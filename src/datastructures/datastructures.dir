@@ -1,0 +1,12 @@
+/**
+\dir
+
+!!Contains efficient datastructures
+
+Currently, only one type of datastructure is used: A Particle Container.
+The task of a ParticleContainer is to store Particles and provide access to them
+and especially efficient access to neighbouring pairs of particles.
+The class ParticleContainer is an interface providing methods for these tasks.
+All other datastructures have to implement that interface.
+
+*/

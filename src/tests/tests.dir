@@ -1,0 +1,12 @@
+/**
+\dir
+
+!Unit Tests
+
+Each class (and each method in the class) should be tested for correctness. 
+One way to do this are Unit-Tests. So for each class in the project, there should be 
+a Unit Test. Thats why the structure in this directory should reflect the structure of
+the whole source code. So there should e.g. be a subfolder of this folder called datastructures
+where all UnitTests for the classes from the datastructures namespace are placed.
+
+*/

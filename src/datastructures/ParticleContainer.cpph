@@ -1,0 +1,40 @@
+
+#include <iostream>
+#include <cmath>
+#include <fstream>
+#include <sstream>
+using namespace std;
+
+template<class ParticleType>
+utils::Log datastructures::ParticleContainer<ParticleType>::_log("ParticleContainer");
+
+template<class ParticleType>
+datastructures::ParticleContainer<ParticleType>::ParticleContainer(datastructures::ParticlePairsHandler<ParticleType>& partPairsHandler,
+                                                                  double bBoxMin[3], double bBoxMax[3] ):
+                _particlePairsHandler(partPairsHandler){
+  for(int i=0; i<3; i++){
+    _boundingBoxMin[i] = bBoxMin[i];
+    _boundingBoxMax[i] = bBoxMax[i];
+  }
+}
+
+template<class ParticleType>
+datastructures::ParticleContainer<ParticleType>::~ParticleContainer(){
+}
+
+template<class ParticleType>
+double datastructures::ParticleContainer<ParticleType>::getBoundingBoxMin(int dimension){
+  return this->_boundingBoxMin[dimension];
+}
+
+template<class ParticleType>
+double datastructures::ParticleContainer<ParticleType>::getBoundingBoxMax(int dimension){
+  return this->_boundingBoxMax[dimension];
+}
+
+template<class ParticleType>
+double datastructures::ParticleContainer<ParticleType>::get_halo_L(int index){   
+  _log.error("get_halo_L(...)","Has to be implemented in derived class");
+  return 0;
+}
+

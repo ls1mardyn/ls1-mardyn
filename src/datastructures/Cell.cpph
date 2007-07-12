@@ -1,0 +1,51 @@
+template<class ParticleType>
+datastructures::Cell<ParticleType>::Cell(){
+  this->_haloCellState = false;
+  this->_boundaryCellState = false;
+  this->_innerCellState = false;
+}
+
+template<class ParticleType>
+void datastructures::Cell<ParticleType>::removeAllParticles(){
+  this->_particlePointers.clear();
+}
+
+template<class ParticleType>
+void datastructures::Cell<ParticleType>::addParticle(ParticleType* particle_ptr){
+  _particlePointers.push_back(particle_ptr);
+}
+
+template<class ParticleType>
+list<ParticleType*>& datastructures::Cell<ParticleType>::getParticlePointers(){
+  return this->_particlePointers; 
+}
+
+template<class ParticleType>
+void datastructures::Cell<ParticleType>::assingCellToHaloRegion(){
+  this->_haloCellState = true;
+}
+
+template<class ParticleType>
+void datastructures::Cell<ParticleType>::assignCellToBoundaryRegion(){
+  this->_boundaryCellState = true;
+}
+
+template<class ParticleType>
+void datastructures::Cell<ParticleType>::assignCellToInnerRegion(){
+  this->_innerCellState = true; 
+}
+
+template<class ParticleType>
+bool datastructures::Cell<ParticleType>::isHaloCell() {
+  return _haloCellState;
+}
+
+template<class ParticleType>
+bool datastructures::Cell<ParticleType>::isBoundaryCell() {
+  return _boundaryCellState;
+}
+
+template<class ParticleType>
+bool datastructures::Cell<ParticleType>::isInnerCell() {
+  return _innerCellState;
+}    
