@@ -194,7 +194,7 @@ void datastructures::LinkedCells<ParticleType>::traversePairs(){
     // loop over all backward neighbours. calculate only forces
     // to neighbour cells in the halo region, all others already have been calculated
     // Upot6LJ,... must not be changed, as this force-pair is also calculated in one of the other loops
-    for(neighbourOffsetsIter=_forwardNeighbourOffsets.begin(); neighbourOffsetsIter!=_forwardNeighbourOffsets.end(); neighbourOffsetsIter++){
+    for(neighbourOffsetsIter=_backwardNeighbourOffsets.begin(); neighbourOffsetsIter!=_backwardNeighbourOffsets.end(); neighbourOffsetsIter++){
       Cell<ParticleType>& neighbourCell = _cells[*cellIndexIter+*neighbourOffsetsIter];
       if(neighbourCell.isHaloCell()){
         // loop over all particles in the cell
@@ -261,7 +261,7 @@ void datastructures::LinkedCells<ParticleType>::calculateNeighbourIndices(){
     // of cells between the two cells (this is received by substracting one of the 
     // absolute difference of the cells, if this difference is not zero)
     if(zIndex != 0){
-      zDistanceSquare = (abs(zIndex)-1) * _cellLength[2];
+      zDistanceSquare = pow((abs(zIndex)-1) * _cellLength[2],2);
     }
     else {
       zDistanceSquare = 0;
@@ -275,7 +275,7 @@ void datastructures::LinkedCells<ParticleType>::calculateNeighbourIndices(){
       }
       for(int xIndex=-_haloWidthInNumCells[0]; xIndex<=_haloWidthInNumCells[0]; xIndex++) {
         if(xIndex != 0){
-          xDistanceSquare = (abs(yIndex)-1) * _cellLength[0];
+          xDistanceSquare = pow((abs(xIndex)-1) * _cellLength[0],2);
         }
         else {
           xDistanceSquare = 0;
