@@ -96,8 +96,7 @@ Simulation::Simulation(int *argc, char ***argv){
         }
         
         _moleculeContainer = new datastructures::LinkedCells<Molecule>(bBoxMin, bBoxMax,
-                                                             _cutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);
-        
+                                                             _cutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);  
       }
     }
     else if(token=="output")  {
@@ -204,11 +203,15 @@ void Simulation::simulate(){
   std::list<md_io::OutputBase*>::iterator outputIter;
   for(outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++){
     (*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain); 
+    delete (*outputIter);
   }
   
   
   delete _domainDecomposition;
   delete _domain;
+  delete _particlePairsHandler;
+  delete _moleculeContainer;
+  delete _integrator;
   // wait for all processes to reach the end of the program
   //_DomainDecomposition->barrier();
 }

@@ -33,6 +33,7 @@ namespace parallel{
 using namespace std;
 
 //! @brief controls the whole simulation process
+//! @author Martin Buchholz
 //!
 //! Some of the simulation parameters are provided in a config file.
 //! The order of the parameters in the config file is important.
