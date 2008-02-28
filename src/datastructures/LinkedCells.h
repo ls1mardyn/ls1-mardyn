@@ -3,7 +3,7 @@
 
 #include "datastructures/ParticleContainer.h"
 #include "utils/Log.h"
-//#include "Cell.h"
+
 #include <sstream>
 
 namespace datastructures {
@@ -15,6 +15,7 @@ namespace datastructures {
 }
 
 //! @brief Linked Cell Data Structure
+//! @author Martin Buchholz
 //!
 //! Without any specialized data structure, it needs O(N*N) - where N is
 //! the number of particles - time to find all neighbouring pairs of particles.

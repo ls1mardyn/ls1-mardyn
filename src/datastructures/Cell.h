@@ -13,17 +13,19 @@ namespace datastructures {
 
 
 //! @brief Cell data structure.
+//! @author Martin Buchholz
 //!
-//! A Cell stores a list of pointers to the molecules in that cell. \n
-//! It also knows to which region it belongs. The following regions are possible: \n
-//! \li completele outside (more than the cutoffradius away from all cells that
+//! A Cell represents a small cuboid area of the domain and stores a list of 
+//! pointers to the molecules in that area. Depending on the actual position
+//! of the cell, it belongs to one of four different regions: \n
+//! - completele outside (more than the cutoffradius away from all cells that
 //!                       belong directly to the MoleculeContainer)
-//!                      Such a cell shouldn't exist!!!
-//! \li halo region (not belonging directly to the MoleculeContainer, but within
+//!                       Such a cell shouldn't exist!!!
+//! - halo region (not belonging directly to the MoleculeContainer, but within
 //!                       the cutoffradius of at least one cell of the MoleculeContainer)
-//! \li boundary region (belonging directly to the MoleculeContainer, but not more than
+//! - boundary region (belonging directly to the MoleculeContainer, but not more than
 //!                           the cutoffradius away from the boundary)
-//! \li inner region (more than the cutoffradius away from the boundary)
+//! - inner region (more than the cutoffradius away from the boundary)
 //! 
 //! There are three boolean member variables for the last three regions. \n
 //! If more than one of them is true, there must be an error in the code \n
@@ -38,11 +40,10 @@ namespace datastructures {
 //! 561 has spacial index (counting from zero)  (1,6,5) and the cell indices of
 //! the neighbours are e.g. 450, 451, 452, 460, 461, ... 
 //! But for either unregular domains or unregular spacial decompositions
-//! in the parallelisation (space filling curves), it's not easy to store that
+//! in the parallelisation (e.g. space filling curves), it's not easy to store that
 //! information in the linked cell vector (if it is a vector at all)
 //! That's why this class was introduced, so additional information which is
 //! specific to a cell should be stored here.
-//! @todo Improve class comment
 template<class ParticleType>
 class datastructures::Cell{
   public:

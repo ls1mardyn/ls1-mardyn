@@ -3,8 +3,6 @@
 
 #include <list>
 #include <string>
-//#include "molecules/SimpleMolecule.h"
-//#include "datastructures/MoleculeContainer.h"
 #include "utils/Log.h"
 
 namespace integrators {
@@ -20,6 +18,7 @@ class Molecule;
 class Domain;
 
 //! @brief update velocities and position
+//! @author Martin Buchholz
 //!
 //! The basic idea of the integrator is, that it calculates from
 //! given values at one timestep the corresponding values in the next timestep.
@@ -28,9 +27,9 @@ class Domain;
 //! time (usually t=0). E.g. positions and velocities are always available
 //! at the same starting time as they are read from the input file, but
 //! the forces don't stand in the input file, so they have to be calculated
-//! for t=0 beforce the integrator starts working.
+//! for t=0 before the integrator starts working.
 //!
-//! The idea of this interface is, that different integrators can be used,
+//! The idea of this interface is that different integrators can be used,
 //! but the user of the main application shouldn't have to care which
 //! integrator is used. This of course means, that there can't be a
 //! method called "second_velocity_half_step_of_leapfrog_integrator".
@@ -42,9 +41,6 @@ class Domain;
 //! whenever some new information (e.g. new Forces on the molecules) is
 //! available. The integrator should then know what can be done with
 //! this new information (e.g. calculate new accelaration)
-//! @todo document this class
-//! @todo change this class to an interface
-//! @todo implement different iterators as subclasses
 class integrators::Integrator{
   public:
     //! The constructor

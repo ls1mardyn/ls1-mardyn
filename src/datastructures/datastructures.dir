@@ -3,10 +3,16 @@
 
 !!Contains efficient datastructures
 
-Currently, only one type of datastructure is used: A Particle Container.
-The task of a ParticleContainer is to store Particles and provide access to them
-and especially efficient access to neighbouring pairs of particles.
-The class ParticleContainer is an interface providing methods for these tasks.
-All other datastructures have to implement that interface.
+The datastructures in this directory are needed to store Particles and/or
+to provide specific access to them (e.g. all particles in some region).
+There are basically two types of datastructures, Cells and particle Containers: 
+- A Cell datastructure represents a very small (order of the cutoff radius) 
+  cuboid area. 
+- In a ParticleContainer, all particles from a process' domain are stored.
+  The main task of a ParticleContainer is to provide access to them
+  and especially efficient access to neighbouring pairs of particles.
+  The class ParticleContainer is an interface providing methods for these tasks.
+  All other datastructures have to implement that interface. 
+  ParticleContainers can use the Cell datastructure to achieve their task.
 
 */

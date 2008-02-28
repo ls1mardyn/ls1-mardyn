@@ -18,10 +18,6 @@ datastructures::LinkedCells<ParticleType>::LinkedCells(double bBoxMin[3], double
   int numberOfCells = 1;
   _cutoffRadius = cutoffRadius,
   _cellsInCutoffRadius = cellsInCutoffRadius;
-  cout << "bboxmin: " << this->_boundingBoxMin[0] << " / " << this->_boundingBoxMin[1] << " / " << this->_boundingBoxMin[2] << endl;
-  cout << "bboxmax: " << this->_boundingBoxMax[0] << " / " << this->_boundingBoxMax[1] << " / " << this->_boundingBoxMax[2] << endl;
-  cout << "rc: " << _cutoffRadius << endl;
-  cout << "_cellsInCutoffRadius: " << _cellsInCutoffRadius << endl;
   for(int dim=0; dim<3; dim++){
     _haloWidthInNumCells[dim] = (int) ceil(cellsInCutoffRadius);
     _cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim]-this->_boundingBoxMin[dim])/(cutoffRadius/cellsInCutoffRadius))

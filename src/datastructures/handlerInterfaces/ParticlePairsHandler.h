@@ -7,6 +7,7 @@ namespace datastructures {
 }
 
 //! @brief interface for defining the action performed when processing a pair
+//! @author Martin Buchholz
 //! 
 //! The idea of a ParticleContainer is, that the container itself only knows
 //! about how to efficiently store and access Particles (or neighbouring pairs
@@ -20,9 +21,9 @@ namespace datastructures {
 //! done by the ParticleContainer, but the force calculation has to be
 //! performed somewhere else. That's where this interface comes into play.
 //! There are typically three things to be done:
-//! \li Do some initial stuff before the pair processing
-//! \li Do something for each pair
-//! \li Do something after all pairs have been processed
+//! - Do some initial stuff before the pair processing
+//! - Do something for each pair
+//! - Do something after all pairs have been processed
 //!
 //! The ParticleContainer has an instance of a class implementing this interface
 //! as a member variable. When the method of the ParticleContainer that traverses

@@ -23,13 +23,14 @@ namespace parallel {
 using namespace std;
 
 //! @brief This Interface is used to get access to particles and pairs of particles
+//! @author Martin Buchholz
 //! 
 //! A particleContainer is used to store Particles with a short-range potential
 //! in a way that the access to pairs of neighbouring particles is efficient.
 //! Neighbouring particles are particles which have a distance shorter than
 //! a given cutoff radius. 
 //! A common task when using a PariticleContainer is to do do something for
-//! all paritcles. This can be done using the methods begin, next and end, e.g.:
+//! all particles. This can be done using the methods begin, next and end, e.g.:
 //! \code
 //! ParticleContainer* partContPtr; 
 //! ParticleType* partPtr; 
@@ -38,13 +39,17 @@ using namespace std;
 //! } 
 //! \endcode
 //!
+//! 
 //! Particles stored in this container can either belong to the local process
-//! or they can be duplicates (from neighbouring processes or periodic boundary)
-//! To distinguish them, a bounding box is defined through two opposing corners
-//! (_boundingBoxMin[3] and _boundingBoxMax[3]. Particles inside this bounding
-//! box belong to this process, those outside shouldn't. An exception to this is
-//! when particles are moved in a time step. Is has to be ensured, that particles
-//! which leave the bounding box are properly handled.
+//! or they can be duplicates (from neighbouring processes or periodic boundary).
+//! As the simulated regions are often cuboids, a bounding box is defined through 
+//! two opposing corners (_boundingBoxMin[3] and _boundingBoxMax[3]). 
+//! Particles inside this bounding box belong to this process, those outside don't. 
+//! An exception to this is when particles are moved in a time step. Is has to be
+//! ensured, that particles which leave the bounding box are properly handled.
+//! 
+//! For non-cuboid regions, the bounding box still has to be defined as it gives
+//! an approximation for the region that is covered by the ParticleContainer.
 //! 
 //! This interface doesn't implement the datastructure, it just tells which
 //! methods a class implementing this kind of datastructure has to provide to 

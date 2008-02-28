@@ -17,6 +17,7 @@ namespace datastructures{
 }
 
 //! @brief rotational leapfrog integration scheme
+//! @author Martin Buchholz
 //!
 //! For details about the algorithm see David Fincham's paper "Leapfrog rotational algorithms"
 //! This Leapfrog integrator is implemented as a deterministic finite automaton (DFA):

@@ -6,6 +6,7 @@ namespace datastructures {
 }
 
 //! @brief calculate pair forces and collect macroscopic values
+//! @author Martin Buchholz
 //!
 //! used to calculate the force between all pairs and sum up macroscopic values (e.g. Upot)
 //! The idea is, that after the call of init(), processPair(...) is called for all
