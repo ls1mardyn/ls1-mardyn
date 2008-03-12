@@ -2,6 +2,7 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 #include "datastructures/LinkedCells.h"
+#include "datastructures/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/DomainDecompDummy.h"
 #ifdef PARALLEL
@@ -97,6 +98,19 @@ Simulation::Simulation(int *argc, char ***argv){
         
         _moleculeContainer = new datastructures::LinkedCells<Molecule>(bBoxMin, bBoxMax,
                                                              _cutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);  
+      }
+      else if(token=="AdaptiveSubCells"){
+        int cellsInCutoffRadius;
+        inputfilestream >> cellsInCutoffRadius;
+        double bBoxMin[3];
+        double bBoxMax[3];
+        for(int i=0;i<3;i++) {
+          bBoxMin[i] = _domainDecomposition->getCoords(i)*_domain->getGlobalLength(i)/_domainDecomposition->getGridSize(i);
+          bBoxMax[i] = (_domainDecomposition->getCoords(i)+1)*_domain->getGlobalLength(i)/_domainDecomposition->getGridSize(i);
+        }
+        //creates a new Adaptive SubCells datastructure
+        _moleculeContainer = new datastructures::AdaptiveSubCells<Molecule>(bBoxMin, bBoxMax,
+                                                             _cutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);
       }
     }
     else if(token=="output")  {
