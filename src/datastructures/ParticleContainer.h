@@ -64,9 +64,11 @@ class datastructures::ParticleContainer {
     //! @param bBoxMax coordinates of the highest (in all coordinates) corner of the bounding box
     ParticleContainer(datastructures::ParticlePairsHandler<ParticleType>& partPairsHandler, double bBoxMin[3], double bBoxMax[3]);
     
-    //! The destructor
+    //! @brief The destructor
     virtual ~ParticleContainer();
     
+    //! @brief do necessary updates resulting from changed particle positions
+    //! 
     //! For some implementations of the interface ParticleContainer, the place
     //! where particles are stored might e.g. depend on the spacial position of the
     //! particle. So when some externel method (e.g. Leap-Frog) changes the spacial 
@@ -136,6 +138,7 @@ class datastructures::ParticleContainer {
     
     //! @brief returns the width of the halo strip (for the given dimension index)
     //! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
+    //!       e.g. replace it by the cutoff-radius
     virtual double get_halo_L(int index);
     
   protected:
@@ -151,9 +154,7 @@ class datastructures::ParticleContainer {
   private:
     //! Logging interface
     static utils::Log _log;
-    
 
-    
 };
 
 #include "datastructures/ParticleContainer.cpph"

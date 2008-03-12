@@ -7,8 +7,10 @@
 #include <iostream>
 using namespace std;
 
-template<class ParticleType>
-utils::Log datastructures::LinkedCells<ParticleType>::_log("LinkedCells");
+
+//################################################
+//############ PUBLIC METHODS ####################
+//################################################
 
 template<class ParticleType>
 datastructures::LinkedCells<ParticleType>::LinkedCells(double bBoxMin[3], double bBoxMax[3],
@@ -16,8 +18,7 @@ datastructures::LinkedCells<ParticleType>::LinkedCells(double bBoxMin[3], double
                 datastructures::ParticleContainer<ParticleType>(partPairsHandler, bBoxMin, bBoxMax){
                
   int numberOfCells = 1;
-  _cutoffRadius = cutoffRadius,
-  _cellsInCutoffRadius = cellsInCutoffRadius;
+  _cutoffRadius = cutoffRadius;
   for(int dim=0; dim<3; dim++){
     _haloWidthInNumCells[dim] = (int) ceil(cellsInCutoffRadius);
     _cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim]-this->_boundingBoxMin[dim])/(cutoffRadius/cellsInCutoffRadius))
@@ -32,7 +33,6 @@ datastructures::LinkedCells<ParticleType>::LinkedCells(double bBoxMin[3], double
     _haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim]+_haloWidthInNumCells[dim]*_cellLength[dim];
     _haloLength[dim] = _haloWidthInNumCells[dim]*_cellLength[dim];
   }
-  cout << "haloWidthInNumCells: " << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
 
   _cells.resize(numberOfCells);
  
@@ -80,18 +80,6 @@ void datastructures::LinkedCells<ParticleType>::update(){
   }
 }
 
-
-template<class ParticleType>
-void datastructures::LinkedCells<ParticleType>::addParticle(ParticleType* particle){
-  double x = particle->r(0);
-  double y = particle->r(1);
-  double z = particle->r(2);
-  if(x>=this->_haloBoundingBoxMin[0] && x < this->_haloBoundingBoxMax[0] && 
-     y>=this->_haloBoundingBoxMin[1] && y < this->_haloBoundingBoxMax[1] && 
-     z>=this->_haloBoundingBoxMin[2] && z < this->_haloBoundingBoxMax[2]){
-       _particles.push_front(*particle);
-  }
-}
 
 template<class ParticleType>
 void datastructures::LinkedCells<ParticleType>::addParticle(ParticleType& particle){
@@ -206,15 +194,72 @@ void datastructures::LinkedCells<ParticleType>::traversePairs(){
       }
     }
   }
-  
   this->_particlePairsHandler.finish();
-
 }
 
 template<class ParticleType>
 unsigned long datastructures::LinkedCells<ParticleType>::getNumberOfParticles(){
   return _particles.size(); 
 }      
+
+template<class ParticleType>
+ParticleType* datastructures::LinkedCells<ParticleType>::begin(){
+  _particleIter = _particles.begin();
+  if(_particleIter != _particles.end()){
+    return &(*_particleIter);
+  }
+  else {
+    return NULL;
+  }
+}
+
+template<class ParticleType>
+ParticleType* datastructures::LinkedCells<ParticleType>::next(){
+  _particleIter++;
+  if(_particleIter != _particles.end()){
+    return &(*_particleIter);
+  }
+  else {
+    return NULL;
+  }
+}
+
+template<class ParticleType>
+ParticleType* datastructures::LinkedCells<ParticleType>::end(){
+  return NULL;
+}
+
+template<class ParticleType>
+void datastructures::LinkedCells<ParticleType>::deleteOuterParticles(){ 
+  typename std::list<ParticleType>::iterator particleIterator = _particles.begin();
+  
+  bool erase_mol;
+  while(particleIterator!=_particles.end()){
+    erase_mol = false;
+    for(unsigned short d=0;d<3;++d){
+      const double& rd=particleIterator->r(d);
+      // The molecules has to be within the domain of the process
+      // If it is outside in at least one dimension, it has to be
+      // erased /
+      if(rd<this->_boundingBoxMin[d] || rd>=this->_boundingBoxMax[d]) erase_mol = true;
+    }
+    if(erase_mol) {
+      particleIterator=_particles.erase(particleIterator);
+    }
+    else{
+      particleIterator++;
+    }
+  }
+}
+
+template<class ParticleType>
+double datastructures::LinkedCells<ParticleType>::get_halo_L(int index){
+  return _haloLength[index]; 
+}
+
+//################################################
+//############ PRIVATE METHODS ###################
+//################################################
 
 template<class ParticleType>
 void datastructures::LinkedCells<ParticleType>::initializeCells(){
@@ -311,57 +356,4 @@ unsigned long datastructures::LinkedCells<ParticleType>::cellIndexOf3DIndex(int 
 }
 
 template<class ParticleType>
-double datastructures::LinkedCells<ParticleType>::get_halo_L(int index){
-  return _haloLength[index]; 
-}
-
-template<class ParticleType>
-ParticleType* datastructures::LinkedCells<ParticleType>::begin(){
-  _particleIter = _particles.begin();
-  if(_particleIter != _particles.end()){
-    return &(*_particleIter);
-  }
-  else {
-    return NULL;
-  }
-}
-
-template<class ParticleType>
-ParticleType* datastructures::LinkedCells<ParticleType>::next(){
-  _particleIter++;
-  if(_particleIter != _particles.end()){
-    return &(*_particleIter);
-  }
-  else {
-    return NULL;
-  }
-}
-
-template<class ParticleType>
-ParticleType* datastructures::LinkedCells<ParticleType>::end(){
-  return NULL;
-}
-
-
-template<class ParticleType>
-void datastructures::LinkedCells<ParticleType>::deleteOuterParticles(){ 
-  typename std::list<ParticleType>::iterator particleIterator = _particles.begin();
-  
-  bool erase_mol;
-  while(particleIterator!=_particles.end()){
-    erase_mol = false;
-    for(unsigned short d=0;d<3;++d){
-      const double& rd=particleIterator->r(d);
-      // The molecules has to be within the domain of the process
-      // If it is outside in at least one dimension, it has to be
-      // erased /
-      if(rd<this->_boundingBoxMin[d] || rd>=this->_boundingBoxMax[d]) erase_mol = true;
-    }
-    if(erase_mol) {
-      particleIterator=_particles.erase(particleIterator);
-    }
-    else{
-      particleIterator++;
-    }
-  }
-}
+utils::Log datastructures::LinkedCells<ParticleType>::_log("LinkedCells");

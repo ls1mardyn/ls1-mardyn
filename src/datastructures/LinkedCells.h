@@ -44,18 +44,14 @@ namespace datastructures {
 template<class ParticleType>
 class datastructures::LinkedCells: public datastructures::ParticleContainer<ParticleType> {
   public:
-    //#########################################################################
-    //############# methods common for all ParticleContainers #################
-    //#########################################################################
-
     //! @brief initialize the Linked Cell datastructure
     //!  
     //! The constructor sets the following variables:
-    //! - cellsPerDimension[3]
-    //! - haloWidth[3]
-    //! - cellLength[3]
-    //! - cellsInCutoffRadius
-    //! - lowerCorner and higherCorner
+    //! - _cutoffRadius
+    //! - _haloWidthInNumCells[3]
+    //! - _cellsPerDimension[3]
+    //! - _cellLength[3]
+    //! - _haloBoundingBoxMin and _haloBoundingBoxMax
     //!
     //! It resized the cell vector and marks the cells as inner/halo \n
     //! It fills the array innerCellIndices \n
@@ -94,17 +90,10 @@ class datastructures::LinkedCells: public datastructures::ParticleContainer<Part
     //! ParticleContainer is it's corresponding cell.
     void update();    
     
-    //! @brief Insert Molecules into the cells.
-    //!
-    //! Loop over all Molecules and call this->addMolecule(...) for each of them
-    //void addMolecules(std::list<ParticleType>& molecules);
-    
     //! @brief Insert a single molecule.
     //!
     //! Therefore, first the cell (the index) for the molecule has to be determined,
     //! then the molecule is inserted into that cell.
-    //void addMolecule(ParticleType* molecule_ptr);
-    void addParticle(ParticleType* particle);
     void addParticle(ParticleType& particle);
     
     //! @brief calculate the forces between the molecules.
@@ -120,11 +109,43 @@ class datastructures::LinkedCells: public datastructures::ParticleContainer<Part
     //!     because the same pair of cells has already been processed in one of the other loops. 
     void traversePairs();
 
-    //#########################################################################
-    //############# special methods for LinkedCells ###########################
-    //#########################################################################
+    //! @return the number of particles stored in the Linked Cells
+    unsigned long getNumberOfParticles();
     
-    //! @brief Initialze index vectors and cells. 
+    //! @brief returns a pointer to the first particle in the Linked Cells
+    //!
+    //! Internally, the particles are store in a std::list. To traverse this
+    //! list, a iterator (_particleIter) for the list is used.
+    //! This method sets this iterator to point to the begin of the list
+    //! and return a pointer to the value pointed to by the iterator
+    ParticleType* begin();
+
+    //! @brief returns a pointer to the next particle in the Linked Cells
+    //!
+    //! The iterator _particleIter is first incremented. Then a pointer
+    //! to the value pointed to by the iterator is returned. If the
+    //! iterator points to the end of the list (which is one element after the last
+    //! element), NULL is returned 
+    ParticleType* next();
+
+    //! @brief returns NULL
+    ParticleType* end();
+        
+    //! @brief delete all Particles which are not within the bounding box
+    void deleteOuterParticles();
+
+    //! @brief gets the width of the halo region in dimension index
+    //! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
+    //!       e.g. replace it by the cutoff-radius 
+    double get_halo_L(int index);
+    
+
+  private:
+    //####################################
+    //######### PRIVATE METHODS ##########
+    //####################################
+  
+    //! @brief Initialize index vectors and cells. 
     //!
     //! Fill the vector with the indices of the inner and boundary cells.
     //! Assign each cell it's region (halo, boundary, inner).
@@ -170,43 +191,12 @@ class datastructures::LinkedCells: public datastructures::ParticleContainer<Part
     //! y: two cells back, z: one cell up,...)
     unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
 
-    //! @brief gets the width of the halo region in dimension index
-    //! @todo remove this method    
-    double get_halo_L(int index);
-
-    //! @return the number of particles stored in the Linked Cells
-    unsigned long getNumberOfParticles();
-    
-    //! @brief returns a pointer to the first particle in the Linked Cells
-    //!
-    //! Internally, the particles are store in a std::list. To traverse this
-    //! list, a iterator (_particleIter) for the list is used.
-    //! This method sets this iterator to point to the begin of the list
-    //! and return a pointer to the value pointed to by the iterator
-    ParticleType* begin();
-
-    //! @brief returns a pointer to the next particle in the Linked Cells
-    //!
-    //! The iterator _particleIter is first incremented. Then a pointer
-    //! to the value pointed to by the iterator is returned. If the
-    //! iterator points to the end of the list (which is one element after the last
-    //! element), NULL is returned 
-    ParticleType* next();
-
-    //! @brief returns NULL
-    ParticleType* end();
-        
-    //! @brief delete all Particles which are not within the bounding box
-    void deleteOuterParticles();
-    
-  private:
-    //! Logging interface
-    static utils::Log _log;
-
-    //datastructures::ParticlePairsHandler<ParticleType>& _particlePairsHandler;
+    //####################################
+    //##### PRIVATE MEMBER VARIABLES #####
+    //####################################
 
     //! the list contains all molecules from the phasespace
-    list<ParticleType> _particles; // CHECKED
+    list<ParticleType> _particles;
     
     //! Iterator to traverse the list of particles (_particles)
     typename std::list<ParticleType>::iterator _particleIter;
@@ -216,19 +206,16 @@ class datastructures::LinkedCells: public datastructures::ParticleContainer<Part
     
     //! Vector containing the indices (for the cells vector) of all inner cells (without boundary)
     std::vector<unsigned long> _innerCellIndices;
-    
     //! Vector containing the indices (for the cells vector) of all boundary cells
     std::vector<unsigned long> _boundaryCellIndices;
     
     //! Neighbours that come in the total ordering after a cell
     std::vector<unsigned long> _forwardNeighbourOffsets;
-    
     //! Neighbours that come in the total ordering before a cell
     std::vector<unsigned long> _backwardNeighbourOffsets;
 
     //! low corner of the bounding box around the linked cells (including halo)
     double _haloBoundingBoxMin[3];
-    
     //! high corner of the bounding box around the linked cells (including halo)
     double _haloBoundingBoxMax[3];  
     
@@ -243,9 +230,8 @@ class datastructures::LinkedCells: public datastructures::ParticleContainer<Part
     //! cutoff radius
     double _cutoffRadius;
     
-    //! Number of neighbour cells in one direction.
-    double _cellsInCutoffRadius;
-  
+    //! Logging interface
+    static utils::Log _log;  
 };
 
 #include "datastructures/LinkedCells.cpph"
