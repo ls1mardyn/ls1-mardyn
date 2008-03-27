@@ -27,6 +27,7 @@ namespace md_io{
   class OutputBase;
 }
 
+
 namespace parallel{
   class DomainDecompBase;
 }
@@ -129,7 +130,10 @@ class Simulation{
 
     //! Number of discrete time steps for the simulation        
     unsigned long _numberOfTimesteps;
-    
+
+    //! Incremental output flag NEW
+    bool _increment;
+
     //! Datastructure for finding neighbours efficiently
     datastructures::ParticleContainer<Molecule>* _moleculeContainer;
     
@@ -147,6 +151,9 @@ class Simulation{
     
     //! prefix for the names of all output files
     string _outputPrefix;
+    
+    //! frequency of the checkpoint writer
+    long _outputFrequency;
     
     std::list<md_io::OutputBase*> _outputPlugins;
     

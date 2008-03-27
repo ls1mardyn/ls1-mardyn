@@ -19,7 +19,7 @@ using namespace std;
 //!
 int main(int argc, char** argv){
   // Logging interface
-  static utils::Log _log("MDProject");
+  static utils::Log _log("MarDyn");
   stringstream logtext;
   
   //Test all modules

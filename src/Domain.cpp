@@ -59,6 +59,20 @@ double Domain::getGlobalBetaTrans() const { return _globalBetaTrans; }
 
 double Domain::getGlobalBetaRot() const { return _globalBetaRot; }
 
+double Domain::getGlobalTemperature() const { return _globalTemperature; }
+
+void Domain::setGlobalTemperature(double temp) { _globalTemperature = temp; }
+
+vector<double> & Domain::getmixcoeff() { return _mixcoeff; }
+
+double Domain::getepsilonRF() const { return _epsilonRF; }
+
+void Domain::setepsilonRF(double erf) { _epsilonRF = erf; }
+
+unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules; }
+
+void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
+
 double Domain::getGlobalPressure() const { return _globalTemperature*_globalRho+_globalRho*getAverageGlobalVirial()/3.; }
 
 double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
@@ -69,7 +83,25 @@ void Domain::setLocalSummv2(double summv2){ _localSummv2 = summv2; }
     
 void Domain::setLocalSumIw2(double sumIw2){ _localSumIw2 = sumIw2; } 
 
+int Domain::getlocalRank(){ return _localRank;}
+
+unsigned long Domain::getinpversion(){ return _inpversion;}
+
+void Domain::setinpversion(unsigned long inpv){ _inpversion = inpv;}
+
+double Domain::getglobalRho(){ return _globalRho;}
+
+void Domain::setglobalRho(double grho){ _globalRho = grho;}
+
+unsigned long Domain::getglobalRotDOF(){ return _globalRotDOF;}
+	
+void Domain::setglobalRotDOF(unsigned long grotdof){ _globalRotDOF = grotdof;}
+
+utils::Log Domain::getlog() { return _log;}
+
 double Domain::getCurrentTime(){ return _currentTime;}
+
+void Domain::setCurrentTime(double curtime){ _currentTime = curtime;}
 
 void Domain::advanceTime(double timestep){ _currentTime += timestep;}
 
@@ -83,6 +115,10 @@ Comp2Param& Domain::getComp2Params(){
 
 double Domain::getGlobalLength(int index) const {
   return _globalLength[index];
+}
+
+void Domain::setGlobalLength(int index, double length) {
+  _globalLength[index] = length;
 }
 
 void Domain::calculateGlobalValues(parallel::DomainDecompBase* domainDecomp,
@@ -137,6 +173,7 @@ void Domain::readPhaseSpaceHeader(){
   string token;
   _phaseSpaceFileStream >> token;
   _inpversion=0;
+  std::cout << "my first token in readPhaseSpaceHeader is " << token << std::endl;
   if(token != "MDProject" && _localRank == 0)
   {
     cerr << "Input: NOT A MOLDY INPUT! (starts with " << token << ")" << endl;
@@ -172,7 +209,7 @@ void Domain::readPhaseSpaceHeader(){
     }
     token.clear();
     _phaseSpaceFileStream >> token;
-    
+    //std::cout << "got token " << token << std::endl;
     if(token=="currentTime"){
       _phaseSpaceFileStream >> _currentTime;
     }

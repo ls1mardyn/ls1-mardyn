@@ -198,6 +198,33 @@ class Domain{
     //!
     //! @param index dimension for which the length should be returned
     double getGlobalLength(int index) const;
+    
+    //! @brief set the length of the domain
+    //!
+    //! @param index dimension for which the length should be set
+    //! @param index value which should be set
+    void setGlobalLength(int index, double length);
+
+    //! @brief get the global temperature
+    double getGlobalTemperature() const;
+
+    //! @brief set the global temperature
+    void setGlobalTemperature(double temp);
+
+    //! @brief get the mixcoeff
+    vector<double> & getmixcoeff();
+
+    //! @brief get the epsilonRF
+    double getepsilonRF() const;
+
+    //! @brief set the epsilonRF
+    void setepsilonRF(double erf);
+
+    //! @brief get globalNumMolecules
+    unsigned long getglobalNumMolecules() const;
+
+    //! @brief set globalNumMolecules
+    void setglobalNumMolecules(unsigned long glnummol);
 
     //! @brief get the global pressure
     //!
@@ -221,9 +248,36 @@ class Domain{
     
     //! @brief sets _localSumIw2 to the given value
     void setLocalSumIw2(double sumIw2);
+	
+	//! @brief get local rank 
+    int getlocalRank();
+    
+    //! @brief get inpversion
+    unsigned long getinpversion();
 
+    //! @brief set inpversion
+    void setinpversion(unsigned long inpv);
+
+    //! @brief get globalRho
+    double getglobalRho();
+
+    //! @brief set globalRho
+    void setglobalRho(double grho);
+
+    //! @brief get globalRotDOF
+    unsigned long getglobalRotDOF();
+
+    //! @brief set globalRotDOF
+    void setglobalRotDOF(unsigned long grotdof);
+
+    //! @brief get logging interface
+    utils::Log getlog();
+    
     //! @brief get the current time
     double getCurrentTime();
+    
+    //! @brief get the current time
+    void setCurrentTime(double curtime);
     
     //! @brief advance the current time by timestep
     void advanceTime(double timestep);

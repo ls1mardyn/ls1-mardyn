@@ -1,7 +1,8 @@
-#ifndef XYZWRITER_H_
-#define XYZWRITER_H_
+#ifndef POVWRITER_H_
+#define POVWRITER_H_
 
 #include "md_io/OutputBase.h"
+#include "molecules/Component.h"
 #include <string>
 #include <fstream>
 
@@ -18,32 +19,29 @@ class Domain;
 class Molecule;
 
 namespace md_io{
-  class XyzWriter; 
+  class PovWriter; 
 }
 using namespace std;
 
-//! @todo comment
-class md_io::XyzWriter : public md_io::OutputBase{
+class md_io::PovWriter : public md_io::OutputBase{
  public:
-  //XyzWriter(unsigned long numberOfTimesteps, unsigned long writeFrequency, string outputPathAndPrefix);
-  XyzWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental);
-  ~XyzWriter();
-  //! @todo comment
+   //! @brief writes a POVray file of the current state of the simluation
+   //!
+   //! @param filename Name of the POV file (including path)
+  PovWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental);
+  ~PovWriter();
   void initOutput(datastructures::ParticleContainer<Molecule>* particleContainer,
                          parallel::DomainDecompBase* domainDecomp, Domain* domain);
-  //! @todo comment
   void doOutput(datastructures::ParticleContainer<Molecule>* particleContainer,
                          parallel::DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
-  //! @todo comment  
   void finishOutput(datastructures::ParticleContainer<Molecule>* particleContainer,
                          parallel::DomainDecompBase* domainDecomp, Domain* domain);
  private:
-  unsigned long _numberOfTimesteps; 
-  unsigned long _writeFrequency;
-  //string _outputPathAndPrefix;
-  bool _filenameisdate;
-  bool _incremental;
   string _filename;
+  unsigned long _writeFrequency;
+  unsigned long _numberOfTimesteps;
+  bool  _incremental;
+  bool  _filenameisdate;
 };
 
-#endif /*XYZWRITER_H_*/
+#endif /*POVWRITER_H_*/

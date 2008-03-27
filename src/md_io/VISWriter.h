@@ -1,5 +1,5 @@
-#ifndef XYZWRITER_H_
-#define XYZWRITER_H_
+#ifndef VISWRITER_H_
+#define VISWRITER_H_
 
 #include "md_io/OutputBase.h"
 #include <string>
@@ -18,32 +18,28 @@ class Domain;
 class Molecule;
 
 namespace md_io{
-  class XyzWriter; 
+  class VISWriter; 
 }
 using namespace std;
 
-//! @todo comment
-class md_io::XyzWriter : public md_io::OutputBase{
+class md_io::VISWriter : public md_io::OutputBase{
  public:
-  //XyzWriter(unsigned long numberOfTimesteps, unsigned long writeFrequency, string outputPathAndPrefix);
-  XyzWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental);
-  ~XyzWriter();
-  //! @todo comment
+   //! @brief writes a VIS file
+   //!
+  VISWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental);
+  ~VISWriter();
   void initOutput(datastructures::ParticleContainer<Molecule>* particleContainer,
                          parallel::DomainDecompBase* domainDecomp, Domain* domain);
-  //! @todo comment
   void doOutput(datastructures::ParticleContainer<Molecule>* particleContainer,
                          parallel::DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
-  //! @todo comment  
   void finishOutput(datastructures::ParticleContainer<Molecule>* particleContainer,
                          parallel::DomainDecompBase* domainDecomp, Domain* domain);
  private:
-  unsigned long _numberOfTimesteps; 
-  unsigned long _writeFrequency;
-  //string _outputPathAndPrefix;
-  bool _filenameisdate;
-  bool _incremental;
   string _filename;
+  unsigned long _writeFrequency;
+  unsigned long _numberOfTimesteps;
+  bool	_incremental;
+  bool	_filenameisdate;
 };
 
-#endif /*XYZWRITER_H_*/
+#endif /*VISWRITER_H_*/

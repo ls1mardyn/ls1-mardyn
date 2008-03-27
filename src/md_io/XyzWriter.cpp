@@ -1,12 +1,25 @@
 #include "md_io/XyzWriter.h"
+#include "md_io/Common.h"
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
 #include "molecules/Molecule.h"
 
-md_io::XyzWriter::XyzWriter(unsigned long numberOfTimesteps, unsigned long writeFrequency, string outputPathAndPrefix){
+/*md_io::XyzWriter::XyzWriter(unsigned long numberOfTimesteps, unsigned long writeFrequency, string outputPathAndPrefix){
   _writeFrequency = writeFrequency;
   _outputPathAndPrefix = outputPathAndPrefix;
+}*/
+
+md_io::XyzWriter::XyzWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
+  _filename = filename;
+  _writeFrequency = writeFrequency;
+  _incremental = incremental;
+  _numberOfTimesteps = numberOfTimesteps;
+
+  if (filename == "default")
+     _filenameisdate = true;
+  else
+     _filenameisdate = false;
 }
 
 md_io::XyzWriter::~XyzWriter(){}
@@ -19,13 +32,29 @@ void md_io::XyzWriter::doOutput(datastructures::ParticleContainer<Molecule>* par
                          parallel::DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep){
   if(simstep%_writeFrequency == 0) {
     stringstream filenamestream;
-    filenamestream << _outputPathAndPrefix;
+    /*filenamestream << _outputPathAndPrefix;
     unsigned long temp = simstep/_writeFrequency;
     while(temp < floor(_numberOfTimesteps/_writeFrequency)){
       filenamestream << "0";
-      temp = temp*10;
+      temp = temp*10;*/
+    if(_filenameisdate) {
+       filenamestream << gettimestring();
+    } else {
+       filenamestream << _filename;
     }
-    filenamestream << simstep/_writeFrequency << ".xyz";
+    //filenamestream << simstep/_writeFrequency << ".xyz";
+
+	if(_incremental) {
+       unsigned long temp = simstep/_writeFrequency;
+       filenamestream << "-";
+       while(temp < floor(_numberOfTimesteps/_writeFrequency)){
+          filenamestream << "0";
+          temp = temp*10;
+       }
+       filenamestream << simstep/_writeFrequency << ".xyz";
+    } else {
+       filenamestream << ".xyz";
+    }
 
     ofstream xyzfilestream(filenamestream.str().c_str());
     xyzfilestream << particleContainer->getNumberOfParticles() << endl;
