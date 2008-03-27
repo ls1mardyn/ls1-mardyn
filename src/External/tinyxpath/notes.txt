@@ -1,0 +1,95 @@
+/**
+\mainpage TinyXPath documentation
+
+TinyXPath is an XPath processor, building another brick on top of the TinyXML package.\n
+
+<h2>Usage</h2>
+In order to use TinyXPath, one need to include the xpath_processor.h file and link with the tinyxpath code.
+- Under Windows :
+ - You first have to generate the debug and/or release library by compiling the tinyxpath_lib project
+ - You can then link with the debug or release library that has been generated in tinyxpath_lib/debug and tinyxpath_lib/release
+- Under Linux, there's no library yet. You will need to build all .cpp files (except main.cpp and htmlutil.cpp) in your project. There is 
+a <b>build</b> script for the example program in the distribution.
+\n
+The main.cpp source file is an example/regression test source. \n
+
+In order to compute an XPath expression, one need to :
+-# instanciate the TinyXPath::xpath_processor class, giving the constructor a source (Tiny) XML tree and an XPath expression. 
+-# Call TinyXPath::xpath_processor::er_compute_xpath. This delivers the XPath result. 
+
+As an alternative if you know beforehand what result type you're looking for, you can use the following alternate 
+member functions at step 2 :
+- TinyXPath::xpath_processor::S_compute_xpath : returns a string
+- TinyXPath::xpath_processor::i_compute_xpath : returns a single integer
+- TinyXPath::xpath_processor::u_compute_xpath_node_set : returns the number of nodes in the node set. The node set should be retrieved by calls to 
+ - TinyXPath::xpath_processor::v_get_xpath_base or
+ - TinyXPath::xpath_processor::XNp_get_xpath_node or 
+ - TinyXPath::xpath_processor::XAp_get_xpath_attribute
+
+once again, the choice of v_get_xpath_base or its two alternates depend if you know whether you know if you 
+wait for an attribute or another type of node, or not.
+
+<h2>Alternate usage : static functions</h2>
+Now, to make it really simple to use, if you only look for one result at a time, you can include only the following header :
+\verbatim
+#include "xpath_static.h"
+\endverbatim
+
+and then use the following set of functions :
+- TinyXPath::i_xpath_int to get an integer result
+- TinyXPath::d_xpath_double to get a double result
+- TinyXPath::o_xpath_bool to get a bool result
+- TinyXPath::S_xpath_string to get a string result
+- TinyXPath::XNp_xpath_node to get a TiXmlNode
+- TinyXPath::XAp_xpath_attribute to get a TiXmlAttribute
+
+\n or if you need to know whether there was some error with the XPath evaluation :
+
+- TinyXPath::o_xpath_int 
+- TinyXPath::o_xpath_double 
+- TinyXPath::o_xpath_bool 
+- TinyXPath::o_xpath_string
+- TinyXPath::o_xpath_node 
+- TinyXPath::o_xpath_attribute 
+
+<h2>Modification to the source tree</h2>
+Be aware that the input tree user value is modified after the call : all user data (TiXmlNode::SetUserData)
+are replaced by the document order (XPath meaning).
+
+<h2>Namespace</h2>
+Important notice : the whole TinyXPath engine is declared in the TinyXPath namespace. This means that all your declarations have to
+be prefixed with <b>TinyXPath::</b> or, if you don't fear collisions with the classes or functions declared in TinyXPath, you can
+add the following declaration after the #include of xpath_processor.h or xpath_static.h :
+\verbatim
+using namepsace TinyXPath;
+\endverbatim
+This would allow you to skip the <b>TinyXPath::</b> prefix.
+
+<h2>License</h2>
+TinyXPath is covered by the zlib license. Here it is :\n
+
+\verbatim
+www.sourceforge.net/projects/tinyxpath
+Copyright (c) 2002-2004 Yves Berquin (yvesb@users.sourceforge.net)
+
+This software is provided 'as-is', without any express or implied
+warranty. In no event will the authors be held liable for any
+damages arising from the use of this software.
+
+Permission is granted to anyone to use this software for any
+purpose, including commercial applications, and to alter it and
+redistribute it freely, subject to the following restrictions:
+
+1. The origin of this software must not be misrepresented; you must
+not claim that you wrote the original software. If you use this
+software in a product, an acknowledgment in the product documentation
+would be appreciated but is not required.
+
+2. Altered source versions must be plainly marked as such, and
+must not be misrepresented as being the original software.
+
+3. This notice may not be removed or altered from any source
+distribution.
+\endverbatim
+
+*/

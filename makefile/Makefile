@@ -15,9 +15,6 @@ BOOST_VER = boost_1_34_0
 LIBRARY_BOOST_LOCAL = $(shell find ../libs/$(BOOST_VER) -name 'libboost_program_options*.a' |grep release |grep threading-multi)
 LIBRARY_BOOST_GLOBAL = $(shell find /usr/lib/ -name 'libboost_program_options*.a' |grep -e '-mt' ; find /usr/local/lib/ -name 'libboost_program_options*.a' |grep -e '-mt')
 
-LIBRARY_BOOST_LOCAL=
-LIBRARY_BOOST_GLOBAL=
-
 
 # tinyXPATH dependency
 OBJECTS_TINYXPATH = $(patsubst %.cpp,%.o,$(shell find External/tinyxpath -name '*.cpp'))
@@ -30,8 +27,8 @@ BINARY = MarDyn
 MAKEFILEDIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
 # which compiler?
-#include $(MAKEFILEDIR)/cfg/gcc.in
-include ../makefile/cfg/gcc.in
+include $(MAKEFILEDIR)/cfg/gcc.in
+#include ../makefile/cfg/gcc.in
 
 CXX = $(CXX_$(MACHTYPE))
 CXXFLAGS = $(CXXFLAGS_$(MACHTYPE)_$(TARGET))
