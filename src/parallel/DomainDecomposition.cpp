@@ -252,7 +252,7 @@ void parallel::DomainDecomposition::reducevalues(double *Upot, double *Virial, d
   double Virial_glob;
   double summv2_glob;
   double sumIw2_glob;
-  int num_mol_glob;
+  unsigned long num_mol_glob;
   MPI_Allreduce(num_mol, &num_mol_glob, 1, MPI_UNSIGNED_LONG, MPI_SUM, comm_topology);
   MPI_Allreduce(Upot, &Upot_glob, 1, MPI_DOUBLE, MPI_SUM, comm_topology);
   MPI_Allreduce(Virial, &Virial_glob, 1, MPI_DOUBLE, MPI_SUM, comm_topology);
