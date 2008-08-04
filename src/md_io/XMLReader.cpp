@@ -23,7 +23,7 @@ void md_io::XMLReader::setPhaseSpaceHeaderFile(string filename) {
 
 void md_io::XMLReader::readPhaseSpaceHeader(Domain* domain) {
   md_io::XMLReader_main * _xmlreader = new md_io::XMLReader_main();
-  TiXmlDocument XMLdoc = _xmlreader->XMLReader_main_get_doc(_phaseSpaceHeaderFileName);
+  TiXmlDocument XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(_phaseSpaceHeaderFileName.c_str());
   TiXmlDocument *XMLdoc_p = &XMLdoc;
 
   vector<Component>& dcomponents = domain->getComponents();

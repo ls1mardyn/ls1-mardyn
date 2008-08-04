@@ -3,6 +3,7 @@
 
 #include "md_io/InputBase.h"
 #include <string>
+#include <sstream>
 #include <fstream>
 
 namespace datastructures{
@@ -31,7 +32,11 @@ class md_io::AsciiReader : public md_io::InputBase{
   void readPhaseSpaceHeader(Domain* domain);
   void readPhaseSpace(datastructures::ParticleContainer<Molecule>* particleContainer, Domain* domain);
  private:
+#ifdef PARALLEL
+  istringstream _phaseSpaceFileStream;
+#else
   fstream _phaseSpaceFileStream;
+#endif
   fstream _phaseSpaceHeaderFileStream;
   string _phaseSpaceFileName;
   string _phaseSpaceHeaderFileName;

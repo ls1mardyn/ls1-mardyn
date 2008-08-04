@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <time.h>
+#include <climits>
 #include "../src/External/tinyxpath/xpath_static.h"
 
 using namespace std;

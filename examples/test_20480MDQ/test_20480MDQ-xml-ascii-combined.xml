@@ -6,7 +6,7 @@
 -->
 <mardyncfg>
 	<header>
-		<version>20070726</version>
+		<version>20080612</version>
 		<!-- might need this in the future, e.g. for curl -->
 		<required-plugins></required-plugins>
 	</header>

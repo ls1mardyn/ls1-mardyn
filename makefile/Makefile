@@ -12,15 +12,19 @@ OBJECTS = $(shell echo $(SOURCES) | sed -e "s/\.cpp/.o/g")
 # boost dependency
 BOOST_VER = boost_1_34_0
 
-LIBRARY_BOOST_LOCAL = $(shell find ../libs/$(BOOST_VER) -name 'libboost_program_options*.a' |grep release |grep threading-multi)
-LIBRARY_BOOST_GLOBAL = $(shell find /usr/lib/ -name 'libboost_program_options*.a' |grep -e '-mt' ; find /usr/local/lib/ -name 'libboost_program_options*.a' |grep -e '-mt')
+LIBRARY_BOOST_LOCAL = $(shell find ../libs/$(BOOST_VER) -name 'libboost_program_options*.a' 2>/dev/null |grep release |grep threading-multi)
+LIBRARY_BOOST_GLOBAL = $(shell find /usr/lib/ -name 'libboost_program_options*.a' 2>/dev/null |grep -e '-mt' ; find /usr/local/lib/ -name 'libboost_program_options*.a' |grep -e '-mt')
 
 
 # tinyXPATH dependency
 OBJECTS_TINYXPATH = $(patsubst %.cpp,%.o,$(shell find External/tinyxpath -name '*.cpp'))
 
 
+ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
+INCLUDES = -I$(shell pwd) -I$(shell dirname `echo $(LIBRARY_BOOST_GLOBAL) |sed -e 's/\ .*//g'`)
+else
 INCLUDES = -I$(shell pwd) -I../libs/$(BOOST_VER)
+endif
 
 BINARY = MarDyn
 
@@ -35,15 +39,16 @@ CXXFLAGS = $(CXXFLAGS_$(MACHTYPE)_$(TARGET))
 LINKFLAGS = $(LINKFLAGS_$(MACHTYPE)_$(TARGET))
 
 
-# only linker and domain decomposition need MPI
-#$(BINARY): $(OBJECTS)
-#	$(CXX) $(LINKFLAGS) -o $(BINARY) $(OBJECTS)
+# only linker, domain decomposition and Simulation.cpp need MPI
 $(BINARY): $(OBJECTS) $(OBJECTS_TINYXPATH)
 ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
 	$(CXX) $(LINKFLAGS) -o $(BINARY) $(OBJECTS) $(LIBRARY_BOOST_GLOBAL) $(OBJECTS_TINYXPATH)
 else
 	$(CXX) $(LINKFLAGS) -o $(BINARY) $(OBJECTS) $(LIBRARY_BOOST_LOCAL) $(OBJECTS_TINYXPATH)
 endif
+
+Simulation.o: Simulation.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 parallel/DomainDecomposition.o: parallel/DomainDecomposition.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
@@ -81,10 +86,12 @@ ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
 ifeq ($(strip $(LIBRARY_BOOST_GLOBAL)),)
 	@echo "ERROR: no boost library found. please run 'make boost' or install the boost 1.34.0 or newer package."
 else
-	@echo "SUCCESS: found libboost in $(shell dirname $(LIBRARY_BOOST_GLOBAL))"
+	@echo "SUCCESS: found libboost in $(shell dirname `echo $(LIBRARY_BOOST_GLOBAL) |sed -e 's/\ .*//g'`)"
+	@echo " includes: $(INCLUDES)"
 endif
 else
-	@echo "SUCCESS: found libboost in $(shell dirname $(LIBRARY_BOOST_LOCAL))"
+	@echo "SUCCESS: found libboost in $(shell dirname `echo $(LIBRARY_BOOST_LOCAL) |sed -e 's/\ .*//g'`)"
+	@echo " includes: $(INCLUDES)"
 endif
 
 boost:

@@ -16,6 +16,7 @@ class md_io::XMLReader_main {
    XMLReader_main();
    ~XMLReader_main();
    TiXmlDocument XMLReader_main_get_doc(string filename);
+   TiXmlDocument XMLReader_main_get_doc_chara(const char *xmldoc);
 
    string Eval_str(TiXmlDocument * XMLdoc_p, string expr);
    double Eval_d(TiXmlDocument * XMLdoc_p, string expr);
@@ -25,7 +26,7 @@ class md_io::XMLReader_main {
 
    bool is_sourced(TiXmlDocument * XMLdoc_p, string expr);
 
-   void merge(TiXmlDocument * XMLdoc_p, std::string pathPrefix);
+   string merge(TiXmlDocument * XMLdoc_p, std::string pathPrefix);
 
  private:
    string _filename;

@@ -3,6 +3,7 @@
 
 #include <string>
 #include <fstream>
+#include <climits>
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"

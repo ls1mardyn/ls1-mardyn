@@ -1,6 +1,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <climits>
 #include <libgen.h>
 #include "../src/External/tinyxpath/xpath_static.h"
 
@@ -143,7 +144,9 @@ int main(int argc, char *argv[], char *env[])
       {
         output_format += ",res";
         inputfstream >> token;
-        output_file = basename(token.c_str());
+	char *t[];
+	strcpy(t, token.c_str());
+        output_file = basename(t);
       } else if (token == "XyzWriter")
       {
         output_format += ",xyz";

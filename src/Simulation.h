@@ -5,6 +5,14 @@
 #include <vector>
 #include <list>
 #include <sstream>
+#include "md_io/ResultWriter.h"
+#include "md_io/XyzWriter.h"
+#include "md_io/CheckpointWriter.h"
+#include "md_io/PovWriter.h"
+#include "md_io/VISWriter.h"
+#include "md_io/XMLReader_main.h"
+#include "md_io/AsciiReader.h"
+#include "md_io/XMLReader.h"
 
 #include "utils/Log.h"
 
@@ -155,8 +163,7 @@ class Simulation{
     //! frequency of the checkpoint writer
     long _outputFrequency;
     
+    //! list of output plugins to use
     std::list<md_io::OutputBase*> _outputPlugins;
-    
-    
 };
 #endif /*SIMULATION_H_*/

@@ -26,7 +26,7 @@ int main(int argc, char** argv){
   TestCaseRunner runner;
   runner.run();
   Simulation simulation(&argc, &argv);
-  
+
   cout << "Simulation object created" << endl;
   double runtime = double(clock())/CLOCKS_PER_SEC;
 

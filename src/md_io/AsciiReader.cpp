@@ -2,6 +2,7 @@
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+#include <climits>
 
 md_io::AsciiReader::AsciiReader() {
 }
@@ -9,8 +10,12 @@ md_io::AsciiReader::AsciiReader() {
 md_io::AsciiReader::~AsciiReader(){}
 
 void md_io::AsciiReader::setPhaseSpaceFile(string filename) {
+#ifdef PARALLEL
+ _phaseSpaceFileStream.str(filename);
+#else
  _phaseSpaceFileName = filename;
  _phaseSpaceFileStream.open(filename.c_str());
+#endif
 }
 
 void md_io::AsciiReader::setPhaseSpaceHeaderFile(string filename) {
@@ -222,7 +227,9 @@ void md_io::AsciiReader::readPhaseSpace(datastructures::ParticleContainer<Molecu
       domain->setglobalRho(domain->getglobalNumMolecules()/(domain->getGlobalLength(0)*domain->getGlobalLength(1)*domain->getGlobalLength(2)));
       if(domain->getlocalRank()==0) cout << "calculated global Rho:\t" << domain->getglobalRho() << endl;
     }
+#ifndef PARALLEL
     _phaseSpaceFileStream.close();
+#endif
   }
   else {
     domain->getlog().error("read input file", "Error in the PhaseSpace File");

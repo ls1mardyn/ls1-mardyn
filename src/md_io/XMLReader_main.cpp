@@ -1,5 +1,6 @@
 #include <string>
 #include "md_io/XMLReader_main.h"
+#include <sstream>
 
 using namespace std;
 
@@ -8,7 +9,6 @@ md_io::XMLReader_main::XMLReader_main() {}
 md_io::XMLReader_main::~XMLReader_main() {}
 
 TiXmlDocument md_io::XMLReader_main::XMLReader_main_get_doc(string filename) {
-   
    TiXmlDocument * XDp_doc;
 
    XDp_doc = new TiXmlDocument;
@@ -18,6 +18,15 @@ TiXmlDocument md_io::XMLReader_main::XMLReader_main_get_doc(string filename) {
       std::cout << "error description: " << XDp_doc -> ErrorDesc () << std::endl;
       exit(1);
    }
+
+   return *XDp_doc;
+}
+
+TiXmlDocument md_io::XMLReader_main::XMLReader_main_get_doc_chara(const char *xmldoc) {
+   TiXmlDocument * XDp_doc;
+
+   XDp_doc = new TiXmlDocument;
+   XDp_doc -> Parse(xmldoc);
 
    return *XDp_doc;
 }
@@ -122,12 +131,14 @@ TiXmlNode * md_io::XMLReader_main::traverse_descendents(TiXmlElement * element,
   }
 }
 
-void md_io::XMLReader_main::merge(TiXmlDocument * XMLdoc_p, std::string pathPrefix)
+string md_io::XMLReader_main::merge(TiXmlDocument * XMLdoc_p, std::string pathPrefix)
 {
    XMLdoc_g = XMLdoc_p;
    TiXmlElement *XNp_root = XMLdoc_g->RootElement();
   
    TiXmlNode *node = traverse_descendents(XNp_root, pathPrefix);
    
-   XMLdoc_g->SaveFile("_temp.xml");
+   string output;
+   output << *XMLdoc_g;
+   return output; 
 }
