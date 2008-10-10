@@ -1,0 +1,17 @@
+# gnu compiler suite
+# http://gcc.gnu.org/
+# Version: 
+
+CFG_INFO = "icc configuration"
+
+CXX_SEQ = icc
+CXX_PAR = mpicxx
+CXXFLAGS_SEQ_DEBUG = $(INCLUDES) -Wall -g 
+CXXFLAGS_SEQ_RELEASE = $(INCLUDES) -O2 -DNDEBUG -DNEW_IO -I/opt/OpenMPI/1.2.4/include/ -L/opt/OpenMPI/1.2.4/lib/ -lmpi -L/usr/lib64
+LINKFLAGS_SEQ_DEBUG = -O0 -g
+LINKFLAGS_SEQ_RELEASE = -I/opt/OpenMPI/1.2.4/include/ -L/opt/OpenMPI/1.2.4/lib/ -lmpi -L/usr/lib64
+
+CXXFLAGS_PAR_DEBUG = $(INCLUDES) -Wall -g -DPARALLEL
+CXXFLAGS_PAR_RELEASE = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL -DNEW_IO -I/opt/OpenMPI/1.2.4/include/ -L/opt/OpenMPI/1.2.4/lib/ -lmpi -L/usr/lib64
+LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+LINKFLAGS_PAR_RELEASE = -DPARALLEL -I/opt/OpenMPI/1.2.4/include/ -L/opt/OpenMPI/1.2.4/lib/ -lmpi -L/usr/lib64

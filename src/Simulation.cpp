@@ -307,7 +307,7 @@ Simulation::Simulation(int *argc, char ***argv)
   
   TiXmlDocument XMLdoc;
   TiXmlDocument *XMLdoc_p;
-  char *xmldoc_ca;
+  string xmldoc_s;
   int len;
   if (ownrank == 0)
   {
@@ -315,11 +315,8 @@ Simulation::Simulation(int *argc, char ***argv)
     XMLdoc_p = &XMLdoc;
 
     // merge out-sourced XML code into the current tree
-    string xmldoc_s;
     xmldoc_s = _xmlreader->merge(XMLdoc_p, inputPath);
     len = strlen(xmldoc_s.c_str());
-    xmldoc_ca = (char *) malloc(len + 1);
-    strcpy(xmldoc_ca,xmldoc_s.c_str());
   }
 
   // re-read the XML document
@@ -327,19 +324,19 @@ Simulation::Simulation(int *argc, char ***argv)
   if (ownrank == 0)
   {
     MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast (xmldoc_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_ca);
+    MPI_Bcast (const_cast<char *>(xmldoc_s.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_s.c_str());
   } else
   {
     MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    xmldoc_ca = (char *) malloc (len);
-    MPI_Bcast (xmldoc_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_ca);
+    xmldoc_s.resize(len);
+    MPI_Bcast (const_cast<char *>(xmldoc_s.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_s.c_str());
     XMLdoc_p = &XMLdoc;
   }
   MPI_Barrier(MPI_COMM_WORLD);
 #else
-  XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_ca);
+  XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_s.c_str());
 #endif
 
   // sanity check
@@ -415,29 +412,24 @@ Simulation::Simulation(int *argc, char ***argv)
   if (phaseSpaceFormat == "ASCII")
   {
 #ifdef PARALLEL
-    char *inp_ca;
     int len;
+    string inp;
     if (ownrank == 0) {
        ifstream inp_stream;
        inp_stream.open(phaseSpaceFileName.c_str());
-       string inp;
        getline(inp_stream, inp, (char)EOF);
        len = strlen(inp.c_str());
-       inp_ca = (char *) malloc(len + 1);
-       strcpy(inp_ca,inp.c_str());
 
        MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-       MPI_Bcast (inp_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+       MPI_Bcast (const_cast<char *>(inp.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
        _AsciiReader->setPhaseSpaceFile(inp);
     } else {
        MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-       inp_ca = (char *) malloc (len);
-       MPI_Bcast (inp_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-       string inp(inp_ca);
+       inp.resize(len);
+       MPI_Bcast (const_cast<char *>(inp.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
        _AsciiReader->setPhaseSpaceFile(inp);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    free(inp_ca);
 #else
     _AsciiReader->setPhaseSpaceFile(phaseSpaceFileName);
 #endif
@@ -477,10 +469,9 @@ Simulation::Simulation(int *argc, char ***argv)
     // file, e.g. single components.
   } else
   {
-    _XMLReader->setPhaseSpaceHeaderFile(xmldoc_ca);
+    _XMLReader->setPhaseSpaceHeaderFile(xmldoc_s.c_str());
     _XMLReader->readPhaseSpaceHeader(_domain);
   }
-  free(xmldoc_ca);
 
   _domain->initParameterStreams(_cutoffRadius);
 
@@ -706,7 +697,7 @@ Simulation::Simulation(int *argc, char ***argv)
   
   TiXmlDocument XMLdoc;
   TiXmlDocument *XMLdoc_p;
-  char *xmldoc_ca;
+  string xmldoc_s;
   int len;
   if (ownrank == 0)
   {
@@ -714,11 +705,8 @@ Simulation::Simulation(int *argc, char ***argv)
     XMLdoc_p = &XMLdoc;
 
     // merge out-sourced XML code into the current tree
-    string xmldoc_s;
     xmldoc_s = _xmlreader->merge(XMLdoc_p, inputPath);
     len = strlen(xmldoc_s.c_str());
-    xmldoc_ca = (char *) malloc(len + 1);
-    strcpy(xmldoc_ca,xmldoc_s.c_str());
   }
 
   // re-read the XML document
@@ -726,19 +714,19 @@ Simulation::Simulation(int *argc, char ***argv)
   if (ownrank == 0)
   {
     MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast (xmldoc_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_ca);
+    MPI_Bcast (const_cast<char *>(xmldoc_s.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_s.c_str());
   } else
   {
     MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    xmldoc_ca = (char *) malloc (len);
-    MPI_Bcast (xmldoc_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_ca);
+    xmldoc_s.resize(len);
+    MPI_Bcast (const_cast<char *>(xmldoc_s.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+    XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_s.c_str());
     XMLdoc_p = &XMLdoc;
   }
   MPI_Barrier(MPI_COMM_WORLD);
 #else
-  XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_ca);
+  XMLdoc = _xmlreader->XMLReader_main_get_doc_chara(xmldoc_s.c_str());
 #endif
 
   // sanity check only needs to be done once
@@ -814,29 +802,24 @@ Simulation::Simulation(int *argc, char ***argv)
   if (phaseSpaceFormat == "ASCII")
   {
 #ifdef PARALLEL
-    char *inp_ca;
+    string inp;
     int len;
     if (ownrank == 0) {
        ifstream inp_stream;
        inp_stream.open(phaseSpaceFileName.c_str());
-       string inp;
        getline(inp_stream, inp, (char)EOF);
        len = strlen(inp.c_str());
-       inp_ca = (char *) malloc(len + 1);
-       strcpy(inp_ca,inp.c_str());
 
        MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-       MPI_Bcast (inp_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
+       MPI_Bcast (const_cast<char *>(inp.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
        _AsciiReader->setPhaseSpaceFile(inp);
     } else {
        MPI_Bcast (&len, 1, MPI_INT, 0, MPI_COMM_WORLD);
-       inp_ca = (char *) malloc (len);
-       MPI_Bcast (inp_ca, len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
-       string inp(inp_ca);
+       inp.resize(len);
+       MPI_Bcast (const_cast<char *>(inp.c_str()), len+1, MPI_CHAR, 0, MPI_COMM_WORLD);
        _AsciiReader->setPhaseSpaceFile(inp);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-    free(inp_ca);
 #else
     _AsciiReader->setPhaseSpaceFile(phaseSpaceFileName);
 #endif
@@ -876,10 +859,9 @@ Simulation::Simulation(int *argc, char ***argv)
     // file, e.g. single components.
   } else
   {
-    _XMLReader->setPhaseSpaceHeaderFile(xmldoc_ca);
+    _XMLReader->setPhaseSpaceHeaderFile(xmldoc_s.c_str());
     _XMLReader->readPhaseSpaceHeader(_domain);
   }
-  free(xmldoc_ca);
 
   _domain->initParameterStreams(_cutoffRadius);
 
