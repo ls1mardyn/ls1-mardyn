@@ -22,6 +22,7 @@ class ParticleData{
     int displacements[] = {0, sizeof(unsigned long),sizeof(int)+sizeof(unsigned long)};
     MPI_Datatype types[] = {MPI_UNSIGNED_LONG, MPI_INT,MPI_DOUBLE};
     MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType);
+    MPI_Type_commit(&sendPartType);
   }
   
   //! @brief copy data from object of class Molecule to object of class ParticleData

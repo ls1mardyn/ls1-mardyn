@@ -40,7 +40,9 @@ Simulation::Simulation(int *argc, char ***argv)
     if (ownrank == 0) {
       cout << "Usage: " << *argv[0] << " <configfilename> <number of timesteps> <outputprefix>" << endl;
     }
+#ifndef PARALLEL
     delete _domainDecomposition;
+#endif
     exit(1);
   }
 
