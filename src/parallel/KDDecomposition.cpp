@@ -14,7 +14,7 @@ KDDecomposition::KDDecomposition(int *argc, char ***argv, double cutoffRadius, D
   MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank);
   MPI_Comm_size(MPI_COMM_WORLD, &_numProcs);
   MPI_Get_processor_name(_processorName, &procnamelen);
-  
+
   int lowCorner[KDDIM];
   int highCorner[KDDIM];
   bool coversWholeDomain[KDDIM];
@@ -41,7 +41,7 @@ KDDecomposition::KDDecomposition(int *argc, char ***argv, double cutoffRadius, D
 
 KDDecomposition::~KDDecomposition(){
   delete []_numParticlesPerCell;
-  MPI_Finalize(); 
+  MPI_Finalize();
 }
 
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
@@ -85,7 +85,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
   else{
     getPartsToSend(_ownArea, _decompTree, moleculeContainer, domain, procsToSendTo, numMolsToSend, particlePtrsToSend);
     procsToRecvFrom = procsToSendTo;
-  } 
+  }
   numMolsToRecv.resize(procsToRecvFrom.size());
   exchangeNumToSend(procsToSendTo, procsToRecvFrom, numMolsToSend, numMolsToRecv);
   // Initialise send and recieve buffers
@@ -123,7 +123,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
       particlesSendBufs[neighbCount][partCount].Dy = (*particleIter)->D(1);
       particlesSendBufs[neighbCount][partCount].Dz = (*particleIter)->D(2);
       partCount++;
-      
+
     }
   }
   if(balance){
@@ -138,13 +138,15 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
     // longer in the new region
     // TODO Rebuild problem with particles leaving the domain
     moleculeContainer->rebuild(bBoxMin, bBoxMax);
-    
+
     _ownArea = newOwnArea;
     _decompTree = newDecompTree;
     _decompValid = true;
   }
   // Transfer data
+
   transferMolData(procsToSendTo, procsToRecvFrom, numMolsToSend, numMolsToRecv, particlesSendBufs, particlesRecvBufs);
+
   double lowLimit[3];
   double highLimit[3];
   for(int dim=0; dim<3; dim++){
@@ -154,10 +156,9 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
   // store recieved molecules in the molecule container
   ParticleData newMol;
   for(int neighbCount=0;neighbCount<(int)procsToRecvFrom.size();neighbCount++) {
-    if(procsToRecvFrom[neighbCount]==_ownRank) continue; // don't exchange data with the own process 
+    if(procsToRecvFrom[neighbCount]==_ownRank) continue; // don't exchange data with the own process
     for(int i=0; i<numMolsToRecv[neighbCount]; i++){
-      newMol = particlesRecvBufs[neighbCount][i];
-      
+    	newMol = particlesRecvBufs[neighbCount][i];
       // change coordinates (especially needed if particle was moved across boundary)
       if(newMol.rx < lowLimit[0]) newMol.rx += domain->getGlobalLength(0);
       if(newMol.ry < lowLimit[1]) newMol.ry += domain->getGlobalLength(1);
@@ -165,14 +166,13 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
       else if(newMol.rx >= highLimit[0]) newMol.rx -= domain->getGlobalLength(0);
       else if(newMol.ry >= highLimit[1]) newMol.ry -= domain->getGlobalLength(1);
       else if(newMol.rz >= highLimit[2]) newMol.rz -= domain->getGlobalLength(2);
- 
-      Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz, newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
 
+      Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz, newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
       moleculeContainer->addParticle(m1);
-      
+
     }
   }
-  // create the copies of local molecules due to periodic boundaries 
+  // create the copies of local molecules due to periodic boundaries
   // (only for procs covering the whole domain in one dimension)
   createLocalCopies(moleculeContainer, domain, components);
 
@@ -213,19 +213,19 @@ double KDDecomposition::guaranteedDistance(double x, double y, double z, Domain*
   double zdist = 0;
   if (x < getBoundingBoxMin(0, domain)){
     xdist = getBoundingBoxMin(0, domain) - x;
-  } 
+  }
   else if(x >= getBoundingBoxMax(0, domain)){
     xdist = x - getBoundingBoxMin(0, domain);
   }
   if (y < getBoundingBoxMin(1, domain)){
     ydist = getBoundingBoxMin(1, domain) - y;
-  } 
+  }
   else if(y >= getBoundingBoxMax(1, domain)){
     ydist = y - getBoundingBoxMin(1, domain);
   }
   if (z < getBoundingBoxMin(2, domain)){
     zdist = getBoundingBoxMin(2, domain) - z;
-  } 
+  }
   else if(z >= getBoundingBoxMax(2, domain)){
     zdist = z - getBoundingBoxMin(2, domain);
   }
@@ -275,19 +275,19 @@ double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain){
 }
 
 void KDDecomposition::printDecomp(string filename, Domain* domain){
-  
+
   if(_ownRank==0) {
     ofstream povcfgstrm(filename.c_str());
     povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " " << domain->getGlobalLength(2) << endl;
     povcfgstrm << "decompData Regions" << endl;
     povcfgstrm.close();
   }
-   
+
   for(int process = 0; process < _numProcs; process++){
     if(_ownRank==process){
       ofstream povcfgstrm(filename.c_str(), ios::app);
-      povcfgstrm << getBoundingBoxMin(0,domain) << " " << getBoundingBoxMin(1,domain) << " " 
-                 << getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " " 
+      povcfgstrm << getBoundingBoxMin(0,domain) << " " << getBoundingBoxMin(1,domain) << " "
+                 << getBoundingBoxMin(2,domain) << " " << getBoundingBoxMax(0,domain) << " "
                  << getBoundingBoxMax(1,domain) << " " << getBoundingBoxMax(2,domain) << endl;
       povcfgstrm.close();
     }
@@ -296,7 +296,7 @@ void KDDecomposition::printDecomp(string filename, Domain* domain){
 }
 
 void KDDecomposition::writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer){
-  
+
   for(int process = 0; process < _numProcs; process++){
     if(_ownRank==process){
       ofstream checkpointfilestream(filename.c_str(), ios::app);
@@ -304,7 +304,7 @@ void KDDecomposition::writeMoleculesToFile(string filename, ParticleContainer* m
       Molecule* tempMolecule;
       for(tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()){
         tempMolecule->write(checkpointfilestream);
-      }    
+      }
       checkpointfilestream.close();
     }
     barrier();
@@ -349,12 +349,12 @@ void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, Par
     regToSendHigh[0] = (neighbHaloAreas[6*neighbCount+3]+1)*_cellSize[0];
     regToSendHigh[1] = (neighbHaloAreas[6*neighbCount+4]+1)*_cellSize[1];
     regToSendHigh[2] = (neighbHaloAreas[6*neighbCount+5]+1)*_cellSize[2];
-    
+
     // Not only the neighbouring region itself, but also the periodic copies have to be checked
     int shift[3] = {0,0,0};
     for(int dim=0; dim<3; dim++){
       // If the neighbouring region overlaps the left side of the global domain,
-      // a copy of the neighb. region which is shifted to the right has to be examined 
+      // a copy of the neighb. region which is shifted to the right has to be examined
       if(regToSendLow[dim] < 0.0 && regToSendHigh[dim] <= domain->getGlobalLength(dim)){
         shift[dim] = 1;
       }
@@ -365,7 +365,7 @@ void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, Par
       // The other cases:
       // neither overlap left or right --> no copies necessary
       // overlap on both sides --> The neighbouring area already covers the whole domain
-      //                           (in that dimension), so shifted copies could not 
+      //                           (in that dimension), so shifted copies could not
       //                           cover more
     }
 
@@ -402,13 +402,13 @@ void KDDecomposition::exchangeNumToSend(vector<int>& procsToSendTo, vector<int>&
     MPI_Irecv(&numMolsToRecv[neighbCount], 1, MPI_INT, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]);
   }
 
-  // send all numbers 
-  for(int neighbCount=0;neighbCount<(int)procsToSendTo.size();neighbCount++) {  
+  // send all numbers
+  for(int neighbCount=0;neighbCount<(int)procsToSendTo.size();neighbCount++) {
     if(procsToSendTo[neighbCount]==_ownRank) continue; // don't exchange data with the own process
     MPI_Send(&numMolsToSend[neighbCount], 1, MPI_INT, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD);
   }
   // wait for the completion of all recv calls
-  for(int neighbCount=0;neighbCount<(int)procsToRecvFrom.size();neighbCount++) {  
+  for(int neighbCount=0;neighbCount<(int)procsToRecvFrom.size();neighbCount++) {
     if(procsToRecvFrom[neighbCount]==_ownRank) continue; // don't exchange data with the own process
     MPI_Wait(&request[neighbCount], &status);
   }
@@ -416,13 +416,10 @@ void KDDecomposition::exchangeNumToSend(vector<int>& procsToSendTo, vector<int>&
 
 
 void KDDecomposition::transferMolData(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv, vector<ParticleData*>& particlesSendBufs, vector<ParticleData*>& particlesRecvBufs){
-  
+
   // create a MPI Datatype which can store that molecule-data that has to be sent
   MPI_Datatype sendPartType;
-  int blocklengths[] = {2,13}; // 2 int values (id, cid), 13 double values (3r, 3v, 4q, 3D) 
-  int displacements[] = {0,2*sizeof(int)};
-  MPI_Datatype types[] = {MPI_INT,MPI_DOUBLE};
-  MPI_Type_struct(2, blocklengths, displacements, types, &sendPartType);
+  ParticleData::setMPIType(sendPartType);
 
   MPI_Request request[procsToRecvFrom.size()];
   MPI_Status status;
@@ -433,14 +430,14 @@ void KDDecomposition::transferMolData(vector<int>& procsToSendTo, vector<int>& p
     MPI_Irecv(particlesRecvBufs[neighbCount], numMolsToRecv[neighbCount], sendPartType, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]);
   }
 
-  // send all numbers 
-  for(int neighbCount=0;neighbCount<(int)procsToSendTo.size();neighbCount++) {  
+  // send all numbers
+  for(int neighbCount=0;neighbCount<(int)procsToSendTo.size();neighbCount++) {
     if(procsToSendTo[neighbCount]==_ownRank) continue; // don't exchange data with the own process
     MPI_Send(particlesSendBufs[neighbCount], numMolsToSend[neighbCount], sendPartType, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD);
   }
 
   // wait for the completion of all recv calls
-  for(int neighbCount=0;neighbCount<(int)procsToRecvFrom.size();neighbCount++) {  
+  for(int neighbCount=0;neighbCount<(int)procsToRecvFrom.size();neighbCount++) {
     if(procsToRecvFrom[neighbCount]==_ownRank) continue; // don't exchange data with the own process
     MPI_Wait(&request[neighbCount], &status);
   }
@@ -452,20 +449,20 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
     cerr << "KDDecomposition::createLocalCopies failed. Decomposition is invalid" << endl;
     exit(1);
   }
-  
+
   Molecule* molPtr;
   // molecules that have to be copied, get a new position
   double newPosition[3];
- 
+
   for(unsigned short d=0;d<3;++d) {
     // only if the local area covers the whole domain in one dimension, copies have to
-    // be created. Otherwise, the copies are on other procs and are send there 
+    // be created. Otherwise, the copies are on other procs and are send there
     // by the method exchangeMolecules
     if(not(_ownArea->_coversWholeDomain[d])) continue;
 
     molPtr = moleculeContainer->begin();
     while(molPtr!=moleculeContainer->end()){
-      
+
       const double& rd=molPtr->r(d);
       int copy = 0; // -1: copy to left, 1: copy to right, 0: don't copy
       if(rd < moleculeContainer->get_halo_L(d)) copy = 1;
@@ -481,7 +478,7 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 
         Molecule m1 = Molecule(molPtr->id(),molPtr->componentid(),
                                newPosition[0], newPosition[1], newPosition[2],
-                               molPtr->v(0),molPtr->v(1),molPtr->v(2), 
+                               molPtr->v(0),molPtr->v(1),molPtr->v(2),
                                molPtr->q().qw(),molPtr->q().qx(),molPtr->q().qy(),molPtr->q().qz(),
                                molPtr->D(0),molPtr->D(1),molPtr->D(2), &components);
                                moleculeContainer->addParticle(m1);
@@ -523,7 +520,7 @@ void KDDecomposition::recInitialDecomp(KDNode* fatherNode, KDNode*& ownArea){
   int id2;
   int owner1;
   int owner2;
-  
+
   for(int dim=0; dim<KDDIM; dim++){
     low1[dim] = fatherNode->_lowCorner[dim];
     low2[dim] = fatherNode->_lowCorner[dim];
@@ -564,8 +561,8 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
     coversAll[dim] = fatherNode->_coversWholeDomain[dim];
     cellsPerDim[dim] = fatherNode->_highCorner[dim]-fatherNode->_lowCorner[dim]+1;
   }
-  
-  // calculate particles per layer  
+
+  // calculate particles per layer
   vector<int> particlesPerLayer[KDDIM];
   for(int dim=0; dim<KDDIM; dim++){
     particlesPerLayer[dim].resize(fatherNode->_highCorner[dim]-fatherNode->_lowCorner[dim]+1);
@@ -582,22 +579,22 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
         particlesPerLayer[2][iz] += partsInCell;
       }
     }
-  }  
-  
-    
+  }
+
+
   vector<double> partCost;
   double partFactor = 1.0;
   vector<double> sepCost;
   double sepFactor = 1.0;
-  
+
 
   int divDir = 0;
   int divIdx = 0;
   double maxProcCost = DBL_MAX;
-  int numProcsLeft = 0;  
+  int numProcsLeft = 0;
   int numProcsRight = 0;
 
-  
+
   for(int dim=0; dim<3; dim++){
     partCost.resize(fatherNode->_highCorner[dim]-fatherNode->_lowCorner[dim]+1);
     sepCost.resize(fatherNode->_highCorner[dim]-fatherNode->_lowCorner[dim]+1);
@@ -614,15 +611,15 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
         partCost[i] = partFactor*(partCost[i-1] + (double) particlesPerLayer[dim][i]);
         sepCost[i] = sepFactor* (double) (particlesPerLayer[dim][i] + particlesPerLayer[dim][i+1]);
       }
-        
-      
+
+
     }
     for(int i=0; i<fatherNode->_highCorner[dim]-fatherNode->_lowCorner[dim]; i++){
       double partCostLeft = partCost[i];
       double partCostRight = partCost[fatherNode->_highCorner[dim]-fatherNode->_lowCorner[dim]] - partCostLeft;
-      
+
       double costLeft = partCostLeft + sepCost[i];
-      double costRight = partCostRight + sepCost[i];      
+      double costRight = partCostRight + sepCost[i];
       double costTotal = costLeft + costRight;
       double optCostPerProc = costTotal/((double) fatherNode->_numProcs);
       int numProcsLeft1 = (int) floor(costLeft/optCostPerProc);
@@ -631,7 +628,7 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
       int numProcsRight2 = fatherNode->_numProcs - numProcsLeft2;
       double maxProcCost1 = max(costLeft/(double)numProcsLeft1, costRight/(double)numProcsRight1);
       double maxProcCost2 = max(costLeft/(double)numProcsLeft2, costRight/(double)numProcsRight2);
-     
+
       if(maxProcCost1 < maxProcCost){
         divDir = dim;
         divIdx = i+fatherNode->_lowCorner[dim];
@@ -646,14 +643,14 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
         numProcsLeft = numProcsLeft2;
         numProcsRight = fatherNode->_numProcs - numProcsLeft;
       }
-      
+
       if(numProcsLeft <= 0 || numProcsLeft >= fatherNode->_numProcs){
         cerr << "ERROR in recDecomp, part of the domain was not assigned to a proc" << endl;
         exit(1);
       }
     }
   }
-  
+
   coversAll[divDir] = false;
 
   int low1[KDDIM];
@@ -664,7 +661,7 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
   int id2;
   int owner1;
   int owner2;
-  
+
   for(int dim=0; dim<KDDIM; dim++){
     low1[dim] = fatherNode->_lowCorner[dim];
     low2[dim] = fatherNode->_lowCorner[dim];
@@ -683,8 +680,8 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
   owner2 = owner1+numProcsLeft;
   fatherNode->_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll);
   fatherNode->_child2 = new KDNode(numProcsRight, low2, high2, id2, owner2, coversAll);
-  
-  
+
+
   if(numProcsLeft > 1) recDecomp(fatherNode->_child1, ownArea);
   else if (owner1==_ownRank) ownArea = fatherNode->_child1;
   if(numProcsRight > 1) recDecomp(fatherNode->_child2, ownArea);
@@ -694,18 +691,18 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
 
 void KDDecomposition::printDecompTree(KDNode* root, string prefix){
   if(root->_numProcs == 1) {
-    cout << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: (" 
+    cout << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: ("
          << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", "<< root->_lowCorner[2] << ") / ("
          << root->_highCorner[0] << ", " << root->_highCorner[1] << ", "<< root->_highCorner[2] << ")" << endl;
   }
   else {
-    cout << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" 
+    cout << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: ("
          << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", "<< root->_lowCorner[2] << ") / ("
          << root->_highCorner[0] << ", " << root->_highCorner[1] << ", "<< root->_highCorner[2] << ")" << endl;
     stringstream childprefix;
     childprefix << prefix << "  ";
     printDecompTree(root->_child1, childprefix.str());
-    printDecompTree(root->_child2, childprefix.str()); 
+    printDecompTree(root->_child2, childprefix.str());
   }
 }
 
@@ -758,11 +755,11 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
   if (areasIntersect){
     // while testNode is still a inner node (more than one proc), recursively call
     // this method for the children
-    if (testNode->_numProcs > 1){ 
+    if (testNode->_numProcs > 1){
       getOwningProcs(low, high, decompTree, testNode->_child1, procIDs, neighbHaloAreas);
       getOwningProcs(low, high, decompTree, testNode->_child2, procIDs, neighbHaloAreas);
     }
-    else { // leaf node found, add it (and it's area) 
+    else { // leaf node found, add it (and it's area)
       procIDs->push_back(testNode->_owningProc);
       neighbHaloAreas->push_back(testNode->_lowCorner[0]-1);
       neighbHaloAreas->push_back(testNode->_lowCorner[1]-1);
@@ -820,11 +817,11 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
 //void KDDecomposition::balance(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
 
 //  balanceAndExchange(false, moleculeContainer, components, domain);
-  
+
 //moleculeContainer->rebuild(bBoxMin, bBoxMax);
-   
-   
-   
+
+
+
 // Number of force calculations for each cell
 //vector<vector<vector<int> > > numForceCalcs;
 // Number of particles for each cell (including halo)
@@ -841,11 +838,11 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
 // compTime[*][size[*]-1] is therefore the calculation time for the
 // whole domain
 //vector<double> compTime[KDDIM];
-  
-//getNumForceCalcs(moleculeContainer);
-  
 
-  
+//getNumForceCalcs(moleculeContainer);
+
+
+
 
 // set costs for separatedPairs and compTime to zero
 //for(int dim=0; dim<KDDIM; dim++){
@@ -982,7 +979,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
 //     else {
 //       int id1 = getOwningProc(cellPos, decompTree->_child1);
 //       int id2 = getOwningProc(cellPos, decompTree->_child2);
-//       if (id1 < 0 && id2 >= 0) return id2; 
+//       if (id1 < 0 && id2 >= 0) return id2;
 //       else if (id1 >= 0 && id2 < 0) return id1;
 //       else {
 //   cout << "ERROR, CELL IS EITHER OWNED BY NO, OR BY MANY PROCESSES" << endl;
@@ -1018,7 +1015,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
 //   if(_ownRank==0) cout << "localSize: " << localSize[0] << " / " << localSize[1] << endl;
 //   _numParticlesPerCell = new int[(localSize[0]+2)*(localSize[1]+2)];
 //   _localCells.resize((localSize[0]+2)*(localSize[1]+2));
-  
+
 //   if(_ownRank==0){
 //     cout << "LOW CORNER: "<< _ownArea->_lowCorner[0] << " / " << _ownArea->_lowCorner[1] << endl;
 //     cout << "HIGH CORNER: "<< _ownArea->_highCorner[0] << " / " << _ownArea->_highCorner[1] << endl;
@@ -1044,7 +1041,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
 //       // verschoben werden
 //       int lix = cellPos[0] - _ownArea->_lowCorner[0]+1;
 //       int liy = cellPos[1] - _ownArea->_lowCorner[1]+1;
-      
+
 //       if(_ownArea->cellBelongsToRegion(cellPos)){
 //   datFS >> _numParticlesPerCell[liy*(localSize[0]+2)+lix];
 //   _localCells[liy*(localSize[0]+2)+lix]._numPart = _numParticlesPerCell[liy*(localSize[0]+2)+lix];

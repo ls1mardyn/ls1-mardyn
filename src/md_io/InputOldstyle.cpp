@@ -2,6 +2,7 @@
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "Domain.h"
+#include <climits>
 
 InputOldstyle::InputOldstyle() {
 }
@@ -133,17 +134,17 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
 }
 
 void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
-  
+
   string token;
 
   vector<Component>& dcomponents = domain->getComponents();
-  
+
   double x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz;
   double Fx,Fy,Fz,Mx,My,Mz;
   unsigned int numcomponents=dcomponents.size();
   unsigned long i,id;
   int componentid;
-  
+
   x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
   q0=1.;
   Fx=Fy=Fz=Mx=My=Mz=0.;
@@ -154,7 +155,7 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
     domain->setglobalNumMolecules(strtoul(nummolecules.c_str(),NULL,0));
     _phaseSpaceFileStream >> token;
   }
-  
+
   if(token=="MoleculeFormat") {
     string ntypestring("ICRVQD");
     enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
@@ -203,7 +204,7 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
 
       //  store only those molecules within the domain of this process
 
-      // @todo Pointer!!! new!!!  
+      // @todo Pointer!!! new!!!
       Molecule m1 = Molecule(id,componentid,x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,&dcomponents);
       particleContainer->addParticle(m1);
       //(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);

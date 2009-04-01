@@ -13,35 +13,35 @@ DomainDecomposition::DomainDecomposition(int *argc, char ***argv){
   int i;                 // loop counter
   int num_procs;         // Number of processes
   int procnamelen;
-  
-  // All boundary conditions are periodic 
+
+  // All boundary conditions are periodic
   for(i=0; i<DIM; i++){
     period[i] = 1;
   }
-  
+
   MPI_Comm world = MPI_COMM_WORLD;
-  
-  // Allow reordering of process ranks 
+
+  // Allow reordering of process ranks
   reorder = 1;
-  
+
   //MPI_Init(argc,argv);
   MPI_Get_processor_name(_processorName, &procnamelen);
-  MPI_Comm_size(world,&num_procs); // determine total number of procs 
-  setGridSize(num_procs); // determine number of procs in each dimension 
-  MPI_Cart_create(world,DIM,_gridSize,period,reorder,&_commTopology); // create torus topology 
-  
+  MPI_Comm_size(world,&num_procs); // determine total number of procs
+  setGridSize(num_procs); // determine number of procs in each dimension
+  MPI_Cart_create(world,DIM,_gridSize,period,reorder,&_commTopology); // create torus topology
+
   MPI_Comm_rank(_commTopology, &_ownRank);
   MPI_Cart_coords(_commTopology, _ownRank, DIM, _coords);
-  _neighbours[XLOWER]  = getRank(_coords[0]-1,_coords[1],_coords[2]); 
-  _neighbours[XHIGHER] = getRank(_coords[0]+1,_coords[1],_coords[2]); 
-  _neighbours[YLOWER]  = getRank(_coords[0],_coords[1]-1,_coords[2]); 
-  _neighbours[YHIGHER] = getRank(_coords[0],_coords[1]+1,_coords[2]); 
-  _neighbours[ZLOWER]  = getRank(_coords[0],_coords[1],_coords[2]-1); 
+  _neighbours[XLOWER]  = getRank(_coords[0]-1,_coords[1],_coords[2]);
+  _neighbours[XHIGHER] = getRank(_coords[0]+1,_coords[1],_coords[2]);
+  _neighbours[YLOWER]  = getRank(_coords[0],_coords[1]-1,_coords[2]);
+  _neighbours[YHIGHER] = getRank(_coords[0],_coords[1]+1,_coords[2]);
+  _neighbours[ZLOWER]  = getRank(_coords[0],_coords[1],_coords[2]-1);
   _neighbours[ZHIGHER] = getRank(_coords[0],_coords[1],_coords[2]+1);
 }
 
 DomainDecomposition::~DomainDecomposition(){
-  MPI_Finalize(); 
+  MPI_Finalize();
 }
 
 
@@ -63,11 +63,11 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
   numPartsToSend.resize(2);
 
   MPI_Status status;
-  int direction; // direction (0=low/1=high) of molecule movement 
+  int direction; // direction (0=low/1=high) of molecule movement
 
   for(unsigned short d=0;d<3;++d){
     // when moving a particle across a periodic boundary, the molecule position has to change
-    // these offset specify for each dimension (x, y and z) and each direction ("left"/lower 
+    // these offset specify for each dimension (x, y and z) and each direction ("left"/lower
     // neighbour and "right"/higher neighbour, how the paritcle coordinates have to be changed.
     // e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
     // moving to the left get the length of the whole domain added to their x-value
@@ -75,19 +75,18 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
     double offsetHigher[3];
     offsetLower[d] = 0.0;
     offsetHigher[d] = 0.0;
-    
+
     // process on the left boundary
     if(_coords[d] == 0){
       offsetLower[d] = domain->getGlobalLength(d);
     }
     // process on the right boundary
     if(_coords[d] == _gridSize[d]-1){
-      offsetHigher[d] = -domain->getGlobalLength(d); 
+      offsetHigher[d] = -domain->getGlobalLength(d);
     }
 
     double regToSendLow[3];  // Region that belongs to a neighbouring process
     double regToSendHigh[3]; // -> regToSendLow
-         
     for(int side=0; side<2; side++){
       // find the region that each neighbour will get
       for(int i=0; i<3; i++){
@@ -96,10 +95,10 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       }
       if(side==0) regToSendHigh[d] = rmin[d]+halo_L[d];
       else        regToSendLow[d]= rmax[d]-halo_L[d];
-      
+
       list<Molecule*> particlePtrsToSend;
       moleculeContainer->getRegion(regToSendLow, regToSendHigh, particlePtrsToSend);
-      
+
       // initialize send buffer
       numPartsToSend[side] = particlePtrsToSend.size();
       particlesSendBufs[side] = new ParticleData[numPartsToSend[side]];
@@ -107,7 +106,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       std::list<Molecule*>::iterator particlePtrIter;
       int partCount = 0;
       for(particlePtrIter = particlePtrsToSend.begin(); particlePtrIter!=particlePtrsToSend.end(); particlePtrIter++){
-        // copy relevant data from the Molecule to ParticleData type 
+        // copy relevant data from the Molecule to ParticleData type
         ParticleData::setParticleData(particlesSendBufs[side][partCount], **particlePtrIter);
         // add offsets for particles transfered over the periodic boundary
         if(d==0 && side==0) particlesSendBufs[side][partCount].rx += offsetLower[0];
@@ -120,38 +119,33 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       }
     }
 
-    // Communicate to lower and higher neighbour 
+    // Communicate to lower and higher neighbour
     for(direction=0; direction <=1; direction++){
-      // Send to lower, receive from upper 
-      // Send number of values that have to be sent 
-      int numsend = numPartsToSend[direction];
-      int numrecv;
-     
-      MPI_Sendrecv(&numsend, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+direction], 99, 
+      // Send to lower, receive from upper
+      // Send number of values that have to be sent
+      unsigned long numsend = numPartsToSend[direction];
+      unsigned long numrecv;
+      MPI_Sendrecv(&numsend, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+direction], 99,
                    &numrecv, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status);
-    
 
-      // initialize receive buffer 
+      // initialize receive buffer
       particlesRecvBuf = new ParticleData[numrecv];
 
       // create a MPI Datatype which can store that molecule-data that has to be sent
       MPI_Datatype sendPartType;
       ParticleData::setMPIType(sendPartType);
-      
-      
-      // Send values to lower/upper and receive values from upper/lower 
-      MPI_Sendrecv(particlesSendBufs[direction], numsend, sendPartType, _neighbours[2*d+direction], 99, 
+
+      // Send values to lower/upper and receive values from upper/lower
+      MPI_Sendrecv(particlesSendBufs[direction], numsend, sendPartType, _neighbours[2*d+direction], 99,
                    particlesRecvBuf, numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status);
-      
       // insert received molecules into list of molecules
       for(int i=0; i<numrecv; i++){
-        ParticleData newMol = particlesRecvBuf[i]; 
-        Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz, 
+        ParticleData newMol = particlesRecvBuf[i];
+        Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz,
                                newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
         moleculeContainer->addParticle(m1);
       }
-
-      // free memory 
+      // free memory
       delete [] particlesRecvBuf;
       delete [] particlesSendBufs[direction];
     }
@@ -186,19 +180,19 @@ double DomainDecomposition::guaranteedDistance(double x, double y, double z, Dom
   double zdist = 0;
   if (x < getBoundingBoxMin(0, domain)){
     xdist = getBoundingBoxMin(0, domain) - x;
-  } 
+  }
   else if(x >= getBoundingBoxMax(0, domain)){
     xdist = x - getBoundingBoxMax(0, domain);
   }
   if (y < getBoundingBoxMin(1, domain)){
     ydist = getBoundingBoxMin(1, domain) - y;
-  } 
+  }
   else if(y >= getBoundingBoxMax(1, domain)){
     ydist = y - getBoundingBoxMax(1, domain);
   }
   if (z < getBoundingBoxMin(2, domain)){
     zdist = getBoundingBoxMin(2, domain) - z;
-  } 
+  }
   else if(z >= getBoundingBoxMax(2, domain)){
     zdist = z - getBoundingBoxMax(2, domain);
   }
@@ -213,8 +207,8 @@ int DomainDecomposition::countMolecules(ParticleContainer* moleculeContainer, ve
     localCompCount[i] = 0;
   }
   Molecule* tempMolecule;
-  for(tempMolecule = moleculeContainer->begin(); 
-      tempMolecule != moleculeContainer->end(); 
+  for(tempMolecule = moleculeContainer->begin();
+      tempMolecule != moleculeContainer->end();
       tempMolecule = moleculeContainer->next()){
     localCompCount[tempMolecule->componentid()] += 1;
   }
@@ -239,7 +233,7 @@ double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 void DomainDecomposition::printDecomp(string filename, Domain* domain){
   int numprocs;
   MPI_Comm_size(_commTopology, &numprocs);
- 
+
   if(_ownRank==0) {
     ofstream povcfgstrm(filename.c_str());
     povcfgstrm << "size " << domain->getGlobalLength(0) << " " << domain->getGlobalLength(1) << " " << domain->getGlobalLength(2) << endl;
@@ -248,8 +242,8 @@ void DomainDecomposition::printDecomp(string filename, Domain* domain){
     povcfgstrm << "data DomainDecomp" << endl;
     povcfgstrm.close();
   }
-  
-  
+
+
   for(int process = 0; process < numprocs; process++){
     if(_ownRank==process){
       ofstream povcfgstrm(filename.c_str(), ios::app);
@@ -262,17 +256,17 @@ void DomainDecomposition::printDecomp(string filename, Domain* domain){
 
 
 void DomainDecomposition::writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer){
-  
+
   int numprocs;
   MPI_Comm_size(_commTopology, &numprocs);
-  
+
   for(int process = 0; process < numprocs; process++){
     if(_ownRank==process){
       ofstream checkpointfilestream(filename.c_str(), ios::app);
       Molecule* tempMolecule;
       for(tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()){
         tempMolecule->write(checkpointfilestream);
-      }    
+      }
       checkpointfilestream.close();
     }
     barrier();
@@ -281,8 +275,8 @@ void DomainDecomposition::writeMoleculesToFile(string filename, ParticleContaine
 
 
 inline int DomainDecomposition::getRank(int x, int y, int z){
-  int neigh_coords[DIM]; // Array for the coordinates 
-  int neigh_rank;        // Rank of the neighbour     
+  int neigh_coords[DIM]; // Array for the coordinates
+  int neigh_rank;        // Rank of the neighbour
   neigh_coords[0] = x;
   neigh_coords[1] = y;
   neigh_coords[2] = z;
@@ -291,14 +285,14 @@ inline int DomainDecomposition::getRank(int x, int y, int z){
 }
 
 int DomainDecomposition::getNumProcs(){
-  int numProcs; 
+  int numProcs;
   MPI_Comm_size(_commTopology, &numProcs);
   return numProcs;
 }
 
 
 const char* DomainDecomposition::getProcessorName() const {
-  return _processorName; 
+  return _processorName;
 }
 
 
@@ -309,23 +303,23 @@ double DomainDecomposition::getTime(){
 
 
 void DomainDecomposition::setGridSize(int num_procs) {
-  int remainder;      // remainder during the calculation of the prime factors 
-  int i;              // counter                                               
-  int num_factors;    // number of prime factors                               
-  int *prime_factors; // array for the prime factors                           
-  
+  int remainder;      // remainder during the calculation of the prime factors
+  int i;              // counter
+  int num_factors;    // number of prime factors
+  int *prime_factors; // array for the prime factors
+
   // Set the initial number of processes in each dimension to zero
   for(i=0;i<DIM;i++){
     _gridSize[i] = 1;
   }
-  
+
   remainder = num_procs;
-  
+
   // The maximal number of prime factors of a number n is log2(n)
   prime_factors = new int[int(log2(num_procs))];
-  
+
   num_factors = 0;
-  // calculate prime numbers 
+  // calculate prime numbers
   for(i=2; i<=remainder;i++){
     while(remainder%i == 0){ // -> i is prime factor
       remainder = remainder/i;
@@ -337,13 +331,13 @@ void DomainDecomposition::setGridSize(int num_procs) {
   i = num_factors-1;
   while(i>=0){
     if (_gridSize[0] <= _gridSize[1] && _gridSize[0] <= _gridSize[2]){
-      _gridSize[0] *= prime_factors[i]; 
+      _gridSize[0] *= prime_factors[i];
     }
     else if(_gridSize[1] <= _gridSize[0] && _gridSize[1] <= _gridSize[2]){
-      _gridSize[1] *= prime_factors[i]; 
+      _gridSize[1] *= prime_factors[i];
     }
     else{
-      _gridSize[2] *= prime_factors[i]; 
+      _gridSize[2] *= prime_factors[i];
     }
     i--;
   }

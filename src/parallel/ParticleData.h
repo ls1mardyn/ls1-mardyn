@@ -18,13 +18,13 @@ class ParticleData{
  public:
   //! @brief defines a MPI datatype which can be used to transfer a MacroscopicData object
   static void setMPIType(MPI_Datatype &sendPartType){
-    int blocklengths[] = {1,1,13}; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D) 
-    int displacements[] = {0, sizeof(unsigned long),sizeof(int)+sizeof(unsigned long)};
+    int blocklengths[] = {1,1,13}; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
+    MPI_Aint displacements[] = {0, sizeof(unsigned long),sizeof(int)+sizeof(unsigned long)};
     MPI_Datatype types[] = {MPI_UNSIGNED_LONG, MPI_INT,MPI_DOUBLE};
-    MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType);
-    MPI_Type_commit(&sendPartType);
+    MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType);
+  	MPI_Type_commit(&sendPartType);
   }
-  
+
   //! @brief copy data from object of class Molecule to object of class ParticleData
   static void setParticleData(ParticleData &particleStruct, Molecule &molecule){
     particleStruct.id = molecule.id();
@@ -41,9 +41,9 @@ class ParticleData{
     particleStruct.qz = molecule.q().qz();
     particleStruct.Dx = molecule.D(0);
     particleStruct.Dy = molecule.D(1);
-    particleStruct.Dz = molecule.D(2); 
+    particleStruct.Dz = molecule.D(2);
   }
-  
+
   unsigned long id;
   int cid;
   double rx, ry, rz;
