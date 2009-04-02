@@ -3,7 +3,7 @@ MACHTYPE = SEQ
 # choose target: DEBUG|RELEASE
 TARGET = RELEASE
 
-SOURCES_SEQ = $(shell find ./ -name "*.cpp" | grep -v DomainDecomposition | grep -v External)
+SOURCES_SEQ = $(shell find ./ -name "*.cpp" | grep -v DomainDecomposition | grep -v KDDecomposition | grep -v External)
 SOURCES_PAR = $(shell find ./ -name "*.cpp" | grep -v DomainDecompDummy | grep -v External)
 SOURCES = $(SOURCES_$(MACHTYPE))
 
