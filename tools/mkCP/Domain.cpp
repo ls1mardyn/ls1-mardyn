@@ -8,6 +8,7 @@
 #include <cmath>
 
 #define DT 0.030620
+#define TAU_ZERO 15.3100
 
 Domain::Domain(
       int sp_flow, double sp_bondlength, double sp_rho, int sp_d,
@@ -116,7 +117,7 @@ void Domain::writeGraphite(
    }
    Graphit gra;
    gra.calculateCoordinatesOfAtoms(
-      this->d, this->box[0], this->box[2], this->bondlength
+      1, this->box[0], this->box[2], this->bondlength
    );
    unsigned Ngraphene = gra.getNumberOfAtoms();
    cout << "Inserting " << repl*d << " x " << Ngraphene
@@ -249,9 +250,9 @@ void Domain::writeGraphite(
              << "\t0.0 0.0 " << a/ACC_REF << "\n"
              << "S\t" << this->d + 2 << " 3\n"
              << "S\t" << 2*this->d + 1 << " 4\n"
-             << "A\t3\t0.0 0.0 0.0\t" << TAU/REFTIME
+             << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n"
-             << "A\t4\t0.0 0.0 0.0\t" << TAU/REFTIME
+             << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n";
          for(unsigned i=3; this->d >= i; i++)
             xdr << "S\t" << i << " 5\n";
@@ -259,7 +260,7 @@ void Domain::writeGraphite(
             xdr << "S\t" << d+i << " 6\n";
          xdr << "A\t" << 5 << "\t0.0 0.0 " << U/VEL_REF << "\t"
              << TAU/REFTIME << "\t0.0 0.0 0.0\n";
-         xdr << "A\t" << 6 << "\t0.0 0.0 0.0\t" << TAU/REFTIME
+         xdr << "A\t" << 6 << "\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 0.0\n";
       }
       else if(flow == FLOW_POISEUILLE)
@@ -267,35 +268,60 @@ void Domain::writeGraphite(
          xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
              << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n"
              << "S\t2 2\nS\t" << d+1 << " 3\n"
-             << "A\t2\t0.0 0.0 0.0\t" << TAU/REFTIME
+             << "A\t2\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 0.0\n"
-             << "A\t3\t0.0 0.0 0.0\t" << TAU/REFTIME
+             << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 0.0\n";
          for(unsigned i=3; this->d >= i; i++)
             xdr << "S\t" << i << " " << 4 << "\n";
-         xdr << "A\t4\t0.0 0.0 0.0\t" << TAU/REFTIME
+         xdr << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 0.0\n";
       }
       xdr << "N" << "\t" << Ntotal << "\nM" << "\t" << "ICRVQD\n";
 
+      txt.precision(6);
       txt << "mardynconfig\n# \ntimestepLength\t" << DT/REFTIME
           << "\ncutoffRadius\t" << LJ_CUTOFF/SIG_REF
           << "\ntersoffCutoffRadius\t"
           << 1.0001*(original? TERSOFF_S_ORIG: TERSOFF_S) / SIG_REF
-          << "\nconstantAccelerationTimesteps\t200\n";
-      if(muVT) txt << "chemicalPotential " << mu
-                   << " component 1 every 8 steps "
-                   << (int)round(0.001*N1) << " tests\n";
-      txt << "phaseSpaceFile\t" << prefix
+          << "\nconstantAccelerationTimesteps\t25\n"
+          << "initCanonical\t10000\n";
+      if(muVT)
+      {
+         txt.precision(9);
+         txt << "chemicalPotential " << mu/EPS_REF
+             << " component 1 control 0.0 0.0 0.0 to "
+             << this->box[0]/SIG_REF << " " << 0.5*this->h/SIG_REF
+             << " " << this->box[2]/SIG_REF << " conduct "
+             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
+                                                      : 0.0010) * N1)
+             << " tests every 8 steps\n";
+         if(flow == FLOW_COUETTE)
+         {
+            txt << "chemicalPotential " << mu/EPS_REF
+                << " component 1 control 0.0 " << this->box[1]/SIG_REF
+                << " 0.0 to " << this->box[0]/SIG_REF << " "
+                << (this->box[1] + 0.5*this->h)/SIG_REF << " "
+                << box[2]/SIG_REF << " conduct "
+                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
+                                                       : 0.0010) * N1)
+                << " tests every 8 steps\n";
+         }
+	 txt << "planckConstant\t" 
+	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
+         txt << "initGrandCanonical\t30000\n";
+      }
+      txt.precision(5);
+      txt << "initStatistics\t60000\nphaseSpaceFile\t" << prefix
           << ".xdr\n# for LinkedCells, the cellsInCutoffRadius has to"
           << " be provided\ndatastructure\tLinkedCells\t1\noutput\t"
           << "ResultWriter\t40\t" << prefix
           << "_1R\noutput\tXyzWriter\t10000\t" << prefix
           << "_1R.buxyz\noutput\tVisittWriter\t10000000\t" << prefix
-          << "_1R\nprofile\t1 256 1\nprofileRecordingTimesteps\t3\n"
-          << "profileOutputTimesteps\t200000"
+          << "_1R\nprofile\t23 128 32\nprofileRecordingTimesteps\t2\n"
+          << "profileOutputTimesteps\t75000"
           << "\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix
-          << "_1R\nzOscillator 128\n";
+          << "_1R\nzOscillator 512\n";
    }
 
    double I_xx_yy;
@@ -358,12 +384,11 @@ void Domain::writeGraphite(
          for(unsigned l=0; l < Ngraphene; l++)
          {
             tr[0] = gra.getX(l);
-            tr[1] = gra.getX(l) + yoffset;
-            tr[2] = gra.getX(l);
+            tr[1] = gra.getY(l) + yoffset;
+            tr[2] = gra.getZ(l);
             for(int m=0; m < 3; m++)
             {
-               tr[m] = off[m]
-                     + (ii[m] + (1.0 + r->rnd())/3.0)*fl_unit[m];
+               tr[m] += (0.004*r->rnd() - 0.002) * bondlength;
                if(tr[m] > box[m]) tr[m] -= box[m];
                else if(tr[m] < 0.0) tr[m] += box[m];
             }
@@ -397,6 +422,8 @@ void Domain::specifyGraphite(double rho, unsigned N)
 {
    double V_id = (double)N/rho;
    if(this->flow == FLOW_COUETTE) V_id *= 0.5;
+   cout << "Carbon-carbon bond length: " << bondlength
+        << " * 0.05291772 nm.\n";
    cout << "Effective symmetry volume should approach " << V_id
         << " * 1.4818e-04 nm^3.\n";
 

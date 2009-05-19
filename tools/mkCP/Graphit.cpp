@@ -6,6 +6,8 @@
 #include "Random.h"
 
 #include <math.h>
+#include <iostream>
+using namespace std;
 
 int Graphit::getNumberOfAtoms()
 {
@@ -44,12 +46,12 @@ void Graphit::calculateCoordinatesOfAtoms(
 				{
 					if (i%2==0 && temp%2==0)
 					{
-						xCoor = xCoor + B;
+						xCoor += B;
 						i=1;
 					}
 					else
 					{
-						xCoor = xCoor + A;
+						xCoor += A;
 						i=0;
 						temp=0;
 					}
@@ -62,7 +64,7 @@ void Graphit::calculateCoordinatesOfAtoms(
 					}
 				}
 				i=0;
-				zCoor=zCoor+C;
+				zCoor += C;
 				if(j%2==0)
 				{
 					xCoor = 0.6*A;
@@ -105,12 +107,12 @@ void Graphit::calculateCoordinatesOfAtoms(
 				{
 					if (i%2==0)
 					{
-						xCoor = xCoor + A;
+						xCoor += A;
 						i=1;
 					}
 					else
 					{
-						xCoor = xCoor + B;
+						xCoor += B;
 						i=0;
 					}
 					if (xCoor < xLength && zCoor < zLength)
