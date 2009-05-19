@@ -100,6 +100,7 @@ int DomainDecompDummy::countMolecules(ParticleContainer* moleculeContainer, vect
   for(int i=0; i<compCount.size(); i++){
     numMolecules += compCount[i];
   }
+  return numMolecules;
 }
 
 double DomainDecompDummy::getBoundingBoxMin(int dimension, Domain* domain) {
