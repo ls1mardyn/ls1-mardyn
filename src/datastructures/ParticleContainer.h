@@ -15,8 +15,8 @@ using namespace std;
 //! in a way that the access to pairs of neighbouring particles is efficient.
 //! Neighbouring particles are particles which have a distance shorter than
 //! a given cutoff radius. 
-//! A common task when using a PariticleContainer is to do do something for
-//! all particles. This can be done using the methods begin, next and end, e.g.:
+//! A common task when using a PariticleContainer is to do something for all 
+//! particles. This can be done using the methods begin, next and end, e.g.:
 //! \code
 //! ParticleContainer* partContPtr; 
 //! Molecule* partPtr; 
@@ -31,7 +31,7 @@ using namespace std;
 //! As the simulated regions are often cuboids, a bounding box is defined through 
 //! two opposing corners (_boundingBoxMin[3] and _boundingBoxMax[3]). 
 //! Particles inside this bounding box belong to this process, those outside don't. 
-//! An exception to this is when particles are moved in a time step. Is has to be
+//! An exception to this is when particles are moved in a time step. It has to be
 //! ensured, that particles which leave the bounding box are properly handled.
 //! 
 //! For non-cuboid regions, the bounding box still has to be defined as it gives

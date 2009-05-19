@@ -72,7 +72,7 @@ class Domain{
 
   //! @brief initialize parameter streams
   //!
-  //! This method should only be called, after the the component information
+  //! This method should only be called, after the component information
   //! and all molecule data have been read in
   //! @param cutoffRadius cutoff radius
   void initParameterStreams(double cutoffRadius);
