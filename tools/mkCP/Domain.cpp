@@ -448,17 +448,17 @@ void Domain::specifyGraphite(double rho, unsigned N)
     */
    double LxLz_id = V_id / this->eff[1];
    double C = 0.86602540378 * this->bondlength;  // sin(pi/3)
-   double lxlz_id = LxLz_id / (3.0 * this->bondlength * C);
+   double lxlz_id = LxLz_id / (6.0 * this->bondlength * C);
    unsigned lx = round(
-                    sqrt(0.144337567297 * lxlz_id)  // sin(pi/3) / 6
+                    sqrt(0.28867513 * lxlz_id)  // sin(pi/3) / 3
                  );
    if(lx == 0) lx = 1;
    unsigned lz = round(lxlz_id / lx);
    if(lz == 0) lz = 1;
-   this->box[0] = 3.0 * this->bondlength * (double)lx;
+   this->box[0] = 3.0*this->bondlength * (double)lx;
    this->eff[0] = this->box[0];
    this->off[0] = 0.0;
-   this->box[2] = C * (double)lz;
+   this->box[2] = 2.0*C * (double)lz;
    this->eff[2] = this->box[2];
    this->off[2] = 0.0;
 
