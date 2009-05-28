@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 #include "Simulation.h"
 
 using namespace std;

@@ -1,3 +1,4 @@
+#include <ctime>
 #include "md_io/PovWriter.h"
 #include "md_io/Common.h"
 #include "datastructures/ParticleContainer.h"
@@ -37,7 +38,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
       if(_incremental) {
          unsigned long temp = simstep/_writeFrequency;
          filenamestream << "-";
-         while(temp < floor(_numberOfTimesteps/_writeFrequency)){
+         while(temp < floor((double) (_numberOfTimesteps/_writeFrequency))){
             filenamestream << "0";
             temp = temp*10;
          }
