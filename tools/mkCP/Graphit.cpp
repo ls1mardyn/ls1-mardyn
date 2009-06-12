@@ -20,9 +20,9 @@ void Graphit::calculateCoordinatesOfAtoms(
 	double B = 2.0 * A;
 	double C = 0.86602540378 * A;  // sin(pi/3)
 
-	double xCoor = 0.1*A;
+	double xCoor = 0.05*A;
 	double yCoor = 0.0;
-	double zCoor = 0.1*C;
+	double zCoor = 0.05*C;
 	numberOfAtoms=0;
 	for(int Index=1; Index<=numberOfLayers; Index++)
 	{

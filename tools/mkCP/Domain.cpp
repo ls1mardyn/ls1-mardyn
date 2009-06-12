@@ -277,7 +277,7 @@ void Domain::writeGraphite(
          xdr << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
              << "\t0.0 0.0 0.0\n";
       }
-      xdr << "N" << "\t" << Ntotal << "\nM" << "\t" << "ICRVQD\n";
+      xdr << "N" << "\t" << Ntotal << "\nM" << "\t" << "ICRVQD\n\n";
 
       txt.precision(6);
       txt << "mardynconfig\n# \ntimestepLength\t" << DT/REFTIME
@@ -331,20 +331,26 @@ void Domain::writeGraphite(
    unsigned id = 1;
    double tr[3];
    int ii[3];
-   if(!empty) for(ii[0]=0; ii[0] < this->fl_units[0]; ii[0] ++)
-      for(ii[1]=0; ii[1] < this->fl_units[1]; ii[1] ++)
-         for(ii[2]=0; ii[2] < this->fl_units[2]; ii[2] ++)
+   if(!empty) for(ii[0]=0; ii[0] < this->fl_units[0]; (ii[0]) ++)
+      for(ii[1]=0; ii[1] < this->fl_units[1]; (ii[1]) ++)
+         for(ii[2]=0; ii[2] < this->fl_units[2]; (ii[2]) ++)
             for(int j=0; j < repl; j++)
-               if(fill[ii[0]][ii[1]][ii[2]][j])
+	    {
+               if(fill[ ii[0] ][ ii[1] ][ ii[2] ][ j ])
                {
                   for(int k=0; k < 3; k++)
                   {
                      tr[k] = off[k]
-                           + (ii[k] + (1.0 + r->rnd())/3.0)*fl_unit[k];
+                           + (ii[k] + (3.0 + r->rnd())/7.0)*fl_unit[k];
+                  }
+                  tr[1] += j*box[1];
+		  box[1] *= repl;
+                  for(int k=0; k < 3; k++)
+                  {
                      if(tr[k] > box[k]) tr[k] -= box[k];
                      else if(tr[k] < 0.0) tr[k] += box[k];
                   }
-                  tr[1] += j*box[1];
+		  box[1] /= repl;
                   double tv = sqrt(3.0*T / FLUIDMASS);
                   double phi = 6.283185 * r->rnd();
                   double omega = 6.283185 * r->rnd();
@@ -371,6 +377,9 @@ void Domain::writeGraphite(
                       << " 0.0\n";
                   id++;
                }
+	       else xdr << "\n";
+	    }
+   xdr << "\n\n";
 
    for(int j=0; j < repl; j++)
    {
@@ -389,10 +398,15 @@ void Domain::writeGraphite(
             for(int m=0; m < 3; m++)
             {
                tr[m] += (0.004*r->rnd() - 0.002) * bondlength;
+            }
+            if(j == 1) tr[1] += box[1];
+            box[1] *= repl;
+            for(int m=0; m < 3; m++)
+            {
                if(tr[m] > box[m]) tr[m] -= box[m];
                else if(tr[m] < 0.0) tr[m] += box[m];
             }
-            if(j == 1) tr[1] += box[1];
+            box[1] /= repl;
 
             xdr << id << " " << j*d + k << "\t" << tr[0]/SIG_REF
                 << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
@@ -403,7 +417,9 @@ void Domain::writeGraphite(
 
             id++;
          }
+         xdr << "\n";
       }
+      xdr << "\n";
    }
 
    xdr.close();
