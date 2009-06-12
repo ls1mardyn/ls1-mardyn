@@ -153,7 +153,7 @@ Simulation::Simulation(int *argc, char ***argv)
           bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
         }
         _moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-            _cutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);
+            _cutoffRadius, _tersoffCutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);
       } 
       else if (token=="AdaptiveSubCells") {
         int cellsInCutoffRadius;
@@ -315,7 +315,7 @@ void Simulation::updateParticleContainerAndDecomposition()
   // changed and have to be adjusted
   _moleculeContainer->update();
   //_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
-  _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain);
+  _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain, this->_cutoffRadius);
   // The cache of the molecules must be updated/build after the exchange process,
   // as the cache itself isn't transferred 
   Molecule* tempMolecule;

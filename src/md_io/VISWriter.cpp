@@ -5,6 +5,7 @@
 #include "md_io/Common.h"
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "ensemble/GrandCanonical.h"
 
 VISWriter::VISWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
    _filename = filename;
@@ -21,11 +22,15 @@ VISWriter::VISWriter(unsigned long writeFrequency, string filename, unsigned lon
 VISWriter::~VISWriter(){}
 
 void VISWriter::initOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain) {
+                           DomainDecompBase* domainDecomp, Domain* domain)
+{
+   this->_wroteVIS = false;
 }
 
-void VISWriter::doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {
+void VISWriter::doOutput( ParticleContainer* particleContainer,
+                          DomainDecompBase* domainDecomp, Domain* domain,
+			  unsigned long simstep, list<ChemicalPotential>* lmu) 
+{
    if(simstep%_writeFrequency == 0) {
       stringstream filenamestream;
       if(_filenameisdate) {
@@ -36,46 +41,48 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
       if(_incremental) {
          unsigned long temp = simstep/_writeFrequency;
 	 filenamestream << "-";
-         while(temp < floor((double) (_numberOfTimesteps/_writeFrequency))){
+         while(temp < floor(_numberOfTimesteps/_writeFrequency)){
             filenamestream << "0";
             temp = temp*10;
          }
-         filenamestream << simstep/_writeFrequency << ".vis";
+         filenamestream << simstep/_writeFrequency << ".vis_";
       } else {
-	 filenamestream << ".vis";
+	 filenamestream << ".vis_";
       }
 
-      ofstream ostrm(filenamestream.str().c_str());
+      ofstream visittfstrm(filenamestream.str().c_str());
+
+      if(!domain->getlocalRank() && !this->_wroteVIS)
+      {
+         visittfstrm << "      id t          x          y          z     q0     q1     q2     q3        c\n";
+         this->_wroteVIS = true;
+      }
+      else if(!domain->getlocalRank()) visittfstrm << "#\n";
 
       // originally VIS files had a fixed width of 8 (and no t), here I use 12 (with 2 for t)
       //ostrm << "t           x           y           z          q0          q1          q2          q3" << endl;
       for(Molecule* pos=particleContainer->begin() ; pos != particleContainer->end(); pos=particleContainer->next())
       {
-         //printf("%2d %6.2f %6.2f %6.2f %6.3f %6.3f %6.3f %6.3f",pos->componentid(),pos->r(0),pos->r(1),pos->r(2),(pos->q()).qw(),(pos->q()).qx(),(pos->q()).qy(),(pos->q()).qz());
-         //ostrm << setw(2) << pos->componentid()
-         //      << setw(12) << pos->r(0) << setw(12) << pos->r(1) << setw(12) << pos->r(2)
-         //      << setw(12) << (pos->q()).qw() << setw(12) << (pos->q()).qx() << setw(12) << (pos->q()).qy() << setw(12) << (pos->q()).qz()
-         //      << endl;
-         ostrm << setiosflags(ios::fixed) //<< setiosflags(ios::floatfield) << << setiosflags(ios::showpoint)
-               << setw(1) << pos->componentid()
-               << setprecision(1) << setw(6) << pos->r(0) << setw(6) << pos->r(1)
-               << setw(6) << pos->r(2) << setprecision(3) << setw(7)
-               << (pos->q()).qw() << setw(7) << (pos->q()).qx() << setw(7)
-               << (pos->q()).qy() << setw(7) << (pos->q()).qz()
-               << setw(6);
-         
-         // RK
-	 //if ((pos->clusterid() != -1) && (MINCLUSTERSIZE < m_clusters.find(pos->clusterid())->second))
-         //{
-         //  ostrm << setiosflags(ios::fixed) << setw(11) << pos->clusterid()+1 << endl;
-         //}
-         //else
-         //{
-           ostrm << setiosflags(ios::fixed) << setw(11) << "0" << endl;
-         //}
-	 // /RK
+         bool halo = false;
+         for(unsigned short d = 0; d < 3; d++)
+         {
+            if((pos->r(d) < particleContainer->getBoundingBoxMin(d)) || (pos->r(d) > particleContainer->getBoundingBoxMax(d)))
+            {
+               halo = true;
+               break;
+            }
+         }
+         if(!halo)
+	 {
+            visittfstrm << setiosflags(ios::fixed) << setw(8) << pos->id() << setw(2)
+                       << pos->componentid() << setprecision(3);
+            for(unsigned short d = 0; d < 3; d++) visittfstrm << setw(11) << pos->r(d);
+            visittfstrm << setprecision(3) << setw(7) << pos->q().qw() << setw(7) << pos->q().qx()
+                        << setw(7) << pos->q().qy()<< setw(7) << pos->q().qz()
+                        << setw(9) << right << 0 << "\n";
+	 }
       }
-      ostrm.close();
+      visittfstrm.close();
    }
 }
 

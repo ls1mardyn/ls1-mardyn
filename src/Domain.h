@@ -197,6 +197,9 @@ class Domain{
   //! @brief calculate _localSummv2 and _localSumIw2
   //! @todo more detailled description
   void calculateVelocitySums(ParticleContainer* partCont);
+  
+   inline void observeRDF(unsigned i) { }
+   inline void observeRDF(double dd, unsigned i, unsigned j) { }
     
  private:
  

@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Martin Bernreuther   *
- *   Martin.Bernreuther@informatik.uni-stuttgart.de   *
+ *   Copyright (C) 2009 by Martin Bernreuther and colleagues               *
+ *   bernreuther@hlrs.de                                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -21,10 +21,15 @@
 #define MOLECULE_H_
 
 /**
-Molecule modeled as LJ sphere
+Molecule modeled as LJ sphere with point polarities + Tersoff potential
 
 @author Martin Bernreuther
 */
+
+/*
+ * maximal size of the Tersoff neighbour list
+ */
+#define MAXTN 10
 
 #include "molecules/Quaternion.h"
 #include "molecules/Comp2Param.h"
@@ -60,6 +65,7 @@ public:
     { assert(m_sites_d); delete[] m_sites_d; assert(m_osites_e); delete[] m_osites_e; assert(m_sites_F); delete[] m_sites_F; }
   /** get the ID */
   unsigned long id() const { return m_id; }
+  void setid(unsigned long id) { this->m_id = id; }
   /** get the Component */
   int componentid() const { return m_componentid; }
   /** get the position */
@@ -69,6 +75,8 @@ public:
   /** get the Orientation */
   const Quaternion& q() const { return m_q; }
 
+  inline void move(int d, double dr) { m_r[d] += dr; }
+  
   /** get the rotatational speed */
   double D(unsigned short d) const { return m_D[d]; }
 
@@ -78,25 +86,32 @@ public:
   double M(unsigned short d) const {return m_M[d]; }
 
   //double Upot() const { return m_Upot; }
-  double Ukin() const { return .5*m_m*(m_v[0]*m_v[0]+m_v[1]*m_v[1]+m_v[2]*m_v[2]); }
+  double Utrans() const { return .5*m_m*(m_v[0]*m_v[0]+m_v[1]*m_v[1]+m_v[2]*m_v[2]); }
+  double Urot();
 
   /** get number of sites */
   unsigned int numSites() const { return m_numsites; }
   unsigned int numLJcenters() const { return m_ljcenters->size(); }
+  unsigned int numCharges() const { return m_charges->size(); }
   unsigned int numDipoles() const { return m_dipoles->size(); }
   unsigned int numQuadrupoles() const { return m_quadrupoles->size(); }
+  unsigned int numTersoff() const { assert(m_tersoff); return m_tersoff->size(); }
 
   const double* site_d(unsigned int i) const { return &(m_sites_d[3*i]); }
   const double* osite_e(unsigned int i) const { return &(m_osites_e[3*i]); }
   const double* site_F(unsigned int i) const { return &(m_sites_F[3*i]); }
   const double* ljcenter_d(unsigned int i) const { return &(m_ljcenters_d[3*i]); }
   const double* ljcenter_F(unsigned int i) const { return &(m_ljcenters_F[3*i]); }
+  const double* charge_d(unsigned int i) const { return &(m_charges_d[3*i]); }
+  const double* charge_F(unsigned int i) const { return &(m_charges_F[3*i]); }
   const double* dipole_d(unsigned int i) const { return &(m_dipoles_d[3*i]); }
   const double* dipole_e(unsigned int i) const { return &(m_dipoles_e[3*i]); }
   const double* dipole_F(unsigned int i) const { return &(m_dipoles_F[3*i]); }
   const double* quadrupole_d(unsigned int i) const { return &(m_quadrupoles_d[3*i]); }
   const double* quadrupole_e(unsigned int i) const { return &(m_quadrupoles_e[3*i]); }
   const double* quadrupole_F(unsigned int i) const { return &(m_quadrupoles_F[3*i]); }
+  const double* tersoff_d(unsigned int i) const { return &(m_tersoff_d[3*i]); }
+  const double* tersoff_F(unsigned int i) const { return &(m_tersoff_F[3*i]); }
 
   /** get object memory size */
   static unsigned long memsize() { return sizeof(Molecule); }
@@ -114,6 +129,7 @@ public:
   void setFM(double Fx, double Fy, double Fz, double Mx, double My, double Mz)
     { m_F[0]=Fx; m_F[1]=Fy; m_F[2]=Fz; m_M[0]=Mx; m_M[1]=My; m_M[2]=My; }
   void scale_v(double s) { for(unsigned short d=0;d<3;++d) m_v[d]*=s; }
+  void scale_v(double s, double offx, double offy, double offz);
   void scale_F(double s) { for(unsigned short d=0;d<3;++d) m_F[d]*=s; }
   void scale_D(double s) { for(unsigned short d=0;d<3;++d) m_D[d]*=s; }
 
@@ -123,6 +139,25 @@ public:
   void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) m_M[d]+=a[d]; }
   void Msub(const double a[]) { for(unsigned short d=0;d<3;++d) m_M[d]-=a[d]; }
 
+  void vadd(const double ax, const double ay, const double az)
+  {
+     m_v[0] += ax; m_v[1] += ay; m_v[2] += az;
+  }
+  void vsub(const double ax, const double ay, const double az)
+  {
+     m_v[0] -= ax; m_v[1] -= ay; m_v[2] -= az;
+  }
+  void setXY() { fixedx = m_r[0]; fixedy = m_r[1]; }
+  void resetXY()
+  {
+     m_v[0] = 0.0;
+     m_v[1] = 0.0;
+     m_F[1] = 0.0;
+     m_F[0] = 0.0; 
+     m_r[0] = fixedx;
+     m_r[1] = fixedy;
+  }
+  
   void Fsiteadd(unsigned int i, double a[])
     { double* Fsite=&(m_sites_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
   void Fsitesub(unsigned int i, double a[])
@@ -131,6 +166,10 @@ public:
     { double* Fsite=&(m_ljcenters_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
   void Fljcentersub(unsigned int i, double a[])
     { double* Fsite=&(m_ljcenters_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
+  void Fchargeadd(unsigned int i, double a[])
+    { double* Fsite=&(m_charges_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
+  void Fchargesub(unsigned int i, double a[])
+    { double* Fsite=&(m_charges_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
   void Fdipoleadd(unsigned int i, double a[])
     { double* Fsite=&(m_dipoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
   void Fdipolesub(unsigned int i, double a[])
@@ -139,6 +178,10 @@ public:
     { double* Fsite=&(m_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
   void Fquadrupolesub(unsigned int i, double a[])
     { double* Fsite=&(m_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
+  void Ftersoffadd(unsigned int i, double a[])
+    { double* Fsite=&(m_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
+  void Ftersoffsub(unsigned int i, double a[])
+    { double* Fsite=&(m_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 
   //void Upotadd(double u) { m_Upot+=u; }
   //void Upotsub(double u) { m_Upot-=u; }
@@ -151,19 +194,41 @@ public:
   //! @todo what is sumIw2?
   //! @todo comment
   void calculate_mv2_Iw2(double& summv2, double& sumIw2);
+  void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
 
   /** write information to stream */
   void write(std::ostream& ostrm) const;
   /** write binary information to stream */
   void save_restart(std::ostream& ostrm) const;
 
-//  Linked cells
+  /*
+   * veraltet, aber aus Versehen von Martin Buchholz im Code gelassen.
+   * nach dem neuen Schema von Martin Buchholz ist eine Cell als STL-Liste organisiert,
+   * deshalb ist das hier unnötig.
+   *
+  //  Linked cells
   Molecule* nextinCell() const { return m_nextincell; }
+   */
   
   static void setDomain(Domain* domain);
-  static void setblubb(double a);
+  /*
+   * was soll das?? (M. H.) ich nehme das mal raus:
+   * static void setblubb(double a);
+   */
+  
+  inline unsigned getCurTN() { return this->m_curTN; }
+  inline Molecule* getTersoffNeighbour(unsigned i) { return this->m_Tersoff_neighbours_first[i]; }
+  inline bool getPairCode(unsigned i) { return this->m_Tersoff_neighbours_second[i]; }
+  // map<Molecule*, bool>* getTersoffNeighbours() { return &(this->m_Tersoff_neighbours); }
+  inline void clearTersoffNeighbourList() { this->m_curTN = 0; }
+  // void clearTersoffNeighbourList() { this->m_Tersoff_neighbours.clear(); }
+  void addTersoffNeighbour(Molecule* m, bool pairType);
+  double tersoffParameters(double params[15]); //returns delta_r
 
-
+  // clear forces and moments
+  void clearFM();
+  void check(unsigned long id);
+  
 private:
   
   static Domain* _domain;
@@ -178,11 +243,12 @@ private:
   double m_M[3];  // moments
   //double m_Upot;  // potential energy
 
-//  caching component values
-  //const std::vector<Site>* m_sites; // doesn't work that way... see component.h
   const std::vector<LJcenter>* m_ljcenters;
+  const std::vector<Charge>* m_charges;
   const std::vector<Dipole>* m_dipoles;
   const std::vector<Quadrupole>* m_quadrupoles;
+  const std::vector<Tersoff>* m_tersoff;
+  
   double m_m; // total mass
   double m_I[3],m_invI[3];  // moment of inertia for principal axes and it's inverse
   std::size_t m_numsites; // number of sites
@@ -190,32 +256,37 @@ private:
   // global site coordinates relative to site origin
   // row order: dx1,dy1,dz1,dx2,dy2,dz2,...
   double *m_sites_d;
-  double *m_ljcenters_d, *m_dipoles_d, *m_quadrupoles_d;
+  double *m_ljcenters_d, *m_charges_d, *m_dipoles_d,
+         *m_quadrupoles_d, *m_tersoff_d;
   // site orientation
   double *m_osites_e;
   double *m_dipoles_e, *m_quadrupoles_e;
   // site Forces
   // row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
   double* m_sites_F;
-  double *m_ljcenters_F, *m_dipoles_F, *m_quadrupoles_F;
+  double *m_ljcenters_F, *m_charges_F, *m_dipoles_F,
+         *m_quadrupoles_F, *m_tersoff_F;
 
+  /*
+   * veraltet, aber aus Versehen von Martin Buchholz im Code gelassen
+   *
   // used by CELL data structure for intrusive single-linked "collision" lists
   Molecule* m_nextincell;
-
   // used by Cells::addMolecule to modify m_nextincell
   void setNextinCell(Molecule* next) { m_nextincell=next; }
-//  friend void Cells::addMolecule(Molecule* atom);
+  //  friend void Cells::addMolecule(Molecule* atom);
+   *
+   */
 
+  Molecule* m_Tersoff_neighbours_first[MAXTN];
+  bool m_Tersoff_neighbours_second[MAXTN];
+  int m_curTN;
+  double fixedx, fixedy;
 
-  
   // setup cache values/properties
   void setupCache(const std::vector<Component>* components);
-  // clear forces and moments
-  void clearFM();
   // calculate forces and moments for already given site forces
   void calcFM();
-  
-
 };
 
 #endif /*MOLECULE_H_*/

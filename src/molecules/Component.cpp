@@ -17,8 +17,10 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+
 #include "molecules/Component.h"
-//#include "site.h"
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 
@@ -30,6 +32,13 @@ Component::Component(unsigned int id)
   m_rot_dof=0;
   m_Ipa[0]=m_Ipa[1]=m_Ipa[2]=0.;
   m_numMolecules=0;
+  this->maximalTersoffExternalRadius = 0.0;
+
+  m_ljcenters = vector<LJcenter>();
+  m_charges = vector<Charge>();
+  m_quadrupoles = vector<Quadrupole>();
+  m_dipoles = vector<Dipole>();
+  m_tersoff = vector<Tersoff>();
 }
 
 void Component::setI(double Ixx,double Iyy,double Izz
@@ -54,10 +63,22 @@ void Component::addI(double Ixx,double Iyy,double Izz
   m_I[5]+=Iyz;
 }
 
-void Component::addLJcenter(double x, double y, double z
-                           ,double m, double eps, double sigma)
-{
-  m_ljcenters.push_back(LJcenter(x,y,z,m,eps,sigma));
+void Component::addLJcenter(
+   double x, double y, double z, double m, double eps, double sigma,
+   double rc, bool TRUNCATED_SHIFTED
+) {
+  if(TRUNCATED_SHIFTED)
+  {
+     double sigperrc2 = sigma*sigma/(rc*rc);
+     double sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
+     double shift6 = 24.0*eps * (sigperrc6 - sigperrc6*sigperrc6);
+     m_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, shift6));
+  }
+  else
+  {
+     m_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, 0.0)); 
+  }
+  
   m_m+=m;
   // assume the input is already transformed to the principal axes system
   // (and therefore the origin is the center of mass)
@@ -67,13 +88,35 @@ void Component::addLJcenter(double x, double y, double z
   m_I[3]-=m*x*y;
   m_I[4]-=m*x*z;
   m_I[5]-=m*y*z;
-
+  
   m_rot_dof=3;
   for(unsigned short d=0;d<3;++d)
   {
     m_Ipa[d]=m_I[d];
     if(m_Ipa[d]==0.) --m_rot_dof;
   }
+}
+
+void Component::addCharge(double x, double y, double z, double m, double q)
+{
+   m_charges.push_back( Charge(x, y, z, m, q) );
+   m_m += m;
+
+   // assume the input is already transformed to the principal axes system
+   // (and therefore the origin is the center of mass)
+   m_I[0]+=m*(y*y+z*z);
+   m_I[1]+=m*(x*x+z*z);
+   m_I[2]+=m*(x*x+y*y);
+   m_I[3]-=m*x*y;
+   m_I[4]-=m*x*z;
+   m_I[5]-=m*y*z;
+
+   m_rot_dof=3;
+   for(unsigned short d=0;d<3;++d)
+   {
+      m_Ipa[d]=m_I[d];
+      if(m_Ipa[d]==0.) --m_rot_dof;
+   }
 }
 
 void Component::addDipole(double x, double y, double z
@@ -90,6 +133,33 @@ void Component::addQuadrupole(double x, double y, double z
   // massless...
 }
 
+void Component::addTersoff( double x, double y, double z,
+                            double m, double A, double B, double lambda, double mu, double R,
+                            double S, double c, double d, double h, double n, double beta  )
+{
+   if(S > this->maximalTersoffExternalRadius) maximalTersoffExternalRadius = S;
+   m_tersoff.push_back( Tersoff(x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta) );
+
+   m_m+=m;
+   // assume the input is already transformed to the principal axes system
+   // (and therefore the origin is the center of mass)
+   m_I[0]+=m*(y*y+z*z);
+   m_I[1]+=m*(x*x+z*z);
+   m_I[2]+=m*(x*x+y*y);
+   m_I[3]-=m*x*y;
+   m_I[4]-=m*x*z;
+   m_I[5]-=m*y*z;
+
+   m_rot_dof=3;
+   for(unsigned short d=0;d<3;++d)
+   {
+     m_Ipa[d]=m_I[d];
+     if(m_Ipa[d]==0.) --m_rot_dof;
+   }
+}
+
+/* Brauchen wir das? (M. H.)
+ *
 // NOT SUPPORTED at the moment!!!
 void Component::transformPA()
 {
@@ -125,13 +195,21 @@ cerr << "Component::transformPA(): NOT SUPPORTED at the moment!!!" << endl;
     m_I[4]-=m*x*z;
     m_I[5]-=m*y*z;
   }
-  
 }
+ *
+ */
 
 void Component::write(std::ostream& ostrm) const
 {
-  ostrm << m_ljcenters.size() << "\t" << m_dipoles.size() << "\t" << m_quadrupoles.size() << endl;
+  ostrm << m_ljcenters.size() << "\t" << m_charges.size() << "\t"
+        << m_dipoles.size() << "\t" << m_quadrupoles.size() << "\t"
+	<< m_tersoff.size() << "\n";
   for(std::vector<LJcenter>::const_iterator pos=m_ljcenters.begin();pos!=m_ljcenters.end();++pos)
+  {
+    pos->write(ostrm);
+    ostrm << endl;
+  }
+  for(std::vector<Charge>::const_iterator pos=m_charges.begin();pos!=m_charges.end();++pos)
   {
     pos->write(ostrm);
     ostrm << endl;
@@ -142,6 +220,11 @@ void Component::write(std::ostream& ostrm) const
     ostrm << endl;
   }
   for(std::vector<Quadrupole>::const_iterator pos=m_quadrupoles.begin();pos!=m_quadrupoles.end();++pos)
+  {
+    pos->write(ostrm);
+    ostrm << endl;
+  }
+  for(std::vector<Tersoff>::const_iterator pos=m_tersoff.begin();pos!=m_tersoff.end();++pos)
   {
     pos->write(ostrm);
     ostrm << endl;
@@ -164,4 +247,15 @@ void Component::writePOVobjs(std::ostream& ostrm, string para) const
     ostrm << para << "}";
   }
   ostrm << flush;
+}
+
+void Component::writeVIM(std::ostream& ostrm)
+{
+   for(std::vector<LJcenter>::const_iterator pos=m_ljcenters.begin();pos!=m_ljcenters.end();++pos)
+   {
+      ostrm << "~ " << this->m_id+1 << " LJ "
+            << setw(7) << pos->rx() << ' ' << setw(7) << pos->ry() << ' ' << setw(7) << pos->rz() << ' '
+            << setw(6) << pos->sigma() << ' ' << setw(2) << (1 + (this->m_id % 9)) << "\n";
+   }
+   ostrm << flush;
 }

@@ -3,9 +3,11 @@
 
 #include "datastructures/ParticleContainer.h"
 #include <vector>
+#include <sstream>
 
 class Cell;
-
+class ChemicalPotential;
+class DomainDecompBase;
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -68,8 +70,11 @@ class LinkedCells: public ParticleContainer {
   //!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
   //!        ==> celllength = 100/66 = 1.5152
   //! @param partPairsHandler specified concrete action to be done for each pair
-  LinkedCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double cellsInCutoffRadius,
-              ParticlePairsHandler& partPairsHandler);
+  LinkedCells(
+     double bBoxMin[3], double bBoxMax[3], double cutoffRadius,
+     double tersoffCutoffRadius, double cellsInCutoffRadius,
+     ParticlePairsHandler& partPairsHandler
+  );
     
   //! Destructor
   ~LinkedCells();
@@ -144,6 +149,20 @@ class LinkedCells: public ParticleContainer {
   // documentation see father class (ParticleContainer.h)
   void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs);
 
+  double getCutoff() { return this->_cutoffRadius; }
+  double getTersoffCutoff() { return this->_tersoffCutoffRadius; }
+  void countParticles(Domain* d);
+  //! @brief counts all particles inside the bounding box
+  unsigned countParticles(int cid);
+  //! @brief counts particles in the intersection of bounding box and control volume
+  unsigned countParticles(int cid, double* cbottom, double* ctop);
+
+  void deleteMolecule(unsigned long molid, double x, double y, double z);
+  double getEnergy(Molecule* m1);
+  int localGrandcanonicalBalance() { return this->_localInsertionsMinusDeletions; }
+  int grandcanonicalBalance(DomainDecompBase* comm);
+  void grandcanonicalStep(ChemicalPotential* mu, double T);
+ 
  private:
   //####################################
   //######### PRIVATE METHODS ##########
@@ -243,12 +262,16 @@ class LinkedCells: public ParticleContainer {
   int _cellsPerDimension[3];
   //! Halo width (in cells) in each dimension
   int _haloWidthInNumCells[3];
-  //! width of the halo strip (in lenght-unit)
+  //! width of the halo strip (in size units)
   double _haloLength[3];
   //! length of the cell (for each dimension)
   double _cellLength[3];
   //! cutoff radius
   double _cutoffRadius;
+  //! Tersoff cutoff radius
+  double _tersoffCutoffRadius;
+  //! balance of the grand canonical ensemble
+  int _localInsertionsMinusDeletions;
     
   //! @brief True if all Particles are in the right cell
   //!
@@ -263,7 +286,6 @@ class LinkedCells: public ParticleContainer {
   //! abort the program if not). After the cells are updated, _cellsValid
   //! should be set to true.
   bool _cellsValid;
-
 };
 
 

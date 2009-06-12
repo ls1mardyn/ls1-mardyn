@@ -406,4 +406,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 //  PotForce(mi, mj, params,drm,Upot6LJ,UpotXpoles,MyRF,Virial);
 //}
 
+inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF)
+{
+}
+
+inline void TersoffPotForce(Molecule* mi, double params[15], double& UpotTersoff, double delta_r)
+{
+}
+
 #endif /*POTFORCE_H_*/

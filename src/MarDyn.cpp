@@ -1,5 +1,4 @@
 #include <iostream>
-#include <ctime>
 #include "Simulation.h"
 
 using namespace std;
@@ -15,16 +14,20 @@ using namespace std;
 //!
 int main(int argc, char** argv){
 
-  cout.precision(10);
+  cout.precision(6);
 
   Simulation simulation(&argc, &argv);
   
-  double runtime = double(clock())/CLOCKS_PER_SEC;
+  /*
+   * rejected by the Portland Group compiler
+   */
+  // double runtime = double(clock())/CLOCKS_PER_SEC;
 
   simulation.simulate();
 
-  runtime=double(clock())/CLOCKS_PER_SEC-runtime;
-  
-  cout << "main: used " << runtime << " s" << endl;
-
+  /*
+   * rejected by the Portland Group compiler
+   */
+  // runtime=double(clock())/CLOCKS_PER_SEC-runtime;
+  // cout << "main: used " << runtime << " s" << endl;
 }

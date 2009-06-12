@@ -13,7 +13,7 @@ DomainDecompDummy::DomainDecompDummy(){
 DomainDecompDummy::~DomainDecompDummy(){
 }
 
-void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
+void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
   
   double rmin[3]; // lower corner of the process-specific domain //PARALLEL
   double rmax[3];
@@ -82,12 +82,12 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
   }
 }
 
-void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
-  exchangeMolecules(moleculeContainer, components, domain);
+void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
+  exchangeMolecules(moleculeContainer, components, domain, rc);
 }
 
 int DomainDecompDummy::countMolecules(ParticleContainer* moleculeContainer, vector<int> &compCount){
-  for(int i=0; i<compCount.size(); i++){
+  for(unsigned i=0; i<compCount.size(); i++){
     compCount[i] = 0;
   }
   Molecule* tempMolecule;
@@ -97,7 +97,7 @@ int DomainDecompDummy::countMolecules(ParticleContainer* moleculeContainer, vect
     compCount[tempMolecule->componentid()] += 1;
   }
   int numMolecules = 0;
-  for(int i=0; i<compCount.size(); i++){
+  for(unsigned i=0; i<compCount.size(); i++){
     numMolecules += compCount[i];
   }
   return numMolecules;
@@ -128,4 +128,19 @@ const char* DomainDecompDummy::getProcessorName() const{
 
 double DomainDecompDummy::getTime(){
   return double(clock())/CLOCKS_PER_SEC;
+}
+
+unsigned DomainDecompDummy::Ndistribution(unsigned localN, float* minrnd, float* maxrnd)
+{
+   *minrnd = 0.0;
+   *maxrnd = 1.0;
+   return localN;
+}
+
+void DomainDecompDummy::assertIntIdentity(int IX)
+{
+}
+
+void DomainDecompDummy::assertDisjunctivity(TMoleculeContainer* mm)
+{
 }

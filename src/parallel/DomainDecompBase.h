@@ -3,10 +3,14 @@
 
 #include <vector>
 #include <iostream>
+#include <map>
 
+class Molecule;
 class Component;
 class Domain;
 class ParticleContainer;
+
+typedef ParticleContainer TMoleculeContainer;
 
 using namespace std;
 
@@ -26,7 +30,7 @@ using namespace std;
 //! is simulated (usually a cube) is divided into several smaller regions. Each process
 //! works on one of those regions. But as the molecules move between regions, the processes
 //! have to communicate to exchange molecules. Also for the calculation of some values
-//! (e.g. macroscopic values), communication is necessary. Each time processes needs
+//! (e.g. macroscopic values), communication is necessary. Each time processes need
 //! to communicate, a method of this interface (that means a method of a class implementing
 //! this interface) is called, which then somehow does the communication.
 //!
@@ -54,7 +58,7 @@ class DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data), 
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) = 0;                                 
+  virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc) = 0;                                 
   
   //! @brief balance the load (and optimise communication) and exchange boundary particles
   //!
@@ -68,15 +72,7 @@ class DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data), 
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) = 0;
-
-  //! @brief calculate global macroscopic values from the process' local macroscopic values 
-  //! 
-  //! For several values, the sum over the whole domain has to be calculated
-  //! This method takes the local sums of all processes and calculates the
-  //! global sum. 
-  //! @todo comment parameters
-  //virtual void reducevalues(double *Upot, double *Virial, double *summv2, double *sumIw2, unsigned long *num_mol) = 0;
+  virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc) = 0;
 
   //! @brief find out whether the given position belongs to the domain of this process
   //! 
@@ -149,6 +145,13 @@ class DomainDecompBase{
 
   //! @brief returns the time in seconds since some time in the past
   virtual double getTime() = 0;
+
+  //! @brief returns total number of molecules
+  virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd) = 0;
+
+  //! @brief checks identity of random number generators
+  virtual void assertIntIdentity(int IX) = 0;
+  virtual void assertDisjunctivity(TMoleculeContainer* mm) = 0;
 
   //##################################################################
   // The following methods with prefix "collComm" are all used 

@@ -90,7 +90,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
         for(j=0;j<numljcenters;++j)
         {
           _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma;
-          dcomponents[i].addLJcenter(x,y,z,m,eps,sigma);
+          dcomponents[i].addLJcenter(x,y,z,m,eps,sigma,2.5*sigma,true);
         }
 
         for(j=0;j<numdipoles;++j)
@@ -177,7 +177,7 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
       numcomponents=1;
       dcomponents.resize(numcomponents);
       dcomponents[0].setID(0);
-      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.);
+      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,2.5,true);
     }
     //m_molecules.clear();
     for(i=0;i<domain->getglobalNumMolecules();++i)

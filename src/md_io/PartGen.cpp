@@ -1,4 +1,3 @@
-#include <ctime>
 #include "PartGen.h"
 #include <cmath>
 #include <iostream>
@@ -193,7 +192,9 @@ void PartGen::readPhaseSpaceHeader(Domain* domain){
                                     getSitePos(comp, site, 2),
                                     getMSite(comp, site),
                                     getEpsilonSite(comp, site),
-                                    getSigmaSite(comp, site));
+                                    getSigmaSite(comp, site),
+				    this->_cutoffRadius,
+				    getShiftSite(comp, site));
     }
     
     for(unsigned int dip=0; dip<numdipoles; dip++){
@@ -525,6 +526,9 @@ double PartGen::getQuadrupolePos(int comp, int site, int dim){
 double PartGen::getEpsilonSite(int comp, int site){
   return _epsilonSite[comp][site];
 }
+bool PartGen::getShiftSite(int comp, int site){
+  return _shiftSite[comp][site];
+}
 double PartGen::getMSite(int comp, int site){
   return _mSite[comp][site];
 }
@@ -779,9 +783,9 @@ void PartGen::readStatePoint(ifstream &inpfStream){
 void PartGen::readAlgorithm(ifstream &inpfStream, 
               vector<double> &simBoxRatio){
   ignoreLines(inpfStream,2);
-  double dummy = getDoubleParamValue(inpfStream);   // dt, not reduced
+  getDoubleParamValue(inpfStream);   // dt, not reduced
   //_dt *= 1.0E-15 * sqrt(_epsilonRefDim/_mRefDim)/_sigmaRefDim; // reduced
-  dummy = getDoubleParamValue(inpfStream);  // rc, not reduced
+  this->_cutoffRadius = getDoubleParamValue(inpfStream);  // rc, not reduced
   //_rc *= 1.0E-10 / _sigmaRefDim;          // reduced
   // THIS VERSION DOES NOT PROCESS EquiSchritte AND SimSchritte
   ignoreLines(inpfStream,2);
@@ -1023,8 +1027,8 @@ void PartGen::getEigenvecs(vector<vector<double> > &m, vector<vector<double> > &
   }
   double phi = acos(-q/(2*sqrt(-p*p*p)));
   double y1 =  2*sqrt(-p)*cos(phi/3);
-  double y2 = -2*sqrt(-p)*cos(phi/3+acos(-1.)/3);
-  double y3 = -2*sqrt(-p)*cos(phi/3-acos(-1.)/3);
+  double y2 = -2*sqrt(-p)*cos(phi/3+acos(-1)/3);
+  double y3 = -2*sqrt(-p)*cos(phi/3-acos(-1)/3);
 
   vector<double> eigenvalues;
   eigenvalues.resize(3);

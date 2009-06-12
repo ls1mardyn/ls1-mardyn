@@ -57,7 +57,7 @@ class DomainDecomposition: public DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data), 
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
   
   //! @brief this decompositin does no balancing, it just exchanges the particles
   //!
@@ -69,7 +69,7 @@ class DomainDecomposition: public DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data), 
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
   
   // documentation see father class (DomainDecompBase.h)
   bool procOwnsPos(double x, double y, double z, Domain* domain);
@@ -138,6 +138,13 @@ class DomainDecomposition: public DomainDecompBase{
 
   // documentation see father class (DomainDecompBase.h)
   double getTime();
+
+  //! @brief returns total number of molecules
+  unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+
+  //! @brief checks identity of random number generators
+  void assertIntIdentity(int IX);
+  void assertDisjunctivity(TMoleculeContainer* mm);
 
   //##################################################################
   // The following methods with prefix "collComm" are all used 

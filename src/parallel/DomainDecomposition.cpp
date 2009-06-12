@@ -45,7 +45,7 @@ DomainDecomposition::~DomainDecomposition(){
 }
 
 
-void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
+void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
 
   double rmin[3]; // lower corner of the process-specific domain //PARALLEL
   double rmax[3];
@@ -139,7 +139,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       MPI_Sendrecv(particlesSendBufs[direction], numsend, sendPartType, _neighbours[2*d+direction], 99,
                    particlesRecvBuf, numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status);
       // insert received molecules into list of molecules
-      for(int i=0; i<numrecv; i++){
+      for(unsigned i=0; i<numrecv; i++){
         ParticleData newMol = particlesRecvBuf[i];
         Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz,
                                newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
@@ -153,8 +153,8 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 }
 
 
-void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
-  exchangeMolecules(moleculeContainer, components, domain);
+void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
+  exchangeMolecules(moleculeContainer, components, domain, rc);
 }
 
 
@@ -341,4 +341,99 @@ void DomainDecomposition::setGridSize(int num_procs) {
     }
     i--;
   }
+}
+
+unsigned DomainDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd)
+{
+   int num_procs;
+   MPI_Comm_size(this->_commTopology, &num_procs);
+   unsigned* moldistribution = new unsigned[num_procs];
+   MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, this->_commTopology);
+   unsigned globalN = 0;
+   for(int r=0; r < this->_ownRank; r++) globalN += moldistribution[r];
+   unsigned localNbottom = globalN;
+   globalN += moldistribution[this->_ownRank];
+   unsigned localNtop = globalN;
+   for(int r = this->_ownRank + 1; r < num_procs; r++) globalN += moldistribution[r];
+   delete []moldistribution;
+   *minrnd = (float)localNbottom / globalN;
+   *maxrnd = (float)localNtop / globalN;
+   return globalN;
+}
+
+void DomainDecomposition::assertIntIdentity(int IX)
+{
+   if(this->_ownRank)
+   {
+      MPI_Send(&IX, 1, MPI_INT, 0, 2*_ownRank+17, this->_commTopology);
+   }
+   else
+   {
+      int recv;
+      int num_procs;
+      MPI_Comm_size(this->_commTopology, &num_procs);
+      MPI_Status s;
+      for(int i=1; i<num_procs; i++)
+      {
+         MPI_Recv(&recv, 1, MPI_INT, i, 2*i+17, this->_commTopology, &s);
+         if(recv != IX)
+         {
+            cout << "SEVERE ERROR: IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
+            MPI_Finalize();
+            exit(911);
+         }
+      }
+      cout << "IX = " << recv << " for all " << num_procs << " ranks.\n";
+   }
+}
+
+void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
+{
+   Molecule* m;
+   if(this->_ownRank)
+   {
+      int tid;
+      for(m = mm->begin(); m != mm->end(); m = mm->next())
+      {
+         tid = m->id();
+         MPI_Send(&tid, 1, MPI_INT, 0, 2674+_ownRank, this->_commTopology);
+      }
+      tid = -1;
+      MPI_Send(&tid, 1, MPI_INT, 0, 2674+_ownRank, this->_commTopology);
+   }
+   else
+   {
+      int recv;
+      map<int, int> check;
+      for(m = mm->begin(); m != mm->end(); m = mm->next())
+      {
+         check[m->id()] = 0;
+      }
+
+      int num_procs;
+      MPI_Comm_size(this->_commTopology, &num_procs);
+      MPI_Status s;
+      for(int i=1; i < num_procs; i++)
+      {
+         bool cc = true;
+         while(cc)
+         {
+            MPI_Recv(&recv, 1, MPI_INT, i, 2674+i, this->_commTopology, &s);
+            if(recv == -1) cc = false;
+            else
+            {
+               if(check.find(recv) != check.end())
+               {
+                  cout << "\nSEVERE ERROR. Ranks " << check[recv] << " and "
+                       << i << " both propagate ID " << recv << ". Aborting.\n";
+                  MPI_Finalize();
+                  exit(2674);
+               }
+               else check[recv] = i;
+            }
+         }
+      }
+      cout << "\nData consistency checked. No duplicate IDs detected among " << check.size()
+           << " entries.\n";
+   }
 }

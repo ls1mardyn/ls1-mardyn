@@ -29,10 +29,10 @@ class DomainDecompDummy: public DomainDecompBase {
   //! are moved to the opposite side of the domain (periodic boundary).
   //! Additionally, the molecules from the boundary region are duplicated
   //! and copied into the corresponding halo-regions.
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
   
   //! @brief in the sequential version, no balancing is necessary --> calls exchangeMolecules
-  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
 
   //! @brief returns true
   //! 
@@ -76,6 +76,13 @@ class DomainDecompDummy: public DomainDecompBase {
   
   // documentation see father class (DomainDecompBase.h)
   double getTime();
+
+  //! @brief returns total number of molecules
+  unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+
+  //! @brief checks identity of random number generators
+  void assertIntIdentity(int IX);
+  void assertDisjunctivity(TMoleculeContainer* mm);
 
   //##################################################################
   // The following methods with prefix "collComm" are all used 

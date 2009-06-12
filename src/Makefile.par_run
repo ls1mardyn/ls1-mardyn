@@ -1,0 +1,52 @@
+# machine type: SEQ (=>SEQUENTIAL) or PAR (=>PARALLEL)
+SEQPAR = PAR
+# choose target: DEB (=>DEBUG) | RUN (=>NDEBUG)
+DEBRUN = RUN
+
+DSEQ = SEQUENTIAL
+DPAR = PARALLEL
+DDEB = DEBUG
+DRUN = NDEBUG
+
+OBJECTS_PAR = $(shell find ./ -name "*.cpp" | sed -e "s/\.cpp/.o/g" | grep -v DomainDecompDummy)
+OBJECTS_SEQ = $(shell find ./ -name "*.cpp" | sed -e "s/\.cpp/.o/g" | grep -v DomainDecomposition)
+
+OBJECTS = $(OBJECTS_$(SEQPAR))
+
+BINARY = ls1_mardyn.$(SEQPAR)_$(DEBRUN)
+
+CXX_SEQ = g++ 
+CXX_PAR = mpiCC
+CXXFLAGS_DEB = -Wall -g
+LNKFLAGS_DEB = -O0 -g -D$(D$(SEQPAR))
+CXXFLAGS_RUN = -O2
+LNKFLAGS_RUN = -D$(D$(SEQPAR))
+
+CXXFLAGS_SEQ_DEBUG = -I$(shell pwd) -Wall -g -D$(PSET) -D$(CUTOFF) -D$(NLIST)
+CXXFLAGS_SEQ_RELEASE = -I$(shell pwd)  -O2 -DNDEBUG -D$(PSET) -D$(CUTOFF) -D$(NLIST)
+LINKFLAGS_SEQ_DEBUG = -O0 -g
+LINKFLAGS_SEQ_RELEASE =
+
+CXXOPT = -I$(shell pwd) $(CXXFLAGS_$(DEBRUN)) -D$(D$(SEQPAR)) -D$(D$(DEBRUN))
+LNKOPT = $(LINKFLAGS_$(DEBRUN))
+
+# only linker and domain decomposition need MPI
+$(BINARY): $(OBJECTS)
+	$(CXX_$(SEQPAR)) $(LINKFLAGS) -o $(BINARY) $(OBJECTS)
+
+parallel/DomainDecomposition.o: parallel/DomainDecomposition.cpp
+	$(CXX_PAR) $(CXXOPT) -c $< -o $@
+
+%.o: %.cpp
+	$(CXX_$(SEQPAR)) $(CXXOPT) -c $< -o $@
+
+tar: clear
+	tar -cvjf mardyn_buchholz.tar.bz2 *
+
+clean:
+	find -name '*.o' -exec rm -r {} \;
+	find -name '*.bz2' -exec rm -r {} \;
+	find -name '*~' -exec rm -r {} \;
+
+clear: clean
+	rm -f ls1*

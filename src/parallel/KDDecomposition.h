@@ -85,7 +85,7 @@ class KDDecomposition: public DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data), 
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain  
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
 
   //! @brief balance the load (and optimise communication) and exchange boundary particles
   //! 
@@ -105,7 +105,7 @@ class KDDecomposition: public DomainDecompBase{
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
   void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer,
-                          const vector<Component>& components, Domain* domain);
+                          const vector<Component>& components, Domain* domain, double rc);
 
   // documentation see father class (DomainDecompBase.h)
   bool procOwnsPos(double x, double y, double z, Domain* domain);
@@ -189,10 +189,16 @@ class KDDecomposition: public DomainDecompBase{
   void collCommAllreduceSum(){ _collComm.allreduceSum(); };
   void collCommBroadcast(){ _collComm.broadcast(); };
   
+  //! @brief returns total number of molecules
+  unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+
+  //! @brief checks identity of random number generators
+  void assertIntIdentity(int IX);
+  void assertDisjunctivity(TMoleculeContainer* mm);
 
  private:
   //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-  //$ Methoden, die von balanceAndExchange benötigt werden $
+  //$ Methoden, die von balanceAndExchange benï¿½tigt werden $
   //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   //! @brief Each process collects the particles to be send to neighbours
@@ -388,19 +394,19 @@ class KDDecomposition: public DomainDecompBase{
 
 //  int getOwningProcPerBound(int cellPos[KDDIM], KDNode* decompTree);
 
-// den Prozess finden, dem die Zelle gehört
-// die Koordinaten cellPos müssen bezüglich des selben Referenzrahmens
+// den Prozess finden, dem die Zelle gehï¿½rt
+// die Koordinaten cellPos mï¿½ssen bezï¿½glich des selben Referenzrahmens
 // angegeben werden, der auch von decompTree verwendet wird.
 // int getOwningProc(int cellPos[KDDIM], KDNode* decompTree);
 
 
 //! evtl. Verschiebung des Referenzrahmens muss kompensiert werden
-//! Angenommen man legt ein Zellgitter über das "reale" Gebiet, so dass
+//! Angenommen man legt ein Zellgitter ï¿½ber das "reale" Gebiet, so dass
 //! die unterste Zelle genau im untersten Eck des Gebiets liegt. Nun
 //! deckt das durch _initDecompTree abgedeckte Gebiet zwar genau das gleiche
-//! Gebiet ab, aber die unterste Zelle ist gegenüber dem "realen" Zellgitter
-//! verschoben um _initOffset (möglich durch periodischen Rand). Um nun zu prüfen, ob eine
-//! Zelle in dem Gebiet _initOwnArea liegt, muss also zunächst die Koordinate
-//! angepasst werden. Um die Position bezüglich des neuen Gitters zu erhalten,
-//! muss von der ursprünglichen Koordinate _initOffset abgezogen werden.
+//! Gebiet ab, aber die unterste Zelle ist gegenï¿½ber dem "realen" Zellgitter
+//! verschoben um _initOffset (mï¿½glich durch periodischen Rand). Um nun zu prï¿½fen, ob eine
+//! Zelle in dem Gebiet _initOwnArea liegt, muss also zunï¿½chst die Koordinate
+//! angepasst werden. Um die Position bezï¿½glich des neuen Gitters zu erhalten,
+//! muss von der ursprï¿½nglichen Koordinate _initOffset abgezogen werden.
 //int _initOffset[KDDIM];

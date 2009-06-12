@@ -115,6 +115,7 @@ class Simulation{
     
   //! maximum distance at which the forces between two molecules still have to be calculated.
   double _cutoffRadius;
+  double _tersoffCutoffRadius;
 
   //! Number of discrete time steps for the simulation        
   unsigned long _numberOfTimesteps;

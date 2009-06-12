@@ -1,10 +1,16 @@
 #ifndef PARTICLECONTAINER_H_
 #define PARTICLECONTAINER_H_
 
+#include <vector>
 #include <list>
 
-class Molecule;
+#include "molecules/Molecule.h"
+
 class ParticlePairsHandler;
+class ParticleContainer;
+class DomainDecompBase;
+class Domain;
+class ChemicalPotential;
 
 using namespace std;
 
@@ -32,7 +38,7 @@ using namespace std;
 //! two opposing corners (_boundingBoxMin[3] and _boundingBoxMax[3]). 
 //! Particles inside this bounding box belong to this process, those outside don't. 
 //! An exception to this is when particles are moved in a time step. It has to be
-//! ensured, that particles which leave the bounding box are properly handled.
+//! ensured that particles which leave the bounding box are properly handled.
 //! 
 //! For non-cuboid regions, the bounding box still has to be defined as it gives
 //! an approximation for the region that is covered by the ParticleContainer.
@@ -146,7 +152,28 @@ class ParticleContainer {
   //! @param highwCorner maximum x-, y- and z-coordinate of the region
   virtual void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs) = 0;
     
-  virtual bool check(){return false;};
+  virtual bool check() { return false; };
+
+  virtual double getCutoff() = 0;
+  virtual double getTersoffCutoff() = 0;
+  virtual void countParticles(Domain* d) = 0;
+  
+  //! @brief counts all particles inside the bounding box
+  virtual unsigned countParticles(int cid) = 0;
+
+  //! @brief counts particles in the intersection of bounding box and control volume
+  virtual unsigned countParticles(
+    int cid, double* cbottom, double* ctop
+  ) = 0;
+
+  virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
+  virtual double getEnergy(Molecule* m1) = 0;
+  virtual int localGrandcanonicalBalance() = 0;
+  virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
+  virtual void grandcanonicalStep
+  (
+     ChemicalPotential* mu, double T
+  ) = 0;
 
  protected:
 

@@ -44,7 +44,7 @@ union valType{
 //!   // create object
 //!   CollectiveCommunication collComm;
 //!   // Set number of values to be sent
-//!   collComm.init(4);
+//!   collComm.init(comm, 4);
 //!
 //!   // store values to be sent
 //!   collComm.appendInt(5);
@@ -53,7 +53,7 @@ union valType{
 //!   collComm.appendUnsLong(9);
 //!
 //!   // execute collective communication
-//!   collComm.allReduceSum();
+//!   collComm.allreduceSum();
 //!
 //!   // read values (IMPORTANT: same order as for storing)
 //!   int i1 = collComm.getInt();
@@ -185,6 +185,8 @@ class CollectiveCommunication {
     _listOfTypes[_setCounter] = MPI_LONG_DOUBLE;
     _setCounter++;
   }
+
+  MPI_Comm getTopology() { return this->_communicator; }
 
   //! Get the next value from the list, which must be int
   int getInt(){

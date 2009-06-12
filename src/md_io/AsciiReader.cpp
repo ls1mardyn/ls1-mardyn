@@ -49,9 +49,10 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain) {
   double x,y,z;
   unsigned int numcomponents=0;
   unsigned int j;
-  double m,sigma,eps;
+  double m,sigma,eps,rc;
   double xi,eta;
   unsigned long i;
+  int do_shift;
 
   // When the last header element is reached, "header" is set to false
   bool header = true;
@@ -98,8 +99,8 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain) {
         _phaseSpaceFileStream >> numljcenters >> numdipoles >> numquadrupoles;
         for(j=0;j<numljcenters;++j)
         {
-          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma;
-          dcomponents[i].addLJcenter(x,y,z,m,eps,sigma);
+          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma >> rc >> do_shift;
+          dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, rc, (do_shift != 0));
         }
 
         for(j=0;j<numdipoles;++j)
@@ -186,7 +187,7 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
       numcomponents=1;
       dcomponents.resize(numcomponents);
       dcomponents[0].setID(0);
-      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.);
+      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,2.5,true);
     }
     //m_molecules.clear();
     for(i=0;i<domain->getglobalNumMolecules();++i)

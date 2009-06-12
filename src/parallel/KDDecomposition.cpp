@@ -44,11 +44,11 @@ KDDecomposition::~KDDecomposition(){
   MPI_Finalize();
 }
 
-void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
-  balanceAndExchange(false, moleculeContainer, components, domain);
+void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
+  balanceAndExchange(false, moleculeContainer, components, domain, rc);
 }
 
-void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
+void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
   _decompValid=true;
   KDNode* newDecompTree = NULL;
   KDNode* newOwnArea = NULL;
@@ -811,6 +811,101 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
   delete [] _numParticlesPerCell;
   _numParticlesPerCell = numParticlesPerCellTemp;
 
+}
+
+unsigned KDDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd)
+{
+   int num_procs;
+   MPI_Comm_size(this->_collComm.getTopology(), &num_procs);
+   unsigned* moldistribution = new unsigned[num_procs];
+   MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, this->_collComm.getTopology());
+   unsigned globalN = 0;
+   for(int r=0; r < this->_ownRank; r++) globalN += moldistribution[r];
+   unsigned localNbottom = globalN;
+   globalN += moldistribution[this->_ownRank];
+   unsigned localNtop = globalN;
+   for(int r = this->_ownRank + 1; r < num_procs; r++) globalN += moldistribution[r];
+   delete []moldistribution;
+   *minrnd = (float)localNbottom / globalN;
+   *maxrnd = (float)localNtop / globalN;
+   return globalN;
+}
+
+void KDDecomposition::assertIntIdentity(int IX)
+{
+   if(this->_ownRank)
+   {
+      MPI_Send(&IX, 1, MPI_INT, 0, 2*_ownRank+17, this->_collComm.getTopology());
+   }
+   else
+   {
+      int recv;
+      int num_procs;
+      MPI_Comm_size(this->_collComm.getTopology(), &num_procs);
+      MPI_Status s;
+      for(int i=1; i<num_procs; i++)
+      {
+         MPI_Recv(&recv, 1, MPI_INT, i, 2*i+17, this->_collComm.getTopology(), &s);
+         if(recv != IX)
+         {
+            cout << "SEVERE ERROR: IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
+            MPI_Finalize();
+            exit(911);
+         }
+      }
+      cout << "IX = " << recv << " for all " << num_procs << " ranks.\n";
+   }
+}
+
+void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
+{
+   Molecule* m;
+   if(this->_ownRank)
+   {
+      int tid;
+      for(m = mm->begin(); m != mm->end(); m = mm->next())
+      {
+         tid = m->id();
+         MPI_Send(&tid, 1, MPI_INT, 0, 2674+_ownRank, this->_collComm.getTopology());
+      }
+      tid = -1;
+      MPI_Send(&tid, 1, MPI_INT, 0, 2674+_ownRank, this->_collComm.getTopology());
+   }
+   else
+   {
+      int recv;
+      map<int, int> check;
+      for(m = mm->begin(); m != mm->end(); m = mm->next())
+      {
+         check[m->id()] = 0;
+      }
+
+      int num_procs;
+      MPI_Comm_size(this->_collComm.getTopology(), &num_procs);
+      MPI_Status s;
+      for(int i=1; i < num_procs; i++)
+      {
+         bool cc = true;
+         while(cc)
+         {
+            MPI_Recv(&recv, 1, MPI_INT, i, 2674+i, this->_collComm.getTopology(), &s);
+            if(recv == -1) cc = false;
+            else
+            {
+               if(check.find(recv) != check.end())
+               {
+                  cout << "\nSEVERE ERROR. Ranks " << check[recv] << " and "
+                       << i << " both propagate ID " << recv << ". Aborting.\n";
+                  MPI_Finalize();
+                  exit(2674);
+               }
+               else check[recv] = i;
+            }
+         }
+      }
+      cout << "\nData consistency checked. No duplicate IDs detected among " << check.size()
+           << " entries.\n";
+   }
 }
 
 

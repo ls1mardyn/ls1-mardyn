@@ -2,6 +2,9 @@
 #include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
 #include "molecules/Molecule.h"
+#include "Domain.h"
+#include "ensemble/GrandCanonical.h"
+#include "parallel/DomainDecompBase.h"
 
 #include <cmath>
 #include <iostream>
@@ -227,6 +230,133 @@ void AdaptiveSubCells::addParticle(Molecule& particle){
   }
 }
 
+void AdaptiveSubCells::countParticles(Domain* d)
+{
+  vector<Cell>::iterator cellIter;
+  std::list<Molecule*>::iterator molIter1;
+  for(unsigned i=0; i < _cells.size(); i++)
+  {
+    Cell& currentCell = _cells[i];
+    if(currentCell.isHaloCell()) continue;
+    for(molIter1=currentCell.getParticlePointers().begin(); molIter1!=currentCell.getParticlePointers().end(); molIter1++)
+    {
+      Molecule& molecule1 = **molIter1;
+      d->observeRDF(molecule1.componentid());
+    }
+  }
+}
+unsigned AdaptiveSubCells::countParticles(int cid) 
+{
+   unsigned N = 0;
+   vector<Cell>::iterator cellIter;
+   std::list<Molecule*>::iterator molIter1;
+   for(unsigned i=0; i < _cells.size(); i++)
+   {
+      Cell& currentCell = _cells[i];
+      if(currentCell.isHaloCell()) continue;
+      for( molIter1=currentCell.getParticlePointers().begin();
+           molIter1!=currentCell.getParticlePointers().end();
+           molIter1++ )
+      {
+         if((*molIter1)->componentid() == cid) N++;
+      }
+   }
+   return N;
+}
+unsigned AdaptiveSubCells::countParticles(
+   int cid, double* cbottom, double* ctop
+) {
+   int minIndex[3];
+   int maxIndex[3];
+   for(int d=0; d < 3; d++)
+   {
+      if(cbottom[d] < this->_haloBoundingBoxMin[d]) minIndex[d] = 0;
+      else minIndex[d] = (int)floor(
+         (cbottom[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]
+      );
+      if(ctop[d] > this->_haloBoundingBoxMax[d])
+	 maxIndex[d] = (int)floor(
+	    (this->_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d])
+	       / this->_cellLength[d]
+         );
+      else maxIndex[d] = (int)floor(
+         (ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]
+      );
+   }
+   
+   unsigned N = 0;
+   int cix[3];
+   vector<Cell>::iterator cellIter;
+   std::list<Molecule*>::iterator molIter1;
+   bool individualCheck;
+   int cellid;
+
+   for(cix[0] = minIndex[0]; maxIndex[0] >= cix[0]; (cix[0])++)
+      for(cix[1] = minIndex[1]; maxIndex[1] >= cix[1]; (cix[1])++)
+	 for(cix[2] = minIndex[2]; maxIndex[2] >= cix[2]; (cix[2])++)
+	 {
+	    individualCheck = (cix[0] == minIndex[0]) ||
+	                      (cix[0] == maxIndex[0]) ||
+	                      (cix[1] == maxIndex[1]) ||
+	                      (cix[1] == maxIndex[1]) ||
+	                      (cix[2] == maxIndex[2]) ||
+	                      (cix[2] == maxIndex[2]);
+	    cellid = this->subCellIndexOf3DIndex(cix[0], cix[1], cix[2]);
+            Cell& currentCell = _subCells[cellid];
+            if(currentCell.isHaloCell()) continue;
+	    if(individualCheck)
+	    {
+               for(molIter1=currentCell.getParticlePointers().begin();
+                   molIter1!=currentCell.getParticlePointers().end();
+                   molIter1++)
+	       {
+                  if( ((*molIter1)->r(0) > cbottom[0]) &&
+		      ((*molIter1)->r(1) > cbottom[1]) &&
+		      ((*molIter1)->r(2) > cbottom[2]) &&
+		      ((*molIter1)->r(0) < ctop[0]) &&
+		      ((*molIter1)->r(1) < ctop[1]) &&
+		      ((*molIter1)->r(2) < ctop[2]) &&
+		      ((*molIter1)->componentid() == cid) )
+		  {
+		     N++;
+		  }
+	       }
+	    }
+	    else
+	    {
+               for(molIter1=currentCell.getParticlePointers().begin();
+                   molIter1!=currentCell.getParticlePointers().end();
+                   molIter1++)
+	       {
+                  if((*molIter1)->componentid() == cid) N++;
+	       }
+	    }
+	 }
+   
+   return N;
+}
+
+void AdaptiveSubCells::deleteMolecule
+(
+   unsigned long molid, double x, double y, double z
+)
+{
+   int ix = (int)floor((x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
+   int iy = (int)floor((y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
+   int iz = (int)floor((z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
+   unsigned long hash = this->subCellIndexOf3DIndex(ix, iy, iz);
+   if((hash >= this->_subCells.size()) || (hash < 0))
+   {
+      cout << "SEVERE ERROR: coordinates for atom deletion lie outside bounding box.\n";
+      exit(1);
+   }
+   bool found = this->_subCells[hash].deleteMolecule(molid);
+   if(!found)
+   {
+      cout << "SEVERE ERROR: could not delete molecule " << molid << ".\n";
+      exit(1);
+   }
+}
 
 void AdaptiveSubCells::traversePairs(){
   if(_cellsValid == false) {
@@ -248,12 +378,14 @@ void AdaptiveSubCells::traversePairs(){
     }
   } 
 
-
+  double dd;
   vector<unsigned long>::iterator subCellIndexIter;
   vector<unsigned long>::iterator neighbourSubOffsetsIter;
   
   // sqare of the cutoffradius
-  double cutoffRadiusSquare = pow(_cutoffRadius,2); 
+  double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius; 
+  double tersoffCutoffRadiusSquare = this->_tersoffCutoffRadius
+                                   * this->_tersoffCutoffRadius;
   // loop over all inner subCells and calculate forces to forward neighbours
   for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_innerSubCellIndices.end(); subCellIndexIter++){
     Cell& currentSubCell = _subCells[*subCellIndexIter];
@@ -262,8 +394,14 @@ void AdaptiveSubCells::traversePairs(){
       Molecule& molecule1 = **molIter1;
       for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
         Molecule& molecule2 = **molIter2;
-        if(&molecule1 != &molecule2 && molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare){
-          this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0);
+	dd = molecule2.dist2(molecule1,distanceVector);
+        if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
+          this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+	  if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+	                                   && (dd < tersoffCutoffRadiusSquare) )
+	  { 
+	     this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+	  }
         }
       }
     }
@@ -276,9 +414,15 @@ void AdaptiveSubCells::traversePairs(){
         Molecule& molecule1 = **molIter1;
         for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
           Molecule& molecule2 = **molIter2;
-          if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
-            this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0);
-          }
+	  dd = molecule2.dist2(molecule1,distanceVector);
+          if(dd < cutoffRadiusSquare) {
+            this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+	    if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+	                                     && (dd < tersoffCutoffRadiusSquare) )
+	    {
+	      this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+	    }
+	  }
         }
       }
     }
@@ -292,8 +436,14 @@ void AdaptiveSubCells::traversePairs(){
       Molecule& molecule1 = **molIter1;
       for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
         Molecule& molecule2 = **molIter2;
-        if(&molecule1 != &molecule2 && molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare){
-          this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0);      
+	dd = molecule2.dist2(molecule1,distanceVector);
+        if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
+          this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);       
+	  if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+	                                   && (dd < tersoffCutoffRadiusSquare) )
+	  {
+	     this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+	  }
         }
       }
     }
@@ -307,17 +457,74 @@ void AdaptiveSubCells::traversePairs(){
         Molecule& molecule1 = **molIter1;
         for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
           Molecule& molecule2 = **molIter2;
-          if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
+	  dd = molecule2.dist2(molecule1,distanceVector);
+          if(dd < cutoffRadiusSquare) {
             if(neighbourSubCell.isHaloCell() && not isFirstParticle(molecule1, molecule2)){
-              this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1);
+              this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1,dd);
+	      if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+	                                       && (dd < tersoffCutoffRadiusSquare) )
+	      {
+	        this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,true);
+	      }
             }
             else{
-              this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0);
+              this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+	      if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+	                                       && (dd < tersoffCutoffRadiusSquare) )
+	      {
+	         this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+	      }
             }
           }
         }
       }
     }
+
+  // loop over halo cells and detect Tersoff neighbours within the halo
+  // this is relevant for the angle summation
+  for(unsigned i=0; i < _subCells.size(); i++)
+  {
+    Cell& currentSubCell = _subCells[i];
+    if(!currentSubCell.isHaloCell()) continue;
+
+    for( molIter1=currentSubCell.getParticlePointers().begin();
+         molIter1!=currentSubCell.getParticlePointers().end();
+         molIter1++ )
+    {
+      Molecule& molecule1 = **molIter1;
+      if(molecule1.numTersoff() == 0) continue;
+      for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++)
+      {
+        Molecule& molecule2 = **molIter2;
+        if((&molecule1 != &molecule2) && (molecule2.numTersoff() > 0))
+        { 
+          double dd = molecule2.dist2(molecule1, distanceVector);
+          if(dd < tersoffCutoffRadiusSquare)
+            this->_particlePairsHandler.preprocessTersoffPair(molecule1, molecule2, true);
+        }
+      }
+      
+      for( neighbourSubOffsetsIter=_forwardNeighbourSubOffsets[i].begin();
+           neighbourSubOffsetsIter!=_forwardNeighbourSubOffsets[i].end();
+           neighbourSubOffsetsIter++ )
+      {
+        int j = i + *neighbourSubOffsetsIter;
+        if((j < 0) || (j >= (int)(this->_subCells.size()))) continue;
+        Cell& neighbourSubCell = _subCells[j];
+        if(!neighbourSubCell.isHaloCell()) continue;
+        for( molIter2=neighbourSubCell.getParticlePointers().begin();
+             molIter2!=neighbourSubCell.getParticlePointers().end();
+             molIter2++ )
+        {
+          Molecule& molecule2 = **molIter2;
+          if(molecule2.numTersoff() == 0) continue;
+          double dd = molecule2.dist2(molecule1, distanceVector);
+          if(dd < tersoffCutoffRadiusSquare)
+            this->_particlePairsHandler.preprocessTersoffPair(molecule1, molecule2, true);
+        }
+      }
+    }
+  }
 
     // loop over all backward neighbours. calculate only forces
     // to neighbour subCells in the halo region, all others already have been calculated
@@ -330,12 +537,14 @@ void AdaptiveSubCells::traversePairs(){
           Molecule& molecule1 = **molIter1;
           for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
             Molecule& molecule2 = **molIter2;
+	    if((molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)) continue;
+	    double dd = molecule2.dist2(molecule1,distanceVector);
             if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
               if (isFirstParticle(molecule1, molecule2)) {
-                this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0);
+                this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
               }
               else{
-                this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1);
+                this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1,dd);
               }
             }
           }
@@ -343,9 +552,101 @@ void AdaptiveSubCells::traversePairs(){
       }
     }
   }
+  
+#ifndef NDEBUG
+  cout << "processing Tersoff potential.\n";  //X
+#endif
+  double params[15];
+  double delta_r;
+  bool knowparams = false;
+
+  for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
+    if(subCellIndexIter == this->_innerSubCellIndices.end())
+      subCellIndexIter = this->_boundarySubCellIndices.begin();
+    Cell& currentSubCell = _subCells[*subCellIndexIter];
+    for( molIter1=currentSubCell.getParticlePointers().begin();
+         molIter1!=currentSubCell.getParticlePointers().end();
+         molIter1++ )
+    {
+      Molecule& molecule1 = **molIter1;
+      if(molecule1.numTersoff() == 0) continue;
+      if(!knowparams)
+      {
+         delta_r = molecule1.tersoffParameters(params);
+         knowparams = true;
+      }
+      this->_particlePairsHandler.processTersoffAtom(molecule1, params, delta_r);
+    }
+  }
+  
   this->_particlePairsHandler.finish();
 }
 
+double AdaptiveSubCells::getEnergy(Molecule* m1)
+{
+   double u = 0.0;
+   double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius; 
+   double dd;
+   double distanceVector[3];
+   std::list<Molecule*>::iterator molIter2;
+   unsigned long m1id = m1->id();
+
+   unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
+   Cell& currentSubCell = _subCells[subCellIndex];
+   vector<unsigned long>::iterator subCellIndexIter;
+   vector<unsigned long>::iterator neighbourSubOffsetsIter;
+
+   if(m1->numTersoff() > 0)
+   {
+      cout << "The grand canonical ensemble is not implemented for solids.\n";
+      exit(848);
+   }
+   // molecules in the same subCell
+   for( molIter2=currentSubCell.getParticlePointers().begin();
+        molIter2!=currentSubCell.getParticlePointers().end();
+        molIter2++ )
+   {
+      if(m1id == (*molIter2)->id()) continue;
+      dd = (*molIter2)->dist2(*m1, distanceVector);
+      if(dd > cutoffRadiusSquare) continue;
+      u += this->_particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
+   }
+
+   // loop over all forward neighbours
+   for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[subCellIndex].begin();
+        neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[subCellIndex].end();
+        neighbourSubOffsetsIter++ )
+   {
+      Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
+      // loop over all particles in the subCell
+      for( molIter2=neighbourSubCell.getParticlePointers().begin();
+           molIter2!=neighbourSubCell.getParticlePointers().end();
+           molIter2++ )
+      {
+	 dd = (*molIter2)->dist2(*m1, distanceVector);
+	 if(dd > cutoffRadiusSquare) continue;
+	 u += this->_particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
+      }
+   }
+   // loop over all backward neighbours
+   for( neighbourSubOffsetsIter =_backwardNeighbourSubOffsets[subCellIndex].begin();
+        neighbourSubOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end();
+        neighbourSubOffsetsIter++ )
+   {
+      Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
+      // loop over all particles in the subCell
+      for( molIter2=neighbourSubCell.getParticlePointers().begin();
+           molIter2!=neighbourSubCell.getParticlePointers().end();
+           molIter2++ )
+      {
+	 dd = (*molIter2)->dist2(*m1, distanceVector);
+	 if(dd > cutoffRadiusSquare) continue;
+	 u += this->_particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
+      }
+   }
+   
+   return u;
+}
 
 unsigned long AdaptiveSubCells::getNumberOfParticles(){
   return _particles.size(); 
@@ -952,7 +1253,6 @@ void AdaptiveSubCells::calculateMetaCellIndex(){
   _metaCellIndex[_cells.size()]=numberOfSubCells;
 }
 
-
 void AdaptiveSubCells::calculateLocalRho(){
   // may be you can get along without the integer variables cellIntIterator and minIterator 
   int cellIntIterator=0;
@@ -989,4 +1289,122 @@ bool AdaptiveSubCells::isFirstParticle(Molecule& m1, Molecule& m2){
       }      
     }
   }
+}
+
+int AdaptiveSubCells::grandcanonicalBalance(DomainDecompBase* comm)
+{
+   comm->collCommInit(1);
+   comm->collCommAppendInt(this->_localInsertionsMinusDeletions);
+   comm->collCommAllreduceSum();
+   int universalInsertionsMinusDeletions = comm->collCommGetInt();
+   comm->collCommFinalize();
+   return universalInsertionsMinusDeletions;
+}
+
+void AdaptiveSubCells::grandcanonicalStep
+(
+   ChemicalPotential* mu, double T
+)
+{
+   bool accept = true;
+   double DeltaUpot;
+   Molecule* m;
+
+   this->_localInsertionsMinusDeletions = 0;
+
+   mu->submitTemperature(T);
+   double minco[3];
+   double maxco[3];
+   for(int d=0; d < 3; d++)
+   {
+      minco[d] = this->getBoundingBoxMin(d);
+      maxco[d] = this->getBoundingBoxMax(d);
+   }
+
+   bool hasDeletion = true;
+   bool hasInsertion = true;
+   double ins[3];
+   unsigned nextid = 0;
+   while(hasDeletion || hasInsertion)
+   {
+      if(hasDeletion)
+         hasDeletion = mu->getDeletion(this, minco, maxco);
+      if(hasDeletion)
+      {
+         m = &(*(this->_particleIter));
+         DeltaUpot = -1.0 * getEnergy(m);
+
+         accept = mu->decideDeletion(DeltaUpot / T);
+#ifndef NDEBUG
+         if(accept) cout << "r" << mu->rank() << "d" << m->id() << "\n";
+         else cout << "   (r" << mu->rank() << "-d" << m->id() << ")\n";
+         cout.flush();
+#endif
+         if(accept)
+         {
+            m->upd_cache();
+            // m->clearFM();
+            m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
+            mu->storeMolecule(*m);
+            this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+            this->_particles.erase(this->_particleIter);
+            this->_particleIter = _particles.begin();
+            this->_localInsertionsMinusDeletions--;
+         }
+      }
+
+      if(hasInsertion)
+      {
+         nextid = mu->getInsertion(ins);
+         hasInsertion = (nextid > 0);
+      }
+      if(hasInsertion)
+      {
+         // for(int d = 0; d < 3; d++)
+         //    ins[d] = ins[d]-coords[d]*proc_domain_L[d]-m_rmin[d];
+         Molecule tmp = mu->loadMolecule();
+         for(int d=0; d < 3; d++) tmp.setr(d, ins[d]);
+         tmp.setid(nextid);
+         this->_particles.push_back(tmp);
+
+         std::list<Molecule>::iterator mit = _particles.end();
+         mit--;
+         m = &(*mit);
+         m->upd_cache();
+         m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
+         m->check(nextid); 
+#ifndef NDEBUG
+         cout << "rank " << mu->rank() << ": insert " << m->id() 
+              << " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? ";
+         cout.flush();
+#endif
+
+         this->addParticle(*m);
+         DeltaUpot = getEnergy(m);
+         accept = mu->decideInsertion(DeltaUpot/T);
+
+#ifndef NDEBUG
+         if(accept) cout << "r" << mu->rank() << "i" << mit->id() << ")\n";
+         else cout << "   (r" << mu->rank() << "-i" << mit->id() << ")\n";
+         cout.flush();
+#endif
+         if(accept)
+         {
+            this->_localInsertionsMinusDeletions++;
+         }
+         else
+         {
+            this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+
+            mit->check(m->id());
+            this->_particles.erase(mit);
+         }
+      }
+   }
+   for(m = this->begin(); m != this->end(); m = this->next())
+   {
+#ifndef NDEBUG
+      m->check(m->id());
+#endif
+   }
 }

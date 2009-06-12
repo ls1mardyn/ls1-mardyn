@@ -21,6 +21,7 @@
 #define SITE_H_
 
 #include <iostream>
+#include <math.h>
 
 /** Site
 @author Martin Bernreuther
@@ -61,24 +62,180 @@ protected:
 class LJcenter : public Site
 {
 public:
-  /// Constructor
-  LJcenter(double x, double y, double z ,double m, double eps, double sigma)
+  /// Constructor: pass shift = 0.0 for the full LJ potential
+  LJcenter(double x, double y, double z ,double m, double eps, double sigma, double shift)
     : Site(x,y,z,m), m_eps(eps), m_sigma(sigma)
-    { m_r[0]=x; m_r[1]=y; m_r[2]=z; }
+    { m_r[0]=x; m_r[1]=y; m_r[2]=z; uLJshift6 = shift; }
   /// Constructor reading from stream
-  LJcenter(std::istream& istrm) { istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_m >> m_eps >> m_sigma; }
+  LJcenter(std::istream& istrm) { istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_m >> m_eps >> m_sigma >> uLJshift6; }
   /// write to stream
-  void write(std::ostream& ostrm) const { ostrm << m_r[0] << " " << m_r[1] << " "  << m_r[2]<< "\t"  << m_m << "\t"  << m_eps << " "  << m_sigma; }
+  void write(std::ostream& ostrm) const { ostrm << m_r[0] << " " << m_r[1] << " "  << m_r[2]<< "\t"  << m_m << "\t"  << m_eps << " " << m_sigma << " " << uLJshift6; }
   /// get strength
   double eps() const { return m_eps; }
   /// get diameter
   double sigma() const { return m_sigma; }
+  /// get truncation option
+  bool TRUNCATED_SHIFTED() { return (this->uLJshift6 != 0.0); }
 
 private:
   double m_eps; // strength
   double m_sigma; // diameter
+  double uLJshift6;  // truncation offset of the LJ potential
 };
 
+class Charge: public Site
+{
+ public:
+   /// Constructor
+   Charge(double x, double y, double z, double m, double q)
+      : Site(x, y, z, m), m_q(q)
+   {
+      m_r[0]=x; m_r[1]=y; m_r[2]=z;
+      m_m = m;
+      m_q = q;
+   }
+
+   /// Constructor reading from stream
+   Charge(std::istream& istrm)
+   {
+      istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_m >> m_q;
+   }
+   /// write to stream
+   void write(std::ostream& ostrm) const 
+   {
+      ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t" << m_m << " " << m_q;
+   }
+   /// get charge
+   double q() const { return m_q; }
+
+ private:
+   /// charge
+   double m_q;
+};
+
+class Tersoff: public Site
+{
+ public:
+   Tersoff( double x, double y, double z,
+            double m, double A, double B,
+            double lambda, double mu, double R, double S,
+            double c, double d, double h, double n, double beta )
+      : Site(x, y, z, m)
+   {
+      this->m_r[0] = x;
+      this->m_r[1] = y;
+      this->m_r[2] = z;
+
+      this->m_m = m;
+      this->m_A = A;
+      this->m_B = B;
+
+      this->m_minus_lambda = -lambda;
+      this->m_minus_mu = -mu;
+      this->m_R = R;
+      this->m_S = S;
+
+      this->m_c_square = c*c;
+      this->m_d_square = d*d;
+      this->m_h = h;
+      this->m_n = n;
+      this->m_beta = beta;
+   }
+
+   /// Constructor reading from stream
+   Tersoff(std::istream& istrm)
+   {
+      double lambda, mu, c, d;
+      istrm >> m_r[0] >> m_r[1] >> m_r[2]
+            >> m_m >> m_A >> m_B >> lambda >> mu
+            >> m_R >> m_S >> c
+            >> d >> m_h >> m_n >> m_beta;
+      m_minus_lambda = -lambda;
+      m_minus_mu = -mu;
+      m_c_square = c*c;
+      m_d_square = d*d;
+   }
+
+   //! @brief write to stream
+   //!
+   void write(std::ostream& ostrm) const
+   {
+      ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t"
+            << m_m << "\t"  << m_A << " "  << m_B << " " << -m_minus_lambda << " " << -m_minus_mu << "\t"
+            << m_R << " " << m_S << "\t" << sqrt(m_c_square) << " "
+            << sqrt(m_d_square) << "\t" << m_h << " " << m_n << " " << m_beta;
+   }
+
+   //! @brief get repulsive coefficient
+   //!
+   double A() const { return this->m_A; }
+
+   //! @brief get attractive coefficient
+   //!
+   double B() const { return this->m_B; }
+
+   //! @brief get repulsive coexponent
+   //!
+   double minusLambda() const { return this->m_minus_lambda; }
+
+   //! @brief get attractive coexponent
+   //!
+   double minusMu() const { return this->m_minus_mu; }
+
+   //! @brief get internal radius
+   //!
+   double R() const { return this->m_R; }
+
+   //! @brief get external radius
+   //!
+   double S() const { return this->m_S; }
+
+   //! @brief get c square Tersoff interaction parameter
+   //!
+   double cSquare() const { return this->m_c_square; }
+
+   //! @brief get d square Tersoff interaction parameter
+   //!
+   double dSquare() const { return this->m_d_square; }
+
+   //! @brief get h Tersoff interaction parameter
+   //!
+   double h() const { return this->m_h; }
+
+   //! @brief get n Tersoff interaction parameter
+   //!
+   double n() const { return this->m_n; }
+
+   //! @brief get beta Tersoff interaction parameter
+   //!
+   double beta() const { return this->m_beta; }
+
+ private:
+   //! repulsive coefficient
+   double m_A;
+   //! attractive coefficient
+   double m_B;
+   //! repulsive coexponent
+   double m_minus_lambda;
+   //! attractive coexponent
+   double m_minus_mu;
+
+   //! internal radius
+   double m_R;
+   //! external radius
+   double m_S;
+
+   //! c square Tersoff interaction parameter
+   double m_c_square;
+   //! d square Tersoff interaction parameter
+   double m_d_square;
+   //! h Tersoff interaction parameter
+   double m_h;
+   //! n Tersoff interaction parameter
+   double m_n;
+   //! beta Tersoff interaction parameter
+   double m_beta;
+};
 
 /** OrientedSite
 @author Martin Bernreuther

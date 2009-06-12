@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Martin Bernreuther   *
- *   Martin.Bernreuther@informatik.uni-stuttgart.de   *
+ *   Copyright (C) 2009 by Martin Bernreuther and colleagues               *
+ *   bernreuther@hlrs.de                                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -22,11 +22,12 @@
 
 #include <vector>
 #include <string>
+using namespace std;
 
 #include "molecules/Site.h"
 
 /**
-Komponente (Molekltyp)
+Komponente (Molekueltyp)
 
 @author Martin Bernreuther
 */
@@ -37,10 +38,19 @@ public:
 
   void setID(unsigned int id) { m_id=id; };
   unsigned int ID() const { return m_id; }
-  unsigned int numSites() const { return numLJcenters()+numDipoles()+numQuadrupoles(); }
+  unsigned int numSites() const
+  { 
+     return this->numLJcenters() + this->numCharges()
+                                 + this->numDipoles()
+                                 + this->numQuadrupoles()
+                                 + this->numTersoff();
+  }
   unsigned int numLJcenters() const { return m_ljcenters.size(); }
+  unsigned numCharges() const { return m_charges.size(); }
   unsigned int numDipoles() const { return m_dipoles.size(); }
   unsigned int numQuadrupoles() const { return m_quadrupoles.size(); }
+  unsigned int numTersoff() const { return m_tersoff.size(); }
+  
   double m() const { return m_m; }
   const double* I() const { return m_I; }
   const double* Ipa() const { return m_Ipa; }
@@ -69,28 +79,41 @@ public:
            ,double Ixy=0.,double Ixz=0.,double Iyz=0.);
   unsigned int rot_dof() const { return m_rot_dof; }
 
-  //const std::vector<Site>& sites() const { return m_sites; }  // see below
-  //const Site& site(unsigned int i) const { return m_sites[i]; }
   const std::vector<LJcenter>& ljcenters() const { return m_ljcenters; }
   const LJcenter& ljcenter(unsigned int i) const { return m_ljcenters[i]; }
+  const std::vector<Charge>& charges() const { return m_charges; }
+  const Charge& charge(unsigned i) const { return m_charges[i]; }
   const std::vector<Dipole>& dipoles() const { return m_dipoles; }
   const Dipole& dipole(unsigned int i) const { return m_dipoles[i]; }
   const std::vector<Quadrupole>& quadrupoles() const { return m_quadrupoles; }
   const Quadrupole& quadrupole(unsigned int i) const { return m_quadrupoles[i]; }
+  const std::vector<Tersoff>& tersoff() const { return m_tersoff; }
+  const Tersoff& tersoff(unsigned int i) const { return m_tersoff[i]; }
+  
   //! @brief set the number of Molecules (global) which have this component type
   void setnumMolecules(int num) {m_numMolecules = num; } 
   void incrnumMolecules() { ++m_numMolecules; }
   unsigned long numMolecules() const { return m_numMolecules; }
+  void Nadd(int N) { this->m_numMolecules += N; }
 
-  void addLJcenter(double x, double y, double z
-                  ,double m, double eps, double sigma);
+  void addLJcenter(
+     double x, double y, double z, double m, double eps,
+     double sigma, double rc, bool TRUNCATED_SHIFTED
+  );
+  void addCharge(double x, double y, double z, double m, double q);
   void addDipole(double x, double y, double z
                 ,double eMyx, double eMyy, double eMyz, double eMyabs);
   void addQuadrupole(double x, double y, double z
                     ,double eQx, double eQy, double eQz, double eQabs);
+  void addTersoff( double x, double y, double z,
+                   double m, double A, double B, double lambda, double mu, double R,
+                   double S, double c, double d, double h, double n, double beta  );
 
-  /// NOT SUPPORTED!!!
-  void transformPA();
+  /*
+   * Was ist das ueberhaupt? (M. H.) Ich nehme es mal raus ...
+   * /// NOT SUPPORTED!!!
+   * void transformPA();
+   */
 
   /** write information to stream */
   void write(std::ostream& ostrm) const;
@@ -98,14 +121,21 @@ public:
   /** write POVray object definition to stream */
   void writePOVobjs(std::ostream& ostrm, std::string para=std::string("pigment {color rgb<1,0,0>}")) const;
 
+  void writeVIM(std::ostream& ostrm);
+
+  double getTersoffRadius() { return this->maximalTersoffExternalRadius; }
+  void setTersoffRadius(double mTER) { this->maximalTersoffExternalRadius = mTER; }
+
 private:
   unsigned int m_id;  // IDentification number
   // LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array
   //std::vector<Site> m_sites;
   // use separate vectors instead...
   std::vector<LJcenter> m_ljcenters;
+  vector<Charge> m_charges;
   std::vector<Dipole> m_dipoles;
   std::vector<Quadrupole> m_quadrupoles;
+  vector<Tersoff> m_tersoff;
   // for performance reasons better(?) omit Site-class indirection and use cached values
   double m_m; // total mass
   //       Ixx,Iyy,Izz,Ixy,Ixz,Iyz
@@ -113,6 +143,7 @@ private:
   unsigned long m_rot_dof;  // number of rotational degrees of freedom
   double m_Ipa[3];  // moments of inertia for principal axes
   unsigned long m_numMolecules; // number of molecules for this molecule type
+  double maximalTersoffExternalRadius;
 };
 
 #endif /*COMPONENT_H_*/

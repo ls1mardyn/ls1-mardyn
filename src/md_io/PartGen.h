@@ -89,6 +89,7 @@ class PartGen : public InputBase{
   double getDipolePos(int comp, int site, int dim);
   double getQuadrupolePos(int comp, int site, int dim);
   double getEpsilonSite(int comp, int site);
+  bool getShiftSite(int comp, int site);
   double getMSite(int comp, int site);
   double getSigmaSite(int comp, int site);
   double getEMyBody(int comp, int site, int dim);
@@ -359,6 +360,7 @@ class PartGen : public InputBase{
   vector<vector<double> > _epsilonSite;
   vector<vector<double> > _mSite;
   vector<vector<double> > _sigmaSite;
+  vector< vector<bool> > _shiftSite;
   vector<vector<vector<double> > > _eMyBody;
   vector<vector<double> > _absMy;
   vector<vector<vector<double> > > _eQBody;
@@ -366,6 +368,8 @@ class PartGen : public InputBase{
   vector<vector<double> > _iBody;
   vector<vector<double> > _invIBody;
 
+  double _cutoffRadius;
+  double _tersoffCutoffRadius;
 };
 
 #endif /*PARTGEN_H_*/

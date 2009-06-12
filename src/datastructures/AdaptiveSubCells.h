@@ -8,6 +8,8 @@
 //#include <iostream>
 
 class Cell;
+class ChemicalPotential;
+class DomainDecompBase;
 
 //! @brief Adaptive SubCell Data Structure
 //! @author Martin Buchholz
@@ -123,7 +125,20 @@ class AdaptiveSubCells: public ParticleContainer {
   // documentation see father class (ParticleContainer.h)
   void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs);
     
+  double getCutoff() { return this->_cutoffRadius; }
+  double getTersoffCutoff() { return this->_tersoffCutoffRadius; }
+  void countParticles(Domain* d);
+  //! @brief counts all particles inside the bounding box
+  unsigned countParticles(int cid);
+  //! @brief counts particles in the intersection of bounding box and control volume
+  unsigned countParticles(int cid, double* cbottom, double* ctop);
 
+  void deleteMolecule(unsigned long molid, double x, double y, double z);
+  double getEnergy(Molecule* m1);
+  int localGrandcanonicalBalance() { return this->_localInsertionsMinusDeletions; }
+  int grandcanonicalBalance(DomainDecompBase* comm);
+  void grandcanonicalStep(ChemicalPotential* mu, double T);
+  
  private:
   //####################################
   //######### PRIVATE METHODS ##########
@@ -250,6 +265,10 @@ class AdaptiveSubCells: public ParticleContainer {
   double _cellLength[3];
   //! cutoff radius
   double _cutoffRadius;
+  //! Tersoff cutoff radius
+  double _tersoffCutoffRadius;
+  //! balance of the grand canonical ensemble
+  int _localInsertionsMinusDeletions;
     
   //! Depending on the density, a cell is refined (resulting in 8 subcells) or not.
   //! All cells (fine and coarse) are stored in one big vector (_subCells). 
