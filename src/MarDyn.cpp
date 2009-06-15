@@ -1,4 +1,5 @@
 #include <iostream>
+#include <ctime>
 #include "Simulation.h"
 
 using namespace std;
@@ -18,16 +19,12 @@ int main(int argc, char** argv){
 
   Simulation simulation(&argc, &argv);
   
-  /*
-   * rejected by the Portland Group compiler
-   */
-  // double runtime = double(clock())/CLOCKS_PER_SEC;
+  double runtime = double(clock())/CLOCKS_PER_SEC;
 
   simulation.simulate();
 
-  /*
-   * rejected by the Portland Group compiler
-   */
-  // runtime=double(clock())/CLOCKS_PER_SEC-runtime;
-  // cout << "main: used " << runtime << " s" << endl;
+  runtime=double(clock())/CLOCKS_PER_SEC-runtime;
+  
+  cout << "main: used " << runtime << " s" << endl;
+
 }
