@@ -4,20 +4,15 @@
 #define DIM 3
 
 /* indexes of the neighbours in the neighbour-array */
-#define XLOWER 0
+#define XLOWER  0
 #define XHIGHER 1
-#define YLOWER 2
+#define YLOWER  2
 #define YHIGHER 3
-#define ZLOWER 4
+#define ZLOWER  4
 #define ZHIGHER 5
 
 #include "parallel/DomainDecompBase.h"
 #include <iostream>
-
-// See page 27 of MPICH2 User Guide for reference
-#undef SEEK_SET
-#undef SEEK_END
-#undef SEEK_CUR
 #include "mpi.h"
 
 #include "parallel/CollectiveCommunication.h"
