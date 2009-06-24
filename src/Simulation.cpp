@@ -28,23 +28,21 @@
 
 Simulation::Simulation(int *argc, char ***argv)
 {
-  int ownrank;
+  int ownrank = 0;
 #ifdef PARALLEL
   MPI_Init(argc,argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
-#else
-  ownrank = 0;
-  _domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
 #endif
   if (*argc != 4) {
     if (ownrank == 0) {
       cout << "Usage: " << *argv[0] << " <configfilename> <number of timesteps> <outputprefix>" << endl;
     }
-#ifndef PARALLEL
-    delete _domainDecomposition;
-#endif
     exit(1);
   }
+
+#ifndef PARALLEL
+  _domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+#endif
 
   // open filestream to the input file
   string inputfilename((*argv)[1]);
@@ -129,8 +127,9 @@ Simulation::Simulation(int *argc, char ***argv)
     } 
     else if (token=="parallelisation") {
 #ifndef PARALLEL
-      cerr << "ERROR: config demands parallelisation, but the current compilation isn't supposed to run parallel" << endl;
-      exit(1);
+      cerr << "\nWARING: Input file demands parallelisation, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
+      inputfilestream >> token;
+      //exit(1);
 #else
       inputfilestream >> token;
       if (token=="DomainDecomposition") {
