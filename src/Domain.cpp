@@ -106,6 +106,10 @@ vector<Component>& Domain::getComponents(){
   return _components; 
 }
 
+void Domain::addComponent(Component component){
+  _components.push_back(component);
+}
+
 Comp2Param& Domain::getComp2Params(){
   return _comp2params; 
 }

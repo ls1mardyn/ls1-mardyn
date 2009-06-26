@@ -180,9 +180,12 @@ class Domain{
   //! @brief advance the current time by timestep
   void advanceTime(double timestep);
 
-  //! @brief get a reference to the vector of Components
+  //! @brief get a reference to the vector of components
   vector<Component>& getComponents();
-    
+
+  //! @brief add a component to the vector of components
+  void addComponent(Component component);
+
   //! @brief get the parameter streams
   Comp2Param& getComp2Params();
        

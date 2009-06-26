@@ -79,37 +79,35 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
     if(token=="NumberOfComponents") {
 
       _phaseSpaceFileStream >> numcomponents;
-      dcomponents.resize(numcomponents);
       for(i=0;i<numcomponents;++i)
       {
-        dcomponents[i].setID(i);
+        Component component(i);
         unsigned int numljcenters=0;
         unsigned int numdipoles=0;
         unsigned int numquadrupoles=0;
         _phaseSpaceFileStream >> numljcenters >> numdipoles >> numquadrupoles;
-        for(j=0;j<numljcenters;++j)
-        {
+        for(j=0;j<numljcenters;++j) {
           _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma;
-          dcomponents[i].addLJcenter(x,y,z,m,eps,sigma,2.5*sigma,true);
+          component.addLJcenter(x,y,z,m,eps,sigma,2.5*sigma,true);
         }
 
-        for(j=0;j<numdipoles;++j)
-        {
+        for(j=0;j<numdipoles;++j) {
           double eMyx,eMyy,eMyz,absMy;
           _phaseSpaceFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
-          dcomponents[i].addDipole(x,y,z,eMyx,eMyy,eMyz,absMy);
+          component.addDipole(x,y,z,eMyx,eMyy,eMyz,absMy);
         }
-        for(j=0;j<numquadrupoles;++j)
-        {
+        for(j=0;j<numquadrupoles;++j) {
           double eQx,eQy,eQz,absQ;
           _phaseSpaceFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
-          dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
+          component.addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
         }
         double IDummy1,IDummy2,IDummy3;
         _phaseSpaceFileStream >> IDummy1 >> IDummy2 >> IDummy3;
         if(IDummy1>0.) dcomponents[i].setI11(IDummy1);
         if(IDummy2>0.) dcomponents[i].setI22(IDummy2);
         if(IDummy3>0.) dcomponents[i].setI33(IDummy3);
+	
+	domain->addComponent(component);
       }
       vector<double>& dmixcoeff = domain->getmixcoeff();
       dmixcoeff.clear();
