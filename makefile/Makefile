@@ -1,5 +1,5 @@
 # compiler configuration
-CFG := gcc
+CFG := icc
 #$(info $(CFG) set through $(origin CFG))
 
 # machine type: SEQ or PAR
@@ -7,7 +7,7 @@ PARTYPE := SEQ
 #$(info $(PARTYPE) set through $(origin PARTYPE))
 
 # choose target: DEBUG|RELEASE
-TARGET := DEBUG
+TARGET := RELEASE
 #$(info $(TARGET) set through $(origin TARGET))
 
 

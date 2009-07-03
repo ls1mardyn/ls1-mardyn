@@ -1,5 +1,6 @@
 #include "PartGen.h"
 #include <cmath>
+#include <ctime>
 #include <iostream>
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
@@ -1027,8 +1028,8 @@ void PartGen::getEigenvecs(vector<vector<double> > &m, vector<vector<double> > &
   }
   double phi = acos(-q/(2*sqrt(-p*p*p)));
   double y1 =  2*sqrt(-p)*cos(phi/3);
-  double y2 = -2*sqrt(-p)*cos(phi/3+acos(-1)/3);
-  double y3 = -2*sqrt(-p)*cos(phi/3-acos(-1)/3);
+  double y2 = -2*sqrt(-p)*cos(phi/3+acos(-1.)/3);
+  double y3 = -2*sqrt(-p)*cos(phi/3-acos(-1.)/3);
 
   vector<double> eigenvalues;
   eigenvalues.resize(3);
