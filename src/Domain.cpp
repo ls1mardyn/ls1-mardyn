@@ -183,8 +183,7 @@ void Domain::writeCheckpoint(string filename, ParticleContainer* particleContain
                      
   ofstream checkpointfilestream(filename.c_str());
   checkpointfilestream << "MDProject\t20070111"<< endl;
-  //! @todo use real cuurenttime
-  checkpointfilestream << "currentTime\t0"  << endl;
+  checkpointfilestream << "currentTime\t" << _currentTime << endl;
   checkpointfilestream << "Temperature\t" << _globalTemperature << endl;
   checkpointfilestream << "Length\t" << _globalLength[0] << "\t" << _globalLength[1] << "\t" << _globalLength[2] << endl;
   checkpointfilestream << "NumberOfComponents\t" << _components.size() << endl;
