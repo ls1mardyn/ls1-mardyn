@@ -9,7 +9,7 @@ class Domain;
 //!
 //! The basic idea of the integrator is, that it calculates from
 //! given values at one timestep the corresponding values in the next timestep.
-//! A PREDONDITION for each integrator is, that all values that the integrator
+//! A PRECONDITION for each integrator is, that all values that the integrator
 //! reads before it writes them have to be available at the same point in
 //! time (usually t=0). E.g. positions and velocities are always available
 //! at the same starting time as they are read from the input file, but

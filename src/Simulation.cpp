@@ -47,6 +47,10 @@ Simulation::Simulation(int *argc, char ***argv)
   // open filestream to the input file
   string inputfilename((*argv)[1]);
   ifstream inputfilestream(inputfilename.c_str());
+  if ( !inputfilestream.is_open() ) {
+    cerr << "ERROR: Could not open file " << inputfilename << endl;
+    exit (1);
+  }
 
   std::string inputPath;
   unsigned int lastIndex = inputfilename.find_last_of('/',inputfilename.size()-1);
