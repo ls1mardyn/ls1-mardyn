@@ -63,6 +63,10 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
   numPartsToSend.resize(2);
 
   MPI_Status status;
+  // create a MPI Datatype which can store that molecule-data that has to be sent
+  MPI_Datatype sendPartType;
+  ParticleData::setMPIType(sendPartType);
+
   int direction; // direction (0=low/1=high) of molecule movement
 
   for(unsigned short d=0;d<3;++d){
@@ -130,10 +134,6 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 
       // initialize receive buffer
       particlesRecvBuf = new ParticleData[numrecv];
-
-      // create a MPI Datatype which can store that molecule-data that has to be sent
-      MPI_Datatype sendPartType;
-      ParticleData::setMPIType(sendPartType);
 
       // Send values to lower/upper and receive values from upper/lower
       MPI_Sendrecv(particlesSendBufs[direction], numsend, sendPartType, _neighbours[2*d+direction], 99,
