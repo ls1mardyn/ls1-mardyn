@@ -152,6 +152,9 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 
     }
 #if 0
+/* When uncommenting this part the handling of recieved molecules will go to a separate loop. 
+ * WARNING: Results differ. The reason is not clear, yet.
+ */
   }
   for(unsigned short d=0;d<3;++d){
 #endif
