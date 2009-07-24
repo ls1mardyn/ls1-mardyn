@@ -55,14 +55,26 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
     rmax[i] =  moleculeContainer->getBoundingBoxMax(i);
     halo_L[i] =  moleculeContainer->get_halo_L(i);
   }
+  vector<int> compCount;
+  compCount.resize(1);
+  countMolecules(moleculeContainer, compCount);
+  //cout << "Rank " << domain->getlocalRank() << "Num molecules: " << compCount[0] << endl;
 
   vector<ParticleData*> particlesSendBufs;
-  ParticleData* particlesRecvBuf;
+  vector<ParticleData*> particlesRecvBufs;
   vector<int> numPartsToSend;
-  particlesSendBufs.resize(2); // left + right neighbour
-  numPartsToSend.resize(2);
+  vector<int> numPartsToRecv;
+  particlesSendBufs.resize(6); // left + right neighbour
+  particlesRecvBufs.resize(6); // left + right neighbour
+  numPartsToSend.resize(6);
+  numPartsToRecv.resize(6);
 
   MPI_Status status;
+  MPI_Status  send_statuses[6];
+  MPI_Status  recv_statuses[6];
+  MPI_Request send_requests[6];
+  MPI_Request recv_requests[6];
+
   // create a MPI Datatype which can store that molecule-data that has to be sent
   MPI_Datatype sendPartType;
   ParticleData::setMPIType(sendPartType);
@@ -77,48 +89,46 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
     // moving to the left get the length of the whole domain added to their x-value
     double offsetLower[3];
     double offsetHigher[3];
-    offsetLower[d] = 0.0;
+    offsetLower[d]  = 0.0;
     offsetHigher[d] = 0.0;
 
     // process on the left boundary
-    if(_coords[d] == 0){
+    if(_coords[d] == 0)
       offsetLower[d] = domain->getGlobalLength(d);
-    }
     // process on the right boundary
-    if(_coords[d] == _gridSize[d]-1){
+    if(_coords[d] == _gridSize[d]-1)
       offsetHigher[d] = -domain->getGlobalLength(d);
-    }
 
     double regToSendLow[3];  // Region that belongs to a neighbouring process
     double regToSendHigh[3]; // -> regToSendLow
-    for(int side=0; side<2; side++){
+    for(direction=0; direction<2; direction++){
       // find the region that each neighbour will get
       for(int i=0; i<3; i++){
         regToSendLow[i] = rmin[i]-halo_L[i];
         regToSendHigh[i] = rmax[i]+halo_L[i];
       }
-      if(side==0) regToSendHigh[d] = rmin[d]+halo_L[d];
-      else        regToSendLow[d]= rmax[d]-halo_L[d];
+      if(direction==0) regToSendHigh[d] = rmin[d] + halo_L[d];
+      else             regToSendLow[d]  = rmax[d] - halo_L[d];
 
       list<Molecule*> particlePtrsToSend;
       moleculeContainer->getRegion(regToSendLow, regToSendHigh, particlePtrsToSend);
 
       // initialize send buffer
-      numPartsToSend[side] = particlePtrsToSend.size();
-      particlesSendBufs[side] = new ParticleData[numPartsToSend[side]];
+      numPartsToSend[2*d+direction] = particlePtrsToSend.size();
+      particlesSendBufs[2*d+direction] = new ParticleData[numPartsToSend[2*d+direction]];
 
       std::list<Molecule*>::iterator particlePtrIter;
       int partCount = 0;
       for(particlePtrIter = particlePtrsToSend.begin(); particlePtrIter!=particlePtrsToSend.end(); particlePtrIter++){
         // copy relevant data from the Molecule to ParticleData type
-        ParticleData::setParticleData(particlesSendBufs[side][partCount], **particlePtrIter);
+        ParticleData::setParticleData(particlesSendBufs[2*d+direction][partCount], **particlePtrIter);
         // add offsets for particles transfered over the periodic boundary
-        if(d==0 && side==0) particlesSendBufs[side][partCount].rx += offsetLower[0];
-        if(d==1 && side==0) particlesSendBufs[side][partCount].ry += offsetLower[1];
-        if(d==2 && side==0) particlesSendBufs[side][partCount].rz += offsetLower[2];
-        if(d==0 && side==1) particlesSendBufs[side][partCount].rx += offsetHigher[0];
-        if(d==1 && side==1) particlesSendBufs[side][partCount].ry += offsetHigher[1];
-        if(d==2 && side==1) particlesSendBufs[side][partCount].rz += offsetHigher[2];
+        if(d==0 && direction==0) particlesSendBufs[2*d+direction][partCount].rx += offsetLower[0];
+        if(d==1 && direction==0) particlesSendBufs[2*d+direction][partCount].ry += offsetLower[1];
+        if(d==2 && direction==0) particlesSendBufs[2*d+direction][partCount].rz += offsetLower[2];
+        if(d==0 && direction==1) particlesSendBufs[2*d+direction][partCount].rx += offsetHigher[0];
+        if(d==1 && direction==1) particlesSendBufs[2*d+direction][partCount].ry += offsetHigher[1];
+        if(d==2 && direction==1) particlesSendBufs[2*d+direction][partCount].rz += offsetHigher[2];
         partCount++;
       }
     }
@@ -127,27 +137,38 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
     for(direction=0; direction <=1; direction++){
       // Send to lower, receive from upper
       // Send number of values that have to be sent
-      unsigned long numsend = numPartsToSend[direction];
+      unsigned long numsend = numPartsToSend[2*d+direction];
       unsigned long numrecv;
       MPI_Sendrecv(&numsend, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+direction], 99,
                    &numrecv, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status);
 
       // initialize receive buffer
-      particlesRecvBuf = new ParticleData[numrecv];
+      particlesRecvBufs[2*d+direction] = new ParticleData[numrecv];
+      numPartsToRecv[2*d+direction] = numrecv;
 
       // Send values to lower/upper and receive values from upper/lower
-      MPI_Sendrecv(particlesSendBufs[direction], numsend, sendPartType, _neighbours[2*d+direction], 99,
-                   particlesRecvBuf, numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status);
+      MPI_Isend(particlesSendBufs[2*d+direction], numsend, sendPartType, _neighbours[2*d+direction], 99, _commTopology, &send_requests[2*d+direction]);
+      MPI_Irecv(particlesRecvBufs[2*d+direction], numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction]);
+
+    }
+#if 0
+  }
+  for(unsigned short d=0;d<3;++d){
+#endif
+    for(direction=0; direction <=1; direction++){
+      unsigned long numrecv = numPartsToRecv[2*d+direction];
+      MPI_Wait(&send_requests[2*d+direction], &send_statuses[2*d+direction]);
+      MPI_Wait(&recv_requests[2*d+direction], &recv_statuses[2*d+direction]);
       // insert received molecules into list of molecules
       for(unsigned i=0; i<numrecv; i++){
-        ParticleData newMol = particlesRecvBuf[i];
+        ParticleData newMol = particlesRecvBufs[2*d+direction][i];
         Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz,
                                newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
         moleculeContainer->addParticle(m1);
       }
       // free memory
-      delete [] particlesRecvBuf;
-      delete [] particlesSendBufs[direction];
+      delete [] particlesRecvBufs[2*d+direction];
+      delete [] particlesSendBufs[2*d+direction];
     }
   }
 }
