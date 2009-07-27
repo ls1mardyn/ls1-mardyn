@@ -25,6 +25,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include "Timer.h"
 
 Simulation::Simulation(int *argc, char ***argv)
 {
@@ -247,7 +248,9 @@ void Simulation::simulate()
 
   initialize();
 
+  Timer loopTimer;
   // MAIN LOOP
+  loopTimer.start();
   for (unsigned long simstep=1; simstep<=_numberOfTimesteps; simstep++) {
     _integrator->eventNewTimestep(_moleculeContainer, _domain);
 
@@ -277,14 +280,22 @@ void Simulation::simulate()
     _domain->advanceTime(_integrator->getTimestepLength());
     output(simstep);
   }
+  loopTimer.stop();
+
+  Timer ioTimer;
+  ioTimer.start();
   string cpfile(_outputPrefix+".restart.inp");
   _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
-
   // finish output
   std::list<OutputBase*>::iterator outputIter;
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
       (*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
     delete (*outputIter);
+  }
+  ioTimer.stop();
+  if ( 0 == _domainDecomposition->getRank()) {
+    cout << "Simulation loop took: " << loopTimer.get_etime() << " sec\n";
+    cout << "Simulation io took:   " << ioTimer.get_etime() << " sec\n";
   }
 
   delete _domainDecomposition;
