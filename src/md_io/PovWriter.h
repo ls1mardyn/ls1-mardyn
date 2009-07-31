@@ -2,6 +2,7 @@
 #define POVWRITER_H_
 
 #include "md_io/OutputBase.h"
+#include "ensemble/GrandCanonical.h"
 //#include "molecules/Component.h"
 #include <string>
 //#include <fstream>
@@ -22,8 +23,11 @@ class PovWriter : public OutputBase{
   ~PovWriter();
   void initOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain);
-  void doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
+  void doOutput(
+     ParticleContainer* particleContainer,
+     DomainDecompBase* domainDecomp, Domain* domain,
+     unsigned long simstep, list<ChemicalPotential>* lmu
+  );
   void finishOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain);
  private:

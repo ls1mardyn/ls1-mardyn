@@ -1,22 +1,25 @@
 #ifndef OUTPUTBASE_H_
 #define OUTPUTBASE_H_
 
+#include "ensemble/GrandCanonical.h"
+#include <list>
+
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
 
 //! @brief interface for any kind of output class
-//! @author Martin Buchholz
+//! @author Martin Bernreuther, Martin Buchholz, et al. (2009)
 //!
-//! There are lot's of different things that possibly might want
-//! to be outputted, e.g. thermodynimic values, graphical information, 
+//! There are lots of different things that possibly might want
+//! to be written out, e.g. thermodynimic values, graphical information, 
 //! time measurements, ... \n
 //! In many cases, the output happens regularly every time step. To keep
-//! The other classes as clear as possible, the output routines (especially
-//! extensive routines writing special graphics formats for visualisation)
+//! the other classes as clear as possible, the output routines (especially
+//! extensive routines writing special graphics formats for visualization)
 //! shouldn't be placed there. That's why this interface was introduced.
 //! For a given output task, this interface has to be implemented. This
-//! Implemenation will be called OutputPlugin in the follwing. 
+//! implementation will be called OutputPlugin in the follwing. 
 //! 
 //! There are three main methodes
 //! - initOutput: will be called once in the beginning
@@ -53,8 +56,11 @@ class OutputBase{
   //! every n-th time step. Therefore, this method has an additional parameter simstep,
   //! allowing to do a output depending on the current simulation time step. This method 
   //! will be called once every time step during the simulation (see Simulation.cpp)
-  virtual void doOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) = 0;
+  virtual void doOutput(
+     ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+     Domain* domain, unsigned long simstep,
+     list<ChemicalPotential>* lmu
+  ) = 0;
   
   //! @brief will be called at the end of the simulation
   //!
@@ -63,7 +69,6 @@ class OutputBase{
   //! be called once at the end of the simulation (see Simulation.cpp)
   virtual void finishOutput(ParticleContainer* particleContainer,
 			    DomainDecompBase* domainDecomp, Domain* domain) = 0;
-  
 };
 
 #endif /*OUTPUTBASE_H_*/

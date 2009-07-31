@@ -4,9 +4,11 @@
 #include "md_io/InputBase.h"
 #include <fstream>
 #include <vector>
+#include <list>
 
 using namespace std;
 
+class ChemicalPotential;
 
 //! @brief generates homogeneous and inhomogeneous particle distributions
 //! 
@@ -32,15 +34,10 @@ class PartGen : public InputBase{
   void setPhaseSpaceHeaderFile(string filename);
   
   //! @brief read the phase space components and header information
-  void readPhaseSpaceHeader(Domain* domain);
+  void readPhaseSpaceHeader(Domain* domain, double timestep, double cutoff);
   
   //! @brief read the actual phase space information
-  void readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
-
-
-
-
-
+  unsigned long readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 
   //! @brief stores the cluster file and related parameters
@@ -84,10 +81,17 @@ class PartGen : public InputBase{
   int getNumSites(int comp);
   int getNumDipoles(int comp);
   int getNumQuadrupoles(int comp);
+  
+  int getNumCharges(int comp);
+  int getNumTersoff(int comp);
 
   double getSitePos(int comp, int site, int dim);
   double getDipolePos(int comp, int site, int dim);
   double getQuadrupolePos(int comp, int site, int dim);
+  
+  double getChargePos(int comp, int site, int dim);
+  double getTersoffPos(int comp, int site, int dim);
+  
   double getEpsilonSite(int comp, int site);
   bool getShiftSite(int comp, int site);
   double getMSite(int comp, int site);
@@ -96,10 +100,25 @@ class PartGen : public InputBase{
   double getAbsMy(int comp, int site);
   double getEQBody(int comp, int site, int dim);
   double getAbsQ(int comp, int site);
+  
+  double getChargeMass(int comp, int site);
+  double getCharge(int comp, int site);
+  double getTersoffMass(int comp, int site);
+  double getTersoffA(int comp, int site);
+  double getTersoffB(int comp, int site);
+  double getTersoff_lambda(int comp, int site);
+  double getTersoff_mu(int comp, int site);
+  double getTersoffR(int comp, int site);
+  double getTersoffS(int comp, int site);
+  double getTersoff_c(int comp, int site);
+  double getTersoff_d(int comp, int site);
+  double getTersoff_h(int comp, int site);
+  double getTersoff_n(int comp, int site);
+  double getTersoff_beta(int comp, int site);
+  
   double getIDummy(int comp, int dim);
   double getEta(int comp1, int comp2);
   double getXi(int comp1, int comp2);
-    
 
  private:
 
@@ -299,12 +318,17 @@ class PartGen : public InputBase{
   //###########################################################
   
   // physical constants
-  //! @brief atomic mass, not reduced, [atomic maxx] = kg
+  //! @brief atomic mass, not reduced, [atomic mass] = kg
   const static double _atomicMassDim = 1.660539E-27;
-  //! @brief avogadro constant, not reduced, [Avogadro] = 1/mol 
+  //! @brief Avogadro constant, not reduced, [Avogadro] = 1/mol 
   const static double _avogadroDim = 6.02214E+23;
-  //! @brief boltzmann constant, not reduced,  [Boltzmann] = J/K
+  //! @brief Boltzmann constant, not reduced,  [Boltzmann] = J/K
+  //! @note note that for simulation purposes, k equals 1 instead of 1.3e-23.
   const static double _boltzmannDim = 1.38065E-23;
+  //! @brief Coulomb constant in units of [Coco] = Jm/e^2
+  const static double _cocoDim = 2.307076e-28;
+  //! @brief Debye in units of [my] = me
+  const static double _debyeDim = 2.0819435e-11;
 
   //! @brief density of the gas phase 
   double _gasDensity;
@@ -353,20 +377,42 @@ class PartGen : public InputBase{
   vector<int> _numSites;
   vector<int> _numDipoles;
   vector<int> _numQuadrupoles;
-  vector<vector<double> > _iBodyDummy;
-  vector<vector<vector<double> > > _rSiteBody;
-  vector<vector<vector<double> > > _rDipoleBody;
-  vector<vector<vector<double> > > _rQuadrupoleBody;
-  vector<vector<double> > _epsilonSite;
-  vector<vector<double> > _mSite;
-  vector<vector<double> > _sigmaSite;
+  
+  vector<int> _numCharges;
+  vector<int> _numTersoff;
+  
+  vector< vector<double> > _iBodyDummy;
+  vector< vector< vector<double> > > _rSiteBody;
+  vector< vector< vector<double> > > _rDipoleBody;
+  vector< vector< vector<double> > > _rQuadrupoleBody;
+  vector< vector<double> > _epsilonSite;
+  vector< vector<double> > _mSite;
+  vector< vector<double> > _sigmaSite;
   vector< vector<bool> > _shiftSite;
-  vector<vector<vector<double> > > _eMyBody;
-  vector<vector<double> > _absMy;
-  vector<vector<vector<double> > > _eQBody;
-  vector<vector<double> > _absQ;
-  vector<vector<double> > _iBody;
-  vector<vector<double> > _invIBody;
+  vector< vector< vector<double> > > _eMyBody;
+  vector< vector<double> > _absMy;
+  vector< vector< vector<double> > > _eQBody;
+  vector< vector<double> > _absQ;
+  
+  vector< vector< vector<double> > > _rChargeBody;
+  vector< vector< vector<double> > > _rTersoffBody;
+  vector< vector<double> > _mCharge;
+  vector< vector<double> > _qCharge;
+  vector< vector<double> > _mTersoff;
+  vector< vector<double> > _ATersoff;
+  vector< vector<double> > _BTersoff;
+  vector< vector<double> > _lambdaTersoff;
+  vector< vector<double> > _muTersoff;
+  vector< vector<double> > _RTersoff;
+  vector< vector<double> > _STersoff;
+  vector< vector<double> > _cTersoff;
+  vector< vector<double> > _dTersoff;
+  vector< vector<double> > _hTersoff;
+  vector< vector<double> > _nTersoff;
+  vector< vector<double> > _betaTersoff;
+  
+  vector< vector<double> > _iBody;
+  vector< vector<double> > _invIBody;
 
   double _cutoffRadius;
   double _tersoffCutoffRadius;

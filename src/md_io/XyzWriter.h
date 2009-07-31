@@ -2,6 +2,7 @@
 #define XYZWRITER_H_
 
 #include "md_io/OutputBase.h"
+#include "ensemble/GrandCanonical.h"
 #include <string>
 
 
@@ -21,8 +22,11 @@ class XyzWriter : public OutputBase{
   void initOutput(ParticleContainer* particleContainer,
 		  DomainDecompBase* domainDecomp, Domain* domain);
   //! @todo comment
-  void doOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
+  void doOutput(
+     ParticleContainer* particleContainer,
+     DomainDecompBase* domainDecomp, Domain* domain,
+     unsigned long simstep, list<ChemicalPotential>* lmu
+  );
   //! @todo comment  
   void finishOutput(ParticleContainer* particleContainer,
 		    DomainDecompBase* domainDecomp, Domain* domain);

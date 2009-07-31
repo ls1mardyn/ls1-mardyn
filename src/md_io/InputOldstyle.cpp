@@ -1,6 +1,7 @@
 #include "md_io/InputOldstyle.h"
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "ensemble/GrandCanonical.h"
 #include "Domain.h"
 #include <climits>
 
@@ -17,23 +18,32 @@ void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
 
 }
 
-void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
+void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double cutoff)
+{
   vector<Component>& dcomponents = domain->getComponents();
   string token;
   _phaseSpaceFileStream >> token;
   domain->setinpversion(0);
-  if(token != "MDProject" && domain->getlocalRank() == 0)
+
+  if((token != "mardyn") && (token != "MOLDY") && (token != "ls1r1") && (token != "mrdyn") && (token != "MDProject") && (token != "Mardyn") && (token != "MARDYN"))
   {
-    cerr << "Input: NOT A MOLDY INPUT! (starts with " << token << ")" << endl;
+    if(domain->ownrank() == 0)
+       cerr << "Input: NOT AN LS1 MARDYN INPUT! (starts with "
+            << token << ")" << endl;
+    exit(1);
   }
-  else
+  _phaseSpaceFileStream >> token;
+  if(token != "trunk")
   {
-    _phaseSpaceFileStream >> token;
-    domain->setinpversion(strtoul(token.c_str(),NULL,0));
-    if(domain->getinpversion() < 20070111 && domain->getlocalRank() == 0)
-    {
+     if(!domain->ownrank()) cout << "Wrong input file version (\'"
+	               << token << "\' instead of \'trunk\'). Aborting.\n";
+     exit(787);
+  }
+  _phaseSpaceFileStream >> token;
+  domain->setinpversion(strtoul(token.c_str(),NULL,0));
+  if(domain->getinpversion() < 20080701 && domain->getlocalRank() == 0)
+  {
       cerr << "Input: OLD VERSION (" << domain->getinpversion() << ")" << endl;
-    }
   }
 
   char c;
@@ -43,6 +53,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
   double m,sigma,eps;
   double xi,eta;
   unsigned long i;
+  double do_shift;
 
   // When the last header element is reached, "header" is set to false
   bool header = true;
@@ -59,55 +70,108 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
     token.clear();
     _phaseSpaceFileStream >> token;
 
-    if(token=="currentTime"){
+    if((token == "currentTime") || (token == "t"))
+    {
       _phaseSpaceFileStream >> token;
       domain->setCurrentTime(strtod(token.c_str(), NULL));
     }
-
-    if(token=="Temperature"){
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalTemperature(strtod(token.c_str(), NULL));
+    else if((token == "Temperature") || (token == "T"))
+    {
+       domain->disableCT();
+       double targetT;
+       _phaseSpaceFileStream >> targetT;
+       domain->setGlobalTemperature(targetT);
     }
-    else if(token=="Length"){
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalLength(0, strtod(token.c_str(),NULL));
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalLength(1, strtod(token.c_str(),NULL));
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalLength(2, strtod(token.c_str(),NULL));
+    else if((token == "ThermostatTemperature") || (token == "ThT") || (token == "h"))
+    {
+       int i;
+       double targetT;
+       _phaseSpaceFileStream >> i;
+       _phaseSpaceFileStream >> targetT;
+       domain->setTargetT(i, targetT);
     }
-    if(token=="NumberOfComponents") {
-
+    else if((token == "ComponentThermostat") || (token == "CT") || (token == "o"))
+    {
+       if(!domain->severalThermostats())
+	  domain->enableCT();
+       int cid;
+       _phaseSpaceFileStream >> cid;
+       cid--;
+       int th;
+       _phaseSpaceFileStream >> th;
+       if(0 >= th) continue;
+       domain->setComponentThermostat(cid, th);
+    }
+    else if((token == "Undirected") || (token == "U"))
+    {
+       int tst;
+       _phaseSpaceFileStream >> tst;
+       domain->enableUndirectedThermostat(tst);
+    }
+    else if((token == "Length") || (token == "L"))
+    {
+       double globalLength[3];
+       _phaseSpaceFileStream >> globalLength[0] >> globalLength[1] >> globalLength[2];
+       for(int i=0; i < 3; i++)
+          domain->setGlobalLength(i, 1.0000000333 * globalLength[i]);
+    }
+    else if((token == "NumberOfComponents") || (token == "C"))
+    {
       _phaseSpaceFileStream >> numcomponents;
+      dcomponents.resize(numcomponents);
       for(i=0;i<numcomponents;++i)
       {
-        Component component(i);
-        unsigned int numljcenters=0;
-        unsigned int numdipoles=0;
-        unsigned int numquadrupoles=0;
-        _phaseSpaceFileStream >> numljcenters >> numdipoles >> numquadrupoles;
-        for(j=0;j<numljcenters;++j) {
-          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma;
-          component.addLJcenter(x,y,z,m,eps,sigma,2.5*sigma,true);
+        dcomponents[i].setID(i);
+        unsigned int numljcenters = 0;
+	unsigned int numcharges = 0;
+        unsigned int numdipoles = 0;
+        unsigned int numquadrupoles = 0;
+	unsigned int numtersoff = 0;
+        _phaseSpaceFileStream >> numljcenters >> numcharges
+	                      >> numdipoles >> numquadrupoles
+			      >> numtersoff;
+        for(j=0;j<numljcenters;++j)
+        {
+          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma >> cutoff >> do_shift;
+          dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, cutoff, (do_shift != 0));
         }
-
-        for(j=0;j<numdipoles;++j) {
+        for(j = 0; j < numcharges; j++)
+        {
+          double q;
+          _phaseSpaceFileStream >> x >> y >> z >> m >> q;
+          dcomponents[i].addCharge(x, y, z, m, q);
+        }
+        for(j=0;j<numdipoles;++j)
+        {
           double eMyx,eMyy,eMyz,absMy;
           _phaseSpaceFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
-          component.addDipole(x,y,z,eMyx,eMyy,eMyz,absMy);
+          dcomponents[i].addDipole(x,y,z,eMyx,eMyy,eMyz,absMy);
         }
-        for(j=0;j<numquadrupoles;++j) {
+        for(j=0;j<numquadrupoles;++j)
+        {
           double eQx,eQy,eQz,absQ;
           _phaseSpaceFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
-          component.addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
+          dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
+        }
+        for(j = 0; j < numtersoff; j++)
+        {
+          double x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta;
+          _phaseSpaceFileStream >> x >> y >> z;
+          _phaseSpaceFileStream >> m >> A >> B;
+          _phaseSpaceFileStream >> lambda >> mu >> R >> S;
+          _phaseSpaceFileStream >> c >> d >> h >> n >> beta;
+          dcomponents[i].addTersoff(
+            x, y, z,
+            m, A, B,
+            lambda, mu, R, S,
+            c, d, h, n, beta
+          );
         }
         double IDummy1,IDummy2,IDummy3;
         _phaseSpaceFileStream >> IDummy1 >> IDummy2 >> IDummy3;
         if(IDummy1>0.) dcomponents[i].setI11(IDummy1);
         if(IDummy2>0.) dcomponents[i].setI22(IDummy2);
         if(IDummy3>0.) dcomponents[i].setI33(IDummy3);
-	
-	domain->addComponent(component);
       }
       vector<double>& dmixcoeff = domain->getmixcoeff();
       dmixcoeff.clear();
@@ -122,16 +186,41 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain) {
       }
       _phaseSpaceFileStream >> token;
       domain->setepsilonRF(strtod(token.c_str(),NULL));
+      header = false;
     }
-    else if(token=="NumberOfMolecules"){
+    else if((token == "NumberOfMolecules") || (token == "N"))
+    {
       _phaseSpaceFileStream >> token;
       domain->setglobalNumMolecules(strtoul(token.c_str(),NULL,0));
-      header = false;
+    }
+    else if((token == "AssignCoset") || (token == "S"))
+    {
+      unsigned cid, cosetid;
+      _phaseSpaceFileStream >> cid >> cosetid;
+      cid--;
+      domain->assignCoset(cid, cosetid);
+    }
+    else if((token == "Accelerate") || (token == "A"))
+    {
+       unsigned cosetid;
+       _phaseSpaceFileStream >> cosetid;
+       double v[3];
+       for(unsigned d = 0; d < 3; d++) _phaseSpaceFileStream >> v[d];
+       double tau;
+       _phaseSpaceFileStream >> tau;
+       double ainit[3];
+       for(unsigned d = 0; d < 3; d++) _phaseSpaceFileStream >> ainit[d];
+       domain->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+    }
+    else
+    {
+       cout << "Invalid token \'" << token << "\' found. Skipping rest of the header.\n";
+       header = false;
     }
   }
 }
 
-void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
   string token;
 
@@ -142,19 +231,22 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
   unsigned int numcomponents=dcomponents.size();
   unsigned long i,id;
   int componentid;
+  
+  unsigned long maxid = 0;
 
   x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
   q0=1.;
   Fx=Fy=Fz=Mx=My=Mz=0.;
   _phaseSpaceFileStream >> token;
-  if(token=="NumberOfMolecules") {
+  if((token == "NumberOfMolecules") || (token == "N"))
+  {
     string nummolecules;
     _phaseSpaceFileStream >> nummolecules;
     domain->setglobalNumMolecules(strtoul(nummolecules.c_str(),NULL,0));
     _phaseSpaceFileStream >> token;
   }
 
-  if(token=="MoleculeFormat") {
+  if((token=="MoleculeFormat") || (token == "M")) {
     string ntypestring("ICRVQD");
     enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
 
@@ -175,7 +267,7 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
       numcomponents=1;
       dcomponents.resize(numcomponents);
       dcomponents[0].setID(0);
-      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,2.5,true);
+      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,cutoffRadius,false);
     }
     //m_molecules.clear();
     for(i=0;i<domain->getglobalNumMolecules();++i)
@@ -197,8 +289,7 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
       if(((int)componentid > (int)numcomponents) && domain->getlocalRank() == 0) {
         cerr << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
       }
-      // @todo why do componetids start with 0?
-      --componentid;
+      componentid --;
 
       //  store only those molecules within the domain of this process
 
@@ -208,8 +299,18 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
       //(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);
       dcomponents[componentid].incrnumMolecules();
       domain->setglobalRotDOF(dcomponents[componentid].rot_dof()+domain->getglobalRotDOF());
+      if(id > maxid) maxid = id;
+      std::list<ChemicalPotential>::iterator cpit;
+      for(cpit = lmu->begin(); cpit != lmu->end(); cpit++)
+      {
+         if( !cpit->hasSample() &&
+	     (componentid == cpit->getComponentID()) )
+	 {
+	    cpit->storeMolecule(m1);
+	 }
+      }
 
-      if(!(i%1000)) if(domain->getlocalRank()==0) cout << '.' << flush;
+      if(!(i%4096)) if(domain->getlocalRank()==0) cout << '.' << flush;
     }
     if(domain->getlocalRank()==0) cout << " done" << endl;
 
@@ -225,4 +326,5 @@ void InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, Domain*
     cerr << "ERROR in AsciiReader::readPhaseSpace: Error in the PhaseSpace File" << endl;
   }
 
+  return maxid;
 }

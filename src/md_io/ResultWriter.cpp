@@ -25,8 +25,10 @@ void ResultWriter::initOutput(ParticleContainer* particleContainer,
   }
 }
 
-void ResultWriter::doOutput(ParticleContainer* particleContainer,
-			    DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep){
+void ResultWriter::doOutput( ParticleContainer* particleContainer,
+                             DomainDecompBase* domainDecomp, Domain* domain,
+			     unsigned long simstep, list<ChemicalPotential>* lmu ) 
+{
   if(domainDecomp->getRank()==0){
     _resultStream << simstep << "\t" << domain->getCurrentTime()
                   << "\t" << domain->getAverageGlobalUpot() << "\t" << domain->getGlobalPressure()

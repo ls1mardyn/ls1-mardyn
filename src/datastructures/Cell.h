@@ -7,7 +7,6 @@ using namespace std;
 
 class Molecule;
 
-
 //! @brief Cell data structure.
 //! @author Martin Buchholz
 //!
@@ -55,7 +54,7 @@ class Cell{
   //! return a reference to the list of molecules (molecule pointers) in this cell
   list<Molecule*>& getParticlePointers();
     
-  bool deleteMolecule(unsigned long molid) { return false; }
+  bool deleteMolecule(unsigned long molid);
   
   //! Set the flag for a Halo Cell
   void assingCellToHaloRegion();

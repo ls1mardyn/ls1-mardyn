@@ -2,7 +2,11 @@
 #define SIMULATION_H_
 
 #include <string>
+#include <vector>
 #include <list>
+#include <sstream>
+
+#include "ensemble/GrandCanonical.h"
 
 using namespace std;
 
@@ -13,12 +17,13 @@ class Integrator;
 class OutputBase;
 class DomainDecompBase;
 class InputBase;
-
+class Molecule;
 
 using namespace std;
 
 //! @brief controls the whole simulation process
-//! @author Martin Buchholz
+//! @author Martin Bernreuther,  Martin Buchholz, et al.
+//!         (development coordinator: M. Bernreuther)
 //!
 //! Some of the simulation parameters are provided in a config file.
 //! The order of the parameters in the config file is important.
@@ -39,7 +44,7 @@ using namespace std;
 //!                  which is the number of cells in the cutoff radius (equals to the 
 //!                  cutoff radius divided by the cell length). 
 //!  
-//! Example for the config file: \n
+//! An outdated example for the config file would have been as follows: \n
 //! 
 //! \pre
 //! MDProjectConfig 
@@ -62,7 +67,8 @@ class Simulation{
   //! - phaseSpace
   //! - moleculeContainer
   //! @param argc Pointer to the number of arguments passed to the programm. Needed for MPI
-  //! @param argv the arguments, also needed for MPI
+  //! @param argv Pointer to the list of arguments, also needed for MPI
+  //! @note very elegant way of passing these arguments!!!
   Simulation(int *argc, char ***argv);
 
   //! @brief calculate all values for the starting timepoint
@@ -102,7 +108,7 @@ class Simulation{
   //! @brief output results 
   //! @param simstep timestep of the output
   //! @todo comment
-  void output(int simstep);
+  void output(unsigned long simstep);
     
   //! The following things have to be done here:
   //! - bring all molecules to the corresponding processes (including copies for halo)
@@ -110,19 +116,45 @@ class Simulation{
   //! - update the ParticleContainer
   void updateParticleContainerAndDecomposition();
       
+  double Tfactor(unsigned long simstep);
     
  private:
     
   //! maximum distance at which the forces between two molecules still have to be calculated.
   double _cutoffRadius;
   double _tersoffCutoffRadius;
+  
+  bool _doRecordProfile;
+  unsigned _profileRecordingTimesteps;
+  unsigned _profileOutputTimesteps;
+  string _profileOutputPrefix;
+  bool _doRecordRDF;
+  unsigned _RDFOutputTimesteps;
+  string _RDFOutputPrefix;
+  unsigned _resultOutputTimesteps;
+  
+  unsigned _collectThermostatDirectedVelocity;
 
+  bool _zoscillation;
+  unsigned _zoscillator;
+  
   //! Number of discrete time steps for the simulation        
   unsigned long _numberOfTimesteps;
-
+  
   //! Incremental output flag NEW
   bool _increment;
 
+  //! initial number of steps
+  unsigned long _initSimulation;
+  //! step number for the end of the configurational equilibration
+  unsigned long _initCanonical;
+  //! step number for activation of the muVT ensemble
+  unsigned long _initGrandCanonical;
+  //! step number for activation of all sorts of statistics
+  unsigned long _initStatistics;
+
+  unsigned _numberOfComponents;
+    
   //! Datastructure for finding neighbours efficiently
   ParticleContainer* _moleculeContainer;
     
@@ -146,10 +178,19 @@ class Simulation{
     
   //! frequency of the checkpoint writer
   long _outputFrequency;
+  // unsigned _restartOutputInterval;
     
   //! list of output plugins to use
   std::list<OutputBase*> _outputPlugins;
+  
+  /*
+   * ¡grand canonical ensemble¡
+   */
+  std::list<ChemicalPotential> _lmu;
     
-    
+  /*
+   * Planck's constant
+   */
+  double h;
 };
 #endif /*SIMULATION_H_*/

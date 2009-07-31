@@ -6,7 +6,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "datastructures/ParticleContainer.h"
-
+#include "ensemble/GrandCanonical.h"
 
 PartGen::PartGen(){
 }
@@ -30,7 +30,7 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
   readRefValues(inpfStream);
 
   // Read in state point
-   readStatePoint(inpfStream );
+  readStatePoint(inpfStream );
 
   // Algorithm
   readAlgorithm(inpfStream, _simBoxRatio);
@@ -50,8 +50,10 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
 
   // Molekuelbeschreibung
   int MaxAnzSites = getIntParamValue(inpfStream);
+  int MaxAnzCharges = getIntParamValue(inpfStream);
   int MaxAnzDipole = getIntParamValue(inpfStream);
   int MaxAnzQuadrupole = getIntParamValue(inpfStream);
+  int MaxAnzTersoff = getIntParamValue(inpfStream);
 
   ignoreLines(inpfStream,1);
   _epsilonRF = getDoubleParamValue(inpfStream);
@@ -84,37 +86,82 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
   setMatrixValues(_absMy, _numberOfComponents, MaxAnzDipole, 0.0);
   set3DMatrixValues(_eQBody, _numberOfComponents, MaxAnzQuadrupole, 3, 0.0);
   setMatrixValues(_absQ, _numberOfComponents, MaxAnzDipole, 0.0);
+  
+  setVectorValues(_numCharges, _numberOfComponents, 0);
+  setVectorValues(_numTersoff, _numberOfComponents, 0);
+  set3DMatrixValues(_rChargeBody, _numberOfComponents, MaxAnzCharges, 3, 0.0);
+  set3DMatrixValues(_rTersoffBody, _numberOfComponents, MaxAnzTersoff, 3, 0.0);
+  setMatrixValues(_mCharge, _numberOfComponents, MaxAnzCharges, 0);
+  setMatrixValues(_qCharge, _numberOfComponents, MaxAnzCharges, 0);
+  setMatrixValues(_mTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_ATersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_BTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_lambdaTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_muTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_RTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_STersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_cTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_dTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_hTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_nTersoff, _numberOfComponents, MaxAnzTersoff, 0);
+  setMatrixValues(_betaTersoff, _numberOfComponents, MaxAnzTersoff, 0);
 
   // Loop over all Components
-  for(int comp=0; comp<_numberOfComponents; comp++){
+  for(int comp=0; comp<_numberOfComponents; comp++)
+  {
      ignoreLines(inpfStream,3);
     _numSites[comp] = getIntParamValue(inpfStream);
+    _numCharges[comp] = getIntParamValue(inpfStream);
     _numDipoles[comp] = getIntParamValue(inpfStream);
     _numQuadrupoles[comp] = getIntParamValue(inpfStream);
-    if(_numSites[comp] > MaxAnzSites || _numDipoles[comp] > MaxAnzDipole ||
-      _numQuadrupoles[comp] > MaxAnzQuadrupole){
-      cout << "One component has to many Sites/Dipoles/Quadrupoles!" << endl;
+    _numTersoff[comp] = getIntParamValue(inpfStream);
+    if( (_numSites[comp] > MaxAnzSites)    || (_numCharges[comp] > MaxAnzCharges) ||
+        (_numDipoles[comp] > MaxAnzDipole) || (_numQuadrupoles[comp] > MaxAnzQuadrupole)
+	                                   || (_numTersoff[comp] > MaxAnzTersoff) )
+    {
+      cout << "Exceeded maximal number of interaction sites." << endl;
       exit(1);
     }
     ignoreLines(inpfStream,1);
-    for(int site=0; site<_numSites[comp]; site++){
+    for(int site=0; site<_numSites[comp]; site++)
+    {
       getDoubleParamValues(inpfStream, _rSiteBody[comp][site][0], 
                                        _rSiteBody[comp][site][1], 
                                        _rSiteBody[comp][site][2]);
     }
-    for(int dip=0; dip<_numDipoles[comp]; dip++){
+    for(int cg=0; cg < this->_numCharges[comp]; cg++)
+    {
+       getDoubleParamValues(inpfStream, _rChargeBody[comp][cg][0], 
+                                        _rChargeBody[comp][cg][1], 
+                                        _rChargeBody[comp][cg][2]);
+    }
+    for(int dip=0; dip<_numDipoles[comp]; dip++)
+    {
       getDoubleParamValues(inpfStream, _rDipoleBody[comp][dip][0], 
                                        _rDipoleBody[comp][dip][1], 
                                        _rDipoleBody[comp][dip][2]);
     }
-    for(int quad=0; quad<_numQuadrupoles[comp]; quad++){
+    for(int quad=0; quad<_numQuadrupoles[comp]; quad++)
+    {
       getDoubleParamValues(inpfStream, _rQuadrupoleBody[comp][quad][0], 
                                        _rQuadrupoleBody[comp][quad][1], 
                                        _rQuadrupoleBody[comp][quad][2]);
     }
+    for(int tter=0; tter < this->_numTersoff[comp]; tter++)
+    {
+       getDoubleParamValues(inpfStream, _rChargeBody[comp][tter][0], 
+                                        _rChargeBody[comp][tter][1], 
+                                        _rChargeBody[comp][tter][2]);
+    }
 
-    for(int site=0; site<_numSites[comp]; site++){
+    for(int site=0; site<_numSites[comp]; site++)
+    {
       getDoubleParamValues(inpfStream, _epsilonSite[comp][site], _mSite[comp][site], _sigmaSite[comp][site]);
+    }
+    for(int cg = 0; cg < this->_numCharges[comp]; cg++)
+    {
+       getDoubleParamValues( inpfStream, _mCharge[comp][cg],
+			                 _qCharge[comp][cg] );
     }
     for(int dip=0; dip<_numDipoles[comp]; dip++){
       getDoubleParamValues(inpfStream, _eMyBody[comp][dip][0], 
@@ -138,10 +185,25 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
         vecmult(_eMyBody[comp][quad], (1/dr));
       }
     }    
+    for(int tter = 0; tter < this->_numTersoff[comp]; tter++)
+    {
+       getDoubleParamValues( inpfStream, _mTersoff[comp][tter],
+			                 _ATersoff[comp][tter],
+			                 _BTersoff[comp][tter],
+			                 _lambdaTersoff[comp][tter] );
+       getDoubleParamValues( inpfStream, _muTersoff[comp][tter],
+			                 _RTersoff[comp][tter],
+			                 _STersoff[comp][tter],
+			                 _cTersoff[comp][tter] );
+       getDoubleParamValues( inpfStream, _dTersoff[comp][tter],
+			                 _hTersoff[comp][tter],
+			                 _nTersoff[comp][tter],
+			                 _betaTersoff[comp][tter] );
+    }
     ignoreLines(inpfStream, 1);
-    getDoubleParamValues(inpfStream, _iBodyDummy[comp][0], 
-                                     _iBodyDummy[comp][1], 
-                                     _iBodyDummy[comp][2]);
+    getDoubleParamValues( inpfStream, _iBodyDummy[comp][0], 
+                                      _iBodyDummy[comp][1], 
+                                      _iBodyDummy[comp][2] );
     for(int dim=0; dim<3; dim++){
       _iBodyDummy[comp][dim] *= _atomicMassDim*1.0E-20;
     }
@@ -150,16 +212,50 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
   inpfStream.close();
 
   // reduce all Molecule Parameters
+  //
+  // welchen Sinn ergeben diese Koeffizienten (1e-10 etc.)?
+  // vielleicht war die Idee diese: in readRefValues werden
+  // eps_ref, m_ref und sig_ref kuenstlich in das Einheitensystem
+  // J, kg, m uebertragen. Da aber die Potentialparameter alle in
+  // K, u, A gegeben sind, muss diese Umwandlung jetzt bei jeder
+  // Verwendung dieser Variablen nochmal rueckwaerts durchgefuehrt
+  // werden.
+  //
   matmult(_iBodyDummy, 1 / (_mRefDim*pow(_sigmaRefDim,2)));
   mat3dmult(_rSiteBody, 1.0E-10 / _sigmaRefDim);
+  mat3dmult(_rChargeBody, 1.0E-10 / _sigmaRefDim);
   mat3dmult(_rDipoleBody, 1.0E-10 / _sigmaRefDim);
   mat3dmult(_rQuadrupoleBody, 1.0E-10 / _sigmaRefDim);
+  mat3dmult(_rTersoffBody, 1.0E-10 / _sigmaRefDim);
   matmult(_epsilonSite, _boltzmannDim / _epsilonRefDim);
   matmult(_mSite, _atomicMassDim / _mRefDim);
   matmult(_sigmaSite, 1.0E-10 / _sigmaRefDim);
+  /*
+   * These lines do not appear to make a lot of sense:
+   *
   matmult(_absMy, 1 / (1.0E+24 * sqrt(10.0*_epsilonRefDim*(pow(_sigmaRefDim,3.0))) ));
   matmult(_absQ, 1 / (1.0E+34 * sqrt(10.0*_epsilonRefDim*(pow(_sigmaRefDim,5.0))) ));
+   */
 
+  /*
+   * This version assumes that parameters are given in e, D, and DA.
+   */
+  double qRefDim = sqrt(_sigmaRefDim * _epsilonRefDim / _cocoDim);  // [e]
+  double muRefDim = qRefDim * _sigmaRefDim / _debyeDim;  // [D]
+  double qdrRefDim = muRefDim * (1.0e+10 * _sigmaRefDim);  // [DA]
+  matmult(_absMy, 1.0 / muRefDim);
+  matmult(_absQ, 1.0 / qdrRefDim);
+  
+  matmult(_mCharge, _atomicMassDim / _mRefDim);
+  matmult(_qCharge, 1.0 / qRefDim);
+  matmult(_mTersoff, _atomicMassDim / _mRefDim);
+  matmult(_ATersoff, _boltzmannDim / _epsilonRefDim);  // given in units of K
+  matmult(_BTersoff, _boltzmannDim / _epsilonRefDim);  // given in units of K
+  matmult(_lambdaTersoff, 1.0e+10 * _sigmaRefDim);  // given in units of 1/A
+  matmult(_muTersoff, 1.0e+10 * _sigmaRefDim);  // given in units of 1/A
+  matmult(_RTersoff, 1.0E-10 / _sigmaRefDim);
+  matmult(_STersoff, 1.0E-10 / _sigmaRefDim);
+ 
   // transform all components to a principle axis system
   principleAxisTransform();
 
@@ -173,7 +269,13 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
 }
   
 //! @brief read the phase space components and header information
-void PartGen::readPhaseSpaceHeader(Domain* domain){
+void PartGen::readPhaseSpaceHeader(
+   Domain* domain, double timestep,
+   double cutoff
+){
+   this->_cutoffRadius = cutoff;
+   // this->_tersoffCutoffRadius = cutoffTersoff;
+   
   vector<Component>& dcomponents = domain->getComponents();
   domain->setCurrentTime(0);
   domain->setGlobalTemperature(_temperature);
@@ -185,9 +287,12 @@ void PartGen::readPhaseSpaceHeader(Domain* domain){
   for(int comp=0; comp<_numberOfComponents; comp++) {
     dcomponents[comp].setID(comp);
     unsigned int numljcenters   = getNumSites(comp);
+    unsigned int numcharges     = getNumCharges(comp);
     unsigned int numdipoles     = getNumDipoles(comp);
     unsigned int numquadrupoles = getNumQuadrupoles(comp);
-    for(unsigned int site=0; site<numljcenters; site++){
+    unsigned int numtersoff     = getNumTersoff(comp);
+    for(unsigned int site=0; site<numljcenters; site++)
+    {
       dcomponents[comp].addLJcenter(getSitePos(comp, site, 0),
                                     getSitePos(comp, site, 1),
                                     getSitePos(comp, site, 2),
@@ -197,8 +302,16 @@ void PartGen::readPhaseSpaceHeader(Domain* domain){
 				    this->_cutoffRadius,
 				    getShiftSite(comp, site));
     }
-    
-    for(unsigned int dip=0; dip<numdipoles; dip++){
+    for(unsigned int cg = 0; cg < numcharges; cg++)
+    {
+       dcomponents[comp].addCharge( getChargePos(comp, cg, 0),
+                                    getChargePos(comp, cg, 1),
+                                    getChargePos(comp, cg, 2),
+				    getChargeMass(comp, cg),
+				    getCharge(comp, cg) );
+    }
+    for(unsigned int dip=0; dip<numdipoles; dip++)
+    {
       dcomponents[comp].addDipole(getDipolePos(comp, dip, 0),
                                   getDipolePos(comp, dip, 1),
                                   getDipolePos(comp, dip, 2),
@@ -207,7 +320,8 @@ void PartGen::readPhaseSpaceHeader(Domain* domain){
                                   getEMyBody(comp, dip, 2),
                                   getAbsMy(comp, dip));
     }
-    for(unsigned int quad=0; quad<numquadrupoles; quad++){
+    for(unsigned int quad=0; quad<numquadrupoles; quad++)
+    {
       dcomponents[comp].addQuadrupole(getQuadrupolePos(comp, quad, 0),
                                       getQuadrupolePos(comp, quad, 1),
                                       getQuadrupolePos(comp, quad, 2),
@@ -215,6 +329,24 @@ void PartGen::readPhaseSpaceHeader(Domain* domain){
                                       getEQBody(comp, quad, 1),
                                       getEQBody(comp, quad, 2),
                                       getAbsQ(comp, quad));
+    }
+    for(unsigned int tter = 0; tter < numtersoff; tter++)
+    {
+       dcomponents[comp].addTersoff( getTersoffPos(comp, tter, 0),
+                                     getTersoffPos(comp, tter, 1),
+                                     getTersoffPos(comp, tter, 2),
+				     getTersoffMass(comp, tter),
+				     getTersoffA(comp, tter),
+				     getTersoffB(comp, tter),
+				     getTersoff_lambda(comp, tter),
+				     getTersoff_mu(comp, tter),
+				     getTersoffR(comp, tter),
+				     getTersoffS(comp, tter),
+				     getTersoff_c(comp, tter),
+				     getTersoff_d(comp, tter),
+				     getTersoff_h(comp, tter),
+				     getTersoff_n(comp, tter),
+				     getTersoff_beta(comp, tter) );
     }
     double IDummy1,IDummy2,IDummy3;
     IDummy1 = getIDummy(comp, 0);
@@ -236,8 +368,11 @@ void PartGen::readPhaseSpaceHeader(Domain* domain){
 }
   
 //! @brief read the actual phase space information
-void PartGen::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp){
-  
+unsigned long PartGen::readPhaseSpace(
+   ParticleContainer* particleContainer, double cutoffRadius,
+   list<ChemicalPotential>* lmu, Domain* domain,
+   DomainDecompBase* domainDecomp
+) {
   vector<double> bBoxMin;
   vector<double> bBoxMax;
   //_globalLength[0] = partGen->getLSimBox(0);
@@ -263,6 +398,28 @@ void PartGen::readPhaseSpace(ParticleContainer* particleContainer, Domain* domai
   }
   domain->setglobalRho(domain->getglobalNumMolecules()/(_simBoxLength[0]*_simBoxLength[1]*_simBoxLength[2]));
   
+  unsigned long maxid = 0;
+  for( Molecule* pp = particleContainer->begin();
+       pp != particleContainer->end();
+       pp = particleContainer->next() )
+  {
+      if(pp->id() > maxid) maxid = pp->id();
+      std::list<ChemicalPotential>::iterator cpit;
+      bool brk = true;
+      for(cpit = lmu->begin(); cpit != lmu->end(); cpit++)
+      {
+         if(!cpit->hasSample())
+	 {
+	    if(pp->componentid() == cpit->getComponentID())
+	    {
+  	       cpit->storeMolecule(*pp);
+	    }
+	    else brk = false;
+	 }
+      }
+      if(brk) break;
+   }
+   return maxid;
 }
 
 
@@ -506,6 +663,7 @@ double PartGen::getEpsilonRF(){
 int PartGen::getNumComps(){
   return _numberOfComponents;
 }
+
 int PartGen::getNumSites(int comp){
   return _numSites[comp];
 }
@@ -515,6 +673,14 @@ int PartGen::getNumDipoles(int comp){
 int PartGen::getNumQuadrupoles(int comp){
   return _numQuadrupoles[comp];
 }
+
+int PartGen::getNumCharges(int comp){
+  return _numCharges[comp];
+}
+int PartGen::getNumTersoff(int comp){
+  return _numTersoff[comp];
+}
+
 double PartGen::getSitePos(int comp, int site, int dim){
   return _rSiteBody[comp][site][dim];
 }
@@ -524,6 +690,16 @@ double PartGen::getDipolePos(int comp, int site, int dim){
 double PartGen::getQuadrupolePos(int comp, int site, int dim){
   return _rQuadrupoleBody[comp][site][dim];
 }
+
+double PartGen::getChargePos(int comp, int site, int dim)
+{
+   return this->_rChargeBody[comp][site][dim];
+}
+double PartGen::getTersoffPos(int comp, int site, int dim)
+{
+   return this->_rTersoffBody[comp][site][dim];
+}
+
 double PartGen::getEpsilonSite(int comp, int site){
   return _epsilonSite[comp][site];
 }
@@ -556,6 +732,63 @@ double PartGen::getEta(int comp1, int comp2){
 }
 double PartGen::getXi(int comp1, int comp2){
   return _xiLB[comp1][comp2];
+}
+
+double PartGen::getChargeMass(int comp, int site)
+{
+   return this->_mCharge[comp][site];
+}
+double PartGen::getCharge(int comp, int site)
+{
+   return this->_qCharge[comp][site];
+}
+double PartGen::getTersoffMass(int comp, int site)
+{
+   return this->_mTersoff[comp][site];
+}
+double PartGen::getTersoffA(int comp, int site)
+{
+   return this->_ATersoff[comp][site];
+}
+double PartGen::getTersoffB(int comp, int site)
+{
+   return this->_BTersoff[comp][site];
+}
+double PartGen::getTersoff_lambda(int comp, int site)
+{
+   return this->_lambdaTersoff[comp][site];
+}
+double PartGen::getTersoff_mu(int comp, int site)
+{
+   return this->_muTersoff[comp][site];
+}
+double PartGen::getTersoffR(int comp, int site)
+{
+   return this->_RTersoff[comp][site];
+}
+double PartGen::getTersoffS(int comp, int site)
+{
+   return this->_STersoff[comp][site];
+}
+double PartGen::getTersoff_c(int comp, int site)
+{
+   return this->_cTersoff[comp][site];
+}
+double PartGen::getTersoff_d(int comp, int site)
+{
+   return this->_dTersoff[comp][site];
+}
+double PartGen::getTersoff_h(int comp, int site)
+{
+   return this->_hTersoff[comp][site];
+}
+double PartGen::getTersoff_n(int comp, int site)
+{
+   return this->_nTersoff[comp][site];
+}
+double PartGen::getTersoff_beta(int comp, int site)
+{
+   return this->_betaTersoff[comp][site];
 }
 
 void PartGen::addParticle(int id, double x, double y, double z, ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp){
@@ -762,6 +995,16 @@ void PartGen::readRefValues(ifstream &inpfStream){
   _epsilonRefDim *= _boltzmannDim;     // not reduced
   _mRefDim *= _atomicMassDim;    // not reduced
   _sigmaRefDim *= 1.0E-10;        // not reduced
+  
+  /*
+   * ACHTUNG: in der eingelesenen Datei
+   * haben eps_ref, m_ref und sig_ref
+   * die Einheiten K, u und A.
+   *
+   * Hier werden sie (eigentlich unnoetigerweise)
+   * umgestellt auf J, kg und m.
+   */
+  
   ignoreLines(inpfStream, 1);
 }
 

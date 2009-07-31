@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Martin Bernreuther   *
- *   Martin.Bernreuther@informatik.uni-stuttgart.de   *
+ *   Copyright (C) 2009 by Martin Bernreuther et al.                       *
+*   bernreuther@hlrs.de                                                    *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -28,7 +28,7 @@
 
 
 /**
-  @author Martin Bernreuther <Martin.Bernreuther@informatik.uni-stuttgart.de>
+  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2009)
 */
 class Comp2Param{
 public:
@@ -40,6 +40,7 @@ public:
 
   ParaStrm& operator()(unsigned int i, unsigned int j)
     { return m_ssparatbl(i,j); }
+  // ParaStrm& getTersoffStream(unsigned int i, unsigned int j) { return m_tersofftbl(i,j); }
 
   /** initialize parameter streams for each component-component table enty
       the order corresponds to the
@@ -60,5 +61,7 @@ private:
   // 1.5*absQ1*absMy1,1.5*absQ1*absMy2,...
   // 0.75*absQ1*absQ1,0.75*absQ1*absQ2,...
   Array2D<ParaStrm> m_ssparatbl;  // table for parameter streams
+  
+  // Array2D<ParaStrm> m_tersofftbl;
 };
 #endif /*COMP2PARAM_H_*/

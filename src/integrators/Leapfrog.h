@@ -5,10 +5,8 @@
 
 using namespace std;
 
-
-
 //! @brief rotational leapfrog integration scheme
-//! @author Martin Buchholz
+//! @author Martin Buchholz, Martin Bernreuther, et al.
 //!
 //! For details about the algorithm see David Fincham's paper "Leapfrog rotational algorithms"
 //! This Leapfrog integrator is implemented as a deterministic finite automaton (DFA):
@@ -47,6 +45,22 @@ class Leapfrog: public Integrator{
   //! checks whether the current state of the integrator allows that this method is called
   void eventNewTimestep(ParticleContainer* molCont, Domain* domain);
 
+   virtual void accelerateUniformly(
+      ParticleContainer* molCont,
+      Domain* domain
+   );
+   virtual void accelerateInstantaneously(
+      ParticleContainer* molCont,
+      Domain* domain
+   );
+   virtual void init1D(
+      unsigned zoscillator,
+      ParticleContainer* molCont
+   );
+   virtual void zOscillation(
+      unsigned zoscillator,
+      ParticleContainer* molCont
+   );
 
  private:
     

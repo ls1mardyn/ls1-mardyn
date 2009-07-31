@@ -5,7 +5,6 @@
 #include "md_io/Common.h"
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
-#include "ensemble/GrandCanonical.h"
 
 VISWriter::VISWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
    _filename = filename;
@@ -29,7 +28,7 @@ void VISWriter::initOutput(ParticleContainer* particleContainer,
 
 void VISWriter::doOutput( ParticleContainer* particleContainer,
                           DomainDecompBase* domainDecomp, Domain* domain,
-			  unsigned long simstep, list<ChemicalPotential>* lmu) 
+			  unsigned long simstep, list<ChemicalPotential>* lmu ) 
 {
    if(simstep%_writeFrequency == 0) {
       stringstream filenamestream;

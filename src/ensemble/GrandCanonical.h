@@ -1,5 +1,8 @@
+#ifndef GRANDCANONICAL_H_
+#define GRANDCANONICAL_H_
+
 /*
- * Martin Horsch, ls1 project moderated by Martin Bernreuther
+ * Martin Bernreuther, Martin Horsch, et al.
  * (C)2009 GNU General Public License
  */
 #include <list>
@@ -112,4 +115,4 @@ class ChemicalPotential
 
    list<Molecule> reservoir;
 };
-
+#endif

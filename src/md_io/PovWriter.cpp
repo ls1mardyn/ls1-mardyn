@@ -26,8 +26,10 @@ void PovWriter::initOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain){
 }
 
-void PovWriter::doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep){
+void PovWriter::doOutput( ParticleContainer* particleContainer,
+                          DomainDecompBase* domainDecomp, Domain* domain,
+			  unsigned long simstep, list<ChemicalPotential>* lmu ) 
+{
    if(simstep%_writeFrequency == 0) {
       
       stringstream filenamestream;

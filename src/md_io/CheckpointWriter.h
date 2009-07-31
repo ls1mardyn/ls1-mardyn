@@ -2,6 +2,7 @@
 #define CHECKPOINTWRITER_H_
 
 #include "md_io/OutputBase.h"
+#include "ensemble/GrandCanonical.h"
 #include <string>
 
 class ParticleContainer;
@@ -27,8 +28,11 @@ class CheckpointWriter : public OutputBase{
   ~CheckpointWriter();
   void initOutput(ParticleContainer* particleContainer,
 		  DomainDecompBase* domainDecomp, Domain* domain);
-  void doOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
+  void doOutput(
+     ParticleContainer* particleContainer,
+     DomainDecompBase* domainDecomp, Domain* domain,
+     unsigned long simstep, list<ChemicalPotential>* lmu
+  );
   void finishOutput(ParticleContainer* particleContainer,
 		    DomainDecompBase* domainDecomp, Domain* domain);
  private:

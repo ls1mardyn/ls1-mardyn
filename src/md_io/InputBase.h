@@ -2,10 +2,12 @@
 #define INPUTBASE_H_
 
 #include <string>
+#include <list>
 
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
+class ChemicalPotential;
 
 using namespace std;
 
@@ -26,10 +28,10 @@ class InputBase{
   virtual void setPhaseSpaceHeaderFile(string filename) = 0;
   
   //! @brief read the phase space components and header information
-  virtual void readPhaseSpaceHeader(Domain* domain) = 0;
+  virtual void readPhaseSpaceHeader(Domain* domain, double timestep, double cutoff) = 0;
   
   //! @brief read the actual phase space information
-  virtual void readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) = 0;
+  virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
   
 };
 

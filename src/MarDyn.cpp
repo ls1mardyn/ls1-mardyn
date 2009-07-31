@@ -5,13 +5,13 @@
 using namespace std;
 
 //! @page main
-//! In this project, software for the simulation of Molecular Dynamics
+//! In this project, software for molecular dynamics simulation
 //! with short-range forces is developed. The aim is to have a parallel code (MPI) 
 //! for multi-centered molecules.
 //!
-//! The role of the main function is to run Tests for all classes
-//! and to instantiate an Object of the Simulation class which
-//! then is responsible for the simulation
+//! The role of the main function is to run tests for all classes
+//! and to instantiate an object of the Simulation class which
+//! is actually responsible for the simulation
 //!
 int main(int argc, char** argv){
 
@@ -26,5 +26,4 @@ int main(int argc, char** argv){
   runtime=double(clock())/CLOCKS_PER_SEC-runtime;
   
   cout << "main: used " << runtime << " s" << endl;
-
 }

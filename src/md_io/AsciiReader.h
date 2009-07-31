@@ -6,6 +6,7 @@
 #include <sstream>
 #include <fstream>
 
+class ChemicalPotential;
 
 //class ParticleContainer;
 //class DomainDecompBase;
@@ -19,8 +20,8 @@ class AsciiReader : public InputBase{
   ~AsciiReader();
   void setPhaseSpaceFile(string filename);
   void setPhaseSpaceHeaderFile(string filename);
-  void readPhaseSpaceHeader(Domain* domain);
-  void readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp);
+  void readPhaseSpaceHeader(Domain* domain, double timestep, double cutoffRadius);
+  unsigned long readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
  private:
 #ifdef PARALLEL
   istringstream _phaseSpaceFileStream;

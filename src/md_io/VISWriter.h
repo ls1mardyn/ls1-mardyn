@@ -3,6 +3,7 @@
 
 #include "md_io/OutputBase.h"
 #include "Domain.h"
+#include "ensemble/GrandCanonical.h"
 #include <string>
 #include <list>
 
@@ -21,9 +22,11 @@ class VISWriter : public OutputBase{
   ~VISWriter();
   void initOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain);
-  void doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep,
-			 list<ChemicalPotential>* lmu);
+  void doOutput(
+     ParticleContainer* particleContainer,
+     DomainDecompBase* domainDecomp, Domain* domain,
+     unsigned long simstep, list<ChemicalPotential>* lmu
+  );
   void finishOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain);
  private:

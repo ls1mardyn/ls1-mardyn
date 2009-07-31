@@ -1,13 +1,13 @@
-MDProject	20070111
-currentTime	3000.
+mardyn trunk 20090731
+currentTime	0.0
 #rho	0.0438273
 Temperature	0.7
 Length	97.	97.	97.
 NumberOfComponents	1
-1 0 0
- 0. 0. 0.	10000.	1. 1.
+1 0 0 0 0
+ 0. 0. 0.	10000.	1. 1. 5.0 0.0
  0. 0. 0.
-1.e10
+1.0e+10
 NumberOfMolecules	40000	
 MoleculeFormat	ICRV
 1	1	75.7616 86.4547 68.2849	0.000524377 0.00150218 0.00214105

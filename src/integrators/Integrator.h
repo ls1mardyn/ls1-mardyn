@@ -5,7 +5,7 @@ class ParticleContainer;
 class Domain;
 
 //! @brief update velocities and position
-//! @author Martin Buchholz
+//! @author Martin Buchholz, Martin Bernreuther, et al.
 //!
 //! The basic idea of the integrator is, that it calculates from
 //! given values at one timestep the corresponding values in the next timestep.
@@ -58,13 +58,29 @@ class Integrator{
   //! @param domain needed because some macroscopic values (Thermostat) might influence the integrator
   virtual void eventNewTimestep(ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
-  //! set the time between to time steps
+  //! set the time between two time steps
   void setTimestepLength(double dt) { _timestepLength = dt;}
     
-  //! get the time between to time steps
+  //! get the time between two time steps
   double getTimestepLength() { return _timestepLength; }
-    
-      
+
+   virtual void accelerateUniformly(
+      ParticleContainer* molCont,
+      Domain* domain
+   ) = 0;
+   virtual void accelerateInstantaneously(
+      ParticleContainer* molCont,
+      Domain* domain
+   ) = 0;
+   virtual void init1D(
+      unsigned zoscillator,
+      ParticleContainer* molCont
+   ) = 0;
+   virtual void zOscillation(
+      unsigned zoscillator,
+      ParticleContainer* molCont
+   ) = 0;
+
  protected:
 
   //! time between time step n and time step (n+1)

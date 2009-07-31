@@ -1,6 +1,6 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Martin Bernreuther   *
- *   Martin.Bernreuther@informatik.uni-stuttgart.de   *
+ *   Copyright (C) 2009 by Martin Bernreuther et al.                       *
+ *   bernreuther@hlrs.de                                                   *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,7 +24,7 @@
 #include <math.h>
 
 /** Site
-@author Martin Bernreuther
+@author Martin Bernreuther et al. (2009)
 */
 class Site
 {
@@ -57,7 +57,7 @@ protected:
 
 /** LJcenter
     Lennard-Jones 12-6 center
-@author Martin Bernreuther
+@author Martin Bernreuther et al.
 */
 class LJcenter : public Site
 {
@@ -76,6 +76,7 @@ public:
   double sigma() const { return m_sigma; }
   /// get truncation option
   bool TRUNCATED_SHIFTED() { return (this->uLJshift6 != 0.0); }
+  double shift6() const { return this->uLJshift6; }
 
 private:
   double m_eps; // strength

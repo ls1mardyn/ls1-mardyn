@@ -5,8 +5,6 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 
-
-
 DecompWriter::DecompWriter(unsigned long writeFrequency, string mode, string filename, unsigned long numberOfTimesteps, bool incremental) {
   _filename = filename;
   _mode = mode;
@@ -25,7 +23,10 @@ DecompWriter::~DecompWriter(){}
 void DecompWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
 }
 
-void DecompWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep){
+void DecompWriter::doOutput( ParticleContainer* particleContainer,
+                             DomainDecompBase* domainDecomp, Domain* domain,
+			     unsigned long simstep, list<ChemicalPotential>* lmu ) 
+{
   if(simstep%_writeFrequency == 0) {
     stringstream filenamestream;
     if(_filenameisdate) {

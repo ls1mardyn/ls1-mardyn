@@ -25,8 +25,10 @@ void XyzWriter::initOutput(ParticleContainer* particleContainer,
 			   DomainDecompBase* domainDecomp, Domain* domain){
 }
 
-void XyzWriter::doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep){
+void XyzWriter::doOutput( ParticleContainer* particleContainer,
+                          DomainDecompBase* domainDecomp, Domain* domain,
+			  unsigned long simstep, list<ChemicalPotential>* lmu ) 
+{
   if(simstep%_writeFrequency == 0) {
     stringstream filenamestream;
     if(_filenameisdate) {

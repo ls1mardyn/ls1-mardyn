@@ -1,4 +1,5 @@
 #include "datastructures/Cell.h"
+#include "molecules/Molecule.h"
 
 Cell::Cell(){
   this->_haloCellState = false;
@@ -50,3 +51,22 @@ bool Cell::isBoundaryCell() {
 bool Cell::isInnerCell() {
   return _innerCellState;
 }    
+
+bool Cell::deleteMolecule(unsigned long molid)
+{
+   bool found = false;
+   list<Molecule*>::iterator cellit;
+
+   for( cellit = this->_particlePointers.begin();
+        cellit != this->_particlePointers.end();
+        cellit++ )
+   {
+      if((*cellit)->id() == molid)
+      {
+         found = true;
+         this->_particlePointers.remove(*cellit);
+         break;   
+      }
+   }
+   return found;
+}

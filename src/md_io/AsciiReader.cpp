@@ -2,6 +2,7 @@
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+#include "ensemble/GrandCanonical.h"
 #include "Domain.h"
 #include <climits>
 
@@ -26,33 +27,40 @@ void AsciiReader::setPhaseSpaceHeaderFile(string filename) {
  _phaseSpaceHeaderFileName = filename;
 }
 
-void AsciiReader::readPhaseSpaceHeader(Domain* domain) {
+void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep, double cutoffRadius)
+{
   vector<Component>& dcomponents = domain->getComponents();
   string token;
   _phaseSpaceFileStream >> token;
   domain->setinpversion(0);
-  if(token != "MDProject" && domain->getlocalRank() == 0)
+
+  if((token != "mardyn") && (token != "MOLDY") && (token != "ls1r1") && (token != "mrdyn") && (token != "MDProject") && (token != "Mardyn") && (token != "MARDYN"))
   {
-    cerr << "Input: NOT A MOLDY INPUT! (starts with " << token << ")" << endl;
+    if(domain->ownrank() == 0) cerr << "Input: NOT AN LS1 MARDYN INPUT! (starts with " << token << ")" << endl;
+    exit(1);
   }
-  else
+  _phaseSpaceFileStream >> token;
+  if(token != "trunk")
   {
-    _phaseSpaceFileStream >> token;
-    domain->setinpversion(strtoul(token.c_str(),NULL,0));
-    if(domain->getinpversion() < 20070111 && domain->getlocalRank() == 0)
-    {
+     if(!domain->ownrank()) cout << "Wrong input file version (\'"
+	               << token << "\' instead of \'trunk\'). Aborting.\n";
+     exit(787);
+  }
+  _phaseSpaceFileStream >> token;
+  domain->setinpversion(strtoul(token.c_str(),NULL,0));
+  if(domain->getinpversion() < 20080701 && domain->ownrank() == 0)
+  {
       cerr << "Input: OLD VERSION (" << domain->getinpversion() << ")" << endl;
-    }
   }
 
   char c;
   double x,y,z;
   unsigned int numcomponents=0;
   unsigned int j;
-  double m,sigma,eps,rc;
+  double m,sigma,eps;
   double xi,eta;
   unsigned long i;
-  int do_shift;
+  double do_shift;
 
   // When the last header element is reached, "header" is set to false
   bool header = true;
@@ -69,40 +77,76 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain) {
     token.clear();
     _phaseSpaceFileStream >> token;
 
-    if(token=="currentTime"){
+    if((token == "currentTime") || (token == "t"))
+    {
       _phaseSpaceFileStream >> token;
       domain->setCurrentTime(strtod(token.c_str(), NULL));
     }
-
-    if(token=="Temperature"){
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalTemperature(strtod(token.c_str(), NULL));
+    else if((token == "Temperature") || (token == "T"))
+    {
+       _phaseSpaceFileStream >> token;
+       domain->disableCT();
+       domain->setGlobalTemperature(strtod(token.c_str(), NULL));
     }
-    else if(token=="Length"){
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalLength(0, strtod(token.c_str(),NULL));
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalLength(1, strtod(token.c_str(),NULL));
-      _phaseSpaceFileStream >> token;
-      domain->setGlobalLength(2, strtod(token.c_str(),NULL));
+    else if((token == "ThermostatTemperature") || (token == "ThT") || (token == "h"))
+    {
+       int i;
+       double targetT;
+       _phaseSpaceFileStream >> i;
+       _phaseSpaceFileStream >> targetT;
+       domain->setTargetT(i, targetT);
     }
-    if(token=="NumberOfComponents") {
-
+    else if((token == "ComponentThermostat") || (token == "CT") || (token == "o"))
+    {
+       if(!domain->severalThermostats())
+	  domain->enableCT();
+       int cid;
+       _phaseSpaceFileStream >> cid;
+       cid--;
+       int th;
+       _phaseSpaceFileStream >> th;
+       if(0 >= th) continue;
+       domain->setComponentThermostat(cid, th);
+    }
+    else if((token == "Undirected") || (token == "U"))
+    {
+       int tst;
+       _phaseSpaceFileStream >> tst;
+       domain->enableUndirectedThermostat(tst);
+    }
+    else if((token == "Length") || (token == "L"))
+    {
+       double globalLength[3];
+       _phaseSpaceFileStream >> globalLength[0] >> globalLength[1] >> globalLength[2];
+       for(int i=0; i < 3; i++)
+          domain->setGlobalLength(i, 1.0000000333 * globalLength[i]);
+    }
+    else if((token == "NumberOfComponents") || (token == "C"))
+    {
       _phaseSpaceFileStream >> numcomponents;
       dcomponents.resize(numcomponents);
       for(i=0;i<numcomponents;++i)
       {
         dcomponents[i].setID(i);
-        unsigned int numljcenters=0;
-        unsigned int numdipoles=0;
-        unsigned int numquadrupoles=0;
-        _phaseSpaceFileStream >> numljcenters >> numdipoles >> numquadrupoles;
+        unsigned int numljcenters = 0;
+	unsigned int numcharges = 0;
+        unsigned int numdipoles = 0;
+        unsigned int numquadrupoles = 0;
+	unsigned int numtersoff = 0;
+        _phaseSpaceFileStream >> numljcenters >> numcharges
+	                      >> numdipoles >> numquadrupoles
+			      >> numtersoff;
         for(j=0;j<numljcenters;++j)
         {
-          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma >> rc >> do_shift;
-          dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, rc, (do_shift != 0));
+          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma >> cutoffRadius >> do_shift;
+          dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, cutoffRadius, (do_shift != 0));
         }
-
+        for(j = 0; j < numcharges; j++)
+        {
+          double q;
+          _phaseSpaceFileStream >> x >> y >> z >> m >> q;
+          dcomponents[i].addCharge(x, y, z, m, q);
+        }
         for(j=0;j<numdipoles;++j)
         {
           double eMyx,eMyy,eMyz,absMy;
@@ -114,6 +158,20 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain) {
           double eQx,eQy,eQz,absQ;
           _phaseSpaceFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
           dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
+        }
+        for(j = 0; j < numtersoff; j++)
+        {
+          double x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta;
+          _phaseSpaceFileStream >> x >> y >> z;
+          _phaseSpaceFileStream >> m >> A >> B;
+          _phaseSpaceFileStream >> lambda >> mu >> R >> S;
+          _phaseSpaceFileStream >> c >> d >> h >> n >> beta;
+          dcomponents[i].addTersoff(
+            x, y, z,
+            m, A, B,
+            lambda, mu, R, S,
+            c, d, h, n, beta
+          );
         }
         double IDummy1,IDummy2,IDummy3;
         _phaseSpaceFileStream >> IDummy1 >> IDummy2 >> IDummy3;
@@ -135,15 +193,35 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain) {
       _phaseSpaceFileStream >> token;
       domain->setepsilonRF(strtod(token.c_str(),NULL));
     }
-    else if(token=="NumberOfMolecules"){
+    else if((token == "NumberOfMolecules") || (token == "N"))
+    {
       _phaseSpaceFileStream >> token;
       domain->setglobalNumMolecules(strtoul(token.c_str(),NULL,0));
       header = false;
     }
+    else if((token == "AssignCoset") || (token == "S"))
+    {
+      unsigned cid, cosetid;
+      _phaseSpaceFileStream >> cid >> cosetid;
+      cid--;
+      domain->assignCoset(cid, cosetid);
+    }
+    else if((token == "Accelerate") || (token == "A"))
+    {
+       unsigned cosetid;
+       _phaseSpaceFileStream >> cosetid;
+       double v[3];
+       for(unsigned d = 0; d < 3; d++) _phaseSpaceFileStream >> v[d];
+       double tau;
+       _phaseSpaceFileStream >> tau;
+       double ainit[3];
+       for(unsigned d = 0; d < 3; d++) _phaseSpaceFileStream >> ainit[d];
+       domain->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+    }
   }
 }
 
-void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
   
   string token;
 
@@ -154,6 +232,8 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
   unsigned int numcomponents=dcomponents.size();
   unsigned long i,id;
   int componentid;
+  
+  unsigned long maxid = 0;
   
   x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
   q0=1.;
@@ -166,7 +246,7 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
     _phaseSpaceFileStream >> token;
   }
   
-  if(token=="MoleculeFormat") {
+  if((token=="MoleculeFormat") || (token == "M")) {
     string ntypestring("ICRVQD");
     enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
 
@@ -187,7 +267,7 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
       numcomponents=1;
       dcomponents.resize(numcomponents);
       dcomponents[0].setID(0);
-      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,2.5,true);
+      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,cutoffRadius,false);
     }
     //m_molecules.clear();
     for(i=0;i<domain->getglobalNumMolecules();++i)
@@ -209,7 +289,6 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
       if(((int)componentid > (int)numcomponents) && domain->getlocalRank() == 0) {
         cerr << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
       }
-      // @todo why do componetids start with 0?
       --componentid;
 
       //  store only those molecules within the domain of this process
@@ -220,8 +299,18 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
       //(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);
       dcomponents[componentid].incrnumMolecules();
       domain->setglobalRotDOF(dcomponents[componentid].rot_dof()+domain->getglobalRotDOF());
+      if(id > maxid) maxid = id;
+      std::list<ChemicalPotential>::iterator cpit;
+      for(cpit = lmu->begin(); cpit != lmu->end(); cpit++)
+      {
+         if( !cpit->hasSample() &&
+	     (componentid == cpit->getComponentID()) )
+	 {
+	    cpit->storeMolecule(m1);
+	 }
+      }
 
-      if(!(i%1000)) if(domain->getlocalRank()==0) cout << '.' << flush;
+      if(!(i%4096)) if(domain->getlocalRank()==0) cout << '.' << flush;
     }
     if(domain->getlocalRank()==0) cout << " done" << endl;
 
@@ -237,4 +326,5 @@ void AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, Domain* d
     cerr << "ERROR in AsciiReader::readPhaseSpace: Error in the PhaseSpace File" << endl;
   }
 
+  return maxid;
 }

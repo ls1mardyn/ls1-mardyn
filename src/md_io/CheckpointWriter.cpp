@@ -6,7 +6,6 @@
 #include "molecules/Molecule.h"
 #include <sstream>
 
-
 CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
   _filename = filename;
   _writeFrequency = writeFrequency;
@@ -25,6 +24,37 @@ void CheckpointWriter::initOutput(ParticleContainer* particleContainer,
           DomainDecompBase* domainDecomp, Domain* domain) {
 }
 
+void CheckpointWriter::doOutput( ParticleContainer* particleContainer,
+                                 DomainDecompBase* domainDecomp, Domain* domain,
+			         unsigned long simstep, list<ChemicalPotential>* lmu )
+{
+  if(simstep%_writeFrequency != 0) return;
+  
+    stringstream filenamestream;
+    if(_filenameisdate) {
+      filenamestream << gettimestring();
+    } else {
+      filenamestream << _filename;
+    }
+    if(_incremental) {
+      unsigned long temp = simstep/_writeFrequency;
+      filenamestream << "-";
+      while(temp < floor((double) (_numberOfTimesteps/_writeFrequency))){
+  filenamestream << "0";
+  temp = temp*10;
+      }
+      filenamestream << simstep/_writeFrequency << ".xdr";
+    } else {
+      filenamestream << ".xdr";
+    }
+
+  string filename = filenamestream.str();
+  domain->writeCheckpoint(filename, particleContainer, domainDecomp);
+}
+
+/*
+ * archaic version
+ *
 void CheckpointWriter::doOutput(ParticleContainer* particleContainer,
         DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep) {
   if(simstep%_writeFrequency == 0) {
@@ -90,6 +120,11 @@ void CheckpointWriter::doOutput(ParticleContainer* particleContainer,
   }
 
 }
+ *
+ */
 
-void CheckpointWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+void CheckpointWriter::finishOutput(
+   ParticleContainer* particleContainer,
+   DomainDecompBase* domainDecomp, Domain* domain
+) {
 }
