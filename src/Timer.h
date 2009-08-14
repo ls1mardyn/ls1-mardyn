@@ -4,13 +4,11 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include <iostream>
-
 /* We use MPIs Wtime in parallel application, else clock */
 #ifdef PARALLEL 
 	#include <mpi.h>
 #else
-	#include <time.h>
+	#include <sys/time.h>
 #endif
 
 typedef enum {
@@ -75,7 +73,9 @@ private:
 				MPI_Barrier(MPI_COMM_WORLD);
 			time = MPI_Wtime();
 		#else
-			time = double(clock()) / CLOCKS_PER_SEC;
+			struct timeval tmp_time;
+			gettimeofday(&tmp_time, NULL);
+			time = (1.0e6 * (double)tmp_time.tv_sec + (double)tmp_time.tv_usec) / 1.0e6;
 		#endif
 		return time;
 	}
