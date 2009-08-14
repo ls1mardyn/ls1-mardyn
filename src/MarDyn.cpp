@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <ctime>
 #include "Simulation.h"
 
@@ -25,5 +26,5 @@ int main(int argc, char** argv){
 
   runtime=double(clock())/CLOCKS_PER_SEC-runtime;
   
-  cout << "main: used " << runtime << " s" << endl;
+  cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
 }
