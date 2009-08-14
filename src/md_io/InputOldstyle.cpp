@@ -324,6 +324,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
   }
   else {
     cerr << "ERROR in AsciiReader::readPhaseSpace: Error in the PhaseSpace File" << endl;
+    exit(1);
   }
 
   return maxid;
