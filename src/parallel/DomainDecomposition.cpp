@@ -151,13 +151,6 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       MPI_Irecv(particlesRecvBufs[2*d+direction], numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction]);
 
     }
-#if 0
-/* When uncommenting this part the handling of recieved molecules will go to a separate loop. 
- * WARNING: Results differ. The reason is not clear, yet.
- */
-  }
-  for(unsigned short d=0;d<3;++d){
-#endif
     for(direction=0; direction <=1; direction++){
       unsigned long numrecv = numPartsToRecv[2*d+direction];
       MPI_Wait(&send_requests[2*d+direction], &send_statuses[2*d+direction]);
