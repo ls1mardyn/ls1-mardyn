@@ -1,7 +1,6 @@
 #ifndef PARTICLECONTAINER_H_
 #define PARTICLECONTAINER_H_
 
-#include <vector>
 #include <list>
 
 #include "molecules/Molecule.h"
