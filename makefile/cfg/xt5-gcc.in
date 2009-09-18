@@ -1,0 +1,24 @@
+# Configuratin for the Cray XT5 System and GNU Compiler
+
+CFG_INFO = "xt5 configuration for gcc"
+
+CXX_SEQ = CC
+CXX_PAR = CC
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Wall -g 
+LINKFLAGS_SEQ_DEBUG = -O0 -g
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) -O2 -DNDEBUG
+LINKFLAGS_SEQ_RELEASE = -O2
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -Wall -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+# RELEASE
+CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -DNDEBUG -DPARALLEL -O2
+LINKFLAGS_PAR_RELEASE = -DPARALLEL
