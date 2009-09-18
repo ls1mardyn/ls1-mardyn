@@ -3,8 +3,6 @@
 
 #include "integrators/Integrator.h"
 
-using namespace std;
-
 //! @brief rotational leapfrog integration scheme
 //! @author Martin Buchholz, Martin Bernreuther, et al.
 //!
