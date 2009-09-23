@@ -433,7 +433,7 @@ inline void Molecule::setupCache(const vector<Component>* components)
   m_numsites+=m_quadrupoles->size();
   m_numorientedsites+=m_quadrupoles->size();
   m_tersoff=&(*components)[m_componentid].tersoff();
-#ifdef DEBUG
+#ifndef NDEBUG
   if(!m_tersoff)
   {
      cout << "\nmolecule " << m_id << " (" << m_r[0] << " / "
