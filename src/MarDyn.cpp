@@ -19,6 +19,7 @@ int main(int argc, char** argv){
   cout.precision(6);
 
   Simulation simulation(&argc, &argv);
+  simulation.initialize();
   
   double runtime = double(clock())/CLOCKS_PER_SEC;
 

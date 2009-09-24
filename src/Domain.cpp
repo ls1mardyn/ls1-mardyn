@@ -11,6 +11,9 @@
 #include <sstream>
 #include <string>
 
+#include "Logger.h"
+using Log::global_log;
+
 using namespace std;
 
 /*
@@ -621,6 +624,7 @@ void Domain::initParameterStreams(double cutoffRadius){
 }
 
 void Domain::initFarFieldCorr(double cutoffRadius) {
+  global_log->set_mpi_output_root(0);
   double UpotCorrLJ=0.;
   double VirialCorrLJ=0.;
   double MySelbstTerm=0.;
@@ -675,7 +679,8 @@ void Domain::initFarFieldCorr(double cutoffRadius) {
           double zj=cj.ljcenter(sj).rz();
           double tau2=sqrt(xj*xj+yj*yj+zj*zj);
           if(tau1+tau2>=cutoffRadius){
-            cerr << "Error calculating cutoff corrections, rc too small" << endl;
+            global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
+            exit(1);
           }
           double eps24;
           params >> eps24;
@@ -721,10 +726,9 @@ void Domain::initFarFieldCorr(double cutoffRadius) {
   _UpotCorr=UpotCorrLJ+MySelbstTerm;
   _VirialCorr=VirialCorrLJ+3.*MySelbstTerm;
   
-  if(_localRank == 0)
-  {
-    cout << "far field terms:\nU\t" << _UpotCorr << "\nvirial\t" << _VirialCorr << "\n";
-  }
+  global_log->info() << "Far field terms:" << endl;
+  global_log->info() << " U_pot_correction  = " << _UpotCorr << endl;
+  global_log->info() << " virial_correction = " << _VirialCorr << endl;
 }
 
 void Domain::specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep)

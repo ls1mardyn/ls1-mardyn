@@ -30,6 +30,9 @@
 #include <sstream>
 #include <iomanip>
 #include "Timer.h"
+#include "Logger.h"
+
+using Log::global_log;
 
 Simulation::Simulation(int *argc, char ***argv)
 {
@@ -38,46 +41,43 @@ Simulation::Simulation(int *argc, char ***argv)
   MPI_Init(argc, argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
 #endif
+
+  /* Initialize the global log file */
+  string logfileName("MarDyn");
+  global_log = new Log::Logger(Log::ALL);
+  global_log->set_mpi_output_root(0);
+
   if (*argc != 4) 
   {
-     if(ownrank == 0)
-     {
-        cout << "Usage: " << (*argv)[0] << " <configfilename> <number of timesteps> <outputprefix>\n";
-        cout << "Detected argc: " << *argc << "\n";
-     }
+     global_log->error() << "Usage: " << (*argv)[0] << " <configfilename> <number of timesteps> <outputprefix>\n";
+     global_log->error() << "Detected argc: " << *argc << endl;
      exit(1);
   }
   
 #ifndef PARALLEL
-#ifndef NDEBUG
-  cout << "Initializing the alibi domain decomposition: ";
-#endif
+  global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
   _domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
-#ifndef NDEBUG
-  cout << "done.\n";
-#endif
+  global_log->info() << "Initialization done" << endl;
 #endif
 
   // open filestream to the input file
   string inputfilename((*argv)[1]);
   ifstream inputfilestream(inputfilename.c_str());
   if ( !inputfilestream.is_open() ) {
-    cerr << "ERROR: Could not open file " << inputfilename << endl;
+    global_log->error() << "Could not open file " << inputfilename << endl;
     exit (1);
   }
 
   std::string inputPath;
   unsigned int lastIndex = inputfilename.find_last_of('/',inputfilename.size()-1);
-  if (lastIndex == string::npos) {
-      inputPath="";
-  }    
-  else {
+  if (lastIndex == string::npos)
+    inputPath="";
+  else
     inputPath = inputfilename.substr(0, lastIndex+1);
-  }
   
   // store number of timesteps to be simulated
   this->_numberOfTimesteps = atol((*argv)[2]);
-  if(!ownrank) cout << "Simulating " << _numberOfTimesteps << " steps.\n";
+  global_log->info() << "Simulating " << _numberOfTimesteps << " steps." << endl;
 
   // store prefix for output files
   _outputPrefix = string((*argv)[3]);
@@ -107,28 +107,23 @@ Simulation::Simulation(int *argc, char ***argv)
   this->h = 0.0;
   this->_initStatistics = 20000;
   
-#ifndef NDEBUG
-  if(!ownrank) cout << "constructing domain:";
-#endif
+  global_log->info() << "Constructing domain ..." << endl;
   this->_domain = new Domain(ownrank);
-#ifndef NDEBUG
-  if(!ownrank) cout << " done.";
-  cout.flush();
-#endif
+  global_log->info() << "Domain construction done." << endl;
   _particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 
   // The first line of the config file has to contain the token "MDProjectConfig"
   inputfilestream >> token;
   if((token != "mardynconfig") && (token != "MDProjectConfig"))
   {
-    if(ownrank == 0) cerr << "Not a mardynconfig file! " << token << endl;
+    global_log->error() << "Not a mardynconfig file! " << token << endl;
     exit(1);
   } 
   
   while (inputfilestream) {
     token.clear();
     inputfilestream >> token;
-    if(!ownrank) cout << " [[" << token << "]] \t";
+    global_log->debug() << " [[" << token << "]]" << endl;
 
     if (token.substr(0, 1)=="#"){
       inputfilestream.ignore(1024,'\n');
@@ -138,9 +133,8 @@ Simulation::Simulation(int *argc, char ***argv)
       string phaseSpaceFileFormat; 
       inputfilestream >> phaseSpaceFileFormat;
 
-      if(timestepLength == 0.0)
-      {
-         cout << "timestep missing.\n";
+      if(timestepLength == 0.0) {
+         global_log->error() << "timestep missing." << endl;
          exit(1);
       }
       if(phaseSpaceFileFormat=="OldStyle"){
@@ -181,9 +175,8 @@ Simulation::Simulation(int *argc, char ***argv)
     else if ((token=="parallelization") || (token == "parallelisation"))
     {
 #ifndef PARALLEL
-      cerr << "\nWARNING: Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
+      global_log->warning() << "WARNING: Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
       inputfilestream >> token;
-      //exit(1);
 #else
       inputfilestream >> token;
       if (token=="DomainDecomposition") {
@@ -255,7 +248,7 @@ Simulation::Simulation(int *argc, char ***argv)
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> outputPathAndPrefix;
         _outputPlugins.push_back(new VISWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
-        if(!ownrank) cout << "VisItt " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+        global_log->debug() << "VisItt " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
       }
       /*
       else if(token == "VimWriter")
@@ -273,84 +266,59 @@ Simulation::Simulation(int *argc, char ***argv)
     {
       cosetid++;
       inputfilestream >> token;
-#ifndef NDEBUG
-      if(!ownrank)
-      {
-         cout << token << "\n";
-         cout << flush;
-      } 
-#endif
+      global_log->debug() << "Found specifier '" << token << "'\n";
+
       if(token != "comp")
       {
-         if(ownrank == 0) cout << "Expected 'comp' instead of '" << token << "'.\n";
+         global_log->error() << "Expected 'comp' instead of '" << token << "'.\n";
          exit(1);
       }
       int cid = 0;
       while(cid >= 0)
       {
          inputfilestream >> cid;
-         if(!ownrank && (cid > 0)) cout << "acc. for component " << cid << "\n";
+         if(cid > 0) global_log->info() << "acc. for component " << cid << endl;
          cid--;
          _domain->assignCoset((unsigned)cid, cosetid);
       }
       double v;
       inputfilestream >> v;
-      if(!ownrank) cout << "velocity " << v << "\n";
+      global_log->debug() << "velocity " << v << endl;
       inputfilestream >> token;
-#ifndef NDEBUG
-      if(!ownrank)
-      {
-         cout << token << "\n";
-         cout << flush;
-      } 
-#endif
-      if(token != "towards")
-      {
-         if(ownrank == 0) cout << "Expected 'towards' instead of '" << token << "'.\n";
+      global_log->debug() << "Found specifier '" << token << "'\n";
+
+      if(token != "towards") {
+         global_log->error() << "Expected 'towards' instead of '" << token << "'.\n";
          exit(1);
       }
       double dir[3];
       double dirnorm = 0;
-      for(unsigned d = 0; d < 3; d++)
-      {
+      for(unsigned d = 0; d < 3; d++) {
          inputfilestream >> dir[d];
          dirnorm += dir[d]*dir[d];
       }
       dirnorm = 1.0 / sqrt(dirnorm);
       for(unsigned d = 0; d < 3; d++) dir[d] *= dirnorm;
       inputfilestream >> token;
-#ifndef NDEBUG
-      if(!ownrank)
-      {
-         cout << token << "\n";
-         cout << flush;
-      } 
-#endif
-      if(token != "within")
-      {
-         if(ownrank == 0) cout << "Expected 'within' instead of '" << token << "'.\n";
+      global_log->debug() << "Found specifier '" << token << "'\n";
+
+      if(token != "within") {
+         global_log->error() << "Expected 'within' instead of '" << token << "'.\n";
          exit(1);
       }
       double tau;
       inputfilestream >> tau;
       inputfilestream >> token;
-#ifndef NDEBUG
-      if(!ownrank)
-      {
-         cout << token << "\n";
-         cout << flush;
-      } 
-#endif
-      if(token != "from")
-      {
-         if(ownrank == 0) cout << "Expected 'from' instead of '" << token << "'.\n";
+      global_log->debug() << "Found specifier '" << token << "'\n";
+
+      if(token != "from") {
+         global_log->error() << "Expected 'from' instead of '" << token << "'.\n";
          exit(1);
       }
       double ainit[3];
       for(unsigned d = 0; d < 3; d++) inputfilestream >> ainit[3];
-      if(timestepLength == 0.0)
-      {
-         cout << "timestep missing.\n";
+      if(timestepLength == 0.0) {
+         global_log->error() << "timestep missing." << endl;
          exit(1);
       }
       this->_domain->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
@@ -425,14 +393,10 @@ Simulation::Simulation(int *argc, char ***argv)
        inputfilestream >> token;
        if(token != "component")
        {
-          if(ownrank == 0)
-          {
-             cout << "Input failure.\n";
-             cout << "Expected 'component' instead of '" << token << "'.\n\n";
-             cout << "Syntax: chemicalPotential <mu> component <cid> "
-	          << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-		  << "conduct <ntest> tests every <nstep> steps\n";
-          }
+	  global_log->error() << "Expected 'component' instead of '" << token << "'.\n";
+	  global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+	              << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+	              << "conduct <ntest> tests every <nstep> steps" << endl;
           exit(1);
        }
        unsigned icid;
@@ -448,14 +412,10 @@ Simulation::Simulation(int *argc, char ***argv)
           inputfilestream >> token;
           if(token != "to")
           {
-             if(ownrank == 0)
-             {
-                cout << "Input failure.\n";
-                cout << "Expected 'to' instead of '" << token << "'.\n\n";
-                cout << "Syntax: chemicalPotential <mu> component <cid> "
-	             << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-		     << "conduct <ntest> tests every <nstep> steps\n";
-             }
+             global_log->error() << "Expected 'to' instead of '" << token << "'.\n";
+             global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+                         << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+	                 << "conduct <ntest> tests every <nstep> steps\n";
              exit(1);
           }
           inputfilestream >> x1 >> y1 >> z1;
@@ -463,14 +423,10 @@ Simulation::Simulation(int *argc, char ***argv)
        }
        if(token != "conduct")
        {
-          if(ownrank == 0)
-          {
-             cout << "Input failure.\n";
-             cout << "Expected 'conduct' instead of '" << token << "'.\n\n";
-             cout << "Syntax: chemicalPotential <mu> component <cid> "
-	          << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-		  << "conduct <ntest> tests every <nstep> steps\n";
-          }
+          global_log->error() << "Expected 'conduct' instead of '" << token << "'.\n";
+          global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+	              << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+		      << "conduct <ntest> tests every <nstep> steps\n";
           exit(1);
        }
        unsigned intest;
@@ -478,27 +434,19 @@ Simulation::Simulation(int *argc, char ***argv)
        inputfilestream >> token;
        if(token != "tests")
        {
-          if(ownrank == 0)
-          {
-             cout << "Input failure.\n";
-             cout << "Expected 'tests' instead of '" << token << "'.\n\n";
-             cout << "Syntax: chemicalPotential <mu> component <cid> "
-	          << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-		  << "conduct <ntest> tests every <nstep> steps\n";
-          }
+          global_log->error() << "Expected 'tests' instead of '" << token << "'.\n";
+          global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+	              << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+	              << "conduct <ntest> tests every <nstep> steps" << endl;
           exit(1);
        }
        inputfilestream >> token;
        if(token != "every")
        {
-          if(ownrank == 0)
-          {
-             cout << "Input failure.\n";
-             cout << "Expected 'every' instead of '" << token << "'.\n\n";
-             cout << "Syntax: chemicalPotential <mu> component <cid> "
-	          << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-		  << "conduct <ntest> tests every <nstep> steps\n";
-          }
+          global_log->error() << "Expected 'every' instead of '" << token << "'.\n";
+          global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+	              << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+		      << "conduct <ntest> tests every <nstep> steps" << endl;
           exit(1);
        }
        unsigned instep;
@@ -506,14 +454,10 @@ Simulation::Simulation(int *argc, char ***argv)
        inputfilestream >> token;
        if(token != "steps")
        {
-          if(ownrank == 0)
-          {
-             cout << "Input failure.\n";
-             cout << "Expected 'steps' instead of '" << token << "'.\n\n";
-             cout << "Syntax: chemicalPotential <mu> component <cid> "
-	          << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-		  << "conduct <ntest> tests every <nstep> steps\n";
-          }
+          global_log->error() << "Expected 'steps' instead of '" << token << "'.\n";
+          global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+	              << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+		      << "conduct <ntest> tests every <nstep> steps" << endl;
           exit(1);
        }
        ChemicalPotential tmu = ChemicalPotential();
@@ -521,18 +465,12 @@ Simulation::Simulation(int *argc, char ***argv)
        tmu.setInterval(instep); 
        tmu.setInstances(intest);
        if(controlVolume) tmu.setControlVolume(x0, y0, z0, x1, y1, z1);
-       cout.precision(6);
-       if(!ownrank)
-       {
-	  cout << "chemical Potential " << imu << " component "
-	       << icid+1 << " (internally " << icid << ") conduct "
-	       << intest << " tests every " << instep << " steps: ";
-       }
+       global_log->info().precision(6);
+       global_log->info() << "chemical Potential " << imu << " component "
+	          << icid+1 << " (internally " << icid << ") conduct "
+	          << intest << " tests every " << instep << " steps: ";
        this->_lmu.push_back(tmu);
-       if(!ownrank)
-       {
-	  cout << " pushed back.\n";
-       }
+       global_log->info() << " pushed back." << endl;
     }
     else if(token == "planckConstant")
     {
@@ -610,38 +548,38 @@ Simulation::Simulation(int *argc, char ***argv)
 
 void Simulation::initialize()
 {
+  global_log->set_mpi_output_root(0);
+  global_log->info() << "Initializing simulation" << endl;
   // clear halo
-  if(!this->_domain->ownrank()) cout << "   * clearing the halo\n";
+  global_log->info() << "Clearing halos" << endl;
   _moleculeContainer->deleteOuterParticles();
 
-  if(!this->_domain->ownrank()) cout << "   * updating domain decomposition\n";
+  global_log->info() << "Updating domain decomposition" << endl;
   updateParticleContainerAndDecomposition();
   
   // Force calculation
-  if(!this->_domain->ownrank()) cout << "   * force calculation\n";
+  global_log->info() << "Performing force calculation" << endl;
   _moleculeContainer->traversePairs();
 
   // clear halo
+  global_log->info() << "Clearing halos" << endl;
   _moleculeContainer->deleteOuterParticles();
   
   // initialize the radial distribution function
   if(this->_doRecordRDF) this->_domain->resetRDF();
 
-  cout << "   [:[:]:]   ";
   if(this->_domain->isAcceleratingUniformly())
   {
-     if(!this->_domain->ownrank()) cout << "   * initialising uniform acceleration.\n";
+     global_log->info() << "Initialising uniform acceleration." << endl;
      unsigned long uCAT = this->_domain->getUCAT();
-     if(!this->_domain->ownrank()) cout << "        uCAT: " << uCAT << " steps.\n";
-     cout << "   [-[-]-]   ";
+     global_log->info() << "uCAT: " << uCAT << " steps." << endl;
      this->_domain->determineAdditionalAcceleration( this->_domainDecomposition,
                                                      this->_moleculeContainer,
                                                      uCAT * _integrator->getTimestepLength() );
-     if(!this->_domain->ownrank()) cout << "        uniform acceleration initialised.\n";
+     global_log->info() << "Uniform acceleration initialised." << endl;
   }
   
-  cout << "   [.[.].]   ";
-  if(!this->_domain->ownrank()) cout << "   * calculating global values\n";
+  global_log->info() << "Calculating global values" << endl;
   _domain->calculateThermostatDirectedVelocity(_moleculeContainer);
   _domain->calculateVelocitySums(_moleculeContainer);
   _domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, true, 1.0);
@@ -664,9 +602,7 @@ void Simulation::initialize()
 
   if(this->_zoscillation)
   {
-#ifndef NDEBUG
-    if(!this->_domain->ownrank()) cout << "   * initialize z-oscillators\n";
-#endif
+    global_log->debug() << "Initializing z-oscillators" << endl;
     this->_integrator->init1D(this->_zoscillator, this->_moleculeContainer);
   }
   
@@ -675,25 +611,25 @@ void Simulation::initialize()
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++){
     (*outputIter)->initOutput(_moleculeContainer, _domainDecomposition, _domain);
   }
-  if(!this->_domain->ownrank()) cout << "system is initialised.\n\n";
+  global_log->info() << "System initialised\n" << endl;
 }
 
 void Simulation::simulate()
 {
 
   Molecule* tM;
-  cout.precision(3);
-  cout.width(7);
-  cout << "Now ";
-  int ownrank = _domainDecomposition->getRank();
-  cout << "simulating rank " << ownrank << ".\n";
 
-  initialize();
+  global_log->set_mpi_output_root(0);
+  global_log->info() << "Started simulation" << endl;
+  
+
   // (universal) constant acceleration (number of) timesteps
   unsigned uCAT = this->_domain->getUCAT();
 
+  /***************************************************************************/
+  /* BEGIN MAIN LOOP                                                         */
+  /***************************************************************************/
   Timer loopTimer;
-  // MAIN LOOP
   loopTimer.start();
   
   this->_initSimulation = (unsigned long)(this->_domain->getCurrentTime()
@@ -718,21 +654,16 @@ void Simulation::simulate()
 	  j++;
        }
     }
-    if(this->_domain->ownrank() < 3)
-       cout << "\ntimestep " << simstep << " [rank " << this->_domain->ownrank() << "]:\n";
+    global_log->debug() << "timestep " << simstep << endl;
      
     _integrator->eventNewTimestep(_moleculeContainer, _domain);
 
     // ensure that all Particles are in the right cells and exchange Particles
-#ifndef NDEBUG
-    if(!this->_domain->ownrank()) cout << "   * container and decomposition\n";
-#endif
+    global_log->debug() << "Updating container and decomposition" << endl;
     updateParticleContainerAndDecomposition();
 
     // Force calculation
-#ifndef NDEBUG
-    if(!this->_domain->ownrank()) cout << "   * traverse pairs\n";
-#endif
+    global_log->debug() << "Traversing pairs" << endl;
     _moleculeContainer->traversePairs();
     
     /*
@@ -748,13 +679,8 @@ void Simulation::simulate()
        {
 	  if(!((simstep + 2*j + 3) % cpit->getInterval()))
 	  {     
-             if(!this->_domain->ownrank()) 
-             {
-#ifndef NDEBUG
-                cout << "   * grand canonical ensemble(" << j
-		     << "): test deletions and insertions\n";
-#endif
-             }
+             global_log->debug() << "Grand canonical ensemble(" << j
+		         << "): test deletions and insertions" << endl;
              this->_moleculeContainer->grandcanonicalStep(
 	        &(*cpit), this->_domain->T(0)
              );
@@ -764,16 +690,10 @@ void Simulation::simulate()
 	     int balance = _moleculeContainer->grandcanonicalBalance(
 	        this->_domainDecomposition
 	     );
-#ifndef NDEBUG
-             if(!this->_domain->ownrank()) 
-             {
-                cout << "   b[" << ((balance > 0)? "+": "") << balance
-                     << "(" << ((localBalance > 0)? "+": "")
-		     << localBalance << ")" << " / c = "
-		     << cpit->getComponentID() << "]   ";
-                cout.flush();
-             }
-#endif	     
+             global_log->debug() << "   b[" << ((balance > 0)? "+": "") << balance
+                         << "(" << ((localBalance > 0)? "+": "")
+		         << localBalance << ")" << " / c = "
+		         << cpit->getComponentID() << "]   " << endl;
              this->_domain->Nadd(
 	        cpit->getComponentID(), balance, localBalance
 	     );
@@ -784,9 +704,7 @@ void Simulation::simulate()
     }
 
     // clear halo
-#ifndef NDEBUG
-    if(!this->_domain->ownrank()) cout << "   * delete outer particles\n";
-#endif
+    global_log->debug() << "Delete outer particles" << endl;
     _moleculeContainer->deleteOuterParticles();
     
     /*
@@ -814,37 +732,27 @@ void Simulation::simulate()
     {
       if(!(simstep % uCAT))
       {
-#ifndef NDEBUG
-        if(!this->_domain->ownrank()) cout << "   * determine the additional acceleration\n";
-#endif
+        global_log->debug() << "Determine the additional acceleration" << endl;
         this->_domain->determineAdditionalAcceleration( this->_domainDecomposition,
                                                         this->_moleculeContainer,
                                                         uCAT * _integrator->getTimestepLength() );
       }
-#ifndef NDEBUG
-      if(!this->_domain->ownrank()) cout << "   * process the uniform acceleration\n";
-#endif
+      global_log->debug() << "Process the uniform acceleration" << endl;
       this->_integrator->accelerateUniformly(this->_moleculeContainer, this->_domain);
     }
 
     if(this->_zoscillation)
     {
-#ifndef NDEBUG
-      if(!this->_domain->ownrank()) cout << "   * alert z-oscillators\n";
-#endif
+      global_log->debug() << "alert z-oscillators" << endl;
       this->_integrator->zOscillation(this->_zoscillator, this->_moleculeContainer);
     }
 
     // Inform the integrator about the calculated forces
-#ifndef NDEBUG
-    if(!this->_domain->ownrank()) cout << "   * inform the integrator\n";
-#endif
+    global_log->debug() << "Inform the integrator" << endl;
     _integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
     // calculate the global macroscopic values from the local values
-#ifndef NDEBUG
-    if(!this->_domain->ownrank()) cout << "   * calculate macroscopic values\n";
-#endif
+    global_log->debug() << "Calculate macroscopic values" << endl;
     _domain->calculateGlobalValues( _domainDecomposition, _moleculeContainer,
                                     (!(simstep % _collectThermostatDirectedVelocity)),
                                     Tfactor(simstep) );
@@ -852,9 +760,7 @@ void Simulation::simulate()
     // scale velocity and angular momentum
     if(!this->_domain->NVE())
     {
-#ifndef NDEBUG
-       if(!this->_domain->ownrank()) cout << "   * velocity scaling\n";
-#endif
+       global_log->debug() << "Velocity scaling" << endl;
        if(this->_domain->severalThermostats())
        {
           for( tM = _moleculeContainer->begin();
@@ -893,6 +799,9 @@ void Simulation::simulate()
     output(simstep);
   }
   loopTimer.stop();
+  /***************************************************************************/
+  /* END MAIN LOOP                                                           */
+  /***************************************************************************/
 
   Timer ioTimer;
   ioTimer.start();
@@ -905,10 +814,9 @@ void Simulation::simulate()
     delete (*outputIter);
   }
   ioTimer.stop();
-  if ( 0 == _domainDecomposition->getRank()) {
-    cout << "Simulation loop took: " << loopTimer.get_etime() << " sec\n";
-    cout << "Simulation io took:   " << ioTimer.get_etime() << " sec\n";
-  }
+
+  global_log->info() << "Simulation loop took: " << loopTimer.get_etime() << " sec" << endl;
+  global_log->info() << "Simulation io took:   " << ioTimer.get_etime() << " sec" << endl;
 
   delete _domainDecomposition;
   delete _domain;
@@ -922,6 +830,7 @@ void Simulation::simulate()
 void Simulation::output(unsigned long simstep)
 {
   int ownrank = _domainDecomposition->getRank();
+  global_log->set_mpi_output_root(0);
 
   std::list<OutputBase*>::iterator outputIter;
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++)
@@ -989,13 +898,17 @@ void Simulation::output(unsigned long simstep)
      );
   }
 
+  if(_domain->thermostatWarning())
+      global_log->warning() << "Thermostat!" << endl;
+  global_log->info() << "Simstep = "<< simstep
+      << "\tT = " << _domain->T(0)
+      << "\tU_pot = " << _domain->getAverageGlobalUpot() 
+      << "\tp = " << _domain->getGlobalPressure() << endl;
+
+#if 0 
+  // CHECKFORREMOVAL
   if(ownrank==0)
   {
-     cout.precision(4);
-     cout << (_domain->thermostatWarning()? "*": "")
-          << simstep << "\t" << _domain->T(0)
-                     << "\t" << _domain->getAverageGlobalUpot() << "\t"
-                     << _domain->getGlobalPressure();
      double a = _domain->getDirectedVelocity(1);
      if(a > 0)
      {
@@ -1012,9 +925,8 @@ void Simulation::output(unsigned long simstep)
              << cpit->getGlobalN() << "  ";
      }
      cout << (this->_domain->thermostatWarning()? "  *": "");
-     cout << "\n";
-     cout.precision(6);
   }
+#endif
 }
 
 void Simulation::updateParticleContainerAndDecomposition()

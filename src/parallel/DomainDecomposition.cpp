@@ -3,6 +3,9 @@
 #include "datastructures/ParticleContainer.h"
 #include "Domain.h"
 #include "parallel/ParticleData.h"
+#include "Logger.h"
+using Log::global_log;
+
 using namespace std;
 
 
@@ -407,6 +410,8 @@ void DomainDecomposition::assertIntIdentity(int IX)
 void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
 {
    Molecule* m;
+   global_log->set_mpi_output_root(0);
+
    if(this->_ownRank)
    {
       int tid;
@@ -439,18 +444,16 @@ void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
             if(recv == -1) cc = false;
             else
             {
-               if(check.find(recv) != check.end())
-               {
-                  cout << "\nSEVERE ERROR. Ranks " << check[recv] << " and "
-                       << i << " both propagate ID " << recv << ". Aborting.\n";
-                  MPI_Finalize();
-                  exit(2674);
+               if(check.find(recv) != check.end()) {
+                  global_log->error() << "Ranks " << check[recv] << " and " << i 
+                              << " both propagate ID " << recv << endl;
+                  exit(1);
                }
                else check[recv] = i;
             }
          }
       }
-      cout << "\nData consistency checked. No duplicate IDs detected among " << check.size()
+      global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
            << " entries.\n";
    }
 }

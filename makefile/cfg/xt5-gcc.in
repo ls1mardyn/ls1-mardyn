@@ -1,6 +1,6 @@
 # Configuratin for the Cray XT5 System and GNU Compiler
 
-CFG_INFO = "xt5 configuration for gcc"
+CFG_INFO = "Cray XT5 configuration for gcc"
 
 CXX_SEQ = CC
 CXX_PAR = CC

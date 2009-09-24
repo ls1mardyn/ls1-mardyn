@@ -4,6 +4,8 @@
 #include "ensemble/GrandCanonical.h"
 #include "Domain.h"
 #include <climits>
+#include "Logger.h"
+using Log::global_log;
 
 InputOldstyle::InputOldstyle() {
 }
@@ -28,14 +30,14 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
   if((token != "mardyn") && (token != "MOLDY") && (token != "ls1r1") && (token != "mrdyn") && (token != "MDProject") && (token != "Mardyn") && (token != "MARDYN"))
   {
     if(domain->ownrank() == 0)
-       cerr << "Input: NOT AN LS1 MARDYN INPUT! (starts with "
+       global_log->error() << "Input: NOT AN LS1 MARDYN INPUT! (starts with "
             << token << ")" << endl;
     exit(1);
   }
   _phaseSpaceFileStream >> token;
   if(token != "trunk")
   {
-     if(!domain->ownrank()) cout << "Wrong input file version (\'"
+     global_log->error() << "Wrong input file version (\'"
 	               << token << "\' instead of \'trunk\'). Aborting.\n";
      exit(787);
   }
@@ -43,7 +45,8 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
   domain->setinpversion(strtoul(token.c_str(),NULL,0));
   if(domain->getinpversion() < 20080701 && domain->getlocalRank() == 0)
   {
-      cerr << "Input: OLD VERSION (" << domain->getinpversion() << ")" << endl;
+	  global_log->error() << "Input: OLD VERSION (" << domain->getinpversion() << ")" << endl;
+	  exit(1);
   }
 
   char c;
@@ -214,13 +217,14 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
     }
     else
     {
-       cout << "Invalid token \'" << token << "\' found. Skipping rest of the header.\n";
+       global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << endl;
        header = false;
     }
   }
 }
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+  global_log->set_mpi_output_root(0);
 
   string token;
 
@@ -250,7 +254,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
     string ntypestring("ICRVQD");
     enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
 
-    if(domain->getlocalRank()==0) cout << "reading " << domain->getglobalNumMolecules() << " molecules" << flush;
+    global_log->info() << "Reading " << domain->getglobalNumMolecules() << " molecules" << endl;
     if(domain->getinpversion() >= 51129) _phaseSpaceFileStream >> ntypestring;
     ntypestring.erase(ntypestring.find_last_not_of(" \t\n")+1);
     ntypestring.erase(0,ntypestring.find_first_not_of(" \t\n"));
@@ -260,10 +264,10 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
       ntype=ICRV;
     else if (ntypestring=="IRV")
       ntype=IRV;
-    if(domain->getlocalRank()==0) cout << " (" << ntypestring << ")" << flush;
+    global_log->info() << "Molecul format: " << ntypestring << endl;
     if(!numcomponents)
     {
-      if(domain->getlocalRank()==0) cout << endl << "No components defined! Setting up single one-centered LJ" << endl;
+      global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
       numcomponents=1;
       dcomponents.resize(numcomponents);
       dcomponents[0].setID(0);
@@ -286,8 +290,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
         cerr << endl << id << ": Molecule " << x << ";" << y << ";" << z << " out of box! " << flush;
       }
 
-      if(((int)componentid > (int)numcomponents) && domain->getlocalRank() == 0) {
-        cerr << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
+      if(componentid > numcomponents) {
+        global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
+	exit(1);
       }
       componentid --;
 
@@ -309,21 +314,23 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	    cpit->storeMolecule(m1);
 	 }
       }
-
-      if(!(i%4096)) if(domain->getlocalRank()==0) cout << '.' << flush;
+      unsigned long iph = domain->getglobalNumMolecules() / 100;
+      if(i%iph == 0)
+        global_log->info() << "Finished reading molecules: " << i/iph << "%" << endl;
     }
-    if(domain->getlocalRank()==0) cout << " done" << endl;
+    global_log->info() << "Finished reading molecules: 100%" << endl;
+    global_log->info() << "Reading Molecules done" << endl;
 
     if(!domain->getglobalRho()){
       domain->setglobalRho(domain->getglobalNumMolecules()/(domain->getGlobalLength(0)*domain->getGlobalLength(1)*domain->getGlobalLength(2)));
-      if(domain->getlocalRank()==0) cout << "calculated global Rho:\t" << domain->getglobalRho() << endl;
+      global_log->info() << "Calculated Rho_global = " << domain->getglobalRho() << endl;
     }
 
     _phaseSpaceFileStream.close();
 
   }
   else {
-    cerr << "ERROR in AsciiReader::readPhaseSpace: Error in the PhaseSpace File" << endl;
+    global_log->error() << "Error in the PhaseSpace File. expected 'MoleculeFormat' or 'M' but found token " << token << endl;
     exit(1);
   }
 

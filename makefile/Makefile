@@ -7,7 +7,7 @@ PARTYPE := SEQ
 #$(info $(PARTYPE) set through $(origin PARTYPE))
 
 # choose target: DEBUG|RELEASE
-TARGET := DEBUG
+TARGET := RELEASE
 #$(info $(TARGET) set through $(origin TARGET))
 
 
@@ -73,15 +73,15 @@ $(BINARY): $(OBJECTS)
 	$(CXX) $(LINKFLAGS) -o $(BINARY) $(OBJECTS)
 	$(shell if [ ! -f $(BINARYbasename) -o -L $(BINARYbasename) ]; then ln -sf $(BINARY) $(BINARYbasename); fi)
 
-Simulation.o: Simulation.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+#Simulation.o: Simulation.cpp
+#	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-$(OBJECTS_PAR): %.o: %.cpp
-	$(CXX) -c $(CXXFLAGS) $< -o $@
+#$(OBJECTS_PAR): %.o: %.cpp
+#	$(CXX) -c $(CXXFLAGS) $< -o $@
 
 # all other files can always be compiled with g++
 %.o: %.cpp
-	$(CXX_SEQ) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: help all clean cleanall depend check boost cleanboost
 
