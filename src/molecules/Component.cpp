@@ -72,11 +72,11 @@ void Component::addLJcenter(
      double sigperrc2 = sigma*sigma/(rc*rc);
      double sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
      double shift6 = 24.0*eps * (sigperrc6 - sigperrc6*sigperrc6);
-     m_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, shift6));
+     m_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, rc, shift6));
   }
   else
   {
-     m_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, 0.0)); 
+     m_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, rc, 0.0)); 
   }
   
   m_m+=m;

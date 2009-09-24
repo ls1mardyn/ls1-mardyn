@@ -63,13 +63,13 @@ class LJcenter : public Site
 {
 public:
   /// Constructor: pass shift = 0.0 for the full LJ potential
-  LJcenter(double x, double y, double z ,double m, double eps, double sigma, double shift)
-    : Site(x,y,z,m), m_eps(eps), m_sigma(sigma)
+  LJcenter(double x, double y, double z ,double m, double eps, double sigma, double rc, double shift)
+    : Site(x,y,z,m), m_eps(eps), m_sigma(sigma), m_rc(rc)
     { m_r[0]=x; m_r[1]=y; m_r[2]=z; uLJshift6 = shift; }
   /// Constructor reading from stream
   LJcenter(std::istream& istrm) { istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_m >> m_eps >> m_sigma >> uLJshift6; }
   /// write to stream
-  void write(std::ostream& ostrm) const { ostrm << m_r[0] << " " << m_r[1] << " "  << m_r[2]<< "\t"  << m_m << "\t"  << m_eps << " " << m_sigma << " " << uLJshift6; }
+  void write(std::ostream& ostrm) const { ostrm << m_r[0] << " " << m_r[1] << " "  << m_r[2]<< "\t"  << m_m << "\t"  << m_eps << " " << m_sigma << " " << m_rc << " " << uLJshift6; }
   /// get strength
   double eps() const { return m_eps; }
   /// get diameter
@@ -81,6 +81,7 @@ public:
 private:
   double m_eps; // strength
   double m_sigma; // diameter
+  double m_rc; // cutoff radius
   double uLJshift6;  // truncation offset of the LJ potential
 };
 

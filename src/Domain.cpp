@@ -529,6 +529,28 @@ void Domain::writeCheckpoint( string filename,
     checkpointfilestream << "\n";
     checkpointfilestream << " currentTime\t"  << this->_currentTime << "\n";
     checkpointfilestream << " Length\t" << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
+if(this->_universalComponentwiseThermostat)
+    {
+       for( map<int, int>::iterator thermit = this->_universalThermostatID.begin();
+            thermit != this->_universalThermostatID.end();
+            thermit++ )
+       {
+          if(0 >= thermit->second) continue;
+          checkpointfilestream << " CT\t" << 1+thermit->first
+                               << "\t" << thermit->second << "\n";
+       }
+       for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
+            Tit != this->_universalTargetTemperature.end();
+            Tit++ )
+       {
+          if((0 >= Tit->first) || (0 >= Tit->second)) continue;
+          checkpointfilestream << " ThT " << Tit->first << "\t" << Tit->second << "\n";
+       }
+    }
+    else
+    {
+       checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << endl;
+    }
 #ifndef NDEBUG
     checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
     checkpointfilestream << "# rc\t" << particleContainer->getCutoff() << "\n";
@@ -577,28 +599,6 @@ void Domain::writeCheckpoint( string filename,
                            << this->_universalAdditionalAcceleration[0][cosetid] << " "
                            << this->_universalAdditionalAcceleration[1][cosetid] << " "
                            << this->_universalAdditionalAcceleration[2][cosetid] << "\n";
-    }
-    if(this->_universalComponentwiseThermostat)
-    {
-       for( map<int, int>::iterator thermit = this->_universalThermostatID.begin();
-            thermit != this->_universalThermostatID.end();
-            thermit++ )
-       {
-          if(0 >= thermit->second) continue;
-          checkpointfilestream << " CT\t" << 1+thermit->first
-                               << "\t" << thermit->second << "\n";
-       }
-       for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
-            Tit != this->_universalTargetTemperature.end();
-            Tit++ )
-       {
-          if((0 >= Tit->first) || (0 >= Tit->second)) continue;
-          checkpointfilestream << " ThT " << Tit->first << "\t" << Tit->second << "\n";
-       }
-    }
-    else
-    {
-       checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << endl;
     }
     for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
          uutit != this->_universalUndirectedThermostat.end();
