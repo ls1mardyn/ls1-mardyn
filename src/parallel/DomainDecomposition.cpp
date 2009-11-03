@@ -104,7 +104,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 
     double regToSendLow[3];  // Region that belongs to a neighbouring process
     double regToSendHigh[3]; // -> regToSendLow
-    for(direction=0; direction<2; direction++){
+    for( direction = 0; direction <= 1; direction++ ){
       // find the region that each neighbour will get
       for(int i=0; i<3; i++){
         regToSendLow[i] = rmin[i]-halo_L[i];
@@ -137,29 +137,30 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
     }
 
     // Communicate to lower and higher neighbour
-    for(direction=0; direction <=1; direction++){
+    for( direction = 0; direction <= 1; direction++ ){
       // Send to lower, receive from upper
       // Send number of values that have to be sent
-      unsigned long numsend = numPartsToSend[2*d+direction];
-      unsigned long numrecv;
-      MPI_Sendrecv(&numsend, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+direction], 99,
-                   &numrecv, 1, MPI_UNSIGNED_LONG, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status);
-
-      // initialize receive buffer
-      particlesRecvBufs[2*d+direction] = new ParticleData[numrecv];
-      numPartsToRecv[2*d+direction] = numrecv;
+      int numsend = numPartsToSend[2*d+direction];
+      int numrecv;
 
       // Send values to lower/upper and receive values from upper/lower
       MPI_Isend(particlesSendBufs[2*d+direction], numsend, sendPartType, _neighbours[2*d+direction], 99, _commTopology, &send_requests[2*d+direction]);
+      MPI_Probe( _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status );
+      MPI_Get_count( &status, sendPartType, &numrecv );
+      // initialize receive buffer
+      particlesRecvBufs[2*d+direction] = new ParticleData[numrecv];
+      numPartsToRecv[2*d+direction] = numrecv;
       MPI_Irecv(particlesRecvBufs[2*d+direction], numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction]);
 
     }
-    for(direction=0; direction <=1; direction++){
-      unsigned long numrecv = numPartsToRecv[2*d+direction];
+
+    // Insert molecules into domain
+    for( direction = 0; direction <= 1; direction++ ){
+      int numrecv = numPartsToRecv[2*d+direction];
       MPI_Wait(&send_requests[2*d+direction], &send_statuses[2*d+direction]);
       MPI_Wait(&recv_requests[2*d+direction], &recv_statuses[2*d+direction]);
       // insert received molecules into list of molecules
-      for(unsigned i=0; i<numrecv; i++){
+      for( int i = 0; i < numrecv; i++ ){
         ParticleData newMol = particlesRecvBufs[2*d+direction][i];
         Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz,
                                newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
