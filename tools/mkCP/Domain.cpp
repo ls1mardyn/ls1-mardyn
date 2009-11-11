@@ -8,7 +8,8 @@
 #include <cmath>
 
 #define DT 0.030620
-#define TAU_ZERO 15.3100
+#define TAU_ZERO 153.10
+#define HALFLIFE 3062.9
 
 Domain::Domain(
       int sp_flow, double sp_bondlength, double sp_rho, int sp_d,
@@ -285,6 +286,7 @@ void Domain::writeGraphite(
           << "\ntersoffCutoffRadius\t"
           << 1.0001*(original? TERSOFF_S_ORIG: TERSOFF_S) / SIG_REF
           << "\nconstantAccelerationTimesteps\t25\n"
+          << "tauHalfLife\t" << HALFLIFE/REFTIME << "\n"
           << "initCanonical\t10000\n";
       if(muVT)
       {
@@ -321,7 +323,7 @@ void Domain::writeGraphite(
           << "_1R\nprofile\t23 128 32\nprofileRecordingTimesteps\t2\n"
           << "profileOutputTimesteps\t75000"
           << "\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix
-          << "_1R\nzOscillator 512\n";
+          << "_1R\nzOscillator 1024\n";
    }
 
    double I_xx_yy;

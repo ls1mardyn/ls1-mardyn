@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEFAULT_TAU 306.200
+#define DEFAULT_TAU 153.10
 
 #define DEFAULT_CC_BONDLENGTH 2.6853
 #define ORIGINAL_CC_BONDLENGTH 2.7609
