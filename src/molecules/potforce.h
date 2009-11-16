@@ -343,7 +343,6 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
         params >> eps24;
         double sig2;
         params >> sig2;
-	cout.flush();
         PotForceLJ(drs,dr2,eps24,sig2,f,u);
         double shift6;
         params >> shift6;  // must be 0.0 for full LJ
