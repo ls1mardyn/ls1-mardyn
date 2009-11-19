@@ -239,6 +239,9 @@ unsigned LinkedCells::countParticles(
       else maxIndex[d] = (int)floor(
          (ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]
       );
+
+      if(minIndex[d] < 0) minIndex[d] = 0;
+      if(maxIndex[d] >= _cellsPerDimension[d]) maxIndex[d] = _cellsPerDimension[d] - 1;
    }
    
    unsigned N = 0;
@@ -252,12 +255,12 @@ unsigned LinkedCells::countParticles(
       for(cix[1] = minIndex[1]; maxIndex[1] >= cix[1]; (cix[1])++)
 	 for(cix[2] = minIndex[2]; maxIndex[2] >= cix[2]; (cix[2])++)
 	 {
-	    individualCheck = (cix[0] == minIndex[0]) ||
-	                      (cix[0] == maxIndex[0]) ||
-	                      (cix[1] == maxIndex[1]) ||
-	                      (cix[1] == maxIndex[1]) ||
-	                      (cix[2] == maxIndex[2]) ||
-	                      (cix[2] == maxIndex[2]);
+	    individualCheck = (cix[0] == minIndex[0]) || (cix[0] == minIndex[0] + 1) ||
+	                      (cix[0] == maxIndex[0]) || (cix[0] == maxIndex[0] - 1) ||
+	                      (cix[1] == minIndex[1]) || (cix[1] == minIndex[1] + 1) ||
+	                      (cix[1] == maxIndex[1]) || (cix[1] == maxIndex[1] - 1) ||
+	                      (cix[2] == minIndex[2]) || (cix[2] == minIndex[2] + 1) ||
+	                      (cix[2] == maxIndex[2]) || (cix[2] == maxIndex[2] - 1);
 	    cellid = this->cellIndexOf3DIndex(cix[0], cix[1], cix[2]);
             Cell& currentCell = _cells[cellid];
             if(currentCell.isHaloCell()) continue;
