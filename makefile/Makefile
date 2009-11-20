@@ -48,7 +48,11 @@ INCLUDES = -I$(shell pwd)
 #INCLUDES += -I$(PWD)/External/ticpp
 
 BINARYbasename := MarDyn
-BINARY := ${BINARYbasename}_$(shell svnversion)
+BINARY := $(BINARYbasename)
+ifneq ($(realpath .svn),)
+#  $(info Building from a svn version.)
+  BINARY := ${BINARY}_$(shell svnversion)
+endif
 BINARY := ${BINARY}_${PARTYPE}.${TARGET}
 
 MAKEFILEDIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
