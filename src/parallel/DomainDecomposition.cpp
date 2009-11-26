@@ -106,8 +106,8 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
     double regToSendHigh[3]; // -> regToSendLow
     for( direction = 0; direction <= 1; direction++ ){
       // find the region that each neighbour will get
-      for(int i=0; i<3; i++){
-        regToSendLow[i] = rmin[i]-halo_L[i];
+      for(int i = 0; i < 3; i++){
+        regToSendLow[i]  = rmin[i]-halo_L[i];
         regToSendHigh[i] = rmax[i]+halo_L[i];
       }
       if(direction==0) regToSendHigh[d] = rmin[d] + halo_L[d];
@@ -124,14 +124,10 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       int partCount = 0;
       for(particlePtrIter = particlePtrsToSend.begin(); particlePtrIter!=particlePtrsToSend.end(); particlePtrIter++){
         // copy relevant data from the Molecule to ParticleData type
-        ParticleData::setParticleData(particlesSendBufs[2*d+direction][partCount], **particlePtrIter);
+        ParticleData::MoleculeToParticleData( particlesSendBufs[2*d+direction][partCount], **particlePtrIter );
         // add offsets for particles transfered over the periodic boundary
-        if(d==0 && direction==0) particlesSendBufs[2*d+direction][partCount].rx += offsetLower[0];
-        if(d==1 && direction==0) particlesSendBufs[2*d+direction][partCount].ry += offsetLower[1];
-        if(d==2 && direction==0) particlesSendBufs[2*d+direction][partCount].rz += offsetLower[2];
-        if(d==0 && direction==1) particlesSendBufs[2*d+direction][partCount].rx += offsetHigher[0];
-        if(d==1 && direction==1) particlesSendBufs[2*d+direction][partCount].ry += offsetHigher[1];
-        if(d==2 && direction==1) particlesSendBufs[2*d+direction][partCount].rz += offsetHigher[2];
+        if( direction == 0 ) particlesSendBufs[2*d + direction][partCount].r[d] += offsetLower[d];
+        if( direction == 1 ) particlesSendBufs[2*d + direction][partCount].r[d] += offsetHigher[d];
         partCount++;
       }
     }
@@ -144,13 +140,13 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       int numrecv;
 
       // Send values to lower/upper and receive values from upper/lower
-      MPI_Isend(particlesSendBufs[2*d+direction], numsend, sendPartType, _neighbours[2*d+direction], 99, _commTopology, &send_requests[2*d+direction]);
+      MPI_Isend( particlesSendBufs[2*d+direction], numsend, sendPartType, _neighbours[2*d+direction], 99, _commTopology, &send_requests[2*d+direction] );
       MPI_Probe( _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status );
       MPI_Get_count( &status, sendPartType, &numrecv );
       // initialize receive buffer
       particlesRecvBufs[2*d+direction] = new ParticleData[numrecv];
       numPartsToRecv[2*d+direction] = numrecv;
-      MPI_Irecv(particlesRecvBufs[2*d+direction], numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction]);
+      MPI_Irecv( particlesRecvBufs[2*d+direction], numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction] );
 
     }
 
@@ -161,10 +157,10 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       MPI_Wait(&recv_requests[2*d+direction], &recv_statuses[2*d+direction]);
       // insert received molecules into list of molecules
       for( int i = 0; i < numrecv; i++ ){
-        ParticleData newMol = particlesRecvBufs[2*d+direction][i];
-        Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz,
-                               newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
-        moleculeContainer->addParticle(m1);
+        ParticleData newMol = particlesRecvBufs[2*d + direction][i];
+        Molecule m1 = Molecule( newMol.id, newMol.cid, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2],
+                               newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2], &components );
+        moleculeContainer->addParticle( m1 );
       }
       // free memory
       delete [] particlesRecvBufs[2*d+direction];

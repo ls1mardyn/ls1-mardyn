@@ -3,6 +3,8 @@
 
 #include "molecules/Molecule.h"
 
+#define DIM 3
+
 //! @brief class to represent that particle data that is necessary for the exchange between processes
 //! @author Martin Buchholz
 //!
@@ -26,30 +28,30 @@ class ParticleData{
   }
 
   //! @brief copy data from object of class Molecule to object of class ParticleData
-  static void setParticleData(ParticleData &particleStruct, Molecule &molecule){
+  static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule){
     particleStruct.id = molecule.id();
     particleStruct.cid= molecule.componentid();
-    particleStruct.rx = molecule.r(0);
-    particleStruct.ry = molecule.r(1);
-    particleStruct.rz = molecule.r(2);
-    particleStruct.vx = molecule.v(0);
-    particleStruct.vy = molecule.v(1);
-    particleStruct.vz = molecule.v(2);
-    particleStruct.qw = molecule.q().qw();
-    particleStruct.qx = molecule.q().qx();
-    particleStruct.qy = molecule.q().qy();
-    particleStruct.qz = molecule.q().qz();
-    particleStruct.Dx = molecule.D(0);
-    particleStruct.Dy = molecule.D(1);
-    particleStruct.Dz = molecule.D(2);
+    particleStruct.r[0] = molecule.r(0);
+    particleStruct.r[1] = molecule.r(1);
+    particleStruct.r[2] = molecule.r(2);
+    particleStruct.v[0] = molecule.v(0);
+    particleStruct.v[1] = molecule.v(1);
+    particleStruct.v[2] = molecule.v(2);
+    particleStruct.q[0] = molecule.q().qw();
+    particleStruct.q[1] = molecule.q().qx();
+    particleStruct.q[2] = molecule.q().qy();
+    particleStruct.q[3] = molecule.q().qz();
+    particleStruct.D[0] = molecule.D(0);
+    particleStruct.D[1] = molecule.D(1);
+    particleStruct.D[2] = molecule.D(2);
   }
 
   unsigned long id;
   int cid;
-  double rx, ry, rz;
-  double vx, vy, vz;
-  double qw, qx, qy, qz;
-  double Dx, Dy, Dz;
+  double r[3];
+  double v[3];
+  double q[4];
+  double D[3];
 };
 
 #endif /*PARTICLE_H_*/

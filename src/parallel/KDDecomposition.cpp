@@ -102,28 +102,13 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
   }
 
   // Fill send buffer with particle data
-  for(int neighbCount=0;neighbCount<(int)procsToSendTo.size();neighbCount++) {
+  for(int neighbCount = 0; neighbCount < (int) procsToSendTo.size(); neighbCount++ ) {
     if(procsToSendTo[neighbCount]==_ownRank) continue; // don't exchange data with the own process
     list<Molecule*>::iterator particleIter;
     int partCount = 0;
-    for(particleIter =  particlePtrsToSend[neighbCount].begin(); particleIter != particlePtrsToSend[neighbCount].end(); particleIter++){
-      particlesSendBufs[neighbCount][partCount].id = (*particleIter)->id();
-      particlesSendBufs[neighbCount][partCount].cid = (*particleIter)->componentid();
-      particlesSendBufs[neighbCount][partCount].rx = (*particleIter)->r(0);
-      particlesSendBufs[neighbCount][partCount].ry = (*particleIter)->r(1);
-      particlesSendBufs[neighbCount][partCount].rz = (*particleIter)->r(2);
-      particlesSendBufs[neighbCount][partCount].vx = (*particleIter)->v(0);
-      particlesSendBufs[neighbCount][partCount].vy = (*particleIter)->v(1);
-      particlesSendBufs[neighbCount][partCount].vz = (*particleIter)->v(2);
-      particlesSendBufs[neighbCount][partCount].qw = (*particleIter)->q().qw();
-      particlesSendBufs[neighbCount][partCount].qx = (*particleIter)->q().qx();
-      particlesSendBufs[neighbCount][partCount].qy = (*particleIter)->q().qy();
-      particlesSendBufs[neighbCount][partCount].qz = (*particleIter)->q().qz();
-      particlesSendBufs[neighbCount][partCount].Dx = (*particleIter)->D(0);
-      particlesSendBufs[neighbCount][partCount].Dy = (*particleIter)->D(1);
-      particlesSendBufs[neighbCount][partCount].Dz = (*particleIter)->D(2);
+    for( particleIter =  particlePtrsToSend[neighbCount].begin(); particleIter != particlePtrsToSend[neighbCount].end(); particleIter++ ){
+      ParticleData::MoleculeToParticleData( particlesSendBufs[neighbCount][partCount], **particleIter );
       partCount++;
-
     }
   }
   if(balance){
@@ -160,14 +145,15 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
     for(int i=0; i<numMolsToRecv[neighbCount]; i++){
     	newMol = particlesRecvBufs[neighbCount][i];
       // change coordinates (especially needed if particle was moved across boundary)
-      if(newMol.rx < lowLimit[0]) newMol.rx += domain->getGlobalLength(0);
-      if(newMol.ry < lowLimit[1]) newMol.ry += domain->getGlobalLength(1);
-      if(newMol.rz < lowLimit[2]) newMol.rz += domain->getGlobalLength(2);
-      else if(newMol.rx >= highLimit[0]) newMol.rx -= domain->getGlobalLength(0);
-      else if(newMol.ry >= highLimit[1]) newMol.ry -= domain->getGlobalLength(1);
-      else if(newMol.rz >= highLimit[2]) newMol.rz -= domain->getGlobalLength(2);
+      if(newMol.r[0] < lowLimit[0]) newMol.r[0] += domain->getGlobalLength(0);
+      else if(newMol.r[0] >= highLimit[0]) newMol.r[0] -= domain->getGlobalLength(0);
+      if(newMol.r[1] < lowLimit[1]) newMol.r[1] += domain->getGlobalLength(1);
+      else if(newMol.r[1] >= highLimit[1]) newMol.r[1] -= domain->getGlobalLength(1);
+      if(newMol.r[2] < lowLimit[2]) newMol.r[2] += domain->getGlobalLength(2);
+      else if(newMol.r[2] >= highLimit[2]) newMol.r[2] -= domain->getGlobalLength(2);
 
-      Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.rx, newMol.ry, newMol.rz, newMol.vx, newMol.vy, newMol.vz, newMol.qw, newMol.qx, newMol.qy, newMol.qz, newMol.Dx, newMol.Dy, newMol.Dz, &components);
+      Molecule m1 = Molecule( newMol.id, newMol.cid, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2],
+                              newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2], &components );
       moleculeContainer->addParticle(m1);
 
     }
