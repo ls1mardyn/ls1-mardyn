@@ -157,10 +157,10 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       MPI_Wait(&recv_requests[2*d+direction], &recv_statuses[2*d+direction]);
       // insert received molecules into list of molecules
       for( int i = 0; i < numrecv; i++ ){
-        ParticleData newMol = particlesRecvBufs[2*d + direction][i];
-        Molecule m1 = Molecule( newMol.id, newMol.cid, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2],
-                               newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2], &components );
-        moleculeContainer->addParticle( m1 );
+	Molecule *m;
+	ParticleData::ParticleDataToMolecule( particlesRecvBufs[2*d + direction][i], &m, &components );
+        moleculeContainer->addParticle( *m );
+	delete m;
       }
       // free memory
       delete [] particlesRecvBufs[2*d+direction];
