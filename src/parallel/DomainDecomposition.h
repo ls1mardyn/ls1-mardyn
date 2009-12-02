@@ -174,6 +174,7 @@ class DomainDecomposition: public DomainDecompBase{
 
   //! new topology after initializing the torus
   MPI_Comm _commTopology;
+  MPI_Datatype _mpiParticleDataType;
   //! Number of processes in each dimension (i.e. 2 for 8 processes) 
   int _gridSize[DIM];
   //! Grid coordinates of process

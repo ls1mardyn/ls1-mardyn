@@ -41,6 +41,8 @@ DomainDecomposition::DomainDecomposition(int *argc, char ***argv){
   _neighbours[YHIGHER] = getRank(_coords[0],_coords[1]+1,_coords[2]);
   _neighbours[ZLOWER]  = getRank(_coords[0],_coords[1],_coords[2]-1);
   _neighbours[ZHIGHER] = getRank(_coords[0],_coords[1],_coords[2]+1);
+
+  ParticleData::setMPIType( _mpiParticleDataType );
 }
 
 DomainDecomposition::~DomainDecomposition(){
@@ -77,10 +79,6 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
   MPI_Status  recv_statuses[6];
   MPI_Request send_requests[6];
   MPI_Request recv_requests[6];
-
-  // create a MPI Datatype which can store that molecule-data that has to be sent
-  MPI_Datatype sendPartType;
-  ParticleData::setMPIType(sendPartType);
 
   int direction; // direction (0=low/1=high) of molecule movement
 
@@ -140,13 +138,13 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       int numrecv;
 
       // Send values to lower/upper and receive values from upper/lower
-      MPI_Isend( particlesSendBufs[2*d+direction], numsend, sendPartType, _neighbours[2*d+direction], 99, _commTopology, &send_requests[2*d+direction] );
+      MPI_Isend( particlesSendBufs[2*d+direction], numsend, _mpiParticleDataType, _neighbours[2*d+direction], 99, _commTopology, &send_requests[2*d+direction] );
       MPI_Probe( _neighbours[2*d+(direction+1)%2], 99, _commTopology, &status );
-      MPI_Get_count( &status, sendPartType, &numrecv );
+      MPI_Get_count( &status, _mpiParticleDataType, &numrecv );
       // initialize receive buffer
       particlesRecvBufs[2*d+direction] = new ParticleData[numrecv];
       numPartsToRecv[2*d+direction] = numrecv;
-      MPI_Irecv( particlesRecvBufs[2*d+direction], numrecv, sendPartType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction] );
+      MPI_Irecv( particlesRecvBufs[2*d+direction], numrecv, _mpiParticleDataType, _neighbours[2*d+(direction+1)%2], 99, _commTopology, &recv_requests[2*d+direction] );
 
     }
 
