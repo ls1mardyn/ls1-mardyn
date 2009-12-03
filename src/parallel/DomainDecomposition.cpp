@@ -120,12 +120,14 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 
       std::list<Molecule*>::iterator particlePtrIter;
       int partCount = 0;
+      double shift = 0.0;
+      if( direction == 0 ) shift = offsetLower[d];
+      if( direction == 1 ) shift = offsetHigher[d];
       for(particlePtrIter = particlePtrsToSend.begin(); particlePtrIter!=particlePtrsToSend.end(); particlePtrIter++){
         // copy relevant data from the Molecule to ParticleData type
         ParticleData::MoleculeToParticleData( particlesSendBufs[2*d+direction][partCount], **particlePtrIter );
         // add offsets for particles transfered over the periodic boundary
-        if( direction == 0 ) particlesSendBufs[2*d + direction][partCount].r[d] += offsetLower[d];
-        if( direction == 1 ) particlesSendBufs[2*d + direction][partCount].r[d] += offsetHigher[d];
+        particlesSendBufs[2*d + direction][partCount].r[d] += shift;
         partCount++;
       }
     }
