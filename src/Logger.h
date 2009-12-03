@@ -99,6 +99,7 @@ public:
 
 	/* methods for easy handling of output ranks */
 	bool set_mpi_output_root(int root = 0);
+	bool set_mpi_output_all();
 	bool set_mpi_output_ranks(int num_nums, int* nums);
 	/* parameters:	nums[num_nums]	array containing the numbers of ranks which
 	 * shall print messages 

@@ -69,11 +69,16 @@ Logger::Logger (logLevel maxlevel, std::string filename) {
 	this->init(maxlevel, logStream);
 }
 
-	bool Logger::set_mpi_output_root(int root) {
-		if (_comm_rank != root) 
-			_no_output = true;
-		return _no_output;
-	}
+bool Logger::set_mpi_output_root(int root) {
+	if (_comm_rank != root) 
+	_no_output = true;
+	return _no_output;
+}
+
+bool Logger::set_mpi_output_all() {
+	_no_output = false;
+	return _no_output;
+}
 
 bool Logger::set_mpi_output_ranks(int num_nums, int* nums) {
 	int i;
