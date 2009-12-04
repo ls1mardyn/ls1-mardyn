@@ -93,6 +93,7 @@ help:
 	@echo "configuration: $(CFG_INFO)"
 	@echo "targets:"
 	@echo "make all		build $(BINARY)"
+	@echo "make cfg_list    list available configurations"
 	@echo "make clean	delete object files"
 	@echo "make cleanall	delete object files and executable"
 	@echo "make depend	generate makefile dependency list"
@@ -101,6 +102,10 @@ help:
 	@echo "make cleanboost	clean bundled boost library"
 
 all: check $(BINARY)
+
+#list available configurations
+cfg_list:
+	@ls -1 ../makefile/cfg | sed -e 's/.in//'
 
 clean:
 	find -name '*.o' -exec rm -r {} \;
