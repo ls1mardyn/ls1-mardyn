@@ -8,8 +8,9 @@
 #include <cmath>
 
 #define DT 0.030620
-#define TAU_ZERO 153.10
-#define HALFLIFE 3062.9
+#define TAU_ZERO 0.91860
+#define ZETA 0.0072286
+#define TAUPRIME 15.310
 
 Domain::Domain(
       int sp_flow, double sp_bondlength, double sp_rho, int sp_d,
@@ -286,7 +287,8 @@ void Domain::writeGraphite(
           << "\ntersoffCutoffRadius\t"
           << 1.0001*(original? TERSOFF_S_ORIG: TERSOFF_S) / SIG_REF
           << "\nconstantAccelerationTimesteps\t25\n"
-          << "tauHalfLife\t" << HALFLIFE/REFTIME << "\n"
+          << "zetaFlow\t" << ZETA*sqrt(REFTIME) << "\n"
+          << "tauPrimeFlow\t" << TAUPRIME/REFTIME << "\n"
           << "initCanonical\t10000\n";
       if(muVT)
       {
@@ -305,8 +307,8 @@ void Domain::writeGraphite(
                 << " 0.0 to " << this->box[0]/SIG_REF << " "
                 << (this->box[1] + 0.5*this->h)/SIG_REF << " "
                 << box[2]/SIG_REF << " conduct "
-                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
-                                                       : 0.0010) * N1)
+                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.001
+                                                       : 0.002) * N1)
                 << " tests every 8 steps\n";
          }
 	 txt << "planckConstant\t" 
@@ -320,7 +322,7 @@ void Domain::writeGraphite(
           << "ResultWriter\t40\t" << prefix
           << "_1R\noutput\tXyzWriter\t10000\t" << prefix
           << "_1R.buxyz\noutput\tVisittWriter\t10000000\t" << prefix
-          << "_1R\nprofile\t23 128 32\nprofileRecordingTimesteps\t2\n"
+          << "_1R\nprofile\t12 384 16\nprofileRecordingTimesteps\t2\n"
           << "profileOutputTimesteps\t75000"
           << "\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix
           << "_1R\nzOscillator 1024\n";

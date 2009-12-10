@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define TIME 20091110
+#define TIME 20091207
 
 #define FLUID_AR 0
 #define FLUID_CH4 1
@@ -88,3 +88,4 @@ class Domain
        fl_unit_phi, fl_units_phi;
    double pfill;  // probability of placing a molecule in a fluid unit
 };
+
