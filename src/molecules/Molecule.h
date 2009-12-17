@@ -70,6 +70,9 @@ public:
   int componentid() const { return m_componentid; }
   /** get the position */
   double r(unsigned short d) const { return m_r[d]; }
+
+  double oldr (unsigned short d) const { return m_oldr[d];}
+
   /** get the velocity */
   double v(unsigned short d) const { return m_v[d]; }
   /** get the Orientation */
@@ -118,6 +121,8 @@ public:
 
   /** set the position */
   void setr(unsigned short d, double r) { m_r[d]=r; }
+
+  void setOldRFromR () {for (int i = 0; i < 3; i++) m_oldr[i] = m_r[i];}
 
   /** calculate the difference vector and return the square (euclidean) distance */
   double dist2(const Molecule& a, double dr[]) const
@@ -204,7 +209,7 @@ public:
   /*
    * veraltet, aber aus Versehen von Martin Buchholz im Code gelassen.
    * nach dem neuen Schema von Martin Buchholz ist eine Cell als STL-Liste organisiert,
-   * deshalb ist das hier unnötig.
+   * deshalb ist das hier unnÃ¶tig.
    *
   //  Linked cells
   Molecule* nextinCell() const { return m_nextincell; }
@@ -235,6 +240,7 @@ private:
   unsigned long m_id; // IDentification number of that molecule
   int m_componentid;  // IDentification number of its component type
   double m_r[3];  // position coordinates
+  double m_oldr[3]; // position coordinates last step
   double m_v[3];  // velocity
   Quaternion m_q; // orientation
   double m_D[3];  // angular momentum

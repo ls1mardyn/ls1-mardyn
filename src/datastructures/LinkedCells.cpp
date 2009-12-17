@@ -715,6 +715,18 @@ Molecule* LinkedCells::end(){
 }
 
 
+Molecule* LinkedCells::deleteCurrent ()
+{
+	_particleIter = _particles.erase (_particleIter);
+	if (_particleIter != _particles.end())
+	{
+		return &(*_particleIter);
+	}
+	else {
+		return NULL;
+	}
+}
+
 void LinkedCells::deleteOuterParticles(){ 
   if(_cellsValid == false) {
     cerr << "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first" << endl;

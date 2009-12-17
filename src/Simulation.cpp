@@ -23,6 +23,15 @@
 #include "md_io/InputOldstyle.h"
 #include "ensemble/GrandCanonical.h"
 
+#ifdef STEEREO
+#include "commands/snapshotCommand.h"
+#include "commands/megaMolSnapshotCommand.h"
+#include "commands/sendCouplingMDCommand.h"
+#include "commands/receiveCouplingMDCommand.h"
+#include <steerParameterCommand.h>
+#include <steereoSocketCommunicator.h>
+#endif
+
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -544,6 +553,19 @@ Simulation::Simulation(int *argc, char ***argv)
      
      j++;
   }
+#ifdef STEEREO
+	_steer = new SimSteering ();
+  _steer->setNumberOfQueues (1);
+
+#ifdef PARALLEL
+  if (ownrank == 0)
+  {
+#endif
+    _steer->setCommunicator (new SteereoSocketCommunicator ("44445"));
+#ifdef PARALLEL
+  }
+#endif
+#endif
 }
 
 void Simulation::initialize()
@@ -611,6 +633,28 @@ void Simulation::initialize()
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++){
     (*outputIter)->initOutput(_moleculeContainer, _domainDecomposition, _domain);
   }
+
+#ifdef STEEREO
+  MegaMolSnapshotCommand::setSimData (this);
+  _steer->registerCommand (MegaMolSnapshotCommand::generateNewInstance, "getMegaMolSnapshot");
+  _steer->registerCommand (SendCouplingMDCommand::generateNewInstance, "sendCouplingMD");
+  _steer->registerCommand (ReceiveCouplingMDCommand::generateNewInstance, "receiveCouplingMD");
+  _steer->registerCommand (SnapshotCommand::generateNewInstance, "getSnapshot");
+  SnapshotCommand::setSimData (this);
+  SteerParameterCommand::registerScalarParameter ("temp", _domain, &Domain::getGlobalTemperature,
+																									&Domain::setGlobalTemperature);
+  SendCouplingMDCommand::setData(this);
+  ReceiveCouplingMDCommand::setData(this);
+#ifdef PARALLEL
+  std::cout << "_ownrank is " << ownrank << std::endl;
+  if (this->_domain->_ownrank == 0)
+  {
+#endif
+    _steer->startListening ();
+#ifdef PARALLEL
+  }
+#endif
+#endif
   global_log->info() << "System initialised\n" << endl;
 }
 
@@ -796,6 +840,9 @@ void Simulation::simulate()
     }
 
     _domain->advanceTime(_integrator->getTimestepLength());
+#ifdef STEEREO
+		_steer -> processQueue (0);
+#endif
     output(simstep);
   }
   loopTimer.stop();

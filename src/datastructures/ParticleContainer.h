@@ -131,6 +131,8 @@ class ParticleContainer {
 
   //! @brief Has to return the same as next() after it already pointed to the last particle
   virtual Molecule* end() = 0;
+
+  virtual Molecule* deleteCurrent() = 0;
     
   //! @brief delete all Particles which are not within the bounding box
   virtual void deleteOuterParticles() = 0;

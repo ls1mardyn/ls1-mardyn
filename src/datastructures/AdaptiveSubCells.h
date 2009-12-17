@@ -109,6 +109,9 @@ class AdaptiveSubCells: public ParticleContainer {
   //! @brief returns NULL
   Molecule* end();
 
+  //! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
+  Molecule* deleteCurrent ();
+
   //! @brief delete all Particles which are not within the bounding box
   void deleteOuterParticles();
 

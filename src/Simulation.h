@@ -7,6 +7,9 @@
 #include <sstream>
 
 #include "ensemble/GrandCanonical.h"
+#ifdef STEEREO
+  #include <simSteering.h>
+#endif
 
 using namespace std;
 
@@ -115,7 +118,10 @@ class Simulation{
   //! - update the caches of the molecules
   //! - update the ParticleContainer
   void updateParticleContainerAndDecomposition();
-      
+
+  Domain* getDomain () {return _domain;};
+  ParticleContainer* getMolecules () {return _moleculeContainer;};
+  unsigned long getSimStep () {return _simstep;};
   double Tfactor(unsigned long simstep);
     
  private:
@@ -184,7 +190,7 @@ class Simulation{
   std::list<OutputBase*> _outputPlugins;
   
   /*
-   * ¡grand canonical ensemble¡
+   * ï¿½grand canonical ensembleï¿½
    */
   std::list<ChemicalPotential> _lmu;
     
@@ -192,5 +198,11 @@ class Simulation{
    * Planck's constant
    */
   double h;
+
+#ifdef STEEREO
+  SimSteering* _steer;
+#endif
+
+  unsigned long _simstep;
 };
 #endif /*SIMULATION_H_*/

@@ -684,6 +684,20 @@ Molecule* AdaptiveSubCells::end(){
 
 // this method remains unchanged
 
+Molecule* AdaptiveSubCells::deleteCurrent ()
+{
+	_particleIter = _particles.erase (_particleIter);
+	if (_particleIter != _particles.end())
+	{
+		return &(*_particleIter);
+	}
+	else {
+		return NULL;
+	}
+}
+
+// this method remains unchanged
+
 void AdaptiveSubCells::deleteOuterParticles(){
   if(_cellsValid == false) {
     cerr << "Cell structure in AdaptiveSubCells (deleteOuterParticles) invalid, call update first" << endl;

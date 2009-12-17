@@ -182,6 +182,7 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr)
   for(unsigned short d=0;d<3;++d)
   {
     m_v[d]=vcorr*m_v[d]+dtInv2m*m_F[d];
+    m_oldr [d] = m_r[d];
     m_r[d]+=dt*m_v[d];
   }
 
