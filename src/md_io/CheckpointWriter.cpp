@@ -1,9 +1,12 @@
+// CheckpointWriter.cpp
+
 #include "md_io/CheckpointWriter.h"
-#include "md_io/Common.h"
-#include "datastructures/ParticleContainer.h"
-#include "parallel/DomainDecompBase.h"
+#include "Common.h"
 #include "Domain.h"
+#include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+
 #include <sstream>
 
 CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
@@ -32,7 +35,7 @@ void CheckpointWriter::doOutput( ParticleContainer* particleContainer,
   
     stringstream filenamestream;
     if(_filenameisdate) {
-      filenamestream << gettimestring();
+      filenamestream << gettimestring() << ".out";
     } else {
       filenamestream << _filename;
     }
@@ -60,7 +63,7 @@ void CheckpointWriter::doOutput(ParticleContainer* particleContainer,
   if(simstep%_writeFrequency == 0) {
     stringstream filenamestream;
     if(_filenameisdate) {
-      filenamestream << gettimestring();
+      filenamestream << gettimestring() << ".out";
     } else {
       filenamestream << _filename;
     }

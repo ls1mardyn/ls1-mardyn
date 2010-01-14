@@ -1,10 +1,13 @@
+// VISWriter.cpp
+
+#include "md_io/VISWriter.h"
+#include "Common.h"
+#include "datastructures/ParticleContainer.h"
+#include "molecules/Molecule.h"
+
 #include <iomanip>
 #include <fstream>
 #include <sstream>
-#include "md_io/VISWriter.h"
-#include "md_io/Common.h"
-#include "datastructures/ParticleContainer.h"
-#include "molecules/Molecule.h"
 
 VISWriter::VISWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
    _filename = filename;
@@ -33,21 +36,20 @@ void VISWriter::doOutput( ParticleContainer* particleContainer,
    if(simstep%_writeFrequency == 0) {
       stringstream filenamestream;
       if(_filenameisdate) {
-         filenamestream << gettimestring();
+         filenamestream << "mardyn" << gettimestring();
       } else {
          filenamestream << _filename;
       }
       if(_incremental) {
          unsigned long temp = simstep/_writeFrequency;
-	 filenamestream << "-";
+         filenamestream << "-";
          while(temp < floor((double) _numberOfTimesteps / (double) _writeFrequency)){
             filenamestream << "0";
             temp = temp*10;
          }
-         filenamestream << simstep/_writeFrequency << ".vis_";
-      } else {
-	 filenamestream << ".vis_";
+         filenamestream << simstep/_writeFrequency;
       }
+      filenamestream << ".vis";
 
       ofstream visittfstrm(filenamestream.str().c_str());
 

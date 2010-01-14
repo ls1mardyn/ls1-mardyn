@@ -1,9 +1,12 @@
+// XyzWriter.cpp
+
 #include "md_io/XyzWriter.h"
-#include "md_io/Common.h"
-#include "datastructures/ParticleContainer.h"
-#include "parallel/DomainDecompBase.h"
+#include "Common.h"
 #include "Domain.h"
+#include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+
 #include <fstream>
 #include <sstream>
 
@@ -32,7 +35,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer,
   if(simstep%_writeFrequency == 0) {
     stringstream filenamestream;
     if(_filenameisdate) {
-      filenamestream << gettimestring();
+      filenamestream << "mardyn" << gettimestring() << ".out";
     } else {
       filenamestream << _filename;
     }

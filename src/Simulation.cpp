@@ -1,4 +1,6 @@
+// Simulation.cpp
 #include "Simulation.h"
+#include "Common.h"
 #include "Domain.h"
 #include "md_io/PartGen.h"
 #include "molecules/Molecule.h"
@@ -56,9 +58,9 @@ Simulation::Simulation(int *argc, char ***argv)
   global_log = new Log::Logger(Log::ALL);
   global_log->set_mpi_output_root(0);
 
-  if (*argc != 4) 
+  if (*argc <= 1) 
   {
-     global_log->error() << "Usage: " << (*argv)[0] << " <configfilename> <number of timesteps> <outputprefix>\n";
+     global_log->error() << "Usage: " << (*argv)[0] << " <configfilename> [<number of timesteps>] [<outputprefix>]\n";
      global_log->error() << "Detected argc: " << *argc << endl;
      exit(1);
   }
@@ -84,40 +86,44 @@ Simulation::Simulation(int *argc, char ***argv)
   else
     inputPath = inputfilename.substr(0, lastIndex+1);
   
+
+  /*
+   * default parameters
+   */
+  _numberOfTimesteps = 1;
+  _outputPrefix = string("mardyn"); _outputPrefix.append(gettimestring());
+  _resultOutputTimesteps = 25;
+  _doRecordProfile = false;
+  _profileRecordingTimesteps = 7;
+  _profileOutputTimesteps = 12500;
+  _profileOutputPrefix = "out";
+  _collectThermostatDirectedVelocity = 100;
+  _zoscillation = false;
+  _zoscillator = 512;
+  _doRecordRDF = false;
+  _RDFOutputTimesteps = 25000;
+  _RDFOutputPrefix = "out";
+  _initCanonical = 5000;
+  _initGrandCanonical = 10000000;
+  _initStatistics = 20000;
+  h = 0.0;
+
+
   // store number of timesteps to be simulated
-  this->_numberOfTimesteps = atol((*argv)[2]);
+  if (*argc>2) _numberOfTimesteps = atol((*argv)[2]);
   global_log->info() << "Simulating " << _numberOfTimesteps << " steps." << endl;
 
   // store prefix for output files
-  _outputPrefix = string((*argv)[3]);
+  if (*argc>3) _outputPrefix = string((*argv)[3]);
 
   // used to store one token of the inputfilestream
   string token;
 
   double timestepLength;
   unsigned cosetid = 0;
-  
-  /*
-   * default parameters
-   */
-  this->_resultOutputTimesteps = 25;
-  this->_doRecordProfile = false;
-  this->_profileRecordingTimesteps = 7;
-  this->_profileOutputTimesteps = 12500;
-  this->_profileOutputPrefix = "out";
-  this->_collectThermostatDirectedVelocity = 100;
-  this->_zoscillation = false;
-  this->_zoscillator = 512;
-  this->_doRecordRDF = false;
-  this->_RDFOutputTimesteps = 25000;
-  this->_RDFOutputPrefix = "out";
-  this->_initCanonical = 5000;
-  this->_initGrandCanonical = 10000000;
-  this->h = 0.0;
-  this->_initStatistics = 20000;
-  
+
   global_log->info() << "Constructing domain ..." << endl;
-  this->_domain = new Domain(ownrank);
+  _domain = new Domain(ownrank);
   global_log->info() << "Domain construction done." << endl;
   _particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 
@@ -125,7 +131,7 @@ Simulation::Simulation(int *argc, char ***argv)
   inputfilestream >> token;
   if((token != "mardynconfig") && (token != "MDProjectConfig"))
   {
-    global_log->error() << "Not a mardynconfig file! " << token << endl;
+    global_log->error() << "Not a mardynconfig file! First token: " << token << endl;
     exit(1);
   } 
   
@@ -236,7 +242,7 @@ Simulation::Simulation(int *argc, char ***argv)
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> outputPathAndPrefix;
         _outputPlugins.push_back(new XyzWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
-        this->_outputFrequency = writeFrequency;
+        _outputFrequency = writeFrequency;
       } 
       else if (token=="PovWriter") {
         unsigned long writeFrequency;
@@ -330,68 +336,68 @@ Simulation::Simulation(int *argc, char ***argv)
          global_log->error() << "timestep missing." << endl;
          exit(1);
       }
-      this->_domain->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
+      _domain->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
     }
     else if(token == "constantAccelerationTimesteps")
     {
        unsigned uCAT;
        inputfilestream >> uCAT;
-       this->_domain->setUCAT(uCAT);
+       _domain->setUCAT(uCAT);
     }
     else if(token == "profile")
     {
        unsigned xun, yun, zun;
        inputfilestream >> xun >> yun >> zun;
-       this->_domain->setupProfile(xun, yun, zun);
-       this->_doRecordProfile = true;
+       _domain->setupProfile(xun, yun, zun);
+       _doRecordProfile = true;
     }
     else if(token == "profileRecordingTimesteps")
     {
-       inputfilestream >> this->_profileRecordingTimesteps;
+       inputfilestream >> _profileRecordingTimesteps;
     }
     else if(token == "profileOutputTimesteps")
     {
-       inputfilestream >> this->_profileOutputTimesteps;
+       inputfilestream >> _profileOutputTimesteps;
     }
     else if(token == "RDF")
     {
        double interval;
        unsigned bins;
        inputfilestream >> interval >> bins;
-       this->_domain->setupRDF(interval, bins);
-       this->_doRecordRDF = true;
+       _domain->setupRDF(interval, bins);
+       _doRecordRDF = true;
     }
     else if(token == "RDFOutputTimesteps")
     {
-       inputfilestream >> this->_RDFOutputTimesteps;
+       inputfilestream >> _RDFOutputTimesteps;
     }
     else if(token == "RDFOutputPrefix")
     {
-       inputfilestream >> this->_RDFOutputPrefix;
+       inputfilestream >> _RDFOutputPrefix;
     }
     else if(token == "resultOutputTimesteps")
     {
-       inputfilestream >> this->_resultOutputTimesteps;
+       inputfilestream >> _resultOutputTimesteps;
     }
     else if(token == "profiledComponent")
     {
        unsigned cid;
        inputfilestream >> cid;
        cid--;
-       this->_domain->considerComponentInProfile(cid);
+       _domain->considerComponentInProfile(cid);
     }
     else if(token == "profileOutputPrefix")
     {
-       inputfilestream >> this->_profileOutputPrefix;
+       inputfilestream >> _profileOutputPrefix;
     }
     else if(token == "collectThermostatDirectedVelocity")
     {
-       inputfilestream >> this->_collectThermostatDirectedVelocity;
+       inputfilestream >> _collectThermostatDirectedVelocity;
     }
     else if(token == "zOscillator")
     {
-       this->_zoscillation = true;
-       inputfilestream >> this->_zoscillator;
+       _zoscillation = true;
+       inputfilestream >> _zoscillator;
     }
     // chemicalPotential <mu> component <cid> [control <x0> <y0> <z0>
     // to <x1> <y1> <z1>] conduct <ntest> tests every <nstep> steps
@@ -478,35 +484,35 @@ Simulation::Simulation(int *argc, char ***argv)
        global_log->info() << "chemical Potential " << imu << " component "
 	          << icid+1 << " (internally " << icid << ") conduct "
 	          << intest << " tests every " << instep << " steps: ";
-       this->_lmu.push_back(tmu);
+       _lmu.push_back(tmu);
        global_log->info() << " pushed back." << endl;
     }
     else if(token == "planckConstant")
     {
-       inputfilestream >> this->h;
+       inputfilestream >> h;
     }
     else if(token == "NVE")
     {
-       this->_domain->thermostatOff();
+       _domain->thermostatOff();
     }
     else if(token == "initCanonical")
     {
-       inputfilestream >> this->_initCanonical;
+       inputfilestream >> _initCanonical;
     }
     else if(token == "initGrandCanonical")
     {
-       inputfilestream >> this->_initGrandCanonical;
+       inputfilestream >> _initGrandCanonical;
     }
     else if(token == "initStatistics")
     {
-       inputfilestream >> this->_initStatistics;
+       inputfilestream >> _initStatistics;
     }
   }
 
   // read particle data
   unsigned long maxid = _inputReader->readPhaseSpace(
-     this->_moleculeContainer, this->_cutoffRadius, &this->_lmu,
-     this->_domain, this->_domainDecomposition
+     _moleculeContainer, _cutoffRadius, &_lmu,
+     _domain, _domainDecomposition
   );
 
   _domain->initFarFieldCorr(_cutoffRadius);
@@ -518,13 +524,13 @@ Simulation::Simulation(int *argc, char ***argv)
   _moleculeContainer->update();
   _moleculeContainer->deleteOuterParticles();
 
-  unsigned idi = this->_lmu.size();
+  unsigned idi = _lmu.size();
   unsigned j = 0;
   std::list<ChemicalPotential>::iterator cpit;
-  for(cpit = this->_lmu.begin(); cpit != this->_lmu.end(); cpit++)
+  for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++)
   {
      cpit->setIncrement(idi);
-     double tmp_molecularMass = this->_domain->getComponents()[
+     double tmp_molecularMass = _domain->getComponents()[
         cpit->getComponentID()
      ].m();
      cpit->setSystem(
@@ -532,7 +538,7 @@ Simulation::Simulation(int *argc, char ***argv)
         _domain->getGlobalLength(2), tmp_molecularMass
      );
      cpit->setGlobalN(
-        this->_domain->N(cpit->getComponentID())
+        _domain->N(cpit->getComponentID())
      );
      cpit->setNextID(j + (int)(1.001 * (256 + maxid)));
 
@@ -544,12 +550,12 @@ Simulation::Simulation(int *argc, char ***argv)
         _moleculeContainer->getBoundingBoxMin(2),
         _moleculeContainer->getBoundingBoxMax(2)
      );
-     double Tcur = this->_domain->T(0);
+     double Tcur = _domain->T(0);
      double Ttar = _domain->severalThermostats()? _domain->targetT(1)
                                                 : _domain->targetT(0);
      if((Tcur < 0.85*Ttar) || (Tcur > 1.15*Ttar)) Tcur = Ttar;
      cpit->submitTemperature(Tcur);
-     if(this->h != 0.0) cpit->setPlanckConstant(this->h);
+     if(h != 0.0) cpit->setPlanckConstant(h);
      
      j++;
   }
@@ -588,15 +594,15 @@ void Simulation::initialize()
   _moleculeContainer->deleteOuterParticles();
   
   // initialize the radial distribution function
-  if(this->_doRecordRDF) this->_domain->resetRDF();
+  if(_doRecordRDF) _domain->resetRDF();
 
-  if(this->_domain->isAcceleratingUniformly())
+  if(_domain->isAcceleratingUniformly())
   {
      global_log->info() << "Initialising uniform acceleration." << endl;
-     unsigned long uCAT = this->_domain->getUCAT();
+     unsigned long uCAT = _domain->getUCAT();
      global_log->info() << "uCAT: " << uCAT << " steps." << endl;
-     this->_domain->determineAdditionalAcceleration( this->_domainDecomposition,
-                                                     this->_moleculeContainer,
+     _domain->determineAdditionalAcceleration( _domainDecomposition,
+                                                     _moleculeContainer,
                                                      uCAT * _integrator->getTimestepLength() );
      global_log->info() << "Uniform acceleration initialised." << endl;
   }
@@ -606,26 +612,26 @@ void Simulation::initialize()
   _domain->calculateVelocitySums(_moleculeContainer);
   _domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, true, 1.0);
   
-  if(this->_lmu.size() > 0)
+  if(_lmu.size() > 0)
   {
-     double Tcur = this->_domain->T(0);
-     double Ttar = this->_domain->severalThermostats()? this->_domain->targetT(1)
-                                                      : this->_domain->targetT(0);
+     double Tcur = _domain->T(0);
+     double Ttar = _domain->severalThermostats()? _domain->targetT(1)
+                                                      : _domain->targetT(0);
      if((Tcur < 0.85*Ttar) || (Tcur > 1.15*Ttar)) Tcur = Ttar;
   
      list<ChemicalPotential>::iterator cpit;
-     if(this->h == 0.0) this->h = sqrt(6.2831853 * Ttar);
-     for(cpit = this->_lmu.begin(); cpit != this->_lmu.end(); cpit++)
+     if(h == 0.0) h = sqrt(6.2831853 * Ttar);
+     for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++)
      {
         cpit->submitTemperature(Tcur);
-        cpit->setPlanckConstant(this->h);
+        cpit->setPlanckConstant(h);
      }
   }
 
-  if(this->_zoscillation)
+  if(_zoscillation)
   {
     global_log->debug() << "Initializing z-oscillators" << endl;
-    this->_integrator->init1D(this->_zoscillator, this->_moleculeContainer);
+    _integrator->init1D(_zoscillator, _moleculeContainer);
   }
   
   // initialize output 
@@ -647,7 +653,7 @@ void Simulation::initialize()
   ReceiveCouplingMDCommand::setData(this);
 #ifdef PARALLEL
   std::cout << "_ownrank is " << ownrank << std::endl;
-  if (this->_domain->_ownrank == 0)
+  if (_domain->_ownrank == 0)
   {
 #endif
     _steer->startListening ();
@@ -668,7 +674,7 @@ void Simulation::simulate()
   
 
   // (universal) constant acceleration (number of) timesteps
-  unsigned uCAT = this->_domain->getUCAT();
+  unsigned uCAT = _domain->getUCAT();
 
   /***************************************************************************/
   /* BEGIN MAIN LOOP                                                         */
@@ -676,23 +682,23 @@ void Simulation::simulate()
   Timer loopTimer;
   loopTimer.start();
   
-  this->_initSimulation = (unsigned long)(this->_domain->getCurrentTime()
+  _initSimulation = (unsigned long)(_domain->getCurrentTime()
                              / _integrator->getTimestepLength());
 
-  for (unsigned long simstep=this->_initSimulation; simstep<=_numberOfTimesteps; simstep++)
+  for (unsigned long simstep=_initSimulation; simstep<=_numberOfTimesteps; simstep++)
   {
-    if(simstep >= this->_initGrandCanonical)
+    if(simstep >= _initGrandCanonical)
     {
        unsigned j = 0;
        list<ChemicalPotential>::iterator cpit;
-       for( cpit = this->_lmu.begin();
-	    cpit != this->_lmu.end();
+       for( cpit = _lmu.begin();
+	    cpit != _lmu.end();
 	    cpit++ )
        {
 	  if(!((simstep + 2*j + 3) % cpit->getInterval()))
 	  {
 	     cpit->prepareTimestep(
-	        this->_moleculeContainer, this->_domainDecomposition
+	        _moleculeContainer, _domainDecomposition
              );
 	  }
 	  j++;
@@ -717,28 +723,28 @@ void Simulation::simulate()
     {
        unsigned j = 0;
        list<ChemicalPotential>::iterator cpit;
-       for( cpit = this->_lmu.begin();
-	    cpit != this->_lmu.end();
+       for( cpit = _lmu.begin();
+	    cpit != _lmu.end();
 	    cpit++ )
        {
 	  if(!((simstep + 2*j + 3) % cpit->getInterval()))
 	  {     
              global_log->debug() << "Grand canonical ensemble(" << j
 		         << "): test deletions and insertions" << endl;
-             this->_moleculeContainer->grandcanonicalStep(
-	        &(*cpit), this->_domain->T(0)
+             _moleculeContainer->grandcanonicalStep(
+	        &(*cpit), _domain->T(0)
              );
-	     cpit->assertSynchronization(this->_domainDecomposition);
+	     cpit->assertSynchronization(_domainDecomposition);
 	     
 	     int localBalance = _moleculeContainer->localGrandcanonicalBalance();
 	     int balance = _moleculeContainer->grandcanonicalBalance(
-	        this->_domainDecomposition
+	        _domainDecomposition
 	     );
              global_log->debug() << "   b[" << ((balance > 0)? "+": "") << balance
                          << "(" << ((localBalance > 0)? "+": "")
 		         << localBalance << ")" << " / c = "
 		         << cpit->getComponentID() << "]   " << endl;
-             this->_domain->Nadd(
+             _domain->Nadd(
 	        cpit->getComponentID(), balance, localBalance
 	     );
 	  }
@@ -754,41 +760,41 @@ void Simulation::simulate()
     /*
      * radial distribution function
      */
-    if((simstep >= this->_initStatistics) && (this->_doRecordRDF))
+    if((simstep >= _initStatistics) && (_doRecordRDF))
     {
-       this->_particlePairsHandler->recordRDF();
-       this->_moleculeContainer->countParticles(this->_domain);
-       this->_domain->tickRDF();
+       _particlePairsHandler->recordRDF();
+       _moleculeContainer->countParticles(_domain);
+       _domain->tickRDF();
     }
 
     if(simstep >= _initGrandCanonical)
     {
-       this->_domain->evaluateRho
+       _domain->evaluateRho
        (
-          this->_moleculeContainer->getNumberOfParticles(),
-          this->_domainDecomposition
+          _moleculeContainer->getNumberOfParticles(),
+          _domainDecomposition
        );
     }
     
     if(!(simstep % _collectThermostatDirectedVelocity))
        _domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-    if(this->_domain->isAcceleratingUniformly())
+    if(_domain->isAcceleratingUniformly())
     {
       if(!(simstep % uCAT))
       {
         global_log->debug() << "Determine the additional acceleration" << endl;
-        this->_domain->determineAdditionalAcceleration( this->_domainDecomposition,
-                                                        this->_moleculeContainer,
+        _domain->determineAdditionalAcceleration( _domainDecomposition,
+                                                        _moleculeContainer,
                                                         uCAT * _integrator->getTimestepLength() );
       }
       global_log->debug() << "Process the uniform acceleration" << endl;
-      this->_integrator->accelerateUniformly(this->_moleculeContainer, this->_domain);
+      _integrator->accelerateUniformly(_moleculeContainer, _domain);
     }
 
-    if(this->_zoscillation)
+    if(_zoscillation)
     {
       global_log->debug() << "alert z-oscillators" << endl;
-      this->_integrator->zOscillation(this->_zoscillator, this->_moleculeContainer);
+      _integrator->zOscillation(_zoscillator, _moleculeContainer);
     }
 
     // Inform the integrator about the calculated forces
@@ -802,18 +808,18 @@ void Simulation::simulate()
                                     Tfactor(simstep) );
 
     // scale velocity and angular momentum
-    if(!this->_domain->NVE())
+    if(!_domain->NVE())
     {
        global_log->debug() << "Velocity scaling" << endl;
-       if(this->_domain->severalThermostats())
+       if(_domain->severalThermostats())
        {
           for( tM = _moleculeContainer->begin();
                tM != _moleculeContainer->end();
                tM = _moleculeContainer->next() )
           {
-             int thermostat = this->_domain->getThermostat(tM->componentid());
+             int thermostat = _domain->getThermostat(tM->componentid());
              if(0 >= thermostat) continue;
-             if(this->_domain->thermostatIsUndirected(thermostat))
+             if(_domain->thermostatIsUndirected(thermostat))
              {
                 tM->scale_v( _domain->getGlobalBetaTrans(thermostat),
                              _domain->thermostatv(thermostat, 0),
@@ -882,65 +888,65 @@ void Simulation::output(unsigned long simstep)
   std::list<OutputBase*>::iterator outputIter;
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++)
   {
-    (*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(this->_lmu));
+    (*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
   }
   
-  if(this->_doRecordRDF && !(simstep % this->_RDFOutputTimesteps))
+  if(_doRecordRDF && !(simstep % _RDFOutputTimesteps))
   {
-    this->_domain->collectRDF(this->_domainDecomposition);
+    _domain->collectRDF(_domainDecomposition);
     if(!ownrank)
     {
-      this->_domain->accumulateRDF();
-      for(unsigned i=0; i < this->_numberOfComponents; i++)
+      _domain->accumulateRDF();
+      for(unsigned i=0; i < _numberOfComponents; i++)
       {
-        for(unsigned j=i; j < this->_numberOfComponents; j++)
+        for(unsigned j=i; j < _numberOfComponents; j++)
         {
           ostringstream osstrm;
-          osstrm << this->_RDFOutputPrefix << "_" << i << "-" << j << ".";
+          osstrm << _RDFOutputPrefix << "_" << i << "-" << j << ".";
           osstrm.fill('0');
           osstrm.width(9);
           osstrm << right << simstep;
-          this->_domain->outputRDF(osstrm.str().c_str(), i, j);
+          _domain->outputRDF(osstrm.str().c_str(), i, j);
           osstrm.str(""); osstrm.clear();
         }
       }
     }
-    this->_domain->resetRDF();
+    _domain->resetRDF();
   }
   
-  if((simstep >= this->_initStatistics) && this->_doRecordProfile
-                                        && !(simstep % this->_profileRecordingTimesteps))
+  if((simstep >= _initStatistics) && _doRecordProfile
+                                        && !(simstep % _profileRecordingTimesteps))
   {
-    this->_domain->recordProfile(this->_moleculeContainer);
+    _domain->recordProfile(_moleculeContainer);
   }
-  if((simstep >= this->_initStatistics) && this->_doRecordProfile 
-                                        && !(simstep % this->_profileOutputTimesteps))
+  if((simstep >= _initStatistics) && _doRecordProfile 
+                                        && !(simstep % _profileOutputTimesteps))
   {
-    this->_domain->collectProfile(this->_domainDecomposition);
+    _domain->collectProfile(_domainDecomposition);
     if(!ownrank)
     {
       ostringstream osstrm;
-      osstrm << this->_profileOutputPrefix << ".";
+      osstrm << _profileOutputPrefix << ".";
       osstrm.fill('0');
       osstrm.width(9);
       osstrm << right << simstep;
-      this->_domain->outputProfile(osstrm.str().c_str());
+      _domain->outputProfile(osstrm.str().c_str());
       osstrm.str(""); osstrm.clear();
     }
-    this->_domain->resetProfile();
+    _domain->resetProfile();
   }
   
-  if(!(simstep % this->_outputFrequency))
+  if(!(simstep % _outputFrequency))
   {
      _moleculeContainer->deleteOuterParticles();
      ostringstream osstrm;
      osstrm.str("");
-     osstrm << this->_outputPrefix;
+     osstrm << _outputPrefix;
      // osstrm.width(3);
      // osstrm.fill('0');
-     // osstrm << this->_domain->ownrank();
+     // osstrm << _domain->ownrank();
      osstrm << ".restart.xdr";
-     this->_domain->writeCheckpoint(
+     _domain->writeCheckpoint(
         osstrm.str(), _moleculeContainer, _domainDecomposition
      );
   }
@@ -968,10 +974,10 @@ void Simulation::output(unsigned long simstep)
      list<ChemicalPotential>::iterator cpit;
      for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++)
      {
-        cout << (this->_domain->thermostatWarning()? "*": "")
+        cout << (_domain->thermostatWarning()? "*": "")
              << cpit->getGlobalN() << "  ";
      }
-     cout << (this->_domain->thermostatWarning()? "  *": "");
+     cout << (_domain->thermostatWarning()? "  *": "");
   }
 #endif
 }
@@ -983,7 +989,7 @@ void Simulation::updateParticleContainerAndDecomposition()
   // changed and have to be adjusted
   _moleculeContainer->update();
   //_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
-  _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain, this->_cutoffRadius);
+  _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain, _cutoffRadius);
   // The cache of the molecules must be updated/build after the exchange process,
   // as the cache itself isn't transferred 
   Molecule* tM;
@@ -995,7 +1001,7 @@ void Simulation::updateParticleContainerAndDecomposition()
 
 double Simulation::Tfactor(unsigned long simstep)
 {
-   double xi = (double)(simstep - this->_initSimulation) / (double)(this->_initCanonical - this->_initSimulation);
+   double xi = (double)(simstep - _initSimulation) / (double)(_initCanonical - _initSimulation);
    if((xi < 0.1) || (xi > 0.9)) return 1.0;
    else if(xi < 0.3) return 15.0*xi - 0.5;
    else if(xi < 0.4) return 10.0 - 20.0*xi;

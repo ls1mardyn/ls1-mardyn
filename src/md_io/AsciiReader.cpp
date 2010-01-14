@@ -36,7 +36,7 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep, double c
 
   if((token != "mardyn") && (token != "MOLDY") && (token != "ls1r1") && (token != "mrdyn") && (token != "MDProject") && (token != "Mardyn") && (token != "MARDYN"))
   {
-    if(domain->ownrank() == 0) cerr << "Input: NOT AN LS1 MARDYN INPUT! (starts with " << token << ")" << endl;
+    if(domain->ownrank() == 0) cerr << "Input: NOT AN Ascii LS1 MARDYN INPUT! (starts with " << token << ")" << endl;
     exit(1);
   }
   _phaseSpaceFileStream >> token;

@@ -1,11 +1,15 @@
+// InputOldstyle.cpp
+
 #include "md_io/InputOldstyle.h"
+#include "Domain.h"
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
-#include "Domain.h"
-#include <climits>
 #include "Logger.h"
+#include <climits>
+
 using Log::global_log;
+
 
 InputOldstyle::InputOldstyle() {
 }
@@ -30,7 +34,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
   if((token != "mardyn") && (token != "MOLDY") && (token != "ls1r1") && (token != "mrdyn") && (token != "MDProject") && (token != "Mardyn") && (token != "MARDYN"))
   {
     if(domain->ownrank() == 0)
-       global_log->error() << "Input: NOT AN LS1 MARDYN INPUT! (starts with "
+       global_log->error() << "Input: NOT AN OldStyle LS1 MARDYN INPUT! (starts with "
             << token << ")" << endl;
     exit(1);
   }

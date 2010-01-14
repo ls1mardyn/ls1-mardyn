@@ -1,8 +1,10 @@
+// DecompWriter.cpp
+
 #include "md_io/DecompWriter.h"
-#include "md_io/Common.h"
+#include "Common.h"
+#include "Domain.h"
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
-#include "Domain.h"
 #include "molecules/Molecule.h"
 
 DecompWriter::DecompWriter(unsigned long writeFrequency, string mode, string filename, unsigned long numberOfTimesteps, bool incremental) {
@@ -30,7 +32,7 @@ void DecompWriter::doOutput( ParticleContainer* particleContainer,
   if(simstep%_writeFrequency == 0) {
     stringstream filenamestream;
     if(_filenameisdate) {
-      filenamestream << gettimestring();
+      filenamestream << gettimestring() << ".out";
     } else {
       filenamestream << _filename;
     }

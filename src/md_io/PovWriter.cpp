@@ -1,10 +1,13 @@
-#include <ctime>
+// PovWriter.cpp
+
 #include "md_io/PovWriter.h"
-#include "md_io/Common.h"
+#include "Common.h"
+#include "Domain.h"
 #include "datastructures/ParticleContainer.h"
 //#include "parallel/DomainDecompBase.h"
-#include "Domain.h"
 #include "molecules/Molecule.h"
+
+#include <ctime>
 #include <sstream>
 #include <fstream>
 
@@ -28,14 +31,15 @@ void PovWriter::initOutput(ParticleContainer* particleContainer,
 
 void PovWriter::doOutput( ParticleContainer* particleContainer,
                           DomainDecompBase* domainDecomp, Domain* domain,
-			  unsigned long simstep, list<ChemicalPotential>* lmu ) 
+                          unsigned long simstep, list<ChemicalPotential>* lmu ) 
 {
    if(simstep%_writeFrequency == 0) {
-      
+
       stringstream filenamestream;
-      filenamestream << _filename;
       if(_filenameisdate) {
-         filenamestream << gettimestring();
+         filenamestream << "mardyn" << gettimestring();
+      } else {
+         filenamestream << _filename;
       }
       if(_incremental) {
          unsigned long temp = simstep/_writeFrequency;
@@ -44,19 +48,18 @@ void PovWriter::doOutput( ParticleContainer* particleContainer,
             filenamestream << "0";
             temp = temp*10;
          }
-         filenamestream << simstep/_writeFrequency << ".pov";
-      } else {
-         filenamestream << ".pov";
+         filenamestream << simstep/_writeFrequency;
       }
+      filenamestream << ".pov";
 
       ofstream ostrm(filenamestream.str().c_str());
-   
+
       ostrm << "// " << filenamestream.str() << endl;
       ostrm << "// moldy" << endl;
       time_t now;
       now=time(NULL);
       ostrm << "// " << ctime(&now) << endl;
-   
+
       ostrm << "// bb: [0," << domain->getGlobalLength(0) << "]^3" << endl;
       ostrm << "//*PMRawBegin" << endl;
       ostrm << "background {rgb <1,1,1>}" << endl;

@@ -333,7 +333,8 @@ void DomainDecomposition::setGridSize(int num_procs) {
   remainder = num_procs;
 
   // The maximal number of prime factors of a number n is log2(n)
-  prime_factors = new int[int(log2(num_procs))];
+  //prime_factors = new int[int(log2(num_procs))];
+  prime_factors = new int[int(log(float(num_procs))/log(2.))];
 
   num_factors = 0;
   // calculate prime numbers
