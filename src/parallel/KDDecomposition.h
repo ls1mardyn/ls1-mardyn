@@ -57,7 +57,7 @@ class KDDecomposition: public DomainDecompBase{
   //! It has to determine the number of cells and create an initial decomposition
   //! of the domain (no knowledge about particles yet), which is stored in
   //! _decompTree and _ownArea
-  KDDecomposition(int *argc, char ***argv, double cutoffRadius, Domain* domain);
+  KDDecomposition(double cutoffRadius, Domain* domain);
 
   // documentation see father class (DomainDecompBase.h)
   ~KDDecomposition();

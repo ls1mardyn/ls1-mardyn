@@ -8,7 +8,7 @@
 #include "parallel/KDNode.h"
 #include <float.h>
 
-KDDecomposition::KDDecomposition(int *argc, char ***argv, double cutoffRadius, Domain* domain){
+KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain){
   int procnamelen;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank);
@@ -41,7 +41,6 @@ KDDecomposition::KDDecomposition(int *argc, char ***argv, double cutoffRadius, D
 
 KDDecomposition::~KDDecomposition(){
   delete []_numParticlesPerCell;
-  MPI_Finalize();
 }
 
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
@@ -239,7 +238,7 @@ int KDDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain){
   if(_decompValid==false){
     cerr << "KDDecomposition::getBoundingBoxMin failed. Decomposition is invalid" << endl;
-    exit(1);
+    MPI_Abort( MPI_COMM_WORLD, 1 );
   }
   double globalLength = domain->getGlobalLength(dimension);
   double pos = (_ownArea->_lowCorner[dimension])*_cellSize[dimension];
@@ -251,7 +250,7 @@ double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain){
 double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain){
   if(_decompValid==false){
     cerr << "KDDecomposition::getBoundingBoxMax failed. Decomposition is invalid" << endl;
-    exit(1);
+    MPI_Abort( MPI_COMM_WORLD, 1 );
   }
   double globalLength = domain->getGlobalLength(dimension);
   double pos = (_ownArea->_highCorner[dimension] + 1)*_cellSize[dimension];
@@ -433,7 +432,7 @@ void KDDecomposition::transferMolData(vector<int>& procsToSendTo, vector<int>& p
 void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain, const vector<Component>& components){
   if(_decompValid==false){
     cerr << "KDDecomposition::createLocalCopies failed. Decomposition is invalid" << endl;
-    exit(1);
+    MPI_Abort( MPI_COMM_WORLD, 1 );
   }
 
   Molecule* molPtr;
@@ -632,7 +631,7 @@ void KDDecomposition::recDecomp(KDNode* fatherNode, KDNode*& ownArea){
 
       if(numProcsLeft <= 0 || numProcsLeft >= fatherNode->_numProcs){
         cerr << "ERROR in recDecomp, part of the domain was not assigned to a proc" << endl;
-        exit(1);
+        MPI_Abort( MPI_COMM_WORLD, 1 );
       }
     }
   }
@@ -761,7 +760,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer){
 
   if(_decompValid==false){
     cerr << "KDDecomposition::getNumParticles failed. Decomposition is invalid" << endl;
-    exit(1);
+    MPI_Abort( MPI_COMM_WORLD, 1 );
   }
   int count = 0;
   double bBMin[3]; // haloBoundingBoxMin
@@ -835,8 +834,7 @@ void KDDecomposition::assertIntIdentity(int IX)
          if(recv != IX)
          {
             cout << "SEVERE ERROR: IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
-            MPI_Finalize();
-            exit(911);
+            MPI_Abort( MPI_COMM_WORLD, 911 );
          }
       }
       cout << "IX = " << recv << " for all " << num_procs << " ranks.\n";
@@ -882,8 +880,7 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
                {
                   cout << "\nSEVERE ERROR. Ranks " << check[recv] << " and "
                        << i << " both propagate ID " << recv << ". Aborting.\n";
-                  MPI_Finalize();
-                  exit(2674);
+                  MPI_Abort( MPI_COMM_WORLD, 2674 );
                }
                else check[recv] = i;
             }

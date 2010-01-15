@@ -34,7 +34,7 @@ class DomainDecomposition: public DomainDecompBase{
  public:
   //! @brief The constructor has to determine the own rank and the number of neighbours and
   //!        sets up the topology 
-  DomainDecomposition(int *argc, char ***argv);
+  DomainDecomposition();
 
   // documentation see father class (DomainDecompBase.h)
   ~DomainDecomposition();

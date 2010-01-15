@@ -110,6 +110,13 @@ Simulation::Simulation(int *argc, char ***argv)
   }
 }
 
+Simulation::~Simulation(){
+#ifdef PARALLEL
+  MPI_Finalize();
+#endif
+}
+
+
 
 void Simulation::initConfigOldstyle(const string& inputfilename)
 {
@@ -214,10 +221,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
 #else
       inputfilestream >> token;
       if (token=="DomainDecomposition") {
-        _domainDecomposition = (DomainDecompBase*) new DomainDecomposition(argc, argv);
+        _domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
       } 
       else if(token=="KDDecomposition"){
-        _domainDecomposition = (DomainDecompBase*) new KDDecomposition(argc, argv, _cutoffRadius, _domain);
+        _domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain);
       }
 #endif
     }

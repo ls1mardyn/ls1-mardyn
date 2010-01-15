@@ -69,6 +69,10 @@ class Simulation{
   //!           We should have a class to handle command line arguments like http://www.boost.org/doc/libs/1_41_0/doc/html/program_options.html
   Simulation(int *argc, char ***argv);
 
+  //! @brief destruct simulation object
+  //!
+  ~Simulation();
+
   //! @brief process configuration file (*.cfg)
   //! 
   //! Opens the file with the given filename and reads in all parameters

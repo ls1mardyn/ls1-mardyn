@@ -9,7 +9,7 @@ using Log::global_log;
 using namespace std;
 
 
-DomainDecomposition::DomainDecomposition(int *argc, char ***argv){
+DomainDecomposition::DomainDecomposition(){
 
   int period[DIM];       // 1(true) when using periodic boundary conditions in the corresponding dimension
   int reorder;           // 1(true) if the ranking may be reordered by MPI_Cart_create
@@ -46,7 +46,6 @@ DomainDecomposition::DomainDecomposition(int *argc, char ***argv){
 }
 
 DomainDecomposition::~DomainDecomposition(){
-  MPI_Finalize();
 }
 
 
@@ -397,8 +396,7 @@ void DomainDecomposition::assertIntIdentity(int IX)
          if(recv != IX)
          {
             cout << "SEVERE ERROR: IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
-            MPI_Finalize();
-            exit(911);
+            MPI_Abort( MPI_COMM_WORLD, 911 );
          }
       }
       cout << "IX = " << recv << " for all " << num_procs << " ranks.\n";
@@ -445,7 +443,7 @@ void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
                if(check.find(recv) != check.end()) {
                   global_log->error() << "Ranks " << check[recv] << " and " << i 
                               << " both propagate ID " << recv << endl;
-                  exit(1);
+		  MPI_Abort( MPI_COMM_WORLD, 1 );
                }
                else check[recv] = i;
             }
