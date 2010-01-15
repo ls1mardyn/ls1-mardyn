@@ -51,7 +51,7 @@ BINARYbasename := MarDyn
 BINARY := $(BINARYbasename)
 ifneq ($(realpath .svn),)
 #  $(info Building from a svn version.)
-  BINARY := ${BINARY}_$(shell svnversion)
+  BINARY := ${BINARY}_$(shell svnversion | sed -e "s/:/-/")
 endif
 BINARY := ${BINARY}_${PARTYPE}.${TARGET}
 

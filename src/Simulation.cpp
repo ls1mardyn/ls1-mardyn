@@ -48,7 +48,7 @@ using Log::global_log;
 Simulation::Simulation(int *argc, char ***argv)
 {
 #ifdef PARALLEL
-  MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
+  MPI_Init(argc, argv);
 #endif
 
   /* Initialize the global log file */
