@@ -36,18 +36,15 @@ void VISWriter::doOutput( ParticleContainer* particleContainer,
    if(simstep%_writeFrequency == 0) {
       stringstream filenamestream;
       if(_filenameisdate) {
-         filenamestream << "mardyn" << gettimestring();
+	filenamestream << "mardyn" << gettimestring();
       } else {
-         filenamestream << _filename;
+	filenamestream << _filename;
       }
+
       if(_incremental) {
-         unsigned long temp = simstep/_writeFrequency;
-         filenamestream << "-";
-         while(temp < floor((double) _numberOfTimesteps / (double) _writeFrequency)){
-            filenamestream << "0";
-            temp = temp*10;
-         }
-         filenamestream << simstep/_writeFrequency;
+	/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
+	int num_digits = ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
+	filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' );
       }
       filenamestream << ".vis";
 

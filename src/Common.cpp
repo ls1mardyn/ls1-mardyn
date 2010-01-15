@@ -1,7 +1,9 @@
 // Common.cpp
 
 #include "Common.h"
+#include <sstream>
 #include <ctime>
+#include <cmath>
 using namespace std;
 
 string gettimestring(const char* fmt) {
@@ -15,4 +17,13 @@ string gettimestring(const char* fmt) {
    string date(buffer);
 
    return date;
+}
+
+std::string aligned_number( int number, int num_digits, char c ) {
+  stringstream numstream;
+  numstream.fill( c );
+  numstream.width( num_digits );
+  numstream << number;
+  string numstr(numstream.str());
+  return numstr;
 }

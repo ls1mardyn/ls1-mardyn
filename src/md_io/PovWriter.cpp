@@ -37,18 +37,16 @@ void PovWriter::doOutput( ParticleContainer* particleContainer,
 
       stringstream filenamestream;
       if(_filenameisdate) {
-         filenamestream << "mardyn" << gettimestring();
+	filenamestream << "mardyn" << gettimestring();
       } else {
-         filenamestream << _filename;
+	filenamestream << _filename;
       }
+
       if(_incremental) {
-         unsigned long temp = simstep/_writeFrequency;
-         filenamestream << "-";
-         while(temp < floor((double) (_numberOfTimesteps/_writeFrequency))){
-            filenamestream << "0";
-            temp = temp*10;
-         }
-         filenamestream << simstep/_writeFrequency;
+	filenamestream << "-";
+	/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
+	int num_digits = ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
+	filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' );
       }
       filenamestream << ".pov";
 

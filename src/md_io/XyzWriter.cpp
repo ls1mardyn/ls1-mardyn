@@ -42,12 +42,9 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer,
 
     if( _incremental ) {
       filenamestream << "-";
-      /* align numbers with preceding '0's. */
+      /* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
       int num_digits = ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
-      char prev_fill = filenamestream.fill('0');
-      filenamestream.width( num_digits );
-      filenamestream << simstep/_writeFrequency << ".xyz";
-      filenamestream.fill( prev_fill );
+      filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' ) << ".xyz";
     } else {
       filenamestream << ".xyz";
     }
