@@ -32,7 +32,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer,
                           DomainDecompBase* domainDecomp, Domain* domain,
 			  unsigned long simstep, list<ChemicalPotential>* lmu ) 
 {
-  if(simstep%_writeFrequency == 0) {
+  if( simstep % _writeFrequency == 0) {
     stringstream filenamestream;
     if(_filenameisdate) {
       filenamestream << "mardyn" << gettimestring() << ".out";
@@ -40,35 +40,35 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer,
       filenamestream << _filename;
     }
 
-    if(_incremental) {
-      unsigned long temp = simstep/_writeFrequency;
+    if( _incremental ) {
       filenamestream << "-";
-      while(temp < floor((double) (_numberOfTimesteps/_writeFrequency))){ 
-        filenamestream << "0";
-        temp = temp*10;
-      }
+      /* align numbers with preceding '0's. */
+      int num_digits = ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
+      char prev_fill = filenamestream.fill('0');
+      filenamestream.width( num_digits );
       filenamestream << simstep/_writeFrequency << ".xyz";
+      filenamestream.fill( prev_fill );
     } else {
       filenamestream << ".xyz";
     }
     int ownRank = domainDecomp->getRank();
-    if(ownRank==0) {
-      ofstream xyzfilestream(filenamestream.str().c_str());
+    if( ownRank == 0 ) {
+      ofstream xyzfilestream( filenamestream.str(). c_str() );
       xyzfilestream << domain->getglobalNumMolecules() << endl;
       xyzfilestream << "comment line" << endl;
       xyzfilestream.close();
     }
-    for(int process = 0; process < domainDecomp->getNumProcs(); process++){
+    for( int process = 0; process < domainDecomp->getNumProcs(); process++ ){
       domainDecomp->barrier();
-      if(ownRank==process){
-        ofstream xyzfilestream(filenamestream.str().c_str(), ios::app);
+      if( ownRank == process ){
+        ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
         Molecule* tempMol;
-        for(tempMol = particleContainer->begin(); tempMol != particleContainer->end(); tempMol = particleContainer->next()){
-          if(tempMol->componentid() == 0) { xyzfilestream << "Ar ";}
-          else if(tempMol->componentid() == 1) {xyzfilestream << "Xe ";}
-          else if(tempMol->componentid() == 2) {xyzfilestream << "C ";}
-          else if(tempMol->componentid() == 3) {xyzfilestream << "O ";}
-          else {xyzfilestream << "H ";}
+        for( tempMol = particleContainer->begin(); tempMol != particleContainer->end(); tempMol = particleContainer->next()){
+          if( tempMol->componentid() == 0) { xyzfilestream << "Ar ";}
+          else if( tempMol->componentid() == 1 ) { xyzfilestream << "Xe ";}
+          else if( tempMol->componentid() == 2 ) { xyzfilestream << "C ";}
+          else if( tempMol->componentid() == 3 ) { xyzfilestream << "O ";}
+          else { xyzfilestream << "H ";}
           xyzfilestream << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << endl;
         }
         xyzfilestream.close();
@@ -77,6 +77,6 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer,
   }
 }
 
-void XyzWriter::finishOutput(ParticleContainer* particleContainer,
-			     DomainDecompBase* domainDecomp, Domain* domain){
+void XyzWriter::finishOutput( ParticleContainer* particleContainer,
+			     DomainDecompBase* domainDecomp, Domain* domain ){
 }
