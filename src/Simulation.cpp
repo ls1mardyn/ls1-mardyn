@@ -47,9 +47,7 @@ using Log::global_log;
 
 Simulation::Simulation(int *argc, char ***argv)
 {
-  int ownrank = 0;
 #ifdef PARALLEL
-  MPI_Init(argc, argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
 #endif
 
@@ -70,22 +68,6 @@ Simulation::Simulation(int *argc, char ***argv)
   _domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
   global_log->info() << "Initialization done" << endl;
 #endif
-
-  // open filestream to the input file
-  string inputfilename((*argv)[1]);
-  ifstream inputfilestream(inputfilename.c_str());
-  if ( !inputfilestream.is_open() ) {
-    global_log->error() << "Could not open file " << inputfilename << endl;
-    exit (1);
-  }
-
-  std::string inputPath;
-  unsigned int lastIndex = inputfilename.find_last_of('/',inputfilename.size()-1);
-  if (lastIndex == string::npos)
-    inputPath="";
-  else
-    inputPath = inputfilename.substr(0, lastIndex+1);
-  
 
   /*
    * default parameters
@@ -115,6 +97,43 @@ Simulation::Simulation(int *argc, char ***argv)
 
   // store prefix for output files
   if (*argc>3) _outputPrefix = string((*argv)[3]);
+
+
+  string inputfilename((*argv)[1]);
+  if (inputfilename.rfind(".cfg")==inputfilename.size()-4)
+  {
+    global_log->info() << "command line config file type is oldstyle (*.cfg)" << endl;
+    initConfigOldstyle(inputfilename);
+  } else {
+    global_log->info() << "command line config file type is unknown: trying oldstyle" << endl;
+    initConfigOldstyle(inputfilename);
+  }
+}
+
+
+void Simulation::initConfigOldstyle(const string& inputfilename)
+{
+  int ownrank = 0;
+#ifdef PARALLEL
+  MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
+#endif
+
+  global_log->info() << "init oldstyle config file: " << inputfilename << endl;
+
+  // open filestream to the input file
+  ifstream inputfilestream(inputfilename.c_str());
+  if ( !inputfilestream.is_open() ) {
+    global_log->error() << "Could not open file " << inputfilename << endl;
+    exit (1);
+  }
+
+//  std::string inputPath;
+//  unsigned int lastIndex = inputfilename.find_last_of('/',inputfilename.size()-1);
+//  if (lastIndex == string::npos)
+//    inputPath="";
+//  else
+//    inputPath = inputfilename.substr(0, lastIndex+1);
+
 
   // used to store one token of the inputfilestream
   string token;

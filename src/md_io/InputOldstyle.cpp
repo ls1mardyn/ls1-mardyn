@@ -320,7 +320,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
       }
       unsigned long iph = domain->getglobalNumMolecules() / 100;
       if(i%iph == 0)
-        global_log->info() << "Finished reading molecules: " << i/iph << "%" << endl;
+        global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
     }
     global_log->info() << "Finished reading molecules: 100%" << endl;
     global_log->info() << "Reading Molecules done" << endl;

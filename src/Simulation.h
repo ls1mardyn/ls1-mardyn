@@ -2,16 +2,14 @@
 #define SIMULATION_H_
 
 #include <string>
-#include <vector>
 #include <list>
-#include <sstream>
+//#include <vector>
+//#include <sstream>
 
 #include "ensemble/GrandCanonical.h"
 #ifdef STEEREO
   #include <simSteering.h>
 #endif
-
-using namespace std;
 
 class Domain;
 class ParticleContainer;
@@ -63,16 +61,24 @@ class Simulation{
  public:
   //! @brief instantiate simulation object
   //!
-  //! The Constructor opens the file with the given filename and reads in
-  //! all parameters for the simulaion and initializes the following member variables:
+  //! The Constructor processes the command line arguments
+  //! @param argc Pointer to the number of arguments passed to the programm. Needed for MPI
+  //! @param argv Pointer to the list of arguments, also needed for MPI
+  //! @note very elegant way of passing these arguments!!!
+  //!       MD: why??? C++ typically uses references (int& argc, char**& argv) instead of pointers and offers a real call-by-reference.
+  //!           We should have a class to handle command line arguments like http://www.boost.org/doc/libs/1_41_0/doc/html/program_options.html
+  Simulation(int *argc, char ***argv);
+
+  //! @brief process configuration file (*.cfg)
+  //! 
+  //! Opens the file with the given filename and reads in all parameters
+  //! for the simulaion and initializes the following member variables:
   //! - timestepLength: 
   //! - cutoffRadius
   //! - phaseSpace
   //! - moleculeContainer
-  //! @param argc Pointer to the number of arguments passed to the programm. Needed for MPI
-  //! @param argv Pointer to the list of arguments, also needed for MPI
-  //! @note very elegant way of passing these arguments!!!
-  Simulation(int *argc, char ***argv);
+  void initConfigOldstyle(const std::string& inputfilename);
+  void initConfigOldstyle(const char* inputfilename) { initConfigOldstyle(std::string(inputfilename)); }
 
   //! @brief calculate all values for the starting timepoint
   //! 
@@ -133,10 +139,10 @@ class Simulation{
   bool _doRecordProfile;
   unsigned _profileRecordingTimesteps;
   unsigned _profileOutputTimesteps;
-  string _profileOutputPrefix;
+  std::string _profileOutputPrefix;
   bool _doRecordRDF;
   unsigned _RDFOutputTimesteps;
-  string _RDFOutputPrefix;
+  std::string _RDFOutputPrefix;
   unsigned _resultOutputTimesteps;
   
   unsigned _collectThermostatDirectedVelocity;
@@ -180,7 +186,7 @@ class Simulation{
   InputBase* _inputReader;
 
   //! prefix for the names of all output files
-  string _outputPrefix;
+  std::string _outputPrefix;
     
   //! frequency of the checkpoint writer
   long _outputFrequency;
