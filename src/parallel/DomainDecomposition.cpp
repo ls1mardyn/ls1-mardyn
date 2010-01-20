@@ -320,14 +320,12 @@ double DomainDecomposition::getTime(){
 
 void DomainDecomposition::setGridSize(int num_procs) {
   int remainder;      // remainder during the calculation of the prime factors
-  int i;              // counter
   int num_factors;    // number of prime factors
   int *prime_factors; // array for the prime factors
 
   // Set the initial number of processes in each dimension to zero
-  for(i=0;i<DIM;i++){
+  for( int i = 0; i < DIM; i++ )
     _gridSize[i] = 1;
-  }
 
   remainder = num_procs;
 
@@ -337,27 +335,24 @@ void DomainDecomposition::setGridSize(int num_procs) {
 
   num_factors = 0;
   // calculate prime numbers
-  for(i=2; i<=remainder;i++){
-    while(remainder%i == 0){ // -> i is prime factor
-      remainder = remainder/i;
+  for( int i = 2; i <= remainder; i++ ){
+    while( remainder % i == 0 ){ // -> i is prime factor
+      remainder = remainder / i;
       prime_factors[num_factors] = i;
       num_factors++;
     }
   }
 
-  i = num_factors-1;
-  while(i>=0){
-    if (_gridSize[0] <= _gridSize[1] && _gridSize[0] <= _gridSize[2]){
+  for( int i = num_factors - 1; i >= 0; i-- ){
+    if (_gridSize[0] <= _gridSize[1] && _gridSize[0] <= _gridSize[2])
       _gridSize[0] *= prime_factors[i];
-    }
-    else if(_gridSize[1] <= _gridSize[0] && _gridSize[1] <= _gridSize[2]){
+    else if(_gridSize[1] <= _gridSize[0] && _gridSize[1] <= _gridSize[2])
       _gridSize[1] *= prime_factors[i];
-    }
-    else{
+    else
       _gridSize[2] *= prime_factors[i];
-    }
-    i--;
   }
+  
+  delete [] prime_factors;
 }
 
 unsigned DomainDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd)
