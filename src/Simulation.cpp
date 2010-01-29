@@ -116,6 +116,16 @@ Simulation::~Simulation(){
 #endif
 }
 
+int Simulation::exit( int exitcode ){
+#ifdef PARALLEL
+  // terminate all mpi processes and return exitcode
+  MPI_Abort( MPI_COMM_WORLD, exitcode );
+#else 
+  // call POSIX exit
+  _exit( exitcode );
+#endif
+}
+
 
 
 void Simulation::initConfigOldstyle(const string& inputfilename)
@@ -131,7 +141,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
   ifstream inputfilestream(inputfilename.c_str());
   if ( !inputfilestream.is_open() ) {
     global_log->error() << "Could not open file " << inputfilename << endl;
-    exit (1);
+    exit(1);
   }
 
 //  std::string inputPath;
