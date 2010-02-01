@@ -124,6 +124,7 @@ int Simulation::exit( int exitcode ){
   // call POSIX exit
   _exit( exitcode );
 #endif
+  return exitcode;
 }
 
 
