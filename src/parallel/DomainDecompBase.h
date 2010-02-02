@@ -106,7 +106,7 @@ class DomainDecompBase{
   //!                  this method will will the vector with the number of molecules for each
   //!                  of the components (in the global domain)
   //! @return the number of molecules in the global domain is returned
-  virtual int countMolecules(ParticleContainer* moleculeContainer, vector<int> &compCount) = 0;
+  virtual unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) = 0;
 
   //! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
   //! @param dimension coordinate direction for which the minimum of the bounding box is returned

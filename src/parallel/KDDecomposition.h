@@ -109,7 +109,7 @@ class KDDecomposition: public DomainDecompBase{
   double guaranteedDistance(double x, double y, double z, Domain* domain);
 
   // documentation see father class (DomainDecompBase.h)
-  int countMolecules(ParticleContainer* moleculeContainer, vector<int> &compCount);
+  unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount);
 
   //! @todo comment and thing
   double getBoundingBoxMin(int dimension, Domain* domain);

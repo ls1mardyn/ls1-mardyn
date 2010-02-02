@@ -86,7 +86,7 @@ void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* mole
   exchangeMolecules(moleculeContainer, components, domain, rc);
 }
 
-int DomainDecompDummy::countMolecules(ParticleContainer* moleculeContainer, vector<int> &compCount){
+unsigned long DomainDecompDummy::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount){
   for(unsigned i=0; i<compCount.size(); i++){
     compCount[i] = 0;
   }

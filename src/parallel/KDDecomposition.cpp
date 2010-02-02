@@ -217,8 +217,8 @@ double KDDecomposition::guaranteedDistance(double x, double y, double z, Domain*
   return sqrt(xdist*xdist + ydist*ydist + zdist*zdist);
 }
 
-int KDDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<int> &compCount){
-  vector<int> localCompCount;
+unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount){
+  vector<unsigned long> localCompCount;
   localCompCount.resize(compCount.size());
   for(int i=0; i<(int)localCompCount.size(); i++){
     localCompCount[i] = 0;

@@ -60,15 +60,15 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
   }
 
 #ifndef NDEBUG
-  vector<int> compCount;
+  vector<unsigned long> compCount;
   compCount.resize(1);
   countMolecules(moleculeContainer, compCount);
   global_log->debug() << "Num molecules: " << compCount[0] << endl;
 #endif
 
   // temporal data for the particle exchange
-  long int numPartsToSend[DIM][2];
-  long int numPartsToRecv[DIM][2];
+  int numPartsToSend[DIM][2];
+  int numPartsToRecv[DIM][2];
   ParticleData* particlesSendBuffs[DIM][2];
   ParticleData* particlesRecvBuffs[DIM][2];
 
@@ -216,7 +216,7 @@ double DomainDecomposition::guaranteedDistance(double x, double y, double z, Dom
 }
 
 
-int DomainDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<int> &compCount){
+unsigned long DomainDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount){
   vector<int> localCompCount;
   localCompCount.resize( compCount.size() );
   for( unsigned int i = 0; i < localCompCount.size(); i++ )

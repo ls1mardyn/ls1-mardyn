@@ -389,7 +389,7 @@ unsigned long PartGen::readPhaseSpace(
   createClusters(particleContainer, bBoxMin, bBoxMax, domain, domainDecomp);
 
   vector<Component>& dcomponents = domain->getComponents();
-  vector<int> partsPerComp;
+  vector<unsigned long> partsPerComp;
   partsPerComp.resize(_numberOfComponents);
   domain->setglobalNumMolecules(domainDecomp->countMolecules(particleContainer, partsPerComp));
   for(unsigned int i=0; i<partsPerComp.size(); i++) {
