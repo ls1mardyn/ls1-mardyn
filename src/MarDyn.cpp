@@ -3,7 +3,6 @@
 #include <ctime>
 #include "Simulation.h"
 
-Simulation *simulation;
 
 using namespace std;
 
@@ -20,12 +19,12 @@ int main(int argc, char** argv){
 
   cout.precision(6);
 
-  simulation = new Simulation(&argc, &argv);
-  simulation->initialize();
+  Simulation simulation(&argc, &argv);
+  simulation.initialize();
   
   double runtime = double(clock())/CLOCKS_PER_SEC;
 
-  simulation->simulate();
+  simulation.simulate();
 
   runtime=double(clock())/CLOCKS_PER_SEC-runtime;
   

@@ -3,18 +3,14 @@
 
 #define DIM 3
 
-/* indexes of the neighbours in the neighbour-array */
-#define XLOWER  0
-#define XHIGHER 1
-#define YLOWER  2
-#define YHIGHER 3
-#define ZLOWER  4
-#define ZHIGHER 5
+#define LOWER  0
+#define HIGHER 1
 
 #include "parallel/DomainDecompBase.h"
 #include <iostream>
 #include "mpi.h"
 
+#include "parallel/ParticleData.h"
 #include "parallel/CollectiveCommunication.h"
 
 using namespace std;
@@ -117,19 +113,16 @@ class DomainDecomposition: public DomainDecompBase{
   //! there is a loop over all processes with a barrier in between
   //! @param filename name of the file into which the data will be written
   //! @param moleculeContainer all Particles from this container will be written to the file
-  void writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer);
+  void writeMoleculesToFile( string filename, ParticleContainer* moleculeContainer );
 
   // documentation see father class (DomainDecompBase.h)
-  int getRank(void){ return _ownRank;}
+  int getRank(void){ return _rank;}
   
   // documentation see father class (DomainDecompBase.h)
   int getNumProcs();
- 
-  // documentation see father class (DomainDecompBase.h)
-  const char* getProcessorName() const;
 
   // documentation see father class (DomainDecompBase.h)
-  void barrier() {MPI_Barrier(_commTopology);}
+  void barrier() {MPI_Barrier( _comm );}
 
   // documentation see father class (DomainDecompBase.h)
   double getTime();
@@ -150,7 +143,7 @@ class DomainDecomposition: public DomainDecompBase{
   // the documentation of the class CollectiveCommunication and of the
   // father class of this class (DomainDecompBase.h)
   //##################################################################  
-  void collCommInit(int numValues){ _collComm.init(_commTopology, numValues); };
+  void collCommInit(int numValues){ _collComm.init(_comm, numValues); };
   void collCommFinalize(){ _collComm.finalize(); };
   void collCommAppendInt(int intValue){_collComm.appendInt(intValue);};
   void collCommAppendUnsLong(unsigned long unsLongValue){_collComm.appendUnsLong(unsLongValue);};
@@ -173,21 +166,22 @@ class DomainDecomposition: public DomainDecompBase{
   void setGridSize(int num_procs);
 
   //! new topology after initializing the torus
-  MPI_Comm _commTopology;
-  MPI_Datatype _mpiParticleDataType;
+  MPI_Comm _comm;
+  int _comm_size;
+  MPI_Group _comm_group;
+  MPI_Group _neighbours_groups[DIM][2];
+
+  MPI_Datatype _mpi_Particle_data;
   //! Number of processes in each dimension (i.e. 2 for 8 processes) 
   int _gridSize[DIM];
   //! Grid coordinates of process
   int _coords[DIM];
   //!  rank of process
-  int _ownRank;
-  //! rank of neighbours starting with the lowest dimension (x) and
-  //! the lower value (x-1; "left), then the higher value (x+1).
-  //! Then follows the next dimension (y), so all elements are:
-  //! (x-1,y,z),(x+1,y,z),(x,y-1,z),(x,y+1,z),(x,y,z-1),(x,y,z+1)
-  int _neighbours[2*DIM];
-  //! name of the local processor
-  char _processorName[MPI_MAX_PROCESSOR_NAME];
+  int _rank;
+  //! Array of neighbour ranks.
+  //! The first array index specifies the coordinate index,
+  //! the second one the direction. For the later use the predefined LOWER and HIGHER macros.
+  int _neighbours[DIM][2];
   
   //! variable used for different kinds of collective operations
   CollectiveCommunication _collComm;

@@ -137,9 +137,6 @@ class DomainDecompBase{
   //! @return number of processes
   virtual int getNumProcs() = 0;
 
-  //! @brief returns the name of the Processor
-  virtual const char* getProcessorName() const = 0;
-
   //! @brief synchronises all processes
   virtual void barrier() = 0;
 
