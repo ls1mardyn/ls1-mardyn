@@ -1,19 +1,27 @@
 # Portland compiler suite
+# http://www.pgroup.com
 # Version: 
 
 CFG_INFO = "pgi configuration"
 
 CXX_SEQ = pgCC
-# on Cray XT5 use the following (see XT5 User Guide)
-#CXX_SEQ = CC
 CXX_PAR = mpicxx
-CXXFLAGS_SEQ_DEBUG = $(INCLUDES) -Wall -g 
-CXXFLAGS_SEQ_RELEASE = $(INCLUDES)  -O2 -DNDEBUG
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -g 
 LINKFLAGS_SEQ_DEBUG = -O0 -g
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES)  -O2 -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
 
-CXXFLAGS_PAR_DEBUG = $(INCLUDES) -Wall -g -DPARALLEL
-CXXFLAGS_PAR_RELEASE = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -g -DPARALLEL
 LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+# RELEASE
+CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
 LINKFLAGS_PAR_RELEASE = -DPARALLEL
 
