@@ -228,7 +228,6 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
 }
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
-  global_log->set_mpi_output_root(0);
 
   string token;
 

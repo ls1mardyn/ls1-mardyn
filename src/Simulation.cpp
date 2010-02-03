@@ -54,7 +54,9 @@ Simulation::Simulation(int *argc, char ***argv)
   /* Initialize the global log file */
   string logfileName("MarDyn");
   global_log = new Log::Logger(Log::ALL);
+#ifdef PARALLEL
   global_log->set_mpi_output_root(0);
+#endif
 
   if (*argc <= 1) 
   {
@@ -517,10 +519,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
        tmu.setInterval(instep); 
        tmu.setInstances(intest);
        if(controlVolume) tmu.setControlVolume(x0, y0, z0, x1, y1, z1);
-       global_log->info().precision(6);
-       global_log->info() << "chemical Potential " << imu << " component "
-	          << icid+1 << " (internally " << icid << ") conduct "
-	          << intest << " tests every " << instep << " steps: ";
+       global_log->info() << setprecision(6) 
+	 << "chemical Potential " << imu 
+	 << " component " << icid + 1 
+	 << " (internally " << icid << ") conduct " << intest 
+	 << " tests every " << instep << " steps: ";
        _lmu.push_back(tmu);
        global_log->info() << " pushed back." << endl;
     }
@@ -613,7 +616,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
 
 void Simulation::initialize()
 {
-  global_log->set_mpi_output_root(0);
   global_log->info() << "Initializing simulation" << endl;
   // clear halo
   global_log->info() << "Clearing halos" << endl;
@@ -706,7 +708,6 @@ void Simulation::simulate()
 
   Molecule* tM;
 
-  global_log->set_mpi_output_root(0);
   global_log->info() << "Started simulation" << endl;
   
 
@@ -920,7 +921,6 @@ void Simulation::simulate()
 void Simulation::output(unsigned long simstep)
 {
   int ownrank = _domainDecomposition->getRank();
-  global_log->set_mpi_output_root(0);
 
   std::list<OutputBase*>::iterator outputIter;
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++)

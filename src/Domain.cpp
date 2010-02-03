@@ -624,7 +624,6 @@ void Domain::initParameterStreams(double cutoffRadius){
 }
 
 void Domain::initFarFieldCorr(double cutoffRadius) {
-  global_log->set_mpi_output_root(0);
   double UpotCorrLJ=0.;
   double VirialCorrLJ=0.;
   double MySelbstTerm=0.;
