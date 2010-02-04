@@ -124,7 +124,7 @@ int Simulation::exit( int exitcode ){
   MPI_Abort( MPI_COMM_WORLD, exitcode );
 #else 
   // call POSIX exit
-  _exit( exitcode );
+  ::exit( exitcode );
 #endif
   return exitcode;
 }
