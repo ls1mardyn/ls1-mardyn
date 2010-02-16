@@ -120,7 +120,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
        double globalLength[3];
        _phaseSpaceFileStream >> globalLength[0] >> globalLength[1] >> globalLength[2];
        for(int i=0; i < 3; i++)
-          domain->setGlobalLength(i, 1.0000000333 * globalLength[i]);
+          domain->setGlobalLength(i, globalLength[i]);
     }
     else if((token == "NumberOfComponents") || (token == "C"))
     {

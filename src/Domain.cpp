@@ -531,7 +531,7 @@ void Domain::writeCheckpoint( string filename,
     checkpointfilestream << "mardyn trunk 20090727";
     checkpointfilestream << "\n";
     checkpointfilestream << " currentTime\t"  << this->_currentTime << "\n";
-    checkpointfilestream << " Length\t" << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
+    checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 if(this->_universalComponentwiseThermostat)
     {
        for( map<int, int>::iterator thermit = this->_universalThermostatID.begin();
