@@ -979,13 +979,8 @@ void Simulation::output(unsigned long simstep)
      ostringstream osstrm;
      osstrm.str("");
      osstrm << _outputPrefix;
-     // osstrm.width(3);
-     // osstrm.fill('0');
-     // osstrm << _domain->ownrank();
      osstrm << ".restart.xdr";
-     _domain->writeCheckpoint(
-        osstrm.str(), _moleculeContainer, _domainDecomposition
-     );
+     _domain->writeCheckpoint( osstrm.str(), _moleculeContainer, _domainDecomposition );
   }
 
   if(_domain->thermostatWarning())
