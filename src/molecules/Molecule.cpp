@@ -27,7 +27,11 @@
 #include <fstream>
 #include <cassert>
 //#include <iostream>
+
+#include "Logger.h"
+
 using namespace std;
+using Log::global_log;
 
 Domain* Molecule::_domain;
 
@@ -82,9 +86,7 @@ Molecule::Molecule(const Molecule& m)
   m_quadrupoles=m.m_quadrupoles;
   if(!m.m_tersoff)
   {
-     cout << "\nmolecule " << m_id << " (" << m_r[0] << " / "
-          << m_r[1] << " / "<< m_r[2]
-          << ") \nTERSOFF VECTOR NULL POINTER WARNING (cf. Molecule.cpp).\n";
+     global_log->warning() << "Tersoff vector null pointer detected for Molecule " << m_id << endl;
   }
   m_tersoff = m.m_tersoff;
   m_m=m.m_m;
@@ -259,11 +261,11 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2)
      /*
       * catches NaN forces and coordinates
       */
-     cout << "Severe error: m" << this->m_id << " has v^2 = " << v2 << ".\n"
+     global_log->error() << "Molecule " << m_id << " has v^2 = " << v2 << ".\n"
           << "r = (" << m_r[0] << " / " << m_r[1] << " / " << m_r[2] << "), "
           << "F = (" << m_F[0] << " / " << m_F[1] << " / " << m_F[2] << "), "
-          << "v = (" << m_v[0] << " / " << m_v[1] << " / " << m_v[2] << ").\n";
-     exit(5);
+          << "v = (" << m_v[0] << " / " << m_v[1] << " / " << m_v[2] << ")." << endl;
+     exit(1);
   }
 #endif
   summv2+=m_m*v2;
@@ -384,11 +386,10 @@ void Molecule::addTersoffNeighbour(Molecule* m, bool pairType)
    this->m_Tersoff_neighbours_first[m_curTN] = m;
    this->m_Tersoff_neighbours_second[m_curTN] = pairType;
    this->m_curTN++;
-   if(m_curTN > MAXTN)
+   if( m_curTN > MAXTN )
    {
-      cout << "A severe error occurred. ID " << m->m_id << " has more than " << MAXTN << " Tersoff neighbours.\n";
-      cerr << "<Error> Tersoff neighbour list overflow.\n";
-      exit(17);
+      global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->m_id << " has more than " << MAXTN << " Tersoff neighbours." << endl;
+      exit(1);
    }
 }
 
@@ -437,9 +438,7 @@ inline void Molecule::setupCache(const vector<Component>* components)
 #ifndef NDEBUG
   if(!m_tersoff)
   {
-     cout << "\nmolecule " << m_id << " (" << m_r[0] << " / "
-          << m_r[1] << " / "<< m_r[2]
-          << ") \nSEVERE TERSOFF VECTOR NULL POINTER ERROR (cf. Molecule::setupCache()).\n";
+     global_log-error() << "Tersoff vector null pointer detected for Molecule " << m_id << endl;
      exit(1);
   }
 #endif
@@ -500,12 +499,12 @@ inline void Molecule::calcFM()
     {
        if(!((dsite[d] >= 0) || (dsite[d] < 0)))
        {
-          cout << "Severe dsite[" << d << "] error for site " << si << " of m" << m_id << ".\n";
+          global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << m_id << endl;
           assert(false);
        }
        if(!((Fsite[d] >= 0) || (Fsite[d] < 0)))
        {
-          cout << "Severe Fsite[" << d << "] error for site " << si << " of m" << m_id << ".\n";
+          global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << m_id << endl;
           assert(false);
        }
     }
