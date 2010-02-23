@@ -142,7 +142,7 @@ void LinkedCells::update(){
   std::list<Molecule>::iterator pos;
   for(pos=_particles.begin();pos!=_particles.end();++pos) {
     index=getCellIndexOfMolecule(&(*pos));
-    if(index < 0 || index >= _cells.size())
+    if( index >= _cells.size() )
     {
       cout << "\nSEVERE ERROR\n";
       cout << "ID " << pos->id() << "\nr:" << pos->r(0) << " / "  << pos->r(1) << " / "  << pos->r(2) << endl;
@@ -978,7 +978,7 @@ void LinkedCells::deleteMolecule
    int iy = (int)floor((y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
    int iz = (int)floor((z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
    unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
-   if((hash >= this->_cells.size()) || (hash < 0))
+   if( hash >= _cells.size() )
    {
       cout << "SEVERE ERROR: coordinates for atom deletion lie outside bounding box.\n";
       exit(1);

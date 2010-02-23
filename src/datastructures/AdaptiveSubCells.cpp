@@ -164,7 +164,7 @@ void AdaptiveSubCells::update(){
     std::list<Molecule>::iterator pos;
     for(pos=_particles.begin();pos!=_particles.end();++pos) {
       index=getCellIndexOfMolecule(&(*pos));
-      if(index < 0 || index >= _cells.size()){
+      if( index >= _cells.size() ){
         cerr << "Error in AdaptiveSubCells::update(): INDEX ERROR" << endl;
         exit(1);
       }
@@ -345,7 +345,7 @@ void AdaptiveSubCells::deleteMolecule
    int iy = (int)floor((y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
    int iz = (int)floor((z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
    unsigned long hash = this->subCellIndexOf3DIndex(ix, iy, iz);
-   if((hash >= this->_subCells.size()) || (hash < 0))
+   if( hash >= _subCells.size() )
    {
       cout << "SEVERE ERROR: coordinates for atom deletion lie outside bounding box.\n";
       exit(1);
