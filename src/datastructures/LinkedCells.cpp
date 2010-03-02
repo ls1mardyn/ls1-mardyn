@@ -357,8 +357,8 @@ void LinkedCells::traversePairs(){
 				molIter2++; // no self interaction
 				for( ; molIter2!=currentCell.getParticlePointers().end(); molIter2++ )
 				{
-					assert( &molecule1 != &molecule2 );
 					Molecule& molecule2 = **molIter2;
+					assert( &molecule1 != &molecule2 );
 					double dd = molecule2.dist2( molecule1, distanceVector );
 					if( dd < cutoffRadiusSquare ) {
 						_particlePairsHandler.processPair( molecule1, molecule2, distanceVector, 0, dd );
@@ -371,8 +371,8 @@ void LinkedCells::traversePairs(){
 				molIter2++; // no self interaction
 				for( ; molIter2 != currentCell.getParticlePointers().end(); molIter2++ )
 				{
-					assert( &molecule1 != &molecule2 );
 					Molecule& molecule2 = **molIter2;
+					assert( &molecule1 != &molecule2 );
 					double dd = molecule2.dist2( molecule1, distanceVector );
 					if( dd < cutoffRadiusSquare )
 					{
@@ -441,8 +441,8 @@ void LinkedCells::traversePairs(){
 			molIter2++;
 			for( ; molIter2 != currentCell.getParticlePointers().end(); molIter2++ )
 			{
-				assert( &molecule1 != &molecule2 );
 				Molecule& molecule2 = **molIter2;
+				assert( &molecule1 != &molecule2 );
 				if( molecule2.numTersoff() > 0 )
 				{ 
 					double dd = molecule2.dist2( molecule1, distanceVector );
@@ -483,8 +483,8 @@ void LinkedCells::traversePairs(){
 				molIter2++;
 				for( ; molIter2 != currentCell.getParticlePointers().end(); molIter2++ )
 				{
-					assert( &molecule1 != &molecule2 );
 					Molecule& molecule2 = **molIter2;
+					assert( &molecule1 != &molecule2 );
 					double dd = molecule2.dist2(molecule1,distanceVector);
 					if( dd < cutoffRadiusSquare )
 					{
@@ -498,8 +498,8 @@ void LinkedCells::traversePairs(){
 				molIter2++;
 				for( ; molIter2 != currentCell.getParticlePointers().end(); molIter2++ )
 				{
-					assert( &molecule1 != &molecule2 );
 					Molecule& molecule2 = **molIter2;
+					assert( &molecule1 != &molecule2 );
 					double dd = molecule2.dist2(molecule1,distanceVector);
 					if( dd < cutoffRadiusSquare )
 					{
