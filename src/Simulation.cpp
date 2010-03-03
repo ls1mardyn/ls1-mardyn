@@ -717,12 +717,15 @@ void Simulation::simulate()
   /***************************************************************************/
   /* BEGIN MAIN LOOP                                                         */
   /***************************************************************************/
-  Timer loopTimer;
-  loopTimer.start();
+  // all timers except the ioTimer messure inside the main loop
+  Timer loopTimer;         // Timer for computation
+  Timer perStepIoTimer;    // Timer for IO during simulation steps
+  Timer ioTimer;           // Timer for final IO
   
   _initSimulation = (unsigned long)(_domain->getCurrentTime()
                              / _integrator->getTimestepLength());
 
+  loopTimer.start();
   for (unsigned long simstep=_initSimulation; simstep<=_numberOfTimesteps; simstep++)
   {
     if(simstep >= _initGrandCanonical)
@@ -887,14 +890,16 @@ void Simulation::simulate()
 #ifdef STEEREO
 		_steer -> processQueue (0);
 #endif
-    output(simstep);
+	// measure per timestep IO 
+	loopTimer.stop(); perStepIoTimer.start();
+	output(simstep);
+	perStepIoTimer.stop(); loopTimer.start();
   }
   loopTimer.stop();
   /***************************************************************************/
   /* END MAIN LOOP                                                           */
   /***************************************************************************/
 
-  Timer ioTimer;
   ioTimer.start();
   string cpfile(_outputPrefix+".restart.xdr");
   _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
@@ -906,8 +911,9 @@ void Simulation::simulate()
   }
   ioTimer.stop();
 
-  global_log->info() << "Simulation loop took: " << loopTimer.get_etime() << " sec" << endl;
-  global_log->info() << "Simulation io took:   " << ioTimer.get_etime() << " sec" << endl;
+  global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+  global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
+  global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
 
   delete _domainDecomposition;
   delete _domain;
