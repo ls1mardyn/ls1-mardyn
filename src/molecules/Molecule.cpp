@@ -438,7 +438,7 @@ inline void Molecule::setupCache(const vector<Component>* components)
 #ifndef NDEBUG
   if(!m_tersoff)
   {
-     global_log-error() << "Tersoff vector null pointer detected for Molecule " << m_id << endl;
+     global_log->error() << "Tersoff vector null pointer detected for Molecule " << m_id << endl;
      exit(1);
   }
 #endif
