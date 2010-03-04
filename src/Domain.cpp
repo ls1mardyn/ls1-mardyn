@@ -189,10 +189,6 @@ Comp2Param& Domain::getComp2Params(){
   return _comp2params; 
 }
 
-double Domain::getGlobalLength(int index) const {
-  return _globalLength[index];
-}
-
 void Domain::calculateGlobalValues(
    DomainDecompBase* domainDecomp,
    ParticleContainer* particleContainer,

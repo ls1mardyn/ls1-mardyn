@@ -298,7 +298,8 @@ class Domain{
     double N(unsigned cid) { return this->_components[cid].numMolecules(); }
     void Nadd(unsigned cid, int N, int localN);
 
-   double getGlobalLength(int d) { return this->_globalLength[d]; }
+   double getGlobalLength(int d) { return _globalLength[d]; }
+   double getGlobalVolume() { return (_globalLength[0] *  _globalLength[1] *  _globalLength[2]); }
 
    void setupRDF(double interval, unsigned bins);
    void resetRDF();
