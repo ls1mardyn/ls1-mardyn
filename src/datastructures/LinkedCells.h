@@ -33,14 +33,14 @@ class DomainDecompBase;
 //! the phasespace is used for (periodic) boundary conditions
 //! and has to be at least as wide as the cutoff radius. \n
 //! In total, there are three different cell types:
-//! - halo 
+//! - halo
 //! - boundary
 //! - inner
 
 class LinkedCells: public ParticleContainer {
  public:
   //! @brief initialize the Linked Cell datastructure
-  //!  
+  //!
   //! The constructor sets the following variables:
   //! - _cutoffRadius
   //! - _haloWidthInNumCells[3]
@@ -56,7 +56,7 @@ class LinkedCells: public ParticleContainer {
   //! to a bounding box including inner + boundary cells but excluding halo cells. \n
   //! But the corners of this class have to include the halo cells.
   //! @param bBoxMin lower corner of the bounding box of the domain belonging to this container
-  //! @param bBoxMax higher corner of the bounding box of the domain belonging to this container 
+  //! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
   //! @param cutoffRadius distance for which forces have to be calculated
   //! @param cellsInCutoffRadius describes the width of cells relative to the cutoffRadius: \n
   //!        equal (or larger) to the cutoffRadius divided by the length of a cell
@@ -73,30 +73,30 @@ class LinkedCells: public ParticleContainer {
   LinkedCells(
      double bBoxMin[3], double bBoxMax[3], double cutoffRadius,
      double tersoffCutoffRadius, double cellsInCutoffRadius,
-     ParticlePairsHandler& partPairsHandler
+     ParticlePairsHandler* partPairsHandler
   );
-    
+
   //! Destructor
   ~LinkedCells();
- 
+
   // documentation see father class (ParticleContainer.h)
   void rebuild(double bBoxMin[3], double bBoxMax[3]);
- 
+
   //! Pointers to the particles are put into cells depending on the spacial position
-  //! of the particles. 
+  //! of the particles.
   //! Before the call of this method, this distribution might have become invalid.
   //! To ensure, that all Particles (pointers to them) are put into the corresponding cells,
   //! first all cells are cleared and then filled again depending on the spacial position
   //! of the molecules. After the update, exactly one pointer for each particle in this
   //! ParticleContainer is it's corresponding cell.
-  void update();    
-    
+  void update();
+
   //! @brief Insert a single molecule.
   //!
   //! Therefore, first the cell (the index) for the molecule has to be determined,
   //! then the molecule is inserted into that cell.
   void addParticle(Molecule& particle);
-    
+
   //! @brief calculate the forces between the molecules.
   //!
   //! Only molecules with a distance not larger than the cutoff radius are to be used. \n
@@ -106,13 +106,13 @@ class LinkedCells: public ParticleContainer {
   //!     all forward cells have to be used, as none of them can be halo or outside
   //! \li a loop over the boundary cells first calculates forces with all forward cells and all
   //!     backward cells. Here it has to be checked whether the neighbour cell is halo or not.
-  //!     If it is Halo, the force is calculated, if it isn't, the force is not calculated, 
-  //!     because the same pair of cells has already been processed in one of the other loops. 
+  //!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
+  //!     because the same pair of cells has already been processed in one of the other loops.
   void traversePairs();
 
   //! @return the number of particles stored in the Linked Cells
   unsigned long getNumberOfParticles();
-    
+
   //! @brief returns a pointer to the first particle in the Linked Cells
   //!
   //! Internally, the particles are store in a std::list. To traverse this
@@ -126,7 +126,7 @@ class LinkedCells: public ParticleContainer {
   //! The iterator _particleIter is first incremented. Then a pointer
   //! to the value pointed to by the iterator is returned. If the
   //! iterator points to the end of the list (which is one element after the last
-  //! element), NULL is returned 
+  //! element), NULL is returned
   Molecule* next();
 
   //! @brief returns NULL
@@ -134,15 +134,15 @@ class LinkedCells: public ParticleContainer {
 
   //! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
   Molecule* deleteCurrent ();
-        
+
   //! @brief delete all Particles which are not within the bounding box
   void deleteOuterParticles();
 
   //! @brief gets the width of the halo region in dimension index
   //! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
-  //!       e.g. replace it by the cutoff-radius 
+  //!       e.g. replace it by the cutoff-radius
   double get_halo_L(int index);
-    
+
   //! @brief appends pointers to all particles in the boundary region to the list
   void getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs);
 
@@ -165,38 +165,38 @@ class LinkedCells: public ParticleContainer {
   int localGrandcanonicalBalance() { return this->_localInsertionsMinusDeletions; }
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
- 
+
  private:
   //####################################
   //######### PRIVATE METHODS ##########
   //####################################
-  
-  //! @brief Initialize index vectors and cells. 
+
+  //! @brief Initialize index vectors and cells.
   //!
   //! Fill the vector with the indices of the inner and boundary cells.
   //! Assign each cell it's region (halo, boundary, inner).
   void initializeCells();
-        
+
   //! @brief Calculate neighbour indices.
   //!
   //! This method is executed once for the molecule container and not for
   //! each cell. E.g. the index (in the cell vector) of the right neighbour of a cell
   //! always equals the index of the cell minus one. This method calculates two vectors
-  //! of index offsets, one for positive offsets (forward neighbours) and one for negative 
+  //! of index offsets, one for positive offsets (forward neighbours) and one for negative
   //! offsets (backward neighbours). So given a specific cell, the neighbours can be retrieved
-  //! by adding to the index of the cell the offsets in the two vectors. 
-  //! 
+  //! by adding to the index of the cell the offsets in the two vectors.
+  //!
   //! The method works as follows: \n
   //! The loop runs over all potential neighbour cells (bounding box which contains
   //! the cell itself, and in each dimension on the lower and on the higher side as
-  //! many cells as the width of the halo strip. E.g. if the haloWidth is 2, a box 
+  //! many cells as the width of the halo strip. E.g. if the haloWidth is 2, a box
   //! of 5x5x5 cell is considered as potential neighbours
   //! for each of those cells, the minimal possible distance between that cell
   //! and the central cell is calculated (sqrt(x^2+y^2+z^2)). If that distance
   //! is larger than the cutoff radius, the cell can be neglected.
-  //! The distance in one dimension is the width of a cell multiplied with the number 
-  //! of cells between the two cells (this is received by substracting one of the difference). 
-  void calculateNeighbourIndices(); 
+  //! The distance in one dimension is the width of a cell multiplied with the number
+  //! of cells between the two cells (this is received by substracting one of the difference).
+  void calculateNeighbourIndices();
 
   //! @brief Get the index in the cell vector to which this Molecule belong
   //!
@@ -206,7 +206,7 @@ class LinkedCells: public ParticleContainer {
   //! and returns the index of that cell in the cell vector. \n
   //! If the molecule is not inside the bounding box, an error is printed
   unsigned long getCellIndexOfMolecule(Molecule* molecule);
-    
+
   //! @brief given the 3D index of a cell, return the index in the cell vector.
   //!
   //! A cell can be identified by a 3D index. \n
@@ -216,7 +216,7 @@ class LinkedCells: public ParticleContainer {
   //! vector when called with the 3D cell index offets (e.g. x: one cell to the left,
   //! y: two cells back, z: one cell up,...)
   unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
-    
+
   //! @brief find out whether m1 is before m2 (in some global ordering
   //!
   //! At the boundary between two processes (if used in parallel mode), the forces
@@ -225,7 +225,7 @@ class LinkedCells: public ParticleContainer {
   //! counted only once, which is done by the process who owns the "first" particle.
   //! As order criterion, the spacial position is used int this method. The particles
   //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-  //! For pairs which are completely on one process, the first particle can be 
+  //! For pairs which are completely on one process, the first particle can be
   //! determined from the cell structure. But for pairs on different procs, the
   //! corresponding cell discretisations might be different as well, and therefore
   //! the cell structure must not be used to determine the order.
@@ -237,20 +237,20 @@ class LinkedCells: public ParticleContainer {
 
   //! the list contains all molecules from the phasespace
   list<Molecule> _particles;
-    
+
   //! Iterator to traverse the list of particles (_particles)
   std::list<Molecule>::iterator _particleIter;
-    
+
   //! Vector containing all cells (including halo)
   std::vector<Cell> _cells;
-    
+
   //! Vector containing the indices (for the cells vector) of all inner cells (without boundary)
   std::vector<unsigned long> _innerCellIndices;
   //! Vector containing the indices (for the cells vector) of all boundary cells
   std::vector<unsigned long> _boundaryCellIndices;
   //! Vector containing the indices (for the cells vector) of all halo cells
   std::vector<unsigned long> _haloCellIndices;
-    
+
   //! Neighbours that come in the total ordering after a cell
   std::vector<unsigned long> _forwardNeighbourOffsets;
   //! Neighbours that come in the total ordering before a cell
@@ -259,8 +259,8 @@ class LinkedCells: public ParticleContainer {
   //! low corner of the bounding box around the linked cells (including halo)
   double _haloBoundingBoxMin[3];
   //! high corner of the bounding box around the linked cells (including halo)
-  double _haloBoundingBoxMax[3];  
-    
+  double _haloBoundingBoxMax[3];
+
   //! Number of Cells in each spacial dimension (including halo)
   int _cellsPerDimension[3];
   //! Halo width (in cells) in each dimension
@@ -275,7 +275,7 @@ class LinkedCells: public ParticleContainer {
   double _tersoffCutoffRadius;
   //! balance of the grand canonical ensemble
   int _localInsertionsMinusDeletions;
-    
+
   //! @brief True if all Particles are in the right cell
   //!
   //! The particles themselves are not stored in cells, but in one large

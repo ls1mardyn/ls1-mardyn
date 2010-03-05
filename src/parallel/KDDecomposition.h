@@ -12,7 +12,7 @@
 
 using namespace std;
 
-class Molecule; 
+class Molecule;
 class ParticleData;
 class KDNode;
 
@@ -22,14 +22,14 @@ class KDNode;
 
 //! @brief domain decomposition based on a kind of KD-Tree
 //! @author Martin Buchholz
-//! 
+//!
 //! There are two main goals which shall be achieved by this class.
 //! First, it should be able to distribute the load evenly among the
 //! processes (so create a load-balanced decomposition). The second goal
 //! is to do that in a way so that the domain boundaries are in region
-//! which are not dense (e.g. gas). This reduces the number of 
+//! which are not dense (e.g. gas). This reduces the number of
 //! necessary double computations and the amount of communication.
-//! 
+//!
 //! The technique used is a modified KD-Tree. First, the region is discretised
 //! into cells (size equals (or larger then) cutoffradius). This region is then
 //! divided into two smaller cuboids. Those cuboids are again recursively divided
@@ -38,7 +38,7 @@ class KDNode;
 //! - where is the "cut" (how many cell-layers on the "left" and on the "right") ?
 //! - how many processes share the "left" and the "right" part ?
 //! This class tries to find an answer to this three questions which balances the
-//! load and and the same time tries to minimise the communication (and double 
+//! load and and the same time tries to minimize the communication (and double
 //! calculation) costs. This is done by "guessing" the overall costs/time for
 //! each possible division and selection the best. A guess basically works as follows:
 //! for one division, the computation costs for each part are calculated (using
@@ -48,7 +48,8 @@ class KDNode;
 //! are calculated (again heuristics e.g. depending on the number of pairs which are cut)
 //! With all the calculated costs, one can select that division which is cheapest.
 //! This is done recursively until each process has its own region.
-//! @todo CURRENTLY, THIS CLASS IS IN DEVELOPMENT
+//!
+//! @todo Development of this class is finished, some correctness tests still have to be done
 class KDDecomposition: public DomainDecompBase{
  public:
   //! @brief create an initial decomposition tree
@@ -57,13 +58,13 @@ class KDDecomposition: public DomainDecompBase{
   //! It has to determine the number of cells and create an initial decomposition
   //! of the domain (no knowledge about particles yet), which is stored in
   //! _decompTree and _ownArea
-  KDDecomposition(double cutoffRadius, Domain* domain);
+  KDDecomposition(double cutoffRadius, Domain* domain, double alpha, double beta);
 
   // documentation see father class (DomainDecompBase.h)
   ~KDDecomposition();
 
   //###############################################
-  //### The following methods are those of the  ### 
+  //### The following methods are those of the  ###
   //### base class which have to be implemented ###
   //###############################################
 
@@ -71,19 +72,19 @@ class KDDecomposition: public DomainDecompBase{
   //!
   //! molecules which aren't in the domain of their process any
   //! more are transferred to their neighbours. Additionally, the
-  //! molecules for the halo-region are transferred. 
+  //! molecules for the halo-region are transferred.
   //! In this implementation, the methods used for load-balancing and those
   //! for just exchanging particles without rebalancing are quite similar.
   //! Therefore, this method just calls balanceAndExchange(0,...), where
   //! the "0" says that only exchanging and no balancing has to be done.
   //! @param moleculeContainer needed to get those molecules which have to be exchanged
-  //! @param components when creating a new Molecule-object (from the recieved data), 
+  //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
-  //! @param domain is e.g. needed to get the size of the local domain  
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
+  //! @param domain is e.g. needed to get the size of the local domain
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
 
   //! @brief balance the load (and optimise communication) and exchange boundary particles
-  //! 
+  //!
   //! The workflow is as follows (some steps only if balancing shall be done):
   //! - if balance: _numParticlesPerCell is updated to be able to calculate the load of the cells
   //! - if balance: A new decomposition tree is calculated (using recDecomp) based on the particle distribution
@@ -96,15 +97,17 @@ class KDDecomposition: public DomainDecompBase{
   //! - for processes which span the whole domain in at least one direction, ensure periodic boundary
   //! @param balance if true, a rebalancing should be performed, otherwise only exchange
   //! @param moleculeContainer needed for calculating load and to get the particles
-  //! @param components when creating a new Molecule-object (from the recieved data), 
+  //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
   void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer,
-                          const vector<Component>& components, Domain* domain, double rc);
+                          const vector<Component>& components, Domain* domain);
+
+
 
   // documentation see father class (DomainDecompBase.h)
   bool procOwnsPos(double x, double y, double z, Domain* domain);
-  
+
   // documentation see father class (DomainDecompBase.h)
   double guaranteedDistance(double x, double y, double z, Domain* domain);
 
@@ -117,12 +120,12 @@ class KDDecomposition: public DomainDecompBase{
   double getBoundingBoxMax(int dimension, Domain* domain);
 
   //! @brief writes information about the current decomposition into the given file
-  //! 
+  //!
   //! This decomposition first writes a very small header with the following lines:
   //! - "size", followed by three double values for the size of the domain
   //! - "decompData Regions": just this text to state that now the header is finished and data follows
   //! - one line per proc, giving the bounding box (minx, miny, minz, maxx, maxy, maxz)
-  //! 
+  //!
   //! An example file for 5 procs could look like this:
   //!
   //! |size 62.0 62.0 62.0 \n
@@ -147,12 +150,9 @@ class KDDecomposition: public DomainDecompBase{
 
   // documentation see father class (DomainDecompBase.h)
   int getRank(void){ return _ownRank;}
-  
-  // documentation see father class (DomainDecompBase.h)
-  int getNumProcs(){ return _numProcs;}
 
   // documentation see father class (DomainDecompBase.h)
-  const char* getProcessorName() const { return _processorName;};
+  int getNumProcs(){ return _numProcs;}
 
   // documentation see father class (DomainDecompBase.h)
   void barrier() {MPI_Barrier(MPI_COMM_WORLD);}
@@ -160,15 +160,23 @@ class KDDecomposition: public DomainDecompBase{
   // documentation see father class (DomainDecompBase.h)
   double getTime() { return MPI_Wtime(); };
 
+  //! @brief returns total number of molecules
+  unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+
+  //! @brief checks identity of random number generators
+  void assertIntIdentity(int IX);
+  void assertDisjunctivity(TMoleculeContainer* mm);
+
+
   //##################################################################
-  // The following methods with prefix "collComm" are all used 
+  // The following methods with prefix "collComm" are all used
   // in the context of collective communication. Each of the methods
   // basically has to call the corresponding method from the class
   // CollectiveCommunication (or CollectiveCommDummy in the sequential
-  // case). To get information about how to use this methods, read 
+  // case). To get information about how to use this methods, read
   // the documentation of the class CollectiveCommunication and of the
   // father class of this class (DomainDecompBase.h)
-  //##################################################################  
+  //##################################################################
   void collCommInit(int numValues){ _collComm.init(MPI_COMM_WORLD, numValues); };
   void collCommFinalize(){ _collComm.finalize(); };
   void collCommAppendInt(int intValue){_collComm.appendInt(intValue);};
@@ -183,23 +191,17 @@ class KDDecomposition: public DomainDecompBase{
   long double collCommGetLongDouble(){ return _collComm.getLongDouble(); };
   void collCommAllreduceSum(){ _collComm.allreduceSum(); };
   void collCommBroadcast(){ _collComm.broadcast(); };
-  
-  //! @brief returns total number of molecules
-  unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
 
-  //! @brief checks identity of random number generators
-  void assertIntIdentity(int IX);
-  void assertDisjunctivity(TMoleculeContainer* mm);
 
  private:
   //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-  //$ Methoden, die von balanceAndExchange ben�tigt werden $
+  //$ Methoden, die von balanceAndExchange benoetigt werden $
   //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
   //! @brief Each process collects the particles to be send to neighbours
   //!
-  //! First, all processes (and their region, incl. halo) which need  
-  //! part of the sourceArea are determined. 
+  //! First, all processes (and their region, incl. halo) which need
+  //! part of the sourceArea are determined.
   //! (Also all necessary periodic copies of the neighbours region)
   //! Then all particles (pointers to them) from those regions
   //! are stored in particlesToSend[procid]
@@ -209,26 +211,26 @@ class KDDecomposition: public DomainDecompBase{
   //! @param moleculeContainer needed to get the molecule pointers
   //! @param domain needed to get the domain size
   //! @param procIDs Here the ids of the neighbouring procs will be stored
-  //! @param numMolsToSend Here the number of molecules to be sent are stored 
+  //! @param numMolsToSend Here the number of molecules to be sent are stored
   //!                      The vector has to be initialised in this method
   //! @param particlesToSend Here the pointers to the particles will be stored
   void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, vector<int>& procIDs, vector<int>& numMolsToSend, vector<list<Molecule*> >& particlesToSend);
 
   //! @brief Neighbouring procs inform each other about number of particles
-  //! 
+  //!
   //! Before particle data can be transferred, the recieving procs have to
   //! allocate memory to store those data. Therefore they have to be informed
   //! about the number of particles which have to be recieved.
   //! @param procsToSendTo ids of all neighbours (possibly including self) which have
   //!        to recieve particles from this process
   //! @param procsToRecvFrom ids of all neighbours (possibly including self) which have
-  //!        to send particles to this process  
+  //!        to send particles to this process
   //! @param particlesToSend Needed to know the number of particles to send
   //! @param numMolsToRecv Array to store the number of molecules which have to be recieved.
   void exchangeNumToSend(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv);
 
   //! @brief transfer of the molecule data to the neighbours
-  //! 
+  //!
   //! After each process knows which particles have to be sent
   //! and how many particles have to be received, and all buffers
   //! have been initialised, the data transfer itself can be done
@@ -239,6 +241,34 @@ class KDDecomposition: public DomainDecompBase{
   //! @param particlesSendBufs already filled buffers of particles to be sent
   //! @param particlesRecvBufs buffers (already allocated) to store recieved particles
   void transferMolData(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv, vector<ParticleData*>& particlesSendBufs, vector<ParticleData*>& particlesRecvBufs);
+
+
+  //! @brief corrects the position of particles outside the domain after a balance step
+  //!
+  //! After a new decomposition of the domain, all processes have a new part of
+  //! the domain. Each process sends the particles, which it no longer possesses, to the
+  //! new owner. Those particles which are still owned (old and new region overlap)
+  //! have to be kept. Also particles from the new halo region are kept, all other
+  //! particles have to be deleted. Now it can happen that a particle just left the
+  //! global domain in the step before the rebalancing and now is in the halo region.
+  //! If in this case the new owner of this halo cell is equal to the old owner of
+  //! the particle, the particle has to be kept, but the coordinates have to be changed.
+  //! In the following sketch, the particle marked with "x" belonged to process 2 in the
+  //! old decomposition and just left the global area on the right side and still belongs
+  //! to process 2 in the new decomposition, but the position has to be adjusted.
+  //! This is done by this method.
+  //!  ____________________              ____________________
+  //! |              |     |            |______              |
+  //! |              | P2  |            |      |             |
+  //! |              | old |x    =>     |x P2  |             |
+  //! |              |_____|            |  new |             |
+  //! |                    |            |______|             |
+  //! |____________________|            |____________________|
+  //!
+  //! @param ownArea contains the information about the own area determined by the new decomposition
+  //! @param moleculeContainer needed to walk through all still owned particles
+  //! @param domain needed to find out the size of the global domain
+  void adjustOuterParticles(KDNode*& ownArea, ParticleContainer* moleculeContainer, Domain* domain);
 
   //! @brief create copies due to periodic boundary
   //!
@@ -267,6 +297,24 @@ class KDDecomposition: public DomainDecompBase{
   //! @param prefix A string which is printed in front of each line
   void printDecompTree(KDNode* root, string prefix);
 
+  void calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup);
+
+
+  //! @brief calculates the index of a certain cell in the global cell array
+  //!
+  //! During the construction of a new decomposition, a area is recursively
+  //! divided into two smaller areas. Each of the corresponding dividing planes
+  //! can be orthogonal to each of the three spacial axis. For each of these three
+  //! divisions, all cells in the "left" part are traversed by using three loops over
+  //! the three dimensions. E.g. if the dividing plane is orthogonal to the x-axis,
+  //! the loop goes over the left part of all x-cells, over all y-cells and over all z-cells.
+  //! To avoid code duplication for the three possibilities of the dividing plane, a
+  //! special method is used. The tree loops don't run over x, y and z, but over
+  //! divDim, dim1 and dim2, where those three values are chosen differently
+  //! for each of the dividing planes (x: 0,1,2; y: 1,0,2; z: 2,0,1). Those three values plus
+  //! the corresponding loop-indeces are used by this method to calculate the global index.
+  unsigned int getGlobalIndex(int divDim, int dim1, int dim2, int index_dim, int index_dim1, int index_dim2, KDNode* localArea);
+
   //! @brief provides a "real" modulo function
   //!
   //! The C build-in modulo operation uses a symmetric modulo,
@@ -279,7 +327,7 @@ class KDDecomposition: public DomainDecompBase{
   //! @brief create an initial decomposition of the domain
   //!
   //! At the beginning of the simulation, particles have to be read in.
-  //! At this time, the distribution of particles is unknown, so an
+  //! At this time, the distribution of particles is unknown, so
   //! an initial domain decomposition has to be created.
   //! This method does achieve this with a very simple decomposition
   //! It has to be recursively called for all inner nodes
@@ -288,13 +336,29 @@ class KDDecomposition: public DomainDecompBase{
   //! If the children are inner nodes, recInitialDecomp is recursively
   //! called.
   //! @param fatherNode Pointer to a (already existing!) inner node
-  //! @param ownArea This pointer has to be set to the leaf node 
+  //! @param ownArea This pointer has to be set to the leaf node
   //!                representing the own area
   void recInitialDecomp(KDNode* fatherNode, KDNode*& ownArea);
-  void recDecomp(KDNode* fatherNode, KDNode*& ownArea);
-    
-  unsigned long predictBoundariesPerProc(int numcells, int numprocs);
-  
+
+  //! @brief core method of this class which calculates a load-balanced decomposition
+  //!
+  //! Part of the description of this method is already given in the description of this class.
+  //! This method recursively divides a region into two smaller regions. The chosen
+  //! division tries to balance the load in the two parts (weighted with the number of
+  //! processes which have to deal with each of the parts) and tries to minimize the
+  //! communication overhead. A more detailed description is found in the
+  //! dissertation of Martin Buchholz
+  bool recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
+
+  //! @brief exchange decomposition data and build up the resulting tree
+  //!
+  //! After the new decomposition has been determined (by recDecompPar), each
+  //! process knows its own Area (and that part of the decomp tree which lies on the
+  //! the path between the root node and the node with the own Area), but each process
+  //! has to know the complete decomposition. This method exchanges the decomposition
+  //! data between the processes and builds up a complete decomposition Tree on
+  //! all processes.
+  void completeTreeInfo(KDNode*& root, KDNode*& ownArea);
 
 
   //! @brief Find all processes which own a part of the given area
@@ -304,24 +368,24 @@ class KDDecomposition: public DomainDecompBase{
   //! In the recursive calls, testNode will be changed to walk through the whole tree.
   //! The given area can be partly outside of the area covered by the decomposition tree
   //! (usually because of the halo region), in this case the periodic boundary conditions
-  //! are applied to get the corresponging area on the other side of the region.
+  //! are applied to get the corresponding area on the other side of the region.
   //! @param low low corner of the area for which the owners shall be found
   //! @param high high corner of the area for which the owners shall be found
   //! @param decompTree root KDNode of a domain decomposition tree. The area covered by
   //!                   this KDNode must not overlap the domain
   //! @param testNode KDNode currenty tested for intersection (method is used recursively)
   //! @param procIDs here the ids of those procs which own a part will be stored
-  //! @param neighbHaloAreas here the corresponging (see procIDs) areas will be stored. For
+  //! @param neighbHaloAreas here the corresponding (see procIDs) areas will be stored. For
   //!                        each procID six double values are stored, first the three
   //!                        coordinates for the low corner of the area, then the high corner
   //! @todo make it work for overlapping decomposition trees
   void getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, vector<int>* procIDs, vector<int>* neighbHaloAreas);
 
 
-  //! @brief 
+  //! @brief
   //! @todo _numParticles should perhaps not be a member variable (think about that)
   void getNumParticles(ParticleContainer* moleculeContainer);
-  void newDecomp(ParticleContainer* moleculeContainer);
+
 
   //######################################
   //###    private member variables    ###
@@ -331,77 +395,53 @@ class KDDecomposition: public DomainDecompBase{
   int _ownRank;
   //! total number of processes (to be set by the constructor)
   int _numProcs;
-  //! name of the local processor (to be set by the constructor)
-  char _processorName[MPI_MAX_PROCESSOR_NAME];
 
-
-
-  //! Length of one cell. The length of the cells is the cutoff-radius, or a 
+  //! Length of one cell. The length of the cells is the cutoff-radius, or a
   //! little bit larger as there has to be a natural number of cells.
   double _cellSize[KDDIM];
-  
+
   //! Number of cells in the global domain in each coordinate direction.
   //!  _globalCellsPerDim does not include the halo region
   int _globalCellsPerDim[KDDIM];
+
   //! global number of cells (without halo)
   int _globalNumCells;
 
-  // Pointer to the root element of the initial decomposition tree
+  // Pointer to the root element of the decomposition tree
   KDNode* _decompTree;
-  // each process own an area in the initial decomposition
+
+  // each process owns an area in the decomposition
   KDNode* _ownArea;
-  //! during balancing, _decompTree and _ownArea become invalid.
-  //! They might already point to the new decomposition/Area, but the
-  //! moleculeContainer is not yet updated e.g.
-  bool _decompValid; 
-
-
 
   // Number of particles for each cell (including halo?)
-  int *_numParticlesPerCell;
+  unsigned char* _numParticlesPerCell;
+  //TODO
+  float* _globalLoadPerCell;
+  ParticleContainer* _moleculeContainer;
 
   //! variable used for different kinds of collective operations
   CollectiveCommunication _collComm;
-  
-  // local linked cells list
-  //vector<Cell> _localCells;
-  //$ noch zu verbessern (static,?)
-  //double _timePerBoundary;
-  //double _timePerForceCalc;
+
+  //! number of simulation steps. Can be used to trigger load-balancing every _frequency steps
+  size_t _steps;
+
+  //! determines how often rebalancing is done
+  int _frequency;
+
+  //! weighting of costs for distance and force calculations
+  //! Load(cell) = alpha * distancecosts(cell) + (1-alpha) * forcecosts(cell)
+  //! alpha has to be between 0.0 and 1.0 but usually should be larger than 0.3
+  //! For simple fluids (1CLJ), 1.0 is optimal, for complex fluids a smaller value is better
+  //! (e.g. 0.7 for 2CLJQ)
+  double _alpha;
+
+  //! weighting of costs for computation and communication
+  //! costs = computation costs + beta * communication costs
+  //! On most HPC-hardware, beta=0.0 is the best choice. Only on systems with
+  //! a network with very low bandwidth it might be useful to use a larger value
+  double _beta;
+
 };
 
 
 #endif /*KDDECOMPOSITION_H_*/
-
-
-
-
-
-
-//  void printArea(KDNode* area);
-
-
-/*   // when readInData is called, each proc reads in his data from the file */
-/*   // corresponding to the decomposition defined by _initDecompTree and */
-/*   // _initOwnArea, which is the leaf node of _initDecompTree owned by this process; */
-/*   // The Halo region stays empty and has to be filled by some other method! */
-/*   void readInData(); */
-
-//  int getOwningProcPerBound(int cellPos[KDDIM], KDNode* decompTree);
-
-// den Prozess finden, dem die Zelle geh�rt
-// die Koordinaten cellPos m�ssen bez�glich des selben Referenzrahmens
-// angegeben werden, der auch von decompTree verwendet wird.
-// int getOwningProc(int cellPos[KDDIM], KDNode* decompTree);
-
-
-//! evtl. Verschiebung des Referenzrahmens muss kompensiert werden
-//! Angenommen man legt ein Zellgitter �ber das "reale" Gebiet, so dass
-//! die unterste Zelle genau im untersten Eck des Gebiets liegt. Nun
-//! deckt das durch _initDecompTree abgedeckte Gebiet zwar genau das gleiche
-//! Gebiet ab, aber die unterste Zelle ist gegen�ber dem "realen" Zellgitter
-//! verschoben um _initOffset (m�glich durch periodischen Rand). Um nun zu pr�fen, ob eine
-//! Zelle in dem Gebiet _initOwnArea liegt, muss also zun�chst die Koordinate
-//! angepasst werden. Um die Position bez�glich des neuen Gitters zu erhalten,
-//! muss von der urspr�nglichen Koordinate _initOffset abgezogen werden.
-//int _initOffset[KDDIM];

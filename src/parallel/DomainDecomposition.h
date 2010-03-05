@@ -29,15 +29,15 @@ using namespace std;
 class DomainDecomposition: public DomainDecompBase{
  public:
   //! @brief The constructor has to determine the own rank and the number of neighbours and
-  //!        sets up the topology 
+  //!        sets up the topology
   DomainDecomposition();
 
   // documentation see father class (DomainDecompBase.h)
   ~DomainDecomposition();
 
   //! @brief exchange molecules between processes
-  //!  
-  //! molecules which aren't in the domain of their process any 
+  //!
+  //! molecules which aren't in the domain of their process any
   //! more are transferred to their neighbours. Additionally, the
   //! molecules for the halo-region are transferred. To reduce the number
   //! of neighbours a single process has to communicate with, particles
@@ -45,11 +45,11 @@ class DomainDecomposition: public DomainDecompBase{
   //! moved to the right neighbour first and then from the right neighbour
   //! to the lower neighbour.
   //! @param moleculeContainer needed to get those molecules which have to be exchanged
-  //! @param components when creating a new Molecule-object (from the recieved data), 
+  //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
-  
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+
   //! @brief this decompositin does no balancing, it just exchanges the particles
   //!
   //! This domain decomposition devides the domain into equally sized smaller cuboids, therefore
@@ -57,17 +57,17 @@ class DomainDecomposition: public DomainDecompBase{
   //! between the processes are exchanged, therefore exchangeMolecules is called.
   //! @param balance has no influence in this implementation
   //! @param moleculeContainer needed for calculating load and to get the particles
-  //! @param components when creating a new Molecule-object (from the recieved data), 
+  //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc);
-  
+  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+
   // documentation see father class (DomainDecompBase.h)
   bool procOwnsPos(double x, double y, double z, Domain* domain);
 
   // documentation see father class (DomainDecompBase.h)
   double guaranteedDistance(double x, double y, double z, Domain* domain);
-  
+
   // documentation see father class (DomainDecompBase.h)
   unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount);
 
@@ -78,7 +78,7 @@ class DomainDecomposition: public DomainDecompBase{
   double getBoundingBoxMax(int dimension, Domain* domain);
 
   //! @brief writes information about the current decomposition into the given file
-  //! 
+  //!
   //! This decomposition first writes a small header with the following lines:
   //! - "size", followed by three double values for the size of the domain
   //! - "cells", followed by three int values for the number of cells in each direction.
@@ -87,7 +87,7 @@ class DomainDecomposition: public DomainDecompBase{
   //! - "procs", follwed by one int value (number of processes)
   //! - "data DomainDecomp": just this text to state that now the header is finished and data follows
   //! - one line per proc, containing the "cellid" using a x-y-z-ordering and the rank of the proc
-  //! 
+  //!
   //! An example file for 8 procs could look like this:
   //!
   //! |size 62.0 62.0 62.0 \n
@@ -117,7 +117,7 @@ class DomainDecomposition: public DomainDecompBase{
 
   // documentation see father class (DomainDecompBase.h)
   int getRank(void){ return _rank;}
-  
+
   // documentation see father class (DomainDecompBase.h)
   int getNumProcs();
 
@@ -135,14 +135,14 @@ class DomainDecomposition: public DomainDecompBase{
   void assertDisjunctivity(TMoleculeContainer* mm);
 
   //##################################################################
-  // The following methods with prefix "collComm" are all used 
+  // The following methods with prefix "collComm" are all used
   // in the context of collective communication. Each of the methods
   // basically has to call the corresponding method from the class
   // CollectiveCommunication (or CollectiveCommDummy in the sequential
-  // case). To get information about how to use this methods, read 
+  // case). To get information about how to use this methods, read
   // the documentation of the class CollectiveCommunication and of the
   // father class of this class (DomainDecompBase.h)
-  //##################################################################  
+  //##################################################################
   void collCommInit(int numValues){ _collComm.init(_comm, numValues); };
   void collCommFinalize(){ _collComm.finalize(); };
   void collCommAppendInt(int intValue){_collComm.appendInt(intValue);};
@@ -172,7 +172,7 @@ class DomainDecomposition: public DomainDecompBase{
   MPI_Group _neighbours_groups[DIM][2];
 
   MPI_Datatype _mpi_Particle_data;
-  //! Number of processes in each dimension (i.e. 2 for 8 processes) 
+  //! Number of processes in each dimension (i.e. 2 for 8 processes)
   int _gridSize[DIM];
   //! Grid coordinates of process
   int _coords[DIM];
@@ -182,7 +182,7 @@ class DomainDecomposition: public DomainDecompBase{
   //! The first array index specifies the coordinate index,
   //! the second one the direction. For the later use the predefined LOWER and HIGHER macros.
   int _neighbours[DIM][2];
-  
+
   //! variable used for different kinds of collective operations
   CollectiveCommunication _collComm;
 

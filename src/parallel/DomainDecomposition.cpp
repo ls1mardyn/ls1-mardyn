@@ -46,7 +46,7 @@ DomainDecomposition::~DomainDecomposition(){
 }
 
 
-void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
+void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
 
   // corners of the process-specific domain
   double rmin[DIM]; // lower corner
@@ -73,7 +73,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
   ParticleData* particlesRecvBuffs[DIM][2];
 
   // MPI communication status and requests
-  MPI_Status  status; 
+  MPI_Status  status;
   MPI_Status  send_statuses[DIM][2];
   MPI_Status  recv_statuses[DIM][2];
   MPI_Request send_requests[DIM][2];
@@ -124,9 +124,9 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
       std::list<Molecule*>::iterator particlePtrIter;
       long partCount = 0;
       double shift = 0.0;
-      if( direction == LOWER ) 
+      if( direction == LOWER )
 	shift = offsetLower[d];
-      if( direction == HIGHER ) 
+      if( direction == HIGHER )
 	shift = offsetHigher[d];
 
       for( particlePtrIter = particlePtrsToSend.begin(); particlePtrIter != particlePtrsToSend.end(); particlePtrIter++ ){
@@ -175,8 +175,8 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 }
 
 
-void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc){
-  exchangeMolecules(moleculeContainer, components, domain, rc);
+void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain){
+  exchangeMolecules(moleculeContainer, components, domain);
 }
 
 
@@ -344,7 +344,7 @@ void DomainDecomposition::setGridSize( int num_procs ) {
     else
       _gridSize[2] *= prime_factors[i];
   }
-  
+
   delete [] prime_factors;
 }
 
@@ -415,15 +415,15 @@ void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
          bool cc = true;
          while(cc) {
             MPI_Recv( &recv, 1, MPI_INT, i, 2674 + i, _comm, &s );
-            if( recv == -1 ) 
+            if( recv == -1 )
 	      cc = false;
             else {
                if( check.find(recv) != check.end() ) {
-                  global_log->error() << "Ranks " << check[recv] << " and " << i 
+                  global_log->error() << "Ranks " << check[recv] << " and " << i
                               << " both propagate ID " << recv << endl;
 		  MPI_Abort( MPI_COMM_WORLD, 1 );
                }
-               else 
+               else
 		 check[recv] = i;
             }
          }

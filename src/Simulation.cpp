@@ -58,13 +58,13 @@ Simulation::Simulation(int *argc, char ***argv)
   global_log->set_mpi_output_root(0);
 #endif
 
-  if (*argc <= 1) 
+  if (*argc <= 1)
   {
      global_log->error() << "Usage: " << (*argv)[0] << " <configfilename> [<number of timesteps>] [<outputprefix>]\n";
      global_log->error() << "Detected argc: " << *argc << endl;
      exit(1);
   }
-  
+
 #ifndef PARALLEL
   global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
   _domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
@@ -122,7 +122,7 @@ int Simulation::exit( int exitcode ){
 #ifdef PARALLEL
   // terminate all mpi processes and return exitcode
   MPI_Abort( MPI_COMM_WORLD, exitcode );
-#else 
+#else
   // call POSIX exit
   ::exit( exitcode );
 #endif
@@ -172,8 +172,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
   {
     global_log->error() << "Not a mardynconfig file! First token: " << token << endl;
     exit(1);
-  } 
-  
+  }
+
   while (inputfilestream) {
     token.clear();
     inputfilestream >> token;
@@ -182,9 +182,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
     if (token.substr(0, 1)=="#"){
       inputfilestream.ignore(1024,'\n');
       continue;
-    } 
+    }
     if (token=="phaseSpaceFile") {
-      string phaseSpaceFileFormat; 
+      string phaseSpaceFileFormat;
       inputfilestream >> phaseSpaceFileFormat;
 
       if(timestepLength == 0.0) {
@@ -206,7 +206,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         _inputReader = (InputBase*) new PartGen();
         _inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
         // PartGen has to modes, a "Homogeneous" mode, where particles
-        // with a homogeneous distribution are created, and a "Cluster" mode, 
+        // with a homogeneous distribution are created, and a "Cluster" mode,
         // where droplets are created. Currently, only the cluster mode is supported,
         // which needs another config line starting with "clusterFile ..." directly
         // after the config line starting with "phaseSpaceFile"
@@ -219,13 +219,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         ((PartGen*)_inputReader)->readPhaseSpaceHeader(_domain, timestepLength, _cutoffRadius);
       }
       _domain->initParameterStreams(_cutoffRadius);
-    } 
+    }
     else if (token=="timestepLength") {
       inputfilestream >> timestepLength;
-    } 
+    }
     else if (token=="cutoffRadius") {
       inputfilestream >> _cutoffRadius;
-    } 
+    }
     else if ((token=="parallelization") || (token == "parallelisation"))
     {
 #ifndef PARALLEL
@@ -235,9 +235,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
       inputfilestream >> token;
       if (token=="DomainDecomposition") {
         _domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-      } 
+      }
       else if(token=="KDDecomposition"){
-        _domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain);
+        _domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
       }
 #endif
     }
@@ -253,8 +253,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
           bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
         }
         _moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-            _cutoffRadius, _tersoffCutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);
-      } 
+            _cutoffRadius, _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+      }
       else if (token=="AdaptiveSubCells") {
         int cellsInCutoffRadius;
         inputfilestream >> cellsInCutoffRadius;
@@ -266,23 +266,23 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         }
         //creates a new Adaptive SubCells datastructure
         _moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-              _cutoffRadius, cellsInCutoffRadius, *_particlePairsHandler);
-      } 
-    } 
+              _cutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+      }
+    }
     else if (token=="output") {
       inputfilestream >> token;
       if (token=="ResultWriter") {
         string outputPathAndPrefix;
         inputfilestream >> outputPathAndPrefix;
         _outputPlugins.push_back(new ResultWriter(outputPathAndPrefix));
-      } 
+      }
       else if (token=="XyzWriter") {
         unsigned long writeFrequency;
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> outputPathAndPrefix;
         _outputPlugins.push_back(new XyzWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
         _outputFrequency = writeFrequency;
-      } 
+      }
       else if (token=="PovWriter") {
         unsigned long writeFrequency;
         string outputPathAndPrefix;
@@ -516,13 +516,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
        }
        ChemicalPotential tmu = ChemicalPotential();
        tmu.setMu(icid, imu);
-       tmu.setInterval(instep); 
+       tmu.setInterval(instep);
        tmu.setInstances(intest);
        if(controlVolume) tmu.setControlVolume(x0, y0, z0, x1, y1, z1);
-       global_log->info() << setprecision(6) 
-	 << "chemical Potential " << imu 
-	 << " component " << icid + 1 
-	 << " (internally " << icid << ") conduct " << intest 
+       global_log->info() << setprecision(6)
+	 << "chemical Potential " << imu
+	 << " component " << icid + 1
+	 << " (internally " << icid << ") conduct " << intest
 	 << " tests every " << instep << " steps: ";
        _lmu.push_back(tmu);
        global_log->info() << " pushed back." << endl;
@@ -596,7 +596,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
      if((Tcur < 0.85*Ttar) || (Tcur > 1.15*Ttar)) Tcur = Ttar;
      cpit->submitTemperature(Tcur);
      if(h != 0.0) cpit->setPlanckConstant(h);
-     
+
      j++;
   }
 #ifdef STEEREO
@@ -623,7 +623,7 @@ void Simulation::initialize()
 
   global_log->info() << "Updating domain decomposition" << endl;
   updateParticleContainerAndDecomposition();
-  
+
   // Force calculation
   global_log->info() << "Performing force calculation" << endl;
   _moleculeContainer->traversePairs();
@@ -631,7 +631,7 @@ void Simulation::initialize()
   // clear halo
   global_log->info() << "Clearing halos" << endl;
   _moleculeContainer->deleteOuterParticles();
-  
+
   // initialize the radial distribution function
   if(_doRecordRDF) _domain->resetRDF();
 
@@ -645,19 +645,19 @@ void Simulation::initialize()
                                                      uCAT * _integrator->getTimestepLength() );
      global_log->info() << "Uniform acceleration initialised." << endl;
   }
-  
+
   global_log->info() << "Calculating global values" << endl;
   _domain->calculateThermostatDirectedVelocity(_moleculeContainer);
   _domain->calculateVelocitySums(_moleculeContainer);
   _domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, true, 1.0);
-  
+
   if(_lmu.size() > 0)
   {
      double Tcur = _domain->T(0);
      double Ttar = _domain->severalThermostats()? _domain->targetT(1)
                                                       : _domain->targetT(0);
      if((Tcur < 0.85*Ttar) || (Tcur > 1.15*Ttar)) Tcur = Ttar;
-  
+
      list<ChemicalPotential>::iterator cpit;
      if(h == 0.0) h = sqrt(6.2831853 * Ttar);
      for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++)
@@ -672,8 +672,8 @@ void Simulation::initialize()
     global_log->debug() << "Initializing z-oscillators" << endl;
     _integrator->init1D(_zoscillator, _moleculeContainer);
   }
-  
-  // initialize output 
+
+  // initialize output
   std::list<OutputBase*>::iterator outputIter;
   for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++){
     (*outputIter)->initOutput(_moleculeContainer, _domainDecomposition, _domain);
@@ -709,7 +709,7 @@ void Simulation::simulate()
   Molecule* tM;
 
   global_log->info() << "Started simulation" << endl;
-  
+
 
   // (universal) constant acceleration (number of) timesteps
   unsigned uCAT = _domain->getUCAT();
@@ -721,7 +721,7 @@ void Simulation::simulate()
   Timer loopTimer;         // Timer for computation
   Timer perStepIoTimer;    // Timer for IO during simulation steps
   Timer ioTimer;           // Timer for final IO
-  
+
   _initSimulation = (unsigned long)(_domain->getCurrentTime()
                              / _integrator->getTimestepLength());
 
@@ -746,7 +746,7 @@ void Simulation::simulate()
        }
     }
     global_log->debug() << "timestep " << simstep << endl;
-     
+
     _integrator->eventNewTimestep(_moleculeContainer, _domain);
 
     // ensure that all Particles are in the right cells and exchange Particles
@@ -756,7 +756,7 @@ void Simulation::simulate()
     // Force calculation
     global_log->debug() << "Traversing pairs" << endl;
     _moleculeContainer->traversePairs();
-    
+
     /*
      * test deletions and insertions
      */
@@ -769,14 +769,14 @@ void Simulation::simulate()
 	    cpit++ )
        {
 	  if(!((simstep + 2*j + 3) % cpit->getInterval()))
-	  {     
+	  {
              global_log->debug() << "Grand canonical ensemble(" << j
 		         << "): test deletions and insertions" << endl;
              _moleculeContainer->grandcanonicalStep(
 	        &(*cpit), _domain->T(0)
              );
 	     cpit->assertSynchronization(_domainDecomposition);
-	     
+
 	     int localBalance = _moleculeContainer->localGrandcanonicalBalance();
 	     int balance = _moleculeContainer->grandcanonicalBalance(
 	        _domainDecomposition
@@ -789,7 +789,7 @@ void Simulation::simulate()
 	        cpit->getComponentID(), balance, localBalance
 	     );
 	  }
-	  
+
 	  j++;
        }
     }
@@ -797,7 +797,7 @@ void Simulation::simulate()
     // clear halo
     global_log->debug() << "Delete outer particles" << endl;
     _moleculeContainer->deleteOuterParticles();
-    
+
     /*
      * radial distribution function
      */
@@ -816,7 +816,7 @@ void Simulation::simulate()
           _domainDecomposition
        );
     }
-    
+
     if(!(simstep % _collectThermostatDirectedVelocity))
        _domain->calculateThermostatDirectedVelocity(_moleculeContainer);
     if(_domain->isAcceleratingUniformly())
@@ -871,7 +871,7 @@ void Simulation::simulate()
              {
                 tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
              }
-             tM->scale_D(_domain->getGlobalBetaRot(thermostat));  
+             tM->scale_D(_domain->getGlobalBetaRot(thermostat));
           }
        }
        else
@@ -890,7 +890,7 @@ void Simulation::simulate()
 #ifdef STEEREO
 		_steer -> processQueue (0);
 #endif
-	// measure per timestep IO 
+	// measure per timestep IO
 	loopTimer.stop(); perStepIoTimer.start();
 	output(simstep);
 	perStepIoTimer.stop(); loopTimer.start();
@@ -933,7 +933,7 @@ void Simulation::output(unsigned long simstep)
   {
     (*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
   }
-  
+
   if(_doRecordRDF && !(simstep % _RDFOutputTimesteps))
   {
     _domain->collectRDF(_domainDecomposition);
@@ -956,13 +956,13 @@ void Simulation::output(unsigned long simstep)
     }
     _domain->resetRDF();
   }
-  
+
   if((simstep >= _initStatistics) && _doRecordProfile
                                         && !(simstep % _profileRecordingTimesteps))
   {
     _domain->recordProfile(_moleculeContainer);
   }
-  if((simstep >= _initStatistics) && _doRecordProfile 
+  if((simstep >= _initStatistics) && _doRecordProfile
                                         && !(simstep % _profileOutputTimesteps))
   {
     _domain->collectProfile(_domainDecomposition);
@@ -978,7 +978,7 @@ void Simulation::output(unsigned long simstep)
     }
     _domain->resetProfile();
   }
-  
+
   if(!(simstep % _outputFrequency))
   {
      _moleculeContainer->deleteOuterParticles();
@@ -993,10 +993,10 @@ void Simulation::output(unsigned long simstep)
       global_log->warning() << "Thermostat!" << endl;
   global_log->info() << "Simstep = "<< simstep
       << "\tT = " << _domain->T(0)
-      << "\tU_pot = " << _domain->getAverageGlobalUpot() 
+      << "\tU_pot = " << _domain->getAverageGlobalUpot()
       << "\tp = " << _domain->getGlobalPressure() << endl;
 
-#if 0 
+#if 0
   // CHECKFORREMOVAL
   if(ownrank==0)
   {
@@ -1027,9 +1027,9 @@ void Simulation::updateParticleContainerAndDecomposition()
   // changed and have to be adjusted
   _moleculeContainer->update();
   //_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
-  _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain, _cutoffRadius);
+  _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain);
   // The cache of the molecules must be updated/build after the exchange process,
-  // as the cache itself isn't transferred 
+  // as the cache itself isn't transferred
   Molecule* tM;
   for (tM = _moleculeContainer->begin(); tM
        != _moleculeContainer->end(); tM = _moleculeContainer->next()){

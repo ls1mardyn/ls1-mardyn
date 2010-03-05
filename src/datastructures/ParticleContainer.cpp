@@ -1,9 +1,10 @@
 #include "datastructures/ParticleContainer.h"
+#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
 
 #include <iostream>
 using namespace std;
 
-ParticleContainer::ParticleContainer(ParticlePairsHandler& partPairsHandler, double bBoxMin[3], double bBoxMax[3] ):
+ParticleContainer::ParticleContainer(ParticlePairsHandler* partPairsHandler, double bBoxMin[3], double bBoxMax[3] ):
   _particlePairsHandler(partPairsHandler){
   for(int i=0; i<3; i++){
     _boundingBoxMin[i] = bBoxMin[i];
@@ -30,9 +31,15 @@ double ParticleContainer::getBoundingBoxMax(int dimension){
   return this->_boundingBoxMax[dimension];
 }
 
-double ParticleContainer::get_halo_L(int index){   
+double ParticleContainer::get_halo_L(int index){
   cerr << "ERROR: ParticleContainer::get_halo_L(...) has to be implemented in derived class" << endl;
   return 0;
 }
 
+void ParticleContainer::setPairHandler(ParticlePairsHandler* partPairHandler){
+  _particlePairsHandler = partPairHandler;
+}
 
+ParticlePairsHandler* ParticleContainer::getPairHandler(){
+  return _particlePairsHandler;
+}

@@ -53,29 +53,29 @@ class DomainDecompBase{
   //!
   //! molecules which aren't in the domain of their process any
   //! more are transferred to their neighbours. Additionally, the
-  //! molecules for the halo-region are transferred. 
+  //! molecules for the halo-region are transferred.
   //! @param moleculeContainer needed to get those molecules which have to be exchanged
-  //! @param components when creating a new Molecule-object (from the recieved data), 
+  //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc) = 0;                                 
-  
+  virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) = 0;
+
   //! @brief balance the load (and optimise communication) and exchange boundary particles
   //!
-  //! This method is used to perform a new decomposition of the global domain with the 
+  //! This method is used to perform a new decomposition of the global domain with the
   //! goal of getting the equal load (and possibly additional goals) on each process.
   //! This method is then also responsible for redistributing all particles, so after the
   //! method was called, each process has a domain with all particles belonging to this
   //! domain (as if exchangeParticles was called after the new decomposition).
   //! @param balance if true, a rebalancing should be performed, otherwise only exchange
   //! @param moleculeContainer needed for calculating load and to get the particles
-  //! @param components when creating a new Molecule-object (from the recieved data), 
+  //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain, double rc) = 0;
+  virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) = 0;
 
   //! @brief find out whether the given position belongs to the domain of this process
-  //! 
+  //!
   //! This method is e.g. used by a particle generator which creates particles within
   //! the bounding box (cuboid) of a local domain, but only those particles which really
   //! belong to the domain (which might not be cuboid) are allowed to be really used.
@@ -84,9 +84,9 @@ class DomainDecompBase{
   //! @param z z-coordinate of the position to be checked
   //! @param domain might be needed to get the bounding box
   virtual bool procOwnsPos(double x, double y, double z, Domain* domain) = 0;
-  
-  //! @brief returns a guaranteed distance of (x,y,z) to the local domain 
-  //! 
+
+  //! @brief returns a guaranteed distance of (x,y,z) to the local domain
+  //!
   //! This method is e.g. used by a particle generator which creates clusters (nuclei, drops).
   //! Only if the cluster is close (cluster radius larger then guaranteedDistance) to the
   //! domain the particles have to be created.
@@ -95,8 +95,8 @@ class DomainDecompBase{
   //! @param z z-coordinate of the position for which the guaranteed distance is returned
   //! @param domain might be needed to get the bounding box
   virtual double guaranteedDistance(double x, double y, double z, Domain* domain) = 0;
-  
-  //! @brief counts the number of molecules of each component type. 
+
+  //! @brief counts the number of molecules of each component type.
   //!
   //! This method is usually only needed once in the beginning of the simulation and only
   //! if the particles were not read in from a single file but read in from one file per proc or
@@ -112,7 +112,7 @@ class DomainDecompBase{
   //! @param dimension coordinate direction for which the minimum of the bounding box is returned
   //! @param domain here the bounding box is stored
   virtual double getBoundingBoxMin(int dimension, Domain* domain) = 0;
-  
+
   //! @brief get the maximum of the bounding box of this process' domain in the given dimension (0,1,2)
   //! @param dimension coordinate direction for which the maximum of the bounding box is returned
   //! @param domain here the bounding box is stored
@@ -128,11 +128,11 @@ class DomainDecompBase{
   //! @param filename name of the file into which the data will be written
   //! @param moleculeContainer all Particles from this container will be written to the file
   virtual void writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer) = 0;
-  
+
   //! @brief returns the own rank
   //! @return rank of the process
   virtual int getRank() = 0;
-  
+
   //! @brief returns the number of processes
   //! @return number of processes
   virtual int getNumProcs() = 0;
@@ -151,13 +151,13 @@ class DomainDecompBase{
   virtual void assertDisjunctivity(TMoleculeContainer* mm) = 0;
 
   //##################################################################
-  // The following methods with prefix "collComm" are all used 
+  // The following methods with prefix "collComm" are all used
   // in the context of collective communication. Each of the methods
   // basically has to call the corresponding method from the class
   // CollectiveCommunication (or CollectiveCommDummy in the sequential
-  // case). To get information about how to use this methods, read 
+  // case). To get information about how to use this methods, read
   // the documentation of the class CollectiveCommunication.
-  //##################################################################  
+  //##################################################################
   //! has to call init method of a CollComm class
   virtual void collCommInit(int numValues) = 0;
   //! has to call finalize method of a CollComm class
@@ -186,7 +186,7 @@ class DomainDecompBase{
   virtual void collCommAllreduceSum() = 0;
   //! has to call broadcast method of a CollComm class (none in sequential version)
   virtual void collCommBroadcast() = 0;
-  
+
 };
 
 

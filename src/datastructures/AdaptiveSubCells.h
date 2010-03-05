@@ -13,7 +13,7 @@ class DomainDecompBase;
 
 //! @brief Adaptive SubCell Data Structure
 //! @author Martin Buchholz
-//! 
+//!
 //! To understand the AdaptiveSubCells datastructure, you should first read the documentation
 //! on the LinkedCells Datastructure, as AdaptiveSubCells is an enhancement of LinkedCells
 //! The difference is that not all cells have the same size but the cell size is adapted to the
@@ -29,7 +29,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //#########################################################################
 
   //! @brief initialize the Adaptive SubCell datastructure
-  //! 
+  //!
   //! The constructor sets the following variables:
   //! - _cutoffRadius
   //! - _haloWidthInNumCells[3]
@@ -44,31 +44,31 @@ class AdaptiveSubCells: public ParticleContainer {
   //! to a bounding box including inner + boundary cells but excluding halo cells. \n
   //! But the corners of this class have to include the halo cells.
   //! @param bBoxMin lower corner of the bounding box of the domain belonging to this container
-  //! @param bBoxMax higher corner of the bounding box of the domain belonging to this container 
+  //! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
   //! @param cutoffRadius distance for which forces have to be calculated
-  //! @param cellsInCutoffRadius describes the width of the coarse cells relative to the cutoffRadius. 
-  //!        This value should be 1, only then a useful adaption to the particle distribution can 
+  //! @param cellsInCutoffRadius describes the width of the coarse cells relative to the cutoffRadius.
+  //!        This value should be 1, only then a useful adaption to the particle distribution can
   //!        take place. The actual cell size is usually slightly bigger than the cutoffRadius,
   //!        as the domain has to be divided into a natural number of cells --> round up
   //! @param partPairsHandler specified concrete action to be done for each pair
   AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double cellsInCutoffRadius,
-                   ParticlePairsHandler& partPairsHandler);
-    
+                   ParticlePairsHandler* partPairsHandler);
+
   //! Destructor
   ~AdaptiveSubCells();
- 
+
   // documentation see father class (ParticleContainer.h)
   void rebuild(double bBoxMin[3], double bBoxMax[3]);
-    
+
   //! Pointers to the particles are put into cells depending on the spacial position
-  //! of the particles. 
+  //! of the particles.
   //! Before the call of this method, this distribution might have become invalid.
   //! To ensure, that all Particles (pointers to them) are put into the corresponding cells,
   //! first all cells are cleared and then filled again depending on the spacial position
   //! of the molecules. After the update, exactly one pointer for each particle in this
-  //! ParticleContainer is in it's corresponding cell.   
+  //! ParticleContainer is in it's corresponding cell.
   void update();
-    
+
   //! @brief Insert a single molecule.
   //!
   //! Add the molecule to the list (it is not inserted into a cell yet)
@@ -83,13 +83,13 @@ class AdaptiveSubCells: public ParticleContainer {
   //!     all forward cells have to be used, as none of them can be halo or outside
   //! \li a loop over the boundary cells first calculates forces with all forward cells and all
   //!     backward cells. Here it has to be checked whether the neighbour cell is halo or not.
-  //!     If it is Halo, the force is calculated, if it isn't, the force is not calculated, 
-  //!     because the same pair of cells has already been processed in one of the other loops. 
+  //!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
+  //!     because the same pair of cells has already been processed in one of the other loops.
   void traversePairs();
 
   //! @return the number of particles stored in the Linked Cells
   unsigned long getNumberOfParticles();
-    
+
   //! @brief returns a pointer to the first particle in the Linked Cells
   //!
   //! Internally, the particles are store in a std::list. To traverse this
@@ -103,7 +103,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //! The iterator _particleIter is first incremented. Then a pointer
   //! to the value pointed to by the iterator is returned. If the
   //! iterator points to the end of the list (which is one element after the last
-  //! element), NULL is returned 
+  //! element), NULL is returned
   Molecule* next();
 
   //! @brief returns NULL
@@ -116,9 +116,9 @@ class AdaptiveSubCells: public ParticleContainer {
   void deleteOuterParticles();
 
   //! @brief gets the width of the halo region in dimension index
-  //! @todo remove this method    
+  //! @todo remove this method
   double get_halo_L(int index);
-    
+
   //! @brief appends pointers to all particles in the boundary region to the list
   void getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs);
 
@@ -127,7 +127,7 @@ class AdaptiveSubCells: public ParticleContainer {
 
   // documentation see father class (ParticleContainer.h)
   void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs);
-    
+
   double getCutoff() { return this->_cutoffRadius; }
   double getTersoffCutoff() { return this->_tersoffCutoffRadius; }
   void countParticles(Domain* d);
@@ -141,20 +141,20 @@ class AdaptiveSubCells: public ParticleContainer {
   int localGrandcanonicalBalance() { return this->_localInsertionsMinusDeletions; }
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
-  
+
  private:
   //####################################
   //######### PRIVATE METHODS ##########
   //####################################
-    
-  //! @brief Initialze index vectors and subCells. 
-  //! 
+
+  //! @brief Initialze index vectors and subCells.
+  //!
   //! Fill the vector with the indices of the inner and boundary subCells.
   //! Assign each subCell it's region (halo, boundary, inner).
   void initializeSubCells();
 
   //! @brief Calculate SubCell neighbour indices.
-  //! 
+  //!
   //! In contrast to the LinkedCell datastructure, the index offsets to get to
   //! neighbouring cells are different for all cells. So for each cell (coarse or fine),
   //! a vector of index offets has to be calculated. This is done by first
@@ -169,13 +169,13 @@ class AdaptiveSubCells: public ParticleContainer {
   //! In each of those cases, the distance is calculated and where required the corresponding
   //! index offset (offset in the vector _subCells) is stored in _forwardNeighbourSubOffsets
   //! of _backwardNeighbourSubOffsets;
-  void calculateSubNeighbourIndices(); 
+  void calculateSubNeighbourIndices();
 
   //! This method determines for a given Molecule the corresponding coarse cell
   //! and returns the index of that cell in the cell vector. \n
   //! If the molecule is not inside the bounding box, an error is printed
   unsigned long getCellIndexOfMolecule(Molecule* molecule);
-    
+
   //! @brief Get the index in the subCell vector to which this Molecule belong
   //!
   //! each spacial position within the bounding box of the adaptive linked cells
@@ -192,7 +192,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //! and returns the index of that subCell in the subCell vector. \n
   //! Attention: The method can't(!!) be used to get the offset between two cells in the cell
   //! vector when called with the 3D cell index offets (e.g. x: one cell to the left,
-  //! y: two cells back, z: one cell up,...). The offsets can differ from subCell to subCell, because both the number and the position of the Cells that are containing subCells can differ. 
+  //! y: two cells back, z: one cell up,...). The offsets can differ from subCell to subCell, because both the number and the position of the Cells that are containing subCells can differ.
   unsigned long subCellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
 
   //! @brief calculates the metaCellIndex for each coarse Cell and store it in _metaCellIndex
@@ -204,10 +204,10 @@ class AdaptiveSubCells: public ParticleContainer {
 
   //! @brief calculates the density for each coarse Cell separately
   //! @todo: currently, not the density but the number of particles
-  //!        is calculated. To change that (or even if it is not changed), 
+  //!        is calculated. To change that (or even if it is not changed),
   //!        the influence of cutoff-radius has to be considered
   void calculateLocalRho();
-    
+
     //! @brief find out whether m1 is before m2 (in some global ordering
   //!
   //! At the boundary between two processes (if used in parallel mode), the forces
@@ -216,12 +216,12 @@ class AdaptiveSubCells: public ParticleContainer {
   //! counted only once, which is done by the process who owns the "first" particle.
   //! As order criterion, the spacial position is used int this method. The particles
   //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-  //! For pairs which are completely on one process, the first particle can be 
+  //! For pairs which are completely on one process, the first particle can be
   //! determined from the cell structure. But for pairs on different procs, the
   //! corresponding cell discretisations might be different as well, and therefore
   //! the cell structure must not be used to determine the order.
   bool isFirstParticle(Molecule& m1, Molecule& m2);
-    
+
   //####################################
   //##### PRIVATE MEMBER VARIABLES #####
   //####################################
@@ -242,7 +242,7 @@ class AdaptiveSubCells: public ParticleContainer {
   std::vector<Cell> _subCells;
 
   //! Vector containing the indices (for the subCells vector) of all inner subCells (without boundary)
-  std::vector<unsigned long> _innerSubCellIndices;  
+  std::vector<unsigned long> _innerSubCellIndices;
   //! Vector containing the indices (for the subCells vector) of all boundary subCells
   std::vector<unsigned long> _boundarySubCellIndices;
   //! Vector containing the indices (for the subCells vector) of all halo subCells
@@ -256,7 +256,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //! low corner of the bounding box around the linked cells (including halo)
   double _haloBoundingBoxMin[3];
   //! high corner of the bounding box around the linkeaad cells (including halo)
-  double _haloBoundingBoxMax[3];  
+  double _haloBoundingBoxMax[3];
 
   //! Number of coarse cells in each spacial dimension (including halo)
   int _cellsPerDimension[3];
@@ -272,15 +272,15 @@ class AdaptiveSubCells: public ParticleContainer {
   double _tersoffCutoffRadius;
   //! balance of the grand canonical ensemble
   int _localInsertionsMinusDeletions;
-    
+
   //! Depending on the density, a cell is refined (resulting in 8 subcells) or not.
-  //! All cells (fine and coarse) are stored in one big vector (_subCells). 
-  //! E.g. Element 37 is a coarse cell (named A). It's neighbouring cell (B) is refined, 
+  //! All cells (fine and coarse) are stored in one big vector (_subCells).
+  //! E.g. Element 37 is a coarse cell (named A). It's neighbouring cell (B) is refined,
   //! so in the vector _subCells, the next eight indices (38-45) are subcells of B.
-  //! But there are loops (i from 0 to #coarseCells-1) which run over all coarse cells 
+  //! But there are loops (i from 0 to #coarseCells-1) which run over all coarse cells
   //! (which might be refined or not).
   //! Those cells (and possibly subcells) have to be accessed, therefor their index
-  //! in the vector _subcells has to be known. _metaCellIndex contains for each i 
+  //! in the vector _subcells has to be known. _metaCellIndex contains for each i
   //! the correspoding index of the vector _subCells.
   std::vector<int> _metaCellIndex;
 
@@ -305,7 +305,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //! should approx. equal the simulation step. It is used to
   //! dynamically adapt the datastructure every nth time.
   int _numberOfUpdates;
-      
+
 };
 
 #endif /*ADAPTIVESUBCELLS_H_*/
