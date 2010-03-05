@@ -8,8 +8,10 @@
 
 #include <cmath>
 #include <iostream>
+#include "Logger.h"
 
 using namespace std;
+using Log::global_log;
 
 //################################################
 //############ PUBLIC METHODS ####################
@@ -17,669 +19,675 @@ using namespace std;
 
 
 AdaptiveSubCells::AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3],
-         double cutoffRadius, double cellsInCutoffRadius, ParticlePairsHandler& partPairsHandler):
-         ParticleContainer(partPairsHandler, bBoxMin, bBoxMax){
-               
-  int numberOfCells = 1;
-  _cutoffRadius = cutoffRadius;
-  for(int dim=0; dim<3; dim++){
-    _haloWidthInNumCells[dim] = (int) ceil(cellsInCutoffRadius);
-    _cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim]-this->_boundingBoxMin[dim])/(cutoffRadius/cellsInCutoffRadius))
-      + 2 * _haloWidthInNumCells[dim];
-    // in each dimension at least one layer of (inner+boundary) cells necessary
-    if(_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]){
-      _cellsPerDimension[dim]++;
-    }
-    numberOfCells *= _cellsPerDimension[dim];
-    _cellLength[dim]=(this->_boundingBoxMax[dim]-this->_boundingBoxMin[dim])/(_cellsPerDimension[dim]-2*_haloWidthInNumCells[dim]);
-    _haloBoundingBoxMin[dim] = this->_boundingBoxMin[dim]-_haloWidthInNumCells[dim]*_cellLength[dim];
-    _haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim]+_haloWidthInNumCells[dim]*_cellLength[dim];
-    _haloLength[dim] = _haloWidthInNumCells[dim]*_cellLength[dim];
-  }
+		double cutoffRadius, double cellsInCutoffRadius, ParticlePairsHandler& partPairsHandler):
+	ParticleContainer(partPairsHandler, bBoxMin, bBoxMax)
+{
 
-  // The resize method initializes the _cells array with the number of all cells within the bounding box
-  _cells.resize(numberOfCells);
-  // Initialize the vector containing the _localRho value of each coarse cell
-  _localRho.resize(numberOfCells);
-  // Initialize the vector containing the _metaCellIndex of each coarse cell 
-  // The size of _metaCellIndex is by one larger than _cells.
-  // To find out, whether a cell is refined, the _subCell-index difference of 
-  // the cell and the next coarse cell is calculated. If the difference is 8, it
-  // is a refined cell, if the difference is 1, it is a coarse cell. To be able
-  // to do this calculation for the last cell, the index of the "next cell" has
-  // to be calculated. To be able to store this index, the vector _metaCellIndex 
-  // has to be one element larger.
-  _metaCellIndex.resize(numberOfCells+1);
+	int numberOfCells = 1;
+	_cutoffRadius = cutoffRadius;
+	for( int d = 0; d < 3; d++ ){
+		_haloWidthInNumCells[d] = (int) ceil(cellsInCutoffRadius);
+		_cellsPerDimension[d] = (int) floor( ( _boundingBoxMax[d] - _boundingBoxMin[d] ) / ( cutoffRadius / cellsInCutoffRadius ) )
+			+ 2 * _haloWidthInNumCells[d];
+		// in each dension at least one layer of (inner+boundary) cells necessary
+		if(_cellsPerDimension[d] == 2 * _haloWidthInNumCells[d]){
+			_cellsPerDimension[d]++;
+		}
+		numberOfCells *= _cellsPerDimension[d];
+		_cellLength[d] = ( _boundingBoxMax[d] - _boundingBoxMin[d] ) / ( _cellsPerDimension[d] - 2 * _haloWidthInNumCells[d] );
+		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloWidthInNumCells[d] * _cellLength[d];
+		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloWidthInNumCells[d] * _cellLength[d];
+		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
+	}
 
-  // If the with of the inner region is less than the width of the halo region
-  // a parallelisation isn't possible (with the used algorithms).
-  // In this case, print an error message
-  // _cellsPerDimension is 2 times the halo width + the inner width
-  // so it has to be at least 3 times the halo width
-  if(_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
-     _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
-     _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]){
-    cerr << "Error in AdaptiveSubCells (Constructor): bounding box too small for calculated cell Length" << endl;
-    cerr << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
-    cerr << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
-    exit(5);
-  }
-  // initially, zero updates were performed:
-  _numberOfUpdates = 0;
-  _cellsValid = false;
+	// The resize method initializes the _cells array with the number of all cells within the bounding box
+	_cells.resize(numberOfCells);
+	// Initialize the vector containing the _localRho value of each coarse cell
+	_localRho.resize(numberOfCells);
+	// Initialize the vector containing the _metaCellIndex of each coarse cell 
+	// The size of _metaCellIndex is by one larger than _cells.
+	// To find out, whether a cell is refined, the _subCell-index difference of 
+	// the cell and the next coarse cell is calculated. If the difference is 8, it
+	// is a refined cell, if the difference is 1, it is a coarse cell. To be able
+	// to do this calculation for the last cell, the index of the "next cell" has
+	// to be calculated. To be able to store this index, the vector _metaCellIndex 
+	// has to be one element larger.
+	_metaCellIndex.resize( numberOfCells + 1 );
+
+	// If the with of the inner region is less than the width of the halo region
+	// a parallelisation isn't possible (with the used algorithms).
+	// In this case, print an error message
+	// _cellsPerDimension is 2 times the halo width + the inner width
+	// so it has to be at least 3 times the halo width
+	if( _cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
+			_cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
+			_cellsPerDimension[2] < 3*_haloWidthInNumCells[2] )
+	{
+		global_log->error() << "Error in AdaptiveSubCells (Constructor): bounding box too small for calculated cell Length" << endl;
+		global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		exit(5);
+	}
+	// initially, zero updates were performed:
+	_numberOfUpdates = 0;
+	_cellsValid = false;
 }
 
 
 AdaptiveSubCells::~AdaptiveSubCells(){
+	// empty
 }
 
 void AdaptiveSubCells::rebuild(double bBoxMin[3], double bBoxMax[3]){
-  for(int i=0; i<3; i++){
-    this->_boundingBoxMin[i] = bBoxMin[i];
-    this->_boundingBoxMax[i] = bBoxMax[i];
-  }
+	for( int d = 0; d < 3; d++ ){
+		_boundingBoxMin[d] = bBoxMin[d];
+		_boundingBoxMax[d] = bBoxMax[d];
+	}
 
-  int numberOfCells = 1;
+	int numberOfCells = 1;
 
-  for(int dim=0; dim<3; dim++){
-    _cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim]-this->_boundingBoxMin[dim])/(_cutoffRadius/_haloWidthInNumCells[dim]))
-      + 2 * _haloWidthInNumCells[dim];
-    // in each dimension at least one layer of (inner+boundary) cells necessary
-    if(_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]){
-      _cellsPerDimension[dim]++;
-    }
-    numberOfCells *= _cellsPerDimension[dim];
-    _cellLength[dim]=(this->_boundingBoxMax[dim]-this->_boundingBoxMin[dim])/(_cellsPerDimension[dim]-2*_haloWidthInNumCells[dim]);
-    _haloBoundingBoxMin[dim] = this->_boundingBoxMin[dim]-_haloWidthInNumCells[dim]*_cellLength[dim];
-    _haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim]+_haloWidthInNumCells[dim]*_cellLength[dim];
-    _haloLength[dim] = _haloWidthInNumCells[dim]*_cellLength[dim];
-  }
+	for( int d = 0; d < 3; d++ ){
+		_cellsPerDimension[d] = (int) floor( (_boundingBoxMax[d] - _boundingBoxMin[d]) / (_cutoffRadius / _haloWidthInNumCells[d]) )
+			+ 2 * _haloWidthInNumCells[d];
+		// in each dimension at least one layer of (inner+boundary) cells necessary
+		if(_cellsPerDimension[d] == 2 * _haloWidthInNumCells[d]){
+			_cellsPerDimension[d]++;
+		}
+		numberOfCells *= _cellsPerDimension[d];
+		_cellLength[d]= (_boundingBoxMax[d] - _boundingBoxMin[d]) / (_cellsPerDimension[d] - 2*_haloWidthInNumCells[d]);
+		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloWidthInNumCells[d] * _cellLength[d];
+		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloWidthInNumCells[d] * _cellLength[d];
+		_haloLength[d] = _haloWidthInNumCells[d]*_cellLength[d];
+	}
 
-  // The resize method initializes the _cells array with the number of all cells within the bounding box
-  _cells.resize(numberOfCells);
-  
-  // Initialize the vector containing the _localRho value of each coarse cell
-  _localRho.resize(numberOfCells);
-  // Initialize the vector containing the _metaCellIndex of each coarse cell 
-  // The size of _metaCellIndex is by one larger than _cells.
-  // To find out, whether a cell is refined, the _subCell-index difference of 
-  // the cell and the next coarse cell is calculated. If the difference is 8, it
-  // is a refined cell, if the difference is 1, it is a coarse cell. To be able
-  // to do this calculation for the last cell, the index of the "next cell" has
-  // to be calculated. To be able to store this index, the vector _metaCellIndex 
-  // has to be one element larger.
-  _metaCellIndex.resize(numberOfCells+1);
+	// The resize method initializes the _cells array with the number of all cells within the bounding box
+	_cells.resize(numberOfCells);
 
-  // If the with of the inner region is less than the width of the halo region
-  // a parallelisation isn't possible (with the used algorithms).
-  // In this case, print an error message
-  // _cellsPerDimension is 2 times the halo width + the inner width
-  // so it has to be at least 3 times the halo width
-  if(_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
-     _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
-     _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]){
-    cerr << "Error in AdaptiveSubCells::rebuild: bounding box too small for calculated cell Length" << endl;
-    cerr << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
-    cerr << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
-    exit(5);
-  }
-  // initially, zero updates were perfored:
-  _numberOfUpdates = 0;
-  
-  
-  // delete all Particles which are outside of the halo region
-  std::list<Molecule>::iterator particleIterator = _particles.begin();
-  bool erase_mol;
-  while(particleIterator!=_particles.end()){
-    erase_mol = false;
-    for(unsigned short d=0;d<3;++d){
-      const double& rd=particleIterator->r(d);
-      // The molecules has to be within the domain of the process
-      // If it is outside in at least one dimension, it has to be
-      // erased /
-      if(rd<this->_haloBoundingBoxMin[d] || rd>=this->_haloBoundingBoxMax[d]) erase_mol = true;
-    }
-    if(erase_mol) {
-      particleIterator=_particles.erase(particleIterator);
-    }
-    else{
-      particleIterator++;
-    }
-  }
-  _cellsValid=false;
+	// Initialize the vector containing the _localRho value of each coarse cell
+	_localRho.resize(numberOfCells);
+	// Initialize the vector containing the _metaCellIndex of each coarse cell 
+	// The size of _metaCellIndex is by one larger than _cells.
+	// To find out, whether a cell is refined, the _subCell-index difference of 
+	// the cell and the next coarse cell is calculated. If the difference is 8, it
+	// is a refined cell, if the difference is 1, it is a coarse cell. To be able
+	// to do this calculation for the last cell, the index of the "next cell" has
+	// to be calculated. To be able to store this index, the vector _metaCellIndex 
+	// has to be one element larger.
+	_metaCellIndex.resize(numberOfCells+1);
 
+	// If the with of the inner region is less than the width of the halo region
+	// a parallelisation isn't possible (with the used algorithms).
+	// In this case, print an error message
+	// _cellsPerDimension is 2 times the halo width + the inner width
+	// so it has to be at least 3 times the halo width
+	if(_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
+			_cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
+			_cellsPerDimension[2] < 3*_haloWidthInNumCells[2]){
+		global_log->error() << "Error in AdaptiveSubCells::rebuild: bounding box too small for calculated cell Length" << endl;
+		global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		exit(5);
+	}
+	// initially, zero updates were perfored:
+	_numberOfUpdates = 0;
+
+
+	// delete all Particles which are outside of the halo region
+	std::list<Molecule>::iterator particleIterator = _particles.begin();
+	bool erase_mol;
+	while( particleIterator != _particles.end()){
+		erase_mol = false;
+		for( int d = 0; d < 3; d++ ){
+			const double& rd=particleIterator->r(d);
+			// The molecules has to be within the domain of the process
+			// If it is outside in at least one dimension, it has to be
+			// erased /
+			if( rd < _haloBoundingBoxMin[d] || rd >= _haloBoundingBoxMax[d] ) 
+				erase_mol = true;
+		}
+		if( erase_mol ) {
+			particleIterator = _particles.erase(particleIterator);
+		}
+		else{
+			particleIterator++;
+		}
+	}
+	_cellsValid=false;
 }
 
 
 void AdaptiveSubCells::update(){
 
-  // the _cells vector is only needed in order to compute _localRho[] for each coarse grid cell. So we need to initialize _cells in 1 of 1000 timesteps only
-  if(_numberOfUpdates%1000==0){
-    // clear all Cells  
-    std::vector<Cell>::iterator celliter;
-    for(celliter=(_cells).begin();celliter!=(_cells).end();++celliter){
-      (*celliter).removeAllParticles();
-    }
-    unsigned long index; // index of the cell into which the pointer has to be inserted
-    std::list<Molecule>::iterator pos;
-    for(pos=_particles.begin();pos!=_particles.end();++pos) {
-      index=getCellIndexOfMolecule(&(*pos));
-      if( index >= _cells.size() ){
-        cerr << "Error in AdaptiveSubCells::update(): INDEX ERROR" << endl;
-        exit(1);
-      }
-      (_cells[index]).addParticle(&(*pos));
-    }
-    // computes the _metaCellIndex for each Cell in the coarse grid
-    calculateMetaCellIndex();
-    int numberOfSubCells = _metaCellIndex[_cells.size()];
-    // The .clear() method clears the whole _subCells vector
-    _subCells.clear();
-    // The resize method initializes the _subCells array with the number of all subCells within the bounding box
-    _subCells.resize(numberOfSubCells);
-    _forwardNeighbourSubOffsets.resize(numberOfSubCells);
-    _backwardNeighbourSubOffsets.resize(numberOfSubCells);
+	// the _cells vector is only needed in order to compute _localRho[] for each coarse grid cell. So we need to initialize _cells in 1 of 1000 timesteps only
+	// FIXME: introduce global variabel instead of fixed numer '1000'
+	if( _numberOfUpdates % 1000 == 0 ){
+		// clear all Cells  
+		std::vector<Cell>::iterator celliter;
+		for(celliter=(_cells).begin();celliter!=(_cells).end();++celliter){
+			(*celliter).removeAllParticles();
+		}
+		unsigned long index; // index of the cell into which the pointer has to be inserted
+		std::list<Molecule>::iterator pos;
+		for( pos = _particles.begin(); pos != _particles.end(); pos++ ) {
+			index = getCellIndexOfMolecule( &(*pos) );
+			if( index >= _cells.size() ){ // FIXME: how likely/critical is this, can this go to an assert?
+				global_log->error() << "Found wrong index in AdaptiveSubCells::update()" << endl;
+				exit(1);
+			}
+			(_cells[index]).addParticle(&(*pos));
+		}
+		// computes the _metaCellIndex for each Cell in the coarse grid
+		calculateMetaCellIndex();
+		int numberOfSubCells = _metaCellIndex[_cells.size()];
+		// The .clear() method clears the whole _subCells vector
+		_subCells.clear();
+		// The resize method initializes the _subCells array with the number of all subCells within the bounding box
+		_subCells.resize(numberOfSubCells);
+		_forwardNeighbourSubOffsets.resize(numberOfSubCells);
+		_backwardNeighbourSubOffsets.resize(numberOfSubCells);
 
-    initializeSubCells();
-    calculateSubNeighbourIndices();
-  }
-  // Here the adaptive datastructure is going to be created
-  // subcelliter is the new iterator to pass through all subCells
-  std::vector<Cell>::iterator subcelliter;
-  for(subcelliter=(_subCells).begin();subcelliter!=(_subCells).end();++subcelliter){
-    (*subcelliter).removeAllParticles();
-  }
-  // subIndex is the index of the cell into which the pointer has to be inserted
-  int subIndex; 
-  std::list<Molecule>::iterator pos;
-  for(pos=_particles.begin();pos!=_particles.end();++pos) {
-    // getSubCellIndexOfMolecule computes the index of the subCell where the molecule has to be inserted
-    
-    subIndex=getSubCellIndexOfMolecule(&(*pos));
+		initializeSubCells();
+		calculateSubNeighbourIndices();
+	}
+	// Here the adaptive datastructure is going to be created
+	// subcelliter is the new iterator to pass through all subCells
+	std::vector<Cell>::iterator subcelliter;
+	for( subcelliter = (_subCells).begin(); subcelliter != (_subCells).end(); subcelliter++ ) {
+		(*subcelliter).removeAllParticles();
+	}
+	// subIndex is the index of the cell into which the pointer has to be inserted
+	int subIndex; 
+	std::list<Molecule>::iterator pos;
+	for( pos = _particles.begin(); pos != _particles.end(); pos++ ) {
+		// getSubCellIndexOfMolecule computes the index of the subCell where the molecule has to be inserted
+		subIndex=getSubCellIndexOfMolecule(&(*pos));
 
-    if(subIndex < (int) 0 || subIndex >= (int) _subCells.size()){
-      cerr << "Error in AdaptiveSubCells::update(): INDEX ERROR" << endl;
-      exit(1);
-    }
-    (_subCells[subIndex]).addParticle(&(*pos));
-  }
-  // increas number of performed updates
-  _numberOfUpdates++;
-  _cellsValid = true;
+		if(subIndex < (int) 0 || subIndex >= (int) _subCells.size()){ // FIXME: should this go to an asssert?
+			global_log->error() << "Found invalid index in AdaptiveSubCells::update()." << endl;
+			exit(1);
+		}
+		_subCells[subIndex].addParticle(&(*pos));
+	}
+	// increas number of performed updates
+	_numberOfUpdates++;
+	_cellsValid = true;
 }
 
 
 void AdaptiveSubCells::addParticle(Molecule& particle){
 
-  double x = particle.r(0);
-  double y = particle.r(1);
-  double z = particle.r(2);
-  
-  if(x>=this->_haloBoundingBoxMin[0] && x < this->_haloBoundingBoxMax[0] && 
-     y>=this->_haloBoundingBoxMin[1] && y < this->_haloBoundingBoxMax[1] && 
-     z>=this->_haloBoundingBoxMin[2] && z < this->_haloBoundingBoxMax[2]){
-    _particles.push_front(particle);
-    if(_cellsValid){
-      int subIndex=getSubCellIndexOfMolecule(&particle);
-      if(subIndex < (int) 0 || subIndex >= (int) _subCells.size()){
-        cerr << "Error in AdaptiveSubCells::addParticle(): INDEX ERROR" << endl;
-        exit(1);
-      }
-      (_subCells[subIndex]).addParticle(&(_particles.front()));
-    }
-  }
+	double x = particle.r(0);
+	double y = particle.r(1);
+	double z = particle.r(2);
+
+	if(        x >= _haloBoundingBoxMin[0] && x < _haloBoundingBoxMax[0] 
+			&& y >= _haloBoundingBoxMin[1] && y < _haloBoundingBoxMax[1] 
+			&& z >= _haloBoundingBoxMin[2] && z < _haloBoundingBoxMax[2] )
+	{
+		_particles.push_front(particle);
+		if(_cellsValid){
+			int subIndex=getSubCellIndexOfMolecule(&particle);
+			if(subIndex < (int) 0 || subIndex >= (int) _subCells.size() ) // FIXME: Should this go to an assert?
+			{
+				global_log->error() << "Found invalid index in AdaptiveSubCells::addParticle()" << endl;
+				exit(1);
+			}
+			_subCells[subIndex].addParticle( &(_particles.front()) );
+		}
+	}
 }
 
 void AdaptiveSubCells::countParticles(Domain* d)
 {
-  vector<Cell>::iterator cellIter;
-  std::list<Molecule*>::iterator molIter1;
-  for(unsigned i=0; i < _cells.size(); i++)
-  {
-    Cell& currentCell = _cells[i];
-    if(currentCell.isHaloCell()) continue;
-    for(molIter1=currentCell.getParticlePointers().begin(); molIter1!=currentCell.getParticlePointers().end(); molIter1++)
-    {
-      Molecule& molecule1 = **molIter1;
-      d->observeRDF(molecule1.componentid());
-    }
-  }
+	vector<Cell>::iterator cellIter;
+	std::list<Molecule*>::iterator molIter1;
+	for(unsigned i=0; i < _cells.size(); i++)
+	{
+		Cell& currentCell = _cells[i];
+		if(currentCell.isHaloCell()) continue;
+		for(molIter1=currentCell.getParticlePointers().begin(); molIter1!=currentCell.getParticlePointers().end(); molIter1++)
+		{
+			Molecule& molecule1 = **molIter1;
+			d->observeRDF(molecule1.componentid());
+		}
+	}
 }
+
 unsigned AdaptiveSubCells::countParticles(int cid) 
 {
-   unsigned N = 0;
-   vector<Cell>::iterator cellIter;
-   std::list<Molecule*>::iterator molIter1;
-   for(unsigned i=0; i < _cells.size(); i++)
-   {
-      Cell& currentCell = _cells[i];
-      if(currentCell.isHaloCell()) continue;
-      for( molIter1=currentCell.getParticlePointers().begin();
-           molIter1!=currentCell.getParticlePointers().end();
-           molIter1++ )
-      {
-         if((*molIter1)->componentid() == cid) N++;
-      }
-   }
-   return N;
-}
-unsigned AdaptiveSubCells::countParticles(
-   int cid, double* cbottom, double* ctop
-) {
-   int minIndex[3];
-   int maxIndex[3];
-   for(int d=0; d < 3; d++)
-   {
-      if(cbottom[d] < this->_haloBoundingBoxMin[d]) minIndex[d] = 0;
-      else minIndex[d] = (int)floor(
-         (cbottom[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]
-      );
-      if(ctop[d] > this->_haloBoundingBoxMax[d])
-	 maxIndex[d] = (int)floor(
-	    (this->_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d])
-	       / this->_cellLength[d]
-         );
-      else maxIndex[d] = (int)floor(
-         (ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]
-      );
-   }
-   
-   unsigned N = 0;
-   int cix[3];
-   vector<Cell>::iterator cellIter;
-   std::list<Molecule*>::iterator molIter1;
-   bool individualCheck;
-   int cellid;
-
-   for(cix[0] = minIndex[0]; maxIndex[0] >= cix[0]; (cix[0])++)
-      for(cix[1] = minIndex[1]; maxIndex[1] >= cix[1]; (cix[1])++)
-	 for(cix[2] = minIndex[2]; maxIndex[2] >= cix[2]; (cix[2])++)
-	 {
-	    individualCheck = (cix[0] == minIndex[0]) ||
-	                      (cix[0] == maxIndex[0]) ||
-	                      (cix[1] == maxIndex[1]) ||
-	                      (cix[1] == maxIndex[1]) ||
-	                      (cix[2] == maxIndex[2]) ||
-	                      (cix[2] == maxIndex[2]);
-	    cellid = this->subCellIndexOf3DIndex(cix[0], cix[1], cix[2]);
-            Cell& currentCell = _subCells[cellid];
-            if(currentCell.isHaloCell()) continue;
-	    if(individualCheck)
-	    {
-               for(molIter1=currentCell.getParticlePointers().begin();
-                   molIter1!=currentCell.getParticlePointers().end();
-                   molIter1++)
-	       {
-                  if( ((*molIter1)->r(0) > cbottom[0]) &&
-		      ((*molIter1)->r(1) > cbottom[1]) &&
-		      ((*molIter1)->r(2) > cbottom[2]) &&
-		      ((*molIter1)->r(0) < ctop[0]) &&
-		      ((*molIter1)->r(1) < ctop[1]) &&
-		      ((*molIter1)->r(2) < ctop[2]) &&
-		      ((*molIter1)->componentid() == cid) )
-		  {
-		     N++;
-		  }
-	       }
-	    }
-	    else
-	    {
-               for(molIter1=currentCell.getParticlePointers().begin();
-                   molIter1!=currentCell.getParticlePointers().end();
-                   molIter1++)
-	       {
-                  if((*molIter1)->componentid() == cid) N++;
-	       }
-	    }
-	 }
-   
-   return N;
+	unsigned N = 0;
+	vector<Cell>::iterator cellIter;
+	std::list<Molecule*>::iterator molIter1;
+	for( unsigned long i = 0; i < _cells.size(); i++ )
+	{
+		Cell& currentCell = _cells[i];
+		if(currentCell.isHaloCell()) continue;
+		for( molIter1 = currentCell.getParticlePointers().begin();
+				molIter1 != currentCell.getParticlePointers().end();
+				molIter1++ )
+		{
+			if((*molIter1)->componentid() == cid) N++;
+		}
+	}
+	return N;
 }
 
-void AdaptiveSubCells::deleteMolecule
-(
-   unsigned long molid, double x, double y, double z
-)
+unsigned AdaptiveSubCells::countParticles( int cid, double* cbottom, double* ctop ) {
+	int minIndex[3];
+	int maxIndex[3];
+	for( int d = 0; d < 3; d++ )
+	{
+		if( cbottom[d] < _haloBoundingBoxMin[d] ) 
+			minIndex[d] = 0;
+		else 
+			minIndex[d] = (int)floor( (cbottom[d] - _haloBoundingBoxMin[d]) / _cellLength[d]);
+
+		if( ctop[d] > _haloBoundingBoxMax[d] )
+			maxIndex[d] = (int)floor( (_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d]) / _cellLength[d]);
+		else 
+			maxIndex[d] = (int)floor( (ctop[d] - _haloBoundingBoxMin[d]) / _cellLength[d]);
+	}
+
+	unsigned N = 0;
+	int cix[3];
+	vector<Cell>::iterator cellIter;
+	std::list<Molecule*>::iterator molIter1;
+	bool individualCheck;
+	int cellid;
+
+	for(cix[0] = minIndex[0]; maxIndex[0] >= cix[0]; (cix[0])++)
+		for(cix[1] = minIndex[1]; maxIndex[1] >= cix[1]; (cix[1])++)
+			for(cix[2] = minIndex[2]; maxIndex[2] >= cix[2]; (cix[2])++)
+			{
+				individualCheck = (cix[0] == minIndex[0]) ||
+					(cix[0] == maxIndex[0]) ||
+					(cix[1] == maxIndex[1]) ||
+					(cix[1] == maxIndex[1]) ||
+					(cix[2] == maxIndex[2]) ||
+					(cix[2] == maxIndex[2]);
+				cellid = this->subCellIndexOf3DIndex(cix[0], cix[1], cix[2]);
+				Cell& currentCell = _subCells[cellid];
+				if(currentCell.isHaloCell()) continue;
+				if(individualCheck)
+				{
+					for(molIter1=currentCell.getParticlePointers().begin();
+							molIter1!=currentCell.getParticlePointers().end();
+							molIter1++)
+					{
+						if( ((*molIter1)->r(0) > cbottom[0]) &&
+								((*molIter1)->r(1) > cbottom[1]) &&
+								((*molIter1)->r(2) > cbottom[2]) &&
+								((*molIter1)->r(0) < ctop[0]) &&
+								((*molIter1)->r(1) < ctop[1]) &&
+								((*molIter1)->r(2) < ctop[2]) &&
+								((*molIter1)->componentid() == cid) )
+						{
+							N++;
+						}
+					}
+				}
+				else
+				{
+					for(molIter1=currentCell.getParticlePointers().begin();
+							molIter1!=currentCell.getParticlePointers().end();
+							molIter1++)
+					{
+						if((*molIter1)->componentid() == cid) N++;
+					}
+				}
+			}
+
+	return N;
+}
+
+void AdaptiveSubCells::deleteMolecule ( unsigned long molid, double x, double y, double z)
 {
-   int ix = (int)floor((x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
-   int iy = (int)floor((y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
-   int iz = (int)floor((z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
-   unsigned long hash = this->subCellIndexOf3DIndex(ix, iy, iz);
-   if( hash >= _subCells.size() )
-   {
-      cout << "SEVERE ERROR: coordinates for atom deletion lie outside bounding box.\n";
-      exit(1);
-   }
-   bool found = this->_subCells[hash].deleteMolecule(molid);
-   if(!found)
-   {
-      cout << "SEVERE ERROR: could not delete molecule " << molid << ".\n";
-      exit(1);
-   }
+	int ix = (int)floor((x - _haloBoundingBoxMin[0]) / _cellLength[0]);
+	int iy = (int)floor((y - _haloBoundingBoxMin[1]) / _cellLength[1]);
+	int iz = (int)floor((z - _haloBoundingBoxMin[2]) / _cellLength[2]);
+	unsigned long hash = this->subCellIndexOf3DIndex(ix, iy, iz);
+	if( hash >= _subCells.size() )
+	{
+		global_log->error() << "SEVERE ERROR: coordinates for atom deletion lie outside bounding box.\n";
+		exit(1);
+	}
+	bool found = _subCells[hash].deleteMolecule(molid);
+	if(!found)
+	{
+		global_log->error() << "SEVERE ERROR: could not delete molecule " << molid << ".\n";
+		exit(1);
+	}
 }
 
 void AdaptiveSubCells::traversePairs(){
-  if(_cellsValid == false) {
-    cerr << "Cell structure in AdaptiveSubCells (traversePairs) invalid, call update first" << endl;
-    exit(1);
-  }
+	if(_cellsValid == false) {
+		global_log->error() << "Cell structure in AdaptiveSubCells (traversePairs) invalid, call update first" << endl;
+		exit(1);
+	}
 
-  this->_particlePairsHandler.init();
-  
-  // XXX comment
-  double distanceVector[3];
-  // loop over all subCells
-  vector<Cell>::iterator subCellIter;
-  std::list<Molecule*>::iterator molIter1;
-  std::list<Molecule*>::iterator molIter2;
-  for(subCellIter=_subCells.begin(); subCellIter!= _subCells.end(); subCellIter++){
-    for(molIter1=subCellIter->getParticlePointers().begin(); molIter1!=subCellIter->getParticlePointers().end(); molIter1++){
-      (*molIter1)->setFM(0,0,0,0,0,0);
-    }
-  } 
+	_particlePairsHandler.init();
 
-  double dd;
-  vector<unsigned long>::iterator subCellIndexIter;
-  vector<unsigned long>::iterator neighbourSubOffsetsIter;
-  
-  // sqare of the cutoffradius
-  double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius; 
-  double tersoffCutoffRadiusSquare = this->_tersoffCutoffRadius
-                                   * this->_tersoffCutoffRadius;
-  // loop over all inner subCells and calculate forces to forward neighbours
-  for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_innerSubCellIndices.end(); subCellIndexIter++){
-    Cell& currentSubCell = _subCells[*subCellIndexIter];
-    // forces between molecules in the subCell
-    for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-      Molecule& molecule1 = **molIter1;
-      for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
-        Molecule& molecule2 = **molIter2;
-	dd = molecule2.dist2(molecule1,distanceVector);
-        if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
-          this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
-	  if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-	                                   && (dd < tersoffCutoffRadiusSquare) )
-	  { 
-	     this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
-	  }
-        }
-      }
-    }
-    // loop over all neighbours
-    for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[*subCellIndexIter].begin(); 
-         neighbourSubOffsetsIter !=_forwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
-      Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
-      // loop over all particles in the subCell
-      for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-        Molecule& molecule1 = **molIter1;
-        for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
-          Molecule& molecule2 = **molIter2;
-	  dd = molecule2.dist2(molecule1,distanceVector);
-          if(dd < cutoffRadiusSquare) {
-            this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
-	    if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-	                                     && (dd < tersoffCutoffRadiusSquare) )
-	    {
-	      this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
-	    }
-	  }
-        }
-      }
-    }
-  }
+	// XXX comment
+	double distanceVector[3];
+	// loop over all subCells
+	vector<Cell>::iterator subCellIter;
+	std::list<Molecule*>::iterator molIter1;
+	std::list<Molecule*>::iterator molIter2;
+	for(subCellIter=_subCells.begin(); subCellIter!= _subCells.end(); subCellIter++){
+		for(molIter1=subCellIter->getParticlePointers().begin(); molIter1!=subCellIter->getParticlePointers().end(); molIter1++){
+			(*molIter1)->setFM(0,0,0,0,0,0);
+		}
+	} 
 
-  // loop over all boundary subCells and calculate forces to forward and backward neighbours
-  for(subCellIndexIter=_boundarySubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
-    Cell& currentSubCell = _subCells[*subCellIndexIter];
-    // forces between molecules in the subCell
-    for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-      Molecule& molecule1 = **molIter1;
-      for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
-        Molecule& molecule2 = **molIter2;
-	dd = molecule2.dist2(molecule1,distanceVector);
-        if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
-          this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);       
-	  if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-	                                   && (dd < tersoffCutoffRadiusSquare) )
-	  {
-	     this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
-	  }
-        }
-      }
-    }
+	double dd;
+	vector<unsigned long>::iterator subCellIndexIter;
+	vector<unsigned long>::iterator neighbourSubOffsetsIter;
 
-    // loop over all forward neighbours
-    for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[*subCellIndexIter].begin();
-         neighbourSubOffsetsIter !=_forwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
-      Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
-      // loop over all particles in the subCell
-      for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-        Molecule& molecule1 = **molIter1;
-        for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
-          Molecule& molecule2 = **molIter2;
-	  dd = molecule2.dist2(molecule1,distanceVector);
-          if(dd < cutoffRadiusSquare) {
-            if(neighbourSubCell.isHaloCell() && not isFirstParticle(molecule1, molecule2)){
-              this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1,dd);
-	      if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-	                                       && (dd < tersoffCutoffRadiusSquare) )
-	      {
-	        this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,true);
-	      }
-            }
-            else{
-              this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
-	      if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-	                                       && (dd < tersoffCutoffRadiusSquare) )
-	      {
-	         this->_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
-	      }
-            }
-          }
-        }
-      }
-    }
+	// sqare of the cutoffradius
+	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius; 
+	double tersoffCutoffRadiusSquare = _tersoffCutoffRadius * _tersoffCutoffRadius;
 
-  // loop over halo cells and detect Tersoff neighbours within the halo
-  // this is relevant for the angle summation
-  for(unsigned i=0; i < _subCells.size(); i++)
-  {
-    Cell& currentSubCell = _subCells[i];
-    if(!currentSubCell.isHaloCell()) continue;
+	// loop over all inner subCells and calculate forces to forward neighbours
+	for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_innerSubCellIndices.end(); subCellIndexIter++){
+		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		// forces between molecules in the subCell
+		for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
+			Molecule& molecule1 = **molIter1;
+			for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
+				Molecule& molecule2 = **molIter2;
+				dd = molecule2.dist2(molecule1,distanceVector);
+				if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
+					_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+					if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+							&& (dd < tersoffCutoffRadiusSquare) )
+					{ 
+						_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+					}
+				}
+			}
+		}
+		// loop over all neighbours
+		for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[*subCellIndexIter].begin(); 
+				neighbourSubOffsetsIter !=_forwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
+			Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
+			// loop over all particles in the subCell
+			for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
+				Molecule& molecule1 = **molIter1;
+				for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
+					Molecule& molecule2 = **molIter2;
+					dd = molecule2.dist2(molecule1,distanceVector);
+					if(dd < cutoffRadiusSquare) {
+						_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+						if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+								&& (dd < tersoffCutoffRadiusSquare) )
+						{
+							_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+						}
+					}
+				}
+			}
+		}
+	}
 
-    for( molIter1=currentSubCell.getParticlePointers().begin();
-         molIter1!=currentSubCell.getParticlePointers().end();
-         molIter1++ )
-    {
-      Molecule& molecule1 = **molIter1;
-      if(molecule1.numTersoff() == 0) continue;
-      for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++)
-      {
-        Molecule& molecule2 = **molIter2;
-        if((&molecule1 != &molecule2) && (molecule2.numTersoff() > 0))
-        { 
-          double dd = molecule2.dist2(molecule1, distanceVector);
-          if(dd < tersoffCutoffRadiusSquare)
-            this->_particlePairsHandler.preprocessTersoffPair(molecule1, molecule2, true);
-        }
-      }
-      
-      for( neighbourSubOffsetsIter=_forwardNeighbourSubOffsets[i].begin();
-           neighbourSubOffsetsIter!=_forwardNeighbourSubOffsets[i].end();
-           neighbourSubOffsetsIter++ )
-      {
-        int j = i + *neighbourSubOffsetsIter;
-        if((j < 0) || (j >= (int)(this->_subCells.size()))) continue;
-        Cell& neighbourSubCell = _subCells[j];
-        if(!neighbourSubCell.isHaloCell()) continue;
-        for( molIter2=neighbourSubCell.getParticlePointers().begin();
-             molIter2!=neighbourSubCell.getParticlePointers().end();
-             molIter2++ )
-        {
-          Molecule& molecule2 = **molIter2;
-          if(molecule2.numTersoff() == 0) continue;
-          double dd = molecule2.dist2(molecule1, distanceVector);
-          if(dd < tersoffCutoffRadiusSquare)
-            this->_particlePairsHandler.preprocessTersoffPair(molecule1, molecule2, true);
-        }
-      }
-    }
-  }
+	// loop over all boundary subCells and calculate forces to forward and backward neighbours
+	for( subCellIndexIter = _boundarySubCellIndices.begin(); subCellIndexIter != _boundarySubCellIndices.end(); subCellIndexIter++ ){
+		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		// forces between molecules in the subCell
+		for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
+			Molecule& molecule1 = **molIter1;
+			for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
+				Molecule& molecule2 = **molIter2;
+				dd = molecule2.dist2(molecule1,distanceVector);
+				if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
+					_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);       
+					if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+							&& (dd < tersoffCutoffRadiusSquare) )
+					{
+						_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+					}
+				}
+			}
+		}
 
-    // loop over all backward neighbours. calculate only forces
-    // to neighbour subCells in the halo region, all others already have been calculated
-    for(neighbourSubOffsetsIter=_backwardNeighbourSubOffsets[*subCellIndexIter].begin();
-        neighbourSubOffsetsIter!=_backwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
-      Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
-      if(neighbourSubCell.isHaloCell()){
-        // loop over all particles in the subCell
-        for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-          Molecule& molecule1 = **molIter1;
-          for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
-            Molecule& molecule2 = **molIter2;
-	    if((molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)) continue;
-	    double dd = molecule2.dist2(molecule1,distanceVector);
-            if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
-              if (isFirstParticle(molecule1, molecule2)) {
-                this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
-              }
-              else{
-                this->_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1,dd);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  
-#ifndef NDEBUG
-  cout << "processing Tersoff potential.\n";  //X
-#endif
-  double params[15];
-  double delta_r;
-  bool knowparams = false;
+		// loop over all forward neighbours
+		for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[*subCellIndexIter].begin();
+				neighbourSubOffsetsIter !=_forwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
+			Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
+			// loop over all particles in the subCell
+			for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
+				Molecule& molecule1 = **molIter1;
+				for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
+					Molecule& molecule2 = **molIter2;
+					dd = molecule2.dist2(molecule1,distanceVector);
+					if(dd < cutoffRadiusSquare) {
+						if(neighbourSubCell.isHaloCell() && not isFirstParticle(molecule1, molecule2)){
+							_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1,dd);
+							if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+									&& (dd < tersoffCutoffRadiusSquare) )
+							{
+								_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,true);
+							}
+						}
+						else{
+							_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+							if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
+									&& (dd < tersoffCutoffRadiusSquare) )
+							{
+								_particlePairsHandler.preprocessTersoffPair(molecule1,molecule2,false);
+							}
+						}
+					}
+				}
+			}
+		}
 
-  for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
-    if(subCellIndexIter == this->_innerSubCellIndices.end())
-      subCellIndexIter = this->_boundarySubCellIndices.begin();
-    Cell& currentSubCell = _subCells[*subCellIndexIter];
-    for( molIter1=currentSubCell.getParticlePointers().begin();
-         molIter1!=currentSubCell.getParticlePointers().end();
-         molIter1++ )
-    {
-      Molecule& molecule1 = **molIter1;
-      if(molecule1.numTersoff() == 0) continue;
-      if(!knowparams)
-      {
-         delta_r = molecule1.tersoffParameters(params);
-         knowparams = true;
-      }
-      this->_particlePairsHandler.processTersoffAtom(molecule1, params, delta_r);
-    }
-  }
-  
-  this->_particlePairsHandler.finish();
+
+		// loop over all backward neighbours. calculate only forces
+		// to neighbour subCells in the halo region, all others already have been calculated
+		for(neighbourSubOffsetsIter=_backwardNeighbourSubOffsets[*subCellIndexIter].begin();
+				neighbourSubOffsetsIter!=_backwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
+			Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
+			if(neighbourSubCell.isHaloCell()){
+				// loop over all particles in the subCell
+				for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
+					Molecule& molecule1 = **molIter1;
+					for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
+						Molecule& molecule2 = **molIter2;
+						if((molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)) continue;
+						double dd = molecule2.dist2(molecule1,distanceVector);
+						if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
+							if (isFirstParticle(molecule1, molecule2)) {
+								_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,0,dd);
+							}
+							else{
+								_particlePairsHandler.processPair(molecule1,molecule2,distanceVector,1,dd);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// loop over halo cells and detect Tersoff neighbours within the halo
+	// this is relevant for the angle summation
+	for( subCellIndexIter = _haloSubCellIndices.begin(); subCellIndexIter != _haloSubCellIndices.end(); subCellIndexIter++ )
+	{
+		unsigned long i = *subCellIndexIter;
+		Cell& currentSubCell = _subCells[i];
+
+		for( molIter1 = currentSubCell.getParticlePointers().begin(); molIter1 != currentSubCell.getParticlePointers().end(); molIter1++ )
+		{
+			Molecule& molecule1 = **molIter1;
+			if( molecule1.numTersoff() == 0 ) continue; 
+
+			molIter2 = molIter1;
+			molIter2++;
+			for( ; molIter2 != currentSubCell.getParticlePointers().end(); molIter2++ )
+			{
+				Molecule& molecule2 = **molIter2;
+				assert( &molecule1 != &molecule2 );
+				if( molecule2.numTersoff() > 0 )
+				{ 
+					double dd = molecule2.dist2( molecule1, distanceVector );
+					if( dd < tersoffCutoffRadiusSquare )
+						_particlePairsHandler.preprocessTersoffPair(molecule1, molecule2, true);
+				}
+			}
+
+			for( neighbourSubOffsetsIter = _forwardNeighbourSubOffsets[i].begin();
+					neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[i].end();
+					neighbourSubOffsetsIter++ )
+			{
+				unsigned long j = i + *neighbourSubOffsetsIter;
+				// FIXME: moved the following checks to asserts, as this should never happen!?
+				/* if( (j < 0) || ( j >= (int)( _subCells.size() ) ) ) 
+				 * continue;
+				 */
+				assert( i >= *neighbourSubOffsetsIter);
+				assert( j < _subCells.size() );
+				Cell& neighbourSubCell = _subCells[j];
+				if(!neighbourSubCell.isHaloCell()) continue;
+				for( molIter2 = neighbourSubCell.getParticlePointers().begin();
+						molIter2 != neighbourSubCell.getParticlePointers().end();
+						molIter2++ )
+				{
+					Molecule& molecule2 = **molIter2;
+					if(molecule2.numTersoff() == 0) continue;
+					double dd = molecule2.dist2(molecule1, distanceVector);
+					if(dd < tersoffCutoffRadiusSquare)
+						_particlePairsHandler.preprocessTersoffPair(molecule1, molecule2, true);
+				}
+			}
+		}
+	}
+
+	global_log->info() << "processing Tersoff potential." << endl;
+
+	double params[15];
+	double delta_r;
+	bool knowparams = false;
+
+	for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
+		if( subCellIndexIter == _innerSubCellIndices.end() )
+			subCellIndexIter = _boundarySubCellIndices.begin();
+		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		for( molIter1=currentSubCell.getParticlePointers().begin();
+				molIter1!=currentSubCell.getParticlePointers().end();
+				molIter1++ )
+		{
+			Molecule& molecule1 = **molIter1;
+			if(molecule1.numTersoff() == 0) continue;
+			if(!knowparams)
+			{
+				delta_r = molecule1.tersoffParameters(params);
+				knowparams = true;
+			}
+			_particlePairsHandler.processTersoffAtom(molecule1, params, delta_r);
+		}
+	}
+
+	_particlePairsHandler.finish();
 }
 
 double AdaptiveSubCells::getEnergy(Molecule* m1)
 {
-   double u = 0.0;
-   double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius; 
-   double dd;
-   double distanceVector[3];
-   std::list<Molecule*>::iterator molIter2;
-   unsigned long m1id = m1->id();
+	double u = 0.0;
+	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius; 
+	double dd;
+	double distanceVector[3];
+	std::list<Molecule*>::iterator molIter2;
+	unsigned long m1id = m1->id();
 
-   unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
-   Cell& currentSubCell = _subCells[subCellIndex];
-   vector<unsigned long>::iterator subCellIndexIter;
-   vector<unsigned long>::iterator neighbourSubOffsetsIter;
+	unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
+	Cell& currentSubCell = _subCells[subCellIndex];
+	vector<unsigned long>::iterator subCellIndexIter;
+	vector<unsigned long>::iterator neighbourSubOffsetsIter;
 
-   if(m1->numTersoff() > 0)
-   {
-      cout << "The grand canonical ensemble is not implemented for solids.\n";
-      exit(848);
-   }
-   // molecules in the same subCell
-   for( molIter2=currentSubCell.getParticlePointers().begin();
-        molIter2!=currentSubCell.getParticlePointers().end();
-        molIter2++ )
-   {
-      if(m1id == (*molIter2)->id()) continue;
-      dd = (*molIter2)->dist2(*m1, distanceVector);
-      if(dd > cutoffRadiusSquare) continue;
-      u += this->_particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
-   }
+	if(m1->numTersoff() > 0)
+	{
+		global_log->error() << "The grand canonical ensemble is not implemented for solids.\n";
+		exit(848);
+	}
+	// molecules in the same subCell
+	for( molIter2=currentSubCell.getParticlePointers().begin();
+			molIter2!=currentSubCell.getParticlePointers().end();
+			molIter2++ )
+	{
+		if(m1id == (*molIter2)->id()) continue;
+		dd = (*molIter2)->dist2(*m1, distanceVector);
+		if(dd > cutoffRadiusSquare) continue;
+		u += _particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
+	}
 
-   // loop over all forward neighbours
-   for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[subCellIndex].begin();
-        neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[subCellIndex].end();
-        neighbourSubOffsetsIter++ )
-   {
-      Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
-      // loop over all particles in the subCell
-      for( molIter2=neighbourSubCell.getParticlePointers().begin();
-           molIter2!=neighbourSubCell.getParticlePointers().end();
-           molIter2++ )
-      {
-	 dd = (*molIter2)->dist2(*m1, distanceVector);
-	 if(dd > cutoffRadiusSquare) continue;
-	 u += this->_particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
-      }
-   }
-   // loop over all backward neighbours
-   for( neighbourSubOffsetsIter =_backwardNeighbourSubOffsets[subCellIndex].begin();
-        neighbourSubOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end();
-        neighbourSubOffsetsIter++ )
-   {
-      Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
-      // loop over all particles in the subCell
-      for( molIter2=neighbourSubCell.getParticlePointers().begin();
-           molIter2!=neighbourSubCell.getParticlePointers().end();
-           molIter2++ )
-      {
-	 dd = (*molIter2)->dist2(*m1, distanceVector);
-	 if(dd > cutoffRadiusSquare) continue;
-	 u += this->_particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
-      }
-   }
-   
-   return u;
+	// loop over all forward neighbours
+	for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[subCellIndex].begin();
+			neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[subCellIndex].end();
+			neighbourSubOffsetsIter++ )
+	{
+		Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
+		// loop over all particles in the subCell
+		for( molIter2=neighbourSubCell.getParticlePointers().begin();
+				molIter2!=neighbourSubCell.getParticlePointers().end();
+				molIter2++ )
+		{
+			dd = (*molIter2)->dist2(*m1, distanceVector);
+			if(dd > cutoffRadiusSquare) continue;
+			u += _particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
+		}
+	}
+	// loop over all backward neighbours
+	for( neighbourSubOffsetsIter =_backwardNeighbourSubOffsets[subCellIndex].begin();
+			neighbourSubOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end();
+			neighbourSubOffsetsIter++ )
+	{
+		Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
+		// loop over all particles in the subCell
+		for( molIter2=neighbourSubCell.getParticlePointers().begin();
+				molIter2!=neighbourSubCell.getParticlePointers().end();
+				molIter2++ )
+		{
+			dd = (*molIter2)->dist2(*m1, distanceVector);
+			if(dd > cutoffRadiusSquare) continue;
+			u += _particlePairsHandler.processPair(*m1, **molIter2, distanceVector, 2, dd);
+		}
+	}
+
+	return u;
 }
 
 unsigned long AdaptiveSubCells::getNumberOfParticles(){
-  return _particles.size(); 
+	return _particles.size(); 
 }      
 
 // this method remains unchanged
 
 Molecule* AdaptiveSubCells::begin(){
-  _particleIter = _particles.begin();
-  if(_particleIter != _particles.end()){
-    return &(*_particleIter);
-  }
-  else {
-    return NULL;
-  }
+	_particleIter = _particles.begin();
+	if(_particleIter != _particles.end()){
+		return &(*_particleIter);
+	}
+	else {
+		return NULL;
+	}
 }
 
 // this method remains unchanged
 
 Molecule* AdaptiveSubCells::next(){
-  _particleIter++;
-  if(_particleIter != _particles.end()){
-    return &(*_particleIter);
-  }
-  else {
-    return NULL;
-  }
+	_particleIter++;
+	if(_particleIter != _particles.end()){
+		return &(*_particleIter);
+	}
+	else {
+		return NULL;
+	}
 }
 
 // this method remains unchanged
 
 Molecule* AdaptiveSubCells::end(){
-  return NULL;
+	return NULL;
 }
 
 // this method remains unchanged
@@ -699,129 +707,129 @@ Molecule* AdaptiveSubCells::deleteCurrent ()
 // this method remains unchanged
 
 void AdaptiveSubCells::deleteOuterParticles(){
-  if(_cellsValid == false) {
-    cerr << "Cell structure in AdaptiveSubCells (deleteOuterParticles) invalid, call update first" << endl;
-    exit(1);
-  }
+	if(_cellsValid == false) {
+		global_log->error() << "Cell structure in AdaptiveSubCells (deleteOuterParticles) invalid, call update first" << endl;
+		exit(1);
+	}
 
-  vector<unsigned long>::iterator subCellIndexIter;
-  //std::list<Molecule*>::iterator molIter1;
-  for(subCellIndexIter=_haloSubCellIndices.begin(); subCellIndexIter!=_haloSubCellIndices.end(); subCellIndexIter++){
-    Cell& currentSubCell = _subCells[*subCellIndexIter];
-    currentSubCell.removeAllParticles();
-  }
+	vector<unsigned long>::iterator subCellIndexIter;
+	//std::list<Molecule*>::iterator molIter1;
+	for(subCellIndexIter=_haloSubCellIndices.begin(); subCellIndexIter!=_haloSubCellIndices.end(); subCellIndexIter++){
+		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		currentSubCell.removeAllParticles();
+	}
 
 
-  std::list<Molecule>::iterator particleIterator = _particles.begin();
-  bool erase_mol;
-  while(particleIterator!=_particles.end()){
-    erase_mol = false;
-    for(unsigned short d=0;d<3;++d){
-      const double& rd=particleIterator->r(d);
-      // The molecules has to be within the domain of the process
-      // If it is outside in at least one dimension, it has to be
-      // erased /
-      if(rd<this->_boundingBoxMin[d] || rd>=this->_boundingBoxMax[d]) erase_mol = true;
-    }
-    if(erase_mol) {
-      particleIterator=_particles.erase(particleIterator);
-    }
-    else{
-      particleIterator++;
-    }
-  }
+	std::list<Molecule>::iterator particleIterator = _particles.begin();
+	bool erase_mol;
+	while(particleIterator!=_particles.end()){
+		erase_mol = false;
+		for(unsigned short d=0;d<3;++d){
+			const double& rd=particleIterator->r(d);
+			// The molecules has to be within the domain of the process
+			// If it is outside in at least one dimension, it has to be
+			// erased /
+			if(rd < _boundingBoxMin[d] || rd >= _boundingBoxMax[d]) erase_mol = true;
+		}
+		if(erase_mol) {
+			particleIterator=_particles.erase(particleIterator);
+		}
+		else{
+			particleIterator++;
+		}
+	}
 }
 
 // this method remains unchanged
 
 double AdaptiveSubCells::get_halo_L(int index){
-  return _haloLength[index]; 
+	return _haloLength[index]; 
 }
 
 void AdaptiveSubCells::getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs){
-  if(_cellsValid == false) {
-    cerr << "Cell structure in AdaptiveSubCells (getBoundaryParticles) invalid, call update first" << endl;
-    exit(1);
-  }
+	if(_cellsValid == false) {
+		global_log->error() << "Cell structure in AdaptiveSubCells (getBoundaryParticles) invalid, call update first" << endl;
+		exit(1);
+	}
 
-  std::list<Molecule*>::iterator particlePtrIter;
-  vector<unsigned long>::iterator subCellIndexIter; 
-  
-  // loop over all boundary cells
-  for(subCellIndexIter=_boundarySubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
-    Cell& currentSubCell = _subCells[*subCellIndexIter];
-    // loop over all molecules in the cell
-    for(particlePtrIter=currentSubCell.getParticlePointers().begin(); particlePtrIter!=currentSubCell.getParticlePointers().end(); particlePtrIter++){
-      boundaryParticlePtrs.push_back(*particlePtrIter);
-    }
-  }
+	std::list<Molecule*>::iterator particlePtrIter;
+	vector<unsigned long>::iterator subCellIndexIter; 
+
+	// loop over all boundary cells
+	for(subCellIndexIter=_boundarySubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
+		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		// loop over all molecules in the cell
+		for(particlePtrIter=currentSubCell.getParticlePointers().begin(); particlePtrIter!=currentSubCell.getParticlePointers().end(); particlePtrIter++){
+			boundaryParticlePtrs.push_back(*particlePtrIter);
+		}
+	}
 }
 
 void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs){
-  if(_cellsValid == false) {
-    cerr << "Cell structure in AdaptiveSubCells (getHaloParticles) invalid, call update first" << endl;
-    exit(1);
-  }
+	if(_cellsValid == false) {
+		global_log->error() << "Cell structure in AdaptiveSubCells (getHaloParticles) invalid, call update first" << endl;
+		exit(1);
+	}
 
-  std::list<Molecule*>::iterator particlePtrIter;
-  vector<unsigned long>::iterator subCellIndexIter; 
-  
-  // loop over all halo cells
-  for(subCellIndexIter=_haloSubCellIndices.begin(); subCellIndexIter!=_haloSubCellIndices.end(); subCellIndexIter++){
-    Cell& currentSubCell = _subCells[*subCellIndexIter];
-    // loop over all molecules in the cell
-    for(particlePtrIter=currentSubCell.getParticlePointers().begin(); particlePtrIter!=currentSubCell.getParticlePointers().end(); particlePtrIter++){
-      haloParticlePtrs.push_back(*particlePtrIter);
-    }
-  }
+	std::list<Molecule*>::iterator particlePtrIter;
+	vector<unsigned long>::iterator subCellIndexIter; 
+
+	// loop over all halo cells
+	for(subCellIndexIter=_haloSubCellIndices.begin(); subCellIndexIter!=_haloSubCellIndices.end(); subCellIndexIter++){
+		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		// loop over all molecules in the cell
+		for(particlePtrIter=currentSubCell.getParticlePointers().begin(); particlePtrIter!=currentSubCell.getParticlePointers().end(); particlePtrIter++){
+			haloParticlePtrs.push_back(*particlePtrIter);
+		}
+	}
 }
 
 void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs){
-  if(_cellsValid == false) {
-    cerr << "Cell structure in AdaptiveSubCells (getRegion) invalid, call update first" << endl;
-    exit(1);
-  }
-  int startIndex[3];
-  int stopIndex[3];
-  int globalCellIndex;
-  std::list<Molecule*>::iterator particleIter;
-  
-  for(int dim=0; dim<3; dim++){
-    if(lowCorner[dim] < this->_boundingBoxMax[dim] && highCorner[dim] > this->_boundingBoxMin[dim]){
-      startIndex[dim] = (int) floor((lowCorner[dim]-_haloBoundingBoxMin[dim])/_cellLength[dim]) - 1;
-      stopIndex[dim] = (int) floor((highCorner[dim]-_haloBoundingBoxMin[dim])/_cellLength[dim]) + 1;
-      if(startIndex[dim] < 0) startIndex[dim] = 0; 
-      if(stopIndex[dim] > _cellsPerDimension[dim]-1) stopIndex[dim] = _cellsPerDimension[dim]-1;
-    }
-    else{
-      // No Part of the given region is owned by this process
-      // --> chose some startIndex which is higher than the stopIndex
-      startIndex[dim] = 1;
-      stopIndex[dim] = 0;
-    }
-  }
+	if(_cellsValid == false) {
+		global_log->error() << "Cell structure in AdaptiveSubCells (getRegion) invalid, call update first" << endl;
+		exit(1);
+	}
+	int startIndex[3];
+	int stopIndex[3];
+	int globalCellIndex;
+	std::list<Molecule*>::iterator particleIter;
 
-  for(int iz=startIndex[2]; iz <=stopIndex[2]; iz++){
-    for(int iy=startIndex[1]; iy <=stopIndex[1]; iy++){
-      for(int ix=startIndex[0]; ix <=stopIndex[0]; ix++){
-        // globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
-        globalCellIndex=(iz*_cellsPerDimension[1]+iy) * _cellsPerDimension[0] + ix;
-        // loop over all subcells (either 1 or 8)
-        for(int sCIdx = _metaCellIndex[globalCellIndex]; 
-            sCIdx < _metaCellIndex[globalCellIndex+1]; sCIdx++){
-          // traverse all molecules in the current cell
-          for(particleIter=_subCells[sCIdx].getParticlePointers().begin();
-              particleIter!=_subCells[sCIdx].getParticlePointers().end(); particleIter++){
-            if((*particleIter)->r(0) >= lowCorner[0] && (*particleIter)->r(0) < highCorner[0] &&
-               (*particleIter)->r(1) >= lowCorner[1] && (*particleIter)->r(1) < highCorner[1] &&
-               (*particleIter)->r(2) >= lowCorner[2] && (*particleIter)->r(2) < highCorner[2]) {
-              particlePtrs.push_back(*particleIter);
-            }
-          }
-        }
-      }
-    }
-  }
+	for(int dim=0; dim<3; dim++){
+		if(lowCorner[dim] < _boundingBoxMax[dim] && highCorner[dim] > _boundingBoxMin[dim]){
+			startIndex[dim] = (int) floor((lowCorner[dim]-_haloBoundingBoxMin[dim])/_cellLength[dim]) - 1;
+			stopIndex[dim] = (int) floor((highCorner[dim]-_haloBoundingBoxMin[dim])/_cellLength[dim]) + 1;
+			if(startIndex[dim] < 0) startIndex[dim] = 0; 
+			if(stopIndex[dim] > _cellsPerDimension[dim]-1) stopIndex[dim] = _cellsPerDimension[dim]-1;
+		}
+		else{
+			// No Part of the given region is owned by this process
+			// --> chose some startIndex which is higher than the stopIndex
+			startIndex[dim] = 1;
+			stopIndex[dim] = 0;
+		}
+	}
+
+	for(int iz=startIndex[2]; iz <=stopIndex[2]; iz++){
+		for(int iy=startIndex[1]; iy <=stopIndex[1]; iy++){
+			for(int ix=startIndex[0]; ix <=stopIndex[0]; ix++){
+				// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
+				globalCellIndex=(iz*_cellsPerDimension[1]+iy) * _cellsPerDimension[0] + ix;
+				// loop over all subcells (either 1 or 8)
+				for(int sCIdx = _metaCellIndex[globalCellIndex]; 
+						sCIdx < _metaCellIndex[globalCellIndex+1]; sCIdx++){
+					// traverse all molecules in the current cell
+					for(particleIter=_subCells[sCIdx].getParticlePointers().begin();
+							particleIter!=_subCells[sCIdx].getParticlePointers().end(); particleIter++){
+						if((*particleIter)->r(0) >= lowCorner[0] && (*particleIter)->r(0) < highCorner[0] &&
+								(*particleIter)->r(1) >= lowCorner[1] && (*particleIter)->r(1) < highCorner[1] &&
+								(*particleIter)->r(2) >= lowCorner[2] && (*particleIter)->r(2) < highCorner[2]) {
+							particlePtrs.push_back(*particleIter);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 //################################################
@@ -831,594 +839,591 @@ void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], list
 // assigns each subCell to the inner, boundary or halo region
 
 void AdaptiveSubCells::initializeSubCells(){
-  _innerSubCellIndices.clear();
-  _boundarySubCellIndices.clear();
-  _haloSubCellIndices.clear();
-  int subCellIndex, nextSubCellIndex;
-  for(int iz=0; iz<_cellsPerDimension[2]; ++iz) {
-    for(int iy=0; iy<_cellsPerDimension[1]; ++iy) {
-      for(int ix=0; ix<_cellsPerDimension[0]; ++ix) {
-        // calls the method that computes the subCellIndex of the current coarse Cell  
-        // maybe there's an inline method possible!
-        subCellIndex = subCellIndexOf3DIndex(ix,iy,iz);
-        // nextSubCellIndex is the index of the subCell that corresponds with (cellIndex + 1)
-        nextSubCellIndex = subCellIndexOf3DIndex(ix+1,iy,iz);
-        if(ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] ||
-           ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
-           iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||
-           iz >= _cellsPerDimension[2]-_haloWidthInNumCells[2]){
-          // assign the (first) subCell to the halo region
-          _subCells[subCellIndex].assingCellToHaloRegion();
-          _haloSubCellIndices.push_back(subCellIndex);
-          // if nextSubCellIndex-subCellIndex == 8 (or 7, at the end of the array) the current Cell contains subCells 
-          if(nextSubCellIndex-subCellIndex > 1){
-            for(int i=1; i<8; i++){
-              // assign the remaining 7 subCells to the halo region
-              _subCells[subCellIndex+i].assingCellToHaloRegion();
-              _haloSubCellIndices.push_back(subCellIndex);
-            }
-          }  
-        }
-        else if (ix < 2*_haloWidthInNumCells[0] || iy < 2*_haloWidthInNumCells[1] || iz < 2*_haloWidthInNumCells[2] ||
-                 ix >= _cellsPerDimension[0]-2*_haloWidthInNumCells[0] ||
-                 iy >= _cellsPerDimension[1]-2*_haloWidthInNumCells[1] ||
-                 iz >= _cellsPerDimension[2]-2*_haloWidthInNumCells[2]){
-          // assign the (first) subCell to the boundary region
-          _subCells[subCellIndex].assignCellToBoundaryRegion();
-          _boundarySubCellIndices.push_back(subCellIndex);
-          // if nextSubCellIndex-subCellIndex > 1 the current Cell contains subCells 
-          if(nextSubCellIndex-subCellIndex > 1){
-            for(int i=1; i<8; i++){
-              // assign the remaining 7 subCells to the boundary region
-              _subCells[subCellIndex+i].assignCellToBoundaryRegion();
-              _boundarySubCellIndices.push_back(subCellIndex+i);
-            }
-          }  
-        }
-        else {
-          // assign the (first) subCell to the inner region
-          _subCells[subCellIndex].assignCellToInnerRegion();
-          _innerSubCellIndices.push_back(subCellIndex);
-          // if nextSubCellIndex-subCellIndex > 1 the current Cell contains subCells 
-          if(nextSubCellIndex-subCellIndex > 1){
-            for(int i=1; i<8; i++){
-              // assign the remaining 7 subCells to the inner region
-              _subCells[subCellIndex+i].assignCellToInnerRegion();
-              _innerSubCellIndices.push_back(subCellIndex+i);
-            }
-          }
-        }
-      }
-    }
-  }
+	_innerSubCellIndices.clear();
+	_boundarySubCellIndices.clear();
+	_haloSubCellIndices.clear();
+	int subCellIndex, nextSubCellIndex;
+	for(int iz=0; iz<_cellsPerDimension[2]; ++iz) {
+		for(int iy=0; iy<_cellsPerDimension[1]; ++iy) {
+			for(int ix=0; ix<_cellsPerDimension[0]; ++ix) {
+				// calls the method that computes the subCellIndex of the current coarse Cell  
+				// maybe there's an inline method possible!
+				subCellIndex = subCellIndexOf3DIndex(ix,iy,iz);
+				// nextSubCellIndex is the index of the subCell that corresponds with (cellIndex + 1)
+				nextSubCellIndex = subCellIndexOf3DIndex(ix+1,iy,iz);
+				if(ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] ||
+						ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
+						iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||
+						iz >= _cellsPerDimension[2]-_haloWidthInNumCells[2]){
+					// assign the (first) subCell to the halo region
+					_subCells[subCellIndex].assingCellToHaloRegion();
+					_haloSubCellIndices.push_back(subCellIndex);
+					// if nextSubCellIndex-subCellIndex == 8 (or 7, at the end of the array) the current Cell contains subCells 
+					if(nextSubCellIndex-subCellIndex > 1){
+						for(int i=1; i<8; i++){
+							// assign the remaining 7 subCells to the halo region
+							_subCells[subCellIndex+i].assingCellToHaloRegion();
+							_haloSubCellIndices.push_back(subCellIndex);
+						}
+					}  
+				}
+				else if (ix < 2*_haloWidthInNumCells[0] || iy < 2*_haloWidthInNumCells[1] || iz < 2*_haloWidthInNumCells[2] ||
+						ix >= _cellsPerDimension[0]-2*_haloWidthInNumCells[0] ||
+						iy >= _cellsPerDimension[1]-2*_haloWidthInNumCells[1] ||
+						iz >= _cellsPerDimension[2]-2*_haloWidthInNumCells[2]){
+					// assign the (first) subCell to the boundary region
+					_subCells[subCellIndex].assignCellToBoundaryRegion();
+					_boundarySubCellIndices.push_back(subCellIndex);
+					// if nextSubCellIndex-subCellIndex > 1 the current Cell contains subCells 
+					if(nextSubCellIndex-subCellIndex > 1){
+						for(int i=1; i<8; i++){
+							// assign the remaining 7 subCells to the boundary region
+							_subCells[subCellIndex+i].assignCellToBoundaryRegion();
+							_boundarySubCellIndices.push_back(subCellIndex+i);
+						}
+					}  
+				}
+				else {
+					// assign the (first) subCell to the inner region
+					_subCells[subCellIndex].assignCellToInnerRegion();
+					_innerSubCellIndices.push_back(subCellIndex);
+					// if nextSubCellIndex-subCellIndex > 1 the current Cell contains subCells 
+					if(nextSubCellIndex-subCellIndex > 1){
+						for(int i=1; i<8; i++){
+							// assign the remaining 7 subCells to the inner region
+							_subCells[subCellIndex+i].assignCellToInnerRegion();
+							_innerSubCellIndices.push_back(subCellIndex+i);
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 
 void AdaptiveSubCells::calculateSubNeighbourIndices() {
-  // The distance between two coarse cells (the centers of the cells) in each coordinate
-  // direction can be expressed using the unit "coarse cells" (Distance to a direct
-  // neighbour 1, e.g.) Now the distance between find cells (of fine and coarse cells) 
-  // shall be expressed using the same unit. The centre of a subcell is shifted by
-  // a absolute value of 0.25 in each coordinate direction compared to the centre of
-  // the corresponding coarse cell. The following table shows the shift for subcell
-  // 0 to 7 and all three coordinate direction.
-  // dir \ k|   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
-  //   x    | -0.25 | +0.25 | -0.25 | +0.25 | -0.25 | +0.25 | -0.25 | +0.25 | 
-  //   y    | -0.25 | -0.25 | +0.25 | +0.25 | -0.25 | -0.25 | +0.25 | +0.25 | 
-  //   z    | -0.25 | -0.25 | -0.25 | -0.25 | +0.25 | +0.25 | +0.25 | +0.25 | 
-  // those values are stored in subCellShifts and are needed for the distance calculation
-  double subCellShifts[3][8] = {{-0.25, +0.25, -0.25, +0.25, -0.25, +0.25, -0.25, +0.25}, 
-                                {-0.25, -0.25, +0.25, +0.25, -0.25, -0.25, +0.25, +0.25},
-                                {-0.25, -0.25, -0.25, -0.25, +0.25, +0.25, +0.25, +0.25}};
-  // The values of the following variables {x,y,z}CoarseCellDistanceNotZero are used for the 
-  // distance calculations of the subcells and have two possible values: 1.0 and 0.0
-  // If the corresponding coarse cells don't have a distance in a given coordinate direction
-  // (e.g. xIndex = 0), then the minimal distance between the subcells is also Zero, 
-  // and therefore {x,y,z}CoarseCellDistanceNotZero is 0.0 e.g.:
-  // ========================
-  // || a3 | a4 || b3 | b4 ||
-  // ||----A----||----B----||
-  // || a1 | a2 || b1 | b2 ||
-  // ========================
-  // In this example, The distance, yIndex=0, so the centers of A and B have the same y-value
-  // The minimal distance in y-direction between two subcells is in this case always zero
-  // in all other cases {x,y,z}CoarseCellDistanceNotZero is 1.0.
-  double xCoarseCellDistanceNotZero, yCoarseCellDistanceNotZero, zCoarseCellDistanceNotZero;
-  // the minimum squared distance between 2 cells for each spacial dimension is stored in
-  // the variables  xDistanceSquare, yDistanceSquare and zDistanceSquare.
-  // The spacial offsets for the local subCells (...K) and the neighbouring 
-  // subCells (...P) must be taken into regard when calculating the distance.
-  // Consider the two coarse cells A and B in the following picture.
-  // ========================
-  // || a3 | a4 || b3 | b4 ||
-  // ||----A----||----B----||
-  // || a1 | a2 || b1 | b2 ||
-  // ========================
-  // Both cells have been refined.
-  // xIndex can be seen as distance (unit: cells) between A and B, which
-  // is in this case 1. Now let's consider the distance between a1 and b2.
-  // The centre of SubCell a1 is shifted by -0.25 compared to the centre
-  // of the coarse Cell A, this shift is stored in subCellShift[0][k].
-  // For b2, a shift of 0.25 is stored in subCellShift[0][p]. The distance
-  // between b2 and a1 is abs(position_of_b2 - position_of_a1)
-  // Let position_of_b2 be (xIndex+subCellShift[0][p]) = (1+0.25) = 1.25.
-  // Then position_of_a1 is subCellShift[0][k] = -0.25
-  // ==> distance = abs(position_of_b2 - position_of_a1) = abs(1.25 - (- 0.25))
-  //              = 1.5
-  // From this value, 0.5 has to be substracted (but only if the distance is not
-  // zero, so if e.g. xIndex is not null, see variable xCoarseCellDistanceNotZero) 
-  // as 1.5 is the distance between the to cell centers. The distance of the center 
-  // to the border is 0.25 for subCells. For the "real" distance, the resulting
-  // value (here 1.0) has to be multiplied with the cellLength.
-  double xDistanceSquare, yDistanceSquare, zDistanceSquare; 
-  int coarseCellOffset;  // Each cell is either a coarse cell or is located in a coarse cell. For 
-                         // two neighbouring cells, coarseCellOffset is the index offset of the
-                         // corresponding coarse cells in the vector _cells
-  int metaCellOffset;    // Each coarse cell (or "meta" cell if the cell is refined) has also an index in
-                         // the vector _subCells, which contains coarse and fine cells. metaCellOffset is
-                         // the index offset of two coarse of "meta" cellsin the vector _subCells
-  int SubCellOffset;     // The offset between two arbitrary (coarse or fine) cells in the vector _subCells
-  double cutoffRadiusSquare = pow(_cutoffRadius, 2); // square of the _cutoffRadius
-  
-  // clear the old neighbour offsets of the last adaptive grid in order to create room for the new offsets
-  for (unsigned int f=0; f<_subCells.size(); f++) {
-    _forwardNeighbourSubOffsets[f].clear();
-    _backwardNeighbourSubOffsets[f].clear();
-  }
-  // loop over all cellIndices of the coarse grid
-  // @todo only necessary cells!
-  for (unsigned int i=0; i<_cells.size(); i++) {
-    // If two coarse cells, which have a index difference of 1 (cell i and cell /i+1) in the
-    // array _cells (usually direct neighbours in x-direction) have an index difference of
-    // 8 in the array _subCells (corresponding indeces stored in _metaCellIndex, then the 
-    // cell i is refined and countains 8 subcells. Otherwise the index difference is 1 and 
-    // cell i is not refined.
-    if (_metaCellIndex[i+1]-_metaCellIndex[i]==8) {
-      // loop over all local subCells 
-      for (int k=0; k<8; k++) {
-        // first find the neighbours whithin the cell itself (7 other subCells)
-        // compute the forward index offsets of the local subCells
-        for (int l=k+1; l<8; l++) {
-          SubCellOffset=(int) (l-k);
-          _forwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
-        }
-        // compute the backward index offsets of the local subCells
-        for (int m=0; m<k; m++) {
-          SubCellOffset=(int) (m-k);
-          _backwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
-        }
-        // loop over all neighbouring ("continue" in case of the cell itself) coarse cells
-        for (int zIndex=-_haloWidthInNumCells[2]; zIndex<=_haloWidthInNumCells[2]; zIndex++) {
-          for (int yIndex=-_haloWidthInNumCells[1]; yIndex<=_haloWidthInNumCells[1]; yIndex++) {
-            for (int xIndex=-_haloWidthInNumCells[0]; xIndex<=_haloWidthInNumCells[0]; xIndex++) {
-              // The cell itself should not be searched for neighbours!
-              if(xIndex==0 && yIndex==0 && zIndex==0) continue;
-              // compute the global coarseCellOffset for the current coarse grid neighbour cell
-              coarseCellOffset = (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
-              // _cells.size()-1 is the upper cellIndex boundary! So i + coarseCellOffset must be smaller than _cells.size()
-              // @todo only calculate neighbour offets for necessary cells, so this  if  could then be removed
-              if((int)i+coarseCellOffset<(int)_cells.size()){
-                // check for each dimension if the cells have the same coordinate value in that dimension
-                if(xIndex == 0) xCoarseCellDistanceNotZero = 0.0;
-                else xCoarseCellDistanceNotZero = 1.0;
-                if(yIndex == 0) yCoarseCellDistanceNotZero = 0.0;
-                else yCoarseCellDistanceNotZero = 1.0;
-                if(zIndex == 0) zCoarseCellDistanceNotZero = 0.0;
-                else zCoarseCellDistanceNotZero = 1.0;
+	// The distance between two coarse cells (the centers of the cells) in each coordinate
+	// direction can be expressed using the unit "coarse cells" (Distance to a direct
+	// neighbour 1, e.g.) Now the distance between find cells (of fine and coarse cells) 
+	// shall be expressed using the same unit. The centre of a subcell is shifted by
+	// a absolute value of 0.25 in each coordinate direction compared to the centre of
+	// the corresponding coarse cell. The following table shows the shift for subcell
+	// 0 to 7 and all three coordinate direction.
+	// dir \ k|   0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
+	//   x    | -0.25 | +0.25 | -0.25 | +0.25 | -0.25 | +0.25 | -0.25 | +0.25 | 
+	//   y    | -0.25 | -0.25 | +0.25 | +0.25 | -0.25 | -0.25 | +0.25 | +0.25 | 
+	//   z    | -0.25 | -0.25 | -0.25 | -0.25 | +0.25 | +0.25 | +0.25 | +0.25 | 
+	// those values are stored in subCellShifts and are needed for the distance calculation
+	double subCellShifts[3][8] = {{-0.25, +0.25, -0.25, +0.25, -0.25, +0.25, -0.25, +0.25}, 
+		{-0.25, -0.25, +0.25, +0.25, -0.25, -0.25, +0.25, +0.25},
+		{-0.25, -0.25, -0.25, -0.25, +0.25, +0.25, +0.25, +0.25}};
+	// The values of the following variables {x,y,z}CoarseCellDistanceNotZero are used for the 
+	// distance calculations of the subcells and have two possible values: 1.0 and 0.0
+	// If the corresponding coarse cells don't have a distance in a given coordinate direction
+	// (e.g. xIndex = 0), then the minimal distance between the subcells is also Zero, 
+	// and therefore {x,y,z}CoarseCellDistanceNotZero is 0.0 e.g.:
+	// ========================
+	// || a3 | a4 || b3 | b4 ||
+	// ||----A----||----B----||
+	// || a1 | a2 || b1 | b2 ||
+	// ========================
+	// In this example, The distance, yIndex=0, so the centers of A and B have the same y-value
+	// The minimal distance in y-direction between two subcells is in this case always zero
+	// in all other cases {x,y,z}CoarseCellDistanceNotZero is 1.0.
+	double xCoarseCellDistanceNotZero, yCoarseCellDistanceNotZero, zCoarseCellDistanceNotZero;
+	// the minimum squared distance between 2 cells for each spacial dimension is stored in
+	// the variables  xDistanceSquare, yDistanceSquare and zDistanceSquare.
+	// The spacial offsets for the local subCells (...K) and the neighbouring 
+	// subCells (...P) must be taken into regard when calculating the distance.
+	// Consider the two coarse cells A and B in the following picture.
+	// ========================
+	// || a3 | a4 || b3 | b4 ||
+	// ||----A----||----B----||
+	// || a1 | a2 || b1 | b2 ||
+	// ========================
+	// Both cells have been refined.
+	// xIndex can be seen as distance (unit: cells) between A and B, which
+	// is in this case 1. Now let's consider the distance between a1 and b2.
+	// The centre of SubCell a1 is shifted by -0.25 compared to the centre
+	// of the coarse Cell A, this shift is stored in subCellShift[0][k].
+	// For b2, a shift of 0.25 is stored in subCellShift[0][p]. The distance
+	// between b2 and a1 is abs(position_of_b2 - position_of_a1)
+	// Let position_of_b2 be (xIndex+subCellShift[0][p]) = (1+0.25) = 1.25.
+	// Then position_of_a1 is subCellShift[0][k] = -0.25
+	// ==> distance = abs(position_of_b2 - position_of_a1) = abs(1.25 - (- 0.25))
+	//              = 1.5
+	// From this value, 0.5 has to be substracted (but only if the distance is not
+	// zero, so if e.g. xIndex is not null, see variable xCoarseCellDistanceNotZero) 
+	// as 1.5 is the distance between the to cell centers. The distance of the center 
+	// to the border is 0.25 for subCells. For the "real" distance, the resulting
+	// value (here 1.0) has to be multiplied with the cellLength.
+	double xDistanceSquare, yDistanceSquare, zDistanceSquare; 
+	int coarseCellOffset;  // Each cell is either a coarse cell or is located in a coarse cell. For 
+	// two neighbouring cells, coarseCellOffset is the index offset of the
+	// corresponding coarse cells in the vector _cells
+	int metaCellOffset;    // Each coarse cell (or "meta" cell if the cell is refined) has also an index in
+	// the vector _subCells, which contains coarse and fine cells. metaCellOffset is
+	// the index offset of two coarse of "meta" cellsin the vector _subCells
+	int SubCellOffset;     // The offset between two arbitrary (coarse or fine) cells in the vector _subCells
+	double cutoffRadiusSquare = pow(_cutoffRadius, 2); // square of the _cutoffRadius
 
-                // Index Offset of the two coarse cells in the array _subCells
-                metaCellOffset=_metaCellIndex[i+coarseCellOffset]-_metaCellIndex[i];
-                // if "delta"==8 the neighbour Cell with index i+coarseCellOffset contains subCells 
-                // ##################################
-                // ## CASE 1: BOTH CELLS REFINED   ##
-                // ##################################
-                if(_metaCellIndex[i+coarseCellOffset+1]-_metaCellIndex[i+coarseCellOffset]==8){
-                  // loop over all subCells that the neighbour Cell contains 
-                  for(int p=0; p<8; p++){
-                    // compute the minimum distance between 2 cells for each spacial dimension. 
-                    // The spacial offsets for the local subCells (...K) and the neighbouring 
-                    // subCells (...P) must be taken into regard.
-                    // Consider the two coarse cells A and B in the following picture.
-                    // ========================
-                    // || a3 | a4 || b3 | b4 ||
-                    // ||----A----||----B----||
-                    // || a1 | a2 || b1 | b2 ||
-                    // ========================
-                    // xIndex can be seen as distance (unit: cells) between A and B, which
-                    // is in this case 1. Now let's consider the distance between a1 and b2.
-                    // The centre of SubCell a1 is shifted by -0.25 compared to the centre
-                    // of the coarse Cell A, this shift is stored in subCellShift[0][k].
-                    // For b2, a shift of 0.25 is stored in subCellShift[0][p]. The distance
-                    // between b2 and a1 is abs(position_of_b2 - position_of_a1)
-                    // Let position_of_b2 be (xIndex+subCellShift[0][p]) = (1+0.25) = 1.25.
-                    // Then position_of_a1 is subCellShift[0][k] = -0.25
-                    // ==> distance = abs(position_of_b2 - position_of_a1) = abs(1.25 - (- 0.25))
-                    //              = 1.5
-                    // From this value, 0.5 has to be substracted (but only if the distance is not
-                    // zero, so if e.g. xIndex is not null) as 1.5 is the distance between
-                    // the to cell centers. The distance of the center to the border is 0.25 for
-                    // subCells. For the "real" distance, the resulting value (here 1.0) has to be
-                    // multiplied with the cellLength
-                    xDistanceSquare=pow( (abs(xIndex - subCellShifts[0][k] + subCellShifts[0][p])
-                                          -0.5*xCoarseCellDistanceNotZero)*_cellLength[0],2 );
-                    yDistanceSquare=pow( (abs(yIndex - subCellShifts[1][k] + subCellShifts[1][p])
-                                          -0.5*yCoarseCellDistanceNotZero)*_cellLength[1],2 );
-                    zDistanceSquare=pow( (abs(zIndex - subCellShifts[2][k] + subCellShifts[2][p])
-                                          -0.5*zCoarseCellDistanceNotZero)*_cellLength[2],2 );
-                    // check whether the distance of the cells is smaller than the cutoff radius
-                    if(xDistanceSquare+yDistanceSquare+zDistanceSquare < cutoffRadiusSquare) {
-                      // You need to add the local index p of the neighbouring subCell and to 
-                      // substract the local index k of the regarded subCell to compute the right 
-                      // subCell Index Offset
-                      SubCellOffset=metaCellOffset+p-k;
-                      if(SubCellOffset > 0){
-                        _forwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
-                      }
-                      else { // 0 can't happen as only real neighbours are considered
-                        _backwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
-                      }
-                    } // if Distance < cutoffRadius
-                  } // loop over the subcells in the neighbouring cell
-                } // CASE 1
-                // ########################################
-                // ## CASE 2: CELL A REFINED, CELL B NOT ##
-                // ########################################
-                else {
-                  // As in case 1, first the distance between the centers is calculated. 
-                  // Only Cell A (loop index k) is shifted, Cell B is not as it is a coarse cell.
-                  // One of the cells is coarse (distance to boundary 0.5, one is fine (distance 0.25),
-                  // so for the minimal distance, 0.75 has to be substracted if the two cells don't have
-                  // the same x (or y or z) -value (See comment of for the variable xCoarseCellDistanceNotZero).
-                  xDistanceSquare=pow((abs(xIndex-subCellShifts[0][k])-0.75*xCoarseCellDistanceNotZero)*_cellLength[0],2);
-                  yDistanceSquare=pow((abs(yIndex-subCellShifts[1][k])-0.75*yCoarseCellDistanceNotZero)*_cellLength[1],2);
-                  zDistanceSquare=pow((abs(zIndex-subCellShifts[2][k])-0.75*zCoarseCellDistanceNotZero)*_cellLength[2],2);
-                  if(xDistanceSquare+yDistanceSquare+zDistanceSquare <= cutoffRadiusSquare) {
-                    // You need to substract the local index k of the regarded subCell in order to compute the subCellOffset
-                    SubCellOffset= metaCellOffset-k;
-                    if(SubCellOffset > 0){
-                      _forwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
-                    }
-                    else { // 0 can't happen as only real neighbours are considered
-                      _backwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
-                    }
-                  } // if Distance < cutoffRadius
-                } // CASE 2
-              } // end if for checking if the cell is a boundary cell (to be removed)
-            }// loop over xIndex
-          } // loop over yIndex
-        } // loop over zIndex
-      } // loop over the subcells of cell A
-    } // if cell A is subcell
-    // the easier case: There are no subCells in the current coarse Cell 
-    // (but may be there are subCells in the neighbouring Cells!)
-    else {
-      // loop over all neighbouring ("continue" in case of the cell itself) coarse cells
-      for(int zIndex=-_haloWidthInNumCells[2]; zIndex<=_haloWidthInNumCells[2]; zIndex++) {
-        for(int yIndex=-_haloWidthInNumCells[1]; yIndex<=_haloWidthInNumCells[1]; yIndex++) {
-          for(int xIndex=-_haloWidthInNumCells[0]; xIndex<=_haloWidthInNumCells[0]; xIndex++) {
-            // The cell itself should not be searched for neighbours!
-            if(xIndex==0 && yIndex==0 && zIndex==0) continue;
-            // compute the global coarseCellOffset for the current coarse grid neighbour cell
-            coarseCellOffset = (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
-            // _cells.size()-1 is the upper cellIndex boundary! So i + coarseCellOffset must be smaller than _cells.size()
-            // @todo only calculate neighbour offets for necessary cells, so this  if  could then be removed
-            if((int)i+coarseCellOffset<(int)_cells.size() && (int)i+coarseCellOffset>=0){
-              // check for each dimension if the cells have the same coordinate value in that dimension
-              if(xIndex == 0) xCoarseCellDistanceNotZero = 0.0;
-              else xCoarseCellDistanceNotZero = 1.0;
-              if(yIndex == 0) yCoarseCellDistanceNotZero = 0.0;
-              else yCoarseCellDistanceNotZero = 1.0;
-              if(zIndex == 0) zCoarseCellDistanceNotZero = 0.0;
-              else zCoarseCellDistanceNotZero = 1.0;
-              
-              // Index Offset of the two coarse cells in the array _subCells
-              metaCellOffset=_metaCellIndex[i+coarseCellOffset]-_metaCellIndex[i];
-              // ###########################################
-              // ## CASE 3: CELL A COARSE, CELL B REFINED ##
-              // ###########################################
-              if(_metaCellIndex[i+coarseCellOffset+1]-_metaCellIndex[i+coarseCellOffset]==8){
-                // loop over all subCells that the neighbour Cell contains
-                for(int p=0; p<8; p++){
-                  xDistanceSquare = pow((abs(xIndex+subCellShifts[0][p])-0.75*xCoarseCellDistanceNotZero) * _cellLength[0],2);
-                  yDistanceSquare = pow((abs(yIndex+subCellShifts[1][p])-0.75*yCoarseCellDistanceNotZero) * _cellLength[1],2);
-                  zDistanceSquare = pow((abs(zIndex+subCellShifts[2][p])-0.75*zCoarseCellDistanceNotZero) * _cellLength[2],2);
-                  if(xDistanceSquare+yDistanceSquare+zDistanceSquare <= cutoffRadiusSquare) {
-                    // You need to add the local index p of the neighbour subCell in order to compute the subCellOffset
-                    SubCellOffset=metaCellOffset+p;
-                    if(SubCellOffset > 0){
-                      _forwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
-                    } 
-                    else { // 0 can't happen as only real neighbours are considered
-                      _backwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
-                    }
-                  } // if Distance < cutoffRadius
-                } // loop over the subcells in the neighbouring cell
-              } // CASE 3
-              // #################################
-              // ## CASE 4: BOTH CELLS COARSE   ##
-              // #################################
-              else {
-                // in the "else else" case (neither the current Cell nor the neighbour Cell contain subCells)
-                // the distance in one dimension is the width of a coarse Cell multiplied with the number 
-                // of coarse cells between the two cells (this is received by substracting one of the 
-                // absolute difference of the cells, if this difference is not zero)
-                xDistanceSquare = pow((abs(xIndex)-1*xCoarseCellDistanceNotZero) * _cellLength[0],2);
-                yDistanceSquare = pow((abs(yIndex)-1*yCoarseCellDistanceNotZero) * _cellLength[1],2);
-                zDistanceSquare = pow((abs(zIndex)-1*zCoarseCellDistanceNotZero) * _cellLength[2],2);
-                if(xDistanceSquare+yDistanceSquare+zDistanceSquare <= cutoffRadiusSquare) {
-                  // subCellOffset==metaCellOffset, because there are neither local subCells nor subCells
-                  // within the current neighbour Cell. So we don't need any additional index offsets 
-                  SubCellOffset = metaCellOffset; 
-                  if(SubCellOffset > 0){
-                    _forwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
-                  }
-                  else { // 0 can't happen as only real neighbours are considered
-                    _backwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
-                  }
-                }
-              } // CASE 4
-            } // end if for checking if the cell is a boundary cell (to be removed)
-          }// loop over xIndex
-        } // loop over yIndex
-      } // loop over zIndex
-    } // else case (cell A is not refined)
-  } // loop over all cells
+	// clear the old neighbour offsets of the last adaptive grid in order to create room for the new offsets
+	for (unsigned int f=0; f<_subCells.size(); f++) {
+		_forwardNeighbourSubOffsets[f].clear();
+		_backwardNeighbourSubOffsets[f].clear();
+	}
+	// loop over all cellIndices of the coarse grid
+	// @todo only necessary cells!
+	for (unsigned int i=0; i<_cells.size(); i++) {
+		// If two coarse cells, which have a index difference of 1 (cell i and cell /i+1) in the
+		// array _cells (usually direct neighbours in x-direction) have an index difference of
+		// 8 in the array _subCells (corresponding indeces stored in _metaCellIndex, then the 
+		// cell i is refined and countains 8 subcells. Otherwise the index difference is 1 and 
+		// cell i is not refined.
+		if (_metaCellIndex[i+1]-_metaCellIndex[i]==8) {
+			// loop over all local subCells 
+			for (int k=0; k<8; k++) {
+				// first find the neighbours whithin the cell itself (7 other subCells)
+				// compute the forward index offsets of the local subCells
+				for (int l=k+1; l<8; l++) {
+					SubCellOffset=(int) (l-k);
+					_forwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
+				}
+				// compute the backward index offsets of the local subCells
+				for (int m=0; m<k; m++) {
+					SubCellOffset=(int) (m-k);
+					_backwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
+				}
+				// loop over all neighbouring ("continue" in case of the cell itself) coarse cells
+				for (int zIndex=-_haloWidthInNumCells[2]; zIndex<=_haloWidthInNumCells[2]; zIndex++) {
+					for (int yIndex=-_haloWidthInNumCells[1]; yIndex<=_haloWidthInNumCells[1]; yIndex++) {
+						for (int xIndex=-_haloWidthInNumCells[0]; xIndex<=_haloWidthInNumCells[0]; xIndex++) {
+							// The cell itself should not be searched for neighbours!
+							if(xIndex==0 && yIndex==0 && zIndex==0) continue;
+							// compute the global coarseCellOffset for the current coarse grid neighbour cell
+							coarseCellOffset = (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
+							// _cells.size()-1 is the upper cellIndex boundary! So i + coarseCellOffset must be smaller than _cells.size()
+							// @todo only calculate neighbour offets for necessary cells, so this  if  could then be removed
+							if((int)i+coarseCellOffset<(int)_cells.size()){
+								// check for each dimension if the cells have the same coordinate value in that dimension
+								if(xIndex == 0) xCoarseCellDistanceNotZero = 0.0;
+								else xCoarseCellDistanceNotZero = 1.0;
+								if(yIndex == 0) yCoarseCellDistanceNotZero = 0.0;
+								else yCoarseCellDistanceNotZero = 1.0;
+								if(zIndex == 0) zCoarseCellDistanceNotZero = 0.0;
+								else zCoarseCellDistanceNotZero = 1.0;
+
+								// Index Offset of the two coarse cells in the array _subCells
+								metaCellOffset=_metaCellIndex[i+coarseCellOffset]-_metaCellIndex[i];
+								// if "delta"==8 the neighbour Cell with index i+coarseCellOffset contains subCells 
+								// ##################################
+								// ## CASE 1: BOTH CELLS REFINED   ##
+								// ##################################
+								if(_metaCellIndex[i+coarseCellOffset+1]-_metaCellIndex[i+coarseCellOffset]==8){
+									// loop over all subCells that the neighbour Cell contains 
+									for(int p=0; p<8; p++){
+										// compute the minimum distance between 2 cells for each spacial dimension. 
+										// The spacial offsets for the local subCells (...K) and the neighbouring 
+										// subCells (...P) must be taken into regard.
+										// Consider the two coarse cells A and B in the following picture.
+										// ========================
+										// || a3 | a4 || b3 | b4 ||
+										// ||----A----||----B----||
+										// || a1 | a2 || b1 | b2 ||
+										// ========================
+										// xIndex can be seen as distance (unit: cells) between A and B, which
+										// is in this case 1. Now let's consider the distance between a1 and b2.
+										// The centre of SubCell a1 is shifted by -0.25 compared to the centre
+										// of the coarse Cell A, this shift is stored in subCellShift[0][k].
+										// For b2, a shift of 0.25 is stored in subCellShift[0][p]. The distance
+										// between b2 and a1 is abs(position_of_b2 - position_of_a1)
+										// Let position_of_b2 be (xIndex+subCellShift[0][p]) = (1+0.25) = 1.25.
+										// Then position_of_a1 is subCellShift[0][k] = -0.25
+										// ==> distance = abs(position_of_b2 - position_of_a1) = abs(1.25 - (- 0.25))
+										//              = 1.5
+										// From this value, 0.5 has to be substracted (but only if the distance is not
+										// zero, so if e.g. xIndex is not null) as 1.5 is the distance between
+										// the to cell centers. The distance of the center to the border is 0.25 for
+										// subCells. For the "real" distance, the resulting value (here 1.0) has to be
+										// multiplied with the cellLength
+										xDistanceSquare=pow( (abs(xIndex - subCellShifts[0][k] + subCellShifts[0][p])
+													-0.5*xCoarseCellDistanceNotZero)*_cellLength[0],2 );
+										yDistanceSquare=pow( (abs(yIndex - subCellShifts[1][k] + subCellShifts[1][p])
+													-0.5*yCoarseCellDistanceNotZero)*_cellLength[1],2 );
+										zDistanceSquare=pow( (abs(zIndex - subCellShifts[2][k] + subCellShifts[2][p])
+													-0.5*zCoarseCellDistanceNotZero)*_cellLength[2],2 );
+										// check whether the distance of the cells is smaller than the cutoff radius
+										if(xDistanceSquare+yDistanceSquare+zDistanceSquare < cutoffRadiusSquare) {
+											// You need to add the local index p of the neighbouring subCell and to 
+											// substract the local index k of the regarded subCell to compute the right 
+											// subCell Index Offset
+											SubCellOffset=metaCellOffset+p-k;
+											if(SubCellOffset > 0){
+												_forwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
+											}
+											else { // 0 can't happen as only real neighbours are considered
+												_backwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
+											}
+										} // if Distance < cutoffRadius
+									} // loop over the subcells in the neighbouring cell
+								} // CASE 1
+								// ########################################
+								// ## CASE 2: CELL A REFINED, CELL B NOT ##
+								// ########################################
+								else {
+									// As in case 1, first the distance between the centers is calculated. 
+									// Only Cell A (loop index k) is shifted, Cell B is not as it is a coarse cell.
+									// One of the cells is coarse (distance to boundary 0.5, one is fine (distance 0.25),
+									// so for the minimal distance, 0.75 has to be substracted if the two cells don't have
+									// the same x (or y or z) -value (See comment of for the variable xCoarseCellDistanceNotZero).
+									xDistanceSquare=pow((abs(xIndex-subCellShifts[0][k])-0.75*xCoarseCellDistanceNotZero)*_cellLength[0],2);
+									yDistanceSquare=pow((abs(yIndex-subCellShifts[1][k])-0.75*yCoarseCellDistanceNotZero)*_cellLength[1],2);
+									zDistanceSquare=pow((abs(zIndex-subCellShifts[2][k])-0.75*zCoarseCellDistanceNotZero)*_cellLength[2],2);
+									if(xDistanceSquare+yDistanceSquare+zDistanceSquare <= cutoffRadiusSquare) {
+										// You need to substract the local index k of the regarded subCell in order to compute the subCellOffset
+										SubCellOffset= metaCellOffset-k;
+										if(SubCellOffset > 0){
+											_forwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
+										}
+										else { // 0 can't happen as only real neighbours are considered
+											_backwardNeighbourSubOffsets[_metaCellIndex[i]+k].push_back(SubCellOffset);
+										}
+									} // if Distance < cutoffRadius
+								} // CASE 2
+							} // end if for checking if the cell is a boundary cell (to be removed)
+						}// loop over xIndex
+					} // loop over yIndex
+				} // loop over zIndex
+			} // loop over the subcells of cell A
+		} // if cell A is subcell
+		// the easier case: There are no subCells in the current coarse Cell 
+		// (but may be there are subCells in the neighbouring Cells!)
+		else {
+			// loop over all neighbouring ("continue" in case of the cell itself) coarse cells
+			for(int zIndex=-_haloWidthInNumCells[2]; zIndex<=_haloWidthInNumCells[2]; zIndex++) {
+				for(int yIndex=-_haloWidthInNumCells[1]; yIndex<=_haloWidthInNumCells[1]; yIndex++) {
+					for(int xIndex=-_haloWidthInNumCells[0]; xIndex<=_haloWidthInNumCells[0]; xIndex++) {
+						// The cell itself should not be searched for neighbours!
+						if(xIndex==0 && yIndex==0 && zIndex==0) continue;
+						// compute the global coarseCellOffset for the current coarse grid neighbour cell
+						coarseCellOffset = (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
+						// _cells.size()-1 is the upper cellIndex boundary! So i + coarseCellOffset must be smaller than _cells.size()
+						// @todo only calculate neighbour offets for necessary cells, so this  if  could then be removed
+						if((int)i+coarseCellOffset<(int)_cells.size() && (int)i+coarseCellOffset>=0){
+							// check for each dimension if the cells have the same coordinate value in that dimension
+							if(xIndex == 0) xCoarseCellDistanceNotZero = 0.0;
+							else xCoarseCellDistanceNotZero = 1.0;
+							if(yIndex == 0) yCoarseCellDistanceNotZero = 0.0;
+							else yCoarseCellDistanceNotZero = 1.0;
+							if(zIndex == 0) zCoarseCellDistanceNotZero = 0.0;
+							else zCoarseCellDistanceNotZero = 1.0;
+
+							// Index Offset of the two coarse cells in the array _subCells
+							metaCellOffset=_metaCellIndex[i+coarseCellOffset]-_metaCellIndex[i];
+							// ###########################################
+							// ## CASE 3: CELL A COARSE, CELL B REFINED ##
+							// ###########################################
+							if(_metaCellIndex[i+coarseCellOffset+1]-_metaCellIndex[i+coarseCellOffset]==8){
+								// loop over all subCells that the neighbour Cell contains
+								for(int p=0; p<8; p++){
+									xDistanceSquare = pow((abs(xIndex+subCellShifts[0][p])-0.75*xCoarseCellDistanceNotZero) * _cellLength[0],2);
+									yDistanceSquare = pow((abs(yIndex+subCellShifts[1][p])-0.75*yCoarseCellDistanceNotZero) * _cellLength[1],2);
+									zDistanceSquare = pow((abs(zIndex+subCellShifts[2][p])-0.75*zCoarseCellDistanceNotZero) * _cellLength[2],2);
+									if(xDistanceSquare+yDistanceSquare+zDistanceSquare <= cutoffRadiusSquare) {
+										// You need to add the local index p of the neighbour subCell in order to compute the subCellOffset
+										SubCellOffset=metaCellOffset+p;
+										if(SubCellOffset > 0){
+											_forwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
+										} 
+										else { // 0 can't happen as only real neighbours are considered
+											_backwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
+										}
+									} // if Distance < cutoffRadius
+								} // loop over the subcells in the neighbouring cell
+							} // CASE 3
+							// #################################
+							// ## CASE 4: BOTH CELLS COARSE   ##
+							// #################################
+							else {
+								// in the "else else" case (neither the current Cell nor the neighbour Cell contain subCells)
+								// the distance in one dimension is the width of a coarse Cell multiplied with the number 
+								// of coarse cells between the two cells (this is received by substracting one of the 
+								// absolute difference of the cells, if this difference is not zero)
+								xDistanceSquare = pow((abs(xIndex)-1*xCoarseCellDistanceNotZero) * _cellLength[0],2);
+								yDistanceSquare = pow((abs(yIndex)-1*yCoarseCellDistanceNotZero) * _cellLength[1],2);
+								zDistanceSquare = pow((abs(zIndex)-1*zCoarseCellDistanceNotZero) * _cellLength[2],2);
+								if(xDistanceSquare+yDistanceSquare+zDistanceSquare <= cutoffRadiusSquare) {
+									// subCellOffset==metaCellOffset, because there are neither local subCells nor subCells
+									// within the current neighbour Cell. So we don't need any additional index offsets 
+									SubCellOffset = metaCellOffset; 
+									if(SubCellOffset > 0){
+										_forwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
+									}
+									else { // 0 can't happen as only real neighbours are considered
+										_backwardNeighbourSubOffsets[_metaCellIndex[i]].push_back(SubCellOffset);
+									}
+								}
+							} // CASE 4
+						} // end if for checking if the cell is a boundary cell (to be removed)
+					}// loop over xIndex
+				} // loop over yIndex
+			} // loop over zIndex
+		} // else case (cell A is not refined)
+	} // loop over all cells
 } // end method
 
 
 unsigned long AdaptiveSubCells::getCellIndexOfMolecule(Molecule* molecule) {
-  int cellIndex[3]; // 3D Cell index
+	int cellIndex[3]; // 3D Cell index
 
-  for(int dim=0; dim<3; dim++){
-    if(molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]){
-      cerr << "ERROR in AdaptiveSubCells::getCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
-    } 
-    cellIndex[dim] = (int) floor((molecule->r(dim)-_haloBoundingBoxMin[dim])/_cellLength[dim]);
+	for(int dim=0; dim<3; dim++){
+		if(molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]){
+			global_log->error() << "AdaptiveSubCells::getCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
+		} 
+		cellIndex[dim] = (int) floor((molecule->r(dim)-_haloBoundingBoxMin[dim])/_cellLength[dim]);
 
-  }
-  return (cellIndex[2]*_cellsPerDimension[1]+cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0]; 
+	}
+	return (cellIndex[2]*_cellsPerDimension[1]+cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0]; 
 }
 
 
 unsigned long AdaptiveSubCells::getSubCellIndexOfMolecule(Molecule* molecule) {
-  // 3D Cell index
-  int cellIndex[3], globalCellIndex, metaSubCellIndex, subCell3DIndexOffset[3], subCellIndexOffset; 
+	// 3D Cell index
+	int cellIndex[3], globalCellIndex, metaSubCellIndex, subCell3DIndexOffset[3], subCellIndexOffset; 
 
-  for(int dim=0; dim<3; dim++){
-    if(molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]){
-      cerr << "ERROR in AdaptiveSubCells::getSubCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
-    } 
-    cellIndex[dim] = (int) floor((molecule->r(dim)-_haloBoundingBoxMin[dim])/_cellLength[dim]);
+	for(int dim=0; dim<3; dim++){
+		if(molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]){
+			global_log->error() << "AdaptiveSubCells::getSubCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
+		} 
+		cellIndex[dim] = (int) floor((molecule->r(dim)-_haloBoundingBoxMin[dim])/_cellLength[dim]);
 
-  }
-  // globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
-  // It needs to be transformed to the subCell level 
-  globalCellIndex=(cellIndex[2]*_cellsPerDimension[1]+cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0];
-  // metaSubCellIndex is the index of the subCell at the lower, left, front end of the current coarse Cell.
-  // For adressing the other local subCells an index offset needs to be added. 
-  metaSubCellIndex=_metaCellIndex[globalCellIndex];
-  // if (_metaCellIndex[r+1]-_metaCellIndex[r]==8) the Cell with global Index r contains subCells
-  if(_metaCellIndex[globalCellIndex+1]-_metaCellIndex[globalCellIndex]==8){
-    // computes an Index Offset for each spacial dimension (x,y,z). 
-    for(int d=0; d<3; d++){
-      // the case matching is needed to decide for each spacial dimension (x,y,z) whether the
-      // molecule must be inserted into the first or into the last subCell. 
-      if(((molecule->r(d)-_haloBoundingBoxMin[d])/_cellLength[d])-floor((molecule->r(d)-_haloBoundingBoxMin[d])/_cellLength[d])>=0.5){
-        
-        // insert molecule into the last subCell of dimension d, d=0,1,2
-        subCell3DIndexOffset[d]=1;
-      }
-      else {
-        // insert molecule into the first subCell of dimension d, d=0,1,2
-        subCell3DIndexOffset[d]=0;
-      }
-    }
-    // transforms the 3D index offset of the subCell into the global subCellIndexOffset:
-    subCellIndexOffset=4*subCell3DIndexOffset[2]+2*subCell3DIndexOffset[1]+subCell3DIndexOffset[0];
-    // add the subCellIndexOffset and return the resulting index of the subCell where the molecule has to be inserted
-    return (metaSubCellIndex+subCellIndexOffset);
-  }  
-  else{ 
-    // if the current Cell doesn't contain subCells the molecule's globalSubCellIndex is idem with its metaSubCellIndex
-    return metaSubCellIndex;
-  } 
+	}
+	// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
+	// It needs to be transformed to the subCell level 
+	globalCellIndex=(cellIndex[2]*_cellsPerDimension[1]+cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0];
+	// metaSubCellIndex is the index of the subCell at the lower, left, front end of the current coarse Cell.
+	// For adressing the other local subCells an index offset needs to be added. 
+	metaSubCellIndex=_metaCellIndex[globalCellIndex];
+	// if (_metaCellIndex[r+1]-_metaCellIndex[r]==8) the Cell with global Index r contains subCells
+	if(_metaCellIndex[globalCellIndex+1]-_metaCellIndex[globalCellIndex]==8){
+		// computes an Index Offset for each spacial dimension (x,y,z). 
+		for(int d=0; d<3; d++){
+			// the case matching is needed to decide for each spacial dimension (x,y,z) whether the
+			// molecule must be inserted into the first or into the last subCell. 
+			if(((molecule->r(d)-_haloBoundingBoxMin[d])/_cellLength[d])-floor((molecule->r(d)-_haloBoundingBoxMin[d])/_cellLength[d])>=0.5){
+
+				// insert molecule into the last subCell of dimension d, d=0,1,2
+				subCell3DIndexOffset[d]=1;
+			}
+			else {
+				// insert molecule into the first subCell of dimension d, d=0,1,2
+				subCell3DIndexOffset[d]=0;
+			}
+		}
+		// transforms the 3D index offset of the subCell into the global subCellIndexOffset:
+		subCellIndexOffset=4*subCell3DIndexOffset[2]+2*subCell3DIndexOffset[1]+subCell3DIndexOffset[0];
+		// add the subCellIndexOffset and return the resulting index of the subCell where the molecule has to be inserted
+		return (metaSubCellIndex+subCellIndexOffset);
+	}  
+	else{ 
+		// if the current Cell doesn't contain subCells the molecule's globalSubCellIndex is idem with its metaSubCellIndex
+		return metaSubCellIndex;
+	} 
 }
 
 
 unsigned long AdaptiveSubCells::subCellIndexOf3DIndex(int xIndex, int yIndex, int zIndex){
 
-  int globalCellIndex, metaSubCellIndex;
-  // globalCellIndex is the cellIndex of the molecule on the Cell level. It needs to be transformed to the subCell level 
-  globalCellIndex=(zIndex*_cellsPerDimension[1]+yIndex) * _cellsPerDimension[0] + xIndex;
-  // this case matching prevents the method from returning indices that are overstepping the upper index boundary of the array 
-  if(globalCellIndex>=(int)_cells.size()){
-    metaSubCellIndex=_subCells.size()-1;
-  }
-  
-  else{
-    // metaSubCellIndex is the index of the subCell at the lower, left, front end of the current coarse Cell 
-    metaSubCellIndex=_metaCellIndex[globalCellIndex];
-  }
-  // returns the metaSubCellIndex. A suitable index offset needs to be added
-  //in the calling function in order to adress all subCells
-  return metaSubCellIndex;
+	int globalCellIndex, metaSubCellIndex;
+	// globalCellIndex is the cellIndex of the molecule on the Cell level. It needs to be transformed to the subCell level 
+	globalCellIndex=(zIndex*_cellsPerDimension[1]+yIndex) * _cellsPerDimension[0] + xIndex;
+	// this case matching prevents the method from returning indices that are overstepping the upper index boundary of the array 
+	if(globalCellIndex>=(int)_cells.size()){
+		metaSubCellIndex=_subCells.size()-1;
+	}
+
+	else{
+		// metaSubCellIndex is the index of the subCell at the lower, left, front end of the current coarse Cell 
+		metaSubCellIndex=_metaCellIndex[globalCellIndex];
+	}
+	// returns the metaSubCellIndex. A suitable index offset needs to be added
+	//in the calling function in order to adress all subCells
+	return metaSubCellIndex;
 }
 
 
 void AdaptiveSubCells::calculateMetaCellIndex(){
 
-  int metaCellIter=0;
-  // calls the computation of _localRho[]
-  // may be you can integrate this method as inline method
-  calculateLocalRho();
-  // loop over all cellIndices in the coarse grid
-  for(int r=0; r< (int) _cells.size(); r++){  
-    _metaCellIndex[r]=metaCellIter;
-    // if localRho >= rhoLimit you need to increment the cellIter 8 times in order to create space for the subCell index offsets. For example rhoLimit=44 is the minimum density of molecules per Cell in a standard fluid
-    if(_localRho[r]>=16){
-      metaCellIter+=7;
-    }
-    // if _localRho < rhoLimit you need to increment the cellIter only once 
-    metaCellIter++;
-  }
-  //compute the numberOfSubCells (=the maximum subCellIndex + 1) in order to be able do determine the size of the subCell array
-  int numberOfSubCells=metaCellIter;
-  // insert an upper index boundary into the array in order to be able to handle the getSubCellIndexOfMolecule method
-  _metaCellIndex[_cells.size()]=numberOfSubCells;
+	int metaCellIter=0;
+	// calls the computation of _localRho[]
+	// may be you can integrate this method as inline method
+	calculateLocalRho();
+	// loop over all cellIndices in the coarse grid
+	for(int r=0; r< (int) _cells.size(); r++){  
+		_metaCellIndex[r]=metaCellIter;
+		// if localRho >= rhoLimit you need to increment the cellIter 8 times in order to create space for the subCell index offsets. For example rhoLimit=44 is the minimum density of molecules per Cell in a standard fluid
+		if(_localRho[r]>=16){
+			metaCellIter+=7;
+		}
+		// if _localRho < rhoLimit you need to increment the cellIter only once 
+		metaCellIter++;
+	}
+	//compute the numberOfSubCells (=the maximum subCellIndex + 1) in order to be able do determine the size of the subCell array
+	int numberOfSubCells=metaCellIter;
+	// insert an upper index boundary into the array in order to be able to handle the getSubCellIndexOfMolecule method
+	_metaCellIndex[_cells.size()]=numberOfSubCells;
 }
 
 void AdaptiveSubCells::calculateLocalRho(){
-  // may be you can get along without the integer variables cellIntIterator and minIterator 
-  int cellIntIterator=0;
-  // loop over all cells
-  vector<Cell>::iterator cellIterator;
-  std::list<Molecule*>::iterator molIterator;
-  // traverse all coarse cells
-  for(cellIterator=_cells.begin(); cellIterator!= _cells.end(); cellIterator++){ 
-    int molIntIterator=0;   
-    for(molIterator=cellIterator->getParticlePointers().begin();
-      // traverse all molecules in the current coarse cell
-      molIterator!=cellIterator->getParticlePointers().end(); molIterator++){
-      // count the molecules that the current coarse cell contains 
-      molIntIterator++;
-    }
-    _localRho[cellIntIterator]=molIntIterator;
-    // cellIntIterator is the integer value of cellIterator
-    cellIntIterator++; 
-  }
+	// may be you can get along without the integer variables cellIntIterator and minIterator 
+	int cellIntIterator=0;
+	// loop over all cells
+	vector<Cell>::iterator cellIterator;
+	std::list<Molecule*>::iterator molIterator;
+	// traverse all coarse cells
+	for(cellIterator=_cells.begin(); cellIterator!= _cells.end(); cellIterator++){ 
+		int molIntIterator=0;   
+		for(molIterator=cellIterator->getParticlePointers().begin();
+				// traverse all molecules in the current coarse cell
+				molIterator!=cellIterator->getParticlePointers().end(); molIterator++){
+			// count the molecules that the current coarse cell contains 
+			molIntIterator++;
+		}
+		_localRho[cellIntIterator]=molIntIterator;
+		// cellIntIterator is the integer value of cellIterator
+		cellIntIterator++; 
+	}
 }
 
 bool AdaptiveSubCells::isFirstParticle(Molecule& m1, Molecule& m2){
-  if(m1.r(2) < m2.r(2)) return true;
-  else if(m1.r(2) > m2.r(2)) return false;
-  else {
-    if(m1.r(1) < m2.r(1)) return true;
-    else if(m1.r(1) > m2.r(1)) return false;
-    else {
-      if(m1.r(0) < m2.r(0)) return true;
-      else if(m1.r(0) > m2.r(0)) return false;
-      else {
-        cerr << "Error in AdaptiveSubCells::isFirstParticle: both Particles have the same position" << endl;
-        exit(1);
-      }      
-    }
-  }
+	if(m1.r(2) < m2.r(2)) return true;
+	else if(m1.r(2) > m2.r(2)) return false;
+	else {
+		if(m1.r(1) < m2.r(1)) return true;
+		else if(m1.r(1) > m2.r(1)) return false;
+		else {
+			if(m1.r(0) < m2.r(0)) return true;
+			else if(m1.r(0) > m2.r(0)) return false;
+			else {
+				global_log->error() << "AdaptiveSubCells::isFirstParticle: both Particles have the same position" << endl;
+				exit(1);
+			}      
+		}
+	}
 }
 
 int AdaptiveSubCells::grandcanonicalBalance(DomainDecompBase* comm)
 {
-   comm->collCommInit(1);
-   comm->collCommAppendInt(this->_localInsertionsMinusDeletions);
-   comm->collCommAllreduceSum();
-   int universalInsertionsMinusDeletions = comm->collCommGetInt();
-   comm->collCommFinalize();
-   return universalInsertionsMinusDeletions;
+	comm->collCommInit(1);
+	comm->collCommAppendInt(_localInsertionsMinusDeletions);
+	comm->collCommAllreduceSum();
+	int universalInsertionsMinusDeletions = comm->collCommGetInt();
+	comm->collCommFinalize();
+	return universalInsertionsMinusDeletions;
 }
 
 void AdaptiveSubCells::grandcanonicalStep
 (
-   ChemicalPotential* mu, double T
-)
+ ChemicalPotential* mu, double T
+ )
 {
-   bool accept = true;
-   double DeltaUpot;
-   Molecule* m;
+	bool accept = true;
+	double DeltaUpot;
+	Molecule* m;
 
-   this->_localInsertionsMinusDeletions = 0;
+	_localInsertionsMinusDeletions = 0;
 
-   mu->submitTemperature(T);
-   double minco[3];
-   double maxco[3];
-   for(int d=0; d < 3; d++)
-   {
-      minco[d] = this->getBoundingBoxMin(d);
-      maxco[d] = this->getBoundingBoxMax(d);
-   }
+	mu->submitTemperature(T);
+	double minco[3];
+	double maxco[3];
+	for(int d=0; d < 3; d++)
+	{
+		minco[d] = this->getBoundingBoxMin(d);
+		maxco[d] = this->getBoundingBoxMax(d);
+	}
 
-   bool hasDeletion = true;
-   bool hasInsertion = true;
-   double ins[3];
-   unsigned nextid = 0;
-   while(hasDeletion || hasInsertion)
-   {
-      if(hasDeletion)
-         hasDeletion = mu->getDeletion(this, minco, maxco);
-      if(hasDeletion)
-      {
-         m = &(*(this->_particleIter));
-         DeltaUpot = -1.0 * getEnergy(m);
+	bool hasDeletion = true;
+	bool hasInsertion = true;
+	double ins[3];
+	unsigned nextid = 0;
+	while(hasDeletion || hasInsertion)
+	{
+		if(hasDeletion)
+			hasDeletion = mu->getDeletion(this, minco, maxco);
+		if(hasDeletion)
+		{
+			m = &(*(_particleIter));
+			DeltaUpot = -1.0 * getEnergy(m);
 
-         accept = mu->decideDeletion(DeltaUpot / T);
+			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
-         if(accept) cout << "r" << mu->rank() << "d" << m->id() << "\n";
-         else cout << "   (r" << mu->rank() << "-d" << m->id() << ")\n";
-         cout.flush();
+			if(accept) global_log->debug() << "r" << mu->rank() << "d" << m->id() << endl;
+			else global_log->debug() << "   (r" << mu->rank() << "-d" << m->id() << ")" << endl;
 #endif
-         if(accept)
-         {
-            m->upd_cache();
-            // m->clearFM();
-            m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
-            mu->storeMolecule(*m);
-            this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
-            this->_particles.erase(this->_particleIter);
-            this->_particleIter = _particles.begin();
-            this->_localInsertionsMinusDeletions--;
-         }
-      }
+			if(accept)
+			{
+				m->upd_cache();
+				// m->clearFM();
+				m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
+				mu->storeMolecule(*m);
+				deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+				_particles.erase(_particleIter);
+				_particleIter = _particles.begin();
+				_localInsertionsMinusDeletions--;
+			}
+		}
 
-      if(hasInsertion)
-      {
-         nextid = mu->getInsertion(ins);
-         hasInsertion = (nextid > 0);
-      }
-      if(hasInsertion)
-      {
-         // for(int d = 0; d < 3; d++)
-         //    ins[d] = ins[d]-coords[d]*proc_domain_L[d]-m_rmin[d];
-         Molecule tmp = mu->loadMolecule();
-         for(int d=0; d < 3; d++) tmp.setr(d, ins[d]);
-         tmp.setid(nextid);
-         this->_particles.push_back(tmp);
+		if(hasInsertion)
+		{
+			nextid = mu->getInsertion(ins);
+			hasInsertion = (nextid > 0);
+		}
+		if(hasInsertion)
+		{
+			// for(int d = 0; d < 3; d++)
+			//    ins[d] = ins[d]-coords[d]*proc_domain_L[d]-m_rmin[d];
+			Molecule tmp = mu->loadMolecule();
+			for(int d=0; d < 3; d++) tmp.setr(d, ins[d]);
+			tmp.setid(nextid);
+			this->_particles.push_back(tmp);
 
-         std::list<Molecule>::iterator mit = _particles.end();
-         mit--;
-         m = &(*mit);
-         m->upd_cache();
-         m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
-         m->check(nextid); 
+			std::list<Molecule>::iterator mit = _particles.end();
+			mit--;
+			m = &(*mit);
+			m->upd_cache();
+			m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
+			m->check(nextid); 
 #ifndef NDEBUG
-         cout << "rank " << mu->rank() << ": insert " << m->id() 
-              << " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? ";
-         cout.flush();
+			global_log->debug() << "rank " << mu->rank() << ": insert " << m->id() 
+				<< " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? " << endl;
 #endif
 
-         this->addParticle(*m);
-         DeltaUpot = getEnergy(m);
-         accept = mu->decideInsertion(DeltaUpot/T);
+			addParticle(*m);
+			DeltaUpot = getEnergy(m);
+			accept = mu->decideInsertion(DeltaUpot/T);
 
 #ifndef NDEBUG
-         if(accept) cout << "r" << mu->rank() << "i" << mit->id() << ")\n";
-         else cout << "   (r" << mu->rank() << "-i" << mit->id() << ")\n";
-         cout.flush();
+			if(accept) global_log->debug() << "r" << mu->rank() << "i" << mit->id() << ")" << endl;
+			else global_log->debug() << "   (r" << mu->rank() << "-i" << mit->id() << ")" << endl;
 #endif
-         if(accept)
-         {
-            this->_localInsertionsMinusDeletions++;
-         }
-         else
-         {
-            this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+			if(accept)
+			{
+				_localInsertionsMinusDeletions++;
+			}
+			else
+			{
+				deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
 
-            mit->check(m->id());
-            this->_particles.erase(mit);
-         }
-      }
-   }
-   for(m = this->begin(); m != this->end(); m = this->next())
-   {
+				mit->check(m->id());
+				_particles.erase(mit);
+			}
+		}
+	}
+	for(m = this->begin(); m != this->end(); m = this->next())
+	{
 #ifndef NDEBUG
-      m->check(m->id());
+		m->check(m->id());
 #endif
-   }
+	}
 }
