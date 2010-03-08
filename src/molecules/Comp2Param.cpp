@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2005 by Martin Bernreuther   *
- *   Martin.Bernreuther@informatik.uni-stuttgart.de   *
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -24,9 +23,10 @@
 
 using namespace std;
 
-void Comp2Param::initialize(const vector<Component>& components, const vector<double>& mixcoeff
-                           , double epsRF, double rc)
-{
+void Comp2Param::initialize(
+   const vector<Component>& components, const vector<double>& mixcoeff,
+   double epsRF, double rc, double rcLJ
+) {
   m_numcomp=components.size();
   m_ssparatbl.redim(m_numcomp,m_numcomp);
 
@@ -38,10 +38,10 @@ void Comp2Param::initialize(const vector<Component>& components, const vector<do
     unsigned int nci=components[compi].numLJcenters();
     double epsi,sigi,epsj,sigj,epsilon24,sigma2,shift6i;
     unsigned nti = components[compi].numTersoff();
-    // no LJ interaction between solid components
+    // no LJ interaction between solid atoms belonging to the same component
     if(!nti)
     {
-      // interaction between same components
+      // single-component interaction
       for(unsigned int centeri=0;centeri<nci;++centeri)
       {
         const LJcenter& ljcenteri=static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
@@ -67,64 +67,59 @@ void Comp2Param::initialize(const vector<Component>& components, const vector<do
 #ifndef NDEBUG
       cout << "parameters for " << compi << " and " << compj << ": ";
 #endif
-      unsigned ntj = components[compj].numTersoff();
-      // no LJ interaction between solid components
-      if(!nti || !ntj)
+      ParaStrm& pstrmij=m_ssparatbl(compi,compj);
+      unsigned int ncj=components[compj].numLJcenters();
+      double xi=*mixpos; ++mixpos;
+      double eta=*mixpos; ++mixpos;
+      double shift6combined, sigperrc2, sigperrc6;
+      for(unsigned int centeri=0;centeri<nci;++centeri)
       {
-        ParaStrm& pstrmij=m_ssparatbl(compi,compj);
-        unsigned int ncj=components[compj].numLJcenters();
-        double xi=*mixpos; ++mixpos;
-        double eta=*mixpos; ++mixpos;
-        double shift6combined, sigperrc2, sigperrc6;
-        for(unsigned int centeri=0;centeri<nci;++centeri)
-        {
-          const LJcenter& ljcenteri=static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
-          epsi=ljcenteri.eps();
-          sigi=ljcenteri.sigma();
-          for(unsigned int centerj=0;centerj<ncj;++centerj)
-          {
-            const LJcenter& ljcenterj=static_cast<const LJcenter&>(components[compj].ljcenter(centerj));
-            epsj=ljcenterj.eps();
-            sigj=ljcenterj.sigma();
-            epsilon24=24.*xi*sqrt(epsi*epsj);
-            sigma2=eta*.5*(sigi+sigj); sigma2*=sigma2;
-            sigperrc2 = sigma2/(rc*rc);
-            sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
-            shift6combined = epsilon24 * (sigperrc6 - sigperrc6*sigperrc6);
-            pstrmij << epsilon24;
-#ifndef NDEBUG
-            cout << "eps24=" << epsilon24 << " ";
-#endif
-            pstrmij << sigma2;
-#ifndef NDEBUG
-            cout << "sig2=" << sigma2 << " ";
-#endif
-            pstrmij << shift6combined;  
-#ifndef NDEBUG
-            cout << "shift6=" << shift6combined << " ";
-#endif
-          }
-        }
-        ParaStrm& pstrmji=m_ssparatbl(compj,compi);
+        const LJcenter& ljcenteri=static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
+        epsi=ljcenteri.eps();
+        sigi=ljcenteri.sigma();
         for(unsigned int centerj=0;centerj<ncj;++centerj)
         {
           const LJcenter& ljcenterj=static_cast<const LJcenter&>(components[compj].ljcenter(centerj));
           epsj=ljcenterj.eps();
           sigj=ljcenterj.sigma();
-          for(unsigned int centeri=0;centeri<nci;++centeri)
-          {
-            const LJcenter& ljcenteri=static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
-            epsi=ljcenteri.eps();
-            sigi=ljcenteri.sigma();
-            epsilon24=24.*xi*sqrt(epsi*epsj);
-            sigma2=eta*.5*(sigi+sigj); sigma2*=sigma2;
-            sigperrc2 = sigma2/(rc*rc);
-            sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
-            shift6combined = epsilon24 * (sigperrc6 - sigperrc6*sigperrc6);
-            pstrmji << epsilon24;
-            pstrmji << sigma2;
-            pstrmji << shift6combined;  
-          }
+          epsilon24=24.*xi*sqrt(epsi*epsj);
+          sigma2=eta*.5*(sigi+sigj); sigma2*=sigma2;
+          sigperrc2 = sigma2/(rcLJ*rcLJ);
+          sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
+          shift6combined = epsilon24 * (sigperrc6 - sigperrc6*sigperrc6);
+          pstrmij << epsilon24;
+#ifndef NDEBUG
+          cout << "eps24=" << epsilon24 << " ";
+#endif
+          pstrmij << sigma2;
+#ifndef NDEBUG
+          cout << "sig2=" << sigma2 << " ";
+#endif
+          pstrmij << shift6combined;  
+#ifndef NDEBUG
+          cout << "shift6=" << shift6combined << " ";
+#endif
+        }
+      }
+      ParaStrm& pstrmji=m_ssparatbl(compj,compi);
+      for(unsigned int centerj=0;centerj<ncj;++centerj)
+      {
+        const LJcenter& ljcenterj=static_cast<const LJcenter&>(components[compj].ljcenter(centerj));
+        epsj=ljcenterj.eps();
+        sigj=ljcenterj.sigma();
+        for(unsigned int centeri=0;centeri<nci;++centeri)
+        {
+          const LJcenter& ljcenteri=static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
+          epsi=ljcenteri.eps();
+          sigi=ljcenteri.sigma();
+          epsilon24=24.*xi*sqrt(epsi*epsj);
+          sigma2=eta*.5*(sigi+sigj); sigma2*=sigma2;
+          sigperrc2 = sigma2/(rcLJ*rcLJ);
+          sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
+          shift6combined = epsilon24 * (sigperrc6 - sigperrc6*sigperrc6);
+          pstrmji << epsilon24;
+          pstrmji << sigma2;
+          pstrmji << shift6combined;  
         }
       }
     }

@@ -1,3 +1,22 @@
+/***************************************************************************
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #ifndef PARTICLEPAIRS2POTFORCEADAPTER_H_
 #define PARTICLEPAIRS2POTFORCEADAPTER_H_
 
@@ -52,17 +71,17 @@ class ParticlePairs2PotForceAdapter: public ParticlePairsHandler{
     //! For all pairs, the force between the two Molecules has to be calculated
     //! and stored in the molecules. For original pairs(pairType 0), the contributions
     //! to the macroscopic values have to be collected
-    double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd){
+    double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ){
       ParaStrm& params=_domain.getComp2Params()(particle1.componentid(),particle2.componentid());
       params.reset_read();
       if(pairType == 0){
         if(this->_doRecordRDF) this->_domain.observeRDF(dd, particle1.componentid(), particle2.componentid());
 
-        PotForce(particle1,particle2,params,distanceVector,_upot6LJ,_upotXpoles,_myRF,_virial);
+        PotForce(particle1, particle2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ);
         return _upot6LJ + _upotXpoles;
       }
       else if(pairType == 1){
-        PotForce(particle1,particle2,params,distanceVector,_dummy1,_dummy2,_dummy3,_dummy4);
+        PotForce(particle1, particle2, params, distanceVector, _dummy1, _dummy2, _dummy3, _dummy4, calculateLJ);
         return 0.0;
       }
       else if(pairType == 2)
@@ -71,7 +90,7 @@ class ParticlePairs2PotForceAdapter: public ParticlePairsHandler{
         _dummy2 = 0.0;  // U_polarity
         _dummy3 = 0.0;  // U_dipole_reaction_field
         
-        FluidPot(particle1, particle2, params, distanceVector, _dummy1, _dummy2, _dummy3);
+        FluidPot(particle1, particle2, params, distanceVector, _dummy1, _dummy2, _dummy3, calculateLJ);
         return _dummy1/6.0 + _dummy2 + _dummy3;
       }
       else exit(666);

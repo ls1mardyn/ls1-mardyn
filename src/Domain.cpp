@@ -1,3 +1,22 @@
+/***************************************************************************
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #include "Domain.h"
 
 #include "datastructures/ParticleContainer.h"
@@ -15,6 +34,9 @@
 using Log::global_log;
 
 using namespace std;
+
+#define VERSION 20100308
+#define RDF_MINIMAL_OUTPUT_STEPS 1023
 
 /*
  * cutoff correction
@@ -95,7 +117,11 @@ Domain::Domain(int rank){
   _currentTime = 0.0;
   
   this->_doCollectRDF = false;
+  this->_universalRDFTimesteps = -1;
   this->_universalNVE = false;
+  this->_globalUSteps = 0;
+  this->_globalSigmaU = 0.0;
+  this->_globalSigmaUU = 0.0;
 #ifdef COMPLEX_POTENTIAL_SET
   this->_universalConstantAccelerationTimesteps = 30;
   if(!rank)
@@ -524,7 +550,7 @@ void Domain::writeCheckpoint( string filename,
   if(!this->_localRank)
   {
     ofstream checkpointfilestream(filename.c_str());
-    checkpointfilestream << "mardyn trunk 20090727";
+    checkpointfilestream << "mardyn trunk " << VERSION;
     checkpointfilestream << "\n";
     checkpointfilestream << " currentTime\t"  << this->_currentTime << "\n";
     checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
@@ -555,6 +581,13 @@ if(this->_universalComponentwiseThermostat)
     checkpointfilestream << "# rc\t" << particleContainer->getCutoff() << "\n";
     checkpointfilestream << "# rcT\t" << particleContainer->getTersoffCutoff() << "\n";
 #endif
+    if(this->_globalUSteps > 1)
+    {
+       checkpointfilestream << setprecision(13);
+       checkpointfilestream << " I\t" << this->_globalUSteps << " "
+                            << this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
+       checkpointfilestream << setprecision(8);
+    }
     checkpointfilestream << " NumberOfComponents\t" << _components.size() << endl;
     for(vector<Component>::const_iterator pos=_components.begin();pos!=_components.end();++pos){
       pos->write(checkpointfilestream);
@@ -615,11 +648,11 @@ if(this->_universalComponentwiseThermostat)
     domainDecomp->writeMoleculesToFile(filename, particleContainer); 
 }
 
-void Domain::initParameterStreams(double cutoffRadius){
-  _comp2params.initialize(_components,_mixcoeff,_epsilonRF, cutoffRadius); 
+void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
+  _comp2params.initialize(_components, _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ); 
 }
 
-void Domain::initFarFieldCorr(double cutoffRadius) {
+void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
   double UpotCorrLJ=0.;
   double VirialCorrLJ=0.;
   double MySelbstTerm=0.;
@@ -673,7 +706,7 @@ void Domain::initFarFieldCorr(double cutoffRadius) {
           double yj=cj.ljcenter(sj).ry();
           double zj=cj.ljcenter(sj).rz();
           double tau2=sqrt(xj*xj+yj*yj+zj*zj);
-          if(tau1+tau2>=cutoffRadius){
+          if(tau1+tau2>=cutoffRadiusLJ){
             global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
             exit(1);
           }
@@ -689,21 +722,21 @@ void Domain::initFarFieldCorr(double cutoffRadius) {
              double fac=double(ci.numMolecules())*double(cj.numMolecules())*eps24;
              if(tau1==0. && tau2==0.)
 	     {
-                UpotCorrLJ+=fac*(TICCu(-6,cutoffRadius,sig2)-TICCu(-3,cutoffRadius,sig2));
-                VirialCorrLJ+=fac*(TICCv(-6,cutoffRadius,sig2)-TICCv(-3,cutoffRadius,sig2));
+                UpotCorrLJ+=fac*(TICCu(-6,cutoffRadiusLJ,sig2)-TICCu(-3,cutoffRadiusLJ,sig2));
+                VirialCorrLJ+=fac*(TICCv(-6,cutoffRadiusLJ,sig2)-TICCv(-3,cutoffRadiusLJ,sig2));
              }
              else if(tau1!=0. && tau2!=0.)
 	     {
-                UpotCorrLJ += fac*( TISSu(-6,cutoffRadius,sig2,tau1,tau2)
-		                    - TISSu(-3,cutoffRadius,sig2,tau1,tau2) );
-                VirialCorrLJ += fac*( TISSv(-6,cutoffRadius,sig2,tau1,tau2)
-		                      - TISSv(-3,cutoffRadius,sig2,tau1,tau2) );
+                UpotCorrLJ += fac*( TISSu(-6,cutoffRadiusLJ,sig2,tau1,tau2)
+		                    - TISSu(-3,cutoffRadiusLJ,sig2,tau1,tau2) );
+                VirialCorrLJ += fac*( TISSv(-6,cutoffRadiusLJ,sig2,tau1,tau2)
+		                      - TISSv(-3,cutoffRadiusLJ,sig2,tau1,tau2) );
              }
              else {
                 if(tau2==0.) 
                    tau2=tau1;
-                UpotCorrLJ+=fac*(TICSu(-6,cutoffRadius,sig2,tau2)-TICSu(-3,cutoffRadius,sig2,tau2));
-                VirialCorrLJ+=fac*(TICSv(-6,cutoffRadius,sig2,tau2)-TICSv(-3,cutoffRadius,sig2,tau2));
+                UpotCorrLJ+=fac*(TICSu(-6,cutoffRadiusLJ,sig2,tau2)-TICSu(-3,cutoffRadiusLJ,sig2,tau2));
+                VirialCorrLJ+=fac*(TICSv(-6,cutoffRadiusLJ,sig2,tau2)-TICSv(-3,cutoffRadiusLJ,sig2,tau2));
              }
 	  }
         }
@@ -1095,7 +1128,7 @@ void Domain::setupRDF(double interval, unsigned bins)
    this->_doCollectRDF = true;
    this->_universalInterval = interval;
    this->_universalBins = bins;
-   this->_universalRDFTimesteps = 0;
+   this->_universalRDFTimesteps = -1;
    this->_universalAccumulatedTimesteps = 0;
    this->ddmax = interval*interval*bins*bins;
 
@@ -1151,6 +1184,7 @@ void Domain::resetRDF()
 
 void Domain::accumulateRDF()
 {
+   if(0 >= this->_universalRDFTimesteps) return;
    this->_universalAccumulatedTimesteps += this->_universalRDFTimesteps;
    if(!this->_localRank)
    {
@@ -1199,6 +1233,7 @@ void Domain::collectRDF(DomainDecompBase* dode)
 void Domain::outputRDF(const char* prefix, unsigned i, unsigned j)
 {
    if(this->_localRank) return;
+   if(RDF_MINIMAL_OUTPUT_STEPS >= this->_universalRDFTimesteps) return;
    string rdfname(prefix);
    rdfname += ".rdf";
    ofstream rdfout(rdfname.c_str());
@@ -1385,3 +1420,24 @@ void Domain::setglobalRotDOF(unsigned long grotdof)
 void Domain::setGlobalLength(int index, double length) {
   _globalLength[index] = length;
 }
+
+void Domain::record_cv()
+{
+   if(_localRank != 0) return;
+
+   this->_globalUSteps ++;
+   this->_globalSigmaU += this->_globalUpot;
+   this->_globalSigmaUU += this->_globalUpot*_globalUpot;
+}
+
+double Domain::cv()
+{
+   if((_localRank != 0) || (_globalUSteps == 0)) return 0.0;
+
+   double id = 1.5 + 0.5*_universalRotationalDOF[0]/_globalNumMolecules;
+   double conf = (_globalSigmaUU - _globalSigmaU*_globalSigmaU/_globalUSteps)
+      / (_globalUSteps * _globalNumMolecules * _globalTemperatureMap[0] * _globalTemperatureMap[0]);
+
+   return id + conf;
+}
+

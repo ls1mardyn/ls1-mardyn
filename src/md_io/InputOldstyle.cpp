@@ -24,7 +24,7 @@ void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
 	_phaseSpaceHeaderFileStream.open( filename.c_str() );
 }
 
-void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double cutoff)
+void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 {
 	string token, token2;
 
@@ -124,6 +124,13 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
 			for( int d = 0; d < 3; d++ )
 				domain->setGlobalLength( d, globalLength[d] );
 		}
+                else if((token == "HeatCapacity") || (token == "cv") || (token == "I"))
+                {
+                   unsigned N;
+                   double U, UU;
+                   _phaseSpaceFileStream >> N >> U >> UU;
+                   domain->init_cv(N, U, UU);
+                }
 		else if((token == "NumberOfComponents") || (token == "C")) {
 			// read in component definitions and
 			// read in mixing coefficients
@@ -144,9 +151,9 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
 
 				double x, y, z, m;
 				for( int j = 0; j < numljcenters; j++ ) {
-					double eps, sigma, cutoff, do_shift;
-					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> cutoff >> do_shift;
-					dcomponents[i].addLJcenter( x, y, z, m, eps, sigma, cutoff, (do_shift != 0) );
+					double eps, sigma, tcutoff, do_shift;
+					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
+					dcomponents[i].addLJcenter( x, y, z, m, eps, sigma, tcutoff, (do_shift != 0) );
 				}
 				for( int j = 0; j < numcharges; j++ ) {
 					double q;
@@ -237,7 +244,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep, double
 	}
 }
 
-unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	string token;
 
@@ -274,7 +281,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			numcomponents = 1;
 			dcomponents.resize( numcomponents );
 			dcomponents[0].setID(0);
-			dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., cutoffRadius, false);
+			dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
 		}
 
 

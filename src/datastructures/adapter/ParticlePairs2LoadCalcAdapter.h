@@ -52,7 +52,7 @@ class ParticlePairs2LoadCalcAdapter: public ParticlePairsHandler{
   //! For all pairs, the force between the two Molecules has to be calculated
   //! and stored in the molecules. For original pairs(pairType 0), the contributions
   //! to the macroscopic values have to be collected
-  double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd){
+  double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ){
     if(pairType==0){
       int cellIndex[3]; // 3D Cell index (local)
       int globalCellIdx[3]; // 3D Cell index (global)

@@ -1,6 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2009 by Martin Bernreuther and colleagues               *
- *   bernreuther@hlrs.de                                                   *
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -16,9 +15,6 @@
  *   along with this program; if not, write to the                         *
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- *                                                                         *
- *   Due to copyleft all future versions of this program must be           *
- *   published as Free Software.                                           *
  ***************************************************************************/
 
 #ifndef POTFORCE_H_
@@ -311,7 +307,7 @@ inline void PotForceChargeDipole( const double dr[3], const double& dr2,
 
    drm == distance FROM j TO i ... !!!
 */
-inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial )
+inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ)
 // ???better calc Virial, when molecule forces are calculated:
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
@@ -319,10 +315,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
   double u;
   double drs[3],dr2;  // site distance vector & length^2
   // LJ centers
-  // no LJ interaction between molecules with Tersoff centres
+  // no LJ interaction between solid atoms of the same component
   const unsigned int nt1 = mi.numTersoff();
-  const unsigned int nt2 = mj.numTersoff();
-  if(!nt1 || !nt2)
+  if((mi.componentid() != mj.componentid()) || !nt1)
   {
     const unsigned int nc1 = mi.numLJcenters();
     const unsigned int nc2 = mj.numLJcenters();
@@ -337,10 +332,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
         params >> eps24;
         double sig2;
         params >> sig2;
-        PotForceLJ(drs,dr2,eps24,sig2,f,u);
         double shift6;
         params >> shift6;  // must be 0.0 for full LJ
-        u += shift6;
+        if(calculateLJ)
+        {
+          PotForceLJ(drs, dr2, eps24, sig2, f, u);
+          u += shift6;
 
 // even for interactions within the cell a neighbor might try to add/subtract
 // better use atomic...
@@ -348,17 +345,18 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 #ifdef _OPENMP
 #pragma omp critical
 #endif
-        {
-          mi.Fljcenteradd(si,f);
-          mj.Fljcentersub(sj,f);
+          {
+            mi.Fljcenteradd(si,f);
+            mj.Fljcentersub(sj,f);
+          }
+          Upot6LJ+=u;
+          /*
+          u/=6.;
+          mi.Upotadd(u);
+          mj.Upotadd(u);
+          */
+          for(unsigned short d=0;d<3;++d) Virial+=drm[d]*f[d];
         }
-        Upot6LJ+=u;
-        /*
-        u/=6.;
-        mi.Upotadd(u);
-        mj.Upotadd(u);
-        */
-        for(unsigned short d=0;d<3;++d) Virial+=drm[d]*f[d];
       }
     }
   }
@@ -561,19 +559,16 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 }
 
 /*
- * calculates the potential energy of the mi-mj interaction,
- * if and only if both of them are fluid (no interaction between Tersoff sites is considered)
+ * calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered)
  */
-inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF)
+inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
 {
   double f[3];
   double u;
   double drs[3], dr2;  // site distance vector & length^2
-  // LJ centers
-  // no LJ interaction between molecules with Tersoff centres
+  // no LJ interaction between equal solid atoms
   const unsigned int nt1 = mi.numTersoff();
-  const unsigned int nt2 = mj.numTersoff();
-  if(!nt1 || !nt2)
+  if((mi.componentid() != mj.componentid()) || !nt1)
   {
     const unsigned int nc1 = mi.numLJcenters();
     const unsigned int nc2 = mj.numLJcenters();
@@ -588,11 +583,15 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
         params >> eps24;
         double sig2;
         params >> sig2;
-        PotForceLJ(drs,dr2,eps24,sig2,f,u);
         double shift6;
         params >> shift6;  // must be 0.0 for full LJ
-        u += shift6;
-        Upot6LJ+=u;
+
+        if(calculateLJ)
+        {
+          PotForceLJ(drs,dr2,eps24,sig2,f,u);
+          u += shift6;
+          Upot6LJ+=u;
+        }
       }
     }
   }
@@ -902,3 +901,4 @@ inline void TersoffPotForce(Molecule* mi, double params[15], double& UpotTersoff
 }
 
 #endif /*POTFORCE_H_*/
+

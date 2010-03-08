@@ -20,8 +20,8 @@ class AsciiReader : public InputBase{
   ~AsciiReader();
   void setPhaseSpaceFile(string filename);
   void setPhaseSpaceHeaderFile(string filename);
-  void readPhaseSpaceHeader(Domain* domain, double timestep, double cutoffRadius);
-  unsigned long readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+  void readPhaseSpaceHeader(Domain* domain, double timestep);
+  unsigned long readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
  private:
 #ifdef PARALLEL
   istringstream _phaseSpaceFileStream;

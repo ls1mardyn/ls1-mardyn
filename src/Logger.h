@@ -42,7 +42,7 @@ namespace Log {
     ERROR       = 2,    /* program corrected */
     WARNING     = 4,    /* perhaps wrong */
     INFO        = 8,    /* user info */
-    DEBUG       = 16,   /* detailed info for debugging */
+    MARDYN_DEBUG = 16,   /* detailed info for debugging */
     ALL
   } logLevel;
 
@@ -74,7 +74,7 @@ namespace Log {
 	logLevelNames.insert(std::pair<logLevel, std::string>(ERROR,   "ERROR"        ));
 	logLevelNames.insert(std::pair<logLevel, std::string>(WARNING, "WARNING"      ));
 	logLevelNames.insert(std::pair<logLevel, std::string>(INFO,    "INFO"         ));
-	logLevelNames.insert(std::pair<logLevel, std::string>(DEBUG,   "DEBUG"        ));
+	logLevelNames.insert(std::pair<logLevel, std::string>(MARDYN_DEBUG, "DEBUG"        ));
 #ifdef MPI_SUPPORT
 	MPI_Comm_rank( MPI_COMM_WORLD, &_rank );
 #endif
@@ -130,7 +130,7 @@ namespace Log {
       Logger& error()  { return msg_level(ERROR);   }
       Logger& warning(){ return msg_level(WARNING); }
       Logger& info()   { return msg_level(INFO);    }
-      Logger& debug()  { return msg_level(DEBUG);   }
+      Logger& debug()  { return msg_level(MARDYN_DEBUG);   }
 
 
       // set log level

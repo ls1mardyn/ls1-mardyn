@@ -34,10 +34,10 @@ class PartGen : public InputBase{
   void setPhaseSpaceHeaderFile(string filename);
   
   //! @brief read the phase space components and header information
-  void readPhaseSpaceHeader(Domain* domain, double timestep, double cutoff);
+  void readPhaseSpaceHeader(Domain* domain, double timestep);
   
   //! @brief read the actual phase space information
-  unsigned long readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+  unsigned long readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 
   //! @brief stores the cluster file and related parameters
@@ -414,8 +414,9 @@ class PartGen : public InputBase{
   vector< vector<double> > _iBody;
   vector< vector<double> > _invIBody;
 
-  double _cutoffRadius;
-  double _tersoffCutoffRadius;
+  // double _cutoffRadius;
+  double _LJCutoffRadius;
+  // double _tersoffCutoffRadius;
 };
 
 #endif /*PARTGEN_H_*/

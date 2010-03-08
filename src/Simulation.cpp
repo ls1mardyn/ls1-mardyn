@@ -1,3 +1,22 @@
+/***************************************************************************
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 // Simulation.cpp
 #include "Simulation.h"
 #include "Common.h"
@@ -74,6 +93,8 @@ Simulation::Simulation(int *argc, char ***argv)
   /*
    * default parameters
    */
+  _cutoffRadius = 0.0;
+  _LJCutoffRadius = 0.0;
   _numberOfTimesteps = 1;
   _outputPrefix = string("mardyn"); _outputPrefix.append(gettimestring());
   _resultOutputTimesteps = 25;
@@ -197,7 +218,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         _inputReader = (InputBase*) new InputOldstyle();
         _inputReader->setPhaseSpaceFile(phaseSpaceFileName);
         _inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
-        _inputReader->readPhaseSpaceHeader(_domain, timestepLength, _cutoffRadius);
+        _inputReader->readPhaseSpaceHeader(_domain, timestepLength);
       }
       else if(phaseSpaceFileFormat=="PartGen"){
         string mode;
@@ -216,15 +237,19 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         string clusterFileName;
         inputfilestream >> token >> gasDensity >> fluidDensity >> volPercOfFluid >> clusterFileName;
         ((PartGen*)_inputReader)->setClusterFile(gasDensity, fluidDensity, volPercOfFluid, clusterFileName);
-        ((PartGen*)_inputReader)->readPhaseSpaceHeader(_domain, timestepLength, _cutoffRadius);
+        ((PartGen*)_inputReader)->readPhaseSpaceHeader(_domain, timestepLength);
       }
-      _domain->initParameterStreams(_cutoffRadius);
+      if(this->_LJCutoffRadius == 0.0) _LJCutoffRadius = this->_cutoffRadius;
+      _domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
     }
     else if (token=="timestepLength") {
       inputfilestream >> timestepLength;
     }
     else if (token=="cutoffRadius") {
       inputfilestream >> _cutoffRadius;
+    }
+    else if (token=="LJCutoffRadius") {
+      inputfilestream >> _LJCutoffRadius;
     }
     else if ((token=="parallelization") || (token == "parallelisation"))
     {
@@ -252,8 +277,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
           bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
           bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
         }
+        if(this->_LJCutoffRadius == 0.0) _LJCutoffRadius = this->_cutoffRadius;
         _moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-            _cutoffRadius, _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+            _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
       }
       else if (token=="AdaptiveSubCells") {
         int cellsInCutoffRadius;
@@ -264,8 +290,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
           bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
         }
         //creates a new Adaptive SubCells datastructure
+        if(_LJCutoffRadius == 0.0) _LJCutoffRadius = _cutoffRadius;
         _moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-              _cutoffRadius, _particlePairsHandler);
+              _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
       }
     }
     else if (token=="output") {
@@ -550,11 +577,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
 
   // read particle data
   unsigned long maxid = _inputReader->readPhaseSpace(
-     _moleculeContainer, _cutoffRadius, &_lmu,
+     _moleculeContainer, &_lmu,
      _domain, _domainDecomposition
   );
 
-  _domain->initFarFieldCorr(_cutoffRadius);
+  if(this->_LJCutoffRadius == 0.0) _LJCutoffRadius = this->_cutoffRadius;
+  _domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
   // @todo comment
   _integrator = new Leapfrog(timestepLength);
@@ -699,6 +727,10 @@ void Simulation::initialize()
   }
 #endif
 #endif
+
+  // activate RDF sampling
+  if((this->_initSimulation > this->_initStatistics) && this->_doRecordRDF) this->_domain->tickRDF();
+
   global_log->info() << "System initialised\n" << endl;
 }
 
@@ -747,6 +779,9 @@ void Simulation::simulate()
     global_log->debug() << "timestep " << simstep << endl;
 
     _integrator->eventNewTimestep(_moleculeContainer, _domain);
+
+    // activate RDF sampling
+    if((simstep == this->_initStatistics) && this->_doRecordRDF) this->_domain->tickRDF();
 
     // ensure that all Particles are in the right cells and exchange Particles
     global_log->debug() << "Updating container and decomposition" << endl;
@@ -797,16 +832,6 @@ void Simulation::simulate()
     global_log->debug() << "Delete outer particles" << endl;
     _moleculeContainer->deleteOuterParticles();
 
-    /*
-     * radial distribution function
-     */
-    if((simstep >= _initStatistics) && (_doRecordRDF))
-    {
-       _particlePairsHandler->recordRDF();
-       _moleculeContainer->countParticles(_domain);
-       _domain->tickRDF();
-    }
-
     if(simstep >= _initGrandCanonical)
     {
        _domain->evaluateRho
@@ -829,6 +854,23 @@ void Simulation::simulate()
       }
       global_log->debug() << "Process the uniform acceleration" << endl;
       _integrator->accelerateUniformly(_moleculeContainer, _domain);
+    }
+
+    /*
+     * radial distribution function
+     */
+    if(simstep >= _initStatistics)
+    {
+       if(this->_lmu.size() == 0)
+       {
+          this->_domain->record_cv();
+       }
+       if(this->_doRecordRDF)
+       {
+          this->_domain->tickRDF();
+          this->_particlePairsHandler->recordRDF();
+          this->_moleculeContainer->countParticles(_domain);
+       }
     }
 
     if(_zoscillation)

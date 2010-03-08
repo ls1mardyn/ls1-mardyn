@@ -1,3 +1,22 @@
+/***************************************************************************
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #include "datastructures/LinkedCells.h"
 #include "molecules/potforce.h"
 #include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
@@ -20,13 +39,14 @@ using Log::global_log;
 
 
 LinkedCells::LinkedCells(
-   double bBoxMin[3], double bBoxMax[3], double cutoffRadius,
+   double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
    double tersoffCutoffRadius, double cellsInCutoffRadius,
    ParticlePairsHandler* partPairsHandler
 ): ParticleContainer(partPairsHandler, bBoxMin, bBoxMax)
 {
   int numberOfCells = 1;
-  _cutoffRadius = cutoffRadius;
+  this->_cutoffRadius = cutoffRadius;
+  this->_LJCutoffRadius = LJCutoffRadius;
   this->_tersoffCutoffRadius = tersoffCutoffRadius;
   for(int dim=0; dim<3; dim++){
     _haloWidthInNumCells[dim] = (int) ceil(cellsInCutoffRadius);
@@ -323,6 +343,7 @@ void LinkedCells::traversePairs(){
 
 	// sqare of the cutoff radius
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double tersoffCutoffRadiusSquare = _tersoffCutoffRadius * _tersoffCutoffRadius;
 
 #ifndef NDEBUG
@@ -361,7 +382,7 @@ void LinkedCells::traversePairs(){
 					assert( &molecule1 != &molecule2 );
 					double dd = molecule2.dist2( molecule1, distanceVector );
 					if( dd < cutoffRadiusSquare ) {
-						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 					}
 				}
 			}
@@ -376,7 +397,7 @@ void LinkedCells::traversePairs(){
 					double dd = molecule2.dist2( molecule1, distanceVector );
 					if( dd < cutoffRadiusSquare )
 					{
-						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 						if( (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare) )
 						{
 							_particlePairsHandler->preprocessTersoffPair( molecule1, molecule2, false );
@@ -402,7 +423,7 @@ void LinkedCells::traversePairs(){
 						double dd = molecule2.dist2( molecule1, distanceVector );
 						if( dd < cutoffRadiusSquare )
 						{
-							_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+							_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 						}
 					}
 				}
@@ -414,7 +435,7 @@ void LinkedCells::traversePairs(){
 						double dd = molecule2.dist2( molecule1, distanceVector );
 						if( dd < cutoffRadiusSquare )
 						{
-							_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+							_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 							if( (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare) )
 							{
 								_particlePairsHandler->preprocessTersoffPair( molecule1, molecule2, false );
@@ -488,7 +509,7 @@ void LinkedCells::traversePairs(){
 					double dd = molecule2.dist2(molecule1,distanceVector);
 					if( dd < cutoffRadiusSquare )
 					{
-						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 					}
 				}
 			}
@@ -503,7 +524,7 @@ void LinkedCells::traversePairs(){
 					double dd = molecule2.dist2(molecule1,distanceVector);
 					if( dd < cutoffRadiusSquare )
 					{
-						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+						_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 						if( (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare) )
 						{
 							_particlePairsHandler->preprocessTersoffPair( molecule1, molecule2, false );
@@ -531,11 +552,11 @@ void LinkedCells::traversePairs(){
 						{
 							if( neighbourCell.isHaloCell() && !isFirstParticle( molecule1, molecule2 ) )
 							{
-								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 1, dd );
+								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 1, dd, (dd < LJCutoffRadiusSquare) );
 							}
 							else
 							{
-								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 							}
 						}
 					}
@@ -553,7 +574,7 @@ void LinkedCells::traversePairs(){
 							{
 								cd = 1;
 							}
-							_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, cd, dd );
+							_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, cd, dd, (dd < LJCutoffRadiusSquare) );
 							if( (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare) )
 							{
 								_particlePairsHandler->preprocessTersoffPair( molecule1, molecule2, (cd == 1));
@@ -585,11 +606,11 @@ void LinkedCells::traversePairs(){
 							{
 								if( isFirstParticle( molecule1, molecule2 ) )
 								{
-									_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd );
+									_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 0, dd, (dd < LJCutoffRadiusSquare) );
 								}
 								else
 								{
-									_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 1, dd );
+									_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, 1, dd, (dd < LJCutoffRadiusSquare) );
 								}
 							}
 						}
@@ -607,7 +628,7 @@ void LinkedCells::traversePairs(){
 								{
 									cd = 1;
 								}
-								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, cd, dd );
+								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, cd, dd, (dd < LJCutoffRadiusSquare) );
 								if( (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare) )
 								{
 									_particlePairsHandler->preprocessTersoffPair( molecule1, molecule2, (cd == 1) );
@@ -966,6 +987,7 @@ double LinkedCells::getEnergy(Molecule* m1)
 
    // sqare of the cutoffradius
    double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+   double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
    double dd;
    double distanceVector[3];
 
@@ -985,7 +1007,7 @@ double LinkedCells::getEnergy(Molecule* m1)
       if(m1->id() == (*molIter2)->id()) continue;
       dd = (*molIter2)->dist2(*m1, distanceVector);
       if(dd > cutoffRadiusSquare) continue;
-      u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd);
+      u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
    }
 
    // backward and forward neighbours
@@ -1002,7 +1024,7 @@ double LinkedCells::getEnergy(Molecule* m1)
       {
          dd = (*molIter2)->dist2(*m1, distanceVector);
          if(dd > cutoffRadiusSquare) continue;
-         u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd);
+         u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
       }
    }
    return u;

@@ -27,7 +27,7 @@ void AsciiReader::setPhaseSpaceHeaderFile(string filename) {
  _phaseSpaceHeaderFileName = filename;
 }
 
-void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep, double cutoffRadius)
+void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 {
   vector<Component>& dcomponents = domain->getComponents();
   string token;
@@ -121,6 +121,13 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep, double c
        for(int i=0; i < 3; i++)
           domain->setGlobalLength(i, globalLength[i]);
     }
+    else if((token == "HeatCapacity") || (token == "cv") || (token == "I"))
+    {
+       unsigned N;
+       double U, UU;
+       _phaseSpaceFileStream >> N >> U >> UU;
+       domain->init_cv(N, U, UU);
+    }
     else if((token == "NumberOfComponents") || (token == "C"))
     {
       _phaseSpaceFileStream >> numcomponents;
@@ -133,13 +140,14 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep, double c
         unsigned int numdipoles = 0;
         unsigned int numquadrupoles = 0;
 	unsigned int numtersoff = 0;
+        double tcutoff = 0.0;
         _phaseSpaceFileStream >> numljcenters >> numcharges
 	                      >> numdipoles >> numquadrupoles
 			      >> numtersoff;
         for(j=0;j<numljcenters;++j)
         {
-          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma >> cutoffRadius >> do_shift;
-          dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, cutoffRadius, (do_shift != 0));
+          _phaseSpaceFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
+          dcomponents[i].addLJcenter(x, y, z, m, eps, sigma, tcutoff, (do_shift != 0));
         }
         for(j = 0; j < numcharges; j++)
         {
@@ -221,7 +229,7 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep, double c
   }
 }
 
-unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, double cutoffRadius, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
   
   string token;
 
@@ -267,7 +275,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
       numcomponents=1;
       dcomponents.resize(numcomponents);
       dcomponents[0].setID(0);
-      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,cutoffRadius,false);
+      dcomponents[0].addLJcenter(0.,0.,0.,1.,1.,1.,6.,false);
     }
     //m_molecules.clear();
     for(i=0;i<domain->getglobalNumMolecules();++i)

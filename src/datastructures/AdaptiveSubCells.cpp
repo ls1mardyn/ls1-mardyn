@@ -19,12 +19,14 @@ using Log::global_log;
 
 
 AdaptiveSubCells::AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3],
-		double cutoffRadius, ParticlePairsHandler* partPairsHandler):
+		double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius, ParticlePairsHandler* partPairsHandler):
 	ParticleContainer(partPairsHandler, bBoxMin, bBoxMax)
 {
 
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
+        _LJCutoffRadius = LJCutoffRadius;
+        _tersoffCutoffRadius = tersoffCutoffRadius;
 	for( int d = 0; d < 3; d++ ){
 		_haloWidthInNumCells[d] = 1;
 		_cellsPerDimension[d] = (int) floor( ( _boundingBoxMax[d] - _boundingBoxMin[d] ) / cutoffRadius )
@@ -385,6 +387,7 @@ void AdaptiveSubCells::traversePairs(){
 
 	// sqare of the cutoffradius
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+        double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double tersoffCutoffRadiusSquare = _tersoffCutoffRadius * _tersoffCutoffRadius;
 
 	// loop over all inner subCells and calculate forces to forward neighbours
@@ -397,7 +400,7 @@ void AdaptiveSubCells::traversePairs(){
 				Molecule& molecule2 = **molIter2;
 				dd = molecule2.dist2(molecule1,distanceVector);
 				if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
-					_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd);
+					_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
 					if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
 							&& (dd < tersoffCutoffRadiusSquare) )
 					{
@@ -417,7 +420,7 @@ void AdaptiveSubCells::traversePairs(){
 					Molecule& molecule2 = **molIter2;
 					dd = molecule2.dist2(molecule1,distanceVector);
 					if(dd < cutoffRadiusSquare) {
-						_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd);
+						_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
 						if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
 								&& (dd < tersoffCutoffRadiusSquare) )
 						{
@@ -439,7 +442,7 @@ void AdaptiveSubCells::traversePairs(){
 				Molecule& molecule2 = **molIter2;
 				dd = molecule2.dist2(molecule1,distanceVector);
 				if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
-					_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd);
+					_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
 					if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
 							&& (dd < tersoffCutoffRadiusSquare) )
 					{
@@ -461,7 +464,7 @@ void AdaptiveSubCells::traversePairs(){
 					dd = molecule2.dist2(molecule1,distanceVector);
 					if(dd < cutoffRadiusSquare) {
 						if(neighbourSubCell.isHaloCell() && not isFirstParticle(molecule1, molecule2)){
-							_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,1,dd);
+							_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,1,dd,(dd < LJCutoffRadiusSquare));
 							if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
 									&& (dd < tersoffCutoffRadiusSquare) )
 							{
@@ -469,7 +472,7 @@ void AdaptiveSubCells::traversePairs(){
 							}
 						}
 						else{
-							_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd);
+							_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
 							if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
 									&& (dd < tersoffCutoffRadiusSquare) )
 							{
@@ -497,10 +500,10 @@ void AdaptiveSubCells::traversePairs(){
 						double dd = molecule2.dist2(molecule1,distanceVector);
 						if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
 							if (isFirstParticle(molecule1, molecule2)) {
-								_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd);
+								_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
 							}
 							else{
-								_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,1,dd);
+								_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,1,dd,(dd < LJCutoffRadiusSquare));
 							}
 						}
 					}
@@ -594,6 +597,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1)
 {
 	double u = 0.0;
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+        double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double dd;
 	double distanceVector[3];
 	std::list<Molecule*>::iterator molIter2;
@@ -617,7 +621,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1)
 		if(m1id == (*molIter2)->id()) continue;
 		dd = (*molIter2)->dist2(*m1, distanceVector);
 		if(dd > cutoffRadiusSquare) continue;
-		u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd);
+		u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
 	}
 
 	// loop over all forward neighbours
@@ -633,7 +637,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1)
 		{
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if(dd > cutoffRadiusSquare) continue;
-			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd);
+			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 	// loop over all backward neighbours
@@ -649,7 +653,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1)
 		{
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if(dd > cutoffRadiusSquare) continue;
-			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd);
+			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 

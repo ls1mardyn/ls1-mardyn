@@ -51,7 +51,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //!        take place. The actual cell size is usually slightly bigger than the cutoffRadius,
   //!        as the domain has to be divided into a natural number of cells --> round up
   //! @param partPairsHandler specified concrete action to be done for each pair
-  AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius,
+  AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
                    ParticlePairsHandler* partPairsHandler);
 
   //! Destructor
@@ -129,6 +129,7 @@ class AdaptiveSubCells: public ParticleContainer {
   void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs);
 
   double getCutoff() { return this->_cutoffRadius; }
+  double getLJCutoff() { return this->_LJCutoffRadius; }
   double getTersoffCutoff() { return this->_tersoffCutoffRadius; }
   void countParticles(Domain* d);
   //! @brief counts all particles inside the bounding box
@@ -268,6 +269,8 @@ class AdaptiveSubCells: public ParticleContainer {
   double _cellLength[3];
   //! cutoff radius
   double _cutoffRadius;
+  //! LJ cutoff radius
+  double _LJCutoffRadius;
   //! Tersoff cutoff radius
   double _tersoffCutoffRadius;
   //! balance of the grand canonical ensemble

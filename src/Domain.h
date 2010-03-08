@@ -1,3 +1,22 @@
+/***************************************************************************
+ *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 2 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, write to the                         *
+ *   Free Software Foundation, Inc.,                                       *
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
+ ***************************************************************************/
+
 #ifndef DOMAIN_H_
 #define DOMAIN_H_
 
@@ -77,14 +96,14 @@ class Domain{
   //! @param cutoffRadius cutoff radius
   //! @todo How does the Correction work? Give reference to some paper,
   //!       documentation in the implementation
-  void initFarFieldCorr(double cutoffRadius); // CHECKED
+  void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ); // CHECKED
 
   //! @brief initialize parameter streams
   //!
   //! This method should only be called, after the component information
   //! and all molecule data have been read in
   //! @param cutoffRadius cutoff radius
-  void initParameterStreams(double cutoffRadius);
+  void initParameterStreams(double cutoffRadius, double cutoffRadiusLJ);
 
   //! @brief set the potential of the local process
   void setLocalUpot(double Upot); 
@@ -310,9 +329,10 @@ class Domain{
    inline void observeRDF(unsigned i) { this->_localCtr[i] ++; }
    inline void observeRDF(double dd, unsigned i, unsigned j)
    {
+      if(this->_universalRDFTimesteps < 0) return;
       if(dd > this->ddmax) return;
       if(i > j) { this->observeRDF(dd, j, i); return; }
-      unsigned l = (unsigned)(sqrt(dd)/this->_universalInterval);
+      unsigned l = (unsigned)floor(sqrt(dd)/this->_universalInterval);
       this->_localDistribution[i][j-i][l] ++;
    }
    void thermostatOff() { this->_universalNVE = true; }
@@ -321,6 +341,15 @@ class Domain{
    bool thermostatWarning() { return (this->_universalSelectiveThermostatWarning > 0); }
 
    void evaluateRho(unsigned long localN, DomainDecompBase* comm);
+
+   void init_cv(unsigned N, double U, double UU)
+   {
+      this->_globalUSteps = N;
+      this->_globalSigmaU = U;
+      this->_globalSigmaUU = UU;
+   }
+   void record_cv();
+   double cv();
 
  private:
  
@@ -404,6 +433,11 @@ class Domain{
     /// number of items in the velocity queue
     map<unsigned, unsigned> _globalVelocityQueuelength;
 
+    //! computation of the isochoric heat capacity
+    unsigned _globalUSteps;
+    double _globalSigmaU;
+    double _globalSigmaUU;    
+
     //! 1 / dimension of a profile cuboid
     double _universalInvProfileUnit[3];
     //! number of successive profile cuboids in x/y/z direction
@@ -432,7 +466,7 @@ class Domain{
     bool _doCollectRDF;
     double _universalInterval;
     unsigned _universalBins;
-    unsigned _universalRDFTimesteps, _universalAccumulatedTimesteps;
+    int _universalRDFTimesteps, _universalAccumulatedTimesteps;
     double ddmax;
     unsigned long *_localCtr, *_globalCtr, *_globalAccumulatedCtr;
     unsigned long ***_localDistribution, ***_globalDistribution, ***_globalAccumulatedDistribution;

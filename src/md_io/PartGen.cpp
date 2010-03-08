@@ -269,13 +269,10 @@ void PartGen::setPhaseSpaceHeaderFile(string filename){
 }
   
 //! @brief read the phase space components and header information
+//! the LJ cutoff radius must be passed using readAlgorithm
 void PartGen::readPhaseSpaceHeader(
-   Domain* domain, double timestep,
-   double cutoff
+   Domain* domain, double timestep
 ){
-   this->_cutoffRadius = cutoff;
-   // this->_tersoffCutoffRadius = cutoffTersoff;
-   
   vector<Component>& dcomponents = domain->getComponents();
   domain->setCurrentTime(0);
   domain->setGlobalTemperature(_temperature);
@@ -299,7 +296,7 @@ void PartGen::readPhaseSpaceHeader(
                                     getMSite(comp, site),
                                     getEpsilonSite(comp, site),
                                     getSigmaSite(comp, site),
-				    this->_cutoffRadius,
+				    this->_LJCutoffRadius,
 				    getShiftSite(comp, site));
     }
     for(unsigned int cg = 0; cg < numcharges; cg++)
@@ -369,7 +366,7 @@ void PartGen::readPhaseSpaceHeader(
   
 //! @brief read the actual phase space information
 unsigned long PartGen::readPhaseSpace(
-   ParticleContainer* particleContainer, double cutoffRadius,
+   ParticleContainer* particleContainer,
    list<ChemicalPotential>* lmu, Domain* domain,
    DomainDecompBase* domainDecomp
 ) {
@@ -1029,7 +1026,7 @@ void PartGen::readAlgorithm(ifstream &inpfStream,
   ignoreLines(inpfStream,2);
   getDoubleParamValue(inpfStream);   // dt, not reduced
   //_dt *= 1.0E-15 * sqrt(_epsilonRefDim/_mRefDim)/_sigmaRefDim; // reduced
-  this->_cutoffRadius = getDoubleParamValue(inpfStream);  // rc, not reduced
+  this->_LJCutoffRadius = getDoubleParamValue(inpfStream);  // rc, not reduced
   //_rc *= 1.0E-10 / _sigmaRefDim;          // reduced
   // THIS VERSION DOES NOT PROCESS EquiSchritte AND SimSchritte
   ignoreLines(inpfStream,2);
