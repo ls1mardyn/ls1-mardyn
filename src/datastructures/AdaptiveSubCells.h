@@ -51,7 +51,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //!        take place. The actual cell size is usually slightly bigger than the cutoffRadius,
   //!        as the domain has to be divided into a natural number of cells --> round up
   //! @param partPairsHandler specified concrete action to be done for each pair
-  AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double cellsInCutoffRadius,
+  AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius,
                    ParticlePairsHandler* partPairsHandler);
 
   //! Destructor

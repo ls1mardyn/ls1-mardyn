@@ -257,7 +257,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
       }
       else if (token=="AdaptiveSubCells") {
         int cellsInCutoffRadius;
-        inputfilestream >> cellsInCutoffRadius;
         double bBoxMin[3];
         double bBoxMax[3];
         for (int i=0; i<3; i++) {
@@ -266,7 +265,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         }
         //creates a new Adaptive SubCells datastructure
         _moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-              _cutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+              _cutoffRadius, _particlePairsHandler);
       }
     }
     else if (token=="output") {
