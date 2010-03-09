@@ -20,7 +20,9 @@
 #include <cmath>
 
 #include "molecules/Comp2Param.h"
+#include "Logger.h"
 
+using Log::global_log;
 using namespace std;
 
 void Comp2Param::initialize(
@@ -64,9 +66,6 @@ void Comp2Param::initialize(
     // interaction between different components
     for(unsigned int compj=compi+1;compj<m_numcomp;++compj)
     {
-#ifndef NDEBUG
-      cout << "parameters for " << compi << " and " << compj << ": ";
-#endif
       ParaStrm& pstrmij=m_ssparatbl(compi,compj);
       unsigned int ncj=components[compj].numLJcenters();
       double xi=*mixpos; ++mixpos;
@@ -88,16 +87,10 @@ void Comp2Param::initialize(
           sigperrc6 = sigperrc2*sigperrc2*sigperrc2;
           shift6combined = epsilon24 * (sigperrc6 - sigperrc6*sigperrc6);
           pstrmij << epsilon24;
-#ifndef NDEBUG
-          cout << "eps24=" << epsilon24 << " ";
-#endif
           pstrmij << sigma2;
-#ifndef NDEBUG
-          cout << "sig2=" << sigma2 << " ";
-#endif
           pstrmij << shift6combined;  
 #ifndef NDEBUG
-          cout << "shift6=" << shift6combined << " ";
+          global_log->debug() << "Component " << compi << ": eps24=" << epsilon24 << " sig2=" << sigma2 << " shift6=" << shift6combined << endl;
 #endif
         }
       }

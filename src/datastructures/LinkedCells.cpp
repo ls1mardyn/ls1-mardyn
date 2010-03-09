@@ -73,9 +73,9 @@ LinkedCells::LinkedCells(
   if(_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
      _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
      _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]){
-    cerr << "Error in LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
-    cerr << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
-    cerr << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+    global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
+    global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+    global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
     exit(5);
   }
   this->_localInsertionsMinusDeletions = 0;
@@ -102,7 +102,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]){
       + 2 * _haloWidthInNumCells[dim];
     // in each dimension at least one layer of (inner+boundary) cells necessary
     if(_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]){
-      cerr << "ERROR in LinkedCells::rebuild: region to small" << endl;
+      global_log->error() << "LinkedCells::rebuild: region to small" << endl;
       exit(1);
     }
     numberOfCells *= _cellsPerDimension[dim];
@@ -122,9 +122,9 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]){
   if(_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
      _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
      _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]){
-    cerr << "Error in LinkedCells (rebuild): bounding box too small for calculated cell Length" << endl;
-    cerr << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
-    cerr << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+    global_log->error() << "LinkedCells (rebuild): bounding box too small for calculated cell Length" << endl;
+    global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+    global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
     exit(5);
   }
 
@@ -166,19 +166,17 @@ void LinkedCells::update(){
     index=getCellIndexOfMolecule(&(*pos));
     if( index >= _cells.size() )
     {
-      cout << "\nSEVERE ERROR\n";
-      cout << "ID " << pos->id() << "\nr:" << pos->r(0) << " / "  << pos->r(1) << " / "  << pos->r(2) << endl;
-      cout << "v:" << pos->v(0) << " / "  << pos->v(1) << " / "  << pos->v(2) << endl;
-      cout << "F:" << pos->F(0) << " / "  << pos->F(1) << " / "  << pos->F(2) << endl;
-      cout << "Cell: " << index << endl;
-      cout << "_cells.size(): " << _cells.size() << "\tindex: " << index << "\n";
-      cout << "Length of the cell: " << _cellLength[0] << " " << _cellLength[1] << " " << _cellLength[2] << "\n";
-      cout << "\nBounding box, including halo, from (" << _haloBoundingBoxMin[0] << "/"
+      global_log->error() << "ID " << pos->id() << "\nr:" << pos->r(0) << " / "  << pos->r(1) << " / "  << pos->r(2) << endl;
+      global_log->error() << "v:" << pos->v(0) << " / "  << pos->v(1) << " / "  << pos->v(2) << endl;
+      global_log->error() << "F:" << pos->F(0) << " / "  << pos->F(1) << " / "  << pos->F(2) << endl;
+      global_log->error() << "Cell: " << index << endl;
+      global_log->error() << "_cells.size(): " << _cells.size() << "\tindex: " << index << "\n";
+      global_log->error() << "Length of the cell: " << _cellLength[0] << " " << _cellLength[1] << " " << _cellLength[2] << "\n";
+      global_log->error() << "\nBounding box, including halo, from (" << _haloBoundingBoxMin[0] << "/"
            << _haloBoundingBoxMin[1] << "/" << _haloBoundingBoxMin[2] << ") to (" << _haloBoundingBoxMax[0]
            << "/" << _haloBoundingBoxMax[1] << "/" << _haloBoundingBoxMax[2] << ").\n";
-      cout << "removing m" << pos->id() << " (internal component number " << pos->componentid()
+      global_log->error() << "removing m" << pos->id() << " (internal component number " << pos->componentid()
            << ", Utrans=" << pos->Utrans() << ").\n";
-      cout << "\n\n";
       exit(1);
     }
     (_cells[index]).addParticle(&(*pos));
@@ -201,7 +199,7 @@ void LinkedCells::addParticle(Molecule& particle){
     if(_cellsValid){
       int cellIndex=getCellIndexOfMolecule(&particle);
       if(cellIndex < (int) 0 || cellIndex >= (int) _cells.size()){
-        cerr << "Error in LinkedCells::addParticle(): INDEX ERROR" << endl;
+        global_log->error() << "LinkedCells::addParticle(): INDEX ERROR" << endl;
         exit(1);
       }
       (_cells[cellIndex]).addParticle(&(_particles.front()));
@@ -716,7 +714,7 @@ Molecule* LinkedCells::deleteCurrent ()
 
 void LinkedCells::deleteOuterParticles(){
   if(_cellsValid == false) {
-    cerr << "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first" << endl;
+    global_log->error() << "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first" << endl;
     exit(1);
   }
 
@@ -755,7 +753,7 @@ double LinkedCells::get_halo_L(int index){
 
 void LinkedCells::getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs){
   if(_cellsValid == false) {
-    cerr << "Cell structure in LinkedCells (getBoundaryParticles) invalid, call update first" << endl;
+    global_log->error() << "Cell structure in LinkedCells (getBoundaryParticles) invalid, call update first" << endl;
     exit(1);
   }
 
@@ -774,7 +772,7 @@ void LinkedCells::getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs){
 
 void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs){
   if(_cellsValid == false) {
-    cerr << "Cell structure in LinkedCells (getHaloParticles) invalid, call update first" << endl;
+    global_log->error() << "Cell structure in LinkedCells (getHaloParticles) invalid, call update first" << endl;
     exit(1);
   }
 
@@ -794,7 +792,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs){
 
 void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs){
   if(_cellsValid == false) {
-    cerr << "Cell structure in LinkedCells (getRegion) invalid, call update first" << endl;
+    global_log->error() << "Cell structure in LinkedCells (getRegion) invalid, call update first" << endl;
     exit(1);
   }
 
@@ -925,7 +923,7 @@ unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) {
 
   for(int dim=0; dim<3; dim++){
     if(molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]){
-      cerr << "Error in getCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
+      global_log->error() << "getCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
     }
     cellIndex[dim] = (int) floor((molecule->r(dim)-_haloBoundingBoxMin[dim])/_cellLength[dim]);
 
@@ -949,7 +947,7 @@ bool LinkedCells::isFirstParticle(Molecule& m1, Molecule& m2){
       if(m1.r(0) < m2.r(0)) return true;
       else if(m1.r(0) > m2.r(0)) return false;
       else {
-        cerr << "Error in LinkedCells::isFirstParticle: both Particles have the same position" << endl;
+        global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << endl;
         exit(1);
       }
     }
@@ -967,13 +965,13 @@ void LinkedCells::deleteMolecule
    unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
    if( hash >= _cells.size() )
    {
-      cout << "SEVERE ERROR: coordinates for atom deletion lie outside bounding box.\n";
+      global_log->error() << "coordinates for atom deletion lie outside bounding box." << endl;
       exit(1);
    }
    bool found = this->_cells[hash].deleteMolecule(molid);
    if(!found)
    {
-      cout << "SEVERE ERROR: could not delete molecule " << molid << ".\n";
+      global_log->error() << "could not delete molecule " << molid << "." << endl;
       exit(1);
    }
 }
@@ -996,7 +994,7 @@ double LinkedCells::getEnergy(Molecule* m1)
 
    if(m1->numTersoff() > 0)
    {
-      cout << "The grand canonical ensemble is not implemented for solids.\n";
+      global_log->error() << "The grand canonical ensemble is not implemented for solids." << endl;
       exit(484);
    }
    // molecules in the cell
@@ -1075,9 +1073,8 @@ void LinkedCells::grandcanonicalStep
 
          accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
-         if(accept) cout << "r" << mu->rank() << "d" << m->id() << "\n";
-         else cout << "   (r" << mu->rank() << "-d" << m->id() << ")\n";
-         cout.flush();
+         if(accept) global_log->debug() << "r" << mu->rank() << "d" << m->id() << endl;
+         else global_log->debug() << "   (r" << mu->rank() << "-d" << m->id() << ")" << endl;
 #endif
          if(accept)
          {
@@ -1113,9 +1110,8 @@ void LinkedCells::grandcanonicalStep
          m->setFM(0.0,0.0,0.0,0.0,0.0,0.0);
          m->check(nextid);
 #ifndef NDEBUG
-         cout << "rank " << mu->rank() << ": insert " << m->id()
-              << " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? ";
-         cout.flush();
+         global_log->debug() << "rank " << mu->rank() << ": insert " << m->id()
+              << " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? " << endl;
 #endif
 
          unsigned long cellid = this->getCellIndexOfMolecule(m);
@@ -1124,9 +1120,8 @@ void LinkedCells::grandcanonicalStep
          accept = mu->decideInsertion(DeltaUpot/T);
 
 #ifndef NDEBUG
-         if(accept) cout << "r" << mu->rank() << "i" << mit->id() << ")\n";
-         else cout << "   (r" << mu->rank() << "-i" << mit->id() << ")\n";
-         cout.flush();
+         if(accept) global_log->debug() << "r" << mu->rank() << "i" << mit->id() << ")" << endl;
+         else global_log->debug() << "   (r" << mu->rank() << "-i" << mit->id() << ")" << endl;
 #endif
          if(accept)
          {
