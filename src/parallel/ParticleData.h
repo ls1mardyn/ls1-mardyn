@@ -21,8 +21,16 @@ class ParticleData{
   //! @brief defines a MPI datatype which can be used to transfer a MacroscopicData object
   static void setMPIType(MPI_Datatype &sendPartType){
     int blocklengths[] = {1,1,13}; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
-    MPI_Aint displacements[] = {0, sizeof(unsigned long),sizeof(int)+sizeof(unsigned long)};
     MPI_Datatype types[] = {MPI_UNSIGNED_LONG, MPI_INT,MPI_DOUBLE};
+
+    MPI_Aint displacements[3];
+    ParticleData pdata_dummy;
+    MPI_Address(&pdata_dummy, displacements);
+    MPI_Address(&pdata_dummy.cid, displacements+1);
+    MPI_Address(&pdata_dummy.r[0], displacements+2);
+    MPI_Aint base = displacements[0];
+    for (int i=0; i<3; i++) displacements[i] -= base;
+
     MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType);
   	MPI_Type_commit(&sendPartType);
   }
