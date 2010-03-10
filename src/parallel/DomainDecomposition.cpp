@@ -312,6 +312,12 @@ double DomainDecomposition::getTime(){
 
 
 void DomainDecomposition::setGridSize( int num_procs ) {
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 1
+  for( int i = 0; i < DIM; i++ )
+	  _gridSize[i] = 0;
+  MPI_Dims_create( num_procs, DIM, (int *) &_gridSize );
+#else
+  // Fallback for older MPI implementations.
   int remainder;      // remainder during the calculation of the prime factors
   int num_factors;    // number of prime factors
   int *prime_factors; // array for the prime factors
@@ -346,6 +352,7 @@ void DomainDecomposition::setGridSize( int num_procs ) {
   }
 
   delete [] prime_factors;
+#endif
 }
 
 unsigned DomainDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd)
