@@ -29,15 +29,10 @@ DomainDecomposition::DomainDecomposition(){
   // introduce coordinates
   MPI_Comm_rank( _comm, &_rank );
   MPI_Cart_coords( _comm, _rank, DIM, _coords );
-
-  // save neighbour ranks
-  _neighbours[0][LOWER]  = getRank(_coords[0] - 1, _coords[1]     , _coords[2]     );
-  _neighbours[0][HIGHER] = getRank(_coords[0] + 1, _coords[1]     , _coords[2]     );
-  _neighbours[1][LOWER]  = getRank(_coords[0]    , _coords[1] - 1 , _coords[2]     );
-  _neighbours[1][HIGHER] = getRank(_coords[0]    , _coords[1] + 1 , _coords[2]     );
-  _neighbours[2][LOWER]  = getRank(_coords[0]    , _coords[1]     , _coords[2] - 1 );
-  _neighbours[2][HIGHER] = getRank(_coords[0]    , _coords[1]     , _coords[2] + 1 );
-
+  // find lower and higher neighbours:
+  for( int d = 0; d < DIM; d++ ) {
+	  MPI_Cart_shift( _comm, d, 1, &_neighbours[d][LOWER], &_neighbours[d][HIGHER] );
+  }
   // Initialize MPI Dataype for the particle exchange once at the beginning.
   ParticleData::setMPIType( _mpi_Particle_data );
 }
