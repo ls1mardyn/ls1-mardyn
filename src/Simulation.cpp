@@ -71,8 +71,9 @@ Simulation::Simulation(int *argc, char ***argv)
 #endif
 
   /* Initialize the global log file */
-  string logfileName("MarDyn");
-  global_log = new Log::Logger(Log::ALL);
+  //string logfileName("MarDyn");
+  //global_log = new Log::Logger( Log::All, logfileName );
+  global_log = new Log::Logger( Log::All );
 #ifdef PARALLEL
   global_log->set_mpi_output_root(0);
 #endif
