@@ -319,16 +319,16 @@ class PartGen : public InputBase{
   
   // physical constants
   //! @brief atomic mass, not reduced, [atomic mass] = kg
-  const static double _atomicMassDim = 1.660539E-27;
+  static const double _atomicMassDim;
   //! @brief Avogadro constant, not reduced, [Avogadro] = 1/mol 
-  const static double _avogadroDim = 6.02214E+23;
+  static const double _avogadroDim;
   //! @brief Boltzmann constant, not reduced,  [Boltzmann] = J/K
   //! @note note that for simulation purposes, k equals 1 instead of 1.3e-23.
-  const static double _boltzmannDim = 1.38065E-23;
+  static const double _boltzmannDim;
   //! @brief Coulomb constant in units of [Coco] = Jm/e^2
-  const static double _cocoDim = 2.307076e-28;
+  static const double _cocoDim;
   //! @brief Debye in units of [my] = me
-  const static double _debyeDim = 2.0819435e-11;
+  static const double _debyeDim;
 
   //! @brief density of the gas phase 
   double _gasDensity;

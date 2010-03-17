@@ -8,6 +8,13 @@
 #include "datastructures/ParticleContainer.h"
 #include "ensemble/GrandCanonical.h"
 
+// initialize constants
+const double PartGen::_atomicMassDim(1.660539E-27);
+const double PartGen::_avogadroDim(6.02214E+23);
+const double PartGen::_boltzmannDim(1.38065E-23);
+const double PartGen::_cocoDim(2.307076e-28);
+const double PartGen::_debyeDim(2.0819435e-11);
+
 PartGen::PartGen(){
 }
 
