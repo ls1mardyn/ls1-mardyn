@@ -26,9 +26,7 @@
 #include "molecules/ParaStrm.h"
 
 
-/**
-  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2009)
-*/
+//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class Comp2Param{
 public:
   Comp2Param() : m_numcomp(0) {}

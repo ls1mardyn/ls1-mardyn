@@ -13,7 +13,7 @@ class Domain;
 using namespace std;
 
 //! @brief writes thermodynamic properties to a file
-//! @author Martin Buchholz
+//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 //!
 //! The following global values will be written to a file:
 //! - Simulation time step

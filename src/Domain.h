@@ -1,21 +1,20 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+/*************************************************************************
+ * Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *                                                                       *
+ * This program is free software; you can redistribute it and/or modify  *
+ * it under the terms of the GNU General Public License as published by  *
+ * the Free Software Foundation; either version 2 of the License, or (at *
+ * your option) any later version.                                       *
+ *                                                                       *
+ * This program is distributed in the hope that it will be useful, but   *
+ * WITHOUT ANY WARRANTY; without even the implied warranty of            * 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      *
+ * General Public License for more details.                              *
+ *                                                                       *
+ * You should have received a copy of the GNU General Public License     *
+ * along with this program; if not, write to the Free Software           *
+ * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.   *
+ *************************************************************************/
 
 #ifndef DOMAIN_H_
 #define DOMAIN_H_
@@ -36,7 +35,7 @@ class DomainDecompBase;
 using namespace std;
 
 //! @brief This class is used to read in the phasespace and to handle macroscopic values
-//! @author Martin Bernreuther, Martin Buchholz, et al. (2009)
+//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 //!
 //! This class is responsible for all macroscopic values.
 //! It is important to differentiate between local and global version of those values
@@ -92,11 +91,31 @@ class Domain{
   //! By limiting the calculation to pairs of particles which have
   //! less distance than the given cutoff radius, an error is made
   //! By calculating approximations for the neglected pairs, the
-  //! error can be reduced
-  //! @param cutoffRadius cutoff radius
-  //! @todo How does the Correction work? Give reference to some paper,
-  //!       documentation in the implementation
-  void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ); // CHECKED
+  //! error can be reduced.
+  //! The way the cutoff correction works is essentially explained
+  //! in the lecture notes "Molekulare Thermodynamik" by Vrabec for
+  //! the LJ potential, and it is analogous for electrostatics.
+  //! Probably all books on molecular simulation explain that method,
+  //! e.g. have a look at Allen/Tildesley.
+  //!
+  //! The idea is that for radii above the cutoff radius, the
+  //! radial distribution function is assumed to be exactly one, so
+  //! that the correction for the internal energy as well as the
+  //! virial can be obtained immediately from an integral over the
+  //! pair potential and its derivative, respectively.
+  //! For quadrupoles, the long-range correction turns out to be zero
+  //! so that it is not calculated here. Molecules with point charges
+  //! and a zero net charge interact over long distances according to
+  //! their dipole moments, which is why effective dipoles are
+  //! calculated for the far field correction.
+  //!
+  //! If ions appear, so that the net charge of a molecule is distinct
+  //! from zero, the far field terms become much more complicated, and
+  //! THAT IS NOT IMPLEMENTED AT PRESENT.
+  //!
+  //! @param cutoffRadius cutoff radius for electrostatics
+  //! @param cutoffRadiusLJ cutoff radius for the LJ potential
+  void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ); 
 
   //! @brief initialize parameter streams
   //!
@@ -136,7 +155,7 @@ class Domain{
   //! @param index value which should be set
   void setGlobalLength(int index, double length);
 
-  //! @brief get the global temperature
+  //! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
   double getGlobalTemperature() { return this->T(0); }
   double T(int thermostat) { return this->_globalTemperatureMap[thermostat]; }
   double targetT(int thermostat) { return this->_universalTargetTemperature[thermostat]; }
@@ -175,12 +194,14 @@ class Domain{
   //! global virial has been calculated (method calculateGlobalValues)
   double getAverageGlobalVirial() const;
 
-  //! @brief sets _localSummv2 to the given value
+  //! @brief sets _localSummv2 to the given value (for thermostat ID 0)
   void setLocalSummv2(double summv2);
+  //! @brief sets _localSummv2 to the given value
   void setLocalSummv2(double summv2, int thermostat);
     
-  //! @brief sets _localSumIw2 to the given value
+  //! @brief sets _localSumIw2 to the given value (for thermostat ID 0)
   void setLocalSumIw2(double sumIw2);
+  //! @brief sets _localSumIw2 to the given value
   void setLocalSumIw2(double sumIw2, int thermostat);
 	
     //! @brief sets _localThermostatN(i) and _localRotationalDOF(i)
@@ -234,74 +255,145 @@ class Domain{
   //!
   //! @param domainDecomp domain decomposition
   //! @param particleContainer particle Container
-  //! @todo more detailled description
+  //! @param collectThermostatVelocities flag stating whether the directed velocity should be collected for the corresponding thermostats
+  //! @param Tfactor temporary factor applied to the temperature during equilibration
+  //!
+  //! Essentially, this method calculates all thermophysical values
+  //! that require communication between the subdomains of the system.
+  //!
+  //! In particular, it determines:
+  //!   - the potential energy and the virial
+  //!   - if (collectThermostatVelocities == true), the directed velocity associated with the appropriately marked thermostats
+  //!   - the kinetic energy and number of DOF associated with each thermostat
+  //!   - on that basis, the correction factors for translation and rotation, also applying some heuristics in case of an explosion
+  //!
+  //! The heuristics applied in case of an explosion were already commented
+  //! on, in the appropriate place (Domain.cpp), but apparently it should be
+  //! repeated here (according to the requirements communicated by TUM):
+  //! Sometimes an "explosion" occurs, for instance, by inserting a particle
+  //! at an unfavorable position, or due to imprecise integration of the
+  //! equations of motion. The thermostat would then remove the kinetic energy from
+  //! the rest of the system, effectively destroying a simulation run that could
+  //! be saved by a more intelligent version, which is provided by the present
+  //! heuristics. It is essential that such an intervention does not occur
+  //! regularly, therefore it is limited to three times every 3000 time steps.
+  //! That limit is implemented using the properties _universalSelectiveThermostatCounter,
+  //! _universalSelectiveThermostatWarning, and _universalSelectiveThermostatError.
+  void calculateGlobalValues(
+     DomainDecompBase* domainDecomp, ParticleContainer* particleContainer,
+     bool collectThermostatVelocities, double Tfactor
+  );
+  //! @brief calls this->calculateGlobalValues with Tfactor = 1 and without velocity collection
   void calculateGlobalValues(DomainDecompBase* domainDecomp,
 			     ParticleContainer* particleContainer)
   {
      this->calculateGlobalValues(domainDecomp, particleContainer, false, 1.0);
   }
-  void calculateGlobalValues(
-     DomainDecompBase* domainDecomp, ParticleContainer* particleContainer,
-     bool collectThermostatVelocities, double Tfactor
-  );
   
   //! @brief calculate _localSummv2 and _localSumIw2
-  //! @todo more detailled description
+  //!
+  //! The present method calculates the translational and rotational
+  //! kinetic energies associated with the thermostats of the system,
+  //! together with the corresponding number of DOF. If a thermostat
+  //! is marked as applying to the undirected motion only, this is
+  //! explicitly considered by subtracting the average directed
+  //! motion corresponding to the thermostat from the motion of each
+  //! individual particle, for the purpose of aggregating the kinetic
+  //! energy of the undirected motion.
   void calculateVelocitySums(ParticleContainer* partCont);
   
+    //! Calculates the LOCAL directed kinetic energy associated
+    //! with the appropriately marked thermostats
     void calculateThermostatDirectedVelocity(ParticleContainer* partCont);
+    //! A thermostat is referred to as undirected here if it
+    //! explicitly excludes the kinetic energy associated with
+    //! the directed motion of the respective components.
     bool thermostatIsUndirected(int th) { return this->_universalUndirectedThermostat[th]; }
+    //! @brief returns the directed velocity associated with a thermostat
+    //! @param th ID of the thermostat
+    //! @param d coordinate 0 (v_x), 1 (v_y), or 2 (v_z).
+    //!
+    //! It should be obvious that this method only returns sensible values
+    //! for thermostats marked as "undirected", because otherwise the
+    //! directed velocity is not explicitly computed.
     double thermostatv(int th, int d) { return this->_universalThermostatDirectedVelocity[d][th]; }
 
     int ownrank() { return this->_localRank; }
 
+    //! @brief returns whether there are several distinct thermostats in the system
     bool severalThermostats() { return this->_universalComponentwiseThermostat; }
+    //! @brief thermostat to be applied to component cid
+    //! @param cid ID of the respective component
     int getThermostat(int cid) { return this->_universalThermostatID[cid]; }
+    //! @brief disables the componentwise thermostat (so that a single thermostat is applied to all DOF)
     void disableCT() { this->_universalComponentwiseThermostat = false; }
+    //! @brief enables the componentwise thermostat
     void enableCT();
+    //! @brief returns the ID of the "last" thermostat in the system
+    //!
+    //! The idea is that ID -1 refers to DOF without thermostats,
+    //! while ID 0 refers to the entire system (or to the unique thermostat if the componentwise
+    //! thermostat is disabled). In case of componentwise thermostats being applied,
+    //! these have the IDs from 1 to this->maxThermostat().
     unsigned maxThermostat()
     {
        return (_universalComponentwiseThermostat)? (_universalThermostatN.size() - 2): 0;
     }
+    //! @brief associates a component with a thermostat
+    //! @param cid internal ID of the component
+    //! @param th internal ID of the thermostat
     void setComponentThermostat(int cid, int th)
     {
        if((0 > cid) || (0 >= th)) exit(787);
        this->_universalThermostatID[cid] = th;
        this->_universalThermostatN[th] = 0;
     }
+    //! @brief enables the "undirected" flag for the specified thermostat
+    //! @param tst internal ID of the respective thermostat
     void enableUndirectedThermostat(int tst);
 
-    /// assigns a coset ID to a component (ID)
+    //! @brief assigns a coset ID to a component (ID)
     void assignCoset(unsigned cid, unsigned cosetid) { _universalComponentSetID[cid] = cosetid; }
-    /// sets the information on the acceleration model for one coset
+    //! @brief sets the information on the acceleration model for one coset
     void specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep);
-    /// sets the number of timesteps between two updates of the uniform acceleration
+    //! @brief sets the number of timesteps between two updates of the uniform acceleration
     void setUCAT(unsigned uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
-    /// returns the number of timesteps between two updates of the uniform acceleration
+    //! @brief returns the number of timesteps between two updates of the uniform acceleration
     unsigned getUCAT() { return this->_universalConstantAccelerationTimesteps; }
-    /// are there any cosets?
+    //! @brief are there any cosets?
     bool isAcceleratingUniformly() { return ( (this->_universalTau.size() > 0)
                                               && (this->_universalConstantAccelerationTimesteps > 0) ); }
-    /// updates the intensity and direction of the uniform acceleration
+    //! @brief updates the intensity and direction of the uniform acceleration
     void determineAdditionalAcceleration
     (
         DomainDecompBase* domainDecomp,
         ParticleContainer* molCont, double dtConstantAcc
     );
-    /// returns the acceleration map (necessary for passing data to the integrator)
+    //! @brief returns the acceleration map (necessary for passing data to the integrator)
     map<unsigned, double>* getUAA() { return this->_universalAdditionalAcceleration; }
-    /// returns the cosetid of a component (0 for unaccelerated components)
+    //! @brief returns the cosetid of a component (0 for unaccelerated components)
     unsigned getComponentSet(unsigned cid)
     {
        if(_universalComponentSetID.find(cid) == _universalComponentSetID.end()) return 0;
        else return this->_universalComponentSetID[cid];
     }
+    //! @brief returns the absolute directed velocity for a component set
+    //! @param cosetid ID of the component set
     double getDirectedVelocity(unsigned cosetid);
+    //! @brief returns the directed velocity for a component set
+    //! @param cosetid ID of the component set
+    //! @param d x direction (0), y direction (1), or z direction (2)
     double getDirectedVelocity(unsigned cosetid, unsigned d);
+    //! @brief returns the absolute external acceleration for a component set
+    //! @param cosetid ID of the component set
     double getUniformAcceleration(unsigned cosetid);
+    //! @brief returns the external acceleration for a component set
+    //! @param cosetid ID of the component set
+    //! @param d x direction (0), y direction (1), or z direction (2)
     double getUniformAcceleration(unsigned cosetid, unsigned d);
-    /// returns the difference between the desired velocity and the global average velocity
+    //! @brief returns the difference between the desired velocity and the global average velocity
     double getMissingVelocity(unsigned cosetid, unsigned d);
+    //! @brief total number of particles that belong to the specified component set
     double getCosetN(unsigned cosetid) { return this->_globalN[cosetid]; }
 
     void setupProfile(unsigned xun, unsigned yun, unsigned zun);
@@ -482,18 +574,19 @@ class Domain{
     map<int, double> _local2KERot; 
     
   //! reaction field
-  //! @todo WHAT IS THIS?
-  //! @todo local or global?
+  //!
+  //! This is neither "local" nor "global" but a parameter of the reaction field method.
+  //! (So one might regard it as "global" formally.)
+  //! For a description of the reaction field method cf. the dissertation of J. Stoll.
+  //! It was introduced by J. A. Barker and R. O. Watts, Mol. Phys. 26: 789-792 (1973).
   double _epsilonRF;
 
-  //! Potential correction for the error made by the cutoff
-  //! @todo local or global?
+  //! Global potential correction for the error made by the cutoff
   double _UpotCorr;
-  //! Virial correction for the error made by the cutoff
-  //! @todo local or global?
+  //! Global virial correction for the error made by the cutoff
   double _VirialCorr;     
 
-  //! @todo comment
+  //! Contains the time t in reduced units
   double _currentTime;
 
   //! Components resp. molecule types

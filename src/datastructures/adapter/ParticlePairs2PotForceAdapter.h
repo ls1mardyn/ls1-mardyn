@@ -24,7 +24,7 @@
 #include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
 
 //! @brief calculate pair forces and collect macroscopic values
-//! @author Martin Buchholz
+//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 //!
 //! used to calculate the force between all pairs and sum up macroscopic values (e.g. Upot)
 //! The idea is, that after the call of init(), processPair(...) is called for all

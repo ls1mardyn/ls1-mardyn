@@ -34,8 +34,10 @@ using Log::global_log;
 
 using namespace std;
 
-#define VERSION 20100308
+#define VERSION 20100321
 #define RDF_MINIMAL_OUTPUT_STEPS 1023
+#define MIN_BETA 0.9
+#define KINLIMIT_PER_T 10.0
 
 /*
  * cutoff correction
@@ -317,18 +319,10 @@ void Domain::calculateGlobalValues(
 			this->_universalBRot[thermit->first] = 1.0;
 		}
 
-		// Sometimes an "explosion" occurs, for instance, by inserting a particle
-		// at an unfavorable position, or due to imprecise integration of the
-		// equations of motion. The thermostat then removes the kinetic energy from
-		// the rest of the system, effectively destroying a simulation run that could
-		// be saved by a more intelligent version. It is essential that such an intervention
-		// does not occur regularly, therefore it is limited to three times every 3000 time
-		// steps and it is also indicated in the output.
-		// FIXME: No hardcoded numbers: Use input file parameters + default values.
+		// heuristic handling of the unfortunate special case of an explosion in the system
 		//
-		if( ( (this->_universalBTrans[thermit->first] < 0.95)
-					|| (this->_universalBRot[thermit->first] < 0.90) )
-				&& (this->_currentTime > 0.05)
+		if( ( (this->_universalBTrans[thermit->first] < MIN_BETA)
+					|| (this->_universalBRot[thermit->first] < MIN_BETA) )
 				&& (0 >= this->_universalSelectiveThermostatError) )
 		{
 			global_log->warning() << "Explosion warning (time t=" << _currentTime << ")." << endl;
@@ -339,7 +333,7 @@ void Domain::calculateGlobalValues(
 			int rot_dof;
 			double Utrans, Urot;
 			// double target_energy = 1.5*Ti;
-			double limit_energy =  9.0*Ti;
+			double limit_energy =  KINLIMIT_PER_T * Ti;
 			double limit_rot_energy;
 			double vcorr, Dcorr;
 			for( tM = particleContainer->begin();

@@ -14,6 +14,7 @@ class ChemicalPotential;
 
 using namespace std;
 
+//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class AsciiReader : public InputBase{
  public:
   AsciiReader();
