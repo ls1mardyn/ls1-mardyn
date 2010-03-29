@@ -61,6 +61,7 @@
 #include <iomanip>
 #include "Timer.h"
 #include "Logger.h"
+#include "compile_info.h"
 
 using Log::global_log;
 
@@ -84,6 +85,21 @@ Simulation::Simulation(int *argc, char ***argv)
      global_log->error() << "Detected argc: " << *argc << endl;
      exit(1);
   }
+  char *info_str = new char[MAX_INFO_STRING_LENGTH];
+
+  get_compiler_info( &info_str );
+  global_log->info() << "Compiler: " << info_str << endl;
+  get_compile_time( &info_str );
+  global_log->info() << "Compiled: " << info_str << endl;
+#ifdef PARALLEL
+  get_mpi_info( &info_str );
+  global_log->info() << "MPI library: " << info_str << endl;
+#endif
+
+  get_timestamp( &info_str );
+  global_log->info() <<  "Started: " << info_str  << endl;
+  get_host( &info_str );
+  global_log->info() <<  "Execution host: " << info_str  << endl;
 
 #ifndef PARALLEL
   global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
