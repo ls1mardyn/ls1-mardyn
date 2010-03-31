@@ -392,45 +392,51 @@ void DomainDecomposition::assertIntIdentity(int IX)
 
 void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm)
 {
-   Molecule* m;
-   global_log->set_mpi_output_root(0);
+	Molecule* m;
 
-   if( _rank ) {
-      int tid;
-      for(m = mm->begin(); m != mm->end(); m = mm->next()) {
-         tid = m->id();
-         MPI_Send( &tid, 1, MPI_INT, 0, 2674 + _rank, _comm );
-      }
-      tid = -1;
-      MPI_Send( &tid, 1, MPI_INT, 0, 2674 + _rank, _comm );
-   }
-   else {
-      int recv;
-      map<int, int> check;
-      for( m = mm->begin(); m != mm->end(); m = mm->next() )
-         check[m->id()] = 0;
+	if( _rank ) {
+		int num_molecules = mm->getNumberOfParticles();
+		unsigned long *tids;
+		tids = new unsigned long[num_molecules];
 
-      int num_procs;
-      MPI_Comm_size( _comm, &num_procs );
-      MPI_Status s;
-      for( int i = 1; i < num_procs; i++ ) {
-         bool cc = true;
-         while(cc) {
-            MPI_Recv( &recv, 1, MPI_INT, i, 2674 + i, _comm, &s );
-            if( recv == -1 )
-	      cc = false;
-            else {
-               if( check.find(recv) != check.end() ) {
-                  global_log->error() << "Ranks " << check[recv] << " and " << i
-                              << " both propagate ID " << recv << endl;
-		  MPI_Abort( MPI_COMM_WORLD, 1 );
-               }
-               else
-		 check[recv] = i;
-            }
-         }
-      }
-      global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
-           << " entries." << endl;
-   }
+		int i = 0;
+		for(m = mm->begin(); m != mm->end(); m = mm->next()) {
+			tids[i] = m->id();
+			i++;
+		}
+		MPI_Send( tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm );
+		delete[] tids;
+		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
+	}
+	else {
+		map<unsigned long, int> check;
+		int num_procs;
+		MPI_Comm_size( _comm, &num_procs );
+
+		for( m = mm->begin(); m != mm->end(); m = mm->next() )
+			check[m->id()] = 0;
+
+		MPI_Status status;
+		for( int i = 1; i < num_procs; i++ ) {
+			int num_recv = 0;
+			unsigned long *recv;
+			MPI_Probe( i, 2674 + i, _comm, &status );
+			MPI_Get_count( &status, MPI_UNSIGNED_LONG, &num_recv );
+			recv = new unsigned long[num_recv];
+
+			MPI_Recv( recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status );
+			for( int j = 0; j < num_recv; j++ ) {
+				if( check.find(recv[j]) != check.end() ) {
+					global_log->error() << "Ranks " << check[recv[j]] << " and " << i
+						<< " both propagate ID " << recv << endl;
+					MPI_Abort( MPI_COMM_WORLD, 1 );
+				}
+				else
+					check[recv[j]] = i;
+			}
+			delete[] recv;
+		}
+		global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size()
+			<< " entries." << endl;
+	}
 }
