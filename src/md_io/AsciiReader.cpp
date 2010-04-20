@@ -85,7 +85,7 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
     else if((token == "Temperature") || (token == "T"))
     {
        _phaseSpaceFileStream >> token;
-       domain->disableCT();
+       domain->disableComponentwiseThermostat();
        domain->setGlobalTemperature(strtod(token.c_str(), NULL));
     }
     else if((token == "ThermostatTemperature") || (token == "ThT") || (token == "h"))
@@ -94,12 +94,12 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
        double targetT;
        _phaseSpaceFileStream >> i;
        _phaseSpaceFileStream >> targetT;
-       domain->setTargetT(i, targetT);
+       domain->setTargetTemperature(i, targetT);
     }
     else if((token == "ComponentThermostat") || (token == "CT") || (token == "o"))
     {
        if(!domain->severalThermostats())
-	  domain->enableCT();
+	  domain->enableComponentwiseThermostat();
        int cid;
        _phaseSpaceFileStream >> cid;
        cid--;

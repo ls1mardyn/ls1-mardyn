@@ -86,7 +86,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 		}
 		else if((token == "Temperature") || (token == "T")) {
 			// set global thermostat temperature
-			domain->disableCT(); //disable component wise thermostats
+			domain->disableComponentwiseThermostat(); //disable component wise thermostats
 			double targetT;
 			_phaseSpaceHeaderFileStream >> targetT;
 			domain->setGlobalTemperature( targetT );
@@ -97,12 +97,12 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			double targetT;
 			_phaseSpaceHeaderFileStream >> thermostat_id;
 			_phaseSpaceHeaderFileStream >> targetT;
-			domain->setTargetT( thermostat_id, targetT );
+			domain->setTargetTemperature( thermostat_id, targetT );
 		}
 		else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
 			// specify a thermostat for a component
 			if( !domain->severalThermostats() )
-				domain->enableCT();
+				domain->enableComponentwiseThermostat();
 			int component_id;
 			int thermostat_id;
 			_phaseSpaceHeaderFileStream >> component_id >> thermostat_id;

@@ -1297,7 +1297,7 @@ void Domain::evaluateRho(
 		(this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]);
 }
 
-void Domain::setTargetT(int thermostat, double targetT)
+void Domain::setTargetTemperature(int thermostat, double targetT)
 {
 	if(thermostat < 0)
 	{
@@ -1309,7 +1309,7 @@ void Domain::setTargetT(int thermostat, double targetT)
 	this->_universalTargetTemperature[thermostat] = targetT;
 	if(!(this->_universalUndirectedThermostat[thermostat] == true))
 		this->_universalUndirectedThermostat[thermostat] = false;
-	if(thermostat == 0) this->disableCT();
+	if(thermostat == 0) this->disableComponentwiseThermostat();
 	if(thermostat >= 1)
 	{
 		if(!this->_universalComponentwiseThermostat)
@@ -1327,7 +1327,7 @@ void Domain::setTargetT(int thermostat, double targetT)
 	}
 }
 
-void Domain::enableCT()
+void Domain::enableComponentwiseThermostat()
 {
 	if(this->_universalComponentwiseThermostat) return;
 
@@ -1352,7 +1352,7 @@ void Domain::enableUndirectedThermostat(int tst)
 
 void Domain::setGlobalTemperature(double temp)
 {
-	this->disableCT();
+	this->disableComponentwiseThermostat();
 	this->_universalTargetTemperature[0] = temp;
 }
 

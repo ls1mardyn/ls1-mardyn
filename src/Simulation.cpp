@@ -161,7 +161,7 @@ int Simulation::exit( int exitcode ){
   // terminate all mpi processes and return exitcode
   MPI_Abort( MPI_COMM_WORLD, exitcode );
 #else
-  // call POSIX exit
+  // call global exit
   ::exit( exitcode );
 #endif
   return exitcode;
@@ -634,9 +634,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         _moleculeContainer->getBoundingBoxMin(2),
         _moleculeContainer->getBoundingBoxMax(2)
      );
-     double Tcur = _domain->T(0);
-     double Ttar = _domain->severalThermostats()? _domain->targetT(1)
-                                                : _domain->targetT(0);
+	 /* TODO: thermostat */
+     double Tcur = _domain->getCurrentTemperature(0);
+	 /* FIXME: target temperature from thermostat ID 0 or 1?  */
+     double Ttar = _domain->severalThermostats()? _domain->getTargetTemperature(1)
+                                                : _domain->getTargetTemperature(0);
      if((Tcur < 0.85*Ttar) || (Tcur > 1.15*Ttar)) Tcur = Ttar;
      cpit->submitTemperature(Tcur);
      if(h != 0.0) cpit->setPlanckConstant(h);
@@ -697,9 +699,11 @@ void Simulation::initialize()
 
   if(_lmu.size() > 0)
   {
-     double Tcur = _domain->T(0);
-     double Ttar = _domain->severalThermostats()? _domain->targetT(1)
-                                                      : _domain->targetT(0);
+	  /* TODO: thermostat */
+     double Tcur = _domain->getGlobalCurrentTemperature();
+	 /* FIXME: target temperature from thermostat ID 0 or 1? */
+     double Ttar = _domain->severalThermostats()? _domain->getTargetTemperature(1)
+                                                      : _domain->getTargetTemperature(0);
      if((Tcur < 0.85*Ttar) || (Tcur > 1.15*Ttar)) Tcur = Ttar;
 
      list<ChemicalPotential>::iterator cpit;
@@ -823,8 +827,9 @@ void Simulation::simulate()
 	  {
              global_log->debug() << "Grand canonical ensemble(" << j
 		         << "): test deletions and insertions" << endl;
+			 /* TODO: thermostat */
              _moleculeContainer->grandcanonicalStep(
-	        &(*cpit), _domain->T(0)
+	        &(*cpit), _domain->getGlobalCurrentTemperature()
              );
 	     cpit->assertSynchronization(_domainDecomposition);
 
@@ -920,10 +925,11 @@ void Simulation::simulate()
              if(0 >= thermostat) continue;
              if(_domain->thermostatIsUndirected(thermostat))
              {
+				 /* TODO: thermostat */
                 tM->scale_v( _domain->getGlobalBetaTrans(thermostat),
-                             _domain->thermostatv(thermostat, 0),
-                             _domain->thermostatv(thermostat, 1),
-                             _domain->thermostatv(thermostat, 2)  );
+                             _domain->getThermostatDirectedVelocity(thermostat, 0),
+                             _domain->getThermostatDirectedVelocity(thermostat, 1),
+                             _domain->getThermostatDirectedVelocity(thermostat, 2)  );
              }
              else
              {
@@ -1049,8 +1055,9 @@ void Simulation::output(unsigned long simstep)
 
   if(_domain->thermostatWarning())
       global_log->warning() << "Thermostat!" << endl;
+  /* TODO: thermostat */
   global_log->info() << "Simstep = "<< simstep
-      << "\tT = " << _domain->T(0)
+      << "\tT = " << _domain->getGlobalCurrentTemperature()
       << "\tU_pot = " << _domain->getAverageGlobalUpot()
       << "\tp = " << _domain->getGlobalPressure() << endl;
 

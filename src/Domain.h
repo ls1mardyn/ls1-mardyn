@@ -156,13 +156,13 @@ class Domain{
   void setGlobalLength(int index, double length);
 
   //! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
-  double getGlobalTemperature() { return this->T(0); }
-  double T(int thermostat) { return this->_globalTemperatureMap[thermostat]; }
-  double targetT(int thermostat) { return this->_universalTargetTemperature[thermostat]; }
+  double getGlobalCurrentTemperature() { return this->getCurrentTemperature(0); }
+  double getCurrentTemperature(int thermostat) { return this->_globalTemperatureMap[thermostat]; }
+  double getTargetTemperature(int thermostat) { return this->_universalTargetTemperature[thermostat]; }
 
   //! @brief set the global temperature
-  void setGlobalTemperature(double temp);
-  void setTargetT(int thermostat, double T);
+  void setGlobalTemperature(double T);
+  void setTargetTemperature(int thermostat, double T);
 
   //! @brief get the mixcoeff
   vector<double> & getmixcoeff();
@@ -204,22 +204,22 @@ class Domain{
   //! @brief sets _localSumIw2 to the given value
   void setLocalSumIw2(double sumIw2, int thermostat);
 	
-    //! @brief sets _localThermostatN(i) and _localRotationalDOF(i)
-    void setLocalNrotDOF(int i, unsigned long N, unsigned long rotDOF)
+    //! @brief sets _localThermostatN and _localRotationalDOF for thermostat
+    void setLocalNrotDOF(int thermostat, unsigned long N, unsigned long rotDOF)
     {
-       this->_localThermostatN[i] = N;
-       this->_localRotationalDOF[i] = rotDOF;
+       this->_localThermostatN[thermostat] = N;
+       this->_localRotationalDOF[thermostat] = rotDOF;
     }
     unsigned getComponentRotDOF(int cid) { return this->_components[cid].rot_dof(); }
   
   //! @brief get local rank 
   int getlocalRank();
     
-  //! @brief get inpversion
+  //! @brief get input version
   unsigned long getinpversion();
 
-  //! @brief set inpversion
-  void setinpversion(unsigned long inpv);
+  //! @brief set input version
+  void setinpversion(unsigned long inputVersion);
 
   //! @brief get globalRho
   double getglobalRho();
@@ -308,7 +308,7 @@ class Domain{
     //! A thermostat is referred to as undirected here if it
     //! explicitly excludes the kinetic energy associated with
     //! the directed motion of the respective components.
-    bool thermostatIsUndirected(int th) { return this->_universalUndirectedThermostat[th]; }
+    bool thermostatIsUndirected(int thermostat) { return this->_universalUndirectedThermostat[thermostat]; }
     //! @brief returns the directed velocity associated with a thermostat
     //! @param th ID of the thermostat
     //! @param d coordinate 0 (v_x), 1 (v_y), or 2 (v_z).
@@ -316,7 +316,7 @@ class Domain{
     //! It should be obvious that this method only returns sensible values
     //! for thermostats marked as "undirected", because otherwise the
     //! directed velocity is not explicitly computed.
-    double thermostatv(int th, int d) { return this->_universalThermostatDirectedVelocity[d][th]; }
+    double getThermostatDirectedVelocity(int thermostat, int d) { return this->_universalThermostatDirectedVelocity[d][thermostat]; }
 
     int ownrank() { return this->_localRank; }
 
@@ -326,9 +326,9 @@ class Domain{
     //! @param cid ID of the respective component
     int getThermostat(int cid) { return this->_universalThermostatID[cid]; }
     //! @brief disables the componentwise thermostat (so that a single thermostat is applied to all DOF)
-    void disableCT() { this->_universalComponentwiseThermostat = false; }
+    void disableComponentwiseThermostat() { this->_universalComponentwiseThermostat = false; }
     //! @brief enables the componentwise thermostat
-    void enableCT();
+    void enableComponentwiseThermostat();
     //! @brief returns the ID of the "last" thermostat in the system
     //!
     //! The idea is that ID -1 refers to DOF without thermostats,
@@ -342,15 +342,15 @@ class Domain{
     //! @brief associates a component with a thermostat
     //! @param cid internal ID of the component
     //! @param th internal ID of the thermostat
-    void setComponentThermostat(int cid, int th)
+    void setComponentThermostat(int cid, int thermostat)
     {
-       if((0 > cid) || (0 >= th)) exit(787);
-       this->_universalThermostatID[cid] = th;
-       this->_universalThermostatN[th] = 0;
+       if((0 > cid) || (0 >= thermostat)) exit(787);
+       this->_universalThermostatID[cid] = thermostat;
+       this->_universalThermostatN[thermostat] = 0;
     }
     //! @brief enables the "undirected" flag for the specified thermostat
     //! @param tst internal ID of the respective thermostat
-    void enableUndirectedThermostat(int tst);
+    void enableUndirectedThermostat(int thermostat);
 
     //! @brief assigns a coset ID to a component (ID)
     void assignCoset(unsigned cid, unsigned cosetid) { _universalComponentSetID[cid] = cosetid; }
