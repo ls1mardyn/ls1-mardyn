@@ -1043,7 +1043,7 @@ void Simulation::output(unsigned long simstep)
     _domain->resetProfile();
   }
 
-  if(!(simstep % _outputFrequency))
+  if((_outputFrequency > 0) && (0 == simstep % _outputFrequency))
   {
      _moleculeContainer->deleteOuterParticles();
      ostringstream osstrm;
