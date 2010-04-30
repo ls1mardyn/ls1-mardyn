@@ -4,8 +4,8 @@
 
 CFG_INFO = "gcc configuration enabling the stereo framework"
 
-GLOBAL_INCLUDES = -I/usr/local/include/steereo -DSTEEREO
-GLOBAL_LINK     = -L/usr/local/lib -lSteereo
+GLOBAL_INCLUDES = -I/home/hpcdjenz/workspace/Steereo/src -DSTEEREO -DSTEEREO_PARTITIONS=1
+GLOBAL_LINK     = -L/home/hpcdjenz/workspace/Steereo/src -lSteereo
 
 CXX_SEQ = g++
 CXX_PAR = mpicxx
@@ -16,7 +16,7 @@ CXX_PAR = mpicxx
 CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -g 
 LINKFLAGS_SEQ_DEBUG = $(GLOBAL_LINK) -O0 -g
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -O3 -DNDEBUG
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -O3 -DNDEBUG 
 LINKFLAGS_SEQ_RELEASE = $(GLOBAL_LINK)
 
 # PAR

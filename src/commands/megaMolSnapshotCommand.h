@@ -28,10 +28,10 @@ class MegaMolSnapshotCommand : public SteereoCommand
 
  private:
   // parameters needed for execution
-  int sockfd;
   static Simulation* sim;
   static int startStep;
   int stepInterval;
+  int colouringVal;
 
 };
 

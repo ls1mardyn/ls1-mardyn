@@ -1,6 +1,6 @@
 #ifdef STEEREO
 
-//#include <moleculeData.h>
+
 #include <iostream>
 #include "snapshotCommand.h"
 #include "../Domain.h"

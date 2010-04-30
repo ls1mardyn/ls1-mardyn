@@ -49,6 +49,10 @@
 #include "commands/megaMolSnapshotCommand.h"
 #include "commands/sendCouplingMDCommand.h"
 #include "commands/receiveCouplingMDCommand.h"
+#include "commands/getVisDataCommand.h"
+#ifdef PARALLEL
+#include <steereoMPIIntraCommunicator.h>
+#endif //PARALLEL
 #include <steerParameterCommand.h>
 #include <steereoSocketCommunicator.h>
 #endif
@@ -646,18 +650,40 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
      j++;
   }
 #ifdef STEEREO
+	SteereoLogger::setOutputLevel(2);
 	_steer = new SimSteering ();
   _steer->setNumberOfQueues (1);
-
+  int portNumber = 44445;
 #ifdef PARALLEL
-  if (ownrank == 0)
-  {
+  int ownSize;
+  MPI_Comm_size (MPI_COMM_WORLD, &ownSize);
+  SteereoMPIIntraCommunicator* mpiIntraComm = new SteereoMPIIntraCommunicator();
+  int partNum = 1;
+#ifdef STEEREO_PARTITIONS
+  partNum = STEEREO_PARTITIONS;
 #endif
-    _steer->setCommunicator (new SteereoSocketCommunicator ("44445"));
+  char* partVal = getenv("STEEREO_PARTITIONS");
+  if (partVal != NULL)
+  {
+  	partNum = atoi (partVal);
+  }
+  global_log->debug() << "going to divide the " << ownSize << " processes into " << partNum << " partitions" << std::endl;
+  mpiIntraComm->generateEqually (ownrank, partNum, ownSize);
+  global_log->debug() << "equally generated" << std::endl;
+  _steer->setIntraCommunicator (mpiIntraComm);
+  //if (ownrank == mpiIntraComm->getRoot())
+  if (mpiIntraComm->amIRoot())
+  {
+  	portNumber += (ownrank * partNum) / ownSize;
+#endif
+  	std::stringstream strstr;
+		strstr << portNumber;
+    _steer->setCommunicator (new SteereoSocketCommunicator (strstr.str()));
 #ifdef PARALLEL
   }
 #endif
 #endif
+
 }
 
 void Simulation::initialize()
@@ -734,14 +760,19 @@ void Simulation::initialize()
   _steer->registerCommand (ReceiveCouplingMDCommand::generateNewInstance, "receiveCouplingMD");
   _steer->registerCommand (SnapshotCommand::generateNewInstance, "getSnapshot");
   SnapshotCommand::setSimData (this);
-  SteerParameterCommand::registerScalarParameter ("temp", _domain, &Domain::getGlobalTemperature,
+  SteerParameterCommand::registerScalarParameter ("temp", _domain, &Domain::getGlobalCurrentTemperature,
 																									&Domain::setGlobalTemperature);
-  SendCouplingMDCommand::setData(this);
-  ReceiveCouplingMDCommand::setData(this);
+  SendCouplingMDCommand::addData(this);
+  ReceiveCouplingMDCommand::addData(this);
 #ifdef PARALLEL
-  std::cout << "_ownrank is " << ownrank << std::endl;
-  if (_domain->_ownrank == 0)
+  int ownrank = _domainDecomposition->getRank();
+  global_log->debug() << "_ownrank is " << ownrank << std::endl;
+  global_log->debug() << "my local rank is " << _steer->getIntraCommunicator()->getRank() << std::endl;
+  global_log->debug() << "my local root rank is " << _steer->getIntraCommunicator()->getRoot() << std::endl;
+  //if (ownrank == _steer->getIntraCommunicator()->getRoot())
+  if (_steer->getIntraCommunicator()->amIRoot())
   {
+  	global_log->debug() << "going to start listening on rank " << ownrank << std::endl;
 #endif
     _steer->startListening ();
 #ifdef PARALLEL
@@ -778,9 +809,9 @@ void Simulation::simulate()
                              / _integrator->getTimestepLength());
 
   loopTimer.start();
-  for (unsigned long simstep=_initSimulation; simstep<=_numberOfTimesteps; simstep++)
+  for (_simstep=_initSimulation; _simstep<=_numberOfTimesteps; _simstep++)
   {
-    if(simstep >= _initGrandCanonical)
+    if(_simstep >= _initGrandCanonical)
     {
        unsigned j = 0;
        list<ChemicalPotential>::iterator cpit;
@@ -788,7 +819,7 @@ void Simulation::simulate()
 	    cpit != _lmu.end();
 	    cpit++ )
        {
-	  if(!((simstep + 2*j + 3) % cpit->getInterval()))
+	  if(!((_simstep + 2*j + 3) % cpit->getInterval()))
 	  {
 	     cpit->prepareTimestep(
 	        _moleculeContainer, _domainDecomposition
@@ -797,12 +828,12 @@ void Simulation::simulate()
 	  j++;
        }
     }
-    global_log->debug() << "timestep " << simstep << endl;
+    global_log->debug() << "timestep " << _simstep << endl;
 
     _integrator->eventNewTimestep(_moleculeContainer, _domain);
 
     // activate RDF sampling
-    if((simstep == this->_initStatistics) && this->_doRecordRDF) this->_domain->tickRDF();
+    if((_simstep == this->_initStatistics) && this->_doRecordRDF) this->_domain->tickRDF();
 
     // ensure that all Particles are in the right cells and exchange Particles
     global_log->debug() << "Updating container and decomposition" << endl;
@@ -815,7 +846,7 @@ void Simulation::simulate()
     /*
      * test deletions and insertions
      */
-    if(simstep >= _initGrandCanonical)
+    if(_simstep >= _initGrandCanonical)
     {
        unsigned j = 0;
        list<ChemicalPotential>::iterator cpit;
@@ -823,7 +854,7 @@ void Simulation::simulate()
 	    cpit != _lmu.end();
 	    cpit++ )
        {
-	  if(!((simstep + 2*j + 3) % cpit->getInterval()))
+	  if(!((_simstep + 2*j + 3) % cpit->getInterval()))
 	  {
              global_log->debug() << "Grand canonical ensemble(" << j
 		         << "): test deletions and insertions" << endl;
@@ -854,7 +885,7 @@ void Simulation::simulate()
     global_log->debug() << "Delete outer particles" << endl;
     _moleculeContainer->deleteOuterParticles();
 
-    if(simstep >= _initGrandCanonical)
+    if(_simstep >= _initGrandCanonical)
     {
        _domain->evaluateRho
        (
@@ -863,11 +894,11 @@ void Simulation::simulate()
        );
     }
 
-    if(!(simstep % _collectThermostatDirectedVelocity))
+    if(!(_simstep % _collectThermostatDirectedVelocity))
        _domain->calculateThermostatDirectedVelocity(_moleculeContainer);
     if(_domain->isAcceleratingUniformly())
     {
-      if(!(simstep % uCAT))
+      if(!(_simstep % uCAT))
       {
         global_log->debug() << "Determine the additional acceleration" << endl;
         _domain->determineAdditionalAcceleration( _domainDecomposition,
@@ -881,7 +912,7 @@ void Simulation::simulate()
     /*
      * radial distribution function
      */
-    if(simstep >= _initStatistics)
+    if(_simstep >= _initStatistics)
     {
        if(this->_lmu.size() == 0)
        {
@@ -908,8 +939,8 @@ void Simulation::simulate()
     // calculate the global macroscopic values from the local values
     global_log->debug() << "Calculate macroscopic values" << endl;
     _domain->calculateGlobalValues( _domainDecomposition, _moleculeContainer,
-                                    (!(simstep % _collectThermostatDirectedVelocity)),
-                                    Tfactor(simstep) );
+                                    (!(_simstep % _collectThermostatDirectedVelocity)),
+                                    Tfactor(_simstep) );
 
     // scale velocity and angular momentum
     if(!_domain->NVE())
@@ -956,7 +987,7 @@ void Simulation::simulate()
 #endif
 	// measure per timestep IO
 	loopTimer.stop(); perStepIoTimer.start();
-	output(simstep);
+	output(_simstep);
 	perStepIoTimer.stop(); loopTimer.start();
   }
   loopTimer.stop();

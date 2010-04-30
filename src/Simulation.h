@@ -157,6 +157,7 @@ class Simulation{
   //! - update the ParticleContainer
   void updateParticleContainerAndDecomposition();
 
+  void setDomainDecomposition (DomainDecompBase* ddb) {_domainDecomposition = ddb;};
   Domain* getDomain () {return _domain;};
   ParticleContainer* getMolecules () {return _moleculeContainer;};
   unsigned long getSimStep () {return _simstep;};
