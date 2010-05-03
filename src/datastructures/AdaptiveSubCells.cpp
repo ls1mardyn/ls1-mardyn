@@ -980,6 +980,9 @@ void AdaptiveSubCells::calculateSubNeighbourIndices() {
 	// loop over all cellIndices of the coarse grid
 	// @todo only necessary cells!
 	for (unsigned int i=0; i<_cells.size(); i++) {
+		// Bugfix Johannes Weissl: Exclude halo, otherwise negative index access in _metaCellIndex
+		if(_subCells[_metaCellIndex[i]].isHaloCell())
+			continue;
 		// If two coarse cells, which have a index difference of 1 (cell i and cell /i+1) in the
 		// array _cells (usually direct neighbours in x-direction) have an index difference of
 		// 8 in the array _subCells (corresponding indeces stored in _metaCellIndex, then the
