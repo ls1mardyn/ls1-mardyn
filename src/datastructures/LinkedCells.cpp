@@ -621,10 +621,10 @@ void LinkedCells::traversePairs(){
 							double dd = molecule2.dist2( molecule1, distanceVector );
 							if( dd < cutoffRadiusSquare )
 							{
-								int cd = 0;
+								int cd = 1;
 								if( isFirstParticle( molecule1, molecule2 ) )
 								{
-									cd = 1;
+									cd = 0;
 								}
 								_particlePairsHandler->processPair( molecule1, molecule2, distanceVector, cd, dd, (dd < LJCutoffRadiusSquare) );
 								if( (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare) )
