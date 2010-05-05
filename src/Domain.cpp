@@ -81,6 +81,10 @@ double TISSv(int n,double rc,double sigma2,double tau1,double tau2){
 	return -(   pow(rc+tauPlus,2*n+3) - pow(rc+tauMinus,2*n+3) - pow(rc-tauMinus,2*n+3) + pow(rc-tauPlus,2*n+3) ) * rc*rc / ( 8*pow(sigma2,n)*tau1*tau2*(n+1)*(2*n+3) ) - 3*TISSu(n,rc,sigma2,tau1,tau2);
 }
 
+/*
+ * END cutoff correction
+ */
+
 Domain::Domain(int rank){
 	_localRank = rank;
 	_localUpot = 0;
@@ -89,7 +93,7 @@ Domain::Domain(int rank){
 	_globalVirial = 0; 
 	_globalRho = 0;
 
-	this->_universalThermostatID = map<int, int>();
+	this->_componentToThermostatIdMap = map<int, int>();
 	this->_localThermostatN = map<int, unsigned long>();
 	this->_localThermostatN[-1] = 0;
 	this->_localThermostatN[0] = 0;
@@ -130,7 +134,7 @@ Domain::Domain(int rank){
 		for(int d = 0; d < 3; d++)
 			this->_globalVelocitySum[d] = map<unsigned, long double>();
 #endif
-	this->_universalComponentwiseThermostat = false;
+	this->_componentwiseThermostat = false;
 #ifdef COMPLEX_POTENTIAL_SET
 	this->_universalUndirectedThermostat = map<int, bool>();
 	for(int d = 0; d < 3; d++)
@@ -152,33 +156,11 @@ void Domain::setLocalVirial(double Virial) {_localVirial = Virial;}
 
 double Domain::getLocalVirial() const {return _localVirial; }
 
-double Domain::getGlobalBetaTrans() 
-{
-	return this->_universalBTrans[0];
-}
-double Domain::getGlobalBetaTrans(int thermostat) 
-{
-	return this->_universalBTrans[thermostat];
-}
-
-double Domain::getGlobalBetaRot() 
-{
-	return this->_universalBRot[0];
-}
-double Domain::getGlobalBetaRot(int thermostat)
-{
-	return this->_universalBRot[thermostat];
-}
-
-double Domain::getGlobalPressure()
-{
-	double globalTemperature = _globalTemperatureMap[0];
-	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
-}
-
-double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
-
-double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolecules; }
+/* methods accessing thermostat info */
+double Domain::getGlobalBetaTrans() { return _universalBTrans[0]; }
+double Domain::getGlobalBetaTrans(int thermostat) { return _universalBTrans[thermostat]; }
+double Domain::getGlobalBetaRot() { return _universalBRot[0]; }
+double Domain::getGlobalBetaRot(int thermostat) { return _universalBRot[thermostat]; }
 
 void Domain::setLocalSummv2(double summv2, int thermostat)
 {
@@ -196,6 +178,18 @@ void Domain::setLocalSumIw2(double sumIw2, int thermostat)
 } 
 
 void Domain::setLocalSumIw2(double sumIw2) { setLocalSumIw2(sumIw2, 0); }
+
+double Domain::getGlobalPressure()
+{
+	double globalTemperature = _globalTemperatureMap[0];
+	return globalTemperature * _globalRho + _globalRho * getAverageGlobalVirial()/3.;
+}
+
+double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
+
+double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolecules; }
+
+
 
 double Domain::getCurrentTime(){ return _currentTime;}
 
@@ -235,17 +229,13 @@ void Domain::calculateGlobalValues(
 	domainDecomp->collCommInit(2);
 	domainDecomp->collCommAppendDouble(Upot);
 	domainDecomp->collCommAppendDouble(Virial);
-	// domainDecomp->collCommAppendDouble(summv2);
-	// domainDecomp->collCommAppendDouble(sumIw2);
-	// domainDecomp->collCommAppendUnsLong(numMolecules);
 	domainDecomp->collCommAllreduceSum();
 	Upot = domainDecomp->collCommGetDouble();
 	Virial = domainDecomp->collCommGetDouble();
-	// summv2 = domainDecomp->collCommGetDouble();
-	// sumIw2 = domainDecomp->collCommGetDouble();
-	// numMolecules = domainDecomp->collCommGetUnsLong();
 	domainDecomp->collCommFinalize();
 
+	/* FIXME: why should process 0 do this alone? 
+	 * we should keep symmetry of all proccesses! */
 	// Process 0 has to add the dipole correction:
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
 	_globalUpot = Upot + _UpotCorr;
@@ -255,7 +245,7 @@ void Domain::calculateGlobalValues(
 	 * thermostat ID 0 represents the entire system
 	 */
 	map<int, unsigned long>::iterator thermit;
-	if(this->_universalComponentwiseThermostat)
+	if( _componentwiseThermostat )
 	{
 #ifndef NDEBUG
 		global_log->debug() << "* applying a componentwise thermostat" << endl;
@@ -278,14 +268,11 @@ void Domain::calculateGlobalValues(
 	{
 		// number of molecules on the local process. After the reduce operation
 		// num_molecules will contain the global number of molecules
-		unsigned long numMolecules = this->_localThermostatN[thermit->first];
-#ifndef NDEBUG
-		global_log->debug() << " [[[ " << thermit->first << " ] N=" << numMolecules << " ] localRank=" << _localRank << " ]" << endl;
-#endif
-		double summv2 = this->_local2KETrans[thermit->first];
+		unsigned long numMolecules = _localThermostatN[thermit->first];
+		double summv2 = _local2KETrans[thermit->first];
 		assert(summv2 >= 0.0);
-		unsigned long rotDOF = this->_localRotationalDOF[thermit->first];
-		double sumIw2 = (rotDOF > 0)? this->_local2KERot[thermit->first]: 0.0;
+		unsigned long rotDOF = _localRotationalDOF[thermit->first];
+		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
 		domainDecomp->collCommInit(4);
 		domainDecomp->collCommAppendDouble(summv2);
@@ -301,17 +288,22 @@ void Domain::calculateGlobalValues(
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
+
+		/* calculate the temperature of the entire system */
 		if(numMolecules > 0)
-			this->_globalTemperatureMap[thermit->first] =
-				(summv2+sumIw2) / (3.0*numMolecules + rotDOF);
+			_globalTemperatureMap[thermit->first] =
+				(summv2 + sumIw2) / (double)(3*numMolecules + rotDOF);
 		else
 			_globalTemperatureMap[thermit->first] = _universalTargetTemperature[thermit->first];
-		double Ti = Tfactor * this->_universalTargetTemperature[thermit->first];
-		if((Ti > 0.0) && !this->_universalNVE)
+
+		double Ti = Tfactor * _universalTargetTemperature[thermit->first];
+		if((Ti > 0.0) && !_universalNVE)
 		{
-			this->_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
-			if(sumIw2 == 0.0) this->_universalBRot[thermit->first] = 1.0;
-			else this->_universalBRot[thermit->first] = pow(rotDOF*Ti / sumIw2, 0.4);
+			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
+			if( sumIw2 == 0.0 ) 
+				_universalBRot[thermit->first] = 1.0;
+			else 
+				_universalBRot[thermit->first] = pow(rotDOF*Ti / sumIw2, 0.4);
 		}
 		else
 		{
@@ -320,22 +312,19 @@ void Domain::calculateGlobalValues(
 		}
 
 		// heuristic handling of the unfortunate special case of an explosion in the system
-		//
-		if( ( (this->_universalBTrans[thermit->first] < MIN_BETA)
-					|| (this->_universalBRot[thermit->first] < MIN_BETA) )
-				&& (0 >= this->_universalSelectiveThermostatError) )
+		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
+				&& (0 >= _universalSelectiveThermostatError) )
 		{
 			global_log->warning() << "Explosion warning (time t=" << _currentTime << ")." << endl;
 			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << endl;
-			Molecule* tM;
 			int rot_dof;
 			double Utrans, Urot;
-			// double target_energy = 1.5*Ti;
 			double limit_energy =  KINLIMIT_PER_T * Ti;
 			double limit_rot_energy;
 			double vcorr, Dcorr;
+			Molecule* tM;
 			for( tM = particleContainer->begin();
 					tM != particleContainer->end();
 					tM = particleContainer->next() )
@@ -344,16 +333,12 @@ void Domain::calculateGlobalValues(
 				if(Utrans > limit_energy)
 				{
 					vcorr = sqrt(limit_energy / Utrans);
-					global_log->info() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
-					global_log->info() << "v(m" << tM->id() << ")\t=\t(" << tM->v(0) << "/" << tM->v(1)
-						<< "/" << tM->v(2) << "),\tU_trans = " << Utrans << endl;
+					global_log->debug() << ": v(m" << tM->id() << ") *= " << vcorr << endl;
 					tM->scale_v(vcorr);
 					tM->scale_F(vcorr);
-					global_log->info() << "v(m" << tM->id() << ")\t<-\t(" << tM->v(0) << "/" << tM->v(1)
-						<< "/" << tM->v(2) << "),\tU_trans <- " << tM->Utrans() << endl;
 				}
 
-				rot_dof = this->_components[tM->componentid()].rot_dof();
+				rot_dof = _components[tM->componentid()].rot_dof();
 				if(rot_dof > 0)
 				{
 					limit_rot_energy = 3.0*rot_dof * Ti;
@@ -361,39 +346,39 @@ void Domain::calculateGlobalValues(
 					if(Urot > limit_rot_energy)
 					{
 						Dcorr = sqrt(limit_rot_energy / Urot);
-						global_log->debug() << "Rank " << this->_localRank << ": D(m" << tM->id() << ") *= " << Dcorr << endl;
-						global_log->debug() << "U_rot = " << Urot << endl;
+						global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
 						tM->scale_D(Dcorr);
 						tM->scale_F(Dcorr);
-						global_log->info() << "U_rot <- " << tM->Urot() << endl;
 					}
 				}
 			}
 
-			if(3960 >= this->_universalSelectiveThermostatCounter)
+			/* FIXME: Unnamed constant 3960... */
+			if(3960 >= _universalSelectiveThermostatCounter)
 			{
-				if(this->_universalSelectiveThermostatWarning > 0)
+				if( _universalSelectiveThermostatWarning > 0 )
 					_universalSelectiveThermostatError = _universalSelectiveThermostatWarning;
-				if(this->_universalSelectiveThermostatCounter > 0)
+				if( _universalSelectiveThermostatCounter > 0 )
 					_universalSelectiveThermostatWarning = _universalSelectiveThermostatCounter;
-				this->_universalSelectiveThermostatCounter = 4000;
+				_universalSelectiveThermostatCounter = 4000;
 			}
-			this->_universalBTrans[thermit->first] = 1.0;
-			this->_universalBRot[thermit->first] = pow(this->_universalBRot[thermit->first], 0.0091);
+			_universalBTrans[thermit->first] = 1.0;
+			_universalBRot[thermit->first] = pow(this->_universalBRot[thermit->first], 0.0091);
 		}
 #ifdef NDEBUG
-		if( (this->_universalSelectiveThermostatCounter > 0) &&
-				((this->_universalSelectiveThermostatCounter % 20) == 10) )
+		if( (_universalSelectiveThermostatCounter > 0) &&
+				((_universalSelectiveThermostatCounter % 20) == 10) )
 #endif
-			global_log->debug() << "counter " << this->_universalSelectiveThermostatCounter
-				<< ",\t warning " << this->_universalSelectiveThermostatWarning
-				<< ",\t error " << this->_universalSelectiveThermostatError << endl;
+			/* FIXME: why difference counters? */
+			global_log->debug() << "counter " << _universalSelectiveThermostatCounter
+				<< ",\t warning " << _universalSelectiveThermostatWarning
+				<< ",\t error " << _universalSelectiveThermostatError << endl;
 
-		if(collectThermostatVelocities && this->_universalUndirectedThermostat[thermit->first])
+		if(collectThermostatVelocities && _universalUndirectedThermostat[thermit->first])
 		{
 			double sigv[3];
 			for(int d=0; d < 3; d++)
-				sigv[d] = this->_localThermostatDirectedVelocity[d][thermit->first];
+				sigv[d] = _localThermostatDirectedVelocity[d][thermit->first];
 
 			domainDecomp->collCommInit(3);
 			for(int d=0; d < 3; d++) domainDecomp->collCommAppendDouble(sigv[d]);
@@ -403,10 +388,11 @@ void Domain::calculateGlobalValues(
 
 			for(int d=0; d < 3; d++)
 			{
-				this->_localThermostatDirectedVelocity[d][thermit->first] = 0.0;
+				_localThermostatDirectedVelocity[d][thermit->first] = 0.0;
 				if(numMolecules > 0)
 					_universalThermostatDirectedVelocity[d][thermit->first] = sigv[d] / numMolecules;
-				else _universalThermostatDirectedVelocity[d][thermit->first] = 0.0;
+				else 
+					_universalThermostatDirectedVelocity[d][thermit->first] = 0.0;
 			}
 
 #ifndef NDEBUG
@@ -441,7 +427,7 @@ void Domain::calculateGlobalValues(
 void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
 	Molecule* tM;
-	if(this->_universalComponentwiseThermostat)
+	if(this->_componentwiseThermostat)
 	{
 		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
 				thit != _universalUndirectedThermostat.end();
@@ -453,7 +439,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
 		{
 			int cid = tM->componentid();
-			int thermostat = this->_universalThermostatID[cid];
+			int thermostat = this->_componentToThermostatIdMap[cid];
 			if(this->_universalUndirectedThermostat[thermostat])
 			{
 				for(int d=0; d < 3; d++)
@@ -475,12 +461,12 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
 	Molecule* tM;
-	if(this->_universalComponentwiseThermostat)
+	if(this->_componentwiseThermostat)
 	{
 		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
 		{
 			int cid = tM->componentid();
-			int thermostat = this->_universalThermostatID[cid];
+			int thermostat = this->_componentToThermostatIdMap[cid];
 			this->_localThermostatN[thermostat]++;
 			this->_localRotationalDOF[thermostat] += _components[cid].rot_dof();
 			if(this->_universalUndirectedThermostat[thermostat])
@@ -536,10 +522,10 @@ void Domain::writeCheckpoint( string filename,
 		checkpointfilestream << "\n";
 		checkpointfilestream << " currentTime\t"  << this->_currentTime << "\n";
 		checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
-		if(this->_universalComponentwiseThermostat)
+		if(this->_componentwiseThermostat)
 		{
-			for( map<int, int>::iterator thermit = this->_universalThermostatID.begin();
-					thermit != this->_universalThermostatID.end();
+			for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
+					thermit != this->_componentToThermostatIdMap.end();
 					thermit++ )
 			{
 				if(0 >= thermit->second) continue;
@@ -852,9 +838,6 @@ void Domain::determineAdditionalAcceleration
 		}
 	}
 
-	// domainDecomp->broadcastCosetAcceleration(_universalAdditionalAcceleration);
-	// domainDecomp->broadcastVelocitySum(_globalVelocitySum);
-	//
 	domainDecomp->collCommInit(7*this->_localN.size());
 	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin();
 			lNit != this->_localN.end();
@@ -1204,8 +1187,14 @@ void Domain::collectRDF(DomainDecompBase* dode)
 
 void Domain::outputRDF(const char* prefix, unsigned i, unsigned j)
 {
-	if(this->_localRank) return;
-	if(RDF_MINIMAL_OUTPUT_STEPS >= this->_universalRDFTimesteps) return;
+	/* Output only from process with rank 0 */
+	if( 0 == _localRank ) 
+		return;
+
+	/* FIXME: MINIMAL >= xyz ?! */
+	if(RDF_MINIMAL_OUTPUT_STEPS >= _universalRDFTimesteps) 
+		return;
+
 	string rdfname(prefix);
 	rdfname += ".rdf";
 	ofstream rdfout(rdfname.c_str());
@@ -1237,6 +1226,7 @@ void Domain::outputRDF(const char* prefix, unsigned i, unsigned j)
 		double rmax = (l+1.0) * _universalInterval;
 		double r3min = rmin*rmin*rmin;
 		double r3max = rmax*rmax*rmax;
+		/* FIXME: uncommented constant */
 		double dV = 4.1887902 * (r3max - r3min);
 
 		unsigned long N_pair = _globalDistribution[i][j-i][l] / _universalRDFTimesteps;
@@ -1269,10 +1259,10 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	this->_globalNumMolecules += N;
 	this->_localRotationalDOF[0] += localN * this->_components[cid].rot_dof();
 	this->_universalRotationalDOF[0] += N * this->_components[cid].rot_dof();
-	if( (this->_universalComponentwiseThermostat)
-			&& (this->_universalThermostatID[cid] > 0) )
+	if( (this->_componentwiseThermostat)
+			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
-		int thid = this->_universalThermostatID[cid];
+		int thid = this->_componentToThermostatIdMap[cid];
 		this->_localThermostatN[thid] += localN;
 		this->_universalThermostatN[thid] += N;
 		this->_localRotationalDOF[thid] += localN * this->_components[cid].rot_dof();
@@ -1309,35 +1299,38 @@ void Domain::setTargetTemperature(int thermostat, double targetT)
 	this->_universalTargetTemperature[thermostat] = targetT;
 	if(!(this->_universalUndirectedThermostat[thermostat] == true))
 		this->_universalUndirectedThermostat[thermostat] = false;
+
+	/* FIXME: Substantial change in program behaviour without any info to the user! */
 	if(thermostat == 0) this->disableComponentwiseThermostat();
 	if(thermostat >= 1)
 	{
-		if(!this->_universalComponentwiseThermostat)
+		if(!this->_componentwiseThermostat)
 		{
-			this->_universalComponentwiseThermostat = true;
+			/* FIXME: Substantial change in program behaviour without any info to the user! */
+			this->_componentwiseThermostat = true;
 			this->_universalTargetTemperature.erase(0);
 			this->_universalUndirectedThermostat.erase(0);
 			for(int d=0; d < 3; d++) this->_universalThermostatDirectedVelocity[d].erase(0);
 			for( vector<Component>::iterator tc = this->_components.begin();
 					tc != this->_components.end();
 					tc ++ )
-				if(!(this->_universalThermostatID[ tc->ID() ] > 0))
-					this->_universalThermostatID[ tc->ID() ] = -1;
+				if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0))
+					this->_componentToThermostatIdMap[ tc->ID() ] = -1;
 		}
 	}
 }
 
 void Domain::enableComponentwiseThermostat()
 {
-	if(this->_universalComponentwiseThermostat) return;
+	if(this->_componentwiseThermostat) return;
 
-	this->_universalComponentwiseThermostat = true;
+	this->_componentwiseThermostat = true;
 	this->_universalTargetTemperature.erase(0);
 	for( vector<Component>::iterator tc = this->_components.begin();
 			tc != this->_components.end();
 			tc ++ )
-		if(!(this->_universalThermostatID[ tc->ID() ] > 0))
-			this->_universalThermostatID[ tc->ID() ] = -1;
+		if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0))
+			this->_componentToThermostatIdMap[ tc->ID() ] = -1;
 }
 
 void Domain::enableUndirectedThermostat(int tst)

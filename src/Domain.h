@@ -283,6 +283,8 @@ class Domain{
      DomainDecompBase* domainDecomp, ParticleContainer* particleContainer,
      bool collectThermostatVelocities, double Tfactor
   );
+
+  /* FIXME: alternatively: default values for function parameters */
   //! @brief calls this->calculateGlobalValues with Tfactor = 1 and without velocity collection
   void calculateGlobalValues(DomainDecompBase* domainDecomp,
 			     ParticleContainer* particleContainer)
@@ -321,12 +323,12 @@ class Domain{
     int ownrank() { return this->_localRank; }
 
     //! @brief returns whether there are several distinct thermostats in the system
-    bool severalThermostats() { return this->_universalComponentwiseThermostat; }
+    bool severalThermostats() { return this->_componentwiseThermostat; }
     //! @brief thermostat to be applied to component cid
     //! @param cid ID of the respective component
-    int getThermostat(int cid) { return this->_universalThermostatID[cid]; }
+    int getThermostat(int cid) { return this->_componentToThermostatIdMap[cid]; }
     //! @brief disables the componentwise thermostat (so that a single thermostat is applied to all DOF)
-    void disableComponentwiseThermostat() { this->_universalComponentwiseThermostat = false; }
+    void disableComponentwiseThermostat() { this->_componentwiseThermostat = false; }
     //! @brief enables the componentwise thermostat
     void enableComponentwiseThermostat();
     //! @brief returns the ID of the "last" thermostat in the system
@@ -337,7 +339,7 @@ class Domain{
     //! these have the IDs from 1 to this->maxThermostat().
     unsigned maxThermostat()
     {
-       return (_universalComponentwiseThermostat)? (_universalThermostatN.size() - 2): 0;
+       return (_componentwiseThermostat)? (_universalThermostatN.size() - 2): 0;
     }
     //! @brief associates a component with a thermostat
     //! @param cid internal ID of the component
@@ -345,7 +347,7 @@ class Domain{
     void setComponentThermostat(int cid, int thermostat)
     {
        if((0 > cid) || (0 >= thermostat)) exit(787);
-       this->_universalThermostatID[cid] = thermostat;
+       this->_componentToThermostatIdMap[cid] = thermostat;
        this->_universalThermostatN[thermostat] = 0;
     }
     //! @brief enables the "undirected" flag for the specified thermostat
@@ -405,8 +407,12 @@ class Domain{
 
     unsigned maxCoset() { return this->_universalTau.size(); }
 
-    double N() {return this->_globalNumMolecules;}
-    double N(unsigned cid) { return this->_components[cid].numMolecules(); }
+	/* FIXME: this functions are superflous as the molecule container class 
+	 * includes this functionality! */
+    unsigned long N() {return _globalNumMolecules;}
+    unsigned long N(unsigned cid) { return _components[cid].numMolecules(); }
+
+	/* FIXME: this function is absolutely missleading! */
     void Nadd(unsigned cid, int N, int localN);
 
    double getGlobalLength(int d) { return _globalLength[d]; }
@@ -476,11 +482,13 @@ class Domain{
   double _globalLength[3];
 
     //! does a componentwise thermostat apply?
-    bool _universalComponentwiseThermostat;
+    bool _componentwiseThermostat;
     //! thermostat IDs. negative: no thermostat, 0: global, positive: componentwise
     //! in the case of a componentwise thermostat, all components are assigned
     //! a thermostat ID different from zero.
-    map<int, int> _universalThermostatID;
+    map<int, int> _componentToThermostatIdMap;
+	
+	/* FIXME: The following values should be provided by the particle container. */
     //! _localThermostatN[0] and _universalThermostatN[0] are always the total number
     //! of particles in the subdomain and, respectively, the entire domain
     map<int, unsigned long> _localThermostatN;
@@ -500,6 +508,8 @@ class Domain{
     //! stores the velocity of the directed movement
     map<int, double> _universalThermostatDirectedVelocity[3];
     map<int, double> _localThermostatDirectedVelocity[3];
+
+	/* FIXME: This info should go into an ensemble class */
     bool _universalNVE;
 
     /// calculate new value of the uniform acceleration each # timesteps
