@@ -1,17 +1,17 @@
 # compiler configuration
-CFG := gcc
+CFG ?= gcc
 #$(info $(CFG) set through $(origin CFG))
 
 # machine type: SEQ or PAR
-PARTYPE := SEQ
+PARTYPE ?= SEQ
 #$(info $(PARTYPE) set through $(origin PARTYPE))
 
 # choose target: DEBUG|RELEASE
-TARGET := RELEASE
+TARGET ?= RELEASE
 #$(info $(TARGET) set through $(origin TARGET))
 
 
-CURDIR := $(realpath $(PWD) )
+CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
  $(warning ERROR: current directory $(CURDIR) seems not to be a source directory)
 endif
