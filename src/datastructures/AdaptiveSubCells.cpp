@@ -5,10 +5,10 @@
 #include "Domain.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
+#include "Logger.h"
 
 #include <cmath>
 #include <iostream>
-#include "Logger.h"
 
 using namespace std;
 using Log::global_log;
@@ -20,17 +20,18 @@ using Log::global_log;
 
 AdaptiveSubCells::AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius, ParticlePairsHandler* partPairsHandler):
-	ParticleContainer(partPairsHandler, bBoxMin, bBoxMax)
+	ParticleContainer(partPairsHandler, bBoxMin, bBoxMax), _blockTraverse(this, _subCells, _innerSubCellIndices, _boundarySubCellIndices, _forwardNeighbourSubOffsets, _backwardNeighbourSubOffsets)
 {
 
-	int numberOfCells = 1;
-	_cutoffRadius = cutoffRadius;
-        _LJCutoffRadius = LJCutoffRadius;
-        _tersoffCutoffRadius = tersoffCutoffRadius;
-	for( int d = 0; d < 3; d++ ){
-		_haloWidthInNumCells[d] = 1;
-		_cellsPerDimension[d] = (int) floor( ( _boundingBoxMax[d] - _boundingBoxMin[d] ) / cutoffRadius )
-			+ 2 * _haloWidthInNumCells[d];
+  int numberOfCells = 1;
+  _cutoffRadius = cutoffRadius;
+  _LJCutoffRadius = LJCutoffRadius;
+  _tersoffCutoffRadius = tersoffCutoffRadius;
+
+  for( int d = 0; d < 3; d++ ){
+    _haloWidthInNumCells[d] = 1;
+    _cellsPerDimension[d] = (int) floor( ( _boundingBoxMax[d] - _boundingBoxMin[d] ) / cutoffRadius )
+			    + 2 * _haloWidthInNumCells[d];
 		// in each dension at least one layer of (inner+boundary) cells necessary
 		if(_cellsPerDimension[d] == 2 * _haloWidthInNumCells[d]){
 			_cellsPerDimension[d]++;
@@ -366,231 +367,7 @@ void AdaptiveSubCells::traversePairs(){
 		global_log->error() << "Cell structure in AdaptiveSubCells (traversePairs) invalid, call update first" << endl;
 		exit(1);
 	}
-
-	_particlePairsHandler->init();
-
-	// XXX comment
-	double distanceVector[3];
-	// loop over all subCells
-	vector<Cell>::iterator subCellIter;
-	std::list<Molecule*>::iterator molIter1;
-	std::list<Molecule*>::iterator molIter2;
-	for(subCellIter=_subCells.begin(); subCellIter!= _subCells.end(); subCellIter++){
-		for(molIter1=subCellIter->getParticlePointers().begin(); molIter1!=subCellIter->getParticlePointers().end(); molIter1++){
-			(*molIter1)->setFM(0,0,0,0,0,0);
-		}
-	}
-
-	double dd;
-	vector<unsigned long>::iterator subCellIndexIter;
-	vector<unsigned long>::iterator neighbourSubOffsetsIter;
-
-	// sqare of the cutoffradius
-	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
-        double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
-	double tersoffCutoffRadiusSquare = _tersoffCutoffRadius * _tersoffCutoffRadius;
-
-	// loop over all inner subCells and calculate forces to forward neighbours
-	for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_innerSubCellIndices.end(); subCellIndexIter++){
-		Cell& currentSubCell = _subCells[*subCellIndexIter];
-		// forces between molecules in the subCell
-		for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-			Molecule& molecule1 = **molIter1;
-			for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
-				Molecule& molecule2 = **molIter2;
-				dd = molecule2.dist2(molecule1,distanceVector);
-				if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
-					_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
-					if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-							&& (dd < tersoffCutoffRadiusSquare) )
-					{
-						_particlePairsHandler->preprocessTersoffPair(molecule1,molecule2,false);
-					}
-				}
-			}
-		}
-		// loop over all neighbours
-		for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[*subCellIndexIter].begin();
-				neighbourSubOffsetsIter !=_forwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
-			Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
-			// loop over all particles in the subCell
-			for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-				Molecule& molecule1 = **molIter1;
-				for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
-					Molecule& molecule2 = **molIter2;
-					dd = molecule2.dist2(molecule1,distanceVector);
-					if(dd < cutoffRadiusSquare) {
-						_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
-						if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-								&& (dd < tersoffCutoffRadiusSquare) )
-						{
-							_particlePairsHandler->preprocessTersoffPair(molecule1,molecule2,false);
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// loop over all boundary subCells and calculate forces to forward and backward neighbours
-	for( subCellIndexIter = _boundarySubCellIndices.begin(); subCellIndexIter != _boundarySubCellIndices.end(); subCellIndexIter++ ){
-		Cell& currentSubCell = _subCells[*subCellIndexIter];
-		// forces between molecules in the subCell
-		for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-			Molecule& molecule1 = **molIter1;
-			for(molIter2=molIter1; molIter2!=currentSubCell.getParticlePointers().end(); molIter2++){
-				Molecule& molecule2 = **molIter2;
-				dd = molecule2.dist2(molecule1,distanceVector);
-				if(&molecule1 != &molecule2 && dd < cutoffRadiusSquare){
-					_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
-					if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-							&& (dd < tersoffCutoffRadiusSquare) )
-					{
-						_particlePairsHandler->preprocessTersoffPair(molecule1,molecule2,false);
-					}
-				}
-			}
-		}
-
-		// loop over all forward neighbours
-		for( neighbourSubOffsetsIter =_forwardNeighbourSubOffsets[*subCellIndexIter].begin();
-				neighbourSubOffsetsIter !=_forwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
-			Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
-			// loop over all particles in the subCell
-			for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-				Molecule& molecule1 = **molIter1;
-				for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
-					Molecule& molecule2 = **molIter2;
-					dd = molecule2.dist2(molecule1,distanceVector);
-					if(dd < cutoffRadiusSquare) {
-						if(neighbourSubCell.isHaloCell() && not isFirstParticle(molecule1, molecule2)){
-							_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,1,dd,(dd < LJCutoffRadiusSquare));
-							if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-									&& (dd < tersoffCutoffRadiusSquare) )
-							{
-								_particlePairsHandler->preprocessTersoffPair(molecule1,molecule2,true);
-							}
-						}
-						else{
-							_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
-							if( (molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)
-									&& (dd < tersoffCutoffRadiusSquare) )
-							{
-								_particlePairsHandler->preprocessTersoffPair(molecule1,molecule2,false);
-							}
-						}
-					}
-				}
-			}
-		}
-
-
-		// loop over all backward neighbours. calculate only forces
-		// to neighbour subCells in the halo region, all others already have been calculated
-		for(neighbourSubOffsetsIter=_backwardNeighbourSubOffsets[*subCellIndexIter].begin();
-				neighbourSubOffsetsIter!=_backwardNeighbourSubOffsets[*subCellIndexIter].end(); neighbourSubOffsetsIter++){
-			Cell& neighbourSubCell = _subCells[*subCellIndexIter+*neighbourSubOffsetsIter];
-			if(neighbourSubCell.isHaloCell()){
-				// loop over all particles in the subCell
-				for(molIter1=currentSubCell.getParticlePointers().begin(); molIter1!=currentSubCell.getParticlePointers().end(); molIter1++){
-					Molecule& molecule1 = **molIter1;
-					for(molIter2=neighbourSubCell.getParticlePointers().begin(); molIter2!=neighbourSubCell.getParticlePointers().end(); molIter2++){
-						Molecule& molecule2 = **molIter2;
-						if((molecule1.numTersoff() > 0) && (molecule2.numTersoff() > 0)) continue;
-						double dd = molecule2.dist2(molecule1,distanceVector);
-						if(molecule2.dist2(molecule1,distanceVector) < cutoffRadiusSquare) {
-							if (isFirstParticle(molecule1, molecule2)) {
-								_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,0,dd,(dd < LJCutoffRadiusSquare));
-							}
-							else{
-								_particlePairsHandler->processPair(molecule1,molecule2,distanceVector,1,dd,(dd < LJCutoffRadiusSquare));
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	// loop over halo cells and detect Tersoff neighbours within the halo
-	// this is relevant for the angle summation
-	for( subCellIndexIter = _haloSubCellIndices.begin(); subCellIndexIter != _haloSubCellIndices.end(); subCellIndexIter++ )
-	{
-		unsigned long i = *subCellIndexIter;
-		Cell& currentSubCell = _subCells[i];
-
-		for( molIter1 = currentSubCell.getParticlePointers().begin(); molIter1 != currentSubCell.getParticlePointers().end(); molIter1++ )
-		{
-			Molecule& molecule1 = **molIter1;
-			if( molecule1.numTersoff() == 0 ) continue;
-
-			molIter2 = molIter1;
-			molIter2++;
-			for( ; molIter2 != currentSubCell.getParticlePointers().end(); molIter2++ )
-			{
-				Molecule& molecule2 = **molIter2;
-				assert( &molecule1 != &molecule2 );
-				if( molecule2.numTersoff() > 0 )
-				{
-					double dd = molecule2.dist2( molecule1, distanceVector );
-					if( dd < tersoffCutoffRadiusSquare )
-						_particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, true);
-				}
-			}
-
-			for( neighbourSubOffsetsIter = _forwardNeighbourSubOffsets[i].begin();
-					neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[i].end();
-					neighbourSubOffsetsIter++ )
-			{
-				unsigned long j = i + *neighbourSubOffsetsIter;
-				// FIXME: moved the following checks to asserts, as this should never happen!?
-				/* if( (j < 0) || ( j >= (int)( _subCells.size() ) ) )
-				 * continue;
-				 */
-				assert( i >= *neighbourSubOffsetsIter);
-				assert( j < _subCells.size() );
-				Cell& neighbourSubCell = _subCells[j];
-				if(!neighbourSubCell.isHaloCell()) continue;
-				for( molIter2 = neighbourSubCell.getParticlePointers().begin();
-						molIter2 != neighbourSubCell.getParticlePointers().end();
-						molIter2++ )
-				{
-					Molecule& molecule2 = **molIter2;
-					if(molecule2.numTersoff() == 0) continue;
-					double dd = molecule2.dist2(molecule1, distanceVector);
-					if(dd < tersoffCutoffRadiusSquare)
-						_particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, true);
-				}
-			}
-		}
-	}
-
-	global_log->info() << "processing Tersoff potential." << endl;
-
-	double params[15];
-	double delta_r;
-	bool knowparams = false;
-
-	for(subCellIndexIter=_innerSubCellIndices.begin(); subCellIndexIter!=_boundarySubCellIndices.end(); subCellIndexIter++){
-		if( subCellIndexIter == _innerSubCellIndices.end() )
-			subCellIndexIter = _boundarySubCellIndices.begin();
-		Cell& currentSubCell = _subCells[*subCellIndexIter];
-		for( molIter1=currentSubCell.getParticlePointers().begin();
-				molIter1!=currentSubCell.getParticlePointers().end();
-				molIter1++ )
-		{
-			Molecule& molecule1 = **molIter1;
-			if(molecule1.numTersoff() == 0) continue;
-			if(!knowparams)
-			{
-				delta_r = molecule1.tersoffParameters(params);
-				knowparams = true;
-			}
-			_particlePairsHandler->processTersoffAtom(molecule1, params, delta_r);
-		}
-	}
-
-	_particlePairsHandler->finish();
+	_blockTraverse.traversePairs();
 }
 
 double AdaptiveSubCells::getEnergy(Molecule* m1)

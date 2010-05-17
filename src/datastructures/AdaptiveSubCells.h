@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "datastructures/ParticleContainer.h"
+#include "BlockTraverse.h"
 
 // TODO REMOVE
 //#include <iostream>
@@ -143,6 +144,20 @@ class AdaptiveSubCells: public ParticleContainer {
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
 
+  //! @brief find out whether m1 is before m2 (in some global ordering)
+  //!
+  //! At the boundary between two processes (if used in parallel mode), the forces
+  //! for pairs which cross the boundary are calculated twice (once by each proc who
+  //! owns one of the particles). But the contribution to macroscopic value must be
+  //! counted only once, which is done by the process who owns the "first" particle.
+  //! As order criterion, the spacial position is used int this method. The particles
+  //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
+  //! For pairs which are completely on one process, the first particle can be
+  //! determined from the cell structure. But for pairs on different procs, the
+  //! corresponding cell discretisations might be different as well, and therefore
+  //! the cell structure must not be used to determine the order.
+  bool isFirstParticle(Molecule& m1, Molecule& m2);
+
  private:
   //####################################
   //######### PRIVATE METHODS ##########
@@ -208,20 +223,6 @@ class AdaptiveSubCells: public ParticleContainer {
   //!        is calculated. To change that (or even if it is not changed),
   //!        the influence of cutoff-radius has to be considered
   void calculateLocalRho();
-
-    //! @brief find out whether m1 is before m2 (in some global ordering
-  //!
-  //! At the boundary between two processes (if used in parallel mode), the forces
-  //! for pairs which cross the boundary are calculated twice (once by each proc who
-  //! owns one of the particles). But the contribution to macroscopic value must be
-  //! counted only once, which is done by the process who owns the "first" particle.
-  //! As order criterion, the spacial position is used int this method. The particles
-  //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-  //! For pairs which are completely on one process, the first particle can be
-  //! determined from the cell structure. But for pairs on different procs, the
-  //! corresponding cell discretisations might be different as well, and therefore
-  //! the cell structure must not be used to determine the order.
-  bool isFirstParticle(Molecule& m1, Molecule& m2);
 
   //####################################
   //##### PRIVATE MEMBER VARIABLES #####
@@ -309,6 +310,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //! dynamically adapt the datastructure every nth time.
   int _numberOfUpdates;
 
+  BlockTraverse _blockTraverse;
 };
 
 #endif /*ADAPTIVESUBCELLS_H_*/

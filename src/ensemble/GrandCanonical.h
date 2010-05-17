@@ -19,11 +19,12 @@
 #ifndef GRANDCANONICAL_H_
 #define GRANDCANONICAL_H_
 
-#include <list>
 #include "molecules/Molecule.h"
-#include "datastructures/ParticleContainer.h"
+#include <list>
 
-class DomainDecompBase; 
+class DomainDecompBase;
+class ParticleContainer;
+class Molecule;
 
 using namespace std;
 

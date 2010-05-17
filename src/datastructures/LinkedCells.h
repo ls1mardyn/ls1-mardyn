@@ -21,6 +21,7 @@
 #define LINKEDCELLS_H_
 
 #include "datastructures/ParticleContainer.h"
+#include "BlockTraverse.h"
 #include <vector>
 #include <sstream>
 
@@ -186,6 +187,20 @@ class LinkedCells: public ParticleContainer {
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
 
+  //! @brief find out whether m1 is before m2 (in some global ordering)
+  //!
+  //! At the boundary between two processes (if used in parallel mode), the forces
+  //! for pairs which cross the boundary are calculated twice (once by each proc who
+  //! owns one of the particles). But the contribution to macroscopic value must be
+  //! counted only once, which is done by the process who owns the "first" particle.
+  //! As order criterion, the spacial position is used int this method. The particles
+  //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
+  //! For pairs which are completely on one process, the first particle can be
+  //! determined from the cell structure. But for pairs on different procs, the
+  //! corresponding cell discretisations might be different as well, and therefore
+  //! the cell structure must not be used to determine the order.
+  bool isFirstParticle(Molecule& m1, Molecule& m2);
+
  private:
   //####################################
   //######### PRIVATE METHODS ##########
@@ -236,20 +251,6 @@ class LinkedCells: public ParticleContainer {
   //! vector when called with the 3D cell index offets (e.g. x: one cell to the left,
   //! y: two cells back, z: one cell up,...)
   unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
-
-  //! @brief find out whether m1 is before m2 (in some global ordering
-  //!
-  //! At the boundary between two processes (if used in parallel mode), the forces
-  //! for pairs which cross the boundary are calculated twice (once by each proc who
-  //! owns one of the particles). But the contribution to macroscopic value must be
-  //! counted only once, which is done by the process who owns the "first" particle.
-  //! As order criterion, the spacial position is used int this method. The particles
-  //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-  //! For pairs which are completely on one process, the first particle can be
-  //! determined from the cell structure. But for pairs on different procs, the
-  //! corresponding cell discretisations might be different as well, and therefore
-  //! the cell structure must not be used to determine the order.
-  bool isFirstParticle(Molecule& m1, Molecule& m2);
 
   //####################################
   //##### PRIVATE MEMBER VARIABLES #####
@@ -311,6 +312,8 @@ class LinkedCells: public ParticleContainer {
   //! abort the program if not). After the cells are updated, _cellsValid
   //! should be set to true.
   bool _cellsValid;
+
+  BlockTraverse _blockTraverse;
 };
 
 
