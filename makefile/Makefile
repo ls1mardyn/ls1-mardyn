@@ -98,6 +98,13 @@ $(BINARY): .deps $(OBJECTS)
 
 help:
 	@echo "configuration: $(CFG_INFO)"
+	@echo
+	@echo "options:"
+	@echo "make CFG=...                 choose compiler (see make cfg_list)"
+	@echo "make PARTYPE=SEQ | PAR       sequential or parallel (MPI) build"
+	@echo "make TARGET=DEBUG | RELEASE  debugging / non optimized build"
+	@echo "make DEPS=0 | 1              compile using dependancy tracking"
+	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
 	@echo "make cfg_list    list available configurations"
@@ -122,9 +129,6 @@ clean:
 cleanall: clean
 	rm -f $(BINARY)
 	if [ -L $(BINARYbasename) ]; then rm -f $(BINARYbasename); fi
-
-depend:
-	makedepend  -I$(INCLUDES) -- $(CXXFLAGS) -- $(SOURCES)
 
 #check:
 #ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
@@ -154,5 +158,3 @@ endif
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
-
-# DO NOT DELETE THIS LINE -- make depend depends on it.
