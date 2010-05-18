@@ -4,6 +4,7 @@ CFG_INFO = "Cray XT5 configuration for gcc"
 
 CXX_SEQ = CC
 CXX_PAR = CC
+DEPMODE = none
 
 # SEQ
 #########################################

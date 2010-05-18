@@ -6,6 +6,7 @@ CFG_INFO = "pgi configuration"
 
 CXX_SEQ = pgCC
 CXX_PAR = mpicxx
+DEPMODE = none
 
 # SEQ
 #########################################

@@ -6,6 +6,7 @@ CFG_INFO = "icc configuration"
 
 CXX_SEQ = icpc
 CXX_PAR = mpicxx
+DEPMODE = icc
 
 # SEQ
 #########################################

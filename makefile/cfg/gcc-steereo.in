@@ -9,6 +9,7 @@ GLOBAL_LINK     = -L/home/hpcdjenz/workspace/Steereo/src -lSteereo
 
 CXX_SEQ = g++
 CXX_PAR = mpicxx
+DEPMODE = gcc3
 
 # SEQ
 #########################################

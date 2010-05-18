@@ -6,6 +6,7 @@ CFG_INFO = "gcc configuration"
 
 CXX_SEQ = g++
 CXX_PAR = mpicxx
+DEPMODE = gcc3
 
 # SEQ
 #########################################

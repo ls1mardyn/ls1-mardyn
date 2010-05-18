@@ -7,6 +7,7 @@ CFG_INFO = "icc + Intel MPI configuration"
 
 CXX_SEQ = icpc
 CXX_PAR = mpiicpc
+DEPMODE = icc
 
 # SEQ
 #########################################

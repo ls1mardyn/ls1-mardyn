@@ -10,6 +10,8 @@ PARTYPE ?= SEQ
 TARGET ?= RELEASE
 #$(info $(TARGET) set through $(origin TARGET))
 
+# compile using depmode?
+DEPS ?= 0
 
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
@@ -47,15 +49,15 @@ INCLUDES = -I$(shell pwd)
 
 #INCLUDES += -I$(PWD)/External/ticpp
 
-BINARYbasename := MarDyn
-BINARY := $(BINARYbasename)
+BINARYbasename = MarDyn
 ifneq ($(realpath .svn),)
 #  $(info Building from a svn version.)
-  BINARY := ${BINARY}_$(shell svnversion | sed -e "s/:/-/")
+  BINARY = $(BINARYbasename)_$(shell svnversion | sed -e "s/:/-/")
+else
+  BINARY = $(BINARYbasename)_$(PARTYPE).$(TARGET)
 endif
-BINARY := ${BINARY}_${PARTYPE}.${TARGET}
 
-MAKEFILEDIR = $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
 # which compiler?
@@ -71,10 +73,15 @@ CXX = $(CXX_$(PARTYPE))
 CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK
 LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) -lrt
 
-# only linker, domain decomposition and Simulation.cpp need MPI
-$(BINARY): $(OBJECTS)
+ifeq ($(DEPS),1)
+DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
+else
+DEPCOMP =
+endif
+
+$(BINARY): .deps $(OBJECTS)
 	@echo "building $(BINARY)"
-	$(CXX) $(LINKFLAGS) -o $(BINARY) $(OBJECTS)
+	$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)
 	$(shell if [ ! -f $(BINARYbasename) -o -L $(BINARYbasename) ]; then ln -sf $(BINARY) $(BINARYbasename); fi)
 
 #Simulation.o: Simulation.cpp
@@ -85,7 +92,7 @@ $(BINARY): $(OBJECTS)
 
 # all other files can always be compiled with g++
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
 
 .PHONY: help all clean cleanall depend check boost cleanboost
 
@@ -108,7 +115,9 @@ cfg_list:
 	@ls -1 ../makefile/cfg | sed -e 's/.in//'
 
 clean:
-	find -name '*.o' -exec rm -r {} \;
+	find -type f -name '*.o' -delete
+	find -path '*/.deps/*' -type f -delete
+	find -type d -name .deps -delete
 
 cleanall: clean
 	rm -f $(BINARY)
@@ -136,5 +145,14 @@ boost:
 
 cleanboost:
 	cd ../libs/$(BOOST_VER) && make distclean
+
+# create .deps subdirectories containging dependency information
+.deps:
+ifeq ($(DEPS),1)
+	$(shell find -type d ! -name .deps -execdir mkdir -p {}/.deps \;)
+endif
+
+# include potentially generated dependency information
+-include $(shell find -path '*/.deps/*' -type f)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

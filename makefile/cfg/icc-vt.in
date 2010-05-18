@@ -6,6 +6,7 @@ CFG_INFO = "gcc configuration"
 
 CXX_SEQ = vtcxx
 CXX_PAR = vtcxx
+DEPMODE = gcc3
 CXXFLAGS_SEQ_DEBUG = $(INCLUDES) -Wall -g 
 CXXFLAGS_SEQ_RELEASE = $(INCLUDES) -O2 -DNDEBUG -DNEW_IO -I/opt/OpenMPI/1.2.4/include/ -L/opt/vampir/5.2.0/lib -lvt.mpi -lvt -lz -L/opt/OpenMPI/1.2.4/lib/ -lmpi -lpthread -L/usr/lib64 -lvapi
 LINKFLAGS_SEQ_DEBUG = -O0 -g
