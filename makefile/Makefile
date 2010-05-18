@@ -99,14 +99,14 @@ $(BINARY): .deps $(OBJECTS)
 help:
 	@echo "configuration: $(CFG_INFO)"
 	@echo "targets:"
-	@echo "make all		build $(BINARY)"
+	@echo "make all         build $(BINARY)"
 	@echo "make cfg_list    list available configurations"
-	@echo "make clean	delete object files"
-	@echo "make cleanall	delete object files and executable"
-	@echo "make depend	generate makefile dependency list"
-	@echo "make check	check for needed libraries"
-	@echo "make boost	build bundled boost library"
-	@echo "make cleanboost	clean bundled boost library"
+	@echo "make clean       delete object files"
+	@echo "make cleanall    delete object files and executable"
+	@echo "make depend      generate makefile dependency list"
+	@echo "make check       check for needed libraries"
+	@echo "make boost       build bundled boost library"
+	@echo "make cleanboost  clean bundled boost library"
 
 all: check $(BINARY)
 
@@ -146,7 +146,7 @@ boost:
 cleanboost:
 	cd ../libs/$(BOOST_VER) && make distclean
 
-# create .deps subdirectories containging dependency information
+# create .deps subdirectories containing dependency information
 .deps:
 ifeq ($(DEPS),1)
 	$(shell find -type d ! -name .deps -execdir mkdir -p {}/.deps \;)
