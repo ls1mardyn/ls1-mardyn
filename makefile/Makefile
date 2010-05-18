@@ -1,14 +1,11 @@
 # compiler configuration
 CFG ?= gcc
-#$(info $(CFG) set through $(origin CFG))
 
 # machine type: SEQ or PAR
 PARTYPE ?= SEQ
-#$(info $(PARTYPE) set through $(origin PARTYPE))
 
 # choose target: DEBUG|RELEASE
 TARGET ?= RELEASE
-#$(info $(TARGET) set through $(origin TARGET))
 
 # compile using depmode?
 DEPS ?= 0
@@ -23,7 +20,6 @@ SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -v "Dummy")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
 
-OBJECTS_PAR = $(SOURCES_PAR:.cpp=.o)
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # boost dependency
@@ -84,13 +80,6 @@ $(BINARY): .deps $(OBJECTS)
 	$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)
 	$(shell if [ ! -f $(BINARYbasename) -o -L $(BINARYbasename) ]; then ln -sf $(BINARY) $(BINARYbasename); fi)
 
-#Simulation.o: Simulation.cpp
-#	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-#$(OBJECTS_PAR): %.o: %.cpp
-#	$(CXX) -c $(CXXFLAGS) $< -o $@
-
-# all other files can always be compiled with g++
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
 
