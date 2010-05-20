@@ -41,10 +41,6 @@ inline void PotForceLJ(const double dr[3], const double& dr2
                       , const double& eps24, const double& sig2
                       ,double f[3], double& u6)
 {
-  //double eps24;
-  //params >> eps24;
-  //double sig2;
-  //params >> sig2;
   double invdr2=1./dr2;
   double lj6=sig2*invdr2; lj6=lj6*lj6*lj6;
   double lj12=lj6*lj6;
@@ -289,7 +285,6 @@ inline void PotForceChargeDipole( const double dr[3], const double& dr2,
 
    // const double partialRijInvdr1 = -2.0 * u * invdr2;
    const double partialTjInvdr1 = uInvcostj*invdr;
-   // const double fac = costj*partialTjInvdr1*invdr - partialRijInvdr1;
    const double fac = 3.0 * u * invdr*invdr2;
    for(unsigned short d=0;d<3;++d) f[d] = fac*dr[d] - partialTjInvdr1*ejj[d];
 
@@ -349,11 +344,6 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
             mj.Fljcentersub(sj,f);
           }
           Upot6LJ+=u;
-          /*
-          u/=6.;
-          mi.Upotadd(u);
-          mj.Upotadd(u);
-          */
           for(unsigned short d=0;d<3;++d) Virial+=drm[d]*f[d];
         }
       }
@@ -459,10 +449,6 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
       mj.Madd(m2);
 
       UpotXpoles+=u;
-      /*
-      mi.Upotadd(u);
-      mj.Upotadd(u);
-      */
       for(unsigned short d=0;d<3;++d) Virial+=drm[d]*f[d];
     }
     // Quadrupole-Dipole -----------------------
@@ -474,7 +460,6 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
       params >> qmy15;
       minusSiteSiteDistance(drm, dii, djj, drs, dr2);
       const double* ejj=mj.dipole_e(sj);
-      //for(unsigned short d=0;d<3;++d) drs[d]=-drs[d]; // avoid that and toggle add/sub below
       PotForceDiQuadrupole(drs,dr2,ejj,eii,qmy15,f,m2,m1,u);
 
       mi.Fquadrupolesub(si, f); 
@@ -521,16 +506,11 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
       mi.Madd(m1);
       mj.Madd(m2);
       UpotXpoles+=u;
-      /*
-      mi.Upotadd(u);
-      mj.Upotadd(u);
-      */
       for(unsigned short d=0;d<3;++d) Virial+=drm[d]*f[d];
     }
     // Dipole-Dipole ---------------------------
     for(unsigned int sj=0;sj<nd2;++sj)
     {
-      //double drs[3];
       const double* djj=mj.dipole_d(sj);
       double my2;
       params >> my2;
@@ -545,10 +525,6 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
       mi.Madd(m1);
       mj.Madd(m2);
       UpotXpoles+=u;
-      /*
-      mi.Upotadd(u);
-      mj.Upotadd(u);
-      */
       for(unsigned short d=0;d<3;++d) Virial+=drm[d]*f[d];
     }
   }
@@ -583,6 +559,7 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
         double sig2;
         params >> sig2;
         double shift6;
+		/* FIXME: alternative? */
         params >> shift6;  // must be 0.0 for full LJ
 
         if(calculateLJ)
@@ -657,7 +634,6 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
     // Quadrupole-Quadrupole -------------------
     for(unsigned int sj=0;sj<nq2;++sj)
     {
-      //double drs[3];
       const double* djj=mj.quadrupole_d(sj);
       double q2075;
       params >> q2075;
@@ -669,7 +645,6 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
     // Quadrupole-Dipole -----------------------
     for(unsigned int sj=0;sj<nd2;++sj)
     {
-      //double drs[3];
       const double* djj=mj.dipole_d(sj);
       double qmy15;
       params >> qmy15;
@@ -754,28 +729,11 @@ inline double Tersoffbij( Molecule* mi, Molecule* mj,
             zeta += kC * g;
          }
          else zeta += g;
-#ifndef NDEBUG
-         /*
-         cout << "\t\t\t\t\t\tI(" << mi->r(0) << " / " << mi->r(1) << " / " << mi->r(2) << ")\n";
-         cout << "\t\t\t\t\t\tJ(" << mj->r(0) << " / " << mj->r(1) << " / " << mj->r(2) << ")\n";
-         cout << "\t\t\t\t\t\tK(" << mk->r(0) << " / " << mk->r(1) << " / " << mk->r(2) << ")\n";
-         cout << "\t\t\t\t\t\ti-j = (" << drij[0] << "; " << drij[1] << "; " << drij[2] << ")\n";
-         cout << "\t\t\t\t\t\ti-k = (" << drik[0] << "; " << drik[1] << "; " << drik[2] << ")\n";
-         cout << "\t\t\t\t\tangle " << mi->id() << "-" << mj->id() << "-" << mk->id() << ": arccos " << drdr/(drij1*drik1) << "\n";
-         cout << "\t\t\t\t\tg = " << g << " = " << params[11] << " - " << params[3] << "/(" << params[4] << " + " << h_min_costheta << "^2)\n";
-         */
-#endif
       }
    }
    double BZ = params[8]*zeta;
    double BZtoN = pow(BZ, params[9]);
    double b = pow(1.0 + BZtoN, params[14]);
-#ifndef NDEBUG
-   /*
-   cout << "\t\t\t\tpow(" << params[8] << "*zeta, " << params[9] << ") = " << BZtoN << "\n";
-   cout << "\t\t\t\tb(" << mi->id() << ", " << mj->id() << ") = " << b << " (zeta = " << zeta << ", -0.5/n = " << params[14] << ")\n";
-   */
-#endif
    return b;
 }
 
@@ -849,9 +807,6 @@ inline double TersoffPotential(Molecule* mi, double params[15], double& UpotTers
    {
       mj = mi->getTersoffNeighbour(nmj);
       if(mj->numTersoff() == 0) continue;
-#ifndef NDEBUG
-      // cout << "\t\tconsidering " << mi->id() << "-" << mj->id() << " interaction.\n";
-#endif
       double drij2 = mj->dist2(*mi, distanceVector);  // distance j->i
       if(params[12] > drij2)
          Ui += TersoffUIJplusUJI(mi, mj, params, distanceVector, drij2, UpotTersoff);
@@ -861,9 +816,6 @@ inline double TersoffPotential(Molecule* mi, double params[15], double& UpotTers
       {
          mk = mj->getTersoffNeighbour(nmk);
          if(mk->id() == mi->id() || (mk->numTersoff() == 0)) continue; 
-#ifndef NDEBUG
-      // cout << "\t\tconsidering " << mj->id() << "-" << mk->id() << " attraction.\n";
-#endif
          double drjk2 = mk->dist2(*mj, distanceVector);  // distance k->j
          if(params[12] > drjk2)
             Ui += TersoffUIJattr(mj, mk, params, distanceVector, drjk2);
@@ -878,19 +830,12 @@ inline void TersoffPotForce(Molecule* mi, double params[15], double& UpotTersoff
    if(mi->numTersoff() == 0) return;
    double offsetU = TersoffPotential(mi, params, UpotTersoff);
 
-#ifndef NDEBUG
-   // cout << "atom " << mi->id() << " offset U = " << offsetU << "\n";
-#endif
-
    for(int d=0; d<3; d++)
    {
       mi->move(d, delta_r);
 
       double irrelevantU = 0.0;
       double currentU = TersoffPotential(mi, params, irrelevantU);
-#ifndef NDEBUG
-      // cout << "\tdim. " << d << " current U = " << currentU << "\n";
-#endif
       
       f[d] = (offsetU - currentU) / delta_r;
       mi->move(d, -delta_r);
