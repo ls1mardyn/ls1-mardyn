@@ -47,7 +47,7 @@ INCLUDES = -I$(shell pwd)
 
 BINARYbasename = MarDyn
 ifneq ($(realpath .svn),)
-#  $(info Building from a svn version.)
+  $(info Building from a svn version.)
   BINARY = $(BINARYbasename)_$(shell svnversion | sed -e "s/:/-/")
 else
   BINARY = $(BINARYbasename)_$(PARTYPE).$(TARGET)
@@ -56,14 +56,12 @@ endif
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
-# which compiler?
-#include ../makefile/cfg/$(CFG).in
-#ifndef (CFGFILE,)
-# $(error ERROR: config file for $(CFG) not found - no include )
-#else
-# $(info including $(CFGFILE) )
+ifeq ($(CFGFILE),)
+ $(error ERROR: config file for $(CFG) not found - no include )
+else
+ $(info including $(CFGFILE) )
  include $(CFGFILE)
-#endif
+endif
 
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK
