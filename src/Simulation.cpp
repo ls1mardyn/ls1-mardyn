@@ -96,7 +96,7 @@ Simulation::Simulation(int *argc, char ***argv)
   op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 
   optparse::Values& options = op.parse_args(*argc, *argv);
-  vector<string> args(op.args().begin(), op.args().end());
+  vector<string> args = op.args();
 
   if (args.size() < 1)
   {
