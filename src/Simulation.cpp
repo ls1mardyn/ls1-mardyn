@@ -26,6 +26,7 @@
 #include "datastructures/LinkedCells.h"
 #include "datastructures/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/OptionParser.h"
 #ifdef PARALLEL
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
@@ -68,6 +69,7 @@
 #include "compile_info.h"
 
 using Log::global_log;
+using optparse::OptionParser;
 
 Simulation::Simulation(int *argc, char ***argv)
 {
@@ -83,10 +85,22 @@ Simulation::Simulation(int *argc, char ***argv)
   global_log->set_mpi_output_root(0);
 #endif
 
-  if (*argc <= 1)
+  OptionParser op = OptionParser()
+      .usage("%prog [OPTION]... <configfilename> [<number of timesteps>] [<outputprefix>]")
+      .version("%prog 1.0")
+      .description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
+      // .epilog("background info?")
+  ;
+
+  op.add_option("-n", "--steps") .dest("timesteps") .type("int") .set_default("1") .help("number of timesteps to simulate (default: 1)");
+  op.add_option("-p", "--outprefix") .dest("outputprefix") .help("prefix for output files");
+
+  optparse::Values& options = op.parse_args(*argc, *argv);
+  vector<string> args(op.args().begin(), op.args().end());
+
+  if (args.size() < 1)
   {
-     global_log->error() << "Usage: " << (*argv)[0] << " <configfilename> [<number of timesteps>] [<outputprefix>]\n";
-     global_log->error() << "Detected argc: " << *argc << endl;
+     op.print_usage();
      exit(1);
   }
   char *info_str = new char[MAX_INFO_STRING_LENGTH];
@@ -136,14 +150,19 @@ Simulation::Simulation(int *argc, char ***argv)
 
 
   // store number of timesteps to be simulated
-  if (*argc>2) _numberOfTimesteps = atol((*argv)[2]);
+  if (args.size() >= 2)
+    istringstream(args[1]) >> _numberOfTimesteps;
+  if (options.is_set("timesteps"))
+    _numberOfTimesteps = options.get("timesteps");
   global_log->info() << "Simulating " << _numberOfTimesteps << " steps." << endl;
 
   // store prefix for output files
-  if (*argc>3) _outputPrefix = string((*argv)[3]);
+  if (args.size() >= 3)
+    _outputPrefix = args[2];
+  if (options.is_set("outputprefix"))
+    _outputPrefix = options["outputprefix"];
 
-
-  string inputfilename((*argv)[1]);
+  string inputfilename(args[0]);
   if (inputfilename.rfind(".cfg")==inputfilename.size()-4)
   {
     global_log->info() << "command line config file type is oldstyle (*.cfg)" << endl;
