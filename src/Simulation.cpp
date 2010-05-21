@@ -86,14 +86,14 @@ Simulation::Simulation(int *argc, char ***argv)
 #endif
 
   OptionParser op = OptionParser()
-      .usage("%prog [OPTION]... <configfilename> [<number of timesteps>] [<outputprefix>]")
+      .usage("%prog [-n] [-p] <configfilename> [<number of timesteps>] [<outputprefix>]")
       .version("%prog 1.0")
       .description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
       // .epilog("background info?")
   ;
 
-  op.add_option("-n", "--steps") .dest("timesteps") .type("int") .set_default("1") .help("number of timesteps to simulate (default: 1)");
-  op.add_option("-p", "--outprefix") .dest("outputprefix") .help("prefix for output files");
+  op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default("1") .help("number of timesteps to simulate (default: 1)");
+  op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 
   optparse::Values& options = op.parse_args(*argc, *argv);
   vector<string> args(op.args().begin(), op.args().end());
