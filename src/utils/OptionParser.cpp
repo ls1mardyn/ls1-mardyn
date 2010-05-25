@@ -7,27 +7,22 @@
 
 #include "OptionParser.h"
 
-#include <sstream>
 #include <cstdlib>
 #include <algorithm>
 #include <complex>
 
-#if ENABLE_NLS
+#if defined(ENABLE_NLS) && ENABLE_NLS
 # include <libintl.h>
-# ifndef _
-#  define _(s) gettext(s)
-# endif
+# define _(s) gettext(s)
 #else
-# ifndef _
-#  define _(s) s
-# endif
+# define _(s) ((const char *) (s))
 #endif
 
 using namespace std;
 
 namespace optparse {
 
-////////// auxiliary string functions { //////////
+////////// auxiliary (string) functions { //////////
 struct str_wrap {
   str_wrap(const string& l, const string& r) : lwrap(l), rwrap(r) {}
   str_wrap(const string& w) : lwrap(w), rwrap(w) {}
@@ -64,7 +59,7 @@ static string str_replace(const string& s, const string& patt, const string& rep
   str_replace(tmp, patt, repl);
   return tmp;
 }
-static string str_format(const string& s, size_t pre, size_t len, bool indent_first) {
+static string str_format(const string& s, size_t pre, size_t len, bool indent_first = true) {
   stringstream ss;
   string p;
   if (indent_first)
@@ -84,7 +79,7 @@ static string str_format(const string& s, size_t pre, size_t len, bool indent_fi
     }
     if (line == 1)
       p = string(pre, ' ');
-    if (wrap || new_pos + p.length() > linestart + len) {
+    if (wrap || new_pos + pre > linestart + len) {
       ss << p << s.substr(linestart, pos - linestart - 1) << endl;
       linestart = pos;
       line++;
@@ -102,15 +97,36 @@ static string str_inc(const string& s) {
   ss << i+1;
   return ss.str();
 }
-////////// } auxiliary string functions //////////
+static size_t cols() {
+  size_t n = 80;
+  const char *s = getenv("COLUMNS");
+  if (s)
+    istringstream(s) >> n;
+  return n;
+}
+static string basename(const string& s) {
+  string b = s;
+  size_t i = b.find_last_not_of('/');
+  if (i == string::npos) {
+    if (b[0] == '/')
+      b.erase(1);
+    return b;
+  }
+  b.erase(i+1, b.length()-i-1);
+  i = b.find_last_of("/");
+  if (i != string::npos)
+    b.erase(0, i+1);
+  return b;
+}
+////////// } auxiliary (string) functions //////////
 
 
 ////////// class OptionParser { //////////
 OptionParser::OptionParser() :
   _usage(_("%prog [options]")),
   _add_help_option(true),
-  _add_version_option(true) {
-}
+  _add_version_option(true),
+  _interspersed_args(true) {}
 
 Option& OptionParser::add_option(const string& opt) {
   const string tmp[1] = { opt };
@@ -146,6 +162,18 @@ Option& OptionParser::add_option(const vector<string>& v) {
   if (option.dest() == "")
     option.dest(dest_fallback);
   return option;
+}
+
+OptionParser& OptionParser::add_option_group(const OptionGroup& group) {
+  for (list<Option>::const_iterator oit = group._opts.begin(); oit != group._opts.end(); ++oit) {
+    const Option& option = *oit;
+    for (set<string>::const_iterator it = option._short_opts.begin(); it != option._short_opts.end(); ++it)
+      _optmap_s[*it] = &option;
+    for (set<string>::const_iterator it = option._long_opts.begin(); it != option._long_opts.end(); ++it)
+      _optmap_l[*it] = &option;
+  }
+  _groups.push_back(&group);
+  return *this;
 }
 
 const Option& OptionParser::lookup_short_opt(const string& opt) const {
@@ -221,18 +249,22 @@ void OptionParser::handle_long_opt(const string& optstr) {
 }
 
 Values& OptionParser::parse_args(const int argc, char const* const* const argv) {
-  if (_prog == "")
-    _prog = argv[0];
+  if (prog() == "")
+    prog(basename(argv[0]));
   return parse_args(&argv[1], &argv[argc]);
 }
-Values& OptionParser::parse_args(const vector<string>& args) {
+Values& OptionParser::parse_args(const vector<string>& v) {
 
-  _remaining.assign(args.begin(), args.end());
+  _remaining.assign(v.begin(), v.end());
 
-  if (add_help_option())
-    add_option("-h", "--help") .action("help") .help(_("show this help message and exit"));
-  if (add_version_option() and version() != "")
+  if (add_version_option() and version() != "") {
     add_option("--version") .action("version") .help(_("show program's version number and exit"));
+    _opts.splice(_opts.begin(), _opts, --(_opts.end()));
+  }
+  if (add_help_option()) {
+    add_option("-h", "--help") .action("help") .help(_("show this help message and exit"));
+    _opts.splice(_opts.begin(), _opts, --(_opts.end()));
+  }
 
   while (not _remaining.empty()) {
     const string arg = _remaining.front();
@@ -249,6 +281,8 @@ Values& OptionParser::parse_args(const vector<string>& args) {
     } else {
       _remaining.pop_front();
       _leftover.push_back(arg);
+      if (not interspersed_args())
+        break;
     }
   }
   while (not _remaining.empty()) {
@@ -276,38 +310,51 @@ void OptionParser::process_opt(const Option& o, const string& opt, const string&
     if (err != "")
       error(err);
     _values[o.dest()] = value;
-  } else
-  if (o.action() == "store_const") {
+  }
+  else if (o.action() == "store_const") {
     _values[o.dest()] = o.get_const();
-  } else
-  if (o.action() == "store_true") {
+  }
+  else if (o.action() == "store_true") {
     _values[o.dest()] = "1";
-  } else
-  if (o.action() == "store_false") {
+  }
+  else if (o.action() == "store_false") {
     _values[o.dest()] = "0";
-  } else
-  if (o.action() == "count") {
+  }
+  else if (o.action() == "append") {
+    string err = o.check_type(opt, value);
+    if (err != "")
+      error(err);
+    _values[o.dest()] = value;
+    _values.all(o.dest()).push_back(value);
+  }
+  else if (o.action() == "append_const") {
+    _values[o.dest()] = o.get_const();
+    _values.all(o.dest()).push_back(o.get_const());
+  }
+  else if (o.action() == "count") {
     _values[o.dest()] = str_inc(_values[o.dest()]);
-  } else
-  if (o.action() == "help") {
+  }
+  else if (o.action() == "help") {
     print_help();
     std::exit(0);
-  } else
-  if (o.action() == "version") {
+  }
+  else if (o.action() == "version") {
     print_version();
     std::exit(0);
   }
+  else if (o.action() == "callback" && o.callback()) {
+    (*o.callback())(o, opt, value, *this);
+  }
 }
 
-string OptionParser::format_option_help() const {
+string OptionParser::format_option_help(unsigned int indent /* = 2 */) const {
   stringstream ss;
 
   if (_opts.empty())
     return ss.str();
 
-  ss << _("Options") << ":" << endl;
   for (list<Option>::const_iterator it = _opts.begin(); it != _opts.end(); ++it) {
-    ss << it->format_help();
+    ss << it->format_help(indent);
   }
 
   return ss.str();
@@ -320,12 +367,21 @@ string OptionParser::format_help() const {
     ss << get_usage() << endl;
 
   if (description() != "")
-    ss << str_format(description(), 0, 80, true) << endl;
+    ss << str_format(description(), 0, cols()) << endl;
 
+  ss << _("Options") << ":" << endl;
   ss << format_option_help();
 
+  for (list<OptionGroup const*>::const_iterator it = _groups.begin(); it != _groups.end(); ++it) {
+    const OptionGroup& group = **it;
+    ss << endl << "  " << group.title() << ":" << endl;
+    if (group.group_description() != "")
+      ss << str_format(group.group_description(), 4, cols()) << endl;
+    ss << group.format_option_help(4);
+  }
+
   if (epilog() != "")
-    ss << endl << str_format(epilog(), 0, 80, true);
+    ss << endl << str_format(epilog(), 0, cols());
 
   return ss.str();
 }
@@ -379,11 +435,8 @@ void OptionParser::error(const string& msg) const {
 ////////// class Values { //////////
 const string& Values::operator[] (const string& d) const {
   strMap::const_iterator it = _map.find(d);
-  static const string& _empty = "";
-  return (it != _map.end()) ? it->second : _empty;
-}
-bool Values::is_set(const string& d) const {
-  return _map.find(d) != _map.end();
+  static const string empty = "";
+  return (it != _map.end()) ? it->second : empty;
 }
 ////////// } class Values //////////
 
@@ -419,7 +472,7 @@ string Option::check_type(const string& opt, const string& val) const {
   return err.str();
 }
 
-string Option::format_option_help() const {
+string Option::format_option_help(unsigned int indent /* = 2 */) const {
 
   string mvar_short, mvar_long;
   if (nargs() == 1) {
@@ -427,13 +480,13 @@ string Option::format_option_help() const {
     if (mvar == "") {
       mvar = type();
       transform(mvar.begin(), mvar.end(), mvar.begin(), ::toupper);
-    }
+     }
     mvar_short = " " + mvar;
     mvar_long = "=" + mvar;
   }
 
   stringstream ss;
-  ss << "  ";
+  ss << string(indent, ' ');
 
   if (not _short_opts.empty()) {
     ss << str_join_trans(", ", _short_opts.begin(), _short_opts.end(), str_wrap("-", mvar_short));
@@ -446,22 +499,26 @@ string Option::format_option_help() const {
   return ss.str();
 }
 
-string Option::format_help() const {
+string Option::format_help(unsigned int indent /* = 2 */) const {
   stringstream ss;
-  string h = format_option_help();
-  bool indent_first;
+  string h = format_option_help(indent);
+  size_t width = cols();
+  size_t opt_width = min(width*3/10, 36u);
+  bool indent_first = false;
   ss << h;
-  if (h.length() > 22) {
+  // if the option list is too long, start a new paragraph
+  if (h.length() >= (opt_width-1)) {
     ss << endl;
     indent_first = true;
   } else {
-    ss << string(24 - h.length(), ' ');
-    indent_first = false;
+    ss << string(opt_width - h.length(), ' ');
     if (help() == "")
       ss << endl;
   }
-  if (help() != "")
-    ss << str_format(help(), 24, 80, indent_first);
+  if (help() != "") {
+    string help_str = (get_default() != "") ? str_replace(help(), "%default", get_default()) : help();
+    ss << str_format(help_str, opt_width, width, indent_first);
+  }
   return ss.str();
 }
 
