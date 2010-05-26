@@ -1,6 +1,6 @@
 // PovWriter.cpp
 
-#include "md_io/PovWriter.h"
+#include "io/PovWriter.h"
 #include "Common.h"
 #include "Domain.h"
 #include "datastructures/ParticleContainer.h"

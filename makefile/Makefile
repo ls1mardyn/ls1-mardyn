@@ -31,7 +31,8 @@ OBJECTS = $(SOURCES:.cpp=.o)
 # tinyXPATH dependency
 #OBJECTS += $(patsubst %.cpp,%.o,$(shell find External/ticpp -name '*.cpp'))
 
-INCLUDES = -I$(shell pwd)
+#INCLUDES = -I$(shell pwd)
+INCLUDES = -I$(CURDIR) -I$(CURDIR)/External
 
 #ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
 # $(info using BOOST library from system: $(LIBRARY_BOOST_SYSTEM))
@@ -48,19 +49,22 @@ INCLUDES = -I$(shell pwd)
 BINARYbasename = MarDyn
 ifneq ($(realpath .svn),)
   $(info Building from a svn version.)
-  BINARY = $(BINARYbasename)_$(shell svnversion | sed -e "s/:/-/")
+  svnVERSION = $(shell svnversion | sed -e "s/:/-/")
+  ifneq ($(svnVERSION),)
+    BINARY = $(BINARYbasename)_$(svnVERSION).$(PARTYPE)_$(TARGET)
+  endif
 else
-  BINARY = $(BINARYbasename)_$(PARTYPE).$(TARGET)
+  BINARY = $(BINARYbasename).$(PARTYPE)_$(TARGET)
 endif
 
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
-ifeq ($(CFGFILE),)
- $(error ERROR: config file for $(CFG) not found - no include )
-else
+ifneq ($(CFGFILE),)
  $(info including $(CFGFILE) )
  include $(CFGFILE)
+else
+ $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
 CXX = $(CXX_$(PARTYPE))
@@ -98,9 +102,9 @@ help:
 	@echo "make clean       delete object files"
 	@echo "make cleanall    delete object files and executable"
 	@echo "make depend      generate makefile dependency list"
-	@echo "make check       check for needed libraries"
-	@echo "make boost       build bundled boost library"
-	@echo "make cleanboost  clean bundled boost library"
+	#@echo "make check       check for needed libraries"
+	#@echo "make boost       build bundled boost library"
+	#@echo "make cleanboost  clean bundled boost library"
 
 all: check $(BINARY)
 
@@ -130,12 +134,12 @@ cleanall: clean
 #	@echo " includes: $(INCLUDES)"
 #endif
 
-boost:
-	cd ../libs/$(BOOST_VER) && ./configure --with-libraries=program_options
-	cd ../libs/$(BOOST_VER) && make
+#boost:
+#	cd ../libs/$(BOOST_VER) && ./configure --with-libraries=program_options
+#	cd ../libs/$(BOOST_VER) && make
 
-cleanboost:
-	cd ../libs/$(BOOST_VER) && make distclean
+#cleanboost:
+#	cd ../libs/$(BOOST_VER) && make distclean
 
 # create .deps subdirectories containing dependency information
 .deps:

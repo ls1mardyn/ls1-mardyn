@@ -1,26 +1,19 @@
-#ifndef DECOMPWRITER_H_
-#define DECOMPWRITER_H_
+#ifndef XYZWRITER_H_
+#define XYZWRITER_H_
 
-#include "md_io/OutputBase.h"
+#include "io/OutputBase.h"
 #include "ensemble/GrandCanonical.h"
 #include <string>
-#include <fstream>
-#include <sstream>
 
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
-//class Molecule;
-//class DecompWriter; 
-
-
-using namespace std;
 
 //! @todo comment
-class DecompWriter : public OutputBase{
+class XyzWriter : public OutputBase{
  public:
-  DecompWriter(unsigned long writeFrequency, string mode, string filename, unsigned long numberOfTimesteps, bool incremental);
-  ~DecompWriter();
+  XyzWriter(unsigned long writeFrequency, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+  ~XyzWriter();
   //! @todo comment
   void initOutput(ParticleContainer* particleContainer,
 		  DomainDecompBase* domainDecomp, Domain* domain);
@@ -28,18 +21,17 @@ class DecompWriter : public OutputBase{
   void doOutput(
      ParticleContainer* particleContainer,
      DomainDecompBase* domainDecomp, Domain* domain,
-     unsigned long simstep, list<ChemicalPotential>* lmu
+     unsigned long simstep, std::list<ChemicalPotential>* lmu
   );
   //! @todo comment  
   void finishOutput(ParticleContainer* particleContainer,
 		    DomainDecompBase* domainDecomp, Domain* domain);
  private:
+  std::string _filename;
   unsigned long _numberOfTimesteps; 
   unsigned long _writeFrequency;
-  string _mode;
   bool _filenameisdate;
   bool _incremental;
-  string _filename;
 };
 
-#endif /*DECOMPWRITER_H_*/
+#endif /*XYZWRITER_H_*/

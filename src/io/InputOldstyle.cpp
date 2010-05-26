@@ -1,4 +1,4 @@
-#include "md_io/InputOldstyle.h"
+#include "io/InputOldstyle.h"
 #include "Domain.h"
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"

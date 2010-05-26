@@ -1,6 +1,6 @@
 // DecompWriter.cpp
 
-#include "md_io/DecompWriter.h"
+#include "io/DecompWriter.h"
 #include "Common.h"
 #include "Domain.h"
 #include "datastructures/ParticleContainer.h"

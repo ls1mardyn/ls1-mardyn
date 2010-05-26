@@ -1,12 +1,10 @@
 #ifndef PARTGEN_H_
 #define PARTGEN_H_
 
-#include "md_io/InputBase.h"
+#include "io/InputBase.h"
 #include <fstream>
 #include <vector>
 #include <list>
-
-using namespace std;
 
 class ChemicalPotential;
 
@@ -27,17 +25,17 @@ class PartGen : public InputBase{
   PartGen();
 
   //! @brief set the phase space file name
-  void setPhaseSpaceFile(string filename);
+  void setPhaseSpaceFile(std::string filename);
   
   //! @brief set the phase space header file name (can be identical to the
   //         phase space file
-  void setPhaseSpaceHeaderFile(string filename);
+  void setPhaseSpaceHeaderFile(std::string filename);
   
   //! @brief read the phase space components and header information
   void readPhaseSpaceHeader(Domain* domain, double timestep);
   
   //! @brief read the actual phase space information
-  unsigned long readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+  unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 
   //! @brief stores the cluster file and related parameters
@@ -46,7 +44,7 @@ class PartGen : public InputBase{
   //! to the member variables, the values are used to calculate the
   //! new size of the simulation box
   void setClusterFile(double gasDensity, double fluidDensity, 
-		      double volPercOfFluid, string clusterFileName);
+		      double volPercOfFluid, std::string clusterFileName);
 
   //! @brief creates a homogeneous distribution of particles
   //!
@@ -54,7 +52,7 @@ class PartGen : public InputBase{
   //! bBoxMax) and belonging to this process (see domainDecomp) are
   //! created
   void createHomogeneousDist(ParticleContainer* particleContainer, 
-			     vector<double> &bBoxMin, vector<double> &bBoxMax, 
+			     std::vector<double> &bBoxMin, std::vector<double> &bBoxMax, 
 			     Domain* domain, DomainDecompBase* domainDecomp);
 
   //! @brief creates an inhomogeneous distribution (gas with fluid drops)
@@ -63,7 +61,7 @@ class PartGen : public InputBase{
   //! bBoxMax) and belonging to this process (see domainDecomp) are
   //! created
   void createClusters(ParticleContainer* particleContainer, 
-		      vector<double> &bBoxMin, vector<double> &bBoxMax, Domain* domain, 
+		      std::vector<double> &bBoxMin, std::vector<double> &bBoxMax, Domain* domain, 
 		      DomainDecompBase* domainDecomp);
 
   //! @brief prints some values of the config to stdout
@@ -174,7 +172,7 @@ class PartGen : public InputBase{
   //###########################################################
   
   //! @brief ignore numLines Lines in the given stream
-  void ignoreLines(ifstream &inpfStream, int numLines);
+  void ignoreLines(std::ifstream &inpfStream, int numLines);
 
   //! @brief get the next parameter value (int) from the input stream
   //!
@@ -183,31 +181,31 @@ class PartGen : public InputBase{
   //! <whatever>
   //! The method returns the integer value, the stream is updated to point to the
   //! beginning of the next line
-  int getIntParamValue(ifstream &inpfStream);
+  int getIntParamValue(std::ifstream &inpfStream);
 
   //! @brief get the next parameter value (double) from the input stream
   //!
   //! For an explanation, see the documentation of getIntParamValue(...)
-  double getDoubleParamValue(ifstream &inpfStream);
+  double getDoubleParamValue(std::ifstream &inpfStream);
 
   //! @brief finds the next " = " in the stream and jumps at the place after it
   //!
   //! The "=" has to be surrounded by whitespace, the input stream will point
   //! to the next token after the "="
-  void removePrefix(ifstream &inpfStream);
+  void removePrefix(std::ifstream &inpfStream);
 
   //! @brief get 2 double values from the stream
   //!
   //! The stream has to point to the first value and the next value has
   //! to be separated from the first value (and everything after) by whitespace
-  void getDoubleParamValues(ifstream &inpfStream, double &val1, double &val2);
+  void getDoubleParamValues(std::ifstream &inpfStream, double &val1, double &val2);
 
   //! @brief get 3 double values from the stream (see 2-value-version)
-  void getDoubleParamValues(ifstream &inpfStream, double &val1, double &val2, 
+  void getDoubleParamValues(std::ifstream &inpfStream, double &val1, double &val2, 
 			    double &val3);
 
   //! @brief get 4 double values from the stream (see 2-value-version)
-  void getDoubleParamValues(ifstream &inpfStream, double &val1, double &val2, 
+  void getDoubleParamValues(std::ifstream &inpfStream, double &val1, double &val2, 
 			    double &val3, double &val4);
 
   //#############################################################
@@ -218,7 +216,7 @@ class PartGen : public InputBase{
   //!
   //! The first two lines of the input stream are ignored, the next
   //! three lines must contain the three values
-  void readRefValues(ifstream &inpfStream);
+  void readRefValues(std::ifstream &inpfStream);
 
   //! @brief read in state point
   //!
@@ -226,72 +224,72 @@ class PartGen : public InputBase{
   //! line must contain the number of components, the next numcomp lines
   //! must contain the number of molecules per comp,
   //! the following two lines must contain rho and T
-  void readStatePoint(ifstream &inpfStream);
+  void readStatePoint(std::ifstream &inpfStream);
 
 
   //! @brief read in information about time steps and cutoff radius
-  void readAlgorithm(ifstream &inpfStream, vector<double> &simBoxRatio);
+  void readAlgorithm(std::ifstream &inpfStream, std::vector<double> &simBoxRatio);
 
   //###########################################################
   //### methods for operations on matrices and vectors      ###
   //###########################################################
 
   //! @brief init the 3D matrix to the given size and with the given value
-  void set3DMatrixValues(vector<vector<vector<double> > > &matrix, int numx, 
+  void set3DMatrixValues(std::vector<std::vector<std::vector<double> > > &matrix, int numx, 
 			 int numy, int numz, double value);
 
   //! @brief init the matrix to the given size and with the given value
-  void setMatrixValues(vector<vector<double> > &matrix, int numrows, 
+  void setMatrixValues(std::vector<std::vector<double> > &matrix, int numrows, 
 		       int numcols, double value);
 
   //! @brief init the int-vector to the given size and with the given value
-  void setVectorValues(vector<int> &vect, int num, int value);
+  void setVectorValues(std::vector<int> &vect, int num, int value);
 
   //! @brief init the double-vector to the given size and with the given value
-  void setVectorValues(vector<double> &vect, int num, double value);
+  void setVectorValues(std::vector<double> &vect, int num, double value);
 
   //! @brief return the scalar produkt of two vectors
-  double dotprod(vector<double> &v1, vector<double> &v2);
+  double dotprod(std::vector<double> &v1, std::vector<double> &v2);
 
   //! @brief multiply the given vector with the given value
-  void vecmult(vector<double> &v, double value);
+  void vecmult(std::vector<double> &v, double value);
 
   //! @brief return the maximum of the three values
   double max(double a, double b, double c);
 
   //! @brief add the second vector to the first (only the first is modified)
-  void vecadd(vector<double> &v1, vector<double> &v2);
+  void vecadd(std::vector<double> &v1, std::vector<double> &v2);
 
   //! @brief multiply the given matrix with the given value
-  void matmult(vector<vector<double> > &m, double value);
+  void matmult(std::vector<std::vector<double> > &m, double value);
 
   //! @brief return the product of the two given matrices
-  vector<vector<double> > matmult(vector<vector<double> > &m1, 
-				  vector<vector<double> > &m2);
+  std::vector<std::vector<double> > matmult(std::vector<std::vector<double> > &m1, 
+                                            std::vector<std::vector<double> > &m2);
 
   //! @brief return the product of the row vector v with the matrix m
-  void matmult(vector<double> &v, vector<vector<double> > &m);
+  void matmult(std::vector<double> &v, std::vector<std::vector<double> > &m);
 
   //! @brief multiply the given 3D-matrix with the given value
-  void mat3dmult(vector<vector<vector<double> > > &m, double value);
+  void mat3dmult(std::vector<std::vector<std::vector<double> > > &m, double value);
 
   //! @brief lvst ein 3x3 LGS mit rechter Seite Null
   //! @todo enhance comments
-  void solveLGS(vector<vector<double> > &A, vector<double> &x);
+  void solveLGS(std::vector<std::vector<double> > &A, std::vector<double> &x);
 
   //! @brief calcuate the eigenvectors of the given Matrix (3x3 symmetric matrix)
   //! @todo enhance comments
-  void getEigenvecs(vector<vector<double> > &m, 
-		    vector<vector<double> > &eigenvecs);
+  void getEigenvecs(std::vector<std::vector<double> > &m, 
+		    std::vector<std::vector<double> > &eigenvecs);
 
   //! @brief transforms the molecule to a principle axis system
   void principleAxisTransform();
 
   //! @brief erstellt die Massentraegheitsmatrix
   //! @todo enhance comments
-  void createTraegheitsMatrix(vector<vector<double> > &matrix, 
-			      vector<vector<double> > &sitesPos, 
-			      vector<double> &masses, int numsites);
+  void createTraegheitsMatrix(std::vector<std::vector<double> > &matrix, 
+			      std::vector<std::vector<double> > &sitesPos, 
+			      std::vector<double> &masses, int numsites);
 
   //###########################################################
   //### methods which create random numbers                 ###
@@ -335,9 +333,9 @@ class PartGen : public InputBase{
   //! @brief density of the fluid phase (drops)
   double _fluidDensity;
   //! @brief file in which the fluid drops are defined (lines with x,y,z,r)
-  string _clusterFile;
+  std::string _clusterFile;
   //! @brief each element is a sphere (vector containing x,y,z and r)
-  vector<vector<double> > _localClusters;
+  std::vector<std::vector<double> > _localClusters;
 
   // Reference Values (units not reduced!)
   double _epsilonRefDim;
@@ -350,69 +348,69 @@ class PartGen : public InputBase{
   //! @brief total number of molecules
   int _numberOfMolecules;
   //! @brief number of molecules from each molecule type 
-  vector<int> _numMolsPerComp;
+  std::vector<int> _numMolsPerComp;
 
   //! @brief density of a homogeneous distribution (reduced unit)
   double _rho;
   //! @brief temperature of the simulated material (reduced unit)
   double _temperature; 
   //! @brief describes the relative length of the simulation box
-  vector<double> _simBoxRatio;
+  std::vector<double> _simBoxRatio;
   //! @brief length of the global simulation box
-  vector<double> _simBoxLength;
+  std::vector<double> _simBoxLength;
 
   //! @brief epsilon reaction field
   double _epsilonRF;
 
   //! @brief each element of the vector is the mass of a component
-  vector<double> _massOfComps;
+  std::vector<double> _massOfComps;
   //! @brief each element is the number of DOF of a component
-  vector<int> _degreesOfFreedom;
+  std::vector<int> _degreesOfFreedom;
 
   // Mixing parameters for interactions between different components
-  vector<vector<double> > _etaLB;
-  vector<vector<double> > _xiLB;
+  std::vector<std::vector<double> > _etaLB;
+  std::vector<std::vector<double> > _xiLB;
 
   // Variables used to represent the components
-  vector<int> _numSites;
-  vector<int> _numDipoles;
-  vector<int> _numQuadrupoles;
+  std::vector<int> _numSites;
+  std::vector<int> _numDipoles;
+  std::vector<int> _numQuadrupoles;
   
-  vector<int> _numCharges;
-  vector<int> _numTersoff;
+  std::vector<int> _numCharges;
+  std::vector<int> _numTersoff;
   
-  vector< vector<double> > _iBodyDummy;
-  vector< vector< vector<double> > > _rSiteBody;
-  vector< vector< vector<double> > > _rDipoleBody;
-  vector< vector< vector<double> > > _rQuadrupoleBody;
-  vector< vector<double> > _epsilonSite;
-  vector< vector<double> > _mSite;
-  vector< vector<double> > _sigmaSite;
-  vector< vector<bool> > _shiftSite;
-  vector< vector< vector<double> > > _eMyBody;
-  vector< vector<double> > _absMy;
-  vector< vector< vector<double> > > _eQBody;
-  vector< vector<double> > _absQ;
+  std::vector< std::vector<double> > _iBodyDummy;
+  std::vector< std::vector< std::vector<double> > > _rSiteBody;
+  std::vector< std::vector< std::vector<double> > > _rDipoleBody;
+  std::vector< std::vector< std::vector<double> > > _rQuadrupoleBody;
+  std::vector< std::vector<double> > _epsilonSite;
+  std::vector< std::vector<double> > _mSite;
+  std::vector< std::vector<double> > _sigmaSite;
+  std::vector< std::vector<bool> > _shiftSite;
+  std::vector< std::vector< std::vector<double> > > _eMyBody;
+  std::vector< std::vector<double> > _absMy;
+  std::vector< std::vector< std::vector<double> > > _eQBody;
+  std::vector< std::vector<double> > _absQ;
   
-  vector< vector< vector<double> > > _rChargeBody;
-  vector< vector< vector<double> > > _rTersoffBody;
-  vector< vector<double> > _mCharge;
-  vector< vector<double> > _qCharge;
-  vector< vector<double> > _mTersoff;
-  vector< vector<double> > _ATersoff;
-  vector< vector<double> > _BTersoff;
-  vector< vector<double> > _lambdaTersoff;
-  vector< vector<double> > _muTersoff;
-  vector< vector<double> > _RTersoff;
-  vector< vector<double> > _STersoff;
-  vector< vector<double> > _cTersoff;
-  vector< vector<double> > _dTersoff;
-  vector< vector<double> > _hTersoff;
-  vector< vector<double> > _nTersoff;
-  vector< vector<double> > _betaTersoff;
+  std::vector< std::vector< std::vector<double> > > _rChargeBody;
+  std::vector< std::vector< std::vector<double> > > _rTersoffBody;
+  std::vector< std::vector<double> > _mCharge;
+  std::vector< std::vector<double> > _qCharge;
+  std::vector< std::vector<double> > _mTersoff;
+  std::vector< std::vector<double> > _ATersoff;
+  std::vector< std::vector<double> > _BTersoff;
+  std::vector< std::vector<double> > _lambdaTersoff;
+  std::vector< std::vector<double> > _muTersoff;
+  std::vector< std::vector<double> > _RTersoff;
+  std::vector< std::vector<double> > _STersoff;
+  std::vector< std::vector<double> > _cTersoff;
+  std::vector< std::vector<double> > _dTersoff;
+  std::vector< std::vector<double> > _hTersoff;
+  std::vector< std::vector<double> > _nTersoff;
+  std::vector< std::vector<double> > _betaTersoff;
   
-  vector< vector<double> > _iBody;
-  vector< vector<double> > _invIBody;
+  std::vector< std::vector<double> > _iBody;
+  std::vector< std::vector<double> > _invIBody;
 
   // double _cutoffRadius;
   double _LJCutoffRadius;

@@ -1,6 +1,6 @@
 // XyzWriter.cpp
 
-#include "md_io/XyzWriter.h"
+#include "io/XyzWriter.h"
 #include "Common.h"
 #include "Domain.h"
 #include "datastructures/ParticleContainer.h"

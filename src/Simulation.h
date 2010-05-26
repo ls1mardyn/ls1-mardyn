@@ -37,8 +37,10 @@ class OutputBase;
 class DomainDecompBase;
 class InputBase;
 class Molecule;
-
-using namespace std;
+namespace optparse {
+  class OptionParser;
+  class Values;
+}
 
 //! @brief controls the whole simulation process
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -97,7 +99,28 @@ class Simulation{
   //! execution mode.
   int exit( int exitcode );
 
-  //! @brief process configuration file (*.cfg)
+  const optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op);
+
+  //! @brief process configuration file
+  //! 
+  //! calls initConfigXML or initConfigOldStyle
+  //! @param inputfilename filename of the input file
+  void initConfigFile(const std::string& inputfilename);
+  void initConfigFile(const char* inputfilename) { initConfigFile(std::string(inputfilename)); }
+
+  //! @brief process XML configuration file (*.xml)
+  //! 
+  //! Opens the XML file with the given filename and reads in all parameters
+  //! for the simulaion and initializes the following member variables:
+  //! - timestepLength: 
+  //! - cutoffRadius
+  //! - phaseSpace
+  //! - moleculeContainer
+  //! @param inputfilename filename of the XML input file
+  void initConfigXML(const std::string& inputfilename);
+  void initConfigXML(const char* inputfilename) { initConfigXML(std::string(inputfilename)); }
+
+  //! @brief process oldstyle configuration file (*.cfg)
   //! 
   //! Opens the file with the given filename and reads in all parameters
   //! for the simulaion and initializes the following member variables:
@@ -150,7 +173,7 @@ class Simulation{
   //! b) conventional output methods, i.e. outputRDF for the radial distribution
   //! function and writeCheckpoint for XDR (configuration) files.
   void output(unsigned long simstep);
-    
+
   //! The following things have to be done here:
   //! - bring all molecules to the corresponding processes (including copies for halo)
   //! - update the caches of the molecules
@@ -161,6 +184,7 @@ class Simulation{
   Domain* getDomain () {return _domain;};
   ParticleContainer* getMolecules () {return _moleculeContainer;};
   unsigned long getSimStep () {return _simstep;};
+  double getcutoffRadius() const {return _cutoffRadius;}
 
   //! @brief temperature increase factor during automatic equilibration
   //! @param current simulation time step

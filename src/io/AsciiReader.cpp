@@ -1,4 +1,4 @@
-#include "md_io/AsciiReader.h"
+#include "io/AsciiReader.h"
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"

@@ -18,7 +18,7 @@
  ***************************************************************************/
 
 #include <ctime>
-#include "md_io/ResultWriter.h"
+#include "io/ResultWriter.h"
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"

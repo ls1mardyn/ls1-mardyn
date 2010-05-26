@@ -1,13 +1,9 @@
 #ifndef INPUTOLDSTYLE_H_
 #define INPUTOLDSTYLE_H_
 
-#include "md_io/InputBase.h"
+#include "io/InputBase.h"
 #include <string>
 #include <fstream>
-
-
-
-using namespace std;
 
 //! @brief This class is used to read in the phasespace using the "old" input file syntax
 //! @author Martin Bernreuther, Martin Buchholz
@@ -23,10 +19,10 @@ class InputOldstyle : public InputBase{
   //! itself is stored, but a stream (_phaseSpaceFileStream) which is associated with
   //! the file
   //! @param filename full path to the input file
-  void setPhaseSpaceFile(string filename);
+  void setPhaseSpaceFile(std::string filename);
   
   //! @brief For this class, header and data are in the same file, so there is no separate header file
-  void setPhaseSpaceHeaderFile(string filename);
+  void setPhaseSpaceHeaderFile(std::string filename);
   
   //! @brief reads in header of the input file (including component description)
   //!
@@ -79,13 +75,13 @@ class InputOldstyle : public InputBase{
   //! An example can be seen in the documentation of this class
   //! @param particleContainer Here the Molecules from the input file are stored 
   //! @return Highest molecule ID found in the input phase space file.
-  unsigned long readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+  unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
  private:
 
-  string  _phaseSpaceFile;
-  string  _phaseSpaceHeaderFile;
-  fstream _phaseSpaceFileStream;
-  fstream _phaseSpaceHeaderFileStream;
+  std::string  _phaseSpaceFile;
+  std::string  _phaseSpaceHeaderFile;
+  std::fstream _phaseSpaceFileStream;
+  std::fstream _phaseSpaceHeaderFileStream;
 
 };
 

@@ -21,7 +21,7 @@
 #include "Simulation.h"
 #include "Common.h"
 #include "Domain.h"
-#include "md_io/PartGen.h"
+#include "io/PartGen.h"
 #include "molecules/Molecule.h"
 #include "datastructures/LinkedCells.h"
 #include "datastructures/AdaptiveSubCells.h"
@@ -36,13 +36,14 @@
 #include "datastructures/adapter/ParticlePairs2PotForceAdapter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "md_io/ResultWriter.h"
-#include "md_io/XyzWriter.h"
-#include "md_io/PovWriter.h"
-#include "md_io/DecompWriter.h"
-#include "md_io/CheckpointWriter.h"
-#include "md_io/VISWriter.h"
-#include "md_io/InputOldstyle.h"
+#include "utils/xmlfile.h"
+#include "io/ResultWriter.h"
+#include "io/XyzWriter.h"
+#include "io/PovWriter.h"
+#include "io/DecompWriter.h"
+#include "io/CheckpointWriter.h"
+#include "io/VISWriter.h"
+#include "io/InputOldstyle.h"
 #include "ensemble/GrandCanonical.h"
 
 #ifdef STEEREO
@@ -71,6 +72,7 @@
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
+using optparse::Values;
 
 Simulation::Simulation(int *argc, char ***argv)
 {
@@ -81,37 +83,17 @@ Simulation::Simulation(int *argc, char ***argv)
   /* Initialize the global log file */
   //string logfileName("MarDyn");
   //global_log = new Log::Logger( Log::All, logfileName );
-  global_log = new Log::Logger( Log::All );
+  global_log = new Log::Logger( Log::Info );
 #ifdef PARALLEL
   global_log->set_mpi_output_root(0);
 #endif
 
-  OptionParser op = OptionParser()
-      // The last two optional positional arguments are only here for backwards-compatibility
-      .usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]")
-      .version("%prog 1.0")
-      .description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
-      // .epilog("background info?")
-  ;
-
-  op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-  op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
-
-  OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
-  dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
-  char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
-  dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
-  dgroup.add_option("--cutoff-radius") .type("float") .set_default(5.0) .help("radius of sphere around a particle in which forces are considered (default: %default)");
-  dgroup.add_option("--cells-in-cutoff") .type("int") .set_default(2) .help("number of cells in cutoff-radius cube (default: %default); only used by LinkedCells particle container");
-  char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition" };
-  dgroup.add_option("--domain-decomposition") .choices(&dd_choices[0], &dd_choices[2]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
-  dgroup.add_option("--timestep-length") .type("float") .set_default(0.004) .help("length of one timestep in TODO (default: %default)");
-  op.add_option_group(dgroup);
-
-  optparse::Values options = op.parse_args(*argc, *argv);
+  OptionParser op;
+  Values options = initOptions(*argc,*argv,op);
   vector<string> args = op.args();
+  unsigned int numargs = args.size();
 
-  if (args.size() < 1)
+  if (numargs < 1)
   {
      op.print_usage();
      exit(1);
@@ -164,27 +146,23 @@ Simulation::Simulation(int *argc, char ***argv)
   _cutoffRadius = options.get("cutoff_radius");
 
   // store number of timesteps to be simulated
-  if (args.size() >= 2)
+  if (numargs >= 2)
     istringstream(args[1]) >> _numberOfTimesteps;
   if (options.is_set("timesteps"))
     _numberOfTimesteps = options.get("timesteps");
   global_log->info() << "Simulating " << _numberOfTimesteps << " steps." << endl;
 
   // store prefix for output files
-  if (args.size() >= 3)
+  if (numargs >= 3)
     _outputPrefix = args[2];
   if (options.is_set("outputprefix"))
     _outputPrefix = options["outputprefix"];
 
+  if (options.is_set("verbose") && options.get("verbose"))
+    global_log->set_log_level(Log::All);
+
   string inputfilename(args[0]);
-  if (inputfilename.rfind(".cfg")==inputfilename.size()-4)
-  {
-    global_log->info() << "command line config file type is oldstyle (*.cfg)" << endl;
-    initConfigOldstyle(inputfilename);
-  } else {
-    global_log->info() << "command line config file type is unknown: trying oldstyle" << endl;
-    initConfigOldstyle(inputfilename);
-  }
+  initConfigFile(inputfilename);
 }
 
 Simulation::~Simulation(){
@@ -204,7 +182,77 @@ int Simulation::exit( int exitcode ){
   return exitcode;
 }
 
+const Values& Simulation::initOptions(int argc, char *argv[], OptionParser& op)
+{
+  op = OptionParser()
+      // The last two optional positional arguments are only here for backwards-compatibility
+      .usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]")
+      .version("%prog 1.0")
+      .description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
+      // .epilog("background info?")
+  ;
 
+  op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
+  op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
+  op.add_option("-v", "--verbose") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+
+  OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
+  dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
+  char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
+  dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
+  dgroup.add_option("--cutoff-radius") .type("float") .set_default(5.0) .help("radius of sphere around a particle in which forces are considered (default: %default)");
+  dgroup.add_option("--cells-in-cutoff") .type("int") .set_default(2) .help("number of cells in cutoff-radius cube (default: %default); only used by LinkedCells particle container");
+  char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition" };
+  dgroup.add_option("--domain-decomposition") .choices(&dd_choices[0], &dd_choices[2]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
+  dgroup.add_option("--timestep-length") .type("float") .set_default(0.004) .help("length of one timestep in TODO (default: %default)");
+  op.add_option_group(dgroup);
+
+  return op.parse_args(argc, argv);
+}
+
+void Simulation::initConfigFile(const string& inputfilename)
+{
+  if (inputfilename.rfind(".xml")==inputfilename.size()-4)
+  {
+    global_log->info() << "command line config file type is XML (*.xml)" << endl;
+    initConfigXML(inputfilename);
+  } else if (inputfilename.rfind(".cfg")==inputfilename.size()-4) {
+    global_log->info() << "command line config file type is oldstyle (*.cfg)" << endl;
+    initConfigOldstyle(inputfilename);
+  } else {
+    global_log->info() << "command line config file type is unknown: trying oldstyle" << endl;
+    initConfigOldstyle(inputfilename);
+  }
+}
+
+void Simulation::initConfigXML(const string& inputfilename)
+{
+  global_log->info() << "init XML config file: " << inputfilename << endl;
+  XMLfile inp(inputfilename);
+  //inp.printXML();
+  global_log->debug() << string(inp) << endl;
+  if(!inp.changecurrentnode("/mardyn"))
+  {
+    global_log->error() << inputfilename << " is not a MarDyn XML input file!" << endl;
+    return;
+  }
+  string version;
+  //inp.getNodeValue("/mardyn@version",version);
+  inp.getNodeValue("@version",version);
+  global_log->debug() << "MarDyn XML config file version " << version << endl;
+  if(inp.changecurrentnode("simulation"))
+  {
+    string siminpfile,siminptype;
+    if(inp.getNodeValue("input",siminpfile))
+    {
+      // input type="oldstyle" to include oldstyle input files for backward compatibility - only temporary!!!
+      if(inp.getNodeValue("input@type",siminptype) && siminptype=="oldstyle")
+        initConfigOldstyle(siminpfile);
+    }
+  } else {
+    global_log->error() << "XML input " << inputfilename << ": no simulation section" << endl;
+  }
+}
 
 void Simulation::initConfigOldstyle(const string& inputfilename)
 {
@@ -355,12 +403,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         string outputPathAndPrefix;
         inputfilestream >> outputPathAndPrefix;
         _outputPlugins.push_back(new ResultWriter(outputPathAndPrefix));
+        global_log->debug() << "ResultWriter '" << outputPathAndPrefix << "'.\n";
       }
       else if (token=="XyzWriter") {
         unsigned long writeFrequency;
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> outputPathAndPrefix;
         _outputPlugins.push_back(new XyzWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
+        global_log->debug() << "XyzWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
         _outputFrequency = writeFrequency;
       }
       else if (token=="PovWriter") {
@@ -368,6 +418,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> outputPathAndPrefix;
         _outputPlugins.push_back(new PovWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
+        global_log->debug() << "POVWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
       }
       else if (token=="DecompWriter") {
         unsigned long writeFrequency;
@@ -375,6 +426,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> mode >> outputPathAndPrefix;
         _outputPlugins.push_back(new DecompWriter(writeFrequency, mode, outputPathAndPrefix, _numberOfTimesteps, true));
+        global_log->debug() << "DecompWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
       }
       else if((token == "VisittWriter") || (token == "VISWriter"))
       {
@@ -382,7 +434,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
         string outputPathAndPrefix;
         inputfilestream >> writeFrequency >> outputPathAndPrefix;
         _outputPlugins.push_back(new VISWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
-        global_log->debug() << "VisItt " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+        global_log->debug() << "VISWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
       }
       /*
       else if(token == "VimWriter")

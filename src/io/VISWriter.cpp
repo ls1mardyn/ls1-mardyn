@@ -1,6 +1,6 @@
 // VISWriter.cpp
 
-#include "md_io/VISWriter.h"
+#include "io/VISWriter.h"
 #include "Common.h"
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"

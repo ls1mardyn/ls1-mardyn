@@ -1,6 +1,6 @@
 // CheckpointWriter.cpp
 
-#include "md_io/CheckpointWriter.h"
+#include "io/CheckpointWriter.h"
 #include "Common.h"
 #include "Domain.h"
 #include "datastructures/ParticleContainer.h"
