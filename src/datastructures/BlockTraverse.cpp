@@ -22,7 +22,7 @@
 #include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
 #include "datastructures/ParticleContainer.h"
-#include "Logger.h"
+#include "utils/Logger.h"
 
 #include <list>
 #include <cmath>

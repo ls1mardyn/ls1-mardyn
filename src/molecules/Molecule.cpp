@@ -28,7 +28,7 @@
 #include <cassert>
 //#include <iostream>
 
-#include "Logger.h"
+#include "utils/Logger.h"
 
 using namespace std;
 using Log::global_log;

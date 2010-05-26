@@ -5,7 +5,7 @@
 #include "Domain.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
-#include "Logger.h"
+#include "utils/Logger.h"
 
 #include <cmath>
 #include <iostream>

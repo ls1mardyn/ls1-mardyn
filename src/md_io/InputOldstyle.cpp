@@ -3,7 +3,7 @@
 #include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
-#include "Logger.h"
+#include "utils/Logger.h"
 #include <climits>
 
 using Log::global_log;

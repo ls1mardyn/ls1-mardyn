@@ -64,8 +64,8 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
-#include "Timer.h"
-#include "Logger.h"
+#include "utils/Timer.h"
+#include "utils/Logger.h"
 #include "compile_info.h"
 
 using Log::global_log;

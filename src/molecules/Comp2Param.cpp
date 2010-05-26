@@ -20,7 +20,7 @@
 #include <cmath>
 
 #include "molecules/Comp2Param.h"
-#include "Logger.h"
+#include "utils/Logger.h"
 
 using Log::global_log;
 using namespace std;

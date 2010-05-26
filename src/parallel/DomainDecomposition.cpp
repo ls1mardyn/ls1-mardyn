@@ -3,7 +3,7 @@
 #include "datastructures/ParticleContainer.h"
 #include "Domain.h"
 #include "parallel/ParticleData.h"
-#include "Logger.h"
+#include "utils/Logger.h"
 using Log::global_log;
 
 using namespace std;
