@@ -67,7 +67,7 @@
 #include <iomanip>
 #include "utils/Timer.h"
 #include "utils/Logger.h"
-#include "compile_info.h"
+#include "utils/compile_info.h"
 
 using Log::global_log;
 using optparse::OptionParser;
