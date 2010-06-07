@@ -148,14 +148,14 @@ Simulation::Simulation(int *argc, char ***argv)
   // store number of timesteps to be simulated
   if (numargs >= 2)
     istringstream(args[1]) >> _numberOfTimesteps;
-  if (options.is_set("timesteps"))
+  if (options.is_set_by_user("timesteps"))
     _numberOfTimesteps = options.get("timesteps");
   global_log->info() << "Simulating " << _numberOfTimesteps << " steps." << endl;
 
   // store prefix for output files
   if (numargs >= 3)
     _outputPrefix = args[2];
-  if (options.is_set("outputprefix"))
+  if (options.is_set_by_user("outputprefix"))
     _outputPrefix = options["outputprefix"];
 
   if (options.is_set("verbose") && options.get("verbose"))
