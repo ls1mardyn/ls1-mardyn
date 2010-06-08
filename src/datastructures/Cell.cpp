@@ -1,6 +1,8 @@
 #include "datastructures/Cell.h"
 #include "molecules/Molecule.h"
 
+using namespace std;
+
 Cell::Cell(){
   this->_haloCellState = false;
   this->_boundaryCellState = false;

@@ -11,6 +11,8 @@
 #include <sstream>
 #include <fstream>
 
+using namespace std;
+
 PovWriter::PovWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
    _filename = filename;
    _writeFrequency = writeFrequency;

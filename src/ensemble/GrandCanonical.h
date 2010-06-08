@@ -26,7 +26,6 @@ class DomainDecompBase;
 class ParticleContainer;
 class Molecule;
 
-using namespace std;
 
 typedef ParticleContainer TMoleculeContainer;
 
@@ -91,7 +90,7 @@ class ChemicalPotential
    unsigned long getGlobalN() { return this->globalN; }
    double getGlobalRho() { return (double)(this->globalN) / this->globalV; }
 
-   void outputIX() { cout << "  r" << ownrank << "[IX" << rnd.getIX() << "]  "; }
+   void outputIX() { std::cout << "  r" << ownrank << "[IX" << rnd.getIX() << "]  "; }
 
    void assertSynchronization(DomainDecompBase* comm);
 
@@ -116,10 +115,10 @@ class ChemicalPotential
 
    unsigned long nextid;  // ID given to the next inserted particle
    unsigned id_increment;
-   list<unsigned> remainingDeletions;  // position of the vector that should be deleted
-   list<double> remainingInsertions[3];
-   list<unsigned long> remainingInsertionIDs;
-   list<float> remainingDecisions;  // first deletions, then insertions
+   std::list<unsigned> remainingDeletions;  // position of the vector that should be deleted
+   std::list<double> remainingInsertions[3];
+   std::list<unsigned long> remainingInsertionIDs;
+   std::list<float> remainingDecisions;  // first deletions, then insertions
 
    unsigned long globalN;
    double globalV;
@@ -130,6 +129,6 @@ class ChemicalPotential
    double control_bottom[3];
    double control_top[3];
 
-   list<Molecule> reservoir;
+   std::list<Molecule> reservoir;
 };
 #endif

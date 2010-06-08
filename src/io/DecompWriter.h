@@ -16,7 +16,7 @@ class Domain;
 //! @todo comment
 class DecompWriter : public OutputBase{
  public:
-  DecompWriter(unsigned long writeFrequency, string mode, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+  DecompWriter(unsigned long writeFrequency, std::string mode, std::string filename, unsigned long numberOfTimesteps, bool incremental);
   ~DecompWriter();
   //! @todo comment
   void initOutput(ParticleContainer* particleContainer,

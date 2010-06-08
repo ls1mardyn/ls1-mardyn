@@ -13,8 +13,6 @@
 #include "parallel/ParticleData.h"
 #include "parallel/CollectiveCommunication.h"
 
-using namespace std;
-
 //! @brief Basic parallelisation which divides the domain into #procs equal sized cuboids
 //! @author Martin Buchholz
 //!

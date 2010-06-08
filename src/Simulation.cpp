@@ -356,7 +356,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
     else if ((token=="parallelization") || (token == "parallelisation"))
     {
 #ifndef PARALLEL
-      global_log->warning() << "WARNING: Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
+      global_log->warning() << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
       inputfilestream >> token;
 #else
       inputfilestream >> token;

@@ -121,13 +121,13 @@ class AdaptiveSubCells: public ParticleContainer {
   double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
-  void getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs);
+  void getBoundaryParticles( std::list<Molecule*> &boundaryParticlePtrs );
 
   //! @brief appends pointers to all particles in the halo region to the list
-  void getHaloParticles(list<Molecule*> &haloParticlePtrs);
+  void getHaloParticles( std::list<Molecule*> &haloParticlePtrs );
 
   // documentation see father class (ParticleContainer.h)
-  void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs);
+  void getRegion( double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs );
 
   double getCutoff() { return this->_cutoffRadius; }
   double getLJCutoff() { return this->_LJCutoffRadius; }
@@ -229,7 +229,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //####################################
 
   //! the list contains all molecules from the phasespace
-  list<Molecule> _particles;
+  std::list<Molecule> _particles;
 
   //! Iterator to traverse the list of particles (_particles)
   //11 typename entfernt
@@ -251,9 +251,9 @@ class AdaptiveSubCells: public ParticleContainer {
   std::vector<unsigned long> _haloSubCellIndices;
 
   //! Neighbours that come in the total ordering after a subCell
-  std::vector<vector<unsigned long> > _forwardNeighbourSubOffsets;
+  std::vector< std::vector<unsigned long> > _forwardNeighbourSubOffsets;
   //! Neighbours that come in the total ordering before a subCell
-  std::vector<vector<unsigned long> > _backwardNeighbourSubOffsets;
+  std::vector< std::vector<unsigned long> > _backwardNeighbourSubOffsets;
 
   //! low corner of the bounding box around the linked cells (including halo)
   double _haloBoundingBoxMin[3];

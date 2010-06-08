@@ -3,8 +3,6 @@
 
 #include <list>
 
-using namespace std;
-
 class Molecule;
 
 //! @brief Cell data structure.
@@ -52,7 +50,7 @@ class Cell{
   void addParticle(Molecule* particle_ptr);
       
   //! return a reference to the list of molecules (molecule pointers) in this cell
-  list<Molecule*>& getParticlePointers();
+  std::list<Molecule*>& getParticlePointers();
     
   bool deleteMolecule(unsigned long molid);
   

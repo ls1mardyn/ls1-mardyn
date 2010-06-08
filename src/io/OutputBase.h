@@ -59,7 +59,7 @@ class OutputBase{
   virtual void doOutput(
      ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
      Domain* domain, unsigned long simstep,
-     list<ChemicalPotential>* lmu
+     std::list<ChemicalPotential>* lmu
   ) = 0;
   
   //! @brief will be called at the end of the simulation

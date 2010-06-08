@@ -5,6 +5,8 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 
+using namespace std;
+
 Leapfrog::Leapfrog(double timestepLength){
   // set starting state
   this->_state = 3; 

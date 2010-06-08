@@ -30,8 +30,6 @@ class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
 
-using namespace std;
-
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
 //!
@@ -162,15 +160,15 @@ class ParticleContainer {
   virtual double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
-  virtual void getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs) = 0;
+  virtual void getBoundaryParticles( std::list<Molecule*> &boundaryParticlePtrs ) = 0;
 
   //! @brief appends pointers to all particles in the halo region to the list
-  virtual void getHaloParticles(list<Molecule*> &haloParticlePtrs) = 0;
+  virtual void getHaloParticles( std::list<Molecule*> &haloParticlePtrs ) = 0;
 
   //! @brief fills the given list with pointers to all particles in the given region
   //! @param lowCorner minimum x-, y- and z-coordinate of the region
   //! @param highwCorner maximum x-, y- and z-coordinate of the region
-  virtual void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs) = 0;
+  virtual void getRegion( double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs ) = 0;
 
   virtual double getCutoff() = 0;
   virtual double getLJCutoff() = 0;

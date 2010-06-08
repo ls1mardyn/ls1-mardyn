@@ -32,8 +32,6 @@ class Molecule;
 class ParticleContainer;
 class DomainDecompBase; 
 
-using namespace std;
-
 //! @brief This class is used to read in the phasespace and to handle macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 //!
@@ -83,8 +81,8 @@ class Domain{
   //! @param particleContainer The molecules that have to be written to the file are stored here
   //! @param domainDecomp In the parallel version, the file has to be written by more than one process.
   //!                     Methods to achieve this are available in domainDecomp 
-  void writeCheckpoint(string filename, ParticleContainer* particleContainer,
-		       DomainDecompBase* domainDecomp);
+  void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
+		       DomainDecompBase* domainDecomp );
 
   //! @brief initialize far field correction parameters
   //! 
@@ -165,7 +163,7 @@ class Domain{
   void setTargetTemperature(int thermostat, double T);
 
   //! @brief get the mixcoeff
-  vector<double> & getmixcoeff();
+  std::vector<double> & getmixcoeff();
 
   //! @brief get the epsilonRF
   double getepsilonRF() const;
@@ -243,7 +241,7 @@ class Domain{
   void advanceTime(double timestep);
 
   //! @brief get a reference to the vector of components
-  vector<Component>& getComponents();
+  std::vector<Component>& getComponents();
 
   //! @brief add a component to the vector of components
   void addComponent(Component component);
@@ -372,7 +370,7 @@ class Domain{
         ParticleContainer* molCont, double dtConstantAcc
     );
     //! @brief returns the acceleration map (necessary for passing data to the integrator)
-    map<unsigned, double>* getUAA() { return this->_universalAdditionalAcceleration; }
+	std::map<unsigned, double>* getUAA() { return this->_universalAdditionalAcceleration; }
     //! @brief returns the cosetid of a component (0 for unaccelerated components)
     unsigned getComponentSet(unsigned cid)
     {
@@ -486,28 +484,28 @@ class Domain{
     //! thermostat IDs. negative: no thermostat, 0: global, positive: componentwise
     //! in the case of a componentwise thermostat, all components are assigned
     //! a thermostat ID different from zero.
-    map<int, int> _componentToThermostatIdMap;
+	std::map<int, int> _componentToThermostatIdMap;
 	
 	/* FIXME: The following values should be provided by the particle container. */
     //! _localThermostatN[0] and _universalThermostatN[0] are always the total number
     //! of particles in the subdomain and, respectively, the entire domain
-    map<int, unsigned long> _localThermostatN;
-    map<int, unsigned long> _universalThermostatN;
-    map<int, unsigned long> _localRotationalDOF;
-    map<int, unsigned long> _universalRotationalDOF;
+	std::map<int, unsigned long> _localThermostatN;
+    std::map<int, unsigned long> _universalThermostatN;
+    std::map<int, unsigned long> _localRotationalDOF;
+    std::map<int, unsigned long> _universalRotationalDOF;
     //! _globalTemperatureMap[0] is always the temperature of the whole system,
     //! including components to which no thermostat is applied.
     //! The _globalTemperatureMap stores actual CURRENT temperatures, whereas
     //! the temperature objective of the thermostat is stored in _universalTargetTemperature
-    map<int, double> _globalTemperatureMap;
-    map<int, double> _universalTargetTemperature;
-    map<int, double> _universalBTrans;
-    map<int, double> _universalBRot;
+	std::map<int, double> _globalTemperatureMap;
+    std::map<int, double> _universalTargetTemperature;
+    std::map<int, double> _universalBTrans;
+    std::map<int, double> _universalBRot;
     //! should the directed movement be subtracted when calculating the temperature?
-    map<int, bool> _universalUndirectedThermostat;
+	std::map<int, bool> _universalUndirectedThermostat;
     //! stores the velocity of the directed movement
-    map<int, double> _universalThermostatDirectedVelocity[3];
-    map<int, double> _localThermostatDirectedVelocity[3];
+	std::map<int, double> _universalThermostatDirectedVelocity[3];
+	std::map<int, double> _localThermostatDirectedVelocity[3];
 
 	/* FIXME: This info should go into an ensemble class */
     bool _universalNVE;
@@ -515,25 +513,25 @@ class Domain{
     /// calculate new value of the uniform acceleration each # timesteps
     unsigned _universalConstantAccelerationTimesteps;
     /// assigns a component set ID to some of the components
-    map<unsigned, unsigned> _universalComponentSetID;
+	std::map<unsigned, unsigned> _universalComponentSetID;
     /// local number of molecules that belong to a given component set ID
-    map<unsigned, unsigned long> _localN;
+	std::map<unsigned, unsigned long> _localN;
     /// global number of molecules that belong to a given component set ID
-    map<unsigned, unsigned long> _globalN;
+	std::map<unsigned, unsigned long> _globalN;
     /// local sum of the velocity vectors corresponding to a given component set ID
-    map<unsigned, long double> _localVelocitySum[3];
+	std::map<unsigned, long double> _localVelocitySum[3];
     /// global sum of the velocity vectors corresponding to a given component set ID
-    map<unsigned, long double> _globalVelocitySum[3];
+	std::map<unsigned, long double> _globalVelocitySum[3];
     /// uniform acceleration
-    map<unsigned, double> _universalAdditionalAcceleration[3];
+	std::map<unsigned, double> _universalAdditionalAcceleration[3];
     /// target average velocity for the molecules of a coset
-    map<unsigned, double> _globalTargetVelocity[3];
+	std::map<unsigned, double> _globalTargetVelocity[3];
     /// delay variable tau of a coset
-    map<unsigned, double> _universalTau;
+	std::map<unsigned, double> _universalTau;
     /// queue of previously recorded velocity sums
-    map<unsigned, deque<long double> > _globalPriorVelocitySums[3];
+	std::map<unsigned, std::deque<long double> > _globalPriorVelocitySums[3];
     /// number of items in the velocity queue
-    map<unsigned, unsigned> _globalVelocityQueuelength;
+	std::map<unsigned, unsigned> _globalVelocityQueuelength;
 
     //! computation of the isochoric heat capacity
     unsigned _globalUSteps;
@@ -545,25 +543,25 @@ class Domain{
     //! number of successive profile cuboids in x/y/z direction
     unsigned _universalNProfileUnits[3];
     //! local N profile map
-    map<unsigned, long double> _localNProfile;
+	std::map<unsigned, long double> _localNProfile;
     //! global N profile map
-    map<unsigned, double> _globalNProfile;
+	std::map<unsigned, double> _globalNProfile;
     //! local directed velocity profile map
-    map<unsigned, long double> _localvProfile[3];
+	std::map<unsigned, long double> _localvProfile[3];
     //! global directed velocity  profile map
-    map<unsigned, double> _globalvProfile[3];
+	std::map<unsigned, double> _globalvProfile[3];
     //! local kinetic energy profile map
-    map<unsigned, long double> _localKineticProfile;
+	std::map<unsigned, long double> _localKineticProfile;
     //! global kinetic energy profile map
-    map<unsigned, double> _globalKineticProfile;
+	std::map<unsigned, double> _globalKineticProfile;
     //! local counter w. r. t. degrees of freedom
-    map<unsigned, long double> _localDOFProfile;
+	std::map<unsigned, long double> _localDOFProfile;
     //! global counter w. r. t. degrees of freedom
-    map<unsigned, double> _globalDOFProfile;
+	std::map<unsigned, double> _globalDOFProfile;
     //! how many _evaluated_ timesteps are currently accumulated in the profile?
     unsigned _globalAccumulatedDatasets;
     //! which components should be considered?
-    map<unsigned, bool> _universalProfiledComponents;
+	std::map<unsigned, bool> _universalProfiledComponents;
 
     bool _doCollectRDF;
     double _universalInterval;
@@ -578,10 +576,10 @@ class Domain{
     int _universalSelectiveThermostatError;
 
     //! local sum (over all molecules) of the mass multiplied with the squared velocity
-    map<int, double> _local2KETrans;
+	std::map<int, double> _local2KETrans;
     //! local sum (over all molecules) of the moment of inertia 
     //! multiplied with the squared  rotational velocity
-    map<int, double> _local2KERot; 
+	std::map<int, double> _local2KERot; 
     
   //! reaction field
   //!
@@ -600,12 +598,12 @@ class Domain{
   double _currentTime;
 
   //! Components resp. molecule types
-  vector<Component> _components;
+  std::vector<Component> _components;
   //! parameter streams for each possible pair of molecule-types
   Comp2Param _comp2params;
   //! modified Lorentz-Berthelot mixing rule parameters
   //! @todo more explanation
-  vector<double> _mixcoeff;
+  std::vector<double> _mixcoeff;
 };
 
 

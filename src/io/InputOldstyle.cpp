@@ -7,6 +7,7 @@
 #include <climits>
 
 using Log::global_log;
+using namespace std;
 
 
 InputOldstyle::InputOldstyle() {

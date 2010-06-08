@@ -164,13 +164,13 @@ class LinkedCells: public ParticleContainer {
   double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
-  void getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs);
+  void getBoundaryParticles( std::list<Molecule*> &boundaryParticlePtrs );
 
   //! @brief appends pointers to all particles in the halo region to the list
-  void getHaloParticles(list<Molecule*> &haloParticlePtrs);
+  void getHaloParticles( std::list<Molecule*> &haloParticlePtrs );
 
   // documentation see father class (ParticleContainer.h)
-  void getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs);
+  void getRegion( double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs );
 
   double getCutoff() { return this->_cutoffRadius; }
   double getLJCutoff() { return this->_LJCutoffRadius; }
@@ -257,7 +257,7 @@ class LinkedCells: public ParticleContainer {
   //####################################
 
   //! the list contains all molecules from the phasespace
-  list<Molecule> _particles;
+  std::list<Molecule> _particles;
 
   //! Iterator to traverse the list of particles (_particles)
   std::list<Molecule>::iterator _particleIter;

@@ -9,6 +9,7 @@
 #include <fstream>
 #include <sstream>
 
+using namespace std;
 VISWriter::VISWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
    _filename = filename;
    _writeFrequency = writeFrequency;

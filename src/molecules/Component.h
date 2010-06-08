@@ -21,7 +21,6 @@
 
 #include <vector>
 #include <string>
-using namespace std;
 
 #include "molecules/Site.h"
 
@@ -131,10 +130,10 @@ private:
   //std::vector<Site> m_sites;
   // use separate vectors instead...
   std::vector<LJcenter> m_ljcenters;
-  vector<Charge> m_charges;
+  std::vector<Charge> m_charges;
   std::vector<Dipole> m_dipoles;
   std::vector<Quadrupole> m_quadrupoles;
-  vector<Tersoff> m_tersoff;
+  std::vector<Tersoff> m_tersoff;
   // for performance reasons better(?) omit Site-class indirection and use cached values
   double m_m; // total mass
   //       Ixx,Iyy,Izz,Ixy,Ixz,Iyz
