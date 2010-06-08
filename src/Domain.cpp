@@ -348,7 +348,7 @@ void Domain::calculateGlobalValues(
 						Dcorr = sqrt(limit_rot_energy / Urot);
 						global_log->debug() << "D(m" << tM->id() << ") *= " << Dcorr << endl;
 						tM->scale_D(Dcorr);
-						tM->scale_F(Dcorr);
+						tM->scale_M(Dcorr);
 					}
 				}
 			}
