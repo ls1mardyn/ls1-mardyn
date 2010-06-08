@@ -131,6 +131,7 @@ public:
   void scale_v(double s, double offx, double offy, double offz);
   void scale_F(double s) { for(unsigned short d=0;d<3;++d) m_F[d]*=s; }
   void scale_D(double s) { for(unsigned short d=0;d<3;++d) m_D[d]*=s; }
+  void scale_M(double s) { for(unsigned short d=0;d<3;++d) m_M[d]*=s; }
 
   void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) m_F[d]+=a[d]; }
   void Fsub(const double a[]) { for(unsigned short d=0;d<3;++d) m_F[d]-=a[d]; }
