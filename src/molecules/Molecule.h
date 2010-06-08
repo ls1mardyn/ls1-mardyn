@@ -40,8 +40,7 @@ class Domain;
 //! @brief Molecule modeled as LJ sphere with point polarities + Tersoff potential
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class Molecule{
-//friend class integrators::Integrator;
-//friend class integrators::Leapfrog;
+
 public:
   enum streamtype { RESTART };
 
@@ -183,9 +182,6 @@ public:
   void Ftersoffsub(unsigned int i, double a[])
     { double* Fsite=&(m_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 
-  //void Upotadd(double u) { m_Upot+=u; }
-  //void Upotsub(double u) { m_Upot-=u; }
-
   void upd_preF(double dt, double vcorr=1., double Dcorr=1.);
   void upd_cache();
   void upd_postF(double dt_halve, double& summv2, double& sumIw2);
@@ -201,27 +197,12 @@ public:
   /** write binary information to stream */
   void save_restart(std::ostream& ostrm) const;
 
-  /*
-   * veraltet, aber aus Versehen von Martin Buchholz im Code gelassen.
-   * nach dem neuen Schema von Martin Buchholz ist eine Cell als STL-Liste organisiert,
-   * deshalb ist das hier unnötig.
-   *
-  //  Linked cells
-  Molecule* nextinCell() const { return m_nextincell; }
-   */
-  
   static void setDomain(Domain* domain);
-  /*
-   * was soll das?? (M. H.) ich nehme das mal raus:
-   * static void setblubb(double a);
-   */
   
   inline unsigned getCurTN() { return this->m_curTN; }
   inline Molecule* getTersoffNeighbour(unsigned i) { return this->m_Tersoff_neighbours_first[i]; }
   inline bool getPairCode(unsigned i) { return this->m_Tersoff_neighbours_second[i]; }
-  // map<Molecule*, bool>* getTersoffNeighbours() { return &(this->m_Tersoff_neighbours); }
   inline void clearTersoffNeighbourList() { this->m_curTN = 0; }
-  // void clearTersoffNeighbourList() { this->m_Tersoff_neighbours.clear(); }
   void addTersoffNeighbour(Molecule* m, bool pairType);
   double tersoffParameters(double params[15]); //returns delta_r
 
@@ -242,7 +223,6 @@ private:
 
   double m_F[3];  // forces
   double m_M[3];  // moments
-  //double m_Upot;  // potential energy
 
   const std::vector<LJcenter>* m_ljcenters;
   const std::vector<Charge>* m_charges;
@@ -267,17 +247,6 @@ private:
   double* m_sites_F;
   double *m_ljcenters_F, *m_charges_F, *m_dipoles_F,
          *m_quadrupoles_F, *m_tersoff_F;
-
-  /*
-   * veraltet, aber aus Versehen von Martin Buchholz im Code gelassen
-   *
-  // used by CELL data structure for intrusive single-linked "collision" lists
-  Molecule* m_nextincell;
-  // used by Cells::addMolecule to modify m_nextincell
-  void setNextinCell(Molecule* next) { m_nextincell=next; }
-  //  friend void Cells::addMolecule(Molecule* atom);
-   *
-   */
 
   Molecule* m_Tersoff_neighbours_first[MAXTN];
   bool m_Tersoff_neighbours_second[MAXTN];

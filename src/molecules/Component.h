@@ -107,12 +107,6 @@ public:
                    double m, double A, double B, double lambda, double mu, double R,
                    double S, double c, double d, double h, double n, double beta  );
 
-  /*
-   * Was ist das ueberhaupt? (M. H.) Ich nehme es mal raus ...
-   * /// NOT SUPPORTED!!!
-   * void transformPA();
-   */
-
   /** write information to stream */
   void write(std::ostream& ostrm) const;
 
@@ -136,7 +130,7 @@ private:
   std::vector<Tersoff> m_tersoff;
   // for performance reasons better(?) omit Site-class indirection and use cached values
   double m_m; // total mass
-  //       Ixx,Iyy,Izz,Ixy,Ixz,Iyz
+  // Ixx,Iyy,Izz,Ixy,Ixz,Iyz
   double m_I[6];  // moments of inertia tensor
   unsigned long m_rot_dof;  // number of rotational degrees of freedom
   double m_Ipa[3];  // moments of inertia for principal axes

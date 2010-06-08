@@ -158,47 +158,6 @@ void Component::addTersoff( double x, double y, double z,
    }
 }
 
-/* Brauchen wir das? (M. H.)
- *
-// NOT SUPPORTED at the moment!!!
-void Component::transformPA()
-{
-cerr << "Component::transformPA(): NOT SUPPORTED at the moment!!!" << endl;
-  //vector<Site>::iterator pos; // see component.h
-  vector<LJcenter>::iterator pos; // Dipoles and Quadrupoles are massless at the moment
-  double cm[3];
-  m_m=0.;
-  cm[0]=cm[1]=cm[2]=0.;
-  for(pos=m_ljcenters.begin();pos!=m_ljcenters.end();++pos)
-  {
-    Site& s=*pos;
-    double m=s.m();
-    m_m+=m;
-    cm[0]+=m*s.rx();
-    cm[1]+=m*s.ry();
-    cm[2]+=m*s.rz();
-  }
-  for(unsigned short d=0;d<3;++d) cm[d]/=m_m;
-  m_I[0]=m_I[1]=m_I[2]=m_I[3]=m_I[4]=m_I[5]=0.;
-  for(pos=m_ljcenters.begin();pos!=m_ljcenters.end();++pos)
-  {
-    Site& s=*pos;
-    s.translateOrigin(cm);
-    double m=s.m();
-    double x=s.rx();
-    double y=s.ry();
-    double z=s.rz();
-    m_I[0]+=m*(y*y+z*z);
-    m_I[1]+=m*(x*x+z*z);
-    m_I[2]+=m*(x*x+y*y);
-    m_I[3]-=m*x*y;
-    m_I[4]-=m*x*z;
-    m_I[5]-=m*y*z;
-  }
-}
- *
- */
-
 void Component::write(std::ostream& ostrm) const
 {
   ostrm << m_ljcenters.size() << "\t" << m_charges.size() << "\t"

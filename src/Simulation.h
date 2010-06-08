@@ -21,8 +21,6 @@
 
 #include <string>
 #include <list>
-//#include <vector>
-//#include <sstream>
 
 #include "ensemble/GrandCanonical.h"
 #ifdef STEEREO
@@ -318,7 +316,6 @@ class Simulation{
     
   //! frequency of the checkpoint writer
   long _outputFrequency;
-  // unsigned _restartOutputInterval;
     
   //! list of output plugins to use
   std::list<OutputBase*> _outputPlugins;

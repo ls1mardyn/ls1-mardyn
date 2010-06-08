@@ -226,6 +226,8 @@ void Domain::calculateGlobalValues(
 	// had to be moved from Thermostat to upd_postF and the final calculations  
 	// of m_Ukin, m_Upot and Pressure had to be moved from Thermostat / upd_F  
 	// to this point           
+	
+	/* FIXME stuff for the ensemble class */
 	domainDecomp->collCommInit(2);
 	domainDecomp->collCommAppendDouble(Upot);
 	domainDecomp->collCommAppendDouble(Virial);
@@ -244,6 +246,7 @@ void Domain::calculateGlobalValues(
 	/*
 	 * thermostat ID 0 represents the entire system
 	 */
+
 	map<int, unsigned long>::iterator thermit;
 	if( _componentwiseThermostat )
 	{
