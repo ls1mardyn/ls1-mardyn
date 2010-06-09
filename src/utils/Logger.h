@@ -34,17 +34,17 @@ namespace Log {
 	class Logger;
 
 	/** Gobal logger variable for use in the entire program.
-	  * Must be initialized with constructor e.g. new Log::Logger().
-	  * Namespace visibility:
-	  *	 using Log::global_log;
-	  */
+	 * Must be initialized with constructor e.g. new Log::Logger().
+	 * Namespace visibility:
+	 *	 using Log::global_log;
+	 */
 #ifndef LOGGER_SRC
 	extern Log::Logger *global_log;
 #endif
 
 	/** list of available log levels
-	  * For each level a name has to be specified in the constructor of the Logger() class.
-	  * This name will be prepended later on to the log message. */
+	 * For each level a name has to be specified in the constructor of the Logger() class.
+	 * This name will be prepended later on to the log message. */
 	typedef enum {
 		None        = 0,    /* supress output */
 		Fatal       = 1,    /* program exit */
@@ -102,7 +102,7 @@ namespace Log {
 
 		public:
 			/** Initializes the log level, log stream and the list of log level names.
-			  * If MPI_SUPPORT is enabled by default all process perform logging output. */
+			 * If MPI_SUPPORT is enabled by default all process perform logging output. */
 			Logger( logLevel level = Log::Error, std::ostream *os = &(std::cout) ): _log_level(level), _log_stream(os) {
 				init_starting_time();
 				_filename = "";
@@ -164,6 +164,7 @@ namespace Log {
 
 			/// Add log info in front of messages
 			Logger& msg_level( logLevel level ){
+				using namespace std;
 				_msg_log_level = level;
 				if ( _msg_log_level <= _log_level && _do_output ) {
 					// Include timestamp
@@ -171,11 +172,11 @@ namespace Log {
 					t = time( NULL );
 					tm* lt = localtime(&t);
 					//*_log_stream << ctime(&t) << " ";
-					std::stringstream timestampstream;
+					stringstream timestampstream;
 					// maybe sprintf is easier here...
-					timestampstream << std::setfill ('0') << std::setw (2)
-					                << lt->tm_year << lt->tm_mon << lt->tm_mday
-					                << "T" << lt->tm_hour << lt->tm_min << lt->tm_sec;
+					timestampstream << setfill('0') << setw(4) << (1900 + lt->tm_year) 
+						<< setw(2) << (1 + lt->tm_mon) << setw(2) << lt->tm_mday << "T" 
+						<< setw(2) << lt->tm_hour << setw(2) << lt->tm_min << setw(2) << lt->tm_sec;
 					*_log_stream << timestampstream.str() << " ";
 					//timestampstream.str(""); timestampstream.clear();
 #ifdef USE_GETTIMEOFDAY
