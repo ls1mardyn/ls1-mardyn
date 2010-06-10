@@ -18,25 +18,29 @@
  ***************************************************************************/
 
 // Simulation.cpp
+#define SIMULATION_SRC
 #include "Simulation.h"
+
 #include "Common.h"
 #include "Domain.h"
-#include "io/PartGen.h"
 #include "molecules/Molecule.h"
 #include "datastructures/LinkedCells.h"
 #include "datastructures/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
-#include "utils/OptionParser.h"
+
 #ifdef PARALLEL
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #else
 #include "parallel/DomainDecompDummy.h"
 #endif
+
 #include "datastructures/adapter/ParticlePairs2PotForceAdapter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+
 #include "utils/xmlfile.h"
+#include "io/PartGen.h"
 #include "io/ResultWriter.h"
 #include "io/XyzWriter.h"
 #include "io/PovWriter.h"
@@ -44,6 +48,7 @@
 #include "io/CheckpointWriter.h"
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
+
 #include "ensemble/GrandCanonical.h"
 
 #ifdef STEEREO
@@ -59,12 +64,13 @@
 #include <steereoSocketCommunicator.h>
 #endif
 
-#include <fstream>
 #include <iostream>
 #include <iterator>
 #include <string>
 #include <sstream>
 #include <iomanip>
+
+#include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 #include "utils/compile_info.h"
@@ -74,11 +80,16 @@ using optparse::OptionParser;
 using optparse::OptionGroup;
 using optparse::Values;
 
+Simulation* global_simulation;
+Simulation& _simulation = *global_simulation;
+
 Simulation::Simulation(int *argc, char ***argv)
 {
 #ifdef PARALLEL
   MPI_Init(argc, argv);
 #endif
+
+  global_simulation = this;
 
   /* Initialize the global log file */
   //string logfileName("MarDyn");
@@ -928,38 +939,31 @@ void Simulation::simulate()
     global_log->debug() << "Traversing pairs" << endl;
     _moleculeContainer->traversePairs();
 
-    /*
-     * test deletions and insertions
-     */
+    // test deletions and insertions
     if(_simstep >= _initGrandCanonical)
     {
        unsigned j = 0;
        list<ChemicalPotential>::iterator cpit;
-       for( cpit = _lmu.begin();
-	    cpit != _lmu.end();
-	    cpit++ )
+       for( cpit = _lmu.begin(); cpit != _lmu.end(); cpit++ )
        {
-	  if(!((_simstep + 2*j + 3) % cpit->getInterval()))
-	  {
-             global_log->debug() << "Grand canonical ensemble(" << j
-		         << "): test deletions and insertions" << endl;
-			 /* TODO: thermostat */
-             _moleculeContainer->grandcanonicalStep(
-	        &(*cpit), _domain->getGlobalCurrentTemperature()
-             );
-	     cpit->assertSynchronization(_domainDecomposition);
+	  if(!((_simstep + 2*j + 3) % cpit->getInterval())) {
+		  global_log->debug() << "Grand canonical ensemble(" << j
+			  << "): test deletions and insertions" << endl;
+		  /* TODO: thermostat */
+		  _moleculeContainer->grandcanonicalStep( &(*cpit), _domain->getGlobalCurrentTemperature());
+#ifndef NDEBUG
+		  /* silly check if random numbers inserted are the same for all processes... */
+		  cpit->assertSynchronization(_domainDecomposition);
+#endif
 
 	     int localBalance = _moleculeContainer->localGrandcanonicalBalance();
 	     int balance = _moleculeContainer->grandcanonicalBalance(
-	        _domainDecomposition
-	     );
-             global_log->debug() << "   b[" << ((balance > 0)? "+": "") << balance
-                         << "(" << ((localBalance > 0)? "+": "")
-		         << localBalance << ")" << " / c = "
-		         << cpit->getComponentID() << "]   " << endl;
-             _domain->Nadd(
-	        cpit->getComponentID(), balance, localBalance
-	     );
+	        _domainDecomposition );
+		 global_log->debug() << "   b[" << ((balance > 0)? "+": "") << balance
+			 << "(" << ((localBalance > 0)? "+": "")
+			 << localBalance << ")" << " / c = "
+			 << cpit->getComponentID() << "]   " << endl;
+		 _domain->Nadd( cpit->getComponentID(), balance, localBalance );
 	  }
 
 	  j++;
@@ -970,13 +974,8 @@ void Simulation::simulate()
     global_log->debug() << "Delete outer particles" << endl;
     _moleculeContainer->deleteOuterParticles();
 
-    if(_simstep >= _initGrandCanonical)
-    {
-       _domain->evaluateRho
-       (
-          _moleculeContainer->getNumberOfParticles(),
-          _domainDecomposition
-       );
+    if(_simstep >= _initGrandCanonical) {
+       _domain->evaluateRho ( _moleculeContainer->getNumberOfParticles(), _domainDecomposition);
     }
 
     if(!(_simstep % _collectThermostatDirectedVelocity))
@@ -1033,9 +1032,7 @@ void Simulation::simulate()
        global_log->debug() << "Velocity scaling" << endl;
        if(_domain->severalThermostats())
        {
-          for( tM = _moleculeContainer->begin();
-               tM != _moleculeContainer->end();
-               tM = _moleculeContainer->next() )
+          for( tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next() )
           {
              int thermostat = _domain->getThermostat(tM->componentid());
              if(0 >= thermostat) continue;
@@ -1056,9 +1053,7 @@ void Simulation::simulate()
        }
        else
        {
-          for( tM = _moleculeContainer->begin();
-               tM != _moleculeContainer->end();
-               tM = _moleculeContainer->next() )
+          for( tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next() )
           {
              tM->scale_v(_domain->getGlobalBetaTrans());
              tM->scale_D(_domain->getGlobalBetaRot());
@@ -1176,29 +1171,6 @@ void Simulation::output(unsigned long simstep)
       << "\tT = " << _domain->getGlobalCurrentTemperature()
       << "\tU_pot = " << _domain->getAverageGlobalUpot()
       << "\tp = " << _domain->getGlobalPressure() << endl;
-
-#if 0
-  // CHECKFORREMOVAL
-  if(ownrank==0)
-  {
-     double a = _domain->getDirectedVelocity(1);
-     if(a > 0)
-     {
-        cout << "\t\t" << _domain->getDirectedVelocity(1, 2)
-             << "\t" << _domain->getUniformAcceleration(1, 2)
-             << "\t" << _domain->getUniformAcceleration(1)
-             << "\t" << _domain->getCosetN(1);
-     }
-     cout << "\t";
-     list<ChemicalPotential>::iterator cpit;
-     for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++)
-     {
-        cout << (_domain->thermostatWarning()? "*": "")
-             << cpit->getGlobalN() << "  ";
-     }
-     cout << (_domain->thermostatWarning()? "  *": "");
-  }
-#endif
 }
 
 void Simulation::updateParticleContainerAndDecomposition()
@@ -1218,6 +1190,7 @@ void Simulation::updateParticleContainerAndDecomposition()
   }
 }
 
+/* FIXME: we shoud provide a more general way of doing this */ 
 double Simulation::Tfactor(unsigned long simstep)
 {
    double xi = (double)(simstep - _initSimulation) / (double)(_initCanonical - _initSimulation);

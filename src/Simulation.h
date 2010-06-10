@@ -27,6 +27,14 @@
   #include <simSteering.h>
 #endif
 
+#ifndef SIMULATION_SRC
+class Simulation;
+//! Global pointer to the simulation object. Do not use directly. Instead use the reference.
+extern Simulation* global_simulation;
+//! Reference to the global simulation object 
+extern Simulation& _simulation;
+#endif
+
 class Domain;
 class ParticleContainer;
 class ParticlePairsHandler;
