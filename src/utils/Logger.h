@@ -182,7 +182,7 @@ namespace Log {
 #ifdef USE_GETTIMEOFDAY
 					timeval tod;
 					gettimeofday(&tod, 0);
-					*_log_stream << tod.tv_sec-_starttime.tv_sec+(tod.tv_usec-_starttime.tv_usec)/1.E6 << "\t";
+					*_log_stream << setw(8) << tod.tv_sec-_starttime.tv_sec+(tod.tv_usec-_starttime.tv_usec)/1.E6 << " ";
 #else
 					*_log_stream << t-_starttime << "\t";
 #endif
