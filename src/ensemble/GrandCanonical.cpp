@@ -265,7 +265,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
       }
    }
 #ifndef NDEBUG
-   global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." std::endl;
+   global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
    assert(m->id() < nextid);
    return true;
