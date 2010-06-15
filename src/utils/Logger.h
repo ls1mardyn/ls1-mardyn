@@ -74,11 +74,11 @@ namespace Log {
 	 */
 	class Logger{
 		private:
-			std::string _filename;
-			std::ostream *_log_stream;
 			logLevel _log_level;
 			logLevel _msg_log_level;
 			bool _do_output;
+			std::string _filename;
+			std::ostream *_log_stream;
 			std::map<logLevel, std::string> logLevelNames;
 #ifdef USE_GETTIMEOFDAY
 			timeval _starttime;
