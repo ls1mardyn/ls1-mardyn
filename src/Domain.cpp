@@ -187,11 +187,10 @@ double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolec
 
 
 
-double Domain::getCurrentTime(){ return _currentTime;}
 
 void Domain::setCurrentTime(double curtime){ _currentTime = curtime;}
-
 void Domain::advanceTime(double timestep){ _currentTime += timestep;}
+double Domain::getCurrentTime(){ return _currentTime;}
 
 vector<Component>& Domain::getComponents(){
 	return _components; 
@@ -870,19 +869,6 @@ void Domain::determineAdditionalAcceleration
 	domainDecomp->collCommFinalize();
 }
 
-double Domain::getDirectedVelocity(unsigned cosetid)
-{
-	double vv = 0.0;
-	if(!this->_localRank)
-	{
-		for(unsigned d = 0; d < 3; d++)
-		{
-			double vd = this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
-			vv += vd*vd;
-		}
-	}
-	return sqrt(vv);
-}
 double Domain::getDirectedVelocity(unsigned cosetid, unsigned d)
 {
 	if(!this->_localRank) 

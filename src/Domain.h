@@ -373,9 +373,6 @@ class Domain{
        if(_universalComponentSetID.find(cid) == _universalComponentSetID.end()) return 0;
        else return this->_universalComponentSetID[cid];
     }
-    //! @brief returns the absolute directed velocity for a component set
-    //! @param cosetid ID of the component set
-    double getDirectedVelocity(unsigned cosetid);
     //! @brief returns the directed velocity for a component set
     //! @param cosetid ID of the component set
     //! @param d x direction (0), y direction (1), or z direction (2)
