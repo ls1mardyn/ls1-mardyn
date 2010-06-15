@@ -170,14 +170,10 @@ void Domain::setLocalSummv2(double summv2, int thermostat)
 	this->_local2KETrans[thermostat] = summv2;
 }
 
-void Domain::setLocalSummv2(double summv2) { setLocalSummv2(summv2, 0); }
-
 void Domain::setLocalSumIw2(double sumIw2, int thermostat)
 {
 	_local2KERot[thermostat] = sumIw2;
 } 
-
-void Domain::setLocalSumIw2(double sumIw2) { setLocalSumIw2(sumIw2, 0); }
 
 double Domain::getGlobalPressure()
 {

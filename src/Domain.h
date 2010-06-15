@@ -192,13 +192,9 @@ class Domain{
   //! global virial has been calculated (method calculateGlobalValues)
   double getAverageGlobalVirial() const;
 
-  //! @brief sets _localSummv2 to the given value (for thermostat ID 0)
-  void setLocalSummv2(double summv2);
   //! @brief sets _localSummv2 to the given value
   void setLocalSummv2(double summv2, int thermostat);
     
-  //! @brief sets _localSumIw2 to the given value (for thermostat ID 0)
-  void setLocalSumIw2(double sumIw2);
   //! @brief sets _localSumIw2 to the given value
   void setLocalSumIw2(double sumIw2, int thermostat);
 	
