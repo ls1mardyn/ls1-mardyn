@@ -34,7 +34,7 @@ class Random
 {
  public:
    Random();
-   void init(int seed, int rank);
+   void init(int seed);
 
    float rnd_muVT();
 
@@ -43,7 +43,6 @@ class Random
  private:
    int ix_muVT, iy_muVT;
    float am_muVT;
-   int ownrank;  // only for debugging purposes (indicate rank in console output)
 };
 
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)

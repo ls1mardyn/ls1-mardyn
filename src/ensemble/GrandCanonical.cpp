@@ -3,19 +3,21 @@
  * (C)2009 GNU General Public License
  */
 #include "GrandCanonical.h"
+#include "utils/Logger.h"
 
 #include "datastructures/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 
-Random::Random() { this->init(8624, -1); }
+Random::Random() { this->init(8624); }
 
-void Random::init(int seed, int rank)
+using Log::global_log;
+
+void Random::init(int seed)
 {
    this->ix_muVT = (seed ^ (int)888889999) | (int)1;
    this->iy_muVT = seed ^ (int)777755555;
    // Calculate normalization factor
    this->am_muVT = 2.0 / (1.0 + (unsigned)((int)-1));
-   this->ownrank = rank;
 }
 
 float Random::rnd_muVT()
@@ -34,7 +36,6 @@ float Random::rnd_muVT()
    iy_muVT = IA * (iy_muVT - k*IQ) - IR*k;
    if(iy_muVT < 0) iy_muVT += IM;
    rnd = am_muVT * ((IM & (ix_muVT ^ iy_muVT)) | (int)1);
-   // cout << "rank " << ownrank << " rnd " << rnd << ".\n";  // \\ // 
    return rnd;
 }
 
@@ -68,7 +69,7 @@ ChemicalPotential::ChemicalPotential()
 void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1)
 {
    this->ownrank = rank;
-   this->rnd.init(8624, rank);
+   this->rnd.init(8624);
    if(!this->restrictedControlVolume)
    {
       this->globalV = this->system[0] * this->system[1] * this->system[2];
@@ -116,7 +117,10 @@ void ChemicalPotential::setSystem(double x, double y, double z, double m)
 void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm)
 {
    this->remainingDeletions.clear();
-   for(int d=0; d<3; d++) assert(this->remainingInsertions[d].empty());
+#ifndef NDEBUG
+   for(int d=0; d<3; d++) 
+	   assert(this->remainingInsertions[d].empty());
+#endif
    this->remainingDecisions.clear();
 
    // get information on the system decomposition
@@ -136,8 +140,7 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
    float maxrnd = 1.0;
    this->globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
 #ifndef NDEBUG
-   if(ownrank < 4)
-      cout << "rank " << ownrank << " believes N(" << componentid << ")=" << globalN << ", rho=" << globalN/globalV
+   global_log->debug() << " believes N(" << componentid << ")=" << globalN << ", rho=" << globalN/globalV
            << ", the decisive density quotient equals " << (float)globalN/globalReducedVolume << "\n";
 #endif
 
@@ -165,7 +168,7 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
 
    int insertions = this->instances;
 #ifndef NDEBUG
-   if(!ownrank) cout << "Number of insertions: " << insertions << ".\n";
+   global_log->debug() << "Number of insertions: " << insertions << ".\n";
 #endif
 
    // construct insertions
@@ -262,8 +265,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
       }
    }
 #ifndef NDEBUG
-   cout << "rank " << ownrank << " selects ID " << m->id() 
-        << " for deletion (index " << idx << "). ";
+   global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." std::endl;
 #endif
    assert(m->id() < nextid);
    return true;
@@ -288,7 +290,7 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde)
 {
    if(this->remainingDecisions.empty())
    {
-      cout << "SEVERE ERROR on rank " << ownrank << ": no decision is possible.\n";
+      global_log->error() << "No decision is possible." << std::endl;
       exit(1);
    }
    float dec = *this->remainingDecisions.begin();
@@ -312,7 +314,7 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 {
    if(this->remainingDecisions.empty())
    {
-      cout << "SEVERE ERROR on rank " << ownrank << ": no decision is possible.\n";
+      global_log->error() << "No decision is possible." << std::endl;
       exit(1);
    }
    float dec = *this->remainingDecisions.begin();
@@ -357,10 +359,9 @@ void ChemicalPotential::setControlVolume(
 ) {
    if((x0 >= x1) || (y0 >= y1) || (z0 >= z1))
    {
-      if(!ownrank)
-         cout << "\nInvalid control volume (" << x0 << " / " << y0 
+         global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0 
 	      << " / " << z0 << ") to (" << x1 << " / " << y1 << " / "
-	      << z1 << ").\n\n";
+	      << z1 << ")." << std::endl;
       exit(611);
    }
    
