@@ -104,7 +104,7 @@ public:
 		/// duplicate a node
 		/// \param	XMLfile::Node&	source node
 		Node(const Node& n)
-			: m_nodepath(n.m_nodepath), m_xmlnode(n.m_xmlnode), m_type(n.m_type)
+			: m_xmlnode(n.m_xmlnode), m_nodepath(n.m_nodepath), m_type(n.m_type)
 			{}
 
 		/// \brief get nodepath
@@ -205,8 +205,8 @@ public:
 			{ if(!xmlattribute) m_type=Invalid_Node; }
 
 		const t_XMLnode*	m_xmlnode;
-		NodeType	m_type;
 		std::string	m_nodepath;
+		NodeType	m_type;
 	};
 //-XMLfile::Node----------------------------------------------------------------
 
