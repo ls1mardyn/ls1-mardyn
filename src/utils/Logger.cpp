@@ -4,6 +4,6 @@
 
 namespace Log {
 
-	Logger *global_log;
+Logger *global_log;
 
 } /* end namespace Log */

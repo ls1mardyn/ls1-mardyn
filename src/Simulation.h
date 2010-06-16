@@ -19,12 +19,9 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
-#include <string>
-#include <list>
-
 #include "ensemble/GrandCanonical.h"
 #ifdef STEEREO
-  #include <simSteering.h>
+ #include <simSteering.h>
 #endif
 
 #ifndef SIMULATION_SRC
@@ -35,6 +32,9 @@ extern Simulation* global_simulation;
 extern Simulation& _simulation;
 #endif
 
+#include <string>
+#include <list>
+
 class Domain;
 class ParticleContainer;
 class ParticlePairsHandler;
@@ -43,9 +43,10 @@ class OutputBase;
 class DomainDecompBase;
 class InputBase;
 class Molecule;
+
 namespace optparse {
-  class OptionParser;
-  class Values;
+class OptionParser;
+class Values;
 }
 
 //! @brief controls the whole simulation process
@@ -85,8 +86,8 @@ namespace optparse {
 //! datastructure LinkedCells 1 
 //! parallelization DomainDecomposition
 //! \endpre
-class Simulation{
- public:
+class Simulation {
+public:
   //! @brief instantiate simulation object
   //!
   //! The Constructor processes the command line arguments
@@ -103,7 +104,7 @@ class Simulation{
   //! The exit method takes care over the right way to terminate the application in a correct way
   //! for the different parallelization schemes. e.g. terminating other processes in MPI parallel
   //! execution mode.
-  int exit( int exitcode );
+  int exit(int exitcode);
 
   const optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op);
 
@@ -170,7 +171,7 @@ class Simulation{
   //!     so the macroscopic values can be calculated
   //! - velocity and angular momentum have to be scaled
   void simulate();
- 
+
   //! @brief output results 
   //! @param simstep timestep of the output
   //! 
@@ -186,11 +187,25 @@ class Simulation{
   //! - update the ParticleContainer
   void updateParticleContainerAndDecomposition();
 
-  void setDomainDecomposition (DomainDecompBase* ddb) {_domainDecomposition = ddb;};
-  Domain* getDomain () {return _domain;};
-  ParticleContainer* getMolecules () {return _moleculeContainer;};
-  unsigned long getSimStep () {return _simstep;};
-  double getcutoffRadius() const {return _cutoffRadius;}
+  void setDomainDecomposition(DomainDecompBase* ddb) {
+    _domainDecomposition = ddb;
+  }
+
+  Domain* getDomain() {
+    return _domain;
+  }
+
+  ParticleContainer* getMolecules() {
+    return _moleculeContainer;
+  }
+
+  unsigned long getSimStep() {
+    return _simstep;
+  }
+
+  double getcutoffRadius() const {
+    return _cutoffRadius;
+  }
 
   //! @brief temperature increase factor during automatic equilibration
   //! @param current simulation time step
@@ -220,7 +235,6 @@ class Simulation{
   double Tfactor(unsigned long simstep);
     
  private:
-    
   //! maximum distance at which the forces between two molecules still have to be calculated.
   double _cutoffRadius;
 
