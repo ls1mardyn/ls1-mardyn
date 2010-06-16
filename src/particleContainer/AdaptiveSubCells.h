@@ -1,66 +1,35 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
+#ifndef ADAPTIVESUBCELLS_H_
+#define ADAPTIVESUBCELLS_H_
 
-#ifndef LINKEDCELLS_H_
-#define LINKEDCELLS_H_
-
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "BlockTraverse.h"
 
 #include <vector>
-#include <sstream>
+// TODO REMOVE
+//#include <iostream>
 
 class Cell;
 class ChemicalPotential;
 class DomainDecompBase;
 
-//! @brief Linked Cell Data Structure
+//! @brief Adaptive SubCell Data Structure
 //! @author Martin Buchholz
 //!
-//! Without any specialized data structure, it needs O(N*N) - where N is
-//! the number of particles - time to find all neighbouring pairs of particles.
-//! The linked cell data structure is a datastructure which allows to find all
-//! neighbouring pairs of particles (neighbouring means particles pairs
-//! which have less than a certain distance) in O(N) time.
-//! The following picture shows a domain with some particles in it. The blue
-//! circle shows the neighbouring area of the red particle
-//! \image particles.jpg
-//! The problem is that all particles have to be examined to find those within the circle
-//! With the linked cell data structure, the domain is divided into cells (using a regular grid).
-//! All particles are placed in those cells.
-//! For a given cell, neighbouring cells can easily be calculated, so for a given particle,
-//! only the particles from neighbouring cells have to be examined. The following
-//! picture illustrates this
-//! \image particles_with_lc.jpg
-//!
-//! The spacial domain covered by the linked cells is larger then
-//! the bounding box of the domain. This halo region surrounding
-//! the phasespace is used for (periodic) boundary conditions
-//! and has to be at least as wide as the cutoff radius. \n
-//! In total, there are three different cell types:
-//! - halo
-//! - boundary
-//! - inner
+//! To understand the AdaptiveSubCells datastructure, you should first read the documentation
+//! on the LinkedCells Datastructure, as AdaptiveSubCells is an enhancement of LinkedCells
+//! The difference is that not all cells have the same size but the cell size is adapted to the
+//! local density. The adaption only allows to refine once, as more refinements result in to
+//! much overhead. So during the initialisation, first a regular cell structure is created
+//! (Basically LinkedCells with l=rc, so big coarse cells).
+//! Depending on the local density, the cells are refinded once (8 subcells) or remain coarse.
 
-class LinkedCells : public ParticleContainer {
+class AdaptiveSubCells : public ParticleContainer {
 public:
-  //! @brief initialize the Linked Cell datastructure
+  //#########################################################################
+  //############# methods common for all ParticleContainers #################
+  //#########################################################################
+
+  //! @brief initialize the Adaptive SubCell datastructure
   //!
   //! The constructor sets the following variables:
   //! - _cutoffRadius
@@ -69,9 +38,8 @@ public:
   //! - _cellLength[3]
   //! - _haloBoundingBoxMin and _haloBoundingBoxMax
   //!
-  //! It resized the cell vector and marks the cells as inner/halo \n
-  //! It fills the array innerCellIndices \n
-  //! It fills the array with forward and backward neighbour indices \n
+  //! It resized the _cells vector
+  //! It resized _localRho and _metaCellIndex
   //! The corner parameters for the constructor describe the bounding box
   //! of the phasespace which belongs directly to this process, so they correspond
   //! to a bounding box including inner + boundary cells but excluding halo cells. \n
@@ -79,26 +47,19 @@ public:
   //! @param bBoxMin lower corner of the bounding box of the domain belonging to this container
   //! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
   //! @param cutoffRadius distance for which forces have to be calculated
-  //! @param cellsInCutoffRadius describes the width of cells relative to the cutoffRadius: \n
-  //!        equal (or larger) to the cutoffRadius divided by the length of a cell
-  //!        as for the number of cells in each dimension only natural numbers are allowed,
-  //!        it can happen that it is not possible to set celllength = cutoffRadius / cellsInCutoffRadius.
-  //!        In that case, the celllength is chosen to be the next larger value so that the sum of
-  //!        the cell lengths in one dimension equals the length of the phasespace
-  //!        Example: phasespacelength=100, cellsInCutoffRadius=2, CutoffRadius=3 \n
-  //!        ==> celllength should be: cutoffRadius/cellsInCutoffRadius = 3/2 = 1.5 \n
-  //!        ==> cellsPerDimension = phasespacelength/celllength = 100/1.5 = 66.67 cells \n
-  //!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
-  //!        ==> celllength = 100/66 = 1.5152
+  //! @param cellsInCutoffRadius describes the width of the coarse cells relative to the cutoffRadius.
+  //!        This value should be 1, only then a useful adaption to the particle distribution can
+  //!        take place. The actual cell size is usually slightly bigger than the cutoffRadius,
+  //!        as the domain has to be divided into a natural number of cells --> round up
   //! @param partPairsHandler specified concrete action to be done for each pair
-  LinkedCells(
-     double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-     double tersoffCutoffRadius, double cellsInCutoffRadius,
-     ParticlePairsHandler* partPairsHandler
+  AdaptiveSubCells(
+      double bBoxMin[3], double bBoxMax[3],
+      double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
+      ParticlePairsHandler* partPairsHandler
   );
 
   //! Destructor
-  ~LinkedCells();
+  ~AdaptiveSubCells();
 
   // documentation see father class (ParticleContainer.h)
   void rebuild(double bBoxMin[3], double bBoxMax[3]);
@@ -109,13 +70,12 @@ public:
   //! To ensure, that all Particles (pointers to them) are put into the corresponding cells,
   //! first all cells are cleared and then filled again depending on the spacial position
   //! of the molecules. After the update, exactly one pointer for each particle in this
-  //! ParticleContainer is it's corresponding cell.
+  //! ParticleContainer is in it's corresponding cell.
   void update();
 
   //! @brief Insert a single molecule.
   //!
-  //! Therefore, first the cell (the index) for the molecule has to be determined,
-  //! then the molecule is inserted into that cell.
+  //! Add the molecule to the list (it is not inserted into a cell yet)
   void addParticle(Molecule& particle);
 
   //! @brief calculate the forces between the molecules.
@@ -160,8 +120,7 @@ public:
   void deleteOuterParticles();
 
   //! @brief gets the width of the halo region in dimension index
-  //! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
-  //!       e.g. replace it by the cutoff-radius
+  //! @todo remove this method
   double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
@@ -176,9 +135,11 @@ public:
   double getCutoff() {
     return this->_cutoffRadius;
   }
+
   double getLJCutoff() {
     return this->_LJCutoffRadius;
   }
+
   double getTersoffCutoff() {
     return this->_tersoffCutoffRadius;
   }
@@ -195,6 +156,7 @@ public:
   int localGrandcanonicalBalance() {
     return this->_localInsertionsMinusDeletions;
   }
+
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
 
@@ -217,51 +179,66 @@ private:
   //######### PRIVATE METHODS ##########
   //####################################
 
-  //! @brief Initialize index vectors and cells.
+  //! @brief Initialze index vectors and subCells.
   //!
-  //! Fill the vector with the indices of the inner and boundary cells.
-  //! Assign each cell it's region (halo, boundary, inner).
-  void initializeCells();
+  //! Fill the vector with the indices of the inner and boundary subCells.
+  //! Assign each subCell it's region (halo, boundary, inner).
+  void initializeSubCells();
 
-  //! @brief Calculate neighbour indices.
+  //! @brief Calculate SubCell neighbour indices.
   //!
-  //! This method is executed once for the molecule container and not for
-  //! each cell. E.g. the index (in the cell vector) of the right neighbour of a cell
-  //! always equals the index of the cell minus one. This method calculates two vectors
-  //! of index offsets, one for positive offsets (forward neighbours) and one for negative
-  //! offsets (backward neighbours). So given a specific cell, the neighbours can be retrieved
-  //! by adding to the index of the cell the offsets in the two vectors.
-  //!
-  //! The method works as follows: \n
-  //! The loop runs over all potential neighbour cells (bounding box which contains
-  //! the cell itself, and in each dimension on the lower and on the higher side as
-  //! many cells as the width of the halo strip. E.g. if the haloWidth is 2, a box
-  //! of 5x5x5 cell is considered as potential neighbours
-  //! for each of those cells, the minimal possible distance between that cell
-  //! and the central cell is calculated (sqrt(x^2+y^2+z^2)). If that distance
-  //! is larger than the cutoff radius, the cell can be neglected.
-  //! The distance in one dimension is the width of a cell multiplied with the number
-  //! of cells between the two cells (this is received by substracting one of the difference).
-  void calculateNeighbourIndices();
+  //! In contrast to the LinkedCell datastructure, the index offsets to get to
+  //! neighbouring cells are different for all cells. So for each cell (coarse or fine),
+  //! a vector of index offets has to be calculated. This is done by first
+  //! looping over all cells and then for each cell looping over all possible neighbour
+  //! cells and storing those in the vector which have a minimal distance less than
+  //! the cutoff radius. As an example, let's assume we want to calculate the index
+  //! offset between cell A and cell B. There are basically four different cases:
+  //! - Cell A fine and Cell B fine
+  //! - Cell A fine and Cell B coarse
+  //! - Cell A coarse and Cell B fine
+  //! - Cell A coarse and Cell B coarse
+  //! In each of those cases, the distance is calculated and where required the corresponding
+  //! index offset (offset in the vector _subCells) is stored in _forwardNeighbourSubOffsets
+  //! of _backwardNeighbourSubOffsets;
+  void calculateSubNeighbourIndices();
 
-  //! @brief Get the index in the cell vector to which this Molecule belong
-  //!
-  //! each spacial position within the bounding box of the linked cells
-  //! belongs unambiguously to one cell. \n
-  //! This method determines for a given Molecule the corresponding cell
+  //! This method determines for a given Molecule the corresponding coarse cell
   //! and returns the index of that cell in the cell vector. \n
   //! If the molecule is not inside the bounding box, an error is printed
   unsigned long getCellIndexOfMolecule(Molecule* molecule);
 
-  //! @brief given the 3D index of a cell, return the index in the cell vector.
+  //! @brief Get the index in the subCell vector to which this Molecule belong
+  //!
+  //! each spacial position within the bounding box of the adaptive linked cells
+  //! belongs unambiguously to one subCell. \n
+  //! This method determines for a given Molecule the corresponding subCell
+  //! and returns the index of that subCell in the subCell vector. \n
+  //! If the molecule is not inside the bounding box, an error is printed
+  unsigned long getSubCellIndexOfMolecule(Molecule* molecule);
+
+  //! @brief given the 3D index of a subCell, return the index in the subCell vector.
   //!
   //! A cell can be identified by a 3D index. \n
-  //! This method determines for a given 3D index the corresponding cell
-  //! and returns the index of that cell in the cell vector. \n
-  //! The method can also be used to get the offset between two cells in the cell
+  //! This method determines for a given 3D index the corresponding subCell
+  //! and returns the index of that subCell in the subCell vector. \n
+  //! Attention: The method can't(!!) be used to get the offset between two cells in the cell
   //! vector when called with the 3D cell index offets (e.g. x: one cell to the left,
-  //! y: two cells back, z: one cell up,...)
-  unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
+  //! y: two cells back, z: one cell up,...). The offsets can differ from subCell to subCell, because both the number and the position of the Cells that are containing subCells can differ.
+  unsigned long subCellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
+
+  //! @brief calculates the metaCellIndex for each coarse Cell and store it in _metaCellIndex
+  //!
+  //! Each coarse cell (or "meta" cell if the cell is refined) has also an index in
+  //! the vector _subCells, which contains coarse and fine cells. metaCellOffset is
+  //! the index offset of two coarse of "meta" cellsin the vector _subCells
+  void calculateMetaCellIndex();
+
+  //! @brief calculates the density for each coarse Cell separately
+  //! @todo: currently, not the density but the number of particles
+  //!        is calculated. To change that (or even if it is not changed),
+  //!        the influence of cutoff-radius has to be considered
+  void calculateLocalRho();
 
   //####################################
   //##### PRIVATE MEMBER VARIABLES #####
@@ -271,37 +248,43 @@ private:
   std::list<Molecule> _particles;
 
   //! Iterator to traverse the list of particles (_particles)
+  //11 typename entfernt
   std::list<Molecule>::iterator _particleIter;
 
   //! Vector containing all cells (including halo)
+  //! @todo This vector is probably only needed during dynamic adaption
+  //!       of the datastructure to calculate the local density
   std::vector<Cell> _cells;
 
-  //! Vector containing the indices (for the cells vector) of all inner cells (without boundary)
-  std::vector<unsigned long> _innerCellIndices;
-  //! Vector containing the indices (for the cells vector) of all boundary cells
-  std::vector<unsigned long> _boundaryCellIndices;
-  //! Vector containing the indices (for the cells vector) of all halo cells
-  std::vector<unsigned long> _haloCellIndices;
+  //! Vector containing all subCells (including halo)
+  std::vector<Cell> _subCells;
 
-  //! Neighbours that come in the total ordering after a cell
-  std::vector<unsigned long> _forwardNeighbourOffsets;
-  //! Neighbours that come in the total ordering before a cell
-  std::vector<unsigned long> _backwardNeighbourOffsets;
+  //! Vector containing the indices (for the subCells vector) of all inner subCells (without boundary)
+  std::vector<unsigned long> _innerSubCellIndices;
+  //! Vector containing the indices (for the subCells vector) of all boundary subCells
+  std::vector<unsigned long> _boundarySubCellIndices;
+  //! Vector containing the indices (for the subCells vector) of all halo subCells
+  std::vector<unsigned long> _haloSubCellIndices;
+
+  //! Neighbours that come in the total ordering after a subCell
+  std::vector<std::vector<unsigned long> > _forwardNeighbourSubOffsets;
+  //! Neighbours that come in the total ordering before a subCell
+  std::vector<std::vector<unsigned long> > _backwardNeighbourSubOffsets;
 
   //! low corner of the bounding box around the linked cells (including halo)
   double _haloBoundingBoxMin[3];
-  //! high corner of the bounding box around the linked cells (including halo)
+  //! high corner of the bounding box around the linkeaad cells (including halo)
   double _haloBoundingBoxMax[3];
 
-  //! Number of Cells in each spacial dimension (including halo)
+  //! Number of coarse cells in each spacial dimension (including halo)
   int _cellsPerDimension[3];
   //! Halo width (in cells) in each dimension
   int _haloWidthInNumCells[3];
-  //! width of the halo strip (in size units)
+  //! width of the halo strip (in lenght-unit)
   double _haloLength[3];
-  //! length of the cell (for each dimension)
+  //! length of one coarse cell (for each dimension)
   double _cellLength[3];
-  //! RDF/electrostatics cutoff radius
+  //! cutoff radius
   double _cutoffRadius;
   //! LJ cutoff radius
   double _LJCutoffRadius;
@@ -309,6 +292,17 @@ private:
   double _tersoffCutoffRadius;
   //! balance of the grand canonical ensemble
   int _localInsertionsMinusDeletions;
+
+  //! Depending on the density, a cell is refined (resulting in 8 subcells) or not.
+  //! All cells (fine and coarse) are stored in one big vector (_subCells).
+  //! E.g. Element 37 is a coarse cell (named A). It's neighbouring cell (B) is refined,
+  //! so in the vector _subCells, the next eight indices (38-45) are subcells of B.
+  //! But there are loops (i from 0 to #coarseCells-1) which run over all coarse cells
+  //! (which might be refined or not).
+  //! Those cells (and possibly subcells) have to be accessed, therefor their index
+  //! in the vector _subcells has to be known. _metaCellIndex contains for each i
+  //! the correspoding index of the vector _subCells.
+  std::vector<int> _metaCellIndex;
 
   //! @brief True if all Particles are in the right cell
   //!
@@ -324,7 +318,15 @@ private:
   //! should be set to true.
   bool _cellsValid;
 
+  //! Vector containing the density value of each coarse cell
+  std::vector<double> _localRho;
+
+  //! Number of times the update method was called. This value
+  //! should approx. equal the simulation step. It is used to
+  //! dynamically adapt the datastructure every nth time.
+  int _numberOfUpdates;
+
   BlockTraverse _blockTraverse;
 };
 
-#endif /*LINKEDCELLS_H_*/
+#endif /*ADAPTIVESUBCELLS_H_*/

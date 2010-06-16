@@ -1,6 +1,6 @@
 #include "parallel/DomainDecomposition.h"
 #include "molecules/Molecule.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "parallel/ParticleData.h"
 #include "utils/Logger.h"

@@ -1,6 +1,6 @@
-#include "datastructures/AdaptiveSubCells.h"
+#include "particleContainer/AdaptiveSubCells.h"
 
-#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
 #include "molecules/Molecule.h"
 #include "Domain.h"

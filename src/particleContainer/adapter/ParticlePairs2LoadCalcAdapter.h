@@ -1,7 +1,7 @@
 #ifndef PARTICLEPAIRS2LOADCALCADAPTER_H_
 #define PARTICLEPAIRS2LOADCALCADAPTER_H_
 
-#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 
 //! @brief used for guessing load
 //! @author Martin Buchholz

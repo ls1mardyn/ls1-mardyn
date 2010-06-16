@@ -5,7 +5,7 @@
 #include "GrandCanonical.h"
 #include "utils/Logger.h"
 
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 
 Random::Random() { this->init(8624); }

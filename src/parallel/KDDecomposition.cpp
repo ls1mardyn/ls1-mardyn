@@ -3,9 +3,9 @@
 #include <sstream>
 #include "../molecules/Molecule.h"
 #include "../Domain.h"
-#include "../datastructures/ParticleContainer.h"
-#include "../datastructures/handlerInterfaces/ParticlePairsHandler.h"
-#include "../datastructures/adapter/ParticlePairs2LoadCalcAdapter.h"
+#include "../particleContainer/ParticleContainer.h"
+#include "../particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "../particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
 #include "ParticleData.h"
 #include "KDNode.h"
 #include <float.h>

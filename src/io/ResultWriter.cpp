@@ -19,7 +19,7 @@
 
 #include <ctime>
 #include "io/ResultWriter.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
 

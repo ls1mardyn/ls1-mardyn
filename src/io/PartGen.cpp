@@ -5,7 +5,7 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "ensemble/GrandCanonical.h"
 
 // initialize constants

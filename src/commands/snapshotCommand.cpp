@@ -4,7 +4,7 @@
 #include <iostream>
 #include "snapshotCommand.h"
 #include "../Domain.h"
-#include "../datastructures/ParticleContainer.h"
+#include "../particleContainer/ParticleContainer.h"
 #include "../molecules/Molecule.h"
 #include <baseSimSteering.h>
 #include <steereoStream.h>

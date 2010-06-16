@@ -1,6 +1,6 @@
 #include "io/InputOldstyle.h"
 #include "Domain.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
 #include "utils/Logger.h"

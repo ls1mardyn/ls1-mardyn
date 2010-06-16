@@ -3,7 +3,7 @@
 #include "io/XyzWriter.h"
 #include "Common.h"
 #include "Domain.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 

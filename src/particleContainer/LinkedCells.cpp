@@ -17,10 +17,10 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include "datastructures/LinkedCells.h"
+#include "particleContainer/LinkedCells.h"
 
 #include "molecules/potforce.h"
-#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"

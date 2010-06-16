@@ -21,7 +21,7 @@
 #define PARTICLEPAIRS2POTFORCEADAPTER_H_
 
 #include "molecules/potforce.h"
-#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 
 //! @brief calculate pair forces and collect macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)

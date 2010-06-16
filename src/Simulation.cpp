@@ -24,8 +24,8 @@
 #include "Common.h"
 #include "Domain.h"
 #include "molecules/Molecule.h"
-#include "datastructures/LinkedCells.h"
-#include "datastructures/AdaptiveSubCells.h"
+#include "particleContainer/LinkedCells.h"
+#include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
 
 #ifdef PARALLEL
@@ -35,7 +35,7 @@
 #include "parallel/DomainDecompDummy.h"
 #endif
 
-#include "datastructures/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 

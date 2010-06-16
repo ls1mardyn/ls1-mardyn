@@ -19,9 +19,9 @@
 
 #include "BlockTraverse.h"
 #include "molecules/Molecule.h"
-#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
 #include <list>

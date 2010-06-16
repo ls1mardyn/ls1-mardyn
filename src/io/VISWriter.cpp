@@ -2,7 +2,7 @@
 
 #include "io/VISWriter.h"
 #include "Common.h"
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 
 #include <iomanip>

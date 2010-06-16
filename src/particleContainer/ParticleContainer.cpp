@@ -1,6 +1,6 @@
-#include "datastructures/ParticleContainer.h"
+#include "particleContainer/ParticleContainer.h"
 
-#include "datastructures/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 
 #include <iostream>
 
