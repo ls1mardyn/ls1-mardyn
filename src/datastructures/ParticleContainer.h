@@ -20,9 +20,9 @@
 #ifndef PARTICLECONTAINER_H_
 #define PARTICLECONTAINER_H_
 
-#include <list>
-
 #include "molecules/Molecule.h"
+
+#include <list>
 
 class ParticlePairsHandler;
 class ParticleContainer;
@@ -64,7 +64,7 @@ class ChemicalPotential;
 //! be used by the framework. Such a class should
 //! be implemented as a subclass of this class.
 class ParticleContainer {
- public:
+public:
   //! @brief The constructor
   //! @param partPairsHandler specified concrete action to be done for each pair
   //! @param bBoxMin coordinates of the lowest (in all coordinates) corner of the bounding box
@@ -91,7 +91,6 @@ class ParticleContainer {
   //! position of a particle, the representation within the particleContainer becomes
   //! invalid. This method restores a valid representation.
   virtual void update() = 0;
-
 
   //! @brief add a single Molecules to the ParticleContainer.
   //!
@@ -160,15 +159,15 @@ class ParticleContainer {
   virtual double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
-  virtual void getBoundaryParticles( std::list<Molecule*> &boundaryParticlePtrs ) = 0;
+  virtual void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs) = 0;
 
   //! @brief appends pointers to all particles in the halo region to the list
-  virtual void getHaloParticles( std::list<Molecule*> &haloParticlePtrs ) = 0;
+  virtual void getHaloParticles(std::list<Molecule*> &haloParticlePtrs) = 0;
 
   //! @brief fills the given list with pointers to all particles in the given region
   //! @param lowCorner minimum x-, y- and z-coordinate of the region
   //! @param highwCorner maximum x-, y- and z-coordinate of the region
-  virtual void getRegion( double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs ) = 0;
+  virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
 
   virtual double getCutoff() = 0;
   virtual double getLJCutoff() = 0;
@@ -179,18 +178,13 @@ class ParticleContainer {
   virtual unsigned countParticles(int cid) = 0;
 
   //! @brief counts particles in the intersection of bounding box and control volume
-  virtual unsigned countParticles(
-    int cid, double* cbottom, double* ctop
-  ) = 0;
+  virtual unsigned countParticles(int cid, double* cbottom, double* ctop) = 0;
 
   virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
   virtual double getEnergy(Molecule* m1) = 0;
   virtual int localGrandcanonicalBalance() = 0;
   virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
-  virtual void grandcanonicalStep
-  (
-     ChemicalPotential* mu, double T
-  ) = 0;
+  virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
 
   //! @brief sets a new ParticlePairsHandler
   void setPairHandler(ParticlePairsHandler* partPairHandler);
@@ -212,7 +206,7 @@ class ParticleContainer {
   //! the cell structure must not be used to determine the order.
   virtual bool isFirstParticle(Molecule& m1, Molecule& m2) = 0;
 
- protected:
+protected:
 
   //! A ParticlePairsHandler is used to process pairs of particles
   ParticlePairsHandler* _particlePairsHandler;
@@ -222,8 +216,6 @@ class ParticleContainer {
   //! coordinates of the right, upper, back corner of the bounding box
   double _boundingBoxMax[3];
 
-
 };
-
 
 #endif /*PARTICLECONTAINER_H_*/

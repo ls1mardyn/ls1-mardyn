@@ -1,8 +1,8 @@
+#include "Simulation.h"
+
 #include <iostream>
 #include <iomanip>
 #include <ctime>
-#include "Simulation.h"
-
 
 using namespace std;
 
@@ -15,18 +15,18 @@ using namespace std;
 //! and to instantiate an object of the Simulation class which
 //! is actually responsible for the simulation
 //!
-int main(int argc, char** argv){
+int main(int argc, char** argv) {
 
   cout.precision(6);
 
   Simulation simulation(&argc, &argv);
   simulation.initialize();
-  
-  double runtime = double(clock())/CLOCKS_PER_SEC;
+
+  double runtime = double(clock()) / CLOCKS_PER_SEC;
 
   simulation.simulate();
 
-  runtime=double(clock())/CLOCKS_PER_SEC-runtime;
-  
+  runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
+
   cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
 }

@@ -46,22 +46,22 @@
 //! "finish()".
 //! A class implementing this interface now serves as an adapter between the
 //! particleContainer an some other part of the programm (e.g. force calculation)
-class ParticlePairsHandler{
- public:
+class ParticlePairsHandler {
+public:
   //! Constructor
-  ParticlePairsHandler(){
+  ParticlePairsHandler() {
   }
-  
+
   //! Destructor
-  virtual ~ParticlePairsHandler(){
+  virtual ~ParticlePairsHandler() {
   }
-    
+
   //! @brief things to be done before particle pairs are processed
   virtual void init() = 0;
-    
+
   //! @brief things to be done after particle pairs are processed
   virtual void finish() = 0;
-    
+
   //! @brief things to be done for each particle pair
   //!
   //! @param particle1 first particle

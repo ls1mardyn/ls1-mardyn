@@ -41,16 +41,19 @@ public:
   //!
   //! Use this initializer if there already is vector of vectors for the neighbourOffsets.
   //! A BlockTraverse structure created this way doesn't need to be updated using assignOffsets().
-  BlockTraverse(ParticleContainer* moleculeContainer,
-      std::vector<Cell>& cells, std::vector<unsigned long>& innerCellIndices, std::vector<unsigned long>& boundaryCellIndices,
-      std::vector<std::vector<unsigned long> >& forwardNeighbourOffsets, std::vector<std::vector<unsigned long> >& backwardNeighbourOffsets
+  BlockTraverse(
+      ParticleContainer* moleculeContainer, std::vector<Cell>& cells,
+      std::vector<unsigned long>& innerCellIndices, std::vector<unsigned long>& boundaryCellIndices,
+      std::vector<std::vector<unsigned long> >& forwardNeighbourOffsets,
+      std::vector<std::vector<unsigned long> >& backwardNeighbourOffsets
   );
 
   //! @brief initialize BlockTraverse structure
   //!
   //! _(forward|backward)NeighbourOffsets members are newly allocated and must be kept updated using the assignOffsets() method.
-  BlockTraverse(ParticleContainer* moleculeContainer,
-      std::vector<Cell>& cells, std::vector<unsigned long>& innerCellIndices, std::vector<unsigned long>& boundaryCellIndices
+  BlockTraverse(
+      ParticleContainer* moleculeContainer, std::vector<Cell>& cells,
+      std::vector<unsigned long>& innerCellIndices, std::vector<unsigned long>& boundaryCellIndices
   );
 
   //! Destructor

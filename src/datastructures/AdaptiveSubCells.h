@@ -1,10 +1,10 @@
 #ifndef ADAPTIVESUBCELLS_H_
 #define ADAPTIVESUBCELLS_H_
 
-#include <vector>
 #include "datastructures/ParticleContainer.h"
 #include "BlockTraverse.h"
 
+#include <vector>
 // TODO REMOVE
 //#include <iostream>
 
@@ -23,8 +23,8 @@ class DomainDecompBase;
 //! (Basically LinkedCells with l=rc, so big coarse cells).
 //! Depending on the local density, the cells are refinded once (8 subcells) or remain coarse.
 
-class AdaptiveSubCells: public ParticleContainer {
- public:
+class AdaptiveSubCells : public ParticleContainer {
+public:
   //#########################################################################
   //############# methods common for all ParticleContainers #################
   //#########################################################################
@@ -52,8 +52,11 @@ class AdaptiveSubCells: public ParticleContainer {
   //!        take place. The actual cell size is usually slightly bigger than the cutoffRadius,
   //!        as the domain has to be divided into a natural number of cells --> round up
   //! @param partPairsHandler specified concrete action to be done for each pair
-  AdaptiveSubCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
-                   ParticlePairsHandler* partPairsHandler);
+  AdaptiveSubCells(
+      double bBoxMin[3], double bBoxMax[3],
+      double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
+      ParticlePairsHandler* partPairsHandler
+  );
 
   //! Destructor
   ~AdaptiveSubCells();
@@ -111,7 +114,7 @@ class AdaptiveSubCells: public ParticleContainer {
   Molecule* end();
 
   //! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-  Molecule* deleteCurrent ();
+  Molecule* deleteCurrent();
 
   //! @brief delete all Particles which are not within the bounding box
   void deleteOuterParticles();
@@ -121,17 +124,26 @@ class AdaptiveSubCells: public ParticleContainer {
   double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
-  void getBoundaryParticles( std::list<Molecule*> &boundaryParticlePtrs );
+  void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs);
 
   //! @brief appends pointers to all particles in the halo region to the list
-  void getHaloParticles( std::list<Molecule*> &haloParticlePtrs );
+  void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
   // documentation see father class (ParticleContainer.h)
-  void getRegion( double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs );
+  void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
 
-  double getCutoff() { return this->_cutoffRadius; }
-  double getLJCutoff() { return this->_LJCutoffRadius; }
-  double getTersoffCutoff() { return this->_tersoffCutoffRadius; }
+  double getCutoff() {
+    return this->_cutoffRadius;
+  }
+
+  double getLJCutoff() {
+    return this->_LJCutoffRadius;
+  }
+
+  double getTersoffCutoff() {
+    return this->_tersoffCutoffRadius;
+  }
+
   void countParticles(Domain* d);
   //! @brief counts all particles inside the bounding box
   unsigned countParticles(int cid);
@@ -140,7 +152,11 @@ class AdaptiveSubCells: public ParticleContainer {
 
   void deleteMolecule(unsigned long molid, double x, double y, double z);
   double getEnergy(Molecule* m1);
-  int localGrandcanonicalBalance() { return this->_localInsertionsMinusDeletions; }
+
+  int localGrandcanonicalBalance() {
+    return this->_localInsertionsMinusDeletions;
+  }
+
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
 
@@ -158,7 +174,7 @@ class AdaptiveSubCells: public ParticleContainer {
   //! the cell structure must not be used to determine the order.
   bool isFirstParticle(Molecule& m1, Molecule& m2);
 
- private:
+private:
   //####################################
   //######### PRIVATE METHODS ##########
   //####################################
@@ -251,9 +267,9 @@ class AdaptiveSubCells: public ParticleContainer {
   std::vector<unsigned long> _haloSubCellIndices;
 
   //! Neighbours that come in the total ordering after a subCell
-  std::vector< std::vector<unsigned long> > _forwardNeighbourSubOffsets;
+  std::vector<std::vector<unsigned long> > _forwardNeighbourSubOffsets;
   //! Neighbours that come in the total ordering before a subCell
-  std::vector< std::vector<unsigned long> > _backwardNeighbourSubOffsets;
+  std::vector<std::vector<unsigned long> > _backwardNeighbourSubOffsets;
 
   //! low corner of the bounding box around the linked cells (including halo)
   double _haloBoundingBoxMin[3];

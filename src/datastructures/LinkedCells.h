@@ -22,6 +22,7 @@
 
 #include "datastructures/ParticleContainer.h"
 #include "BlockTraverse.h"
+
 #include <vector>
 #include <sstream>
 
@@ -57,8 +58,8 @@ class DomainDecompBase;
 //! - boundary
 //! - inner
 
-class LinkedCells: public ParticleContainer {
- public:
+class LinkedCells : public ParticleContainer {
+public:
   //! @brief initialize the Linked Cell datastructure
   //!
   //! The constructor sets the following variables:
@@ -153,7 +154,7 @@ class LinkedCells: public ParticleContainer {
   Molecule* end();
 
   //! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-  Molecule* deleteCurrent ();
+  Molecule* deleteCurrent();
 
   //! @brief delete all Particles which are not within the bounding box
   void deleteOuterParticles();
@@ -164,17 +165,24 @@ class LinkedCells: public ParticleContainer {
   double get_halo_L(int index);
 
   //! @brief appends pointers to all particles in the boundary region to the list
-  void getBoundaryParticles( std::list<Molecule*> &boundaryParticlePtrs );
+  void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs);
 
   //! @brief appends pointers to all particles in the halo region to the list
-  void getHaloParticles( std::list<Molecule*> &haloParticlePtrs );
+  void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
   // documentation see father class (ParticleContainer.h)
-  void getRegion( double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs );
+  void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
 
-  double getCutoff() { return this->_cutoffRadius; }
-  double getLJCutoff() { return this->_LJCutoffRadius; }
-  double getTersoffCutoff() { return this->_tersoffCutoffRadius; }
+  double getCutoff() {
+    return this->_cutoffRadius;
+  }
+  double getLJCutoff() {
+    return this->_LJCutoffRadius;
+  }
+  double getTersoffCutoff() {
+    return this->_tersoffCutoffRadius;
+  }
+
   void countParticles(Domain* d);
   //! @brief counts all particles inside the bounding box
   unsigned countParticles(int cid);
@@ -183,7 +191,10 @@ class LinkedCells: public ParticleContainer {
 
   void deleteMolecule(unsigned long molid, double x, double y, double z);
   double getEnergy(Molecule* m1);
-  int localGrandcanonicalBalance() { return this->_localInsertionsMinusDeletions; }
+
+  int localGrandcanonicalBalance() {
+    return this->_localInsertionsMinusDeletions;
+  }
   int grandcanonicalBalance(DomainDecompBase* comm);
   void grandcanonicalStep(ChemicalPotential* mu, double T);
 
@@ -201,7 +212,7 @@ class LinkedCells: public ParticleContainer {
   //! the cell structure must not be used to determine the order.
   bool isFirstParticle(Molecule& m1, Molecule& m2);
 
- private:
+private:
   //####################################
   //######### PRIVATE METHODS ##########
   //####################################
@@ -315,6 +326,5 @@ class LinkedCells: public ParticleContainer {
 
   BlockTraverse _blockTraverse;
 };
-
 
 #endif /*LINKEDCELLS_H_*/
