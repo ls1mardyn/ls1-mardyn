@@ -395,7 +395,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename)
             _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
       }
       else if (token=="AdaptiveSubCells") {
-        int cellsInCutoffRadius;
         double bBoxMin[3];
         double bBoxMax[3];
         for (int i=0; i<3; i++) {
