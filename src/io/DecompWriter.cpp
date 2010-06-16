@@ -1,11 +1,14 @@
 // DecompWriter.cpp
 
 #include "io/DecompWriter.h"
+
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+
+using namespace std;
 
 DecompWriter::DecompWriter(unsigned long writeFrequency, string mode, string filename, unsigned long numberOfTimesteps, bool incremental) {
   _filename = filename;

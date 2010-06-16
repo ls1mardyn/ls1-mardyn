@@ -3,6 +3,8 @@
 
 #include "molecules/Molecule.h"
 
+#include <mpi.h>
+
 #define DIM 3
 
 //! @brief class to represent that particle data that is necessary for the exchange between processes
@@ -16,29 +18,30 @@
 //! This class achieves both. It is a class without constructor and destructor and only static
 //! methods, which means that only the member variables use memory, so it can be used like a
 //! C stuct. The static method setMPIType sets the given type to represent all the member variables.
-class ParticleData{
- public:
+class ParticleData {
+public:
   //! @brief defines a MPI datatype which can be used to transfer a MacroscopicData object
-  static void setMPIType(MPI_Datatype &sendPartType){
-    int blocklengths[] = {1,1,13}; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
-    MPI_Datatype types[] = {MPI_UNSIGNED_LONG, MPI_INT,MPI_DOUBLE};
+  static void setMPIType(MPI_Datatype &sendPartType) {
+    int blocklengths[] = { 1, 1, 13 }; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
+    MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE };
 
     MPI_Aint displacements[3];
     ParticleData pdata_dummy;
     MPI_Address(&pdata_dummy, displacements);
-    MPI_Address(&pdata_dummy.cid, displacements+1);
-    MPI_Address(&pdata_dummy.r[0], displacements+2);
+    MPI_Address(&pdata_dummy.cid, displacements + 1);
+    MPI_Address(&pdata_dummy.r[0], displacements + 2);
     MPI_Aint base = displacements[0];
-    for (int i=0; i<3; i++) displacements[i] -= base;
+    for (int i = 0; i < 3; i++)
+      displacements[i] -= base;
 
     MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType);
-  	MPI_Type_commit(&sendPartType);
+    MPI_Type_commit(&sendPartType);
   }
 
   //! @brief copy data from object of class Molecule to object of class ParticleData
-  static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule){
+  static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule) {
     particleStruct.id = molecule.id();
-    particleStruct.cid= molecule.componentid();
+    particleStruct.cid = molecule.componentid();
     particleStruct.r[0] = molecule.r(0);
     particleStruct.r[1] = molecule.r(1);
     particleStruct.r[2] = molecule.r(2);
@@ -55,14 +58,14 @@ class ParticleData{
   }
 
   //! @brief copy data from object of class class ParticleData to object of class Molecule
-  static void ParticleDataToMolecule( ParticleData &particleStruct, Molecule **molecule, const std::vector<Component>* components = NULL ){
-    *molecule = new Molecule( particleStruct.id, particleStruct.cid,
-	                     particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
-			     particleStruct.v[0], particleStruct.v[1], particleStruct.v[2],
-			     particleStruct.q[0], particleStruct.q[1], particleStruct.q[2], particleStruct.q[3],
-			     particleStruct.D[0], particleStruct.D[1], particleStruct.D[2],
-			     components
-			   );
+  static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule, const std::vector<Component>* components = NULL) {
+    *molecule = new Molecule(particleStruct.id, particleStruct.cid,
+                             particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
+                             particleStruct.v[0], particleStruct.v[1], particleStruct.v[2],
+                             particleStruct.q[0], particleStruct.q[1], particleStruct.q[2], particleStruct.q[3],
+                             particleStruct.D[0], particleStruct.D[1], particleStruct.D[2],
+                             components
+    );
   }
 
   unsigned long id;

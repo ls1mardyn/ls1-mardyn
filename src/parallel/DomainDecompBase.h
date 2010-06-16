@@ -12,8 +12,6 @@ class ParticleContainer;
 
 typedef ParticleContainer TMoleculeContainer;
 
-using namespace std;
-
 //! @brief handle boundary region and multiple processes
 //! @author Martin Buchholz
 //!
@@ -41,13 +39,15 @@ using namespace std;
 //! no need for message passing between processes). So the main program (or in this
 //! case the class Simulation) can decide which implementation to use. When MPI is
 //! available, the parallel version is used, otherwise the sequential version
-class DomainDecompBase{
- public:
+class DomainDecompBase {
+public:
   //! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
-  DomainDecompBase() {};
+  DomainDecompBase() {
+  }
 
   //! @brief The Destructor finalizes MPI
-  virtual ~DomainDecompBase() {};
+  virtual ~DomainDecompBase() {
+  }
 
   //! @brief exchange molecules between processes
   //!
@@ -58,7 +58,7 @@ class DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) = 0;
+  virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain) = 0;
 
   //! @brief balance the load (and optimise communication) and exchange boundary particles
   //!
@@ -72,7 +72,7 @@ class DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) = 0;
+  virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain) = 0;
 
   //! @brief find out whether the given position belongs to the domain of this process
   //!
@@ -106,7 +106,7 @@ class DomainDecompBase{
   //!                  this method will will the vector with the number of molecules for each
   //!                  of the components (in the global domain)
   //! @return the number of molecules in the global domain is returned
-  virtual unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) = 0;
+  virtual unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount) = 0;
 
   //! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
   //! @param dimension coordinate direction for which the minimum of the bounding box is returned
@@ -122,12 +122,12 @@ class DomainDecompBase{
   //!        The format is not strictly defined and depends on the decompositio
   //! @param filename name of the file into which the data will be written
   //! @param domain e.g. needed to get the bounding boxes
-  virtual void printDecomp(string filename, Domain* domain) = 0;
+  virtual void printDecomp(std::string filename, Domain* domain) = 0;
 
   //! @brief appends molecule data to the file. The format is the same as that of the input file
   //! @param filename name of the file into which the data will be written
   //! @param moleculeContainer all Particles from this container will be written to the file
-  virtual void writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer) = 0;
+  virtual void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) = 0;
 
   //! @brief returns the own rank
   //! @return rank of the process
@@ -186,8 +186,6 @@ class DomainDecompBase{
   virtual void collCommAllreduceSum() = 0;
   //! has to call broadcast method of a CollComm class (none in sequential version)
   virtual void collCommBroadcast() = 0;
-
 };
-
 
 #endif /*DOMAINDECOMPBASE_H_*/

@@ -7,11 +7,11 @@
 #define HIGHER 1
 
 #include "parallel/DomainDecompBase.h"
-#include <iostream>
-#include "mpi.h"
-
 #include "parallel/ParticleData.h"
 #include "parallel/CollectiveCommunication.h"
+
+#include <mpi.h>
+#include <iostream>
 
 //! @brief Basic parallelisation which divides the domain into #procs equal sized cuboids
 //! @author Martin Buchholz
@@ -24,8 +24,8 @@
 //! molecules. Another problem is that molecules are moving across the
 //! boundaries of local domains. So methods are implemented to transfer those molecules
 //! @todo reference to a paper describing the %domain decomposition
-class DomainDecomposition: public DomainDecompBase{
- public:
+class DomainDecomposition : public DomainDecompBase {
+public:
   //! @brief The constructor has to determine the own rank and the number of neighbours and
   //!        sets up the topology
   DomainDecomposition();
@@ -46,7 +46,7 @@ class DomainDecomposition: public DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
   //! @brief this decompositin does no balancing, it just exchanges the particles
   //!
@@ -58,7 +58,7 @@ class DomainDecomposition: public DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
   // documentation see father class (DomainDecompBase.h)
   bool procOwnsPos(double x, double y, double z, Domain* domain);
@@ -67,7 +67,7 @@ class DomainDecomposition: public DomainDecompBase{
   double guaranteedDistance(double x, double y, double z, Domain* domain);
 
   // documentation see father class (DomainDecompBase.h)
-  unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount);
+  unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
 
   // documentation see father class (DomainDecompBase.h)
   double getBoundingBoxMin(int dimension, Domain* domain);
@@ -102,7 +102,7 @@ class DomainDecomposition: public DomainDecompBase{
   //!  8 8
   //! @param filename name of the file into which the data will be written
   //! @param domain e.g. needed to get the bounding boxes
-  void printDecomp(string filename, Domain* domain);
+  void printDecomp(std::string filename, Domain* domain);
 
   //! @brief append the molecule date of all processes to the file
   //!
@@ -111,16 +111,20 @@ class DomainDecomposition: public DomainDecompBase{
   //! there is a loop over all processes with a barrier in between
   //! @param filename name of the file into which the data will be written
   //! @param moleculeContainer all Particles from this container will be written to the file
-  void writeMoleculesToFile( string filename, ParticleContainer* moleculeContainer );
+  void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
 
   // documentation see father class (DomainDecompBase.h)
-  int getRank(void){ return _rank;}
+  int getRank(void) {
+    return _rank;
+  }
 
   // documentation see father class (DomainDecompBase.h)
   int getNumProcs();
 
   // documentation see father class (DomainDecompBase.h)
-  void barrier() {MPI_Barrier( _comm );}
+  void barrier() {
+    MPI_Barrier(_comm);
+  }
 
   // documentation see father class (DomainDecompBase.h)
   double getTime();
@@ -141,23 +145,63 @@ class DomainDecomposition: public DomainDecompBase{
   // the documentation of the class CollectiveCommunication and of the
   // father class of this class (DomainDecompBase.h)
   //##################################################################
-  void collCommInit(int numValues){ _collComm.init(_comm, numValues); };
-  void collCommFinalize(){ _collComm.finalize(); };
-  void collCommAppendInt(int intValue){_collComm.appendInt(intValue);};
-  void collCommAppendUnsLong(unsigned long unsLongValue){_collComm.appendUnsLong(unsLongValue);};
-  void collCommAppendFloat(float floatValue){_collComm.appendFloat(floatValue);};
-  void collCommAppendDouble(double doubleValue){_collComm.appendDouble(doubleValue);};
-  void collCommAppendLongDouble(long double longDoubleValue){_collComm.appendLongDouble(longDoubleValue);};
-  int collCommGetInt(){return _collComm.getInt(); };
-  unsigned long collCommGetUnsLong(){return _collComm.getUnsLong(); };
-  float collCommGetFloat(){return _collComm.getInt(); };
-  double collCommGetDouble(){ return _collComm.getDouble(); };
-  long double collCommGetLongDouble(){ return _collComm.getLongDouble(); };
-  void collCommAllreduceSum(){ _collComm.allreduceSum(); };
-  void collCommBroadcast(){ _collComm.broadcast(); };
+  void collCommInit(int numValues) {
+    _collComm.init(_comm, numValues);
+  }
 
- private:
+  void collCommFinalize() {
+    _collComm.finalize();
+  }
 
+  void collCommAppendInt(int intValue) {
+    _collComm.appendInt(intValue);
+  }
+
+  void collCommAppendUnsLong(unsigned long unsLongValue) {
+    _collComm.appendUnsLong(unsLongValue);
+  }
+
+  void collCommAppendFloat(float floatValue) {
+    _collComm.appendFloat(floatValue);
+  }
+
+  void collCommAppendDouble(double doubleValue) {
+    _collComm.appendDouble(doubleValue);
+  }
+
+  void collCommAppendLongDouble(long double longDoubleValue) {
+    _collComm.appendLongDouble(longDoubleValue);
+  }
+
+  int collCommGetInt() {
+    return _collComm.getInt();
+  }
+
+  unsigned long collCommGetUnsLong() {
+    return _collComm.getUnsLong();
+  }
+
+  float collCommGetFloat() {
+    return _collComm.getInt();
+  }
+
+  double collCommGetDouble() {
+    return _collComm.getDouble();
+  }
+
+  long double collCommGetLongDouble() {
+    return _collComm.getLongDouble();
+  }
+
+  void collCommAllreduceSum() {
+    _collComm.allreduceSum();
+  }
+
+  void collCommBroadcast() {
+    _collComm.broadcast();
+  }
+
+private:
   //! determines and returns the rank of the process at the given coordinates
   int getRank(int x, int y, int z);
   //! with the given number of processes, the dimensions of the grid are calculated
@@ -183,7 +227,6 @@ class DomainDecomposition: public DomainDecompBase{
 
   //! variable used for different kinds of collective operations
   CollectiveCommunication _collComm;
-
 };
 
 #endif /*DOMAINDECOMPOSITION_H_*/

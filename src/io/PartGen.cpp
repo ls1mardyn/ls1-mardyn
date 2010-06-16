@@ -1,12 +1,16 @@
 #include "PartGen.h"
-#include <cmath>
-#include <ctime>
-#include <iostream>
+
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "ensemble/GrandCanonical.h"
+
+#include <cmath>
+#include <ctime>
+#include <iostream>
+
+using namespace std;
 
 // initialize constants
 const double PartGen::_atomicMassDim(1.660539E-27);

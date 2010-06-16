@@ -1,11 +1,10 @@
 #ifndef DOMAINDECOMPDUMMY_H_
 #define DOMAINDECOMPDUMMY_H_
 
-
 #include "parallel/DomainDecompBase.h"
 #include "parallel/CollectiveCommDummy.h"
+
 #include <iostream>
-using namespace std;
 
 //! @brief implement the %domain decomposition for a single processor
 //! @author Martin Buchholz
@@ -17,8 +16,8 @@ using namespace std;
 //! While this class doesn't has to implement communication between processes,
 //! there are still some other things to do, especially the handling of the
 //! boundary region.
-class DomainDecompDummy: public DomainDecompBase {
- public:
+class DomainDecompDummy : public DomainDecompBase {
+public:
   //! The constructor has nothing to do
   DomainDecompDummy();
 
@@ -29,25 +28,29 @@ class DomainDecompDummy: public DomainDecompBase {
   //! are moved to the opposite side of the domain (periodic boundary).
   //! Additionally, the molecules from the boundary region are duplicated
   //! and copied into the corresponding halo-regions.
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
   //! @brief in the sequential version, no balancing is necessary --> calls exchangeMolecules
-  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
   //! @brief returns true
   //!
   //! It is assumed that in the sequential version, the only process possesses all particles
   //! Therefore, even for a position outside of the domain, true is returned
-  bool procOwnsPos(double x, double y, double z, Domain* domain){ return true;};
+  bool procOwnsPos(double x, double y, double z, Domain* domain) {
+    return true;
+  }
 
   //! @brief returns 0.0
   //!
   //! In the sequential version, the only process covers the whole domain, so
   //! there is not distance between any point and the region of the process
-  double guaranteedDistance(double x, double y, double z, Domain* domain){ return 0.0;};
+  double guaranteedDistance(double x, double y, double z, Domain* domain) {
+    return 0.0;
+  }
 
   // documentation see father class (DomainDecompBase.h)
-  unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount);
+  unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
 
   // documentation see father class (DomainDecompBase.h)
   double getBoundingBoxMin(int dimension, Domain* domain);
@@ -56,23 +59,30 @@ class DomainDecompDummy: public DomainDecompBase {
   double getBoundingBoxMax(int dimension, Domain* domain);
 
   //! @brief In the sequential mode, there is no decomposition and therefore nothing to be printed
-  void printDecomp(string filename, Domain* domain){ cerr << "printDecomp useless in serial mode" << endl;};
+  void printDecomp(std::string filename, Domain* domain) {
+    std::cerr << "printDecomp useless in serial mode" << std::endl;
+  }
 
   //! @brief opends the file(append), loops over all molecules and writes each into the file
-  void writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer);
+  void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
 
   //! @brief There is only one process, so this method always returns 0
-  int getRank(){ return 0;};
+  int getRank() {
+    return 0;
+  }
 
   //! @brief There is only one process, so this method always returns 1
-  int getNumProcs(){ return 1;};
+  int getNumProcs() {
+    return 1;
+  }
 
   //! @brief for the sequential version, the processor name is not that important
   //! @todo implement this
   const char* getProcessorName() const;
 
   //! @brief one process doesn't need synchronisation, so nothing is done here
-  void barrier(){};
+  void barrier() {
+  }
 
   // documentation see father class (DomainDecompBase.h)
   double getTime();
@@ -93,20 +103,59 @@ class DomainDecompDummy: public DomainDecompBase {
   // the documentation of the class CollectiveCommDummy and of the
   // father class of this class (DomainDecompBase.h)
   //##################################################################
-  void collCommInit(int numValues){ _collComm.init(numValues); };
-  void collCommFinalize(){ _collComm.finalize(); };
-  void collCommAppendInt(int intValue){_collComm.appendInt(intValue);};
-  void collCommAppendUnsLong(unsigned long unsLongValue){_collComm.appendUnsLong(unsLongValue);};
-  void collCommAppendFloat(float floatValue){_collComm.appendFloat(floatValue);};
-  void collCommAppendDouble(double doubleValue){_collComm.appendDouble(doubleValue);};
-  void collCommAppendLongDouble(long double longDoubleValue){_collComm.appendLongDouble(longDoubleValue);};
-  int collCommGetInt(){return _collComm.getInt(); };
-  unsigned long collCommGetUnsLong(){return _collComm.getUnsLong(); };
-  float collCommGetFloat(){return _collComm.getInt(); };
-  double collCommGetDouble(){ return _collComm.getDouble(); };
-  long double collCommGetLongDouble(){ return _collComm.getLongDouble(); };
-  void collCommAllreduceSum(){};
-  void collCommBroadcast(){};
+  void collCommInit(int numValues) {
+    _collComm.init(numValues);
+  }
+
+  void collCommFinalize() {
+    _collComm.finalize();
+  }
+
+  void collCommAppendInt(int intValue) {
+    _collComm.appendInt(intValue);
+  }
+
+  void collCommAppendUnsLong(unsigned long unsLongValue) {
+    _collComm.appendUnsLong(unsLongValue);
+  }
+
+  void collCommAppendFloat(float floatValue) {
+    _collComm.appendFloat(floatValue);
+  }
+
+  void collCommAppendDouble(double doubleValue) {
+    _collComm.appendDouble(doubleValue);
+  }
+
+  void collCommAppendLongDouble(long double longDoubleValue) {
+    _collComm.appendLongDouble(longDoubleValue);
+  }
+
+  int collCommGetInt() {
+    return _collComm.getInt();
+  }
+
+  unsigned long collCommGetUnsLong() {
+    return _collComm.getUnsLong();
+  }
+
+  float collCommGetFloat() {
+    return _collComm.getInt();
+  }
+
+  double collCommGetDouble() {
+    return _collComm.getDouble();
+  }
+
+  long double collCommGetLongDouble() {
+    return _collComm.getLongDouble();
+  }
+
+  void collCommAllreduceSum() {
+  }
+
+  void collCommBroadcast() {
+  }
 
 private:
   //! Dummy variable for sequential "collective" communication, basically only
@@ -114,6 +163,5 @@ private:
   CollectiveCommDummy _collComm;
 
 };
-
 
 #endif /*DOMAINDECOMPDUMMY_H_*/

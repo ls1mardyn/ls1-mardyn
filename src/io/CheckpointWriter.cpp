@@ -1,6 +1,7 @@
 // CheckpointWriter.cpp
 
 #include "io/CheckpointWriter.h"
+
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
@@ -8,6 +9,8 @@
 #include "parallel/DomainDecompBase.h"
 
 #include <sstream>
+
+using namespace std;
 
 CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
   _filename = filename;

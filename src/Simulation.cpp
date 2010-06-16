@@ -79,6 +79,7 @@ using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
 using optparse::Values;
+using namespace std;
 
 Simulation* global_simulation;
 Simulation& _simulation = *global_simulation;

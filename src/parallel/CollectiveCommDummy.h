@@ -2,7 +2,7 @@
 #define COLLECTIVECOMMDUMMY_H_
 
 //! Read documentation for this union in CollectiveCommunication.h
-union valType{
+union valType {
   int val_int;
   unsigned long val_unsLong;
   float val_float;
@@ -25,10 +25,10 @@ union valType{
 //! ensure that this also works if there is no real domain decomposition but the
 //! class DomainDecompDummy is used.
 class CollectiveCommDummy {
- public:
+public:
   //! @brief allocate memory for the values to be stored, initialize counters 
   //! @param numValues number of values that shall be stored
-  void init(int numValues){
+  void init(int numValues) {
     _values = new valType[numValues];
     _numValues = numValues;
     _setCounter = 0;
@@ -36,49 +36,49 @@ class CollectiveCommDummy {
   }
 
   //! @brief delete memory and MPI_Type
-  void finalize(){
-    delete [] _values;
-  } 
-  
+  void finalize() {
+    delete[] _values;
+  }
+
   //! Append an int value to the list of values to be stored
-  void appendInt(int intValue){
+  void appendInt(int intValue) {
     _values[_setCounter++].val_int = intValue;
   }
   //! Append a unsigned long value to the list of values to be stored
-  void appendUnsLong(unsigned long unsLongValue){
+  void appendUnsLong(unsigned long unsLongValue) {
     _values[_setCounter++].val_unsLong = unsLongValue;
   }
   //! Append a float value to the list of values to be stored
-  void appendFloat(float floatValue){
+  void appendFloat(float floatValue) {
     _values[_setCounter++].val_float = floatValue;
   }
   //! Append a double value to the list of values to be stored
-  void appendDouble(double doubleValue){
+  void appendDouble(double doubleValue) {
     _values[_setCounter++].val_double = doubleValue;
   }
   //! Append a long double value to the list of values to be stored
-  void appendLongDouble(double longDoubleValue){
+  void appendLongDouble(double longDoubleValue) {
     _values[_setCounter++].val_longDouble = longDoubleValue;
   }
 
   //! Get the next value from the list, which must be int
-  int getInt(){
+  int getInt() {
     return _values[_getCounter++].val_int;
   }
   //! Get the next value from the list, which must be unsigned long
-  unsigned long getUnsLong(){
+  unsigned long getUnsLong() {
     return _values[_getCounter++].val_unsLong;
   }
   //! Get the next value from the list, which must be float
-  float getFloat(){
+  float getFloat() {
     return _values[_getCounter++].val_float;
   }
   //! Get the next value from the list, which must be double
-  double getDouble(){
+  double getDouble() {
     return _values[_getCounter++].val_double;
   }
   //! Get the next value from the list, which must be long double
-  long double getLongDouble(){
+  long double getLongDouble() {
     return _values[_getCounter++].val_longDouble;
   }
   //! number of values (possibly different types) to be communicated
@@ -87,7 +87,7 @@ class CollectiveCommDummy {
   int _setCounter;
   //! counter which points to the position which shall be read next
   int _getCounter;
-  
+
   //! Array to store the values which shall be communicated
   valType* _values;
 

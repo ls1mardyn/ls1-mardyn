@@ -3,14 +3,12 @@
 
 #define KDDIM 3
 
+#include "DomainDecompBase.h"
+#include "parallel/CollectiveCommunication.h"
+
 #include <iostream>
 #include <list>
 #include <mpi.h>
-
-#include "parallel/CollectiveCommunication.h"
-#include "DomainDecompBase.h"
-
-using namespace std;
 
 class Molecule;
 class ParticleData;
@@ -81,7 +79,7 @@ class KDDecomposition: public DomainDecompBase{
   //! @param components when creating a new Molecule-object (from the recieved data),
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
-  void exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain);
+  void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
   //! @brief balance the load (and optimise communication) and exchange boundary particles
   //!
@@ -101,7 +99,7 @@ class KDDecomposition: public DomainDecompBase{
   //!                   the Molecule-constructor needs this component vector
   //! @param domain is e.g. needed to get the size of the local domain
   void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer,
-                          const vector<Component>& components, Domain* domain);
+                          const std::vector<Component>& components, Domain* domain);
 
 
 
@@ -112,7 +110,7 @@ class KDDecomposition: public DomainDecompBase{
   double guaranteedDistance(double x, double y, double z, Domain* domain);
 
   // documentation see father class (DomainDecompBase.h)
-  unsigned long countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount);
+  unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
 
   //! @todo comment and thing
   double getBoundingBoxMin(int dimension, Domain* domain);
@@ -137,7 +135,7 @@ class KDDecomposition: public DomainDecompBase{
   //!  20.0 30.0 25.0 62.0 62.0 62.0
   //! @param filename name of the file into which the data will be written
   //! @param domain e.g. needed to get the bounding boxes
-  void printDecomp(string filename, Domain* domain);
+  void printDecomp(std::string filename, Domain* domain);
 
   //! @brief append the molecule date of all processes to the file
   //!
@@ -146,7 +144,7 @@ class KDDecomposition: public DomainDecompBase{
   //! there is a loop over all processes with a barrier in between
   //! @param filename name of the file into which the data will be written
   //! @param moleculeContainer all Particles from this container will be written to the file
-  void writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer);
+  void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
 
   // documentation see father class (DomainDecompBase.h)
   int getRank(void){ return _ownRank;}
@@ -214,7 +212,7 @@ class KDDecomposition: public DomainDecompBase{
   //! @param numMolsToSend Here the number of molecules to be sent are stored
   //!                      The vector has to be initialised in this method
   //! @param particlesToSend Here the pointers to the particles will be stored
-  void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, vector<int>& procIDs, vector<int>& numMolsToSend, vector<list<Molecule*> >& particlesToSend);
+  void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, std::vector<int>& procIDs, std::vector<int>& numMolsToSend, std::vector<std::list<Molecule*> >& particlesToSend);
 
   //! @brief Neighbouring procs inform each other about number of particles
   //!
@@ -227,7 +225,7 @@ class KDDecomposition: public DomainDecompBase{
   //!        to send particles to this process
   //! @param particlesToSend Needed to know the number of particles to send
   //! @param numMolsToRecv Array to store the number of molecules which have to be recieved.
-  void exchangeNumToSend(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv);
+  void exchangeNumToSend(std::vector<int>& procsToSendTo, std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend, std::vector<int>& numMolsToRecv);
 
   //! @brief transfer of the molecule data to the neighbours
   //!
@@ -240,7 +238,7 @@ class KDDecomposition: public DomainDecompBase{
   //! @param numMolsToRecv Number of molecules to be recieved from each neighbour
   //! @param particlesSendBufs already filled buffers of particles to be sent
   //! @param particlesRecvBufs buffers (already allocated) to store recieved particles
-  void transferMolData(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv, vector<ParticleData*>& particlesSendBufs, vector<ParticleData*>& particlesRecvBufs);
+  void transferMolData(std::vector<int>& procsToSendTo, std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend, std::vector<int>& numMolsToRecv, std::vector<ParticleData*>& particlesSendBufs, std::vector<ParticleData*>& particlesRecvBufs);
 
 
   //! @brief corrects the position of particles outside the domain after a balance step
@@ -281,7 +279,7 @@ class KDDecomposition: public DomainDecompBase{
   //! @param components needed to create new molecules
   //! @todo make it work with overlapping decomposition trees
   //! @todo more efficiency (don't run over all molecules)
-  void createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain, const vector<Component>& components);
+  void createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain, const std::vector<Component>& components);
 
   //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
   //$ sonstige Methoden
@@ -295,9 +293,9 @@ class KDDecomposition: public DomainDecompBase{
   //! are always indented two spaces more than there parents
   //! @param root Node for which the subtree shall be printed
   //! @param prefix A string which is printed in front of each line
-  void printDecompTree(KDNode* root, string prefix);
+  void printDecompTree(KDNode* root, std::string prefix);
 
-  void calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup);
+  void calculateCostsPar(KDNode* area, std::vector<std::vector<double> >& costsLeft, std::vector<std::vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup);
 
 
   //! @brief calculates the index of a certain cell in the global cell array
@@ -379,7 +377,7 @@ class KDDecomposition: public DomainDecompBase{
   //!                        each procID six double values are stored, first the three
   //!                        coordinates for the low corner of the area, then the high corner
   //! @todo make it work for overlapping decomposition trees
-  void getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, vector<int>* procIDs, vector<int>* neighbHaloAreas);
+  void getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, std::vector<int>* procIDs, std::vector<int>* neighbHaloAreas);
 
 
   //! @brief

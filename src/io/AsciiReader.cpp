@@ -1,10 +1,14 @@
 #include "io/AsciiReader.h"
+
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
 #include "Domain.h"
+
 #include <climits>
+
+using namespace std;
 
 AsciiReader::AsciiReader() {
 }

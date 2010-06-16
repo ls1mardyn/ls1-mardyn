@@ -1,6 +1,7 @@
 // XyzWriter.cpp
 
 #include "io/XyzWriter.h"
+
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
@@ -9,6 +10,8 @@
 
 #include <fstream>
 #include <sstream>
+
+using namespace std;
 
 XyzWriter::XyzWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
   _filename = filename;

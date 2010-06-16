@@ -3,14 +3,15 @@
  * (C)2009 GNU General Public License
  */
 #include "GrandCanonical.h"
-#include "utils/Logger.h"
 
+#include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 
-Random::Random() { this->init(8624); }
-
+using namespace std;
 using Log::global_log;
+
+Random::Random() { this->init(8624); }
 
 void Random::init(int seed)
 {

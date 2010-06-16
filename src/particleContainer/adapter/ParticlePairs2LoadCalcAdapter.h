@@ -88,7 +88,7 @@ public:
   }
 
   void giveStatus() {
-    cout << "Adapter: ParticlePairs2LoadCalcAdapter" << endl;
+    std::cout << "Adapter: ParticlePairs2LoadCalcAdapter" << std::endl;
   }
 
   float* getLoad() {

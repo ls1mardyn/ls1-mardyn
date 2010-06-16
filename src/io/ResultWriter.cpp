@@ -17,11 +17,15 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
-#include <ctime>
 #include "io/ResultWriter.h"
+
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+
+#include <ctime>
+
+using namespace std;
 
 ResultWriter::ResultWriter(string outputPrefix){
   _outputPrefix = outputPrefix;
