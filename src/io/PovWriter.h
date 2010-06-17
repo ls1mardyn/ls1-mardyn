@@ -3,10 +3,7 @@
 
 #include "io/OutputBase.h"
 #include "ensemble/GrandCanonical.h"
-//#include "molecules/Component.h"
 #include <string>
-//#include <fstream>
-//#include <sstream>
 
 class ParticleContainer;
 class DomainDecompBase; 

@@ -3,8 +3,7 @@
 #include "io/PovWriter.h"
 #include "Common.h"
 #include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
-//#include "parallel/DomainDecompBase.h"
+#include "datastructures/ParticleContainer.h"
 #include "molecules/Molecule.h"
 
 #include <ctime>

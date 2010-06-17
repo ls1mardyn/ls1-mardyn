@@ -867,7 +867,6 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
   fatherNode->_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll);
   fatherNode->_child2 = new KDNode(numProcsRight, low2, high2, id2, owner2, coversAll);
 
-  int newRank;
   vector<int> origRanks;
   int newNumProcs;
   if (_ownRank < owner2) {
@@ -1017,7 +1016,6 @@ void KDDecomposition::printDecompTree(KDNode* root, string prefix) {
 void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup) {
 
   double areaCosts = 0.0;
-  double sepFactor = 1.0;
 
   vector<vector<double> > cellCosts;
   vector<vector<double> > sepCostLeft;

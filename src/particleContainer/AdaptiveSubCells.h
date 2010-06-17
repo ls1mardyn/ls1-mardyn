@@ -6,7 +6,6 @@
 
 #include <vector>
 // TODO REMOVE
-//#include <iostream>
 
 class Cell;
 class ChemicalPotential;
