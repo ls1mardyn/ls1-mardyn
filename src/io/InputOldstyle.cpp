@@ -140,7 +140,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			unsigned int numcomponents = 0;
 			_phaseSpaceHeaderFileStream >> numcomponents;
 			dcomponents.resize(numcomponents);
-			for( int i = 0; i < numcomponents; i++ ) {
+			for( unsigned int i = 0; i < numcomponents; i++ ) {
 				dcomponents[i].setID(i);
 				unsigned int numljcenters = 0;
 				unsigned int numcharges = 0;
@@ -151,27 +151,27 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 					>> numquadrupoles >> numtersoff;
 
 				double x, y, z, m;
-				for( int j = 0; j < numljcenters; j++ ) {
+				for( unsigned int j = 0; j < numljcenters; j++ ) {
 					double eps, sigma, tcutoff, do_shift;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
 					dcomponents[i].addLJcenter( x, y, z, m, eps, sigma, tcutoff, (do_shift != 0) );
 				}
-				for( int j = 0; j < numcharges; j++ ) {
+				for( unsigned int j = 0; j < numcharges; j++ ) {
 					double q;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> q;
 					dcomponents[i].addCharge( x, y, z, m, q );
 				}
-				for( int j = 0; j < numdipoles; j++ ) {
+				for( unsigned int j = 0; j < numdipoles; j++ ) {
 					double eMyx,eMyy,eMyz,absMy;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
 					dcomponents[i].addDipole( x, y, z, eMyx, eMyy, eMyz, absMy );
 				}
-				for(int j = 0; j < numquadrupoles; j++ ) {
+				for( unsigned int j = 0; j < numquadrupoles; j++ ) {
 					double eQx,eQy,eQz,absQ;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
 					dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
 				}
-				for(int j = 0; j < numtersoff; j++ ) {
+				for( unsigned int j = 0; j < numtersoff; j++ ) {
 					double x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta;
 					_phaseSpaceHeaderFileStream >> x >> y >> z;
 					_phaseSpaceHeaderFileStream >> m >> A >> B;
