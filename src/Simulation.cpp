@@ -123,6 +123,11 @@ Simulation::Simulation(int *argc, char ***argv) {
   global_log->info() << "Started: " << info_str << endl;
   get_host(&info_str);
   global_log->info() << "Execution host: " << info_str << endl;
+  int world_size = 1;
+#ifdef PARALLEL
+  MPI_Comm_size( MPI_COMM_WORLD, &world_size );
+#endif
+  global_log->info() << "Running with " << world_size << " processes." << endl;
 
 #ifndef PARALLEL
   global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
