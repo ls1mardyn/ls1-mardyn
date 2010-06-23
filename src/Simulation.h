@@ -28,9 +28,10 @@
 class Simulation;
 //! Global pointer to the simulation object. Do not use directly. Instead use the reference.
 extern Simulation* global_simulation;
-//! Reference to the global simulation object 
-extern Simulation& _simulation;
 #endif
+
+//! Reference to the global simulation object 
+#define _simulation (*global_simulation)
 
 #include <string>
 #include <list>

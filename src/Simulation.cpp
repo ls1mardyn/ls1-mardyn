@@ -82,7 +82,6 @@ using optparse::Values;
 using namespace std;
 
 Simulation* global_simulation;
-Simulation& _simulation = *global_simulation;
 
 Simulation::Simulation(int *argc, char ***argv) {
 #ifdef PARALLEL
