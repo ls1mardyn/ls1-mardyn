@@ -104,7 +104,7 @@ public:
   //! The exit method takes care over the right way to terminate the application in a correct way
   //! for the different parallelization schemes. e.g. terminating other processes in MPI parallel
   //! execution mode.
-  int exit(int exitcode);
+  void exit(int exitcode);
 
   const optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op);
 

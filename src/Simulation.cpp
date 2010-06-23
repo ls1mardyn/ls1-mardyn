@@ -187,7 +187,7 @@ Simulation::~Simulation() {
 #endif
 }
 
-int Simulation::exit(int exitcode) {
+void Simulation::exit(int exitcode) {
 #ifdef PARALLEL
   // terminate all mpi processes and return exitcode
   MPI_Abort( MPI_COMM_WORLD, exitcode );
@@ -195,7 +195,6 @@ int Simulation::exit(int exitcode) {
   // call global exit
   ::exit(exitcode);
 #endif
-  return exitcode;
 }
 
 const Values& Simulation::initOptions(int argc, char *argv[], OptionParser& op) {
