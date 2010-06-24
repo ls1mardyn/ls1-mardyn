@@ -118,6 +118,12 @@ public:
   double getTersoffRadius() { return this->maximalTersoffExternalRadius; }
   void setTersoffRadius(double mTER) { this->maximalTersoffExternalRadius = mTER; }
 
+  void setE_trans( double E ) { _E_trans = E; }
+  void setE_rot( double E ) { _E_rot = E; }
+  double E_trans() { return _E_trans; }
+  double E_rot() { return _E_rot; }
+  double E() { return _E_trans + _E_rot; }
+
 private:
   unsigned int m_id;  // IDentification number
   // LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array
@@ -134,7 +140,12 @@ private:
   double m_I[6];  // moments of inertia tensor
   unsigned long m_rot_dof;  // number of rotational degrees of freedom
   double m_Ipa[3];  // moments of inertia for principal axes
+
+  /* cached values, set by ensemble class! */
   unsigned long m_numMolecules; // number of molecules for this molecule type
+  double _E_trans;  // translational energy
+  double _E_rot;  // rotational energy
+
   double maximalTersoffExternalRadius;
 };
 

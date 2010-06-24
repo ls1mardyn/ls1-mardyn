@@ -50,6 +50,7 @@
 #include "io/InputOldstyle.h"
 
 #include "ensemble/GrandCanonical.h"
+#include "ensemble/CanonicalEnsemble.h"
 
 #ifdef STEEREO
 #include "commands/snapshotCommand.h"
@@ -845,6 +846,14 @@ void Simulation::simulate() {
 
   // (universal) constant acceleration (number of) timesteps
   unsigned uCAT = _domain->getUCAT();
+
+  /* demonstration for the usage of the new ensemble class */
+  CanonicalEnsemble ensemble( _moleculeContainer, &(_domain->getComponents()));
+  ensemble.updateGlobalVariable( NUM_PARTICLES );
+  global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
+  ensemble.updateGlobalVariable( ENERGY );
+  global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
+
 
   /***************************************************************************/
   /* BEGIN MAIN LOOP                                                         */
