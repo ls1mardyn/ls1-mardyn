@@ -188,8 +188,12 @@ public:
   //! - update the ParticleContainer
   void updateParticleContainerAndDecomposition();
 
-  void setDomainDecomposition(DomainDecompBase* ddb) {
-    _domainDecomposition = ddb;
+  void setDomainDecomposition(DomainDecompBase* domainDecomposition) {
+    _domainDecomposition = domainDecomposition;
+  }
+  //! @brief Return a reference to the domain decomposition used in the simulation
+  DomainDecompBase& domainDecomposition() {
+	  return *_domainDecomposition;
   }
 
   Domain* getDomain() {
