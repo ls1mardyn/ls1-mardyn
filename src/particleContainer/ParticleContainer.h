@@ -20,8 +20,6 @@
 #ifndef PARTICLECONTAINER_H_
 #define PARTICLECONTAINER_H_
 
-#include "molecules/Molecule.h"
-
 #include <list>
 
 class ParticlePairsHandler;
@@ -29,6 +27,7 @@ class ParticleContainer;
 class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
+class Molecule;
 
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
@@ -205,6 +204,9 @@ public:
   //! corresponding cell discretisations might be different as well, and therefore
   //! the cell structure must not be used to determine the order.
   virtual bool isFirstParticle(Molecule& m1, Molecule& m2) = 0;
+
+  //! @brief Update the caches of the molecules.
+  void updateMoleculeCaches();
 
 protected:
 

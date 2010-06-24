@@ -19,6 +19,7 @@
 #ifndef POTFORCE_H_
 #define POTFORCE_H_
 
+#include "molecules/Molecule.h"
 #include "molecules/Comp2Param.h"
 
 /// helper function to calculate the distance between 2 sites

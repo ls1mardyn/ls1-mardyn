@@ -1,8 +1,10 @@
+#include <iostream>
+
 #include "particleContainer/ParticleContainer.h"
 
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "molecules/Molecule.h"
 
-#include <iostream>
 
 using namespace std;
 
@@ -44,4 +46,11 @@ void ParticleContainer::setPairHandler(ParticlePairsHandler* partPairHandler) {
 
 ParticlePairsHandler* ParticleContainer::getPairHandler() {
   return _particlePairsHandler;
+}
+
+void ParticleContainer::updateMoleculeCaches() {
+	Molecule *tM;
+	for (tM = this->begin(); tM != this->end(); tM = this->next() ) {
+		tM->upd_cache();
+	}
 }

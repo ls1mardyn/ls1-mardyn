@@ -1107,10 +1107,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
   _domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain->getComponents(), _domain);
   // The cache of the molecules must be updated/build after the exchange process,
   // as the cache itself isn't transferred
-  Molecule* tM;
-  for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-    tM->upd_cache();
-  }
+  _moleculeContainer->updateMoleculeCaches();
 }
 
 /* FIXME: we shoud provide a more general way of doing this */
