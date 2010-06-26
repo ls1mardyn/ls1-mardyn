@@ -12,7 +12,7 @@
 
 using namespace std;
 
-#define DEFAULT_TAU 0.9186
+#define DEFAULT_TAU 0.30620
 
 #define DEFAULT_CC_BONDLENGTH 2.6853
 #define ORIGINAL_CC_BONDLENGTH 2.7609
@@ -358,7 +358,7 @@ int main(int argc, char** argv)
       bondlength = original? ORIGINAL_CC_BONDLENGTH
                            : DEFAULT_CC_BONDLENGTH;
    if(!in_TAU) TAU = DEFAULT_TAU;
-   if(!in_a) a = 0.1 * U / TAU;
+   if(!in_a) a = 0.01 * U / TAU;
 
    Domain* dalet = new Domain(
       flow, bondlength, rho, d, fluid, h, ETA, SIG_REF, EPS_REF,

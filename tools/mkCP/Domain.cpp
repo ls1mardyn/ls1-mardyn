@@ -8,9 +8,9 @@
 #include <cmath>
 
 #define DT 0.030620
-#define TAU_ZERO 0.91860
-#define ZETA 0.0072286
-#define TAUPRIME 15.310
+#define TAU_ZERO 0.30620
+#define ZETA 0.0036143
+#define TAUPRIME 61.240
 
 Domain::Domain(
       int sp_flow, double sp_bondlength, double sp_rho, int sp_d,
@@ -41,7 +41,7 @@ Domain::Domain(
     */
    else if(fluid == FLUID_C2H6)
    {
-      this->shielding = 0.25*CO2LONG + this->ETA*SIG_CO2;
+      this->shielding = 0.25*C2H6LONG + this->ETA*SIG_C2H6;
    }
    else if(fluid == FLUID_N2)
    {
@@ -97,7 +97,7 @@ void Domain::writeGraphite(
    double REFOMGA = 1.0 / REFTIME;
 
    int repl = (this->flow == FLOW_COUETTE)? 2: 1;
-   bool fill[fl_units[0]][fl_units[1]][fl_units[2]][repl];
+   bool fill[fl_units[0]][fl_units[1]][fl_units[2]][repl][3];
    unsigned N1 = 0;
    if(!empty)
    {
@@ -105,16 +105,17 @@ void Domain::writeGraphite(
          for(int j=0; j < this->fl_units[1]; j++)
             for(int k=0; k < this->fl_units[2]; k++)
                for(int l=0; l < repl; l++)
-               {
-                  bool tfill = (pfill >= r->rnd());
-                  fill[i][j][k][l] = tfill;
-                  if(tfill) N1++;
-               }
-      cout << "Filling " << N1 << " of " << repl << " x "
+                  for(int d=0; d < 3; d++)
+                  {
+                     bool tfill = (pfill >= r->rnd());
+                     fill[i][j][k][l][d] = tfill;
+                     if(tfill) N1++;
+                  }
+      cout << "Filling " << N1 << " of " << repl << " x 3*"
            << fl_units[0] << "*" << fl_units[1] << "*" << fl_units[2]
-           << " = " << repl*fl_units[0]*fl_units[1]*fl_units[2]
+           << " = " << 3*repl*fl_units[0]*fl_units[1]*fl_units[2]
            << " slots (ideally "
-           << pfill*repl*fl_units[0]*fl_units[1]*fl_units[2]
+           << pfill*3*repl*fl_units[0]*fl_units[1]*fl_units[2]
            << ").\n";
    }
    Graphit gra;
@@ -289,7 +290,7 @@ void Domain::writeGraphite(
           << "\nconstantAccelerationTimesteps\t25\n"
           << "zetaFlow\t" << ZETA*sqrt(REFTIME) << "\n"
           << "tauPrimeFlow\t" << TAUPRIME/REFTIME << "\n"
-          << "initCanonical\t10000\n";
+          << "initCanonical\t25001\n";
       if(muVT)
       {
          txt.precision(9);
@@ -297,8 +298,8 @@ void Domain::writeGraphite(
              << " component 1 control 0.0 0.0 0.0 to "
              << this->box[0]/SIG_REF << " " << 0.5*this->h/SIG_REF
              << " " << this->box[2]/SIG_REF << " conduct "
-             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
-                                                      : 0.0010) * N1)
+             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.001
+                                                      : 0.002) * N1)
              << " tests every 8 steps\n";
          if(flow == FLOW_COUETTE)
          {
@@ -313,17 +314,17 @@ void Domain::writeGraphite(
          }
 	 txt << "planckConstant\t" 
 	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
-         txt << "initGrandCanonical\t30000\n";
+         txt << "initGrandCanonical\t50001\n";
       }
       txt.precision(5);
-      txt << "initStatistics\t60000\nphaseSpaceFile\t" << prefix
+      txt << "initStatistics\t100001\nphaseSpaceFile\t" << prefix
           << ".xdr\n# for LinkedCells, the cellsInCutoffRadius has to"
           << " be provided\ndatastructure\tLinkedCells\t1\noutput\t"
           << "ResultWriter\t40\t" << prefix
           << "_1R\noutput\tXyzWriter\t10000\t" << prefix
           << "_1R.buxyz\noutput\tVisittWriter\t10000000\t" << prefix
-          << "_1R\nprofile\t12 384 16\nprofileRecordingTimesteps\t2\n"
-          << "profileOutputTimesteps\t75000"
+          << "_1R\nprofile\t6 1024 8\nprofileRecordingTimesteps\t3\n"
+          << "profileOutputTimesteps\t50000"
           << "\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix
           << "_1R\nzOscillator 1024\n";
    }
@@ -340,48 +341,52 @@ void Domain::writeGraphite(
          for(ii[2]=0; ii[2] < this->fl_units[2]; (ii[2]) ++)
             for(int j=0; j < repl; j++)
 	    {
-               if(fill[ ii[0] ][ ii[1] ][ ii[2] ][ j ])
+               for(int d=0; d < 3; d++)
                {
-                  for(int k=0; k < 3; k++)
+                  if(fill[ ii[0] ][ ii[1] ][ ii[2] ][ j ][ d ])
                   {
-                     tr[k] = off[k]
-                           + (ii[k] + (3.0 + r->rnd())/7.0)*fl_unit[k];
+                     for(int k=0; k < 3; k++)
+                     {
+                        tr[k] = off[k] + fl_unit[k] * (
+                                   ii[k] + 0.02*r->rnd() + ((k == d)? 0.24: 0.74)
+                                );
+                     }
+                     tr[1] += j*box[1];
+		     box[1] *= repl;
+                     for(int k=0; k < 3; k++)
+                     {
+                        if(tr[k] > box[k]) tr[k] -= box[k];
+                        else if(tr[k] < 0.0) tr[k] += box[k];
+                     }
+                     box[1] /= repl;
+                     double tv = sqrt(3.0*T / FLUIDMASS);
+                     double phi = 6.283185 * r->rnd();
+                     double omega = 6.283185 * r->rnd();
+                     double xxomga, yyomga;
+                     if(I_xx_yy > 0.0)
+                     {
+                        xxomga = sqrt(r->rnd()*T/I_xx_yy);
+                        if(r->rnd() > 0.5) xxomga *= -1.0;
+                        yyomga = sqrt(r->rnd()*T/I_xx_yy);
+                        if(r->rnd() > 0.5) yyomga *= -1.0;
+                     }
+                     else
+                     {
+                        xxomga = 0.0;
+                        yyomga = 0.0;
+                     }
+                     // xdr << "(" << ii[0] << "/" << ii[1] << "/" << ii[2] << "), j = " << j << ", d = " << d << ":\t";
+                     xdr << id << " " << 1 << "\t" << tr[0]/SIG_REF
+                         << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
+                         << "\t" << tv*cos(phi)*cos(omega)/VEL_REF << " "
+                         << tv*cos(phi)*sin(omega)/VEL_REF << " "
+                         << tv*sin(phi)/VEL_REF << "\t1.0 0.0 0.0 0.0\t"
+                         << xxomga/REFOMGA << " " << yyomga/REFOMGA
+                         << " 0.0\n";
+                     id++;
                   }
-                  tr[1] += j*box[1];
-		  box[1] *= repl;
-                  for(int k=0; k < 3; k++)
-                  {
-                     if(tr[k] > box[k]) tr[k] -= box[k];
-                     else if(tr[k] < 0.0) tr[k] += box[k];
-                  }
-		  box[1] /= repl;
-                  double tv = sqrt(3.0*T / FLUIDMASS);
-                  double phi = 6.283185 * r->rnd();
-                  double omega = 6.283185 * r->rnd();
-                  double xxomga, yyomga;
-                  if(I_xx_yy > 0.0)
-                  {
-                     xxomga = sqrt(r->rnd()*T/I_xx_yy);
-                     if(r->rnd() > 0.5) xxomga *= -1.0;
-                     yyomga = sqrt(r->rnd()*T/I_xx_yy);
-                     if(r->rnd() > 0.5) yyomga *= -1.0;
-                  }
-                  else
-                  {
-                     xxomga = 0.0;
-                     yyomga = 0.0;
-                  }
-
-                  xdr << id << " " << 1 << "\t" << tr[0]/SIG_REF
-                      << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
-                      << "\t" << tv*cos(phi)*cos(omega)/VEL_REF << " "
-                      << tv*cos(phi)*sin(omega)/VEL_REF << " "
-                      << tv*sin(phi)/VEL_REF << "\t1.0 0.0 0.0 0.0\t"
-                      << xxomga/REFOMGA << " " << yyomga/REFOMGA
-                      << " 0.0\n";
-                  id++;
+	          else xdr << "\n";
                }
-	       else xdr << "\n";
 	    }
    xdr << "\n\n";
 
@@ -490,21 +495,23 @@ void Domain::specifyGraphite(double rho, unsigned N)
         << " * 1.4818e-04 nm^3, effectively " << V_eff
         << " * 1.4818e-04 nm^3.\n";
    double N_id = V_eff*rho;
+   double N_boxes = N_id / 3.0;
    fl_units[1] = round(
                     pow(
-                       (N_id * this->eff[1] * this->eff[1])
-                            / (this->eff[0] * this->eff[2]), 1.0/3.0
+                       (N_boxes * this->eff[1] * this->eff[1])
+                                / (this->eff[0] * this->eff[2]), 1.0/3.0
                     )
                  );
    if(fl_units[1] == 0) fl_units[1] = 1;
-   double bxbz_id = N_id / fl_units[1];
+   double bxbz_id = N_boxes / fl_units[1];
    fl_units[0] = round(sqrt(this->eff[0] * bxbz_id / this->eff[2]));
    if(fl_units[0] == 0) this->fl_units[0] = 1;
    fl_units[2] = ceil(bxbz_id / fl_units[0]);
+   cout << "Elementary cell: " << this->eff[0]/fl_units[0] << " a0 x " << this->eff[1]/fl_units[1] << " a0 x " << this->eff[2]/fl_units[2] << " a0.\n";
 
    for(int i=0; i < 3; i++)
-      this->fl_unit[i] = round(this->eff[i] / fl_units[i]);
-   this->pfill = N_id / ((double)fl_units[0]*fl_units[1]*fl_units[2]);
+      this->fl_unit[i] = this->eff[i] / (double)fl_units[i];
+   this->pfill = N_boxes / ((double)fl_units[0]*fl_units[1]*fl_units[2]);
 }
 
 void Domain::specifyNanotube(double rho, double m_per_n, unsigned N)

@@ -13,4 +13,4 @@ clean:
 	rm -f *.o *~ mkCP *.bz2 *.xdr
 
 tar: clean
-	tar -cvjf mkCP.tar.bz2 *.h *.cpp *.png *.txt *.pm Makefile
+	tar -cvjf mkCP.tar.bz2 *.h *.cpp *.png *.txt Makefile
