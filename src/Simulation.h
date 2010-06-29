@@ -20,9 +20,8 @@
 #define SIMULATION_H_
 
 #include "ensemble/GrandCanonical.h"
-#ifdef STEEREO
- #include <simSteering.h>
-#endif
+
+
 
 #ifndef SIMULATION_SRC
 class Simulation;
@@ -36,6 +35,10 @@ extern Simulation* global_simulation;
 #include <string>
 #include <list>
 
+#ifdef STEEREO
+  class SimSteering;
+#endif
+
 class Domain;
 class ParticleContainer;
 class ParticlePairsHandler;
@@ -44,6 +47,8 @@ class OutputBase;
 class DomainDecompBase;
 class InputBase;
 class Molecule;
+
+
 
 namespace optparse {
 class OptionParser;
@@ -370,6 +375,7 @@ public:
 
 #ifdef STEEREO
   SimSteering* _steer;
+  //CouplingInformationType* couplingInfo;
 #endif
 
   //! simulation time step

@@ -53,16 +53,8 @@
 #include "ensemble/CanonicalEnsemble.h"
 
 #ifdef STEEREO
-#include "commands/snapshotCommand.h"
-#include "commands/megaMolSnapshotCommand.h"
-#include "commands/sendCouplingMDCommand.h"
-#include "commands/receiveCouplingMDCommand.h"
-#include "commands/getVisDataCommand.h"
-#ifdef PARALLEL
-#include <steereoMPIIntraCommunicator.h>
-#endif //PARALLEL
-#include <steerParameterCommand.h>
-#include <steereoSocketCommunicator.h>
+#include "utils/SteereoIntegration.h"
+#include <simSteering.h>
 #endif
 
 #include "utils/OptionParser.h"
@@ -704,38 +696,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
     j++;
   }
-#ifdef STEEREO
-  SteereoLogger::setOutputLevel(2);
-  _steer = new SimSteering();
-  _steer->setNumberOfQueues(1);
-  int portNumber = 44445;
-#ifdef PARALLEL
-  int ownSize;
-  MPI_Comm_size(MPI_COMM_WORLD, &ownSize);
-  SteereoMPIIntraCommunicator* mpiIntraComm = new SteereoMPIIntraCommunicator();
-  int partNum = 1;
-#ifdef STEEREO_PARTITIONS
-  partNum = STEEREO_PARTITIONS;
-#endif /* STEEREO_PARTITIONS */
-  char* partVal = getenv("STEEREO_PARTITIONS");
-  if (partVal != NULL) {
-    partNum = atoi(partVal);
-  }
-  global_log->debug() << "going to divide the " << ownSize << " processes into " << partNum << " partitions" << std::endl;
-  mpiIntraComm->generateEqually(ownrank, partNum, ownSize);
-  global_log->debug() << "equally generated" << std::endl;
-  _steer->setIntraCommunicator(mpiIntraComm);
-  //if (ownrank == mpiIntraComm->getRoot())
-  if (mpiIntraComm->amIRoot()) {
-    portNumber += (ownrank * partNum) / ownSize;
-#endif /* PARALLEL */
-    std::stringstream strstr;
-    strstr << portNumber;
-    _steer->setCommunicator(new SteereoSocketCommunicator(strstr.str()));
-#ifdef PARALLEL
-  }
-#endif /* PARALLEL */
-#endif /* STEEREO */
 
 }
 
@@ -807,28 +767,9 @@ void Simulation::initialize() {
   }
 
 #ifdef STEEREO
-  MegaMolSnapshotCommand::setSimData(this);
-  _steer->registerCommand(MegaMolSnapshotCommand::generateNewInstance, "getMegaMolSnapshot");
-  _steer->registerCommand(SendCouplingMDCommand::generateNewInstance, "sendCouplingMD");
-  _steer->registerCommand(ReceiveCouplingMDCommand::generateNewInstance, "receiveCouplingMD");
-  _steer->registerCommand(SnapshotCommand::generateNewInstance, "getSnapshot");
-  SnapshotCommand::setSimData(this);
-  SteerParameterCommand::registerScalarParameter("temp", _domain, &Domain::getGlobalCurrentTemperature, &Domain::setGlobalTemperature);
-  SendCouplingMDCommand::addData(this);
-  ReceiveCouplingMDCommand::addData(this);
-#ifdef PARALLEL
-  int ownrank = _domainDecomposition->getRank();
-  global_log->debug() << "_ownrank is " << ownrank << std::endl;
-  global_log->debug() << "my local rank is " << _steer->getIntraCommunicator()->getRank() << std::endl;
-  global_log->debug() << "my local root rank is " << _steer->getIntraCommunicator()->getRoot() << std::endl;
-  //if (ownrank == _steer->getIntraCommunicator()->getRoot())
-  if (_steer->getIntraCommunicator()->amIRoot()) {
-    global_log->debug() << "going to start listening on rank " << ownrank << std::endl;
-#endif
-    _steer->startListening();
-#ifdef PARALLEL
-  }
-#endif
+  _steer = initSteereo (44445, _domainDecomposition->getRank());
+  registerSteereoCommands (_steer, this);
+  startListeningSteereo (_steer, _domainDecomposition->getRank());
 #endif
 
   // activate RDF sampling

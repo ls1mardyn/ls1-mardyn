@@ -45,7 +45,7 @@ MegaMolSnapshotCommand::~MegaMolSnapshotCommand ()
 
 ReturnType MegaMolSnapshotCommand::execute ()
 {
-	SteereoLogger::setOutputLevel(4);
+	//SteereoLogger::setOutputLevel(4);
 
   Domain* dom = sim -> getDomain ();
   int numberOfComponents = dom -> getComponents().size();
@@ -171,7 +171,6 @@ ReturnType MegaMolSnapshotCommand::execute ()
 void MegaMolSnapshotCommand::setParameters (std::list <std::string> params)
 {
   int listSize = params.size ();
-  std::cout << "set parameters has " << params.size () << " parameters" << std::endl;
   if (listSize > 0)
   {
     stepInterval = atoi (params.front().c_str ());
@@ -182,13 +181,11 @@ void MegaMolSnapshotCommand::setParameters (std::list <std::string> params)
   	colouringVal = atoi (params.front().c_str());
   	params.pop_front();
   }
-  std::cout << "set values: " << stepInterval << " " << colouringVal << std::endl;
 
 }
 
 SteereoCommand* MegaMolSnapshotCommand::generateNewInstance ()
 {
-	std::cout << "generate new MegaMolSnapshotCommand " << std::endl;
   SteereoCommand* comm = new MegaMolSnapshotCommand ();
   startStep = sim -> getSimStep ();
   ((MegaMolSnapshotCommand*) comm) -> setSimData (sim);
@@ -197,7 +194,6 @@ SteereoCommand* MegaMolSnapshotCommand::generateNewInstance ()
 
 bool MegaMolSnapshotCommand::condition ()
 {
-  //int actStep = sd -> getSteps ();
   if (stepInterval > 0)
   {
     unsigned long actStep = sim -> getSimStep ();
