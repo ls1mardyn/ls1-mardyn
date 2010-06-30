@@ -51,6 +51,7 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
+#include "ensemble/PressureGradient.h"
 
 #ifdef STEEREO
 #include "utils/SteereoIntegration.h"
@@ -287,8 +288,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
   double timestepLength;
   unsigned cosetid = 0;
 
+  this->_pressureGradient = new PressureGradient(ownrank);
   global_log->info() << "Constructing domain ..." << endl;
-  _domain = new Domain(ownrank);
+  this->_domain = new Domain(ownrank, this->_pressureGradient);
   global_log->info() << "Domain construction done." << endl;
   _particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 
@@ -467,7 +469,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
         if (cid > 0)
           global_log->info() << "acc. for component " << cid << endl;
         cid--;
-        _domain->assignCoset((unsigned) cid, cosetid);
+        _pressureGradient->assignCoset((unsigned) cid, cosetid);
       }
       double v;
       inputfilestream >> v;
@@ -511,12 +513,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
         global_log->error() << "timestep missing." << endl;
         exit(1);
       }
-      _domain->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
+      _pressureGradient->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
     }
     else if (token == "constantAccelerationTimesteps") {
       unsigned uCAT;
       inputfilestream >> uCAT;
-      _domain->setUCAT(uCAT);
+      _pressureGradient->setUCAT(uCAT);
     }
     else if (token == "profile") {
       unsigned xun, yun, zun;
@@ -720,11 +722,11 @@ void Simulation::initialize() {
   if (_doRecordRDF)
     _domain->resetRDF();
 
-  if (_domain->isAcceleratingUniformly()) {
+  if (_pressureGradient->isAcceleratingUniformly()) {
     global_log->info() << "Initialising uniform acceleration." << endl;
-    unsigned long uCAT = _domain->getUCAT();
+    unsigned long uCAT = _pressureGradient->getUCAT();
     global_log->info() << "uCAT: " << uCAT << " steps." << endl;
-    _domain->determineAdditionalAcceleration(
+    _pressureGradient->determineAdditionalAcceleration(
         _domainDecomposition,
         _moleculeContainer,
         uCAT * _integrator->getTimestepLength()
@@ -786,7 +788,7 @@ void Simulation::simulate() {
   global_log->info() << "Started simulation" << endl;
 
   // (universal) constant acceleration (number of) timesteps
-  unsigned uCAT = _domain->getUCAT();
+  unsigned uCAT = _pressureGradient->getUCAT();
 
   /* demonstration for the usage of the new ensemble class */
   CanonicalEnsemble ensemble( _moleculeContainer, &(_domain->getComponents()));
@@ -872,10 +874,10 @@ void Simulation::simulate() {
 
     if (!(_simstep % _collectThermostatDirectedVelocity))
       _domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-    if (_domain->isAcceleratingUniformly()) {
+    if (_pressureGradient->isAcceleratingUniformly()) {
       if (!(_simstep % uCAT)) {
         global_log->debug() << "Determine the additional acceleration" << endl;
-        _domain->determineAdditionalAcceleration(_domainDecomposition,
+        _pressureGradient->determineAdditionalAcceleration(_domainDecomposition,
                                                  _moleculeContainer,
                                                  uCAT * _integrator->getTimestepLength());
       }

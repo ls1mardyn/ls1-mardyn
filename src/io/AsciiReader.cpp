@@ -4,6 +4,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
+#include "ensemble/PressureGradient.h"
 #include "Domain.h"
 
 #include <climits>
@@ -216,7 +217,7 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
       unsigned cid, cosetid;
       _phaseSpaceFileStream >> cid >> cosetid;
       cid--;
-      domain->assignCoset(cid, cosetid);
+      domain->getPG()->assignCoset(cid, cosetid);
     }
     else if((token == "Accelerate") || (token == "A"))
     {
@@ -228,7 +229,7 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
        _phaseSpaceFileStream >> tau;
        double ainit[3];
        for(unsigned d = 0; d < 3; d++) _phaseSpaceFileStream >> ainit[d];
-       domain->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+       domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
     }
   }
 }

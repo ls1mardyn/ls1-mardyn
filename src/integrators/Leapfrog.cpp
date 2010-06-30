@@ -4,6 +4,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "molecules/Molecule.h"
+#include "ensemble/PressureGradient.h"
 
 using namespace std;
 
@@ -106,13 +107,13 @@ void Leapfrog::accelerateUniformly
    ParticleContainer* molCont,
    Domain* domain   )
 {
-   map<unsigned, double>* additionalAcceleration = domain->getUAA();
+   map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
    vector<Component> comp = domain->getComponents();
    vector<Component>::iterator compit;
    map<unsigned, double> componentwiseVelocityDelta[3];
    for(compit = comp.begin(); compit != comp.end(); compit++)
    {
-      unsigned cosetid = domain->getComponentSet(compit->ID());
+      unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
       if(cosetid != 0)
          for(unsigned d = 0; d < 3; d++)
             componentwiseVelocityDelta[d][compit->ID()]
@@ -142,11 +143,11 @@ void Leapfrog::accelerateInstantaneously
    map<unsigned, double> componentwiseVelocityDelta[3];
    for(compit = comp.begin(); compit != comp.end(); compit++)
    {
-      unsigned cosetid = domain->getComponentSet(compit->ID());
+      unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
       if(cosetid != 0)
          for(unsigned d = 0; d < 3; d++)
             componentwiseVelocityDelta[d][compit->ID()]
-               = domain->getMissingVelocity(cosetid, d);
+               = domain->getPG()->getMissingVelocity(cosetid, d);
       else
          for(unsigned d = 0; d < 3; d++)
             componentwiseVelocityDelta[d][compit->ID()] = 0;

@@ -23,6 +23,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
+#include "ensemble/PressureGradient.h"
 
 #include <iostream>
 #include <sstream>
@@ -85,13 +86,15 @@ double TISSv(int n,double rc,double sigma2,double tau1,double tau2){
  * END cutoff correction
  */
 
-Domain::Domain(int rank){
+Domain::Domain(int rank, PressureGradient* pg){
 	_localRank = rank;
 	_localUpot = 0;
 	_localVirial = 0;   
 	_globalUpot = 0;
 	_globalVirial = 0; 
 	_globalRho = 0;
+
+	this->_universalPG = pg;
 
 	this->_componentToThermostatIdMap = map<int, int>();
 	this->_localThermostatN = map<int, unsigned long>();
@@ -577,26 +580,28 @@ void Domain::writeCheckpoint( string filename,
 			}
 		}
 		checkpointfilestream << _epsilonRF << endl;
-		for( map<unsigned, unsigned>::const_iterator uCSIDit = this->_universalComponentSetID.begin();
-				uCSIDit != this->_universalComponentSetID.end();
+                map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
+		for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
+				uCSIDit != componentSets.end();
 				uCSIDit++ )
 		{ 
 			if(uCSIDit->first > 100) continue;
 			checkpointfilestream << " S\t" << 1+uCSIDit->first << "\t" << uCSIDit->second << "\n";
 		}
-		for( map<unsigned, double>::const_iterator gTit = _universalTau.begin();
-				gTit != this->_universalTau.end();
+		map<unsigned, double> tau = this->_universalPG->getTau();
+		for( map<unsigned, double>::const_iterator gTit = tau.begin();
+				gTit != tau.end();
 				gTit++ )
 		{
 			unsigned cosetid = gTit->first;
+			double* ttargetv = this->_universalPG->getTargetVelocity(cosetid);
+			double* tacc = this->_universalPG->getAdditionalAcceleration(cosetid);
 			checkpointfilestream << " A\t" << cosetid << "\t"
-				<< this->_globalTargetVelocity[0][cosetid] << " "
-				<< this->_globalTargetVelocity[1][cosetid] << " "
-				<< this->_globalTargetVelocity[2][cosetid] << "\t"
+				<< ttargetv[0] << " " << ttargetv[1] << " " << ttargetv[2] << "\t"
 				<< gTit->second << "\t"
-				<< this->_universalAdditionalAcceleration[0][cosetid] << " "
-				<< this->_universalAdditionalAcceleration[1][cosetid] << " "
-				<< this->_universalAdditionalAcceleration[2][cosetid] << "\n";
+				<< tacc[0] << " " << tacc[1] << " " << tacc[2] << "\n";
+			delete ttargetv;
+			delete tacc;
 		}
 		for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
 				uutit != this->_universalUndirectedThermostat.end();
@@ -721,177 +726,6 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 	_VirialCorr=VirialCorrLJ+3.*MySelbstTerm;
 
 	global_log->info() << "Far field terms: U_pot_correction  = " << _UpotCorr << " virial_correction = " << _VirialCorr << endl;
-}
-
-void Domain::specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep)
-{
-	this->_localN[cosetid] = 0;
-	for(unsigned d = 0; d < 3; d++)
-	{
-		this->_universalAdditionalAcceleration[d][cosetid] = ainit[d];
-		this->_localVelocitySum[d][cosetid] = 0.0;
-	}
-	this->_universalTau[cosetid] = tau;
-	if(this->_localRank == 0)
-	{
-		this->_globalN[cosetid] = 0;
-		for(unsigned d = 0; d < 3; d++)
-		{
-			this->_globalTargetVelocity[d][cosetid] = v[d];
-			this->_globalVelocitySum[d][cosetid] = 0.0;
-		}
-		this->_globalVelocityQueuelength[cosetid] = (unsigned)ceil(
-				sqrt(this->_universalTau[cosetid] / (timestep*this->_universalConstantAccelerationTimesteps))
-				);
-		global_log->info() << "coset " << cosetid << " will receive "
-			<< _globalVelocityQueuelength[cosetid] << " velocity queue entries." << endl;
-	}
-}
-
-/*
- * diese Version beschleunigt in alle Raumrichtungen
- */
-void Domain::determineAdditionalAcceleration
-(
- DomainDecompBase* domainDecomp,
- ParticleContainer* molCont, double dtConstantAcc )
-{
-	for( map<unsigned, double>::iterator uAAit = _universalAdditionalAcceleration[0].begin();
-			uAAit != _universalAdditionalAcceleration[0].end();
-			uAAit++ )
-	{
-		this->_localN[uAAit->first] = 0;
-		for(unsigned d = 0; d < 3; d++)
-			this->_localVelocitySum[d][uAAit->first] = 0.0;
-	}
-	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
-	{
-		unsigned cid = thismol->componentid();
-		map<unsigned, unsigned>::iterator uCSIDit = this->_universalComponentSetID.find(cid);
-		if(uCSIDit == _universalComponentSetID.end()) continue;
-		unsigned cosetid = uCSIDit->second;
-		this->_localN[cosetid]++;
-		for(unsigned d = 0; d < 3; d++)
-			this->_localVelocitySum[d][cosetid] += thismol->v(d);
-	}
-
-	// domainDecomp->collectCosetVelocity(&_localN, _localVelocitySum, &_globalN, _globalVelocitySum);
-	//
-	domainDecomp->collCommInit( 4 * _localN.size() );
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
-	{
-		domainDecomp->collCommAppendUnsLong(lNit->second);
-		for(int d = 0; d < 3; d++)
-			domainDecomp->collCommAppendDouble( this->_localVelocitySum[d][lNit->first]);
-	}
-	domainDecomp->collCommAllreduceSum();
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
-	{
-		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
-		for(int d = 0; d < 3; d++)
-			_globalVelocitySum[d][lNit->first] = domainDecomp->collCommGetDouble();
-	}
-	domainDecomp->collCommFinalize();
-
-	map<unsigned, long double>::iterator gVSit;
-	if(!this->_localRank)
-	{
-		for(gVSit = _globalVelocitySum[0].begin(); gVSit != _globalVelocitySum[0].end(); gVSit++)
-		{
-#ifndef NDEBUG
-			global_log->debug() << "required entries in velocity queue: " << _globalVelocityQueuelength[gVSit->first] << endl;
-			global_log->debug() << "entries in velocity queue: " << _globalPriorVelocitySums[0][gVSit->first].size() << endl;
-#endif
-			for(unsigned d = 0; d < 3; d++)
-			{
-				while(_globalPriorVelocitySums[d][gVSit->first].size() < _globalVelocityQueuelength[gVSit->first])
-					_globalPriorVelocitySums[d][gVSit->first].push_back(_globalVelocitySum[d][gVSit->first]);
-			}
-		}
-	}
-
-	if(!this->_localRank)
-	{
-		for(gVSit = _globalVelocitySum[0].begin(); gVSit != _globalVelocitySum[0].end(); gVSit++)
-		{
-			double invgN = 1.0 / this->_globalN[gVSit->first];
-			double invgtau = 1.0 / this->_universalTau[gVSit->first];
-			double invgtau2 = invgtau * invgtau;
-			double previousVelocity[3];
-			for(unsigned d = 0; d < 3; d++)
-			{
-				previousVelocity[d] = invgN * _globalPriorVelocitySums[d][gVSit->first].front();
-				this->_globalPriorVelocitySums[d][gVSit->first].pop_front();
-				this->_universalAdditionalAcceleration[d][gVSit->first]
-					+= dtConstantAcc * invgtau2 *
-					( this->_globalTargetVelocity[d][gVSit->first]
-					  - 2.0*this->_globalVelocitySum[d][gVSit->first]*invgN
-					  + previousVelocity[d] );
-			}
-#ifndef NDEBUG
-			global_log->debug() << "accelerator no. " << gVSit->first 
-				<< "previous vz: " << previousVelocity[2] 
-				<< "current vz: " << _globalVelocitySum[2][gVSit->first]*invgN << endl;
-#endif
-		}
-	}
-
-	domainDecomp->collCommInit(7*this->_localN.size());
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin();
-			lNit != this->_localN.end();
-			lNit++ )
-	{
-		domainDecomp->collCommAppendUnsLong(_globalN[lNit->first]);
-		for(int d=0; d < 3; d++)
-		{
-			domainDecomp->collCommAppendDouble(
-					this->_universalAdditionalAcceleration[d][lNit->first]
-					);
-			domainDecomp->collCommAppendDouble(
-					this->_globalVelocitySum[d][lNit->first]
-					);
-		}
-	}
-	domainDecomp->collCommBroadcast();
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin();
-			lNit != this->_localN.end();
-			lNit++ )
-	{
-		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
-		for(int d=0; d < 3; d++)
-		{
-			this->_universalAdditionalAcceleration[d][lNit->first]
-				= domainDecomp->collCommGetDouble();
-			this->_globalVelocitySum[d][lNit->first]
-				= domainDecomp->collCommGetDouble();
-		}
-	}
-	domainDecomp->collCommFinalize();
-}
-
-double Domain::getDirectedVelocity(unsigned cosetid, unsigned d)
-{
-	if(!this->_localRank) 
-		return this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
-	else return 0.0;
-}
-
-double Domain::getUniformAcceleration(unsigned cosetid)
-{
-	double aa = 0.0;
-	for(unsigned d = 0; d < 3; d++)
-		aa += _universalAdditionalAcceleration[d][cosetid] * _universalAdditionalAcceleration[d][cosetid];
-	return sqrt(aa);
-}
-double Domain::getUniformAcceleration(unsigned cosetid, unsigned d)
-{
-	return this->_universalAdditionalAcceleration[d][cosetid];
-}
-
-double Domain::getMissingVelocity(unsigned cosetid, unsigned d)
-{
-	double vd = this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
-	return this->_globalTargetVelocity[d][cosetid] - vd;
 }
 
 void Domain::setupProfile(unsigned xun, unsigned yun, unsigned zun)

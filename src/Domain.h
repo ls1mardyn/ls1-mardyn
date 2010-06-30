@@ -31,6 +31,7 @@
 class Molecule;
 class ParticleContainer;
 class DomainDecompBase; 
+class PressureGradient;
 
 //! @brief This class is used to read in the phasespace and to handle macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -54,7 +55,7 @@ class DomainDecompBase;
 class Domain{
  public:
   //! The constructor sets _localRank to rank and initializes all member variables 
-  Domain(int rank);
+  Domain(int rank, PressureGradient* pg);
 
   //! @brief reads in the data of all molecules
   //! 
@@ -348,46 +349,7 @@ class Domain{
     //! @param tst internal ID of the respective thermostat
     void enableUndirectedThermostat(int thermostat);
 
-    //! @brief assigns a coset ID to a component (ID)
-    void assignCoset(unsigned cid, unsigned cosetid) { _universalComponentSetID[cid] = cosetid; }
-    //! @brief sets the information on the acceleration model for one coset
-    void specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep);
-    //! @brief sets the number of timesteps between two updates of the uniform acceleration
-    void setUCAT(unsigned uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
-    //! @brief returns the number of timesteps between two updates of the uniform acceleration
-    unsigned getUCAT() { return this->_universalConstantAccelerationTimesteps; }
-    //! @brief are there any cosets?
-    bool isAcceleratingUniformly() { return ( (this->_universalTau.size() > 0)
-                                              && (this->_universalConstantAccelerationTimesteps > 0) ); }
-    //! @brief updates the intensity and direction of the uniform acceleration
-    void determineAdditionalAcceleration
-    (
-        DomainDecompBase* domainDecomp,
-        ParticleContainer* molCont, double dtConstantAcc
-    );
-    //! @brief returns the acceleration map (necessary for passing data to the integrator)
-	std::map<unsigned, double>* getUAA() { return this->_universalAdditionalAcceleration; }
-    //! @brief returns the cosetid of a component (0 for unaccelerated components)
-    unsigned getComponentSet(unsigned cid)
-    {
-       if(_universalComponentSetID.find(cid) == _universalComponentSetID.end()) return 0;
-       else return this->_universalComponentSetID[cid];
-    }
-    //! @brief returns the directed velocity for a component set
-    //! @param cosetid ID of the component set
-    //! @param d x direction (0), y direction (1), or z direction (2)
-    double getDirectedVelocity(unsigned cosetid, unsigned d);
-    //! @brief returns the absolute external acceleration for a component set
-    //! @param cosetid ID of the component set
-    double getUniformAcceleration(unsigned cosetid);
-    //! @brief returns the external acceleration for a component set
-    //! @param cosetid ID of the component set
-    //! @param d x direction (0), y direction (1), or z direction (2)
-    double getUniformAcceleration(unsigned cosetid, unsigned d);
-    //! @brief returns the difference between the desired velocity and the global average velocity
-    double getMissingVelocity(unsigned cosetid, unsigned d);
-    //! @brief total number of particles that belong to the specified component set
-    double getCosetN(unsigned cosetid) { return this->_globalN[cosetid]; }
+	PressureGradient* getPG() { return this->_universalPG; }
 
     void setupProfile(unsigned xun, unsigned yun, unsigned zun);
     void considerComponentInProfile(int cid); 
@@ -396,15 +358,10 @@ class Domain{
     void outputProfile(const char* prefix);
     void resetProfile();
 
-    unsigned maxCoset() { return this->_universalTau.size(); }
-
-	/* FIXME: this functions are superflous as the molecule container class 
-	 * includes this functionality! */
     unsigned long N() {return _globalNumMolecules;}
     unsigned long N(unsigned cid) { return _components[cid].numMolecules(); }
 
-	/* FIXME: this function is absolutely missleading! */
-    void Nadd(unsigned cid, int N, int localN);
+   void Nadd(unsigned cid, int N, int localN);
 
    double getGlobalLength(int d) { return _globalLength[d]; }
    double getGlobalVolume() { return (_globalLength[0] *  _globalLength[1] *  _globalLength[2]); }
@@ -479,7 +436,6 @@ class Domain{
     //! a thermostat ID different from zero.
 	std::map<int, int> _componentToThermostatIdMap;
 	
-	/* FIXME: The following values should be provided by the particle container. */
     //! _localThermostatN[0] and _universalThermostatN[0] are always the total number
     //! of particles in the subdomain and, respectively, the entire domain
 	std::map<int, unsigned long> _localThermostatN;
@@ -503,28 +459,7 @@ class Domain{
 	/* FIXME: This info should go into an ensemble class */
     bool _universalNVE;
 
-    /// calculate new value of the uniform acceleration each # timesteps
-    unsigned _universalConstantAccelerationTimesteps;
-    /// assigns a component set ID to some of the components
-	std::map<unsigned, unsigned> _universalComponentSetID;
-    /// local number of molecules that belong to a given component set ID
-	std::map<unsigned, unsigned long> _localN;
-    /// global number of molecules that belong to a given component set ID
-	std::map<unsigned, unsigned long> _globalN;
-    /// local sum of the velocity vectors corresponding to a given component set ID
-	std::map<unsigned, long double> _localVelocitySum[3];
-    /// global sum of the velocity vectors corresponding to a given component set ID
-	std::map<unsigned, long double> _globalVelocitySum[3];
-    /// uniform acceleration
-	std::map<unsigned, double> _universalAdditionalAcceleration[3];
-    /// target average velocity for the molecules of a coset
-	std::map<unsigned, double> _globalTargetVelocity[3];
-    /// delay variable tau of a coset
-	std::map<unsigned, double> _universalTau;
-    /// queue of previously recorded velocity sums
-	std::map<unsigned, std::deque<long double> > _globalPriorVelocitySums[3];
-    /// number of items in the velocity queue
-	std::map<unsigned, unsigned> _globalVelocityQueuelength;
+	PressureGradient* _universalPG;
 
     //! computation of the isochoric heat capacity
     unsigned _globalUSteps;

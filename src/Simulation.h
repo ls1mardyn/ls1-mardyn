@@ -21,13 +21,13 @@
 
 #include "ensemble/GrandCanonical.h"
 
-
-
 #ifndef SIMULATION_SRC
 class Simulation;
 //! Global pointer to the simulation object. Do not use directly. Instead use the reference.
 extern Simulation* global_simulation;
 #endif
+
+class PressureGradient;
 
 //! Reference to the global simulation object 
 #define _simulation (*global_simulation)
@@ -324,6 +324,9 @@ public:
 
   // this should be obvious, right?
   unsigned _numberOfComponents;
+
+  //! Flow regulation
+  PressureGradient* _pressureGradient;
     
   //! Datastructure for finding neighbours efficiently
   ParticleContainer* _moleculeContainer;

@@ -3,6 +3,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
+#include "ensemble/PressureGradient.h"
 #include "utils/Logger.h"
 #include <climits>
 
@@ -223,7 +224,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			unsigned component_id, cosetid;
 			_phaseSpaceHeaderFileStream >> component_id >> cosetid;
 			component_id--; // FIXME: Component ID starting with 0 in program ...
-			domain->assignCoset( component_id, cosetid );
+			domain->getPG()->assignCoset( component_id, cosetid );
 		}
 		else if((token == "Accelerate") || (token == "A")) {
 			unsigned cosetid;
@@ -236,7 +237,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			double ainit[3];
 			for(unsigned d = 0; d < 3; d++) 
 				_phaseSpaceHeaderFileStream >> ainit[d];
-			domain->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+			domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
 		}
 		else {
 			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << endl;

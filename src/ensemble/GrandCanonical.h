@@ -26,7 +26,6 @@ class DomainDecompBase;
 class ParticleContainer;
 class Molecule;
 
-
 typedef ParticleContainer TMoleculeContainer;
 
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -131,3 +130,4 @@ class ChemicalPotential
    std::list<Molecule> reservoir;
 };
 #endif
+

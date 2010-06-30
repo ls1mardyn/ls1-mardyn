@@ -117,8 +117,11 @@ clean:
 	find -path '*/.deps/*' -type f -delete
 	find -type d -name .deps -delete
 
+clear: cleanall
+
 cleanall: clean
 	rm -f $(BINARY)
+	find -type f -name '*~' -delete
 	if [ -L $(BINARYbasename) ]; then rm -f $(BINARYbasename); fi
 
 #check:
