@@ -520,6 +520,23 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
       inputfilestream >> uCAT;
       _pressureGradient->setUCAT(uCAT);
     }
+    else if(token == "zetaFlow")
+    {
+       double zeta;
+       inputfilestream >> zeta;
+       _pressureGradient->setZetaFlow(zeta);
+    }
+    else if(token == "tauPrimeFlow")
+    {
+       double tauPrime;
+       inputfilestream >> tauPrime;
+       if(timestepLength == 0.0)
+       {
+          cout << "timestep missing.\n";
+          exit(1);
+       }
+       _pressureGradient->specifyTauPrime(tauPrime, timestepLength);
+    }
     else if (token == "profile") {
       unsigned xun, yun, zun;
       inputfilestream >> xun >> yun >> zun;
@@ -883,6 +900,7 @@ void Simulation::simulate() {
       }
       global_log->debug() << "Process the uniform acceleration" << endl;
       _integrator->accelerateUniformly(_moleculeContainer, _domain);
+      _pressureGradient->adjustTau(this->_integrator->getTimestepLength());
     }
 
     /*

@@ -28,7 +28,7 @@ class ParticleContainer;
 class PressureGradient
 {
  public:
-	PressureGradient(int rank) { this->_localRank = rank; };
+	PressureGradient(int rank);
 
 	//! @brief assigns a coset ID to a component (ID)
 	void assignCoset(unsigned cid, unsigned cosetid) { _universalComponentSetID[cid] = cosetid; }
@@ -38,6 +38,13 @@ class PressureGradient
 	void setUCAT(unsigned uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
 	//! @brief returns the number of timesteps between two updates of the uniform acceleration
 	unsigned getUCAT() { return this->_universalConstantAccelerationTimesteps; }
+	/// sets the zeta value for the flow controller
+	void setZetaFlow(double zeta) {
+		this->_universalConstantTau = false;
+		this->_universalZetaFlow = zeta;
+	}
+	void specifyTauPrime(double tauPrime, double dt);
+	void adjustTau(double dt);
 	//! @brief are there any cosets?
 	bool isAcceleratingUniformly() {
 		return ( (this->_universalTau.size() > 0)
@@ -103,6 +110,12 @@ class PressureGradient
 	std::map<unsigned, double> _globalTargetVelocity[3];
 	/// delay variable tau of a coset
 	std::map<unsigned, double> _universalTau;
+	/// is the tau parameter constant
+	bool _universalConstantTau;
+	/// zeta parameter of the flow regulation
+	double _universalZetaFlow;
+	/// tau prime (t') parameter of the flow regulation
+	double _universalTauPrime;
 	/// queue of previously recorded velocity sums
 	std::map<unsigned, std::deque<long double> > _globalPriorVelocitySums[3];
 	/// number of items in the velocity queue

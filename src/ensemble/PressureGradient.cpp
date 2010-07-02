@@ -12,6 +12,17 @@
 
 using namespace std;
 
+PressureGradient::PressureGradient(int rank) {
+	this->_localRank = rank;
+	this->_universalConstantAccelerationTimesteps = 0;
+	if(!rank)
+		for(unsigned d=0; d < 3; d++)
+			this->_globalVelocitySum[d] = map<unsigned, long double>();
+	this->_universalConstantTau = true;
+	this->_universalZetaFlow = 0.0;
+	this->_universalTauPrime = 0.0;
+}
+
 void PressureGradient::specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep)
 {
 	this->_localN[cosetid] = 0;
@@ -30,8 +41,10 @@ void PressureGradient::specifyComponentSet(unsigned cosetid, double v[3], double
 			this->_globalVelocitySum[d][cosetid] = 0.0;
 		}
 		this->_globalVelocityQueuelength[cosetid] = (unsigned)ceil(
+			(this->_universalTauPrime == 0.0)?
 				sqrt(this->_universalTau[cosetid] / (timestep*this->_universalConstantAccelerationTimesteps))
-				);
+				: this->_universalTauPrime / (timestep*this->_universalConstantAccelerationTimesteps)
+		);
 		cout << "coset " << cosetid << " will receive "
 			<< _globalVelocityQueuelength[cosetid] << " velocity queue entries." << endl;
 	}
@@ -197,5 +210,38 @@ double* PressureGradient::getAdditionalAcceleration(unsigned set)
    for(int d=0; d < 3; d++)
       retv[d] = this->_universalAdditionalAcceleration[d][set];
    return retv;
+}
+
+void PressureGradient::specifyTauPrime(double tauPrime, double dt)
+{
+   this->_universalTauPrime = tauPrime;
+   if(this->_localRank != 0) return;
+   if(this->_universalConstantAccelerationTimesteps == 0)
+   {
+      cout << "SEVERE ERROR: unknown UCAT!\n";
+      exit(78);
+   }
+   unsigned vql = (unsigned)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
+   map<unsigned, unsigned>::iterator vqlit;
+   for(vqlit = _globalVelocityQueuelength.begin(); vqlit != _globalVelocityQueuelength.end(); vqlit++)
+   {
+      vqlit->second = vql;
+      cout << "coset " << vqlit->first << " will receive "
+           << vqlit->second << " velocity queue entries.\n";
+   }
+}
+
+/*
+ * quadratische Variante
+ */
+void PressureGradient::adjustTau(double dt) {
+	if(this->_universalConstantTau) return;
+	map<unsigned, double>::iterator tauit;
+	double increment;
+	for(tauit = _universalTau.begin(); tauit != _universalTau.end(); tauit++)
+	{
+		increment = dt * this->_universalZetaFlow * sqrt(tauit->second);
+		tauit->second += increment;
+	}
 }
 
