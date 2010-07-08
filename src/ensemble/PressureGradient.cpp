@@ -7,9 +7,12 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 
+#include "utils/Logger.h"
+
 #include <cmath>
 #include <iostream>
 
+using namespace Log;
 using namespace std;
 
 PressureGradient::PressureGradient(int rank) {
