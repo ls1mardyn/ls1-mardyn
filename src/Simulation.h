@@ -34,6 +34,8 @@ class PressureGradient;
 
 #include <string>
 #include <list>
+#include <vector>
+#include <string>
 
 #ifdef STEEREO
   class SimSteering;
@@ -99,7 +101,7 @@ public:
   //! The Constructor processes the command line arguments
   //! @param argc Pointer to the number of arguments passed to the programm. Needed for MPI
   //! @param argv Pointer to the list of arguments, also needed for MPI
-  Simulation(int *argc, char ***argv);
+  Simulation(optparse::Values& options, std::vector<std::string>& args);
 
   //! @brief destruct simulation object
   //!
@@ -111,8 +113,6 @@ public:
   //! for the different parallelization schemes. e.g. terminating other processes in MPI parallel
   //! execution mode.
   void exit(int exitcode);
-
-  const optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op);
 
   //! @brief process configuration file
   //! 

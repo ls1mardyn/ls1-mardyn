@@ -21,6 +21,13 @@ string gettimestring(const char* fmt) {
   return date;
 }
 
+/**
+ * Align a number to the right by padding with a filling character.
+ *
+ * @param number the number value to be aligned
+ * @param num_digits the number of digits
+ * @param c character used for filling up
+ */
 string aligned_number(int number, int num_digits, char c) {
   stringstream numstream;
   numstream.fill(c);

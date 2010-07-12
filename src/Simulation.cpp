@@ -77,12 +77,13 @@ using namespace std;
 
 Simulation* global_simulation;
 
-Simulation::Simulation(int *argc, char ***argv) {
+Simulation::Simulation(optparse::Values& options, vector<string>& args ) {
 #ifdef PARALLEL
   MPI_Init(argc, argv);
 #endif
 
   global_simulation = this;
+  unsigned int numargs = args.size();
 
   /* Initialize the global log file */
   //string logfileName("MarDyn");
@@ -92,15 +93,6 @@ Simulation::Simulation(int *argc, char ***argv) {
   global_log->set_mpi_output_root(0);
 #endif
 
-  OptionParser op;
-  Values options = initOptions(*argc, *argv, op);
-  vector<string> args = op.args();
-  unsigned int numargs = args.size();
-
-  if (numargs < 1) {
-    op.print_usage();
-    exit(1);
-  }
   char *info_str = new char[MAX_INFO_STRING_LENGTH];
 
   get_compiler_info(&info_str);
@@ -190,33 +182,6 @@ void Simulation::exit(int exitcode) {
 #endif
 }
 
-const Values& Simulation::initOptions(int argc, char *argv[], OptionParser& op) {
-
-  op = OptionParser()
-      // The last two optional positional arguments are only here for backwards-compatibility
-      .usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]")
-      .version("%prog 1.0")
-      .description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
-      // .epilog("background info?")
-  ;
-
-  op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-  op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
-  op.add_option("-v", "--verbose") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-
-  OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
-  dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
-  char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
-  dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
-  dgroup.add_option("--cutoff-radius") .type("float") .set_default(5.0) .help("radius of sphere around a particle in which forces are considered (default: %default)");
-  dgroup.add_option("--cells-in-cutoff") .type("int") .set_default(2) .help("number of cells in cutoff-radius cube (default: %default); only used by LinkedCells particle container");
-  char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition" };
-  dgroup.add_option("--domain-decomposition") .choices(&dd_choices[0], &dd_choices[2]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
-  dgroup.add_option("--timestep-length") .type("float") .set_default(0.004) .help("length of one timestep in TODO (default: %default)");
-  op.add_option_group(dgroup);
-
-  return op.parse_args(argc, argv);
-}
 
 void Simulation::initConfigFile(const string& inputfilename) {
   if (inputfilename.rfind(".xml") == inputfilename.size() - 4) {
