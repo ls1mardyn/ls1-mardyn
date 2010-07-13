@@ -1,6 +1,3 @@
-#include "Simulation.h"
-
-#include "utils/OptionParser.h"
 #include <iostream>
 #include <iomanip>
 #include <ctime>
@@ -10,6 +7,13 @@
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #endif
 
+#include "utils/OptionParser.h"
+#include "utils/Logger.h"
+#include "utils/compile_info.h"
+#include "Simulation.h"
+
+
+using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
 using optparse::Values;
@@ -31,6 +35,38 @@ optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op
 //! is actually responsible for the simulation
 //!
 int main(int argc, char** argv) {
+
+#ifdef PARALLEL
+  MPI_Init(&argc, &argv);
+#endif
+  /* Initialize the global log file */
+  //string logfileName("MarDyn");
+  //global_log = new Log::Logger(Log::All, logfileName);
+  global_log = new Log::Logger(Log::Info);
+#ifdef PARALLEL
+  global_log->set_mpi_output_root(0);
+#endif
+
+  char *info_str = new char[MAX_INFO_STRING_LENGTH];
+  get_compiler_info(&info_str);
+  global_log->info() << "Compiler: " << info_str << endl;
+  get_compile_time(&info_str);
+  global_log->info() << "Compiled: " << info_str << endl;
+#ifdef PARALLEL
+  get_mpi_info(&info_str);
+  global_log->info() << "MPI library: " << info_str << endl;
+#endif
+  get_timestamp(&info_str);
+  global_log->info() << "Started: " << info_str << endl;
+  get_host(&info_str);
+  global_log->info() << "Execution host: " << info_str << endl;
+#ifdef PARALLEL
+  int world_size = 1;
+  MPI_Comm_size( MPI_COMM_WORLD, &world_size );
+  global_log->info() << "Running with " << world_size << " processes." << endl;
+#endif
+
+
 
   cout.precision(6);
 
@@ -59,6 +95,9 @@ int main(int argc, char** argv) {
   runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
 
   cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
+#ifdef PARALLEL
+  MPI_Finalize();
+#endif
 }
 
 

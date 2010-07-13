@@ -61,7 +61,6 @@
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
-#include "utils/compile_info.h"
 
 #include <iostream>
 #include <iterator>
@@ -78,41 +77,8 @@ using namespace std;
 Simulation* global_simulation;
 
 Simulation::Simulation(optparse::Values& options, vector<string>& args ) {
-#ifdef PARALLEL
-  MPI_Init(argc, argv);
-#endif
-
   global_simulation = this;
   unsigned int numargs = args.size();
-
-  /* Initialize the global log file */
-  //string logfileName("MarDyn");
-  //global_log = new Log::Logger(Log::All, logfileName);
-  global_log = new Log::Logger(Log::Info);
-#ifdef PARALLEL
-  global_log->set_mpi_output_root(0);
-#endif
-
-  char *info_str = new char[MAX_INFO_STRING_LENGTH];
-
-  get_compiler_info(&info_str);
-  global_log->info() << "Compiler: " << info_str << endl;
-  get_compile_time(&info_str);
-  global_log->info() << "Compiled: " << info_str << endl;
-#ifdef PARALLEL
-  get_mpi_info(&info_str);
-  global_log->info() << "MPI library: " << info_str << endl;
-#endif
-
-  get_timestamp(&info_str);
-  global_log->info() << "Started: " << info_str << endl;
-  get_host(&info_str);
-  global_log->info() << "Execution host: " << info_str << endl;
-  int world_size = 1;
-#ifdef PARALLEL
-  MPI_Comm_size( MPI_COMM_WORLD, &world_size );
-#endif
-  global_log->info() << "Running with " << world_size << " processes." << endl;
 
 #ifndef PARALLEL
   global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
@@ -158,6 +124,7 @@ Simulation::Simulation(optparse::Values& options, vector<string>& args ) {
     _outputPrefix = args[2];
   if (options.is_set_by_user("outputprefix"))
     _outputPrefix = options["outputprefix"];
+  global_log->info() << "Using output prefix '" << _outputPrefix << "'" << endl;
 
   if (options.is_set("verbose") && options.get("verbose"))
     global_log->set_log_level(Log::All);
@@ -167,9 +134,6 @@ Simulation::Simulation(optparse::Values& options, vector<string>& args ) {
 }
 
 Simulation::~Simulation() {
-#ifdef PARALLEL
-  MPI_Finalize();
-#endif
 }
 
 void Simulation::exit(int exitcode) {
