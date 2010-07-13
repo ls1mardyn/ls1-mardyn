@@ -34,7 +34,11 @@ public:
     for (int i = 0; i < 3; i++)
       displacements[i] -= base;
 
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
     MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType);
+#else
+	MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType);
+#endif
     MPI_Type_commit(&sendPartType);
   }
 
