@@ -103,13 +103,13 @@ int main(int argc, char** argv) {
 
 void runTests() {
 #ifdef CPPUNIT_TESTS
-	cout << "Running unit tests!" << endl;
-  CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-  CppUnit::TextUi::TestRunner runner;
-  runner.addTest( registry.makeTest() );
-  runner.run();
+	global_log->info() << "Running unit tests!" << endl;
+	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
+	CppUnit::TextUi::TestRunner runner;
+	runner.addTest( registry.makeTest() );
+	runner.run();
 #else
-  cout << endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << endl << endl;
+	global_log->error() << endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << endl << endl;
 #endif
 }
 
@@ -117,12 +117,12 @@ void runTests() {
 Values& initOptions(int argc, char *argv[], OptionParser& op) {
 
 	op = OptionParser()
-        						// The last two optional positional arguments are only here for backwards-compatibility
-        						.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n\nUse option --help to display all available options.")
-        						.version("%prog 1.0")
-        						.description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
-        						// .epilog("background info?")
-        						;
+		// The last two optional positional arguments are only here for backwards-compatibility
+		.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n\nUse option --help to display all available options.")
+		.version("%prog 1.0")
+		.description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
+		// .epilog("background info?")
+		;
 
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
