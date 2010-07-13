@@ -5,23 +5,37 @@ CFG ?= gcc
 PARTYPE ?= SEQ
 
 # choose target: DEBUG|RELEASE
-TARGET ?= RELEASE
+TARGET ?= DEBUG
 
 # compile using depmode?
 DEPS ?= 0
+
+#build unit tests?
+TESTS ?= 0
 
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
  $(warning ERROR: current directory $(CURDIR) seems not to be a source directory)
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -v "parallel/")
-SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy")
-SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -v "Dummy")
-SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
+#build name and include config file
+MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
+
+ifneq ($(CFGFILE),)
+ $(info including $(CFGFILE) )
+ include $(CFGFILE)
+else
+ $(error ERROR: config file for $(CFG) not found - no include )
+endif
+
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "/tests/")
+SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -v "/tests/")
+SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -v "Dummy" | grep -v "/tests/")
+SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 
+
 
 OBJECTS = $(SOURCES:.cpp=.o)
-
 # boost dependency
 #BOOST_VER := boost_1_34_0
 
@@ -32,7 +46,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 #OBJECTS += $(patsubst %.cpp,%.o,$(shell find External/ticpp -name '*.cpp'))
 
 #INCLUDES = -I$(shell pwd)
-INCLUDES = -I$(CURDIR) -I$(CURDIR)/External
+INCLUDES = -I$(CURDIR) -I$(CURDIR)/External $(CPPUNIT_INCLUDES)
 
 #ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
 # $(info using BOOST library from system: $(LIBRARY_BOOST_SYSTEM))
@@ -52,24 +66,16 @@ ifneq ($(realpath .svn),)
   svnVERSION = $(shell svnversion | sed -e "s/:/-/")
   ifneq ($(svnVERSION),)
     BINARY = $(BINARYbasename)_$(svnVERSION).$(PARTYPE)_$(TARGET)
+  else
+    BINARY = $(BINARYbasename).$(PARTYPE)_$(TARGET)
   endif
 else
   BINARY = $(BINARYbasename).$(PARTYPE)_$(TARGET)
 endif
 
-MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
-
-ifneq ($(CFGFILE),)
- $(info including $(CFGFILE) )
- include $(CFGFILE)
-else
- $(error ERROR: config file for $(CFG) not found - no include )
-endif
-
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK
-LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) -lrt
+LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) $(CPPUNIT_LINK_ARGS) -lrt
 
 ifeq ($(DEPS),1)
 DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
@@ -77,7 +83,7 @@ else
 DEPCOMP =
 endif
 
-$(BINARY): .deps $(OBJECTS)
+$(BINARY): .deps $(OBJECTS) cppunit
 	@echo "building $(BINARY)"
 	$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)
 	$(shell if [ ! -f $(BINARYbasename) -o -L $(BINARYbasename) ]; then ln -sf $(BINARY) $(BINARYbasename); fi)
@@ -95,6 +101,7 @@ help:
 	@echo "make PARTYPE=SEQ | PAR       sequential or parallel (MPI) build"
 	@echo "make TARGET=DEBUG | RELEASE  debugging / non optimized build"
 	@echo "make DEPS=0 | 1              compile using dependancy tracking"
+	@echo "make TESTS=0 | 1     compile with or without unit tests (and build cppunit if neccessary)"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
@@ -119,7 +126,7 @@ clean:
 
 clear: cleanall
 
-cleanall: clean
+cleanall: clean cppunit_clean
 	rm -f $(BINARY)
 	find -type f -name '*~' -delete
 	if [ -L $(BINARYbasename) ]; then rm -f $(BINARYbasename); fi
@@ -137,13 +144,6 @@ cleanall: clean
 #	@echo " includes: $(INCLUDES)"
 #endif
 
-#boost:
-#	cd ../libs/$(BOOST_VER) && ./configure --with-libraries=program_options
-#	cd ../libs/$(BOOST_VER) && make
-
-#cleanboost:
-#	cd ../libs/$(BOOST_VER) && make distclean
-
 # create .deps subdirectories containing dependency information
 .deps:
 ifeq ($(DEPS),1)
@@ -152,3 +152,8 @@ endif
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
+  
+#include makefile for cppunit tests
+CPPUNIT_MAKEFILE := $(realpath $(MAKEFILEDIR)cppunit.mk )
+include $(CPPUNIT_MAKEFILE)
+

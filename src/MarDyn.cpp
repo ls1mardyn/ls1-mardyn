@@ -75,14 +75,14 @@ int main(int argc, char** argv) {
   vector<string> args = op.args();
   unsigned int numargs = args.size();
 
-  if (numargs < 1) {
-    op.print_usage();
-    exit(1);
-  }
-
   bool tests = options.get("tests");
   if (tests) {
     runTests();
+  }
+
+  if (numargs < 1) {
+    op.print_usage();
+    exit(1);
   }
 
   Simulation simulation(options, args);
@@ -100,7 +100,6 @@ int main(int argc, char** argv) {
 #endif
 }
 
-
 void runTests() {
 #ifdef CPPUNIT_TESTS
 	global_log->info() << "Running unit tests!" << endl;
@@ -115,6 +114,8 @@ void runTests() {
 
 
 Values& initOptions(int argc, char *argv[], OptionParser& op) {
+
+	cout << "Size of args: " << argc << endl;
 
 	op = OptionParser()
 		// The last two optional positional arguments are only here for backwards-compatibility
