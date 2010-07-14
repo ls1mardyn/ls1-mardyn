@@ -1,9 +1,0 @@
-#!/bin/sh
-#
-rm -f ls1*
-make -f Makefile.seq_deb clean
-make -f Makefile.seq_deb
-make -f Makefile.par_run clean
-make -f Makefile.par_run
-make -f Makefile.par_deb clean
-make -f Makefile.par_deb
