@@ -5,7 +5,7 @@ CFG ?= gcc
 PARTYPE ?= SEQ
 
 # choose target: DEBUG|RELEASE
-TARGET ?= DEBUG
+TARGET ?= RELEASE
 
 # compile using depmode?
 DEPS ?= 0
