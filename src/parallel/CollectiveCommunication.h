@@ -152,7 +152,11 @@ public:
       disps[i] = disp;
       disp += sizeof(valType);
     }
-    MPI_Type_create_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType);
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
+	MPI_Type_create_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType);
+#else
+	MPI_Type_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType);
+#endif
     MPI_Type_commit(&_valuesType);
   }
 
