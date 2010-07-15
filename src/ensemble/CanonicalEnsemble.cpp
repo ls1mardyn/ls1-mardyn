@@ -49,7 +49,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 #endif
 			global_log->debug() << "Number of molecules in component " << cid << ": " << numMolecules[cid] << endl;
 			_N += numMolecules[cid];
-			(*_components)[cid].setnumMolecules(numMolecules[cid]);
+			(*_components)[cid].setNumMolecules(numMolecules[cid]);
 		}
     }
 

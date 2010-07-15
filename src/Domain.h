@@ -359,7 +359,7 @@ class Domain{
     void resetProfile();
 
     unsigned long N() {return _globalNumMolecules;}
-    unsigned long N(unsigned cid) { return _components[cid].numMolecules(); }
+    unsigned long N(unsigned cid) { return _components[cid].getNumMolecules(); }
 
    void Nadd(unsigned cid, int N, int localN);
 

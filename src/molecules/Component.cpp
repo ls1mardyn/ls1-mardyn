@@ -31,7 +31,7 @@ Component::Component(unsigned int id)
   m_I[0]=m_I[1]=m_I[2]=m_I[3]=m_I[4]=m_I[5]=0.;
   m_rot_dof=0;
   m_Ipa[0]=m_Ipa[1]=m_Ipa[2]=0.;
-  m_numMolecules=0;
+  _numMolecules=0;
   this->maximalTersoffExternalRadius = 0.0;
 
   m_ljcenters = vector<LJcenter>();

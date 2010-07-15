@@ -89,10 +89,11 @@ public:
   const Tersoff& tersoff(unsigned int i) const { return m_tersoff[i]; }
   
   //! @brief set the number of Molecules (global) which have this component type
-  void setnumMolecules(int num) {m_numMolecules = num; } 
-  void incrnumMolecules() { ++m_numMolecules; }
-  unsigned long numMolecules() const { return m_numMolecules; }
-  void Nadd(int N) { this->m_numMolecules += N; }
+  void setNumMolecules(unsigned long num) {_numMolecules = num; } 
+  void incNumMolecules() { ++_numMolecules; }
+  unsigned long getNumMolecules() const { return _numMolecules; }
+  // TODO: The following method is missleading.
+  void Nadd(int N) { _numMolecules += N; }
 
   void addLJcenter(
      double x, double y, double z, double m, double eps,
@@ -142,7 +143,7 @@ private:
   double m_Ipa[3];  // moments of inertia for principal axes
 
   /* cached values, set by ensemble class! */
-  unsigned long m_numMolecules; // number of molecules for this molecule type
+  unsigned long _numMolecules; // number of molecules for this molecule type
   double _E_trans;  // translational energy
   double _E_rot;  // rotational energy
 

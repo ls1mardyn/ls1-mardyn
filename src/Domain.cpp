@@ -631,7 +631,7 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 	unsigned long nummolecules=0;
 	for(unsigned int i=0;i<numcomp;++i) {
 		Component& ci=_components[i];
-		nummolecules+=ci.numMolecules();
+		nummolecules+=ci.getNumMolecules();
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
 		unsigned int numdipolesi=ci.numDipoles();
@@ -656,7 +656,7 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 		}
 		double my2 = 0.0;
 		for(unsigned d = 0; d < 3; d++) my2 += chargeBalance[d] * chargeBalance[d];
-		MySelbstTerm += my2 * ci.numMolecules();
+		MySelbstTerm += my2 * ci.getNumMolecules();
 
 		for(unsigned int j=0;j<numcomp;++j) {
 			Component& cj=_components[j];
@@ -690,7 +690,7 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 
 					if(uLJshift6 == 0.0)
 					{
-						double fac=double(ci.numMolecules())*double(cj.numMolecules())*eps24;
+						double fac=double(ci.getNumMolecules())*double(cj.getNumMolecules())*eps24;
 						if(tau1==0. && tau2==0.)
 						{
 							UpotCorrLJ+=fac*(TICCu(-6,cutoffRadiusLJ,sig2)-TICCu(-3,cutoffRadiusLJ,sig2));

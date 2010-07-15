@@ -329,7 +329,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			particleContainer->addParticle(m1);
 
 			//(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);
-			dcomponents[componentid].incrnumMolecules();
+			dcomponents[componentid].incNumMolecules();
 			domain->setglobalRotDOF(dcomponents[componentid].rot_dof()+domain->getglobalRotDOF());
 			if(id > maxid) maxid = id;
 
