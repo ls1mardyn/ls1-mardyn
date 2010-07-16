@@ -4,6 +4,7 @@
 
 #ifdef CPPUNIT_TESTS
 #include<cppunit/ui/text/TestRunner.h>
+#include<cppunit/TestResultCollector.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #endif
 
@@ -19,7 +20,9 @@ using optparse::OptionGroup;
 using optparse::Values;
 using namespace std;
 
-void runTests();
+//! execute unit tests
+//! @return false if no errors occured, true otherwise
+bool runTests();
 
 
 optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op);
@@ -77,7 +80,8 @@ int main(int argc, char** argv) {
 
   bool tests = options.get("tests");
   if (tests) {
-    runTests();
+    bool testresult = runTests();
+    exit(testresult);
   }
 
   if (numargs < 1) {
@@ -100,15 +104,20 @@ int main(int argc, char** argv) {
 #endif
 }
 
-void runTests() {
+bool runTests() {
 #ifdef CPPUNIT_TESTS
 	global_log->info() << "Running unit tests!" << endl;
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( registry.makeTest() );
 	runner.run();
+
+	const CppUnit::TestResultCollector& collector = runner.result();
+	bool testresult = collector.testFailuresTotal() != 0;
+	return testresult;
 #else
 	global_log->error() << endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << endl << endl;
+	return false;
 #endif
 }
 
