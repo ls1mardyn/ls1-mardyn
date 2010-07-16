@@ -3,7 +3,7 @@
 #---------------------------------------------------------------------------
 # General configuration options
 #---------------------------------------------------------------------------
-PROJECT_NAME                        = DefaultProjectName
+PROJECT_NAME                        = ls1/Mardyn 
 PROJECT_NUMBER                      = 
 INPUT                               = .
 OUTPUT_DIRECTORY                    = doxys_docs/

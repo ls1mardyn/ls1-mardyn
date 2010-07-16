@@ -11,7 +11,7 @@ TARGET ?= RELEASE
 DEPS ?= 0
 
 #build unit tests?
-TESTS ?= 0
+TESTS ?= 1
 
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
@@ -114,6 +114,9 @@ help:
 	#@echo "make cleanboost  clean bundled boost library"
 
 all: check $(BINARY)
+
+test: 
+	./$(BINARY) -t
 
 #list available configurations
 cfg_list:
