@@ -1,3 +1,7 @@
+#!/bin/sh
+#
+# build several configurations and run unit tests
+
 BUILD1="PARTYPE=SEQ TARGET=DEBUG TESTS=1"
 BUILD2="PARTYPE=SEQ TARGET=RELEASE TESTS=1"
 BUILD3="PARTYPE=SEQ TARGET=RELEASE TESTS=0"
