@@ -4,8 +4,8 @@
 
 Documentation available:
 
-- \ref unittests "Writing Unit Tests for Mardyn"
-<br/> <br/>
-- <a href="../doc/styleguide.pdf">Style Guide</a> 
+|| Ressource   || Comment
+| "Unit Tests" |  Description on how to build, execute and write unit tests
+| <a href="../doc/styleguide.pdf">Style Guide</a> | The Mardyn Styleguide
 
 */
