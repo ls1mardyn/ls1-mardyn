@@ -1,11 +1,11 @@
 
-/** \page unittests "Unit Tests"
+/** \page "Unit Tests"
 
 The project ls1/Mardyn uses the testing framework CppUnit for writing unit tests. 
 Following you find a short description on building Mardyn with CppUnit, testing 
 your build and writing new tests. 
 
-\section cppunnit_building Building Mardyn with Unit Tests (CppUnit)
+!!! Building Mardyn with Unit Tests (CppUnit)
 
 To build Mardyn with unit tests generally, the following conditions have to be met:
 - the macro CPPUNIT_TESTS has to be defined when compiling Mardyn
@@ -15,19 +15,19 @@ To build Mardyn with unit tests generally, the following conditions have to be m
 If building without CppUnit, all source code in the  *\\test-directories cannot be
 compiled and linked, so it has to be excluded from the build. 
 
-\subsection built_in Using the CppUnit-Source from the Mardyn-repository
+!! Using the CppUnit-Source from the Mardyn-repository
 
 The simplest way is to use the makefile distributed, with the option TESTS=1. Then 
 the CppUnit source code which comes with the svn version is compiled and linked. Also all
 tests will be compiled and linked.
 
-\subsection library Using a CppUnit Library
+!! Using a CppUnit Library
 
 If there is already a cppUnit library on your system, it might be convenient to 
 use that one. Configure your build-system so that the conditions listed above 
 are met, or replace the file makefile/cppunit.mk.  
 
-\section executing_tests Executing the unit tests
+!!! Executing the unit tests
 
 After building Mardyn with unit tests, call Mardyn with the commandline arguments
  "-t" or "--tests". The tests will then be executed. 
@@ -35,13 +35,13 @@ After building Mardyn with unit tests, call Mardyn with the commandline argument
 \note In cases you use the cppunit source code from the Mardyn repository, also 
 the tests which test cppUnit itself will be executed.  
 
-\section organisation Organisation of the tests
+!!! Organisation of the tests
 
 All tests are organized in directories called \b tests. A test-directory contains
 the tests for the code contained in its parent directory. It should be possible 
 to derive the name of the class under test from the classname of the testcase.
 
-\section writing_tests Writing unit tests
+!!! Writing unit tests
 
 Here I explain the testcase tests/CommonTest as a simple example, to demonstrate
 how to write testcases with cppunit. 
@@ -145,7 +145,7 @@ void CommonTest::testGetTimeString() {
 }
 \endcode
 
-\section thoughts A few general thoughts about tests
+!!! A few general thoughts about tests
 
 - Think about testability, when you write code.
   Try to keep your methods small and simple. If your method is just too long or 
@@ -165,6 +165,6 @@ void CommonTest::testGetTimeString() {
   if certain parts of your code are likely to contain several bugs, or if code
   is rather complex.
 
-For more detailed information and further available options see the \ref cppunit_cookbook
+For more detailed information and further available options see the "CppUnit Cookbook"
 
 */

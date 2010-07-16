@@ -1,8 +1,8 @@
-/*! \page cppunit_cookbook CppUnit Cookbook
+/*! \page "CppUnit Cookbook"
 Here is a short cookbook to help you get started.
 
 
-\section simple_test_case Simple Test Case
+!! Simple Test Case
 You want to know whether your code is working. 
 
 How do you do it? 
@@ -52,10 +52,8 @@ this, use a fixture.
 
 
 
+!! Test Fixture
 
-
-
-\section fixture Fixture
 A fixture is a known set of objects that 
 serves as a base for a set of test cases. 
 Fixtures come in very handy when you are 
@@ -152,7 +150,7 @@ over the course of our development.
 
 
 
-\section test_case Test Case
+!! Test Case
 
 How do you write and invoke individual tests using a fixture? 
 
@@ -216,7 +214,7 @@ Once you have several tests, organize them into a suite.
 
 
 
-\section suite Suite
+!! Suite
 
 How do you set up your tests so that you can run them all at once?
 
@@ -259,7 +257,7 @@ suite.run( &result );
 
 
 
-\section test_runner TestRunner
+!! TestRunner
 
 How do you run your tests and collect their results?
 
@@ -327,7 +325,7 @@ like division by zero and other exceptions thrown by the C++ runtime or your cod
 
 
 
-\section helper_macros Helper Macros
+!! Helper Macros
 
 As you might have noticed, implementing the fixture static <tt>suite()</tt> 
 method is a repetitive and error prone task. A \ref WritingTestFixture set of 
@@ -425,7 +423,7 @@ If the expected exception is not thrown, then a assertion failure is reported.
 
 
 
-\section test_factory_registry TestFactoryRegistry
+!! TestFactoryRegistry
 
 The TestFactoryRegistry was created to solve two pitfalls:
 - forgetting to add your fixture suite to the test runner (since it is in 
@@ -482,7 +480,7 @@ contains all the test suite registered using CPPUNIT_TEST_SUITE_REGISTRATION().
 
 
 
-\section post_build_check Post-build check
+!! Post-build check
 
 Well, now that we have our unit tests running, how about integrating unit 
 testing to our build process ?
