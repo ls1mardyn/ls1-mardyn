@@ -42,9 +42,6 @@ OBJECTS = $(SOURCES:.cpp=.o)
 #LIBRARY_BOOST_LOCAL = $(shell find ../libs/$(BOOST_VER) -name 'libboost_program_options*.a' 2>/dev/null |grep release |grep threading-multi)
 #LIBRARY_BOOST_SYSTEM = $(shell find /usr/lib/ -name 'libboost_program_options*.a' 2>/dev/null |grep -e '-mt' ; find /usr/local/lib/ -name 'libboost_program_options*.a' |grep -e '-mt')
 
-# tinyXPATH dependency
-#OBJECTS += $(patsubst %.cpp,%.o,$(shell find External/ticpp -name '*.cpp'))
-
 #INCLUDES = -I$(shell pwd)
 INCLUDES = -I$(CURDIR) -I$(CURDIR)/External $(CPPUNIT_INCLUDES)
 
@@ -58,7 +55,6 @@ INCLUDES = -I$(CURDIR) -I$(CURDIR)/External $(CPPUNIT_INCLUDES)
 # OBJECTS += $(LIBRARY_BOOST_LOCAL)
 #endif
 
-#INCLUDES += -I$(PWD)/External/ticpp
 
 BINARYbasename = MarDyn
 ifneq ($(realpath .svn),)
