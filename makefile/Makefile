@@ -11,7 +11,7 @@ TARGET ?= RELEASE
 DEPS ?= 0
 
 #build unit tests?
-TESTS ?= 1
+TESTS ?= 0
 
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
