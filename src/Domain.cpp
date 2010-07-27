@@ -580,7 +580,7 @@ void Domain::writeCheckpoint( string filename,
 			}
 		}
 		checkpointfilestream << _epsilonRF << endl;
-                map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
+		map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
 		for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
 				uCSIDit != componentSets.end();
 				uCSIDit++ )

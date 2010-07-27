@@ -76,7 +76,7 @@ using namespace std;
 
 Simulation* global_simulation;
 
-Simulation::Simulation(optparse::Values& options, vector<string>& args ) {
+Simulation::Simulation(optparse::Values& options, vector<string>& args) {
 	global_simulation = this;
 	unsigned int numargs = args.size();
 
@@ -139,7 +139,7 @@ Simulation::~Simulation() {
 void Simulation::exit(int exitcode) {
 #ifdef PARALLEL
 	// terminate all mpi processes and return exitcode
-	MPI_Abort( MPI_COMM_WORLD, exitcode );
+	MPI_Abort(MPI_COMM_WORLD, exitcode);
 #else
 	// call global exit
 	::exit(exitcode);
@@ -737,10 +737,10 @@ void Simulation::simulate() {
 	unsigned uCAT = _pressureGradient->getUCAT();
 
 	/* demonstration for the usage of the new ensemble class */
-	CanonicalEnsemble ensemble( _moleculeContainer, &(_domain->getComponents()));
-	ensemble.updateGlobalVariable( NUM_PARTICLES );
+	CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
+	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
-	ensemble.updateGlobalVariable( ENERGY );
+	ensemble.updateGlobalVariable(ENERGY);
 	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
 
 
@@ -990,11 +990,11 @@ void Simulation::output(unsigned long simstep) {
 		global_log->warning() << "Thermostat!" << endl;
 	/* TODO: thermostat */
 	global_log->info()
-	    << "Simstep = " << simstep
-	    << "\tT = " << _domain->getGlobalCurrentTemperature()
-	    << "\tU_pot = " << _domain->getAverageGlobalUpot()
-	    << "\tp = " << _domain->getGlobalPressure()
-	    << endl;
+			<< "Simstep = " << simstep
+			<< "\tT = " << _domain->getGlobalCurrentTemperature()
+			<< "\tU_pot = " << _domain->getAverageGlobalUpot()
+			<< "\tp = " << _domain->getGlobalPressure()
+			<< endl;
 }
 
 void Simulation::updateParticleContainerAndDecomposition() {
