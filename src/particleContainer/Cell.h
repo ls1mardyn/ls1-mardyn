@@ -40,48 +40,48 @@ class Molecule;
 
 class Cell {
 public:
-  //! The constructor sets all cell-states to false 
-  Cell();
+	//! The constructor sets all cell-states to false 
+	Cell();
 
-  //! removes all elements from the list molecules
-  void removeAllParticles();
+	//! removes all elements from the list molecules
+	void removeAllParticles();
 
-  //! insert a single molecule into this cell
-  void addParticle(Molecule* particle_ptr);
+	//! insert a single molecule into this cell
+	void addParticle(Molecule* particle_ptr);
 
-  //! return a reference to the list of molecules (molecule pointers) in this cell
-  std::list<Molecule*>& getParticlePointers();
+	//! return a reference to the list of molecules (molecule pointers) in this cell
+	std::list<Molecule*>& getParticlePointers();
 
-  bool deleteMolecule(unsigned long molid);
+	bool deleteMolecule(unsigned long molid);
 
-  //! Set the flag for a Halo Cell
-  void assingCellToHaloRegion();
+	//! Set the flag for a Halo Cell
+	void assingCellToHaloRegion();
 
-  //! Set the flag for a Boundary Cell
-  void assignCellToBoundaryRegion();
+	//! Set the flag for a Boundary Cell
+	void assignCellToBoundaryRegion();
 
-  //! Set the flag for a Inner Cell
-  void assignCellToInnerRegion();
+	//! Set the flag for a Inner Cell
+	void assignCellToInnerRegion();
 
-  //! returns true, if the cell is a Halo Cell, otherwise false
-  bool isHaloCell();
+	//! returns true, if the cell is a Halo Cell, otherwise false
+	bool isHaloCell();
 
-  //! returns true, if the cell is a Boundary Cell, otherwise false
-  bool isBoundaryCell();
+	//! returns true, if the cell is a Boundary Cell, otherwise false
+	bool isBoundaryCell();
 
-  //! returns true, if the cell is a Inner Cell, otherwise false
-  bool isInnerCell();
+	//! returns true, if the cell is a Inner Cell, otherwise false
+	bool isInnerCell();
 
 private:
-  //! each cell contains a list of pointers to the molecules in the cell
-  std::list<Molecule*> _particlePointers;
+	//! each cell contains a list of pointers to the molecules in the cell
+	std::list<Molecule*> _particlePointers;
 
-  //! true when the cell is in the halo region 
-  bool _haloCellState;
-  //! true when the cell is in the boundary region
-  bool _boundaryCellState;
-  //! true when the cell is in the inner region
-  bool _innerCellState;
+	//! true when the cell is in the halo region 
+	bool _haloCellState;
+	//! true when the cell is in the boundary region
+	bool _boundaryCellState;
+	//! true when the cell is in the inner region
+	bool _innerCellState;
 };
 
 #endif /*CELL_H_*/

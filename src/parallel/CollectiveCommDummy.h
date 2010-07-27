@@ -3,11 +3,11 @@
 
 //! Read documentation for this union in CollectiveCommunication.h
 union valType {
-  int val_int;
-  unsigned long val_unsLong;
-  float val_float;
-  double val_double;
-  long double val_longDouble;
+	int val_int;
+	unsigned long val_unsLong;
+	float val_float;
+	double val_double;
+	long double val_longDouble;
 };
 
 //! @brief This class is just a dummy class which ensures that the collective communication
@@ -26,70 +26,70 @@ union valType {
 //! class DomainDecompDummy is used.
 class CollectiveCommDummy {
 public:
-  //! @brief allocate memory for the values to be stored, initialize counters 
-  //! @param numValues number of values that shall be stored
-  void init(int numValues) {
-    _values = new valType[numValues];
-    _numValues = numValues;
-    _setCounter = 0;
-    _getCounter = 0;
-  }
+	//! @brief allocate memory for the values to be stored, initialize counters 
+	//! @param numValues number of values that shall be stored
+	void init(int numValues) {
+		_values = new valType[numValues];
+		_numValues = numValues;
+		_setCounter = 0;
+		_getCounter = 0;
+	}
 
-  //! @brief delete memory and MPI_Type
-  void finalize() {
-    delete[] _values;
-  }
+	//! @brief delete memory and MPI_Type
+	void finalize() {
+		delete[] _values;
+	}
 
-  //! Append an int value to the list of values to be stored
-  void appendInt(int intValue) {
-    _values[_setCounter++].val_int = intValue;
-  }
-  //! Append a unsigned long value to the list of values to be stored
-  void appendUnsLong(unsigned long unsLongValue) {
-    _values[_setCounter++].val_unsLong = unsLongValue;
-  }
-  //! Append a float value to the list of values to be stored
-  void appendFloat(float floatValue) {
-    _values[_setCounter++].val_float = floatValue;
-  }
-  //! Append a double value to the list of values to be stored
-  void appendDouble(double doubleValue) {
-    _values[_setCounter++].val_double = doubleValue;
-  }
-  //! Append a long double value to the list of values to be stored
-  void appendLongDouble(double longDoubleValue) {
-    _values[_setCounter++].val_longDouble = longDoubleValue;
-  }
+	//! Append an int value to the list of values to be stored
+	void appendInt(int intValue) {
+		_values[_setCounter++].val_int = intValue;
+	}
+	//! Append a unsigned long value to the list of values to be stored
+	void appendUnsLong(unsigned long unsLongValue) {
+		_values[_setCounter++].val_unsLong = unsLongValue;
+	}
+	//! Append a float value to the list of values to be stored
+	void appendFloat(float floatValue) {
+		_values[_setCounter++].val_float = floatValue;
+	}
+	//! Append a double value to the list of values to be stored
+	void appendDouble(double doubleValue) {
+		_values[_setCounter++].val_double = doubleValue;
+	}
+	//! Append a long double value to the list of values to be stored
+	void appendLongDouble(double longDoubleValue) {
+		_values[_setCounter++].val_longDouble = longDoubleValue;
+	}
 
-  //! Get the next value from the list, which must be int
-  int getInt() {
-    return _values[_getCounter++].val_int;
-  }
-  //! Get the next value from the list, which must be unsigned long
-  unsigned long getUnsLong() {
-    return _values[_getCounter++].val_unsLong;
-  }
-  //! Get the next value from the list, which must be float
-  float getFloat() {
-    return _values[_getCounter++].val_float;
-  }
-  //! Get the next value from the list, which must be double
-  double getDouble() {
-    return _values[_getCounter++].val_double;
-  }
-  //! Get the next value from the list, which must be long double
-  long double getLongDouble() {
-    return _values[_getCounter++].val_longDouble;
-  }
-  //! number of values (possibly different types) to be communicated
-  int _numValues;
-  //! counter which points to the position which shall be written next
-  int _setCounter;
-  //! counter which points to the position which shall be read next
-  int _getCounter;
+	//! Get the next value from the list, which must be int
+	int getInt() {
+		return _values[_getCounter++].val_int;
+	}
+	//! Get the next value from the list, which must be unsigned long
+	unsigned long getUnsLong() {
+		return _values[_getCounter++].val_unsLong;
+	}
+	//! Get the next value from the list, which must be float
+	float getFloat() {
+		return _values[_getCounter++].val_float;
+	}
+	//! Get the next value from the list, which must be double
+	double getDouble() {
+		return _values[_getCounter++].val_double;
+	}
+	//! Get the next value from the list, which must be long double
+	long double getLongDouble() {
+		return _values[_getCounter++].val_longDouble;
+	}
+	//! number of values (possibly different types) to be communicated
+	int _numValues;
+	//! counter which points to the position which shall be written next
+	int _setCounter;
+	//! counter which points to the position which shall be read next
+	int _getCounter;
 
-  //! Array to store the values which shall be communicated
-  valType* _values;
+	//! Array to store the values which shall be communicated
+	valType* _values;
 
 };
 

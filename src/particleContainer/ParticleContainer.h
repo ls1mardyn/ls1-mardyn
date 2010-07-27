@@ -64,159 +64,159 @@ class Molecule;
 //! be implemented as a subclass of this class.
 class ParticleContainer {
 public:
-  //! @brief The constructor
-  //! @param partPairsHandler specified concrete action to be done for each pair
-  //! @param bBoxMin coordinates of the lowest (in all coordinates) corner of the bounding box
-  //! @param bBoxMax coordinates of the highest (in all coordinates) corner of the bounding box
-  ParticleContainer(ParticlePairsHandler* partPairsHandler, double bBoxMin[3], double bBoxMax[3]);
+	//! @brief The constructor
+	//! @param partPairsHandler specified concrete action to be done for each pair
+	//! @param bBoxMin coordinates of the lowest (in all coordinates) corner of the bounding box
+	//! @param bBoxMax coordinates of the highest (in all coordinates) corner of the bounding box
+	ParticleContainer(ParticlePairsHandler* partPairsHandler, double bBoxMin[3], double bBoxMax[3]);
 
-  //! @brief The destructor
-  virtual ~ParticleContainer();
+	//! @brief The destructor
+	virtual ~ParticleContainer();
 
-  //! @brief rebuild the datastructure
-  //!
-  //! Load-balancing decompositions change the position and size of the local region
-  //! during runtime. Therefore, the datastructure needs to be rebuild completely.
-  //! This method basically does what the constructor does as well, with the difference,
-  //! that there are already particles stored, and particles which don't belong to the
-  //! new region have to be deleted after rebuild
-  virtual void rebuild(double bBoxMin[3], double bBoxMax[3]);
+	//! @brief rebuild the datastructure
+	//!
+	//! Load-balancing decompositions change the position and size of the local region
+	//! during runtime. Therefore, the datastructure needs to be rebuild completely.
+	//! This method basically does what the constructor does as well, with the difference,
+	//! that there are already particles stored, and particles which don't belong to the
+	//! new region have to be deleted after rebuild
+	virtual void rebuild(double bBoxMin[3], double bBoxMax[3]);
 
-  //! @brief do necessary updates resulting from changed particle positions
-  //!
-  //! For some implementations of the interface ParticleContainer, the place
-  //! where particles are stored might e.g. depend on the spacial position of the
-  //! particle. So when some externel method (e.g. Leap-Frog) changes the spacial
-  //! position of a particle, the representation within the particleContainer becomes
-  //! invalid. This method restores a valid representation.
-  virtual void update() = 0;
+	//! @brief do necessary updates resulting from changed particle positions
+	//!
+	//! For some implementations of the interface ParticleContainer, the place
+	//! where particles are stored might e.g. depend on the spacial position of the
+	//! particle. So when some externel method (e.g. Leap-Frog) changes the spacial
+	//! position of a particle, the representation within the particleContainer becomes
+	//! invalid. This method restores a valid representation.
+	virtual void update() = 0;
 
-  //! @brief add a single Molecules to the ParticleContainer.
-  //!
-  //! It is important, that the Particle is entered in "the front" of the container.
-  //! This is important when the container is traversed with the "next" method.
-  //! E.g. a method traversing the container which adds copies of particles
-  //! (periodic boundary) must not run over the added copies.
-  //! This method has to be implemented in derived classes
-  //! @param particle reference to the particle which has to be added
-  virtual void addParticle(Molecule& particle) = 0;
+	//! @brief add a single Molecules to the ParticleContainer.
+	//!
+	//! It is important, that the Particle is entered in "the front" of the container.
+	//! This is important when the container is traversed with the "next" method.
+	//! E.g. a method traversing the container which adds copies of particles
+	//! (periodic boundary) must not run over the added copies.
+	//! This method has to be implemented in derived classes
+	//! @param particle reference to the particle which has to be added
+	virtual void addParticle(Molecule& particle) = 0;
 
-  //! @brief traverse pairs which are close to each other
-  //!
-  //! Only interactions between particles which have a distance which is not
-  //! larger than the cutoff radius are to be considered. \n
-  //! This method has to be implemented in derived classes
-  //! Precondition: All Particles of the process + halo molecules are stored
-  //! Task: Run over all pairs (Each pair exactely once!) of particles (within cutoffradius)
-  //! Important: Some pairs might be "duplicated": All pairs which cross the boundary occur twice
-  //! (second time at the periodic image). Those pairs are from the point of view of the datastructure
-  //! two different pairs, but they both times connect the same particles.
-  //! For a pair which occurs twice, it has to be made sure, that one gets the status "original pair"
-  //! and the other one "duplicated pair".
-  //! For each pair found, there is an action executed, but it is a different action for
-  //! original and duplicated pairs. Details about how to handle pairs can be found
-  //! in the documentation for the class ParticlePairsHandler
-  virtual void traversePairs() = 0;
+	//! @brief traverse pairs which are close to each other
+	//!
+	//! Only interactions between particles which have a distance which is not
+	//! larger than the cutoff radius are to be considered. \n
+	//! This method has to be implemented in derived classes
+	//! Precondition: All Particles of the process + halo molecules are stored
+	//! Task: Run over all pairs (Each pair exactely once!) of particles (within cutoffradius)
+	//! Important: Some pairs might be "duplicated": All pairs which cross the boundary occur twice
+	//! (second time at the periodic image). Those pairs are from the point of view of the datastructure
+	//! two different pairs, but they both times connect the same particles.
+	//! For a pair which occurs twice, it has to be made sure, that one gets the status "original pair"
+	//! and the other one "duplicated pair".
+	//! For each pair found, there is an action executed, but it is a different action for
+	//! original and duplicated pairs. Details about how to handle pairs can be found
+	//! in the documentation for the class ParticlePairsHandler
+	virtual void traversePairs() = 0;
 
-  //! @return the number of particles stored in this container
-  //!
-  //! This number may includes particles which are outside of
-  //! the bounding box
-  virtual unsigned long getNumberOfParticles() = 0;
+	//! @return the number of particles stored in this container
+	//!
+	//! This number may includes particles which are outside of
+	//! the bounding box
+	virtual unsigned long getNumberOfParticles() = 0;
 
-  //! @brief returns one coordinate of the lower corner of the bounding box
-  //!
-  //! @param dimension the coordinate which should be returned
-  double getBoundingBoxMin(int dimension);
+	//! @brief returns one coordinate of the lower corner of the bounding box
+	//!
+	//! @param dimension the coordinate which should be returned
+	double getBoundingBoxMin(int dimension);
 
-  //! @brief returns one coordinate of the higher corner of the bounding box
-  //!
-  //! @param dimension the coordinate which should be returned
-  double getBoundingBoxMax(int dimension);
+	//! @brief returns one coordinate of the higher corner of the bounding box
+	//!
+	//! @param dimension the coordinate which should be returned
+	double getBoundingBoxMax(int dimension);
 
-  //! @brief Returns a pointer to the first particle in the Container
-  virtual Molecule* begin() = 0;
+	//! @brief Returns a pointer to the first particle in the Container
+	virtual Molecule* begin() = 0;
 
-  //! @brief Returns a pointer to the next particle in the Container
-  //!
-  //! The class internally has to store the Particle to which is currently pointed
-  //! With the call of next, this internal pointer is advanced to the next particle
-  //! and this new pointer is returned
-  virtual Molecule* next() = 0;
+	//! @brief Returns a pointer to the next particle in the Container
+	//!
+	//! The class internally has to store the Particle to which is currently pointed
+	//! With the call of next, this internal pointer is advanced to the next particle
+	//! and this new pointer is returned
+	virtual Molecule* next() = 0;
 
-  //! @brief Has to return the same as next() after it already pointed to the last particle
-  virtual Molecule* end() = 0;
+	//! @brief Has to return the same as next() after it already pointed to the last particle
+	virtual Molecule* end() = 0;
 
-  virtual Molecule* deleteCurrent() = 0;
+	virtual Molecule* deleteCurrent() = 0;
 
-  //! @brief delete all Particles which are not within the bounding box
-  virtual void deleteOuterParticles() = 0;
+	//! @brief delete all Particles which are not within the bounding box
+	virtual void deleteOuterParticles() = 0;
 
-  //! @brief returns the width of the halo strip (for the given dimension index)
-  //! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
-  //!       e.g. replace it by the cutoff-radius
-  virtual double get_halo_L(int index);
+	//! @brief returns the width of the halo strip (for the given dimension index)
+	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
+	//!       e.g. replace it by the cutoff-radius
+	virtual double get_halo_L(int index);
 
-  //! @brief appends pointers to all particles in the boundary region to the list
-  virtual void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs) = 0;
+	//! @brief appends pointers to all particles in the boundary region to the list
+	virtual void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs) = 0;
 
-  //! @brief appends pointers to all particles in the halo region to the list
-  virtual void getHaloParticles(std::list<Molecule*> &haloParticlePtrs) = 0;
+	//! @brief appends pointers to all particles in the halo region to the list
+	virtual void getHaloParticles(std::list<Molecule*> &haloParticlePtrs) = 0;
 
-  //! @brief fills the given list with pointers to all particles in the given region
-  //! @param lowCorner minimum x-, y- and z-coordinate of the region
-  //! @param highwCorner maximum x-, y- and z-coordinate of the region
-  virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
+	//! @brief fills the given list with pointers to all particles in the given region
+	//! @param lowCorner minimum x-, y- and z-coordinate of the region
+	//! @param highwCorner maximum x-, y- and z-coordinate of the region
+	virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
 
-  virtual double getCutoff() = 0;
-  virtual double getLJCutoff() = 0;
-  virtual double getTersoffCutoff() = 0;
-  virtual void countParticles(Domain* d) = 0;
+	virtual double getCutoff() = 0;
+	virtual double getLJCutoff() = 0;
+	virtual double getTersoffCutoff() = 0;
+	virtual void countParticles(Domain* d) = 0;
 
-  //! @brief counts all particles inside the bounding box
-  virtual unsigned countParticles(int cid) = 0;
+	//! @brief counts all particles inside the bounding box
+	virtual unsigned countParticles(int cid) = 0;
 
-  //! @brief counts particles in the intersection of bounding box and control volume
-  virtual unsigned countParticles(int cid, double* cbottom, double* ctop) = 0;
+	//! @brief counts particles in the intersection of bounding box and control volume
+	virtual unsigned countParticles(int cid, double* cbottom, double* ctop) = 0;
 
-  virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
-  virtual double getEnergy(Molecule* m1) = 0;
-  virtual int localGrandcanonicalBalance() = 0;
-  virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
-  virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
+	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
+	virtual double getEnergy(Molecule* m1) = 0;
+	virtual int localGrandcanonicalBalance() = 0;
+	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
+	virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
 
-  //! @brief sets a new ParticlePairsHandler
-  void setPairHandler(ParticlePairsHandler* partPairHandler);
+	//! @brief sets a new ParticlePairsHandler
+	void setPairHandler(ParticlePairsHandler* partPairHandler);
 
-  //! @brief returns the currently used ParticlePairsHandler
-  ParticlePairsHandler* getPairHandler();
+	//! @brief returns the currently used ParticlePairsHandler
+	ParticlePairsHandler* getPairHandler();
 
-  //! @brief find out whether m1 is before m2 (in some global ordering)
-  //!
-  //! At the boundary between two processes (if used in parallel mode), the forces
-  //! for pairs which cross the boundary are calculated twice (once by each proc who
-  //! owns one of the particles). But the contribution to macroscopic value must be
-  //! counted only once, which is done by the process who owns the "first" particle.
-  //! As order criterion, the spacial position is used int this method. The particles
-  //! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-  //! For pairs which are completely on one process, the first particle can be
-  //! determined from the cell structure. But for pairs on different procs, the
-  //! corresponding cell discretisations might be different as well, and therefore
-  //! the cell structure must not be used to determine the order.
-  virtual bool isFirstParticle(Molecule& m1, Molecule& m2) = 0;
+	//! @brief find out whether m1 is before m2 (in some global ordering)
+	//!
+	//! At the boundary between two processes (if used in parallel mode), the forces
+	//! for pairs which cross the boundary are calculated twice (once by each proc who
+	//! owns one of the particles). But the contribution to macroscopic value must be
+	//! counted only once, which is done by the process who owns the "first" particle.
+	//! As order criterion, the spacial position is used int this method. The particles
+	//! with lower x-coordinate is first (if equal, then y- or z-coordinate).
+	//! For pairs which are completely on one process, the first particle can be
+	//! determined from the cell structure. But for pairs on different procs, the
+	//! corresponding cell discretisations might be different as well, and therefore
+	//! the cell structure must not be used to determine the order.
+	virtual bool isFirstParticle(Molecule& m1, Molecule& m2) = 0;
 
-  //! @brief Update the caches of the molecules.
-  void updateMoleculeCaches();
+	//! @brief Update the caches of the molecules.
+	void updateMoleculeCaches();
 
 protected:
 
-  //! A ParticlePairsHandler is used to process pairs of particles
-  ParticlePairsHandler* _particlePairsHandler;
+	//! A ParticlePairsHandler is used to process pairs of particles
+	ParticlePairsHandler* _particlePairsHandler;
 
-  //!  coordinates of the left, lower, front corner of the bounding box
-  double _boundingBoxMin[3];
-  //! coordinates of the right, upper, back corner of the bounding box
-  double _boundingBoxMax[3];
+	//!  coordinates of the left, lower, front corner of the bounding box
+	double _boundingBoxMin[3];
+	//! coordinates of the right, upper, back corner of the bounding box
+	double _boundingBoxMax[3];
 
 };
 

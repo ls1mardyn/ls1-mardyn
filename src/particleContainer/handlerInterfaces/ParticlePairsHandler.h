@@ -48,31 +48,31 @@
 //! particleContainer an some other part of the programm (e.g. force calculation)
 class ParticlePairsHandler {
 public:
-  //! Constructor
-  ParticlePairsHandler() {
-  }
+	//! Constructor
+	ParticlePairsHandler() {
+	}
 
-  //! Destructor
-  virtual ~ParticlePairsHandler() {
-  }
+	//! Destructor
+	virtual ~ParticlePairsHandler() {
+	}
 
-  //! @brief things to be done before particle pairs are processed
-  virtual void init() = 0;
+	//! @brief things to be done before particle pairs are processed
+	virtual void init() = 0;
 
-  //! @brief things to be done after particle pairs are processed
-  virtual void finish() = 0;
+	//! @brief things to be done after particle pairs are processed
+	virtual void finish() = 0;
 
-  //! @brief things to be done for each particle pair
-  //!
-  //! @param particle1 first particle
-  //! @param particle2 second particle
-  //! @param distanceVector[3] distance between the two particles
-  //! @param pairType describes whether the pair is a original pair(0) or a duplicated pair(1)
-  //!                 for details about pair types see comments on traversePairs() in ParticleContainer
-  virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ) = 0;
-  virtual void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) = 0;
-  virtual void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) = 0;
-  virtual void recordRDF() = 0;
+	//! @brief things to be done for each particle pair
+	//!
+	//! @param particle1 first particle
+	//! @param particle2 second particle
+	//! @param distanceVector[3] distance between the two particles
+	//! @param pairType describes whether the pair is a original pair(0) or a duplicated pair(1)
+	//!                 for details about pair types see comments on traversePairs() in ParticleContainer
+	virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ) = 0;
+	virtual void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) = 0;
+	virtual void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) = 0;
+	virtual void recordRDF() = 0;
 };
 
 #endif /*PARTICLEPAIRSHANDLER_H_*/

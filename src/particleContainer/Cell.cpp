@@ -4,57 +4,57 @@
 using namespace std;
 
 Cell::Cell() {
-  this->_haloCellState = false;
-  this->_boundaryCellState = false;
-  this->_innerCellState = false;
+	this->_haloCellState = false;
+	this->_boundaryCellState = false;
+	this->_innerCellState = false;
 }
 
 void Cell::removeAllParticles() {
-  this->_particlePointers.clear();
+	this->_particlePointers.clear();
 }
 
 void Cell::addParticle(Molecule* particle_ptr) {
-  _particlePointers.push_back(particle_ptr);
+	_particlePointers.push_back(particle_ptr);
 }
 
 list<Molecule*>& Cell::getParticlePointers() {
-  return this->_particlePointers;
+	return this->_particlePointers;
 }
 
 void Cell::assingCellToHaloRegion() {
-  this->_haloCellState = true;
+	this->_haloCellState = true;
 }
 
 void Cell::assignCellToBoundaryRegion() {
-  this->_boundaryCellState = true;
+	this->_boundaryCellState = true;
 }
 
 void Cell::assignCellToInnerRegion() {
-  this->_innerCellState = true;
+	this->_innerCellState = true;
 }
 
 bool Cell::isHaloCell() {
-  return _haloCellState;
+	return _haloCellState;
 }
 
 bool Cell::isBoundaryCell() {
-  return _boundaryCellState;
+	return _boundaryCellState;
 }
 
 bool Cell::isInnerCell() {
-  return _innerCellState;
+	return _innerCellState;
 }
 
 bool Cell::deleteMolecule(unsigned long molid) {
-  bool found = false;
-  list<Molecule*>::iterator cellit;
+	bool found = false;
+	list<Molecule*>::iterator cellit;
 
-  for (cellit = this->_particlePointers.begin(); cellit != this->_particlePointers.end(); cellit++) {
-    if ((*cellit)->id() == molid) {
-      found = true;
-      this->_particlePointers.remove(*cellit);
-      break;
-    }
-  }
-  return found;
+	for (cellit = this->_particlePointers.begin(); cellit != this->_particlePointers.end(); cellit++) {
+		if ((*cellit)->id() == molid) {
+			found = true;
+			this->_particlePointers.remove(*cellit);
+			break;
+		}
+	}
+	return found;
 }

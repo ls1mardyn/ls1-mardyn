@@ -28,38 +28,38 @@
 using namespace std;
 
 ResultWriter::ResultWriter(string outputPrefix){
-  _outputPrefix = outputPrefix;
+	_outputPrefix = outputPrefix;
 }
 
 ResultWriter::~ResultWriter(){}
 
 void ResultWriter::initOutput(ParticleContainer* particleContainer,
 			      DomainDecompBase* domainDecomp, Domain* domain){
-   
-  // initialize result file
-  string resultfile(_outputPrefix+".res");
-  time_t now;
-  time(&now);
-  if(domainDecomp->getRank()==0){
-    _resultStream.open(resultfile.c_str());
-    _resultStream << "# moldy MD simulation starting at " << ctime(&now) << endl;
-    _resultStream << "#\tt\t\tU_pot\tPressure\t\tbeta_trans\tbeta_rot\t\tc_v" << endl;
-  }
+	 
+	// initialize result file
+	string resultfile(_outputPrefix+".res");
+	time_t now;
+	time(&now);
+	if(domainDecomp->getRank()==0){
+		_resultStream.open(resultfile.c_str());
+		_resultStream << "# moldy MD simulation starting at " << ctime(&now) << endl;
+		_resultStream << "#\tt\t\tU_pot\tPressure\t\tbeta_trans\tbeta_rot\t\tc_v" << endl;
+	}
 }
 
 void ResultWriter::doOutput( ParticleContainer* particleContainer,
-                             DomainDecompBase* domainDecomp, Domain* domain,
+														 DomainDecompBase* domainDecomp, Domain* domain,
 			     unsigned long simstep, list<ChemicalPotential>* lmu ) 
 {
-  if(domainDecomp->getRank()==0){
-    _resultStream << simstep << "\t" << domain->getCurrentTime()
-                  << "\t\t" << domain->getAverageGlobalUpot() << "\t" << domain->getGlobalPressure()
-                  << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
-                  << "\t\t" << domain->cv() << "\n";
-  }
+	if(domainDecomp->getRank()==0){
+		_resultStream << simstep << "\t" << domain->getCurrentTime()
+		              << "\t\t" << domain->getAverageGlobalUpot() << "\t" << domain->getGlobalPressure()
+		              << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
+		              << "\t\t" << domain->cv() << "\n";
+	}
 }
 
 void ResultWriter::finishOutput(ParticleContainer* particleContainer,
 				DomainDecompBase* domainDecomp, Domain* domain){
-  _resultStream.close();
+	_resultStream.close();
 }

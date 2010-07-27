@@ -9,43 +9,43 @@
 using namespace std;
 
 ParticleContainer::ParticleContainer(ParticlePairsHandler* partPairsHandler, double bBoxMin[3], double bBoxMax[3])
-    : _particlePairsHandler(partPairsHandler) {
-  for (int i = 0; i < 3; i++) {
-    _boundingBoxMin[i] = bBoxMin[i];
-    _boundingBoxMax[i] = bBoxMax[i];
-  }
+		: _particlePairsHandler(partPairsHandler) {
+	for (int i = 0; i < 3; i++) {
+		_boundingBoxMin[i] = bBoxMin[i];
+		_boundingBoxMax[i] = bBoxMax[i];
+	}
 }
 
 ParticleContainer::~ParticleContainer() {
 }
 
 void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
-  cout << "REBUILD OF PARTICLE CONTAINER" << endl;
-  for (int i = 0; i < 3; i++) {
-    _boundingBoxMin[i] = bBoxMin[i];
-    _boundingBoxMax[i] = bBoxMax[i];
-  }
+	cout << "REBUILD OF PARTICLE CONTAINER" << endl;
+	for (int i = 0; i < 3; i++) {
+		_boundingBoxMin[i] = bBoxMin[i];
+		_boundingBoxMax[i] = bBoxMax[i];
+	}
 }
 
 double ParticleContainer::getBoundingBoxMin(int dimension) {
-  return this->_boundingBoxMin[dimension];
+	return this->_boundingBoxMin[dimension];
 }
 
 double ParticleContainer::getBoundingBoxMax(int dimension) {
-  return this->_boundingBoxMax[dimension];
+	return this->_boundingBoxMax[dimension];
 }
 
 double ParticleContainer::get_halo_L(int index) {
-  cerr << "ERROR: ParticleContainer::get_halo_L(...) has to be implemented in derived class" << endl;
-  return 0;
+	cerr << "ERROR: ParticleContainer::get_halo_L(...) has to be implemented in derived class" << endl;
+	return 0;
 }
 
 void ParticleContainer::setPairHandler(ParticlePairsHandler* partPairHandler) {
-  _particlePairsHandler = partPairHandler;
+	_particlePairsHandler = partPairHandler;
 }
 
 ParticlePairsHandler* ParticleContainer::getPairHandler() {
-  return _particlePairsHandler;
+	return _particlePairsHandler;
 }
 
 void ParticleContainer::updateMoleculeCaches() {
