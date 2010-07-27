@@ -19,26 +19,26 @@ enum GlobalVariable {
 //! Each ensemble should provide access to extensive (NVE) and intensive 
 //! (\mu p t) variables as well as a function to update global variables.
 class Ensemble {
-	public:
-		Ensemble() {};
-		~Ensemble() {};
+public:
+	Ensemble() {}
+	~Ensemble() {}
 
-		//! @brief Returns the global number of Molecules of the ensemble. 
-		virtual unsigned long N() = 0;
-		//! @brief Returns the global volume of the ensemble
-		virtual double V() = 0;
-		//! @brief Returns the global energy of the ensemble
-		virtual double E() = 0;
-		//! @brief Returns the global chemical potential of the ensemble
-		virtual double mu() = 0;
-		//! @brief Returns the global presure of the ensemble.
-		virtual double p() = 0;
-		//! @brief Returns the global Temperature of the ensemble.
-		virtual double T() = 0;
+	//! @brief Returns the global number of Molecules of the ensemble.
+	virtual unsigned long N() = 0;
+	//! @brief Returns the global volume of the ensemble
+	virtual double V() = 0;
+	//! @brief Returns the global energy of the ensemble
+	virtual double E() = 0;
+	//! @brief Returns the global chemical potential of the ensemble
+	virtual double mu() = 0;
+	//! @brief Returns the global presure of the ensemble.
+	virtual double p() = 0;
+	//! @brief Returns the global Temperature of the ensemble.
+	virtual double T() = 0;
 
-		//! @brief Calculate global variables
-		//! @param variable Variable to be updated.
-		virtual void updateGlobalVariable( GlobalVariable variable ) = 0;
+	//! @brief Calculate global variables
+	//! @param variable Variable to be updated.
+	virtual void updateGlobalVariable(GlobalVariable variable) = 0;
 };
 
 #endif

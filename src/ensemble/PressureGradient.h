@@ -25,9 +25,8 @@
 class DomainDecompBase;
 class ParticleContainer;
 
-class PressureGradient
-{
- public:
+class PressureGradient {
+public:
 	PressureGradient(int rank);
 
 	//! @brief assigns a coset ID to a component (ID)
@@ -47,8 +46,8 @@ class PressureGradient
 	void adjustTau(double dt);
 	//! @brief are there any cosets?
 	bool isAcceleratingUniformly() {
-		return ( (this->_universalTau.size() > 0)
-		   && (this->_universalConstantAccelerationTimesteps > 0) );
+		return (this->_universalTau.size() > 0)
+				&& (this->_universalConstantAccelerationTimesteps > 0);
 	}
 	//! @brief updates the intensity and direction of the uniform acceleration
 	void determineAdditionalAcceleration(
@@ -58,10 +57,11 @@ class PressureGradient
 	//! @brief returns the acceleration map (necessary for passing data to the integrator)
 	std::map<unsigned, double>* getUAA() { return this->_universalAdditionalAcceleration; }
 	//! @brief returns the cosetid of a component (0 for unaccelerated components)
-	unsigned getComponentSet(unsigned cid)
-	{
-		if(_universalComponentSetID.find(cid) == _universalComponentSetID.end()) return 0;
-		else return this->_universalComponentSetID[cid];
+	unsigned getComponentSet(unsigned cid) {
+		if(_universalComponentSetID.find(cid) == _universalComponentSetID.end())
+			return 0;
+		else
+			return this->_universalComponentSetID[cid];
 	}
 	//! @brief returns the directed velocity for a component set
 	//! @param cosetid ID of the component set
@@ -89,7 +89,7 @@ class PressureGradient
 	double* getTargetVelocity(unsigned set);
 	double* getAdditionalAcceleration(unsigned set);
 
- private:
+private:
 	unsigned _localRank;
 
 	/// calculate new value of the uniform acceleration each # timesteps

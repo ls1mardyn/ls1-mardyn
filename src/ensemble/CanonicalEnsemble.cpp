@@ -16,7 +16,7 @@ using Log::global_log;
 
 void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 
-    const int numComponents = this->numComponents();
+	const int numComponents = this->numComponents();
 
 
 	Molecule *tM;
@@ -25,7 +25,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	/* calculate local variables */
 
 	/* "fixed" variables of this ensemble */
-    if ( variable & NUM_PARTICLES ) {
+	if ( variable & NUM_PARTICLES ) {
 		global_log->info() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
 		unsigned long numMolecules[numComponents];
@@ -51,32 +51,32 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 			_N += numMolecules[cid];
 			(*_components)[cid].setNumMolecules(numMolecules[cid]);
 		}
-    }
+	}
 
-    if ( variable & VOLUME ) {
-      global_log->info() << "Updating volume" << endl;
+	if ( variable & VOLUME ) {
+		global_log->info() << "Updating volume" << endl;
 	  /* TODO: calculate actual volume or return specified volume as 
 	   * the canonical ensemble should have a fixed volume? */
-    }
+	}
 
-    if ( variable & TEMPERATURE ) {
-      global_log->info() << "Updating temperature" << endl;
+	if ( variable & TEMPERATURE ) {
+		global_log->info() << "Updating temperature" << endl;
 	  /* TODO: calculate actual temperature or return specified temperature as 
 	   * the canonical ensemble should have a fixed temperature? */
 	  //temperature = (summv2 + sumIw2) / (double)(3*numMolecules + rotDOF);
-    }
+	}
 
 	/* variable variables of this ensemble */
-    if ( variable & CHEMICAL_POTENTIAL ) {
-      global_log->info() << "Updating chemical potential" << endl;
-    }
+	if ( variable & CHEMICAL_POTENTIAL ) {
+		global_log->info() << "Updating chemical potential" << endl;
+	}
 
-    if ( variable & PRESSURE ) {
-      global_log->info() << "Updating pressure" << endl;
-    }
+	if ( variable & PRESSURE ) {
+		global_log->info() << "Updating pressure" << endl;
+	}
 
-    if ( variable & ENERGY ) {
-      global_log->info() << "Updating energy" << endl;
+	if ( variable & ENERGY ) {
+		global_log->info() << "Updating energy" << endl;
 	  double E_trans[numComponents];
 	  double E_rot[numComponents];
 	  for( int cid = 0; cid < numComponents; cid++)
@@ -114,13 +114,13 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  _E = _E_trans + _E_rot;
 
 
-    }
+	}
 
 	/* now calculate all local variables */
 	//molecule.calculate_mv2_Iw2( mv2[cid], Iw2[cid]);
 
 	/* calculate global variables from local variables */
 
-    /* save variables to components and ensemble */
+	/* save variables to components and ensemble */
 }
 

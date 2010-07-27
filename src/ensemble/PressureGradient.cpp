@@ -201,37 +201,37 @@ double PressureGradient::getMissingVelocity(unsigned cosetid, unsigned d)
 
 double* PressureGradient::getTargetVelocity(unsigned set)
 {
-   double* retv = new double[3];
-   for(int d=0; d < 3; d++)
-      retv[d] = this->_globalTargetVelocity[d][set];
-   return retv;
+	double* retv = new double[3];
+	for(int d=0; d < 3; d++)
+		retv[d] = this->_globalTargetVelocity[d][set];
+	return retv;
 }
 
 double* PressureGradient::getAdditionalAcceleration(unsigned set)
 {
-   double* retv = new double[3];
-   for(int d=0; d < 3; d++)
-      retv[d] = this->_universalAdditionalAcceleration[d][set];
-   return retv;
+	double* retv = new double[3];
+	for(int d=0; d < 3; d++)
+		retv[d] = this->_universalAdditionalAcceleration[d][set];
+	return retv;
 }
 
 void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 {
-   this->_universalTauPrime = tauPrime;
-   if(this->_localRank != 0) return;
-   if(this->_universalConstantAccelerationTimesteps == 0)
-   {
-      cout << "SEVERE ERROR: unknown UCAT!\n";
-      exit(78);
-   }
-   unsigned vql = (unsigned)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
-   map<unsigned, unsigned>::iterator vqlit;
-   for(vqlit = _globalVelocityQueuelength.begin(); vqlit != _globalVelocityQueuelength.end(); vqlit++)
-   {
-      vqlit->second = vql;
-      cout << "coset " << vqlit->first << " will receive "
-           << vqlit->second << " velocity queue entries.\n";
-   }
+	this->_universalTauPrime = tauPrime;
+	if(this->_localRank != 0) return;
+	if(this->_universalConstantAccelerationTimesteps == 0)
+	{
+		cout << "SEVERE ERROR: unknown UCAT!\n";
+		exit(78);
+	}
+	unsigned vql = (unsigned)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
+	map<unsigned, unsigned>::iterator vqlit;
+	for(vqlit = _globalVelocityQueuelength.begin(); vqlit != _globalVelocityQueuelength.end(); vqlit++)
+	{
+		vqlit->second = vql;
+		cout << "coset " << vqlit->first << " will receive "
+		     << vqlit->second << " velocity queue entries.\n";
+	}
 }
 
 /*
