@@ -11,23 +11,22 @@
 
 #include <steereoCommand.h>
 
-class ReceiveCouplingMDCommand: public SteereoCommand
-{
+class ReceiveCouplingMDCommand: public SteereoCommand {
 public:
 	ReceiveCouplingMDCommand();
 	virtual ~ReceiveCouplingMDCommand();
 
-  virtual ReturnType execute ();
-  void setParameters (std::list<std::string> params);
+	virtual ReturnType execute ();
+	void setParameters (std::list<std::string> params);
 
-  static SteereoCommand* generateNewInstance ();
+	static SteereoCommand* generateNewInstance ();
 
-  bool condition ();
-  void setStepInterval (int interval) {stepInterval = interval;};
+	bool condition ();
+	void setStepInterval (int interval) {stepInterval = interval;};
 
 private:
-  static int startStep;
-  int stepInterval;
+	static int startStep;
+	int stepInterval;
 };
 
 #endif /* RECEIVECOUPLINGMDCOMMAND_H_ */

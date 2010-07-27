@@ -56,7 +56,7 @@ ReturnType SendCouplingMDCommand::execute ()
 	double low_limit; // particles below this limit have to be copied or moved to the lower process
 	double high_limit; // particles above(or equal) this limit have to be copied or moved to the higher process
 
-		// set limits (outside "inner" region)
+	// set limits (outside "inner" region)
 	low_limit = rmin;
 	high_limit = rmax;
 	currentMolecule = moleculeContainer->begin();
