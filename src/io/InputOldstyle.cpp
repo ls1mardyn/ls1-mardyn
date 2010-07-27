@@ -126,13 +126,13 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			for( int d = 0; d < 3; d++ )
 				domain->setGlobalLength( d, globalLength[d] );
 		}
-                else if((token == "HeatCapacity") || (token == "cv") || (token == "I"))
-                {
-                   unsigned N;
-                   double U, UU;
-                   _phaseSpaceFileStream >> N >> U >> UU;
-                   domain->init_cv(N, U, UU);
-                }
+		else if((token == "HeatCapacity") || (token == "cv") || (token == "I"))
+		{
+			unsigned N;
+			double U, UU;
+			_phaseSpaceFileStream >> N >> U >> UU;
+			domain->init_cv(N, U, UU);
+		}
 		else if((token == "NumberOfComponents") || (token == "C")) {
 			// read in component definitions and
 			// read in mixing coefficients

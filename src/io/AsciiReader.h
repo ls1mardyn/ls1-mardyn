@@ -13,23 +13,23 @@ class ChemicalPotential;
 //class Domain;
 
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
-class AsciiReader : public InputBase{
- public:
-  AsciiReader();
-  ~AsciiReader();
-  void setPhaseSpaceFile(std::string filename);
-  void setPhaseSpaceHeaderFile(std::string filename);
-  void readPhaseSpaceHeader(Domain* domain, double timestep);
-  unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
- private:
+class AsciiReader : public InputBase {
+public:
+	AsciiReader();
+	~AsciiReader();
+	void setPhaseSpaceFile(std::string filename);
+	void setPhaseSpaceHeaderFile(std::string filename);
+	void readPhaseSpaceHeader(Domain* domain, double timestep);
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+private:
 #ifdef PARALLEL
-  std::istringstream _phaseSpaceFileStream;
+	std::istringstream _phaseSpaceFileStream;
 #else
-  std::fstream _phaseSpaceFileStream;
+	std::fstream _phaseSpaceFileStream;
 #endif
-  std::fstream _phaseSpaceHeaderFileStream;
-  std::string _phaseSpaceFileName;
-  std::string _phaseSpaceHeaderFileName;
+	std::fstream _phaseSpaceHeaderFileStream;
+	std::string _phaseSpaceFileName;
+	std::string _phaseSpaceHeaderFileName;
 };
 
 #endif /*ASCIIREADER_H_*/

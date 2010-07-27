@@ -35,40 +35,40 @@ class Domain;
 //! for each element in that list the method initOutput is called. 
 //! The same will happen in each time step with the method doOutput and at 
 //! the end of the simulation with the method finishOutput.
-class OutputBase{
- public:
-  //! @brief Subclasses should use their constructur to pass parameters (e.g. filenames)
-  OutputBase(){}
-  
-  virtual ~OutputBase(){}
-  
-  //! @brief will be called at the beginning of the simulation
-  //!
-  //! Some OutputPlugins will need some initial things to be done before
-  //! the output can start, e.g. opening some files. This method will
-  //! be called once at the beginning of the simulation (see Simulation.cpp)
-  virtual void initOutput(ParticleContainer* particleContainer,
-			  DomainDecompBase* domainDecomp, Domain* domain) = 0;
-  
-  //! @brief will be called in each time step
-  //!
-  //! Most of the times, the output should either be done every time step or at least
-  //! every n-th time step. Therefore, this method has an additional parameter simstep,
-  //! allowing to do a output depending on the current simulation time step. This method 
-  //! will be called once every time step during the simulation (see Simulation.cpp)
-  virtual void doOutput(
-     ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-     Domain* domain, unsigned long simstep,
-     std::list<ChemicalPotential>* lmu
-  ) = 0;
-  
-  //! @brief will be called at the end of the simulation
-  //!
-  //! Some OutputPlugins will need to do some things at the end of the simulation,
-  //! e.g. closing some files. This method will
-  //! be called once at the end of the simulation (see Simulation.cpp)
-  virtual void finishOutput(ParticleContainer* particleContainer,
-			    DomainDecompBase* domainDecomp, Domain* domain) = 0;
+class OutputBase {
+public:
+	//! @brief Subclasses should use their constructur to pass parameters (e.g. filenames)
+	OutputBase(){}
+
+	virtual ~OutputBase(){}
+
+	//! @brief will be called at the beginning of the simulation
+	//!
+	//! Some OutputPlugins will need some initial things to be done before
+	//! the output can start, e.g. opening some files. This method will
+	//! be called once at the beginning of the simulation (see Simulation.cpp)
+	virtual void initOutput(ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, Domain* domain) = 0;
+
+	//! @brief will be called in each time step
+	//!
+	//! Most of the times, the output should either be done every time step or at least
+	//! every n-th time step. Therefore, this method has an additional parameter simstep,
+	//! allowing to do a output depending on the current simulation time step. This method
+	//! will be called once every time step during the simulation (see Simulation.cpp)
+	virtual void doOutput(
+			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+			Domain* domain, unsigned long simstep,
+			std::list<ChemicalPotential>* lmu
+	) = 0;
+
+	//! @brief will be called at the end of the simulation
+	//!
+	//! Some OutputPlugins will need to do some things at the end of the simulation,
+	//! e.g. closing some files. This method will
+	//! be called once at the end of the simulation (see Simulation.cpp)
+	virtual void finishOutput(ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, Domain* domain) = 0;
 };
 
 #endif /*OUTPUTBASE_H_*/
