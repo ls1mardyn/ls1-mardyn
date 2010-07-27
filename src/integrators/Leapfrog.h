@@ -25,59 +25,59 @@
 //!     e.g. the new forces. In this case, the integrator is informed, that new forces
 //!     have been calculated. The automaton can then do all necessary computations
 //!     that have to be done do get from the current state to the next state
-class Leapfrog: public Integrator{
- public:
-  //! The constructor
-  Leapfrog(double timestepLength);
-    
-  //! The destructor
-  ~Leapfrog();
-    
-  //! @brief steps between the force calculation and the end of the time step
-  //!
-  //! checks whether the current state of the integrator allows that this method is called
-  void eventForcesCalculated(ParticleContainer* molCont, Domain* domain);
-    
-  //! @brief performs all steps that can be done before new forces are needed
-  //!
-  //! checks whether the current state of the integrator allows that this method is called
-  void eventNewTimestep(ParticleContainer* molCont, Domain* domain);
+class Leapfrog : public Integrator {
+public:
+	//! The constructor
+	Leapfrog(double timestepLength);
 
-   virtual void accelerateUniformly(
-      ParticleContainer* molCont,
-      Domain* domain
-   );
-   virtual void accelerateInstantaneously(
-      ParticleContainer* molCont,
-      Domain* domain
-   );
-   virtual void init1D(
-      unsigned zoscillator,
-      ParticleContainer* molCont
-   );
-   virtual void zOscillation(
-      unsigned zoscillator,
-      ParticleContainer* molCont
-   );
+	//! The destructor
+	~Leapfrog();
 
- private:
-    
-  //! state in which the integrator is 
-  int _state;
-    
-  //! @brief calculate new positions and the first velocity halfstep
-  //!
-  //! This method also checks whether the state is 1. If so, the calculations are done and
-  //! the state is set to 2, otherwise, an error is printed
-  void transition1to2(ParticleContainer* molCont, Domain* domain);
-      
-  //! @brief calculates the second halfstep for the velocity and angular momentum (postF) 
-  //!
-  //! This method also checks whether the state is 2. If so, the calculations are done and
-  //! the state is set to 3, otherwise, an error is printed
-  void transition2to3(ParticleContainer* molCont, Domain* domain);
-  //! @brief checks whether the state is 3. If so, the state is set to 3, otherwise, an error is printed.
-  void transition3to1(ParticleContainer* molCont, Domain* domain);
-    
+	//! @brief steps between the force calculation and the end of the time step
+	//!
+	//! checks whether the current state of the integrator allows that this method is called
+	void eventForcesCalculated(ParticleContainer* molCont, Domain* domain);
+
+	//! @brief performs all steps that can be done before new forces are needed
+	//!
+	//! checks whether the current state of the integrator allows that this method is called
+	void eventNewTimestep(ParticleContainer* molCont, Domain* domain);
+
+	virtual void accelerateUniformly(
+			ParticleContainer* molCont,
+			Domain* domain
+	);
+	virtual void accelerateInstantaneously(
+			ParticleContainer* molCont,
+			Domain* domain
+	);
+	virtual void init1D(
+			unsigned zoscillator,
+			ParticleContainer* molCont
+	);
+	virtual void zOscillation(
+			unsigned zoscillator,
+			ParticleContainer* molCont
+	);
+
+private:
+
+	//! state in which the integrator is
+	int _state;
+
+	//! @brief calculate new positions and the first velocity halfstep
+	//!
+	//! This method also checks whether the state is 1. If so, the calculations are done and
+	//! the state is set to 2, otherwise, an error is printed
+	void transition1to2(ParticleContainer* molCont, Domain* domain);
+
+	//! @brief calculates the second halfstep for the velocity and angular momentum (postF)
+	//!
+	//! This method also checks whether the state is 2. If so, the calculations are done and
+	//! the state is set to 3, otherwise, an error is printed
+	void transition2to3(ParticleContainer* molCont, Domain* domain);
+	//! @brief checks whether the state is 3. If so, the state is set to 3, otherwise, an error is printed.
+	void transition3to1(ParticleContainer* molCont, Domain* domain);
+
 };
 #endif /*LEAPFROG_H_*/

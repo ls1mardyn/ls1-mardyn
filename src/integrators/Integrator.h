@@ -28,63 +28,67 @@ class Domain;
 //! whenever some new information (e.g. new Forces on the molecules) is
 //! available. The integrator should then know what can be done with
 //! this new information (e.g. calculate new accelaration)
-class Integrator{
- public:
-  //! The constructor
-  Integrator();
-    
-  //! The destructor
-  virtual ~Integrator();
-    
-  //! @brief informs the integrator about available forces, who then continues integration
-  //!
-  //! An Integrator can't calculate the force on molecules. But the forces are needed to solve
-  //! the equations of motion. This method informs the integrator that the forces on all molecules
-  //! have been calculated (by some other module), so the integrator should continue it's work
-  //! up to a point where all values are available at the time step end.
-  //! @param moleculeContainer containes the molecules for which the equations of motion shall be solved
-  //! @param domain needed because some macroscopic values (Thermostat) might influence the integrator
-  virtual void eventForcesCalculated(ParticleContainer* moleculeContainer, Domain* domain) = 0;
-    
-  //! @brief inform the integrator that the integration should continue
-  //!
-  //! Basically, the only point where an integrator has to interrupt it's work is when
-  //! it needs forces to continue, which is not necessarily between two time steps. But
-  //! the simulation program usually wants to do something (output) between two time steps
-  //! (this has to be done as only then all values (x, v,...) are avaiable for the same point in time).
-  //! So the integrator interrupts it's work at the end of one time step and resumes work
-  //! with the call of this method.
-  //! @param moleculeContainer containes the molecules for which the equations of motion shall be solved
-  //! @param domain needed because some macroscopic values (Thermostat) might influence the integrator
-  virtual void eventNewTimestep(ParticleContainer* moleculeContainer, Domain* domain) = 0;
+class Integrator {
+public:
+	//! The constructor
+	Integrator();
 
-  //! set the time between two time steps
-  void setTimestepLength(double dt) { _timestepLength = dt;}
-    
-  //! get the time between two time steps
-  double getTimestepLength() { return _timestepLength; }
+	//! The destructor
+	virtual ~Integrator();
 
-   virtual void accelerateUniformly(
-      ParticleContainer* molCont,
-      Domain* domain
-   ) = 0;
-   virtual void accelerateInstantaneously(
-      ParticleContainer* molCont,
-      Domain* domain
-   ) = 0;
-   virtual void init1D(
-      unsigned zoscillator,
-      ParticleContainer* molCont
-   ) = 0;
-   virtual void zOscillation(
-      unsigned zoscillator,
-      ParticleContainer* molCont
-   ) = 0;
+	//! @brief informs the integrator about available forces, who then continues integration
+	//!
+	//! An Integrator can't calculate the force on molecules. But the forces are needed to solve
+	//! the equations of motion. This method informs the integrator that the forces on all molecules
+	//! have been calculated (by some other module), so the integrator should continue it's work
+	//! up to a point where all values are available at the time step end.
+	//! @param moleculeContainer containes the molecules for which the equations of motion shall be solved
+	//! @param domain needed because some macroscopic values (Thermostat) might influence the integrator
+	virtual void eventForcesCalculated(ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
- protected:
+	//! @brief inform the integrator that the integration should continue
+	//!
+	//! Basically, the only point where an integrator has to interrupt it's work is when
+	//! it needs forces to continue, which is not necessarily between two time steps. But
+	//! the simulation program usually wants to do something (output) between two time steps
+	//! (this has to be done as only then all values (x, v,...) are avaiable for the same point in time).
+	//! So the integrator interrupts it's work at the end of one time step and resumes work
+	//! with the call of this method.
+	//! @param moleculeContainer containes the molecules for which the equations of motion shall be solved
+	//! @param domain needed because some macroscopic values (Thermostat) might influence the integrator
+	virtual void eventNewTimestep(ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
-  //! time between time step n and time step (n+1)
-  double _timestepLength;
-    
+	//! set the time between two time steps
+	void setTimestepLength(double dt) {
+		_timestepLength = dt;
+	}
+
+	//! get the time between two time steps
+	double getTimestepLength() {
+		return _timestepLength;
+	}
+
+	virtual void accelerateUniformly(
+			ParticleContainer* molCont,
+			Domain* domain
+	) = 0;
+	virtual void accelerateInstantaneously(
+			ParticleContainer* molCont,
+			Domain* domain
+	) = 0;
+	virtual void init1D(
+			unsigned zoscillator,
+			ParticleContainer* molCont
+	) = 0;
+	virtual void zOscillation(
+			unsigned zoscillator,
+			ParticleContainer* molCont
+	) = 0;
+
+protected:
+
+	//! time between time step n and time step (n+1)
+	double _timestepLength;
+
 };
 #endif /*INTEGRATOR_H_*/
