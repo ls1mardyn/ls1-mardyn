@@ -14,7 +14,7 @@ using namespace std;
 
 // declaration of the function to be tested in Mardyn.cpp
 optparse::Values& initOptions(int argc, char *argv[],
-    optparse::OptionParser& op);
+		optparse::OptionParser& op);
 
 CPPUNIT_TEST_SUITE_REGISTRATION(MarDynInitOptionsTest);
 

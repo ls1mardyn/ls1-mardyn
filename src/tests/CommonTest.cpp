@@ -27,13 +27,13 @@ void CommonTest::testGetTimeString() {
 
 
 void CommonTest::testAlignedNumber() {
-  //CPPUNIT_ASSERT_EQUAL_MESSAGE("One should be zero!", 1, 0);
+	//CPPUNIT_ASSERT_EQUAL_MESSAGE("One should be zero!", 1, 0);
 
-  std::string result = aligned_number(123, 7, '.');
-  std::string expected("....123");
-  CPPUNIT_ASSERT_EQUAL_MESSAGE("Align number 123 to 7 digits, filling char is .", expected, result);
+	std::string result = aligned_number(123, 7, '.');
+	std::string expected("....123");
+	CPPUNIT_ASSERT_EQUAL_MESSAGE("Align number 123 to 7 digits, filling char is .", expected, result);
 
-  result = aligned_number(-2, 6, ' ');
-  expected = "    -2";
-  CPPUNIT_ASSERT_EQUAL_MESSAGE("Align number -2 to 6 digits, filling char is ' '(space)", expected, result);
+	result = aligned_number(-2, 6, ' ');
+	expected = "    -2";
+	CPPUNIT_ASSERT_EQUAL_MESSAGE("Align number -2 to 6 digits, filling char is ' '(space)", expected, result);
 }
