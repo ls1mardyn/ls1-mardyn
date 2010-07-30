@@ -96,7 +96,11 @@ public:
 private:
 	double m_eps; // strength
 	double m_sigma; // diameter
-	double m_rc; // cutoff radius
+  // cutoff radius
+  // it seems to me as if this is not the cutoff-radius which is used for the linked cells,
+  // but a molecule specific one to determine the cutoff correction
+  // TODO why may they be different!!!???
+	double m_rc;
 	double uLJshift6; // truncation offset of the LJ potential
 };
 
