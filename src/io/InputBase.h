@@ -12,7 +12,7 @@ class ChemicalPotential;
 //! @brief interface for any kind of input class
 //!
 //! @todo more comment
-class InputBase {
+class InputBase{
 public:
 	InputBase(){}
 
@@ -26,9 +26,14 @@ public:
 	virtual void setPhaseSpaceHeaderFile(std::string filename) = 0;
 
 	//! @brief read the phase space components and header information
+	//! @param timestep timestep length
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep) = 0;
 
-	//! @brief read the actual phase space information
+	/**
+	 *  @brief read the actual phase space information
+	 *  Returns "the highest molecule ID found in the phase space file";
+	 *  // todo why? should it be some kind of upper bound for the number of molecules???
+	 */
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 
 };

@@ -19,6 +19,12 @@ InputOldstyle::~InputOldstyle(){}
 void InputOldstyle::setPhaseSpaceFile(string filename) {
 	_phaseSpaceFile = filename;
 	_phaseSpaceFileStream.open( filename.c_str() );
+
+	if (!_phaseSpaceFileStream.is_open()) {
+		global_log->error() << " Reader for old-style input file: " << endl;
+		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
+		exit(1);
+	}
 }
 
 void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
