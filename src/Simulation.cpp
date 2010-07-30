@@ -48,6 +48,7 @@
 #include "io/CheckpointWriter.h"
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
+#include "io/OneCLJGenerator.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -243,19 +244,19 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			string phaseSpaceFileFormat;
 			inputfilestream >> phaseSpaceFileFormat;
 
-			if (timestepLength == 0.0) {
-				global_log->error() << "timestep missing." << endl;
-				exit(1);
-			}
-			if (phaseSpaceFileFormat == "OldStyle") {
-				string phaseSpaceFileName;
-				inputfilestream >> phaseSpaceFileName;
-				_inputReader = (InputBase*) new InputOldstyle();
-				_inputReader->setPhaseSpaceFile(phaseSpaceFileName);
-				_inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			}
-			else if (phaseSpaceFileFormat == "PartGen") {
+      if (timestepLength == 0.0) {
+        global_log->error() << "timestep missing." << endl;
+        exit(1);
+      }
+      if (phaseSpaceFileFormat == "OldStyle") {
+        string phaseSpaceFileName;
+        inputfilestream >> phaseSpaceFileName;
+        _inputReader = (InputBase*) new InputOldstyle();
+        _inputReader->setPhaseSpaceFile(phaseSpaceFileName);
+        _inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
+        _inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+      }
+      else if (phaseSpaceFileFormat == "PartGen") {
 				string mode;
 				string phaseSpaceFileName;
 				inputfilestream >> mode >> phaseSpaceFileName;
@@ -273,21 +274,48 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> token >> gasDensity >> fluidDensity >> volPercOfFluid >> clusterFileName;
 				((PartGen*) _inputReader)->setClusterFile(gasDensity, fluidDensity, volPercOfFluid, clusterFileName);
 				((PartGen*) _inputReader)->readPhaseSpaceHeader(_domain, timestepLength);
+			} else if (phaseSpaceFileFormat == "1CLJGen") {
+				string mode;
+				int N;
+				double T;
+				string line;
+
+				getline(inputfilestream, line);
+				stringstream lineStream(line);
+				lineStream >> mode >> N >> T;
+				cout << "read: mode " << mode << " N " << N << " T " << T << endl;
+
+				OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
+				if (mode == "Homogeneous") {
+					double rho;
+					lineStream >> rho;
+					generator->setHomogeneuosParameter(rho);
+				} else if (mode == "Cluster") {
+					double rho_gas, rho_fluid, vol_perc_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
+					lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
+					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
+				} else {
+					global_log->error() << "Error in inputfile: OneCLJGenerator option \"Cluster\" not supported!" << endl;
+					exit(1);
+				}
+				generator->readPhaseSpaceHeader(_domain, timestepLength);
+
+				_inputReader = (OneCLJGenerator*) generator;
 			}
-			if (this->_LJCutoffRadius == 0.0)
-				_LJCutoffRadius = this->_cutoffRadius;
-			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
+      if (this->_LJCutoffRadius == 0.0)
+      	_LJCutoffRadius = this->_cutoffRadius;
+      _domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		}
-		else if (token == "timestepLength") {
-			inputfilestream >> timestepLength;
-		}
-		else if (token == "cutoffRadius") {
-			inputfilestream >> _cutoffRadius;
-		}
-		else if (token == "LJCutoffRadius") {
-			inputfilestream >> _LJCutoffRadius;
-		}
-		else if ((token == "parallelization") || (token == "parallelisation")) {
+    else if (token == "timestepLength") {
+      inputfilestream >> timestepLength;
+    }
+    else if (token == "cutoffRadius") {
+      inputfilestream >> _cutoffRadius;
+    }
+    else if (token == "LJCutoffRadius") {
+      inputfilestream >> _LJCutoffRadius;
+    }
+    else if ((token == "parallelization") || (token == "parallelisation")) {
 #ifndef PARALLEL
 			global_log->warning() << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
 			inputfilestream >> token;

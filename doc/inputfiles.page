@@ -1,0 +1,69 @@
+/*! \page "Mardyn Input Files"
+
+@TODO write or complete the page...
+
+!!! Config file
+
+@TODO Sketch general.
+
+MDProjectConfig
+
+!! timestepLength 
+!! cutoffRadius
+!! phaseSpaceFile 
+
+! OldStyle 
+Specifies a phase space specifiation file of the old input file (whatever the "old"
+input style is!?).
+
+! 1CLJGen
+
+@note This particle generator doesn't produce input which is physically correct
+      in any way. It's intended to be used just to test technical stuff!
+
+Generates 1-Center-Lennard-Jones molecules as input. There are two 
+modes, "Homogeneous" or "Cluster". Independent of the mode, the generator needs 
+two more parameters, the number of molecules and the temperature.
+
+In any case, the size of the simulation box is calculated automatically.
+
+- "Homogeneous"
+Creates a homogeneous distribution of a gas. The molecules are distributet randomly
+within the domain. The generator takes one more parameter, the density of the gas.
+
+A line could look like
+\verbatim
+#                      mode        N     T  rho
+phaseSpaceFile 1CLJGen Homogeneous 20000 10 0.08
+\endverbatim
+
+- "Cluster"
+Create a inhomogeneous distribution, i.e. a scenario where molecules are clustered
+as drops in a gas phase. Apart from N and T, the generator takes the following 
+additional parameters:
+	- the density of the gas
+	- the density of the fluid (i.e. in the drops)
+	- the percentage of volume covered by the drops (in percent)
+	- the volume of the largest drops (in percent of the total volume)
+	- the number of sphere-classes. The drops of a class have a radius 0.9 * radius
+	  of the drops of the larger class.
+
+A line could look like
+\verbatim
+#                      mode    N     T   rho_gas  rho_fluid  fluidVolume  maxSphereVolume  numSphereSizes
+phaseSpaceFile 1CLJGen Cluster 2000  10  0.1      0.4        10           30               5   4
+\endverbatim
+
+!! parallelization DomainDecomposition
+!! datastructure LinkedCells
+!! cellsInCutoffRadius
+
+!! Output Writer
+
+!!! Component Specification
+
+!!! Phase Specification File
+
+!!! XML File Format
+
+*/
