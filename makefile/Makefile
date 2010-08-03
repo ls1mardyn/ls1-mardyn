@@ -1,10 +1,12 @@
 # compiler configuration
+# show list of all available configurations with make cfg_list
 CFG ?= gcc
 
 # machine type: SEQ or PAR
 PARTYPE ?= SEQ
 
 # choose target: DEBUG|RELEASE
+# some configurations have additional targets, see the respective configuration files for details
 TARGET ?= RELEASE
 
 # compile using depmode?
@@ -15,7 +17,7 @@ TESTS ?= 0
 
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
- $(warning ERROR: current directory $(CURDIR) seems not to be a source directory)
+  $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
 endif
 
 #build name and include config file
@@ -23,10 +25,11 @@ MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
 ifneq ($(CFGFILE),)
- $(info including $(CFGFILE) )
- include $(CFGFILE)
+  $(info # Selected configuration: $(CFG) )
+  $(info # Including file $(CFGFILE) )
+  include $(CFGFILE)
 else
- $(error ERROR: config file for $(CFG) not found - no include )
+  $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
 SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "/tests/")
@@ -36,24 +39,8 @@ SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
 
 
 OBJECTS = $(SOURCES:.cpp=.o)
-# boost dependency
-#BOOST_VER := boost_1_34_0
 
-#LIBRARY_BOOST_LOCAL = $(shell find ../libs/$(BOOST_VER) -name 'libboost_program_options*.a' 2>/dev/null |grep release |grep threading-multi)
-#LIBRARY_BOOST_SYSTEM = $(shell find /usr/lib/ -name 'libboost_program_options*.a' 2>/dev/null |grep -e '-mt' ; find /usr/local/lib/ -name 'libboost_program_options*.a' |grep -e '-mt')
-
-#INCLUDES = -I$(shell pwd)
 INCLUDES = -I$(CURDIR) -I$(CURDIR)/External $(CPPUNIT_INCLUDES)
-
-#ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
-# $(info using BOOST library from system: $(LIBRARY_BOOST_SYSTEM))
-# INCLUDES += -I$(shell dirname `echo $(LIBRARY_BOOST_SYSTEM) |sed -e 's/\ .*//g'`)
-# OBJECTS += $(LIBRARY_BOOST_SYSTEM)
-#else
-# $(info using BOOST library from ls1 SVN: $(LIBRARY_BOOST_LOCAL))
-# INCLUDES += -I../libs/$(BOOST_VER)
-# OBJECTS += $(LIBRARY_BOOST_LOCAL)
-#endif
 
 
 BINARYbasename = MarDyn
@@ -74,9 +61,9 @@ CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK
 LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) $(CPPUNIT_LINK_ARGS) -lrt
 
 ifeq ($(DEPS),1)
-DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
+  DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
 else
-DEPCOMP =
+  DEPCOMP =
 endif
 
 $(BINARY): .deps $(OBJECTS) cppunit
@@ -87,7 +74,7 @@ $(BINARY): .deps $(OBJECTS) cppunit
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: help all clean cleanall depend check boost cleanboost
+.PHONY: help all clean cleanall depend cfg_list test
 
 help:
 	@echo "configuration: $(CFG_INFO)"
@@ -129,19 +116,6 @@ cleanall: clean cppunit_clean
 	rm -f $(BINARY)
 	find -type f -name '*~' -delete
 	if [ -L $(BINARYbasename) ]; then rm -f $(BINARYbasename); fi
-
-#check:
-#ifeq ($(strip $(LIBRARY_BOOST_LOCAL)),)
-#ifeq ($(strip $(LIBRARY_BOOST_SYSTEM)),)
-#	@echo "ERROR: no boost library found. please run 'make boost' or install the boost 1.34.0 or newer package."
-#else
-#	@echo "SUCCESS: found libboost in $(shell dirname `echo $(LIBRARY_BOOST_SYSTEM) |sed -e 's/\ .*//g'`)"
-#	@echo " includes: $(INCLUDES)"
-#endif
-#else
-#	@echo "SUCCESS: found libboost in $(shell dirname `echo $(LIBRARY_BOOST_LOCAL) |sed -e 's/\ .*//g'`)"
-#	@echo " includes: $(INCLUDES)"
-#endif
 
 # create .deps subdirectories containing dependency information
 .deps:
