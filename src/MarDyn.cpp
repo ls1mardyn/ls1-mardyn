@@ -124,8 +124,6 @@ bool runTests() {
 
 Values& initOptions(int argc, char *argv[], OptionParser& op) {
 
-	cout << "Size of args: " << argc << endl;
-
 	op = OptionParser()
 		// The last two optional positional arguments are only here for backwards-compatibility
 		.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n\nUse option --help to display all available options.")
