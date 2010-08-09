@@ -244,19 +244,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			string phaseSpaceFileFormat;
 			inputfilestream >> phaseSpaceFileFormat;
 
-      if (timestepLength == 0.0) {
-        global_log->error() << "timestep missing." << endl;
-        exit(1);
-      }
-      if (phaseSpaceFileFormat == "OldStyle") {
-        string phaseSpaceFileName;
-        inputfilestream >> phaseSpaceFileName;
-        _inputReader = (InputBase*) new InputOldstyle();
-        _inputReader->setPhaseSpaceFile(phaseSpaceFileName);
-        _inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
-        _inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-      }
-      else if (phaseSpaceFileFormat == "PartGen") {
+			if (timestepLength == 0.0) {
+				global_log->error() << "timestep missing." << endl;
+				exit(1);
+			}
+			if (phaseSpaceFileFormat == "OldStyle") {
+				string phaseSpaceFileName;
+				inputfilestream >> phaseSpaceFileName;
+				_inputReader = (InputBase*) new InputOldstyle();
+				_inputReader->setPhaseSpaceFile(phaseSpaceFileName);
+				_inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			} else if (phaseSpaceFileFormat == "PartGen") {
 				string mode;
 				string phaseSpaceFileName;
 				inputfilestream >> mode >> phaseSpaceFileName;
@@ -302,20 +301,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 				_inputReader = (OneCLJGenerator*) generator;
 			}
-      if (this->_LJCutoffRadius == 0.0)
-      	_LJCutoffRadius = this->_cutoffRadius;
-      _domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-		}
-    else if (token == "timestepLength") {
-      inputfilestream >> timestepLength;
-    }
-    else if (token == "cutoffRadius") {
-      inputfilestream >> _cutoffRadius;
-    }
-    else if (token == "LJCutoffRadius") {
-      inputfilestream >> _LJCutoffRadius;
-    }
-    else if ((token == "parallelization") || (token == "parallelisation")) {
+			if (this->_LJCutoffRadius == 0.0)
+				_LJCutoffRadius = this->_cutoffRadius;
+			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
+		} else if (token == "timestepLength") {
+			inputfilestream >> timestepLength;
+		} else if (token == "cutoffRadius") {
+			inputfilestream >> _cutoffRadius;
+		} else if (token == "LJCutoffRadius") {
+			inputfilestream >> _LJCutoffRadius;
+		} else if ((token == "parallelization") || (token == "parallelisation")) {
 #ifndef PARALLEL
 			global_log->warning() << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
 			inputfilestream >> token;

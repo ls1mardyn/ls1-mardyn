@@ -52,28 +52,28 @@ public:
 	virtual ~DropletGenerator();
 
 private:
-  double _fluidVolume;
-  double _maxSphereRadius;
-  int _numSphereSizes;
+	double _fluidVolume;
+	double _maxSphereRadius;
+	int _numSphereSizes;
 
-  int _numOccupied;
-  std::vector<std::vector<std::vector<bool> > > _occupiedFields;
+	int _numOccupied;
+	std::vector<std::vector<std::vector<bool> > > _occupiedFields;
 
-  /**
-   * Initialize vector _occupiedFields
-   */
-  void initFields(int size);
+	/**
+	 * Initialize vector _occupiedFields
+	 */
+	void initFields(int size);
 
-  /**
-   * calculate Euclidean distance
-   */
-  double calcDistance(std::vector<double> pos1, double pos2[3]);
+	/**
+	 * calculate Euclidean distance
+	 */
+	double calcDistance(std::vector<double> pos1, double pos2[3]);
 
-  /**
-   * Places a droplet randomly in the domain (spheres may overlap), adds it to droplets
-   * and marks occupiedFields to calculate the percentage of volume covered.
-   */
-  void placeSphereRandomly(double radius, std::vector<Droplet>& droplets);
+	/**
+	 * Places a droplet randomly in the domain (spheres may overlap), adds it to droplets
+	 * and marks occupiedFields to calculate the percentage of volume covered.
+	 */
+	void placeSphereRandomly(double radius, std::vector<Droplet>& droplets);
 };
 
 Log::Logger& operator<<(Log::Logger& str, DropletGenerator::Droplet& droplet);

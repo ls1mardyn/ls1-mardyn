@@ -27,24 +27,24 @@ DropletGenerator::~DropletGenerator() {
 }
 
 void DropletGenerator::initFields(int size){
-  _occupiedFields.resize(size);
-  for(int ix=0; ix<size; ix++){
-    _occupiedFields[ix].resize(size);
-    for(int iy=0; iy<size; iy++){
-      _occupiedFields[ix][iy].resize(size);
-      for(int iz=0; iz<size; iz++){
-      	_occupiedFields[ix][iy][iz] = false;
-      }
-    }
-  }
+	_occupiedFields.resize(size);
+	for(int ix=0; ix<size; ix++){
+		_occupiedFields[ix].resize(size);
+		for(int iy=0; iy<size; iy++){
+			_occupiedFields[ix][iy].resize(size);
+			for(int iz=0; iz<size; iz++){
+				_occupiedFields[ix][iy][iz] = false;
+			}
+		}
+	}
 }
 
 double DropletGenerator::calcDistance(vector<double> pos1, double pos2[3]){
-  double temp = 0;
-  for(int i=0; i<3; i++){
-    temp += pow(pos1[i]-pos2[i],2.0);
-  }
-  return sqrt(temp);
+	double temp = 0;
+	for(int i=0; i<3; i++){
+		temp += pow(pos1[i]-pos2[i],2.0);
+	}
+	return sqrt(temp);
 }
 
 
@@ -92,27 +92,27 @@ void DropletGenerator::placeSphereRandomly(double radius, std::vector<Droplet>& 
 vector<DropletGenerator::Droplet> DropletGenerator::generateDroplets() {
 
 	// sphereclass 1:
-	  double currentRadius = _maxSphereRadius;
-	  double percentageOccupied = 0.0;
-	  double percentageNeeded = 0.0;
-	  vector<Droplet> droplets;
-	  for(int sphereclass = 0; sphereclass < _numSphereSizes; sphereclass++){
-	    percentageNeeded = (sphereclass+1.0)/_numSphereSizes*_fluidVolume;
-	    percentageOccupied = _numOccupied/pow(SIZE,3.0);
-	    int count = 0;
-	    while(percentageOccupied < percentageNeeded){
-	      placeSphereRandomly(currentRadius, droplets);
-	      count++;
-	      percentageOccupied = _numOccupied/pow(SIZE,3.0);
-	    }
-	    Log::global_log->debug() << "Created " << count << " spheres with radius " << currentRadius << endl;
-	    currentRadius -= _maxSphereRadius/10.0;
-	  }
-	  Log::global_log->debug() << "PercentOccupied: " << (100*_numOccupied/pow(SIZE,3.0)) << " %" << endl;
-	  return droplets;
+	double currentRadius = _maxSphereRadius;
+	double percentageOccupied = 0.0;
+	double percentageNeeded = 0.0;
+	vector<Droplet> droplets;
+	for (int sphereclass = 0; sphereclass < _numSphereSizes; sphereclass++) {
+		percentageNeeded = (sphereclass + 1.0) / _numSphereSizes * _fluidVolume;
+		percentageOccupied = _numOccupied / pow(SIZE, 3.0);
+		int count = 0;
+		while (percentageOccupied < percentageNeeded) {
+			placeSphereRandomly(currentRadius, droplets);
+			count++;
+			percentageOccupied = _numOccupied / pow(SIZE, 3.0);
+		}
+		Log::global_log->debug() << "Created " << count << " spheres with radius " << currentRadius << endl;
+		currentRadius -= _maxSphereRadius / 10.0;
+	}
+	Log::global_log->debug() << "PercentOccupied: " << (100 * _numOccupied / pow(SIZE, 3.0)) << " %" << endl;
+	return droplets;
 }
 
 Log::Logger& operator<<(Log::Logger& str, DropletGenerator::Droplet& droplet) {
 	str << " Droplet: center [" << droplet._center[0] << "," << droplet._center[1] << "," << droplet._center[2] << "] r:" << droplet._radius << endl;
-  return str;
+	return str;
 }
