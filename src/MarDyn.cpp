@@ -2,17 +2,11 @@
 #include <iomanip>
 #include <ctime>
 
-#ifdef CPPUNIT_TESTS
-#include<cppunit/ui/text/TestRunner.h>
-#include<cppunit/TestResultCollector.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#endif
-
 #include "utils/OptionParser.h"
 #include "utils/Logger.h"
 #include "utils/compile_info.h"
+#include "utils/Testing.h"
 #include "Simulation.h"
-
 
 
 using Log::global_log;
@@ -21,17 +15,13 @@ using optparse::OptionGroup;
 using optparse::Values;
 using namespace std;
 
-//! execute unit tests
-//! @return false if no errors occured, true otherwise
-bool runTests();
 
-
-optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op);
+optparse::Values& initOptions(int argc, const char* const argv[], optparse::OptionParser& op);
 
 
 //! @page main
 //! In this project, software for molecular dynamics simulation
-//! with short-range forces is developed. The aim is to have a parallel code (MPI)
+//! with short-range forces is developed. The aim is to have a parallel code (MPI) 
 //! for multi-centered molecules.
 //!
 //! The role of the main function is to run tests for all classes
@@ -70,8 +60,6 @@ int main(int argc, char** argv) {
 	global_log->info() << "Running with " << world_size << " processes." << endl;
 #endif
 
-
-
 	cout.precision(6);
 
 	OptionParser op;
@@ -105,25 +93,8 @@ int main(int argc, char** argv) {
 #endif
 }
 
-bool runTests() {
-#ifdef CPPUNIT_TESTS
-	global_log->info() << "Running unit tests!" << endl;
-	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
-	CppUnit::TextUi::TestRunner runner;
-	runner.addTest( registry.makeTest() );
-	runner.run();
 
-	const CppUnit::TestResultCollector& collector = runner.result();
-	bool testresult = collector.testFailuresTotal() != 0;
-	return testresult;
-#else
-	global_log->error() << endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << endl << endl;
-	return false;
-#endif
-}
-
-
-Values& initOptions(int argc, char *argv[], OptionParser& op) {
+Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 
 	op = OptionParser()
 		// The last two optional positional arguments are only here for backwards-compatibility

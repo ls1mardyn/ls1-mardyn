@@ -8,26 +8,27 @@
 #ifndef MARDYNINITOPTIONSTEST_H_
 #define MARDYNINITOPTIONSTEST_H_
 
-#include <cppunit/extensions/HelperMacros.h>
+#include "utils/Testing.h"
 
 /**
  * This class tests, if the command-line options are all present and configured
  * the right way.
  */
-class MarDynInitOptionsTest: public CppUnit::TestFixture {
+class MarDynInitOptionsTest: public utils::Test {
 
-	CPPUNIT_TEST_SUITE(MarDynInitOptionsTest);
+	TEST_SUITE(MarDynInitOptionsTest);
 
-	CPPUNIT_TEST(testAllOptions);
+	TEST_METHOD(testAllOptions);
 
-	CPPUNIT_TEST_SUITE_END();
+	TEST_SUITE_END();
 
 public:
+
 	MarDynInitOptionsTest();
+
 	virtual ~MarDynInitOptionsTest();
 
 	void testAllOptions();
-
 };
 
 #endif /* MARDYNINITOPTIONSTEST_H_ */

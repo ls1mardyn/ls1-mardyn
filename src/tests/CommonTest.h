@@ -8,23 +8,22 @@
 #ifndef COMMONTEST_H_
 #define COMMONTEST_H_
 
-#include <cppunit/extensions/HelperMacros.h>
+#include "utils/Testing.h"
 
 /**
  * Test functionality of module Common
  */
-class CommonTest : public CppUnit::TestFixture{
+class CommonTest : public utils::Test {
 
 	// declare testsuite commonTest
-	CPPUNIT_TEST_SUITE(CommonTest);
+	TEST_SUITE(CommonTest);
 
 	// add two methods which perform tests
-	CPPUNIT_TEST(testGetTimeString);
-	CPPUNIT_TEST(testAlignedNumber);
+	TEST_METHOD(testGetTimeString);
+	TEST_METHOD(testAlignedNumber);
 
 	// end suite declaration
-	CPPUNIT_TEST_SUITE_END();
-
+	TEST_SUITE_END();
 
 public:
 	CommonTest();
