@@ -1,14 +1,32 @@
 
 /** \page "Unit Tests"
 
-The project ls1/Mardyn uses the testing framework CppUnit for writing unit tests. 
-Following you find a short description on building Mardyn with CppUnit, testing 
-your build and writing new tests. 
+Currently, the project ls1/Mardyn uses the testing framework CppUnit for writing unit tests. 
+Following you find a short description on building Mardyn with CppUnit and executing the tests.
 
-!!! Building Mardyn with Unit Tests (CppUnit)
+For information on how to write unit tests within Mardyn see "Writing Unit Tests". 
+
+!!! Quick Instructions
+
+The simplest way to build Mardyn/ls1 with Unit Tests, is to use the makefile and the 
+cppunit-version contained in the subversion repository.
+
+Change to the directory "src/" and type
+
+\verbatim
+make -f ../makefile/Makefile TESTS=1
+\endverbatim
+
+Execute the tests with
+\verbatim
+./MarDyn -t
+\endverbatim
+
+
+!!! Building Mardyn with Unit Tests
 
 To build Mardyn with unit tests generally, the following conditions have to be met:
-- the macro CPPUNIT_TESTS has to be defined when compiling Mardyn
+- the macro UNIT_TESTS has to be defined when compiling Mardyn
 - the CppUnit header-files have to be in the include path
 - you have to link against the CppUnit-Library or the compiled source code
 
@@ -23,148 +41,16 @@ tests will be compiled and linked.
 
 !! Using a CppUnit Library
 
-If there is already a cppUnit library on your system, it might be convenient to 
-use that one. Configure your build-system so that the conditions listed above 
+If there is already a cppUnit library installed on your system, it might be convenient
+to use that one. Configure your build-system so that the conditions listed above 
 are met, or replace the file makefile/cppunit.mk.  
 
-!!! Executing the unit tests
+!!! Running the unit tests
 
 After building Mardyn with unit tests, call Mardyn with the commandline arguments
  "-t" or "--tests". The tests will then be executed. 
  
 \note In cases you use the cppunit source code from the Mardyn repository, also 
 the tests which test cppUnit itself will be executed.  
-
-!!! Organisation of the tests
-
-All tests are organized in directories called \b tests. A test-directory contains
-the tests for the code contained in its parent directory. It should be possible 
-to derive the name of the class under test from the classname of the testcase.
-
-!!! Writing unit tests
-
-Here I explain the testcase tests/CommonTest as a simple example, to demonstrate
-how to write testcases with cppunit. 
-
-To create a new testcase, apply the following steps to your new header file:
-- Create a new testclass, which inherits from CppUnit::TestFixture 
-- Include the header \"cppunit/extensions/HelperMacros.h\"
-- Write the declarations of the test methods. It is recommended that you create
-  one tes method for each method which you are going to test. The name
-  of test methods should start with \"test"\. Thus, you end up with the following 
-  code:
-  
-  \code
-#include <cppunit/extensions/HelperMacros.h>
-
-class CommonTest : public CppUnit::TestFixture{
-
-public:
-	CommonTest();
-
-	virtual ~CommonTest();
-
-	void testGetTimeString();
-
-	void testAlignedNumber();
-};
-\endcode
-  
-- Next declare the test suite, which will contain the single test methods. A good
-  place is just at then beginning of the class. A test suite is declared with
-  the macros CPPUNIT_TEST_SUITE(test_suite_name) and 
-  CPPUNIT_TEST_SUITE_END().
-  Declare the unit tests in between those two macros with the macro 
-  CPPUNIT_TEST(testGetTimeString). 
-  
-  \note The argument of CPPUNIT_TEST must match the name of a test function
-        you declared in the last step!
-  \note Each of the macros has to be terminated by a semicolon!   
-  
-  The result is the final header: 
-
-\code
-#include <cppunit/extensions/HelperMacros.h>
-
-class CommonTest : public CppUnit::TestFixture{
-
-	// declare testsuite commonTest
-	CPPUNIT_TEST_SUITE(CommonTest);
-
-	// add two methods which perform tests
-	CPPUNIT_TEST(testGetTimeString);
-	CPPUNIT_TEST(testAlignedNumber);
-
-	// end suite declaration
-	CPPUNIT_TEST_SUITE_END();
-
-
-public:
-	CommonTest();
-
-	virtual ~CommonTest();
-
-	void testGetTimeString();
-
-	void testAlignedNumber();
-};
-\endcode
-
-- Next implement the .cpp-file. Include the header of the test class as well as 
-  the header of the class being tested. 
-
-- <b>After the includes, call the macro \"CPPUNIT_TEST_SUITE_REGISTRATION(test name)\",
-with the name of the test class as argument! </b> 
-
-\code
-#include "CommonTest.h"
-#include "Common.h"
-
-CPPUNIT_TEST_SUITE_REGISTRATION(CommonTest);
-\endcode
-
-- Then implement the test functions. Use assertions to check results. Assertions
-are 
-	- CPPUNIT_ASSERT
-	- CPPUNIT_ASSERT_MESSAGE
-	- CPPUNIT_ASSERT_EQUAL
-	- CPPUNIT_ASSERT_EQUAL_MESSAGE
-	- CPPUNIT_ASSERT_DOUBLES_EQUAL
-	- CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE
-
-For more assertions see the header cppunit/TestAssert.h.
-
-An implementation may look like
-\code
-void CommonTest::testGetTimeString() {
-	//Log::Logger log(Log::All);
-	//log.debug() << "Testing getTimeString" << std::endl;
-	std::string time = gettimestring();
-	CPPUNIT_ASSERT_EQUAL((size_t)13, time.size());
-	CPPUNIT_ASSERT_EQUAL(time[6], 'T');
-}
-\endcode
-
-!!! A few general thoughts about tests
-
-- Think about testability, when you write code.
-  Try to keep your methods small and simple. If your method is just too long or 
-  contains complex control flows, then your tests might get very complex as well.
-  Thus, try to design your code for testability. 
-  
-- You might also try to test invalid input to your methods. E.g. if you specify 
-  that your method accepts only positive integer input values, try also negative
-  ones and check if your code deals with that case the right way. 
-
-- Of course tests will never cover 100 % of your code, and there will be bugs 
-  despite. For each bug you fixed, add a test. This will make sure that the bug 
-  will never again be introduced (e.g. by a developer who is not familiar with
-  that part of the code).
-
-- Don't overdo tests - create a few tests per public method. Add only more tests, 
-  if certain parts of your code are likely to contain several bugs, or if code
-  is rather complex.
-
-For more detailed information and further available options see the "CppUnit Cookbook"
 
 */

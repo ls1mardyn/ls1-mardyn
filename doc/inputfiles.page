@@ -13,13 +13,12 @@ MDProjectConfig
 !! phaseSpaceFile 
 
 ! OldStyle 
-Specifies a phase space specifiation file of the old input file (whatever the "old"
-input style is!?).
+Specifies a phase space specifiation file of the old input file (whatever the "old" input style is!?).
 
 ! 1CLJGen
 
-@note This particle generator doesn't produce input which is physically correct
-      in any way. It's intended to be used just to test technical stuff!
+<b>Note This particle generator doesn't produce input which is physically correct
+      in any way. It's intended to be used just to test technical stuff!</b>
 
 Generates 1-Center-Lennard-Jones molecules as input. There are two 
 modes, "Homogeneous" or "Cluster". Independent of the mode, the generator needs 
