@@ -14,6 +14,7 @@
 #include "Simulation.h"
 
 
+
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -30,7 +31,7 @@ optparse::Values& initOptions(int argc, char *argv[], optparse::OptionParser& op
 
 //! @page main
 //! In this project, software for molecular dynamics simulation
-//! with short-range forces is developed. The aim is to have a parallel code (MPI) 
+//! with short-range forces is developed. The aim is to have a parallel code (MPI)
 //! for multi-centered molecules.
 //!
 //! The role of the main function is to run tests for all classes
