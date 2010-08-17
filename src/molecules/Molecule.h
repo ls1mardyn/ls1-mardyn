@@ -141,7 +141,7 @@ public:
 
 	void setFM(double Fx, double Fy, double Fz, double Mx, double My, double Mz) {
 		_F[0]=Fx; _F[1]=Fy; _F[2]=Fz;
-		_M[0]=Mx; _M[1]=My; _M[2]=My;
+		_M[0]=Mx; _M[1]=My; _M[2]=Mz;
 	}
 	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d]*=s; }
 	void scale_v(double s, double offx, double offy, double offz);
