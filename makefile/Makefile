@@ -92,11 +92,8 @@ help:
 	@echo "make clean       delete object files"
 	@echo "make cleanall    delete object files and executable"
 	@echo "make depend      generate makefile dependency list"
-	#@echo "make check       check for needed libraries"
-	#@echo "make boost       build bundled boost library"
-	#@echo "make cleanboost  clean bundled boost library"
 
-all: check $(BINARY)
+all: $(BINARY)
 
 test: 
 	./$(BINARY) -t
