@@ -21,7 +21,7 @@ CPPUNIT_LINK_ARGS = $(CPPUNIT_OBJECTS) -ldl
 # tests in "/parallel" are not consicered at the moment
 CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep "/tests/")
 SOURCES += $(CPPUNIT_TESTS)
-CXXFLAGS += -DCPPUNIT_TESTS
+CXXFLAGS += -DUNIT_TESTS
 CPPUNIT_TESTS_OBJECTS = $(CPPUNIT_TESTS:.cpp=.o)
 
 cppunit: $(CPPUNIT_OBJECTS) $(CPPUNIT_TESTS_OBJECTS)
