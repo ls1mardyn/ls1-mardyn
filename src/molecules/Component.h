@@ -32,60 +32,59 @@
 class Component {
 public:
 	Component(unsigned int id = 0);
-	//Component(std::istream& istrm);
 
-	void setID(unsigned int id) { m_id = id; }
-	unsigned int ID() const { return m_id; }
+	void setID(unsigned int id) { _id = id; }
+	unsigned int ID() const { return _id; }
 	unsigned int numSites() const {
 		return this->numLJcenters() + this->numCharges()
 		                            + this->numDipoles()
 		                            + this->numQuadrupoles()
 		                            + this->numTersoff();
 	}
-	unsigned int numLJcenters() const { return m_ljcenters.size(); }
-	unsigned numCharges() const { return m_charges.size(); }
-	unsigned int numDipoles() const { return m_dipoles.size(); }
-	unsigned int numQuadrupoles() const { return m_quadrupoles.size(); }
-	unsigned int numTersoff() const { return m_tersoff.size(); }
+	unsigned int numLJcenters() const { return _ljcenters.size(); }
+	unsigned int numCharges() const { return _charges.size(); }
+	unsigned int numDipoles() const { return _dipoles.size(); }
+	unsigned int numQuadrupoles() const { return _quadrupoles.size(); }
+	unsigned int numTersoff() const { return _tersoff.size(); }
 
-	double m() const { return m_m; }
-	const double* I() const { return m_I; }
-	const double* Ipa() const { return m_Ipa; }
-	double Ixx() const { return m_I[0]; }
-	double Iyy() const { return m_I[1]; }
-	double Izz() const { return m_I[2]; }
-	double Ixy() const { return m_I[3]; }
-	double Ixz() const { return m_I[4]; }
-	double Iyz() const { return m_I[5]; }
-	double I11() const { return m_Ipa[0]; }
-	double I22() const { return m_Ipa[1]; }
-	double I33() const { return m_Ipa[2]; }
-	void setIxx(double I) { m_I[0]=I; }
-	void setIyy(double I) { m_I[1]=I; }
-	void setIzz(double I) { m_I[2]=I; }
-	void setIxy(double I) { m_I[3]=I; }
-	void setIxz(double I) { m_I[4]=I; }
-	void setIyz(double I) { m_I[5]=I; }
-	void setI11(double I) { m_Ipa[0]=I; }
-	void setI22(double I) { m_Ipa[1]=I; }
-	void setI33(double I) { m_Ipa[2]=I; }
+	double m() const { return _m; }
+	const double* I() const { return _I; }
+	const double* Ipa() const { return _Ipa; }
+	double Ixx() const { return _I[0]; }
+	double Iyy() const { return _I[1]; }
+	double Izz() const { return _I[2]; }
+	double Ixy() const { return _I[3]; }
+	double Ixz() const { return _I[4]; }
+	double Iyz() const { return _I[5]; }
+	double I11() const { return _Ipa[0]; }
+	double I22() const { return _Ipa[1]; }
+	double I33() const { return _Ipa[2]; }
+	void setIxx(double I) { _I[0]=I; }
+	void setIyy(double I) { _I[1]=I; }
+	void setIzz(double I) { _I[2]=I; }
+	void setIxy(double I) { _I[3]=I; }
+	void setIxz(double I) { _I[4]=I; }
+	void setIyz(double I) { _I[5]=I; }
+	void setI11(double I) { _Ipa[0]=I; }
+	void setI22(double I) { _Ipa[1]=I; }
+	void setI33(double I) { _Ipa[2]=I; }
 	void setI(double Ixx=0.,double Iyy=0.,double Izz=0.,
 	          double Ixy=0.,double Ixz=0.,double Iyz=0.);
-	void setI(unsigned short d,double I) { m_I[d]=I; }
+	void setI(unsigned short d,double I) { _I[d]=I; }
 	void addI(double Ixx=0.,double Iyy=0.,double Izz=0.,
 	          double Ixy=0.,double Ixz=0.,double Iyz=0.);
-	unsigned int rot_dof() const { return m_rot_dof; }
+	unsigned int rot_dof() const { return _rot_dof; }
 
-	const std::vector<LJcenter>& ljcenters() const { return m_ljcenters; }
-	const LJcenter& ljcenter(unsigned int i) const { return m_ljcenters[i]; }
-	const std::vector<Charge>& charges() const { return m_charges; }
-	const Charge& charge(unsigned i) const { return m_charges[i]; }
-	const std::vector<Dipole>& dipoles() const { return m_dipoles; }
-	const Dipole& dipole(unsigned int i) const { return m_dipoles[i]; }
-	const std::vector<Quadrupole>& quadrupoles() const { return m_quadrupoles; }
-	const Quadrupole& quadrupole(unsigned int i) const { return m_quadrupoles[i]; }
-	const std::vector<Tersoff>& tersoff() const { return m_tersoff; }
-	const Tersoff& tersoff(unsigned int i) const { return m_tersoff[i]; }
+	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
+	const LJcenter& ljcenter(unsigned int i) const { return _ljcenters[i]; }
+	const std::vector<Charge>& charges() const { return _charges; }
+	const Charge& charge(unsigned i) const { return _charges[i]; }
+	const std::vector<Dipole>& dipoles() const { return _dipoles; }
+	const Dipole& dipole(unsigned int i) const { return _dipoles[i]; }
+	const std::vector<Quadrupole>& quadrupoles() const { return _quadrupoles; }
+	const Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
+	const std::vector<Tersoff>& tersoff() const { return _tersoff; }
+	const Tersoff& tersoff(unsigned int i) const { return _tersoff[i]; }
 
 	//! @brief set the number of Molecules (global) which have this component type
 	void setNumMolecules(unsigned long num) { _numMolecules = num; }
@@ -125,21 +124,21 @@ public:
 	double E() { return _E_trans + _E_rot; }
 
 private:
-	unsigned int m_id; // IDentification number
+	unsigned int _id; // IDentification number
 	// LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array
-	//std::vector<Site> m_sites;
+	//std::vector<Site> _sites;
 	// use separate vectors instead...
-	std::vector<LJcenter> m_ljcenters;
-	std::vector<Charge> m_charges;
-	std::vector<Dipole> m_dipoles;
-	std::vector<Quadrupole> m_quadrupoles;
-	std::vector<Tersoff> m_tersoff;
+	std::vector<LJcenter> _ljcenters;
+	std::vector<Charge> _charges;
+	std::vector<Dipole> _dipoles;
+	std::vector<Quadrupole> _quadrupoles;
+	std::vector<Tersoff> _tersoff;
 	// for performance reasons better(?) omit Site-class indirection and use cached values
-	double m_m; // total mass
+	double _m; // total mass
 	// Ixx,Iyy,Izz,Ixy,Ixz,Iyz
-	double m_I[6]; // moments of inertia tensor
-	unsigned long m_rot_dof; // number of rotational degrees of freedom
-	double m_Ipa[3]; // moments of inertia for principal axes
+	double _I[6]; // moments of inertia tensor
+	unsigned long _rot_dof; // number of rotational degrees of freedom
+	double _Ipa[3]; // moments of inertia for principal axes
 
 	/* cached values, set by ensemble class! */
 	unsigned long _numMolecules; // number of molecules for this molecule type

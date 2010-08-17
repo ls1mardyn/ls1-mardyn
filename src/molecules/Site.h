@@ -29,33 +29,33 @@
 class Site {
 public:
 	/// get x-coordinate of position
-	double rx() const { return m_r[0]; }
+	double rx() const { return _r[0]; }
 	/// get y-coordinate of position
-	double ry() const { return m_r[1]; }
+	double ry() const { return _r[1]; }
 	/// get z-coordinate of position
-	double rz() const { return m_r[2]; }
+	double rz() const { return _r[2]; }
 	/// get position vector
-	const double* r() const { return m_r; }
+	const double* r() const { return _r; }
 	/// get mass
-	double m() const { return m_m; }
+	double m() const { return _m; }
 	/// translate coordinates to new origin
 	void translateOrigin(double neworigin[3]) {
 		for (unsigned short d = 0; d < 3; ++d)
-			m_r[d] -= neworigin[d];
+			_r[d] -= neworigin[d];
 	}
 
 protected:
 	/// Constructor
 	Site(double x = 0., double y = 0., double z = 0., double m = 0.)
-			: m_m(m) {
-		m_r[0] = x;
-		m_r[1] = y;
-		m_r[2] = z;
+			: _m(m) {
+		_r[0] = x;
+		_r[1] = y;
+		_r[2] = z;
 	}
 
 	//private:
-	double m_r[3]; // position coordinates
-	double m_m; // mass
+	double _r[3]; // position coordinates
+	double _m; // mass
 };
 
 
@@ -67,67 +67,67 @@ class LJcenter : public Site {
 public:
 	/// Constructor: pass shift = 0.0 for the full LJ potential
 	LJcenter(double x, double y, double z, double m, double eps, double sigma, double rc, double shift)
-			: Site(x, y, z, m), m_eps(eps), m_sigma(sigma), m_rc(rc) {
-		m_r[0] = x;
-		m_r[1] = y;
-		m_r[2] = z;
-		uLJshift6 = shift;
+			: Site(x, y, z, m), _eps(eps), _sigma(sigma), _rc(rc) {
+		_r[0] = x;
+		_r[1] = y;
+		_r[2] = z;
+		_uLJshift6 = shift;
 	}
 	/// Constructor reading from stream
 	LJcenter(std::istream& istrm) {
-		istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_m >> m_eps >> m_sigma >> uLJshift6;
+		istrm >> _r[0] >> _r[1] >> _r[2] >> _m >> _eps >> _sigma >> _uLJshift6;
 	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
-		ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t" << m_m << "\t" << m_eps << " " << m_sigma << " " << m_rc << " " << uLJshift6;
+		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << "\t" << _eps << " " << _sigma << " " << _rc << " " << _uLJshift6;
 	}
 	/// get strength
-	double eps() const { return m_eps; }
+	double eps() const { return _eps; }
 	/// get diameter
-	double sigma() const { return m_sigma; }
+	double sigma() const { return _sigma; }
 	/// get truncation option
 	bool TRUNCATED_SHIFTED() {
-		return (this->uLJshift6 != 0.0);
+		return (this->_uLJshift6 != 0.0);
 	}
 	double shift6() const {
-		return this->uLJshift6;
+		return this->_uLJshift6;
 	}
 
 private:
-	double m_eps; // strength
-	double m_sigma; // diameter
+	double _eps; // strength
+	double _sigma; // diameter
   // cutoff radius
   // it seems to me as if this is not the cutoff-radius which is used for the linked cells,
   // but a molecule specific one to determine the cutoff correction
   // TODO why may they be different!!!???
-	double m_rc;
-	double uLJshift6; // truncation offset of the LJ potential
+	double _rc;
+	double _uLJshift6; // truncation offset of the LJ potential
 };
 
 class Charge : public Site {
 public:
 	/// Constructor
 	Charge(double x, double y, double z, double m, double q)
-			: Site(x, y, z, m), m_q(q) {
-		m_r[0] = x; m_r[1] = y; m_r[2] = z;
-		m_m = m;
-		m_q = q;
+			: Site(x, y, z, m), _q(q) {
+		_r[0] = x; _r[1] = y; _r[2] = z;
+		_m = m;
+		_q = q;
 	}
 
 	/// Constructor reading from stream
 	Charge(std::istream& istrm) {
-		istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_m >> m_q;
+		istrm >> _r[0] >> _r[1] >> _r[2] >> _m >> _q;
 	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
-		ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t" << m_m << " " << m_q;
+		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << " " << _q;
 	}
 	/// get charge
-	double q() const { return m_q; }
+	double q() const { return _q; }
 
 private:
 	/// charge
-	double m_q;
+	double _q;
 };
 
 class Tersoff : public Site {
@@ -138,117 +138,117 @@ public:
 	        double c, double d, double h, double n, double beta)
 		: Site(x, y, z, m)
 	{
-		this->m_r[0] = x;
-		this->m_r[1] = y;
-		this->m_r[2] = z;
+		this->_r[0] = x;
+		this->_r[1] = y;
+		this->_r[2] = z;
 
-		this->m_m = m;
-		this->m_A = A;
-		this->m_B = B;
+		this->_m = m;
+		this->_A = A;
+		this->_B = B;
 
-		this->m_minus_lambda = -lambda;
-		this->m_minus_mu = -mu;
-		this->m_R = R;
-		this->m_S = S;
+		this->_minus_lambda = -lambda;
+		this->_minus_mu = -mu;
+		this->_R = R;
+		this->_S = S;
 
-		this->m_c_square = c*c;
-		this->m_d_square = d*d;
-		this->m_h = h;
-		this->m_n = n;
-		this->m_beta = beta;
+		this->_c_square = c*c;
+		this->_d_square = d*d;
+		this->_h = h;
+		this->_n = n;
+		this->_beta = beta;
 	}
 
 	/// Constructor reading from stream
 	Tersoff(std::istream& istrm) {
 		double lambda, mu, c, d;
-		istrm >> m_r[0] >> m_r[1] >> m_r[2]
-		      >> m_m >> m_A >> m_B >> lambda >> mu
-		      >> m_R >> m_S >> c
-		      >> d >> m_h >> m_n >> m_beta;
-		m_minus_lambda = -lambda;
-		m_minus_mu = -mu;
-		m_c_square = c*c;
-		m_d_square = d*d;
+		istrm >> _r[0] >> _r[1] >> _r[2]
+		      >> _m >> _A >> _B >> lambda >> mu
+		      >> _R >> _S >> c
+		      >> d >> _h >> _n >> _beta;
+		_minus_lambda = -lambda;
+		_minus_mu = -mu;
+		_c_square = c*c;
+		_d_square = d*d;
 	}
 
 	//! @brief write to stream
 	//!
 	void write(std::ostream& ostrm) const {
-		ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t"
-		      << m_m << "\t"  << m_A << " "  << m_B << " " << -m_minus_lambda << " " << -m_minus_mu << "\t"
-		      << m_R << " " << m_S << "\t" << sqrt(m_c_square) << " "
-		      << sqrt(m_d_square) << "\t" << m_h << " " << m_n << " " << m_beta;
+		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
+		      << _m << "\t"  << _A << " "  << _B << " " << -_minus_lambda << " " << -_minus_mu << "\t"
+		      << _R << " " << _S << "\t" << sqrt(_c_square) << " "
+		      << sqrt(_d_square) << "\t" << _h << " " << _n << " " << _beta;
 	}
 
 	//! @brief get repulsive coefficient
 	//!
-	double A() const { return this->m_A; }
+	double A() const { return this->_A; }
 
 	//! @brief get attractive coefficient
 	//!
-	double B() const { return this->m_B; }
+	double B() const { return this->_B; }
 
 	//! @brief get repulsive coexponent
 	//!
-	double minusLambda() const { return this->m_minus_lambda; }
+	double minusLambda() const { return this->_minus_lambda; }
 
 	//! @brief get attractive coexponent
 	//!
-	double minusMu() const { return this->m_minus_mu; }
+	double minusMu() const { return this->_minus_mu; }
 
 	//! @brief get internal radius
 	//!
-	double R() const { return this->m_R; }
+	double R() const { return this->_R; }
 
 	//! @brief get external radius
 	//!
-	double S() const { return this->m_S; }
+	double S() const { return this->_S; }
 
 	//! @brief get c square Tersoff interaction parameter
 	//!
-	double cSquare() const { return this->m_c_square; }
+	double cSquare() const { return this->_c_square; }
 
 	//! @brief get d square Tersoff interaction parameter
 	//!
-	double dSquare() const { return this->m_d_square; }
+	double dSquare() const { return this->_d_square; }
 
 	//! @brief get h Tersoff interaction parameter
 	//!
-	double h() const { return this->m_h; }
+	double h() const { return this->_h; }
 
 	//! @brief get n Tersoff interaction parameter
 	//!
-	double n() const { return this->m_n; }
+	double n() const { return this->_n; }
 
 	//! @brief get beta Tersoff interaction parameter
 	//!
-	double beta() const { return this->m_beta; }
+	double beta() const { return this->_beta; }
 
 private:
 	//! repulsive coefficient
-	double m_A;
+	double _A;
 	//! attractive coefficient
-	double m_B;
+	double _B;
 	//! repulsive coexponent
-	double m_minus_lambda;
+	double _minus_lambda;
 	//! attractive coexponent
-	double m_minus_mu;
+	double _minus_mu;
 
 	//! internal radius
-	double m_R;
+	double _R;
 	//! external radius
-	double m_S;
+	double _S;
 
 	//! c square Tersoff interaction parameter
-	double m_c_square;
+	double _c_square;
 	//! d square Tersoff interaction parameter
-	double m_d_square;
+	double _d_square;
 	//! h Tersoff interaction parameter
-	double m_h;
+	double _h;
 	//! n Tersoff interaction parameter
-	double m_n;
+	double _n;
 	//! beta Tersoff interaction parameter
-	double m_beta;
+	double _beta;
 };
 
 /** OrientedSite
@@ -256,22 +256,22 @@ private:
  */
 class OrientedSite : public Site {
 public:
-	double ex() const { return m_e[0]; }
-	double ey() const { return m_e[1]; }
-	double ez() const { return m_e[2]; }
-	const double* e() const { return m_e; }
+	double ex() const { return _e[0]; }
+	double ey() const { return _e[1]; }
+	double ez() const { return _e[2]; }
+	const double* e() const { return _e; }
 
 protected:
 	/// Constructor
 	OrientedSite(double x = 0., double y = 0., double z = 0., double m = 0., double ex = 0., double ey = 0., double ez = 0.)
 			: Site(x, y, z, m) {
-		m_e[0] = ex;
-		m_e[1] = ey;
-		m_e[2] = ez;
+		_e[0] = ex;
+		_e[1] = ey;
+		_e[2] = ez;
 	}
 
 	//private:
-	double m_e[3];
+	double _e[3];
 };
 
 
@@ -282,21 +282,21 @@ class Dipole : public OrientedSite {
 public:
 	/// Constructor
 	Dipole(double x, double y, double z, double eMyx, double eMyy, double eMyz, double absMy)
-			: OrientedSite(x, y, z, 0., eMyx, eMyy, eMyz), m_absMy(absMy) {
+			: OrientedSite(x, y, z, 0., eMyx, eMyy, eMyz), _absMy(absMy) {
 	}
 	/// Constructor reading from stream
 	Dipole(std::istream& istrm) {
-		istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_e[0] >> m_e[1] >> m_e[2] >> m_absMy;
-		m_m = 0.;
+		istrm >> _r[0] >> _r[1] >> _r[2] >> _e[0] >> _e[1] >> _e[2] >> _absMy;
+		_m = 0.;
 	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
-		ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t" << m_e[0] << " " << m_e[1] << " " << m_e[2] << "\t" << m_absMy;
+		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << "\t" << _absMy;
 	}
-	double absMy() const { return m_absMy; }
+	double absMy() const { return _absMy; }
 
 private:
-	double m_absMy;
+	double _absMy;
 };
 
 /** Quadrupole
@@ -306,21 +306,21 @@ class Quadrupole : public OrientedSite {
 public:
 	/// Constructor
 	Quadrupole(double x, double y, double z, double eQx, double eQy, double eQz, double absQ)
-			: OrientedSite(x, y, z, 0., eQx, eQy, eQz), m_absQ(absQ) {
+			: OrientedSite(x, y, z, 0., eQx, eQy, eQz), _absQ(absQ) {
 	}
 	/// Constructor reading from stream
 	Quadrupole(std::istream& istrm) {
-		istrm >> m_r[0] >> m_r[1] >> m_r[2] >> m_e[0] >> m_e[1] >> m_e[2] >> m_absQ;
-		m_m = 0.;
+		istrm >> _r[0] >> _r[1] >> _r[2] >> _e[0] >> _e[1] >> _e[2] >> _absQ;
+		_m = 0.;
 	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
-		ostrm << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t" << m_e[0] << " " << m_e[1] << " " << m_e[2] << " " << m_absQ;
+		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << " " << _absQ;
 	}
-	double absQ() const { return m_absQ; }
+	double absQ() const { return _absQ; }
 
 private:
-	double m_absQ;
+	double _absQ;
 };
 
 #endif /*SITE_H_*/

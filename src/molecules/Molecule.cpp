@@ -40,20 +40,20 @@ Molecule::Molecule(unsigned long id, int componentid,
 	                 double q0, double q1, double q2, double q3,
 	                 double Dx, double Dy, double Dz,
 	                 const vector<Component>* components)
-		: m_q(q0, q1, q2, q3), m_ljcenters(NULL), m_tersoff(NULL) {
-	m_id = id;
-	m_componentid = componentid;
-	m_r[0] = rx;
-	m_r[1] = ry;
-	m_r[2] = rz;
-	m_v[0] = vx;
-	m_v[1] = vy;
-	m_v[2] = vz;
-	m_D[0] = Dx;
-	m_D[1] = Dy;
-	m_D[2] = Dz;
-	m_sites_d = m_sites_F = m_osites_e = NULL;
-	m_curTN = 0;
+		: _q(q0, q1, q2, q3), _ljcenters(NULL), _tersoff(NULL) {
+	_id = id;
+	_componentid = componentid;
+	_r[0] = rx;
+	_r[1] = ry;
+	_r[2] = rz;
+	_v[0] = vx;
+	_v[1] = vy;
+	_v[2] = vz;
+	_D[0] = Dx;
+	_D[1] = Dy;
+	_D[2] = Dz;
+	_sites_d = _sites_F = _osites_e = NULL;
+	_curTN = 0;
 	fixedx = rx;
 	fixedy = ry;
 	if (components)
@@ -61,101 +61,101 @@ Molecule::Molecule(unsigned long id, int componentid,
 }
 
 Molecule::Molecule(const Molecule& m) {
-	m_id = m.m_id;
-	m_componentid = m.m_componentid;
-	m_r[0] = m.m_r[0];
-	m_r[1] = m.m_r[1];
-	m_r[2] = m.m_r[2];
-	m_v[0] = m.m_v[0];
-	m_v[1] = m.m_v[1];
-	m_v[2] = m.m_v[2];
-	m_q = m.m_q;
-	m_D[0] = m.m_D[0];
-	m_D[1] = m.m_D[1];
-	m_D[2] = m.m_D[2];
-	m_F[0] = m.m_F[0];
-	m_F[1] = m.m_F[1];
-	m_F[2] = m.m_F[2];
-	m_M[0] = m.m_M[0];
-	m_M[1] = m.m_M[1];
-	m_M[2] = m.m_M[2];
+	_id = m._id;
+	_componentid = m._componentid;
+	_r[0] = m._r[0];
+	_r[1] = m._r[1];
+	_r[2] = m._r[2];
+	_v[0] = m._v[0];
+	_v[1] = m._v[1];
+	_v[2] = m._v[2];
+	_q = m._q;
+	_D[0] = m._D[0];
+	_D[1] = m._D[1];
+	_D[2] = m._D[2];
+	_F[0] = m._F[0];
+	_F[1] = m._F[1];
+	_F[2] = m._F[2];
+	_M[0] = m._M[0];
+	_M[1] = m._M[1];
+	_M[2] = m._M[2];
 
-	m_ljcenters = m.m_ljcenters;
-	m_charges = m.m_charges;
-	m_dipoles = m.m_dipoles;
-	m_quadrupoles = m.m_quadrupoles;
-	if (!m.m_tersoff) {
-		global_log->warning() << "Tersoff vector null pointer detected for Molecule " << m_id << endl;
+	_ljcenters = m._ljcenters;
+	_charges = m._charges;
+	_dipoles = m._dipoles;
+	_quadrupoles = m._quadrupoles;
+	if (!m._tersoff) {
+		global_log->warning() << "Tersoff vector null pointer detected for Molecule " << _id << endl;
 	}
-	m_tersoff = m.m_tersoff;
-	m_m = m.m_m;
-	m_I[0] = m.m_I[0];
-	m_I[1] = m.m_I[1];
-	m_I[2] = m.m_I[2];
-	m_invI[0] = m.m_invI[0];
-	m_invI[1] = m.m_invI[1];
-	m_invI[2] = m.m_invI[2];
+	_tersoff = m._tersoff;
+	_m = m._m;
+	_I[0] = m._I[0];
+	_I[1] = m._I[1];
+	_I[2] = m._I[2];
+	_invI[0] = m._invI[0];
+	_invI[1] = m._invI[1];
+	_invI[2] = m._invI[2];
 
-	m_numsites = m.m_numsites;
-	m_numorientedsites = m.m_numorientedsites;
-	assert(m_numsites);
-	m_sites_d = new double[m_numsites*3];
-	assert(m_sites_d);
-	//for(unsigned int i=0;i<m_numsites*3;++i) m_sites_d[i]=m.m_sites_d[i]; // not necessary -> cache only
-	m_ljcenters_d = &(m_sites_d[0]);
-	m_charges_d = &(m_ljcenters_d[numLJcenters()*3]);
-	m_dipoles_d = &(m_charges_d[numCharges()*3]);
-	m_quadrupoles_d = &(m_dipoles_d[numDipoles()*3]);
-	m_tersoff_d = &(m_quadrupoles_d[numQuadrupoles()*3]);
+	_numsites = m._numsites;
+	_numorientedsites = m._numorientedsites;
+	assert(_numsites);
+	_sites_d = new double[_numsites*3];
+	assert(_sites_d);
+	//for(unsigned int i=0;i<_numsites*3;++i) _sites_d[i]=m._sites_d[i]; // not necessary -> cache only
+	_ljcenters_d = &(_sites_d[0]);
+	_charges_d = &(_ljcenters_d[numLJcenters()*3]);
+	_dipoles_d = &(_charges_d[numCharges()*3]);
+	_quadrupoles_d = &(_dipoles_d[numDipoles()*3]);
+	_tersoff_d = &(_quadrupoles_d[numQuadrupoles()*3]);
 
-	m_osites_e = new double[m_numorientedsites*3];
-	assert(m_osites_e);
-	//for(unsigned int i=0;i<m_numorientedsites*3;++i) m_osites_e[i]=m.m_osites_e[i]; // not necessary -> cache only
-	m_dipoles_e = &(m_osites_e[0]);
-	m_quadrupoles_e = &(m_dipoles_e[numDipoles()*3]);
+	_osites_e = new double[_numorientedsites*3];
+	assert(_osites_e);
+	//for(unsigned int i=0;i<_numorientedsites*3;++i) _osites_e[i]=m._osites_e[i]; // not necessary -> cache only
+	_dipoles_e = &(_osites_e[0]);
+	_quadrupoles_e = &(_dipoles_e[numDipoles()*3]);
 
-	m_sites_F = new double[m_numsites*3];
+	_sites_F = new double[_numsites*3];
 
-	assert(m_sites_F);
-	//for(unsigned int i=0;i<m_numsites*3;++i) m_sites_F[i]=m.m_sites_F[i]; // not necessary -> cache only
-	m_ljcenters_F = &(m_sites_F[0]);
-	m_charges_F = &(m_ljcenters_F[numLJcenters()*3]);
-	m_dipoles_F = &(m_charges_F[numCharges()*3]);
-	m_quadrupoles_F = &(m_dipoles_F[numDipoles()*3]);
-	m_tersoff_F = &(m_quadrupoles_F[numQuadrupoles()*3]);
-	//m_nextincell=m.m_nextincell;  // not necessary -> temporary only
-	m_curTN = 0;
+	assert(_sites_F);
+	//for(unsigned int i=0;i<_numsites*3;++i) _sites_F[i]=m._sites_F[i]; // not necessary -> cache only
+	_ljcenters_F = &(_sites_F[0]);
+	_charges_F = &(_ljcenters_F[numLJcenters()*3]);
+	_dipoles_F = &(_charges_F[numCharges()*3]);
+	_quadrupoles_F = &(_dipoles_F[numDipoles()*3]);
+	_tersoff_F = &(_quadrupoles_F[numQuadrupoles()*3]);
+	//_nextincell=m._nextincell;  // not necessary -> temporary only
+	_curTN = 0;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
 }
 
 Molecule::Molecule(istream& istrm, streamtype type, const vector<Component>* components) {
 	if (type == RESTART) {
-		istrm.read((char *) &m_id, sizeof(m_id));
-		istrm.read((char *) &m_componentid, sizeof(m_componentid));
-		istrm.read((char *) &m_r[0], sizeof(m_r[0]));
-		istrm.read((char *) &m_r[1], sizeof(m_r[1]));
-		istrm.read((char *) &m_r[2], sizeof(m_r[2]));
-		istrm.read((char *) &m_v[0], sizeof(m_v[0]));
-		istrm.read((char *) &m_v[1], sizeof(m_v[1]));
-		istrm.read((char *) &m_v[2], sizeof(m_v[2]));
+		istrm.read((char *) &_id, sizeof(_id));
+		istrm.read((char *) &_componentid, sizeof(_componentid));
+		istrm.read((char *) &_r[0], sizeof(_r[0]));
+		istrm.read((char *) &_r[1], sizeof(_r[1]));
+		istrm.read((char *) &_r[2], sizeof(_r[2]));
+		istrm.read((char *) &_v[0], sizeof(_v[0]));
+		istrm.read((char *) &_v[1], sizeof(_v[1]));
+		istrm.read((char *) &_v[2], sizeof(_v[2]));
 		double qw, qx, qy, qz;
 		istrm.read((char *) &qw, sizeof(qw));
 		istrm.read((char *) &qx, sizeof(qx));
 		istrm.read((char *) &qy, sizeof(qy));
 		istrm.read((char *) &qz, sizeof(qz));
-		m_q = Quaternion(qw, qx, qy, qz);
-		istrm.read((char *) &m_D[0], sizeof(m_D[0]));
-		istrm.read((char *) &m_D[1], sizeof(m_D[1]));
-		istrm.read((char *) &m_D[2], sizeof(m_D[2]));
-		istrm.read((char *) &m_F[0], sizeof(m_F[0]));
-		istrm.read((char *) &m_F[1], sizeof(m_F[1]));
-		istrm.read((char *) &m_F[2], sizeof(m_F[2]));
-		istrm.read((char *) &m_M[0], sizeof(m_M[0]));
-		istrm.read((char *) &m_M[1], sizeof(m_M[1]));
-		istrm.read((char *) &m_M[2], sizeof(m_M[2]));
+		_q = Quaternion(qw, qx, qy, qz);
+		istrm.read((char *) &_D[0], sizeof(_D[0]));
+		istrm.read((char *) &_D[1], sizeof(_D[1]));
+		istrm.read((char *) &_D[2], sizeof(_D[2]));
+		istrm.read((char *) &_F[0], sizeof(_F[0]));
+		istrm.read((char *) &_F[1], sizeof(_F[1]));
+		istrm.read((char *) &_F[2], sizeof(_F[2]));
+		istrm.read((char *) &_M[0], sizeof(_M[0]));
+		istrm.read((char *) &_M[1], sizeof(_M[1]));
+		istrm.read((char *) &_M[2], sizeof(_M[2]));
 	}
-	m_sites_d = m_sites_F = NULL;
+	_sites_d = _sites_F = NULL;
 	if (components)
 		setupCache(components);
 }
@@ -164,7 +164,7 @@ double Molecule::dist2(const Molecule& a, double L[3], double dr[]) const {
 	double d2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		double L_halve = .5 * L[d];
-		dr[d] = a.m_r[d] - m_r[d];
+		dr[d] = a._r[d] - _r[d];
 		if (dr[d] > L_halve) {
 			dr[d] -= L[d];
 		} else if (dr[d] < -L_halve) {
@@ -177,36 +177,36 @@ double Molecule::dist2(const Molecule& a, double L[3], double dr[]) const {
 }
 
 void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
-	assert(m_m);
+	assert(_m);
 	double dt_halve = .5 * dt;
-	double dtInv2m = dt_halve / m_m;
+	double dtInv2m = dt_halve / _m;
 	for (unsigned short d = 0; d < 3; ++d) {
-		m_v[d] = vcorr * m_v[d] + dtInv2m * m_F[d];
-		m_oldr[d] = m_r[d];
-		m_r[d] += dt * m_v[d];
+		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
+		_oldr[d] = _r[d];
+		_r[d] += dt * _v[d];
 	}
 
 	double w[3];
-	m_q.rotate(m_D, w);
+	_q.rotate(_D, w);
 	for (unsigned short d = 0; d < 3; ++d)
-		w[d] *= m_invI[d];
+		w[d] *= _invI[d];
 	Quaternion qhalfstep;
-	m_q.differentiate(w, qhalfstep);
+	_q.differentiate(w, qhalfstep);
 	qhalfstep.scale(dt_halve);
-	qhalfstep.add(m_q);
+	qhalfstep.add(_q);
 	double qcorr = 1. / sqrt(qhalfstep.magnitude2());
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
-		m_D[d] = Dcorr * m_D[d] + dt_halve * m_M[d];
-	qhalfstep.rotate(m_D, w);
+		_D[d] = Dcorr * _D[d] + dt_halve * _M[d];
+	qhalfstep.rotate(_D, w);
 	for (unsigned short d = 0; d < 3; ++d)
-		w[d] *= m_invI[d];
+		w[d] *= _invI[d];
 	Quaternion qincr;
 	qhalfstep.differentiate(w, qincr);
 	qincr.scale(dt);
-	m_q.add(qincr);
-	qcorr = 1. / sqrt(m_q.magnitude2());
-	m_q.scale(qcorr);
+	_q.add(qincr);
+	qcorr = 1. / sqrt(_q.magnitude2());
+	_q.scale(qcorr);
 
 }
 
@@ -215,106 +215,106 @@ void Molecule::upd_cache() {
 	unsigned int i;
 	unsigned int ns = numLJcenters();
 	for (i = 0; i < ns; ++i)
-		m_q.rotateinv((*m_ljcenters)[i].r(), &(m_ljcenters_d[i*3]));
+		_q.rotateinv((*_ljcenters)[i].r(), &(_ljcenters_d[i*3]));
 	ns = numCharges();
 	for (i = 0; i < ns; ++i)
-		m_q.rotateinv((*m_charges)[i].r(), &(m_charges_d[i*3]));
+		_q.rotateinv((*_charges)[i].r(), &(_charges_d[i*3]));
 	ns = numDipoles();
 
 	for (i = 0; i < ns; ++i) {
-		const Dipole& di = (*m_dipoles)[i];
-		m_q.rotateinv(di.r(), &(m_dipoles_d[i*3]));
-		m_q.rotateinv(di.e(), &(m_dipoles_e[i*3]));
+		const Dipole& di = (*_dipoles)[i];
+		_q.rotateinv(di.r(), &(_dipoles_d[i*3]));
+		_q.rotateinv(di.e(), &(_dipoles_e[i*3]));
 	}
 	ns = numQuadrupoles();
 
 	for (i = 0; i < ns; ++i) {
-		const Quadrupole& qi = (*m_quadrupoles)[i];
-		m_q.rotateinv(qi.r(), &(m_quadrupoles_d[i*3]));
-		m_q.rotateinv(qi.e(), &(m_quadrupoles_e[i*3]));
+		const Quadrupole& qi = (*_quadrupoles)[i];
+		_q.rotateinv(qi.r(), &(_quadrupoles_d[i*3]));
+		_q.rotateinv(qi.e(), &(_quadrupoles_e[i*3]));
 	}
 	ns = this->numTersoff();
 	for (i = 0; i < ns; i++)
-		m_q.rotateinv((*m_tersoff)[i].r(), &(m_tersoff_d[i*3]));
+		_q.rotateinv((*_tersoff)[i].r(), &(_tersoff_d[i*3]));
 
 	clearFM();
-	//m_Upot=0.;
+	//_Upot=0.;
 }
 
 
 void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
-	//m_Upot*=.5;
+	//_Upot*=.5;
 
 
 	calcFM();
 
-	//if(m_id==1) cout << "Kraft: " << m_F[0] << " / " << m_F[1] << " / " << m_F[2] << endl;
+	//if(_id==1) cout << "Kraft: " << _F[0] << " / " << _F[1] << " / " << _F[2] << endl;
 
-	double dtInv2m = dt_halve / m_m;
+	double dtInv2m = dt_halve / _m;
 	double v2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
-		m_v[d] += dtInv2m * m_F[d];
-		v2 += m_v[d] * m_v[d];
-		m_D[d] += dt_halve * m_M[d];
+		_v[d] += dtInv2m * _F[d];
+		v2 += _v[d] * _v[d];
+		_D[d] += dt_halve * _M[d];
 	}
 #ifndef NDEBUG
 	if (!(v2 > 0.0)) {
 		/*
 		 * catches NaN forces and coordinates
 		 */
-		global_log->error() << "Molecule " << m_id << " has v^2 = " << v2 << ".\n"
-		                    << "r = (" << m_r[0] << " / " << m_r[1] << " / " << m_r[2] << "), "
-		                    << "F = (" << m_F[0] << " / " << m_F[1] << " / " << m_F[2] << "), "
-		                    << "v = (" << m_v[0] << " / " << m_v[1] << " / " << m_v[2] << ")." << endl;
+		global_log->error() << "Molecule " << _id << " has v^2 = " << v2 << ".\n"
+		                    << "r = (" << _r[0] << " / " << _r[1] << " / " << _r[2] << "), "
+		                    << "F = (" << _F[0] << " / " << _F[1] << " / " << _F[2] << "), "
+		                    << "v = (" << _v[0] << " / " << _v[1] << " / " << _v[2] << ")." << endl;
 		exit(1);
 	}
 #endif
-	summv2 += m_m * v2;
+	summv2 += _m * v2;
 	double w[3];
-	m_q.rotate(m_D, w);
+	_q.rotate(_D, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
-		w[d] *= m_invI[d];
-		Iw2 += m_I[d] * w[d] * w[d];
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
 	}
 	sumIw2 += Iw2;
 }
 
 double Molecule::Urot() {
 	double w[3];
-	m_q.rotate(m_D, w);
+	_q.rotate(_D, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
-		w[d] *= m_invI[d];
-		Iw2 += m_I[d] * w[d] * w[d];
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
 	}
 	return 0.5 * Iw2;
 }
 
 void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
-	summv2 += m_m * v2();
+	summv2 += _m * v2();
 	double w[3];
-	m_q.rotate(m_D, w);
+	_q.rotate(_D, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
-		w[d] *= m_invI[d];
-		Iw2 += m_I[d] * w[d] * w[d];
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
 	}
 	sumIw2 += Iw2;
 }
 
 void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {
-	double vcx = m_v[0] - offx;
-	double vcy = m_v[1] - offy;
-	double vcz = m_v[2] - offz;
-	summv2 += m_m * (vcx*vcx + vcy*vcy + vcz*vcz);
+	double vcx = _v[0] - offx;
+	double vcy = _v[1] - offy;
+	double vcz = _v[2] - offz;
+	summv2 += _m * (vcx*vcx + vcy*vcy + vcz*vcz);
 
 	double w[3];
-	m_q.rotate(m_D, w);
+	_q.rotate(_D, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
-		w[d] *= m_invI[d];
-		Iw2 += m_I[d] * w[d] * w[d];
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
 	}
 	sumIw2 += Iw2;
 }
@@ -326,64 +326,64 @@ void Molecule::scale_v(double s, double offx, double offy, double offz) {
 }
 
 void Molecule::write(ostream& ostrm) const {
-	ostrm << m_id << "\t" << (m_componentid+1) << "\t"
-	      << m_r[0] << " " << m_r[1] << " " << m_r[2] << "\t"
-	      << m_v[0] << " " << m_v[1] << " " << m_v[2] << "\t"
-	      << m_q.qw() << " " << m_q.qx() << " " << m_q.qy() << " " << m_q.qz() << "\t"
-	      << m_D[0] << " " << m_D[1] << " " << m_D[2] << "\t"
+	ostrm << _id << "\t" << (_componentid+1) << "\t"
+	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
+	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
+	      << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
+	      << _D[0] << " " << _D[1] << " " << _D[2] << "\t"
 	      << endl;
 }
 
 void Molecule::save_restart(ostream& ostrm) const {
-	ostrm.write((const char *) &m_id, sizeof(m_id));
-	ostrm.write((const char *) &m_componentid, sizeof(m_componentid));
-	ostrm.write((const char *) &m_r[0], sizeof(m_r[0]));
-	ostrm.write((const char *) &m_r[1], sizeof(m_r[1]));
-	ostrm.write((const char *) &m_r[2], sizeof(m_r[2]));
-	ostrm.write((const char *) &m_v[0], sizeof(m_v[0]));
-	ostrm.write((const char *) &m_v[1], sizeof(m_v[1]));
-	ostrm.write((const char *) &m_v[2], sizeof(m_v[2]));
-	double q = m_q.qw();
+	ostrm.write((const char *) &_id, sizeof(_id));
+	ostrm.write((const char *) &_componentid, sizeof(_componentid));
+	ostrm.write((const char *) &_r[0], sizeof(_r[0]));
+	ostrm.write((const char *) &_r[1], sizeof(_r[1]));
+	ostrm.write((const char *) &_r[2], sizeof(_r[2]));
+	ostrm.write((const char *) &_v[0], sizeof(_v[0]));
+	ostrm.write((const char *) &_v[1], sizeof(_v[1]));
+	ostrm.write((const char *) &_v[2], sizeof(_v[2]));
+	double q = _q.qw();
 	ostrm.write((const char *) &q, sizeof(q));
-	q = m_q.qx();
+	q = _q.qx();
 	ostrm.write((const char *) &q, sizeof(q));
-	q = m_q.qy();
+	q = _q.qy();
 	ostrm.write((const char *) &q, sizeof(q));
-	q = m_q.qz();
+	q = _q.qz();
 	ostrm.write((const char *) &q, sizeof(q));
-	ostrm.write((const char *) &m_D[0], sizeof(m_D[0]));
-	ostrm.write((const char *) &m_D[1], sizeof(m_D[1]));
-	ostrm.write((const char *) &m_D[2], sizeof(m_D[2]));
-	ostrm.write((const char *) &m_F[0], sizeof(m_F[0]));
-	ostrm.write((const char *) &m_F[1], sizeof(m_F[1]));
-	ostrm.write((const char *) &m_F[2], sizeof(m_F[2]));
-	ostrm.write((const char *) &m_M[0], sizeof(m_M[0]));
-	ostrm.write((const char *) &m_M[1], sizeof(m_M[1]));
-	ostrm.write((const char *) &m_M[2], sizeof(m_M[2]));
+	ostrm.write((const char *) &_D[0], sizeof(_D[0]));
+	ostrm.write((const char *) &_D[1], sizeof(_D[1]));
+	ostrm.write((const char *) &_D[2], sizeof(_D[2]));
+	ostrm.write((const char *) &_F[0], sizeof(_F[0]));
+	ostrm.write((const char *) &_F[1], sizeof(_F[1]));
+	ostrm.write((const char *) &_F[2], sizeof(_F[2]));
+	ostrm.write((const char *) &_M[0], sizeof(_M[0]));
+	ostrm.write((const char *) &_M[1], sizeof(_M[1]));
+	ostrm.write((const char *) &_M[2], sizeof(_M[2]));
 }
 
 void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
-	// this->m_Tersoff_neighbours.insert(pair<Molecule*, bool>(m, (pairType > 0)));
-	for (int j = 0; j < m_curTN; j++) {
-		if (m->m_id == m_Tersoff_neighbours_first[j]->id()) {
-			this->m_Tersoff_neighbours_first[j] = m;
-			this->m_Tersoff_neighbours_second[j] = pairType;
+	// this->_Tersoff_neighbours.insert(pair<Molecule*, bool>(m, (pairType > 0)));
+	for (int j = 0; j < _curTN; j++) {
+		if (m->_id == _Tersoff_neighbours_first[j]->id()) {
+			this->_Tersoff_neighbours_first[j] = m;
+			this->_Tersoff_neighbours_second[j] = pairType;
 			return;
 		}
 	}
 
-	this->m_Tersoff_neighbours_first[m_curTN] = m;
-	this->m_Tersoff_neighbours_second[m_curTN] = pairType;
-	this->m_curTN++;
-	if (m_curTN > MAXTN) {
-		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->m_id << " has more than " << MAXTN << " Tersoff neighbours." << endl;
+	this->_Tersoff_neighbours_first[_curTN] = m;
+	this->_Tersoff_neighbours_second[_curTN] = pairType;
+	this->_curTN++;
+	if (_curTN > MAXTN) {
+		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->_id << " has more than " << MAXTN << " Tersoff neighbours." << endl;
 		exit(1);
 	}
 }
 
 double Molecule::tersoffParameters(double params[15]) //returns delta_r
 {
-	const Tersoff* t = &((*(this->m_tersoff))[0]);
+	const Tersoff* t = &((*(this->_tersoff))[0]);
 	params[ 0] = t->R();
 	params[ 1] = t->S();
 	params[ 2] = t->h();
@@ -410,70 +410,70 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 	assert(components);
 	if (components->size() == 0)
 		return;
-	assert(m_componentid >= 0);
-	m_numsites = m_numorientedsites = 0;
-	m_ljcenters = &(*components)[m_componentid].ljcenters();
-	m_numsites += m_ljcenters->size();
-	m_charges = &(*components)[m_componentid].charges();
-	m_numsites += m_charges->size();
-	m_dipoles = &(*components)[m_componentid].dipoles();
-	m_numsites += m_dipoles->size();
-	m_numorientedsites += m_dipoles->size();
-	m_quadrupoles = &(*components)[m_componentid].quadrupoles();
-	m_numsites += m_quadrupoles->size();
-	m_numorientedsites += m_quadrupoles->size();
-	m_tersoff = &(*components)[m_componentid].tersoff();
+	assert(_componentid >= 0);
+	_numsites = _numorientedsites = 0;
+	_ljcenters = &(*components)[_componentid].ljcenters();
+	_numsites += _ljcenters->size();
+	_charges = &(*components)[_componentid].charges();
+	_numsites += _charges->size();
+	_dipoles = &(*components)[_componentid].dipoles();
+	_numsites += _dipoles->size();
+	_numorientedsites += _dipoles->size();
+	_quadrupoles = &(*components)[_componentid].quadrupoles();
+	_numsites += _quadrupoles->size();
+	_numorientedsites += _quadrupoles->size();
+	_tersoff = &(*components)[_componentid].tersoff();
 #ifndef NDEBUG
-	if (!m_tersoff) {
-		global_log->error() << "Tersoff vector null pointer detected for Molecule " << m_id << endl;
+	if (!_tersoff) {
+		global_log->error() << "Tersoff vector null pointer detected for Molecule " << _id << endl;
 		exit(1);
 	}
 #endif
-	m_numsites += m_tersoff->size();
+	_numsites += _tersoff->size();
 
-	m_m = (*components)[m_componentid].m();
-	m_I[0] = (*components)[m_componentid].I11();
-	m_I[1] = (*components)[m_componentid].I22();
-	m_I[2] = (*components)[m_componentid].I33();
+	_m = (*components)[_componentid].m();
+	_I[0] = (*components)[_componentid].I11();
+	_I[1] = (*components)[_componentid].I22();
+	_I[2] = (*components)[_componentid].I33();
 	for (unsigned short d = 0; d < 3; ++d) {
-		if (m_I[d] != 0.)
-			m_invI[d] = 1. / m_I[d];
+		if (_I[d] != 0.)
+			_invI[d] = 1. / _I[d];
 		else
-			m_invI[d] = 0.;
+			_invI[d] = 0.;
 	}
 
-	assert(m_numsites);
+	assert(_numsites);
 
-	m_sites_d = new double[m_numsites*3];
-	assert(m_sites_d);
-	m_ljcenters_d = &(m_sites_d[0]);
-	m_charges_d = &(m_ljcenters_d[numLJcenters()*3]);
-	m_dipoles_d = &(m_charges_d[numCharges()*3]);
-	m_quadrupoles_d = &(m_dipoles_d[numDipoles()*3]);
-	m_tersoff_d = &(m_quadrupoles_d[numQuadrupoles()*3]);
+	_sites_d = new double[_numsites*3];
+	assert(_sites_d);
+	_ljcenters_d = &(_sites_d[0]);
+	_charges_d = &(_ljcenters_d[numLJcenters()*3]);
+	_dipoles_d = &(_charges_d[numCharges()*3]);
+	_quadrupoles_d = &(_dipoles_d[numDipoles()*3]);
+	_tersoff_d = &(_quadrupoles_d[numQuadrupoles()*3]);
 
-	m_osites_e = new double[m_numorientedsites*3];
-	assert(m_osites_e);
-	m_dipoles_e = &(m_osites_e[0]);
-	m_quadrupoles_e = &(m_dipoles_e[numDipoles()*3]);
+	_osites_e = new double[_numorientedsites*3];
+	assert(_osites_e);
+	_dipoles_e = &(_osites_e[0]);
+	_quadrupoles_e = &(_dipoles_e[numDipoles()*3]);
 
-	m_sites_F = new double[m_numsites*3];
+	_sites_F = new double[_numsites*3];
 
-	assert(m_sites_F);
-	m_ljcenters_F = &(m_sites_F[0]);
-	m_charges_F = &(m_ljcenters_F[numLJcenters()*3]);
-	m_dipoles_F = &(m_charges_F[numCharges()*3]);
-	m_quadrupoles_F = &(m_dipoles_F[numDipoles()*3]);
-	m_tersoff_F = &(m_quadrupoles_F[numQuadrupoles()*3]);
+	assert(_sites_F);
+	_ljcenters_F = &(_sites_F[0]);
+	_charges_F = &(_ljcenters_F[numLJcenters()*3]);
+	_dipoles_F = &(_charges_F[numCharges()*3]);
+	_quadrupoles_F = &(_dipoles_F[numDipoles()*3]);
+	_tersoff_F = &(_quadrupoles_F[numQuadrupoles()*3]);
 
 	this->clearFM();
 }
 
 inline void Molecule::clearFM() {
-	for (unsigned int i = 0; i < m_numsites * 3; ++i)
-		m_sites_F[i] = 0.;
-	m_F[0] = m_F[1] = m_F[2] = 0.;
-	m_M[0] = m_M[1] = m_M[2] = 0.;
+	for (unsigned int i = 0; i < _numsites * 3; ++i)
+		_sites_F[i] = 0.;
+	_F[0] = _F[1] = _F[2] = 0.;
+	_M[0] = _M[1] = _M[2] = 0.;
 }
 
 inline void Molecule::calcFM() {
@@ -487,19 +487,19 @@ inline void Molecule::calcFM() {
 		 */
 		for (int d = 0; d < 3; d++) {
 			if (!((dsite[d] >= 0) || (dsite[d] < 0))) {
-				global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << m_id << endl;
+				global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << _id << endl;
 				assert(false);
 			}
 			if (!((Fsite[d] >= 0) || (Fsite[d] < 0))) {
-				global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << m_id << endl;
+				global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << _id << endl;
 				assert(false);
 			}
 		}
 #endif
 		Fadd(Fsite);
-		m_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
-		m_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
-		m_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
+		_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
+		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
+		_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
 	}
 }
 
@@ -511,18 +511,18 @@ void Molecule::setDomain(Domain* domain) {
  * catches NaN values and missing data
  */
 void Molecule::check(unsigned long id) {
-	assert(m_id == id);
-	assert(m_componentid >= 0);
-	assert(m_m > 0.0);
-	assert(m_numsites > 0);
-	assert(m_numorientedsites >= 0);
+	assert(_id == id);
+	assert(_componentid >= 0);
+	assert(_m > 0.0);
+	assert(_numsites > 0);
+	assert(_numorientedsites >= 0);
 	for (int d = 0; d < 3; d++) {
-		assert((m_r[d] >= 0.0) || (m_r[d] < 0.0));
-		assert((m_v[d] >= 0.0) || (m_v[d] < 0.0));
-		assert((m_D[d] >= 0.0) || (m_D[d] < 0.0));
-		assert((m_F[d] >= 0.0) || (m_F[d] < 0.0));
-		assert((m_M[d] >= 0.0) || (m_M[d] < 0.0));
-		assert((m_I[d] >= 0.0) || (m_I[d] < 0.0));
-		assert((m_invI[d] >= 0.0) || (m_invI[d] < 0.0));
+		assert((_r[d] >= 0.0) || (_r[d] < 0.0));
+		assert((_v[d] >= 0.0) || (_v[d] < 0.0));
+		assert((_D[d] >= 0.0) || (_D[d] < 0.0));
+		assert((_F[d] >= 0.0) || (_F[d] < 0.0));
+		assert((_M[d] >= 0.0) || (_M[d] < 0.0));
+		assert((_I[d] >= 0.0) || (_I[d] < 0.0));
+		assert((_invI[d] >= 0.0) || (_invI[d] < 0.0));
 	}
 }
