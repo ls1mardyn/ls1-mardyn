@@ -295,47 +295,9 @@ double DomainDecomposition::getTime() {
 }
 
 void DomainDecomposition::setGridSize(int num_procs) {
-#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 1
 	for( int i = 0; i < DIM; i++ )
 	_gridSize[i] = 0;
 	MPI_Dims_create( num_procs, DIM, (int *) &_gridSize );
-#else
-	// Fallback for older MPI implementations.
-	int remainder; // remainder during the calculation of the prime factors
-	int num_factors; // number of prime factors
-	int *prime_factors; // array for the prime factors
-
-	// Set the initial number of processes in each dimension to zero
-	for (int i = 0; i < DIM; i++)
-		_gridSize[i] = 1;
-
-	remainder = num_procs;
-
-	// The maximal number of prime factors of a number n is log2(n)
-	//prime_factors = new int[int(log2(num_procs))];
-	prime_factors = new int[int(log(float(num_procs)) / log(2.))];
-
-	num_factors = 0;
-	// calculate prime numbers
-	for (int i = 2; i <= remainder; i++) {
-		while (remainder % i == 0) { // -> i is prime factor
-			remainder = remainder / i;
-			prime_factors[num_factors] = i;
-			num_factors++;
-		}
-	}
-
-	for (int i = num_factors - 1; i >= 0; i--) {
-		if (_gridSize[0] <= _gridSize[1] && _gridSize[0] <= _gridSize[2])
-			_gridSize[0] *= prime_factors[i];
-		else if (_gridSize[1] <= _gridSize[0] && _gridSize[1] <= _gridSize[2])
-			_gridSize[1] *= prime_factors[i];
-		else
-			_gridSize[2] *= prime_factors[i];
-	}
-
-	delete[] prime_factors;
-#endif
 }
 
 unsigned DomainDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
