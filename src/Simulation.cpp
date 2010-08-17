@@ -290,7 +290,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					lineStream >> rho;
 					generator->setHomogeneuosParameter(rho);
 				} else if (mode == "Cluster") {
-					double rho_gas, rho_fluid, vol_perc_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
+					double rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
 					lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
 					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
 				} else {
