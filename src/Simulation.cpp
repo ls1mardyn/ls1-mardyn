@@ -920,6 +920,18 @@ void Simulation::simulate() {
 #ifdef STEEREO
 		_steer -> processQueue (0);
 #endif
+
+		/* BEGIN PHYSICAL SECTION:
+		 * the system is in a consistent state so we can extract global variables 
+		 */
+		ensemble.updateGlobalVariable(NUM_PARTICLES);
+		global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
+		ensemble.updateGlobalVariable(ENERGY);
+		global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
+		ensemble.updateGlobalVariable(TEMPERATURE);
+		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;
+		/* END PHYSICAL SECTION */
+
 		// measure per timestep IO
 		loopTimer.stop();
 		perStepIoTimer.start();
@@ -931,12 +943,6 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
-	ensemble.updateGlobalVariable(NUM_PARTICLES);
-	global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
-	ensemble.updateGlobalVariable(ENERGY);
-	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
-	ensemble.updateGlobalVariable(TEMPERATURE);
-	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;
 
 
 	ioTimer.start();

@@ -119,9 +119,11 @@ public:
 
 	void setE_trans(double E) { _E_trans = E; }
 	void setE_rot(double E) { _E_rot = E; }
+	void setT(double T) { _T = T; }
 	double E_trans() { return _E_trans; }
 	double E_rot() { return _E_rot; }
 	double E() { return _E_trans + _E_rot; }
+	double T() { return _T; }
 
 private:
 	unsigned int _id; // IDentification number
@@ -144,6 +146,7 @@ private:
 	unsigned long _numMolecules; // number of molecules for this molecule type
 	double _E_trans; // translational energy
 	double _E_rot; // rotational energy
+	double _T; // temperature
 
 	double maximalTersoffExternalRadius;
 };

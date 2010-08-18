@@ -25,7 +25,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	/* calculate local variables */
 
 	/* "fixed" variables of this ensemble */
-	if ( variable & NUM_PARTICLES ) {
+	if ( variable & NUM_PARTICLES | variable & TEMPERATURE ) {
 		global_log->info() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
 		unsigned long numMolecules[numComponents];
@@ -104,8 +104,8 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		  _E_rot   += E_rot[cid];
 	  }
 
-	  global_log->debug() << "Total Kinetic energy: 2*E_{trans} = " << _E_trans 
-		  << ", 2*E_{rot} = " << _E_rot << endl;
+	  global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans 
+		  << ", 2*E_rot = " << _E_rot << endl;
 	  _E = _E_trans + _E_rot;
 
 
@@ -115,8 +115,20 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		global_log->info() << "Updating temperature" << endl;
 		/* TODO: calculate actual temperature or return specified temperature as 
 		 * the canonical ensemble should have a fixed temperature? */
-		/* TODO: rotDOF missing */
-		_T = _E / (double)(3 * _N /*+ rotDOF*/);
+		long long totalDegreesOfFreedom = 0;
+		for( int cid = 0; cid < numComponents; cid++) {
+			unsigned int rdf = (*_components)[cid].getRotationalDegreesOfFreedom();
+			long long N      = (*_components)[cid].getNumMolecules();
+			long long degreesOfFreedom = (3 + rdf) * N;
+			totalDegreesOfFreedom += degreesOfFreedom;
+
+			double E_kin = (*_components)[cid].E(); 
+			double T = E_kin / degreesOfFreedom;
+			global_log->debug() << "Temprature of component " << cid << ": " <<
+				              "T = " << T << endl;
+			(*_components)[cid].setT( T );
+		}
+		_T = _E / totalDegreesOfFreedom;
 	}
 
 	/* now calculate all local variables */
