@@ -73,7 +73,7 @@ public:
 	void setI(unsigned short d,double I) { _I[d]=I; }
 	void addI(double Ixx=0.,double Iyy=0.,double Izz=0.,
 	          double Ixy=0.,double Ixz=0.,double Iyz=0.);
-	unsigned int rot_dof() const { return _rot_dof; }
+	unsigned int getRotationalDegreesOfFreedom() const { return _rot_dof; }
 
 	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
 	const LJcenter& ljcenter(unsigned int i) const { return _ljcenters[i]; }

@@ -402,7 +402,7 @@ unsigned long PartGen::readPhaseSpace(
 	domain->setglobalNumMolecules(domainDecomp->countMolecules(particleContainer, partsPerComp));
 	for(unsigned int i=0; i<partsPerComp.size(); i++) {
 		dcomponents[i].setNumMolecules(partsPerComp[i]);
-		domain->setglobalRotDOF(partsPerComp[i]*dcomponents[i].rot_dof());
+		domain->setglobalRotDOF(partsPerComp[i]*dcomponents[i].getRotationalDegreesOfFreedom());
 	}
 	domain->setglobalRho(domain->getglobalNumMolecules()/(_simBoxLength[0]*_simBoxLength[1]*_simBoxLength[2]));
 	

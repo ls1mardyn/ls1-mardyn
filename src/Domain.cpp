@@ -341,7 +341,7 @@ void Domain::calculateGlobalValues(
 					tM->scale_F(vcorr);
 				}
 
-				rot_dof = _components[tM->componentid()].rot_dof();
+				rot_dof = _components[tM->componentid()].getRotationalDegreesOfFreedom();
 				if(rot_dof > 0)
 				{
 					limit_rot_energy = 3.0*rot_dof * Ti;
@@ -471,7 +471,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
 			this->_localThermostatN[thermostat]++;
-			this->_localRotationalDOF[thermostat] += _components[cid].rot_dof();
+			this->_localRotationalDOF[thermostat] += _components[cid].getRotationalDegreesOfFreedom();
 			if(this->_universalUndirectedThermostat[thermostat])
 			{
 				tM->calculate_mv2_Iw2( this->_local2KETrans[thermostat],
@@ -491,7 +491,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
 		{
 			this->_localThermostatN[0]++;
-			this->_localRotationalDOF[0] += _components[ tM->componentid() ].rot_dof();
+			this->_localRotationalDOF[0] += _components[ tM->componentid() ].getRotationalDegreesOfFreedom();
 			if(this->_universalUndirectedThermostat[0])
 			{
 				tM->calculate_mv2_Iw2( this->_local2KETrans[0],
@@ -762,7 +762,7 @@ void Domain::recordProfile(ParticleContainer* molCont)
 				+ yun * this->_universalNProfileUnits[2] + zun;
 			this->_localNProfile[unID] += 1.0;
 			for(int d=0; d<3; d++) this->_localvProfile[d][unID] += thismol->v(d);
-			this->_localDOFProfile[unID] += 3.0 + (long double)(this->_components[cid].rot_dof());
+			this->_localDOFProfile[unID] += 3.0 + (long double)(_components[cid].getRotationalDegreesOfFreedom());
 
 			// record _twice_ the total (ordered + unordered) kinetic energy
 			mv2 = 0.0;
@@ -1076,21 +1076,21 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 {
 	this->_components[cid].Nadd(N);
 	this->_globalNumMolecules += N;
-	this->_localRotationalDOF[0] += localN * this->_components[cid].rot_dof();
-	this->_universalRotationalDOF[0] += N * this->_components[cid].rot_dof();
+	this->_localRotationalDOF[0] += localN * _components[cid].getRotationalDegreesOfFreedom();
+	this->_universalRotationalDOF[0] += N * _components[cid].getRotationalDegreesOfFreedom();
 	if( (this->_componentwiseThermostat)
 			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
 		int thid = this->_componentToThermostatIdMap[cid];
 		this->_localThermostatN[thid] += localN;
 		this->_universalThermostatN[thid] += N;
-		this->_localRotationalDOF[thid] += localN * this->_components[cid].rot_dof();
-		this->_universalRotationalDOF[thid] += N * this->_components[cid].rot_dof();
+		this->_localRotationalDOF[thid] += localN * _components[cid].getRotationalDegreesOfFreedom();
+		this->_universalRotationalDOF[thid] += N * _components[cid].getRotationalDegreesOfFreedom();
 	}
 	this->_localThermostatN[0] += localN;
 	this->_universalThermostatN[0] += N;
-	this->_localRotationalDOF[0] += localN * this->_components[cid].rot_dof();
-	this->_universalRotationalDOF[0] += N * this->_components[cid].rot_dof();
+	this->_localRotationalDOF[0] += localN * _components[cid].getRotationalDegreesOfFreedom();
+	this->_universalRotationalDOF[0] += N * _components[cid].getRotationalDegreesOfFreedom();
 }
 
 void Domain::evaluateRho(

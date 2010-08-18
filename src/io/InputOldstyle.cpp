@@ -336,7 +336,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 
 			//(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);
 			dcomponents[componentid].incNumMolecules();
-			domain->setglobalRotDOF(dcomponents[componentid].rot_dof()+domain->getglobalRotDOF());
+			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 			if(id > maxid) maxid = id;
 
 			std::list<ChemicalPotential>::iterator cpit;

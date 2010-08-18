@@ -204,7 +204,9 @@ public:
 		this->_localThermostatN[thermostat] = N;
 		this->_localRotationalDOF[thermostat] = rotDOF;
 	}
-	unsigned getComponentRotDOF(int cid) { return this->_components[cid].rot_dof(); }
+	unsigned int getComponentRotDOF(int cid) { 
+		return _components[cid].getRotationalDegreesOfFreedom(); 
+	}
 
 	//! @brief get local rank
 	int getlocalRank();

@@ -311,7 +311,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 			particleContainer->addParticle(m1);
 			//(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);
 			dcomponents[componentid].incNumMolecules();
-			domain->setglobalRotDOF(dcomponents[componentid].rot_dof()+domain->getglobalRotDOF());
+			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 			if(id > maxid) maxid = id;
 			std::list<ChemicalPotential>::iterator cpit;
 			for(cpit = lmu->begin(); cpit != lmu->end(); cpit++)
