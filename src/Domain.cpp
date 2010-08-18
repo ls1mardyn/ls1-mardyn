@@ -286,6 +286,8 @@ void Domain::calculateGlobalValues(
 		numMolecules = domainDecomp->collCommGetUnsLong();
 		rotDOF = domainDecomp->collCommGetUnsLong();
 		domainDecomp->collCommFinalize();
+		global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF 
+			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << endl;
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
@@ -503,11 +505,9 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 				tM->calculate_mv2_Iw2(_local2KETrans[0], _local2KERot[0]);
 			}
 		}
-#ifndef NDEBUG
 		global_log->debug() << "      * N = " << this->_localThermostatN[0]
-			<< "   rotDOF = " << this->_localRotationalDOF[0] << "   mvv = "
-			<< _local2KETrans[0] << " Iww = " << _local2KERot[0] << endl;
-#endif
+			<< "rotDOF = " << this->_localRotationalDOF[0] << "   mv2 = "
+			<< _local2KETrans[0] << " Iw2 = " << _local2KERot[0] << endl;
 	}
 }
 
