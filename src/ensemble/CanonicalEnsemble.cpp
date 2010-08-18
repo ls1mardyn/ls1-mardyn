@@ -84,11 +84,11 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  for( tM = _particles->begin(); tM != _particles->end(); tM = _particles->next() ) {
 		  Molecule& molecule = *tM;
 		  const int cid = molecule.componentid();
-		  double E_trans_loc;
-		  double E_rot_loc;
+		  double E_trans_loc = 0.0;
+		  double E_rot_loc = 0.0;
 		  molecule.calculate_mv2_Iw2( E_trans_loc, E_rot_loc );
-		  E_trans[cid] += E_trans_loc;
-		  E_rot[cid]   += E_rot_loc;
+		  E_trans[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
+		  E_rot[cid]   += E_rot_loc;  // 2*k_{B} * E_{rot}
 	  }
 #ifdef PARALLEL
 	  _simulation.domainDecomposition().collCommInit(2*numComponents);
@@ -98,7 +98,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  }
 	  _simulation.domainDecomposition().collCommAllreduceSum();
 #endif
-	  _E = 0.0;
+	  _E = _E_trans = _E_rot = 0.0;
 	  for( int cid = 0; cid < numComponents; cid++) {
 #ifdef PARALLEL
 		  E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
@@ -111,6 +111,8 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		  _E_rot   += E_rot[cid];
 	  }
 
+	  global_log->debug() << "Total Kinetic energy: 2*E_{trans} = " << _E_trans 
+		  << ", 2*E_{rot} = " << _E_rot << endl;
 	  _E = _E_trans + _E_rot;
 
 
