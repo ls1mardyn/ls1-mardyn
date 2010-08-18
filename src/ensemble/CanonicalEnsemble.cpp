@@ -59,13 +59,6 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	   * the canonical ensemble should have a fixed volume? */
 	}
 
-	if ( variable & TEMPERATURE ) {
-		global_log->info() << "Updating temperature" << endl;
-	  /* TODO: calculate actual temperature or return specified temperature as 
-	   * the canonical ensemble should have a fixed temperature? */
-	  //temperature = (summv2 + sumIw2) / (double)(3*numMolecules + rotDOF);
-	}
-
 	/* variable variables of this ensemble */
 	if ( variable & CHEMICAL_POTENTIAL ) {
 		global_log->info() << "Updating chemical potential" << endl;
@@ -75,7 +68,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		global_log->info() << "Updating pressure" << endl;
 	}
 
-	if ( variable & ENERGY ) {
+	if ( variable & ENERGY | variable & TEMPERATURE) {
 		global_log->info() << "Updating energy" << endl;
 	  double E_trans[numComponents];
 	  double E_rot[numComponents];
@@ -116,6 +109,14 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  _E = _E_trans + _E_rot;
 
 
+	}
+
+	if ( variable & TEMPERATURE ) {
+		global_log->info() << "Updating temperature" << endl;
+		/* TODO: calculate actual temperature or return specified temperature as 
+		 * the canonical ensemble should have a fixed temperature? */
+		/* TODO: rotDOF missing */
+		_T = _E / (double)(3 * _N /*+ rotDOF*/);
 	}
 
 	/* now calculate all local variables */

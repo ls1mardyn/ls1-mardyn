@@ -765,6 +765,8 @@ void Simulation::simulate() {
 	global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
 	ensemble.updateGlobalVariable(ENERGY);
 	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
+	ensemble.updateGlobalVariable(TEMPERATURE);
+	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;
 
 
 	/***************************************************************************/
@@ -929,6 +931,13 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
+	ensemble.updateGlobalVariable(NUM_PARTICLES);
+	global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
+	ensemble.updateGlobalVariable(ENERGY);
+	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
+	ensemble.updateGlobalVariable(TEMPERATURE);
+	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;
+
 
 	ioTimer.start();
 	string cpfile(_outputPrefix + ".restart.xdr");
