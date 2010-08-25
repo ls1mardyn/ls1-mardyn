@@ -5,8 +5,7 @@
  * @Author: eckhardw
  */
 
-#include "DropletGenerator.h"
-#include "utils/Logger.h"
+#include "io/DropletGenerator.h"
 #include <cmath>
 
 #define SIZE 100
