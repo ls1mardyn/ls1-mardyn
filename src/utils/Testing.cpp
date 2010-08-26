@@ -40,7 +40,7 @@ bool runTests() {
 #endif
 #else
 	Log::global_log->error() << std::endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
-	return false;
+	return true;
 #endif
 }
 

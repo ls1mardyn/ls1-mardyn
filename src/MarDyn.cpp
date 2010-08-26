@@ -70,7 +70,11 @@ int main(int argc, char** argv) {
 	bool tests = options.get("tests");
 	if (tests) {
 		bool testresult = runTests();
-		exit(testresult);
+		if (testresult) {
+			exit(1);
+		} else {
+			exit(0);
+		}
 	}
 
 	if (numargs < 1) {
