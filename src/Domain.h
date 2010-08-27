@@ -57,23 +57,6 @@ public:
 	//! The constructor sets _localRank to rank and initializes all member variables
 	Domain(int rank, PressureGradient* pg);
 
-	//! @brief reads in the data of all molecules
-	//!
-	//! The Molecule Data starts in a new line with the string "MoleculeFormat"
-	//! followed by whitespace and a string representing the format.
-	//! In the standard case (format ICRVQD), the following values are provided for each molecule:
-	//! \li id of the molecule (int)
-	//! \li id of the component of the molecule (int)
-	//! \li Coordinates: x, y, z (all double)
-	//! \li velocities: vx, vy, vz (all double)
-	//! \li Orientation (quaternion): q0, q1, q2, q3 (all double)
-	//! \li Angular Momentum: Dx, Dy, Dz (all double)
-	//!
-	//! An example can be seen in the documentation of this class
-	//! @param particleContainer Here the Molecules from the input file are stored
-	//void readPhaseSpaceData(ParticleContainer* particleContainer);
-	//void readPhaseSpaceData(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, ParticleGenerator *partGen);
-
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!
 	//! The format of the checkpointfile written by this method is the same as the format
