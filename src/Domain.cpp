@@ -1119,16 +1119,18 @@ void Domain::setTargetTemperature(int thermostat, double targetT)
 	if(!(this->_universalUndirectedThermostat[thermostat] == true))
 		this->_universalUndirectedThermostat[thermostat] = false;
 
-	/* FIXME: Substantial change in program behaviour without any info to the user! */
-	if(thermostat == 0) this->disableComponentwiseThermostat();
-	if(thermostat >= 1)
-	{
-		if(!this->_componentwiseThermostat)
-		{
-			/* FIXME: Substantial change in program behaviour without any info to the user! */
-			this->_componentwiseThermostat = true;
-			this->_universalTargetTemperature.erase(0);
-			this->_universalUndirectedThermostat.erase(0);
+	/* FIXME: Substantial change in program behaviour! */
+	if(thermostat == 0) {
+		global_log->warning() << "Disabling the component wise thermostat!" << endl;
+		disableComponentwiseThermostat();
+	}
+	if(thermostat >= 1) {
+		if( ! _componentwiseThermostat ) {
+			/* FIXME: Substantial change in program behaviour! */
+			global_log->warning() << "Enabling the component wise thermostat!" << endl;
+			_componentwiseThermostat = true;
+			_universalTargetTemperature.erase(0);
+			_universalUndirectedThermostat.erase(0);
 			for(int d=0; d < 3; d++) this->_universalThermostatDirectedVelocity[d].erase(0);
 			for( vector<Component>::iterator tc = this->_components.begin();
 					tc != this->_components.end();
