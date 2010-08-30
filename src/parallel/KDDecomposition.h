@@ -6,7 +6,6 @@
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
 
-#include <iostream>
 #include <list>
 #include <mpi.h>
 

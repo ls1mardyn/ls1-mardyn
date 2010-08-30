@@ -32,7 +32,6 @@ class PressureGradient;
 //! Reference to the global simulation object 
 #define _simulation (*global_simulation)
 
-#include <string>
 #include <list>
 #include <vector>
 #include <string>

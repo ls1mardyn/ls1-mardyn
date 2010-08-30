@@ -68,6 +68,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <limits>
 
 using Log::global_log;
 using optparse::OptionParser;

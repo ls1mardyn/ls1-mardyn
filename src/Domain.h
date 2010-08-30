@@ -20,7 +20,6 @@
 #define DOMAIN_H_
 
 #include <string>
-#include <fstream>
 #include <map>
 #include <queue>
 #include <list>
