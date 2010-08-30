@@ -237,7 +237,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		global_log->debug() << " [[" << token << "]]" << endl;
 
 		if (token.substr(0, 1) == "#") {
-			inputfilestream.ignore(1024, '\n');
+			/* FIXME: ignoring once 1024 characters can be unsufficient! */
+			//inputfilestream.ignore(1024, '\n');
+			inputfilestream.ignore( std::numeric_limits<streamsize>::max(), '\n');
 			continue;
 		}
 		if (token == "phaseSpaceFile") {
