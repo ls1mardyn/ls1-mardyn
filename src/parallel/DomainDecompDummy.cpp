@@ -4,7 +4,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 
-#include <iostream>
+#include <fstream>
 #include <ctime>
 
 using namespace std;
