@@ -5,8 +5,11 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 #include "ensemble/PressureGradient.h"
+#include "utils/Logger.h"
+
 
 using namespace std;
+using Log::global_log;
 
 Leapfrog::Leapfrog(double timestepLength) {
 	// set starting state
@@ -43,7 +46,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 		this->_state = 2;
 	}
 	else {
-		cerr << "Leapfrog::transition1to2(...): Wrong state for state transition" << endl;
+		global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << endl;
 	}
 }
 
@@ -91,7 +94,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 		this->_state = 3;
 	}
 	else {
-		cerr << "Leapfrog::transition2to3(...): Wrong state for state transition" << endl;
+		global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << endl;
 	}
 }
 
@@ -100,7 +103,7 @@ void Leapfrog::transition3to1(ParticleContainer* molCont, Domain* domain) {
 		this->_state = 1;
 	}
 	else {
-		cerr << "Leapfrog::transition3to1(...): Wrong state for state transition" << endl;
+		global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << endl;
 	}
 }
 
