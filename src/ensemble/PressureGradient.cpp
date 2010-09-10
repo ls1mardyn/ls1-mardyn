@@ -19,17 +19,17 @@ PressureGradient::PressureGradient(int rank) {
 	this->_localRank = rank;
 	this->_universalConstantAccelerationTimesteps = 0;
 	if(!rank)
-		for(unsigned d=0; d < 3; d++)
-			this->_globalVelocitySum[d] = map<unsigned, long double>();
+		for(unsigned short int d=0; d < 3; d++)
+			this->_globalVelocitySum[d] = map<unsigned int, long double>();
 	this->_universalConstantTau = true;
 	this->_universalZetaFlow = 0.0;
 	this->_universalTauPrime = 0.0;
 }
 
-void PressureGradient::specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep)
+void PressureGradient::specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep)
 {
 	this->_localN[cosetid] = 0;
-	for(unsigned d = 0; d < 3; d++)
+	for(unsigned short int d = 0; d < 3; d++)
 	{
 		this->_universalAdditionalAcceleration[d][cosetid] = ainit[d];
 		this->_localVelocitySum[d][cosetid] = 0.0;
@@ -38,12 +38,12 @@ void PressureGradient::specifyComponentSet(unsigned cosetid, double v[3], double
 	if(this->_localRank == 0)
 	{
 		this->_globalN[cosetid] = 0;
-		for(unsigned d = 0; d < 3; d++)
+		for(unsigned short int d = 0; d < 3; d++)
 		{
 			this->_globalTargetVelocity[d][cosetid] = v[d];
 			this->_globalVelocitySum[d][cosetid] = 0.0;
 		}
-		this->_globalVelocityQueuelength[cosetid] = (unsigned)ceil(
+		this->_globalVelocityQueuelength[cosetid] = (unsigned int)ceil(
 			(this->_universalTauPrime == 0.0)?
 				sqrt(this->_universalTau[cosetid] / (timestep*this->_universalConstantAccelerationTimesteps))
 				: this->_universalTauPrime / (timestep*this->_universalConstantAccelerationTimesteps)
@@ -61,36 +61,36 @@ void PressureGradient::determineAdditionalAcceleration
  DomainDecompBase* domainDecomp,
  ParticleContainer* molCont, double dtConstantAcc )
 {
-	for( map<unsigned, double>::iterator uAAit = _universalAdditionalAcceleration[0].begin();
+	for( map<unsigned int, double>::iterator uAAit = _universalAdditionalAcceleration[0].begin();
 			uAAit != _universalAdditionalAcceleration[0].end();
 			uAAit++ )
 	{
 		this->_localN[uAAit->first] = 0;
-		for(unsigned d = 0; d < 3; d++)
+		for(unsigned short int d = 0; d < 3; d++)
 			this->_localVelocitySum[d][uAAit->first] = 0.0;
 	}
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
-		unsigned cid = thismol->componentid();
-		map<unsigned, unsigned>::iterator uCSIDit = this->_universalComponentSetID.find(cid);
+		unsigned int cid = thismol->componentid();
+		map<unsigned int, unsigned int>::iterator uCSIDit = this->_universalComponentSetID.find(cid);
 		if(uCSIDit == _universalComponentSetID.end()) continue;
 		unsigned cosetid = uCSIDit->second;
 		this->_localN[cosetid]++;
-		for(unsigned d = 0; d < 3; d++)
+		for(unsigned short int d = 0; d < 3; d++)
 			this->_localVelocitySum[d][cosetid] += thismol->v(d);
 	}
 
 	// domainDecomp->collectCosetVelocity(&_localN, _localVelocitySum, &_globalN, _globalVelocitySum);
 	//
 	domainDecomp->collCommInit( 4 * _localN.size() );
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	for( map<unsigned int, unsigned int long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
 	{
 		domainDecomp->collCommAppendUnsLong(lNit->second);
 		for(int d = 0; d < 3; d++)
 			domainDecomp->collCommAppendDouble( this->_localVelocitySum[d][lNit->first]);
 	}
 	domainDecomp->collCommAllreduceSum();
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
 	{
 		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
 		for(int d = 0; d < 3; d++)
@@ -98,7 +98,7 @@ void PressureGradient::determineAdditionalAcceleration
 	}
 	domainDecomp->collCommFinalize();
 
-	map<unsigned, long double>::iterator gVSit;
+	map<unsigned int, long double>::iterator gVSit;
 	if(!this->_localRank)
 	{
 		for(gVSit = _globalVelocitySum[0].begin(); gVSit != _globalVelocitySum[0].end(); gVSit++)
@@ -107,7 +107,7 @@ void PressureGradient::determineAdditionalAcceleration
 			global_log->debug() << "required entries in velocity queue: " << _globalVelocityQueuelength[gVSit->first] << endl;
 			global_log->debug() << "entries in velocity queue: " << _globalPriorVelocitySums[0][gVSit->first].size() << endl;
 #endif
-			for(unsigned d = 0; d < 3; d++)
+			for(unsigned short int d = 0; d < 3; d++)
 			{
 				while(_globalPriorVelocitySums[d][gVSit->first].size() < _globalVelocityQueuelength[gVSit->first])
 					_globalPriorVelocitySums[d][gVSit->first].push_back(_globalVelocitySum[d][gVSit->first]);
@@ -123,7 +123,7 @@ void PressureGradient::determineAdditionalAcceleration
 			double invgtau = 1.0 / this->_universalTau[gVSit->first];
 			double invgtau2 = invgtau * invgtau;
 			double previousVelocity[3];
-			for(unsigned d = 0; d < 3; d++)
+			for(unsigned short int d = 0; d < 3; d++)
 			{
 				previousVelocity[d] = invgN * _globalPriorVelocitySums[d][gVSit->first].front();
 				this->_globalPriorVelocitySums[d][gVSit->first].pop_front();
@@ -142,7 +142,7 @@ void PressureGradient::determineAdditionalAcceleration
 	}
 
 	domainDecomp->collCommInit(7*this->_localN.size());
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin();
+	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin();
 			lNit != this->_localN.end();
 			lNit++ )
 	{
@@ -158,7 +158,7 @@ void PressureGradient::determineAdditionalAcceleration
 		}
 	}
 	domainDecomp->collCommBroadcast();
-	for( map<unsigned, unsigned long>::iterator lNit = _localN.begin();
+	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin();
 			lNit != this->_localN.end();
 			lNit++ )
 	{
@@ -174,32 +174,32 @@ void PressureGradient::determineAdditionalAcceleration
 	domainDecomp->collCommFinalize();
 }
 
-double PressureGradient::getDirectedVelocity(unsigned cosetid, unsigned d)
+double PressureGradient::getDirectedVelocity(unsigned int cosetid, unsigned short int d)
 {
 	if(!this->_localRank) 
 		return this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
 	else return 0.0;
 }
 
-double PressureGradient::getUniformAcceleration(unsigned cosetid)
+double PressureGradient::getUniformAcceleration(unsigned int cosetid)
 {
 	double aa = 0.0;
-	for(unsigned d = 0; d < 3; d++)
+	for(unsigned short int d = 0; d < 3; d++)
 		aa += _universalAdditionalAcceleration[d][cosetid] * _universalAdditionalAcceleration[d][cosetid];
 	return sqrt(aa);
 }
-double PressureGradient::getUniformAcceleration(unsigned cosetid, unsigned d)
+double PressureGradient::getUniformAcceleration(unsigned int cosetid, unsigned short int d)
 {
 	return this->_universalAdditionalAcceleration[d][cosetid];
 }
 
-double PressureGradient::getMissingVelocity(unsigned cosetid, unsigned d)
+double PressureGradient::getMissingVelocity(unsigned int cosetid, unsigned short int d)
 {
 	double vd = this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
 	return this->_globalTargetVelocity[d][cosetid] - vd;
 }
 
-double* PressureGradient::getTargetVelocity(unsigned set)
+double* PressureGradient::getTargetVelocity(unsigned int set)
 {
 	double* retv = new double[3];
 	for(int d=0; d < 3; d++)
@@ -207,7 +207,7 @@ double* PressureGradient::getTargetVelocity(unsigned set)
 	return retv;
 }
 
-double* PressureGradient::getAdditionalAcceleration(unsigned set)
+double* PressureGradient::getAdditionalAcceleration(unsigned int set)
 {
 	double* retv = new double[3];
 	for(int d=0; d < 3; d++)
@@ -224,8 +224,8 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 		cout << "SEVERE ERROR: unknown UCAT!\n";
 		exit(78);
 	}
-	unsigned vql = (unsigned)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
-	map<unsigned, unsigned>::iterator vqlit;
+	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
+	map<unsigned int, unsigned int>::iterator vqlit;
 	for(vqlit = _globalVelocityQueuelength.begin(); vqlit != _globalVelocityQueuelength.end(); vqlit++)
 	{
 		vqlit->second = vql;
@@ -239,7 +239,7 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
  */
 void PressureGradient::adjustTau(double dt) {
 	if(this->_universalConstantTau) return;
-	map<unsigned, double>::iterator tauit;
+	map<unsigned int, double>::iterator tauit;
 	double increment;
 	for(tauit = _universalTau.begin(); tauit != _universalTau.end(); tauit++)
 	{

@@ -30,13 +30,13 @@ public:
 	PressureGradient(int rank);
 
 	//! @brief assigns a coset ID to a component (ID)
-	void assignCoset(unsigned cid, unsigned cosetid) { _universalComponentSetID[cid] = cosetid; }
+	void assignCoset(unsigned int cid, unsigned int cosetid) { _universalComponentSetID[cid] = cosetid; }
 	//! @brief sets the information on the acceleration model for one coset
-	void specifyComponentSet(unsigned cosetid, double v[3], double tau, double ainit[3], double timestep);
+	void specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep);
 	//! @brief sets the number of timesteps between two updates of the uniform acceleration
-	void setUCAT(unsigned uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
+	void setUCAT(unsigned int uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
 	//! @brief returns the number of timesteps between two updates of the uniform acceleration
-	unsigned getUCAT() { return this->_universalConstantAccelerationTimesteps; }
+	unsigned int getUCAT() { return this->_universalConstantAccelerationTimesteps; }
 	/// sets the zeta value for the flow controller
 	void setZetaFlow(double zeta) {
 		this->_universalConstantTau = false;
@@ -55,9 +55,9 @@ public:
 		ParticleContainer* molCont, double dtConstantAcc
 	);
 	//! @brief returns the acceleration map (necessary for passing data to the integrator)
-	std::map<unsigned, double>* getUAA() { return this->_universalAdditionalAcceleration; }
+	std::map<unsigned int, double>* getUAA() { return this->_universalAdditionalAcceleration; }
 	//! @brief returns the cosetid of a component (0 for unaccelerated components)
-	unsigned getComponentSet(unsigned cid) {
+	unsigned int getComponentSet(unsigned int cid) {
 		if(_universalComponentSetID.find(cid) == _universalComponentSetID.end())
 			return 0;
 		else
@@ -66,50 +66,50 @@ public:
 	//! @brief returns the directed velocity for a component set
 	//! @param cosetid ID of the component set
 	//! @param d x direction (0), y direction (1), or z direction (2)
-	double getDirectedVelocity(unsigned cosetid, unsigned d);
+	double getDirectedVelocity(unsigned int cosetid, unsigned short int d);
 	//! @brief returns the absolute external acceleration for a component set
 	//! @param cosetid ID of the component set
-	double getUniformAcceleration(unsigned cosetid);
+	double getUniformAcceleration(unsigned int cosetid);
 	//! @brief returns the external acceleration for a component set
 	//! @param cosetid ID of the component set
 	//! @param d x direction (0), y direction (1), or z direction (2)
-	double getUniformAcceleration(unsigned cosetid, unsigned d);
+	double getUniformAcceleration(unsigned int cosetid, unsigned short int d);
 	//! @brief returns the difference between the desired velocity and the global average velocity
-	double getMissingVelocity(unsigned cosetid, unsigned d);
+	double getMissingVelocity(unsigned int cosetid, unsigned short int d);
 	//! @brief total number of particles that belong to the specified component set
-	double getCosetN(unsigned cosetid) { return this->_globalN[cosetid]; }
-	unsigned maxCoset() { return this->_universalTau.size(); }
+	double getCosetN(unsigned int cosetid) { return this->_globalN[cosetid]; }
+	unsigned int maxCoset() { return this->_universalTau.size(); }
 
 	//! @brief returns the component -> set ID map
-	std::map<unsigned, unsigned> getComponentSets() { return this->_universalComponentSetID; }
+	std::map<unsigned int, unsigned int> getComponentSets() { return this->_universalComponentSetID; }
 
-	std::map<unsigned, double> getTau() { return this->_universalTau; }
-	double getTau(unsigned set) { return this->_universalTau[set]; }
+	std::map<unsigned int, double> getTau() { return this->_universalTau; }
+	double getTau(unsigned int set) { return this->_universalTau[set]; }
 
-	double* getTargetVelocity(unsigned set);
-	double* getAdditionalAcceleration(unsigned set);
+	double* getTargetVelocity(unsigned int set);
+	double* getAdditionalAcceleration(unsigned int set);
 
 private:
-	unsigned _localRank;
+	unsigned int _localRank;
 
 	/// calculate new value of the uniform acceleration each # timesteps
-	unsigned _universalConstantAccelerationTimesteps;
+	unsigned int _universalConstantAccelerationTimesteps;
 	/// assigns a component set ID to some of the components
-	std::map<unsigned, unsigned> _universalComponentSetID;
+	std::map<unsigned int, unsigned int> _universalComponentSetID;
 	/// local number of molecules that belong to a given component set ID
-	std::map<unsigned, unsigned long> _localN;
+	std::map<unsigned int, unsigned long> _localN;
 	/// global number of molecules that belong to a given component set ID
-	std::map<unsigned, unsigned long> _globalN;
+	std::map<unsigned int, unsigned long> _globalN;
 	/// local sum of the velocity vectors corresponding to a given component set ID
-	std::map<unsigned, long double> _localVelocitySum[3];
+	std::map<unsigned int, long double> _localVelocitySum[3];
 	/// global sum of the velocity vectors corresponding to a given component set ID
-	std::map<unsigned, long double> _globalVelocitySum[3];
+	std::map<unsigned int, long double> _globalVelocitySum[3];
 	/// uniform acceleration
-	std::map<unsigned, double> _universalAdditionalAcceleration[3];
+	std::map<unsigned int, double> _universalAdditionalAcceleration[3];
 	/// target average velocity for the molecules of a coset
-	std::map<unsigned, double> _globalTargetVelocity[3];
+	std::map<unsigned int, double> _globalTargetVelocity[3];
 	/// delay variable tau of a coset
-	std::map<unsigned, double> _universalTau;
+	std::map<unsigned int, double> _universalTau;
 	/// is the tau parameter constant
 	bool _universalConstantTau;
 	/// zeta parameter of the flow regulation
@@ -117,9 +117,9 @@ private:
 	/// tau prime (t') parameter of the flow regulation
 	double _universalTauPrime;
 	/// queue of previously recorded velocity sums
-	std::map<unsigned, std::deque<long double> > _globalPriorVelocitySums[3];
+	std::map<unsigned int, std::deque<long double> > _globalPriorVelocitySums[3];
 	/// number of items in the velocity queue
-	std::map<unsigned, unsigned> _globalVelocityQueuelength;
+	std::map<unsigned int, unsigned int> _globalVelocityQueuelength;
 };
 #endif
 

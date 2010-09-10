@@ -92,11 +92,11 @@ public:
 	operator const char*() { return str.c_str(); }
 	operator bool() { bool t; return (valid && (std::istringstream(str) >> t)) ? t : false; }
 	operator short() { short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-	operator unsigned short() { unsigned short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
+	operator unsigned short int() { unsigned short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator int() { int t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator unsigned int() { unsigned int t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator long() { long t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
-	operator unsigned long() { unsigned long t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
+	operator unsigned long int() { unsigned long t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator float() { float t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator double() { double t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator long double() { long double t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
