@@ -95,14 +95,21 @@ void BlockTraverse::traversePairs() {
 	vector<Cell>::iterator cellIter;
 	list<Molecule*>::iterator molIter1;
 	list<Molecule*>::iterator molIter2;
+
+#ifndef NDEBUG
 	// reset forces and momenta to zero
+	global_log->debug() << "Resetting forces and momenta, disconnecting Tersoff pairs." << endl;
+#endif
 	{
 		double zeroVec[3] = {0.0, 0.0, 0.0};
 
 		for (cellIter = _cells.begin(); cellIter != _cells.end(); ++cellIter) {
 			for (molIter1 = cellIter->getParticlePointers().begin(); molIter1 != cellIter->getParticlePointers().end(); molIter1++) {
-				(*molIter1)->setF(zeroVec);
-				(*molIter1)->setM(zeroVec);
+				Molecule& molecule1 = **molIter1;
+				molecule1.setF(zeroVec);
+				molecule1.setM(zeroVec);
+				molecule1.clearTersoffNeighbourList();
+
 			}
 		}
 	}
@@ -114,17 +121,6 @@ void BlockTraverse::traversePairs() {
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
 	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double tersoffCutoffRadiusSquare = _tersoffCutoffRadius * _tersoffCutoffRadius;
-
-#ifndef NDEBUG
-	global_log->debug() << "Disconnecting Tersoff pairs." << endl;
-#endif
-	for (unsigned i = 0; i < _cells.size(); i++) {
-		Cell& currentCell = _cells[i];
-		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-			Molecule& molecule1 = **molIter1;
-			molecule1.clearTersoffNeighbourList();
-		}
-	}
 
 #ifndef NDEBUG
 	global_log->debug() << "Processing pairs and preprocessing Tersoff pairs." << endl;
