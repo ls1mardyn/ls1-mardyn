@@ -46,7 +46,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    txtstrstrm << prefix << "_1R.txt";
    txt.open(txtstrstrm.str().c_str(), ios::trunc);
 
-   unsigned fl_units[3][2];
+   unsigned int fl_units[3][2];
    double fl_unit[3][2];
    double N_id[2];
    for(int i=0; i < 2; i++)
@@ -81,9 +81,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    unsigned slots[2];
    for(int l=0; l < 2; l++)
    {
-      for(int i=0; i < fl_units[0][l]; i++)
-         for(int j=0; j < fl_units[1][l]; j++)
-            for(int k=0; k < fl_units[2][l]; k++)
+      for(unsigned int i=0; i < fl_units[0][l]; i++)
+         for(unsigned int j=0; j < fl_units[1][l]; j++)
+            for(unsigned int k=0; k < fl_units[2][l]; k++)
                for(int d=0; d < 3; d++)
                {
                   if(l == 0) fill0[i][j][k][d] = true;
@@ -101,9 +101,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
          tswap = (N[l] < N_id[l]);
          pswap = (N_id[l] - (double)N[l]) / ((tswap? slots[l]: 0) - (double)N[l]);
          // cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
-         for(int i=0; i < fl_units[0][l]; i++)
-            for(int j=0; j < fl_units[1][l]; j++)
-               for(int k=0; k < fl_units[2][l]; k++)
+         for(unsigned int i=0; i < fl_units[0][l]; i++)
+            for(unsigned int j=0; j < fl_units[1][l]; j++)
+               for(unsigned int k=0; k < fl_units[2][l]; k++)
                   for(int d=0; d < 3; d++)
                      if(pswap >= r->rnd())
                      {
@@ -175,9 +175,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
 
    unsigned ID = 1;
    for(int l=0; l < 2; l++)
-      for(int i=0; i < fl_units[0][l]; i++)
-         for(int j=0; j < fl_units[1][l]; j++)
-            for(int k=0; k < fl_units[2][l]; k++)
+      for(unsigned int i=0; i < fl_units[0][l]; i++)
+         for(unsigned int j=0; j < fl_units[1][l]; j++)
+            for(unsigned int k=0; k < fl_units[2][l]; k++)
                for(int d=0; d < 3; d++)
                {
                   if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d]))
