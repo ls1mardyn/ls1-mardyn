@@ -334,7 +334,6 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			Molecule m1 = Molecule(id,componentid,x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,&dcomponents);
 			particleContainer->addParticle(m1);
 
-			//(_molecules.back()).setFM(Fx,Fy,Fz,Mx,My,Mz);
 			dcomponents[componentid].incNumMolecules();
 			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 			if(id > maxid) maxid = id;

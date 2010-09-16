@@ -704,7 +704,12 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 			if (accept) {
 				m->upd_cache();
 				// m->clearFM();
-				m->setFM(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+				// reset forces and momenta to zero
+				{
+					double zeroVec[3] = {0.0, 0.0, 0.0};
+					m->setF(zeroVec);
+					m->setM(zeroVec);
+				}
 				mu->storeMolecule(*m);
 				this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
 				this->_particles.erase(this->_particleIter);
@@ -730,7 +735,12 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 			mit--;
 			m = &(*mit);
 			m->upd_cache();
-			m->setFM(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+			// reset forces and momenta to zero
+			{
+				double zeroVec[3] = {0.0, 0.0, 0.0};
+				m->setF(zeroVec);
+				m->setM(zeroVec);
+			}
 			m->check(nextid);
 #ifndef NDEBUG
 			global_log->debug() << "rank " << mu->rank() << ": insert " << m->id()

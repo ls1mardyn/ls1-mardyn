@@ -95,9 +95,15 @@ void BlockTraverse::traversePairs() {
 	vector<Cell>::iterator cellIter;
 	list<Molecule*>::iterator molIter1;
 	list<Molecule*>::iterator molIter2;
-	for (cellIter = _cells.begin(); cellIter != _cells.end(); ++cellIter) {
-		for (molIter1 = cellIter->getParticlePointers().begin(); molIter1 != cellIter->getParticlePointers().end(); molIter1++) {
-			(*molIter1)->setFM(0, 0, 0, 0, 0, 0);
+	// reset forces and momenta to zero
+	{
+		double zeroVec[3] = {0.0, 0.0, 0.0};
+
+		for (cellIter = _cells.begin(); cellIter != _cells.end(); ++cellIter) {
+			for (molIter1 = cellIter->getParticlePointers().begin(); molIter1 != cellIter->getParticlePointers().end(); molIter1++) {
+				(*molIter1)->setF(zeroVec);
+				(*molIter1)->setM(zeroVec);
+			}
 		}
 	}
 
