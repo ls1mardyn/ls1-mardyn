@@ -8,6 +8,8 @@
 
 #define MAX_INFO_STRING_LENGTH 1024
 
+
+
 int get_compiler_info(char **info_str) {
 	/* For compiler predfined macros used for identification see
 	 * http://predef.sourceforge.net/precomp.html
@@ -99,6 +101,28 @@ int get_host(char **info_str) {
 	gethostname(hostname, 1023);
 	sprintf(*info_str, "%s", hostname);
 	return 0;
+}
+
+std::string getCompileFlags() {
+	std::stringstream flags;
+
+#ifdef PARALLEL
+	flags << " PARALLEL";
+#endif
+
+#ifdef NDEBUG
+	flags << " NDEBUG ";
+#endif
+
+#ifdef VTK
+	flags << " VTK ";
+#endif
+
+#ifdef UNIT_TESTS
+	flags << " UNIT_TESTS ";
+#endif
+
+	return flags.str();
 }
 
 #endif /*COMPILE_INFO_H_*/
