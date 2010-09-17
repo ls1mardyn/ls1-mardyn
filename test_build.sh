@@ -21,9 +21,9 @@ NUM_JOBS=3
 
 #LOG_FILE=/dev/null
 LOG_FILE=test_build.out
-echo "Protocoll of testing build and tests. " > $LOG_FILE
 
 cd src
+echo "Protocoll of testing build and tests. " > $LOG_FILE
 
 for i in $(seq 6) 
 do
