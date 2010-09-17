@@ -33,8 +33,6 @@ class Domain;
 
 #include <vector>
 #include <iostream>
-#include <string>
-
 #include <cassert>
 
 //! @brief Molecule modeled as LJ sphere with point polarities + Tersoff potential
