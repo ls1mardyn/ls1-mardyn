@@ -41,6 +41,9 @@ int main(int argc, char** argv) {
 	global_log->set_mpi_output_root(0);
 #endif
 
+	std::string compile_flags = getCompileFlags();
+	global_log->info() << "Compile-flags: " << compile_flags << endl;
+
 	char *info_str = new char[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(&info_str);
 	global_log->info() << "Compiler: " << info_str << endl;
@@ -71,8 +74,14 @@ int main(int argc, char** argv) {
 	if (tests) {
 		bool testresult = runTests();
 		if (testresult) {
+			#ifdef PARALLEL
+			MPI_Finalize();
+			#endif
 			exit(1);
 		} else {
+			#ifdef PARALLEL
+			MPI_Finalize();
+			#endif
 			exit(0);
 		}
 	}

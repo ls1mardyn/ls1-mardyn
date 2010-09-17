@@ -4,7 +4,7 @@
 
 #targets used outside are cppunit and cppunit_clean
 
-$(warning included cppunit.mk!)
+$(info included cppunit.mk!)
 
 ifeq ($(TESTS), 1)
 
@@ -19,7 +19,11 @@ CPPUNIT_INCLUDES = -I../dependencies-external/cppunit-1.12.1/include
 CPPUNIT_LINK_ARGS = $(CPPUNIT_OBJECTS) -ldl
 
 # tests in "/parallel" are not consicered at the moment
-CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep "/tests/")
+CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
+ifeq ($(VTK), 1)
+CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep "vtk/tests/")
+endif
+
 SOURCES += $(CPPUNIT_TESTS)
 CXXFLAGS += -DUNIT_TESTS
 CPPUNIT_TESTS_OBJECTS = $(CPPUNIT_TESTS:.cpp=.o)

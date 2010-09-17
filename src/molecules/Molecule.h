@@ -44,6 +44,10 @@ public:
 		RESTART
 	};
 
+	// TODO Correct this constructor: the components vector is optional,
+	// but if it is left away, all pointer data is not initialized (which is not
+	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
+	// use it's instances.
 	Molecule(unsigned long id = 0, int componentid = 0,
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,

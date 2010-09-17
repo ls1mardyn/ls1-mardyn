@@ -49,6 +49,9 @@
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
 #include "io/OneCLJGenerator.h"
+#ifdef VTK
+#include "io/vtk/VTKMoleculeWriter.h"
+#endif
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -78,7 +81,9 @@ using namespace std;
 
 Simulation* global_simulation;
 
-Simulation::Simulation(optparse::Values& options, vector<string>& args) {
+Simulation::Simulation(optparse::Values& options, vector<string>& args)
+: _domainDecomposition(NULL) {
+
 	global_simulation = this;
 	unsigned int numargs = args.size();
 
@@ -297,7 +302,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
 					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
 				} else {
-					global_log->error() << "Error in inputfile: OneCLJGenerator option \"Cluster\" not supported!" << endl;
+					global_log->error() << "Error in inputfile: OneCLJGenerator option \""<< mode << "\" not supported!" << endl;
+					global_log->error() << " Has to be  \"Homogeneous\"  or \"Cluster\"  " << endl;
 					exit(1);
 				}
 				generator->readPhaseSpaceHeader(_domain, timestepLength);
@@ -328,6 +334,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #endif
 		}
 		else if (token == "datastructure") {
+
+			if (_domainDecomposition == NULL) {
+				global_log->error() << "_domainDecomposition is NULL! Probably you compiled for MPI, but didn't specify line \"parallelization\" before line \"datastructure\"!" << endl;
+				exit(1);
+			}
+
 			inputfilestream >> token;
 			if (token == "LinkedCells") {
 				int cellsInCutoffRadius;
@@ -396,6 +408,17 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new VISWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "VISWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+			}
+			else if (token == "VTKWriter") {
+#ifdef VTK
+				unsigned long writeFrequency=0;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new VTKMoleculeWriter(writeFrequency, outputPathAndPrefix));
+				global_log->debug() << "VTKWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+#else
+				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
+#endif
 			}
 			/*
 			 else if(token == "VimWriter")

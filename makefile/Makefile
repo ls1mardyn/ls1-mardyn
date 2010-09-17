@@ -15,6 +15,8 @@ DEPS ?= 0
 #build unit tests?
 TESTS ?= 0
 
+VTK ?= 0
+
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
   $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
@@ -32,9 +34,9 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "/tests/")
-SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -v "/tests/")
-SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -v "Dummy" | grep -v "/tests/")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "/tests/" | grep -v "/vtk/")
+SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -v "/tests/" | grep -v "/vtk/")
+SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -v "Dummy" | grep -v "/tests/" | grep -v "/vtk/")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 
 
 
@@ -57,14 +59,17 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK
-LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) $(CPPUNIT_LINK_ARGS) -lrt
+CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK 
+LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) $(CPPUNIT_LINK_ARGS) -lrt 
 
 ifeq ($(DEPS),1)
   DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
 else
   DEPCOMP =
 endif
+
+VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)vtkwriter.mk ) 
+include $(VTK_MAKEFILE)
 
 $(BINARY): .deps $(OBJECTS) cppunit
 	@echo "building $(BINARY)"
@@ -84,7 +89,8 @@ help:
 	@echo "make PARTYPE=SEQ | PAR       sequential or parallel (MPI) build"
 	@echo "make TARGET=DEBUG | RELEASE  debugging / non optimized build"
 	@echo "make DEPS=0 | 1              compile using dependancy tracking"
-	@echo "make TESTS=0 | 1     compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=0 | 1	            compile with or without the vtk output plugin" 
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
