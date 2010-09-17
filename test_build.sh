@@ -22,6 +22,8 @@ NUM_JOBS=3
 #LOG_FILE=/dev/null
 LOG_FILE=test_build.out
 
+RETURN_VALUE=0
+
 cd src
 echo "Protocoll of testing build and tests. " > $LOG_FILE
 
@@ -38,6 +40,7 @@ do
   (make -s -f ../makefile/Makefile $ARG -j$NUM_JOBS) >> $LOG_FILE 2>&1
   if [ $? -ne 0 ]
     then echo "build   $ARG     FAILED!";
+    RETURN_VALUE=1;
   else
     echo "build   $ARG     OK!"
     (make -s -f ../makefile/Makefile $ARG test) >> test_build.txt 2>&1
@@ -46,8 +49,11 @@ do
       then echo "Tests OK!";
     else
       echo "Tests FAILED!";
-      echo Expected Value: $EXPECTED_RESULT
-      echo Return Value: $RETVAL
+      echo Expected Value: $EXPECTED_RESULT;
+      echo Return Value: $RETVAL;
+      RETURN_VALUE=1;
     fi
   fi 
 done
+
+exit $RETURN_VALUE
