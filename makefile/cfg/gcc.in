@@ -11,7 +11,7 @@ DEPMODE = gcc3
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Wall -Wextra -Weffc++ -g -pedantic 
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Wall -Wextra -Weffc++ -g 
 LINKFLAGS_SEQ_DEBUG = -O0 -g
 # RELEASE
 CXXFLAGS_SEQ_RELEASE  = $(INCLUDES)  -O2 -DNDEBUG
