@@ -30,10 +30,11 @@ void removeFile(const char* fileName) {
 unsigned int getFileSize(const char* fileName) {
 	struct stat status;
 	int stat_status = stat(fileName, &status);
+	unsigned int retVal = 0;
 	if (stat_status == 0) {
-		unsigned int retVal = (unsigned int) status.st_size;
+		retVal = (unsigned int) status.st_size;
 	} else {
 		global_log->warning() << "Could not stat file " << fileName << std::endl;
-		return 0;
 	}
+	return retVal;
 }
