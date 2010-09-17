@@ -9,15 +9,19 @@ BUILD4="PARTYPE=PAR TARGET=DEBUG   TESTS=0"
 BUILD5="PARTYPE=PAR TARGET=DEBUG   TESTS=1"
 BUILD6="PARTYPE=PAR TARGET=RELEASE TESTS=1 VTK=1"
 
-# list the expected return values for each configuration above
+# list the expected return values for each configuration above (note: make returns 2 if mardyn returns with errors)
 RETVAL1=0
 RETVAL2=0
-RETVAL3=1
-RETVAL4=1
+RETVAL3=2
+RETVAL4=2
 RETVAL5=0
 RETVAL6=0
 
 NUM_JOBS=3
+
+#LOG_FILE=/dev/null
+LOG_FILE=test_build.out
+echo "Protocoll of testing build and tests. " > $LOG_FILE
 
 cd src
 
@@ -28,14 +32,15 @@ do
   
   TMP=RETVAL$i
   eval EXPECTED_RESULT=\$$TMP
-  
-  (make -s -f ../makefile/Makefile $ARG clean) > /dev/null 2>&1
-  (make -s -f ../makefile/Makefile $ARG -j$NUM_JOBS) > /dev/null 2>&1
+ 
+  echo "===== BUILD $i =====" >> $LOG_FILE  
+  (make -s -f ../makefile/Makefile $ARG cleanall) >> $LOG_FILE 2>&1
+  (make -s -f ../makefile/Makefile $ARG -j$NUM_JOBS) >> $LOG_FILE 2>&1
   if [ $? -ne 0 ]
     then echo "build   $ARG     FAILED!";
   else
     echo "build   $ARG     OK!"
-    (make -s -f ../makefile/Makefile $ARG test) > /dev/null 2>&1
+    (make -s -f ../makefile/Makefile $ARG test) >> test_build.txt 2>&1
     eval RETVAL=$?
     if [ $RETVAL -eq $EXPECTED_RESULT ]
       then echo "Tests OK!";
