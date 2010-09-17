@@ -139,11 +139,13 @@ public:
 	/** calculate and return the square velocity */
 	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
 
-	/** set molecule force and momentum 
+	/** set force acting on molecule
 	 * @param F force vector (x,y,z)
-	 * @param M momentum vector (x,y,z)
 	 */
 	void setF(double F[3]) { for(int d = 0; d < 3; d++ ) { _F[d] = F[d]; } }
+	/** set momentum acting on molecule 
+	 * @param M force vector (x,y,z)
+	 */
 	void setM(double M[3]) { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
 
 	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d]*=s; }
