@@ -162,7 +162,7 @@ public:
 	//! @brief gets the width of the halo region in dimension index
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	double get_halo_L(int index);
+	double get_halo_L(int index) const;
 
 	//! @brief appends pointers to all particles in the boundary region to the list
 	void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs);

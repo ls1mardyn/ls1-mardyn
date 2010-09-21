@@ -489,7 +489,7 @@ void AdaptiveSubCells::deleteOuterParticles() {
 
 // this method remains unchanged
 
-double AdaptiveSubCells::get_halo_L(int index) {
+double AdaptiveSubCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
