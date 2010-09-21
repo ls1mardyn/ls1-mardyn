@@ -27,15 +27,15 @@ void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	}
 }
 
-double ParticleContainer::getBoundingBoxMin(int dimension) {
+double ParticleContainer::getBoundingBoxMin(int dimension) const {
 	return this->_boundingBoxMin[dimension];
 }
 
-double ParticleContainer::getBoundingBoxMax(int dimension) {
+double ParticleContainer::getBoundingBoxMax(int dimension) const {
 	return this->_boundingBoxMax[dimension];
 }
 
-double ParticleContainer::get_halo_L(int index) {
+double ParticleContainer::get_halo_L(int index) const {
 	cerr << "ERROR: ParticleContainer::get_halo_L(...) has to be implemented in derived class" << endl;
 	return 0;
 }

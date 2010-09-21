@@ -127,12 +127,12 @@ public:
 	//! @brief returns one coordinate of the lower corner of the bounding box
 	//!
 	//! @param dimension the coordinate which should be returned
-	double getBoundingBoxMin(int dimension);
+	double getBoundingBoxMin(int dimension) const;
 
 	//! @brief returns one coordinate of the higher corner of the bounding box
 	//!
 	//! @param dimension the coordinate which should be returned
-	double getBoundingBoxMax(int dimension);
+	double getBoundingBoxMax(int dimension) const;
 
 	//! @brief Returns a pointer to the first particle in the Container
 	virtual Molecule* begin() = 0;
@@ -155,7 +155,7 @@ public:
 	//! @brief returns the width of the halo strip (for the given dimension index)
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	virtual double get_halo_L(int index);
+	virtual double get_halo_L(int index) const;
 
 	//! @brief appends pointers to all particles in the boundary region to the list
 	virtual void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs) = 0;
