@@ -556,7 +556,7 @@ void LinkedCells::calculateNeighbourIndices() {
 	_blockTraverse.assignOffsets(_forwardNeighbourOffsets, _backwardNeighbourOffsets);
 }
 
-unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) {
+unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	int cellIndex[3]; // 3D Cell index
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -569,7 +569,7 @@ unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) {
 	return (cellIndex[2] * _cellsPerDimension[1] + cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0];
 }
 
-unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) {
+unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
 }
 

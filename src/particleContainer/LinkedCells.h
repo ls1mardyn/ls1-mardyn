@@ -212,6 +212,10 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isFirstParticle(Molecule& m1, Molecule& m2);
 
+#ifdef VTK
+	friend class VTKGridWriter;
+#endif
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
@@ -251,7 +255,7 @@ private:
 	//! This method determines for a given Molecule the corresponding cell
 	//! and returns the index of that cell in the cell vector. \n
 	//! If the molecule is not inside the bounding box, an error is printed
-	unsigned long getCellIndexOfMolecule(Molecule* molecule);
+	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -261,7 +265,7 @@ private:
 	//! The method can also be used to get the offset between two cells in the cell
 	//! vector when called with the 3D cell index offets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
-	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex);
+	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
@@ -325,6 +329,8 @@ private:
 	bool _cellsValid;
 
 	BlockTraverse _blockTraverse;
+
+
 };
 
 #endif /*LINKEDCELLS_H_*/
