@@ -15,6 +15,11 @@
 class LinkedCells;
 class VTKGridWriterImplementation;
 
+/**
+ * This class acts as adapter to the VTKGridWriterImplementation, which handles
+ * the actual xml writing. It is a friend class of LinkedCells, but reads only
+ * its internal data to generate the vtk output.
+ */
 class VTKGridWriter : public OutputBase {
 
 private:
@@ -37,12 +42,25 @@ private:
 
 public:
 
+	/**
+	 * @param container the LinkedCells particle container. It has to be the same container
+	 *                  which is handed in to the methods initOutput() / doOutput() / finishOutput()!
+	 */
 	VTKGridWriter(unsigned int writeFrequency, const std::string& fileName, const LinkedCells& container);
 	virtual ~VTKGridWriter();
 
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 
+	/**
+	 * creates the VTKGrid and sets all the data, which is then written out.
+	 *
+	 * @note As the gridwriter isn't notified when the particleContainer is changed
+	 * (i.e. rebuild()), it is not sufficient to build up the vtkgrid once and only
+	 * renew the information every iteration.
+	 * Thus every time output is done, the methods setupVTKGrid() and releaseVTKGrid()
+	 * are called.
+	 */
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,

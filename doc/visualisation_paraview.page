@@ -20,6 +20,8 @@ You have to
 
 !!! Generating VTK output
 
+! For molecule data
+
 Add the line 
 \verbatim
 output VTKWriter n filename
@@ -33,10 +35,25 @@ will be generated (file ending .vtu). Running ls1 in parallel will result in one
 file per MPI-process per timestep being written. Additionally, the root node will
 create one meta-file (ending .pvtu) referencing the data files of the single processes.
 
+! For the linked cell data structure
+
+Add the line 
+\verbatim
+output VTKGridWriter n filename
+\endverbatim
+to the config file. Be sure that "filename" is different from the filename you specified for 
+the VTKWriter (in case you use both), otherwise both writers will try to generate output files 
+with the same name.
+ 
+Concerning everythin else the section above applies, too. 
+
 !!! Visualising the output
 
 I assume you have Paraview (available from www.paraview.org) installed on your system.
-Start it, and 
+Start it.
+
+! Molecule data
+
 - choose "File->open..."
 - navigate to the directory where the files are located
 - choose a *.pvtu file, if the experiment ran in parallel, otherwise choose a *.vtu
@@ -47,4 +64,13 @@ a number (e.g. "_1.vtu", "_2.vtu", ...) as a sequence of output files of the sam
 - choose "Sphere" as "Glyph Type" from the menu in the lower left and klick apply.  
 - Now there's plenty of options to format the glyphs. Have fun! ;)
 
+! LinkedCells Grid
+
+- choose "File->open..."
+- navigate to the directory where the files are located
+- choose a *.pvtu file, if the experiment ran in parallel, otherwise choose a *.vtu
+file. Paraview will consider files of the same base name but ending with an underscore and
+a number (e.g. "_1.vtu", "_2.vtu", ...) as a sequence of output files of the same experiment.
+
+- You already should see the 3d grid. Create a view you like.
 */
