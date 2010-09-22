@@ -11,6 +11,8 @@
 #include "utils/Logger.h"
 #include "Domain.h"
 
+#include "io/vtk/vtk-punstructured.h"
+
 #include <sstream>
 
 using namespace Log;

@@ -8,6 +8,7 @@
 #include "VTKMoleculeWriterImplementationTest.h"
 #include "io/vtk/VTKMoleculeWriterImplementation.h"
 #include "utils/FileUtils.h"
+#include "molecules/Molecule.h"
 #include <vector>
 #ifdef PARALLEL
 #include <mpi.h>
@@ -23,12 +24,6 @@ VTKMoleculeWriterImplementationTest::~VTKMoleculeWriterImplementationTest() {
 
 void VTKMoleculeWriterImplementationTest::testInitialization() {
 	VTKMoleculeWriterImplementation writer(0);
-
-	std::vector<Component> components;
-	Component dummyComponent(0);
-	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
-	components.push_back(dummyComponent);
-	Molecule dummyMolecule(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &components);
 
 	ASSERT_EQUAL(writer.isVTKFileInitialized(), false);
 	writer.initializeVTKFile();
@@ -66,7 +61,7 @@ void VTKMoleculeWriterImplementationTest::testWriteVTKFile() {
 
 	writer.writeVTKFile("VTKMoleculeWriter00.vtu");
 	ASSERT_TRUE(fileExists("VTKMoleculeWriter00.vtu"));
-	writer.writeVTKFile("VTKMoleculeWriter00.pvtu");
+	writer.writeParallelVTKFile("VTKMoleculeWriter00.pvtu");
 	ASSERT_TRUE(fileExists("VTKMoleculeWriter00.pvtu"));
 
 	removeFile("VTKMoleculeWriter00.vtu");

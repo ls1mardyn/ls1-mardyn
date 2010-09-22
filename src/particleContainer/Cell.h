@@ -72,6 +72,9 @@ public:
 	//! returns true, if the cell is a Inner Cell, otherwise false
 	bool isInnerCell();
 
+	//! return the number of molecules contained in this cell
+	int getMoleculeCount() const;
+
 private:
 	//! each cell contains a list of pointers to the molecules in the cell
 	std::list<Molecule*> _particlePointers;

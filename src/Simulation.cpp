@@ -51,6 +51,7 @@
 #include "io/OneCLJGenerator.h"
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
+#include "io/vtk/VTKGridWriter.h"
 #endif
 
 #include "ensemble/GrandCanonical.h"
@@ -416,6 +417,23 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new VTKMoleculeWriter(writeFrequency, outputPathAndPrefix));
 				global_log->debug() << "VTKWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+#else
+				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
+#endif
+			}
+			else if (token == "VTKGridWriter") {
+#ifdef VTK
+				unsigned long writeFrequency=0;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				LinkedCells* lc = dynamic_cast<LinkedCells*> (_moleculeContainer);
+				if (lc != NULL) {
+					_outputPlugins.push_back(new VTKGridWriter(writeFrequency, outputPathAndPrefix, *lc));
+					global_log->debug() << "VTKGridWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+				} else {
+					global_log->warning() << "VTKGridWriter only supported with LinkedCells!" << std::endl;
+					global_log->warning() << "Generating no VTK output for the grid!" << std::endl;
+				}
 #else
 				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif

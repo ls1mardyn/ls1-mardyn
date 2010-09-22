@@ -6,6 +6,8 @@
  */
 
 #include "io/vtk/VTKMoleculeWriterImplementation.h"
+#include "molecules/Molecule.h"
+#include "io/vtk/vtk-punstructured.h"
 #include "utils/Logger.h"
 
 #include <fstream>
@@ -13,14 +15,14 @@
 using namespace Log;
 
 VTKMoleculeWriterImplementation::VTKMoleculeWriterImplementation(int rank)
-: _vtkFileInitialized(false), _parallelVTKFileInitialized(false), _numMoleculesPlotted(0), _rank(rank) {
+: _vtkFile(NULL), _parallelVTKFile(NULL), _numMoleculesPlotted(0), _rank(rank) {
 }
 
 VTKMoleculeWriterImplementation::~VTKMoleculeWriterImplementation() {
-	if (_vtkFileInitialized) {
+	if (isVTKFileInitialized()) {
 		delete _vtkFile;
 	}
-	if (_parallelVTKFileInitialized) {
+	if (isParallelVTKFileInitialized()) {
 		delete _parallelVTKFile;
 	}
 }
@@ -56,14 +58,13 @@ void VTKMoleculeWriterImplementation::initializeVTKFile() {
 	PieceUnstructuredGrid_t piece(pointData, cellData, points, cells, 0, 0);
 	UnstructuredGrid_t unstructuredGrid(piece);
 	_vtkFile = new VTKFile_t("UnstructuredGrid");
-	_vtkFileInitialized = true;
 	_vtkFile->UnstructuredGrid(unstructuredGrid);
 }
 
 void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 
 #ifndef NDEBUG
-	if (!_vtkFileInitialized) {
+	if (!isVTKFileInitialized()) {
 		global_log->error() << "VTKMoleculeWriterImplementation::plotMolecule(): vtkFile not initialized!" << std::endl;
 		return;
 	}
@@ -93,7 +94,7 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 
 void  VTKMoleculeWriterImplementation::writeVTKFile(const std::string& fileName) {
 #ifndef NDEBUG
-	if (!_vtkFileInitialized) {
+	if (!isVTKFileInitialized()) {
 		global_log->error() << "VTKMoleculeWriterImplementation::writeVTKFile(): vtkFile not initialized!" << std::endl;
 		return;
 	}
@@ -133,14 +134,13 @@ void VTKMoleculeWriterImplementation::initializeParallelVTKFile(const std::vecto
 	}
 
 	_parallelVTKFile = new VTKFile_t("PUnstructuredGrid");
-	_parallelVTKFileInitialized = true;
 	_parallelVTKFile->PUnstructuredGrid(p_unstructuredGrid);
 }
 
 
 void VTKMoleculeWriterImplementation::writeParallelVTKFile(const std::string& fileName) {
 #ifndef NDEBUG
-	if (!_parallelVTKFileInitialized) {
+	if (!isParallelVTKFileInitialized()) {
 		global_log->error() << "VTKMoleculeWriterImplementation::writeParallelVTKFile(): parallelVTKFile not initialized!" << std::endl;
 		return;
 	}
@@ -151,11 +151,11 @@ void VTKMoleculeWriterImplementation::writeParallelVTKFile(const std::string& fi
 
 
 bool VTKMoleculeWriterImplementation::isVTKFileInitialized() {
-	return _vtkFileInitialized;
+	return _vtkFile != NULL;
 }
 
 bool VTKMoleculeWriterImplementation::isParallelVTKFileInitialized() {
-	return _parallelVTKFileInitialized;
+	return _parallelVTKFile != NULL;
 }
 
 unsigned int VTKMoleculeWriterImplementation::getNumMoleculesPlotted() {

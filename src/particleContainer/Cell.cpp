@@ -45,6 +45,10 @@ bool Cell::isInnerCell() {
 	return _innerCellState;
 }
 
+int Cell::getMoleculeCount() const {
+	return _particlePointers.size();
+}
+
 bool Cell::deleteMolecule(unsigned long molid) {
 	bool found = false;
 	list<Molecule*>::iterator cellit;
