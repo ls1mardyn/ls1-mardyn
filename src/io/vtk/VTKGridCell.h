@@ -27,12 +27,6 @@ private:
 
 	int _numberOfMolecules;
 
-	/*! indicates if this cell contains valid data, which should be plotted.
-	 *  This is probably not true for halo cells. Nevertheless it might be convenient
-	 *  to use also VTKGridCells for each halo cell to get rid of nasty index calculations.
-	 */
-//	bool _isValidDataCell;
-
 public:
 
 	VTKGridCell();
@@ -46,8 +40,6 @@ public:
 	void setIndex(int index);
 
 	unsigned int getIndex() const;
-
-//	bool isValidDataCell() const;
 
 	/**
 	 * set all the data fields.
