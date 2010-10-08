@@ -296,7 +296,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
 		double Fx,Fy,Fz,Mx,My,Mz;
 		unsigned long id;
-		int componentid;
+		unsigned int componentid;
 
 		x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
 		q0=1.;

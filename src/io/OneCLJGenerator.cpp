@@ -345,7 +345,7 @@ void OneCLJGenerator::readLocalClusters(Domain* domain, DomainDecompBase* domain
 	double distanceToDomain;
 	sphere.resize(4); // x y z r
 	shiftedSphere.resize(4); // x y z r
-	for (int count = 0; count < droplets.size(); count++) {
+	for (unsigned int count = 0; count < droplets.size(); count++) {
 		for (int i = 0; i < 3; i++) {
 			sphere[i] = droplets[count]._center[i] * _simBoxLength[i];
 		}

@@ -25,7 +25,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	/* calculate local variables */
 
 	/* "fixed" variables of this ensemble */
-	if ( variable & NUM_PARTICLES | variable & TEMPERATURE ) {
+	if ( (variable & NUM_PARTICLES) | (variable & TEMPERATURE) ) {
 		global_log->info() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
 		unsigned long numMolecules[numComponents];
@@ -68,7 +68,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		global_log->info() << "Updating pressure" << endl;
 	}
 
-	if ( variable & ENERGY | variable & TEMPERATURE) {
+	if ( (variable & ENERGY) | (variable & TEMPERATURE) ) {
 		global_log->info() << "Updating energy" << endl;
 	  double E_trans[numComponents];
 	  double E_rot[numComponents];
