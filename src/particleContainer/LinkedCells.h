@@ -64,7 +64,7 @@ public:
 	//!
 	//! The constructor sets the following variables:
 	//! - _cutoffRadius
-	//! - _LJcutoffRadius
+	//! - _LJCutoffRadius
 	//! - _tersoffCutoffRadius
 	//! - _haloWidthInNumCells[3]
 	//! - _cellsPerDimension[3]
@@ -81,6 +81,8 @@ public:
 	//! @param bBoxMin lower corner of the bounding box of the domain belonging to this container
 	//! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
 	//! @param cutoffRadius distance for which forces have to be calculated
+	//! @param LJCutoffRadius distance for which lennard jones forces have to be calculated
+	//! @param tersoffCutoffRadius distance for which tersoff forces have to be calculated
 	//! @param cellsInCutoffRadius describes the width of cells relative to the cutoffRadius: \n
 	//!        equal (or larger) to the cutoffRadius divided by the length of a cell
 	//!        as for the number of cells in each dimension only natural numbers are allowed,
@@ -176,13 +178,13 @@ public:
 	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
 
 	double getCutoff() {
-		return this->_cutoffRadius;
+		return _cutoffRadius;
 	}
 	double getLJCutoff() {
-		return this->_LJCutoffRadius;
+		return _LJCutoffRadius;
 	}
 	double getTersoffCutoff() {
-		return this->_tersoffCutoffRadius;
+		return _tersoffCutoffRadius;
 	}
 
 	//! @brief observes the RDFs of all particles in the domain.
