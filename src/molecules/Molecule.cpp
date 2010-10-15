@@ -300,8 +300,8 @@ void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
 	this->_Tersoff_neighbours_first[_curTN] = m;
 	this->_Tersoff_neighbours_second[_curTN] = pairType;
 	this->_curTN++;
-	if (_curTN > MAXTN) {
-		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->_id << " has more than " << MAXTN << " Tersoff neighbours." << endl;
+	if (_curTN > MAX_TERSOFF_NEIGHBOURS) {
+		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->_id << " has more than " << MAX_TERSOFF_NEIGHBOURS << " Tersoff neighbours." << endl;
 		exit(1);
 	}
 }

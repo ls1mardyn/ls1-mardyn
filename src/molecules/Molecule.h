@@ -22,7 +22,7 @@
 /*
  * maximal size of the Tersoff neighbour list
  */
-#define MAXTN 10
+#define MAX_TERSOFF_NEIGHBOURS 10
 
 #include "molecules/Quaternion.h"
 #include "molecules/Comp2Param.h"
@@ -267,8 +267,8 @@ private:
 	double *_ljcenters_F, *_charges_F, *_dipoles_F,
 	       *_quadrupoles_F, *_tersoff_F;
 
-	Molecule* _Tersoff_neighbours_first[MAXTN];
-	bool _Tersoff_neighbours_second[MAXTN];
+	Molecule* _Tersoff_neighbours_first[MAX_TERSOFF_NEIGHBOURS];
+	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS];
 	int _curTN;
 	double fixedx, fixedy;
 
