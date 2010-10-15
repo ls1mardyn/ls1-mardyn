@@ -129,53 +129,6 @@ Molecule::Molecule(const Molecule& m) {
 	fixedy = m.fixedy;
 }
 
-Molecule::Molecule(istream& istrm, streamtype type, const vector<Component>* components) {
-	if (type == RESTART) {
-		istrm.read((char *) &_id, sizeof(_id));
-		istrm.read((char *) &_componentid, sizeof(_componentid));
-		istrm.read((char *) &_r[0], sizeof(_r[0]));
-		istrm.read((char *) &_r[1], sizeof(_r[1]));
-		istrm.read((char *) &_r[2], sizeof(_r[2]));
-		istrm.read((char *) &_v[0], sizeof(_v[0]));
-		istrm.read((char *) &_v[1], sizeof(_v[1]));
-		istrm.read((char *) &_v[2], sizeof(_v[2]));
-		double qw, qx, qy, qz;
-		istrm.read((char *) &qw, sizeof(qw));
-		istrm.read((char *) &qx, sizeof(qx));
-		istrm.read((char *) &qy, sizeof(qy));
-		istrm.read((char *) &qz, sizeof(qz));
-		_q = Quaternion(qw, qx, qy, qz);
-		istrm.read((char *) &_D[0], sizeof(_D[0]));
-		istrm.read((char *) &_D[1], sizeof(_D[1]));
-		istrm.read((char *) &_D[2], sizeof(_D[2]));
-		istrm.read((char *) &_F[0], sizeof(_F[0]));
-		istrm.read((char *) &_F[1], sizeof(_F[1]));
-		istrm.read((char *) &_F[2], sizeof(_F[2]));
-		istrm.read((char *) &_M[0], sizeof(_M[0]));
-		istrm.read((char *) &_M[1], sizeof(_M[1]));
-		istrm.read((char *) &_M[2], sizeof(_M[2]));
-	}
-	_sites_d = _sites_F = NULL;
-	if (components)
-		setupCache(components);
-}
-
-double Molecule::dist2(const Molecule& a, double L[3], double dr[]) const {
-	double d2 = 0.;
-	for (unsigned short d = 0; d < 3; ++d) {
-		double L_halve = .5 * L[d];
-		dr[d] = a._r[d] - _r[d];
-		if (dr[d] > L_halve) {
-			dr[d] -= L[d];
-		} else if (dr[d] < -L_halve) {
-			dr[d] += L[d];
-		}
-		//dr[d]-=L[d]*floor((dr[d]+L_halve)/L[d]);
-		d2 += dr[d] * dr[d];
-	}
-	return d2;
-}
-
 void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	assert(_m);
 	double dt_halve = .5 * dt;
@@ -332,34 +285,6 @@ void Molecule::write(ostream& ostrm) const {
 	      << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
 	      << _D[0] << " " << _D[1] << " " << _D[2] << "\t"
 	      << endl;
-}
-
-void Molecule::save_restart(ostream& ostrm) const {
-	ostrm.write((const char *) &_id, sizeof(_id));
-	ostrm.write((const char *) &_componentid, sizeof(_componentid));
-	ostrm.write((const char *) &_r[0], sizeof(_r[0]));
-	ostrm.write((const char *) &_r[1], sizeof(_r[1]));
-	ostrm.write((const char *) &_r[2], sizeof(_r[2]));
-	ostrm.write((const char *) &_v[0], sizeof(_v[0]));
-	ostrm.write((const char *) &_v[1], sizeof(_v[1]));
-	ostrm.write((const char *) &_v[2], sizeof(_v[2]));
-	double q = _q.qw();
-	ostrm.write((const char *) &q, sizeof(q));
-	q = _q.qx();
-	ostrm.write((const char *) &q, sizeof(q));
-	q = _q.qy();
-	ostrm.write((const char *) &q, sizeof(q));
-	q = _q.qz();
-	ostrm.write((const char *) &q, sizeof(q));
-	ostrm.write((const char *) &_D[0], sizeof(_D[0]));
-	ostrm.write((const char *) &_D[1], sizeof(_D[1]));
-	ostrm.write((const char *) &_D[2], sizeof(_D[2]));
-	ostrm.write((const char *) &_F[0], sizeof(_F[0]));
-	ostrm.write((const char *) &_F[1], sizeof(_F[1]));
-	ostrm.write((const char *) &_F[2], sizeof(_F[2]));
-	ostrm.write((const char *) &_M[0], sizeof(_M[0]));
-	ostrm.write((const char *) &_M[1], sizeof(_M[1]));
-	ostrm.write((const char *) &_M[2], sizeof(_M[2]));
 }
 
 void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {

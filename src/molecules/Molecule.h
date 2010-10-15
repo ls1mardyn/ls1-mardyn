@@ -40,10 +40,6 @@ class Domain;
 class Molecule {
 
 public:
-	enum streamtype {
-		RESTART
-	};
-
 	// TODO Correct this constructor: the components vector is optional,
 	// but if it is left away, all pointer data is not initialized (which is not
 	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
@@ -56,7 +52,6 @@ public:
 	         const std::vector<Component>* components = NULL
 	);
 	Molecule(const Molecule& m);
-	Molecule(std::istream& istrm, streamtype type, const std::vector<Component>* components=NULL);
 
 	~Molecule() {
 		assert(_sites_d); delete[] _sites_d;
@@ -128,16 +123,19 @@ public:
 			_oldr[i] = _r[i];
 	}
 
-	/** calculate the difference vector and return the square (euclidean) distance */
-	double dist2(const Molecule& a, double dr[]) const {
-		double d2=0.;
-		for (unsigned short d=0; d<3; ++d) {
-			dr[d] = a._r[d] - _r[d];
+	/** Calculate the difference vector and return the square (euclidean) distance.
+	 *
+	 *  \param molecule2 molecule to which the distance shall be calculated
+	 */
+	double dist2(const Molecule& molecule2, double dr[3]) const {
+		double d2 = 0.;
+		for (unsigned short d = 0; d < 3; d++) {
+			dr[d] = molecule2._r[d] - _r[d];
 			d2 += dr[d] * dr[d];
 		}
 		return d2;
 	}
-	double dist2(const Molecule& a, double L[3], double dr[]) const;
+	
 	/** calculate and return the square velocity */
 	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
 
@@ -145,6 +143,7 @@ public:
 	 * @param F force vector (x,y,z)
 	 */
 	void setF(double F[3]) { for(int d = 0; d < 3; d++ ) { _F[d] = F[d]; } }
+
 	/** set momentum acting on molecule 
 	 * @param M force vector (x,y,z)
 	 */
@@ -210,14 +209,12 @@ public:
 
 	//! calculate summv2 and sumIw2
 	//! @todo what is sumIw2?
-	                         //! @todo comment
+	//! @todo comment
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
-	/** write binary information to stream */
-	void save_restart(std::ostream& ostrm) const;
 
 	static void setDomain(Domain* domain);
 
