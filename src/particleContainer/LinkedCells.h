@@ -64,6 +64,8 @@ public:
 	//!
 	//! The constructor sets the following variables:
 	//! - _cutoffRadius
+	//! - _LJcutoffRadius
+	//! - _tersoffCutoffRadius
 	//! - _haloWidthInNumCells[3]
 	//! - _cellsPerDimension[3]
 	//! - _cellLength[3]
@@ -183,6 +185,8 @@ public:
 		return this->_tersoffCutoffRadius;
 	}
 
+	//! @brief observes the RDFs of all particles in the domain.
+	/* TODO: misleading method name */
 	void countParticles(Domain* d);
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(int cid);
@@ -190,6 +194,7 @@ public:
 	unsigned countParticles(int cid, double* cbottom, double* ctop);
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
+	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(Molecule* m1);
 
 	int localGrandcanonicalBalance() {
