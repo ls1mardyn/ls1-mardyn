@@ -308,6 +308,8 @@ private:
 	int _cellsPerDimension[3];
 	//! Halo width (in cells) in each dimension
 	int _haloWidthInNumCells[3];
+	//! Box width (in cells) in each dimension
+	int _boxWidthInNumCells[3];
 	//! width of the halo strip (in size units)
 	double _haloLength[3];
 	//! length of the cell (for each dimension)

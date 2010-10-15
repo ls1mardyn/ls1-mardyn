@@ -19,6 +19,9 @@
 
 #include "particleContainer/LinkedCells.h"
 
+#include <cmath>
+#include <iostream>
+
 #include "molecules/potforce.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
@@ -27,9 +30,6 @@
 #include "ensemble/GrandCanonical.h"
 #include "Domain.h"
 #include "utils/Logger.h"
-
-#include <cmath>
-#include <iostream>
 
 using namespace std;
 using Log::global_log;
@@ -48,22 +48,29 @@ LinkedCells::LinkedCells(
 			_blockTraverse(this, _cells, _innerCellIndices, _boundaryCellIndices)
 {
 	int numberOfCells = 1;
-	this->_cutoffRadius = cutoffRadius;
-	this->_LJCutoffRadius = LJCutoffRadius;
-	this->_tersoffCutoffRadius = tersoffCutoffRadius;
-	for (int dim = 0; dim < 3; dim++) {
-		_haloWidthInNumCells[dim] = (int) ceil(cellsInCutoffRadius);
-		_cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim] - this->_boundingBoxMin[dim]) / (cutoffRadius / cellsInCutoffRadius)) + 2 * _haloWidthInNumCells[dim];
-		// in each dimension at least one layer of (inner+boundary) cells necessary
-		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			_cellsPerDimension[dim]++;
+	_cutoffRadius = cutoffRadius;
+	_LJCutoffRadius = LJCutoffRadius;
+	_tersoffCutoffRadius = tersoffCutoffRadius;
+
+	for (int d = 0; d < 3; d++) {
+		/* first calculate the cell length for this dimension */
+		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
+		// in each dimension at least one layer of (inner+boundary) cells is necessary
+		if( _boxWidthInNumCells[d] == 0 ) {
+			_boxWidthInNumCells[d] = 1;
 		}
-		numberOfCells *= _cellsPerDimension[dim];
-		_cellLength[dim] = (this->_boundingBoxMax[dim] - this->_boundingBoxMin[dim]) / (_cellsPerDimension[dim] - 2 * _haloWidthInNumCells[dim]);
-		_haloBoundingBoxMin[dim] = this->_boundingBoxMin[dim] - _haloWidthInNumCells[dim] * _cellLength[dim];
-		_haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim] + _haloWidthInNumCells[dim] * _cellLength[dim];
-		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
+		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d]) / _boxWidthInNumCells[d];
+
+		_haloWidthInNumCells[d] = ceil(cellsInCutoffRadius);
+		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
+		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloLength[d];
+		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloLength[d];
+
+		_cellsPerDimension[d] = _boxWidthInNumCells[d] + 2 * _haloWidthInNumCells[d];
+
+		numberOfCells *= _cellsPerDimension[d];
 	}
+	global_log->debug() << "Cell size (" << _cellLength[1] << ", " << _cellLength[2] << ", " << _cellLength[3] << ")" << endl;
 
 	_cells.resize(numberOfCells);
 
@@ -76,7 +83,7 @@ LinkedCells::LinkedCells(
 	    _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
 	    _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
-		global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
 		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
 		exit(5);
 	}
