@@ -5,7 +5,7 @@
 #include "Graphit.h"
 #include "Random.h"
 
-#include <math.h>
+#include <cmath>
 #include <iostream>
 using namespace std;
 
@@ -18,7 +18,7 @@ void Graphit::calculateCoordinatesOfAtoms(
    int numberOfLayers, double xLength, double zLength, double A
 ) {
 	double B = 2.0 * A;
-	double C = 0.86602540378 * A;  // sin(pi/3)
+	double C = sin(M_PI / 3.0) * A;
 
 	double xCoor = 0.05*A;
 	double yCoor = 0.0;
