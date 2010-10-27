@@ -53,7 +53,7 @@ Molecule::Molecule(unsigned long id, int componentid,
 	_D[1] = Dy;
 	_D[2] = Dz;
 	_sites_d = _sites_F = _osites_e = NULL;
-	_curTN = 0;
+	_numTersoffNeighbours = 0;
 	fixedx = rx;
 	fixedy = ry;
 	if (components)
@@ -124,7 +124,7 @@ Molecule::Molecule(const Molecule& m) {
 	_quadrupoles_F = &(_dipoles_F[numDipoles()*3]);
 	_tersoff_F = &(_quadrupoles_F[numQuadrupoles()*3]);
 	//_nextincell=m._nextincell;  // not necessary -> temporary only
-	_curTN = 0;
+	_numTersoffNeighbours = 0;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
 }
@@ -289,7 +289,7 @@ void Molecule::write(ostream& ostrm) const {
 
 void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
 	// this->_Tersoff_neighbours.insert(pair<Molecule*, bool>(m, (pairType > 0)));
-	for (int j = 0; j < _curTN; j++) {
+	for (int j = 0; j < _numTersoffNeighbours; j++) {
 		if (m->_id == _Tersoff_neighbours_first[j]->id()) {
 			this->_Tersoff_neighbours_first[j] = m;
 			this->_Tersoff_neighbours_second[j] = pairType;
@@ -297,10 +297,10 @@ void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
 		}
 	}
 
-	this->_Tersoff_neighbours_first[_curTN] = m;
-	this->_Tersoff_neighbours_second[_curTN] = pairType;
-	this->_curTN++;
-	if (_curTN > MAX_TERSOFF_NEIGHBOURS) {
+	this->_Tersoff_neighbours_first[_numTersoffNeighbours] = m;
+	this->_Tersoff_neighbours_second[_numTersoffNeighbours] = pairType;
+	this->_numTersoffNeighbours++;
+	if (_numTersoffNeighbours > MAX_TERSOFF_NEIGHBOURS) {
 		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->_id << " has more than " << MAX_TERSOFF_NEIGHBOURS << " Tersoff neighbours." << endl;
 		exit(1);
 	}

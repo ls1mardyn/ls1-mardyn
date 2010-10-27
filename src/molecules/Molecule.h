@@ -218,10 +218,10 @@ public:
 
 	static void setDomain(Domain* domain);
 
-	inline unsigned getCurTN() { return this->_curTN; }
+	inline unsigned getCurTN() { return this->_numTersoffNeighbours; }
 	inline Molecule* getTersoffNeighbour(unsigned i) { return this->_Tersoff_neighbours_first[i]; }
 	inline bool getPairCode(unsigned i) { return this->_Tersoff_neighbours_second[i]; }
-	inline void clearTersoffNeighbourList() { this->_curTN = 0; }
+	inline void clearTersoffNeighbourList() { this->_numTersoffNeighbours = 0; }
 	void addTersoffNeighbour(Molecule* m, bool pairType);
 	double tersoffParameters(double params[15]); //returns delta_r
 
@@ -269,7 +269,7 @@ private:
 
 	Molecule* _Tersoff_neighbours_first[MAX_TERSOFF_NEIGHBOURS];
 	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS];
-	int _curTN;
+	int _numTersoffNeighbours;
 	double fixedx, fixedy;
 
 	// setup cache values/properties
