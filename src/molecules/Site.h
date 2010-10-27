@@ -21,7 +21,7 @@
 #define SITE_H_
 
 #include <iostream>
-#include <math.h>
+#include <cmath>
 
 /** Site
  @author Martin Bernreuther et al. (2009)
