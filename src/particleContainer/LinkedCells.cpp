@@ -74,14 +74,14 @@ LinkedCells::LinkedCells(
 
 	_cells.resize(numberOfCells);
 
-	// If the with of the inner region is less than the width of the halo region
+	// If the width of the inner region is less than the width of the halo region
 	// a parallelisation isn't possible (with the used algorithms).
 	// In this case, print an error message
 	// _cellsPerDimension is 2 times the halo width + the inner width
 	// so it has to be at least 3 times the halo width
-	if (_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
-	    _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
-	    _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]) {
+	if (_boxWidthInNumCells[0] < _haloWidthInNumCells[0] ||
+	    _boxWidthInNumCells[1] < _haloWidthInNumCells[1] ||
+	    _boxWidthInNumCells[2] < _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
 		global_log->error() << "_cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
 		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
@@ -573,7 +573,7 @@ unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 
 	}
-	return (cellIndex[2] * _cellsPerDimension[1] + cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0];
+	return this->cellIndexOf3DIndex( cellIndex[0], cellIndex[1], cellIndex[2] );
 }
 
 unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
