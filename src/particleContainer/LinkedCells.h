@@ -278,50 +278,31 @@ private:
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
 
-	//! the list contains all molecules from the phasespace
-	std::list<Molecule> _particles;
+	std::list<Molecule> _particles; //!< List containing all molecules from the phasespace
 
-	//! Iterator to traverse the list of particles (_particles)
-	std::list<Molecule>::iterator _particleIter;
+	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
 
-	//! Vector containing all cells (including halo)
-	std::vector<Cell> _cells;
+	std::vector<Cell> _cells; //!< Vector containing all cells (including halo)
 
-	//! Vector containing the indices (for the cells vector) of all inner cells (without boundary)
-	std::vector<unsigned long> _innerCellIndices;
-	//! Vector containing the indices (for the cells vector) of all boundary cells
-	std::vector<unsigned long> _boundaryCellIndices;
-	//! Vector containing the indices (for the cells vector) of all halo cells
-	std::vector<unsigned long> _haloCellIndices;
+	std::vector<unsigned long> _innerCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
+	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
+	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
 
-	//! Neighbours that come in the total ordering after a cell
-	std::vector<unsigned long> _forwardNeighbourOffsets;
-	//! Neighbours that come in the total ordering before a cell
-	std::vector<unsigned long> _backwardNeighbourOffsets;
+	std::vector<unsigned long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
+	std::vector<unsigned long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
 
-	//! low corner of the bounding box around the linked cells (including halo)
-	double _haloBoundingBoxMin[3];
-	//! high corner of the bounding box around the linked cells (including halo)
-	double _haloBoundingBoxMax[3];
+	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
+	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
 
-	//! Number of Cells in each spacial dimension (including halo)
-	int _cellsPerDimension[3];
-	//! Halo width (in cells) in each dimension
-	int _haloWidthInNumCells[3];
-	//! Box width (in cells) in each dimension
-	int _boxWidthInNumCells[3];
-	//! width of the halo strip (in size units)
-	double _haloLength[3];
-	//! length of the cell (for each dimension)
-	double _cellLength[3];
-	//! RDF/electrostatics cutoff radius
-	double _cutoffRadius;
-	//! LJ cutoff radius
-	double _LJCutoffRadius;
-	//! Tersoff cutoff radius
-	double _tersoffCutoffRadius;
-	//! balance of the grand canonical ensemble
-	int _localInsertionsMinusDeletions;
+	int _cellsPerDimension[3]; //!< Number of Cells in each spacial dimension (including halo)
+	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
+	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
+	double _haloLength[3]; //!< width of the halo strip (in size units)
+	double _cellLength[3]; //!< length of the cell (for each dimension)
+	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
+	double _LJCutoffRadius; //!< LJ cutoff radius
+	double _tersoffCutoffRadius; //!< Tersoff cutoff radius
+	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
 
 	//! @brief True if all Particles are in the right cell
 	//!
