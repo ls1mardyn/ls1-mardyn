@@ -26,7 +26,6 @@
 
 #include <list>
 #include <cmath>
-#include <iostream>
 
 using namespace std;
 using Log::global_log;

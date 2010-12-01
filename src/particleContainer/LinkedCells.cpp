@@ -20,7 +20,6 @@
 #include "particleContainer/LinkedCells.h"
 
 #include <cmath>
-#include <iostream>
 
 #include "molecules/potforce.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
