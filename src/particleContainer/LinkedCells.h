@@ -270,7 +270,7 @@ private:
 	//! This method determines for a given 3D index the corresponding cell
 	//! and returns the index of that cell in the cell vector. \n
 	//! The method can also be used to get the offset between two cells in the cell
-	//! vector when called with the 3D cell index offets (e.g. x: one cell to the left,
+	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
 	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 
