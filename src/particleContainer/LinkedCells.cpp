@@ -169,25 +169,12 @@ void LinkedCells::update() {
 		(*celliter).removeAllParticles();
 	}
 
-	unsigned long index; // index of the cell into which the pointer has to be inserted
 	std::list<Molecule>::iterator pos;
 	for (pos = _particles.begin(); pos != _particles.end(); ++pos) {
-		index = getCellIndexOfMolecule(&(*pos));
-		if (index >= _cells.size()) {
-			global_log->error() << "ID " << pos->id() << "\nr:" << pos->r(0) << " / " << pos->r(1) << " / " << pos->r(2) << endl;
-			global_log->error() << "v:" << pos->v(0) << " / " << pos->v(1) << " / " << pos->v(2) << endl;
-			global_log->error() << "F:" << pos->F(0) << " / " << pos->F(1) << " / " << pos->F(2) << endl;
-			global_log->error() << "Cell: " << index << endl;
-			global_log->error() << "_cells.size(): " << _cells.size() << "\tindex: " << index << "\n";
-			global_log->error() << "Length of the cell: " << _cellLength[0] << " " << _cellLength[1] << " " << _cellLength[2] << "\n";
-			global_log->error() << "\nBounding box, including halo, from (" << _haloBoundingBoxMin[0] << "/"
-			    << _haloBoundingBoxMin[1] << "/" << _haloBoundingBoxMin[2] << ") to (" << _haloBoundingBoxMax[0]
-			    << "/" << _haloBoundingBoxMax[1] << "/" << _haloBoundingBoxMax[2] << ").\n";
-			global_log->error() << "removing m" << pos->id() << " (internal component number " << pos->componentid()
-			    << ", Utrans=" << pos->Utrans() << ").\n";
-			exit(1);
-		}
-		(_cells[index]).addParticle(&(*pos));
+		// determine the cell into which the particle belongs
+		Molecule &m = *pos;
+		unsigned long index = getCellIndexOfMolecule(&m);
+		_cells[index].addParticle(&(*pos));
 	}
 	_cellsValid = true;
 }
@@ -198,24 +185,20 @@ void LinkedCells::addParticle(Molecule& particle) {
 	double y = particle.r(1);
 	double z = particle.r(2);
 
-	if (x>=this->_haloBoundingBoxMin[0] && x < this->_haloBoundingBoxMax[0] &&
-	    y>=this->_haloBoundingBoxMin[1] && y < this->_haloBoundingBoxMax[1] &&
-	    z>=this->_haloBoundingBoxMin[2] && z < this->_haloBoundingBoxMax[2]) {
+	if ( ( x >= _haloBoundingBoxMin[0]) && (x < _haloBoundingBoxMax[0]) &&
+	     ( y >= _haloBoundingBoxMin[1]) && (y < _haloBoundingBoxMax[1]) &&
+	     ( z >= _haloBoundingBoxMin[2]) && (z < _haloBoundingBoxMax[2]) ) {
 
-		_particles.push_front(particle);
+		_particles.push_front( particle );
+		/* TODO: Have a closer look onto this check as there is no warning or error message. */
 		if (_cellsValid) {
 			int cellIndex = getCellIndexOfMolecule(&particle);
-			if (cellIndex < (int) 0 || cellIndex >= (int) _cells.size()) {
-				global_log->error() << "LinkedCells::addParticle(): INDEX ERROR" << endl;
-				exit(1);
-			}
-			(_cells[cellIndex]).addParticle(&(_particles.front()));
+			_cells[cellIndex].addParticle(&(_particles.front()));
 		}
 	}
 }
 
 void LinkedCells::countParticles(Domain* d) {
-	vector<Cell>::iterator cellIter;
 	std::list<Molecule*>::iterator molIter1;
 	for (unsigned i = 0; i < _cells.size(); i++) {
 		Cell& currentCell = _cells[i];
@@ -230,15 +213,14 @@ void LinkedCells::countParticles(Domain* d) {
 
 unsigned LinkedCells::countParticles(int cid) {
 	unsigned N = 0;
-	vector<Cell>::iterator cellIter;
 	std::list<Molecule*>::iterator molIter1;
 	for (unsigned i = 0; i < _cells.size(); i++) {
 		Cell& currentCell = _cells[i];
-		if (currentCell.isHaloCell())
-			continue;
-		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-			if ((*molIter1)->componentid() == cid)
-				N++;
+		if( !currentCell.isHaloCell() ) {
+			for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
+				if ((*molIter1)->componentid() == cid)
+					N++;
+			}
 		}
 	}
 	return N;
