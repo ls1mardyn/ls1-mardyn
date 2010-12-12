@@ -23,11 +23,11 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: mkCP (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] -h <height> [-H <eta>] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-r] [-s <size unit [A]>] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-W <energy and temperature unit [K]>] [-Y <mass unit [u]>] [-3 <xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), CH4, C2H6, N2, or CO2\n-H\tdefault: eta according to Wang et al.\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-t\tdefault: tau = 5 ps\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3\tdefault: xi according to Wang et al.\n-8\toriginal Tersoff potential as published in the 80s\n";
-   if((argc < 15) || (argc > 41))
+   const char* usage = "usage: mkCP (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] -h <height> [-H <eta>] [-k] [-l] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-p <polarity coefficient>] [-r] [-s <size unit [A]>] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-v <volume fraction without acceleration>] [-V <volume fraction without wall] [-W <energy and temperature unit [K]>] [-Y <mass unit [u]>] [-3 <xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), Ave, CH4, C2H6, N2, CO2, H2O, CH3OH, or C6H14\n-H\tdefault: eta according to Wang et al.\n-k\tonly harmonic potentials active within the wall (default for polar walls)\n-l\tLJ interaction within the wall as well (default for unpolar walls)\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-p\tdefault polarity coefficient: 0 (unpolar walls)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-t\tdefault: tau = 5 ps\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3\tdefault: xi according to Wang et al.\n-8\toriginal Tersoff potential as published in the 80s\n";
+   if((argc < 15) || (argc > 60))
    {
       cout << "There are " << argc
-           << " arguments where 15 to 41 should be given.\n\n";
+           << " arguments where 15 to 60 should be given.\n\n";
       cout << usage;
       return 1;
    }
@@ -43,6 +43,10 @@ int main(int argc, char** argv)
    double EPS_REF = 1.0;
    double REFMASS = 1.0;
 
+   double wo_acceleration = 0.0;
+   double wo_wall = 0.0;
+   double polarity = 0.0;
+
    bool in_a = false;
    bool in_bondlength = false;
    bool empty = false;
@@ -57,9 +61,11 @@ int main(int argc, char** argv)
    bool in_h = false;
    bool in_T = false;
    bool in_U = false;
+   bool in_WLJ = false;
    bool original = false;
    bool muVT = false;
    bool nanotube = false;
+   bool WLJ = true;
 
    for(int i=1; i < argc; i++)
    {
@@ -72,6 +78,7 @@ int main(int argc, char** argv)
       }
       for(int j=1; argv[i][j]; j++)
       {
+         // cout << argv[i][j] << "\n";
          if(argv[i][j] == 'a')
          {
             in_a = true;
@@ -114,10 +121,14 @@ int main(int argc, char** argv)
             in_fluid = true;
             i++;
             if(!strcmp(argv[i], "Ar")) fluid = FLUID_AR;
+            else if(!strcmp(argv[i], "Ave")) fluid = FLUID_AVE;
             else if(!strcmp(argv[i], "CH4")) fluid = FLUID_CH4;
             else if(!strcmp(argv[i], "C2H6")) fluid = FLUID_C2H6;
             else if(!strcmp(argv[i], "N2")) fluid = FLUID_N2;
             else if(!strcmp(argv[i], "CO2")) fluid = FLUID_CO2;
+            else if(!strcmp(argv[i], "H2O")) fluid = FLUID_H2O;
+            else if(!strcmp(argv[i], "CH3OH")) fluid = FLUID_CH3OH;
+            else if(!strcmp(argv[i], "C6H14")) fluid = FLUID_C6H14;
             else
             {
                cout << "Fluid '" << argv[i] 
@@ -140,6 +151,16 @@ int main(int argc, char** argv)
             ETA = atof(argv[i]);
             break;
          }
+         else if(argv[i][j] == 'k')
+         {
+            in_WLJ = true;
+            WLJ = false;
+         }
+         else if(argv[i][j] == 'l')
+         {
+            in_WLJ = true;
+            WLJ = true;
+         }
          else if(argv[i][j] == 'L') LJunits = true;
          else if(argv[i][j] == 'm')
          {
@@ -160,6 +181,16 @@ int main(int argc, char** argv)
             in_N = true;
             i++;
             N = atoi(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == 'p')
+         {
+            i++;
+            polarity = atof(argv[i]);
+            if(!in_WLJ)
+            {
+               WLJ = (polarity == 0.0);
+            }
             break;
          }
          else if(argv[i][j] == 'P')
@@ -196,6 +227,18 @@ int main(int argc, char** argv)
             in_U = true;
             i++;
             U = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == 'v')
+         {
+            i++;
+            wo_acceleration = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == 'V')
+         {
+            i++;
+            wo_wall = atof(argv[i]);
             break;
          }
          else if(argv[i][j] == 'W')
@@ -246,6 +289,12 @@ int main(int argc, char** argv)
       cout << "Carbon nanotubes are not yet implemented.\n\n"
            << usage;
       return 11;
+   }
+   if(WLJ && (polarity != 0.0))
+   {
+      cout << "Severe error: Non-zero polarity is incompatible with the LJ interlayer interaction.\n\n"
+           << usage;
+      return 181;
    }
    if(!prefix)
    {
@@ -303,11 +352,25 @@ int main(int argc, char** argv)
       EPS_FLUID = EPS_CO2;
       FLUIDMASS = CO2MASS;
    }
-   else
+   else if(fluid == FLUID_AVE) // Avendaño mode
+   {
+      SIG_FLUID = SIG_AVE;
+      EPS_FLUID = EPS_AVE;
+      FLUIDMASS = AVEMASS;
+   }
+   else if(fluid == FLUID_AR)
    {
       SIG_FLUID = SIG_AR;
       EPS_FLUID = EPS_AR;
       FLUIDMASS = ARMASS;
+   }
+   else // effectively sets ETA = XI = 1 in all other cases
+   {
+      SIG_FLUID = SIG_WANG;
+      EPS_FLUID = EPS_WANG;
+      if(fluid == FLUID_H2O) FLUIDMASS = OH2OMASS + 2.0*HH2OMASS;
+      else if(fluid == FLUID_CH3OH) FLUIDMASS = CCH3OHMASS + OCH3OHMASS + HCH3OHMASS;
+      else FLUIDMASS = 2.0*FC6H14MASS + 4.0*MC6H14MASS;
    }
    if(!in_N)
    {
@@ -362,7 +425,7 @@ int main(int argc, char** argv)
 
    Domain* dalet = new Domain(
       flow, bondlength, rho, d, fluid, h, ETA, SIG_REF, EPS_REF,
-      REFMASS, muVT, nanotube, m_per_n, N, T, XI
+      REFMASS, muVT, nanotube, m_per_n, N, T, XI, wo_wall
    );
    if(nanotube)
    {
@@ -373,9 +436,10 @@ int main(int argc, char** argv)
    else
    {
       dalet->write(
-         prefix, a, empty, format, mu, TAU, U, original
+         prefix, a, empty, format, mu, TAU, U, original, wo_acceleration, polarity, WLJ
       );
    }
 
    return 0;
 }
+

@@ -17,7 +17,7 @@ Domain::Domain(
       int sp_fluid, double sp_h, double sp_ETA, double sp_SIG_REF,
       double sp_EPS_REF, double sp_REFMASS, bool sp_muVT,
       bool sp_nanotube, double sp_m_per_n, unsigned sp_N, double sp_T,
-      double sp_XI
+      double sp_XI, double sp_wo_wall
 ) {
    this->flow = sp_flow;
    this->bondlength = sp_bondlength;
@@ -33,6 +33,7 @@ Domain::Domain(
    this->pfill = 0.0;
    this->T = sp_T;
    this->XI = sp_XI;
+   this->wo_wall = sp_wo_wall;
 
    if(fluid == FLUID_AR) this->shielding = this->ETA * SIG_AR;
    else if(fluid == FLUID_CH4) this->shielding = ETA * SIG_CH4;
@@ -51,6 +52,19 @@ Domain::Domain(
    {
       this->shielding = 0.25*CO2LONG + this->ETA*SIG_CO2;
    }
+   else if(fluid == FLUID_AVE) this->shielding = ETA * SIG_AVE;
+   else if(fluid == FLUID_H2O)
+   {
+      this->shielding = 0.25*H2O_LONG + this->ETA*SIG_OH2O;
+   }
+   else if(fluid == FLUID_CH3OH)
+   {
+      this->shielding = 0.25*CH3OH_LONG + this->ETA*SIG_CCH3OH;
+   }
+   else if(fluid == FLUID_C6H14)
+   {
+      this->shielding = 0.25*C6H14_LONG + this->ETA*SIG_MC6H14;
+   }
 
    if(nanotube) this->specifyNanotube(sp_rho, sp_m_per_n, sp_N);
    else this->specifyGraphite(sp_rho, sp_N);
@@ -58,20 +72,24 @@ Domain::Domain(
 
 void Domain::write(
    char* prefix, double a, bool empty, int format, double mu,
-   double TAU, double U, bool original
+   double TAU, double U, bool original, double wo_acceleration,
+   double polarity, bool WLJ
 ) {
 
    if(this->nanotube) this->writeNanotube(
-      prefix, a, empty, format, mu, TAU, U, original
+      prefix, a, empty, format, mu, TAU, U, original,
+      wo_acceleration, polarity, WLJ
    );
    else this->writeGraphite(
-      prefix, a, empty, format, mu, TAU, U, original
+      prefix, a, empty, format, mu, TAU, U, original,
+      wo_acceleration, polarity, WLJ
    );
 }
 
 void Domain::writeGraphite(
    char* prefix, double a, bool empty, int format, double mu,
-   double TAU, double U, bool original
+   double TAU, double U, bool original, double wo_acceleration,
+   double polarity, bool WLJ
 ) {
    ofstream xdr, txt;
    stringstream strstrm, txtstrstrm;
@@ -120,7 +138,7 @@ void Domain::writeGraphite(
    }
    Graphit gra;
    gra.calculateCoordinatesOfAtoms(
-      1, this->box[0], this->box[2], this->bondlength
+      1, this->box[0], this->box[2], this->bondlength, this->wo_wall
    );
    unsigned Ngraphene = gra.getNumberOfAtoms();
    cout << "Inserting " << repl*d << " x " << Ngraphene
@@ -128,6 +146,7 @@ void Domain::writeGraphite(
    unsigned Ntotal = N1 + repl*d*Ngraphene;
 
    double LJ_CUTOFF;
+   double EL_CUTOFF;
    double FLUIDMASS, EPS_FLUID, SIG_FLUID, FLUIDLONG, QDR_FLUID;
    if(fluid == FLUID_AR)
    {
@@ -150,7 +169,7 @@ void Domain::writeGraphite(
       SIG_FLUID = SIG_C2H6;
       FLUIDLONG = C2H6LONG;
       QDR_FLUID = QDR_C2H6;
-      LJ_CUTOFF = 5.5*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
    }
    else if(fluid == FLUID_N2)
    {
@@ -159,7 +178,7 @@ void Domain::writeGraphite(
       SIG_FLUID = SIG_N2;
       FLUIDLONG = N2LONG;
       QDR_FLUID = QDR_N2;
-      LJ_CUTOFF = 5.5*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
    }
    else if(fluid == FLUID_CO2)
    {
@@ -168,7 +187,34 @@ void Domain::writeGraphite(
       SIG_FLUID = SIG_CO2;
       FLUIDLONG = CO2LONG;
       QDR_FLUID = QDR_CO2;
-      LJ_CUTOFF = 5.5*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid == FLUID_AVE)
+   {
+      FLUIDMASS = AVEMASS;
+      EPS_FLUID = EPS_AVE;
+      SIG_FLUID = SIG_AVE;
+      LJ_CUTOFF = 2.5*SIG_FLUID;
+   }
+   else if(fluid == FLUID_H2O)
+   {
+      FLUIDMASS = OH2OMASS + 2.0*HH2OMASS;
+      EPS_FLUID = EPS_OH2O;
+      SIG_FLUID = SIG_OH2O;
+      FLUIDLONG = H2O_LONG;
+      LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid == FLUID_CH3OH)
+   {
+      FLUIDMASS = CCH3OHMASS + OCH3OHMASS + HCH3OHMASS;
+      FLUIDLONG = CH3OH_LONG;
+      LJ_CUTOFF = 4.0*SIG_CCH3OH + 0.5*FLUIDLONG;
+   }
+   else if(fluid == FLUID_C6H14)
+   {
+      FLUIDMASS = 2.0*FC6H14MASS + 4.0*MC6H14MASS;
+      FLUIDLONG = C6H14_LONG;
+      LJ_CUTOFF = 4.0*SIG_MC6H14 + 0.5*FLUIDLONG;
    }
    else
    {
@@ -176,9 +222,22 @@ void Domain::writeGraphite(
       exit(20);
    }
 
+   if((fluid == FLUID_AR) || (fluid == FLUID_CH4) || (fluid == FLUID_AVE))
+   {
+      EL_CUTOFF = LJ_CUTOFF;
+   }
+   else if((fluid == FLUID_C2H6) || (fluid == FLUID_N2) || (fluid == FLUID_CO2))
+   {
+      EL_CUTOFF = 1.08*LJ_CUTOFF;
+   }
+   else EL_CUTOFF = 1.1664*LJ_CUTOFF;
+
    if(format == FORMAT_BRANCH)
    {
-      xdr.precision(6);
+      unsigned wallcomp_sng = (polarity == 0.0)? d: NCOMP_POLAR;
+      unsigned wallcomp = repl*wallcomp_sng;
+
+      xdr.precision(7);
       xdr << "mardyn " << TIME << " tersoff\n"
           << "# mardyn input file, ls1 project\n"
           << "# generated by the mkcp tool\n";
@@ -188,16 +247,17 @@ void Domain::writeGraphite(
                     / (repl * box[0]*box[1]*box[2])
           << "\n" << "L" << "\t" << box[0]/SIG_REF << "\t"
           << repl*box[1]/SIG_REF << "\t" << box[2]/SIG_REF
-          << "\n" << "C" << "\t" << repl*d + 1 << "\n";
+          << "\n";
+      xdr << "C" << "\t" << wallcomp + 1 << "\n";
 
-      if((fluid == FLUID_AR) || (fluid == FLUID_CH4))
+      if((fluid == FLUID_AR) || (fluid == FLUID_CH4) || (fluid == FLUID_AVE))
       {
          xdr << "1 0 0 0 0\n"  // LJ, C, Q, D, Tersoff
              << "0.0 0.0 0.0\t"
              << FLUIDMASS/REFMASS << " " << EPS_FLUID/EPS_REF << " "
              << SIG_FLUID/SIG_REF << "\t0.0 0.0 0.0\n";
       }
-      else
+      else if((fluid == FLUID_C2H6) || (fluid == FLUID_N2) || (fluid == FLUID_CO2))
       {
          xdr << "2 0 1 0 0\n"  // LJ, C, Q, D, Tersoff
              << "0.0 0.0 " << -0.5*FLUIDLONG/SIG_REF << "\t"
@@ -209,12 +269,87 @@ void Domain::writeGraphite(
              << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID/QDR_REF
              << "\n0.0 0.0 0.0\n";
       }
-      for(unsigned i=0; i < repl * this->d; i++)
+      else if(fluid == FLUID_H2O)
       {
-         xdr << "1 0 0 0 1\n"  // LJ, C, Q, D, Tersoff
-             << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
-             << EPS_FLUID/EPS_REF << " " << SIG_FLUID/SIG_REF << "\n"
-             << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_O_H2O/SIG_REF << " " << R1_O_H2O/SIG_REF << " " << R2_O_H2O/SIG_REF << "\t"
+             << OH2OMASS/REFMASS << " " << EPS_OH2O/EPS_REF << " " << SIG_OH2O/SIG_REF << "\n";
+
+         xdr << R0_H1H2O/SIG_REF << " " << R1_H1H2O/SIG_REF << " " << R2_H1H2O/SIG_REF << "\t"
+             << HH2OMASS/REFMASS << " " << CHG_HH2O/REFCARG << "\n";
+         xdr << R0_H2H2O/SIG_REF << " " << R1_H2H2O/SIG_REF << " " << R2_H2H2O/SIG_REF << "\t"
+             << HH2OMASS/REFMASS << " " << CHG_HH2O/REFCARG << "\n";
+         xdr << R0_E_H2O/SIG_REF << " " << R1_E_H2O/SIG_REF << " " << R2_E_H2O/SIG_REF << "\t"
+             << "0.0 " << CHG_EH2O/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
+      else if(fluid == FLUID_CH3OH)
+      {
+         xdr << "2 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_C_CH3OH/SIG_REF << " " << R1_C_CH3OH/SIG_REF << " " << R2_C_CH3OH/SIG_REF << "\t"
+             << CCH3OHMASS/REFMASS << " " << EPS_CCH3OH/EPS_REF << " " << SIG_CCH3OH/SIG_REF << "\n";
+         xdr << R0_O_CH3OH/SIG_REF << " " << R1_O_CH3OH/SIG_REF << " " << R2_O_CH3OH/SIG_REF << "\t"
+             << OCH3OHMASS/REFMASS << " " << EPS_OCH3OH/EPS_REF << " " << SIG_OCH3OH/SIG_REF << "\n";
+
+         xdr << R0_C_CH3OH/SIG_REF << " " << R1_C_CH3OH/SIG_REF << " " << R2_C_CH3OH/SIG_REF << "\t"
+             << "0.0 " << CHG_CCH3OH/REFCARG << "\n";
+         xdr << R0_O_CH3OH/SIG_REF << " " << R1_O_CH3OH/SIG_REF << " " << R2_O_CH3OH/SIG_REF << "\t"
+             << "0.0 " << CHG_OCH3OH/REFCARG << "\n";
+         xdr << R0_H_CH3OH/SIG_REF << " " << R1_H_CH3OH/SIG_REF << " " << R2_H_CH3OH/SIG_REF << "\t"
+             << HCH3OHMASS/REFMASS << " " << CHG_HCH3OH/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
+      else if(fluid == FLUID_C6H14)
+      {
+         xdr << "6 0 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_F1C6H14/SIG_REF << " " << R1_F1C6H14/SIG_REF << " " << R2_F1C6H14/SIG_REF << "\t"
+             << FC6H14MASS/REFMASS << " " << EPS_FC6H14/EPS_REF << " " << SIG_FC6H14/SIG_REF << "\n";
+         xdr << R0_M1C6H14/SIG_REF << " " << R1_M1C6H14/SIG_REF << " " << R2_M1C6H14/SIG_REF << "\t"
+             << MC6H14MASS/REFMASS << " " << EPS_MC6H14/EPS_REF << " " << SIG_MC6H14/SIG_REF << "\n";
+         xdr << R0_M2C6H14/SIG_REF << " " << R1_M2C6H14/SIG_REF << " " << R2_M2C6H14/SIG_REF << "\t"
+             << MC6H14MASS/REFMASS << " " << EPS_MC6H14/EPS_REF << " " << SIG_MC6H14/SIG_REF << "\n";
+         xdr << R0_M3C6H14/SIG_REF << " " << R1_M3C6H14/SIG_REF << " " << R2_M3C6H14/SIG_REF << "\t"
+             << MC6H14MASS/REFMASS << " " << EPS_MC6H14/EPS_REF << " " << SIG_MC6H14/SIG_REF << "\n";
+         xdr << R0_M4C6H14/SIG_REF << " " << R1_M4C6H14/SIG_REF << " " << R2_M4C6H14/SIG_REF << "\t"
+             << MC6H14MASS/REFMASS << " " << EPS_MC6H14/EPS_REF << " " << SIG_MC6H14/SIG_REF << "\n";
+         xdr << R0_F2C6H14/SIG_REF << " " << R1_F2C6H14/SIG_REF << " " << R2_F2C6H14/SIG_REF << "\t"
+             << FC6H14MASS/REFMASS << " " << EPS_FC6H14/EPS_REF << " " << SIG_FC6H14/SIG_REF << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
+      else
+      {
+         cout << "Fluid code " << fluid << ": Not yet implemented.\n";
+         exit(1000+fluid);
+      }
+
+      double crga[repl*NCOMP_POLAR];
+      for(unsigned i=0; i < wallcomp; i++) crga[i] = 0.0;
+      for(int r=0; r < repl; r++)
+      {
+         crga[1 + r*NCOMP_POLAR] = polarity/3.0;
+         crga[2 + r*NCOMP_POLAR] = -2.0*polarity/3.0;      
+         crga[3 + r*NCOMP_POLAR] = -1.0*polarity/3.0;
+      }
+
+      for(unsigned i=0; i < wallcomp; i++)
+      {
+         if(polarity == 0.0) xdr << "1 0 0 0 1\n";  // LJ, C, Q, D, Tersoff
+         else xdr << "0 1 0 0 1\n";
+         
+         if(polarity == 0.0)
+            xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
+                << EPS_FLUID/EPS_REF << " " << SIG_FLUID/SIG_REF << "\n";
+         else
+            xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS
+                << " " << crga[i]/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
              << TERSOFF_A/EPS_REF << " " << TERSOFF_B/EPS_REF << "\t"
              << (original? TERSOFF_LAMBDA_ORIG
                          : TERSOFF_LAMBDA) * SIG_REF << " "
@@ -225,66 +360,101 @@ void Domain::writeGraphite(
              << TERSOFF_H << " " << TERSOFF_N << " " << TERSOFF_BETA
              << "\n0.0 0.0 0.0\n";
       }
-      for(unsigned j=2; repl*this->d + 1 >= j; j++)
+      for(unsigned j=2; wallcomp + 1 >= j; j++)
          xdr << this->XI << " " << this->ETA << "   ";
       xdr << "\n";
-      for(unsigned i=2; repl*this->d >= i; i++)
+      for(unsigned i=2; wallcomp >= i; i++)
       {
-         for(unsigned j = i+1; repl*d + 1 >= j; j++)
-            xdr << "1.0 1.0   ";
+         for(unsigned j = i+1; wallcomp + 1 >= j; j++)
+            if(WLJ) xdr << "1.0 1.0   ";
+            else xdr << "0.0 1.0   ";
          xdr << "\n";
       }
       xdr << "1.0e+10\n";
 
-      for(unsigned i=2; repl*d + 1 >= i; i++)
-         xdr << "CT\t" << i << " " << i-1
-             << "\nThT\t" << i-1 << " " << T/EPS_REF << "\n";
-      if(flow == FLOW_COUETTE)
-         for(unsigned i=1; d >= i; i++) xdr << "U\t" << i << "\n";
-      xdr << "CT\t1 " << repl*d + 1 << "\n"
-          << "ThT\t" << repl*d + 1 << " " << T/EPS_REF
-          << "\nU\t" << repl*d + 1 << "\n";
+      double wallthermostats = (polarity == 0.0)? wallcomp: repl;
+      for(unsigned i=2; wallcomp + 1 >= i; i++)
+      {
+         xdr << "CT\t" << i << " " << ((polarity == 0.0)? i-1: ((wallcomp_sng+1 >= i)? 1: 2)) << "\n";
+      }
+      for(unsigned i=1; wallthermostats >= i; i++)
+      {
+         xdr << "ThT\t" << i << " " << T/EPS_REF << "\n";
+         if(flow == FLOW_COUETTE) xdr << "U\t" << i << "\n";
+      }
+      xdr << "CT\t1 " << wallthermostats + 1 << "\n"
+          << "ThT\t" << wallthermostats + 1 << " " << T/EPS_REF
+          << "\nU\t" << wallthermostats + 1 << "\n";
       if(flow == FLOW_COUETTE)
       {
-         xdr << "S\t2 1\nS\t" << this->d + 1 << " 2\n"
-             << "A\t1\t0.0 0.0 " << U/VEL_REF << "\t" << TAU/REFTIME
-             << "\t0.0 0.0 " << a/ACC_REF << "\n"
-             << "A\t2\t0.0 0.0 " << U/VEL_REF << "\t" << TAU/REFTIME
-             << "\t0.0 0.0 " << a/ACC_REF << "\n"
-             << "S\t" << this->d + 2 << " 3\n"
-             << "S\t" << 2*this->d + 1 << " 4\n"
-             << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-             << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n"
-             << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-             << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n";
-         for(unsigned i=3; this->d >= i; i++)
-            xdr << "S\t" << i << " 5\n";
-         for(unsigned i=3; this->d >= i; i++)
-            xdr << "S\t" << d+i << " 6\n";
-         xdr << "A\t" << 5 << "\t0.0 0.0 " << U/VEL_REF << "\t"
-             << TAU/REFTIME << "\t0.0 0.0 0.0\n";
-         xdr << "A\t" << 6 << "\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-             << "\t0.0 0.0 0.0\n";
+         if(polarity == 0.0)
+         {
+            xdr << "S\t2 1\nS\t" << this->d + 1 << " 2\n"
+                << "A\t1\t0.0 0.0 " << U/VEL_REF << "\t" << TAU/REFTIME
+                << "\t0.0 0.0 " << a/ACC_REF << "\n"
+                << "A\t2\t0.0 0.0 " << U/VEL_REF << "\t" << TAU/REFTIME
+                << "\t0.0 0.0 " << a/ACC_REF << "\n"
+                << "S\t" << this->d + 2 << " 3\n"
+                << "S\t" << 2*this->d + 1 << " 4\n"
+                << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
+                << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n"
+                << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
+                << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n";
+            for(unsigned i=3; this->d >= i; i++)
+               xdr << "S\t" << i << " 5\n";
+            for(unsigned i=3; this->d >= i; i++)
+               xdr << "S\t" << d+i << " 6\n";
+            xdr << "A\t" << 5 << "\t0.0 0.0 " << U/VEL_REF << "\t"
+                << TAU/REFTIME << "\t0.0 0.0 0.0\n";
+            xdr << "A\t" << 6 << "\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
+                << "\t0.0 0.0 0.0\n";
+         }
+         else
+         {
+            for(unsigned i=1; i < wallcomp_sng; i++)
+            {
+               xdr << "S\t" << i+1 << " 1\nS\t" << wallcomp_sng+i+1 << "\t 2\n";
+            }
+            xdr << "A\t1\t0.0 0.0 " << U/VEL_REF << "\t" << TAU/REFTIME
+                << "\t0.0 0.0 " << a/ACC_REF << "\n"
+                << "A\t2\t0.0 0.0 0.0\t" << TAU/REFTIME
+                << "\t0.0 0.0 " << -1.0*a/ACC_REF << "\n";
+         }
       }
       else if(flow == FLOW_POISEUILLE)
       {
-         xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
-             << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n"
-             << "S\t2 2\nS\t" << d+1 << " 3\n"
-             << "A\t2\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-             << "\t0.0 0.0 0.0\n"
-             << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-             << "\t0.0 0.0 0.0\n";
-         for(unsigned i=3; this->d >= i; i++)
-            xdr << "S\t" << i << " " << 4 << "\n";
-         xdr << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-             << "\t0.0 0.0 0.0\n";
+         if(polarity == 0.0)
+         {
+            xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
+                << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n"
+                << "S\t2 2\nS\t" << d+1 << " 3\n"
+                << "A\t2\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
+                << "\t0.0 0.0 0.0\n"
+                << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
+                << "\t0.0 0.0 0.0\n";
+            for(unsigned i=3; this->d >= i; i++)
+               xdr << "S\t" << i << " " << 4 << "\n";
+            xdr << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
+                << "\t0.0 0.0 0.0\n";
+         }
+         else
+         {
+            xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
+                << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n";
+            for(unsigned i=1; i < wallcomp; i++)
+            {
+               xdr << "S\t" << i+1 << " 2\n";
+            }
+            xdr << "A\t2\t0.0 0.0 0.0\t" << TAU/REFTIME
+                << "\t0.0 0.0 0.0\n";
+         }
       }
       xdr << "N" << "\t" << Ntotal << "\nM" << "\t" << "ICRVQD\n\n";
 
       txt.precision(6);
       txt << "mardynconfig\n# \ntimestepLength\t" << DT/REFTIME
-          << "\ncutoffRadius\t" << LJ_CUTOFF/SIG_REF
+          << "\ncutoffRadius\t" << EL_CUTOFF/SIG_REF
+          << "\nLJCutoffRadius\t" << LJ_CUTOFF/SIG_REF
           << "\ntersoffCutoffRadius\t"
           << 1.0001*(original? TERSOFF_S_ORIG: TERSOFF_S) / SIG_REF
           << "\nconstantAccelerationTimesteps\t25\n"
@@ -298,9 +468,9 @@ void Domain::writeGraphite(
              << " component 1 control 0.0 0.0 0.0 to "
              << this->box[0]/SIG_REF << " " << 0.5*this->h/SIG_REF
              << " " << this->box[2]/SIG_REF << " conduct "
-             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.001
-                                                      : 0.002) * N1)
-             << " tests every 8 steps\n";
+             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0001
+                                                      : 0.0002) * N1)
+             << " tests every 2 steps\n";
          if(flow == FLOW_COUETTE)
          {
             txt << "chemicalPotential " << mu/EPS_REF
@@ -308,9 +478,9 @@ void Domain::writeGraphite(
                 << " 0.0 to " << this->box[0]/SIG_REF << " "
                 << (this->box[1] + 0.5*this->h)/SIG_REF << " "
                 << box[2]/SIG_REF << " conduct "
-                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.001
-                                                       : 0.002) * N1)
-                << " tests every 8 steps\n";
+                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0001
+                                                         : 0.0002) * N1)
+                << " tests every 2 steps\n";
          }
 	 txt << "planckConstant\t" 
 	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
@@ -326,12 +496,66 @@ void Domain::writeGraphite(
           << "_1R\nprofile\t6 1024 8\nprofileRecordingTimesteps\t3\n"
           << "profileOutputTimesteps\t50000"
           << "\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix
-          << "_1R\nzOscillator 1024\n";
+          << "_1R\n";
+      if(WLJ)
+      {
+         txt << "wallLJ\ton\n";
+         if(flow == FLOW_COUETTE)
+         {
+             txt << "zOscillator 1024\n";
+         }
+         else
+         {
+             txt << "oscillator 1024\n";
+         }
+      }
+      else
+      {
+         txt << "wallLJ\toff\n";
+         if(flow == FLOW_COUETTE)
+         {
+             txt << "zOscillator 128\n";
+         }
+         else
+         {
+             txt << "oscillator 128\n";
+         }
+      }
+      if(flow == FLOW_NONE)
+         txt << "nomomentum 16384\n";
+      if(wo_acceleration != 0.0)
+      {
+         txt << "flowControl\t0 0 " << 0.5*wo_acceleration*box[2]/SIG_REF
+             << " to " << box[0]/SIG_REF << " " << repl*box[1]/SIG_REF << " "
+             << (1.0 - 0.5*wo_acceleration)*box[2]/SIG_REF << "\n";
+      }
    }
 
-   double I_xx_yy;
-   if((fluid == FLUID_AR) || (fluid == FLUID_CH4)) I_xx_yy = 0.0;
-   else I_xx_yy = 0.25 * FLUIDMASS * FLUIDLONG * FLUIDLONG;
+   double I[3];
+   for(int k=0; k < 3; k++) I[k] = 0.0;
+   if((fluid == FLUID_C2H6) || (fluid == FLUID_N2) || (fluid == FLUID_CO2))
+   {
+      I[0] = 0.25 * FLUIDMASS * FLUIDLONG * FLUIDLONG;
+      I[1] = I[0];
+   }
+   else if(fluid == FLUID_H2O)
+   {
+      I[0] = I_XX_H2O;
+      I[1] = I_YY_H2O;
+      I[2] = I_ZZ_H2O;
+   }
+   else if(fluid == FLUID_CH3OH)
+   {
+      I[0] = I_XX_CH3OH;
+      I[1] = I_YY_CH3OH;
+      I[2] = I_ZZ_CH3OH;
+   }
+   else if(fluid == FLUID_C6H14)
+   {
+      I[0] = I_XX_C6H14;
+      I[1] = I_YY_C6H14;
+      I[2] = I_ZZ_C6H14;
+   }
 
    unsigned id = 1;
    double tr[3];
@@ -362,27 +586,16 @@ void Domain::writeGraphite(
                      double tv = sqrt(3.0*T / FLUIDMASS);
                      double phi = 6.283185 * r->rnd();
                      double omega = 6.283185 * r->rnd();
-                     double xxomga, yyomga;
-                     if(I_xx_yy > 0.0)
-                     {
-                        xxomga = sqrt(r->rnd()*T/I_xx_yy);
-                        if(r->rnd() > 0.5) xxomga *= -1.0;
-                        yyomga = sqrt(r->rnd()*T/I_xx_yy);
-                        if(r->rnd() > 0.5) yyomga *= -1.0;
-                     }
-                     else
-                     {
-                        xxomga = 0.0;
-                        yyomga = 0.0;
-                     }
-                     // xdr << "(" << ii[0] << "/" << ii[1] << "/" << ii[2] << "), j = " << j << ", d = " << d << ":\t";
+                     double w[3];
+                     for(int k=0; k < 3; k++)
+                        w[k] = (I[k] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I[k]);
                      xdr << id << " " << 1 << "\t" << tr[0]/SIG_REF
                          << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
                          << "\t" << tv*cos(phi)*cos(omega)/VEL_REF << " "
                          << tv*cos(phi)*sin(omega)/VEL_REF << " "
                          << tv*sin(phi)/VEL_REF << "\t1.0 0.0 0.0 0.0\t"
-                         << xxomga/REFOMGA << " " << yyomga/REFOMGA
-                         << " 0.0\n";
+                         << w[0]/REFOMGA << " " << w[1]/REFOMGA << " "
+                         << w[2]/REFOMGA << "\n";
                      id++;
                   }
 	          else xdr << "\n";
@@ -398,12 +611,14 @@ void Domain::writeGraphite(
       gra.calculateVelocities(T, layerU);
       for(unsigned k=2; this->d+1 >= k; k++)
       {
+         unsigned layerid = j*d + k;
          double yoffset = 0.5*h + (k-2.0)*Z;
          for(unsigned l=0; l < Ngraphene; l++)
          {
             tr[0] = gra.getX(l);
             tr[1] = gra.getY(l) + yoffset;
             tr[2] = gra.getZ(l);
+            unsigned tcid = gra.getComponent(l) + j*NCOMP_POLAR;
             for(int m=0; m < 3; m++)
             {
                tr[m] += (0.004*r->rnd() - 0.002) * bondlength;
@@ -417,7 +632,8 @@ void Domain::writeGraphite(
             }
             box[1] /= repl;
 
-            xdr << id << " " << j*d + k << "\t" << tr[0]/SIG_REF
+            xdr << id << " " << ((polarity == 0.0)? layerid: tcid)
+                << "\t" << tr[0]/SIG_REF
                 << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
                 << "\t" << gra.getVelocityX(l)/VEL_REF << " "
                 << gra.getVelocityY(l)/VEL_REF << " "
@@ -437,7 +653,8 @@ void Domain::writeGraphite(
 
 void Domain::writeNanotube(
    char* prefix, double a, bool empty, int format, double mu,
-   double TAU, double U, bool original
+   double TAU, double U, bool original, double wo_acceleration,
+   double polarity, bool WLJ
 ) {
    cout << "Cannot create the nanotube - implementation missing.\n";
    exit(19);
@@ -445,13 +662,6 @@ void Domain::writeNanotube(
 
 void Domain::specifyGraphite(double rho, unsigned N)
 {
-   double V_id = (double)N/rho;
-   if(this->flow == FLOW_COUETTE) V_id *= 0.5;
-   cout << "Carbon-carbon bond length: " << bondlength
-        << " * 0.05291772 nm.\n";
-   cout << "Effective symmetry volume should approach " << V_id
-        << " * 1.4818e-04 nm^3.\n";
-
    /*
     * y direction
     */
@@ -468,24 +678,36 @@ void Domain::specifyGraphite(double rho, unsigned N)
    this->off[1] = 0.5*this->h + ((double)(this->d)-1.0)*Z
                               + this->shielding;
 
+   double V_id = (double)(N/rho) / (wo_wall + (1.0 - wo_wall)*eff[1]/box[1]);
+   if(this->flow == FLOW_COUETTE) V_id *= 0.5;
+   cout << "Carbon-carbon bond length: " << bondlength
+        << " * 0.05291772 nm.\n";
+   cout << "Total volume should approach " << V_id
+        << " * 1.4818e-04 nm^3.\n";
+
    /*
     * x and z direction
     */
-   double LxLz_id = V_id / this->eff[1];
-   double C = 0.86602540378 * this->bondlength;  // sin(pi/3)
-   double lxlz_id = LxLz_id / (6.0 * this->bondlength * C);
-   unsigned lx = round(
-                    sqrt(0.28867513 * lxlz_id)  // sin(pi/3) / 3
-                 );
-   if(lx == 0) lx = 1;
-   unsigned lz = round(lxlz_id / lx);
-   if(lz == 0) lz = 1;
-   this->box[0] = 3.0*this->bondlength * (double)lx;
+   double A = V_id / this->box[1];
+   double tX = this->bondlength * 3.0;
+   double tZ = this->bondlength * 12.124356 / (1.0 - wo_wall);  // effektiv 14 * sin(pi/3)
+   int zeta = round(sqrt(2.0*A) / tZ);  // bewirkt, dass etwa <z> = 2<x> wird
+   if(zeta == 0) zeta = 1;
+   int xi = round(A / (tX*tZ*zeta));
+   if(xi == 0)
+   {
+      xi = 1;
+      zeta = round(A / (tX*tZ*xi));
+      if(zeta == 0)
+      {
+         cout << "Warning: The generated box will be larger than specified, due to technical reasons.\n\n";
+         zeta = 1;
+      }
+   }
+   this->box[0] = xi*tX;
    this->eff[0] = this->box[0];
-   this->off[0] = 0.0;
-   this->box[2] = 2.0*C * (double)lz;
+   this->box[2] = zeta*tZ;
    this->eff[2] = this->box[2];
-   this->off[2] = 0.0;
 
    /*
     * fluid unit box dimensions
@@ -494,7 +716,14 @@ void Domain::specifyGraphite(double rho, unsigned N)
    cout << "Symmetry volume " << box[0]*box[1]*box[2]
         << " * 1.4818e-04 nm^3, effectively " << V_eff
         << " * 1.4818e-04 nm^3.\n";
-   double N_id = V_eff*rho;
+   double V_ext = 0.0;
+   if(wo_wall > 2.0*shielding)
+   {
+      V_ext = (wo_wall - 2.0*shielding) * (this->box[1] - this->eff[1]);
+      cout << "Additionally available: " << V_ext << " * 1.4818e-04 nm^3.\n";
+   }
+   double V_total = V_eff + V_ext;
+   double N_id = V_total*rho;
    double N_boxes = N_id / 3.0;
    fl_units[1] = round(
                     pow(

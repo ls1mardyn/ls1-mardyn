@@ -5,7 +5,7 @@
 #include "Graphit.h"
 #include "Random.h"
 
-#include <cmath>
+#include <math.h>
 #include <iostream>
 using namespace std;
 
@@ -15,10 +15,10 @@ int Graphit::getNumberOfAtoms()
 }
 
 void Graphit::calculateCoordinatesOfAtoms(
-   int numberOfLayers, double xLength, double zLength, double A
+   int numberOfLayers, double xLength, double zLength, double A, double wo_wall
 ) {
 	double B = 2.0 * A;
-	double C = sin(M_PI / 3.0) * A;
+	double C = 0.86602540378 * A;  // sin(pi/3)
 
 	double xCoor = 0.05*A;
 	double yCoor = 0.0;
@@ -36,10 +36,14 @@ void Graphit::calculateCoordinatesOfAtoms(
 			int i = 0;
 			int j = 0;
 			int temp = 0;
-			coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
-			coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
-			coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
-			numberOfAtoms++;
+                        if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
+                        {
+                        	coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
+				coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
+				coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
+                                componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
+				numberOfAtoms++;
+			}
 			while(zCoor < zLength)
 			{
 				while(xCoor < xLength)
@@ -55,31 +59,33 @@ void Graphit::calculateCoordinatesOfAtoms(
 						i=0;
 						temp=0;
 					}
-					if (xCoor < xLength && zCoor < zLength)
+					if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
 					{
 						coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
 						coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
 						coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
+                             			componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
 						numberOfAtoms++;
 					}
 				}
 				i=0;
 				zCoor += C;
-				if(j%2==0)
+                                j++;
+                                if(j == 14) j = 0;
+				if(j%2==1)
 				{
 					xCoor = 0.6*A;
-					j=1;
 				}
 				else
 				{
 					xCoor = 0.1*A;
-					j=0;
 				}
-				if (xCoor < xLength && zCoor < zLength)
+				if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
 				{
 					coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
 					coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
 					coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
+                             		componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
 					numberOfAtoms++;
 				}
 				temp = j;
@@ -94,13 +100,17 @@ void Graphit::calculateCoordinatesOfAtoms(
 			xCoor = B-0.4*A;
 			zCoor = 0.1*C;
 			int i = 0; //Makes it possible to change the different lengths in one direction
-			int j = 0; //Necessary for changing the different startpoints of the xCoor
+			int j = 7; //Necessary for changing the different startpoints of the xCoor
 			
 			// Code for writing the Coordinates together
-			coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
-			coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
-			coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
-			numberOfAtoms++;
+                        if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
+                        {
+				coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
+				coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
+				coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
+              			componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
+				numberOfAtoms++;
+			}
 			while(zCoor < zLength)
 			{
 				while(xCoor < xLength)
@@ -108,39 +118,41 @@ void Graphit::calculateCoordinatesOfAtoms(
 					if (i%2==0)
 					{
 						xCoor += A;
-						i=1;
+						i=0;
 					}
 					else
 					{
 						xCoor += B;
-						i=0;
+						i=1;
 					}
-					if (xCoor < xLength && zCoor < zLength)
+					if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
 					{
 						coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
 						coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
 						coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
+                             			componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
 						numberOfAtoms++;
 					}
 			
 				}
-				i=0;
-				zCoor=zCoor+C;
-				if(j%2==0)
+				i=1;
+				zCoor += C;
+                                j++;
+                                if(j == 14) j = 0;
+				if(j%2==1)
 				{
 					xCoor = 0.1*A;
-					j=1;
 				}
 				else
 				{
 					xCoor = B-0.4*A;
-					j=0;
 				}	
-				if (xCoor < xLength && zCoor < zLength)
+				if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
 				{
 					coordinatesOfAtoms[0][numberOfAtoms] = xCoor;
 					coordinatesOfAtoms[1][numberOfAtoms] = yCoor;
 					coordinatesOfAtoms[2][numberOfAtoms] = zCoor;
+                      			componentsOfAtoms[numberOfAtoms] = this->comp(i, j);
 					numberOfAtoms++;
 				}
 			}
@@ -206,3 +218,20 @@ void Graphit::reset()
       this->velocitiesOfAtoms[d].clear();
    }
 }
+
+unsigned Graphit::comp(int ti, int tj)
+{
+   int i = ti % 2;
+   int j = tj % 14;
+
+   if((j == 2) && (i == 1)) return CID_I;
+   else if((j ==  3) && (i == 0)) return CID_I;
+   else if((j ==  3) && (i == 1)) return CID_ZI;
+   else if((j ==  7) && (i == 0)) return CID_I;
+   else if((j ==  7) && (i == 1)) return CID_Z;
+   else if((j == 11) && (i == 0)) return CID_I;
+   else if((j == 11) && (i == 1)) return CID_ZI;
+   else if((j == 12) && (i == 1)) return CID_I;
+   else return CID_C;
+}
+

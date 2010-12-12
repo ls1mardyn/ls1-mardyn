@@ -46,7 +46,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    txtstrstrm << prefix << "_1R.txt";
    txt.open(txtstrstrm.str().c_str(), ios::trunc);
 
-   unsigned int fl_units[3][2];
+   unsigned fl_units[3][2];
    double fl_unit[3][2];
    double N_id[2];
    for(int i=0; i < 2; i++)
@@ -81,9 +81,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    unsigned slots[2];
    for(int l=0; l < 2; l++)
    {
-      for(unsigned int i=0; i < fl_units[0][l]; i++)
-         for(unsigned int j=0; j < fl_units[1][l]; j++)
-            for(unsigned int k=0; k < fl_units[2][l]; k++)
+      for(int i=0; i < fl_units[0][l]; i++)
+         for(int j=0; j < fl_units[1][l]; j++)
+            for(int k=0; k < fl_units[2][l]; k++)
                for(int d=0; d < 3; d++)
                {
                   if(l == 0) fill0[i][j][k][d] = true;
@@ -101,9 +101,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
          tswap = (N[l] < N_id[l]);
          pswap = (N_id[l] - (double)N[l]) / ((tswap? slots[l]: 0) - (double)N[l]);
          // cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
-         for(unsigned int i=0; i < fl_units[0][l]; i++)
-            for(unsigned int j=0; j < fl_units[1][l]; j++)
-               for(unsigned int k=0; k < fl_units[2][l]; k++)
+         for(int i=0; i < fl_units[0][l]; i++)
+            for(int j=0; j < fl_units[1][l]; j++)
+               for(int k=0; k < fl_units[2][l]; k++)
                   for(int d=0; d < 3; d++)
                      if(pswap >= r->rnd())
                      {
@@ -141,12 +141,13 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
       {
          if(gradient)
          {
-            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 0 0 to " << box[0] << " " << 0.1*box[1] << " " << box[2] << "\tconduct " << (int)round(N[2] / 5000.0) << " tests every 1 steps\n";
-            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 " << 0.5*box[1] << " 0 to " << box[0] << " " << 0.6*box[1] << " " << box[2] << "\tconduct " << (int)round(N[1] / 5000.0) << " tests every 1 steps\n";
+            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 0 0 to " << box[0] << " " << 0.1*box[1] << " " << box[2] << "\tconduct " << (int)round(N[0] / 2500.0) << " tests every 2 steps\n";
+            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 " << 0.5*box[1] << " 0 to " << box[0] << " " << 0.6*box[1] << " " << box[2] << "\tconduct " << (int)round(N[1] / 2500.0) << " tests every 2 steps\n";
          }
          else
          {
-            txt << "chemicalPotential\t" << mu << " component 1\tconduct " << (int)round((N[1]+N[2]) / 1000.0) << " tests every 1 steps\n";
+            cout << "N[0] = " << N[0] << ", N[1] = " << N[1] << ", conducting " << round((double)(N[0]+N[1]) / 5000.0) << " test actions.\n";
+            txt << "chemicalPotential\t" << mu << " component 1\tconduct " << (int)round((double)(N[0]+N[1]) / 5000.0) << " tests every 2 steps\n";
          }
          txt << "planckConstant\t" << sqrt(6.2831853 * T) << "\ninitGrandCanonical\t60000\n";
       }
@@ -175,9 +176,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
 
    unsigned ID = 1;
    for(int l=0; l < 2; l++)
-      for(unsigned int i=0; i < fl_units[0][l]; i++)
-         for(unsigned int j=0; j < fl_units[1][l]; j++)
-            for(unsigned int k=0; k < fl_units[2][l]; k++)
+      for(int i=0; i < fl_units[0][l]; i++)
+         for(int j=0; j < fl_units[1][l]; j++)
+            for(int k=0; k < fl_units[2][l]; k++)
                for(int d=0; d < 3; d++)
                {
                   if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d]))

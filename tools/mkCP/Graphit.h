@@ -12,6 +12,12 @@ using namespace std;
 #define DEFAULT_A_ORIGINAL 2.7666
 #define Z 6.33
 
+#define NCOMP_POLAR 4
+#define CID_I 3
+#define CID_C 2
+#define CID_Z 5
+#define CID_ZI 4
+
 #define TERSOFF_A 51.214
 #define TERSOFF_B 12.740
 #define TERSOFF_LAMBDA 1.8982
@@ -34,7 +40,7 @@ class Graphit
    int getNumberOfAtoms();
 
    void calculateCoordinatesOfAtoms(
-      int numberOfLayers, double xLength, double zLength, double A
+      int numberOfLayers, double xLength, double zLength, double A, double wo_wall
    );
    double getX(int number);
    double getY(int number);
@@ -45,10 +51,15 @@ class Graphit
    double getVelocityY(int number);
    double getVelocityZ(int number);
 
+   unsigned getComponent(int number) { return this->componentsOfAtoms[number]; };
+
    void reset();
 
  private:
+   unsigned comp(int ti, int tj);
+
    int numberOfAtoms;
    map<unsigned, double> coordinatesOfAtoms[3];
    map<unsigned, double> velocitiesOfAtoms[3];
+   map<unsigned, unsigned> componentsOfAtoms;
 };
