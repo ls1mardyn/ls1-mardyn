@@ -92,7 +92,7 @@ int main(int argc, char** argv) {
 	}
 
 	Simulation simulation(options, args);
-	simulation.initialize();
+	simulation.prepare_start();
 
 	double runtime = double(clock()) / CLOCKS_PER_SEC;
 

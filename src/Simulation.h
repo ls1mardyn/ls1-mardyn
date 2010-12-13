@@ -151,7 +151,7 @@ public:
 	//! which act on the molecules or macroscopic values at the potential.
 	//! This method has to ensure, that all values are available at
 	//! time step zero
-	void initialize();
+	void prepare_start();
 
 	//! @brief Controls the main loop of the simulation.
 	//!
@@ -382,6 +382,10 @@ public:
 
 	//! simulation time step
 	unsigned long _simstep;
+
+	//! initialize all member variables with a suitable value
+	void initialize();
+
 };
 #endif /*SIMULATION_H_*/
 

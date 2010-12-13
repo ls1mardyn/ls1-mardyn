@@ -18,6 +18,13 @@
 using namespace std;
 using namespace rapidxml;
 
+const char *const XMLfile::includeattrtag = "include";
+const char *const XMLfile::queryattrtag = "query";
+
+
+// XMLfile======================================================================
+// public methods
+
 XMLfile::XMLfile()
 {
 	clear();
@@ -152,6 +159,7 @@ void XMLfile::print(std::ostream& ostrm) const
 
 
 //------------------------------------------------------------------------------
+// private methods
 
 void XMLfile::clear()
 {
@@ -224,12 +232,12 @@ void XMLfile::expandincludes()
 		xml_node<>* node=nodelist.front();
 		nodelist.pop_front();
 		if(!node) continue;
-		if(string(node->name())==string("include"))
+		if(string(node->name())==string(includeattrtag))
 		{
 			string inclfile=node->value();
 			// relative path?
 			if(inclfile.find_first_of("/~")!=0) inclfile=m_filedir+inclfile;
-			xml_attribute<>* attr = node->first_attribute("query");
+			xml_attribute<>* attr = node->first_attribute(queryattrtag);
 			string queryval("/");
 			if(attr) queryval=attr->value();
 			//cout << "XMLfile::expandincludes DEBUG:\tincluding " << inclfile << "\tquery " << queryval << endl;
@@ -499,7 +507,8 @@ bool XMLfile::distributeXMLstring()
 #endif
 
 
-//------------------------------------------------------------------------------
+// XMLfile::Node================================================================
+// public methods
 
 bool XMLfile::Node::isLeafNode() const
 {
@@ -678,7 +687,8 @@ XMLfile::Node::Node(const t_XMLelement* xmlelement, std::string nodepath)
 }
 
 
-
+// XMLfile::Query===============================================================
+// public methods
 
 XMLfile::Query& XMLfile::Query::operator =(const XMLfile::Query& q)
 {

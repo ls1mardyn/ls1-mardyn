@@ -46,14 +46,16 @@
 *
 * DOM representation of an XML file
 */
-class XMLfile{
-
+class XMLfile
+{
 	//typedef rapidxml::xml_node<> t_XMLnode;
 	typedef rapidxml::xml_base<> t_XMLnode;
 	typedef rapidxml::xml_node<> t_XMLelement;
 	typedef rapidxml::xml_attribute<> t_XMLattribute;
 
 public:
+	static const char *const includeattrtag;
+	static const char *const queryattrtag;
 
 	class Query;
 	//class Query::const_iterator; forward declaration not possible...
@@ -228,7 +230,7 @@ public:
 			/// \brief XMLfile::Query::const_iterator constructor
 			/// sets up an invalid iterator
 			const_iterator()
-				{ m_query=NULL; m_nodesidx=0; }
+				: m_query(NULL), m_nodesidx(0) {}
 			long index() const { return m_nodesidx; }
 			/// \brief bool operator
 			/// check if iterator is valid and index is in a valid range
@@ -265,19 +267,19 @@ public:
 			long m_nodesidx;
 
 			const_iterator(const Query* query, long idx)
-				{ m_query=query; m_nodesidx=idx; }
+				: m_query(query), m_nodesidx(idx) {}
 		};
 //-XMLfile::Query::const_iterator...............................................
 
 		/// \brief XMLfile::Query constructor
 		/// sets up an invalid query
-		Query()
-			{ m_xmlfile=NULL; m_nodes.clear(); }
+		Query() : m_xmlfile(NULL)
+			{ m_nodes.clear(); }
 		/// \brief copy constructor
 		/// duplicate a given query and register the new created one at the XMLfile
 		/// \param const Query&	query
-		Query(const Query& q) : m_nodes(q.m_nodes)
-			{ m_xmlfile=q.m_xmlfile; xmlfile_register(); }
+		Query(const Query& q) : m_nodes(q.m_nodes), m_xmlfile(q.m_xmlfile)
+			{ xmlfile_register(); }
 		/// \brief XMLfile::Query destructor
 		/// unregister the query
 		~Query()
@@ -384,7 +386,8 @@ public:
 		std::vector<Node> m_nodes;
 
 		Query(const XMLfile* xmlfile)
-			{ m_xmlfile=xmlfile; m_nodes.clear(); }
+			: m_xmlfile(xmlfile)
+			{ m_nodes.clear(); }
 
 		void xmlfile_register()
 			{ if(m_xmlfile) m_xmlfile->registerQuery(this); }
@@ -396,8 +399,10 @@ public:
 		friend void Query::xmlfile_register();
 		friend void Query::xmlfile_unregister();
 
+	/// \brief XMLfile default constructor
 	XMLfile();
-	~XMLfile() { clear(); }
+	/// \brief XMLfile default destructor
+	virtual ~XMLfile() { clear(); }
 
 	/// \brief constructor for XML-file
 	/// constructor calls initfile
@@ -594,6 +599,7 @@ public:
 	void setMPIdefaults(int mpirootrank=0, MPI_Comm mpicomm=MPI_COMM_WORLD);
 #endif
 
+//protected:
 private:
 	std::string m_filedir;
 	std::string m_filename;
