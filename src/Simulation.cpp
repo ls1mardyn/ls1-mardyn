@@ -60,7 +60,8 @@
 
 #ifdef STEEREO
 #include "utils/SteereoIntegration.h"
-#include <simSteering.h>
+#include <steereoSimSteering.h>
+#include <steereoCouplingSim.h>
 #endif
 
 #include "utils/OptionParser.h"
@@ -837,7 +838,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	}
 
 	// read particle data
-	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
+	maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
 
 	if (this->_LJCutoffRadius == 0.0)
 		_LJCutoffRadius = this->_cutoffRadius;
@@ -955,9 +956,12 @@ void Simulation::prepare_start() {
 	}
 
 #ifdef STEEREO
-	_steer = initSteereo (44445, _domainDecomposition->getRank());
+	_steer = initSteereo (_domainDecomposition->getRank(), _domainDecomposition->getNumProcs());
+#ifdef STEEREO_COUPLING
+	_coupling = initCoupling(_steer, (long*) &_simstep);
+#endif STEEREO_COUPLING
 	registerSteereoCommands (_steer, this);
-	startListeningSteereo (_steer, _domainDecomposition->getRank());
+	startListeningSteereo (_steer);
 #endif
 
 	// activate RDF sampling
@@ -990,13 +994,21 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 	// all timers except the ioTimer messure inside the main loop
-	Timer loopTimer; // Timer for computation
-	Timer perStepIoTimer; // Timer for IO during simulation steps
-	Timer ioTimer; // Timer for final IO
+  _loopTimer = new Timer;
+  _perStepIoTimer = new Timer;
+  _ioTimer = new Timer;
 
 	_initSimulation = (unsigned long) (_domain->getCurrentTime() / _integrator->getTimestepLength());
 
-	loopTimer.start();
+#ifdef STEEREO
+#ifdef STEEREO_COUPLING
+  _simstep = _initSimulation;
+  //SteereoLogger::setOutputLevel (4);
+  _coupling->waitForConnection();
+#endif //STEEREO_COUPLING
+#endif
+
+	_loopTimer->start();
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1012,6 +1024,12 @@ void Simulation::simulate() {
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
+#ifdef STEEREO
+#ifdef STEEREO_COUPLING
+    _steer -> processQueue (1);
+    global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
+#endif
+#endif
 		// activate RDF sampling
 		if ((_simstep == this->_initStatistics) && this->_doRecordRDF)
 			this->_domain->tickRDF();
@@ -1150,19 +1168,19 @@ void Simulation::simulate() {
 		/* END PHYSICAL SECTION */
 
 		// measure per timestep IO
-		loopTimer.stop();
-		perStepIoTimer.start();
+		_loopTimer->stop();
+		_perStepIoTimer->start();
 		output(_simstep);
-		perStepIoTimer.stop();
-		loopTimer.start();
+		_perStepIoTimer->stop();
+		_loopTimer->start();
 	}
-	loopTimer.stop();
+	_loopTimer->stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
 
 
-	ioTimer.start();
+	_ioTimer->start();
 	string cpfile(_outputPrefix + ".restart.xdr");
 	_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
 	// finish output
@@ -1171,11 +1189,11 @@ void Simulation::simulate() {
 		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 		delete (*outputIter);
 	}
-	ioTimer.stop();
+	_ioTimer->stop();
 
-	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Computation in main loop took: " << _loopTimer->get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop  took:         " << _perStepIoTimer->get_etime() << " sec" << endl;
+	global_log->info() << "Final IO took:                 " << _ioTimer->get_etime() << " sec" << endl;
 
 }
 

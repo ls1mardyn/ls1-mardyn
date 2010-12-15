@@ -227,6 +227,8 @@ public:
 
 	// clear forces and moments
 	void clearFM();
+	// calculate forces and moments for already given site forces
+	void calcFM();
 	void check(unsigned long id);
 
 private:
@@ -274,8 +276,7 @@ private:
 
 	// setup cache values/properties
 	void setupCache(const std::vector<Component>* components);
-	// calculate forces and moments for already given site forces
-	void calcFM();
+
 };
 
 #endif /*MOLECULE_H_*/

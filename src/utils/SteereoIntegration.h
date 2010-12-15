@@ -9,11 +9,17 @@
 #ifndef STEEREOINTEGRATION_H_
 #define STEEREOINTEGRATION_H_
 
-class SimSteering;
+class SteereoSimSteering;
+class ParticleContainer;
+class SteereoCouplingSim;
 
-SimSteering* initSteereo(int startPort, int ownRank);
-void registerSteereoCommands (SimSteering* simSteer, Simulation* sim);
-void startListeningSteereo (SimSteering* simSteer, int ownRank);
+SteereoSimSteering* initSteereo(int ownRank, int numProcs);
+#ifdef STEEREO_COUPLING
+SteereoCouplingSim* initCoupling (SteereoSimSteering* sim, long* simStep);
+#endif
+void registerSteereoCommands (SteereoSimSteering* simSteer, Simulation* sim);
+void startListeningSteereo (SteereoSimSteering* simSteer);
+void checkMoleculeContainer (ParticleContainer* pc);
 
 
 #endif /* STEEREOINTEGRATION_H_ */

@@ -401,7 +401,7 @@ inline void Molecule::clearFM() {
 	_M[0] = _M[1] = _M[2] = 0.;
 }
 
-inline void Molecule::calcFM() {
+void Molecule::calcFM() {
 	unsigned int ns = numSites();
 	for (unsigned int si = 0; si < ns; ++si) {
 		const double* Fsite = site_F(si);

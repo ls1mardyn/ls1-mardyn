@@ -5,10 +5,13 @@
 CFG_INFO = "gcc configuration enabling the stereo framework"
 
 GLOBAL_INCLUDES = -I/home/hpcdjenz/workspace/Steereo/src -DSTEEREO -DSTEEREO_PARTITIONS=1
-GLOBAL_LINK     = -L/home/hpcdjenz/workspace/Steereo/src -lSteereo
+ #-DSTEEREO_COUPLING 
+GLOBAL_LINK     = -L/home/hpcdjenz/workspace/Steereo/src -lSteereo -ldl
+#-lmpl -ldl /usr/lib64/mpi/mpi-mpich2/usr/lib64/libmpl.so -Wl,-rpath,/usr/lib64/mpi/mpi-mpich2/usr/lib64 
 
 CXX_SEQ = g++
-CXX_PAR = mpicxx
+#CXX_PAR = mpicxx
+CXX_PAR = mpic++
 DEPMODE = gcc3
 
 # SEQ
