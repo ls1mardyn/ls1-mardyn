@@ -208,12 +208,16 @@ void Domain::writeGraphite(
    {
       FLUIDMASS = CCH3OHMASS + OCH3OHMASS + HCH3OHMASS;
       FLUIDLONG = CH3OH_LONG;
+      EPS_FLUID = EPS_WANG; // used for the wall centres only
+      SIG_FLUID = SIG_WANG; // used for the wall centres only
       LJ_CUTOFF = 4.0*SIG_CCH3OH + 0.5*FLUIDLONG;
    }
    else if(fluid == FLUID_C6H14)
    {
       FLUIDMASS = 2.0*FC6H14MASS + 4.0*MC6H14MASS;
       FLUIDLONG = C6H14_LONG;
+      EPS_FLUID = EPS_WANG; // used for the wall centres only
+      SIG_FLUID = SIG_WANG; // used for the wall centres only
       LJ_CUTOFF = 4.0*SIG_MC6H14 + 0.5*FLUIDLONG;
    }
    else
@@ -340,17 +344,27 @@ void Domain::writeGraphite(
       for(unsigned i=0; i < wallcomp; i++)
       {
          if(polarity == 0.0) xdr << "1 0 0 0 1\n";  // LJ, C, Q, D, Tersoff
-         else xdr << "0 1 0 0 1\n";
+         else if(crga[i] == 0.0) xdr << "1 0 0 0 1\n";
+         else xdr << "1 1 0 0 1\n";
          
          if(polarity == 0.0)
             xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
                 << EPS_FLUID/EPS_REF << " " << SIG_FLUID/SIG_REF << "\n";
-         else
-            xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS
+         else if(crga[i] != 0.0)
+            xdr << "0.0 0.0 0.0\t0.0 "
+                << EPS_FLUID/EPS_REF << " " << SIG_FLUID/SIG_REF << "\n"
+                << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS
                 << " " << crga[i]/REFCARG << "\n";
+         else
+            xdr << "0.0 0.0 0.0\t0.0 "
+                << EPS_FLUID/EPS_REF << " " << SIG_FLUID/SIG_REF << "\n";
 
-         xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " "
-             << TERSOFF_A/EPS_REF << " " << TERSOFF_B/EPS_REF << "\t"
+         if((polarity != 0.0) && (crga[i] == 0.0))
+            xdr << "0.0 0.0 0.0\t" << ATOMIC_MASS_C/REFMASS << " ";
+         else
+            xdr << "0.0 0.0 0.0\t" << 0.5*ATOMIC_MASS_C/REFMASS << " ";
+
+         xdr << TERSOFF_A/EPS_REF << " " << TERSOFF_B/EPS_REF << "\t"
              << (original? TERSOFF_LAMBDA_ORIG
                          : TERSOFF_LAMBDA) * SIG_REF << " "
              << (original? TERSOFF_MU_ORIG: TERSOFF_MU) * SIG_REF
@@ -423,31 +437,8 @@ void Domain::writeGraphite(
       }
       else if(flow == FLOW_POISEUILLE)
       {
-         if(polarity == 0.0)
-         {
-            xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
-                << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n"
-                << "S\t2 2\nS\t" << d+1 << " 3\n"
-                << "A\t2\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-                << "\t0.0 0.0 0.0\n"
-                << "A\t3\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-                << "\t0.0 0.0 0.0\n";
-            for(unsigned i=3; this->d >= i; i++)
-               xdr << "S\t" << i << " " << 4 << "\n";
-            xdr << "A\t4\t0.0 0.0 0.0\t" << TAU_ZERO/REFTIME
-                << "\t0.0 0.0 0.0\n";
-         }
-         else
-         {
-            xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
-                << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n";
-            for(unsigned i=1; i < wallcomp; i++)
-            {
-               xdr << "S\t" << i+1 << " 2\n";
-            }
-            xdr << "A\t2\t0.0 0.0 0.0\t" << TAU/REFTIME
-                << "\t0.0 0.0 0.0\n";
-         }
+         xdr << "S\t1 1\nA\t1\t0.0 0.0 " << U/VEL_REF << "\t"
+             << TAU/REFTIME << "\t0.0 0.0 " << a/ACC_REF << "\n";
       }
       xdr << "N" << "\t" << Ntotal << "\nM" << "\t" << "ICRVQD\n\n";
 
@@ -456,10 +447,7 @@ void Domain::writeGraphite(
           << "\ncutoffRadius\t" << EL_CUTOFF/SIG_REF
           << "\nLJCutoffRadius\t" << LJ_CUTOFF/SIG_REF
           << "\ntersoffCutoffRadius\t"
-          << 1.0001*(original? TERSOFF_S_ORIG: TERSOFF_S) / SIG_REF
-          << "\nconstantAccelerationTimesteps\t25\n"
-          << "zetaFlow\t" << ZETA*sqrt(REFTIME) << "\n"
-          << "tauPrimeFlow\t" << TAUPRIME/REFTIME << "\n"
+          << 1.0001*(original? TERSOFF_S_ORIG: TERSOFF_S) / SIG_REF << "\n"
           << "initCanonical\t25001\n";
       if(muVT)
       {
@@ -486,8 +474,15 @@ void Domain::writeGraphite(
 	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
          txt << "initGrandCanonical\t50001\n";
       }
+      txt << "initStatistics\t100001\n";
+      if(flow != FLOW_NONE)
+      {
+         txt << "constantAccelerationTimesteps\t25\n"
+             << "zetaFlow\t" << ZETA*sqrt(REFTIME) << "\n"
+             << "tauPrimeFlow\t" << TAUPRIME/REFTIME << "\n";
+      }
       txt.precision(5);
-      txt << "initStatistics\t100001\nphaseSpaceFile\t" << prefix
+      txt << "phaseSpaceFile\t" << prefix
           << ".xdr\n# for LinkedCells, the cellsInCutoffRadius has to"
           << " be provided\ndatastructure\tLinkedCells\t1\noutput\t"
           << "ResultWriter\t40\t" << prefix
@@ -502,11 +497,11 @@ void Domain::writeGraphite(
          txt << "wallLJ\ton\n";
          if(flow == FLOW_COUETTE)
          {
-             txt << "zOscillator 1024\n";
+             txt << "zOscillator 1536\n";
          }
          else
          {
-             txt << "oscillator 1024\n";
+             txt << "oscillator 1536\n";
          }
       }
       else
@@ -514,11 +509,11 @@ void Domain::writeGraphite(
          txt << "wallLJ\toff\n";
          if(flow == FLOW_COUETTE)
          {
-             txt << "zOscillator 128\n";
+             txt << "zOscillator 384\n";
          }
          else
          {
-             txt << "oscillator 128\n";
+             txt << "oscillator 384\n";
          }
       }
       if(flow == FLOW_NONE)

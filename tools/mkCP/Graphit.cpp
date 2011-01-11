@@ -48,7 +48,7 @@ void Graphit::calculateCoordinatesOfAtoms(
 			{
 				while(xCoor < xLength)
 				{
-					if (i%2==0 && temp%2==0)
+					if (i%2==0)
 					{
 						xCoor += B;
 						i=1;
@@ -68,16 +68,17 @@ void Graphit::calculateCoordinatesOfAtoms(
 						numberOfAtoms++;
 					}
 				}
-				i=0;
 				zCoor += C;
                                 j++;
                                 if(j == 14) j = 0;
 				if(j%2==1)
 				{
+					i = 1;
 					xCoor = 0.6*A;
 				}
 				else
 				{
+					i = 0;
 					xCoor = 0.1*A;
 				}
 				if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
@@ -135,16 +136,17 @@ void Graphit::calculateCoordinatesOfAtoms(
 					}
 			
 				}
-				i=1;
 				zCoor += C;
                                 j++;
                                 if(j == 14) j = 0;
 				if(j%2==1)
 				{
+					i = 1;
 					xCoor = 0.1*A;
 				}
 				else
 				{
+					i = 0;
 					xCoor = B-0.4*A;
 				}	
 				if((xCoor < xLength && zCoor < zLength) && ((zCoor < (0.5 - 0.5*wo_wall)*zLength) || (zCoor > (0.5 + 0.5*wo_wall)*zLength)))
@@ -223,6 +225,9 @@ unsigned Graphit::comp(int ti, int tj)
 {
    int i = ti % 2;
    int j = tj % 14;
+
+   // cout << "\t\t(i, j) \t=\t (" << i << ", " << j << ")\n";
+   // cout.flush();
 
    if((j == 2) && (i == 1)) return CID_I;
    else if((j ==  3) && (i == 0)) return CID_I;
