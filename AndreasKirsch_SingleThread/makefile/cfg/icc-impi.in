@@ -1,0 +1,35 @@
+# Intel compiler suite in combination with Intel MPI
+# http://software.intel.com/en-us/intel-compilers/
+# http://www.intel.com/go/mpi/
+# Version: 
+
+CFG_INFO = "icc + Intel MPI configuration"
+
+CXX_SEQ = icpc
+CXX_PAR = mpiicpc
+DEPMODE = icc
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Wall -g 
+LINKFLAGS_SEQ_DEBUG = -O0 -g
+#RELEASE
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) -O2 -DNDEBUG
+LINKFLAGS_SEQ_RELEASE = -O2
+# CODECOV
+CXXFLAGS_SEQ_CODECOV  = $(CXXFLAGS_SEQ_RELEASE) -g -prof-gen=srcpos
+LINKFLAGS_SEQ_CODECOV = $(LINKFLAGS_SEQ_RELEASE) -g -prof-gen=srcpos
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -Wall -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+#RELEASE
+CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE = -O2 -DPARALLEL
+# CODECOV
+CXXFLAGS_PAR_CODECOV  = $(CXXFLAGS_PAR_RELEASE) -g -prof-gen=srcpos
+LINKFLAGS_PAR_CODECOV = $(LINKFLAGS_PAR_RELEASE) -g -prof-gen=srcpos
+

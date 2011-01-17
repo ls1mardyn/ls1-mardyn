@@ -1,0 +1,30 @@
+# gnu compiler suite
+# http://gcc.gnu.org/
+# Version: 
+
+CFG_INFO = "gcc configuration enabling the stereo framework"
+
+GLOBAL_INCLUDES = -I/home/hpcdjenz/workspace/Steereo/src -DSTEEREO -DSTEEREO_PARTITIONS=1
+GLOBAL_LINK     = -L/home/hpcdjenz/workspace/Steereo/src -lSteereo
+
+CXX_SEQ = g++
+CXX_PAR = mpicxx
+DEPMODE = gcc3
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -g 
+LINKFLAGS_SEQ_DEBUG = $(GLOBAL_LINK) -O0 -g
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -O3 -DNDEBUG 
+LINKFLAGS_SEQ_RELEASE = $(GLOBAL_LINK)
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG = $(GLOBAL_LINK) -O0 -g -DPARALLEL
+# RELEASE
+CXXFLAGS_PAR_RELEASE  = $(INCLUDES) $(GLOBAL_INCLUDES) -Wall -O3 -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE = $(GLOBAL_LINK) -DPARALLEL
