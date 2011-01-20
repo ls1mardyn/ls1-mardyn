@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define TIME 20110111
+#define TIME 20110120
 
 #define FLUID_AR 0
 #define FLUID_CH4 1
@@ -143,7 +143,7 @@ class Domain
    void write(
       char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ
+      double polarity, bool WLJ, bool symmetric
    );
 
  private:
@@ -152,12 +152,12 @@ class Domain
    void writeGraphite(
       char* prefix, double a, bool empty, int format, double mu, 
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ
+      double polarity, bool WLJ, bool symmetric
    );
    void writeNanotube(
       char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ
+      double polarity, bool WLJ, bool symmetric
    );
 
    bool muVT, nanotube;
@@ -165,13 +165,19 @@ class Domain
    unsigned d, m, n;
    double bondlength, h, ETA, SIG_REF, EPS_REF, REFMASS, T, XI, wo_wall;
 
-   double box[3], r_tub,  // box dimensions (Couette == two boxes)
-          eff[3], r_eff,  // effective space for the fluid
-          off[3], r_off;  // offset coordinates for the fluid
+   double box[3],  // box dimensions (Couette == two boxes)
+          eff[3],  // effective space for the fluid
+          off[3];  // offset coordinates for the fluid
    double shielding;  // shielding of the wall due to ETA*SIGMA
 
-   int fl_unit[3], fl_units[3], fl_unit_r, fl_units_r,
-       fl_unit_phi, fl_units_phi;
+   double fl_unit[3];
+   unsigned fl_units[3];
    double pfill;  // probability of placing a molecule in a fluid unit
+
+   bool fill_ext;
+   double ext[3], off_ext[3];
+   double fl_unit_ext[3];
+   unsigned fl_units_ext[3];
+   double pfill_ext;  // probability of placing a molecule in a fluid unit
 };
 

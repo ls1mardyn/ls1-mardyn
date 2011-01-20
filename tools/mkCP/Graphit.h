@@ -13,10 +13,10 @@ using namespace std;
 #define Z 6.33
 
 #define NCOMP_POLAR 4
-#define CID_I 3
-#define CID_C 2
-#define CID_Z 5
-#define CID_ZI 4
+#define CID_I 2
+#define CID_C 1
+#define CID_Z 4
+#define CID_ZI 3
 
 #define TERSOFF_A 51.214
 #define TERSOFF_B 12.740
