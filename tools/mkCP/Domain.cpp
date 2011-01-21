@@ -11,7 +11,7 @@
 #define TAU_ZERO 1.0e+10
 #define ZETA 0.0036143
 #define TAUPRIME 61.240
-#define PRECISION 7
+#define PRECISION 4
 
 Domain::Domain(
       int sp_flow, double sp_bondlength, double sp_rho, int sp_d,
@@ -117,14 +117,20 @@ void Domain::writeGraphite(
 
    int repl = (this->flow == FLOW_COUETTE)? 2: 1;
    bool tswap;
-   double pswap;
+   double pswap, N_id;
 
-   unsigned N1a = 0;
    bool fill[fl_units[0]][fl_units[1]][fl_units[2]][repl][3];
+   for(unsigned i=0; i < fl_units[0]; i++)
+      for(unsigned j=0; j < fl_units[1]; j++)
+         for(unsigned k=0; k < fl_units[2]; k++)
+            for(int l=0; l < repl; l++)
+               for(int d=0; d < 3; d++)
+                  fill[i][j][k][l][d] = true;
+   unsigned N1a = 3*repl * fl_units[0] * fl_units[1] * fl_units[2];
    if(!empty)
    {
-      double slots = 3.0*repl * fl_units[0] * fl_units[1] * fl_units[2];
-      double N_id = pfill * slots;
+      double slots = N1a;
+      N_id = pfill * slots;
       for(int m=0; m < PRECISION; m++)
       {
          tswap = (N1a < N_id);
@@ -146,13 +152,20 @@ void Domain::writeGraphite(
            << fl_units[0] << "*" << fl_units[1] << "*" << fl_units[2]
            << " = " << slots << " slots (ideally " << N_id << ").\n\n";
    }
+   else N1a = 0;
 
-   unsigned N1b = 0;
    bool fill_ext[fl_units_ext[0]][fl_units_ext[1]][fl_units_ext[2]][repl][3];
-   if(!empty)
+   for(unsigned i=0; i < fl_units_ext[0]; i++)
+      for(unsigned j=0; j < fl_units_ext[1]; j++)
+         for(unsigned k=0; k < fl_units_ext[2]; k++)
+            for(int l=0; l < repl; l++)
+               for(int d=0; d < 3; d++)
+                  fill_ext[i][j][k][l][d] = true;
+   unsigned N1b = 3*repl * fl_units_ext[0] * fl_units_ext[1] * fl_units_ext[2];
+   if(do_fill_ext && !empty)
    {
-      double slots = 3.0*repl * fl_units_ext[0] * fl_units_ext[1] * fl_units_ext[2];
-      double N_id = pfill_ext * slots;
+      double slots = N1b;
+      N_id = pfill_ext * slots;
       for(int m=0; m < PRECISION; m++)
       {
          tswap = (N1b < N_id);
@@ -174,6 +187,7 @@ void Domain::writeGraphite(
            << fl_units_ext[0] << "*" << fl_units_ext[1] << "*" << fl_units_ext[2]
            << " = " << slots << " extension slots (ideally " << N_id << ").\n\n";
    }
+   else N1b = 0;
 
    unsigned N1 = N1a + N1b;
    bool ignore_first;
@@ -688,7 +702,7 @@ void Domain::writeGraphite(
    /*
     * fluid volume: extension
     */
-   if(!empty) for(ii[0]=0; ii[0] < this->fl_units_ext[0]; (ii[0]) ++)
+   if(do_fill_ext && !empty) for(ii[0]=0; ii[0] < this->fl_units_ext[0]; (ii[0]) ++)
       for(ii[1]=0; ii[1] < this->fl_units_ext[1]; (ii[1]) ++)
          for(ii[2]=0; ii[2] < this->fl_units_ext[2]; (ii[2]) ++)
             for(int j=0; j < repl; j++)
@@ -741,7 +755,7 @@ void Domain::writeGraphite(
       for(unsigned k = fluidcomp+1; fluidcomp+d >= k; k++)
       {
          unsigned layerid = j*d + k;
-         double yoffset = 0.5*h + (k-2.0)*Z;
+         double yoffset = 0.5*h + (k - fluidcomp - 1.0)*Z;
          for(unsigned l=0; l < Ngraphene; l++)
          {
             tr[0] = gra.getX(l);
@@ -879,7 +893,7 @@ void Domain::specifyGraphite(double rho, unsigned N)
    fl_units[0] = round(sqrt(this->eff[0] * bxbz_id / this->eff[2]));
    if(fl_units[0] == 0) this->fl_units[0] = 1;
    fl_units[2] = ceil(bxbz_id / fl_units[0]);
-   cout << "Elementary cell: " << this->eff[0]/fl_units[0] << " a0 x " << this->eff[1]/fl_units[1] << " a0 x " << this->eff[2]/fl_units[2] << " a0.\n";
+   cout << "Elementary cell: " << this->eff[0]/fl_units[0] << " a0 x " << this->eff[1]/fl_units[1] << " a0 x " << this->eff[2]/fl_units[2] << " a0.\n\n";
    for(int i=0; i < 3; i++)
       this->fl_unit[i] = this->eff[i] / (double)fl_units[i];
    this->pfill = N_boxes / ((double)fl_units[0]*fl_units[1]*fl_units[2]);
@@ -887,9 +901,9 @@ void Domain::specifyGraphite(double rho, unsigned N)
    /*
     * additional free volume (outside the pore)
     */
-   if((wo_wall > 2.0*shielding) && (wo_wall != 1.0))
+   if((wo_wall*box[2] > 2.0*shielding) && (wo_wall != 1.0))
    {
-      this->fill_ext = true;
+      this->do_fill_ext = true;
 
       this->ext[0] = this->eff[0];
       this->off_ext[0] = this->off[0];
@@ -921,14 +935,14 @@ void Domain::specifyGraphite(double rho, unsigned N)
       fl_units_ext[2] = ceil(bxbz_id_ext / fl_units_ext[0]);
       cout << "Elementary cell (extension): " << this->ext[0]/fl_units_ext[0]
            << " a0 x " << this->ext[1]/fl_units_ext[1] << " a0 x "
-           << this->ext[2]/fl_units_ext[2] << " a0.\n";
+           << this->ext[2]/fl_units_ext[2] << " a0.\n\n";
       for(int i=0; i < 3; i++)
          this->fl_unit_ext[i] = this->ext[i] / (double)fl_units_ext[i];
-      this->pfill_ext = N_boxes / ((double)fl_units_ext[0]*fl_units_ext[1]*fl_units_ext[2]);
+      this->pfill_ext = N_boxes_ext / ((double)fl_units_ext[0]*fl_units_ext[1]*fl_units_ext[2]);
    }
    else
    {
-      this->fill_ext = false;
+      this->do_fill_ext = false;
       this->pfill_ext = 0.0;
    }
 }

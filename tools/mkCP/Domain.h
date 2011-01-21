@@ -174,7 +174,7 @@ class Domain
    unsigned fl_units[3];
    double pfill;  // probability of placing a molecule in a fluid unit
 
-   bool fill_ext;
+   bool do_fill_ext;
    double ext[3], off_ext[3];
    double fl_unit_ext[3];
    unsigned fl_units_ext[3];
