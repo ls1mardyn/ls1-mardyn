@@ -112,8 +112,12 @@ public:
 	const double* tersoff_d(unsigned int i) const { return &(_tersoff_d[3*i]); }
 	const double* tersoff_F(unsigned int i) const { return &(_tersoff_F[3*i]); }
 
-	/** get object memory size */
-	static unsigned long memsize() { return sizeof(Molecule); }
+	/**
+	 * get the total object memory size, together with all its members
+	 * \Note You can retrieve the size of the molecule class itself simply
+	 *       with the sizeof()-operator.
+	 */
+	unsigned long totalMemsize() const;
 
 	/** set the position */
 	void setr(unsigned short d, double r) { _r[d]=r; }

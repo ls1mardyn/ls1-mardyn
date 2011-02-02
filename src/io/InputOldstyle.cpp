@@ -146,6 +146,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			// components:
 			unsigned int numcomponents = 0;
 			_phaseSpaceHeaderFileStream >> numcomponents;
+			global_log->debug() << "Reading " << numcomponents << " components" << endl;
 			dcomponents.resize(numcomponents);
 			for( unsigned int i = 0; i < numcomponents; i++ ) {
 				dcomponents[i].setID(i);
@@ -193,6 +194,13 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				if( IDummy2 > 0. ) dcomponents[i].setI22(IDummy2);
 				if( IDummy3 > 0. ) dcomponents[i].setI33(IDummy3);
 			}
+
+#ifndef NDEBUG
+			for (int i = 0; i < numcomponents; i++) {
+				global_log->debug() << "Component " << (i+1) << " of " << numcomponents << endl;
+				global_log->debug() << dcomponents[i] << endl;
+			}
+#endif
 
 			// Mixing coefficients
 			vector<double>& dmixcoeff = domain->getmixcoeff();
@@ -260,6 +268,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	unsigned int numcomponents = dcomponents.size();
 
 	_phaseSpaceFileStream >> token;
+	std::cout << "WE Read token: " << token << std::endl;
 	if((token == "NumberOfMolecules") || (token == "N")) {
 		string nummolecules;
 		_phaseSpaceFileStream >> nummolecules;

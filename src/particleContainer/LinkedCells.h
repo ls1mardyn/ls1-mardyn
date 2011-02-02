@@ -223,6 +223,8 @@ public:
 	friend class VTKGridWriter;
 #endif
 
+	friend class StatisticsWriter;
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########

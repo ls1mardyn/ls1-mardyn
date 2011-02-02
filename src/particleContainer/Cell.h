@@ -64,13 +64,13 @@ public:
 	void assignCellToInnerRegion();
 
 	//! returns true, if the cell is a Halo Cell, otherwise false
-	bool isHaloCell();
+	bool isHaloCell() const;
 
 	//! returns true, if the cell is a Boundary Cell, otherwise false
-	bool isBoundaryCell();
+	bool isBoundaryCell() const;
 
 	//! returns true, if the cell is a Inner Cell, otherwise false
-	bool isInnerCell();
+	bool isInnerCell() const;
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;

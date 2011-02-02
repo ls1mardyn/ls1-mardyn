@@ -98,10 +98,6 @@ void  VTKGridWriter::initOutput(ParticleContainer* particleContainer,
 }
 
 void VTKGridWriter::setupVTKGrid() {
-	double lower_left[3]; // lower left front coordinates of the first vertex to plot
-	for (int i = 0; i < 3; i++) {
-		lower_left[i] = _container.getBoundingBoxMin(i);
-	}
 
 	int numCellsPerDimension[3];
 	for (int i = 0; i < 3; i++) {
@@ -133,6 +129,7 @@ void VTKGridWriter::setupVTKGrid() {
 			for (int k = 0; k < numCellsPerDimension[0]; k++) {
 				int cellsIndex = i * numCellsPerDimension[1] * numCellsPerDimension[1] + j * numCellsPerDimension[0] + k;
 				assert(cellsIndex < _numCells);
+				// calculate the indices of the inner cells, taking the halo into account
 				int containerIndex = _container.cellIndexOf3DIndex(k + _container._haloWidthInNumCells[0],
 						j + _container._haloWidthInNumCells[1],
 						i + _container._haloWidthInNumCells[2]);

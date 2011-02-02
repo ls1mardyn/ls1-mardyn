@@ -67,6 +67,14 @@ phaseSpaceFile 1CLJGen Cluster 2000  10  0.1      0.4        10           30    
 
 !! Output Writer
 
+- VTKWriter: For the specification of the VTKWriter to visualize the output with Paraview, see "Visualisation with Paraview"
+- StatisticsWriter:
+Add the line 
+\verbatim
+output StatisticsWriter n filename
+\endverbatim
+to the config file. See "StatisticsWriter".
+
 !!! Component Specification
 
 !!! Phase Specification File

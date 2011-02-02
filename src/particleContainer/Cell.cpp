@@ -33,15 +33,15 @@ void Cell::assignCellToInnerRegion() {
 	this->_innerCellState = true;
 }
 
-bool Cell::isHaloCell() {
+bool Cell::isHaloCell() const {
 	return _haloCellState;
 }
 
-bool Cell::isBoundaryCell() {
+bool Cell::isBoundaryCell() const {
 	return _boundaryCellState;
 }
 
-bool Cell::isInnerCell() {
+bool Cell::isInnerCell() const {
 	return _innerCellState;
 }
 

@@ -194,3 +194,8 @@ void Component::writeVIM(std::ostream& ostrm) {
 	}
 	ostrm << flush;
 }
+
+std::ostream& operator<<(std::ostream& stream, const Component& component) {
+	component.write(stream);
+	return stream;
+}

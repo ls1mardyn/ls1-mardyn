@@ -151,4 +151,6 @@ private:
 	double maximalTersoffExternalRadius;
 };
 
+std::ostream& operator<<(std::ostream& stream, const Component& component);
+
 #endif /*COMPONENT_H_*/

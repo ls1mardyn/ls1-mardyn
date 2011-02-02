@@ -451,3 +451,17 @@ void Molecule::check(unsigned long id) {
 		assert((_invI[d] >= 0.0) || (_invI[d] < 0.0));
 	}
 }
+
+unsigned long Molecule::totalMemsize() const {
+	unsigned long size = sizeof (*this);
+
+	//_sites_d
+	size += sizeof(double) * _numsites * 3;
+	// site orientation _osites_e
+	size += sizeof(double) * _numorientedsites * 3;
+	// site Forces _sites_F
+	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
+	size += sizeof(double) * _numsites * 3;
+
+	return size;
+}

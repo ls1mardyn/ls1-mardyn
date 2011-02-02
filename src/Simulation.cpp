@@ -48,6 +48,7 @@
 #include "io/CheckpointWriter.h"
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
+#include "io/StatisticsWriter.h"
 #include "io/OneCLJGenerator.h"
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
@@ -484,6 +485,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				generator->readPhaseSpaceHeader(_domain, timestepLength);
 
 				_inputReader = (OneCLJGenerator*) generator;
+			} else {
+				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
+				exit(1);
 			}
 			if (this->_LJCutoffRadius == 0.0)
 				_LJCutoffRadius = this->_cutoffRadius;
@@ -611,6 +615,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
+			} else if (token == "StatisticsWriter") {
+				unsigned long writeFrequency=0;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				LinkedCells* lc = dynamic_cast<LinkedCells*> (_moleculeContainer);
+				if (lc != NULL) {
+					_outputPlugins.push_back(new StatisticsWriter(writeFrequency, outputPathAndPrefix, *lc));
+					global_log->debug() << "StatisticsWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+				} else {
+					global_log->warning() << "StatisticsWriter only supported with LinkedCells!" << std::endl;
+					global_log->warning() << "Generating no statistics output for the grid!" << std::endl;
+				}
 			}
 			/*
 			 else if(token == "VimWriter")
