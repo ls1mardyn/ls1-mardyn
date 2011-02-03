@@ -168,9 +168,6 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	//! @brief appends pointers to all particles in the boundary region to the list
-	void getBoundaryParticles(std::list<Molecule*> &boundaryParticlePtrs);
-
 	//! @brief appends pointers to all particles in the halo region to the list
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 

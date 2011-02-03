@@ -493,24 +493,6 @@ double AdaptiveSubCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
-void AdaptiveSubCells::getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs) {
-	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in AdaptiveSubCells (getBoundaryParticles) invalid, call update first" << endl;
-		exit(1);
-	}
-
-	std::list<Molecule*>::iterator particlePtrIter;
-	vector<unsigned long>::iterator subCellIndexIter;
-
-	// loop over all boundary cells
-	for (subCellIndexIter = _boundarySubCellIndices.begin(); subCellIndexIter != _boundarySubCellIndices.end(); subCellIndexIter++) {
-		Cell& currentSubCell = _subCells[*subCellIndexIter];
-		// loop over all molecules in the cell
-		for (particlePtrIter = currentSubCell.getParticlePointers().begin(); particlePtrIter != currentSubCell.getParticlePointers().end(); particlePtrIter++) {
-			boundaryParticlePtrs.push_back(*particlePtrIter);
-		}
-	}
-}
 
 void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	if (_cellsValid == false) {

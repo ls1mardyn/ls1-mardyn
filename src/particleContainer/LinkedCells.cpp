@@ -376,24 +376,6 @@ double LinkedCells::get_halo_L(int index) const {
 	return _haloLength[index];
 }
 
-void LinkedCells::getBoundaryParticles(list<Molecule*> &boundaryParticlePtrs) {
-	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (getBoundaryParticles) invalid, call update first" << endl;
-		exit(1);
-	}
-
-	std::list<Molecule*>::iterator particleIter;
-	vector<unsigned long>::iterator cellIndexIter;
-
-	// loop over all boundary cells
-	for (cellIndexIter = _boundaryCellIndices.begin(); cellIndexIter != _boundaryCellIndices.end(); cellIndexIter++) {
-		Cell& currentCell = _cells[*cellIndexIter];
-		// loop over all molecules in the cell
-		for (particleIter = currentCell.getParticlePointers().begin(); particleIter != currentCell.getParticlePointers().end(); particleIter++) {
-			boundaryParticlePtrs.push_back(*particleIter);
-		}
-	}
-}
 
 void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	if (_cellsValid == false) {
