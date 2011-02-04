@@ -18,6 +18,13 @@
  ***************************************************************************/
 
 // Simulation.cpp
+#include <iostream>
+#include <iterator>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <limits>
+
 #define SIMULATION_SRC
 #include "Simulation.h"
 
@@ -39,21 +46,7 @@
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 
-#include "utils/xmlfileUnits.h"
-#include "io/PartGen.h"
-#include "io/ResultWriter.h"
-#include "io/XyzWriter.h"
-#include "io/PovWriter.h"
-#include "io/DecompWriter.h"
-#include "io/CheckpointWriter.h"
-#include "io/VISWriter.h"
-#include "io/InputOldstyle.h"
-#include "io/StatisticsWriter.h"
-#include "io/OneCLJGenerator.h"
-#ifdef VTK
-#include "io/vtk/VTKMoleculeWriter.h"
-#include "io/vtk/VTKGridWriter.h"
-#endif
+#include "io/io.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -69,12 +62,6 @@
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 
-#include <iostream>
-#include <iterator>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <limits>
 
 using Log::global_log;
 using optparse::OptionParser;
