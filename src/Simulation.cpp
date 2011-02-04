@@ -837,6 +837,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		}
 		else if (token == "initStatistics") {
 			inputfilestream >> _initStatistics;
+		} else {
+			global_log->warning() << "Did not process unknown token " << token << endl;
 		}
 	}
 

@@ -47,6 +47,8 @@ void StatisticsWriter::initOutput(ParticleContainer* particleContainer,
 	outfile << "HaloWidth in num cells: [" << _container._haloWidthInNumCells[0]
 		        << "," << _container._haloWidthInNumCells[1] << "," << _container._haloWidthInNumCells[2] << "]" << endl;
 
+	outfile << "Cell Width: [" << _container._cellLength[0] << "," << _container._cellLength[1] << "," << _container._cellLength[2] << "]" << endl;
+
 	outfile << endl;
 	outfile << "SizeOf(Molecule) = " << sizeof(Molecule) << endl;
 
