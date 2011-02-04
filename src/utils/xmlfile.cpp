@@ -199,7 +199,9 @@ bool XMLfile::initfile_local(const string& filepath)
 
 	char* xmlstr = m_xmldoc.allocate_string(NULL,len+1);
 	xmlstr[len]=0;
+#ifndef NDEBUG
 	size_t lenread=fread(xmlstr,sizeof(char),len,fp);
+#endif
 	fclose(fp);
 
 	assert(lenread==len);

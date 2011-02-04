@@ -992,7 +992,8 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 		}
 	}
 
-	KDNode* oldRoot = root;
+	//@TODO: the old root has to be deleted
+	//KDNode* oldRoot = root;
 	root = ptrToAllNodes[0];
 	ownArea = ptrToAllNodes[ownArea->_nodeID];
 

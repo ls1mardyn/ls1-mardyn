@@ -278,7 +278,7 @@ public:
 		/// \brief copy constructor
 		/// duplicate a given query and register the new created one at the XMLfile
 		/// \param const Query&	query
-		Query(const Query& q) : m_nodes(q.m_nodes), m_xmlfile(q.m_xmlfile)
+		Query(const Query& q) : m_xmlfile(q.m_xmlfile), m_nodes(q.m_nodes)
 			{ xmlfile_register(); }
 		/// \brief XMLfile::Query destructor
 		/// unregister the query
