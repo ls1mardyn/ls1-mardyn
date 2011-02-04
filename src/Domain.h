@@ -30,7 +30,7 @@
 /* 
  * TODO add comments for variables 
  */
-#define VERSION 20100321  /**< checkpoint file version
+#define VERSION 20100321  /**< checkpoint file version */
 #define RDF_MINIMAL_OUTPUT_STEPS 1023
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
