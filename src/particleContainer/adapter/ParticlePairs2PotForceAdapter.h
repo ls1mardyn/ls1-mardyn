@@ -65,32 +65,44 @@ public:
 		_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	}
 
-	//! @brief calculate force between pairs and collect macroscopic contribution
-	//!
-	//! For all pairs, the force between the two Molecules has to be calculated
-	//! and stored in the molecules. For original pairs(pairType 0), the contributions
-	//! to the macroscopic values have to be collected
-	double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ) {
-		ParaStrm& params = _domain.getComp2Params()(particle1.componentid(), particle2.componentid());
+    /** calculate force between pairs and collect macroscopic contribution
+     *
+     * For all pairs, the force between the two Molecules has to be calculated
+     * and stored in the molecules. For original pairs(pairType 0), the contributions
+     * to the macroscopic values have to be collected
+     *
+     * @param molecule1       molecule 1
+     * @param molecule2       molecule 2
+     * @param distanceVector  distance vector from molecule 2 to molecule 1
+     * @param pairType        molecule - molecule: 0,  molecule - halo molecule: 1,  molecule - molecule (fluid): 2
+     * @param dd              square of the distance between the two molecules
+     * @param calculateLJ     true if we shall calculate the LJ interaction, otherwise false (default true)
+     *
+     * @return                interaction energy
+     */
+	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], int pairType, double dd, bool calculateLJ = true) {
+		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
 		params.reset_read();
 		if (pairType == 0) {
-			if (this->_doRecordRDF)
-				this->_domain.observeRDF(dd, particle1.componentid(), particle2.componentid());
+			if ( _doRecordRDF )
+				_domain.observeRDF(dd, molecule1.componentid(), molecule2.componentid());
 
-			PotForce(particle1, particle2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ);
+			PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
 			return _upot6LJ + _upotXpoles;
 		}
 		else if (pairType == 1) {
-			PotForce(particle1, particle2, params, distanceVector, _dummy1, _dummy2, _dummy3, _dummy4, calculateLJ);
+            double dummy1, dummy2, dummy3, dummy4;
+			PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
 			return 0.0;
 		}
 		else if (pairType == 2) {
-			_dummy1 = 0.0; // 6*U_LJ
-			_dummy2 = 0.0; // U_polarity
-			_dummy3 = 0.0; // U_dipole_reaction_field
+            double dummy1, dummy2, dummy3;
+			dummy1 = 0.0; // 6*U_LJ
+			dummy2 = 0.0; // U_polarity
+			dummy3 = 0.0; // U_dipole_reaction_field
 
-			FluidPot(particle1, particle2, params, distanceVector, _dummy1, _dummy2, _dummy3, calculateLJ);
-			return _dummy1 / 6.0 + _dummy2 + _dummy3;
+			FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ);
+			return dummy1 / 6.0 + dummy2 + dummy3;
 		}
 		else
 			exit(666);
@@ -129,15 +141,6 @@ private:
 	double _upotTersoff;
 	//! @brief variable used to sum the MyRF contribution of all pairs
 	double _myRF;
-
-	//! @brief dummy variable used for pairs which don't contribute to the macroscopic values
-	double _dummy1;
-	//! @brief dummy variable used for pairs which don't contribute to the macroscopic values
-	double _dummy2;
-	//! @brief dummy variable used for pairs which don't contribute to the macroscopic values
-	double _dummy3;
-	//! @brief dummy variable used for pairs which don't contribute to the macroscopic values
-	double _dummy4;
 
 	bool _doRecordRDF;
 };
