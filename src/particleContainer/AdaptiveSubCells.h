@@ -5,7 +5,6 @@
 #include "BlockTraverse.h"
 
 #include <vector>
-// TODO REMOVE
 
 class Cell;
 class ChemicalPotential;

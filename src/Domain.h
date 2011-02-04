@@ -21,8 +21,6 @@
 
 #include <string>
 #include <map>
-#include <queue>
-#include <list>
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"

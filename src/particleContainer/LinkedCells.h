@@ -24,7 +24,6 @@
 #include "BlockTraverse.h"
 
 #include <vector>
-#include <sstream>
 
 class Cell;
 class ChemicalPotential;
