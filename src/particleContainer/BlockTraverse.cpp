@@ -102,15 +102,14 @@ void BlockTraverse::traversePairs() {
 	{
 		double zeroVec[3] = {0.0, 0.0, 0.0};
 
-		for (cellIter = _cells.begin(); cellIter != _cells.end(); ++cellIter) {
-			for (molIter1 = cellIter->getParticlePointers().begin(); molIter1 != cellIter->getParticlePointers().end(); molIter1++) {
-				Molecule& molecule1 = **molIter1;
+        // TODO: check if the reset is done twice as leaving this part has no difference on the result.
+        Molecule *moleculePtr;
+        for ( moleculePtr = _moleculeContainer->begin(); moleculePtr != _moleculeContainer->end(); moleculePtr = _moleculeContainer->next() ) {
+				Molecule& molecule1 = *moleculePtr;
 				molecule1.setF(zeroVec);
 				molecule1.setM(zeroVec);
 				molecule1.clearTersoffNeighbourList();
-
-			}
-		}
+        }
 	}
 
 	vector<unsigned long>::iterator cellIndexIter;
