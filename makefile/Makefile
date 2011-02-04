@@ -59,7 +59,7 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) -DMPICH_IGNORE_CXX_SEEK 
+CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK 
 LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) $(CPPUNIT_LINK_ARGS) -lrt 
 
 ifeq ($(DEPS),1)
@@ -79,10 +79,10 @@ $(BINARY): .deps $(OBJECTS) cppunit
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: help all clean cleanall depend cfg_list test
+.PHONY: help all clean cleanall depend cfg_list cfg_help test
 
 help:
-	@echo "configuration: $(CFG_INFO)"
+	@echo "Current configuration: $(CFG_INFO)"
 	@echo
 	@echo "options:"
 	@echo "make CFG=...                 choose compiler (see make cfg_list)"
@@ -95,9 +95,11 @@ help:
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
 	@echo "make cfg_list    list available configurations"
+	@echo "make cfg_help    show help for the selected configuration"
 	@echo "make clean       delete object files"
 	@echo "make cleanall    delete object files and executable"
 	@echo "make depend      generate makefile dependency list"
+
 
 all: $(BINARY)
 
@@ -107,6 +109,15 @@ test:
 #list available configurations
 cfg_list:
 	@ls -1 ../makefile/cfg | sed -e 's/.in//'
+#print info about the selected configuration
+cfg_help:
+	@echo "Current configuration: $(CFG_INFO)"
+	@echo 
+	@echo "Available PARTYPEs:"
+	@echo -e $(CFG_PARTYPES)
+	@echo "Available TARGETs:"
+	@echo -e $(CFG_TARGETS)
+	
 
 clean:
 	find -type f -name '*.o' -delete

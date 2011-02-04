@@ -2,7 +2,15 @@
 # http://www.pgroup.com
 # Version: 
 
-CFG_INFO = "pgi configuration"
+CFG_INFO = "PGI compiler"
+
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
 
 CXX_SEQ = pgCC
 CXX_PAR = mpicxx
@@ -11,18 +19,18 @@ DEPMODE = none
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -g 
-LINKFLAGS_SEQ_DEBUG = -O0 -g
+CXXFLAGS_SEQ_DEBUG  = -g 
+LINKFLAGS_SEQ_DEBUG =
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = $(INCLUDES)  -O2 -DNDEBUG
+CXXFLAGS_SEQ_RELEASE  = -O2 -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
 
 # PAR
 #########################################
 # DEBUG
-CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -g -DPARALLEL
-LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+CXXFLAGS_PAR_DEBUG  = -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG =
 # RELEASE
-CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
-LINKFLAGS_PAR_RELEASE = -DPARALLEL
+CXXFLAGS_PAR_RELEASE  = -O2 -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE =
 

@@ -2,7 +2,16 @@
 # http://gcc.gnu.org/
 # Version: 
 
-CFG_INFO = "gcc configuration"
+CFG_INFO = "GNU Compiler"
+
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "COVERAGE code coverage test version\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
 
 CXX_SEQ = g++
 CXX_PAR = mpicxx
@@ -11,23 +20,23 @@ DEPMODE = gcc3
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Wall -Wextra -Weffc++ -g 
-LINKFLAGS_SEQ_DEBUG = -O0 -g
-# #COVERAGE
-CXXFLAGS_SEQ_COVERAGE  = $(INCLUDES) -Wall --coverage
-LINKFLAGS_SEQ_COVERAGE = --coverage
+CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -Weffc++ -g 
+LINKFLAGS_SEQ_DEBUG =
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = $(INCLUDES)  -O2 -DNDEBUG
+CXXFLAGS_SEQ_RELEASE  = -O2 -Wall -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
+# COVERAGE
+CXXFLAGS_SEQ_COVERAGE  = $(CXXFLAGS_SEQ_RELEASE) --coverage
+LINKFLAGS_SEQ_COVERAGE = $(LINKFLAGS_SEQ_RELEASE) --coverage
 
 # PAR
 #########################################
 # DEBUG
-CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -Wall -g -DPARALLEL
-LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
-# COVERAGE
-CXXFLAGS_PAR_COVERAGE  = $(INCLUDES) -Wall --coverage
-LINKFLAGS_PAR_COVERAGE = --coverage
+CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -Weffc++ -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG =
 # RELEASE
-CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
-LINKFLAGS_PAR_RELEASE = -DPARALLEL
+CXXFLAGS_PAR_RELEASE  = -O2 -Wall -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE =
+# COVERAGE
+CXXFLAGS_PAR_COVERAGE  = $(CXXFLAGS_PAR_RELEASE) --coverage
+LINKFLAGS_PAR_COVERAGE = $(LINKFLAGS_PAR_RELEASE) --coverage

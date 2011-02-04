@@ -1,6 +1,16 @@
-# Configuratin for the Cray XT5 System and GNU Compiler
+# Cray XT5 System using GNU Compiler
+# http://gcc.gnu.org/
+# Version:
 
-CFG_INFO = "Cray XT5 configuration for gcc"
+CFG_INFO = "GNU compiler on Cray XT/XE systems"
+
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
 
 CXX_SEQ = CC
 CXX_PAR = CC
@@ -9,17 +19,17 @@ DEPMODE = none
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Wall -g 
-LINKFLAGS_SEQ_DEBUG = -O0 -g
+CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -Weffc++ -g
+LINKFLAGS_SEQ_DEBUG =
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) -O2 -DNDEBUG
-LINKFLAGS_SEQ_RELEASE = -O2
+CXXFLAGS_SEQ_RELEASE  = -O2 -DNDEBUG
+LINKFLAGS_SEQ_RELEASE =
 
 # PAR
 #########################################
 # DEBUG
-CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -Wall -g -DPARALLEL
-LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -Weffc++ -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG =
 # RELEASE
-CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -DNDEBUG -DPARALLEL -O2
-LINKFLAGS_PAR_RELEASE = -DPARALLEL
+CXXFLAGS_PAR_RELEASE  = -O2 -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE =

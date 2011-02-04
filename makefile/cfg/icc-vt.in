@@ -1,18 +1,36 @@
 # gnu compiler suite
-# http://gcc.gnu.org/
+# http://tu-dresden.de/die_tu_dresden/zentrale_einrichtungen/zih/forschung/software_werkzeuge_zur_unterstuetzung_von_programmierung_und_optimierung/vampir
+# http://software.intel.com/en-us/intel-compilers/
 # Version: 
 
-CFG_INFO = "gcc configuration"
+CFG_INFO = "Vampirtrace instrumentation using Intel compiler (manual instrumentation)"
 
-CXX_SEQ = vtcxx
-CXX_PAR = vtcxx
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
+
+CXX_SEQ = vtcxx -vt:inst manual
+CXX_PAR = vtcxx -vt:cxx mpicxx -vt:inst manual
 DEPMODE = gcc3
-CXXFLAGS_SEQ_DEBUG = $(INCLUDES) -Wall -g 
-CXXFLAGS_SEQ_RELEASE = $(INCLUDES) -O2 -DNDEBUG -DNEW_IO -I/opt/OpenMPI/1.2.4/include/ -L/opt/vampir/5.2.0/lib -lvt.mpi -lvt -lz -L/opt/OpenMPI/1.2.4/lib/ -lmpi -lpthread -L/usr/lib64 -lvapi
-LINKFLAGS_SEQ_DEBUG = -O0 -g
-LINKFLAGS_SEQ_RELEASE = -I/opt/OpenMPI/1.2.4/include/ -L/opt/vampir/5.2.0/lib -lvt.mpi -lvt -lz -L/opt/OpenMPI/1.2.4/lib/ -lmpi -lpthread -L/usr/lib64 -lvapi
 
-CXXFLAGS_PAR_DEBUG = $(INCLUDES) -Wall -g -DPARALLEL
-CXXFLAGS_PAR_RELEASE = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL -DNEW_IO -I/opt/OpenMPI/1.2.4/include/ -L/opt/vampir/5.2.0/lib -lvt.mpi -lvt -lz -L/opt/OpenMPI/1.2.4/lib/ -lmpi -lpthread -L/usr/lib64 -lvapi
-LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
-LINKFLAGS_PAR_RELEASE = -DPARALLEL -I/opt/OpenMPI/1.2.4/include/ -L/opt/vampir/5.2.0/lib -lvt.mpi -lvt -lz -L/opt/OpenMPI/1.2.4/lib/ -lmpi -lpthread -L/usr/lib64 -lvapi
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = -Wall -g 
+LINKFLAGS_SEQ_DEBUG =
+#RELEASE
+CXXFLAGS_SEQ_RELEASE  = -O2 -Wall -g -DNDEBUG
+LINKFLAGS_SEQ_RELEASE =
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = -Wall -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG =
+#RELEASE
+CXXFLAGS_PAR_RELEASE  = -O2 -Wall -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE =
