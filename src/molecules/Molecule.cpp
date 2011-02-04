@@ -32,7 +32,6 @@
 using namespace std;
 using Log::global_log;
 
-Domain* Molecule::_domain;
 
 Molecule::Molecule(unsigned long id, int componentid,
 	                 double rx, double ry, double rz,
@@ -52,7 +51,7 @@ Molecule::Molecule(unsigned long id, int componentid,
 	_D[0] = Dx;
 	_D[1] = Dy;
 	_D[2] = Dz;
-	_sites_d = _sites_F = _osites_e = NULL;
+	_sites_d = _sites_F =_osites_e = NULL;
 	_numTersoffNeighbours = 0;
 	fixedx = rx;
 	fixedy = ry;
@@ -123,7 +122,6 @@ Molecule::Molecule(const Molecule& m) {
 	_dipoles_F = &(_charges_F[numCharges()*3]);
 	_quadrupoles_F = &(_dipoles_F[numDipoles()*3]);
 	_tersoff_F = &(_quadrupoles_F[numQuadrupoles()*3]);
-	//_nextincell=m._nextincell;  // not necessary -> temporary only
 	_numTersoffNeighbours = 0;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
@@ -135,7 +133,7 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	double dtInv2m = dt_halve / _m;
 	for (unsigned short d = 0; d < 3; ++d) {
 		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
-		_oldr[d] = _r[d];
+		//_oldr[d] = _r[d];
 		_r[d] += dt * _v[d];
 	}
 
@@ -196,12 +194,8 @@ void Molecule::upd_cache() {
 
 
 void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
-	//_Upot*=.5;
-
 
 	calcFM();
-
-	//if(_id==1) cout << "Kraft: " << _F[0] << " / " << _F[1] << " / " << _F[2] << endl;
 
 	double dtInv2m = dt_halve / _m;
 	double v2 = 0.;
@@ -428,9 +422,6 @@ void Molecule::calcFM() {
 	}
 }
 
-void Molecule::setDomain(Domain* domain) {
-	Molecule::_domain = domain;
-}
 
 /*
  * catches NaN values and missing data

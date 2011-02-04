@@ -67,8 +67,6 @@ public:
 	/** get the position */
 	double r(unsigned short d) const { return _r[d]; }
 
-	double oldr (unsigned short d) const { return _oldr[d]; }
-
 	/** get the velocity */
 	double v(unsigned short d) const { return _v[d]; }
 	/** get the Orientation */
@@ -84,7 +82,6 @@ public:
 	/** get M */
 	double M(unsigned short d) const {return _M[d]; }
 
-	//double Upot() const { return _Upot; }
 	double Utrans() const { return .5*_m*(_v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]); }
 	double Urot();
 
@@ -97,20 +94,13 @@ public:
 	unsigned int numTersoff() const { assert(_tersoff); return _tersoff->size(); }
 
 	const double* site_d(unsigned int i) const { return &(_sites_d[3*i]); }
-	const double* osite_e(unsigned int i) const { return &(_osites_e[3*i]); }
 	const double* site_F(unsigned int i) const { return &(_sites_F[3*i]); }
 	const double* ljcenter_d(unsigned int i) const { return &(_ljcenters_d[3*i]); }
-	const double* ljcenter_F(unsigned int i) const { return &(_ljcenters_F[3*i]); }
 	const double* charge_d(unsigned int i) const { return &(_charges_d[3*i]); }
-	const double* charge_F(unsigned int i) const { return &(_charges_F[3*i]); }
 	const double* dipole_d(unsigned int i) const { return &(_dipoles_d[3*i]); }
 	const double* dipole_e(unsigned int i) const { return &(_dipoles_e[3*i]); }
-	const double* dipole_F(unsigned int i) const { return &(_dipoles_F[3*i]); }
 	const double* quadrupole_d(unsigned int i) const { return &(_quadrupoles_d[3*i]); }
 	const double* quadrupole_e(unsigned int i) const { return &(_quadrupoles_e[3*i]); }
-	const double* quadrupole_F(unsigned int i) const { return &(_quadrupoles_F[3*i]); }
-	const double* tersoff_d(unsigned int i) const { return &(_tersoff_d[3*i]); }
-	const double* tersoff_F(unsigned int i) const { return &(_tersoff_F[3*i]); }
 
 	/**
 	 * get the total object memory size, together with all its members
@@ -121,11 +111,6 @@ public:
 
 	/** set the position */
 	void setr(unsigned short d, double r) { _r[d]=r; }
-
-	void setOldRFromR () {
-		for (int i = 0; i < 3; i++)
-			_oldr[i] = _r[i];
-	}
 
 	/** Calculate the difference vector and return the square (euclidean) distance.
 	 *
@@ -160,10 +145,8 @@ public:
 	void scale_M(double s) { for(unsigned short d=0;d<3;++d) _M[d]*=s; }
 
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
-	void Fsub(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]-=a[d]; }
 
 	void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
-	void Msub(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]-=a[d]; }
 
 	void vadd(const double ax, const double ay, const double az) {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
@@ -182,10 +165,6 @@ public:
 		_r[1] = fixedy;
 	}
 
-	void Fsiteadd(unsigned int i, double a[])
-	{ double* Fsite=&(_sites_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	void Fsitesub(unsigned int i, double a[])
-	{ double* Fsite=&(_sites_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 	void Fljcenteradd(unsigned int i, double a[])
 	{ double* Fsite=&(_ljcenters_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
 	void Fljcentersub(unsigned int i, double a[])
@@ -204,8 +183,6 @@ public:
 	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 	void Ftersoffadd(unsigned int i, double a[])
 	{ double* Fsite=&(_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	void Ftersoffsub(unsigned int i, double a[])
-	{ double* Fsite=&(_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 
 	void upd_preF(double dt, double vcorr=1., double Dcorr=1.);
 	void upd_cache();
@@ -220,11 +197,8 @@ public:
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
 
-	static void setDomain(Domain* domain);
-
 	inline unsigned getCurTN() { return this->_numTersoffNeighbours; }
 	inline Molecule* getTersoffNeighbour(unsigned i) { return this->_Tersoff_neighbours_first[i]; }
-	inline bool getPairCode(unsigned i) { return this->_Tersoff_neighbours_second[i]; }
 	inline void clearTersoffNeighbourList() { this->_numTersoffNeighbours = 0; }
 	void addTersoffNeighbour(Molecule* m, bool pairType);
 	double tersoffParameters(double params[15]); //returns delta_r
@@ -237,11 +211,9 @@ public:
 
 private:
 
-	static Domain* _domain;
 	unsigned long _id; // IDentification number of that molecule
 	int _componentid;  // IDentification number of its component type
 	double _r[3];  // position coordinates
-	double _oldr[3]; // position coordinates last step
 	double _v[3];  // velocity
 	Quaternion _q; // orientation
 	double _D[3];  // angular momentum
