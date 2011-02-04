@@ -188,19 +188,6 @@ public:
 	//! @brief returns the currently used ParticlePairsHandler
 	ParticlePairsHandler* getPairHandler();
 
-	//! @brief find out whether m1 is before m2 (in some global ordering)
-	//!
-	//! At the boundary between two processes (if used in parallel mode), the forces
-	//! for pairs which cross the boundary are calculated twice (once by each proc who
-	//! owns one of the particles). But the contribution to macroscopic value must be
-	//! counted only once, which is done by the process who owns the "first" particle.
-	//! As order criterion, the spacial position is used int this method. The particles
-	//! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-	//! For pairs which are completely on one process, the first particle can be
-	//! determined from the cell structure. But for pairs on different procs, the
-	//! corresponding cell discretisations might be different as well, and therefore
-	//! the cell structure must not be used to determine the order.
-	virtual bool isFirstParticle(Molecule& m1, Molecule& m2) = 0;
 
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();

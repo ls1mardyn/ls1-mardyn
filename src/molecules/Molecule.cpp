@@ -133,7 +133,6 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	double dtInv2m = dt_halve / _m;
 	for (unsigned short d = 0; d < 3; ++d) {
 		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
-		//_oldr[d] = _r[d];
 		_r[d] += dt * _v[d];
 	}
 
@@ -442,6 +441,32 @@ void Molecule::check(unsigned long id) {
 		assert((_invI[d] >= 0.0) || (_invI[d] < 0.0));
 	}
 }
+
+bool Molecule::isLessThan(const Molecule& m2) const {
+	if (_r[2] < m2.r(2))
+		return true;
+	else if (_r[2] > m2.r(2))
+		return false;
+	else {
+		if (_r[1] < m2.r(1))
+			return true;
+		else if (_r[1] > m2.r(1))
+			return false;
+		else {
+			if (_r[0] < m2.r(0))
+				return true;
+			else if (_r[0] > m2.r(0))
+				return false;
+			else {
+				global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << endl;
+				exit(1);
+			}
+		}
+	}
+}
+
+
+
 
 unsigned long Molecule::totalMemsize() const {
 	unsigned long size = sizeof (*this);

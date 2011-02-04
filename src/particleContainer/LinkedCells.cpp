@@ -543,28 +543,6 @@ unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
 }
 
-bool LinkedCells::isFirstParticle(Molecule& m1, Molecule& m2) {
-	if (m1.r(2) < m2.r(2))
-		return true;
-	else if (m1.r(2) > m2.r(2))
-		return false;
-	else {
-		if (m1.r(1) < m2.r(1))
-			return true;
-		else if (m1.r(1) > m2.r(1))
-			return false;
-		else {
-			if (m1.r(0) < m2.r(0))
-				return true;
-			else if (m1.r(0) > m2.r(0))
-				return false;
-			else {
-				global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << endl;
-				exit(1);
-			}
-		}
-	}
-}
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z) {
 

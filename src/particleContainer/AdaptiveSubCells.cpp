@@ -1025,28 +1025,6 @@ void AdaptiveSubCells::calculateLocalRho() {
 	}
 }
 
-bool AdaptiveSubCells::isFirstParticle(Molecule& m1, Molecule& m2) {
-	if (m1.r(2) < m2.r(2))
-		return true;
-	else if (m1.r(2) > m2.r(2))
-		return false;
-	else {
-		if (m1.r(1) < m2.r(1))
-			return true;
-		else if (m1.r(1) > m2.r(1))
-			return false;
-		else {
-			if (m1.r(0) < m2.r(0))
-				return true;
-			else if (m1.r(0) > m2.r(0))
-				return false;
-			else {
-				global_log->error() << "AdaptiveSubCells::isFirstParticle: both Particles have the same position" << endl;
-				exit(1);
-			}
-		}
-	}
-}
 
 int AdaptiveSubCells::grandcanonicalBalance(DomainDecompBase* comm) {
 	comm->collCommInit(1);
