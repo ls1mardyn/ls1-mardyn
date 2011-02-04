@@ -17,6 +17,11 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
 
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <cmath>
+
 #include "Domain.h"
 
 #include "particleContainer/ParticleContainer.h"
@@ -25,20 +30,10 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/PressureGradient.h"
 
-#include <iostream>
-#include <sstream>
-#include <string>
-#include <cmath>
-
 #include "utils/Logger.h"
 using Log::global_log;
 
 using namespace std;
-
-#define VERSION 20100321
-#define RDF_MINIMAL_OUTPUT_STEPS 1023
-#define MIN_BETA 0.9
-#define KINLIMIT_PER_T 10.0
 
 /*
  * cutoff correction
