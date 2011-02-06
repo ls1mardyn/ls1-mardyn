@@ -62,7 +62,6 @@
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 
-
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -71,8 +70,8 @@ using namespace std;
 
 Simulation* global_simulation;
 
-Simulation::Simulation(optparse::Values& options, vector<string>& args)
-: _domainDecomposition(NULL) {
+Simulation::Simulation(optparse::Values& options, vector<string>& args) :
+	_domainDecomposition(NULL) {
 
 	initialize();
 	unsigned int numargs = args.size();
@@ -96,21 +95,27 @@ Simulation::Simulation(optparse::Values& options, vector<string>& args)
 	if (options.is_set("verbose") && options.get("verbose"))
 		global_log->set_log_level(Log::All);
 
-	if (numargs >= 1)
-	{
+	if (numargs >= 1) {
 		string inputfilename(args[0]);
 		initConfigFile(inputfilename);
 	}
 }
 
 Simulation::~Simulation() {
-	if(_domainDecomposition) delete _domainDecomposition;
-	if(_pressureGradient) delete _pressureGradient;
-	if(_domain) delete _domain;
-	if(_particlePairsHandler) delete _particlePairsHandler;
-	if(_moleculeContainer) delete _moleculeContainer;
-	if(_integrator) delete _integrator;
-	if(_inputReader) delete _inputReader;
+	if (_domainDecomposition)
+		delete _domainDecomposition;
+	if (_pressureGradient)
+		delete _pressureGradient;
+	if (_domain)
+		delete _domain;
+	if (_particlePairsHandler)
+		delete _particlePairsHandler;
+	if (_moleculeContainer)
+		delete _moleculeContainer;
+	if (_integrator)
+		delete _integrator;
+	if (_inputReader)
+		delete _inputReader;
 }
 
 void Simulation::exit(int exitcode) {
@@ -123,17 +128,14 @@ void Simulation::exit(int exitcode) {
 #endif
 }
 
-
 void Simulation::initConfigFile(const string& inputfilename) {
 	if (inputfilename.rfind(".xml") == inputfilename.size() - 4) {
 		global_log->info() << "command line config file type is XML (*.xml)" << endl;
 		initConfigXML(inputfilename);
-	}
-	else if (inputfilename.rfind(".cfg") == inputfilename.size() - 4) {
+	} else if (inputfilename.rfind(".cfg") == inputfilename.size() - 4) {
 		global_log->info() << "command line config file type is oldstyle (*.cfg)" << endl;
 		initConfigOldstyle(inputfilename);
-	}
-	else {
+	} else {
 		global_log->info() << "command line config file type is unknown: trying oldstyle" << endl;
 		initConfigOldstyle(inputfilename);
 	}
@@ -155,8 +157,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	string version;
 	unsigned long foundentries;
 	//inp.getNodeValue("/mardyn@version",version);
-	foundentries=inp.getNodeValue("@version", version);
-	if(foundentries)
+	foundentries = inp.getNodeValue("@version", version);
+	if (foundentries)
 		global_log->debug() << "MarDyn XML config file version " << version << endl;
 	else
 		global_log->debug() << "MarDyn XML config file version not set" << endl;
@@ -191,54 +193,54 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			} else if (pspfiletype == "PartGen") {
 				string mode;
 				inp.getNodeValue("ensemble/phasespacepoint/file@mode", mode);
-global_log->error() << "NOT IMPLEMENTED YET";
-/*
-				_inputReader = (InputBase*) new PartGen();
-				_inputReader->setPhaseSpaceHeaderFile(pspfile);
-				// PartGen has to modes, a "Homogeneous" mode, where particles
-				// with a homogeneous distribution are created, and a "Cluster" mode,
-				// where droplets are created. Currently, only the cluster mode is supported,
-				// which needs another config line starting with "clusterFile ..." directly
-				// after the config line starting with "phaseSpaceFile"
-				double gasDensity;
-				double fluidDensity;
-				double volPercOfFluid;
-				string clusterFileName;
-				inputfilestream >> token >> gasDensity >> fluidDensity >> volPercOfFluid >> clusterFileName;
-				((PartGen*) _inputReader)->setClusterFile(gasDensity, fluidDensity, volPercOfFluid, clusterFileName);
-				((PartGen*) _inputReader)->readPhaseSpaceHeader(_domain, timestepLength);
-*/
+				global_log->error() << "NOT IMPLEMENTED YET";
+				/*
+				 _inputReader = (InputBase*) new PartGen();
+				 _inputReader->setPhaseSpaceHeaderFile(pspfile);
+				 // PartGen has to modes, a "Homogeneous" mode, where particles
+				 // with a homogeneous distribution are created, and a "Cluster" mode,
+				 // where droplets are created. Currently, only the cluster mode is supported,
+				 // which needs another config line starting with "clusterFile ..." directly
+				 // after the config line starting with "phaseSpaceFile"
+				 double gasDensity;
+				 double fluidDensity;
+				 double volPercOfFluid;
+				 string clusterFileName;
+				 inputfilestream >> token >> gasDensity >> fluidDensity >> volPercOfFluid >> clusterFileName;
+				 ((PartGen*) _inputReader)->setClusterFile(gasDensity, fluidDensity, volPercOfFluid, clusterFileName);
+				 ((PartGen*) _inputReader)->readPhaseSpaceHeader(_domain, timestepLength);
+				 */
 			} else if (pspfiletype == "1CLJGen") {
 				string mode;
 				inp.getNodeValue("ensemble/phasespacepoint/file@mode", mode);
-global_log->error() << "NOT IMPLEMENTED YET";
-/*
-				int N;
-				double T;
-				string line;
-				getline(inputfilestream, line);
-				stringstream lineStream(line);
-				lineStream >> mode >> N >> T;
-				cout << "read: mode " << mode << " N " << N << " T " << T << endl;
+				global_log->error() << "NOT IMPLEMENTED YET";
+				/*
+				 int N;
+				 double T;
+				 string line;
+				 getline(inputfilestream, line);
+				 stringstream lineStream(line);
+				 lineStream >> mode >> N >> T;
+				 cout << "read: mode " << mode << " N " << N << " T " << T << endl;
 
-				OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
-				if (mode == "Homogeneous") {
-					double rho;
-					lineStream >> rho;
-					generator->setHomogeneuosParameter(rho);
-				} else if (mode == "Cluster") {
-					double rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
-					lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
-					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
-				} else {
-					global_log->error() << "Error in inputfile: OneCLJGenerator option \""<< mode << "\" not supported!" << endl;
-					global_log->error() << " Has to be  \"Homogeneous\"  or \"Cluster\"  " << endl;
-					exit(1);
-				}
-				generator->readPhaseSpaceHeader(_domain, timestepLength);
+				 OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
+				 if (mode == "Homogeneous") {
+				 double rho;
+				 lineStream >> rho;
+				 generator->setHomogeneuosParameter(rho);
+				 } else if (mode == "Cluster") {
+				 double rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
+				 lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
+				 generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
+				 } else {
+				 global_log->error() << "Error in inputfile: OneCLJGenerator option \""<< mode << "\" not supported!" << endl;
+				 global_log->error() << " Has to be  \"Homogeneous\"  or \"Cluster\"  " << endl;
+				 exit(1);
+				 }
+				 generator->readPhaseSpaceHeader(_domain, timestepLength);
 
-				_inputReader = (OneCLJGenerator*) generator;
-*/
+				 _inputReader = (OneCLJGenerator*) generator;
+				 */
 			}
 			if (this->_LJCutoffRadius == 0.0)
 				_LJCutoffRadius = this->_cutoffRadius;
@@ -254,7 +256,9 @@ global_log->error() << "NOT IMPLEMENTED YET";
 		if (inp.getNodeValue("parallelisation", partype)) {
 			global_log->info() << "reading parallelization type:\t" << partype << endl;
 #ifndef PARALLEL
-			global_log->warning() << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
+			global_log->warning()
+			        << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
+			        << endl;
 #else
 			if (partype=="DomainDecomposition") {
 				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
@@ -268,7 +272,7 @@ global_log->error() << "NOT IMPLEMENTED YET";
 		if (inp.getNodeValue("datastructure@type", datastructype)) {
 			global_log->info() << "datastructure to use:\t" << datastructype << endl;
 			if (datastructype == "LinkedCells") {
-				int cellsInCutoffRadius=1;
+				int cellsInCutoffRadius = 1;
 				inp.getNodeValue("datastructure/cellsInCutoffRadius", cellsInCutoffRadius);
 				global_log->info() << "LinkedCells cells in cutoff radius:\t" << cellsInCutoffRadius << endl;
 				double bBoxMin[3];
@@ -279,11 +283,9 @@ global_log->error() << "NOT IMPLEMENTED YET";
 				}
 				if (this->_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-				                                     _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius,
-				                                     cellsInCutoffRadius, _particlePairsHandler);
-			}
-			else if (datastructype == "AdaptiveSubCells") {
+				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+				        _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+			} else if (datastructype == "AdaptiveSubCells") {
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
@@ -293,9 +295,8 @@ global_log->error() << "NOT IMPLEMENTED YET";
 				//creates a new Adaptive SubCells datastructure
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
-				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-				                                          _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius,
-				                                          _particlePairsHandler);
+				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+				        _tersoffCutoffRadius, _particlePairsHandler);
 			}
 		}
 		inp.changecurrentnode("..");
@@ -306,7 +307,8 @@ global_log->error() << "NOT IMPLEMENTED YET";
 	if (inp.changecurrentnode("output")) {
 		string outputPathAndPrefix;
 		if (inp.getNodeValue("Resultwriter", outputPathAndPrefix)) {
-			_outputPlugins.push_back(new ResultWriter(outputPathAndPrefix));
+			// TODO: add the output frequency to the xml!
+			_outputPlugins.push_back(new ResultWriter(1, outputPathAndPrefix));
 			global_log->debug() << "ResultWriter '" << outputPathAndPrefix << "'.\n";
 		}
 		inp.changecurrentnode("..");
@@ -335,26 +337,19 @@ global_log->error() << "NOT IMPLEMENTED YET";
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
 		double tmp_molecularMass = _domain->getComponents()[cpit->getComponentID()].m();
-		cpit->setSystem(
-		    _domain->getGlobalLength(0), _domain->getGlobalLength(1),
-		    _domain->getGlobalLength(2), tmp_molecularMass
-		);
-		cpit->setGlobalN(
-		    _domain->N(cpit->getComponentID())
-		);
+		cpit->setSystem(_domain->getGlobalLength(0), _domain->getGlobalLength(1), _domain->getGlobalLength(2),
+		        tmp_molecularMass);
+		cpit->setGlobalN(_domain->N(cpit->getComponentID()));
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
-		cpit->setSubdomain(
-		    ownrank,
-		    _moleculeContainer->getBoundingBoxMin(0), _moleculeContainer->getBoundingBoxMax(0),
-		    _moleculeContainer->getBoundingBoxMin(1), _moleculeContainer->getBoundingBoxMax(1),
-		    _moleculeContainer->getBoundingBoxMin(2), _moleculeContainer->getBoundingBoxMax(2)
-		);
+		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0), _moleculeContainer->getBoundingBoxMax(0),
+		        _moleculeContainer->getBoundingBoxMin(1), _moleculeContainer->getBoundingBoxMax(1),
+		        _moleculeContainer->getBoundingBoxMin(2), _moleculeContainer->getBoundingBoxMax(2));
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
-		                                            : _domain->getTargetTemperature(0);
+		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(
+		        0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 		cpit->submitTemperature(Tcur);
@@ -408,7 +403,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		global_log->debug() << " [[" << token << "]]" << endl;
 
 		if (token.substr(0, 1) == "#") {
-			inputfilestream.ignore( std::numeric_limits<streamsize>::max(), '\n');
+			inputfilestream.ignore(std::numeric_limits<streamsize>::max(), '\n');
 			continue;
 		}
 		if (token == "phaseSpaceFile") {
@@ -463,9 +458,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				} else if (mode == "Cluster") {
 					double rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
 					lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
-					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
+					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume,
+					        numSphereSizes);
 				} else {
-					global_log->error() << "Error in inputfile: OneCLJGenerator option \""<< mode << "\" not supported!" << endl;
+					global_log->error() << "Error in inputfile: OneCLJGenerator option \"" << mode
+					        << "\" not supported!" << endl;
 					global_log->error() << " Has to be  \"Homogeneous\"  or \"Cluster\"  " << endl;
 					exit(1);
 				}
@@ -487,7 +484,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> _LJCutoffRadius;
 		} else if ((token == "parallelization") || (token == "parallelisation")) {
 #ifndef PARALLEL
-			global_log->warning() << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n" << endl;
+			global_log->warning()
+			        << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
+			        << endl;
 			inputfilestream >> token;
 #else
 			inputfilestream >> token;
@@ -498,11 +497,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
 			}
 #endif
-		}
-		else if (token == "datastructure") {
+		} else if (token == "datastructure") {
 
 			if (_domainDecomposition == NULL) {
-				global_log->error() << "_domainDecomposition is NULL! Probably you compiled for MPI, but didn't specify line \"parallelization\" before line \"datastructure\"!" << endl;
+				global_log->error()
+				        << "_domainDecomposition is NULL! Probably you compiled for MPI, but didn't specify line \"parallelization\" before line \"datastructure\"!"
+				        << endl;
 				exit(1);
 			}
 
@@ -518,11 +518,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 				if (this->_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-				                                     _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius,
-				                                     cellsInCutoffRadius, _particlePairsHandler);
-			}
-			else if (token == "AdaptiveSubCells") {
+				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+				        _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+			} else if (token == "AdaptiveSubCells") {
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
@@ -532,52 +530,47 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				//creates a new Adaptive SubCells datastructure
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
-				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-				                                          _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius,
-				                                          _particlePairsHandler);
+				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+				        _tersoffCutoffRadius, _particlePairsHandler);
 			}
-		}
-		else if (token == "output") {
+		} else if (token == "output") {
 			inputfilestream >> token;
 			if (token == "ResultWriter") {
+				unsigned long writeFrequency;
 				string outputPathAndPrefix;
-				inputfilestream >> outputPathAndPrefix;
-				_outputPlugins.push_back(new ResultWriter(outputPathAndPrefix));
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new ResultWriter(writeFrequency, outputPathAndPrefix));
 				global_log->debug() << "ResultWriter '" << outputPathAndPrefix << "'.\n";
-			}
-			else if (token == "XyzWriter") {
+			} else if (token == "XyzWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new XyzWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "XyzWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 				_outputFrequency = writeFrequency;
-			}
-			else if (token == "PovWriter") {
+			} else if (token == "PovWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new PovWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "POVWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
-			}
-			else if (token == "DecompWriter") {
+			} else if (token == "DecompWriter") {
 				unsigned long writeFrequency;
 				string mode;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> mode >> outputPathAndPrefix;
-				_outputPlugins.push_back(new DecompWriter(writeFrequency, mode, outputPathAndPrefix, _numberOfTimesteps, true));
+				_outputPlugins.push_back(new DecompWriter(writeFrequency, mode, outputPathAndPrefix,
+				        _numberOfTimesteps, true));
 				global_log->debug() << "DecompWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
-			}
-			else if ((token == "VisittWriter") || (token == "VISWriter")) {
+			} else if ((token == "VisittWriter") || (token == "VISWriter")) {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new VISWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "VISWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
-			}
-			else if (token == "VTKWriter") {
+			} else if (token == "VTKWriter") {
 #ifdef VTK
-				unsigned long writeFrequency=0;
+				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new VTKMoleculeWriter(writeFrequency, outputPathAndPrefix));
@@ -585,10 +578,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
-			}
-			else if (token == "VTKGridWriter") {
+			} else if (token == "VTKGridWriter") {
 #ifdef VTK
-				unsigned long writeFrequency=0;
+				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				LinkedCells* lc = dynamic_cast<LinkedCells*> (_moleculeContainer);
@@ -603,13 +595,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
 			} else if (token == "StatisticsWriter") {
-				unsigned long writeFrequency=0;
+				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				LinkedCells* lc = dynamic_cast<LinkedCells*> (_moleculeContainer);
 				if (lc != NULL) {
 					_outputPlugins.push_back(new StatisticsWriter(writeFrequency, outputPathAndPrefix, *lc));
-					global_log->debug() << "StatisticsWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+					global_log->debug() << "StatisticsWriter " << writeFrequency << " '" << outputPathAndPrefix
+					        << "'.\n";
 				} else {
 					global_log->warning() << "StatisticsWriter only supported with LinkedCells!" << std::endl;
 					global_log->warning() << "Generating no statistics output for the grid!" << std::endl;
@@ -626,8 +619,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			 if(!ownrank) cout << "Vim " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 			 }
 			 */
-		}
-		else if (token == "accelerate") {
+		} else if (token == "accelerate") {
 			cosetid++;
 			inputfilestream >> token;
 			global_log->debug() << "Found specifier '" << token << "'\n";
@@ -687,70 +679,51 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				exit(1);
 			}
 			_pressureGradient->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
-		}
-		else if (token == "constantAccelerationTimesteps") {
+		} else if (token == "constantAccelerationTimesteps") {
 			unsigned uCAT;
 			inputfilestream >> uCAT;
 			_pressureGradient->setUCAT(uCAT);
-		}
-		else if(token == "zetaFlow")
-		{
-			 double zeta;
-			 inputfilestream >> zeta;
-			 _pressureGradient->setZetaFlow(zeta);
-		}
-		else if(token == "tauPrimeFlow")
-		{
-			 double tauPrime;
-			 inputfilestream >> tauPrime;
-			 if(timestepLength == 0.0)
-			 {
-			    cout << "timestep missing.\n";
-			    exit(1);
-			 }
-			 _pressureGradient->specifyTauPrime(tauPrime, timestepLength);
-		}
-		else if (token == "profile") {
+		} else if (token == "zetaFlow") {
+			double zeta;
+			inputfilestream >> zeta;
+			_pressureGradient->setZetaFlow(zeta);
+		} else if (token == "tauPrimeFlow") {
+			double tauPrime;
+			inputfilestream >> tauPrime;
+			if (timestepLength == 0.0) {
+				cout << "timestep missing.\n";
+				exit(1);
+			}
+			_pressureGradient->specifyTauPrime(tauPrime, timestepLength);
+		} else if (token == "profile") {
 			unsigned xun, yun, zun;
 			inputfilestream >> xun >> yun >> zun;
 			_domain->setupProfile(xun, yun, zun);
 			_doRecordProfile = true;
-		}
-		else if (token == "profileRecordingTimesteps") {
+		} else if (token == "profileRecordingTimesteps") {
 			inputfilestream >> _profileRecordingTimesteps;
-		}
-		else if (token == "profileOutputTimesteps") {
+		} else if (token == "profileOutputTimesteps") {
 			inputfilestream >> _profileOutputTimesteps;
-		}
-		else if (token == "RDF") {
+		} else if (token == "RDF") {
 			double interval;
 			unsigned bins;
 			inputfilestream >> interval >> bins;
 			_domain->setupRDF(interval, bins);
 			_doRecordRDF = true;
-		}
-		else if (token == "RDFOutputTimesteps") {
+		} else if (token == "RDFOutputTimesteps") {
 			inputfilestream >> _RDFOutputTimesteps;
-		}
-		else if (token == "RDFOutputPrefix") {
+		} else if (token == "RDFOutputPrefix") {
 			inputfilestream >> _RDFOutputPrefix;
-		}
-		else if (token == "resultOutputTimesteps") {
-			inputfilestream >> _resultOutputTimesteps;
-		}
-		else if (token == "profiledComponent") {
+		} else if (token == "profiledComponent") {
 			unsigned cid;
 			inputfilestream >> cid;
 			cid--;
 			_domain->considerComponentInProfile(cid);
-		}
-		else if (token == "profileOutputPrefix") {
+		} else if (token == "profileOutputPrefix") {
 			inputfilestream >> _profileOutputPrefix;
-		}
-		else if (token == "collectThermostatDirectedVelocity") {
+		} else if (token == "collectThermostatDirectedVelocity") {
 			inputfilestream >> _collectThermostatDirectedVelocity;
-		}
-		else if (token == "zOscillator") {
+		} else if (token == "zOscillator") {
 			_zoscillation = true;
 			inputfilestream >> _zoscillator;
 		}
@@ -762,7 +735,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> token;
 			if (token != "component") {
 				global_log->error() << "Expected 'component' instead of '" << token << "'.\n";
-				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> " << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps" << endl;
+				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+				        << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
+				        << endl;
 				exit(1);
 			}
 			unsigned icid;
@@ -777,7 +752,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> token;
 				if (token != "to") {
 					global_log->error() << "Expected 'to' instead of '" << token << "'.\n";
-					global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> " << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps\n";
+					global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+					        << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+					        << "conduct <ntest> tests every <nstep> steps\n";
 					exit(1);
 				}
 				inputfilestream >> x1 >> y1 >> z1;
@@ -785,7 +762,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 			if (token != "conduct") {
 				global_log->error() << "Expected 'conduct' instead of '" << token << "'.\n";
-				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> " << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps\n";
+				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+				        << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
+				        << "conduct <ntest> tests every <nstep> steps\n";
 				exit(1);
 			}
 			unsigned intest;
@@ -793,13 +772,17 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> token;
 			if (token != "tests") {
 				global_log->error() << "Expected 'tests' instead of '" << token << "'.\n";
-				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> " << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps" << endl;
+				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+				        << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
+				        << endl;
 				exit(1);
 			}
 			inputfilestream >> token;
 			if (token != "every") {
 				global_log->error() << "Expected 'every' instead of '" << token << "'.\n";
-				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> " << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps" << endl;
+				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+				        << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
+				        << endl;
 				exit(1);
 			}
 			unsigned instep;
@@ -807,7 +790,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> token;
 			if (token != "steps") {
 				global_log->error() << "Expected 'steps' instead of '" << token << "'.\n";
-				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> " << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps" << endl;
+				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
+				        << "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
+				        << endl;
 				exit(1);
 			}
 			ChemicalPotential tmu = ChemicalPotential();
@@ -816,26 +801,19 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			tmu.setInstances(intest);
 			if (controlVolume)
 				tmu.setControlVolume(x0, y0, z0, x1, y1, z1);
-			global_log->info() << setprecision(6)
-			                   << "chemical Potential " << imu
-			                   << " component " << icid + 1 << " (internally " << icid << ") conduct "
-			                   << intest << " tests every " << instep << " steps: ";
+			global_log->info() << setprecision(6) << "chemical Potential " << imu << " component " << icid + 1
+			        << " (internally " << icid << ") conduct " << intest << " tests every " << instep << " steps: ";
 			_lmu.push_back(tmu);
 			global_log->info() << " pushed back." << endl;
-		}
-		else if (token == "planckConstant") {
+		} else if (token == "planckConstant") {
 			inputfilestream >> h;
-		}
-		else if (token == "NVE") {
+		} else if (token == "NVE") {
 			_domain->thermostatOff();
-		}
-		else if (token == "initCanonical") {
+		} else if (token == "initCanonical") {
 			inputfilestream >> _initCanonical;
-		}
-		else if (token == "initGrandCanonical") {
+		} else if (token == "initGrandCanonical") {
 			inputfilestream >> _initGrandCanonical;
-		}
-		else if (token == "initStatistics") {
+		} else if (token == "initStatistics") {
 			inputfilestream >> _initStatistics;
 		} else {
 			global_log->warning() << "Did not process unknown token " << token << endl;
@@ -862,26 +840,19 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
 		double tmp_molecularMass = _domain->getComponents()[cpit->getComponentID()].m();
-		cpit->setSystem(
-		    _domain->getGlobalLength(0), _domain->getGlobalLength(1),
-		    _domain->getGlobalLength(2), tmp_molecularMass
-		);
-		cpit->setGlobalN(
-		    _domain->N(cpit->getComponentID())
-		);
+		cpit->setSystem(_domain->getGlobalLength(0), _domain->getGlobalLength(1), _domain->getGlobalLength(2),
+		        tmp_molecularMass);
+		cpit->setGlobalN(_domain->N(cpit->getComponentID()));
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
-		cpit->setSubdomain(
-		    ownrank,
-		    _moleculeContainer->getBoundingBoxMin(0), _moleculeContainer->getBoundingBoxMax(0),
-		    _moleculeContainer->getBoundingBoxMin(1), _moleculeContainer->getBoundingBoxMax(1),
-		    _moleculeContainer->getBoundingBoxMin(2), _moleculeContainer->getBoundingBoxMax(2)
-		);
+		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0), _moleculeContainer->getBoundingBoxMax(0),
+		        _moleculeContainer->getBoundingBoxMin(1), _moleculeContainer->getBoundingBoxMax(1),
+		        _moleculeContainer->getBoundingBoxMin(2), _moleculeContainer->getBoundingBoxMax(2));
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
-		                                            : _domain->getTargetTemperature(0);
+		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(
+		        0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 		cpit->submitTemperature(Tcur);
@@ -918,11 +889,8 @@ void Simulation::prepare_start() {
 		global_log->info() << "Initialising uniform acceleration." << endl;
 		unsigned long uCAT = _pressureGradient->getUCAT();
 		global_log->info() << "uCAT: " << uCAT << " steps." << endl;
-		_pressureGradient->determineAdditionalAcceleration(
-		    _domainDecomposition,
-		    _moleculeContainer,
-		    uCAT * _integrator->getTimestepLength()
-		);
+		_pressureGradient->determineAdditionalAcceleration(_domainDecomposition, _moleculeContainer, uCAT
+		        * _integrator->getTimestepLength());
 		global_log->info() << "Uniform acceleration initialised." << endl;
 	}
 
@@ -935,8 +903,8 @@ void Simulation::prepare_start() {
 		/* TODO: thermostat */
 		double Tcur = _domain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
-		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
-		                                            : _domain->getTargetTemperature(0);
+		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(
+		        0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 
@@ -970,6 +938,8 @@ void Simulation::prepare_start() {
 #endif
 
 	// activate RDF sampling
+	// FIXME this condition is not executed deterministically, as _initSimulation here
+	// is not initialized (it is initialized in function simulate()).
 	if ((this->_initSimulation > this->_initStatistics) && this->_doRecordRDF)
 		this->_domain->tickRDF();
 
@@ -994,22 +964,21 @@ void Simulation::simulate() {
 	ensemble.updateGlobalVariable(TEMPERATURE);
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;
 
-
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 	// all timers except the ioTimer messure inside the main loop
-  _loopTimer = new Timer;
-  _perStepIoTimer = new Timer;
-  _ioTimer = new Timer;
+	_loopTimer = new Timer;
+	_perStepIoTimer = new Timer;
+	_ioTimer = new Timer;
 
 	_initSimulation = (unsigned long) (_domain->getCurrentTime() / _integrator->getTimestepLength());
 
 #ifdef STEEREO
 #ifdef STEEREO_COUPLING
-  _simstep = _initSimulation;
-  //SteereoLogger::setOutputLevel (4);
-  _coupling->waitForConnection();
+	_simstep = _initSimulation;
+	//SteereoLogger::setOutputLevel (4);
+	_coupling->waitForConnection();
 #endif //STEEREO_COUPLING
 #endif
 
@@ -1031,8 +1000,8 @@ void Simulation::simulate() {
 
 #ifdef STEEREO
 #ifdef STEEREO_COUPLING
-    _steer -> processQueue (1);
-    global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
+		_steer -> processQueue (1);
+		global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
 #endif
 #endif
 		// activate RDF sampling
@@ -1053,8 +1022,8 @@ void Simulation::simulate() {
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					global_log->debug() << "Grand canonical ensemble(" << j
-					                    << "): test deletions and insertions" << endl;
+					global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
+					        << endl;
 					/* TODO: thermostat */
 					_moleculeContainer->grandcanonicalStep(&(*cpit), _domain->getGlobalCurrentTemperature());
 #ifndef NDEBUG
@@ -1064,10 +1033,9 @@ void Simulation::simulate() {
 
 					int localBalance = _moleculeContainer->localGrandcanonicalBalance();
 					int balance = _moleculeContainer->grandcanonicalBalance(_domainDecomposition);
-					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance
-					                    << "(" << ((localBalance > 0) ? "+" : "")
-					                    << localBalance << ")" << " / c = "
-					                    << cpit->getComponentID() << "]   " << endl;
+					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "(" << ((localBalance
+					        > 0) ? "+" : "") << localBalance << ")" << " / c = " << cpit->getComponentID() << "]   "
+					        << endl;
 					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
 				}
 
@@ -1088,9 +1056,8 @@ void Simulation::simulate() {
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
 				global_log->debug() << "Determine the additional acceleration" << endl;
-				_pressureGradient->determineAdditionalAcceleration(_domainDecomposition,
-				                                         _moleculeContainer,
-				                                         uCAT * _integrator->getTimestepLength());
+				_pressureGradient->determineAdditionalAcceleration(_domainDecomposition, _moleculeContainer, uCAT
+				        * _integrator->getTimestepLength());
 			}
 			global_log->debug() << "Process the uniform acceleration" << endl;
 			_integrator->accelerateUniformly(_moleculeContainer, _domain);
@@ -1122,10 +1089,8 @@ void Simulation::simulate() {
 
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
-		_domain->calculateGlobalValues(_domainDecomposition,
-		                               _moleculeContainer,
-		                               (!(_simstep % _collectThermostatDirectedVelocity)),
-		                               Tfactor(_simstep));
+		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, (!(_simstep
+		        % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
@@ -1137,18 +1102,15 @@ void Simulation::simulate() {
 						continue;
 					if (_domain->thermostatIsUndirected(thermostat)) {
 						/* TODO: thermostat */
-						tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
-						            _domain->getThermostatDirectedVelocity(thermostat, 0),
-						            _domain->getThermostatDirectedVelocity(thermostat, 1),
-						            _domain->getThermostatDirectedVelocity(thermostat, 2));
-					}
-					else {
+						tM->scale_v(_domain->getGlobalBetaTrans(thermostat), _domain->getThermostatDirectedVelocity(
+						        thermostat, 0), _domain->getThermostatDirectedVelocity(thermostat, 1),
+						        _domain->getThermostatDirectedVelocity(thermostat, 2));
+					} else {
 						tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
 					}
 					tM->scale_D(_domain->getGlobalBetaRot(thermostat));
 				}
-			}
-			else {
+			} else {
 				for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
 					tM->scale_v(_domain->getGlobalBetaTrans());
 					tM->scale_D(_domain->getGlobalBetaRot());
@@ -1183,7 +1145,6 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
-
 
 	_ioTimer->start();
 	string cpfile(_outputPrefix + ".restart.xdr");
@@ -1260,12 +1221,8 @@ void Simulation::output(unsigned long simstep) {
 	if (_domain->thermostatWarning())
 		global_log->warning() << "Thermostat!" << endl;
 	/* TODO: thermostat */
-	global_log->info()
-			<< "Simstep = " << simstep
-			<< "\tT = " << _domain->getGlobalCurrentTemperature()
-			<< "\tU_pot = " << _domain->getAverageGlobalUpot()
-			<< "\tp = " << _domain->getGlobalPressure()
-			<< endl;
+	global_log->info() << "Simstep = " << simstep << "\tT = " << _domain->getGlobalCurrentTemperature() << "\tU_pot = "
+	        << _domain->getAverageGlobalUpot() << "\tp = " << _domain->getGlobalPressure() << endl;
 }
 
 void Simulation::updateParticleContainerAndDecomposition() {
@@ -1283,16 +1240,19 @@ void Simulation::updateParticleContainerAndDecomposition() {
 /* FIXME: we shoud provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
 	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
-	if ((xi < 0.1) || (xi > 0.9)) return 1.0;
-	else if (xi < 0.3) return 15.0 * xi - 0.5;
-	else if (xi < 0.4) return 10.0 - 20.0 * xi;
-	else if (xi < 0.6) return 2.0;
-	else return 4 - 10.0 * xi / 3.0;
+	if ((xi < 0.1) || (xi > 0.9))
+		return 1.0;
+	else if (xi < 0.3)
+		return 15.0 * xi - 0.5;
+	else if (xi < 0.4)
+		return 10.0 - 20.0 * xi;
+	else if (xi < 0.6)
+		return 2.0;
+	else
+		return 4 - 10.0 * xi / 3.0;
 }
 
-
-void Simulation::initialize()
-{
+void Simulation::initialize() {
 	int ownrank = 0;
 #ifdef PARALLEL
 	MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
@@ -1300,12 +1260,12 @@ void Simulation::initialize()
 
 	global_simulation = this;
 
-	_domainDecomposition=NULL;
-	_domain=NULL;
-	_particlePairsHandler=NULL;
-	_moleculeContainer=NULL;
-	_integrator=NULL;
-	_inputReader=NULL;
+	_domainDecomposition = NULL;
+	_domain = NULL;
+	_particlePairsHandler = NULL;
+	_moleculeContainer = NULL;
+	_integrator = NULL;
+	_inputReader = NULL;
 
 #ifndef PARALLEL
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
@@ -1321,7 +1281,6 @@ void Simulation::initialize()
 	_numberOfTimesteps = 1;
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
-	_resultOutputTimesteps = 25;
 	_doRecordProfile = false;
 	_profileRecordingTimesteps = 7;
 	_profileOutputTimesteps = 12500;

@@ -22,7 +22,7 @@ class Domain;
 //! - BetaRot
 class ResultWriter : public OutputBase {
 public:
-	ResultWriter(std::string outputPrefix);
+	ResultWriter(unsigned long writeFrequency, std::string outputPrefix);
 	~ResultWriter();
 	//! @todo comment
 	void initOutput(ParticleContainer* particleContainer,
@@ -41,6 +41,7 @@ private:
 	//! prefix for the names of all output files
 	std::string _outputPrefix;
 	std::ofstream _resultStream;
+	unsigned long _writeFrequency;
 };
 
 #endif /*RESULTWRITER_H_*/

@@ -27,9 +27,10 @@
 
 using namespace std;
 
-ResultWriter::ResultWriter(string outputPrefix){
-	_outputPrefix = outputPrefix;
-}
+ResultWriter::ResultWriter(unsigned long writeFrequency, string outputPrefix)
+: _writeFrequency(writeFrequency),
+	_outputPrefix(outputPrefix)
+{ }
 
 ResultWriter::~ResultWriter(){}
 
@@ -51,7 +52,7 @@ void ResultWriter::doOutput( ParticleContainer* particleContainer,
 														 DomainDecompBase* domainDecomp, Domain* domain,
 			     unsigned long simstep, list<ChemicalPotential>* lmu ) 
 {
-	if(domainDecomp->getRank()==0){
+	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
 		_resultStream << simstep << "\t" << domain->getCurrentTime()
 		              << "\t\t" << domain->getAverageGlobalUpot() << "\t" << domain->getGlobalPressure()
 		              << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
