@@ -17,6 +17,8 @@ TESTS ?= 0
 
 VTK ?= 0
 
+LCOV?= 0
+
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
   $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
@@ -68,6 +70,14 @@ else
   DEPCOMP =
 endif
 
+ifeq ($(LCOV),1)
+  ifeq ($(TARGET),DEBUG)
+    $(info # Creating LCOV) 
+    CXXFLAGS += -fno-default-inline -fno-inline -fprofile-arcs -ftest-coverage
+    LINKFLAGS += -fprofile-arcs -ftest-coverage
+  endif
+endif
+
 VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)vtkwriter.mk ) 
 include $(VTK_MAKEFILE)
 
@@ -79,7 +89,7 @@ $(BINARY): .deps $(OBJECTS) cppunit
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: help all clean cleanall depend cfg_list cfg_help test
+.PHONY: help all clean cleanall depend cfg_list cfg_help test lcov
 
 help:
 	@echo "Current configuration: $(CFG_INFO)"
@@ -91,6 +101,7 @@ help:
 	@echo "make DEPS=0 | 1              compile using dependancy tracking"
 	@echo "make TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=0 | 1	            compile with or without the vtk output plugin" 
+	@echo "make LCOV=0 | 1              compile with support for lcov (code-coverage)"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
@@ -99,7 +110,8 @@ help:
 	@echo "make clean       delete object files"
 	@echo "make cleanall    delete object files and executable"
 	@echo "make depend      generate makefile dependency list"
-
+	@echo "make lcov        create code coverage information"
+	@echo "make lcov-clean  reset profile data"
 
 all: $(BINARY)
 
@@ -123,6 +135,9 @@ clean:
 	find -type f -name '*.o' -delete
 	find -path '*/.deps/*' -type f -delete
 	find -type d -name .deps -delete
+	find -type f -name '*.gcov' -delete
+	find -type f -name '*.gcda' -delete
+	find -type f -name '*.gcno' -delete
 
 clear: cleanall
 
@@ -130,6 +145,13 @@ cleanall: clean cppunit_clean
 	rm -f $(BINARY)
 	find -type f -name '*~' -delete
 	if [ -L $(BINARYbasename) ]; then rm -f $(BINARYbasename); fi
+
+lcov:
+	lcov --directory $(CURDIR) -b $(CURDIR) --capture --output-file Mardyn.info
+	genhtml --output-director $(CURDIR)/../lcov/ Mardyn.info
+
+lcov-clean:
+	 lcov --directory $(CURDIR) -b $(CURDIR) --zerocounters
 
 # create .deps subdirectories containing dependency information
 .deps:
