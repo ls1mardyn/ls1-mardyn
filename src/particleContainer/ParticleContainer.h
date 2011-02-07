@@ -149,6 +149,7 @@ public:
 
 	virtual Molecule* deleteCurrent() = 0;
 
+    /* TODO can we combine this with the update method? */
 	//! @brief delete all Particles which are not within the bounding box
 	virtual void deleteOuterParticles() = 0;
 
@@ -170,18 +171,27 @@ public:
 	virtual double getTersoffCutoff() = 0;
 	virtual void countParticles(Domain* d) = 0;
 
+    /* TODO: This goes into the component class */
 	//! @brief counts all particles inside the bounding box
 	virtual unsigned countParticles(int cid) = 0;
 
+    /* TODO: This goes into the component class */
 	//! @brief counts particles in the intersection of bounding box and control volume
 	virtual unsigned countParticles(int cid, double* cbottom, double* ctop) = 0;
 
+    /* TODO: Have a look on this */
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
+
+    /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(Molecule* m1) = 0;
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
 
+    /* TODO:
+     * extend for multiple potentials
+     * take care for pre- and postprocessing 
+     * */
 	//! @brief sets a new ParticlePairsHandler
 	void setPairHandler(ParticlePairsHandler* partPairHandler);
 
