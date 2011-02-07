@@ -17,8 +17,6 @@ TESTS ?= 0
 
 VTK ?= 0
 
-LCOV?= 0
-
 CURDIR ?= $(realpath $(PWD) )
 ifeq ($(findstring src,$(CURDIR)),)
   $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
@@ -70,14 +68,6 @@ else
   DEPCOMP =
 endif
 
-ifeq ($(LCOV),1)
-  ifeq ($(TARGET),DEBUG)
-    $(info # Creating LCOV) 
-    CXXFLAGS += -fno-default-inline -fno-inline -fprofile-arcs -ftest-coverage
-    LINKFLAGS += -fprofile-arcs -ftest-coverage
-  endif
-endif
-
 VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)vtkwriter.mk ) 
 include $(VTK_MAKEFILE)
 
@@ -96,12 +86,11 @@ help:
 	@echo
 	@echo "options:"
 	@echo "make CFG=...                 choose compiler (see make cfg_list)"
-	@echo "make PARTYPE=SEQ | PAR       sequential or parallel (MPI) build"
-	@echo "make TARGET=DEBUG | RELEASE  debugging / non optimized build"
+	@echo "make PARTYPE=SEQ | PAR       choose parallelization type (see cfg_help)"
+	@echo "make TARGET=DEBUG | RELEASE  choose target (see cfg_help)"
 	@echo "make DEPS=0 | 1              compile using dependancy tracking"
 	@echo "make TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=0 | 1	            compile with or without the vtk output plugin" 
-	@echo "make LCOV=0 | 1              compile with support for lcov (code-coverage)"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
