@@ -44,7 +44,7 @@ LinkedCells::LinkedCells(
 		ParticlePairsHandler* partPairsHandler
 )
 		: ParticleContainer(partPairsHandler, bBoxMin, bBoxMax),
-			_blockTraverse(this, _cells, _innerCellIndices, _boundaryCellIndices)
+			_blockTraverse(this, _cells, _innerCellIndices, _boundaryCellIndices, _haloCellIndices )
 {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;

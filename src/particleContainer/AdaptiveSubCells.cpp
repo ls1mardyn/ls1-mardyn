@@ -25,8 +25,8 @@ AdaptiveSubCells::AdaptiveSubCells(
 		ParticlePairsHandler* partPairsHandler
 )
 		: ParticleContainer(partPairsHandler, bBoxMin, bBoxMax),
-			_blockTraverse(this, _subCells, _innerSubCellIndices, _boundarySubCellIndices,
-			                     _forwardNeighbourSubOffsets, _backwardNeighbourSubOffsets)
+			_blockTraverse(this, _subCells, _innerSubCellIndices, _boundarySubCellIndices, _haloSubCellIndices,
+			                     _forwardNeighbourSubOffsets, _backwardNeighbourSubOffsets )
 {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;

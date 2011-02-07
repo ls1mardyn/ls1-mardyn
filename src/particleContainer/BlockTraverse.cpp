@@ -37,27 +37,36 @@ using Log::global_log;
 
 BlockTraverse::BlockTraverse(
 		ParticleContainer* moleculeContainer,
-		vector<Cell>& cells, vector<unsigned long>& innerCellIndices, vector<unsigned long>& boundaryCellIndices,
-		vector<vector<unsigned long> >& forwardNeighbourOffsets, vector<vector<unsigned long> >& backwardNeighbourOffsets
+		vector<Cell>& cells, 
+        vector<unsigned long>& innerCellIndices, 
+        vector<unsigned long>& boundaryCellIndices,
+        vector<unsigned long>& haloCellIndices,
+		vector<vector<unsigned long> >& forwardNeighbourOffsets,
+        vector<vector<unsigned long> >& backwardNeighbourOffsets
 )
 		: _moleculeContainer(moleculeContainer),
 			_particlePairsHandler(moleculeContainer->getPairHandler()),
 			_cells(cells),
 			_innerCellIndices(innerCellIndices),
 			_boundaryCellIndices(boundaryCellIndices),
+            _haloCellIndices(haloCellIndices),
 			_forwardNeighbourOffsets(&forwardNeighbourOffsets), _backwardNeighbourOffsets(&backwardNeighbourOffsets),
 			_allocatedOffsets(false) {
 }
 
 BlockTraverse::BlockTraverse(
 		ParticleContainer* moleculeContainer,
-		vector<Cell>& cells, vector<unsigned long>& innerCellIndices, vector<unsigned long>& boundaryCellIndices
+		vector<Cell>& cells, 
+        vector<unsigned long>& innerCellIndices, 
+        vector<unsigned long>& boundaryCellIndices, 
+        vector<unsigned long>& haloCellIndices
 )
 		: _moleculeContainer(moleculeContainer),
 			_particlePairsHandler(moleculeContainer->getPairHandler()),
 			_cells(cells),
 			_innerCellIndices(innerCellIndices),
 			_boundaryCellIndices(boundaryCellIndices),
+			_haloCellIndices(haloCellIndices),
 			_forwardNeighbourOffsets(0), _backwardNeighbourOffsets(0),
 			_allocatedOffsets(true)
 {
@@ -176,10 +185,9 @@ void BlockTraverse::traversePairs() {
 
 	// loop over halo cells and detect Tersoff neighbours within the halo
 	// this is relevant for the angle summation
-	for (unsigned long cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
-		Cell& currentCell = _cells[cellIndex];
-		if (!currentCell.isHaloCell())
-			continue;
+    for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
+        unsigned long cellIndex = *cellIndexIter;
+        Cell& currentCell = _cells[cellIndex];
 
 		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
 			Molecule& molecule1 = **molIter1;
