@@ -1,0 +1,28 @@
+# Portland compiler suite
+# http://www.pgroup.com
+# Version: 
+
+CFG_INFO = "pgi configuration"
+
+CXX_SEQ = pgCC
+CXX_PAR = mpicxx
+DEPMODE = none
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -g 
+LINKFLAGS_SEQ_DEBUG = -O0 -g
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES)  -O2 -DNDEBUG
+LINKFLAGS_SEQ_RELEASE =
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+# RELEASE
+CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE = -DPARALLEL
+

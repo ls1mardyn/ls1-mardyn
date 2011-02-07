@@ -1,0 +1,56 @@
+
+/** \page "Unit Tests"
+
+Currently, the project ls1/Mardyn uses the testing framework CppUnit for writing unit tests. 
+Following you find a short description on building Mardyn with CppUnit and executing the tests.
+
+For information on how to write unit tests within Mardyn see "Writing Unit Tests". 
+
+!!! Quick Instructions
+
+The simplest way to build Mardyn/ls1 with Unit Tests, is to use the makefile and the 
+cppunit-version contained in the subversion repository.
+
+Change to the directory "src/" and type
+
+\verbatim
+make -f ../makefile/Makefile TESTS=1
+\endverbatim
+
+Execute the tests with
+\verbatim
+./MarDyn -t
+\endverbatim
+
+
+!!! Building Mardyn with Unit Tests
+
+To build Mardyn with unit tests generally, the following conditions have to be met:
+- the macro UNIT_TESTS has to be defined when compiling Mardyn
+- the CppUnit header-files have to be in the include path
+- you have to link against the CppUnit-Library or the compiled source code
+
+If building without CppUnit, all source code in the  *\\test-directories cannot be
+compiled and linked, so it has to be excluded from the build. 
+
+!! Using the CppUnit-Source from the Mardyn-repository
+
+The simplest way is to use the makefile distributed, with the option TESTS=1. Then 
+the CppUnit source code which comes with the svn version is compiled and linked. Also all
+tests will be compiled and linked.
+
+!! Using a CppUnit Library
+
+If there is already a cppUnit library installed on your system, it might be convenient
+to use that one. Configure your build-system so that the conditions listed above 
+are met, or replace the file makefile/cppunit.mk.  
+
+!!! Running the unit tests
+
+After building Mardyn with unit tests, call Mardyn with the commandline arguments
+ "-t" or "--tests". The tests will then be executed. 
+ 
+\note In cases you use the cppunit source code from the Mardyn repository, also 
+the tests which test cppUnit itself will be executed.  
+
+*/
