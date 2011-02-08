@@ -957,8 +957,11 @@ void Domain::collectRDF(DomainDecompBase* dode)
 void Domain::outputRDF(const char* prefix, unsigned i, unsigned j)
 {
 	/* Output only from process with rank 0 */
-	if( 0 == _localRank ) 
+	if( _localRank != 0 )
 		return;
+
+	global_log->debug() << "outputRDF(): RDF_MINIMAL_OUTPUT_STEPS " << RDF_MINIMAL_OUTPUT_STEPS
+			<< " _universalRDFTimesteps" << _universalRDFTimesteps << endl;
 
 	/* FIXME: MINIMAL >= xyz ?! */
 	if(RDF_MINIMAL_OUTPUT_STEPS >= _universalRDFTimesteps) 

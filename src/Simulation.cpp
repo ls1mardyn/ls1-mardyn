@@ -862,6 +862,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		j++;
 	}
 
+	vector<Component>& dcomponents = _domain->getComponents();
+	_numberOfComponents = dcomponents.size();
 }
 
 void Simulation::prepare_start() {

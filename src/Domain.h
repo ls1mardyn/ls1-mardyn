@@ -29,7 +29,13 @@
  * TODO add comments for variables 
  */
 #define VERSION 20100321  /**< checkpoint file version */
-#define RDF_MINIMAL_OUTPUT_STEPS 1023
+
+/* I set this to 0 as I think we don't need one more counter.
+ * The existing fields (e.g. Simulation::_initStatistics) should offer enough
+ * flexibility...
+ * TODO: delete RDF_MINIMAL_OUTPUT_STEPS?!
+ * */
+#define RDF_MINIMAL_OUTPUT_STEPS 0
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
 

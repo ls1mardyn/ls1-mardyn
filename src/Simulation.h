@@ -347,6 +347,8 @@ private:
 	unsigned long _initStatistics;
 
 	// this should be obvious, right?
+	// Answer: It should be. However, I am missing the "undefined"
+	// in the name somehow...
 	unsigned _numberOfComponents;
 
 	//! Flow regulation
