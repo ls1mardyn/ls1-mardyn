@@ -84,7 +84,7 @@ include $(VTK_MAKEFILE)
 $(BINARY): .deps $(OBJECTS) cppunit
 	@echo "building $(BINARY)"
 	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
-	$(shell if [ ! -f $(BINARYbasename) -o -L $(BINARYbasename) ]; then ln -sf $(BINARY) $(BINARYbasename); fi)
+	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
 
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
@@ -143,7 +143,7 @@ clear: cleanall
 cleanall: clean cppunit_clean
 	rm -f $(BINARY)
 	find -type f -name '*~' -delete
-	if [ -L $(BINARYbasename) ]; then rm -f $(BINARYbasename); fi
+	if [ -L $(BINARY_BASENAME) ]; then rm -f $(BINARY_BASENAME); fi
 
 lcov:
 	lcov --directory $(CURDIR) -b $(CURDIR) --capture --output-file Mardyn.info
