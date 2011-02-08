@@ -305,7 +305,7 @@ void BlockTraverse::traversePairs() {
 	global_log->debug() << "processing Tersoff potential." << endl;
 #endif
 	double params[15];
-	double delta_r;
+	double delta_r = 0.;
 	bool knowparams = false;
 
 	for (cellIndexIter = _innerCellIndices.begin(); cellIndexIter != _boundaryCellIndices.end(); cellIndexIter++) {
