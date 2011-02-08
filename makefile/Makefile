@@ -1,12 +1,27 @@
+# Find out the base directory
+MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
+.PHONY: default
+default: all
+
+# Check current directory
+CURDIR ?= $(realpath $(PWD) )
+ifeq ($(findstring src,$(CURDIR)),)
+  $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
+endif
+
 # compiler configuration
-# show list of all available configurations with make cfg_list
+# Show list of all available configurations with make cfg_list
 CFG ?= gcc
 
-# machine type: SEQ or PAR
+# parallelization type
+# Show list of all available parallelization types for the current config with cfg_help
+# Each config should at least provide the two parallelization types SEQ and PAR
 PARTYPE ?= SEQ
 
-# choose target: DEBUG|RELEASE
-# some configurations have additional targets, see the respective configuration files for details
+# choose target
+# Show list of all available targets for the current config with cfg_help
+# Each config should at least provide the two targets RELEASE and DEBUG.
 TARGET ?= RELEASE
 
 # compile using depmode?
@@ -15,15 +30,10 @@ DEPS ?= 0
 #build unit tests?
 TESTS ?= 0
 
+# build with VTK support
 VTK ?= 0
 
-CURDIR ?= $(realpath $(PWD) )
-ifeq ($(findstring src,$(CURDIR)),)
-  $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
-endif
-
 #build name and include config file
-MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
 ifneq ($(CFGFILE),)
@@ -34,9 +44,9 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "/tests/" | grep -v "/vtk/")
-SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -v "/tests/" | grep -v "/vtk/")
-SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -v "Dummy" | grep -v "/tests/" | grep -v "/vtk/")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/)")
+SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -E -v "(/tests/|/vtk/)")
+SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(Dummy|/tests/|/vtk/)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 
 
 
@@ -45,22 +55,22 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(CURDIR) -I$(CURDIR)/External $(CPPUNIT_INCLUDES)
 
 
-BINARYbasename = MarDyn
+BINARY_BASENAME = MarDyn
 ifneq ($(realpath .svn),)
   $(info Building from a svn version.)
-  svnVERSION = $(shell svnversion | sed -e "s/:/-/")
-  ifneq ($(svnVERSION),)
-    BINARY = $(BINARYbasename)_$(svnVERSION).$(PARTYPE)_$(TARGET)
+  SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
+  ifneq ($(SVN_VERSION),)
+    BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)
   else
-    BINARY = $(BINARYbasename).$(PARTYPE)_$(TARGET)
+    BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)
   endif
 else
-  BINARY = $(BINARYbasename).$(PARTYPE)_$(TARGET)
+  BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)
 endif
 
 CXX = $(CXX_$(PARTYPE))
 CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK 
-LINKFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) $(CPPUNIT_LINK_ARGS) -lrt 
+LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET))
 
 ifeq ($(DEPS),1)
   DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
@@ -73,7 +83,7 @@ include $(VTK_MAKEFILE)
 
 $(BINARY): .deps $(OBJECTS) cppunit
 	@echo "building $(BINARY)"
-	$(CXX) $(LINKFLAGS) -o $@ $(OBJECTS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
 	$(shell if [ ! -f $(BINARYbasename) -o -L $(BINARYbasename) ]; then ln -sf $(BINARY) $(BINARYbasename); fi)
 
 %.o: %.cpp
