@@ -39,9 +39,9 @@ public:
 
 private:
 	//! prefix for the names of all output files
-	std::string _outputPrefix;
 	std::ofstream _resultStream;
 	unsigned long _writeFrequency;
+	std::string _outputPrefix;
 };
 
 #endif /*RESULTWRITER_H_*/
