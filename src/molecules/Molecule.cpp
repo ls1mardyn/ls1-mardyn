@@ -312,7 +312,7 @@ double Molecule::tersoffParameters(double params[15]) //returns delta_r
 	params[ 7] = t->minusMu();
 	params[ 8] = t->beta();
 	params[ 9] = t->n();
-	params[10] = 3.141592653589 / (t->S() - t->R());
+	params[10] = M_PI / (t->S() - t->R());
 	params[11] = 1.0 + t->cSquare() / t->dSquare();
 	params[12] = t->S() * t->S();
 	params[13] = -(t->B());

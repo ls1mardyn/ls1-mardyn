@@ -13,7 +13,7 @@
 using namespace std;
 
 DropletGenerator::DropletGenerator(double fluidVolume, double maxSphereVolume, int numSphereSizes)
- : _fluidVolume(fluidVolume / 100.), _maxSphereRadius(pow((3.0*maxSphereVolume / 100.)/(4.0*3.14159), 1.0/3.0)),
+ : _fluidVolume(fluidVolume / 100.), _maxSphereRadius(pow((3.0*maxSphereVolume / 100.)/(4.0 * M_PI), 1.0/3.0)),
    _numSphereSizes(numSphereSizes), _numOccupied(0)
 {
 	initFields(SIZE);
