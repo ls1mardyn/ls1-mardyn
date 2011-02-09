@@ -248,7 +248,6 @@ unsigned LinkedCells::countParticles(int cid, double* cbottom, double* ctop) {
 
 	unsigned N = 0;
 	int cix[3];
-	vector<Cell>::iterator cellIter;
 	std::list<Molecule*>::iterator molIter1;
 	bool individualCheck;
 	int cellid;

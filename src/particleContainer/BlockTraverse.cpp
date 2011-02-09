@@ -100,7 +100,6 @@ void BlockTraverse::traversePairs() {
 	// XXX comment
 	double distanceVector[3];
 	// loop over all cells
-	vector<Cell>::iterator cellIter;
 	list<Molecule*>::iterator molIter1;
 	list<Molecule*>::iterator molIter2;
 

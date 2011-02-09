@@ -242,7 +242,6 @@ void AdaptiveSubCells::addParticle(Molecule& particle) {
 }
 
 void AdaptiveSubCells::countParticles(Domain* d) {
-	vector<Cell>::iterator cellIter;
 	std::list<Molecule*>::iterator molIter1;
 
 	for (unsigned i = 0; i < _cells.size(); i++) {
@@ -258,7 +257,6 @@ void AdaptiveSubCells::countParticles(Domain* d) {
 
 unsigned AdaptiveSubCells::countParticles(int cid) {
 	unsigned N = 0;
-	vector<Cell>::iterator cellIter;
 	std::list<Molecule*>::iterator molIter1;
 
 	for (unsigned long i = 0; i < _cells.size(); i++) {
@@ -291,7 +289,6 @@ unsigned AdaptiveSubCells::countParticles(int cid, double* cbottom, double* ctop
 
 	unsigned N = 0;
 	int cix[3];
-	vector<Cell>::iterator cellIter;
 	std::list<Molecule*>::iterator molIter1;
 	bool individualCheck;
 	int cellid;
@@ -360,7 +357,6 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 
 	unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
 	Cell& currentSubCell = _subCells[subCellIndex];
-	vector<unsigned long>::iterator subCellIndexIter;
 	vector<unsigned long>::iterator neighbourSubOffsetsIter;
 
 	if (m1->numTersoff() > 0) {
