@@ -27,8 +27,8 @@ TARGET ?= RELEASE
 # compile using depmode?
 DEPS ?= 0
 
-#build unit tests?
-TESTS ?= 0
+# build unit tests?
+UNIT_TESTS ?= 0
 
 # build with VTK support
 VTK ?= 0
@@ -51,9 +51,7 @@ SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
 
 
 OBJECTS = $(SOURCES:.cpp=.o)
-
-INCLUDES = -I$(CURDIR) -I$(CURDIR)/External $(CPPUNIT_INCLUDES)
-
+INCLUDES = -I$(CURDIR) -I$(CURDIR)/External
 
 BINARY_BASENAME = MarDyn
 ifneq ($(realpath .svn),)
@@ -72,16 +70,26 @@ CXX = $(CXX_$(PARTYPE))
 CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK 
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET))
 
+# additional setup for unit tests
+ifneq ($(UNIT_TESTS),0)
+  CPPUNIT_MAKE_INCLUDE=$(realpath $(MAKEFILEDIR)/cppunit.mk )
+  include $(CPPUNIT_MAKE_INCLUDE)
+endif
+
+
 ifeq ($(DEPS),1)
   DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
 else
   DEPCOMP =
 endif
 
-VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)vtkwriter.mk ) 
-include $(VTK_MAKEFILE)
 
-$(BINARY): .deps $(OBJECTS) cppunit
+ifeq ($(VTK), 1)
+  VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk ) 
+  include $(VTK_MAKEFILE)
+endif
+
+$(BINARY): .deps $(OBJECTS)
 	@echo "building $(BINARY)"
 	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
 	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
@@ -89,7 +97,7 @@ $(BINARY): .deps $(OBJECTS) cppunit
 %.o: %.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -c $< -o $@
 
-.PHONY: help all clean cleanall depend cfg_list cfg_help test lcov
+.PHONY: help all clean cleanall depend cfg_list cfg_help lcov
 
 help:
 	@echo "Current configuration: $(CFG_INFO)"
@@ -99,7 +107,7 @@ help:
 	@echo "make PARTYPE=SEQ | PAR       choose parallelization type (see cfg_help)"
 	@echo "make TARGET=DEBUG | RELEASE  choose target (see cfg_help)"
 	@echo "make DEPS=0 | 1              compile using dependancy tracking"
-	@echo "make TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make UNIT_TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=0 | 1	            compile with or without the vtk output plugin" 
 	@echo
 	@echo "targets:"
@@ -110,12 +118,10 @@ help:
 	@echo "make cleanall    delete object files and executable"
 	@echo "make depend      generate makefile dependency list"
 	@echo "make lcov        create code coverage information"
-	@echo "make lcov-clean  reset profile data"
+	@echo "make lcov_clean  reset profile data"
 
 all: $(BINARY)
 
-test: 
-	./$(BINARY) -t
 
 #list available configurations
 cfg_list:
@@ -140,7 +146,7 @@ clean:
 
 clear: cleanall
 
-cleanall: clean cppunit_clean
+cleanall: clean
 	rm -f $(BINARY)
 	find -type f -name '*~' -delete
 	if [ -L $(BINARY_BASENAME) ]; then rm -f $(BINARY_BASENAME); fi
@@ -149,7 +155,7 @@ lcov:
 	lcov --directory $(CURDIR) -b $(CURDIR) --capture --output-file Mardyn.info
 	genhtml --output-director $(CURDIR)/../lcov/ Mardyn.info
 
-lcov-clean:
+lcov_clean:
 	 lcov --directory $(CURDIR) -b $(CURDIR) --zerocounters
 
 # create .deps subdirectories containing dependency information
@@ -160,8 +166,3 @@ endif
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
-  
-#include makefile for cppunit tests
-CPPUNIT_MAKEFILE := $(realpath $(MAKEFILEDIR)cppunit.mk )
-include $(CPPUNIT_MAKEFILE)
-

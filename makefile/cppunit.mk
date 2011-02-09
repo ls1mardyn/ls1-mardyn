@@ -1,22 +1,13 @@
+$(info # Including cppunit.mk!)
 
-# this makefile builds the artefacts neccessary for mardyn to link against cppunit
-# only variables used outside are CPPUNIT_INCLUDES and CPPUNIT_LINK_ARGS so far
+# directory with the cppunit header files
+#CPPUNIT_INC_DIR=/usr/include
+#CXXFLAGS += -I$(CPPUNIT_INC_DIR)
 
-#targets used outside are cppunit and cppunit_clean
+# directory including the cppunit library
+#CPPUNIT_LIB_DIR=/usr/lib64
+#LDFLAGS += -L$(CPPUNIT_LIB_DIR)
 
-$(info included cppunit.mk!)
-
-ifeq ($(TESTS), 1)
-
-# sources of cppUnit
-CPPUNIT_SOURCES = $(shell find ../dependencies-external/cppunit-1.12.1/src -name "*.cpp") $(shell find ../dependencies-external/cppunit-1.12.1/examples -name "*.cpp")
-
-CPPUNIT_OBJECTS = $(CPPUNIT_SOURCES:.cpp=.o)
-
-# if you want to use a cppunit-library which is already installed on your system,
-# replace the following two lines to point to your installation and set CPPUNIT_OBJECTS empty
-CPPUNIT_INCLUDES = -I../dependencies-external/cppunit-1.12.1/include
-CPPUNIT_LINK_ARGS = $(CPPUNIT_OBJECTS) -ldl
 
 # tests in "/parallel" are not consicered at the moment
 CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
@@ -24,20 +15,12 @@ ifeq ($(VTK), 1)
 CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep "vtk/tests/")
 endif
 
-SOURCES += $(CPPUNIT_TESTS)
 CXXFLAGS += -DUNIT_TESTS
-CPPUNIT_TESTS_OBJECTS = $(CPPUNIT_TESTS:.cpp=.o)
+LDFLAGS  += -ldl -lcppunit
+SOURCES += $(CPPUNIT_TESTS)
 
-cppunit: $(CPPUNIT_OBJECTS) $(CPPUNIT_TESTS_OBJECTS)
 
-cppunit_clean:
-	find ../dependencies-external/cppunit-1.12.1/src/ -type f -name '*.o' -delete
-	find ../dependencies-external/cppunit-1.12.1/examples/ -type f -name '*.o' -delete
-
-else
-cppunit:
-cppunit_clean:
-endif
+.PHONY: test
 	
-.PHONY: cppunit cppunit_clean
-	
+test: $(BINARY)
+	./$(BINARY) -t
