@@ -152,7 +152,7 @@ XMLfileUnits::ValueUnit XMLfileUnits::ValueUnit::normalized() const
 	//if(i>0) --i;
 	//new_q0=prefixquantifiers[i];
 	short int q0diff = m_Q[0]-new_q0;
-	double new_v = m_value*pow(10,q0diff);
+	double new_v = m_value*pow(10., q0diff);
 	XMLfileUnits::ValueUnit new_vu(*this);
 	new_vu.m_value = new_v;
 	new_vu.m_Q[0] = new_q0;
@@ -179,7 +179,7 @@ void XMLfileUnits::ValueUnit::print(ostream& ostrm,bool simplify) const
 			}
 			if(i>0) --i;
 			q0=m_Q[0]-prefixquantifiers[i];
-			v=m_value*pow(10,q0);
+			v=m_value*pow(10., q0);
 			ostrm << v << " " << string(prefixsymbols[i]) << string(unittypesymbols[ut]);
 			return;
 		}
@@ -188,7 +188,7 @@ void XMLfileUnits::ValueUnit::print(ostream& ostrm,bool simplify) const
 	// g -> kg
 	if(m_Q[2]>0) q0-=3*m_Q[2];
 	else if(m_Q[2]<0) q0+=3*m_Q[2];
-	if(q0) v*=pow(10,q0);
+	if(q0) v*=pow(10., q0);
 	ostrm << v;
 	if(m_Q[1])
 	{
