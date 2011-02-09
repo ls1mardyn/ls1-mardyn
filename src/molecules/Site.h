@@ -23,96 +23,108 @@
 #include <iostream>
 #include <cmath>
 
+
 /** Site
- @author Martin Bernreuther et al. (2009)
+ *
+ * Sites are the center of a interactions. Depending on the interaction type
+ * there are specialised derived classes of this basic site class.
+ *
+ * @author Martin Bernreuther et al. (2009)
  */
 class Site {
 public:
-	/// get x-coordinate of position
-	double rx() const { return _r[0]; }
-	/// get y-coordinate of position
-	double ry() const { return _r[1]; }
-	/// get z-coordinate of position
-	double rz() const { return _r[2]; }
-	/// get position vector
-	const double* r() const { return _r; }
-	/// get mass
-	double m() const { return _m; }
+	double rx() const { return _r[0]; }  /**< get x-coordinate of position vector */
+	double ry() const { return _r[1]; }  /**< get y-coordinate of position vector */
+	double rz() const { return _r[2]; }  /**< get z-coordinate of position vector */
+	const double* r() const { return _r; }  /**< get position vector */
+	double m() const { return _m; }         /**< get mass */
+
+    /* TODO: The following function is nowhere used in the code */
 	/// translate coordinates to new origin
 	void translateOrigin(double neworigin[3]) {
-		for (unsigned short d = 0; d < 3; ++d)
+		for (int d = 0; d < 3; d++)
 			_r[d] -= neworigin[d];
 	}
 
 protected:
 	/// Constructor
-	Site(double x = 0., double y = 0., double z = 0., double m = 0.)
-			: _m(m) {
-		_r[0] = x;
-		_r[1] = y;
-		_r[2] = z;
-	}
+    Site(double x = 0., double y = 0., double z = 0., double m = 0.)
+        : _m(m) {
+            _r[0] = x;
+            _r[1] = y;
+            _r[2] = z;
+        }
 
-	//private:
-	double _r[3]; // position coordinates
-	double _m; // mass
+	double _r[3]; /**< position coordinates */
+	double _m;    /**< mass */
 };
 
 
-/** LJcenter
- Lennard-Jones 12-6 center
- @author Martin Bernreuther et al.
+/** Lennard-Jones 12-6 center
+ * @author Martin Bernreuther et al.
+ *
+ * Lennard-Jones 12-6 interaction site. The potential between two LJ centers of the same type is 
+ * given by 
+ *
+ * \f$[
+ *  U_\text{LJ} = \epsilon \left[ \left(\frac{r}{\sigma}\right)^{6} - \left(\frac{r}{\sigma}\right)^{12} \right]
+ * \f]
+ *
+ * where $r$ is the distance between the two LJ centers. See potforce.h for the detailed implementation.
  */
 class LJcenter : public Site {
 public:
-	/// Constructor: pass shift = 0.0 for the full LJ potential
+	/** Constructor
+     *
+     * \param[in] x        relative x coordinate
+     * \param[in] y        relative y coordinate
+     * \param[in] z        relative z coordinate
+     * \param[in] m        m mass    
+     * \param[in] epsilon  interaction strength
+     * \param[in] sigma    interaction diameter
+     * \param[in] rc       cutoff radius
+     * \param[in] shift    0. for full LJ potential
+     */
 	LJcenter(double x, double y, double z, double m, double eps, double sigma, double rc, double shift)
-			: Site(x, y, z, m), _eps(eps), _sigma(sigma), _rc(rc) {
-		_r[0] = x;
-		_r[1] = y;
-		_r[2] = z;
-		_uLJshift6 = shift;
-	}
+			: Site(x, y, z, m), _eps(eps), _sigma(sigma), _rc(rc), _uLJshift6(shift) { }
+
 	/// Constructor reading from stream
 	LJcenter(std::istream& istrm) {
 		istrm >> _r[0] >> _r[1] >> _r[2] >> _m >> _eps >> _sigma >> _uLJshift6;
 	}
+
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << "\t" << _eps << " " << _sigma << " " << _rc << " " << _uLJshift6;
 	}
-	/// get strength
-	double eps() const { return _eps; }
-	/// get diameter
-	double sigma() const { return _sigma; }
-	/// get truncation option
-	bool TRUNCATED_SHIFTED() {
-		return (this->_uLJshift6 != 0.0);
-	}
-	double shift6() const {
-		return this->_uLJshift6;
-	}
+    /* TODO rename to epsilon */
+	double eps() const { return _eps; }     /**< get interaction strength */
+	double sigma() const { return _sigma; } /**< get interaction diameter */
+
+    /* TODO: The following method is never used */
+	bool TRUNCATED_SHIFTED() { return (_uLJshift6 != 0.0); } /**< get truncation option */
+
+	double shift6() const { return _uLJshift6; }             /**< get energy shift of interaction potential */
 
 private:
-	double _eps; // strength
-	double _sigma; // diameter
+	double _eps;    /**< interaction strength */
+	double _sigma;  /**< interaction diameter */
+
   // cutoff radius
   // it seems to me as if this is not the cutoff-radius which is used for the linked cells,
   // but a molecule specific one to determine the cutoff correction
   // TODO why may they be different!!!???
-	double _rc;
-	double _uLJshift6; // truncation offset of the LJ potential
+	double _rc;     /**< cutoff radius */
+	double _uLJshift6; /**< truncation offset of the LJ potential */
 };
 
+/** Charge center
+ */
 class Charge : public Site {
 public:
 	/// Constructor
 	Charge(double x, double y, double z, double m, double q)
-			: Site(x, y, z, m), _q(q) {
-		_r[0] = x; _r[1] = y; _r[2] = z;
-		_m = m;
-		_q = q;
-	}
+			: Site(x, y, z, m), _q(q) { }
 
 	/// Constructor reading from stream
 	Charge(std::istream& istrm) {
@@ -123,40 +135,26 @@ public:
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << " " << _q;
 	}
 	/// get charge
-	double q() const { return _q; }
+	double q() const { return _q; } /**< get charge */
 
 private:
-	/// charge
-	double _q;
+	double _q;  /**< charge */
 };
 
+
+
+/** Tersoff center
+ *
+ * TODO: Document the potential, in particular the parameters
+ */
 class Tersoff : public Site {
 public:
 	Tersoff(double x, double y, double z,
 	        double m, double A, double B,
 	        double lambda, double mu, double R, double S,
 	        double c, double d, double h, double n, double beta)
-		: Site(x, y, z, m)
-	{
-		this->_r[0] = x;
-		this->_r[1] = y;
-		this->_r[2] = z;
-
-		this->_m = m;
-		this->_A = A;
-		this->_B = B;
-
-		this->_minus_lambda = -lambda;
-		this->_minus_mu = -mu;
-		this->_R = R;
-		this->_S = S;
-
-		this->_c_square = c*c;
-		this->_d_square = d*d;
-		this->_h = h;
-		this->_n = n;
-		this->_beta = beta;
-	}
+		: Site(x, y, z, m), _A(A), _B(B), _minus_lambda(-lambda), _minus_mu(-mu), _R(R), _S(S),
+        _c_square(c*c), _d_square(d*d), _h(h),_n(n), _beta(beta) {}
 
 	/// Constructor reading from stream
 	Tersoff(std::istream& istrm) {
@@ -180,79 +178,38 @@ public:
 		      << sqrt(_d_square) << "\t" << _h << " " << _n << " " << _beta;
 	}
 
-	//! @brief get repulsive coefficient
-	//!
-	double A() const { return this->_A; }
+	double A() const { return _A; }  /**< get repulsive coefficient */
+	double B() const { return _B; }  /**< get attractive coefficient */
+	double minusLambda() const { return _minus_lambda; }  /**< get repulsive coexponent */
+	double minusMu() const { return _minus_mu; }  /**< get attractive coexponent */
 
-	//! @brief get attractive coefficient
-	//!
-	double B() const { return this->_B; }
+	double R() const { return _R; }  /**< get internal radius */
+	double S() const { return _S; }  /**< get external radius */
 
-	//! @brief get repulsive coexponent
-	//!
-	double minusLambda() const { return this->_minus_lambda; }
-
-	//! @brief get attractive coexponent
-	//!
-	double minusMu() const { return this->_minus_mu; }
-
-	//! @brief get internal radius
-	//!
-	double R() const { return this->_R; }
-
-	//! @brief get external radius
-	//!
-	double S() const { return this->_S; }
-
-	//! @brief get c square Tersoff interaction parameter
-	//!
-	double cSquare() const { return this->_c_square; }
-
-	//! @brief get d square Tersoff interaction parameter
-	//!
-	double dSquare() const { return this->_d_square; }
-
-	//! @brief get h Tersoff interaction parameter
-	//!
-	double h() const { return this->_h; }
-
-	//! @brief get n Tersoff interaction parameter
-	//!
-	double n() const { return this->_n; }
-
-	//! @brief get beta Tersoff interaction parameter
-	//!
-	double beta() const { return this->_beta; }
+	double cSquare() const { return _c_square; }  /**< get c square Tersoff interaction parameter */
+	double dSquare() const { return _d_square; }  /**< get d square Tersoff interaction parameter */
+	double h() const { return _h; }  /**< get h Tersoff interaction parameter */
+	double n() const { return _n; }  /**< get n Tersoff interaction parameter */
+	double beta() const { return _beta; }  /**< get beta Tersoff interaction parameter */
 
 private:
-	//! repulsive coefficient
-	double _A;
-	//! attractive coefficient
-	double _B;
-	//! repulsive coexponent
-	double _minus_lambda;
-	//! attractive coexponent
-	double _minus_mu;
+	double _A;  /**< repulsive coefficient */
+	double _B;  /**< attractive coefficient */
+	double _minus_lambda;  /**< repulsive coexponent */
+	double _minus_mu;      /**< attractive coexponent */
 
-	//! internal radius
-	double _R;
-	//! external radius
-	double _S;
+	double _R;  /**< internal radius */
+	double _S;  /**< external radius */
 
-	//! c square Tersoff interaction parameter
-	double _c_square;
-	//! d square Tersoff interaction parameter
-	double _d_square;
-	//! h Tersoff interaction parameter
-	double _h;
-	//! n Tersoff interaction parameter
-	double _n;
-	//! beta Tersoff interaction parameter
-	double _beta;
+	double _c_square;  /**< c square Tersoff interaction parameter */
+	double _d_square;  /**< d square Tersoff interaction parameter */
+	double _h;  /**< h Tersoff interaction parameter */
+	double _n;  /**< n Tersoff interaction parameter */
+	double _beta;  /**< beta Tersoff interaction parameter */
 };
 
 /** OrientedSite
- @author Martin Bernreuther
+ * @author Martin Bernreuther
  */
 class OrientedSite : public Site {
 public:
@@ -270,13 +227,12 @@ protected:
 		_e[2] = ez;
 	}
 
-	//private:
 	double _e[3];
 };
 
 
 /** Dipole
- @author Martin Bernreuther
+ * @author Martin Bernreuther
  */
 class Dipole : public OrientedSite {
 public:
@@ -300,7 +256,7 @@ private:
 };
 
 /** Quadrupole
- @author Martin Bernreuther
+ * @author Martin Bernreuther
  */
 class Quadrupole : public OrientedSite {
 public:
@@ -323,4 +279,4 @@ private:
 	double _absQ;
 };
 
-#endif /*SITE_H_*/
+#endif  /* SITE_H_ */
