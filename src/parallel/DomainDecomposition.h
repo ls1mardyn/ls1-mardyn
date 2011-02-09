@@ -122,9 +122,7 @@ public:
 	int getNumProcs();
 
 	// documentation see father class (DomainDecompBase.h)
-	void barrier() {
-		MPI_Barrier(_comm);
-	}
+	void barrier() { MPI_CHECK( MPI_Barrier(_comm) ); }
 
 	// documentation see father class (DomainDecompBase.h)
 	double getTime();

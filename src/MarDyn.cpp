@@ -59,7 +59,7 @@ int main(int argc, char** argv) {
 	global_log->info() << "Execution host: " << info_str << endl;
 #ifdef PARALLEL
 	int world_size = 1;
-	MPI_Comm_size( MPI_COMM_WORLD, &world_size );
+	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );
 	global_log->info() << "Running with " << world_size << " processes." << endl;
 #endif
 

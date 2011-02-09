@@ -152,7 +152,7 @@ class KDDecomposition: public DomainDecompBase{
 	int getNumProcs(){ return _numProcs;}
 
 	// documentation see father class (DomainDecompBase.h)
-	void barrier() {MPI_Barrier(MPI_COMM_WORLD);}
+	void barrier() { MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) ); }
 
 	// documentation see father class (DomainDecompBase.h)
 	double getTime() { return MPI_Wtime(); };

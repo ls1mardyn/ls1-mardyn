@@ -17,8 +17,8 @@ using namespace std;
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, double beta)
 		: _steps(0), _frequency(10), _alpha(alpha), _beta(beta) {
 
-	MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank);
-	MPI_Comm_size(MPI_COMM_WORLD, &_numProcs);
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank) );
+	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
 
 	int lowCorner[KDDIM];
 	int highCorner[KDDIM];
@@ -297,7 +297,7 @@ unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContain
 	}
 	int numMolecules = 0;
 	for (int i = 0; i < (int) localCompCount.size(); i++) {
-		MPI_Allreduce(&localCompCount[i], &compCount[i], 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+		MPI_CHECK( MPI_Allreduce(&localCompCount[i], &compCount[i], 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) );
 		numMolecules += compCount[i];
 	}
 	return numMolecules;
@@ -363,9 +363,9 @@ void KDDecomposition::writeMoleculesToFile(string filename, ParticleContainer* m
 
 unsigned KDDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
 	int num_procs;
-	MPI_Comm_size(this->_collComm.getTopology(), &num_procs);
+	MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
 	unsigned* moldistribution = new unsigned[num_procs];
-	MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, this->_collComm.getTopology());
+	MPI_CHECK( MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, this->_collComm.getTopology()) );
 	unsigned globalN = 0;
 	for (int r = 0; r < this->_ownRank; r++)
 		globalN += moldistribution[r];
@@ -382,15 +382,15 @@ unsigned KDDecomposition::Ndistribution(unsigned localN, float* minrnd, float* m
 
 void KDDecomposition::assertIntIdentity(int IX) {
 	if (this->_ownRank) {
-		MPI_Send(&IX, 1, MPI_INT, 0, 2 * _ownRank + 17, this->_collComm.getTopology());
+		MPI_CHECK( MPI_Send(&IX, 1, MPI_INT, 0, 2 * _ownRank + 17, this->_collComm.getTopology()) );
 	}
 	else {
 		int recv;
 		int num_procs;
-		MPI_Comm_size(this->_collComm.getTopology(), &num_procs);
+		MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
 		MPI_Status s;
 		for (int i = 1; i < num_procs; i++) {
-			MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, this->_collComm.getTopology(), &s);
+			MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, this->_collComm.getTopology(), &s) );
 			if (recv != IX) {
 				cout << "SEVERE ERROR: IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
 				MPI_Abort(MPI_COMM_WORLD, 911);
@@ -406,10 +406,10 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 		int tid;
 		for (m = mm->begin(); m != mm->end(); m = mm->next()) {
 			tid = m->id();
-			MPI_Send(&tid, 1, MPI_INT, 0, 2674 + _ownRank, this->_collComm.getTopology());
+			MPI_CHECK( MPI_Send(&tid, 1, MPI_INT, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
 		}
 		tid = -1;
-		MPI_Send(&tid, 1, MPI_INT, 0, 2674 + _ownRank, this->_collComm.getTopology());
+		MPI_CHECK( MPI_Send(&tid, 1, MPI_INT, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
 	}
 	else {
 		int recv;
@@ -419,12 +419,12 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 		}
 
 		int num_procs;
-		MPI_Comm_size(this->_collComm.getTopology(), &num_procs);
+		MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
 		MPI_Status s;
 		for (int i = 1; i < num_procs; i++) {
 			bool cc = true;
 			while (cc) {
-				MPI_Recv(&recv, 1, MPI_INT, i, 2674 + i, this->_collComm.getTopology(), &s);
+				MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2674 + i, this->_collComm.getTopology(), &s) );
 				if (recv == -1)
 					cc = false;
 				else {
@@ -530,18 +530,18 @@ void KDDecomposition::exchangeNumToSend(vector<int>& procsToSendTo, vector<int>&
 	// initiate recv calls
 	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
 		if (procsToRecvFrom[neighbCount] == _ownRank) continue; // don't exchange data with the own process
-		MPI_Irecv(&numMolsToRecv[neighbCount], 1, MPI_INT, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]);
+		MPI_CHECK( MPI_Irecv(&numMolsToRecv[neighbCount], 1, MPI_INT, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]) );
 	}
 
 	// send all numbers
 	for (int neighbCount = 0; neighbCount < (int) procsToSendTo.size(); neighbCount++) {
 		if (procsToSendTo[neighbCount] == _ownRank) continue; // don't exchange data with the own process
-		MPI_Send(&numMolsToSend[neighbCount], 1, MPI_INT, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD);
+		MPI_CHECK( MPI_Send(&numMolsToSend[neighbCount], 1, MPI_INT, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD) );
 	}
 	// wait for the completion of all recv calls
 	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
 		if (procsToRecvFrom[neighbCount] == _ownRank) continue; // don't exchange data with the own process
-		MPI_Wait(&request[neighbCount], &status);
+		MPI_CHECK( MPI_Wait(&request[neighbCount], &status) );
 	}
 }
 
@@ -557,17 +557,17 @@ void KDDecomposition::transferMolData(vector<int>& procsToSendTo, vector<int>& p
 	// initiate recv calls
 	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
 		if (procsToRecvFrom[neighbCount] == _ownRank) continue; // don't exchange data with the own process
-		MPI_Irecv(particlesRecvBufs[neighbCount], numMolsToRecv[neighbCount], sendPartType, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]);
+		MPI_CHECK( MPI_Irecv(particlesRecvBufs[neighbCount], numMolsToRecv[neighbCount], sendPartType, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]) );
 	}
 	// send all numbers
 	for (int neighbCount = 0; neighbCount < (int) procsToSendTo.size(); neighbCount++) {
 		if (procsToSendTo[neighbCount] == _ownRank) continue; // don't exchange data with the own process
-		MPI_Send(particlesSendBufs[neighbCount], numMolsToSend[neighbCount], sendPartType, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD);
+		MPI_CHECK( MPI_Send(particlesSendBufs[neighbCount], numMolsToSend[neighbCount], sendPartType, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD) );
 	}
 	// wait for the completion of all recv calls
 	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
 		if (procsToRecvFrom[neighbCount] == _ownRank) continue; // don't exchange data with the own process
-		MPI_Wait(&request[neighbCount], &status);
+		MPI_CHECK( MPI_Wait(&request[neighbCount], &status) );
 	}
 }
 
@@ -717,6 +717,8 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 		}
 	}
 	bool coversAll[KDDIM];
+    
+    /* TODO: We do not use this values anywhere ... */
 	int cellsPerDim[KDDIM];
 	for (int dim = 0; dim < KDDIM; dim++) {
 		coversAll[dim] = fatherNode->_coversWholeDomain[dim];
@@ -889,9 +891,9 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 	MPI_Comm newComm;
 	MPI_Group origGroup, newGroup;
 
-	MPI_Comm_group(commGroup, &origGroup);
-	MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup);
-	MPI_Comm_create(commGroup, newGroup, &newComm);
+	MPI_CHECK( MPI_Comm_group(commGroup, &origGroup) );
+	MPI_CHECK( MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup) );
+	MPI_CHECK( MPI_Comm_create(commGroup, newGroup, &newComm) );
 
 	if (numProcsLeft > 1 && _ownRank < owner2) {
 		domainTooSmall = (domainTooSmall || recDecompPar(fatherNode->_child1, ownArea, newComm));
@@ -962,7 +964,7 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 			}
 
 		}
-		MPI_Bcast(&data[0], 13, MPI_INT, nextSendingProcess, MPI_COMM_WORLD);
+		MPI_CHECK( MPI_Bcast(&data[0], 13, MPI_INT, nextSendingProcess, MPI_COMM_WORLD) );
 		bool coversAll[3];
 		for (int i = 0; i < 3; i++)
 			coversAll[i] = false;
@@ -1029,8 +1031,8 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 	int newRank;
 	MPI_Group group;
 
-	MPI_Comm_group(commGroup, &group);
-	MPI_Group_rank(group, &newRank);
+	MPI_CHECK( MPI_Comm_group(commGroup, &group) );
+	MPI_CHECK( MPI_Group_rank(group, &newRank) );
 
 	vector<vector<double> > costsLeftTemp;
 	vector<vector<double> > costsRightTemp;
@@ -1188,14 +1190,14 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		double tempRecvCosts, tempSendCosts;
 		tempSendCosts = 0;
 		if (recvCostValue) {
-			MPI_Recv(&tempRecvCosts, 1, MPI_DOUBLE, _ownRank - 1, 123, MPI_COMM_WORLD, &recvStat);
+			MPI_CHECK( MPI_Recv(&tempRecvCosts, 1, MPI_DOUBLE, _ownRank - 1, 123, MPI_COMM_WORLD, &recvStat) );
 			if (sendCostValue) {
 				tempSendCosts = tempRecvCosts;
 			}
 		}
 		if (sendCostValue) {
 			tempSendCosts += cellCosts[dim][loopend];
-			MPI_Send(&tempSendCosts, 1, MPI_DOUBLE, _ownRank + 1, 123, MPI_COMM_WORLD);
+			MPI_CHECK( MPI_Send(&tempSendCosts, 1, MPI_DOUBLE, _ownRank + 1, 123, MPI_COMM_WORLD) );
 		}
 		if (recvCostValue) {
 			for (int i_dim = loopstart; i_dim <= loopend; i_dim++) {
@@ -1212,9 +1214,9 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		sepCostSumRight.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
 		int size2 = cellCostsSum.size();
-		MPI_Allreduce(&cellCosts[dim][0], &cellCostsSum[0], size2, MPI_DOUBLE, MPI_SUM, commGroup);
-		MPI_Allreduce(&sepCostLeft[dim][0], &sepCostSumLeft[0], size2, MPI_DOUBLE, MPI_SUM, commGroup);
-		MPI_Allreduce(&sepCostRight[dim][0], &sepCostSumRight[0], size2, MPI_DOUBLE, MPI_SUM, commGroup);
+		MPI_CHECK( MPI_Allreduce(&cellCosts[dim][0], &cellCostsSum[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
+		MPI_CHECK( MPI_Allreduce(&sepCostLeft[dim][0], &sepCostSumLeft[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
+		MPI_CHECK( MPI_Allreduce(&sepCostRight[dim][0], &sepCostSumRight[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
 
 		for (int i_dim = 0; i_dim <= area->_highCorner[dim] - area->_lowCorner[dim]; i_dim++) {
 			areaCosts += cellCosts[dim][i_dim];
@@ -1335,6 +1337,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 
 	int count = 0;
 	double bBMin[3]; // haloBoundingBoxMin
+    /* TODO: We do not use values form bBMax anywhere ... */
 	double bBMax[3]; // haloBoundingBoxMax
 	for (int dim = 0; dim < 3; dim++) {
 		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
@@ -1364,7 +1367,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 	// must be different. The consequence is, that a temporary array has to be created for
 	// the values to be recieved, which that has to be copied back to the original array
 	unsigned char* numParticlesPerCellTemp = new unsigned char[_globalNumCells];
-	MPI_Allreduce(_numParticlesPerCell, numParticlesPerCellTemp, _globalNumCells, MPI_UNSIGNED_CHAR, MPI_SUM, MPI_COMM_WORLD);
+	MPI_CHECK( MPI_Allreduce(_numParticlesPerCell, numParticlesPerCellTemp, _globalNumCells, MPI_UNSIGNED_CHAR, MPI_SUM, MPI_COMM_WORLD) );
 	delete[] _numParticlesPerCell;
 	_numParticlesPerCell = numParticlesPerCellTemp;
 

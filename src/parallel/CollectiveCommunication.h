@@ -2,6 +2,7 @@
 #define COLLECTIVECOMMUNICATION_H_
 
 #include <mpi.h>
+#include "utils/Logger.h"
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
  * user defined reduce operation so that the MPI reduce operation is only called once. */
@@ -88,7 +89,7 @@ public:
 		delete[] _sendValues;
 		delete[] _recvValues;
 #if ENABLE_AGGLOMERATED_REDUCE
-		MPI_Type_free(&_valuesType);
+		MPI_CHECK( MPI_Type_free(&_valuesType) );
 #endif
 	}
 
@@ -109,13 +110,13 @@ public:
 		int numtypes;
 		int combiner;
 
-		MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes, &combiner);
+		MPI_CHECK( MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes, &combiner) );
 
 		int arrayInts[numints];
 		MPI_Aint arrayAddr[numaddr];
 		MPI_Datatype arrayTypes[numtypes];
 
-		MPI_Type_get_contents(*dtype, numints, numaddr, numtypes, arrayInts, arrayAddr, arrayTypes);
+		MPI_CHECK( MPI_Type_get_contents(*dtype, numints, numaddr, numtypes, arrayInts, arrayAddr, arrayTypes) );
 
 		for (int i = 0; i < numtypes; i++) {
 			if (arrayTypes[i] == MPI_INT) {
@@ -153,11 +154,11 @@ public:
 			disp += sizeof(valType);
 		}
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-	MPI_Type_create_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType);
+	MPI_CHECK( MPI_Type_create_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType) );
 #else
-	MPI_Type_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType);
+	MPI_CHECK( MPI_Type_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType) );
 #endif
-		MPI_Type_commit(&_valuesType);
+		MPI_CHECK( MPI_Type_commit(&_valuesType) );
 	}
 
 	//! Append an int value to the list of values to be sent
@@ -227,7 +228,7 @@ public:
 	//! Broadcast all values from the process with rank 0 to all others
 	void broadcast() {
 		setMPIType();
-		MPI_Bcast(_sendValues, 1, _valuesType, 0, _communicator);
+		MPI_CHECK( MPI_Bcast(_sendValues, 1, _valuesType, 0, _communicator) );
 		for (int i = 0; i < _numValues; i++) {
 			_recvValues[i] = _sendValues[i];
 		}
@@ -238,11 +239,11 @@ public:
 #if ENABLE_AGGLOMERATED_REDUCE
 		setMPIType();
 		MPI_Op reduceOp;
-		MPI_Op_create((MPI_User_function *) CollectiveCommunication::add, 1, &reduceOp);
-		MPI_Allreduce(_sendValues, _recvValues, 1, _valuesType, reduceOp, _communicator);
+		MPI_CHECK( MPI_Op_create((MPI_User_function *) CollectiveCommunication::add, 1, &reduceOp) );
+		MPI_CHECK( MPI_Allreduce(_sendValues, _recvValues, 1, _valuesType, reduceOp, _communicator) );
 #else
 		for( int i = 0; i < _numValues; i++ ) {
-			MPI_Allreduce( &_sendValues[i], &_recvValues[i], 1, _listOfTypes[i], MPI_SUM, _communicator );
+			MPI_CHECK( MPI_Allreduce( &_sendValues[i], &_recvValues[i], 1, _listOfTypes[i], MPI_SUM, _communicator ) );
 		}
 #endif
 	}

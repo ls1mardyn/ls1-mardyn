@@ -55,19 +55,19 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	// in the parallel case we check only that the right files are written.
 	// Their content should be right, if the sequential tests pass.
 	int rank = 0;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &rank) );
 	Domain domain(rank, NULL);
 	writer.doOutput(&container, NULL, &domain, 1, NULL);
 	writer.doOutput(&container, NULL, &domain, 2, NULL);
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 	if (rank == 0) {
 		ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKMoleculeWriterTest_1.pvtu"));
 		ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKMoleculeWriterTest_2.pvtu"));
 		removeFile("VTKMoleculeWriterTest_2.pvtu");
 
 		int numProcs = 0;
-		MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
+		MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &numProcs) );
 		for (int i = 0; i < numProcs; i++) {
 			std::stringstream str;
 			str << "VTKMoleculeWriterTest_node" << i << "_2.vtu";

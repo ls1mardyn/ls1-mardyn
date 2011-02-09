@@ -4,6 +4,7 @@
 #include "molecules/Molecule.h"
 
 #include <mpi.h>
+#include "utils/Logger.h"
 
 #define DIM 3
 
@@ -27,19 +28,19 @@ public:
 
 		MPI_Aint displacements[3];
 		ParticleData pdata_dummy;
-		MPI_Address(&pdata_dummy, displacements);
-		MPI_Address(&pdata_dummy.cid, displacements + 1);
-		MPI_Address(&pdata_dummy.r[0], displacements + 2);
+		MPI_CHECK( MPI_Address(&pdata_dummy, displacements) );
+		MPI_CHECK( MPI_Address(&pdata_dummy.cid, displacements + 1) );
+		MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements + 2) );
 		MPI_Aint base = displacements[0];
 		for (int i = 0; i < 3; i++)
 			displacements[i] -= base;
 
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-		MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType);
+		MPI_CHECK( MPI_Type_create_struct(3, blocklengths, displacements, types, &sendPartType) );
 #else
-	MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType);
+	MPI_CHECK( MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType) );
 #endif
-		MPI_Type_commit(&sendPartType);
+		MPI_CHECK( MPI_Type_commit(&sendPartType) );
 	}
 
 	//! @brief copy data from object of class Molecule to object of class ParticleData

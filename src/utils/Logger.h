@@ -23,7 +23,24 @@
 
 #ifdef MPI_SUPPORT
 #include <mpi.h>
+
+#ifndef NDEBUG
+/** When NDEBUG macro is undefined check the expression return value to be MPI_SUCCESS.
+ *
+ * Check expression to return MPI_SUCCESS. Can only be used after MPI_Init is called
+ * because the Logger cannot be initialized before with the current implementation.
+ */
+#define MPI_CHECK(x) do {                   \
+    int __ret;                              \
+    if (MPI_SUCCESS != (__ret = (x)))       \
+    Log::global_log->error() << "MPI returned with error code " << __ret << std::endl;  \
+} while (0)
+
+#else
+#define MPI_CHECK(x) x
 #endif
+
+#endif  /* MPI_SUPPORT */
 
 
 /* we use a seperate namespace because we have some global definitions for

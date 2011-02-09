@@ -21,17 +21,17 @@ DomainDecomposition::DomainDecomposition() {
 	// Allow reordering of process ranks
 	reorder = 1;
 	// Find out appropriate grid dimensions
-	MPI_Comm_size(MPI_COMM_WORLD, &num_procs);
+	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &num_procs) );
 	setGridSize(num_procs);
 	// Create the communicator
-	MPI_Cart_create(MPI_COMM_WORLD, DIM, _gridSize, period, reorder, &_comm);
+	MPI_CHECK( MPI_Cart_create(MPI_COMM_WORLD, DIM, _gridSize, period, reorder, &_comm) );
 
 	// introduce coordinates
-	MPI_Comm_rank(_comm, &_rank);
-	MPI_Cart_coords(_comm, _rank, DIM, _coords);
+	MPI_CHECK( MPI_Comm_rank(_comm, &_rank) );
+	MPI_CHECK( MPI_Cart_coords(_comm, _rank, DIM, _coords) );
 	// find lower and higher neighbours:
 	for (int d = 0; d < DIM; d++) {
-		MPI_Cart_shift(_comm, d, 1, &_neighbours[d][LOWER], &_neighbours[d][HIGHER]);
+		MPI_CHECK( MPI_Cart_shift(_comm, d, 1, &_neighbours[d][LOWER], &_neighbours[d][HIGHER]) );
 	}
 	// Initialize MPI Dataype for the particle exchange once at the beginning.
 	ParticleData::setMPIType(_mpi_Particle_data);
@@ -142,20 +142,20 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 			int numrecv;
 
 			// Send values to lower/upper and receive values from upper/lower
-			MPI_Isend(particlesSendBuffs[d][direction], numsend, _mpi_Particle_data, _neighbours[d][direction], 99, _comm, &send_requests[d][direction]);
-			MPI_Probe(_neighbours[d][(direction + 1) % 2], 99, _comm, &status);
-			MPI_Get_count(&status, _mpi_Particle_data, &numrecv);
+			MPI_CHECK( MPI_Isend(particlesSendBuffs[d][direction], numsend, _mpi_Particle_data, _neighbours[d][direction], 99, _comm, &send_requests[d][direction]) );
+			MPI_CHECK( MPI_Probe(_neighbours[d][(direction + 1) % 2], 99, _comm, &status) );
+			MPI_CHECK( MPI_Get_count(&status, _mpi_Particle_data, &numrecv) );
 			// initialize receive buffer
 			particlesRecvBuffs[d][direction] = new ParticleData[numrecv];
 			numPartsToRecv[d][direction] = numrecv;
-			MPI_Irecv(particlesRecvBuffs[d][direction], numrecv, _mpi_Particle_data, _neighbours[d][(direction + 1) % 2], 99, _comm, &recv_requests[d][direction]);
+			MPI_CHECK( MPI_Irecv(particlesRecvBuffs[d][direction], numrecv, _mpi_Particle_data, _neighbours[d][(direction + 1) % 2], 99, _comm, &recv_requests[d][direction]) );
 		}
 
 		// Insert molecules into domain
 		for (direction = LOWER; direction <= HIGHER; direction++) {
 			int numrecv = numPartsToRecv[d][direction];
-			MPI_Wait(&send_requests[d][direction], &send_statuses[d][direction]);
-			MPI_Wait(&recv_requests[d][direction], &recv_statuses[d][direction]);
+			MPI_CHECK( MPI_Wait(&send_requests[d][direction], &send_statuses[d][direction]) );
+			MPI_CHECK( MPI_Wait(&recv_requests[d][direction], &recv_statuses[d][direction]) );
 			// insert received molecules into list of molecules
 			for (int i = 0; i < numrecv; i++) {
 				Molecule *m;
@@ -220,7 +220,7 @@ unsigned long DomainDecomposition::countMolecules(ParticleContainer* moleculeCon
 	}
 	int numMolecules = 0;
 	for (unsigned int i = 0; i < localCompCount.size(); i++) {
-		MPI_Allreduce(&localCompCount[i], &compCount[i], 1, MPI_INT, MPI_SUM, _comm);
+		MPI_CHECK( MPI_Allreduce(&localCompCount[i], &compCount[i], 1, MPI_INT, MPI_SUM, _comm) );
 		numMolecules += compCount[i];
 	}
 	return numMolecules;
@@ -236,7 +236,7 @@ double DomainDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 
 void DomainDecomposition::printDecomp(string filename, Domain* domain) {
 	int numprocs;
-	MPI_Comm_size(_comm, &numprocs);
+	MPI_CHECK( MPI_Comm_size(_comm, &numprocs) );
 
 	if (_rank == 0) {
 		ofstream povcfgstrm(filename.c_str());
@@ -260,7 +260,7 @@ void DomainDecomposition::printDecomp(string filename, Domain* domain) {
 void DomainDecomposition::writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer) {
 
 	int numprocs;
-	MPI_Comm_size(_comm, &numprocs);
+	MPI_CHECK( MPI_Comm_size(_comm, &numprocs) );
 
 	for (int process = 0; process < numprocs; process++) {
 		if (_rank == process) {
@@ -280,13 +280,13 @@ inline int DomainDecomposition::getRank(int x, int y, int z) {
 	neigh_coords[0] = x;
 	neigh_coords[1] = y;
 	neigh_coords[2] = z;
-	MPI_Cart_rank(_comm, neigh_coords, &neigh_rank);
+	MPI_CHECK( MPI_Cart_rank(_comm, neigh_coords, &neigh_rank) );
 	return (neigh_rank);
 }
 
 int DomainDecomposition::getNumProcs() {
 	int numProcs;
-	MPI_Comm_size(_comm, &numProcs);
+	MPI_CHECK( MPI_Comm_size(_comm, &numProcs) );
 	return numProcs;
 }
 
@@ -297,14 +297,14 @@ double DomainDecomposition::getTime() {
 void DomainDecomposition::setGridSize(int num_procs) {
 	for( int i = 0; i < DIM; i++ )
 	_gridSize[i] = 0;
-	MPI_Dims_create( num_procs, DIM, (int *) &_gridSize );
+	MPI_CHECK( MPI_Dims_create( num_procs, DIM, (int *) &_gridSize ) );
 }
 
 unsigned DomainDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
 	int num_procs;
-	MPI_Comm_size(_comm, &num_procs);
+	MPI_CHECK( MPI_Comm_size(_comm, &num_procs) );
 	unsigned* moldistribution = new unsigned[num_procs];
-	MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, _comm);
+	MPI_CHECK( MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, _comm) );
 	unsigned globalN = 0;
 	for (int r = 0; r < _rank; r++)
 		globalN += moldistribution[r];
@@ -321,14 +321,14 @@ unsigned DomainDecomposition::Ndistribution(unsigned localN, float* minrnd, floa
 
 void DomainDecomposition::assertIntIdentity(int IX) {
 	if (_rank)
-		MPI_Send(&IX, 1, MPI_INT, 0, 2 * _rank + 17, _comm);
+		MPI_CHECK( MPI_Send(&IX, 1, MPI_INT, 0, 2 * _rank + 17, _comm) );
 	else {
 		int recv;
 		int num_procs;
-		MPI_Comm_size(_comm, &num_procs);
+		MPI_CHECK( MPI_Comm_size(_comm, &num_procs) );
 		MPI_Status s;
 		for (int i = 1; i < num_procs; i++) {
-			MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, _comm, &s);
+			MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, _comm, &s) );
 			if (recv != IX) {
 				global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
 				MPI_Abort(MPI_COMM_WORLD, 911);
@@ -351,14 +351,14 @@ void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 			tids[i] = m->id();
 			i++;
 		}
-		MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm);
+		MPI_CHECK( MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _rank, _comm) );
 		delete[] tids;
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	}
 	else {
 		map<unsigned long, int> check;
 		int num_procs;
-		MPI_Comm_size(_comm, &num_procs);
+		MPI_CHECK( MPI_Comm_size(_comm, &num_procs) );
 
 		for (m = mm->begin(); m != mm->end(); m = mm->next())
 			check[m->id()] = 0;
@@ -367,11 +367,11 @@ void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 		for (int i = 1; i < num_procs; i++) {
 			int num_recv = 0;
 			unsigned long *recv;
-			MPI_Probe(i, 2674 + i, _comm, &status);
-			MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv);
+			MPI_CHECK( MPI_Probe(i, 2674 + i, _comm, &status) );
+			MPI_CHECK( MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv) );
 			recv = new unsigned long[num_recv];
 
-			MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status);
+			MPI_CHECK( MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status) );
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID " << recv << endl;

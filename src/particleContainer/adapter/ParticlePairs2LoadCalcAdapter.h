@@ -2,6 +2,7 @@
 #define PARTICLEPAIRS2LOADCALCADAPTER_H_
 
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "utils/Logger.h"
 
 //! @brief used for guessing load
 //! @author Martin Buchholz
@@ -42,7 +43,7 @@ public:
 	//! @brief finish
 	void finish() {
 		float* temp = new float[_globalNumCells];
-		MPI_Allreduce(_globalLoadPerCell, temp, _globalNumCells, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+		MPI_CHECK( MPI_Allreduce(_globalLoadPerCell, temp, _globalNumCells, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD) );
 		delete[] _globalLoadPerCell;
 		_globalLoadPerCell = temp;
 		//cout << "LocalLoad: " << _localLoad << endl;

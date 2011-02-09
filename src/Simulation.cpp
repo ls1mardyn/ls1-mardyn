@@ -144,7 +144,7 @@ void Simulation::initConfigFile(const string& inputfilename) {
 void Simulation::initConfigXML(const string& inputfilename) {
 	int ownrank = 0;
 #ifdef PARALLEL
-	MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 	global_log->info() << "init XML config file: " << inputfilename << endl;
 	XMLfileUnits inp(inputfilename);
@@ -364,7 +364,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 void Simulation::initConfigOldstyle(const string& inputfilename) {
 	int ownrank = 0;
 #ifdef PARALLEL
-	MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 
 	global_log->info() << "init oldstyle config file: " << inputfilename << endl;
@@ -1257,7 +1257,7 @@ double Simulation::Tfactor(unsigned long simstep) {
 void Simulation::initialize() {
 	int ownrank = 0;
 #ifdef PARALLEL
-	MPI_Comm_rank(MPI_COMM_WORLD, &ownrank);
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 
 	global_simulation = this;
