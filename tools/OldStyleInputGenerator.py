@@ -34,7 +34,7 @@ parser.add_option("-x", "--Lx", action="store", type="float", dest="Lx", help="B
 parser.add_option("-y", "--Ly", action="store", type="float", dest="Ly", help="Box length in y direction")
 parser.add_option("-z", "--Lz", action="store", type="float", dest="Lz", help="Box length in z direction")
 parser.add_option("-r", "--rc", action="store", type="float", dest="rc", help="Cutoff radius. Should match value from '*.cfg' file!")
-parser.add_option("-t", "--example", action="store", type="string", dest="example", help="available options: LJ(default), EOX")
+parser.add_option("-t", "--example", action="store", type="string", dest="example", help="available options: LJ(default), EOX, MIX (=2CLJD and EOX mixed")
 
 (options, args) = parser.parse_args()
 
@@ -85,9 +85,26 @@ elif (example == "LJ"):
   0. 0. 0.       %(m).4f %(eps).4f %(sigm).4f %(rc).4f 0.0
   0. 0. 0.
 1.e10""" % vars()
+elif (example == "MIX"):
+  print """NumberOfComponents      2
+3 0 1 0 0
+0.0000000000000000        0.0000000000000000        1.4681756272422370       1.59989999999999993E-002  1.96741662167147779E-004   5.8447340512780981   38.36144        0
+-1.4739864075776508        0.0000000000000000      -0.83729029230229368       1.40269999999999995E-002  2.68352891066251406E-004   6.6643082884145430  38.36144        0
+1.4739864075776508        0.0000000000000000      -0.83729029230229368       1.40269999999999995E-002  2.68352891066251406E-004   6.6643082884145430  38.36144        0
+0.0000000000000000        0.0000000000000000       7.79229859719781925E-002   0.0000000000000000        0.0000000000000000      -1.00000000000000000       0.96744548351221815
+0.0000000000000000        0.0000000000000000        0.0000000000000000
+2 0 1 0 0
+0.0 0.0 -2.245185	0.015035 0.000433822 6.59439    5.0    0
+0.0 0.0 2.245185	0.015035 0.000433822 6.59439    5.0    0
+0.0 0.0 0.0	0.0 0.0 1.0	-0.61537
+0.0 0.0 0.0
+0.99 0.98
+10000000000.0000000
+""" % vars()
+
 
 print "NumberOfMolecules       " + `N`
-if (example == "EOX"):
+if (example == "EOX" or example == "MIX"):
   print "MoleculeFormat  ICRVQD"
 elif (example == "LJ"):
   print "MoleculeFormat  ICRV"
@@ -100,6 +117,10 @@ L=(Lx,Ly,Lz)
 nmax=int(ceil(pow(N, 1./3.))) 
 
 for n in range (N):
+  
+  if (example == "EOX" or example == "MIX"):
+    cid = random.randint(1,2);
+
   myn=n
   nz=myn%nmax
   myn=n-nz
@@ -125,13 +146,13 @@ for n in range (N):
 
   q1=q2=q3=q4=0
   D1=D2=D3=0
-  if(example == "EOX"):
+  if(example == "EOX" or example == "MIX"):
     q1=random.choice((-0.5,0.5))
     q2=random.choice((-0.5,0.5))
     q3=random.choice((-0.5,0.5))
     q4=random.choice((-0.5,0.5))
 
-  if(example == "EOX"):
+  if(example == "EOX" or example == "MIX"):
     print "%i %i %f %f %f %f %f %f %f %f %f %f %f %f %f" % (n+1, cid, rx,ry,rz, vx,vy,vz, q1,q2,q3,q4, D1,D2,D3)
   elif(example == "LJ"):
     print "%i %i %f %f %f %f %f %f" % (n+1, cid, rx,ry,rz, vx,vy,vz)
