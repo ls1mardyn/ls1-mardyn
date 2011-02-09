@@ -26,12 +26,39 @@ Domain::Domain(
 
 void Domain::write(char* prefix, int format, double mu)
 {
-   ofstream xdr, txt;
-   stringstream strstrm, txtstrstrm;
-   strstrm << prefix << ".xdr";
+   ofstream xdr, txt, buchholz;
+   stringstream strstrm, txtstrstrm, buchholzstrstrm;
+   if(format == FORMAT_BRANCH)
+   {
+      strstrm << prefix << ".xdr";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      strstrm << prefix << ".inp";
+   }
    xdr.open(strstrm.str().c_str(), ios::trunc);
-   txtstrstrm << prefix << "_1R.txt";
+   if(format == FORMAT_BRANCH)
+   {
+      txtstrstrm << prefix << "_1R.txt";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      txtstrstrm << prefix << "_1R.cfg";
+   }
    txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      buchholzstrstrm << prefix << "_1R.xml";
+      buchholz.open(buchholzstrstrm.str().c_str(), ios::trunc);
+
+      /*
+       * Gesamter Inhalt der Buchholz-Datei
+       */
+      buchholz << "<?xml version = \'1.0\' encoding = \'UTF-8\'?>\n<mardyn version=\""
+               << TIME << "\">\n   <simulation type=\"MD\">\n      <input type=\"oldstyle\">"
+               << prefix << "_1R.cfg</input>\n   </simulation>\n</mardyn>";
+      buchholz.close();
+   }
 
    Random* r = new Random();
    r->init(
@@ -168,17 +195,22 @@ void Domain::write(char* prefix, int format, double mu)
    }
    else EL_CUTOFF = 1.2 * LJ_CUTOFF;
 
+   xdr.precision(9);
    if(format == FORMAT_BRANCH)
    {
-      xdr.precision(9);
       xdr << "mardyn " << TIME << " tersoff\n"
           << "# mardyn input file, ls1 project\n"
           << "# written by animaker, the mesh generator\n";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      xdr << "mardyn trunk " << TIME << "\n";
+   }
 
-      xdr << "t\t0.0\ndt\t" << DT/REFTIME << "\n" << "# rho\t"
-          << N1 * SIG_REF*SIG_REF*SIG_REF
-                    / (box[0]*box[1]*box[2])
-          << "\nL\t" << box[0]/SIG_REF << "\t"
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      xdr << "T\t" << T/EPS_REF << "\n";
+      xdr << "t\t0.0\nL\t" << box[0]/SIG_REF << "\t"
           << box[1]/SIG_REF << "\t" << box[2]/SIG_REF
           << "\nC\t1\n";
 
@@ -187,7 +219,9 @@ void Domain::write(char* prefix, int format, double mu)
          xdr << "1 0 0 0 0\n"  // LJ, C, Q, D, Tersoff
              << "0.0 0.0 0.0\t"
              << FLUIDMASS/REFMASS << " " << EPS_FLUID/EPS_REF << " "
-             << SIG_FLUID/SIG_REF << "\t0.0 0.0 0.0\n";
+             << SIG_FLUID/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\t0.0 0.0 0.0\n";
       }
       else if(fluid == FLUID_EOX)
       {
@@ -195,13 +229,17 @@ void Domain::write(char* prefix, int format, double mu)
 
          xdr << R0_C1EOX/SIG_REF << " " << R1_C1EOX/SIG_REF << " "
              << R2_C1EOX/SIG_REF << "\t" << CEOXMASS/REFMASS << " "
-             << EPS_CEOX/EPS_REF << " " << SIG_CEOX/SIG_REF << "\n"
-             << R0_C2EOX/SIG_REF << " " << R1_C2EOX/SIG_REF << " "
+             << EPS_CEOX/EPS_REF << " " << SIG_CEOX/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << R0_C2EOX/SIG_REF << " " << R1_C2EOX/SIG_REF << " "
              << R2_C2EOX/SIG_REF << "\t" << CEOXMASS/REFMASS << " "
-             << EPS_CEOX/EPS_REF << " " << SIG_CEOX/SIG_REF << "\n"
-             << R0_O_EOX/SIG_REF << " " << R1_O_EOX/SIG_REF << " "
+             << EPS_CEOX/EPS_REF << " " << SIG_CEOX/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << R0_O_EOX/SIG_REF << " " << R1_O_EOX/SIG_REF << " "
              << R2_O_EOX/SIG_REF << "\t" << OEOXMASS/REFMASS << " "
-             << EPS_OEOX/EPS_REF << " " << SIG_OEOX/SIG_REF << "\n";
+             << EPS_OEOX/EPS_REF << " " << SIG_OEOX/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
 
          xdr << R0DIPEOX/SIG_REF << " " << R1DIPEOX/SIG_REF << " "
              << R2DIPEOX/SIG_REF << "\t0.0 0.0 1.0 "
@@ -215,10 +253,13 @@ void Domain::write(char* prefix, int format, double mu)
 
          xdr << "0.0 0.0 " << -0.5*FLUIDLONG/SIG_REF << "\t"
              << 0.5*FLUIDMASS/REFMASS << " " << EPS_FLUID/EPS_REF
-             << " " << SIG_FLUID/SIG_REF << "\n"
-             << "0.0 0.0 " << +0.5*FLUIDLONG/SIG_REF << "\t"
+             << " " << SIG_FLUID/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 " << +0.5*FLUIDLONG/SIG_REF << "\t"
              << 0.5*FLUIDMASS/REFMASS << " " << EPS_FLUID/EPS_REF
-             << " " << SIG_FLUID/SIG_REF << "\n";
+             << " " << SIG_FLUID/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
 
          xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID/QDR_REF;
 
@@ -226,16 +267,21 @@ void Domain::write(char* prefix, int format, double mu)
       }
       xdr << "1.0e+10\n";
 
-      xdr << "T\t" << T/EPS_REF << "\n";
       xdr << "N" << "\t" << N1 << "\nM" << "\t" << "ICRVQD\n\n";
 
       txt.precision(6);
       txt << "mardynconfig\n# \ntimestepLength\t" << DT/REFTIME
           << "\ncutoffRadius\t" << EL_CUTOFF/SIG_REF
-          << "\nLJCutoffRadius\t" << LJ_CUTOFF/SIG_REF
-          << "\ntersoffCutoffRadius\t"
-          <<  LJ_CUTOFF/(3.0*SIG_REF)
-          << "\ninitCanonical\t50000\n";
+          << "\nLJCutoffRadius\t" << LJ_CUTOFF/SIG_REF;
+   }
+   if(format == FORMAT_BRANCH)
+   {
+      txt << "\ntersoffCutoffRadius\t"
+          <<  LJ_CUTOFF/(3.0*SIG_REF);
+   }
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      txt << "\ninitCanonical\t50000\n";
       if(muVT)
       {
          txt.precision(9);
@@ -250,8 +296,19 @@ void Domain::write(char* prefix, int format, double mu)
          txt << "initGrandCanonical\t100000\n";
       }
       txt.precision(5);
-      txt << "initStatistics\t150000\nphaseSpaceFile\t" << prefix
-          << ".xdr\ndatastructure\tLinkedCells\t1\noutput\t"
+      txt << "initStatistics\t150000\n";
+   }
+   if(format == FORMAT_BRANCH)
+   {
+      txt << "phaseSpaceFile\t" << prefix << ".xdr\n";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\n";
+   }
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      txt << "datastructure\tLinkedCells\t1\noutput\t"
           << "ResultWriter\t100\t" << prefix
           << "_1R\noutput\tXyzWriter\t10000\t" << prefix
           << "_1R.buxyz\n";
@@ -300,13 +357,16 @@ void Domain::write(char* prefix, int format, double mu)
                   for(int d=0; d < 3; d++)
                      w[d] = (I[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I[d]);
                   // xdr << "(" << ii[0] << "/" << ii[1] << "/" << ii[2] << "), j = " << j << ", d = " << d << ":\t";
-                  xdr << id << " " << 1 << "\t" << tr[0]/SIG_REF
-                      << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
-                      << "\t" << tv*cos(phi)*cos(omega)/VEL_REF << " "
-                      << tv*cos(phi)*sin(omega)/VEL_REF << " "
-                      << tv*sin(phi)/VEL_REF << "\t1.0 0.0 0.0 0.0\t"
-                      << w[0]/REFOMGA << " " << w[1]/REFOMGA << " "
-                      << w[2]/REFOMGA << "\n";
+                  if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+                  {
+                     xdr << id << " " << 1 << "\t" << tr[0]/SIG_REF
+                         << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
+                         << "\t" << tv*cos(phi)*cos(omega)/VEL_REF << " "
+                         << tv*cos(phi)*sin(omega)/VEL_REF << " "
+                         << tv*sin(phi)/VEL_REF << "\t1.0 0.0 0.0 0.0\t"
+                         << w[0]/REFOMGA << " " << w[1]/REFOMGA << " "
+                         << w[2]/REFOMGA << "\n";
+                  }
                   id++;
                }
                else xdr << "\n";

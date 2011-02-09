@@ -6,10 +6,10 @@
 #include "Random.h"
 #include <cmath>
 
-#define BINS 1024
-#define DT 0.0015
-#define PRECISION 6
-#define TIME 20100210
+#define BINS 2048
+#define DT 0.002
+#define PRECISION 5
+#define TIME 20110209
 #define VARFRACTION 0.125
 
 Domain::Domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
@@ -39,12 +39,38 @@ Domain::Domain(unsigned t_N, double t_rho, double t_RDF)
 
 void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, int format)
 {
-   ofstream xdr, txt;
-   stringstream strstrm, txtstrstrm;
-   strstrm << prefix << ".xdr";
+   ofstream xdr, txt, buchholz;
+   stringstream strstrm, txtstrstrm, buchholzstrstrm;
+   if(format == FORMAT_BRANCH)
+   {
+      strstrm << prefix << ".xdr";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      strstrm << prefix << ".inp";
+   }
    xdr.open(strstrm.str().c_str(), ios::trunc);
-   txtstrstrm << prefix << "_1R.txt";
+   if(format == FORMAT_BRANCH)
+   {
+      txtstrstrm << prefix << "_1R.txt";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      txtstrstrm << prefix << "_1R.cfg";
+   }
    txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      buchholzstrstrm << prefix << "_1R.xml";
+      buchholz.open(buchholzstrstrm.str().c_str(), ios::trunc);
+
+      /*
+       * Gesamter Inhalt der Buchholz-Datei
+       */
+      buchholz << "<?xml version = \'1.0\' encoding = \'UTF-8\'?>\n<mardyn version=\""
+               << TIME << "\">\n   <simulation type=\"MD\">\n      <input type=\"oldstyle\">"
+               << prefix << "_1R.cfg</input>\n   </simulation>\n</mardyn>";
+   }
 
    unsigned fl_units[3][2];
    double fl_unit[3][2];
@@ -79,12 +105,12 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    bool fill1[fl_units[0][1]][fl_units[1][1]][fl_units[2][1]][3];
    unsigned N[2];
    unsigned slots[2];
-   for(int l=0; l < 2; l++)
+   for(unsigned l=0; l < 2; l++)
    {
-      for(int i=0; i < fl_units[0][l]; i++)
-         for(int j=0; j < fl_units[1][l]; j++)
-            for(int k=0; k < fl_units[2][l]; k++)
-               for(int d=0; d < 3; d++)
+      for(unsigned i=0; i < fl_units[0][l]; i++)
+         for(unsigned j=0; j < fl_units[1][l]; j++)
+            for(unsigned k=0; k < fl_units[2][l]; k++)
+               for(unsigned d=0; d < 3; d++)
                {
                   if(l == 0) fill0[i][j][k][d] = true;
                   else fill1[i][j][k][d] = true;
@@ -94,17 +120,17 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    }
    bool tswap;
    double pswap;
-   for(int l=0; l < 2; l++)
+   for(unsigned l=0; l < 2; l++)
    {
-      for(int m=0; m < PRECISION; m++)
+      for(unsigned m=0; m < PRECISION; m++)
       {
          tswap = (N[l] < N_id[l]);
          pswap = (N_id[l] - (double)N[l]) / ((tswap? slots[l]: 0) - (double)N[l]);
          // cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
-         for(int i=0; i < fl_units[0][l]; i++)
-            for(int j=0; j < fl_units[1][l]; j++)
-               for(int k=0; k < fl_units[2][l]; k++)
-                  for(int d=0; d < 3; d++)
+         for(unsigned i=0; i < fl_units[0][l]; i++)
+            for(unsigned j=0; j < fl_units[1][l]; j++)
+               for(unsigned k=0; k < fl_units[2][l]; k++)
+                  for(unsigned d=0; d < 3; d++)
                      if(pswap >= r->rnd())
                      {
                         if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d])) N[l] --;
@@ -118,24 +144,39 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
            << " = " << slots[l] << " slots (ideally " << N_id[l] << ").\n";
    }
 
+   txt.precision(6);
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      txt << "mardynconfig\ntimestepLength\t" << DT << "\ncutoffRadius\t"
+          << ((RDF > cutoff)? 1.031623*RDF: cutoff) << "\nLJCutoffRadius\t" << cutoff << "\n";
+   }
    if(format == FORMAT_BRANCH)
    {
-      txt.precision(6);
-      txt << "mardynconfig\n# \ntimestepLength\t" << DT << "\ncutoffRadius\t" << ((RDF > cutoff)? 1.031623*RDF: cutoff)  << "\nLJCutoffRadius\t" << cutoff << "\ntersoffCutoffRadius\t0.5\n";
+      txt << "tersoffCutoffRadius\t0.5\nphaseSpaceFile\t" << prefix << ".xdr\n";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\n";
+   }
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      txt << "datastructure\tLinkedCells\t1\n";
 
-      txt << "phaseSpaceFile\t" << prefix << ".xdr\n";
-
-      txt << "datastructure\tLinkedCells 1\n";
-
-      txt << "output\tResultWriter 200\t" << prefix << "_1R\nresultOutputTimesteps\t200\noutput\tXyzWriter 50000\t" << prefix << "_1R\ninitCanonical\t10\ninitStatistics\t120000\n";
+      txt << "output\tResultWriter\t1500\t" << prefix << "_1R\n";
+   }
+   if(format == FORMAT_BRANCH) txt << "resultOutputTimesteps\t1500\n";
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      txt << "output\tXyzWriter 60000\t" << prefix << "_1R\ninitCanonical\t10\ninitStatistics\t3003003\n";
       if(gradient)
       {
-         txt << "profile\t1 " << BINS << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t40000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\n";
+         txt << "profile\t1 " << BINS << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t3000000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\nAlignCentre\t100 0.01\n";
       }
       else
       {
-         txt << "RDF\t" << RDF/(double)BINS << " " << BINS << "\nRDFOutputTimesteps\t40000\nRDFOutputPrefix\t" << prefix << "_1R\n";
+         txt << "RDF\t" << RDF/(double)BINS << " " << BINS << "\nRDFOutputTimesteps\t3000000\nRDFOutputPrefix\t" << prefix << "_1R\n";
       }
+      txt << "nomomentum\t1024\n";
 
       if(use_mu)
       {
@@ -153,15 +194,21 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
       }
    }
 
+   xdr.precision(8);
    if(format == FORMAT_BRANCH)
    {
-      xdr.precision(8);
       xdr << "mardyn " << TIME << " tersoff\n"
           << "# mardyn input file, ls1 project\n"
-          << "# generated by the mkTcTS tool\n# \n";
-
-      xdr << "t\t0\nL\t" << box[0] << " " << box[1]
+          << "# generated by the mkTcTS tool\n# \n"
+          << "t\t0\nL\t" << box[0] << " " << box[1]
           << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t0 0 0 1e+10\nT\t" << T << "\nN\t"
+          << N[0]+N[1] << "\nM\tICRVQD\n\n";
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      xdr << "mardyn trunk " << TIME << "\n"
+          << "t\t0\nL\t" << box[0] << " " << box[1]
+          << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t2.5 1\t0 0 0 1e+10\nT\t" << T << "\nN\t"
           << N[0]+N[1] << "\nM\tICRVQD\n\n";
    }
 
@@ -175,11 +222,11 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    goffset[0][2] = 0.5; goffset[1][2] = 0.5; goffset[2][2] = 0.0;
 
    unsigned ID = 1;
-   for(int l=0; l < 2; l++)
-      for(int i=0; i < fl_units[0][l]; i++)
-         for(int j=0; j < fl_units[1][l]; j++)
-            for(int k=0; k < fl_units[2][l]; k++)
-               for(int d=0; d < 3; d++)
+   for(unsigned l=0; l < 2; l++)
+      for(unsigned i=0; i < fl_units[0][l]; i++)
+         for(unsigned j=0; j < fl_units[1][l]; j++)
+            for(unsigned k=0; k < fl_units[2][l]; k++)
+               for(unsigned d=0; d < 3; d++)
                {
                   if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d]))
                   {
@@ -196,17 +243,19 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
                      double phi = 6.283185 * r->rnd();
                      double omega = 6.283185 * r->rnd();
 
-                     xdr << ID << " " << 1 << "\t" << q[0]
-                         << " " << q[1] << " " << q[2]
-                         << "\t" << v*cos(phi)*cos(omega) << " "
-                         << v*cos(phi)*sin(omega) << " "
-                         << v*sin(phi) << "\t1 0 0 0 0 0 0\n";
-
+                     if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+                     {
+                        xdr << ID << " " << 1 << "\t" << q[0]
+                            << " " << q[1] << " " << q[2]
+                            << "\t" << v*cos(phi)*cos(omega) << " "
+                            << v*cos(phi)*sin(omega) << " "
+                            << v*sin(phi) << "\t1 0 0 0 0 0 0\n";
+                     }
                      ID++;
                   }
                   else
                   {
-                     if(format == FORMAT_BRANCH)
+                     if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
                      {
                         xdr << "\n";
                      }
@@ -215,5 +264,9 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
 
    xdr.close();
    txt.close();
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      buchholz.close();
+   }
 }
 

@@ -325,12 +325,6 @@ int main(int argc, char** argv)
            << "is unavailable at present.\n\n" << usage;
       return 14;
    }
-   if(format == FORMAT_BUCHHOLZ)
-   {
-      cout << "B-u-chholz format (flag -u) "
-           << "is unavailable at present.\n\n" << usage;
-      return 31;
-   }
    if(!in_fluid) fluid = FLUID_AR;
    double SIG_FLUID, EPS_FLUID, FLUIDMASS;
    if(fluid == FLUID_CH4)

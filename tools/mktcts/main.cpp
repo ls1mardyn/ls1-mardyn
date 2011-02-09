@@ -128,12 +128,6 @@ int main(int argc, char** argv)
            << "is unavailable at present.\n\n" << usage;
       return 3;
    }
-   if(format == FORMAT_BUCHHOLZ)
-   {
-      cout << "B-u-chholz format (flag -u) "
-           << "is unavailable at present.\n\n" << usage;
-      return 4;
-   }
 
    if(!in_h) h = pow((double)N/rho, 1.0/3.0);
 
