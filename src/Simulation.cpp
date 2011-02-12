@@ -547,7 +547,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new XyzWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "XyzWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
-				_outputFrequency = writeFrequency;
+            } else if (token == "CheckpointWriter") {
+                unsigned long writeFrequency;
+                string outputPathAndPrefix;
+                inputfilestream >> writeFrequency >> outputPathAndPrefix;
+                _outputPlugins.push_back(new CheckpointWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
+                global_log->debug() << "CheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "PovWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
@@ -1210,15 +1215,6 @@ void Simulation::output(unsigned long simstep) {
 			osstrm.clear();
 		}
 		_domain->resetProfile();
-	}
-
-	if ((_outputFrequency > 0) && (0 == simstep % _outputFrequency)) {
-		_moleculeContainer->deleteOuterParticles();
-		ostringstream osstrm;
-		osstrm.str("");
-		osstrm << _outputPrefix;
-		osstrm << ".restart.xdr";
-		_domain->writeCheckpoint(osstrm.str(), _moleculeContainer, _domainDecomposition);
 	}
 
 	if (_domain->thermostatWarning())

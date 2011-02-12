@@ -376,7 +376,7 @@ private:
 	std::string _outputPrefix;
 
 	//! frequency of the checkpoint writer
-	long _outputFrequency;
+	//long _outputFrequency;
 
 	//!Timer for computation
 	Timer* _loopTimer;

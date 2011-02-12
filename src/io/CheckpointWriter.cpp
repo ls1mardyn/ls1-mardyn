@@ -30,14 +30,16 @@ void CheckpointWriter::initOutput(ParticleContainer* particleContainer,
 }
 
 void CheckpointWriter::doOutput( ParticleContainer* particleContainer,
-																 DomainDecompBase* domainDecomp, Domain* domain,
-			         unsigned long simstep, list<ChemicalPotential>* lmu )
+        DomainDecompBase* domainDecomp, 
+        Domain* domain,
+        unsigned long simstep, 
+        list<ChemicalPotential>* lmu )
 {
-	if(simstep%_writeFrequency != 0) return;
+	if( simstep % _writeFrequency != 0 ) return;
 	
 		stringstream filenamestream;
 		if(_filenameisdate) {
-			filenamestream << gettimestring() << ".out";
+			filenamestream << "mardyn" << gettimestring();
 		} else {
 			filenamestream << _filename;
 		}
@@ -45,9 +47,9 @@ void CheckpointWriter::doOutput( ParticleContainer* particleContainer,
 		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
 			int num_digits = ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
-			filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
-		filenamestream << ".xdr";
+		filenamestream << ".restart.xdr";
 
 	string filename = filenamestream.str();
 	domain->writeCheckpoint(filename, particleContainer, domainDecomp);
