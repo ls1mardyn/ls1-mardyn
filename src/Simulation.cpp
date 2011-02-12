@@ -1149,6 +1149,7 @@ void Simulation::simulate() {
 	/***************************************************************************/
 
 	_ioTimer->start();
+	/* write final checkpoint */
 	string cpfile(_outputPrefix + ".restart.xdr");
 	_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
 	// finish output

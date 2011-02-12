@@ -5,7 +5,6 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 
 #include <sstream>
