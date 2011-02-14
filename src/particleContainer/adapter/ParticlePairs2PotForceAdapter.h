@@ -22,6 +22,7 @@
 
 #include "molecules/potforce.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "RDF.h"
 
 //! @brief calculate pair forces and collect macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -36,7 +37,7 @@ class ParticlePairs2PotForceAdapter : public ParticlePairsHandler {
 public:
 	//! Constructor
 	ParticlePairs2PotForceAdapter(Domain& domain) : _domain(domain) {
-		this->_doRecordRDF = false;
+		//this->_doRecordRDF = false;
 	}
 
 	//! Destructor
@@ -84,8 +85,8 @@ public:
 		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
 		params.reset_read();
 		if (pairType == 0) {
-			if ( _doRecordRDF )
-				_domain.observeRDF(dd, molecule1.componentid(), molecule2.componentid());
+			if ( _rdf != NULL )
+				_rdf->observeRDF(dd, molecule1.componentid(), molecule2.componentid());
 
 			PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
 			return _upot6LJ + _upotXpoles;
@@ -123,9 +124,9 @@ public:
 		TersoffPotForce(&particle1, params, _upotTersoff, delta_r);
 	}
 
-	void recordRDF() {
-		this->_doRecordRDF = true;
-	}
+//	void recordRDF() {
+//		this->_doRecordRDF = true;
+//	}
 
 private:
 	//! @brief reference to the domain is needed to store the calculated macroscopic values
@@ -142,7 +143,7 @@ private:
 	//! @brief variable used to sum the MyRF contribution of all pairs
 	double _myRF;
 
-	bool _doRecordRDF;
+//	bool _doRecordRDF;
 };
 
 #endif /*PARTICLEPAIRS2POTFORCEADAPTER_H_*/

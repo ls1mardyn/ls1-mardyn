@@ -204,7 +204,7 @@ public:
 	}
 
 	//! @brief get local rank
-	int getlocalRank();
+	int getlocalRank() const;
 
 	//! @brief get input version
 	unsigned long getinpversion();
@@ -356,22 +356,8 @@ public:
 	void Nadd(unsigned cid, int N, int localN);
 
 	double getGlobalLength(int d) { return _globalLength[d]; }
-	double getGlobalVolume() { return (_globalLength[0] *  _globalLength[1] *  _globalLength[2]); }
+	double getGlobalVolume() const { return (_globalLength[0] *  _globalLength[1] *  _globalLength[2]); }
 
-	void setupRDF(double interval, unsigned bins);
-	void resetRDF();
-	void collectRDF(DomainDecompBase* domainDecomp);
-	void outputRDF(const char* prefix, unsigned i, unsigned j);
-	void accumulateRDF();
-	void tickRDF() { this->_universalRDFTimesteps++; }
-	inline void observeRDF(unsigned i) { this->_localCtr[i] ++; }
-	inline void observeRDF(double dd, unsigned i, unsigned j) {
-		if(this->_universalRDFTimesteps < 0) return;
-		if(dd > this->ddmax) return;
-		if(i > j) { this->observeRDF(dd, j, i); return; }
-		unsigned l = (unsigned)floor(sqrt(dd)/this->_universalInterval);
-		this->_localDistribution[i][j-i][l] ++;
-	}
 	void thermostatOff() { this->_universalNVE = true; }
 	void thermostatOn() { this->_universalNVE = false; }
 	bool NVE() { return this->_universalNVE; }
@@ -480,14 +466,6 @@ private:
 	unsigned _globalAccumulatedDatasets;
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
-
-	bool _doCollectRDF;
-	double _universalInterval;
-	unsigned _universalBins;
-	int _universalRDFTimesteps, _universalAccumulatedTimesteps;
-	double ddmax;
-	unsigned long *_localCtr, *_globalCtr, *_globalAccumulatedCtr;
-	unsigned long ***_localDistribution, ***_globalDistribution, ***_globalAccumulatedDistribution;
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;

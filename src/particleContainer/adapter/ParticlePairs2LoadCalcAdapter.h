@@ -84,9 +84,9 @@ public:
 		return;
 	}
 
-	void recordRDF() {
-		return;
-	}
+//	void recordRDF() {
+//		return;
+//	}
 
 	void giveStatus() {
 		std::cout << "Adapter: ParticlePairs2LoadCalcAdapter" << std::endl;

@@ -20,6 +20,8 @@
 #ifndef PARTICLEPAIRSHANDLER_H_
 #define PARTICLEPAIRSHANDLER_H_
 
+class RDF;
+
 //! @brief interface for defining the action performed when processing a pair
 //! @author Martin Buchholz
 //! 
@@ -49,7 +51,7 @@
 class ParticlePairsHandler {
 public:
 	//! Constructor
-	ParticlePairsHandler() {
+	ParticlePairsHandler() : _rdf(NULL) {
 	}
 
 	//! Destructor
@@ -72,7 +74,22 @@ public:
 	virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ) = 0;
 	virtual void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) = 0;
 	virtual void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) = 0;
-	virtual void recordRDF() = 0;
+
+	/**
+	 * @todo it is not clean to have particleHandlers need to know about the rdf.
+	 *       however, this more or less reflects the previous design, so I do it just in the old way
+	 *       for the moment.
+	 *
+	 *       Once we generalized the treatment of the potentials in the ParticleContainer somehow,
+	 *       we should make the RDF a particlePairsHandler of its own.
+	 */
+	//virtual void recordRDF() = 0;
+	void setRDF(RDF* rdf) {
+		this->_rdf = rdf;
+	}
+
+protected:
+	RDF* _rdf;
 };
 
 #endif /*PARTICLEPAIRSHANDLER_H_*/

@@ -50,6 +50,7 @@ class DomainDecompBase;
 class InputBase;
 class Molecule;
 class Timer;
+class RDF;
 
 namespace optparse {
 class OptionParser;
@@ -298,13 +299,6 @@ private:
 	//! and Tpry (kinetic energy) will be attached to the prefix for
 	//! the different profiles.
 	std::string _profileOutputPrefix;
-	//! flag specifying whether the radial distribution function is recorded
-	bool _doRecordRDF;
-	//! aggregation interval for the RDF data
-	unsigned _RDFOutputTimesteps;
-	//! the timestep, the respective component IDs, and "rdf" are
-	//! appended to this prefix
-	std::string _RDFOutputPrefix;
 
 	//! A thermostat can be specified to account for the directed
 	//! motion, which means that only the undirected kinetic energy is
@@ -353,6 +347,9 @@ private:
 
 	//! Flow regulation
 	PressureGradient* _pressureGradient;
+
+	//! Component to calculate the radial distribution function
+	RDF* _rdf;
 
 	//! Datastructure for finding neighbours efficiently
 	ParticleContainer* _moleculeContainer;

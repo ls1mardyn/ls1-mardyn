@@ -75,8 +75,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 
 	_currentTime = 0.0;
 
-	this->_doCollectRDF = false;
-	this->_universalRDFTimesteps = -1;
 	this->_universalNVE = false;
 	this->_globalUSteps = 0;
 	this->_globalSigmaU = 0.0;
@@ -845,185 +843,6 @@ void Domain::resetProfile()
 	this->_globalAccumulatedDatasets = 0;
 }
 
-void Domain::setupRDF(double interval, unsigned bins)
-{
-	unsigned numc = this->_components.size();
-
-	this->_doCollectRDF = true;
-	this->_universalInterval = interval;
-	this->_universalBins = bins;
-	this->_universalRDFTimesteps = -1;
-	this->_universalAccumulatedTimesteps = 0;
-	this->ddmax = interval*interval*bins*bins;
-
-	this->_localCtr = new unsigned long[numc];
-	this->_globalCtr = new unsigned long[numc];
-	this->_globalAccumulatedCtr = new unsigned long[numc];
-	this->_localDistribution = new unsigned long**[numc];
-	this->_globalDistribution = new unsigned long**[numc];
-	this->_globalAccumulatedDistribution = new unsigned long**[numc];
-	for(unsigned i = 0; i < numc; i++)
-	{
-		this->_localCtr[i] = 0;
-		this->_globalCtr[i] = 0;
-		this->_globalAccumulatedCtr[i] = 0;
-
-		this->_localDistribution[i] = new unsigned long*[numc-i];
-		this->_globalDistribution[i] = new unsigned long*[numc-i];
-		this->_globalAccumulatedDistribution[i] = new unsigned long*[numc-i];
-
-		for(unsigned k=0; i+k < numc; k++)
-		{
-			this->_localDistribution[i][k] = new unsigned long[bins];
-			this->_globalDistribution[i][k] = new unsigned long[bins];
-			this->_globalAccumulatedDistribution[i][k] = new unsigned long[bins];
-
-			for(unsigned l=0; l < bins; l++)
-			{
-				this->_localDistribution[i][k][l] = 0;
-				this->_globalDistribution[i][k][l] = 0;
-				this->_globalAccumulatedDistribution[i][k][l] = 0;
-			}
-		}
-	}
-}
-
-void Domain::resetRDF()
-{
-	this->_universalRDFTimesteps = 0;
-	for(unsigned i=0; i < this->_components.size(); i++)
-	{
-		this->_localCtr[i] = 0;
-		this->_globalCtr[i] = 0;
-		for(unsigned k=0; i+k < this->_components.size(); k++)
-		{
-			for(unsigned l=0; l < this->_universalBins; l++)
-			{
-				this->_localDistribution[i][k][l] = 0;
-				this->_globalDistribution[i][k][l] = 0;
-			}
-		}
-	}
-}
-
-void Domain::accumulateRDF()
-{
-	if(0 >= this->_universalRDFTimesteps) return;
-	this->_universalAccumulatedTimesteps += this->_universalRDFTimesteps;
-	if(!this->_localRank)
-	{
-		for(unsigned i=0; i < this->_components.size(); i++)
-		{
-			this->_globalAccumulatedCtr[i] += this->_globalCtr[i];
-			for(unsigned k=0; i+k < this->_components.size(); k++)
-				for(unsigned l=0; l < this->_universalBins; l++)
-					this->_globalAccumulatedDistribution[i][k][l]
-						+= this->_globalDistribution[i][k][l];
-		}
-	}
-}
-
-void Domain::collectRDF(DomainDecompBase* dode)
-{
-	unsigned nb = this->_universalBins;
-	unsigned nc = this->_components.size();
-	dode->collCommInit(nc + nb*nc*(nc+1)/2);
-	for(unsigned i=0; i < nc; i++)
-	{
-		dode->collCommAppendUnsLong(this->_localCtr[i]);
-		for(unsigned k=0; i+k < nc; k++)
-		{
-			for(unsigned l=0; l < nb; l++)
-			{
-				dode->collCommAppendUnsLong(_localDistribution[i][k][l]);
-			}
-		}
-	}
-	dode->collCommAllreduceSum();
-	for(unsigned i=0; i < nc; i++)
-	{
-		this->_globalCtr[i] = dode->collCommGetUnsLong();
-		for(unsigned k=0; i+k < nc; k++)
-		{
-			for(unsigned l=0; l < nb; l++)
-			{
-				_globalDistribution[i][k][l] = dode->collCommGetUnsLong();
-			}
-		}
-	}
-	dode->collCommFinalize();
-}
-
-void Domain::outputRDF(const char* prefix, unsigned i, unsigned j)
-{
-	/* Output only from process with rank 0 */
-	if( _localRank != 0 )
-		return;
-
-	global_log->debug() << "outputRDF(): RDF_MINIMAL_OUTPUT_STEPS " << RDF_MINIMAL_OUTPUT_STEPS
-			<< " _universalRDFTimesteps" << _universalRDFTimesteps << endl;
-
-	/* FIXME: MINIMAL >= xyz ?! */
-	if(RDF_MINIMAL_OUTPUT_STEPS >= _universalRDFTimesteps) 
-		return;
-
-	string rdfname(prefix);
-	rdfname += ".rdf";
-	ofstream rdfout(rdfname.c_str());
-	if (!rdfout) return;
-
-	double V = _globalLength[0] * _globalLength[1] * _globalLength[2];
-	double N_i = _globalCtr[i] / _universalRDFTimesteps;
-	double N_Ai = _globalAccumulatedCtr[i] / _universalAccumulatedTimesteps;
-	double N_j = _globalCtr[j] / _universalRDFTimesteps;
-	double N_Aj = _globalAccumulatedCtr[j] / _universalAccumulatedTimesteps;
-	double rho_i = N_i / V;
-	double rho_Ai = N_Ai / V;
-	double rho_j = N_j / V;
-	double rho_Aj = N_Aj / V;
-
-	rdfout.precision(5);
-	rdfout << "# r\tcurr.\taccu.\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnorm(curr.)\tnorm(accu.)\n";
-	rdfout << "# \n# ctr_i: " << _globalCtr[i] << "\n# ctr_j: " << _globalCtr[j]
-		<< "\n# V: " << V << "\n# _universalRDFTimesteps: " << _universalRDFTimesteps
-		<< "\n# _universalAccumulatedTimesteps: " << _universalAccumulatedTimesteps
-		<< "\n# rho_i: " << rho_i << " (acc. " << rho_Ai << ")"
-		<< "\n# rho_j: " << rho_j << " (acc. " << rho_Aj << ")"
-		<< "\n# \n";
-
-	for(unsigned l=0; l < this->_universalBins; l++)
-	{
-		double rmin = l * _universalInterval;
-		double rmid = (l+0.5) * _universalInterval;
-		double rmax = (l+1.0) * _universalInterval;
-		double r3min = rmin*rmin*rmin;
-		double r3max = rmax*rmax*rmax;
-		/* FIXME: uncommented constant */
-		double dV = 4.1887902 * (r3max - r3min);
-
-		unsigned long N_pair = _globalDistribution[i][j-i][l] / _universalRDFTimesteps;
-		unsigned long N_Apair = _globalAccumulatedDistribution[i][j-i][l]
-			/ _universalAccumulatedTimesteps;
-		double N_pair_norm;
-		double N_Apair_norm;
-		if(i == j)
-		{
-			N_pair_norm = 0.5*N_i*rho_i*dV;
-			N_Apair_norm = 0.5*N_Ai*rho_Ai*dV;
-		}
-		else
-		{
-			N_pair_norm = N_i*rho_j*dV;
-			N_Apair_norm = N_Ai*rho_Aj*dV;
-		}
-
-		rdfout << rmid << "\t" << N_pair/N_pair_norm
-			<< "\t" << N_Apair/N_Apair_norm
-			<< "\t\t" << dV << "\t" << N_pair << "\t" << N_Apair
-			<< "\t\t" << N_pair_norm << "\t" << N_Apair_norm << "\n";
-	}
-	rdfout.close();
-}
 
 void Domain::Nadd(unsigned cid, int N, int localN)
 {
@@ -1133,7 +952,7 @@ unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
-int Domain::getlocalRank(){ return _localRank;}
+int Domain::getlocalRank() const { return _localRank;}
 
 unsigned long Domain::getinpversion(){ return _inpversion;}
 

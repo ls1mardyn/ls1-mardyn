@@ -52,6 +52,8 @@
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
 
+#include "RDF.h"
+
 #ifdef STEEREO
 #include "utils/SteereoIntegration.h"
 #include <steereoSimSteering.h>
@@ -71,6 +73,7 @@ using namespace std;
 Simulation* global_simulation;
 
 Simulation::Simulation(optparse::Values& options, vector<string>& args) :
+	_rdf(NULL),
 	_domainDecomposition(NULL) {
 
 	initialize();
@@ -102,6 +105,8 @@ Simulation::Simulation(optparse::Values& options, vector<string>& args) :
 }
 
 Simulation::~Simulation() {
+	if (_rdf)
+		delete _rdf;
 	if (_domainDecomposition)
 		delete _domainDecomposition;
 	if (_pressureGradient)
@@ -713,12 +718,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double interval;
 			unsigned bins;
 			inputfilestream >> interval >> bins;
-			_domain->setupRDF(interval, bins);
-			_doRecordRDF = true;
+			if (_domain->getComponents().size() <= 0) {
+				global_log->error() << "PhaseSpaceFile-Specifiation has to occur befor RDF-Token!" << endl;
+				exit(-1);
+			}
+			_rdf = new RDF(interval, bins, _domain->getComponents().size());
+			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") {
-			inputfilestream >> _RDFOutputTimesteps;
+			unsigned int RDFOutputTimesteps;
+			inputfilestream >> RDFOutputTimesteps;
+			_rdf->setOutputTimestep(RDFOutputTimesteps);
 		} else if (token == "RDFOutputPrefix") {
-			inputfilestream >> _RDFOutputPrefix;
+			std::string RDFOutputPrefix;
+			inputfilestream >> RDFOutputPrefix;
+			_rdf->setOutputPrefix(RDFOutputPrefix);
 		} else if (token == "profiledComponent") {
 			unsigned cid;
 			inputfilestream >> cid;
@@ -889,8 +902,9 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 
 	// initialize the radial distribution function
-	if (_doRecordRDF)
-		_domain->resetRDF();
+	// TODO this call should not be neccessary!
+//	if (_rdf != NULL)
+//		_rdf->reset();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
@@ -944,11 +958,10 @@ void Simulation::prepare_start() {
 	startListeningSteereo (_steer);
 #endif
 
-	// activate RDF sampling
-	// FIXME this condition is not executed deterministically, as _initSimulation here
-	// is not initialized (it is initialized in function simulate()).
-	if ((this->_initSimulation > this->_initStatistics) && this->_doRecordRDF)
-		this->_domain->tickRDF();
+//	if ((_initSimulation > _initStatistics) && this->_rdf != NULL) {
+//		this->_rdf->tickRDF();
+//		this->_particlePairsHandler->setRDF(_rdf);
+//	}
 
 	global_log->info() << "System initialised\n" << endl;
 }
@@ -961,6 +974,7 @@ void Simulation::simulate() {
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
+	_initSimulation = (unsigned long) (_domain->getCurrentTime() / _integrator->getTimestepLength());
 
 	/* demonstration for the usage of the new ensemble class */
 	CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
@@ -978,8 +992,6 @@ void Simulation::simulate() {
 	_loopTimer = new Timer;
 	_perStepIoTimer = new Timer;
 	_ioTimer = new Timer;
-
-	_initSimulation = (unsigned long) (_domain->getCurrentTime() / _integrator->getTimestepLength());
 
 #ifdef STEEREO
 #ifdef STEEREO_COUPLING
@@ -1012,8 +1024,11 @@ void Simulation::simulate() {
 #endif
 #endif
 		// activate RDF sampling
-		if ((_simstep == this->_initStatistics) && this->_doRecordRDF)
-			this->_domain->tickRDF();
+		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
+			this->_rdf->tickRDF();
+			this->_particlePairsHandler->setRDF(_rdf);
+			this->_rdf->accumulateNumberOfMolecules(_domain->getComponents());
+		}
 
 		// ensure that all Particles are in the right cells and exchange Particles
 		global_log->debug() << "Updating container and decomposition" << endl;
@@ -1078,11 +1093,10 @@ void Simulation::simulate() {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
-			if (this->_doRecordRDF) {
-				this->_domain->tickRDF();
-				this->_particlePairsHandler->recordRDF();
-				this->_moleculeContainer->countParticles(_domain);
-			}
+//			if (this->_rdf != NULL) {
+//				this->_rdf->tickRDF();
+//
+//			}
 		}
 
 		if (_zoscillation) {
@@ -1179,24 +1193,8 @@ void Simulation::output(unsigned long simstep) {
 		(*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
-	if (_doRecordRDF && !(simstep % _RDFOutputTimesteps)) {
-		_domain->collectRDF(_domainDecomposition);
-		if (!ownrank) {
-			_domain->accumulateRDF();
-			for (unsigned i = 0; i < _numberOfComponents; i++) {
-				for (unsigned j = i; j < _numberOfComponents; j++) {
-					ostringstream osstrm;
-					osstrm << _RDFOutputPrefix << "_" << i << "-" << j << ".";
-					osstrm.fill('0');
-					osstrm.width(9);
-					osstrm << right << simstep;
-					_domain->outputRDF(osstrm.str().c_str(), i, j);
-					osstrm.str("");
-					osstrm.clear();
-				}
-			}
-		}
-		_domain->resetRDF();
+	if (_rdf != NULL) {
+		_rdf->doOutput(_domainDecomposition, _domain, simstep);
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
@@ -1287,9 +1285,6 @@ void Simulation::initialize() {
 	_collectThermostatDirectedVelocity = 100;
 	_zoscillation = false;
 	_zoscillator = 512;
-	_doRecordRDF = false;
-	_RDFOutputTimesteps = 25000;
-	_RDFOutputPrefix = "out";
 	_initCanonical = 5000;
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;

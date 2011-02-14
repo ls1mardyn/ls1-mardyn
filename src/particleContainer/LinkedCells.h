@@ -183,9 +183,6 @@ public:
 		return _tersoffCutoffRadius;
 	}
 
-	//! @brief observes the RDFs of all particles in the domain.
-	/* TODO: misleading method name */
-	void countParticles(Domain* d);
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(int cid);
 	//! @brief counts particles in the intersection of bounding box and control volume

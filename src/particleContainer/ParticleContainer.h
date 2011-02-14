@@ -169,8 +169,6 @@ public:
 	virtual double getCutoff() = 0;
 	virtual double getLJCutoff() = 0;
 	virtual double getTersoffCutoff() = 0;
-	// TODO this can be retrieved via component
-	virtual void countParticles(Domain* d) = 0;
 
     /* TODO: This goes into the component class */
 	//! @brief counts all particles inside the bounding box

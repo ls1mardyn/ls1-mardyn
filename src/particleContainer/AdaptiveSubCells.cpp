@@ -241,19 +241,6 @@ void AdaptiveSubCells::addParticle(Molecule& particle) {
 	}
 }
 
-void AdaptiveSubCells::countParticles(Domain* d) {
-	std::list<Molecule*>::iterator molIter1;
-
-	for (unsigned i = 0; i < _cells.size(); i++) {
-		Cell& currentCell = _cells[i];
-		if (currentCell.isHaloCell())
-			continue;
-		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-			Molecule& molecule1 = **molIter1;
-			d->observeRDF(molecule1.componentid());
-		}
-	}
-}
 
 unsigned AdaptiveSubCells::countParticles(int cid) {
 	unsigned N = 0;

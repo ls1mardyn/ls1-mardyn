@@ -8,6 +8,12 @@ class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
 
+/**
+ * TODO: cleanup all classes implementing this interface
+ *       make this an abstract class which deals with all things which are
+ *       common to all OutputComponents like writeFrequncy, baseFilename, and so on...
+ */
+
 //! @brief interface for any kind of output class
 //! @author Martin Bernreuther, Martin Buchholz, et al. (2009)
 //!
