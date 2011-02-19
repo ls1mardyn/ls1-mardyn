@@ -268,7 +268,6 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	unsigned int numcomponents = dcomponents.size();
 
 	_phaseSpaceFileStream >> token;
-	std::cout << "WE Read token: " << token << std::endl;
 	if((token == "NumberOfMolecules") || (token == "N")) {
 		string nummolecules;
 		_phaseSpaceFileStream >> nummolecules;
