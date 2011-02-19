@@ -21,7 +21,7 @@ enum GlobalVariable {
 class Ensemble {
 public:
 	Ensemble() {}
-	~Ensemble() {}
+	virtual ~Ensemble() {}
 
 	//! @brief Returns the global number of Molecules of the ensemble.
 	virtual unsigned long N() = 0;
