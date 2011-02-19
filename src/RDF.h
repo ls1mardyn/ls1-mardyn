@@ -37,6 +37,8 @@ class Component;
  */
 class RDF {
 
+	friend class RDFTest;
+
 public:
 
 	/**
