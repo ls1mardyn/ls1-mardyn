@@ -8,18 +8,6 @@
  * user defined reduce operation so that the MPI reduce operation is only called once. */
 #define ENABLE_AGGLOMERATED_REDUCE 1
 
-//! As in C++ arrays have to contain only one type of variable,
-//! but this class (see documentation of CollectiveCommunication class)
-//! shall be able to store values of different types for the transfer,
-//! this union is needed to be able to store the values of different
-//! types in one array.
-union valType {
-	int val_int;
-	unsigned long val_unsLong;
-	float val_float;
-	double val_double;
-	long double val_longDouble;
-};
 
 //! @brief This class is used to transfer several values of different types with a single command
 //! @author Martin Buchholz
@@ -70,6 +58,20 @@ union valType {
 //!   collComm.finalize();
 //! @endcode
 class CollectiveCommunication {
+
+	//! As in C++ arrays have to contain only one type of variable,
+	//! but this class (see documentation of CollectiveCommunication class)
+	//! shall be able to store values of different types for the transfer,
+	//! this union is needed to be able to store the values of different
+	//! types in one array.
+	union valType {
+		int val_int;
+		unsigned long val_unsLong;
+		float val_float;
+		double val_double;
+		long double val_longDouble;
+	};
+
 public:
 	//! @brief allocate memory for the values to be sent, initialize counters
 	//! @param numValues number of values that shall be communicated

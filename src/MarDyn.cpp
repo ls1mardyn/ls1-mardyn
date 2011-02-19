@@ -70,8 +70,14 @@ int main(int argc, char** argv) {
 	vector<string> args = op.args();
 	unsigned int numargs = args.size();
 
+	if (options.is_set("verbose") && options.get("verbose"))
+		global_log->set_log_level(Log::All);
+
 	bool tests = options.get("tests");
 	if (tests) {
+		std::string testDataDirectory(options.get("testDataDirectory"));
+		std::cout << "TestDataDirectory is " << testDataDirectory << std::endl;
+		setTestDataDirectory(testDataDirectory);
 		bool testresult = runTests();
 		if (testresult) {
 			#ifdef PARALLEL
@@ -121,6 +127,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
 	op.add_option("-t", "--tests") .action("store_true") .dest("tests") .metavar("T") .type("bool") .set_default(false) .help("unit tests: run built-in unit tests (default: %default)");
+	op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
 
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");

@@ -8,6 +8,8 @@
 #include "utils/Logger.h"
 
 #include <sys/stat.h>
+#include <errno.h>
+#include <cstring>
 #include <cstdio>
 
 using namespace Log;
@@ -15,7 +17,11 @@ using namespace Log;
 bool fileExists(const char* fileName) {
 	struct stat status;
 	int retVal = stat(fileName, &status);
-
+	if (retVal != 0) {
+		char* error = strerror(errno);
+		global_log->debug() << "File does not exist: " << fileName << std::endl;
+		global_log->debug() << error << std::endl;
+	}
 	return retVal == 0;
 }
 
@@ -23,7 +29,9 @@ bool fileExists(const char* fileName) {
 void removeFile(const char* fileName) {
 	int retVal = remove(fileName);
 	if (retVal != 0) {
+		char* error = strerror(errno);
 		global_log->warning() << "Could not remove file " << fileName << std::endl;
+		global_log->debug() << error << std::endl;
 	}
 }
 

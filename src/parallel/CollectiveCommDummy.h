@@ -1,14 +1,6 @@
 #ifndef COLLECTIVECOMMDUMMY_H_
 #define COLLECTIVECOMMDUMMY_H_
 
-//! Read documentation for this union in CollectiveCommunication.h
-union valType {
-	int val_int;
-	unsigned long val_unsLong;
-	float val_float;
-	double val_double;
-	long double val_longDouble;
-};
 
 //! @brief This class is just a dummy class which ensures that the collective communication
 //!        commands also work if the program is executed sequentially without MPI
@@ -25,6 +17,18 @@ union valType {
 //! ensure that this also works if there is no real domain decomposition but the
 //! class DomainDecompDummy is used.
 class CollectiveCommDummy {
+
+
+	//! Read documentation for this union in CollectiveCommunication.h
+	union valType {
+		int val_int;
+		unsigned long val_unsLong;
+		float val_float;
+		double val_double;
+		long double val_longDouble;
+	};
+
+
 public:
 	//! @brief allocate memory for the values to be stored, initialize counters 
 	//! @param numValues number of values that shall be stored

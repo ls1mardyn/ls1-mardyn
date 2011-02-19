@@ -95,9 +95,6 @@ Simulation::Simulation(optparse::Values& options, vector<string>& args) :
 		_outputPrefix = options["outputprefix"];
 	global_log->info() << "Using output prefix '" << _outputPrefix << "'" << endl;
 
-	if (options.is_set("verbose") && options.get("verbose"))
-		global_log->set_log_level(Log::All);
-
 	if (numargs >= 1) {
 		string inputfilename(args[0]);
 		initConfigFile(inputfilename);
