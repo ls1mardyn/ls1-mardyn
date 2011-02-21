@@ -4,7 +4,7 @@
 class ParticleContainer;
 class Domain;
 
-//! @brief update velocities and position
+//! @brief Update velocities and positions.
 //! @author Martin Buchholz, Martin Bernreuther, et al.
 //!
 //! The basic idea of the integrator is, that it calculates from

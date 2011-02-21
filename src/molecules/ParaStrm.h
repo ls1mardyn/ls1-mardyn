@@ -28,20 +28,19 @@
 #ifndef PARASTRM_H_
 #define PARASTRM_H_
 
-//#include <vector>
-
 #include <cstdlib>
 #include <cassert>
 
-/**
- Parameter stream
-
- @author Martin Bernreuther
+/** Parameter stream
+ *
+ * @author Martin Bernreuther
  */
 class ParaStrm {
 public:
 	//enum Eparatype {UNDEF=0,DOUBLE,INT};
 
+    /** Constructor
+     */
 	ParaStrm() :
 		m_size(0)/*, m_pos(0)*/{
 		m_pstrm = NULL;
@@ -52,7 +51,6 @@ public:
 			free(m_pstrm);
 	}
 
-	//std::size_t numpara() const { return m_ptypes.size(); }
 	/// end of stream reached?
 	bool eos() const {
 		return m_readpos >= m_pstrm + m_size;
