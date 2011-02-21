@@ -846,7 +846,7 @@ void Domain::resetProfile()
 
 void Domain::Nadd(unsigned cid, int N, int localN)
 {
-	this->_components[cid].Nadd(N);
+	this->_components[cid].incNumMolecules(N);
 	this->_globalNumMolecules += N;
 	this->_localRotationalDOF[0] += localN * _components[cid].getRotationalDegreesOfFreedom();
 	this->_universalRotationalDOF[0] += N * _components[cid].getRotationalDegreesOfFreedom();

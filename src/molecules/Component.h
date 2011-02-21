@@ -86,12 +86,10 @@ public:
 	const std::vector<Tersoff>& tersoff() const { return _tersoff; }
 	const Tersoff& tersoff(unsigned int i) const { return _tersoff[i]; }
 
-	//! @brief set the number of Molecules (global) which have this component type
-	void setNumMolecules(unsigned long num) { _numMolecules = num; }
-	void incNumMolecules() { ++_numMolecules; }
-	unsigned long getNumMolecules() const { return _numMolecules; }
-	// TODO: The following method is missleading.
-	void Nadd(int N) { _numMolecules += N; }
+	void setNumMolecules(unsigned long num) { _numMolecules = num; }  /**< set the number of molecules for this component */
+	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */ 
+	void incNumMolecules(int N) { _numMolecules += N; }  /**< increase the number of molecules for this component by N */
+	unsigned long getNumMolecules() const { return _numMolecules; }  /**< get the number of molecules (global) of the component */
 
 	void addLJcenter(
 			double x, double y, double z, double m, double eps,
