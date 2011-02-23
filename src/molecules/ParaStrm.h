@@ -30,6 +30,7 @@
 
 #include <cstdlib>
 #include <cassert>
+#include <string.h>
 
 /** Parameter stream
  *
@@ -39,13 +40,18 @@ class ParaStrm {
 public:
 	//enum Eparatype {UNDEF=0,DOUBLE,INT};
 
-    /** Constructor
-     */
-	ParaStrm() :
-		m_size(0)/*, m_pos(0)*/{
-		m_pstrm = NULL;
-		m_readpos = NULL;
+    /// Constructor generating a new, empty parameter stream.
+	ParaStrm() : m_size(0)/*, m_pos(0)*/, m_pstrm(NULL), m_readpos(NULL) { }
+
+    /// Constructor using an existing parameter stream (resets the reading "pointer" to the beginning of the stream).
+	ParaStrm( const ParaStrm& param_stream ) : m_size( param_stream.m_size ), m_pstrm(NULL), m_readpos(NULL) {
+        m_pstrm = (char *) malloc(m_size);
+        assert(m_pstrm);
+        memcpy( m_pstrm, param_stream.m_pstrm, m_size );
+        m_readpos = m_pstrm;
 	}
+
+    /// Destructor
 	~ParaStrm() {
 		if (m_pstrm)
 			free(m_pstrm);
@@ -63,6 +69,16 @@ public:
 	void reset_read() {
 		m_readpos = m_pstrm; /*m_pos=0;*/
 	}
+
+    /// Copy parameter stream (resets the reading "pointer" to the beginning of the stream).
+    ParaStrm& operator=( const ParaStrm& param_stream ) {
+        m_size  = param_stream.m_size;
+        m_pstrm = (char *) malloc(m_size);
+        assert(m_pstrm);
+        memcpy( m_pstrm, param_stream.m_pstrm, m_size );
+        m_readpos = m_pstrm;
+        return *this;
+    }
 
 	/// add value to the (end of) stream
 	template<class T> ParaStrm& operator <<(T p) {
@@ -84,8 +100,6 @@ public:
 		m_readpos = m_pstrm + readpos;
 		return *this;
 	}
-	//ParaStrm& operator <<(double p);
-	//ParaStrm& operator <<(int p);
 
 	/// read value at actual stream position and move position
 	template<class T> ParaStrm& operator >>(T& p) {
@@ -99,8 +113,9 @@ public:
 	}
 
 private:
-	size_t m_size;
-	char *m_pstrm, *m_readpos; // sizeof(char)==1!
+	size_t m_size;  /**< Size of stored stream data in bytes. */
+	char *m_pstrm;  /**< Base pointer of data storage. */
+	char *m_readpos;  /**< Pointer to the current data item. */
 	// we also could check for valid types...
 	//std::vector<Eparatype> m_ptypes;
 	//std::size_t m_pos;
