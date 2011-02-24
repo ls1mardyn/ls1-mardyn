@@ -139,8 +139,12 @@ public:
 		return this->_tersoffCutoffRadius;
 	}
 
+	//! @todo remove this, using Component::getNumMolecules()
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(int cid);
+	/**
+	 * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
+	 */
 	//! @brief counts particles in the intersection of bounding box and control volume
 	unsigned countParticles(int cid, double* cbottom, double* ctop);
 

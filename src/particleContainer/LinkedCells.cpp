@@ -199,6 +199,9 @@ void LinkedCells::addParticle(Molecule& particle) {
 }
 
 
+/**
+ * @todo replace this by a call to component->getNumMolecules() !?
+ */
 unsigned LinkedCells::countParticles(int cid) {
 	unsigned N = 0;
 	std::list<Molecule*>::iterator molIter1;
@@ -214,6 +217,9 @@ unsigned LinkedCells::countParticles(int cid) {
 	return N;
 }
 
+/**
+ * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
+ */
 unsigned LinkedCells::countParticles(int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];

@@ -258,6 +258,9 @@ unsigned AdaptiveSubCells::countParticles(int cid) {
 	return N;
 }
 
+/**
+ * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
+ */
 unsigned AdaptiveSubCells::countParticles(int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];

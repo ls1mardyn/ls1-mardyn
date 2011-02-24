@@ -8,10 +8,10 @@
 #ifndef RDFTEST_H_
 #define RDFTEST_H_
 
-#include "utils/Testing.h"
+#include "utils/TestWithSimulationSetup.h"
 
 
-class RDFTest : public utils::Test {
+class RDFTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(RDFTest);
 	TEST_METHOD(testRDFCountSequential12_LinkedCell);

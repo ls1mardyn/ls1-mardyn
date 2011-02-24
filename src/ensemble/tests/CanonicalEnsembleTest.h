@@ -8,7 +8,7 @@
 #ifndef CANONICALENSEMBLETEST_H_
 #define CANONICALENSEMBLETEST_H_
 
-#include "utils/Testing.h"
+#include "utils/TestWithSimulationSetup.h"
 
 /**
  * Simple tests for the canonical ensemble.
@@ -18,7 +18,7 @@
  *       For the parallel case the test case needed to set up the global_simulation somehow,
  *       as the ensemble needs it for the communication.
  */
-class CanonicalEnsembleTest: public utils::Test {
+class CanonicalEnsembleTest: public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(CanonicalEnsembleTest);
 	TEST_METHOD(UpdateNumMoleculesSequential);

@@ -9,14 +9,6 @@
 #include "utils/Logger.h"
 #include "utils/FileUtils.h"
 
-#include "Domain.h"
-#include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecompDummy.h"
-
-#ifdef PARALLEL
-#include "parallel/DomainDecomposition.h"
-#endif
-
 #ifdef UNIT_TESTS
   #ifdef USE_CPPUNIT
     #include<cppunit/ui/text/TestRunner.h>
@@ -66,41 +58,9 @@ void setTestDataDirectory(std::string& testDataDirectory) {
 
 std::string utils::Test::testDataDirectory("");
 
-utils::Test::Test() : _rank(0), _domain(NULL), _domainDecomposition(NULL) { }
+utils::Test::Test() { }
 
-utils::Test::~Test() {
-	if (_domain != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
-		delete _domain;
-	}
-
-	if (_domainDecomposition != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
-		delete _domainDecomposition;
-	}
-}
-
-void utils::Test::setUp() {
-	_rank = 0;
-	#ifdef PARALLEL
-		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
-	#endif
-	_domain = new Domain(_rank, NULL);
-
-	#ifdef PARALLEL
-	_domainDecomposition = new DomainDecomposition();
-	#else
-	_domainDecomposition = new DomainDecompDummy();
-	#endif
-}
-
-
-void utils::Test::tearDown() {
-	delete _domain;
-	_domain = NULL;
-	delete _domainDecomposition;
-	_domainDecomposition = NULL;
-}
+utils::Test::~Test() { }
 
 
 void utils::Test::setTestDataDirectory(std::string& testDataDir) {
@@ -120,14 +80,6 @@ std::string utils::Test::getTestDataFilename(const std::string& file) {
 		exit(-1);
 	}
 	return fullPath;
-}
-
-
-ParticleContainer* utils::Test::initializeFromFile(
-		ParticleContainerFactory::type type, const char* fileName, double cutoff) {
-
-	return ParticleContainerFactory::createInitializedParticleContainer(
-			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName));
 }
 
 #endif

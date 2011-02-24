@@ -18,10 +18,6 @@
 #include "particleContainer/tests/ParticleContainerFactory.h"
 #include <string>
 
-class Domain;
-class DomainDecompBase;
-class ParticleContainer;
-
 //! execute unit tests
 //! @return false if no errors occured, true otherwise
 bool runTests();
@@ -160,25 +156,12 @@ namespace utils {
 namespace utils {
 
 /**
- * Now for every Test class it's rank, domain and domainDecomposition are setup
- * from scratch before the execution of every test method. The objects are also
- * automatically destroyed after the testcase has been executed.
+ * For all the tests you can set a root directory where all the files have to
+ * reside which are required by tests.
  *
- * All the files which might be required by tests have to reside in one folder which
- * can be set via setTestDataDirectory().
- * If particle containers are created from input files, it is sufficient to just
- * give the name of the inputfile. The complete path is also determined by this
- * class.
- *
- * @note Testing the sequential algorithm indepentend of the number of MPI-processes
- *       Mardyn has been started with, should be possible if you replace the
- *       domainDecomposition with a dummyDomainDecomposition before the particleContainer
- *       is initialized.
- *
- * @todo Probably not every test needs the basic simulation classes like domain,
- *       domainDecomposition, particleContainer, etc... So should we move that into
- *       a seperate subclass?
- *
+ * Test cases then don't have to care about paths as such. They only have to give
+ * the relative path name to getTestDataFilename(const std::string& file), and
+ * will retrieve the path of the file to be used.
  */
 class Test : public utils::TestBaseClass {
 
@@ -187,46 +170,18 @@ public:
 	Test();
 	~Test();
 
-
-	virtual void setUp();
-
-	virtual void tearDown();
-
 	static void setTestDataDirectory(std::string& testDataDirectory);
 
 protected:
-
-	/**
-	 * Initialize a particle container from the given phase specification file.
-	 * The domain class is setup as far as the input file is concerned, and for
-	 * the initialization the _domain and _domainDecomposition of this test case
-	 * are used.
-	 *
-	 * @note The caller is responsible for deleting the particle container.
-	 *
-	 * @see ParticleContainerFactory::createInitializedParticleContainer()
-	 */
-	ParticleContainer* initializeFromFile(ParticleContainerFactory::type type, const char* fileName, double cutoff);
-
-	int _rank;
-
-	Domain* _domain;
-
-	DomainDecompBase* _domainDecomposition;
-
-private:
-
 	std::string getTestDataFilename(const std::string& file);
 
+private:
 	static std::string testDataDirectory;
 
 };
 
 }
 
-
 #endif /* UNIT_TESTS */
-
-
 
 #endif /* TESTING_H_ */

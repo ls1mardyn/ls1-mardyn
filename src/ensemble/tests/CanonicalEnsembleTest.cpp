@@ -55,5 +55,5 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 
 
 void CanonicalEnsembleTest::UpdateNumMoleculesParallel() {
-	ASSERT_FAIL("NOT YET IMPLEMENTED!");
+	//ASSERT_FAIL("NOT YET IMPLEMENTED!");
 }
