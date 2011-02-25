@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define TIME 20110120
+#define TIME 20110225
 
 #define FLUID_AR 0
 #define FLUID_CH4 1
@@ -143,7 +143,7 @@ class Domain
    void write(
       char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ, bool symmetric
+      double polarity, bool WLJ, bool symmetric, bool widom
    );
 
  private:
@@ -152,12 +152,12 @@ class Domain
    void writeGraphite(
       char* prefix, double a, bool empty, int format, double mu, 
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ, bool symmetric
+      double polarity, bool WLJ, bool symmetric, bool widom
    );
    void writeNanotube(
       char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ, bool symmetric
+      double polarity, bool WLJ, bool symmetric, bool widom
    );
 
    bool muVT, nanotube;

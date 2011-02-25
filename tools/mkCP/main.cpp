@@ -23,7 +23,7 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: mkCP (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] -h <height> [-H <eta>] [-k] [-l] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-p <polarity coefficient>] [-r] [-s <size unit [A]>] [-S] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-v <volume fraction without acceleration>] [-V <volume fraction without wall] [-W <energy and temperature unit [K]>] [-Y <mass unit [u]>] [-3 <xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), Ave, CH4, C2H6, N2, CO2, H2O, CH3OH, or C6H14\n-H\tdefault: eta according to Wang et al.\n-k\tonly harmonic potentials active within the wall (default for polar walls)\n-l\tLJ interaction within the wall as well (default for unpolar walls)\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-p\tdefault polarity coefficient: 0 (unpolar walls)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A 0\n-S\tsymmetric system (with two identical fluid components)\n-t\tdefault: tau extremely large (about 30 us)\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3\tdefault: xi according to Wang et al.\n-8\toriginal Tersoff potential as published in the 80s\n";
+   const char* usage = "usage: mkCP (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] -h <height> [-H <eta>] [-k] [-l] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-p <polarity coefficient>] [-r] [-s <size unit [A]>] [-S] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-v <volume fraction without acceleration>] [-V <volume fraction without wall] [-w] [-W <energy and temperature unit [K]>] [-Y <mass unit [u]>] [-3 <xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), Ave, CH4, C2H6, N2, CO2, H2O, CH3OH, or C6H14\n-H\tdefault: eta according to Wang et al.\n-k\tonly harmonic potentials active within the wall (default for polar walls)\n-l\tLJ interaction within the wall as well (default for unpolar walls)\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-p\tdefault polarity coefficient: 0 (unpolar walls)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A 0\n-S\tsymmetric system (with two identical fluid components)\n-t\tdefault: tau extremely large (about 30 us)\n-u\tuse B-u-chholz format\n-w\tWidom\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3\tdefault: xi according to Wang et al.\n-8\toriginal Tersoff potential as published in the 80s\n";
    if((argc < 15) || (argc > 61))
    {
       cout << "There are " << argc
@@ -67,6 +67,7 @@ int main(int argc, char** argv)
    bool nanotube = false;
    bool WLJ = true;
    bool symmetric = false;
+   bool widom = false;
 
    for(int i=1; i < argc; i++)
    {
@@ -243,6 +244,7 @@ int main(int argc, char** argv)
             wo_wall = atof(argv[i]);
             break;
          }
+         else if(argv[i][j] == 'w') widom = true;
          else if(argv[i][j] == 'W')
          {
             i++;
@@ -442,7 +444,7 @@ int main(int argc, char** argv)
    {
       dalet->write(
          prefix, a, empty, format, mu, TAU, U, original,
-         wo_acceleration, polarity, WLJ, symmetric
+         wo_acceleration, polarity, WLJ, symmetric, widom
       );
    }
 

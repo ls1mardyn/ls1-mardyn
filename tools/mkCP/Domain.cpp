@@ -74,23 +74,23 @@ Domain::Domain(
 void Domain::write(
    char* prefix, double a, bool empty, int format, double mu,
    double TAU, double U, bool original, double wo_acceleration,
-   double polarity, bool WLJ, bool symmetric
+   double polarity, bool WLJ, bool symmetric, bool widom
 ) {
 
    if(this->nanotube) this->writeNanotube(
       prefix, a, empty, format, mu, TAU, U, original,
-      wo_acceleration, polarity, WLJ, symmetric
+      wo_acceleration, polarity, WLJ, symmetric, widom
    );
    else this->writeGraphite(
       prefix, a, empty, format, mu, TAU, U, original,
-      wo_acceleration, polarity, WLJ, symmetric
+      wo_acceleration, polarity, WLJ, symmetric, widom
    );
 }
 
 void Domain::writeGraphite(
    char* prefix, double a, bool empty, int format, double mu,
    double TAU, double U, bool original, double wo_acceleration,
-   double polarity, bool WLJ, bool symmetric
+   double polarity, bool WLJ, bool symmetric, bool widom
 ) {
    ofstream xdr, txt, buchholz;
    stringstream strstrm, txtstrstrm, buchholzstrstrm;
@@ -652,36 +652,58 @@ void Domain::writeGraphite(
    }
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
-      txt << "initCanonical\t25001\n";
-      if(muVT)
+      txt << "initCanonical\t20001\n";
+      if(muVT || widom)
       {
          txt.precision(9);
-         txt << "chemicalPotential " << mu/EPS_REF
+         txt << "chemicalPotential " << (muVT? (mu/EPS_REF): 0.0)
              << " component 1 control 0.0 0.0 0.0 to "
              << this->box[0]/SIG_REF << " " << 0.5*this->h/SIG_REF
              << " " << this->box[2]/SIG_REF << " conduct "
-             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0001
-                                                      : 0.0002) * N1)
+             << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
+                                                      : 0.001) * N1)
              << " tests every 2 steps\n";
+         if(symmetric && widom && !muVT)
+         {
+            txt << "chemicalPotential " << 0.0
+                << " component 2 control 0.0 0.0 0.0 to "
+                << this->box[0]/SIG_REF << " " << 0.5*this->h/SIG_REF
+                << " " << this->box[2]/SIG_REF << " conduct "
+                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
+                                                         : 0.001) * N1)
+                << " tests every 2 steps\n";
+         }
          if(flow == FLOW_COUETTE)
          {
-            txt << "chemicalPotential " << mu/EPS_REF
+            txt << "chemicalPotential " << (muVT? (mu/EPS_REF): 0.0)
                 << " component 1 control 0.0 " << this->box[1]/SIG_REF
                 << " 0.0 to " << this->box[0]/SIG_REF << " "
                 << (this->box[1] + 0.5*this->h)/SIG_REF << " "
                 << box[2]/SIG_REF << " conduct "
-                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0001
-                                                         : 0.0002) * N1)
+                << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
+                                                         : 0.001) * N1)
                 << " tests every 2 steps\n";
+            if(symmetric && widom && !muVT)
+            {
+               txt << "chemicalPotential " << 0.0
+                   << " component 2 control 0.0 " << this->box[1]/SIG_REF
+                   << " 0.0 to " << this->box[0]/SIG_REF << " "
+                   << (this->box[1] + 0.5*this->h)/SIG_REF << " "
+                   << box[2]/SIG_REF << " conduct "
+                   << 1 + (int)round(((flow == FLOW_COUETTE)? 0.0005
+                                                            : 0.001) * N1)
+                   << " tests every 2 steps\n";
+            }
          }
 	 txt << "planckConstant\t" 
 	     << sqrt(6.28319 * T/EPS_REF) << "\n";  // sqrt(2 pi kT)
-         txt << "initGrandCanonical\t50001\n";
+         txt << "initGrandCanonical\t" << (muVT? 40001: 60001) << "\n";
       }
-      txt << "initStatistics\t100001\n";
+      if(widom) txt << "Widom\n";
+      txt << "initStatistics\t60001\n";
       if(flow != FLOW_NONE)
       {
-         txt << "constantAccelerationTimesteps\t256\n"
+         txt << "constantAccelerationTimesteps\t32\n"
              << "zetaFlow\t" << ZETA*sqrt(REFTIME) << "\n"
              << "tauPrimeFlow\t" << TAUPRIME/REFTIME << "\n";
       }
@@ -702,11 +724,11 @@ void Domain::writeGraphite(
   
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
-      txt << "ResultWriter\t50\t" << prefix
-          << "_1R\noutput\tXyzWriter\t20000\t" << prefix
+      txt << "ResultWriter\t40\t" << prefix
+          << "_1R\noutput\tXyzWriter\t8000\t" << prefix
           << "_1R.buxyz\noutput\tVisittWriter\t10000000\t" << prefix
-          << "_1R\nprofile\t1 362 362\nprofileRecordingTimesteps\t4\n"
-          << "profileOutputTimesteps\t100000"
+          << "_1R\nprofile\t1 362 362\nprofileRecordingTimesteps\t1\n"
+          << "profileOutputTimesteps\t60000"
           << "\nprofiledComponent\t1\n";
       if(symmetric) txt << "profiledComponent\t2\n";
       txt << "profileOutputPrefix\t" << prefix << "_1R\n";
@@ -929,7 +951,7 @@ void Domain::writeGraphite(
 void Domain::writeNanotube(
    char* prefix, double a, bool empty, int format, double mu,
    double TAU, double U, bool original, double wo_acceleration,
-   double polarity, bool WLJ, bool symmetric
+   double polarity, bool WLJ, bool symmetric, bool widom
 ) {
    cout << "Cannot create the nanotube - implementation missing.\n";
    exit(19);
