@@ -26,7 +26,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 
 	/* "fixed" variables of this ensemble */
 	if ( (variable & NUM_PARTICLES) | (variable & TEMPERATURE) ) {
-		global_log->info() << "Updating particle counts" << endl;
+		global_log->debug() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
 		unsigned long numMolecules[numComponents];
 		for( int cid = 0; cid < numComponents; cid++) 
@@ -54,14 +54,14 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	}
 
 	if ( variable & VOLUME ) {
-		global_log->info() << "Updating volume" << endl;
+		global_log->debug() << "Updating volume" << endl;
 	  /* TODO: calculate actual volume or return specified volume as 
 	   * the canonical ensemble should have a fixed volume? */
 	}
 
 	/* variable variables of this ensemble */
 	if ( variable & CHEMICAL_POTENTIAL ) {
-		global_log->info() << "Updating chemical potential" << endl;
+		global_log->debug() << "Updating chemical potential" << endl;
 	}
 
 	if ( variable & PRESSURE ) {
@@ -69,7 +69,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	}
 
 	if ( (variable & ENERGY) | (variable & TEMPERATURE) ) {
-		global_log->info() << "Updating energy" << endl;
+		global_log->debug() << "Updating energy" << endl;
 	  double E_trans[numComponents];
 	  double E_rot[numComponents];
 	  for( int cid = 0; cid < numComponents; cid++)
@@ -112,7 +112,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	}
 
 	if ( variable & TEMPERATURE ) {
-		global_log->info() << "Updating temperature" << endl;
+		global_log->debug() << "Updating temperature" << endl;
 		/* TODO: calculate actual temperature or return specified temperature as 
 		 * the canonical ensemble should have a fixed temperature? */
 		long long totalDegreesOfFreedom = 0;
