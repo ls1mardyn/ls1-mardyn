@@ -17,7 +17,7 @@ void Cell::addParticle(Molecule* particle_ptr) {
 	_particlePointers.push_back(particle_ptr);
 }
 
-list<Molecule*>& Cell::getParticlePointers() {
+vector<Molecule*>& Cell::getParticlePointers() {
 	return this->_particlePointers;
 }
 
@@ -51,12 +51,12 @@ int Cell::getMoleculeCount() const {
 
 bool Cell::deleteMolecule(unsigned long molid) {
 	bool found = false;
-	list<Molecule*>::iterator cellit;
+	vector<Molecule*>::iterator cellit;
 
-	for (cellit = this->_particlePointers.begin(); cellit != this->_particlePointers.end(); cellit++) {
+	for (cellit = _particlePointers.begin(); cellit != _particlePointers.end(); cellit++) {
 		if ((*cellit)->id() == molid) {
 			found = true;
-			this->_particlePointers.remove(*cellit);
+			_particlePointers.erase(cellit);
 			break;
 		}
 	}

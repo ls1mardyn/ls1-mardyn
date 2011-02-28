@@ -244,7 +244,7 @@ void AdaptiveSubCells::addParticle(Molecule& particle) {
 
 unsigned AdaptiveSubCells::countParticles(int cid) {
 	unsigned N = 0;
-	std::list<Molecule*>::iterator molIter1;
+	std::vector<Molecule*>::iterator molIter1;
 
 	for (unsigned long i = 0; i < _cells.size(); i++) {
 		Cell& currentCell = _cells[i];
@@ -279,7 +279,7 @@ unsigned AdaptiveSubCells::countParticles(int cid, double* cbottom, double* ctop
 
 	unsigned N = 0;
 	int cix[3];
-	std::list<Molecule*>::iterator molIter1;
+	std::vector<Molecule*>::iterator molIter1;
 	bool individualCheck;
 	int cellid;
 
@@ -342,7 +342,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double dd;
 	double distanceVector[3];
-	std::list<Molecule*>::iterator molIter2;
+	std::vector<Molecule*>::iterator molIter2;
 	unsigned long m1id = m1->id();
 
 	unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
@@ -486,7 +486,7 @@ void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 		exit(1);
 	}
 
-	std::list<Molecule*>::iterator particlePtrIter;
+	std::vector<Molecule*>::iterator particlePtrIter;
 	vector<unsigned long>::iterator subCellIndexIter;
 
 	// loop over all halo cells
@@ -507,7 +507,7 @@ void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], list
 	int startIndex[3];
 	int stopIndex[3];
 	int globalCellIndex;
-	std::list<Molecule*>::iterator particleIter;
+	std::vector<Molecule*>::iterator particleIter;
 
 	for (int dim = 0; dim < 3; dim++) {
 		if (lowCorner[dim] < _boundingBoxMax[dim] && highCorner[dim] > _boundingBoxMin[dim]) {
@@ -995,7 +995,7 @@ void AdaptiveSubCells::calculateLocalRho() {
 	int cellIntIterator = 0;
 	// loop over all cells
 	vector<Cell>::iterator cellIterator;
-	std::list<Molecule*>::iterator molIterator;
+	std::vector<Molecule*>::iterator molIterator;
 	// traverse all coarse cells
 	for (cellIterator = _cells.begin(); cellIterator != _cells.end(); cellIterator++) {
 		int molIntIterator = 0;

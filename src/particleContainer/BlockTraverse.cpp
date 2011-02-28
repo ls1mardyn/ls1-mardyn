@@ -24,7 +24,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
-#include <list>
+#include <vector>
 #include <cmath>
 
 using namespace std;
@@ -100,8 +100,8 @@ void BlockTraverse::traversePairs() {
 	// XXX comment
 	double distanceVector[3];
 	// loop over all cells
-	list<Molecule*>::iterator molIter1;
-	list<Molecule*>::iterator molIter2;
+	vector<Molecule*>::iterator molIter1;
+	vector<Molecule*>::iterator molIter2;
 
 #ifndef NDEBUG
 	// reset forces and momenta to zero

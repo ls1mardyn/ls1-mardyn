@@ -1,7 +1,7 @@
 #ifndef CELL_H_
 #define CELL_H_
 
-#include <list>
+#include <vector>
 
 class Molecule;
 
@@ -50,7 +50,7 @@ public:
 	void addParticle(Molecule* particle_ptr);
 
 	//! return a reference to the list of molecules (molecule pointers) in this cell
-	std::list<Molecule*>& getParticlePointers();
+	std::vector<Molecule*>& getParticlePointers();
 
 	bool deleteMolecule(unsigned long molid);
 
@@ -77,7 +77,7 @@ public:
 
 private:
 	//! each cell contains a list of pointers to the molecules in the cell
-	std::list<Molecule*> _particlePointers;
+	std::vector<Molecule*> _particlePointers;
 
 	//! true when the cell is in the halo region 
 	bool _haloCellState;

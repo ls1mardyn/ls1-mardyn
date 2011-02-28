@@ -204,7 +204,7 @@ void LinkedCells::addParticle(Molecule& particle) {
  */
 unsigned LinkedCells::countParticles(int cid) {
 	unsigned N = 0;
-	std::list<Molecule*>::iterator molIter1;
+	std::vector<Molecule*>::iterator molIter1;
 	for (unsigned i = 0; i < _cells.size(); i++) {
 		Cell& currentCell = _cells[i];
 		if( !currentCell.isHaloCell() ) {
@@ -242,7 +242,7 @@ unsigned LinkedCells::countParticles(int cid, double* cbottom, double* ctop) {
 
 	unsigned N = 0;
 	int cix[3];
-	std::list<Molecule*>::iterator molIter1;
+	std::vector<Molecule*>::iterator molIter1;
 	bool individualCheck;
 	int cellid;
 
@@ -376,7 +376,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 		exit(1);
 	}
 
-	std::list<Molecule*>::iterator particleIter;
+	std::vector<Molecule*>::iterator particleIter;
 	vector<unsigned long>::iterator cellIndexIter;
 
 	// loop over all halo cells
@@ -398,7 +398,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<Mole
 	int startIndex[3];
 	int stopIndex[3];
 	int globalCellIndex;
-	std::list<Molecule*>::iterator particleIter;
+	std::vector<Molecule*>::iterator particleIter;
 
 	for (int dim = 0; dim < 3; dim++) {
 		if (lowCorner[dim] < this->_boundingBoxMax[dim] && highCorner[dim] > this->_boundingBoxMin[dim]) {
@@ -559,7 +559,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 double LinkedCells::getEnergy(Molecule* m1) {
 	double u = 0.0;
 
-	std::list<Molecule*>::iterator molIter2;
+	std::vector<Molecule*>::iterator molIter2;
 	vector<unsigned long>::iterator neighbourOffsetsIter;
 
 	// sqare of the cutoffradius
