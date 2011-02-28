@@ -79,7 +79,7 @@ public:
      * \param[in] x        relative x coordinate
      * \param[in] y        relative y coordinate
      * \param[in] z        relative z coordinate
-     * \param[in] m        m mass    
+     * \param[in] m        mass    
      * \param[in] epsilon  interaction strength
      * \param[in] sigma    interaction diameter
      * \param[in] rc       cutoff radius
@@ -110,10 +110,10 @@ private:
 	double _eps;    /**< interaction strength */
 	double _sigma;  /**< interaction diameter */
 
-  // cutoff radius
-  // it seems to me as if this is not the cutoff-radius which is used for the linked cells,
-  // but a molecule specific one to determine the cutoff correction
-  // TODO why may they be different!!!???
+	// cutoff radius
+	// it seems to me as if this is not the cutoff-radius which is used for the linked cells,
+	// but a molecule specific one to determine the cutoff correction
+	// TODO why may they be different!!!???
 	double _rc;     /**< cutoff radius */
 	double _uLJshift6; /**< truncation offset of the LJ potential */
 };
@@ -122,8 +122,15 @@ private:
  */
 class Charge : public Site {
 public:
-	/// Constructor
-	Charge(double x, double y, double z, double m, double q)
+    /** Constructor
+     *
+     * \param[in] x        relative x coordinate
+     * \param[in] y        relative y coordinate
+     * \param[in] z        relative z coordinate
+     * \param[in] m        mass    
+     * \param[in] q        charge
+     */
+    Charge(double x, double y, double z, double m, double q)
 			: Site(x, y, z, m), _q(q) { }
 
 	/// Constructor reading from stream
@@ -134,8 +141,7 @@ public:
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << " " << _q;
 	}
-	/// get charge
-	double q() const { return _q; } /**< get charge */
+	double q() const { return _q; }  /**< get charge */
 
 private:
 	double _q;  /**< charge */
@@ -208,7 +214,7 @@ private:
 	double _beta;  /**< beta Tersoff interaction parameter */
 };
 
-/** OrientedSite
+/** Oriented site
  * @author Martin Bernreuther
  */
 class OrientedSite : public Site {
@@ -216,7 +222,7 @@ public:
 	double ex() const { return _e[0]; }
 	double ey() const { return _e[1]; }
 	double ez() const { return _e[2]; }
-	const double* e() const { return _e; }
+	const double* e() const { return _e; }  /**< Get pointer to the normalized orientation vector. */
 
 protected:
 	/// Constructor
@@ -227,19 +233,30 @@ protected:
 		_e[2] = ez;
 	}
 
-	double _e[3];
+	double _e[3];  /**< Normalized orientation vector */
 };
 
 
 /** Dipole
  * @author Martin Bernreuther
+ *
  */
 class Dipole : public OrientedSite {
 public:
-	/// Constructor
-	Dipole(double x, double y, double z, double eMyx, double eMyy, double eMyz, double absMy)
+    /** Constructor
+     *
+     * \param[in] x        relative x coordinate
+     * \param[in] y        relative y coordinate
+     * \param[in] z        relative z coordinate
+     * \param[in] eMyx     x coordinate of the dipole moments normal
+     * \param[in] eMyy     y coordinate of the dipole moments normal
+     * \param[in] eMyz     z coordinate of the dipole moments normal
+     * \param[in] absQ     dipole moments absolute value
+     */
+    Dipole(double x, double y, double z, double eMyx, double eMyy, double eMyz, double absMy)
 			: OrientedSite(x, y, z, 0., eMyx, eMyy, eMyz), _absMy(absMy) {
 	}
+
 	/// Constructor reading from stream
 	Dipole(std::istream& istrm) {
 		istrm >> _r[0] >> _r[1] >> _r[2] >> _e[0] >> _e[1] >> _e[2] >> _absMy;
@@ -249,10 +266,11 @@ public:
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << "\t" << _absMy;
 	}
-	double absMy() const { return _absMy; }
+	double absMy() const { return _absMy; }  /**< Get the absolute value of the dipole moment. */
 
 private:
-	double _absMy;
+    /* TODO: move abs to oriented site. */
+	double _absMy;  /**< absolute value of the dipole moment. */
 };
 
 /** Quadrupole
@@ -260,10 +278,20 @@ private:
  */
 class Quadrupole : public OrientedSite {
 public:
-	/// Constructor
+    /** Constructor
+     *
+     * \param[in] x        relative x coordinate
+     * \param[in] y        relative y coordinate
+     * \param[in] z        relative z coordinate
+     * \param[in] eQx      x coordinate of the quadrupole moments normal
+     * \param[in] eQy      y coordinate of the quadrupole moments normal
+     * \param[in] eQz      z coordinate of the quadrupole moments normal
+     * \param[in] absQ     quadrupole moments absolute value
+     */
 	Quadrupole(double x, double y, double z, double eQx, double eQy, double eQz, double absQ)
 			: OrientedSite(x, y, z, 0., eQx, eQy, eQz), _absQ(absQ) {
 	}
+
 	/// Constructor reading from stream
 	Quadrupole(std::istream& istrm) {
 		istrm >> _r[0] >> _r[1] >> _r[2] >> _e[0] >> _e[1] >> _e[2] >> _absQ;
@@ -273,10 +301,11 @@ public:
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << " " << _absQ;
 	}
-	double absQ() const { return _absQ; }
+	double absQ() const { return _absQ; }  /**< Get the absolute value of the quadrupole moment. */
 
 private:
-	double _absQ;
+    /* TODO: move abs to oriented site. */
+	double _absQ;  /**< absolute value of the quadrupole moment. */
 };
 
 #endif  /* SITE_H_ */

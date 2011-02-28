@@ -107,8 +107,8 @@ help:
 	@echo "make PARTYPE=SEQ | PAR       choose parallelization type (see cfg_help)"
 	@echo "make TARGET=DEBUG | RELEASE  choose target (see cfg_help)"
 	@echo "make DEPS=0 | 1              compile using dependancy tracking"
-	@echo "make UNIT_TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=0 | 1	            compile with or without the vtk output plugin" 
+	@echo "make UNIT_TESTS=0 | 1        compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=0 | 1               compile with or without the vtk output plugin" 
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
