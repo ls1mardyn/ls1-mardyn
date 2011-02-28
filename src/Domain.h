@@ -87,7 +87,7 @@ public:
 	//! By calculating approximations for the neglected pairs, the
 	//! error can be reduced.
 	//! The way the cutoff correction works is essentially explained
-	//! in the lecture notes "Molekulare Thermodynamik" by Vrabec for
+	//! in the lecture notes "Molekulare Thermodynamik" by Vrabec [1] for
 	//! the LJ potential, and it is analogous for electrostatics.
 	//! Probably all books on molecular simulation explain that method,
 	//! e.g. have a look at Allen/Tildesley.
@@ -106,6 +106,8 @@ public:
 	//! If ions appear, so that the net charge of a molecule is distinct
 	//! from zero, the far field terms become much more complicated, and
 	//! THAT IS NOT IMPLEMENTED AT PRESENT.
+	//!
+	//! [1] http://www.itt.uni-stuttgart.de/de/lehre/vorlesungsdoku/molsim/molscript.pdf
 	//!
 	//! @param cutoffRadius cutoff radius for electrostatics
 	//! @param cutoffRadiusLJ cutoff radius for the LJ potential
