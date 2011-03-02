@@ -347,7 +347,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 // even for interactions within the cell a neighbor might try to add/subtract
 // better use atomic...
 // and even better use a order where critical sections occure only at some boundary cells...
-#ifdef _OPENMP
+#if defined(ENABLE_OPENMP)
 #pragma omp critical
 #endif
 					{
