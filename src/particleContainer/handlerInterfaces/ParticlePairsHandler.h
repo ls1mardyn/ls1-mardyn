@@ -22,6 +22,13 @@
 
 class RDF;
 
+typedef enum {
+    MOLECULE_MOLECULE = 0,      /**< molecule molecule */
+    MOLECULE_HALOMOLECULE = 1,  /**< molecule - halo molecule */
+    MOLECULE_MOLECULE_FLUID = 2 /**< molecule - molecule (fluid) */
+} PairType;
+
+
 //! @brief interface for defining the action performed when processing a pair
 //! @author Martin Buchholz
 //! 
@@ -71,7 +78,7 @@ public:
 	//! @param distanceVector[3] distance between the two particles
 	//! @param pairType describes whether the pair is a original pair(0) or a duplicated pair(1)
 	//!                 for details about pair types see comments on traversePairs() in ParticleContainer
-	virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], int pairType, double dd, bool calculateLJ) = 0;
+	virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ) = 0;
 	virtual void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) = 0;
 	virtual void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) = 0;
 

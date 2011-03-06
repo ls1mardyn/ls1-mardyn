@@ -582,7 +582,7 @@ double LinkedCells::getEnergy(Molecule* m1) {
 		dd = (*molIter2)->dist2(*m1, distanceVector);
 		if (dd > cutoffRadiusSquare)
 			continue;
-		u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
+		u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 	}
 
 	// backward and forward neighbours
@@ -596,7 +596,7 @@ double LinkedCells::getEnergy(Molecule* m1) {
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if (dd > cutoffRadiusSquare)
 				continue;
-			u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
+			u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 	return u;

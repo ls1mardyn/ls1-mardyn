@@ -360,7 +360,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 		dd = (*molIter2)->dist2(*m1, distanceVector);
 		if (dd > cutoffRadiusSquare)
 			continue;
-		u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
+		u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 	}
 
 	// loop over all forward neighbours
@@ -372,7 +372,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if (dd > cutoffRadiusSquare)
 				continue;
-			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
+			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 	// loop over all backward neighbours
@@ -384,7 +384,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if (dd > cutoffRadiusSquare)
 				continue;
-			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, 2, dd, (dd < LJCutoffRadiusSquare));
+			u += _particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 

@@ -75,38 +75,38 @@ public:
      * @param molecule1       molecule 1
      * @param molecule2       molecule 2
      * @param distanceVector  distance vector from molecule 2 to molecule 1
-     * @param pairType        molecule - molecule: 0,  molecule - halo molecule: 1,  molecule - molecule (fluid): 2
+     * @param pairType        molecule pair type (see PairType)
      * @param dd              square of the distance between the two molecules
      * @param calculateLJ     true if we shall calculate the LJ interaction, otherwise false (default true)
      *
      * @return                interaction energy
      */
-	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], int pairType, double dd, bool calculateLJ = true) {
+	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ = true) {
 		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
 		params.reset_read();
-		if (pairType == 0) {
-			if ( _rdf != NULL )
-				_rdf->observeRDF(dd, molecule1.componentid(), molecule2.componentid());
+        switch (pairType) {
 
-			PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
-			return _upot6LJ + _upotXpoles;
-		}
-		else if (pairType == 1) {
             double dummy1, dummy2, dummy3, dummy4;
-			PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
-			return 0.0;
-		}
-		else if (pairType == 2) {
-            double dummy1, dummy2, dummy3;
-			dummy1 = 0.0; // 6*U_LJ
-			dummy2 = 0.0; // U_polarity
-			dummy3 = 0.0; // U_dipole_reaction_field
+            
+            case MOLECULE_MOLECULE : 
+                if ( _rdf != NULL )
+                    _rdf->observeRDF(dd, molecule1.componentid(), molecule2.componentid());
 
-			FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ);
-			return dummy1 / 6.0 + dummy2 + dummy3;
-		}
-		else
-			exit(666);
+                PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
+                return _upot6LJ + _upotXpoles;
+            case MOLECULE_HALOMOLECULE : 
+                PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
+                return 0.0;
+            case MOLECULE_MOLECULE_FLUID : 
+                dummy1 = 0.0; // 6*U_LJ
+                dummy2 = 0.0; // U_polarity
+                dummy3 = 0.0; // U_dipole_reaction_field
+
+                FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ);
+                return dummy1 / 6.0 + dummy2 + dummy3;
+            default:
+                exit(666);
+        }
 	}
 
 	//! Only for so-called original pairs (pair type 0) the contributions
