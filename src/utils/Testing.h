@@ -16,15 +16,21 @@
 #define TESTING_H_
 
 #include "particleContainer/tests/ParticleContainerFactory.h"
+#include "utils/Logger.h"
 #include <string>
 
 //! execute unit tests
 //! @return false if no errors occured, true otherwise
-bool runTests();
+bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory);
 
 //! delegate to Test::setTestDataDirectory
 void setTestDataDirectory(std::string& testDataDirectory);
 
+/**
+ * Gobal logger variable for use in the test cases.
+ * Is initialized in runTests().
+ */
+extern Log::Logger* test_log;
 
 #ifdef UNIT_TESTS
 

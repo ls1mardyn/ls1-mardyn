@@ -76,9 +76,8 @@ int main(int argc, char** argv) {
 	bool tests = options.get("tests");
 	if (tests) {
 		std::string testDataDirectory(options.get("testDataDirectory"));
-		std::cout << "TestDataDirectory is " << testDataDirectory << std::endl;
-		setTestDataDirectory(testDataDirectory);
-		bool testresult = runTests();
+		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
+		bool testresult = runTests(testLogLevel, testDataDirectory);
 		if (testresult) {
 			#ifdef PARALLEL
 			MPI_Finalize();
