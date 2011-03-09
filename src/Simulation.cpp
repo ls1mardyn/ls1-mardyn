@@ -990,12 +990,10 @@ void Simulation::simulate() {
 	_perStepIoTimer = new Timer;
 	_ioTimer = new Timer;
 
-#ifdef STEEREO
-#ifdef STEEREO_COUPLING
+#if defined(STEEREO) && defined(STEEREO_COUPLING)
 	_simstep = _initSimulation;
 	//SteereoLogger::setOutputLevel (4);
 	_coupling->waitForConnection();
-#endif //STEEREO_COUPLING
 #endif
 
 	_loopTimer->start();
@@ -1014,11 +1012,9 @@ void Simulation::simulate() {
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-#ifdef STEEREO
-#ifdef STEEREO_COUPLING
+#if defined(STEEREO) && defined(STEEREO_COUPLING)
 		_steer -> processQueue (1);
 		global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
-#endif
 #endif
 		// activate RDF sampling
 		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
