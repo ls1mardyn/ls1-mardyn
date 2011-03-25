@@ -23,7 +23,7 @@ Log::Logger* test_log;
 #endif
 
 
-bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory) {
+bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases) {
 	Log::logLevel globalLogLevel = Log::global_log->get_log_level();
 
 	test_log = new Log::Logger(testLogLevel);
@@ -43,7 +43,7 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory) {
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( registry.makeTest() );
-	runner.run();
+	runner.run(testcases);
 
 	const CppUnit::TestResultCollector& collector = runner.result();
 	testresult = collector.testFailuresTotal() != 0;

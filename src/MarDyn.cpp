@@ -73,11 +73,19 @@ int main(int argc, char** argv) {
 	if (options.is_set("verbose") && options.get("verbose"))
 		global_log->set_log_level(Log::All);
 
-	bool tests = options.get("tests");
+	bool tests(options.get("tests"));
 	if (tests) {
+		string testcases = "";
+		if (numargs == 1 ) {
+			testcases = args[0];
+			global_log->info() << "Running unit tests: " << testcases << endl;
+		} else {
+			global_log->info() << "Running all unit tests! (Too many arguments were specified)" << endl;
+		}
+
 		std::string testDataDirectory(options.get("testDataDirectory"));
 		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
-		bool testresult = runTests(testLogLevel, testDataDirectory);
+		bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
 		if (testresult) {
 			#ifdef PARALLEL
 			MPI_Finalize();
@@ -116,7 +124,9 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 
 	op = OptionParser()
 		// The last two optional positional arguments are only here for backwards-compatibility
-		.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n\nUse option --help to display all available options.")
+		.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n "
+		  "      %prog -t -d <test input data directory> [<name of testcase>]\n\n"
+				"Use option --help to display all available options.")
 		.version("%prog 1.0")
 		.description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
 		// .epilog("background info?")

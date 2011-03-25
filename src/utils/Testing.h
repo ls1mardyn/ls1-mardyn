@@ -19,9 +19,15 @@
 #include "utils/Logger.h"
 #include <string>
 
-//! execute unit tests
-//! @return false if no errors occured, true otherwise
-bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory);
+/**
+ * execute unit tests
+ * @param testLogLevel the logging level of test_log
+ * @param testDataDirectory the directory where input data for tests is located
+ * @param testcases the name of the testcase or of the namespace for which the testcases
+ *                  should be executed
+ * @return false if no errors occured, true otherwise
+ */
+bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases = std::string(""));
 
 //! delegate to Test::setTestDataDirectory
 void setTestDataDirectory(std::string& testDataDirectory);

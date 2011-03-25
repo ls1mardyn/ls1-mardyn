@@ -190,7 +190,12 @@ void LinkedCells::addParticle(Molecule& particle) {
 	     ( z >= _haloBoundingBoxMin[2]) && (z < _haloBoundingBoxMax[2]) ) {
 
 		_particles.push_front( particle );
-		/* TODO: Have a closer look onto this check as there is no warning or error message. */
+		/* TODO: Have a closer look onto this check as there is no warning or error message.
+		 *
+		 * I (WE) guess this should be a performance optimization: the particle is added into this
+		 * container anyway, it is just not sorted into the cells. But as the container is not valid,
+		 * update() has to be called anyway.
+		 */
 		if (_cellsValid) {
 			int cellIndex = getCellIndexOfMolecule(&particle);
 			_cells[cellIndex].addParticle(&(_particles.front()));
