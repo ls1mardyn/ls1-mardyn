@@ -325,9 +325,10 @@ private:
 	//! atoms for all solid components.
 	unsigned _zoscillator;
 
-	//! Number of discrete time steps for the simulation        
-	unsigned long _numberOfTimesteps;
+	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps for the simulation */
+	unsigned long _simstep;             /**< Actual simulation time step */
 
+	// TODO: should go into output module
 	//! Incremental output flag NEW
 	bool _increment;
 
@@ -339,11 +340,6 @@ private:
 	unsigned long _initGrandCanonical;
 	//! step number for activation of all sorts of statistics
 	unsigned long _initStatistics;
-
-	// this should be obvious, right?
-	// Answer: It should be. However, I am missing the "undefined"
-	// in the name somehow...
-	unsigned _numberOfComponents;
 
 	//! Flow regulation
 	PressureGradient* _pressureGradient;
@@ -371,9 +367,6 @@ private:
 
 	//! prefix for the names of all output files
 	std::string _outputPrefix;
-
-	//! frequency of the checkpoint writer
-	//long _outputFrequency;
 
 	//!Timer for computation
 	Timer* _loopTimer;
@@ -411,8 +404,6 @@ private:
 	SteereoCouplingSim* _coupling;
 #endif
 
-	//! simulation time step
-	unsigned long _simstep;
 
 	//! initialize all member variables with a suitable value
 	void initialize();
