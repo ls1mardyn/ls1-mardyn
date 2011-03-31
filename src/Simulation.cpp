@@ -947,10 +947,10 @@ void Simulation::prepare_start() {
 	_steer = initSteereo (_domainDecomposition->getRank(), _domainDecomposition->getNumProcs());
 #ifdef STEEREO_COUPLING
 	_coupling = initCoupling(_steer, (long*) &_simstep);
-#endif STEEREO_COUPLING
+#endif  /* STEEREO_COUPLING */
 	registerSteereoCommands (_steer, this);
 	startListeningSteereo (_steer);
-#endif
+#endif  /* STEEREO */
 
 //	if ((_initSimulation > _initStatistics) && this->_rdf != NULL) {
 //		this->_rdf->tickRDF();
