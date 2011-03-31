@@ -77,7 +77,8 @@ RDF::~RDF() {
 }
 
 void RDF::accumulateNumberOfMolecules(std::vector<Component>& components) const {
-	for (int i = 0; i < components.size(); i++) {
+	const int num_components = components.size();
+	for (int i = 0; i < num_components; i++) {
 		_globalCtr[i] += components[i].getNumMolecules();
 	}
 }
