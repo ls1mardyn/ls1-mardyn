@@ -233,12 +233,12 @@ private:
 	unsigned long _id; // IDentification number of that molecule
 	int _componentid;  // IDentification number of its component type
 	double _r[3];  // position coordinates
-	double _v[3];  // velocity
-	Quaternion _q; // orientation
-	double _D[3];  // angular momentum
-
 	double _F[3];  // forces
-	double _M[3];  // moments
+	double _v[3];  // velocity
+	Quaternion _q; // angular orientation
+	double _M[3];  // torsional moment
+    // TODO: We should rename _D to _L with respect to the literature.
+	double _D[3];  // angular momentum 
 
 	const std::vector<LJcenter>* _ljcenters;
 	const std::vector<Charge>* _charges;

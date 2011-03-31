@@ -203,26 +203,17 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		v2 += _v[d] * _v[d];
 		_D[d] += dt_halve * _M[d];
 	}
-#ifndef NDEBUG
-	if (!(v2 > 0.0)) {
-		/*
-		 * catches NaN forces and coordinates
-		 */
-		global_log->error() << "Molecule " << _id << " has v^2 = " << v2 << ".\n"
-		                    << "r = (" << _r[0] << " / " << _r[1] << " / " << _r[2] << "), "
-		                    << "F = (" << _F[0] << " / " << _F[1] << " / " << _F[2] << "), "
-		                    << "v = (" << _v[0] << " / " << _v[1] << " / " << _v[2] << ")." << endl;
-		exit(1);
-	}
-#endif
-	summv2 += _m * v2;
+    assert( v2 > 0.0 ); // catches NaN
+    summv2 += _m * v2;
+
 	double w[3];
-	_q.rotate(_D, w);
+	_q.rotate(_D, w); // L = D = Iw
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
 		Iw2 += _I[d] * w[d] * w[d];
 	}
+    assert( Iw2 > 0.0 ); // catches NaN
 	sumIw2 += Iw2;
 }
 

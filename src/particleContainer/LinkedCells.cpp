@@ -649,7 +649,6 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 #endif
 			if (accept) {
 				m->upd_cache();
-				// m->clearFM();
 				// reset forces and momenta to zero
 				{
 					double zeroVec[3] = {0.0, 0.0, 0.0};
@@ -669,8 +668,6 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 			hasInsertion = (nextid > 0);
 		}
 		if (hasInsertion) {
-			// for(int d = 0; d < 3; d++)
-			//    ins[d] = ins[d]-coords[d]*proc_domain_L[d]-m_rmin[d];
 			Molecule tmp = mu->loadMolecule();
 			for (int d = 0; d < 3; d++)
 				tmp.setr(d, ins[d]);
