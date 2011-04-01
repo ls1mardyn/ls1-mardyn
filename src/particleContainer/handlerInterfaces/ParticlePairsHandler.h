@@ -58,7 +58,7 @@ typedef enum {
 class ParticlePairsHandler {
 public:
 	//! Constructor
-	ParticlePairsHandler() : _rdf(NULL) {
+	ParticlePairsHandler() : _rdf( 0 ) {
 	}
 
 	//! Destructor

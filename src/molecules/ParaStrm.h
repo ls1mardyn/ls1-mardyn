@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <cassert>
 #include <string.h>
+#include <cstddef>
 
 /** Parameter stream
  *
