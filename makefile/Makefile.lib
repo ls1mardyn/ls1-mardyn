@@ -1,0 +1,10 @@
+
+include Makefile
+
+MAIN=./MarDyn.cpp
+SOURCES := $(filter-out $(MAIN),$(SOURCES))
+CXXFLAGS+= -fPIC 
+
+lib: .deps $(OBJECTS)
+	$(CXX) $(LDFLAGS) -shared -Wl,-soname,Mardyn.so -lc -fp -o lib$(BINARY).so $(OBJECTS)
+
