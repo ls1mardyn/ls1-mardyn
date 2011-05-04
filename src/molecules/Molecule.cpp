@@ -203,7 +203,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		v2 += _v[d] * _v[d];
 		_D[d] += dt_halve * _M[d];
 	}
-    assert( v2 > 0.0 ); // catches NaN
+    assert(!isnan(v2)); // catches NaN
     summv2 += _m * v2;
 
 	double w[3];
@@ -213,7 +213,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		w[d] *= _invI[d];
 		Iw2 += _I[d] * w[d] * w[d];
 	}
-    assert( Iw2 > 0.0 ); // catches NaN
+    assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 }
 
@@ -395,11 +395,11 @@ void Molecule::calcFM() {
 		 * catches NaN assignments
 		 */
 		for (int d = 0; d < 3; d++) {
-			if (!((dsite[d] >= 0) || (dsite[d] < 0))) {
+			if (isnan(dsite[d])) {
 				global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << _id << endl;
 				assert(false);
 			}
-			if (!((Fsite[d] >= 0) || (Fsite[d] < 0))) {
+			if (isnan(Fsite[d])) {
 				global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << _id << endl;
 				assert(false);
 			}
@@ -415,6 +415,10 @@ void Molecule::calcFM() {
 
 /*
  * catches NaN values and missing data
+ *
+ * @note Use isnan from cmath to check for nan.
+ * If that's not available (C99), compare the value with itself. If the value
+ * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
 void Molecule::check(unsigned long id) {
 	assert(_id == id);
@@ -423,13 +427,13 @@ void Molecule::check(unsigned long id) {
 	assert(_numsites > 0);
 	assert(_numorientedsites >= 0);
 	for (int d = 0; d < 3; d++) {
-		assert((_r[d] >= 0.0) || (_r[d] < 0.0));
-		assert((_v[d] >= 0.0) || (_v[d] < 0.0));
-		assert((_D[d] >= 0.0) || (_D[d] < 0.0));
-		assert((_F[d] >= 0.0) || (_F[d] < 0.0));
-		assert((_M[d] >= 0.0) || (_M[d] < 0.0));
-		assert((_I[d] >= 0.0) || (_I[d] < 0.0));
-		assert((_invI[d] >= 0.0) || (_invI[d] < 0.0));
+		assert(!isnan(_r[d]));
+		assert(!isnan(_v[d]));
+		assert(!isnan(_D[d]));
+		assert(!isnan(_F[d]));
+		assert(!isnan(_M[d]));
+		assert(!isnan(_I[d]));
+		assert(!isnan(_invI[d]));
 	}
 }
 

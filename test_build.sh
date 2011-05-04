@@ -21,10 +21,13 @@ NUM_JOBS=3
 
 #LOG_FILE=/dev/null
 LOG_FILE=test_build.out
+TEST_LOG_FILE=test_build_results.txt
 
 RETURN_VALUE=0
 
 cd src
+rm $LOG_FILE
+rm $TEST_LOG_FILE
 echo "Protocoll of testing build and tests. " > $LOG_FILE
 
 for i in $(seq 6) 
@@ -43,7 +46,7 @@ do
     RETURN_VALUE=1;
   else
     echo "build   $ARG     OK!"
-    (make -s -f ../makefile/Makefile $ARG test) >> test_build.txt 2>&1
+    (make -s -f ../makefile/Makefile $ARG test) >> $TEST_LOG_FILE 2>&1
     eval RETVAL=$?
     if [ $RETVAL -eq $EXPECTED_RESULT ]
       then echo "Tests OK!";
