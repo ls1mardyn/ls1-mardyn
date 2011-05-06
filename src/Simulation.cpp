@@ -510,6 +510,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			inputfilestream >> token;
 			if (token == "LinkedCells") {
+				_particleContainerType = LINKED_CELL;
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
 				double bBoxMin[3];
@@ -523,6 +524,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 				        _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
 			} else if (token == "AdaptiveSubCells") {
+				_particleContainerType = ADAPTIVE_LINKED_CELL;
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
@@ -590,9 +592,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				LinkedCells* lc = dynamic_cast<LinkedCells*> (_moleculeContainer);
-				if (lc != NULL) {
-					_outputPlugins.push_back(new VTKGridWriter(writeFrequency, outputPathAndPrefix, *lc));
+
+				if (_particleContainerType == LINKED_CELL) {
+					_outputPlugins.push_back(new VTKGridWriter(writeFrequency, outputPathAndPrefix, static_cast<LinkedCells&> (*_moleculeContainer)));
 					global_log->debug() << "VTKGridWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 				} else {
 					global_log->warning() << "VTKGridWriter only supported with LinkedCells!" << std::endl;
@@ -605,9 +607,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				LinkedCells* lc = dynamic_cast<LinkedCells*> (_moleculeContainer);
-				if (lc != NULL) {
-					_outputPlugins.push_back(new StatisticsWriter(writeFrequency, outputPathAndPrefix, *lc));
+
+				if (_particleContainerType == LINKED_CELL) {
+					_outputPlugins.push_back(new StatisticsWriter(writeFrequency, outputPathAndPrefix, static_cast<LinkedCells&> (*_moleculeContainer)));
 					global_log->debug() << "StatisticsWriter " << writeFrequency << " '" << outputPathAndPrefix
 					        << "'.\n";
 				} else {

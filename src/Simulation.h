@@ -270,6 +270,13 @@ public:
 	double Tfactor(unsigned long simstep);
 
 private:
+
+	// enum to get rid of a dynamic cast. With the xml format, there won't be any
+	// need for this hack then.
+	enum ParticleContainerType {LINKED_CELL, ADAPTIVE_LINKED_CELL};
+
+	ParticleContainerType _particleContainerType;
+
 	//! maximum id of particles
 	unsigned long maxid;
 
