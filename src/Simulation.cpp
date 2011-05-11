@@ -892,6 +892,12 @@ void Simulation::prepare_start() {
 	// Force calculation
 	global_log->info() << "Performing force calculation" << endl;
 	_moleculeContainer->traversePairs();
+	// here we have to call calcFM() manually, otherwise force and moment are not
+	// updated inside the molecule (actually this is done in upd_postF)
+	// or should we better call the integrator->eventForcesCalculated?
+	for (Molecule* tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+		tM->calcFM();
+	}
 
 	// clear halo
 	global_log->info() << "Clearing halos" << endl;
