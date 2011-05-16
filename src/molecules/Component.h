@@ -48,23 +48,9 @@ public:
 	unsigned int numTersoff() const { return _tersoff.size(); }
 
 	double m() const { return _m; }
-	const double* I() const { return _I; }
-	const double* Ipa() const { return _Ipa; }
-	double Ixx() const { return _I[0]; }
-	double Iyy() const { return _I[1]; }
-	double Izz() const { return _I[2]; }
-	double Ixy() const { return _I[3]; }
-	double Ixz() const { return _I[4]; }
-	double Iyz() const { return _I[5]; }
 	double I11() const { return _Ipa[0]; }
 	double I22() const { return _Ipa[1]; }
 	double I33() const { return _Ipa[2]; }
-	void setIxx(double I) { _I[0]=I; }
-	void setIyy(double I) { _I[1]=I; }
-	void setIzz(double I) { _I[2]=I; }
-	void setIxy(double I) { _I[3]=I; }
-	void setIxz(double I) { _I[4]=I; }
-	void setIyz(double I) { _I[5]=I; }
 	void setI11(double I) { _Ipa[0]=I; }
 	void setI22(double I) { _Ipa[1]=I; }
 	void setI33(double I) { _Ipa[2]=I; }
