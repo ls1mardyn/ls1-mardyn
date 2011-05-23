@@ -54,11 +54,7 @@ public:
 	void setI11(double I) { _Ipa[0]=I; }
 	void setI22(double I) { _Ipa[1]=I; }
 	void setI33(double I) { _Ipa[2]=I; }
-	void setI(double Ixx=0.,double Iyy=0.,double Izz=0.,
-	          double Ixy=0.,double Ixz=0.,double Iyz=0.);
-	void setI(unsigned short d,double I) { _I[d]=I; }
-	void addI(double Ixx=0.,double Iyy=0.,double Izz=0.,
-	          double Ixy=0.,double Ixz=0.,double Iyz=0.);
+
 	unsigned int getRotationalDegreesOfFreedom() const { return _rot_dof; }
 
 	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
@@ -90,6 +86,18 @@ public:
 	                double m, double A, double B, double lambda, double mu, double R,
 	                double S, double c, double d, double h, double n, double beta);
 
+	/** delete the last site stored in the vector */
+	void deleteLJCenter() { _ljcenters.pop_back() ;}
+	void deleteCharge() { _charges.pop_back() ;}
+	void deleteDipole() { _dipoles.pop_back() ;}
+	void deleteQuadrupole() { _quadrupoles.pop_back() ;}
+	void deleteTersoff() { _tersoff.pop_back() ;}
+
+	/**
+	 * To be called after sites have been deleted or the properties of sites have been changed.
+	 */
+	void updateMassInertia();
+
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
 
@@ -110,6 +118,9 @@ public:
 	double T() { return _T; }
 
 private:
+
+	void updateMassInertia(Site& site);
+
 	unsigned int _id; // IDentification number
 	// LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array
 	//std::vector<Site> _sites;

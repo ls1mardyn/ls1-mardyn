@@ -22,7 +22,7 @@
 
 #include <iostream>
 #include <cmath>
-
+#include <cassert>
 
 /** Site
  *
@@ -41,9 +41,21 @@ public:
 
     /* TODO: The following function is nowhere used in the code */
 	/// translate coordinates to new origin
-	void translateOrigin(double neworigin[3]) {
-		for (int d = 0; d < 3; d++)
-			_r[d] -= neworigin[d];
+//	void translateOrigin(double neworigin[3]) {
+//		for (int d = 0; d < 3; d++)
+//			_r[d] -= neworigin[d];
+//	}
+
+	/**
+	 * set the d-th component of the position
+	 */
+	void setR(int d, double r) {
+		assert(d < 3);
+		_r[d] = r;
+	}
+
+	void setM(double m) {
+		_m = m;
 	}
 
 protected:
@@ -101,6 +113,22 @@ public:
 	double eps() const { return _eps; }     /**< get interaction strength */
 	double sigma() const { return _sigma; } /**< get interaction diameter */
 
+	void setEps(double eps) {
+		_eps = eps;
+	}
+
+	void setSigma(double sigma) {
+		_sigma = sigma;
+	}
+
+	void setRC(double rc) {
+		_rc = rc;
+	}
+
+	void setULJShift6(double uLJshift6) {
+		_uLJshift6 = uLJshift6;
+	}
+
     /* TODO: The following method is never used */
 	bool TRUNCATED_SHIFTED() { return (_uLJshift6 != 0.0); } /**< get truncation option */
 
@@ -142,6 +170,10 @@ public:
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << " " << _q;
 	}
 	double q() const { return _q; }  /**< get charge */
+
+	void setQ(double q) {
+		_q = q;
+	}
 
 private:
 	double _q;  /**< charge */
@@ -224,6 +256,12 @@ public:
 	double ez() const { return _e[2]; }
 	const double* e() const { return _e; }  /**< Get pointer to the normalized orientation vector. */
 
+	/** set the d-th component of the orientation vector */
+	void setE(int d, double e) {
+		assert(d < 3);
+		_e[d] = e;
+	}
+
 protected:
 	/// Constructor
 	OrientedSite(double x = 0., double y = 0., double z = 0., double m = 0., double ex = 0., double ey = 0., double ez = 0.)
@@ -266,7 +304,13 @@ public:
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << "\t" << _absMy;
 	}
+
 	double absMy() const { return _absMy; }  /**< Get the absolute value of the dipole moment. */
+
+	/** set the value of the dipole moment */
+	void setAbyMy(double my) {
+		_absMy = my;
+	}
 
 private:
     /* TODO: move abs to oriented site. */
@@ -302,6 +346,11 @@ public:
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << " " << _absQ;
 	}
 	double absQ() const { return _absQ; }  /**< Get the absolute value of the quadrupole moment. */
+
+	/** set the absolute value of teh quadrupole moment */
+	void setAbsQ(double q) {
+		_absQ = q;
+	}
 
 private:
     /* TODO: move abs to oriented site. */
