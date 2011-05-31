@@ -58,15 +58,20 @@ public:
 	unsigned int getRotationalDegreesOfFreedom() const { return _rot_dof; }
 
 	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
-	LJcenter& ljcenter(unsigned int i) const { return _ljcenters[i]; }
+	LJcenter& ljcenter(unsigned int i) { return _ljcenters[i]; }
+	const LJcenter& ljcenter(unsigned int i) const { return _ljcenters[i]; }
 	const std::vector<Charge>& charges() const { return _charges; }
-	Charge& charge(unsigned i) const { return _charges[i]; }
+	Charge& charge(unsigned i) { return _charges[i]; }
+	const Charge& charge(unsigned i) const { return _charges[i]; }
 	const std::vector<Dipole>& dipoles() const { return _dipoles; }
-	Dipole& dipole(unsigned int i) const { return _dipoles[i]; }
+	Dipole& dipole(unsigned int i) { return _dipoles[i]; }
+	const Dipole& dipole(unsigned int i) const { return _dipoles[i]; }
 	const std::vector<Quadrupole>& quadrupoles() const { return _quadrupoles; }
-	Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
+	Quadrupole& quadrupole(unsigned int i) { return _quadrupoles[i]; }
+	const Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
 	const std::vector<Tersoff>& tersoff() const { return _tersoff; }
-	Tersoff& tersoff(unsigned int i) const { return _tersoff[i]; }
+	Tersoff& tersoff(unsigned int i) { return _tersoff[i]; }
+	const Tersoff& tersoff(unsigned int i) const { return _tersoff[i]; }
 
 	void setNumMolecules(unsigned long num) { _numMolecules = num; }  /**< set the number of molecules for this component */
 	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */ 
