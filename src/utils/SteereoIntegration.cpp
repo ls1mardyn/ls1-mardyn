@@ -15,10 +15,10 @@
 #include "steereoCommands/estimateRemainingTimeCommand.h"
 #include "steereoCommands/getVisDataCommand.h"
 #include "Domain.h"
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #include <steereoMPIIntraCommunicator.h>
-#endif //PARALLEL
+#endif //ENABLE_MPI
 #include <steerParameterCommand.h>
 #include <steereoSocketCommunicator.h>
 #include <steereoSimSteering.h>
@@ -34,7 +34,7 @@ SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 	global_log->info() << "In initSteereo" << std::endl;
 	SteereoSimSteering* _steer = new SteereoSimSteering();
 /*	SteereoXMLReader* xmlReader;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	global_log->debug() << "I am parallel" << std::endl;
 	xmlReader = new SteereoXMLReader ("./utils/steereoParallelConfig.xml");
 #else
@@ -49,7 +49,7 @@ SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 	_steer->setNumberOfQueues(1);
 #endif
 	int portNumber = 44445;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	int ownSize;
 	MPI_Comm_size(MPI_COMM_WORLD, &ownSize);
 	SteereoMPIIntraCommunicator* mpiIntraComm = new SteereoMPIIntraCommunicator();
@@ -67,14 +67,14 @@ SteereoSimSteering* initSteereo(int ownRank, int numProcs) {
 	_steer->setIntraCommunicator(mpiIntraComm);
 	if (mpiIntraComm->amIRoot()) {
 		portNumber += (ownRank * partNum) / ownSize;
-#endif // PARALLEL
+#endif // ENABLE_MPI
 
 	std::stringstream strstr;
 	strstr << portNumber;
 	_steer->setCommunicator(new SteereoSocketCommunicator(strstr.str()));
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 }
-#endif // PARALLEL
+#endif // ENABLE_MPI
 	global_log->info() << "done init_steereo" << std::endl;
 	return _steer;
 
@@ -120,11 +120,11 @@ void registerSteereoCommands(SteereoSimSteering* simSteer, Simulation* sim) {
 }
 
 void startListeningSteereo(SteereoSimSteering* simSteer) {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	if (simSteer->getIntraCommunicator()->amIRoot()) {
 #endif
 	simSteer->startListening();
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 }
 #endif
 }
@@ -132,7 +132,7 @@ void startListeningSteereo(SteereoSimSteering* simSteer) {
 void checkMoleculeContainer(ParticleContainer* pc) {
 	std::cout << "In checkMoleculeContainer" << std::endl;
 
-	double rmin; // lower corner of the process-specific domain //PARALLEL
+	double rmin; // lower corner of the process-specific domain //ENABLE_MPI
 	double rmax;
 	rmin = pc->getBoundingBoxMin(0);
 	rmax = pc->getBoundingBoxMax(0);

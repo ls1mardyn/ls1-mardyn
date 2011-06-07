@@ -35,7 +35,7 @@
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
 #else
@@ -121,7 +121,7 @@ Simulation::~Simulation() {
 }
 
 void Simulation::exit(int exitcode) {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	// terminate all mpi processes and return exitcode
 	MPI_Abort(MPI_COMM_WORLD, exitcode);
 #else
@@ -145,7 +145,7 @@ void Simulation::initConfigFile(const string& inputfilename) {
 
 void Simulation::initConfigXML(const string& inputfilename) {
 	int ownrank = 0;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 	global_log->info() << "init XML config file: " << inputfilename << endl;
@@ -257,7 +257,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		string partype;
 		if (inp.getNodeValue("parallelisation", partype)) {
 			global_log->info() << "reading parallelization type:\t" << partype << endl;
-#ifndef PARALLEL
+#ifndef ENABLE_MPI
 			global_log->warning()
 			        << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
 			        << endl;
@@ -365,7 +365,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 void Simulation::initConfigOldstyle(const string& inputfilename) {
 	int ownrank = 0;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 
@@ -485,7 +485,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "LJCutoffRadius") {
 			inputfilestream >> _LJCutoffRadius;
 		} else if ((token == "parallelization") || (token == "parallelisation")) {
-#ifndef PARALLEL
+#ifndef ENABLE_MPI
 			global_log->warning()
 			        << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
 			        << endl;
@@ -1249,7 +1249,7 @@ double Simulation::Tfactor(unsigned long simstep) {
 
 void Simulation::initialize() {
 	int ownrank = 0;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 
@@ -1262,7 +1262,7 @@ void Simulation::initialize() {
 	_integrator = NULL;
 	_inputReader = NULL;
 
-#ifndef PARALLEL
+#ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
 	global_log->info() << "Initialization done" << endl;

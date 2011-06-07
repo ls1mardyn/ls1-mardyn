@@ -14,7 +14,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
 

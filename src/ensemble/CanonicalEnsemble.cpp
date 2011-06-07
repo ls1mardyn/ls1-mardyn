@@ -3,7 +3,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "molecules/Component.h"
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include "parallel/CollectiveCommunication.h"
 #endif
 #include "parallel/DomainDecompBase.h"
@@ -36,7 +36,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 			const int cid = molecule.componentid();
 			numMolecules[cid]++;
 		}
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		_simulation.domainDecomposition().collCommInit(numComponents);
 		for( int cid = 0; cid < numComponents; cid++)
 			_simulation.domainDecomposition().collCommAppendUnsLong(numMolecules[cid]);
@@ -44,7 +44,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 #endif
 		_N = 0;
 		for( int cid = 0; cid < numComponents; cid++) {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 			numMolecules[cid] =  _simulation.domainDecomposition().collCommGetUnsLong();
 #endif
 			global_log->debug() << "Number of molecules in component " << cid << ": " << numMolecules[cid] << endl;
@@ -83,7 +83,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		  E_trans[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
 		  E_rot[cid]   += E_rot_loc;  // 2*k_{B} * E_{rot}
 	  }
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	  _simulation.domainDecomposition().collCommInit(2*numComponents);
 	  for( int cid = 0; cid < numComponents; cid++ ) {
 		  _simulation.domainDecomposition().collCommAppendDouble(E_trans[cid]);
@@ -93,7 +93,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 #endif
 	  _E = _E_trans = _E_rot = 0.0;
 	  for( int cid = 0; cid < numComponents; cid++) {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		  E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
 #endif
 		  global_log->debug() << "Kinetic energy in component " << cid << ": " << 

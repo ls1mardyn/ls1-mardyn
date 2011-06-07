@@ -54,7 +54,7 @@ void  VTKGridWriter::doOutput(
 	std::stringstream fileNameStream;
 	fileNameStream << _fileName;
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	fileNameStream << "_node" << rank;
 
 	if (rank == 0) {

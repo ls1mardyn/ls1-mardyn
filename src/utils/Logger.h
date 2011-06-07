@@ -16,12 +16,7 @@
 #include <sys/time.h>
 #endif
 
-/* some applications define PARALLEL to enable MPI */
-#ifdef PARALLEL
-#define MPI_SUPPORT
-#endif
-
-#ifdef MPI_SUPPORT
+#ifdef ENABLE_MPI
 #include <mpi.h>
 
 #ifndef NDEBUG
@@ -40,7 +35,7 @@
 #define MPI_CHECK(x) x
 #endif
 
-#endif  /* MPI_SUPPORT */
+#endif  /* ENABLE_MPI */
 
 
 /* we use a seperate namespace because we have some global definitions for
@@ -88,7 +83,7 @@ typedef enum {
  * set_mpi_output_ranks(int num_ranks, int * ranks)
  * Please include std::endl statements at the end of output as they will flush
  * the stream buffers.
- * If MPI_SUPPORT is enabled logger initialization has to take place after the
+ * If ENABLE_MPI is enabled logger initialization has to take place after the
  * MPI_Init call.
  */
 class Logger {
@@ -105,7 +100,7 @@ private:
 	time_t _starttime;
 #endif
 
-#ifdef MPI_SUPPORT
+#ifdef ENABLE_MPI
 	int _rank;
 #endif
 
@@ -120,14 +115,14 @@ private:
 
 public:
 	/** Initializes the log level, log stream and the list of log level names.
-	 * If MPI_SUPPORT is enabled by default all process perform logging output. */
+	 * If ENABLE_MPI is enabled by default all process perform logging output. */
 	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout))
 	    : _log_level(level), _log_stream(os) {
 		init_starting_time();
 		_filename = "";
 		_do_output = true;
 		this->init_log_levels();
-#ifdef MPI_SUPPORT
+#ifdef ENABLE_MPI
 		MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 #endif
 	}
@@ -137,7 +132,7 @@ public:
 		std::stringstream filenamestream;
 		filenamestream << prefix;
 		_do_output = true;
-#ifdef MPI_SUPPORT
+#ifdef ENABLE_MPI
 		MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 		filenamestream << "_R" << _rank;
 #endif
@@ -203,7 +198,7 @@ public:
 #else
 			*_log_stream << t-_starttime << "\t";
 #endif
-#ifdef MPI_SUPPORT
+#ifdef ENABLE_MPI
 			*_log_stream << "[" << _rank << "]\t";
 #endif
 			*_log_stream << logLevelNames[level] << ": ";
@@ -252,7 +247,7 @@ public:
 #endif
 	}
 
-#ifdef MPI_SUPPORT
+#ifdef ENABLE_MPI
 	/* methods for easy handling of output processes */
 
 	/// allow logging only for a single process

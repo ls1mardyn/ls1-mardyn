@@ -7,7 +7,7 @@
 #include <iostream>
 
 /* We use MPIs Wtime in parallel application, else clock */
-#ifdef PARALLEL 
+#ifdef ENABLE_MPI 
 #include <mpi.h>
 #else
 #include <sys/time.h>
@@ -54,9 +54,9 @@ class Timer {
 	double _stop;       // start time
 	double _etime;      // elapsed time
 	timer_state _state; // timer state
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	bool _synced;       // timer syncs processes
-#endif /* PARALLEL */
+#endif /* ENABLE_MPI */
 #ifdef PAPI
 	long long *_papi_start;
 	long long *_papi_stop;
@@ -78,9 +78,9 @@ class Timer {
 public:
 	Timer() {
 		reset();
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		set_sync(true);
-#endif /* PARALLEL */
+#endif /* ENABLE_MPI */
 #ifdef PAPI
 		if ( (_papi_num_avail_counters = PAPI_num_counters()) < 0 ) {
 #ifdef DEBUG
@@ -168,7 +168,7 @@ public:
 		return _state;
 	}
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	void set_sync(bool sync) {
 		_synced = sync;
 	}
@@ -192,7 +192,7 @@ public:
 private:
 	double timer() {
 		double time;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		if (_synced)
 			MPI_Barrier(MPI_COMM_WORLD);
 		time = MPI_Wtime();

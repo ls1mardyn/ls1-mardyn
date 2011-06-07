@@ -17,7 +17,7 @@
 #include <baseSimSteering.h>
 #include <steereoStream.h>
 #include <steereoDefinitions.h>
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	#include <mpi.h>
 #endif
 

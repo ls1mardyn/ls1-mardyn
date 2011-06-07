@@ -31,11 +31,7 @@
 #define RAPIDXML_NO_EXCEPTIONS
 #include "rapidxml/rapidxml.hpp"
 
-#ifdef PARALLEL
-#define PARALLEL_MPI
-#endif
-
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -595,7 +591,7 @@ public:
 	unsigned int numqueries() const
 		{ return m_queries.size(); }
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	void setMPIdefaults(int mpirootrank=0, MPI_Comm mpicomm=MPI_COMM_WORLD);
 #endif
 
@@ -621,7 +617,7 @@ private:
 	void invalidateQueries()
 	{ for(std::set<Query*>::iterator pos=m_queries.begin();pos!=m_queries.end();++pos) (*pos)->invalidate(); m_queries.clear(); }
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	int m_mpi_rootrank;
 	MPI_Comm m_mpi_comm;
 	int m_mpi_myrank;

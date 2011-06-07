@@ -9,7 +9,7 @@
 #include <baseSimSteering.h>
 #include <steereoStream.h>
 #include <steereoDefinitions.h>
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	#include <mpi.h>
 #endif
 
@@ -34,7 +34,7 @@ SnapshotCommand::~SnapshotCommand ()
 
 ReturnType SnapshotCommand::execute ()
 {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	int myRank, mySize;
 	MPI_Comm_size (MPI_COMM_WORLD, &mySize);
 	MPI_Comm_rank (MPI_COMM_WORLD, &myRank);
@@ -65,7 +65,7 @@ ReturnType SnapshotCommand::execute ()
 	ParticleContainer* m_molecules = sim -> getMolecules ();
 	int anzahl_mol = sim -> getDomain () -> getglobalNumMolecules ();
 	int local_mol = m_molecules->getNumberOfParticles();
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	if (myRank == 0)
 	{
 		outStream.allocateMemory (factor * anzahl_mol * sizeof(float) + offset * sizeof(float));
@@ -84,7 +84,7 @@ ReturnType SnapshotCommand::execute ()
 	daStream << (int) numberOfComponents;
 
 //std::cout << "in getSnapshot we have "<< local_mol << " particles from " << anzahl_mol  << std::endl;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	if (myRank == 0)
 	{
 		molNumbers = new int [mySize];
@@ -118,7 +118,7 @@ ReturnType SnapshotCommand::execute ()
 		counter++;
 	}
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	MPI_Gatherv (daStream.getStream(), local_mol * 3 * sizeof(float), MPI_CHAR, outStream.getStream (), dataSizes, displ, MPI_CHAR, 0, MPI_COMM_WORLD);
 
 	daStream.resetActPos();
@@ -136,7 +136,7 @@ ReturnType SnapshotCommand::execute ()
 			daStream << (float) pos->F(2);*/
 			daStream << tempF;
 		}
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		if (myRank == 0)
 		{
 			baseDispl = displ[mySize-1] + dataSizes[mySize-1];
@@ -164,7 +164,7 @@ ReturnType SnapshotCommand::execute ()
 			daStream << (float) pos->v(2);*/
 			daStream << vel;
 		}
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		if (myRank == 0)
 		{
 			baseDispl = displ[mySize-1] + dataSizes[mySize-1];
@@ -192,7 +192,7 @@ ReturnType SnapshotCommand::execute ()
 			daStream << v2;
 
 		}
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		if (myRank == 0)
 		{
 			baseDispl = displ[mySize-1] + dataSizes[mySize-1];
@@ -214,7 +214,7 @@ ReturnType SnapshotCommand::execute ()
 			daStream << v2max;
 		}*/
 	}
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	if (myRank == 0)
 	{
 		std::cout << "snapshotCommand: assembled the data to be sent in a stream: " << outStream.getStreamSize() <<  " "<< counter <<std::endl;

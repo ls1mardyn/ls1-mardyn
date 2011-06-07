@@ -13,7 +13,7 @@
 
 #include <vector>
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -40,7 +40,7 @@ void VTKGridWriterImplementationTest::testInitialization() {
 
 void VTKGridWriterImplementationTest::testWriteVTKFile() {
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	int rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	if (rank != 0) {

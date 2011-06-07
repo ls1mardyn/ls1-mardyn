@@ -10,7 +10,7 @@
 #include "utils/FileUtils.h"
 #include "molecules/Molecule.h"
 #include <vector>
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -36,7 +36,7 @@ void VTKMoleculeWriterImplementationTest::testInitialization() {
 }
 
 void VTKMoleculeWriterImplementationTest::testWriteVTKFile() {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	int rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	if (rank != 0) {

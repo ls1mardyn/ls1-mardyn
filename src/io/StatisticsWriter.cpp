@@ -120,7 +120,7 @@ void StatisticsWriter::doOutput(
 		global_log->warning() << "Writing Cell Occupancy only for root node!" << endl;
 	}
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 		// do a reduction
 #endif
 }

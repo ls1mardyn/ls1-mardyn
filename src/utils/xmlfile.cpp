@@ -28,7 +28,7 @@ const char *const XMLfile::queryattrtag = "query";
 XMLfile::XMLfile()
 {
 	clear();
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	setMPIdefaults();
 #endif
 }
@@ -36,7 +36,7 @@ XMLfile::XMLfile()
 XMLfile::XMLfile(const string& filepath)
 {
 	clear();
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	setMPIdefaults();
 #endif
 	initfile(filepath);
@@ -45,7 +45,7 @@ XMLfile::XMLfile(const string& filepath)
 XMLfile::XMLfile(const char* filepath)
 {
 	clear();
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	setMPIdefaults();
 #endif
 	initfile(filepath);
@@ -56,13 +56,13 @@ bool XMLfile::initfile(const string& filepath)
 	clear();
 	bool status;
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	// only root node will read XML file in MPI parallel version
 	if(m_mpi_myrank==m_mpi_rootrank)
 #endif
 	status=initfile_local(filepath);
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	status=distributeXMLstring();
 #endif
 
@@ -73,13 +73,13 @@ void XMLfile::initstring(const char* xmlstring)
 {
 	clear();
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	// root node XML string will be used in MPI parallel version
 	if(m_mpi_myrank==m_mpi_rootrank)
 #endif
 	initstring_local(xmlstring);
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	distributeXMLstring();
 #endif
 }
@@ -108,7 +108,7 @@ bool XMLfile::changecurrentnode(const Query::const_iterator& pos)
 
 void XMLfile::save(string filepath)
 {
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 	// only root process will save its data for now
 	if(m_mpi_myrank!=m_mpi_rootrank) return;
 #endif
@@ -464,7 +464,7 @@ void XMLfile::insertcloneelement(const t_XMLelement* src, t_XMLelement* dest_aft
 }
 
 
-#ifdef PARALLEL_MPI
+#ifdef ENABLE_MPI
 void XMLfile::setMPIdefaults(int mpirootrank, MPI_Comm mpicomm)
 {
 	m_mpi_rootrank=mpirootrank;

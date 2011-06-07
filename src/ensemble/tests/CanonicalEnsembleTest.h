@@ -14,7 +14,7 @@
  * Simple tests for the canonical ensemble.
  *
  * @todo In it's current implementation the Canonical Ensemble is only testable
- *       if the code is compiled without -DPARALLEL.
+ *       if the code is compiled without -DENABLE_MPI.
  *       For the parallel case the test case needed to set up the global_simulation somehow,
  *       as the ensemble needs it for the communication.
  */

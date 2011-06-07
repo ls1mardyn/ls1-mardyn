@@ -13,7 +13,7 @@
 #include "utils/FileUtils.h"
 #include "particleContainer/tests/ParticleContainerFactory.h"
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -34,7 +34,7 @@ void VTKGridWriterTest::testEmptyGrid() {
 
 	VTKGridWriter writer(2, "VTKGridWriterTest", *linkedCells);
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	// in the parallel case we check only that the right files are written.
 	// Their content should be right, if the sequential tests pass.
 	int rank = 0;

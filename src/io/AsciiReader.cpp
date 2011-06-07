@@ -17,7 +17,7 @@ AsciiReader::AsciiReader() {
 AsciiReader::~AsciiReader(){}
 
 void AsciiReader::setPhaseSpaceFile(string filename) {
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
  _phaseSpaceFileStream.str(filename);
 #else
  _phaseSpaceFileName = filename;
@@ -330,7 +330,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 			domain->setglobalRho(domain->getglobalNumMolecules()/(domain->getGlobalLength(0)*domain->getGlobalLength(1)*domain->getGlobalLength(2)));
 			if(domain->getlocalRank()==0) cout << "calculated global Rho:\t" << domain->getglobalRho() << endl;
 		}
-#ifndef PARALLEL
+#ifndef ENABLE_MPI
 		_phaseSpaceFileStream.close();
 #endif
 	}

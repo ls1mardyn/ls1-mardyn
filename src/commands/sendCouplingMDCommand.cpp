@@ -39,7 +39,7 @@ ReturnType SendCouplingMDCommand::execute ()
 	ParticleContainer* moleculeContainer = ((Simulation*) this->getData())->getMolecules();
 	std::vector<Component> components = ((Simulation*) this->getData())->getDomain()->getComponents();
 
-	double rmin; // lower corner of the process-specific domain //PARALLEL
+	double rmin; // lower corner of the process-specific domain //ENABLE_MPI
 	double rmax;
 	int dim = borderToLook / 2;
 	int dir = borderToLook % 2;

@@ -12,7 +12,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "parallel/DomainDecompDummy.h"
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
 
@@ -41,12 +41,12 @@ utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 
 void utils::TestWithSimulationSetup::setUp() {
 	_rank = 0;
-	#ifdef PARALLEL
+	#ifdef ENABLE_MPI
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
 	#endif
 	_domain = new Domain(_rank, NULL);
 
-	#ifdef PARALLEL
+	#ifdef ENABLE_MPI
 	_domainDecomposition = new DomainDecomposition();
 	#else
 	_domainDecomposition = new DomainDecompDummy();

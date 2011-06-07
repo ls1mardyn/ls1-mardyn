@@ -30,14 +30,14 @@ optparse::Values& initOptions(int argc, const char* const argv[], optparse::Opti
 //!
 int main(int argc, char** argv) {
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
 #endif
 	/* Initialize the global log file */
 	//string logfileName("MarDyn");
 	//global_log = new Log::Logger(Log::All, logfileName);
 	global_log = new Log::Logger(Log::Info);
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	global_log->set_mpi_output_root(0);
 #endif
 
@@ -49,7 +49,7 @@ int main(int argc, char** argv) {
 	global_log->info() << "Compiler: " << info_str << endl;
 	get_compile_time(&info_str);
 	global_log->info() << "Compiled: " << info_str << endl;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	get_mpi_info(&info_str);
 	global_log->info() << "MPI library: " << info_str << endl;
 #endif
@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 	global_log->info() << "Started: " << info_str << endl;
 	get_host(&info_str);
 	global_log->info() << "Execution host: " << info_str << endl;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );
 	global_log->info() << "Running with " << world_size << " processes." << endl;
@@ -87,12 +87,12 @@ int main(int argc, char** argv) {
 		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
 		bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
 		if (testresult) {
-			#ifdef PARALLEL
+			#ifdef ENABLE_MPI
 			MPI_Finalize();
 			#endif
 			exit(1);
 		} else {
-			#ifdef PARALLEL
+			#ifdef ENABLE_MPI
 			MPI_Finalize();
 			#endif
 			exit(0);
@@ -114,7 +114,7 @@ int main(int argc, char** argv) {
 	runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
 
 	cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	MPI_Finalize();
 #endif
 }

@@ -12,7 +12,7 @@
 
 #include <sstream>
 #include <vector>
- #ifdef PARALLEL
+ #ifdef ENABLE_MPI
 #include <mpi.h>
 #endif
 
@@ -52,7 +52,7 @@ void VTKMoleculeWriter::doOutput(
 	std::stringstream fileNameStream;
 	fileNameStream << _fileName;
 
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	fileNameStream << "_node" << rank;
 
 	if (rank == 0) {

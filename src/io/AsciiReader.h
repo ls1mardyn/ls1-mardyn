@@ -22,7 +22,7 @@ public:
 	void readPhaseSpaceHeader(Domain* domain, double timestep);
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 private:
-#ifdef PARALLEL
+#ifdef ENABLE_MPI
 	std::istringstream _phaseSpaceFileStream;
 #else
 	std::fstream _phaseSpaceFileStream;

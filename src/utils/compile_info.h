@@ -106,8 +106,8 @@ int get_host(char **info_str) {
 std::string getCompileFlags() {
 	std::stringstream flags;
 
-#ifdef PARALLEL
-	flags << " PARALLEL";
+#ifdef ENABLE_MPI
+	flags << " ENABLE_MPI";
 #endif
 
 #ifdef NDEBUG

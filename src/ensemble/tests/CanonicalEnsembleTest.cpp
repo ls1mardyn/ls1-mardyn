@@ -24,7 +24,7 @@ CanonicalEnsembleTest::~CanonicalEnsembleTest() { }
 
 void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 // remove the ifndef when canonicalensemble can be tested in parallel
-#ifndef PARALLEL
+#ifndef ENABLE_MPI
 
 	delete _domainDecomposition;
 	// will be deleted by tearDown()
