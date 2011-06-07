@@ -91,7 +91,7 @@ public:
 	void assertSynchronization(DomainDecompBase* comm);
 
 	double getMu() { return this->mu; }
-	int getComponentID() { return this->componentid; }
+	unsigned int getComponentID() { return this->componentid; }
 	int rank() { return this->ownrank; }
 
 private:
@@ -101,7 +101,7 @@ private:
 
 	double mu;
 	double muTilde;
-	int componentid;
+	unsigned int componentid;
 	unsigned interval;  // how often?
 	unsigned instances;  // how many trial insertions and deletions?
 	Random rnd;

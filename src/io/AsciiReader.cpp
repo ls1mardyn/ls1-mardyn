@@ -244,7 +244,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	double Fx,Fy,Fz,Mx,My,Mz;
 	unsigned int numcomponents=dcomponents.size();
 	unsigned long i,id;
-	int componentid;
+	unsigned int componentid;
 	
 	unsigned long maxid = 0;
 	

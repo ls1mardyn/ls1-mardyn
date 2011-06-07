@@ -33,7 +33,7 @@ using namespace std;
 using Log::global_log;
 
 
-Molecule::Molecule(unsigned long id, int componentid,
+Molecule::Molecule(unsigned long id, unsigned int componentid,
 	                 double rx, double ry, double rz,
 	                 double vx, double vy, double vz,
 	                 double q0, double q1, double q2, double q3,

@@ -44,7 +44,7 @@ public:
 	// but if it is left away, all pointer data is not initialized (which is not
 	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
 	// use it's instances.
-	Molecule(unsigned long id = 0, int componentid = 0,
+	Molecule(unsigned long id = 0, unsigned int componentid = 0,
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,
 	         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
@@ -63,7 +63,7 @@ public:
 	unsigned long id() const { return _id; }
 	void setid(unsigned long id) { this->_id = id; }
 	/** get the Component */
-	int componentid() const { return _componentid; }
+	unsigned int componentid() const { return _componentid; }
 	/** get the position */
 	double r(unsigned short d) const { return _r[d]; }
 
@@ -231,7 +231,7 @@ public:
 private:
 
 	unsigned long _id; // IDentification number of that molecule
-	int _componentid;  // IDentification number of its component type
+	unsigned int _componentid;  // IDentification number of its component type
 	double _r[3];  // position coordinates
 	double _F[3];  // forces
 	double _v[3];  // velocity

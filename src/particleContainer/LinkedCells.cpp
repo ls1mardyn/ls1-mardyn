@@ -69,7 +69,7 @@ LinkedCells::LinkedCells(
 
 		numberOfCells *= _cellsPerDimension[d];
 	}
-	global_log->debug() << "Cell size (" << _cellLength[1] << ", " << _cellLength[2] << ", " << _cellLength[3] << ")" << endl;
+	global_log->debug() << "Cell size (" << _cellLength[0] << ", " << _cellLength[1] << ", " << _cellLength[2] << ")" << endl;
 
 	_cells.resize(numberOfCells);
 
@@ -207,7 +207,7 @@ void LinkedCells::addParticle(Molecule& particle) {
 /**
  * @todo replace this by a call to component->getNumMolecules() !?
  */
-unsigned LinkedCells::countParticles(int cid) {
+unsigned LinkedCells::countParticles(unsigned int cid) {
 	unsigned N = 0;
 	std::vector<Molecule*>::iterator molIter1;
 	for (unsigned i = 0; i < _cells.size(); i++) {
@@ -225,7 +225,7 @@ unsigned LinkedCells::countParticles(int cid) {
 /**
  * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
  */
-unsigned LinkedCells::countParticles(int cid, double* cbottom, double* ctop) {
+unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];
 	for (int d = 0; d < 3; d++) {

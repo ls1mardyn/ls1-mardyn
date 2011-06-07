@@ -242,7 +242,7 @@ void AdaptiveSubCells::addParticle(Molecule& particle) {
 }
 
 
-unsigned AdaptiveSubCells::countParticles(int cid) {
+unsigned AdaptiveSubCells::countParticles(unsigned int cid) {
 	unsigned N = 0;
 	std::vector<Molecule*>::iterator molIter1;
 
@@ -261,7 +261,7 @@ unsigned AdaptiveSubCells::countParticles(int cid) {
 /**
  * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
  */
-unsigned AdaptiveSubCells::countParticles(int cid, double* cbottom, double* ctop) {
+unsigned AdaptiveSubCells::countParticles(unsigned int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];
 

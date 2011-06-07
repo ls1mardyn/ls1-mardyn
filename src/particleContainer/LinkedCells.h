@@ -184,13 +184,13 @@ public:
 	}
 
 	//! @brief counts all particles inside the bounding box
-	unsigned countParticles(int cid);
+	unsigned countParticles(unsigned int cid);
 
 	/**
 	 * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
 	 */
 	//! @brief counts particles in the intersection of bounding box and control volume
-	unsigned countParticles(int cid, double* cbottom, double* ctop);
+	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
