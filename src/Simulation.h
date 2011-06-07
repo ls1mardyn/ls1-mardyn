@@ -52,10 +52,6 @@ class Molecule;
 class Timer;
 class RDF;
 
-namespace optparse {
-class OptionParser;
-class Values;
-}
 
 //! @brief controls the whole simulation process
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -97,15 +93,12 @@ class Values;
 class Simulation {
 public:
 	//! @brief instantiate simulation object
-	//!
-	//! The Constructor processes the command line arguments
-	//! @param argc Pointer to the number of arguments passed to the programm. Needed for MPI
-	//! @param argv Pointer to the list of arguments, also needed for MPI
-	Simulation(optparse::Values& options, std::vector<std::string>& args);
+	Simulation();
 
 	//! @brief destruct simulation object
 	//!
 	~Simulation();
+
 
 	//! @brief Terminate simulation with a given exit code.
 	//!
@@ -118,6 +111,7 @@ public:
 	//! 
 	//! calls initConfigXML or initConfigOldStyle
 	//! @param inputfilename filename of the input file
+    void readConfigFile(std::string filename);
 	void initConfigFile(const std::string& inputfilename);
 	void initConfigFile(const char* inputfilename) {
 		initConfigFile(std::string(inputfilename));
@@ -333,6 +327,11 @@ private:
 	unsigned _zoscillator;
 
 	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps for the simulation */
+public:
+    void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
+    unsigned long getNumTimesteps() { return _numberOfTimesteps; }
+
+private:
 	unsigned long _simstep;             /**< Actual simulation time step */
 
 	// TODO: should go into output module
@@ -375,6 +374,12 @@ private:
 	//! prefix for the names of all output files
 	std::string _outputPrefix;
 
+public:
+    void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
+    void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
+    std::string getOutputPrefix() { return _outputPrefix; }
+
+private:
 	//!Timer for computation
 	Timer* _loopTimer;
 	//! Timer for IO during simulation steps

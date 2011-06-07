@@ -72,33 +72,11 @@ using namespace std;
 
 Simulation* global_simulation;
 
-Simulation::Simulation(optparse::Values& options, vector<string>& args) :
+Simulation::Simulation() :
 	_rdf(NULL),
 	_domainDecomposition(NULL) {
 
 	initialize();
-	unsigned int numargs = args.size();
-
-	_cutoffRadius = options.get("cutoff_radius");
-
-	// store number of timesteps to be simulated
-	if (numargs >= 2)
-		istringstream(args[1]) >> _numberOfTimesteps;
-	if (options.is_set_by_user("timesteps"))
-		_numberOfTimesteps = options.get("timesteps");
-	global_log->info() << "Simulating " << _numberOfTimesteps << " steps." << endl;
-
-	// store prefix for output files
-	if (numargs >= 3)
-		_outputPrefix = args[2];
-	if (options.is_set_by_user("outputprefix"))
-		_outputPrefix = options["outputprefix"];
-	global_log->info() << "Using output prefix '" << _outputPrefix << "'" << endl;
-
-	if (numargs >= 1) {
-		string inputfilename(args[0]);
-		initConfigFile(inputfilename);
-	}
 }
 
 Simulation::~Simulation() {
@@ -128,6 +106,10 @@ void Simulation::exit(int exitcode) {
 	// call global exit
 	::exit(exitcode);
 #endif
+}
+
+void Simulation::readConfigFile(string filename) {
+    initConfigFile(filename);
 }
 
 void Simulation::initConfigFile(const string& inputfilename) {

@@ -6,6 +6,7 @@
 #include "utils/Logger.h"
 #include "utils/compile_info.h"
 #include "utils/Testing.h"
+#include "utils/FileUtils.h"
 #include "Simulation.h"
 
 
@@ -44,6 +45,7 @@ int main(int argc, char** argv) {
 	std::string compile_flags = getCompileFlags();
 	global_log->info() << "Compile-flags: " << compile_flags << endl;
 
+    /* Print some info about the program itself */
 	char *info_str = new char[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(&info_str);
 	global_log->info() << "Compiler: " << info_str << endl;
@@ -57,6 +59,7 @@ int main(int argc, char** argv) {
 	global_log->info() << "Started: " << info_str << endl;
 	get_host(&info_str);
 	global_log->info() << "Execution host: " << info_str << endl;
+
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );
@@ -69,6 +72,10 @@ int main(int argc, char** argv) {
 	Values options = initOptions(argc, argv, op);
 	vector<string> args = op.args();
 	unsigned int numargs = args.size();
+	if (numargs < 1) {
+		op.print_usage();
+		exit(1);
+	}
 
 	if (options.is_set("verbose") && options.get("verbose"))
 		global_log->set_log_level(Log::All);
@@ -99,23 +106,49 @@ int main(int argc, char** argv) {
 		}
 	}
 
-	if (numargs < 1) {
-		op.print_usage();
-		exit(1);
-	}
+    Simulation simulation;
 
-	Simulation simulation(options, args);
-	simulation.prepare_start();
+    /* read the given config file if it exists */
+    if( fileExists(args[0].c_str()) ) {
+        string inputfilename(args[0]);
+        simulation.readConfigFile(inputfilename);
+    } else {
+        exit(1);
+    }
 
-	double runtime = double(clock()) / CLOCKS_PER_SEC;
+    // set the number of timesteps to be simulated
+    if( numargs > 1 ) {
+        unsigned long steps = 0;
+        istringstream(args[1]) >> steps;
+        simulation.setNumTimesteps( steps );
+    }
+    if (options.is_set_by_user("timesteps")) {
+        simulation.setNumTimesteps(options.get("timesteps"));
+    }
+    global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
 
-	simulation.simulate();
+    // set the prefix for output files
+    if( numargs > 2 ) {
+        simulation.setOutputPrefix( args[2] );
+    }
+    if( options.is_set_by_user("outputprefix") ) {
+        simulation.setOutputPrefix( options["outputprefix"] );
+    }
+    global_log->info() << "Using output prefix '" << simulation.getOutputPrefix() << "'" << endl;
 
-	runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
+    // TODO
+    //simulation.setCutoffRadius(options.get("cutoff_radius"));
 
-	cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
+
+    simulation.prepare_start();
+
+    double runtime = double(clock()) / CLOCKS_PER_SEC;
+    simulation.simulate();
+    runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
+    cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
+
 #ifdef ENABLE_MPI
-	MPI_Finalize();
+    MPI_Finalize();
 #endif
 }
 
