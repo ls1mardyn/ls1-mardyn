@@ -199,12 +199,9 @@ bool XMLfile::initfile_local(const string& filepath)
 
 	char* xmlstr = m_xmldoc.allocate_string(NULL,len+1);
 	xmlstr[len]=0;
-#ifndef NDEBUG
-	size_t lenread=fread(xmlstr,sizeof(char),len,fp);
-#endif
+	len -= fread(xmlstr,sizeof(char),len,fp);
 	fclose(fp);
-
-	assert(lenread==len);
+	assert(len == 0);
 
 	m_xmldoc.parse<0>(xmlstr);
 	expandincludes();
