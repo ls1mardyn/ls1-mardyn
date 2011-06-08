@@ -11,6 +11,7 @@
 #include <float.h>
 #include <sstream>
 #include <fstream>
+#include <climits>
 
 using namespace std;
 
@@ -403,16 +404,17 @@ void KDDecomposition::assertIntIdentity(int IX) {
 void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 	Molecule* m;
 	if (this->_ownRank) {
-		int tid;
+		unsigned long int tid;
 		for (m = mm->begin(); m != mm->end(); m = mm->next()) {
 			tid = m->id();
-			MPI_CHECK( MPI_Send(&tid, 1, MPI_INT, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
+			MPI_CHECK( MPI_Send(&tid, 1, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
 		}
-		tid = -1;
-		MPI_CHECK( MPI_Send(&tid, 1, MPI_INT, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
+		// use ULONG_MAX to tell the receiving process that there are no more molecules
+		tid = ULONG_MAX;
+		MPI_CHECK( MPI_Send(&tid, 1, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
 	}
 	else {
-		int recv;
+		unsigned long int recv;
 		map<int, int> check;
 		for (m = mm->begin(); m != mm->end(); m = mm->next()) {
 			check[m->id()] = 0;
@@ -422,16 +424,17 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 		MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
 		MPI_Status s;
 		for (int i = 1; i < num_procs; i++) {
-			bool cc = true;
-			while (cc) {
-				MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2674 + i, this->_collComm.getTopology(), &s) );
-				if (recv == -1)
-					cc = false;
+			bool receiveMoreMolecules = true;
+			while (receiveMoreMolecules) {
+				MPI_CHECK( MPI_Recv(&recv, 1, MPI_UNSIGNED_LONG, i, 2674 + i, this->_collComm.getTopology(), &s) );
+				if (recv == ULONG_MAX)
+					receiveMoreMolecules = false;
 				else {
 					if (check.find(recv) != check.end()) {
 						cout << "\nSEVERE ERROR. Ranks " << check[recv] << " and "
 						     << i << " both propagate ID " << recv << ". Aborting.\n";
-						MPI_Abort(MPI_COMM_WORLD, 2674);
+						cout << "recv=" << recv << endl;
+						//MPI_Abort(MPI_COMM_WORLD, 2674);
 					}
 					else
 						check[recv] = i;
