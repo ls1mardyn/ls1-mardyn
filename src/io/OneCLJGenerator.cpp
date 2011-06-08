@@ -14,7 +14,7 @@ const double OneCLJGenerator::eps = 1.0;
 const double OneCLJGenerator::sigma = 1.0;
 const double OneCLJGenerator::mass = 1.0;
 
-OneCLJGenerator::OneCLJGenerator(string mode, unsigned long N, double T) {
+OneCLJGenerator::OneCLJGenerator(string mode, unsigned long N, double T) : _moleculeCountOffset(0) {
 	_mode = mode;
 	_temperature = T;
 	_numberOfMolecules = N;
@@ -69,6 +69,10 @@ unsigned long OneCLJGenerator::readPhaseSpace(ParticleContainer* particleContain
 
 	vector<double> bBoxMin;
 	vector<double> bBoxMax;
+
+	// This is rather a hack to make sure that the ids of the molecules for each process are unique
+	_moleculeCountOffset = (2 * domainDecomp->getRank()) * _numberOfMolecules / domainDecomp->getNumProcs();
+	Log::global_log->info() << "MoleculeCountOffset=" << _moleculeCountOffset << endl;
 
 	bBoxMin.resize(3);
 	bBoxMax.resize(3);
@@ -152,7 +156,7 @@ void OneCLJGenerator::createHomogeneousDist(ParticleContainer* particleContainer
 	vector<double> r_;
 	r_.resize(3);
 
-	int molCount = 0;
+	unsigned long int molCount = _moleculeCountOffset;
 	for (int fcc = 0; fcc < 4; fcc++) {
 		for (int iz = localFccCellsMin[2]; iz <= localFccCellsMax[2]; iz++) {
 			for (int iy = localFccCellsMin[1]; iy <= localFccCellsMax[1]; iy++) {
@@ -163,13 +167,12 @@ void OneCLJGenerator::createHomogeneousDist(ParticleContainer* particleContainer
 					r_[1] = iy * (fccCellLength[1]) + fccOffsets[fcc][1] + 0.000000001;
 					r_[2] = iz * (fccCellLength[2]) + fccOffsets[fcc][2] + 0.000000001;
 
-					if (not domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
-						// if the position is not in the domain of this proc,
-						// the molecule must not be created
-						continue;
+					// if the position is not in the domain of this proc,
+					// the molecule must not be created
+					if (domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
+						addParticle(molCount, r_[0], r_[1], r_[2], particleContainer, domain, domainDecomp);
+						molCount++;
 					}
-					addParticle(molCount, r_[0], r_[1], r_[2], particleContainer, domain, domainDecomp);
-					molCount++;
 				}
 			}
 		}
@@ -219,7 +222,7 @@ void OneCLJGenerator::createClusters(ParticleContainer* particleContainer, vecto
 	vector<double> r_;
 	r_.resize(3);
 
-	int molCount = 0;
+	unsigned long int molCount = _moleculeCountOffset;
 	for (unsigned int cluster = 0; cluster < _localClusters.size(); cluster++) {
 		radius = _localClusters[cluster][3];
 		for (int dim = 0; dim < 3; dim++) {
@@ -242,18 +245,18 @@ void OneCLJGenerator::createClusters(ParticleContainer* particleContainer, vecto
 							// molecule is too far away from the center of the cluster
 							continue;
 						}
-						if (not domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
-							// if the position is not in the domain of this proc,
-							// the molecule must not be created
-							continue;
-						}
+
 						if (belongsToPreviousCluster(r_[0], r_[1], r_[2], cluster)) {
 							// some other cluster already created this molecule
 							continue;
 						}
 
-						addParticle(molCount, r_[0], r_[1], r_[2], particleContainer, domain, domainDecomp);
-						molCount++;
+						// if the position is not in the domain of this proc,
+						// the molecule must not be created
+						if (domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
+							addParticle(molCount, r_[0], r_[1], r_[2], particleContainer, domain, domainDecomp);
+							molCount++;
+						}
 					}
 				}
 			}
@@ -290,18 +293,17 @@ void OneCLJGenerator::createClusters(ParticleContainer* particleContainer, vecto
 					r_[1] = iy * (fccCellLength[1]) + fccOffsets[fcc][1] + 0.000000001;
 					r_[2] = iz * (fccCellLength[2]) + fccOffsets[fcc][2] + 0.000000001;
 
-					if (not domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
-						// if the position is not in the domain of this proc,
-						// the molecule must not be created
-						continue;
-					}
 					if (closeToAnyCluster(r_[0], r_[1], r_[2], securityOffset)) {
 						// some other cluster already created this molecule
 						continue;
 					}
 
-					addParticle(molCount, r_[0], r_[1], r_[2], particleContainer, domain, domainDecomp);
-					molCount++;
+					// if the position is not in the domain of this proc,
+					// the molecule must not be created
+					if (domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
+						addParticle(molCount, r_[0], r_[1], r_[2], particleContainer, domain, domainDecomp);
+						molCount++;
+					}
 				}
 			}
 		}

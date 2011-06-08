@@ -182,6 +182,8 @@ public:
 	//! @brief length of the global simulation box
 	vector<double> _simBoxLength;
 
+	unsigned long int _moleculeCountOffset;
+
 };
 
 #endif /*Gen1CLJ_H_*/
