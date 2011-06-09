@@ -30,8 +30,8 @@
       <temperature unit="reduced" >0.7</temperature>	<!-- in future also units="K" -->
       <volume type="box">
           <lx unit="reduced">97.</lx>
-          <ly>97.</ly>
-          <lz>97.</lz>
+          <ly unit="reduced">97.</ly>
+          <lz unit="reduced">97.</lz>
       </volume>
       <!-- instead of lx/ly/lz we might accept density -->
       <components>
@@ -78,8 +78,8 @@
           </mixing>
       </components>
       <!-- Definition of the Phasespacepoint -->
-      <psp>
-        <file type="xdr" >test.xdr</file>
+      <phasespacepoint>
+        <file type="OldStyle" >test.xdr</file>
         <generator src="internal" id="kfc" >
          <!-- elements contain parameters needed for the generator -->
         </generator>
@@ -87,14 +87,14 @@
         <generator src="plugin" lib="test" id="gen1">
          <!-- parameters needed for the generator -->
         </generator>
-      </psp>
+      </phasespacepoint>
     </ensemble>
-    <algo>
+    <algorithm>
       <parallelisation>DomainDecomposition</parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
-    </algo>
+    </algorithm>
     <status>
         <currenttime>0</currenttime>
     </status>

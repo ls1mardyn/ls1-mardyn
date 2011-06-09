@@ -157,18 +157,22 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				initConfigOldstyle(siminpfile);
 			}
 		}
+		
 		if (inp.getNodeValueReduced("integrator/timestep", timestepLength)) {
 			global_log->info() << "dimensionless timestep:\t" << timestepLength << endl;
 		}
 		if (inp.getNodeValueReduced("cutoff/radiusLJ", _cutoffRadius)) {
 			global_log->info() << "dimensionless LJ cutoff radius:\t" << _cutoffRadius << endl;
 		}
+		
 		string pspfile;
 		if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
+			pspfile.insert(0, inp.getDir());
 			global_log->info() << "phasespacepoint description file:\t" << pspfile << endl;
+			
 			string pspfiletype("OldStyle");
 			inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype);
-			global_log->info() << "                   psp file type:\t" << pspfiletype << endl;
+			global_log->info() << "       phasespacepoint file type:\t" << pspfiletype << endl;
 			if (pspfiletype == "OldStyle") {
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
@@ -230,75 +234,86 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				_LJCutoffRadius = this->_cutoffRadius;
 			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		}
+		
+		string dummy;
+		double simBoxLength[3];
+		if (inp.getNodeValue("ensemble/volume", dummy)) {
+			inp.getNodeValueReduced( "ensemble/volume/lx", simBoxLength[0] );
+			inp.getNodeValueReduced( "ensemble/volume/ly", simBoxLength[1] );
+			inp.getNodeValueReduced( "ensemble/volume/lz", simBoxLength[2] );
+			for( int d = 0; d < 3; d++ ) {
+				_domain->setGlobalLength( d, simBoxLength[d] );
+			}
+		}
+		if (inp.changecurrentnode("algorithm")) {
+			string partype;
+			if (inp.getNodeValue("parallelisation", partype)) {
+				global_log->info() << "reading parallelization type:\t" << partype << endl;
+#ifndef ENABLE_MPI
+				global_log->warning()
+					<< "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
+					<< endl;
+#else
+				if (partype=="DomainDecomposition") {
+					_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+				}
+				else if(partype=="KDDecomposition") {
+					_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
+				}
+#endif	
+			}
+			string datastructype;
+			if (inp.getNodeValue("datastructure@type", datastructype)) {
+				global_log->info() << "datastructure to use:\t" << datastructype << endl;
+				if (datastructype == "LinkedCells") {
+					int cellsInCutoffRadius = 1;
+					inp.getNodeValue("datastructure/cellsInCutoffRadius", cellsInCutoffRadius);
+					global_log->info() << "LinkedCells cells in cutoff radius:\t" << cellsInCutoffRadius << endl;
+					double bBoxMin[3];
+					double bBoxMax[3];
+					for (int i = 0; i < 3; i++) {
+						bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
+						bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
+					}
+					if (this->_LJCutoffRadius == 0.0)
+						_LJCutoffRadius = this->_cutoffRadius;
+					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+						_tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+				} else if (datastructype == "AdaptiveSubCells") {
+					double bBoxMin[3];
+					double bBoxMax[3];
+					for (int i = 0; i < 3; i++) {
+						bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
+						bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
+					}
+					//creates a new Adaptive SubCells datastructure
+					if (_LJCutoffRadius == 0.0)
+						_LJCutoffRadius = _cutoffRadius;
+					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+						_tersoffCutoffRadius, _particlePairsHandler);
+				}
+			}
+			inp.changecurrentnode("..");
+		} // algo-section
+		else {
+			global_log->info() << "XML config file " << inputfilename << ": no algo section" << endl;
+		}
+		if (inp.changecurrentnode("output")) {
+			string outputPathAndPrefix;
+			if (inp.getNodeValue("Resultwriter", outputPathAndPrefix)) {
+				// TODO: add the output frequency to the xml!
+				_outputPlugins.push_back(new ResultWriter(1, outputPathAndPrefix));
+				global_log->debug() << "ResultWriter '" << outputPathAndPrefix << "'.\n";
+			}
+			inp.changecurrentnode("..");
+		} // output-section
+		else {
+			global_log->info() << "XML config file " << inputfilename << ": no output section" << endl;
+		}
 		inp.changecurrentnode("..");
 	} // simulation-section
 	else {
 		global_log->error() << "XML config file " << inputfilename << ": no simulation section" << endl;
-	}
-	if (inp.changecurrentnode("algo")) {
-		string partype;
-		if (inp.getNodeValue("parallelisation", partype)) {
-			global_log->info() << "reading parallelization type:\t" << partype << endl;
-#ifndef ENABLE_MPI
-			global_log->warning()
-			        << "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
-			        << endl;
-#else
-			if (partype=="DomainDecomposition") {
-				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-			}
-			else if(partype=="KDDecomposition") {
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
-			}
-#endif	
-		}
-		string datastructype;
-		if (inp.getNodeValue("datastructure@type", datastructype)) {
-			global_log->info() << "datastructure to use:\t" << datastructype << endl;
-			if (datastructype == "LinkedCells") {
-				int cellsInCutoffRadius = 1;
-				inp.getNodeValue("datastructure/cellsInCutoffRadius", cellsInCutoffRadius);
-				global_log->info() << "LinkedCells cells in cutoff radius:\t" << cellsInCutoffRadius << endl;
-				double bBoxMin[3];
-				double bBoxMax[3];
-				for (int i = 0; i < 3; i++) {
-					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
-					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
-				}
-				if (this->_LJCutoffRadius == 0.0)
-					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-				        _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
-			} else if (datastructype == "AdaptiveSubCells") {
-				double bBoxMin[3];
-				double bBoxMax[3];
-				for (int i = 0; i < 3; i++) {
-					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
-					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
-				}
-				//creates a new Adaptive SubCells datastructure
-				if (_LJCutoffRadius == 0.0)
-					_LJCutoffRadius = _cutoffRadius;
-				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-				        _tersoffCutoffRadius, _particlePairsHandler);
-			}
-		}
-		inp.changecurrentnode("..");
-	} // algo-section
-	else {
-		global_log->info() << "XML config file " << inputfilename << ": no algo section" << endl;
-	}
-	if (inp.changecurrentnode("output")) {
-		string outputPathAndPrefix;
-		if (inp.getNodeValue("Resultwriter", outputPathAndPrefix)) {
-			// TODO: add the output frequency to the xml!
-			_outputPlugins.push_back(new ResultWriter(1, outputPathAndPrefix));
-			global_log->debug() << "ResultWriter '" << outputPathAndPrefix << "'.\n";
-		}
-		inp.changecurrentnode("..");
-	} // output-section
-	else {
-		global_log->info() << "XML config file " << inputfilename << ": no output section" << endl;
 	}
 
 	// read particle data
