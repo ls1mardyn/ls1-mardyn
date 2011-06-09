@@ -76,7 +76,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	while(header) {
 		char c;
 		_phaseSpaceHeaderFileStream >> c;
-		if(c=='#') {
+		if(c == '#') {
 			// comment line
 			_phaseSpaceHeaderFileStream.ignore( INT_MAX,'\n' );
 			continue;
@@ -262,117 +262,131 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
+	global_log->info() << "Reading phase space file " << _phaseSpaceFile << endl;
+	
 	string token;
-
 	vector<Component>& dcomponents = domain->getComponents();
 	unsigned int numcomponents = dcomponents.size();
+	unsigned long nummolecules;
+	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
+	string ntypestring("ICRVQD");
+	enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype = ICRVQD;
 
 	_phaseSpaceFileStream >> token;
-	if((token == "NumberOfMolecules") || (token == "N")) {
-		string nummolecules;
-		_phaseSpaceFileStream >> nummolecules;
-		domain->setglobalNumMolecules( strtoul(nummolecules.c_str(),NULL,0) );
-		_phaseSpaceFileStream >> token;
+	if((token != "NumberOfMolecules") && (token != "N")) {
+		global_log->error() << "Expected token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
+		exit(1);
 	}
-
-	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
+	_phaseSpaceFileStream >> nummolecules;
+	global_log->info() << " number of molecules: " << nummolecules << endl;
+	domain->setglobalNumMolecules( nummolecules );
+	
+	streampos spos = _phaseSpaceFileStream.tellg();
+	_phaseSpaceFileStream >> token;
 	if((token=="MoleculeFormat") || (token == "M")) {
-		string ntypestring("ICRVQD");
-		enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
 
-		global_log->info() << "Reading " << domain->getglobalNumMolecules() << " molecules" 
-			<< " from file " << _phaseSpaceFile << endl;
-		if( domain->getinpversion() >= 51129 )  // FIXME: Is this a magic number?
+		if( domain->getinpversion() >= 51129 )  // TODO: Is this a magic number?
 			_phaseSpaceFileStream >> ntypestring;
 		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
 		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
 		
-		if (ntypestring == "ICRVFQDM")  ntype = ICRVFQDM;
+		if (ntypestring == "ICRVQD") ntype = ICRVQD;
+		else if (ntypestring == "ICRVFQDM")  ntype = ICRVFQDM;
 		else if (ntypestring == "ICRV") ntype = ICRV;
 		else if (ntypestring == "IRV")  ntype = IRV;
-		global_log->info() << "Molecul format: " << ntypestring << endl;
-
-		if( !numcomponents ) {
-			global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
-			numcomponents = 1;
-			dcomponents.resize( numcomponents );
-			dcomponents[0].setID(0);
-			dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
+		else {
+			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
+			exit(1);
 		}
+	} else {
+		_phaseSpaceFileStream.seekg(spos);
+	}
+	global_log->info() << " molecule format: " << ntypestring << endl;
+	
+	if( numcomponents < 1 ) {
+		global_log->warning() << "No components defined! Setting up single one-centered LJ" << endl;
+		numcomponents = 1;
+		dcomponents.resize( numcomponents );
+		dcomponents[0].setID(0);
+		dcomponents[0].addLJcenter(0., 0., 0., 1., 1., 1., 6., false);
+	}
 
 
-		double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
-		double Fx,Fy,Fz,Mx,My,Mz;
-		unsigned long id;
-		unsigned int componentid;
+	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
+	double Fx,Fy,Fz,Mx,My,Mz;
+	unsigned long id;
+	unsigned int componentid;
 
-		x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
-		q0=1.;
-		Fx=Fy=Fz=Mx=My=Mz=0.;
+	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
+	q0=1.;
+	Fx=Fy=Fz=Mx=My=Mz=0.;
 
-		for( unsigned long i = 0; i < domain->getglobalNumMolecules(); i++ ) {
+	for( unsigned long i = 0; i < domain->getglobalNumMolecules(); i++ ) {
 
-			if( ntype == ICRVFQDM )
-				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz >> Fx >> Fy >> Fz
-					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Mx >> My >> Mz;
-			else if( ntype == ICRV )
-				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
-			else if( ntype == IRV )
-				_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
-			else // FIXME: Is ICRVQD a default format?
+		switch ( ntype ) {
+			case ICRVQD:
 				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
 					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
-
-			if(        ( x < 0.0 || x >= domain->getGlobalLength(0) )
-					|| ( y < 0.0 || y >= domain->getGlobalLength(1) ) 
-					|| ( z < 0.0 || z >= domain->getGlobalLength(2) ) ) 
-			{
-				global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
-			}
-
-			if( componentid > numcomponents ) {
-				global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
-				exit(1);
-			}
-			componentid --; // FIXME Component IDs start with 0 in the program.
-
-			// store only those molecules within the domain of this process
-			// The neccessary check is performed in the particleContainer addPartice method
-			// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
-			Molecule m1 = Molecule(id,componentid,x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,&dcomponents);
-			particleContainer->addParticle(m1);
-
-			dcomponents[componentid].incNumMolecules();
-			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
-			if(id > maxid) maxid = id;
-
-			std::list<ChemicalPotential>::iterator cpit;
-			for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-				if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-					cpit->storeMolecule(m1);
-				}
-			}
-
-			// Print status message
-			unsigned long iph = domain->getglobalNumMolecules() / 100;
-			if( iph != 0 && (i % iph) == 0 )
-				global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
+				break;
+			case ICRVFQDM :
+				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz >> Fx >> Fy >> Fz
+					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Mx >> My >> Mz;
+				break;
+			case ICRV :
+				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
+				break;
+			case IRV :
+				_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
+				break;
+		}
+		if(        ( x < 0.0 || x >= domain->getGlobalLength(0) )
+				|| ( y < 0.0 || y >= domain->getGlobalLength(1) ) 
+				|| ( z < 0.0 || z >= domain->getGlobalLength(2) ) ) 
+		{
+			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
 		}
 
-		global_log->info() << "Finished reading molecules: 100%" << endl;
-		global_log->info() << "Reading Molecules done" << endl;
+		if( componentid > numcomponents ) {
+			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
+			exit(1);
+		}
+		componentid --; // TODO: Component IDs start with 0 in the program.
 
-		if( !domain->getglobalRho() ){
-			domain->setglobalRho( domain->getglobalNumMolecules() / domain->getGlobalVolume() );
-			global_log->info() << "Calculated Rho_global = " << domain->getglobalRho() << endl;
+		// store only those molecules within the domain of this process
+		// The neccessary check is performed in the particleContainer addPartice method
+		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
+		Molecule m1 = Molecule(id,componentid,x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,&dcomponents);
+		particleContainer->addParticle(m1);
+		
+		 // TODO: The following should be done by the addPartice method.
+		dcomponents[componentid].incNumMolecules();
+		domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
+		
+		if(id > maxid) maxid = id;
+
+		std::list<ChemicalPotential>::iterator cpit;
+		for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
+			if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
+				cpit->storeMolecule(m1);
+			}
 		}
 
-		_phaseSpaceFileStream.close();
+		// Print status message
+		unsigned long iph = domain->getglobalNumMolecules() / 100;
+		if( iph != 0 && (i % iph) == 0 )
+			global_log->info() << "Finished reading molecules: " << i/iph << "%\r" << flush;
 	}
-	else {
-		global_log->error() << "Wrong format of Phase space file detected. Expected 'MoleculeFormat' or 'M' but found token " << token << endl;
-		exit(1);
+
+	global_log->info() << "Finished reading molecules: 100%" << endl;
+	global_log->info() << "Reading Molecules done" << endl;
+
+	// TODO: Shouldn't we always calculate this?
+	if( !domain->getglobalRho() ){
+		domain->setglobalRho( domain->getglobalNumMolecules() / domain->getGlobalVolume() );
+		global_log->info() << "Calculated Rho_global = " << domain->getglobalRho() << endl;
 	}
+
+	_phaseSpaceFileStream.close();
 
 	return maxid;
 }
