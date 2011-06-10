@@ -80,7 +80,7 @@ public:
 
 	void addLJcenter(
 			double x, double y, double z, double m, double eps,
-			double sigma, double rc, bool TRUNCATED_SHIFTED
+			double sigma, double rc = 0, bool TRUNCATED_SHIFTED = 0
 	);
 	void addCharge(double x, double y, double z, double m, double q);
 	void addDipole(double x, double y, double z,
