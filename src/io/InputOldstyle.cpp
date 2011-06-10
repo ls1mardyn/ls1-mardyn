@@ -205,8 +205,8 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			// Mixing coefficients
 			vector<double>& dmixcoeff = domain->getmixcoeff();
 			dmixcoeff.clear();
-			for( unsigned int i = 0; i < numcomponents - 1; i++ ) {
-				for( unsigned int j = i + 1; j < numcomponents; j++ ) {
+			for( unsigned int i = 1; i < numcomponents; i++ ) {
+				for( unsigned int j = i + 1; j <= numcomponents; j++ ) {
 					double xi, eta;
 					_phaseSpaceHeaderFileStream >> xi >> eta;
 					dmixcoeff.push_back( xi );
