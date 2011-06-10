@@ -47,6 +47,7 @@
 #include "integrators/Leapfrog.h"
 
 #include "io/io.h"
+#include "io/xmlreader.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -132,21 +133,40 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #endif
 	global_log->info() << "init XML config file: " << inputfilename << endl;
 	XMLfileUnits inp(inputfilename);
+	XMLReader xmlreader(inputfilename);
+	
 	//inp.printXML();
 	global_log->debug() << string(inp) << endl;
 	if (!inp.changecurrentnode("/mardyn")) {
 		global_log->error() << inputfilename << " is not a MarDyn XML input file!" << endl;
 		return;
 	}
-	string version;
-	unsigned long foundentries;
-	//inp.getNodeValue("/mardyn@version",version);
-	foundentries = inp.getNodeValue("@version", version);
-	if (foundentries)
-		global_log->debug() << "MarDyn XML config file version " << version << endl;
-	else
-		global_log->debug() << "MarDyn XML config file version not set" << endl;
-	double timestepLength;
+	
+	string version = xmlreader.getVersion();
+	global_log->info() << "MarDyn XML config file version: " << version << endl;
+	global_log->info() << "Reading simulation parameters ..." << endl;
+	
+	double timestepLength = 0.0;
+	timestepLength = xmlreader.getTimestepLength();
+	if ( timestepLength != 0 ) {
+		global_log->info() << " timestep:             " << timestepLength << endl;
+	} else {
+		/* TODO: perform checks before simulation start as there are command line parameters, too */
+		global_log->error() << "Undefined timestep length." << endl;
+	}
+		
+	double simBoxLength[3];
+	if ( xmlreader.getSimBoxSize( simBoxLength ) ) {
+		global_log->info() << " simulation box size:  (" 
+			<< simBoxLength[0] << ", "
+			<< simBoxLength[1] << ", "
+			<< simBoxLength[2] << ")" << endl;
+			
+		for( int d = 0; d < 3; d++ ) {
+			_domain->setGlobalLength( d, simBoxLength[d] );
+		}
+	}
+		
 	if (inp.changecurrentnode("simulation")) {
 		string siminpfile, siminptype;
 		if (inp.getNodeValue("input", siminpfile)) {
@@ -158,9 +178,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			}
 		}
 		
-		if (inp.getNodeValueReduced("integrator/timestep", timestepLength)) {
-			global_log->info() << "dimensionless timestep:\t" << timestepLength << endl;
-		}
+		
 		if (inp.getNodeValueReduced("cutoff/radiusLJ", _cutoffRadius)) {
 			global_log->info() << "dimensionless LJ cutoff radius:\t" << _cutoffRadius << endl;
 		}
@@ -235,16 +253,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		}
 		
-		string dummy;
-		double simBoxLength[3];
-		if (inp.getNodeValue("ensemble/volume", dummy)) {
-			inp.getNodeValueReduced( "ensemble/volume/lx", simBoxLength[0] );
-			inp.getNodeValueReduced( "ensemble/volume/ly", simBoxLength[1] );
-			inp.getNodeValueReduced( "ensemble/volume/lz", simBoxLength[2] );
-			for( int d = 0; d < 3; d++ ) {
-				_domain->setGlobalLength( d, simBoxLength[d] );
-			}
-		}
 		if (inp.changecurrentnode("algorithm")) {
 			string partype;
 			if (inp.getNodeValue("parallelisation", partype)) {
@@ -315,12 +323,31 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	else {
 		global_log->error() << "XML config file " << inputfilename << ": no simulation section" << endl;
 	}
+	
 
 	// read particle data
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain, _domainDecomposition);
 
 	if (this->_LJCutoffRadius == 0.0)
 		_LJCutoffRadius = this->_cutoffRadius;
+	
+	global_log->info() << " reading in components from xml ..." << endl;
+	/* TODO: save components into domain:
+	 * take care of already existing components
+	 * take care about parameter streams
+	 */
+	std::vector<Component>& dcomponents = _domain->getComponents();
+	std::vector<Component> components; 
+	xmlreader.getComponents( components );
+// 	for( unsigned int j = 0; j < components.size(); j++ ) {
+// 		global_log->info() << components[j] << endl;
+// 	}
+	long numComponents = dcomponents.size();
+	global_log->info() << " number of components from input: " << numComponents << endl;
+	global_log->info() << " number of components in xml (not implemented): " << components.size() << endl;
+	
+	// TODO: Check this...
+// 	_domain->initParameterStreams( _cutoffRadius, _LJCutoffRadius );
 	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// @todo comment

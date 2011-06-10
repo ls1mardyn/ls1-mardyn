@@ -67,9 +67,9 @@
               <Iyy>47.02459341</Iyy>
             </momentsofinertia>
           </moleculetype>
-          <moleculetype id="2" >
-            <include query="/components/moleculetype[@id='cycC6H12']" >components.xml</include>
-          </moleculetype>
+          
+          <include query="/components/moleculetype[@id='cycC6H12']" >components.xml</include>
+          
           <mixing>
             <rule type="LB" id1="1" id2="2">
               <eta>1.0</eta>
