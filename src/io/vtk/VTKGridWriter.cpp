@@ -39,7 +39,7 @@ void  VTKGridWriter::doOutput(
 		return;
 	}
 
-	int rank = domain->getlocalRank();
+	int rank = domain->ownrank();
 
 	VTKGridWriterImplementation impl(rank);
 	impl.initializeVTKFile();

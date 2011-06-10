@@ -952,8 +952,6 @@ unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
-int Domain::getlocalRank() const { return _localRank;}
-
 unsigned long Domain::getinpversion(){ return _inpversion;}
 
 void Domain::setinpversion(unsigned long inpv){ _inpversion = inpv;}

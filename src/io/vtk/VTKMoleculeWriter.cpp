@@ -37,7 +37,7 @@ void VTKMoleculeWriter::doOutput(
 		return;
 	}
 
-	int rank = domain->getlocalRank();
+	int rank = domain->ownrank();
 
 	VTKMoleculeWriterImplementation impl(rank);
 

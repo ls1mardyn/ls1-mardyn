@@ -52,11 +52,13 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 
 		ofstream visittfstrm(filenamestream.str().c_str());
 
-		if (!domain->getlocalRank() && !this->_wroteVIS) {
+		if ((domain->ownrank() == 0) && (!_wroteVIS)) {
 			visittfstrm << "      id t          x          y          z     q0     q1     q2     q3        c\n";
 			this->_wroteVIS = true;
 		}
-		else if (!domain->getlocalRank()) visittfstrm << "#\n";
+		else if (domain->ownrank() == 0) {
+            visittfstrm << "#\n";
+        }
 
 		// originally VIS files had a fixed width of 8 (and no t), here I use 12 (with 2 for t)
 		//ostrm << "t           x           y           z          q0          q1          q2          q3" << endl;

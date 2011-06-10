@@ -47,7 +47,7 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 	_phaseSpaceFileStream >> token;
 	if(token != "trunk")
 	{
-		 if(!domain->ownrank()) cout << "Wrong input file version (\'"
+		 if(domain->ownrank() == 0) cout << "Wrong input file version (\'"
 	               << token << "\' instead of \'trunk\'). Aborting.\n";
 		 exit(787);
 	}
@@ -263,7 +263,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		string ntypestring("ICRVQD");
 		enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
 
-		if(domain->getlocalRank()==0) cout << "reading " << domain->getglobalNumMolecules() << " molecules" << flush;
+		if(domain->ownrank() == 0) cout << "reading " << domain->getglobalNumMolecules() << " molecules" << flush;
 		if(domain->getinpversion() >= 51129) _phaseSpaceFileStream >> ntypestring;
 		ntypestring.erase(ntypestring.find_last_not_of(" \t\n")+1);
 		ntypestring.erase(0,ntypestring.find_first_not_of(" \t\n"));
@@ -273,10 +273,10 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 			ntype=ICRV;
 		else if (ntypestring=="IRV")
 			ntype=IRV;
-		if(domain->getlocalRank()==0) cout << " (" << ntypestring << ")" << flush;
+		if(domain->ownrank() == 0) cout << " (" << ntypestring << ")" << flush;
 		if(!numcomponents)
 		{
-			if(domain->getlocalRank()==0) cout << endl << "No components defined! Setting up single one-centered LJ" << endl;
+			if(domain->ownrank() == 0) cout << endl << "No components defined! Setting up single one-centered LJ" << endl;
 			numcomponents=1;
 			dcomponents.resize(numcomponents);
 			dcomponents[0].setID(0);
@@ -295,11 +295,11 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 			else
 				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
 				      >> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
-			if((x<0.0 || x>=domain->getGlobalLength(0) || y<0.0 || y>=domain->getGlobalLength(1) || z<0.0 || z>=domain->getGlobalLength(2)) && domain->getlocalRank() == 0) {
+			if((x<0.0 || x>=domain->getGlobalLength(0) || y<0.0 || y>=domain->getGlobalLength(1) || z<0.0 || z>=domain->getGlobalLength(2)) && (domain->ownrank() == 0)) {
 				cerr << endl << id << ": Molecule " << x << ";" << y << ";" << z << " out of box! " << flush;
 			}
 
-			if(((int)componentid > (int)numcomponents) && domain->getlocalRank() == 0) {
+			if(((int)componentid > (int)numcomponents) && (domain->ownrank() == 0)) {
 				cerr << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
 			}
 			--componentid;
@@ -322,13 +322,13 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	 }
 			}
 
-			if(!(i%4096)) if(domain->getlocalRank()==0) cout << '.' << flush;
+			if(!(i%4096)) if(domain->ownrank() == 0) cout << '.' << flush;
 		}
-		if(domain->getlocalRank()==0) cout << " done" << endl;
+		if(domain->ownrank() == 0) cout << " done" << endl;
 
 		if(!domain->getglobalRho()){
 			domain->setglobalRho(domain->getglobalNumMolecules()/(domain->getGlobalLength(0)*domain->getGlobalLength(1)*domain->getGlobalLength(2)));
-			if(domain->getlocalRank()==0) cout << "calculated global Rho:\t" << domain->getglobalRho() << endl;
+			if(domain->ownrank() == 0) cout << "calculated global Rho:\t" << domain->getglobalRho() << endl;
 		}
 #ifndef ENABLE_MPI
 		_phaseSpaceFileStream.close();

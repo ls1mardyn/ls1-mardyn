@@ -147,7 +147,7 @@ void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, 
 	if (simStep > 0 && simStep % _RDFOutputTimesteps == 0) {
 		collectRDF(domainDecomposition);
 
-		if( domain->getlocalRank() == 0 ) {
+		if( domain->ownrank() == 0 ) {
 			accumulateRDF();
 			for (unsigned i = 0; i < _numberOfComponents; i++) {
 				for (unsigned j = i; j < _numberOfComponents; j++) {
