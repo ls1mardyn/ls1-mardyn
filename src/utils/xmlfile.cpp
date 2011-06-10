@@ -97,7 +97,8 @@ long XMLfile::changecurrentnode(const string& nodepath)
 
 bool XMLfile::changecurrentnode(const Query::const_iterator& pos)
 {
-	if(pos && (*pos).type()==Node::ELEMENT_Node)
+	if(pos && (*pos).type()!=Node::ATTRIBUTE_Node)
+	// TODO: Node types are not always correctly set to Node::ELEMENT_Node ...
 	{
 		m_currentnode=*pos;
 		return true;
