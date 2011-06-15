@@ -4,14 +4,26 @@
 
 CFG_INFO = "gcc configuration enabling the stereo framework"
 
-GLOBAL_INCLUDES = -I/home/hpcdjenz/workspace/Steereo/src -DSTEEREO -DSTEEREO_PARTITIONS=1
- #-DSTEEREO_COUPLING 
-GLOBAL_LINK     = -L/home/hpcdjenz/workspace/Steereo/src -lSteereo -ldl
-#-lmpl -ldl /usr/lib64/mpi/mpi-mpich2/usr/lib64/libmpl.so -Wl,-rpath,/usr/lib64/mpi/mpi-mpich2/usr/lib64 
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
 
 CXX_SEQ = g++
 CXX_PAR = mpicxx
 DEPMODE = gcc3
+
+# path to the steereo installation directory
+STEEREO_HOME := /usr/local
+
+GLOBAL_INCLUDES = -I$(STEEREO_HOME)/include -DSTEEREO -DSTEEREO_PARTITIONS=1
+#GLOBAL_INCLUDES = -I$(STEEREO_HOME)/include -DSTEEREO -DSTEEREO_PARTITIONS=1 -DSTEEREO_COUPLING 
+GLOBAL_LINK     = -L$(STEEREO_HOME)/lib -lSteereo -ldl
+#-lmpl -ldl /usr/lib64/mpi/mpi-mpich2/usr/lib64/libmpl.so -Wl,-rpath,/usr/lib64/mpi/mpi-mpich2/usr/lib64 
+
 
 # SEQ
 #########################################
@@ -19,7 +31,7 @@ DEPMODE = gcc3
 CXXFLAGS_SEQ_DEBUG  = $(GLOBAL_INCLUDES) -Wall -g 
 LINKFLAGS_SEQ_DEBUG = $(GLOBAL_LINK) -O0 -g
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = $(GLOBAL_INCLUDES) -Wall -O3 -DNDEBUG 
+CXXFLAGS_SEQ_RELEASE  = $(GLOBAL_INCLUDES) -Wall -O2 -DNDEBUG 
 LINKFLAGS_SEQ_RELEASE = $(GLOBAL_LINK)
 
 # PAR
