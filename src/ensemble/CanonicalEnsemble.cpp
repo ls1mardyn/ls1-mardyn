@@ -28,7 +28,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	if ( (variable & NUM_PARTICLES) | (variable & TEMPERATURE) ) {
 		global_log->debug() << "Updating particle counts" << endl;
 		/* initializes the number of molecules present in each component! */
-		unsigned long numMolecules[numComponents];
+		unsigned long *numMolecules = new unsigned long[numComponents];
 		for( int cid = 0; cid < numComponents; cid++) 
 			numMolecules[cid] = 0;
 		for( tM = _particles->begin(); tM != _particles->end(); tM = _particles->next() ) {
@@ -70,8 +70,8 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 
 	if ( (variable & ENERGY) | (variable & TEMPERATURE) ) {
 		global_log->debug() << "Updating energy" << endl;
-	  double E_trans[numComponents];
-	  double E_rot[numComponents];
+	  double *E_trans = new double [numComponents];
+	  double *E_rot = new double[numComponents];
 	  for( int cid = 0; cid < numComponents; cid++)
 		  E_trans[cid] = E_rot[cid] = 0.0;
 	  for( tM = _particles->begin(); tM != _particles->end(); tM = _particles->next() ) {
