@@ -9,15 +9,16 @@
 #ifndef RECEIVECOUPLINGMDCOMMAND_H_
 #define RECEIVECOUPLINGMDCOMMAND_H_
 
-#include <steereoCouplingCommand.h>
+#include <steereo/steereoCouplingCommand.h>
 #include <queue>
 #include "../molecules/Molecule.h"
-//class Molecule;
+
+class CouplingBoundary;
 
 typedef struct
 {
 	double translatedPos[3];
-	CouplingBoundary boundary;
+	//CouplingBoundary boundary;
 } DataPackage;
 
 class ReceiveCouplingMDCommand: public SteereoCouplingCommand

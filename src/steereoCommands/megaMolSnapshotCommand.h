@@ -9,7 +9,7 @@
 #ifndef MEGAMOLSNAPSHOTCOMMAND_H_
 #define MEGAMOLSNAPSHOTCOMMAND_H_
 
-#include <steereoCommand.h>
+#include <steereo/steereoCommand.h>
 #include <Simulation.h>
 
 class MegaMolSnapshotCommand : public SteereoCommand

@@ -6,11 +6,13 @@
 #include "../Domain.h"
 #include "../particleContainer/ParticleContainer.h"
 #include "../molecules/Molecule.h"
-#include <steereoSteeringBase.h>
-#include <steereoStream.h>
-#include <steereoDefinitions.h>
+
+#include <steereo/steereoSteeringBase.h>
+#include <steereo/steereoStream.h>
+#include <steereo/steereoDefinitions.h>
+
 #ifdef ENABLE_MPI
-  #include <mpi.h>
+#include <mpi.h>
 #endif
 
 
@@ -50,17 +52,21 @@ ReturnType SnapshotCommand::execute ()
   SteereoStream daStream;
   SteereoStream outStream;
   int counter = 0;
+#ifdef ENABLE_MPI
   int* molNumbers = NULL;
   int* dataSizes = NULL;
   int* displ = NULL;
   int baseDispl = 0;
+#endif
   int factor = 3 +  sendForces + sendVelocity + sendV2;
   //int offset = sendV2Max;
   // at the moment the simulation area extents need 6 floats
   int offset = 7;
 
   ParticleContainer* m_molecules = sim -> getMolecules ();
+#ifdef ENABLE_MPI
   int anzahl_mol = sim -> getDomain () -> getglobalNumMolecules ();
+#endif
   int local_mol = m_molecules->getNumberOfParticles();
 #ifdef ENABLE_MPI
   if (myRank == 0)

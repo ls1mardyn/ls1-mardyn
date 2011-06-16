@@ -8,7 +8,7 @@
 #ifndef __ESTIMATEREMAININGTIMECOMMAND_H__
 #define __ESTIMATEREMAININGTIMECOMMAND_H__
 
-#include <steereoCommand.h>
+#include <steereo/steereoCommand.h>
 
 class EstimateRemainingTimeCommand : public SteereoCommand {
 public:

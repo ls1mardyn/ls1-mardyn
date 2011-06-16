@@ -5,7 +5,7 @@
  *      Author: hpcdjenz
  */
 
-#ifdef STEEREO
+#if defined(STEEREO) && defined(STEEREO_COUPLING)
 #include "receiveCouplingMDCommand.h"
 #include "../Simulation.h"
 #include "../Domain.h"

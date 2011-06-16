@@ -2,9 +2,8 @@
 #define __SNAPSHOTCOMMAND_H__
 
 #ifdef STEEREO
-//#include <steereo/command.h>
 #include "../Simulation.h"
-#include <steereoCommand.h>
+#include <steereo/steereoCommand.h>
 
 
 class SnapshotCommand : public SteereoCommand 

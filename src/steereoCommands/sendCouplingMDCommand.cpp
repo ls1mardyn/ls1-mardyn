@@ -5,7 +5,7 @@
  *      Author: hpcdjenz
  */
 
-#ifdef STEEREO
+#if defined(STEEREO) && defined(STEEREO_COUPLING)
 #include "sendCouplingMDCommand.h"
 #include <cstdio>
 #include <cstdlib>

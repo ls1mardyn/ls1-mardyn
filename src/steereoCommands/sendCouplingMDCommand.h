@@ -10,9 +10,11 @@
 #ifndef __SENDCOUPLINGINFOCOMMAND_H__
 #define __SENDCOUPLINGINFOCOMMAND_H__
 
-#include <steereoCouplingCommand.h>
+#include <steereo/steereoCouplingCommand.h>
 #include <vector>
 #include "../molecules/Molecule.h"
+
+class CouplingBoundary;
 
 class SendCouplingMDCommand: public SteereoCouplingCommand
 {

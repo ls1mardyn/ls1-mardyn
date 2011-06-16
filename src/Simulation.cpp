@@ -57,8 +57,8 @@
 
 #ifdef STEEREO
 #include "utils/SteereoIntegration.h"
-#include <steereoSimSteering.h>
-#include <steereoCouplingSim.h>
+#include <steereo/steereoSimSteering.h>
+#include <steereo/steereoCouplingSim.h>
 #endif
 
 #include "utils/OptionParser.h"

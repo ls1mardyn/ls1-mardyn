@@ -8,23 +8,24 @@
 #ifdef STEEREO
 
 #include "utils/Logger.h"
+#include "Domain.h"
 #include "steereoCommands/snapshotCommand.h"
 #include "steereoCommands/megaMolSnapshotCommand.h"
 #include "steereoCommands/sendCouplingMDCommand.h"
 #include "steereoCommands/receiveCouplingMDCommand.h"
 #include "steereoCommands/estimateRemainingTimeCommand.h"
-#include "steereoCommands/getVisDataCommand.h"
-#include "Domain.h"
+//#include "steereoCommands/getVisDataCommand.h"
+#include <steereo/steerParameterCommand.h>
+#include <steereo/steereoSocketCommunicator.h>
+#include <steereo/steereoSimSteering.h>
+#include <steereo/steereoCouplingSim.h>
+#include <steereo/steereoXMLReader.h>
+#include "particleContainer/ParticleContainer.h"
+
 #ifdef ENABLE_MPI
 #include <mpi.h>
 #include <steereoMPIIntraCommunicator.h>
 #endif //ENABLE_MPI
-#include <steerParameterCommand.h>
-#include <steereoSocketCommunicator.h>
-#include <steereoSimSteering.h>
-#include <steereoCouplingSim.h>
-#include <steereoXMLReader.h>
-#include "particleContainer/ParticleContainer.h"
 
 using Log::global_log;
 
@@ -96,9 +97,9 @@ void registerSteereoCommands(SteereoSimSteering* simSteer, Simulation* sim) {
 
 	simSteer->registerCommand(MegaMolSnapshotCommand::generateNewInstance, "getMegaMolSnapshot");
 	simSteer->registerCommand(SnapshotCommand::generateNewInstance, "getSnapshot");
-	simSteer->registerCommand(GetVisDataCommand::generateNewInstance, "getVisData");
+	//simSteer->registerCommand(GetVisDataCommand::generateNewInstance, "getVisData");
 	// register estimateRemainingTimeCommand
-  simSteer->registerCommand(EstimateRemainingTimeCommand::generateNewInstance, "estimateRemainingTime");
+    simSteer->registerCommand(EstimateRemainingTimeCommand::generateNewInstance, "estimateRemainingTime");
 	MegaMolSnapshotCommand::setSimData(sim);
 	//simSteer->registerSignalHandler(EstimateRemainingTimeCommand::generateNewInstance, 15);
 	SnapshotCommand::setSimData(sim);
@@ -108,7 +109,7 @@ void registerSteereoCommands(SteereoSimSteering* simSteer, Simulation* sim) {
 	    sim->getDomain(),
 	    &Domain::getGlobalCurrentTemperature,
 	    &Domain::setGlobalTemperature);
-	GetVisDataCommand::addData("getVisData", sim);
+	//GetVisDataCommand::addData("getVisData", sim);
 	global_log->info() << "add Data to EstimateRemainingTimeCommand" << std::endl;
 	EstimateRemainingTimeCommand::addData ("estimateRemainingTime", sim);
 	// add data for the EstimateRemainingTimeCommand
