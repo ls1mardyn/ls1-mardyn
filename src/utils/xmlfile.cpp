@@ -97,8 +97,7 @@ long XMLfile::changecurrentnode(const string& nodepath)
 
 bool XMLfile::changecurrentnode(const Query::const_iterator& pos)
 {
-	if(pos && (*pos).type()!=Node::ATTRIBUTE_Node)
-	// TODO: Node types are not always correctly set to Node::ELEMENT_Node ...
+	if(pos && (*pos).type()==Node::ELEMENT_Node)
 	{
 		m_currentnode=*pos;
 		return true;
@@ -269,12 +268,19 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, No
 		// nothing selected
 		return 0;
 	// initialize startnode with current node of xmlfile object
-	const t_XMLnode* node(m_currentnode.m_xmlnode);
+	//const t_XMLnode* node(m_currentnode.m_xmlnode);
+	// only ELEMENT_Node nodes will be handled => t_XMLelement* is the better choice (and doesn't need casts afterwards)...
+	const t_XMLelement* node(static_cast<const t_XMLelement*>(m_currentnode.m_xmlnode));
 	string nodepath(m_currentnode.nodepath());
 	if(startnode.m_xmlnode)
 	{ // if startnode is given use this one
-		node=startnode.m_xmlnode;
-		nodepath=startnode.nodepath();
+		if(startnode.type()==Node::ELEMENT_Node)
+		{ // but only if it's an ELEMENT_Node node
+			node=static_cast<const t_XMLelement*>(startnode.m_xmlnode);
+			nodepath=startnode.nodepath();
+		}
+		else
+			cerr << "XMLfile::query: invalid startnode type " << startnode.type() << endl;
 	}
 	size_t pos=0;
 	size_t tokenpos;
@@ -374,7 +380,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, No
 	{ // wildcard *
 		map<string,unsigned long> elenames;
 		map<string,unsigned long>::iterator poselenames;
-		for(ele=static_cast<const t_XMLelement*>(node)->first_node(); ele; ele=ele->next_sibling())
+		for(ele=node->first_node(); ele; ele=ele->next_sibling())
 		{
 			poselenames=elenames.find(ele->name());
 			if(poselenames==elenames.end())
@@ -403,7 +409,7 @@ unsigned long XMLfile::query(list<Node>& nodeselection, const char* querystr, No
 			}
 		}
 	} else { // elename given (or empty)
-		const t_XMLelement* firstnode=static_cast<const t_XMLelement*>(node);
+		const t_XMLelement* firstnode=node;
 		if(!elename.empty())
 			firstnode=firstnode->first_node(elename.c_str());
 		for(ele=firstnode; ele; elename.empty() ? ele=NULL : ele=ele->next_sibling(elename.c_str()))
