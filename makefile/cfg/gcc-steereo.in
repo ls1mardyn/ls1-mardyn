@@ -17,7 +17,7 @@ CXX_PAR = mpicxx
 DEPMODE = gcc3
 
 # path to the steereo installation directory
-STEEREO_HOME := /usr/local
+STEEREO_HOME ?= /usr/local
 
 GLOBAL_INCLUDES = -I$(STEEREO_HOME)/include -DSTEEREO -DSTEEREO_PARTITIONS=1
 #GLOBAL_INCLUDES = -I$(STEEREO_HOME)/include -DSTEEREO -DSTEEREO_PARTITIONS=1 -DSTEEREO_COUPLING 
