@@ -83,9 +83,7 @@ Molecule::Molecule(const Molecule& m) {
 	_charges = m._charges;
 	_dipoles = m._dipoles;
 	_quadrupoles = m._quadrupoles;
-	if (!m._tersoff) {
-		global_log->warning() << "Tersoff vector null pointer detected for Molecule " << _id << endl;
-	}
+	assert( m._tersoff );
 	_tersoff = m._tersoff;
 	_m = m._m;
 	_I[0] = m._I[0];
