@@ -107,6 +107,7 @@ public:
             default:
                 exit(666);
         }
+        return 0.0;
 	}
 
 	//! Only for so-called original pairs (pair type 0) the contributions

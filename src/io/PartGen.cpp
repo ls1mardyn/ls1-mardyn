@@ -1438,6 +1438,7 @@ int PartGen::randCompID(){
 	}
 	cerr << "Error in randCompID, to many molecules?"  << endl;
 	exit(1);
+	return -1; /* Silence warnings about missing return statement */
 }
 
 

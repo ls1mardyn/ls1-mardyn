@@ -14,6 +14,8 @@
  * This class provides access to all global variables of the canonical ensemble (NVT).
  **/
 class Component;
+/* Fix problem with Cray compiler which requires the actual size of the component class. */
+#include "molecules/Component.h" 
 
 
 class CanonicalEnsemble : public Ensemble {

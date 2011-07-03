@@ -456,6 +456,7 @@ bool Molecule::isLessThan(const Molecule& m2) const {
 			}
 		}
 	}
+	return false; /* Silence warnings about missing return statement */
 }
 
 
