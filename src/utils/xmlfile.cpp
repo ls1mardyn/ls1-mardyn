@@ -705,6 +705,15 @@ XMLfile::Query& XMLfile::Query::operator =(const XMLfile::Query& q)
 	return *this;
 }
 
+template<typename T> unsigned long XMLfile::Query::getNodeValue(T& value) const
+{
+	if(!empty()) front().getValue(value);
+	return card();
+}
+template unsigned long XMLfile::Query::getNodeValue(double& value) const;
+template unsigned long XMLfile::Query::getNodeValue(int& value) const;
+template unsigned long XMLfile::Query::getNodeValue(std::string& value) const;
+
 void XMLfile::Query::printXML(std::ostream& ostrm) const
 {
 	for(vector<Node>::const_iterator pos=m_nodes.begin();pos!=m_nodes.end();++pos)

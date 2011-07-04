@@ -49,7 +49,7 @@ const char *const XMLfileUnits::prefixsymbols[numPrefixes] = { "y"  // "yocto"
                                                               ,"f"  // "femto"
                                                               ,"p"  // "pico"
                                                               ,"n"  // "nano"
-                                                              ,"μ"  // "micro"
+                                                              ,"u"  // "micro","µ"
                                                               ,"m"  // "milli"
                                                               ,"c"  // "centi"
                                                               ,"d"  // "deci"
@@ -332,8 +332,8 @@ void XMLfileUnits::ValueUnit::initialize(double value,const string& symbol)
 		{ // milli-
 			m_Q[0]=-3;
 		}
-		else if(prefix==string("µ") ||
-		        prefix==string("u"))
+		else if(prefix==string("u") )
+		       // || prefix==string("µ"))
 		{ // micro-
 			m_Q[0]=-6;
 		}

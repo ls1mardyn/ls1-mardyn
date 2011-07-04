@@ -341,8 +341,7 @@ public:
 		/// get the node content and convert it to a given type
 		/// \param T&	variable to return value
 		/// \return unsigned long	number of nodes matching the nodepath
-		template<typename T> unsigned long getNodeValue(T& value) const
-			{ if(!empty()) front().getValue(value); return card(); }
+		template<typename T> unsigned long getNodeValue(T& value) const;
 		/// \brief get node value as string
 		/// get the node content
 		/// \param const std::string	default value to return, if node is not found
