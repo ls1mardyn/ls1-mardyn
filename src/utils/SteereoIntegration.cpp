@@ -138,7 +138,6 @@ void checkMoleculeContainer(ParticleContainer* pc) {
 	rmin = pc->getBoundingBoxMin(0);
 	rmax = pc->getBoundingBoxMax(0);
 
-	std::cout << "halo is " << pc->get_halo_L(0) << std::endl;
 	Molecule* currentMolecule;
 
 	double low_limit; // particles below this limit have to be copied or moved to the lower process

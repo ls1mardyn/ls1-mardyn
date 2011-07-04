@@ -23,7 +23,7 @@ public:
 		_globalLoadPerCell = new float[_globalNumCells];
 
 		for (int dim = 0; dim < 3; dim++) {
-			_bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
+			_bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);
 		}
 		for (unsigned int i = 0; i < _globalNumCells; i++) {
 			_globalLoadPerCell[i] = 0.0;
