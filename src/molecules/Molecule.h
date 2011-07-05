@@ -19,24 +19,24 @@
 #ifndef MOLECULE_H_
 #define MOLECULE_H_
 
-/*
- * maximal size of the Tersoff neighbour list
- */
-#define MAX_TERSOFF_NEIGHBOURS 10
+#include <vector>
+#include <iostream>
+#include <cassert>
 
 #include "molecules/Quaternion.h"
 #include "molecules/Comp2Param.h"
 #include "molecules/Site.h"
 #include "molecules/Component.h"
 #include "integrators/Integrator.h"
+
+/*
+ * maximal size of the Tersoff neighbour list
+ */
+#define MAX_TERSOFF_NEIGHBOURS 10
+
 class Domain;
 
-#include <vector>
-#include <iostream>
-#include <cassert>
-
 //! @brief Molecule modeled as LJ sphere with point polarities + Tersoff potential
-//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class Molecule {
 
 public:
@@ -59,31 +59,44 @@ public:
 		assert(_sites_F); delete[] _sites_F;
 	}
 
-	/** get the ID */
+	/** get molecule ID */
 	unsigned long id() const { return _id; }
-	void setid(unsigned long id) { this->_id = id; }
-	/** get the Component */
+	/** set molecule ID */
+	void setid(unsigned long id) { _id = id; }
+	/** get the molecule's component ID */
 	unsigned int componentid() const { return _componentid; }
-	/** get the position */
+	/** set the molecule's component ID */
+	void setComponentid( unsigned int id ) { _componentid = id; }
+	/** get position coordinate */
 	double r(unsigned short d) const { return _r[d]; }
-	/** get the velocity */
+	/** set position coordinate */
+	void setr(unsigned short d, double r) { _r[d] = r; }
+	/** get velocity coordinate */
 	double v(unsigned short d) const { return _v[d]; }
-	/** get the Orientation */
-	const Quaternion& q() const { return _q; }
-
-	inline void move(int d, double dr) { _r[d] += dr; }
-
-	/** get the rotatational speed */
-	double D(unsigned short d) const { return _D[d]; }
-
-	/** get F */
+	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
-	/** get M */
+	/** get the orientation */
+	const Quaternion& q() const { return _q; }
+	/** get coordinate of the rotatational speed */
+	double D(unsigned short d) const { return _D[d]; } /* TODO: we should rename D to L with respect to literature. */
+	/** get coordinate of the current angular momentum  onto molecule */ 
 	double M(unsigned short d) const {return _M[d]; }
 
-	double Utrans() const { return .5*_m*(_v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]); }
+
+	inline void move(int d, double dr) { _r[d] += dr; } /* TODO: is this realy needed? */
+
+
+	/** calculate and return the square velocity */
+	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
+	
+	/** return the translational energy of the molecule */
+	double Utrans() const { return 0.5 * _m * v2(); }
+	/** return the rotational energy of the molecule */
 	double Urot();
 
+	/* TODO: Maybe we should better do this using the component directly? 
+	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
+	 */
 	/** get number of sites */
 	unsigned int numSites() const { return _numsites; }
 	unsigned int numLJcenters() const { return _ljcenters->size(); }
@@ -108,9 +121,8 @@ public:
 	 */
 	unsigned long totalMemsize() const;
 
-	/** set the position */
-	void setr(unsigned short d, double r) { _r[d]=r; }
 
+	/* TODO: Is this realy necessary? Better use a function like dist2(m1.r(), m2.r()). */
 	/** Calculate the difference vector and return the square (euclidean) distance.
 	 *
 	 *  \param molecule2 molecule to which the distance shall be calculated
@@ -124,8 +136,6 @@ public:
 		return d2;
 	}
 	
-	/** calculate and return the square velocity */
-	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
 
 	/** set force acting on molecule
 	 * @param F force vector (x,y,z)
@@ -202,10 +212,12 @@ public:
 	void addTersoffNeighbour(Molecule* m, bool pairType);
 	double tersoffParameters(double params[15]); //returns delta_r
 
-	// clear forces and moments
+	/** clear forces and moments */
 	void clearFM();
-	// calculate forces and moments for already given site forces
+	/** calculate forces and moments for already given site forces */
 	void calcFM();
+	
+	/** perform data consistency check for the molecule (only debug mode) */
 	void check(unsigned long id);
 
 	//! @brief find out whether m1 is before m2 (in some global ordering)
@@ -229,28 +241,30 @@ public:
 
 private:
 
-	unsigned long _id; // IDentification number of that molecule
-	unsigned int _componentid;  // IDentification number of its component type
-	double _r[3];  // position coordinates
-	double _F[3];  // forces
-	double _v[3];  // velocity
-	Quaternion _q; // angular orientation
-	double _M[3];  // torsional moment
+	unsigned long _id; 	/**< IDentification number of that molecule */
+	unsigned int _componentid;  /**< IDentification number of its component type */
+	double _r[3];  /**< position coordinates */
+	double _F[3];  /**< forces */
+	double _v[3];  /**< velocity */
+	Quaternion _q; /**< angular orientation */
+	double _M[3];  /**< torsional moment */
     // TODO: We should rename _D to _L with respect to the literature.
-	double _D[3];  // angular momentum 
+	double _D[3];  /**< angular momentum */
 
+	/* Caches for component data */
 	const std::vector<LJcenter>* _ljcenters;
 	const std::vector<Charge>* _charges;
 	const std::vector<Dipole>* _dipoles;
 	const std::vector<Quadrupole>* _quadrupoles;
 	const std::vector<Tersoff>* _tersoff;
 
-	double _m; // total mass
+	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
 	std::size_t _numsites; // number of sites
 	std::size_t _numorientedsites; // number of oriented sites (subset of sites)
 	// global site coordinates relative to site origin
 	// row order: dx1,dy1,dz1,dx2,dy2,dz2,...
+	/* TODO: Maybe change to absolute positions for many center molecules. */
 	double *_sites_d;
 	double *_ljcenters_d, *_charges_d, *_dipoles_d,
 	       *_quadrupoles_d, *_tersoff_d;
@@ -264,7 +278,7 @@ private:
 	       *_quadrupoles_F, *_tersoff_F;
 
 	Molecule* _Tersoff_neighbours_first[MAX_TERSOFF_NEIGHBOURS];
-	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS];
+	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS]; /* TODO: Comment */
 	int _numTersoffNeighbours;
 	double fixedx, fixedy;
 

@@ -419,8 +419,8 @@ void Molecule::calcFM() {
  * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
 void Molecule::check(unsigned long id) {
+#ifndef NDEBUG
 	assert(_id == id);
-	assert(_componentid >= 0);
 	assert(_m > 0.0);
 	assert(_numsites > 0);
 	assert(_numorientedsites >= 0);
@@ -433,6 +433,7 @@ void Molecule::check(unsigned long id) {
 		assert(!isnan(_I[d]));
 		assert(!isnan(_invI[d]));
 	}
+#endif
 }
 
 bool Molecule::isLessThan(const Molecule& m2) const {
