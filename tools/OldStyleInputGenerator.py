@@ -118,7 +118,7 @@ nmax=int(ceil(pow(N, 1./3.)))
 
 for n in range (N):
   
-  if (example == "EOX" or example == "MIX"):
+  if (example == "MIX"):
     cid = random.randint(1,2);
 
   myn=n
