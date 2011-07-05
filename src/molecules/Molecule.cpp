@@ -460,6 +460,15 @@ bool Molecule::isLessThan(const Molecule& m2) const {
 }
 
 
+std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
+	os << "ID: " << m.id() << "\n";
+	os << "r:  (" << m.r(0) << ", " << m.r(1) << ", " << m.r(2) << ")\n" ;
+	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
+	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;
+	os << "q:  [[" << m.q().qw() << ", " << m.q().qx() << "], [" << m.q().qy() << ", " << m.q().qz()<< "]]\n" ;
+	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")" ;
+	return os;
+}
 
 
 unsigned long Molecule::totalMemsize() const {

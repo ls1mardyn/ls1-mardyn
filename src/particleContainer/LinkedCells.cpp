@@ -530,6 +530,7 @@ unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	for (int dim = 0; dim < 3; dim++) {
 		if (molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
 			global_log->error() << "getCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
+			global_log->debug() << "Molecule:\n" << *molecule << endl;
 		}
 		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 

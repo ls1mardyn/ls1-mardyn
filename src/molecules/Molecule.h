@@ -66,7 +66,6 @@ public:
 	unsigned int componentid() const { return _componentid; }
 	/** get the position */
 	double r(unsigned short d) const { return _r[d]; }
-
 	/** get the velocity */
 	double v(unsigned short d) const { return _v[d]; }
 	/** get the Orientation */
@@ -273,5 +272,8 @@ private:
 	void setupCache(const std::vector<Component>* components);
 
 };
+
+
+std::ostream& operator<<( std::ostream& os, const Molecule& m );
 
 #endif /*MOLECULE_H_*/
