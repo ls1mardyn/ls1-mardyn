@@ -1,5 +1,5 @@
 #include "io/OneCLJGenerator.h"
-#include "io/DropletGenerator.h"
+#include "io/DropletPlacement.h"
 
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
@@ -339,8 +339,8 @@ void OneCLJGenerator::addParticle(int id, double x, double y, double z, Particle
 
 void OneCLJGenerator::readLocalClusters(Domain* domain, DomainDecompBase* domainDecomp){
 
-	DropletGenerator dropletGenerator(_fluidVolume, _maxSphereVolume, _numSphereSizes);
-	vector<DropletGenerator::Droplet> droplets = dropletGenerator.generateDroplets();
+	DropletPlacement dropletPlacement(_fluidVolume, _maxSphereVolume, _numSphereSizes);
+	vector<DropletPlacement::Droplet> droplets = dropletPlacement.generateDroplets();
 
 	vector<double> shiftedSphere;
 	vector<double> sphere;
