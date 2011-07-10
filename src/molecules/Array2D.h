@@ -33,7 +33,7 @@
 #include <cassert>
 
 template<class T>
-class Array2D : std::vector<T> {
+class Array2D : private std::vector<T> {
 public:
 	/// Constructor
 	/**
