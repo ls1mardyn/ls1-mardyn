@@ -130,15 +130,15 @@ OptionParser::OptionParser() :
 
 Option& OptionParser::add_option(const string& opt) {
 	const string tmp[1] = { opt };
-	return add_option(vector<string>(&tmp[0], &tmp[1]));
+	return add_option(vector<string>(tmp, tmp + 1));
 }
 Option& OptionParser::add_option(const string& opt1, const string& opt2) {
 	const string tmp[2] = { opt1, opt2 };
-	return add_option(vector<string>(&tmp[0], &tmp[2]));
+	return add_option(vector<string>(tmp, tmp + 2));
 }
 Option& OptionParser::add_option(const string& opt1, const string& opt2, const string& opt3) {
 	const string tmp[3] = { opt1, opt2, opt3 };
-	return add_option(vector<string>(&tmp[0], &tmp[3]));
+	return add_option(vector<string>(tmp, tmp + 3));
 }
 Option& OptionParser::add_option(const vector<string>& v) {
 	_opts.resize(_opts.size()+1);
