@@ -41,7 +41,7 @@ static string str_join_trans(const string& sep, InputIterator begin, InputIterat
 }
 template<class InputIterator>
 static string str_join(const string& sep, InputIterator begin, InputIterator end) {
-	return str_join_trans(sep, begin, end, str_wrap(""));
+	return str_join_trans<InputIterator, str_wrap>(sep, begin, end, str_wrap(""));
 }
 static string& str_replace(string& s, const string& patt, const string& repl) {
 	size_t pos = 0, n = patt.length();
