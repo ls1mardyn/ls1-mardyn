@@ -190,6 +190,12 @@ public:
 private:
 	const Option& lookup_short_opt(const std::string& opt) const;
 	const Option& lookup_long_opt(const std::string& opt) const;
+	
+	template<typename InputIterator, typename UnaryOperator>
+	static std::string str_join_trans(const std::string& sep, InputIterator begin, InputIterator end, UnaryOperator op);
+	
+	template<class InputIterator>
+	static std::string str_join(const std::string& sep, InputIterator begin, InputIterator end);
 
 	void handle_short_opt(const std::string& opt, const std::string& arg);
 	void handle_long_opt(const std::string& optstr);
