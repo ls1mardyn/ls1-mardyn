@@ -25,7 +25,7 @@ ReturnType EstimateRemainingTimeCommand::execute ()
 	loopTimer->stop();
 	double elapsedTime = loopTimer->get_etime();
 	unsigned long currentStep = sim->getSimStep();
-	unsigned long numberOfTimesteps = sim->getNumberOfTimeSteps();
+	unsigned long numberOfTimesteps = sim->getNumTimesteps();
 	double estimation = ((double) numberOfTimesteps / currentStep) * elapsedTime - elapsedTime;
 	SteereoStream stream;
 	stream << currentStep << numberOfTimesteps << elapsedTime << estimation;

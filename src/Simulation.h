@@ -207,14 +207,14 @@ public:
 	ParticleContainer* getMolecules() {
 		return _moleculeContainer;
 	}
+	
+	/** Set the number of time steps to be performed in the simulation */
+	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
+	/** Get the number of time steps to be performed in the simulatoin */
+	unsigned long getNumTimesteps() { return _numberOfTimesteps; }
 
-	unsigned long getSimStep() {
-		return _simstep;
-	}
-
-	unsigned long getNumberOfTimeSteps() {
-		return _numberOfTimesteps;
-	}
+	/** Get the number of the actual time step currently processed in the simulation. */
+	unsigned long getSimStep() { return _simstep; }
 
 	Timer* getLoopTimer() {
 		return _loopTimer;
@@ -325,13 +325,9 @@ private:
 	//! atoms for all solid components.
 	unsigned _zoscillator;
 
-	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps for the simulation */
-public:
-    void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
-    unsigned long getNumTimesteps() { return _numberOfTimesteps; }
+	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
 
-private:
-	unsigned long _simstep;             /**< Actual simulation time step */
+	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
 	// TODO: should go into output module
 	//! Incremental output flag NEW
