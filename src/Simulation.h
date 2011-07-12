@@ -61,7 +61,7 @@ class RDF;
 //! Thats's because e.g. the datastructure can only be built after the 
 //! phasespace has been read. \n
 //!
-//! The config file usually has the file ending ".txt" and
+//! The config file usually has the file ending ".cfg" and
 //! starts with a line containing the token "mardynconfig"
 //! followed by the following parameters, among others
 //! (possibly mixed with comment lines starting with "#"):
@@ -110,11 +110,10 @@ public:
 	//! @brief process configuration file
 	//! 
 	//! calls initConfigXML or initConfigOldStyle
-	//! @param inputfilename filename of the input file
+	//! @param filename filename of the input file
     void readConfigFile(std::string filename);
-	void initConfigFile(const std::string& inputfilename);
-	void initConfigFile(const char* inputfilename) {
-		initConfigFile(std::string(inputfilename));
+    void readConfigFile(const char* filename) {
+		readConfigFile(std::string(filename));
 	}
 
 	//! @brief process XML configuration file (*.xml)

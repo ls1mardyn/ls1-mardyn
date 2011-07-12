@@ -110,21 +110,18 @@ void Simulation::exit(int exitcode) {
 }
 
 void Simulation::readConfigFile(string filename) {
-    initConfigFile(filename);
-}
-
-void Simulation::initConfigFile(const string& inputfilename) {
-	if (inputfilename.rfind(".xml") == inputfilename.size() - 4) {
+	if (filename.rfind(".xml") == filename.size() - 4) {
 		global_log->info() << "command line config file type is XML (*.xml)" << endl;
-		initConfigXML(inputfilename);
-	} else if (inputfilename.rfind(".cfg") == inputfilename.size() - 4) {
+		initConfigXML(filename);
+	} else if (filename.rfind(".cfg") == filename.size() - 4) {
 		global_log->info() << "command line config file type is oldstyle (*.cfg)" << endl;
-		initConfigOldstyle(inputfilename);
+		initConfigOldstyle(filename);
 	} else {
 		global_log->info() << "command line config file type is unknown: trying oldstyle" << endl;
-		initConfigOldstyle(inputfilename);
+		initConfigOldstyle(filename);
 	}
 }
+
 
 void Simulation::initConfigXML(const string& inputfilename) {
 	int ownrank = 0;
