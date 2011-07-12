@@ -176,8 +176,10 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		}
 		
 		
-		if (inp.getNodeValueReduced("cutoff/radiusLJ", _cutoffRadius)) {
-			global_log->info() << "dimensionless LJ cutoff radius:\t" << _cutoffRadius << endl;
+		if (inp.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
+			_cutoffRadius = _LJCutoffRadius;
+			global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
 		}
 		
 		string pspfile;
@@ -245,8 +247,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				 _inputReader = (OneCLJGenerator*) generator;
 				 */
 			}
-			if (this->_LJCutoffRadius == 0.0)
-				_LJCutoffRadius = this->_cutoffRadius;
+			/* TODO: Check this part of the code */
+			if (_LJCutoffRadius == 0.0)
+				_LJCutoffRadius = _cutoffRadius;
 			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		}
 		
@@ -913,6 +916,7 @@ void Simulation::prepare_start() {
 	// Force calculation
 	global_log->info() << "Performing force calculation" << endl;
 	_moleculeContainer->traversePairs();
+	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// or should we better call the integrator->eventForcesCalculated?
