@@ -22,7 +22,6 @@ STEEREO_HOME ?= /usr/local
 GLOBAL_INCLUDES = -I$(STEEREO_HOME)/include -DSTEEREO -DSTEEREO_PARTITIONS=1
 #GLOBAL_INCLUDES = -I$(STEEREO_HOME)/include -DSTEEREO -DSTEEREO_PARTITIONS=1 -DSTEEREO_COUPLING 
 GLOBAL_LINK     = -L$(STEEREO_HOME)/lib -lSteereo -ldl
-#-lmpl -ldl /usr/lib64/mpi/mpi-mpich2/usr/lib64/libmpl.so -Wl,-rpath,/usr/lib64/mpi/mpi-mpich2/usr/lib64 
 
 
 # SEQ
