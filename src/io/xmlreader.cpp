@@ -2,6 +2,7 @@
 #include <string>
 #include "utils/xmlfileUnits.h"
 #include "molecules/Component.h"
+#include "integrators/Leapfrog.h"
 
 #include "io/xmlreader.h"
 #include "utils/Logger.h"
@@ -23,7 +24,31 @@ std::string XMLReader::getVersion() {
 }
 
 
+bool XMLReader::getIntegrator( Integrator* integrator ) {
+	if( _inp.changecurrentnode( ROOT + "/simulation/integrator" ) ) {
+		double timestepLength = 0;
+		_inp.getNodeValueReduced( "timestep", timestepLength );
+		
+		std::string integratorType;
+		_inp.getNodeValue( "@type", integratorType );
+		if( integratorType == "Leapfrog" ) {
+			integrator = new Leapfrog(timestepLength);
+			return true;
+		} 
+		else if ( integratorType == "" ) {
+			global_log->error() << "No integrator type specified." << std::endl;
+		} else {
+			global_log->error() << "Unknown integrator type '" << integratorType << "'." << std::endl;
+		}
+		
+		global_log->info() << "Integrator: " << integratorType << std::endl;
+	}
+	return false;
+}
+
+
 double XMLReader::getTimestepLength() {
+	/* TODO: Do we need this interface? We should go through the integrator. */
 	double timestepLength = 0;
 	_inp.getNodeValueReduced( ROOT + "/simulation/integrator/timestep", timestepLength );
 	return timestepLength;

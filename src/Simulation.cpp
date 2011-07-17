@@ -152,6 +152,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		global_log->error() << "Undefined timestep length." << endl;
 	}
 		
+	xmlreader.getIntegrator( _integrator );
+	
+	
 	double simBoxLength[3];
 	if ( xmlreader.getSimBoxSize( simBoxLength ) ) {
 		global_log->info() << " simulation box size:  (" 
@@ -349,10 +352,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	// TODO: Check this...
 // 	_domain->initParameterStreams( _cutoffRadius, _LJCutoffRadius );
 	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-
-	// @todo comment
-	_integrator = new Leapfrog(timestepLength);
-
+	
 	// test new Decomposition
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();

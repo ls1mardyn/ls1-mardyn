@@ -4,8 +4,15 @@
 #include <string>
 
 class Component;
+class Integrator;
 class XMLfileUnits;
 
+
+/** Reader for the MarDyn XML input file format
+ * 
+ * The XMLReader encapsulates the data format of the MarDyn XML input file 
+ * format and provides access to the inout data using a generic interface.
+ */
 class XMLReader {
 	
 	private:
@@ -34,6 +41,12 @@ class XMLReader {
 		 *  @return number of read components
 		 */
 		long getComponents( std::vector<Component>& components );
+		
+		/** get and initialize integrator
+		 *  @param[out] integrator
+		 *  @return false on error
+		 */
+		bool getIntegrator( Integrator *integrator );
 		
 	private:
 		/** read in a single component */
