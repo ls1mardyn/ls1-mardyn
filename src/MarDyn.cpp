@@ -38,26 +38,24 @@ int main(int argc, char** argv) {
 	//string logfileName("MarDyn");
 	//global_log = new Log::Logger(Log::All, logfileName);
 	global_log = new Log::Logger(Log::Info);
+	cout.precision(6);
 #ifdef ENABLE_MPI
 	global_log->set_mpi_output_root(0);
 #endif
 
-	std::string compile_flags = getCompileFlags();
-	global_log->info() << "Compile-flags: " << compile_flags << endl;
-
-    /* Print some info about the program itself */
-	char *info_str = new char[MAX_INFO_STRING_LENGTH];
-	get_compiler_info(&info_str);
+	/* Print some info about the program itself */
+	char info_str[MAX_INFO_STRING_LENGTH];
+	get_compiler_info(info_str);
 	global_log->info() << "Compiler: " << info_str << endl;
-	get_compile_time(&info_str);
+	get_compile_time(info_str);
 	global_log->info() << "Compiled: " << info_str << endl;
 #ifdef ENABLE_MPI
-	get_mpi_info(&info_str);
+	get_mpi_info(info_str);
 	global_log->info() << "MPI library: " << info_str << endl;
 #endif
-	get_timestamp(&info_str);
+	get_timestamp(info_str);
 	global_log->info() << "Started: " << info_str << endl;
-	get_host(&info_str);
+	get_host(info_str);
 	global_log->info() << "Execution host: " << info_str << endl;
 
 #ifdef ENABLE_MPI
@@ -65,8 +63,6 @@ int main(int argc, char** argv) {
 	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );
 	global_log->info() << "Running with " << world_size << " processes." << endl;
 #endif
-
-	cout.precision(6);
 
 	OptionParser op;
 	Values options = initOptions(argc, argv, op);
