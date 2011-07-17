@@ -132,12 +132,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	XMLfileUnits inp(inputfilename);
 	XMLReader xmlreader(inputfilename);
 	
-	//inp.printXML();
-	global_log->debug() << string(inp) << endl;
-	if (!inp.changecurrentnode("/mardyn")) {
-		global_log->error() << inputfilename << " is not a MarDyn XML input file!" << endl;
-		return;
-	}
+	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
+	inp.changecurrentnode("/mardyn");
 	
 	string version = xmlreader.getVersion();
 	global_log->info() << "MarDyn XML config file version: " << version << endl;

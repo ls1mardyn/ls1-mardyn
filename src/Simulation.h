@@ -48,7 +48,6 @@ class Integrator;
 class OutputBase;
 class DomainDecompBase;
 class InputBase;
-class Molecule;
 class Timer;
 class RDF;
 

@@ -12,8 +12,9 @@ using Log::global_log;
 
 XMLReader::XMLReader(const std::string& filename) : _inp(filename) {
 	ROOT = "/mardyn";
-	_inp.changecurrentnode( ROOT ); /* TODO: checks */
-	std::cerr << "PATH: " << _inp.getcurrentnodepath() << std::endl;
+	if( _inp.changecurrentnode( ROOT ) <= 0 ) {
+		global_log->error() << filename << " invalid MarDyn XML file!" << std::endl;
+	}
 }
 
 

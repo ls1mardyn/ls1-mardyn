@@ -78,7 +78,7 @@ int main(int argc, char** argv) {
 
 	bool tests(options.get("tests"));
 	if (tests) {
-		string testcases = "";
+		string testcases;
 		if (numargs == 1 ) {
 			testcases = args[0];
 			global_log->info() << "Running unit tests: " << testcases << endl;
@@ -104,11 +104,11 @@ int main(int argc, char** argv) {
 
     Simulation simulation;
 
-    /* read the given config file if it exists */
-    if( fileExists(args[0].c_str()) ) {
-        string inputfilename(args[0]);
-        simulation.readConfigFile(inputfilename);
+    /* First read the given config file if it exists, then overwrite parameters with command line arguments. */
+    if( fileExists( args[0].c_str()) ) {
+        simulation.readConfigFile( args[0] );
     } else {
+		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
         exit(1);
     }
 
