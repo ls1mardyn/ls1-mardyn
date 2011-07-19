@@ -125,8 +125,9 @@ Molecule::Molecule(const Molecule& m) {
 	fixedy = m.fixedy;
 }
 
+
 void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
-	assert(_m);
+	assert(_m > 0);
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
 	for (unsigned short d = 0; d < 3; ++d) {
@@ -158,35 +159,32 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 
 }
 
+
 void Molecule::upd_cache() {
-	// update Cache (rotate sites and save relative positions)
 	unsigned int i;
-	unsigned int ns = numLJcenters();
+	unsigned int ns;
+	
+	ns = numLJcenters();
 	for (i = 0; i < ns; ++i)
 		_q.rotateinv((*_ljcenters)[i].r(), &(_ljcenters_d[i*3]));
 	ns = numCharges();
 	for (i = 0; i < ns; ++i)
 		_q.rotateinv((*_charges)[i].r(), &(_charges_d[i*3]));
 	ns = numDipoles();
-
 	for (i = 0; i < ns; ++i) {
 		const Dipole& di = (*_dipoles)[i];
 		_q.rotateinv(di.r(), &(_dipoles_d[i*3]));
 		_q.rotateinv(di.e(), &(_dipoles_e[i*3]));
 	}
 	ns = numQuadrupoles();
-
 	for (i = 0; i < ns; ++i) {
 		const Quadrupole& qi = (*_quadrupoles)[i];
 		_q.rotateinv(qi.r(), &(_quadrupoles_d[i*3]));
 		_q.rotateinv(qi.e(), &(_quadrupoles_e[i*3]));
 	}
-	ns = this->numTersoff();
+	ns = numTersoff();
 	for (i = 0; i < ns; i++)
 		_q.rotateinv((*_tersoff)[i].r(), &(_tersoff_d[i*3]));
-
-	clearFM();
-	//_Upot=0.;
 }
 
 
@@ -214,6 +212,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
     assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 }
+
 
 double Molecule::Urot() {
 	double w[3];
@@ -376,7 +375,7 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 	this->clearFM();
 }
 
-inline void Molecule::clearFM() {
+void Molecule::clearFM() {
 	for (unsigned int i = 0; i < _numsites * 3; ++i)
 		_sites_F[i] = 0.;
 	_F[0] = _F[1] = _F[2] = 0.;
