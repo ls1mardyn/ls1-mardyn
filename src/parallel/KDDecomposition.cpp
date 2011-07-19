@@ -15,8 +15,9 @@
 
 using namespace std;
 
-KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, double beta)
-		: _steps(0), _frequency(10), _alpha(alpha), _beta(beta) {
+
+KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, double beta, int steps, int updateFrequency)
+		: _steps(steps), _frequency(updateFrequency), _alpha(alpha), _beta(beta) {
 
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank) );
 	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
