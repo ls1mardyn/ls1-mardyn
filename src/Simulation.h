@@ -328,10 +328,6 @@ private:
 
 	unsigned long _simstep;             /**< Actual time step in the simulation. */
 
-	// TODO: should go into output module
-	//! Incremental output flag NEW
-	bool _increment;
-
 	//! initial number of steps
 	unsigned long _initSimulation;
 	//! step number for the end of the configurational equilibration

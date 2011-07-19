@@ -637,17 +637,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					global_log->warning() << "Generating no statistics output for the grid!" << std::endl;
 				}
 			}
-			/*
-			 else if(token == "VimWriter")
-			 {
-			 unsigned long writeFrequency;
-
-			 string outputPathAndPrefix;
-			 inputfilestream >> writeFrequency >> outputPathAndPrefix;
-			 _outputPlugins.push_back(new VimWriter(_numberOfTimesteps, writeFrequency, outputPathAndPrefix, true));
-			 if(!ownrank) cout << "Vim " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
-			 }
-			 */
 		} else if (token == "accelerate") {
 			cosetid++;
 			inputfilestream >> token;
@@ -902,15 +891,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
-	// clear halo
+	
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
-
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
-
-	// Force calculation
-	global_log->info() << "Performing force calculation" << endl;
+	global_log->info() << "Performing inital force calculation" << endl;
 	_moleculeContainer->traversePairs();
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
