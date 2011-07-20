@@ -14,6 +14,7 @@
 #include <vector>
  #ifdef ENABLE_MPI
 #include <mpi.h>
+#include <parallel/DomainDecompBase.h>
 #endif
 
 VTKMoleculeWriter::VTKMoleculeWriter(unsigned int writeFrequency, const std::string& fileName)
@@ -37,7 +38,7 @@ void VTKMoleculeWriter::doOutput(
 		return;
 	}
 
-	int rank = domain->ownrank();
+	int rank = domainDecomp->getRank();
 
 	VTKMoleculeWriterImplementation impl(rank);
 

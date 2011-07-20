@@ -3,6 +3,7 @@
 #include "io/VISWriter.h"
 #include "Common.h"
 #include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 
 #include <iomanip>
@@ -49,14 +50,15 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 			filenamestream << aligned_number(simstep / _writeFrequency, num_digits, '0');
 		}
 		filenamestream << ".vis";
-
+		
 		ofstream visittfstrm(filenamestream.str().c_str());
 
-		if ((domain->ownrank() == 0) && (!_wroteVIS)) {
+		int rank = domainDecomp->getRank();
+		if ((rank== 0) && (!_wroteVIS)) {
 			visittfstrm << "      id t          x          y          z     q0     q1     q2     q3        c\n";
-			this->_wroteVIS = true;
+			_wroteVIS = true;
 		}
-		else if (domain->ownrank() == 0) {
+		else if (rank == 0) {
             visittfstrm << "#\n";
         }
 

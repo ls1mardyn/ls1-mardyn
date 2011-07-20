@@ -299,9 +299,6 @@ public:
 	//! directed velocity is not explicitly computed.
 	double getThermostatDirectedVelocity(int thermostat, int d) { return this->_universalThermostatDirectedVelocity[d][thermostat]; }
 
-	//! @brief get local rank
-	int ownrank() const { return this->_localRank; }
-
 	//! @brief returns whether there are several distinct thermostats in the system
 	bool severalThermostats() { return this->_componentwiseThermostat; }
 	//! @brief thermostat to be applied to component cid
