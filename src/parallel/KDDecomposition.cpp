@@ -8,7 +8,7 @@
 #include "ParticleData.h"
 #include "KDNode.h"
 
-#include <float.h>
+#include <cfloat>
 #include <sstream>
 #include <fstream>
 #include <climits>
