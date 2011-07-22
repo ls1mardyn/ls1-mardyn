@@ -11,9 +11,9 @@
 
 #include <iostream>
 #include "snapshotCommand.h"
-#include "../Domain.h"
-#include "../particleContainer/ParticleContainer.h"
-#include "../molecules/Molecule.h"
+#include "Domain.h"
+#include "particleContainer/ParticleContainer.h"
+#include "molecules/Molecule.h"
 #include <steereo/steereoSteeringBase.h>
 #include <steereo/steereoStream.h>
 #include <steereo/steereoDefinitions.h>

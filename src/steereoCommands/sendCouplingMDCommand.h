@@ -12,7 +12,7 @@
 
 #include <steereo/steereoCouplingCommand.h>
 #include <vector>
-#include "../molecules/Molecule.h"
+#include "molecules/Molecule.h"
 
 class CouplingBoundary;
 

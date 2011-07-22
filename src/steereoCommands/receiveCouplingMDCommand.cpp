@@ -7,10 +7,10 @@
 
 #if defined(STEEREO) && defined(STEEREO_COUPLING)
 #include "receiveCouplingMDCommand.h"
-#include "../Simulation.h"
-#include "../Domain.h"
-#include "../particleContainer/ParticleContainer.h"
-#include "../molecules/Molecule.h"
+#include "Simulation.h"
+#include "Domain.h"
+#include "particleContainer/ParticleContainer.h"
+#include "molecules/Molecule.h"
 #include <cmath>
 
 Molecule* ReceiveCouplingMDCommand::referenceMolecule = NULL;

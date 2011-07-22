@@ -11,7 +11,7 @@
 
 #include <steereo/steereoCouplingCommand.h>
 #include <queue>
-#include "../molecules/Molecule.h"
+#include "molecules/Molecule.h"
 
 class CouplingBoundary;
 

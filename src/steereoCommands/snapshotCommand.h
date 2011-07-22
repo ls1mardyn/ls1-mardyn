@@ -2,7 +2,7 @@
 #define __SNAPSHOTCOMMAND_H__
 
 #ifdef STEEREO
-#include "../Simulation.h"
+#include "Simulation.h"
 #include <steereo/steereoCommand.h>
 
 

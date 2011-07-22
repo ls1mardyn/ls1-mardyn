@@ -10,10 +10,10 @@
 #include <cstdio>
 #include <cstdlib>
 #include <map>
-#include "../Simulation.h"
-#include "../particleContainer/ParticleContainer.h"
-#include "../molecules/Molecule.h"
-#include "../Domain.h"
+#include "Simulation.h"
+#include "particleContainer/ParticleContainer.h"
+#include "molecules/Molecule.h"
+#include "Domain.h"
 
 std::vector<Molecule>* SendCouplingMDCommand::transferContainer=NULL;
 

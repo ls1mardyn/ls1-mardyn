@@ -1,10 +1,10 @@
 #include "KDDecomposition.h" //$ Pfad aendern (parallel/...)
 
-#include "../molecules/Molecule.h"
-#include "../Domain.h"
-#include "../particleContainer/ParticleContainer.h"
-#include "../particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "../particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
+#include "molecules/Molecule.h"
+#include "Domain.h"
+#include "particleContainer/ParticleContainer.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
 #include "ParticleData.h"
 #include "KDNode.h"
 
