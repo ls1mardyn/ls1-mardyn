@@ -225,7 +225,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				 getline(inputfilestream, line);
 				 stringstream lineStream(line);
 				 lineStream >> mode >> N >> T;
-				 cout << "read: mode " << mode << " N " << N << " T " << T << endl;
+				 global_log->debug() << "read: mode " << mode << " N " << N << " T " << T << endl;
 
 				 OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
 				 if (mode == "Homogeneous") {
@@ -470,7 +470,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				getline(inputfilestream, line);
 				stringstream lineStream(line);
 				lineStream >> mode >> N >> T;
-				cout << "read: mode " << mode << " N " << N << " T " << T << endl;
+				global_log->debug() << "read: mode " << mode << " N " << N << " T " << T << endl;
 
 				OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
 				if (mode == "Homogeneous") {
@@ -709,7 +709,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double tauPrime;
 			inputfilestream >> tauPrime;
 			if (timestepLength == 0.0) {
-				cout << "timestep missing.\n";
+				global_log->error() << "timestep missing." << endl;
 				exit(1);
 			}
 			_pressureGradient->specifyTauPrime(tauPrime, timestepLength);

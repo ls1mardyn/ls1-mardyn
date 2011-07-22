@@ -3,11 +3,13 @@
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
+#include "utils/Logger.h"
 
 #include <fstream>
 #include <ctime>
 
 using namespace std;
+using Log::global_log;
 
 DomainDecompDummy::DomainDecompDummy() {
 }
@@ -140,4 +142,8 @@ void DomainDecompDummy::assertIntIdentity(int IX) {
 }
 
 void DomainDecompDummy::assertDisjunctivity(TMoleculeContainer* mm) {
+}
+
+void DomainDecompDummy::printDecomp(std::string filename, Domain* domain) {
+	global_log->warning() << "printDecomp useless in serial mode" << endl;
 }

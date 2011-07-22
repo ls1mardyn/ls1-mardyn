@@ -7,6 +7,7 @@
 #include "particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
 #include "ParticleData.h"
 #include "KDNode.h"
+#include "utils/Logger.h"
 
 #include <cfloat>
 #include <sstream>
@@ -14,6 +15,7 @@
 #include <climits>
 
 using namespace std;
+using Log::global_log;
 
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, double beta, int steps, int updateFrequency)
@@ -44,9 +46,9 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	for (int dim = 0; dim < 3; dim++) {
 		maxProcs *= (highCorner[dim] - lowCorner[dim] + 1) / 2;
 	}
-	if (_ownRank == 0 && maxProcs < _numProcs) {
-		cerr << "KDDecompsition not possible. Each Proc needs at least 8 cells." << endl;
-		cerr << "the number of Cells is only sufficient for " << maxProcs << " Procs!" << endl;
+	if (maxProcs < _numProcs) {
+		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
+		global_log->error() << "The number of Cells is only sufficient for " << maxProcs << " Procs!" << endl;
 		exit(1);
 	}
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain);
@@ -81,7 +83,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		_moleculeContainer->setPairHandler(tempHandler);
 		_globalLoadPerCell = loadHandler->getLoad();
 		if (recDecompPar(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
-			cerr << "Domain too small to achieve a perfect load balancing" << endl;
+			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
 		completeTreeInfo(newDecompTree, newOwnArea);
 		delete loadHandler;
@@ -394,11 +396,11 @@ void KDDecomposition::assertIntIdentity(int IX) {
 		for (int i = 1; i < num_procs; i++) {
 			MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, this->_collComm.getTopology(), &s) );
 			if (recv != IX) {
-				cout << "SEVERE ERROR: IX is " << IX << " for rank 0, but " << recv << " for rank " << i << ".\n";
+				global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << "." << endl;
 				MPI_Abort(MPI_COMM_WORLD, 911);
 			}
 		}
-		cout << "IX = " << recv << " for all " << num_procs << " ranks.\n";
+		global_log->debug() << "IX = " << recv << " for all " << num_procs << " ranks." << endl;
 	}
 }
 
@@ -432,18 +434,17 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 					receiveMoreMolecules = false;
 				else {
 					if (check.find(recv) != check.end()) {
-						cout << "\nSEVERE ERROR. Ranks " << check[recv] << " and "
-						     << i << " both propagate ID " << recv << ". Aborting.\n";
-						cout << "recv=" << recv << endl;
-						//MPI_Abort(MPI_COMM_WORLD, 2674);
+						global_log->error() << "Ranks " << check[recv] << " and "
+						     << i << " both propagate ID " << recv << "." << endl;
+						exit(1);
 					}
 					else
 						check[recv] = i;
 				}
 			}
 		}
-		cout << "\nData consistency checked. No duplicate IDs detected among " << check.size()
-		     << " entries.\n";
+		global_log->debug() << "Data consistency checked. No duplicate IDs detected among " << check.size()
+		     << " entries." << endl;
 	}
 }
 
@@ -716,7 +717,7 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 			return domainTooSmall;
 		}
 		else {
-			cerr << "ERROR in recDecompPar: called with a leaf node" << endl;
+			global_log->error() << "ERROR in recDecompPar: called with a leaf node" << endl;
 			exit(1);
 		}
 	}
@@ -835,9 +836,7 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 			// End new version
 
 			if (numProcsLeft <= 0 || numProcsLeft >= fatherNode->_numProcs) {
-				if (_ownRank == 0) {
-					cerr << "ERROR in recDecompPar, part of the domain was not assigned to a proc" << endl;
-				}
+				global_log->error() << "ERROR in recDecompPar, part of the domain was not assigned to a proc" << endl;
 				exit(1);
 			}
 		}

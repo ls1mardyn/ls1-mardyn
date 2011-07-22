@@ -59,9 +59,7 @@ public:
 	double getBoundingBoxMax(int dimension, Domain* domain);
 
 	//! @brief In the sequential mode, there is no decomposition and therefore nothing to be printed
-	void printDecomp(std::string filename, Domain* domain) {
-		std::cerr << "printDecomp useless in serial mode" << std::endl;
-	}
+	void printDecomp(std::string filename, Domain* domain);
 
 	//! @brief opends the file(append), loops over all molecules and writes each into the file
 	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
