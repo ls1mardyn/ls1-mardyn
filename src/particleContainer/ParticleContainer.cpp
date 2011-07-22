@@ -35,11 +35,6 @@ double ParticleContainer::getBoundingBoxMax(int dimension) const {
 	return this->_boundingBoxMax[dimension];
 }
 
-double ParticleContainer::get_halo_L(int index) const {
-	cerr << "ERROR: ParticleContainer::get_halo_L(...) has to be implemented in derived class" << endl;
-	return 0;
-}
-
 void ParticleContainer::setPairHandler(ParticlePairsHandler* partPairHandler) {
 	_particlePairsHandler = partPairHandler;
 }

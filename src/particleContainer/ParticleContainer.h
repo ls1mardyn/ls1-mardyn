@@ -156,7 +156,7 @@ public:
 	//! @brief returns the width of the halo strip (for the given dimension index)
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
-	virtual double get_halo_L(int index) const;
+	virtual double get_halo_L(int index) const = 0;
 
 	//! @brief appends pointers to all particles in the halo region to the list
 	virtual void getHaloParticles(std::list<Molecule*> &haloParticlePtrs) = 0;
