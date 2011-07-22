@@ -6,8 +6,9 @@ default: all
 
 # Check current directory
 CURDIR ?= $(realpath $(PWD) )
-ifeq ($(findstring src,$(CURDIR)),)
-  $(error ERROR: current directory $(CURDIR) seems not to be a source directory)
+SRCDIR := $(CURDIR)
+ifeq ($(findstring src,$(SRCDIR)),)
+  $(error ERROR: current directory $(SRCDIR) seems not to be a source directory)
 endif
 
 # compiler configuration
@@ -51,7 +52,7 @@ SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE))
 
 
 OBJECTS = $(SOURCES:.cpp=.o)
-INCLUDES = -I$(CURDIR) -I$(CURDIR)/External
+INCLUDES = -I$(SRCDIR) -I$(SRCDIR)/External
 
 BINARY_BASENAME = MarDyn
 ifneq ($(realpath .svn),)
@@ -152,11 +153,11 @@ cleanall: clean
 	if [ -L $(BINARY_BASENAME) ]; then rm -f $(BINARY_BASENAME); fi
 
 lcov:
-	lcov --directory $(CURDIR) -b $(CURDIR) --capture --output-file Mardyn.info
-	genhtml --output-director $(CURDIR)/../lcov/ Mardyn.info
+	lcov --directory $(SRCDIR) -b $(SRCDIR) --capture --output-file Mardyn.info
+	genhtml --output-director $(SRCDIR)/../lcov/ Mardyn.info
 
 lcov_clean:
-	 lcov --directory $(CURDIR) -b $(CURDIR) --zerocounters
+	 lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
 
 # create .deps subdirectories containing dependency information
 .deps:
