@@ -76,10 +76,6 @@ public:
 		return 1;
 	}
 
-	//! @brief for the sequential version, the processor name is not that important
-	//! @todo implement this
-	const char* getProcessorName() const;
-
 	//! @brief one process doesn't need synchronisation, so nothing is done here
 	void barrier() {
 	}

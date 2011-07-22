@@ -126,11 +126,6 @@ void DomainDecompDummy::writeMoleculesToFile(string filename, ParticleContainer*
 	checkpointfilestream.close();
 }
 
-const char* DomainDecompDummy::getProcessorName() const {
-	cerr << "ERROR in DomainDecompDummy::getProcessorName(): This method is not implemented yet" << endl;
-	return "main";
-}
-
 double DomainDecompDummy::getTime() {
 	return double(clock()) / CLOCKS_PER_SEC;
 }
