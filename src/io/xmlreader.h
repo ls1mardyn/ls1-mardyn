@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "parallel/DomainDecompTypes.h"
+
 class Component;
 class Integrator;
 class XMLfileUnits;
@@ -47,6 +49,11 @@ class XMLReader {
 		 *  @return false on error
 		 */
 		bool getIntegrator( Integrator *integrator );
+		
+		/** get the domain decomposition type
+		 *  @return type of the domain decomposition as defined in DomainDecompTypes.h
+		 */
+		DomainDecompType getDomainDecompositionType();
 		
 	private:
 		/** read in a single component */

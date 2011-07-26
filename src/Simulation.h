@@ -20,6 +20,7 @@
 #define SIMULATION_H_
 
 #include "ensemble/GrandCanonical.h"
+#include "parallel/DomainDecompTypes.h"
 
 #ifndef SIMULATION_SRC
 class Simulation;
@@ -349,6 +350,8 @@ private:
 	//! Handler describing what action is to be done for each particle pair
 	ParticlePairsHandler* _particlePairsHandler;
 
+	/** Type of the domain decomposition */
+	DomainDecompType _domainDecompositionType;
 	//! module which handles the domain decomposition
 	DomainDecompBase* _domainDecomposition;
 

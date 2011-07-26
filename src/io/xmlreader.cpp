@@ -7,13 +7,14 @@
 #include "io/xmlreader.h"
 #include "utils/Logger.h"
 
+using namespace std;
 using Log::global_log;
 
 
 XMLReader::XMLReader(const std::string& filename) : _inp(filename) {
 	ROOT = "/mardyn";
 	if( _inp.changecurrentnode( ROOT ) <= 0 ) {
-		global_log->error() << filename << " invalid MarDyn XML file!" << std::endl;
+		global_log->error() << filename << " invalid MarDyn XML file!" << endl;
 	}
 }
 
@@ -37,12 +38,12 @@ bool XMLReader::getIntegrator( Integrator* integrator ) {
 			return true;
 		} 
 		else if ( integratorType == "" ) {
-			global_log->error() << "No integrator type specified." << std::endl;
+			global_log->error() << "No integrator type specified." << endl;
 		} else {
-			global_log->error() << "Unknown integrator type '" << integratorType << "'." << std::endl;
+			global_log->error() << "Unknown integrator type '" << integratorType << "'." << endl;
 		}
 		
-		global_log->info() << "Integrator: " << integratorType << std::endl;
+		global_log->info() << "Integrator: " << integratorType << endl;
 	}
 	return false;
 }
@@ -81,7 +82,7 @@ long XMLReader::getComponents( std::vector<Component>& components ) {
 	unsigned int i = 0;
 	for( componentIter = query.begin(); componentIter; componentIter++, i++ ) {
 		_inp.changecurrentnode( componentIter );
-		std::cerr << "PATH: " << _inp.getcurrentnodepath() << std::endl;
+		std::cerr << "PATH: " << _inp.getcurrentnodepath() << endl;
 		components.push_back( readComponent( i ) );
 	}
 	return numComponents;
@@ -93,8 +94,8 @@ Component XMLReader::readComponent( unsigned int i ) {
 
 	std::string cid("");
 	_inp.getNodeValue( "@id", cid );
-	global_log->info() << "Adding component " << cid << " with id " << i << std::endl;
-// 			std::cerr << "PATH: " << _inp.getcurrentnodepath() << std::endl;
+	global_log->info() << "Adding component " << cid << " with id " << i << endl;
+// 			std::cerr << "PATH: " << _inp.getcurrentnodepath() << endl;
 
 	/* TODO: read in sites */
 	XMLfile::Query query = _inp.query( "site" );
@@ -112,7 +113,7 @@ Component XMLReader::readComponent( unsigned int i ) {
 		_inp.getNodeValueReduced( "coord/z", z );
 		_inp.getNodeValueReduced( "mass", m );
 		std::cout << "Adding new site of type " << siteType
-			<< " (" << x << ", " << y << ", " << z << ")" << std::endl;
+			<< " (" << x << ", " << y << ", " << z << ")" << endl;
 		
 		if ( siteType == "LJ126" ) {
 			double epsilon = 0;
@@ -174,3 +175,23 @@ Component XMLReader::readComponent( unsigned int i ) {
 }
 
 
+DomainDecompType XMLReader::getDomainDecompositionType() {
+	if ( _inp.changecurrentnode( ROOT + "/simulation/algorithm/parallelization" ) ) {
+		std::string domainDecompositionType("DummyDecomposition");
+		_inp.getNodeValue( "@type", domainDecompositionType );
+		global_log->debug() << "Domain decomposition type is " << domainDecompositionType << endl;
+		
+		if ( domainDecompositionType == "DummyDecomposition" ) { return DUMMY_DECOMPOSITION; }
+#ifdef ENABLE_MPI
+		else if ( domainDecompositionType == "DomainDecomposition" ) { return DOMAIN_DECOMPOSITION; }
+		else if ( domainDecompositionType == "KDDecomposition" ) { return KD_DECOMPOSITION; }
+#endif
+		else {
+			global_log->error() << "Unknown domain decomposition type '" << domainDecompositionType << "'." << endl;
+			return UNKNOWN_DECOMPOSITION;
+		}
+	} 
+	
+	global_log->warning() << "No parallelization section found. Using dummy domain decomposition." << endl;
+	return DUMMY_DECOMPOSITION;
+}

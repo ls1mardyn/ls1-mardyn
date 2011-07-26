@@ -138,18 +138,47 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	string version = xmlreader.getVersion();
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
 	global_log->info() << "Reading simulation parameters ..." << endl;
-	
+
+	global_log->info() << "Reading integrator information..." << endl;
+	xmlreader.getIntegrator( _integrator );	
 	double timestepLength = 0.0;
-	timestepLength = xmlreader.getTimestepLength();
-	if ( timestepLength != 0 ) {
-		global_log->info() << " timestep:             " << timestepLength << endl;
-	} else {
+	timestepLength = _integrator->getTimestepLength();
+	global_log->info() << " timestep:             " << timestepLength << endl;
+	if ( timestepLength == 0 ) {
 		/* TODO: perform checks before simulation start as there are command line parameters, too */
 		global_log->error() << "Undefined timestep length." << endl;
 	}
-		
-	xmlreader.getIntegrator( _integrator );
 	
+	global_log->info() << "Reading parallelization type..." << endl;
+	_domainDecompositionType = xmlreader.getDomainDecompositionType();
+	switch( _domainDecompositionType) {
+		case DUMMY_DECOMPOSITION:
+#ifdef ENABLE_MPI
+			global_log->warning() << "Dummy domain decomposition does not work in a parallel environment." << endl;
+			exit(1);
+#else
+			_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+#endif
+			break;
+#ifdef ENABLE_MPI
+		case DOMAIN_DECOMPOSITION:
+			_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+			break;
+		case KD_DECOMPOSITION:
+			/* TODO: remove parameters from KDDecomposition constructor */
+			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
+			break;
+#endif
+		case UNKNOWN_DECOMPOSITION:
+			global_log->error() << "Unknown domain decomposition type." << endl;
+			exit(1);
+			break;
+	}
+#ifndef ENABLE_MPI
+	if( _domainDecompositionType != DUMMY_DECOMPOSITION ) {
+		global_log->warning() << "Input demands parallelization, but the current compilation doesn't support parallel execution." << endl;
+	}
+#endif	
 	
 	double simBoxLength[3];
 	if ( xmlreader.getSimBoxSize( simBoxLength ) ) {
@@ -253,22 +282,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		}
 		
 		if (inp.changecurrentnode("algorithm")) {
-			string partype;
-			if (inp.getNodeValue("parallelisation", partype)) {
-				global_log->info() << "reading parallelization type:\t" << partype << endl;
-#ifndef ENABLE_MPI
-				global_log->warning()
-					<< "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
-					<< endl;
-#else
-				if (partype=="DomainDecomposition") {
-					_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-				}
-				else if(partype=="KDDecomposition") {
-					_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
-				}
-#endif	
-			}
+
 			string datastructype;
 			if (inp.getNodeValue("datastructure@type", datastructype)) {
 				global_log->info() << "datastructure to use:\t" << datastructype << endl;
