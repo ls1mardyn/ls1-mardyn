@@ -48,7 +48,7 @@ class XMLReader {
 		 *  @param[out] integrator
 		 *  @return false on error
 		 */
-		bool getIntegrator( Integrator *integrator );
+		bool getIntegrator( Integrator* &integrator );
 		
 		/** get the domain decomposition type
 		 *  @return type of the domain decomposition as defined in DomainDecompTypes.h

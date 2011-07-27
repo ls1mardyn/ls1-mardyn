@@ -19,6 +19,7 @@ XMLReader::XMLReader(const std::string& filename) : _inp(filename) {
 }
 
 
+
 std::string XMLReader::getVersion() {
 	std::string version("unknown");
 	_inp.getNodeValue("@version", version);
@@ -26,7 +27,7 @@ std::string XMLReader::getVersion() {
 }
 
 
-bool XMLReader::getIntegrator( Integrator* integrator ) {
+bool XMLReader::getIntegrator( Integrator* &integrator ) {
 	if( _inp.changecurrentnode( ROOT + "/simulation/integrator" ) ) {
 		double timestepLength = 0;
 		_inp.getNodeValueReduced( "timestep", timestepLength );
@@ -44,6 +45,7 @@ bool XMLReader::getIntegrator( Integrator* integrator ) {
 		}
 		
 		global_log->info() << "Integrator: " << integratorType << endl;
+		global_log->info() << "timestep: " << timestepLength << endl;
 	}
 	return false;
 }
