@@ -17,10 +17,10 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-
-#include "molecules/Component.h"
 #include <iostream>
 #include <iomanip>
+
+#include "Component.h"
 
 using namespace std;
 

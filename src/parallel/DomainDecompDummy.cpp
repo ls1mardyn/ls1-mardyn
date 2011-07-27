@@ -1,12 +1,12 @@
-#include "parallel/DomainDecompDummy.h"
+#include <fstream>
+#include <ctime>
+
+#include "DomainDecompDummy.h"
 
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "utils/Logger.h"
-
-#include <fstream>
-#include <ctime>
 
 using namespace std;
 using Log::global_log;

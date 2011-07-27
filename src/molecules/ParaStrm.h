@@ -30,8 +30,9 @@
 
 #include <cstdlib>
 #include <cassert>
-#include <string.h>
+#include <cstring>
 #include <cstddef>
+#include <malloc.h>
 
 /** Parameter stream
  *

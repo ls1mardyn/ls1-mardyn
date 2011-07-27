@@ -1,4 +1,6 @@
-#include "ensemble/CanonicalEnsemble.h"
+#include <map>
+
+#include "CanonicalEnsemble.h"
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
@@ -8,8 +10,6 @@
 #endif
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
-
-#include <map>
 
 using namespace std;
 using Log::global_log;

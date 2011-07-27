@@ -1,10 +1,10 @@
 #ifndef DOMAINDECOMPDUMMY_H_
 #define DOMAINDECOMPDUMMY_H_
 
+#include <iostream>
+
 #include "parallel/DomainDecompBase.h"
 #include "parallel/CollectiveCommDummy.h"
-
-#include <iostream>
 
 //! @brief implement the %domain decomposition for a single processor
 //! @author Martin Buchholz

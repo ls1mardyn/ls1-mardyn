@@ -1,10 +1,10 @@
 #ifndef ADAPTIVESUBCELLS_H_
 #define ADAPTIVESUBCELLS_H_
 
+#include <vector>
+
 #include "particleContainer/ParticleContainer.h"
 #include "BlockTraverse.h"
-
-#include <vector>
 
 class Cell;
 class ChemicalPotential;

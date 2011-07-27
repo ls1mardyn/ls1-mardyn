@@ -1,13 +1,14 @@
 #ifndef CHECKPOINTWRITER_H_
 #define CHECKPOINTWRITER_H_
 
-#include "io/OutputBase.h"
-#include "ensemble/GrandCanonical.h"
 #include <string>
+
+#include "io/OutputBase.h"
 
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
+class ChemicalPotential;
 
 class CheckpointWriter : public OutputBase {
 public:

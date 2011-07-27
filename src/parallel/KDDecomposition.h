@@ -1,13 +1,13 @@
 #ifndef KDDECOMPOSITION_H_
 #define KDDECOMPOSITION_H_
 
+#include <list>
+#include <mpi.h>
+
 #define KDDIM 3
 
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
-
-#include <list>
-#include <mpi.h>
 
 class Molecule;
 class ParticleData;

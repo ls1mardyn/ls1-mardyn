@@ -20,13 +20,11 @@
  *   Due to copyleft all future versions of this program must be           *
  *   distributed as Free Software (e.g., using a BSD-like license).        *
  ***************************************************************************/
-#include "molecules/Molecule.h"
-
-
 #include <cmath>
 #include <fstream>
 #include <cassert>
 
+#include "Molecule.h"
 #include "utils/Logger.h"
 
 using namespace std;

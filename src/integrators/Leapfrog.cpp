@@ -1,6 +1,6 @@
 #include <map>
 
-#include "integrators/Leapfrog.h"
+#include "Leapfrog.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "molecules/Molecule.h"

@@ -1,14 +1,15 @@
-#include "io/AsciiReader.h"
+#include <climits>
+
+#include "AsciiReader.h"
 
 #include "particleContainer/ParticleContainer.h"
-#include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/PressureGradient.h"
 #include "Domain.h"
 #include "utils/Logger.h"
 
-#include <climits>
+class DomainDecompBase;
 
 using Log::global_log;
 using namespace std;

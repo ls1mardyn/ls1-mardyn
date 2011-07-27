@@ -19,8 +19,9 @@
 #ifndef GRANDCANONICAL_H_
 #define GRANDCANONICAL_H_
 
-#include "molecules/Molecule.h"
 #include <list>
+
+#include "molecules/Molecule.h"
 
 class DomainDecompBase;
 class ParticleContainer;

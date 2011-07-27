@@ -20,7 +20,7 @@
 #ifndef QUATERNION_H_
 #define QUATERNION_H_
 
-#include "cmath"
+#include <cmath>
 
 /**
  @author Martin Bernreuther

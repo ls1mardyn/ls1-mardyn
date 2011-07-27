@@ -1,4 +1,7 @@
-#include "particleContainer/AdaptiveSubCells.h"
+#include <cmath>
+#include <iostream>
+
+#include "AdaptiveSubCells.h"
 
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "Cell.h"
@@ -7,9 +10,6 @@
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
-
-#include <cmath>
-#include <iostream>
 
 using namespace std;
 using Log::global_log;

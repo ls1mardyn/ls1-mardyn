@@ -1,13 +1,15 @@
 // CheckpointWriter.cpp
 
-#include "io/CheckpointWriter.h"
+#include <sstream>
+
+#include "CheckpointWriter.h"
 
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
-#include "parallel/DomainDecompBase.h"
 
-#include <sstream>
+
+class DomainDecompBase;
 
 using namespace std;
 

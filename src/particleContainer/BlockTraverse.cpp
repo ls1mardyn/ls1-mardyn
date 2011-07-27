@@ -16,6 +16,8 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
+#include <vector>
+#include <cmath>
 
 #include "BlockTraverse.h"
 #include "molecules/Molecule.h"
@@ -23,9 +25,6 @@
 #include "Cell.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-
-#include <vector>
-#include <cmath>
 
 using namespace std;
 using Log::global_log;

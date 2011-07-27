@@ -1,4 +1,9 @@
-#include "KDDecomposition.h" //$ Pfad aendern (parallel/...)
+#include <cfloat>
+#include <sstream>
+#include <fstream>
+#include <climits>
+
+#include "KDDecomposition.h"
 
 #include "molecules/Molecule.h"
 #include "Domain.h"
@@ -8,11 +13,6 @@
 #include "ParticleData.h"
 #include "KDNode.h"
 #include "utils/Logger.h"
-
-#include <cfloat>
-#include <sstream>
-#include <fstream>
-#include <climits>
 
 using namespace std;
 using Log::global_log;

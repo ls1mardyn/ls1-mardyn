@@ -17,7 +17,7 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include "molecules/Quaternion.h"
+#include "Quaternion.h"
 
 void Quaternion::operator *=(const Quaternion& q) {
 	double qw=m_qw*q.m_qw-m_qx*q.m_qx-m_qy*q.m_qy-m_qz*q.m_qz;
