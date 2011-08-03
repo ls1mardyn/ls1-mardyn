@@ -191,6 +191,10 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			_domain->setGlobalLength( d, simBoxLength[d] );
 		}
 	}
+	
+	double temperature = xmlreader.getTemperature();
+	_domain->setGlobalTemperature( temperature );
+	global_log->info() << "Temperature of the enseble: " << temperature << endl;
 		
 	if (inp.changecurrentnode("simulation")) {
 		string siminpfile, siminptype;

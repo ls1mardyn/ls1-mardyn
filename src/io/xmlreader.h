@@ -32,6 +32,9 @@ class XMLReader {
 		/** get timestep length */
 		double getTimestepLength();
 		
+		/** get temperature */
+		double getTemperature();
+		
 		/** get simulation box length 
 		 *  @param[out] simBoxLength array to hold the box dimensions
 		 *  @return false if simulation volume is not a box

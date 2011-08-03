@@ -197,3 +197,10 @@ DomainDecompType XMLReader::getDomainDecompositionType() {
 	global_log->warning() << "No parallelization section found. Using dummy domain decomposition." << endl;
 	return DUMMY_DECOMPOSITION;
 }
+
+double XMLReader::getTemperature() {
+	double temperature = 0;
+	_inp.getNodeValue( ROOT + "/simulation/ensemble/temperature", temperature);
+	return 	temperature;
+
+}
