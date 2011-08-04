@@ -7,10 +7,10 @@
 #include <cmath>
 
 #define DT 0.002
-#define TIME 20100813
+#define TIME 20110804
 #define VARFRACTION 0.07
-#define BOXOVERLOAD 1.02
-#define AVGBIN 0.0066667
+#define BOXOVERLOAD 1.3333
+#define AVGBIN 0.025
 
 void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int format)
 {
@@ -70,14 +70,14 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
    if(format == FORMAT_BRANCH)
    {
       txt.precision(6);
-      txt << "mardynconfig\n# \ntimestepLength\t" << DT << "\ncutoffRadius\t" << cutoff  << "\nLJCutoffRadius\t" << cutoff << "\ntersoffCutoffRadius\t0.5\n";
+      txt << "mardynconfig\n# \ntimestepLength\t" << DT << "\ncutoffRadius\t" << cutoff << "\nLJCutoffRadius\t" << cutoff << "\ntersoffCutoffRadius\t0.5\n";
 
       txt << "phaseSpaceFile\t" << prefix << ".xdr\n";
 
       txt << "datastructure\tLinkedCells 1\n";
 
-      txt << "output\tResultWriter 2000\t" << prefix << "_1R\nresultOutputTimesteps\t2000\noutput\tXyzWriter 100000\t" << prefix << "_1R\ninitCanonical\t10\ninitStatistics\t5000000\n";
-      txt << "profile\t1 " << (unsigned)round(R_o / AVGBIN) << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t30000000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\nesfera\nnomomentum 8192\nAlignCentre 512 0.0015625\n";
+      txt << "output\tResultWriter 500\t" << prefix << "_1R\nresultOutputTimesteps\t500\noutput\tXyzWriter 60000\t" << prefix << "_1R\noutput\tXdrWriter 60000\t" << prefix << "_1R\ninitCanonical\t10\ninitStatistics\t3003003\n";
+      txt << "profile\t1 " << (unsigned)round(R_o / AVGBIN) << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t500000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\nesfera\nnomomentum 16384\nAlignCentre 333 0.003\nchemicalPotential 0 component 1 conduct " << (unsigned)round(N/3.0) << " tests every 1 steps\nWidom\n";
    }
 
    if(format == FORMAT_BRANCH)
