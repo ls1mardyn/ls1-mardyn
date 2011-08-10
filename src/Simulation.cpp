@@ -97,6 +97,12 @@ Simulation::~Simulation() {
 		delete _integrator;
 	if (_inputReader)
 		delete _inputReader;
+	if (_loopTimer )
+		delete _loopTimer;
+	if (_perStepIoTimer )
+		delete _perStepIoTimer;
+	if (_ioTimer )
+		delete _ioTimer;
 }
 
 void Simulation::exit(int exitcode) {

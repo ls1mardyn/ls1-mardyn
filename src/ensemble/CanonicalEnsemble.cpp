@@ -107,8 +107,8 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans 
 		  << ", 2*E_rot = " << _E_rot << endl;
 	  _E = _E_trans + _E_rot;
-
-
+		delete [] E_trans;
+		delete [] E_rot; 
 	}
 
 	if ( variable & TEMPERATURE ) {
