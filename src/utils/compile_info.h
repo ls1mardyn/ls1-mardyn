@@ -18,15 +18,6 @@ int get_compiler_info(char *info_str) {
 	/* Cray compiler */
 #if defined(_CRAYC)
 	sprintf( info_str, "Cray %d.%d", _RELEASE, _RELEASE_MINOR);
-#endif
-
-	/* GNU compiler */
-#if defined(__GNUC__)
-# if defined(__GNUC_PATCHLEVEL__)
-	sprintf(info_str, "GNU %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-# else
-	sprintf(info_str, "GNU %d.%d", __GNUC__, __GNUC_MINOR__);
-# endif
 
 	/* Intel compiler */
 #elif defined(__INTEL_COMPILER)
@@ -47,6 +38,14 @@ int get_compiler_info(char *info_str) {
 	int patch = (__SUNPRO_C >> 0 ) & 0xf;
 	sprintf(info_str, "Sun %d.%d%d.%d", version, revision_digit1, revision_digit2, patch);
 
+	/* GNU compiler */
+#elif defined(__GNUC__)
+# if defined(__GNUC_PATCHLEVEL__)
+	sprintf(info_str, "GNU %d.%d.%d", __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+# else
+	sprintf(info_str, "GNU %d.%d", __GNUC__, __GNUC_MINOR__);
+# endif
+	
 	/* unknown */
 #else
 	sprintf(info_str, "unknown");
