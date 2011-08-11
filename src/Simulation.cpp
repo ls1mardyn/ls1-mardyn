@@ -213,11 +213,13 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			}
 		}
 		
-		
 		if (inp.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
 			_cutoffRadius = _LJCutoffRadius;
 			global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
 			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
+		} else {
+			global_log->error() << "Cutoff section missing." << endl;
+			exit(1);
 		}
 		
 		string pspfile;
@@ -302,12 +304,15 @@ void Simulation::initConfigXML(const string& inputfilename) {
 					global_log->info() << "LinkedCells cells in cutoff radius:\t" << cellsInCutoffRadius << endl;
 					double bBoxMin[3];
 					double bBoxMax[3];
-					for (int i = 0; i < 3; i++) {
-						bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
-						bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
+					global_log->debug() << "Box dimensions:" << endl;
+					for (int d = 0; d < 3; d++) {
+						bBoxMin[d] = _domainDecomposition->getBoundingBoxMin(d, _domain);
+						bBoxMax[d] = _domainDecomposition->getBoundingBoxMax(d, _domain);
+						global_log->debug() << "[" << d << "] " << bBoxMin[d] << " - " << bBoxMax[d] << endl;
 					}
 					if (this->_LJCutoffRadius == 0.0)
-						_LJCutoffRadius = this->_cutoffRadius;
+						_LJCutoffRadius = _cutoffRadius;
+					global_log->debug() << "Cutoff: " << _cutoffRadius << "\nCellsInCutoff: " << cellsInCutoffRadius << endl;
 					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 						_tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
 				} else if (datastructype == "AdaptiveSubCells") {
