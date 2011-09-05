@@ -7,6 +7,7 @@
 
 #include "io/vtk/VTKMoleculeWriter.h"
 #include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 #include "Domain.h"
 

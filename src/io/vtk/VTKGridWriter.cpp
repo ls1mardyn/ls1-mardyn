@@ -11,6 +11,7 @@
 #include "particleContainer/Cell.h"
 #include "Domain.h"
 #include "utils/Logger.h"
+#include "parallel/DomainDecompBase.h"
 
 using namespace Log;
 

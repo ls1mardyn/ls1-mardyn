@@ -110,6 +110,7 @@ void VTKGridWriterImplementation::plotCell(VTKGridCell& cell) {
 	it3->push_back(_rank);
 	it3++;
 	it3->push_back(cell.getIndex());
+	it3++;
 }
 
 
