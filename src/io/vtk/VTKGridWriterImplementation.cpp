@@ -157,7 +157,7 @@ void VTKGridWriterImplementation::initializeParallelVTKFile(const std::vector<st
 
 
 		PUnstructuredGrid_t p_unstructuredGrid(p_pointData, p_cellData, p_points, p_cells);
-		for (int i = 0; i < fileNames.size(); i++) {
+		for (unsigned int i = 0; i < fileNames.size(); i++) {
 			Piece p_piece(fileNames[i]);
 			p_unstructuredGrid.Piece().push_back(p_piece);
 		}

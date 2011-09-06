@@ -128,7 +128,7 @@ void VTKMoleculeWriterImplementation::initializeParallelVTKFile(const std::vecto
 	p_cells.PDataArray().push_back(p_cells_data);
 
 	PUnstructuredGrid_t p_unstructuredGrid(p_pointData, p_cellData, p_points, p_cells);
-	for (int i = 0; i < fileNames.size(); i++) {
+	for (size_t i = 0; i < fileNames.size(); i++) {
 		Piece p_piece(fileNames[i]);
 		p_unstructuredGrid.Piece().push_back(p_piece);
 	}

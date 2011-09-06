@@ -75,7 +75,7 @@ void  VTKGridWriter::outputParallelVTKFile(unsigned int numProcs, unsigned long 
 			VTKGridWriterImplementation& impl) {
 
 	std::vector<std::string> procFileNames;
-	for (int i = 0; i < numProcs; i++) {
+	for (unsigned int i = 0; i < numProcs; i++) {
 		std::stringstream fileNameStream;
 		fileNameStream << _fileName << "_node" << i << "_" << simstep << ".vtu";
 		procFileNames.push_back(fileNameStream.str());
