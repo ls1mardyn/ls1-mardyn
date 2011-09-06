@@ -68,13 +68,7 @@ int main(int argc, char** argv) {
 	Values options = initOptions(argc, argv, op);
 	vector<string> args = op.args();
 	unsigned int numargs = args.size();
-	if (numargs < 1) {
-		op.print_usage();
-		exit(1);
-	}
 
-	if (options.is_set("verbose") && options.get("verbose"))
-		global_log->set_log_level(Log::All);
 
 	bool tests(options.get("tests"));
 	if (tests) {
@@ -101,6 +95,14 @@ int main(int argc, char** argv) {
 			exit(0);
 		}
 	}
+
+	if (numargs < 1) {
+		op.print_usage();
+		exit(1);
+	}
+
+	if (options.is_set("verbose") && options.get("verbose"))
+		global_log->set_log_level(Log::All);
 
     Simulation simulation;
 
