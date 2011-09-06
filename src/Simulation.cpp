@@ -906,8 +906,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(
-		        0);
+		double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
 		cpit->submitTemperature(Tcur);
@@ -1309,6 +1308,7 @@ void Simulation::initialize() {
 	 */
 	_cutoffRadius = 0.0;
 	_LJCutoffRadius = 0.0;
+	_tersoffCutoffRadius = 3.0;
 	_numberOfTimesteps = 1;
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
