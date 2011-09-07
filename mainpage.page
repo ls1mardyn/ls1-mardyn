@@ -12,11 +12,11 @@ Documentation available:
 
 Code Coverage Information:
 
-- <a href="../lcov_tests"/>
-- <a href="../lcov_lj40000_t300"/>
-- <a href="../lcov_EOX_305K"/>
-- <a href="../lcov_CO2-1M"/>
-- <a href="../lcov_pore-CH3OH"/>
-- <a href="../lcov_total"/>
+- <a href="../lcov_tests"> Unit Tests </a>
+- <a href="../lcov_lj40000_t300"> lj40000_t300 </a>
+- <a href="../lcov_EOX_305K"> EOX_305K </a>
+- <a href="../lcov_CO2-1M"> CO2-1M </a>
+- <a href="../lcov_pore-CH3OH"> pore-CH3OH </a>
+- <a href="../lcov_total"> Summary </a>
 
 */
