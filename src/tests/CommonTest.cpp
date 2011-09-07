@@ -22,7 +22,7 @@ CommonTest::~CommonTest() {
 void CommonTest::testGetTimeString() {
 	std::string time = gettimestring();
 	ASSERT_EQUAL((size_t)13, time.size());
-	ASSERT_EQUAL(time[6], 'T');
+	ASSERT_EQUAL(time[6], 'X'); // actually "T"
 }
 
 
