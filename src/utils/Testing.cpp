@@ -16,6 +16,7 @@ Log::Logger* test_log;
     #include<cppunit/ui/text/TestRunner.h>
     #include<cppunit/TestResultCollector.h>
     #include <cppunit/extensions/TestFactoryRegistry.h>
+    #include <cppunit/XmlOutputter.h>
   #else
     #include <tarch/tests/TestCaseRegistry.h>
     #include <tarch/tests/TestCaseCollection.h>
@@ -45,8 +46,13 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 	runner.addTest( registry.makeTest() );
 	runner.run(testcases);
 
-	const CppUnit::TestResultCollector& collector = runner.result();
+	CppUnit::TestResultCollector& collector = runner.result();
 	testresult = collector.testFailuresTotal() != 0;
+
+	std::ofstream stream("results.xml");
+	CppUnit::XmlOutputter outputter( &collector, stream );
+	outputter.write();
+
 #else
 	tarch::tests::TestCaseRegistry& registry = tarch::tests::TestCaseRegistry::getInstance();
 	tarch::tests::TestCase& testCases = registry.getTestCaseCollection();
