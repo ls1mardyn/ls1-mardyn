@@ -24,7 +24,7 @@ void CommonTest::testGetTimeString() {
 	ASSERT_EQUAL((size_t)13, time.size());
 	ASSERT_EQUAL(time[6], 'T');
 }
-T
+
 
 void CommonTest::testAlignedNumber() {
 //	ASSERT_EQUAL_MSG("One should be zero!", 1, 0);
