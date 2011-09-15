@@ -1,0 +1,54 @@
+/** \page "Scenario Generator"
+
+!!! Building the gui
+
+See also http://www5.informatik.tu-muenchen.de/scenariogenerator/build.html.
+
+First build the Mardyn library and copy it to the directory tools/gui: 
+Type in the directory src/
+\verbatim
+make -f ../makefile/Makefile.lib lib
+cp libMardyn.so* ../tools/gui
+\endverbatim
+
+I assume that VTK 5, QT4 and QMake are installed on your system. Then CD into the 
+directory /tools/gui.
+
+If the VTK header files are not in your include path, you have to set the variable VTKINCLUDEPATH:
+\verbatim
+export VTKINCLUDEPATH=/usr/local/include/vtk-5.8/
+\endverbatim
+
+Similar for the VTK libraries the variable VTKLIBPATH:
+\verbatim
+export VTKLIBPATH=/usr/local/lib/vtk-5.8/
+\endverbatim
+ 
+
+Create the Makefile for the executable (ScenGen) and build the executable. 
+\verbatim
+qmake ScenGen.pro -o Makefile.scengen
+make -f Makefile.scengen
+\endverbatim
+
+!!! Building the generators
+
+\verbatim
+qmake CubicGridGenerator.pro -o Makefile.cubic
+make -f Makefile.cubic
+\endverbatim
+
+\verbatim
+qmake DropletGenerator.pro -o Makefile.droplet
+make -f Makefile.droplet
+\endverbatim
+
+Now, there should be a libs/ directory, where the libraries for the generators have
+been placed. 
+
+Finally, set the LD_LIBRARY_PATH and run the scenario generator:
+\verbatim
+export LD_LIBRARY_PATH=.
+./ScenGen
+\endverbatim
+*/
