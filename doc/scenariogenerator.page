@@ -4,15 +4,23 @@
 
 See also http://www5.informatik.tu-muenchen.de/scenariogenerator/build.html.
 
-First build the Mardyn library and copy it to the directory tools/gui: 
+First build the Mardyn library, copy it to the directory tools/gui and create the 
+necessary symbolic links: 
 Type in the directory src/
 \verbatim
-make -f ../makefile/Makefile.lib lib
-cp libMardyn.so* ../tools/gui
+make -f ../makefile/Makefile.lib UNIT_TESTS=0 VTK=0 TARGET=RELEASE PARTYPE=SEQ lib
+cp libMardyn.so.1.0 ../tools/gui
+cd ../tools/gui
+ln -s libMardyn.so.1.0 libMardyn.so.1
+ln -s libMardyn.so.1.0 libMardyn.so
 \endverbatim
 
-I assume that VTK 5, QT4 and QMake are installed on your system. Then CD into the 
-directory /tools/gui.
+I assume that VTK 5, QT4 and QMake are installed on your system.
+
+Extract the ScenarioGenerator sources:
+\verbatim
+tar xfz ScenarioGenerator.tar.gz
+\endverbatim
 
 If the VTK header files are not in your include path, you have to set the variable VTKINCLUDEPATH:
 \verbatim

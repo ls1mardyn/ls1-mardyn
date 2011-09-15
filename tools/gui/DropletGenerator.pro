@@ -19,22 +19,22 @@ HEADERS  += src/IO/WriteOutput.h
 HEADERS  += src/Tokenize.h
 
 # MD Generator headers
-HEADERS  += src/Generators/md/MDGenerator.h
-HEADERS  += src/Generators/md/PMFileReader.h
-HEADERS  += src/Generators/md/ComponentParameters.h
-HEADERS  += src/Generators/md/MardynConfiguration.h
-HEADERS  += src/Generators/md/MardynConfigurationParameters.h
-HEADERS  += src/Generators/md/MardynConfigLegacyWriter.h
-HEADERS  += src/Generators/md/DropletGenerator.h
-HEADERS  += src/Generators/md/DrawableMolecule.h
-SOURCES  += src/Generators/md/MDGenerator.cpp
-SOURCES  += src/Generators/md/PMFileReader.cpp
-SOURCES  += src/Generators/md/ComponentParameters.cpp
-SOURCES  += src/Generators/md/MardynConfiguration.cpp
-SOURCES  += src/Generators/md/MardynConfigurationParameters.cpp
-SOURCES  += src/Generators/md/DropletGenerator.cpp
-SOURCES  += src/Generators/md/DrawableMolecule.cpp
-SOURCES  += src/Generators/md/MardynConfigLegacyWriter.cpp
+HEADERS  += generators/MDGenerator.h
+HEADERS  += generators/DropletGenerator.h
+SOURCES  += generators/MDGenerator.cpp
+SOURCES  += generators/DropletGenerator.cpp
+HEADERS  += generators/common/PMFileReader.h
+HEADERS  += generators/common/ComponentParameters.h
+HEADERS  += generators/common/MardynConfiguration.h
+HEADERS  += generators/common/MardynConfigurationParameters.h
+HEADERS  += generators/common/MardynConfigLegacyWriter.h
+HEADERS  += generators/common/DrawableMolecule.h
+SOURCES  += generators/common/PMFileReader.cpp
+SOURCES  += generators/common/ComponentParameters.cpp
+SOURCES  += generators/common/MardynConfiguration.cpp
+SOURCES  += generators/common/MardynConfigurationParameters.cpp
+SOURCES  += generators/common/DrawableMolecule.cpp
+SOURCES  += generators/common/MardynConfigLegacyWriter.cpp
 
 LIBS += -L. -lMardyn
 
