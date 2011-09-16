@@ -77,10 +77,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		newDecompTree = new KDNode(_numProcs, _decompTree->_lowCorner, _decompTree->_highCorner, 0, 0, _decompTree->_coversWholeDomain);
 		ParticlePairs2LoadCalcAdapter* loadHandler;
 		loadHandler = new ParticlePairs2LoadCalcAdapter(_globalCellsPerDim, _ownArea->_lowCorner, _cellSize, _moleculeContainer);
-		ParticlePairsHandler* tempHandler = _moleculeContainer->getPairHandler();
-		_moleculeContainer->setPairHandler(loadHandler);
-		_moleculeContainer->traversePairs();
-		_moleculeContainer->setPairHandler(tempHandler);
+		_moleculeContainer->traversePairs(loadHandler);
 		_globalLoadPerCell = loadHandler->getLoad();
 		if (recDecompPar(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
