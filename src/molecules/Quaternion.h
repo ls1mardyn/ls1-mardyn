@@ -70,7 +70,18 @@ public:
 	}
 
 	void operator *=(const Quaternion& q);
+	/**
+	 * apply the rotation represented by tis quaternion to d
+	 * @param d the vector to be rotated
+	 * @param result vector of the rotation
+	 */
 	void rotate(const double d[3], double drot[3]) const;
+
+	/**
+	 * apply the rotation represented by tis quaternion to d. The result vector
+	 * is stored to d.
+	 * @param d the vector to be rotated
+	 */
 	void rotate(double d[3]) const {
 		double drot[3];
 		rotate(d, drot);
