@@ -54,7 +54,6 @@ void RDFTest::testRDFCountSequential12_AdaptiveCell() {
 
 void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
-	moleculeContainer->setPairHandler(&handler);
 
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
@@ -64,7 +63,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	RDF rdf(0.018, 100, 1);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
-	moleculeContainer->traversePairs();
+	moleculeContainer->traversePairs(&handler);
 	rdf.collectRDF(_domainDecomposition);
 
 	for (int i = 0; i < 100; i++) {
@@ -85,7 +84,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	// now the same with halo particles present.
 	_domainDecomposition->exchangeMolecules(moleculeContainer, _domain->getComponents(), _domain);
-	moleculeContainer->traversePairs();
+	moleculeContainer->traversePairs(&handler);
 	rdf.collectRDF(_domainDecomposition);
 	rdf.accumulateRDF();
 
@@ -124,7 +123,6 @@ void RDFTest::testRDFCountAdaptiveCell() {
 
 void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
-	moleculeContainer->setPairHandler(&handler);
 
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain->getComponents(), _domain);
 	moleculeContainer->updateMoleculeCaches();
@@ -132,7 +130,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	RDF rdf(0.018, 100, 1);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
-	moleculeContainer->traversePairs();
+	moleculeContainer->traversePairs(&handler);
 	rdf.collectRDF(_domainDecomposition);
 
 	// assert number of pairs counted
@@ -154,7 +152,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	rdf.reset();
 
 	rdf.tickRDF();
-	moleculeContainer->traversePairs();
+	moleculeContainer->traversePairs(&handler);
 	rdf.collectRDF(_domainDecomposition);
 	rdf.accumulateRDF();
 
