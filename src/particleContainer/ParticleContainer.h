@@ -65,10 +65,9 @@ class Molecule;
 class ParticleContainer {
 public:
 	//! @brief The constructor
-	//! @param partPairsHandler specified concrete action to be done for each pair
 	//! @param bBoxMin coordinates of the lowest (in all coordinates) corner of the bounding box
 	//! @param bBoxMax coordinates of the highest (in all coordinates) corner of the bounding box
-	ParticleContainer(ParticlePairsHandler* partPairsHandler, double bBoxMin[3], double bBoxMax[3]);
+	ParticleContainer(double bBoxMin[3], double bBoxMax[3]);
 
 	//! @brief The destructor
 	virtual ~ParticleContainer();
@@ -116,7 +115,8 @@ public:
 	//! For each pair found, there is an action executed, but it is a different action for
 	//! original and duplicated pairs. Details about how to handle pairs can be found
 	//! in the documentation for the class ParticlePairsHandler
-	virtual void traversePairs() = 0;
+	//! @param particlePairsHandler specified concrete action to be done for each pair
+	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler) = 0;
 
 	//! @return the number of particles stored in this container
 	//!
@@ -186,17 +186,6 @@ public:
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
-
-    /* TODO:
-     * extend for multiple potentials
-     * take care for pre- and postprocessing 
-     * */
-	//! @brief sets a new ParticlePairsHandler
-	void setPairHandler(ParticlePairsHandler* partPairHandler);
-
-	//! @brief returns the currently used ParticlePairsHandler
-	ParticlePairsHandler* getPairHandler();
-
 
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();

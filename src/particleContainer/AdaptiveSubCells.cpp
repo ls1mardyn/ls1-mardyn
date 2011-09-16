@@ -21,10 +21,9 @@ using Log::global_log;
 
 AdaptiveSubCells::AdaptiveSubCells(
 		double bBoxMin[3], double bBoxMax[3],
-		double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
-		ParticlePairsHandler* partPairsHandler
+		double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius
 )
-		: ParticleContainer(partPairsHandler, bBoxMin, bBoxMax),
+		: ParticleContainer(bBoxMin, bBoxMax),
 			_blockTraverse(this, _subCells, _innerSubCellIndices, _boundarySubCellIndices, _haloSubCellIndices,
 			                     _forwardNeighbourSubOffsets, _backwardNeighbourSubOffsets )
 {
@@ -328,12 +327,12 @@ void AdaptiveSubCells::deleteMolecule(unsigned long molid, double x, double y, d
 	}
 }
 
-void AdaptiveSubCells::traversePairs() {
+void AdaptiveSubCells::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in AdaptiveSubCells (traversePairs) invalid, call update first" << endl;
 		exit(1);
 	}
-	_blockTraverse.traversePairs();
+	_blockTraverse.traversePairs(particlePairsHandler);
 }
 
 double AdaptiveSubCells::getEnergy(Molecule* m1) {

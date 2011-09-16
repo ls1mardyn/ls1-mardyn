@@ -314,7 +314,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 						_LJCutoffRadius = _cutoffRadius;
 					global_log->debug() << "Cutoff: " << _cutoffRadius << "\nCellsInCutoff: " << cellsInCutoffRadius << endl;
 					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-						_tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+						_tersoffCutoffRadius, cellsInCutoffRadius);
 				} else if (datastructype == "AdaptiveSubCells") {
 					double bBoxMin[3];
 					double bBoxMax[3];
@@ -326,7 +326,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 					if (_LJCutoffRadius == 0.0)
 						_LJCutoffRadius = _cutoffRadius;
 					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-						_tersoffCutoffRadius, _particlePairsHandler);
+						_tersoffCutoffRadius);
 				}
 			}
 			inp.changecurrentnode("..");
@@ -571,7 +571,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				if (this->_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = this->_cutoffRadius;
 				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-				        _tersoffCutoffRadius, cellsInCutoffRadius, _particlePairsHandler);
+				        _tersoffCutoffRadius, cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
 				_particleContainerType = ADAPTIVE_LINKED_CELL;
 				double bBoxMin[3];
@@ -583,8 +583,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				//creates a new Adaptive SubCells datastructure
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
-				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-				        _tersoffCutoffRadius, _particlePairsHandler);
+				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius);
 			}
 		} else if (token == "output") {
 			inputfilestream >> token;
@@ -925,7 +924,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
-	_moleculeContainer->traversePairs();
+	_moleculeContainer->traversePairs(_particlePairsHandler);
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
@@ -1069,7 +1068,7 @@ void Simulation::simulate() {
 
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
-		_moleculeContainer->traversePairs();
+		_moleculeContainer->traversePairs(_particlePairsHandler);
 
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {

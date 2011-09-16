@@ -72,7 +72,8 @@ public:
 	//!     backward cells. Here it has to be checked whether the neighbour cell is halo or not.
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
-	void traversePairs();
+	//! @param particlePairsHandler specified concrete action to be done for each pair
+	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
 	//! @brief assign new (forward|backward)NeighbourOffsets
 	//!
@@ -86,9 +87,6 @@ private:
 
 	//! Datastructure for finding neighbours efficiently
 	ParticleContainer* _moleculeContainer;
-
-	//! A ParticlePairsHandler is used to process pairs of particles
-	ParticlePairsHandler* _particlePairsHandler;
 
 	//! Vector containing all cells (including halo)
 	std::vector<Cell>& _cells;

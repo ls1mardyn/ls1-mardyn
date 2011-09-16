@@ -39,10 +39,9 @@ using Log::global_log;
 
 LinkedCells::LinkedCells(
 		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		double tersoffCutoffRadius, double cellsInCutoffRadius,
-		ParticlePairsHandler* partPairsHandler
+		double tersoffCutoffRadius, double cellsInCutoffRadius
 )
-		: ParticleContainer(partPairsHandler, bBoxMin, bBoxMax),
+		: ParticleContainer(bBoxMin, bBoxMax),
 			_blockTraverse(this, _cells, _innerCellIndices, _boundaryCellIndices, _haloCellIndices )
 {
 	int numberOfCells = 1;
@@ -289,12 +288,12 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* 
 	return N;
 }
 
-void LinkedCells::traversePairs() {
+void LinkedCells::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
 		exit(1);
 	}
-	_blockTraverse.traversePairs();
+	_blockTraverse.traversePairs(particlePairsHandler);
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {

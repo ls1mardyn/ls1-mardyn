@@ -4,12 +4,12 @@
 
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "molecules/Molecule.h"
-
+#include "utils/Logger.h"
 
 using namespace std;
+using Log::global_log;
 
-ParticleContainer::ParticleContainer(ParticlePairsHandler* partPairsHandler, double bBoxMin[3], double bBoxMax[3])
-		: _particlePairsHandler(partPairsHandler) {
+ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		_boundingBoxMin[i] = bBoxMin[i];
 		_boundingBoxMax[i] = bBoxMax[i];
@@ -20,7 +20,7 @@ ParticleContainer::~ParticleContainer() {
 }
 
 void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
-	cout << "REBUILD OF PARTICLE CONTAINER" << endl;
+	global_log->info() << "REBUILD OF PARTICLE CONTAINER" << endl;
 	for (int i = 0; i < 3; i++) {
 		_boundingBoxMin[i] = bBoxMin[i];
 		_boundingBoxMax[i] = bBoxMax[i];
@@ -33,14 +33,6 @@ double ParticleContainer::getBoundingBoxMin(int dimension) const {
 
 double ParticleContainer::getBoundingBoxMax(int dimension) const {
 	return this->_boundingBoxMax[dimension];
-}
-
-void ParticleContainer::setPairHandler(ParticlePairsHandler* partPairHandler) {
-	_particlePairsHandler = partPairHandler;
-}
-
-ParticlePairsHandler* ParticleContainer::getPairHandler() {
-	return _particlePairsHandler;
 }
 
 void ParticleContainer::updateMoleculeCaches() {

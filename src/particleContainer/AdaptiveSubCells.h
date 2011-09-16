@@ -49,11 +49,9 @@ public:
 	//!        This value should be 1, only then a useful adaption to the particle distribution can
 	//!        take place. The actual cell size is usually slightly bigger than the cutoffRadius,
 	//!        as the domain has to be divided into a natural number of cells --> round up
-	//! @param partPairsHandler specified concrete action to be done for each pair
 	AdaptiveSubCells(
 	    double bBoxMin[3], double bBoxMax[3],
-	    double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
-	    ParticlePairsHandler* partPairsHandler
+	    double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius
 	);
 
 	//! Destructor
@@ -87,7 +85,8 @@ public:
 	//!     backward cells. Here it has to be checked whether the neighbour cell is halo or not.
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
-	void traversePairs();
+	//! @param particlePairsHandler specified concrete action to be done for each pair
+	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
