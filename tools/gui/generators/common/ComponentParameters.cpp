@@ -13,16 +13,18 @@
 
 #include "PMFileReader.h"
 #include "Conversions.h"
+#include "../MDGenerator.h"
 
 #include <cstdlib>
 
 //#define DEBUG
 
+
 ComponentParameters::ComponentParameters(const std::string& id,
 		const std::string& name, const std::string& desc, Component& component) :
 	ParameterCollection(id, name, desc, Parameter::BUTTON, true, false) {
-	parameters.push_back(new ParameterWithDoubleValue(name + ".Temperature", "Temperature", "Temperature of this component", Parameter::LINE_EDIT,
-			false,component.T()));
+//	parameters.push_back(new ParameterWithDoubleValue(name + ".Temperature", "Temperature", "Temperature of this component", Parameter::LINE_EDIT,
+//			false,component.T()));
 	parameters.push_back(
 			new ParameterWithIntValue(name + ".NumberOfLJCenters",
 					"Number of LJCenters", "number of LJCenters",Parameter::SPINBOX,
@@ -47,21 +49,21 @@ ComponentParameters::ComponentParameters(const std::string& id,
 				baseName, baseName, baseName, Parameter::BUTTON);
 		Charge charge = component.charge(i);
 		chargeCollection->addParameter(
-				new ParameterWithDoubleValue(baseName + ".x", baseName + ".x",
-						baseName + ".x",Parameter::LINE_EDIT, false, charge.rx()));
+				new ParameterWithDoubleValue(baseName + ".x", baseName + ".x [Angstrom]",
+						baseName + ".x",Parameter::LINE_EDIT, false, charge.rx() / MDGenerator::angstroem_2_atomicUnitLength));
 		chargeCollection->addParameter(
-				new ParameterWithDoubleValue(baseName + ".y", baseName + ".y",
-						baseName + ".y",Parameter::LINE_EDIT, false, charge.ry()));
+				new ParameterWithDoubleValue(baseName + ".y", baseName + ".y [Angstrom]",
+						baseName + ".y",Parameter::LINE_EDIT, false, charge.ry() / MDGenerator::angstroem_2_atomicUnitLength));
 		chargeCollection->addParameter(
-				new ParameterWithDoubleValue(baseName + ".z", baseName + ".z",
-						baseName + ".z",Parameter::LINE_EDIT, false, charge.rz()));
+				new ParameterWithDoubleValue(baseName + ".z", baseName + ".z [Angstrom]",
+						baseName + ".z",Parameter::LINE_EDIT, false, charge.rz() / MDGenerator::angstroem_2_atomicUnitLength));
 		chargeCollection->addParameter(
 				new ParameterWithDoubleValue(baseName + ".mass",
-						baseName + ".mass", baseName + ".mass",Parameter::LINE_EDIT, false,
-						charge.m()));
+						baseName + ".mass [u]", baseName + ".mass",Parameter::LINE_EDIT, false,
+						charge.m() / MDGenerator::unitMass_2_mardyn));
 		chargeCollection->addParameter(
 				new ParameterWithDoubleValue(baseName + ".charge", "charge",
-						baseName + ".charge", Parameter::LINE_EDIT,false, charge.q()));
+						baseName + ".charge [el. charge e]", Parameter::LINE_EDIT,false, charge.q()));
 		addParameter(chargeCollection);
 	}
 	for (unsigned int i = 0; i < component.numLJcenters(); i++) {
@@ -72,26 +74,26 @@ ComponentParameters::ComponentParameters(const std::string& id,
 				baseName, baseName, baseName, Parameter::BUTTON);
 		LJcenter ljCenter = component.ljcenter(i);
 		ljCenterCollection->addParameter(
-				new ParameterWithDoubleValue(baseName + ".x", baseName + ".x",
-						baseName + ".x", Parameter::LINE_EDIT,false, ljCenter.rx()));
+				new ParameterWithDoubleValue(baseName + ".x", baseName + ".x [Angstrom]",
+						baseName + ".x", Parameter::LINE_EDIT,false, ljCenter.rx() / MDGenerator::angstroem_2_atomicUnitLength));
 		ljCenterCollection->addParameter(
-				new ParameterWithDoubleValue(baseName + ".y", baseName + ".y",
-						baseName + ".y",Parameter::LINE_EDIT, false, ljCenter.ry()));
+				new ParameterWithDoubleValue(baseName + ".y", baseName + ".y [Angstrom]",
+						baseName + ".y",Parameter::LINE_EDIT, false, ljCenter.ry() / MDGenerator::angstroem_2_atomicUnitLength));
 		ljCenterCollection->addParameter(
-				new ParameterWithDoubleValue(baseName + ".z", baseName + ".z",
-						baseName + ".z",Parameter::LINE_EDIT, false, ljCenter.rz()));
+				new ParameterWithDoubleValue(baseName + ".z", baseName + ".z [Angstrom]",
+						baseName + ".z",Parameter::LINE_EDIT, false, ljCenter.rz() / MDGenerator::angstroem_2_atomicUnitLength));
 		ljCenterCollection->addParameter(
 				new ParameterWithDoubleValue(baseName + ".mass",
-						baseName + ".mass", baseName + ".mass",Parameter::LINE_EDIT, false,
-						ljCenter.m()));
+						baseName + ".mass [u]", baseName + ".mass",Parameter::LINE_EDIT, false,
+						ljCenter.m() / MDGenerator::unitMass_2_mardyn));
 		ljCenterCollection->addParameter(
 				new ParameterWithDoubleValue(baseName + ".epsilon",
-						baseName + ".epsilon", baseName + ".epsilon", Parameter::LINE_EDIT,false,
+						baseName + ".epsilon [Kelvin * K_B]", baseName + ".epsilon", Parameter::LINE_EDIT,false,
 						ljCenter.eps()));
 		ljCenterCollection-> addParameter(
 				new ParameterWithDoubleValue(baseName + ".sigma",
-						baseName + ".sigma", baseName + ".sigma", Parameter::LINE_EDIT,false,
-						ljCenter.sigma()));
+						baseName + ".sigma [Angstrom]", baseName + ".sigma", Parameter::LINE_EDIT,false,
+						ljCenter.sigma() / MDGenerator::angstroem_2_atomicUnitLength));
 		addParameter(ljCenterCollection);
 	}
 
@@ -102,20 +104,20 @@ ComponentParameters::ComponentParameters(const std::string& id,
 		ParameterCollection* dipoleCollection = new ParameterCollection(
 				baseName, baseName, baseName, Parameter::BUTTON);
 		Dipole dipole = component.dipole(i);
-		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".x", baseName + ".x", baseName + ".x",
-				Parameter::LINE_EDIT,false, dipole.rx()));
-		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".y", baseName + ".y", baseName + ".y",
-				Parameter::LINE_EDIT,false, dipole.ry()));
-		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".z", baseName + ".z", baseName + ".z",
-				Parameter::LINE_EDIT,false, dipole.rz()));
+		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".x", baseName + ".x [Angstrom]", baseName + ".x",
+				Parameter::LINE_EDIT,false, dipole.rx() / MDGenerator::angstroem_2_atomicUnitLength));
+		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".y", baseName + ".y [Angstrom]", baseName + ".y",
+				Parameter::LINE_EDIT,false, dipole.ry() / MDGenerator::angstroem_2_atomicUnitLength));
+		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".z", baseName + ".z [Angstrom]", baseName + ".z",
+				Parameter::LINE_EDIT,false, dipole.rz() / MDGenerator::angstroem_2_atomicUnitLength));
 		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".eMyx", baseName + ".eMyx", baseName + ".eMyx",
 				Parameter::LINE_EDIT,false, dipole.ex()));
 		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".eMyy", baseName + ".eMyy", baseName + ".eMyy",
 				Parameter::LINE_EDIT,false, dipole.ey()));
 		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".eMyz", baseName + ".eMyz", baseName + ".eMyz",
 				Parameter::LINE_EDIT,false, dipole.ez()));
-		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".dipole", baseName + ".dipole", baseName + ".dipole",
-				Parameter::LINE_EDIT,false, dipole.absMy()));
+		dipoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".dipole", baseName + ".dipole [Debye]", baseName + ".dipole",
+				Parameter::LINE_EDIT,false, dipole.absMy() / MDGenerator::debye_2_mardyn));
 		addParameter(dipoleCollection);
 
 	}
@@ -125,20 +127,20 @@ ComponentParameters::ComponentParameters(const std::string& id,
 		string baseName = baseNameStream.str();
 		Quadrupole quad = component.quadrupole(i);
 		ParameterCollection* quadrupoleCollection = new ParameterCollection(baseName, baseName, baseName, Parameter::BUTTON);
-		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".x", baseName + ".x", baseName + ".x",
-				Parameter::LINE_EDIT,false, quad.rx()));
-		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".y", baseName + ".y", baseName + ".y",
-				Parameter::LINE_EDIT,false, quad.ry()));
-		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".z", baseName + ".z", baseName + ".z",
-				Parameter::LINE_EDIT,false, quad.rz()));
+		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".x", baseName + ".x [Angstrom]", baseName + ".x",
+				Parameter::LINE_EDIT,false, quad.rx() / MDGenerator::angstroem_2_atomicUnitLength));
+		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".y", baseName + ".y [Angstrom]", baseName + ".y",
+				Parameter::LINE_EDIT,false, quad.ry() / MDGenerator::angstroem_2_atomicUnitLength));
+		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".z", baseName + ".z [Angstrom]", baseName + ".z",
+				Parameter::LINE_EDIT,false, quad.rz() / MDGenerator::angstroem_2_atomicUnitLength));
 		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".eQx", baseName + ".eQx", baseName + ".eQx",
 				Parameter::LINE_EDIT,false, quad.ex()));
 		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".eQy", baseName + ".eQy", baseName + ".eQy",
 				Parameter::LINE_EDIT,false, quad.ey()));
 		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".eQz", baseName + ".eQz", baseName + ".eQz",
 				Parameter::LINE_EDIT,false, quad.ez()));
-		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".quadrupole", baseName + ".quadrupole", baseName + ".quadrupole",
-				Parameter::LINE_EDIT,false, quad.absQ()));
+		quadrupoleCollection->addParameter(new ParameterWithDoubleValue(baseName + ".quadrupole", baseName + ".quadrupole [Buckingham]", baseName + ".quadrupole",
+				Parameter::LINE_EDIT,false, quad.absQ() / MDGenerator::buckingham_2_mardyn));
 		addParameter(quadrupoleCollection);
 	}
 
@@ -158,7 +160,6 @@ void ComponentParameters::setParameterValue(Component& component, Parameter* p,
 	if (valueName == "NumberOfCharges") {
 		size_t numCharges =
 				dynamic_cast<const ParameterWithIntValue*> (p)->getValue();
-		//int numCharges = intParameter->getValue();
 		while (component.numCharges() < numCharges) {
 			component.addCharge(0.0, 0.0, 0.0, 0.0, 0);
 		}
@@ -245,13 +246,13 @@ void ComponentParameters::setParameterValue(Charge& charge,
 #endif
 
 	if (valueName == "x") {
-		charge.setR(0, p->getValue());
+		charge.setR(0, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
 	} else if (valueName == "y") {
-		charge.setR(1, p->getValue());
+		charge.setR(1, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
 	} else if (valueName == "z") {
-		charge.setR(2, p->getValue());
+		charge.setR(2, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
 	} else if (valueName == "mass") {
-		charge.setM(p->getValue());
+		charge.setM(p->getValue() /* * MDGenerator::unitMass_2_mardyn*/);
 	} else if (valueName == "charge") {
 		charge.setQ(p->getValue());
 	} else {
@@ -270,17 +271,17 @@ void ComponentParameters::setParameterValue(LJcenter& ljCenter,
 #endif
 
 	if (valueName == "x") {
-		ljCenter.setR(0, p->getValue());
+		ljCenter.setR(0, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
 	} else if (valueName == "y") {
-		ljCenter.setR(1, p->getValue());
+		ljCenter.setR(1, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
 	} else if (valueName == "z") {
-		ljCenter.setR(2, p->getValue());
+		ljCenter.setR(2, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
 	} else if (valueName == "mass") {
-		ljCenter.setM(p->getValue());
+		ljCenter.setM(p->getValue() /* * MDGenerator::unitMass_2_mardyn*/);
 	} else if (valueName == "epsilon") {
 		ljCenter.setEps(p->getValue());
 	} else if (valueName == "sigma") {
-		ljCenter.setSigma(p->getValue());
+		ljCenter.setSigma(p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(LJCenter): unkown parameter! (valueName="
 				<< valueName << ")" << endl;
@@ -294,11 +295,11 @@ void ComponentParameters::setParameterValue(Dipole& dipole, ParameterWithDoubleV
 #endif
 
 	if (valueName == "x") {
-		dipole.setR(0,p->getValue());
+		dipole.setR(0,p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "y") {
-		dipole.setR(1,p->getValue());
+		dipole.setR(1,p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "z") {
-		dipole.setR(2,p->getValue());
+		dipole.setR(2,p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "eMyx") {
 		dipole.setE(0,p->getValue());
 	} else if (valueName == "eMyy") {
@@ -306,7 +307,7 @@ void ComponentParameters::setParameterValue(Dipole& dipole, ParameterWithDoubleV
 	} else if (valueName == "eMyz") {
 		dipole.setE(2,p->getValue());
 	} else if (valueName == "dipole") {
-		dipole.setAbyMy(p->getValue());
+		dipole.setAbyMy(p->getValue() * MDGenerator::debye_2_mardyn);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(Dipole): unkown parameter! (valueName="
 				<< valueName << ")" << endl;
@@ -320,11 +321,11 @@ void ComponentParameters::setParameterValue(Quadrupole& quadrupole, ParameterWit
 #endif
 
 	if (valueName == "x") {
-		quadrupole.setR(0,p->getValue());
+		quadrupole.setR(0,p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "y") {
-		quadrupole.setR(1,p->getValue());
+		quadrupole.setR(1,p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "z") {
-		quadrupole.setR(2,p->getValue());
+		quadrupole.setR(2,p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "eQx") {
 		quadrupole.setE(0,p->getValue());
 	} else if (valueName == "eQy") {
@@ -332,7 +333,7 @@ void ComponentParameters::setParameterValue(Quadrupole& quadrupole, ParameterWit
 	} else if (valueName == "eQz") {
 		quadrupole.setE(2,p->getValue());
 	} else if (valueName == "quadrupole") {
-		quadrupole.setAbsQ(p->getValue());
+		quadrupole.setAbsQ(p->getValue() * MDGenerator::buckingham_2_mardyn);
 	} else {
 		std::cout << "ComponentParameters::setParameterValue(Quadrupole): unkown parameter! (valueName="
 				<< valueName << ")" << endl;

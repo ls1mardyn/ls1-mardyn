@@ -34,6 +34,33 @@ class ChemicalPotential;
  */
 class MDGenerator: public Generator, InputBase {
 
+public:
+
+	// multiplicative factors for unit conversions
+	// the factors are based on the file atomic_units.txt
+	static const double angstroem_2_atomicUnitLength;
+
+	static const double unitMass_2_mardyn; // Mardyn calculates with 1/1000 u as base unit.
+
+	static const double debye_2_mardyn;
+
+	static const double buckingham_2_mardyn;
+
+	/**
+	 * femto-seconds to mardyn
+	 */
+	static const double fs_2_mardyn;
+
+	/**
+	 * convert particle density mol/liter to particles / \f$a_0^3\f$
+	 *
+	 * 1 mol / l = 1 mol / 10^{-3} m^3
+	 *           = 6.022141 * 10^{23} / 10^{-3} * (1.889726 * 10^{10} a_0)^3
+	 *           = 6.022141 * 10^{23} / 6.748333 * 10^{27} a_0^3
+	 *           = 8.923894 * 10^{-5} / a_0^3
+	 */
+	static const double molPerL_2_mardyn;
+
 protected:
 	Log::Logger* _logger;
 	bool _deleteLogger;

@@ -10,7 +10,9 @@
 #include "Parameters/ParameterWithDoubleValue.h"
 #include "Parameters/ParameterWithChoice.h"
 #include "Parameters/ParameterWithStringValue.h"
+#include "Parameters/ParameterWithBool.h"
 #include "Tokenize.h"
+#include "../MDGenerator.h"
 
 #include <vector>
 #include <iostream>
@@ -30,11 +32,16 @@ MardynConfigurationParameters::MardynConfigurationParameters(const MardynConfigu
 			"The format of the configuration file (xml not yet supported)", Parameter::COMBOBOX, false, choices,
 			other.getOutputFormat() == MardynConfiguration::XML ? choices[0] : choices[1]));
 
-	addParameter(new ParameterWithDoubleValue("ConfigurationParameters.timesteplength", "Length of timestep", "Length of timestep",
-			Parameter::LINE_EDIT, false, other.getTimestepLength()));
+	addParameter(new ParameterWithDoubleValue("ConfigurationParameters.timesteplength", "Length of timestep [fs]", "Length of timestep",
+			Parameter::LINE_EDIT, false, other.getTimestepLength() / MDGenerator::fs_2_mardyn));
 
-	addParameter(new ParameterWithDoubleValue("ConfigurationParameters.cutoffradius", "Cutoff radius", "Cutoff Radius, i.e. cell length",
-				Parameter::LINE_EDIT, false, other.getCutoffRadius()));
+	addParameter(new ParameterWithDoubleValue("ConfigurationParameters.cutoffradius", "Cutoff radius [Angstrom]", "Cutoff Radius, i.e. cell length",
+				Parameter::LINE_EDIT, false, other.getCutoffRadius() / MDGenerator::angstroem_2_atomicUnitLength));
+
+	addParameter(new ParameterWithDoubleValue("ConfigurationParameters.LJcutoffradius", "LJ Cutoff radius [Angstrom]", "Lennard-Jones Cutoff Radius, i.e. cell length",
+				Parameter::LINE_EDIT, false, other.getLJCutoffRadius() / MDGenerator::angstroem_2_atomicUnitLength));
+	addParameter(new ParameterWithBool("ConfigurationParameters.principalAxisTrafo", "Perform principal axis transformation", "Perform a principal axis transformation for each component\nwhen writing the Mardyn phasespace file.",
+				Parameter::CHECKBOX, false, other.performPrincipalAxisTransformation()));
 }
 
 
@@ -59,10 +66,16 @@ void MardynConfigurationParameters::setParameterValue(MardynConfiguration& confi
 		}
 	} else if (valueName == "timesteplength") {
 		double timestepLength = dynamic_cast<const ParameterWithDoubleValue*>(parameter)->getValue();
-		config.setTimestepLength(timestepLength);
+		config.setTimestepLength(timestepLength * MDGenerator::fs_2_mardyn);
 	} else if (valueName == "cutoffradius") {
 		double cutoffRadius = dynamic_cast<const ParameterWithDoubleValue*>(parameter)->getValue();
-		config.setCutoffRadius(cutoffRadius);
+		config.setCutoffRadius(cutoffRadius * MDGenerator::angstroem_2_atomicUnitLength);
+	} else if (valueName == "LJcutoffradius") {
+		double cutoffRadius = dynamic_cast<const ParameterWithDoubleValue*>(parameter)->getValue();
+		config.setLJCutoffRadius(cutoffRadius * MDGenerator::angstroem_2_atomicUnitLength);
+	} else if (valueName == "principalAxisTrafo") {
+		bool performTrafo = dynamic_cast<const ParameterWithBool*>(parameter)->getValue();
+		config.setPerformPrincipalAxisTransformation(performTrafo);
 	} else {
 		std::cout << "Invalid Parameter in ConfigurationParameters::setParameter(): " << endl;
 		parameter->print();

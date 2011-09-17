@@ -26,20 +26,19 @@
 #include <list>
 
 /**
- * Class CubicGridGenerator implements the generator that generates DrawableMolecules
- * on an equidistant grid
+ * Generate Molecules on a grid according to body centered cubic (bcc) layout,
+ * allowing for a density of 68 %.
  */
 
 class CubicGridGenerator: public MDGenerator {
 
 private:
-	int numMoleculesX, numMoleculesY, numMoleculesZ; // number of mols in each direction
+	int _numMolecules;
+	double _molarDensity;
 	std::vector<Component> _components;
 	double _temperature;
-	double dx, dy, dz; // distance between DrawableMolecules
-	Position origin; // origin of the first DrawableMolecule
 
-	double simBoxLength[3]; // length of the simulation box
+	double _simBoxLength[3]; // length of the simulation box
 
 public:
 	/**

@@ -8,7 +8,8 @@
 #include "MardynConfiguration.h"
 
 MardynConfiguration::MardynConfiguration()
-: _cutoffRadius(3.0), _timestepLength(0.1), _outputFormat(LEGACY)
+: _cutoffRadius(1), _LJcutoffRadius(1), _timestepLength(1), _outputFormat(LEGACY),
+  _performPrincipalAxisTransformation(false)
 {
 
 
@@ -56,3 +57,25 @@ void MardynConfiguration::setTimestepLength(double timestepLength)
 
 MardynConfiguration::~MardynConfiguration() {
 }
+
+bool MardynConfiguration::performPrincipalAxisTransformation() const
+{
+    return _performPrincipalAxisTransformation;
+}
+
+double MardynConfiguration::getLJCutoffRadius() const
+{
+    return _LJcutoffRadius;
+}
+
+void MardynConfiguration::setLJCutoffRadius(double _LJcutoffRadius)
+{
+    this->_LJcutoffRadius = _LJcutoffRadius;
+}
+
+void MardynConfiguration::setPerformPrincipalAxisTransformation(bool performPrincipalAxisTransformation)
+{
+    _performPrincipalAxisTransformation = performPrincipalAxisTransformation;
+}
+
+

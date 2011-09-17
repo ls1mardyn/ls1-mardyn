@@ -23,10 +23,13 @@ public:
 
 private:
 	double _cutoffRadius;
+	double _LJcutoffRadius;
 	double _timestepLength;
 
 	OutputFormat _outputFormat;
 	std::string _scenarioName;
+
+	bool _performPrincipalAxisTransformation;
 
 public:
 	MardynConfiguration();
@@ -48,6 +51,14 @@ public:
 	void setScenarioName(std::string scenarioName);
 
 	void setTimestepLength(double timestepLength);
+
+	bool performPrincipalAxisTransformation() const;
+
+	void setPerformPrincipalAxisTransformation(bool _performPrincipalAxisTransformation);
+
+	double getLJCutoffRadius() const;
+
+	void setLJCutoffRadius(double _LJcutoffRadius);
 };
 
 #endif /* CONFIGURATION_H_ */

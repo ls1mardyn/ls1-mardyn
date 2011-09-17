@@ -29,12 +29,17 @@ HEADERS  += generators/common/MardynConfiguration.h
 HEADERS  += generators/common/MardynConfigurationParameters.h
 HEADERS  += generators/common/MardynConfigLegacyWriter.h
 HEADERS  += generators/common/DrawableMolecule.h
+HEADERS  += generators/common/eig3.h
+HEADERS  += generators/common/PrincipalAxisTransform.h
+
 SOURCES  += generators/common/PMFileReader.cpp
 SOURCES  += generators/common/ComponentParameters.cpp
 SOURCES  += generators/common/MardynConfiguration.cpp
 SOURCES  += generators/common/MardynConfigurationParameters.cpp
 SOURCES  += generators/common/DrawableMolecule.cpp
 SOURCES  += generators/common/MardynConfigLegacyWriter.cpp
+SOURCES  += generators/common/eig3.cpp
+SOURCES  += generators/common/PrincipalAxisTransform.cpp
 
 LIBS += -L. -lMardyn
 

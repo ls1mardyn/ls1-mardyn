@@ -7,6 +7,7 @@
 
 #include "DropletGenerator.h"
 #include "common/MardynConfigurationParameters.h"
+#include "common/PrincipalAxisTransform.h"
 #include "Parameters/ParameterWithIntValue.h"
 #include "Tokenize.h"
 
@@ -75,7 +76,11 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		    << "," << simBoxLength[1] << "," <<  simBoxLength[2] << "]" << endl;
 
 		for (unsigned int i = 0; i < _components.size(); i++) {
-			domain->addComponent(_components[i]);
+			Component component = _components[i];
+			if (_configuration.performPrincipalAxisTransformation()) {
+				principalAxisTransform(component);
+			}
+			domain->addComponent(component);
 		}
 		domain->setepsilonRF(1e+10);
 }

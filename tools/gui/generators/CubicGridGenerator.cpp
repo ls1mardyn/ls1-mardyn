@@ -2,12 +2,13 @@
  * CubicGridGenerator.cpp
  *
  *  Created on: Mar 25, 2011
- *      Author: kovacevt
+ *      Author: kovacevt, eckhardw
  */
 
 #include "CubicGridGenerator.h"
 #include "Parameters/ParameterWithIntValue.h"
 #include "common/MardynConfigurationParameters.h"
+#include "common/PrincipalAxisTransform.h"
 #include "Tokenize.h"
 #include <cstring>
 
@@ -25,12 +26,8 @@ extern "C" {
 
 
 CubicGridGenerator::CubicGridGenerator() :
-	MDGenerator("CubicGridGenerator"), numMoleculesX(4), numMoleculesY(4),
-			numMoleculesZ(3), _temperature(1.5), origin(0.5, 0.5, 0.5) {
-
-	dx = 1.0;
-	dy = 1.0;
-	dz = 1.0;
+	MDGenerator("CubicGridGenerator"), _numMolecules(4), _molarDensity(0.6),
+	_temperature(1.5) {
 
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 5.0, false);
@@ -45,17 +42,13 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 	parameters.push_back(tab);
 
 	tab->addParameter(
-			new ParameterWithIntValue("numMoleculesX", "Number of Molecules X",
-					"Number of Molecules in X direction", Parameter::LINE_EDIT,
-					false, numMoleculesX));
+			new ParameterWithDoubleValue("molarDensity", "Molar density [mol/l]",
+					"molar density in mol/l", Parameter::LINE_EDIT,
+					false, _molarDensity));
 	tab->addParameter(
-			new ParameterWithIntValue("numMoleculesY", "Number of Molecules Y",
-					"Number of Molecules in Y direction", Parameter::LINE_EDIT,
-					false, numMoleculesY));
-	tab->addParameter(
-			new ParameterWithIntValue("numMoleculesZ", "Number of Molecules Z",
-					"Number of Molecules in Z direction", Parameter::LINE_EDIT,
-					false, numMoleculesZ));
+			new ParameterWithIntValue("numMolecules", "Number of Molecules",
+					"Total number of Molecules", Parameter::LINE_EDIT,
+					false, _numMolecules));
 	tab->addParameter(
 			new ParameterWithDoubleValue("temperature", "Temperature",
 					"Temperature in the domain", Parameter::LINE_EDIT,
@@ -69,12 +62,12 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 
 void CubicGridGenerator::setParameter(Parameter* p) {
 	string id = p->getNameId();
-	if (id == "numMoleculesX") {
-		numMoleculesX = static_cast<ParameterWithIntValue*> (p)->getValue();
-	} else if (id == "numMoleculesY") {
-		numMoleculesY = static_cast<ParameterWithIntValue*> (p)->getValue();
-	} else if (id == "numMoleculesZ") {
-		numMoleculesZ = static_cast<ParameterWithIntValue*> (p)->getValue();
+	if (id == "numMolecules") {
+		_numMolecules = static_cast<ParameterWithIntValue*> (p)->getValue();
+	} else if (id == "molarDensity") {
+		_molarDensity = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+	} else if (id == "temperature") {
+		_temperature = static_cast<ParameterWithDoubleValue*> (p)->getValue();
 	} else if (id.find("component1") != std::string::npos) {
 		std::string part = remainingSubString(".", id);
 		ComponentParameters::setParameterValue(_components[0], p, part);
@@ -86,20 +79,27 @@ void CubicGridGenerator::setParameter(Parameter* p) {
 
 
 void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	simBoxLength[0] = dx * numMoleculesX;
-	simBoxLength[1] = dy * numMoleculesY;
-	simBoxLength[2] = dz * numMoleculesZ;
+	// 1 mol/l = 0.6022 / nm^3 = 0.0006022 / Ang^3 = 0.089236726516 / a0^3
+	double parts_per_a0 = _molarDensity * MDGenerator::molPerL_2_mardyn;
+	double volume = _numMolecules / parts_per_a0;
+	_simBoxLength[0] = pow(volume, 1./3.);
+	_simBoxLength[1] = _simBoxLength[0];
+	_simBoxLength[2] = _simBoxLength[0];
 
 	domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);
-	domain->setGlobalLength(0, simBoxLength[0]);
-	domain->setGlobalLength(1, simBoxLength[1]);
-	domain->setGlobalLength(2, simBoxLength[2]);
+	domain->setGlobalLength(0, _simBoxLength[0]);
+	domain->setGlobalLength(1, _simBoxLength[1]);
+	domain->setGlobalLength(2, _simBoxLength[2]);
 
 	for (unsigned int i = 0; i < _components.size(); i++) {
-		domain->addComponent(_components[i]);
+		Component component = _components[i];
+		if (_configuration.performPrincipalAxisTransformation()) {
+			principalAxisTransform(component);
+		}
+		domain->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 }
@@ -108,19 +108,44 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
+	int numMoleculesPerDimension = pow(_numMolecules / 2, 1./3.);
+
 	int id = 1;
-	for (int i = 0; i < numMoleculesX; i++) {
-		for (int j = 0; j < numMoleculesY; j++) {
-			for (int k = 0; k < numMoleculesZ; k++) {
-				Molecule m(id, 0, origin.x + i * dx,
-						origin.y + j * dy, origin.z + k * dz, 0.1 * id,
-						-0.2 * id, 0.3 * id, 0, 0, 0, 0, 0, 0, 0, &_components);
+	double spacing = _simBoxLength[0] / numMoleculesPerDimension;
+	double origin = spacing / 4.; // origin of the first DrawableMolecule
+
+//	_logger->info() << "Spacing=" << spacing << " numMolPerDim=" << numMoleculesPerDimension <<
+//			" origin=" << origin << endl;
+
+	for (int i = 0; i < numMoleculesPerDimension; i++) {
+		for (int j = 0; j < numMoleculesPerDimension; j++) {
+			for (int k = 0; k < numMoleculesPerDimension; k++) {
+				vector<double> velocity = getRandomVelocity(_temperature);
+				Molecule m(id, 0, origin +
+						i * spacing, origin + j * spacing, origin + k * spacing, // position
+						velocity[0], -velocity[1], velocity[2], // velocity
+						0, 0, 0, 0, 0, 0, 0, &_components);
 				particleContainer->addParticle(m);
 				id++;
 			}
 		}
 	}
-	_logger->debug() << "EqvGridGenerator: numParticles = "<< particleContainer->getNumberOfParticles() << endl;
+
+	origin = spacing / 4. * 3.; // origin of the first DrawableMolecule
+
+	for (int i = 0; i < numMoleculesPerDimension; i++) {
+		for (int j = 0; j < numMoleculesPerDimension; j++) {
+			for (int k = 0; k < numMoleculesPerDimension; k++) {
+				vector<double> velocity = getRandomVelocity(_temperature);
+				Molecule m(id, 0, origin +
+						i * spacing, origin + j * spacing, origin + k * spacing, // position
+						velocity[0], -velocity[1], velocity[2], // velocity
+						0, 0, 0, 0, 0, 0, 0, &_components);
+				particleContainer->addParticle(m);
+				id++;
+			}
+		}
+	}
 }
 
 

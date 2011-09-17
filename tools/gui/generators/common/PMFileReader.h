@@ -24,6 +24,7 @@ public:
 	virtual ~PMFileReader();
 
 	static void readPMFile(const std::string& filename, Generator* generator, ComponentParameters* parameters);
+
 };
 
 #endif /* PMFILEREADER_H_ */

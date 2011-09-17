@@ -18,6 +18,20 @@
 #include "common/DrawableMolecule.h"
 #include "QObjects/ScenarioGenerator.h"
 
+
+double const MDGenerator::angstroem_2_atomicUnitLength = 1.889726878;
+
+double const MDGenerator::unitMass_2_mardyn = 0.001; // Mardyn calculates with 1/1000 u as base unit.
+
+double const MDGenerator::debye_2_mardyn = 0.393429724;
+
+double const MDGenerator::buckingham_2_mardyn = 0.743472313;
+
+double const MDGenerator::fs_2_mardyn = 0.030619994;
+
+const double MDGenerator::molPerL_2_mardyn = 8.923894 * 10e-5;
+
+
 MDGenerator::MDGenerator(std::string name) :
 Generator(name), _deleteLogger(true) {
 	// initialize monolithic Mardyn's global_log and silence it...
@@ -62,7 +76,6 @@ void MDGenerator::generatePreview() {
 	double LJCutoffRadius = 3.0;
 	double tersoffCutoffRadius = 3.0;
 	double cellsInCutoffRadius = 1;
-	ParticlePairsHandler* partPairsHandler = NULL;
 
 	readPhaseSpaceHeader(&domain, 0);
 	bBoxMax[0] = domain.getGlobalLength(0);
@@ -72,11 +85,10 @@ void MDGenerator::generatePreview() {
 	_logger->info() << "MDGenerator: bounding box of domain is [" <<
 			bBoxMin[0] << "," << bBoxMin[1] << "," << bBoxMin[2] << "] to ["
 			<< bBoxMax[0] << "," << bBoxMax[1] << "," << bBoxMax[2] << "]" << endl;
-
-	_logger->info() << "MDGenerator: temperature=" << domain.getGlobalCurrentTemperature() << endl;
+	_logger->info() << "MDGenerator: temperature=" << domain.getTargetTemperature(0) << endl;
 
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius, partPairsHandler);
+			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
 
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
@@ -113,17 +125,15 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	double LJCutoffRadius = 3.0;
 	double tersoffCutoffRadius = 3.0;
 	double cellsInCutoffRadius = 1;
-	ParticlePairsHandler* partPairsHandler = NULL;
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius, partPairsHandler);
+			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
 
 	readPhaseSpaceHeader(&domain, 0);
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 
-	string destination = directory + "/molecules.inp";
+	string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
 	_logger->info() << "Writing output to: " << destination << endl;
-	CheckpointWriter writer(1, destination, 0, false);
-	writer.doOutput(&container, &domainDecomposition, &domain, 1, &lmu);
+	domain.writeCheckpoint(destination, &container, &domainDecomposition);
 }
 
 std::vector<double> MDGenerator::getRandomVelocity(double temperature) const {

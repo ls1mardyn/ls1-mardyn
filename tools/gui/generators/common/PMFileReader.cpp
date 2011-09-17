@@ -103,10 +103,10 @@ void readDipole(ComponentParameters* parameters, Generator* generator, ifstream&
 		double value = 0;
 		string baseName = parameters->getNameId() + ".Dipole" + convertToString(i);
 
-		for (int k = 0; k < 6; k++) {
+		for (int k = 0; k < 8; k++) {
 			readTag(DipoleTags[k], value, input);
 
-			if (DipoleTags[k] == "shielding" || DipoleTags[k] == "phi" || DipoleTags[k] == "theta") {
+			if (DipoleTags[k] == "shielding" || DipoleTags[k] == "phi" || DipoleTags[k] == "theta" || DipoleTags[k] == "mass") {
 				std::cout << "PMFileReader: Ignoring value " << DipoleTags[k] << endl;
 				continue;
 			}
@@ -125,10 +125,10 @@ void readQuadrupole(ComponentParameters* parameters, Generator* generator, ifstr
 		double value = 0;
 		string baseName = parameters->getNameId() + ".Quadrupole" + convertToString(i);
 
-		for (int k = 0; k < 6; k++) {
+		for (int k = 0; k < 8; k++) {
 			readTag(QuadrupoleTags[k], value, input);
 
-			if (QuadrupoleTags[k] == "shielding" || QuadrupoleTags[k] == "phi" || QuadrupoleTags[k] == "theta") {
+			if (QuadrupoleTags[k] == "shielding" || QuadrupoleTags[k] == "phi" || QuadrupoleTags[k] == "theta" || QuadrupoleTags[k] == "mass") {
 				std::cout << "PMFileReader: Ignoring value " << QuadrupoleTags[k] << endl;
 				continue;
 			}
@@ -141,8 +141,21 @@ void readQuadrupole(ComponentParameters* parameters, Generator* generator, ifstr
 	}
 }
 
+void reset(Generator* generator, ComponentParameters* parameters) {
+	string numberSitesNames[] = { ".NumberOfLJCenters", ".NumberOfCharges",
+								  ".NumberOfDipoles", ".NumberOfQuadrupoles" };
+
+	for (int i = 0; i < 4; i++) {
+		ParameterWithIntValue* numLJParameters =
+				dynamic_cast<ParameterWithIntValue*> (ParameterCollection::findParameter(parameters, parameters->getNameId() + numberSitesNames[i]));
+		numLJParameters->setValue(0);
+		generator->setParameter(numLJParameters);
+	}
+}
 
 void PMFileReader::readPMFile(const std::string& filename, Generator* generator, ComponentParameters* parameters) {
+	reset(generator, parameters);
+
 	ifstream input(filename.c_str());
 
 	int nSiteTypes = 0;
