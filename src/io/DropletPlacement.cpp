@@ -92,7 +92,6 @@ vector<DropletPlacement::Droplet> DropletPlacement::generateDroplets() {
 
 	// in case there is only one droplet to be generated, place it in the middle!
 	double maxDropVolume = (4.0 / 3.0 * M_PI * pow(_maxSphereRadius,3));
-	std::cout << "maxDropVolume=" << maxDropVolume << " fluidVolume=" << _fluidVolume << endl;
 	if (_numSphereSizes == 1 && maxDropVolume >= _fluidVolume) {
 		vector<Droplet> droplets;
 		double center[3] = {0.5, 0.5, 0.5};
