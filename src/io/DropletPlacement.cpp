@@ -12,14 +12,14 @@
 
 using namespace std;
 
-DropletPlacement::DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes)
+DropletPlacement::DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes, Log::Logger* logger)
  : _fluidVolume(fluidVolume / 100.), _maxSphereRadius(pow((3.0*maxSphereVolume / 100.)/(4.0 * M_PI), 1.0/3.0)),
-   _numSphereSizes(numSphereSizes), _numOccupied(0)
+   _numSphereSizes(numSphereSizes), _numOccupied(0), _logger(logger)
 {
 	initFields(SIZE);
-	Log::global_log -> debug() << "Instantiated Droplet Generator for parameter set " <<
+	_logger -> debug() << "Instantiated Droplet Generator for parameter set " <<
 			" fluidVolume " << _fluidVolume << " maxSphereVolume " << (maxSphereVolume/100) << " numSphereSizes " << _numSphereSizes << endl;
-	Log::global_log -> debug() << " _maxSphereRadius is " << _maxSphereRadius << endl;
+	_logger -> debug() << " _maxSphereRadius is " << _maxSphereRadius << endl;
 }
 
 DropletPlacement::~DropletPlacement() {
@@ -90,6 +90,17 @@ void DropletPlacement::placeSphereRandomly(double radius, std::vector<Droplet>& 
 
 vector<DropletPlacement::Droplet> DropletPlacement::generateDroplets() {
 
+	// in case there is only one droplet to be generated, place it in the middle!
+	double maxDropVolume = (4.0 / 3.0 * M_PI * pow(_maxSphereRadius,3));
+	std::cout << "maxDropVolume=" << maxDropVolume << " fluidVolume=" << _fluidVolume << endl;
+	if (_numSphereSizes == 1 && maxDropVolume >= _fluidVolume) {
+		vector<Droplet> droplets;
+		double center[3] = {0.5, 0.5, 0.5};
+		Droplet droplet(center, _maxSphereRadius);
+		droplets.push_back(droplet);
+		return droplets;
+	}
+
 	// sphereclass 1:
 	double currentRadius = _maxSphereRadius;
 	double percentageOccupied = 0.0;
@@ -104,10 +115,10 @@ vector<DropletPlacement::Droplet> DropletPlacement::generateDroplets() {
 			count++;
 			percentageOccupied = _numOccupied / pow(SIZE, 3.0);
 		}
-		Log::global_log->debug() << "Created " << count << " spheres with radius " << currentRadius << endl;
+		_logger->debug() << "Created " << count << " spheres with radius " << currentRadius << endl;
 		currentRadius -= _maxSphereRadius / 10.0;
 	}
-	Log::global_log->debug() << "PercentOccupied: " << (100 * _numOccupied / pow(SIZE, 3.0)) << " %" << endl;
+	_logger->debug() << "PercentOccupied: " << (100 * _numOccupied / pow(SIZE, 3.0)) << " %" << endl;
 	return droplets;
 }
 

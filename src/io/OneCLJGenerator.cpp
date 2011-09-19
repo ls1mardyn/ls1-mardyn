@@ -339,7 +339,7 @@ void OneCLJGenerator::addParticle(int id, double x, double y, double z, Particle
 
 void OneCLJGenerator::readLocalClusters(Domain* domain, DomainDecompBase* domainDecomp){
 
-	DropletPlacement dropletPlacement(_fluidVolume, _maxSphereVolume, _numSphereSizes);
+	DropletPlacement dropletPlacement(_fluidVolume, _maxSphereVolume, _numSphereSizes, Log::global_log);
 	vector<DropletPlacement::Droplet> droplets = dropletPlacement.generateDroplets();
 
 	vector<double> shiftedSphere;

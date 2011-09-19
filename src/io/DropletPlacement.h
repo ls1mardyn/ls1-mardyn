@@ -41,7 +41,7 @@ public:
 	 *         - each class covering the same volume in total
 	 *         - the size of a sphere is determined by pow(0.9, i) * maxSphereRadius; i in [1,maxSphereSize]
 	 */
-	DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes);
+	DropletPlacement(double fluidVolume, double maxSphereVolume, int numSphereSizes, Log::Logger* logger);
 
 	/**
 	 * Generates droplets with sizes as specified by numSphereSizes, fluidVolume
@@ -58,6 +58,8 @@ private:
 
 	int _numOccupied;
 	std::vector<std::vector<std::vector<bool> > > _occupiedFields;
+
+	Log::Logger* _logger;
 
 	/**
 	 * Initialize vector _occupiedFields
