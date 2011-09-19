@@ -21,12 +21,14 @@ private:
 	Position _x;
 	Vector _v;
 	unsigned long _id;
+	int _numComponents;
+	int _cid; // component-id
 
 public:
 	/**
 	 * Constructors
 	 */
-	DrawableMolecule(const Molecule& molecule);
+	DrawableMolecule(const Molecule& molecule, int numComponents);
 
 	DrawableMolecule();
 

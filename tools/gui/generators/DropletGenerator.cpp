@@ -40,7 +40,7 @@ DropletGenerator::DropletGenerator() :
 	_temperature = 3.0;
 	setClusterParameters(0.05, 0.8, 15, 5, 4);
 	_components.resize(1);
-	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 5.0, false);
+	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
 }
 
 DropletGenerator::~DropletGenerator() {
@@ -132,7 +132,7 @@ void DropletGenerator::readLocalClusters(Domain* domain,
 
 	localClusters.clear();
 	DropletPlacement dropletPlacement(fluidVolume, maxSphereVolume,
-			numSphereSizes);
+			numSphereSizes, _logger);
 	vector<DropletPlacement::Droplet> droplets =
 			dropletPlacement.generateDroplets();
 
@@ -229,7 +229,7 @@ vector<ParameterCollection*> DropletGenerator::getParameters() {
 			new ParameterWithIntValue("fluidVolume", "fluidVolume",
 					"Volume of the fluid, i.e. percentage of the volume covered by fluid (X percent)",Parameter::LINE_EDIT,  false, fluidVolume));
 	tab->addParameter(
-			new ParameterWithIntValue("maxShpereVolume", "maxSphereVolume",
+			new ParameterWithDoubleValue("maxSphereVolume", "maxSphereVolume",
 					"The Volume covered by the largest drop (X Percent of the total volume", Parameter::LINE_EDIT, false, maxSphereVolume));
 	tab->addParameter(
 			new ParameterWithIntValue("numSphereSizes", "numSphereSizes",
@@ -434,7 +434,7 @@ void DropletGenerator::setParameter(Parameter* p) {
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "maxSphereVolume") {
 		maxSphereVolume
-				= static_cast<ParameterWithIntValue*> (p)->getValue();
+				= static_cast<ParameterWithDoubleValue*> (p)->getValue();
 		cout << "OneCenterLJDroplet: maxSphereVolume: " << maxSphereVolume
 				<< endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,

@@ -7,6 +7,7 @@
 
 #include "CubicGridGenerator.h"
 #include "Parameters/ParameterWithIntValue.h"
+#include "Parameters/ParameterWithBool.h"
 #include "common/MardynConfigurationParameters.h"
 #include "common/PrincipalAxisTransform.h"
 #include "Tokenize.h"
@@ -27,10 +28,10 @@ extern "C" {
 
 CubicGridGenerator::CubicGridGenerator() :
 	MDGenerator("CubicGridGenerator"), _numMolecules(4), _molarDensity(0.6),
-	_temperature(1.5) {
+	_temperature(1.5), _binaryMixture(false) {
 
 	_components.resize(1);
-	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 5.0, false);
+	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
 }
 
 vector<ParameterCollection*> CubicGridGenerator::getParameters() {
@@ -56,6 +57,15 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 	tab->addParameter(
 			new ComponentParameters("component1", "component1",
 					"Set up the parameters of component 1", _components[0]));
+	tab->addParameter(
+			new ParameterWithBool("binaryMixture", "Binary Mixture",
+					"Check this option to simulate a binary mixture.\n(A second component will be added.)",
+					Parameter::CHECKBOX, true, _binaryMixture));
+	if (_binaryMixture) {
+		tab->addParameter(
+				new ComponentParameters("component2", "component2",
+						"Set up the parameters of component 2", _components[1]));
+	}
 	return parameters;
 }
 
@@ -71,6 +81,17 @@ void CubicGridGenerator::setParameter(Parameter* p) {
 	} else if (id.find("component1") != std::string::npos) {
 		std::string part = remainingSubString(".", id);
 		ComponentParameters::setParameterValue(_components[0], p, part);
+	} else if (id == "binaryMixture") {
+		_binaryMixture = static_cast<ParameterWithBool*>(p)->getValue();
+		if (_binaryMixture && _components.size() == 1) {
+			_components.resize(2);
+			_components[1].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 5.0, false);
+		} else if (!_binaryMixture && _components.size() == 2) {
+			_components.resize(1);
+		}
+	} else if (id.find("component2") != std::string::npos) {
+		std::string part = remainingSubString(".", id);
+		ComponentParameters::setParameterValue(_components[1], p, part);
 	} else if (firstSubString(".", id) == "ConfigurationParameters") {
 		std::string part = remainingSubString(".", id);
 		MardynConfigurationParameters::setParameterValue(_configuration, p, part);
@@ -121,7 +142,13 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		for (int j = 0; j < numMoleculesPerDimension; j++) {
 			for (int k = 0; k < numMoleculesPerDimension; k++) {
 				vector<double> velocity = getRandomVelocity(_temperature);
-				Molecule m(id, 0, origin +
+
+				int componentType = 0;
+				if (_binaryMixture) {
+					componentType = randdouble(0, 1.999999);
+				}
+
+				Molecule m(id, componentType, origin +
 						i * spacing, origin + j * spacing, origin + k * spacing, // position
 						velocity[0], -velocity[1], velocity[2], // velocity
 						0, 0, 0, 0, 0, 0, 0, &_components);

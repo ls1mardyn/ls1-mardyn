@@ -138,8 +138,9 @@ protected:
 
 	MardynConfiguration _configuration;
 
-private:
-
+	/**
+	 * create a random number between a and b (inclusive)
+	 */
 	double randdouble(double a, double b) const {
 		return a + rand() * (b - a) / (RAND_MAX);
 	}

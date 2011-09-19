@@ -11,6 +11,7 @@
 #include "Parameters/ParameterCollection.h"
 
 class MardynConfiguration;
+class OutputConfiguration;
 
 /**
  * This class represents a collection of parameters corresponding to the
@@ -29,6 +30,11 @@ public:
 	 */
 	static void setParameterValue(MardynConfiguration& config, const Parameter* parameter, const std::string valueName);
 
+private:
+
+	void addOutputConfigurationParameters(const OutputConfiguration& config, const std::string& basename);
+
+	static void setOutputConfigurationParameter(OutputConfiguration& config, const Parameter* parameter, const std::string& valueName);
 };
 
 #endif /* CONFIGURATIONPARAMETERS_H_ */

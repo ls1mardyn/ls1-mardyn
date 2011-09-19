@@ -29,6 +29,7 @@ HEADERS  += generators/common/PMFileReader.h
 HEADERS  += generators/common/MardynConfigLegacyWriter.h
 HEADERS  += generators/common/eig3.h
 HEADERS  += generators/common/PrincipalAxisTransform.h
+HEADERS  += generators/common/OutputConfiguration.h
 
 SOURCES  += generators/MDGenerator.cpp
 SOURCES  += generators/CubicGridGenerator.cpp
@@ -40,6 +41,7 @@ SOURCES  += generators/common/PMFileReader.cpp
 SOURCES  += generators/common/MardynConfigLegacyWriter.cpp
 SOURCES  += generators/common/eig3.cpp
 SOURCES  += generators/common/PrincipalAxisTransform.cpp
+SOURCES  += generators/common/OutputConfiguration.cpp
 
 LIBS += -L. -lMardyn
 

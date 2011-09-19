@@ -40,6 +40,7 @@ private:
 
 	double _simBoxLength[3]; // length of the simulation box
 
+	bool _binaryMixture;
 public:
 	/**
 	 * Constructor

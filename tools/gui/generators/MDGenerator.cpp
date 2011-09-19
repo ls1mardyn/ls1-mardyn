@@ -71,7 +71,7 @@ void MDGenerator::generatePreview() {
 	list<ChemicalPotential> lmu;
 
 	double bBoxMin[3] = { 0,0,0};
-	double bBoxMax[3] = { 20,20, 20};
+	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
 	double LJCutoffRadius = 3.0;
 	double tersoffCutoffRadius = 3.0;
@@ -95,7 +95,7 @@ void MDGenerator::generatePreview() {
 
 	Molecule* molecule = container.begin();
 	while (molecule != container.end()) {
-		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule));
+		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, domain.getComponents().size()-1));
 		molecule = container.next();
 	}
 }
@@ -120,16 +120,21 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	list<ChemicalPotential> lmu;
 
 	double bBoxMin[3] = { 0,0,0};
-	double bBoxMax[3] = { 10,10,10};
+	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
 	double LJCutoffRadius = 3.0;
 	double tersoffCutoffRadius = 3.0;
 	double cellsInCutoffRadius = 1;
-	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
 
 	readPhaseSpaceHeader(&domain, 0);
+	bBoxMax[0] = domain.getGlobalLength(0);
+	bBoxMax[1] = domain.getGlobalLength(1);
+	bBoxMax[2] = domain.getGlobalLength(2);
+	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
+			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
+	domain.setglobalNumMolecules(container.getNumberOfParticles());
+	std::cout << "NumMolecules in Container: " << container.getNumberOfParticles() << endl;
 
 	string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
 	_logger->info() << "Writing output to: " << destination << endl;
