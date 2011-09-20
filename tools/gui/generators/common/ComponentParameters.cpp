@@ -246,13 +246,13 @@ void ComponentParameters::setParameterValue(Charge& charge,
 #endif
 
 	if (valueName == "x") {
-		charge.setR(0, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
+		charge.setR(0, p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "y") {
-		charge.setR(1, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
+		charge.setR(1, p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "z") {
-		charge.setR(2, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
+		charge.setR(2, p->getValue()  * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "mass") {
-		charge.setM(p->getValue() /* * MDGenerator::unitMass_2_mardyn*/);
+		charge.setM(p->getValue() * MDGenerator::unitMass_2_mardyn);
 	} else if (valueName == "charge") {
 		charge.setQ(p->getValue());
 	} else {
@@ -271,13 +271,13 @@ void ComponentParameters::setParameterValue(LJcenter& ljCenter,
 #endif
 
 	if (valueName == "x") {
-		ljCenter.setR(0, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
+		ljCenter.setR(0, p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "y") {
-		ljCenter.setR(1, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
+		ljCenter.setR(1, p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "z") {
-		ljCenter.setR(2, p->getValue() /* * MDGenerator::angstroem_2_atomicUnitLength*/);
+		ljCenter.setR(2, p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else if (valueName == "mass") {
-		ljCenter.setM(p->getValue() /* * MDGenerator::unitMass_2_mardyn*/);
+		ljCenter.setM(p->getValue()  * MDGenerator::unitMass_2_mardyn);
 	} else if (valueName == "epsilon") {
 		ljCenter.setEps(p->getValue());
 	} else if (valueName == "sigma") {

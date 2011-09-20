@@ -11,7 +11,7 @@
 
 
 const std::string MardynConfiguration::OutputFormat_XML("XML");
-const std::string MardynConfiguration::OutputFormat_LEGACY("ls1 LEGACY");
+const std::string MardynConfiguration::OutputFormat_LEGACY("ls1-LEGACY");
 
 const std::string MardynConfiguration::ParallelisationType_NONE("None");
 const std::string MardynConfiguration::ParallelisationType_DOMAINDECOMPOSITION("DomainDecomposition");

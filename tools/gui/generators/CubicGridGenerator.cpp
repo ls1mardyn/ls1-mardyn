@@ -32,6 +32,7 @@ CubicGridGenerator::CubicGridGenerator() :
 
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
+	calculateSimulationBoxLength();
 }
 
 vector<ParameterCollection*> CubicGridGenerator::getParameters() {
@@ -51,9 +52,9 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 					"Total number of Molecules", Parameter::LINE_EDIT,
 					false, _numMolecules));
 	tab->addParameter(
-			new ParameterWithDoubleValue("temperature", "Temperature",
-					"Temperature in the domain", Parameter::LINE_EDIT,
-					false, _temperature ));
+			new ParameterWithDoubleValue("temperature", "Temperature [K]",
+					"Temperature in the domain in Kelvin", Parameter::LINE_EDIT,
+					false, _temperature / MDGenerator::kelvin_2_mardyn ));
 	tab->addParameter(
 			new ComponentParameters("component1", "component1",
 					"Set up the parameters of component 1", _components[0]));
@@ -74,10 +75,12 @@ void CubicGridGenerator::setParameter(Parameter* p) {
 	string id = p->getNameId();
 	if (id == "numMolecules") {
 		_numMolecules = static_cast<ParameterWithIntValue*> (p)->getValue();
+		calculateSimulationBoxLength();
 	} else if (id == "molarDensity") {
 		_molarDensity = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		calculateSimulationBoxLength();
 	} else if (id == "temperature") {
-		_temperature = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		_temperature = static_cast<ParameterWithDoubleValue*> (p)->getValue() * MDGenerator::kelvin_2_mardyn;
 	} else if (id.find("component1") != std::string::npos) {
 		std::string part = remainingSubString(".", id);
 		ComponentParameters::setParameterValue(_components[0], p, part);
@@ -99,14 +102,17 @@ void CubicGridGenerator::setParameter(Parameter* p) {
 }
 
 
-void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
+void CubicGridGenerator::calculateSimulationBoxLength() {
 	// 1 mol/l = 0.6022 / nm^3 = 0.0006022 / Ang^3 = 0.089236726516 / a0^3
 	double parts_per_a0 = _molarDensity * MDGenerator::molPerL_2_mardyn;
 	double volume = _numMolecules / parts_per_a0;
 	_simBoxLength[0] = pow(volume, 1./3.);
 	_simBoxLength[1] = _simBoxLength[0];
 	_simBoxLength[2] = _simBoxLength[0];
+}
 
+
+void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
@@ -148,10 +154,23 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 					componentType = randdouble(0, 1.999999);
 				}
 
+				double I[3] = {0.,0.,0.};
+				I[0] = _components[componentType].I11();
+				I[1] = _components[componentType].I22();
+				I[2] = _components[componentType].I33();
+				/*****  Copied from animake - initialize anular velocity *****/
+				double w[3];
+				for(int d=0; d < 3; d++) {
+					w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+							sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+					w[d] = w[d] * MDGenerator::fs_2_mardyn;
+				}
+				/************************** End Copy **************************/
+
 				Molecule m(id, componentType, origin +
 						i * spacing, origin + j * spacing, origin + k * spacing, // position
 						velocity[0], -velocity[1], velocity[2], // velocity
-						0, 0, 0, 0, 0, 0, 0, &_components);
+						1, 0, 0, 0, w[0], w[1], w[2], &_components);
 				particleContainer->addParticle(m);
 				id++;
 			}
@@ -188,6 +207,10 @@ bool CubicGridGenerator::validateParameters() {
 		valid = false;
 		_logger->error() << "OutputFormat XML not yet supported!" << endl;
 	}
-	return valid;
+
+	if (_simBoxLength[0] < 2. * _configuration.getCutoffRadius()) {
+		valid = false;
+		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+	}
 }
 

@@ -73,6 +73,9 @@ public:
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer,
 			std::list<ChemicalPotential>* lmu, Domain* domain,
 			DomainDecompBase* domainDecomp);
+
+private:
+	void calculateSimulationBoxLength();
 };
 
 #endif /* EQVGRIDGENERATOR_H_ */

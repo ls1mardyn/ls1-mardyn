@@ -235,6 +235,10 @@ vector<ParameterCollection*> DropletGenerator::getParameters() {
 			new ParameterWithIntValue("numSphereSizes", "numSphereSizes",
 					"determines how many different sizes of spheres exist, with \n 1) each class covering the same volume in total and \n 2) the size of a sphere is determined by pow(0.9, i) * maxSphereRadius; i in [1,maxSphereSize]",Parameter::SPINBOX,  false, numSphereSizes));
 	tab->addParameter(
+			new ParameterWithDoubleValue("temperature", "Temperature [K]",
+					"Temperature in the domain in Kelvin", Parameter::LINE_EDIT,
+					false, _temperature / MDGenerator::kelvin_2_mardyn ));
+	tab->addParameter(
 			new ComponentParameters("component1", "component1", "Set up the parameters of component 1",
 					_components[0]));
 	return parameters;
@@ -334,9 +338,21 @@ void DropletGenerator::generateMoleculesCluster(
 
 						if (isInsideDomain(domain, r_)
 								 && domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
+							double I[3] = {0.,0.,0.};
+							I[0] = _components[0].I11();
+							I[1] = _components[0].I22();
+							I[2] = _components[0].I33();
+							/*****  Loop Copied from animake - initialize anular velocity *****/
+							double w[3];
+							for(int d=0; d < 3; d++) {
+								w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+										sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+								w[d] = w[d] * MDGenerator::fs_2_mardyn;
+							}
+
 							vector<double> v = getRandomVelocity(_temperature);
 							Molecule m(molCount, 0, r_[0], r_[1], r_[2], v[0], v[1], v[2],
-									0, 0, 0, 0, 0, 0, 0, &_components);
+									1, 0, 0, 0, w[0], w[1], w[2], &_components);
 							particleContainer->addParticle(m);
 							//std::cout << "XXXXXXX DropletGenerator: added particle with ID=" << molCount << std::endl;
 							molCount++;
@@ -395,9 +411,21 @@ void DropletGenerator::generateMoleculesCluster(
 
 					 if (isInsideDomain(domain, r_)
 							 && domainDecomp->procOwnsPos(r_[0], r_[1], r_[2], domain)) {
+						 double I[3] = {0.,0.,0.};
+						 I[0] = _components[0].I11();
+						 I[1] = _components[0].I22();
+						 I[2] = _components[0].I33();
+						 /*****  Loop Copied from animake - initialize anular velocity *****/
+						 double w[3];
+						 for(int d=0; d < 3; d++) {
+							 w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+									 sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+							 w[d] = w[d] * MDGenerator::fs_2_mardyn;
+						 }
+
 						 vector<double> v = getRandomVelocity(_temperature);
 						 Molecule m(molCount, 0, r_[0], r_[1], r_[2], v[0], v[1], v[2],
-								 0, 0, 0, 0, 0, 0, 0, &_components);
+								 1, 0, 0, 0, w[0], w[1], w[2], &_components);
 						 particleContainer->addParticle(m);
 						 //std::cout << "XXXXXXX DropletGenerator: added particle with ID=" << molCount << std::endl;
 						 molCount++;
@@ -445,7 +473,9 @@ void DropletGenerator::setParameter(Parameter* p) {
 				<< endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
-	} else if (id.find("component1") != std::string::npos) {
+	} else if (id == "temperature") {
+		_temperature = static_cast<ParameterWithDoubleValue*> (p)->getValue() * MDGenerator::kelvin_2_mardyn;
+	}  else if (id.find("component1") != std::string::npos) {
 		std::string part = id.substr(11);
 		ComponentParameters::setParameterValue(_components[0], p, part);
 	} else if (firstSubString(".", id) == "ConfigurationParameters") {
@@ -469,6 +499,14 @@ bool DropletGenerator::validateParameters() {
 		valid = false;
 		_logger->error() << "OutputFormat XML not yet supported!" << endl;
 	}
+
+	for (int i = 0; i < 3; i++) {
+		if (simBoxLength[i] < 2.0 * _configuration.getCutoffRadius()) {
+			valid = false;
+			_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+		}
+	}
+
 	return valid;
 }
 

@@ -61,6 +61,8 @@ public:
 	 */
 	static const double molPerL_2_mardyn;
 
+	static const double kelvin_2_mardyn;
+
 protected:
 	Log::Logger* _logger;
 	bool _deleteLogger;
