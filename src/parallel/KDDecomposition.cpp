@@ -728,12 +728,11 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 	bool coversAll[KDDIM];
     
     /* TODO: We do not use this values anywhere ... */
-	int cellsPerDim[KDDIM];
+	//int cellsPerDim[KDDIM];
 	for (int dim = 0; dim < KDDIM; dim++) {
 		coversAll[dim] = fatherNode->_coversWholeDomain[dim];
-		cellsPerDim[dim] = fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] + 1;
+		//cellsPerDim[dim] = fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] + 1;
 	}
-
 	int divDir = 0;
 	int divIdx = 0;
 	double maxProcCost = DBL_MAX;
@@ -757,8 +756,8 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 					numCellsInLayer *= fatherNode->_highCorner[temp] - fatherNode->_lowCorner[temp] + 1;
 				}
 			}
-			unsigned long numCellsLeft = numCellsInLayer * (i + 1);
-			unsigned long numCellsRight = numCellsInLayer * (fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - i);
+			// unsigned long numCellsLeft = numCellsInLayer * (i + 1);
+			// unsigned long numCellsRight = numCellsInLayer * (fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - i);
 
 			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) fatherNode->_numProcs);
 
@@ -798,8 +797,8 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 						ok = true;
 				}
 			}
-			unsigned long numBoundCellsLeft = numCellsLeft - (unsigned long) (((double) numProcsLeftTest) * pow(pow(numCellsLeft / numProcsLeftTest, 1. / 3.) - 2, 3));
-			unsigned long numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
+			// unsigned long numBoundCellsLeft = numCellsLeft - (unsigned long) (((double) numProcsLeftTest) * pow(pow(numCellsLeft / numProcsLeftTest, 1. / 3.) - 2, 3));
+			// unsigned long numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
 			double maxProcCostOld = max(costsLeft[dim][i] / (double) numProcsLeftTest, costsRight[dim][i] / (double) numProcsRightTest);
 			// Find out in which direction process distribution has to be shifted
 			int procShift = 1;
@@ -820,8 +819,8 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 						break;
 					}
 					else {
-						numBoundCellsLeft = numCellsLeft - (unsigned long) (((double) numProcsLeftTest) * pow(pow(numCellsLeft / numProcsLeftTest, 1. / 3.) - 2, 3));
-						numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
+						// numBoundCellsLeft = numCellsLeft - (unsigned long) (((double) numProcsLeftTest) * pow(pow(numCellsLeft / numProcsLeftTest, 1. / 3.) - 2, 3));
+						// numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
 						maxProcCostNew = max(costsLeft[dim][i] / (double) numProcsLeftTest, costsRight[dim][i] / (double) numProcsRightTest);
 					}
 				}
@@ -1345,11 +1344,13 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 	int count = 0;
 	double bBMin[3]; // haloBoundingBoxMin
     /* TODO: We do not use values form bBMax anywhere ... */
+	/*
 	double bBMax[3]; // haloBoundingBoxMax
 	for (int dim = 0; dim < 3; dim++) {
 		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
 		bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
 	}
+	*/
 	Molecule* molPtr = moleculeContainer->begin();
 	while (molPtr != moleculeContainer->end()) {
 		int cellIndex[3]; // 3D Cell index (local)
