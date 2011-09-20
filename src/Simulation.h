@@ -220,9 +220,12 @@ public:
 		return _loopTimer;
 	}
 
-	double getcutoffRadius() const {
-		return _cutoffRadius;
-	}
+	double getcutoffRadius() const { return _cutoffRadius; }
+	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
+	double getLJCutoff() const { return _LJCutoffRadius; }
+	void getLJCutoff(double LJCutoffRadius) { _LJCutoffRadius = LJCutoffRadius; }
+	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
+	void getTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
 
 	void setMaxID (unsigned long id)
 	{

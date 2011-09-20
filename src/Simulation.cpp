@@ -310,7 +310,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 						bBoxMax[d] = _domainDecomposition->getBoundingBoxMax(d, _domain);
 						global_log->debug() << "[" << d << "] " << bBoxMin[d] << " - " << bBoxMax[d] << endl;
 					}
-					if (this->_LJCutoffRadius == 0.0)
+					if (_LJCutoffRadius == 0.0)
 						_LJCutoffRadius = _cutoffRadius;
 					global_log->debug() << "Cutoff: " << _cutoffRadius << "\nCellsInCutoff: " << cellsInCutoffRadius << endl;
 					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
@@ -524,8 +524,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
 				exit(1);
 			}
-			if (this->_LJCutoffRadius == 0.0)
-				_LJCutoffRadius = this->_cutoffRadius;
+			if (_LJCutoffRadius == 0.0)
+				_LJCutoffRadius = _cutoffRadius;
 			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		} else if (token == "timestepLength") {
 			inputfilestream >> timestepLength;
