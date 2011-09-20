@@ -13,6 +13,7 @@
 #include<cstdlib>
 #include<cassert>
 
+#include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
 
 using namespace std;
@@ -474,9 +475,8 @@ void XMLfile::setMPIdefaults(int mpirootrank, MPI_Comm mpicomm)
 	m_mpi_rootrank=mpirootrank;
 	m_mpi_comm=mpicomm;
 
-	int ierror, mpimyrank;
-	ierror=MPI_Comm_rank(m_mpi_comm, &mpimyrank);
-	assert(ierror==MPI_SUCCESS);
+	int mpimyrank;
+	MPI_CHECK( MPI_Comm_rank(m_mpi_comm, &mpimyrank) );
 	m_mpi_myrank=mpimyrank;
 	//m_mpi_isroot=mpirootrank==mpimyrank;
 }
@@ -487,10 +487,10 @@ bool XMLfile::distributeXMLstring()
 	string xmlstring;
 	if(m_mpi_myrank==m_mpi_rootrank) xmlstring=string(*this);
 
+	int ierror;
 	int len=xmlstring.size();
-	int ierror=MPI_Bcast(&len, 1, MPI_INT, m_mpi_rootrank, m_mpi_comm);
-	assert(ierror==MPI_SUCCESS);
-	bool status=ierror==MPI_SUCCESS && len>0;
+	MPI_CHECK( ierror = MPI_Bcast(&len, 1, MPI_INT, m_mpi_rootrank, m_mpi_comm) );
+	bool status = (ierror==MPI_SUCCESS) && (len>0);
 	char* buffer=const_cast<char*>(xmlstring.c_str());
 	if(m_mpi_myrank!=m_mpi_rootrank)
 	{
@@ -498,8 +498,7 @@ bool XMLfile::distributeXMLstring()
 		buffer=m_xmldoc.allocate_string(NULL,len+1);
 		buffer[len]=0;
 	}
-	ierror=MPI_Bcast(buffer, len, MPI_CHAR, m_mpi_rootrank, m_mpi_comm);
-	assert(ierror==MPI_SUCCESS);
+	MPI_CHECK( MPI_Bcast(buffer, len, MPI_CHAR, m_mpi_rootrank, m_mpi_comm) );
 	if(m_mpi_myrank!=m_mpi_rootrank)
 	{
 		m_xmldoc.parse<0>(buffer);
