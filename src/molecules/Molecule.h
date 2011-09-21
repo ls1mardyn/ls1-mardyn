@@ -96,10 +96,12 @@ public:
 	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }
 	
 	/** return the translational energy of the molecule */
-	double Utrans() const { return 0.5 * _m * v2(); }
+	double U_trans() const { return 0.5 * _m * v2(); }
 	/** return the rotational energy of the molecule */
-	double Urot();
-
+	double U_rot();
+	/** return total kinetic energy of the molecule */
+	double U_kin() { return U_trans() + U_rot(); }
+	
 	/* TODO: Maybe we should better do this using the component directly? 
 	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
 	 */

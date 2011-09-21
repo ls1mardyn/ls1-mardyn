@@ -212,7 +212,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 }
 
 
-double Molecule::Urot() {
+double Molecule::U_rot() {
 	double w[3];
 	_q.rotate(_D, w);
 	double Iw2 = 0.;
