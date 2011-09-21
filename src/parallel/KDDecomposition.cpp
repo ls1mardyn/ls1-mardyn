@@ -1344,13 +1344,11 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 	int count = 0;
 	double bBMin[3]; // haloBoundingBoxMin
     /* TODO: We do not use values form bBMax anywhere ... */
-	/*
-	double bBMax[3]; // haloBoundingBoxMax
+	//double bBMax[3]; // haloBoundingBoxMax
 	for (int dim = 0; dim < 3; dim++) {
 		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
-		bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
+		//bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
 	}
-	*/
 	Molecule* molPtr = moleculeContainer->begin();
 	while (molPtr != moleculeContainer->end()) {
 		int cellIndex[3]; // 3D Cell index (local)
