@@ -41,6 +41,12 @@ make -f Makefile.scengen
 
 !!! Building the generators
 
+Make sure, that in the files <b> CubicGridGenerator.pro</b> and <b> DropletGenerator.pro</b>
+the config variable is set as shown:
+\verbatim
+CONFIG += dll debug
+\endverbatim
+
 \verbatim
 qmake CubicGridGenerator.pro -o Makefile.cubic
 make -f Makefile.cubic
@@ -59,4 +65,36 @@ Finally, set the LD_LIBRARY_PATH and run the scenario generator:
 export LD_LIBRARY_PATH=.
 ./ScenGen
 \endverbatim
+
+
+!!! Using the generators for direct input
+
+As file io may be really slow on some architectures, it is possible to use the 
+generators to generate the input directly in Mardyn/ls1. In order to do this, 
+build the Mardyn executable with the option SUPPORT_DL_GENERATOR in the makefile set.
+
+
+Make sure, that in the files <b> CubicGridGenerator.pro</b> and <b> DropletGenerator.pro</b>
+the config variable is set as shown:
+\verbatim
+CONFIG += dll debug mardyn
+\endverbatim
+
+Then, build the generator libraries. Note, that a generator library built for Mardyn
+is incompatible with the graphical generator, and vice-versa (so you will probably need two
+versions of the libraries).
+
+Now it is possible to create a setup with the graphical generator. Save that configuration
+to a file (Choose "Generator..." -> "save"). That configuration file can be used to initialize 
+the generator. As it is a plain text file, you can edit it by hand (e.g. increase the number 
+of molecules by some orders).
+
+The corresponding line in the mardyn configuration file has to look like:
+\verbatim
+phasespacefile Generator libDropletGenerator.so config.txt
+\endverbatim
+
+<B> Note that only the content of the phasespace file will be generated, i.e. all
+other settings e.g. cutoff-radius, parallelization and so on are read from the mardyn config file! </B>
+
 */

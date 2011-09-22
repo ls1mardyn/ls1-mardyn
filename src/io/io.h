@@ -13,7 +13,6 @@
 #define __IO_H__
 
 #include "utils/xmlfileUnits.h"
-#include "io/PartGen.h"
 #include "io/ResultWriter.h"
 #include "io/XyzWriter.h"
 #include "io/PovWriter.h"
@@ -22,7 +21,6 @@
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
 #include "io/StatisticsWriter.h"
-#include "io/OneCLJGenerator.h"
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
 #include "io/vtk/VTKGridWriter.h"

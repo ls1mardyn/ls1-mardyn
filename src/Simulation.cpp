@@ -48,6 +48,7 @@
 
 #include "io/io.h"
 #include "io/xmlreader.h"
+#include "io/DynamicGeneratorFactory.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -472,54 +473,17 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_inputReader->setPhaseSpaceFile(phaseSpaceFileName);
 				_inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			} else if (phaseSpaceFileFormat == "PartGen") {
-				string mode;
-				string phaseSpaceFileName;
-				inputfilestream >> mode >> phaseSpaceFileName;
-				_inputReader = (InputBase*) new PartGen();
-				_inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
-				// PartGen has to modes, a "Homogeneous" mode, where particles
-				// with a homogeneous distribution are created, and a "Cluster" mode,
-				// where droplets are created. Currently, only the cluster mode is supported,
-				// which needs another config line starting with "clusterFile ..." directly
-				// after the config line starting with "phaseSpaceFile"
-				double gasDensity;
-				double fluidDensity;
-				double volPercOfFluid;
-				string clusterFileName;
-				inputfilestream >> token >> gasDensity >> fluidDensity >> volPercOfFluid >> clusterFileName;
-				((PartGen*) _inputReader)->setClusterFile(gasDensity, fluidDensity, volPercOfFluid, clusterFileName);
-				((PartGen*) _inputReader)->readPhaseSpaceHeader(_domain, timestepLength);
-			} else if (phaseSpaceFileFormat == "1CLJGen") {
-				string mode;
-				int N;
-				double T;
-				string line;
+			} else if (phaseSpaceFileFormat == "Generator") {
+				std::cout << "phaseSpaceFileFormat is Generator!" << endl;
+				string generatorName; // name of the library to load
+				string inputFile; // name of the input file for the generator
 
+				string line;
 				getline(inputfilestream, line);
 				stringstream lineStream(line);
-				lineStream >> mode >> N >> T;
-				global_log->debug() << "read: mode " << mode << " N " << N << " T " << T << endl;
-
-				OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
-				if (mode == "Homogeneous") {
-					double rho;
-					lineStream >> rho;
-					generator->setHomogeneuosParameter(rho);
-				} else if (mode == "Cluster") {
-					double rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
-					lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
-					generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume,
-					        numSphereSizes);
-				} else {
-					global_log->error() << "Error in inputfile: OneCLJGenerator option \"" << mode
-					        << "\" not supported!" << endl;
-					global_log->error() << " Has to be  \"Homogeneous\"  or \"Cluster\"  " << endl;
-					exit(1);
-				}
-				generator->readPhaseSpaceHeader(_domain, timestepLength);
-
-				_inputReader = (OneCLJGenerator*) generator;
+				lineStream >> generatorName >> inputFile;
+				_inputReader = DynamicGeneratorFactory::loadGenerator(generatorName, inputFile);
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			} else {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
 				exit(1);

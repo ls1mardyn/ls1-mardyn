@@ -15,8 +15,11 @@
 #include "Domain.h"
 
 #include "common/MardynConfigLegacyWriter.h"
+
+#ifndef MARDYN
 #include "common/DrawableMolecule.h"
 #include "QObjects/ScenarioGenerator.h"
+#endif
 
 
 double const MDGenerator::angstroem_2_atomicUnitLength = 1.889726878;
@@ -61,11 +64,18 @@ void MDGenerator::setLogger(Log::Logger* logger) {
 	_deleteLogger = false;
 }
 
-const Object* MDGenerator::getSampleObject() const {
-	return new DrawableMolecule();
+void MDGenerator::createSampleObject() const {
+#ifndef MARDYN
+	std::vector<Component> components;
+	components.resize(1);
+	Molecule m(1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, &components);
+	ScenarioGeneratorApplication::getInstance()->addObject(
+			new DrawableMolecule(m, 1));
+#endif
 }
 
 void MDGenerator::generatePreview() {
+#ifndef MARDYN
 	int rank = 0;
 	PressureGradient gradient(rank);
 	Domain domain(rank, &gradient);
@@ -100,6 +110,7 @@ void MDGenerator::generatePreview() {
 		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, domain.getComponents().size()-1));
 		molecule = container.next();
 	}
+#endif
 }
 
 

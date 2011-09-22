@@ -28,7 +28,7 @@ extern "C" {
 
 CubicGridGenerator::CubicGridGenerator() :
 	MDGenerator("CubicGridGenerator"), _numMolecules(4), _molarDensity(0.6),
-	_temperature(1.5), _binaryMixture(false) {
+	_temperature(300. / 315774.5), _binaryMixture(false) {
 
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
@@ -134,6 +134,9 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+//
+// create a body centered cubic layout, by creating by placing the molecules on the
+// vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
 	int numMoleculesPerDimension = pow(_numMolecules / 2, 1./3.);
 
@@ -177,21 +180,45 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		}
 	}
 
+	_components[0].updateMassInertia();
+	if (_binaryMixture) {
+		_components[1].updateMassInertia();
+	}
+
 	origin = spacing / 4. * 3.; // origin of the first DrawableMolecule
 
 	for (int i = 0; i < numMoleculesPerDimension; i++) {
 		for (int j = 0; j < numMoleculesPerDimension; j++) {
 			for (int k = 0; k < numMoleculesPerDimension; k++) {
 				vector<double> velocity = getRandomVelocity(_temperature);
-				Molecule m(id, 0, origin +
+				int componentType = 0;
+				if (_binaryMixture) {
+					componentType = randdouble(0, 1.999999);
+				}
+
+				double I[3] = {0.,0.,0.};
+				I[0] = _components[componentType].I11();
+				I[1] = _components[componentType].I22();
+				I[2] = _components[componentType].I33();
+				/*****  Copied from animake - initialize anular velocity *****/
+				double w[3];
+				for(int d=0; d < 3; d++) {
+					w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+							sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+					w[d] = w[d] * MDGenerator::fs_2_mardyn;
+				}
+				/************************** End Copy **************************/
+
+				Molecule m(id, componentType, origin +
 						i * spacing, origin + j * spacing, origin + k * spacing, // position
 						velocity[0], -velocity[1], velocity[2], // velocity
-						0, 0, 0, 0, 0, 0, 0, &_components);
+						1, 0, 0, 0, w[0], w[1], w[2], &_components);
 				particleContainer->addParticle(m);
 				id++;
 			}
 		}
 	}
+	return id;
 }
 
 
@@ -211,6 +238,9 @@ bool CubicGridGenerator::validateParameters() {
 	if (_simBoxLength[0] < 2. * _configuration.getCutoffRadius()) {
 		valid = false;
 		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+		_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
+							<< " domain size=" << _simBoxLength[0] << endl;
 	}
+	return valid;
 }
 

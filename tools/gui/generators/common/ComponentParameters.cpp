@@ -88,8 +88,8 @@ ComponentParameters::ComponentParameters(const std::string& id,
 						ljCenter.m() / MDGenerator::unitMass_2_mardyn));
 		ljCenterCollection->addParameter(
 				new ParameterWithDoubleValue(baseName + ".epsilon",
-						baseName + ".epsilon [Kelvin * K_B]", baseName + ".epsilon", Parameter::LINE_EDIT,false,
-						ljCenter.eps()));
+						baseName + ".epsilon [K]", "Epsilon normalized to the Boltzmann constant", Parameter::LINE_EDIT,false,
+						ljCenter.eps() / MDGenerator::kelvin_2_mardyn));
 		ljCenterCollection-> addParameter(
 				new ParameterWithDoubleValue(baseName + ".sigma",
 						baseName + ".sigma [Angstrom]", baseName + ".sigma", Parameter::LINE_EDIT,false,
@@ -279,7 +279,7 @@ void ComponentParameters::setParameterValue(LJcenter& ljCenter,
 	} else if (valueName == "mass") {
 		ljCenter.setM(p->getValue()  * MDGenerator::unitMass_2_mardyn);
 	} else if (valueName == "epsilon") {
-		ljCenter.setEps(p->getValue());
+		ljCenter.setEps(p->getValue() * MDGenerator::kelvin_2_mardyn);
 	} else if (valueName == "sigma") {
 		ljCenter.setSigma(p->getValue() * MDGenerator::angstroem_2_atomicUnitLength);
 	} else {

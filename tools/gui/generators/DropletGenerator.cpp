@@ -15,7 +15,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
-#include "io/DropletPlacement.h"
+#include "common/DropletPlacement.h"
 #include "utils/Logger.h"
 
 
@@ -37,7 +37,7 @@ extern "C" {
 DropletGenerator::DropletGenerator() :
 	MDGenerator("DropletGenerator") {
 	numOfMolecules = 50;
-	_temperature = 3.0;
+	_temperature = 300. / 315774.5;
 	setClusterParameters(0.05, 0.8, 15, 5, 4);
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
@@ -251,6 +251,8 @@ void DropletGenerator::generateMoleculesCluster(
 		vector<double> &bBoxMax, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	readLocalClusters(domain, domainDecomp);
+
+	_components[0].updateMassInertia();
 
 	vector<int> globalFccCells;
 	vector<int> clusterFccCellsMin;
@@ -504,6 +506,8 @@ bool DropletGenerator::validateParameters() {
 		if (simBoxLength[i] < 2.0 * _configuration.getCutoffRadius()) {
 			valid = false;
 			_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
+			_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
+					<< " domain size=" << simBoxLength[i] << endl;
 		}
 	}
 

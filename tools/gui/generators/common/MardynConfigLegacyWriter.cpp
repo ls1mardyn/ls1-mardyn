@@ -12,7 +12,7 @@
 using namespace std;
 
 void writeOutputConfig(ofstream& output, const OutputConfiguration& config) {
-	output << "output" << config.getName() << " " << config.getOutputFrequency() << " " << config.getOutputPrefix() << endl;
+	output << "output " << config.getName() << " " << config.getOutputFrequency() << " " << config.getOutputPrefix() << endl;
 }
 
 MardynConfigLegacyWriter::MardynConfigLegacyWriter() {
@@ -32,7 +32,7 @@ void MardynConfigLegacyWriter::writeConfigFile(const std::string& directory, con
 
 	output << "timestepLength " << config.getTimestepLength() << endl;
 	output << "cutoffRadius " << config.getCutoffRadius() << endl;
-	output << "LJCutoffRadius" << config.getLJCutoffRadius() << endl;
+	output << "LJCutoffRadius " << config.getLJCutoffRadius() << endl;
 	output << "phaseSpaceFile OldStyle " << config.getScenarioName() << ".inp" << endl;
 	output << "datastructure " << config.getContainerTypeString() << " 1" << endl;
 	if (config.getParallelisationTypeString() != MardynConfiguration::ParallelisationType_NONE) {

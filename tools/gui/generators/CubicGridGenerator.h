@@ -8,8 +8,6 @@
 #ifndef EQVGRIDGENERATOR_H_
 #define EQVGRIDGENERATOR_H_
 
-#include "common/DrawableMolecule.h"
-#include "QObjects/ScenarioGenerator.h"
 #include "common/ComponentParameters.h"
 #include "Parameters/ParameterCollection.h"
 #include "MDGenerator.h"

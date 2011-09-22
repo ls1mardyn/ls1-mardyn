@@ -5,7 +5,7 @@
  * @Author: eckhardw
  */
 
-#include "io/DropletPlacement.h"
+#include "DropletPlacement.h"
 #include <cmath>
 
 #define SIZE 100

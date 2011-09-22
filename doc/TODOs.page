@@ -1,0 +1,16 @@
+/** \page "TODOs - Open Issues"
+
+This page should collect open points, concerning design or (non-)functionality 
+of the code.
+
+There are plenty of TODOs or FIXMEs in the code, which partly refer to individual 
+persons. Let's place here things which we could use as a basis for Coders' Day or so.
+
+|| Issue    | Description
+|  pm files | pm files define mass for dipoles and quadrupoles, which are not 
+              supported within Mardyn
+|  cutoff radius | a lj cutoff is included in the component definition, but not used
+                   (both in the phasespace file and in the component class)
+| ASCII-Reader   | Not used - but still necessary???
+
+*/

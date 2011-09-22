@@ -32,7 +32,7 @@ class ChemicalPotential;
  *       otherwise it is built for use from the ScenarioGenerator. Both modes are
  *       exclusive.
  */
-class MDGenerator: public Generator, InputBase {
+class MDGenerator: public Generator, public InputBase {
 
 public:
 
@@ -83,7 +83,7 @@ protected:
 
 public:
 
-	void setLogger(Log::Logger* logger);
+	virtual void setLogger(Log::Logger* logger);
 
 	//! NOP
 	void setPhaseSpaceFile(std::string filename) {}
@@ -101,7 +101,7 @@ public:
 	 */
 	virtual void generateOutput(const std::string& directory);
 
-	const Object* getSampleObject() const;
+	void createSampleObject() const;
 
 	/***********************************************/
 	/*** Methods to be implemented by subclasses ***/

@@ -9,6 +9,8 @@ Documentation available:
 | "Unit Tests"           |  Description on how to build, execute and write unit tests
 | <a href="../doc/styleguide.pdf">Style Guide</a> | The Mardyn Styleguide
 | "Visualisation with Paraview" | Describes how to produce vtk data and how to visualize it with paraview
+| "Scenario Generator" | Describes how to build and run the graphical scenario generator
+| "TODOs - Open Issues" | Collection open issues concerning code design or functionality
 
 Code Coverage Information:
 
