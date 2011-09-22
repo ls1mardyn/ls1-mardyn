@@ -54,15 +54,12 @@ public:
 	Molecule(const Molecule& m);
 
 	~Molecule() {
-		if (_sites_d) {
-			delete[] _sites_d;
-		}
-		if (_osites_e) {
-			delete[] _osites_e;
-		}
-		if (_sites_F) {
-			delete[] _sites_F;
-		}
+		assert(_sites_d);
+		delete[] _sites_d;
+		assert(_osites_e);
+		delete[] _osites_e;
+		assert(_sites_F);
+		delete[] _sites_F;
 	}
 
 	/** get molecule ID */
