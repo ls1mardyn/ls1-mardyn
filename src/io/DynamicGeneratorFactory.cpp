@@ -65,6 +65,8 @@ InputBase* DynamicGeneratorFactory::loadGenerator(std::string generatorName, std
 	generator->load(configFile);
 
 	return generator;
+#else
+	return NULL;
 #endif
 }
 
