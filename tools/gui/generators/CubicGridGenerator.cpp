@@ -139,13 +139,14 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 // vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
 	int numMoleculesPerDimension = pow(_numMolecules / 2, 1./3.);
+	_components[0].updateMassInertia();
+	if (_binaryMixture) {
+		_components[1].updateMassInertia();
+	}
 
 	int id = 1;
 	double spacing = _simBoxLength[0] / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
-
-//	_logger->info() << "Spacing=" << spacing << " numMolPerDim=" << numMoleculesPerDimension <<
-//			" origin=" << origin << endl;
 
 	for (int i = 0; i < numMoleculesPerDimension; i++) {
 		for (int j = 0; j < numMoleculesPerDimension; j++) {
@@ -178,11 +179,6 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				id++;
 			}
 		}
-	}
-
-	_components[0].updateMassInertia();
-	if (_binaryMixture) {
-		_components[1].updateMassInertia();
 	}
 
 	origin = spacing / 4. * 3.; // origin of the first DrawableMolecule
