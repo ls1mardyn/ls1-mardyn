@@ -148,7 +148,7 @@ inline void PotForce2Quadrupole(const double dr[3], const double& dr2, const dou
 	const double partialRijInvdr1 = -5. * u * invdr2;
 	const double partialTiInvdr1 = -qfac * 10. * (costi + 3. * costi * cos2tj + 2. * costj * term) * invdr1;
 	const double partialTjInvdr1 = -qfac * 10. * (costj + 3. * cos2ti * costj + 2. * costi * term) * invdr1;
-	const double& partialGij = qfac * 4. * term;
+	const double partialGij = qfac * 4. * term;
 	const double fac = -partialRijInvdr1 + (costi*partialTiInvdr1 + costj*partialTjInvdr1) * invdr1;
 	for (unsigned short d = 0; d < 3; ++d)
 		f[d] = fac * dr[d] - partialTiInvdr1*eii[d] - partialTjInvdr1*ejj[d];
@@ -207,7 +207,7 @@ inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const do
 	const double partialRijInvdr1 = -4. * u * invdr2;
 	const double partialTiInvdr1 = myqfac * (-5. * cos2tj + 1.) * invdr1;
 	const double partialTjInvdr1 = myqfac * 2. * (-5. * costi * costj + cosgij) * invdr1;
-	const double& partialGij = myqfac * 2. * costj;
+	const double partialGij = myqfac * 2. * costj;
 	const double fac = -partialRijInvdr1 + (costi*partialTiInvdr1 + costj*partialTjInvdr1) * invdr1;
 	for (unsigned short d = 0; d < 3; ++d)
 		f[d] = fac * dr[d] - partialTiInvdr1*eii[d] - partialTjInvdr1*ejj[d];
