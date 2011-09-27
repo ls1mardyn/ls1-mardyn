@@ -314,7 +314,6 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 	assert(components);
 	if (components->size() == 0)
 		return;
-	assert(_componentid >= 0);
 	_numsites = _numorientedsites = 0;
 	_ljcenters = &(*components)[_componentid].ljcenters();
 	_numsites += _ljcenters->size();
@@ -420,7 +419,6 @@ void Molecule::check(unsigned long id) {
 	assert(_id == id);
 	assert(_m > 0.0);
 	assert(_numsites > 0);
-	assert(_numorientedsites >= 0);
 	for (int d = 0; d < 3; d++) {
 		assert(!isnan(_r[d]));
 		assert(!isnan(_v[d]));

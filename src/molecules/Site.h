@@ -58,6 +58,8 @@ public:
 		_m = m;
 	}
 
+	virtual ~Site() {}
+
 protected:
 	/// Constructor
     Site(double x = 0., double y = 0., double z = 0., double m = 0.)
@@ -99,11 +101,6 @@ public:
      */
 	LJcenter(double x, double y, double z, double m, double eps, double sigma, double rc, double shift)
 			: Site(x, y, z, m), _eps(eps), _sigma(sigma), _rc(rc), _uLJshift6(shift) { }
-
-	/// Constructor reading from stream
-	LJcenter(std::istream& istrm) {
-		istrm >> _r[0] >> _r[1] >> _r[2] >> _m >> _eps >> _sigma >> _uLJshift6;
-	}
 
 	/// write to stream
 	void write(std::ostream& ostrm) const {
@@ -161,10 +158,6 @@ public:
     Charge(double x, double y, double z, double m, double q)
 			: Site(x, y, z, m), _q(q) { }
 
-	/// Constructor reading from stream
-	Charge(std::istream& istrm) {
-		istrm >> _r[0] >> _r[1] >> _r[2] >> _m >> _q;
-	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << " " << _q;
@@ -193,19 +186,6 @@ public:
 	        double c, double d, double h, double n, double beta)
 		: Site(x, y, z, m), _A(A), _B(B), _minus_lambda(-lambda), _minus_mu(-mu), _R(R), _S(S),
         _c_square(c*c), _d_square(d*d), _h(h),_n(n), _beta(beta) {}
-
-	/// Constructor reading from stream
-	Tersoff(std::istream& istrm) {
-		double lambda, mu, c, d;
-		istrm >> _r[0] >> _r[1] >> _r[2]
-		      >> _m >> _A >> _B >> lambda >> mu
-		      >> _R >> _S >> c
-		      >> d >> _h >> _n >> _beta;
-		_minus_lambda = -lambda;
-		_minus_mu = -mu;
-		_c_square = c*c;
-		_d_square = d*d;
-	}
 
 	//! @brief write to stream
 	//!
@@ -295,11 +275,6 @@ public:
 			: OrientedSite(x, y, z, 0., eMyx, eMyy, eMyz), _absMy(absMy) {
 	}
 
-	/// Constructor reading from stream
-	Dipole(std::istream& istrm) {
-		istrm >> _r[0] >> _r[1] >> _r[2] >> _e[0] >> _e[1] >> _e[2] >> _absMy;
-		_m = 0.;
-	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << "\t" << _absMy;
@@ -336,11 +311,6 @@ public:
 			: OrientedSite(x, y, z, 0., eQx, eQy, eQz), _absQ(absQ) {
 	}
 
-	/// Constructor reading from stream
-	Quadrupole(std::istream& istrm) {
-		istrm >> _r[0] >> _r[1] >> _r[2] >> _e[0] >> _e[1] >> _e[2] >> _absQ;
-		_m = 0.;
-	}
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << " " << _absQ;
