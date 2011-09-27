@@ -52,12 +52,12 @@ void CommonTest::testCalculateDistances() {
 		}
 	}
 
-	for (int i = 0; i < 3; i++) {
+	/*for (int i = 0; i < 3; i++) {
 		std::cout << "A Points: " << valuesA[0][i] << "," << valuesA[1][i] << "," << valuesA[2][i] << std::endl;
 	}
 	for (int i = 0; i < 1; i++) {
 			std::cout << "B Points: " << valuesB[0][i] << "," << valuesB[1][i] << "," << valuesB[2][i] << std::endl;
-	}
+	}*/
 
 
 	fp_type** distances;
@@ -68,7 +68,7 @@ void CommonTest::testCalculateDistances() {
 	fp_type** distanceVectors[3];
 	for (int i = 0; i < 3; i++) {
 		distanceVectors[i] = new fp_type*[3];
-		for (int j = 0; j < 4; j++) {
+		for (int j = 0; j < 3; j++) {
 			distanceVectors[i][j] = new fp_type[1];
 		}
 	}
