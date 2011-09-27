@@ -1,0 +1,68 @@
+There are many areas where further work is possible:
+
+\subsection{Molecule Storage}
+I have only compared fully non-interleaved storage with the current one. It seems that cache hits are more important than fully coalesced accesses, so it could well be possible that storing the molecule data fully interleaved could outperform the current implementation.
+
+\subsection{Cell Processor}
+The warp block cell processor is better than the thread block cell processor for all but the most basic case.
+For this simplest case, which is a cutoff radius of 5 in my datasets or, more generally, a molecule count per cell smaller or equal to the warp size, the simplest possible implementation is the most effective: a simple loop over all molecule pairs. This is exactly what the thread block cell processor with only 1 warp degrades to.
+
+Even though using a shared memory cache in the warp block cell processor speeds it up, the additional locks in the code erase all benefits.
+
+A possible remedy would be using the cache while still calculating all interactions twice. This would remove the need for any additional locks.
+
+Another idea would be to dynamically choose the cell processor depending on the maximum molecule count per cell.
+
+\subsection{Halo Handling and Global Domain Statistics}
+Support for domain decomposition has not been implemented. The code assumes that the halo cells are simply copies of the border cells and uses this assumption when calculating the global potential and virial values.
+
+It does not implement an \lstinline!isFirstParticle!-check, because the additional branching in the molecule pair handler is inefficient.
+
+I would rather propose to change the halo global statistics handling to a cell-based approach, ie it should be possible to decide on the cell level whether to take the potential and virial into account or not.
+This is possible by eg simply extending 3 of the 6 planes of the domain cuboid and using them to split the halo cells accordingly into "owned" and "ghost" cells. This would add the necessity of calculating molecule interactions between some halo cells, but the design could be quite clean otherwise. Especially potential and virial calculation would be very simple: the potential and virial values of ghost halo cells would have to be subtracted of the total values of the inner and border cells, and those of owned halo cells added.
+
+\subsection{Domain Traversal}
+Especially considering the possible changes to the halo handling, the current domain traversal code needs to be changed, too. Its main idea is the construction of a virtual coordinate system for the cell grid, that can be mapped effectively to real cell indices. In this virtual coordinate system all cells or rather cell pairs can be visited in any order and there is no overlap between any cell pairs.
+
+The current code processes more cell pairs than necessary compared to the CPU code. The best solution for this would be to rewrite the domain traverser to output an array of cell pairs similar to what \cite{orend10numerische}. It could take into account empty cells and reduce the number of distinct kernel calls with the added information.
+
+\subsection{Less Synchronization/Fewer Locks}
+The spin-locks are the only reason the warp block cell processor is a lot slower when run in the shared memory mode compared to the bigger L1 cache. Finer lock granularity could really help avoid unnecessary waiting between warps.
+
+If the domain traversal code was changed to output a cell pair array, one could directly make it create a warp block pair interaction array between all warp blocks of a cell. The scheduler could then be reduced to an atomic increment on a global warp block pair counter.
+
+Creating this cell/warp block pair array could be done on the GPU, too, given the information already available.
+
+\subsection{Memory Usage}
+My code uses way too little memory. The footprint is very small compared to the amount of available video RAM in today's workstation graphics cards. Thus finding a design that uses lots of scratch memory could well lead to a faster implementation.
+
+From benchmarking and profiling I suspect that my code is instruction limited instead of memory limited because most changes regarding memory access patterns had very little effect. The alternative design consists of having a scratch buffer for every warp/thread and reducing all the interactions later on.
+
+Maybe it could even be possible to sort the interactions by magnitude to reduce them in a way that minimizes the floating-point error.
+
+The current code also does not make use of pinned or mapped memory. The amount of time spent copying data around is negligible for the datasets I have used, but this could change.
+
+\subsection{\cuda{} Interface}
+I have intenionally used the driver API, because I prefer its cleaner code separation between GPU and CPU code. Moreover, it could be possible to write code that dumps all parameters and calls to the API to replay kernel calls on different systems for debugging\footnote{a prime example would be a Windows workstation with NVIDIA's Parallel Nsight---\url{http://developer.nvidia.com/nvidia-parallel-nsight}}. I have not had time to write this.
+
+There is a good reason to switch back to the runtime CUDA API: most third-party tools support only it. Ocelot\footnote{\url{http://code.google.com/p/gpuocelot/}} is a good example and certainly a reason to switch back.
+
+I think that switching back to the runtime API is less work than the other way around because the code is cleanly separated.
+
+\subsection{Quaternions}
+Currently quaternions are converted to $3 \times 3$ matrices and these matrices are used for transformations. I have not researched whether rotating points directly by a quaternion might not be faster on the GPU.
+
+\subsection{Warp-Centered Design}
+\cite{cudaDMA} and \cite{DBLP:conf/ispass/WongPSM10} explain that code divergence on a warp-level has no negative effect but rather can be used for performance optimizations.
+You could come up with a design that makes use of this even more than the warp block cell processor.
+
+\subsection{More Stages}
+I have encountered a compiler bug that was caused by the size or rather depth of some nested loops inside various inlined functions. I doubt that it is possible to reduce the used register count (without sacrificing performance), but the register count is currently the reason that only 512 threads can be resident at any time in an SM, which is only a third of the maximum number.
+
+Maybe it could be possible to split the current molecule pair handler into multiple smaller kernels that can run independently and use less registers each to achieve better parallization.
+
+\subsection{Low Molecule Counts Per Cell}
+An open question for me is how to deal with sparsely populated cells effectively. One warp would have to process multiple cells to keep all threads in a warp busy.
+
+\subsection{Single Precision Mode}
+The current code is only optimized for double precision. The current \cuda{} version does not support atomic operations or reductions for doubles like it does for floats. One could optimize the code for float support and make use of reductions or atomic operations to avoid synchronization and simplify the code.

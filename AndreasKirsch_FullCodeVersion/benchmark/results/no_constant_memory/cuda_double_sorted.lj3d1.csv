@@ -1,0 +1,13 @@
+timeSteps, numWarps, moleculeCount, totalTime, CUDA_totalTime, CUDA_preTime, CUDA_postTime, CUDA_singleTime, CUDA_pairTime, CUDA_processingTime, name
+10,1,10000,1.15E+00,8.18E+01,4.13E+00,2.92E+00,6.53E+00,6.82E+01,7.47E+01, lj3d1
+10,1,50000,8.05E+00,5.84E+02,2.06E+01,1.14E+01,5.73E+01,4.94E+02,5.52E+02, lj3d1
+10,1,100000,1.99E+01,1.51E+03,4.47E+01,2.33E+01,1.20E+02,1.32E+03,1.44E+03, lj3d1
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,
+,,,,,,,,,,

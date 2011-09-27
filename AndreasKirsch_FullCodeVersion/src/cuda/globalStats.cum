@@ -1,0 +1,131 @@
+#ifndef GLOBALSTATS_CUM__
+#define GLOBALSTATS_CUM__
+
+#include "sharedDecls.h"
+
+#include "util/locks.cum"
+
+#include "domainTraverser.cum"
+
+struct CellStats : CellStatsStorage {
+	__device__ void add( floatType potential, floatType virial ) {
+		this->potential += potential;
+		this->virial += virial;
+	}
+};
+
+// should be: __device__ CellStats cellStats[CellCount]
+__constant__ __device__ CellStats * cellStats;
+
+#ifdef CUDA_WARP_BLOCK_CELL_PROCESSOR
+__constant__ Lock::Mutex *cellLocks;
+#endif
+
+namespace ThreadBlockCellStats {
+	__shared__ volatile floatType threadPotential[BLOCK_SIZE];
+	__shared__ volatile floatType threadVirial[BLOCK_SIZE];
+
+	__device__ void initThreadLocal(int threadIndex) {
+		threadPotential[threadIndex] = 0.0f;
+		threadVirial[threadIndex] = 0.0f;
+
+		// no synchronization required because each thread only accesses its own entry
+	}
+
+	__device__ void add(int threadIndex, floatType potential, floatType virial) {
+		threadPotential[threadIndex] += potential;
+		threadVirial[threadIndex] += virial;
+	}
+
+	__device__ void reduceWarps(int threadIndex) {
+#if WARP_SIZE > 1
+		// no synchronization required since every warp is automatically synchronized
+#	if 1
+#		if WARP_SIZE != 32
+#			error WARP_SIZE == 32 assumed
+#		endif
+
+#		pragma unroll 5
+		for( int index = 4 ; index >= 0 ; index-- ) {
+			const int shift = 1 << index;
+			if( warpThreadIdx < shift ) {
+				const int neighborIndex = threadIndex + shift;
+				threadPotential[threadIndex] += threadPotential[neighborIndex];
+				threadVirial[threadIndex] += threadVirial[neighborIndex];
+			}
+		}
+#	else
+		// this version cannot be unrolled since nvcc is too stupid to analyze the counter >_>
+		for( int shift = WARP_SIZE / 2 ; shift >= 1 ; shift >>= 1 ) {
+			if( warpThreadIdx < shift ) {
+				const int neighborIndex = threadIndex + shift;
+				threadPotential[threadIndex] += threadPotential[neighborIndex];
+				threadVirial[threadIndex] += threadVirial[neighborIndex];
+			}
+		}
+#	endif
+#endif
+	}
+
+	__device__ void reduceAndStore(int threadIndex, int cellIndexA, int cellIndexB) {
+		reduceWarps( threadIndex );
+
+		__syncthreads();
+
+		if( threadIndex == 0 ) {
+			floatType potential = 0.0;
+			floatType virial = 0.0;
+
+			for( int warpIndex = 0 ; warpIndex < (BLOCK_SIZE / WARP_SIZE) ; warpIndex++ ) {
+				potential += threadPotential[ warpIndex * WARP_SIZE ];
+				virial += threadVirial[ warpIndex * WARP_SIZE ];
+			}
+
+			cellStats[cellIndexA].add( potential, virial );
+			cellStats[cellIndexB].add( potential, virial );
+		}
+	}
+
+#ifdef CUDA_WARP_BLOCK_CELL_PROCESSOR
+	__device__ __noinline__ void reduceAndStoreWarp(int threadIndex, int cellIndex) {
+		// no synchronization required since every warp is implicitly synchronized
+		reduceWarps( threadIndex );
+
+		if( warpThreadIdx == 0 ) {
+			floatType potential = threadPotential[ threadIndex ];
+			floatType virial = threadVirial[ threadIndex ];
+
+			cellLocks[cellIndex].lock();
+
+			cellStats[cellIndex].add( potential, virial );
+			__threadfence();
+
+			cellLocks[cellIndex].unlock();
+		}
+	}
+
+	__device__ __noinline__ void reduceAndStoreWarpForPair(int threadIndex, int cellIndex) {
+		// no synchronization required since every warp is implicitly synchronized
+		reduceWarps( threadIndex );
+
+		if( warpThreadIdx == 0 ) {
+			floatType potential = threadPotential[ threadIndex ];
+			floatType virial = threadVirial[ threadIndex ];
+
+			const int neighborIndex = DomainTraverser::getNeighborCellIndex(cellIndex);
+			// use the neighbor lock
+			// the processor uses the cellIndex lock
+			// so there is less unnecessary inter-locking
+			cellLocks[neighborIndex].lock();
+
+			cellStats[cellIndex].add( potential, virial );
+			cellStats[neighborIndex].add( potential, virial );
+			__threadfence();
+
+			cellLocks[neighborIndex].unlock();
+		}
+	}
+#endif
+};
+
+#endif

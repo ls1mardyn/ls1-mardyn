@@ -1,0 +1,6 @@
+This paper describes the architecture of a \cuda{} kernel that supports different molecule potential types and explains optimizations and implementation details.
+We took a hard look at different approaches for parallelizing molecule interaction calculations and compared them.
+
+It is evident that the warp block cell processor is most effective for higher molecule counts per cell and the simplest solution works best for low molecule counts per cell.
+
+Lots of further optimizations are possible and the \cuda{} implementation does not yet support all features of MarDyn like domain decomposition and halo cell handling.

@@ -1,0 +1,53 @@
+#ifndef CELLINFO_H__
+#define CELLINFO_H__
+
+#include <host_defines.h>
+
+#include "config.h"
+#include "util.cum"
+
+struct CellInfo {
+	unsigned startIndex;
+	unsigned endIndex;
+
+	__device__ CellInfo() {}
+	__device__ CellInfo( unsigned startIndex, unsigned endIndex ) : startIndex( startIndex ), endIndex( endIndex ) {}
+
+	__device__ uint getWarpOffset( uint index ) const {
+		return startIndex + index * WARP_SIZE;
+	}
+
+	__device__ uint getBlockOffset( uint index ) const {
+		return startIndex + index * BLOCK_SIZE;
+	}
+};
+
+// TODO: what a volatile mess - only to support declarations like volatile CellInfoEx cell; ...
+struct CellInfoEx : CellInfo {
+	unsigned length;
+
+	__device__ CellInfoEx() {}
+	__device__ CellInfoEx( const CellInfo cell ) : CellInfo( cell.startIndex , cell.endIndex ), length( endIndex - startIndex ) {}
+
+	__device__ CellInfoEx( const volatile CellInfoEx &other ) : CellInfo( other.startIndex , other.endIndex ), length( other.length ) {}
+	__device__ volatile CellInfoEx & operator =( const CellInfoEx &other ) volatile {
+		startIndex = other.startIndex;
+		endIndex = other.endIndex;
+		length = other.length;
+		return *this;
+	}
+
+	__device__ uint getBlockCount() const {
+		return iceil( length, BLOCK_SIZE );
+	}
+
+	__device__ uint getLastBlockSize() const {
+		return shiftedMod( length, BLOCK_SIZE );
+	}
+
+	__device__ uint getWarpCount() const volatile {
+		return iceil( length, WARP_SIZE );
+	}
+};
+
+#endif

@@ -1,0 +1,222 @@
+#ifndef MOLECULESTORAGE_CUM__
+#define MOLECULESTORAGE_CUM__
+
+#include <host_defines.h>
+
+#include "util.cum"
+
+#include "molecule.cum"
+#include "cellInfo.cum"
+
+#ifndef CUDA_UNPACKED_STORAGE
+#	define DECL_FLOATTYPE3_PTR(stream) floatType3 *stream
+#	define DECL_QUATERNION_PTR(stream) Quaternion *stream
+#	define DECL_MATRIX3x3_PTR(stream) Matrix3x3 *stream
+
+#	define DECL_FLOATTYPE3_ARRAY(stream, size) floatType3 stream[size]
+#	define DECL_MATRIX3x3_ARRAY(stream, size) Matrix3x3 stream[size]
+
+#	define LOAD_FLOATTYPE3(stream, index) (stream[index])
+#	define LOAD_MATRIX3x3(stream, index) (stream[index])
+
+#	define STORE_FLOATTYPE3(stream, index, data) (stream[index] = (data))
+#	define STORE_MATRIX3x3(stream, index, data) (stream[index] = (data))
+#else
+#	define DECL_FLOATTYPE3_PTR(stream) floatType *stream[3]
+#	define DECL_QUATERNION_PTR(stream) floatType *stream[4]
+#	define DECL_MATRIX3x3_PTR(stream) floatType *stream[9]
+
+#	define DECL_FLOATTYPE3_ARRAY(stream, size) floatType stream[3][size]
+#	define DECL_MATRIX3x3_ARRAY(stream, size) floatType stream[9][size]
+
+#	define LOAD_FLOATTYPE3(stream, index) packFloatType3((stream), (index))
+#	define LOAD_MATRIX3x3(stream, index) packMatrix3x3((stream), (index))
+
+#	define STORE_FLOATTYPE3(stream, index, data) unpackFloatType3( stream, index, data )
+#	define STORE_MATRIX3x3(stream, index, data) unpackMatrix3x3( stream, index, data )
+#endif
+
+// global shared data pointers
+__constant__ __device__ DECL_FLOATTYPE3_PTR( moleculePositions );
+__constant__ __device__ DECL_QUATERNION_PTR( moleculeQuaternions );
+__constant__ __device__ DECL_MATRIX3x3_PTR( moleculeRotations );
+
+__constant__ __device__ DECL_FLOATTYPE3_PTR( moleculeForces );
+__constant__ __device__ DECL_FLOATTYPE3_PTR( moleculeTorque );
+
+__constant__ __device__ ComponentType *moleculeComponentTypes;
+
+__constant__ __device__ uint *cellStartIndices;
+
+__device__ CellInfo cellInfoFromCellIndex( int index ) {
+	return CellInfo( cellStartIndices[index], cellStartIndices[index+1] );
+}
+
+
+struct MoleculeStorage {
+	// straight-forward getter/setter
+	__device__ floatType3 getPosition(uint index) const {
+		return LOAD_FLOATTYPE3(moleculePositions, index);
+	}
+
+	__device__ Matrix3x3 getRotation(uint index) const {
+		return LOAD_MATRIX3x3(moleculeRotations, index);
+	}
+
+	__device__ floatType3 getForce(uint index) const {
+		return LOAD_FLOATTYPE3(moleculeForces, index);
+	}
+
+	__device__ floatType3 getTorque(uint index) const {
+		return LOAD_FLOATTYPE3(moleculeTorque, index);
+	}
+
+	__device__ ComponentType getComponentType(uint index) const {
+		return moleculeComponentTypes[index];
+	}
+
+	__device__ void addForce(uint index, const floatType3 &force) {
+		STORE_FLOATTYPE3(moleculeForces, index, getForce(index) + force);
+	}
+
+	__device__ void addTorque(uint index, const floatType3 &torque) {
+		STORE_FLOATTYPE3(moleculeTorque, index, getTorque(index) + torque);
+	}
+};
+
+// caches molecule data locally
+template<MoleculeStorage &moleculeStorage>
+struct SharedMoleculeLocalStorage {
+	DECL_FLOATTYPE3_ARRAY( positions, BLOCK_SIZE );
+	DECL_MATRIX3x3_ARRAY( rotations, BLOCK_SIZE );
+
+	DECL_FLOATTYPE3_ARRAY( forces, BLOCK_SIZE );
+	DECL_FLOATTYPE3_ARRAY( torque, BLOCK_SIZE );
+
+	ComponentType componentTypes[BLOCK_SIZE];
+
+	__device__ void load(uint localIndex, uint index) {
+		STORE_FLOATTYPE3( positions, localIndex, moleculeStorage.getPosition( index ) );
+		STORE_MATRIX3x3( rotations, localIndex, moleculeStorage.getRotation( index ) );
+		componentTypes[ localIndex ] = moleculeComponentTypes[ index ];
+
+		STORE_FLOATTYPE3( forces, localIndex, make_floatType3( 0.0, 0.0, 0.0 ) );
+		STORE_FLOATTYPE3( torque, localIndex, make_floatType3( 0.0, 0.0, 0.0 ) );
+	}
+
+	__device__ void commit(uint localIndex, uint index) const {
+		moleculeStorage.addForce( index, getCachedForce( localIndex ) );
+		moleculeStorage.addTorque( index, getCachedTorque( localIndex ) );
+	}
+
+	__device__ floatType3 getPosition(uint index) const {
+		return LOAD_FLOATTYPE3(positions, index);
+	}
+
+	__device__ Matrix3x3 getRotation(uint index) const {
+		return LOAD_MATRIX3x3(rotations, index);
+	}
+
+	__device__ floatType3 getCachedForce(uint index) const {
+		return LOAD_FLOATTYPE3(forces, index);
+	}
+
+	__device__ floatType3 getCachedTorque(uint index) const {
+		return LOAD_FLOATTYPE3(torque, index);
+	}
+
+	__device__ ComponentType getComponentType(uint index) const {
+		return componentTypes[index];
+	}
+
+	__device__ void addForce(uint index, const floatType3 &force) {
+		STORE_FLOATTYPE3(forces, index, getCachedForce(index) + force);
+	}
+
+	__device__ void addTorque(uint index, const floatType3 &torque) {
+		STORE_FLOATTYPE3(this->torque, index, getCachedTorque(index) + torque);
+	}
+};
+
+template<MoleculeStorage &moleculeStorage>
+struct WriteThroughMoleculeLocalStorage {
+	__device__ void load(uint localIndex, uint index) {}
+
+	__device__ void commit(uint localIndex, uint index) const {}
+
+	__device__ floatType3 getPosition(uint index) const {
+		return moleculeStorage.getPosition( index );
+	}
+
+	__device__ Matrix3x3 getRotation(uint index) const {
+		return moleculeStorage.getRotation( index );
+	}
+
+	__device__ floatType3 getForce(uint index) const {
+		return moleculeStorage.getForce( index );
+	}
+
+	__device__ floatType3 getTorque(uint index) const {
+		return moleculeStorage.getTorque( index );
+	}
+
+	__device__ ComponentType getComponentType(uint index) const {
+		return moleculeStorage.getComponentType( index );
+	}
+
+	__device__ void addForce(uint index, const floatType3 &force) {
+		moleculeStorage.addForce( index, force );
+	}
+
+	__device__ void addTorque(uint index, const floatType3 &torque) {
+		moleculeStorage.addTorque( index, torque );
+	}
+};
+
+template<MoleculeStorage &moleculeStorage>
+struct ResultLocalStorage {
+	DECL_FLOATTYPE3_ARRAY( forces, BLOCK_SIZE );
+	DECL_FLOATTYPE3_ARRAY( torque, BLOCK_SIZE );
+
+	__device__ void reset(uint localIndex) {
+		STORE_FLOATTYPE3( forces, localIndex, make_floatType3( 0.0, 0.0, 0.0 ) );
+		STORE_FLOATTYPE3( torque, localIndex, make_floatType3( 0.0, 0.0, 0.0 ) );
+	}
+
+	__device__ void commit(uint localIndex, uint index) const {
+		moleculeStorage.addForce( index, getCachedForce( localIndex ) );
+		moleculeStorage.addTorque( index, getCachedTorque( localIndex ) );
+	}
+
+	// pass-through part
+	__device__ floatType3 getPosition(uint index) const {
+		return moleculeStorage.getPosition( index );
+	}
+
+	__device__ Matrix3x3 getRotation(uint index) const {
+		return moleculeStorage.getRotation( index );
+	}
+
+	__device__ ComponentType getComponentType(uint index) const {
+		return moleculeStorage.getComponentType( index );
+	}
+
+	// local part
+	__device__ floatType3 getCachedForce(uint index) const {
+		return LOAD_FLOATTYPE3(forces, index);
+	}
+
+	__device__ floatType3 getCachedTorque(uint index) const {
+		return LOAD_FLOATTYPE3(torque, index);
+	}
+
+	__device__ void addForce(uint index, const floatType3 &force) {
+		STORE_FLOATTYPE3(forces, index, getCachedForce(index) + force);
+	}
+
+	__device__ void addTorque(uint index, const floatType3 &torque) {
+		STORE_FLOATTYPE3(this->torque, index, getCachedTorque(index) + torque);
+	}
+};
+
+#endif

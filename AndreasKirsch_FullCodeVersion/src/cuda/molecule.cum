@@ -1,0 +1,70 @@
+#ifndef MOLECULE_CUM__
+#define MOLECULE_CUM__
+
+#include <host_defines.h>
+
+#include "sharedDecls.h"
+
+#include "util.cum"
+
+typedef Molecule_ComponentType ComponentType;
+
+template<class MoleculeStorage, MoleculeStorage &moleculeStorage>
+struct Molecule {
+	floatType3 force;
+	floatType3 torque;
+
+	uint dataIndex;
+
+	__device__ void init( uint dataIndex ) {
+		this->dataIndex = dataIndex;
+		force = make_floatType3( 0.0, 0.0, 0.0 );
+		torque = make_floatType3( 0.0, 0.0, 0.0 );
+	}
+
+	__device__ void merge( const Molecule &other ) {
+		force += other.force;
+		torque += other.torque;
+	}
+
+	__device__ floatType3 getPosition() const {
+		return moleculeStorage.getPosition(dataIndex);
+	}
+
+	// relative->global coord system
+	__device__ Matrix3x3 getRotation() const {
+		return moleculeStorage.getRotation(dataIndex);
+	}
+
+	__device__ ComponentType getComponentType() const {
+		return moleculeStorage.getComponentType(dataIndex);
+	}
+
+	__device__ void addForce(const floatType3 &other) {
+		force += other;
+	}
+
+	__device__ void addTorque(const floatType3 &other) {
+		torque += other;
+	}
+
+	__device__ const floatType3 & getForce() const {
+		return force;
+	}
+
+	__device__ const floatType3 & getTorque() const {
+		return torque;
+	}
+
+	__device__ void store() const {
+		moleculeStorage.addForce( dataIndex, force );
+		moleculeStorage.addTorque( dataIndex, torque );
+	}
+
+	__device__ void store(uint storeIndex) const {
+		moleculeStorage.addForce( storeIndex, force );
+		moleculeStorage.addTorque( storeIndex, torque );
+	}
+};
+
+#endif
