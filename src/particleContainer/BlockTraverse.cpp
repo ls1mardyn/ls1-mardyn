@@ -34,6 +34,58 @@ using Log::global_log;
 //################################################
 
 
+
+void BlockTraverse::processCell(Cell& cell, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler) {
+	vector<Molecule*>::iterator molIter1;
+	vector<Molecule*>::iterator molIter2;
+    double distanceVector[3];
+
+    for( molIter1 = cell.getParticlePointers().begin(); molIter1 != cell.getParticlePointers().end(); molIter1++ ) {
+        Molecule& molecule1 = **molIter1;
+        unsigned int num_tersoff = molecule1.numTersoff(); // important for loop unswitching
+        molIter2 = molIter1;
+        molIter2++; // no self interaction
+
+        for( ; molIter2 != cell.getParticlePointers().end(); molIter2++ ) {
+            Molecule& molecule2 = **molIter2;
+            assert(&molecule1 != &molecule2);
+            double dd = molecule2.dist2(molecule1, distanceVector);
+
+            if (dd < cutoffRadiusSquare) {
+                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, true );
+                if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
+                    particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
+                }
+            }
+        }
+    }
+}
+
+void BlockTraverse::processCellPair( Cell &cell1, Cell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler ) {
+	vector<Molecule*>::iterator molIter1;
+	vector<Molecule*>::iterator molIter2;
+    double distanceVector[3];
+
+    for( molIter1 = cell1.getParticlePointers().begin(); molIter1 != cell1.getParticlePointers().end(); molIter1++) {
+        Molecule& molecule1 = **molIter1;
+        unsigned int num_tersoff = molecule1.numTersoff(); // important for loop unswitching
+
+        for( molIter2 = cell2.getParticlePointers().begin(); molIter2 != cell2.getParticlePointers().end(); molIter2++) {
+            Molecule& molecule2 = **molIter2;
+            assert(&molecule1 != &molecule2);
+            double dd = molecule2.dist2(molecule1, distanceVector);
+
+            if (dd < cutoffRadiusSquare) {
+                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, true );
+                if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
+                    particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
+                }
+            }
+        }
+    }
+}
+
+
 BlockTraverse::BlockTraverse(
 		ParticleContainer* moleculeContainer,
 		vector<Cell>& cells, 
@@ -137,50 +189,16 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
         }
 
 		// forces between molecules in the cell
-		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-			Molecule& molecule1 = **molIter1;
-			unsigned int num_tersoff = molecule1.numTersoff(); // important for loop unswitching
-			molIter2 = molIter1;
-			molIter2++; // no self interaction
-
-			for (; molIter2 != currentCell.getParticlePointers().end(); molIter2++) {
-				Molecule& molecule2 = **molIter2;
-				assert(&molecule1 != &molecule2);
-				double dd = molecule2.dist2(molecule1, distanceVector);
-
-				if (dd < cutoffRadiusSquare) {
-					particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare));
-					if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
-						particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
-					}
-				}
-			}
-		}
+        if( currentCell.getMoleculeCount() > 0 ) {
+            processCell( currentCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
+        }
 
 		// loop over all neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
 			Cell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-
-            if( neighbourCell.getMoleculeCount() == 0 ) {
-                continue;
+            if( neighbourCell.getMoleculeCount() > 0 ) {
+                processCellPair( currentCell, neighbourCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
             }
-			// loop over all particles in the cell
-			for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-				Molecule& molecule1 = **molIter1;
-				unsigned int num_tersoff = molecule1.numTersoff(); // important for loop unswitching
-
-				for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
-					Molecule& molecule2 = **molIter2;
-					double dd = molecule2.dist2(molecule1, distanceVector);
-					if (dd < cutoffRadiusSquare) {
-						particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare));
-						if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
-							particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
-						}
-					}
-				}
-
-			}
 		}
 	}
 
@@ -237,24 +255,9 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
         }
 
 		// forces between molecules in the cell
-		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-			Molecule& molecule1 = **molIter1;
-			unsigned int num_tersoff = molecule1.numTersoff(); // important for loop unswitching
-			molIter2 = molIter1;
-			molIter2++;
-			for (; molIter2 != currentCell.getParticlePointers().end(); molIter2++) {
-				Molecule& molecule2 = **molIter2;
-				assert(&molecule1 != &molecule2);
-
-				double dd = molecule2.dist2(molecule1, distanceVector);
-				if (dd < cutoffRadiusSquare) {
-					particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare));
-					if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
-						particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
-					}
-				}
-			}
-		}
+        if( currentCell.getMoleculeCount() > 0 ) {
+            processCell( currentCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
+        }
 
 		// loop over all forward neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {

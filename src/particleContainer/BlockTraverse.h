@@ -81,6 +81,12 @@ public:
 	void assignOffsets(std::vector<unsigned long>& forwardNeighbourOffsets, std::vector<unsigned long>& backwardNeighbourOffsets);
 
 private:
+	/** calculates forces between all molecules in the cell */
+	void processCell(Cell &cell, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
+
+	/** calculates forces between all molecules in cell1 and cell2 */
+	void processCellPair(Cell &cell1, Cell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
+	
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
