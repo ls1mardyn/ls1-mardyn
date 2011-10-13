@@ -34,10 +34,10 @@ void MardynConfigLegacyWriter::writeConfigFile(const std::string& directory, con
 	output << "cutoffRadius " << config.getCutoffRadius() << endl;
 	output << "LJCutoffRadius " << config.getLJCutoffRadius() << endl;
 	output << "phaseSpaceFile OldStyle " << config.getScenarioName() << ".inp" << endl;
-	output << "datastructure " << config.getContainerTypeString() << " 1" << endl;
 	if (config.getParallelisationTypeString() != MardynConfiguration::ParallelisationType_NONE) {
 		output << "parallelization " << config.getParallelisationTypeString() << endl;
 	}
+	output << "datastructure " << config.getContainerTypeString() << " 1" << endl;
 
 	output << endl;
 	if (config.isNVE()) {
