@@ -32,7 +32,7 @@ double const MDGenerator::buckingham_2_mardyn = 0.743472313;
 
 double const MDGenerator::fs_2_mardyn = 0.030619994;
 
-const double MDGenerator::molPerL_2_mardyn = 8.923894 * 10e-5;
+const double MDGenerator::molPerL_2_mardyn = 8.923894e-5;
 
 const double MDGenerator::kelvin_2_mardyn = 1.0 / 315774.5;
 
@@ -68,6 +68,7 @@ void MDGenerator::createSampleObject() const {
 #ifndef MARDYN
 	std::vector<Component> components;
 	components.resize(1);
+	components[0].addLJcenter(0,0,0,1,1,1,1,false);
 	Molecule m(1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, &components);
 	ScenarioGeneratorApplication::getInstance()->addObject(
 			new DrawableMolecule(m, 1));
@@ -75,6 +76,7 @@ void MDGenerator::createSampleObject() const {
 }
 
 void MDGenerator::generatePreview() {
+	srand(1);
 #ifndef MARDYN
 	int rank = 0;
 	PressureGradient gradient(rank);
@@ -116,6 +118,9 @@ void MDGenerator::generatePreview() {
 
 void MDGenerator::generateOutput(const std::string& directory) {
 
+	srand(1);
+	std::cout << "MDGenerator::generateOutput called!" << endl;
+
 	if (_configuration.getOutputFormat() == MardynConfiguration::LEGACY) {
 		MardynConfigLegacyWriter::writeConfigFile(directory, _configuration.getScenarioName() + ".cfg", _configuration);
 	} else if (_configuration.getOutputFormat() == MardynConfiguration::XML) {
@@ -126,6 +131,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 		_logger->error() << "Invalid File format for Output!" << _configuration.getOutputFormat() << endl;
 	}
 
+	std::cout << "MDGenerator::config file written!" << endl;
 	int rank = 0;
 	PressureGradient gradient(rank);
 	Domain domain(rank, &gradient);
@@ -139,13 +145,17 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	double tersoffCutoffRadius = 3.0;
 	double cellsInCutoffRadius = 1;
 
+	std::cout << "MDGenerator::generateOutput before read phasespace header!" << endl;
 	readPhaseSpaceHeader(&domain, 0);
+	std::cout << "MDGenerator::generateOutput after read phasespace header!" << endl;
 	bBoxMax[0] = domain.getGlobalLength(0);
 	bBoxMax[1] = domain.getGlobalLength(1);
 	bBoxMax[2] = domain.getGlobalLength(2);
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
 			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
+	std::cout << "MDGenerator::generateOutput before read phasespace!" << endl;
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
+	std::cout << "MDGenerator::generateOutput read phasespace done!" << endl;
 	domain.setglobalNumMolecules(container.getNumberOfParticles());
 	std::cout << "NumMolecules in Container: " << container.getNumberOfParticles() << endl;
 
@@ -173,6 +183,23 @@ std::vector<double> MDGenerator::getRandomVelocity(double temperature) const {
 	}
 
 	return v_;
+}
+
+
+void MDGenerator::getOrientation(int base, int delta, double orientation[4]) {
+	double offset = randdouble(-delta / 2., delta / 2.) / 180. * M_PI;
+	std::cout << "getOrientation: offset=" << offset << endl;
+	double rad = base / 180. * M_PI;
+	double angle = rad + offset;
+
+	double cosinePart = cos(angle);
+	double sinePart = sin(angle);
+
+	double length = sqrt(cosinePart * cosinePart + 2 * (sinePart + sinePart));
+	orientation[0] = cosinePart / length;
+	orientation[1] = sinePart / length;
+	orientation[2] = sinePart / length;
+	orientation[3] = 0;
 }
 
 bool MDGenerator::isInsideDomain(Domain* domain, double position[3]) {

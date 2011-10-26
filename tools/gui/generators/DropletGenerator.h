@@ -122,6 +122,13 @@ public:
 
 	virtual bool validateParameters();
 
+	/**
+	 * set the orientation of a molecule according to their position on
+	 * an alpha-fcc-lattice (code copied from Martin Buchholz's branch - PartGen.cpp)
+	 * as described in "Molecular Simulation of Liquids".
+	 */
+	void getFCCOrientation(int q_type, double q[4]);
+
 };
 
 #endif /* DROPLETGENERATOR_H_ */

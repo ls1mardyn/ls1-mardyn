@@ -146,6 +146,8 @@ protected:
 	double randdouble(double a, double b) const {
 		return a + rand() * (b - a) / (RAND_MAX);
 	}
+
+	void getOrientation(int base, int delta, double orientation[4]);
 };
 
 #endif /* MDGENERATOR_H_ */

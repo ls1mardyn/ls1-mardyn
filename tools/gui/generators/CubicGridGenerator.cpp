@@ -109,6 +109,12 @@ void CubicGridGenerator::calculateSimulationBoxLength() {
 	_simBoxLength[0] = pow(volume, 1./3.);
 	_simBoxLength[1] = _simBoxLength[0];
 	_simBoxLength[2] = _simBoxLength[0];
+	std::cout << "calculateSimulationBoxLength(): Molar Density [mol / l] = " << _molarDensity;
+	std::cout << "\t\t\t volume = " << volume << " dimless density= " << parts_per_a0 << endl;
+
+	double rho = _numMolecules / (_simBoxLength[0] * _simBoxLength[1] * _simBoxLength[2]) / molPerL_2_mardyn;
+	std::cout << "calculateSimulationBoxLength(): check calculated rho=" << rho << endl;
+	std::cout << "Conversion factor=" << MDGenerator::molPerL_2_mardyn << endl;
 }
 
 
@@ -148,10 +154,16 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	double spacing = _simBoxLength[0] / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
+	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
+	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
+	// o = cos 30° + (1 1 0) * sin 15°
+	double orientation[4];
+
 	for (int i = 0; i < numMoleculesPerDimension; i++) {
 		for (int j = 0; j < numMoleculesPerDimension; j++) {
 			for (int k = 0; k < numMoleculesPerDimension; k++) {
 				vector<double> velocity = getRandomVelocity(_temperature);
+				getOrientation(15, 10, orientation);
 
 				int componentType = 0;
 				if (_binaryMixture) {
@@ -174,7 +186,8 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				Molecule m(id, componentType, origin +
 						i * spacing, origin + j * spacing, origin + k * spacing, // position
 						velocity[0], -velocity[1], velocity[2], // velocity
-						1, 0, 0, 0, w[0], w[1], w[2], &_components);
+						orientation[0], orientation[1], orientation[2], orientation[3],
+						w[0], w[1], w[2], &_components);
 				particleContainer->addParticle(m);
 				id++;
 			}
@@ -208,7 +221,9 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				Molecule m(id, componentType, origin +
 						i * spacing, origin + j * spacing, origin + k * spacing, // position
 						velocity[0], -velocity[1], velocity[2], // velocity
-						1, 0, 0, 0, w[0], w[1], w[2], &_components);
+						//orientation[0], orientation[1], orientation[2], orientation[3],
+						1, 0, 0, 0,
+						w[0], w[1], w[2], &_components);
 				particleContainer->addParticle(m);
 				id++;
 			}
