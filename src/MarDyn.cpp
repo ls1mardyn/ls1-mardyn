@@ -143,7 +143,7 @@ int main(int argc, char** argv) {
     double runtime = double(clock()) / CLOCKS_PER_SEC;
     simulation.simulate();
     runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
-    cout << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
+    global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
 
 #ifdef ENABLE_MPI
     MPI_Finalize();
