@@ -90,6 +90,7 @@ unsigned long DropletGenerator::readPhaseSpace(
 		std::list<ChemicalPotential>* lmu, Domain* domain,
 		DomainDecompBase* domainDecomp) {
 
+	srand(1);
 	vector<double> bBoxMin;
 	vector<double> bBoxMax;
 
@@ -294,7 +295,8 @@ void DropletGenerator::generateMoleculesCluster(
 	double r_[3];
 	double q_[4];
 
-	int molCount = 0;
+	long int idOffset = LONG_MAX / domainDecomp->getNumProcs() * domainDecomp->getRank();
+	long int molCount = idOffset;
 	for (unsigned int cluster = 0; cluster < localClusters.size(); cluster++) {
 		radius = localClusters[cluster][3];
 		for (int dim = 0; dim < 3; dim++) {
@@ -358,11 +360,8 @@ void DropletGenerator::generateMoleculesCluster(
 							Molecule m(molCount, 0, r_[0], r_[1], r_[2], v[0], v[1], v[2],
 									q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2], &_components);
 							particleContainer->addParticle(m);
-							//std::cout << "XXXXXXX DropletGenerator: added particle with ID=" << molCount << std::endl;
 							molCount++;
 						}
-
-						//molCount++;
 					}
 				}
 			}
@@ -432,7 +431,6 @@ void DropletGenerator::generateMoleculesCluster(
 						 Molecule m(molCount, 0, r_[0], r_[1], r_[2], v[0], v[1], v[2],
 								 q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2], &_components);
 						 particleContainer->addParticle(m);
-						 //std::cout << "XXXXXXX DropletGenerator: added particle with ID=" << molCount << std::endl;
 						 molCount++;
 					 }
 				}

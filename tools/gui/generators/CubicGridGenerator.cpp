@@ -109,12 +109,8 @@ void CubicGridGenerator::calculateSimulationBoxLength() {
 	_simBoxLength[0] = pow(volume, 1./3.);
 	_simBoxLength[1] = _simBoxLength[0];
 	_simBoxLength[2] = _simBoxLength[0];
-	std::cout << "calculateSimulationBoxLength(): Molar Density [mol / l] = " << _molarDensity;
-	std::cout << "\t\t\t volume = " << volume << " dimless density= " << parts_per_a0 << endl;
 
 	double rho = _numMolecules / (_simBoxLength[0] * _simBoxLength[1] * _simBoxLength[2]) / molPerL_2_mardyn;
-	std::cout << "calculateSimulationBoxLength(): check calculated rho=" << rho << endl;
-	std::cout << "Conversion factor=" << MDGenerator::molPerL_2_mardyn << endl;
 }
 
 
@@ -183,12 +179,18 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				}
 				/************************** End Copy **************************/
 
-				Molecule m(id, componentType, origin +
-						i * spacing, origin + j * spacing, origin + k * spacing, // position
-						velocity[0], -velocity[1], velocity[2], // velocity
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						w[0], w[1], w[2], &_components);
-				particleContainer->addParticle(m);
+				double x = origin + i * spacing;
+				double y = origin + j * spacing;
+				double z = origin + k * spacing;
+				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
+					Molecule m(id, componentType, x, y, z, // position
+							velocity[0], -velocity[1], velocity[2], // velocity
+							orientation[0], orientation[1], orientation[2], orientation[3],
+							w[0], w[1], w[2], &_components);
+					particleContainer->addParticle(m);
+				}
+				// increment id in any case, because this particle will probably
+				// be added by some other process
 				id++;
 			}
 		}
@@ -218,17 +220,32 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				}
 				/************************** End Copy **************************/
 
-				Molecule m(id, componentType, origin +
-						i * spacing, origin + j * spacing, origin + k * spacing, // position
-						velocity[0], -velocity[1], velocity[2], // velocity
-						//orientation[0], orientation[1], orientation[2], orientation[3],
-						1, 0, 0, 0,
-						w[0], w[1], w[2], &_components);
-				particleContainer->addParticle(m);
+				double x = origin + i * spacing;
+				double y = origin + j * spacing;
+				double z = origin + k * spacing;
+				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
+					Molecule m(id, componentType, x, y, z, // position
+							velocity[0], -velocity[1], velocity[2], // velocity
+							orientation[0], orientation[1], orientation[2], orientation[3],
+							w[0], w[1], w[2], &_components);
+					particleContainer->addParticle(m);
+				}
+				// increment id in any case, because this particle will probably
+				// be added by some other process
 				id++;
 			}
 		}
 	}
+
+	unsigned long int globalNumMolecules = particleContainer->getNumberOfParticles();
+	domainDecomp->collCommInit(1);
+
+	domainDecomp->collCommAppendUnsLong(globalNumMolecules);
+	domainDecomp->collCommAllreduceSum();
+	globalNumMolecules = domainDecomp->collCommGetUnsLong();
+	domainDecomp->collCommFinalize();
+
+	domain->setglobalNumMolecules(globalNumMolecules);
 	return id;
 }
 
