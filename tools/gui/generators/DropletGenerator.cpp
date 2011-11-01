@@ -20,6 +20,7 @@
 
 
 #include <cmath>
+#include <climits>
 #include <iostream>
 
 extern "C" {
