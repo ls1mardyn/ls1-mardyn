@@ -34,6 +34,8 @@ UNIT_TESTS ?= 0
 # build with VTK support
 VTK ?= 0
 
+SUPPORT_DL_GENERATOR ?= 0
+
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
@@ -68,8 +70,14 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK 
-LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET))
+CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
+LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
+
+ifeq ($(SUPPORT_DL_GENERATOR), 1)
+LDFLAGS += -rdynamic -ldl
+CXXFLAGS += -DSUPPORT_DL_GENERATOR
+INCLUDES += -I../tools/gui/ -I../tools/gui/src/
+endif
 
 # additional setup for unit tests
 ifneq ($(UNIT_TESTS),0)
@@ -104,12 +112,13 @@ help:
 	@echo "Current configuration: $(CFG_INFO)"
 	@echo
 	@echo "options:"
-	@echo "make CFG=...                 choose compiler (see make cfg_list)"
-	@echo "make PARTYPE=SEQ | PAR       choose parallelization type (see cfg_help)"
-	@echo "make TARGET=DEBUG | RELEASE  choose target (see cfg_help)"
-	@echo "make DEPS=0 | 1              compile using dependancy tracking"
-	@echo "make UNIT_TESTS=0 | 1        compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=0 | 1               compile with or without the vtk output plugin" 
+	@echo "make CFG=...                    choose compiler (see make cfg_list)"
+	@echo "make PARTYPE=SEQ | PAR          choose parallelization type (see cfg_help)"
+	@echo "make TARGET=DEBUG | RELEASE     choose target (see cfg_help)"
+	@echo "make DEPS=0 | 1                 compile using dependancy tracking"
+	@echo "make UNIT_TESTS=0 | 1           compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=0 | 1                  compile with or without the vtk output plugin" 
+	@echo "make SUPPORT_DL_GENERATOR=0 | 1 compile with support for input generators as dynamic libraries"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
