@@ -452,7 +452,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	while (inputfilestream) {
 		token.clear();
 		inputfilestream >> token;
-		global_log->debug() << " [[" << token << "]]" << endl;
+		global_log->info() << " [[" << token << "]]" << endl;
 
 		if (token.substr(0, 1) == "#") {
 			inputfilestream.ignore(std::numeric_limits<streamsize>::max(), '\n');
@@ -833,8 +833,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> _initGrandCanonical;
 		} else if (token == "initStatistics") {
 			inputfilestream >> _initStatistics;
-		} else {
-			global_log->warning() << "Did not process unknown token " << token << endl;
+		} else if (token == "cutoffRadius") {
+                        double rc;
+                        inputfilestream >> rc;
+                        this->setcutoffRadius(rc);
+                } else if (token == "LJCutoffRadius") {
+                        double rc;
+                        inputfilestream >> rc;
+                        this->setLJCutoff(rc);
+                } else if (token == "tersoffCutoffRadius") {
+                        double rc;
+                        inputfilestream >> rc;
+                        this->setTersoffCutoff(rc);
+                } else {
+			if(token != "") global_log->warning() << "Did not process unknown token " << token << endl;
 		}
 	}
 

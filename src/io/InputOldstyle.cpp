@@ -19,17 +19,11 @@ InputOldstyle::~InputOldstyle(){}
 
 void InputOldstyle::setPhaseSpaceFile(string filename) {
 	_phaseSpaceFile = filename;
-	_phaseSpaceFileStream.open( filename.c_str() );
-
-	if (!_phaseSpaceFileStream.is_open()) {
-		global_log->error() << " Reader for old-style input file: " << endl;
-		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
-		exit(1);
-	}
 }
 
 void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
 	_phaseSpaceHeaderFile = filename;
+        global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
 	_phaseSpaceHeaderFileStream.open( filename.c_str() );
 }
 
@@ -86,7 +80,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 		token.clear();
 		_phaseSpaceHeaderFileStream >> token;
-		global_log->debug() << "[[" << token << "]]" << endl;
+		global_log->info() << "{{" << token << "}}" << endl;
 
 		if((token == "currentTime") || (token == "t")) {
 			// set current simulation time
@@ -147,9 +141,10 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			// components:
 			unsigned int numcomponents = 0;
 			_phaseSpaceHeaderFileStream >> numcomponents;
-			global_log->debug() << "Reading " << numcomponents << " components" << endl;
+			global_log->info() << "Reading " << numcomponents << " components" << endl;
 			dcomponents.resize(numcomponents);
 			for( unsigned int i = 0; i < numcomponents; i++ ) {
+                                global_log->info() << "comp. i = " << i << ": ";
 				dcomponents[i].setID(i);
 				unsigned int numljcenters = 0;
 				unsigned int numcharges = 0;
@@ -164,21 +159,25 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 					double eps, sigma, tcutoff, do_shift;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
 					dcomponents[i].addLJcenter( x, y, z, m, eps, sigma, tcutoff, (do_shift != 0) );
+                                        global_log->info() << "LJ at [" << x << " " << y << " " << z << "] " << endl;
 				}
 				for( unsigned int j = 0; j < numcharges; j++ ) {
 					double q;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> q;
 					dcomponents[i].addCharge( x, y, z, m, q );
+                                        global_log->info() << "charge at [" << x << " " << y << " " << z << "] " << endl;
 				}
 				for( unsigned int j = 0; j < numdipoles; j++ ) {
 					double eMyx,eMyy,eMyz,absMy;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eMyx >> eMyy >> eMyz >> absMy;
 					dcomponents[i].addDipole( x, y, z, eMyx, eMyy, eMyz, absMy );
+                                        global_log->info() << "dipole at [" << x << " " << y << " " << z << "] " << endl;
 				}
 				for( unsigned int j = 0; j < numquadrupoles; j++ ) {
 					double eQx,eQy,eQz,absQ;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
 					dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
+                                        global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << endl;
 				}
 				for( unsigned int j = 0; j < numtersoff; j++ ) {
 					double x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta;
@@ -187,6 +186,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 					_phaseSpaceHeaderFileStream >> lambda >> mu >> R >> S;
 					_phaseSpaceHeaderFileStream >> c >> d >> h >> n >> beta;
 					dcomponents[i].addTersoff( x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta );
+                                        global_log->info() << "solid at [" << x << " " << y << " " << z << "] " << endl;
 				}
 				double IDummy1,IDummy2,IDummy3;
 				// FIXME! Was soll das hier? Was ist mit der Initialisierung im Fall I <= 0.
@@ -194,6 +194,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				if( IDummy1 > 0. ) dcomponents[i].setI11(IDummy1);
 				if( IDummy2 > 0. ) dcomponents[i].setI22(IDummy2);
 				if( IDummy3 > 0. ) dcomponents[i].setI33(IDummy3);
+                                global_log->info() << endl;
 			}
 
 #ifndef NDEBUG
@@ -259,14 +260,24 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			header = false;
 		}
 	}
+
+	_phaseSpaceHeaderFileStream.close();
 }
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();
+
+        global_log->info() << "Opening phase space file " << _phaseSpaceFile << endl;
+	_phaseSpaceFileStream.open( _phaseSpaceFile.c_str() );
+	if (!_phaseSpaceFileStream.is_open()) {
+		global_log->error() << " Reader for old-style input file: " << endl;
+		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
+		exit(1);
+	}
 	global_log->info() << "Reading phase space file " << _phaseSpaceFile << endl;
-	
+
 	string token;
 	vector<Component>& dcomponents = domain->getComponents();
 	unsigned int numcomponents = dcomponents.size();
@@ -275,9 +286,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	string ntypestring("ICRVQD");
 	enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype = ICRVQD;
 
-	_phaseSpaceFileStream >> token;
+	while(_phaseSpaceFileStream && (token != "NumberOfMolecules") && (token != "N")) _phaseSpaceFileStream >> token;
 	if((token != "NumberOfMolecules") && (token != "N")) {
-		global_log->error() << "Expected token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
+		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
 		exit(1);
 	}
 	_phaseSpaceFileStream >> nummolecules;
