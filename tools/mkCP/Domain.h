@@ -9,8 +9,9 @@
 
 using namespace std;
 
-#define TIME 20110225
+#define TIME 20111102
 
+#define FLUID_NIL -1
 #define FLUID_AR 0
 #define FLUID_CH4 1
 #define FLUID_C2H6 2
@@ -135,15 +136,15 @@ class Domain
  public:
    Domain(
       int sp_flow, double sp_bondlength, double sp_rho, int sp_d,
-      int sp_fluid, double sp_h, double sp_ETA, double sp_SIG_REF,
+      int sp_fluid, int sp_fluid2, double sp_h, double sp_ETA, double sp_ETA2, double sp_ETAF, double sp_SIG_REF,
       double sp_EPS_REF, double sp_REFMASS, bool sp_muVT,
       bool sp_nanotube, double sp_m_per_n, unsigned sp_N, double sp_T,
-      double sp_XI, double sp_wo_wall
+      double sp_XI, double sp_XI2, double sp_XIF, double sp_wo_wall
    );
    void write(
       char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ, bool symmetric, bool widom
+      double polarity, bool WLJ, bool symmetric, bool widom, double x
    );
 
  private:
@@ -152,18 +153,18 @@ class Domain
    void writeGraphite(
       char* prefix, double a, bool empty, int format, double mu, 
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ, bool symmetric, bool widom
+      double polarity, bool WLJ, bool symmetric, bool widom, double x
    );
    void writeNanotube(
       char* prefix, double a, bool empty, int format, double mu,
       double TAU, double U, bool original, double wo_acceleration,
-      double polarity, bool WLJ, bool symmetric, bool widom
+      double polarity, bool WLJ, bool symmetric, bool widom, double x
    );
 
    bool muVT, nanotube;
-   int flow, fluid;
+   int flow, fluid, fluid2;
    unsigned d, m, n;
-   double bondlength, h, ETA, SIG_REF, EPS_REF, REFMASS, T, XI, wo_wall;
+   double bondlength, h, ETA, ETA2, ETAF, SIG_REF, EPS_REF, REFMASS, T, XI, XI2, XIF, wo_wall;
 
    double box[3],  // box dimensions (Couette == two boxes)
           eff[3],  // effective space for the fluid

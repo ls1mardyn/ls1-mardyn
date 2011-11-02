@@ -23,8 +23,8 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: mkCP (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] -h <height> [-H <eta>] [-k] [-l] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-p <polarity coefficient>] [-r] [-s <size unit [A]>] [-S] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-v <volume fraction without acceleration>] [-V <volume fraction without wall] [-w] [-W <energy and temperature unit [K]>] [-Y <mass unit [u]>] [-3 <xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), Ave, CH4, C2H6, N2, CO2, H2O, CH3OH, or C6H14\n-H\tdefault: eta according to Wang et al.\n-k\tonly harmonic potentials active within the wall (default for polar walls)\n-l\tLJ interaction within the wall as well (default for unpolar walls)\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-p\tdefault polarity coefficient: 0 (unpolar walls)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A 0\n-S\tsymmetric system (with two identical fluid components)\n-t\tdefault: tau extremely large (about 30 us)\n-u\tuse B-u-chholz format\n-w\tWidom\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3\tdefault: xi according to Wang et al.\n-8\toriginal Tersoff potential as published in the 80s\n";
-   if((argc < 15) || (argc > 61))
+   const char* usage = "usage: mkCP (-C|-P|-0) <prefix> [-a <initial acceleration>] [-A <C-C bond length>] -c <density> -d <layers> [-e] [-E] [-f <fluid>] [-g <second component>] -h <height> [-H <eta>] [-I <eta2>] [-J <fluid eta>] [-k] [-l] [-L] [-m <chemical potential>] [-M <CNT with m/n>] -N <N_fluid> [-p <polarity coefficient>] [-r] [-s <size unit [A]>] [-S] [-t <controller time parameter>] -T <temperature> [-u] -U <velocity> [-v <volume fraction without acceleration>] [-V <volume fraction without wall] [-w] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-3 <xi>] [-4 <xi2>] [-5 <fluid xi>] [-8]\n\n-A\treduced C-C bond length; default: 2.6853 a0 = 0.1421 nm, original Tersoff: 2.7609 a0\n-C\tCouette flow (flag followed by output prefix)\n-e\tuse B-e-rnreuther format\n-E\tgenerate an empty channel\n-f\tAr (default), Ave, CH4, C2H6, N2, CO2, H2O, CH3OH, or C6H14\n-H, -I\tdefault: eta according to Wang et al.\n-J\tdefault: eta = 1\n-k\tonly harmonic potentials active within the wall (default for polar walls)\n-l\tLJ interaction within the wall as well (default for unpolar walls)\n-L\tuse Lennard-Jones units instead of atomic units (cf. atomic_units.txt)\n-M\tgenerate a carbon nanotube (only for Poiseuille flow)\n-p\tdefault polarity coefficient: 0 (unpolar walls)\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A 0\n-S\tsymmetric system (with two identical fluid components)\n-t\tdefault: tau extremely large (about 30 us)\n-u\tuse B-u-chholz format\n-w\tWidom\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-x\tdefault value: 0 (i.e. pure first comp. fluid)\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n-0\tstatic scenario without flow (followed by output prefix)\n-3, -4\tdefault: xi according to Wang et al.\n-5\tdefault: xi = 1\n-8\toriginal Tersoff potential as published in the 80s\n";
+   if((argc < 15) || (argc > 69))
    {
       cout << "There are " << argc
            << " arguments where 15 to 61 should be given.\n\n";
@@ -33,9 +33,11 @@ int main(int argc, char** argv)
    }
 
    unsigned d, N;
-   double h, T, rho, U, XI, ETA, TAU, bondlength, a, m_per_n;
+   double h, T, rho, U, XI, ETA, XI2, ETA2, XIF, ETAF, TAU, bondlength, a, m_per_n;
    double mu = 0.0;
+   double x = 0.0;
    int fluid, flow;
+   int fluid2 = FLUID_NIL;
    int format = FORMAT_BRANCH;
    char* prefix = (char*)0;
 
@@ -51,17 +53,23 @@ int main(int argc, char** argv)
    bool in_bondlength = false;
    bool empty = false;
    bool in_ETA = false;
+   bool in_ETA2 = false;
+   bool in_ETAF = false;
    bool LJunits = false;
    bool in_TAU = false;
    bool in_N = false;
    bool in_XI = false;
+   bool in_XI2 = false;
+   bool in_XIF = false;
    bool in_rho = false;
    bool in_d = false;
    bool in_fluid = false;
+   bool in_fluid2 = false;
    bool in_h = false;
    bool in_T = false;
    bool in_U = false;
    bool in_WLJ = false;
+   bool in_x = false;
    bool original = false;
    bool muVT = false;
    bool nanotube = false;
@@ -139,6 +147,27 @@ int main(int argc, char** argv)
             }
             break;
          }
+         else if(argv[i][j] == 'g')
+         {
+            in_fluid2 = true;
+            i++;
+            if(!strcmp(argv[i], "Ar")) fluid2 = FLUID_AR;
+            else if(!strcmp(argv[i], "Ave")) fluid2 = FLUID_AVE;
+            else if(!strcmp(argv[i], "CH4")) fluid2 = FLUID_CH4;
+            else if(!strcmp(argv[i], "C2H6")) fluid2 = FLUID_C2H6;
+            else if(!strcmp(argv[i], "N2")) fluid2 = FLUID_N2;
+            else if(!strcmp(argv[i], "CO2")) fluid2 = FLUID_CO2;
+            else if(!strcmp(argv[i], "H2O")) fluid2 = FLUID_H2O;
+            else if(!strcmp(argv[i], "CH3OH")) fluid2 = FLUID_CH3OH;
+            else if(!strcmp(argv[i], "C6H14")) fluid2 = FLUID_C6H14;
+            else
+            {
+               cout << "(Secondary) fluid '" << argv[i] 
+                    << "' is not available.\n\n" << usage;
+               return 99;
+            }
+            break;
+         }
          else if(argv[i][j] == 'h')
          {
             in_h = true;
@@ -151,6 +180,20 @@ int main(int argc, char** argv)
             in_ETA = true;
             i++;
             ETA = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == 'I')
+         {
+            in_ETA2 = true;
+            i++;
+            ETA2 = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == 'J')
+         {
+            in_ETAF = true;
+            i++;
+            ETAF = atof(argv[i]);
             break;
          }
          else if(argv[i][j] == 'k')
@@ -251,6 +294,13 @@ int main(int argc, char** argv)
             EPS_REF = atof(argv[i]) / 315774.5;
             break;
          }
+         else if(argv[i][j] == 'x')
+         {
+            in_x = true;
+            i++;
+            x = atof(argv[i]);
+            break;
+         }
          else if(argv[i][j] == 'Y')
          {
             i++;
@@ -269,6 +319,20 @@ int main(int argc, char** argv)
             in_XI = true;
             i++;
             XI = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == '4')
+         {
+            in_XI2 = true;
+            i++;
+            XI2 = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == '5')
+         {
+            in_XIF = true;
+            i++;
+            XIF = atof(argv[i]);
             break;
          }
          else if(argv[i][j] == '8') original = true;
@@ -327,8 +391,42 @@ int main(int argc, char** argv)
            << "is unavailable at present.\n\n" << usage;
       return 14;
    }
+
+   if(fluid == fluid2)
+   {
+      symmetric = true;
+      fluid2 = FLUID_NIL;
+   }
+   if((x < 0.0) || (x > 1.0))
+   {
+      cout << "Invalid mole fraction x = " << x << ".\n\n" << usage;
+      return 15;
+   }
+   if((in_fluid2 == false) || (fluid2 == FLUID_NIL))
+   {
+      x = 0.0;
+   }
+   if(x == 1.0)
+   {
+      fluid = fluid2;
+      x = 0.0;
+   }
+   if(x == 0.0)
+   {
+      in_fluid2 = false;
+      fluid2 = FLUID_NIL;
+   }
+
+   if(symmetric && (fluid2 != FLUID_NIL))
+   {
+      cout << "The symmetric scenario cannot contain an (actual) fluid mixture.\n\n" << usage;
+      return 16;
+   }
+   if(symmetric) x = 0.5;
+
    if(!in_fluid) fluid = FLUID_AR;
    double SIG_FLUID, EPS_FLUID, FLUIDMASS;
+   double SIG_FLUID2, EPS_FLUID2, FLUIDMASS2;
    if(fluid == FLUID_CH4)
    {
       SIG_FLUID = SIG_CH4;
@@ -373,6 +471,50 @@ int main(int argc, char** argv)
       else if(fluid == FLUID_CH3OH) FLUIDMASS = CCH3OHMASS + OCH3OHMASS + HCH3OHMASS;
       else FLUIDMASS = 2.0*FC6H14MASS + 4.0*MC6H14MASS;
    }
+   if(fluid2 == FLUID_CH4)
+   {
+      SIG_FLUID2 = SIG_CH4;
+      EPS_FLUID2 = EPS_CH4;
+      FLUIDMASS2 = CH4MASS;
+   }
+   else if(fluid2 == FLUID_C2H6)
+   {
+      SIG_FLUID2 = SIG_C2H6;
+      EPS_FLUID2 = EPS_C2H6;
+      FLUIDMASS2 = C2H6MASS;
+   }
+   else if(fluid2 == FLUID_N2)
+   {
+      SIG_FLUID2 = SIG_N2;
+      EPS_FLUID2 = EPS_N2;
+      FLUIDMASS2 = N2MASS;
+   }
+   else if(fluid2 == FLUID_CO2)
+   {
+      SIG_FLUID2 = SIG_CO2;
+      EPS_FLUID2 = EPS_CO2;
+      FLUIDMASS2 = CO2MASS;
+   }
+   else if(fluid2 == FLUID_AVE) // Avendaño mode
+   {
+      SIG_FLUID2 = SIG_AVE;
+      EPS_FLUID2 = EPS_AVE;
+      FLUIDMASS2 = AVEMASS;
+   }
+   else if(fluid2 == FLUID_AR)
+   {
+      SIG_FLUID2 = SIG_AR;
+      EPS_FLUID2 = EPS_AR;
+      FLUIDMASS2 = ARMASS;
+   }
+   else // effectively sets ETA2 = XI2 = 1 in all other cases
+   {
+      SIG_FLUID2 = SIG_WANG;
+      EPS_FLUID2 = EPS_WANG;
+      if(fluid2 == FLUID_H2O) FLUIDMASS2 = OH2OMASS + 2.0*HH2OMASS;
+      else if(fluid2 == FLUID_CH3OH) FLUIDMASS2 = CCH3OHMASS + OCH3OHMASS + HCH3OHMASS;
+      else FLUIDMASS2 = 2.0*FC6H14MASS + 4.0*MC6H14MASS;
+   }
    if(!in_N)
    {
       cout << "Missing essential input parameter "
@@ -401,8 +543,12 @@ int main(int argc, char** argv)
    }
 
    if(!in_h) h = pow((double)N/rho, 1.0/3.0);
-   if(!in_ETA) ETA = sqrt(SIG_WANG / SIG_FLUID);
+   if(!in_ETA) ETA = 0.5*(1.0 + SIG_WANG/SIG_FLUID);
    if(!in_XI) XI = sqrt(EPS_WANG / EPS_FLUID);
+   if(!in_ETA2) ETA2 = (SIG_WANG + SIG_FLUID2) / (SIG_FLUID + SIG_FLUID2);
+   if(!in_XI2) XI2 = sqrt(EPS_WANG / EPS_FLUID);
+   if(!in_ETAF) ETAF = 1.0;
+   if(!in_XIF) XIF = 1.0;
 
    SIG_REF = LJunits? SIG_FLUID: 1.0;
    EPS_REF = LJunits? EPS_FLUID: 1.0;
@@ -431,8 +577,8 @@ int main(int argc, char** argv)
    if(!in_a) a = 0.01 * U / TAU;
 
    Domain* dalet = new Domain(
-      flow, bondlength, rho, d, fluid, h, ETA, SIG_REF, EPS_REF,
-      REFMASS, muVT, nanotube, m_per_n, N, T, XI, wo_wall
+      flow, bondlength, rho, d, fluid, fluid2, h, ETA, ETA2, ETAF, SIG_REF, EPS_REF,
+      REFMASS, muVT, nanotube, m_per_n, N, T, XI, XI2, XIF, wo_wall
    );
    if(nanotube)
    {
@@ -444,7 +590,7 @@ int main(int argc, char** argv)
    {
       dalet->write(
          prefix, a, empty, format, mu, TAU, U, original,
-         wo_acceleration, polarity, WLJ, symmetric, widom
+         wo_acceleration, polarity, WLJ, symmetric, widom, x
       );
    }
 
