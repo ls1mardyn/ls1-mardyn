@@ -200,7 +200,7 @@ void Domain::write(char* prefix, int format, double mu)
    {
       xdr << "mardyn " << TIME << " tersoff\n"
           << "# mardyn input file, ls1 project\n"
-          << "# written by animaker, the mesh generator\n";
+          << "# written by animake, the mesh generator\n";
    }
    if(format == FORMAT_BUCHHOLZ)
    {
@@ -304,7 +304,7 @@ void Domain::write(char* prefix, int format, double mu)
    }
    if(format == FORMAT_BUCHHOLZ)
    {
-      txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\n";
+      txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\nparallelization\tDomainDecomposition\n";
    }
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
