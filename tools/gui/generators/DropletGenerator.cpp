@@ -17,6 +17,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "common/DropletPlacement.h"
 #include "utils/Logger.h"
+#include "utils/Timer.h"
 
 
 #include <cmath>
@@ -91,6 +92,10 @@ unsigned long DropletGenerator::readPhaseSpace(
 		std::list<ChemicalPotential>* lmu, Domain* domain,
 		DomainDecompBase* domainDecomp) {
 
+	Timer inputTimer;
+	inputTimer.start();
+	_logger->info() << "Reading phase space file (DropletGenerator)." << endl;
+
 	srand(1);
 	vector<double> bBoxMin;
 	vector<double> bBoxMax;
@@ -106,7 +111,7 @@ unsigned long DropletGenerator::readPhaseSpace(
 			<< "OneCLJGenerator  generating cluster distribution. " << " T "
 			<< _temperature << " #molecules " << numOfMolecules << " rho_gas "
 			<< gasDensity << " rho_fluid " << fluidDensity << endl;
-	generateMoleculesCluster(particleContainer, bBoxMin, bBoxMax, domain,
+	unsigned long maxID = generateMoleculesCluster(particleContainer, bBoxMin, bBoxMax, domain,
 			domainDecomp);
 
 	vector<Component>& dcomponents = domain->getComponents();
@@ -126,7 +131,9 @@ unsigned long DropletGenerator::readPhaseSpace(
 	domain->setglobalRho(
 			domain->getglobalNumMolecules() / (simBoxLength[0]
 					* simBoxLength[1] * simBoxLength[2]));
-	return domain->getglobalNumMolecules();
+	inputTimer.stop();
+	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	return maxID;
 }
 
 void DropletGenerator::readLocalClusters(Domain* domain,
@@ -248,7 +255,7 @@ vector<ParameterCollection*> DropletGenerator::getParameters() {
 
 
 
-void DropletGenerator::generateMoleculesCluster(
+unsigned long DropletGenerator::generateMoleculesCluster(
 		ParticleContainer* particleContainer, vector<double> &bBoxMin,
 		vector<double> &bBoxMax, Domain* domain, DomainDecompBase* domainDecomp) {
 
@@ -296,8 +303,8 @@ void DropletGenerator::generateMoleculesCluster(
 	double r_[3];
 	double q_[4];
 
-	long int idOffset = LONG_MAX / domainDecomp->getNumProcs() * domainDecomp->getRank();
-	long int molCount = idOffset;
+	unsigned long int idOffset = LONG_MAX / domainDecomp->getNumProcs() * domainDecomp->getRank();
+	unsigned long int molCount = idOffset;
 	for (unsigned int cluster = 0; cluster < localClusters.size(); cluster++) {
 		radius = localClusters[cluster][3];
 		for (int dim = 0; dim < 3; dim++) {
@@ -438,6 +445,7 @@ void DropletGenerator::generateMoleculesCluster(
 			}
 		}
 	}
+	return molCount;
 }
 
 void DropletGenerator::setParameter(Parameter* p) {

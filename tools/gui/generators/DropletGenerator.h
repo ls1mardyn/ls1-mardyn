@@ -63,8 +63,10 @@ public:
 	 * created
 	 *
 	 * Generates dropplets, called from GenerateDrawableMolecules()
+	 *
+	 * @return the highest id of a molecule generated.
 	 */
-	void generateMoleculesCluster(ParticleContainer* particleContainer,
+	unsigned long generateMoleculesCluster(ParticleContainer* particleContainer,
 			vector<double> &bBoxMin, vector<double> &bBoxMax, Domain* domain,
 			DomainDecompBase* domainDecomp);
 

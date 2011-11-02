@@ -11,6 +11,7 @@
 #include "common/MardynConfigurationParameters.h"
 #include "common/PrincipalAxisTransform.h"
 #include "Tokenize.h"
+#include "utils/Timer.h"
 #include <cstring>
 
 
@@ -136,7 +137,11 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
-//
+
+	Timer inputTimer;
+	inputTimer.start();
+	_logger->info() << "Reading phase space file (CubicGridGenerator)." << endl;
+
 // create a body centered cubic layout, by creating by placing the molecules on the
 // vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
@@ -246,6 +251,8 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	domainDecomp->collCommFinalize();
 
 	domain->setglobalNumMolecules(globalNumMolecules);
+	inputTimer.stop();
+	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
 	return id;
 }
 
