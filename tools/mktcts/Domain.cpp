@@ -9,7 +9,7 @@
 #define BINS 2048
 #define DT 0.002
 #define PRECISION 5
-#define TIME 20110209
+#define TIME 20111102
 #define VARFRACTION 0.125
 
 Domain::Domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
@@ -156,7 +156,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    }
    if(format == FORMAT_BUCHHOLZ)
    {
-      txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\n";
+      txt << "phaseSpaceFile\tOldStyle\t" << prefix << ".inp\nparallelization\tDomainDecomposition\n";
    }
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
