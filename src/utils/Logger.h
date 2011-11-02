@@ -113,25 +113,32 @@ private:
 		logLevelNames.insert(std::pair<logLevel, std::string>(Debug,   "DEBUG"      ));
 	}
 
+	// don't allow copy-construction
+	Logger(const Logger&) : _log_level(Log::Error), _msg_log_level(Log::Error), _do_output(true),
+			_filename(""), _log_stream(0), logLevelNames(), _starttime()
+	{ }
+
+	// don't allow assignment
+	Logger& operator=(const Logger&) { return *this; }
+
 public:
 	/** Initializes the log level, log stream and the list of log level names.
 	 * If ENABLE_MPI is enabled by default all process perform logging output. */
 	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout))
-	    : _log_level(level), _log_stream(os) {
+	    : _log_level(level), _msg_log_level(Log::Error), _do_output(true), _filename(""),
+	      _log_stream(os), logLevelNames(), _starttime() {
 		init_starting_time();
-		_filename = "";
-		_do_output = true;
 		this->init_log_levels();
 #ifdef ENABLE_MPI
 		MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 #endif
 	}
 
-	Logger(logLevel level, std::string prefix) : _log_level(level) {
+	Logger(logLevel level, std::string prefix) :  _log_level(level), _msg_log_level(Log::Error),
+			_do_output(true), _filename(""), _log_stream(0), logLevelNames(), _starttime() {
 		init_starting_time();
 		std::stringstream filenamestream;
 		filenamestream << prefix;
-		_do_output = true;
 #ifdef ENABLE_MPI
 		MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
 		filenamestream << "_R" << _rank;

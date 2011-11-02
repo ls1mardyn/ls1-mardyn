@@ -5,6 +5,7 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/PressureGradient.h"
 #include "utils/Logger.h"
+#include "utils/Timer.h"
 #include <climits>
 
 using Log::global_log;
@@ -262,6 +263,8 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
+	Timer inputTimer;
+	inputTimer.start();
 	global_log->info() << "Reading phase space file " << _phaseSpaceFile << endl;
 	
 	string token;
@@ -388,5 +391,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 
 	_phaseSpaceFileStream.close();
 
+	inputTimer.stop();
+	global_log->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
 	return maxid;
 }

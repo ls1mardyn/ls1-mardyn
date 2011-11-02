@@ -33,6 +33,7 @@ public:
 	 *  @brief read the actual phase space information
 	 *  Returns "the highest molecule ID found in the phase space file";
 	 *  // todo why? should it be some kind of upper bound for the number of molecules???
+	 *  // WE: good question. For the scenario generator however, useful for the visualization...
 	 */
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 
