@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<mardyn version="20111102">
+   <simulation type="MD">
+      <input type="oldstyle">M14-mkTcTS_1R.cfg</input>
+   </simulation>
+</mardyn>
