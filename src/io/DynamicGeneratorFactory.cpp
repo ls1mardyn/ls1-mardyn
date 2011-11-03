@@ -11,7 +11,6 @@
 //#include <dirent.h>
 #include <errno.h>
 #include <iostream>
-#include <dlfcn.h>
 #include <cassert>
 
 
@@ -20,6 +19,7 @@
 #include "src/Parameters/Parameter.h"
 #include "src/Parameters/ParameterCollection.h"
 #include "src/IO/WriteOutput.h"
+#include <dlfcn.h>
 #endif
 
 using namespace Log;
