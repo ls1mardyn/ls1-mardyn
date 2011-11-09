@@ -374,7 +374,7 @@ void DomainDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 			MPI_CHECK( MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, _comm, &status) );
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
-					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID " << recv << endl;
+					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID " << recv[j] << endl;
 					MPI_Abort(MPI_COMM_WORLD, 1);
 				}
 				else
