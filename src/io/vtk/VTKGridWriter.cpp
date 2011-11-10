@@ -77,7 +77,12 @@ void  VTKGridWriter::outputParallelVTKFile(unsigned int numProcs, unsigned long 
 	std::vector<std::string> procFileNames;
 	for (unsigned int i = 0; i < numProcs; i++) {
 		std::stringstream fileNameStream;
-		fileNameStream << _fileName << "_node" << i << "_" << simstep << ".vtu";
+		size_t pos = _fileName.find_last_of("/");
+		if (pos != std::string::npos) {
+			fileNameStream << _fileName.substr(pos+1) << "_node" << i << "_" << simstep << ".vtu";
+		} else {
+			fileNameStream << _fileName << "_node" << i << "_" << simstep << ".vtu";
+		}
 		procFileNames.push_back(fileNameStream.str());
 	}
 
