@@ -60,7 +60,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 
 KDDecomposition::~KDDecomposition() {
 	delete[] _numParticlesPerCell;
-	MPI_Finalize();
 }
 
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
