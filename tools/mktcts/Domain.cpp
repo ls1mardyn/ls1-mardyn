@@ -208,7 +208,8 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    {
       xdr << "mardyn trunk " << TIME << "\n"
           << "t\t0\nL\t" << box[0] << " " << box[1]
-          << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t2.5 1\t0 0 0 1e+10\nT\t" << T << "\nN\t"
+          << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t" << cutoff << " "
+          << (do_shift? "1": "0") << "\t0 0 0 1e+10\nT\t" << T << "\nN\t"
           << N[0]+N[1] << "\nM\tICRVQD\n\n";
    }
 
