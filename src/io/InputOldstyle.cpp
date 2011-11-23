@@ -23,14 +23,14 @@ void InputOldstyle::setPhaseSpaceFile(string filename) {
 
 void InputOldstyle::setPhaseSpaceHeaderFile(string filename) {
 	_phaseSpaceHeaderFile = filename;
-        global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
-	_phaseSpaceHeaderFileStream.open( filename.c_str() );
 }
 
 void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 {
 	string token, token2;
 
+	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
+	_phaseSpaceHeaderFileStream.open( _phaseSpaceHeaderFile.c_str() );
 	_phaseSpaceHeaderFileStream >> token;
 	domain->setinpversion(0);
 
