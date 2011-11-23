@@ -21,28 +21,13 @@
 
 #include <list>
 
+#include "utils/Random.h"
 #include "molecules/Molecule.h"
 
 class DomainDecompBase;
 class ParticleContainer;
-class Molecule;
 
 typedef ParticleContainer TMoleculeContainer;
-
-//! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
-class Random {
-public:
-	Random();
-	void init(int seed);
-
-	float rnd_muVT();
-
-	int getIX() { return this->ix_muVT; }
-
-private:
-	int ix_muVT, iy_muVT;
-	float am_muVT;
-};
 
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 class ChemicalPotential {

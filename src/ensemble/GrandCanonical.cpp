@@ -11,35 +11,6 @@
 using namespace std;
 using Log::global_log;
 
-Random::Random() { this->init(8624); }
-
-void Random::init(int seed)
-{
-	 this->ix_muVT = (seed ^ (int)888889999) | (int)1;
-	 this->iy_muVT = seed ^ (int)777755555;
-	 // Calculate normalization factor
-	 this->am_muVT = 2.0 / (1.0 + (unsigned)((int)-1));
-}
-
-float Random::rnd_muVT()
-{
-	 float rnd;
-	 const int IA = 16807;
-	 const int IM = 2147483647;
-	 const int IQ = 127773; 
-	 const int IR = 2836;
-
-	 ix_muVT ^= (ix_muVT >> 13);
-	 ix_muVT ^= (ix_muVT << 17);
-	 ix_muVT ^= (ix_muVT >> 5);
-
-	 int k = iy_muVT / IQ;
-	 iy_muVT = IA * (iy_muVT - k*IQ) - IR*k;
-	 if(iy_muVT < 0) iy_muVT += IM;
-	 rnd = am_muVT * ((IM & (ix_muVT ^ iy_muVT)) | (int)1);
-	 return rnd;
-}
-
 ChemicalPotential::ChemicalPotential()
 {
 	 this->ownrank = -1;
@@ -151,8 +122,8 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
 	 unsigned localIndex;
 	 for(unsigned i=0; i < this->instances; i++)
 	 {
-	    sel = this->rnd.rnd_muVT();
-	    dec = this->rnd.rnd_muVT();
+	    sel = this->rnd.rnd();
+	    dec = this->rnd.rnd();
 #ifndef NDEBUG
 			// if(!ownrank) cout << "global index " << sel << " chosen for deletion.\n";
 #endif
@@ -178,8 +149,8 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
 	 double tc[3];
 	 for(int i=0; i < insertions; i++)
 	 {
-	    for(int d=0; d < 3; d++) redc[d] = this->rnd.rnd_muVT();
-	    dec = this->rnd.rnd_muVT();
+	    for(int d=0; d < 3; d++) redc[d] = this->rnd.rnd();
+	    dec = this->rnd.rnd();
 	    if(    (redc[0] >= minredco[0]) && (redc[1] >= minredco[1]) && (redc[2] >= minredco[2]) 
 	        && (redc[0] <  maxredco[0]) && (redc[1] <  maxredco[1]) && (redc[2] <  maxredco[2]) )
 	    {
@@ -340,7 +311,7 @@ void ChemicalPotential::submitTemperature(double T)
 	 this->muTilde = this->mu / T;
 	 double lambda = 0.39894228 * h / sqrt(molecularMass*T);
 	 globalReducedVolume = globalV / (lambda*lambda*lambda);
-	 double doOutput = this->rnd.rnd_muVT();
+	 double doOutput = this->rnd.rnd();
 #ifdef NDEBUG
 	 if(ownrank) return;
 #endif
