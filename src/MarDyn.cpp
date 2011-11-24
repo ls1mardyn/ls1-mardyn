@@ -108,19 +108,32 @@ int main(int argc, char** argv) {
     /* First read the given config file if it exists, then overwrite parameters with command line arguments. */
     if(args[0] == "mkTcTS")
     {
-       simulation.mkTcTS(argc-2, argv);
+    	simulation.mkTcTS(argc-2, argv);
+    	// set the number of timesteps to be simulated
+    	if (numargs > 2) {
+    		unsigned long steps = 0;
+    		istringstream(args[numargs - 2]) >> steps;
+    		simulation.setNumTimesteps(steps);
+    	}
+        if( numargs > 3 ) {
+            simulation.setOutputPrefix( args[2] );
+        }
     }
     else if( fileExists( args[0].c_str()) ) {
         simulation.readConfigFile( args[0] );
+    	if (numargs > 1) {
+    		unsigned long steps = 0;
+    		istringstream(args[numargs - 2]) >> steps;
+    		simulation.setNumTimesteps(steps);
+    	}
+        if( numargs > 2 ) {
+            simulation.setOutputPrefix( args[2] );
+        }
     } else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
         exit(1);
     }
 
-    // set the number of timesteps to be simulated
-    unsigned long steps = 0;
-    istringstream(args[numargs - 2]) >> steps;
-    simulation.setNumTimesteps(steps);
     /*
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
