@@ -116,14 +116,14 @@ int main(int argc, char** argv) {
     		simulation.setNumTimesteps(steps);
     	}
         if( numargs > 3 ) {
-            simulation.setOutputPrefix( args[2] );
+            simulation.setOutputPrefix( args[numargs - 1] );
         }
     }
     else if( fileExists( args[0].c_str()) ) {
         simulation.readConfigFile( args[0] );
     	if (numargs > 1) {
     		unsigned long steps = 0;
-    		istringstream(args[numargs - 2]) >> steps;
+    		istringstream(args[1]) >> steps;
     		simulation.setNumTimesteps(steps);
     	}
         if( numargs > 2 ) {
@@ -133,7 +133,6 @@ int main(int argc, char** argv) {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
         exit(1);
     }
-
     /*
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
