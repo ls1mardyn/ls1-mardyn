@@ -10,6 +10,11 @@
 #include "io/XyzWriter.h"
 #include "io/CheckpointWriter.h"
 
+#ifdef ENABLE_MPI
+#include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecomposition.h"
+#endif
+
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -279,7 +284,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
    this->_domain->setglobalNumMolecules(N[0]+N[1]);
 
 #ifdef ENABLE_MPI
-   *this->_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+   *(this->_domainDecomposition) = (DomainDecompBase*) new DomainDecomposition();
 #endif
    double bBoxMin[3];
    double bBoxMax[3];
@@ -287,7 +292,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
       bBoxMin[i] = (*_domainDecomposition)->getBoundingBoxMin(i, _domain);
       bBoxMax[i] = (*_domainDecomposition)->getBoundingBoxMax(i, _domain);
    }
-   *this->_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, ecutoff, cutoff, 0.5, 1);
+   *(this->_moleculeContainer) = new LinkedCells(bBoxMin, bBoxMax, ecutoff, cutoff, 0.5, 1);
    stringstream opstream;
    opstream << prefix << "_1R";
    this->_msimulation->setOutputPrefix(opstream.str().c_str());
