@@ -195,8 +195,8 @@ public:
 		_collComm.allreduceSum();
 	}
 
-	void collCommBroadcast() {
-		_collComm.broadcast();
+	void collCommBroadcast(int root = 0) {
+		_collComm.broadcast(root);
 	}
 
 private:

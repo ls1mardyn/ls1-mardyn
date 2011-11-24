@@ -148,7 +148,7 @@ public:
 	void collCommAllreduceSum() {
 	}
 
-	void collCommBroadcast() {
+	void collCommBroadcast(int root = 0) {
 	}
 
 private:

@@ -187,7 +187,7 @@ class KDDecomposition: public DomainDecompBase{
 	double collCommGetDouble(){ return _collComm.getDouble(); };
 	long double collCommGetLongDouble(){ return _collComm.getLongDouble(); };
 	void collCommAllreduceSum(){ _collComm.allreduceSum(); };
-	void collCommBroadcast(){ _collComm.broadcast(); };
+	void collCommBroadcast(int root = 0){ _collComm.broadcast(root); };
 
 	int getUpdateFrequency() { return _frequency; }
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }

@@ -228,9 +228,9 @@ public:
 	}
 
 	//! Broadcast all values from the process with rank 0 to all others
-	void broadcast() {
+	void broadcast(int root = 0) {
 		setMPIType();
-		MPI_CHECK( MPI_Bcast(_sendValues, 1, _valuesType, 0, _communicator) );
+		MPI_CHECK( MPI_Bcast(_sendValues, 1, _valuesType, root, _communicator) );
 		for (int i = 0; i < _numValues; i++) {
 			_recvValues[i] = _sendValues[i];
 		}
