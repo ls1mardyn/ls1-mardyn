@@ -55,7 +55,7 @@ public:
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
-	void setOutputPrefix(std::string& prefix);
+	void setOutputPrefix(std::string prefix);
 
 	//! plot all the statistics calculated to one or several files
 	void doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep);

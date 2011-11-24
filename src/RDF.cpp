@@ -138,7 +138,7 @@ void RDF::setOutputTimestep(unsigned int timestep) {
 	_RDFOutputTimesteps = timestep;
 }
 
-void RDF::setOutputPrefix(std::string& prefix) {
+void RDF::setOutputPrefix(std::string prefix) {
 	_RDFOutputPrefix = prefix;
 }
 

@@ -265,6 +265,20 @@ public:
 	//! set the "initCanonical" parameter to "0".
 	double Tfactor(unsigned long simstep);
 
+        void mkTcTS(int argc, char** argv);
+
+        void initCanonical(unsigned long t) { this->_initCanonical = t; }
+        void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
+        void initStatistics(unsigned long t) { this->_initStatistics = t; }
+
+        void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix)
+        {
+           this->_doRecordProfile = true;
+           this->_profileRecordingTimesteps = profileRecordingTimesteps;
+           this->_profileOutputTimesteps = profileOutputTimesteps;
+           this->_profileOutputPrefix = profileOutputPrefix;
+        }
+
 private:
 
 	// enum to get rid of a dynamic cast. With the xml format, there won't be any

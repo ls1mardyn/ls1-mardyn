@@ -1,3 +1,6 @@
+#ifndef RANDOM_H
+#define RANDOM_H
+
 class Random
 {
  public:
@@ -12,4 +15,6 @@ class Random
    int ix, iy;
    float am;
 };
+
+#endif
 

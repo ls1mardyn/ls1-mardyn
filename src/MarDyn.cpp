@@ -69,7 +69,6 @@ int main(int argc, char** argv) {
 	vector<string> args = op.args();
 	unsigned int numargs = args.size();
 
-
 	bool tests(options.get("tests"));
 	if (tests) {
 		string testcases;
@@ -107,7 +106,11 @@ int main(int argc, char** argv) {
     Simulation simulation;
 
     /* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-    if( fileExists( args[0].c_str()) ) {
+    if(args[0] == "mkTcTS")
+    {
+       simulation.mkTcTS(argc-2, argv);
+    }
+    else if( fileExists( args[0].c_str()) ) {
         simulation.readConfigFile( args[0] );
     } else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
@@ -115,28 +118,27 @@ int main(int argc, char** argv) {
     }
 
     // set the number of timesteps to be simulated
-    if( numargs > 1 ) {
-        unsigned long steps = 0;
-        istringstream(args[1]) >> steps;
-        simulation.setNumTimesteps( steps );
-    }
+    unsigned long steps = 0;
+    istringstream(args[numargs - 2]) >> steps;
+    simulation.setNumTimesteps(steps);
+    /*
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
     }
+    */
     global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
 
     // set the prefix for output files
-    if( numargs > 2 ) {
-        simulation.setOutputPrefix( args[2] );
-    }
+    simulation.setOutputPrefix(args[numargs - 1]);
+    /*
     if( options.is_set_by_user("outputprefix") ) {
         simulation.setOutputPrefix( options["outputprefix"] );
     }
+    */
     global_log->info() << "Using output prefix '" << simulation.getOutputPrefix() << "'" << endl;
 
     // TODO
     //simulation.setCutoffRadius(options.get("cutoff_radius"));
-
 
     simulation.prepare_start();
 
@@ -153,8 +155,8 @@ int main(int argc, char** argv) {
 
 Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 
+        /*
 	op = OptionParser()
-		// The last two optional positional arguments are only here for backwards-compatibility
 		.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n "
 		  "      %prog -t -d <test input data directory> [<name of testcase>]\n\n"
 				"Use option --help to display all available options.")
@@ -162,12 +164,25 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 		.description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
 		// .epilog("background info?")
 		;
+        */
+	op = OptionParser()
+		.usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
+		  "      %prog -t -d <test input data directory> [<name of testcase>]\n\n"
+				"Use option --help to display all available options.")
+		.version("%prog 0.1")
+		.description("ls1 mardyn (M-olecul-AR DYN-amics)")
+		// .epilog("background info?")
+		;
 
-	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
-	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	// op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
+	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
+	// op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
 	op.add_option("-t", "--tests") .action("store_true") .dest("tests") .metavar("T") .type("bool") .set_default(false) .help("unit tests: run built-in unit tests (default: %default)");
 	op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
+
+        op.add_option("-c").help("fluid density (mkTcTS)");
+        op.add_option("-N").help("approximate number of fluid molecules (mkTcTS)");
+        op.add_option("-T").help("temperature (mkTcTS)");
 
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
