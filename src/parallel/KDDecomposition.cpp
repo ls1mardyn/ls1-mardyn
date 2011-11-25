@@ -138,23 +138,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 
 		for (particleIter = particlePtrsToSend[neighbCount].begin(); particleIter != particlePtrsToSend[neighbCount].end(); particleIter++) {
 			ParticleData::MoleculeToParticleData(particlesSendBufs[neighbCount][partCount], **particleIter);
-			//  particlesSendBufs[neighbCount][partCount].id = (*particleIter)->id();
-			//particlesSendBufs[neighbCount][partCount].cid = (*particleIter)->componentid();
-			//particlesSendBufs[neighbCount][partCount].rx = (*particleIter)->r(0);
-			//particlesSendBufs[neighbCount][partCount].ry = (*particleIter)->r(1);
-			//particlesSendBufs[neighbCount][partCount].rz = (*particleIter)->r(2);
-			//particlesSendBufs[neighbCount][partCount].vx = (*particleIter)->v(0);
-			//particlesSendBufs[neighbCount][partCount].vy = (*particleIter)->v(1);
-			//particlesSendBufs[neighbCount][partCount].vz = (*particleIter)->v(2);
-			//particlesSendBufs[neighbCount][partCount].qw = (*particleIter)->q().qw();
-			//particlesSendBufs[neighbCount][partCount].qx = (*particleIter)->q().qx();
-			//particlesSendBufs[neighbCount][partCount].qy = (*particleIter)->q().qy();
-			//particlesSendBufs[neighbCount][partCount].qz = (*particleIter)->q().qz();
-			//particlesSendBufs[neighbCount][partCount].Dx = (*particleIter)->D(0);
-			//particlesSendBufs[neighbCount][partCount].Dy = (*particleIter)->D(1);
-			//particlesSendBufs[neighbCount][partCount].Dz = (*particleIter)->D(2);
 			partCount++;
-
 		}
 	}
 	if (_steps % _frequency == 0 || _steps <= 1) {
@@ -313,23 +297,29 @@ unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContain
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);
 	double pos = (_ownArea->_lowCorner[dimension]) * _cellSize[dimension];
-	if (pos < 0)
-		return pos + globalLength;
-	else if (pos > globalLength)
-		return pos - globalLength;
-	else
+	if (pos < 0) {
+		return 0;
+	}
+	else if (pos > globalLength) {
+		return globalLength;
+	}
+	else {
 		return pos;
+	}
 }
 
 double KDDecomposition::getBoundingBoxMax(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);
 	double pos = (_ownArea->_highCorner[dimension] + 1) * _cellSize[dimension];
-	if (pos < 0)
-		return pos + globalLength;
-	else if (pos > globalLength)
-		return pos - globalLength;
-	else
+	if (pos < 0) {
+		return 0;
+	}
+	else if (pos > globalLength) {
+		return globalLength;
+	}
+	else {
 		return pos;
+	}
 }
 
 void KDDecomposition::printDecomp(string filename, Domain* domain) {
@@ -409,45 +399,49 @@ void KDDecomposition::assertIntIdentity(int IX) {
 
 void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 	Molecule* m;
-	if (this->_ownRank) {
-		unsigned long int tid;
+
+	if (_ownRank) {
+		int num_molecules = mm->getNumberOfParticles();
+		unsigned long *tids;
+		tids = new unsigned long[num_molecules];
+
+		int i = 0;
 		for (m = mm->begin(); m != mm->end(); m = mm->next()) {
-			tid = m->id();
-			MPI_CHECK( MPI_Send(&tid, 1, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
+			tids[i] = m->id();
+			i++;
 		}
-		// use ULONG_MAX to tell the receiving process that there are no more molecules
-		tid = ULONG_MAX;
-		MPI_CHECK( MPI_Send(&tid, 1, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
+		MPI_CHECK( MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
+		delete[] tids;
+		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	}
 	else {
-		unsigned long int recv;
-		map<int, int> check;
-		for (m = mm->begin(); m != mm->end(); m = mm->next()) {
-			check[m->id()] = 0;
-		}
-
+		map<unsigned long, int> check;
 		int num_procs;
 		MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
-		MPI_Status s;
+
+		for (m = mm->begin(); m != mm->end(); m = mm->next())
+			check[m->id()] = 0;
+
+		MPI_Status status;
 		for (int i = 1; i < num_procs; i++) {
-			bool receiveMoreMolecules = true;
-			while (receiveMoreMolecules) {
-				MPI_CHECK( MPI_Recv(&recv, 1, MPI_UNSIGNED_LONG, i, 2674 + i, this->_collComm.getTopology(), &s) );
-				if (recv == ULONG_MAX)
-					receiveMoreMolecules = false;
-				else {
-					if (check.find(recv) != check.end()) {
-						global_log->error() << "Ranks " << check[recv] << " and "
-						     << i << " both propagate ID " << recv << "." << endl;
-						exit(1);
-					}
-					else
-						check[recv] = i;
+			int num_recv = 0;
+			unsigned long *recv;
+			MPI_CHECK( MPI_Probe(i, 2674 + i, this->_collComm.getTopology(), &status) );
+			MPI_CHECK( MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv) );
+			recv = new unsigned long[num_recv];
+
+			MPI_CHECK( MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, this->_collComm.getTopology(), &status) );
+			for (int j = 0; j < num_recv; j++) {
+				if (check.find(recv[j]) != check.end()) {
+					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID " << recv[j] << endl;
+					MPI_Abort(MPI_COMM_WORLD, 1);
 				}
+				else
+					check[recv[j]] = i;
 			}
+			delete[] recv;
 		}
-		global_log->debug() << "Data consistency checked. No duplicate IDs detected among " << check.size()
-		     << " entries." << endl;
+		global_log->info() << "Data consistency checked: No duplicate IDs detected among " << check.size() << " entries." << endl;
 	}
 }
 
