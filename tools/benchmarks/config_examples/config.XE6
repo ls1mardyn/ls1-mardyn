@@ -1,0 +1,17 @@
+[generator]
+jobscript=job.pbs
+template:	gentemplate.XE6
+parafiles:	%(jobscript)s
+condition:	$NPPN<$NPROC
+command:	qsub %(jobscript)s
+
+[parameters]
+# Parameter variations
+NPROC:	1 2 4 8 16 32
+NPPN:	1 2 4 16 32
+
+[postproc]
+ppscript=pp
+template:	pptemplate.XE6
+parafiles:	%(ppscript)s
+command:	sh %(ppscript)s 0

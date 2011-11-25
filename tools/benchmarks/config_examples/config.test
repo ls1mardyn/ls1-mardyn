@@ -1,0 +1,24 @@
+[general]
+#root: .
+#dstroot: .
+delimiter: :
+
+[generator]
+jobscript=job.sh
+template:	gentemplate.test
+parafiles:	%(jobscript)s parameters
+#command:	sh %(jobscript)s
+command:	cat -n parameters
+condition:	$NPPN<$NPROC
+
+[parameters]
+# Parameter variations
+NPROC:	4 8 16
+NPPN:	1 2
+TYPE:	A B
+
+[postproc]
+ppscript=postproc.sh
+template:	pptemplate.test
+parafiles:	%(ppscript)s
+command:	nl %(ppscript)s
