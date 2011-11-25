@@ -66,6 +66,7 @@ LinkedCells::LinkedCells(
 		_cellsPerDimension[d] = _boxWidthInNumCells[d] + 2 * _haloWidthInNumCells[d];
 
 		numberOfCells *= _cellsPerDimension[d];
+		assert(numberOfCells > 0);
 	}
 	global_log->debug() << "Cell size (" << _cellLength[0] << ", " << _cellLength[1] << ", " << _cellLength[2] << ")" << endl;
 
