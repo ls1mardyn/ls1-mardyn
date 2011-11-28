@@ -41,7 +41,7 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
    this->_mrdf = irdf;
    this->_msimulation = isimulation;
 
-   const char* usage = "usage: mkTcTS <prefix> -c <density> [-d <second density>] [-e] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-r] [-S] -T <temperature> [-U] [-u]\n\n-e\tuse B-e-rnreuther format\n-r\tuse b-r-anch format (active by default)\n-S\tshift (active by default)\n-U\tunshift\n-u\tuse B-u-chholz format\n";
+   const char* usage = "usage: mkTcTS <prefix> -c <density> [-d <second density>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-S] -T <temperature> [-U]\n\n-S\tshift (active by default)\n-U\tunshift\n";
    if((argc < 9) || (argc > 24))
    {
       cout << "There are " << argc
@@ -54,7 +54,6 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
    bool in_h = false;
    bool use_mu = false;
    bool gradient = false;
-   unsigned format = FORMAT_BRANCH;
 
    double cutoff = 2.5;
    double dRDF = 12.0;
@@ -91,7 +90,6 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
             rho2 = atof(argv[i]);
             break;
          }
-         else if(argv[i][j] == 'e') format = FORMAT_BERNREUTHER;
          else if(argv[i][j] == 'h')
          {
             in_h = true;
@@ -124,7 +122,6 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
             cutoff = atof(argv[i]);
             break;
          }
-         else if(argv[i][j] == 'r') format = FORMAT_BRANCH;
          else if(argv[i][j] == 'S') do_shift = true;
          else if(argv[i][j] == 'T')
          {
@@ -133,7 +130,6 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
             break;
          }
          else if(argv[i][j] == 'U') do_shift = false;
-         else if(argv[i][j] == 'u') format = FORMAT_BUCHHOLZ;
          else
          {
             cout << "Invalid flag '-" << argv[i][j]
@@ -150,18 +146,11 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
       exit(5);
    }
 
-   if(format == FORMAT_BERNREUTHER)
-   {
-      cout << "B-e-rnreuther format (flag -e) "
-           << "is unavailable at present.\n\n" << usage;
-      exit(3);
-   }
-
    if(!in_h) h = pow((double)N/rho, 1.0/3.0);
 
    if(gradient) this->domain(h, N, rho, rho2);
    else this->domain(N, rho, dRDF);
-   this->write(prefix, cutoff, mu, T, do_shift, use_mu, format);
+   this->write(prefix, cutoff, mu, T, do_shift, use_mu);
 }
 
 void TcTS::domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
@@ -189,7 +178,7 @@ void TcTS::domain(unsigned t_N, double t_rho, double t_RDF)
    this->box[2] = this->box[0];
 }
 
-void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, int format)
+void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu)
 {
    unsigned fl_units[3][2];
    double fl_unit[3][2];

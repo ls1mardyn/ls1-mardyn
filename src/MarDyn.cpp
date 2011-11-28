@@ -189,12 +189,18 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	// op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 	// op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-	op.add_option("-t", "--tests") .action("store_true") .dest("tests") .metavar("T") .type("bool") .set_default(false) .help("unit tests: run built-in unit tests (default: %default)");
-	op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
 
         op.add_option("-c").help("fluid density (mkTcTS)");
+	op.add_option("-d", "--test-dir").help("input directory (unit tests); secondary fluid density (mkTcTS)");
+        op.add_option("-h").help("height (mkTcTS)");
+        op.add_option("-m").help("chemical potential (mkTcTS)");
         op.add_option("-N").help("approximate number of fluid molecules (mkTcTS)");
+        op.add_option("-p").help("pair correlation cutoff (mkTcTS)");
+        op.add_option("-R").help("Lennard-Jones cutoff (mkTcTS)");
+        op.add_option("-S").help("shift the LJ potential (mkTcTS)");
         op.add_option("-T").help("temperature (mkTcTS)");
+	op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
+        op.add_option("-U").help("unshift (i.e., do not shift) the LJTS potential (mkTcTS)");
 
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");

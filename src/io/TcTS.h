@@ -14,16 +14,12 @@
 
 using namespace std;
 
-#define FORMAT_BUCHHOLZ 0
-#define FORMAT_BRANCH 1
-#define FORMAT_BERNREUTHER 2
-
 class TcTS
 {
  public:
    TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*>* outputPlugins, RDF* irdf, Simulation* isimulation);
    void write(
-      char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, int format
+      char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu
    );
 
  private:
