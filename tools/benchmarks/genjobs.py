@@ -65,10 +65,13 @@ parasubs={}
 print "options ----------------------------------------------------------------"
 #if options.configfile is not None:
 #	configfile=options.configfile
-if len(args)>1: configfile=args[1]
+if len(args)>0: 
+	configfile=args[0]
 if not os.path.isfile(configfile):
 	sys.stderr.write("ERROR: configuration file \"{0}\" not found!\n".format(configfile))
 	sys.exit(1)
+else:
+	print "Using config file {0}".format(configfile)
 configfiledir=os.path.dirname(os.path.realpath(configfile))
 print "configuration file:\t{0}".format(configfile)
 #print "         directory:\t{0}".format(configfiledir)
