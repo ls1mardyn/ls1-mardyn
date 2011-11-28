@@ -1,0 +1,43 @@
+#!/bin/bash
+# job.msub
+# job script for Hermit1 (http://www.hlrs.de/systems/platforms/)
+# Christoph Niethammer <niethammer@hlrs.de>
+#
+#PBS -l mppwidth=$NPROC
+##PBS -l mppnppn=$NPPN
+#PBS -l walltime=1:0:0
+#PBS -x
+#PBS -N $JOBNAME
+##PBS -o $JOBNAME.o%I
+##PBS -e $JOBNAME.e%I
+##PBS -A pa0628
+
+echo -e "JOBNAME:\t$JOBNAME"
+echo -e "NPROC:  \t$NPROC"
+#echo -e "NPPN:   \t$NPPN"
+
+#set -x
+cd ${PBS_O_WORKDIR}
+pwd
+date +%A,%e.%B.%Y,%H:%M:%S.%N
+echo "============================================================"
+starttime=`date +"%s"`
+cmd="aprun -n $NPROC ./MarDyn M$INP_ID-$INP"
+cmd="${cmd}_1R.cfg 1000"
+echo "$cmd"
+$cmd
+retval=$?
+endtime=`date +"%s"`
+echo "============================================================"
+date +%A,%e.%B.%Y,%H:%M:%S.%N
+difftime_sec=$(( ${endtime}-${starttime} ))
+difftime_S=$(( ${difftime_sec}%60 ))
+difftime_M=$(( ${difftime_sec}/60 ))
+difftime_H=$(( ${difftime_M}/60 ))
+difftime_M=$(( ${difftime_M}%60 ))
+echo "running for ${difftime_sec} sec = ${difftime_H} h, ${difftime_M} min, ${difftime_S} sec"
+if [ ${retval} -gt 0 ]; then
+	echo "ERROR (${retval})"
+fi
+
+echo "job finished"
