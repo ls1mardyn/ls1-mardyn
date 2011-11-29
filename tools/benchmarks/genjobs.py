@@ -19,7 +19,7 @@ import time
 #import re
 
 desc="generate&start benchmark runs"
-version="2011.11.25"
+version="2011.11.29"
 author="Martin Bernreuther <bernreuther@hlrs.de>"
 
 print time.strftime("genjobs.py starting at %a, %d.%m.%Y %H:%M:%S %Z")
@@ -41,7 +41,9 @@ ppcommand=None
 
 if sys.version_info < (2, 6):
 	#raise "ERROR: python version too old: "+str(sys.version_info)+"<2.6"
-	sys.stderr.write("\nWARNING: using old python version "+str(sys.version_info)+" < 2.6\n\n")
+	sys.stderr.write("\n!!! WARNING: using old python version "+str(sys.version_info)+" < 2.6 !!!\n\n")
+#else
+#	print "using Python version {0}".format(sys.version_info)
 
 progname=os.path.basename(sys.argv[0])
 optparser = optparse.OptionParser(usage="usage: {0} [options] [configfile]\n{1}\n(version: {2}, author: {3}, license: GPL)".format(progname,desc,version,author))	## %prog
@@ -153,6 +155,7 @@ if pptemplate is not None:
 		print "postprocessing command:\t",ppcommand
 
 
+
 print "parameters:"
 print "name\tvalues\t(width,int)"
 parameters=[]
@@ -160,18 +163,23 @@ numvar=0
 for i in cfgparser.items("parameters"):
 	paraname,paravalue=i
 	paravalues=paravalue.split()
-	maxlen=0
-	onlydigits=True
-	for paravalue in paravalues:
-		if len(paravalue)>maxlen: maxlen=len(paravalue)
-		if not paravalue.isdigit(): onlydigits=False
-	parameters.append([paraname,paravalues,[maxlen,onlydigits]])
-	print "{0}\t{1}\t({2},{3})".format(paraname,paravalues,maxlen,onlydigits)
-	if not numvar:
-		numvar=len(paravalues)
+	numval=len(paravalues)
+	if numval>1:
+		maxlen=0
+		onlydigits=True
+		for paravalue in paravalues:
+			if len(paravalue)>maxlen: maxlen=len(paravalue)
+			if not paravalue.isdigit(): onlydigits=False
+		parameters.append([paraname,paravalues,[maxlen,onlydigits]])
+		if not numvar:
+			numvar=numval
+		else:
+			numvar*=numval
+		print "{0}\t{1}\t({2},{3})\t*{4}".format(paraname,paravalues,maxlen,onlydigits,numval)
 	else:
-		numvar*=len(paravalues)
-
+		parasubs['$'+paraname]=paravalue
+		print "{0}\t{1}\t(substitution)".format(paraname,paravalue)
+print "number of jobs:\t{0}".format(numvar)
 
 
 def execmd(cmd,wd="."):
@@ -181,9 +189,8 @@ def execmd(cmd,wd="."):
 	stderrdata=""
 	try:
 		try:
-			#shell scripts have to be started using sh
-			stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd)
-			# with shell=True it should also be possible to start shell scripts directly, but this option might introduce a security risk
+			#stdoutdata=subprocess.check_output(cmd,cwd=wd,shell=True)	# security risk?
+			stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd)	# shell scripts have to be started using sh
 			#stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd,shell=True)
 		except subprocess.CalledProcessError,(rc,stdoutdata):
 			print "ERROR ({0}) executing {1}: {2}".format(rc,cmd,stdoutdata)
@@ -192,8 +199,11 @@ def execmd(cmd,wd="."):
 	except AttributeError:
 		try:
 			pid=subprocess.Popen(cmd,cwd=wd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
+			#                         executable=shlex.split(cmd)[0]
+			#pid=subprocess.Popen(shlex.split(cmd),cwd=wd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 			stdoutdata,stderrdata=pid.communicate()
 			rc=int(pid.returncode)
+			#if rc: print "ERROR {0} executing \"{1}\"".format(rc,cmd)	# return rc and let caller deal with it
 		except ValueError:
 			print "Popen ERROR executing "+cmd
 	return rc,stdoutdata,stderrdata
@@ -214,18 +224,22 @@ def adjrlinks(dstdir,srcdir):
 						os.remove(dstfile)
 						os.symlink(os.path.relpath(templatelinkfile,dstdir),dstfile)
 
+def replaceparameters(s,paradefs):
+	for paraname,paravalue in paradefs.items():
+		s=s.replace(paraname,str(paravalue))
+	return s
 
 
 if os.path.exists(dstroot):
 	sys.stderr.write("ERROR: destination directory {0} already exists\n".format(dstroot))
 	sys.exit(5)
 
+print "creating directory {0}".format(dstroot)
 if pptemplate is not None:
-	print "creating directory {0} copying {1}".format(dstroot,pptemplate)
+	print "\t(copying {0})".format(pptemplate)
 	shutil.copytree(pptemplate,dstroot,symlinks=True)
 	adjrlinks(dstroot,pptemplate)
 else:
-	print "creating directory {0}".format(dstroot)
 	#os.mkdir(dstroot)
 	os.makedirs(dstroot)
 if not (os.path.isdir(dstroot) and os.access(dstroot, os.W_OK)):
@@ -258,6 +272,8 @@ for i in range(numvar):
 			jobname+=str(paravalue)
 	parasubs["$JOBNAME"]=jobname
 	# substitute all parameters within condition & cmd
+	#cond=replaceparameters(cond,parasubs)
+	#cmd=replaceparameters(cmd,parasubs)
 	for paraname,paravalue in parasubs.items():
 		if cond is not None:
 			cond=cond.replace(paraname,str(paravalue))
@@ -293,6 +309,7 @@ for i in range(numvar):
 			substfhdl.close()
 			# alternatively loop over lines (with e.g. readline(), xreadlines or fileinput) and read-replace-write line-by-line
 			# replace parameters within file content
+			#substfilecontent=replaceparameters(substfilecontent,parasubs)
 			for paraname,paravalue in parasubs.items():
 				substfilecontent=substfilecontent.replace(paraname,str(paravalue))
 			substfile=os.path.join(jobdir,parareplacefile)
@@ -306,15 +323,15 @@ for i in range(numvar):
 		createdjobs.append(jobname)
 		#
 		if cmd is not None:
-			print "- command:",cmd,'-'*(60-len(cmd))
+			print "- command:",cmd,'-'*(51-len(cmd)),time.strftime("%H:%M:%S")
 			rc,stdoutdata,stderrdata=execmd(cmd,jobdir)
 			if rc!=0:
 				print stdoutdata
 				print stderrdata
-				print '-'*(64-len(str(rc))),rc,"failed"
+				print '-'*(56-len(str(rc))),rc,"failed",time.strftime("%H:%M:%S")
 			else:
 				print stdoutdata
-				print '-'*67,"done"
+				print '-'*58,"done",time.strftime("%H:%M:%S")
 				cmd_output.append(stdoutdata.rstrip("\n"))
 	else:
 		print "condition",cond,"does not hold"
@@ -356,15 +373,15 @@ if pptemplate is not None:
 		ppcmd=ppcommand
 		for paraname,paravalue in parasubs.items():
 				ppcmd=ppcmd.replace(paraname,str(paravalue))
-		print "- command:",ppcmd,'-'*(60-len(ppcmd))
+		print "- command:",ppcmd,'-'*(51-len(ppcmd)),time.strftime("%H:%M:%S")
 		rc,stdoutdata,stderrdata=execmd(ppcmd,dstroot)
 		if rc!=0:
 			print stdoutdata
 			print stderrdata
-			print '-'*64-len(str(rc)),rc,"failed"
+			print '-'*(56-len(str(rc))),rc,"failed",time.strftime("%H:%M:%S")
 		else:
 			print stdoutdata
-			print '-'*67,"done"
+			print '-'*58,"done",time.strftime("%H:%M:%S")
 			cmd_output.append(stdoutdata)
 	print "################################################################### done"
 

@@ -31,7 +31,7 @@ Structure of configure file:
 [general]
 root:	root directory
 dstroot:	destination root directory, where the job directories will be stored
-separator:	character (or string) to seperate list entries in variables
+delimiter:	character (or string) to seperate list entries in variables
 
 [generator]
 template:	job template directory to be copied to dstroot
@@ -53,7 +53,7 @@ Additional variables:
 
 $DSTROOT	dstroot
 $DSTROOTPATH	dstroot, absolute path
-$SEPARATOR	list delimiter
+$DELIMITER	list delimiter
 $GENTEMPLATE	job template
 $GENTEMPLATEPATH	job template, absolute path
 $PPTEMPLATE	postprocessing template
@@ -67,3 +67,4 @@ $JOBDIRPATH	job directory, absolute path
 within the preprocessing part after job generation
 $CREATEDJOBS	list of jobnames
 $GENCMDOUTPUT	list of the generator commands output
+

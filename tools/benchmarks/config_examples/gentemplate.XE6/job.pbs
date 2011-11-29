@@ -5,26 +5,27 @@
 #
 #PBS -l mppwidth=$NPROC
 ##PBS -l mppnppn=$NPPN
-#PBS -l walltime=1:0:0
+#PBS -l walltime=1:00:00
 #PBS -x
 #PBS -N $JOBNAME
-##PBS -o $JOBNAME.o%I
-##PBS -e $JOBNAME.e%I
-##PBS -A pa0628
+
+#. /opt/modules/default/etc/modules.sh
+#module swap PrgEnv-cray PrgEnv-gnu
 
 echo -e "JOBNAME:\t$JOBNAME"
 echo -e "NPROC:  \t$NPROC"
 #echo -e "NPPN:   \t$NPPN"
 
+INPFILE="M$INP_ID-$INPUT_1R.cfg"
+
 #set -x
 cd ${PBS_O_WORKDIR}
 pwd
+cmd="aprun -n $NPROC ./MarDyn ${INPFILE} 1000"
 date +%A,%e.%B.%Y,%H:%M:%S.%N
+echo "$cmd"
 echo "============================================================"
 starttime=`date +"%s"`
-cmd="aprun -n $NPROC ./MarDyn M$INP_ID-$INP"
-cmd="${cmd}_1R.cfg 1000"
-echo "$cmd"
 $cmd
 retval=$?
 endtime=`date +"%s"`

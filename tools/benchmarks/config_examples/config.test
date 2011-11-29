@@ -16,6 +16,7 @@ condition:	$NPPN<$NPROC
 NPROC:	4 8 16
 NPPN:	1 2
 TYPE:	A B
+INP:	C
 
 [postproc]
 ppscript=postproc.sh
