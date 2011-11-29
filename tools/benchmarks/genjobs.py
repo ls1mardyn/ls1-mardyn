@@ -191,7 +191,7 @@ def execmd(cmd,wd="."):
 			rc=0
 	except AttributeError:
 		try:
-			pid=subprocess.Popen(shlex.split(cmd),cwd=wd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+			pid=subprocess.Popen(cmd,cwd=wd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 			stdoutdata,stderrdata=pid.communicate()
 			rc=int(pid.returncode)
 		except ValueError:
@@ -311,7 +311,7 @@ for i in range(numvar):
 			if rc!=0:
 				print stdoutdata
 				print stderrdata
-				print '-'*64-len(str(rc)),rc,"failed"
+				print '-'*(64-len(str(rc))),rc,"failed"
 			else:
 				print stdoutdata
 				print '-'*67,"done"
