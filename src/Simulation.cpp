@@ -330,6 +330,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 						_LJCutoffRadius = _cutoffRadius;
 					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 						_tersoffCutoffRadius);
+				} else {
+					global_log->error() << "UNKOWN DATASTRUCTURE: " << datastructype << endl;
+					exit(1);
 				}
 			}
 			inp.changecurrentnode("..");
@@ -550,6 +553,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
 				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius);
+			} else {
+				global_log->error() << "UNKOWN DATASTRUCTURE: " << token << endl;
+				exit(1);
 			}
 		} else if (token == "output") {
 			inputfilestream >> token;
