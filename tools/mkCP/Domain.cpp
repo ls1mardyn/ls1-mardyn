@@ -48,28 +48,28 @@ Domain::Domain(
     */
    else if(fluid == FLUID_C2H6)
    {
-      this->shielding = 0.25*C2H6LONG + this->ETA*SIG_C2H6;
+      this->shielding = 0.5*C2H6LONG + this->ETA*SIG_C2H6;
    }
    else if(fluid == FLUID_N2)
    {
-      this->shielding = 0.25*N2LONG + this->ETA*SIG_N2;
+      this->shielding = 0.5*N2LONG + this->ETA*SIG_N2;
    }
    else if(fluid == FLUID_CO2)
    {
-      this->shielding = 0.25*CO2LONG + this->ETA*SIG_CO2;
+      this->shielding = 0.5*CO2LONG + this->ETA*SIG_CO2;
    }
    else if(fluid == FLUID_AVE) this->shielding = ETA * SIG_AVE;
    else if(fluid == FLUID_H2O)
    {
-      this->shielding = 0.25*H2O_LONG + this->ETA*SIG_OH2O;
+      this->shielding = 0.5*H2O_LONG + this->ETA*SIG_OH2O;
    }
    else if(fluid == FLUID_CH3OH)
    {
-      this->shielding = 0.25*CH3OH_LONG + this->ETA*SIG_CCH3OH;
+      this->shielding = 0.5*CH3OH_LONG + this->ETA*SIG_CCH3OH;
    }
    else if(fluid == FLUID_C6H14)
    {
-      this->shielding = 0.25*C6H14_LONG + this->ETA*SIG_MC6H14;
+      this->shielding = 0.5*C6H14_LONG + this->ETA*SIG_MC6H14;
    }
 
    double shielding2 = 0.0;
@@ -80,28 +80,28 @@ Domain::Domain(
     */
    else if(fluid2 == FLUID_C2H6)
    {
-      shielding2 = 0.25*C2H6LONG + this->ETA*SIG_C2H6;
+      shielding2 = 0.5*C2H6LONG + this->ETA*SIG_C2H6;
    }
    else if(fluid2 == FLUID_N2)
    {
-      shielding2 = 0.25*N2LONG + this->ETA*SIG_N2;
+      shielding2 = 0.5*N2LONG + this->ETA*SIG_N2;
    }
    else if(fluid2 == FLUID_CO2)
    {
-      shielding2 = 0.25*CO2LONG + this->ETA*SIG_CO2;
+      shielding2 = 0.5*CO2LONG + this->ETA*SIG_CO2;
    }
    else if(fluid2 == FLUID_AVE) shielding2 = ETA * SIG_AVE;
    else if(fluid2 == FLUID_H2O)
    {
-      shielding2 = 0.25*H2O_LONG + this->ETA*SIG_OH2O;
+      shielding2 = 0.5*H2O_LONG + this->ETA*SIG_OH2O;
    }
    else if(fluid2 == FLUID_CH3OH)
    {
-      shielding2 = 0.25*CH3OH_LONG + this->ETA*SIG_CCH3OH;
+      shielding2 = 0.5*CH3OH_LONG + this->ETA*SIG_CCH3OH;
    }
    else if(fluid2 == FLUID_C6H14)
    {
-      shielding2 = 0.25*C6H14_LONG + this->ETA*SIG_MC6H14;
+      shielding2 = 0.5*C6H14_LONG + this->ETA*SIG_MC6H14;
    }
    if(shielding2 > this->shielding) this->shielding = shielding2;
 
@@ -1052,7 +1052,7 @@ void Domain::writeGraphite(
                         for(int k=0; k < 3; k++)
                         {
                            tr[k] = off[k] + fl_unit[k] * (
-                                      ii[k] + 0.02*r->rnd() + ((k == d)? 0.24: 0.74)
+                                      ii[k] + 0.004*r->rnd() + ((k == d)? 0.248: 0.748)
                                    );
                         }
                         tr[1] += j*box[1];
@@ -1107,7 +1107,7 @@ void Domain::writeGraphite(
                      for(int k=0; k < 3; k++)
                      {
                         tr[k] = off_ext[k] + fl_unit_ext[k] * (
-                                   ii[k] + 0.02*r->rnd() + ((k == d)? 0.24: 0.74)
+                                   ii[k] + 0.004*r->rnd() + ((k == d)? 0.248: 0.748)
                                 );
                      }
                      tr[1] += j*box[1];
@@ -1272,9 +1272,9 @@ void Domain::specifyGraphite(double rho, unsigned N)
       this->box[2] = zeta*tZ;
    }
    this->eff[0] = this->box[0];
-   this->off[0] = -0.03 * this->box[0];
+   this->off[0] = 0.0;
    this->eff[2] = this->box[2];
-   this->off[2] = 0.02 * this->box[2];
+   this->off[2] = 0.0;
 
    /*
     * fluid unit box dimensions
@@ -1315,13 +1315,12 @@ void Domain::specifyGraphite(double rho, unsigned N)
       if(off_ext[1] < 0.0) off_ext[1] += box[1];
       else if(off_ext[1] > box[1]) off_ext[1] -= box[1];
       this->ext[2] = this->box[2]*wo_wall - 2.0*shielding;
-      this->off_ext[2] = this->off[2] + 0.5*(1.0 - wo_wall)*box[2];
+      this->off_ext[2] = this->off[2] + 0.5*(1.0 - wo_wall)*box[2] + shielding; // Shielding (Aussenseite der Wand)
       double V_ext = this->ext[0] * this->ext[1] * this->ext[2];
       cout << "Additionally available: " << V_ext << " * 1.4818e-04 nm^3,"
            << "i.e. " << this->ext[0] << " (off " << this->off_ext[0]
            << ") x " << this->ext[1] << " (off " << this->off_ext[1]
            << ") x " << this->ext[2] << " (off " << this->off_ext[2] << ").\n";
-
 
       double N_id_ext = rho*V_ext;
       double N_boxes_ext = N_id_ext / 3.0;
