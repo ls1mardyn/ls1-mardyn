@@ -53,7 +53,7 @@ public:
 	bool decideInsertion(double deltaUTilde);
 
 	Molecule loadMolecule();
-	void storeMolecule( Molecule old )
+	void storeMolecule( Molecule& old )
 	{
 		assert(old.componentid() == componentid);
 #ifndef NDEBUG
