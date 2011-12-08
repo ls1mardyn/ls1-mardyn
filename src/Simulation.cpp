@@ -1318,7 +1318,7 @@ void Simulation::mkTcTS(int argc, char** argv)
 {
    _particleContainerType = LINKED_CELL;
 
-   TcTS scen = TcTS(argc, argv, this->_domain, &(this->_domainDecomposition), &(this->_integrator), &(this->_moleculeContainer), &(this->_outputPlugins), this->_rdf, this);
+   TcTS(argc, argv, this->_domain, &(this->_domainDecomposition), &(this->_integrator), &(this->_moleculeContainer), &(this->_outputPlugins), this->_rdf, this);
 
    if (this->_LJCutoffRadius == 0.0)
       _LJCutoffRadius = this->_cutoffRadius;
