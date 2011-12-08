@@ -1074,7 +1074,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 		if (hasInsertion) {
 			// for(int d = 0; d < 3; d++)
 			//    ins[d] = ins[d]-coords[d]*proc_domain_L[d]-m_rmin[d];
-			Molecule tmp = mu->loadMolecule();
+			Molecule tmp(mu->loadMolecule());
 			for (int d = 0; d < 3; d++)
 				tmp.setr(d, ins[d]);
 			tmp.setid(nextid);
