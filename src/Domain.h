@@ -59,6 +59,12 @@ class PressureGradient;
 //! At some points of the simulation, macroscopic values for the whole set of molecules 
 //! have to be calculated. Those values are stored in member variables beginning with _global. 
 class Domain {
+
+private:
+	Domain();
+	Domain(Domain &domain);
+	Domain& operator=(Domain &domain);
+	
 public:
 	//! The constructor sets _localRank to rank and initializes all member variables
 	Domain(int rank, PressureGradient* pg);

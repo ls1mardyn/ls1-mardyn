@@ -91,6 +91,10 @@ class RDF;
 //! parallelization DomainDecomposition
 //! \endpre
 class Simulation {
+private:
+	Simulation(Simulation &simulation);
+	Simulation& operator=(Simulation &simulation);
+	
 public:
 	//! @brief instantiate simulation object
 	Simulation();
