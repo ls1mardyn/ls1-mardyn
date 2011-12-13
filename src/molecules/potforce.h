@@ -352,10 +352,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 					{
 						mi.Fljcenteradd(si, f);
 						mj.Fljcentersub(sj, f);
+						Upot6LJ += u;
+						for (unsigned short d = 0; d < 3; ++d)
+							Virial += drm[d] * f[d];
 					}
-					Upot6LJ += u;
-					for (unsigned short d = 0; d < 3; ++d)
-						Virial += drm[d] * f[d];
 				}
 			}
 		}
