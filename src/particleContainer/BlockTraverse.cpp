@@ -184,14 +184,11 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	for (cellIndexIter = _innerCellIndices.begin(); cellIndexIter != _innerCellIndices.end(); cellIndexIter++) {
 		unsigned long cellIndex = *cellIndexIter;
 		Cell& currentCell = _cells[cellIndex];
-        if( currentCell.getMoleculeCount() == 0 ) {
+        if( currentCell.getMoleculeCount() < 1 )
             continue;
-        }
 
 		// forces between molecules in the cell
-        if( currentCell.getMoleculeCount() > 0 ) {
-            processCell( currentCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
-        }
+		processCell( currentCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
 
 		// loop over all neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
@@ -207,13 +204,12 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
     for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
         unsigned long cellIndex = *cellIndexIter;
         Cell& currentCell = _cells[cellIndex];
-        if( currentCell.getMoleculeCount() == 0 ) {
+        if( currentCell.getMoleculeCount() < 1 )
             continue;
-        }
 
 		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
 			Molecule& molecule1 = **molIter1;
-			if (molecule1.numTersoff() == 0)
+			if (molecule1.numTersoff() < 1)
 				continue;
 			molIter2 = molIter1;
 			molIter2++;
@@ -236,7 +232,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 					continue;
 				for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
 					Molecule& molecule2 = **molIter2;
-					if (molecule2.numTersoff() == 0)
+					if (molecule2.numTersoff() < 1)
 						continue;
 					double dd = molecule2.dist2(molecule1, distanceVector);
 					if (dd < tersoffCutoffRadiusSquare)
@@ -250,21 +246,17 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	for (cellIndexIter = _boundaryCellIndices.begin(); cellIndexIter != _boundaryCellIndices.end(); cellIndexIter++) {
 		unsigned long cellIndex = *cellIndexIter;
 		Cell& currentCell = _cells[cellIndex];
-        if( currentCell.getMoleculeCount() == 0 ) {
+        if( currentCell.getMoleculeCount() < 1 )
             continue;
-        }
 
 		// forces between molecules in the cell
-        if( currentCell.getMoleculeCount() > 0 ) {
-            processCell( currentCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
-        }
+		processCell( currentCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
 
 		// loop over all forward neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
 			Cell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-            if( neighbourCell.getMoleculeCount() == 0 ) {
+            if( neighbourCell.getMoleculeCount() < 1 )
                 continue;
-            }
 
 			// loop over all particles in the cell
 			for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
@@ -334,7 +326,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
 			Molecule& molecule1 = **molIter1;
 
-			if (molecule1.numTersoff() == 0)
+			if (molecule1.numTersoff() < 1)
 				continue;
 
 			if (!knowparams) {
