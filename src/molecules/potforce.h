@@ -325,8 +325,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	double drs[3], dr2; // site distance vector & length^2
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
-	const unsigned int nt1 = mi.numTersoff();
-	if ((mi.componentid() != mj.componentid()) || !nt1) {
+	if ((mi.numTersoff() == 0) || (mi.componentid() != mj.componentid())) {
 		const unsigned int nc1 = mi.numLJcenters();
 		const unsigned int nc2 = mj.numLJcenters();
 		for (unsigned int si = 0; si < nc1; ++si) {
