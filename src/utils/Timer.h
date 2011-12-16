@@ -76,7 +76,15 @@ class Timer {
 #endif /* PAPI */
 
 public:
-	Timer() {
+	Timer() : 
+		_start(0), _stop(0), _etime(0), _state(TIMER_HALTED) 
+#if ENABLE_MPI
+		, _synced()
+#endif
+#ifdef PAPI
+		, _papi_start(0), _papi_stop(0), _papi_num_counters(0), _papi_num_avail_counters(0), _papi_EventSet(0)
+#endif
+	{
 		reset();
 #ifdef ENABLE_MPI
 		set_sync(true);
