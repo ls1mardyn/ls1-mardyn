@@ -34,7 +34,7 @@ ChemicalPotential::ChemicalPotential()
 	 for(int d=0; d<3; d++) this->remainingInsertions[d] = list<double>();
 	 this->remainingInsertionIDs = list<unsigned long>();
 	 this->remainingDecisions = list<float>(); 
-	 this->reservoir = list<Molecule>();
+	 //this->reservoir = list<Molecule>();
 	 this->id_increment = 1;
 }
 

@@ -53,6 +53,10 @@ public:
 	);
 	Molecule(const Molecule& m);
 
+private:
+	Molecule& operator=(const Molecule& m);
+
+public:
 	~Molecule() {
 		assert(_sites_d);
 		delete[] _sites_d;
