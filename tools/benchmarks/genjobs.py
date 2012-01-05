@@ -19,7 +19,7 @@ import time
 #import re
 
 desc="generate&start benchmark runs"
-version="2011.11.29"
+version="2011.12.28"
 author="Martin Bernreuther <bernreuther@hlrs.de>"
 
 print time.strftime("genjobs.py starting at %a, %d.%m.%Y %H:%M:%S %Z")
@@ -156,29 +156,66 @@ if pptemplate is not None:
 
 
 
+class Parameter:
+	"""Parameter set"""
+	
+	def __init__(self,parameter,value=None):
+		if isinstance(parameter,Parameter):
+			self.__name=parameter.name()
+			self.__values=parameter.values()
+		elif isinstance(parameter,str):
+			self.__name=parameter
+		if isinstance(value,str):
+			self.__values=value.split()
+		self.__initialize()
+	
+	def __initialize(self):
+		self.__maxlen=0
+		self.__onlydigits=True
+		for v in self.__values:
+			if len(v)>self.__maxlen: self.__maxlen=len(v)
+			if not v.isdigit(): self.__onlydigits=False
+		
+	
+	def name(self):
+		return self.__name
+	
+	def values(self):
+		return self.__values
+	
+	def maxlen(self):
+		return self.__maxlen
+		
+	def onlydigits(self):
+		return self.__onlydigits
+	
+	def numvalues(self):
+		return len(self.__values)
+	
+	def __str__(self):
+		return self.__name
+	
+	def __int__(self):
+		return self.numvalues()
+	
+
+
 print "parameters:"
 print "name\tvalues\t(width,int)"
 parameters=[]
 numvar=0
+jobname=""
 for i in cfgparser.items("parameters"):
-	paraname,paravalue=i
-	paravalues=paravalue.split()
-	numval=len(paravalues)
-	if numval>1:
-		maxlen=0
-		onlydigits=True
-		for paravalue in paravalues:
-			if len(paravalue)>maxlen: maxlen=len(paravalue)
-			if not paravalue.isdigit(): onlydigits=False
-		parameters.append([paraname,paravalues,[maxlen,onlydigits]])
-		if not numvar:
-			numvar=numval
-		else:
-			numvar*=numval
-		print "{0}\t{1}\t({2},{3})\t*{4}".format(paraname,paravalues,maxlen,onlydigits,numval)
+	if numvar==0: numvar=1
+	p=Parameter(i[0],i[1])
+	if p.numvalues()>1:
+		parameters.append(Parameter(p))
+		numvar*=p.numvalues()
+		print "{0}\t{1}\t({2},{3})\t*{4}".format(p.name(),p.values(),p.maxlen(),p.onlydigits(),p.numvalues())
 	else:
-		parasubs['$'+paraname]=paravalue
-		print "{0}\t{1}\t(substitution)".format(paraname,paravalue)
+		parasubs['$'+p.name()]=p.values()[0]
+		jobname+=p.name()+p.values()[0]
+		print "{0}\t{1}\t(substitution)".format(p.name(),p.values())
 print "number of jobs:\t{0}".format(numvar)
 
 
@@ -251,25 +288,27 @@ print
 print "generate jobs ##########################################################"
 createdjobs=[]
 cmd_output=[]
-v=[0]*len(parameters)
+v=[0]*max(1,len(parameters))
 for i in range(numvar):
 	cond=gencondition
 	cmd=gencommand
-	jobname=""
-	for p in range(len(v)):
-		paraname=parameters[p][0]
-		jobname+=paraname
-		paravalues=parameters[p][1]
-		if v[p]>=len(parameters[p][1]):
-			v[p+1]+=1
-			v[p]=0
-		paravalue=paravalues[v[p]]
-		parasubs['$'+paraname]=paravalue
-		maxlen,onlydigits=parameters[p][2]
-		if onlydigits:
-			jobname+=paravalue.zfill(maxlen)
-		else:
-			jobname+=str(paravalue)
+	if numvar>1:
+		jobname=""
+		for p in range(len(v)):
+			paraname=parameters[p].name()
+			jobname+=paraname
+			paravalues=parameters[p].values()
+			if v[p]>=parameters[p].numvalues():
+				v[p+1]+=1
+				v[p]=0
+			paravalue=paravalues[v[p]]
+			parasubs['$'+paraname]=paravalue
+			if parameters[p].onlydigits():
+				jobname+=paravalue.zfill(parameters[p].maxlen())
+			else:
+				jobname+=str(paravalue)
+	else:
+		if jobname=="": jobname="NO_parameters"
 	parasubs["$JOBNAME"]=jobname
 	# substitute all parameters within condition & cmd
 	#cond=replaceparameters(cond,parasubs)
@@ -323,7 +362,7 @@ for i in range(numvar):
 		createdjobs.append(jobname)
 		#
 		if cmd is not None:
-			print "- command:",cmd,'-'*(51-len(cmd)),time.strftime("%H:%M:%S")
+			print "-",time.strftime("%H:%M:%S"),"command:",cmd,'-'*(50-len(cmd))
 			rc,stdoutdata,stderrdata=execmd(cmd,jobdir)
 			if rc!=0:
 				print stdoutdata
@@ -338,7 +377,7 @@ for i in range(numvar):
 	v[0]+=1
 
 for p in range(len(parameters)):
-	paraname=parameters[p][0]
+	paraname=parameters[p].name()
 	del parasubs['$'+paraname]
 parasubs["$CREATEDJOBS"]=delimiter.join(createdjobs)
 parasubs["$GENCMDOUTPUT"]=delimiter.join(cmd_output)
@@ -373,7 +412,7 @@ if pptemplate is not None:
 		ppcmd=ppcommand
 		for paraname,paravalue in parasubs.items():
 				ppcmd=ppcmd.replace(paraname,str(paravalue))
-		print "- command:",ppcmd,'-'*(51-len(ppcmd)),time.strftime("%H:%M:%S")
+		print "-",time.strftime("%H:%M:%S"),"command:",ppcmd,'-'*(50-len(ppcmd))
 		rc,stdoutdata,stderrdata=execmd(ppcmd,dstroot)
 		if rc!=0:
 			print stdoutdata
