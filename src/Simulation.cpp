@@ -479,7 +479,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			} else if (phaseSpaceFileFormat == "Generator") {
-				std::cout << "phaseSpaceFileFormat is Generator!" << endl;
+				global_log->info() << "phaseSpaceFileFormat is Generator!" << endl;
 				string generatorName; // name of the library to load
 				string inputFile; // name of the input file for the generator
 
