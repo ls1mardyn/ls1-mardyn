@@ -100,12 +100,6 @@ Simulation::~Simulation() {
 		delete _integrator;
 	if (_inputReader)
 		delete _inputReader;
-	if (_loopTimer )
-		delete _loopTimer;
-	if (_perStepIoTimer )
-		delete _perStepIoTimer;
-	if (_ioTimer )
-		delete _ioTimer;
 }
 
 void Simulation::exit(int exitcode) {
@@ -1009,9 +1003,9 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 	// all timers except the ioTimer messure inside the main loop
-	_loopTimer = new Timer;
-	_perStepIoTimer = new Timer;
-	_ioTimer = new Timer;
+	Timer loopTimer;;
+	Timer perStepIoTimer;
+	Timer ioTimer;
 
 #if defined(STEEREO) && defined(STEEREO_COUPLING)
 	_simstep = _initSimulation;
@@ -1019,7 +1013,7 @@ void Simulation::simulate() {
 	_coupling->waitForConnection();
 #endif
 
-	_loopTimer->start();
+	loopTimer.start();
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1172,18 +1166,18 @@ void Simulation::simulate() {
 		/* END PHYSICAL SECTION */
 
 		// measure per timestep IO
-		_loopTimer->stop();
-		_perStepIoTimer->start();
+		loopTimer.stop();
+		perStepIoTimer.start();
 		output(_simstep);
-		_perStepIoTimer->stop();
-		_loopTimer->start();
+		perStepIoTimer.stop();
+		loopTimer.start();
 	}
-	_loopTimer->stop();
+	loopTimer.stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/***************************************************************************/
 
-	_ioTimer->start();
+	ioTimer.start();
 	/* write final checkpoint */
 	string cpfile(_outputPrefix + ".restart.xdr");
 	_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
@@ -1193,11 +1187,11 @@ void Simulation::simulate() {
 		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 		delete (*outputIter);
 	}
-	_ioTimer->stop();
+	ioTimer.stop();
 
-	global_log->info() << "Computation in main loop took: " << _loopTimer->get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop  took:         " << _perStepIoTimer->get_etime() << " sec" << endl;
-	global_log->info() << "Final IO took:                 " << _ioTimer->get_etime() << " sec" << endl;
+	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
 
 }
 

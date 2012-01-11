@@ -220,10 +220,6 @@ public:
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimStep() { return _simstep; }
 
-	Timer* getLoopTimer() {
-		return _loopTimer;
-	}
-
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
 	double getLJCutoff() const { return _LJCutoffRadius; }
@@ -394,12 +390,6 @@ public:
     std::string getOutputPrefix() { return _outputPrefix; }
 
 private:
-	//!Timer for computation
-	Timer* _loopTimer;
-	//! Timer for IO during simulation steps
-	Timer* _perStepIoTimer;
-	// Timer for final IO
-	Timer* _ioTimer;
 
 	//! list of output plugins to use
 	std::list<OutputBase*> _outputPlugins;
