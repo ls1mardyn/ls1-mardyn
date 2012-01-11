@@ -73,6 +73,10 @@ class CollectiveCommunication {
 	};
 
 public:
+	~CollectiveCommunication() {
+		finalize();
+	}
+		
 	//! @brief allocate memory for the values to be sent, initialize counters
 	//! @param numValues number of values that shall be communicated
 	void init(MPI_Comm communicator, int numValues) {
@@ -92,6 +96,7 @@ public:
 		delete[] _recvValues;
 #if ENABLE_AGGLOMERATED_REDUCE
 		MPI_CHECK( MPI_Type_free(&_valuesType) );
+		assert( _valuesType == MPI_DATATYPE_NULL )
 #endif
 	}
 
