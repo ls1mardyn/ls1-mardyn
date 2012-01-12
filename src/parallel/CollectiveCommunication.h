@@ -96,7 +96,7 @@ public:
 		delete[] _recvValues;
 #if ENABLE_AGGLOMERATED_REDUCE
 		MPI_CHECK( MPI_Type_free(&_valuesType) );
-		assert( _valuesType == MPI_DATATYPE_NULL )
+		assert( _valuesType == MPI_DATATYPE_NULL );
 #endif
 	}
 
