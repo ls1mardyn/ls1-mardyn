@@ -1,8 +1,10 @@
 #ifndef COLLECTIVECOMMUNICATION_H_
 #define COLLECTIVECOMMUNICATION_H_
 
-#include <mpi.h>
 #include "utils/Logger.h"
+
+#include <mpi.h>
+#include <assert.h>
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
  * user defined reduce operation so that the MPI reduce operation is only called once. */
