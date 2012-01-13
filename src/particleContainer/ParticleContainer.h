@@ -63,6 +63,10 @@ class Molecule;
 //! be used by the framework. Such a class should
 //! be implemented as a subclass of this class.
 class ParticleContainer {
+private:
+	/* Copy operator private */
+	ParticleContainer& operator=(const ParticleContainer&);
+
 public:
 	//! @brief The constructor
 	//! @param bBoxMin coordinates of the lowest (in all coordinates) corner of the bounding box
