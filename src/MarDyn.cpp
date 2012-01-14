@@ -133,11 +133,11 @@ int main(int argc, char** argv) {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
         exit(1);
     }
-    /*
+
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
     }
-    */
+
     global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
 
     // set the prefix for output files
@@ -186,9 +186,9 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 		// .epilog("background info?")
 		;
 
-	// op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
+	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
-	// op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
 
         op.add_option("-c").help("fluid density (mkTcTS)");
 	op.add_option("-d", "--test-dir").help("input directory (unit tests); secondary fluid density (mkTcTS)");
@@ -200,6 +200,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
         op.add_option("-S").help("shift the LJ potential (mkTcTS)");
         op.add_option("-T").help("temperature (mkTcTS)");
 	op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
+       	op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
         op.add_option("-U").help("unshift (i.e., do not shift) the LJTS potential (mkTcTS)");
 
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");

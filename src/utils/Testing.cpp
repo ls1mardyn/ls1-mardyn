@@ -86,7 +86,7 @@ utils::Test::~Test() { }
 
 void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 	if (!fileExists(testDataDir.c_str())) {
-		test_log->error() << "Directory " << testDataDirectory << " for test input data does not exits!" << std::endl;
+		test_log->error() << "Directory '" << testDataDirectory << "' for test input data does not exits!" << std::endl;
 		exit(-1);
 	}
 	testDataDirectory = testDataDir;
