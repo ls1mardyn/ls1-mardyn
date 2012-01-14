@@ -24,6 +24,7 @@
 #include <climits>
 #include <iostream>
 
+#ifndef MARDYN
 extern "C" {
 
 	Generator* create_generator() {
@@ -34,7 +35,7 @@ extern "C" {
 		delete generator;
 	}
 }
-
+#endif
 
 DropletGenerator::DropletGenerator() :
 	MDGenerator("DropletGenerator") {

@@ -14,7 +14,7 @@
 #include "utils/Timer.h"
 #include <cstring>
 
-
+#ifndef MARDYN
 extern "C" {
 
 	Generator* create_generator() {
@@ -25,7 +25,7 @@ extern "C" {
 		delete generator;
 	}
 }
-
+#endif
 
 CubicGridGenerator::CubicGridGenerator() :
 	MDGenerator("CubicGridGenerator"), _numMolecules(4), _molarDensity(0.6),
