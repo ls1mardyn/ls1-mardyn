@@ -188,7 +188,6 @@ std::vector<double> MDGenerator::getRandomVelocity(double temperature) const {
 
 void MDGenerator::getOrientation(int base, int delta, double orientation[4]) {
 	double offset = randdouble(-delta / 2., delta / 2.) / 180. * M_PI;
-	std::cout << "getOrientation: offset=" << offset << endl;
 	double rad = base / 180. * M_PI;
 	double angle = rad + offset;
 
