@@ -238,7 +238,9 @@ private:
 
 class Option {
 public:
-	Option() : _action("store"), _type("string"), _nargs(1), _callback(0) {}
+	Option() : _short_opts(), _long_opts(), _action("store"), _type("string"),
+	           _dest(""), _default(""), _nargs(1), _const(""), _choices(),
+	           _help(""), _metavar(""), _callback(0) {}
 	virtual ~Option() {}
 
 	Option& action(const std::string& a);
