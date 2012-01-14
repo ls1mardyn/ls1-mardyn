@@ -10,6 +10,7 @@ parafiles:	%(jobscript)s parameters
 #command:	sh %(jobscript)s
 command:	cat -n parameters
 condition:	$NPPN<$NPROC
+break:	$COMMANDSTATUS>0
 
 [parameters]
 # Parameter variations

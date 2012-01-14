@@ -38,9 +38,10 @@ template:	job template directory to be copied to dstroot
 parafiles:	files within the job directory to substitute parameters
 command:	command to be executed for each job
 condition:	a condition, which will be checked for each parameter combination as a prerequisite to generate a job
+break:	condition to stop job generation
 
 [parameters]
-# Parameter to variate
+# Parameters to variate
 
 [postproc]
 template:	postprocessing template directory; contents will be copied to dstroot
@@ -63,6 +64,7 @@ within the generator part for each job:
 $JOBNAME	job name
 $JOBDIR	job directory
 $JOBDIRPATH	job directory, absolute path
+$COMMANDSTATUS	return value of command
 
 within the preprocessing part after job generation
 $CREATEDJOBS	list of jobnames

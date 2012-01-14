@@ -32,8 +32,9 @@ dstroot=label
 delimiter='\f'	# '\f','\t','\000',' ',':'
 gentemplate="gentemplate"
 genparareplfiles=[]
-gencondition=None
+gencmdcondition=None
 gencommand=None
+breakcondition=None
 pptemplate=None
 ppscript=None
 ppcommand=None
@@ -126,12 +127,17 @@ if cfgparser.has_option("generator","parafiles"):
 print "generator files to replace parameters:\t{0}".format(genparareplfiles)
 
 if cfgparser.has_option("generator","condition"):
-	gencondition=cfgparser.get("generator","condition")
-	print "parameters condition:\t",gencondition
+	gencmdcondition=cfgparser.get("generator","condition")
+	print "generator command condition:\t",gencmdcondition
 
 if cfgparser.has_option("generator","command"):
 	gencommand=cfgparser.get("generator","command")
 	print "generator command:\t",gencommand
+
+if cfgparser.has_option("generator","break"):
+	breakcondition=cfgparser.get("generator","break")
+	print "break condition:\t",breakcondition
+
 
 if cfgparser.has_option("postproc","template"):
 	pptemplate=cfgparser.get("postproc","template")
@@ -192,6 +198,9 @@ class Parameter:
 	def numvalues(self):
 		return len(self.__values)
 	
+	def strvalues(self,delim=" "):
+		return delim.join(self.__values)
+	
 	def __str__(self):
 		return self.__name
 	
@@ -208,12 +217,13 @@ jobname=""
 for i in cfgparser.items("parameters"):
 	if numvar==0: numvar=1
 	p=Parameter(i[0],i[1])
+	parasubs['$'+p.name()]=p.strvalues()
 	if p.numvalues()>1:
 		parameters.append(Parameter(p))
 		numvar*=p.numvalues()
 		print "{0}\t{1}\t({2},{3})\t*{4}".format(p.name(),p.values(),p.maxlen(),p.onlydigits(),p.numvalues())
 	else:
-		parasubs['$'+p.name()]=p.values()[0]
+		#parasubs['$'+p.name()]=p.values()[0]
 		jobname+=p.name()+p.values()[0]
 		print "{0}\t{1}\t(substitution)".format(p.name(),p.values())
 print "number of jobs:\t{0}".format(numvar)
@@ -221,7 +231,7 @@ print "number of jobs:\t{0}".format(numvar)
 
 def execmd(cmd,wd="."):
 	#print "execute command \"{0}\" (working directory: {1})".format(cmd,wd)
-	rc=-1
+	status=-1
 	stdoutdata=""
 	stderrdata=""
 	try:
@@ -229,21 +239,21 @@ def execmd(cmd,wd="."):
 			#stdoutdata=subprocess.check_output(cmd,cwd=wd,shell=True)	# security risk?
 			stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd)	# shell scripts have to be started using sh
 			#stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd,shell=True)
-		except subprocess.CalledProcessError,(rc,stdoutdata):
-			print "ERROR ({0}) executing {1}: {2}".format(rc,cmd,stdoutdata)
+		except subprocess.CalledProcessError,(status,stdoutdata):
+			print "ERROR ({0}) executing {1}: {2}".format(status,cmd,stdoutdata)
 		else:
-			rc=0
+			status=0
 	except AttributeError:
 		try:
 			pid=subprocess.Popen(cmd,cwd=wd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,shell=True)
 			#                         executable=shlex.split(cmd)[0]
 			#pid=subprocess.Popen(shlex.split(cmd),cwd=wd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
 			stdoutdata,stderrdata=pid.communicate()
-			rc=int(pid.returncode)
-			#if rc: print "ERROR {0} executing \"{1}\"".format(rc,cmd)	# return rc and let caller deal with it
+			status=int(pid.returncode)
+			#if status: print "ERROR {0} executing \"{1}\"".format(status,cmd)	# return status and let caller deal with it
 		except ValueError:
 			print "Popen ERROR executing "+cmd
-	return rc,stdoutdata,stderrdata
+	return status,stdoutdata,stderrdata
 
 def adjrlinks(dstdir,srcdir):
 	#print "adapt relative links contained in directory {0} copied from {1}".format(dstdir,srcdir)
@@ -261,7 +271,8 @@ def adjrlinks(dstdir,srcdir):
 						os.remove(dstfile)
 						os.symlink(os.path.relpath(templatelinkfile,dstdir),dstfile)
 
-def replaceparameters(s,paradefs):
+def replaceparameters(src,paradefs):
+	s=src
 	for paraname,paravalue in paradefs.items():
 		s=s.replace(paraname,str(paravalue))
 	return s
@@ -288,10 +299,9 @@ print
 print "generate jobs ##########################################################"
 createdjobs=[]
 cmd_output=[]
+parasubs["$COMMANDSTATUS"]=0
 v=[0]*max(1,len(parameters))
 for i in range(numvar):
-	cond=gencondition
-	cmd=gencommand
 	if numvar>1:
 		jobname=""
 		for p in range(len(v)):
@@ -310,17 +320,19 @@ for i in range(numvar):
 	else:
 		if jobname=="": jobname="NO_parameters"
 	parasubs["$JOBNAME"]=jobname
-	# substitute all parameters within condition & cmd
-	#cond=replaceparameters(cond,parasubs)
-	#cmd=replaceparameters(cmd,parasubs)
+	# substitute all parameters within cmdcond & cmd
+	#cmdcond=replaceparameters(gencmdcondition,parasubs)
+	#cmd=replaceparameters(gencommand,parasubs)
+	cmdcond=gencmdcondition
+	cmd=gencommand
 	for paraname,paravalue in parasubs.items():
-		if cond is not None:
-			cond=cond.replace(paraname,str(paravalue))
+		if cmdcond is not None:
+			cmdcond=cmdcond.replace(paraname,str(paravalue))
 		if cmd is not None:
 			cmd=cmd.replace(paraname,str(paravalue))
-	if cond is not None:
+	if cmdcond is not None:
 		try:
-			evalcond=eval(cond)
+			evalcond=eval(cmdcond)
 		except Exception, errno:
 			evalcond=False
 	else:
@@ -363,22 +375,36 @@ for i in range(numvar):
 		#
 		if cmd is not None:
 			print "-",time.strftime("%H:%M:%S"),"command:",cmd,'-'*(50-len(cmd))
-			rc,stdoutdata,stderrdata=execmd(cmd,jobdir)
-			if rc!=0:
+			status,stdoutdata,stderrdata=execmd(cmd,jobdir)
+			parasubs["$COMMANDSTATUS"]=status
+			if status!=0:
 				print stdoutdata
 				print stderrdata
-				print '-'*(56-len(str(rc))),rc,"failed",time.strftime("%H:%M:%S")
+				print '-'*(56-len(str(status))),status,"failed",time.strftime("%H:%M:%S")
 			else:
 				print stdoutdata
 				print '-'*58,"done",time.strftime("%H:%M:%S")
 				cmd_output.append(stdoutdata.rstrip("\n"))
 	else:
-		print "condition",cond,"does not hold"
+		print "condition",gencmdcondition,"does not hold after substitution:",cmdcond
+	# check break condition
+	if breakcondition is not None:
+		breakcond=replaceparameters(breakcondition,parasubs)
+		try:
+			if eval(breakcond):
+				print "break condition",breakcondition," fulfilled after substituion:",breakcond
+				break
+		except Exception, errno:
+			print "ERROR evaluating break condition",breakcondition,"after substitution:",breakcond
+			#break
+			pass
 	v[0]+=1
 
-for p in range(len(parameters)):
-	paraname=parameters[p].name()
-	del parasubs['$'+paraname]
+print "",time.strftime("%H:%M:%S"),"created",len(createdjobs),"jobs"
+
+for p in parameters:
+	#del parasubs['$'+p.name()]
+	parasubs['$'+p.name()]=p.strvalues()
 parasubs["$CREATEDJOBS"]=delimiter.join(createdjobs)
 parasubs["$GENCMDOUTPUT"]=delimiter.join(cmd_output)
 
@@ -413,11 +439,12 @@ if pptemplate is not None:
 		for paraname,paravalue in parasubs.items():
 				ppcmd=ppcmd.replace(paraname,str(paravalue))
 		print "-",time.strftime("%H:%M:%S"),"command:",ppcmd,'-'*(50-len(ppcmd))
-		rc,stdoutdata,stderrdata=execmd(ppcmd,dstroot)
-		if rc!=0:
+		status,stdoutdata,stderrdata=execmd(ppcmd,dstroot)
+		#parasubs["$COMMANDSTATUS"]=status
+		if status!=0:
 			print stdoutdata
 			print stderrdata
-			print '-'*(56-len(str(rc))),rc,"failed",time.strftime("%H:%M:%S")
+			print '-'*(56-len(str(status))),status,"failed",time.strftime("%H:%M:%S")
 		else:
 			print stdoutdata
 			print '-'*58,"done",time.strftime("%H:%M:%S")
