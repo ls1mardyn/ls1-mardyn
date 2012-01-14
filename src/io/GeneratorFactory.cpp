@@ -24,7 +24,7 @@ string GeneratorFactory::generators[] = {"droplet", "cubicgrid"};
 
 InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::string configFile) {
 #ifdef SUPPORT_GENERATOR
-	MDGenerator* generator;
+	MDGenerator* generator = NULL;
 	if (generatorName == generators[0]) {
 		generator = new DropletGenerator();
 	}
@@ -33,6 +33,7 @@ InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::strin
 	}
 	else {
 		global_log->error() << " Generator " << generatorName << " not known!" << endl;
+		exit(-1);
 	}
 
 	// somehow, using the global_log in the generator results in a segfault
