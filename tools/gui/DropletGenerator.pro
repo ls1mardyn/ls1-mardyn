@@ -1,11 +1,16 @@
 TEMPLATE = lib
 
+#CONFIG += dll debug
+CONFIG += staticlib debug mardyn
+
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
-DESTDIR=./libs
 
-CONFIG += dll debug
-#CONFIG += dll debug mardyn
+mardyn {
+DESTDIR=./staticlibs
+} else {
+DESTDIR=./libs
+}
 
 # ScenarioGenerator related headers
 HEADERS  += src/Generators/Generator.h

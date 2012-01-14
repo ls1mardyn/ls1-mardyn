@@ -34,7 +34,7 @@ UNIT_TESTS ?= 0
 # build with VTK support
 VTK ?= 0
 
-SUPPORT_DL_GENERATOR ?= 0
+SUPPORT_GENERATOR ?= 0
 
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
@@ -73,9 +73,9 @@ CXX = $(CXX_$(PARTYPE))
 CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
-ifeq ($(SUPPORT_DL_GENERATOR), 1)
-LDFLAGS += -rdynamic -ldl
-CXXFLAGS += -DSUPPORT_DL_GENERATOR
+ifeq ($(SUPPORT_GENERATOR), 1)
+LDFLAGS += -L../tools/gui/staticlibs -lCubicGridGenerator -lDropletGenerator
+CXXFLAGS += -DSUPPORT_GENERATOR
 INCLUDES += -I../tools/gui/ -I../tools/gui/src/
 endif
 
@@ -100,7 +100,7 @@ endif
 
 $(BINARY): .deps $(OBJECTS)
 	@echo "building $(BINARY)"
-	$(CXX) $(LDFLAGS) -o $@ $(OBJECTS)
+	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
 	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
 
 %.o: %.cpp

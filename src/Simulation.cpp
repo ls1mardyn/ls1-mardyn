@@ -48,7 +48,7 @@
 
 #include "io/io.h"
 #include "io/xmlreader.h"
-#include "io/DynamicGeneratorFactory.h"
+#include "io/GeneratorFactory.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -481,7 +481,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				getline(inputfilestream, line);
 				stringstream lineStream(line);
 				lineStream >> generatorName >> inputFile;
-				_inputReader = DynamicGeneratorFactory::loadGenerator(generatorName, inputFile);
+				_inputReader = GeneratorFactory::loadGenerator(generatorName, inputFile);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			} else {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;

@@ -2,7 +2,7 @@
 
 !!! Building the gui
 
-See also http://www5.informatik.tu-muenchen.de/scenariogenerator/build.html.
+See also http://www5.informatik.tu-muenchen.de/scenariogenerator/build.html
 
 First build the Mardyn library, copy it to the directory tools/gui and create the 
 necessary symbolic links: 
@@ -71,7 +71,7 @@ export LD_LIBRARY_PATH=.
 
 As file io may be really slow on some architectures, it is possible to use the 
 generators to generate the input directly in Mardyn/ls1. In order to do this, 
-build the Mardyn executable with the option SUPPORT_DL_GENERATOR in the makefile set.
+build the Mardyn executable with the option SUPPORT_GENERATOR in the makefile set.
 
 
 Make sure, that in the files <b> CubicGridGenerator.pro</b> and <b> DropletGenerator.pro</b>
@@ -80,9 +80,8 @@ the config variable is set as shown:
 CONFIG += dll debug mardyn
 \endverbatim
 
-Then, build the generator libraries. Note, that a generator library built for Mardyn
-is incompatible with the graphical generator, and vice-versa (so you will probably need two
-versions of the libraries).
+Then, build the generator libraries. A static library is created and placed in
+the directory staticlibs.
 
 Now it is possible to create a setup with the graphical generator. Save that configuration
 to a file (Choose "Generator..." -> "save"). That configuration file can be used to initialize 
@@ -91,7 +90,11 @@ of molecules by some orders).
 
 The corresponding line in the mardyn configuration file has to look like:
 \verbatim
-phasespacefile Generator libDropletGenerator.so config.txt
+phasespacefile Generator droplet config.txt
+\endverbatim
+or
+\verbatim
+phasespacefile Generator droplet config.txt
 \endverbatim
 
 <B> Note that only the content of the phasespace file will be generated, i.e. all
