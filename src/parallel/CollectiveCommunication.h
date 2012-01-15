@@ -75,8 +75,8 @@ class CollectiveCommunication {
 	};
 
 public:
-	~CollectiveCommunication() {
-		finalize();
+	virtual ~CollectiveCommunication() {
+	//	finalize();
 	}
 		
 	//! @brief allocate memory for the values to be sent, initialize counters
