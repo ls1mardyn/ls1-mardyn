@@ -8,7 +8,9 @@
 #include "VTKMoleculeWriterTest.h"
 #include "particleContainer/LinkedCells.h"
 #include "parallel/DomainDecompDummy.h"
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
+#endif
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "Domain.h"
