@@ -11,6 +11,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
 #include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecomposition.h"
 #include "utils/FileUtils.h"
 #include "particleContainer/tests/ParticleContainerFactory.h"
 
@@ -40,9 +41,10 @@ void VTKGridWriterTest::testEmptyGrid() {
 	// Their content should be right, if the sequential tests pass.
 	int rank = 0;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	DomainDecomposition domainDecomposition;
 	Domain domain(rank, NULL);
-	writer.doOutput(container, NULL, &domain, 1, NULL);
-	writer.doOutput(container, NULL, &domain, 2, NULL);
+	writer.doOutput(container, &domainDecomposition, &domain, 1, NULL);
+	writer.doOutput(container, &domainDecomposition, &domain, 2, NULL);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0) {
@@ -72,6 +74,4 @@ void VTKGridWriterTest::testEmptyGrid() {
 
 	removeFile("VTKGridWriterTest_2.vtu");
 #endif
-
-
 }

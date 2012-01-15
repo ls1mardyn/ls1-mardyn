@@ -8,6 +8,7 @@
 #include "VTKMoleculeWriterTest.h"
 #include "particleContainer/LinkedCells.h"
 #include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecomposition.h"
 #include "utils/FileUtils.h"
 #include "utils/Logger.h"
 #include "Domain.h"
@@ -57,9 +58,10 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	// Their content should be right, if the sequential tests pass.
 	int rank = 0;
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &rank) );
+	DomainDecomposition domainDecomposition;
 	Domain domain(rank, NULL);
-	writer.doOutput(&container, NULL, &domain, 1, NULL);
-	writer.doOutput(&container, NULL, &domain, 2, NULL);
+	writer.doOutput(&container, &domainDecomposition, &domain, 1, NULL);
+	writer.doOutput(&container, &domainDecomposition, &domain, 2, NULL);
 
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 	if (rank == 0) {
