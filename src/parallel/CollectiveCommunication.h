@@ -93,6 +93,9 @@ public:
 
 	//! @brief delete memory and MPI_Type
 	void finalize() {
+		_numValues = 0;
+		_setCounter = 0;
+		_getCounter = 0;
 		delete[] _listOfTypes;
 		delete[] _sendValues;
 		delete[] _recvValues;
