@@ -45,10 +45,7 @@ public:
 		m_qz *= s;
 	}
 	void scaleinv(double s) {
-		m_qw /= s;
-		m_qx /= s;
-		m_qy /= s;
-		m_qz /= s;
+		scale( 1./ s);
 	}
 	void normalize() {
 		scaleinv(sqrt(magnitude2()));
