@@ -72,6 +72,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 	KDNode* newOwnArea = NULL;
 
 	if (_steps % _frequency == 0 || _steps <= 1) {
+		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 		getNumParticles(moleculeContainer);
 		newDecompTree = new KDNode(_numProcs, _decompTree->_lowCorner, _decompTree->_highCorner, 0, 0, _decompTree->_coversWholeDomain);
 		ParticlePairs2LoadCalcAdapter* loadHandler;
@@ -83,6 +84,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		}
 		completeTreeInfo(newDecompTree, newOwnArea);
 		delete loadHandler;
+		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
 	}
 
 	vector<int> procsToSendTo; // all processes to which this process has to send data
@@ -450,6 +452,7 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 //$ private Methoden, die von exchangeMolecule benvtigt werden $
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+// TODO use vector<vector> instead of vector<list<Molecule*> >& particlesToSend ?
 void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, vector<int>& procIDs, vector<int>& numMolsToSend, vector<list<Molecule*> >& particlesToSend) {
 	int haloCellIdxMin[3]; // Assuming a global 3D Cell index, haloCellIdxMin[3] gives the position
 	                       // of the low local domain corner within this global 3D cell index
@@ -743,12 +746,12 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 			//#################################
 			// New Version: Costs for "future" boundary cells
 			// Num Cells in separation layer
-			unsigned long numCellsInLayer = 1;
-			for (int temp = 0; temp < 3; temp++) {
-				if (temp != dim) {
-					numCellsInLayer *= fatherNode->_highCorner[temp] - fatherNode->_lowCorner[temp] + 1;
-				}
-			}
+//			unsigned long numCellsInLayer = 1;
+//			for (int temp = 0; temp < 3; temp++) {
+//				if (temp != dim) {
+//					numCellsInLayer *= fatherNode->_highCorner[temp] - fatherNode->_lowCorner[temp] + 1;
+//				}
+//			}
 			// unsigned long numCellsLeft = numCellsInLayer * (i + 1);
 			// unsigned long numCellsRight = numCellsInLayer * (fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - i);
 
@@ -1016,6 +1019,14 @@ void KDDecomposition::printDecompTree(KDNode* root, string prefix) {
 	}
 }
 
+/**
+ * Calculate the division cost for all possible divisions of the node area.
+ *
+ * Is done in the following way:
+ * - get the number of particles per cell globally (i.e. for all cell in the domain)
+ * - get the number of particle pairs per cell globally
+ * - then calculate the costs for all possible subdivisions.
+ */
 void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup) {
 
 	double areaCosts = 0.0;
@@ -1033,10 +1044,10 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 	MPI_CHECK( MPI_Comm_group(commGroup, &group) );
 	MPI_CHECK( MPI_Group_rank(group, &newRank) );
 
-	vector<vector<double> > costsLeftTemp;
-	vector<vector<double> > costsRightTemp;
-	costsLeftTemp.resize(3);
-	costsRightTemp.resize(3);
+	//vector<vector<double> > costsLeftTemp;
+	//vector<vector<double> > costsRightTemp;
+	//costsLeftTemp.resize(3);
+	//costsRightTemp.resize(3);
 	int dimStartIndex[3];
 	int dimStopIndex[3];
 	dimStartIndex[0] = 0;
@@ -1057,8 +1068,8 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 		sepCostLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		sepCostRight[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
-		costsLeftTemp[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		costsRightTemp[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
+		//costsLeftTemp[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
+		//costsRightTemp[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		costsLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		costsRight[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
