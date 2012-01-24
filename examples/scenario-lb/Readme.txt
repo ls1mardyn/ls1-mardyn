@@ -8,3 +8,33 @@ In the middle we have one drop EOX, surrounded by a gas phase. Concerning the de
 
 Todo: play with the cutoff radius to have more cells?
 
+
+Observations:
+
+* LB causes some overhead (up to a factor 2 for homogeneous distribution 1CLJ,
+  see Diss. Buchholz Abb. 6.6):
+** communication is more expensive, as the number of neighbours may be
+   much higher
+** probably, communication of particles to 26 neighbours cannot be 
+   done by 3*2 communications (as in the simple DomainDecomposition)?
+
+* Works the better, the higher load imbalance is, i.e.
+** The higher the difference in particle density
+** The more expensive the force calculation
+
+* Weak scaling of LB is very good
+* Strong scaling is rather poor (on the other hand, load balancing 
+  doesn't make sense when there's only one or two cells per process)
+
+
+Remkarks on implementation:
+* as stated in Diss Buchholz, p. 167, number of force calculations 
+  could be neglected (alpha is 1.0 anyway, at the moment)
+  -> this will reduce the overhead by one traversal of all particle
+     pairs
+* extra exchange of number of particles and the particles themselves
+  -> could be communicated together, as in DomainDecomposition
+* don't determine the number of neighbouring processes each time 
+  particles are exchanged, but only after rebalancing?
+* use SFCDecomposition, could it show better strong scaling?
+
