@@ -155,44 +155,15 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	double spacing = _simBoxLength[0] / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
-	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
-	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
-	// o = cos 30° + (1 1 0) * sin 15°
-	double orientation[4];
-
 	for (int i = 0; i < numMoleculesPerDimension; i++) {
 		for (int j = 0; j < numMoleculesPerDimension; j++) {
 			for (int k = 0; k < numMoleculesPerDimension; k++) {
-				vector<double> velocity = getRandomVelocity(_temperature);
-				getOrientation(15, 10, orientation);
-
-				int componentType = 0;
-				if (_binaryMixture) {
-					componentType = randdouble(0, 1.999999);
-				}
-
-				double I[3] = {0.,0.,0.};
-				I[0] = _components[componentType].I11();
-				I[1] = _components[componentType].I22();
-				I[2] = _components[componentType].I33();
-				/*****  Copied from animake - initialize anular velocity *****/
-				double w[3];
-				for(int d=0; d < 3; d++) {
-					w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
-							sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
-					w[d] = w[d] * MDGenerator::fs_2_mardyn;
-				}
-				/************************** End Copy **************************/
 
 				double x = origin + i * spacing;
 				double y = origin + j * spacing;
 				double z = origin + k * spacing;
 				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
-					Molecule m(id, componentType, x, y, z, // position
-							velocity[0], -velocity[1], velocity[2], // velocity
-							orientation[0], orientation[1], orientation[2], orientation[3],
-							w[0], w[1], w[2], &_components);
-					particleContainer->addParticle(m);
+					addMolecule(x, y, z, id, particleContainer);
 				}
 				// increment id in any case, because this particle will probably
 				// be added by some other process
@@ -206,34 +177,11 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	for (int i = 0; i < numMoleculesPerDimension; i++) {
 		for (int j = 0; j < numMoleculesPerDimension; j++) {
 			for (int k = 0; k < numMoleculesPerDimension; k++) {
-				vector<double> velocity = getRandomVelocity(_temperature);
-				int componentType = 0;
-				if (_binaryMixture) {
-					componentType = randdouble(0, 1.999999);
-				}
-
-				double I[3] = {0.,0.,0.};
-				I[0] = _components[componentType].I11();
-				I[1] = _components[componentType].I22();
-				I[2] = _components[componentType].I33();
-				/*****  Copied from animake - initialize anular velocity *****/
-				double w[3];
-				for(int d=0; d < 3; d++) {
-					w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
-							sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
-					w[d] = w[d] * MDGenerator::fs_2_mardyn;
-				}
-				/************************** End Copy **************************/
-
 				double x = origin + i * spacing;
 				double y = origin + j * spacing;
 				double z = origin + k * spacing;
 				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
-					Molecule m(id, componentType, x, y, z, // position
-							velocity[0], -velocity[1], velocity[2], // velocity
-							orientation[0], orientation[1], orientation[2], orientation[3],
-							w[0], w[1], w[2], &_components);
-					particleContainer->addParticle(m);
+					addMolecule(x, y, z, id, particleContainer);
 				}
 				// increment id in any case, because this particle will probably
 				// be added by some other process
@@ -254,6 +202,40 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	inputTimer.stop();
 	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
 	return id;
+}
+
+void CubicGridGenerator::addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer) {
+	vector<double> velocity = getRandomVelocity(_temperature);
+
+	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
+	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
+	// o = cos 30° + (1 1 0) * sin 15°
+	double orientation[4];
+	getOrientation(15, 10, orientation);
+
+	int componentType = 0;
+	if (_binaryMixture) {
+		componentType = randdouble(0, 1.999999);
+	}
+
+	double I[3] = {0.,0.,0.};
+	I[0] = _components[componentType].I11();
+	I[1] = _components[componentType].I22();
+	I[2] = _components[componentType].I33();
+	/*****  Copied from animake - initialize anular velocity *****/
+	double w[3];
+	for(int d=0; d < 3; d++) {
+		w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+				sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+		w[d] = w[d] * MDGenerator::fs_2_mardyn;
+	}
+	/************************** End Copy **************************/
+
+	Molecule m(id, componentType, x, y, z, // position
+			velocity[0], -velocity[1], velocity[2], // velocity
+			orientation[0], orientation[1], orientation[2], orientation[3],
+			w[0], w[1], w[2], &_components);
+	particleContainer->addParticle(m);
 }
 
 

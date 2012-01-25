@@ -74,6 +74,11 @@ public:
 
 private:
 	void calculateSimulationBoxLength();
+
+	/**
+	 * add a molecule to the container, initializing random velocity, orientation, and so on....
+	 */
+	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 };
 
 #endif /* EQVGRIDGENERATOR_H_ */
