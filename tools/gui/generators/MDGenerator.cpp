@@ -57,7 +57,7 @@ MDGenerator::~MDGenerator() {
 
 void MDGenerator::setLogger(Log::Logger* logger) {
 	if (_logger != NULL && _deleteLogger) {
-		delete logger;
+		delete _logger;
 	}
 
 	_logger = logger;

@@ -36,9 +36,7 @@ InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::strin
 		exit(-1);
 	}
 
-	// somehow, using the global_log in the generator results in a segfault
-	// on the first log, somewhere in libstdc++
-	//generator->setLogger(global_log);
+	generator->setLogger(global_log);
 	generator->load(configFile);
 
 	return generator;
