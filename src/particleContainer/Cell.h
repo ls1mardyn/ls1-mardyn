@@ -55,7 +55,7 @@ public:
 	bool deleteMolecule(unsigned long molid);
 
 	//! Set the flag for a Halo Cell
-	void assingCellToHaloRegion();
+	void assignCellToHaloRegion();
 
 	//! Set the flag for a Boundary Cell
 	void assignCellToBoundaryRegion();

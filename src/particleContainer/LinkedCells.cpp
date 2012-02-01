@@ -458,7 +458,7 @@ void LinkedCells::initializeCells() {
 				    ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
 				    iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||
 				    iz >= _cellsPerDimension[2]-_haloWidthInNumCells[2]) {
-					_cells[cellIndex].assingCellToHaloRegion();
+					_cells[cellIndex].assignCellToHaloRegion();
 					_haloCellIndices.push_back(cellIndex);
 				}
 				else if (ix < 2*_haloWidthInNumCells[0] || iy < 2*_haloWidthInNumCells[1] || iz < 2*_haloWidthInNumCells[2] ||

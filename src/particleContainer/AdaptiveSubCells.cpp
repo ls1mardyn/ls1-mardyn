@@ -565,13 +565,13 @@ void AdaptiveSubCells::initializeSubCells() {
 				nextSubCellIndex = subCellIndexOf3DIndex(ix + 1, iy, iz);
 				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] || ix >= _cellsPerDimension[0] - _haloWidthInNumCells[0] || iy >= _cellsPerDimension[1] - _haloWidthInNumCells[1] || iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
 					// assign the (first) subCell to the halo region
-					_subCells[subCellIndex].assingCellToHaloRegion();
+					_subCells[subCellIndex].assignCellToHaloRegion();
 					_haloSubCellIndices.push_back(subCellIndex);
 					// if nextSubCellIndex-subCellIndex == 8 (or 7, at the end of the array) the current Cell contains subCells
 					if (nextSubCellIndex - subCellIndex > 1) {
 						for (int i = 1; i < 8; i++) {
 							// assign the remaining 7 subCells to the halo region
-							_subCells[subCellIndex + i].assingCellToHaloRegion();
+							_subCells[subCellIndex + i].assignCellToHaloRegion();
 							_haloSubCellIndices.push_back(subCellIndex);
 						}
 					}

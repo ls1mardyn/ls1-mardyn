@@ -21,7 +21,7 @@ vector<Molecule*>& Cell::getParticlePointers() {
 	return this->_particlePointers;
 }
 
-void Cell::assingCellToHaloRegion() {
+void Cell::assignCellToHaloRegion() {
 	this->_haloCellState = true;
 }
 
