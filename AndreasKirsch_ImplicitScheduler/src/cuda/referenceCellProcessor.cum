@@ -1,0 +1,49 @@
+#include <host_defines.h>
+
+#include "util.cum"
+
+#include "cellInfo.cum"
+#include "molecule.cum"
+#include "moleculePairHandler.cum"
+
+// exactly one thread pro block
+namespace ReferenceCellProcessor {
+	__device__ void processCellPair(
+			const int threadIndex, const CellInfo & __restrict__ cellA, const CellInfo & __restrict__ cellB
+		) {
+		for( uint indexA = cellA.startIndex ; indexA < cellA.endIndex ; indexA++ ) {
+			Molecule moleculeA;
+			moleculeA.init(indexA);
+
+			for( uint indexB = cellB.startIndex ; indexB < cellB.endIndex ; indexB++ ) {
+				Molecule moleculeB;
+				moleculeB.init(indexB);
+
+				MoleculePairHandler::process( 0, moleculeA, moleculeB );
+
+				moleculeB.store();
+			}
+			moleculeA.store();
+		}
+	}
+
+	__device__ void processCell(
+			const int threadIndex, const CellInfo & __restrict__ cell
+		) {
+		for( uint indexA = cell.startIndex ; indexA < cell.endIndex ; indexA++ ) {
+			Molecule moleculeA;
+			moleculeA.init(indexA);
+
+			for( uint indexB = cell.startIndex ; indexB < indexA; indexB++ ) {
+				Molecule moleculeB;
+				moleculeB.init(indexB);
+
+				MoleculePairHandler::process( 0, moleculeA, moleculeB );
+
+				moleculeB.store();
+			}
+			moleculeA.store();
+		}
+	}
+};
+

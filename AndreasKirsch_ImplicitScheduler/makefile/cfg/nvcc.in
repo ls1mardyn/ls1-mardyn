@@ -1,0 +1,23 @@
+# nvcc compiler suite
+
+CFG_INFO = "nvcc configuration"
+
+CXX_SEQ = /usr/local/cuda/bin/nvcc
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = $(INCLUDES) -Xcompiler -Wall -Xcompiler -Wextra -Xcompiler -Weffc++ -g --ptxas-options=-v
+LINKFLAGS_SEQ_DEBUG = --linker-options -O0 -g
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = $(INCLUDES) -Xcompiler -O2 -Xcompiler -DNDEBUG
+LINKFLAGS_SEQ_RELEASE =
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = $(INCLUDES) -Wall -g -DPARALLEL
+LINKFLAGS_PAR_DEBUG = -O0 -g -DPARALLEL
+# RELEASE
+CXXFLAGS_PAR_RELEASE  = $(INCLUDES) -O2 -DNDEBUG -DPARALLEL
+LINKFLAGS_PAR_RELEASE = -DPARALLEL

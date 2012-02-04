@@ -1,0 +1,47 @@
+#ifndef RINGQUEUE_CUM__
+#define RINGQUEUE_CUM__
+
+#include <host_defines.h>
+
+/*
+ * lock-free queue, assumes one consumer and one producer
+ */
+template<typename ItemType, uint maxSize>
+class RingQueue {
+private:
+	ItemType buffer[maxSize];
+	volatile uint readIndex;
+	volatile uint writeIndex;
+
+public:
+	__device__ RingQueue() {}
+
+	__device__ void init() {
+		readIndex = 0;
+		writeIndex = 0;
+	}
+
+	__device__ bool isEmpty()  {
+		return readIndex == writeIndex;
+	}
+
+	__device__ bool isFull() {
+		return writeIndex >= readIndex + maxSize;
+	}
+
+	__device__ uint getCapacity() {
+		return readIndex + maxSize - writeIndex;
+	}
+
+	__device__ void push(const ItemType & item) {
+		// assert: !isFull
+		buffer[writeIndex++ % maxSize] = item;
+	}
+
+	__device__ ItemType pop() {
+		return buffer[readIndex++ % maxSize];
+	}
+};
+
+
+#endif

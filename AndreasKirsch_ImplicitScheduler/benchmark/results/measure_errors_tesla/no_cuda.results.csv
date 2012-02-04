@@ -1,0 +1,4 @@
+timeSteps,moleculeCount,cutOffRadius,totalTime,name
+40,87808,1.000000e+01,1.524752e+02,no_cuda_lj_80000_10
+40,50000,1.000000e+01,1.713915e+02,no_cuda_lj3d1_50000_10
+40,50000,1.000000e+01,1.418480e+02,no_cuda_lj3d1_lj2d1_50000_10

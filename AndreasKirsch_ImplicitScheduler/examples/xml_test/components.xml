@@ -1,0 +1,104 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<components version="20100525" >
+  <moleculetype id="CO2_3c" >
+    <label>CO2</label>
+    <formula>CO2</formula>
+    <name>Carbon dioxide</name>
+    <description></description>
+    <creator>nobody</creator>
+    <creationDate>7.04.2009</creationDate>
+    <reference>JCP</reference>
+    <comment></comment>
+    <coord_base>principal_axes</coord_base>
+    <site type="LJ126" id="1" >
+      <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+      <mass>12.00</mass>
+      <sigma>2.900109</sigma>
+      <epsilon>11.692625</epsilon>
+    </site>
+    <site type="LJ126" id="2" >
+      <coord> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coord>
+      <mass>16.00</mass>
+      <sigma>2.972625</sigma>
+      <epsilon>105.524481</epsilon>
+    </site>
+    <site type="LJ126" id="3" >
+      <coord> <x>0.0</x> <y>0.0</y> <z>1.212237</z> </coord>
+      <mass>16.00</mass>
+      <sigma>2.972625</sigma>
+      <epsilon>105.524481</epsilon>
+    </site>
+    <site type="Quadrupole" id="4" >
+      <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+      <orientation> <theta>0.0</theta> <phi>0.0</phi> </orientation>
+      <mass>0.0</mass>
+      <shielding>0.6</shielding>
+      <quadrupole>3.458568</quadrupole>
+    </site>
+    <momentsofinertia rotaxes="xy" >
+      <Ixx>47.02459341</Ixx>
+      <Iyy>47.02459341</Iyy>
+    </momentsofinertia>
+  </moleculetype>
+
+  <moleculetype id="cycC6H12" >
+    <label>cycC6H12</label>
+    <formula>C6H12</formula>
+    <name>Cyclohexane</name>
+    <description></description>
+    <creator>nobody</creator>
+    <creationDate>7.04.2009</creationDate>
+    <reference>JCP</reference>
+    <comment></comment>
+    <coord_base>principal_axes</coord_base>
+    <site type="LJ126" id="1" >
+      <coord> <x>-0.998574</x> <y>-0.298334</y> <z>-1.552759</z> </coord>
+      <mass>14.0</mass>
+      <sigma>3.4965</sigma>
+      <epsilon>87.385</epsilon>
+    </site>
+    <site type="LJ126" id="2" >
+      <coord> <x>-1.805197</x> <y>0.311771</y> <z>0.021002</z> </coord>
+      <mass>14.0</mass>
+      <sigma>3.4965</sigma>
+      <epsilon>87.385</epsilon>
+    </site>
+    <site type="LJ126" id="3" >
+      <coord> <x>-0.886326</x> <y>-0.298872</y> <z>1.531758</z> </coord>
+      <mass>14.0</mass>
+      <sigma>3.4965</sigma>
+      <epsilon>87.385</epsilon>
+    </site>
+    <site type="LJ126" id="4" >
+      <coord> <x>0.886326</x> <y>0.298872</y> <z>1.531758</z> </coord>
+      <mass>14.0</mass>
+      <sigma>3.4965</sigma>
+      <epsilon>87.385</epsilon>
+    </site>
+    <site type="LJ126" id="5" >
+      <coord> <x>1.805197</x> <y>-0.311771</y> <z>0.021002</z> </coord>
+      <mass>14.0</mass>
+      <sigma>3.4965</sigma>
+      <epsilon>87.385</epsilon>
+    </site>
+    <site type="LJ126" id="6" >
+      <coord> <x>0.998574</x> <y>0.298334</y> <z>-1.552759</z> </coord>
+      <mass>14.0</mass>
+      <sigma>3.4965</sigma>
+      <epsilon>87.385</epsilon>
+    </site>
+    <site type="Quadrupole" id="4" >
+      <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+      <orientation> <theta>90.0</theta> <phi>90.0</phi> </orientation>
+      <mass>0.0</mass>
+      <shielding>0.7</shielding>
+      <quadrupole>0.8179</quadrupole>
+    </site>
+    <momentsofinertia rotaxes="xyz" >
+      <Ixx>140.9327631888689</Ixx>
+      <Iyy>274.3788372418323</Iyy>
+      <Izz>148.8756870983759</Izz>
+    </momentsofinertia>
+  </moleculetype>
+
+</components>

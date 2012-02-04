@@ -1,0 +1,13 @@
+/** \mainpage "MDProject"
+
+!!New implementation of LS1
+
+Documentation available:
+
+|| Ressource             || Comment
+| "Mardyn Input Files" |  Description of the Mardyn input file
+| "Unit Tests"           |  Description on how to build, execute and write unit tests
+| <a href="../doc/styleguide.pdf">Style Guide</a> | The Mardyn Styleguide
+| "Visualisation with Paraview" | Describes how to produce vtk data and how to visualize it with paraview
+
+*/

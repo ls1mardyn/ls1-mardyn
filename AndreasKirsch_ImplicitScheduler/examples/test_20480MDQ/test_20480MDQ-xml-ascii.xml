@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+      This config file demonstrates the following case:
+       * phase space point is defined in an ASCII format file
+       * components are defined in a XML format file
+      Note that any node can be defined in an external XML file, as well as
+      any already referenced XML file can be directly be included in this
+      file. See test_20480MDQ-xml-ascii-combined.xml.
+-->
+<mardyncfg>
+	<header>
+		<version>20071126</version>
+		<!-- might need this in the future, e.g. for curl -->
+		<required-plugins></required-plugins>
+	</header>
+	<experiment>
+		<timestep-length>1.498364304465601E-003</timestep-length>
+		<cutoff-radius>4.33333333333333</cutoff-radius>
+		<temperature unit="kelvin">2.50000000000000</temperature>
+		<current-time>0</current-time>
+		<length>
+			<x>35.3210947328206</x>
+			<y>35.3210947328206</y>
+			<z>35.3210947328206</z>
+		</length>
+		<phase-space source="test_20480MDQ-phase_space_only.inp" format="ASCII" />
+		
+		<components source="test_20480MDQ_components.xml" format="XML-external" />
+		<data-structure>
+			<linked-cells>1</linked-cells>
+		</data-structure>
+	</experiment>
+</mardyncfg>

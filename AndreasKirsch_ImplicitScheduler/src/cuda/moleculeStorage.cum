@@ -1,0 +1,59 @@
+#ifndef MOLECULESTORAGE_CUM__
+#define MOLECULESTORAGE_CUM__
+
+#include <host_defines.h>
+
+#include "util.cum"
+
+#include "cellInfo.cum"
+
+typedef Molecule_ComponentType ComponentType;
+
+// global shared data pointers
+__constant__ __device__ floatType3 *moleculePositions;
+__constant__ __device__ Quaternion *moleculeQuaternions;
+__constant__ __device__ Matrix3x3 *moleculeRotations;
+
+__constant__ __device__ floatType3 *moleculeForces;
+__constant__ __device__ floatType3 *moleculeTorque;
+
+__constant__ __device__ ComponentType *moleculeComponentTypes;
+
+__constant__ __device__ uint *cellStartIndices;
+
+__device__ CellInfo cellInfoFromCellIndex( int index ) {
+	return CellInfo( cellStartIndices[index], cellStartIndices[index+1] );
+}
+
+namespace MoleculeStorage {
+	// straight-forward getter/setter
+	__device__ floatType3 getPosition(uint index) {
+		return moleculePositions[index];
+	}
+
+	__device__ Matrix3x3 getRotation(uint index) {
+		return moleculeRotations[index];
+	}
+
+	__device__ floatType3 getForce(uint index) {
+		return moleculeForces[index];
+	}
+
+	__device__ floatType3 getTorque(uint index) {
+		return moleculeTorque[index];
+	}
+
+	__device__ ComponentType getComponentType(uint index) {
+		return moleculeComponentTypes[index];
+	}
+
+	__device__ void addForce(uint index, const floatType3 &force) {
+		moleculeForces[index] += force;
+	}
+
+	__device__ void addTorque(uint index, const floatType3 &torque) {
+		moleculeTorque[index] += torque;
+	}
+};
+
+#endif

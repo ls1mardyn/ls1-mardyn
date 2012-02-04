@@ -1,0 +1,98 @@
+/*
+ * componentDescriptor.cum
+ *
+ *  Created on: Jun 21, 2011
+ *      Author: Andreas Kirsch
+ */
+
+#ifndef COMPONENTDESCRIPTOR_CUM_
+#define COMPONENTDESCRIPTOR_CUM_
+
+#include <host_defines.h>
+
+#include "molecule.cum"
+
+#include "sharedDecls.h"
+
+__constant__ __device__ ComponentDescriptors componentDescriptors;
+__constant__ __device__ ComponentMixCoefficients componentMixXis;
+__constant__ __device__ ComponentMixCoefficients componentMixEtas;
+
+extern "C" {
+__global__ void debugComponentDescriptors( int numDescriptors ) {
+	printf( "CUDA component descriptor dump:\n" );
+
+	for( int i = 0 ; i < numDescriptors ; i++ ) {
+		const ComponentDescriptor &descriptor = componentDescriptors[i];
+		printf( "component #%i:\n", i );
+#if MAX_NUM_LJCENTERS > 0
+		for( int j = 0 ; j < descriptor.numLJCenters ; j++ ) {
+			const ComponentDescriptor::LJCenter &ljCenter = descriptor.ljCenters[j];
+			printf( "\tljcenter #%i:\n"
+					"\t\trelative position:%f %f %f\n"
+					"\t\tepsilon: %f\n"
+					"\t\tsigma: %f\n",
+					j,
+					ljCenter.relativePosition.x, ljCenter.relativePosition.y, ljCenter.relativePosition.z,
+					ljCenter.ljParameters.epsilon, ljCenter.ljParameters.sigma
+				);
+		}
+#endif
+#if MAX_NUM_CHARGES > 0
+		for( int j = 0 ; j < descriptor.numCharges ; j++ ) {
+			const ComponentDescriptor::Charge &charge = descriptor.charges[j];
+			printf( "\tcharge #%i:\n"
+					"\t\trelative position:%f %f %f\n"
+					"\t\tq: %f\n",
+					j,
+					charge.relativePosition.x, charge.relativePosition.y, charge.relativePosition.z,
+					charge.q
+				);
+		}
+#endif
+#if MAX_NUM_DIPOLES > 0
+		for( int j = 0 ; j < descriptor.numDipoles ; j++ ) {
+			const ComponentDescriptor::Dipole &dipole = descriptor.dipoles[j];
+			printf( "\tdipole #%i\n"
+					"\t\trelative position:%f %f %f\n"
+					"\t\trelative e: %f %f %f\n"
+					"\t\tabsMy: %f\n",
+					j,
+					dipole.relativePosition.x, dipole.relativePosition.y, dipole.relativePosition.z,
+					dipole.relativeE.x, dipole.relativeE.y, dipole.relativeE.z,
+					dipole.absMu
+				);
+		}
+#endif
+#if MAX_NUM_QUADRUPOLES > 0
+		for( int j = 0 ; j < descriptor.numQuadrupoles ; j++ ) {
+			const ComponentDescriptor::Quadrupole &quadrupole = descriptor.quadrupoles[j];
+			printf( "\tquadrupole #%i\n"
+					"\t\trelative position:%f %f %f\n"
+					"\t\trelative e: %f %f %f\n"
+					"\t\tabsQ: %f\n",
+					j,
+					quadrupole.relativePosition.x, quadrupole.relativePosition.y, quadrupole.relativePosition.z,
+					quadrupole.relativeE.x, quadrupole.relativeE.y, quadrupole.relativeE.z,
+					quadrupole.absQ
+				);
+		}
+#endif
+
+		printf( "\n" );
+	}
+
+	printf( "\n"
+			"Mix coefficients:\n\n" );
+	for( int i = 0 ; i < numDescriptors ; i++ ) {
+		for( int j = 0 ; j < numDescriptors ; j++ ) {
+			const int index = i * MAX_NUM_COMPONENTS + j;
+			printf( "%f, %f\t", componentMixXis[index], componentMixEtas[index] );
+		}
+		printf( "\n" );
+	}
+	printf( "\n" );
+}
+}
+
+#endif /* COMPONENTDESCRIPTOR_CUM_ */
