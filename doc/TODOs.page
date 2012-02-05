@@ -16,5 +16,6 @@ persons. Let's place here things which we could use as a basis for Coders' Day o
                                                Move it one level up (into the abstract super class?)
 | Simulation::prepare_start()   | Why necessary? Could become superflous if loop structure in simulate() changed?
 | Class Quaternion              | Remove unnecessary methods which are never called.
-
+| Mardyn.cpp                    | Output if compiled in debug mode
+| Simulation.cpp ???            | Compile-Flag or if to disable all file output
 */
