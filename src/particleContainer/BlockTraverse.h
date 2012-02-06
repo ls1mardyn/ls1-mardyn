@@ -20,11 +20,12 @@
 #ifndef BLOCKTRAVERSE_H_
 #define BLOCKTRAVERSE_H_
 
+#include "ParticleCell.h"
+
 #include <vector>
 
 class ParticleContainer;
 class ParticlePairsHandler;
-class ParticleCell;
 
 //! @brief BlockTraverse datastructure
 //! @author Johannes Weißl
