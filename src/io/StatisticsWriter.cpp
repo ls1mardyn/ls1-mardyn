@@ -8,7 +8,7 @@
 #include "StatisticsWriter.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/Cell.h"
+#include "particleContainer/ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 

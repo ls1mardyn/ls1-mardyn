@@ -22,7 +22,7 @@
 
 #include "molecules/potforce.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "Cell.h"
+#include "ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #include "ensemble/GrandCanonical.h"
@@ -163,7 +163,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 void LinkedCells::update() {
 	// clear all Cells
-	std::vector<Cell>::iterator celliter;
+	std::vector<ParticleCell>::iterator celliter;
 	for (celliter = (_cells).begin(); celliter != (_cells).end(); ++celliter) {
 		(*celliter).removeAllParticles();
 	}
@@ -210,7 +210,7 @@ unsigned LinkedCells::countParticles(unsigned int cid) {
 	unsigned N = 0;
 	std::vector<Molecule*>::iterator molIter1;
 	for (unsigned i = 0; i < _cells.size(); i++) {
-		Cell& currentCell = _cells[i];
+		ParticleCell& currentCell = _cells[i];
 		if( !currentCell.isHaloCell() ) {
 			for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
 				if ((*molIter1)->componentid() == cid)
@@ -260,7 +260,7 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* 
 				                  (cix[2] == minIndex[2]) || (cix[2] == minIndex[2] + 1) ||
 				                  (cix[2] == maxIndex[2]) || (cix[2] == maxIndex[2] - 1);
 			cellid = this->cellIndexOf3DIndex(cix[0], cix[1], cix[2]);
-				Cell& currentCell = _cells[cellid];
+				ParticleCell& currentCell = _cells[cellid];
 				if (currentCell.isHaloCell())
 					continue;
 				if (individualCheck) {
@@ -344,7 +344,7 @@ void LinkedCells::deleteOuterParticles() {
 	vector<unsigned long>::iterator cellIndexIter;
 	//std::list<Molecule*>::iterator molIter1;
 	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
-		Cell& currentCell = _cells[*cellIndexIter];
+		ParticleCell& currentCell = _cells[*cellIndexIter];
 		currentCell.removeAllParticles();
 	}
 
@@ -385,7 +385,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 
 	// loop over all halo cells
 	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
-		Cell& currentCell = _cells[*cellIndexIter];
+		ParticleCell& currentCell = _cells[*cellIndexIter];
 		// loop over all molecules in the cell
 		for (particleIter = currentCell.getParticlePointers().begin(); particleIter != currentCell.getParticlePointers().end(); particleIter++) {
 			haloParticlePtrs.push_back(*particleIter);
@@ -575,7 +575,7 @@ double LinkedCells::getEnergy(Molecule* m1) {
 	double distanceVector[3];
 
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
-	Cell& currentCell = _cells[cellIndex];
+	ParticleCell& currentCell = _cells[cellIndex];
 
 	if (m1->numTersoff() > 0) {
 		global_log->error() << "The grand canonical ensemble is not implemented for solids." << endl;
@@ -597,7 +597,7 @@ double LinkedCells::getEnergy(Molecule* m1) {
 		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
 			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 
-		Cell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if (dd > cutoffRadiusSquare)

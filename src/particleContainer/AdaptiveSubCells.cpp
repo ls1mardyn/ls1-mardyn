@@ -4,7 +4,7 @@
 #include "AdaptiveSubCells.h"
 
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "Cell.h"
+#include "ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "Domain.h"
 #include "ensemble/GrandCanonical.h"
@@ -167,7 +167,7 @@ void AdaptiveSubCells::update() {
 	// FIXME: introduce global variabel instead of fixed numer '1000'
 	if (_numberOfUpdates % 1000 == 0) {
 		// clear all Cells
-		std::vector<Cell>::iterator celliter;
+		std::vector<ParticleCell>::iterator celliter;
 		for (celliter = (_cells).begin(); celliter != (_cells).end(); ++celliter) {
 			(*celliter).removeAllParticles();
 		}
@@ -196,7 +196,7 @@ void AdaptiveSubCells::update() {
 	}
 	// Here the adaptive datastructure is going to be created
 	// subcelliter is the new iterator to pass through all subCells
-	std::vector<Cell>::iterator subcelliter;
+	std::vector<ParticleCell>::iterator subcelliter;
 	for (subcelliter = (_subCells).begin(); subcelliter != (_subCells).end(); subcelliter++) {
 		(*subcelliter).removeAllParticles();
 	}
@@ -246,7 +246,7 @@ unsigned AdaptiveSubCells::countParticles(unsigned int cid) {
 	std::vector<Molecule*>::iterator molIter1;
 
 	for (unsigned long i = 0; i < _cells.size(); i++) {
-		Cell& currentCell = _cells[i];
+		ParticleCell& currentCell = _cells[i];
 		if (currentCell.isHaloCell())
 			continue;
 		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
@@ -287,7 +287,7 @@ unsigned AdaptiveSubCells::countParticles(unsigned int cid, double* cbottom, dou
 			for (cix[2] = minIndex[2]; maxIndex[2] >= cix[2]; (cix[2])++) {
 				individualCheck = (cix[0] == minIndex[0]) || (cix[0] == maxIndex[0]) || (cix[1] == maxIndex[1]) || (cix[1] == maxIndex[1]) || (cix[2] == maxIndex[2]) || (cix[2] == maxIndex[2]);
 				cellid = this->subCellIndexOf3DIndex(cix[0], cix[1], cix[2]);
-				Cell& currentCell = _subCells[cellid];
+				ParticleCell& currentCell = _subCells[cellid];
 
 				if (currentCell.isHaloCell())
 					continue;
@@ -345,7 +345,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 	unsigned long m1id = m1->id();
 
 	unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
-	Cell& currentSubCell = _subCells[subCellIndex];
+	ParticleCell& currentSubCell = _subCells[subCellIndex];
 	vector<unsigned long>::iterator neighbourSubOffsetsIter;
 
 	if (m1->numTersoff() > 0) {
@@ -365,7 +365,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 	// loop over all forward neighbours
 	for (neighbourSubOffsetsIter = _forwardNeighbourSubOffsets[subCellIndex].begin();
 	    neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[subCellIndex].end(); neighbourSubOffsetsIter++) {
-		Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
+		ParticleCell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
 		// loop over all particles in the subCell
 		for (molIter2 = neighbourSubCell.getParticlePointers().begin(); molIter2 != neighbourSubCell.getParticlePointers().end(); molIter2++) {
 			dd = (*molIter2)->dist2(*m1, distanceVector);
@@ -377,7 +377,7 @@ double AdaptiveSubCells::getEnergy(Molecule* m1) {
 	// loop over all backward neighbours
 	for (neighbourSubOffsetsIter = _backwardNeighbourSubOffsets[subCellIndex].begin();
 	    neighbourSubOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end(); neighbourSubOffsetsIter++) {
-		Cell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
+		ParticleCell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
 		// loop over all particles in the subCell
 		for (molIter2 = neighbourSubCell.getParticlePointers().begin(); molIter2 != neighbourSubCell.getParticlePointers().end(); molIter2++) {
 			dd = (*molIter2)->dist2(*m1, distanceVector);
@@ -447,7 +447,7 @@ void AdaptiveSubCells::deleteOuterParticles() {
 	vector<unsigned long>::iterator subCellIndexIter;
 	//std::list<Molecule*>::iterator molIter1;
 	for (subCellIndexIter = _haloSubCellIndices.begin(); subCellIndexIter != _haloSubCellIndices.end(); subCellIndexIter++) {
-		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		ParticleCell& currentSubCell = _subCells[*subCellIndexIter];
 		currentSubCell.removeAllParticles();
 	}
 
@@ -490,7 +490,7 @@ void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 
 	// loop over all halo cells
 	for (subCellIndexIter = _haloSubCellIndices.begin(); subCellIndexIter != _haloSubCellIndices.end(); subCellIndexIter++) {
-		Cell& currentSubCell = _subCells[*subCellIndexIter];
+		ParticleCell& currentSubCell = _subCells[*subCellIndexIter];
 		// loop over all molecules in the cell
 		for (particlePtrIter = currentSubCell.getParticlePointers().begin(); particlePtrIter != currentSubCell.getParticlePointers().end(); particlePtrIter++) {
 			haloParticlePtrs.push_back(*particlePtrIter);
@@ -993,7 +993,7 @@ void AdaptiveSubCells::calculateLocalRho() {
 	// may be you can get along without the integer variables cellIntIterator and minIterator
 	int cellIntIterator = 0;
 	// loop over all cells
-	vector<Cell>::iterator cellIterator;
+	vector<ParticleCell>::iterator cellIterator;
 	std::vector<Molecule*>::iterator molIterator;
 	// traverse all coarse cells
 	for (cellIterator = _cells.begin(); cellIterator != _cells.end(); cellIterator++) {

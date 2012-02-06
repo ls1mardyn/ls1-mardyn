@@ -6,7 +6,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "BlockTraverse.h"
 
-class Cell;
+class ParticleCell;
 class ChemicalPotential;
 class DomainDecompBase;
 
@@ -238,10 +238,10 @@ private:
 	//! Vector containing all cells (including halo)
 	//! @todo This vector is probably only needed during dynamic adaption
 	//!       of the datastructure to calculate the local density
-	std::vector<Cell> _cells;
+	std::vector<ParticleCell> _cells;
 
 	//! Vector containing all subCells (including halo)
-	std::vector<Cell> _subCells;
+	std::vector<ParticleCell> _subCells;
 
 	//! Vector containing the indices (for the subCells vector) of all inner subCells (without boundary)
 	std::vector<unsigned long> _innerSubCellIndices;

@@ -24,7 +24,7 @@
 
 class ParticleContainer;
 class ParticlePairsHandler;
-class Cell;
+class ParticleCell;
 
 //! @brief BlockTraverse datastructure
 //! @author Johannes Weißl
@@ -42,7 +42,7 @@ public:
 	//! Use this initializer if there already is vector of vectors for the neighbourOffsets.
 	//! A BlockTraverse structure created this way doesn't need to be updated using assignOffsets().
 	BlockTraverse(
-            ParticleContainer* moleculeContainer, std::vector<Cell>& cells,
+            ParticleContainer* moleculeContainer, std::vector<ParticleCell>& cells,
             std::vector<unsigned long>& innerCellIndices,
             std::vector<unsigned long>& boundaryCellIndices,
             std::vector<unsigned long>& haloCellIndices,
@@ -54,7 +54,7 @@ public:
 	//!
 	//! _(forward|backward)NeighbourOffsets members are newly allocated and must be kept updated using the assignOffsets() method.
 	BlockTraverse(
-	    ParticleContainer* moleculeContainer, std::vector<Cell>& cells,
+	    ParticleContainer* moleculeContainer, std::vector<ParticleCell>& cells,
 	    std::vector<unsigned long>& innerCellIndices, std::vector<unsigned long>& boundaryCellIndices, std::vector<unsigned long>& haloCellIndices
 	);
 
@@ -82,10 +82,10 @@ public:
 
 private:
 	/** calculates forces between all molecules in the cell */
-	void processCell(Cell &cell, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
+	void processCell(ParticleCell &cell, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
 
 	/** calculates forces between all molecules in cell1 and cell2 */
-	void processCellPair(Cell &cell1, Cell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
+	void processCellPair(ParticleCell &cell1, ParticleCell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
 	
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
@@ -95,7 +95,7 @@ private:
 	ParticleContainer* _moleculeContainer;
 
 	//! Vector containing all cells (including halo)
-	std::vector<Cell>& _cells;
+	std::vector<ParticleCell>& _cells;
 
 	//! Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long>& _innerCellIndices;

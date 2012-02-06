@@ -22,7 +22,7 @@
 #include "BlockTraverse.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "Cell.h"
+#include "ParticleCell.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
@@ -35,7 +35,7 @@ using Log::global_log;
 
 
 
-void BlockTraverse::processCell(Cell& cell, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler) {
+void BlockTraverse::processCell(ParticleCell& cell, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler) {
 	vector<Molecule*>::iterator molIter1;
 	vector<Molecule*>::iterator molIter2;
     double distanceVector[3];
@@ -61,7 +61,7 @@ void BlockTraverse::processCell(Cell& cell, double& cutoffRadiusSquare, double& 
     }
 }
 
-void BlockTraverse::processCellPair( Cell &cell1, Cell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler ) {
+void BlockTraverse::processCellPair( ParticleCell &cell1, ParticleCell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler ) {
 	vector<Molecule*>::iterator molIter1;
 	vector<Molecule*>::iterator molIter2;
     double distanceVector[3];
@@ -88,7 +88,7 @@ void BlockTraverse::processCellPair( Cell &cell1, Cell& cell2, double& cutoffRad
 
 BlockTraverse::BlockTraverse(
 		ParticleContainer* moleculeContainer,
-		vector<Cell>& cells, 
+		vector<ParticleCell>& cells, 
         vector<unsigned long>& innerCellIndices, 
         vector<unsigned long>& boundaryCellIndices,
         vector<unsigned long>& haloCellIndices,
@@ -106,7 +106,7 @@ BlockTraverse::BlockTraverse(
 
 BlockTraverse::BlockTraverse(
 		ParticleContainer* moleculeContainer,
-		vector<Cell>& cells, 
+		vector<ParticleCell>& cells, 
         vector<unsigned long>& innerCellIndices, 
         vector<unsigned long>& boundaryCellIndices, 
         vector<unsigned long>& haloCellIndices
@@ -183,7 +183,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (cellIndexIter = _innerCellIndices.begin(); cellIndexIter != _innerCellIndices.end(); cellIndexIter++) {
 		unsigned long cellIndex = *cellIndexIter;
-		Cell& currentCell = _cells[cellIndex];
+		ParticleCell& currentCell = _cells[cellIndex];
         if( currentCell.getMoleculeCount() < 1 )
             continue;
 
@@ -192,7 +192,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 
 		// loop over all neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
-			Cell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
             if( neighbourCell.getMoleculeCount() > 0 ) {
                 processCellPair( currentCell, neighbourCell, cutoffRadiusSquare, LJCutoffRadiusSquare, tersoffCutoffRadiusSquare, particlePairsHandler );
             }
@@ -203,7 +203,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	// this is relevant for the angle summation
     for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
         unsigned long cellIndex = *cellIndexIter;
-        Cell& currentCell = _cells[cellIndex];
+        ParticleCell& currentCell = _cells[cellIndex];
         if( currentCell.getMoleculeCount() < 1 )
             continue;
 
@@ -227,7 +227,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 				int j = cellIndex + *neighbourOffsetsIter;
 				if ((j < 0) || (j >= (int) (_cells.size())))
 					continue;
-				Cell& neighbourCell = _cells[j];
+				ParticleCell& neighbourCell = _cells[j];
 				if (!neighbourCell.isHaloCell())
 					continue;
 				for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
@@ -245,7 +245,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	// loop over all boundary cells and calculate forces to forward and backward neighbours
 	for (cellIndexIter = _boundaryCellIndices.begin(); cellIndexIter != _boundaryCellIndices.end(); cellIndexIter++) {
 		unsigned long cellIndex = *cellIndexIter;
-		Cell& currentCell = _cells[cellIndex];
+		ParticleCell& currentCell = _cells[cellIndex];
         if( currentCell.getMoleculeCount() < 1 )
             continue;
 
@@ -254,7 +254,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 
 		// loop over all forward neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
-			Cell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
             if( neighbourCell.getMoleculeCount() < 1 )
                 continue;
 
@@ -285,7 +285,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 		// loop over all backward neighbours. calculate only forces
 		// to neighbour cells in the halo region, all others already have been calculated
 		for (neighbourOffsetsIter = backwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != backwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
-			Cell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 
 			if (neighbourCell.isHaloCell() && neighbourCell.getMoleculeCount() > 0) {
 				// loop over all particles in the cell
@@ -322,7 +322,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 		if (cellIndexIter == _innerCellIndices.end())
 			cellIndexIter = _boundaryCellIndices.begin();
 
-		Cell& currentCell = _cells[*cellIndexIter];
+		ParticleCell& currentCell = _cells[*cellIndexIter];
 		for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
 			Molecule& molecule1 = **molIter1;
 
