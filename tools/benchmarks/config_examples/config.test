@@ -11,6 +11,7 @@ parafiles:	%(jobscript)s parameters
 command:	cat -n parameters
 condition:	$NPPN<$NPROC
 break:	$COMMANDSTATUS>0
+logfile:	$DSTROOT.log
 
 [parameters]
 # Parameter variations

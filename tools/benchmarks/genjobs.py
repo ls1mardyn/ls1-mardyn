@@ -38,6 +38,7 @@ breakcondition=None
 pptemplate=None
 ppscript=None
 ppcommand=None
+logfile=None
 
 
 if sys.version_info < (2, 6):
@@ -56,6 +57,7 @@ optparser.add_option("-d", "--dstroot", type="string", dest="dstroot", help="des
 optparser.add_option("-t", "--delimiter", type="string", dest="delimiter", help="delimiter for lists [default (hex): {0}]".format(''.join([hex(ord(c))[2:].rjust(2,'0') for c in delimiter])))
 optparser.add_option("-g", "--gentemplate", type="string", dest="gentemplate", help="generator job template directory [default: {0}]".format(gentemplate))
 optparser.add_option("-p", "--pptemplate", type="string", dest="pptemplate", help="postprocessing template directory [default: {0}]".format(pptemplate))
+optparser.add_option("-l", "--logfile", type="string", dest="logfile", help="log file [default: {0}]".format(logfile))
 (options, args) = optparser.parse_args()
 
 if options.print_version:
@@ -64,6 +66,12 @@ if options.print_version:
 	sys.exit(0)
 
 parasubs={}
+
+def replaceparameters(src,paradefs):
+	s=src
+	for paraname,paravalue in paradefs.items():
+		s=s.replace(paraname,str(paravalue))
+	return s
 
 print "options ----------------------------------------------------------------"
 #if options.configfile is not None:
@@ -138,6 +146,22 @@ if cfgparser.has_option("generator","break"):
 	breakcondition=cfgparser.get("generator","break")
 	print "break condition:\t",breakcondition
 
+if cfgparser.has_option("generator","logfile"):
+	logfile=cfgparser.get("generator","logfile")
+if options.logfile:
+	logfile=options.logfile
+logfile=replaceparameters(logfile,parasubs)
+if logfile:
+	logfile=os.path.join(rootdir,logfile)
+	try:
+		logfhdl=open(logfile, 'w')
+		parasubs["$LOGFILE"]=logfile
+		parasubs["$LOGFILEPATH"]=os.path.realpath(logfile)
+		print "log file:\t{0}".format(logfile)
+	except IOError, (errno, strerror):
+		print "Error ({0}) opening {1} for writing: {2}".format(errno,substfile,strerror)
+		#logfhdl=None
+		print "\tlogging deactivated"
 
 if cfgparser.has_option("postproc","template"):
 	pptemplate=cfgparser.get("postproc","template")
@@ -230,6 +254,7 @@ print "number of jobs:\t{0}".format(numvar)
 
 
 def execmd(cmd,wd="."):
+	global logfhdl
 	#print "execute command \"{0}\" (working directory: {1})".format(cmd,wd)
 	status=-1
 	stdoutdata=""
@@ -253,9 +278,12 @@ def execmd(cmd,wd="."):
 			#if status: print "ERROR {0} executing \"{1}\"".format(status,cmd)	# return status and let caller deal with it
 		except ValueError:
 			print "Popen ERROR executing "+cmd
+	if logfhdl is not None:
+			logfhdl.write("$(cd {0}; {1}) # cmd rc={2}\n".format(wd,cmd,status))
 	return status,stdoutdata,stderrdata
 
 def adjrlinks(dstdir,srcdir):
+	global logfhdl
 	#print "adapt relative links contained in directory {0} copied from {1}".format(dstdir,srcdir)
 	dstdirqueue=["."]
 	while len(dstdirqueue)>0:
@@ -269,13 +297,11 @@ def adjrlinks(dstdir,srcdir):
 					templatelinkfile=os.path.realpath(os.path.join(srcdir,filename))
 					if dstfile!=templatelinkfile:
 						os.remove(dstfile)
+						if logfhdl is not None:
+							logfhdl.write("rm {0}\n".format(dstfile))
 						os.symlink(os.path.relpath(templatelinkfile,dstdir),dstfile)
-
-def replaceparameters(src,paradefs):
-	s=src
-	for paraname,paravalue in paradefs.items():
-		s=s.replace(paraname,str(paravalue))
-	return s
+						if logfhdl is not None:
+							logfhdl.write("ln -s {0} {1}\n".format(os.path.relpath(templatelinkfile,dstdir),dstfile))
 
 
 if os.path.exists(dstroot):
@@ -286,10 +312,14 @@ print "creating directory {0}".format(dstroot)
 if pptemplate is not None:
 	print "\t(copying {0})".format(pptemplate)
 	shutil.copytree(pptemplate,dstroot,symlinks=True)
+	if logfhdl is not None:
+		logfhdl.write("cp -a {0} {1}\n".format(pptemplate,dstroot))
 	adjrlinks(dstroot,pptemplate)
 else:
 	#os.mkdir(dstroot)
 	os.makedirs(dstroot)
+	if logfhdl is not None:
+		logfhdl.write("mkdir {0}\n".format(dstroot))
 if not (os.path.isdir(dstroot) and os.access(dstroot, os.W_OK)):
 	sys.stderr.write("ERROR: destination directory {0} not accessible\n".format(dstroot))
 	sys.exit(6)
@@ -346,6 +376,8 @@ for i in range(numvar):
 			print "destination directory {0} already exists ... skipping".format(jobdir)
 			continue
 		shutil.copytree(gentemplate,jobdir,symlinks=True)
+		if logfhdl is not None:
+			logfhdl.write("cp -a {0} {1}\n".format(gentemplate,jobdir))
 		adjrlinks(jobdir,gentemplate)
 		# substitute parameters within all parafiles
 		for parareplacefile in genparareplfiles:
@@ -374,7 +406,7 @@ for i in range(numvar):
 		createdjobs.append(jobname)
 		#
 		if cmd is not None:
-			print "-",time.strftime("%H:%M:%S"),"command:",cmd,'-'*(50-len(cmd))
+			print "-",time.strftime("%H:%M:%S"),"command:",cmd,'-'*(51-len(cmd))
 			status,stdoutdata,stderrdata=execmd(cmd,jobdir)
 			parasubs["$COMMANDSTATUS"]=status
 			if status!=0:
@@ -450,5 +482,7 @@ if pptemplate is not None:
 			print '-'*58,"done",time.strftime("%H:%M:%S")
 			cmd_output.append(stdoutdata)
 	print "################################################################### done"
+
+	if logfhdl is not None: logfhdl.close()
 
 print time.strftime("finished at %a, %d.%m.%Y %H:%M:%S %Z")
