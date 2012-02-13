@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]]\n\n-e\tuse B-e-rnreuther format\n-f\tCH4 (default), Ar, C2H6, N2, CO2, or EOX\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
+   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES or VEG\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
    if((argc < 8) || (argc > 23))
    {
       cout << "There are " << argc
@@ -23,9 +23,10 @@ int main(int argc, char** argv)
    }
 
    unsigned N;
-   double x, y, z, T, rho;
+   double x, dimx, dimy, dimz, T, rho, XIF, ETAF;
    double mu = 0.0;
    int fluid;
+   int fluid2 = FLUID_NIL;
    int format = FORMAT_BRANCH;
    char* prefix = argv[1];
    bool muVT = false;
@@ -37,9 +38,13 @@ int main(int argc, char** argv)
    bool in_N = false;
    bool in_rho = false;
    bool in_fluid = false;
-   bool in_y = false;
-   bool in_z = false;
+   bool in_fluid2 = false;
+   bool in_x = false;
+   bool in_dimy = false;
+   bool in_dimz = false;
    bool in_T = false;
+   bool in_ETAF = false;
+   bool in_XIF = false;
 
    for(int i=2; i < argc; i++)
    {
@@ -70,12 +75,41 @@ int main(int argc, char** argv)
             else if(!strcmp(argv[i], "N2")) fluid = FLUID_N2;
             else if(!strcmp(argv[i], "CO2")) fluid = FLUID_CO2;
             else if(!strcmp(argv[i], "EOX")) fluid = FLUID_EOX;
+            else if(!strcmp(argv[i], "JES")) fluid = FLUID_JES;
+            else if(!strcmp(argv[i], "VEG")) fluid = FLUID_VEG;
             else
             {
                cout << "Fluid '" << argv[i] 
                     << "' is not available.\n\n" << usage;
                return 9;
             }
+            break;
+         }
+         else if(argv[i][j] == 'g')
+         {
+            in_fluid2 = true;
+            i++;
+            if(!strcmp(argv[i], "Ar")) fluid2 = FLUID_AR;
+            else if(!strcmp(argv[i], "CH4")) fluid2 = FLUID_CH4;
+            else if(!strcmp(argv[i], "C2H6")) fluid2 = FLUID_C2H6;
+            else if(!strcmp(argv[i], "N2")) fluid2 = FLUID_N2;
+            else if(!strcmp(argv[i], "CO2")) fluid2 = FLUID_CO2;
+            else if(!strcmp(argv[i], "EOX")) fluid2 = FLUID_EOX;
+            else if(!strcmp(argv[i], "JES")) fluid2 = FLUID_JES;
+            else if(!strcmp(argv[i], "VEG")) fluid2 = FLUID_VEG;
+            else
+            {
+               cout << "(Secondary) fluid '" << argv[i] 
+                    << "' is not available.\n\n" << usage;
+               return 99;
+            }
+            break;
+         }
+         else if(argv[i][j] == 'J')
+         {
+            in_ETAF = true;
+            i++;
+            ETAF = atof(argv[i]);
             break;
          }
          else if(argv[i][j] == 'm')
@@ -113,6 +147,13 @@ int main(int argc, char** argv)
             EPS_REF = atof(argv[i]) / 315774.5;
             break;
          }
+         else if(argv[i][j] == 'x')
+         {
+            in_x = true;
+            i++;
+            x = atof(argv[i]);
+            break;
+         }
          else if(argv[i][j] == 'Y')
          {
             i++;
@@ -121,28 +162,37 @@ int main(int argc, char** argv)
          }
          else if(argv[i][j] == 'y')
          {
-            in_y = true;
+            in_dimy = true;
             i++;
-            y = atof(argv[i]);
+            dimy = atof(argv[i]);
             break;
          }
          else if(argv[i][j] == 'z')
          {
-            in_z = true;
+            in_dimz = true;
             i++;
-            z = atof(argv[i]);
+            dimz = atof(argv[i]);
+            break;
+         }
+         else if(argv[i][j] == '5')
+         {
+            in_XIF = true;
+            i++;
+            XIF = atof(argv[i]);
             break;
          }
       }
    }
 
+   if(!in_ETAF) ETAF = 1.0;
+   if(!in_XIF) XIF = 1.0;
    if(!in_rho)
    {
       cout << "Fatal error: no fluid density was specified.\n\n";
       cout << usage;
       return 16;
    }
-   if(in_z && !in_y)
+   if(in_dimz && !in_dimy)
    {
       cout << "Fatal error: z is specified while y is unknown. Please replace the -z option by -y.\n\n";
       cout << usage;
@@ -167,24 +217,43 @@ int main(int argc, char** argv)
       cout << usage;
       return 21;
    }
+   if((x < 0.0) || (x > 1.0))
+   {
+      cout << "Invalid mole fraction x = " << x << ".\n\n" << usage;
+      return 15;
+   }
+   if((in_fluid2 == false) || (fluid2 == FLUID_NIL))
+   {
+      x = 0.0;
+   }
+   if(x == 1.0)
+   {
+      fluid = fluid2;
+      x = 0.0;
+   }
+   if(x == 0.0)
+   {
+      in_fluid2 = false;
+      fluid2 = FLUID_NIL;
+   }
 
    double V = (double)N/rho;
-   if(!in_y) y = pow(V, 1.0/3.0);
-   if(!in_z) z = sqrt(V/y);
-   x = V / (y*z);
+   if(!in_dimy) dimy = pow(V, 1.0/3.0);
+   if(!in_dimz) dimz = sqrt(V/dimy);
+   dimx = V / (dimy*dimz);
 
    double box[3];
-   box[0] = x * SIG_REF;
-   box[1] = y * SIG_REF;
-   box[2] = z * SIG_REF;
+   box[0] = dimx * SIG_REF;
+   box[1] = dimy * SIG_REF;
+   box[2] = dimz * SIG_REF;
    T *= EPS_REF;
    mu *= EPS_REF;
 
    Domain* delta = new Domain(
-      fluid, box, SIG_REF, EPS_REF, REFMASS, muVT, N, T
+      fluid, fluid2, box, SIG_REF, EPS_REF, REFMASS, muVT, N, T, ETAF, XIF
    );
    delta->write(
-      prefix, format, mu
+      prefix, format, mu, x
    );
 
    return 0;

@@ -8,13 +8,15 @@
 
 #define DT 0.061240
 #define PRECISION 8
+#define BINS 1024
 
 Domain::Domain(
-      int sp_fluid, double* sp_box, double sp_SIG_REF,
+      int sp_fluid, int sp_fluid2, double* sp_box, double sp_SIG_REF,
       double sp_EPS_REF, double sp_REFMASS, bool sp_muVT,
-      unsigned sp_N, double sp_T
+      unsigned sp_N, double sp_T, double sp_ETAF, double sp_XIF
 ) {
    this->fluid = sp_fluid;
+   this->fluid2 = sp_fluid2;
    for(int d=0; d < 3; d++) this->box[d] = sp_box[d];
    this->SIG_REF = sp_SIG_REF;
    this->EPS_REF = sp_EPS_REF;
@@ -22,9 +24,11 @@ Domain::Domain(
    this->muVT = sp_muVT;
    this->N = sp_N;
    this->T = sp_T;
+   this->ETAF = sp_ETAF;
+   this->XIF = sp_XIF;
 }
 
-void Domain::write(char* prefix, int format, double mu)
+void Domain::write(char* prefix, int format, double mu, double x)
 {
    ofstream xdr, txt, buchholz;
    stringstream strstrm, txtstrstrm, buchholzstrstrm;
@@ -183,6 +187,22 @@ void Domain::write(char* prefix, int format, double mu)
       FLUIDMASS = 2*CEOXMASS + OEOXMASS;
       LJ_CUTOFF = CUTLJEOX;
    }
+   else if(fluid == FLUID_JES)
+   {
+      FLUIDMASS = OJESMASS + 2.0*HJESMASS;
+      EPS_FLUID = EPS_OJES;
+      SIG_FLUID = SIG_OJES;
+      FLUIDLONG = JES_LONG;
+      LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid == FLUID_VEG)
+   {
+      FLUIDMASS = OVEGMASS + 2.0*HVEGMASS;
+      EPS_FLUID = EPS_OVEG;
+      SIG_FLUID = SIG_OVEG;
+      FLUIDLONG = VEG_LONG;
+      LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
    else
    {
       cout << "Unavailable fluid ID " << fluid << ".\n";
@@ -194,6 +214,89 @@ void Domain::write(char* prefix, int format, double mu)
       EL_CUTOFF = LJ_CUTOFF;
    }
    else EL_CUTOFF = 1.2 * LJ_CUTOFF;
+
+   double LJ_CUTOFF2 = 0.0;
+   double EL_CUTOFF2 = 0.0;
+   double FLUIDMASS2, EPS_FLUID2, SIG_FLUID2, FLUIDLONG2, QDR_FLUID2;
+   if(fluid2 == FLUID_AR)
+   {
+      FLUIDMASS2 = ARMASS;
+      EPS_FLUID2 = EPS_AR;
+      SIG_FLUID2 = SIG_AR;
+      LJ_CUTOFF2 = 2.5*SIG_FLUID;
+   }
+   else if(fluid2 == FLUID_CH4)
+   {
+      FLUIDMASS2 = CH4MASS;
+      EPS_FLUID2 = EPS_CH4;
+      SIG_FLUID2 = SIG_CH4;
+      LJ_CUTOFF2 = 2.5*SIG_FLUID;
+   }
+   else if(fluid2 == FLUID_C2H6)
+   {
+      FLUIDMASS2 = C2H6MASS;
+      EPS_FLUID2 = EPS_C2H6;
+      SIG_FLUID2 = SIG_C2H6;
+      FLUIDLONG2 = C2H6LONG;
+      QDR_FLUID2 = QDR_C2H6;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid2 == FLUID_N2)
+   {
+      FLUIDMASS2 = N2MASS;
+      EPS_FLUID2 = EPS_N2;
+      SIG_FLUID2 = SIG_N2;
+      FLUIDLONG2 = N2LONG;
+      QDR_FLUID2 = QDR_N2;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid2 == FLUID_CO2)
+   {
+      FLUIDMASS2 = CO2MASS;
+      EPS_FLUID2 = EPS_CO2;
+      SIG_FLUID2 = SIG_CO2;
+      FLUIDLONG2 = CO2LONG;
+      QDR_FLUID2 = QDR_CO2;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid2 == FLUID_EOX)
+   {
+      FLUIDMASS2 = 2*CEOXMASS + OEOXMASS;
+      LJ_CUTOFF2 = CUTLJEOX;
+   }
+   else if(fluid2 == FLUID_JES)
+   {
+      FLUIDMASS2 = OJESMASS + 2.0*HJESMASS;
+      EPS_FLUID2 = EPS_OJES;
+      SIG_FLUID2 = SIG_OJES;
+      FLUIDLONG2 = JES_LONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid2 == FLUID_VEG)
+   {
+      FLUIDMASS2 = OVEGMASS + 2.0*HVEGMASS;
+      EPS_FLUID2 = EPS_OVEG;
+      SIG_FLUID2 = SIG_OVEG;
+      FLUIDLONG2 = VEG_LONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else fluid2 = FLUID_NIL;
+
+   if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
+   {
+      EL_CUTOFF2 = LJ_CUTOFF2;
+   }
+   else if(fluid2 != FLUID_NIL) EL_CUTOFF2 = 1.2*LJ_CUTOFF2;
+
+   if(LJ_CUTOFF2 > LJ_CUTOFF) LJ_CUTOFF = LJ_CUTOFF2;
+   if(EL_CUTOFF2 > EL_CUTOFF) EL_CUTOFF = EL_CUTOFF2;
+   for(int dim=0; dim < 3; dim++)
+   {
+      if(0.5*box[dim] < EL_CUTOFF) EL_CUTOFF = 0.5*box[dim];
+      if(0.5*box[dim] < LJ_CUTOFF) LJ_CUTOFF = 0.5*box[dim];
+   }
+
+   unsigned fluidcomp = (fluid2 != FLUID_NIL)? 2: 1;
 
    xdr.precision(9);
    if(format == FORMAT_BRANCH)
@@ -212,7 +315,7 @@ void Domain::write(char* prefix, int format, double mu)
       xdr << "T\t" << T/EPS_REF << "\n";
       xdr << "t\t0.0\nL\t" << box[0]/SIG_REF << "\t"
           << box[1]/SIG_REF << "\t" << box[2]/SIG_REF
-          << "\nC\t1\n";
+          << "\nC\t" << fluidcomp << "\n";
 
       if((fluid == FLUID_AR) || (fluid == FLUID_CH4))
       {
@@ -247,6 +350,42 @@ void Domain::write(char* prefix, int format, double mu)
 
          xdr << "\n0.0 0.0 0.0\n";
       }
+      else if(fluid == FLUID_JES)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_O_JES/SIG_REF << " " << R1_O_JES/SIG_REF << " " << R2_O_JES/SIG_REF << "\t"
+             << OJESMASS/REFMASS << " " << EPS_OJES/EPS_REF << " " << SIG_OJES/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << R0_H1JES/SIG_REF << " " << R1_H1JES/SIG_REF << " " << R2_H1JES/SIG_REF << "\t"
+             << HJESMASS/REFMASS << " " << CHG_HJES/REFCARG << "\n";
+         xdr << R0_H2JES/SIG_REF << " " << R1_H2JES/SIG_REF << " " << R2_H2JES/SIG_REF << "\t"
+             << HJESMASS/REFMASS << " " << CHG_HJES/REFCARG << "\n";
+         xdr << R0_E_JES/SIG_REF << " " << R1_E_JES/SIG_REF << " " << R2_E_JES/SIG_REF << "\t"
+             << "0.0 " << CHG_EJES/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
+      else if(fluid == FLUID_VEG)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_O_VEG/SIG_REF << " " << R1_O_VEG/SIG_REF << " " << R2_O_VEG/SIG_REF << "\t"
+             << OVEGMASS/REFMASS << " " << EPS_OVEG/EPS_REF << " " << SIG_OVEG/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << R0_H1VEG/SIG_REF << " " << R1_H1VEG/SIG_REF << " " << R2_H1VEG/SIG_REF << "\t"
+             << HVEGMASS/REFMASS << " " << CHG_HVEG/REFCARG << "\n";
+         xdr << R0_H2VEG/SIG_REF << " " << R1_H2VEG/SIG_REF << " " << R2_H2VEG/SIG_REF << "\t"
+             << HVEGMASS/REFMASS << " " << CHG_HVEG/REFCARG << "\n";
+         xdr << R0_E_VEG/SIG_REF << " " << R1_E_VEG/SIG_REF << " " << R2_E_VEG/SIG_REF << "\t"
+             << "0.0 " << CHG_EVEG/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
       else
       {
          xdr << "2 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
@@ -265,6 +404,99 @@ void Domain::write(char* prefix, int format, double mu)
 
          xdr << "\n0.0 0.0 0.0\n";
       }
+
+      if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
+      {
+         xdr << "1 0 0 0 0\n"  // LJ, C, Q, D, Tersoff
+             << "0.0 0.0 0.0\t"
+             << FLUIDMASS2/REFMASS << " " << EPS_FLUID2/EPS_REF << " "
+             << SIG_FLUID2/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\t0.0 0.0 0.0\n";
+      }
+      else if(fluid2 == FLUID_EOX)
+      {
+         xdr << "3 0 0 1 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_C1EOX/SIG_REF << " " << R1_C1EOX/SIG_REF << " "
+             << R2_C1EOX/SIG_REF << "\t" << CEOXMASS/REFMASS << " "
+             << EPS_CEOX/EPS_REF << " " << SIG_CEOX/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << R0_C2EOX/SIG_REF << " " << R1_C2EOX/SIG_REF << " "
+             << R2_C2EOX/SIG_REF << "\t" << CEOXMASS/REFMASS << " "
+             << EPS_CEOX/EPS_REF << " " << SIG_CEOX/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << R0_O_EOX/SIG_REF << " " << R1_O_EOX/SIG_REF << " "
+             << R2_O_EOX/SIG_REF << "\t" << OEOXMASS/REFMASS << " "
+             << EPS_OEOX/EPS_REF << " " << SIG_OEOX/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
+
+         xdr << R0DIPEOX/SIG_REF << " " << R1DIPEOX/SIG_REF << " "
+             << R2DIPEOX/SIG_REF << "\t0.0 0.0 1.0 "
+             << DIPOLEOX/DIP_REF;
+
+         xdr << "\n0.0 0.0 0.0\n";
+      }
+      else if(fluid2 == FLUID_JES)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_O_JES/SIG_REF << " " << R1_O_JES/SIG_REF << " " << R2_O_JES/SIG_REF << "\t"
+             << OJESMASS/REFMASS << " " << EPS_OJES/EPS_REF << " " << SIG_OJES/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << R0_H1JES/SIG_REF << " " << R1_H1JES/SIG_REF << " " << R2_H1JES/SIG_REF << "\t"
+             << HJESMASS/REFMASS << " " << CHG_HJES/REFCARG << "\n";
+         xdr << R0_H2JES/SIG_REF << " " << R1_H2JES/SIG_REF << " " << R2_H2JES/SIG_REF << "\t"
+             << HJESMASS/REFMASS << " " << CHG_HJES/REFCARG << "\n";
+         xdr << R0_E_JES/SIG_REF << " " << R1_E_JES/SIG_REF << " " << R2_E_JES/SIG_REF << "\t"
+             << "0.0 " << CHG_EJES/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
+      else if(fluid2 == FLUID_VEG)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << R0_O_VEG/SIG_REF << " " << R1_O_VEG/SIG_REF << " " << R2_O_VEG/SIG_REF << "\t"
+             << OVEGMASS/REFMASS << " " << EPS_OVEG/EPS_REF << " " << SIG_OVEG/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << R0_H1VEG/SIG_REF << " " << R1_H1VEG/SIG_REF << " " << R2_H1VEG/SIG_REF << "\t"
+             << HVEGMASS/REFMASS << " " << CHG_HVEG/REFCARG << "\n";
+         xdr << R0_H2VEG/SIG_REF << " " << R1_H2VEG/SIG_REF << " " << R2_H2VEG/SIG_REF << "\t"
+             << HVEGMASS/REFMASS << " " << CHG_HVEG/REFCARG << "\n";
+         xdr << R0_E_VEG/SIG_REF << " " << R1_E_VEG/SIG_REF << " " << R2_E_VEG/SIG_REF << "\t"
+             << "0.0 " << CHG_EVEG/REFCARG << "\n";
+
+         xdr << "0.0 0.0 0.0\n";
+      }
+      else if(fluid2 != FLUID_NIL)
+      {
+         xdr << "2 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
+
+         xdr << "0.0 0.0 " << -0.5*FLUIDLONG2/SIG_REF << "\t"
+             << 0.5*FLUIDMASS2/REFMASS << " " << EPS_FLUID2/EPS_REF
+             << " " << SIG_FLUID2/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 " << +0.5*FLUIDLONG2/SIG_REF << "\t"
+             << 0.5*FLUIDMASS2/REFMASS << " " << EPS_FLUID2/EPS_REF
+             << " " << SIG_FLUID2/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID2/QDR_REF;
+
+         xdr << "\n0.0 0.0 0.0\n";
+      }
+
+      if(fluid2 != FLUID_NIL)
+      {
+         xdr << XIF << "\t" << ETAF << "\n";
+      }
       xdr << "1.0e+10\n";
 
       xdr << "N" << "\t" << N1 << "\nM" << "\t" << "ICRVQD\n\n";
@@ -277,7 +509,7 @@ void Domain::write(char* prefix, int format, double mu)
    if(format == FORMAT_BRANCH)
    {
       txt << "\ntersoffCutoffRadius\t"
-          <<  LJ_CUTOFF/(3.0*SIG_REF);
+          <<  LJ_CUTOFF/(4.0*SIG_REF);
    }
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
@@ -311,7 +543,9 @@ void Domain::write(char* prefix, int format, double mu)
       txt << "datastructure\tLinkedCells\t1\noutput\t"
           << "ResultWriter\t100\t" << prefix
           << "_1R\noutput\tXyzWriter\t10000\t" << prefix
-          << "_1R.buxyz\n";
+          << "_1R.buxyz\n"
+          << "RDF\t" << (EL_CUTOFF - 2.0*FLUIDLONG)/(SIG_REF * (double)BINS) << " "
+          << BINS << "\nRDFOutputTimesteps\t150000\nRDFOutputPrefix\t" << prefix << "_1R\n";
    }
    txt.close();
 
@@ -323,15 +557,56 @@ void Domain::write(char* prefix, int format, double mu)
       I[1] = I_YY_EOX;
       I[2] = I_ZZ_EOX;
    }
+   else if(fluid == FLUID_JES)
+   {
+      I[0] = I_XX_JES;
+      I[1] = I_YY_JES;
+      I[2] = I_ZZ_JES;
+   }
+   else if(fluid == FLUID_VEG)
+   {
+      I[0] = I_XX_VEG;
+      I[1] = I_YY_VEG;
+      I[2] = I_ZZ_VEG;
+   }
    else if(!((fluid == FLUID_AR) || (fluid == FLUID_CH4)))
    {
       I[0] = 0.25 * FLUIDMASS * FLUIDLONG * FLUIDLONG;
       I[1] = I[0];
    }
 
+   double I2[3];
+   for(int k=0; k < 3; k++) I2[k] = 0.0;
+   if(fluid2 == FLUID_EOX)
+   {
+      I2[0] = I_XX_EOX;
+      I2[1] = I_YY_EOX;
+      I2[2] = I_ZZ_EOX;
+   }
+   else if(fluid2 == FLUID_JES)
+   {
+      I2[0] = I_XX_JES;
+      I2[1] = I_YY_JES;
+      I2[2] = I_ZZ_JES;
+   }
+   else if(fluid2 == FLUID_VEG)
+   {
+      I2[0] = I_XX_VEG;
+      I2[1] = I_YY_VEG;
+      I2[2] = I_ZZ_VEG;
+   }
+   else if(!((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4)))
+   {
+      I2[0] = 0.25 * FLUIDMASS2 * FLUIDLONG2 * FLUIDLONG2;
+      I2[1] = I2[0];
+   }
+
    unsigned id = 1;
    double tr[3];
    unsigned ii[3];
+   double Nf[2];
+   Nf[0] = (1.0 - x) * (double)N1 + 0.001;
+   Nf[1] = x * (double)N1 + 0.001;
    for(ii[0]=0; ii[0] < fl_units[0]; (ii[0]) ++)
       for(ii[1]=0; ii[1] < fl_units[1]; (ii[1]) ++)
          for(ii[2]=0; ii[2] < fl_units[2]; (ii[2]) ++)
@@ -353,13 +628,21 @@ void Domain::write(char* prefix, int format, double mu)
                   double tv = sqrt(3.0*T / FLUIDMASS);
                   double phi = 6.283185 * r->rnd();
                   double omega = 6.283185 * r->rnd();
+                  unsigned cid;
+                  if(fluidcomp == 1) cid = 1;
+                  else
+                  {
+                     cid = (r->rnd() > (Nf[0] / (Nf[0] + Nf[1])))? 2: 1;
+                     --Nf[cid - 1];
+                  }
                   double w[3];
                   for(int d=0; d < 3; d++)
-                     w[d] = (I[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I[d]);
+                     if(cid == 1) w[d] = (I[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I[d]);
+                     else w[d] = (I2[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I2[d]);
                   // xdr << "(" << ii[0] << "/" << ii[1] << "/" << ii[2] << "), j = " << j << ", d = " << d << ":\t";
                   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
                   {
-                     xdr << id << " " << 1 << "\t" << tr[0]/SIG_REF
+                     xdr << id << " " << cid << "\t" << tr[0]/SIG_REF
                          << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF
                          << "\t" << tv*cos(phi)*cos(omega)/VEL_REF << " "
                          << tv*cos(phi)*sin(omega)/VEL_REF << " "

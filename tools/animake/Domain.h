@@ -9,14 +9,17 @@
 
 using namespace std;
 
-#define TIME 20111102
+#define TIME 20120213
 
+#define FLUID_NIL -1
 #define FLUID_CH4 0
 #define FLUID_AR 1
 #define FLUID_C2H6 2
 #define FLUID_N2 3
 #define FLUID_CO2 4
 #define FLUID_EOX 5
+#define FLUID_JES 6
+#define FLUID_VEG 7
 
 #define EPS_AR 3.69853e-04
 #define SIG_AR 6.41600
@@ -70,6 +73,52 @@ using namespace std;
 #define I_YY_EOX 115.11
 #define I_ZZ_EOX  60.951
 
+#define EPS_OJES 6.58951e-04
+#define SIG_OJES 5.89277
+#define OJESMASS 0.0159994
+#define HJESMASS 0.0010079
+#define CHG_HJES +0.419548
+#define CHG_EJES -0.839096
+#define R0_O_JES +0.0
+#define R1_O_JES -0.14948
+#define R2_O_JES +0.0
+#define R0_H1JES -1.72579
+#define R1_H1JES +1.18644
+#define R2_H1JES +0.0
+#define R0_H2JES +1.72579
+#define R1_H2JES +1.18644
+#define R2_H2JES +0.0
+#define R0_E_JES +0.0
+#define R1_E_JES +0.23765
+#define R2_E_JES +0.0
+#define I_XX_JES 0.0031950
+#define I_YY_JES 0.0060038
+#define I_ZZ_JES 0.0091988
+#define JES_LONG 1.0
+
+#define EPS_OVEG 2.5915e-04
+#define SIG_OVEG 5.9695
+#define OVEGMASS 0.0159994
+#define HVEGMASS 0.0010079
+#define CHG_HVEG +0.5564
+#define CHG_EVEG -1.1128
+#define R0_O_VEG +0.0
+#define R1_O_VEG -0.12389
+#define R2_O_VEG +0.0
+#define R0_H1VEG -1.43052
+#define R1_H1VEG +0.98330
+#define R2_H1VEG +0.0
+#define R0_H2VEG +1.43052
+#define R1_H2VEG +0.98330
+#define R2_H2VEG +0.0
+#define R0_E_VEG +0.0
+#define R1_E_VEG +0.16826
+#define R2_E_VEG +0.0
+#define I_XX_VEG 0.0021946
+#define I_YY_VEG 0.0041251
+#define I_ZZ_VEG 0.0063197
+#define VEG_LONG 1.0
+
 #define FORMAT_BUCHHOLZ 0
 #define FORMAT_BRANCH 1
 #define FORMAT_BERNREUTHER 2
@@ -82,17 +131,17 @@ class Domain
 {
  public:
    Domain(
-      int sp_fluid, double* sp_box, double sp_SIG_REF,
+      int sp_fluid, int sp_fluid2, double* sp_box, double sp_SIG_REF,
       double sp_EPS_REF, double sp_REFMASS, bool sp_muVT,
-      unsigned sp_N, double sp_T
+      unsigned sp_N, double sp_T, double sp_ETAF, double sp_XIF
    );
-   void write(char* prefix, int format, double mu);
+   void write(char* prefix, int format, double mu, double x);
 
  private:
    bool muVT;
-   int fluid;
+   int fluid, fluid2;
    unsigned N;
-   double SIG_REF, EPS_REF, REFMASS, T;
+   double SIG_REF, EPS_REF, REFMASS, T, ETAF, XIF;
 
    double box[3];  // offset coordinates for the fluid
 };
