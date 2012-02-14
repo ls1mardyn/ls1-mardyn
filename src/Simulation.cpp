@@ -451,7 +451,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	while (inputfilestream) {
 		token.clear();
 		inputfilestream >> token;
-		global_log->info() << " [[" << token << "]]" << endl;
+		global_log->debug() << " [[" << token << "]]" << endl;
 
 		if (token.substr(0, 1) == "#") {
 			inputfilestream.ignore(std::numeric_limits<streamsize>::max(), '\n');
