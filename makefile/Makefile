@@ -18,7 +18,7 @@ CFG ?= gcc
 # parallelization type
 # Show list of all available parallelization types for the current config with cfg_help
 # Each config should at least provide the two parallelization types SEQ and PAR
-PARTYPE ?= SEQ
+PARTYPE ?= PAR
 
 # choose target
 # Show list of all available targets for the current config with cfg_help
