@@ -544,7 +544,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
           << "ResultWriter\t100\t" << prefix
           << "_1R\noutput\tXyzWriter\t10000\t" << prefix
           << "_1R.buxyz\n"
-          << "RDF\t" << (EL_CUTOFF - 2.0*FLUIDLONG)/(SIG_REF * (double)BINS) << " "
+          << "RDF\t" << (EL_CUTOFF - 4.0*FLUIDLONG)/(SIG_REF * (double)BINS) << " "
           << BINS << "\nRDFOutputTimesteps\t150000\nRDFOutputPrefix\t" << prefix << "_1R\n";
    }
    txt.close();
