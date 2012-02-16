@@ -87,6 +87,8 @@ endif
 
 
 ifeq ($(DEPS),1)
+  # create .deps subdirectories containing dependency information
+  $(shell find -type d ! -name .deps -execdir mkdir -p {}/.deps \;)
   DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
 else
   DEPCOMP =
@@ -98,7 +100,7 @@ ifeq ($(VTK), 1)
   include $(VTK_MAKEFILE)
 endif
 
-$(BINARY): .deps $(OBJECTS)
+$(BINARY): $(OBJECTS)
 	@echo "building $(BINARY)"
 	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
 	$(shell if [ ! -f $(BINARY_BASENAME) -o -L $(BINARY_BASENAME) ]; then ln -sf $(BINARY) $(BINARY_BASENAME); fi)
@@ -167,12 +169,6 @@ lcov:
 
 lcov_clean:
 	 lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
-
-# create .deps subdirectories containing dependency information
-.deps:
-ifeq ($(DEPS),1)
-	$(shell find -type d ! -name .deps -execdir mkdir -p {}/.deps \;)
-endif
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
