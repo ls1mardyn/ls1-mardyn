@@ -137,6 +137,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	initializeCells();
 	calculateNeighbourIndices();
 
+	// TODO: We loose particles here as they are not communicated to the new owner
 	// delete all Particles which are outside of the halo region
 	std::list<Molecule>::iterator particleIterator = _particles.begin();
 	bool erase_mol;
