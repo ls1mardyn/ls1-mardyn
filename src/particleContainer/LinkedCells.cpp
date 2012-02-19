@@ -71,11 +71,8 @@ LinkedCells::LinkedCells(
 
 	_cells.resize(numberOfCells);
 
-	// If the width of the inner region is less than the width of the halo region
-	// a parallelisation isn't possible (with the used algorithms).
-	// In this case, print an error message
-	// _cellsPerDimension is 2 times the halo width + the inner width
-	// so it has to be at least 3 times the halo width
+	// If the width of the inner region is less than the width of the halo 
+	// region a parallelisation is not possible (with the used algorithms).
 	if (_boxWidthInNumCells[0] < _haloWidthInNumCells[0] ||
 	    _boxWidthInNumCells[1] < _haloWidthInNumCells[1] ||
 	    _boxWidthInNumCells[2] < _haloWidthInNumCells[2]) {
