@@ -931,8 +931,7 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 	int nextSendingProcess = 0;
 	for (int nodeID = 0; nodeID < numElementsToRecv; nodeID++) {
 		//pack:
-		vector<int> data;
-		data.resize(13, 0);
+		int data[13] = {0};
 		if (oldNode->_nodeID == nodeID) {
 
 			data[0] = oldNode->_numProcs;
@@ -960,7 +959,7 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 			}
 
 		}
-		MPI_CHECK( MPI_Bcast(&data[0], 13, MPI_INT, nextSendingProcess, MPI_COMM_WORLD) );
+		MPI_CHECK( MPI_Bcast(data, 13, MPI_INT, nextSendingProcess, MPI_COMM_WORLD) );
 		bool coversAll[3];
 		for (int i = 0; i < 3; i++)
 			coversAll[i] = false;
