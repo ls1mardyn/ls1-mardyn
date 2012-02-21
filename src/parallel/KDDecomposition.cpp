@@ -25,13 +25,12 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank) );
 	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
 
-	int lowCorner[KDDIM];
-	int highCorner[KDDIM];
+	int lowCorner[KDDIM] = {0};
+	int highCorner[KDDIM] = {0};
 	bool coversWholeDomain[KDDIM];
 
 	for (int dim = 0; dim < KDDIM; dim++) {
 		_globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / cutoffRadius);
-		lowCorner[dim] = 0;
 		highCorner[dim] = _globalCellsPerDim[dim] - 1;
 		_cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
 		coversWholeDomain[dim] = true;
