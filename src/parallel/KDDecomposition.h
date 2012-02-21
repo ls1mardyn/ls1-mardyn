@@ -136,15 +136,6 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param domain e.g. needed to get the bounding boxes
 	void printDecomp(std::string filename, Domain* domain);
 
-	//! @brief append the molecule date of all processes to the file
-	//!
-	//! Currently, parallel IO isn't used.
-	//! To ensure that not more than one process writes to the file at any time,
-	//! there is a loop over all processes with a barrier in between
-	//! @param filename name of the file into which the data will be written
-	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
-
 	// documentation see father class (DomainDecompBase.h)
 	int getRank(void){ return _ownRank;}
 

@@ -1,4 +1,4 @@
-#include <fstream>
+
 #include <ctime>
 
 #include "DomainDecompDummy.h"
@@ -117,16 +117,6 @@ double DomainDecompDummy::getBoundingBoxMax(int dimension, Domain* domain) {
 	return domain->getGlobalLength(dimension);
 }
 
-void DomainDecompDummy::writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer) {
-
-	ofstream checkpointfilestream(filename.c_str(), ios::app);
-
-	Molecule* tempMolecule;
-	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
-		tempMolecule->write(checkpointfilestream);
-	}
-	checkpointfilestream.close();
-}
 
 double DomainDecompDummy::getTime() {
 	return double(clock()) / CLOCKS_PER_SEC;

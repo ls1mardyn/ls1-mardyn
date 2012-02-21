@@ -22,7 +22,7 @@ public:
 	DomainDecompDummy();
 
 	//! The destructor has nothing to do
-	~DomainDecompDummy();
+	virtual ~DomainDecompDummy();
 
 	//! molecules which aren't in the domain of their process any
 	//! are moved to the opposite side of the domain (periodic boundary).
@@ -60,9 +60,6 @@ public:
 
 	//! @brief In the sequential mode, there is no decomposition and therefore nothing to be printed
 	void printDecomp(std::string filename, Domain* domain);
-
-	//! @brief opends the file(append), loops over all molecules and writes each into the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
 
 	//! @brief There is only one process, so this method always returns 0
 	int getRank() {

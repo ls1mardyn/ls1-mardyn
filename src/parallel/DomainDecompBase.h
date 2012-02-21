@@ -5,6 +5,7 @@
 #include <iostream>
 #include <map>
 
+
 class Molecule;
 class Component;
 class Domain;
@@ -124,10 +125,6 @@ public:
 	//! @param domain e.g. needed to get the bounding boxes
 	virtual void printDecomp(std::string filename, Domain* domain) = 0;
 
-	//! @brief appends molecule data to the file. The format is the same as that of the input file
-	//! @param filename name of the file into which the data will be written
-	//! @param moleculeContainer all Particles from this container will be written to the file
-	virtual void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) = 0;
 
 	//! @brief returns the own rank
 	//! @return rank of the process
@@ -149,6 +146,18 @@ public:
 	//! @brief checks identity of random number generators
 	virtual void assertIntIdentity(int IX) = 0;
 	virtual void assertDisjunctivity(TMoleculeContainer* mm) = 0;
+
+	//! @brief appends molecule data to the file. The format is the same as that of the input file
+	//! @param filename name of the file into which the data will be written
+	//! @param moleculeContainer all Particles from this container will be written to the file
+	//!
+	//! Currently, parallel IO isn't used.
+	//! To ensure that not more than one process writes to the file at any time,
+	//! there is a loop over all processes with a barrier in between
+	//! @param filename name of the file into which the data will be written
+	//! @param moleculeContainer all Particles from this container will be written to the file
+	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
+
 
 	//##################################################################
 	// The following methods with prefix "collComm" are all used
