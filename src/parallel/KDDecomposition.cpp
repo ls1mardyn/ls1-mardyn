@@ -15,6 +15,8 @@
 #include "KDNode.h"
 #include "utils/Logger.h"
 
+#include <cmath>
+
 using namespace std;
 using Log::global_log;
 
@@ -44,10 +46,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are avaialble
-	int maxProcs = 1;
-	for (int dim = 0; dim < 3; dim++) {
-		maxProcs *= (highCorner[dim] - lowCorner[dim] + 1) / 2;
-	}
+	int maxProcs = _globalNumCells / pow(KDDIM,2);
 
 	global_log->info() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
 
