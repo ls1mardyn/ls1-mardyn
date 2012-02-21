@@ -968,11 +968,11 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 			data[7] -= 4;
 		}
 		if (data[7] >= 2) {
-			coversAll[0] = true;
+			coversAll[1] = true;
 			data[7] -= 2;
 		}
 		if (data[7] >= 1) {
-			coversAll[0] = true;
+			coversAll[2] = true;
 		}
 		ptrToAllNodes[nodeID] = new KDNode(data[0], &data[1], &data[4], data[8], data[9], coversAll);
 		child1[nodeID] = data[10];
