@@ -993,10 +993,10 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 
 void KDDecomposition::printDecompTree(KDNode* root, string prefix) {
 	if (root->_numProcs == 1) {
-		cout << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
+		global_log->debug() << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
 	}
 	else {
-		cout << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
+		global_log->debug() << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
 		stringstream childprefix;
 		childprefix << prefix << "  ";
 		printDecompTree(root->_child1, childprefix.str());
