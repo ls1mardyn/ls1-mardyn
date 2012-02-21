@@ -939,9 +939,9 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 				data[1 + i] = oldNode->_lowCorner[i];
 				data[4 + i] = oldNode->_highCorner[i];
 			}
-			if (oldNode->_coversWholeDomain[0]) data[7] += 4;
-			if (oldNode->_coversWholeDomain[1]) data[7] += 2;
-			if (oldNode->_coversWholeDomain[2]) data[7] += 1;
+			if (oldNode->_coversWholeDomain[0]) data[7] += 0x4;
+			if (oldNode->_coversWholeDomain[1]) data[7] += 0x2;
+			if (oldNode->_coversWholeDomain[2]) data[7] += 0x1;
 			data[8] = oldNode->_nodeID;
 			data[9] = oldNode->_owningProc;
 			// determine owner of next data set and IDs of children (-1 of no children)
@@ -961,19 +961,11 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 		}
 		MPI_CHECK( MPI_Bcast(data, 13, MPI_INT, nextSendingProcess, MPI_COMM_WORLD) );
 		bool coversAll[3];
-		for (int i = 0; i < 3; i++)
-			coversAll[i] = false;
-		if (data[7] >= 4) {
-			coversAll[0] = true;
-			data[7] -= 4;
-		}
-		if (data[7] >= 2) {
-			coversAll[1] = true;
-			data[7] -= 2;
-		}
-		if (data[7] >= 1) {
-			coversAll[2] = true;
-		}
+
+		coversAll[0] = (data[7] & 0x4);
+		coversAll[1] = (data[7] & 0x2);
+		coversAll[2] = (data[7] & 0x1);
+
 		ptrToAllNodes[nodeID] = new KDNode(data[0], &data[1], &data[4], data[8], data[9], coversAll);
 		child1[nodeID] = data[10];
 		child2[nodeID] = data[11];
