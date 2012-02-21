@@ -376,7 +376,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! @todo _numParticles should perhaps not be a member variable (think about that)
 	void getNumParticles(ParticleContainer* moleculeContainer);
 
-
+	void balance();
 	//######################################
 	//###    private member variables    ###
 	//######################################

@@ -70,6 +70,11 @@ void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, co
 	balanceAndExchange(false, moleculeContainer, components, domain);
 }
 
+void KDDecomposition::balance() {
+	
+}
+
+
 void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
 	_moleculeContainer = moleculeContainer;
 	KDNode* newDecompTree = NULL;
@@ -1360,15 +1365,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 		molPtr = moleculeContainer->next();
 		count++;
 	}
-	// TODO
-	// memory problem:
-	// Some MPI-Implementations demand that in a Allreduce command, send and recv buffers
-	// must be different. The consequence is, that a temporary array has to be created for
-	// the values to be recieved, which that has to be copied back to the original array
-	unsigned char* numParticlesPerCellTemp = new unsigned char[_globalNumCells];
-	MPI_CHECK( MPI_Allreduce(_numParticlesPerCell, numParticlesPerCellTemp, _globalNumCells, MPI_UNSIGNED_CHAR, MPI_SUM, MPI_COMM_WORLD) );
-	delete[] _numParticlesPerCell;
-	_numParticlesPerCell = numParticlesPerCellTemp;
+	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED_CHAR, MPI_SUM, MPI_COMM_WORLD) );
 
 }
 
