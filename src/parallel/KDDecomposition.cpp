@@ -48,7 +48,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	// ensure that enough cells for the number of procs are avaialble
 	int maxProcs = _globalNumCells / pow(KDDIM,2);
 
-	global_log->info() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
+	global_log->debug() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
 
 	if (maxProcs < _numProcs) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
