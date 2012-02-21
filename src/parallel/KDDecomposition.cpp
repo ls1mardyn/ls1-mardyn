@@ -7,6 +7,7 @@
 
 #include "molecules/Molecule.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
@@ -46,10 +47,13 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	for (int dim = 0; dim < 3; dim++) {
 		maxProcs *= (highCorner[dim] - lowCorner[dim] + 1) / 2;
 	}
+
+	global_log->info() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
+
 	if (maxProcs < _numProcs) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << maxProcs << " Procs!" << endl;
-		exit(1);
+		global_simulation->exit(-1);
 	}
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain);
 	if (_numProcs > 1)
@@ -344,21 +348,6 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 	}
 }
 
-void KDDecomposition::writeMoleculesToFile(string filename, ParticleContainer* moleculeContainer) {
-
-	for (int process = 0; process < _numProcs; process++) {
-		if (_ownRank == process) {
-			ofstream checkpointfilestream(filename.c_str(), ios::app);
-			checkpointfilestream.precision(20);
-			Molecule* tempMolecule;
-			for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
-				tempMolecule->write(checkpointfilestream);
-			}
-			checkpointfilestream.close();
-		}
-		barrier();
-	}
-}
 
 unsigned KDDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
 	int num_procs;
@@ -718,7 +707,7 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 		}
 		else {
 			global_log->error() << "ERROR in recDecompPar: called with a leaf node" << endl;
-			exit(1);
+			global_simulation->exit(1);
 		}
 	}
 	bool coversAll[KDDIM];
@@ -836,7 +825,7 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 
 			if (numProcsLeft <= 0 || numProcsLeft >= fatherNode->_numProcs) {
 				global_log->error() << "ERROR in recDecompPar, part of the domain was not assigned to a proc" << endl;
-				exit(1);
+				global_simulation->exit(1);
 			}
 		}
 	}
