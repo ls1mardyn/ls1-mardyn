@@ -28,14 +28,16 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	int lowCorner[KDDIM] = {0};
 	int highCorner[KDDIM] = {0};
 	bool coversWholeDomain[KDDIM];
-
+	_globalNumCells = 1;
+	
 	for (int dim = 0; dim < KDDIM; dim++) {
 		_globalCellsPerDim[dim] = (int) floor(domain->getGlobalLength(dim) / cutoffRadius);
+		_globalNumCells *= _globalCellsPerDim[dim];
 		highCorner[dim] = _globalCellsPerDim[dim] - 1;
 		_cellSize[dim] = domain->getGlobalLength(dim) / ((double) _globalCellsPerDim[dim]);
 		coversWholeDomain[dim] = true;
 	}
-	_globalNumCells = (_globalCellsPerDim[0]) * (_globalCellsPerDim[1]) * (_globalCellsPerDim[2]);
+	
 	_numParticlesPerCell = new unsigned char[_globalNumCells];
 	for (int i = 0; i < _globalNumCells; i++)
 		_numParticlesPerCell[i] = 0;
