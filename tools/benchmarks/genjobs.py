@@ -40,6 +40,7 @@ ppscript=None
 ppcommand=None
 logfile=None
 
+logfhdl=None
 
 if sys.version_info < (2, 6):
 	#raise "ERROR: python version too old: "+str(sys.version_info)+"<2.6"
@@ -150,8 +151,8 @@ if cfgparser.has_option("generator","logfile"):
 	logfile=cfgparser.get("generator","logfile")
 if options.logfile:
 	logfile=options.logfile
-logfile=replaceparameters(logfile,parasubs)
 if logfile:
+	logfile=replaceparameters(logfile,parasubs)
 	logfile=os.path.join(rootdir,logfile)
 	try:
 		logfhdl=open(logfile, 'w')
@@ -279,7 +280,9 @@ def execmd(cmd,wd="."):
 		except ValueError:
 			print "Popen ERROR executing "+cmd
 	if logfhdl is not None:
-			logfhdl.write("$(cd {0}; {1}) # cmd rc={2}\n".format(wd,cmd,status))
+			#logfhdl.write("cd {0}; {1}; cd $OLDPWD # cmd rc={2}\n".format(wd,cmd,status))
+			#logfhdl.write("cd {0}; {1}; cd - # cmd rc={2}\n".format(wd,cmd,status))
+			logfhdl.write("(cd {0}; {1}) # cmd rc={2}\n".format(wd,cmd,status))
 	return status,stdoutdata,stderrdata
 
 def adjrlinks(dstdir,srcdir):
