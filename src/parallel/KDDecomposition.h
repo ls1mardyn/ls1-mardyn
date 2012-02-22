@@ -277,6 +277,11 @@ class KDDecomposition: public DomainDecompBase{
 	//$ sonstige Methoden
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+	/**
+	 * print all Decomposition Trees at all processors.
+	 */
+	void printDecompTrees(KDNode* root);
+
 	//! @brief prints the given (sub-) tree to stdout
 	//!
 	//! For each node, it is printed whether it is a "LEAF" or a "INNER" node,

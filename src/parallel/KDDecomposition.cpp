@@ -46,13 +46,14 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are avaialble
-	int maxProcs = _globalNumCells / pow(KDDIM,2);
+	int maxProcs = _globalNumCells / pow(2,KDDIM);
 
 	global_log->debug() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
 
 	if (maxProcs < _numProcs) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << maxProcs << " Procs!" << endl;
+		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
 		global_simulation->exit(-1);
 	}
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain);
@@ -91,6 +92,10 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		if (recDecompPar(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
+
+		//printDecompTrees(_decompTree);
+		//printDecompTrees(newDecompTree);
+
 		completeTreeInfo(newDecompTree, newOwnArea);
 		delete loadHandler;
 		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
@@ -991,12 +996,24 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 
 }
 
+void KDDecomposition::printDecompTrees(KDNode* root) {
+// use std::cout as I want to have all nodes at all processes printed
+	for (int process = 0; process < _numProcs; process++) {
+		if (_ownRank == process) {
+			std::cout << "DecompTree at process " << process << endl;
+			printDecompTree(_decompTree, " ");
+		}
+		barrier();
+	}
+}
+
 void KDDecomposition::printDecompTree(KDNode* root, string prefix) {
+// use std::cout as I want to have all nodes at all processes printed
 	if (root->_numProcs == 1) {
-		global_log->debug() << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
+		std::cout << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
 	}
 	else {
-		global_log->debug() << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
+		std::cout << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
 		stringstream childprefix;
 		childprefix << prefix << "  ";
 		printDecompTree(root->_child1, childprefix.str());
