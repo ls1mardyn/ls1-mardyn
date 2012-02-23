@@ -73,6 +73,18 @@ public:
 		);
 	}
 
+#ifndef NDEBUG
+	ParticleData() : id(0), cid(-1) {
+		for (int i = 0; i < 3; i++ ) {
+			r[i] = 0.0;
+			v[i] = 0.0;
+			D[i] = 0.0;
+			q[i] = 0.0;
+		}
+		q[3] = 0.0;
+	}
+#endif
+
 	unsigned long id;
 	int cid;
 	double r[3];
