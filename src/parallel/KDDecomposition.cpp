@@ -46,7 +46,11 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are avaialble
-	int maxProcs = _globalNumCells / pow(2,KDDIM);
+	// (at least 2 per process per dimension)
+	int maxProcs = 1;
+	for (int dim = 0; dim < 3; dim++) {
+		maxProcs *= _globalCellsPerDim[dim] / 2;
+	}
 
 	global_log->debug() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
 
