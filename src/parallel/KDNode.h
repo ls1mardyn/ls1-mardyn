@@ -44,26 +44,6 @@ public:
 		delete _child2;
 	}
 
-	//! checks whether the given cell position belongs to the region of this KDNode
-	bool cellBelongsToRegion(int cellPos[KDDIM]) {
-		bool isInside = true;
-		for (int dim = 0; dim < KDDIM; dim++) {
-			if (cellPos[dim] < _lowCorner[dim] || cellPos[dim] > _highCorner[dim])
-				isInside = false;
-		}
-		return isInside;
-	}
-
-	//! checks whether the given cell position is in the boundary region of this KDNode 
-	bool regionCellBelongsToBoundary(int cellPos[KDDIM]) {
-		bool isBoundary = false;
-		for (int dim = 0; dim < KDDIM; dim++) {
-			if (cellPos[dim] == _lowCorner[dim] || cellPos[dim] == _highCorner[dim])
-				isBoundary = true;
-		}
-		return isBoundary;
-	}
-
 	//! number of procs which share this area
 	int _numProcs;
 	//! in cells relative to global domain
