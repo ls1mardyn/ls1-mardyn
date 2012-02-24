@@ -97,9 +97,6 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
 
-		//printDecompTrees(_decompTree);
-		//printDecompTrees(newDecompTree);
-
 		completeTreeInfo(newDecompTree, newOwnArea);
 		delete loadHandler;
 		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
@@ -713,24 +710,17 @@ void KDDecomposition::recInitialDecomp(KDNode* fatherNode, KDNode*& ownArea) {
 
 bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup) {
 	bool domainTooSmall = false;
-	// This happens if the whole simulation is run with a single process
+	// recursion termination criterion
 	if (fatherNode->_numProcs == 1) {
-		if (fatherNode->_owningProc == _ownRank) {
-			ownArea = fatherNode;
-			return domainTooSmall;
-		}
-		else {
-			global_log->error() << "ERROR in recDecompPar: called with a leaf node" << endl;
-			global_simulation->exit(1);
-		}
+		// own area must belong to this process!
+		assert(fatherNode->_owningProc == _ownRank);
+		ownArea = fatherNode;
+		return domainTooSmall;
 	}
 	bool coversAll[KDDIM];
     
-    /* TODO: We do not use this values anywhere ... */
-	//int cellsPerDim[KDDIM];
 	for (int dim = 0; dim < KDDIM; dim++) {
 		coversAll[dim] = fatherNode->_coversWholeDomain[dim];
-		//cellsPerDim[dim] = fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] + 1;
 	}
 	int divDir = 0;
 	int divIdx = 0;
@@ -900,20 +890,18 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 	MPI_CHECK( MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup) );
 	MPI_CHECK( MPI_Comm_create(commGroup, newGroup, &newComm) );
 
-	if (numProcsLeft > 1 && _ownRank < owner2) {
-		domainTooSmall = (domainTooSmall || recDecompPar(fatherNode->_child1, ownArea, newComm));
+	if (_ownRank < owner2) {
+		// do not use the function call directly in the logical expression, as it may
+		// not be executed due to conditional / short-circuit evaluation!
+		bool subdomainTooSmall = recDecompPar(fatherNode->_child1, ownArea, newComm);
+		domainTooSmall = (domainTooSmall || subdomainTooSmall);
+	} else {
+		assert(_ownRank >= owner2);
+		bool subdomainTooSmall = recDecompPar(fatherNode->_child2, ownArea, newComm);
+		domainTooSmall = (domainTooSmall || subdomainTooSmall);
 	}
-	else if (owner1 == _ownRank)
-		ownArea = fatherNode->_child1;
-
-	if (numProcsRight > 1 && _ownRank >= owner2) {
-		domainTooSmall = (domainTooSmall || recDecompPar(fatherNode->_child2, ownArea, newComm));
-	}
-	else if (owner2 == _ownRank)
-		ownArea = fatherNode->_child2;
 
 	return domainTooSmall;
-
 }
 
 void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
@@ -1017,11 +1005,16 @@ void KDDecomposition::printDecompTree(KDNode* root, string prefix) {
 		std::cout << prefix << "LEAF: " << root->_nodeID << ", Owner: " << root->_owningProc << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
 	}
 	else {
-		std::cout << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")" << endl;
+		std::cout << prefix << "INNER: " << root->_nodeID << ", Owner: " << root->_owningProc << "(" << root->_numProcs << " procs)" << ", Corners: (" << root->_lowCorner[0] << ", " << root->_lowCorner[1] << ", " << root->_lowCorner[2] << ") / (" << root->_highCorner[0] << ", " << root->_highCorner[1] << ", " << root->_highCorner[2] << ")"
+				" child1: " << root->_child1 << " child2: " << root->_child2 << endl;
 		stringstream childprefix;
 		childprefix << prefix << "  ";
-		printDecompTree(root->_child1, childprefix.str());
-		printDecompTree(root->_child2, childprefix.str());
+		if (root->_child1 != NULL) {
+			printDecompTree(root->_child1, childprefix.str());
+		}
+		if (root->_child2 != NULL) {
+			printDecompTree(root->_child2, childprefix.str());
+		}
 	}
 }
 
