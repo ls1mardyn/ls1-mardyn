@@ -319,22 +319,6 @@ class KDDecomposition: public DomainDecompBase{
 	int mod(int number, int modulo);
 
 
-	//! @brief create an initial decomposition of the domain
-	//!
-	//! At the beginning of the simulation, particles have to be read in.
-	//! At this time, the distribution of particles is unknown, so
-	//! an initial domain decomposition has to be created.
-	//! This method does achieve this with a very simple decomposition
-	//! It has to be recursively called for all inner nodes
-	//! A inner node is a node for which numProcs is larger than one.
-	//! So if numProcs is larger than one, two new children are created
-	//! If the children are inner nodes, recInitialDecomp is recursively
-	//! called.
-	//! @param fatherNode Pointer to a (already existing!) inner node
-	//! @param ownArea This pointer has to be set to the leaf node
-	//!                representing the own area
-	void recInitialDecomp(KDNode* fatherNode, KDNode*& ownArea);
-
 	//! @brief core method of this class which calculates a load-balanced decomposition
 	//!
 	//! Part of the description of this method is already given in the description of this class.

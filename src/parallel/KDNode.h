@@ -1,6 +1,9 @@
 #ifndef KDNODE_H_
 #define KDNODE_H_
 
+// include because of macro KDDIM
+#include "parallel/KDDecomposition.h"
+
 //! @brief represents a node in the decomposition tree when using KDDecomposition
 //! @author Martin Buchholz
 //! 
@@ -9,7 +12,7 @@
 //! The root node of the decomposition covers the whole domain, in the first
 //! splitting step, this domain is divided into two parts, where each part
 //! then has to be divided into several smaller parts. How many parts/regions there
-//! will be depends on the number of processes, each process will get one region.
+//! depends on the number of processes, each process will get one region.
 //! So the KNNode also has to store how many process "share" the current region
 //! The leaf nodes of the tree represent the region of the single processes.
 //! The regions (the size of the regions) is not stored in some floating-point length unit
@@ -18,31 +21,43 @@
 //! processes
 class KDNode {
 public:
-	//! This constructor just sets the child pointers to NULL
-	KDNode() {
-		_child1 = NULL;
-		_child2 = NULL;
+
+	KDNode() : _child1(NULL), _child2(NULL) {
 	}
 
-	//! This constructor sets all member variables to the given values (child pointers to NULL)
-	KDNode(int numP, int low[KDDIM], int high[KDDIM], int id, int owner, bool coversAll[KDDIM]) {
-		_numProcs = numP;
+	KDNode(int numP, int low[KDDIM], int high[KDDIM], int id, int owner, bool coversAll[KDDIM])
+	: _numProcs(numP), _nodeID(id), _owningProc(owner), _child1(NULL), _child2(NULL) {
 		for (int dim = 0; dim < KDDIM; dim++) {
 			_lowCorner[dim] = low[dim];
 			_highCorner[dim] = high[dim];
 			_coversWholeDomain[dim] = coversAll[dim];
 		}
-		_nodeID = id;
-		_owningProc = owner;
-		_child1 = NULL;
-		_child2 = NULL;
 	}
+
+	/**
+	 * compare the tree represented by this node to another tree.
+	 */
+	bool equals(KDNode& other);
 
 	//! The destructor deletes the childs (recursive call of destructors)
 	~KDNode() {
 		delete _child1;
 		delete _child2;
 	}
+
+	/**
+	 * @return the area for process rank, i.e. the leaf of this tree with
+	 *         (_owningProc == rank) and (_numProcs == 1).
+	 *
+	 *         If no corresponding node is found, this method returns NULL!
+	 */
+	KDNode* findAreaForProcess(int rank);
+
+	//! @brief create an initial decomposition of the domain represented by this node.
+	//!
+	//! Build a KDTree representing a simple initial domain decomposition by bipartitioning
+	//! the area recursively, always in the dimension with the longest extend.
+	void buildKDTree();
 
 	//! number of procs which share this area
 	int _numProcs;

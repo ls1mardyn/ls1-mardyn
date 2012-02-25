@@ -61,10 +61,8 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 		global_simulation->exit(-1);
 	}
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain);
-	if (_numProcs > 1)
-		recInitialDecomp(_decompTree, _ownArea);
-	else
-		_ownArea = _decompTree;
+	_decompTree->buildKDTree();
+	_ownArea = _decompTree->findAreaForProcess(_ownRank);
 }
 
 KDDecomposition::~KDDecomposition() {
@@ -645,68 +643,6 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 	}
 }
 
-void KDDecomposition::recInitialDecomp(KDNode* fatherNode, KDNode*& ownArea) {
-	bool coversAll[KDDIM];
-	int cellsPerDim[KDDIM];
-	for (int dim = 0; dim < KDDIM; dim++) {
-		coversAll[dim] = fatherNode->_coversWholeDomain[dim];
-		cellsPerDim[dim] = fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] + 1;
-	}
-	int divDir = 0;
-	int maxCells = cellsPerDim[0];
-	if (cellsPerDim[1] > maxCells) {
-		divDir = 1;
-		maxCells = cellsPerDim[1];
-	}
-	if (cellsPerDim[2] > maxCells) {
-		divDir = 2;
-		maxCells = cellsPerDim[2];
-	}
-
-	coversAll[divDir] = false;
-
-	int low1[KDDIM];
-	int low2[KDDIM];
-	int high1[KDDIM];
-	int high2[KDDIM];
-	int numProcs1;
-	int numProcs2;
-	int id1;
-	int id2;
-	int owner1;
-	int owner2;
-
-	for (int dim = 0; dim < KDDIM; dim++) {
-		low1[dim] = fatherNode->_lowCorner[dim];
-		low2[dim] = fatherNode->_lowCorner[dim];
-		high1[dim] = fatherNode->_highCorner[dim];
-		high2[dim] = fatherNode->_highCorner[dim];
-	}
-
-	low1[divDir] = fatherNode->_lowCorner[divDir];
-	high1[divDir] = (fatherNode->_highCorner[divDir] + fatherNode->_lowCorner[divDir]) / 2;
-	low2[divDir] = high1[divDir] + 1;
-	high2[divDir] = fatherNode->_highCorner[divDir];
-
-	numProcs1 = fatherNode->_numProcs / 2;
-	numProcs2 = fatherNode->_numProcs - numProcs1;
-	id1 = fatherNode->_nodeID + 1;
-	id2 = fatherNode->_nodeID + 2 * numProcs1;
-	owner1 = fatherNode->_owningProc;
-	owner2 = owner1 + numProcs1;
-	fatherNode->_child1 = new KDNode(numProcs1, low1, high1, id1, owner1, coversAll);
-	fatherNode->_child2 = new KDNode(numProcs2, low2, high2, id2, owner2, coversAll);
-
-	if (numProcs1 > 1)
-		recInitialDecomp(fatherNode->_child1, ownArea);
-	else if (owner1 == _ownRank)
-		ownArea = fatherNode->_child1;
-
-	if (numProcs2 > 1)
-		recInitialDecomp(fatherNode->_child2, ownArea);
-	else if (owner2 == _ownRank)
-		ownArea = fatherNode->_child2;
-}
 
 bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup) {
 	bool domainTooSmall = false;
