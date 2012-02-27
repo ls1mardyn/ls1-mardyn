@@ -265,8 +265,8 @@ def execmd(cmd,wd="."):
 			#stdoutdata=subprocess.check_output(cmd,cwd=wd,shell=True)	# security risk?
 			stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd)	# shell scripts have to be started using sh
 			#stdoutdata=subprocess.check_output(shlex.split(cmd),cwd=wd,shell=True)
-		except subprocess.CalledProcessError,(status,stdoutdata):
-			print "ERROR ({0}) executing {1}: {2}".format(status,cmd,stdoutdata)
+		except subprocess.CalledProcessError,e:
+			print "ERROR ({0}) executing {1}: {2}".format(e.returncode,cmd,e.output)
 		else:
 			status=0
 	except AttributeError:
@@ -374,7 +374,7 @@ for i in range(numvar):
 		jobdir=os.path.join(dstroot,jobname)
 		parasubs["$JOBDIR"]=jobdir
 		parasubs["$JOBDIRPATH"]=os.path.realpath(jobdir)
-		print '=',i+1,'/',numvar," benchmark job directory:",jobdir,'='*(39-len(jobdir)-len(str(i+1))-len(str(numvar)))
+		print '=',i+1,'/',numvar," benchmark job directory:",jobdir,'='*(39-len(str(i+1))-len(str(numvar))-len(jobdir))
 		if os.path.exists(jobdir):
 			print "destination directory {0} already exists ... skipping".format(jobdir)
 			continue
@@ -421,16 +421,17 @@ for i in range(numvar):
 				print '-'*58,"done",time.strftime("%H:%M:%S")
 				cmd_output.append(stdoutdata.rstrip("\n"))
 	else:
-		print "condition",gencmdcondition,"does not hold after substitution:",cmdcond
+		print '-',i+1,'/',numvar," benchmark job:",jobname,'-'*(49-len(str(i+1))-len(str(numvar))-len(jobname))
+		print "condition",gencmdcondition,"does not hold after substitution:",cmdcond,"is false"
 	# check break condition
 	if breakcondition is not None:
 		breakcond=replaceparameters(breakcondition,parasubs)
 		try:
 			if eval(breakcond):
-				print "break condition",breakcondition," fulfilled after substituion:",breakcond
+				print "break condition",breakcondition," fulfilled after substituion:",breakcond,"is true"
 				break
 		except Exception, errno:
-			print "ERROR evaluating break condition",breakcondition,"after substitution:",breakcond
+			print "ERROR evaluating break condition",breakcondition,"after substitution:",breakcond,"is erroneous"
 			#break
 			pass
 	v[0]+=1
