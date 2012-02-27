@@ -116,3 +116,28 @@ void KDNode::buildKDTree() {
 		_child2->buildKDTree();
 	}
 }
+
+
+void KDNode::printTree(std::string prefix) {
+// use std::cout as I want to have all nodes at all processes printed
+	if (_numProcs == 1) {
+		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc
+				<< ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
+				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << ")" << std::endl;
+	}
+	else {
+		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc
+				<< "(" << _numProcs << " procs)" << ", Corners: (" << _lowCorner[0]
+				<< ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0]
+				<< ", " << _highCorner[1] << ", " << _highCorner[2] << ")"
+				" child1: " << _child1 << " child2: " << _child2 << std::endl;
+		std::stringstream childprefix;
+		childprefix << prefix << "  ";
+		if (_child1 != NULL) {
+			_child1->printTree(childprefix.str());
+		}
+		if (_child2 != NULL) {
+			_child2->printTree(childprefix.str());
+		}
+	}
+}

@@ -55,7 +55,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! It has to determine the number of cells and create an initial decomposition
 	//! of the domain (no knowledge about particles yet), which is stored in
 	//! _decompTree and _ownArea
-	KDDecomposition(double cutoffRadius, Domain* domain, double alpha, double beta, int steps = 0, int updateFrequency = 10);
+	KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency);
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
@@ -206,32 +206,23 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param particlesToSend Here the pointers to the particles will be stored
 	void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, std::vector<int>& procIDs, std::vector<int>& numMolsToSend, std::vector<std::list<Molecule*> >& particlesToSend);
 
-	//! @brief Neighbouring procs inform each other about number of particles
-	//!
-	//! Before particle data can be transferred, the recieving procs have to
-	//! allocate memory to store those data. Therefore they have to be informed
-	//! about the number of particles which have to be recieved.
-	//! @param procsToSendTo ids of all neighbours (possibly including self) which have
-	//!        to recieve particles from this process
-	//! @param procsToRecvFrom ids of all neighbours (possibly including self) which have
-	//!        to send particles to this process
-	//! @param particlesToSend Needed to know the number of particles to send
-	//! @param numMolsToRecv Array to store the number of molecules which have to be recieved.
-	void exchangeNumToSend(std::vector<int>& procsToSendTo, std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend, std::vector<int>& numMolsToRecv);
-
 	//! @brief transfer of the molecule data to the neighbours
+	//! After each process knows which particles have to be sent, the particles
+	//! can be exchanged.
 	//!
-	//! After each process knows which particles have to be sent
-	//! and how many particles have to be received, and all buffers
-	//! have been initialised, the data transfer itself can be done
-	//! using this method
-	//! @param procIDs ids of all neighbours (possibly including self)
+	//! @param procsToSendTo IDs of processes to which particles have to be sent
+	//! @param procsToRecvFrom IDs of processes from which particles have to be received
 	//! @param numMolsToSend Number of molecules to be sent to each neighbour
 	//! @param numMolsToRecv Number of molecules to be recieved from each neighbour
-	//! @param particlesSendBufs already filled buffers of particles to be sent
-	//! @param particlesRecvBufs buffers (already allocated) to store recieved particles
-	void transferMolData(std::vector<int>& procsToSendTo, std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend, std::vector<int>& numMolsToRecv, std::vector<ParticleData*>& particlesSendBufs, std::vector<ParticleData*>& particlesRecvBufs);
-
+	//! @param particlePtrsToSend pointers to the particles
+	//! @param particlesRecvBufs buffers to store recieved particles
+	//!
+	//! @note The particlesRecvBufs is allocated in this method and has to be
+	//!       deleted afterwards!
+	void sendReceiveParticleData(std::vector<int>& procsToSendTo,
+			std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend,
+			std::vector<int>& numMolsToRecv, std::vector<std::list<Molecule*> >& particlePtrsToSend,
+			std::vector<ParticleData*>& particlesRecvBufs);
 
 	//! @brief corrects the position of particles outside the domain after a balance step
 	//!
@@ -282,15 +273,6 @@ class KDDecomposition: public DomainDecompBase{
 	 */
 	void printDecompTrees(KDNode* root);
 
-	//! @brief prints the given (sub-) tree to stdout
-	//!
-	//! For each node, it is printed whether it is a "LEAF" or a "INNER" node,
-	//! The owner is printed as well as the region of each node
-	//! The order of printing is a depth-first walk through the tree, children
-	//! are always indented two spaces more than there parents
-	//! @param root Node for which the subtree shall be printed
-	//! @param prefix A string which is printed in front of each line
-	void printDecompTree(KDNode* root, std::string prefix);
 
 	void calculateCostsPar(KDNode* area, std::vector<std::vector<double> >& costsLeft, std::vector<std::vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup);
 
@@ -417,11 +399,8 @@ class KDDecomposition: public DomainDecompBase{
 	//! (e.g. 0.7 for 2CLJQ)
 	double _alpha;
 
-	//! weighting of costs for computation and communication
-	//! costs = computation costs + beta * communication costs
-	//! On most HPC-hardware, beta=0.0 is the best choice. Only on systems with
-	//! a network with very low bandwidth it might be useful to use a larger value
-	double _beta;
+	// mpi data type for particle data
+	MPI_Datatype _mpi_Particle_data;
 
 };
 

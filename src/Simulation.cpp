@@ -169,7 +169,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			break;
 		case KD_DECOMPOSITION:
 			/* TODO: remove parameters from KDDecomposition constructor */
-			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
+			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 10);
 			break;
 #endif
 		case UNKNOWN_DECOMPOSITION:
@@ -508,7 +508,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 			}
 			else if(token=="KDDecomposition") {
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 0.0);
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 10);
 			}
 #endif
 		} else if (token == "datastructure") {
@@ -978,6 +978,7 @@ void Simulation::prepare_start() {
 //	}
 
 	global_log->info() << "System initialised\n" << endl;
+	global_log->info() << "System contains " << _domain->getglobalNumMolecules() << endl;
 }
 
 void Simulation::simulate() {

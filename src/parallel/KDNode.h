@@ -59,6 +59,16 @@ public:
 	//! the area recursively, always in the dimension with the longest extend.
 	void buildKDTree();
 
+
+	//! @brief prints this (sub-) tree to stdout
+	//!
+	//! For each node, it is printed whether it is a "LEAF" or a "INNER" node,
+	//! The order of printing is a depth-first walk through the tree, children
+	//! are always indented two spaces more than there parents
+	//! @param prefix A string which is printed in front of each line
+	void printTree(std::string prefix = "");
+
+
 	//! number of procs which share this area
 	int _numProcs;
 	//! in cells relative to global domain
