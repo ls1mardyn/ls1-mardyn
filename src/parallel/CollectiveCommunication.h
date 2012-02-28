@@ -244,6 +244,7 @@ public:
 		for (int i = 0; i < _numValues; i++) {
 			_recvValues[i] = _sendValues[i];
 		}
+		MPI_CHECK( MPI_Type_free(&_valuesType) );
 	}
 
 	//! Do Allreduce off all values with reduce operation add
