@@ -255,6 +255,7 @@ public:
 		MPI_CHECK( MPI_Op_create((MPI_User_function *) CollectiveCommunication::add, 1, &reduceOp) );
 		MPI_CHECK( MPI_Allreduce(_sendValues, _recvValues, 1, _valuesType, reduceOp, _communicator) );
 		MPI_CHECK( MPI_Op_free(&reduceOp) );
+		MPI_CHECK( MPI_Type_free(&_valuesType) );
 #else
 		for( int i = 0; i < _numValues; i++ ) {
 			MPI_CHECK( MPI_Allreduce( &_sendValues[i], &_recvValues[i], 1, _listOfTypes[i], MPI_SUM, _communicator ) );
