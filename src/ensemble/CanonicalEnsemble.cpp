@@ -51,6 +51,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 			_N += numMolecules[cid];
 			(*_components)[cid].setNumMolecules(numMolecules[cid]);
 		}
+		delete [] numMolecules;
 	}
 
 	if ( variable & VOLUME ) {
