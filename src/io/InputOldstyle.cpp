@@ -476,5 +476,8 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 
 	inputTimer.stop();
 	global_log->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+#ifdef ENABLE_MPI
+	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
+#endif
 	return maxid;
 }
