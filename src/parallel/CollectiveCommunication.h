@@ -76,7 +76,7 @@ class CollectiveCommunication {
 
 public:
 	virtual ~CollectiveCommunication() {
-	//	finalize();
+		finalize();
 	}
 		
 	//! @brief allocate memory for the values to be sent, initialize counters
@@ -99,10 +99,7 @@ public:
 		delete[] _listOfTypes;
 		delete[] _sendValues;
 		delete[] _recvValues;
-#if ENABLE_AGGLOMERATED_REDUCE
-		MPI_CHECK( MPI_Type_free(&_valuesType) );
 		assert( _valuesType == MPI_DATATYPE_NULL );
-#endif
 	}
 
 	//! @brief method used by MPI to add variables of this type
