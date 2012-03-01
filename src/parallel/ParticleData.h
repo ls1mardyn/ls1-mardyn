@@ -28,9 +28,9 @@ public:
 
 		MPI_Aint displacements[3];
 		ParticleData pdata_dummy;
-		MPI_CHECK( MPI_Address(&pdata_dummy, displacements) );
-		MPI_CHECK( MPI_Address(&pdata_dummy.cid, displacements + 1) );
-		MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements + 2) );
+		MPI_CHECK( MPI_Get_address(&pdata_dummy, displacements) );
+		MPI_CHECK( MPI_Get_address(&pdata_dummy.cid, displacements + 1) );
+		MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 2) );
 		MPI_Aint base = displacements[0];
 		for (int i = 0; i < 3; i++)
 			displacements[i] -= base;
