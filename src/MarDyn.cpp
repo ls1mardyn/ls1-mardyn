@@ -31,8 +31,6 @@ optparse::Values& initOptions(int argc, const char* const argv[], optparse::Opti
 //!
 int main(int argc, char** argv) {
 
-	asdf asdf asdf
-
 #ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
 #endif
