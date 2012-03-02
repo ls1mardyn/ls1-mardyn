@@ -133,7 +133,7 @@ public:
 			if (arrayTypes[i] == MPI_INT) {
 				inoutvec[i].val_int += invec[i].val_int;
 			}
-			if (arrayTypes[i] == MPI_UNSIGNED_LONG) {
+			else if (arrayTypes[i] == MPI_UNSIGNED_LONG) {
 				inoutvec[i].val_unsLong += invec[i].val_unsLong;
 			}
 			else if (arrayTypes[i] == MPI_FLOAT) {
