@@ -5,6 +5,7 @@
  *      Author: eckhardw
  */
 #include "KDNode.h"
+#include <bitset>
 
 KDNode* KDNode::findAreaForProcess(int rank) {
 	if (_numProcs == 1) {
@@ -123,14 +124,14 @@ void KDNode::printTree(std::string prefix) {
 	if (_numProcs == 1) {
 		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc
 				<< ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
-				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << ")" << std::endl;
+				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << std::endl;
 	}
 	else {
 		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc
 				<< "(" << _numProcs << " procs)" << ", Corners: (" << _lowCorner[0]
 				<< ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0]
 				<< ", " << _highCorner[1] << ", " << _highCorner[2] << ")"
-				" child1: " << _child1 << " child2: " << _child2 << std::endl;
+				" child1: " << _child1 << " child2: " << _child2 << ", Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << std::endl;
 		std::stringstream childprefix;
 		childprefix << prefix << "  ";
 		if (_child1 != NULL) {
@@ -140,4 +141,28 @@ void KDNode::printTree(std::string prefix) {
 			_child2->printTree(childprefix.str());
 		}
 	}
+}
+
+KDNode::MPIKDNode KDNode::getMPIKDNode() {
+	std::bitset<3> coversWholeDomain;
+	for (int i = 0; i < KDDIM; i++) {
+		coversWholeDomain.set(i, _coversWholeDomain[i]);
+	}
+
+	int nextSender = _owningProc + 1;
+	int leftChildID = -1;
+	int rightChildID = -1;
+
+	if (_numProcs > 1) {
+		nextSender = _owningProc;
+		leftChildID = _child1->_nodeID;
+		rightChildID = _child2->_nodeID;
+	}
+
+	// const std::bitset<3>& coversWholeDomain, const int& numProcs,
+	// const std::vector<int>& lowCorner, const std::vector<int>& highCorner,
+	// const int& nodeID, const int& owningProc, const int& firstChildID, const int& secondChildID,
+	// const int& nextSendingProcess, const double& load, const double& OptimalLoadPerProcess
+	return MPIKDNode(coversWholeDomain, _numProcs, _lowCorner, _highCorner,
+				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess);
 }

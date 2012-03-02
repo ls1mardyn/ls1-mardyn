@@ -3,6 +3,13 @@
 
 // include because of macro KDDIM
 #include "parallel/KDDecomposition.h"
+/*
+ * #include <assert.h>
+
+#define assertion(x) assert(x)
+#define assertion1(x,y) assert(x)
+ */
+#include "parallel/MPIKDNode.h"
 
 //! @brief represents a node in the decomposition tree when using KDDecomposition
 //! @author Martin Buchholz
@@ -22,11 +29,19 @@
 class KDNode {
 public:
 
+	/**
+	 * MPIKDNodes represent the data of a KDNode which has to be sent via MPI.
+	 * MPIKDNodes can be used directly in MPI Send/Receive operations, with
+	 * mpi_data_type as type.
+	 */
+	typedef MPIKDNodePacked MPIKDNode;
+
 	KDNode() : _child1(NULL), _child2(NULL) {
 	}
 
-	KDNode(int numP, int low[KDDIM], int high[KDDIM], int id, int owner, bool coversAll[KDDIM])
-	: _numProcs(numP), _nodeID(id), _owningProc(owner), _child1(NULL), _child2(NULL) {
+	KDNode(int numP, const int low[KDDIM], const int high[KDDIM], int id, int owner, bool coversAll[KDDIM])
+	: _numProcs(numP), _nodeID(id), _owningProc(owner),
+	  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0) {
 		for (int dim = 0; dim < KDDIM; dim++) {
 			_lowCorner[dim] = low[dim];
 			_highCorner[dim] = high[dim];
@@ -68,13 +83,31 @@ public:
 	//! @param prefix A string which is printed in front of each line
 	void printTree(std::string prefix = "");
 
+	/**
+	 * Initialize the mpi datatype. Has to be called once initially.
+	 */
+	static void initMPIDataType() {
+		MPIKDNode::initDatatype();
+	}
+
+	/**
+	 * Free the mpi datatype
+	 */
+	static void shutdownMPIDataType() {
+		MPIKDNode::shutdownDatatype();
+	}
+
+	/**
+	 * Get a MPIDKNode object representing this KDNode.
+	 */
+	MPIKDNode getMPIKDNode();
 
 	//! number of procs which share this area
 	int _numProcs;
 	//! in cells relative to global domain
-	int _lowCorner[KDDIM];
+	int _lowCorner[3];
 	//! in cells relative to global domain
-	int _highCorner[KDDIM];
+	int _highCorner[3];
 	//! true if the domain in the given dimension is not divided into more than one process
 	bool _coversWholeDomain[KDDIM];
 
@@ -87,6 +120,9 @@ public:
 	KDNode* _child1;
 	//! "left" child of this KDNode (only used if the child is no leaf)
 	KDNode* _child2;
+
+	double _load;
+	double _optimalLoadPerProcess;
 };
 
 #endif /*KDNODE_H_*/

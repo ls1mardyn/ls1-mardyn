@@ -66,10 +66,12 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 
 	// initialize the mpi data type for particles once in the beginning
 	ParticleData::setMPIType(_mpi_Particle_data);
+	KDNode::initMPIDataType();
 }
 
 KDDecomposition::~KDDecomposition() {
 	delete[] _numParticlesPerCell;
+	KDNode::shutdownMPIDataType();
 }
 
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
@@ -89,9 +91,9 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 	if (_steps % _frequency == 0 || _steps <= 1) {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 		getNumParticles(moleculeContainer);
-		newDecompTree = new KDNode(_numProcs, _decompTree->_lowCorner, _decompTree->_highCorner, 0, 0, _decompTree->_coversWholeDomain);
+		newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain);
 		ParticlePairs2LoadCalcAdapter* loadHandler;
-		loadHandler = new ParticlePairs2LoadCalcAdapter(_globalCellsPerDim, _ownArea->_lowCorner, _cellSize, _moleculeContainer);
+		loadHandler = new ParticlePairs2LoadCalcAdapter(_globalCellsPerDim, &(_ownArea->_lowCorner[0]), _cellSize, _moleculeContainer);
 		_moleculeContainer->traversePairs(loadHandler);
 		_globalLoadPerCell = loadHandler->getLoad();
 		if (recDecompPar(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
@@ -101,6 +103,10 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		completeTreeInfo(newDecompTree, newOwnArea);
 		delete loadHandler;
 		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
+
+//		if(_ownRank == 0) {
+//			_decompTree->printTree("");
+//		}
 	}
 
 	vector<int> procsToSendTo; // all processes to which this process has to send data
@@ -672,18 +678,6 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 
 		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
 		for (int i = 1; i < fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - 1; i++) {
-			//#################################
-			// New Version: Costs for "future" boundary cells
-			// Num Cells in separation layer
-//			unsigned long numCellsInLayer = 1;
-//			for (int temp = 0; temp < 3; temp++) {
-//				if (temp != dim) {
-//					numCellsInLayer *= fatherNode->_highCorner[temp] - fatherNode->_lowCorner[temp] + 1;
-//				}
-//			}
-			// unsigned long numCellsLeft = numCellsInLayer * (i + 1);
-			// unsigned long numCellsRight = numCellsInLayer * (fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - i);
-
 			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) fatherNode->_numProcs);
 
 			// costs for initial guessed process distribution
@@ -798,8 +792,13 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 	owner1 = fatherNode->_owningProc;
 	owner2 = owner1 + numProcsLeft;
 
+	double optCostPerProc = (costsLeft[divDir][divIdx] + costsRight[divDir][divIdx]) / ((double) fatherNode->_numProcs);
 	fatherNode->_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll);
+	fatherNode->_child1->_optimalLoadPerProcess = optCostPerProc;
+	fatherNode->_child1->_load = costsLeft[divDir][divIdx];
 	fatherNode->_child2 = new KDNode(numProcsRight, low2, high2, id2, owner2, coversAll);
+	fatherNode->_child2->_optimalLoadPerProcess = optCostPerProc;
+	fatherNode->_child2->_load = costsRight[divDir][divIdx];
 
 	vector<int> origRanks;
 	int newNumProcs;
@@ -863,46 +862,30 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 
 	int nextSendingProcess = 0;
 	for (int nodeID = 0; nodeID < numElementsToRecv; nodeID++) {
-		//pack:
-		int data[13] = {0};
-		if (oldNode->_nodeID == nodeID) {
 
-			data[0] = oldNode->_numProcs;
-			for (int i = 0; i < 3; i++) {
-				data[1 + i] = oldNode->_lowCorner[i];
-				data[4 + i] = oldNode->_highCorner[i];
-			}
-			if (oldNode->_coversWholeDomain[0]) data[7] += 0x4;
-			if (oldNode->_coversWholeDomain[1]) data[7] += 0x2;
-			if (oldNode->_coversWholeDomain[2]) data[7] += 0x1;
-			data[8] = oldNode->_nodeID;
-			data[9] = oldNode->_owningProc;
-			// determine owner of next data set and IDs of children (-1 of no children)
+		KDNode::MPIKDNode mpiKDNode;
+		if (oldNode->_nodeID == nodeID) {
+			mpiKDNode = oldNode->getMPIKDNode();
+
 			if (oldNode->_numProcs > 1) {
-				data[10] = oldNode->_child1->_nodeID;
-				data[11] = oldNode->_child2->_nodeID;
-				data[12] = _ownRank;
-				// forward pointer to children
 				oldNode = oldNode->_child1;
 			}
-			else {
-				data[10] = -1;
-				data[11] = -1;
-				data[12] = _ownRank + 1;
-			}
-
 		}
-		MPI_CHECK( MPI_Bcast(data, 13, MPI_INT, nextSendingProcess, MPI_COMM_WORLD) );
+
+		MPI_CHECK( MPI_Bcast(&mpiKDNode, 1, KDNode::MPIKDNode::Datatype, nextSendingProcess, MPI_COMM_WORLD) );
 		bool coversAll[3];
 
-		coversAll[0] = (data[7] & 0x4);
-		coversAll[1] = (data[7] & 0x2);
-		coversAll[2] = (data[7] & 0x1);
+		coversAll[0] = mpiKDNode.getCoversWholeDomain(0);
+		coversAll[1] = mpiKDNode.getCoversWholeDomain(1);
+		coversAll[2] = mpiKDNode.getCoversWholeDomain(2);
 
-		ptrToAllNodes[nodeID] = new KDNode(data[0], &data[1], &data[4], data[8], data[9], coversAll);
-		child1[nodeID] = data[10];
-		child2[nodeID] = data[11];
-		nextSendingProcess = data[12];
+		ptrToAllNodes[nodeID] = new KDNode(mpiKDNode.getNumProcs(), mpiKDNode.getLowCorner(),
+				mpiKDNode.getHighCorner(), mpiKDNode.getNodeID(), mpiKDNode.getOwningProc(), coversAll);
+		ptrToAllNodes[nodeID]->_load = mpiKDNode.getLoad();
+		ptrToAllNodes[nodeID]->_optimalLoadPerProcess = mpiKDNode.getOptimalLoadPerProcess();
+		child1[nodeID] = mpiKDNode.getFirstChildID();
+		child2[nodeID] = mpiKDNode.getSecondChildID();
+		nextSendingProcess = mpiKDNode.getNextSendingProcess();
 	}
 
 	// connect all Nodes of the tree
@@ -914,14 +897,8 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 		}
 	}
 
-	//@TODO: the old root has to be deleted
-	//KDNode* oldRoot = root;
 	root = ptrToAllNodes[0];
 	ownArea = ptrToAllNodes[ownArea->_nodeID];
-
-	//@TODO: the old root has to be deleted
-	//delete oldRoot;
-
 }
 
 void KDDecomposition::printDecompTrees(KDNode* root) {

@@ -48,6 +48,9 @@ class KDNode;
 //!
 //! @todo Development of this class is finished, some correctness tests still have to be done
 class KDDecomposition: public DomainDecompBase{
+
+	friend class KDDecompositionTest;
+
  public:
 	//! @brief create an initial decomposition tree
 	//!

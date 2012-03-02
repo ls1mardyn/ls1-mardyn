@@ -102,3 +102,36 @@ void KDNodeTest::testFindAreaForProcess() {
 	ASSERT_EQUAL(resultRoot.findAreaForProcess(2), resultChild2);
 	ASSERT_EQUAL(resultRoot.findAreaForProcess(41), (KDNode*) NULL);
 }
+
+void KDNodeTest::testGetMPIKDNode() {
+	const int lowerCorner[3] = {0,0,0};
+	const int higherCorner[3] = {3,3,3};
+	std::bitset<3> coversWholeDomain;
+	for (int i = 0; i < 3; i++) {
+		coversWholeDomain[i] = true;
+	}
+
+	MPIKDNodePacked mpiNode(coversWholeDomain, 1, lowerCorner, higherCorner,
+			7, 0, -1, -1, 1, 0.0, 0.0);
+
+	for (int i = 0; i < 3; i++) {
+		ASSERT_EQUAL(mpiNode.getCoversWholeDomain(i), true);
+		ASSERT_EQUAL(mpiNode.getLowCorner(i), 0);
+		ASSERT_EQUAL(mpiNode.getHighCorner(i), 3);
+	}
+
+	bool coversAll[3] = {true};
+	KDNode node(1, lowerCorner, higherCorner, 7, 0, coversAll);
+	MPIKDNodePacked newMPINode = node.getMPIKDNode();
+	ASSERT_EQUAL(newMPINode.getOwningProc(), mpiNode.getOwningProc());
+	ASSERT_EQUAL(newMPINode.getNumProcs(), mpiNode.getNumProcs());
+	ASSERT_EQUAL(newMPINode.getNodeID(), mpiNode.getNodeID());
+	ASSERT_EQUAL(newMPINode.getFirstChildID(), mpiNode.getFirstChildID());
+	ASSERT_EQUAL(newMPINode.getSecondChildID(), mpiNode.getSecondChildID());
+	ASSERT_EQUAL(newMPINode.getLowCorner(0), mpiNode.getLowCorner(0));
+	ASSERT_EQUAL(newMPINode.getLowCorner(1), mpiNode.getLowCorner(1));
+	ASSERT_EQUAL(newMPINode.getLowCorner(2), mpiNode.getLowCorner(2));
+	ASSERT_EQUAL(newMPINode.getHighCorner(0), mpiNode.getHighCorner(0));
+	ASSERT_EQUAL(newMPINode.getHighCorner(1), mpiNode.getHighCorner(1));
+	ASSERT_EQUAL(newMPINode.getHighCorner(2), mpiNode.getHighCorner(2));
+}
