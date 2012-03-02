@@ -51,6 +51,9 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 			_N += numMolecules[cid];
 			(*_components)[cid].setNumMolecules(numMolecules[cid]);
 		}
+#ifdef ENABLE_MPI
+		_simulation.domainDecomposition().collCommFinalize();
+#endif
 		delete [] numMolecules;
 	}
 
@@ -104,6 +107,9 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		  _E_trans += E_trans[cid];
 		  _E_rot   += E_rot[cid];
 	  }
+#ifdef ENABLE_MPI
+	  _simulation.domainDecomposition().collCommFinalize();
+#endif
 
 	  global_log->debug() << "Total Kinetic energy: 2*E_trans = " << _E_trans 
 		  << ", 2*E_rot = " << _E_rot << endl;
@@ -138,6 +144,5 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	/* calculate global variables from local variables */
 
 	/* save variables to components and ensemble */
-	_simulation.domainDecomposition().collCommFinalize();
 }
 
