@@ -101,8 +101,9 @@ public:
 		delete[] _listOfTypes;
 		delete[] _sendValues;
 		delete[] _recvValues;
-		_sendValues == NULL;
-		_recvValues == NULL;
+		_listOfTypes = NULL;
+		_sendValues = NULL;
+		_recvValues = NULL;
 		assert( _valuesType == MPI_DATATYPE_NULL );
 	}
 
