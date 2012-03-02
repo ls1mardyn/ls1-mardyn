@@ -138,5 +138,6 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	/* calculate global variables from local variables */
 
 	/* save variables to components and ensemble */
+	_simulation.domainDecomposition().collCommFinalize();
 }
 
