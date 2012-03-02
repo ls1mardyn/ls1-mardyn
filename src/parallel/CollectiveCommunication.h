@@ -76,7 +76,9 @@ class CollectiveCommunication {
 
 public:
 	virtual ~CollectiveCommunication() {
-		finalize();
+		assert(_sendValues == 0);
+		assert(_recvValues == 0);
+		assert( _valuesType == MPI_DATATYPE_NULL );
 	}
 		
 	//! @brief allocate memory for the values to be sent, initialize counters
