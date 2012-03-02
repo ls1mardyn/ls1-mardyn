@@ -159,6 +159,8 @@ int main(int argc, char** argv) {
     runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
     global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
 
+    delete global_log;
+
 #ifdef ENABLE_MPI
     MPI_Finalize();
 #endif
