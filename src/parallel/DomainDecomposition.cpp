@@ -38,6 +38,7 @@ DomainDecomposition::DomainDecomposition() {
 }
 
 DomainDecomposition::~DomainDecomposition() {
+	MPI_Type_free(&_mpi_Particle_data);
 }
 
 void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
