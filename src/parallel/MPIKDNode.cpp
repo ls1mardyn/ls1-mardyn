@@ -281,7 +281,7 @@ MPI_Datatype MPIKDNodePacked::Datatype = 0;
 void MPIKDNodePacked::initDatatype() {
 	MPIKDNodePacked dummyMPIKDNodePacked[2];
 
-	const int Attributes = 11;
+	const int Attributes = 10;
 	MPI_Datatype subtypes[Attributes] = {
 			MPI_INT,		 //lowCorner
 			MPI_INT,		 //highCorner
@@ -292,8 +292,7 @@ void MPIKDNodePacked::initDatatype() {
 			MPI_INT,		 //nextSendingProcess
 			MPI_DOUBLE,		 //load
 			MPI_DOUBLE,		 //OptimalLoadPerProcess
-			MPI_INT,		 //_packedRecords0
-			MPI_UB		 // end/displacement flag
+			MPI_INT 		 //_packedRecords0
 	};
 
 	int blocklen[Attributes] = {
@@ -306,8 +305,7 @@ void MPIKDNodePacked::initDatatype() {
 			1,		 //nextSendingProcess
 			1,		 //load
 			1,		 //OptimalLoadPerProcess
-			1,		 //_packedRecords0
-			1		 // end/displacement flag
+			1		 //_packedRecords0
 	};
 
 	MPI_Aint     disp[Attributes];
@@ -324,7 +322,6 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[9] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[1]._lowCorner[0]))), 		&disp[10] );
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
