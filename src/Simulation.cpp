@@ -978,7 +978,7 @@ void Simulation::prepare_start() {
 //	}
 
 	global_log->info() << "System initialised\n" << endl;
-	global_log->info() << "System contains " << _domain->getglobalNumMolecules() << endl;
+	global_log->info() << "System contains " << _domain->getglobalNumMolecules() << " molecules." << endl;
 }
 
 void Simulation::simulate() {
