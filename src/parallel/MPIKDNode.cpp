@@ -311,6 +311,19 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Aint     disp[Attributes];
 
 	MPI_Aint base;
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nodeID))), 		&disp[2] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._owningProc))), 		&disp[3] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._firstChildID))), 		&disp[4] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._secondChildID))), 		&disp[5] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nextSendingProcess))), 		&disp[6] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[9] );
+#else
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
@@ -322,6 +335,7 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[9] );
+#endif
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
