@@ -335,7 +335,11 @@ void MPIKDNodePacked::initDatatype() {
 	for (int i=0; i<Attributes; i++) {
 		disp[i] -= base;
 	}
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
+	MPI_Type_create_struct( Attributes, blocklen, disp, subtypes, &MPIKDNodePacked::Datatype );
+#else
 	MPI_Type_struct( Attributes, blocklen, disp, subtypes, &MPIKDNodePacked::Datatype );
+#endif
 	MPI_Type_commit( &MPIKDNodePacked::Datatype );
 }
 
