@@ -75,6 +75,12 @@ class CollectiveCommunication {
 	};
 
 public:
+	CollectiveCommunication() {
+		_sendValues = 0;
+		_recvValues = 0;
+		_valuesType = MPI_DATATYPE_NULL;
+	}
+
 	virtual ~CollectiveCommunication() {
 		assert(_sendValues == 0);
 		assert(_recvValues == 0);
