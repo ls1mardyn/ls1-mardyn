@@ -38,7 +38,11 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 
 	bool testresult;
 
-#ifdef UNIT_TESTS
+#ifndef UNIT_TESTS
+	test_log->error() << std::endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
+	testresult = true;
+
+#else 
 	test_log->info() << "Running unit tests!" << std::endl;
 #ifdef USE_CPPUNIT
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
@@ -59,9 +63,6 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 	testCases.run();
 	testresult = testCases.getNumberOfErrors() != 0;
 #endif
-#else
-	test_log->error() << std::endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
-	testresult = true;
 #endif
 
 	Log::global_log->set_log_level(globalLogLevel);
