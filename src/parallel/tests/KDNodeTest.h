@@ -14,6 +14,7 @@ class KDNodeTest : public utils::Test {
 
 	TEST_SUITE(KDNodeTest);
 	TEST_METHOD(testEqual);
+	TEST_METHOD(testSplit);
 	TEST_METHOD(testBuildKDTree);
 	TEST_METHOD(testFindAreaForProcess);
 	TEST_METHOD(testGetMPIKDNode);
@@ -26,6 +27,8 @@ public:
 	virtual ~KDNodeTest();
 
 	void testEqual();
+
+	void testSplit();
 
 	void testBuildKDTree();
 

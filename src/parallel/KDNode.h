@@ -3,12 +3,7 @@
 
 // include because of macro KDDIM
 #include "parallel/KDDecomposition.h"
-/*
- * #include <assert.h>
 
-#define assertion(x) assert(x)
-#define assertion1(x,y) assert(x)
- */
 #include "parallel/MPIKDNode.h"
 
 //! @brief represents a node in the decomposition tree when using KDDecomposition
@@ -27,6 +22,7 @@
 //! the decomposition is based on distributing those cells (blocks of cells) to the
 //! processes
 class KDNode {
+
 public:
 
 	/**
@@ -74,6 +70,28 @@ public:
 	//! the area recursively, always in the dimension with the longest extend.
 	void buildKDTree();
 
+	/**
+	 * @return true, if the node can be resolved for its number of processes (_numProcs),
+	 *         i.e. each process can have a subdomain of at least 2 cells per dimension.
+	 */
+	bool isResolvable();
+
+	/**
+	 * @return maximum number of processes, which could be assigned to this node.
+	 */
+	unsigned int getNumMaxProcs();
+
+	/**
+	 * Split this node, i.e. create two children (note, that its children must be
+	 * NULL before this call!).
+	 *
+	 * @param dimension the dimension \in [0;KDDIM-1] along which this node is split
+	 * @param splitIndex the index of the corner cell for the new left child
+	 *        (note: must be in ] _lowCorner[dimension]; _highCorner[dimension] [.
+	 * @param numProcsLeft the number of processors for the left child. The number
+	 *        of processors for the right child is calculated.
+	 */
+	void split(int divDimension, int splitIndex, int numProcsLeft);
 
 	//! @brief prints this (sub-) tree to stdout
 	//!

@@ -37,6 +37,29 @@ void KDNodeTest::testEqual() {
 	ASSERT_TRUE(node1.equals(node2));
 }
 
+void KDNodeTest::testSplit() {
+	int lowerEnd[] = {0, 0, 0};
+	int upperEnd[] = {7, 3, 3};
+	bool coversAll[] = {true, true, true};
+
+	KDNode root(7, lowerEnd, upperEnd, 1, 0, coversAll);
+	root.split(1, 1, 3);
+
+	KDNode resultRoot(7, lowerEnd, upperEnd, 1, 0, coversAll);
+	int lower1[] = {0, 0, 0};
+	int upper1[] = {7, 1, 3};
+	bool childCoversAll[] = {true, false, true};
+	KDNode* resultChild1 = new KDNode(3, lower1, upper1, 2, 0, childCoversAll);
+
+	int lower2[] = {0, 2, 0};
+	int upper2[] = {7, 3, 3};
+	KDNode* resultChild2 = new KDNode(4, lower2, upper2, 7, 3, childCoversAll);
+	resultRoot._child1 = resultChild1;
+	resultRoot._child2 = resultChild2;
+
+	ASSERT_TRUE(root.equals(resultRoot));
+}
+
 void KDNodeTest::testBuildKDTree() {
 
 	int lowerEnd[] = {0, 0, 0};
@@ -49,10 +72,10 @@ void KDNodeTest::testBuildKDTree() {
 	ASSERT_TRUE(node1.equals(result));
 
 
-	KDNode root(2, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode root(2, lowerEnd, upperEnd, 0, 0, coversAll);
 	root.buildKDTree();
 
-	KDNode resultRoot(2, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode resultRoot(2, lowerEnd, upperEnd, 0, 0, coversAll);
 	int lower1[] = {0, 0, 0};
 	int upper1[] = {3, 3, 3};
 	bool childCoversAll[] = {false, true, true};
@@ -60,7 +83,7 @@ void KDNodeTest::testBuildKDTree() {
 
 	int lower2[] = {4, 0, 0};
 	int upper2[] = {7, 3, 3};
-	KDNode* resultChild2 = new KDNode(1, lower2, upper2, 1, 1, childCoversAll);
+	KDNode* resultChild2 = new KDNode(1, lower2, upper2, 2, 1, childCoversAll);
 	resultRoot._child1 = resultChild1;
 	resultRoot._child2 = resultChild2;
 
@@ -86,12 +109,10 @@ void KDNodeTest::testFindAreaForProcess() {
 
 	int lower3[] = {0, 0, 0};
 	int upper3[] = {1, 3, 3};
-//	bool childCoversAll[] = {false, true, true};
 	KDNode* resultChild3 = new KDNode(1, lower3, upper3, 1, 0, childCoversAll);
 
 	int lower4[] = {2, 0, 0};
 	int upper4[] = {3, 3, 3};
-//	bool childCoversAll[] = {false, true, true};
 	KDNode* resultChild4 = new KDNode(1, lower4, upper4, 1, 1, childCoversAll);
 
 	resultRoot._child1->_child1 = resultChild3;
