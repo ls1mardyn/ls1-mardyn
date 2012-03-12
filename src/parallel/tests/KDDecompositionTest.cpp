@@ -32,11 +32,11 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 		int lowerEnd[] = {0, 0, 0};
 		int upperEnd[] = {3, 3, 3};
 		bool coversAll[] = {true, true, true};
-		KDNode* root = new KDNode(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll);
+		KDNode* root = new KDNode(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll, 0);
 		root->buildKDTree();
 		KDNode* ownArea = root->findAreaForProcess(_rank);
 
-		KDNode result(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll);
+		KDNode result(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll, 0);
 		result.buildKDTree();
 
 		KDDecomposition decomposition(1.0, _domain, 1.0, 10);

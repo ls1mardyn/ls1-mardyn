@@ -30,6 +30,9 @@ private:
 	int _nextSendingProcess;
 	double _load;
 	double _OptimalLoadPerProcess;
+	double _expectedDeviation;
+	double _deviation;
+	int _level;
 
 	/** mapping of records:
       || Member 	|| startbit 	|| length
@@ -46,7 +49,11 @@ public:
 	/**
 	 * Generated
 	 */
-	MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs, const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc, const int& firstChildID, const int& secondChildID, const int& nextSendingProcess, const double& load, const double& OptimalLoadPerProcess);
+	MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs,
+			const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc,
+			const int& firstChildID, const int& secondChildID, const int& nextSendingProcess,
+			const double& load, const double& OptimalLoadPerProcess, const double& expectedDeviation,
+			const double& deviation, const int& level);
 
 	/**
 	 * Generated
@@ -187,6 +194,12 @@ public:
 	 * Generated
 	 */
 	void setOptimalLoadPerProcess(const double& OptimalLoadPerProcess);
+
+	double getExpectedDeviation() const;
+
+	double getDeviation() const;
+
+	int getLevel() const;
 
 	/**
 	 * Generated

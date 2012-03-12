@@ -7,14 +7,21 @@
 
 
 
-MPIKDNodePacked::MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs, const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc, const int& firstChildID, const int& secondChildID, const int& nextSendingProcess, const double& load, const double& OptimalLoadPerProcess):
+MPIKDNodePacked::MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs,
+		const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc,
+		const int& firstChildID, const int& secondChildID, const int& nextSendingProcess,
+		const double& load, const double& OptimalLoadPerProcess, const double& expectedDeviation,
+		const double& deviation, const int& level):
 _nodeID(nodeID),
 _owningProc(owningProc),
 _firstChildID(firstChildID),
 _secondChildID(secondChildID),
 _nextSendingProcess(nextSendingProcess),
 _load(load),
-_OptimalLoadPerProcess(OptimalLoadPerProcess) {
+_OptimalLoadPerProcess(OptimalLoadPerProcess),
+_expectedDeviation(expectedDeviation),
+_deviation(deviation),
+_level(level) {
   setCoversWholeDomain(coversWholeDomain);
   setNumProcs(numProcs);
   for (int i = 0; i < 3; i++) {
@@ -227,6 +234,18 @@ void MPIKDNodePacked::setOptimalLoadPerProcess(const double& OptimalLoadPerProce
 }
 
 
+double MPIKDNodePacked::getExpectedDeviation() const {
+	return _expectedDeviation;
+}
+
+double MPIKDNodePacked::getDeviation() const {
+	return _deviation;
+}
+
+int MPIKDNodePacked::getLevel() const {
+	return _level;
+}
+
 
 
 std::string MPIKDNodePacked::toString() const {
@@ -277,11 +296,14 @@ void MPIKDNodePacked::toString (std::ostream& out) const {
 
 MPI_Datatype MPIKDNodePacked::Datatype = 0;
 
-
+/**
+ * TODO: incorporate changes of rev. 1000
+ * However, at the moment I'm not quite sure how that works...
+ */
 void MPIKDNodePacked::initDatatype() {
 	MPIKDNodePacked dummyMPIKDNodePacked[2];
 
-	const int Attributes = 10;
+	const int Attributes = 14;
 	MPI_Datatype subtypes[Attributes] = {
 			MPI_INT,		 //lowCorner
 			MPI_INT,		 //highCorner
@@ -292,7 +314,11 @@ void MPIKDNodePacked::initDatatype() {
 			MPI_INT,		 //nextSendingProcess
 			MPI_DOUBLE,		 //load
 			MPI_DOUBLE,		 //OptimalLoadPerProcess
-			MPI_INT 		 //_packedRecords0
+			MPI_DOUBLE,		 // expectedDeviation;
+			MPI_DOUBLE,		 // deviation;
+			MPI_INT,		 // level;
+			MPI_INT,		 //_packedRecords0
+			MPI_UB		 // end/displacement flag
 	};
 
 	int blocklen[Attributes] = {
@@ -305,25 +331,16 @@ void MPIKDNodePacked::initDatatype() {
 			1,		 //nextSendingProcess
 			1,		 //load
 			1,		 //OptimalLoadPerProcess
-			1		 //_packedRecords0
+			1,		 // expectedDeviation;
+			1,		 // deviation;
+			1,		 // level;
+			1,		 //_packedRecords0
+			1		 // end/displacement flag
 	};
 
 	MPI_Aint     disp[Attributes];
 
 	MPI_Aint base;
-#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nodeID))), 		&disp[2] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._owningProc))), 		&disp[3] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._firstChildID))), 		&disp[4] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._secondChildID))), 		&disp[5] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nextSendingProcess))), 		&disp[6] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[9] );
-#else
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
@@ -334,8 +351,11 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nextSendingProcess))), 		&disp[6] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
 	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[9] );
-#endif
+	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._expectedDeviation))), 		&disp[9] );
+	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._deviation))), 		&disp[10] );
+	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._level))), 		&disp[11] );
+	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[12] );
+	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[1]._lowCorner[0]))), 		&disp[13] );
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
@@ -346,11 +366,7 @@ void MPIKDNodePacked::initDatatype() {
 	for (int i=0; i<Attributes; i++) {
 		disp[i] -= base;
 	}
-#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-	MPI_Type_create_struct( Attributes, blocklen, disp, subtypes, &MPIKDNodePacked::Datatype );
-#else
 	MPI_Type_struct( Attributes, blocklen, disp, subtypes, &MPIKDNodePacked::Datatype );
-#endif
 	MPI_Type_commit( &MPIKDNodePacked::Datatype );
 }
 

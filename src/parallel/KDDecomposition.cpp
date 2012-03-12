@@ -20,6 +20,7 @@
 using namespace std;
 using Log::global_log;
 
+#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency)
 		: _steps(0), _frequency(updateFrequency), _alpha(alpha) {
@@ -40,27 +41,19 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 		coversWholeDomain[dim] = true;
 	}
 	
-	_numParticlesPerCell = new unsigned char[_globalNumCells];
+	_numParticlesPerCell = new unsigned int[_globalNumCells];
 	for (int i = 0; i < _globalNumCells; i++)
 		_numParticlesPerCell[i] = 0;
 
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are avaialble
-	// (at least 2 per process per dimension)
-	int maxProcs = 1;
-	for (int dim = 0; dim < 3; dim++) {
-		maxProcs *= _globalCellsPerDim[dim] / 2;
-	}
-
-	global_log->debug() << "KDDecomp: maxProcs=" << maxProcs << ", numProcs=" << _numProcs << endl;
-
-	if (maxProcs < _numProcs) {
+	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
+	if (! _decompTree->isResolvable()) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
-		global_log->error() << "The number of Cells is only sufficient for " << maxProcs << " Procs!" << endl;
+		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
 		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
 		global_simulation->exit(-1);
 	}
-	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain);
 	_decompTree->buildKDTree();
 	_ownArea = _decompTree->findAreaForProcess(_ownRank);
 
@@ -91,7 +84,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 	if (_steps % _frequency == 0 || _steps <= 1) {
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 		getNumParticles(moleculeContainer);
-		newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain);
+		newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
 		ParticlePairs2LoadCalcAdapter* loadHandler;
 		loadHandler = new ParticlePairs2LoadCalcAdapter(_globalCellsPerDim, &(_ownArea->_lowCorner[0]), _cellSize, _moleculeContainer);
 		_moleculeContainer->traversePairs(loadHandler);
@@ -104,9 +97,11 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		delete loadHandler;
 		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
 
-//		if(_ownRank == 0) {
-//			_decompTree->printTree("");
-//		}
+#ifdef DEBUG_DECOMP
+		if (_ownRank == 0) {
+			newDecompTree->printTree("");
+		}
+#endif
 	}
 
 	vector<int> procsToSendTo; // all processes to which this process has to send data
@@ -254,8 +249,8 @@ double KDDecomposition::guaranteedDistance(double x, double y, double z, Domain*
 
 unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
 	const int numComponents = compCount.size();
-	unsigned long localCompCount[numComponents];
-	unsigned long globalCompCount[numComponents];
+	unsigned long* localCompCount = new unsigned long[numComponents];
+	unsigned long* globalCompCount = new unsigned long[numComponents];
 	for( int i = 0; i < numComponents; i++ ) {
 		localCompCount[i] = 0;
 	}
@@ -272,6 +267,9 @@ unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContain
 		compCount[i] = globalCompCount[i];
 		numMolecules += globalCompCount[i];
 	}
+
+	delete[] localCompCount;
+	delete[] globalCompCount;
 	return numMolecules;
 }
 
@@ -672,8 +670,16 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 
 	vector<vector<double> > costsLeft(3);
 	vector<vector<double> > costsRight(3);
-	calculateCostsPar(fatherNode, costsLeft, costsRight, true, commGroup);
+	calculateCostsPar(fatherNode, costsLeft, costsRight, commGroup);
 
+#ifdef DEBUG_DECOMP
+	std::stringstream fname;
+	fname << "Division_" << _ownRank << "_step_" << _steps << ".txt";
+	std::ofstream filestream(fname.str().c_str(), ios::app);
+	filestream << " Division at rank=" << _ownRank << " for node [" << fatherNode->_lowCorner[0]
+	           << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
+	           << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "]" << endl;
+#endif
 	for (int dim = 0; dim < 3; dim++) {
 
 		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
@@ -683,6 +689,11 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 			// costs for initial guessed process distribution
 			int numProcsLeftTest = (int) max(1.0, min(floor(costsLeft[dim][i] / optCostPerProc), (double) (fatherNode->_numProcs - 1)));
 			int numProcsRightTest = fatherNode->_numProcs - numProcsLeftTest;
+#ifdef DEBUG_DECOMP
+			filestream << "divDim=" << dim << " sectionAt=" << i << " costsLeft=" << costsLeft[dim][i] << " costsRight="
+				<< costsRight[dim][i] << " totalCosts=" << (costsLeft[dim][i] + costsRight[dim][i]) <<" initailGuess: numProcsLeftTest=" << numProcsLeftTest << " numProcsRightTest=" << numProcsRightTest << endl;
+#endif
+
 			// Ensure that each sub-area is large enough to be distributed to the chosen number of processes
 			bool ok = false;
 			bool procShiftAllowed = true;
@@ -697,6 +708,9 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 			// if not resolvable, continue with next loop
 			if ((numProcsLeftTest + numProcsRightTest) > (maxProcsLeft + maxProcsRight)) {
 				domainTooSmall = true;
+#ifdef DEBUG_DECOMP
+				filestream << " NOT RESOLVABLE!" << endl;
+#endif
 				continue;
 			}
 			if (numProcsLeftTest <= maxProcsLeft && numProcsRightTest <= maxProcsRight)
@@ -716,7 +730,6 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 						ok = true;
 				}
 			}
-			// unsigned long numBoundCellsLeft = numCellsLeft - (unsigned long) (((double) numProcsLeftTest) * pow(pow(numCellsLeft / numProcsLeftTest, 1. / 3.) - 2, 3));
 			// unsigned long numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
 			double maxProcCostOld = max(costsLeft[dim][i] / (double) numProcsLeftTest, costsRight[dim][i] / (double) numProcsRightTest);
 			// Find out in which direction process distribution has to be shifted
@@ -738,8 +751,6 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 						break;
 					}
 					else {
-						// numBoundCellsLeft = numCellsLeft - (unsigned long) (((double) numProcsLeftTest) * pow(pow(numCellsLeft / numProcsLeftTest, 1. / 3.) - 2, 3));
-						// numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
 						maxProcCostNew = max(costsLeft[dim][i] / (double) numProcsLeftTest, costsRight[dim][i] / (double) numProcsRightTest);
 					}
 				}
@@ -763,6 +774,15 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 			}
 		}
 	}
+
+	int costIndex = divIdx - fatherNode->_lowCorner[divDir];
+	double optCostPerProc = (costsLeft[divDir][costIndex] + costsRight[divDir][costIndex]) / ((double) fatherNode->_numProcs);
+#ifdef DEBUG_DECOMP
+	filestream << " Dividing along dim=" << divDir << " divIdx=" << (costIndex) << " optCosts=" << optCostPerProc
+			<< " costLeft=" << costsLeft[divDir][costIndex] << " costsRight=" << costsRight[divDir][costIndex] << endl;
+	filestream << endl;
+	filestream.close();
+#endif
 
 	coversAll[divDir] = false;
 
@@ -792,13 +812,12 @@ bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Com
 	owner1 = fatherNode->_owningProc;
 	owner2 = owner1 + numProcsLeft;
 
-	double optCostPerProc = (costsLeft[divDir][divIdx] + costsRight[divDir][divIdx]) / ((double) fatherNode->_numProcs);
-	fatherNode->_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll);
+	fatherNode->_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll, fatherNode->_level+1);
 	fatherNode->_child1->_optimalLoadPerProcess = optCostPerProc;
-	fatherNode->_child1->_load = costsLeft[divDir][divIdx];
-	fatherNode->_child2 = new KDNode(numProcsRight, low2, high2, id2, owner2, coversAll);
+	fatherNode->_child1->_load = costsLeft[divDir][costIndex];
+	fatherNode->_child2 = new KDNode(numProcsRight, low2, high2, id2, owner2, coversAll, fatherNode->_level+1);
 	fatherNode->_child2->_optimalLoadPerProcess = optCostPerProc;
-	fatherNode->_child2->_load = costsRight[divDir][divIdx];
+	fatherNode->_child2->_load = costsRight[divDir][costIndex];
 
 	vector<int> origRanks;
 	int newNumProcs;
@@ -880,7 +899,7 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 		coversAll[2] = mpiKDNode.getCoversWholeDomain(2);
 
 		ptrToAllNodes[nodeID] = new KDNode(mpiKDNode.getNumProcs(), mpiKDNode.getLowCorner(),
-				mpiKDNode.getHighCorner(), mpiKDNode.getNodeID(), mpiKDNode.getOwningProc(), coversAll);
+				mpiKDNode.getHighCorner(), mpiKDNode.getNodeID(), mpiKDNode.getOwningProc(), coversAll, mpiKDNode.getLevel());
 		ptrToAllNodes[nodeID]->_load = mpiKDNode.getLoad();
 		ptrToAllNodes[nodeID]->_optimalLoadPerProcess = mpiKDNode.getOptimalLoadPerProcess();
 		child1[nodeID] = mpiKDNode.getFirstChildID();
@@ -921,7 +940,7 @@ void KDDecomposition::printDecompTrees(KDNode* root) {
  * - get the number of particle pairs per cell globally
  * - then calculate the costs for all possible subdivisions.
  */
-void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup) {
+void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, MPI_Comm commGroup) {
 
 	double areaCosts = 0.0;
 
@@ -954,9 +973,6 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 	int startIndex = sumNumLayers * newRank / area->_numProcs;
 	int stopIndex = sumNumLayers * (newRank + 1) / area->_numProcs - 1;
 	for (int dim = 0; dim < 3; dim++) {
-		// If only total costs shall be calculated, and not the different possible divisions,
-		// the loop runs only once
-		if (not calcDivisionCosts && dim != 0) break;
 
 		cellCosts[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		sepCostLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
@@ -1118,13 +1134,7 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 
 		for (int i_dim = 0; i_dim <= area->_highCorner[dim] - area->_lowCorner[dim]; i_dim++) {
 			areaCosts += cellCosts[dim][i_dim];
-			// Num Cells in separation layer
-			unsigned long sepCells = 1;
-			for (int i = 0; i < 3; i++) {
-				if (i != dim) {
-					sepCells *= area->_highCorner[i] - area->_lowCorner[i] + 1;
-				}
-			}
+
 			// guessed costs for future boundary cells
 			costsLeft[dim][i_dim] = cellCostsSum[i_dim] + sepCostSumLeft[i_dim];
 			costsRight[dim][i_dim] = cellCostsSum[area->_highCorner[dim] - area->_lowCorner[dim]] - cellCostsSum[i_dim] + sepCostSumRight[i_dim];
@@ -1261,7 +1271,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 		molPtr = moleculeContainer->next();
 		count++;
 	}
-	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED_CHAR, MPI_SUM, MPI_COMM_WORLD) );
+	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
 
 }
 

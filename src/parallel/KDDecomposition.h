@@ -277,7 +277,7 @@ class KDDecomposition: public DomainDecompBase{
 	void printDecompTrees(KDNode* root);
 
 
-	void calculateCostsPar(KDNode* area, std::vector<std::vector<double> >& costsLeft, std::vector<std::vector<double> >& costsRight, bool calcDivisionCosts, MPI_Comm commGroup);
+	void calculateCostsPar(KDNode* area, std::vector<std::vector<double> >& costsLeft, std::vector<std::vector<double> >& costsRight, MPI_Comm commGroup);
 
 
 	//! @brief calculates the index of a certain cell in the global cell array
@@ -351,6 +351,7 @@ class KDDecomposition: public DomainDecompBase{
 	void getNumParticles(ParticleContainer* moleculeContainer);
 
 	void balance();
+
 	//######################################
 	//###    private member variables    ###
 	//######################################
@@ -377,9 +378,8 @@ class KDDecomposition: public DomainDecompBase{
 	// each process owns an area in the decomposition
 	KDNode* _ownArea;
 
-	/* TODO: Is there a problem with the limit of 255 particles per cell?! */
 	//! Number of particles for each cell (including halo?)
-	unsigned char* _numParticlesPerCell;
+	unsigned int* _numParticlesPerCell;
 	//TODO
 	float* _globalLoadPerCell;
 	ParticleContainer* _moleculeContainer;

@@ -7,7 +7,7 @@
 #include "parallel/MPIKDNode.h"
 
 //! @brief represents a node in the decomposition tree when using KDDecomposition
-//! @author Martin Buchholz
+//! @author Martin Buchholz, Wolfgang Eckhardt
 //! 
 //! The KDDecomposition decomposes the domain by recursively splitting the domain
 //! into smaller parts. This class is used to represent this decomposition.
@@ -35,9 +35,28 @@ public:
 	KDNode() : _child1(NULL), _child2(NULL) {
 	}
 
-	KDNode(int numP, const int low[KDDIM], const int high[KDDIM], int id, int owner, bool coversAll[KDDIM])
+
+	/**
+	 * Copy constructor copies all execpt the children (are set to NULL!)
+	 */
+	KDNode(const KDNode& other) : _numProcs(other._numProcs), _nodeID(other._nodeID),
+			_owningProc(other._owningProc), _child1(NULL), _child2(NULL),
+			_load(other._load), _optimalLoadPerProcess(other._optimalLoadPerProcess),
+			_expectedDeviation(other._expectedDeviation), _deviation(other._deviation),
+			_level(other._level)
+	{
+		for (int dim = 0; dim < KDDIM; dim++) {
+			_lowCorner[dim] = other._lowCorner[dim];
+			_highCorner[dim] = other._highCorner[dim];
+			_coversWholeDomain[dim] = other._coversWholeDomain[dim];
+		}
+	}
+
+	KDNode(int numP, const int low[KDDIM], const int high[KDDIM], int id, int owner, bool coversAll[KDDIM], int level)
 	: _numProcs(numP), _nodeID(id), _owningProc(owner),
-	  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0) {
+	  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0),
+	  _expectedDeviation(0.0), _deviation(0.0), _level(level)
+	{
 		for (int dim = 0; dim < KDDIM; dim++) {
 			_lowCorner[dim] = low[dim];
 			_highCorner[dim] = high[dim];
@@ -80,6 +99,29 @@ public:
 	 * @return maximum number of processes, which could be assigned to this node.
 	 */
 	unsigned int getNumMaxProcs();
+
+	double calculateAvgLoadPerProc() {
+		return _load / ((double) _numProcs);
+	}
+
+	void calculateExpectedDeviation() {
+		double child1Dev = _child1->calculateAvgLoadPerProc() - _optimalLoadPerProcess;
+		child1Dev = child1Dev * child1Dev;
+		double child2Dev = _child2->calculateAvgLoadPerProc() - _optimalLoadPerProcess;
+		child2Dev = child2Dev * child2Dev;
+		_expectedDeviation = child1Dev * (double) _child1->_numProcs
+		                     + child2Dev * (double) _child2->_numProcs;
+	}
+
+	void calculateDeviation() {
+		if (_numProcs == 1) {
+			//_deviation = _load - _optimalLoadPerProcess;
+			double dev = _load - _optimalLoadPerProcess;
+			_deviation = dev * dev;
+		} else {
+			_deviation = _child1->_deviation + _child2->_deviation;
+		}
+	}
 
 	/**
 	 * Split this node, i.e. create two children (note, that its children must be
@@ -141,6 +183,11 @@ public:
 
 	double _load;
 	double _optimalLoadPerProcess;
+	double _expectedDeviation;
+	double _deviation;
+
+	// level of this node (at root node, level = 0)
+	int _level;
 };
 
 #endif /*KDNODE_H_*/

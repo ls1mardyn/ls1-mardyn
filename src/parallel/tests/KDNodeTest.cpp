@@ -22,16 +22,16 @@ void KDNodeTest::testEqual() {
 	int upperEnd[] = {3, 3, 3};
 	bool coversAll[] = {true, true, true};
 
-	KDNode node1(5, lowerEnd, upperEnd, 41, 0, coversAll);
-	KDNode node2(5, lowerEnd, upperEnd, 41, 0, coversAll);
+	KDNode node1(5, lowerEnd, upperEnd, 41, 0, coversAll, 0);
+	KDNode node2(5, lowerEnd, upperEnd, 41, 0, coversAll, 0);
 	ASSERT_TRUE(node1.equals(node2));
 
-	KDNode node3(7, lowerEnd, upperEnd, 41, 0, coversAll);
+	KDNode node3(7, lowerEnd, upperEnd, 41, 0, coversAll, 0);
 	ASSERT_TRUE(! node1.equals(node3));
 
-	KDNode* node4 = new KDNode(7, lowerEnd, upperEnd, 41, 0, coversAll);
+	KDNode* node4 = new KDNode(7, lowerEnd, upperEnd, 41, 0, coversAll, 0);
 	node1._child1 = node4;
-	KDNode* node5 = new KDNode(7, lowerEnd, upperEnd, 41, 0, coversAll);
+	KDNode* node5 = new KDNode(7, lowerEnd, upperEnd, 41, 0, coversAll, 0);
 	node2._child1 = node5;
 	// node4 and node5 are deleted by their root nodes...
 	ASSERT_TRUE(node1.equals(node2));
@@ -42,18 +42,18 @@ void KDNodeTest::testSplit() {
 	int upperEnd[] = {7, 3, 3};
 	bool coversAll[] = {true, true, true};
 
-	KDNode root(7, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode root(7, lowerEnd, upperEnd, 1, 0, coversAll, 0);
 	root.split(1, 1, 3);
 
-	KDNode resultRoot(7, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode resultRoot(7, lowerEnd, upperEnd, 1, 0, coversAll, 0);
 	int lower1[] = {0, 0, 0};
 	int upper1[] = {7, 1, 3};
 	bool childCoversAll[] = {true, false, true};
-	KDNode* resultChild1 = new KDNode(3, lower1, upper1, 2, 0, childCoversAll);
+	KDNode* resultChild1 = new KDNode(3, lower1, upper1, 2, 0, childCoversAll, 1);
 
 	int lower2[] = {0, 2, 0};
 	int upper2[] = {7, 3, 3};
-	KDNode* resultChild2 = new KDNode(4, lower2, upper2, 7, 3, childCoversAll);
+	KDNode* resultChild2 = new KDNode(4, lower2, upper2, 7, 3, childCoversAll, 1);
 	resultRoot._child1 = resultChild1;
 	resultRoot._child2 = resultChild2;
 
@@ -66,24 +66,24 @@ void KDNodeTest::testBuildKDTree() {
 	int upperEnd[] = {7, 3, 3};
 	bool coversAll[] = {true, true, true};
 
-	KDNode node1(1, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode node1(1, lowerEnd, upperEnd, 1, 0, coversAll, 0);
 	node1.buildKDTree();
-	KDNode result(1, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode result(1, lowerEnd, upperEnd, 1, 0, coversAll, 0);
 	ASSERT_TRUE(node1.equals(result));
 
 
-	KDNode root(2, lowerEnd, upperEnd, 0, 0, coversAll);
+	KDNode root(2, lowerEnd, upperEnd, 0, 0, coversAll, 0);
 	root.buildKDTree();
 
-	KDNode resultRoot(2, lowerEnd, upperEnd, 0, 0, coversAll);
+	KDNode resultRoot(2, lowerEnd, upperEnd, 0, 0, coversAll, 0);
 	int lower1[] = {0, 0, 0};
 	int upper1[] = {3, 3, 3};
 	bool childCoversAll[] = {false, true, true};
-	KDNode* resultChild1 = new KDNode(1, lower1, upper1, 1, 0, childCoversAll);
+	KDNode* resultChild1 = new KDNode(1, lower1, upper1, 1, 0, childCoversAll, 1);
 
 	int lower2[] = {4, 0, 0};
 	int upper2[] = {7, 3, 3};
-	KDNode* resultChild2 = new KDNode(1, lower2, upper2, 2, 1, childCoversAll);
+	KDNode* resultChild2 = new KDNode(1, lower2, upper2, 2, 1, childCoversAll, 1);
 	resultRoot._child1 = resultChild1;
 	resultRoot._child2 = resultChild2;
 
@@ -94,26 +94,26 @@ void KDNodeTest::testFindAreaForProcess() {
 	int lowerEnd[] = {0, 0, 0};
 	int upperEnd[] = {7, 3, 3};
 	bool coversAll[] = {true, true, true};
-	KDNode resultRoot(3, lowerEnd, upperEnd, 1, 0, coversAll);
+	KDNode resultRoot(3, lowerEnd, upperEnd, 1, 0, coversAll, 0);
 
 	int lower1[] = {0, 0, 0};
 	int upper1[] = {3, 3, 3};
 	bool childCoversAll[] = {false, true, true};
-	KDNode* resultChild1 = new KDNode(2, lower1, upper1, 1, 0, childCoversAll);
+	KDNode* resultChild1 = new KDNode(2, lower1, upper1, 1, 0, childCoversAll, 1);
 	int lower2[] = {4, 0, 0};
 	int upper2[] = {7, 3, 3};
-	KDNode* resultChild2 = new KDNode(1, lower2, upper2, 1, 2, childCoversAll);
+	KDNode* resultChild2 = new KDNode(1, lower2, upper2, 1, 2, childCoversAll, 1);
 
 	resultRoot._child1 = resultChild1;
 	resultRoot._child2 = resultChild2;
 
 	int lower3[] = {0, 0, 0};
 	int upper3[] = {1, 3, 3};
-	KDNode* resultChild3 = new KDNode(1, lower3, upper3, 1, 0, childCoversAll);
+	KDNode* resultChild3 = new KDNode(1, lower3, upper3, 1, 0, childCoversAll, 2);
 
 	int lower4[] = {2, 0, 0};
 	int upper4[] = {3, 3, 3};
-	KDNode* resultChild4 = new KDNode(1, lower4, upper4, 1, 1, childCoversAll);
+	KDNode* resultChild4 = new KDNode(1, lower4, upper4, 1, 1, childCoversAll, 2);
 
 	resultRoot._child1->_child1 = resultChild3;
 	resultRoot._child1->_child2 = resultChild4;
@@ -133,7 +133,7 @@ void KDNodeTest::testGetMPIKDNode() {
 	}
 
 	MPIKDNodePacked mpiNode(coversWholeDomain, 1, lowerCorner, higherCorner,
-			7, 0, -1, -1, 1, 0.0, 0.0);
+			7, 0, -1, -1, 1, 0.0, 0.0, 2.0, 3.0, 2);
 
 	for (int i = 0; i < 3; i++) {
 		ASSERT_EQUAL(mpiNode.getCoversWholeDomain(i), true);
@@ -142,7 +142,9 @@ void KDNodeTest::testGetMPIKDNode() {
 	}
 
 	bool coversAll[3] = {true};
-	KDNode node(1, lowerCorner, higherCorner, 7, 0, coversAll);
+	KDNode node(1, lowerCorner, higherCorner, 7, 0, coversAll, 2);
+	node._expectedDeviation = 2.0;
+	node._deviation = 3.0;
 	MPIKDNodePacked newMPINode = node.getMPIKDNode();
 	ASSERT_EQUAL(newMPINode.getOwningProc(), mpiNode.getOwningProc());
 	ASSERT_EQUAL(newMPINode.getNumProcs(), mpiNode.getNumProcs());
@@ -155,4 +157,8 @@ void KDNodeTest::testGetMPIKDNode() {
 	ASSERT_EQUAL(newMPINode.getHighCorner(0), mpiNode.getHighCorner(0));
 	ASSERT_EQUAL(newMPINode.getHighCorner(1), mpiNode.getHighCorner(1));
 	ASSERT_EQUAL(newMPINode.getHighCorner(2), mpiNode.getHighCorner(2));
+
+	ASSERT_EQUAL(newMPINode.getExpectedDeviation(), mpiNode.getExpectedDeviation());
+	ASSERT_EQUAL(newMPINode.getDeviation(), mpiNode.getDeviation());
+	ASSERT_EQUAL(newMPINode.getLevel(), mpiNode.getLevel());
 }

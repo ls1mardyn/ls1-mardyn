@@ -29,6 +29,7 @@ bool KDNode::equals(KDNode& other) {
 	equal = equal && (_numProcs == other._numProcs);
 	equal = equal && (_nodeID == other._nodeID);
 	equal = equal && (_owningProc == other._owningProc);
+	equal = equal && (_level == other._level);
 
 	for (int i = 0; i < KDDIM; i++) {
 		equal = equal && (_lowCorner[i] == other._lowCorner[i]);
@@ -95,14 +96,14 @@ void KDNode::printTree(std::string prefix) {
 	if (_numProcs == 1) {
 		std::cout << prefix << "LEAF: " << _nodeID << ", Owner: " << _owningProc
 				<< ", Corners: (" << _lowCorner[0] << ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / ("
-				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << std::endl;
+				<< _highCorner[0] << ", " << _highCorner[1] << ", " << _highCorner[2] << "), Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
 	}
 	else {
 		std::cout << prefix << "INNER: " << _nodeID << ", Owner: " << _owningProc
 				<< "(" << _numProcs << " procs)" << ", Corners: (" << _lowCorner[0]
 				<< ", " << _lowCorner[1] << ", " << _lowCorner[2] << ") / (" << _highCorner[0]
 				<< ", " << _highCorner[1] << ", " << _highCorner[2] << ")"
-				" child1: " << _child1 << " child2: " << _child2 << ", Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << std::endl;
+				" child1: " << _child1 << " child2: " << _child2 << ", Load: " << _load << ", OptLoad:" << _optimalLoadPerProcess << " level=" << _level << std::endl;
 		std::stringstream childprefix;
 		childprefix << prefix << "  ";
 		if (_child1 != NULL) {
@@ -135,7 +136,8 @@ KDNode::MPIKDNode KDNode::getMPIKDNode() {
 	// const int& nodeID, const int& owningProc, const int& firstChildID, const int& secondChildID,
 	// const int& nextSendingProcess, const double& load, const double& OptimalLoadPerProcess
 	return MPIKDNode(coversWholeDomain, _numProcs, _lowCorner, _highCorner,
-				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess);
+				_nodeID, _owningProc, leftChildID, rightChildID, nextSender, _load, _optimalLoadPerProcess,
+				_expectedDeviation, _deviation, _level);
 }
 
 bool KDNode::isResolvable() {
@@ -192,6 +194,8 @@ void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 	id2 = _nodeID + 2 * numProcsLeft;
 	owner1 = _owningProc;
 	owner2 = owner1 + numProcsLeft;
-	_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll);
-	_child2 = new KDNode(_numProcs - numProcsLeft, low2, high2, id2, owner2, coversAll);
+	_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll, _level+1);
+	_child1->_optimalLoadPerProcess = _optimalLoadPerProcess;
+	_child2 = new KDNode(_numProcs - numProcsLeft, low2, high2, id2, owner2, coversAll, _level+1);
+	_child2->_optimalLoadPerProcess = _optimalLoadPerProcess;
 }
