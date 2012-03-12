@@ -875,7 +875,7 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 			}
 
 			clone->split(dim, node->_lowCorner[dim] + i, numProcsLeft);
-			if ((clone->_child1->_numProcs + clone->_child2->_numProcs) >
+			if ( (unsigned int) (clone->_child1->_numProcs + clone->_child2->_numProcs) >
 			        (clone->_child1->getNumMaxProcs() + clone->_child2->getNumMaxProcs())) {
 				domainTooSmall = true;
 				delete clone;
