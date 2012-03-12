@@ -164,6 +164,8 @@ int main(int argc, char** argv) {
 
     delete global_log;
 
+	simulation.finalize();
+
 #ifdef ENABLE_MPI
     MPI_Finalize();
 #endif

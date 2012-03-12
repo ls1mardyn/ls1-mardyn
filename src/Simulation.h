@@ -190,6 +190,9 @@ public:
 	//! function and writeCheckpoint for XDR (configuration) files.
 	void output(unsigned long simstep);
 
+	//! @brief clean up simulation
+	void finalize();
+
 	//! The following things have to be done here:
 	//! - bring all molecules to the corresponding processes (including copies for halo)
 	//! - update the caches of the molecules

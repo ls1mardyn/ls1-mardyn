@@ -1233,6 +1233,13 @@ void Simulation::output(unsigned long simstep) {
 	        << _domain->getAverageGlobalUpot() << "\tp = " << _domain->getGlobalPressure() << endl;
 }
 
+void Simulation::finalize() {
+#ifdef ENABLE_MPI
+	delete _domainDecomposition;
+	_domainDecomposition = NULL;
+#endif
+}
+
 void Simulation::updateParticleContainerAndDecomposition() {
 
 	// The particles have moved, so the neighbourhood relations have
