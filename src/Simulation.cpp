@@ -38,6 +38,7 @@
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
+#include "parallel/KDDecomposition2.h"
 #else
 #include "parallel/DomainDecompDummy.h"
 #endif
@@ -509,6 +510,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 			else if(token=="KDDecomposition") {
 				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 10);
+			}
+			else if(token=="KDDecomposition2") {
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition2(_cutoffRadius, _domain, 1.0, 10);
 			}
 #endif
 		} else if (token == "datastructure") {
