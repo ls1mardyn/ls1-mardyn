@@ -18,10 +18,10 @@
 using namespace std;
 using Log::global_log;
 
-#define DEBUG_DECOMP
+//#define DEBUG_DECOMP
 
-KDDecomposition2::KDDecomposition2(double cutoffRadius, Domain* domain, double alpha, int updateFrequency)
-		: _steps(0), _frequency(updateFrequency), _alpha(alpha) {
+KDDecomposition2::KDDecomposition2(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
+		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold) {
 
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank) );
 	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
@@ -58,6 +58,8 @@ KDDecomposition2::KDDecomposition2(double cutoffRadius, Domain* domain, double a
 	// initialize the mpi data type for particles once in the beginning
 	ParticleData::setMPIType(_mpi_Particle_data);
 	KDNode::initMPIDataType();
+
+	global_log->info() << "Created KDDecomposition2 with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
 }
 
 KDDecomposition2::~KDDecomposition2() {
@@ -241,6 +243,7 @@ double KDDecomposition2::guaranteedDistance(double x, double y, double z, Domain
 	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }
 
+// TODO delete unused methdo countMolecules!
 unsigned long KDDecomposition2::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
 	const int numComponents = compCount.size();
 	unsigned long* localCompCount = new unsigned long[numComponents];
@@ -751,22 +754,32 @@ bool KDDecomposition2::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm 
 	std::list<KDNode*> subdivisions;
 	domainTooSmall = calculateAllSubdivisions(fatherNode, subdivisions, commGroup);
 
-#ifdef DEBUG_DECOMP
-	std::stringstream fname;
-	fname << "Div_proc_" << _ownRank << "_step_" << _steps << ".txt";
-	std::ofstream filestream(fname.str().c_str(), ios::app);
-	for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
-	filestream << "Division at rank=" << _ownRank << " for [" << fatherNode->_lowCorner[0]
-               << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
-               << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "] " <<
-               "level=" << fatherNode->_level << endl;
-#endif
-
 	KDNode* bestSubdivision = NULL;
 	double minimalDeviation = globalMinimalDeviation;
 	list<KDNode*>::iterator iter = subdivisions.begin();
 	int iterations = 0;
-	int maxIterations = INT_MAX;
+	int log2 = 0;
+	while ((_numProcs >> log2) > 1) {
+		log2++;
+	}
+	// if we are near the root of the tree, we just take the first best subdivision
+	int maxIterations = 1;
+	if (fatherNode->_level > (log2 - _fullSearchThreshold)) {
+		maxIterations = INT_MAX;
+	}
+
+#ifdef DEBUG_DECOMP
+	std::stringstream fname;
+	fname << "Div_proc_" << _ownRank << "_step_" << _steps << ".txt";
+	std::ofstream filestream(fname.str().c_str(), ios::app);
+	filestream.precision(8);
+	for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
+	filestream << "Division at rank=" << _ownRank << " for [" << fatherNode->_lowCorner[0]
+               << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
+               << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "] " <<
+               "level=" << fatherNode->_level << " #divisions=" << subdivisions.size() << endl;
+#endif
+
 	while (iter !=  subdivisions.end() && (iterations < maxIterations) && (*iter)->_expectedDeviation < minimalDeviation) {
 		iterations++;
 #ifdef DEBUG_DECOMP
@@ -863,8 +876,20 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 	calculateCostsPar(node, costsLeft, costsRight, commGroup);
 
 	for (int dim = 0; dim < 3; dim++) {
+
+		// if a node has some more processors, we probably don't have to find the
+		// "best" partitioning, but it's sufficient to divide the node in the middle
+		// and shift the processor count according to the load imbalance.
+
 		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
-		for (int i = 1; i < node->_highCorner[dim] - node->_lowCorner[dim] - 1; i++) {
+		int startIndex = 1;
+		int endIndex = node->_highCorner[dim] - node->_lowCorner[dim] - 1;
+		if (node->_numProcs > _fullSearchThreshold) {
+			startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
+			endIndex = min(endIndex, startIndex + 1);
+		}
+
+		for (int i = startIndex; i < endIndex; i++) {
 			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) node->_numProcs);
 			int optNumProcsLeft = min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
 			int numProcsLeft = (int) max(1, optNumProcsLeft);
@@ -935,14 +960,8 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
  */
 void KDDecomposition2::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, MPI_Comm commGroup) {
 
-	double areaCosts = 0.0;
-
 	vector<vector<double> > cellCosts;
-	vector<vector<double> > sepCostLeft;
-	vector<vector<double> > sepCostRight;
 	cellCosts.resize(3);
-	sepCostLeft.resize(3);
-	sepCostRight.resize(3);
 
 	int newRank;
 	MPI_Group group;
@@ -964,9 +983,6 @@ void KDDecomposition2::calculateCostsPar(KDNode* area, vector<vector<double> >& 
 	for (int dim = 0; dim < 3; dim++) {
 
 		cellCosts[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostRight[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-
 		costsLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		costsRight[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
@@ -990,8 +1006,6 @@ void KDDecomposition2::calculateCostsPar(KDNode* area, vector<vector<double> >& 
 			else
 				cellCosts[dim][i_dim] = cellCosts[dim][i_dim - 1];
 
-			sepCostLeft[dim][i_dim] = 0;
-			sepCostRight[dim][i_dim] = 0;
 			int dim1, dim2;
 			if (dim == 0) {
 				dim1 = 1;
@@ -1038,49 +1052,12 @@ void KDDecomposition2::calculateCostsPar(KDNode* area, vector<vector<double> >& 
 								if (nI_dim2 + area->_lowCorner[dim2] >= _globalCellsPerDim[dim2])
 									nI_dim2 = 0;
 								// count only forward neighbours
-								//if (getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area) > getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)) {
-									int numPartsNeigh = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area)];
-									cellCosts[dim][i_dim] += 0.5 * (double) (numParts * numPartsNeigh);
-								//}
+								int numPartsNeigh = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area)];
+								cellCosts[dim][i_dim] += 0.5 * (double) (numParts * numPartsNeigh);
 							}
 						}
 					}
-
-					// #######################
-					// ## Separation Costs  ##
-					// #######################
-
-					// Neighbours on the other (right) side of the dividing plane (consider periodic boundary)
-/*					int neighInd_divDim = i_dim + 1;
-					if (neighInd_divDim + area->_lowCorner[dim] == _globalCellsPerDim[dim])
-						neighInd_divDim = 0;
-
-					// loop over all nine neighbours right of that plane
-					for (int neighInd_dim1 = i_dim1 - 1; neighInd_dim1 <= i_dim1 + 1; neighInd_dim1++) {
-						// adjust index in case of periodic boundary
-						int nI_dim1 = neighInd_dim1;
-						if (nI_dim1 + area->_lowCorner[dim1] < 0)
-							nI_dim1 = _globalCellsPerDim[dim1] - 1;
-						if (nI_dim1 + area->_lowCorner[dim1] >= _globalCellsPerDim[dim1])
-							nI_dim1 = 0;
-
-						for (int neighInd_dim2 = i_dim2 - 1; neighInd_dim2 <= i_dim2 + 1; neighInd_dim2++) {
-							// adjust index in case of periodic boundary
-							int nI_dim2 = neighInd_dim2;
-							if (nI_dim2 + area->_lowCorner[dim2] < 0)
-								nI_dim2 = _globalCellsPerDim[dim2] - 1;
-							if (nI_dim2 + area->_lowCorner[dim2] >= _globalCellsPerDim[dim2])
-								nI_dim2 = 0;
-							int numPartsNeigh = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, neighInd_divDim, nI_dim1, nI_dim2, area)];
-							if (getGlobalIndex(dim, dim1, dim2, neighInd_divDim, nI_dim1, nI_dim2, area) > getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)) {
-								sepCostRight[dim][i_dim] += 0.5 * (double) (numParts * numPartsNeigh);
-							}
-							else {
-								sepCostLeft[dim][i_dim] += 0.5 * (double) (numParts * numPartsNeigh);
-							}
-						}
-					}
-			*/	}
+				}
 			}
 		}
 
@@ -1106,31 +1083,18 @@ void KDDecomposition2::calculateCostsPar(KDNode* area, vector<vector<double> >& 
 	}
 	for (int dim = 0; dim < 3; dim++) {
 		vector<double> cellCostsSum;
-		vector<double> sepCostSumLeft;
-		vector<double> sepCostSumRight;
 		cellCostsSum.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostSumLeft.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostSumRight.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
 		int size2 = cellCostsSum.size();
 		MPI_CHECK( MPI_Allreduce(&cellCosts[dim][0], &cellCostsSum[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
-		MPI_CHECK( MPI_Allreduce(&sepCostLeft[dim][0], &sepCostSumLeft[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
-		MPI_CHECK( MPI_Allreduce(&sepCostRight[dim][0], &sepCostSumRight[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
 
 		for (int i_dim = 0; i_dim <= area->_highCorner[dim] - area->_lowCorner[dim]; i_dim++) {
-			areaCosts += cellCosts[dim][i_dim];
-
-			costsLeft[dim][i_dim] = cellCostsSum[i_dim] + sepCostSumLeft[i_dim];
-			if (costsLeft[dim][i_dim] < 0.001) {
-				costsLeft[dim][i_dim] = 0.0;
-			}
-			costsRight[dim][i_dim] = cellCostsSum[area->_highCorner[dim] - area->_lowCorner[dim]] - cellCostsSum[i_dim] + sepCostSumRight[i_dim];
-			if (costsRight[dim][i_dim] < 0.001) {
-				costsRight[dim][i_dim] = 0.0;
-			}
+			costsLeft[dim][i_dim] = cellCostsSum[i_dim];
+			costsRight[dim][i_dim] = cellCostsSum[area->_highCorner[dim] - area->_lowCorner[dim]] - cellCostsSum[i_dim];
 		}
 	}
 }
+
 
 unsigned int KDDecomposition2::getGlobalIndex(int divDim, int dim1, int dim2, int index_divDim, int index_dim1, int index_dim2, KDNode* localArea) {
 	int xIndex, yIndex, zIndex;

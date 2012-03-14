@@ -62,9 +62,6 @@ int main(int argc, char** argv) {
 	int world_size = 1;
 	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );
 	global_log->info() << "Running with " << world_size << " processes." << endl;
-	int rank;
-	MPI_CHECK( MPI_Comm_rank( MPI_COMM_WORLD,&rank));
-	std::cout << "Hello from rank=" << rank << endl;
 #endif
 
 	OptionParser op;

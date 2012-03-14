@@ -170,7 +170,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			break;
 		case KD_DECOMPOSITION:
 			/* TODO: remove parameters from KDDecomposition constructor */
-			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 10);
+			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
 			break;
 #endif
 		case UNKNOWN_DECOMPOSITION:
@@ -509,10 +509,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 			}
 			else if(token=="KDDecomposition") {
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 10);
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
 			}
 			else if(token=="KDDecomposition2") {
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition2(_cutoffRadius, _domain, 1.0, 10);
+				int updateFrequency = 100;
+				int fullSearchThreshold = 3;
+				string line;
+				getline(inputfilestream, line);
+				stringstream lineStream(line);
+				lineStream >> updateFrequency >> fullSearchThreshold;
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition2(_cutoffRadius, _domain, updateFrequency, fullSearchThreshold);
 			}
 #endif
 		} else if (token == "datastructure") {
@@ -550,7 +556,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				//creates a new Adaptive SubCells datastructure
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
-				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius);
+					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius);
 			} else {
 				global_log->error() << "UNKOWN DATASTRUCTURE: " << token << endl;
 				exit(1);
@@ -935,8 +941,11 @@ void Simulation::prepare_start() {
 
 	global_log->info() << "Calculating global values" << endl;
 	_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
+
 	_domain->calculateVelocitySums(_moleculeContainer);
+
 	_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, true, 1.0);
+	global_log->debug() << "Calculating global values finished." << endl;
 
 	if (_lmu.size() > 0) {
 		/* TODO: thermostat */
@@ -1008,7 +1017,8 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 	// all timers except the ioTimer messure inside the main loop
-	Timer loopTimer;;
+	Timer loopTimer;
+	Timer decompositionTimer;
 	Timer perStepIoTimer;
 	Timer ioTimer;
 
@@ -1047,7 +1057,11 @@ void Simulation::simulate() {
 
 		// ensure that all Particles are in the right cells and exchange Particles
 		global_log->debug() << "Updating container and decomposition" << endl;
+		loopTimer.stop();
+		decompositionTimer.start();
 		updateParticleContainerAndDecomposition();
+		decompositionTimer.stop();
+		loopTimer.start();
 
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
@@ -1195,6 +1209,7 @@ void Simulation::simulate() {
 	ioTimer.stop();
 
 	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Decomposition took. " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
 

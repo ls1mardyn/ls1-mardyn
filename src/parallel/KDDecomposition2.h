@@ -13,6 +13,7 @@ class Molecule;
 class ParticleData;
 class KDNode;
 
+
 /**
  * This class is coppy&paste from KDDecomposition. Basic idea is to build up
  * all possible subdivisions and do a A*-like search of the best subdivision.
@@ -32,13 +33,20 @@ class KDDecomposition2: public DomainDecompBase{
 	friend class KDDecompositionTest;
 
  public:
-	//! @brief create an initial decomposition tree
-	//!
-	//! The constructor has to determine the own rank and the number of neighbours.
-	//! It has to determine the number of cells and create an initial decomposition
-	//! of the domain (no knowledge about particles yet), which is stored in
-	//! _decompTree and _ownArea
-	KDDecomposition2(double cutoffRadius, Domain* domain, double alpha, int updateFrequency);
+	/** @brief create an initial decomposition tree
+	 *
+	 * The constructor determines the number of cells and creates an initial decomposition
+	 * of the domain (not yet balanced), which is stored in _decompTree and _ownArea.
+	 * @param cutoffRadius largest cutoff radius of a molecule (determines a basic
+	 *                     cell for loadbalancing)
+	 * @param domain
+	 * @param updateFrequency every n-th timestep, load will be balanced.
+	 * @param fullSearchThreshold If a KDNode has a processor count less or equal this number,
+	 *                            all possible decompositions will be investigated, so it
+	 *                            influences the quality of the load balancing. I recommend to
+	 *                            set it to 2 - 4.
+	 */
+	KDDecomposition2(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold);
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition2();
@@ -376,12 +384,12 @@ class KDDecomposition2: public DomainDecompBase{
 	//! determines how often rebalancing is done
 	int _frequency;
 
-	//! weighting of costs for distance and force calculations
-	//! Load(cell) = alpha * distancecosts(cell) + (1-alpha) * forcecosts(cell)
-	//! alpha has to be between 0.0 and 1.0 but usually should be larger than 0.3
-	//! For simple fluids (1CLJ), 1.0 is optimal, for complex fluids a smaller value is better
-	//! (e.g. 0.7 for 2CLJQ)
-	double _alpha;
+	/*
+	 * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,
+	 * it is for each dimension divided in the middle only. Otherwise, all possible subdivisions
+	 * are created.
+	 */
+	int _fullSearchThreshold;
 
 	// mpi data type for particle data
 	MPI_Datatype _mpi_Particle_data;
