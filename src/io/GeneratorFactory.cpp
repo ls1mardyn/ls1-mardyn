@@ -41,7 +41,7 @@ InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::strin
 
 	return generator;
 #else
-	global_log->error() << "Generators not supported! (Compile with -DSUPPORT_GENERATORS!)" << endl;
+	global_log->error() << "Generators not supported! (Compile with -DSUPPORT_GENERATOR!)" << endl;
 	return NULL;
 #endif
 }
