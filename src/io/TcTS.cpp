@@ -187,7 +187,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
    {
       N_id[i] = box[0]*(0.5*box[1])*box[2] * ((i == 0)? rho: rho2);
       double N_boxes = N_id[i] / 3.0;
-      fl_units[1][i] = round(
+      fl_units[1][i] = (unsigned int) round(
                           pow(
                              (N_boxes * (0.5*box[1]) * (0.5*box[1]))
                                       / (this->box[0] * this->box[2]), 1.0/3.0
@@ -195,9 +195,9 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
                        );
       if(fl_units[1][i] == 0) fl_units[1][i] = 1;
       double bxbz_id = N_boxes / fl_units[1][i];
-      fl_units[0][i] = round(sqrt(this->box[0] * bxbz_id / this->box[2]));
+      fl_units[0][i] = (unsigned int) round(sqrt(this->box[0] * bxbz_id / this->box[2]));
       if(fl_units[0][i] == 0) fl_units[0][i] = 1;
-      fl_units[2][i] = ceil(bxbz_id / fl_units[0][i]);
+      fl_units[2][i] = (unsigned int) ceil(bxbz_id / fl_units[0][i]);
       for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? 0.5: 1.0) * box[d] / (double)fl_units[d][i];
       cout << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << ".\n";
    }

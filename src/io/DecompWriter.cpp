@@ -43,7 +43,7 @@ void DecompWriter::doOutput( ParticleContainer* particleContainer,
 		if(_incremental) {
 			filenamestream << "-";
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			int num_digits = ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
+			int num_digits = (int) ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
 		filenamestream << ".decomp";
