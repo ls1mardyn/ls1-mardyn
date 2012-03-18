@@ -95,6 +95,8 @@ public:
 	//! @param y y-coordinate of the position for which the guaranteed distance is returned
 	//! @param z z-coordinate of the position for which the guaranteed distance is returned
 	//! @param domain might be needed to get the bounding box
+	//!
+	//! @TODO move this method to the DropletGenerator!
 	virtual double guaranteedDistance(double x, double y, double z, Domain* domain) = 0;
 
 	//! @brief counts the number of molecules of each component type.
@@ -107,6 +109,8 @@ public:
 	//!                  this method will will the vector with the number of molecules for each
 	//!                  of the components (in the global domain)
 	//! @return the number of molecules in the global domain is returned
+	//!
+	//! @TODO move this method to the DropletGenerator!
 	virtual unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount) = 0;
 
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)

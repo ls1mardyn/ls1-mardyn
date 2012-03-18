@@ -243,7 +243,7 @@ double KDDecomposition2::guaranteedDistance(double x, double y, double z, Domain
 	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }
 
-// TODO delete unused methdo countMolecules!
+// TODO move method countMolecules to DropletGenerator!
 unsigned long KDDecomposition2::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
 	const int numComponents = compCount.size();
 	unsigned long* localCompCount = new unsigned long[numComponents];
@@ -914,6 +914,7 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 				clone->_child1->_numProcs--;
 				clone->_child2->_numProcs++;
 				clone->_child2->_owningProc--;
+				clone->_child2->_nodeID = clone->_nodeID + 2 * clone->_child1->_numProcs;
 				domainTooSmall = true;
 			}
 
@@ -922,13 +923,15 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 				clone->_child1->_numProcs++;
 				clone->_child2->_numProcs--;
 				clone->_child2->_owningProc++;
+				clone->_child2->_nodeID = clone->_nodeID + 2 * clone->_child1->_numProcs;
 				domainTooSmall = true;
 			}
 
 			// In this place, MBu had some processor shifting in his algorithm.
 			// I believe it to be unneccessary, as the ratio of left and right processors
 			// is chosen according to the load ratio (I use round instead of floor).
-			if (clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) {
+			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
+					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				global_log->error() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
 				global_simulation->exit(1);
 			}
