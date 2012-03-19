@@ -52,7 +52,7 @@ void BlockTraverse::processCell(ParticleCell& cell, double& cutoffRadiusSquare, 
             double dd = molecule2.dist2(molecule1, distanceVector);
 
             if (dd < cutoffRadiusSquare) {
-                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, true );
+                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare) );
                 if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
                     particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
                 }
@@ -76,7 +76,7 @@ void BlockTraverse::processCellPair( ParticleCell &cell1, ParticleCell& cell2, d
             double dd = molecule2.dist2(molecule1, distanceVector);
 
             if (dd < cutoffRadiusSquare) {
-                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, true );
+                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare) );
                 if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
                     particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
                 }
