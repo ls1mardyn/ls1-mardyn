@@ -44,31 +44,16 @@ Component::Component(unsigned int id) {
 void Component::addLJcenter(double x, double y, double z,
                             double m, double eps, double sigma,
                             double rc, bool TRUNCATED_SHIFTED) {
+	double shift6 = 0.0;
 	if (TRUNCATED_SHIFTED) {
 		double sigperrc2 = sigma * sigma / (rc * rc);
 		double sigperrc6 = sigperrc2 * sigperrc2 * sigperrc2;
-		double shift6 = 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
-		_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, rc, shift6));
-	}
-	else {
-		_ljcenters.push_back(LJcenter(x, y, z, m, eps, sigma, rc, 0.0));
+		shift6 = 24.0 * eps * (sigperrc6 - sigperrc6 * sigperrc6);
 	}
 
-	_m += m;
-	// assume the input is already transformed to the principal axes system
-	// (and therefore the origin is the center of mass)
-	_I[0] += m * (y * y + z * z);
-	_I[1] += m * (x * x + z * z);
-	_I[2] += m * (x * x + y * y);
-	_I[3] -= m * x * y;
-	_I[4] -= m * x * z;
-	_I[5] -= m * y * z;
-
-	_rot_dof = 3;
-	for (unsigned short d = 0; d < 3; ++d) {
-		_Ipa[d] = _I[d];
-		if (_Ipa[d] == 0.) --_rot_dof;
-	}
+	LJcenter ljsite(x, y, z, m, eps, sigma, rc, shift6);
+	_ljcenters.push_back(ljsite);
+	updateMassInertia(ljsite);
 }
 
 void Component::updateMassInertia() {
@@ -113,23 +98,9 @@ void Component::updateMassInertia(Site& site) {
 }
 
 void Component::addCharge(double x, double y, double z, double m, double q) {
-	_charges.push_back(Charge(x, y, z, m, q));
-	_m += m;
-
-	// assume the input is already transformed to the principal axes system
-	// (and therefore the origin is the center of mass)
-	_I[0] += m * (y * y + z * z);
-	_I[1] += m * (x * x + z * z);
-	_I[2] += m * (x * x + y * y);
-	_I[3] -= m * x * y;
-	_I[4] -= m * x * z;
-	_I[5] -= m * y * z;
-
-	_rot_dof = 3;
-	for (unsigned short d = 0; d < 3; ++d) {
-		_Ipa[d] = _I[d];
-		if (_Ipa[d] == 0.) --_rot_dof;
-	}
+	Charge chargesite(x, y, z, m, q);
+	_charges.push_back(chargesite);
+	updateMassInertia(chargesite);
 }
 
 void Component::addDipole(double x, double y, double z,
@@ -148,23 +119,9 @@ void Component::addTersoff(double x, double y, double z,
                            double m, double A, double B, double lambda, double mu, double R,
                            double S, double c, double d, double h, double n, double beta) {
 	if (S > this->maximalTersoffExternalRadius) maximalTersoffExternalRadius = S;
-	_tersoff.push_back(Tersoff(x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta));
-
-	_m += m;
-	// assume the input is already transformed to the principal axes system
-	// (and therefore the origin is the center of mass)
-	_I[0] += m * (y * y + z * z);
-	_I[1] += m * (x * x + z * z);
-	_I[2] += m * (x * x + y * y);
-	_I[3] -= m * x * y;
-	_I[4] -= m * x * z;
-	_I[5] -= m * y * z;
-
-	_rot_dof = 3;
-	for (unsigned short d = 0; d < 3; ++d) {
-		_Ipa[d] = _I[d];
-		if (_Ipa[d] == 0.) --_rot_dof;
-	}
+	Tersoff tersoffsite(x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta);
+	_tersoff.push_back(tersoffsite);
+	updateMassInertia(tersoffsite);
 }
 
 void Component::write(std::ostream& ostrm) const {
