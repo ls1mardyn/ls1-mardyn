@@ -56,6 +56,12 @@ void Component::addLJcenter(double x, double y, double z,
 	updateMassInertia(ljsite);
 }
 
+void Component::addLJcenter(LJcenter& ljsite) {
+	_ljcenters.push_back(ljsite);
+	updateMassInertia(ljsite);
+}
+
+
 void Component::updateMassInertia() {
 	_m = 0;
 	for (int i = 0; i < 6; i++) {
@@ -103,17 +109,35 @@ void Component::addCharge(double x, double y, double z, double m, double q) {
 	updateMassInertia(chargesite);
 }
 
+void Component::addCharge(Charge& chargesite) {
+	_charges.push_back(chargesite);
+	updateMassInertia(chargesite);
+}
+
+
 void Component::addDipole(double x, double y, double z,
                           double eMyx, double eMyy, double eMyz, double eMyabs) {
 	_dipoles.push_back(Dipole(x, y, z, eMyx, eMyy, eMyz, eMyabs));
 	// massless...
 }
 
+void Component::addDipole(Dipole& dipolesite) {
+	_dipoles.push_back(dipolesite);
+	// massless...
+}
+
+
 void Component::addQuadrupole(double x, double y, double z,
                               double eQx, double eQy, double eQz, double eQabs) {
 	_quadrupoles.push_back(Quadrupole(x, y, z, eQx, eQy, eQz, eQabs));
 	// massless...
 }
+
+void Component::addQuadrupole(Quadrupole& quadrupolesite) {
+	_quadrupoles.push_back(quadrupolesite);
+	// massless
+}
+
 
 void Component::addTersoff(double x, double y, double z,
                            double m, double A, double B, double lambda, double mu, double R,
@@ -123,6 +147,13 @@ void Component::addTersoff(double x, double y, double z,
 	_tersoff.push_back(tersoffsite);
 	updateMassInertia(tersoffsite);
 }
+
+void Component::addTersoff(Tersoff& tersoffsite)
+{
+	_tersoff.push_back(tersoffsite);
+	updateMassInertia(tersoffsite);
+}
+
 
 void Component::write(std::ostream& ostrm) const {
 	ostrm << _ljcenters.size() << "\t" << _charges.size() << "\t"

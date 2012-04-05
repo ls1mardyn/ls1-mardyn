@@ -78,15 +78,20 @@ public:
 	void incNumMolecules(int N) { _numMolecules += N; }  /**< increase the number of molecules for this component by N */
 	unsigned long getNumMolecules() const { return _numMolecules; }  /**< get the number of molecules (global) of the component */
 
+	void addLJcenter(LJcenter& ljsite);
 	void addLJcenter(
 			double x, double y, double z, double m, double eps,
 			double sigma, double rc = 0, bool TRUNCATED_SHIFTED = 0
 	);
+	void addCharge(Charge& chargesite);
 	void addCharge(double x, double y, double z, double m, double q);
+	void addDipole(Dipole& dipolesite);
 	void addDipole(double x, double y, double z,
 	               double eMyx, double eMyy, double eMyz, double eMyabs);
+	void addQuadrupole(Quadrupole& quadrupolesite);
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
+	void addTersoff(Tersoff& tersoffsite);
 	void addTersoff(double x, double y, double z,
 	                double m, double A, double B, double lambda, double mu, double R,
 	                double S, double c, double d, double h, double n, double beta);
