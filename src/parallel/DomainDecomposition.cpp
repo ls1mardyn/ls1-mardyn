@@ -25,10 +25,12 @@ DomainDecomposition::DomainDecomposition() {
 	setGridSize(num_procs);
 	// Create the communicator
 	MPI_CHECK( MPI_Cart_create(MPI_COMM_WORLD, DIM, _gridSize, period, reorder, &_comm) );
+	global_log->info() << "Grid dimensions: " << _gridSize[0]<<", "<<_gridSize[1]<<", "<<_gridSize[2] << endl;
 
 	// introduce coordinates
 	MPI_CHECK( MPI_Comm_rank(_comm, &_rank) );
 	MPI_CHECK( MPI_Cart_coords(_comm, _rank, DIM, _coords) );
+	global_log->info() << "Coordinate: " << _coords[0]<<", "<<_coords[1]<<", "<<_coords[2] << endl;
 	// find lower and higher neighbours:
 	for (int d = 0; d < DIM; d++) {
 		MPI_CHECK( MPI_Cart_shift(_comm, d, 1, &_neighbours[d][LOWER], &_neighbours[d][HIGHER]) );
