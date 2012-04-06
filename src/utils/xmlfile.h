@@ -194,6 +194,12 @@ public:
 		/// \param	std::ostream&	stream to write to (default: std::cout)
 		void print(std::ostream& ostrm=std::cout) const;
 	
+		Node& operator=(Node& node){
+			m_xmlnode = node.m_xmlnode;
+			m_nodepath = node.m_nodepath;
+			m_type = node.m_type;
+			return *this;
+		}
 	private:
 		Node(const t_XMLnode* xmlnode, std::string nodepath=std::string())
 		    : m_xmlnode(xmlnode), m_nodepath(nodepath), m_type(Unknown_Node)
