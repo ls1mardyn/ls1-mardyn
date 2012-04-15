@@ -5,8 +5,8 @@
  *      Author: kovacevt
  */
 
-#ifndef EQVGRIDGENERATOR_H_
-#define EQVGRIDGENERATOR_H_
+#ifndef CUBICGRIDGENERATOR_H_
+#define CUBICGRIDGENERATOR_H_
 
 #include "common/ComponentParameters.h"
 #include "Parameters/ParameterCollection.h"
@@ -71,6 +71,11 @@ public:
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer,
 			std::list<ChemicalPotential>* lmu, Domain* domain,
 			DomainDecompBase* domainDecomp);
+	/**
+	 * Remove momentum from particle container.
+	 * This function should be moved to MDGenerator in the future.
+	 */
+	void removeMomentum(ParticleContainer* particleContainer);
 
 private:
 	void calculateSimulationBoxLength();
@@ -81,4 +86,4 @@ private:
 	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 };
 
-#endif /* EQVGRIDGENERATOR_H_ */
+#endif /* CUBICGRIDGENERATOR_H_ */

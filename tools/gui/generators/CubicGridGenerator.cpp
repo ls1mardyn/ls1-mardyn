@@ -189,6 +189,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 			}
 		}
 	}
+	removeMomentum(particleContainer);
 
 	unsigned long int globalNumMolecules = particleContainer->getNumberOfParticles();
 	domainDecomp->collCommInit(1);
@@ -259,5 +260,33 @@ bool CubicGridGenerator::validateParameters() {
 							<< " domain size=" << _simBoxLength[0] << endl;
 	}
 	return valid;
+}
+
+void CubicGridGenerator::removeMomentum(ParticleContainer* particleContainer){
+	double mass=0.;
+	double mass_sum=0.;
+	double momentum_sum[3] = {0., 0., 0.};
+
+	int i = 0;
+	Molecule* molecule = particleContainer->begin();
+	while(molecule != particleContainer->end()){
+		mass = _components[molecule->componentid()].m();
+		mass_sum = mass_sum + mass;
+		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
+		momentum_sum[1] = momentum_sum[1] + mass * molecule->v(1);
+		momentum_sum[2] = momentum_sum[2] + mass * molecule->v(2);
+		molecule = particleContainer->next();
+		i++;
+	}
+
+	double velocity_sub0=momentum_sum[0]/mass_sum;
+	double velocity_sub1=momentum_sum[1]/mass_sum;
+	double velocity_sub2=momentum_sum[2]/mass_sum;
+
+	molecule = particleContainer->begin();
+	while(molecule != particleContainer->end()){
+		molecule->vsub(velocity_sub0,velocity_sub1,velocity_sub2);
+		molecule = particleContainer->next();
+	}
 }
 
