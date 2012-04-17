@@ -247,7 +247,7 @@ private:
 	//! This method determines for a given Molecule the corresponding cell
 	//! and returns the index of that cell in the cell vector. \n
 	//! If the molecule is not inside the bounding box, an error is printed
-	long int getCellIndexOfMolecule(Molecule* molecule) const;
+	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -257,7 +257,7 @@ private:
 	//! The method can also be used to get the offset between two cells in the cell
 	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
-	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
+	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####

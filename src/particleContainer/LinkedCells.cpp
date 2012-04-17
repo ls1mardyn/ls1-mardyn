@@ -506,12 +506,12 @@ void LinkedCells::calculateNeighbourIndices() {
 					xDistanceSquare = 0;
 				}
 				if (xDistanceSquare + yDistanceSquare + zDistanceSquare <= cutoffRadiusSquare) {
-					long int offset = cellIndexOf3DIndex(xIndex, yIndex, zIndex);
+					long offset = cellIndexOf3DIndex(xIndex, yIndex, zIndex);
 					if (offset > 0) {
-						_forwardNeighbourOffsets.push_back(abs(offset));
+						_forwardNeighbourOffsets.push_back(offset);
 					}
 					if (offset < 0) {
-						_backwardNeighbourOffsets.push_back(abs(offset));
+						_backwardNeighbourOffsets.push_back(offset);
 					}
 				}
 			}
@@ -520,7 +520,7 @@ void LinkedCells::calculateNeighbourIndices() {
 	_blockTraverse.assignOffsets(_forwardNeighbourOffsets, _backwardNeighbourOffsets);
 }
 
-long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
+unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	int cellIndex[3]; // 3D Cell index
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -535,7 +535,7 @@ long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	return this->cellIndexOf3DIndex( cellIndex[0], cellIndex[1], cellIndex[2] );
 }
 
-long int LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
+unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
 }
 
