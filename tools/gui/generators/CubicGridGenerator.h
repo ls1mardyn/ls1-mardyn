@@ -71,11 +71,6 @@ public:
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer,
 			std::list<ChemicalPotential>* lmu, Domain* domain,
 			DomainDecompBase* domainDecomp);
-	/**
-	 * Remove momentum from particle container.
-	 * This function should be moved to MDGenerator in the future.
-	 */
-	void removeMomentum(ParticleContainer* particleContainer);
 
 private:
 	void calculateSimulationBoxLength();

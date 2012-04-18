@@ -136,7 +136,9 @@ public:
 	 */
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 
-
+	/**
+	 * Remove the system of momentum from particle container.
+	 */
 	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components)const;
 
 protected:

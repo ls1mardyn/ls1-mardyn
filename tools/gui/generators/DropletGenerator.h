@@ -131,12 +131,6 @@ public:
 	 */
 	void getFCCOrientation(int q_type, double q[4]);
 
-	/**
-	 * Remove momentum from particle container.
-	 * This function should be moved to MDGenerator in the future.
-	 */
-	void removeMomentum(ParticleContainer* particleContainer);
-
 };
 
 #endif /* DROPLETGENERATOR_H_ */
