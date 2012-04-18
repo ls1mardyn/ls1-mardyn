@@ -136,6 +136,9 @@ public:
 	 */
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) = 0;
 
+
+	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components)const;
+
 protected:
 
 	MardynConfiguration _configuration;
@@ -148,6 +151,7 @@ protected:
 	}
 
 	void getOrientation(int base, int delta, double orientation[4]);
+
 };
 
 #endif /* MDGENERATOR_H_ */
