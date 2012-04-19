@@ -27,7 +27,7 @@ MardynConfiguration::MardynConfiguration() :
 	    	_NVE(false), _parallelisationType(KDDECOMPOSITION), _containerType(LINKEDCELLS),
 	    	_hasResultWriter(false), _resultWriterConfig("ResultWriter"),
 	    	_hasStatisticsWriter(false), _statisticsWriterConfig("StatisticsWriter"),
-	    	_hasVTKMoleculeWriter(false), _vtkMoleculeWriterConfig("VTKMoleculeWriter"),
+	    	_hasVTKMoleculeWriter(false), _vtkMoleculeWriterConfig("VTKWriter"),
 	    	_hasVTKGridWriter(false), _vtkGridWriterConfig("VTKGridWriter")
 {
 }

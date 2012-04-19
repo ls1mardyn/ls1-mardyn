@@ -50,7 +50,7 @@ void MardynConfigLegacyWriter::writeConfigFile(const std::string& directory, con
 	if (config.hasStatisticsWriter()) {
 		writeOutputConfig(output, config.getStatisticsWriterConfig());
 	}
-	if (config.hasVTKGridWriter()) {
+	if (config.hasVTKMoleculeWriter()) {
 		writeOutputConfig(output, config.getVtkMoleculeWriterConfig());
 	}
 	if (config.hasVTKGridWriter()) {

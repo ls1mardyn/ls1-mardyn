@@ -76,7 +76,7 @@ MardynConfigurationParameters::MardynConfigurationParameters(const MardynConfigu
 	addParameter(new ParameterWithBool("ConfigurationParameters.hasVTKMoleculeWriter", "Create VTK output", "Write molecule data to a file for visualization VTK/Paraview.",
 			Parameter::CHECKBOX, true, other.hasVTKMoleculeWriter()));
 	if (other.hasVTKMoleculeWriter()) {
-		addOutputConfigurationParameters(other.getVtkMoleculeWriterConfig(), "VTKMoleculeWriter");
+		addOutputConfigurationParameters(other.getVtkMoleculeWriterConfig(), "VTKWriter");
 	}
 	addParameter(new ParameterWithBool("ConfigurationParameters.hasVTKGridWriter", "Create VTK output (Celldata)", "Write cell data to a file for visualization VTK/Paraview.",
 			Parameter::CHECKBOX, true, other.hasVTKGridWriter()));
@@ -138,7 +138,7 @@ void MardynConfigurationParameters::setParameterValue(MardynConfiguration& confi
 			setOutputConfigurationParameter(config.getResultWriterConfig(), parameter, secondPart);
 		} else if (firstPart == "StatisticsWriter") {
 			setOutputConfigurationParameter(config.getStatisticsWriterConfig(), parameter, secondPart);
-		} else if (firstPart == "VTKMoleculeWriter") {
+		} else if (firstPart == "VTKWriter") {
 			setOutputConfigurationParameter(config.getVtkMoleculeWriterConfig(), parameter, secondPart);
 		} else if (firstPart == "VTKGridWriter") {
 			setOutputConfigurationParameter(config.getVtkGridWriterConfig(), parameter, secondPart);
