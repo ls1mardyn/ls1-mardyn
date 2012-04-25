@@ -18,4 +18,9 @@ persons. Let's place here things which we could use as a basis for Coders' Day o
 | Class Quaternion              | Remove unnecessary methods which are never called.
 | Mardyn.cpp                    | Output if compiled in debug mode
 | Simulation.cpp ???            | Compile-Flag or if to disable all file output
+| ParticleContainers / Molecule classes | move call to calcFM from Molecule::upd_postF() 
+                     into ParticleContainer::traversePairs(). Then it corresponds to clearFM(),
+                     and the initializing call in Simulation.cpp as well in the ForceCalculationTest
+                     is not neccessary. 
+
 */
