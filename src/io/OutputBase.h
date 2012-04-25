@@ -3,6 +3,7 @@
 
 #include "ensemble/GrandCanonical.h"
 #include <list>
+#include <string>
 
 class ParticleContainer;
 class DomainDecompBase; 
@@ -75,6 +76,10 @@ public:
 	//! be called once at the end of the simulation (see Simulation.cpp)
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
+			
+	virtual std::string getPluginName() {
+		return std::string("Unknown output plugin name.");
+	}
 };
 
 #endif /*OUTPUTBASE_H_*/

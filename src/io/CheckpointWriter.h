@@ -31,6 +31,10 @@ public:
 	);
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
+	
+	std::string getPluginName() {
+		return std::string("CheckpointWriter");
+	}
 private:
 	std::string _filename;
 	unsigned long _writeFrequency;

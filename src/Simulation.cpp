@@ -735,6 +735,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				exit(-1);
 			}
 			_rdf = new RDF(interval, bins, _domain->getComponents().size());
+			_timer["RDF"];
 			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") {
 			unsigned int RDFOutputTimesteps;
@@ -1212,6 +1213,11 @@ void Simulation::simulate() {
 	global_log->info() << "Decomposition took. " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+	map<string, Timer>::iterator timerIter;
+	for (timerIter = _timer.begin(); timerIter != _timer.end(); timerIter++) {
+		string timerName = timerIter->first;
+		global_log->info() << " Output Plugin: " << timerName << "\t" << _timer[timerName].get_etime() << " sec" << endl;
+	}
 
 }
 
@@ -1220,7 +1226,10 @@ void Simulation::output(unsigned long simstep) {
 
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
+		string pluginName = (*outputIter)->getPluginName();
+		_timer[pluginName].start();
 		(*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
+		_timer[pluginName].stop();
 	}
 
 	if (_rdf != NULL) {

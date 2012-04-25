@@ -36,6 +36,7 @@ class PressureGradient;
 #include <list>
 #include <vector>
 #include <string>
+#include <map>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -423,6 +424,7 @@ private:
 	SteereoCouplingSim* _coupling;
 #endif
 
+	std::map<std::string, Timer> _timer; /**< timer map used e.g. to meassure io times per plugin. */
 
 	//! initialize all member variables with a suitable value
 	void initialize();

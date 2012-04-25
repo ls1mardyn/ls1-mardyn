@@ -45,6 +45,10 @@ public:
 	//! NOP
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
+	
+	std::string getPluginName() {
+		return std::string("StatisticstWriter");
+	}
 
 private:
 

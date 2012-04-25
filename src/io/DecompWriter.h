@@ -30,6 +30,10 @@ public:
 	//! @todo comment
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
+	
+	std::string getPluginName() {
+		return std::string("DecompWriter");
+	}
 private:
 	unsigned long _numberOfTimesteps;
 	unsigned long _writeFrequency;
