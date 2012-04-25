@@ -98,7 +98,7 @@ namespace utils {
  * message msg is being output additionally to the diagnostics of the assertion.
  * @see CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE
  */
-#define ASSERT_DOUBLES_EQUAL_MSG(expected,actual,delta) CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(expected,actual,delta)
+#define ASSERT_DOUBLES_EQUAL_MSG(message, expected,actual,delta) CPPUNIT_ASSERT_DOUBLES_EQUAL_MESSAGE(message, expected,actual,delta)
 
 #else /***********  DEFINITIONS TO USE THE PEANO Test-Package    ****/
 
