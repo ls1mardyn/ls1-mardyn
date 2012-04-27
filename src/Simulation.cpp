@@ -1233,7 +1233,9 @@ void Simulation::output(unsigned long simstep) {
 	}
 
 	if (_rdf != NULL) {
+        _timer["RDF"].start();
 		_rdf->doOutput(_domainDecomposition, _domain, simstep);
+        _timer["RDF"].stop();
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
