@@ -71,6 +71,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	inputReader.readPhaseSpace(moleculeContainer, &chemPot, domain, domainDecomposition);
 	moleculeContainer->update();
 	moleculeContainer->deleteOuterParticles();
+	moleculeContainer->updateMoleculeCaches();
 
 	domain->initParameterStreams(cutoff, cutoff);
 	return moleculeContainer;
