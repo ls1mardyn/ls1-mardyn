@@ -97,12 +97,37 @@ Molecule::Molecule(const Molecule& m) {
 	_sites_d = new double[_numsites*3];
 	assert(_sites_d);
 	//for(unsigned int i=0;i<_numsites*3;++i) _sites_d[i]=m._sites_d[i]; // not necessary -> cache only
-	_ljcenters_d = &(_sites_d[0]);
-	_charges_d = &(_ljcenters_d[numLJcenters()*3]);
-	_dipoles_d = &(_charges_d[numCharges()*3]);
-	_quadrupoles_d = &(_dipoles_d[numDipoles()*3]);
-	_tersoff_d = &(_quadrupoles_d[numQuadrupoles()*3]);
 
+	_ljcenters_d = new double[_ljcenters->size() * 3];
+	for (unsigned int i = 0; i < _ljcenters->size() * 3; i++) {
+		_ljcenters_d[i] = m._ljcenters_d[i];
+	}
+
+	_charges_d = new double[numCharges() * 3];
+	for (unsigned int i = 0; i < numCharges() * 3; i++) {
+		_charges_d[i] = m._charges_d[i];
+	}
+
+	_dipoles_d = new double[numDipoles() * 3];
+	for (unsigned int i = 0; i < numDipoles() * 3; i++) {
+		_dipoles_d[i] = m._dipoles_d[i];
+	}
+	_quadrupoles_d = new double[numQuadrupoles() * 3];
+	for (unsigned int i = 0; i < numQuadrupoles() * 3; i++) {
+		_quadrupoles_d[i] = m._quadrupoles_d[i];
+	}
+	_tersoff_d = new double[numTersoff() * 3];
+	for (unsigned int i = 0; i < numTersoff() * 3; i++) {
+		_tersoff_d[i] = m._tersoff_d[i];
+	}
+/*
+	_sites_d = &(m._sites_d[0]);
+	_ljcenters_d = &(m._ljcenters_d[numLJcenters()*3]);
+	_charges_d = &(m._charges_d[numCharges()*3]);
+	_dipoles_d = &(m._dipoles_d[numDipoles()*3]);
+	_quadrupoles_d = &(m._quadrupoles_d[numQuadrupoles()*3]);
+	_tersoff_d = &(m._quadrupoles_d[numTersoff()*3]);
+*/
 	_osites_e = new double[_numorientedsites*3];
 	assert(_osites_e);
 	//for(unsigned int i=0;i<_numorientedsites*3;++i) _osites_e[i]=m._osites_e[i]; // not necessary -> cache only
