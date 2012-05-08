@@ -96,16 +96,14 @@ Molecule::Molecule(const Molecule& m) {
 	assert(_numsites);
 	_sites_d = new double[_numsites*3];
 	assert(_sites_d);
-	//for(unsigned int i=0;i<_numsites*3;++i) _sites_d[i]=m._sites_d[i]; // not necessary -> cache only
 
-	assert(_numsites);
-	_sites_d = new double[_numsites*3];
-	assert(_sites_d);
 	for(unsigned int i=0;i<_numsites*3;++i) _sites_d[i]=m._sites_d[i]; // not necessary -> cache only
 	_ljcenters_d = &(_sites_d[0]);
 	_charges_d = &(_ljcenters_d[numLJcenters()*3]);
 	_dipoles_d = &(_charges_d[numCharges()*3]);
 	_quadrupoles_d = &(_dipoles_d[numDipoles()*3]);
+	_tersoff_d = &(_quadrupoles_d[numQuadrupoles()*3]);
+
 	_osites_e = new double[_numorientedsites*3];
 	assert(_osites_e);
 	//for(unsigned int i=0;i<_numorientedsites*3;++i) _osites_e[i]=m._osites_e[i]; // not necessary -> cache only
