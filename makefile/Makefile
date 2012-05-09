@@ -49,7 +49,7 @@ endif
 
 SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -E -v "(/tests/|/vtk/)")
-SOURCES_SEQ += $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase")
+SOURCES_SEQ += $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/)")
 SOURCES = $(SOURCES_COMMON) $(SOURCES_$(PARTYPE)) 
 

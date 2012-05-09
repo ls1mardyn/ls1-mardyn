@@ -9,10 +9,14 @@ $(info # Including cppunit.mk!)
 #LDFLAGS += -L$(CPPUNIT_LIB_DIR)
 
 
-# tests in "/parallel" are not consicered at the moment
 CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
+CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep "parallel/tests/DomainDecompBaseTest")
 ifeq ($(VTK), 1)
 CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep "vtk/tests/")
+endif
+ifeq ($(PARTYPE), PAR)
+$(info ADDING PARALLEL TESTS!)
+CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep "parallel/tests/")
 endif
 
 CXXFLAGS += -DUNIT_TESTS
