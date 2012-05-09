@@ -10,7 +10,10 @@ $(info # Including cppunit.mk!)
 
 
 CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
+ifneq ($(PARTYPE), PAR)
+#include the sequential DomainDecompBaseTest (if SEQTYPE == PAR, it will be included below with the parallel tests)
 CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep "parallel/tests/DomainDecompBaseTest")
+endif
 ifeq ($(VTK), 1)
 CPPUNIT_TESTS += $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep "vtk/tests/")
 endif
