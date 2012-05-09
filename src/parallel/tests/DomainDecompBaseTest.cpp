@@ -5,7 +5,7 @@
  * @Author: eckhardw
  */
 
-#include "DomainDecompBaseTest.h"
+#include "parallel/tests/DomainDecompBaseTest.h"
 #include "parallel/DomainDecompDummy.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Component.h"
