@@ -1,0 +1,31 @@
+/*! \page "Building Mardyn" 
+
+!!! Makefile
+
+CD into the src directory, type
+
+\verbatim
+make -f ../makefile/Makefile PARTYPE=SEQ TARGET=DEBUG UNIT_TESTS=1 VTK=1 -j3
+\endverbatim
+
+Building using the makefile should always work, as this is the only reliable way 
+to build Mardyn on clusters / supercomputers. 
+
+Note that dependency tracking does not work properly, so better always do a 
+"make clean"...
+
+!!! Eclipse
+
+(recommended for development)
+
+Download and install Eclipse CDT (http://www.eclipse.org/) together with the 
+Subclipse Plugin (SVN client, available at http://subclipse.tigris.org/).
+
+The following screen shots show the settings to build Mardyn sequentially in debug mode:
+
+\image eclipse-img/eclipse_path
+\image eclipse-img/eclipse_preprocessor
+\image eclipse-img/eclipse_includes
+\image eclipse-img/eclipse_libraries
+
+*/

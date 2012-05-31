@@ -22,5 +22,6 @@ persons. Let's place here things which we could use as a basis for Coders' Day o
                      into ParticleContainer::traversePairs(). Then it corresponds to clearFM(),
                      and the initializing call in Simulation.cpp as well in the ForceCalculationTest
                      is not neccessary. 
+| Simulation.cpp                | move tickRDF() calls into handler->initialize()?
 
 */
