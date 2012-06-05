@@ -18,7 +18,7 @@ const std::string MardynConfiguration::ParallelisationType_DOMAINDECOMPOSITION("
 const std::string MardynConfiguration::ParallelisationType_KDDECOMPOSITION("KDDecomposition");
 
 const std::string MardynConfiguration::ContainerType_LINKEDCELLS("LinkedCells");
-const std::string MardynConfiguration::ContainerType_ADAPTIVELINKEDCELLS("AdaptiveLinkedCells");
+const std::string MardynConfiguration::ContainerType_ADAPTIVELINKEDCELLS("AdaptiveSubCells");
 
 
 MardynConfiguration::MardynConfiguration() :

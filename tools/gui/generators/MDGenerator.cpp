@@ -194,7 +194,7 @@ void MDGenerator::getOrientation(int base, int delta, double orientation[4]) {
 	double cosinePart = cos(angle);
 	double sinePart = sin(angle);
 
-	double length = sqrt(cosinePart * cosinePart + 2 * (sinePart + sinePart));
+	double length = sqrt(cosinePart * cosinePart + 2 * (sinePart * sinePart));
 	orientation[0] = cosinePart / length;
 	orientation[1] = sinePart / length;
 	orientation[2] = sinePart / length;
