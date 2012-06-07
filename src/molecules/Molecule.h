@@ -323,4 +323,12 @@ inline void SiteSiteDistance(const double drm[3], const double ds1[3], const dou
 	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
 }
 
+
+inline void minusSiteSiteDistance(const double drm[3], const double ds1[3], const double ds2[3], double drs[3], double& dr2)
+{
+	for (unsigned short d = 0; d < 3; ++d)
+		drs[d] = ds2[d] - drm[d] - ds1[d];
+	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
+}
+
 #endif /*MOLECULE_H_*/
