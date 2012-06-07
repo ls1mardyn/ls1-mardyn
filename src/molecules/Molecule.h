@@ -304,4 +304,23 @@ private:
 
 std::ostream& operator<<( std::ostream& os, const Molecule& m );
 
+
+
+/* helper function to calculate the distance between 2 sites, given the distance
+ * vector between two molecules.
+ *
+ * @param drm distance vector between the two molecule centers
+ * @param ds1 distance vector from the center of molecule1 to its site
+ * @param ds2 distance vector from the center of molecule2 to its site
+ * @param[out] drs distance vector site-site (output parameter)
+ * @param[out] dr2 distance site-site (output parameter)
+ *
+ */
+inline void SiteSiteDistance(const double drm[3], const double ds1[3], const double ds2[3], double drs[3], double& dr2)
+{
+	for (unsigned short d = 0; d < 3; ++d)
+		drs[d] = drm[d] + ds1[d] - ds2[d];
+	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
+}
+
 #endif /*MOLECULE_H_*/
