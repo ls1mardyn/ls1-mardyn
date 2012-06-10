@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 			testcases = args[0];
 			global_log->info() << "Running unit tests: " << testcases << endl;
 		} else {
-			global_log->info() << "Running all unit tests! (Too many arguments were specified)" << endl;
+			global_log->info() << "Running all unit tests!" << endl;
 		}
 
 		std::string testDataDirectory(options.get("testDataDirectory"));

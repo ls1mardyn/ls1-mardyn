@@ -14,13 +14,16 @@
 
 #include <sstream>
 #include <fstream>
+#include <map>
 
 using namespace Log;
 
-RDF::RDF(double intervalLength, unsigned int bins, unsigned int numberOfComponents) :
+RDF::RDF(double intervalLength, unsigned int bins, const std::vector<Component>& components) :
 	_intervalLength(intervalLength),
 	_bins(bins),
-	_numberOfComponents(numberOfComponents),
+	_numberOfComponents(components.size()),
+	_components(components),
+	_doCollectSiteRDF(false),
 	_RDFOutputTimesteps(25000),
 	_RDFOutputPrefix("out")
 {
@@ -34,6 +37,10 @@ RDF::RDF(double intervalLength, unsigned int bins, unsigned int numberOfComponen
 	_localDistribution = new unsigned long**[_numberOfComponents];
 	_globalDistribution = new unsigned long**[_numberOfComponents];
 	_globalAccumulatedDistribution = new unsigned long**[_numberOfComponents];
+
+	this->_localSiteDistribution = new unsigned long****[_numberOfComponents];
+	this->_globalSiteDistribution = new unsigned long****[_numberOfComponents];
+	this->_globalAccumulatedSiteDistribution = new unsigned long****[_numberOfComponents];
 	for(unsigned i = 0; i < _numberOfComponents; i++) {
 		this->_globalCtr[i] = 0;
 		this->_globalAccumulatedCtr[i] = 0;
@@ -41,6 +48,11 @@ RDF::RDF(double intervalLength, unsigned int bins, unsigned int numberOfComponen
 		this->_localDistribution[i] = new unsigned long*[_numberOfComponents-i];
 		this->_globalDistribution[i] = new unsigned long*[_numberOfComponents-i];
 		this->_globalAccumulatedDistribution[i] = new unsigned long*[_numberOfComponents-i];
+
+		unsigned ni = _components[i].numSites();
+		this->_localSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
+		this->_globalSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
+		this->_globalAccumulatedSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
 
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
 			this->_localDistribution[i][k] = new unsigned long[bins];
@@ -51,6 +63,32 @@ RDF::RDF(double intervalLength, unsigned int bins, unsigned int numberOfComponen
 				this->_localDistribution[i][k][l] = 0;
 				this->_globalDistribution[i][k][l] = 0;
 				this->_globalAccumulatedDistribution[i][k][l] = 0;
+			}
+
+			unsigned nj = _components[i+k].numSites();
+			if(ni+nj > 2) {
+				this->_doCollectSiteRDF = true;
+
+				this->_localSiteDistribution[i][k] = new unsigned long**[ni];
+				this->_globalSiteDistribution[i][k] = new unsigned long**[ni];
+				this->_globalAccumulatedSiteDistribution[i][k] = new unsigned long**[ni];
+
+				for(unsigned m=0; m < ni; m++) {
+					this->_localSiteDistribution[i][k][m] = new unsigned long*[nj];
+					this->_globalSiteDistribution[i][k][m] = new unsigned long*[nj];
+					this->_globalAccumulatedSiteDistribution[i][k][m] = new unsigned long*[nj];
+					for(unsigned n=0; n < nj; n++) {
+						this->_localSiteDistribution[i][k][m][n] = new unsigned long[bins];
+						this->_globalSiteDistribution[i][k][m][n] = new unsigned long[bins];
+						this->_globalAccumulatedSiteDistribution[i][k][m][n] = new unsigned long[bins];
+						for(unsigned l=0; l < bins; l++) {
+							this->_localSiteDistribution[i][k][m][n][l] = 0;
+							this->_globalSiteDistribution[i][k][m][n][l] = 0;
+							this->_globalAccumulatedSiteDistribution[i][k][m][n][l] = 0;
+							// cout << "init " << i << "\t" << k << "\t" << m << "\t" << n << "\t" << l << "\n";
+						}
+					}
+				}
 			}
 		}
 	}
@@ -89,15 +127,25 @@ void RDF::accumulateRDF() {
 	_accumulatedNumberOfRDFTimesteps += _numberOfRDFTimesteps;
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		this->_globalAccumulatedCtr[i] += this->_globalCtr[i];
+		unsigned ni = _components[i].numSites();
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
+			unsigned nj = _components[i+k].numSites();
 			for(unsigned l=0; l < _bins; l++) {
 				this->_globalAccumulatedDistribution[i][k][l] += this->_globalDistribution[i][k][l];
+				if(ni + nj > 2) {
+					for(unsigned m=0; m < ni; m++) {
+						for(unsigned n=0; n < nj; n++) {
+							this->_globalAccumulatedSiteDistribution[i][k][m][n][l] += this->_globalSiteDistribution[i][k][m][n][l];
+						}
+					}
+				}
 			}
 		}
 	}
 }
 
 void RDF::collectRDF(DomainDecompBase* dode) {
+	// Communicate component-component RDFs
 	dode->collCommInit(_bins * _numberOfComponents * (_numberOfComponents+1)/2);
 
 	for(unsigned i=0; i < _numberOfComponents; i++) {
@@ -117,6 +165,39 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 		}
 	}
 	dode->collCommFinalize();
+
+	// communicate site-site RDFs
+	for(unsigned i=0; i < _numberOfComponents; i++) {
+		unsigned ni = _components[i].numSites();
+		for(unsigned k=0; i+k < _numberOfComponents; k++) {
+			unsigned nj = _components[i+k].numSites();
+			if(ni+nj > 2) {
+				dode->collCommInit(_bins * ni * nj);
+				for(unsigned l=0; l < _bins; l++) {
+					for(unsigned m=0; m < ni; m++) {
+						for(unsigned n=0; n < nj; n++) {
+							// d1 = this->_localSiteDistribution[i][k][m][n][l];
+							dode->collCommAppendUnsLong(_localSiteDistribution[i][k][m][n][l]);
+						}
+					}
+				}
+
+				// domainDecomp->reducevalues(&dZ, &d0, &d1, &d2);
+				dode->collCommAllreduceSum();
+
+				for(unsigned l=0; l < _bins; l++) {
+					for(unsigned m=0; m < ni; m++) {
+						for(unsigned n=0; n < nj; n++) {
+							// if(!this->_localRank) this->_globalSiteDistribution[i][k][m][n][l] = d1;
+							_globalSiteDistribution[i][k][m][n][l] = dode->collCommGetUnsLong();
+						}
+					}
+				}
+				dode->collCommFinalize();
+
+			}
+		}
+	}
 }
 
 
@@ -124,10 +205,22 @@ void RDF::reset() {
 	_numberOfRDFTimesteps = 0;
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		_globalCtr[i] = 0;
+
+		unsigned ni = _components[i].numSites();
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
+			unsigned nj = _components[i+k].numSites();
 			for(unsigned l=0; l < _bins; l++) {
 				_localDistribution[i][k][l] = 0;
 				_globalDistribution[i][k][l] = 0;
+
+				if(ni+nj > 2) {
+					for(unsigned m=0; m < ni; m++) {
+						for(unsigned n=0; n < nj; n++) {
+							this->_localSiteDistribution[i][k][m][n][l] = 0;
+							this->_globalSiteDistribution[i][k][m][n][l] = 0;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -176,6 +269,9 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 		return;
 	}
 
+	unsigned ni = _components[i].numSites();
+	unsigned nj = _components[j].numSites();
+
 	double V = domain->getGlobalVolume();
 	double N_i = _globalCtr[i] / _numberOfRDFTimesteps;
 	double N_Ai = _globalAccumulatedCtr[i] / _accumulatedNumberOfRDFTimesteps;
@@ -187,7 +283,16 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 	double rho_Aj = N_Aj / V;
 
 	rdfout.precision(5);
-	rdfout << "# r\tcurr.\taccu.\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnorm(curr.)\tnorm(accu.)\n";
+	rdfout << "# r\tcurr.{loc, int}\taccu.{loc, int}\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnorm(curr.)\tnorm(accu.)";
+	if(ni+nj > 2) {
+		for(unsigned m=0; m < ni; m++) {
+			rdfout << "\t";
+			for(unsigned n=0; n < nj; n++) {
+				rdfout << "\t(" << m << ", " << n << ")_curr{loc, int}   (" << m << ", " << n << ")_accu{loc, int}";
+			}
+		}
+	}
+	rdfout << "\n";
 	rdfout << "# \n# ctr_i: " << _globalCtr[i] << "\n# ctr_j: " << _globalCtr[j]
 	       << "\n# V: " << V << "\n# _universalRDFTimesteps: " << _numberOfRDFTimesteps
 	       << "\n# _universalAccumulatedTimesteps: " << _accumulatedNumberOfRDFTimesteps
@@ -195,6 +300,9 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 	       << "\n# rho_j: " << rho_j << " (acc. " << rho_Aj << ")"
 	       << "\n# \n";
 
+	double N_pair_int = 0.0;
+	double N_Apair_int = 0.0;
+	std::map< unsigned, std::map<unsigned, double> > Nsite_pair_int, Nsite_Apair_int;
 	for(unsigned l=0; l < this->_bins; l++) {
 		double rmin = l * _intervalLength;
 		double rmid = (l+0.5) * _intervalLength;
@@ -203,26 +311,53 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 		double r3max = rmax*rmax*rmax;
 		double dV = (4.0 / 3.0) * M_PI * (r3max - r3min);
 
-		unsigned long N_pair = _globalDistribution[i][j-i][l] / _numberOfRDFTimesteps;
-		unsigned long N_Apair = _globalAccumulatedDistribution[i][j-i][l]
-		                                                               / _accumulatedNumberOfRDFTimesteps;
-		double N_pair_norm;
-		double N_Apair_norm;
+		double N_pair = _globalDistribution[i][j-i][l] / (double) _numberOfRDFTimesteps;
+		N_pair_int += N_pair;
+		double N_Apair = _globalAccumulatedDistribution[i][j-i][l]
+		                                                               / (double) _accumulatedNumberOfRDFTimesteps;
+		N_Apair_int += N_Apair;
+		double N_pair_norm = 0.0;
+		double N_Apair_norm = 0.0;
+		double N_pair_int_norm = 0.0;
+		double N_Apair_int_norm = 0.0;
+
 		if(i == j)
 		{
-			N_pair_norm = 0.5*N_i*rho_i*dV;
-			N_Apair_norm = 0.5*N_Ai*rho_Ai*dV;
+			N_pair_norm = 0.5*N_i*(N_i-1.0) * dV/V;
+			N_Apair_norm = 0.5*N_Ai*(N_Ai-1.0) * dV/V;
+			N_pair_int_norm = 0.5*N_i*(N_i-1.0) * 4.1887902*r3max/V;
+			N_Apair_int_norm = 0.5*N_Ai*(N_Ai-1.0) * 4.1887902*r3max/V;
 		}
 		else
 		{
-			N_pair_norm = N_i*rho_j*dV;
-			N_Apair_norm = N_Ai*rho_Aj*dV;
+			N_pair_norm = N_i*N_j * dV/V;
+			N_Apair_norm = N_Ai*N_Aj * dV/V;
+			N_pair_int_norm = N_i*N_j * 4.1887902*r3max/V;
+			N_Apair_int_norm = N_Ai*N_Aj * 4.1887902*r3max/V;
 		}
 
-		rdfout << rmid << "\t" << N_pair/N_pair_norm
-				<< "\t" << N_Apair/N_Apair_norm
+		rdfout << rmid << "\t" << N_pair/N_pair_norm << " " << N_pair_int/N_pair_int_norm
+				<< "\t" << N_Apair/N_Apair_norm << " " << N_Apair_int/N_Apair_int_norm
 				<< "\t\t" << dV << "\t" << N_pair << "\t" << N_Apair
-				<< "\t\t" << N_pair_norm << "\t" << N_Apair_norm << "\n";
+				<< "\t\t" << N_pair_norm << "\t" << N_Apair_norm;
+
+		if(ni+nj > 2)
+		{
+			for(unsigned m=0; m < ni; m++)
+			{
+				rdfout << "\t";
+				for(unsigned n=0; n < nj; n++)
+				{
+					double p = _globalSiteDistribution[i][j-i][m][n][l] / (double)_numberOfRDFTimesteps;
+					Nsite_pair_int[m][n] += p;
+					double ap = _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
+					Nsite_Apair_int[m][n] += ap;
+					rdfout << "\t" << p/N_pair_norm << " " << Nsite_pair_int[m][n]/N_pair_int_norm
+							<< "   " << ap/N_Apair_norm << " " << Nsite_Apair_int[m][n]/N_Apair_int_norm;
+				}
+			}
+		}
+		rdfout << "\n";
 	}
 	rdfout.close();
 }

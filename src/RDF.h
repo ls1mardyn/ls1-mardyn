@@ -12,6 +12,8 @@
 #include <string>
 #include <vector>
 
+#include "molecules/Molecule.h"
+
 class Domain;
 class DomainDecompBase;
 class Component;
@@ -45,7 +47,7 @@ public:
 	 * @todo Wouldn't make sense to calculate the parameter intervalLength?
 	 *       intervalLength = cutoffRadius / bins
 	 */
-	RDF(double intervalLength, unsigned int bins, unsigned int numberOfComponents);
+	RDF(double intervalLength, unsigned int bins, const std::vector<Component>& components);
 
 	virtual ~RDF();
 
@@ -70,6 +72,27 @@ public:
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components) const;
 
+	void observeRDF(Molecule& mi, Molecule& mj, double dd, double distanceVector[3]) const {
+		observeRDF(dd, mi.componentid(), mj.componentid());
+
+		if(_doCollectSiteRDF) {
+			double drs[3];
+			double dr2;
+			unsigned si = mi.numSites();
+			unsigned sj = mj.numSites();
+			if(si+sj > 2) {
+				for(unsigned m = 0; m < si; m++) {
+					for(unsigned n = 0; n < sj; n++) {
+						const double* dii = mi.site_d(m);
+						const double* djj = mj.site_d(n);
+						SiteSiteDistance(distanceVector, dii, djj, drs, dr2);
+						observeRDF(dr2, mi.componentid(), mj.componentid(), m, n);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * This method "really" counts the number of pairs within a certain distance.
 	 */
@@ -81,8 +104,33 @@ public:
 		this->_localDistribution[i][j-i][l] ++;
 	}
 
+	/**
+	 * Count center pairing for particle pair for molecules i and j and centers
+	 * m_i, n_j at distance dd.
+	 */
+	inline void observeRDF(double dd, unsigned i, unsigned j, unsigned m, unsigned n) const {
+		if(_numberOfRDFTimesteps <= 0) return;
+		if(dd > _maxDistanceSquare) return;
+		if(i > j) {
+			this->observeRDF(dd, j, i, n, m);
+			return;
+		} else if (i == j && m > n) {
+			this->observeRDF(dd, i, j, n, m);
+			return;
+		}
+
+		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		this->_localSiteDistribution[i][j-i][m][n][l] ++;
+//		std::cout << "Obeserved RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
+	}
+
+	bool siteRDF() {
+		return this->_doCollectSiteRDF;
+	}
+
 	//! set all values counted to 0, except the accumulated ones.
 	void reset();
+
 private:
 
 
@@ -98,14 +146,17 @@ private:
 
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.
-	double _intervalLength;
+	const double _intervalLength;
 
 	//! The number of bins, i.e. the number of intervals in which the cutoff
 	//! radius will be subdivided.
 	unsigned int _bins;
 
 	//! number of different components (i.e. molecule types).
-	unsigned int _numberOfComponents;
+	const unsigned int _numberOfComponents;
+
+	//! components vector
+	const std::vector<Component>& _components;
 
 	//! number of timesteps over which the counters are being accumulated
 	//! since the last calculation of the RDF.
@@ -139,6 +190,14 @@ private:
 
 	//! holds the distribution of the neighbouring particles, globally accumulated.
 	unsigned long ***_globalAccumulatedDistribution;
+
+	bool _doCollectSiteRDF;
+
+	unsigned long *****_localSiteDistribution;
+
+	unsigned long *****_globalSiteDistribution;
+
+	unsigned long *****_globalAccumulatedSiteDistribution;
 
 	/**
 	 * aggregation interval for the RDF data

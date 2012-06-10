@@ -84,17 +84,20 @@ public:
 	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ = true) {
 		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
 		params.reset_read();
-        switch (pairType) {
+
+		switch (pairType) {
 
             double dummy1, dummy2, dummy3, dummy4;
             
             case MOLECULE_MOLECULE : 
                 if ( _rdf != NULL )
-                    _rdf->observeRDF(dd, molecule1.componentid(), molecule2.componentid());
+                    _rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
                 PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
+
                 return _upot6LJ + _upotXpoles;
             case MOLECULE_HALOMOLECULE : 
+
                 PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
                 return 0.0;
             case MOLECULE_MOLECULE_FLUID : 

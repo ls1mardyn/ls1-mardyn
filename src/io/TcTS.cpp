@@ -298,7 +298,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
    }
    else
    {
-      this->_mrdf = new RDF(dRDF/(double)BINS, BINS, 1);
+      this->_mrdf = new RDF(dRDF/(double)BINS, BINS, dcomponents);
       this->_mrdf->setOutputTimestep(3000000);
       this->_mrdf->setOutputPrefix(opstream.str());
    }

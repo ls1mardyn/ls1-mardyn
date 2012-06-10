@@ -9,6 +9,7 @@
 
 #include "RDF.h"
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/DomainDecompDummy.h"
 #include "particleContainer/LinkedCells.h"
@@ -54,13 +55,15 @@ void RDFTest::testRDFCountSequential12_AdaptiveCell() {
 
 void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
+	const vector<Component>& components = _domain->getComponents();
+	ASSERT_EQUAL((size_t) 1, components.size());
 
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 
 	/* The number of pairs counted by the RDF also depends on the particles in the halo.
 	 * So count first with the halo being empty, and then being populated. */
-	RDF rdf(0.018, 100, 1);
+	RDF rdf(0.018, 100, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traversePairs(&handler);
@@ -123,11 +126,13 @@ void RDFTest::testRDFCountAdaptiveCell() {
 
 void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
+	const vector<Component>& components = _domain->getComponents();
+	ASSERT_EQUAL((size_t) 1, components.size());
 
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain->getComponents(), _domain);
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.018, 100, 1);
+	RDF rdf(0.018, 100, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traversePairs(&handler);
@@ -175,3 +180,115 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 		ASSERT_EQUAL(rdf._globalAccumulatedDistribution[0][0][i], 2 * rdf._globalDistribution[0][0][i]);
 	}
 }
+
+
+
+void RDFTest::testSiteSiteRDFLinkedCell() {
+	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "2clj-regular.inp", 3.5);
+	testSiteSiteRDF(moleculeContainer);
+	delete moleculeContainer;
+}
+
+void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
+
+	if (_domainDecomposition->getNumProcs() > 8) {
+		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
+	}
+
+	ParticlePairs2PotForceAdapter handler(*_domain);
+	const vector<Component>& components = _domain->getComponents();
+	ASSERT_EQUAL((size_t) 1, components.size());
+
+	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain->getComponents(), _domain);
+	moleculeContainer->update();
+	moleculeContainer->updateMoleculeCaches();
+
+	RDF rdf(0.05, 101, components);
+	handler.setRDF(&rdf);
+	rdf.tickRDF();
+	moleculeContainer->traversePairs(&handler);
+	rdf.collectRDF(_domainDecomposition);
+
+	for (int i = 0; i < 101; i++) {
+//		std::cout << "Bin " << i << ": " << rdf._globalSiteDistribution[0][0][0][0][i] <<
+//					", " << rdf._globalSiteDistribution[0][0][0][1][i] <<
+//					", " << rdf._globalSiteDistribution[0][0][1][0][i] <<
+//					", " << rdf._globalSiteDistribution[0][0][1][1][i] << std::endl;
+		if (i == 20) {
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+		} else if (i == 60) {
+			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+		} else if (i == 100) {
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+		} else {
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+		}
+	}
+
+	rdf.accumulateRDF();
+	rdf.reset();
+	rdf.tickRDF();
+
+	// test the accumulation of counts...
+	moleculeContainer->traversePairs(&handler);
+	rdf.collectRDF(_domainDecomposition);
+	rdf.accumulateRDF();
+
+	for (int i = 0; i < 101; i++) {
+			if (i == 20) {
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+				// accumulated counts
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(32ul, rdf._globalAccumulatedSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][1][i]);
+			} else if (i == 60) {
+				ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+				// accumulated counts
+				ASSERT_EQUAL(32ul, rdf._globalAccumulatedSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(32ul, rdf._globalAccumulatedSiteDistribution[0][0][1][1][i]);
+			} else if (i == 100) {
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+				// accumulated counts
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(32ul, rdf._globalAccumulatedSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][1][i]);
+			} else {
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
+				// accumulated counts
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][0][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][0][1][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][0][i]);
+				ASSERT_EQUAL(0ul, rdf._globalAccumulatedSiteDistribution[0][0][1][1][i]);
+			}
+		}
+
+}
+

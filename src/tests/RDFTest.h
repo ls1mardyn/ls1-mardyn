@@ -18,6 +18,7 @@ class RDFTest : public utils::TestWithSimulationSetup {
 	TEST_METHOD(testRDFCountSequential12_AdaptiveCell);
 	TEST_METHOD(testRDFCountLinkedCell);
 	TEST_METHOD(testRDFCountAdaptiveCell);
+	TEST_METHOD(testSiteSiteRDFLinkedCell);
 	TEST_SUITE_END();
 
 public:
@@ -69,6 +70,16 @@ public:
 	void testRDFCountAdaptiveCell();
 
 	void testRDFCount(ParticleContainer* container);
+
+
+	void testSiteSiteRDFLinkedCell();
+
+	/**
+	 * This test should cover cases for parallel and sequential execution.
+	 * Test against right counting of halo particles is done if this test is
+	 * run in parallel.
+	 */
+	void testSiteSiteRDF(ParticleContainer* moleculeContainer);
 };
 
 #endif /* RDFTEST_H_ */

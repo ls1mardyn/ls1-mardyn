@@ -734,7 +734,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "PhaseSpaceFile-Specifiation has to occur befor RDF-Token!" << endl;
 				exit(-1);
 			}
-			_rdf = new RDF(interval, bins, _domain->getComponents().size());
+			_rdf = new RDF(interval, bins, _domain->getComponents());
 			_timer["RDF"];
 			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") {
