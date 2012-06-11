@@ -39,12 +39,15 @@ private:
 	//! the rank of the process
 	int _rank;
 
+	//! if all LJ Centers should be ploted separately
+	bool _plotAllLJCenters;
+
 public:
 
 	/**
 	 * @param rank the MPI rank of the process
 	 */
-	VTKMoleculeWriterImplementation(int rank);
+	VTKMoleculeWriterImplementation(int rank, bool plotAllLJCenters = false);
 	virtual ~VTKMoleculeWriterImplementation();
 
 	void initializeVTKFile();

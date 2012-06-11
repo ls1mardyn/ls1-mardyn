@@ -12,6 +12,8 @@
 #include "Domain.h"
 
 #include <sstream>
+#include <iostream>
+using namespace std;
 #include <vector>
  #ifdef ENABLE_MPI
 #include <mpi.h>
@@ -34,14 +36,13 @@ void VTKMoleculeWriter::doOutput(
 		Domain* domain, unsigned long simstep,
 		std::list<ChemicalPotential>* lmu
 ) {
-
 	if (simstep % _writeFrequency != 0) {
 		return;
 	}
 
 	int rank = domainDecomp->getRank();
 
-	VTKMoleculeWriterImplementation impl(rank);
+        VTKMoleculeWriterImplementation impl(rank, true);
 
 	impl.initializeVTKFile();
 

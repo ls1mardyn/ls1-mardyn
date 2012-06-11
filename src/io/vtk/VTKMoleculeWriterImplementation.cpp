@@ -14,8 +14,8 @@
 
 using namespace Log;
 
-VTKMoleculeWriterImplementation::VTKMoleculeWriterImplementation(int rank)
-: _vtkFile(NULL), _parallelVTKFile(NULL), _numMoleculesPlotted(0), _rank(rank) {
+VTKMoleculeWriterImplementation::VTKMoleculeWriterImplementation(int rank, bool plotAllLJCenters)
+: _vtkFile(NULL), _parallelVTKFile(NULL), _numMoleculesPlotted(0), _rank(rank), _plotAllLJCenters(plotAllLJCenters) {
 }
 
 VTKMoleculeWriterImplementation::~VTKMoleculeWriterImplementation() {
@@ -42,6 +42,10 @@ void VTKMoleculeWriterImplementation::initializeVTKFile() {
 	pointData.DataArray().push_back(componentId);
 	DataArray_t node_rank(type::Int32, "node-rank", 1);
 	pointData.DataArray().push_back(node_rank);
+	if (_plotAllLJCenters) {
+		DataArray_t centerId(type::Float32, "center-id", 1);
+		pointData.DataArray().push_back(centerId);
+	}
 
 	CellData cellData; // we don't have cell data => leave it empty
 
@@ -72,23 +76,56 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 
 	PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
 	PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
+	
+	if (_plotAllLJCenters) {
+		for (int i = 0; i < molecule.numLJcenters(); i++) {
+			data_iterator->push_back(molecule.id());
+		}
+		data_iterator++;
+		for (int i = 0; i < molecule.numLJcenters(); i++) {
+			data_iterator->push_back(molecule.componentid());
+		}
+		data_iterator++;
+		for (int i = 0; i < molecule.numLJcenters(); i++) {
+			data_iterator->push_back(_rank);
+		}
+		data_iterator++;
+		for (int i = 0; i < molecule.numLJcenters(); i++) {
+			data_iterator->push_back(i);
+		}
+		Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
+		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
+		for (int i = 0; i < molecule.numLJcenters(); i++) {
+			const double* curr_center = molecule.ljcenter_d(i);
+			coordinates_iterator->push_back(molecule.r(0) + curr_center[0]);
+			coordinates_iterator->push_back(molecule.r(1) + curr_center[1]);
+			coordinates_iterator->push_back(molecule.r(2) + curr_center[2]);
+			_numMoleculesPlotted++;
+		}
+		
+		
+
+
+	} else {
 
 	// id
-	data_iterator->push_back(molecule.id());
-	data_iterator++;
-	// componentID
-	data_iterator->push_back(molecule.componentid());
-	data_iterator++;
-	// mpi-node rank
-	data_iterator->push_back(_rank);
+		data_iterator->push_back(molecule.id());
+		data_iterator++;
+		// componentID
+		data_iterator->push_back(molecule.componentid());
+		data_iterator++;
+		// mpi-node rank
+		data_iterator->push_back(_rank);
+		//data_iterator->push_back(molecule.numLJcenters());
 
-	// Coordinates
-	Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
-	Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
-	coordinates_iterator->push_back(molecule.r(0));
-	coordinates_iterator->push_back(molecule.r(1));
-	coordinates_iterator->push_back(molecule.r(2));
-	_numMoleculesPlotted++;
+		// Coordinates
+		Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
+		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
+		coordinates_iterator->push_back(molecule.r(0));
+		coordinates_iterator->push_back(molecule.r(1));
+		coordinates_iterator->push_back(molecule.r(2));
+		_numMoleculesPlotted++;
+	}
 }
 
 
@@ -100,9 +137,9 @@ void  VTKMoleculeWriterImplementation::writeVTKFile(const std::string& fileName)
 	}
 #endif
 
-	(*_vtkFile).UnstructuredGrid()->Piece().NumberOfPoints(_numMoleculesPlotted);
+	(*_vtkFile).UnstructuredGrid()->Piece().NumberOfPoints(_numMoleculesPlotted); // sets the number of points
 	std::ofstream file(fileName.c_str());
-	VTKFile (file, *_vtkFile);
+	VTKFile (file, *_vtkFile); //actually writes the file
 }
 
 void VTKMoleculeWriterImplementation::initializeParallelVTKFile(const std::vector<std::string>& fileNames) {
