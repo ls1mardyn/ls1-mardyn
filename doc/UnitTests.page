@@ -14,7 +14,7 @@ cppunit-version contained in the subversion repository.
 Change to the directory "src/" and type
 
 \verbatim
-make -f ../makefile/Makefile UNIT_TESTS=1
+make -f ../makefile/Makefile TARGET=DEBUG PARTYPE=SEQ UNIT_TESTS=1
 \endverbatim
 
 Execute the tests with
