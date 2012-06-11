@@ -5,7 +5,7 @@
 Documentation available:
 
 || Ressource             || Comment
-| "Building Mardyn"    |  Description how to build Mardyn (command line + Eclipse)
+| "Building and Running Mardyn"    |  Description how to build Mardyn (command line + Eclipse)
 | "Mardyn Input Files" |  Description of the Mardyn input file
 | "Unit Tests"           |  Description on how to build, execute and write unit tests
 | <a href="../doc/styleguide.pdf">Style Guide</a> | The Mardyn Styleguide

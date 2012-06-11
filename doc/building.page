@@ -1,18 +1,39 @@
-/*! \page "Building Mardyn" 
+/*! \page "Building and Running Mardyn" 
 
 !!! Makefile
-
-CD into the src directory, type
-
-\verbatim
-make -f ../makefile/Makefile PARTYPE=SEQ TARGET=DEBUG UNIT_TESTS=1 VTK=1 -j3
-\endverbatim
 
 Building using the makefile should always work, as this is the only reliable way 
 to build Mardyn on clusters / supercomputers. 
 
 Note that dependency tracking does not work properly, so better always do a 
 "make clean"...
+
+!! Sequential Version
+
+To build Mardyn in the sequential version (i.e. for single processor use), 
+CD into the src directory, type
+
+\verbatim
+make -f ../makefile/Makefile PARTYPE=SEQ TARGET=DEBUG UNIT_TESTS=1 VTK=1 -j3
+\endverbatim
+
+!! Running sequential
+
+- The most reliable thing is to copy the executable as well as all(!) input files
+  into the same directory.
+- Execute 
+\verbatim
+./MarDyn lj40000_t300.cfg 10
+\endverbatim
+where lj40000_t300.cfg is the scenario file and 10 iterations are performed
+
+!! Parallel Version
+
+To build Mardyn in the parallel version for MPI, CD into the src directory, type
+
+\verbatim
+make -f ../makefile/Makefile PARTYPE=PAR TARGET=DEBUG UNIT_TESTS=1 VTK=1 -j3
+\endverbatim
 
 !!! Eclipse
 
