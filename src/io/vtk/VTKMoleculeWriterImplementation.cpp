@@ -78,24 +78,24 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 	PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
 	
 	if (_plotAllLJCenters) {
-		for (int i = 0; i < molecule.numLJcenters(); i++) {
+		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
 			data_iterator->push_back(molecule.id());
 		}
 		data_iterator++;
-		for (int i = 0; i < molecule.numLJcenters(); i++) {
+		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
 			data_iterator->push_back(molecule.componentid());
 		}
 		data_iterator++;
-		for (int i = 0; i < molecule.numLJcenters(); i++) {
+		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
 			data_iterator->push_back(_rank);
 		}
 		data_iterator++;
-		for (int i = 0; i < molecule.numLJcenters(); i++) {
+		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
 			data_iterator->push_back(i);
 		}
 		Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
 		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
-		for (int i = 0; i < molecule.numLJcenters(); i++) {
+		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
 			const double* curr_center = molecule.ljcenter_d(i);
 			coordinates_iterator->push_back(molecule.r(0) + curr_center[0]);
 			coordinates_iterator->push_back(molecule.r(1) + curr_center[1]);
