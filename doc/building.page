@@ -44,9 +44,12 @@ Subclipse Plugin (SVN client, available at http://subclipse.tigris.org/).
 
 The following screen shots show the settings to build Mardyn sequentially in debug mode:
 
-\image eclipse-img/eclipse_path
-\image eclipse-img/eclipse_preprocessor
-\image eclipse-img/eclipse_includes
-\image eclipse-img/eclipse_libraries
+\image eclipse_path.png
+
+\image eclipse_preprocessor.png
+
+\image eclipse_includes.png
+
+\image eclipse_libraries.png
 
 */
