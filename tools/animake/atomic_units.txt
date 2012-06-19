@@ -15,6 +15,7 @@ Unit time		1 = 32.6584 fs
 Unit energy		1 = 27.2126 eV
 Unit acceleration	1 = 49614800 nm/ns^2
 Unit pressure		1 = 2.94210e+10 kPa
+Unit surface tension	1 = 1556.89 N/m
 
 Unit dipole moment	1 = 2.54175 Debye
 Unit quadrupole moment	1 = 1.34504 Buckingham (i.e. Debye Ang) 
