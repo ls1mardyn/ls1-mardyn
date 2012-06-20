@@ -339,26 +339,6 @@ void Domain::write(char* prefix, int format, double mu, double x)
       {
          xdr << "2 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
       }
-      if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
-      {
-         xdr << "1 0 0 0 0\n";  // LJ, C, Q, D, Tersoff
-      }
-      else if(fluid2 == FLUID_EOX)
-      {
-         xdr << "3 0 0 1 0\n";  // LJ, C, Q, D, Tersoff
-      }
-      else if(fluid2 == FLUID_JES)
-      {
-         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
-      }
-      else if(fluid2 == FLUID_VEG)
-      {
-         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
-      }
-      else if(fluid2 != FLUID_NIL)
-      {
-         xdr << "2 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
-      }
    }
    if(format == FORMAT_BUCHHOLZ)
    {
@@ -379,26 +359,6 @@ void Domain::write(char* prefix, int format, double mu, double x)
          xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
       }
       else
-      {
-         xdr << "2 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
-      }
-      if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
-      {
-         xdr << "1 0 0 0 0\n";  // LJ, C, D, Q, Tersoff
-      }
-      else if(fluid2 == FLUID_EOX)
-      {
-         xdr << "3 0 1 0 0\n";  // LJ, C, D, Q, Tersoff
-      }
-      else if(fluid2 == FLUID_JES)
-      {
-         xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
-      }
-      else if(fluid2 == FLUID_VEG)
-      {
-         xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
-      }
-      else if(fluid2 != FLUID_NIL)
       {
          xdr << "2 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
       }
@@ -484,7 +444,57 @@ void Domain::write(char* prefix, int format, double mu, double x)
 
          xdr << "\n0.0 0.0 0.0\n";
       }
+   }
 
+   if(format == FORMAT_BRANCH)
+   {
+      if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
+      {
+         xdr << "1 0 0 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid2 == FLUID_EOX)
+      {
+         xdr << "3 0 0 1 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid2 == FLUID_JES)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid2 == FLUID_VEG)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid2 != FLUID_NIL)
+      {
+         xdr << "2 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+   }
+   if(format == FORMAT_BUCHHOLZ)
+   {
+      if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
+      {
+         xdr << "1 0 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 == FLUID_EOX)
+      {
+         xdr << "3 0 1 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 == FLUID_JES)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 == FLUID_VEG)
+      {
+         xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 != FLUID_NIL)
+      {
+         xdr << "2 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
+      }
+   }
+
+   if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
       if((fluid2 == FLUID_AR) || (fluid2 == FLUID_CH4))
       {
          xdr << "0.0 0.0 0.0\t"
