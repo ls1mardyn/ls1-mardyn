@@ -1,4 +1,4 @@
-MDProject trunk 20090721
+mardyn trunk 20090721
 currentTime     0.00
 # input for the RDFTest; use with cutoff=3.5, then there are 5 cells along each dimension
 # (the last cell is empty to simplify the rdf by avoiding the periodicity of the domain).
