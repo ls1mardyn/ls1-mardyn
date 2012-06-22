@@ -722,9 +722,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> xun >> yun >> zun;
 			_domain->setupProfile(xun, yun, zun);
 			_doRecordProfile = true;
-		} else if (token == "profileRecordingTimesteps") {
+		} else if (token == "profileRecordingTimesteps") { /* TODO: subotion of profile */
 			inputfilestream >> _profileRecordingTimesteps;
-		} else if (token == "profileOutputTimesteps") {
+		} else if (token == "profileOutputTimesteps") { /* TODO: subotion of profile */
 			inputfilestream >> _profileOutputTimesteps;
 		} else if (token == "RDF") {
 			double interval;
@@ -737,22 +737,22 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			_rdf = new RDF(interval, bins, _domain->getComponents());
 			_timer["RDF"];
 			//_domain->setupRDF(interval, bins);
-		} else if (token == "RDFOutputTimesteps") {
+		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
 			unsigned int RDFOutputTimesteps;
 			inputfilestream >> RDFOutputTimesteps;
 			_rdf->setOutputTimestep(RDFOutputTimesteps);
-		} else if (token == "RDFOutputPrefix") {
+		} else if (token == "RDFOutputPrefix") { /* TODO: subotion of RDF */
 			std::string RDFOutputPrefix;
 			inputfilestream >> RDFOutputPrefix;
 			_rdf->setOutputPrefix(RDFOutputPrefix);
-		} else if (token == "profiledComponent") {
+		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
 			unsigned cid;
 			inputfilestream >> cid;
 			cid--;
 			_domain->considerComponentInProfile(cid);
-		} else if (token == "profileOutputPrefix") {
+		} else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
 			inputfilestream >> _profileOutputPrefix;
-		} else if (token == "collectThermostatDirectedVelocity") {
+		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} else if (token == "zOscillator") {
 			_zoscillation = true;
@@ -839,10 +839,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "planckConstant") {
 			inputfilestream >> h;
 		} else if (token == "NVE") {
+			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
 		} else if (token == "initCanonical") {
 			inputfilestream >> _initCanonical;
-		} else if (token == "initGrandCanonical") {
+		} else if (token == "initGrandCanonical") { /* suboption of chemical potential */
 			inputfilestream >> _initGrandCanonical;
 		} else if (token == "initStatistics") {
 			inputfilestream >> _initStatistics;

@@ -11,7 +11,7 @@ persons. Let's place here things which we could use as a basis for Coders' Day o
               supported within Mardyn
 |  cutoff radius | a lj cutoff is included in the component definition, but not used
                    (both in the phasespace file and in the component class)
-| ASCII-Reader   | Not used - but still necessary???
+| ASCII-Reader   | Not used - but still necessary??? NO, remove it!
 | DomainDecomposition -> AssertDisjunctivity | Faster implementation which requires less memory;
                                                Move it one level up (into the abstract super class?)
 | Simulation::prepare_start()   | Why necessary? Could become superflous if loop structure in simulate() changed?

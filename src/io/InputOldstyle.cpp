@@ -40,17 +40,9 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	_phaseSpaceHeaderFileStream >> token;
 	domain->setinpversion(0);
 
-	if(        
-			(token != "mardyn") 
-			&& (token != "MOLDY") 
-			&& (token != "ls1r1") 
-			&& (token != "mrdyn") 
-			&& (token != "MDProject") 
-			&& (token != "Mardyn") 
-			&& (token != "MARDYN") 
-	  ) 
+	if( token != "mardyn")
 	{
-		global_log->error() << _phaseSpaceHeaderFile << " not a valid OldStyle LS1 input file." << endl;
+		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
 		exit(1);
 	}
 

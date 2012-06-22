@@ -165,5 +165,6 @@ void Leapfrog::init1D(unsigned zoscillator, ParticleContainer* molCont) {
 void Leapfrog::zOscillation(unsigned zoscillator, ParticleContainer* molCont) {
 	Molecule* thismol;
 	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+		/* TODO: use cid instead of complicated id + tersoff */
 		if (!(thismol->id() % zoscillator) && thismol->numTersoff()) thismol->resetXY();
 }
