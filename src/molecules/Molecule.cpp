@@ -164,6 +164,9 @@ void Molecule::upd_cache() {
 	unsigned int ns;
 	
 	ns = numLJcenters();
+	double mag = 1/std::sqrt(_q.magnitude2());
+	_q.scale(mag);
+	//_q *= std::sqrt(_q.magnitude2());
 	for (i = 0; i < ns; ++i)
 		_q.rotateinv((*_ljcenters)[i].r(), &(_ljcenters_d[i*3]));
 	ns = numCharges();
@@ -381,6 +384,7 @@ void Molecule::clearFM() {
 }
 
 void Molecule::calcFM() {
+	//_M[0] = _M[1] = _M[2] = 0.;
 	unsigned int ns = numSites();
 	for (unsigned int si = 0; si < ns; ++si) {
 		const double* Fsite = site_F(si);
@@ -400,6 +404,7 @@ void Molecule::calcFM() {
 			}
 		}
 #endif
+
 		Fadd(Fsite);
 		_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
 		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];

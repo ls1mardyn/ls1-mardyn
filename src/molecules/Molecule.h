@@ -28,7 +28,6 @@
 #include "molecules/Site.h"
 #include "molecules/Component.h"
 #include "integrators/Integrator.h"
-
 /*
  * maximal size of the Tersoff neighbour list
  */
@@ -80,10 +79,16 @@ public:
 	void setr(unsigned short d, double r) { _r[d] = r; }
 	/** get velocity coordinate */
 	double v(unsigned short d) const { return _v[d]; }
+
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
 	/** get the orientation */
 	const Quaternion& q() const { return _q; }
+
+
+	//tijana added
+	inline void setq(Quaternion q){ _q = q;}
+
 	/** get coordinate of the rotatational speed */
 	double D(unsigned short d) const { return _D[d]; } /* TODO: we should rename D to L with respect to literature. */
 	/** get coordinate of the current angular momentum  onto molecule */ 
@@ -122,6 +127,7 @@ public:
 	const double* dipole_e(unsigned int i) const { return &(_dipoles_e[3*i]); }
 	const double* quadrupole_d(unsigned int i) const { return &(_quadrupoles_d[3*i]); }
 	const double* quadrupole_e(unsigned int i) const { return &(_quadrupoles_e[3*i]); }
+
 
 	/**
 	 * get the total object memory size, together with all its members
@@ -202,7 +208,13 @@ public:
 	void Ftersoffadd(unsigned int i, double a[])
 	{ double* Fsite=&(_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
 
-	
+	double getEps() {
+		return (*_ljcenters)[0].eps();
+	}
+
+	double getSigma() {
+		return (*_ljcenters)[0].sigma();
+	}
 	
 	/** First step of the leap frog integrator */
 	void upd_preF(double dt, double vcorr=1., double Dcorr=1.);
@@ -252,6 +264,7 @@ public:
 	//! corresponding cell discretisations might be different as well, and therefore
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
+
 
 private:
 

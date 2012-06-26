@@ -39,7 +39,6 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	_phaseSpaceHeaderFileStream.open( _phaseSpaceHeaderFile.c_str() );
 	_phaseSpaceHeaderFileStream >> token;
 	domain->setinpversion(0);
-
 	if( token != "mardyn")
 	{
 		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;

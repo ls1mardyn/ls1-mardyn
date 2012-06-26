@@ -21,7 +21,6 @@
 #define QUATERNION_H_
 
 #include <cmath>
-
 /**
  @author Martin Bernreuther
  */
@@ -43,6 +42,7 @@ public:
 		m_qx *= s;
 		m_qy *= s;
 		m_qz *= s;
+
 	}
 	void scaleinv(double s) {
 		scale( 1./ s);
@@ -65,6 +65,9 @@ public:
 		m_qy += q.m_qy;
 		m_qz += q.m_qz;
 	}
+
+
+	void multiply_left(const Quaternion& q);
 
 	void operator *=(const Quaternion& q);
 	/**
