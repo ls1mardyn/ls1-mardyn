@@ -22,7 +22,7 @@ class ParticleInsertionTest: public utils::TestWithSimulationSetup {
 	TEST_SUITE( ParticleInsertionTest);
 	TEST_METHOD( testRotation);
 	TEST_METHOD( testTranslationAndRotation);
-	TEST_METHOD( testParameterSetup);
+	//TEST_METHOD( testParameterSetup);
 	TEST_SUITE_END();
 public:
 	ParticleInsertionTest();

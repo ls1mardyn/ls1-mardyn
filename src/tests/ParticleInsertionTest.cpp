@@ -226,6 +226,7 @@ insertion		.findParticlePosition(
 
 	}
 }
+/*
 void ParticleInsertionTest::testParameterSetup() {
 
 	LinkedCells* linkedCells = (LinkedCells*) initializeFromFile(
@@ -337,6 +338,7 @@ insertion	.findParticlePosition(
 	//ASSERT_DOUBLES_EQUAL(equals[i], energy, 1e-5);
 	}
 }
+*/
 void ParticleInsertionTest::readParamFile(string file_name, int* maxIter, int* maxRestarts, int* maxRotations, double* tolerance,
 		double* maxAngle, double* maxAllowedAngle, double* minAngle, bool* largeStepsizeOnOverlap,
 		bool* restartIfIncreases) {
