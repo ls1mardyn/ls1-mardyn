@@ -180,7 +180,6 @@ void LinkedCells::addParticle(Molecule& particle) {
 	double x = particle.r(0);
 	double y = particle.r(1);
 	double z = particle.r(2);
-	const double* ljcMolec;
 
 	if ( ( x >= _haloBoundingBoxMin[0]) && (x < _haloBoundingBoxMax[0]) &&
 	     ( y >= _haloBoundingBoxMin[1]) && (y < _haloBoundingBoxMax[1]) &&
