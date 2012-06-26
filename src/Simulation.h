@@ -21,7 +21,6 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
-#include "tarch/la/Vector.h"
 
 #include "MoleculeWrapper.h"
 
