@@ -1135,7 +1135,7 @@ void Simulation::simulate() {
 	Molecule* tM;
 	int molCnt = 0;
 	global_log->info() << "Started simulation" << endl;
-	Molecule* molec;
+
 	// added by tijana because of getEnergy(...) in LinkedCells
 	_moleculeContainer->setPairsHandler(_particlePairsHandler);
 
@@ -1143,8 +1143,6 @@ void Simulation::simulate() {
 
 
 molCnt = 0;
-double total_u = 0;
-double en;
 
 // (universal) constant acceleration (number of) timesteps
 unsigned uCAT = _pressureGradient->getUCAT();
