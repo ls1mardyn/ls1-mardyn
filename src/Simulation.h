@@ -21,6 +21,9 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
+#include "tarch/la/Vector.h"
+
+#include "MoleculeWrapper.h"
 
 #ifndef SIMULATION_SRC
 class Simulation;
@@ -29,6 +32,7 @@ extern Simulation* global_simulation;
 #endif
 
 class PressureGradient;
+class ParticleInsertion;
 
 //! Reference to the global simulation object 
 #define _simulation (*global_simulation)
@@ -36,7 +40,6 @@ class PressureGradient;
 #include <list>
 #include <vector>
 #include <string>
-#include <map>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -424,11 +427,10 @@ private:
 	SteereoCouplingSim* _coupling;
 #endif
 
-	std::map<std::string, Timer> _timer; /**< timer map used e.g. to meassure io times per plugin. */
 
 	//! initialize all member variables with a suitable value
 	void initialize();
-
+	
 };
 #endif /*SIMULATION_H_*/
 
