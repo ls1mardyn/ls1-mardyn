@@ -335,7 +335,7 @@ void AdaptiveSubCells::traversePairs(ParticlePairsHandler* particlePairsHandler)
 	_blockTraverse.traversePairs(particlePairsHandler);
 }
 
-double AdaptiveSubCells::getEnergy(Molecule* m1) {
+double AdaptiveSubCells::getEnergy(Molecule* m1, double* force) {
 	double u = 0.0;
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
 	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;

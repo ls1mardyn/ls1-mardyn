@@ -101,6 +101,10 @@ public:
 	//! Destructor
 	~LinkedCells();
 
+	double getHaloWidthNumCells(){
+		return _haloWidthInNumCells[0];
+	}
+
 	// documentation see father class (ParticleContainer.h)
 	void rebuild(double bBoxMin[3], double bBoxMax[3]);
 
@@ -117,6 +121,7 @@ public:
 	//!
 	//! Therefore, first the cell (the index) for the molecule has to be determined,
 	//! then the molecule is inserted into that cell.
+
 	void addParticle(Molecule& particle);
 
 	//! @brief calculate the forces between the molecules.
@@ -193,7 +198,11 @@ public:
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
-	double getEnergy(Molecule* m1);
+	double getEnergy(Molecule* m1, double f[3]);
+
+
+	/* Gets the energy and the force, without modifying the force of the molecules in the container */
+	double getForceAndEnergy(Molecule* m1, double* f);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;
@@ -201,12 +210,41 @@ public:
 	int grandcanonicalBalance(DomainDecompBase* comm);
 	void grandcanonicalStep(ChemicalPotential* mu, double T);
 
+	double* boundingBoxMax() {
+		return _boundingBoxMax;
+	}
 
+	double* boundingBoxMin() {
+		return _boundingBoxMin;
+	}
+
+	int* boxWidthInNumCells() {
+		return _boxWidthInNumCells;
+	}
+
+	double* cellLength() {
+		return _cellLength; 
+	}
+	
 #ifdef VTK
 	friend class VTKGridWriter;
 #endif
 
+
+
 	friend class StatisticsWriter;
+
+
+	//! @brief Get the index in the cell vector to which this Molecule belong
+	//!
+	//! each spacial position within the bounding box of the linked cells
+	//! belongs unambiguously to one cell. \n
+	//! This method determines for a given Molecule the corresponding cell
+	//! and returns the index of that cell in the cell vector. \n
+	//! If the molecule is not inside the bounding box, an error is printed
+	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
+
+	ParticleCell getCell(int idx){ return _cells[idx];}
 
 private:
 	//####################################
@@ -240,14 +278,7 @@ private:
 	//! of cells between the two cells (this is received by substracting one of the difference).
 	void calculateNeighbourIndices();
 
-	//! @brief Get the index in the cell vector to which this Molecule belong
-	//!
-	//! each spacial position within the bounding box of the linked cells
-	//! belongs unambiguously to one cell. \n
-	//! This method determines for a given Molecule the corresponding cell
-	//! and returns the index of that cell in the cell vector. \n
-	//! If the molecule is not inside the bounding box, an error is printed
-	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
+	
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -258,6 +289,8 @@ private:
 	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
 	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
+
+
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####

@@ -148,7 +148,7 @@ public:
 	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
-	double getEnergy(Molecule* m1);
+	double getEnergy(Molecule* m1, double* force = NULL);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;

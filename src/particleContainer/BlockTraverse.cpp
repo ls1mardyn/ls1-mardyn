@@ -50,9 +50,9 @@ void BlockTraverse::processCell(ParticleCell& cell, double& cutoffRadiusSquare, 
             Molecule& molecule2 = **molIter2;
             assert(&molecule1 != &molecule2);
             double dd = molecule2.dist2(molecule1, distanceVector);
-
+            double force[3] = {0,0,0};
             if (dd < cutoffRadiusSquare) {
-                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare) );
+                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare), force);
                 if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
                     particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
                 }
@@ -74,9 +74,9 @@ void BlockTraverse::processCellPair( ParticleCell &cell1, ParticleCell& cell2, d
             Molecule& molecule2 = **molIter2;
             assert(&molecule1 != &molecule2);
             double dd = molecule2.dist2(molecule1, distanceVector);
-
+            double force[3] = {0,0,0};
             if (dd < cutoffRadiusSquare) {
-                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare) );
+                particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < LJCutoffRadiusSquare), force);
                 if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
                     particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
                 }
@@ -182,7 +182,9 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (cellIndexIter = _innerCellIndices.begin(); cellIndexIter != _innerCellIndices.end(); cellIndexIter++) {
+
 		unsigned long cellIndex = *cellIndexIter;
+
 		ParticleCell& currentCell = _cells[cellIndex];
         if( currentCell.getMoleculeCount() < 1 )
             continue;
@@ -246,6 +248,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 	for (cellIndexIter = _boundaryCellIndices.begin(); cellIndexIter != _boundaryCellIndices.end(); cellIndexIter++) {
 		unsigned long cellIndex = *cellIndexIter;
 		ParticleCell& currentCell = _cells[cellIndex];
+
         if( currentCell.getMoleculeCount() < 1 )
             continue;
 
@@ -254,7 +257,10 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 
 		// loop over all forward neighbours
 		for (neighbourOffsetsIter = forwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != forwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
+			//cout<<"here!!!!!!!!!!!!!!!!!!"<<endl;
+			//cout<<"offset"<< *neighbourOffsetsIter<<"idx "<<cellIndex<<endl;
 			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+
             if( neighbourCell.getMoleculeCount() < 1 )
                 continue;
 
@@ -273,7 +279,8 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 							/* Do not sum up values twice. */
 							pairType = MOLECULE_HALOMOLECULE;
 						}
-						particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < LJCutoffRadiusSquare));
+						double force[3] = {0,0,0};
+						particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < LJCutoffRadiusSquare), force);
 						if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
 							particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, (pairType == MOLECULE_HALOMOLECULE));
 						}
@@ -285,6 +292,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 		// loop over all backward neighbours. calculate only forces
 		// to neighbour cells in the halo region, all others already have been calculated
 		for (neighbourOffsetsIter = backwardNeighbourOffsets[cellIndex].begin(); neighbourOffsetsIter != backwardNeighbourOffsets[cellIndex].end(); neighbourOffsetsIter++) {
+
 			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 
 			if (neighbourCell.isHaloCell() && neighbourCell.getMoleculeCount() > 0) {
@@ -295,11 +303,11 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 
 					for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
 						Molecule& molecule2 = **molIter2;
-
+						double force[3] = {0,0,0};
 						double dd = molecule2.dist2(molecule1, distanceVector);
 						if (dd < cutoffRadiusSquare) {
 							PairType pairType = molecule1.isLessThan(molecule2) ? MOLECULE_MOLECULE : MOLECULE_HALOMOLECULE;
-							particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < LJCutoffRadiusSquare));
+							particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < LJCutoffRadiusSquare), force);
 							if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < tersoffCutoffRadiusSquare)) {
 								particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, (pairType == MOLECULE_HALOMOLECULE));
 							}

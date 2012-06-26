@@ -133,6 +133,8 @@ public:
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMin(int dimension) const;
 
+
+	double getHaloWidthNumCells();
 	//! @brief returns one coordinate of the higher corner of the bounding box
 	//!
 	//! @param dimension the coordinate which should be returned
@@ -186,13 +188,17 @@ public:
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
 
     /* TODO goes into grand canonical ensemble */
-	virtual double getEnergy(Molecule* m1) = 0;
+	virtual double getEnergy(Molecule* m1, double* = NULL) = 0;
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
 
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();
+
+	void setPairsHandler(ParticlePairsHandler* p) {
+		_particlePairsHandler = p;
+	}
 
 protected:
 

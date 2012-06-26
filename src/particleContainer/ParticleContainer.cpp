@@ -34,7 +34,9 @@ double ParticleContainer::getBoundingBoxMin(int dimension) const {
 double ParticleContainer::getBoundingBoxMax(int dimension) const {
 	return this->_boundingBoxMax[dimension];
 }
-
+double ParticleContainer::getHaloWidthNumCells() {
+	return 0;
+}
 void ParticleContainer::updateMoleculeCaches() {
 	Molecule *tM;
 	for (tM = this->begin(); tM != this->end(); tM = this->next() ) {
