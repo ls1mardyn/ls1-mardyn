@@ -22,7 +22,7 @@
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 
-#include "MoleculeWrapper.h"
+//#include "MoleculeWrapper.h"
 
 #ifndef SIMULATION_SRC
 class Simulation;
