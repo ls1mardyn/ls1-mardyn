@@ -35,7 +35,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
-#include "ParticleInsertion.h"
+//#include "ParticleInsertion.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
