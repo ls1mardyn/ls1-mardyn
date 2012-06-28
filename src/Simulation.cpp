@@ -1133,7 +1133,6 @@ void Simulation::prepare_start() {
 void Simulation::simulate() {
 
 	Molecule* tM;
-	int molCnt = 0;
 	global_log->info() << "Started simulation" << endl;
 
 	// added by tijana because of getEnergy(...) in LinkedCells
@@ -1141,8 +1140,6 @@ void Simulation::simulate() {
 
 	_simstep = 0;
 
-
-molCnt = 0;
 
 // (universal) constant acceleration (number of) timesteps
 unsigned uCAT = _pressureGradient->getUCAT();
