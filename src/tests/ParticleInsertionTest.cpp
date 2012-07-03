@@ -114,7 +114,7 @@ void ParticleInsertionTest::testRotation() {
 		insertion.rotateMolecule(&newMolecule, wrapper,
 				&linkedCells, 1000, 45 * 3.14 / 180, 3.14, 0.1 * PI / 180,
 				targets[i], 10000 * newMolecule.getEps(), &timestep, 0.001,
-				&energy, &energy_old, force, &absForce, &q, 0, 1, &vec_energy,
+				&energy, &energy_old, force, force, &q, 0, 1, &vec_energy,
 				&vec_angle, &vec_lj, &vec_center, name_energy, name_angle,
 				name_lj, name_center);
 
