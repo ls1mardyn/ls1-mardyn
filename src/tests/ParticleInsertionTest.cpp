@@ -336,9 +336,13 @@ void ParticleInsertionTest::readParamFile(string file_name, int* maxIter,
 	int* restartIfIncreasesInt = new int[1];
 	int* largeStepsizeOnOverlapInt = new int[1];
 
-	fscanf(file, "%d\n%d\n%d\n%lf\n%lf\n%lf\n%lf\n%d\n%d", maxIter,
+	int read = fscanf(file, "%d\n%d\n%d\n%lf\n%lf\n%lf\n%lf\n%d\n%d", maxIter,
 			maxRestarts, maxRotations, tolerance, maxAngle, maxAllowedAngle,
 			minAngle, largeStepsizeOnOverlapInt, restartIfIncreasesInt);
+	if (read == EOF) {
+		cout<<"problem reading from file"<<endl;
+		exit(1);
+	}
 	if (*restartIfIncreasesInt == 1) {
 		*restartIfIncreases = true;
 	} else if (*restartIfIncreasesInt == 0) {
