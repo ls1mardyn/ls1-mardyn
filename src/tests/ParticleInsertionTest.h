@@ -12,7 +12,6 @@
 #include "Simulation.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/LinkedCells.h"
-#include "MoleculeWrapper.h"
 #include "ParticleInsertion.h"
 #include <sstream>
 

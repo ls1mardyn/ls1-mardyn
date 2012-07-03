@@ -95,10 +95,6 @@ void ParticleInsertionTest::testRotation() {
 
 		double energy = linkedCells.getForceAndEnergy(&newMolecule, force);
 		cout << "starting energy " << energy << endl;
-		tarch::la::Vector<3, double> force_vec(0.0);
-		for (int j = 0; j < 3; j++)
-			force_vec(j) = force[j];
-		double absForce = std::sqrt(force_vec * force_vec);
 		wrapper.setForce(force);
 
 		// allocate vectors for logging energy, angle, lj position and center position
@@ -193,9 +189,6 @@ void ParticleInsertionTest::testTranslationAndRotation() {
 
 		double energy = linkedCells.getForceAndEnergy(&newMolecule, force);
 		cout << "starting energy " << energy << endl;
-		tarch::la::Vector<3, double> force_vec(0.0);
-		for (int j = 0; j < 3; j++)
-			force_vec(j) = force[j];
 		wrapper.setForce(force);
 
 		// allocate for logging

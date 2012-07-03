@@ -2,10 +2,8 @@
 #define _MOLECULARDYNAMICS_COUPLING_PARTICLEINSERTION_H_
 
 #include "particleContainer/LinkedCells.h"
-#include "tarch/la/Vector.h"
 #include "molecules/Molecule.h"
 #include <vector>
-#include "MoleculeWrapper.h"
 #include "MardynMoleculeWrapper.h"
 #include <cstdlib>
 #include <cmath>
