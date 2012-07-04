@@ -42,6 +42,9 @@ class ParticleContainer;
  *       Mardyn has been started with, should be possible if you replace the
  *       domainDecomposition with a dummyDomainDecomposition before the particleContainer
  *       is initialized.
+ *
+ * @note The components (i.e. molecule types) specified in the input file used
+ *       in initializeFromFile() can be accessed via _domain->getComponents();
  */
 class utils::TestWithSimulationSetup : public utils::Test {
 
