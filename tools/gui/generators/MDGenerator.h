@@ -139,7 +139,7 @@ public:
 	/**
 	 * Remove the system of momentum from particle container.
 	 */
-	void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components)const;
+	static void removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components);
 
 protected:
 
