@@ -20,6 +20,7 @@
 #include "../tools/gui/generators/MDGenerator.h"
 
 using namespace std;
+#ifdef SUPPORT_GENERATOR
 
 class MDGenerator;
 
@@ -63,3 +64,5 @@ void InputFileTest::testRemoveMomentum() {
 
 	delete particleContainer;
 }
+#endif
+
