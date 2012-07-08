@@ -8,6 +8,7 @@
  *  Created on: 01.05.2012
  *      Author: yutaka
  */
+#ifdef SUPPORT_GENERATOR
 
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
@@ -20,7 +21,6 @@
 #include "../tools/gui/generators/MDGenerator.h"
 
 using namespace std;
-#ifdef SUPPORT_GENERATOR
 
 class MDGenerator;
 

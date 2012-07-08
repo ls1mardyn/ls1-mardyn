@@ -5,7 +5,7 @@
  *  Created on: 01.05.2012
  *      Author: yutaka
  */
-
+#ifdef SUPPORT_GENERATOR
 #ifndef INPUTFILETEST_H_
 #define INPUTFILETEST_H_
 
@@ -33,3 +33,4 @@ public:
 
 #endif /* INPUTFILETEST_H_ */
 
+#endif/*SUPPORT_GENERATOR*/
