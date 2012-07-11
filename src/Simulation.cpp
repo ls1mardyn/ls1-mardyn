@@ -1141,254 +1141,252 @@ void Simulation::simulate() {
 	_simstep = 0;
 
 
-// (universal) constant acceleration (number of) timesteps
-unsigned uCAT = _pressureGradient->getUCAT();
-_initSimulation = (unsigned long) (_domain->getCurrentTime()
-		/ _integrator->getTimestepLength());
+	// (universal) constant acceleration (number of) timesteps
+	unsigned uCAT = _pressureGradient->getUCAT();
+	_initSimulation = (unsigned long) (_domain->getCurrentTime()
+			/ _integrator->getTimestepLength());
 
-/* demonstration for the usage of the new ensemble class */
-CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
-ensemble.updateGlobalVariable(NUM_PARTICLES);
-global_log->debug() << "Number of particles in the Ensemble: "
-<< ensemble.N() << endl;
-ensemble.updateGlobalVariable(ENERGY);
-global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E()
-<< endl;
-ensemble.updateGlobalVariable(TEMPERATURE);
-global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-<< endl;
-
-/***************************************************************************/
-/* BEGIN MAIN LOOP                                                         */
-/***************************************************************************/
-// all timers except the ioTimer messure inside the main loop
-Timer loopTimer;
-Timer decompositionTimer;
-Timer perStepIoTimer;
-Timer ioTimer;
-
-#if defined(STEEREO) && defined(STEEREO_COUPLING)
-_simstep = _initSimulation;
-//SteereoLogger::setOutputLevel (4);
-_coupling->waitForConnection();
-#endif
-
-loopTimer.start();
-for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
-	cout << "starting simstep " << _simstep << endl;
-
-	if (_simstep >= _initGrandCanonical) {
-		unsigned j = 0;
-		list<ChemicalPotential>::iterator cpit;
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-				cpit->prepareTimestep(_moleculeContainer,
-						_domainDecomposition);
-			}
-			j++;
-		}
-	}
-	global_log->debug() << "timestep " << _simstep << endl;
-
-	_integrator->eventNewTimestep(_moleculeContainer, _domain);
-
-#if defined(STEEREO) && defined(STEEREO_COUPLING)
-	_steer -> processQueue (1);
-	global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
-#endif
-	// activate RDF sampling
-	if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
-		this->_rdf->tickRDF();
-		this->_particlePairsHandler->setRDF(_rdf);
-		this->_rdf->accumulateNumberOfMolecules(_domain->getComponents());
-	}
-
-	// ensure that all Particles are in the right cells and exchange Particles
-	global_log->debug() << "Updating container and decomposition" << endl;
-	loopTimer.stop();
-	decompositionTimer.start();
-	updateParticleContainerAndDecomposition();
-	decompositionTimer.stop();
-	loopTimer.start();
-
-	// Force calculation
-	global_log->debug() << "Traversing pairs" << endl;
-	//cout<<"here somehow"<<endl;
-	_moleculeContainer->traversePairs(_particlePairsHandler);
-
-	// test deletions and insertions
-	if (_simstep >= _initGrandCanonical) {
-		unsigned j = 0;
-		list<ChemicalPotential>::iterator cpit;
-		for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-				global_log->debug() << "Grand canonical ensemble(" << j
-				<< "): test deletions and insertions" << endl;
-				/* TODO: thermostat */
-				_moleculeContainer->grandcanonicalStep(&(*cpit),
-						_domain->getGlobalCurrentTemperature());
-#ifndef NDEBUG
-				/* silly check if random numbers inserted are the same for all processes... */
-				cpit->assertSynchronization(_domainDecomposition);
-#endif
-
-				int localBalance =
-				_moleculeContainer->localGrandcanonicalBalance();
-				int balance = _moleculeContainer->grandcanonicalBalance(
-						_domainDecomposition);
-				global_log->debug() << "   b["
-				<< ((balance > 0) ? "+" : "") << balance << "("
-				<< ((localBalance > 0) ? "+" : "") << localBalance
-				<< ")" << " / c = " << cpit->getComponentID()
-				<< "]   " << endl;
-				_domain->Nadd(cpit->getComponentID(), balance, localBalance);
-			}
-
-			j++;
-		}
-	}
-
-	// clear halo
-	global_log->debug() << "Delete outer particles" << endl;
-	_moleculeContainer->deleteOuterParticles();
-
-	if (_simstep >= _initGrandCanonical) {
-		_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
-				_domainDecomposition);
-	}
-
-	if (!(_simstep % _collectThermostatDirectedVelocity))
-	_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-	if (_pressureGradient->isAcceleratingUniformly()) {
-		if (!(_simstep % uCAT)) {
-			global_log->debug() << "Determine the additional acceleration"
-			<< endl;
-			_pressureGradient->determineAdditionalAcceleration(
-					_domainDecomposition, _moleculeContainer, uCAT
-					* _integrator->getTimestepLength());
-		}
-		global_log->debug() << "Process the uniform acceleration" << endl;
-		_integrator->accelerateUniformly(_moleculeContainer, _domain);
-		_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
-	}
-
-	/*
-	 * radial distribution function
-	 */
-	if (_simstep >= _initStatistics) {
-		if (this->_lmu.size() == 0) {
-			this->_domain->record_cv();
-		}
-		//			if (this->_rdf != NULL) {
-		//				this->_rdf->tickRDF();
-		//
-		//			}
-	}
-
-	if (_zoscillation) {
-		global_log->debug() << "alert z-oscillators" << endl;
-		_integrator->zOscillation(_zoscillator, _moleculeContainer);
-	}
-
-	// Inform the integrator about the calculated forces
-	global_log->debug() << "Inform the integrator" << endl;
-	_integrator->eventForcesCalculated(_moleculeContainer, _domain);
-
-	// calculate the global macroscopic values from the local values
-	global_log->debug() << "Calculate macroscopic values" << endl;
-	_domain->calculateGlobalValues(_domainDecomposition,
-			_moleculeContainer, (!(_simstep
-							% _collectThermostatDirectedVelocity)), Tfactor(
-					_simstep));
-
-	// scale velocity and angular momentum
-	if (!_domain->NVE()) {
-		global_log->debug() << "Velocity scaling" << endl;
-		if (_domain->severalThermostats()) {
-			for (tM = _moleculeContainer->begin(); tM
-					!= _moleculeContainer->end(); tM
-					= _moleculeContainer->next()) {
-				int thermostat = _domain->getThermostat(tM->componentid());
-				if (0 >= thermostat)
-				continue;
-				if (_domain->thermostatIsUndirected(thermostat)) {
-					/* TODO: thermostat */
-					tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
-							_domain->getThermostatDirectedVelocity(
-									thermostat, 0),
-							_domain->getThermostatDirectedVelocity(
-									thermostat, 1),
-							_domain->getThermostatDirectedVelocity(
-									thermostat, 2));
-				} else {
-					tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
-				}
-				tM->scale_D(_domain->getGlobalBetaRot(thermostat));
-			}
-		} else {
-			for (tM = _moleculeContainer->begin(); tM
-					!= _moleculeContainer->end(); tM
-					= _moleculeContainer->next()) {
-				tM->scale_v(_domain->getGlobalBetaTrans());
-				tM->scale_D(_domain->getGlobalBetaRot());
-			}
-		}
-	}
-
-	_domain->advanceTime(_integrator->getTimestepLength());
-#ifdef STEEREO
-	_steer -> processQueue (0);
-#endif
-
-	/* BEGIN PHYSICAL SECTION:
-	 * the system is in a consistent state so we can extract global variables
-	 */
+	/* demonstration for the usage of the new ensemble class */
+	CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
-	<< ensemble.N() << endl;
+			<< ensemble.N() << endl;
 	ensemble.updateGlobalVariable(ENERGY);
-	global_log->debug() << "Kinetic energy in the Ensemble: "
-	<< ensemble.E() << endl;
+	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E()
+		<< endl;
 	ensemble.updateGlobalVariable(TEMPERATURE);
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-	<< endl;
-	/* END PHYSICAL SECTION */
+		<< endl;
 
-	// measure per timestep IO
-	loopTimer.stop();
-	perStepIoTimer.start();
-	//output(_simstep);
-	perStepIoTimer.stop();
+	/***************************************************************************/
+	/* BEGIN MAIN LOOP                                                         */
+	/***************************************************************************/
+	// all timers except the ioTimer messure inside the main loop
+	Timer loopTimer;
+	Timer decompositionTimer;
+	Timer perStepIoTimer;
+	Timer ioTimer;
+
+#if defined(STEEREO) && defined(STEEREO_COUPLING)
+	_simstep = _initSimulation;
+	//SteereoLogger::setOutputLevel (4);
+	_coupling->waitForConnection();
+#endif
+
 	loopTimer.start();
+	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
+		if (_simstep >= _initGrandCanonical) {
+			unsigned j = 0;
+			list<ChemicalPotential>::iterator cpit;
+			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
+					cpit->prepareTimestep(_moleculeContainer,
+							_domainDecomposition);
+				}
+				j++;
+			}
+		}
+		global_log->debug() << "timestep " << _simstep << endl;
 
-}
-loopTimer.stop();
-/***************************************************************************/
-/* END MAIN LOOP                                                           */
-/*****************************//**********************************************/
+		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-ioTimer.start();
-/* write final checkpoint */
-string cpfile(_outputPrefix + ".restart.xdr");
-_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
-// finish output
-std::list<OutputBase*>::iterator outputIter;
-for (outputIter = _outputPlugins.begin(); outputIter
-		!= _outputPlugins.end(); outputIter++) {
-	(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition,
-			_domain);
-	delete (*outputIter);
-}
-ioTimer.stop();
+#if defined(STEEREO) && defined(STEEREO_COUPLING)
+		_steer -> processQueue (1);
+		global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
+#endif
+		// activate RDF sampling
+		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
+			this->_rdf->tickRDF();
+			this->_particlePairsHandler->setRDF(_rdf);
+			this->_rdf->accumulateNumberOfMolecules(_domain->getComponents());
+		}
 
-global_log->info() << "Computation in main loop took: "
-<< loopTimer.get_etime() << " sec" << endl;
-global_log->info() << "Decomposition took. "
-<< decompositionTimer.get_etime() << " sec" << endl;
-global_log->info() << "IO in main loop  took:         "
-<< perStepIoTimer.get_etime() << " sec" << endl;
-global_log->info() << "Final IO took:                 "
-<< ioTimer.get_etime() << " sec" << endl;
+		// ensure that all Particles are in the right cells and exchange Particles
+		global_log->debug() << "Updating container and decomposition" << endl;
+		loopTimer.stop();
+		decompositionTimer.start();
+		updateParticleContainerAndDecomposition();
+		decompositionTimer.stop();
+		loopTimer.start();
+
+		// Force calculation
+		global_log->debug() << "Traversing pairs" << endl;
+		//cout<<"here somehow"<<endl;
+		_moleculeContainer->traversePairs(_particlePairsHandler);
+
+		// test deletions and insertions
+		if (_simstep >= _initGrandCanonical) {
+			unsigned j = 0;
+			list<ChemicalPotential>::iterator cpit;
+			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
+					global_log->debug() << "Grand canonical ensemble(" << j
+							<< "): test deletions and insertions" << endl;
+					/* TODO: thermostat */
+					_moleculeContainer->grandcanonicalStep(&(*cpit),
+							_domain->getGlobalCurrentTemperature());
+#ifndef NDEBUG
+					/* silly check if random numbers inserted are the same for all processes... */
+					cpit->assertSynchronization(_domainDecomposition);
+#endif
+
+					int localBalance =
+							_moleculeContainer->localGrandcanonicalBalance();
+					int balance = _moleculeContainer->grandcanonicalBalance(
+							_domainDecomposition);
+					global_log->debug() << "   b["
+							<< ((balance > 0) ? "+" : "") << balance << "("
+							<< ((localBalance > 0) ? "+" : "") << localBalance
+							<< ")" << " / c = " << cpit->getComponentID()
+							<< "]   " << endl;
+					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
+				}
+
+				j++;
+			}
+		}
+
+		// clear halo
+		global_log->debug() << "Delete outer particles" << endl;
+		_moleculeContainer->deleteOuterParticles();
+
+		if (_simstep >= _initGrandCanonical) {
+			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
+					_domainDecomposition);
+		}
+
+		if (!(_simstep % _collectThermostatDirectedVelocity))
+			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
+		if (_pressureGradient->isAcceleratingUniformly()) {
+			if (!(_simstep % uCAT)) {
+				global_log->debug() << "Determine the additional acceleration"
+						<< endl;
+				_pressureGradient->determineAdditionalAcceleration(
+						_domainDecomposition, _moleculeContainer, uCAT
+						* _integrator->getTimestepLength());
+			}
+			global_log->debug() << "Process the uniform acceleration" << endl;
+			_integrator->accelerateUniformly(_moleculeContainer, _domain);
+			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
+		}
+
+		/*
+		 * radial distribution function
+		 */
+		if (_simstep >= _initStatistics) {
+			if (this->_lmu.size() == 0) {
+				this->_domain->record_cv();
+			}
+			//			if (this->_rdf != NULL) {
+			//				this->_rdf->tickRDF();
+			//
+			//			}
+		}
+
+		if (_zoscillation) {
+			global_log->debug() << "alert z-oscillators" << endl;
+			_integrator->zOscillation(_zoscillator, _moleculeContainer);
+		}
+
+		// Inform the integrator about the calculated forces
+		global_log->debug() << "Inform the integrator" << endl;
+		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
+
+		// calculate the global macroscopic values from the local values
+		global_log->debug() << "Calculate macroscopic values" << endl;
+		_domain->calculateGlobalValues(_domainDecomposition,
+				_moleculeContainer, (!(_simstep
+						% _collectThermostatDirectedVelocity)), Tfactor(
+								_simstep));
+
+		// scale velocity and angular momentum
+		if (!_domain->NVE()) {
+			global_log->debug() << "Velocity scaling" << endl;
+			if (_domain->severalThermostats()) {
+				for (tM = _moleculeContainer->begin(); tM
+				!= _moleculeContainer->end(); tM
+				= _moleculeContainer->next()) {
+					int thermostat = _domain->getThermostat(tM->componentid());
+					if (0 >= thermostat)
+						continue;
+					if (_domain->thermostatIsUndirected(thermostat)) {
+						/* TODO: thermostat */
+						tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
+								_domain->getThermostatDirectedVelocity(
+										thermostat, 0),
+										_domain->getThermostatDirectedVelocity(
+												thermostat, 1),
+												_domain->getThermostatDirectedVelocity(
+														thermostat, 2));
+					} else {
+						tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
+					}
+					tM->scale_D(_domain->getGlobalBetaRot(thermostat));
+				}
+			} else {
+				for (tM = _moleculeContainer->begin(); tM
+				!= _moleculeContainer->end(); tM
+				= _moleculeContainer->next()) {
+					tM->scale_v(_domain->getGlobalBetaTrans());
+					tM->scale_D(_domain->getGlobalBetaRot());
+				}
+			}
+		}
+
+		_domain->advanceTime(_integrator->getTimestepLength());
+#ifdef STEEREO
+		_steer -> processQueue (0);
+#endif
+
+		/* BEGIN PHYSICAL SECTION:
+		 * the system is in a consistent state so we can extract global variables
+		 */
+		ensemble.updateGlobalVariable(NUM_PARTICLES);
+		global_log->debug() << "Number of particles in the Ensemble: "
+				<< ensemble.N() << endl;
+		ensemble.updateGlobalVariable(ENERGY);
+		global_log->debug() << "Kinetic energy in the Ensemble: "
+				<< ensemble.E() << endl;
+		ensemble.updateGlobalVariable(TEMPERATURE);
+		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
+			<< endl;
+		/* END PHYSICAL SECTION */
+
+		// measure per timestep IO
+		loopTimer.stop();
+		perStepIoTimer.start();
+		output(_simstep);
+		perStepIoTimer.stop();
+		loopTimer.start();
+
+	}
+	loopTimer.stop();
+	/***************************************************************************/
+	/* END MAIN LOOP                                                           */
+	/*****************************//**********************************************/
+
+	ioTimer.start();
+	/* write final checkpoint */
+	string cpfile(_outputPrefix + ".restart.xdr");
+	_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+	// finish output
+	std::list<OutputBase*>::iterator outputIter;
+	for (outputIter = _outputPlugins.begin(); outputIter
+	!= _outputPlugins.end(); outputIter++) {
+		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition,
+				_domain);
+		delete (*outputIter);
+	}
+	ioTimer.stop();
+
+	global_log->info() << "Computation in main loop took: "
+			<< loopTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Decomposition took. "
+			<< decompositionTimer.get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop  took:         "
+			<< perStepIoTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Final IO took:                 "
+			<< ioTimer.get_etime() << " sec" << endl;
 
 
 }
