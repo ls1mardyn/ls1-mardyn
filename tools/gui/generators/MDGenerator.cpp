@@ -211,7 +211,7 @@ bool MDGenerator::isInsideDomain(Domain* domain, double position[3]) {
 	return true;
 }
 
-void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components)const{
+void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components) {
 	double mass=0.;
 	double mass_sum=0.;
 	double momentum_sum[3] = {0., 0., 0.};
