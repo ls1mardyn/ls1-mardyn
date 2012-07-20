@@ -119,7 +119,8 @@ void VTKGridWriter::setupVTKGrid() {
 	for (int i = 0; i < numCellsPerDimension[2]+1; i++) {
 		for (int j = 0; j < numCellsPerDimension[1]+1; j++) {
 			for (int k = 0; k < numCellsPerDimension[0]+1; k++) {
-				int vertexIndex = i * (numCellsPerDimension[1]+1) * (numCellsPerDimension[1]+1) + j * (numCellsPerDimension[0]+1) + k;
+				int vertexIndex = i * (numCellsPerDimension[1]+1) * (numCellsPerDimension[0]+1) + j * (numCellsPerDimension[0]+1) + k;
+
 				assert(vertexIndex < _numVertices);
 				int x = k * _container._cellLength[0];
 				int y = j * _container._cellLength[1];
@@ -133,7 +134,7 @@ void VTKGridWriter::setupVTKGrid() {
 	for (int i = 0; i < numCellsPerDimension[2]; i++) {
 		for (int j = 0; j < numCellsPerDimension[1]; j++) {
 			for (int k = 0; k < numCellsPerDimension[0]; k++) {
-				int cellsIndex = i * numCellsPerDimension[1] * numCellsPerDimension[1] + j * numCellsPerDimension[0] + k;
+				int cellsIndex = i * numCellsPerDimension[1] * numCellsPerDimension[0] + j * numCellsPerDimension[0] + k;
 				assert(cellsIndex < _numCells);
 				// calculate the indices of the inner cells, taking the halo into account
 				int containerIndex = _container.cellIndexOf3DIndex(k + _container._haloWidthInNumCells[0],
@@ -142,7 +143,7 @@ void VTKGridWriter::setupVTKGrid() {
 				_cells[cellsIndex].setIndex(containerIndex);
 
 				for (int l = 0; l < 8; l++) {
-					int vertexIndex =   (i + (l & 4 ? 1 : 0)) * (numCellsPerDimension[1]+1) * (numCellsPerDimension[1]+1)
+					int vertexIndex =   (i + (l & 4 ? 1 : 0)) * (numCellsPerDimension[1]+1) * (numCellsPerDimension[0]+1)
 						                    		 + (j + (l & 2 ? 1 : 0)) * (numCellsPerDimension[0]+1) + (k + (l & 1));
 					assert(vertexIndex < _numVertices);
 					_cells[cellsIndex].setVertex(l, &_vertices[vertexIndex]);
