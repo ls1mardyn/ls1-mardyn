@@ -273,10 +273,10 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 	unsigned nj = _components[j].numSites();
 
 	double V = domain->getGlobalVolume();
-	double N_i = _globalCtr[i] / _numberOfRDFTimesteps;
-	double N_Ai = _globalAccumulatedCtr[i] / _accumulatedNumberOfRDFTimesteps;
-	double N_j = _globalCtr[j] / _numberOfRDFTimesteps;
-	double N_Aj = _globalAccumulatedCtr[j] / _accumulatedNumberOfRDFTimesteps;
+	double N_i = _globalCtr[i] / (double)_numberOfRDFTimesteps;
+	double N_Ai = _globalAccumulatedCtr[i] / (double)_accumulatedNumberOfRDFTimesteps;
+	double N_j = _globalCtr[j] / (double)_numberOfRDFTimesteps;
+	double N_Aj = _globalAccumulatedCtr[j] / (double)_accumulatedNumberOfRDFTimesteps;
 	double rho_i = N_i / V;
 	double rho_Ai = N_Ai / V;
 	double rho_j = N_j / V;
