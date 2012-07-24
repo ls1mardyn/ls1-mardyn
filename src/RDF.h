@@ -114,14 +114,12 @@ public:
 		if(i > j) {
 			this->observeRDF(dd, j, i, n, m);
 			return;
-		} else if (i == j && m > n) {
-			this->observeRDF(dd, i, j, n, m);
-			return;
 		}
 
 		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
 		this->_localSiteDistribution[i][j-i][m][n][l] ++;
-//		std::cout << "Obeserved RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
+                if((i == j) && (m != n)) this->_localSiteDistribution[i][j-i][n][m][l] ++;
+//		std::cout << "Observed RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
 	}
 
 	bool siteRDF() {
@@ -166,7 +164,7 @@ private:
 	//! accumulated
 	int _accumulatedNumberOfRDFTimesteps;
 
-	//! the maximum distance up to which particle pairs are counted, squared
+	//! the maximum distance uthis->_localSiteDistribution[i][j-i][m][n][l]p to which particle pairs are counted, squared
 	double _maxDistanceSquare;
 
 	/**

@@ -23,11 +23,10 @@ RDF::RDF(double intervalLength, unsigned int bins, const std::vector<Component>&
 	_bins(bins),
 	_numberOfComponents(components.size()),
 	_components(components),
-	_doCollectSiteRDF(false),
 	_RDFOutputTimesteps(25000),
 	_RDFOutputPrefix("out")
 {
-
+        _doCollectSiteRDF = false;
 	_numberOfRDFTimesteps = 0;
 	_accumulatedNumberOfRDFTimesteps = 0;
 	_maxDistanceSquare = intervalLength*intervalLength*bins*bins;
@@ -176,19 +175,16 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 				for(unsigned l=0; l < _bins; l++) {
 					for(unsigned m=0; m < ni; m++) {
 						for(unsigned n=0; n < nj; n++) {
-							// d1 = this->_localSiteDistribution[i][k][m][n][l];
 							dode->collCommAppendUnsLong(_localSiteDistribution[i][k][m][n][l]);
 						}
 					}
 				}
 
-				// domainDecomp->reducevalues(&dZ, &d0, &d1, &d2);
 				dode->collCommAllreduceSum();
 
 				for(unsigned l=0; l < _bins; l++) {
 					for(unsigned m=0; m < ni; m++) {
 						for(unsigned n=0; n < nj; n++) {
-							// if(!this->_localRank) this->_globalSiteDistribution[i][k][m][n][l] = d1;
 							_globalSiteDistribution[i][k][m][n][l] = dode->collCommGetUnsLong();
 						}
 					}
@@ -239,7 +235,6 @@ void RDF::setOutputPrefix(std::string prefix) {
 void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep) {
 	if (simStep > 0 && simStep % _RDFOutputTimesteps == 0) {
 		collectRDF(domainDecomposition);
-
 		
 		if( domainDecomposition->getRank() == 0 ) {
 			accumulateRDF();
@@ -282,12 +277,15 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 	double rho_j = N_j / V;
 	double rho_Aj = N_Aj / V;
 
+	std::map< unsigned, std::map<unsigned, double> > Nsite_pair_int, Nsite_Apair_int;
 	rdfout.precision(5);
 	rdfout << "# r\tcurr.{loc, int}\taccu.{loc, int}\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnorm(curr.)\tnorm(accu.)";
 	if(ni+nj > 2) {
 		for(unsigned m=0; m < ni; m++) {
 			rdfout << "\t";
 			for(unsigned n=0; n < nj; n++) {
+                                Nsite_pair_int[m][n] = 0.0;
+                                Nsite_Apair_int[m][n] = 0.0;
 				rdfout << "\t(" << m << ", " << n << ")_curr{loc, int}   (" << m << ", " << n << ")_accu{loc, int}";
 			}
 		}
@@ -302,7 +300,6 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 
 	double N_pair_int = 0.0;
 	double N_Apair_int = 0.0;
-	std::map< unsigned, std::map<unsigned, double> > Nsite_pair_int, Nsite_Apair_int;
 	for(unsigned l=0; l < this->_bins; l++) {
 		double rmin = l * _intervalLength;
 		double rmid = (l+0.5) * _intervalLength;
@@ -311,10 +308,9 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 		double r3max = rmax*rmax*rmax;
 		double dV = (4.0 / 3.0) * M_PI * (r3max - r3min);
 
-		double N_pair = _globalDistribution[i][j-i][l] / (double) _numberOfRDFTimesteps;
+		double N_pair = _globalDistribution[i][j-i][l] / (double)_numberOfRDFTimesteps;
 		N_pair_int += N_pair;
-		double N_Apair = _globalAccumulatedDistribution[i][j-i][l]
-		                                                               / (double) _accumulatedNumberOfRDFTimesteps;
+		double N_Apair = _globalAccumulatedDistribution[i][j-i][l] / (double)_accumulatedNumberOfRDFTimesteps;
 		N_Apair_int += N_Apair;
 		double N_pair_norm = 0.0;
 		double N_Apair_norm = 0.0;
@@ -353,7 +349,7 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 					double ap = _globalAccumulatedSiteDistribution[i][j-i][m][n][l] / (double)_accumulatedNumberOfRDFTimesteps;
 					Nsite_Apair_int[m][n] += ap;
 					rdfout << "\t" << p/N_pair_norm << " " << Nsite_pair_int[m][n]/N_pair_int_norm
-							<< "   " << ap/N_Apair_norm << " " << Nsite_Apair_int[m][n]/N_Apair_int_norm;
+					       << "   " << ap/N_Apair_norm << " " << Nsite_Apair_int[m][n]/N_Apair_int_norm;
 				}
 			}
 		}

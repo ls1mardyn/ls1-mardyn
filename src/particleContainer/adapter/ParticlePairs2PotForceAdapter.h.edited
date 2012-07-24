@@ -95,8 +95,7 @@ public:
 
 	case MOLECULE_MOLECULE:
 		if (_rdf != NULL)
-			_rdf->observeRDF(dd, molecule1.componentid(),
-					molecule2.componentid());
+			_rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
 		PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ,
 				_upotXpoles, _myRF, _virial, calculateLJ, f);
