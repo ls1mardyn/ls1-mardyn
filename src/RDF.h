@@ -164,7 +164,7 @@ private:
 	//! accumulated
 	int _accumulatedNumberOfRDFTimesteps;
 
-	//! the maximum distance uthis->_localSiteDistribution[i][j-i][m][n][l]p to which particle pairs are counted, squared
+	//! the maximum distance up to which particle pairs are counted, squared
 	double _maxDistanceSquare;
 
 	/**
