@@ -483,6 +483,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 	double timestepLength;
 	unsigned cosetid = 0;
+        bool widom = false;
 
 	// The first line of the config file has to contain the token "MDProjectConfig"
 	inputfilestream >> token;
@@ -951,7 +952,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			global_log->info() << " pushed back." << endl;
 		} else if (token == "planckConstant") {
 			inputfilestream >> h;
-		} else if (token == "NVE") {
+		} else if(token == "Widom") {
+                        widom = true;
+                } else if (token == "NVE") {
 			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
 		} else if (token == "initCanonical") {
@@ -998,6 +1001,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	unsigned j = 0;
 	std::list<ChemicalPotential>::iterator cpit;
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+                if(widom) cpit->enableWidom();
 		cpit->setIncrement(idi);
 		double tmp_molecularMass =
 				_domain->getComponents()[cpit->getComponentID()].m();

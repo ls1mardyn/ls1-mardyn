@@ -1,6 +1,6 @@
 /*
  * Martin Horsch, LS1/Mardyn project moderated by Martin Bernreuther
- * (C)2009 GNU General Public License
+ * (C)2012 GNU General Public License
  */
 #include "GrandCanonical.h"
 
@@ -36,6 +36,8 @@ ChemicalPotential::ChemicalPotential()
 	 this->remainingDecisions = list<float>(); 
 	 //this->reservoir = list<Molecule>();
 	 this->id_increment = 1;
+
+         this->widom = false;
 }
 
 void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1)
@@ -116,27 +118,30 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
 	         << ", the decisive density quotient equals " << (float)globalN/globalReducedVolume << "\n";
 #endif
 
-	 // construct deletions
-	 //
-	 float sel, dec;
-	 unsigned localIndex;
-	 for(unsigned i=0; i < this->instances; i++)
-	 {
-	    sel = this->rnd.rnd();
-	    dec = this->rnd.rnd();
+   // construct deletions (disabled for Widom test particle method)
+   //
+   float sel, dec;
+   unsigned localIndex;
+   if(!this->widom)
+   {
+      for(unsigned i=0; i < this->instances; i++)
+      {
+         sel = this->rnd.rnd();
+         dec = this->rnd.rnd();
 #ifndef NDEBUG
-			// if(!ownrank) cout << "global index " << sel << " chosen for deletion.\n";
+         // if(!ownrank) cout << "global index " << sel << " chosen for deletion.\n";
 #endif
-			if((sel >= minrnd) && (sel < maxrnd))
-			{
-				 localIndex = (unsigned)floor(localN*(sel-minrnd)/(maxrnd-minrnd));
+         if((sel >= minrnd) && (sel < maxrnd))
+         {
+            localIndex = (unsigned)floor(localN*(sel-minrnd)/(maxrnd-minrnd));
 #ifndef NDEBUG
-				 // cout << "rank " << ownrank << " will try to delete index " << localIndex << ".\n";  // \\ //
+            // cout << "rank " << ownrank << " will try to delete index " << localIndex << ".\n";  // \\ //
 #endif
-				 this->remainingDeletions.push_back(localIndex);
-				 this->remainingDecisions.push_back(dec);
-			}
-	 }
+            this->remainingDeletions.push_back(localIndex);
+            this->remainingDecisions.push_back(dec);
+         }
+      }
+   }
 
 	 int insertions = this->instances;
 #ifndef NDEBUG
@@ -177,8 +182,7 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
 
 bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, double* maxco)
 {
-	 if(this->remainingDeletions.empty()) return false;
-	 if(cell->getNumberOfParticles() == 0) return false;
+	 if(this->remainingDeletions.empty()) return false; // DELETION_FALSE (always occurring for Widom)
 	 
 	 unsigned idx = *this->remainingDeletions.begin();
 	 this->remainingDeletions.erase(this->remainingDeletions.begin());
@@ -197,6 +201,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
 	    tmaxco[d] = maxco[d];
 	 }
 	 
+	 if(cell->getNumberOfParticles() == 0) return false; // DELETION_INVALID
 	 Molecule* m = cell->begin();
 	 int j=0;
 	 for(unsigned i=0; (i < idx); i++)
@@ -210,7 +215,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
 				 m = cell->next();
 				 if(m == cell->end())
 	 {
-	    if(j == 0) return false;
+	    if(j == 0) return false; // DELETION_FALSE
 	    m = cell->begin();
 	    j = 0;
 	 }
@@ -219,7 +224,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
 			j++;
 			if(m == cell->end())
 			{
-	 if(j == 0) return false;
+	 if(j == 0) return false; // DELETION_FALSE
 	 m = cell->begin();
 	 j = 0;
 			}
@@ -232,7 +237,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
 	    m = cell->next();
 	    if(m == cell->end())
 	    {
-	 if(j == 0) return false;
+	 if(j == 0) return false; // DELETION_FALSE
 	 m = cell->begin();
 			}
 	 }
@@ -240,7 +245,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, dou
 	 global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 	 assert(m->id() < nextid);
-	 return true;
+	 return true; // DELETION_TRUE
 }
 
 // returns 0 if no insertion remains for this subdomain
@@ -260,8 +265,15 @@ unsigned long ChemicalPotential::getInsertion(double* ins)
 
 bool ChemicalPotential::decideDeletion(double deltaUTilde)
 {
+         assert(!this->widom);  // the Widom test particle method should never call decideDeletion ...
+
 	 if(this->remainingDecisions.empty())
 	 {
+            if(this->widom)
+            {
+               global_log->error() << "SEVERE WARNING: The Widom method is (erroneously) trying to carry out test deletions.\n";
+               return false;
+            }
 	    global_log->error() << "No decision is possible." << std::endl;
 	    exit(1);
 	 }
@@ -286,23 +298,33 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 {
 	 if(this->remainingDecisions.empty())
 	 {
+            if(this->widom)
+            {
+               global_log->error() << "!!! SEVERE WARNING on rank " << ownrank << ": no decision is possible !!!\n";
+               return false;
+            }
 	    global_log->error() << "No decision is possible." << std::endl;
 	    exit(1);
 	 }
-	 float dec = *this->remainingDecisions.begin();
-	 this->remainingDecisions.erase(this->remainingDecisions.begin());
 	 double acc = this->globalReducedVolume * exp(muTilde - deltaUTilde) / (1.0 + (double)(this->globalN));
-	 bool ans;
-	 if(dec < 0.000001) ans = true;
-	 else if(dec > 0.999999) ans = false;
-	 else ans = (acc > dec);
-	 // ans = (acc > 1.0e-05)? (acc > dec): false;
+	
+         bool ans;
+         if(this->widom) ans = false;  // the Widom method does not actually insert any particles ...
+         else
+         {
+	    float dec = *this->remainingDecisions.begin();
+  	    if(dec < 0.000001) ans = true;
+	    else if(dec > 0.999999) ans = false;
+	    else ans = (acc > dec);
+	    // ans = (acc > 1.0e-05)? (acc > dec): false;
 #ifndef NDEBUG
-	 // cout << "rank " << ownrank << (ans? " accepted ": " rejected ")
-	 //      << "insertion with deltaUtilde = " << deltaUTilde
-	 //      << " (P = " << ((acc > 1.0)? 1.0: acc) << ").\n"; // \\ //
+	    // cout << "rank " << ownrank << (ans? " accepted ": " rejected ")
+	    //      << "insertion with deltaUtilde = " << deltaUTilde
+	    //      << " (P = " << ((acc > 1.0)? 1.0: acc) << ").\n"; // \\ //
 #endif
-	 if(ans) this->globalN += (2*ownrank + 1);  // estimate, the precise value is communicated later
+	    if(ans) this->globalN += (2*ownrank + 1);  // estimate, the precise value is communicated later
+         }
+	 this->remainingDecisions.erase(this->remainingDecisions.begin());
 	 return ans;
 }
 

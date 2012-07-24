@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ * Copyright (C) 2012 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -80,6 +80,10 @@ public:
 	unsigned int getComponentID() { return this->componentid; }
 	int rank() { return this->ownrank; }
 
+        void disableWidom() { this->widom = false; }
+        void enableWidom() { this->widom = true; }
+        bool isWidom() { return this->widom; }
+
 private:
 	int ownrank;  // only for debugging purposes (indicate rank in console output)
 
@@ -110,6 +114,8 @@ private:
 	bool restrictedControlVolume;
 	double control_bottom[3];
 	double control_top[3];
+
+        bool widom;  // Widom method -> determine mu by test insertions which are all rejected
 
 	std::list<Molecule> reservoir;
 };
