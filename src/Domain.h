@@ -1,5 +1,5 @@
 /*************************************************************************
- * Copyright (C) 2011 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ * Copyright (C) 2012 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
  *                                                                       *
  * This program is free software; you can redistribute it and/or modify  *
  * it under the terms of the GNU General Public License as published by  *
@@ -28,11 +28,10 @@
 /* 
  * TODO add comments for variables 
  */
-#define VERSION 20100321  /**< checkpoint file version */
+#define VERSION 20120726  /**< checkpoint file version */
 
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
-
 
 class Molecule;
 class ParticleContainer;
@@ -358,6 +357,10 @@ public:
 	bool thermostatWarning() { return (this->_universalSelectiveThermostatWarning > 0); }
 
 	void evaluateRho(unsigned long localN, DomainDecompBase* comm);
+        void submitDU(unsigned cid, double DU, double* r);
+        void setLambda(double lambda) { this->_universalLambda = lambda; }
+        void setDensityCoefficient(float coeff) { _globalDecisiveDensity = coeff; }
+        void setProfiledComponentMass(double m) { _universalProfiledComponentMass = m; }
 
 	void init_cv(unsigned N, double U, double UU) {
 		this->_globalUSteps = N;
@@ -443,23 +446,36 @@ private:
 	//! local N profile map
 	std::map<unsigned, long double> _localNProfile;
 	//! global N profile map
-	std::map<unsigned, double> _globalNProfile;
+	std::map<unsigned, double> _universalNProfile;
 	//! local directed velocity profile map
 	std::map<unsigned, long double> _localvProfile[3];
 	//! global directed velocity  profile map
-	std::map<unsigned, double> _globalvProfile[3];
+	std::map<unsigned, double> _universalvProfile[3];
 	//! local kinetic energy profile map
 	std::map<unsigned, long double> _localKineticProfile;
 	//! global kinetic energy profile map
-	std::map<unsigned, double> _globalKineticProfile;
+	std::map<unsigned, double> _universalKineticProfile;
 	//! local counter w. r. t. degrees of freedom
 	std::map<unsigned, long double> _localDOFProfile;
 	//! global counter w. r. t. degrees of freedom
-	std::map<unsigned, double> _globalDOFProfile;
+	std::map<unsigned, double> _universalDOFProfile;
 	//! how many _evaluated_ timesteps are currently accumulated in the profile?
 	unsigned _globalAccumulatedDatasets;
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
+        double _universalProfiledComponentMass;  // set from outside
+
+        std::map<unsigned, double> _universalTProfile; 
+        std::map<unsigned, long double> _localWidomProfile;  // submit individually
+        std::map<unsigned, double> _globalWidomProfile;
+        std::map<unsigned, long double> _localWidomProfileTloc;  // submit individually
+        std::map<unsigned, double> _globalWidomProfileTloc;
+        std::map<unsigned, long double> _localWidomInstances;  // submit individually
+        std::map<unsigned, double> _globalWidomInstances;
+        std::map<unsigned, long double> _localWidomInstancesTloc;  // submit individually
+        std::map<unsigned, double> _globalWidomInstancesTloc;
+        double _universalLambda;  // set from outside
+        float _globalDecisiveDensity;  // set from outside
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;

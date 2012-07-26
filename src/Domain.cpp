@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
+ *   Copyright (C) 2012 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
  *                                                                         *
  *   This program is free software; you can redistribute it and/or modify  *
  *   it under the terms of the GNU General Public License as published by  *
@@ -734,18 +734,50 @@ void Domain::collectProfile(DomainDecompBase* dode)
 			dode->collCommAppendLongDouble(_localvProfile[d][unID]);
 		dode->collCommAppendLongDouble(this->_localDOFProfile[unID]);
 		dode->collCommAppendLongDouble(_localKineticProfile[unID]);
+
+                dode->collCommAppendLongDouble(this->_localWidomProfile[unID]);
+                dode->collCommAppendLongDouble(this->_localWidomInstances[unID]);
+                dode->collCommAppendLongDouble(this->_localWidomProfileTloc[unID]);
+                dode->collCommAppendLongDouble(this->_localWidomInstancesTloc[unID]);
 	}
 	dode->collCommAllreduceSum();
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
-		_globalNProfile[unID] = (double)dode->collCommGetLongDouble();
+		_universalNProfile[unID] = (double)dode->collCommGetLongDouble();
 		for(int d=0; d<3; d++)
-			this->_globalvProfile[d][unID]
+			this->_universalvProfile[d][unID]
 				= (double)dode->collCommGetLongDouble();
-		this->_globalDOFProfile[unID]
+		this->_universalDOFProfile[unID]
 			= (double)dode->collCommGetLongDouble();
-		this->_globalKineticProfile[unID]
+		this->_universalKineticProfile[unID]
 			= (double)dode->collCommGetLongDouble();
+
+		this->_globalWidomProfile[unID]
+			= (double)dode->collCommGetLongDouble();
+		this->_globalWidomInstances[unID]
+			= (double)dode->collCommGetLongDouble();
+		this->_globalWidomProfileTloc[unID]
+			= (double)dode->collCommGetLongDouble();
+		this->_globalWidomInstancesTloc[unID]
+			= (double)dode->collCommGetLongDouble();
+
+		/*
+		 * construct the temperature profile
+		 */
+		double Tun = this->getGlobalCurrentTemperature();
+		if((!this->_localRank) && (_universalDOFProfile[unID] >= 1000))
+		{
+		  double twoEkin = this->_universalKineticProfile[unID];
+
+		  double vvNN = 0.0;
+		  for(unsigned d = 0; d < 3; d++)
+		     vvNN += _universalvProfile[d][unID] * _universalvProfile[d][unID];
+		  double twoEkindir = _universalProfiledComponentMass * vvNN / _universalNProfile[unID];
+
+		  Tun = (twoEkin - twoEkindir) / _universalDOFProfile[unID];
+		}
+		// domainDecomp->doBroadcast(&Tun); // no longer needed, since MPI_Reduce (branch) was replaced with MPI_Allreduce (trunk)
+		this->_universalTProfile[unID] = Tun; 
 	}
 	dode->collCommFinalize();
 }
@@ -757,22 +789,30 @@ void Domain::outputProfile(const char* prefix)
 	string vzpryname(prefix);
 	string Tpryname(prefix);
 	string rhpryname(prefix);
+        string upryname(prefix);
 	rhpryname += ".rhpry";
 	vzpryname += ".vzpry";
 	Tpryname += ".Tpry";
+        upryname += ".upr";
 	ofstream rhpry(rhpryname.c_str());
 	ofstream vzpry(vzpryname.c_str());
 	ofstream Tpry(Tpryname.c_str());
-	if (!(vzpry && Tpry && rhpry))
+	ofstream upry(upryname.c_str());
+	if (!(vzpry && Tpry && rhpry && upry))
 	{
 		return;
 	}
-	rhpry.precision(4);
+	rhpry.precision(6);
 	rhpry << "# y\trho\ttotal DOF\n# \n";
-	vzpry.precision(4);
+	vzpry.precision(5);
 	vzpry << "# y\tvz\tv\n# \n";
-	Tpry.precision(5);
-	Tpry << "# y\t2Ekin/#DOF\n# \n";
+	Tpry.precision(6);
+        Tpry << "# coord\t2Ekin/#DOF\t2Ekin/3N (dir.)\tT\n# \n";
+	upry.precision(5);
+        upry << "# coord\t\tmu_conf(loc)  mu_conf(glob) \t\t mu_rho(loc)  mu_rho(glob) \t "
+             << "mu_at(loc)  mu_at(glob) \t\t mu_T(loc)  mu_T(glob) \t mu_id(loc)  "
+             << "mu_id(glob) \t\t mu_res(loc)  mu_res(glob) \t mu(loc)  mu(glob) \t\t #(loc)  "
+             << "#(glob)\n";
 
 	double layerVolume = this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]
 		/ this->_universalNProfileUnits[1];
@@ -783,7 +823,12 @@ void Domain::outputProfile(const char* prefix)
 		long double Ny = 0.0;
 		long double DOFy = 0.0;
 		long double twoEkiny = 0.0;
+                long double twoEkindiry = 0.0;
 		long double velocitysumy[3];
+                long double widomSigExpy = 0.0;
+                long double widomInstancesy = 0.0;
+                long double widomSigExpyTloc = 0.0;
+                long double widomInstancesyTloc = 0.0;
 		for(unsigned d = 0; d < 3; d++) velocitysumy[d] = 0.0;
 		for(unsigned x = 0; x < this->_universalNProfileUnits[0]; x++)
 		{
@@ -791,25 +836,68 @@ void Domain::outputProfile(const char* prefix)
 			{
 				unsigned unID = x * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
 					+ y * this->_universalNProfileUnits[2] + z;
-				Ny += this->_globalNProfile[unID];
-				DOFy += this->_globalDOFProfile[unID];
-				twoEkiny += this->_globalKineticProfile[unID];
-				for(unsigned d = 0; d < 3; d++) velocitysumy[d] += this->_globalvProfile[d][unID];
+				Ny += this->_universalNProfile[unID];
+				DOFy += this->_universalDOFProfile[unID];
+				twoEkiny += this->_universalKineticProfile[unID];
+				for(unsigned d = 0; d < 3; d++) velocitysumy[d] += this->_universalvProfile[d][unID];
+                                widomSigExpy += this->_globalWidomProfile[unID];
+                                widomInstancesy += this->_globalWidomInstances[unID];
+                                widomSigExpyTloc += this->_globalWidomProfileTloc[unID];
+                                widomInstancesyTloc += this->_globalWidomInstancesTloc[unID];
 			}
 		}
+                double rho_loc = Ny / (layerVolume * this->_globalAccumulatedDatasets);
 
 		if(Ny >= 64.0)
 		{
-			double vvdir = 0.0;
-			for(unsigned d = 0; d < 3; d++)
-			{
-				double vd = velocitysumy[d] / Ny;
-				vvdir += vd*vd;
-			}
-			rhpry << yval << "\t" << (Ny / (layerVolume * this->_globalAccumulatedDatasets))
-				<< "\t" << DOFy << "\n";
-			vzpry << yval << "\t" << (velocitysumy[2] / Ny) << "\t" << sqrt(vvdir) << "\n";
-			Tpry << yval << "\t" << (twoEkiny / DOFy) << "\n";
+		   double vvdir = 0.0;
+		   for(unsigned d = 0; d < 3; d++)
+		   {
+		      double vd = velocitysumy[d] / Ny;
+		      vvdir += vd*vd;
+		   }
+                   twoEkindiry = Ny * _universalProfiledComponentMass * vvdir;
+
+		   rhpry << yval << "\t" << rho_loc << "\t" << DOFy << "\n";
+		   vzpry << yval << "\t" << (velocitysumy[2] / Ny) << "\t" << sqrt(vvdir) << "\n";
+                   Tpry << yval << "\t" << (twoEkiny / DOFy) << "\t"
+                        << (twoEkindiry / (3.0*Ny)) << "\t" << ((twoEkiny - twoEkindiry) / DOFy) << "\n";
+
+                   if(widomInstancesy >= 100.0)
+                   {
+                      double mu_res_glob = -log(widomSigExpy / widomInstancesy);
+                      double mu_conf_glob = mu_res_glob * _globalTemperatureMap[0];
+                      double mu_id_glob = _globalTemperatureMap[0] * log(_globalDecisiveDensity);
+
+                      double mu_T_glob = 0.0;
+                      double mu_rho_loc = 0.0;
+                      double mu_T_loc = 0.0;
+                      double mu_res_loc = 0.0;
+                      double mu_conf_loc = 0.0;
+                      if(Ny >= 10.0)
+                      {
+                         mu_T_glob = 3.0*_globalTemperatureMap[0] * log(_universalLambda);
+                         mu_res_loc = -log(widomSigExpyTloc / widomInstancesyTloc);              
+
+                         if(widomInstancesyTloc >= 100.0)
+                         {
+                            double Tloc = (twoEkiny - twoEkindiry) / DOFy;
+                            // mu_id_loc = Tloc * log(rho_loc * _universalLambda*_universalLambda*_universalLambda);
+                            mu_rho_loc = Tloc * log(rho_loc);
+                            mu_T_loc = 3.0*Tloc * (log(_universalLambda) + 0.5*log(_globalTemperatureMap[0] / Tloc));
+                            mu_conf_loc = Tloc * mu_res_loc;
+                         }
+                      }
+               
+                      upry << yval << " \t\t " << mu_conf_loc << "  " << mu_conf_glob << " \t\t "
+                           << mu_rho_loc << "  " << mu_id_glob - mu_T_glob << " \t "
+                           << mu_conf_loc + mu_rho_loc << "  " << mu_conf_glob + mu_id_glob - mu_T_glob << " \t\t "
+                           << mu_T_loc << "  " << mu_T_glob << " \t "
+                           << mu_rho_loc + mu_T_loc << "  " << mu_id_glob << " \t\t "
+                           << mu_res_loc << "  " << mu_res_glob << " \t "
+                           << mu_rho_loc + mu_T_loc + mu_conf_loc << "  " << mu_id_glob + mu_conf_glob << " \t\t "
+                           << widomInstancesy << "  " << widomInstancesyTloc << "\n";
+                   }
 		}
 		else
 		{
@@ -820,6 +908,7 @@ void Domain::outputProfile(const char* prefix)
 	rhpry.close();
 	vzpry.close();
 	Tpry.close();
+	upry.close();
 }
 
 void Domain::resetProfile()
@@ -829,16 +918,25 @@ void Domain::resetProfile()
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
 		this->_localNProfile[unID] = 0.0;
-		this->_globalNProfile[unID] = 0.0;
+		this->_universalNProfile[unID] = 0.0;
 		for(int d=0; d<3; d++)
 		{
 			this->_localvProfile[d][unID] = 0.0;
-			this->_globalvProfile[d][unID] = 0.0;
+			this->_universalvProfile[d][unID] = 0.0;
 		}
 		this->_localDOFProfile[unID] = 0.0;
-		this->_globalDOFProfile[unID] = 0.0;
+		this->_universalDOFProfile[unID] = 0.0;
 		this->_localKineticProfile[unID] = 0.0;
-		this->_globalKineticProfile[unID] = 0.0;
+		this->_universalKineticProfile[unID] = 0.0;
+
+		this->_localWidomProfile[unID] = 0.0;
+		this->_globalWidomProfile[unID] = 0.0;
+		this->_localWidomInstances[unID] = 0.0;
+		this->_globalWidomInstances[unID] = 0.0;
+		this->_localWidomProfileTloc[unID] = 0.0;
+		this->_globalWidomProfileTloc[unID] = 0.0;
+		this->_localWidomInstancesTloc[unID] = 0.0;
+		this->_globalWidomInstancesTloc[unID] = 0.0;
 	}
 	this->_globalAccumulatedDatasets = 0;
 }
@@ -992,5 +1090,26 @@ double Domain::cv()
 		/ (_globalUSteps * _globalNumMolecules * _globalTemperatureMap[0] * _globalTemperatureMap[0]);
 
 	return id + conf;
+}
+
+void Domain::submitDU(unsigned cid, double DU, double* r)
+{
+   unsigned xun, yun, zun;
+   xun = (unsigned)floor(r[0] * this->_universalInvProfileUnit[0]);
+   yun = (unsigned)floor(r[1] * this->_universalInvProfileUnit[1]);
+   zun = (unsigned)floor(r[2] * this->_universalInvProfileUnit[2]);
+   int unID = xun * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
+                  + yun * this->_universalNProfileUnits[2] + zun;
+   if(unID < 0) return;
+
+   _localWidomProfile[unID] += exp(-DU / _globalTemperatureMap[0]);
+   _localWidomInstances[unID] += 1.0;
+
+   double Tloc = _universalTProfile[unID];
+   if(Tloc != 0.0)
+   {
+      _localWidomProfileTloc[unID] += exp(-DU/Tloc);
+      _localWidomInstancesTloc[unID] += 1.0;
+   }
 }
 

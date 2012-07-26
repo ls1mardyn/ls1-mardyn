@@ -1020,7 +1020,7 @@ int AdaptiveSubCells::grandcanonicalBalance(DomainDecompBase* comm) {
 	return universalInsertionsMinusDeletions;
 }
 
-void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
+void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) {
 	bool accept = true;
 	double DeltaUpot;
 	Molecule* m;
@@ -1098,6 +1098,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 
 			addParticle(*m);
 			DeltaUpot = getEnergy(m);
+                        domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG

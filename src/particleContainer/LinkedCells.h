@@ -208,7 +208,7 @@ public:
 		return this->_localInsertionsMinusDeletions;
 	}
 	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T);
+	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain);
 
 	double* boundingBoxMax() {
 		return _boundingBoxMax;

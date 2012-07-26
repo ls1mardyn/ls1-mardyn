@@ -155,7 +155,7 @@ public:
 	}
 
 	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T);
+	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain);
 
 
 private:

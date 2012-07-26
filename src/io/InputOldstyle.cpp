@@ -191,6 +191,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				if( IDummy1 > 0. ) dcomponents[i].setI11(IDummy1);
 				if( IDummy2 > 0. ) dcomponents[i].setI22(IDummy2);
 				if( IDummy3 > 0. ) dcomponents[i].setI33(IDummy3);
+                                domain->setProfiledComponentMass(dcomponents[i].m());
                                 global_log->info() << endl;
 			}
 

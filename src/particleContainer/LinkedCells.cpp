@@ -692,7 +692,7 @@ int LinkedCells::grandcanonicalBalance(DomainDecompBase* comm) {
 	return universalInsertionsMinusDeletions;
 }
 
-void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
+void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) {
 	bool accept = true;
 	double DeltaUpot;
 	Molecule* m;
@@ -771,6 +771,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T) {
 			this->_cells[cellid].addParticle(m);
 			double force[3] = {0,0,0};
 			DeltaUpot = getEnergy(m, force);
+                        domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG

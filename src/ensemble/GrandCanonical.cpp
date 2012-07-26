@@ -36,6 +36,7 @@ ChemicalPotential::ChemicalPotential()
 	 this->remainingDecisions = list<float>(); 
 	 //this->reservoir = list<Molecule>();
 	 this->id_increment = 1;
+	 this->lambda = 1.0;
 
          this->widom = false;
 }
@@ -331,8 +332,9 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 void ChemicalPotential::submitTemperature(double T)
 {
 	 this->muTilde = this->mu / T;
-	 double lambda = 0.39894228 * h / sqrt(molecularMass*T);
+	 this->lambda = 0.39894228 * h / sqrt(molecularMass*T);
 	 globalReducedVolume = globalV / (lambda*lambda*lambda);
+	 this->decisive_density = (float)globalN/globalReducedVolume;
 	 double doOutput = this->rnd.rnd();
 #ifdef NDEBUG
 	 if(ownrank) return;

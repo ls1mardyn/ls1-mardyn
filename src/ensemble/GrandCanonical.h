@@ -84,6 +84,9 @@ public:
         void enableWidom() { this->widom = true; }
         bool isWidom() { return this->widom; }
 
+	double getLambda() { return this->lambda; }
+	float getDensityCoefficient() { return this->decisive_density; }
+
 private:
 	int ownrank;  // only for debugging purposes (indicate rank in console output)
 
@@ -114,6 +117,10 @@ private:
 	bool restrictedControlVolume;
 	double control_bottom[3];
 	double control_top[3];
+
+	float decisive_density;
+
+	double lambda;
 
         bool widom;  // Widom method -> determine mu by test insertions which are all rejected
 

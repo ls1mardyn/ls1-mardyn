@@ -1226,11 +1226,12 @@ void Simulation::simulate() {
 				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
 					global_log->debug() << "Grand canonical ensemble(" << j
 							<< "): test deletions and insertions" << endl;
-					/* TODO: thermostat */
+                                        this->_domain->setLambda(cpit->getLambda());
+                                        this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
 					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature());
+							_domain->getGlobalCurrentTemperature(), this->_domain);
 #ifndef NDEBUG
-					/* silly check if random numbers inserted are the same for all processes... */
+					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);
 #endif
 

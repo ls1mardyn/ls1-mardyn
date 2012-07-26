@@ -191,7 +191,7 @@ public:
 	virtual double getEnergy(Molecule* m1, double* E = 0) = 0;
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
-	virtual void grandcanonicalStep(ChemicalPotential* mu, double T) = 0;
+	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) = 0;
 
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();
