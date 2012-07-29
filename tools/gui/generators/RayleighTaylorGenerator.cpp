@@ -66,32 +66,6 @@ RayleighTaylorGenerator::~RayleighTaylorGenerator() {
 }
 
 
-//from Droplet
-/*
-void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	domain->setCurrentTime(0);
-
-	domain->disableComponentwiseThermostat();
-	domain->setGlobalTemperature(_temperature);
-
-	domain->setGlobalLength(0, L1);
-	domain->setGlobalLength(1, L2);
-	domain->setGlobalLength(2, L3);
-
-	_logger->debug() << "RayleighTaylorGenerator: set global length=[" << L1
-	                 << "," << L2 << "," <<  L3 << "]" << endl;
-
-	for (unsigned int i = 0; i < _components.size(); i++) {
-		Component component = _components[i];
-		if (_configuration.performPrincipalAxisTransformation()) {
-			principalAxisTransform(component);
-		}
-		domain->addComponent(component);
-	}
-	domain->setepsilonRF(1e+10);
-}
-
-*/
 
 //from CubicGrid
 void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
@@ -239,11 +213,6 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 	tab->addParameter(
 			new ParameterWithIntValue("N", "N",
 					"N", Parameter::LINE_EDIT, false, N));
-
-	/*
-	tab->addParameter(
-			new ParameterWithIntValue("numOfMolecules", "numOfMolecules",
-					"Number of Molecules", Parameter::LINE_EDIT, false, numOfMolecules));*/
 
 	tab->addParameter(
 			new ParameterWithDoubleValue("r_cut", "r_cut",
@@ -406,14 +375,14 @@ void RayleighTaylorGenerator::addMolecule(double x, double y, double z, unsigned
 	I[0] = _components[componentType].I11();
 	I[1] = _components[componentType].I22();
 	I[2] = _components[componentType].I33();
-	/*****  Copied from animake - initialize anular velocity *****/
+	//  Copied from animake - initialize anular velocity
 	double w[3];
 	for(int d=0; d < 3; d++) {
 		w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
 				sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
 		w[d] = w[d] * MDGenerator::fs_2_mardyn;
 	}
-	/************************** End Copy **************************/
+	//End Copy
 
 	Molecule m(id, componentType, x, y, z, // position
 			velocity[0], -velocity[1], velocity[2], // velocity
@@ -447,7 +416,7 @@ bool RayleighTaylorGenerator::validateParameters() {
 			valid = false;
 			_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
 			_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-									<< " domain size=" << L[i]/*simBoxLength[i]*/ << endl;
+									<< " domain size=" << L[i] << endl;
 		}
 	}
 
