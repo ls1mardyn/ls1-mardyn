@@ -38,7 +38,6 @@ void destruct_generator(Generator* generator) {
 
 RayleighTaylorGenerator::RayleighTaylorGenerator() :
 					MDGenerator("RayleighTaylorGenerator") {
-	numOfMolecules = 14000;
 	L1 = 144;
 	L2 = 60;
 	L3 = 60;

@@ -20,9 +20,9 @@ class RayleighTaylorGenerator: public MDGenerator {
 
 private://TODO ask Wolfgang why only _temperature is prefixed by _.
 	double _temperature;
-	int numOfMolecules;
+	int N;
 	double L1, L2, L3, epsilon_A, epsilon_B, sigma_A, sigma_B,
-		q_A, q_B, m_A, m_B, N, r_cut, delta_t, T, G, h, p_max, skal;
+		q_A, q_B, m_A, m_B, r_cut, delta_t, T, G, h, p_max, skal;
 	std::vector<Component> _components;
 
 
