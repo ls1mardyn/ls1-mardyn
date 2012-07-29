@@ -4,7 +4,7 @@
  *  Created on: June, 2012
  *      Author: nagashim
  */
-
+/*
 class Domain;
 using namespace std;
 
@@ -38,13 +38,6 @@ public:
 	RayleighTaylorGenerator();
 	virtual ~RayleighTaylorGenerator();
 
-/*	virtual void readPhaseSpaceHeader(Domain* domain, double timestep);
-
-	//! @brief read the phase space components and header information
-	unsigned long readPhaseSpace(ParticleContainer* particleContainer,
-			std::list<ChemicalPotential>* lmu, Domain* domain,
-			DomainDecompBase* domainDecomp);*/
-
 	vector<ParameterCollection*> getParameters();
 
 	//void generatePreview();
@@ -57,21 +50,22 @@ public:
 	//! @param timestep timestep length
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep);
 
-	/**
-	 *  @brief read the actual phase space information
-	 *  Returns "the highest molecule ID found in the phase space file";
-	 *  // todo why? should it be some kind of upper bound for the number of molecules???
-	 */
+	//
+	//  @brief read the actual phase space information
+	//  Returns "the highest molecule ID found in the phase space file";
+	//  // todo why? should it be some kind of upper bound for the number of molecules???
+	//
 	virtual unsigned long readPhaseSpace(ParticleContainer* particleContainer,
 			std::list<ChemicalPotential>* lmu, Domain* domain,
 			DomainDecompBase* domainDecomp);
 
 private:
 
-	/**
-	 * add a molecule to the container, initializing random velocity, orientation, and so on....
-	 */
+	//
+	// add a molecule to the container, initializing random velocity, orientation, and so on....
+	//
 	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
 };
 
 #endif // RayleighTaylorGenerator.h
+*/

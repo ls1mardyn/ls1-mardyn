@@ -4,7 +4,7 @@
  *  Created on: June, 2012
  *      Author: nagashim
  */
-
+/*
 #include "RayleighTaylorGenerator.h"
 #include "common/MardynConfigurationParameters.h"
 #include "common/PrincipalAxisTransform.h"
@@ -185,58 +185,6 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 	return id;
 }
 
-//from Droplet
-/*
-unsigned long RayleighTaylorGenerator::readPhaseSpace(
-		ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain,
-		DomainDecompBase* domainDecomp) {
-
-	Timer inputTimer;
-	inputTimer.start();
-	_logger->info() << "Reading phase space file (RayleighTaylorGenerator)." << endl;
-
-	srand(1);
-	vector<double> bBoxMin;
-	vector<double> bBoxMax;
-
-	bBoxMin.resize(3);
-	bBoxMax.resize(3);
-	for (int i = 0; i < 3; i++) {
-		bBoxMin[i] = domainDecomp->getBoundingBoxMin(i, domain);
-		bBoxMax[i] = domainDecomp->getBoundingBoxMax(i, domain);
-	}
-
-	_logger->info()
-							<< "OneCLJGenerator  generating cluster distribution. " << " T "
-							<< _temperature << " #molecules " << numOfMolecules << " rho_gas "
-							<< " rho_fluid " << endl;
-
-	vector<Component>& dcomponents = domain->getComponents();
-	vector<unsigned long> partsPerComp;
-	partsPerComp.resize(1);
-	particleContainer->update();
-	particleContainer->deleteOuterParticles();
-	domain->setglobalNumMolecules(
-			domainDecomp->countMolecules(particleContainer, partsPerComp));
-
-	for (unsigned int i = 0; i < partsPerComp.size(); i++) {
-		dcomponents[i].setNumMolecules(partsPerComp[i]);
-		domain->setglobalRotDOF(
-				partsPerComp[i]
-				             * dcomponents[i].getRotationalDegreesOfFreedom());
-	}
-
-	domain->setglobalRho(
-			domain->getglobalNumMolecules() / (L1 * L2 * L3));
-
-	removeMomentum(particleContainer, _components);
-
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
-	return 0;
-}*/
-
 vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 	vector<ParameterCollection*> parameters;
 	parameters.push_back(new MardynConfigurationParameters(_configuration));
@@ -308,13 +256,6 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 	tab->addParameter(
 			new ParameterWithDoubleValue("T", "T",
 					"T", Parameter::LINE_EDIT, false, T));
-
-	/*
-	tab->addParameter(
-			new ParameterWithDoubleValue("temperature", "Temperature [K]",
-					"Temperature in the domain in Kelvin", Parameter::LINE_EDIT,
-					false, _temperature / MDGenerator::kelvin_2_mardyn ));
-	 */
 
 	tab->addParameter(
 			new ParameterWithDoubleValue("G", "G",
@@ -392,12 +333,6 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 		sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
 		cout << "OneCenterLJDroplet: N: " << N
 				<< endl;
-/*
-	} else if (id == "numOfMolecules") {
-		numOfMolecules = static_cast<ParameterWithIntValue*> (p)->getValue();
-		cout << "OneCenterLJDroplet: numOfMolecules: " << numOfMolecules
-				<< endl;
-*/
 
 	} else if (id == "r_cut") {
 		sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
@@ -418,10 +353,6 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 		sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
 		cout << "OneCenterLJDroplet: T: " << T
 				<< endl;
-/*
-	} else if (id == "temperature") {
-		_temperature = static_cast<ParameterWithDoubleValue*> (p)->getValue() * MDGenerator::kelvin_2_mardyn;
-*/
 
 	} else if (id == "G") {
 		sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
@@ -522,3 +453,4 @@ bool RayleighTaylorGenerator::validateParameters() {
 
 	return valid;
 }
+*/
