@@ -19,10 +19,10 @@ using namespace std;
 class RayleighTaylorGenerator: public MDGenerator {
 
 private:
-	double _temperature;
+//	double _temperature;
 	int _N;
-	double _L1, _L2, _L3, epsilon_A, epsilon_B, sigma_A, sigma_B,
-		q_A, q_B, m_A, m_B, _r_cut, _delta_t, _T, _G, _h, _p_max, _skal;
+	double _L1, _L2, _L3, _epsilon_A, _epsilon_B, _sigma_A, _sigma_B,
+		_q_A, _q_B, _m_A, _m_B, _r_cut, _delta_t, _T, _G, _h, _p_max, _skal;
 	std::vector<Component> _components;
 
 	//double rho;
@@ -61,10 +61,15 @@ public:
 
 private:
 
+	bool getRandomPosition(
+			double boxSize_x,double boxSize_y,double boxSize_z,
+			double &x,double &y,double &z,int componentType);
+
 	//
 	// add a molecule to the container, initializing random velocity, orientation, and so on....
 	//
-	void addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer);
+	void addMolecule(double x, double y, double z, unsigned long id,
+			int componentType, ParticleContainer* particleContainer);
 };
 
 #endif // RayleighTaylorGenerator.h
