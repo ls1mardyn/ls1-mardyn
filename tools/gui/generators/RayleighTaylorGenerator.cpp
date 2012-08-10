@@ -39,28 +39,29 @@ void destruct_generator(Generator* generator) {
 
 RayleighTaylorGenerator::RayleighTaylorGenerator() :
 												MDGenerator("RayleighTaylorGenerator") {
-	_L1 = 144*MDGenerator::angstroem_2_atomicUnitLength;
-	_L2 = 60 * MDGenerator::angstroem_2_atomicUnitLength;
-	_L3 = 60 * MDGenerator::angstroem_2_atomicUnitLength;
-	_epsilon_A = 1;
-	_epsilon_B = 1;
-	_sigma_A = 1;
-	_sigma_B = 1;
+	_L1 = 144. * MDGenerator::angstroem_2_atomicUnitLength;
+	_L2 = 60. * MDGenerator::angstroem_2_atomicUnitLength;
+	_L3 = 60. * MDGenerator::angstroem_2_atomicUnitLength;
+	_epsilon_A = 1. * MDGenerator::kelvin_2_mardyn;
+	_epsilon_B = 1. * MDGenerator::kelvin_2_mardyn;
+	_sigma_A = 1. * MDGenerator::angstroem_2_atomicUnitLength;
+	_sigma_B = 1. * MDGenerator::angstroem_2_atomicUnitLength;
 	_q_A = _q_B = 0.5;
-	_m_A = _m_B = 23 * MDGenerator::unitMass_2_mardyn;
+	_m_A = _m_B = 23. * MDGenerator::unitMass_2_mardyn;
 	_N = 140;
-	_r_cut = 6;
+	_r_cut = 6. * MDGenerator::angstroem_2_atomicUnitLength;
 	_delta_t = 0.001;
-	_T = 300 * MDGenerator::kelvin_2_mardyn;
+	_T = 300. * MDGenerator::kelvin_2_mardyn;
 	_G = 0.175;//TODO
-	_h = 1;//TODO
-	_p_max = 4;//TODO
+	_h = 1.;//TODO
+	_p_max = 4.;//TODO
 	_skal = 992.573;//TODO
 
 	//	_temperature = 300. / 315774.5;
 	_components.resize(2);
 	_components[0].addCharge(0.,0.,0.,_m_A,_q_A);
 	_components[1].addCharge(0.,0.,0.,_m_B,_q_B);
+	//_components[0].addLJcenter(0.,0.,0., 23 * MDGenerator::unitMass_2_mardyn,1.,1.,6.,false);
 	_components[0].addLJcenter(0, 0, 0,_m_A, _epsilon_A, _sigma_A, _r_cut, false);
 	_components[1].addLJcenter(0, 0, 0,_m_A, _epsilon_B, _sigma_B, _r_cut, false);
 }
@@ -69,6 +70,41 @@ RayleighTaylorGenerator::RayleighTaylorGenerator() :
 RayleighTaylorGenerator::~RayleighTaylorGenerator() {
 }
 
+bool RayleighTaylorGenerator::getRandomPosition(
+		double boxSize_x,double boxSize_y,double boxSize_z,
+		double &x,double &y,double &z,int componentType){
+
+	x = boxSize_x * ((double) rand() / (double) RAND_MAX);
+	y = boxSize_y * ((double) rand() / (double) RAND_MAX);
+	z = boxSize_z * ((double) rand() / (double) RAND_MAX);
+
+	double lowerBound_z = 1./4.*boxSize_z;
+	double upperBound_z = 3./4.*boxSize_z;
+
+	if(componentType==0){
+		if((lowerBound_z <= z)&&
+				(z < upperBound_z)){
+			return true;
+		}else if(getRandomPosition(boxSize_x,boxSize_y,boxSize_z,x,y,z,componentType)){
+			return true;
+		}
+	}else if(componentType==1){
+		if(!((lowerBound_z <= z)&&
+				(z < upperBound_z))){
+			return true;
+		}else if(getRandomPosition(boxSize_x,boxSize_y,boxSize_z,x,y,z,componentType)){
+			return true;
+		}
+	}
+	else{// If componentType is not either 0 or 1
+		std::cout<<"Invalid component type is detected in getRandomPosition!" << std::flush;
+		return false;
+	}
+
+	return true;
+}
+
+/*
 bool RayleighTaylorGenerator::getRandomPosition(
 		double boxSize_x,double boxSize_y,double boxSize_z,
 		double &x,double &y,double &z,int componentType){
@@ -103,7 +139,7 @@ bool RayleighTaylorGenerator::getRandomPosition(
 	}
 
 	return true;
-}
+}*/
 
 void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	domain->setCurrentTime(0);
@@ -123,7 +159,6 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 	}
 	domain->setepsilonRF(1e+10);
 }
-
 
 unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
@@ -217,39 +252,9 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 					"Temperature[K]", Parameter::LINE_EDIT, false, _T / MDGenerator::kelvin_2_mardyn));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("epsilon_A", "epsilon_A",
-					"epsilon_A", Parameter::LINE_EDIT, false, _epsilon_A));
-
-	tab->addParameter(
-			new ParameterWithDoubleValue("epsilon_B", "epsilon_B",
-					"epsilon_B", Parameter::LINE_EDIT, false, _epsilon_B));
-
-	tab->addParameter(
-			new ParameterWithDoubleValue("sigma_A", "sigma_A",
-					"sigma_A", Parameter::LINE_EDIT, false, _sigma_A));
-
-	tab->addParameter(
-			new ParameterWithDoubleValue("sigma_B", "sigma_B",
-					"sigma_B", Parameter::LINE_EDIT, false, _sigma_B));
-
-	tab->addParameter(
-			new ParameterWithDoubleValue("q_A", "q_A",
-					"q_A", Parameter::LINE_EDIT, false, _q_A));
-	tab->addParameter(
-			new ParameterWithDoubleValue("q_B", "q_B",
-					"q_B", Parameter::LINE_EDIT, false, _q_B));
-
-	tab->addParameter(
-			new ParameterWithDoubleValue("m_A", "m_A",
-					"m_A", Parameter::LINE_EDIT, false, _m_A));
-
-	tab->addParameter(
-			new ParameterWithDoubleValue("m_B", "m_B",
-					"m_B", Parameter::LINE_EDIT, false, _m_B));
-
-	tab->addParameter(
 			new ParameterWithDoubleValue("r_cut", "r_cut",
-					"r_cut", Parameter::LINE_EDIT, false, _r_cut));
+					"r_cut", Parameter::LINE_EDIT, false,
+					_r_cut / MDGenerator::angstroem_2_atomicUnitLength));
 
 	tab->addParameter(
 			new ParameterWithDoubleValue("delta_t", "delta_t",
@@ -279,6 +284,43 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 			new ComponentParameters("component2", "component2", "Set up the parameters of component 2",
 					_components[1]));
 
+	tab->addParameter(
+			new ParameterWithDoubleValue("epsilon_A", "epsilon_A",
+					"epsilon_A", Parameter::LINE_EDIT, false,
+					_epsilon_A / MDGenerator::kelvin_2_mardyn ));
+
+	tab->addParameter(
+			new ParameterWithDoubleValue("epsilon_B", "epsilon_B",
+					"epsilon_B", Parameter::LINE_EDIT, false,
+					_epsilon_B / MDGenerator::kelvin_2_mardyn));
+
+	tab->addParameter(
+			new ParameterWithDoubleValue("sigma_A", "sigma_A",
+					"sigma_A", Parameter::LINE_EDIT, false,
+					_sigma_A / MDGenerator::angstroem_2_atomicUnitLength));
+
+	tab->addParameter(
+			new ParameterWithDoubleValue("sigma_B", "sigma_B",
+					"sigma_B", Parameter::LINE_EDIT, false,
+					_sigma_B / MDGenerator::angstroem_2_atomicUnitLength));
+
+	tab->addParameter(
+			new ParameterWithDoubleValue("q_A", "q_A",
+					"q_A", Parameter::LINE_EDIT, false, _q_A));
+	tab->addParameter(
+			new ParameterWithDoubleValue("q_B", "q_B",
+					"q_B", Parameter::LINE_EDIT, false, _q_B));
+
+	tab->addParameter(
+			new ParameterWithDoubleValue("m_A", "m_A",
+					"m_A", Parameter::LINE_EDIT, false,
+					_m_A / MDGenerator::unitMass_2_mardyn));
+
+	tab->addParameter(
+			new ParameterWithDoubleValue("m_B", "m_B",
+					"m_B", Parameter::LINE_EDIT, false,
+					_m_B / MDGenerator::unitMass_2_mardyn));
+
 	return parameters;
 }
 
@@ -307,36 +349,6 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 				<< _L3 / MDGenerator::angstroem_2_atomicUnitLength
 				<< endl;
 
-	} else if (id == "epsilon_A") {
-		_epsilon_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: epsilon_A: " << _epsilon_A
-				<< endl;
-
-	} else if (id == "epsilon_B") {
-		_epsilon_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: epsilon_B: " << _epsilon_B
-				<< endl;
-
-	} else if (id == "sigma_A") {
-		_sigma_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: sigma_A: " << _sigma_A
-				<< endl;
-
-	} else if (id == "sigma_B") {
-		_sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: sigma_B: " << _sigma_B
-				<< endl;
-
-	} else if (id == "m_A") {
-		_m_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: m_A: " << _m_A
-				<< endl;
-
-	} else if (id == "m_B") {
-		_m_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: m_B: " << _m_B
-				<< endl;
-
 	} else if (id == "NumOfParticles") {
 		_N = static_cast<ParameterWithIntValue*> (p)->getValue();
 		cout << "OneCenterLJRayleighTaylor: NumOfParticles: " << _N
@@ -344,7 +356,8 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 
 	} else if (id == "r_cut") {
 		_r_cut = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: r_cut: " << _r_cut
+		cout << "OneCenterLJRayleighTaylor: r_cut: "
+				<< _r_cut / MDGenerator::angstroem_2_atomicUnitLength
 				<< endl;
 
 	} else if (id == "delta_t") {
@@ -400,6 +413,36 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 		std::string part = id.substr(11);
 		ComponentParameters::setParameterValue(_components[1], p, part);
 
+	} else if (id == "epsilon_A") {
+		_epsilon_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: epsilon_A: " << _epsilon_A
+				<< endl;
+
+	} else if (id == "epsilon_B") {
+		_epsilon_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: epsilon_B: " << _epsilon_B
+				<< endl;
+
+	} else if (id == "sigma_A") {
+		_sigma_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: sigma_A: " << _sigma_A
+				<< endl;
+
+	} else if (id == "sigma_B") {
+		_sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: sigma_B: " << _sigma_B
+				<< endl;
+
+	} else if (id == "m_A") {
+		_m_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: m_A: " << _m_A
+				<< endl;
+
+	} else if (id == "m_B") {
+		_m_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: m_B: " << _m_B
+				<< endl;
+
 	} else if (firstSubString(".", id) == "ConfigurationParameters") {
 		std::string part = remainingSubString(".", id);
 		MardynConfigurationParameters::setParameterValue(_configuration, p, part);
@@ -440,7 +483,6 @@ void RayleighTaylorGenerator::addMolecule(
 			w[0], w[1], w[2], &_components);
 	particleContainer->addParticle(m);
 }
-
 
 bool RayleighTaylorGenerator::validateParameters() {
 	bool valid = true;
