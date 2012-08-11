@@ -20,9 +20,10 @@ class RayleighTaylorGenerator: public MDGenerator {
 
 private:
 //	double _temperature;
-	int _N;
+	int  _n_1, _n_2, _n_3;
 	double _L1, _L2, _L3, _epsilon_A, _epsilon_B, _sigma_A, _sigma_B,
-		_q_A, _q_B, _m_A, _m_B, _r_cut, _delta_t, _T, _G, _h, _p_max, _skal;
+		_q_A, _q_B, _m_A, _m_B, _r_cut, _delta_t, _T, _G, _h, _p_max,
+		_skal;
 	std::vector<Component> _components;
 
 	//double rho;
@@ -60,7 +61,9 @@ public:
 			DomainDecompBase* domainDecomp);
 
 private:
-
+	/*
+	 *  This function is not used.
+	 */
 	bool getRandomPosition(
 			double boxSize_x,double boxSize_y,double boxSize_z,
 			double &x,double &y,double &z,int componentType);

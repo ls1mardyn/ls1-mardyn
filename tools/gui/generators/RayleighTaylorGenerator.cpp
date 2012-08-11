@@ -38,17 +38,20 @@ void destruct_generator(Generator* generator) {
 #endif
 
 RayleighTaylorGenerator::RayleighTaylorGenerator() :
-												MDGenerator("RayleighTaylorGenerator") {
+																MDGenerator("RayleighTaylorGenerator") {
 	_L1 = 144. * MDGenerator::angstroem_2_atomicUnitLength;
 	_L2 = 60. * MDGenerator::angstroem_2_atomicUnitLength;
 	_L3 = 60. * MDGenerator::angstroem_2_atomicUnitLength;
+	_n_1 = 14;
+	_n_2 = 5;
+	_n_3 = 5;
 	_epsilon_A = 1. * MDGenerator::kelvin_2_mardyn;
 	_epsilon_B = 1. * MDGenerator::kelvin_2_mardyn;
 	_sigma_A = 1. * MDGenerator::angstroem_2_atomicUnitLength;
 	_sigma_B = 1. * MDGenerator::angstroem_2_atomicUnitLength;
 	_q_A = _q_B = 0.5;
 	_m_A = _m_B = 23. * MDGenerator::unitMass_2_mardyn;
-	_N = 140;
+//	_N = 140;
 	_r_cut = 6. * MDGenerator::angstroem_2_atomicUnitLength;
 	_delta_t = 0.001;
 	_T = 300. * MDGenerator::kelvin_2_mardyn;
@@ -66,10 +69,13 @@ RayleighTaylorGenerator::RayleighTaylorGenerator() :
 	_components[1].addLJcenter(0, 0, 0,_m_A, _epsilon_B, _sigma_B, _r_cut, false);
 }
 
-
 RayleighTaylorGenerator::~RayleighTaylorGenerator() {
 }
 
+/*
+ * getRandomPosition generates random positions in simulation box.
+ * The valid position depends on the componentType.
+ */
 bool RayleighTaylorGenerator::getRandomPosition(
 		double boxSize_x,double boxSize_y,double boxSize_z,
 		double &x,double &y,double &z,int componentType){
@@ -177,6 +183,39 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 	int id = 1;
 	int numOfAddedMolecule = 0;
 
+	double lowerBound_z = 1./4.* _L3;
+	double upperBound_z = 3./4.* _L3;
+	int componentType;
+	double space_x = _L1 / (_n_1 + 1);
+	double space_y = _L2 / (_n_2 + 1);
+	double space_z = _L3 / (_n_3 + 1);
+
+	for(int idx = 1; idx <= _n_1; idx++){
+		for(int idy = 1; idy <= _n_2; idy++){
+			for(int idz = 1; idz <=_n_3; idz++){
+
+				double x = space_x * idx;
+				double y = space_y * idy;
+				double z = space_z * idz;
+
+				if((lowerBound_z <= z)&&(z < upperBound_z)){
+					componentType = 1;
+				}else{
+					componentType = 0;
+				}
+
+				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
+					addMolecule(x, y, z, id, componentType,particleContainer);
+					numOfAddedMolecule ++;
+				}
+
+				id++;
+			}
+		}
+	}
+
+
+	/*
 	srand((unsigned) time(NULL));
 	for(int idx = 0; idx < _N; idx++){
 
@@ -197,9 +236,9 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 			addMolecule(x, y, z, id, componentType,particleContainer);
 			numOfAddedMolecule ++;
 		}
-		//std::cout << "x is" << x << std::flush;
+
 		id++;
-	}
+	}*/
 
 	//std::cout << "numOfAddedMolecule" << numOfAddedMolecule << std::flush;
 
@@ -243,9 +282,22 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 					"SimulationBoxSize(Z)", Parameter::LINE_EDIT,
 					false, _L3 / MDGenerator::angstroem_2_atomicUnitLength));
 
+//	tab->addParameter(
+//			new ParameterWithIntValue("NumOfParticles", "NumOfParticles",
+//					"NumOfParticles", Parameter::LINE_EDIT, false, _N));
+
 	tab->addParameter(
-			new ParameterWithIntValue("NumOfParticles", "NumOfParticles",
-					"NumOfParticles", Parameter::LINE_EDIT, false, _N));
+			new ParameterWithIntValue("NumOfParticlesAlongX", "NumOfParticlesAlongX",
+					"NumOfParticlesAlongX", Parameter::LINE_EDIT, false, _n_1));
+
+	tab->addParameter(
+			new ParameterWithIntValue("NumOfParticlesAlongY", "NumOfParticlesAlongY",
+					"NumOfParticlesAlongY", Parameter::LINE_EDIT, false, _n_2));
+
+	tab->addParameter(
+			new ParameterWithIntValue("NumOfParticlesAlongZ", "NumOfParticlesAlongZ",
+					"NumOfParticlesAlongZ", Parameter::LINE_EDIT, false, _n_3));
+
 
 	tab->addParameter(
 			new ParameterWithDoubleValue("Temperature[K]", "Temperature[K]",
@@ -349,9 +401,24 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 				<< _L3 / MDGenerator::angstroem_2_atomicUnitLength
 				<< endl;
 
-	} else if (id == "NumOfParticles") {
-		_N = static_cast<ParameterWithIntValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: NumOfParticles: " << _N
+//	} else if (id == "NumOfParticles") {
+//		_N = static_cast<ParameterWithIntValue*> (p)->getValue();
+//		cout << "OneCenterLJRayleighTaylor: NumOfParticles: " << _N
+//				<< endl;
+
+	} else if (id == "NumOfParticlesAlongX") {
+		_n_1 = static_cast<ParameterWithIntValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: NumOfParticlesAlongX: " << _n_1
+				<< endl;
+
+	} else if (id == "NumOfParticlesAlongY") {
+		_n_2 = static_cast<ParameterWithIntValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: NumOfParticlesAlongY: " << _n_2
+				<< endl;
+
+	} else if (id == "NumOfParticlesAlongZ") {
+		_n_3 = static_cast<ParameterWithIntValue*> (p)->getValue();
+		cout << "OneCenterLJRayleighTaylor: NumOfParticlesAlonZ: " << _n_3
 				<< endl;
 
 	} else if (id == "r_cut") {
@@ -453,6 +520,10 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 	}
 }
 
+/*
+ * TODO: How to initialize w[] and orientation[]?
+ * Is this correct?
+ */
 void RayleighTaylorGenerator::addMolecule(
 		double x, double y, double z, unsigned long id, int componentType, ParticleContainer* particleContainer) {
 	vector<double> velocity = getRandomVelocity(_T);
@@ -508,7 +579,7 @@ bool RayleighTaylorGenerator::validateParameters() {
 			valid = false;
 			_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
 			_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-																	<< " domain size=" << L[i] << endl;
+																					<< " domain size=" << L[i] << endl;
 		}
 	}
 
