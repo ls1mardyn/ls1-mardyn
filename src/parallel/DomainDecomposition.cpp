@@ -56,13 +56,6 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 		halo_L[d] = moleculeContainer->get_halo_L(d);
 	}
 
-#ifndef NDEBUG
-	vector<unsigned long> compCount;
-	compCount.resize(1);
-	countMolecules(moleculeContainer, compCount);
-	global_log->debug() << "Num molecules: " << compCount[0] << endl;
-#endif
-
 	// temporal data for the particle exchange
 	int numPartsToSend[DIM][2];
 	int numPartsToRecv[DIM][2];
@@ -211,23 +204,6 @@ double DomainDecomposition::guaranteedDistance(double x, double y, double z, Dom
 	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }
 
-unsigned long DomainDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
-	vector<int> localCompCount;
-	localCompCount.resize(compCount.size());
-	for (unsigned int i = 0; i < localCompCount.size(); i++)
-		localCompCount[i] = 0;
-
-	Molecule* tempMolecule;
-	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
-		localCompCount[tempMolecule->componentid()] += 1;
-	}
-	int numMolecules = 0;
-	for (unsigned int i = 0; i < localCompCount.size(); i++) {
-		MPI_CHECK( MPI_Allreduce(&localCompCount[i], &compCount[i], 1, MPI_INT, MPI_SUM, _comm) );
-		numMolecules += compCount[i];
-	}
-	return numMolecules;
-}
 
 double DomainDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	return _coords[dimension] * domain->getGlobalLength(dimension) / _gridSize[dimension];

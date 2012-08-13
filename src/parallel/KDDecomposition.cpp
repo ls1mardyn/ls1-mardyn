@@ -247,31 +247,6 @@ double KDDecomposition::guaranteedDistance(double x, double y, double z, Domain*
 	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }
 
-unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
-	const int numComponents = compCount.size();
-	unsigned long* localCompCount = new unsigned long[numComponents];
-	unsigned long* globalCompCount = new unsigned long[numComponents];
-	for( int i = 0; i < numComponents; i++ ) {
-		localCompCount[i] = 0;
-	}
-	
-	Molecule* tempMolecule;
-	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
-		localCompCount[tempMolecule->componentid()] += 1;
-	}
-	
-	MPI_CHECK( MPI_Allreduce(localCompCount, globalCompCount, numComponents, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) );
-	
-	unsigned long numMolecules = 0;
-	for (int i = 0; i < numComponents; i++) {
-		compCount[i] = globalCompCount[i];
-		numMolecules += globalCompCount[i];
-	}
-
-	delete[] localCompCount;
-	delete[] globalCompCount;
-	return numMolecules;
-}
 
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);

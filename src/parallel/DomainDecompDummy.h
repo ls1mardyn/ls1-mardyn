@@ -50,9 +50,6 @@ public:
 	}
 
 	// documentation see father class (DomainDecompBase.h)
-	unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
-
-	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)

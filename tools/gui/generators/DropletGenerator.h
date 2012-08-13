@@ -109,6 +109,21 @@ public:
 	//! less (or equal) than offset. Otherwise it returns false.
 	bool closeToAnyCluster(double x, double y, double z, double offset);
 
+	//! @brief counts the number of molecules of each component type.
+	//!
+	//! This method is usually only needed once in the beginning of the simulation and only
+	//! if the particles were not read in from a single file but read in from one file per proc or
+	//! if the particles were created by each proc seperately.
+	//! @param moleculeContainer container for the molecules
+	//! @param compCount vector which has to have the size which equals the number of components
+	//!                  this method will will the vector with the number of molecules for each
+	//!                  of the components (in the global domain)
+	//! @return the number of molecules in the global domain is returned
+	//!
+	//! @TODO move this method to the DropletGenerator!
+	unsigned long countMolecules(DomainDecompBase* domainDecomp, ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
+
+
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep);
 
 	//! @brief read the phase space components and header information
