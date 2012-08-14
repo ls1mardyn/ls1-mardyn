@@ -64,9 +64,6 @@ public:
 	bool procOwnsPos(double x, double y, double z, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
-	double guaranteedDistance(double x, double y, double z, Domain* domain);
-
-	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)

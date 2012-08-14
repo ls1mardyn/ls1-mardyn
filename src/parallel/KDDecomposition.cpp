@@ -220,33 +220,6 @@ bool KDDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) 
 	}
 }
 
-double KDDecomposition::guaranteedDistance(double x, double y, double z, Domain* domain) {
-	double xdist = 0;
-	double ydist = 0;
-	double zdist = 0;
-	if (x < getBoundingBoxMin(0, domain)) {
-		xdist = getBoundingBoxMin(0, domain) - x;
-	}
-	else if (x >= getBoundingBoxMax(0, domain)) {
-		xdist = x - getBoundingBoxMax(0, domain);
-	}
-
-	if (y < getBoundingBoxMin(1, domain)) {
-		ydist = getBoundingBoxMin(1, domain) - y;
-	}
-	else if (y >= getBoundingBoxMax(1, domain)) {
-		ydist = y - getBoundingBoxMax(1, domain);
-	}
-
-	if (z < getBoundingBoxMin(2, domain)) {
-		zdist = getBoundingBoxMin(2, domain) - z;
-	}
-	else if (z >= getBoundingBoxMax(2, domain)) {
-		zdist = z - getBoundingBoxMax(2, domain);
-	}
-	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
-}
-
 
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);

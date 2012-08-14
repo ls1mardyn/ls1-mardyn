@@ -124,6 +124,19 @@ public:
 	unsigned long countMolecules(DomainDecompBase* domainDecomp, ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
 
 
+	//! @brief returns a guaranteed distance of (x,y,z) to the local domain
+	//!
+	//! This method is e.g. used by a particle generator which creates clusters (nuclei, drops).
+	//! Only if the cluster is close (cluster radius larger then guaranteedDistance) to the
+	//! domain the particles have to be created.
+	//! @param x x-coordinate of the position for which the guaranteed distance is returned
+	//! @param y y-coordinate of the position for which the guaranteed distance is returned
+	//! @param z z-coordinate of the position for which the guaranteed distance is returned
+	//! @param domain might be needed to get the bounding box
+	//!
+	double guaranteedDistance(double x, double y, double z, DomainDecompBase* domainDecomp, Domain* domain);
+
+
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep);
 
 	//! @brief read the phase space components and header information

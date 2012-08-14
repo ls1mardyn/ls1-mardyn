@@ -167,9 +167,9 @@ void DropletGenerator::readLocalClusters(Domain* domain,
 					shiftedSphere[0] = sphere[0] + ix * simBoxLength[0];
 					shiftedSphere[1] = sphere[1] + iy * simBoxLength[1];
 					shiftedSphere[2] = sphere[2] + iz * simBoxLength[2];
-					distanceToDomain = domainDecomp->guaranteedDistance(
+					distanceToDomain = guaranteedDistance(
 							shiftedSphere[0], shiftedSphere[1],
-							shiftedSphere[2], domain);
+							shiftedSphere[2], domainDecomp, domain);
 					if (distanceToDomain <= shiftedSphere[3]) { // sphere[3] = radius
 						// reduce number of spheres for domains with periodic boundary
 						bool tooFar = false;
@@ -590,4 +590,29 @@ unsigned long DropletGenerator::countMolecules(DomainDecompBase* domainDecomp, P
 	delete[] localCompCount;
 	delete[] globalCompCount;
 	return numMolecules;
+}
+
+
+
+double DropletGenerator::guaranteedDistance(double x, double y, double z, DomainDecompBase* domainDecomp, Domain* domain) {
+	double xdist = 0;
+	double ydist = 0;
+	double zdist = 0;
+
+	if (x < domainDecomp->getBoundingBoxMin(0, domain))
+		xdist = domainDecomp->getBoundingBoxMin(0, domain) - x;
+	else if (x >= domainDecomp->getBoundingBoxMax(0, domain))
+		xdist = x - domainDecomp->getBoundingBoxMax(0, domain);
+
+	if (y < domainDecomp->getBoundingBoxMin(1, domain))
+		ydist = domainDecomp->getBoundingBoxMin(1, domain) - y;
+	else if (y >= domainDecomp->getBoundingBoxMax(1, domain))
+		ydist = y - domainDecomp->getBoundingBoxMax(1, domain);
+
+	if (z < domainDecomp->getBoundingBoxMin(2, domain))
+		zdist = domainDecomp->getBoundingBoxMin(2, domain) - z;
+	else if (z >= domainDecomp->getBoundingBoxMax(2, domain))
+		zdist = z - domainDecomp->getBoundingBoxMax(2, domain);
+
+	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
 }

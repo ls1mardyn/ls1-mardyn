@@ -86,20 +86,6 @@ public:
 	//! @param domain might be needed to get the bounding box
 	virtual bool procOwnsPos(double x, double y, double z, Domain* domain) = 0;
 
-	//! @brief returns a guaranteed distance of (x,y,z) to the local domain
-	//!
-	//! This method is e.g. used by a particle generator which creates clusters (nuclei, drops).
-	//! Only if the cluster is close (cluster radius larger then guaranteedDistance) to the
-	//! domain the particles have to be created.
-	//! @param x x-coordinate of the position for which the guaranteed distance is returned
-	//! @param y y-coordinate of the position for which the guaranteed distance is returned
-	//! @param z z-coordinate of the position for which the guaranteed distance is returned
-	//! @param domain might be needed to get the bounding box
-	//!
-	//! @TODO move this method to the DropletGenerator!
-	virtual double guaranteedDistance(double x, double y, double z, Domain* domain) = 0;
-
-
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the minimum of the bounding box is returned
 	//! @param domain here the bounding box is stored

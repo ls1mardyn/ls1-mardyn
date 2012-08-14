@@ -41,14 +41,6 @@ public:
 		return true;
 	}
 
-	//! @brief returns 0.0
-	//!
-	//! In the sequential version, the only process covers the whole domain, so
-	//! there is not distance between any point and the region of the process
-	double guaranteedDistance(double x, double y, double z, Domain* domain) {
-		return 0.0;
-	}
-
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain);
 
