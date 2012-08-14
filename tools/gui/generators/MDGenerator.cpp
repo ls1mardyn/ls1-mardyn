@@ -36,6 +36,7 @@ const double MDGenerator::molPerL_2_mardyn = 8.923894e-5;
 
 const double MDGenerator::kelvin_2_mardyn = 1.0 / 315774.5;
 
+const double MDGenerator::unitCharge_2_mardyn = 1./96485.3;
 
 MDGenerator::MDGenerator(std::string name) :
 Generator(name), _deleteLogger(true) {

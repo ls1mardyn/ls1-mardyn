@@ -46,6 +46,8 @@ public:
 
 	static const double buckingham_2_mardyn;
 
+	static const double unitCharge_2_mardyn;
+
 	/**
 	 * femto-seconds to mardyn
 	 */

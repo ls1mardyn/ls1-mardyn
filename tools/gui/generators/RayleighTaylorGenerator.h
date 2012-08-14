@@ -22,16 +22,23 @@ private:
 //	double _temperature;
 	int  _n_1, _n_2, _n_3;
 	double _L1, _L2, _L3, _epsilon_A, _epsilon_B, _sigma_A, _sigma_B,
-		_q_A, _q_B, _m_A, _m_B, _r_cut, _delta_t, _T, _G, _h, _p_max,
-		_skal;
+		_q_A, _q_B, _m_A, _m_B, _T;
 	std::vector<Component> _components;
 
-	//double rho;
 	double numSphereSizes;
 
-	//double simBoxLength[3]; // we use L1 and L2 in place of simBoxLength[3]
-
 public:
+
+	static const double angstroem_2_atomicUnitLength;
+
+	static const double unitMass_2_mardyn; // Mardyn calculates with 1/1000 u as base unit.
+
+	static const double debye_2_mardyn;
+
+	static const double buckingham_2_mardyn;
+
+	static const double unitCharge_2_mardyn;
+
 	/**
 	 * Constructor
 	 */
@@ -39,8 +46,6 @@ public:
 	virtual ~RayleighTaylorGenerator();
 
 	vector<ParameterCollection*> getParameters();
-
-	//void generatePreview();
 
 	void setParameter(Parameter* p);
 
@@ -61,13 +66,6 @@ public:
 			DomainDecompBase* domainDecomp);
 
 private:
-	/*
-	 *  This function is not used.
-	 */
-	bool getRandomPosition(
-			double boxSize_x,double boxSize_y,double boxSize_z,
-			double &x,double &y,double &z,int componentType);
-
 	//
 	// add a molecule to the container, initializing random velocity, orientation, and so on....
 	//
