@@ -7,6 +7,7 @@
 
 #include "CubicGridGenerator.h"
 #include "Parameters/ParameterWithIntValue.h"
+#include "Parameters/ParameterWithLongIntValue.h"
 #include "Parameters/ParameterWithBool.h"
 #include "common/MardynConfigurationParameters.h"
 #include "common/PrincipalAxisTransform.h"
@@ -49,7 +50,7 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 					"molar density in mol/l", Parameter::LINE_EDIT,
 					false, _molarDensity));
 	tab->addParameter(
-			new ParameterWithIntValue("numMolecules", "Number of Molecules",
+			new ParameterWithLongIntValue("numMolecules", "Number of Molecules",
 					"Total number of Molecules", Parameter::LINE_EDIT,
 					false, _numMolecules));
 	tab->addParameter(
@@ -75,7 +76,7 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 void CubicGridGenerator::setParameter(Parameter* p) {
 	string id = p->getNameId();
 	if (id == "numMolecules") {
-		_numMolecules = static_cast<ParameterWithIntValue*> (p)->getValue();
+		_numMolecules = static_cast<ParameterWithLongIntValue*> (p)->getValue();
 		calculateSimulationBoxLength();
 	} else if (id == "molarDensity") {
 		_molarDensity = static_cast<ParameterWithDoubleValue*> (p)->getValue();
@@ -110,8 +111,6 @@ void CubicGridGenerator::calculateSimulationBoxLength() {
 	_simBoxLength[0] = pow(volume, 1./3.);
 	_simBoxLength[1] = _simBoxLength[0];
 	_simBoxLength[2] = _simBoxLength[0];
-
-	double rho = _numMolecules / (_simBoxLength[0] * _simBoxLength[1] * _simBoxLength[2]) / molPerL_2_mardyn;
 }
 
 
@@ -151,7 +150,12 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		_components[1].updateMassInertia();
 	}
 
-	int id = 1;
+	// only for console output
+	double percentage = (numMoleculesPerDimension * numMoleculesPerDimension) / (pow(numMoleculesPerDimension, 3) * 2.0) * 100.0;
+
+	std::cout << "Percentage=" << percentage << endl;
+
+	unsigned long int id = 1;
 	double spacing = _simBoxLength[0] / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
@@ -170,6 +174,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				id++;
 			}
 		}
+		_logger->info() << "Finished reading molecules: " << (i * percentage) << "%\r" << flush;
 	}
 
 	origin = spacing / 4. * 3.; // origin of the first DrawableMolecule
@@ -188,6 +193,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				id++;
 			}
 		}
+		_logger->info() << "Finished reading molecules: " << (50 + i * percentage) << "%\r" << flush;
 	}
 	removeMomentum(particleContainer, _components);
 

@@ -20,7 +20,7 @@ class DropletGenerator: public MDGenerator {
 
 private:
 	double _temperature;
-	int numOfMolecules;
+	long int numOfMolecules;
 	std::vector<Component> _components;
 
 	double fluidDensity;

@@ -9,6 +9,7 @@
 #include "common/MardynConfigurationParameters.h"
 #include "common/PrincipalAxisTransform.h"
 #include "Parameters/ParameterWithIntValue.h"
+#include "Parameters/ParameterWithLongIntValue.h"
 #include "Tokenize.h"
 
 #include "Domain.h"
@@ -236,7 +237,7 @@ vector<ParameterCollection*> DropletGenerator::getParameters() {
 			new ParameterWithDoubleValue("gasDensity", "Gas Density: ",
 					"Density in the gas phase", Parameter::LINE_EDIT, false, gasDensity));
 	tab->addParameter(
-			new ParameterWithIntValue("numOfMolecules", "numOfMolecules",
+			new ParameterWithLongIntValue("numOfMolecules", "numOfMolecules",
 					"Number of Molecules", Parameter::LINE_EDIT, false, numOfMolecules));
 	tab->addParameter(
 			new ParameterWithIntValue("fluidVolume", "fluidVolume",
@@ -466,7 +467,7 @@ void DropletGenerator::setParameter(Parameter* p) {
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,
 				maxSphereVolume, numSphereSizes);
 	} else if (id == "numOfMolecules") {
-		numOfMolecules = static_cast<ParameterWithIntValue*> (p)->getValue();
+		numOfMolecules = static_cast<ParameterWithLongIntValue*> (p)->getValue();
 		cout << "OneCenterLJDroplet: numOfMolecules: " << numOfMolecules
 				<< endl;
 		setClusterParameters(gasDensity, fluidDensity, fluidVolume,

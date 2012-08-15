@@ -17,6 +17,7 @@ HEADERS  += src/Generators/Generator.h
 HEADERS  += src/Parameters/Parameter.h
 HEADERS  += src/Parameters/ParameterWithValue.h
 HEADERS  += src/Parameters/ParameterWithIntValue.h
+HEADERS  += src/Parameters/ParameterWithLongIntValue.h
 HEADERS  += src/Parameters/ParameterWithDoubleValue.h
 HEADERS  += src/Parameters/ParameterWithChoice.h
 HEADERS  += src/Parameters/ParameterCollection.h
@@ -27,6 +28,7 @@ mardyn {
 SOURCES  += src/Parameters/Parameter.cpp
 SOURCES  += src/Parameters/ParameterWithValue.cpp
 SOURCES  += src/Parameters/ParameterWithIntValue.cpp
+SOURCES  += src/Parameters/ParameterWithLongIntValue.cpp
 SOURCES  += src/Parameters/ParameterWithDoubleValue.cpp
 SOURCES  += src/Parameters/ParameterWithBool.cpp
 SOURCES  += src/Parameters/ParameterWithStringValue.cpp

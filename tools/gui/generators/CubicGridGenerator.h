@@ -31,7 +31,7 @@
 class CubicGridGenerator: public MDGenerator {
 
 private:
-	int _numMolecules;
+	long int _numMolecules;
 	double _molarDensity;
 	std::vector<Component> _components;
 	double _temperature;
