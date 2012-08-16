@@ -7,6 +7,7 @@
 
 #include "KDNodeTest.h"
 #include "parallel/KDNode.h"
+#include <string>
 
 TEST_SUITE_REGISTRATION(KDNodeTest);
 
@@ -161,4 +162,23 @@ void KDNodeTest::testGetMPIKDNode() {
 	ASSERT_EQUAL(newMPINode.getExpectedDeviation(), mpiNode.getExpectedDeviation());
 	ASSERT_EQUAL(newMPINode.getDeviation(), mpiNode.getDeviation());
 	ASSERT_EQUAL(newMPINode.getLevel(), mpiNode.getLevel());
+}
+
+void KDNodeTest::testserializeDeserialize() {
+	int lowerEnd[] = {0, 0, 0};
+	int upperEnd[] = {7, 7, 7};
+	bool coversAll[] = {true, true, true};
+
+	KDNode root(4, lowerEnd, upperEnd, 0, 0, coversAll, 0);
+	root.buildKDTree();
+//	std::cout << "root node:" << std::endl;
+//	root.printTree();
+	std::string name("KDNodeTest_serialize.out");
+	root.serialize(name);
+
+	KDNode result;
+	result.deserialize(name);
+//	std::cout << "Result: " << std::endl;
+//	result.printTree();
+	ASSERT_TRUE(root.equals(result));
 }

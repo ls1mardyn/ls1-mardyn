@@ -32,7 +32,10 @@ public:
 	 */
 	typedef MPIKDNodePacked MPIKDNode;
 
-	KDNode() : _child1(NULL), _child2(NULL) {
+	KDNode() :_numProcs(0), _nodeID(0), _owningProc(0),
+			  _child1(NULL), _child2(NULL), _load(0.0), _optimalLoadPerProcess(0.0),
+			  _expectedDeviation(0.0), _deviation(0.0), _level(0)
+	{
 	}
 
 
@@ -144,6 +147,17 @@ public:
 	void printTree(std::string prefix = "");
 
 	/**
+	 * Write the tree represented by this (root-)node to a (binary) file, in order
+	 * to be able to restore the decomposition from disk.
+	 */
+	void serialize(std::string& fileName);
+
+	/**
+	 * Read the tree represented by this (root-)node from a (binary) file.
+	 */
+	void deserialize(std::string& fileName);
+
+	/**
 	 * Initialize the mpi datatype. Has to be called once initially.
 	 */
 	static void initMPIDataType() {
@@ -188,6 +202,12 @@ public:
 
 	// level of this node (at root node, level = 0)
 	int _level;
+
+private:
+
+	void serialize(std::ostream& file);
+
+	void deserialize(std::istream& file);
 };
 
 #endif /*KDNODE_H_*/

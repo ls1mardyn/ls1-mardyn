@@ -199,3 +199,80 @@ void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 	_child2 = new KDNode(_numProcs - numProcsLeft, low2, high2, id2, owner2, coversAll, _level+1);
 	_child2->_optimalLoadPerProcess = _optimalLoadPerProcess;
 }
+
+//#define BINARY
+
+void KDNode::serialize(std::string& fileName) {
+	std::ofstream out;
+#ifdef BINARY
+	out.open(fileName.c_str(), std::ios::binary);
+#else
+	out.open(fileName.c_str());
+#endif
+	serialize(out);
+	out.close();
+}
+
+
+void KDNode::serialize(std::ostream& file) {
+#ifdef BINARY
+	file.write((char*) &_numProcs, sizeof(_numProcs));
+	file.write((char*) _lowCorner, sizeof(_lowCorner));
+	file.write((char*) _highCorner, sizeof(_highCorner));
+	file.write((char*) _coversWholeDomain, sizeof(_coversWholeDomain));
+	file.write((char*) &_nodeID, sizeof(_nodeID));
+	file.write((char*) &_owningProc, sizeof(_owningProc));
+	file.write((char*) &_level, sizeof(_level));
+#else
+	file << _numProcs << " ";
+	file << _lowCorner[0] << " " << _lowCorner[1] << " " << _lowCorner[2] << " ";
+	file << _highCorner[0] << " " << _highCorner[1] << " " << _highCorner[2] << " ";
+	file << _coversWholeDomain[0] << " " << _coversWholeDomain[1] << " " << _coversWholeDomain[2] << " ";
+	file << _nodeID << " ";
+	file << _owningProc << " ";
+	file << _level << " ";
+#endif
+
+	if (_numProcs > 1) {
+		_child1->serialize(file);
+		_child2->serialize(file);
+	}
+}
+
+void KDNode::deserialize(std::string& fileName) {
+	std::ifstream in;
+#ifdef BINARY
+	in.open(fileName.c_str(), std::ios::binary);
+#else
+	in.open(fileName.c_str());
+#endif
+	deserialize(in);
+	in.close();
+}
+
+void KDNode::deserialize(std::istream& file) {
+	assert(!file.eof());
+#ifdef BINARY
+	file.read((char*) &_numProcs, sizeof(_numProcs));
+	file.read((char*) _lowCorner, sizeof(_lowCorner));
+	file.read((char*) _highCorner, sizeof(_highCorner));
+	file.read((char*) _coversWholeDomain, sizeof(_coversWholeDomain));
+	file.read((char*) &_nodeID, sizeof(_nodeID));
+	file.read((char*) &_owningProc, sizeof(_owningProc));
+	file.read((char*) &_level, sizeof(_level));
+# else
+	file >>  _numProcs;
+	file >> _lowCorner[0] >> _lowCorner[1] >> _lowCorner[2];
+	file >> _highCorner[0] >> _highCorner[1] >> _highCorner[2];
+	file >> _coversWholeDomain[0] >> _coversWholeDomain[1] >> _coversWholeDomain[2];
+	file >> _nodeID;
+	file >> _owningProc;
+	file >> _level;
+#endif
+	if (_numProcs > 1) {
+		_child1 = new KDNode();
+		_child2 = new KDNode();
+		_child1->deserialize(file);
+		_child2->deserialize(file);
+	}
+}
