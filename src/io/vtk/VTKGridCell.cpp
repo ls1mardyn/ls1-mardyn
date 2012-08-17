@@ -28,16 +28,24 @@ unsigned int VTKGridCell::getIndex() const {
 	return _index;
 }
 
-//bool VTKGridCell::isValidDataCell() const {
-//	return _isValidDataCell;
-//}
 
-
-void VTKGridCell::setCellData(int numberOfMolecules) {
+void VTKGridCell::setCellData(int numberOfMolecules, double load, int level) {
 	_numberOfMolecules = numberOfMolecules;
+	_load = load;
+	_level = level;
 }
 
 
-int VTKGridCell::getNumberOfMolecules() {
+int VTKGridCell::getNumberOfMolecules() const {
 	return _numberOfMolecules;
+}
+
+
+double VTKGridCell::getLoad() const {
+	return _load;
+}
+
+
+int VTKGridCell::getLevel() const {
+	return _level;
 }

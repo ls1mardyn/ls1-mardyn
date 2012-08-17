@@ -5,6 +5,11 @@
  *      Author: eckhardw
  */
 #include "KDNode.h"
+#ifdef VTK
+#include "io/vtk/VTKGridWriterImplementation.h"
+#include "io/vtk/VTKGridVertex.h"
+#include "io/vtk/VTKGridCell.h"
+#endif
 #include <bitset>
 
 KDNode* KDNode::findAreaForProcess(int rank) {
@@ -202,7 +207,7 @@ void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 
 //#define BINARY
 
-void KDNode::serialize(std::string& fileName) {
+void KDNode::serialize(const std::string& fileName) {
 	std::ofstream out;
 #ifdef BINARY
 	out.open(fileName.c_str(), std::ios::binary);
@@ -239,7 +244,7 @@ void KDNode::serialize(std::ostream& file) {
 	}
 }
 
-void KDNode::deserialize(std::string& fileName) {
+void KDNode::deserialize(const std::string& fileName) {
 	std::ifstream in;
 #ifdef BINARY
 	in.open(fileName.c_str(), std::ios::binary);
@@ -275,4 +280,44 @@ void KDNode::deserialize(std::istream& file) {
 		_child1->deserialize(file);
 		_child2->deserialize(file);
 	}
+}
+
+void KDNode::plotNode(const std::string& vtkFile) const {
+#ifdef VTK
+	VTKGridWriterImplementation writer(_owningProc);
+	writer.initializeVTKFile();
+	plotNode(writer);
+	writer.writeVTKFile(vtkFile);
+#else
+	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"
+#endif
+}
+
+void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
+#ifdef VTK
+	if (_numProcs > 1) {
+		_child1->plotNode(writer);
+		_child2->plotNode(writer);
+	} else {
+		VTKGridVertex vertices[8];
+		vertices[0].setCoordinates(_lowCorner[0], _lowCorner[1], _lowCorner[2]);
+		vertices[1].setCoordinates(_highCorner[0], _lowCorner[1], _lowCorner[2]);
+		vertices[2].setCoordinates(_lowCorner[0], _highCorner[1], _lowCorner[2]);
+		vertices[3].setCoordinates(_highCorner[0], _highCorner[1], _lowCorner[2]);
+		vertices[4].setCoordinates(_lowCorner[0], _lowCorner[1], _highCorner[2]);
+		vertices[5].setCoordinates(_highCorner[0], _lowCorner[1], _highCorner[2]);
+		vertices[6].setCoordinates(_lowCorner[0], _highCorner[1], _highCorner[2]);
+		vertices[7].setCoordinates(_highCorner[0], _highCorner[1], _highCorner[2]);
+
+		VTKGridCell cell;
+		cell.setCellData(_owningProc, _load, _level);
+
+		for (int i = 0; i < 8; i++) {
+			cell.setVertex(i, &vertices[i]);
+		}
+		writer.plotCell(cell);
+	}
+#else
+	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"
+#endif
 }

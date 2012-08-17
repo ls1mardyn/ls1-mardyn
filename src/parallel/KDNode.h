@@ -6,6 +6,8 @@
 
 #include "parallel/MPIKDNode.h"
 
+class VTKGridWriterImplementation;
+
 //! @brief represents a node in the decomposition tree when using KDDecomposition
 //! @author Martin Buchholz, Wolfgang Eckhardt
 //! 
@@ -150,12 +152,17 @@ public:
 	 * Write the tree represented by this (root-)node to a (binary) file, in order
 	 * to be able to restore the decomposition from disk.
 	 */
-	void serialize(std::string& fileName);
+	void serialize(const std::string& fileName);
 
 	/**
 	 * Read the tree represented by this (root-)node from a (binary) file.
 	 */
-	void deserialize(std::string& fileName);
+	void deserialize(const std::string& fileName);
+
+	/**
+	 * plot the leafs of the KDTree with vtk.
+	 */
+	void plotNode(const std::string& vtkFile) const;
 
 	/**
 	 * Initialize the mpi datatype. Has to be called once initially.
@@ -208,6 +215,9 @@ private:
 	void serialize(std::ostream& file);
 
 	void deserialize(std::istream& file);
+
+	void plotNode(VTKGridWriterImplementation& writer) const;
+
 };
 
 #endif /*KDNODE_H_*/

@@ -73,7 +73,7 @@ void VTKGridWriterImplementationTest::testWriteVTKFile() {
 	cell_1.setVertex(5, &vertices[4]);
 	cell_1.setVertex(6, &vertices[9]);
 	cell_1.setVertex(7, &vertices[10]);
-	cell_1.setCellData(14);
+	cell_1.setCellData(14, -1.0, 0);
 
 	cell_2.setVertex(0, &vertices[1]);
 	cell_2.setVertex(1, &vertices[2]);
@@ -83,7 +83,7 @@ void VTKGridWriterImplementationTest::testWriteVTKFile() {
 	cell_2.setVertex(5, &vertices[5]);
 	cell_2.setVertex(6, &vertices[10]);
 	cell_2.setVertex(7, &vertices[11]);
-	cell_2.setCellData(4);
+	cell_2.setCellData(4, -1.0, 0);
 
 	std::vector<std::string> v;
 	writer.initializeVTKFile();

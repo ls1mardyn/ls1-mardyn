@@ -27,6 +27,16 @@ private:
 
 	int _numberOfMolecules;
 
+	/**
+	 * computational load (used when plotting KDDecomposition)
+	 */
+	double _load;
+
+	/**
+	 * level of the cell in the KD-Tree (used when plotting KDDecomposition)
+	 */
+	int _level;
+
 public:
 
 	VTKGridCell();
@@ -44,9 +54,13 @@ public:
 	/**
 	 * set all the data fields.
 	 */
-	void setCellData(int numberOfMolecules);
+	void setCellData(int numberOfMolecules, double load, int level);
 
-	int getNumberOfMolecules();
+	int getNumberOfMolecules() const;
+
+	double getLoad() const;
+
+	int getLevel() const;
 };
 
 #endif /* VTKGRIDCELL_H_ */
