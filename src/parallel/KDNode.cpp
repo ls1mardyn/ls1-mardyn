@@ -293,7 +293,7 @@ void KDNode::plotNode(const std::string& vtkFile) const {
 	plotNode(writer);
 	writer.writeVTKFile(vtkFile);
 #else
-	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"
+	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"<< std::endl;
 #endif
 }
 
@@ -322,6 +322,6 @@ void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
 		writer.plotCell(cell);
 	}
 #else
-	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!"
+	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!" << std::endl;
 #endif
 }
