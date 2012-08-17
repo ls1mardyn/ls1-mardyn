@@ -10,7 +10,11 @@
 #include "io/vtk/VTKGridVertex.h"
 #include "io/vtk/VTKGridCell.h"
 #endif
+
+#include "utils/Logger.h"
 #include <bitset>
+
+using namespace Log;
 
 KDNode* KDNode::findAreaForProcess(int rank) {
 	if (_numProcs == 1) {
