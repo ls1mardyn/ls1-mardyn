@@ -1,6 +1,12 @@
 /*
  * RayleighTaylorGenerator.h
  *
+ * For the problem description, please see
+ * Numerical Simulation in Molecular Dynamics (NSMD) page 281 - page 284
+ * Initial parameter values are take from Table 7.1 on page 284
+ *
+ * For reference values, see NSMD page 96
+ *
  *  Created on: June, 2012
  *      Author: nagashim
  */
@@ -28,7 +34,7 @@ private:
 	double numSphereSizes;
 
 public:
-
+/*
 	static const double angstroem_2_atomicUnitLength;
 
 	static const double unitMass_2_mardyn; // Mardyn calculates with 1/1000 u as base unit.
@@ -37,7 +43,17 @@ public:
 
 	static const double buckingham_2_mardyn;
 
-	static const double unitCharge_2_mardyn;
+	static const double unitCharge_2_mardyn;*/
+
+	// tildes are defined on page 282 of NSMD
+	static const double atomic_mass_unit_u 	= 1.6605655e-27;//[kg]
+	static const double m_tilde				= 1. * 1.6605655e-27; //[kg]
+
+	static const double elementary_charge	= 1.6021892e-19;//[C]
+	static const double q_tilde				= 1. * 1.6021892e-19;//[C]
+
+	static const double sigma_tilde 		= 2.22; //[ngstr m]
+	static const double epsilon_tilde 		= 1.04710e-21; // [J]
 
 	/**
 	 * Constructor

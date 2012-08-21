@@ -48,6 +48,10 @@ public:
 
 	static const double unitCharge_2_mardyn;
 
+	static const double abogadro_constant;
+
+	static const double boltzmann_constant_kB;
+
 	/**
 	 * femto-seconds to mardyn
 	 */

@@ -38,6 +38,10 @@ const double MDGenerator::kelvin_2_mardyn = 1.0 / 315774.5;
 
 const double MDGenerator::unitCharge_2_mardyn = 1./96485.3;
 
+const double MDGenerator::abogadro_constant = 6.02214078e23;
+
+const double MDGenerator::boltzmann_constant_kB = 1.38065e-23;
+
 MDGenerator::MDGenerator(std::string name) :
 Generator(name), _deleteLogger(true) {
 	// initialize monolithic Mardyn's global_log and silence it...

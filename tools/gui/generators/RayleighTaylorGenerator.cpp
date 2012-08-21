@@ -36,27 +36,27 @@ void destruct_generator(Generator* generator) {
 }
 #endif
 
-RayleighTaylorGenerator::RayleighTaylorGenerator() :
-																MDGenerator("RayleighTaylorGenerator") {
-	_L1 = 144. * MDGenerator::angstroem_2_atomicUnitLength;
-	_L2 = 60. * MDGenerator::angstroem_2_atomicUnitLength;
-	_L3 = 60. * MDGenerator::angstroem_2_atomicUnitLength;
-	_n_1 = 14;
-	_n_2 = 5;
-	_n_3 = 5;
-	_epsilon_A = 1. * MDGenerator::kelvin_2_mardyn;
-	_epsilon_B = 1. * MDGenerator::kelvin_2_mardyn;
-	_sigma_A = 1. * MDGenerator::angstroem_2_atomicUnitLength;
-	_sigma_B = 1. * MDGenerator::angstroem_2_atomicUnitLength;
-	_q_A = 0.5 * MDGenerator::unitCharge_2_mardyn;
-	_q_B = -0.5 * MDGenerator::unitCharge_2_mardyn;
-	_m_A = _m_B = 23. * MDGenerator::unitMass_2_mardyn;
-	_T = 0.1 * MDGenerator::kelvin_2_mardyn;
+RayleighTaylorGenerator::RayleighTaylorGenerator() : MDGenerator("RayleighTaylorGenerator") {
 
-	//	_temperature = 300. / 315774.5;
+	_L1 		= 144. * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
+	_L2 		= 60.  * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
+	_L3 		= 60.  * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
+	_n_1 		= 14;
+	_n_2 		= 5;
+	_n_3 		= 5;
+	_epsilon_A 	= 1. * epsilon_tilde * MDGenerator::kelvin_2_mardyn;
+	_epsilon_B 	= 1. * epsilon_tilde * MDGenerator::kelvin_2_mardyn;
+	_sigma_A 	= 1. * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
+	_sigma_B 	= 1. * sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength;
+	_q_A 		=  0.5 * MDGenerator::unitCharge_2_mardyn;
+	_q_B 		= -0.5 * MDGenerator::unitCharge_2_mardyn;
+	_m_A = _m_B = 23. * m_tilde * MDGenerator::unitMass_2_mardyn;
+	_T 			= 0.1 * epsilon_tilde * MDGenerator::kelvin_2_mardyn / MDGenerator::boltzmann_constant_kB;
+
 	_components.resize(2);
 	_components[0].addCharge(0.,0.,0.,0.,_q_A);
 	_components[1].addCharge(0.,0.,0.,0.,_q_B);
+	//TODO: 100 is incorrect!
 	_components[0].addLJcenter(0, 0, 0,_m_A, _epsilon_A, _sigma_A, 100., false);
 	_components[1].addLJcenter(0, 0, 0,_m_A, _epsilon_B, _sigma_B, 100., false);
 }
@@ -157,19 +157,19 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 	parameters.push_back(tab);
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("SimulationBoxSize(X)[nm]", "SimulationBoxSize(X)[nm]",
-					"SimulationBoxSize(X)[nm]", Parameter::LINE_EDIT,
-					false, _L1 / MDGenerator::angstroem_2_atomicUnitLength));
+			new ParameterWithDoubleValue("SimulationBoxSize(X)", "SimulationBoxSize(X)",
+					"SimulationBoxSize(X)", Parameter::LINE_EDIT,
+					false, _L1 / (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength)));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("SimulationBoxSize(Y)[nm]", "SimulationBoxSize(Y)[nm]",
-					"SimulationBoxSize(Y)[nm]", Parameter::LINE_EDIT,
-					false, _L2 / MDGenerator::angstroem_2_atomicUnitLength));
+			new ParameterWithDoubleValue("SimulationBoxSize(Y)", "SimulationBoxSize(Y)",
+					"SimulationBoxSize(Y)", Parameter::LINE_EDIT,
+					false, _L2 / (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength)));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("SimulationBoxSize(Z)[nm]", "SimulationBoxSize(Z)[nm]",
-					"SimulationBoxSize(Z)[nm]", Parameter::LINE_EDIT,
-					false, _L3 / MDGenerator::angstroem_2_atomicUnitLength));
+			new ParameterWithDoubleValue("SimulationBoxSize(Z)", "SimulationBoxSize(Z)",
+					"SimulationBoxSize(Z)", Parameter::LINE_EDIT,
+					false, _L3 / (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength)));
 
 	tab->addParameter(
 			new ParameterWithIntValue("NumOfParticlesAlongX", "NumOfParticlesAlongX",
@@ -184,28 +184,29 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 					"NumOfParticlesAlongZ", Parameter::LINE_EDIT, false, _n_3));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("Temperature[K]", "Temperature[K]",
-					"Temperature[K]", Parameter::LINE_EDIT, false, _T / MDGenerator::kelvin_2_mardyn));
+			new ParameterWithDoubleValue("Temperature", "Temperature",
+					"Temperature", Parameter::LINE_EDIT, false,
+					_T / (epsilon_tilde * MDGenerator::kelvin_2_mardyn / MDGenerator::boltzmann_constant_kB)));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("ComponentA.epsilon[K]", "ComponentA.epsilon[K]",
-					"ComponentA.epsilon[K]", Parameter::LINE_EDIT, false,
-					_epsilon_A / MDGenerator::kelvin_2_mardyn ));
+			new ParameterWithDoubleValue("ComponentA.epsilon", "ComponentA.epsilon",
+					"ComponentA.epsilon", Parameter::LINE_EDIT, false,
+					_epsilon_A / (epsilon_tilde * MDGenerator::kelvin_2_mardyn) ));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("ComponentB.epsilon[K]", "ComponentB.epsilon[K]",
-					"ComponentB.epsilon[K]", Parameter::LINE_EDIT, false,
-					_epsilon_B / MDGenerator::kelvin_2_mardyn));
+			new ParameterWithDoubleValue("ComponentB.epsilon", "ComponentB.epsilon",
+					"ComponentB.epsilon", Parameter::LINE_EDIT, false,
+					_epsilon_B / (epsilon_tilde * MDGenerator::kelvin_2_mardyn)));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("ComponentA.sigma[Angstrom]", "ComponentA.sigma[Angstrom]",
-					"ComponentA.sigma[Angstrom]", Parameter::LINE_EDIT, false,
-					_sigma_A / MDGenerator::angstroem_2_atomicUnitLength));
+			new ParameterWithDoubleValue("ComponentA.sigma", "ComponentA.sigma",
+					"ComponentA.sigma", Parameter::LINE_EDIT, false,
+					_sigma_A / (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength)));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("ComponentB.sigma[Angstrom]", "ComponentB.sigma[Angstrom]",
-					"ComponentB.sigma[Angstrom]", Parameter::LINE_EDIT, false,
-					_sigma_B / MDGenerator::angstroem_2_atomicUnitLength));
+			new ParameterWithDoubleValue("ComponentB.sigma", "ComponentB.sigma",
+					"ComponentB.sigma", Parameter::LINE_EDIT, false,
+					_sigma_B / (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength)));
 
 	tab->addParameter(
 			new ParameterWithDoubleValue("ComponentA.charge", "ComponentA.charge",
@@ -218,41 +219,42 @@ vector<ParameterCollection*> RayleighTaylorGenerator::getParameters() {
 					_q_B / MDGenerator::unitCharge_2_mardyn));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("ComponentA.mass[u]", "ComponentA.mass[u]",
-					"ComponentA.mass[u]", Parameter::LINE_EDIT, false,
-					_m_A / MDGenerator::unitMass_2_mardyn));
+			new ParameterWithDoubleValue("ComponentA.mass", "ComponentA.mass",
+					"ComponentA.mass", Parameter::LINE_EDIT, false,
+					_m_A / (m_tilde * MDGenerator::unitMass_2_mardyn)));
 
 	tab->addParameter(
-			new ParameterWithDoubleValue("ComponentB.mass[u]", "ComponentB.mass[u]",
-					"ComponentB.mass[u]", Parameter::LINE_EDIT, false,
-					_m_B / MDGenerator::unitMass_2_mardyn));
+			new ParameterWithDoubleValue("ComponentB.mass", "ComponentB.mass",
+					"ComponentB.mass", Parameter::LINE_EDIT, false,
+					_m_B / (m_tilde * MDGenerator::unitMass_2_mardyn)));
 
 	return parameters;
 }
 
+//TODO:reference values!
 void RayleighTaylorGenerator::setParameter(Parameter* p) {
 
 	string id = p->getNameId();
 
-	if (id == "SimulationBoxSize(X)[nm]") {
+	if (id == "SimulationBoxSize(X)") {
 		_L1 = static_cast<ParameterWithDoubleValue*> (p)->
-				getValue() * MDGenerator::angstroem_2_atomicUnitLength;
+				getValue() * (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength);
 		cout << "OneCenterLJRayleighTaylor: SimulationBoxSize(X): "
-				<< _L1 / MDGenerator::angstroem_2_atomicUnitLength
+				<< _L1 / (MDGenerator::angstroem_2_atomicUnitLength)
 				<< endl;
 
-	} else if (id == "SimulationBoxSize(Y)[nm]") {
+	} else if (id == "SimulationBoxSize(Y)") {
 		_L2 = static_cast<ParameterWithDoubleValue*> (p)->
-				getValue() * MDGenerator::angstroem_2_atomicUnitLength;
+				getValue() * (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength);
 		cout << "OneCenterLJRayleighTaylor: SimulationBoxSize(Y): "
-				<< _L2 / MDGenerator::angstroem_2_atomicUnitLength
+				<< _L2 / (MDGenerator::angstroem_2_atomicUnitLength)
 				<< endl;
 
-	} else if (id == "SimulationBoxSize(Z)[nm]") {
+	} else if (id == "SimulationBoxSize(Z)") {
 		_L3 = static_cast<ParameterWithDoubleValue*> (p)->
-				getValue() * MDGenerator::angstroem_2_atomicUnitLength;
+				getValue() * (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength);
 		cout << "OneCenterLJRayleighTaylor: SimulationBoxSize(Z): "
-				<< _L3 / MDGenerator::angstroem_2_atomicUnitLength
+				<< _L3 / (MDGenerator::angstroem_2_atomicUnitLength)
 				<< endl;
 
 	} else if (id == "NumOfParticlesAlongX") {
@@ -275,14 +277,14 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 		cout << "OneCenterLJRayleighTaylor: numSphereSizes: " << numSphereSizes
 				<< endl;
 
-	} else if (id == "Temperature[K]") {
-		_T = static_cast<ParameterWithDoubleValue*> (p)->getValue()* MDGenerator::kelvin_2_mardyn;
-		cout << "OneCenterLJRayleighTaylor: Temperature[K]: " << _T
+	} else if (id == "Temperature") {
+		_T = static_cast<ParameterWithDoubleValue*> (p)->getValue()* (epsilon_tilde * MDGenerator::kelvin_2_mardyn / MDGenerator::boltzmann_constant_kB);
+		cout << "OneCenterLJRayleighTaylor: Temperature: " << _T / MDGenerator::kelvin_2_mardyn
 				<< endl;
 
 	} else if (id == "ComponentA.charge") {
 		_q_A = static_cast<ParameterWithDoubleValue*> (p)->getValue() * MDGenerator::unitCharge_2_mardyn;
-		cout << "OneCenterLJRayleighTaylor: ComponentB.charge: " << _q_A
+		cout << "OneCenterLJRayleighTaylor: ComponentB.charge: " << _q_A / MDGenerator::unitCharge_2_mardyn
 				<< endl;
 		_components[0].deleteCharge();
 		_components[0].addCharge(0.,0.,0.,0.,_q_A);
@@ -290,49 +292,49 @@ void RayleighTaylorGenerator::setParameter(Parameter* p) {
 
 	} else if (id == "ComponentB.charge") {
 		_q_B = static_cast<ParameterWithDoubleValue*> (p)->getValue() * MDGenerator::unitCharge_2_mardyn;
-		cout << "OneCenterLJRayleighTaylor: ComponentB.charge: " << _q_B
+		cout << "OneCenterLJRayleighTaylor: ComponentB.charge: " << _q_B / MDGenerator::unitCharge_2_mardyn
 				<< endl;
 		_components[1].deleteCharge();
 		_components[1].addCharge(0.,0.,0.,0.,_q_B);
 
-	} else if (id == "ComponentA.epsilon[K]") {
-		_epsilon_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: ComponentA.epsilon[K]: " << _epsilon_A
+	} else if (id == "ComponentA.epsilon") {
+		_epsilon_A = static_cast<ParameterWithDoubleValue*> (p)->getValue() * (epsilon_tilde * MDGenerator::kelvin_2_mardyn);
+		cout << "OneCenterLJRayleighTaylor: ComponentA.epsilon: " << _epsilon_A / MDGenerator::kelvin_2_mardyn
 				<< endl;
 		_components[0].deleteLJCenter();
 		_components[0].addLJcenter(0, 0, 0,_m_A, _epsilon_A, _sigma_A, 100., false);
 
-	} else if (id == "ComponentB.epsilon[K]") {
-		_epsilon_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: ComponentB.epsilon[K]: " << _epsilon_B
+	} else if (id == "ComponentB.epsilon") {
+		_epsilon_B = static_cast<ParameterWithDoubleValue*> (p)->getValue() * (epsilon_tilde * MDGenerator::kelvin_2_mardyn);
+		cout << "OneCenterLJRayleighTaylor: ComponentB.epsilon: " << _epsilon_B / MDGenerator::kelvin_2_mardyn
 				<< endl;
 		_components[1].deleteLJCenter();
 		_components[1].addLJcenter(0, 0, 0,_m_B, _epsilon_B, _sigma_B, 100., false);
 
-	} else if (id == "ComponentA.sigma[Angstrom]") {
-		_sigma_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: ComponentA.sigma[Angstrom]: " << _sigma_A
+	} else if (id == "ComponentA.sigma") {
+		_sigma_A = static_cast<ParameterWithDoubleValue*> (p)->getValue() * (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength);
+		cout << "OneCenterLJRayleighTaylor: ComponentA.sigma: " << _sigma_A / MDGenerator::angstroem_2_atomicUnitLength
 				<< endl;
 		_components[0].deleteLJCenter();
 		_components[0].addLJcenter(0, 0, 0,_m_A, _epsilon_A, _sigma_A, 100., false);
 
-	} else if (id == "ComponentB.sigma[Angstrom]") {
-		_sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: ComponentB.sigma[Angstrom]: " << _sigma_B
+	} else if (id == "ComponentB.sigma") {
+		_sigma_B = static_cast<ParameterWithDoubleValue*> (p)->getValue() * (sigma_tilde * MDGenerator::angstroem_2_atomicUnitLength);
+		cout << "OneCenterLJRayleighTaylor: ComponentB.sigma: " << _sigma_B / MDGenerator::angstroem_2_atomicUnitLength
 				<< endl;
 		_components[1].deleteLJCenter();
 		_components[1].addLJcenter(0, 0, 0,_m_B, _epsilon_B, _sigma_B, 100., false);
 
-	} else if (id == "ComponentA.mass[u]") {
-		_m_A = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: ComponentA.mass[u]: " << _m_A
+	} else if (id == "ComponentA.mass") {
+		_m_A = static_cast<ParameterWithDoubleValue*> (p)->getValue()* (m_tilde * MDGenerator::unitMass_2_mardyn);
+		cout << "OneCenterLJRayleighTaylor: ComponentA.mass: " << _m_A / MDGenerator::unitMass_2_mardyn
 				<< endl;
 		_components[0].deleteLJCenter();
 		_components[0].addLJcenter(0, 0, 0,_m_A, _epsilon_A, _sigma_A, 100., false);
 
-	} else if (id == "ComponentB.mass[u]") {
-		_m_B = static_cast<ParameterWithDoubleValue*> (p)->getValue();
-		cout << "OneCenterLJRayleighTaylor: ComponentB.mass[u]: " << _m_B
+	} else if (id == "ComponentB.mass") {
+		_m_B = static_cast<ParameterWithDoubleValue*> (p)->getValue() * (m_tilde * MDGenerator::unitMass_2_mardyn);
+		cout << "OneCenterLJRayleighTaylor: ComponentB.mass: " << _m_B / MDGenerator::unitMass_2_mardyn
 				<< endl;
 		_components[1].deleteLJCenter();
 		_components[1].addLJcenter(0, 0, 0,_m_B, _epsilon_B, _sigma_B, 100., false);
