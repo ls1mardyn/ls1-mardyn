@@ -217,7 +217,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 		if (i == 20) {
 			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
 			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][1][i]);
-//y:TODO			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
 			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
 		} else if (i == 60) {
 			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][0][i]);
@@ -227,7 +227,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 		} else if (i == 100) {
 			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
 			ASSERT_EQUAL(16ul, rdf._globalSiteDistribution[0][0][0][1][i]);
-//y:TODO			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
+			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][0][i]);
 			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][1][1][i]);
 		} else {
 			ASSERT_EQUAL(0ul, rdf._globalSiteDistribution[0][0][0][0][i]);
