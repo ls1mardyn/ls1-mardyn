@@ -4,6 +4,11 @@
 
 !!! Building ls1/Mardyn with the VTK Writer
 
+!!Prerequisite
+If you are using Ubuntu, install the following packages.
+- libxerces-c2-dev
+- libxerces-c28
+
 !! Using the Makefile
 
 To build ls1 with VTK support, you have to specify "VTK=1" for the makefile:
