@@ -60,7 +60,16 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
         + (int)(100.0*R_i)
    );
 
-   bool fill[fl_units][fl_units][fl_units][3];
+   bool**** fill = new bool***[fl_units];
+   for (unsigned int i = 0; i < fl_units; i++) {
+	   fill[i] = new bool**[fl_units];
+	   for (unsigned int j = 0; j < fl_units; j++) {
+		   fill[i][j] = new bool*[fl_units];
+		   for (unsigned int k = 0; k < fl_units; k++) {
+			   fill[i][j][k] = new bool[3];
+		   }
+	   }
+   }
    unsigned slots = 3.0*fl_units*fl_units*fl_units;
    double boxdensity = (double)slots / (8.0*R_o*R_o*R_o);
    cerr << "Box density: " << boxdensity << " (unit cell: " << fl_unit << ").\n";
@@ -177,5 +186,16 @@ void Domain::write(char* prefix, double cutoff, double T, bool do_shift, int for
    {
       buchholz.close();
    }
+
+   for (unsigned int i = 0; i < fl_units; i++) {
+	   for (unsigned int j = 0; j < fl_units; j++) {
+		   for (unsigned int k = 0; k < fl_units; k++) {
+			   delete[] fill[i][j][k];
+		   }
+		   delete[] fill[i][j];
+	   }
+	   delete[] fill[i];
+   }
+   delete[] fill;
 }
 
