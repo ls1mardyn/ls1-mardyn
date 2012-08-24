@@ -96,7 +96,7 @@ using namespace std;
 #define I_ZZ_JES 0.0091988
 #define JES_LONG 1.0
 
-#define EPS_OVEG 2.5915e-04
+#define EPS_OVEG 2.9515e-04
 #define SIG_OVEG 5.9695
 #define OVEGMASS 0.0159994
 #define HVEGMASS 0.0010079
