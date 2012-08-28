@@ -96,6 +96,12 @@ class KDDecomposition2: public DomainDecompBase{
 	// documentation see father class (DomainDecompBase.h)
 	bool procOwnsPos(double x, double y, double z, Domain* domain);
 
+	// documentation see father class (DomainDecompBase.h)
+	double guaranteedDistance(double x, double y, double z, Domain* domain);
+
+	// documentation see father class (DomainDecompBase.h)
+	unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
+
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain);
 	//! @todo comment and thing

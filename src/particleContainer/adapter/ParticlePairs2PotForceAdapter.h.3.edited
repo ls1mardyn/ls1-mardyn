@@ -68,6 +68,25 @@ public:
 		_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	}
 
+<<<<<<< .mine
+    /** calculate force between pairs and collect macroscopic contribution
+     *
+     * For all pairs, the force between the two Molecules has to be calculated
+     * and stored in the molecules. For original pairs(pairType 0), the contributions
+     * to the macroscopic values have to be collected
+     *
+     * @param molecule1       molecule 1
+     * @param molecule2       molecule 2
+     * @param distanceVector  distance vector from molecule 2 to molecule 1
+     * @param pairType        molecule pair type (see PairType)
+     * @param dd              square of the distance between the two molecules
+     * @param calculateLJ     true if we shall calculate the LJ interaction, otherwise false (default true)
+     *
+     * @return                interaction energy
+     */
+	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ = true, double* f = NULL) {
+		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
+=======
 	/** calculate force between pairs and collect macroscopic contribution
 	 *
 	 * For all pairs, the force between the two Molecules has to be calculated
@@ -85,44 +104,34 @@ public:
 	 */
 	double processPair(Molecule& molecule1, Molecule& molecule2,
 			double distanceVector[3], PairType pairType, double dd,
-			bool calculateLJ = true, double* f = NULL, int simstep = 1) {
+			bool calculateLJ = true, double* f = NULL) {
 		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(),
 				molecule2.componentid());
+>>>>>>> .r1194
 		params.reset_read();
-		int boundary[3] = { 0, 0, 0 };
 		switch (pairType) {
 
 		double dummy1, dummy2, dummy3, dummy4;
 
 	case MOLECULE_MOLECULE:
 		if (_rdf != NULL)
-			_rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
-		if (molecule2.r(0) < 0) {
-			boundary[0] = 1;
-		}
+			_rdf->observeRDF(dd, molecule1.componentid(),
+					molecule2.componentid());
 
 		PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ,
-				_upotXpoles, _myRF, _virial, calculateLJ, f, boundary, simstep);
+				_upotXpoles, _myRF, _virial, calculateLJ, f);
 		return _upot6LJ + _upotXpoles;
 	case MOLECULE_HALOMOLECULE:
-
-		if (molecule2.r(0) < 0)
-			boundary[0] = -1;
-
 		PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2,
-				dummy3, dummy4, calculateLJ, f, boundary, simstep);
+				dummy3, dummy4, calculateLJ, f);
 		return 0.0;
 	case MOLECULE_MOLECULE_FLUID:
 		dummy1 = 0.0; // 6*U_LJ
 		dummy2 = 0.0; // U_polarity
 		dummy3 = 0.0; // U_dipole_reaction_field
-		if (molecule2.r(0) < 0) {
-			boundary[0] = -1;
-			std::cout << "gotya too!!!!!!!" << std::endl;
-		}
 
-		FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2,
-				dummy3, calculateLJ, f);
+
+		FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ, f);
 
 		return dummy1 / 6.0 + dummy2 + dummy3;
 	case MOLECULE_INSERTION:
@@ -131,8 +140,8 @@ public:
 		dummy3 = 0.0; // U_dipole_reaction_field
 
 
-		PotForceInsertion(molecule1, molecule2, params, distanceVector, dummy1,
-				dummy2, dummy3, dummy4, calculateLJ, f);
+		PotForceInsertion(molecule1, molecule2, params, distanceVector, dummy1, dummy2,
+				dummy3, dummy4, calculateLJ, f);
 
 		return dummy1 / 6.0 + dummy2 + dummy3;
 

@@ -63,6 +63,11 @@ public:
 		delete[] _osites_e;
 		assert(_sites_F);
 		delete[] _sites_F;
+
+		delete _leftxSite;
+		delete _leftxF;
+		delete _leftxRdfSite;
+		delete _leftxRdfF;
 	}
 
 	/** get molecule ID */
@@ -128,6 +133,9 @@ public:
 	const double* quadrupole_d(unsigned int i) const { return &(_quadrupoles_d[3*i]); }
 	const double* quadrupole_e(unsigned int i) const { return &(_quadrupoles_e[3*i]); }
 
+	double ljcenter_disp(unsigned int i) { return std::sqrt((*_ljcenters)[i].r()[0] *
+			(*_ljcenters)[i].r()[0] + (*_ljcenters)[i].r()[1] * (*_ljcenters)[i].r()[1] +
+			(*_ljcenters)[i].r()[2] * (*_ljcenters)[i].r()[2]);}
 
 	/**
 	 * get the total object memory size, together with all its members
@@ -144,6 +152,7 @@ public:
 	 */
 	double dist2(const Molecule& molecule2, double dr[3]) const {
 		double d2 = 0.;
+
 		for (unsigned short d = 0; d < 3; d++) {
 			dr[d] = molecule2._r[d] - _r[d];
 			d2 += dr[d] * dr[d];
@@ -169,7 +178,11 @@ public:
 	void scale_M(double s) { for(unsigned short d=0;d<3;++d) _M[d]*=s; }
 
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
-
+	void leftxFAdd(const double a[]) { for(unsigned short d=0;d<3;++d) _leftxF[d]+=a[d]; }
+	void leftxRdfFAdd(const double a[]) { for(unsigned short d=0;d<3;++d) _leftxRdfF[d]+=a[d]; }
+	double* getLeftxF() {return _leftxF;}
+	double* getLeftxRdfF() {return _leftxRdfF;}
+	double* getLeftxRdfSite(int i) { return &_leftxRdfSite[3 * i];}
 	void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
 
 	void vadd(const double ax, const double ay, const double az) {
@@ -188,6 +201,14 @@ public:
 		_r[0] = fixedx;
 		_r[1] = fixedy;
 	}
+
+	void addLeftxInfluence(unsigned int i, double a[]) {
+		double* leftxSite = &(_leftxSite[3 * i]); for(unsigned short d=0;d<3;++d) leftxSite[d]+=a[d];
+	}
+	void addLeftxRdfInfluence(unsigned int i, double a[]) {
+		double* leftxRdfSite = &(_leftxRdfSite[3 * i]); for(unsigned short d=0;d<3;++d) leftxRdfSite[d]+=a[d];
+	}
+
 
 	void Fljcenteradd(unsigned int i, double a[])
 	{ double* Fsite=&(_ljcenters_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
@@ -265,6 +286,14 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
 
+	void calcLeftxInfluence();
+
+	void resetLeftxInfluence() {
+		for (int i = 0; i < 3 * this->numSites(); i++) {
+			_leftxSite[i] = 0;
+			_leftxRdfSite[i] = 0;
+		}
+	}
 
 private:
 
@@ -301,6 +330,10 @@ private:
 	// site Forces
 	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
 	double* _sites_F;
+	double* _leftxSite;
+	double* _leftxRdfSite;
+	double* _leftxF;
+	double* _leftxRdfF;
 	double *_ljcenters_F, *_charges_F, *_dipoles_F,
 	       *_quadrupoles_F, *_tersoff_F;
 

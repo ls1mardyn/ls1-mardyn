@@ -56,6 +56,13 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 		halo_L[d] = moleculeContainer->get_halo_L(d);
 	}
 
+#ifndef NDEBUG
+	vector<unsigned long> compCount;
+	compCount.resize(1);
+	countMolecules(moleculeContainer, compCount);
+	global_log->debug() << "Num molecules: " << compCount[0] << endl;
+#endif
+
 	// temporal data for the particle exchange
 	int numPartsToSend[DIM][2];
 	int numPartsToRecv[DIM][2];
@@ -181,7 +188,46 @@ bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* doma
 		return true;
 }
 
+double DomainDecomposition::guaranteedDistance(double x, double y, double z, Domain* domain) {
+	double xdist = 0;
+	double ydist = 0;
+	double zdist = 0;
 
+	if (x < getBoundingBoxMin(0, domain))
+		xdist = getBoundingBoxMin(0, domain) - x;
+	else if (x >= getBoundingBoxMax(0, domain))
+		xdist = x - getBoundingBoxMax(0, domain);
+
+	if (y < getBoundingBoxMin(1, domain))
+		ydist = getBoundingBoxMin(1, domain) - y;
+	else if (y >= getBoundingBoxMax(1, domain))
+		ydist = y - getBoundingBoxMax(1, domain);
+
+	if (z < getBoundingBoxMin(2, domain))
+		zdist = getBoundingBoxMin(2, domain) - z;
+	else if (z >= getBoundingBoxMax(2, domain))
+		zdist = z - getBoundingBoxMax(2, domain);
+
+	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
+}
+
+unsigned long DomainDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
+	vector<int> localCompCount;
+	localCompCount.resize(compCount.size());
+	for (unsigned int i = 0; i < localCompCount.size(); i++)
+		localCompCount[i] = 0;
+
+	Molecule* tempMolecule;
+	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
+		localCompCount[tempMolecule->componentid()] += 1;
+	}
+	int numMolecules = 0;
+	for (unsigned int i = 0; i < localCompCount.size(); i++) {
+		MPI_CHECK( MPI_Allreduce(&localCompCount[i], &compCount[i], 1, MPI_INT, MPI_SUM, _comm) );
+		numMolecules += compCount[i];
+	}
+	return numMolecules;
+}
 
 double DomainDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	return _coords[dimension] * domain->getGlobalLength(dimension) / _gridSize[dimension];

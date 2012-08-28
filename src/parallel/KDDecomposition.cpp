@@ -220,6 +220,58 @@ bool KDDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) 
 	}
 }
 
+double KDDecomposition::guaranteedDistance(double x, double y, double z, Domain* domain) {
+	double xdist = 0;
+	double ydist = 0;
+	double zdist = 0;
+	if (x < getBoundingBoxMin(0, domain)) {
+		xdist = getBoundingBoxMin(0, domain) - x;
+	}
+	else if (x >= getBoundingBoxMax(0, domain)) {
+		xdist = x - getBoundingBoxMax(0, domain);
+	}
+
+	if (y < getBoundingBoxMin(1, domain)) {
+		ydist = getBoundingBoxMin(1, domain) - y;
+	}
+	else if (y >= getBoundingBoxMax(1, domain)) {
+		ydist = y - getBoundingBoxMax(1, domain);
+	}
+
+	if (z < getBoundingBoxMin(2, domain)) {
+		zdist = getBoundingBoxMin(2, domain) - z;
+	}
+	else if (z >= getBoundingBoxMax(2, domain)) {
+		zdist = z - getBoundingBoxMax(2, domain);
+	}
+	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
+}
+
+unsigned long KDDecomposition::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
+	const int numComponents = compCount.size();
+	unsigned long* localCompCount = new unsigned long[numComponents];
+	unsigned long* globalCompCount = new unsigned long[numComponents];
+	for( int i = 0; i < numComponents; i++ ) {
+		localCompCount[i] = 0;
+	}
+	
+	Molecule* tempMolecule;
+	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
+		localCompCount[tempMolecule->componentid()] += 1;
+	}
+	
+	MPI_CHECK( MPI_Allreduce(localCompCount, globalCompCount, numComponents, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) );
+	
+	unsigned long numMolecules = 0;
+	for (int i = 0; i < numComponents; i++) {
+		compCount[i] = globalCompCount[i];
+		numMolecules += globalCompCount[i];
+	}
+
+	delete[] localCompCount;
+	delete[] globalCompCount;
+	return numMolecules;
+}
 
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);

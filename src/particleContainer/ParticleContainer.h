@@ -21,6 +21,8 @@
 #define PARTICLECONTAINER_H_
 
 #include <list>
+#include <string>
+#include <vector>
 
 class ParticlePairsHandler;
 class ParticleContainer;
@@ -28,6 +30,9 @@ class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
 class Molecule;
+class RDF;
+
+
 
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
@@ -120,7 +125,8 @@ public:
 	//! original and duplicated pairs. Details about how to handle pairs can be found
 	//! in the documentation for the class ParticlePairsHandler
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler) = 0;
+	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler, std::vector<std::string> file_names = std::vector<std::string>(), int simstep = 1, std::vector< std::vector<double> >* globalADist = NULL, std::vector<
+			std::vector< std::vector<double> > >* globalSiteADist = NULL) = 0;
 
 	//! @return the number of particles stored in this container
 	//!

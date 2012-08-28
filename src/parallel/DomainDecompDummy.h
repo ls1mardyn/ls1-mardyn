@@ -41,6 +41,17 @@ public:
 		return true;
 	}
 
+	//! @brief returns 0.0
+	//!
+	//! In the sequential version, the only process covers the whole domain, so
+	//! there is not distance between any point and the region of the process
+	double guaranteedDistance(double x, double y, double z, Domain* domain) {
+		return 0.0;
+	}
+
+	// documentation see father class (DomainDecompBase.h)
+	unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
+
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain);
 
@@ -137,7 +148,7 @@ public:
 	void collCommBroadcast(int root = 0) {
 	}
 
-private:
+protected:
 	//! Dummy variable for sequential "collective" communication, basically only
 	//! needed to store values and read them again.
 	CollectiveCommDummy _collComm;

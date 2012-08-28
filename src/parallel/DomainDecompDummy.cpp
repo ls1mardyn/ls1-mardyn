@@ -95,6 +95,20 @@ void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* mole
 	exchangeMolecules(moleculeContainer, components, domain);
 }
 
+unsigned long DomainDecompDummy::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
+	for (unsigned i = 0; i < compCount.size(); i++) {
+		compCount[i] = 0;
+	}
+	Molecule* tempMolecule;
+	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
+		compCount[tempMolecule->componentid()] += 1;
+	}
+	int numMolecules = 0;
+	for (unsigned i = 0; i < compCount.size(); i++) {
+		numMolecules += compCount[i];
+	}
+	return numMolecules;
+}
 
 double DomainDecompDummy::getBoundingBoxMin(int dimension, Domain* domain) {
 	return 0.0;

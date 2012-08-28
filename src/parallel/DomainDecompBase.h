@@ -86,6 +86,33 @@ public:
 	//! @param domain might be needed to get the bounding box
 	virtual bool procOwnsPos(double x, double y, double z, Domain* domain) = 0;
 
+	//! @brief returns a guaranteed distance of (x,y,z) to the local domain
+	//!
+	//! This method is e.g. used by a particle generator which creates clusters (nuclei, drops).
+	//! Only if the cluster is close (cluster radius larger then guaranteedDistance) to the
+	//! domain the particles have to be created.
+	//! @param x x-coordinate of the position for which the guaranteed distance is returned
+	//! @param y y-coordinate of the position for which the guaranteed distance is returned
+	//! @param z z-coordinate of the position for which the guaranteed distance is returned
+	//! @param domain might be needed to get the bounding box
+	//!
+	//! @TODO move this method to the DropletGenerator!
+	virtual double guaranteedDistance(double x, double y, double z, Domain* domain) = 0;
+
+	//! @brief counts the number of molecules of each component type.
+	//!
+	//! This method is usually only needed once in the beginning of the simulation and only
+	//! if the particles were not read in from a single file but read in from one file per proc or
+	//! if the particles were created by each proc seperately.
+	//! @param moleculeContainer container for the molecules
+	//! @param compCount vector which has to have the size which equals the number of components
+	//!                  this method will will the vector with the number of molecules for each
+	//!                  of the components (in the global domain)
+	//! @return the number of molecules in the global domain is returned
+	//!
+	//! @TODO move this method to the DropletGenerator!
+	virtual unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount) = 0;
+
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the minimum of the bounding box is returned
 	//! @param domain here the bounding box is stored

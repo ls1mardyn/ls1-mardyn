@@ -18,7 +18,7 @@
 using namespace std;
 using Log::global_log;
 
-#define DEBUG_DECOMP
+//#define DEBUG_DECOMP
 
 KDDecomposition2::KDDecomposition2(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
 		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold) {
@@ -90,7 +90,8 @@ void KDDecomposition2::balanceAndExchange(bool balance, ParticleContainer* molec
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
 
-		completeTreeInfo(newDecompTree, newOwnArea);		global_log->info() << "KDDecomposition2: rebalancing finished" << endl;
+		completeTreeInfo(newDecompTree, newOwnArea);
+		global_log->info() << "KDDecomposition2: rebalancing finished" << endl;
 
 #ifdef DEBUG_DECOMP
 		if (_ownRank == 0) {
@@ -215,6 +216,59 @@ bool KDDecomposition2::procOwnsPos(double x, double y, double z, Domain* domain)
 	}
 }
 
+double KDDecomposition2::guaranteedDistance(double x, double y, double z, Domain* domain) {
+	double xdist = 0;
+	double ydist = 0;
+	double zdist = 0;
+	if (x < getBoundingBoxMin(0, domain)) {
+		xdist = getBoundingBoxMin(0, domain) - x;
+	}
+	else if (x >= getBoundingBoxMax(0, domain)) {
+		xdist = x - getBoundingBoxMax(0, domain);
+	}
+
+	if (y < getBoundingBoxMin(1, domain)) {
+		ydist = getBoundingBoxMin(1, domain) - y;
+	}
+	else if (y >= getBoundingBoxMax(1, domain)) {
+		ydist = y - getBoundingBoxMax(1, domain);
+	}
+
+	if (z < getBoundingBoxMin(2, domain)) {
+		zdist = getBoundingBoxMin(2, domain) - z;
+	}
+	else if (z >= getBoundingBoxMax(2, domain)) {
+		zdist = z - getBoundingBoxMax(2, domain);
+	}
+	return sqrt(xdist * xdist + ydist * ydist + zdist * zdist);
+}
+
+// TODO move method countMolecules to DropletGenerator!
+unsigned long KDDecomposition2::countMolecules(ParticleContainer* moleculeContainer, vector<unsigned long> &compCount) {
+	const int numComponents = compCount.size();
+	unsigned long* localCompCount = new unsigned long[numComponents];
+	unsigned long* globalCompCount = new unsigned long[numComponents];
+	for( int i = 0; i < numComponents; i++ ) {
+		localCompCount[i] = 0;
+	}
+	
+	Molecule* tempMolecule;
+	for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
+		localCompCount[tempMolecule->componentid()] += 1;
+	}
+	
+	MPI_CHECK( MPI_Allreduce(localCompCount, globalCompCount, numComponents, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) );
+	
+	unsigned long numMolecules = 0;
+	for (int i = 0; i < numComponents; i++) {
+		compCount[i] = globalCompCount[i];
+		numMolecules += globalCompCount[i];
+	}
+
+	delete[] localCompCount;
+	delete[] globalCompCount;
+	return numMolecules;
+}
 
 double KDDecomposition2::getBoundingBoxMin(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);
@@ -699,7 +753,6 @@ bool KDDecomposition2::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm 
 
 	std::list<KDNode*> subdivisions;
 	domainTooSmall = calculateAllSubdivisions(fatherNode, subdivisions, commGroup);
-	assert(subdivisions.size() > 0);
 
 	KDNode* bestSubdivision = NULL;
 	double minimalDeviation = globalMinimalDeviation;
@@ -830,16 +883,13 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 
 		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
 		int startIndex = 1;
-		int maxEndIndex = node->_highCorner[dim] - node->_lowCorner[dim] - 1;
-		int endIndex = maxEndIndex;
+		int endIndex = node->_highCorner[dim] - node->_lowCorner[dim] - 1;
 		if (node->_numProcs > _fullSearchThreshold) {
 			startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
 			endIndex = min(endIndex, startIndex + 1);
 		}
 
-		int i = startIndex;
-		while ( (i < endIndex) || (subdivededNodes.size() == 0 && i < maxEndIndex) ) {
-		//for (int i = startIndex; i < endIndex; i++) {
+		for (int i = startIndex; i < endIndex; i++) {
 			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) node->_numProcs);
 			int optNumProcsLeft = min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
 			int numProcsLeft = (int) max(1, optNumProcsLeft);
@@ -856,8 +906,6 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 				delete clone;
 				// domain is not resolvable at all -> continue
 				// I think, this case should not happen, but Martin Buchholz coded it in his code...
-				// OK, it happens...!
-				i++;
 				continue;
 			}
 
@@ -900,7 +948,6 @@ bool KDDecomposition2::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>
 				iter++;
 			}
 			subdivededNodes.insert(iter, clone);
-			i++;
 		}
 	}
 	return domainTooSmall;

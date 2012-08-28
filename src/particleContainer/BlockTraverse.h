@@ -23,10 +23,14 @@
 #include "ParticleCell.h"
 
 #include <vector>
-
+#include <string>
+#include <cmath>
+#include <cstdlib>
 class ParticleContainer;
 class ParticlePairsHandler;
+class RDF;
 
+#define PI 3.1415926535
 //! @brief BlockTraverse datastructure
 //! @author Johannes Weißl
 //!
@@ -74,7 +78,13 @@ public:
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	void traversePairs(ParticlePairsHandler* particlePairsHandler);
+	void traversePairs(ParticlePairsHandler* particlePairsHandler, std::vector<std::string> rdf_file_names = std::vector<std::string>(), int simstep = 1, std::vector< std::vector<double> >* globalADist = NULL, std::vector<
+			std::vector< std::vector<double> > >* globalSiteADist = NULL);
+
+
+	void traverseRDFBoundaryCartesian(std::vector<std::vector<double> >* globalAcc, std::vector<std::vector<
+			std::vector<double> > >* globalSiteAcc,
+			ParticlePairsHandler* particlePairsHandler);
 
 	//! @brief assign new (forward|backward)NeighbourOffsets
 	//!
@@ -88,6 +98,16 @@ private:
 	/** calculates forces between all molecules in cell1 and cell2 */
 	void processCellPair(ParticleCell &cell1, ParticleCell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
 	
+	double integrateRDFSite(double normal_dim[2], Molecule* mol,
+			double rc, double dz, double dx, std::vector<double> globalAcc, std::vector<
+			std::vector<double> > globalSiteAcc, int plane,
+			unsigned int site, int boundary[3]);
+
+	double integrateRDFCartesian(double xlim[2], double ylim[2],
+			double zlim[2], Molecule* mol, double rc, double dx, double dy,
+			double dz, std::vector<double> globalAcc,
+			std::vector<std::vector<double> > globalSiteAcc, int plane, unsigned int site,
+			int boundary[3]);
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################

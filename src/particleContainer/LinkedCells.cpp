@@ -288,12 +288,13 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* 
 	return N;
 }
 
-void LinkedCells::traversePairs(ParticlePairsHandler* particlePairsHandler) {
+void LinkedCells::traversePairs(ParticlePairsHandler* particlePairsHandler,  std::vector<std::string> file_names, int simstep, std::vector< std::vector<double> >* globalADist, std::vector<
+		std::vector< std::vector<double> > >* globalSiteADist) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
 		exit(1);
 	}
-	_blockTraverse.traversePairs(particlePairsHandler);
+	_blockTraverse.traversePairs(particlePairsHandler, file_names, simstep, globalADist, globalSiteADist);
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {
@@ -611,7 +612,6 @@ double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
-
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			//dd = cutoffRadiusSquare - 10;
 			if (dd > cutoffRadiusSquare)

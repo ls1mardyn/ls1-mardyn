@@ -327,12 +327,13 @@ void AdaptiveSubCells::deleteMolecule(unsigned long molid, double x, double y, d
 	}
 }
 
-void AdaptiveSubCells::traversePairs(ParticlePairsHandler* particlePairsHandler) {
+void AdaptiveSubCells::traversePairs(ParticlePairsHandler* particlePairsHandler,  std::vector<std::string> file_names, int simstep, std::vector< std::vector<double> >* globalADist, std::vector<
+		std::vector< std::vector<double> > >* globalSiteADist) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in AdaptiveSubCells (traversePairs) invalid, call update first" << endl;
 		exit(1);
 	}
-	_blockTraverse.traversePairs(particlePairsHandler);
+	_blockTraverse.traversePairs(particlePairsHandler, file_names, simstep);
 }
 
 double AdaptiveSubCells::getEnergy(Molecule* m1, double* force) {

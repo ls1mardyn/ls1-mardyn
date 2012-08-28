@@ -5,6 +5,7 @@
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "RDF.h"
 
 using namespace std;
 using Log::global_log;
