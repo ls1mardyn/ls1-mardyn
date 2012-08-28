@@ -1,6 +1,7 @@
 #ifndef _MOLECULARDYNAMICS_COUPLING_INTERFACE_MOLECULEWRAPPER_H_
 #define _MOLECULARDYNAMICS_COUPLING_INTERFACE_MOLECULEWRAPPER_H_
 
+// to be used with the coupling tool
 #include "tarch/la/Vector.h"
 namespace moleculardynamics {
   namespace coupling {

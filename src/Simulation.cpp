@@ -1200,6 +1200,7 @@ void Simulation::simulate() {
 	std::vector<std::string> file_names;
 	stringstream ss;
 
+	// tx
 	ss << "ethan_0a" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
 	FILE* stepfile = fopen(ss.str().c_str(), "w");
 	file_names.push_back("rdf_Ethan_20k_0a_rc4_0-0.000090000.rdf");

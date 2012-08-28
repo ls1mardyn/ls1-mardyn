@@ -1,3 +1,8 @@
+/*
+ * Usher algorithm for inserting particles on the position
+ * where energy is equal to the mean energy of the system
+ */
+
 #ifndef _MOLECULARDYNAMICS_COUPLING_PARTICLEINSERTION_H_
 #define _MOLECULARDYNAMICS_COUPLING_PARTICLEINSERTION_H_
 

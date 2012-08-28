@@ -395,6 +395,12 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i,
 	rdfout.close();
 }
 
+
+/*
+ * Reads the existing input file and
+ * extracts accumulated rdf (molecule-molecule
+ * and site-site ones)
+ */
 void RDF::readRDFInputFile(string file_name, int i, int j, int ni, int nj,
 		std::vector<double>* rmids, std::vector<double>* globalDist,
 		std::vector<double>* globalADist,
