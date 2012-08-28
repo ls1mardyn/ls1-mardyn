@@ -349,6 +349,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params,
 						mi.Fljcenteradd(si, temp_f);
 
 						if (mj.r(0) < 0) {
+							// for the rdf - periodic comparison
 							mi.addLeftxInfluence(si, temp_f);
 
 						}
