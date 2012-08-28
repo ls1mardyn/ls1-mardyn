@@ -163,7 +163,7 @@ void VTKGridWriter::releaseVTKGrid() {
 
 void VTKGridWriter::getCellData(VTKGridCell& cell) {
 	int numberOfMolecules = _container._cells[cell.getIndex()].getMoleculeCount();
-	cell.setCellData(numberOfMolecules, 0.0, 0);
+	cell.setCellData(numberOfMolecules);
 }
 
 //! NOP

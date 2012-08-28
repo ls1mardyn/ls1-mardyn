@@ -42,10 +42,6 @@ void VTKGridWriterImplementation::initializeVTKFile() {
 	CellData cellData;
 	DataArray_t cells_count(type::Int32, "numberOfMolecules", 1);
 	cellData.DataArray().push_back(cells_count);
-	DataArray_t cells_load(type::Float32, "load", 1);
-	cellData.DataArray().push_back(cells_load);
-	DataArray_t cells_level(type::Int32, "level", 1);
-	cellData.DataArray().push_back(cells_level);
 	DataArray_t node_rank(type::Int32, "node-rank", 1);
 	cellData.DataArray().push_back(node_rank);
 	DataArray_t index(type::UInt32, "index", 1);
@@ -111,10 +107,6 @@ void VTKGridWriterImplementation::plotCell(VTKGridCell& cell) {
 
 	it3->push_back(cell.getNumberOfMolecules());
 	it3++;
-	it3->push_back(cell.getLoad());
-	it3++;
-	it3->push_back(cell.getLevel());
-	it3++;
 	it3->push_back(_rank);
 	it3++;
 	it3->push_back(cell.getIndex());
@@ -145,10 +137,6 @@ void VTKGridWriterImplementation::initializeParallelVTKFile(const std::vector<st
 		PCellData p_cellData;
 		DataArray_t p_numberOfMolecules(type::Int32, "numberOfMolecules", 1);
 		p_cellData.PDataArray().push_back( p_numberOfMolecules);
-		DataArray_t p_load(type::Float32, "load", 1);
-		p_cellData.PDataArray().push_back( p_load);
-		DataArray_t p_cells_level(type::Int32, "level", 1);
-		p_cellData.PDataArray().push_back(p_cells_level);
 		DataArray_t p_node_rank(type::Int32, "node-rank", 1);
 		p_cellData.PDataArray().push_back(p_node_rank);
 		DataArray_t index(type::UInt32, "index", 1);
