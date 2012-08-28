@@ -1,4 +1,4 @@
-
+// Wrapper for the molecule to be used with the coupling tool
 namespace moleculardynamics {
   namespace coupling {
     namespace interface {
