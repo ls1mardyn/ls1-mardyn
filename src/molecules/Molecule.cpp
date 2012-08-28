@@ -447,7 +447,7 @@ void Molecule::calcFM() {
 	}
 }
 
-
+// tijana
 void Molecule::calcLeftxInfluence() {
 	unsigned int ns = numSites();
 	for (int i = 0; i < 3; i++) {

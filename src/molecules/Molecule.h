@@ -288,6 +288,7 @@ public:
 
 	void calcLeftxInfluence();
 
+	// added by tijana
 	void resetLeftxInfluence() {
 		for (int i = 0; i < 3 * this->numSites(); i++) {
 			_leftxSite[i] = 0;
