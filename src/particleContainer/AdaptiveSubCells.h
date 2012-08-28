@@ -10,6 +10,7 @@ class ParticleCell;
 class ChemicalPotential;
 class DomainDecompBase;
 
+//
 //! @brief Adaptive SubCell Data Structure
 //! @author Martin Buchholz
 //!

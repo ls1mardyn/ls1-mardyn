@@ -10,6 +10,7 @@
 using namespace std;
 using Log::global_log;
 
+//
 ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		_boundingBoxMin[i] = bBoxMin[i];

@@ -18,7 +18,7 @@ using Log::global_log;
 //############ PUBLIC METHODS ####################
 //################################################
 
-
+//
 AdaptiveSubCells::AdaptiveSubCells(
 		double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius
