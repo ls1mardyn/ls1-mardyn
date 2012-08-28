@@ -7,7 +7,6 @@
 #include "utils/compile_info.h"
 #include "utils/Testing.h"
 #include "utils/FileUtils.h"
-#include "utils/Timer.h"
 #include "Simulation.h"
 
 
@@ -155,11 +154,9 @@ int main(int argc, char** argv) {
 
     simulation.prepare_start();
 
-    Timer sim_timer;
-    sim_timer.start();
+    double runtime = double(clock()) / CLOCKS_PER_SEC;
     simulation.simulate();
-    sim_timer.stop();
-    double runtime = sim_timer.get_etime();
+    runtime = double(clock()) / CLOCKS_PER_SEC - runtime;
     global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
 
     delete global_log;

@@ -35,6 +35,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/RDFDummyDecomposition.h"
 //#include "ParticleInsertion.h"
 
 #ifdef ENABLE_MPI
@@ -483,7 +484,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 	double timestepLength;
 	unsigned cosetid = 0;
-        bool widom = false;
+	bool widom = false;
 
 	// The first line of the config file has to contain the token "MDProjectConfig"
 	inputfilestream >> token;
@@ -952,9 +953,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			global_log->info() << " pushed back." << endl;
 		} else if (token == "planckConstant") {
 			inputfilestream >> h;
-		} else if(token == "Widom") {
-                        widom = true;
-                } else if (token == "NVE") {
+		} else if (token == "Widom") {
+			widom = true;
+		} else if (token == "NVE") {
 			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
 		} else if (token == "initCanonical") {
@@ -1001,7 +1002,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	unsigned j = 0;
 	std::list<ChemicalPotential>::iterator cpit;
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-                if(widom) cpit->enableWidom();
+		if (widom)
+			cpit->enableWidom();
 		cpit->setIncrement(idi);
 		double tmp_molecularMass =
 				_domain->getComponents()[cpit->getComponentID()].m();
@@ -1036,6 +1038,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 }
 
 void Simulation::prepare_start() {
+	std::string rdf_file = "rdf_Ethan_20k_0a_rc4_0-0.000090000.rdf";
+	std::vector<std::string> file_names;
+	file_names.push_back(rdf_file);
 	global_log->info() << "Initializing simulation" << endl;
 
 	global_log->info() << "Clearing halos" << endl;
@@ -1043,7 +1048,59 @@ void Simulation::prepare_start() {
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
-	_moleculeContainer->traversePairs(_particlePairsHandler);
+	vector<vector<double> > globalDist;
+	vector<vector<double> > globalADist;
+	vector<vector<vector<double> > > globalSiteDist;
+	vector<vector<vector<double> > > globalSiteADist;
+	vector<double> rmids;
+
+	// componentids that appear in the container, number of sites per such component
+	vector<unsigned int> componentIds;
+	vector<int> numSites;
+
+	Molecule* currentMolecule;
+
+	// find which component ids appear
+	for (currentMolecule = _moleculeContainer->begin(); currentMolecule
+			!= _moleculeContainer->end(); currentMolecule
+			= _moleculeContainer->next()) {
+		unsigned int i;
+		for (i = 0; i < componentIds.size(); i++) {
+			if (currentMolecule->componentid() == componentIds[i])
+				break;
+		}
+		if (i == componentIds.size()) {
+			componentIds.push_back(currentMolecule->componentid());
+			numSites.push_back(currentMolecule->numSites());
+		}
+	}
+
+	unsigned int totalComponents = componentIds.size();
+
+	if (file_names.size() != totalComponents * totalComponents)
+		std::cout << "Wrong number of rdf input files. There are "
+				<< totalComponents * totalComponents
+				<< " component combinations requiring the same number of rdf input files."
+				<< endl;
+
+	// read rdf files for different component pairs
+	for (unsigned int i = 0; i < totalComponents; i++) {
+		for (unsigned int j = 0; j < totalComponents; j++) {
+			globalDist.push_back(vector<double> ());
+			globalADist.push_back(vector<double> ());
+			globalSiteDist.push_back(vector<vector<double> > ());
+			globalSiteADist.push_back(vector<vector<double> > ());
+			RDF::readRDFInputFile(file_names[i * totalComponents + j].c_str(),
+					i, j, numSites[i], numSites[j], &rmids, &globalDist[i
+							* totalComponents + j], &globalADist[i
+							* totalComponents + j], &globalSiteDist[i
+							* totalComponents + j], &globalSiteADist[i
+							* totalComponents + j]);
+		}
+	}
+	cout << "size: " << globalADist[0].size() << endl;
+	_moleculeContainer->traversePairs(_particlePairsHandler, file_names, -1,
+			&globalADist, &globalSiteADist);
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
@@ -1132,18 +1189,26 @@ void Simulation::prepare_start() {
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
+
+	globalDist.clear();
+	globalADist.clear();
+	globalSiteDist.clear();
+	globalSiteADist.clear();
 }
 
 void Simulation::simulate() {
+	std::vector<std::string> file_names;
+	stringstream ss;
 
+	ss << "ethan_0a" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
+	FILE* stepfile = fopen(ss.str().c_str(), "w");
+	file_names.push_back("rdf_Ethan_20k_0a_rc4_0-0.000090000.rdf");
 	Molecule* tM;
 	global_log->info() << "Started simulation" << endl;
-
 	// added by tijana because of getEnergy(...) in LinkedCells
 	_moleculeContainer->setPairsHandler(_particlePairsHandler);
 
 	_simstep = 0;
-
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
@@ -1157,10 +1222,10 @@ void Simulation::simulate() {
 			<< ensemble.N() << endl;
 	ensemble.updateGlobalVariable(ENERGY);
 	global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E()
-		<< endl;
+			<< endl;
 	ensemble.updateGlobalVariable(TEMPERATURE);
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-		<< endl;
+			<< endl;
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -1176,6 +1241,56 @@ void Simulation::simulate() {
 	//SteereoLogger::setOutputLevel (4);
 	_coupling->waitForConnection();
 #endif
+
+	vector<vector<double> > globalDist;
+	vector<vector<double> > globalADist;
+	vector<vector<vector<double> > > globalSiteDist;
+	vector<vector<vector<double> > > globalSiteADist;
+
+	// componentids that appear in the container, number of sites per such component
+	vector<unsigned int> componentIds;
+	vector<int> numSites;
+	vector<double> rmids;
+	Molecule* currentMolecule;
+
+	// find which component ids appear
+	for (currentMolecule = _moleculeContainer->begin(); currentMolecule
+			!= _moleculeContainer->end(); currentMolecule
+			= _moleculeContainer->next()) {
+		unsigned int i;
+		for (i = 0; i < componentIds.size(); i++) {
+			if (currentMolecule->componentid() == componentIds[i])
+				break;
+		}
+		if (i == componentIds.size()) {
+			componentIds.push_back(currentMolecule->componentid());
+			numSites.push_back(currentMolecule->numSites());
+		}
+	}
+
+	unsigned int totalComponents = componentIds.size();
+
+	if (file_names.size() != totalComponents * totalComponents)
+		std::cout << "Wrong number of rdf input files. There are "
+				<< totalComponents * totalComponents
+				<< " component combinations requiring the same number of rdf input files."
+				<< endl;
+
+	// read rdf files for different component pairs
+	for (unsigned int i = 0; i < totalComponents; i++) {
+		for (unsigned int j = 0; j < totalComponents; j++) {
+			globalDist.push_back(vector<double> ());
+			globalADist.push_back(vector<double> ());
+			globalSiteDist.push_back(vector<vector<double> > ());
+			globalSiteADist.push_back(vector<vector<double> > ());
+			RDF::readRDFInputFile(file_names[i * totalComponents + j].c_str(),
+					i, j, numSites[i], numSites[j], &rmids, &globalDist[i
+							* totalComponents + j], &globalADist[i
+							* totalComponents + j], &globalSiteDist[i
+							* totalComponents + j], &globalSiteADist[i
+							* totalComponents + j]);
+		}
+	}
 
 	loopTimer.start();
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
@@ -1216,7 +1331,8 @@ void Simulation::simulate() {
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
 		//cout<<"here somehow"<<endl;
-		_moleculeContainer->traversePairs(_particlePairsHandler);
+		_moleculeContainer->traversePairs(_particlePairsHandler, file_names,
+				_simstep, &globalADist, &globalSiteADist);
 
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
@@ -1226,10 +1342,12 @@ void Simulation::simulate() {
 				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
 					global_log->debug() << "Grand canonical ensemble(" << j
 							<< "): test deletions and insertions" << endl;
-                                        this->_domain->setLambda(cpit->getLambda());
-                                        this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
+					this->_domain->setLambda(cpit->getLambda());
+					this->_domain->setDensityCoefficient(
+							cpit->getDensityCoefficient());
 					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature(), this->_domain);
+							_domain->getGlobalCurrentTemperature(),
+							this->_domain);
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);
@@ -1268,7 +1386,7 @@ void Simulation::simulate() {
 						<< endl;
 				_pressureGradient->determineAdditionalAcceleration(
 						_domainDecomposition, _moleculeContainer, uCAT
-						* _integrator->getTimestepLength());
+								* _integrator->getTimestepLength());
 			}
 			global_log->debug() << "Process the uniform acceleration" << endl;
 			_integrator->accelerateUniformly(_moleculeContainer, _domain);
@@ -1302,15 +1420,15 @@ void Simulation::simulate() {
 		_domain->calculateGlobalValues(_domainDecomposition,
 				_moleculeContainer, (!(_simstep
 						% _collectThermostatDirectedVelocity)), Tfactor(
-								_simstep));
+						_simstep));
 
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				for (tM = _moleculeContainer->begin(); tM
-				!= _moleculeContainer->end(); tM
-				= _moleculeContainer->next()) {
+						!= _moleculeContainer->end(); tM
+						= _moleculeContainer->next()) {
 					int thermostat = _domain->getThermostat(tM->componentid());
 					if (0 >= thermostat)
 						continue;
@@ -1319,10 +1437,10 @@ void Simulation::simulate() {
 						tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
 								_domain->getThermostatDirectedVelocity(
 										thermostat, 0),
-										_domain->getThermostatDirectedVelocity(
-												thermostat, 1),
-												_domain->getThermostatDirectedVelocity(
-														thermostat, 2));
+								_domain->getThermostatDirectedVelocity(
+										thermostat, 1),
+								_domain->getThermostatDirectedVelocity(
+										thermostat, 2));
 					} else {
 						tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
 					}
@@ -1330,8 +1448,8 @@ void Simulation::simulate() {
 				}
 			} else {
 				for (tM = _moleculeContainer->begin(); tM
-				!= _moleculeContainer->end(); tM
-				= _moleculeContainer->next()) {
+						!= _moleculeContainer->end(); tM
+						= _moleculeContainer->next()) {
 					tM->scale_v(_domain->getGlobalBetaTrans());
 					tM->scale_D(_domain->getGlobalBetaRot());
 				}
@@ -1354,7 +1472,7 @@ void Simulation::simulate() {
 				<< ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
 		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-			<< endl;
+				<< endl;
 		/* END PHYSICAL SECTION */
 
 		// measure per timestep IO
@@ -1363,8 +1481,125 @@ void Simulation::simulate() {
 		output(_simstep);
 		perStepIoTimer.stop();
 		loopTimer.start();
+		int actual_simstep = _simstep - _initSimulation + 1;
+		Molecule* moleculePtr;
+		_moleculeContainer->deleteOuterParticles();
+		double total_periodic = 0, total_rdf = 0;
+		for (moleculePtr = _moleculeContainer->begin(); moleculePtr
+							!= _moleculeContainer->end(); moleculePtr
+							= _moleculeContainer->next()) {
+			moleculePtr->calcLeftxInfluence();
+			total_periodic += moleculePtr->getLeftxF()[0];
+			total_rdf += moleculePtr->getLeftxRdfF()[0];
+			moleculePtr->resetLeftxInfluence();
+		}
+		fflush(stepfile);
+		fprintf(stepfile, "%lg %lg \n", total_periodic / 18522, total_rdf / 18522);
+		/*
+		if (actual_simstep % 1000 == 0 || actual_simstep == 1
+				|| actual_simstep == 10 || actual_simstep == 100
+				|| actual_simstep == 200 || actual_simstep == 500) {
+			// measuring forces - writing to file
+			Molecule* moleculePtr = _moleculeContainer->begin();
+			_moleculeContainer->deleteOuterParticles();
+			std::stringstream ss;
+			ss << "result_Ethan_" << _moleculeContainer->getCutoff()/moleculePtr->getSigma() << "_" << actual_simstep << ".txt";
 
+			FILE* file = fopen(
+					ss.str().c_str(), "w");
+			double** forces = new double*[160000];
+			for (int i = 1; i <= 160000; i++) {
+				forces[i] = new double[13];
+				for (int j = 0; j < 13; j++)
+					forces[i][j] = -1;
+			}
+			double total_abs = 0;
+			int total_num = 0;
+			int less90 = 0;
+			double total_periodic_force = 0, total_rdf_force = 0,
+					total_periodic_y = 0, total_periodic_z = 0;
+			for (moleculePtr = _moleculeContainer->begin(); moleculePtr
+					!= _moleculeContainer->end(); moleculePtr
+					= _moleculeContainer->next()) {
+
+				moleculePtr->calcLeftxInfluence();
+				//cout<<"id: "<<moleculePtr->id()<<endl;
+
+				forces[moleculePtr->id()][0] = moleculePtr->id();
+				for (int i = 0; i < 3; i++)
+					forces[moleculePtr->id()][i + 1] = moleculePtr->F(i);
+				for (int i = 4; i < 7; i++)
+					forces[moleculePtr->id()][i] = moleculePtr->getLeftxF()[i
+							- 4];
+				for (int i = 4; i < 7; i++)
+					forces[moleculePtr->id()][i + 3]
+							= moleculePtr->getLeftxRdfF()[i - 4];
+
+				total_periodic_y += moleculePtr->getLeftxF()[1];
+				total_periodic_z += moleculePtr->getLeftxF()[2];
+
+				total_periodic_force += moleculePtr->getLeftxF()[0];
+				total_rdf_force += moleculePtr->getLeftxRdfF()[0];
+
+				bool has_boundary = false;
+				for (int i = 0; i < 3; i++)
+					if (moleculePtr->getLeftxF()[i] != 0)
+						has_boundary = true;
+
+				total_num = 18522;
+				if (has_boundary) {
+
+					for (int i = 10; i < 13; i++)
+						forces[moleculePtr->id()][i] = 100 * abs(abs(
+								moleculePtr->getLeftxRdfF()[i - 10]
+										- moleculePtr->getLeftxF()[i - 10])
+								/ moleculePtr->getLeftxF()[i - 10]);
+					total_abs += forces[moleculePtr->id()][10];
+					if (forces[moleculePtr->id()][10] < 90)
+						less90++;
+				}
+			}
+
+			int scale = _simstep - _initSimulation + 1;
+			cout << "dividing by " << scale << endl;
+			fprintf(file, "num_total: %d \n", total_num);
+			fprintf(file, "less than 90 percent for: %d molecules \n", less90);
+			fprintf(file, "average individual diff %lg: \n", total_abs
+					/ total_num);
+			fprintf(file, "avg_periodic: %lg 	avg_rdf: %lg, total_diff(wrt periodic) %lg total_dif(wrt rdf) %lg \n",
+					total_periodic_force / (total_num * scale), total_rdf_force
+							/ (total_num * scale), (total_periodic_force
+							- total_rdf_force) * 100 / total_periodic_force, (total_rdf_force
+									- total_periodic_force) * 100 / total_rdf_force);
+			fprintf(file, "avg periodic y %lg, avg periodic z %lg \n",
+					total_periodic_y / (total_num * scale), total_periodic_z
+							/ (total_num * scale));
+			for (int num = 1; num < 160000; num++) {
+				if (forces[num][10] != -1) {
+					fprintf(file, "%d ", (int) forces[num][0]);
+					for (int i = 4; i < 10; i++)
+						fprintf(file, "%g ", forces[num][i] / scale);
+					fprintf(file, "		");
+					for (int i = 10; i < 13; i++)
+						fprintf(file, "%g ", forces[num][i]);
+					fprintf(file, "\n");
+				}
+			}
+			fclose(file);
+
+			for (int i = 1; i <= 160000; i++) {
+				delete[] forces[i];
+			}
+			delete[] forces;
+		}
+		*/
 	}
+	fclose(stepfile);
+
+	globalDist.clear();
+	globalADist.clear();
+	globalSiteDist.clear();
+	globalSiteADist.clear();
 	loopTimer.stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
@@ -1377,7 +1612,7 @@ void Simulation::simulate() {
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter
-	!= _outputPlugins.end(); outputIter++) {
+			!= _outputPlugins.end(); outputIter++) {
 		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition,
 				_domain);
 		delete (*outputIter);
@@ -1393,7 +1628,6 @@ void Simulation::simulate() {
 	global_log->info() << "Final IO took:                 "
 			<< ioTimer.get_etime() << " sec" << endl;
 
-
 }
 
 void Simulation::output(unsigned long simstep) {
@@ -1407,7 +1641,7 @@ void Simulation::output(unsigned long simstep) {
 				_domain, simstep, &(_lmu));
 	}
 
-	if (_rdf != NULL) {
+	if (_rdf != NULL && simstep >= _initStatistics) {
 		_rdf->doOutput(_domainDecomposition, _domain, simstep);
 	}
 
@@ -1494,7 +1728,7 @@ void Simulation::initialize() {
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... "
 			<< endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy(); //RDFDummyDecomposition();
 	global_log->info() << "Initialization done" << endl;
 #endif
 
@@ -1516,7 +1750,7 @@ void Simulation::initialize() {
 	_zoscillator = 512;
 	_initCanonical = 5000;
 	_initGrandCanonical = 10000000;
-	_initStatistics = 20000;
+	_initStatistics = 60000;
 	h = 0.0;
 
 	_pressureGradient = new PressureGradient(ownrank);

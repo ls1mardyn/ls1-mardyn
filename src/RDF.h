@@ -47,7 +47,8 @@ public:
 	 * @todo Wouldn't make sense to calculate the parameter intervalLength?
 	 *       intervalLength = cutoffRadius / bins
 	 */
-	RDF(double intervalLength, unsigned int bins, const std::vector<Component>& components);
+	RDF(double intervalLength, unsigned int bins,
+			const std::vector<Component>& components);
 
 	virtual ~RDF();
 
@@ -60,7 +61,8 @@ public:
 	void setOutputPrefix(std::string prefix);
 
 	//! plot all the statistics calculated to one or several files
-	void doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep);
+	void doOutput(DomainDecompBase* domainDecomposition, const Domain* domain,
+			unsigned long simStep);
 
 	//! increment the counter indicating for how many iterations
 	//! the molecule pairs have been counted.
@@ -72,21 +74,23 @@ public:
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components) const;
 
-	void observeRDF(Molecule& mi, Molecule& mj, double dd, double distanceVector[3]) const {
+	void observeRDF(Molecule& mi, Molecule& mj, double dd,
+			double distanceVector[3]) const {
 		observeRDF(dd, mi.componentid(), mj.componentid());
 
-		if(_doCollectSiteRDF) {
+		if (_doCollectSiteRDF) {
 			double drs[3];
 			double dr2;
 			unsigned si = mi.numSites();
 			unsigned sj = mj.numSites();
-			if(si+sj > 2) {
-				for(unsigned m = 0; m < si; m++) {
-					for(unsigned n = 0; n < sj; n++) {
+			if (si + sj > 2) {
+				for (unsigned m = 0; m < si; m++) {
+					for (unsigned n = 0; n < sj; n++) {
 						const double* dii = mi.site_d(m);
 						const double* djj = mj.site_d(n);
 						SiteSiteDistance(distanceVector, dii, djj, drs, dr2);
-						observeRDF(dr2, mi.componentid(), mj.componentid(), m, n);
+						observeRDF(dr2, mi.componentid(), mj.componentid(), m,
+								n);
 					}
 				}
 			}
@@ -97,24 +101,33 @@ public:
 	 * This method "really" counts the number of pairs within a certain distance.
 	 */
 	void observeRDF(double dd, unsigned i, unsigned j) const {
-		if(_numberOfRDFTimesteps <= 0) return;
-		if(dd > _maxDistanceSquare) return;
-		if(i > j) { this->observeRDF(dd, j, i); return; }
-		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
-		this->_localDistribution[i][j-i][l] ++;
+		if (_numberOfRDFTimesteps <= 0)
+			return;
+		if (dd > _maxDistanceSquare)
+			return;
+		if (i > j) {
+			this->observeRDF(dd, j, i);
+			return;
+		}
+		unsigned l = (unsigned) floor(sqrt(dd) / this->_intervalLength);
+		this->_localDistribution[i][j - i][l]++;
 	}
 
 	/**
 	 * Count center pairing for particle pair for molecules i and j and centers
 	 * m_i, n_j at distance dd.
 	 */
-	inline void observeRDF(double dd, unsigned i, unsigned j, unsigned m, unsigned n) const {
-		if(_numberOfRDFTimesteps <= 0) return;
-		if(dd > _maxDistanceSquare) return;
-		if(i > j) {
+	inline void observeRDF(double dd, unsigned i, unsigned j, unsigned m,
+			unsigned n) const {
+		if (_numberOfRDFTimesteps <= 0)
+			return;
+		if (dd > _maxDistanceSquare)
+			return;
+		if (i > j) {
 			this->observeRDF(dd, j, i, n, m);
 			return;
 		}
+
 
 		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
 		this->_localSiteDistribution[i][j-i][m][n][l] ++;
@@ -129,8 +142,9 @@ public:
 	//! set all values counted to 0, except the accumulated ones.
 	void reset();
 
+	static void readRDFInputFile(std::string file_name, int i, int j, int ni, int nj, std::vector<double>* rmids, std::vector<double>* globalDist,
+			std::vector<double>* globalADist, std::vector<std::vector<double> >* globalSiteDist, std::vector<std::vector<double> >* globalSiteADist);
 private:
-
 
 	//! Performs a reduction of the local rdf data of all nodes
 	//! to update the "global" fields
@@ -140,7 +154,8 @@ private:
 	//! @note consequently, collectRDF should be called just before.
 	void accumulateRDF();
 
-	void writeToFile(const Domain* domain, const char* prefix, unsigned int i, unsigned int j) const;
+	void writeToFile(const Domain* domain, const char* prefix, unsigned int i,
+			unsigned int j) const;
 
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.
@@ -207,6 +222,8 @@ private:
 	//! the timestep, the respective component IDs, and "rdf" are
 	//! appended to this prefix
 	std::string _RDFOutputPrefix;
+
+
 };
 
 #endif /* RDF_H */
