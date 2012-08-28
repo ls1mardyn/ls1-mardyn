@@ -9,6 +9,7 @@
 #define RDFTEST_H_
 
 #include "utils/TestWithSimulationSetup.h"
+#include "parallel/RDFDummyDecomposition.h"
 
 
 class RDFTest : public utils::TestWithSimulationSetup {
@@ -19,6 +20,10 @@ class RDFTest : public utils::TestWithSimulationSetup {
 	TEST_METHOD(testRDFCountLinkedCell);
 	TEST_METHOD(testRDFCountAdaptiveCell);
 	TEST_METHOD(testSiteSiteRDFLinkedCell);
+	TEST_METHOD(testReadRDFFile);
+	//TEST_METHOD(testRDFPressureCondition);
+	//TEST_METHOD(compareFiles);
+	TEST_METHOD(readOutputFile);
 	TEST_SUITE_END();
 
 public:
@@ -60,6 +65,8 @@ public:
 	 */
 	void testRDFCountSequential12(ParticleContainer* moleculeContainer);
 
+	void readOutputFile();
+
 	/**
 	 * Test with 12x12x12 molecules, also parallel. In this case always the halo
 	 * has to be populated (otherwise the number of subdomains would be wrong as we
@@ -80,6 +87,17 @@ public:
 	 * run in parallel.
 	 */
 	void testSiteSiteRDF(ParticleContainer* moleculeContainer);
+
+	void testReadRDFFile();
+
+	void evaluateForcesHalo(double*** forces, std::string inp_file);
+	void evaluateForcesRDF(double*** forces, std::string inp_file, std::string rdf_file);
+
+	void evalueateForcesRDF();
+
+	void compareFiles();
+
+	void testRDFPressureCondition();
 };
 
 #endif /* RDFTEST_H_ */

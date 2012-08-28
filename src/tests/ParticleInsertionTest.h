@@ -19,9 +19,10 @@
 
 class ParticleInsertionTest: public utils::TestWithSimulationSetup {
 	TEST_SUITE( ParticleInsertionTest);
-	TEST_METHOD( testRotation);
-	TEST_METHOD( testTranslationAndRotation);
+	//TEST_METHOD( testRotation);
+	//TEST_METHOD( testTranslationAndRotation);
 	//TEST_METHOD( testParameterSetup);
+	//TEST_METHOD( testParametersFullStudy);
 	TEST_SUITE_END();
 public:
 	ParticleInsertionTest();
@@ -32,6 +33,8 @@ public:
 	void testTranslationAndRotation();
 
 	void testParameterSetup();
+
+	void testParametersFullStudy();
 
 	void readParamFile(string file_name, int* maxIter, int* maxRestarts, int* maxRotations, double* tolerance,
 			double* maxAngle, double* maxAllowedAngle, double* minAngle, bool* largeStepsizeOnOverlap,
