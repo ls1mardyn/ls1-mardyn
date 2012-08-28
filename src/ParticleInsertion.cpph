@@ -1,3 +1,10 @@
+
+/*
+* Usher algorithm - inserting particles on
+* the position where teh energy is euqal
+* to the mean energy of the system
+*/
+
 namespace moleculardynamics {
 namespace coupling {
 
