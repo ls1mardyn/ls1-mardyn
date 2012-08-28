@@ -1,5 +1,6 @@
 /*
  * ParticleInsertionTest.h
+ * Tests usher algorithm
  *
  *  Created on: Jun 18, 2012
  *      Author: tijana
