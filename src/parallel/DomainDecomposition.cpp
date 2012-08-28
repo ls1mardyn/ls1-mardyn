@@ -10,7 +10,7 @@ using Log::global_log;
 using namespace std;
 
 DomainDecomposition::DomainDecomposition() {
-
+ //
 	int period[DIM]; // 1(true) when using periodic boundary conditions in the corresponding dimension
 	int reorder; // 1(true) if the ranking may be reordered by MPI_Cart_create
 	int num_procs; // Number of processes

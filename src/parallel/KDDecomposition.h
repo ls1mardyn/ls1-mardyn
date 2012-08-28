@@ -1,3 +1,4 @@
+//commented out as mpi not defined
 //#ifndef KDDECOMPOSITION_H_
 //#define KDDECOMPOSITION_H_
 //

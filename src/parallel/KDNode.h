@@ -1,3 +1,4 @@
+//commented out as mpi not defined
 //#ifndef KDNODE_H_
 //#define KDNODE_H_
 //

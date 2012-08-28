@@ -15,6 +15,7 @@ class KDNode;
 
 
 /**
+ *
  * This class is coppy&paste from KDDecomposition. Basic idea is to build up
  * all possible subdivisions and do a A*-like search of the best subdivision.
  *

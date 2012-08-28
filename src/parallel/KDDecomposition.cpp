@@ -21,6 +21,7 @@ using namespace std;
 using Log::global_log;
 
 //#define DEBUG_DECOMP
+//
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency)
 		: _steps(0), _frequency(updateFrequency), _alpha(alpha) {

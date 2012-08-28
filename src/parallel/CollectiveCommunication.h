@@ -1,3 +1,4 @@
+//commented out as mpi not defined
 //#ifndef COLLECTIVECOMMUNICATION_H_
 //#define COLLECTIVECOMMUNICATION_H_
 //

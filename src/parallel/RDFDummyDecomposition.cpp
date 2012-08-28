@@ -1,6 +1,9 @@
 /*
  * RDFDummyDecomposition.cpp
  *
+ * Domain decomposition to be used if RDF boundaries are used.
+ * Makes sure no halo layers are created
+ *
  *  Created on: Jul 5, 2012
  *      Author: tijana
  */

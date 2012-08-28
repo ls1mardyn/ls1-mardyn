@@ -5,7 +5,7 @@
 
 #include "parallel/DomainDecompBase.h"
 #include "parallel/CollectiveCommDummy.h"
-
+//
 //! @brief implement the %domain decomposition for a single processor
 //! @author Martin Buchholz
 //!

@@ -33,6 +33,7 @@ public:
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
+	//
 	//! @brief exchange molecules between processes
 	//!
 	//! molecules which aren't in the domain of their process any

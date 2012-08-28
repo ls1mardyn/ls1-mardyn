@@ -1,6 +1,7 @@
 /*
  * RDFDummyDecomposition.h
  *
+ * To be used if RDF boundaries are used, makes sure no halo layers are created
  *  Created on: Jul 5, 2012
  *      Author: tijana
  */

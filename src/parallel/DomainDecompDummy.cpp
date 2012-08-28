@@ -32,6 +32,7 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 	// molecules that have to be copied (because of halo), get a new position
 	double new_position[3];
 
+	//
 	double phaseSpaceSize[3];
 
 	double low_limit; // particles below this limit have to be copied or moved to the lower process

@@ -7,6 +7,7 @@
 #include "KDNode.h"
 #include <bitset>
 
+//
 KDNode* KDNode::findAreaForProcess(int rank) {
 	if (_numProcs == 1) {
 		if (rank == _owningProc) {
