@@ -66,7 +66,9 @@ public:
 		m_qz += q.m_qz;
 	}
 
-
+	/*
+	 * Rotated by q
+	 */
 	void multiply_left(const Quaternion& q);
 
 	void operator *=(const Quaternion& q);

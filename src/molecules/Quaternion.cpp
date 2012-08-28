@@ -30,6 +30,7 @@ void Quaternion::operator *=(const Quaternion& q) {
 }
 
 void Quaternion::multiply_left(const Quaternion& q) {
+	// for the rotation of the molecule
 	double qw = q.m_qw * m_qw - q.m_qx * m_qx - q.m_qy * m_qy - q.m_qz * m_qz;
 	double qx = q.m_qw * m_qx + q.m_qx * m_qw + q.m_qy * m_qz - q.m_qz * m_qy;
 	double qy = q.m_qw * m_qy + q.m_qy * m_qw + q.m_qz * m_qx - q.m_qx * m_qz;
