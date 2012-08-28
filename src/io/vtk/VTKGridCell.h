@@ -1,6 +1,7 @@
 /*
  * VTKGridCell.h
  *
+ *
  * @Date: 20.09.2010
  * @Author: eckhardw
  */

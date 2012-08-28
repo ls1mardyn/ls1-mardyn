@@ -1,6 +1,7 @@
 /*
  * VTKMoleculeWriterImplementation.h
  *
+ *
  * @Date: 25.08.2010
  * @Author: Wolfgang Eckhardt
  */
