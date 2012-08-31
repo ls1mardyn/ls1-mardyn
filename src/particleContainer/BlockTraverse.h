@@ -98,11 +98,6 @@ private:
 
 	/** calculates forces between all molecules in cell1 and cell2 */
 	void processCellPair(ParticleCell &cell1, ParticleCell& cell2, double& cutoffRadiusSquare, double& LJCutoffRadiusSquare, double& tersoffCutoffRadiusSquare, ParticlePairsHandler* particlePairsHandler);
-	
-	double integrateRDFSite(double normal_dim[2], Molecule* mol,
-			double rc, double dz, double dx, std::vector<double> globalAcc, std::vector<
-			std::vector<double> > globalSiteAcc, int plane,
-			unsigned int site, int boundary[3]);
 
 	double integrateRDFCartesian(double xlim[2], double ylim[2],
 			double zlim[2], Molecule* mol, double rc, double dx, double dy,
