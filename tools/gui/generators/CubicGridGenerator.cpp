@@ -11,6 +11,7 @@
 #include "Parameters/ParameterWithBool.h"
 #include "common/MardynConfigurationParameters.h"
 #include "common/PrincipalAxisTransform.h"
+#include "molecules/Molecule.h"
 #include "Tokenize.h"
 #include "utils/Timer.h"
 #include <cstring>
@@ -108,20 +109,19 @@ void CubicGridGenerator::calculateSimulationBoxLength() {
 	// 1 mol/l = 0.6022 / nm^3 = 0.0006022 / Ang^3 = 0.089236726516 / a0^3
 	double parts_per_a0 = _molarDensity * MDGenerator::molPerL_2_mardyn;
 	double volume = _numMolecules / parts_per_a0;
-	_simBoxLength[0] = pow(volume, 1./3.);
-	_simBoxLength[1] = _simBoxLength[0];
-	_simBoxLength[2] = _simBoxLength[0];
+	_simBoxLength = pow(volume, 1./3.);
 }
 
 
 void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
+	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << endl;
 	domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);
-	domain->setGlobalLength(0, _simBoxLength[0]);
-	domain->setGlobalLength(1, _simBoxLength[1]);
-	domain->setGlobalLength(2, _simBoxLength[2]);
+	domain->setGlobalLength(0, _simBoxLength);
+	domain->setGlobalLength(1, _simBoxLength);
+	domain->setGlobalLength(2, _simBoxLength);
 
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		Component component = _components[i];
@@ -131,6 +131,10 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		domain->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
+	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
+
+    /* silence compiler warnings */
+    (void) timestep;
 }
 
 
@@ -144,24 +148,32 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 // create a body centered cubic layout, by creating by placing the molecules on the
 // vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
-	int numMoleculesPerDimension = pow(_numMolecules / 2, 1./3.);
+	int numMoleculesPerDimension = pow((double) _numMolecules / 2.0, 1./3.);
 	_components[0].updateMassInertia();
 	if (_binaryMixture) {
 		_components[1].updateMassInertia();
 	}
 
-	// only for console output
-	double percentage = (numMoleculesPerDimension * numMoleculesPerDimension) / (pow(numMoleculesPerDimension, 3) * 2.0) * 100.0;
-
-	std::cout << "Percentage=" << percentage << endl;
 
 	unsigned long int id = 1;
-	double spacing = _simBoxLength[0] / numMoleculesPerDimension;
+	double spacing = _simBoxLength / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
-	for (int i = 0; i < numMoleculesPerDimension; i++) {
-		for (int j = 0; j < numMoleculesPerDimension; j++) {
-			for (int k = 0; k < numMoleculesPerDimension; k++) {
+	int start_i = floor((domainDecomp->getBoundingBoxMin(0, domain) / _simBoxLength) * numMoleculesPerDimension) - 1;
+	int start_j = floor((domainDecomp->getBoundingBoxMin(1, domain) / _simBoxLength) * numMoleculesPerDimension) - 1;
+	int start_k = floor((domainDecomp->getBoundingBoxMin(2, domain) / _simBoxLength) * numMoleculesPerDimension) - 1;
+
+	int end_i = ceil((domainDecomp->getBoundingBoxMax(0, domain) / _simBoxLength) * numMoleculesPerDimension) + 1;
+	int end_j = ceil((domainDecomp->getBoundingBoxMax(1, domain) / _simBoxLength) * numMoleculesPerDimension) + 1;
+	int end_k = ceil((domainDecomp->getBoundingBoxMax(2, domain) / _simBoxLength) * numMoleculesPerDimension) + 1;
+
+	// only for console output
+	double percentage = 1.0 / ((end_i - start_i) * 2.0) * 100.0;
+	int percentageRead = 0;
+
+	for (int i = start_i; i < end_i; i++) {
+		for (int j = start_j; j < end_j; j++) {
+			for (int k = start_k; k < end_k; k++) {
 
 				double x = origin + i * spacing;
 				double y = origin + j * spacing;
@@ -174,14 +186,17 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				id++;
 			}
 		}
-		_logger->info() << "Finished reading molecules: " << (i * percentage) << "%\r" << flush;
+		if ((int)(i * percentage) > percentageRead) {
+			percentageRead = i * percentage;
+			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
+		}
 	}
 
 	origin = spacing / 4. * 3.; // origin of the first DrawableMolecule
 
-	for (int i = 0; i < numMoleculesPerDimension; i++) {
-		for (int j = 0; j < numMoleculesPerDimension; j++) {
-			for (int k = 0; k < numMoleculesPerDimension; k++) {
+	for (int i = start_i; i < end_i; i++) {
+		for (int j = start_j; j < end_j; j++) {
+			for (int k = start_k; k < end_k; k++) {
 				double x = origin + i * spacing;
 				double y = origin + j * spacing;
 				double z = origin + k * spacing;
@@ -193,19 +208,14 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				id++;
 			}
 		}
-		_logger->info() << "Finished reading molecules: " << (50 + i * percentage) << "%\r" << flush;
+		if ((int)(50 + i * percentage) > percentageRead) {
+			percentageRead = 50 + i * percentage;
+			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
+		}
 	}
 	removeMomentum(particleContainer, _components);
-
-	unsigned long int globalNumMolecules = particleContainer->getNumberOfParticles();
-	domainDecomp->collCommInit(1);
-
-	domainDecomp->collCommAppendUnsLong(globalNumMolecules);
-	domainDecomp->collCommAllreduceSum();
-	globalNumMolecules = domainDecomp->collCommGetUnsLong();
-	domainDecomp->collCommFinalize();
-
-	domain->setglobalNumMolecules(globalNumMolecules);
+	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
+	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
 	inputTimer.stop();
 	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
 	return id;
@@ -217,31 +227,30 @@ void CubicGridGenerator::addMolecule(double x, double y, double z, unsigned long
 	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
 	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
 	// o = cos 30° + (1 1 0) * sin 15°
-	double orientation[4];
-	getOrientation(15, 10, orientation);
+	//double orientation[4];
+	//getOrientation(15, 10, orientation);
 
-	int componentType = 0;
-	if (_binaryMixture) {
-		componentType = randdouble(0, 1.999999);
-	}
+//	int componentType = 0;
+//	if (_binaryMixture) {
+//		componentType = randdouble(0, 1.999999);
+//	}
 
 	double I[3] = {0.,0.,0.};
-	I[0] = _components[componentType].I11();
-	I[1] = _components[componentType].I22();
-	I[2] = _components[componentType].I33();
+	I[0] = _components[0].I11();
+	I[1] = _components[0].I22();
+	I[2] = _components[0].I33();
 	/*****  Copied from animake - initialize anular velocity *****/
-	double w[3];
-	for(int d=0; d < 3; d++) {
-		w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
-				sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
-		w[d] = w[d] * MDGenerator::fs_2_mardyn;
-	}
+//	double w[3];
+//	for(int d=0; d < 3; d++) {
+//		w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+//				sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+//		w[d] = w[d] * MDGenerator::fs_2_mardyn;
+//	}
 	/************************** End Copy **************************/
 
-	Molecule m(id, componentType, x, y, z, // position
-			velocity[0], -velocity[1], velocity[2], // velocity
-			orientation[0], orientation[1], orientation[2], orientation[3],
-			w[0], w[1], w[2], &_components);
+	Molecule m(id, x, y, z, // position
+			velocity[0], -velocity[1], velocity[2] // velocity
+		);
 	particleContainer->addParticle(m);
 }
 
@@ -259,11 +268,11 @@ bool CubicGridGenerator::validateParameters() {
 		_logger->error() << "OutputFormat XML not yet supported!" << endl;
 	}
 
-	if (_simBoxLength[0] < 2. * _configuration.getCutoffRadius()) {
+	if (_simBoxLength < 2. * _configuration.getCutoffRadius()) {
 		valid = false;
 		_logger->error() << "Cutoff radius is too big (there would be only 1 cell in the domain!)" << endl;
 		_logger->error() << "Cutoff radius=" << _configuration.getCutoffRadius()
-							<< " domain size=" << _simBoxLength[0] << endl;
+							<< " domain size=" << _simBoxLength << endl;
 	}
 	return valid;
 }

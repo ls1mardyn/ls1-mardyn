@@ -31,12 +31,13 @@
 class CubicGridGenerator: public MDGenerator {
 
 private:
-	long int _numMolecules;
+	// use unsigned long long for BG/P
+	unsigned long long int _numMolecules;
 	double _molarDensity;
 	std::vector<Component> _components;
 	double _temperature;
 
-	double _simBoxLength[3]; // length of the simulation box
+	double _simBoxLength; // length of the simulation box
 
 	bool _binaryMixture;
 public:
