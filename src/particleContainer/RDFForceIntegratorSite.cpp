@@ -146,11 +146,12 @@ void RDFForceIntegratorSite::traverseMolecules() {
 			_dn = _dr = currentMolecule->getSigma() / 20;
 
 			if (boundary[0] == -1) {
-				normal_lim[0] = abs(r[0] - _rmin[0]);
+				normal_lim[0] = std::abs(r[0] - _rmin[0]);
 				if (r[0] < _rmin[0])
-					normal_lim[0] = abs(2 * r[0] - _rmin[0]);
+					normal_lim[0] = std::abs(2 * r[0] - _rmin[0]);
+
 			} else if (boundary[0] == 1) {
-				normal_lim[0] = abs(_rmax[0] - r[0]);
+				normal_lim[0] = std::abs(_rmax[0] - r[0]);
 			}
 
 			integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site);
