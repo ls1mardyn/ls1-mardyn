@@ -726,7 +726,7 @@ void Domain::collectProfile(DomainDecompBase* dode)
 {
 	unsigned unIDs = this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 		* this->_universalNProfileUnits[2];
-	dode->collCommInit(6*unIDs);
+	dode->collCommInit(10*unIDs);
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
 		dode->collCommAppendLongDouble(this->_localNProfile[unID]);
