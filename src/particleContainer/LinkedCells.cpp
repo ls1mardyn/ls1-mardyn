@@ -48,7 +48,7 @@ LinkedCells::LinkedCells(
 	_cutoffRadius = cutoffRadius;
 	_LJCutoffRadius = LJCutoffRadius;
 	_tersoffCutoffRadius = tersoffCutoffRadius;
-	cout<<"cutoff "<<cutoffRadius<<"lj "<<LJCutoffRadius<<" tersoff "<<tersoffCutoffRadius<<" num "<<cellsInCutoffRadius<<endl;
+	global_log->debug() <<"cutoff "<<cutoffRadius<<"lj "<<LJCutoffRadius<<" tersoff "<<tersoffCutoffRadius<<" num "<<cellsInCutoffRadius<<endl;
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
