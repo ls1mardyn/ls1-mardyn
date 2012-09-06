@@ -100,9 +100,7 @@ private:
 	time_t _starttime;
 #endif
 
-#ifdef ENABLE_MPI
 	int _rank;
-#endif
 
 	/// initilaize the list of log levels with the corresponding short names
 	void init_log_levels() {
@@ -124,36 +122,12 @@ private:
 public:
 	/** Initializes the log level, log stream and the list of log level names.
 	 * If ENABLE_MPI is enabled by default all process perform logging output. */
-	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout))
-	    : _log_level(level), _msg_log_level(Log::Error), _do_output(true), _filename(""),
-	      _log_stream(os), logLevelNames(), _starttime() {
-		init_starting_time();
-		this->init_log_levels();
-#ifdef ENABLE_MPI
-		MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
-#endif
-	}
+	Logger(logLevel level = Log::Error, std::ostream *os = &(std::cout));
 
-	Logger(logLevel level, std::string prefix) :  _log_level(level), _msg_log_level(Log::Error),
-			_do_output(true), _filename(""), _log_stream(0), logLevelNames(), _starttime() {
-		init_starting_time();
-		std::stringstream filenamestream;
-		filenamestream << prefix;
-#ifdef ENABLE_MPI
-		MPI_Comm_rank(MPI_COMM_WORLD, &_rank);
-		filenamestream << "_R" << _rank;
-#endif
-		filenamestream << ".log";
-		_filename = filenamestream.str();
-		_log_stream = new std::ofstream(_filename.c_str());
-	}
+	Logger(logLevel level, std::string prefix);
 
 	/// Destructor flushes stream
-	~Logger() {
-		*_log_stream << std::flush;
-		if (_filename != "")
-			(static_cast<std::ofstream*> (_log_stream))->close();
-	}
+	~Logger();
 
 	/// General output template for variables, strings, etc.
 	template<typename T>
@@ -205,10 +179,8 @@ public:
 #else
 			*_log_stream << t-_starttime << "\t";
 #endif
-#ifdef ENABLE_MPI
+
 			*_log_stream << "[" << _rank << "]\t";
-#endif
-			*_log_stream << logLevelNames[level] << ": ";
 		}
 		return *this;
 	}
@@ -254,31 +226,17 @@ public:
 #endif
 	}
 
-#ifdef ENABLE_MPI
 	/* methods for easy handling of output processes */
 
 	/// allow logging only for a single process
-	bool set_mpi_output_root(int root = 0) {
-		if (_rank != root)
-			_do_output = false;
-		return _do_output;
-	}
+	bool set_mpi_output_root(int root = 0);
 
 	/// all processes shall perform logging
-	bool set_mpi_output_all() {
-		_do_output = true;
-		return _do_output;
-	}
+	bool set_mpi_output_all();
 
 	/// allow a set of processes for logging
-	bool set_mpi_output_ranks(int num_nums, int* nums) {
-		int i;
-		for(i = 0; i < num_nums; i++)
-			if (nums[i] == _rank)
-				_do_output = true;
-		return _do_output;
-	}
-#endif
+	bool set_mpi_output_ranks(int num_nums, int* nums);
+
 }; /* end of class Logger */
 } /* end of namespace */
 
