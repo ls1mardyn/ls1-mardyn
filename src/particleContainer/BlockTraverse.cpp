@@ -31,6 +31,8 @@
 #include "RDFForceIntegrator.h"
 #include "RDFForceIntegratorSite.h"
 #include "RDFForceIntegratorExtendedSite.h"
+#include "RDFForceIntegratorExact.h"
+#include "RDFForceIntegratorSiteSimpleScale.h"
 
 using namespace std;
 using Log::global_log;
@@ -149,132 +151,13 @@ void BlockTraverse::traverseRDFBoundaryCartesian(
 		vector<vector<vector<double> > >* globalSiteADist,
 		ParticlePairsHandler* particlePairsHandler) {
 	double rc = _moleculeContainer->getCutoff();
-	RDFForceIntegrator* forceIntegrator = new RDFForceIntegratorExtendedSite(_moleculeContainer, rc,
+	RDFForceIntegrator* forceIntegrator = new RDFForceIntegratorExact(_moleculeContainer, rc,
 			globalADist, globalSiteADist);
 	forceIntegrator->traverseMolecules();
 	// placeholder
 
 }
 
-double BlockTraverse::integrateRDFCartesian(double xlim[2], double ylim[2],
-		double zlim[2], Molecule* mol, double rc, double dx, double dy,
-		double dz, vector<double> globalAcc,
-		vector<vector<double> > globalSiteAcc, int plane, unsigned int site,
-		int boundary[3]) {
-
-	// volume of the domain
-	double V = (_moleculeContainer->getBoundingBoxMax(0)
-			- _moleculeContainer->getBoundingBoxMin(0))
-			* (_moleculeContainer->getBoundingBoxMax(1)
-					- _moleculeContainer->getBoundingBoxMin(1))
-			* (_moleculeContainer->getBoundingBoxMax(2)
-					- _moleculeContainer->getBoundingBoxMin(2));
-
-	// number density of the domain
-	//int numMolecules = _moleculeContainer->getNumberOfParticles();
-	int numMolecules = 9826;
-	double rho = numMolecules / (V);
-
-	// molecule position
-	double molr[3] = { mol->r(0) + mol->site_d(site)[0], mol->r(1)
-			+ mol->site_d(site)[1], mol->r(2) + +mol->site_d(site)[2] };
-
-	unsigned int other_site = (site == 0 ? 1 : 0);
-
-	// potential
-	double pot = 0;
-
-	int bin, other_bin; // bin for the radius that rdf is read for
-	double currf[3], absr, normal, radial, g = 0, currPot = 0;
-
-	// dividing part of the sphere outside the bounding box into cells of size
-	// dx, dy, dz
-	for (double x = xlim[0]; x + dx / 2 <= xlim[1]; x += dx) {
-		for (double y = ylim[0]; y + dy / 2 <= ylim[1]; y += dy) {
-			for (double z = zlim[0]; z + dz / 2 <= zlim[1]; z += dz) {
-				// distance of cell center to molecule
-				double r[3] = { molr[0] - x - dx / 2, molr[1] - y - dy / 2,
-						molr[2] - z - dz / 2 };
-
-				double other_r[3] = { mol->r(0) + mol->site_d(other_site)[0]
-						- x - dx / 2, mol->r(1) + mol->site_d(other_site)[1]
-						- y - dy / 2, mol->r(2) + mol->site_d(other_site)[2]
-						- z - dz / 2 };
-				absr = std::sqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]);
-				// check if the middle of the cell is within the cutoff radius,
-				// if not, this cell will not contribute
-				if (absr > rc)
-					continue;
-
-				if (mol->numSites() == 1) {
-					bin = (int) (absr * globalAcc.size() / rc - 0.5);
-
-					g = globalAcc[bin];
-
-					PotForceLJ(r, absr * absr, 24 * mol->getEps(),
-							mol->getSigma() * mol->getSigma(), currf, currPot);
-
-					currPot *= 2 * PI * rho * g * radial * dx * dy * dz / 6;
-					double f[3] = { 0, 0, 0 };
-
-					for (int d = 0; d < 3; d++) {
-						f[d] = rho * g * currf[d] * dx * dy * dz;
-					}
-
-					//mol->Fljcenteradd(site, f);
-					if (boundary[0] == -1 && plane == 0) {
-						mol->addLeftxRdfInfluence(site, f);
-					}
-
-					pot += currPot;
-				} else {
-					// if multiple LJ centers, use site-site rdf
-					// iterate through sites, treat cell center as a site
-
-					for (unsigned int j = 0; j < mol->numLJcenters(); j++) {
-
-						// rdf (probability) value
-						bin
-								= (int) (absr * globalSiteAcc[site
-										* mol->numLJcenters() + site].size()
-										/ rc - 0.5);
-						if (site > j)
-							g
-									= globalSiteAcc[j * mol->numLJcenters()
-											+ site][bin];
-						else
-							g
-									= globalSiteAcc[site * mol->numLJcenters()
-											+ j][bin];
-						if (site != j)
-							g /= 2;
-
-						PotForceLJ(r, absr * absr, 24 * mol->getEps(),
-								mol->getSigma() * mol->getSigma(), currf,
-								currPot);
-
-						//currPot *= 2 * PI * rho * g * radial * dx * dy * dz / 6;
-						double f[3] = { 0, 0, 0 };
-
-						for (int d = 0; d < 3; d++) {
-							f[d] = rho * g * currf[d] * dx * dy * dz;
-						}
-						//if (f[0] > 0 && mol->id() == 18) cout<<"site: "<<site<<" r: "<<absr<<" value: "<<f[0]<<endl;
-
-						//mol->Fljcenteradd(site, f);
-						if (boundary[0] == -1 && plane == 0) {
-							mol->addLeftxRdfInfluence(site, f);
-						}
-						//pot += currPot;
-					}
-				}
-			}
-		}
-
-	}
-
-	return pot;
-}
 
 void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 		std::vector<std::string> rdf_file_names, int simstep, vector<vector<
@@ -539,6 +422,8 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 	}
 
 	if (rdf_file_names.size() > 0) {
+		//particlePairsHandler->traverseRDFBoundary( _moleculeContainer->getCutoff(), _moleculeContainer,
+		//		globalADist, globalSiteADist);
 		this->traverseRDFBoundaryCartesian(globalADist, globalSiteADist,
 				particlePairsHandler);
 
