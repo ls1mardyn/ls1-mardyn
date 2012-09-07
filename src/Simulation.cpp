@@ -336,6 +336,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 							_cutoffRadius, _LJCutoffRadius,
 							_tersoffCutoffRadius, cellsInCutoffRadius);
 
+
+
 				} else if (datastructype == "AdaptiveSubCells") {
 					double bBoxMin[3];
 					double bBoxMax[3];
@@ -1038,7 +1040,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 }
 
 void Simulation::prepare_start() {
-	std::string rdf_file = "rdf_Ethan_20k_0a_rc4_0-0.000090000.rdf";
+	std::string rdf_file = "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
+	//std::string rdf_file = "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/rdf/rdf_Ethan_10k_0a_he_rc1.5_0-0.000080000.rdf";
 	std::vector<std::string> file_names;
 	file_names.push_back(rdf_file);
 	global_log->info() << "Initializing simulation" << endl;
@@ -1201,9 +1204,12 @@ void Simulation::simulate() {
 	stringstream ss;
 
 	// tx
-	ss << "ethan_0a" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
+	ss << "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/results_exact/Ethan_10k_eps_" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
+//	ss << "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/results_coupled_no_lb/Ethan_10k_0a_" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
+
 	FILE* stepfile = fopen(ss.str().c_str(), "w");
-	file_names.push_back("rdf_Ethan_20k_0a_rc4_0-0.000090000.rdf");
+	file_names.push_back("/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf");
+	//file_names.push_back("/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/rdf/rdf_Ethan_10k_0a_he_rc1.5_0-0.000080000.rdf");
 	Molecule* tM;
 	global_log->info() << "Started simulation" << endl;
 	// added by tijana because of getEnergy(...) in LinkedCells
@@ -1495,7 +1501,7 @@ void Simulation::simulate() {
 			moleculePtr->resetLeftxInfluence();
 		}
 		fflush(stepfile);
-		fprintf(stepfile, "%lg %lg \n", total_periodic / 18522, total_rdf / 18522);
+		fprintf(stepfile, "%lg %lg \n", total_periodic / 9826, total_rdf / 9826);
 		/*
 		if (actual_simstep % 1000 == 0 || actual_simstep == 1
 				|| actual_simstep == 10 || actual_simstep == 100
@@ -1547,7 +1553,7 @@ void Simulation::simulate() {
 					if (moleculePtr->getLeftxF()[i] != 0)
 						has_boundary = true;
 
-				total_num = 18522;
+				total_num = 9826;
 				if (has_boundary) {
 
 					for (int i = 10; i < 13; i++)
@@ -1726,12 +1732,7 @@ void Simulation::initialize() {
 	_integrator = NULL;
 	_inputReader = NULL;
 
-#ifndef ENABLE_MPI
-	global_log->info() << "Initializing the alibi domain decomposition ... "
-			<< endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy(); //RDFDummyDecomposition();
-	global_log->info() << "Initialization done" << endl;
-#endif
+
 
 	/*
 	 * default parameters
@@ -1759,6 +1760,13 @@ void Simulation::initialize() {
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
+
+#ifndef ENABLE_MPI
+	global_log->info() << "Initializing the alibi domain decomposition ... "
+			<< endl;
+	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();//RDFDummyDecomposition(_particlePairsHandler, 0); //
+	global_log->info() << "Initialization done" << endl;
+#endif
 }
 
 void Simulation::mkTcTS(int argc, char** argv) {
