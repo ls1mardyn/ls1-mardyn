@@ -26,12 +26,12 @@ public:
 
 
 protected:
-	ParticleContainer* _moleculeContainer;
-	double _rc;
-	double _high_limit[3], _low_limit[3], _rmax[3], _rmin[3];
+	static ParticleContainer* _moleculeContainer;
+	static double _rc;
+	static double _high_limit[3], _low_limit[3], _rmax[3], _rmin[3];
 	int _numMolecules;
-	std::vector<std::vector<double> >* _globalADist;
-	std::vector<std::vector<std::vector<double> > >* _globalSiteADist;
+	static std::vector<std::vector<double> >* _globalADist;
+	static std::vector<std::vector<std::vector<double> > >* _globalSiteADist;
 
 	void initTraversal();
 };
