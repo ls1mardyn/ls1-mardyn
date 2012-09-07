@@ -25,7 +25,7 @@ public:
 			double x, double y, double z, int site_i, double* scale);
 
 private:
-	static double _dx, _dy, _dz, _extension, _dn, _dr, *_scaling_factors, _d_alpha, _d_level;
+	static double _dx, _dy, _dz, _extension, _dn, _dr, *_scaling_factors, _d_alpha, _d_level, _rho;
 	static int _n_r, _n_n, _n_levels, _n_alpha;
 	static bool called;
 	static void precomputeScalingFactors();
