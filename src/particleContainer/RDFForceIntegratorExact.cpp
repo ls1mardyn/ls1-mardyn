@@ -20,6 +20,7 @@ double RDFForceIntegratorExact::_dx = 0;
 double RDFForceIntegratorExact::_dy = 0;
 double RDFForceIntegratorExact::_dz = 0;
 double RDFForceIntegratorExact::_rho = 0;
+double RDFForceIntegratorExact::_g_start = 0;
 
 double* RDFForceIntegratorExact::_scaling_factors = NULL;
 
@@ -102,7 +103,7 @@ void RDFForceIntegratorExact::precomputeScalingFactors() {
 	_d_level = _dn;
 	_n_levels = (int) ((_rc + _extension) / _d_level + 0.5) + 1;
 	_n_n = (int) (2 * _extension / _dn + 0.5) + 1;
-	_d_alpha = 30;
+	_d_alpha = 20;
 	_n_r = (int) ((_rc + _extension) / _dr + 0.5) + 1;
 	_n_alpha = (int) (360 / _d_alpha + 0.5);
 	_scaling_factors = new double[_n_levels * _n_n * _n_r];
@@ -189,7 +190,7 @@ void RDFForceIntegratorExact::getScalingFactor(double* mol_r, double* site_r,
 	for (int idx_alpha = 0; idx_alpha < _n_alpha; idx_alpha++) {
 		alpha = idx_alpha * _d_alpha;
 		ext_sin = _extension * sin(alpha * PI / 180);
-		ext_cos = _extension * sin(alpha * PI / 180);
+		ext_cos = _extension * cos(alpha * PI / 180);
 		curr_x = x + ext_sin;
 		other_site_x = x + 2 * ext_sin;
 
@@ -217,13 +218,13 @@ void RDFForceIntegratorExact::getScalingFactor(double* mol_r, double* site_r,
 			curr_g[0] = curr_g[1] = 0;
 			if (curr_r < _rc) {
 
-				curr_bin = (int) (other_site_r
-						* globalNondecliningSiteADist[0][0].size() / (_rc + 2
+				curr_bin = (int) (curr_r
+						* globalNondecliningADist[0].size() / (_rc + 2
 						* _extension) - 0.5);
 				curr_g[0]
-						= globalNondecliningSiteADist[0][site_i * 2 + 0][curr_bin];
+						= globalNondecliningADist[0][curr_bin];//globalNondecliningSiteADist[0][site_i * 2 + 0][curr_bin];
 				curr_g[1]
-						= globalNondecliningSiteADist[0][site_i * 2 + 1][curr_bin];
+						= globalNondecliningADist[0][curr_bin];//globalNondecliningSiteADist[0][site_i * 2 + 1][curr_bin];
 
 				//std::cout<<"curr_bin "<<curr_bin<<" g "<<curr_g<<std::endl;
 			}
@@ -268,6 +269,16 @@ void RDFForceIntegratorExact::traverseMolecules() {
 	_extension = currentMolecule->ljcenter_disp(0);
 	_dx = _dy = _dz = _dr = _dn = currentMolecule->getSigma() / 10;
 	precomputeScalingFactors();
+	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
+
+	unsigned int num = 0;
+	for (unsigned int i = 0; i < globalSiteAcc[0].size(); i++) {
+		if (globalSiteAcc[0][i] != 0)
+			break;
+		num++;
+	}
+	_g_start = num * ((_rc + 2 * _extension) / globalSiteAcc[0].size()) - 2 * _extension;
+	std::cout<<_g_start<<std::endl;
 
 	// volume of the domain
 	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2]
@@ -487,6 +498,11 @@ void RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 				if (absmold > _rc + _extension)
 					continue;
 
+				double sited[3] = { siter[0] - x, siter[1] - y, siter[2] - z };
+
+				abssited = std::sqrt(sited[0] * sited[0] + sited[1] * sited[1]
+						+ sited[2] * sited[2]);
+
 				small_y = std::abs(y - molr[1]) - allowed_dist;
 				small_z = std::abs(z - molr[2]) - allowed_dist;
 
@@ -495,10 +511,6 @@ void RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 					continue;
 				}
 
-				double sited[3] = { siter[0] - x, siter[1] - y, siter[2] - z };
-
-				abssited = std::sqrt(sited[0] * sited[0] + sited[1] * sited[1]
-						+ sited[2] * sited[2]);
 				// check if the middle of the cell is within the cutoff radius,
 				// if not, this cell will not contribute
 
