@@ -46,7 +46,7 @@ void RDFForceIntegratorExact::precomputeScalingFactors() {
 
 	std::string
 			rdf_file =
-					"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
+					"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc4_0-0.000090000.rdf";
 	std::vector<std::string> file_names;
 	file_names.push_back(rdf_file);
 
@@ -103,7 +103,7 @@ void RDFForceIntegratorExact::precomputeScalingFactors() {
 	_d_level = _dn;
 	_n_levels = (int) ((_rc + _extension) / _d_level + 0.5) + 1;
 	_n_n = (int) (2 * _extension / _dn + 0.5) + 1;
-	_d_alpha = 20;
+	_d_alpha = 30;
 	_n_r = (int) ((_rc + _extension) / _dr + 0.5) + 1;
 	_n_alpha = (int) (360 / _d_alpha + 0.5);
 	_scaling_factors = new double[_n_levels * _n_n * _n_r];
@@ -115,66 +115,117 @@ void RDFForceIntegratorExact::precomputeScalingFactors() {
 			curr_other, alpha, scale, curr_r, level, phi, site_normal,
 			site_radial, site_other, site_r;
 	int curr_bin;
-	/*
-	 // level is where the molecule is
-	 for (int idx_level = 0; idx_level < _n_levels; idx_level++) {
-	 level = idx_level * _d_level;
 
-	 for (int idx_n = 0; idx_n < _n_n; idx_n++) {
-	 for (int idx_r = 0; idx_r < _n_r; idx_r++) {
+	// level is where the molecule is
+	for (int idx_level = 0; idx_level < _n_levels; idx_level++) {
+		level = idx_level * _d_level;
 
-	 normal = -_extension + idx_n * _dn;
-	 radial = idx_r * _dr;
-	 above = 0;
-	 below = 0;
+		for (int idx_n = 0; idx_n < _n_n; idx_n++) {
+			for (int idx_r = 0; idx_r < _n_r; idx_r++) {
 
-	 for (int idx_alpha = 0; idx_alpha < _n_alpha; idx_alpha++) {
-	 alpha = idx_alpha * _d_alpha;
+				normal = -_extension + idx_n * _dn - _dn/2;
+				radial = idx_r * _dr;
+				above = 0;
+				below = 0;
 
-	 curr_normal = normal + _extension * sin(alpha * PI / 180);
+				for (int idx_alpha = 0; idx_alpha < _n_alpha; idx_alpha++) {
+					alpha = idx_alpha * _d_alpha;
 
-	 for (int idx_phi = 0; idx_phi < _n_alpha; idx_phi++) {
-	 phi = idx_phi * _d_alpha;
-	 curr_radial = radial + _extension * cos(alpha * PI
-	 / 180) * cos(phi * PI / 180);
-	 curr_other = _extension * cos(alpha * PI / 180) * sin(
-	 phi * PI / 180);
+					curr_normal = normal + _extension * sin(alpha * PI / 180);
 
-	 curr_r = std::sqrt((curr_normal - level) * (curr_normal
-	 - level) + curr_radial * curr_radial
-	 + curr_other * curr_other);
+					for (int idx_phi = 0; idx_phi < _n_alpha; idx_phi++) {
+						phi = idx_phi * _d_alpha;
+						curr_radial = radial + _extension * cos(alpha * PI
+								/ 180) * cos(phi * PI / 180);
+						curr_other = _extension * cos(alpha * PI / 180) * sin(
+								phi * PI / 180);
 
-	 curr_g = 0;
-	 if (curr_r < _rc) {
+						curr_r = std::sqrt((curr_normal - level) * (curr_normal
+								- level) + curr_radial * curr_radial
+								+ curr_other * curr_other);
 
-	 curr_bin = (int) (curr_r
-	 * globalNondecliningSiteADist[0][0].size()
-	 / (_rc + 2 * _extension) - 0.5);
-	 curr_g
-	 = globalNondecliningSiteADist[0][0][curr_bin];
-	 //std::cout<<"curr_bin "<<curr_bin<<" g "<<curr_g<<std::endl;
-	 }
-	 if (curr_normal > 0) {
-	 below += curr_g;
-	 } else {
-	 above += curr_g;
-	 }
-	 //std::cout<<"curr_z "<<curr_z<<" level "<<level<<" g "<<curr_g<<" curr_r "<<curr_r<<std::endl;
-	 }
+						curr_g = 0;
+						if (curr_r < _rc) {
 
-	 }
-	 if (above + below != 0)
-	 scale = above / (above + below);
-	 else
-	 scale = 0;
+							curr_bin = (int) (curr_r
+									* globalNondecliningADist[0].size() / (_rc
+									+ 2 * _extension) - 0.5);
+							curr_g = globalNondecliningADist[0][curr_bin];
+							//std::cout<<"curr_bin "<<curr_bin<<" g "<<curr_g<<std::endl;
+						}
+						if (curr_normal > 0) {
+							below += curr_g;
+						} else {
+							above += curr_g;
+						}
+						//std::cout<<"curr_z "<<curr_z<<" level "<<level<<" g "<<curr_g<<" curr_r "<<curr_r<<std::endl;
+					}
 
-	 _scaling_factors[idx_level * _n_n * _n_r + idx_n * _n_r + idx_r]
-	 = scale;
-	 }
-	 }
-	 }
-	 */
+				}
+				if (above + below != 0)
+					scale = above / (above + below);
+				else
+					scale = 0;
+
+				_scaling_factors[idx_level * _n_n * _n_r + idx_n * _n_r + idx_r]
+						= scale;
+			}
+		}
+	}
+
 	std::cout << "finished precomputing scaling factors" << std::endl;
+}
+
+double RDFForceIntegratorExact::checkScalingFactor(int idx_level, int idx_n,
+		int idx_r) {
+	double level = idx_level * _d_level;
+
+	double normal = -_extension + idx_n * _dn - _dn/2;
+	double radial = idx_r * _dr;
+	double above = 0;
+	double below = 0;
+	//std::cout<<"in the method "<<level<<" "<<normal<<" "<<radial<<std::endl;
+	int curr_bin;
+	double alpha, phi, curr_normal, curr_radial, curr_other, curr_g, scale, curr_r;
+	for (int idx_alpha = 0; idx_alpha < _n_alpha; idx_alpha++) {
+		alpha = idx_alpha * _d_alpha;
+
+		curr_normal = normal + _extension * sin(alpha * PI / 180);
+
+		for (int idx_phi = 0; idx_phi < _n_alpha; idx_phi++) {
+			phi = idx_phi * _d_alpha;
+			curr_radial = radial + _extension * cos(alpha * PI / 180) * cos(phi
+					* PI / 180);
+			curr_other = _extension * cos(alpha * PI / 180) * sin(phi * PI
+					/ 180);
+
+			curr_r = std::sqrt((curr_normal - level) * (curr_normal - level)
+					+ curr_radial * curr_radial + curr_other * curr_other);
+
+			curr_g = 0;
+			if (curr_r < _rc) {
+
+				curr_bin = (int) (curr_r * globalNondecliningADist[0].size()
+						/ (_rc + 2 * _extension) - 0.5);
+				curr_g = globalNondecliningADist[0][curr_bin];
+				//std::cout<<"curr_bin "<<curr_bin<<" g "<<curr_g<<std::endl;
+			}
+			if (curr_normal > 0) {
+				below += curr_g;
+			} else {
+				above += curr_g;
+			}
+			//std::cout<<"curr_z "<<curr_z<<" level "<<level<<" g "<<curr_g<<" curr_r "<<curr_r<<std::endl;
+		}
+
+	}
+	if (above + below != 0)
+		scale = above / (above + below);
+	else
+		scale = 0;
+
+	_scaling_factors[idx_level * _n_n * _n_r + idx_n * _n_r + idx_r] = scale;
+
 }
 
 void RDFForceIntegratorExact::getScalingFactor(double* mol_r, double* site_r,
@@ -218,13 +269,10 @@ void RDFForceIntegratorExact::getScalingFactor(double* mol_r, double* site_r,
 			curr_g[0] = curr_g[1] = 0;
 			if (curr_r < _rc) {
 
-				curr_bin = (int) (curr_r
-						* globalNondecliningADist[0].size() / (_rc + 2
-						* _extension) - 0.5);
-				curr_g[0]
-						= globalNondecliningADist[0][curr_bin];//globalNondecliningSiteADist[0][site_i * 2 + 0][curr_bin];
-				curr_g[1]
-						= globalNondecliningADist[0][curr_bin];//globalNondecliningSiteADist[0][site_i * 2 + 1][curr_bin];
+				curr_bin = (int) (curr_r * globalNondecliningADist[0].size()
+						/ (_rc + 2 * _extension) - 0.5);
+				curr_g[0] = globalNondecliningADist[0][curr_bin];//globalNondecliningSiteADist[0][site_i * 2 + 0][curr_bin];
+				curr_g[1] = globalNondecliningADist[0][curr_bin];//globalNondecliningSiteADist[0][site_i * 2 + 1][curr_bin];
 
 				//std::cout<<"curr_bin "<<curr_bin<<" g "<<curr_g<<std::endl;
 			}
@@ -267,7 +315,7 @@ RDFForceIntegratorExact::~RDFForceIntegratorExact() {
 void RDFForceIntegratorExact::traverseMolecules() {
 	Molecule* currentMolecule = _moleculeContainer->begin();
 	_extension = currentMolecule->ljcenter_disp(0);
-	_dx = _dy = _dz = _dr = _dn = currentMolecule->getSigma() / 10;
+	_dx = _dy = _dz = _dr = _dn = currentMolecule->getSigma() / 20;
 	precomputeScalingFactors();
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
 
@@ -277,8 +325,9 @@ void RDFForceIntegratorExact::traverseMolecules() {
 			break;
 		num++;
 	}
-	_g_start = num * ((_rc + 2 * _extension) / globalSiteAcc[0].size()) - 2 * _extension;
-	std::cout<<_g_start<<std::endl;
+	_g_start = num * ((_rc + 2 * _extension) / globalSiteAcc[0].size()) - 2
+			* _extension;
+	std::cout << _g_start << std::endl;
 
 	// volume of the domain
 	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2]
@@ -486,9 +535,9 @@ void RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 	// dx, dy, dz
 	allowed_dist = std::abs(ylim[0] - molr[1]) - _extension;
 	//int idx_level, idx_normal, idx_r;
-	for (double x = xlim[0] + _dx / 2; x + _dx / 2 <= xlim[1]; x += _dx) {
-		for (double y = ylim[0] + _dy / 2; y + _dy / 2 <= ylim[1]; y += _dy) {
-			for (double z = zlim[0] + _dz / 2; z + _dz / 2 <= zlim[1]; z += _dz) {
+	for (double x = xlim[0] + _dx / 2; x <= xlim[1]; x += _dx) {
+		for (double y = ylim[0] + _dy / 2; y <= ylim[1]; y += _dy) {
+			for (double z = zlim[0] + _dz / 2; z <= zlim[1]; z += _dz) {
 				// distance of cell center to molecule
 				double mold[3] = { molr[0] - x, molr[1] - y, molr[2] - z };
 
@@ -516,14 +565,17 @@ void RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 
 
 				if (plane == 0 && std::abs(x) < _extension) {
-					/*
-					 idx_level = (int) (molr[0] / _dn + 0.5);
-					 idx_normal = (int) ((x + _extension) / _dn + 0.5);
-					 idx_r = (int) (std::sqrt((y - molr[1]) * (y - molr[1]) + (z
-					 - molr[2]) * (z - molr[2])) / _dn + 0.5);
-					 */
 
-					getScalingFactor(molr, siter, x, y, z, site, scale);
+					int idx_level = (int) (molr[0] / _dn + 0.5);
+					int idx_normal = (int) ((x + _extension) / _dn + 0.5);
+					int idx_r = (int) (std::sqrt((y - molr[1]) * (y - molr[1])
+							+ (z - molr[2]) * (z - molr[2])) / _dn + 0.5);
+					//std::cout<<"at calling "<<molr[0]<<" "<<x<<" "<<std::sqrt((y - molr[1]) * (y - molr[1])
+						//	+ (z - molr[2]) * (z - molr[2]))<<std::endl;
+					scale[0] = scale[1] = _scaling_factors[idx_level * _n_n
+							* _n_r + idx_normal * _n_r + idx_r];
+					//checkScalingFactor(idx_level, idx_normal, idx_r);
+					//getScalingFactor(molr, siter, x, y, z, site, scale);
 
 				}
 

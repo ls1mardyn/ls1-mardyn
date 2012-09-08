@@ -41,6 +41,9 @@ private:
 			double zlim[2], Molecule* mol, int plane, unsigned int site,
 			int boundary[3]);
 
+	double checkScalingFactor(int idx_level,
+			int idx_n, int idx_r);
+
 };
 
 #endif /* RDFFORCEINTEGRATOREXACT_H_ */
