@@ -21,13 +21,12 @@
 #define LINKEDCELLS_H_
 
 #include "particleContainer/ParticleContainer.h"
-#include "BlockTraverse.h"
-
+#include "particleContainer/ParticleCell.h"
 #include <vector>
 
-class ParticleCell;
 class ChemicalPotential;
 class DomainDecompBase;
+class CellProcessor;
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -95,7 +94,7 @@ public:
 	//!        ==> celllength = 100/66 = 1.5152
 	LinkedCells(
 		 double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		 double tersoffCutoffRadius, double cellsInCutoffRadius
+		  double cellsInCutoffRadius
 	);
 
 	//! Destructor
@@ -121,7 +120,6 @@ public:
 	//!
 	//! Therefore, first the cell (the index) for the molecule has to be determined,
 	//! then the molecule is inserted into that cell.
-
 	void addParticle(Molecule& particle);
 
 	//! @brief calculate the forces between the molecules.
@@ -136,7 +134,9 @@ public:
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	void traversePairs(ParticlePairsHandler* particlePairsHandler);
+//	void traversePairs(ParticlePairsHandler* particlePairsHandler);
+
+	void traverseCells(CellProcessor& cellProcessor);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
@@ -183,9 +183,6 @@ public:
 	double getLJCutoff() {
 		return _LJCutoffRadius;
 	}
-	double getTersoffCutoff() {
-		return _tersoffCutoffRadius;
-	}
 
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(unsigned int cid);
@@ -198,11 +195,11 @@ public:
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
-	double getEnergy(Molecule* m1, double f[3]);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double f[3]);
 
 
 	/* Gets the energy and the force, without modifying the force of the molecules in the container */
-	double getForceAndEnergy(Molecule* m1, double* f);
+	double getForceAndEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* f);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;
@@ -288,7 +285,7 @@ private:
 	//! The method can also be used to get the offset between two cells in the cell
 	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
-	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
+	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 
 
 
@@ -308,6 +305,8 @@ private:
 
 	std::vector<unsigned long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
 	std::vector<unsigned long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
+	unsigned int _maxNeighbourOffset;
+	unsigned int _minNeighbourOffset;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
@@ -319,7 +318,6 @@ private:
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
 	double _LJCutoffRadius; //!< LJ cutoff radius
-	double _tersoffCutoffRadius; //!< Tersoff cutoff radius
 	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
 
 	//! @brief True if all Particles are in the right cell
@@ -335,9 +333,6 @@ private:
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
-
-	BlockTraverse _blockTraverse;
-
 
 };
 

@@ -48,6 +48,7 @@ class SteereoCouplingSim;
 class Domain;
 class ParticleContainer;
 class ParticlePairsHandler;
+class CellProcessor;
 class Integrator;
 class OutputBase;
 class DomainDecompBase;
@@ -372,6 +373,9 @@ private:
 
 	//! Handler describing what action is to be done for each particle pair
 	ParticlePairsHandler* _particlePairsHandler;
+
+	//! New cellhandler, which will one day replace the particlePairsHandler here completely.
+	CellProcessor* _cellProcessor;
 
 	/** Type of the domain decomposition */
 	DomainDecompType _domainDecompositionType;

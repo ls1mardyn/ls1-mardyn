@@ -9,6 +9,7 @@
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
 
 TEST_SUITE_REGISTRATION(ForceCalculationTest);
 
@@ -33,7 +34,8 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	container->traversePairs(&forceAdapter);
+	LegacyCellProcessor cellProcessor( 1.1, 1.1, 1.1, &forceAdapter);
+	container->traverseCells(cellProcessor);
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
 		m->calcFM();
@@ -63,7 +65,8 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	container->traversePairs(&forceAdapter);
+	LegacyCellProcessor cellProcessor( 1.3, 1.3, 0, &forceAdapter);
+	container->traverseCells(cellProcessor);
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
 		m->calcFM();

@@ -9,6 +9,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "io/vtk/VTKGridWriterImplementation.h"
 #include "particleContainer/Cell.h"
+#include "particleContainer/ParticleCell.h"
 #include "Domain.h"
 #include "utils/Logger.h"
 #include "parallel/DomainDecompBase.h"

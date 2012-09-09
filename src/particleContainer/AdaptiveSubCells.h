@@ -4,11 +4,11 @@
 #include <vector>
 
 #include "particleContainer/ParticleContainer.h"
-#include "BlockTraverse.h"
 
 class ParticleCell;
 class ChemicalPotential;
 class DomainDecompBase;
+class CellProcessor;
 
 //! @brief Adaptive SubCell Data Structure
 //! @author Martin Buchholz
@@ -51,8 +51,7 @@ public:
 	//!        as the domain has to be divided into a natural number of cells --> round up
 	AdaptiveSubCells(
 	    double bBoxMin[3], double bBoxMax[3],
-	    double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius
-	);
+	    double cutoffRadius, double LJCutoffRadius );
 
 	//! Destructor
 	~AdaptiveSubCells();
@@ -86,7 +85,9 @@ public:
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	void traversePairs(ParticlePairsHandler* particlePairsHandler);
+//	void traversePairs(ParticlePairsHandler* particlePairsHandler);
+
+	void traverseCells(CellProcessor& cellProcessor);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
@@ -148,7 +149,7 @@ public:
 	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
-	double getEnergy(Molecule* m1, double* force = NULL);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* force = NULL);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;
@@ -254,6 +255,8 @@ private:
 	std::vector<std::vector<unsigned long> > _forwardNeighbourSubOffsets;
 	//! Neighbours that come in the total ordering before a subCell
 	std::vector<std::vector<unsigned long> > _backwardNeighbourSubOffsets;
+	unsigned int _maxNeighbourOffset;
+	unsigned int _minNeighbourOffset;
 
 	//! low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMin[3];
@@ -309,8 +312,6 @@ private:
 	//! should approx. equal the simulation step. It is used to
 	//! dynamically adapt the datastructure every nth time.
 	int _numberOfUpdates;
-
-	BlockTraverse _blockTraverse;
 };
 
 #endif /*ADAPTIVESUBCELLS_H_*/

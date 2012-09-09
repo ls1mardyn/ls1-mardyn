@@ -23,7 +23,7 @@ void ParticleInsertionTest::testRotation() {
 	double boundings_min[] = { 0, 0, 0 };
 	double boundings_max[] = { 33.4278, 33.4278, 33.4278 };
 
-	LinkedCells linkedCells(boundings_min, boundings_max, 100, 100, 3, 1);
+	LinkedCells linkedCells(boundings_min, boundings_max, 100, 100, 1);
 	std::vector<Component> components;
 
 	// component - 2 LJ centers
@@ -35,16 +35,15 @@ void ParticleInsertionTest::testRotation() {
 	components.push_back(dummyComponent);
 
 	// domain
-	int ownrank = 0;
-	PressureGradient* pressureGradient = new PressureGradient(ownrank);
-	_domain = new Domain(ownrank, pressureGradient);
+//	int ownrank = 0;
+//	PressureGradient* pressureGradient = new PressureGradient(ownrank);
+//	_domain = new Domain(ownrank, pressureGradient);
 	_domain->addComponent(dummyComponent);
 	_domain->initParameterStreams(100, 100);
 
 	// particle handler for the linked cells
-	ParticlePairsHandler* _particlePairsHandler =
+	ParticlePairsHandler* particlePairsHandler =
 			new ParticlePairs2PotForceAdapter(*_domain);
-	linkedCells.setPairsHandler(_particlePairsHandler);
 
 	// molecules 1 and 2
 	Molecule dummyMolecule1(0, 0, 8, 8, 8, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
@@ -93,7 +92,7 @@ void ParticleInsertionTest::testRotation() {
 		double force[3] = { 0, 0, 0 };
 		newMolecule.clearFM();
 
-		double energy = linkedCells.getForceAndEnergy(&newMolecule, force);
+		double energy = linkedCells.getForceAndEnergy(particlePairsHandler, &newMolecule, force);
 		cout << "starting energy " << energy << endl;
 		wrapper.setForce(force);
 
@@ -128,7 +127,7 @@ void ParticleInsertionTest::testTranslationAndRotation() {
 	double boundings_min[] = { 0, 0, 0 };
 	double boundings_max[] = { 33.4278, 33.4278, 33.4278 };
 
-	LinkedCells linkedCells(boundings_min, boundings_max, 100, 100, 3, 1);
+	LinkedCells linkedCells(boundings_min, boundings_max, 100, 100, 1);
 	std::vector<Component> components;
 
 	// component - 2 LJ centers
@@ -140,16 +139,15 @@ void ParticleInsertionTest::testTranslationAndRotation() {
 	components.push_back(dummyComponent);
 
 	// domain
-	int ownrank = 0;
-	PressureGradient* pressureGradient = new PressureGradient(ownrank);
-	_domain = new Domain(ownrank, pressureGradient);
+//	int ownrank = 0;
+//	PressureGradient* pressureGradient = new PressureGradient(ownrank);
+//	_domain = new Domain(ownrank, pressureGradient);
 	_domain->addComponent(dummyComponent);
 	_domain->initParameterStreams(100, 100);
 
 	// particle handler for the linked cells
-	ParticlePairsHandler* _particlePairsHandler =
+	ParticlePairsHandler* particlePairsHandler =
 			new ParticlePairs2PotForceAdapter(*_domain);
-	linkedCells.setPairsHandler(_particlePairsHandler);
 
 	// molecules 1 and 2
 	Molecule dummyMolecule1(0, 0, 8, 8, 8, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0,
@@ -187,7 +185,7 @@ void ParticleInsertionTest::testTranslationAndRotation() {
 		double force[3] = { 0, 0, 0 };
 		newMolecule.clearFM();
 
-		double energy = linkedCells.getForceAndEnergy(&newMolecule, force);
+		double energy = linkedCells.getForceAndEnergy(particlePairsHandler, &newMolecule, force);
 		cout << "starting energy " << energy << endl;
 		wrapper.setForce(force);
 
@@ -219,8 +217,9 @@ void ParticleInsertionTest::testParameterSetup() {
 			ParticleContainerFactory::LinkedCell, "Ethan_equilibrated.inp",
 			32.1254);
 
-	int ownrank = 0;
-	PressureGradient* pressureGradient = new PressureGradient(ownrank);
+//	int ownrank = 0;
+//	PressureGradient* pressureGradient = new PressureGradient(ownrank);
+//	_domain = new Domain(ownrank, pressureGradient);
 	std::vector<Component> components;
 
 	// component - 2 LJ centers
@@ -230,7 +229,6 @@ void ParticleInsertionTest::testParameterSetup() {
 	dummyComponent.addLJcenter(0, 0, 2.2157048, 0.0150347, 0.00042932536,
 			6.6140441, 0, 0);
 	components.push_back(dummyComponent);
-	_domain = new Domain(ownrank, pressureGradient);
 	_domain->addComponent(dummyComponent);
 	_domain->initParameterStreams(32.1254, 32.1254);
 	moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, 3>
@@ -241,9 +239,9 @@ void ParticleInsertionTest::testParameterSetup() {
 			0, 0, 0, 1, 0, 0, 0, 0, 0, 0, &components);
 
 	// particle handler for the linked cells
-	ParticlePairsHandler* _particlePairsHandler =
+	ParticlePairsHandler* particlePairsHandler =
 			new ParticlePairs2PotForceAdapter(*_domain);
-	linkedCells->setPairsHandler(_particlePairsHandler);
+
 	int num_tests = 17;
 	ParticleCell cell = linkedCells->getCell(
 			linkedCells->getCellIndexOfMolecule(linkedCells->begin()));
@@ -255,7 +253,7 @@ void ParticleInsertionTest::testParameterSetup() {
 	for (Molecule* molec = linkedCells->begin(); molec != linkedCells->end(); molec
 			= linkedCells->next()) {
 		count++;
-		u_avg += linkedCells->getForceAndEnergy(molec, force);
+		u_avg += linkedCells->getForceAndEnergy(particlePairsHandler, molec, force);
 	}
 
 	u_avg /= count;
@@ -275,7 +273,7 @@ void ParticleInsertionTest::testParameterSetup() {
 			// calculate starting energy & force
 			double force[3] = { 0, 0, 0 };
 			newMolecule.clearFM();
-			double energy = linkedCells->getForceAndEnergy(&newMolecule, force);
+			double energy = linkedCells->getForceAndEnergy(particlePairsHandler, &newMolecule, force);
 
 			wrapper.setForce(force);
 

@@ -21,6 +21,7 @@
 #include "particleContainer/LinkedCells.h"
 
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "particleContainer/adapter/CellProcessor.h"
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
@@ -39,16 +40,13 @@ using Log::global_log;
 
 LinkedCells::LinkedCells(
 		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		double tersoffCutoffRadius, double cellsInCutoffRadius
+		double cellsInCutoffRadius
 )
-		: ParticleContainer(bBoxMin, bBoxMax),
-			_blockTraverse(this, _cells, _innerCellIndices, _boundaryCellIndices, _haloCellIndices )
-{
+		: ParticleContainer(bBoxMin, bBoxMax) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 	_LJCutoffRadius = LJCutoffRadius;
-	_tersoffCutoffRadius = tersoffCutoffRadius;
-	global_log->debug() <<"cutoff "<<cutoffRadius<<"lj "<<LJCutoffRadius<<" tersoff "<<tersoffCutoffRadius<<" num "<<cellsInCutoffRadius<<endl;
+	global_log->debug() << "cutoff " << cutoffRadius << "lj " << LJCutoffRadius << " num " << cellsInCutoffRadius << endl;
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
@@ -288,12 +286,114 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* 
 	return N;
 }
 
-void LinkedCells::traversePairs(ParticlePairsHandler* particlePairsHandler) {
+
+void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
 		exit(1);
 	}
-	_blockTraverse.traversePairs(particlePairsHandler);
+
+	vector<unsigned long>::iterator cellIndexIter;
+	vector<unsigned long>::iterator neighbourOffsetsIter;
+
+#ifndef NDEBUG
+	global_log->debug() << "LinkedCells::traverseCells: Processing pairs and preprocessing Tersoff pairs." << endl;
+	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< endl;
+#endif
+
+	cellProcessor.initTraversal();
+	// open the window of cells activated
+	for (unsigned int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
+		#ifndef NDEBUG
+		global_log->debug() << "Open cells window for cell index= " << cellIndex
+				<< " numMolecules()="<<_cells[cellIndex].getMoleculeCount() << endl;
+		#endif
+		cellProcessor.preprocessCell(_cells[cellIndex]);
+	}
+
+	// loop over all inner cells and calculate forces to forward neighbours
+	for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+		ParticleCell& currentCell = _cells[cellIndex];
+
+#ifdef NDEBUG
+		if (currentCell.getMoleculeCount() < 1) {
+			continue;
+		}
+#endif
+
+		// extend the window of cells with cache activated
+		if (cellIndex + _maxNeighbourOffset < _cells.size()) {
+			#ifndef NDEBUG
+			global_log->debug() << "Opening cells window for cell index=" << (cellIndex + _maxNeighbourOffset)
+					<< " with numMolecules()="<< _cells[cellIndex + _maxNeighbourOffset].getMoleculeCount()
+					<< " currentCell " << cellIndex << endl;
+			#endif
+			cellProcessor.preprocessCell(_cells[cellIndex + _maxNeighbourOffset]);
+		}
+
+		if (currentCell.isInnerCell()) {
+			cellProcessor.processCell(currentCell);
+			// loop over all neighbours
+			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+				ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+				cellProcessor.processCellPair(currentCell, neighbourCell);
+			}
+		}
+
+		if (currentCell.isHaloCell()) {
+			cellProcessor.processCell(currentCell);
+			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+				int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
+				if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) (_cells.size())))
+					continue;
+				ParticleCell& neighbourCell = _cells[neighbourCellIndex];
+				if (!neighbourCell.isHaloCell())
+					continue;
+
+				cellProcessor.processCellPair(currentCell, neighbourCell);
+			}
+		}
+
+		// loop over all boundary cells and calculate forces to forward and backward neighbours
+		if (currentCell.isBoundaryCell()) {
+			cellProcessor.processCell(currentCell);
+
+			// loop over all forward neighbours
+			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+				ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+				cellProcessor.processCellPair(currentCell, neighbourCell);
+			}
+
+			// loop over all backward neighbours. calculate only forces
+			// to neighbour cells in the halo region, all others already have been calculated
+			for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+				ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
+				if (neighbourCell.isHaloCell()) {
+					cellProcessor.processCellPair(currentCell, neighbourCell);
+				}
+			}
+		} // if ( isBoundaryCell() )
+
+		// narrow the window of cells activated
+		if (cellIndex >= _minNeighbourOffset) {
+#ifndef NDEBUG
+			global_log->debug() << "Narrowing cells window for cell index=" << (cellIndex - _minNeighbourOffset)
+									<< " with size()="<<_cells[cellIndex - _minNeighbourOffset].getMoleculeCount()
+									<< " currentCell " << cellIndex << endl;
+#endif
+			cellProcessor.postprocessCell(_cells[cellIndex - _minNeighbourOffset]);
+		}
+	} // loop over all cells
+
+	// close the window of cells with cache activated
+	for (unsigned int cellIndex = _cells.size() - _minNeighbourOffset; cellIndex < _cells.size(); cellIndex++) {
+#ifndef NDEBUG
+			global_log->debug() << "Narrowing cells window for cell index=" << cellIndex
+					<< " size()="<<_cells[cellIndex].getMoleculeCount() << endl;
+#endif
+			cellProcessor.postprocessCell(_cells[cellIndex]);
+	}
+	cellProcessor.endTraversal();
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {
@@ -479,6 +579,8 @@ void LinkedCells::initializeCells() {
 void LinkedCells::calculateNeighbourIndices() {
 	_forwardNeighbourOffsets.clear();
 	_backwardNeighbourOffsets.clear();
+	_maxNeighbourOffset = 0;
+	_minNeighbourOffset = 0;
 	double xDistanceSquare;
 	double yDistanceSquare;
 	double zDistanceSquare;
@@ -508,21 +610,29 @@ void LinkedCells::calculateNeighbourIndices() {
 					xDistanceSquare = 0;
 				}
 				if (xDistanceSquare + yDistanceSquare + zDistanceSquare <= cutoffRadiusSquare) {
-					long offset = cellIndexOf3DIndex(xIndex, yIndex, zIndex);
+					long int offset = cellIndexOf3DIndex(xIndex, yIndex, zIndex);
 					if (offset > 0) {
-						_forwardNeighbourOffsets.push_back(offset);
+						_forwardNeighbourOffsets.push_back(abs(offset));
+						if (offset > _maxNeighbourOffset) {
+							_maxNeighbourOffset = offset;
+						}
 					}
 					if (offset < 0) {
-						_backwardNeighbourOffsets.push_back(offset);
+						_backwardNeighbourOffsets.push_back(abs(offset));
+						if (abs(offset) > _minNeighbourOffset) {
+							_minNeighbourOffset = abs(offset);
+						}
 					}
 				}
 			}
 		}
 	}
-	_blockTraverse.assignOffsets(_forwardNeighbourOffsets, _backwardNeighbourOffsets);
+
+	global_log->info() << "Neighbour offsets are bounded by "
+			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
 }
 
-unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
+unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	int cellIndex[3]; // 3D Cell index
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -538,7 +648,7 @@ unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	return this->cellIndexOf3DIndex( cellIndex[0], cellIndex[1], cellIndex[2] );
 }
 
-unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
+long int LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
 }
 
@@ -566,7 +676,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 }
 
 
-double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
+double LinkedCells::getForceAndEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* total_f) {
 
 	double u = 0.0;
 	//double total_f[3];
@@ -598,7 +708,7 @@ double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 		if (dd > cutoffRadiusSquare)
 			continue;
 
-		u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_INSERTION, dd, (dd < LJCutoffRadiusSquare), f);
+		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_INSERTION, dd, (dd < LJCutoffRadiusSquare), f);
 
 		for (int i = 0; i < 3; i++) total_f[i] += f[i];
 
@@ -618,7 +728,7 @@ double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 				continue;
 
 			for (int i = 0; i < 3; i++) f[i] = 0;
-			u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_INSERTION, dd, (dd < LJCutoffRadiusSquare), f);
+			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_INSERTION, dd, (dd < LJCutoffRadiusSquare), f);
 			for (int i = 0; i < 3; i++) total_f[i] += f[i];
 		}
 	}
@@ -627,7 +737,7 @@ double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 }
 
 
-double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
+double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double total_f[3]) {
 
 	double u = 0.0;
 	//double total_f[3];
@@ -659,7 +769,7 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 		if (dd > cutoffRadiusSquare)
 			continue;
 		
-		u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), f);
+		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), f);
 		for (int i = 0; i < 3; i++) total_f[i] += f[i];
 	}
 
@@ -676,7 +786,7 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 			if (dd > cutoffRadiusSquare)
 				continue;
 			for (int i = 0; i < 3; i++) f[i] = 0;
-			u += this->_particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), f);
+			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), f);
 			for (int i = 0; i < 3; i++) total_f[i] += f[i];
 		}
 	}
@@ -696,6 +806,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 	bool accept = true;
 	double DeltaUpot;
 	Molecule* m;
+	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
 
 	this->_localInsertionsMinusDeletions = 0;
 
@@ -717,7 +828,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		if (hasDeletion) {
 			m = &(*(this->_particleIter));
 			double force[3];
-			DeltaUpot = -1.0 * getEnergy(m, force);
+			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, force);
 
 			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
@@ -770,7 +881,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			unsigned long cellid = this->getCellIndexOfMolecule(m);
 			this->_cells[cellid].addParticle(m);
 			double force[3] = {0,0,0};
-			DeltaUpot = getEnergy(m, force);
+			DeltaUpot = getEnergy(&particlePairsHandler, m, force);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 

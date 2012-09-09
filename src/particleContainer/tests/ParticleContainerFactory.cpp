@@ -27,11 +27,10 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(type t
 		double bBoxMax[] = {2.0, 2.0, 2.0, 2.0};
 		double cutoffRadius = 1.0;
 		double LJCutoffRadius = 1.0;
-		double tersoffCutoffRadius = 1.0;
 		double cellsInCutoffRadius = 1.0;
 
 		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius, LJCutoffRadius,
-		                                        tersoffCutoffRadius, cellsInCutoffRadius);
+		                                         cellsInCutoffRadius);
 		return container;
 
 	} else {
@@ -58,9 +57,9 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 
 	ParticleContainer* moleculeContainer;
 	if (type == LinkedCell) {
-		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, cutoff, 1.0);
+		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
 	} else if (type == AdaptiveSubCell) {
-		moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, cutoff, cutoff, cutoff);
+		moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, cutoff, cutoff);
 	} else {
 		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
 		return NULL;

@@ -29,6 +29,7 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/PressureGradient.h"
 #include "CutoffCorrections.h"
+#include "Simulation.h"
 
 #include "utils/Logger.h"
 using Log::global_log;
@@ -495,8 +496,8 @@ void Domain::writeCheckpoint( string filename,
 		}
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
-		checkpointfilestream << "# rc\t" << particleContainer->getCutoff() << "\n";
-		checkpointfilestream << "# rcT\t" << particleContainer->getTersoffCutoff() << "\n";
+		checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
+		checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
 #endif
 		if(this->_globalUSteps > 1)
 		{

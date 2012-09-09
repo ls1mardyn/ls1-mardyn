@@ -34,7 +34,7 @@ VTKMoleculeWriterTest::~VTKMoleculeWriterTest() {
 void VTKMoleculeWriterTest::testDoOutput() {
 	double boundings_min[] = {-1., -1., -1. };
 	double boundings_max[] = {10.0, 10.0, 10.0 };
-	LinkedCells container(boundings_min, boundings_max, 1, 1, 1, 1);
+	LinkedCells container(boundings_min, boundings_max, 1, 1, 1);
 
 	std::vector<Component> components;
 	Component dummyComponent(0);

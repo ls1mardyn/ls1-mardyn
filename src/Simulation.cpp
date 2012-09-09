@@ -35,7 +35,6 @@
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
-//#include "ParticleInsertion.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
@@ -46,6 +45,7 @@
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 
@@ -96,6 +96,9 @@ Simulation::~Simulation() {
 		delete _domain;
 	if (_particlePairsHandler)
 		delete _particlePairsHandler;
+	if (_cellProcessor) {
+		delete _cellProcessor;
+	}
 	if (_moleculeContainer)
 		delete _moleculeContainer;
 	if (_integrator)
@@ -328,13 +331,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 					}
 					if (_LJCutoffRadius == 0.0)
 						_LJCutoffRadius = _cutoffRadius;
-					global_log->debug() << "Cutoff: " << _cutoffRadius
-							<< "\nCellsInCutoff: " << cellsInCutoffRadius
-							<< endl;
-					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-							_cutoffRadius, _LJCutoffRadius,
-							_tersoffCutoffRadius, cellsInCutoffRadius);
-
+					global_log->debug() << "Cutoff: " << _cutoffRadius << "\nCellsInCutoff: " << cellsInCutoffRadius << endl;
+					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+						 cellsInCutoffRadius);
 				} else if (datastructype == "AdaptiveSubCells") {
 					double bBoxMin[3];
 					double bBoxMax[3];
@@ -347,9 +346,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 					//creates a new Adaptive SubCells datastructure
 					if (_LJCutoffRadius == 0.0)
 						_LJCutoffRadius = _cutoffRadius;
-					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-							_cutoffRadius, _LJCutoffRadius,
-							_tersoffCutoffRadius);
+					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
 				} else {
 					global_log->error() << "UNKOWN DATASTRUCTURE: "
 							<< datastructype << endl;
@@ -592,35 +589,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 				if (this->_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax,
-						_cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius,
-						cellsInCutoffRadius);
-				cout << "Cutoff called with" << _cutoffRadius << " "
-						<< _LJCutoffRadius << " " << _tersoffCutoffRadius
-						<< endl;
-				for (int i = 0; i < 3; i++)
-					cout << bBoxMin[i] << " ";
-				cout << endl;
-				for (int i = 0; i < 3; i++)
-					cout << bBoxMax[i] << " ";
-				cout << endl;
-				cout << _tersoffCutoffRadius << " " << cellsInCutoffRadius
-						<< endl;
+				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
+				        cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
 				_particleContainerType = ADAPTIVE_LINKED_CELL;
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
-					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,
-							_domain);
-					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,
-							_domain);
+					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,_domain);
+					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,_domain);
 				}
 				//creates a new Adaptive SubCells datastructure
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
-				_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax,
-						_cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius);
+					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
 			} else {
 				global_log->error() << "UNKOWN DATASTRUCTURE: " << token
 						<< endl;
@@ -989,6 +971,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	if (this->_LJCutoffRadius == 0.0)
 		_LJCutoffRadius = this->_cutoffRadius;
 	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
@@ -1021,9 +1004,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
 		double
-				Ttar =
-						_domain->severalThermostats() ? _domain->getTargetTemperature(
-								1)
+				Ttar =_domain->severalThermostats() ? _domain->getTargetTemperature(1)
 								: _domain->getTargetTemperature(0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
@@ -1043,7 +1024,8 @@ void Simulation::prepare_start() {
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
-	_moleculeContainer->traversePairs(_particlePairsHandler);
+	//_moleculeContainer->traversePairs(_particlePairsHandler);
+	_moleculeContainer->traverseCells(*_cellProcessor);
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
@@ -1086,9 +1068,7 @@ void Simulation::prepare_start() {
 		double Tcur = _domain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
 		double
-				Ttar =
-						_domain->severalThermostats() ? _domain->getTargetTemperature(
-								1)
+				Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1)
 								: _domain->getTargetTemperature(0);
 		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
 			Tcur = Ttar;
@@ -1138,12 +1118,6 @@ void Simulation::simulate() {
 
 	Molecule* tM;
 	global_log->info() << "Started simulation" << endl;
-
-	// added by tijana because of getEnergy(...) in LinkedCells
-	_moleculeContainer->setPairsHandler(_particlePairsHandler);
-
-	_simstep = 0;
-
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
@@ -1216,7 +1190,8 @@ void Simulation::simulate() {
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
 		//cout<<"here somehow"<<endl;
-		_moleculeContainer->traversePairs(_particlePairsHandler);
+		//_moleculeContainer->traversePairs(_particlePairsHandler);
+		_moleculeContainer->traverseCells(*_cellProcessor);
 
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
@@ -1300,38 +1275,30 @@ void Simulation::simulate() {
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
-				_moleculeContainer, (!(_simstep
-						% _collectThermostatDirectedVelocity)), Tfactor(
+				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
 								_simstep));
 
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
-				for (tM = _moleculeContainer->begin(); tM
-				!= _moleculeContainer->end(); tM
-				= _moleculeContainer->next()) {
+				for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
 					int thermostat = _domain->getThermostat(tM->componentid());
 					if (0 >= thermostat)
 						continue;
 					if (_domain->thermostatIsUndirected(thermostat)) {
 						/* TODO: thermostat */
 						tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
-								_domain->getThermostatDirectedVelocity(
-										thermostat, 0),
-										_domain->getThermostatDirectedVelocity(
-												thermostat, 1),
-												_domain->getThermostatDirectedVelocity(
-														thermostat, 2));
+								_domain->getThermostatDirectedVelocity(thermostat, 0),
+								_domain->getThermostatDirectedVelocity(thermostat, 1),
+								_domain->getThermostatDirectedVelocity(thermostat, 2));
 					} else {
 						tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
 					}
 					tM->scale_D(_domain->getGlobalBetaRot(thermostat));
 				}
 			} else {
-				for (tM = _moleculeContainer->begin(); tM
-				!= _moleculeContainer->end(); tM
-				= _moleculeContainer->next()) {
+				for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
 					tM->scale_v(_domain->getGlobalBetaTrans());
 					tM->scale_D(_domain->getGlobalBetaRot());
 				}
@@ -1376,10 +1343,8 @@ void Simulation::simulate() {
 	_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter
-	!= _outputPlugins.end(); outputIter++) {
-		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition,
-				_domain);
+	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
+		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 		delete (*outputIter);
 	}
 	ioTimer.stop();
@@ -1401,22 +1366,18 @@ void Simulation::output(unsigned long simstep) {
 	int ownrank = _domainDecomposition->getRank();
 
 	std::list<OutputBase*>::iterator outputIter;
-	for (outputIter = _outputPlugins.begin(); outputIter
-			!= _outputPlugins.end(); outputIter++) {
-		(*outputIter)->doOutput(_moleculeContainer, _domainDecomposition,
-				_domain, simstep, &(_lmu));
+	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
+		(*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
 	if (_rdf != NULL) {
 		_rdf->doOutput(_domainDecomposition, _domain, simstep);
 	}
 
-	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep
-			% _profileRecordingTimesteps)) {
+	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
 		_domain->recordProfile(_moleculeContainer);
 	}
-	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep
-			% _profileOutputTimesteps)) {
+	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileOutputTimesteps)) {
 		_domain->collectProfile(_domainDecomposition);
 		if (!ownrank) {
 			ostringstream osstrm;
@@ -1462,8 +1423,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
 
 /* FIXME: we shoud provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
-	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical
-			- _initSimulation);
+	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
 	if ((xi < 0.1) || (xi > 0.9))
 		return 1.0;
 	else if (xi < 0.3)
@@ -1487,13 +1447,13 @@ void Simulation::initialize() {
 	_domainDecomposition = NULL;
 	_domain = NULL;
 	_particlePairsHandler = NULL;
+	_cellProcessor = NULL;
 	_moleculeContainer = NULL;
 	_integrator = NULL;
 	_inputReader = NULL;
 
 #ifndef ENABLE_MPI
-	global_log->info() << "Initializing the alibi domain decomposition ... "
-			<< endl;
+	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
 	global_log->info() << "Initialization done" << endl;
 #endif

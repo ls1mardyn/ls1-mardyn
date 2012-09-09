@@ -9,6 +9,7 @@
 #include "utils/Logger.h"
 
 #include "Domain.h"
+#include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/DomainDecompDummy.h"
 
@@ -41,16 +42,17 @@ utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 
 void utils::TestWithSimulationSetup::setUp() {
 	_rank = 0;
+	global_simulation = new Simulation();
 	#ifdef ENABLE_MPI
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
 	#endif
-	_domain = new Domain(_rank, NULL);
-
-	#ifdef ENABLE_MPI
-	_domainDecomposition = new DomainDecomposition();
-	#else
-	_domainDecomposition = new DomainDecompDummy();
-	#endif
+	_domain = global_simulation->getDomain();
+	_domainDecomposition = &(global_simulation->domainDecomposition());
+//	#ifdef ENABLE_MPI
+//	_domainDecomposition = new DomainDecomposition();
+//	#else
+//	_domainDecomposition = new DomainDecompDummy();
+//	#endif
 }
 
 

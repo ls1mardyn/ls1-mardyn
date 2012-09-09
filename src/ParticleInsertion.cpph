@@ -1,3 +1,5 @@
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+
 namespace moleculardynamics {
 namespace coupling {
 
@@ -81,11 +83,12 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 	double torque[3];
 	double absTorque;
 	double angle;
+	ParticlePairs2PotForceAdapter particlePairsHandler(*(global_simulation->getDomain()));
 
 	for (int iRot = 0; iRot < rotationsMax && molecule->numSites() > 1; iRot++) {
 
 		molecule->clearFM();
-		*energy = linkedCells->getForceAndEnergy(molecule, force);
+		*energy = linkedCells->getForceAndEnergy(&particlePairsHandler, molecule, force);
 		molecule->calcFM();
 		*absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
 
@@ -220,6 +223,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 
 	// upper right... corner of macroscopic cell
 	double* upperRightCorner = linkedCells->boundingBoxMax();
+	ParticlePairs2PotForceAdapter particlePairsHandler(*(global_simulation->getDomain()));
 
 	// wrapper for the molecule
 	moleculardynamics::coupling::interface::MardynMoleculeWrapper<Molecule, dim>
@@ -251,7 +255,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 
 		for (int d = 0; d < 3; d++) force[d] = 0;
 		molecule->clearFM();
-		*energy = linkedCells->getForceAndEnergy(molecule, force);
+		*energy = linkedCells->getForceAndEnergy(&particlePairsHandler, molecule, force);
 
 		wrapper.setForce(force);
 		absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
@@ -338,7 +342,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			// save old energy and compute new forces and energy
 			*energyOld = *energy;
 			molecule->clearFM();
-			*energy = linkedCells->getForceAndEnergy(molecule, force);
+			*energy = linkedCells->getForceAndEnergy(&particlePairsHandler, molecule, force);
 
 			wrapper.setForce(force);
 			absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
@@ -370,7 +374,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 					*energyOld = *energy;
 		
 					molecule->clearFM();
-					*energy = linkedCells->getForceAndEnergy(molecule, force);
+					*energy = linkedCells->getForceAndEnergy(&particlePairsHandler, molecule, force);
 
 					wrapper.setForce(force);
 					absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);

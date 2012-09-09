@@ -23,6 +23,7 @@
 #include <list>
 
 class ParticlePairsHandler;
+class CellProcessor;
 class ParticleContainer;
 class DomainDecompBase;
 class Domain;
@@ -120,7 +121,9 @@ public:
 	//! original and duplicated pairs. Details about how to handle pairs can be found
 	//! in the documentation for the class ParticlePairsHandler
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler) = 0;
+//	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler) = 0;
+
+	virtual void traverseCells(CellProcessor& cellProcessor) = 0;
 
 	//! @return the number of particles stored in this container
 	//!
@@ -174,7 +177,6 @@ public:
 
 	virtual double getCutoff() = 0;
 	virtual double getLJCutoff() = 0;
-	virtual double getTersoffCutoff() = 0;
 
     /* TODO: This goes into the component class */
 	//! @brief counts all particles inside the bounding box
@@ -188,7 +190,7 @@ public:
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
 
     /* TODO goes into grand canonical ensemble */
-	virtual double getEnergy(Molecule* m1, double* E = 0) = 0;
+	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* E = 0) = 0;
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) = 0;
@@ -196,14 +198,7 @@ public:
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();
 
-	void setPairsHandler(ParticlePairsHandler* p) {
-		_particlePairsHandler = p;
-	}
-
 protected:
-
-	//! A ParticlePairsHandler is used to process pairs of particles
-	ParticlePairsHandler* _particlePairsHandler;
 
 	//!  coordinates of the left, lower, front corner of the bounding box
 	double _boundingBoxMin[3];
