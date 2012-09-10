@@ -24,6 +24,8 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
 	}
 
 	std::vector<Component> components;
@@ -60,4 +62,6 @@ void DomainDecompositionTest::testExchangeMolecules1Proc() {
 	for (int i = 0; i < 3; i++) {
 		ASSERT_EQUAL(8u, count[i]);
 	}
+
+	delete container;
 }

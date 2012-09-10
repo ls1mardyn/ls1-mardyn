@@ -34,24 +34,24 @@ RDFTest::~RDFTest() {
 
 
 void RDFTest::testRDFCountSequential12_LinkedCell() {
-	delete _domainDecomposition;
-	// will be freed by the tearDown()-method.
+	// original pointer will be freed by the tearDown()-method.
 	_domainDecomposition = new DomainDecompDummy();
 
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3.inp", 1.8);
 	testRDFCountSequential12(moleculeContainer);
 	delete moleculeContainer;
+	delete _domainDecomposition;
 }
 
 
 void RDFTest::testRDFCountSequential12_AdaptiveCell() {
-	delete _domainDecomposition;
-	// will be freed by the tearDown()-method.
+	// original pointer will be freed by the tearDown()-method.
 	_domainDecomposition = new DomainDecompDummy();
 
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-2x2x3.inp", 1.8);
 	testRDFCountSequential12(moleculeContainer);
 	delete moleculeContainer;
+	delete _domainDecomposition;
 }
 
 void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {

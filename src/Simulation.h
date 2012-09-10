@@ -206,6 +206,7 @@ public:
 	void setDomainDecomposition(DomainDecompBase* domainDecomposition) {
 		_domainDecomposition = domainDecomposition;
 	}
+
 	//! @brief Return a reference to the domain decomposition used in the simulation
 	DomainDecompBase& domainDecomposition() {
 		return *_domainDecomposition;
@@ -399,6 +400,9 @@ public:
     void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
     std::string getOutputPrefix() { return _outputPrefix; }
 
+	//! initialize all member variables with a suitable value
+	void initialize();
+
 private:
 
 	//! list of output plugins to use
@@ -431,8 +435,6 @@ private:
 #endif
 
 
-	//! initialize all member variables with a suitable value
-	void initialize();
 	
 };
 #endif /*SIMULATION_H_*/

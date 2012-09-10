@@ -42,25 +42,20 @@ utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 
 void utils::TestWithSimulationSetup::setUp() {
 	_rank = 0;
-	global_simulation = new Simulation();
+	Simulation* sim = new Simulation();
+	sim->initialize(); // this assigns global_simulation.
 	#ifdef ENABLE_MPI
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
 	#endif
 	_domain = global_simulation->getDomain();
-	_domainDecomposition = &(global_simulation->domainDecomposition());
-//	#ifdef ENABLE_MPI
-//	_domainDecomposition = new DomainDecomposition();
-//	#else
-//	_domainDecomposition = new DomainDecompDummy();
-//	#endif
+	_domainDecomposition = & global_simulation->domainDecomposition();
 }
 
 
 void utils::TestWithSimulationSetup::tearDown() {
-	delete _domain;
-	_domain = NULL;
-	delete _domainDecomposition;
+	delete global_simulation;
 	_domainDecomposition = NULL;
+	_domain = NULL;
 }
 
 

@@ -26,8 +26,7 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 // remove the ifndef when canonicalensemble can be tested in parallel
 #ifndef ENABLE_MPI
 
-	delete _domainDecomposition;
-	// will be deleted by tearDown()
+	// original pointer will be deleted by tearDown()
 	_domainDecomposition = new DomainDecompDummy();
 
 	// the halo is cleared for freshly initialized particle containers.
@@ -50,6 +49,8 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 	// has the ensemble updated the count of particles per component right?
 	ASSERT_EQUAL(1729ul, components[0].getNumMolecules());
 
+	delete _domainDecomposition;
+	delete container;
 #endif
 }
 

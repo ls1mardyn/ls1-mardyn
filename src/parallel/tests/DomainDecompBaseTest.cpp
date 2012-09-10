@@ -26,7 +26,6 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	components.push_back(dummyComponent);
 
 	// make sure we have a DomainDecompDummy
-	delete _domainDecomposition;
 	_domainDecomposition = new DomainDecompDummy();
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 17.0);
 
@@ -57,4 +56,7 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	for (int i = 0; i < 3; i++) {
 		ASSERT_EQUAL(8u, count[i]);
 	}
+
+	delete container;
+	delete _domainDecomposition;
 }

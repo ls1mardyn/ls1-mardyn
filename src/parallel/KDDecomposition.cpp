@@ -11,6 +11,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "ParticleData.h"
 #include "KDNode.h"
 #include "utils/Logger.h"
@@ -85,16 +86,15 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 		getNumParticles(moleculeContainer);
 		newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
-		ParticlePairs2LoadCalcAdapter* loadHandler;
-		loadHandler = new ParticlePairs2LoadCalcAdapter(_globalCellsPerDim, &(_ownArea->_lowCorner[0]), _cellSize, _moleculeContainer);
-		_moleculeContainer->traversePairs(loadHandler);
-		_globalLoadPerCell = loadHandler->getLoad();
+		ParticlePairs2LoadCalcAdapter loadHandler(_globalCellsPerDim, &(_ownArea->_lowCorner[0]), _cellSize, _moleculeContainer);
+		LegacyCellProcessor cellProcessor(moleculeContainer->getCutoff(), 0.0, 0.0, &loadHandler);
+		_moleculeContainer->traverseCells(cellProcessor);
+		_globalLoadPerCell = loadHandler.getLoad();
 		if (recDecompPar(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
 
 		completeTreeInfo(newDecompTree, newOwnArea);
-		delete loadHandler;
 		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
 
 #ifdef DEBUG_DECOMP

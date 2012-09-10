@@ -167,17 +167,20 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #ifdef ENABLE_MPI
 		global_log->warning() << "Dummy domain decomposition does not work in a parallel environment." << endl;
 		exit(1);
-#else
-		_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+//#else
+		// the Dummy Domaindecomposition is already created in initialize()!
+//		_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
 #endif
 		break;
 #ifdef ENABLE_MPI
 		case DOMAIN_DECOMPOSITION:
-		_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+			// the Domaindecomposition is already created in initialize()!
+//		_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 		break;
 		case KD_DECOMPOSITION:
 		/* TODO: remove parameters from KDDecomposition constructor */
-		_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
+			delete _domainDecomposition;
+			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
 		break;
 #endif
 	case UNKNOWN_DECOMPOSITION:
@@ -550,12 +553,15 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 			inputfilestream >> token;
 			if (token=="DomainDecomposition") {
-				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+				// default DomainDecomposition is already set in initialize();
+				//_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 			}
 			else if(token=="KDDecomposition") {
+				delete _domainDecomposition;
 				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
 			}
 			else if(token=="KDDecomposition2") {
+				delete _domainDecomposition;
 				int updateFrequency = 100;
 				int fullSearchThreshold = 3;
 				string line;
@@ -1402,10 +1408,11 @@ void Simulation::output(unsigned long simstep) {
 }
 
 void Simulation::finalize() {
-#ifdef ENABLE_MPI
-	delete _domainDecomposition;
-	_domainDecomposition = NULL;
-#endif
+	if (_domainDecomposition != NULL) {
+		delete _domainDecomposition;
+		_domainDecomposition = NULL;
+	}
+	global_simulation = NULL;
 }
 
 void Simulation::updateParticleContainerAndDecomposition() {
@@ -1436,6 +1443,8 @@ double Simulation::Tfactor(unsigned long simstep) {
 		return 4 - 10.0 * xi / 3.0;
 }
 
+
+
 void Simulation::initialize() {
 	int ownrank = 0;
 #ifdef ENABLE_MPI
@@ -1455,8 +1464,11 @@ void Simulation::initialize() {
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
-	global_log->info() << "Initialization done" << endl;
+#else
+	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
+	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
+	global_log->info() << "Initialization done" << endl;
 
 	/*
 	 * default parameters

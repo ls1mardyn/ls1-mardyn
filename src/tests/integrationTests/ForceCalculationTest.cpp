@@ -7,6 +7,7 @@
 
 #include "ForceCalculationTest.h"
 #include "Domain.h"
+#include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
@@ -20,6 +21,13 @@ ForceCalculationTest::~ForceCalculationTest() {
 }
 
 void ForceCalculationTest::testForcePotentialCalculationU0() {
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
+
 	// U (r_ij) = 4 epsilon * ( (sigma / r_ij)^12 - (sigma / r_ij)^6 )
 	// F (r_ij) = 24 epsilon * 1/r ( (sigma / r_ij)^6 - 2 * (sigma / r_ij)^12 )
 
@@ -56,6 +64,14 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 }
 
 void ForceCalculationTest::testForcePotentialCalculationF0() {
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
+
+
 	// U (r_ij) = 4 epsilon * ( (sigma / r_ij)^12 - (sigma / r_ij)^6 )
 	// F (r_ij) = 24 epsilon * 1/r ( (sigma / r_ij)^6 - 2 * (sigma / r_ij)^12 )
 	// -> potential U = -1 per particle pair.
