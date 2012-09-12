@@ -227,30 +227,31 @@ void CubicGridGenerator::addMolecule(double x, double y, double z, unsigned long
 	//double orientation[4] = {1, 0, 0, 0}; // default: in the xy plane
 	// rotate by 30° along the vector (1/1/0), i.e. the angle bisector of x and y axis
 	// o = cos 30° + (1 1 0) * sin 15°
-	//double orientation[4];
-	//getOrientation(15, 10, orientation);
+	double orientation[4];
+	getOrientation(15, 10, orientation);
 
-//	int componentType = 0;
-//	if (_binaryMixture) {
-//		componentType = randdouble(0, 1.999999);
-//	}
+	int componentType = 0;
+	if (_binaryMixture) {
+		componentType = randdouble(0, 1.999999);
+	}
 
 	double I[3] = {0.,0.,0.};
 	I[0] = _components[0].I11();
 	I[1] = _components[0].I22();
 	I[2] = _components[0].I33();
 	/*****  Copied from animake - initialize anular velocity *****/
-//	double w[3];
-//	for(int d=0; d < 3; d++) {
-//		w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
-//				sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
-//		w[d] = w[d] * MDGenerator::fs_2_mardyn;
-//	}
+	double w[3];
+	for(int d=0; d < 3; d++) {
+		w[d] = (I[d] == 0)? 0.0: ((randdouble(0,1) > 0.5)? 1: -1) *
+				sqrt(2.0* randdouble(0,1)* _temperature / I[d]);
+		w[d] = w[d] * MDGenerator::fs_2_mardyn;
+	}
 	/************************** End Copy **************************/
 
-	Molecule m(id, x, y, z, // position
-			velocity[0], -velocity[1], velocity[2] // velocity
-		);
+	Molecule m(id, componentType, x, y, z, // position
+			velocity[0], -velocity[1], velocity[2], // velocity
+			orientation[0], orientation[1], orientation[2], orientation[3],
+			w[0], w[1], w[2], &_components);
 	particleContainer->addParticle(m);
 }
 
