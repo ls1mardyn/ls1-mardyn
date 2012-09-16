@@ -336,8 +336,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 							_cutoffRadius, _LJCutoffRadius,
 							_tersoffCutoffRadius, cellsInCutoffRadius);
 
-
-
 				} else if (datastructype == "AdaptiveSubCells") {
 					double bBoxMin[3];
 					double bBoxMax[3];
@@ -1040,17 +1038,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 }
 
 void Simulation::prepare_start() {
-	std::string rdf_file = "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
+	std::string
+			rdf_file =
+					"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
 	//std::string rdf_file = "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/rdf/rdf_Ethan_10k_0a_he_rc1.5_0-0.000080000.rdf";
 	std::vector<std::string> file_names;
 	file_names.push_back(rdf_file);
-	global_log->info() << "Initializing simulation" << endl;
 
-	global_log->info() << "Clearing halos" << endl;
-	_moleculeContainer->deleteOuterParticles();
-	global_log->info() << "Updating domain decomposition" << endl;
-	updateParticleContainerAndDecomposition();
-	global_log->info() << "Performing inital force calculation" << endl;
 	vector<vector<double> > globalDist;
 	vector<vector<double> > globalADist;
 	vector<vector<vector<double> > > globalSiteDist;
@@ -1102,8 +1096,18 @@ void Simulation::prepare_start() {
 		}
 	}
 	cout << "size: " << globalADist[0].size() << endl;
-	_moleculeContainer->traversePairs(_particlePairsHandler, file_names, -1,
-			&globalADist, &globalSiteADist);
+
+	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist);
+
+	global_log->info() << "Initializing simulation" << endl;
+
+	global_log->info() << "Clearing halos" << endl;
+	_moleculeContainer->deleteOuterParticles();
+	global_log->info() << "Updating domain decomposition" << endl;
+	updateParticleContainerAndDecomposition();
+	global_log->info() << "Performing inital force calculation" << endl;
+
+	_moleculeContainer->traversePairs(_particlePairsHandler);
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
@@ -1204,12 +1208,26 @@ void Simulation::simulate() {
 	stringstream ss;
 
 	// tx
-	ss << "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/results_exact/Ethan_10k_eps_" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
-//	ss << "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/results_coupled_no_lb/Ethan_10k_0a_" << _moleculeContainer->getCutoff() << "_avg_force_per_step_trunc.txt";
+	ss
+			<< "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/results_coupled_no_lb/Ethan_10k_eps_"
+			<< _moleculeContainer->getCutoff()
+			<< "_avg_force_per_step_trunc.txt";
+	//ss
+	//		<< "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/results_coupled_no_lb/Ethan_10k_0a_"
+	//		<< _moleculeContainer->getCutoff()
+	//		<< "_avg_force_per_step_trunc.txt";
 
 	FILE* stepfile = fopen(ss.str().c_str(), "w");
-	file_names.push_back("/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf");
+	file_names.push_back(
+			"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf");
 	//file_names.push_back("/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/rdf/rdf_Ethan_10k_0a_he_rc1.5_0-0.000080000.rdf");
+
+	stringstream density_file_stream;
+	density_file_stream
+			<< "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/results_coupled_no_lb/density/Ethan_10k_0a_"
+			<< _moleculeContainer->getCutoff() << "density.txt";
+	FILE* density_file = fopen(density_file_stream.str().c_str(), "w");
+
 	Molecule* tM;
 	global_log->info() << "Started simulation" << endl;
 	// added by tijana because of getEnergy(...) in LinkedCells
@@ -1298,8 +1316,9 @@ void Simulation::simulate() {
 							* totalComponents + j]);
 		}
 	}
-
+	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist);
 	loopTimer.start();
+
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1335,11 +1354,39 @@ void Simulation::simulate() {
 		decompositionTimer.stop();
 		loopTimer.start();
 
+		int num_bins = 50;
+		if (_simstep % 10 == 1) {
+
+			double length = (_moleculeContainer->getBoundingBoxMax(0)
+					- _moleculeContainer->getBoundingBoxMin(0)) / num_bins;
+
+			int sum = 0;
+
+			for (int i = 1; i <= num_bins; i++) {
+				double bottom[3] = { (i - 1) * length,
+						_moleculeContainer->getBoundingBoxMin(1),
+						_moleculeContainer->getBoundingBoxMin(2) };
+				double top[3] = { i * length,
+						_moleculeContainer->getBoundingBoxMax(1),
+						_moleculeContainer->getBoundingBoxMax(2) };
+				int local_num =
+						_moleculeContainer->countParticles(
+								_moleculeContainer->begin()->componentid(),
+								bottom, top);
+				sum += local_num;
+				fprintf(density_file, "%d ", local_num);
+			}
+			fprintf(density_file, "\n");
+			fflush(density_file);
+
+			std::cout << "sum: " << sum << std::endl;
+		}
+
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
 		//cout<<"here somehow"<<endl;
-		_moleculeContainer->traversePairs(_particlePairsHandler, file_names,
-				_simstep, &globalADist, &globalSiteADist);
+
+		_moleculeContainer->traversePairs(_particlePairsHandler);
 
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
@@ -1490,11 +1537,11 @@ void Simulation::simulate() {
 		loopTimer.start();
 		int actual_simstep = _simstep - _initSimulation + 1;
 		Molecule* moleculePtr;
-		_moleculeContainer->deleteOuterParticles();
+		//_moleculeContainer->deleteOuterParticles();
 		double total_periodic = 0, total_rdf = 0;
 		for (moleculePtr = _moleculeContainer->begin(); moleculePtr
-							!= _moleculeContainer->end(); moleculePtr
-							= _moleculeContainer->next()) {
+				!= _moleculeContainer->end(); moleculePtr
+				= _moleculeContainer->next()) {
 			moleculePtr->calcLeftxInfluence();
 			total_periodic += moleculePtr->getLeftxF()[0];
 			total_rdf += moleculePtr->getLeftxRdfF()[0];
@@ -1502,104 +1549,105 @@ void Simulation::simulate() {
 		}
 		fflush(stepfile);
 		fprintf(stepfile, "%lg %lg \n", total_periodic / 9826, total_rdf / 9826);
+
 		/*
-		if (actual_simstep % 1000 == 0 || actual_simstep == 1
-				|| actual_simstep == 10 || actual_simstep == 100
-				|| actual_simstep == 200 || actual_simstep == 500) {
-			// measuring forces - writing to file
-			Molecule* moleculePtr = _moleculeContainer->begin();
-			_moleculeContainer->deleteOuterParticles();
-			std::stringstream ss;
-			ss << "result_Ethan_" << _moleculeContainer->getCutoff()/moleculePtr->getSigma() << "_" << actual_simstep << ".txt";
+		 if (actual_simstep % 1000 == 0 || actual_simstep == 1
+		 || actual_simstep == 10 || actual_simstep == 100
+		 || actual_simstep == 200 || actual_simstep == 500) {
+		 // measuring forces - writing to file
+		 Molecule* moleculePtr = _moleculeContainer->begin();
+		 _moleculeContainer->deleteOuterParticles();
+		 std::stringstream ss;
+		 ss << "result_Ethan_" << _moleculeContainer->getCutoff()/moleculePtr->getSigma() << "_" << actual_simstep << ".txt";
 
-			FILE* file = fopen(
-					ss.str().c_str(), "w");
-			double** forces = new double*[160000];
-			for (int i = 1; i <= 160000; i++) {
-				forces[i] = new double[13];
-				for (int j = 0; j < 13; j++)
-					forces[i][j] = -1;
-			}
-			double total_abs = 0;
-			int total_num = 0;
-			int less90 = 0;
-			double total_periodic_force = 0, total_rdf_force = 0,
-					total_periodic_y = 0, total_periodic_z = 0;
-			for (moleculePtr = _moleculeContainer->begin(); moleculePtr
-					!= _moleculeContainer->end(); moleculePtr
-					= _moleculeContainer->next()) {
+		 FILE* file = fopen(
+		 ss.str().c_str(), "w");
+		 double** forces = new double*[160000];
+		 for (int i = 1; i <= 160000; i++) {
+		 forces[i] = new double[13];
+		 for (int j = 0; j < 13; j++)
+		 forces[i][j] = -1;
+		 }
+		 double total_abs = 0;
+		 int total_num = 0;
+		 int less90 = 0;
+		 double total_periodic_force = 0, total_rdf_force = 0,
+		 total_periodic_y = 0, total_periodic_z = 0;
+		 for (moleculePtr = _moleculeContainer->begin(); moleculePtr
+		 != _moleculeContainer->end(); moleculePtr
+		 = _moleculeContainer->next()) {
 
-				moleculePtr->calcLeftxInfluence();
-				//cout<<"id: "<<moleculePtr->id()<<endl;
+		 moleculePtr->calcLeftxInfluence();
+		 //cout<<"id: "<<moleculePtr->id()<<endl;
 
-				forces[moleculePtr->id()][0] = moleculePtr->id();
-				for (int i = 0; i < 3; i++)
-					forces[moleculePtr->id()][i + 1] = moleculePtr->F(i);
-				for (int i = 4; i < 7; i++)
-					forces[moleculePtr->id()][i] = moleculePtr->getLeftxF()[i
-							- 4];
-				for (int i = 4; i < 7; i++)
-					forces[moleculePtr->id()][i + 3]
-							= moleculePtr->getLeftxRdfF()[i - 4];
+		 forces[moleculePtr->id()][0] = moleculePtr->id();
+		 for (int i = 0; i < 3; i++)
+		 forces[moleculePtr->id()][i + 1] = moleculePtr->F(i);
+		 for (int i = 4; i < 7; i++)
+		 forces[moleculePtr->id()][i] = moleculePtr->getLeftxF()[i
+		 - 4];
+		 for (int i = 4; i < 7; i++)
+		 forces[moleculePtr->id()][i + 3]
+		 = moleculePtr->getLeftxRdfF()[i - 4];
 
-				total_periodic_y += moleculePtr->getLeftxF()[1];
-				total_periodic_z += moleculePtr->getLeftxF()[2];
+		 total_periodic_y += moleculePtr->getLeftxF()[1];
+		 total_periodic_z += moleculePtr->getLeftxF()[2];
 
-				total_periodic_force += moleculePtr->getLeftxF()[0];
-				total_rdf_force += moleculePtr->getLeftxRdfF()[0];
+		 total_periodic_force += moleculePtr->getLeftxF()[0];
+		 total_rdf_force += moleculePtr->getLeftxRdfF()[0];
 
-				bool has_boundary = false;
-				for (int i = 0; i < 3; i++)
-					if (moleculePtr->getLeftxF()[i] != 0)
-						has_boundary = true;
+		 bool has_boundary = false;
+		 for (int i = 0; i < 3; i++)
+		 if (moleculePtr->getLeftxF()[i] != 0)
+		 has_boundary = true;
 
-				total_num = 9826;
-				if (has_boundary) {
+		 total_num = 9826;
+		 if (has_boundary) {
 
-					for (int i = 10; i < 13; i++)
-						forces[moleculePtr->id()][i] = 100 * abs(abs(
-								moleculePtr->getLeftxRdfF()[i - 10]
-										- moleculePtr->getLeftxF()[i - 10])
-								/ moleculePtr->getLeftxF()[i - 10]);
-					total_abs += forces[moleculePtr->id()][10];
-					if (forces[moleculePtr->id()][10] < 90)
-						less90++;
-				}
-			}
+		 for (int i = 10; i < 13; i++)
+		 forces[moleculePtr->id()][i] = 100 * abs(abs(
+		 moleculePtr->getLeftxRdfF()[i - 10]
+		 - moleculePtr->getLeftxF()[i - 10])
+		 / moleculePtr->getLeftxF()[i - 10]);
+		 total_abs += forces[moleculePtr->id()][10];
+		 if (forces[moleculePtr->id()][10] < 90)
+		 less90++;
+		 }
+		 }
 
-			int scale = _simstep - _initSimulation + 1;
-			cout << "dividing by " << scale << endl;
-			fprintf(file, "num_total: %d \n", total_num);
-			fprintf(file, "less than 90 percent for: %d molecules \n", less90);
-			fprintf(file, "average individual diff %lg: \n", total_abs
-					/ total_num);
-			fprintf(file, "avg_periodic: %lg 	avg_rdf: %lg, total_diff(wrt periodic) %lg total_dif(wrt rdf) %lg \n",
-					total_periodic_force / (total_num * scale), total_rdf_force
-							/ (total_num * scale), (total_periodic_force
-							- total_rdf_force) * 100 / total_periodic_force, (total_rdf_force
-									- total_periodic_force) * 100 / total_rdf_force);
-			fprintf(file, "avg periodic y %lg, avg periodic z %lg \n",
-					total_periodic_y / (total_num * scale), total_periodic_z
-							/ (total_num * scale));
-			for (int num = 1; num < 160000; num++) {
-				if (forces[num][10] != -1) {
-					fprintf(file, "%d ", (int) forces[num][0]);
-					for (int i = 4; i < 10; i++)
-						fprintf(file, "%g ", forces[num][i] / scale);
-					fprintf(file, "		");
-					for (int i = 10; i < 13; i++)
-						fprintf(file, "%g ", forces[num][i]);
-					fprintf(file, "\n");
-				}
-			}
-			fclose(file);
+		 int scale = _simstep - _initSimulation + 1;
+		 cout << "dividing by " << scale << endl;
+		 fprintf(file, "num_total: %d \n", total_num);
+		 fprintf(file, "less than 90 percent for: %d molecules \n", less90);
+		 fprintf(file, "average individual diff %lg: \n", total_abs
+		 / total_num);
+		 fprintf(file, "avg_periodic: %lg 	avg_rdf: %lg, total_diff(wrt periodic) %lg total_dif(wrt rdf) %lg \n",
+		 total_periodic_force / (total_num * scale), total_rdf_force
+		 / (total_num * scale), (total_periodic_force
+		 - total_rdf_force) * 100 / total_periodic_force, (total_rdf_force
+		 - total_periodic_force) * 100 / total_rdf_force);
+		 fprintf(file, "avg periodic y %lg, avg periodic z %lg \n",
+		 total_periodic_y / (total_num * scale), total_periodic_z
+		 / (total_num * scale));
+		 for (int num = 1; num < 160000; num++) {
+		 if (forces[num][10] != -1) {
+		 fprintf(file, "%d ", (int) forces[num][0]);
+		 for (int i = 4; i < 10; i++)
+		 fprintf(file, "%g ", forces[num][i] / scale);
+		 fprintf(file, "		");
+		 for (int i = 10; i < 13; i++)
+		 fprintf(file, "%g ", forces[num][i]);
+		 fprintf(file, "\n");
+		 }
+		 }
+		 fclose(file);
 
-			for (int i = 1; i <= 160000; i++) {
-				delete[] forces[i];
-			}
-			delete[] forces;
-		}
-		*/
+		 for (int i = 1; i <= 160000; i++) {
+		 delete[] forces[i];
+		 }
+		 delete[] forces;
+		 }
+		 */
 	}
 	fclose(stepfile);
 
@@ -1732,8 +1780,6 @@ void Simulation::initialize() {
 	_integrator = NULL;
 	_inputReader = NULL;
 
-
-
 	/*
 	 * default parameters
 	 */
@@ -1764,7 +1810,8 @@ void Simulation::initialize() {
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... "
 			<< endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();//RDFDummyDecomposition(_particlePairsHandler, 0); //
+	_domainDecomposition = (DomainDecompBase*) new RDFDummyDecomposition(
+			_particlePairsHandler, 0); //DomainDecompDummy();//
 	global_log->info() << "Initialization done" << endl;
 #endif
 }

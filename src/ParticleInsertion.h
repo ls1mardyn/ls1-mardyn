@@ -13,6 +13,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <string>
+#include "Simulation.h"
 using namespace std;
 
 #define PI 3.1415926535
@@ -59,7 +60,8 @@ public:
 			int rotationsMax, double maxAngle, double maxAllowedAngle, double minAngle, double xiMax,
 			vector<double>* vec_energy, vector<double>* vec_angle,
 			vector<double*>* vec_lj, vector<double*>* vec_center,
-			string name_energy, string name_angle, string name_lj, string name_center) const;
+			string name_energy, string name_angle, string name_lj, string name_center,
+			double* allowed_low, double* allowed_high) const;
 
 	int rotateMolecule(Molecule* molecule,
 			moleculardynamics::coupling::interface::MardynMoleculeWrapper<Molecule,

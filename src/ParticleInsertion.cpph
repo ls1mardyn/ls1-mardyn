@@ -193,10 +193,10 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 		double minAngle, double xiMax, vector<double>* vec_energy, vector<
 				double>* vec_angle, vector<double*>* vec_lj,
 		vector<double*>* vec_center, string name_energy, string name_angle,
-		string name_lj, string name_center) const {
+		string name_lj, string name_center, double* allowed_low, double* allowed_high) const {
 
-	int numMolecules = thisCell.getMoleculeCount();
-	cout<<"numMol "<<numMolecules<<endl;
+	//int numMolecules = thisCell.getMoleculeCount();
+	//cout<<"numMol "<<numMolecules<<endl;
 	double* position = new double[3];
 
 	// absolute value of force
@@ -212,7 +212,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 	//FIXME: add a coefficient like in peter's implementation
 	// const double U_0 = _config.getMeanPotentialEnergyFactor() * thisCell.getPotentialEnergy();
 
-	vector<Molecule*> molecules = thisCell.getParticlePointers();
+	//vector<Molecule*> molecules = thisCell.getParticlePointers();
 	molecule->clearFM();
 
 	double* force = new double[3];
@@ -263,12 +263,14 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 				+ linkedCells->cellLength()[d] * rand() / (float) RAND_MAX;
 		}
 		*/
-		int dif = linkedCells->boundingBoxMax()[0]/linkedCells->cellLength()[0];
-		
+		int diff[3];
+		for (int d = 0; d < 3; d++) diff[d] = allowed_high[d] - allowed_low[d];
+
 		for (unsigned int d = 0; d < dim; d++) {
-				position[d] = linkedCells->boundingBoxMin()[d]
-						+ (9.0 / dif) *  linkedCells->boundingBoxMax()[d] * rand() / (float) RAND_MAX;
+				position[d] = allowed_low[d]
+					+ diff[d] * (rand() / (float) RAND_MAX);
 		}
+		
 		q = Quaternion(rand(), rand(), rand(), rand());
 		q.normalize();
 
@@ -354,8 +356,8 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			// restart searching if the new position of the particle is outside the macroscopic cell
 			bool out = false;
 			for (unsigned int d = 0; d < dim; d++) {
-				if ((position[d] >= (6.0 / dif) * linkedCells->boundingBoxMax()[d]) || (position[d]
-						<= (3.0 / dif) * linkedCells->boundingBoxMax()[d])) {
+				if (position[d] >= allowed_high[d] || position[d]
+						<= allowed_low[d]) {
 					out = true;
 				}
 			}
@@ -384,7 +386,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			
 				doLogging(vec_energy, vec_angle, vec_lj, vec_center,
 						name_energy, name_angle, name_lj, name_center);
-				cout<<"r: "<<molecule->r(0)<<" "<<molecule->r(1)<<" "<<molecule->r(2)<<endl;
+				cout<<"r: "<<molecule->r(0)<<" "<<molecule->r(1)<<" "<<molecule->r(2)<<" energy: "<<*energy<<endl;
 				return timestep;
 
 			}
@@ -426,7 +428,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			if (rotation == 1) {
 				doLogging(vec_energy, vec_angle, vec_lj, vec_center,
 						name_energy, name_angle, name_lj, name_center);
-				cout<<"r: "<<molecule->r(0)<<" "<<molecule->r(1)<<" "<<molecule->r(2)<<endl;
+				cout<<"r: "<<molecule->r(0)<<" "<<molecule->r(1)<<" "<<molecule->r(2)<<" energy: "<<*energy<<std::endl;
 				return timestep;
 			}
 			
