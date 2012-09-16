@@ -6,17 +6,36 @@
  *      Author: tijana
  */
 #include "parallel/DomainDecompDummy.h"
+#include "ensemble/PressureGradient.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "particleContainer/LinkedCells.h"
+
 #ifndef RDFDUMMYDECOMPOSITION_H_
 #define RDFDUMMYDECOMPOSITION_H_
 
-
-
 class RDFDummyDecomposition: public DomainDecompDummy {
 public:
-	RDFDummyDecomposition();
+	RDFDummyDecomposition(ParticlePairsHandler* ph, int boundary);
 	virtual ~RDFDummyDecomposition();
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
-	void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer,
+			const std::vector<Component>& components, Domain* domain);
+	void exchangeMolecules(ParticleContainer* moleculeContainer,
+			const std::vector<Component>& components, Domain* domain);
+private:
+	int rdfBoundary;
+	static bool have_avg_energy;
+	static int num_calles;
+	ParticlePairsHandler* _particlePairsHandler;
+
+	double randdouble(double a, double b) const {
+		return a + rand() * (b - a) / (RAND_MAX);
+	}
+
+	double getAverageEnergy(LinkedCells* linkedCells, double* rmin, double* rmax);
+	void generateRandomVelocity(double temperature,
+			double* v);
+
+	void generateRandomAngularVelocity(double temperature, double* w, Domain* domain, Molecule* currentMolecule);
 };
 
 #endif /* RDFDUMMYDECOMPOSITION_H_ */

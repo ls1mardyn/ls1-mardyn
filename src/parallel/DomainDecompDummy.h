@@ -31,7 +31,7 @@ public:
 	void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
 	//! @brief in the sequential version, no balancing is necessary --> calls exchangeMolecules
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
 
 	//! @brief returns true
 	//!
