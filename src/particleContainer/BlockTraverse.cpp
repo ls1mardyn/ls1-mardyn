@@ -26,13 +26,6 @@
 #include "ParticleCell.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "RDF.h"
-#include "molecules/potforce.h"
-#include "RDFForceIntegrator.h"
-#include "RDFForceIntegratorSite.h"
-#include "RDFForceIntegratorExtendedSite.h"
-#include "RDFForceIntegratorExact.h"
-#include "RDFForceIntegratorSiteSimpleScale.h"
 
 using namespace std;
 using Log::global_log;
@@ -146,23 +139,17 @@ void BlockTraverse::assignOffsets(
 	_backwardNeighbourOffsets->assign(_cells.size(), backwardNeighbourOffsets);
 }
 
-void BlockTraverse::traverseRDFBoundaryCartesian(
-		vector<vector<double> >* globalADist,
-		vector<vector<vector<double> > >* globalSiteADist,
-		ParticlePairsHandler* particlePairsHandler) {
-	double rc = _moleculeContainer->getCutoff();
-	RDFForceIntegrator* forceIntegrator = new RDFForceIntegratorExact(_moleculeContainer, rc,
-			globalADist, globalSiteADist);
-	forceIntegrator->traverseMolecules();
+double BlockTraverse::traverseRDFBoundary(
+		RDFForceIntegrator* forceIntegrator) {
+
+	return forceIntegrator->traverseMolecules();
 	// placeholder
 
 }
 
 
 void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
-		std::vector<std::string> rdf_file_names, int simstep, vector<vector<
-				double> >* globalADist,
-		vector<vector<vector<double> > >* globalSiteADist) {
+		RDFForceIntegrator* forceIntegrator) {
 
 	double _cutoffRadius = _moleculeContainer->getCutoff();
 	double _LJCutoffRadius = _moleculeContainer->getLJCutoff();
@@ -337,7 +324,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 						double force[3] = { 0, 0, 0 };
 						particlePairsHandler->processPair(molecule1, molecule2,
 								distanceVector, pairType, dd, (dd
-										< LJCutoffRadiusSquare), force, simstep);
+										< LJCutoffRadiusSquare), force);
 						if ((num_tersoff > 0) && (molecule2.numTersoff() > 0)
 								&& (dd < tersoffCutoffRadiusSquare)) {
 							particlePairsHandler->preprocessTersoffPair(
@@ -377,7 +364,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 													: MOLECULE_HALOMOLECULE;
 							particlePairsHandler->processPair(molecule1,
 									molecule2, distanceVector, pairType, dd,
-									(dd < LJCutoffRadiusSquare), force, simstep);
+									(dd < LJCutoffRadiusSquare), force);
 							if ((num_tersoff > 0) && (molecule2.numTersoff()
 									> 0) && (dd < tersoffCutoffRadiusSquare)) {
 								particlePairsHandler->preprocessTersoffPair(
@@ -421,11 +408,9 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 		}
 	}
 
-	if (rdf_file_names.size() > 0) {
-		//particlePairsHandler->traverseRDFBoundary( _moleculeContainer->getCutoff(), _moleculeContainer,
-		//		globalADist, globalSiteADist);
-		this->traverseRDFBoundaryCartesian(globalADist, globalSiteADist,
-				particlePairsHandler);
+	if (forceIntegrator != NULL) {
+		double u_pot = this->traverseRDFBoundary(forceIntegrator);
+		particlePairsHandler->addRDFInfluence(u_pot);
 
 	}
 	particlePairsHandler->finish();

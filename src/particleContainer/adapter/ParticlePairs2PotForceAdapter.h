@@ -24,7 +24,13 @@
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "RDF.h"
 #include "Domain.h"
+#include "particleContainer/RDFForceIntegrator.h"
+#include "particleContainer/RDFForceIntegratorSite.h"
+#include "particleContainer/RDFForceIntegratorExtendedSite.h"
+#include "particleContainer/RDFForceIntegratorExact.h"
+#include "particleContainer/RDFForceIntegratorSiteSimpleScale.h"
 
+class ParticleContainer;
 //! @brief calculate pair forces and collect macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
 //!
@@ -85,7 +91,7 @@ public:
 	 */
 	double processPair(Molecule& molecule1, Molecule& molecule2,
 			double distanceVector[3], PairType pairType, double dd,
-			bool calculateLJ = true, double* f = NULL, int simstep = 1) {
+			bool calculateLJ = true, double* f = NULL) {
 		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(),
 				molecule2.componentid());
 		params.reset_read();
@@ -102,7 +108,7 @@ public:
 		}
 
 		PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ,
-				_upotXpoles, _myRF, _virial, calculateLJ, f, boundary, simstep);
+				_upotXpoles, _myRF, _virial, calculateLJ, f, boundary);
 		return _upot6LJ + _upotXpoles;
 	case MOLECULE_HALOMOLECULE:
 
@@ -110,7 +116,7 @@ public:
 			boundary[0] = -1;
 
 		PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2,
-				dummy3, dummy4, calculateLJ, f, boundary, simstep);
+				dummy3, dummy4, calculateLJ, f, boundary);
 		return 0.0;
 	case MOLECULE_MOLECULE_FLUID:
 		dummy1 = 0.0; // 6*U_LJ
@@ -135,6 +141,8 @@ public:
 				dummy2, dummy3, dummy4, calculateLJ, f);
 
 		return dummy1 / 6.0 + dummy2 + dummy3;
+
+
 
 	default:
 		exit(666);
@@ -163,6 +171,17 @@ public:
 	//		this->_doRecordRDF = true;
 	//	}
 
+	/*
+	virtual void traverseRDFBoundary(double rc, ParticleContainer* moleculeContainer,
+			std::vector<std::vector<double> >* globalADist, std::vector<
+					std::vector<std::vector<double> > >* globalSiteADist) {
+		RDFForceIntegrator* forceIntegrator = new RDFForceIntegratorExact(
+				moleculeContainer, rc, globalADist, globalSiteADist);
+		forceIntegrator->traverseMolecules();
+	} */
+	void addRDFInfluence(double u_pot) {
+			_upot6LJ += u_pot;
+	}
 private:
 	//! @brief reference to the domain is needed to store the calculated macroscopic values
 	Domain& _domain;

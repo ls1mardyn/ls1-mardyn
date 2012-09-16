@@ -27,6 +27,14 @@
 #include <string>
 #include <cmath>
 #include <cstdlib>
+#include "RDF.h"
+#include "molecules/potforce.h"
+#include "RDFForceIntegrator.h"
+#include "RDFForceIntegratorSite.h"
+#include "RDFForceIntegratorExtendedSite.h"
+#include "RDFForceIntegratorExact.h"
+#include "RDFForceIntegratorSiteSimpleScale.h"
+
 class ParticleContainer;
 class ParticlePairsHandler;
 class RDF;
@@ -79,13 +87,10 @@ public:
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	void traversePairs(ParticlePairsHandler* particlePairsHandler, std::vector<std::string> rdf_file_names = std::vector<std::string>(), int simstep = 1, std::vector< std::vector<double> >* globalADist = NULL, std::vector<
-			std::vector< std::vector<double> > >* globalSiteADist = NULL);
+	void traversePairs(ParticlePairsHandler* particlePairsHandler, RDFForceIntegrator* forceIntegrator = NULL);
 
 
-	void traverseRDFBoundaryCartesian(std::vector<std::vector<double> >* globalAcc, std::vector<std::vector<
-			std::vector<double> > >* globalSiteAcc,
-			ParticlePairsHandler* particlePairsHandler);
+	double traverseRDFBoundary(RDFForceIntegrator* forceIntegrator);
 
 	//! @brief assign new (forward|backward)NeighbourOffsets
 	//!

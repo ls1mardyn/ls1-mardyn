@@ -33,8 +33,6 @@ class ChemicalPotential;
 class Molecule;
 class RDF;
 
-
-
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
 //!
@@ -126,8 +124,7 @@ public:
 	//! original and duplicated pairs. Details about how to handle pairs can be found
 	//! in the documentation for the class ParticlePairsHandler
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler, std::vector<std::string> file_names = std::vector<std::string>(), int simstep = 1, std::vector< std::vector<double> >* globalADist = NULL, std::vector<
-			std::vector< std::vector<double> > >* globalSiteADist = NULL) = 0;
+	virtual void traversePairs(ParticlePairsHandler* particlePairsHandler) = 0;
 
 	//! @return the number of particles stored in this container
 	//!
@@ -139,7 +136,6 @@ public:
 	//!
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMin(int dimension) const;
-
 
 	double getHaloWidthNumCells();
 	//! @brief returns one coordinate of the higher corner of the bounding box
@@ -162,7 +158,7 @@ public:
 
 	virtual Molecule* deleteCurrent() = 0;
 
-    /* TODO can we combine this with the update method? */
+	/* TODO can we combine this with the update method? */
 	//! @brief delete all Particles which are not within the bounding box
 	virtual void deleteOuterParticles() = 0;
 
@@ -177,28 +173,32 @@ public:
 	//! @brief fills the given list with pointers to all particles in the given region
 	//! @param lowCorner minimum x-, y- and z-coordinate of the region
 	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
+	virtual void getRegion(double lowCorner[3], double highCorner[3],
+			std::list<Molecule*> &particlePtrs) = 0;
 
 	virtual double getCutoff() = 0;
 	virtual double getLJCutoff() = 0;
 	virtual double getTersoffCutoff() = 0;
 
-    /* TODO: This goes into the component class */
+	/* TODO: This goes into the component class */
 	//! @brief counts all particles inside the bounding box
 	virtual unsigned countParticles(unsigned int cid) = 0;
 
-    /* TODO: This goes into the component class */
+	/* TODO: This goes into the component class */
 	//! @brief counts particles in the intersection of bounding box and control volume
-	virtual unsigned countParticles(unsigned int cid, double* cbottom, double* ctop) = 0;
+	virtual unsigned countParticles(unsigned int cid, double* cbottom,
+			double* ctop) = 0;
 
-    /* TODO: Have a look on this */
-	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
+	/* TODO: Have a look on this */
+	virtual void deleteMolecule(unsigned long molid, double x, double y,
+			double z) = 0;
 
-    /* TODO goes into grand canonical ensemble */
+	/* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(Molecule* m1, double* E = 0) = 0;
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
-	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) = 0;
+	virtual void grandcanonicalStep(ChemicalPotential* mu, double T,
+			Domain* domain) = 0;
 
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();
@@ -206,6 +206,14 @@ public:
 	void setPairsHandler(ParticlePairsHandler* p) {
 		_particlePairsHandler = p;
 	}
+
+	// gives the left lower coordinate (minimum in all directions)
+	virtual void getCellCoordinates(double* particlePosition,
+			double* cellPosition) {
+	}
+
+	virtual void setRDFArrays(std::vector<std::vector<double> >* ADist,
+			std::vector<std::vector<std::vector<double> > >* SiteADist) {}
 
 protected:
 

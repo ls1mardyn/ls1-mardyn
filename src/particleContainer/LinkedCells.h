@@ -23,6 +23,13 @@
 
 #include "particleContainer/ParticleContainer.h"
 #include "BlockTraverse.h"
+#include "RDF.h"
+#include "molecules/potforce.h"
+#include "RDFForceIntegrator.h"
+#include "RDFForceIntegratorSite.h"
+#include "RDFForceIntegratorExtendedSite.h"
+#include "RDFForceIntegratorExact.h"
+#include "RDFForceIntegratorSiteSimpleScale.h"
 
 #include <vector>
 
@@ -58,7 +65,7 @@ class DomainDecompBase;
 //! - boundary
 //! - inner
 
-class LinkedCells : public ParticleContainer {
+class LinkedCells: public ParticleContainer {
 public:
 	//! @brief initialize the Linked Cell datastructure
 	//!
@@ -94,15 +101,14 @@ public:
 	//!        ==> cellsPerDimension = phasespacelength/celllength = 100/1.5 = 66.67 cells \n
 	//!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
 	//!        ==> celllength = 100/66 = 1.5152
-	LinkedCells(
-		 double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		 double tersoffCutoffRadius, double cellsInCutoffRadius
-	);
+	LinkedCells(double bBoxMin[3], double bBoxMax[3], double cutoffRadius,
+			double LJCutoffRadius, double tersoffCutoffRadius,
+			double cellsInCutoffRadius);
 
 	//! Destructor
 	~LinkedCells();
 
-	double getHaloWidthNumCells(){
+	double getHaloWidthNumCells() {
 		return _haloWidthInNumCells[0];
 	}
 
@@ -137,8 +143,7 @@ public:
 	//!     If it is Halo, the force is calculated, if it isn't, the force is not calculated,
 	//!     because the same pair of cells has already been processed in one of the other loops.
 	//! @param particlePairsHandler specified concrete action to be done for each pair
-	void traversePairs(ParticlePairsHandler* particlePairsHandler, std::vector<std::string> rdf_file_names = std::vector<std::string>(), int simstep = 1, std::vector< std::vector<double> >* globalADist = NULL, std::vector<
-			std::vector< std::vector<double> > >* globalSiteADist = NULL);
+	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
@@ -177,7 +182,8 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::list<
+			Molecule*> &particlePtrs);
 
 	double getCutoff() {
 		return _cutoffRadius;
@@ -202,7 +208,6 @@ public:
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(Molecule* m1, double f[3]);
 
-
 	/* Gets the energy and the force, without modifying the force of the molecules in the container */
 	double getForceAndEnergy(Molecule* m1, double* f);
 
@@ -225,17 +230,14 @@ public:
 	}
 
 	double* cellLength() {
-		return _cellLength; 
+		return _cellLength;
 	}
-	
+
 #ifdef VTK
 	friend class VTKGridWriter;
 #endif
 
-
-
 	friend class StatisticsWriter;
-
 
 	//! @brief Get the index in the cell vector to which this Molecule belong
 	//!
@@ -246,7 +248,22 @@ public:
 	//! If the molecule is not inside the bounding box, an error is printed
 	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
-	ParticleCell getCell(int idx){ return _cells[idx];}
+	ParticleCell getCell(int idx) {
+		return _cells[idx];
+	}
+
+	void getCellCoordinates(double* particlePosition, double* cellPosition);
+
+	virtual void setRDFArrays(std::vector<std::vector<double> >* ADist,
+			std::vector<std::vector<std::vector<double> > >* SiteADist) {
+		globalADist = ADist;
+		globalSiteADist = SiteADist;
+		//forceIntegrator = new RDFForceIntegratorSite(this,
+		//	this->getCutoff(), globalADist, globalSiteADist);
+		forceIntegrator = new RDFForceIntegratorExact(this, this->getCutoff(),
+				globalADist, globalSiteADist);
+
+	}
 
 private:
 	//####################################
@@ -280,8 +297,6 @@ private:
 	//! of cells between the two cells (this is received by substracting one of the difference).
 	void calculateNeighbourIndices();
 
-	
-
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
 	//! A cell can be identified by a 3D index. \n
@@ -291,8 +306,6 @@ private:
 	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
 	unsigned long cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
-
-
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
@@ -340,7 +353,9 @@ private:
 
 	BlockTraverse _blockTraverse;
 
-
+	std::vector<std::vector<double> >* globalADist;
+	std::vector<std::vector<std::vector<double> > >* globalSiteADist;
+	RDFForceIntegrator* forceIntegrator;
 };
 
 #endif /*LINKEDCELLS_H_*/

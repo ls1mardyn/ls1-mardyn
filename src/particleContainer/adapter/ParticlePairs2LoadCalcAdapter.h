@@ -97,6 +97,13 @@ public:
 		return _globalLoadPerCell;
 	}
 
+	/*
+	virtual void traverseRDFBoundary(double rc, ParticleContainer* moleculeContainer,
+			std::vector<std::vector<double> >* globalADist, std::vector<
+					std::vector<std::vector<double> > >* globalSiteADist) {
+		std::cout<<"traversing rdf boundary only implemented for 2PotForce adapter"<<std::endl;
+	} */
+
 private:
 	int _globalCellsPerDim[3];
 	unsigned long _globalNumCells;

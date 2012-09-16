@@ -21,15 +21,16 @@ public:
 			std::vector<std::vector<std::vector<double> > >* globalSiteADist);
 	virtual ~RDFForceIntegrator();
 
-	virtual void traverseMolecules() = 0;
+	virtual double traverseMolecules() = 0;
 
+	virtual double processMolecule(Molecule* currentMolecule, double* force, bool add_influence = true) = 0;
 
 
 protected:
 	static ParticleContainer* _moleculeContainer;
 	static double _rc;
 	static double _high_limit[3], _low_limit[3], _rmax[3], _rmin[3];
-	int _numMolecules;
+	static int _numMolecules;
 	static std::vector<std::vector<double> >* _globalADist;
 	static std::vector<std::vector<std::vector<double> > >* _globalSiteADist;
 

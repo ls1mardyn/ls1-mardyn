@@ -23,13 +23,13 @@
 class RDF;
 
 typedef enum {
-    MOLECULE_MOLECULE = 0,      /**< molecule molecule */
-    MOLECULE_HALOMOLECULE = 1,  /**< molecule - halo molecule */
-    MOLECULE_MOLECULE_FLUID = 2, /**< molecule - molecule (fluid) */
-    MOLECULE_INSERTION = 3 /** < molecule - molecule, but the forces are only modified for one molecule
-							 which is being inserted*/
+	MOLECULE_MOLECULE = 0, /**< molecule molecule */
+	MOLECULE_HALOMOLECULE = 1, /**< molecule - halo molecule */
+	MOLECULE_MOLECULE_FLUID = 2, /**< molecule - molecule (fluid) */
+	MOLECULE_INSERTION = 3
+/** < molecule - molecule, but the forces are only modified for one molecule
+ which is being inserted*/
 } PairType;
-
 
 //! @brief interface for defining the action performed when processing a pair
 //! @author Martin Buchholz
@@ -60,7 +60,8 @@ typedef enum {
 class ParticlePairsHandler {
 public:
 	//! Constructor
-	ParticlePairsHandler() : _rdf( 0 ) {
+	ParticlePairsHandler() :
+		_rdf(0) {
 	}
 
 	//! Destructor
@@ -80,9 +81,13 @@ public:
 	//! @param distanceVector[3] distance between the two particles
 	//! @param pairType describes whether the pair is a original pair(0) or a duplicated pair(1)
 	//!                 for details about pair types see comments on traversePairs() in ParticleContainer
-	virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ, double* force = 0, int simstep = 1) = 0;
-	virtual void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) = 0;
-	virtual void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) = 0;
+	virtual double processPair(Molecule& particle1, Molecule& particle2,
+			double distanceVector[3], PairType pairType, double dd,
+			bool calculateLJ, double* force = 0) = 0;
+	virtual void preprocessTersoffPair(Molecule& particle1,
+			Molecule& particle2, bool pairType) = 0;
+	virtual void processTersoffAtom(Molecule& particle1, double params[15],
+			double delta_r) = 0;
 
 	/**
 	 * @todo it is not clean to have particleHandlers need to know about the rdf.
@@ -97,6 +102,14 @@ public:
 		this->_rdf = rdf;
 	}
 
+	// If RDF based boundaries are used instead of the periodic ones
+	/*
+	virtual void traverseRDFBoundary(double rc,
+			ParticleContainer* moleculeContainer, std::vector<std::vector<
+					double> >* globalADist, std::vector<std::vector<
+					std::vector<double> > >* globalSiteADist);
+	*/
+	virtual void addRDFInfluence(double u_rdf){}
 protected:
 	RDF* _rdf;
 };
