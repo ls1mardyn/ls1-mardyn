@@ -535,3 +535,14 @@ unsigned long Molecule::totalMemsize() const {
 
 	return size;
 }
+
+void Molecule::setv(double* v){
+	for (int i = 0; i < 3; i++)
+		_v[i] = v[i];
+}
+
+void Molecule::setD(double* D){
+	for (int i = 0; i < 3; i++) {
+		_D[i] = D[i];
+	}
+}

@@ -21,6 +21,7 @@
 
 #include "molecules/Molecule.h"
 #include "molecules/Comp2Param.h"
+#include <cassert>
 
 /// calculate potential and force between 2 Lennard-Jones 12-6 centers
 //inline void PotForceLJ(const double dr[3], const double& dr2, ParaStrm& params, double f[3], double& u)
@@ -304,8 +305,7 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
  */
 inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params,
 		double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF,
-		double& Virial, bool calculateLJ, double* f, int boundary[3] = NULL,
-		int simstep = 1)
+		double& Virial, bool calculateLJ, double* f, int boundary[3] = NULL)
 // ???better calc Virial, when molecule forces are calculated:
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
@@ -347,7 +347,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params,
 #endif
 					{
 						mi.Fljcenteradd(si, temp_f);
-
+						for (int d = 0; d < 3; d++) {
+							if (isnan(temp_f[d])) std::cout<<"nan caught "<<mi.id()<<" "<<mj.id()<<std::endl;
+						}
 						if (mj.r(0) < 0) {
 							// for the rdf - periodic comparison
 							mi.addLeftxInfluence(si, temp_f);

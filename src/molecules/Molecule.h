@@ -296,6 +296,10 @@ public:
 		}
 	}
 
+
+	void setv(double* v);
+	void setD(double* D);
+
 private:
 
 	unsigned long _id; 	/**< IDentification number of that molecule */
