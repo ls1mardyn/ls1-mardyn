@@ -18,7 +18,7 @@ public:
 			std::vector<std::vector<std::vector<double> > >* globalSiteADist);
 	virtual ~RDFForceIntegratorExtendedSite();
 
-	double traverseMolecules();
+	void traverseMolecules();
 
 	double processMolecule(Molecule* currentMolecule, double* force, bool add_influence = true){}
 

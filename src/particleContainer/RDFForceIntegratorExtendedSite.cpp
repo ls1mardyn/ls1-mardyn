@@ -35,9 +35,9 @@ std::vector<double> RDFForceIntegratorExtendedSite::rmids =
 		std::vector<double>();
 
 RDFForceIntegratorExtendedSite::RDFForceIntegratorExtendedSite(
-		ParticleContainer* moleculeContainer, double rc, std::vector<
-				std::vector<double> >* globalADist, std::vector<std::vector<
-				std::vector<double> > >* globalSiteADist) :
+		ParticleContainer* moleculeContainer, double rc,
+		std::vector<std::vector<double> >* globalADist,
+		std::vector<std::vector<std::vector<double> > >* globalSiteADist) :
 	RDFForceIntegrator(moleculeContainer, rc, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
 
@@ -57,7 +57,7 @@ void RDFForceIntegratorExtendedSite::precomputeScalingFactors() {
 
 	std::string
 			rdf_file =
-					"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc4_0-0.000090000.rdf";
+					"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc2_0-0.000090000.rdf";
 	std::vector<std::string> file_names;
 	file_names.push_back(rdf_file);
 
@@ -94,10 +94,10 @@ void RDFForceIntegratorExtendedSite::precomputeScalingFactors() {
 		for (unsigned int j = 0; j < totalComponents; j++) {
 			globalNondecliningDist.push_back(std::vector<double>());
 			globalNondecliningADist.push_back(std::vector<double>());
-			globalNondecliningSiteDist.push_back(std::vector<
-					std::vector<double> >());
-			globalNondecliningSiteADist.push_back(std::vector<std::vector<
-					double> >());
+			globalNondecliningSiteDist.push_back(
+					std::vector<std::vector<double> >());
+			globalNondecliningSiteADist.push_back(
+					std::vector<std::vector<double> >());
 			RDF::readRDFInputFile(file_names[i * totalComponents + j].c_str(),
 					i, j, numSites[i], numSites[j], &rmids,
 					&globalNondecliningDist[i * totalComponents + j],
@@ -116,6 +116,7 @@ void RDFForceIntegratorExtendedSite::precomputeScalingFactors() {
 	_d_alpha = 10; // angle spacing (degrees)
 	_n_alpha = (int) (360 / _d_alpha + 0.5); // num angles
 	_scaling_factors = new double[_n_levels * _n_n * _n_r]; // array for the factors
+
 
 	for (int i = 0; i < _n_levels * _n_n * _n_r; i++)
 		_scaling_factors[i] = -10; //initialize to some nonsense value
@@ -154,14 +155,15 @@ void RDFForceIntegratorExtendedSite::precomputeScalingFactors() {
 						// center coord
 						mol_x = x + _extension * cos(phi * PI / 180) * cos(
 								alpha * PI / 180);
-						mol_y = _extension * sin(phi * PI / 180) * cos(alpha
-								* PI / 180);
+						mol_y = _extension * sin(phi * PI / 180) * cos(
+								alpha * PI / 180);
 
 						// distance
-						curr_r = std::sqrt(curr_x * curr_x + curr_z * curr_z
-								+ curr_y * curr_y);
-						mol_r = std::sqrt(mol_x * mol_x + mol_y * mol_y + mol_z
-								* mol_z);
+						curr_r = std::sqrt(
+								curr_x * curr_x + curr_z * curr_z + curr_y
+										* curr_y);
+						mol_r = std::sqrt(
+								mol_x * mol_x + mol_y * mol_y + mol_z * mol_z);
 
 						curr_g = 1;
 
@@ -222,10 +224,10 @@ double RDFForceIntegratorExtendedSite::getScalingFactor(int idx_level,
 			phi = idx_phi * _d_alpha; // angle in plane
 
 			// site coord
-			curr_x = x + 2 * _extension * cos(phi * PI / 180) * cos(alpha * PI
-					/ 180);
-			curr_y = 2 * _extension * sin(phi * PI / 180) * cos(alpha * PI
-					/ 180);
+			curr_x = x + 2 * _extension * cos(phi * PI / 180) * cos(
+					alpha * PI / 180);
+			curr_y = 2 * _extension * sin(phi * PI / 180) * cos(
+					alpha * PI / 180);
 
 			// center coord
 			mol_x = x + _extension * cos(phi * PI / 180)
@@ -233,8 +235,8 @@ double RDFForceIntegratorExtendedSite::getScalingFactor(int idx_level,
 			mol_y = _extension * sin(phi * PI / 180) * cos(alpha * PI / 180);
 
 			// distance
-			curr_r = std::sqrt(curr_x * curr_x + curr_z * curr_z + curr_y
-					* curr_y);
+			curr_r = std::sqrt(
+					curr_x * curr_x + curr_z * curr_z + curr_y * curr_y);
 			mol_r = std::sqrt(mol_x * mol_x + mol_y * mol_y + mol_z * mol_z);
 
 			curr_g = 1;
@@ -284,8 +286,8 @@ void RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 	int bin, curr_bin; // bin for the radius that rdf is read for
 	double g;
 	for (double z = normal_dim[0] + _dn / 2; z <= normal_dim[1]; z += _dn) {
-		for (double x = _dr / 2; x <= std::sqrt(normal_dim[1] * normal_dim[1]
-				- z * z); x += _dr) {
+		for (double x = _dr / 2; x <= std::sqrt(
+				normal_dim[1] * normal_dim[1] - z * z); x += _dr) {
 			r = std::sqrt(x * x + z * z);
 			level = normal_dim[0] + _extension; // boundary level
 
@@ -301,7 +303,15 @@ void RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 				int idx_r = (int) (x / _dr);
 				int idx_level = (int) (level / _d_level + 0.5);
 				int idx_n = (int) ((z - normal_dim[0]) / _dn);
-				//std::cout<<"idxlevel: "<<idx_level<<" value "<< mol->r(plane) + mol->site_d(site)[plane] - _rmin[plane]<< "idx_n" <<idx_n<<" idx_r "<<idx_r<<std::endl;
+				/*
+				std::cout << "before: level: " << level << " normal " << z
+						 << " radial " << x << std::endl;
+				std::cout << "after: level" << idx_level * _d_level
+						<< " normal " << level - _extension + idx_n * _dn + _dn
+						/ 2 << " radial: " << idx_r * _dr + _dr / 2
+						<< std::endl;
+				*/
+
 				scale = //getScalingFactor(idx_level, idx_n, idx_r);
 						_scaling_factors[idx_level * _n_n * _n_r + idx_n * _n_r
 								+ idx_r];
@@ -369,7 +379,7 @@ void RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 	}
 }
 
-double RDFForceIntegratorExtendedSite::traverseMolecules() {
+void RDFForceIntegratorExtendedSite::traverseMolecules() {
 	Molecule* currentMolecule = _moleculeContainer->begin();
 	_extension = currentMolecule->ljcenter_disp(0);
 	// box size for the numerical quadrature
@@ -405,7 +415,7 @@ double RDFForceIntegratorExtendedSite::traverseMolecules() {
 			if (currentMolecule->numSites() != currentMolecule->numLJcenters()) {
 				std::cout
 						<< "Molecule consists of something other than LJ centers. In this case RDF cannot be used.";
-				return 0;
+				return;
 			}
 
 			int boundary[3] = { 2, 2, 2 };
@@ -429,7 +439,7 @@ double RDFForceIntegratorExtendedSite::traverseMolecules() {
 			// if molecule close to the boundary, add RDF force
 			// integration limits for axes
 
-			double normal_lim[2] = { 0, _rc + _extension + r[0] - rm[0]};
+			double normal_lim[2] = { 0, _rc + _extension + r[0] - rm[0] };
 
 			if (boundary[0] == -1) {
 				normal_lim[0] = std::abs(r[0] - _rmin[0] - _extension);
@@ -542,6 +552,6 @@ double RDFForceIntegratorExtendedSite::traverseMolecules() {
 			 */
 		}
 	}
-	return total_pot;
+
 }
 
