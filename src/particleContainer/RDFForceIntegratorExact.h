@@ -27,11 +27,10 @@ public:
 	double processMolecule(Molecule* currentMolecule, double* force, bool add_influence = true);
 
 private:
-	static double _dx, _dy, _dz, _extension, _dn, _dr, *_scaling_factors_xneg, *_scaling_factors_xpos, _d_alpha, _d_level, _rho, _g_start;
+	static double _dx, _dy, _dz, _extension, _dn, _dr, *_scaling_factors_x,  _d_alpha, _d_level, _rho, _g_start;
 	static int _n_r, _n_n, _n_levels, _n_alpha;
-	static bool called_xneg, called_xpos;
-	static void precomputeScalingFactorsXneg();
-	static void precomputeScalingFactorsXpos();
+	static bool called_x;
+	static void precomputeScalingFactorsX();
 	static std::vector<std::vector<double> > globalNondecliningDist;
 	static std::vector<std::vector<double> > globalNondecliningADist;
 	static std::vector<std::vector<std::vector<double> > >
