@@ -25,17 +25,26 @@ private:
 	int rdfBoundary;
 	static bool have_avg_energy;
 	static int num_calles;
+	static double* unif_rand;
+	static bool first_unif;
 	ParticlePairsHandler* _particlePairsHandler;
 
 	double randdouble(double a, double b) const {
 		return a + rand() * (b - a) / (RAND_MAX);
 	}
 
-	double getAverageEnergy(LinkedCells* linkedCells, double* rmin, double* rmax);
-	void generateRandomVelocity(double temperature,
-			double* v);
+	double getAverageEnergy(LinkedCells* linkedCells, double* rmin,
+			double* rmax);
+	void generateRandomVelocity(double temperature, double m, double* v);
 
-	void generateRandomAngularVelocity(double temperature, double* w, Domain* domain, Molecule* currentMolecule);
+	void generateRandomAngularVelocity(double temperature, double* w,
+			Domain* domain, Molecule* currentMolecule);
+
+	double getGaussianRandomNumber();
+	double getUniformRandomNumber();
+
+	void addPeriodicCopies(ParticleContainer* moleculeContainer, double* rmax,
+			double* rmin, double* phaseSpaceSize, double* halo_L, const std::vector<Component>& components);
 };
 
 #endif /* RDFDUMMYDECOMPOSITION_H_ */
