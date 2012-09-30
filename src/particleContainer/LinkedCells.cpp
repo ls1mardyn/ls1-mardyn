@@ -29,6 +29,7 @@
 #include "Domain.h"
 #include "utils/Logger.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
+#include "molecules/potforce.h"
 
 using namespace std;
 using Log::global_log;
@@ -41,8 +42,9 @@ using Log::global_log;
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 		double cutoffRadius, double LJCutoffRadius, double tersoffCutoffRadius,
 		double cellsInCutoffRadius) :
-	ParticleContainer(bBoxMin, bBoxMax), _blockTraverse(this, _cells,
-			_innerCellIndices, _boundaryCellIndices, _haloCellIndices) {
+			ParticleContainer(bBoxMin, bBoxMax),
+			_blockTraverse(this, _cells, _innerCellIndices,
+					_boundaryCellIndices, _haloCellIndices) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 	_LJCutoffRadius = LJCutoffRadius;
@@ -116,9 +118,10 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	int numberOfCells = 1;
 
 	for (int dim = 0; dim < 3; dim++) {
-		_cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim]
-				- this->_boundingBoxMin[dim]) / (_cutoffRadius
-				/ _haloWidthInNumCells[dim])) + 2 * _haloWidthInNumCells[dim];
+		_cellsPerDimension[dim] = (int) floor(
+				(this->_boundingBoxMax[dim] - this->_boundingBoxMin[dim])
+						/ (_cutoffRadius / _haloWidthInNumCells[dim])) + 2
+				* _haloWidthInNumCells[dim];
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
 			global_log->error() << "LinkedCells::rebuild: region to small"
@@ -257,15 +260,17 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 		if (cbottom[d] < this->_haloBoundingBoxMin[d])
 			minIndex[d] = 0;
 		else
-			minIndex[d] = (int) floor((cbottom[d]
-					- this->_haloBoundingBoxMin[d]) / _cellLength[d]);
+			minIndex[d] = (int) floor(
+					(cbottom[d] - this->_haloBoundingBoxMin[d])
+							/ _cellLength[d]);
 
 		if (ctop[d] > this->_haloBoundingBoxMax[d])
-			maxIndex[d] = (int) floor((this->_haloBoundingBoxMax[d]
-					- _haloBoundingBoxMin[d]) / this->_cellLength[d]);
+			maxIndex[d] = (int) floor(
+					(this->_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d])
+							/ this->_cellLength[d]);
 		else
-			maxIndex[d] = (int) floor((ctop[d] - this->_haloBoundingBoxMin[d])
-					/ _cellLength[d]);
+			maxIndex[d] = (int) floor(
+					(ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]);
 
 		if (minIndex[d] < 0)
 			minIndex[d] = 0;
@@ -358,9 +363,10 @@ Molecule* LinkedCells::end() {
 }
 
 Molecule* LinkedCells::deleteCurrent() {
-	std::cout<<"in the method, about to delete molecule "<<_particleIter->id()<<std::endl;
+	std::cout << "in the method, about to delete molecule "
+			<< _particleIter->id() << std::endl;
 	_particleIter = _particles.erase(_particleIter);
-	std::cout<<"here "<<std::endl;
+	std::cout << "here " << std::endl;
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
 	} else {
@@ -431,8 +437,8 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<
-		Molecule*> &particlePtrs) {
+void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
+		list<Molecule*> &particlePtrs) {
 	if (_cellsValid == false) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegion) invalid, call update first"
@@ -448,10 +454,12 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<
 	for (int dim = 0; dim < 3; dim++) {
 		if (lowCorner[dim] < this->_boundingBoxMax[dim] && highCorner[dim]
 				> this->_boundingBoxMin[dim]) {
-			startIndex[dim] = (int) floor((lowCorner[dim]
-					- _haloBoundingBoxMin[dim]) / _cellLength[dim]) - 1;
-			stopIndex[dim] = (int) floor((highCorner[dim]
-					- _haloBoundingBoxMin[dim]) / _cellLength[dim]) + 1;
+			startIndex[dim] = (int) floor(
+					(lowCorner[dim] - _haloBoundingBoxMin[dim])
+							/ _cellLength[dim]) - 1;
+			stopIndex[dim] = (int) floor(
+					(highCorner[dim] - _haloBoundingBoxMin[dim])
+							/ _cellLength[dim]) + 1;
 			if (startIndex[dim] < 0)
 				startIndex[dim] = 0;
 			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
@@ -591,8 +599,9 @@ unsigned long LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 			global_log->debug() << "Molecule:\n" << *molecule << endl;
 		}
 #endif
-		cellIndex[dim] = (int) floor((molecule->r(dim)
-				- _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+		cellIndex[dim] = (int) floor(
+				(molecule->r(dim) - _haloBoundingBoxMin[dim])
+						/ _cellLength[dim]);
 
 	}
 	return this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
@@ -609,8 +618,9 @@ void LinkedCells::getCellCoordinates(double* particlePosition,
 			global_log->error() << "Outside of bounding box" << endl;
 		}
 #endif
-		cellIndex[dim] = (int) floor((particlePosition[dim]
-				- _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+		cellIndex[dim] = (int) floor(
+				(particlePosition[dim] - _haloBoundingBoxMin[dim])
+						/ _cellLength[dim]);
 		cellCoord[dim] = cellIndex[dim] * _cellLength[dim];
 	}
 
@@ -624,13 +634,13 @@ unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex,
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 		double z) {
-
-	int ix = (int) floor((x - this->_haloBoundingBoxMin[0])
-			/ this->_cellLength[0]);
-	int iy = (int) floor((y - this->_haloBoundingBoxMin[1])
-			/ this->_cellLength[1]);
-	int iz = (int) floor((z - this->_haloBoundingBoxMin[2])
-			/ this->_cellLength[2]);
+	std::cout << "about to delete" << std::endl;
+	int ix = (int) floor(
+			(x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
+	int iy = (int) floor(
+			(y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
+	int iz = (int) floor(
+			(z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
 
 	unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
 	if (hash >= _cells.size()) {
@@ -651,84 +661,131 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 	}
 }
 
+
 double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 
+	std::vector<Molecule*>::iterator molIter2;
 	double u = 0.0;
+	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	//double total_f[3];
 	for (int i = 0; i < 3; i++)
 		total_f[i] = 0;
 	double f[3];
-
-	std::vector<Molecule*>::iterator molIter2;
-	vector<unsigned long>::iterator neighbourOffsetsIter;
-
-	// sqare of the cutoffradius
-	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
-	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double dd;
-	double distanceVector[3];
+	double distanceVector[3] = {0,0,0};
+	std::cout<<"entered"<<std::endl;
+	Molecule* mol = begin();
+	while (mol != end()) {
+		double dr[3] = {mol->r(0) - m1->r(0), mol->r(1) - m1->r(1), mol->r(2) - m1->r(2)};
+		double dr2 = std::sqrt(dr[0] * dr[0] + dr[1] * dr[1] + dr[2] * dr[2]);
 
-	unsigned long cellIndex = getCellIndexOfMolecule(m1);
-	ParticleCell& currentCell = _cells[cellIndex];
-
-	if (m1->numTersoff() > 0) {
-		global_log->error()
-				<< "The grand canonical ensemble is not implemented for solids."
-				<< endl;
-		exit(484);
-	}
-	// molecules in the cell
-	for (molIter2 = currentCell.getParticlePointers().begin(); molIter2
-			!= currentCell.getParticlePointers().end(); molIter2++) {
-		//cout<<"m1 id "<<m1->id()<<" m2 id"<<(*molIter2)->id()<<endl;
-		if (m1->id() == (*molIter2)->id())
+		if (dr2 > LJCutoffRadiusSquare) {
+			mol = next();
 			continue;
-		dd = (*molIter2)->dist2(*m1, distanceVector);
-		if (dd > cutoffRadiusSquare)
-			continue;
-
-		u += this->_particlePairsHandler->processPair(*m1, **molIter2,
-				distanceVector, MOLECULE_INSERTION, dd, (dd
-						< LJCutoffRadiusSquare), f);
-
-		for (int i = 0; i < 3; i++)
-			total_f[i] += f[i];
-
-	}
-
-	// backward and forward neighbours
-	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter
-			!= _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
-			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-
-		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2
-				!= neighbourCell.getParticlePointers().end(); molIter2++) {
-			dd = (*molIter2)->dist2(*m1, distanceVector);
-			//dd = cutoffRadiusSquare - 10;
-			if (dd > cutoffRadiusSquare)
-				continue;
-
-			for (int i = 0; i < 3; i++)
-				f[i] = 0;
-			u += this->_particlePairsHandler->processPair(*m1, **molIter2,
-					distanceVector, MOLECULE_INSERTION, dd, (dd
-							< LJCutoffRadiusSquare), f);
-			for (int i = 0; i < 3; i++)
-				total_f[i] += f[i];
 		}
-	}
 
-	if (globalADist != NULL && globalSiteADist != NULL) {
 		double f[3] = {0, 0, 0};
-		//std::cout<<"gsize: "<<(*globalADist).size()<<std::endl;
-		u += forceIntegrator->processMolecule(m1, f, false);
-		for (int i = 0; i < 3; i++)
-			total_f[i] += f[i];
+		double u6 =0;
+		if (mol->r(0) < _boundingBoxMin[0] || mol->r(0) > _boundingBoxMax[0]  ||
+			mol->r(1) < _boundingBoxMin[1] || mol->r(1) > _boundingBoxMax[1] ||
+			mol->r(2) < _boundingBoxMin[2] || mol->r(2) > _boundingBoxMax[2]) {
+			PotForceLJ(dr, dr2,
+					24 * m1->getEps(), m1->getSigma() * m1->getSigma(), f, u6);
+			u += u6/2;
+		}
+		mol = next();
 	}
 	return u;
 }
+
+// backup
+//double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
+//
+//	double u = 0.0;
+//	//double total_f[3];
+//	for (int i = 0; i < 3; i++)
+//		total_f[i] = 0;
+//	double f[3];
+//
+//	std::vector<Molecule*>::iterator molIter2;
+//	vector<unsigned long>::iterator neighbourOffsetsIter;
+//
+//	// sqare of the cutoffradius
+//	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+//	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
+//	double dd;
+//	double distanceVector[3];
+//
+//	unsigned long cellIndex = getCellIndexOfMolecule(m1);
+//	if (m1->r(0) < 0 || m1->r(1) < 0 || m1->r(2) < 0 || m1->r(0)
+//			> getBoundingBoxMax(0) || m1->r(1) > getBoundingBoxMax(1) || m1->r(
+//			2) > getBoundingBoxMax(2))
+//		std::cout << "molecule: " << m1->r(0) << " " << m1->r(1) << " "
+//				<< m1->r(2) << std::endl;
+//	ParticleCell& currentCell = _cells[cellIndex];
+//
+//	if (m1->numTersoff() > 0) {
+//		global_log->error()
+//				<< "The grand canonical ensemble is not implemented for solids."
+//				<< endl;
+//		exit(484);
+//	}
+//	// molecules in the cell
+//	for (molIter2 = currentCell.getParticlePointers().begin(); molIter2
+//			!= currentCell.getParticlePointers().end(); molIter2++) {
+//		//cout<<"m1 id "<<m1->id()<<" m2 id"<<(*molIter2)->id()<<endl;
+//		if (m1->id() == (*molIter2)->id())
+//			continue;
+//		dd = (*molIter2)->dist2(*m1, distanceVector);
+//		if (dd > cutoffRadiusSquare)
+//			continue;
+//
+//		u += this->_particlePairsHandler->processPair(*m1, **molIter2,
+//				distanceVector, MOLECULE_INSERTION, dd,
+//				(dd < LJCutoffRadiusSquare), f);
+//
+//		for (int i = 0; i < 3; i++)
+//			total_f[i] += f[i];
+//
+//	}
+//
+//	// backward and forward neighbours
+//	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter
+//			!= _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+//		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
+//			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+//
+//		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+//		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2
+//				!= neighbourCell.getParticlePointers().end(); molIter2++) {
+//			dd = (*molIter2)->dist2(*m1, distanceVector);
+//			//dd = cutoffRadiusSquare - 10;
+//			if (dd > cutoffRadiusSquare)
+//				continue;
+//
+//			for (int i = 0; i < 3; i++)
+//				f[i] = 0;
+//			u += this->_particlePairsHandler->processPair(*m1, **molIter2,
+//					distanceVector, MOLECULE_INSERTION, dd,
+//					(dd < LJCutoffRadiusSquare), f);
+//			for (int i = 0; i < 3; i++)
+//				total_f[i] += f[i];
+//		}
+//	}
+//
+//	if (globalADist != NULL && globalSiteADist != NULL) {
+//		double f[3] = { 0, 0, 0 };
+//		//std::cout<<"gsize: "<<(*globalADist).size()<<std::endl;
+//		double new_u = forceIntegrator->processMolecule(m1, f, false) / 6;
+//		u += new_u;
+//
+//		for (int i = 0; i < 3; i++)
+//			total_f[i] += f[i];
+//	}
+//	return u;
+//}
+
 
 double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 
@@ -767,8 +824,8 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 			continue;
 
 		u += this->_particlePairsHandler->processPair(*m1, **molIter2,
-				distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd
-						< LJCutoffRadiusSquare), f);
+				distanceVector, MOLECULE_MOLECULE_FLUID, dd,
+				(dd < LJCutoffRadiusSquare), f);
 		for (int i = 0; i < 3; i++)
 			total_f[i] += f[i];
 	}
@@ -790,16 +847,16 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 			for (int i = 0; i < 3; i++)
 				f[i] = 0;
 			u += this->_particlePairsHandler->processPair(*m1, **molIter2,
-					distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd
-							< LJCutoffRadiusSquare), f);
+					distanceVector, MOLECULE_MOLECULE_FLUID, dd,
+					(dd < LJCutoffRadiusSquare), f);
 			for (int i = 0; i < 3; i++)
 				total_f[i] += f[i];
 		}
 	}
 
 	if (globalADist != NULL && globalSiteADist != NULL) {
-		double f[3] = {0, 0, 0};
-		u += forceIntegrator->processMolecule(m1, f, false); //FIXME: should it be false?
+		double f[3] = { 0, 0, 0 };
+		u += forceIntegrator->processMolecule(m1, f, false) / 6; //FIXME: should it be false?
 		for (int i = 0; i < 3; i++)
 			total_f[i] += f[i];
 	}

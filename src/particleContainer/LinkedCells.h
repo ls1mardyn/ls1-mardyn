@@ -30,6 +30,7 @@
 #include "RDFForceIntegratorExtendedSite.h"
 #include "RDFForceIntegratorExact.h"
 #include "RDFForceIntegratorSiteSimpleScale.h"
+#include "RDFForceIntegratorExactOrient.h"
 
 #include <vector>
 
@@ -182,8 +183,8 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<
-			Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3],
+			std::list<Molecule*> &particlePtrs);
 
 	double getCutoff() {
 		return _cutoffRadius;
@@ -258,10 +259,15 @@ public:
 			std::vector<std::vector<std::vector<double> > >* SiteADist) {
 		globalADist = ADist;
 		globalSiteADist = SiteADist;
-		//forceIntegrator = new RDFForceIntegratorSite(this,
-		//	this->getCutoff(), globalADist, globalSiteADist);
+//		forceIntegrator = new RDFForceIntegratorExtendedSite(this,
+//				this->getCutoff(), globalADist, globalSiteADist);
+//
+//		forceIntegrator = new RDFForceIntegratorSite(this, this->getCutoff(),
+//				globalADist, globalSiteADist);
 		forceIntegrator = new RDFForceIntegratorExact(this, this->getCutoff(),
-				globalADist, globalSiteADist);
+						globalADist, globalSiteADist);
+		//		forceIntegrator = new RDFForceIntegratorExactOrient(this,
+		//				this->getCutoff(), globalADist, globalSiteADist);
 
 	}
 
