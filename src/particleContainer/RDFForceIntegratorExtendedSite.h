@@ -18,7 +18,7 @@ public:
 			std::vector<std::vector<std::vector<double> > >* globalSiteADist);
 	virtual ~RDFForceIntegratorExtendedSite();
 
-	void traverseMolecules();
+	double traverseMolecules();
 
 	double processMolecule(Molecule* currentMolecule, double* force, bool add_influence = true){}
 
@@ -28,7 +28,7 @@ private:
 	static int _n_r, _n_n, _n_levels, _n_alpha;
 	static bool called;
 	void integrateRDFSite(Molecule* currentMolecule, double* normal_dim,
-			int* boundary, int plane, unsigned int site);
+			int* boundary, int plane, unsigned int site, double* force, bool add_influence);
 	static void precomputeScalingFactors();
 	static std::vector<std::vector<double> > globalNondecliningDist;
 	static std::vector<std::vector<double> > globalNondecliningADist;
