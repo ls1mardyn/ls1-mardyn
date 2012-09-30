@@ -30,6 +30,8 @@ private:
 	static double _dx, _dy, _dz, _extension, _dn, _dr, *_scaling_factors_x,  _d_alpha, _d_level, _rho, _g_start;
 	static int _n_r, _n_n, _n_levels, _n_alpha;
 	static bool called_x;
+	static int timestep;
+	static double* rhos;
 	static void precomputeScalingFactorsX();
 	static std::vector<std::vector<double> > globalNondecliningDist;
 	static std::vector<std::vector<double> > globalNondecliningADist;

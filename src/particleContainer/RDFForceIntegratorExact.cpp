@@ -21,6 +21,8 @@ double RDFForceIntegratorExact::_dy = 0;
 double RDFForceIntegratorExact::_dz = 0;
 double RDFForceIntegratorExact::_rho = 0;
 double RDFForceIntegratorExact::_g_start = 0;
+int RDFForceIntegratorExact::timestep = 0;
+double* RDFForceIntegratorExact::rhos = NULL;
 
 double* RDFForceIntegratorExact::_scaling_factors_x = NULL;
 
@@ -38,7 +40,6 @@ std::vector<std::vector<std::vector<double> > >
 				std::vector<std::vector<double> > >();
 std::vector<double> RDFForceIntegratorExact::rmids = std::vector<double>();
 
-
 void RDFForceIntegratorExact::precomputeScalingFactorsX() {
 	if (called_x)
 		return;
@@ -47,7 +48,11 @@ void RDFForceIntegratorExact::precomputeScalingFactorsX() {
 
 	std::string
 			rdf_file =
-					"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
+					"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
+//	std::string
+//			rdf_file =
+//					"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_0.5a/rdf/rdf_Ethan_10k_0.5a_he_rc2_double_prolonged_0-0.000090000.rdf";
+
 	std::vector<std::string> file_names;
 	file_names.push_back(rdf_file);
 
@@ -84,10 +89,10 @@ void RDFForceIntegratorExact::precomputeScalingFactorsX() {
 		for (unsigned int j = 0; j < totalComponents; j++) {
 			globalNondecliningDist.push_back(std::vector<double>());
 			globalNondecliningADist.push_back(std::vector<double>());
-			globalNondecliningSiteDist.push_back(std::vector<
-					std::vector<double> >());
-			globalNondecliningSiteADist.push_back(std::vector<std::vector<
-					double> >());
+			globalNondecliningSiteDist.push_back(
+					std::vector<std::vector<double> >());
+			globalNondecliningSiteADist.push_back(
+					std::vector<std::vector<double> >());
 			RDF::readRDFInputFile(file_names[i * totalComponents + j].c_str(),
 					i, j, numSites[i], numSites[j], &rmids,
 					&globalNondecliningDist[i * totalComponents + j],
@@ -104,7 +109,7 @@ void RDFForceIntegratorExact::precomputeScalingFactorsX() {
 	_d_level = _dn;
 	_n_levels = (int) ((_rc + _extension) / _d_level + 0.5) + 1;
 	_n_n = (int) (2 * _extension / _dn + 0.5) + 1;
-	_d_alpha = 10;
+	_d_alpha = 5;
 	_n_r = (int) ((_rc + _extension) / _dr + 0.5) + 1;
 	_n_alpha = (int) (360 / _d_alpha + 0.5);
 	_scaling_factors_x = new double[_n_levels * _n_n * _n_r];
@@ -136,30 +141,30 @@ void RDFForceIntegratorExact::precomputeScalingFactorsX() {
 
 					for (int idx_phi = 0; idx_phi < _n_alpha; idx_phi++) {
 						phi = idx_phi * _d_alpha;
-						curr_radial = radial + _extension * cos(alpha * PI
-								/ 180) * cos(phi * PI / 180);
+						curr_radial = radial + _extension * cos(
+								alpha * PI / 180) * cos(phi * PI / 180);
 						curr_other = _extension * cos(alpha * PI / 180) * sin(
 								phi * PI / 180);
 
-						curr_r = std::sqrt((curr_normal - level) * (curr_normal
-								- level) + curr_radial * curr_radial
-								+ curr_other * curr_other);
+						curr_r = std::sqrt(
+								(curr_normal - level) * (curr_normal - level)
+										+ curr_radial * curr_radial
+										+ curr_other * curr_other);
 
 						curr_g = 0;
 						if (curr_r < _rc) {
 
 							curr_bin = (int) (curr_r
 									* globalNondecliningADist[0].size() / (_rc
-									+ 2 * _extension) - 0.5);
+									+ 2 * 2.2157048) - 0.5);
 							curr_g = globalNondecliningADist[0][curr_bin];
-							//std::cout<<"curr_bin "<<curr_bin<<" g "<<curr_g<<std::endl;
 						}
-						if (curr_normal > 0) {
+						if (curr_normal > 0 && curr_r < _rc) {
 							below += curr_g;
 						} else {
 							above += curr_g;
 						}
-						//std::cout<<"curr_z "<<curr_z<<" level "<<level<<" g "<<curr_g<<" curr_r "<<curr_r<<std::endl;
+						//std::cout<<"curr_z "<<curr_normal<<" level "<<level<<" g "<<curr_g<<" curr_r "<<curr_r<<std::endl;
 					}
 
 				}
@@ -185,14 +190,12 @@ double RDFForceIntegratorExact::checkScalingFactor(int idx_level, int idx_n,
 void RDFForceIntegratorExact::getScalingFactor(double* mol_r, double* site_r,
 		double x, double y, double z, int site_i, double* scale) {
 
-
-
 }
 
 RDFForceIntegratorExact::RDFForceIntegratorExact(
-		ParticleContainer* moleculeContainer, double rc, std::vector<
-				std::vector<double> >* globalADist, std::vector<std::vector<
-				std::vector<double> > >* globalSiteADist) :
+		ParticleContainer* moleculeContainer, double rc,
+		std::vector<std::vector<double> >* globalADist,
+		std::vector<std::vector<std::vector<double> > >* globalSiteADist) :
 	RDFForceIntegrator(moleculeContainer, rc, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
 
@@ -215,10 +218,25 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 	if (!called_x)
 		precomputeScalingFactorsX();
 
+	// center of molecule
+	double rm[3] = { currentMolecule->r(0), currentMolecule->r(1),
+			currentMolecule->r(2) };
+
+	int boundary[3] = { 0, 0, 0 };
+	if (rm[0] < _low_limit[0])
+		boundary[0] = -1;
+	else if (rm[0] > _high_limit[0])
+		boundary[0] = 1;
+	if (rm[1] < _low_limit[1])
+		boundary[1] = -1;
+	else if (rm[1] > _high_limit[1])
+		boundary[1] = 1;
+	if (rm[2] < _low_limit[2])
+		boundary[2] = -1;
+	else if (rm[2] > _high_limit[2])
+		boundary[2] = 1;
+
 	for (unsigned int site = 0; site < currentMolecule->numSites(); site++) {
-		// center of molecule
-		double rm[3] = { currentMolecule->r(0), currentMolecule->r(1),
-				currentMolecule->r(2) };
 
 		// current site
 		double r[3] = { currentMolecule->r(0)
@@ -244,19 +262,7 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 		}
 
 		// set where the boundary is
-		int boundary[3] = { 0, 0, 0 };
-		if (rm[0] < _low_limit[0])
-			boundary[0] = -1;
-		else if (rm[0] > _high_limit[0])
-			boundary[0] = 1;
-		if (rm[1] < _low_limit[1])
-			boundary[1] = -1;
-		else if (rm[1] > _high_limit[1])
-			boundary[1] = 1;
-		if (rm[2] < _low_limit[2])
-			boundary[2] = -1;
-		else if (rm[2] > _high_limit[2])
-			boundary[2] = 1;
+
 
 		//if (boundary[0] == 0 && boundary[1] == 0 && boundary[2] == 0)
 		if (boundary[0] != -1 && boundary[0] != 1)
@@ -284,24 +290,46 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 
 		}
 
-		h = std::abs(xlim[1] - xlim[0]);
+		h = std::min(_rc + _extension, std::abs(xlim[1] - xlim[0]));
 		a = std::sqrt(h * (2 * (_rc + _extension) - h));
 		ylim[0] = rm[1] - a;
 		ylim[1] = rm[1] + a;
 		zlim[0] = rm[2] - a;
 		zlim[1] = rm[2] + a;
 
+		for (int i = 0; i < 3; i++)
+			force[i] = 0;
 		// do the integration
 		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0,
 				site, boundary, add_influence, force);
 
+		//		if (force[0] == 0 && currentMolecule->id() == 4789) {
+		//			std::cout<<currentMolecule->id()<<"rm: "<<rm[0]<<" r: "<<r[0]<<" xlim: "<<xlim[0]<<" "<<xlim[1]<<" ylim: "<<ylim[0]<<" "<<ylim[1]<<" zlim: "<<zlim[0]<<" "<<zlim[1]<<std::endl;
+		//		}
+
+		if (rm[0] < 0.01 || rm[0] > _rmax[0] - 0.01) {
+			double diff, diffr;
+			if (boundary[0] == -1) {
+				diff = rm[0];
+				diffr = r[0];
+			}
+			if (boundary[0] == 1) {
+				diff = _rmax[0] - rm[0];
+				diffr = _rmax[0] - r[0];
+			}
+			std::cout << "rm: " << diff << " boundary " << boundary[0]
+					<< " sited " << diffr << " f: " << force[0] << " xlim "
+					<< xlim[0] << " " << xlim[1] << " diffx " << h << std::endl;
+		}
 	}
+
 	return pot;
 }
 double RDFForceIntegratorExact::traverseMolecules() {
+
 	Molecule* currentMolecule = _moleculeContainer->begin();
 	_extension = currentMolecule->ljcenter_disp(0);
-	_dx = _dy = _dz = _dr = _dn = currentMolecule->getSigma() / 10;
+	_dx = _dy = _dz = _dr = _dn = currentMolecule->getSigma() / 5;
 	double total_pot = 0;
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
 
@@ -321,17 +349,49 @@ double RDFForceIntegratorExact::traverseMolecules() {
 
 	// number density of the domain
 	//int numMolecules = _moleculeContainer->getNumberOfParticles();
-	_numMolecules = 9826;
+	_numMolecules = _moleculeContainer->countParticles(
+			_moleculeContainer->begin()->componentid(), _rmin, _rmax);
 	_rho = _numMolecules / (V);
+	std::cout << "num " << _numMolecules << std::endl;
+
+	int num_bins = 800;
+	int sample = 50;
+	if (timestep % sample == 0) {
+		rhos = new double[num_bins];
+		for (int i = 0; i < num_bins; i++)
+			rhos[i] = 0;
+	}
+
+	double length = (_moleculeContainer->getBoundingBoxMax(0)
+			- _moleculeContainer->getBoundingBoxMin(0)) / num_bins;
+	double binV = length * (_rmax[1] - _rmin[1]) * (_rmax[2] - _rmin[2]);
+	for (int i = 1; i <= num_bins; i++) {
+		double bottom[3] = { (i - 1) * length,
+				_moleculeContainer->getBoundingBoxMin(1),
+				_moleculeContainer->getBoundingBoxMin(2) };
+		double top[3] = { i * length, _moleculeContainer->getBoundingBoxMax(1),
+				_moleculeContainer->getBoundingBoxMax(2) };
+		int local_num = _moleculeContainer->countParticles(
+				_moleculeContainer->begin()->componentid(), bottom, top);
+		rhos[i - 1] += local_num;
+
+	}
 
 	// iterate through molecules and add rdf influence
 	for (currentMolecule = _moleculeContainer->begin(); currentMolecule
 			!= _moleculeContainer->end(); currentMolecule
 			= _moleculeContainer->next()) {
 		double force[3] = { 0, 0, 0 };
-		total_pot += this->processMolecule(currentMolecule, force, false);
+		int idx = (int) (currentMolecule->r(0) / length + 0.5);
+		//		if (timestep % (sample - 1) == 0 && timestep != 0)
+		//			_rho = rhos[idx] / (sample * binV);
+		//		if (idx == 799) {
+		//			std::cout << _rho * binV << std::endl;
+		//		}
+		total_pot += this->processMolecule(currentMolecule, force, true);
 
 	}
+	timestep++;
 	return total_pot;
 }
 
@@ -360,33 +420,41 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 		allowed_dist = h_rc * (2 * _rc - h_rc);//std::abs(ylim[0] - molr[1]) - _extension;
 	}
 
+	int cnt = 0;
+	double x;
 	// make sure it is integrated in the same direction for both upper and lower boundary
-	for (double x = xlim[0] - boundary[0] * _dx / 2; boundary[0] * x
-			>= boundary[0] * xlim[1]; x -= boundary[0] * _dx) {
+	for (x = xlim[0] - boundary[0] * _dx / 2; boundary[0] * x >= boundary[0]
+			* xlim[1]; x -= boundary[0] * _dx) {
 
+		cnt++;
+		int cnt2 = 0;
 		for (double y = ylim[0] + _dy / 2; y <= ylim[1]; y += _dy) {
+
 			for (double z = zlim[0] + _dz / 2; z <= zlim[1]; z += _dz) {
+				cnt2++;
 				// distance of cell center to molecule
 				double mold[3] = { molr[0] - x, molr[1] - y, molr[2] - z };
 
-				absmold = std::sqrt(mold[0] * mold[0] + mold[1] * mold[1]
-						+ mold[2] * mold[2]);
+				absmold = std::sqrt(
+						mold[0] * mold[0] + mold[1] * mold[1] + mold[2]
+								* mold[2]);
 
 				if (absmold > _rc + _extension)
 					continue;
 
 				double sited[3] = { siter[0] - x, siter[1] - y, siter[2] - z };
 
-				abssited = std::sqrt(sited[0] * sited[0] + sited[1] * sited[1]
-						+ sited[2] * sited[2]);
+				abssited = std::sqrt(
+						sited[0] * sited[0] + sited[1] * sited[1] + sited[2]
+								* sited[2]);
 
 				if (plane == 0) {
 					small_y = std::abs(y - molr[1]) - allowed_dist;
 					small_z = std::abs(z - molr[2]) - allowed_dist;
 				}
 
-				if (small_y > 0 && small_z > 0 && std::sqrt(small_y * small_y
-						+ small_z * small_z) > _extension) {
+				if (small_y > 0 && small_z > 0 && std::sqrt(
+						small_y * small_y + small_z * small_z) > _extension) {
 					continue;
 				}
 
@@ -396,13 +464,13 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 
 				if (plane == 0 && boundary[0] == -1 && std::abs(x) < _extension) {
 
-					int idx_level = (int) (molr[0] / _dn + 0.5);
+					int idx_level = (int) (molr[0] / _d_level + 0.5);
 					int idx_normal = (int) ((x + _extension) / _dn + 0.5);
-					int idx_r = (int) (std::sqrt((y - molr[1]) * (y - molr[1])
-							+ (z - molr[2]) * (z - molr[2])) / _dn + 0.5);
-
-					scale[0] = scale[1] = _scaling_factors_x[idx_level
-							* _n_n * _n_r + idx_normal * _n_r + idx_r];
+					int idx_r = (int) (std::sqrt(
+							(y - molr[1]) * (y - molr[1]) + (z - molr[2]) * (z
+									- molr[2])) / _dn + 0.5);
+					scale[0] = scale[1] = _scaling_factors_x[idx_level * _n_n
+							* _n_r + idx_normal * _n_r + idx_r];
 
 					//checkScalingFactor(idx_level, idx_normal, idx_r);
 					//getScalingFactor(molr, siter, x, y, z, site, scale);
@@ -412,21 +480,23 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 				if (plane == 0 && boundary[0] == 1 && std::abs(_rmax[0] - x)
 						<= _extension) {
 
-					int idx_level = (int) ((_rmax[0] - molr[0]) / _dn + 0.5);
+					int idx_level = (int) ((_rmax[0] - molr[0]) / _d_level
+							+ 0.5);
 
 					int idx_normal = (int) ((_rmax[0] - x + _extension) / _dn
 							+ 0.5);
-					int idx_r = (int) (std::sqrt((y - molr[1]) * (y - molr[1])
-							+ (z - molr[2]) * (z - molr[2])) / _dn + 0.5);
+					int idx_r = (int) (std::sqrt(
+							(y - molr[1]) * (y - molr[1]) + (z - molr[2]) * (z
+									- molr[2])) / _dn + 0.5);
 
-					scale[0] = scale[1] = _scaling_factors_x[idx_level
-							* _n_n * _n_r + idx_normal * _n_r + idx_r];
-//					std::cout << "scale pos: "
-//							<< _scaling_factors_xpos[idx_level * _n_n * _n_r
-//									+ idx_normal * _n_r + idx_r] << " "
-//							<< "scale neg: " << _scaling_factors_xneg[idx_level
-//							* _n_n * _n_r + idx_normal * _n_r + idx_r]
-//							<< std::endl;
+					scale[0] = scale[1] = _scaling_factors_x[idx_level * _n_n
+							* _n_r + idx_normal * _n_r + idx_r];
+					//					std::cout << "scale pos: "
+					//							<< _scaling_factors_xpos[idx_level * _n_n * _n_r
+					//									+ idx_normal * _n_r + idx_r] << " "
+					//							<< "scale neg: " << _scaling_factors_xneg[idx_level
+					//							* _n_n * _n_r + idx_normal * _n_r + idx_r]
+					//							<< std::endl;
 
 					//checkScalingFactor(idx_level, idx_normal, idx_r);
 				}
@@ -436,9 +506,12 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 
 
 				// rdf (probability) value
+				//				if (mol->id() == 4789 && scale[0] != 0) {
+				//					std::cout<<scale[0]<<std::endl;
+				//				}
 				bin = (int) (abssited * globalSiteAcc[site
 						* mol->numLJcenters() + site].size() / (_rc + 2
-						* _extension) - 0.5);
+						* 2.2157048) - 0.5);
 
 				g[0] = globalSiteAcc[site * mol->numLJcenters() + 0][bin];
 				g[1] = globalSiteAcc[site * mol->numLJcenters() + 1][bin];
@@ -450,7 +523,6 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 
 				g[0] *= scale[0];
 				g[1] *= scale[1];
-
 				double currPot = 0;
 				PotForceLJ(sited, abssited * abssited, 24 * mol->getEps(),
 						mol->getSigma() * mol->getSigma(), currf, currPot);
@@ -459,19 +531,20 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 				double f0[3] = { 0, 0, 0 };
 				double f1[3] = { 0, 0, 0 };
 
-				for (int d = 0; d < 3; d++) {
+				for (int d = 0; d < 1; d++) {
 					f0[d] = _rho * g[0] * currf[d] * _dx * _dy * _dz;
 					f1[d] = _rho * g[1] * currf[d] * _dx * _dy * _dz;
 				}
 				pot += _rho * g[0] * currPot * _dx * _dy * _dz;
 				pot += _rho * g[1] * currPot * _dx * _dy * _dz;
-
 				//if (f[0] > 0 && mol->id() == 18) cout<<"site: "<<site<<" r: "<<absr<<" value: "<<f[0]<<endl;
 				if (add_influence) {
-
-					mol->Fljcenteradd(site, f0);
-					mol->Fljcenteradd(site, f1);
+					//mol->Fljcenteradd(site, f0);
+					//mol->Fljcenteradd(site, f1);
+					mol->Fadd(f0);
+					mol->Fadd(f1);
 				}
+
 				if (boundary[0] == -1 && plane == 0) {
 					mol->addLeftxRdfInfluence(site, f0);
 					mol->addLeftxRdfInfluence(site, f1);
@@ -482,10 +555,29 @@ double RDFForceIntegratorExact::integrateRDFSiteCartesian(double xlim[2],
 					return_force[d] += f1[d];
 				}
 
+				//				if (cnt == 18 && cnt2 == 120 && scale[0] != 1 && scale[0] != 0
+				//						&& (molr[0] < 0.01 || molr[0] > _rmax[0] - 0.01)) {
+				//					double diff, diffr;
+				//					if (boundary[0] == -1) {
+				//						diff = molr[0];
+				//						diffr = siter[0];
+				//					}
+				//					if (boundary[0] == 1) {
+				//						diff = _rmax[0] - molr[0];
+				//						diffr = _rmax[0] - siter[0];
+				//					}
+				//					std::cout << "rm: " << diff << " boundary " << boundary[0]
+				//							<< " mold " << absmold << " siter " << diffr
+				//							<< " realsiter " << siter[0] <<" sited[0] " << sited[0] << " abssited "
+				//							<< abssited << " x " << x << " g "
+				//							<< g[site] / scale[0] <<" bin " << bin << " f0 " <<f0[0] << std::endl;
+				//				}
+
 			}
 
 		}
 
 	}
+
 	return pot;
 }
