@@ -27,6 +27,8 @@
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
+
+
 using namespace std;
 using Log::global_log;
 
@@ -139,10 +141,12 @@ void BlockTraverse::assignOffsets(
 	_backwardNeighbourOffsets->assign(_cells.size(), backwardNeighbourOffsets);
 }
 
+
 double BlockTraverse::traverseRDFBoundary(
 		RDFForceIntegrator* forceIntegrator) {
 
 	return forceIntegrator->traverseMolecules();
+
 	// placeholder
 
 }
@@ -409,7 +413,9 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 	}
 
 	if (forceIntegrator != NULL) {
+
 		double u_pot = this->traverseRDFBoundary(forceIntegrator);
+
 		particlePairsHandler->addRDFInfluence(u_pot);
 
 	}
