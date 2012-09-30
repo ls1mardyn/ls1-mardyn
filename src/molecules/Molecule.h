@@ -299,9 +299,14 @@ public:
 
 	void setv(double* v);
 	void setD(double* D);
+	double mass(){return _m;}
+
+	void bounceBack(int dim, double* axis);
+
+	void enableBouncingBack(double lowb, double highb, double lowspeed, double highspeed);
 
 private:
-
+	double _dt;
 	unsigned long _id; 	/**< IDentification number of that molecule */
 	unsigned int _componentid;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
@@ -346,7 +351,7 @@ private:
 	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS]; /* TODO: Comment */
 	int _numTersoffNeighbours;
 	double fixedx, fixedy;
-
+	double _low_boundary, _high_boundary, _low_boundary_speed, _high_boundary_speed;
 	// setup cache values/properties
 	void setupCache(const std::vector<Component>* components);
 

@@ -67,6 +67,9 @@ Molecule::Molecule(unsigned long id, unsigned int componentid, double rx,
 
 	if (components)
 		setupCache(components);
+
+	_low_boundary = _high_boundary = -1;
+	_low_boundary_speed = _high_boundary_speed = 0;
 }
 
 Molecule::Molecule(const Molecule& m) {
@@ -75,7 +78,6 @@ Molecule::Molecule(const Molecule& m) {
 	_leftxF = new double[3];
 	_leftxRdfSite = new double[6];
 	_leftxRdfF = new double[3];
-
 
 	for (int i = 0; i < 3; i++) {
 		_leftxRdfF[i] = 0;
@@ -151,6 +153,16 @@ Molecule::Molecule(const Molecule& m) {
 	_numTersoffNeighbours = 0;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
+
+	_low_boundary = _high_boundary = -1;
+	_low_boundary_speed = _high_boundary_speed = 0;
+}
+
+void Molecule::enableBouncingBack(double lowb, double highb, double lowspeed, double highspeed) {
+	_low_boundary = lowb;
+	_high_boundary = highb;
+	_low_boundary_speed = lowspeed;
+	_high_boundary_speed = highspeed;
 }
 
 void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
@@ -160,7 +172,9 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	for (unsigned short d = 0; d < 3; ++d) {
 		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
 		_r[d] += dt * _v[d];
+
 	}
+	_dt = dt;
 
 	double w[3];
 	_q.rotate(_D, w);
@@ -239,6 +253,30 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	}
 	assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
+
+	if (_low_boundary == _high_boundary && _low_boundary == -1)
+		return;
+
+	//std::cout<<"here"<<std::endl;
+
+	double t_c_low = (_r[0] - _low_boundary) / (_low_boundary_speed - _v[0]);
+	double t_c_high = (_r[0] - _high_boundary) / (_high_boundary_speed - _v[0]);
+
+	if (t_c_low < dt_halve * 2 && t_c_low > 0) {
+		double old_v = _v[0];
+		std::cout<<"post old: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+		_v[0] = old_v - 2 * (old_v - _low_boundary_speed);
+		_r[0] += t_c_low * old_v + (2 * dt_halve - t_c_low) * _v[0];
+		std::cout<<"pos new: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+	}
+
+	if (t_c_high < dt_halve * 2 && t_c_high > 0) {
+		double old_v = _v[0];
+		std::cout<<"post old: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+		_v[0] = old_v - 2 * (old_v - _high_boundary_speed);
+		_r[0] += t_c_high * old_v + (2 * dt_halve - t_c_high) * _v[0];
+		std::cout<<"pos new: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+	}
 }
 
 double Molecule::U_rot() {
@@ -382,7 +420,6 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 
 	_sites_d = new double[_numsites * 3];
 
-
 	assert(_sites_d);
 	_ljcenters_d = &(_sites_d[0]);
 	_charges_d = &(_ljcenters_d[numLJcenters() * 3]);
@@ -456,7 +493,7 @@ void Molecule::calcLeftxInfluence() {
 	}
 	for (unsigned int si = 0; si < ns; ++si) {
 		const double* leftxSite = &_leftxSite[3 * si];
-		const double* leftxRdfSite = & _leftxRdfSite[3 * si];
+		const double* leftxRdfSite = &_leftxRdfSite[3 * si];
 		leftxFAdd(leftxSite);
 		leftxRdfFAdd(leftxRdfSite);
 	}
@@ -536,13 +573,29 @@ unsigned long Molecule::totalMemsize() const {
 	return size;
 }
 
-void Molecule::setv(double* v){
+void Molecule::setv(double* v) {
 	for (int i = 0; i < 3; i++)
 		_v[i] = v[i];
 }
 
-void Molecule::setD(double* D){
+void Molecule::setD(double* D) {
 	for (int i = 0; i < 3; i++) {
 		_D[i] = D[i];
 	}
+}
+
+void Molecule::bounceBack(int dim, double* axis) {
+	_v[dim] = -_v[dim];
+	//	_D[dim] = -_D[dim];
+	for (int d = 0; d < 3; d++) {
+		_r[d] += _dt * _v[d];
+
+	}
+
+	//
+	//
+	//	double angle = 3.14/2;
+	//	_q.multiply_left(Quaternion(cos(angle / 2), axis[0] * sin(angle / 2),
+	//			axis[1] * sin(angle / 2), axis[2] * sin(angle / 2)));
+	//	upd_cache();
 }
