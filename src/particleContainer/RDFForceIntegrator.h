@@ -23,7 +23,7 @@ public:
 
 	virtual double traverseMolecules() = 0;
 
-	virtual double processMolecule(Molecule* currentMolecule, double* force, bool add_influence = true) = 0;
+	virtual double processMolecule(Molecule* currentMolecule, double* force, bool add_influence = true, bool unit_test = false) = 0;
 
 
 protected:
