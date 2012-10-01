@@ -24,6 +24,9 @@ public:
 	virtual ~TersoffTest();
 
 	void testTersoffbij();
+	void tersoffUIJplusUJI();
+	void tersoffUIJattr();
+	void tersoffPotential();
 
 };
 
