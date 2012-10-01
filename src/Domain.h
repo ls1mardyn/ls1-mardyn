@@ -370,6 +370,12 @@ public:
 	void record_cv();
 	double cv();
 
+    // by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	/* method returning the sigma parameter of a component 
+	=> needed in the output of the MmspdWriter (specifying the particles' radii in a movie) */
+	double getSigma(unsigned cid, unsigned nthSigma);
+	// needed for the MmspdWriter (MegaMol)
+	unsigned getNumberOfComponents();
 private:
 
 	//! rank of the local process

@@ -1093,6 +1093,15 @@ double Domain::cv()
 	return id + conf;
 }
 
+//! methods implemented by Stefan Becker <stefan.becker@mv.uni-kl.de>
+// the following two methods are used by the MmspdWriter (writing the output file in a format used by MegaMol)
+double Domain::getSigma(unsigned cid, unsigned nthSigma){
+  return _components[cid].getSigma(nthSigma);
+}
+unsigned Domain::getNumberOfComponents(){
+  return _components.size();
+}
+
 void Domain::submitDU(unsigned cid, double DU, double* r)
 {
    unsigned xun, yun, zun;

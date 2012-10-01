@@ -127,6 +127,10 @@ public:
 	double E() const { return _E_trans + _E_rot; }
 	double T() const { return _T; }
 
+	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	//! needed by the MegaMol output format
+	double getSigma(unsigned int i) const {return _ljcenters[i].sigma();}
+
 private:
 
 	void updateMassInertia(Site& site);

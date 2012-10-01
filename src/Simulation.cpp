@@ -723,6 +723,15 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 							<< std::endl;
 				}
 			}
+			// by Stefan Becker <stefan.becker@mv.uni-kl.de>
+			// output for the MegaMol Simple Particle Data File Format (*.mmspd)
+			else if (token == "MmspdWriter"){
+			      unsigned long writeFrequency = 0;
+			      string outputPathAndPrefix;
+			      inputfilestream >> writeFrequency >> outputPathAndPrefix;
+			      _outputPlugins.push_back(new MmspdWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
+			      global_log->debug() << "MmspdWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+			}
 		} else if (token == "accelerate") {
 			cosetid++;
 			inputfilestream >> token;

@@ -21,6 +21,8 @@
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
 #include "io/StatisticsWriter.h"
+// MmspdWriter by Stefan Becker <stefan.becker@mv.uni-kl.de>
+#include "io/MmspdWriter.h"
 #ifdef VTK
 #include "io/vtk/VTKMoleculeWriter.h"
 #include "io/vtk/VTKGridWriter.h"
