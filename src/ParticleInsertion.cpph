@@ -185,7 +185,7 @@ template<class Molecule, class LinkedCells, unsigned int dim>
 int moleculardynamics::coupling::ParticleInsertion<Molecule,
 		LinkedCells, dim>::findParticlePosition(
 		//moleculardynamics::coupling::MacroscopicCell<LinkedCells,dim>& thisCell,
-		LinkedCells* linkedCells, ParticleCell thisCell,
+		LinkedCells* linkedCells, 
 		Molecule* molecule, double U_0, double* energy,
 		double* energyOld, bool largeStepsizeOnOverlap,
 		bool restartIfIncreases, int seed, int intIterMax, int restartMax,
