@@ -52,7 +52,6 @@ public:
 	 */
 	int findParticlePosition(
 			LinkedCells* linkedCells,
-			ParticleCell thisCell,
 			Molecule* molecule,
 			double U_0, double* energy, double* old_energy,
 			bool largeStepsizeOnOverlap, bool restartIfIncreases, int seed,
