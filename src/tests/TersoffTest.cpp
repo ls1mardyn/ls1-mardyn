@@ -40,7 +40,7 @@ void TersoffTest::testTersoffbij() {
 	a.tersoffParameters(params);
 	
 	// Distance vector
-	double distance[3] = {1.0,0.0,0.0};
+	//double distance[3] = {1.0,0.0,0.0};
 
 	double dis;	
 	for (int i = 0; i < numTests; i++){	
@@ -151,7 +151,7 @@ void TersoffTest::tersoffPotential() {
 	
 	int numTests = 5;
 	// Test results
-	double expected[5] = {1.7674e31, 6.9530e29, 2.7354e28, 1.0761e27, 4.2335e25};
+	//double expected[5] = {1.7674e31, 6.9530e29, 2.7354e28, 1.0761e27, 4.2335e25};
 	double test = 0.0;
 
 	// Components for the molecules to test
@@ -179,7 +179,7 @@ void TersoffTest::tersoffPotential() {
 
 		test = TersoffPotential(&a, params, upotTersoff);
 		
-		double result = expected[i];
+		//double result = expected[i];
 		// ASSERT_DOUBLES_EQUAL(result, test, 1e-1);
 	}
 
