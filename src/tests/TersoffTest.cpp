@@ -50,13 +50,14 @@ void TersoffTest::testTersoffbij() {
 		double distance[3] = {dis,0.0,0.0};
 
 		// use component id 0 instead of 1! (the components-vector has only one component specified, see above!)
+		// eventually, move this out of the loop and use the move or setR methods?
 		Molecule b(1, 0, 0.0, 0.0, dis,0,0,0,0,0,0,0,0,0,0, &components);
 
 		// Add neighbours
 		a.addTersoffNeighbour(&b, true);
 		b.addTersoffNeighbour(&a, true);
 
-	//	test = Tersoffbij(&a, &b, params, distance, dis);
+		test = Tersoffbij(&a, &b, params, distance, dis);
 	
 		//ASSERT_DOUBLES_EQUAL(*expected[i], test, 1e-6);
 	}
