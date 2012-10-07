@@ -354,12 +354,6 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 	for (unsigned int cellIndex = 0; cellIndex < _subCells.size(); cellIndex++) {
 		ParticleCell& currentCell = _subCells[cellIndex];
 
-#ifdef NDEBUG
-		if (currentCell.getMoleculeCount() < 1) {
-			continue;
-		}
-#endif
-
 		// extend the window of cells with cache activated
 		if (cellIndex + _maxNeighbourOffset < _subCells.size()) {
 			#ifndef NDEBUG

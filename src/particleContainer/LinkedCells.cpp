@@ -315,12 +315,6 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		ParticleCell& currentCell = _cells[cellIndex];
 
-#ifdef NDEBUG
-		if (currentCell.getMoleculeCount() < 1) {
-			continue;
-		}
-#endif
-
 		// extend the window of cells with cache activated
 		if (cellIndex + _maxNeighbourOffset < _cells.size()) {
 			#ifndef NDEBUG
