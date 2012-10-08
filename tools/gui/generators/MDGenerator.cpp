@@ -93,7 +93,6 @@ void MDGenerator::generatePreview() {
 	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
 	double LJCutoffRadius = 3.0;
-	double tersoffCutoffRadius = 3.0;
 	double cellsInCutoffRadius = 1;
 
 	readPhaseSpaceHeader(&domain, 0);
@@ -107,7 +106,7 @@ void MDGenerator::generatePreview() {
 	_logger->info() << "MDGenerator: temperature=" << domain.getTargetTemperature(0) << endl;
 
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
+			LJCutoffRadius, cellsInCutoffRadius);
 
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
