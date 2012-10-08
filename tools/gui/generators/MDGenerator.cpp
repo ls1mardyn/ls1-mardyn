@@ -147,7 +147,6 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
 	double LJCutoffRadius = 3.0;
-	double tersoffCutoffRadius = 3.0;
 	double cellsInCutoffRadius = 1;
 
 	std::cout << "MDGenerator::generateOutput before read phasespace header!" << endl;
@@ -157,7 +156,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	bBoxMax[1] = domain.getGlobalLength(1);
 	bBoxMax[2] = domain.getGlobalLength(2);
 	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, tersoffCutoffRadius, cellsInCutoffRadius);
+			LJCutoffRadius, cellsInCutoffRadius);
 	std::cout << "MDGenerator::generateOutput before read phasespace!" << endl;
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	std::cout << "MDGenerator::generateOutput read phasespace done!" << endl;
