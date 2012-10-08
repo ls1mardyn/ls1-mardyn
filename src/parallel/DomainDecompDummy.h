@@ -38,7 +38,14 @@ public:
 	//! It is assumed that in the sequential version, the only process possesses all particles
 	//! Therefore, even for a position outside of the domain, true is returned
 	bool procOwnsPos(double x, double y, double z, Domain* domain) {
-		return true;
+		if (x < getBoundingBoxMin(0, domain) || x >= getBoundingBoxMax(0, domain))
+			return false;
+		else if (y < getBoundingBoxMin(1, domain) || y >= getBoundingBoxMax(1, domain))
+			return false;
+		else if (z < getBoundingBoxMin(2, domain) || z >= getBoundingBoxMax(2, domain))
+			return false;
+		else
+			return true;
 	}
 
 	// documentation see father class (DomainDecompBase.h)

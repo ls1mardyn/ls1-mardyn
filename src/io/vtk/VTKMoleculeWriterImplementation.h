@@ -39,15 +39,22 @@ private:
 	//! the rank of the process
 	int _rank;
 
-	//! if all LJ Centers should be ploted separately
-	bool _plotAllLJCenters;
+	//! if all centers should be ploted separately
+	bool _plotCenters;
+
+	enum CenterType { Charge = 1, LJ = 2, Dipole = 3, Quadrupole = 4, Tersoff = 5 };
+
+	/**
+	 * plots one single center
+	 */
+	void plotCenter(Molecule& molecule, int centerID, CenterType centerType);
 
 public:
 
 	/**
 	 * @param rank the MPI rank of the process
 	 */
-	VTKMoleculeWriterImplementation(int rank, bool plotAllLJCenters = false);
+	VTKMoleculeWriterImplementation(int rank, bool plotCenters = false);
 	virtual ~VTKMoleculeWriterImplementation();
 
 	void initializeVTKFile();

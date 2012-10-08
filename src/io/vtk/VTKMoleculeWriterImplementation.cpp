@@ -14,8 +14,8 @@
 
 using namespace Log;
 
-VTKMoleculeWriterImplementation::VTKMoleculeWriterImplementation(int rank, bool plotAllLJCenters)
-: _vtkFile(NULL), _parallelVTKFile(NULL), _numMoleculesPlotted(0), _rank(rank), _plotAllLJCenters(plotAllLJCenters) {
+VTKMoleculeWriterImplementation::VTKMoleculeWriterImplementation(int rank, bool plotCenters)
+: _vtkFile(NULL), _parallelVTKFile(NULL), _numMoleculesPlotted(0), _rank(rank), _plotCenters(plotCenters) {
 }
 
 VTKMoleculeWriterImplementation::~VTKMoleculeWriterImplementation() {
@@ -42,9 +42,11 @@ void VTKMoleculeWriterImplementation::initializeVTKFile() {
 	pointData.DataArray().push_back(componentId);
 	DataArray_t node_rank(type::Int32, "node-rank", 1);
 	pointData.DataArray().push_back(node_rank);
-	if (_plotAllLJCenters) {
+	if (_plotCenters) {
 		DataArray_t centerId(type::Float32, "center-id", 1);
 		pointData.DataArray().push_back(centerId);
+		DataArray_t centerType(type::UInt8, "center-type", 1);
+		pointData.DataArray().push_back(centerType);
 	}
 
 	CellData cellData; // we don't have cell data => leave it empty
@@ -65,6 +67,7 @@ void VTKMoleculeWriterImplementation::initializeVTKFile() {
 	_vtkFile->UnstructuredGrid(unstructuredGrid);
 }
 
+
 void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 
 #ifndef NDEBUG
@@ -74,41 +77,33 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 	}
 #endif
 
-	PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
-	PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
-	
-	if (_plotAllLJCenters) {
-		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
-			data_iterator->push_back(molecule.id());
+	if (_plotCenters) {
+		int centerID = 0;
+		for (size_t i = 0; i < molecule.numLJcenters(); i++) {
+			plotCenter(molecule, centerID, LJ);
+			centerID++;
 		}
-		data_iterator++;
-		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
-			data_iterator->push_back(molecule.componentid());
+		for (size_t i = 0; i < molecule.numCharges(); i++) {
+			plotCenter(molecule, centerID, Charge);
+			centerID++;
 		}
-		data_iterator++;
-		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
-			data_iterator->push_back(_rank);
+		for (size_t i = 0; i < molecule.numDipoles(); i++) {
+			plotCenter(molecule, centerID, Dipole);
+			centerID++;
 		}
-		data_iterator++;
-		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
-			data_iterator->push_back(i);
+		for (size_t i = 0; i < molecule.numQuadrupoles(); i++) {
+			plotCenter(molecule, centerID, Quadrupole);
+			centerID++;
 		}
-		Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
-		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
-		for (unsigned int i = 0; i < molecule.numLJcenters(); i++) {
-			const double* curr_center = molecule.ljcenter_d(i);
-			coordinates_iterator->push_back(molecule.r(0) + curr_center[0]);
-			coordinates_iterator->push_back(molecule.r(1) + curr_center[1]);
-			coordinates_iterator->push_back(molecule.r(2) + curr_center[2]);
-			_numMoleculesPlotted++;
+		for (size_t i = 0; i < molecule.numTersoff(); i++) {
+			plotCenter(molecule, centerID, Tersoff);
+			centerID++;
 		}
-		
-		
-
 
 	} else {
-
-	// id
+		PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
+		PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
+		// id
 		data_iterator->push_back(molecule.id());
 		data_iterator++;
 		// componentID
@@ -128,6 +123,32 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 	}
 }
 
+
+void VTKMoleculeWriterImplementation::plotCenter(Molecule& molecule, int centerID, CenterType centerType) {
+	PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
+	PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
+
+	data_iterator->push_back(molecule.id());
+	data_iterator++;
+
+	data_iterator->push_back(molecule.componentid());
+	data_iterator++;
+
+	data_iterator->push_back(_rank);
+	data_iterator++;
+	data_iterator->push_back(centerID);
+	data_iterator++;
+	data_iterator->push_back(centerType);
+
+	Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
+	Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
+
+	const double* curr_center = molecule.ljcenter_d(centerID);
+	coordinates_iterator->push_back(molecule.r(0) + curr_center[0]);
+	coordinates_iterator->push_back(molecule.r(1) + curr_center[1]);
+	coordinates_iterator->push_back(molecule.r(2) + curr_center[2]);
+	_numMoleculesPlotted++;
+}
 
 void  VTKMoleculeWriterImplementation::writeVTKFile(const std::string& fileName) {
 #ifndef NDEBUG
