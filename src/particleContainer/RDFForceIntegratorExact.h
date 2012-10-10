@@ -14,7 +14,7 @@
 
 class RDFForceIntegratorExact: public RDFForceIntegrator {
 public:
-	RDFForceIntegratorExact(ParticleContainer* moleculeContainer, double rc,
+	RDFForceIntegratorExact(ParticleContainer* moleculeContainer, double rc, double d,
 			std::vector<std::vector<double> >* globalADist, std::vector<
 					std::vector<std::vector<double> > >* globalSiteADist);
 	virtual ~RDFForceIntegratorExact();
@@ -28,19 +28,19 @@ public:
 
 
 	void prepareUnitTest(Molecule* m) {
-		_dx = _dy = _dz = _d_level = _dn = _dr = 10;
+		_d = _d_level = 10;
 		_d_alpha = 180;
 		_rho = 1;
 		_extension = m->ljcenter_disp(0);
 
 	}
-	static double* precomputeScalingFactorsX(bool unit_test = false);
+	double* precomputeScalingFactorsX(bool unit_test = false);
 private:
-	static double _dx, _dy, _dz, _extension, _dn, _dr, *_scaling_factors_x,  _d_alpha, _d_level, _rho, _g_start;
-	static int _n_r, _n_n, _n_levels, _n_alpha;
-	static bool called_x;
-	static int timestep;
-	static double* rhos;
+	double  _extension, *_scaling_factors_x,  _d_alpha, _d_level, _rho, _g_start;
+	int _n_r, _n_n, _n_levels, _n_alpha;
+	bool called_x;
+	int timestep;
+	double* rhos;
 
 	double integrateRDFSiteCartesian(double xlim[2], double ylim[2],
 			double zlim[2], Molecule* mol, int plane, unsigned int site,

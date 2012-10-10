@@ -8,22 +8,13 @@
 #include "RDFForceIntegrator.h"
 #include <cmath>
 
-std::vector<std::vector<std::vector<double> > >* RDFForceIntegrator::_globalSiteADist = NULL;
-std::vector<std::vector<double> >* RDFForceIntegrator::_globalADist = NULL;
-double RDFForceIntegrator::_rc = 0;
-double RDFForceIntegrator::_low_limit[3] = {0, 0, 0};
-double RDFForceIntegrator::_high_limit[3] = {0, 0, 0};
-double RDFForceIntegrator::_rmin[3] = {0, 0, 0};
-double RDFForceIntegrator::_rmax[3] = {0, 0, 0};
-ParticleContainer* RDFForceIntegrator::_moleculeContainer = NULL;
-int RDFForceIntegrator::_numMolecules = 9826;
 
-
-RDFForceIntegrator::RDFForceIntegrator(ParticleContainer* moleculeContainer, double rc, std::vector<std::vector<double> >* globalADist,
+RDFForceIntegrator::RDFForceIntegrator(ParticleContainer* moleculeContainer, double rc, double d, std::vector<std::vector<double> >* globalADist,
 		std::vector<std::vector<std::vector<double> > >* globalSiteADist) {
 
 	_moleculeContainer = moleculeContainer;
 	_rc = rc;
+	_d = d;
 	_globalADist = globalADist;
 	_globalSiteADist = globalSiteADist;
 	initTraversal();
