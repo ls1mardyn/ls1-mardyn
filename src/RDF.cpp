@@ -298,6 +298,21 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 	       << "\n# rho_j: " << rho_j << " (acc. " << rho_Aj << ")"
 	       << "\n# \n";
 
+	// new or alternative heading
+	rdfout << "#r\trdf\trdf_integral}\tacc_rdf acc_rdf_integral}\t\tdV\tNpair(curr.)\tNpair(accu.)\t\tnormalization(curr.)\tnormalization(accu.)";
+	if(ni+nj > 2) {
+		for(unsigned m=0; m < ni; m++) {
+			rdfout << "\t";
+			for(unsigned n=0; n < nj; n++) {
+                                Nsite_pair_int[m][n] = 0.0;
+                                Nsite_Apair_int[m][n] = 0.0;
+				rdfout << "\t(" << m << "," << n << ")_curr{rdf, rdf_integral}   (" << m << "," << n << ")_accu{rdf, rdf_integral}";
+			}
+		}
+	}
+	rdfout << "\n";
+    // end
+
 	double N_pair_int = 0.0;
 	double N_Apair_int = 0.0;
 	for(unsigned l=0; l < this->_bins; l++) {
