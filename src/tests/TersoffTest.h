@@ -10,7 +10,7 @@
 
 #include "utils/Testing.h"
 #include "molecules/potforce.h"
-
+/*
 class TersoffTest : public utils::Test {
 
 	TEST_SUITE(TersoffTest);
@@ -29,5 +29,5 @@ public:
 	void tersoffPotential();
 
 };
-
+*/
 #endif /* TERSOFFTEST_H_ */

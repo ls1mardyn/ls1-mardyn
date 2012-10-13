@@ -7,7 +7,7 @@
 
 #include "TersoffTest.h"
 #include "molecules/Molecule.h"
-
+/*
 TEST_SUITE_REGISTRATION(TersoffTest);
 
 TersoffTest::TersoffTest() {
@@ -186,6 +186,6 @@ void TersoffTest::tersoffPotential() {
 	}
 
 }
-
+*/
 
 
