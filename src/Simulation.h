@@ -20,6 +20,8 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include <sstream>
+
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 
@@ -107,6 +109,7 @@ public:
 	//!
 	~Simulation();
 
+	double* getDensityBins();
 
 	//! @brief Terminate simulation with a given exit code.
 	//!
@@ -421,6 +424,17 @@ private:
 	//! the value of h AS EXPRESSED IN REDUCED UNITS, i.e. for the
 	//! internal use of the program.
 	double h;
+
+	std::stringstream force_filestream, density_file_stream, site_density_file_stream,
+				site_orient_file_stream;
+
+	std::string rdf_file, rdf_file_nondeclining;
+	FILE *stepfile, *density_file, *site_density_file, *site_orient_file;
+	double* density_bins;
+	int rdf_integrator_type, dummy_decomp_type;
+	int points_per_sigma;
+	int particle_insertion_type;
+	bool rdf_add_influence;
 
 #ifdef STEEREO
 	SteereoSimSteering* _steer;

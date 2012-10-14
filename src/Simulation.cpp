@@ -21,7 +21,6 @@
 #include <iostream>
 #include <iterator>
 #include <string>
-#include <sstream>
 #include <iomanip>
 #include <limits>
 #include <cmath>
@@ -80,9 +79,22 @@ using namespace std;
 
 Simulation* global_simulation;
 
+double* Simulation::getDensityBins(){
+	return density_bins;
+}
+
 Simulation::Simulation() :
 	_rdf(NULL), _domainDecomposition(NULL) {
-
+	rdf_file = "";
+	rdf_file_nondeclining = "";
+	rdf_integrator_type = 0;
+	dummy_decomp_type = 0;
+	stepfile = density_file = site_density_file = site_orient_file = NULL;
+	rdf_add_influence = false;
+	particle_insertion_type = 0;
+	density_bins = new double[400];
+	for (int i = 0; i < 400; i++)
+		density_bins[i] = 0;
 	initialize();
 }
 
@@ -367,8 +379,8 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			string outputPathAndPrefix;
 			if (inp.getNodeValue("Resultwriter", outputPathAndPrefix)) {
 				// TODO: add the output frequency to the xml!
-				_outputPlugins.push_back(new ResultWriter(1,
-						outputPathAndPrefix));
+				_outputPlugins.push_back(
+						new ResultWriter(1, outputPathAndPrefix));
 				global_log->debug() << "ResultWriter '" << outputPathAndPrefix
 						<< "'.\n";
 			}
@@ -633,32 +645,35 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new ResultWriter(writeFrequency,
-						outputPathAndPrefix));
+				_outputPlugins.push_back(
+						new ResultWriter(writeFrequency, outputPathAndPrefix));
 				global_log->debug() << "ResultWriter '" << outputPathAndPrefix
 						<< "'.\n";
 			} else if (token == "XyzWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new XyzWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+				_outputPlugins.push_back(
+						new XyzWriter(writeFrequency, outputPathAndPrefix,
+								_numberOfTimesteps, true));
 				global_log->debug() << "XyzWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "CheckpointWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new CheckpointWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+				_outputPlugins.push_back(
+						new CheckpointWriter(writeFrequency,
+								outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "CheckpointWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "PovWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new PovWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+				_outputPlugins.push_back(
+						new PovWriter(writeFrequency, outputPathAndPrefix,
+								_numberOfTimesteps, true));
 				global_log->debug() << "POVWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "DecompWriter") {
@@ -667,16 +682,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> mode
 						>> outputPathAndPrefix;
-				_outputPlugins.push_back(new DecompWriter(writeFrequency, mode,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+				_outputPlugins.push_back(
+						new DecompWriter(writeFrequency, mode,
+								outputPathAndPrefix, _numberOfTimesteps, true));
 				global_log->debug() << "DecompWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			} else if ((token == "VisittWriter") || (token == "VISWriter")) {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new VISWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+				_outputPlugins.push_back(
+						new VISWriter(writeFrequency, outputPathAndPrefix,
+								_numberOfTimesteps, true));
 				global_log->debug() << "VISWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {
@@ -685,8 +702,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new VTKMoleculeWriter(writeFrequency,
-						outputPathAndPrefix));
+				_outputPlugins.push_back(
+						new VTKMoleculeWriter(writeFrequency,
+								outputPathAndPrefix));
 				global_log->debug() << "VTKWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 #else
@@ -699,9 +717,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 
 				if (_particleContainerType == LINKED_CELL) {
-					_outputPlugins.push_back(new VTKGridWriter(writeFrequency,
-							outputPathAndPrefix,
-							static_cast<LinkedCells&> (*_moleculeContainer)));
+					_outputPlugins.push_back(
+							new VTKGridWriter(
+									writeFrequency,
+									outputPathAndPrefix,
+									static_cast<LinkedCells&> (*_moleculeContainer)));
 					global_log->debug() << "VTKGridWriter " << writeFrequency
 							<< " '" << outputPathAndPrefix << "'.\n";
 				} else {
@@ -721,9 +741,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 
 				if (_particleContainerType == LINKED_CELL) {
-					_outputPlugins.push_back(new StatisticsWriter(
-							writeFrequency, outputPathAndPrefix,
-							static_cast<LinkedCells&> (*_moleculeContainer)));
+					_outputPlugins.push_back(
+							new StatisticsWriter(
+									writeFrequency,
+									outputPathAndPrefix,
+									static_cast<LinkedCells&> (*_moleculeContainer)));
 					global_log->debug() << "StatisticsWriter "
 							<< writeFrequency << " '" << outputPathAndPrefix
 							<< "'.\n";
@@ -846,7 +868,64 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			std::string RDFOutputPrefix;
 			inputfilestream >> RDFOutputPrefix;
 			_rdf->setOutputPrefix(RDFOutputPrefix);
-		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
+		} else if (token == "RDFIntegratorFile") {
+			inputfilestream >> rdf_file;
+		} else if (token == "ForceOutputFile") {
+			std::string temp;
+			inputfilestream >> temp;
+			force_filestream << temp;
+
+		} else if (token == "DensityOutputFile") {
+			std::string temp;
+			inputfilestream >> temp;
+			density_file_stream << temp;
+		} else if (token == "SiteDensityOutputFile") {
+			std::string temp;
+			inputfilestream >> temp;
+			site_density_file_stream << temp;
+		} else if (token == "SiteOrientationOutputFile") {
+			std::string temp;
+			inputfilestream >> temp;
+			site_orient_file_stream << temp;
+		} else if (token == "RDFForceIntegrator") {
+			inputfilestream >> token;
+			if (token == "exact")
+				rdf_integrator_type = 3;
+			else if (token == "extended_site")
+				rdf_integrator_type = 2;
+			else if (token == "site")
+				rdf_integrator_type = 1;
+		} else if (token == "RDFIntegratorFileProlonged") {
+			inputfilestream >> rdf_file_nondeclining;
+		} else if (token == "RDFDecompType") {
+			inputfilestream >> token;
+
+			if (token == "1") {
+				dummy_decomp_type = 1;
+				_domainDecomposition
+						= (DomainDecompBase*) new RDFDummyDecomposition(
+								_particlePairsHandler, 0, particle_insertion_type, this);
+				std::cout << "using RDFDummyDecomp" << std::endl;
+
+			} else {
+				dummy_decomp_type = 0;
+				_domainDecomposition
+						= (DomainDecompBase*) new DomainDecompDummy();
+				std::cout << "using DomainDecompDummy" << std::endl;
+			}
+		} else if (token == "RDFQuadraturePointsPerSigma") {
+			inputfilestream >> points_per_sigma;
+		} else if (token == "ParticleReflectionInsertion") {
+			inputfilestream >> token;
+			if (token == "wall") {
+				particle_insertion_type = 0;
+
+			} else if (token == "usher") {
+				particle_insertion_type = 1;
+			}
+
+	    } else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
+
 			unsigned cid;
 			inputfilestream >> cid;
 			cid--;
@@ -1038,10 +1117,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 }
 
 void Simulation::prepare_start() {
-	std::string
-			rdf_file =
-					"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf";
-	//std::string rdf_file = "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/rdf/rdf_Ethan_10k_0a_he_rc1.5_0-0.000080000.rdf";
+
 	std::vector<std::string> file_names;
 	file_names.push_back(rdf_file);
 
@@ -1088,16 +1164,18 @@ void Simulation::prepare_start() {
 			globalSiteDist.push_back(vector<vector<double> > ());
 			globalSiteADist.push_back(vector<vector<double> > ());
 			RDF::readRDFInputFile(file_names[i * totalComponents + j].c_str(),
-					i, j, numSites[i], numSites[j], &rmids, &globalDist[i
-							* totalComponents + j], &globalADist[i
-							* totalComponents + j], &globalSiteDist[i
-							* totalComponents + j], &globalSiteADist[i
-							* totalComponents + j]);
+					i, j, numSites[i], numSites[j], &rmids,
+					&globalDist[i * totalComponents + j],
+					&globalADist[i * totalComponents + j],
+					&globalSiteDist[i * totalComponents + j],
+					&globalSiteADist[i * totalComponents + j]);
 		}
 	}
 	cout << "size: " << globalADist[0].size() << endl;
 
-	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist);
+	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist,
+			_moleculeContainer->begin()->getSigma() / points_per_sigma,
+			rdf_integrator_type, rdf_file_nondeclining);
 
 	global_log->info() << "Initializing simulation" << endl;
 
@@ -1131,8 +1209,8 @@ void Simulation::prepare_start() {
 		unsigned long uCAT = _pressureGradient->getUCAT();
 		global_log->info() << "uCAT: " << uCAT << " steps." << endl;
 		_pressureGradient->determineAdditionalAcceleration(
-				_domainDecomposition, _moleculeContainer, uCAT
-						* _integrator->getTimestepLength());
+				_domainDecomposition, _moleculeContainer,
+				uCAT * _integrator->getTimestepLength());
 		global_log->info() << "Uniform acceleration initialised." << endl;
 	}
 
@@ -1204,30 +1282,38 @@ void Simulation::prepare_start() {
 }
 
 void Simulation::simulate() {
+
+	if (density_file_stream.rdbuf()->in_avail() != 0) {
+		density_file_stream << _moleculeContainer->getCutoff()
+				<< "_density.txt";
+		density_file = fopen(density_file_stream.str().c_str(), "w");
+	}
+
+	if (site_density_file_stream.rdbuf()->in_avail() != 0) {
+		site_density_file_stream << _moleculeContainer->getCutoff()
+				<< "_site_density.txt";
+		site_density_file = fopen(site_density_file_stream.str().c_str(), "w");
+	}
+
+	if (site_orient_file_stream.rdbuf()->in_avail() != 0) {
+		site_orient_file_stream << _moleculeContainer->getCutoff()
+				<< "_site_orientation.txt";
+		site_orient_file = fopen(site_orient_file_stream.str().c_str(), "w");
+	}
+
+	if (force_filestream.rdbuf()->in_avail() != 0) {
+		force_filestream << _moleculeContainer->getCutoff()
+				<< "_avg_force_per_step.txt";
+		stepfile = fopen(force_filestream.str().c_str(), "w");
+	}
+
+	std::cout << "force " << force_filestream.str() << std::endl;
+	std::cout << "density " << density_file_stream.str() << std::endl;
+	std::cout << "site density " << site_density_file_stream.str() << std::endl;
+	std::cout << "site orient " << site_orient_file_stream.str() << std::endl;
+
 	std::vector<std::string> file_names;
-	stringstream ss;
-
-	// tx
-	ss
-			<< "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/results_coupled_no_lb/Ethan_10k_eps_"
-			<< _moleculeContainer->getCutoff()
-			<< "_avg_force_per_step_trunc.txt";
-	//ss
-	//		<< "/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/results_coupled_no_lb/Ethan_10k_0a_"
-	//		<< _moleculeContainer->getCutoff()
-	//		<< "_avg_force_per_step_trunc.txt";
-
-	FILE* stepfile = fopen(ss.str().c_str(), "w");
-	file_names.push_back(
-			"/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/rdf/rdf_Ethan_10k_eps_double_prolonged_rc1.5_0-0.000090000.rdf");
-	//file_names.push_back("/home/tijana/Desktop/thesis/tijana/Ethan_10k_0a/rdf/rdf_Ethan_10k_0a_he_rc1.5_0-0.000080000.rdf");
-
-	stringstream density_file_stream;
-	density_file_stream
-			<< "/home/tijana/Desktop/thesis/tijana/Ethan_10k_epsilon/prolonged/results_coupled_no_lb/density/Ethan_10k_0a_"
-			<< _moleculeContainer->getCutoff() << "density.txt";
-	FILE* density_file = fopen(density_file_stream.str().c_str(), "w");
-
+	file_names.push_back(rdf_file);
 	Molecule* tM;
 	global_log->info() << "Started simulation" << endl;
 	// added by tijana because of getEnergy(...) in LinkedCells
@@ -1309,14 +1395,16 @@ void Simulation::simulate() {
 			globalSiteDist.push_back(vector<vector<double> > ());
 			globalSiteADist.push_back(vector<vector<double> > ());
 			RDF::readRDFInputFile(file_names[i * totalComponents + j].c_str(),
-					i, j, numSites[i], numSites[j], &rmids, &globalDist[i
-							* totalComponents + j], &globalADist[i
-							* totalComponents + j], &globalSiteDist[i
-							* totalComponents + j], &globalSiteADist[i
-							* totalComponents + j]);
+					i, j, numSites[i], numSites[j], &rmids,
+					&globalDist[i * totalComponents + j],
+					&globalADist[i * totalComponents + j],
+					&globalSiteDist[i * totalComponents + j],
+					&globalSiteADist[i * totalComponents + j]);
 		}
 	}
-	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist);
+	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist,
+			_moleculeContainer->begin()->getSigma() / points_per_sigma,
+			rdf_integrator_type, rdf_file_nondeclining);
 	loopTimer.start();
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
@@ -1354,14 +1442,21 @@ void Simulation::simulate() {
 		decompositionTimer.stop();
 		loopTimer.start();
 
-		int num_bins = 50;
 		if (_simstep % 10 == 1) {
-
+			int num_bins = 400;
+			int* site_bins = new int[num_bins];
+			double* site_orient = new double[num_bins];
+			int* site_orient_bins = new int[num_bins];
+			int* bins = new int[num_bins];
+			for (int i = 0; i < num_bins; i++) {
+				site_bins[i] = 0;
+				site_orient[i] = 0;
+				bins[i] = 0;
+				site_orient_bins[i] = 0;
+			}
+			int sum = 0;
 			double length = (_moleculeContainer->getBoundingBoxMax(0)
 					- _moleculeContainer->getBoundingBoxMin(0)) / num_bins;
-
-			int sum = 0;
-
 			for (int i = 1; i <= num_bins; i++) {
 				double bottom[3] = { (i - 1) * length,
 						_moleculeContainer->getBoundingBoxMin(1),
@@ -1374,12 +1469,93 @@ void Simulation::simulate() {
 								_moleculeContainer->begin()->componentid(),
 								bottom, top);
 				sum += local_num;
-				fprintf(density_file, "%d ", local_num);
+				bins[i - 1] = local_num;
+				if (density_file != NULL)
+					fprintf(density_file, "%d ", local_num);
 			}
-			fprintf(density_file, "\n");
-			fflush(density_file);
+			std::cout << "length " << length << std::endl;
+			for (Molecule* mol = _moleculeContainer->begin(); mol
+					!= _moleculeContainer->end(); mol
+					= _moleculeContainer->next()) {
+				int idx1 = (int) ((mol->r(0) + mol->site_d(0)[0]) / length);
+				int idx2 = (int) ((mol->r(0) + mol->site_d(1)[0]) / length);
+				int idx_mol = (int) (mol->r(0) / length);
 
-			std::cout << "sum: " << sum << std::endl;
+				if (mol->r(0) > _moleculeContainer->getBoundingBoxMin(0)
+						&& mol->r(0) < _moleculeContainer->getBoundingBoxMax(0)
+						&& mol->r(1) > _moleculeContainer->getBoundingBoxMin(1)
+						&& mol->r(1) < _moleculeContainer->getBoundingBoxMax(1)
+						&& mol->r(2) > _moleculeContainer->getBoundingBoxMin(2)
+						&& mol->r(2) < _moleculeContainer->getBoundingBoxMax(2)
+						&& mol->r(0) + mol->site_d(0)[0]
+								> _moleculeContainer->getBoundingBoxMin(0)
+						&& mol->r(0) + mol->site_d(1)[0]
+								> _moleculeContainer->getBoundingBoxMin(0)) {
+					if (idx1 >= 0 && idx1 < num_bins)
+						site_bins[idx1]++;
+					if (idx2 >= 0 && idx2 < num_bins)
+						site_bins[idx2]++;
+
+				}
+				if (mol->r(0) >= _moleculeContainer->getBoundingBoxMin(0)
+						&& mol->r(0)
+								<= _moleculeContainer->getBoundingBoxMax(0)
+						&& mol->r(1)
+								>= _moleculeContainer->getBoundingBoxMin(1)
+						&& mol->r(1)
+								<= _moleculeContainer->getBoundingBoxMax(1)
+						&& mol->r(2)
+								>= _moleculeContainer->getBoundingBoxMin(2)
+						&& mol->r(2)
+								<= _moleculeContainer->getBoundingBoxMax(2)) {
+					site_orient[idx_mol] += std::abs(mol->site_d(0)[0]);
+					site_orient_bins[idx_mol]++;
+
+				}
+
+			}
+			int site_sum = 0;
+			for (int i = 0; i < num_bins; i++) {
+				density_bins[i] = site_orient_bins[i];
+				if (site_density_file != NULL)
+					fprintf(site_density_file, "%d ", site_bins[i]);
+				if (site_orient_file != NULL) {
+					if (site_orient_bins[i] > 0)
+						fprintf(site_orient_file, "%g ",
+							site_orient[i] / site_orient_bins[i]);
+					else fprintf(site_orient_file, "%g ", 0.0);
+				}
+
+				site_sum += site_bins[i];
+			}
+
+			//			for (int i = 0; i < num_bins; i++) {
+			//				if (density_file != NULL)
+			//					fprintf(density_file, "%d ", site_orient_bins[i]);
+			//			}
+
+			if (site_density_file != NULL) {
+				fprintf(site_density_file, "\n");
+				fflush(site_density_file);
+			}
+
+			if (density_file != NULL) {
+				fprintf(density_file, "\n");
+				fflush(density_file);
+			}
+
+			if (site_orient_file != NULL) {
+				fprintf(site_orient_file, "\n");
+				fflush(site_orient_file);
+			}
+
+			//delete site_bins;
+			std::cout << "sum: " << sum << " site sum: " << site_sum
+					<< std::endl;
+
+			delete site_bins;
+			delete bins;
+			delete site_orient;
 		}
 
 		// Force calculation
@@ -1439,8 +1615,8 @@ void Simulation::simulate() {
 				global_log->debug() << "Determine the additional acceleration"
 						<< endl;
 				_pressureGradient->determineAdditionalAcceleration(
-						_domainDecomposition, _moleculeContainer, uCAT
-								* _integrator->getTimestepLength());
+						_domainDecomposition, _moleculeContainer,
+						uCAT * _integrator->getTimestepLength());
 			}
 			global_log->debug() << "Process the uniform acceleration" << endl;
 			_integrator->accelerateUniformly(_moleculeContainer, _domain);
@@ -1472,9 +1648,9 @@ void Simulation::simulate() {
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
-				_moleculeContainer, (!(_simstep
-						% _collectThermostatDirectedVelocity)), Tfactor(
-						_simstep));
+				_moleculeContainer,
+				(!(_simstep % _collectThermostatDirectedVelocity)),
+				Tfactor(_simstep));
 
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
@@ -1488,7 +1664,8 @@ void Simulation::simulate() {
 						continue;
 					if (_domain->thermostatIsUndirected(thermostat)) {
 						/* TODO: thermostat */
-						tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
+						tM->scale_v(
+								_domain->getGlobalBetaTrans(thermostat),
 								_domain->getThermostatDirectedVelocity(
 										thermostat, 0),
 								_domain->getThermostatDirectedVelocity(
@@ -1547,8 +1724,17 @@ void Simulation::simulate() {
 			total_rdf += moleculePtr->getLeftxRdfF()[0];
 			moleculePtr->resetLeftxInfluence();
 		}
+		double rmin[3] = { _moleculeContainer->getBoundingBoxMin(0),
+				_moleculeContainer->getBoundingBoxMin(1),
+				_moleculeContainer->getBoundingBoxMin(2) };
+		double rmax[3] = { _moleculeContainer->getBoundingBoxMax(0),
+				_moleculeContainer->getBoundingBoxMax(1),
+				_moleculeContainer->getBoundingBoxMax(2) };
+		int num_mols = _moleculeContainer->countParticles(
+				_moleculeContainer->begin()->componentid(), rmin, rmax);
 		fflush(stepfile);
-		fprintf(stepfile, "%lg %lg \n", total_periodic / 9826, total_rdf / 9826);
+		fprintf(stepfile, "%lg %lg \n", total_periodic / num_mols,
+				total_rdf / num_mols);
 
 		/*
 		 if (actual_simstep % 1000 == 0 || actual_simstep == 1
@@ -1810,8 +1996,14 @@ void Simulation::initialize() {
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... "
 			<< endl;
-	_domainDecomposition = (DomainDecompBase*) new RDFDummyDecomposition(
-			_particlePairsHandler, 0); //DomainDecompDummy();//
+	if (dummy_decomp_type == 1) {
+		//		_domainDecomposition = (DomainDecompBase*) new RDFDummyDecomposition(
+		//				_particlePairsHandler, 0);
+		//		std::cout<<"using RDFDummyDecomposition"<<std::endl;
+	} else {
+		std::cout << "using DomainDecompDummy" << std::endl;
+		_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+	}
 	global_log->info() << "Initialization done" << endl;
 #endif
 }
