@@ -15,6 +15,7 @@
 #include "utils/Logger.h"
 #include "particleContainer/LinkedCells.h"
 #include "ParticleInsertion.h"
+#include "Simulation.h"
 
 using namespace std;
 using Log::global_log;
@@ -25,17 +26,23 @@ bool RDFDummyDecomposition::first_unif = true;
 double* RDFDummyDecomposition::unif_rand = new double[2];
 
 RDFDummyDecomposition::RDFDummyDecomposition(ParticlePairsHandler* ph,
-		int boundary) :
-	DomainDecompDummy(), _particlePairsHandler(ph), rdfBoundary(boundary) {
+		int boundary, int insertion_type, Simulation* sim) :
+	DomainDecompDummy(), _particlePairsHandler(ph), rdfBoundary(boundary),
+			particle_insertion_type(insertion_type), simulation(sim) {
+	if (particle_insertion_type == 1) std::cout<<"chosen insertion type is usehr";
+	else if (particle_insertion_type == 0) std::cout<<"chosen insertion type is reflective wall";
+	else std::cout<<"unknown insertion type"<<std::endl;
 	// TODO Auto-generated constructor stub
 
 }
 
 double RDFDummyDecomposition::getUniformRandomNumber() {
+	srand((unsigned) time(NULL));
 	return ((double) rand()) / ((double) RAND_MAX);
 }
 
 double RDFDummyDecomposition::getGaussianRandomNumber() {
+	srand((unsigned) time(NULL));
 	if (first_unif) {
 
 		// in this case: generate new numbers
@@ -128,6 +135,7 @@ void RDFDummyDecomposition::generateRandomVelocity(double temperature,
 void RDFDummyDecomposition::generateRandomAngularVelocity(double temperature,
 		double* w, Domain* domain, Molecule* currentMolecule) {
 
+	srand((unsigned) time(NULL));
 	std::vector<Component> components = domain->getComponents();
 	double I[3] = { 0., 0., 0. };
 	I[0] = components[currentMolecule->componentid()].I11();
@@ -152,11 +160,12 @@ RDFDummyDecomposition::~RDFDummyDecomposition() {
 
 void RDFDummyDecomposition::addPeriodicCopies(
 		ParticleContainer* moleculeContainer, double* rmin, double* rmax,
-		double* phaseSpaceSize, double* halo_L, const std::vector<Component>& components) {
+		double* phaseSpaceSize, double* halo_L,
+		const std::vector<Component>& components) {
 	Molecule* currentMolecule = moleculeContainer->begin();
 	double low_limit[3] = { 0, 0, 0 };
 	double high_limit[3] = { 0, 0, 0 };
-	double new_position[3] = {0, 0, 0};
+	double new_position[3] = { 0, 0, 0 };
 	// now traverse everything that's not the rdf boundary
 	for (unsigned short d = 1; d < 3; ++d) {
 		phaseSpaceSize[d] = rmax[d] - rmin[d];
@@ -169,7 +178,8 @@ void RDFDummyDecomposition::addPeriodicCopies(
 		//cout << "halo_L: " << halo_L[0] << " / " << halo_L[1] << " / " << halo_L[2] << endl;
 		//cout << "proc_domain_L: " << proc_domain_L[0] << " / " << proc_domain_L[1] << " / " << proc_domain_L[2] << endl;
 		while (currentMolecule != moleculeContainer->end()) {
-			currentMolecule->enableBouncingBack(rmin[rdfBoundary], rmax[rdfBoundary], 0, 0);
+			if (!particle_insertion_type)
+				currentMolecule->enableBouncingBack(rmin[rdfBoundary], rmax[rdfBoundary], 0, 0);
 			const double& rd = currentMolecule->r(d);
 			if (currentMolecule->r(rdfBoundary) < rmin[rdfBoundary]
 					|| currentMolecule->r(rdfBoundary) > rmax[rdfBoundary]) {
@@ -196,7 +206,8 @@ void RDFDummyDecomposition::addPeriodicCopies(
 						currentMolecule->q().qz(), currentMolecule->D(0),
 						currentMolecule->D(1), currentMolecule->D(2),
 						&components);
-				m1.enableBouncingBack(rmin[rdfBoundary], rmax[rdfBoundary], 0, 0);
+				if (!particle_insertion_type)
+					m1.enableBouncingBack(rmin[rdfBoundary], rmax[rdfBoundary], 0, 0);
 				moleculeContainer->addParticle(m1);
 				currentMolecule = moleculeContainer->next();
 			} else if (rd >= high_limit[d]) {
@@ -219,7 +230,8 @@ void RDFDummyDecomposition::addPeriodicCopies(
 						currentMolecule->D(1), currentMolecule->D(2),
 						&components);
 				moleculeContainer->addParticle(m1);
-				m1.enableBouncingBack(rmin[rdfBoundary], rmax[rdfBoundary], 0, 0);
+				if (!particle_insertion_type)
+					m1.enableBouncingBack(rmin[rdfBoundary], rmax[rdfBoundary], 0, 0);
 				currentMolecule = moleculeContainer->next();
 			} else
 				currentMolecule = moleculeContainer->next();
@@ -272,18 +284,27 @@ void RDFDummyDecomposition::exchangeMolecules(
 		u_avg = domain->getAverageGlobalUpot();//this->getAverageEnergy(linkedCells, rmin, rmax);
 		std::cout << "average energy: " << u_avg << std::endl;
 		have_avg_energy = true;
+	} else if (!have_avg_energy && num_calles <= 1) {
+		std::cout << "calculating average energy" << std::endl;
+		u_avg = this->getAverageEnergy(linkedCells, rmin, rmax);
 	}
 	num_calles++;
 	int curr_id = 0;
 
-	addPeriodicCopies(moleculeContainer, rmin, rmax, phaseSpaceSize, halo_L, components);
+	addPeriodicCopies(moleculeContainer, rmin, rmax, phaseSpaceSize, halo_L,
+			components);
 	std::cout << "finished inserting periodic copies" << std::endl;
 	moleculeContainer->update();
-	std::cout<<"num particles: "<<moleculeContainer->getNumberOfParticles()<<std::endl;
+	std::cout << "num particles: " << moleculeContainer->getNumberOfParticles()
+			<< std::endl;
 	int num = 0;
+
 	/*
+	 * If particle insertion type is usher, do usher
+	 */
 	currentMolecule = moleculeContainer->begin();
-	while (currentMolecule != moleculeContainer->end()) {
+	while (particle_insertion_type == 1 && currentMolecule != moleculeContainer->end()) {
+
 		num++;
 		curr_id = currentMolecule->id();
 
@@ -319,34 +340,78 @@ void RDFDummyDecomposition::exchangeMolecules(
 					starting_position[d] = rd;
 				}
 			}
+			std::cout << "starting position: " << starting_position[0] << " "
+					<< starting_position[1] << " " << starting_position[2]
+					<< std::endl;
 			starting_positions.push_back(starting_position);
 			//molecules_to_delete.push_back(currentMolecule);
 
 			deleted_ids.push_back(currentMolecule->id());
 			deleted_comp_ids.push_back(currentMolecule->componentid());
 
-			double axis[3] = {0, 0, 0};
-			if (currentMolecule->r(rdfBoundary) < rmin[0]) axis[0] = 1;
-			else axis[0] = -1;
-			currentMolecule->bounceBack(rdfBoundary, axis);
-			//currentMolecule = moleculeContainer->deleteCurrent();//moleculeContainer->next();
+			//			double axis[3] = { 0, 0, 0 };
+			//			if (currentMolecule->r(rdfBoundary) < rmin[0])
+			//				axis[0] = 1;
+			//			else
+			//				axis[0] = -1;
+			//			currentMolecule->bounceBack(rdfBoundary, axis);
+			//			double temperature = domain->getCurrentTemperature(0);
+			//			double w[3] = { 0, 0, 0 };
+			//			this->generateRandomAngularVelocity(temperature, w, domain,
+			//					currentMolecule);
+			//			currentMolecule->setD(w);
+			//			std::cout<<"w: "<<w[0]<<std::endl;
+			//			// get torque
+			//			currentMolecule->calcFM();
+			//			double absTorque = 0;
+			//			for (int i = 0; i < 3; i++)
+			//				absTorque += currentMolecule->M(i) * currentMolecule-> M(i);
+			//
+			//			absTorque = std::sqrt(absTorque);
+			//			double torque[3];
+			//			for (int i = 0; i < 3; i++)
+			//				torque[i] = (1 / absTorque) * currentMolecule->M(i);
+			//
+			//
+			//			double energy = 500;
+			//			int i = 1;
+			//			Quaternion q = currentMolecule->q();
+			//			Quaternion old_q = q;
+			//			srand ( (unsigned)time(NULL));
+			//			while (energy >= 500 && i < 1000) {
+			//				double angle = -30 * 3.14 / 180 + ((double) rand() / (double) RAND_MAX) * 60 * 3.14
+			//									/ 180;
+			//				std::cout<<angle<<std::endl;
+			////				q.multiply_left(Quaternion(cos(angle / 2), torque[0] * sin(angle / 2),
+			////				torque[1] * sin(angle / 2), torque[2] * sin(angle / 2)));
+			//				q = Quaternion(rand(), rand(), rand(), rand());
+			//				q.normalize();
+			//				currentMolecule->setq(q);
+			//				currentMolecule->upd_cache();
+			//				std::cout<<"try number: "<<i<<" energy: "<<energy<<std::endl;
+			//				i++;
+			//				double tempf[3] = {0, 0, 0};
+			//				energy = linkedCells->getForceAndEnergy(currentMolecule, tempf);
+			//				q = old_q;
+			//			}
+			currentMolecule = moleculeContainer->deleteCurrent();//moleculeContainer->next();
 			currentMolecule = moleculeContainer->next();
 		} else {
 			currentMolecule = moleculeContainer->next();
 		}
 
 	}
-	std::cout<<"num "<<num<<std::endl;
+	//	std::cout << "num " << num << std::endl;
 	std::cout << "finished searching for usher candidates" << std::endl;
-
-	std::vector<double*> velocities;
-	// delete the ones that need to be deleted
-
+	//
+	//	std::vector<double*> velocities;
+	//	// delete the ones that need to be deleted
+	//
 	linkedCells->update();
 	std::cout << "updated" << std::endl;
-	*/
+
 	// insert with usher
-	/*
+
 	for (unsigned int i = 0; i < starting_positions.size(); i++) {
 
 		double cell_coordinates[3];
@@ -361,26 +426,47 @@ void RDFDummyDecomposition::exchangeMolecules(
 		std::cout << "coordinates " << cell_coordinates[0] << " "
 				<< cell_coordinates[1] << " " << cell_coordinates[2]
 				<< std::endl;
+		double* density_bins = simulation->getDensityBins();
+		//double* density_bins = new double[200];
+		//		for (int bin = 0; bin < 200; bin++) {
+		//			density_bins[bin] = sim_density_bins[2 * bin] + sim_density_bins[2 * bin + 1];
+		//		}
+		int min_bin_idx = 0;
+		int min_bin = 10000;
+		double rnd = ((double) rand()) / ((double) RAND_MAX);
+		if (rnd > 0.5) {
+			for (int bin = 0; bin < 400; bin++) {
+				if (density_bins[bin] < min_bin) {
+					min_bin = density_bins[bin];
+					min_bin_idx = bin;
+				}
+			}
+		} else {
+			for (int bin = 399; bin >= 0; bin--) {
+				if (density_bins[bin] < min_bin) {
+					min_bin = density_bins[bin];
+					min_bin_idx = bin;
+				}
+			}
+		}
+		double length = rmax[0] / 400;
+		std::cout << "bin " << min_bin_idx << " with " << min_bin << std::endl;
+		//		double allowed_low[3] = {std::max(
+		//										starting_positions[i][0] - 0.2 * linkedCells->cellLength()[0], rmin[0]),
+		//				 0, 0 };
+		//double allowed_low[3] = {std::max(cell_coordinates[0] - 1 * linkedCells->cellLength()[0], rmin[0]), std::max(cell_coordinates[1] - 1 * linkedCells->cellLength()[1], rmin[1]), std::max(cell_coordinates[2] - 1 * linkedCells->cellLength()[2], rmin[2])};
+		//		double allowed_high[3] = {
+		//			std::min(
+		//					cell_coordinates[0] + 0 * linkedCells->cellLength()[0], rmax[0]), std::min(
+		//							cell_coordinates[1] + 0 * linkedCells->cellLength()[1],
+		//							rmax[1]), std::min(
+		//							cell_coordinates[2] + 0 * linkedCells->cellLength()[2],
+		//							rmax[2])};
+		//		double allowed_high[3] = {std::min(
+		//										starting_positions[i][0] + 0.2 * linkedCells->cellLength()[0], rmax[0]), rmax[1], rmax[2] };
 
-		double allowed_low[3] = {
-				std::max(
-						cell_coordinates[0] - 4 * linkedCells->cellLength()[0],
-						rmin[0]), std::max(
-						cell_coordinates[1] - 4 * linkedCells->cellLength()[1],
-						rmin[0]), std::max(
-						cell_coordinates[2] - 4 * linkedCells->cellLength()[2],
-						rmin[0]) };
-
-		double allowed_high[3] = {
-				std::min(
-						cell_coordinates[0] + 3 * linkedCells->cellLength()[0],
-						rmax[0]), std::min(
-						cell_coordinates[1] + 3 * linkedCells->cellLength()[1],
-						rmax[1]), std::min(
-						cell_coordinates[2] + 3 * linkedCells->cellLength()[2],
-						rmax[2]) };
-		//double allowed_high[3] = {rmax[0],rmax[1],rmax[2]};
-
+		double allowed_low[3] = { 0, 0, 0 };
+		double allowed_high[3] = { rmax[0], rmax[1], rmax[2] };
 		std::cout << "allowed low and high: " << allowed_low[0] << " "
 				<< allowed_low[1] << " " << allowed_low[2] << " high: "
 				<< allowed_high[0] << " " << allowed_high[1] << " "
@@ -412,11 +498,25 @@ void RDFDummyDecomposition::exchangeMolecules(
 		moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, 3>
 				usher;
 		std::cout << "started usher, target energy: " << u_avg << std::endl;
-		int iterations = usher.findParticlePosition(linkedCells, newMolecule,
-				u_avg, energy, old_energy, true, false, 1, 10000, 100, 100,
-				45 * 3.14 / 180, 3.14, 3.14 / 180, 0.01, &vec_energy,
-				&vec_angle, &vec_lj, &vec_center, name_energy, name_angle,
-				name_lj, name_center, allowed_low, allowed_high);
+		int iterations = -1;
+		int seed = 1;
+		while (iterations == -1 && seed < 10) {
+			iterations = usher.findParticlePosition(linkedCells, newMolecule,
+					u_avg, energy, old_energy, true, false, seed, 100, 10000,
+					100, 45 * 3.14 / 180, 3.14, 3.14 / 180, 0.01, &vec_energy,
+					&vec_angle, &vec_lj, &vec_center, name_energy, name_angle,
+					name_lj, name_center, allowed_low, allowed_high);
+			seed++;
+		}
+		if (seed == 10) {
+			allowed_low[0] = 0;
+			allowed_high[0] = rmax[0];
+			iterations = usher.findParticlePosition(linkedCells, newMolecule,
+					u_avg, energy, old_energy, true, false, seed, 100, 10000,
+					100, 45 * 3.14 / 180, 3.14, 3.14 / 180, 0.01, &vec_energy,
+					&vec_angle, &vec_lj, &vec_center, name_energy, name_angle,
+					name_lj, name_center, allowed_low, allowed_high);
+		}
 
 		std::cout << "usher did " << iterations << " iterations " << std::endl;
 		std::cout << std::endl;
@@ -515,5 +615,5 @@ void RDFDummyDecomposition::exchangeMolecules(
 		}
 
 	}
-	*/
+
 }

@@ -12,10 +12,10 @@
 
 #ifndef RDFDUMMYDECOMPOSITION_H_
 #define RDFDUMMYDECOMPOSITION_H_
-
+class Simulation;
 class RDFDummyDecomposition: public DomainDecompDummy {
 public:
-	RDFDummyDecomposition(ParticlePairsHandler* ph, int boundary);
+	RDFDummyDecomposition(ParticlePairsHandler* ph, int boundary, int insertion_type, Simulation* sim);
 	virtual ~RDFDummyDecomposition();
 	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer,
 			const std::vector<Component>& components, Domain* domain);
@@ -23,11 +23,13 @@ public:
 			const std::vector<Component>& components, Domain* domain);
 private:
 	int rdfBoundary;
+	int particle_insertion_type;
 	static bool have_avg_energy;
 	static int num_calles;
 	static double* unif_rand;
 	static bool first_unif;
 	ParticlePairsHandler* _particlePairsHandler;
+	Simulation* simulation;
 
 	double randdouble(double a, double b) const {
 		return a + rand() * (b - a) / (RAND_MAX);
