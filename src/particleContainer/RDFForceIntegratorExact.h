@@ -41,6 +41,9 @@ private:
 	bool called_x;
 	int timestep;
 	double* rhos;
+	bool first_unif;
+	double unif_rand[2];
+	double getGaussianRandomNumber();
 
 	double integrateRDFSiteCartesian(double xlim[2], double ylim[2],
 			double zlim[2], Molecule* mol, int plane, unsigned int site,

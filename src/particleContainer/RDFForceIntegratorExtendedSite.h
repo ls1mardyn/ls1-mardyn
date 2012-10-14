@@ -23,7 +23,7 @@ public:
 	 */
 	RDFForceIntegratorExtendedSite(ParticleContainer* moleculeContainer,
 			double rc, double d, std::vector<std::vector<double> >* globalADist,
-			std::vector<std::vector<std::vector<double> > >* globalSiteADist);
+			std::vector<std::vector<std::vector<double> > >* globalSiteADist, std::string rdf_file_nondeclining);
 	virtual ~RDFForceIntegratorExtendedSite();
 
 	/*
@@ -73,6 +73,7 @@ private:
 	std::vector<std::vector<std::vector<double> > > globalNondecliningSiteDist;
 	std::vector<std::vector<std::vector<double> > > globalNondecliningSiteADist;
 	std::vector<double> rmids;
+	std::string rdf_file_nondeclining;
 
 
 };

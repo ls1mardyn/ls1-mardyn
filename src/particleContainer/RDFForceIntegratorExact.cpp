@@ -7,6 +7,34 @@
 
 #include "RDFForceIntegratorExact.h"
 
+double RDFForceIntegratorExact::getGaussianRandomNumber() {
+
+	if (first_unif) {
+
+		// in this case: generate new numbers
+		double s = 2.0;
+		double v[2] = { 0, 0 };
+
+		while (s >= 1.0) {
+			unif_rand[0] = ((double) rand()) / ((double) RAND_MAX);
+			unif_rand[1] = ((double) rand()) / ((double) RAND_MAX);
+			v[0] = (2.0 * unif_rand[0] - 1.0);
+			v[1] = (2.0 * unif_rand[1] - 1.0);
+			s = v[0] * v[0] + v[1] * v[1];
+		}
+		unif_rand[0] = v[0] * sqrt((-2.0 * log(s)) / s);
+		unif_rand[1] = v[1] * sqrt((-2.0 * log(s)) / s);
+
+		// change to the other variable in the next call
+		first_unif = false;
+		return unif_rand[0];
+
+		// otherwise: change to the other random number
+	} else {
+		first_unif = true;
+		return unif_rand[1];
+	}
+}
 
 double* RDFForceIntegratorExact::precomputeScalingFactorsX(bool unit_test) {
 	if (called_x && !unit_test)
@@ -117,19 +145,13 @@ RDFForceIntegratorExact::RDFForceIntegratorExact(
 	RDFForceIntegrator(moleculeContainer, rc, d, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
 	called_x = false;
-	_extension = 0;
-	_d_alpha = 0;
-	_d_level = 0;
-	_n_levels = 0;
-	_n_n = 0;
-	_n_r = 0;
-	_n_alpha = 0;
-	_rho = 0;
+	_extension = _d_alpha = _d_level = _n_levels = _n_n = _n_r = _n_alpha = _rho = 0;
 	_g_start = 0;
 	timestep = 0;
 	rhos = NULL;
 
 	_scaling_factors_x = NULL;
+	first_unif = true;
 }
 
 RDFForceIntegratorExact::~RDFForceIntegratorExact() {
@@ -233,12 +255,31 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0,
 				site, boundary, add_influence, force, unit_test);
 
-//		double rnd = -1 + 2 * ((double) rand() / (double) RAND_MAX);
-//
+
+
+		//double rnd = -1 + 2 * ((double) rand() / (double) RAND_MAX);
+//		double rnd = -1 + 2  * ((double) rand() / (double) RAND_MAX);//getGaussianRandomNumber();
 //		double randf[3] = {0, 0, 0};
-//		randf[0] = rnd * 0.1 * force[0];
-//		currentMolecule->Fljcenteradd(site, randf);
-//		force[0] += randf[0];
+//		double other_randf[3] = {0, 0, 0};
+//		double rand_axis[3] = {(double) rand() / (double) RAND_MAX, (double) rand() / (double) RAND_MAX,(double) rand() / (double) RAND_MAX};
+//		double normalizer = std::sqrt(rand_axis[0] * rand_axis[0] + rand_axis[1] * rand_axis[1] + rand_axis[2] * rand_axis[2]);
+//		for (int d = 0; d < 3; d++)
+//			rand_axis[d]/= normalizer;
+//		double angle = 10 * (double) rand() / (double) RAND_MAX;
+//		angle = angle * 3.14/180;
+//		if (rnd > 0.9) {
+//			Quaternion q = currentMolecule->q();
+//			q.multiply_left(Quaternion(cos(angle / 2), rand_axis[0] * sin(angle / 2),
+//					rand_axis[1] * sin(angle / 2), rand_axis[2] * sin(angle / 2)));
+//			currentMolecule->setq(q);
+//		}
+		//if (timestep % 10 == 0)
+//		randf[0] = rnd * force[0];
+//		other_randf[0] =  (1 - rnd) * force[0];
+		//force[0] += rnd * force[0];
+		//currentMolecule->Fadd(force);
+
+		//force[0] += randf[0];
 
 
 		//		if (force[0] == 0 && currentMolecule->id() == 4789) {
@@ -256,8 +297,7 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 				diffr = _rmax[0] - r[0];
 			}
 			std::cout << "rm: " << diff << " boundary " << boundary[0]
-					<< " sited " << diffr << " f: " << force[0] << " xlim "
-					<< xlim[0] << " " << xlim[1] << " diffx " << h << std::endl;
+					<< " sited " << diffr << " f: " << force[0]<< std::endl;
 		}
 	}
 

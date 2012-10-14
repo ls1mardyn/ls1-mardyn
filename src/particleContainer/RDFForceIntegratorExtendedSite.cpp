@@ -10,9 +10,11 @@
 RDFForceIntegratorExtendedSite::RDFForceIntegratorExtendedSite(
 		ParticleContainer* moleculeContainer, double rc, double d,
 		std::vector<std::vector<double> >* globalADist,
-		std::vector<std::vector<std::vector<double> > >* globalSiteADist) :
+		std::vector<std::vector<std::vector<double> > >* globalSiteADist, std::string rdf_file) :
 	RDFForceIntegrator(moleculeContainer, rc, d, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
+
+	rdf_file_nondeclining = rdf_file;
 
 	// initialize everything to 0 or equivalent
 	_n_n = _n_r = _n_levels = _n_alpha = 0;
@@ -41,11 +43,9 @@ void RDFForceIntegratorExtendedSite::precomputeScalingFactors() {
 	if (called == false)
 		called = true;
 
-	std::string
-			rdf_file =
-					"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_epsilon/prolonged/rdf_nondeclining/rdf_Ethan_10k_eps_double_prolonged_rc2_0-0.000090000.rdf";
 	std::vector<std::string> file_names;
-	file_names.push_back(rdf_file);
+	std::cout<<"using the nondeclining rdf file: "<<rdf_file_nondeclining<<std::endl;
+	file_names.push_back(rdf_file_nondeclining);
 
 	// componentids that appear in the container, number of sites per such component
 	std::vector<unsigned int> componentIds;

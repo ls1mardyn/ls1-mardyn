@@ -13,7 +13,7 @@ RDFForceIntegratorSite::RDFForceIntegratorSite(
 		std::vector<std::vector<std::vector<double> > >* globalSiteADist) :
 	RDFForceIntegrator(moleculeContainer, rc, d, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
-
+	_rho = 0;
 }
 
 RDFForceIntegratorSite::~RDFForceIntegratorSite() {
@@ -156,7 +156,7 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 
 		//if (boundary[0] == 0 && boundary[1] == 0 && boundary[2] == 0)
 
-		if (boundary[0] != -1)// && boundary[0] != 1)
+		if (boundary[0] != -1 && boundary[0] != 1)
 			return 0;
 
 		// if molecule close to the boundary, add RDF force
