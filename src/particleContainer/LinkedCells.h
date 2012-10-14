@@ -29,8 +29,6 @@
 #include "RDFForceIntegratorSite.h"
 #include "RDFForceIntegratorExtendedSite.h"
 #include "RDFForceIntegratorExact.h"
-#include "RDFForceIntegratorSiteSimpleScale.h"
-#include "RDFForceIntegratorExactOrient.h"
 
 #include <vector>
 
@@ -256,18 +254,28 @@ public:
 	void getCellCoordinates(double* particlePosition, double* cellPosition);
 
 	virtual void setRDFArrays(std::vector<std::vector<double> >* ADist,
-			std::vector<std::vector<std::vector<double> > >* SiteADist) {
+			std::vector<std::vector<std::vector<double> > >* SiteADist,
+			double d, int integrator_type, std::string rdf_file_nondeclining) {
 		globalADist = ADist;
 		globalSiteADist = SiteADist;
-//		forceIntegrator = new RDFForceIntegratorExtendedSite(this,
-//				this->getCutoff(), globalADist, globalSiteADist);
-//
-//		forceIntegrator = new RDFForceIntegratorSite(this, this->getCutoff(),
-//				globalADist, globalSiteADist);
-		forceIntegrator = new RDFForceIntegratorExact(this, this->getCutoff(),
-						globalADist, globalSiteADist);
-		//		forceIntegrator = new RDFForceIntegratorExactOrient(this,
-		//				this->getCutoff(), globalADist, globalSiteADist);
+		if (integrator_type == 1) {
+
+			std::cout<<"using site rdf integrator"<<std::endl;
+			forceIntegrator = new RDFForceIntegratorSite(this,
+					this->getCutoff(), d, globalADist, globalSiteADist);
+		} else if (integrator_type == 2) {
+			std::cout<<"using extended site rdf integrator"<<std::endl;
+			forceIntegrator = new RDFForceIntegratorExtendedSite(this,
+					this->getCutoff(), d, globalADist, globalSiteADist, rdf_file_nondeclining);
+		} else if (integrator_type == 3) {
+			std::cout<<"using exact (cartesian) rdf integrator"<<std::endl;
+			forceIntegrator = new RDFForceIntegratorExact(this,
+					this->getCutoff(), d, globalADist, globalSiteADist);
+		} else {
+			forceIntegrator = NULL;
+			std::cout << "no rdf integration" << std::endl;
+		}
+		std::cout<<"quadrature delta is "<<d<<std::endl;
 
 	}
 

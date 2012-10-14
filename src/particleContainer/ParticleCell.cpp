@@ -26,6 +26,7 @@ bool ParticleCell::deleteMolecule(unsigned long molecule_id) {
 	for (molecule_iter = molecules.begin(); molecule_iter != molecules.end(); molecule_iter++) {
 		Molecule *molecule = *molecule_iter;
 		if (molecule->id() == molecule_id) {
+			std::cout<<"really deleting"<<std::endl;
 			found = true;
 			molecules.erase(molecule_iter);
 			break;

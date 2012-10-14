@@ -33,7 +33,6 @@
 #include "RDFForceIntegratorSite.h"
 #include "RDFForceIntegratorExtendedSite.h"
 #include "RDFForceIntegratorExact.h"
-#include "RDFForceIntegratorSiteSimpleScale.h"
 
 class ParticleContainer;
 class ParticlePairsHandler;
