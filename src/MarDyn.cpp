@@ -121,8 +121,7 @@ int main(int argc, char** argv) {
         }
     }
     else if( fileExists( args[0].c_str()) ) {
-        simulation.readConfigFile( args[0] );
-    	if (numargs > 1) {
+	 if (numargs > 1) {
     		unsigned long steps = 0;
     		istringstream(args[1]) >> steps;
     		simulation.setNumTimesteps(steps);
@@ -130,6 +129,7 @@ int main(int argc, char** argv) {
         if( numargs > 2 ) {
             simulation.setOutputPrefix( args[2] );
         }
+         simulation.readConfigFile( args[0] );
     } else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
         exit(1);
