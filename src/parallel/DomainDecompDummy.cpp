@@ -293,20 +293,12 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 		std::cout << "uavg1 " << u_avg << std::endl;
 		//std::cout<<"uavg2 "<<this->getAverageEnergy(linkedCells, rmin, rmax);
 		std::cout << "average energy: " << u_avg << std::endl;
-		if (!have_avg_energy) {
-			energy_file
-					= fopen(
-							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_energy.txt",
-							"w");
-			cell_file
-					= fopen(
-							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_cell.txt",
-							"w");
-			position_file
-					= fopen(
-							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_position.txt",
-							"w");
-		}
+//		if (!have_avg_energy) {
+//			energy_file
+//					= fopen(
+//							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_energy.txt",
+//							"w");
+//		}
 		have_avg_energy = true;
 	}
 
@@ -326,9 +318,9 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 				> rmin[2] && molecule->r(2) < rmax[2]) {
 			deleted_id = molecule->id();
 			deleted_comp_id = molecule->componentid();
-			fprintf(energy_file, "%g \n", domain->getAverageGlobalUpot());
-			fflush(energy_file);
-			std::cout << "wrote the energy, ushering molecule " << molecule->id()<<std::endl;
+//			fprintf(energy_file, "%g \n", domain->getAverageGlobalUpot());
+//			fflush(energy_file);
+			std::cout << "ushering molecule " << molecule->id()<<std::endl;
 			double *energy = new double;
 			double *old_energy = new double;
 			double force[3] = { 0, 0, 0 };

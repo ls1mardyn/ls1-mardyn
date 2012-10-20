@@ -178,7 +178,7 @@ protected:
 	static bool have_avg_energy;
 	static int num_calles;
 	double u_avg;
-	FILE* energy_file, *cell_file, *position_file;
+	FILE* energy_file;
 
 };
 
