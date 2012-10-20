@@ -429,12 +429,13 @@ private:
 				site_orient_file_stream;
 
 	std::string rdf_file, rdf_file_nondeclining;
-	FILE *stepfile, *density_file, *site_density_file, *site_orient_file;
+	FILE *stepfile, *density_file, *site_density_file, *site_orient_file; //
 	double* density_bins;
 	int rdf_integrator_type, dummy_decomp_type;
 	int points_per_sigma;
 	int particle_insertion_type;
 	bool rdf_add_influence;
+	bool validate_usher;
 
 #ifdef STEEREO
 	SteereoSimSteering* _steer;

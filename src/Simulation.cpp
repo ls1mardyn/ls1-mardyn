@@ -91,6 +91,7 @@ Simulation::Simulation() :
 	dummy_decomp_type = 0;
 	stepfile = density_file = site_density_file = site_orient_file = NULL;
 	rdf_add_influence = false;
+	validate_usher = false;
 	particle_insertion_type = 0;
 	density_bins = new double[400];
 	for (int i = 0; i < 400; i++)
@@ -923,6 +924,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			} else if (token == "usher") {
 				particle_insertion_type = 1;
+			}
+
+		} else if (token == "ValidateUsher") {
+			inputfilestream >> token;
+			if (token == "1") {
+				validate_usher = true;
+			} else if (token == "0") {
+				validate_usher = false;
+			} else {
+				std::cout<<"invalid value for the ValidateUsher field"<<std::endl;
 			}
 
 		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
@@ -1962,7 +1973,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
-	if (dummy_decomp_type == 0) {
+	if (dummy_decomp_type == 0 && validate_usher) {
 		DomainDecompDummy* dummy = (DomainDecompDummy*) _domainDecomposition;
 		dummy->validateUsher(_moleculeContainer,
 				_domain->getComponents(), _domain);
