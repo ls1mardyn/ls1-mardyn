@@ -1969,6 +1969,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
 		_moleculeContainer->deleteOuterParticles();
 		dummy->balanceAndExchange(true, _moleculeContainer,
 					_domain->getComponents(), _domain);
+		_moleculeContainer->updateMoleculeCaches();
 	}
 	for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
 			= linkedCells->next()) {
