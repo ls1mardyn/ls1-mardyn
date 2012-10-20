@@ -5,6 +5,7 @@
 
 #include "parallel/DomainDecompBase.h"
 #include "parallel/CollectiveCommDummy.h"
+#include "particleContainer/LinkedCells.h"
 //
 //! @brief implement the %domain decomposition for a single processor
 //! @author Martin Buchholz
@@ -16,8 +17,22 @@
 //! While this class doesn't has to implement communication between processes,
 //! there are still some other things to do, especially the handling of the
 //! boundary region.
-class DomainDecompDummy : public DomainDecompBase {
+class DomainDecompDummy: public DomainDecompBase {
 public:
+
+	double randdouble(double a, double b) const {
+		return a + rand() * (b - a) / (RAND_MAX);
+	}
+
+	double getAverageEnergy(LinkedCells* linkedCells, double* rmin,
+			double* rmax);
+	void generateRandomVelocity(double temperature, double m, double* v);
+
+	void generateRandomAngularVelocity(double temperature, double* w,
+			Domain* domain, Molecule* currentMolecule);
+
+	double getGaussianRandomNumber();
+	double getUniformRandomNumber();
 	//! The constructor has nothing to do
 	DomainDecompDummy();
 
@@ -28,10 +43,15 @@ public:
 	//! are moved to the opposite side of the domain (periodic boundary).
 	//! Additionally, the molecules from the boundary region are duplicated
 	//! and copied into the corresponding halo-regions.
-	void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void exchangeMolecules(ParticleContainer* moleculeContainer,
+			const std::vector<Component>& components, Domain* domain);
 
+	void validateUsher(ParticleContainer* moleculeContainer,
+			const std::vector<Component>& components, Domain* domain);
 	//! @brief in the sequential version, no balancing is necessary --> calls exchangeMolecules
-	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	virtual void balanceAndExchange(bool balance,
+			ParticleContainer* moleculeContainer,
+			const std::vector<Component>& components, Domain* domain);
 
 	//! @brief returns true
 	//!
@@ -50,7 +70,8 @@ public:
 	}
 
 	// documentation see father class (DomainDecompBase.h)
-	unsigned long countMolecules(ParticleContainer* moleculeContainer, std::vector<unsigned long> &compCount);
+	unsigned long countMolecules(ParticleContainer* moleculeContainer,
+			std::vector<unsigned long> &compCount);
 
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMin(int dimension, Domain* domain);
@@ -152,6 +173,12 @@ protected:
 	//! Dummy variable for sequential "collective" communication, basically only
 	//! needed to store values and read them again.
 	CollectiveCommDummy _collComm;
+	static double* unif_rand;
+	static bool first_unif;
+	static bool have_avg_energy;
+	static int num_calles;
+	double u_avg;
+	FILE* energy_file, *cell_file, *position_file;
 
 };
 
