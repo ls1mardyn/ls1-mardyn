@@ -79,7 +79,7 @@ using namespace std;
 
 Simulation* global_simulation;
 
-double* Simulation::getDensityBins(){
+double* Simulation::getDensityBins() {
 	return density_bins;
 }
 
@@ -904,7 +904,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				dummy_decomp_type = 1;
 				_domainDecomposition
 						= (DomainDecompBase*) new RDFDummyDecomposition(
-								_particlePairsHandler, 0, particle_insertion_type, this);
+								_particlePairsHandler, 0,
+								particle_insertion_type, this);
 				std::cout << "using RDFDummyDecomp" << std::endl;
 
 			} else {
@@ -924,7 +925,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				particle_insertion_type = 1;
 			}
 
-	    } else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
+		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
 
 			unsigned cid;
 			inputfilestream >> cid;
@@ -1318,7 +1319,7 @@ void Simulation::simulate() {
 	global_log->info() << "Started simulation" << endl;
 	// added by tijana because of getEnergy(...) in LinkedCells
 	_moleculeContainer->setPairsHandler(_particlePairsHandler);
-
+	LinkedCells* linkedCells = (LinkedCells*) _moleculeContainer;
 	_simstep = 0;
 
 	// (universal) constant acceleration (number of) timesteps
@@ -1438,7 +1439,9 @@ void Simulation::simulate() {
 		global_log->debug() << "Updating container and decomposition" << endl;
 		loopTimer.stop();
 		decompositionTimer.start();
+
 		updateParticleContainerAndDecomposition();
+
 		decompositionTimer.stop();
 		loopTimer.start();
 
@@ -1522,8 +1525,9 @@ void Simulation::simulate() {
 				if (site_orient_file != NULL) {
 					if (site_orient_bins[i] > 0)
 						fprintf(site_orient_file, "%g ",
-							site_orient[i] / site_orient_bins[i]);
-					else fprintf(site_orient_file, "%g ", 0.0);
+								site_orient[i] / site_orient_bins[i]);
+					else
+						fprintf(site_orient_file, "%g ", 0.0);
 				}
 
 				site_sum += site_bins[i];
@@ -1561,6 +1565,18 @@ void Simulation::simulate() {
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
 		//cout<<"here somehow"<<endl;
+
+//		for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
+//				= linkedCells->next()) {
+//			if (mol->id() == 8256) {
+//				mol->clearFM();
+//				double f[3] = { 0, 0, 0 };
+//				linkedCells->getForceAndEnergy(mol, f);
+//				mol->calcFM();
+//				std::cout << "force after writing: " << mol->F(0) << " "
+//						<< mol->F(1) << " " << mol->F(2) << std::endl;
+//			}
+//		}
 
 		_moleculeContainer->traversePairs(_particlePairsHandler);
 
@@ -1930,9 +1946,41 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
 	_domainDecomposition->balanceAndExchange(true, _moleculeContainer,
 			_domain->getComponents(), _domain);
+	LinkedCells* linkedCells = (LinkedCells*) _moleculeContainer;
+	linkedCells->setPairsHandler(_particlePairsHandler);
+	for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
+			= linkedCells->next()) {
+		if (mol->id() == 2387) {
+			mol->clearFM();
+			double f[3] = { 0, 0, 0 };
+			linkedCells->getForceAndEnergy(mol, f);
+			mol->calcFM();
+			std::cout << "before update caches: " << mol->F(0) << " "
+					<< mol->F(1) << " " << mol->F(2) << std::endl;
+		}
+	}
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
+	if (dummy_decomp_type == 0) {
+		DomainDecompDummy* dummy = (DomainDecompDummy*) _domainDecomposition;
+		dummy->validateUsher(_moleculeContainer,
+				_domain->getComponents(), _domain);
+		_moleculeContainer->deleteOuterParticles();
+		dummy->balanceAndExchange(true, _moleculeContainer,
+					_domain->getComponents(), _domain);
+	}
+	for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
+			= linkedCells->next()) {
+		if (mol->id() == 8256) {
+			mol->clearFM();
+			double f[3] = { 0, 0, 0 };
+			linkedCells->getForceAndEnergy(mol, f);
+			mol->calcFM();
+			std::cout << "after update caches: " << mol->F(0) << " " << mol->F(
+					1) << " " << mol->F(2) << " r is " << mol->r(0)<<" "<<mol->r(1)<<" "<<mol->r(2)<< std::endl;
+		}
+	}
 }
 
 /* FIXME: we shoud provide a more general way of doing this */
