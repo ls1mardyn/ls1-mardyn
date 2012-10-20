@@ -370,6 +370,7 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 				seed++;
 			}
 			molecule->setv(v);
+			molecule->setD(w);
 			found = true;
 			//break;
 			molecule = moleculeContainer->next();
