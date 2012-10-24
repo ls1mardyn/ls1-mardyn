@@ -68,10 +68,7 @@ double DomainDecompDummy::getAverageEnergy(LinkedCells* linkedCells,
 	double* force = new double[3]; // placeholder
 	int num = 0;
 	Molecule* currentMolecule;
-	std::cout << "calling for: " << low_limit[0] << " " << low_limit[1] << " "
-			<< low_limit[2] << std::endl;
-	std::cout << "high: " << high_limit[0] << " " << high_limit[1] << " "
-			<< high_limit[2] << std::endl;
+
 	for (currentMolecule = linkedCells->begin(); currentMolecule
 			!= linkedCells->end(); currentMolecule = linkedCells->next()) {
 		if (currentMolecule->r(0) < high_limit[0] && currentMolecule->r(0)
