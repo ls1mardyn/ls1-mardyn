@@ -251,9 +251,8 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer,
 				currentMolecule = moleculeContainer->next();
 		}
 	}
-	//moleculeContainer->updateMoleculeCaches();
-	//	if (num_calles > 1)
-	//		validateUsher(moleculeContainer, components, domain);
+    // this is to ensure validate usher is not called in the first timestep
+	// when molecules are read from the input file
 	num_calles++;
 }
 
@@ -265,7 +264,7 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 	double rmin[3]; // lower corner of the process-specific domain //ENABLE_MPI
 	double rmax[3];
 	double phaseSpaceSize[3];
-	double halo_L[3]; // width of the halo strip //ENABLE_MPI
+	double halo_L[3]; // width of the halo strip
 	for (int i = 0; i < 3; i++) {
 		rmin[i] = moleculeContainer->getBoundingBoxMin(i);
 		rmax[i] = moleculeContainer->getBoundingBoxMax(i);
@@ -289,22 +288,23 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 	Molecule* m;
 
 	if (num_calles > 1) {
-		u_avg = this->getAverageEnergy(linkedCells, rmin, rmax);//domain->getAverageGlobalUpot();
-		std::cout << "uavg1 " << u_avg << std::endl;
-		//std::cout<<"uavg2 "<<this->getAverageEnergy(linkedCells, rmin, rmax);
-		std::cout << "average energy: " << u_avg << std::endl;
+		u_avg = this->getAverageEnergy(linkedCells, rmin, rmax);
+
 //		if (!have_avg_energy) {
 //			energy_file
 //					= fopen(
 //							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_energy.txt",
 //							"w");
+//
 //		}
-		have_avg_energy = true;
+//		have_avg_energy = true;
 	}
 
 	double temperature = domain->getCurrentTemperature(0);
 	double v[3] = { 0, 0, 0 };
 	double w[3] = { 0, 0, 0 };
+
+	// random velocity and angular velocity
 	this->generateRandomVelocity(temperature, molecule->mass(), v);
 	this->generateRandomAngularVelocity(temperature, w, domain, molecule);
 
@@ -316,26 +316,20 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 				&& molecule->r(0) < rmax[0] && molecule->r(1) > rmin[1]
 				&& molecule->r(1) < rmax[1] && molecule->r(2)
 				> rmin[2] && molecule->r(2) < rmax[2]) {
-			deleted_id = molecule->id();
-			deleted_comp_id = molecule->componentid();
-//			fprintf(energy_file, "%g \n", domain->getAverageGlobalUpot());
-//			fflush(energy_file);
-			std::cout << "ushering molecule " << molecule->id()<<std::endl;
+
+			//fprintf(energy_file, "%g \n", domain->getAverageGlobalUpot());
+			//fflush(energy_file);
 			double *energy = new double;
 			double *old_energy = new double;
 			double force[3] = { 0, 0, 0 };
 			*energy = 1;//linkedCells->getForceAndEnergy(newMolecule, force);
 			*old_energy = 1;//*energy;
-			for (int j = 0; j < 3; j++) {
-				v_old[j] = molecule->v(j);
-				w_old[j] = molecule->D(j);
-				r_old[j] = molecule->r(j);
-			}
+
+			// allowed insertion region for the molecule
 			double allowed_low[3] = { 0, 0, 0 };
-			std::cout << "halol: " << halo_L[0] << std::endl;
 			double allowed_high[3] =
 					{ rmax[0], rmax[1], rmax[2]};
-			//molecule = moleculeContainer->deleteCurrent();
+
 			int iterations = -1;
 			int seed = 1;
 			vector<double> vec_energy;
@@ -346,13 +340,14 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 			string name_angle = "angle.txt";
 			string name_lj = "lj.txt";
 			string name_center = "center.txt";
-			std::cout << "about to call the wrapper" << std::endl;
 			moleculardynamics::coupling::interface::MardynMoleculeWrapper<
 					Molecule, 3> wrapper(molecule);
 			moleculardynamics::coupling::ParticleInsertion<Molecule,
 					LinkedCells, 3> usher;
+
+			// call usher - the particle will have the position usher found
+			// after the method is finished
 			while (iterations == -1 && seed < 10) {
-				std::cout<<"starting usher "<<std::endl;
 				iterations = usher.findParticlePosition(linkedCells,
 						molecule, u_avg, energy, old_energy, true, false,
 						seed, 100, 10000, 100, 45 * 3.14 / 180, 3.14,
@@ -361,10 +356,12 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 						name_center, allowed_low, allowed_high);
 				seed++;
 			}
+
+			// set sampled random velocity and angular velocity
 			molecule->setv(v);
 			molecule->setD(w);
 			found = true;
-			//break;
+
 			molecule = moleculeContainer->next();
 
 		} else {
