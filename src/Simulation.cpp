@@ -1575,20 +1575,6 @@ void Simulation::simulate() {
 
 		// Force calculation
 		global_log->debug() << "Traversing pairs" << endl;
-		//cout<<"here somehow"<<endl;
-
-//		for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
-//				= linkedCells->next()) {
-//			if (mol->id() == 8256) {
-//				mol->clearFM();
-//				double f[3] = { 0, 0, 0 };
-//				linkedCells->getForceAndEnergy(mol, f);
-//				mol->calcFM();
-//				std::cout << "force after writing: " << mol->F(0) << " "
-//						<< mol->F(1) << " " << mol->F(2) << std::endl;
-//			}
-//		}
-
 		_moleculeContainer->traversePairs(_particlePairsHandler);
 
 		// test deletions and insertions
@@ -1657,10 +1643,6 @@ void Simulation::simulate() {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
-			//			if (this->_rdf != NULL) {
-			//				this->_rdf->tickRDF();
-			//
-			//			}
 		}
 
 		if (_zoscillation) {
@@ -1966,8 +1948,8 @@ void Simulation::updateParticleContainerAndDecomposition() {
 			double f[3] = { 0, 0, 0 };
 			linkedCells->getForceAndEnergy(mol, f);
 			mol->calcFM();
-			std::cout << "before update caches: " << mol->F(0) << " "
-					<< mol->F(1) << " " << mol->F(2) << std::endl;
+//			std::cout << "before update caches: " << mol->F(0) << " "
+//					<< mol->F(1) << " " << mol->F(2) << std::endl;
 		}
 	}
 	// The cache of the molecules must be updated/build after the exchange process,
@@ -1982,6 +1964,16 @@ void Simulation::updateParticleContainerAndDecomposition() {
 					_domain->getComponents(), _domain);
 		_moleculeContainer->updateMoleculeCaches();
 	}
+
+	if (dummy_decomp_type == 1 && particle_insertion_type == 1) {
+		RDFDummyDecomposition* rdf_decomp = (RDFDummyDecomposition*) _domainDecomposition;
+		rdf_decomp->insertUsher(_moleculeContainer,
+				_domain->getComponents(), _domain);
+		_moleculeContainer->deleteOuterParticles();
+		rdf_decomp->balanceAndExchange(true, _moleculeContainer,
+					_domain->getComponents(), _domain);
+		_moleculeContainer->updateMoleculeCaches();
+	}
 	for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
 			= linkedCells->next()) {
 		if (mol->id() == 8256) {
@@ -1989,8 +1981,8 @@ void Simulation::updateParticleContainerAndDecomposition() {
 			double f[3] = { 0, 0, 0 };
 			linkedCells->getForceAndEnergy(mol, f);
 			mol->calcFM();
-			std::cout << "after update caches: " << mol->F(0) << " " << mol->F(
-					1) << " " << mol->F(2) << " r is " << mol->r(0)<<" "<<mol->r(1)<<" "<<mol->r(2)<< std::endl;
+//			std::cout << "after update caches: " << mol->F(0) << " " << mol->F(
+//					1) << " " << mol->F(2) << " r is " << mol->r(0)<<" "<<mol->r(1)<<" "<<mol->r(2)<< std::endl;
 		}
 	}
 }
