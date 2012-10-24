@@ -1,9 +1,8 @@
-
 /*
-* Usher algorithm - inserting particles on
-* the position where teh energy is euqal
-* to the mean energy of the system
-*/
+ * Usher algorithm - inserting particles on
+ * the position where teh energy is euqal
+ * to the mean energy of the system
+ */
 
 namespace moleculardynamics {
 namespace coupling {
@@ -16,24 +15,24 @@ template<class Molecule, class LinkedCells, unsigned int dim>
 void moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::write_vector(
 		vector<double> vec, string file_name) const {
 	/*
-	FILE* file = fopen(file_name.c_str(), "w");
-	for (unsigned int i = 0; i < vec.size(); i++) {
-		fprintf(file, "%g \n", vec[i]);
-	}
-	fclose(file);
-	*/
+	 FILE* file = fopen(file_name.c_str(), "w");
+	 for (unsigned int i = 0; i < vec.size(); i++) {
+	 fprintf(file, "%g \n", vec[i]);
+	 }
+	 fclose(file);
+	 */
 }
 
 template<class Molecule, class LinkedCells, unsigned int dim>
 void moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::write_vector_3d(
 		std::vector<double*> vec, std::string file_name) const {
 	/*
-	FILE* file = fopen(file_name.c_str(), "w");
-	for (unsigned int i = 0; i < vec.size(); i++) {
-		fprintf(file, "%g %g %g \n", vec[i][0], vec[i][1], vec[i][2]);
-	}
-	fclose(file);
-	*/
+	 FILE* file = fopen(file_name.c_str(), "w");
+	 for (unsigned int i = 0; i < vec.size(); i++) {
+	 fprintf(file, "%g %g %g \n", vec[i][0], vec[i][1], vec[i][2]);
+	 }
+	 fclose(file);
+	 */
 }
 
 template<class Molecule, class LinkedCells, unsigned int dim>
@@ -43,11 +42,11 @@ void moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>:
 		string name_energy, string name_angle, string name_lj,
 		string name_center) const {
 	/*
-	write_vector(*vec_energy, name_energy);
-	write_vector(*vec_angle, name_angle);
-	write_vector_3d(*vec_lj, name_lj);
-	write_vector_3d(*vec_center, name_center);
-	*/
+	 write_vector(*vec_energy, name_energy);
+	 write_vector(*vec_angle, name_angle);
+	 write_vector_3d(*vec_lj, name_lj);
+	 write_vector_3d(*vec_center, name_center);
+	 */
 }
 
 template<class Molecule, class LinkedCells, unsigned int dim>
@@ -55,38 +54,38 @@ void moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>:
 		vector<double>* vec_energy, vector<double>* vec_angle,
 		vector<double*>* vec_lj, vector<double*>* vec_center, double energy,
 		double angle, Molecule* molecule) const {
-/*
-	double* d1 = new double[3];
-	d1[0] = molecule->ljcenter_d(0)[0];
-	d1[1] = molecule->ljcenter_d(0)[1];
-	d1[2] = molecule->ljcenter_d(0)[2];
-	double* d2 = new double[3];
-	d2[0] = molecule->ljcenter_d(1)[0];
-	d2[1] = molecule->ljcenter_d(1)[1];
-	d2[2] = molecule->ljcenter_d(1)[2];
-	double* c = new double[3];
-	c[0] = molecule->r(0);
-	c[1] = molecule->r(1);
-	c[2] = molecule->r(2);
+	/*
+	 double* d1 = new double[3];
+	 d1[0] = molecule->ljcenter_d(0)[0];
+	 d1[1] = molecule->ljcenter_d(0)[1];
+	 d1[2] = molecule->ljcenter_d(0)[2];
+	 double* d2 = new double[3];
+	 d2[0] = molecule->ljcenter_d(1)[0];
+	 d2[1] = molecule->ljcenter_d(1)[1];
+	 d2[2] = molecule->ljcenter_d(1)[2];
+	 double* c = new double[3];
+	 c[0] = molecule->r(0);
+	 c[1] = molecule->r(1);
+	 c[2] = molecule->r(2);
 
-	vec_lj->push_back(d1);
-	vec_lj->push_back(d2);
-	vec_center->push_back(c);
-	vec_energy->push_back(energy);
-	vec_angle->push_back(angle);
-*/
+	 vec_lj->push_back(d1);
+	 vec_lj->push_back(d2);
+	 vec_center->push_back(c);
+	 vec_energy->push_back(energy);
+	 vec_angle->push_back(angle);
+	 */
 }
 
 template<class Molecule, class LinkedCells, unsigned int dim>
 int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::rotateMolecule(
 		Molecule* molecule,
 		moleculardynamics::coupling::interface::MardynMoleculeWrapper<Molecule,
-				dim> wrapper, LinkedCells* linkedCells,
-		int rotationsMax, double maxAngle, double maxAllowedAngle,
-		double minAngle, double U_0, double U_overlap, int* timestep,
-		double xiMax, double* energy, double* energyOld, double* force, double* absForce, Quaternion* q,
-		bool stopIfOverlapping, bool log, vector<double>* vec_energy, vector<
-				double>* vec_angle, vector<double*>* vec_lj,
+				dim> wrapper, LinkedCells* linkedCells, int rotationsMax,
+		double maxAngle, double maxAllowedAngle, double minAngle, double U_0,
+		double U_overlap, int* timestep, double xiMax, double* energy,
+		double* energyOld, double* force, double* absForce, Quaternion* q,
+		bool stopIfOverlapping, bool log, vector<double>* vec_energy,
+		vector<double>* vec_angle, vector<double*>* vec_lj,
 		vector<double*>* vec_center, string name_energy, string name_angle,
 		string name_lj, string name_center) const {
 
@@ -99,7 +98,10 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 		molecule->clearFM();
 		*energy = linkedCells->getForceAndEnergy(molecule, force);
 		molecule->calcFM();
-		*absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
+		*absForce
+				= std::sqrt(
+						force[0] * force[0] + force[1] * force[1] + force[2]
+								* force[2]);
 
 		if (stopIfOverlapping && (*energy > U_overlap)) {
 			//cout << "overlapping, stop rotation" << endl;
@@ -147,8 +149,9 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 		}
 
 		//perform rotation
-		q->multiply_left(Quaternion(cos(angle / 2), torque[0] * sin(angle / 2),
-				torque[1] * sin(angle / 2), torque[2] * sin(angle / 2)));
+		q->multiply_left(
+				Quaternion(cos(angle / 2), torque[0] * sin(angle / 2),
+						torque[1] * sin(angle / 2), torque[2] * sin(angle / 2)));
 
 		molecule->setq(*q);
 		molecule->upd_cache();
@@ -161,39 +164,38 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 }
 
 /*
-template<class Molecule, class LinkedCells, unsigned int dim>
-void moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::writeMoleculeVtk(
-		Molecule* molecule, LinkedCells* linkedCells, Simulation* simulation,
-		int* timestep) const {
-	Molecule* newMolecule = new Molecule(*molecule);
-	newMolecule->setid(molecule->id() + 1);
-	linkedCells->addParticle(*newMolecule);
-	simulation->output(*timestep);
-	Molecule * molec;
-	for (molec = linkedCells->begin(); molec != linkedCells->end(); molec
-			= linkedCells->next()) {
-		if (molec->id() == newMolecule->id()) {
+ template<class Molecule, class LinkedCells, unsigned int dim>
+ void moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::writeMoleculeVtk(
+ Molecule* molecule, LinkedCells* linkedCells, Simulation* simulation,
+ int* timestep) const {
+ Molecule* newMolecule = new Molecule(*molecule);
+ newMolecule->setid(molecule->id() + 1);
+ linkedCells->addParticle(*newMolecule);
+ simulation->output(*timestep);
+ Molecule * molec;
+ for (molec = linkedCells->begin(); molec != linkedCells->end(); molec
+ = linkedCells->next()) {
+ if (molec->id() == newMolecule->id()) {
 
-			linkedCells->deleteCurrent();
-		}
-	}
-	linkedCells->update();
-	delete newMolecule;
-}
-*/
+ linkedCells->deleteCurrent();
+ }
+ }
+ linkedCells->update();
+ delete newMolecule;
+ }
+ */
 template<class Molecule, class LinkedCells, unsigned int dim>
-int moleculardynamics::coupling::ParticleInsertion<Molecule,
-		LinkedCells, dim>::findParticlePosition(
+int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::findParticlePosition(
 		//moleculardynamics::coupling::MacroscopicCell<LinkedCells,dim>& thisCell,
-		LinkedCells* linkedCells, 
-		Molecule* molecule, double U_0, double* energy,
-		double* energyOld, bool largeStepsizeOnOverlap,
+		LinkedCells* linkedCells, Molecule* molecule, double U_0,
+		double* energy, double* energyOld, bool largeStepsizeOnOverlap,
 		bool restartIfIncreases, int seed, int intIterMax, int restartMax,
 		int rotationsMax, double maxAngle, double maxAllowedAngle,
-		double minAngle, double xiMax, vector<double>* vec_energy, vector<
-				double>* vec_angle, vector<double*>* vec_lj,
+		double minAngle, double xiMax, vector<double>* vec_energy,
+		vector<double>* vec_angle, vector<double*>* vec_lj,
 		vector<double*>* vec_center, string name_energy, string name_angle,
-		string name_lj, string name_center, double* allowed_low, double* allowed_high) const {
+		string name_lj, string name_center, double* allowed_low,
+		double* allowed_high) const {
 
 	//int numMolecules = thisCell.getMoleculeCount();
 	//cout<<"numMol "<<numMolecules<<endl;
@@ -227,8 +229,8 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 
 
 	// maximum step size allowed
-	const double stepRef = 1.12 * sigma; //0.1
-			//* pow((1.0 / ((double) numMolecules)), 3.0 / 2.0) * sigma;
+	const double stepRef = 1.12 * sigma/2; //0.1
+	//* pow((1.0 / ((double) numMolecules)), 3.0 / 2.0) * sigma;
 
 	int timestep = 0;
 
@@ -236,11 +238,11 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 	double* upperRightCorner = linkedCells->boundingBoxMax();
 
 	// wrapper for the molecule
-	moleculardynamics::coupling::interface::MardynMoleculeWrapper<Molecule, dim>
-			wrapper(molecule);
+	moleculardynamics::coupling::interface::MardynMoleculeWrapper < Molecule, dim
+			> wrapper(molecule);
 
 	// initialize random numbers 
-	srand(seed);
+	//srand((unsigned) time(NULL));
 	Quaternion q;
 	// try at max. restartMax times to insert this particle...
 	for (int i = 0; i < restartMax; i++) {
@@ -253,37 +255,51 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 		// FIXME: check if RandGen of mardyn should be used
 		// generate random position and rotation
 		/*
-		position[0] = linkedCells->boundingBoxMin()[0]
-							+ linkedCells->boundingBoxMax()[0] * rand() / (float) RAND_MAX;
-		position[1] = linkedCells->boundingBoxMin()[1]
-									+ linkedCells->boundingBoxMax()[1] * rand() / (float) RAND_MAX;
-		
-		for (unsigned int d = 2; d < dim; d++) {
-			position[d] = linkedCells->boundingBoxMin()[d]
-				+ linkedCells->cellLength()[d] * rand() / (float) RAND_MAX;
-		}
-		*/
+		 position[0] = linkedCells->boundingBoxMin()[0]
+		 + linkedCells->boundingBoxMax()[0] * rand() / (float) RAND_MAX;
+		 position[1] = linkedCells->boundingBoxMin()[1]
+		 + linkedCells->boundingBoxMax()[1] * rand() / (float) RAND_MAX;
+		 
+		 for (unsigned int d = 2; d < dim; d++) {
+		 position[d] = linkedCells->boundingBoxMin()[d]
+		 + linkedCells->cellLength()[d] * rand() / (float) RAND_MAX;
+		 }
+		 
+		 */
+		//if (i != 0) {
 		int diff[3];
-		for (int d = 0; d < 3; d++) diff[d] = allowed_high[d] - allowed_low[d];
+		for (int d = 0; d < 3; d++)
+			diff[d] = allowed_high[d] - allowed_low[d]
+					+ linkedCells->getCutoff();
 
 		for (unsigned int d = 0; d < dim; d++) {
-				position[d] = allowed_low[d]
-					+ diff[d] * (rand() / (float) RAND_MAX);
+			position[d] = allowed_low[d] - linkedCells->getCutoff() + diff[d]
+					* (rand() / (float) RAND_MAX);
 		}
-		
-		q = Quaternion(rand(), rand(), rand(), rand());
+		if (i == 0)
+			std::cout << "position" << position[0] << " " << position[1] << " "
+					<< position[2] << std::endl;
+		q = Quaternion(rand() / (float) RAND_MAX, rand() / (float) RAND_MAX,
+				rand() / (float) RAND_MAX, rand() / (float) RAND_MAX);
 		q.normalize();
+		//} else {
+		//	for (int d = 0; d < dim; d++) position[d] = molecule->r(d);
+		//}
 
 		wrapper.setPosition(position);
 		molecule->setq(q);
 		molecule->upd_cache();
 
-		for (int d = 0; d < 3; d++) force[d] = 0;
+		for (int d = 0; d < 3; d++)
+			force[d] = 0;
 		molecule->clearFM();
 		*energy = linkedCells->getForceAndEnergy(molecule, force);
 
 		wrapper.setForce(force);
-		absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
+		absForce
+				= std::sqrt(
+						force[0] * force[0] + force[1] * force[1] + force[2]
+								* force[2]);
 
 		writeToVectors(vec_energy, vec_angle, vec_lj, vec_center, *energy, 0,
 				molecule);
@@ -301,13 +317,13 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 		}
 
 		// determine signum
-		const int signAl = static_cast<int> ((*energy - U_0) / fabs(*energy
-				- U_0));
+		const int signAl = static_cast<int> ((*energy - U_0) / fabs(
+				*energy - U_0));
 
 		if ((signAl != 1) && (signAl != -1)) {
 			std::cout
 					<< "ERROR moleculardynamics::coupling::ParticleInsertion::findParticlePosition(): wrong sign in USHER"
-					<< std::endl;
+					<< signAl << std::endl;
 			doLogging(vec_energy, vec_angle, vec_lj, vec_center, name_energy,
 					name_angle, name_lj, name_center);
 			exit( EXIT_FAILURE);
@@ -327,8 +343,8 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			// control step size
 			if (*energy > U_overlap) {
 				if (largeStepsizeOnOverlap) {
-					stepSize = 1.12 * sigma - sigma * pow(epsilon_times_4 / *energy,
-							(1.0 / 12.0));
+					stepSize = 1.12 * sigma - sigma * pow(
+							epsilon_times_4 / *energy, (1.0 / 12.0));
 					//std::cout<<"large stepsize: "<<stepSize<<std::endl;
 				} else {
 					stepSize = fabs(*energy - U_0) / absForce;
@@ -342,7 +358,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			}
 
 			if (stepSize <= 0.0) {
-				
+
 				doLogging(vec_energy, vec_angle, vec_lj, vec_center,
 						name_energy, name_angle, name_lj, name_center);
 				exit( EXIT_FAILURE);
@@ -350,14 +366,16 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 
 			// update particle position
 			for (int d = 0; d < 3; d++)
-			position[d] = position[d] + (stepSize * signAl / absForce) * force[d];
+				position[d] = position[d] + (stepSize * signAl / absForce)
+						* force[d];
 			wrapper.setPosition(position);
 
 			// restart searching if the new position of the particle is outside the macroscopic cell
 			bool out = false;
 			for (unsigned int d = 0; d < dim; d++) {
-				if (position[d] >= allowed_high[d] || position[d]
-						<= allowed_low[d]) {
+				if (position[d] >= allowed_high[d] + linkedCells->getCutoff()
+						|| position[d] <= allowed_low[d]
+								- linkedCells->getCutoff()) {
 					out = true;
 				}
 			}
@@ -370,9 +388,12 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			*energyOld = *energy;
 			molecule->clearFM();
 			*energy = linkedCells->getForceAndEnergy(molecule, force);
+			molecule->calcFM();
 
 			wrapper.setForce(force);
-			absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
+			absForce = std::sqrt(
+					force[0] * force[0] + force[1] * force[1] + force[2]
+							* force[2]);
 
 			// just for visualizing how the molecule is searching for a position
 			timestep++;
@@ -383,10 +404,27 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			xiloc = fabs(*energy - U_0) / fabs(U_0);
 
 			if (fabs(xiloc) < xiMax) {
-			
+
+				bool out = false;
+				for (unsigned int d = 0; d < dim; d++) {
+					if (position[d] >= allowed_high[d] || position[d]
+							<= allowed_low[d]) {
+						out = true;
+					}
+				}
+				if (out) {
+					//cout << "out of the bounding box, restarting" << endl;
+					break;
+				}
 				doLogging(vec_energy, vec_angle, vec_lj, vec_center,
 						name_energy, name_angle, name_lj, name_center);
-				cout<<"r: "<<molecule->r(0)<<" "<<molecule->r(1)<<" "<<molecule->r(2)<<" energy: "<<*energy<<endl;
+				
+
+				std::cout << "with force: " << molecule->F(0) << " "
+						<< molecule->F(1) << " " << molecule->F(2) << std::endl;
+				cout << "r: (after translation) " << molecule->r(0) << " "
+						<< molecule->r(1) << " " << molecule->r(2)
+						<< " energy: " << *energy << endl;
 				return timestep;
 
 			}
@@ -396,17 +434,22 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 					//cout << "restart because energy increases" << endl;
 					break;
 				} else {
-					q = Quaternion(rand(), rand(), rand(), rand()); //molecule->q();
+					q = Quaternion(rand() / (float) RAND_MAX,
+							rand() / (float) RAND_MAX,
+							rand() / (float) RAND_MAX,
+							rand() / (float) RAND_MAX); //molecule->q();
 					q.normalize();
 					molecule->setq(q);
 					molecule->upd_cache();
 					*energyOld = *energy;
-		
+
 					molecule->clearFM();
 					*energy = linkedCells->getForceAndEnergy(molecule, force);
 
 					wrapper.setForce(force);
-					absForce = std::sqrt(force[0] * force[0] + force[1] * force[1] + force[2] * force[2]);
+					absForce = std::sqrt(
+							force[0] * force[0] + force[1] * force[1]
+									+ force[2] * force[2]);
 					timestep++;
 					//writeMoleculeVtk(molecule, linkedCells, simulation,
 					//		&timestep);
@@ -419,22 +462,33 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule,
 			// if the molecules have more than one interaction site, perform rotations
 
 			int rotation = rotateMolecule(molecule, wrapper, linkedCells,
-					rotationsMax, maxAngle, maxAllowedAngle,
-					minAngle, U_0, U_overlap, &timestep, xiMax, energy,
-					energyOld, force, &absForce, &q, 0, 0, vec_energy,
-					vec_angle, vec_lj, vec_center, name_energy, name_angle,
-					name_lj, name_center);
-			
+					rotationsMax, maxAngle, maxAllowedAngle, minAngle, U_0,
+					U_overlap, &timestep, xiMax, energy, energyOld, force,
+					&absForce, &q, 0, 0, vec_energy, vec_angle, vec_lj,
+					vec_center, name_energy, name_angle, name_lj, name_center);
+
 			if (rotation == 1) {
+				bool out = false;
+				for (unsigned int d = 0; d < dim; d++) {
+					if (position[d] >= allowed_high[d] || position[d]
+							<= allowed_low[d]) {
+						out = true;
+					}
+				}
+				if (out) {
+					//cout << "out of the bounding box, restarting" << endl;
+					break;
+				}
 				doLogging(vec_energy, vec_angle, vec_lj, vec_center,
 						name_energy, name_angle, name_lj, name_center);
-				cout<<"r: "<<molecule->r(0)<<" "<<molecule->r(1)<<" "<<molecule->r(2)<<" energy: "<<*energy<<std::endl;
+				cout << "r (after rotations): " << molecule->r(0) << " "
+						<< molecule->r(1) << " " << molecule->r(2)
+						<< " energy: " << *energy << std::endl;
 				return timestep;
 			}
-			
 
 		}
-		
+
 	}
 	delete position;
 	delete force;
