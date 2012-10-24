@@ -51,6 +51,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	_tersoffCutoffRadius = tersoffCutoffRadius;
 	cout << "cutoff " << cutoffRadius << "lj " << LJCutoffRadius << " tersoff "
 			<< tersoffCutoffRadius << " num " << cellsInCutoffRadius << endl;
+	compute = 0;
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor(
@@ -333,7 +334,10 @@ void LinkedCells::traversePairs(ParticlePairsHandler* particlePairsHandler) {
 				<< endl;
 		exit(1);
 	}
+	pairsHandler = particlePairsHandler;
+	_blockTraverse.setDebugWrite(true);
 	_blockTraverse.traversePairs(particlePairsHandler, forceIntegrator);
+	compute = 1;
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {
@@ -364,7 +368,9 @@ Molecule* LinkedCells::end() {
 
 Molecule* LinkedCells::deleteCurrent() {
 	std::cout << "in the method, about to delete molecule "
-			<< _particleIter->id() << std::endl;
+			<< _particleIter->id() << "wiht position " << _particleIter->r(0)
+			<< " " << _particleIter->r(1) << " " << _particleIter->r(2)
+			<< std::endl;
 	_particleIter = _particles.erase(_particleIter);
 	std::cout << "here " << std::endl;
 	if (_particleIter != _particles.end()) {
@@ -634,7 +640,7 @@ unsigned long LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex,
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 		double z) {
-	std::cout << "about to delete" << std::endl;
+	//std::cout << "about to delete" << std::endl;
 	int ix = (int) floor(
 			(x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
 	int iy = (int) floor(
@@ -660,8 +666,225 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 		exit(1);
 	}
 }
-
+/* other
+ * double u = 0;
+ double dd;
+ double distanceVector[3];
+ double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+ double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
+ for (Molecule* m2 = this->begin(); m2 != this->end(); m2 = this->next()) {
+ dd = m2->dist2(*m1, distanceVector);
+ if (dd > cutoffRadiusSquare)
+ continue;
+ double f[3];
+ if (m1->id() == m2->id() && m1->r(0) == m2->r(0) && m1->r(1) == m2->r(1) &&
+ m1->r(2) == m2->r(2))
+ continue;
+ u += this->_particlePairsHandler->processPair(*m1, *m2,
+ distanceVector, MOLECULE_INSERTION, dd,
+ (dd < LJCutoffRadiusSquare), f);
+ for (int i = 0; i < 3; i++)
+ total_f[i] += f[i];
+ }
+ */
+/*
+ * double dd;
+ double distanceVector[3];
+ double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+ double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
+ for (int i = 0; i < 3; i++) total_f[i] = 0;
+ double u = 0;
+ for (int i = 0; i < _cells.size(); i++) {
+ ParticleCell cell = this->getCell(i);
+ std::vector<Molecule*> molecules = cell.getParticlePointers();
+ double dd = 0;
+ double distanceVector[3];
+ if (molecules.size() > 0) {
+ dd = molecules[0]->dist2(*m1, distanceVector);
+ }
+ if (dd > 16 * cutoffRadiusSquare)
+ continue;
+ for (int j = 0; j < molecules.size(); j++) {
+ double f[3] = {0, 0, 0};
+ dd = molecules[j]->dist2(*m1, distanceVector);
+ u += this->_particlePairsHandler->processPair(*m1, *molecules[j],
+ distanceVector, MOLECULE_INSERTION, dd,
+ (dd < LJCutoffRadiusSquare), f);
+ for (int d = 0; d < 3; d++)
+ total_f[d] += f[d];
+ }
+ }
+ */
 double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
+	/*
+	 m1->resetPotential();
+	 this->addParticle(*m1);
+	 this->update();
+	 _blockTraverse.setDebugWrite(false);
+	 _blockTraverse.traversePairs(pairsHandler, forceIntegrator);
+	 for (int i = 0; i < 3; i++) total_f[i] = m1->F(i);
+	 for (Molecule* mol = this->begin(); mol != this->end(); mol = this->next()) {
+	 if (mol->id() == m1->id() && mol->r(0) == m1->r(0) && mol->r(1) == m1->r(1) &&
+	 mol->r(2) == m1->r(2)) {
+	 delete m1;
+	 m1 = new Molecule(*mol);
+	 break;
+
+	 }
+
+	 }
+	 double u = m1->getPotential();
+	 this->deleteMolecule(m1->id(), m1->r(0), m1->r(1), m1->r(2));
+
+	 return u;
+	 */
+
+	//	double u1 = 0;
+	//	double total_f1[3] = { 0, 0, 0 };
+	double dd;
+	double distanceVector[3];
+	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
+	//	for (Molecule* m2 = this->begin(); m2 != this->end(); m2 = this->next()) {
+	//		dd = m2->dist2(*m1, distanceVector);
+	//		if (dd > cutoffRadiusSquare)
+	//			continue;
+	//		double f[3];
+	//		if (m1->id() == m2->id() && m1->r(0) == m2->r(0) && m1->r(1)
+	//				== m2->r(1) && m1->r(2) == m2->r(2))
+	//			continue;
+	//		u1 += this->_particlePairsHandler->processPair(*m1, *m2,
+	//				distanceVector, MOLECULE_INSERTION, dd,
+	//				(dd < LJCutoffRadiusSquare), f);
+	//		for (int i = 0; i < 3; i++)
+	//			total_f1[i] += f[i];
+	//	}
+	double u = 0.0;
+	//double total_f[3];
+	for (int i = 0; i < 3; i++)
+		total_f[i] = 0;
+	double f[3];
+
+	std::vector<Molecule*>::iterator molIter2;
+	vector<unsigned long>::iterator neighbourOffsetsIter;
+
+	// sqare of the cutoffradius
+	//	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
+	//	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
+	//	double dd;
+	//	double distanceVector[3];
+	bool found = false;
+	unsigned long cellIndex = getCellIndexOfMolecule(m1);
+	if (m1->r(0) < 0 || m1->r(1) < 0 || m1->r(2) < 0 || m1->r(0)
+			> getBoundingBoxMax(0) || m1->r(1) > getBoundingBoxMax(1) || m1->r(
+			2) > getBoundingBoxMax(2)) {
+		//		std::cout << "molecule: " << m1->r(0) << " " << m1->r(1) << " "
+		//				<< m1->r(2) << " cell index " << cellIndex << std::endl;
+		found = true;
+	}
+	ParticleCell& currentCell = _cells[cellIndex];
+
+	if (m1->numTersoff() > 0) {
+		global_log->error()
+				<< "The grand canonical ensemble is not implemented for solids."
+				<< endl;
+		exit(484);
+	}
+	//std::cout<<"here1"<<std::endl;
+	// molecules in the cell
+	for (molIter2 = currentCell.getParticlePointers().begin(); molIter2
+			!= currentCell.getParticlePointers().end(); molIter2++) {
+		//cout<<"m1 id "<<m1->id()<<" m2 id"<<(*molIter2)->id()<<endl;
+		if (m1->id() == (*molIter2)->id())
+			continue;
+		dd = (*molIter2)->dist2(*m1, distanceVector);
+		if (dd > cutoffRadiusSquare)
+			continue;
+
+		u += this->_particlePairsHandler->processPair(*m1, **molIter2,
+				distanceVector, MOLECULE_INSERTION, dd,
+				(dd < LJCutoffRadiusSquare), f);
+
+		for (int i = 0; i < 3; i++)
+			total_f[i] += f[i];
+
+	}
+	//std::cout<<"here2"<<std::endl;
+	// backward and forward neighbours
+	//	std::cout << "backward, forward begin"
+	//			<< *_backwardNeighbourOffsets.begin() << " "
+	//			<< *_forwardNeighbourOffsets.begin() << std::endl;
+	//	std::cout << "backward, forward end" << *_backwardNeighbourOffsets.end()
+	//			<< " " << *_forwardNeighbourOffsets.end() << std::endl;
+	//	std::cout << " for molecule " << m1->r(0) << " " << m1->r(1) << " "
+	//			<< m1->r(2) << std::endl;
+	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter
+			!= _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
+			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+
+		if (cellIndex + *neighbourOffsetsIter < 0 || cellIndex
+				+ *neighbourOffsetsIter >= _cells.size())
+			break;
+		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+		//				std::cout << "index, offset" << cellIndex << " "
+		//						<< *neighbourOffsetsIter << std::endl;
+		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2
+				!= neighbourCell.getParticlePointers().end(); molIter2++) {
+			dd = (*molIter2)->dist2(*m1, distanceVector);
+			//dd = cutoffRadiusSquare - 10;
+			if (dd > cutoffRadiusSquare)
+				continue;
+			if (m1->r(0) == (*molIter2)->r(0) && m1->r(1) == (*molIter2)->r(1)
+					&& m1->r(2) == (*molIter2)->r(2) && m1->id()
+					== (*molIter2)->id())
+				continue;
+
+			for (int i = 0; i < 3; i++)
+				f[i] = 0;
+
+			u += this->_particlePairsHandler->processPair(*m1, **molIter2,
+					distanceVector, MOLECULE_INSERTION, dd,
+					(dd < LJCutoffRadiusSquare), f);
+			for (int i = 0; i < 3; i++)
+				total_f[i] += f[i];
+		}
+	}
+
+	// std::cout<<"here3"<<std::endl;
+	if (globalADist != NULL && globalSiteADist != NULL && forceIntegrator
+			!= NULL && compute != 0) {
+		double f[3] = { 0, 0, 0 };
+		//std::cout<<"gsize: "<<(*globalADist).size()<<std::endl;
+		double new_u = forceIntegrator->processMolecule(m1, f, true) / 6;
+
+		u += new_u;
+
+		for (int i = 0; i < 3; i++)
+			total_f[i] += f[i];
+	}
+	//	double diff = std::abs(u - u1)/u;
+	//
+	//	double diff1 = std::abs(total_f[0] - total_f1[0]) / total_f[0];
+	//	double diff2 = std::abs(total_f[1] - total_f1[1]) / total_f[1];
+	//	double diff3 = std::abs(total_f[2] - total_f1[2]) / total_f[2];
+	//	if (diff> 0.001 || diff1 >  0.001 || diff2 >  0.001 ||
+	//			diff3 >  0.001) {
+	//		std::cout << "u1 " << u1 << " u " << u << " diff " << std::abs(u - u1)
+	//				/ u << std::endl;
+	//		std::cout << "totalf " << total_f[0] << " " << total_f[1] << " "
+	//				<< total_f[2] << std::endl;
+	//		std::cout << "totalf " << total_f1[0] << " " << total_f1[1] << " "
+	//				<< total_f1[2] << std::endl;
+	//		std::cout << "diff f0 " << diff1 << " diff f1 "
+	//				<< diff2 << " diff f2 " << diff3 << std::endl;
+	//		exit(1);
+	//	}
+	return u;
+
+}
+
+double LinkedCells::getForceAndEnergyAddInfluence(Molecule* m1, double* total_f) {
 
 	double u = 0.0;
 	//double total_f[3];
@@ -703,7 +926,7 @@ double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 			continue;
 
 		u += this->_particlePairsHandler->processPair(*m1, **molIter2,
-				distanceVector, MOLECULE_INSERTION, dd,
+				distanceVector, MOLECULE_MOLECULE, dd,
 				(dd < LJCutoffRadiusSquare), f);
 
 		for (int i = 0; i < 3; i++)
@@ -725,25 +948,31 @@ double LinkedCells::getForceAndEnergy(Molecule* m1, double* total_f) {
 			if (dd > cutoffRadiusSquare)
 				continue;
 
+			if (m1->r(0) == (*molIter2)->r(0) && m1->r(1) == (*molIter2)->r(1)
+					&& m1->r(2) == (*molIter2)->r(2))
+				continue;
+
 			for (int i = 0; i < 3; i++)
 				f[i] = 0;
 			u += this->_particlePairsHandler->processPair(*m1, **molIter2,
-					distanceVector, MOLECULE_INSERTION, dd,
+					distanceVector, MOLECULE_MOLECULE, dd,
 					(dd < LJCutoffRadiusSquare), f);
 			for (int i = 0; i < 3; i++)
 				total_f[i] += f[i];
 		}
 	}
 
-//	if (globalADist != NULL && globalSiteADist != NULL) {
-//		double f[3] = { 0, 0, 0 };
-//		//std::cout<<"gsize: "<<(*globalADist).size()<<std::endl;
-//		double new_u = forceIntegrator->processMolecule(m1, f, false) / 6;
-//		u += new_u;
-//
-//		for (int i = 0; i < 3; i++)
-//			total_f[i] += f[i];
-//	}
+	if (globalADist != NULL && globalSiteADist != NULL && forceIntegrator
+			!= NULL && compute != 0) {
+		double f[3] = { 0, 0, 0 };
+		//std::cout<<"gsize: "<<(*globalADist).size()<<std::endl;
+		double new_u = forceIntegrator->processMolecule(m1, f, true) / 6;
+
+		//		u += new_u;
+
+		//		for (int i = 0; i < 3; i++)
+		//			total_f[i] += f[i];
+	}
 	return u;
 }
 
@@ -861,6 +1090,7 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 				<< endl;
 		exit(484);
 	}
+
 	// molecules in the cell
 	for (molIter2 = currentCell.getParticlePointers().begin(); molIter2
 			!= currentCell.getParticlePointers().end(); molIter2++) {
@@ -883,7 +1113,9 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 			!= _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
 		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
 			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-
+		if (cellIndex + *neighbourOffsetsIter < 0 || cellIndex
+				+ *neighbourOffsetsIter >= _cells.size())
+			break;
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2
 				!= neighbourCell.getParticlePointers().end(); molIter2++) {
@@ -902,7 +1134,8 @@ double LinkedCells::getEnergy(Molecule* m1, double total_f[3]) {
 		}
 	}
 
-	if (globalADist != NULL && globalSiteADist != NULL) {
+	if (globalADist != NULL && globalSiteADist != NULL && forceIntegrator
+			!= NULL) {
 		double f[3] = { 0, 0, 0 };
 		u += forceIntegrator->processMolecule(m1, f, false) / 6; //FIXME: should it be false?
 		for (int i = 0; i < 3; i++)

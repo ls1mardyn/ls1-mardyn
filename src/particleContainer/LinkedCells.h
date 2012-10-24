@@ -279,6 +279,8 @@ public:
 
 	}
 
+	double getForceAndEnergyAddInfluence(Molecule* m1, double* total_f);
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########
@@ -370,6 +372,8 @@ private:
 	std::vector<std::vector<double> >* globalADist;
 	std::vector<std::vector<std::vector<double> > >* globalSiteADist;
 	RDFForceIntegrator* forceIntegrator;
+	int compute;
+	ParticlePairsHandler* pairsHandler;
 };
 
 #endif /*LINKEDCELLS_H_*/
