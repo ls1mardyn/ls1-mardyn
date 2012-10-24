@@ -60,8 +60,9 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 				force[plane] += f[plane];
 				potential += boundary[plane] * 2 * PI * _rho * g * lj12_6 * x
 						* _d * _d;
-				if (add_influence)
+				if (add_influence) {
 					mol->Fljcenteradd(site, f);
+				}
 
 				if (boundary[0] == -1 && plane == 0) {
 					mol->addLeftxRdfInfluence(site, f);

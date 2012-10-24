@@ -28,7 +28,9 @@ RDFForceIntegratorExtendedSite::RDFForceIntegratorExtendedSite(
 	globalNondecliningSiteADist
 			= std::vector<std::vector<std::vector<double> > >();
 	rmids = std::vector<double>();
-
+	Molecule* currentMolecule = _moleculeContainer->begin();
+		_extension = currentMolecule->ljcenter_disp(0);
+	precomputeScalingFactors();
 }
 
 RDFForceIntegratorExtendedSite::~RDFForceIntegratorExtendedSite() {
@@ -265,7 +267,7 @@ double RDFForceIntegratorExtendedSite::processMolecule(
 		//if (currentMolecule->r(0) > 10) std::cout<<"boundary: "<<boundary[0]<<" "<<boundary[1]<<" "<<boundary[2]<<std::endl;
 		double f[3] = { 0, 0, 0 };
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site, f,
-				false);
+				add_influence);
 		if (rm[0] < 0.01 || rm[0] > _rmax[0] - 0.01) {
 			double diff, diffr;
 			if (boundary[0] == -1) {
@@ -289,7 +291,7 @@ double RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 		double* force, bool add_influence) {
 	std::vector<double> globalAcc = (*_globalADist)[0];
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
-
+	double potential = 0;
 	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2]
 			- _rmin[2]);
 
@@ -299,7 +301,7 @@ double RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 	double rho = _numMolecules / (V);
 
 	double r, level, scale = 1;
-	double pot = 0;
+
 	int bin; // bin for the radius that rdf is read for
 	double g;
 
@@ -337,6 +339,7 @@ double RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 				double r2 = r * r;
 				double lj6 = sig2 * sig2 * sig2 / (r2 * r2 * r2);
 				double ljf = 24 * mol->getEps() * (lj6 - 2 * lj6 * lj6) / r;
+				double lj12_6 = 6 * 4 * mol->getEps() * (lj6 * lj6 - lj6);
 
 				double f[3] = { 0, 0, 0 };
 				// compute force
@@ -347,7 +350,8 @@ double RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 				// add to molecule
 				if (add_influence)
 					mol->Fljcenteradd(site, f);
-
+				potential += 2 * PI * rho * g * lj12_6 * x
+															* _d * _d;
 				// add for assesing scheme quality
 				if (boundary[0] == 1 && plane == 0) {
 					mol->addLeftxRdfInfluence(site, f);
@@ -378,11 +382,16 @@ double RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 					double ljf = 24 * mol->getEps() * (lj6 - 2 * lj6 * lj6) / r;
 
 					double f[3] = { 0, 0, 0 };
+					double lj12_6 = 6 * 4 * mol->getEps() * (lj6 * lj6 - lj6);
+					potential += 2 * PI * rho * g * lj12_6 * x
+											* _d * _d;
 					f[plane] = boundary[0] * 2 * PI * rho * g * ljf * z * x
 							* _d * _d / r;
 					force[plane] += f[plane];
-					if (add_influence)
+					if (add_influence) {
 						mol->Fljcenteradd(site, f);
+
+					}
 
 					if (boundary[0] == -1 && plane == 0) {
 						mol->addLeftxRdfInfluence(site, f);
@@ -392,7 +401,7 @@ double RDFForceIntegratorExtendedSite::integrateRDFSite(Molecule* mol,
 			}
 		}
 	}
-	return pot;
+	return potential;
 }
 
 double RDFForceIntegratorExtendedSite::traverseMolecules() {
@@ -411,7 +420,7 @@ double RDFForceIntegratorExtendedSite::traverseMolecules() {
 			!= _moleculeContainer->end(); currentMolecule
 			= _moleculeContainer->next()) {
 		double force[3] = {0,0,0};
-		total_pot += this->processMolecule(currentMolecule, force, false, false);
+		total_pot += this->processMolecule(currentMolecule, force, true, false);
 	}
 	return total_pot;
 
