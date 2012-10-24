@@ -127,6 +127,7 @@ private:
 
 	//! If true, _(forward|backward)NeighbourOffsets are allocated and must be free'd
 	bool _allocatedOffsets;
+
 };
 
 #endif /*BLOCKTRAVERSE_H_*/
