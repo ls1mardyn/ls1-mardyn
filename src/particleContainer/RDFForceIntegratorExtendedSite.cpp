@@ -268,20 +268,7 @@ double RDFForceIntegratorExtendedSite::processMolecule(
 		double f[3] = { 0, 0, 0 };
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site, f,
 				add_influence);
-		if (rm[0] < 0.01 || rm[0] > _rmax[0] - 0.01) {
-			double diff, diffr;
-			if (boundary[0] == -1) {
-				diff = rm[0];
-				diffr = r[0];
-			}
-			if (boundary[0] == 1) {
-				diff = _rmax[0] - rm[0];
-				diffr = _rmax[0] - r[0];
-			}
-			std::cout << "rm: " << diff << " boundary " << boundary[0]
-					<< " sited " << diffr << " f: " << f[0] << std::endl;
-		}
-		// xy plane is the boundary
+
 	}
 	return pot;
 }
@@ -414,8 +401,7 @@ double RDFForceIntegratorExtendedSite::traverseMolecules() {
 	precomputeScalingFactors();
 	_numMolecules = _moleculeContainer->countParticles(
 			_moleculeContainer->begin()->componentid(), _rmin, _rmax);
-	std::cout << "nn, nr, nalpha, nlevels" << _n_n << " " << _n_r << " "
-			<< _n_alpha << " " << _n_levels << std::endl;
+
 	for (currentMolecule = _moleculeContainer->begin(); currentMolecule
 			!= _moleculeContainer->end(); currentMolecule
 			= _moleculeContainer->next()) {
