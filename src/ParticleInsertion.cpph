@@ -229,7 +229,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 
 
 	// maximum step size allowed
-	const double stepRef = 1.12 * sigma/2; //0.1
+	const double stepRef = 1.12 * sigma; //0.1
 	//* pow((1.0 / ((double) numMolecules)), 3.0 / 2.0) * sigma;
 
 	int timestep = 0;
