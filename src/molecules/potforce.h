@@ -305,7 +305,7 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
  */
 inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params,
 		double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF,
-		double& Virial, bool calculateLJ, double* f, int boundary[3] = NULL)
+		double& Virial, bool calculateLJ, double* f)
 // ???better calc Virial, when molecule forces are calculated:
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
