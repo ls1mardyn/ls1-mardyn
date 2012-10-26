@@ -27,22 +27,17 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 	std::vector<double> globalAcc = (*_globalADist)[0];
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
 
-	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2]
-			- _rmin[2]);
 
 	double potential = 0;
 
-	// number density of the domain
-	//int numMolecules = _moleculeContainer->getNumberOfParticles();
-
-	//double rho = _numMolecules / (V);
 
 	int bin; // bin for the radius that rdf is read for
 	double g;
 	for (int i = 0; i < 3; i++)
 		force[i] = 0;
 	for (double z = normal_dim[0] + _d / 2; z <= normal_dim[1]; z += _d) {
-		for (double x = _d / 2; x <= std::sqrt( normal_dim[1] *  normal_dim[1] - z * z); x += _d) {
+		for (double x = _d / 2; x <= std::sqrt(
+				normal_dim[1] * normal_dim[1] - z * z); x += _d) {
 			double r = std::sqrt(x * x + z * z);
 			if (mol->numSites() == 1) {
 
@@ -58,12 +53,12 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 				f[plane] = boundary[plane] * 2 * PI * _rho * g * ljf * z * x
 						* _d * _d / r;
 				force[plane] += f[plane];
-				potential += boundary[plane] * 2 * PI * _rho * g * lj12_6 * x
-						* _d * _d;
+				potential += 2 * PI * _rho * g * lj12_6 * x * _d * _d;
 				if (add_influence) {
 					mol->Fljcenteradd(site, f);
 				}
 
+				// track the force coming from the rdf boundary
 				if (boundary[0] == -1 && plane == 0) {
 					mol->addLeftxRdfInfluence(site, f);
 				}
@@ -90,15 +85,14 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 					double lj12_6 = 6 * 4 * mol->getEps() * (lj6 * lj6 - lj6); //times 6 like potforce returns
 
 					double f[3] = { 0, 0, 0 };
-					f[plane] = boundary[plane] * 2 * PI * _rho * g * ljf * z * x
-							* _d * _d / r;
+					f[plane] = boundary[plane] * 2 * PI * _rho * g * ljf * z
+							* x * _d * _d / r;
 					force[plane] += f[plane];
-					potential += boundary[plane] * 2 * PI * _rho * g * lj12_6
-							* x * _d * _d;
+					potential += 2 * PI * _rho * g * lj12_6 * x * _d * _d;
 					if (add_influence)
 						mol->Fljcenteradd(site, f);
 
-
+					// track the force coming from the rdf boundary
 					if (boundary[0] == -1 && plane == 0) {
 						mol->addLeftxRdfInfluence(site, f);
 
@@ -155,8 +149,9 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 		else if (rm[2] >= _high_limit[2])
 			boundary[2] = 1;
 
-		//if (boundary[0] == 0 && boundary[1] == 0 && boundary[2] == 0)
-
+		/** For efficiency, now only consider open boundaries in
+		 * x direction
+		 */
 		if (boundary[0] != -1 && boundary[0] != 1)
 			return 0;
 
@@ -164,133 +159,149 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 		// integration limits for axes
 
 		double normal_lim[2] = { 0, _rc };
-
-		// box size for the numerical quadrature
-		//_dn = _dr = currentMolecule->getSigma() / 20;
-
+		double xlim[2] = { 0, 0 };
+		double ylim[2] = { 0, 0 };
+		double zlim[2] = { 0, 0 };
+		double a, h;
 		if (boundary[0] == -1) {
 			normal_lim[0] = std::abs(r[0] - _rmin[0]);
-			if (r[0] < _rmin[0])
+			xlim[0] = r[0] - _rc;
+			xlim[1] = 0;
+
+			if (r[0] < _rmin[0]) {
 				normal_lim[1] -= _rmin[0] - r[0];
-			//			if (r[0] < _rmin[0])
-			//				normal_lim[0] = std::abs(2 * r[0] - _rmin[0]);
+				xlim[0] += _rmin[0] - r[0];
+			}
 
 		} else if (boundary[0] == 1) {
+			xlim[0] = _rmax[0];
+			xlim[1] = r[0] + _rc;
 			normal_lim[0] = std::abs(_rmax[0] - r[0]);
-			if (r[0] > _rmax[0])
+			if (r[0] > _rmax[0]) {
 				normal_lim[1] -= r[0] - _rmax[0];
-			//			if (r[0] > _rmax[0])
-			//				normal_lim[0] = std::abs(_rmax[0] - 2 * r[0]);
+				xlim[1] -= r[0] - _rmax[0];
+			}
+
 		}
-		//std::cout<<"here2"<<std::endl;
+		if (boundary[0] != 0) {
+			h = std::abs(xlim[1] - xlim[0]);
+			a = std::sqrt(h * (2 * _rc - h));
+			ylim[0] = r[1] - a;
+			ylim[1] = r[1] + a;
+
+			zlim[0] = r[2] - a;
+			zlim[1] = r[2] + a;
+		}
 
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site,
-				force, add_influence);
-		//if (std::abs(force[0]) < 0.00001) std::cout<<"rm: "<<rm[0]<<" r: "<<r[0]<<std::endl;
-//
-//		if (r[0] < 3.23 && r[0] > 3.21)
-//			std::cout<<"r: "<<r[0]<<" f: "<<force[0]<<std::endl;
-//		if (r[0] < 3.21 && r[0] > 3.2)
-//			std::cout<<"r: "<<r[0]<<" f: "<<force[0]<<std::endl;
+			force, add_influence);
+//		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0, site,
+//				boundary, force, add_influence);
+
 		// xy plane is the boundary
 		// integrate xy
+
+
 		/*
-		 for (unsigned int i = 0; boundary[2] != 0 && i
-		 < componentIds.size(); i++) {
-		 if (boundary[2] == -1) {
-		 zlim[0] = r2 - rc;
-		 zlim[1] = (r2 > rmin[2] ? rmin[2] : 2 * r2 - rmin[2]);
-		 normal_lim[0] = abs(r2 - rmin[2]);
-		 } else if (boundary[2] == 1) {
-		 zlim[0] = (r2 < rmax[2] ? rmax[2] : 2 * r2 - rmax[2]);
-		 zlim[1] = r2 + rc;
-		 normal_lim[0] = abs(rmax[2] - r2);
-		 }
-		 double h = zlim[1] - zlim[0];
-		 double a = std::sqrt(h * (2 * rc - h));
-		 if (boundary[0] == 0)
-		 integrateRDFSite(normal_lim, currentMolecule, rc, dn, dr,
-		 globalADist[currentMolecule->componentid()
-		 * totalComponents + i],
-		 globalSiteADist[currentMolecule->componentid()
-		 * totalComponents + i], 2, currSum, site,
-		 boundary);
-		 else {
-		 if (boundary[0] == -1) {
-		 xlim[0] = rmin[0];
-		 xlim[1] = r0 + a;
-		 } else if (boundary[0] == 1) {
-		 xlim[0] = r0 - a;
-		 xlim[1] = rmax[0];
-		 }
-
-		 ylim[0] = r1 - a;
-		 ylim[1] = r1 + a;
-		 integrateRDFCartesian(xlim, ylim, zlim, currentMolecule,
-		 rc, dx, dy, dz,
-		 globalADist[currentMolecule->componentid()
-		 * totalComponents + i],
-		 globalSiteADist[currentMolecule->componentid()
-		 * totalComponents + i], 2, currSum, site,
-		 boundary);
-		 }
-
-		 }
-
-		 // xz plane is the boundary
-		 // integrate xz plane
-		 for (unsigned int i = 0; boundary[1] != 0 && i
-		 < componentIds.size(); i++) {
-		 if (boundary[1] == -1) {
-		 ylim[1] = (r1 > rmin[1] ? rmin[1] : 2 * r1 - rmin[1]);
-		 ylim[0] = r1 - rc;
-		 normal_lim[0] = abs(r1 - rmin[1]);
-		 } else if (boundary[1] == 1) {
-		 ylim[0] = (r1 < rmax[1] ? rmax[1] : 2 * r1 - rmax[1]);
-		 ylim[1] = r1 + rc;
-		 normal_lim[0] = abs(rmax[1] - r1);
-		 }
-		 double h = ylim[1] - ylim[0];
-		 double a = std::sqrt(h * (2 * rc - h));
-		 if (boundary[0] == -1) {
-		 xlim[0] = rmin[0];
-		 xlim[1] = r0 + a;
-		 } else if (boundary[0] == 1) {
-		 xlim[0] = r0 - a;
-		 xlim[1] = rmax[0];
-		 } else {
-		 xlim[0] = r0 - a;
-		 xlim[1] = r0 + a;
-		 }
-		 if (boundary[2] == -1) {
-		 zlim[0] = rmin[2];
-		 zlim[1] = r2 + rc;
-		 } else if (boundary[2] == 1) {
-		 zlim[0] = r2 - rc;
-		 zlim[1] = rmax[2];
-		 } else {
-		 zlim[0] = r2 - a;
-		 zlim[1] = r2 + a;
-		 }
-		 if (boundary[0] == 0 && boundary[2] == 0)
-		 integrateRDFSite(normal_lim, currentMolecule, rc, dr, dn,
-		 globalADist[currentMolecule->componentid()
-		 * totalComponents + i],
-		 globalSiteADist[currentMolecule->componentid()
-		 * totalComponents + i], 1, currSum, site,
-		 boundary);
-		 else
-		 integrateRDFCartesian(xlim, ylim, zlim, currentMolecule,
-		 rc, dx, dy, dz,
-		 globalADist[currentMolecule->componentid()
-		 * totalComponents + i],
-		 globalSiteADist[currentMolecule->componentid()
-		 * totalComponents + i], 1, currSum, site,
-		 boundary);
-		 }
-
-		 delete currSum;
+		 * THe code from here on is if the molecule is in vicinity of more than one boundary
+		 * It was not properly tested as I always worked with boundaries in x direction
+		 * I checked it with breakpoints some months ago
 		 */
+		if (boundary[2] != 0) {
+			if (boundary[2] == -1) {
+				zlim[0] = r[2] - _rc;
+				zlim[1] = _rmin[2];
+				normal_lim[0] = std::abs(r[2] - _rmin[2]);
+				normal_lim[1] = _rc;
+				if (r[2] < _rmin[2]) {
+					normal_lim[1] -= _rmin[2] - r[2];
+					zlim[2] += _rmin[2] - r[2];
+				}
+			} else if (boundary[2] == 1) {
+				zlim[0] = _rmax[2];
+				zlim[1] = r[2] + _rc;
+				normal_lim[0] = std::abs(_rmax[0] - r[0]);
+				normal_lim[1] = _rc;
+				if (r[2] > _rmax[2]) {
+					normal_lim[2] -= r[2] - _rmax[2];
+					zlim[1] -= r[2] - _rmax[2];
+				}
+
+			}
+			double h = zlim[1] - zlim[0];
+			double a = std::sqrt(h * (2 * _rc - h));
+			if (boundary[0] == 0)
+				integrateRDFSite(currentMolecule, normal_lim, boundary, 2,
+						site, force, add_influence);
+			else {
+				if (boundary[0] == -1) {
+					xlim[0] = _rmin[0];
+					xlim[1] = r[0] + a;
+				} else if (boundary[0] == 1) {
+					xlim[0] = r[0] - a;
+					xlim[1] = _rmax[0];
+				}
+
+				ylim[0] = r[1] - a;
+				ylim[1] = r[1] + a;
+				integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 2,
+						site, boundary, force, false);
+			}
+
+		}
+
+		// xz plane is the boundary
+		// integrate xz plane
+		if (boundary[1] != 0) {
+			if (boundary[1] == -1) {
+				ylim[0] = r[1] - _rc;
+				ylim[1] = _rmin[1];
+				normal_lim[0] = std::abs(r[1] - _rmin[1]);
+				normal_lim[1] = _rc;
+				if (r[1] < _rmin[1]) {
+					normal_lim[1] -= _rmin[1] - r[1];
+					ylim[2] += _rmin[1] - r[1];
+				}
+			} else if (boundary[1] == 1) {
+				ylim[0] = _rmax[1];
+				ylim[1] = r[1] + _rc;
+				normal_lim[0] = std::abs(_rmax[1] - r[1]);
+				normal_lim[1] = _rc;
+				if (r[1] > _rmax[1]) {
+					normal_lim[1] -= r[1] - _rmax[1];
+					ylim[1] -= r[1] - _rmax[1];
+				}
+			}
+			double h = ylim[1] - ylim[0];
+			double a = std::sqrt(h * (2 * _rc - h));
+			if (boundary[0] == -1) {
+				xlim[0] = _rmin[0];
+				xlim[1] = r[0] + a;
+			} else if (boundary[0] == 1) {
+				xlim[0] = r[0] - a;
+				xlim[1] = _rmax[0];
+			} else {
+				xlim[0] = r[0] - a;
+				xlim[1] = r[0] + a;
+			}
+			if (boundary[2] == -1) {
+				zlim[0] = _rmin[2];
+				zlim[1] = r[2] + a;
+			} else if (boundary[2] == 1) {
+				zlim[0] = r[2] - a;
+				zlim[1] = _rmax[2];
+			} else {
+				zlim[0] = r[2] - a;
+				zlim[1] = r[2] + a;
+			}
+			if (boundary[0] == 0 && boundary[2] == 0)
+				integrateRDFSite(currentMolecule, normal_lim, boundary, 1,
+						site, force, add_influence);
+			else
+				integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 1,
+						site, boundary, force, false);
+		}
+
 	}
 	return pot;
 }
@@ -299,59 +310,37 @@ double RDFForceIntegratorSite::traverseMolecules() {
 	Molecule* currentMolecule;
 	double force[3] = { 0, 0, 0 };
 	double total_pot = 0;
-	int num_bins = 400;
-	double length = (_moleculeContainer->getBoundingBoxMax(0)
-			- _moleculeContainer->getBoundingBoxMin(0)) / num_bins;
 
-	//double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * length;
-	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2] - _rmin[2]);
-	double* rhos = new double[num_bins];
-	for (int i = 1; i <= num_bins; i++) {
-		double bottom[3] = { (i - 1) * length,
-				_moleculeContainer->getBoundingBoxMin(1),
-				_moleculeContainer->getBoundingBoxMin(2) };
-		double top[3] = { i * length, _moleculeContainer->getBoundingBoxMax(1),
-				_moleculeContainer->getBoundingBoxMax(2) };
-		int local_num = _moleculeContainer->countParticles(
-				_moleculeContainer->begin()->componentid(), bottom, top);
-		rhos[i - 1] = local_num / V;
-	}
-
+	// get number density
+	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2]
+			- _rmin[2]);
 	_numMolecules = _moleculeContainer->countParticles(
 			_moleculeContainer->begin()->componentid(), _rmin, _rmax);
+	_rho = _numMolecules / V;
+
 	// iterate through molecules and add rdf influence
 	for (currentMolecule = _moleculeContainer->begin(); currentMolecule
 			!= _moleculeContainer->end(); currentMolecule
 			= _moleculeContainer->next()) {
-		int rho_idx = (int) (currentMolecule->r(0) / length + 0.5);
-		_rho = _numMolecules/V;//rhos[rho_idx];
+
 		total_pot += processMolecule(currentMolecule, force, true);
 	}
 	return total_pot;
 }
 
-void RDFForceIntegratorSite::integrateRDFSiteCartesian(double xlim[2],
+double RDFForceIntegratorSite::integrateRDFSiteCartesian(double xlim[2],
 		double ylim[2], double zlim[2], Molecule* mol, int plane,
-		unsigned int site, int boundary[3]) {
+		unsigned int site, int boundary[3], double* force, bool add_influence) {
 
 	std::vector<double> globalAcc = (*_globalADist)[0];
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
-
-	// volume of the domain
-	double V = (_rmax[0] - _rmin[0]) * (_rmax[1] - _rmin[1]) * (_rmax[2]
-			- _rmin[2]);
-
-	// number density of the domain
-	//int numMolecules = _moleculeContainer->getNumberOfParticles();
-	_numMolecules = 9826;
-	double rho = _numMolecules / (V);
 
 	// molecule position
 	double molr[3] = { mol->r(0) + mol->site_d(site)[0], mol->r(1)
 			+ mol->site_d(site)[1], mol->r(2) + +mol->site_d(site)[2] };
 
 	int bin; // bin for the radius that rdf is read for
-	double currf[3], absr, normal, radial, g = 0;
+	double currf[3], absr, normal, radial, g = 0, potential = 0;
 
 	// dividing part of the sphere outside the bounding box into cells of size
 	// dx, dy, dz
@@ -379,10 +368,12 @@ void RDFForceIntegratorSite::integrateRDFSiteCartesian(double xlim[2],
 					double f[3] = { 0, 0, 0 };
 
 					for (int d = 0; d < 3; d++) {
-						f[d] = rho * g * currf[d] * _d * _d * _d;
+						f[d] = _rho * g * currf[d] * _d * _d * _d;
+						force[d] += f[d];
 					}
-
-					//mol->Fljcenteradd(site, f);
+					potential += _rho * g * currPot * _d * _d * _d;
+					if (add_influence)
+						mol->Fljcenteradd(site, f);
 					if (boundary[0] == -1 && plane == 0) {
 						mol->addLeftxRdfInfluence(site, f);
 					}
@@ -395,8 +386,8 @@ void RDFForceIntegratorSite::integrateRDFSiteCartesian(double xlim[2],
 
 						// rdf (probability) value
 						bin = (int) (absr * globalSiteAcc[site
-								* mol->numLJcenters() + site].size() / _rc
-								- 0.5);
+								* mol->numLJcenters() + site].size() / (_rc + 2
+								* mol->ljcenter_disp(site)) - 0.5);
 						if (site > j)
 							g
 									= globalSiteAcc[j * mol->numLJcenters()
@@ -412,15 +403,16 @@ void RDFForceIntegratorSite::integrateRDFSiteCartesian(double xlim[2],
 								mol->getSigma() * mol->getSigma(), currf,
 								currPot);
 
-						//currPot *= 2 * PI * rho * g * radial * dx * dy * dz / 6;
+						potential += _rho * g * currPot * _d * _d * _d;
 						double f[3] = { 0, 0, 0 };
 
 						for (int d = 0; d < 3; d++) {
-							f[d] = rho * g * currf[d] * _d * _d * _d;
+							f[d] = _rho * g * currf[d] * _d * _d * _d;
+							force[d] += f[d];
 						}
-						//if (f[0] > 0 && mol->id() == 18) cout<<"site: "<<site<<" r: "<<absr<<" value: "<<f[0]<<endl;
 
-						//mol->Fljcenteradd(site, f);
+						if (add_influence)
+							mol->Fljcenteradd(site, f);
 						if (boundary[0] == -1 && plane == 0) {
 							mol->addLeftxRdfInfluence(site, f);
 						}
@@ -431,5 +423,5 @@ void RDFForceIntegratorSite::integrateRDFSiteCartesian(double xlim[2],
 		}
 
 	}
-
+	return potential;
 }
