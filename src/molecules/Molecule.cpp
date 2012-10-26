@@ -158,7 +158,8 @@ Molecule::Molecule(const Molecule& m) {
 	_low_boundary_speed = _high_boundary_speed = 0;
 }
 
-void Molecule::enableBouncingBack(double lowb, double highb, double lowspeed, double highspeed) {
+void Molecule::enableBouncingBack(double lowb, double highb, double lowspeed,
+		double highspeed) {
 	_low_boundary = lowb;
 	_high_boundary = highb;
 	_low_boundary_speed = lowspeed;
@@ -185,6 +186,9 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	qhalfstep.scale(dt_halve);
 	qhalfstep.add(_q);
 	double qcorr = 1. / sqrt(qhalfstep.magnitude2());
+	if (isnan(qcorr)) {
+		std::cout<<"qcorr nan for "<<id()<<std::endl;
+	}
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
 		_D[d] = Dcorr * _D[d] + dt_halve * _M[d];
@@ -206,6 +210,12 @@ void Molecule::upd_cache() {
 
 	ns = numLJcenters();
 	double mag = 1 / std::sqrt(_q.magnitude2());
+	if (isnan(mag) && id() == 1) {
+		std::cout<<"velocity "<<v(0)<<" "<<v(1)<<" "<<v(2)<<std::endl;
+		std::cout<<"angular velocity "<<D(0)<<" "<<D(1)<<" "<<D(2)<<std::endl;
+		std::cout<<"force: "<<F(0)<<" "<<F(1)<<" "<<F(2)<<std::endl;
+		std::cout<<"nan for molecule "<<id()<<std::endl;
+	}
 	_q.scale(mag);
 	//_q *= std::sqrt(_q.magnitude2());
 	for (i = 0; i < ns; ++i)
@@ -262,21 +272,37 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	double t_c_low = (_r[0] - _low_boundary) / (_low_boundary_speed - _v[0]);
 	double t_c_high = (_r[0] - _high_boundary) / (_high_boundary_speed - _v[0]);
 
-	if (t_c_low < dt_halve * 2 && t_c_low > 0) {
+	if (t_c_low <= dt_halve * 2.1 && t_c_low > 0) {
 		double old_v = _v[0];
-		std::cout<<"post old: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+		std::cout << "post old: " << _r[0] << " " << _r[1] << " " << _r[2]
+				<< std::endl;
 		_v[0] = old_v - 2 * (old_v - _low_boundary_speed);
 		_r[0] += t_c_low * old_v + (2 * dt_halve - t_c_low) * _v[0];
-		std::cout<<"pos new: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+		std::cout << "pos new: " << _r[0] << " " << _r[1] << " " << _r[2]
+				<< std::endl;
+
+//		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
+//		q.normalize();
+//
+//		setq(q);
 	}
 
-	if (t_c_high < dt_halve * 2 && t_c_high > 0) {
+	if (t_c_high < dt_halve * 2.1 && t_c_high > 0) {
 		double old_v = _v[0];
-		std::cout<<"post old: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+		std::cout << "post old: " << _r[0] << " " << _r[1] << " " << _r[2]
+				<< std::endl;
 		_v[0] = old_v - 2 * (old_v - _high_boundary_speed);
 		_r[0] += t_c_high * old_v + (2 * dt_halve - t_c_high) * _v[0];
-		std::cout<<"pos new: "<<_r[0]<<" "<<_r[1]<<" "<<_r[2]<<std::endl;
+		std::cout << "pos new: " << _r[0] << " " << _r[1] << " " << _r[2]
+				<< std::endl;
+
+
+//		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
+//		q.normalize();
+//
+//		setq(q);
 	}
+
 }
 
 double Molecule::U_rot() {
@@ -585,7 +611,8 @@ void Molecule::setD(double* D) {
 }
 
 void Molecule::bounceBack(int dim, double* axis) {
-	_v[dim] = -_v[dim];
+	for (int d = 0; d < 3; d++)
+		_v[d] = -_v[d];
 	//	_D[dim] = -_D[dim];
 	for (int d = 0; d < 3; d++) {
 		_r[d] += _dt * _v[d];
