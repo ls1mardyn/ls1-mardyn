@@ -264,39 +264,42 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 
+	// if reflective wall should be used
 	if (_low_boundary == _high_boundary && _low_boundary == -1)
 		return;
 
-	//std::cout<<"here"<<std::endl;
+	// do reflective wall
 
+
+	// get the time of crossing the lower and upper boundary
 	double t_c_low = (_r[0] - _low_boundary) / (_low_boundary_speed - _v[0]);
 	double t_c_high = (_r[0] - _high_boundary) / (_high_boundary_speed - _v[0]);
 
+
+	// if crossing the lower boundary (2.1 for nummerical instabilities)
+	// boudnary speed is 0 for equilibrium state
 	if (t_c_low <= dt_halve * 2.1 && t_c_low > 0) {
 		double old_v = _v[0];
-		std::cout << "post old: " << _r[0] << " " << _r[1] << " " << _r[2]
-				<< std::endl;
+
 		_v[0] = old_v - 2 * (old_v - _low_boundary_speed);
 		_r[0] += t_c_low * old_v + (2 * dt_halve - t_c_low) * _v[0];
-		std::cout << "pos new: " << _r[0] << " " << _r[1] << " " << _r[2]
-				<< std::endl;
 
+		// for trying random orientations
 //		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
 //		q.normalize();
 //
 //		setq(q);
 	}
 
+	// if crossing higher boundary
 	if (t_c_high < dt_halve * 2.1 && t_c_high > 0) {
 		double old_v = _v[0];
-		std::cout << "post old: " << _r[0] << " " << _r[1] << " " << _r[2]
-				<< std::endl;
+
 		_v[0] = old_v - 2 * (old_v - _high_boundary_speed);
 		_r[0] += t_c_high * old_v + (2 * dt_halve - t_c_high) * _v[0];
-		std::cout << "pos new: " << _r[0] << " " << _r[1] << " " << _r[2]
-				<< std::endl;
 
 
+		// for trying random orientations
 //		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
 //		q.normalize();
 //
