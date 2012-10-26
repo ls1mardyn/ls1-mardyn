@@ -80,7 +80,7 @@ double DomainDecompDummy::getAverageEnergy(LinkedCells* linkedCells,
 			num++;
 		}
 	}
-	std::cout << "num: " << num << std::endl;
+
 	if (num > 0)
 		u_avg /= num;
 
@@ -197,18 +197,7 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer,
 						currentMolecule->q().qz(), currentMolecule->D(0),
 						currentMolecule->D(1), currentMolecule->D(2),
 						&components);
-				//				if (currentMolecule->r(0) < moleculeContainer->get_halo_L(0)
-				//						&& currentMolecule->r(1)
-				//								< moleculeContainer->get_halo_L(1)
-				//						&& currentMolecule->r(2)
-				//								< moleculeContainer->get_halo_L(2)) {
-				//					std::cout << "Periodic copy1: " << m1.r(0) << " "
-				//							<< m1.r(1) << " " << m1.r(2)
-				//							<< " of molecule with " << currentMolecule->id()
-				//							<< " and pos " << currentMolecule->r(0) << " "
-				//							<< currentMolecule->r(1) << " "
-				//							<< currentMolecule->r(2) << std::endl;
-				//				}
+
 				moleculeContainer->addParticle(m1);
 				currentMolecule = moleculeContainer->next();
 			} else if (rd >= high_limit) {
@@ -230,26 +219,16 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer,
 						currentMolecule->q().qz(), currentMolecule->D(0),
 						currentMolecule->D(1), currentMolecule->D(2),
 						&components);
-				//				if (currentMolecule->r(0) < moleculeContainer->get_halo_L(0)
-				//						&& currentMolecule->r(1)
-				//								< moleculeContainer->get_halo_L(1)
-				//						&& currentMolecule->r(2)
-				//								< moleculeContainer->get_halo_L(2)) {
-				//					std::cout << "Periodic copy2: " << m1.r(0) << " "
-				//							<< m1.r(1) << " " << m1.r(2)
-				//							<< " of molecule with " << currentMolecule->id()
-				//							<< " and pos " << currentMolecule->r(0) << " "
-				//							<< currentMolecule->r(1) << " "
-				//							<< currentMolecule->r(2) << std::endl;
-				//				}
+
 				moleculeContainer->addParticle(m1);
 				currentMolecule = moleculeContainer->next();
 			} else
 				currentMolecule = moleculeContainer->next();
 		}
 	}
-    // this is to ensure validate usher is not called in the first timestep
+	// this is to ensure validate usher is not called in the first timestep
 	// when molecules are read from the input file
+
 	num_calles++;
 }
 
@@ -287,14 +266,14 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 	if (num_calles > 1) {
 		u_avg = this->getAverageEnergy(linkedCells, rmin, rmax);
 
-//		if (!have_avg_energy) {
-//			energy_file
-//					= fopen(
-//							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_energy.txt",
-//							"w");
-//
-//		}
-//		have_avg_energy = true;
+		//		if (!have_avg_energy) {
+		//			energy_file
+		//					= fopen(
+		//							"/home_local/kovacevt/Desktop/thesis_rep/masters-thesis-kovacevic-tijana/Ethan_10k_supercritical/results/Ethan_10k_supercritica_validate_usher_energy.txt",
+		//							"w");
+		//
+		//		}
+		//		have_avg_energy = true;
 	}
 
 	double temperature = domain->getCurrentTemperature(0);
@@ -311,24 +290,27 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 		}
 		if (molecule->id() == int_rnd && molecule->r(0) > rmin[0]
 				&& molecule->r(0) < rmax[0] && molecule->r(1) > rmin[1]
-				&& molecule->r(1) < rmax[1] && molecule->r(2)
-				> rmin[2] && molecule->r(2) < rmax[2]) {
+				&& molecule->r(1) < rmax[1] && molecule->r(2) > rmin[2]
+				&& molecule->r(2) < rmax[2]) {
 
 			//fprintf(energy_file, "%g \n", domain->getAverageGlobalUpot());
 			//fflush(energy_file);
 			double *energy = new double;
 			double *old_energy = new double;
 			double force[3] = { 0, 0, 0 };
-			*energy = 1;//linkedCells->getForceAndEnergy(newMolecule, force);
+			*energy = 1;
 			*old_energy = 1;//*energy;
 
 			// allowed insertion region for the molecule
 			double allowed_low[3] = { 0, 0, 0 };
-			double allowed_high[3] =
-					{ rmax[0], rmax[1], rmax[2]};
+			double allowed_high[3] = { rmax[0], rmax[1], rmax[2] };
 
 			int iterations = -1;
 			int seed = 1;
+
+			// these are for logging the way usher does the search
+			// right now it is commented out in the ParticleInsertion class
+			// but it can be put back in
 			vector<double> vec_energy;
 			vector<double> vec_angle;
 			vector<double*> vec_lj;
@@ -345,12 +327,12 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 			// call usher - the particle will have the position usher found
 			// after the method is finished
 			while (iterations == -1 && seed < 10) {
-				iterations = usher.findParticlePosition(linkedCells,
-						molecule, u_avg, energy, old_energy, true, false,
-						seed, 100, 10000, 100, 45 * 3.14 / 180, 3.14,
-						3.14 / 180, 0.02, &vec_energy, &vec_angle, &vec_lj,
-						&vec_center, name_energy, name_angle, name_lj,
-						name_center, allowed_low, allowed_high);
+				iterations = usher.findParticlePosition(linkedCells, molecule,
+						u_avg, energy, old_energy, true, false, seed, 100,
+						10000, 100, 45 * 3.14 / 180, 3.14, 3.14 / 180, 0.02,
+						&vec_energy, &vec_angle, &vec_lj, &vec_center,
+						name_energy, name_angle, name_lj, name_center,
+						allowed_low, allowed_high);
 				seed++;
 			}
 
@@ -367,7 +349,6 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 		i++;
 	}
 	moleculeContainer->update();
-
 
 }
 
