@@ -80,7 +80,9 @@ int main(int argc, char** argv) {
 		}
 
 		std::string testDataDirectory(options.get("testDataDirectory"));
+
 		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
+		/*
 		bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
 		if (testresult) {
 			#ifdef ENABLE_MPI
@@ -93,6 +95,7 @@ int main(int argc, char** argv) {
 			#endif
 			exit(0);
 		}
+		*/
 	}
 
 	if (numargs < 1) {
