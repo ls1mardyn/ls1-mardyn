@@ -27,9 +27,7 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 	std::vector<double> globalAcc = (*_globalADist)[0];
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
 
-
 	double potential = 0;
-
 
 	int bin; // bin for the radius that rdf is read for
 	double g;
@@ -59,7 +57,7 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 				}
 
 				// track the force coming from the rdf boundary
-				if (boundary[0] == -1 && plane == 0) {
+				if (boundary[0] == -1 && plane == 0 && add_influence) {
 					mol->addLeftxRdfInfluence(site, f);
 				}
 			} else {
@@ -93,7 +91,7 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 						mol->Fljcenteradd(site, f);
 
 					// track the force coming from the rdf boundary
-					if (boundary[0] == -1 && plane == 0) {
+					if (boundary[0] == -1 && plane == 0 && add_influence) {
 						mol->addLeftxRdfInfluence(site, f);
 
 					}
@@ -168,6 +166,7 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 			xlim[0] = r[0] - _rc;
 			xlim[1] = 0;
 
+			// bound the integration to up to rc
 			if (r[0] < _rmin[0]) {
 				normal_lim[1] -= _rmin[0] - r[0];
 				xlim[0] += _rmin[0] - r[0];
@@ -177,6 +176,8 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 			xlim[0] = _rmax[0];
 			xlim[1] = r[0] + _rc;
 			normal_lim[0] = std::abs(_rmax[0] - r[0]);
+
+			// bound the integration to up to rc
 			if (r[0] > _rmax[0]) {
 				normal_lim[1] -= r[0] - _rmax[0];
 				xlim[1] -= r[0] - _rmax[0];
@@ -194,9 +195,29 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 		}
 
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site,
-			force, add_influence);
-//		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0, site,
-//				boundary, force, add_influence);
+				force, add_influence);
+
+		// this is to add the potential if the site of the molecule is outside the domain
+		// the forces cancel each other out so this was used in the previous call to
+		// integrate RDFSite
+		// see thesis for more details
+
+		if (boundary[0] == -1 && r[0] < _rmin[0]) {
+			normal_lim[0] = 0;
+			normal_lim[1] = std::abs(r[0] - _rmin[0]);
+			pot += 2 * integrateRDFSite(currentMolecule, normal_lim, boundary,
+					0, site, force, false);
+		}
+
+		if (boundary[0] == 1 && r[0] > _rmax[0]) {
+			normal_lim[0] = 0;
+			normal_lim[1] = std::abs(r[0] - _rmax[0]);
+			pot += 2 * integrateRDFSite(currentMolecule, normal_lim, boundary,
+					0, site, force, false);
+
+		}
+		//		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0, site,
+		//				boundary, force, add_influence);
 
 		// xy plane is the boundary
 		// integrate xy
