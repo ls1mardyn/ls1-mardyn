@@ -28,7 +28,10 @@ int get_compiler_info(char *info_str) {
 
 	/* PGI compiler */
 #elif defined(__PGI)
-	sprintf(info_str, "PGI");
+	int version = (int) __PGIC__;
+	int revision = (int) __PGIC_MINOR__;
+	int patch = (int) __PGIC_PATCHLEVEL__;
+	sprintf(info_str, "PGI %d.%d.%d", version, revision, patch);
 
 	/* Sun compiler */
 #elif defined(__SUNPRO_C)
