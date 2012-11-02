@@ -24,18 +24,20 @@ class ParticleInsertionTest: public utils::TestWithSimulationSetup {
 	//TEST_METHOD( testTranslationAndRotation);
 	//TEST_METHOD( testParameterSetup);
 	//TEST_METHOD( testParametersFullStudy);
+	//TEST_METHOD(haloUsherTest);
 	TEST_SUITE_END();
 public:
 	ParticleInsertionTest();
 	virtual ~ParticleInsertionTest();
 
-	void testRotation();
 
-	void testTranslationAndRotation();
+
+	void haloUsherTest();
+
 
 	void testParameterSetup();
 
-	void testParametersFullStudy();
+
 
 	void readParamFile(string file_name, int* maxIter, int* maxRestarts, int* maxRotations, double* tolerance,
 			double* maxAngle, double* maxAllowedAngle, double* minAngle, bool* largeStepsizeOnOverlap,
