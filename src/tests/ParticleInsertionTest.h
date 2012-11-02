@@ -36,7 +36,7 @@ public:
 
 
 	void testParameterSetup();
-
+	void testParametersFullStudy();
 
 
 	void readParamFile(string file_name, int* maxIter, int* maxRestarts, int* maxRotations, double* tolerance,
