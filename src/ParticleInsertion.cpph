@@ -124,7 +124,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 				angle, molecule);
 
 		// vtk file for visualization
-		timestep++;
+		(*timestep)++;
 		//writeMoleculeVtk(molecule, linkedCells, simulation, timestep);
 
 		double xiloc = fabs(*energy - U_0) / fabs(U_0);
@@ -242,7 +242,7 @@ int moleculardynamics::coupling::ParticleInsertion<Molecule, LinkedCells, dim>::
 			> wrapper(molecule);
 
 	// initialize random numbers 
-	//srand((unsigned) time(NULL));
+	//srand(seed);
 	Quaternion q;
 	// try at max. restartMax times to insert this particle...
 	for (int i = 0; i < restartMax; i++) {
