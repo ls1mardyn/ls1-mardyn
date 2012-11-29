@@ -22,6 +22,11 @@ class ParticleCell;
 class CellProcessor {
 
 public:
+    /** 
+     * virtual destructor 
+     */
+	virtual ~CellProcessor() {}
+
 	/**
 	 * called before the traversal starts.
 	 */
