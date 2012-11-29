@@ -1,5 +1,5 @@
 # Cray XT System using GNU Compiler
-# http://gcc.gnu.org/
+# http://gcc.gnu.org
 # Version:
 
 CFG_INFO = "GNU compiler on Cray XT/XE systems"

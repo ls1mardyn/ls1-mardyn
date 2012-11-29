@@ -1,5 +1,5 @@
 # Cray XT System using Intel Compiler
-# http://gcc.gnu.org/
+# http://software.intel.com/en-us/intel-compilers/
 # Version:
 
 CFG_INFO = "Intel compiler on Cray XT/XE systems"

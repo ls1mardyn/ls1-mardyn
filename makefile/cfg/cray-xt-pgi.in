@@ -14,7 +14,7 @@ CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
 
 CXX_SEQ = CC
 CXX_PAR = CC
-DEPMODE = icc
+DEPMODE = none
 
 # SEQ
 #########################################
