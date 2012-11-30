@@ -285,9 +285,10 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
    stringstream opstream;
    opstream << prefix << "_1R";
    this->_msimulation->setOutputPrefix(opstream.str().c_str());
-   this->_outputPlugins->push_back(new ResultWriter(1500, opstream.str().c_str()));
-   this->_outputPlugins->push_back(new XyzWriter(60000, opstream.str().c_str(), 100000000, true));
-   this->_outputPlugins->push_back(new CheckpointWriter(60000, opstream.str().c_str(), 100000000, true));
+   // Output plugins should not be added statically but as requested by the config
+   //this->_outputPlugins->push_back(new ResultWriter(1500, opstream.str().c_str()));
+   //this->_outputPlugins->push_back(new XyzWriter(60000, opstream.str().c_str(), 100000000, true));
+   //this->_outputPlugins->push_back(new CheckpointWriter(60000, opstream.str().c_str(), 100000000, true));
    this->_msimulation->initCanonical(10);
    this->_msimulation->initStatistics(3003003);
    if(gradient)
