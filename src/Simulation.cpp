@@ -1039,6 +1039,11 @@ void Simulation::prepare_start() {
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
+    
+    if(!_cellProcessor) {
+        global_log->warning() << "No cell processor initialised. Using Legacy Cell Processor." << endl;
+        _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+    }
 	//_moleculeContainer->traversePairs(_particlePairsHandler);
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	// TODO:
