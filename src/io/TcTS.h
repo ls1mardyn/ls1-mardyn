@@ -11,13 +11,15 @@
 #include "integrators/Leapfrog.h"
 #include "parallel/DomainDecompBase.h"
 #include "io/OutputBase.h"
+#include "utils/OptionParser.h"
+using optparse::Values;
 
 using namespace std;
 
 class TcTS
 {
  public:
-   TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*>* outputPlugins, RDF* irdf, Simulation* isimulation);
+   TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*>* outputPlugins, RDF* irdf, Simulation* isimulation);
    void write(
       char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu
    );

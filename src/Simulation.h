@@ -21,6 +21,8 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
+#include "utils/OptionParser.h"
+using optparse::Values;
 
 //#include "MoleculeWrapper.h"
 
@@ -273,7 +275,7 @@ public:
 	//! set the "initCanonical" parameter to "0".
 	double Tfactor(unsigned long simstep);
 
-        void mkTcTS(int argc, char** argv);
+        void mkTcTS(Values &options);
 
         void initCanonical(unsigned long t) { this->_initCanonical = t; }
         void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
@@ -399,12 +401,18 @@ public:
     void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
     void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
     std::string getOutputPrefix() { return _outputPrefix; }
+    
+    void enableFinalCheckpoint() { _finalCheckpoint = true; }
+    void disableFinalCheckpoint() { _finalCheckpoint = false; }
 
 	//! initialize all member variables with a suitable value
 	void initialize();
 
 private:
-
+    
+    //! final checkpoint after simulation run
+    bool _finalCheckpoint;
+    
 	//! list of output plugins to use
 	std::list<OutputBase*> _outputPlugins;
 

@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     /* First read the given config file if it exists, then overwrite parameters with command line arguments. */
     if(args[0] == "mkTcTS")
     {
-    	simulation.mkTcTS(argc-2, argv);
+    	simulation.mkTcTS(options);
     	// set the number of timesteps to be simulated
     	if (numargs > 2) {
     		unsigned long steps = 0;
@@ -135,6 +135,12 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    if( options.is_set("final-checkpoint") ) {
+        if ( options.get("final-checkpoint") )
+            simulation.enableFinalCheckpoint();
+        else
+            simulation.disableFinalCheckpoint();
+    }
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
     }
@@ -196,20 +202,24 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-
-        op.add_option("-c").help("fluid density (mkTcTS)");
-	op.add_option("-d", "--test-dir").help("input directory (unit tests); secondary fluid density (mkTcTS)");
-        op.add_option("-h").help("height (mkTcTS)");
-        op.add_option("-m").help("chemical potential (mkTcTS)");
-        op.add_option("-N").help("approximate number of fluid molecules (mkTcTS)");
-        op.add_option("-p").help("pair correlation cutoff (mkTcTS)");
-        op.add_option("-R").help("Lennard-Jones cutoff (mkTcTS)");
-        op.add_option("-S").help("shift the LJ potential (mkTcTS)");
-        op.add_option("-T").help("temperature (mkTcTS)");
-	op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
-       	op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
-        op.add_option("-U").help("unshift (i.e., do not shift) the LJTS potential (mkTcTS)");
-
+    op.add_option("--final-checkopint") .action("store_true") .dest("final-checkpoint") .type("bool") .set_default(true) .help("enable/disable final checkopint");
+    
+    OptionGroup mkTcTS_options = OptionGroup(op, "mkTcTS options", "Options for the mkTcTS scenario generator.");
+    mkTcTS_options.add_option("--rho1").dest("fluid-density").type("float").help("fluid density (mkTcTS)");
+    mkTcTS_options.add_option("--rho2").dest("fluid-density-2").type("float").help("fluid density (mkTcTS)");
+    mkTcTS_options.add_option("-N").dest("num-particles").type("int").help("approximate number of fluid molecules (mkTcTS)");
+    mkTcTS_options.add_option("-T").dest("temperature").type("float").help("temperature (mkTcTS)");
+    
+    mkTcTS_options.add_option("-R").dest("cutoff-LJ").type("float").help("Lennard-Jones cutoff (mkTcTS)");
+    mkTcTS_options.add_option("-S").dest("shift_LJ").type("bool").help("shift the LJ potential (mkTcTS)").set_default(false);
+    mkTcTS_options.add_option("-h").dest("height").type("float").help("height (mkTcTS)");
+    mkTcTS_options.add_option("-m").dest("chemical-potential").type("float").help("chemical potential (mkTcTS)");
+    mkTcTS_options.add_option("-p").dest("pair-correlation-cutoff").type("float").help("pair correlation cutoff (mkTcTS)");
+    op.add_option_group(mkTcTS_options);
+    
+    op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
+    op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
+    
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
 	char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };

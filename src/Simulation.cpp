@@ -1357,10 +1357,12 @@ void Simulation::simulate() {
 	/* END MAIN LOOP                                                           */
 	/*****************************//**********************************************/
 
-	ioTimer.start();
-	/* write final checkpoint */
-	string cpfile(_outputPrefix + ".restart.xdr");
-	_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+    ioTimer.start();
+    if( _finalCheckpoint ) {
+        /* write final checkpoint */
+        string cpfile(_outputPrefix + ".restart.xdr");
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+    }
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
@@ -1474,6 +1476,7 @@ void Simulation::initialize() {
 	_moleculeContainer = NULL;
 	_integrator = NULL;
 	_inputReader = NULL;
+    _finalCheckpoint = true;
 
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
@@ -1504,7 +1507,6 @@ void Simulation::initialize() {
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;
 	h = 0.0;
-
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);
@@ -1512,10 +1514,10 @@ void Simulation::initialize() {
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 }
 
-void Simulation::mkTcTS(int argc, char** argv) {
+void Simulation::mkTcTS(Values &options) {
 	_particleContainerType = LINKED_CELL;
 
-	TcTS(argc, argv, this->_domain, &(this->_domainDecomposition),
+	TcTS(options, this->_domain, &(this->_domainDecomposition),
 			&(this->_integrator), &(this->_moleculeContainer),
 			&(this->_outputPlugins), this->_rdf, this);
 

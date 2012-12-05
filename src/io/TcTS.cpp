@@ -31,7 +31,7 @@ using namespace std;
 #define PRECISION 5
 #define VARFRACTION 0.125
 
-TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*>* outputPlugins, RDF* irdf, Simulation* isimulation) 
+TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*>* outputPlugins, RDF* irdf, Simulation* isimulation) 
 {
    this->_domain = domain;
    this->_domainDecomposition = domainDecomposition;
@@ -42,13 +42,6 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
    this->_msimulation = isimulation;
 
    const char* usage = "usage: mkTcTS <prefix> -c <density> [-d <second density>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-S] -T <temperature> [-U]\n\n-S\tshift (active by default)\n-U\tunshift\n";
-   if((argc < 9) || (argc > 24))
-   {
-      cout << "There are " << argc
-           << " arguments where 9 to 24 should be given.\n\n";
-      cout << usage;
-      exit(1);
-   }
 
    bool do_shift = true;
    bool in_h = false;
@@ -64,80 +57,34 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
    double rho2 = 0.319;
    double T = 1.0779;
 
-   char* prefix = argv[2];
-
-   for(int i=3; i < argc; i++)
-   {
-      if(*argv[i] != '-')
-      {
-         cout << "Flag expected where '" << argv[i]
-              << "' was given.\n\n";
-         cout << usage;
-         exit(2);
-      }
-      for(int j=1; argv[i][j]; j++)
-      {
-         if(argv[i][j] == 'c')
-         {
-            i++;
-            rho = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'd')
-         {
-            gradient = true;
-            i++;
-            rho2 = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'h')
-         {
-            in_h = true;
-            i++;
-            h = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'm')
-         {
-            use_mu = true;
-            i++;
-            mu = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'N')
-         {
-            i++;
-            N = atoi(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'p')
-         {
-            i++;
-            dRDF = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'R')
-         {
-            i++;
-            cutoff = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'S') do_shift = true;
-         else if(argv[i][j] == 'T')
-         {
-            i++;
-            T = atof(argv[i]);
-            break;
-         }
-         else if(argv[i][j] == 'U') do_shift = false;
-         else
-         {
-            cout << "Invalid flag '-" << argv[i][j]
-                 << "' was detected.\n\n" << usage;
-            exit(2); 
-         }
-      }
+   /* non optional argumentds */
+   rho = options.get("fluid-density");
+   N   = options.get("num-particles");
+   T   = options.get("temperature");
+   
+   /* optional arguments */
+   if(options.is_set("cutoff-LJ")) {
+       cutoff = options.get("cutoff-LJ");
    }
+   if(options.is_set("shift_LJ")) {
+       do_shift = options.get("shift_LJ");
+   }
+   if(options.is_set("shift_LJ")) {
+       rho2 = options.get("fluid-density-2");
+        gradient = true;
+   }
+   if(options.is_set("height")) {
+       in_h = true;
+       h = options.get("height");
+   }
+   if(options.is_set("chemical-potential")) {
+       use_mu = true;
+       mu = options.get("chemical-potential");
+   }
+   if(options.is_set("pair-correlation-cutoff")) {
+       dRDF = options.get("pair-correlation-cutoff");
+   }
+   
 
    if(in_h && !gradient)
    {
@@ -150,7 +97,7 @@ TcTS::TcTS(int argc, char** argv, Domain* domain, DomainDecompBase** domainDecom
 
    if(gradient) this->domain(h, N, rho, rho2);
    else this->domain(N, rho, dRDF);
-   this->write(prefix, cutoff, mu, T, do_shift, use_mu);
+   this->write((char *) isimulation->getOutputPrefix().c_str(), cutoff, mu, T, do_shift, use_mu);
 }
 
 void TcTS::domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
