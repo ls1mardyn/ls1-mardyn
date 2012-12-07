@@ -26,11 +26,11 @@ MarDynInitOptionsTest::~MarDynInitOptionsTest() {
 }
 
 void MarDynInitOptionsTest::testAllOptions() {
-	const char* const argv[] = { "DummyProgrammeName", "-n", "4", "-t", "-v", "-p",
-	    "test_prefix", "--phasespace-file", "phasespace.inp",
+	const char* const argv[] = { "DummyProgrammeName", "-n", "4", "-t", "-v",
+	    "--phasespace-file", "phasespace.inp",
 	    "--particle-container", "AdaptiveSubCells", "--cutoff-radius", "2.5",
 	    "--cells-in-cutoff", "2", "--domain-decomposition", "KDDecomposition",
-	    "--timestep-length", "0.00123" };
+	    "--timestep-length", "0.00123", "test_prefix" };
 
 	int argc = sizeof(argv) / sizeof(char*);
 	optparse::OptionParser op;
