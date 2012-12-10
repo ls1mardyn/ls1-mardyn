@@ -10,7 +10,9 @@
 #include "utils/Timer.h"
 #include "Simulation.h"
 
+#if ENABLE_MPI
 #include "parallel/KDDecomposition2.h"
+#endif
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -149,6 +151,7 @@ int main(int argc, char** argv) {
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
     }
+#if ENABLE_MPI
     if( options.is_set("domain-decomposition") ) {
         global_log->warning() << "Setting domain decomposition via command line to KDDecomposition2" << endl;
         if ( options.get("domain-decomposition") == "KDDecomposition2" ) {
@@ -159,6 +162,7 @@ int main(int argc, char** argv) {
             simulation.setDomainDecomposition(domainDecomp);
         }
     }
+#endif
     
     global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
 
