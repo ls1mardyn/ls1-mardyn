@@ -217,7 +217,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-    op.add_option("--final-checkopint") .action("store_true") .dest("final-checkpoint") .type("bool") .set_default(true) .help("enable/disable final checkopint");
+    op.add_option("--final-checkpoint") .action("store_true") .dest("final-checkpoint") .type("bool") .set_default(true) .help("enable/disable final checkopint");
     
     OptionGroup mkTcTS_options = OptionGroup(op, "mkTcTS options", "Options for the mkTcTS scenario generator.");
     mkTcTS_options.add_option("--rho1").dest("fluid-density").type("float").help("fluid density (mkTcTS)");
