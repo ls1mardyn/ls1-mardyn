@@ -137,10 +137,14 @@ int main(int argc, char** argv) {
     }
 
     if( options.is_set("final-checkpoint") ) {
-        if ( options.get("final-checkpoint") )
+        if ( (bool) options.get("final-checkpoint") ) {
+            global_log->info() << "Final checkpoint enabled" << endl;
             simulation.enableFinalCheckpoint();
-        else
+        }
+        else {
             simulation.disableFinalCheckpoint();
+            global_log->info() << "Final checkpoint disbaled." << endl;
+        }
     }
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));

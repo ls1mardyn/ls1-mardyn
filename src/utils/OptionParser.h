@@ -90,7 +90,7 @@ public:
 	Value() : str(), valid(false) {}
 	Value(const std::string& v) : str(v), valid(true) {}
 	operator const char*() { return str.c_str(); }
-	operator bool() { bool t; return (valid && (std::istringstream(str) >> t)) ? t : false; }
+	operator bool() { bool t; return (valid && (std::istringstream(str) >> std::boolalpha >> t)) ? t : false; }
 	operator short() { short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator unsigned short int() { unsigned short t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
 	operator int() { int t; return (valid && (std::istringstream(str) >> t)) ? t : 0; }
