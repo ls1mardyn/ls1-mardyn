@@ -301,7 +301,8 @@ public:
 	void setD(double* D);
 	double mass(){return _m;}
 
-	void bounceBack(int dim, double* axis);
+	void bounceBack(double dt);
+	void bounceBackDirection(double dt, int dir);
 
 	void enableBouncingBack(double lowb, double highb, double lowspeed, double highspeed);
 

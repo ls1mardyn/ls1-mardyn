@@ -175,6 +175,10 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 		_r[d] += dt * _v[d];
 
 	}
+
+	if ((_low_boundary != _high_boundary && _low_boundary != -1) && (_r[0]
+			< _low_boundary || _r[0] > _high_boundary))
+		bounceBackDirection(dt, 0);
 	_dt = dt;
 
 	double w[3];
@@ -187,7 +191,7 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	qhalfstep.add(_q);
 	double qcorr = 1. / sqrt(qhalfstep.magnitude2());
 	if (isnan(qcorr)) {
-		std::cout<<"qcorr nan for "<<id()<<std::endl;
+		std::cout << "qcorr nan for " << id() << std::endl;
 	}
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
@@ -211,10 +215,13 @@ void Molecule::upd_cache() {
 	ns = numLJcenters();
 	double mag = 1 / std::sqrt(_q.magnitude2());
 	if (isnan(mag) && id() == 1) {
-		std::cout<<"velocity "<<v(0)<<" "<<v(1)<<" "<<v(2)<<std::endl;
-		std::cout<<"angular velocity "<<D(0)<<" "<<D(1)<<" "<<D(2)<<std::endl;
-		std::cout<<"force: "<<F(0)<<" "<<F(1)<<" "<<F(2)<<std::endl;
-		std::cout<<"nan for molecule "<<id()<<std::endl;
+		std::cout << "velocity " << v(0) << " " << v(1) << " " << v(2)
+				<< std::endl;
+		std::cout << "angular velocity " << D(0) << " " << D(1) << " " << D(2)
+				<< std::endl;
+		std::cout << "force: " << F(0) << " " << F(1) << " " << F(2)
+				<< std::endl;
+		std::cout << "nan for molecule " << id() << std::endl;
 	}
 	_q.scale(mag);
 	//_q *= std::sqrt(_q.magnitude2());
@@ -264,48 +271,49 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 
-	// if reflective wall should be used
-	if (_low_boundary == _high_boundary && _low_boundary == -1)
-		return;
+	/*
+	 // if reflective wall should be used
+	 if (_low_boundary == _high_boundary && _low_boundary == -1)
+	 return;
 
-	// do reflective wall
-
-
-	// get the time of crossing the lower and upper boundary
-	double t_c_low = (_r[0] - _low_boundary) / (_low_boundary_speed - _v[0]);
-	double t_c_high = (_r[0] - _high_boundary) / (_high_boundary_speed - _v[0]);
+	 // do reflective wall
 
 
-	// if crossing the lower boundary (2.1 for nummerical instabilities)
-	// boudnary speed is 0 for equilibrium state
-	if (t_c_low <= dt_halve * 2.1 && t_c_low > 0) {
-		double old_v = _v[0];
-
-		_v[0] = old_v - 2 * (old_v - _low_boundary_speed);
-		_r[0] += t_c_low * old_v + (2 * dt_halve - t_c_low) * _v[0];
-
-		// for trying random orientations
-//		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
-//		q.normalize();
-//
-//		setq(q);
-	}
-
-	// if crossing higher boundary
-	if (t_c_high < dt_halve * 2.1 && t_c_high > 0) {
-		double old_v = _v[0];
-
-		_v[0] = old_v - 2 * (old_v - _high_boundary_speed);
-		_r[0] += t_c_high * old_v + (2 * dt_halve - t_c_high) * _v[0];
+	 // get the time of crossing the lower and upper boundary
+	 double t_c_low = (_r[0] - _low_boundary) / (_low_boundary_speed - _v[0]);
+	 double t_c_high = (_r[0] - _high_boundary) / (_high_boundary_speed - _v[0]);
 
 
-		// for trying random orientations
-//		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
-//		q.normalize();
-//
-//		setq(q);
-	}
+	 // if crossing the lower boundary (2.1 for nummerical instabilities)
+	 // boudnary speed is 0 for equilibrium state
+	 if (t_c_low <= dt_halve * 2.1 && t_c_low > 0) {
+	 double old_v = _v[0];
 
+	 _v[0] = old_v - 2 * (old_v - _low_boundary_speed);
+	 _r[0] += t_c_low * old_v + (2 * dt_halve - t_c_low) * _v[0];
+
+	 // for trying random orientations
+	 //		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
+	 //		q.normalize();
+	 //
+	 //		setq(q);
+	 }
+
+	 // if crossing higher boundary
+	 if (t_c_high < dt_halve * 2.1 && t_c_high > 0) {
+	 double old_v = _v[0];
+
+	 _v[0] = old_v - 2 * (old_v - _high_boundary_speed);
+	 _r[0] += t_c_high * old_v + (2 * dt_halve - t_c_high) * _v[0];
+
+
+	 // for trying random orientations
+	 //		Quaternion q = Quaternion(rand(), rand(), rand(), rand());
+	 //		q.normalize();
+	 //
+	 //		setq(q);
+	 }
+	 */
 }
 
 double Molecule::U_rot() {
@@ -613,19 +621,18 @@ void Molecule::setD(double* D) {
 	}
 }
 
-void Molecule::bounceBack(int dim, double* axis) {
-	for (int d = 0; d < 3; d++)
-		_v[d] = -_v[d];
-	//	_D[dim] = -_D[dim];
+void Molecule::bounceBack(double dt) {
 	for (int d = 0; d < 3; d++) {
-		_r[d] += _dt * _v[d];
-
+		_v[d] = -_v[d];
 	}
 
-	//
-	//
-	//	double angle = 3.14/2;
-	//	_q.multiply_left(Quaternion(cos(angle / 2), axis[0] * sin(angle / 2),
-	//			axis[1] * sin(angle / 2), axis[2] * sin(angle / 2)));
-	//	upd_cache();
+	for (int d = 0; d < 3; d++) {
+		_r[d] += dt * _v[d];
+
+	}
+}
+
+void Molecule::bounceBackDirection(double dt, int dir) {
+	_v[dir] = -_v[dir];
+	_r[dir] += dt * _v[dir];
 }

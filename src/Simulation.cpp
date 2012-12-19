@@ -1725,6 +1725,7 @@ void Simulation::simulate() {
 		Molecule* moleculePtr;
 		//_moleculeContainer->deleteOuterParticles();
 		double total_periodic = 0, total_rdf = 0;
+		int num_loop = 0;
 		for (moleculePtr = _moleculeContainer->begin(); moleculePtr
 				!= _moleculeContainer->end(); moleculePtr
 				= _moleculeContainer->next()) {
@@ -1732,6 +1733,7 @@ void Simulation::simulate() {
 			total_periodic += moleculePtr->getLeftxF()[0];
 			total_rdf += moleculePtr->getLeftxRdfF()[0];
 			moleculePtr->resetLeftxInfluence();
+			num_loop++;
 		}
 		double rmin[3] = { _moleculeContainer->getBoundingBoxMin(0),
 				_moleculeContainer->getBoundingBoxMin(1),
@@ -1745,6 +1747,7 @@ void Simulation::simulate() {
 		fprintf(stepfile, "%lg %lg \n", total_periodic / num_mols,
 				total_rdf / num_mols);
 
+		std::cout<<"num_loop: "<<num_loop<<std::endl;
 		/*
 		 if (actual_simstep % 1000 == 0 || actual_simstep == 1
 		 || actual_simstep == 10 || actual_simstep == 100
@@ -1941,17 +1944,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
 			_domain->getComponents(), _domain);
 	LinkedCells* linkedCells = (LinkedCells*) _moleculeContainer;
 	linkedCells->setPairsHandler(_particlePairsHandler);
-	for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
-			= linkedCells->next()) {
-		if (mol->id() == 2387) {
-			mol->clearFM();
-			double f[3] = { 0, 0, 0 };
-			linkedCells->getForceAndEnergy(mol, f);
-			mol->calcFM();
-//			std::cout << "before update caches: " << mol->F(0) << " "
-//					<< mol->F(1) << " " << mol->F(2) << std::endl;
-		}
-	}
+
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
@@ -1974,17 +1967,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
 					_domain->getComponents(), _domain);
 		_moleculeContainer->updateMoleculeCaches();
 	}
-	for (Molecule* mol = linkedCells->begin(); mol != linkedCells->end(); mol
-			= linkedCells->next()) {
-		if (mol->id() == 8256) {
-			mol->clearFM();
-			double f[3] = { 0, 0, 0 };
-			linkedCells->getForceAndEnergy(mol, f);
-			mol->calcFM();
-//			std::cout << "after update caches: " << mol->F(0) << " " << mol->F(
-//					1) << " " << mol->F(2) << " r is " << mol->r(0)<<" "<<mol->r(1)<<" "<<mol->r(2)<< std::endl;
-		}
-	}
+
 }
 
 /* FIXME: we shoud provide a more general way of doing this */

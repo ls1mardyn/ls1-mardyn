@@ -326,19 +326,27 @@ void DomainDecompDummy::validateUsher(ParticleContainer* moleculeContainer,
 
 			// call usher - the particle will have the position usher found
 			// after the method is finished
+			std::cout << "position before " << molecule->r(0) << " "
+					<< molecule->r(1) << " " << molecule->r(2) << std::endl;
 			while (iterations == -1 && seed < 10) {
 				iterations = usher.findParticlePosition(linkedCells, molecule,
-						u_avg, energy, old_energy, true, false, seed, 100,
-						10000, 100, 45 * 3.14 / 180, 3.14, 3.14 / 180, 0.02,
+						u_avg, energy, old_energy, true, false, seed, 20,
+						10000, 10, 45 * 3.14 / 180, 3.14, 3.14 / 180, 0.02,
 						&vec_energy, &vec_angle, &vec_lj, &vec_center,
 						name_energy, name_angle, name_lj, name_center,
 						allowed_low, allowed_high);
 				seed++;
 			}
-
+			if (iterations == -1) {
+				std::cout<<"usher failed!"<<std::endl;
+				exit(1);
+			}
+			std::cout << "position after " << molecule->r(0) << " "
+					<< molecule->r(1) << " " << molecule->r(2) << std::endl;
 			// set sampled random velocity and angular velocity
 			molecule->setv(v);
 			molecule->setD(w);
+
 			found = true;
 
 			molecule = moleculeContainer->next();
