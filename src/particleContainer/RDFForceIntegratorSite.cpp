@@ -91,7 +91,7 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 						mol->Fljcenteradd(site, f);
 
 					// track the force coming from the rdf boundary
-					if (boundary[0] == -1 && plane == 0 && add_influence) {
+					if (boundary[0] == -1 && plane == 0) {
 						mol->addLeftxRdfInfluence(site, f);
 
 					}
@@ -195,27 +195,27 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 		}
 
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site,
-				force, add_influence);
+				force, false);
 
 		// this is to add the potential if the site of the molecule is outside the domain
 		// the forces cancel each other out so this was used in the previous call to
 		// integrate RDFSite
 		// see thesis for more details
-
-		if (boundary[0] == -1 && r[0] < _rmin[0]) {
-			normal_lim[0] = 0;
-			normal_lim[1] = std::abs(r[0] - _rmin[0]);
-			pot += 2 * integrateRDFSite(currentMolecule, normal_lim, boundary,
-					0, site, force, false);
-		}
-
-		if (boundary[0] == 1 && r[0] > _rmax[0]) {
-			normal_lim[0] = 0;
-			normal_lim[1] = std::abs(r[0] - _rmax[0]);
-			pot += 2 * integrateRDFSite(currentMolecule, normal_lim, boundary,
-					0, site, force, false);
-
-		}
+//
+//		if (boundary[0] == -1 && r[0] < _rmin[0]) {
+//			normal_lim[0] = 0;
+//			normal_lim[1] = std::abs(r[0] - _rmin[0]);
+//			pot += 2 * integrateRDFSite(currentMolecule, normal_lim, boundary,
+//					0, site, force, false);
+//		}
+//
+//		if (boundary[0] == 1 && r[0] > _rmax[0]) {
+//			normal_lim[0] = 0;
+//			normal_lim[1] = std::abs(r[0] - _rmax[0]);
+//			pot += 2 * integrateRDFSite(currentMolecule, normal_lim, boundary,
+//					0, site, force, false);
+//
+//		}
 		//		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0, site,
 		//				boundary, force, add_influence);
 
@@ -228,6 +228,7 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 		 * It was not properly tested as I always worked with boundaries in x direction
 		 * I checked it with breakpoints some months ago
 		 */
+		/*
 		if (boundary[2] != 0) {
 			if (boundary[2] == -1) {
 				zlim[0] = r[2] - _rc;
@@ -322,7 +323,7 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 				integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 1,
 						site, boundary, force, false);
 		}
-
+		*/
 	}
 	return pot;
 }

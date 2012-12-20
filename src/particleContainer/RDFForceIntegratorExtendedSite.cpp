@@ -267,7 +267,7 @@ double RDFForceIntegratorExtendedSite::processMolecule(
 		//if (currentMolecule->r(0) > 10) std::cout<<"boundary: "<<boundary[0]<<" "<<boundary[1]<<" "<<boundary[2]<<std::endl;
 		double f[3] = { 0, 0, 0 };
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site, f,
-				add_influence);
+				false);
 
 	}
 	return pot;

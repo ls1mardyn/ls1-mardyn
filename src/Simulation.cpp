@@ -933,7 +933,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			} else if (token == "0") {
 				validate_usher = false;
 			} else {
-				std::cout<<"invalid value for the ValidateUsher field"<<std::endl;
+				std::cout << "invalid value for the ValidateUsher field"
+						<< std::endl;
 			}
 
 		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
@@ -1726,14 +1727,24 @@ void Simulation::simulate() {
 		//_moleculeContainer->deleteOuterParticles();
 		double total_periodic = 0, total_rdf = 0;
 		int num_loop = 0;
+
 		for (moleculePtr = _moleculeContainer->begin(); moleculePtr
 				!= _moleculeContainer->end(); moleculePtr
 				= _moleculeContainer->next()) {
 			moleculePtr->calcLeftxInfluence();
 			total_periodic += moleculePtr->getLeftxF()[0];
 			total_rdf += moleculePtr->getLeftxRdfF()[0];
+			if (moleculePtr->r(0) <= _moleculeContainer->getBoundingBoxMin(0)
+					+ _moleculeContainer->getCutoff()) {
+				num_loop++;
+			} else if (moleculePtr->getLeftxF()[0] != 0
+					|| moleculePtr->getLeftxRdfF()[0] != 0) {
+				std::cout << "impossible" << std::endl;
+				exit(1);
+			}
+
 			moleculePtr->resetLeftxInfluence();
-			num_loop++;
+
 		}
 		double rmin[3] = { _moleculeContainer->getBoundingBoxMin(0),
 				_moleculeContainer->getBoundingBoxMin(1),
@@ -1744,108 +1755,11 @@ void Simulation::simulate() {
 		int num_mols = _moleculeContainer->countParticles(
 				_moleculeContainer->begin()->componentid(), rmin, rmax);
 		fflush(stepfile);
-		fprintf(stepfile, "%lg %lg \n", total_periodic / num_mols,
-				total_rdf / num_mols);
+		fprintf(stepfile, "%lg %lg \n", total_periodic / num_loop,
+				total_rdf / num_loop);
 
-		std::cout<<"num_loop: "<<num_loop<<std::endl;
-		/*
-		 if (actual_simstep % 1000 == 0 || actual_simstep == 1
-		 || actual_simstep == 10 || actual_simstep == 100
-		 || actual_simstep == 200 || actual_simstep == 500) {
-		 // measuring forces - writing to file
-		 Molecule* moleculePtr = _moleculeContainer->begin();
-		 _moleculeContainer->deleteOuterParticles();
-		 std::stringstream ss;
-		 ss << "result_Ethan_" << _moleculeContainer->getCutoff()/moleculePtr->getSigma() << "_" << actual_simstep << ".txt";
+		std::cout << "num_loop: " << num_loop << std::endl;
 
-		 FILE* file = fopen(
-		 ss.str().c_str(), "w");
-		 double** forces = new double*[160000];
-		 for (int i = 1; i <= 160000; i++) {
-		 forces[i] = new double[13];
-		 for (int j = 0; j < 13; j++)
-		 forces[i][j] = -1;
-		 }
-		 double total_abs = 0;
-		 int total_num = 0;
-		 int less90 = 0;
-		 double total_periodic_force = 0, total_rdf_force = 0,
-		 total_periodic_y = 0, total_periodic_z = 0;
-		 for (moleculePtr = _moleculeContainer->begin(); moleculePtr
-		 != _moleculeContainer->end(); moleculePtr
-		 = _moleculeContainer->next()) {
-
-		 moleculePtr->calcLeftxInfluence();
-		 //cout<<"id: "<<moleculePtr->id()<<endl;
-
-		 forces[moleculePtr->id()][0] = moleculePtr->id();
-		 for (int i = 0; i < 3; i++)
-		 forces[moleculePtr->id()][i + 1] = moleculePtr->F(i);
-		 for (int i = 4; i < 7; i++)
-		 forces[moleculePtr->id()][i] = moleculePtr->getLeftxF()[i
-		 - 4];
-		 for (int i = 4; i < 7; i++)
-		 forces[moleculePtr->id()][i + 3]
-		 = moleculePtr->getLeftxRdfF()[i - 4];
-
-		 total_periodic_y += moleculePtr->getLeftxF()[1];
-		 total_periodic_z += moleculePtr->getLeftxF()[2];
-
-		 total_periodic_force += moleculePtr->getLeftxF()[0];
-		 total_rdf_force += moleculePtr->getLeftxRdfF()[0];
-
-		 bool has_boundary = false;
-		 for (int i = 0; i < 3; i++)
-		 if (moleculePtr->getLeftxF()[i] != 0)
-		 has_boundary = true;
-
-		 total_num = 9826;
-		 if (has_boundary) {
-
-		 for (int i = 10; i < 13; i++)
-		 forces[moleculePtr->id()][i] = 100 * abs(abs(
-		 moleculePtr->getLeftxRdfF()[i - 10]
-		 - moleculePtr->getLeftxF()[i - 10])
-		 / moleculePtr->getLeftxF()[i - 10]);
-		 total_abs += forces[moleculePtr->id()][10];
-		 if (forces[moleculePtr->id()][10] < 90)
-		 less90++;
-		 }
-		 }
-
-		 int scale = _simstep - _initSimulation + 1;
-		 cout << "dividing by " << scale << endl;
-		 fprintf(file, "num_total: %d \n", total_num);
-		 fprintf(file, "less than 90 percent for: %d molecules \n", less90);
-		 fprintf(file, "average individual diff %lg: \n", total_abs
-		 / total_num);
-		 fprintf(file, "avg_periodic: %lg 	avg_rdf: %lg, total_diff(wrt periodic) %lg total_dif(wrt rdf) %lg \n",
-		 total_periodic_force / (total_num * scale), total_rdf_force
-		 / (total_num * scale), (total_periodic_force
-		 - total_rdf_force) * 100 / total_periodic_force, (total_rdf_force
-		 - total_periodic_force) * 100 / total_rdf_force);
-		 fprintf(file, "avg periodic y %lg, avg periodic z %lg \n",
-		 total_periodic_y / (total_num * scale), total_periodic_z
-		 / (total_num * scale));
-		 for (int num = 1; num < 160000; num++) {
-		 if (forces[num][10] != -1) {
-		 fprintf(file, "%d ", (int) forces[num][0]);
-		 for (int i = 4; i < 10; i++)
-		 fprintf(file, "%g ", forces[num][i] / scale);
-		 fprintf(file, "		");
-		 for (int i = 10; i < 13; i++)
-		 fprintf(file, "%g ", forces[num][i]);
-		 fprintf(file, "\n");
-		 }
-		 }
-		 fclose(file);
-
-		 for (int i = 1; i <= 160000; i++) {
-		 delete[] forces[i];
-		 }
-		 delete[] forces;
-		 }
-		 */
 	}
 	fclose(stepfile);
 
@@ -1950,21 +1864,22 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	_moleculeContainer->updateMoleculeCaches();
 	if (dummy_decomp_type == 0 && validate_usher) {
 		DomainDecompDummy* dummy = (DomainDecompDummy*) _domainDecomposition;
-		dummy->validateUsher(_moleculeContainer,
-				_domain->getComponents(), _domain);
+		dummy->validateUsher(_moleculeContainer, _domain->getComponents(),
+				_domain);
 		_moleculeContainer->deleteOuterParticles();
 		dummy->balanceAndExchange(true, _moleculeContainer,
-					_domain->getComponents(), _domain);
+				_domain->getComponents(), _domain);
 		_moleculeContainer->updateMoleculeCaches();
 	}
 
 	if (dummy_decomp_type == 1 && particle_insertion_type == 1) {
-		RDFDummyDecomposition* rdf_decomp = (RDFDummyDecomposition*) _domainDecomposition;
-		rdf_decomp->insertUsher(_moleculeContainer,
-				_domain->getComponents(), _domain);
+		RDFDummyDecomposition* rdf_decomp =
+				(RDFDummyDecomposition*) _domainDecomposition;
+		rdf_decomp->insertUsher(_moleculeContainer, _domain->getComponents(),
+				_domain);
 		_moleculeContainer->deleteOuterParticles();
 		rdf_decomp->balanceAndExchange(true, _moleculeContainer,
-					_domain->getComponents(), _domain);
+				_domain->getComponents(), _domain);
 		_moleculeContainer->updateMoleculeCaches();
 	}
 

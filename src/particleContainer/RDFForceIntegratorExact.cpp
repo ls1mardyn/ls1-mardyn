@@ -246,7 +246,8 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 		}
 
 		// hight of the spherical cap and the other dimension of it
-		h = std::min(_rc + _extension, std::abs(xlim[1] - xlim[0]));
+		//h = std::min(_rc + _extension, std::abs(xlim[1] - xlim[0]));
+		h = std::abs(xlim[1] - xlim[0]) - _extension;
 		a = std::sqrt(h * (2 * (_rc + _extension) - h));
 		ylim[0] = rm[1] - a;
 		ylim[1] = rm[1] + a;
@@ -255,7 +256,7 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 
 		// do the integration
 		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0,
-				site, boundary, add_influence, force, unit_test);
+				site, boundary, false, force, unit_test);
 
 		//double rnd = -1 + 2 * ((double) rand() / (double) RAND_MAX);
 		//		double rnd = -1 + 2  * ((double) rand() / (double) RAND_MAX);//getGaussianRandomNumber();
