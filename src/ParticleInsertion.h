@@ -46,9 +46,15 @@ public:
 
 
 
-	/** determines the position of a new particle within the macroscopic cell thisCell and stores the result
-	 *  in the position entry of the molecule 'molecule'. The method returns Insertion if a position has been
-	 *  found and NoAction otherwise.
+
+	/*
+	 * Determines position where the energy is within the xiMax from the
+	 * target energy U_0
+	 * Position should be in the allowed region defined by
+	 * allowedLow and allowedHigh
+	 * Returns -1 if failed, otherwise number of performed steps
+	 * At the end, molecule has the correct position
+	 * Please view cpph file for parameter explanations
 	 */
 	int findParticlePosition(
 			LinkedCells* linkedCells,
@@ -62,6 +68,10 @@ public:
 			string name_energy, string name_angle, string name_lj, string name_center,
 			double* allowed_low, double* allowed_high) const;
 
+	/*
+	 * Molecule rotations towards teh target energy
+	 * Please see cpph file for parameter explanations
+	 */
 	int rotateMolecule(Molecule* molecule,
 			moleculardynamics::coupling::interface::MardynMoleculeWrapper<Molecule,
 			dim> wrapper, LinkedCells* linkedCells,
@@ -87,8 +97,6 @@ public:
 	void write_vector(vector<double> vec, string file_name) const;
 	void write_vector_3d(vector<double*> vec, string file_name) const;
 
-	// const moleculardynamics::coupling::configurations::ParticleInsertionConfiguration _config;
-	// tarch::logging::Log _log;
 };
 #include "ParticleInsertion.cpph"
 #endif // _MOLECULARDYNAMICS_COUPLING_PARTICLEINSERTION_H_
