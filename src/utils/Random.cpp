@@ -18,6 +18,7 @@ float Random::rnd()
    const int IQ = 127773; 
    const int IR = 2836;
 
+   /* Marsaglia shift sequence */
    ix ^= (ix >> 13);
    ix ^= (ix << 17);
    ix ^= (ix >> 5);
@@ -28,4 +29,3 @@ float Random::rnd()
    rnd = am * ((IM & (ix ^ iy)) | (int)1);
    return rnd;
 }
-
