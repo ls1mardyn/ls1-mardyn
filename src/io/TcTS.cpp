@@ -9,6 +9,7 @@
 #include "io/ResultWriter.h"
 #include "io/XyzWriter.h"
 #include "io/CheckpointWriter.h"
+#include "utils/Logger.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecompBase.h"
@@ -25,6 +26,7 @@
 #include <string.h>
 
 using namespace std;
+using Log::global_log;
 
 #define BINS 2048
 #define DT 0.002
@@ -69,9 +71,9 @@ TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecompositi
    if(options.is_set("shift_LJ")) {
        do_shift = options.get("shift_LJ");
    }
-   if(options.is_set("shift_LJ")) {
+   if(options.is_set("fluid-density-2")) {
        rho2 = options.get("fluid-density-2");
-        gradient = true;
+       gradient = true;
    }
    if(options.is_set("height")) {
        in_h = true;
@@ -85,6 +87,11 @@ TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecompositi
        dRDF = options.get("pair-correlation-cutoff");
    }
    
+   global_log->info() << "Fluid density 1: " << rho << endl;
+   global_log->info() << "Fluid density 2: " << rho2 << endl;
+   global_log->info() << "Number of particles: " << N << endl;
+   global_log->info() << "Temperature: " << T << endl;
+   global_log->info() << "Cutoff radius: " << cutoff << endl;
 
    if(in_h && !gradient)
    {
