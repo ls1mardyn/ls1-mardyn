@@ -139,7 +139,8 @@ int main(int argc, char** argv) {
     }
 
     if( options.is_set("final-checkpoint") ) {
-        if ( (bool) options.get("final-checkpoint") ) {
+        global_log->debug() << "Option final-checkpoint set, (value: " << (const char *) options.get("final-checkpoint") << ")" << endl;
+        if ( (int) options.get("final-checkpoint") > 0) {
             global_log->info() << "Final checkpoint enabled" << endl;
             simulation.enableFinalCheckpoint();
         }
