@@ -213,7 +213,8 @@ public:
 	}
 
 	virtual void setRDFArrays(std::vector<std::vector<double> >* ADist,
-			std::vector<std::vector<std::vector<double> > >* SiteADist, double d, int integrator_type, std::string rdf_file_nondeclining) {}
+			std::vector<std::vector<std::vector<double> > >* SiteADist, double d, int integrator_type, std::string rdf_file_nondeclining,
+			double randomizeForceValue = 0, double randomizeForcePercentage = 0) {}
 
 protected:
 

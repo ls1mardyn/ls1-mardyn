@@ -29,7 +29,8 @@ public:
 	 */
 	RDFForceIntegratorExact(ParticleContainer* moleculeContainer, double rc, double d,
 			std::vector<std::vector<double> >* globalADist, std::vector<
-					std::vector<std::vector<double> > >* globalSiteADist);
+					std::vector<std::vector<double> > >* globalSiteADist,
+					double randomizeValue = 0, double randomizePercentage = 0);
 	virtual ~RDFForceIntegratorExact();
 
 	/*
@@ -76,7 +77,8 @@ private:
 	int timestep; // counts timesteps
 	bool first_unif; // if there already is one random number
 	double unif_rand[2]; // stores two uniform random numbers
-
+	double _randomizeValue; // randomize between (-value, value)
+	double _randomizePercentage; // randomize between (-pF, pF), where p is percentage, F force
 	/*
 	 * gets gaussian random number
 	 * to be used for force randomizations

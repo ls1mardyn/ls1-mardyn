@@ -57,7 +57,7 @@ double RDFForceIntegratorSite::integrateRDFSite(Molecule* mol,
 				}
 
 				// track the force coming from the rdf boundary
-				if (boundary[0] == -1 && plane == 0 && add_influence) {
+				if (boundary[0] == -1 && plane == 0 ) {
 					mol->addLeftxRdfInfluence(site, f);
 				}
 			} else {
@@ -195,7 +195,7 @@ double RDFForceIntegratorSite::processMolecule(Molecule* currentMolecule,
 		}
 
 		pot += integrateRDFSite(currentMolecule, normal_lim, boundary, 0, site,
-				force, false);
+				force, add_influence);
 
 		// this is to add the potential if the site of the molecule is outside the domain
 		// the forces cancel each other out so this was used in the previous call to

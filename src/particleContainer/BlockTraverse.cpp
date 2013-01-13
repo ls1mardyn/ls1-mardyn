@@ -416,7 +416,7 @@ void BlockTraverse::traversePairs(ParticlePairsHandler* particlePairsHandler,
 
 		double u_pot = this->traverseRDFBoundary(forceIntegrator);
 
-		particlePairsHandler->addRDFInfluence(u_pot);
+		particlePairsHandler->addRDFInfluence(u_pot/2);
 
 	}
 	particlePairsHandler->finish();

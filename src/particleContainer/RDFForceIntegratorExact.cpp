@@ -61,7 +61,7 @@ double* RDFForceIntegratorExact::precomputeScalingFactorsX(bool unit_test) {
 			curr_other, alpha, scale, curr_r, level, phi;
 	int curr_bin;
 
-	// level is where the molecule is
+	// level is where the molecule is, boundary is at 0
 	for (int idx_level = 0; idx_level < _n_levels; idx_level++) {
 		level = idx_level * _d_level;
 
@@ -140,7 +140,8 @@ double* RDFForceIntegratorExact::precomputeScalingFactorsX(bool unit_test) {
 RDFForceIntegratorExact::RDFForceIntegratorExact(
 		ParticleContainer* moleculeContainer, double rc, double d,
 		std::vector<std::vector<double> >* globalADist,
-		std::vector<std::vector<std::vector<double> > >* globalSiteADist) :
+		std::vector<std::vector<std::vector<double> > >* globalSiteADist,
+		double randomizeValue, double randomizePercentage) :
 	RDFForceIntegrator(moleculeContainer, rc, d, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
 	called_x = false;
@@ -152,6 +153,8 @@ RDFForceIntegratorExact::RDFForceIntegratorExact(
 	first_unif = true;
 	_extension = moleculeContainer->begin()->ljcenter_disp(0);
 	_d_alpha = 5;
+	_randomizeValue = randomizeValue;
+	_randomizePercentage = randomizePercentage;
 
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
 
@@ -256,31 +259,19 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 
 		// do the integration
 		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0,
-				site, boundary, false, force, unit_test);
+				site, boundary, add_influence, force, unit_test);
 
-		//double rnd = -1 + 2 * ((double) rand() / (double) RAND_MAX);
-		//		double rnd = -1 + 2  * ((double) rand() / (double) RAND_MAX);//getGaussianRandomNumber();
-		//		double randf[3] = {0, 0, 0};
-		//		double other_randf[3] = {0, 0, 0};
-		//		double rand_axis[3] = {(double) rand() / (double) RAND_MAX, (double) rand() / (double) RAND_MAX,(double) rand() / (double) RAND_MAX};
-		//		double normalizer = std::sqrt(rand_axis[0] * rand_axis[0] + rand_axis[1] * rand_axis[1] + rand_axis[2] * rand_axis[2]);
-		//		for (int d = 0; d < 3; d++)
-		//			rand_axis[d]/= normalizer;
-		//		double angle = 10 * (double) rand() / (double) RAND_MAX;
-		//		angle = angle * 3.14/180;
-		//		if (rnd > 0.9) {
-		//			Quaternion q = currentMolecule->q();
-		//			q.multiply_left(Quaternion(cos(angle / 2), rand_axis[0] * sin(angle / 2),
-		//					rand_axis[1] * sin(angle / 2), rand_axis[2] * sin(angle / 2)));
-		//			currentMolecule->setq(q);
-		//		}
-		//if (timestep % 10 == 0)
-		//		randf[0] = rnd * force[0];
-		//		other_randf[0] =  (1 - rnd) * force[0];
-		//force[0] += rnd * force[0];
-		//currentMolecule->Fadd(force);
+		if (_randomizeValue != 0 || _randomizePercentage != 0) {
+			double rnd = -1 + 2 * ((double) rand() / (double) RAND_MAX);
+			double randf[3] = {0, 0, 0};
+			if (_randomizeValue) {
+				randf[0] = rnd * _randomizeValue;
+			} else {
+				randf[0] = rnd * _randomizePercentage * force[0];
+			}
 
-		//force[0] += randf[0];
+			currentMolecule->Fljcenteradd(site, randf);
+		}
 
 
 	}
