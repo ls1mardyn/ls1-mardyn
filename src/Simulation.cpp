@@ -96,6 +96,8 @@ Simulation::Simulation() :
 	density_bins = new double[400];
 	for (int i = 0; i < 400; i++)
 		density_bins[i] = 0;
+	randomizeForceValue = 0;
+	randomizeForcePercentage = 0;
 	initialize();
 }
 
@@ -896,6 +898,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				rdf_integrator_type = 2;
 			else if (token == "site")
 				rdf_integrator_type = 1;
+		} else if (token == "RandomizeForceExactValue") {
+			inputfilestream >> randomizeForceValue;
+
+		} else if (token == "RandomizeForcePercentage") {
+			inputfilestream >> randomizeForcePercentage;
 		} else if (token == "RDFIntegratorFileProlonged") {
 			inputfilestream >> rdf_file_nondeclining;
 		} else if (token == "RDFDecompType") {
@@ -1188,7 +1195,7 @@ void Simulation::prepare_start() {
 
 	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist,
 			_moleculeContainer->begin()->getSigma() / points_per_sigma,
-			rdf_integrator_type, rdf_file_nondeclining);
+			rdf_integrator_type, rdf_file_nondeclining, randomizeForceValue, randomizeForcePercentage);
 
 	global_log->info() << "Initializing simulation" << endl;
 
@@ -1496,6 +1503,7 @@ void Simulation::simulate() {
 				int idx2 = (int) ((mol->r(0) + mol->site_d(1)[0]) / length);
 				int idx_mol = (int) (mol->r(0) / length);
 
+				// site density
 				if (mol->r(0) > _moleculeContainer->getBoundingBoxMin(0)
 						&& mol->r(0) < _moleculeContainer->getBoundingBoxMax(0)
 						&& mol->r(1) > _moleculeContainer->getBoundingBoxMin(1)
@@ -1512,6 +1520,8 @@ void Simulation::simulate() {
 						site_bins[idx2]++;
 
 				}
+
+				// molecule orientation
 				if (mol->r(0) >= _moleculeContainer->getBoundingBoxMin(0)
 						&& mol->r(0)
 								<= _moleculeContainer->getBoundingBoxMax(0)
@@ -1728,6 +1738,7 @@ void Simulation::simulate() {
 		double total_periodic = 0, total_rdf = 0;
 		int num_loop = 0;
 
+		// evaluating boundary influence of periodic vs rdf
 		for (moleculePtr = _moleculeContainer->begin(); moleculePtr
 				!= _moleculeContainer->end(); moleculePtr
 				= _moleculeContainer->next()) {

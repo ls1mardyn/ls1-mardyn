@@ -436,6 +436,8 @@ private:
 	int particle_insertion_type;
 	bool rdf_add_influence;
 	bool validate_usher;
+	double randomizeForceValue;
+	double randomizeForcePercentage;
 
 #ifdef STEEREO
 	SteereoSimSteering* _steer;
