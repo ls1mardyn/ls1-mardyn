@@ -438,6 +438,7 @@ private:
 	bool validate_usher;
 	double randomizeForceValue;
 	double randomizeForcePercentage;
+	int randomizeNumSteps;
 
 #ifdef STEEREO
 	SteereoSimSteering* _steer;

@@ -98,6 +98,7 @@ Simulation::Simulation() :
 		density_bins[i] = 0;
 	randomizeForceValue = 0;
 	randomizeForcePercentage = 0;
+	randomizeNumSteps = 1;
 	initialize();
 }
 
@@ -898,11 +899,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				rdf_integrator_type = 2;
 			else if (token == "site")
 				rdf_integrator_type = 1;
-		} else if (token == "RandomizeForceExactValue") {
+		} else if (token == "RandomizeForceValue") {
 			inputfilestream >> randomizeForceValue;
 
 		} else if (token == "RandomizeForcePercentage") {
 			inputfilestream >> randomizeForcePercentage;
+		} else if (token == "RandomizeNumSteps") {
+			inputfilestream >> randomizeNumSteps;
 		} else if (token == "RDFIntegratorFileProlonged") {
 			inputfilestream >> rdf_file_nondeclining;
 		} else if (token == "RDFDecompType") {
@@ -1195,7 +1198,7 @@ void Simulation::prepare_start() {
 
 	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist,
 			_moleculeContainer->begin()->getSigma() / points_per_sigma,
-			rdf_integrator_type, rdf_file_nondeclining, randomizeForceValue, randomizeForcePercentage);
+			rdf_integrator_type, rdf_file_nondeclining, randomizeForceValue, randomizeForcePercentage, randomizeNumSteps);
 
 	global_log->info() << "Initializing simulation" << endl;
 
@@ -1424,7 +1427,7 @@ void Simulation::simulate() {
 	}
 	_moleculeContainer->setRDFArrays(&globalADist, &globalSiteADist,
 			_moleculeContainer->begin()->getSigma() / points_per_sigma,
-			rdf_integrator_type, rdf_file_nondeclining);
+			rdf_integrator_type, rdf_file_nondeclining, randomizeForceValue, randomizeForcePercentage, randomizeNumSteps);
 	loopTimer.start();
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {

@@ -255,7 +255,7 @@ public:
 
 	virtual void setRDFArrays(std::vector<std::vector<double> >* ADist,
 			std::vector<std::vector<std::vector<double> > >* SiteADist,
-			double d, int integrator_type, std::string rdf_file_nondeclining, double randomizeValue = 0, double randomizePercentage = 0) {
+			double d, int integrator_type, std::string rdf_file_nondeclining, double randomizeValue = 0, double randomizePercentage = 0, int randomizeNumSteps = 1) {
 		globalADist = ADist;
 		globalSiteADist = SiteADist;
 		if (integrator_type == 1) {
@@ -270,7 +270,7 @@ public:
 		} else if (integrator_type == 3) {
 			std::cout<<"using exact (cartesian) rdf integrator"<<std::endl;
 			forceIntegrator = new RDFForceIntegratorExact(this,
-					this->getCutoff(), d, globalADist, globalSiteADist, randomizeValue, randomizePercentage);
+					this->getCutoff(), d, globalADist, globalSiteADist, randomizeValue, randomizePercentage, randomizeNumSteps);
 		} else {
 			forceIntegrator = NULL;
 			std::cout << "no rdf integration" << std::endl;

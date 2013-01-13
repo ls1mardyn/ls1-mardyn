@@ -141,7 +141,7 @@ RDFForceIntegratorExact::RDFForceIntegratorExact(
 		ParticleContainer* moleculeContainer, double rc, double d,
 		std::vector<std::vector<double> >* globalADist,
 		std::vector<std::vector<std::vector<double> > >* globalSiteADist,
-		double randomizeValue, double randomizePercentage) :
+		double randomizeValue, double randomizePercentage, int randomizeNumSteps) :
 	RDFForceIntegrator(moleculeContainer, rc, d, globalADist, globalSiteADist) {
 	// TODO Auto-generated constructor stub
 	called_x = false;
@@ -155,6 +155,7 @@ RDFForceIntegratorExact::RDFForceIntegratorExact(
 	_d_alpha = 5;
 	_randomizeValue = randomizeValue;
 	_randomizePercentage = randomizePercentage;
+	_randomizeNumSteps = randomizeNumSteps;
 
 	std::vector<std::vector<double> > globalSiteAcc = (*_globalSiteADist)[0];
 
@@ -261,7 +262,7 @@ double RDFForceIntegratorExact::processMolecule(Molecule* currentMolecule,
 		pot += integrateRDFSiteCartesian(xlim, ylim, zlim, currentMolecule, 0,
 				site, boundary, add_influence, force, unit_test);
 
-		if (_randomizeValue != 0 || _randomizePercentage != 0) {
+		if ((timestep % _randomizeNumSteps == 0) && (_randomizeValue != 0 || _randomizePercentage != 0)) {
 			double rnd = -1 + 2 * ((double) rand() / (double) RAND_MAX);
 			double randf[3] = {0, 0, 0};
 			if (_randomizeValue) {
