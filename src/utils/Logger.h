@@ -170,7 +170,7 @@ public:
 			stringstream timestampstream;
 			// maybe sprintf is easier here...
 			timestampstream << setfill('0') << setw(4) << (1900 + lt->tm_year) << setw(2) << (1 + lt->tm_mon) << setw(2) << lt->tm_mday << "T" << setw(2) << lt->tm_hour << setw(2) << lt->tm_min << setw(2) << lt->tm_sec;
-			*_log_stream << timestampstream.str() << " ";
+			*_log_stream << logLevelNames[level] << ":\t" << timestampstream.str() << " ";
 			//timestampstream.str(""); timestampstream.clear();
 #ifdef USE_GETTIMEOFDAY
 			timeval tod;
