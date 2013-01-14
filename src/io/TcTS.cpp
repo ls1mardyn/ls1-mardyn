@@ -153,7 +153,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
       if(fl_units[0][i] == 0) fl_units[0][i] = 1;
       fl_units[2][i] = (unsigned int) ceil(bxbz_id / fl_units[0][i]);
       for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? 0.5: 1.0) * box[d] / (double)fl_units[d][i];
-      cout << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << ".\n";
+      global_log->debug() << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << ".\n";
    }
 
    Random* r = new Random();
@@ -201,7 +201,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
                         if(tswap) N[l] ++;
                      }
       }
-      cout << "Filling " << N[l] << " of 3*"
+      global_log->debug() << "Filling " << N[l] << " of 3*"
            << fl_units[0][l] << "*" << fl_units[1][l] << "*" << fl_units[2][l]
            << " = " << slots[l] << " slots (ideally " << N_id[l] << ").\n";
    }
