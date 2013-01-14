@@ -47,6 +47,16 @@ int main(int argc, char** argv) {
 	global_log->set_mpi_output_root(0);
 #endif
 
+    OptionParser op;
+    Values options = initOptions(argc, argv, op);
+    vector<string> args = op.args();
+    unsigned int numargs = args.size();
+
+    if( options.is_set("verbose") ) {
+        global_log->info() << "Enabling verbose log output." << endl;
+        global_log->set_log_level(Log::All);
+    }
+
 	/* Print some info about the program itself */
 	char info_str[MAX_INFO_STRING_LENGTH];
 	get_compiler_info(info_str);
@@ -68,10 +78,7 @@ int main(int argc, char** argv) {
 	global_log->info() << "Running with " << world_size << " processes." << endl;
 #endif
 
-	OptionParser op;
-	Values options = initOptions(argc, argv, op);
-	vector<string> args = op.args();
-	unsigned int numargs = args.size();
+
 
 	bool tests(options.get("tests"));
 	if (tests) {
@@ -103,9 +110,6 @@ int main(int argc, char** argv) {
 		op.print_usage();
 		exit(1);
 	}
-
-	if (options.is_set("verbose") && options.get("verbose"))
-		global_log->set_log_level(Log::All);
 
     Simulation simulation;
 
