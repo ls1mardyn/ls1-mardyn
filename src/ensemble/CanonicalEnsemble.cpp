@@ -99,6 +99,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  for( int cid = 0; cid < numComponents; cid++) {
 #ifdef ENABLE_MPI
 		  E_trans[cid] =  _simulation.domainDecomposition().collCommGetDouble();
+		  E_rot[cid]   =  _simulation.domainDecomposition().collCommGetDouble();
 #endif
 		  global_log->debug() << "Kinetic energy in component " << cid << ": " << 
 			  "E_trans = " << E_trans[cid] << ", E_rot = " << E_rot[cid] << endl;
