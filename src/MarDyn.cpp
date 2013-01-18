@@ -93,15 +93,13 @@ int main(int argc, char** argv) {
 		std::string testDataDirectory(options.get("testDataDirectory"));
 		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
 		bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
+
+		#ifdef ENABLE_MPI
+		MPI_Finalize();
+		#endif
 		if (testresult) {
-			#ifdef ENABLE_MPI
-			MPI_Finalize();
-			#endif
 			exit(1);
 		} else {
-			#ifdef ENABLE_MPI
-			MPI_Finalize();
-			#endif
 			exit(0);
 		}
 	}
