@@ -261,7 +261,7 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 
 	ofstream rdfout(prefix);
 	if( rdfout.fail() ) {
-		global_log->warning() << "COULD NOT OPEN FILE" << prefix << std::endl;
+		global_log->error() << "Failed opening output file '" << prefix << "'" << endl;
 		return;
 	}
 
