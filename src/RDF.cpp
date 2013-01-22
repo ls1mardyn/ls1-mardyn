@@ -260,7 +260,7 @@ void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, 
 void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsigned j) const {
 
 	ofstream rdfout(prefix);
-	if (!rdfout) {
+	if( rdfout.fail() ) {
 		global_log->warning() << "COULD NOT OPEN FILE" << prefix << std::endl;
 		return;
 	}
