@@ -16,6 +16,7 @@
 #include <fstream>
 #include <map>
 
+using namespace std;
 using namespace Log;
 
 RDF::RDF(double intervalLength, unsigned int bins, const std::vector<Component>& components) :
@@ -113,7 +114,7 @@ RDF::~RDF() {
 	delete[] _globalAccumulatedDistribution;
 }
 
-void RDF::accumulateNumberOfMolecules(std::vector<Component>& components) const {
+void RDF::accumulateNumberOfMolecules(vector<Component>& components) const {
 	const int num_components = components.size();
 	for (int i = 0; i < num_components; i++) {
 		_globalCtr[i] += components[i].getNumMolecules();
@@ -227,7 +228,7 @@ void RDF::setOutputTimestep(unsigned int timestep) {
 	_RDFOutputTimesteps = timestep;
 }
 
-void RDF::setOutputPrefix(std::string prefix) {
+void RDF::setOutputPrefix(string prefix) {
 	_RDFOutputPrefix = prefix;
 }
 
@@ -240,7 +241,7 @@ void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, 
 			accumulateRDF();
 			for (unsigned i = 0; i < _numberOfComponents; i++) {
 				for (unsigned j = i; j < _numberOfComponents; j++) {
-					std::ostringstream osstrm;
+					ostringstream osstrm;
 					osstrm << _RDFOutputPrefix << "_" << i << "-" << j << ".";
 					osstrm.fill('0');
 					osstrm.width(9);
@@ -258,7 +259,7 @@ void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, 
 
 void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsigned j) const {
 
-	std::ofstream rdfout(prefix);
+	ofstream rdfout(prefix);
 	if (!rdfout) {
 		global_log->warning() << "COULD NOT OPEN FILE" << prefix << std::endl;
 		return;
