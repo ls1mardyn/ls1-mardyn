@@ -43,9 +43,9 @@ TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecompositi
    this->_mrdf = irdf;
    this->_msimulation = isimulation;
 
-   const char* usage = "usage: mkTcTS <prefix> -c <density> [-d <second density>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-S] -T <temperature> [-U]\n\n-S\tshift (active by default)\n-U\tunshift\n";
+   const char* usage = "usage: mkTcTS -c <density> [-C <second density>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-S] -T <temperature>\n\n-S\tshift (NOT active by default!!)\n";
 
-   bool do_shift = true;
+   bool do_shift = false;
    bool in_h = false;
    bool use_mu = false;
    bool gradient = false;
