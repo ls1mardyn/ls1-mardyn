@@ -12,6 +12,7 @@
 
 #if ENABLE_MPI
 #include "parallel/KDDecomposition2.h"
+#include <mpi.h>
 #endif
 
 using Log::global_log;
