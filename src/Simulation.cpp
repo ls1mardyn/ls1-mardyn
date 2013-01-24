@@ -1390,7 +1390,9 @@ void Simulation::output(unsigned long simstep) {
 
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
-		(*outputIter)->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
+		OutputBase* output = (*outputIter);
+		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
+		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
 	if (_rdf != NULL) {
