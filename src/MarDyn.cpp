@@ -157,8 +157,9 @@ int main(int argc, char** argv) {
     }
 #if ENABLE_MPI
     if( options.is_set("domain-decomposition") ) {
-        global_log->warning() << "Setting domain decomposition via command line to KDDecomposition2" << endl;
-        if ( options.get("domain-decomposition") == "KDDecomposition2" ) {
+        string domainDecomp((const char *) options.get("domain-decomposition"));
+        global_log->info() << "Setting domain decomposition via command line to " << domainDecomp << endl;
+        if ( domainDecomp == "KDDecomposition2" ) {
             DomainDecompBase *domainDecomp;
             int updateFrequency = 100;
             int fullSearchThreshold = 3;
