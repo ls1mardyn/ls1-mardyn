@@ -1386,7 +1386,7 @@ void Simulation::simulate() {
 
 void Simulation::output(unsigned long simstep) {
 
-	int ownrank = _domainDecomposition->getRank();
+	int mpi_rank = _domainDecomposition->getRank();
 
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
@@ -1404,7 +1404,7 @@ void Simulation::output(unsigned long simstep) {
 	}
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileOutputTimesteps)) {
 		_domain->collectProfile(_domainDecomposition);
-		if (!ownrank) {
+		if (mpi_rank == 0) {
 			ostringstream osstrm;
 			osstrm << _profileOutputPrefix << ".";
 			osstrm.fill('0');
