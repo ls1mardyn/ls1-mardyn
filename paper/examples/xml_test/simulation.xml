@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+  <refunits type="SI" >
+<!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
+    <length unit="nm">0.35</length>	<!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
+    <mass unit="g">1.0959555966678e-22</mass> <!-- also atomistic mass unit Dalton "u" in the future? -->
+    <energy unit="K">100.0</energy> <!-- again: offer other units -->
+  </refunits>
+  <simulation type="MD" >
+  <!-- simulation properties - should be open to be extended one day to MC as well... -->
+    <integrator type="Leapfrog" >
+      <!-- MD ODE integrator -->
+      <timestep unit="reduced" >0.01</timestep>
+    </integrator>
+    <steps>
+      <!-- time steps for all simulation phases -->
+      <production>100000</production> <!-- for now we only have production steps -->
+    </steps>
+    <cutoff type="CenterOfMass" >
+      <!-- cutoff definitions -->
+      <radiusLJ unit="reduced" >5.0</radiusLJ>
+      <radiusTersoff>1.0</radiusTersoff>
+      <electrostatic type="ReactionField" >
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+    </cutoff>
+    <ensemble type="NVT">
+      <!--Ensemble is the main topic of the simulation -->
+      <Nparticles>40000</Nparticles>
+      <temperature unit="reduced" >0.7</temperature>	<!-- in future also units="K" -->
+      <volume type="box">
+          <lx unit="reduced">97.</lx>
+          <ly unit="reduced">97.</ly>
+          <lz unit="reduced">97.</lz>
+      </volume>
+      <!-- instead of lx/ly/lz we might accept density -->
+      <components>
+          <moleculetype id="1" >
+            <coord_base>principal_axes</coord_base>
+            <site type="LJ126" id="1" >
+              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <mass>12.00</mass>
+              <sigma>2.900109</sigma>
+              <epsilon>11.692625</epsilon>
+            </site>
+            <site type="LJ126" id="2" >
+              <coord> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coord>
+              <mass>16.00</mass>
+              <sigma>2.972625</sigma>
+              <epsilon>105.524481</epsilon>
+            </site>
+            <site type="LJ126" id="3" >
+              <coord> <x>0.0</x> <y>0.0</y> <z>1.212237</z> </coord>
+              <mass>16.00</mass>
+              <sigma>2.972625</sigma>
+              <epsilon>105.524481</epsilon>
+            </site>
+            <site type="Quadrupole" id="4" >
+              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <orientation> <theta>0.0</theta> <phi>0.0</phi> </orientation>
+              <mass>0.0</mass>
+              <shielding>0.6</shielding>
+              <quadrupole>3.458568</quadrupole>
+            </site>
+            <momentsofinertia rotaxes="xy" >
+              <Ixx>47.02459341</Ixx>
+              <Iyy>47.02459341</Iyy>
+            </momentsofinertia>
+          </moleculetype>
+          
+          <include query="/components/moleculetype[@id='cycC6H12']" >components.xml</include>
+          
+          <mixing>
+            <rule type="LB" id1="1" id2="2">
+              <eta>1.0</eta>
+              <xi>1.023</xi>
+            </rule>
+          </mixing>
+      </components>
+      <!-- Definition of the Phasespacepoint -->
+      <phasespacepoint>
+        <file type="OldStyle" >test.xdr</file>
+        <generator src="internal" id="kfc" >
+         <!-- elements contain parameters needed for the generator -->
+        </generator>
+        <!-- generator plugins -->
+        <generator src="plugin" lib="test" id="gen1">
+         <!-- parameters needed for the generator -->
+        </generator>
+      </phasespacepoint>
+    </ensemble>
+    <algorithm>
+      <parallelisation>DomainDecomposition</parallelisation>
+      <datastructure type="LinkedCells">
+          <cellsInCutoffRadius>2</cellsInCutoffRadius>
+      </datastructure>
+    </algorithm>
+    <status>
+        <currenttime>0</currenttime>
+    </status>
+  </simulation>
+</mardyn>

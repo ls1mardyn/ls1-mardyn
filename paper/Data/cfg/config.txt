@@ -1,0 +1,12 @@
+MDProjectConfig
+
+#
+timestepLength 1.498364304465601E-003
+cutoffRadius        4.33333333333333
+phaseSpaceFile ~/SVNwork/MolDyn/trunk/Data/cfg/co2_020000.psp
+# datastructure followed by the parameters for the datastructure
+# for LinkedCells, the cellsInCutoffRadius has to be provided
+datastructure LinkedCells 1
+# specify output plugins to be used
+output ResultWriter ~/SVNwork/MolDyn/trunk/Data/out/resultout
+output XyzWriter 100 ~/SVNwork/MolDyn/trunk/Data/out/xyzout

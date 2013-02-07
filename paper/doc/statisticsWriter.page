@@ -1,0 +1,39 @@
+/*! \page "StatisticsWriter"
+
+!!! Usage
+
+Add the line 
+\verbatim
+output StatisticsWriter n filename
+\endverbatim
+to the config file, where n is an integer number. It means that every n-th 
+timestep an output file is generated. Replace filename with the name or path
+for the output. It serves as base for name of the output file generated.
+
+!!! Generated Files
+
+Two file types are being generated: 
+- one with data about the Linked-Cell container. It is generated once when the programme starts up.
+- one containing a histogramm showing the distribution of molecules over the cells
+  (number of molecules per cell)
+
+!!! Plotting the histogram
+
+You can draw a histogram, e.g. with Gnuplot. Copy the following skript to a file
+(e.g. hist.gpi). Give in the last line the right file containing the histogram 
+(e.g. lj10000_15.stat). Then let gnuplot execute the script: \verb+gnuplot hist.gpi+. 
+
+\verbatim
+set boxwidth 0.5 # Probably 3-5.
+set style fill   solid 1.00 noborder
+set xlabel "Number of Particles per Cell"
+set ylabel "Number of Cells"
+set terminal png # x999999 xffffff
+set output 'histogramm.png'
+set key off # Unless you really want a key
+# For this next line, lw is linewidth (2-4)?
+plot 'lj10000_15.stat' using 1:2 title 'myHistogramData' with boxes lw 5
+
+\endverbatim
+
+*/

@@ -1,0 +1,35 @@
+# Cray XT5 System using GNU Compiler
+# http://gcc.gnu.org/
+# Version:
+
+CFG_INFO = "GNU compiler on Cray XT/XE systems"
+
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
+
+CXX_SEQ = CC
+CXX_PAR = CC
+DEPMODE = none
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -Weffc++ -g
+LINKFLAGS_SEQ_DEBUG =
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = -O3 -DNDEBUG
+LINKFLAGS_SEQ_RELEASE =
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -Weffc++ -g -DENABLE_MPI
+LINKFLAGS_PAR_DEBUG =
+# RELEASE
+CXXFLAGS_PAR_RELEASE  = -O3 -DNDEBUG -DENABLE_MPI
+LINKFLAGS_PAR_RELEASE =
