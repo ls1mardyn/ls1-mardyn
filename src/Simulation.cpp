@@ -1536,7 +1536,7 @@ void Simulation::simulate() {
 								>= _moleculeContainer->getBoundingBoxMin(2)
 						&& mol->r(2)
 								<= _moleculeContainer->getBoundingBoxMax(2)) {
-					site_orient[idx_mol] += std::abs(mol->site_d(0)[0]);
+					site_orient[idx_mol] += acos(std::abs(mol->site_d(0)[0])/mol->ljcenter_disp(0)) * 180 / 3.14;
 					site_orient_bins[idx_mol]++;
 
 				}
