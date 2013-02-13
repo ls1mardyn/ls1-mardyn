@@ -163,9 +163,9 @@ clean_deps:
 clear: cleanall
 
 cleanall: clean clean_deps
-	rm -f $(BINARY)
+	$(RM) $(BINARY)
 	find -type f -name '*~' -delete
-	if [ -L $(BINARY_BASENAME) ]; then rm -f $(BINARY_BASENAME); fi
+	if [ -L $(BINARY_BASENAME) ]; then $(RM) $(BINARY_BASENAME); fi
 
 lcov:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --capture --output-file Mardyn.info
