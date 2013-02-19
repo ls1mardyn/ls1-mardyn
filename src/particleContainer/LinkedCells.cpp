@@ -546,7 +546,12 @@ void LinkedCells::initializeCells() {
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
+
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+				_cells[cellIndex].skipCellFromHaloRegion();
+				_cells[cellIndex].skipCellFromBoundaryRegion();
+				_cells[cellIndex].skipCellFromInnerRegion();
+
 				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] ||
 				    ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
 				    iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||

@@ -190,9 +190,9 @@ int main(int argc, char** argv) {
     double runtime = sim_timer.get_etime();
     global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
 
-    delete global_log;
-
 	simulation.finalize();
+
+    delete global_log;
 
 #ifdef ENABLE_MPI
     MPI_Finalize();

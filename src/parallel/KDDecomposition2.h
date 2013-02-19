@@ -27,6 +27,18 @@ class KDNode;
  * Note that it is important for the A*-search that the estimate is an underestimation (<=)
  * of the load imbalance.
  * Note that some computation of the deviation / expected deviation is done in KDNode.
+ *
+ * \todo Cleanly merge with or replace KDDecomposition
+ * \todo Rewrite this cleanly so that:
+ *       - Communication with own process (if one process needs to create its periodic
+ *         images) is also performed via MPI communication, this should simplify the code
+ *         at now runtime costs.
+ *       - Seperate better between creation of balanced KDTree and the simple communication
+ *         which takes place every time step
+ *       - extract the "ownArea"-thing from the decomposition-methods,
+ *         here KDNode::findAreaForProcess() should do the job.
+ * \todo track the issue with eventually lost particles (test case Stefan Becker).
+ * \todo Profile and tune!
  */
 class KDDecomposition2: public DomainDecompBase{
 
