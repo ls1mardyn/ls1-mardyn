@@ -155,7 +155,8 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	}
 
 
-	unsigned long int id = 1;
+	unsigned long int id = _numMolecules * domainDecomp->getRank() / domainDecomp->getNumProcs();
+	std::cout << "Start-ID=" << id << std::endl;
 	double spacing = _simBoxLength / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
@@ -180,10 +181,10 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				double z = origin + k * spacing;
 				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
 					addMolecule(x, y, z, id, particleContainer);
+					id++;
 				}
 				// increment id in any case, because this particle will probably
 				// be added by some other process
-				id++;
 			}
 		}
 		if ((int)(i * percentage) > percentageRead) {
@@ -202,10 +203,10 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 				double z = origin + k * spacing;
 				if (domainDecomp->procOwnsPos(x,y,z, domain)) {
 					addMolecule(x, y, z, id, particleContainer);
+					id++;
 				}
 				// increment id in any case, because this particle will probably
 				// be added by some other process
-				id++;
 			}
 		}
 		if ((int)(50 + i * percentage) > percentageRead) {
