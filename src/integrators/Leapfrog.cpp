@@ -13,29 +13,28 @@ using Log::global_log;
 
 Leapfrog::Leapfrog(double timestepLength) {
 	// set starting state
-	this->_state = 3;
-
-	this->_timestepLength = timestepLength;
+	_state = STATE_POST_FORCE_CALCULATION;
+	_timestepLength = timestepLength;
 }
 
 Leapfrog::~Leapfrog() {
 }
 
 void Leapfrog::eventForcesCalculated(ParticleContainer* molCont, Domain* domain) {
-	if (this->_state == 2) {
+	if (this->_state == STATE_PRE_FORCE_CALCULATION) {
 		transition2to3(molCont, domain);
 	}
 }
 
 void Leapfrog::eventNewTimestep(ParticleContainer* molCont, Domain* domain) {
-	if (this->_state == 3) {
+	if (this->_state == STATE_POST_FORCE_CALCULATION) {
 		transition3to1(molCont, domain);
 		transition1to2(molCont, domain);
 	}
 }
 
 void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
-	if (this->_state == 1) {
+	if (this->_state == STATE_NEW_TIMESTEP) {
 		Molecule* tempMolecule;
 		double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
 		double Dcorr = 2. - 1. / domain->getGlobalBetaRot();
@@ -43,7 +42,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 			tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr);
 		}
 
-		this->_state = 2;
+		this->_state = STATE_PRE_FORCE_CALCULATION;
 	}
 	else {
 		global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << endl;
@@ -51,7 +50,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 }
 
 void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
-	if (this->_state == 2) {
+	if (this->_state == STATE_PRE_FORCE_CALCULATION) {
 		Molecule* tM;
 		map<int, unsigned long> N;
 		map<int, unsigned long> rotDOF;
@@ -91,7 +90,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
 		}
 
-		this->_state = 3;
+		this->_state = STATE_POST_FORCE_CALCULATION;
 	}
 	else {
 		global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << endl;
@@ -99,8 +98,8 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 }
 
 void Leapfrog::transition3to1(ParticleContainer* molCont, Domain* domain) {
-	if (this->_state == 3) {
-		this->_state = 1;
+	if (this->_state == STATE_POST_FORCE_CALCULATION) {
+		this->_state = STATE_NEW_TIMESTEP;
 	}
 	else {
 		global_log->error() << "Leapfrog::transition3to1(...): Wrong state for state transition" << endl;

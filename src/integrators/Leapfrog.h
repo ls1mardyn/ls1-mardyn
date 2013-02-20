@@ -27,6 +27,13 @@
 //!     that have to be done do get from the current state to the next state
 class Leapfrog : public Integrator {
 public:
+
+	enum {
+		STATE_UNKNOWN = 0,
+		STATE_NEW_TIMESTEP = 1,
+		STATE_PRE_FORCE_CALCULATION = 2,
+		STATE_POST_FORCE_CALCULATION = 3
+	};
 	//! The constructor
 	Leapfrog(double timestepLength);
 
