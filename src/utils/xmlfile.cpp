@@ -709,8 +709,12 @@ template<typename T> unsigned long XMLfile::Query::getNodeValue(T& value) const
 	if(!empty()) front().getValue(value);
 	return card();
 }
+template unsigned long XMLfile::Query::getNodeValue(float& value) const;
 template unsigned long XMLfile::Query::getNodeValue(double& value) const;
 template unsigned long XMLfile::Query::getNodeValue(int& value) const;
+template unsigned long XMLfile::Query::getNodeValue(long& value) const;
+template unsigned long XMLfile::Query::getNodeValue(unsigned int& value) const;
+template unsigned long XMLfile::Query::getNodeValue(unsigned long& value) const;
 template unsigned long XMLfile::Query::getNodeValue(std::string& value) const;
 
 void XMLfile::Query::printXML(std::ostream& ostrm) const
