@@ -53,7 +53,7 @@ int main(int argc, char** argv) {
     vector<string> args = op.args();
     unsigned int numargs = args.size();
 
-    if( options.is_set("verbose") && options.get("verbose") ) {
+    if( options.is_set_by_user("verbose") ) {
         global_log->info() << "Enabling verbose log output." << endl;
         global_log->set_log_level(Log::All);
     }
