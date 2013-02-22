@@ -36,6 +36,7 @@ public:
 	};
 	//! The constructor
 	Leapfrog(double timestepLength);
+	Leapfrog(){}
 
 	//! The destructor
 	~Leapfrog();
