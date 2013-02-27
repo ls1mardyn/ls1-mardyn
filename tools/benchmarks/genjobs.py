@@ -17,9 +17,11 @@ import shlex
 import subprocess
 import time
 #import re
+#
+#import logging
 
 desc="generate&start benchmark runs"
-version="2011.12.28"
+version="2013.02.26"
 author="Martin Bernreuther <bernreuther@hlrs.de>"
 
 print time.strftime("genjobs.py starting at %a, %d.%m.%Y %H:%M:%S %Z")
@@ -104,11 +106,14 @@ if not os.path.isdir(rootdir):
 rootdir=os.path.realpath(rootdir)
 print "root directory:\t{0}".format(rootdir)
 
+parasubs["$DSTROOTNAME"]=dstroot
 if cfgparser.has_option("general","dstroot"):
 	dstroot=cfgparser.get("general","dstroot")
+	parasubs["$DSTROOTNAME"]=dstroot
 if options.dstroot is not None:
-	dstroot=os.path.join(rootdir,options.dstroot)
-parasubs["$DSTROOT"]=dstroot
+	dstroot=options.dstroot
+	parasubs["$DSTROOTNAME"]=dstroot
+	dstroot=os.path.join(rootdir,dstroot)
 parasubs["$DSTROOTPATH"]=os.path.realpath(dstroot)
 print "destination directory:\t{0}".format(dstroot)
 
@@ -123,11 +128,11 @@ if cfgparser.has_option("generator","template"):
 	gentemplate=cfgparser.get("generator","template")
 if options.gentemplate is not None:
 	gentemplate=options.gentemplate
+parasubs["$GENTEMPLATENAME"]=gentemplate
 gentemplate=os.path.join(rootdir,gentemplate)
 if not os.path.isdir(gentemplate):
 	sys.stderr.write("ERROR: template directory {0} does not exist\n".format(gentemplate))
 	sys.exit(3)
-parasubs["$GENTEMPLATE"]=gentemplate
 parasubs["$GENTEMPLATEPATH"]=os.path.realpath(gentemplate)
 print "generator template directory:\t{0}".format(gentemplate)
 
@@ -153,27 +158,38 @@ if options.logfile:
 	logfile=options.logfile
 if logfile:
 	logfile=replaceparameters(logfile,parasubs)
+	parasubs["$LOGFILENAME"]=logfile
 	logfile=os.path.join(rootdir,logfile)
 	try:
 		logfhdl=open(logfile, 'w')
-		parasubs["$LOGFILE"]=logfile
 		parasubs["$LOGFILEPATH"]=os.path.realpath(logfile)
 		print "log file:\t{0}".format(logfile)
 	except IOError, (errno, strerror):
 		print "Error ({0}) opening {1} for writing: {2}".format(errno,substfile,strerror)
 		#logfhdl=None
 		print "\tlogging deactivated"
+		del parasubs["$LOGFILENAME"]
+		#parasubs["$LOGFILENAME"]=""
+		#parasubs["$LOGFILEPATH"]=""
+#else:
+#	parasubs["$LOGFILENAME"]=""
+#	parasubs["$LOGFILEPATH"]=""
+if logfhdl is not None:
+	logfhdl.write("# log file:\t{0}\n".format(parasubs["$LOGFILEPATH"]))
+	logfhdl.write("# label:\t{0}\n".format(label))
+	logfhdl.write("# generator template:\t{0}\n".format(parasubs["$GENTEMPLATEPATH"]))
+	logfhdl.write("# destination root:\t{0}\n".format(parasubs["$DSTROOTPATH"]))
 
 if cfgparser.has_option("postproc","template"):
 	pptemplate=cfgparser.get("postproc","template")
 if options.pptemplate is not None:
 	pptemplate=options.pptemplate
 if pptemplate is not None:
+	parasubs["$PPTEMPLATENAME"]=pptemplate
 	pptemplate=os.path.join(rootdir,pptemplate)
 	if not os.path.isdir(pptemplate):
 		sys.stderr.write("ERROR: postprocessing template directory {0} does not exist\n".format(pptemplate))
 		sys.exit(4)
-	parasubs["$PPTEMPLATE"]=pptemplate
 	parasubs["$PPTEMPLATEPATH"]=os.path.realpath(pptemplate)
 	print "postprocessing template:\t{0}".format(pptemplate)
 	
@@ -190,18 +206,32 @@ if pptemplate is not None:
 class Parameter:
 	"""Parameter set"""
 	
-	def __init__(self,parameter,value=None):
+	def __init__(self,parameter,values=None):
 		if isinstance(parameter,Parameter):
-			self.__name=parameter.name()
-			self.__values=parameter.values()
+			self.__name=parameter.__name
+			#self.__name=parameter.name()
+			self.__values=parameter.__values
+			#self.__values=parameter.values()
+			self.__maxlen=parameter.__maxlen
+			#self.__maxlen=parameter.maxlen()
+			self.__onlydigits=parameter.__onlydigits
+			#self.__onlydigits=parameter.onlydigits()
+			self.__index=parameter.__index
+			self.__value=parameter.__value
 		elif isinstance(parameter,str):
 			self.__name=parameter
-		if isinstance(value,str):
-			self.__values=value.split()
-		self.__initialize()
+			self.__initialize(values)
+		else:
+			self.__name=str(parameter)
+			self.__initialize(values)
 	
-	def __initialize(self):
+	def __initialize(self,values=None):
+		self.__values=[""]
+		if isinstance(values,str) and values:
+			self.__values=values.split()
+		self.__value=self.__values[0]
 		self.__maxlen=0
+		self.__index=0
 		self.__onlydigits=True
 		for v in self.__values:
 			if len(v)>self.__maxlen: self.__maxlen=len(v)
@@ -210,9 +240,6 @@ class Parameter:
 	
 	def name(self):
 		return self.__name
-	
-	def values(self):
-		return self.__values
 	
 	def maxlen(self):
 		return self.__maxlen
@@ -223,8 +250,43 @@ class Parameter:
 	def numvalues(self):
 		return len(self.__values)
 	
+	def index(self):
+		return self.__index
+	
+	def setindex(self,idx):
+		self.__index=(idx)%numvalues()
+	
+	def values(self):
+		return self.__values
+	
+	def value(self):
+		#self.__value=self.__values[max(self.__index,0)]
+		return self.__value
+	
+	def nextvalue(self):
+		self.setindex(self.__index+1)
+		self.__value=self.__values[self.__index]
+		return self.value()
+	
 	def strvalues(self,delim=" "):
 		return delim.join(self.__values)
+	
+	def strvalue(self,padding=False):
+		if padding:
+			if self.onlydigits:
+				#return self.value().rjust(self.maxlen(),'0')
+				return self.value().zfill(self.maxlen())
+			else:
+				return self.value().rjust(self.maxlen(),'_')
+		else:
+			return str(self.value())
+	
+	#def eval_value(self,parasubs):
+	#	paravalue=self.value()
+	#	if paravalue[0]=='=': paravalue=paravalue[1:]
+	#	if parasubs is not None:
+	#		paravalue=replaceparameters(paravalue,parasubs)
+	#	return str(eval(paravalue))
 	
 	def __str__(self):
 		return self.__name
@@ -237,6 +299,7 @@ class Parameter:
 print "parameters:"
 print "name\tvalues\t(width,int)"
 parameters=[]
+paraformulae=[]
 numvar=0
 jobname=""
 for i in cfgparser.items("parameters"):
@@ -248,9 +311,16 @@ for i in cfgparser.items("parameters"):
 		numvar*=p.numvalues()
 		print "{0}\t{1}\t({2},{3})\t*{4}".format(p.name(),p.values(),p.maxlen(),p.onlydigits(),p.numvalues())
 	else:
-		#parasubs['$'+p.name()]=p.values()[0]
-		jobname+=p.name()+p.values()[0]
-		print "{0}\t{1}\t(substitution)".format(p.name(),p.values())
+		if p.value()[0]=='=':
+			paraformulae.append(Parameter(p))
+			print "{0}\t{1}\t(formula substitution)".format(p.name(),p.value())
+			# initial assignment should not be the formula itself, so do something useful(?) here...
+			#del parasubs['$'+p.name()]
+			#parasubs['$'+p.name()]=""
+			parasubs['$'+p.name()]="("+p.value()[1:]+")"	# works for formulas without variables
+		else:
+			jobname+=p.name()+p.value()
+			print "{0}\t{1}\t(substitution only)".format(p.name(),p.value())
 print "number of jobs:\t{0}".format(numvar)
 
 
@@ -332,6 +402,8 @@ print
 print "generate jobs ##########################################################"
 createdjobs=[]
 cmd_output=[]
+#cmd_status=[]
+cmd_failed=0
 parasubs["$COMMANDSTATUS"]=0
 v=[0]*max(1,len(parameters))
 for i in range(numvar):
@@ -353,6 +425,11 @@ for i in range(numvar):
 	else:
 		if jobname=="": jobname="NO_parameters"
 	parasubs["$JOBNAME"]=jobname
+	# substitution&evaluation of formula parameters
+	for p in paraformulae:
+		paravalue=replaceparameters(p.value()[1:],parasubs)
+		parasubs['$'+p.name()]=str(eval(paravalue))
+		#print "${0} = {1}".format(p.name(),parasubs['$'+p.name()])
 	# substitute all parameters within cmdcond & cmd
 	#cmdcond=replaceparameters(gencmdcondition,parasubs)
 	#cmd=replaceparameters(gencommand,parasubs)
@@ -412,10 +489,11 @@ for i in range(numvar):
 			print "-",time.strftime("%H:%M:%S"),"command:",cmd,'-'*(51-len(cmd))
 			status,stdoutdata,stderrdata=execmd(cmd,jobdir)
 			parasubs["$COMMANDSTATUS"]=status
+			#cmd_status.append(status)
 			if status!=0:
 				print stdoutdata
 				print stderrdata
-				print '-'*(56-len(str(status))),status,"failed",time.strftime("%H:%M:%S")
+				print '-'*(51-len(str(status))),"failed (",status,")",time.strftime("%H:%M:%S")
 			else:
 				print stdoutdata
 				print '-'*58,"done",time.strftime("%H:%M:%S")
@@ -436,7 +514,15 @@ for i in range(numvar):
 			pass
 	v[0]+=1
 
+print "-"*72
 print "",time.strftime("%H:%M:%S"),"created",len(createdjobs),"jobs"
+print "",len(cmd_output),"commands executed without errors"
+if cmd is not None:
+	#  cmd_failed=len(filter(lambda s: s>0, cmd_status))
+	if cmd_failed>0:
+		print " Errors detected for executed commands:",cmd_failed,"failed"
+	else:
+		print " No errors detected for executed commands"
 
 for p in parameters:
 	#del parasubs['$'+p.name()]
@@ -474,13 +560,13 @@ if pptemplate is not None:
 		ppcmd=ppcommand
 		for paraname,paravalue in parasubs.items():
 				ppcmd=ppcmd.replace(paraname,str(paravalue))
-		print "-",time.strftime("%H:%M:%S"),"command:",ppcmd,'-'*(50-len(ppcmd))
+		print "-",time.strftime("%H:%M:%S"),"command:",ppcmd,'-'*(51-len(ppcmd))
 		status,stdoutdata,stderrdata=execmd(ppcmd,dstroot)
 		#parasubs["$COMMANDSTATUS"]=status
 		if status!=0:
 			print stdoutdata
 			print stderrdata
-			print '-'*(56-len(str(status))),status,"failed",time.strftime("%H:%M:%S")
+			print '-'*(51-len(str(status))),"failed (",status,")",time.strftime("%H:%M:%S")
 		else:
 			print stdoutdata
 			print '-'*58,"done",time.strftime("%H:%M:%S")

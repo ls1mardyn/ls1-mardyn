@@ -11,17 +11,22 @@ parafiles:	%(jobscript)s parameters
 command:	cat -n parameters
 condition:	$NPPN<$NPROC
 break:	$COMMANDSTATUS>0
-logfile:	$DSTROOT.log
+logfile:	$DSTROOTNAME.log
 
 [parameters]
 # Parameter variations
 NPROC:	4 8 16
 NPPN:	1 2
-TYPE:	A B
+TYPE:	a b
 INP:	C
+nNodes:	=$NNODES
+NNODES:	=$NPROC/$NPPN
+nnodes:	=$NNODES
 
 [postproc]
 ppscript=postproc.sh
 template:	pptemplate.test
 parafiles:	%(ppscript)s
-command:	nl %(ppscript)s
+#command:	nl %(ppscript)s
+command:	sh %(ppscript)s
+
