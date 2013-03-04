@@ -23,5 +23,9 @@ persons. Let's place here things which we could use as a basis for Coders' Day o
                      and the initializing call in Simulation.cpp as well in the ForceCalculationTest
                      is not neccessary. 
 | Simulation.cpp                | move tickRDF() calls into handler->initialize()?
-
+| Molecule.h/cpp                | make id an "unsigned long long int", only this is guaranteed
+                                  to be 64 byte (e.g. on BlueGene, it is not).
+| Parallelization / Communication | At the moment, particles are converted to ParticleData Objects, then send as
+                                    user defined mpi-datatype (which is a conversion again, which is unnecessary?)
+                                    Measure the overhead and fix it?!
 */
