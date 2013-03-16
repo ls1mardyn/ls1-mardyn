@@ -195,11 +195,7 @@ public:
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
-	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double f[3]);
-
-
-	/* Gets the energy and the force, without modifying the force of the molecules in the container */
-	double getForceAndEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* f);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;

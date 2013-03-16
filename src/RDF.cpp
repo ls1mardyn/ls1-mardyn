@@ -234,6 +234,8 @@ void RDF::setOutputPrefix(string prefix) {
 
 
 void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep) {
+	if(_numberOfRDFTimesteps <= 0) return;
+
 	if (simStep > 0 && simStep % _RDFOutputTimesteps == 0) {
 		collectRDF(domainDecomposition);
 		

@@ -429,9 +429,8 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* force) {
+double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1) {
 	double u = 0.0;
-	double dummyForce[3] = {0};
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
 	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double dd;
@@ -454,7 +453,7 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 		dd = (*molIter2)->dist2(*m1, distanceVector);
 		if (dd > cutoffRadiusSquare)
 			continue;
-		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), dummyForce);
+		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 	}
 
 	// loop over all forward neighbours
@@ -466,7 +465,7 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if (dd > cutoffRadiusSquare)
 				continue;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), dummyForce);
+			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 	// loop over all backward neighbours
@@ -478,7 +477,7 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 			dd = (*molIter2)->dist2(*m1, distanceVector);
 			if (dd > cutoffRadiusSquare)
 				continue;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), dummyForce);
+			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 
@@ -1159,7 +1158,6 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 	double DeltaUpot;
 	Molecule* m;
 	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
-	double f[3];
 
 	_localInsertionsMinusDeletions = 0;
 
@@ -1180,7 +1178,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 			hasDeletion = mu->getDeletion(this, minco, maxco);
 		if (hasDeletion) {
 			m = &(*(_particleIter));
-			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, f);
+			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m);
 
 			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
@@ -1233,7 +1231,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 #endif
 
 			addParticle(*m);
-			DeltaUpot = getEnergy(&particlePairsHandler, m, f);
+			DeltaUpot = getEnergy(&particlePairsHandler, m);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 

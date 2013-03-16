@@ -57,7 +57,6 @@ void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	assert(cell1.isInActiveWindow());
 	assert(cell2.isInActiveWindow());
-	double dummyForce[3] = {0};
 
 	double distanceVector[3];
 	std::vector<Molecule*>& currentCellParticles = cell1.getParticlePointers();
@@ -75,7 +74,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 				Molecule& molecule2 = *neighbourCellParticles[j];
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
-					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare), dummyForce);
+					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare));
 					if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < _tersoffCutoffRadiusSquare)) {
 						_particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
 					}
@@ -123,7 +122,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 						/* Do not sum up values twice. */
 						pairType = MOLECULE_HALOMOLECULE;
 					}
-					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare), dummyForce);
+					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
 					if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < _tersoffCutoffRadiusSquare)) {
 						_particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, (pairType == MOLECULE_HALOMOLECULE));
 					}
@@ -135,7 +134,6 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
 	assert(cell.isInActiveWindow());
-	double dummyForce[3] = {0};
 	double distanceVector[3];
 	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
 	int currentParticleCount = currentCellParticles.size();
@@ -151,7 +149,7 @@ void LegacyCellProcessor::processCell(ParticleCell& cell) {
 				double dd = molecule2.dist2(molecule1, distanceVector);
 
 				if (dd < _cutoffRadiusSquare) {
-					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare), dummyForce);
+					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, MOLECULE_MOLECULE, dd, (dd < _LJCutoffRadiusSquare));
 					if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < _tersoffCutoffRadiusSquare)) {
 						_particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, false);
 					}

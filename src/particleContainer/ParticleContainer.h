@@ -190,7 +190,7 @@ public:
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
 
     /* TODO goes into grand canonical ensemble */
-	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* E = 0) = 0;
+	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1) = 0;
 	virtual int localGrandcanonicalBalance() = 0;
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) = 0;

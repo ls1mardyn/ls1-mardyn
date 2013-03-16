@@ -60,10 +60,21 @@ KDDecomposition2::KDDecomposition2(double cutoffRadius, Domain* domain, int upda
 	KDNode::initMPIDataType();
 
 	global_log->info() << "Created KDDecomposition2 with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
+
+#ifdef DEBUG_DECOMP
+	global_log->info() << "Initial Decomposition: " << endl;
+	if (_ownRank == 0) {
+		_decompTree->printTree("");
+	}
+#endif
 }
 
 KDDecomposition2::~KDDecomposition2() {
 	delete[] _numParticlesPerCell;
+//	_decompTree->serialize(string("kddecomp.dat"));
+	if (_ownRank == 0) {
+		_decompTree->plotNode("kddecomp.vtu");
+	}
 	KDNode::shutdownMPIDataType();
 }
 

@@ -293,7 +293,6 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		exit(1);
 	}
 
-	vector<unsigned long>::iterator cellIndexIter;
 	vector<unsigned long>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
@@ -675,74 +674,9 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 }
 
 
-double LinkedCells::getForceAndEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double* total_f) {
+double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1) {
 
 	double u = 0.0;
-	//double total_f[3];
-	for (int i = 0; i < 3; i++) total_f[i] = 0;
-	double f[3];
-
-	std::vector<Molecule*>::iterator molIter2;
-	vector<unsigned long>::iterator neighbourOffsetsIter;
-
-	// sqare of the cutoffradius
-	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
-	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
-	double dd;
-	double distanceVector[3];
-
-	unsigned long cellIndex = getCellIndexOfMolecule(m1);
-	ParticleCell& currentCell = _cells[cellIndex];
-
-	if (m1->numTersoff() > 0) {
-		global_log->error() << "The grand canonical ensemble is not implemented for solids." << endl;
-		exit(484);
-	}
-	// molecules in the cell
-	for (molIter2 = currentCell.getParticlePointers().begin(); molIter2 != currentCell.getParticlePointers().end(); molIter2++) {
-		//cout<<"m1 id "<<m1->id()<<" m2 id"<<(*molIter2)->id()<<endl;
-		if (m1->id() == (*molIter2)->id())
-			continue;
-		dd = (*molIter2)->dist2(*m1, distanceVector);
-		if (dd > cutoffRadiusSquare)
-			continue;
-
-		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_INSERTION, dd, (dd < LJCutoffRadiusSquare), f);
-
-		for (int i = 0; i < 3; i++) total_f[i] += f[i];
-
-	}
-
-	// backward and forward neighbours
-	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
-			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-
-		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
-
-			dd = (*molIter2)->dist2(*m1, distanceVector);
-			//dd = cutoffRadiusSquare - 10;
-			if (dd > cutoffRadiusSquare)
-				continue;
-
-			for (int i = 0; i < 3; i++) f[i] = 0;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_INSERTION, dd, (dd < LJCutoffRadiusSquare), f);
-			for (int i = 0; i < 3; i++) total_f[i] += f[i];
-		}
-	}
-
-	return u;
-}
-
-
-double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, double total_f[3]) {
-
-	double u = 0.0;
-	//double total_f[3];
-	for (int i = 0; i < 3; i++) total_f[i] = 0;
-	double f[3];
-
 	std::vector<Molecule*>::iterator molIter2;
 	vector<unsigned long>::iterator neighbourOffsetsIter;
 
@@ -768,8 +702,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 		if (dd > cutoffRadiusSquare)
 			continue;
 		
-		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), f);
-		for (int i = 0; i < 3; i++) total_f[i] += f[i];
+		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 	}
 
 	// backward and forward neighbours
@@ -784,9 +717,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 			//dd = cutoffRadiusSquare - 10;
 			if (dd > cutoffRadiusSquare)
 				continue;
-			for (int i = 0; i < 3; i++) f[i] = 0;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare), f);
-			for (int i = 0; i < 3; i++) total_f[i] += f[i];
+			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
 		}
 	}
 	return u;
@@ -826,8 +757,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			hasDeletion = mu->getDeletion(this, minco, maxco);
 		if (hasDeletion) {
 			m = &(*(this->_particleIter));
-			double force[3];
-			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, force);
+			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m);
 
 			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
@@ -879,8 +809,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 
 			unsigned long cellid = this->getCellIndexOfMolecule(m);
 			this->_cells[cellid].addParticle(m);
-			double force[3] = {0,0,0};
-			DeltaUpot = getEnergy(&particlePairsHandler, m, force);
+			DeltaUpot = getEnergy(&particlePairsHandler, m);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 
