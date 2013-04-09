@@ -71,6 +71,11 @@ public:
 		return 0.0;
 	}
 
+	double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ)
+	{
+		return this->processPair(particle1, particle2, distanceVector, pairType, dd, calculateLJ, NULL);
+	}
+
 	//! Only for so-called original pairs (pair type 0) the contributions
 	//! to the macroscopic values have to be collected
 	//!
