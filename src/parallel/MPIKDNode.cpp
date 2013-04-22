@@ -303,7 +303,7 @@ MPI_Datatype MPIKDNodePacked::Datatype = 0;
 void MPIKDNodePacked::initDatatype() {
 	MPIKDNodePacked dummyMPIKDNodePacked[2];
 
-	const int Attributes = 14;
+	const int Attributes = 13;
 	MPI_Datatype subtypes[Attributes] = {
 			MPI_INT,		 //lowCorner
 			MPI_INT,		 //highCorner
@@ -318,7 +318,6 @@ void MPIKDNodePacked::initDatatype() {
 			MPI_DOUBLE,		 // deviation;
 			MPI_INT,		 // level;
 			MPI_INT,		 //_packedRecords0
-			MPI_UB		 // end/displacement flag
 	};
 
 	int blocklen[Attributes] = {
@@ -335,27 +334,26 @@ void MPIKDNodePacked::initDatatype() {
 			1,		 // deviation;
 			1,		 // level;
 			1,		 //_packedRecords0
-			1		 // end/displacement flag
 	};
 
 	MPI_Aint     disp[Attributes];
 
 	MPI_Aint base;
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nodeID))), 		&disp[2] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._owningProc))), 		&disp[3] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._firstChildID))), 		&disp[4] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._secondChildID))), 		&disp[5] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nextSendingProcess))), 		&disp[6] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._expectedDeviation))), 		&disp[9] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._deviation))), 		&disp[10] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._level))), 		&disp[11] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[12] );
-	MPI_Address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[1]._lowCorner[0]))), 		&disp[13] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nodeID))), 		&disp[2] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._owningProc))), 		&disp[3] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._firstChildID))), 		&disp[4] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._secondChildID))), 		&disp[5] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nextSendingProcess))), 		&disp[6] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._expectedDeviation))), 		&disp[9] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._deviation))), 		&disp[10] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._level))), 		&disp[11] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[12] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[1]._lowCorner[0]))), 		&disp[13] );
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
@@ -366,7 +364,7 @@ void MPIKDNodePacked::initDatatype() {
 	for (int i=0; i<Attributes; i++) {
 		disp[i] -= base;
 	}
-	MPI_Type_struct( Attributes, blocklen, disp, subtypes, &MPIKDNodePacked::Datatype );
+	MPI_Type_create_struct( Attributes, blocklen, disp, subtypes, &MPIKDNodePacked::Datatype );
 	MPI_Type_commit( &MPIKDNodePacked::Datatype );
 }
 
