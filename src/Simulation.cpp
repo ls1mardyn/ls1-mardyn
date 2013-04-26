@@ -250,57 +250,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				_inputReader->setPhaseSpaceFile(pspfile);
 				_inputReader->setPhaseSpaceHeaderFile(pspfile);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			} else if (pspfiletype == "PartGen") {
-				string mode;
-				inp.getNodeValue("ensemble/phasespacepoint/file@mode", mode);
-				global_log->error() << "NOT IMPLEMENTED YET";
-				/*
-				 _inputReader = (InputBase*) new PartGen();
-				 _inputReader->setPhaseSpaceHeaderFile(pspfile);
-				 // PartGen has to modes, a "Homogeneous" mode, where particles
-				 // with a homogeneous distribution are created, and a "Cluster" mode,
-				 // where droplets are created. Currently, only the cluster mode is supported,
-				 // which needs another config line starting with "clusterFile ..." directly
-				 // after the config line starting with "phaseSpaceFile"
-				 double gasDensity;
-				 double fluidDensity;
-				 double volPercOfFluid;
-				 string clusterFileName;
-				 inputfilestream >> token >> gasDensity >> fluidDensity >> volPercOfFluid >> clusterFileName;
-				 ((PartGen*) _inputReader)->setClusterFile(gasDensity, fluidDensity, volPercOfFluid, clusterFileName);
-				 ((PartGen*) _inputReader)->readPhaseSpaceHeader(_domain, timestepLength);
-				 */
-			} else if (pspfiletype == "1CLJGen") {
-				string mode;
-				inp.getNodeValue("ensemble/phasespacepoint/file@mode", mode);
-				global_log->error() << "NOT IMPLEMENTED YET";
-				/*
-				 int N;
-				 double T;
-				 string line;
-				 getline(inputfilestream, line);
-				 stringstream lineStream(line);
-				 lineStream >> mode >> N >> T;
-				 global_log->debug() << "read: mode " << mode << " N " << N << " T " << T << endl;
-
-				 OneCLJGenerator* generator = (OneCLJGenerator*) new OneCLJGenerator(mode, N, T);
-				 if (mode == "Homogeneous") {
-				 double rho;
-				 lineStream >> rho;
-				 generator->setHomogeneuosParameter(rho);
-				 } else if (mode == "Cluster") {
-				 double rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes;
-				 lineStream >> rho_gas >> rho_fluid >> fluidVolumePercent >> maxSphereVolume >> numSphereSizes;
-				 generator->setClusterParameters(rho_gas, rho_fluid, fluidVolumePercent, maxSphereVolume, numSphereSizes);
-				 } else {
-				 global_log->error() << "Error in inputfile: OneCLJGenerator option \""<< mode << "\" not supported!" << endl;
-				 global_log->error() << " Has to be  \"Homogeneous\"  or \"Cluster\"  " << endl;
-				 exit(1);
-				 }
-				 generator->readPhaseSpaceHeader(_domain, timestepLength);
-
-				 _inputReader = (OneCLJGenerator*) generator;
-				 */
 			}
 			/* TODO: Check this part of the code */
 			if (_LJCutoffRadius == 0.0)
