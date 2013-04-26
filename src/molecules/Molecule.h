@@ -57,11 +57,8 @@ private:
 
 public:
 	~Molecule() {
-		assert(_sites_d);
 		delete[] _sites_d;
-		assert(_osites_e);
 		delete[] _osites_e;
-		assert(_sites_F);
 		delete[] _sites_F;
 	}
 
