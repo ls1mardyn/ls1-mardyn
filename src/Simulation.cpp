@@ -86,25 +86,15 @@ Simulation::Simulation() :
 }
 
 Simulation::~Simulation() {
-	if (_rdf)
-		delete _rdf;
-	if (_domainDecomposition)
-		delete _domainDecomposition;
-	if (_pressureGradient)
-		delete _pressureGradient;
-	if (_domain)
-		delete _domain;
-	if (_particlePairsHandler)
-		delete _particlePairsHandler;
-	if (_cellProcessor) {
-		delete _cellProcessor;
-	}
-	if (_moleculeContainer)
-		delete _moleculeContainer;
-	if (_integrator)
-		delete _integrator;
-	if (_inputReader)
-		delete _inputReader;
+    delete _rdf;
+    delete _domainDecomposition;
+    delete _pressureGradient;
+    delete _domain;
+    delete _particlePairsHandler;
+    delete _cellProcessor;
+    delete _moleculeContainer;
+    delete _integrator;
+    delete _inputReader;
 }
 
 void Simulation::exit(int exitcode) {
