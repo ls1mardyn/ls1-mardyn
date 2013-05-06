@@ -42,6 +42,9 @@ void VTKMoleculeWriterImplementation::initializeVTKFile() {
 	pointData.DataArray().push_back(componentId);
 	DataArray_t node_rank(type::Int32, "node-rank", 1);
 	pointData.DataArray().push_back(node_rank);
+	DataArray_t forces(type::Float32, "forces", 3);
+	pointData.DataArray().push_back(forces);
+
 	if (_plotCenters) {
 		DataArray_t centerId(type::Float32, "center-id", 1);
 		pointData.DataArray().push_back(centerId);
@@ -111,7 +114,11 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 		data_iterator++;
 		// mpi-node rank
 		data_iterator->push_back(_rank);
-		//data_iterator->push_back(molecule.numLJcenters());
+		data_iterator++;
+		// forces
+		data_iterator->push_back(molecule.F(0));
+		data_iterator->push_back(molecule.F(1));
+		data_iterator->push_back(molecule.F(2));
 
 		// Coordinates
 		Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
@@ -136,6 +143,13 @@ void VTKMoleculeWriterImplementation::plotCenter(Molecule& molecule, int centerI
 
 	data_iterator->push_back(_rank);
 	data_iterator++;
+
+	const double* center_force = molecule.site_F(centerID);
+	data_iterator->push_back(center_force[0]);
+	data_iterator->push_back(center_force[1]);
+	data_iterator->push_back(center_force[2]);
+	data_iterator++;
+
 	data_iterator->push_back(centerID);
 	data_iterator++;
 	data_iterator->push_back(centerType);
