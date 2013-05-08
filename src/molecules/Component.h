@@ -41,6 +41,7 @@ public:
 		                            + this->numQuadrupoles()
 		                            + this->numTersoff();
 	}
+	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
 	unsigned int numCharges() const { return _charges.size(); }
 	unsigned int numDipoles() const { return _dipoles.size(); }
