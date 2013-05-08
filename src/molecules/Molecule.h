@@ -204,14 +204,6 @@ public:
 	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 	void Ftersoffadd(unsigned int i, double a[])
 	{ double* Fsite=&(_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-
-	double getEps() {
-		return (*_ljcenters)[0].eps();
-	}
-
-	double getSigma() {
-		return (*_ljcenters)[0].sigma();
-	}
 	
 	/** First step of the leap frog integrator */
 	void upd_preF(double dt, double vcorr=1., double Dcorr=1.);
