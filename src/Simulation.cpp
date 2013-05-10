@@ -31,7 +31,6 @@
 
 #include "Common.h"
 #include "Domain.h"
-#include "molecules/Molecule.h"
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
@@ -56,6 +55,8 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
+
+#include "thermostats/VelocityScalingThermostat.h"
 
 #include "RDF.h"
 
@@ -1075,7 +1076,6 @@ void Simulation::prepare_start() {
 
 void Simulation::simulate() {
 
-	Molecule* tM;
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
@@ -1237,33 +1237,32 @@ void Simulation::simulate() {
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
 								_simstep));
 
+		VelocityScalingThermostat velocityScalingThermostat;
+
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
-				for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-					int thermostat = _domain->getThermostat(tM->componentid());
-					if (0 >= thermostat)
-						continue;
-					if (_domain->thermostatIsUndirected(thermostat)) {
-						/* TODO: thermostat */
-						tM->scale_v(_domain->getGlobalBetaTrans(thermostat),
-								_domain->getThermostatDirectedVelocity(thermostat, 0),
-								_domain->getThermostatDirectedVelocity(thermostat, 1),
-								_domain->getThermostatDirectedVelocity(thermostat, 2));
-					} else {
-						tM->scale_v(_domain->getGlobalBetaTrans(thermostat));
+				velocityScalingThermostat.enableComponentwise();
+				for(unsigned int cid = 0; cid < _domain->getComponents().size(); cid++) {
+					int thermostatId = _domain->getThermostat(cid);
+					velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
+					velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
+					double v[3];
+					for(int d = 0; d < 3; d++) {
+						v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
 					}
-					tM->scale_D(_domain->getGlobalBetaRot(thermostat));
-				}
-			} else {
-				for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-					tM->scale_v(_domain->getGlobalBetaTrans());
-					tM->scale_D(_domain->getGlobalBetaRot());
+					velocityScalingThermostat.setVelocity(thermostatId, v);
 				}
 			}
+			else {
+				velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
+				velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
+				/* TODO */
+				// Undirected global thermostat not implemented!
+			}
+			velocityScalingThermostat.apply(_moleculeContainer);
 		}
-
 		_domain->advanceTime(_integrator->getTimestepLength());
 #ifdef STEEREO
 		_steer -> processQueue (0);
