@@ -12,11 +12,7 @@ public:
 	~VelocityScalingThermostat();
 	void setGlobalBetaTrans(double beta) { _globalBetaTrans = beta; }
 	void setGlobalBetaRot(double beta) { _globalBetaRot = beta; }
-	void setGlobalVelocity(double v[3]) {
-		for(int d = 0; d < 3; d++) {
-			_globalVelocity[d] = v[d];
-		}
-	}
+	void setGlobalVelocity(double v[3]);
 
 	void enableComponentwise() { _componentwise = true; }
 	void disableComponentwise() { _componentwise = false; }

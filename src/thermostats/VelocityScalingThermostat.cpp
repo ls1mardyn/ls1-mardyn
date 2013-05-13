@@ -1,11 +1,12 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
 #include "molecules/Molecule.h"
+#include "utils/Logger.h"
 
 using namespace std;
+using Log::global_log;
 
 VelocityScalingThermostat::VelocityScalingThermostat() : _globalBetaTrans(1), _globalBetaRot(1), _globalVelocity(NULL), _componentwise(false) {
-	_globalVelocity = new double[3];
 }
 
 VelocityScalingThermostat::~VelocityScalingThermostat() {
@@ -20,7 +21,18 @@ void VelocityScalingThermostat::setBetaRot(int componentId, double beta) {
 	_componentBetaRot[componentId] = beta;
 }
 
+void VelocityScalingThermostat::setGlobalVelocity(double v[3]) {
+	if(_globalVelocity == NULL) {
+		_globalVelocity = new double[3];
+	}
+	for(int d = 0; d < 3; d++) {
+		_globalVelocity[d] = v[d];
+	}
+}
 void VelocityScalingThermostat::setVelocity(int componentId, double v[3]) {
+	if(_globalVelocity == NULL) {
+		_globalVelocity = new double[3];
+	}
 	if( _componentVelocity.find(componentId) == _componentVelocity.end() ) {
 		_componentVelocity[componentId] = new double[3];
 	}
@@ -46,6 +58,8 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 				betaTrans = betaIter->second;
 			}
 
+			//global_log->debug() << "Beta rot: " << betaRot << endl;
+			//global_log->debug() << "Beta trans: " << betaTrans << endl;
 			if( (vIter = _componentVelocity.find(cid)) != _componentVelocity.end()) {
 				molecule->scale_v(betaTrans);
 			}
@@ -59,9 +73,11 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 		}
 	}
 	else {
+		double betaTrans = _globalBetaTrans;
+		double betaRot = _globalBetaRot;
+		global_log->debug() << "Beta rot: " << betaRot << endl;
+		global_log->debug() << "Beta trans: " << betaTrans << endl;
 		for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()) {
-			double betaTrans = _globalBetaTrans;
-			double betaRot = _globalBetaRot;
 			if(_globalVelocity == NULL) {
 				molecule->scale_v(betaTrans);
 			}
