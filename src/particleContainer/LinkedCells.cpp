@@ -46,7 +46,7 @@ LinkedCells::LinkedCells(
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 	_LJCutoffRadius = LJCutoffRadius;
-	global_log->debug() << "cutoff " << cutoffRadius << "lj " << LJCutoffRadius << " num " << cellsInCutoffRadius << endl;
+
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
@@ -300,7 +300,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< endl;
 #endif
 
-	cellProcessor.initTraversal();
+	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset +1);
 	// open the window of cells activated
 	for (unsigned int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
 		#ifndef NDEBUG
@@ -659,7 +659,6 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 
 	unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
 	if (hash >= _cells.size()) {
-		cout<<"outside the bb"<<endl;
 		global_log->error() << "coordinates for atom deletion lie outside bounding box." << endl;
 		exit(1);
 	}
@@ -667,7 +666,6 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 	bool found = this->_cells[hash].deleteMolecule(molid);
 
 	if (!found) {
-		cout<<"could not delete"<<endl;
 		global_log->error() << "could not delete molecule " << molid << "." << endl;
 		exit(1);
 	}

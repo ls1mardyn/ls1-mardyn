@@ -1,4 +1,9 @@
 
+#ifndef CELLPROCESSOR_H_
+#define CELLPROCESSOR_H_
+
+#include <cstddef>
+
 class ParticleCell;
 
 /**
@@ -29,8 +34,10 @@ public:
 
 	/**
 	 * called before the traversal starts.
+	 *
+	 * @param numCells number of cells in window
 	 */
-	virtual void initTraversal() = 0;
+	virtual void initTraversal(const size_t numCells) = 0;
 
 	/**
 	 * Called before a cell is touched for the first time during an interation.
@@ -62,3 +69,5 @@ public:
 	 */
 	virtual void endTraversal() = 0;
 };
+
+#endif

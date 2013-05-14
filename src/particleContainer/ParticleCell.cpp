@@ -3,6 +3,14 @@
 
 using namespace std;
 
+ParticleCell::ParticleCell() :
+		_ljsoa(0) {
+}
+
+ParticleCell::~ParticleCell() {
+	assert(!_ljsoa);
+}
+
 void ParticleCell::removeAllParticles() {
 	molecules.clear();
 }

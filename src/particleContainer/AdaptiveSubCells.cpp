@@ -340,7 +340,7 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< endl;
 #endif
 
-	cellProcessor.initTraversal();
+	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset +1);
 	// open the window of cells activated
 	for (unsigned int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
 		#ifndef NDEBUG
@@ -1019,8 +1019,10 @@ void AdaptiveSubCells::calculateSubNeighbourIndices() {
 			} // loop over zIndex
 		} // else case (cell A is not refined)
 	} // loop over all cells
+#ifndef NDEBUG
 	global_log->info() << "Neighbour offsets are bounded by "
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
+#endif
 } // end method
 
 

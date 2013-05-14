@@ -26,7 +26,8 @@ LegacyCellProcessor::~LegacyCellProcessor() {
 }
 
 
-void LegacyCellProcessor::initTraversal() {
+void LegacyCellProcessor::initTraversal(const size_t numCells)
+{
 	_particlePairsHandler->init();
 }
 
