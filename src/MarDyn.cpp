@@ -79,9 +79,7 @@ int main(int argc, char** argv) {
 	global_log->info() << "Running with " << world_size << " processes." << endl;
 #endif
 
-
-
-	bool tests(options.get("tests"));
+	bool tests(options.is_set_by_user("tests"));
 	if (tests) {
 		string testcases;
 		if (numargs == 1 ) {
