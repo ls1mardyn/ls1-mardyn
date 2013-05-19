@@ -6,7 +6,7 @@
 #include <vector>
 
 class Molecule;
-class LennardJonesSoA ;
+class CellDataSoA ;
 
 //! @brief ParticleCell data structure.
 //! @author Martin Buchholz
@@ -66,16 +66,20 @@ public:
 	int getMoleculeCount() const;
 	
 	/**
-	 * \brief Get the structure of arrays for VectorizedLJCellProcessor.
+	 * \brief Get the structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	LennardJonesSoA * getLJSoA() ;
+	CellDataSoA* getCellDataSoA() const {
+		return _cellDataSoA;
+	}
 
 	/**
-	 * \brief Set the sturcture of arrays for VectorizedLJCellProcessor.
+	 * \brief Set the sturcture of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	void setLJSoA(LennardJonesSoA * p) ;
+	void setCellDataSoA(CellDataSoA * p) {
+		_cellDataSoA = p;
+	}
 
 private:
 	/**
@@ -83,10 +87,10 @@ private:
 	 */
 	std::vector<Molecule *> molecules;
 	/**
-	 * \brief Structure of arrays for VectorizedLJCellProcessor.
+	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	LennardJonesSoA * _ljsoa ;
+	CellDataSoA * _cellDataSoA;
 };
 
 #endif /* PARTICLE CELL_H_ */

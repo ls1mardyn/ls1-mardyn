@@ -4,11 +4,11 @@
 using namespace std;
 
 ParticleCell::ParticleCell() :
-		_ljsoa(0) {
+		_cellDataSoA(0) {
 }
 
 ParticleCell::~ParticleCell() {
-	assert(!_ljsoa);
+	assert(!_cellDataSoA);
 }
 
 void ParticleCell::removeAllParticles() {
