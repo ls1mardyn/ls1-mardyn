@@ -68,7 +68,7 @@ public:
 	 */
 	VectorizedCellProcessor(Domain & domain, double cutoffRadius);
 
-	~VectorizedLJCellProcessor();
+	~VectorizedCellProcessor();
 
 	/**
 	 * \brief Reset macroscopic values to 0.0.

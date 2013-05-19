@@ -57,7 +57,7 @@ class DomainDecompBase;
 class InputBase;
 class Timer;
 class RDF;
-
+class LJFlopCounter;
 
 //! @brief controls the whole simulation process
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -379,6 +379,8 @@ private:
 
 	//! New cellhandler, which will one day replace the particlePairsHandler here completely.
 	CellProcessor* _cellProcessor;
+
+	LJFlopCounter* _ljFlopCounter;
 
 	/** Type of the domain decomposition */
 	DomainDecompType _domainDecompositionType;

@@ -46,6 +46,7 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
+#include "particleContainer/adapter/LJFlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 
@@ -957,6 +958,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 #endif
+	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
 
@@ -1013,8 +1015,9 @@ void Simulation::prepare_start() {
         global_log->warning() << "No cell processor initialised. Using Legacy Cell Processor." << endl;
         _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
     }
-	//_moleculeContainer->traversePairs(_particlePairsHandler);
 	_moleculeContainer->traverseCells(*_cellProcessor);
+	_moleculeContainer->traverseCells(*_ljFlopCounter);
+
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
@@ -1348,7 +1351,10 @@ void Simulation::simulate() {
 	global_log->info() << "Final IO took:                 "
 			<< ioTimer.get_etime() << " sec" << endl;
 
-
+	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
+	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / loopTimer.get_etime() / (1024*1024);
+	global_log->info() << "LJ-FLOP-Count per Iteration: " << _ljFlopCounter->getTotalFlopCount() << " FLOPs" <<endl;
+	global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
 }
 
 void Simulation::output(unsigned long simstep) {

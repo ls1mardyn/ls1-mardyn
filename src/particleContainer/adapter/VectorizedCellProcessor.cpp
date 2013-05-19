@@ -78,7 +78,7 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain,
 	}
 }
 
-VectorizedLJCellProcessor :: ~VectorizedLJCellProcessor () {
+VectorizedCellProcessor :: ~VectorizedCellProcessor () {
 	for (size_t i = 0; i < _particleCellDataVector.size(); ++i) {
 		delete _particleCellDataVector[i];
 	}
