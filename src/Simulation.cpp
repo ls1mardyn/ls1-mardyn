@@ -73,6 +73,7 @@
 #include "utils/Logger.h"
 
 #include "io/TcTS.h"
+#include "io/Mkesfera.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -673,6 +674,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			      inputfilestream >> writeFrequency >> outputPathAndPrefix;
 			      _outputPlugins.push_back(new MmspdWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
 			      global_log->debug() << "MmspdWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+			}
+			else {
+				global_log->warning() << "Unknown output plugin " << token << endl;
 			}
 		} else if (token == "accelerate") {
 			cosetid++;
@@ -1489,6 +1493,19 @@ void Simulation::initialize() {
 	Molecule::setComponents(&_domain->getComponents());
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
+}
+
+void Simulation::mkesfera(Values& options) {
+	_particleContainerType = LINKED_CELL;
+
+	Mkesfera mkesfera(options);
+	mkesfera.generate(_domain, &_domainDecomposition, &_integrator, &_moleculeContainer, _outputPlugins, this);
+
+	_moleculeContainer->update();
+	_moleculeContainer->deleteOuterParticles();
+
+	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
+	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 }
 
 void Simulation::mkTcTS(Values &options) {

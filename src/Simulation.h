@@ -275,7 +275,8 @@ public:
 	//! set the "initCanonical" parameter to "0".
 	double Tfactor(unsigned long simstep);
 
-        void mkTcTS(Values &options);
+	void mkTcTS(Values &options);
+	void mkesfera(Values &options);
 
         void initCanonical(unsigned long t) { this->_initCanonical = t; }
         void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }

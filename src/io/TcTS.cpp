@@ -60,7 +60,7 @@ TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecompositi
    double T = 1.0779;
 
    /* non optional argumentds */
-   rho = options.get("fluid-density");
+   rho = options.get("density-1");
    N   = options.get("num-particles");
    T   = options.get("temperature");
    
@@ -71,8 +71,8 @@ TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecompositi
    if(options.is_set("shift_LJ")) {
        do_shift = options.get("shift_LJ");
    }
-   if(options.is_set("fluid-density-2")) {
-       rho2 = options.get("fluid-density-2");
+   if(options.is_set("density-2")) {
+       rho2 = options.get("density-2");
        gradient = true;
    }
    if(options.is_set("height")) {

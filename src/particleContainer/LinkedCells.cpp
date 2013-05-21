@@ -47,6 +47,10 @@ LinkedCells::LinkedCells(
 	_cutoffRadius = cutoffRadius;
 	_LJCutoffRadius = LJCutoffRadius;
 
+	global_log->debug() << "cutoff: " << cutoffRadius << endl;
+	global_log->debug() << "LJ cutoff:" << LJCutoffRadius << endl;
+	global_log->debug() << "# cells in cutoff: " << cellsInCutoffRadius << endl;
+
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
@@ -575,6 +579,7 @@ void LinkedCells::initializeCells() {
 }
 
 void LinkedCells::calculateNeighbourIndices() {
+	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
 	_forwardNeighbourOffsets.clear();
 	_backwardNeighbourOffsets.clear();
 	_maxNeighbourOffset = 0;
