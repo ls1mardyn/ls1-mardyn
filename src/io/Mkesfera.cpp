@@ -10,7 +10,11 @@
 #include "integrators/Leapfrog.h"
 #include "io/ResultWriter.h"
 #include "molecules/Component.h"
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
+#else
+#include "parallel/DomainDecompDummy.h"
+#endif
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "utils/OptionParser.h"
@@ -137,7 +141,11 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 	Widom;
 	*/
 
+#ifdef ENABLE_MPI
 	(*domainDecomposition) = (DomainDecompBase*) new DomainDecomposition();
+#else
+	(*domainDecomposition) = (DomainDecompBase*) new DomainDecompDummy();
+#endif
 	double box_max[3];
 	box_max[0] = 2*R_o;
 	box_max[1] = 2*R_o;
