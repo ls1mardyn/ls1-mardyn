@@ -19,7 +19,7 @@ ParticleContainerTest::~ParticleContainerTest() {
 }
 
 void ParticleContainerTest::setupMolecules(ParticleContainer* container) {
-
+	Molecule::setComponents(&_components);
 	//(id, cid, x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz)
 	Molecule dummyMolecule1(1, 0, 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
 	container->addParticle(dummyMolecule1);
