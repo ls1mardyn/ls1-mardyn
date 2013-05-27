@@ -1,7 +1,7 @@
 TEMPLATE = lib
 
-CONFIG += dll debug
-#CONFIG += staticlib debug mardyn
+#CONFIG += dll debug
+CONFIG += staticlib debug mardyn
 
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
