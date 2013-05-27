@@ -49,6 +49,8 @@ void VTKMoleculeWriterImplementationTest::testWriteVTKFile() {
 	Component dummyComponent(0);
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
+	Molecule::setComponents(&components); // fix this some day!
+
 	Molecule dummyMolecule(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &components);
 
 	std::vector<std::string> v;

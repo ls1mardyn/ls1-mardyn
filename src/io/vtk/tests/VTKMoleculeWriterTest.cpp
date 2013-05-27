@@ -40,6 +40,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	Component dummyComponent(0);
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
+	Molecule::setComponents(&components); // fix this some day!
 
 	Molecule dummyMolecule1(0,0,2.20,3.0,3.4,0,0,0,0,0,0,0,0,0,0, &components);
 	container.addParticle(dummyMolecule1);
