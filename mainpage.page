@@ -22,4 +22,7 @@ Code Coverage Information:
 - <a href="../lcov_pore-CH3OH"> pore-CH3OH </a>
 - <a href="../lcov_total"> Summary </a>
 
+CCCC Metrics information (number lines of code, complexity, etc...): 
+<a href="http://vmbungartz4.informatik.tu-muenchen.de:8080/jenkins_ls1/job/MardynMetrics/127/ccccResult/">CCCC Metrics </a> 
+
 */
