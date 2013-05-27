@@ -236,13 +236,13 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
     op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
     
     OptionGroup mkTcTS_options = OptionGroup(op, "mkTcTS options", "Options for the mkTcTS scenario generator.");
-    mkTcTS_options.add_option("-c").dest("density-1").type("float").help("density 1 (mkTcTS)");
-    mkTcTS_options.add_option("-C").dest("density-2").type("float").help("density 2 (mkTcTS)");
+    mkTcTS_options.add_option("-c").dest("density-1").type("float").help("density 1 (mkTcTS, mkesfera)");
+    mkTcTS_options.add_option("-C").dest("density-2").type("float").help("density 2 (mkTcTS, mkesfera)");
     mkTcTS_options.add_option("-N").dest("num-particles").type("int").help("approximate number of fluid molecules (mkTcTS)");
     mkTcTS_options.add_option("-T").dest("temperature").type("float").help("temperature (mkTcTS, mkesfera)");
     
     mkTcTS_options.add_option("-R").dest("cutoff-LJ").type("float").help("Lennard-Jones cutoff (mkTcTS, mkesfera)");
-    mkTcTS_options.add_option("-S").dest("shift_LJ").type("bool").help("shift the LJ potential (mkTcTS, mkesgera)").set_default(false);
+    mkTcTS_options.add_option("-S").dest("shift_LJ").type("bool").help("shift the LJ potential (mkTcTS, mkesfera)").set_default(false);
     mkTcTS_options.add_option("-h").dest("height").type("float").help("height (mkTcTS)");
     mkTcTS_options.add_option("-m").dest("chemical-potential").type("float").help("chemical potential (mkTcTS)");
     mkTcTS_options.add_option("-p").dest("pair-correlation-cutoff").type("float").help("pair correlation cutoff (mkTcTS)");
