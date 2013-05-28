@@ -1203,6 +1203,10 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 			}
 		}
 
+		if (mu->isWidom()){
+			m = &(*(_particles.begin()));
+			mu->storeMolecule(*m);
+		}
 		if (hasInsertion) {
 			nextid = mu->getInsertion(ins);
 			hasInsertion = (nextid > 0);

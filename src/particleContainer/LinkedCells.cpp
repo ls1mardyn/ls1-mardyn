@@ -783,6 +783,10 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			}
 		}
 
+		if (mu->isWidom()){
+			m = &(*(_particles.begin()));
+			mu->storeMolecule(*m);
+		}
 		if (hasInsertion) {
 			nextid = mu->getInsertion(ins);
 			hasInsertion = (nextid > 0);
