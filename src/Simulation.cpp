@@ -99,6 +99,7 @@ Simulation::~Simulation() {
     delete _moleculeContainer;
     delete _integrator;
     delete _inputReader;
+    delete _ljFlopCounter;
 }
 
 void Simulation::exit(int exitcode) {
@@ -962,7 +963,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 #endif
-	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
 
@@ -1493,6 +1493,7 @@ void Simulation::initialize() {
 	Molecule::setComponents(&_domain->getComponents());
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
+	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
 }
 
 void Simulation::mkesfera(Values& options) {
