@@ -73,6 +73,12 @@ int main(int argc, char** argv) {
 	get_host(info_str);
 	global_log->info() << "Execution host: " << info_str << endl;
 
+	std::stringstream arguments;
+	for (int i = 0; i < argc; i++) {
+		arguments << " " << argv[i];
+	}
+	global_log->info() << "Started with arguments: " << arguments.str() << endl;
+
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );

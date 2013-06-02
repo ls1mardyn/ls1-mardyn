@@ -96,9 +96,8 @@ void VectorizedCellProcessor::initTraversal(const size_t numCells) {
 //		_particleCellDataVector.resize(numCells);
 		for (size_t i = _particleCellDataVector.size(); i < numCells; i++) {
 			_particleCellDataVector.push_back(new CellDataSoA(64,64));
-			global_log->debug() << "Push_back() soa-ptr " << _particleCellDataVector.back() << " total size = " << _particleCellDataVector.size() << std::endl;
 		}
-		global_log->info() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
+		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
 	}
 
 }

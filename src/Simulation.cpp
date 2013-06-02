@@ -1356,7 +1356,8 @@ void Simulation::simulate() {
 			<< ioTimer.get_etime() << " sec" << endl;
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / loopTimer.get_etime() / (1024*1024);
+	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
+	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
 	global_log->info() << "LJ-FLOP-Count per Iteration: " << _ljFlopCounter->getTotalFlopCount() << " FLOPs" <<endl;
 	global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
 }

@@ -8,6 +8,8 @@
 
 #include "particleContainer/ParticleCell.h"
 #include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
 
 LJFlopCounter::LJFlopCounter(double rc) : _rc2(rc * rc) {
@@ -19,6 +21,18 @@ void LJFlopCounter::initTraversal(const size_t numCells) {
 }
 
 void LJFlopCounter::endTraversal() {
+
+	DomainDecompBase& domainDecomp =  global_simulation->domainDecomposition();
+	domainDecomp.collCommInit(3);
+	domainDecomp.collCommAppendDouble(_currentCounts.calc_molDist);
+	domainDecomp.collCommAppendDouble(_currentCounts.calc_LJ);
+	domainDecomp.collCommAppendDouble(_currentCounts.calc_Macro);
+	domainDecomp.collCommAllreduceSum();
+	_currentCounts.calc_molDist = domainDecomp.collCommGetDouble();
+	_currentCounts.calc_LJ = domainDecomp.collCommGetDouble();
+	_currentCounts.calc_Macro = domainDecomp.collCommGetDouble();
+	domainDecomp.collCommFinalize();
+
 	_totalCounts.addCounts(_currentCounts);
 
 	const double cflMolDist = _currentCounts.calc_molDist * _flops_MolDist;
