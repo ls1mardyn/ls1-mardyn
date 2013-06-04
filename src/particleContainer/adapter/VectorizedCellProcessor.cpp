@@ -14,10 +14,9 @@
 
 using namespace Log;
 
-VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain,
-		double cutoffRadius) :
-		_domain(domain), _rc2(cutoffRadius * cutoffRadius), _compIDs(), _eps_sig(), _shift6(), _upot6lj(
-				0.0), _virial(0.0), _center_dist_lookup(128) {
+VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
+		_domain(domain), _cutoffRadiusSquare(cutoffRadius * cutoffRadius), _LJcutoffRadiusSquare(LJcutoffRadius * LJcutoffRadius),
+		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0), _center_dist_lookup(128), _charge_dist_lookup(128) {
 #if VLJCP_VEC_TYPE==VLJCP_NOVEC
 	Log::global_log->info() << "VectorizedLJCellProcessor: no vectorization."
 	<< std::endl;
@@ -89,13 +88,14 @@ VectorizedCellProcessor :: ~VectorizedCellProcessor () {
 void VectorizedCellProcessor::initTraversal(const size_t numCells) {
 	_virial = 0.0;
 	_upot6lj = 0.0;
+	_upotXpoles = 0.0;
 
 	global_log->debug() << "VectorizedLJCellProcessor::initTraversal() to " << numCells << " cells." << std::endl;
 
 	if (numCells > _particleCellDataVector.size()) {
 //		_particleCellDataVector.resize(numCells);
 		for (size_t i = _particleCellDataVector.size(); i < numCells; i++) {
-			_particleCellDataVector.push_back(new CellDataSoA(64,64));
+			_particleCellDataVector.push_back(new CellDataSoA(64,64,64));
 		}
 		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
 	}
@@ -105,7 +105,7 @@ void VectorizedCellProcessor::initTraversal(const size_t numCells) {
 
 void VectorizedCellProcessor::endTraversal() {
 	_domain.setLocalVirial(_virial);
-	_domain.setLocalUpot(_upot6lj / 6.0);
+	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles);
 }
 
 
@@ -117,25 +117,33 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 	// Determine the total number of LJ centers.
 	size_t numMolecules = molecules.size();
 	size_t nLJCenters = 0;
+	size_t nCharges = 0;
 	for (size_t m = 0;  m < numMolecules; ++m) {
 		nLJCenters += molecules[m]->numLJcenters();
+		nCharges += molecules[m]->numCharges();
 	}
 
 	// Construct the SoA.
 	assert(!_particleCellDataVector.empty());
 	CellDataSoA* soaPtr = _particleCellDataVector.back();
 	global_log->debug() << " _particleCellDataVector.size()=" << _particleCellDataVector.size() << " soaPtr=" << soaPtr << " nLJCenters=" << nLJCenters << std::endl;
-	soaPtr->resize(numMolecules,nLJCenters);
+	soaPtr->resize(numMolecules,nLJCenters,nCharges);
 	soaPtr->_num_ljcenters = nLJCenters;
+	soaPtr->_num_charges = nCharges;
 	soaPtr->_num_molecules = numMolecules;
 	c.setCellDataSoA(soaPtr);
 	_particleCellDataVector.pop_back();
 	CellDataSoA & soa = *soaPtr;
 
-	size_t n = 0;
-	// For each molecule iterate over all its LJ centers.
+	// To get the charges
+	ComponentList components = _domain.getComponents();
+
+	size_t iLJCenters = 0;
+	size_t iCharges = 0;
+	// For each molecule iterate over all its LJ centers and charges.
 	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t nLJC = molecules[i]->numLJcenters();
+		const size_t mol_num_ljc = molecules[i]->numLJcenters();
+		const size_t mol_num_charges = molecules[i]->numCharges();
 		const double mol_pos_x = molecules[i]->r(0);
 		const double mol_pos_y = molecules[i]->r(1);
 		const double mol_pos_z = molecules[i]->r(2);
@@ -143,26 +151,46 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 		soa._mol_pos_x[i] = mol_pos_x;
 		soa._mol_pos_y[i] = mol_pos_y;
 		soa._mol_pos_z[i] = mol_pos_z;
-		soa._mol_num_ljc[i] = nLJC;
+		soa._mol_num_ljc[i] = mol_num_ljc;
+		soa._mol_num_charges[i] = mol_num_charges;
 
-		for (size_t j = 0; j < nLJC; ++j, ++n) {
+		for (size_t j = 0; j < mol_num_ljc; ++j, ++iLJCenters) {
 			// Store a copy of the molecule position for each center, and the position of
 			// each LJ center. Assign each LJ center its ID and set the force to 0.0.
-			soa._m_r_x[n] = mol_pos_x;
-			soa._m_r_y[n] = mol_pos_y;
-			soa._m_r_z[n] = mol_pos_z;
-			soa._ljc_r_x[n] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
-			soa._ljc_r_y[n] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
-			soa._ljc_r_z[n] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
-			soa._ljc_f_x[n] = 0.0;
-			soa._ljc_f_y[n] = 0.0;
-			soa._ljc_f_z[n] = 0.0;
-			soa._ljc_id[n] = _compIDs[molecules[i]->componentid()] + j;
+			soa._m_r_x[iLJCenters] = mol_pos_x;
+			soa._m_r_y[iLJCenters] = mol_pos_y;
+			soa._m_r_z[iLJCenters] = mol_pos_z;
+			soa._ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
+			soa._ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
+			soa._ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
+			soa._ljc_f_x[iLJCenters] = 0.0;
+			soa._ljc_f_y[iLJCenters] = 0.0;
+			soa._ljc_f_z[iLJCenters] = 0.0;
+			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
+		}
+
+		for (size_t j = 0; j < mol_num_charges; ++j, ++iCharges)
+		{
+			soa._charges_m_r_x[iCharges] = mol_pos_x;
+			soa._charges_m_r_y[iCharges] = mol_pos_y;
+			soa._charges_m_r_z[iCharges] = mol_pos_z;
+			soa._charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
+			soa._charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
+			soa._charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
+			soa._charges_f_x[iCharges] = 0.0;
+			soa._charges_f_y[iCharges] = 0.0;
+			soa._charges_f_z[iCharges] = 0.0;
+			// Get the charge
+			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
 		}
 	}
 
 	if (_center_dist_lookup.get_size() < nLJCenters) {
 		_center_dist_lookup.resize(nLJCenters);
+	}
+
+	if (_charge_dist_lookup.get_size() < nCharges) {
+		_charge_dist_lookup.resize(nCharges);
 	}
 }
 
@@ -174,21 +202,35 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 	MoleculeList & molecules = c.getParticlePointers();
 
 	// For each molecule iterate over all its centers.
-	size_t n = 0;
+	size_t iLJCenters = 0;
+	size_t iCharges = 0;
 	size_t numMols = molecules.size();
 	for (size_t m = 0; m < numMols; ++m) {
-		const size_t end = molecules[m]->numLJcenters();
-		for (size_t i = 0; i < end; ++i) {
+		const size_t mol_num_ljc = molecules[m]->numLJcenters();
+		const size_t mol_num_charges = molecules[m]->numCharges();
+
+		for (size_t i = 0; i < mol_num_ljc; ++i, ++iLJCenters) {
 			// Store the resulting force in the molecule.
 			double f[3];
-			f[0] = soa._ljc_f_x[n];
-			f[1] = soa._ljc_f_y[n];
-			f[2] = soa._ljc_f_z[n];
+			f[0] = soa._ljc_f_x[iLJCenters];
+			f[1] = soa._ljc_f_y[iLJCenters];
+			f[2] = soa._ljc_f_z[iLJCenters];
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
 			molecules[m]->Fljcenteradd(i, f);
-			++n;
+		}
+
+		for (size_t i = 0; i < mol_num_charges; ++i, ++iCharges) {
+			// Store the resulting force in the molecule.
+			double f[3];
+			f[0] = soa._charges_f_x[iCharges];
+			f[1] = soa._charges_f_y[iCharges];
+			f[2] = soa._charges_f_z[iCharges];
+			assert(!isnan(f[0]));
+			assert(!isnan(f[1]));
+			assert(!isnan(f[2]));
+			molecules[m]->Fchargeadd(i, f);
 		}
 	}
 	// Delete the SoA.
@@ -247,37 +289,109 @@ void VectorizedCellProcessor :: _loopBodyNovec (const CellDataSoA& soa1, size_t 
 }  /* end of method VectorizedLJCellProcessor :: _loopBodyNovec */
 
 template<class ForcePolicy, class MacroPolicy>
+inline
+void VectorizedCellProcessor :: _loopBodyNovecCharges (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask)
+{
+	// Check if we have to calculate anything for this pair.
+	if (*forceMask) {
+		// TODO: Fix assuming that 4pie0 = 1 !!!
+		const double q1q2per4pie0 = soa1._charges_q[i] * soa2._charges_q[j];
+
+		const double c_dx = soa1._charges_r_x[i] - soa2._charges_r_x[j];
+		const double c_dy = soa1._charges_r_y[i] - soa2._charges_r_y[j];
+		const double c_dz = soa1._charges_r_z[i] - soa2._charges_r_z[j];
+
+		const double c_dr2 = c_dx * c_dx + c_dy * c_dy + c_dz * c_dz;
+		const double c_dr2_inv = 1.0 / c_dr2;
+		const double c_dr_inv = sqrt(c_dr2_inv);
+
+		const double upot = q1q2per4pie0 * c_dr_inv;
+		const double fac = upot * c_dr2_inv;
+
+		const double fx = c_dx * fac;
+		const double fy = c_dy * fac;
+		const double fz = c_dz * fac;
+
+		const double m_dx = soa1._charges_m_r_x[i] - soa2._charges_m_r_x[j];
+		const double m_dy = soa1._charges_m_r_y[i] - soa2._charges_m_r_y[j];
+		const double m_dz = soa1._charges_m_r_z[i] - soa2._charges_m_r_z[j];
+
+		// Check if we have to add the macroscopic values up for this pair.
+		if (MacroPolicy :: MacroscopicValueCondition(m_dx, m_dy, m_dz)) {
+			_upotXpoles += upot;
+			_virial += m_dx * fx + m_dy * fy + m_dz * fz;
+		}
+
+		// Add the force to center 1, and subtract it from center 2.
+		soa1._charges_f_x[i] += fx;
+		soa1._charges_f_y[i] += fy;
+		soa1._charges_f_z[i] += fz;
+
+		soa2._charges_f_x[j] -= fx;
+		soa2._charges_f_y[j] -= fy;
+		soa2._charges_f_z[j] -= fz;
+	}
+}
+
+template<class ForcePolicy, class MacroPolicy>
 void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 		const CellDataSoA & soa2) {
 #if VLJCP_VEC_TYPE==VLJCP_NOVEC
 	// For the unvectorized version, we only have to iterate over all pairs of
 	// LJ centers and apply the unvectorized loop body.
-	size_t i_center_idx = 0;
+	size_t i_ljcenter_idx = 0;
+	size_t i_charge_idx = 0;
 	assert(_center_dist_lookup.get_size() >= soa2._ljcenters_size);
+	assert(_charge_dist_lookup.get_size() >= soa2._charges_size);
 	for (size_t i = 0; i < soa1._num_molecules; ++i) {
-
-		unsigned long compute_molecule = 0;
-		for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2._num_ljcenters; ++j) {
+		// Computation of LJ interaction
+		unsigned long compute_molecule_lj = 0;
+		for (size_t j = ForcePolicy :: InitJ(i_ljcenter_idx); j < soa2._num_ljcenters; ++j) {
 			const double m_dx = soa1._mol_pos_x[i] - soa2._m_r_x[j];
 			const double m_dy = soa1._mol_pos_y[i] - soa2._m_r_y[j];
 			const double m_dz = soa1._mol_pos_z[i] - soa2._m_r_z[j];
 			const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
-			const signed long forceMask = ForcePolicy :: Condition(m_r2, _rc2) ? (~0l) : 0l;
-			compute_molecule |= forceMask;
+			const signed long forceMask = ForcePolicy :: Condition(m_r2, _LJcutoffRadiusSquare) ? (~0l) : 0l;
+			compute_molecule_lj |= forceMask;
 			*(_center_dist_lookup + j) = forceMask;
 		}
 
-		if (!compute_molecule) {
-			i_center_idx += soa1._mol_num_ljc[i];
-			continue;
+		if (!compute_molecule_lj) {
+			i_ljcenter_idx += soa1._mol_num_ljc[i];
+		}
+		else {
+			for (int local_i = 0; local_i < soa1._mol_num_ljc[i]; local_i++ ) {
+				for (size_t j = ForcePolicy :: InitJ(i_ljcenter_idx); j < soa2._num_ljcenters; ++j) {
+					_loopBodyNovec<CellPairPolicy_, MacroPolicy>(soa1, i_ljcenter_idx, soa2, j, _center_dist_lookup + j);
+				}
+				i_ljcenter_idx++;
+			}
 		}
 
-		for (int local_i = 0; local_i < soa1._mol_num_ljc[i]; local_i++ ) {
-			for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2._num_ljcenters; ++j) {
-				_loopBodyNovec<CellPairPolicy_, MacroPolicy>(soa1, i_center_idx, soa2, j, _center_dist_lookup + j);
+		// Computation of Charge-Charge interaction
+		unsigned long compute_molecule_charge = 0;
+		for (size_t j = ForcePolicy :: InitJ(i_charge_idx); j < soa2._num_charges; ++j) {
+			const double m_dx = soa1._mol_pos_x[i] - soa2._charges_m_r_x[j];
+			const double m_dy = soa1._mol_pos_y[i] - soa2._charges_m_r_y[j];
+			const double m_dz = soa1._mol_pos_z[i] - soa2._charges_m_r_z[j];
+			const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
+
+			const signed long forceMask = ForcePolicy :: Condition(m_r2, _cutoffRadiusSquare) ? (~0l) : 0l;
+			compute_molecule_charge |= forceMask;
+			*(_charge_dist_lookup + j) = forceMask;
+		}
+
+		if (!compute_molecule_charge) {
+			i_charge_idx += soa1._mol_num_charges[i];
+		}
+		else {
+			for (int local_i = 0; local_i < soa1._mol_num_charges[i]; local_i++ ) {
+				for (size_t j = ForcePolicy :: InitJ(i_charge_idx); j < soa2._num_charges; ++j) {
+					_loopBodyNovec<CellPairPolicy_, MacroPolicy>(soa1, i_charge_idx, soa2, j, _charge_dist_lookup + j);
+				}
+				i_charge_idx++;
 			}
-			i_center_idx++;
 		}
 	}
 
@@ -308,7 +422,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 	double* const p_center_dist_lookup = _center_dist_lookup;
 	const size_t end_j = soa2._num_ljcenters & (~1);
 	const __m128d one = _mm_set1_pd(1.0);
-	const __m128d rc2 = _mm_set1_pd(_rc2);
+	const __m128d rc2 = _mm_set1_pd(_LJcutoffRadiusSquare);
 	__m128d sum_upot = _mm_setzero_pd();
 	__m128d sum_virial = _mm_setzero_pd();
 
@@ -320,7 +434,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 		const __m128d m_r_y1 = _mm_loaddup_pd(p_mol_ry1 + i);
 		const __m128d m_r_z1 = _mm_loaddup_pd(p_mol_rz1 + i);
 
-		// distance and forca mask computation
+		// distance and force mask computation
 		__m128d compute_molecule = _mm_setzero_pd();
 		size_t j = ForcePolicy :: InitJ(i_center_idx);
 		for (; j < end_j; j+=2) {
@@ -345,7 +459,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 			const double m_dz = soa1._mol_pos_z[i] - soa2._m_r_z[j];
 
 			const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
-			const signed long forceMask_l = ForcePolicy :: Condition(m_r2, _rc2) ? ~0l : 0l;
+			const signed long forceMask_l = ForcePolicy :: Condition(m_r2, _LJcutoffRadiusSquare) ? ~0l : 0l;
 			const double forceMask = *reinterpret_cast<const double*>(&forceMask_l);
 
 			*(p_center_dist_lookup + j) = forceMask;
@@ -503,7 +617,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 	double* const p_center_dist_lookup = _center_dist_lookup;
 	const size_t end_j = soa2._num_ljcenters & ~static_cast<size_t>(3);
 	const __m256d one = _mm256_set1_pd(1.0);
-	const __m256d rc2 = _mm256_set1_pd(_rc2);
+	const __m256d rc2 = _mm256_set1_pd(_LJcutoffRadiusSquare);
 
 	__m256d sum_upot = _mm256_setzero_pd();
 	__m256d sum_virial = _mm256_setzero_pd();
@@ -520,7 +634,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 		const __m256d m_r_y1 = _mm256_broadcast_sd(p_mol_ry1 + i);
 		const __m256d m_r_z1 = _mm256_broadcast_sd(p_mol_rz1 + i);
 
-		// distance and forca mask computation
+		// distance and force mask computation
 		__m256d compute_molecule = _mm256_setzero_pd();
 		size_t j = ForcePolicy :: InitJ(i_center_idx);
 		__m256d initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
@@ -548,9 +662,9 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 			const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 			signed long forceMask_l;
 			if (ForcePolicy::DetectSingleCell()) {
-				forceMask_l = (ForcePolicy::Condition(m_r2, _rc2) && j > i_center_idx) ? ~0l : 0l;
+				forceMask_l = (ForcePolicy::Condition(m_r2, _LJcutoffRadiusSquare) && j > i_center_idx) ? ~0l : 0l;
 			} else {
-				forceMask_l = ForcePolicy::Condition(m_r2, _rc2) ? ~0l : 0l;
+				forceMask_l = ForcePolicy::Condition(m_r2, _LJcutoffRadiusSquare) ? ~0l : 0l;
 			}
 			const double forceMask = *reinterpret_cast<const double*>(&forceMask_l);
 

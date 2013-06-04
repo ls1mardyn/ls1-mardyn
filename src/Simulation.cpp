@@ -958,7 +958,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 	} else {
-		_cellProcessor = new VectorizedCellProcessor( *_domain, _LJCutoffRadius);
+		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
 #else
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
