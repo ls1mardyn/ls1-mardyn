@@ -1020,6 +1020,8 @@ void Simulation::prepare_start() {
         _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
     }
 	_moleculeContainer->traverseCells(*_cellProcessor);
+
+	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
 	_moleculeContainer->traverseCells(*_ljFlopCounter);
 
 	// TODO:
@@ -1494,7 +1496,6 @@ void Simulation::initialize() {
 	Molecule::setComponents(&_domain->getComponents());
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
-	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
 }
 
 void Simulation::mkesfera(Values& options) {
