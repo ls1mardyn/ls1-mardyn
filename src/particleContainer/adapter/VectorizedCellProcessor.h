@@ -66,7 +66,7 @@ public:
 	 * \brief Construct and set up the internal parameter table.
 	 * \details Components and parameters should be finalized before this call.
 	 */
-	VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius);
+	VectorizedCellProcessor(Domain & domain, double cutoffRadius);
 
 	~VectorizedCellProcessor();
 
@@ -107,17 +107,10 @@ private:
 	 * \brief The Domain where macroscopic values will be stored.
 	 */
 	Domain & _domain;
-
 	/**
 	 * \brief The squared cutoff radius.
 	 */
-	const double _cutoffRadiusSquare;
-
-	/**
-	 * \brief The squared LJ cutoff radius.
-	 */
-	const double _LJcutoffRadiusSquare;
-
+	const double _rc2;
 	/**
 	 * \brief One LJ center enumeration start index for each component.
 	 * \details All the LJ centers of all components are enumerated.<br>
@@ -139,16 +132,10 @@ private:
 	 */
 	std::vector<DoubleArray> _shift6;
 	/**
-	 * \brief Sum of all LJ potentials.
+	 * \brief Sum of all potentials.
 	 * \details Multiplied by 6.0 for performance reasons.
 	 */
 	double _upot6lj;
-
-	/**
-	 * \brief Sum of all Xpole potentials.
-	 */
-	double _upotXpoles;
-
 	/**
 	 * \brief The virial.
 	 */
@@ -158,24 +145,14 @@ private:
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-	// lookup array for the distance molecule-molecule on a molecule-center basis (LJ).
+	// lookup array for the distance molecule-molecule on a molecule-center basis.
 	DoubleArray _center_dist_lookup;
-
-	// lookup array for the distance molecule-molecule on a molecule-center basis (Charges).
-	DoubleArray _charge_dist_lookup;
 
 	/**
 	 * \brief The body of the inner loop of the non-vectorized force calculation.
 	 */
 	template<class ForcePolicy, class MacroPolicy>
 		void _loopBodyNovec(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
-
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between charges.
-	 * \author Robert Hajda
-	 */
-	template<class ForcePolicy, class MacroPolicy>
-		void _loopBodyNovecCharges(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
