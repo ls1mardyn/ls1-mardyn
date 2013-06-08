@@ -460,7 +460,9 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 
 			const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 			const signed long forceMask_l = ForcePolicy :: Condition(m_r2, _LJcutoffRadiusSquare) ? ~0l : 0l;
-			const double forceMask = *reinterpret_cast<const double*>(&forceMask_l);
+			// this casting via void* is required for gcc
+			const void* forceMask_tmp = reinterpret_cast<const void*>(&forceMask_l);
+			double forceMask = *reinterpret_cast<double const* const>(forceMask_tmp);
 
 			*(p_center_dist_lookup + j) = forceMask;
 			const __m128d forceMask_128 = _mm_set1_pd(forceMask);
@@ -471,6 +473,8 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 			i_center_idx += soa1._mol_num_ljc[i];
 			continue;
 		}
+
+
 
 		// actual force computation
 		for (int local_i = 0; local_i < soa1._mol_num_ljc[i]; local_i++ ) {
@@ -666,7 +670,10 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 			} else {
 				forceMask_l = ForcePolicy::Condition(m_r2, _LJcutoffRadiusSquare) ? ~0l : 0l;
 			}
-			const double forceMask = *reinterpret_cast<const double*>(&forceMask_l);
+
+//			this casting via void* is required for gcc
+			void* forceMask_tmp = reinterpret_cast<void*>(&forceMask_l);
+			double forceMask = *reinterpret_cast<double const* const>(forceMask_tmp);
 
 			*(p_center_dist_lookup + j) = forceMask;
 			const __m256d forceMask_256 = _mm256_set1_pd(forceMask);
