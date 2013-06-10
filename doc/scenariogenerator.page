@@ -70,18 +70,23 @@ export LD_LIBRARY_PATH=.
 !!! Using the generators for direct input
 
 As file io may be really slow on some architectures, it is possible to use the 
-generators to generate the input directly in Mardyn/ls1. In order to do this, 
-build the Mardyn executable with the option SUPPORT_GENERATOR in the makefile set.
-
+generators to generate the input directly in Mardyn/ls1. Therefor, the generators have
+to be built as static libraries, which are linked into the Mardyn executable.
 
 Make sure, that in the files <b> CubicGridGenerator.pro</b> and <b> DropletGenerator.pro</b>
 the config variable is set as shown:
 \verbatim
-CONFIG += dll debug mardyn
+CONFIG += staticlib debug mardyn
 \endverbatim
 
-Then, build the generator libraries. A static library is created and placed in
-the directory staticlibs.
+Then, build the generator libraries. libCubicGridGenerator.a and libDropletGenerator.a 
+are created and placed in the directory staticlibs.
+
+Now, build the Mardyn executable with the option SUPPORT_GENERATOR in the makefile set:
+
+\verbatim
+make -f ../makefile/Makefile PARTYPE=SEQ TARGET=RELEASE SUPPORT_GENERATOR=1 -j3
+\endverbatim
 
 Now it is possible to create a setup with the graphical generator. Save that configuration
 to a file (Choose "Generator..." -> "save"). That configuration file can be used to initialize 
@@ -94,7 +99,7 @@ phasespacefile Generator droplet config.txt
 \endverbatim
 or
 \verbatim
-phasespacefile Generator droplet config.txt
+phasespacefile Generator cubic config.txt
 \endverbatim
 
 <B> Note that only the content of the phasespace file will be generated, i.e. all
