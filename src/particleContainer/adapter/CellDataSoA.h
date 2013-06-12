@@ -16,18 +16,10 @@
  */
 class CellDataSoA {
 public:
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-	typedef AlignedArray<__int32, 64> IndexArray;
-#else
-	typedef AlignedArray<size_t, 64> IndexArray;
-#endif
-	typedef AlignedArray<double, 64> DoubleArray;
+	typedef AlignedArray<size_t> IndexArray;
+	typedef AlignedArray<double> DoubleArray;
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-	CellDataSoA(__int32 molecules_arg, __int32 centers_arg) :
-#else
 	CellDataSoA(size_t molecules_arg, size_t centers_arg) :
-#endif
 		_num_molecules(molecules_arg),
 		_num_ljcenters(centers_arg),
 		_molecules_size( molecules_arg + (molecules_arg & 1)),
@@ -39,22 +31,15 @@ public:
 
 	}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-	__int32 _num_molecules;
-	__int32 _num_ljcenters;
-	__int32 _molecules_size;
-	__int32 _ljcenters_size;
-#else
 	size_t _num_molecules;
 	size_t _num_ljcenters;
 	size_t _molecules_size;
 	size_t _ljcenters_size;
-#endif
 	// entries per molecule
 	DoubleArray _mol_pos_x;
 	DoubleArray _mol_pos_y;
 	DoubleArray _mol_pos_z;
-	AlignedArray<__int32> _mol_num_ljc;
+	AlignedArray<int> _mol_num_ljc;
 
 	// entries per center
 	DoubleArray _m_r_x;
@@ -68,11 +53,7 @@ public:
 	DoubleArray _ljc_f_z;
 	IndexArray _ljc_id;
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-	void resize(__int32 molecules_arg, __int32 centers_arg) {
-#else
 	void resize(size_t molecules_arg, size_t centers_arg) {
-#endif
 			if (centers_arg > _ljcenters_size) {
 				_ljcenters_size = ceil( (double)centers_arg / 4) * 4;
 				_m_r_x.resize(_ljcenters_size);

@@ -14,45 +14,39 @@
 #include <cmath>
 
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VLJCP_VEC_TYPE) or defined(VLJCP_NOVEC) or defined(VLJCP_VEC_SSE3)
+#if defined(VLJCP_VEC_TYPE) || defined(VLJCP_NOVEC) || defined(VLJCP_VEC_SSE3)
 	#error conflicting macro definitions
 #endif
 
 #define VLJCP_NOVEC 0
 #define VLJCP_VEC_SSE3 1
 #define VLJCP_VEC_AVX 2
-#define VLJCP_VEC_MIC 42
 
-#if defined __MIC__
-	#define VLJCP_VEC_TYPE VLJCP_VEC_MIC
-	#pragma message "Compiling for Intel MIC"
-
-	#include <immintrin.h>
-#elif defined __AVX__ and not defined AVX128
+#if defined(__AVX__) && not defined(AVX128)
 	#define VLJCP_VEC_TYPE VLJCP_VEC_AVX
-	#pragma message "Compiling with AVX-Extensions"
-
-	#include <immintrin.h>
-#elif defined __AVX__ and defined AVX128
+#elif defined(__AVX__) && defined(AVX128)
 	#define VLJCP_VEC_TYPE VLJCP_VEC_SSE3
-	#pragma message "AVX128 chosen. Compiling with SSE-Extensions"
-
-	#include <pmmintrin.h>
-#elif defined __SSE3__
+#elif defined(__SSE3__)
 	#define VLJCP_VEC_TYPE VLJCP_VEC_SSE3
-	#pragma message "Compiling with SSE3-Extensions"
-
-	#include <pmmintrin.h>
 #else
 	#define VLJCP_VEC_TYPE VLJCP_NOVEC
-	#pragma message "Compiling without Vector-Extensions"
 #endif
 
 #ifdef NOVEC
-	#undef VLJCP_VEC_TYPE
+	#ifdef VLJCP_VEC_TYPE
+		#warn Multiple vectorization methods specified. Will not use vectorization at all!
+		#undef VLJCP_VEC_TYPE
+	#endif
 	#define VLJCP_VEC_TYPE VLJCP_NOVEC
-	#pragma message "Vectorization switched off via -DNOVEC"
 #endif
+
+// Include necessary files if we vectorize.
+#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+	#include "immintrin.h"
+#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+	#include "pmmintrin.h"
+#endif
+
 
 class Component;
 class Domain;
@@ -152,11 +146,7 @@ private:
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
 	// lookup array for the distance molecule-molecule on a molecule-center basis.
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-	AlignedArray<__mmask8, 64> _center_dist_lookup;
-#else
 	DoubleArray _center_dist_lookup;
-#endif
 
 	/**
 	 * \brief The body of the inner loop of the non-vectorized force calculation.
@@ -213,54 +203,33 @@ private:
 			return true;
 		}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-		inline static __mmask8 GetForceMask (const __m512d m_r2, const __m512d rc2, __mmask8& j_mask)
-		{
-			const __mmask8 result = (_mm512_cmplt_pd_mask(m_r2, rc2) & _mm512_cmpneq_pd_mask(m_r2, _mm512_setzero_pd())) & j_mask;
-			j_mask = 0xFF;
-
-			return result;
-		}
-		inline static __int32 InitJ (const __int32 i)
-		{
-			return (i + 1) & ~static_cast<size_t>(7);
-		}
-		inline static __mmask8 InitJ_Mask (const size_t i)
-		{
-			static const __mmask8 possibleInitJMasks[8] = { 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0xFF };
-
-			return possibleInitJMasks[i & static_cast<size_t>(7)];
-		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
 		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
 		{
-			static const __m256d ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
+			static __m256d ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
 			__m256d result = _mm256_and_pd(
-				_mm256_and_pd(
-						_mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS),
-						_mm256_cmp_pd(m_r2, _mm256_setzero_pd(), _CMP_NEQ_OS)),
-				j_mask
-			);
-
+									_mm256_and_pd(
+											_mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS),
+											_mm256_cmp_pd(m_r2, _mm256_setzero_pd(), _CMP_NEQ_OS)),
+									j_mask);
 			j_mask = ones;
-
 			return result;
 		}
 		inline static size_t InitJ (const size_t i)
 		{
-			return (i + 1) & ~static_cast<size_t>(3);
+			return (i+1) & ~static_cast<size_t>(3);
 		}
 		inline static __m256d InitJ_Mask (const size_t i)
 		{
-			static const __m256d possibleInitJMasks[4] = {
-				_mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0)),
-				_mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,0, 0, 0, 0)),
-				_mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0)),
-				_mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF))
-			};
-			return possibleInitJMasks[i & static_cast<size_t>(3)];
+			switch (i & static_cast<size_t>(3)) {
+				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0));
+				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,0, 0, 0, 0));
+				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0));
+				default: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)); 
+			}
 		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#else
+#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
 		inline static size_t InitJ (const size_t i)
 		{
 			return i + (i & static_cast<size_t>(1));
@@ -274,6 +243,7 @@ private:
 		{
 			return i + 1;
 		}
+#endif
 #endif
 	};
 
@@ -291,7 +261,7 @@ private:
 			return m_r2 < rc2;
 		}
 
-		inline static __int32 InitJ (const __int32)
+		inline static size_t InitJ (const size_t i)
 		{
 			return 0;
 		}
@@ -301,16 +271,7 @@ private:
 			return false;
 		}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-		inline static __mmask8 GetForceMask (const __m512d m_r2, const __m512d rc2, const __mmask8&)
-		{
-			return _mm512_cmplt_pd_mask(m_r2, rc2);
-		}
-		inline static __mmask8 InitJ_Mask (const size_t i)
-		{
-			return 0xFF;
-		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
 		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
 		{
 			return _mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS);
@@ -319,13 +280,15 @@ private:
 		{
 			return _mm256_setzero_pd();
 		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#else
+#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
 		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
 			return _mm_cmplt_pd(m_r2, rc2);
 		}
+#endif
 #endif
 	};
 	/**
@@ -340,19 +303,15 @@ private:
 			// We want all macroscopic values to be calculated.
 			return true;
 		}
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-		inline static __mmask8 GetMacroMask(const __mmask8 forceMask, const __m512d, const __m512d, const __m512d)
-		{
-			return forceMask;
-		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3 || VLJCP_VEC_TYPE==VLJCP_VEC_AVX
 		static __m128d GetMacroMask(__m128d forceMask, __m128d, __m128d, __m128d)
 		{
 			// We want all macroscopic values to be calculated, but not those
 			// for pairs which we ignore because of cutoff or other reasons.
 			return forceMask;
 		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#endif
+#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
 		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&)
 		{
 			return forceMask;
@@ -379,22 +338,7 @@ private:
 					)
 				);
 		}
-#if VLJCP_VEC_TYPE==VLJCP_VEC_MIC
-		inline static __mmask8 GetMacroMask(const __mmask8 forceMask, const __m512d m_dx, const __m512d m_dy, const __m512d m_dz)
-		{
-			const __m512d zero = _mm512_setzero_pd();
-
-			return (
-				_mm512_cmp_pd_mask(m_dz, zero, _MM_CMPINT_LT) | (
-					_mm512_cmp_pd_mask(m_dz, zero, _MM_CMPINT_EQ) & (
-						_mm512_cmp_pd_mask(m_dy, zero, _MM_CMPINT_LT) | (
-							_mm512_cmp_pd_mask(m_dy, zero, _MM_CMPINT_EQ) & _mm512_cmp_pd_mask(m_dx, zero, _MM_CMPINT_LT)
-						)
-					)
-				)
-			);
-		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3 || VLJCP_VEC_TYPE==VLJCP_VEC_AVX
 		// Only calculate macroscopic values for pairs where molecule 1
 		// "IsLessThan" molecule 2.
 		static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz)
@@ -416,7 +360,8 @@ private:
 
 			return _mm_and_pd(forceMask, t4);
 		}
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#endif
+#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
 		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz)
 		{
 			const __m256d zero = _mm256_setzero_pd();
