@@ -3,6 +3,8 @@
 
 #include "io/OutputBase.h"
 #include "ensemble/GrandCanonical.h"
+#include "utils/Accumulator.h"
+
 #include <string>
 #include <fstream>
 
@@ -46,6 +48,8 @@ private:
 	std::ofstream _resultStream;
 	unsigned long _writeFrequency;
 	std::string _outputPrefix;
+	Accumulator<double> _U_pot_acc;
+	Accumulator<double> _p_acc;
 };
 
 #endif /*RESULTWRITER_H_*/
