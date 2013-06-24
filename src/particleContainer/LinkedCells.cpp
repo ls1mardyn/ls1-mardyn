@@ -70,14 +70,16 @@ LinkedCells::LinkedCells(
 		assert(numberOfCells > 0);
 	}
 	global_log->debug() << "Cell size (" << _cellLength[0] << ", " << _cellLength[1] << ", " << _cellLength[2] << ")" << endl;
+	global_log->debug() << "Cells per dimension (incl. halo): " << _cellsPerDimension[0] << " x " << _cellsPerDimension[1] << " x " << _cellsPerDimension[2] << endl;
 
 	_cells.resize(numberOfCells);
 
-	// If the width of the inner region is less than the width of the halo 
+	// If the width of the inner region is less than the width of the halo
 	// region a parallelisation is not possible (with the used algorithms).
-	if (_boxWidthInNumCells[0] < _haloWidthInNumCells[0] ||
-	    _boxWidthInNumCells[1] < _haloWidthInNumCells[1] ||
-	    _boxWidthInNumCells[2] < _haloWidthInNumCells[2]) {
+	// If a particle leaves this box, it would need to be communicated to the two next neighbours.
+	if (_boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
+	    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
+	    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
 		global_log->error() << "_cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
 		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
@@ -103,6 +105,12 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	int numberOfCells = 1;
 
 	for (int dim = 0; dim < 3; dim++) {
+		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _cutoffRadius * _haloWidthInNumCells[dim]);
+		// in each dimension at least one layer of (inner+boundary) cells is necessary
+		if( _boxWidthInNumCells[dim] == 0 ) {
+			_boxWidthInNumCells[dim] = 1;
+		}
+
 		_cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim] - this->_boundingBoxMin[dim]) / (_cutoffRadius / _haloWidthInNumCells[dim]))
 		    + 2 * _haloWidthInNumCells[dim];
 		// in each dimension at least one layer of (inner+boundary) cells necessary
@@ -124,9 +132,9 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	// In this case, print an error message
 	// _cellsPerDimension is 2 times the halo width + the inner width
 	// so it has to be at least 3 times the halo width
-	if (_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
-	    _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
-	    _cellsPerDimension[2] < 3*_haloWidthInNumCells[2]) {
+	if (_boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
+		    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
+		    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (rebuild): bounding box too small for calculated cell Length" << endl;
 		global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
 		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
