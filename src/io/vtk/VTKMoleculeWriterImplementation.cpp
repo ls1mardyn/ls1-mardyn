@@ -186,6 +186,15 @@ void VTKMoleculeWriterImplementation::initializeParallelVTKFile(const std::vecto
 	p_pointData.PDataArray().push_back(p_componentId);
 	DataArray_t p_node_rank(type::Int32, "node-rank", 1);
 	p_pointData.PDataArray().push_back(p_node_rank);
+	DataArray_t p_forces(type::Float32, "forces", 3);
+	p_pointData.PDataArray().push_back(p_forces);
+
+	if (_plotCenters) {
+		DataArray_t p_centerId(type::Float32, "center-id", 1);
+		p_pointData.PDataArray().push_back(p_centerId);
+		DataArray_t p_centerType(type::UInt8, "center-type", 1);
+		p_pointData.PDataArray().push_back(p_centerType);
+	}
 
 	PCellData p_cellData; // we don't have cell data => leave it empty
 
