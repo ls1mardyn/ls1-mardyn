@@ -17,6 +17,8 @@ Log::Logger* test_log;
     #include<cppunit/TestResultCollector.h>
     #include <cppunit/extensions/TestFactoryRegistry.h>
     #include <cppunit/XmlOutputter.h>
+	#include <cppunit/TestResult.h>
+	#include <cppunit/BriefTestProgressListener.h>
   #else
     #include <tarch/tests/TestCaseRegistry.h>
     #include <tarch/tests/TestCaseCollection.h>
@@ -48,6 +50,8 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 	CppUnit::TextUi::TestRunner runner;
 	runner.addTest( registry.makeTest() );
+	CppUnit::BriefTestProgressListener progressListener;
+	runner.eventManager().addListener( &progressListener );
 	runner.run(testcases);
 
 	CppUnit::TestResultCollector& collector = runner.result();
