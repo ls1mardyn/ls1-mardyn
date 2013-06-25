@@ -58,6 +58,11 @@ Molecule::Molecule(unsigned long id, unsigned int componentid,
 	_numTersoffNeighbours = 0;
 	fixedx = rx;
 	fixedy = ry;
+
+	if (components != NULL && _components == NULL) {
+		_components = const_cast<vector<Component>*>(components);
+	}
+
 	if(components) {
 		setupCache(components);
 	}

@@ -95,13 +95,15 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	rdf.accumulateRDF();
 
 	for (int i = 0; i < 100; i++) {
+//		std::cout << " i=" << i << " global = " <<rdf._globalDistribution[0][0][i] << " acc="
+//				<< rdf._globalAccumulatedDistribution[0][0][i] << endl;
 		if (i == 55) {
 			ASSERT_EQUAL(20ul, rdf._globalDistribution[0][0][i]);
 			ASSERT_EQUAL(40ul, rdf._globalAccumulatedDistribution[0][0][i]);
 		} else if (i == 78) {
 			ASSERT_EQUAL(22ul, rdf._globalDistribution[0][0][i]);
 			ASSERT_EQUAL(44ul, rdf._globalAccumulatedDistribution[0][0][i]);
-		} else if (i == 83) {
+		} else if (i == 88) {
 			ASSERT_EQUAL(4ul, rdf._globalDistribution[0][0][i]);
 			ASSERT_EQUAL(4ul, rdf._globalAccumulatedDistribution[0][0][i]);
 		} else if (i == 96) {
