@@ -1236,7 +1236,9 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 			<< " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? " << endl;
 #endif
 
-			addParticle(*m);
+			unsigned long cellid = this->getCellIndexOfMolecule(m);
+			this->_cells[cellid].addParticle(m);
+			//addParticle(*m);
 			DeltaUpot = getEnergy(&particlePairsHandler, m);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
@@ -1249,7 +1251,8 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 				_localInsertionsMinusDeletions++;
 			}
 			else {
-				deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+			//	deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+				this->_cells[cellid].deleteMolecule(m->id());
 
 				mit->check(m->id());
 				_particles.erase(mit);
