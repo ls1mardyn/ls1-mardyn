@@ -20,6 +20,8 @@
 #ifndef SITE_H_
 #define SITE_H_
 
+#include "utils/xmlfileUnits.h"
+
 #include <iostream>
 #include <cmath>
 #include <cassert>
@@ -88,6 +90,7 @@ protected:
  */
 class LJcenter : public Site {
 public:
+	LJcenter() {}
 	/** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -102,6 +105,17 @@ public:
 	LJcenter(double x, double y, double z, double m, double eps, double sigma, double rc, double shift)
 			: Site(x, y, z, m), _eps(eps), _sigma(sigma), _rc(rc), _uLJshift6(shift) { }
 
+	void readXML(XMLfileUnits& xmlconfig) {
+		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[2]);
+		xmlconfig.getNodeValueReduced("mass", _m);
+		xmlconfig.getNodeValueReduced("epsilon", _eps);
+		xmlconfig.getNodeValueReduced("sigma", _sigma);
+		xmlconfig.getNodeValueReduced("cutoff", _rc);
+		xmlconfig.getNodeValueReduced("shifted", _uLJshift6);
+	}
+	
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << "\t" << _eps << " " << _sigma << " " << _rc << " " << _uLJshift6;
@@ -147,6 +161,7 @@ private:
  */
 class Charge : public Site {
 public:
+	Charge() {}
     /** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -158,6 +173,14 @@ public:
     Charge(double x, double y, double z, double m, double q)
 			: Site(x, y, z, m), _q(q) { }
 
+	void readXML(XMLfileUnits& xmlconfig) {
+		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
+		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
+		xmlconfig.getNodeValueReduced("mass", _m);
+		xmlconfig.getNodeValueReduced("charge", _q);
+	}
+	
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _m << " " << _q;
@@ -180,6 +203,7 @@ private:
  */
 class Tersoff : public Site {
 public:
+	Tersoff() {}
 	Tersoff(double x, double y, double z,
 	        double m, double A, double B,
 	        double lambda, double mu, double R, double S,
@@ -187,6 +211,25 @@ public:
 		: Site(x, y, z, m), _A(A), _B(B), _minus_lambda(-lambda), _minus_mu(-mu), _R(R), _S(S),
         _c_square(c*c), _d_square(d*d), _h(h),_n(n), _beta(beta) {}
 
+
+	void readXML(XMLfileUnits& xmlconfig) {
+		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
+		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
+		xmlconfig.getNodeValueReduced("A", _A);
+		xmlconfig.getNodeValueReduced("B", _B);
+		double lambda, mu;
+		xmlconfig.getNodeValueReduced("lambda", lambda); _minus_lambda = -lambda;
+		xmlconfig.getNodeValueReduced("mu", mu); _minus_mu = -mu;
+		xmlconfig.getNodeValueReduced("R", _R);
+		xmlconfig.getNodeValueReduced("S", _S);
+		double c, d;
+		xmlconfig.getNodeValueReduced("c", c); _c_square = c*c;
+		xmlconfig.getNodeValueReduced("d", d); _d_square = d*d;
+		xmlconfig.getNodeValueReduced("h", _h);
+		xmlconfig.getNodeValueReduced("beta", _beta);
+	}
+	
 	//! @brief write to stream
 	//!
 	void write(std::ostream& ostrm) const {
@@ -261,6 +304,7 @@ protected:
  */
 class Dipole : public OrientedSite {
 public:
+	Dipole() {}
     /** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -273,6 +317,17 @@ public:
      */
     Dipole(double x, double y, double z, double eMyx, double eMyy, double eMyz, double absMy)
 			: OrientedSite(x, y, z, 0., eMyx, eMyy, eMyz), _absMy(absMy) {
+	}
+
+	void readXML(XMLfileUnits& xmlconfig) {
+		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[2]);
+		xmlconfig.getNodeValueReduced("dipolemoment/abs", _absMy);
+		xmlconfig.getNodeValueReduced("dipolemoment/x", _e[0]);
+		xmlconfig.getNodeValueReduced("dipolemoment/y", _e[1]);
+		xmlconfig.getNodeValueReduced("dipolemoment/z", _e[2]);
+		/* TODO normalization check */
 	}
 
 	/// write to stream
@@ -297,6 +352,7 @@ private:
  */
 class Quadrupole : public OrientedSite {
 public:
+	Quadrupole() {}
     /** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -311,6 +367,17 @@ public:
 			: OrientedSite(x, y, z, 0., eQx, eQy, eQz), _absQ(absQ) {
 	}
 
+	void readXML(XMLfileUnits& xmlconfig) {
+		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
+		xmlconfig.getNodeValueReduced("coords/y", _r[2]);
+		xmlconfig.getNodeValueReduced("quadrupolemoment/abs", _absQ);
+		xmlconfig.getNodeValueReduced("quadrupolemoment/x", _e[0]);
+		xmlconfig.getNodeValueReduced("quadrupolemoment/y", _e[1]);
+		xmlconfig.getNodeValueReduced("quadrupolemoment/z", _e[2]);
+		/* TODO normalization check */
+	}
+	
 	/// write to stream
 	void write(std::ostream& ostrm) const {
 		ostrm << _r[0] << " " << _r[1] << " " << _r[2] << "\t" << _e[0] << " " << _e[1] << " " << _e[2] << " " << _absQ;
