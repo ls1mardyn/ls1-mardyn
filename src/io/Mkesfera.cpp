@@ -166,7 +166,6 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 	(*moleculeContainer) = new LinkedCells(bBoxMin, bBoxMax, simulation->getcutoffRadius(), simulation->getLJCutoff(), 1);
 
 	vector<Component> &components = domain->getComponents();
-	Molecule::setComponents(&components);
 	components.resize(1);
 	components[0].addLJcenter(0.0, 0.0, 0.0,  1.0, 1.0, 1.0, cutoff, (do_shift? 1: 0));
 	components[0].setI11(0);

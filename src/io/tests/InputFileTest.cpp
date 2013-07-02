@@ -40,7 +40,7 @@ void InputFileTest::testRemoveMomentum() {
 	std::vector<Component>& components = _domain->getComponents();
 
 	ParticleContainer* particleContainer
-		= initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3-removeMomentum.inp", 1.8);
+		= initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3-removeMomentum.inp", 1.5);
 
 	MDGenerator::removeMomentum(particleContainer, components);
 
