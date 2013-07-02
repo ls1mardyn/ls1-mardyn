@@ -1493,7 +1493,6 @@ void Simulation::initialize() {
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);
-	Molecule::setComponents(&_domain->getComponents());
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 }

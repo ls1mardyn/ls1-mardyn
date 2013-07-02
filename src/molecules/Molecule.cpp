@@ -30,11 +30,6 @@
 using namespace std;
 using Log::global_log;
 
-std::vector<Component> *Molecule::_components = NULL;
-
-void Molecule::setComponents(vector< Component >* components) {
-	_components = components;
-}
 
 Molecule::Molecule(unsigned long id, unsigned int componentid,
 	                 double rx, double ry, double rz,
@@ -42,7 +37,7 @@ Molecule::Molecule(unsigned long id, unsigned int componentid,
 	                 double q0, double q1, double q2, double q3,
 	                 double Dx, double Dy, double Dz,
 	                 const vector<Component>* components)
-		: _q(q0, q1, q2, q3) {
+		: _q(q0, q1, q2, q3), _ljcenters(NULL), _tersoff(NULL) {
 	_id = id;
 	_componentid = componentid;
 	_r[0] = rx;
@@ -58,14 +53,8 @@ Molecule::Molecule(unsigned long id, unsigned int componentid,
 	_numTersoffNeighbours = 0;
 	fixedx = rx;
 	fixedy = ry;
-
-	if (components != NULL && _components == NULL) {
-		_components = const_cast<vector<Component>*>(components);
-	}
-
-	if(components) {
+	if (components)
 		setupCache(components);
-	}
 }
 
 Molecule::Molecule(const Molecule& m) {
@@ -88,6 +77,12 @@ Molecule::Molecule(const Molecule& m) {
 	_M[1] = m._M[1];
 	_M[2] = m._M[2];
 
+	_ljcenters = m._ljcenters;
+	_charges = m._charges;
+	_dipoles = m._dipoles;
+	_quadrupoles = m._quadrupoles;
+	assert( m._tersoff );
+	_tersoff = m._tersoff;
 	_m = m._m;
 	_I[0] = m._I[0];
 	_I[1] = m._I[1];
@@ -96,29 +91,26 @@ Molecule::Molecule(const Molecule& m) {
 	_invI[1] = m._invI[1];
 	_invI[2] = m._invI[2];
 
-	
-	Component& component = (*_components)[_componentid];
-	int numsites = component.numSites();
-	_sites_d = new double[numsites * 3];
+	_numsites = m._numsites;
+	_numorientedsites = m._numorientedsites;
+	assert(_numsites);
+	_sites_d = new double[_numsites*3];
 	assert(_sites_d);
 
-	for(int i = 0; i < numsites*3; i++) {
-		_sites_d[i]=m._sites_d[i]; // not necessary -> cache only
-	}
+	for(unsigned int i=0;i<_numsites*3;++i) _sites_d[i]=m._sites_d[i]; // not necessary -> cache only
 	_ljcenters_d = &(_sites_d[0]);
 	_charges_d = &(_ljcenters_d[numLJcenters()*3]);
 	_dipoles_d = &(_charges_d[numCharges()*3]);
 	_quadrupoles_d = &(_dipoles_d[numDipoles()*3]);
 	_tersoff_d = &(_quadrupoles_d[numQuadrupoles()*3]);
 
-	int numorientedsites = component.numOrientedSites();
-	_osites_e = new double[numorientedsites*3];
+	_osites_e = new double[_numorientedsites*3];
 	assert(_osites_e);
 	//for(unsigned int i=0;i<_numorientedsites*3;++i) _osites_e[i]=m._osites_e[i]; // not necessary -> cache only
 	_dipoles_e = &(_osites_e[0]);
 	_quadrupoles_e = &(_dipoles_e[numDipoles()*3]);
 
-	_sites_F = new double[numsites*3];
+	_sites_F = new double[_numsites*3];
 
 	assert(_sites_F);
 	//for(unsigned int i=0;i<_numsites*3;++i) _sites_F[i]=m._sites_F[i]; // not necessary -> cache only
@@ -175,27 +167,26 @@ void Molecule::upd_cache() {
 	double mag = 1/std::sqrt(_q.magnitude2());
 	_q.scale(mag);
 	//_q *= std::sqrt(_q.magnitude2());
-	Component &component = (*_components)[_componentid];
 	for (i = 0; i < ns; ++i)
-		_q.rotateinv(component.ljcenter(i).r(), &(_ljcenters_d[i*3]));
+		_q.rotateinv((*_ljcenters)[i].r(), &(_ljcenters_d[i*3]));
 	ns = numCharges();
 	for (i = 0; i < ns; ++i)
-		_q.rotateinv(component.charge(i).r(), &(_charges_d[i*3]));
+		_q.rotateinv((*_charges)[i].r(), &(_charges_d[i*3]));
 	ns = numDipoles();
 	for (i = 0; i < ns; ++i) {
-		const Dipole& di = component.dipole(i);
+		const Dipole& di = (*_dipoles)[i];
 		_q.rotateinv(di.r(), &(_dipoles_d[i*3]));
 		_q.rotateinv(di.e(), &(_dipoles_e[i*3]));
 	}
 	ns = numQuadrupoles();
 	for (i = 0; i < ns; ++i) {
-		const Quadrupole& qi = component.quadrupole(i);
+		const Quadrupole& qi = (*_quadrupoles)[i];
 		_q.rotateinv(qi.r(), &(_quadrupoles_d[i*3]));
 		_q.rotateinv(qi.e(), &(_quadrupoles_e[i*3]));
 	}
 	ns = numTersoff();
 	for (i = 0; i < ns; i++)
-		_q.rotateinv(component.tersoff(i).r(), &(_tersoff_d[i*3]));
+		_q.rotateinv((*_tersoff)[i].r(), &(_tersoff_d[i*3]));
 }
 
 
@@ -300,8 +291,7 @@ void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
 
 double Molecule::tersoffParameters(double params[15]) //returns delta_r
 {
-	Component& component = (*_components)[_componentid];
-	const Tersoff* t = &component.tersoff()[0];
+	const Tersoff* t = &((*(this->_tersoff))[0]);
 	params[ 0] = t->R();
 	params[ 1] = t->S();
 	params[ 2] = t->h();
@@ -328,14 +318,30 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 	assert(components);
 	if (components->size() == 0)
 		return;
+	_numsites = _numorientedsites = 0;
+	_ljcenters = &(*components)[_componentid].ljcenters();
+	_numsites += _ljcenters->size();
+	_charges = &(*components)[_componentid].charges();
+	_numsites += _charges->size();
+	_dipoles = &(*components)[_componentid].dipoles();
+	_numsites += _dipoles->size();
+	_numorientedsites += _dipoles->size();
+	_quadrupoles = &(*components)[_componentid].quadrupoles();
+	_numsites += _quadrupoles->size();
+	_numorientedsites += _quadrupoles->size();
+	_tersoff = &(*components)[_componentid].tersoff();
+#ifndef NDEBUG
+	if (!_tersoff) {
+		global_log->error() << "Tersoff vector null pointer detected for Molecule " << _id << endl;
+		exit(1);
+	}
+#endif
+	_numsites += _tersoff->size();
 
-	//_components = components;
-	Component &component = (*_components)[_componentid];
-
-	_m = component.m();
-	_I[0] = component.I11();
-	_I[1] = component.I22();
-	_I[2] = component.I33();
+	_m = (*components)[_componentid].m();
+	_I[0] = (*components)[_componentid].I11();
+	_I[1] = (*components)[_componentid].I22();
+	_I[2] = (*components)[_componentid].I33();
 	for (unsigned short d = 0; d < 3; ++d) {
 		if (_I[d] != 0.)
 			_invI[d] = 1. / _I[d];
@@ -343,7 +349,9 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 			_invI[d] = 0.;
 	}
 
-	_sites_d = new double[component.numSites()*3];
+	assert(_numsites);
+
+	_sites_d = new double[_numsites*3];
 	assert(_sites_d);
 	_ljcenters_d = &(_sites_d[0]);
 	_charges_d = &(_ljcenters_d[numLJcenters()*3]);
@@ -351,12 +359,12 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 	_quadrupoles_d = &(_dipoles_d[numDipoles()*3]);
 	_tersoff_d = &(_quadrupoles_d[numQuadrupoles()*3]);
 
-	_osites_e = new double[component.numOrientedSites()*3];
+	_osites_e = new double[_numorientedsites*3];
 	assert(_osites_e);
 	_dipoles_e = &(_osites_e[0]);
 	_quadrupoles_e = &(_dipoles_e[numDipoles()*3]);
 
-	_sites_F = new double[component.numSites()*3];
+	_sites_F = new double[_numsites*3];
 
 	assert(_sites_F);
 	_ljcenters_F = &(_sites_F[0]);
@@ -369,8 +377,7 @@ inline void Molecule::setupCache(const vector<Component>* components) {
 }
 
 void Molecule::clearFM() {
-	Component& component = (*_components)[_componentid];
-	for (unsigned int i = 0; i < component.numSites() * 3; ++i)
+	for (unsigned int i = 0; i < _numsites * 3; ++i)
 		_sites_F[i] = 0.;
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
@@ -417,6 +424,7 @@ void Molecule::check(unsigned long id) {
 #ifndef NDEBUG
 	assert(_id == id);
 	assert(_m > 0.0);
+	assert(_numsites > 0);
 	for (int d = 0; d < 3; d++) {
 		assert(!isnan(_r[d]));
 		assert(!isnan(_v[d]));
@@ -468,14 +476,13 @@ std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
 unsigned long Molecule::totalMemsize() const {
 	unsigned long size = sizeof (*this);
 
-	Component& component = (*_components)[_componentid];
 	//_sites_d
-	size += sizeof(double) * component.numSites()* 3;
+	size += sizeof(double) * _numsites * 3;
 	// site orientation _osites_e
-	size += sizeof(double) * component.numOrientedSites() * 4;
+	size += sizeof(double) * _numorientedsites * 3;
 	// site Forces _sites_F
 	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
-	size += sizeof(double) * component.numSites() * 3;
+	size += sizeof(double) * _numsites * 3;
 
 	return size;
 }

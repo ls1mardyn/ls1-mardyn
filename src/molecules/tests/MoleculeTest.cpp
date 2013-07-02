@@ -23,7 +23,6 @@ void MoleculeTest::testIsLessThan() {
 	Component dummyComponent(0);
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
-	Molecule::setComponents(&components);
 
 	Molecule a(0, 0, 1.0, 1.0, 1.0,0,0,0,0,0,0,0,0,0,0, &components);
 	Molecule b(0, 0, 2.0, 2.0, 2.0,0,0,0,0,0,0,0,0,0,0, &components);
