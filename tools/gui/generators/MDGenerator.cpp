@@ -19,6 +19,7 @@
 #ifndef MARDYN
 #include "common/DrawableMolecule.h"
 #include "QObjects/ScenarioGenerator.h"
+#include "Simulation.h"
 #endif
 
 
@@ -142,6 +143,12 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	DomainDecompDummy domainDecomposition;
 	list<ChemicalPotential> lmu;
 
+#ifndef MARDYN
+	global_simulation = new Simulation();
+	global_simulation->setcutoffRadius(3.0);
+	global_simulation->setTersoffCutoff(3.0);
+#endif
+
 	double bBoxMin[3] = { 0,0,0};
 	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
@@ -165,6 +172,10 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
 	_logger->info() << "Writing output to: " << destination << endl;
 	domain.writeCheckpoint(destination, &container, &domainDecomposition);
+
+#ifndef MARDYN
+	delete global_simulation;
+#endif
 }
 
 std::vector<double> MDGenerator::getRandomVelocity(double temperature) const {
