@@ -24,8 +24,11 @@ persons. Let's place here things which we could use as a basis for Coders' Day o
                      is not neccessary. 
 | Simulation.cpp                | move tickRDF() calls into handler->initialize()?
 | Molecule.h/cpp                | make id an "unsigned long long int", only this is guaranteed
-                                  to be 64 byte (e.g. on BlueGene, it is not).
+                                  to be 64 byte (e.g. on BlueGene, it is not). How about size_t?
 | Parallelization / Communication | At the moment, particles are converted to ParticleData Objects, then send as
                                     user defined mpi-datatype (which is a conversion again, which is unnecessary?)
                                     Measure the overhead and fix it?!
+| LinkedCells::countParticles() | Move all the count-particles methods or replace them, using getRegion() or the methods off class Component.
+| Vectorization | Make CellProcessor selectable (Legacy / Vectorized); How to determine Build-Configuration via Make?
+
 */
