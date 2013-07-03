@@ -408,6 +408,8 @@ public:
     void enableFinalCheckpoint() { _finalCheckpoint = true; }
     void disableFinalCheckpoint() { _finalCheckpoint = false; }
 
+	void setForcedCheckpointTime(double time) { _forced_checkpoint_time = time; }
+
 	//! initialize all member variables with a suitable value
 	void initialize();
 
@@ -439,7 +441,7 @@ private:
 	//! the value of h AS EXPRESSED IN REDUCED UNITS, i.e. for the
 	//! internal use of the program.
 	double h;
-
+	double _forced_checkpoint_time;
 #ifdef STEEREO
 	SteereoSimSteering* _steer;
 	SteereoCouplingSim* _coupling;

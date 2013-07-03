@@ -165,6 +165,12 @@ int main(int argc, char** argv) {
 		global_log->info() << "Final checkpoint disbaled." << endl;
 	}
 
+	if( options.is_set_by_user("timed-checkpoint") ) {
+		double time = options.get("timed-checkpoint");
+		global_log->info() << "Enabling checkpoint after execution time: " << time << " sec" << endl;
+		simulation.setForcedCheckpointTime(time);
+	}
+
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
     }
@@ -240,6 +246,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
     op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
+	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").help("Execution time of the simulation in seconds after which a checkpoint is forced.");
     
     OptionGroup mkTcTS_options = OptionGroup(op, "mkTcTS options", "Options for the mkTcTS scenario generator.");
     mkTcTS_options.add_option("-c").dest("density-1").type("float").help("density 1 (mkTcTS, mkesfera)");

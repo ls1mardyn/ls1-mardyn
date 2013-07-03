@@ -1324,6 +1324,13 @@ void Simulation::simulate() {
 		loopTimer.stop();
 		perStepIoTimer.start();
 		output(_simstep);
+		if(_forced_checkpoint_time > 0 && (loopTimer.get_etime() + ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
+			/* force checkpoint for specified time */
+			string cpfile(_outputPrefix + ".timed.restart.xdr");
+			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
+			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+			_forced_checkpoint_time = 0; /* disable for further timesteps */
+		}
 		perStepIoTimer.stop();
 		loopTimer.start();
 
