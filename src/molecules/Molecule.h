@@ -109,12 +109,13 @@ public:
 	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
 	 */
 	/** get number of sites */
-	unsigned int numSites() const { return _numsites; }
-	unsigned int numLJcenters() const { return _ljcenters->size(); }
-	unsigned int numCharges() const { return _charges->size(); }
-	unsigned int numDipoles() const { return _dipoles->size(); }
-	unsigned int numQuadrupoles() const { return _quadrupoles->size(); }
-	unsigned int numTersoff() const { assert(_tersoff); return _tersoff->size(); }
+	unsigned int numSites() const { return (*_components)[_componentid].numSites(); }
+	unsigned int numOrientedSites() const { return (*_components)[_componentid].numOrientedSites();  }
+	unsigned int numLJcenters() const { return (*_components)[_componentid].numLJcenters(); }
+	unsigned int numCharges() const { return (*_components)[_componentid].numCharges(); }
+	unsigned int numDipoles() const { return (*_components)[_componentid].numDipoles(); }
+	unsigned int numQuadrupoles() const { return (*_components)[_componentid].numQuadrupoles(); }
+	unsigned int numTersoff() const { return (*_components)[_componentid].numTersoff(); }
 
 	const double* site_d(unsigned int i) const { return &(_sites_d[3*i]); }
 	const double* site_F(unsigned int i) const { return &(_sites_F[3*i]); }
@@ -255,6 +256,7 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
 
+	static void setComponents(std::vector<Component> *components);
 
 private:
 
@@ -268,17 +270,8 @@ private:
     // TODO: We should rename _D to _L with respect to the literature.
 	double _D[3];  /**< angular momentum */
 
-	/* Caches for component data */
-	const std::vector<LJcenter>* _ljcenters;
-	const std::vector<Charge>* _charges;
-	const std::vector<Dipole>* _dipoles;
-	const std::vector<Quadrupole>* _quadrupoles;
-	const std::vector<Tersoff>* _tersoff;
-
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
-	std::size_t _numsites; // number of sites
-	std::size_t _numorientedsites; // number of oriented sites (subset of sites)
 	// global site coordinates relative to site origin
 	// row order: dx1,dy1,dz1,dx2,dy2,dz2,...
 	/* TODO: Maybe change to absolute positions for many center molecules. */
@@ -302,6 +295,7 @@ private:
 	// setup cache values/properties
 	void setupCache(const std::vector<Component>* components);
 
+    static std::vector<Component> *_components;
 };
 
 
