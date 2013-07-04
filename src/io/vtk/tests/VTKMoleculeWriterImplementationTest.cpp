@@ -50,7 +50,7 @@ void VTKMoleculeWriterImplementationTest::testWriteVTKFile() {
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
 
-	Molecule dummyMolecule(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, &components);
+	Molecule dummyMolecule(0,&components[0],0,0,0,0,0,0,0,0,0,0,0,0,0);
 
 	std::vector<std::string> v;
 	writer.initializeVTKFile();

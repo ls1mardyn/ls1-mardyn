@@ -41,16 +41,16 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
 
-	Molecule dummyMolecule1(0,0,2.20,3.0,3.4,0,0,0,0,0,0,0,0,0,0, &components);
+	Molecule dummyMolecule1(0,&components[0],2.20,3.0,3.4,0,0,0,0,0,0,0,0,0,0);
 	container.addParticle(dummyMolecule1);
 
-	Molecule dummyMolecule2(0,0, 1.0,0,0,0,0,0,0,0,0,0,0,0,0, &components);
+	Molecule dummyMolecule2(0,&components[0], 1.0,0,0,0,0,0,0,0,0,0,0,0,0);
 	container.addParticle(dummyMolecule2);
 
-	Molecule dummyMolecule3(0,0, 0,1.0,0,0,0,0,0,0,0,0,0,0,0, &components);
+	Molecule dummyMolecule3(0,&components[0], 0,1.0,0,0,0,0,0,0,0,0,0,0,0);
 	container.addParticle(dummyMolecule3);
 
-	Molecule dummyMolecule4(0,0, 1.0,1.5,0.234,0,0,0,0,0,0,0,0,0,0, &components);
+	Molecule dummyMolecule4(0,&components[0], 1.0,1.5,0.234,0,0,0,0,0,0,0,0,0,0);
 	container.addParticle(dummyMolecule4);
 
 	VTKMoleculeWriter writer(2, "VTKMoleculeWriterTest");
