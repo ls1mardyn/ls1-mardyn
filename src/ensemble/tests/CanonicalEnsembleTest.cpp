@@ -40,7 +40,7 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 	// has the ensemble updated the count of particles per component right?
 	ASSERT_EQUAL(1728ul, components[0].getNumMolecules());
 
-	Molecule molecule(1729, 0, 5.5, 5.5, 5.5, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., &components);
+	Molecule molecule(1729, &components[0], 5.5, 5.5, 5.5, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.);
 	container->addParticle(molecule);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
