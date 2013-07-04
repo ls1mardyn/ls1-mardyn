@@ -59,11 +59,12 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 					else
 						new_position[d2] = currentMolecule->r(d2);
 				}
-				Molecule m1 = Molecule(currentMolecule->id(),currentMolecule->componentid(),
+				Component *component = (Component*) &components[currentMolecule->componentid()];
+				Molecule m1 = Molecule(currentMolecule->id(),component,
 				                       new_position[0], new_position[1], new_position[2],
 				                       currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
 				                       currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
-				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2), &components);
+				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2));
 				moleculeContainer->addParticle(m1);
 				currentMolecule = moleculeContainer->next();
 			}
@@ -77,11 +78,12 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 					else
 						new_position[d2] = currentMolecule->r(d2);
 				}
-				Molecule m1 = Molecule(currentMolecule->id(),currentMolecule->componentid(),
+                Component *component = (Component*) &components[currentMolecule->componentid()];
+				Molecule m1 = Molecule(currentMolecule->id(),component,
 				                       new_position[0], new_position[1], new_position[2],
 				                       currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
 				                       currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
-				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2), &components);
+				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2));
 				moleculeContainer->addParticle(m1);
 				currentMolecule = moleculeContainer->next();
 			}

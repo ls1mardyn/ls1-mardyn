@@ -70,12 +70,12 @@ public:
 
 	//! @brief copy data from object of class class ParticleData to object of class Molecule
 	static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule, const std::vector<Component>* components = NULL) {
-		*molecule = new Molecule(particleStruct.id, particleStruct.cid,
+        Component * component = (Component*) &(*components)[particleStruct.cid];
+		*molecule = new Molecule(particleStruct.id, component,
 		                         particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
 		                         particleStruct.v[0], particleStruct.v[1], particleStruct.v[2],
 		                         particleStruct.q[0], particleStruct.q[1], particleStruct.q[2], particleStruct.q[3],
-		                         particleStruct.D[0], particleStruct.D[1], particleStruct.D[2],
-		                         components
+		                         particleStruct.D[0], particleStruct.D[1], particleStruct.D[2]
 		);
 	}
 

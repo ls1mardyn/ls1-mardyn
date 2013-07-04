@@ -196,7 +196,7 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 						v[0] = v_avg*cos(phi)*cos(omega);
 						v[1] = v_avg*cos(phi)*sin(omega);
 						v[2] = v_avg*sin(phi);
-						Molecule molecule(ID, 0, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0, &components);
+						Molecule molecule(ID, &components[0], q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
 						(*moleculeContainer)->addParticle(molecule);
 						ID++;
 					}

@@ -291,7 +291,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
                      double phi = 6.283185 * r->rnd();
                      double omega = 6.283185 * r->rnd();
 
-                     Molecule m1 = Molecule(ID, 0, q[0], q[1], q[2], v*cos(phi)*cos(omega), v*cos(phi)*sin(omega), v*sin(phi), 1, 0, 0, 0, 0, 0, 0, &dcomponents);
+                     Molecule m1 = Molecule(ID, &dcomponents[0], q[0], q[1], q[2], v*cos(phi)*cos(omega), v*cos(phi)*sin(omega), v*sin(phi), 1, 0, 0, 0, 0, 0, 0);
                      (*this->_moleculeContainer)->addParticle(m1);
                      dcomponents[0].incNumMolecules();
                      // domain->setglobalRotDOF(dcomponents[0].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());

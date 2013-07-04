@@ -43,12 +43,11 @@ public:
 	// but if it is left away, all pointer data is not initialized (which is not
 	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
 	// use it's instances.
-	Molecule(unsigned long id = 0, unsigned int componentid = 0,
+	Molecule(unsigned long id = 0, Component *component = NULL,
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,
 	         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
-	         double Dx = 0., double Dy = 0., double Dz = 0.,
-	         const std::vector<Component>* components = NULL
+	         double Dx = 0., double Dy = 0., double Dz = 0.
 	);
 	Molecule(const Molecule& m);
 
@@ -67,9 +66,9 @@ public:
 	/** set molecule ID */
 	void setid(unsigned long id) { _id = id; }
 	/** get the molecule's component ID */
-	unsigned int componentid() const { return _componentid; }
+	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component ID */
-	void setComponentid( unsigned int id ) { _componentid = id; }
+	void setComponent(Component *component) { _component = component; }
 	/** get position coordinate */
 	double r(unsigned short d) const { return _r[d]; }
 	/** set position coordinate */
@@ -109,13 +108,13 @@ public:
 	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
 	 */
 	/** get number of sites */
-	unsigned int numSites() const { return (*_components)[_componentid].numSites(); }
-	unsigned int numOrientedSites() const { return (*_components)[_componentid].numOrientedSites();  }
-	unsigned int numLJcenters() const { return (*_components)[_componentid].numLJcenters(); }
-	unsigned int numCharges() const { return (*_components)[_componentid].numCharges(); }
-	unsigned int numDipoles() const { return (*_components)[_componentid].numDipoles(); }
-	unsigned int numQuadrupoles() const { return (*_components)[_componentid].numQuadrupoles(); }
-	unsigned int numTersoff() const { return (*_components)[_componentid].numTersoff(); }
+	unsigned int numSites() const { return _component->numSites(); }
+	unsigned int numOrientedSites() const { return _component->numOrientedSites();  }
+	unsigned int numLJcenters() const { return _component->numLJcenters(); }
+	unsigned int numCharges() const { return _component->numCharges(); }
+	unsigned int numDipoles() const { return _component->numDipoles(); }
+	unsigned int numQuadrupoles() const { return _component->numQuadrupoles(); }
+	unsigned int numTersoff() const { return _component->numTersoff(); }
 
 	const double* site_d(unsigned int i) const { return &(_sites_d[3*i]); }
 	const double* site_F(unsigned int i) const { return &(_sites_F[3*i]); }
@@ -256,12 +255,8 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
 
-	static void setComponents(std::vector<Component> *components);
-
 private:
-
-	unsigned long _id; 	/**< IDentification number of that molecule */
-	unsigned int _componentid;  /**< IDentification number of its component type */
+    Component *_component;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
 	double _F[3];  /**< forces */
 	double _v[3];  /**< velocity */
@@ -269,6 +264,7 @@ private:
 	double _M[3];  /**< torsional moment */
     // TODO: We should rename _D to _L with respect to the literature.
 	double _D[3];  /**< angular momentum */
+    unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
@@ -293,9 +289,7 @@ private:
 	double fixedx, fixedy;
 
 	// setup cache values/properties
-	void setupCache(const std::vector<Component>* components);
-
-    static std::vector<Component> *_components;
+	void setupCache();
 };
 
 

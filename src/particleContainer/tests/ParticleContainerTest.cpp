@@ -19,24 +19,23 @@ ParticleContainerTest::~ParticleContainerTest() {
 }
 
 void ParticleContainerTest::setupMolecules(ParticleContainer* container) {
-	Molecule::setComponents(&_components);
 	//(id, cid, x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz)
-	Molecule dummyMolecule1(1, 0, 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule1(1, &_components[0], 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule1);
-	Molecule dummyMolecule2(2, 0, 2.0,2.0,2.0,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule2(2, &_components[0], 2.0,2.0,2.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule2);
-	Molecule dummyMolecule3(3, 0, 3.0,3.0,3.0,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule3(3, &_components[0], 3.0,3.0,3.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule3);
-	Molecule dummyMolecule4(4, 0, 5.1,5.1,5.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule4(4, &_components[0], 5.1,5.1,5.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule4);
 }
 
 void ParticleContainerTest::testInsertion(ParticleContainer* container) {
 	setupMolecules(container);
 	ASSERT_EQUAL(4ul, container->getNumberOfParticles());
-	Molecule dummyMolecule5(0, 0, 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule5(0, &_components[0], 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule5);
-	Molecule dummyMolecule6(0, 0, 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule6(0, &_components[0], 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule6);
 	ASSERT_EQUAL(6ul, container->getNumberOfParticles());
 }
@@ -53,9 +52,9 @@ void ParticleContainerTest::testMoleculeIteration(ParticleContainer* container) 
 	ASSERT_EQUAL(4, moleculeCount);
 	ASSERT_EQUAL(4ul, container->getNumberOfParticles());
 
-	Molecule dummyMolecule5(5, 0, 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule5(5, &_components[0], 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule5);
-	Molecule dummyMolecule6(6, 0, 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule6(6, &_components[0], 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule6);
 
 	moleculeCount = 0;
@@ -98,9 +97,9 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 	ASSERT_EQUAL(4ul, container->getNumberOfParticles());
 
 	// add molecules and call update
-	Molecule dummyMolecule5(5, 0, 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule5(5, &_components[0], 7.7,7.1,7.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule5);
-	Molecule dummyMolecule6(6, 0, 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0, &_components);
+	Molecule dummyMolecule6(6, &_components[0], 11.1,11.1,11.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	container->addParticle(dummyMolecule6);
 	container->update();
 

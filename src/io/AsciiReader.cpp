@@ -313,7 +313,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 			//  store only those molecules within the domain of this process
 
 			// @todo Pointer!!! new!!!  
-			Molecule m1 = Molecule(id,componentid,x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,&dcomponents);
+			Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
 			particleContainer->addParticle(m1);
 			dcomponents[componentid].incNumMolecules();
 			domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());

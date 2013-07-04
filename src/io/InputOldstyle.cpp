@@ -395,7 +395,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		// store only those molecules within the domain of this process
 		// The neccessary check is performed in the particleContainer addPartice method
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
-		Molecule m1 = Molecule(id,componentid,x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz,&dcomponents);
+		Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
 #ifdef ENABLE_MPI
 		ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
 		} // Rank 0 only

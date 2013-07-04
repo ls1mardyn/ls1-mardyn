@@ -189,8 +189,8 @@ void KDDecomposition2::balanceAndExchange(bool balance, ParticleContainer* molec
 				newMol.r[2] += domain->getGlobalLength(2);
 			else if (newMol.r[2] >= highLimit[2])
 				newMol.r[2] -= domain->getGlobalLength(2);
-
-			Molecule m1 = Molecule(newMol.id, newMol.cid, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2], newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2], &components);
+            Component *component = (Component*) &components[newMol.cid];
+			Molecule m1 = Molecule(newMol.id, component, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2], newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2]);
 			moleculeContainer->addParticle(m1);
 		}
 	}
@@ -589,11 +589,12 @@ void KDDecomposition2::createLocalCopies(ParticleContainer* moleculeContainer, D
 					else
 						newPosition[d2] = molPtr->r(d2);
 				}
-				Molecule m1 = Molecule(molPtr->id(),molPtr->componentid(),
+				Component *component = (Component*) &components[molPtr->componentid()];
+				Molecule m1 = Molecule(molPtr->id(),component,
 				                       newPosition[0], newPosition[1], newPosition[2],
 				                       molPtr->v(0),molPtr->v(1),molPtr->v(2),
 				                       molPtr->q().qw(),molPtr->q().qx(),molPtr->q().qy(),molPtr->q().qz(),
-				                       molPtr->D(0),molPtr->D(1),molPtr->D(2), &components);
+				                       molPtr->D(0),molPtr->D(1),molPtr->D(2));
 				moleculeContainer->addParticle(m1);
 			}
 			molPtr = moleculeContainer->next();
