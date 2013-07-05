@@ -370,8 +370,8 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 							getFCCOrientation(fcc, q_);
 
 							vector<double> v = getRandomVelocity(_temperature);
-							Molecule m(molCount, 0, r_[0], r_[1], r_[2], v[0], v[1], v[2],
-									q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2], &_components);
+							Molecule m(molCount, &_components[0], r_[0], r_[1], r_[2], v[0], v[1], v[2],
+									q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2]);
 							particleContainer->addParticle(m);
 							molCount++;
 						}
@@ -441,8 +441,8 @@ unsigned long DropletGenerator::generateMoleculesCluster(
 						 getFCCOrientation(fcc, q_);
 
 						 vector<double> v = getRandomVelocity(_temperature);
-						 Molecule m(molCount, 0, r_[0], r_[1], r_[2], v[0], v[1], v[2],
-								 q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2], &_components);
+						 Molecule m(molCount, &_components[0], r_[0], r_[1], r_[2], v[0], v[1], v[2],
+								 q_[0], q_[1], q_[2], q_[3], w[0], w[1], w[2]);
 						 particleContainer->addParticle(m);
 						 molCount++;
 					 }
