@@ -35,6 +35,7 @@ CubicGridGenerator::CubicGridGenerator() :
 
 	_components.resize(1);
 	_components[0].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 0.0, false);
+	_components[0].setID(0);
 	calculateSimulationBoxLength();
 }
 
@@ -53,7 +54,7 @@ vector<ParameterCollection*> CubicGridGenerator::getParameters() {
 	tab->addParameter(
 			new ParameterWithLongIntValue("numMolecules", "Number of Molecules",
 					"Total number of Molecules", Parameter::LINE_EDIT,
-					false, _numMolecules));
+					true, _numMolecules));
 	tab->addParameter(
 			new ParameterWithDoubleValue("temperature", "Temperature [K]",
 					"Temperature in the domain in Kelvin", Parameter::LINE_EDIT,
@@ -92,6 +93,7 @@ void CubicGridGenerator::setParameter(Parameter* p) {
 		if (_binaryMixture && _components.size() == 1) {
 			_components.resize(2);
 			_components[1].addLJcenter(0, 0, 0, 1.0, 1.0, 1.0, 5.0, false);
+			_components[1].setID(1);
 		} else if (!_binaryMixture && _components.size() == 2) {
 			_components.resize(1);
 		}
@@ -106,6 +108,8 @@ void CubicGridGenerator::setParameter(Parameter* p) {
 
 
 void CubicGridGenerator::calculateSimulationBoxLength() {
+	int numMoleculesPerDimension = ceil(pow((double) _numMolecules / 2.0, 1./3.));
+	_numMolecules = pow((double) numMoleculesPerDimension, 3) * 2;
 	// 1 mol/l = 0.6022 / nm^3 = 0.0006022 / Ang^3 = 0.089236726516 / a0^3
 	double parts_per_a0 = _molarDensity * MDGenerator::molPerL_2_mardyn;
 	double volume = _numMolecules / parts_per_a0;
@@ -148,7 +152,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 // create a body centered cubic layout, by creating by placing the molecules on the
 // vertices of a regular grid, then shifting that grid by spacing/2 in all dimensions.
 
-	int numMoleculesPerDimension = pow((double) _numMolecules / 2.0, 1./3.);
+	int numMoleculesPerDimension = ceil(pow((double) _numMolecules / 2.0, 1./3.));
 	_components[0].updateMassInertia();
 	if (_binaryMixture) {
 		_components[1].updateMassInertia();

@@ -40,15 +40,18 @@ AqueousNaClGenerator::AqueousNaClGenerator() :
 	_components[0].addCharge(0, -0.159567514, 0, 0, -1.04);
 	_components[0].addCharge(1.43042933, -0.983266012, 0, 0.001008, 0.52);
 	_components[0].addCharge(-1.43042933, -0.983266012, 0, 0.001008, 0.52);
+	_components[0].setID(0);
 
 	// Na+
 	_components[1].addLJcenter(0, 0, 0, 0.0229897, 0.062 * MDGenerator::kelvin_2_mardyn,
 			2.58 * MDGenerator::angstroem_2_atomicUnitLength, 0.0, false);
 	_components[1].addCharge(0, 0, 0, 0, 1.0);
+	_components[1].setID(1);
 	// Cl-
 	_components[2].addLJcenter(0, 0, 0, 0.0354532, 0.446 * MDGenerator::kelvin_2_mardyn,
 				4.45 * MDGenerator::angstroem_2_atomicUnitLength, 0.0, false);
 	_components[2].addCharge(0, 0, 0, 0, -1.0);
+	_components[2].setID(2);
 
 	calculateSimulationBoxLength();
 }
@@ -218,10 +221,10 @@ void AqueousNaClGenerator::addMolecule(double x, double y, double z, unsigned lo
 	}
 	/************************** End Copy **************************/
 
-	Molecule m(id, cid, x, y, z, // position
+	Molecule m(id, &(_components[cid]), x, y, z, // position
 			velocity[0], -velocity[1], velocity[2], // velocity
 			orientation[0], orientation[1], orientation[2], orientation[3],
-			w[0], w[1], w[2], &_components);
+			w[0], w[1], w[2] );
 	particleContainer->addParticle(m);
 }
 
