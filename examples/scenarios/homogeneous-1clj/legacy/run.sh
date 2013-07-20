@@ -7,6 +7,7 @@ rm ljfluid_640k_rc3.tar.gz
 # power for processor number
 POW=5
 START_TIME=$(date +%s)
+RETVAL=0
 
 # setup file "current" which will contain the runtime results of this run
 # first, print first line with #procs
@@ -38,7 +39,7 @@ echo "waiting for jobs: $JOBIDS"
 while [ $(squeue -u lu32reb2 -j $JOBIDS | wc -l) -gt 1 ]
 do
     echo "Going to sleep!"
-    sleep 100
+    sleep 500
     # abort if tests take longer than 5 hours
     if [ $(($(date +%s) - $START_TIME)) -gt 18000 ]
     then
@@ -64,6 +65,15 @@ do
     current=$(cat tmp)
     rm tmp
     rm tmpref
+    
+    # case: output not ok, no compute time found
+    if [ "$current" == "0" ];
+    then
+	echo "NO RUNTIME FOUND!"
+        RETVAL=1
+    fi
+
+    #case: runtime too high
     if [ "$(echo $max '<' $current | bc -l)" -eq 1 ];
     then
         echo "RUNTIME TOO HIGH! Expected $max but got $current"
@@ -74,3 +84,4 @@ done
 svn commit --username eckhardw-ro --password ra1nING -m "new current runtime for scenario homogeneous-1clj" current 
 
 rm ljfluid_640k_rc3.inp
+exit $RETVAL

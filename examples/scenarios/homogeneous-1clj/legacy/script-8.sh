@@ -10,11 +10,11 @@
 #SBATCH --mail-type=all
 #SBATCH --mail-user=eckhardw@in.tum.de
 #SBATCH --export=NONE
-#SBATCH --time=01:00:00
+#SBATCH --time=00:07:30
 
 source /etc/profile.d/modules.sh
 
-export NTIMES=100
+export NTIMES=1000
 
 # -ppn: processes per node  -n: #processes
 mpiexec.hydra -ppn 8 -n 8 ../../../../src/MarDyn.PAR_RELEASE ljfluid_640k_rc3.cfg $NTIMES --final-checkpoint=0 
