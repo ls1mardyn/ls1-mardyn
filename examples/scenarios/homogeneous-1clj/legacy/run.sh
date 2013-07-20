@@ -5,7 +5,7 @@ tar xfz ljfluid_640k_rc3.tar.gz
 rm ljfluid_640k_rc3.tar.gz
 
 # power for processor number
-POW=5
+POW=6
 START_TIME=$(date +%s)
 RETVAL=0
 
