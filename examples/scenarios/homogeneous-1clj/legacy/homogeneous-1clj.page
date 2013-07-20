@@ -1,0 +1,29 @@
+/*! \page "Scenario Homogeneous 1CLJ-fluid"
+
+!!! Description
+
+In this scenario the 1CLJ fluid at T / N / ... in NVE ensemble is simulated. 
+In the initial configuration, molecules are arranged on a bcc-grid at liquid
+state, after approximately XXX timesteps the fluid is equilibrated and pressure
+and RDF can be measured.
+
+Subject of test is performance of the LegacyCellHandler.
+
+!!! Features
+
+- Single-site Lennard-Jones computation
+- ...
+
+!!! Generation of input set
+
+xyz-generator with command line:
+
+\verbatim
+./xyz-generator par1 par2 par3
+\endverbatim
+
+!!! Performance on MAC-Cluster (Maximum Runtimes)
+
+\include reference
+
+*/
