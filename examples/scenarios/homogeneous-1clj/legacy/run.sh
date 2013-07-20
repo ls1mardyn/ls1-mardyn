@@ -2,10 +2,12 @@
 
 wget http://www5.in.tum.de/mardyn/scenarios/ljfluid_640k_rc3.tar.gz
 tar xfz ljfluid_640k_rc3.tar.gz
+rm ljfluid_640k_rc3.tar.gz
 
 # power for processor number
 POW=5
 START_TIME=$(date +%s)
+
 # setup file "current" which will contain the runtime results of this run
 # first, print first line with #procs
 rm current
@@ -36,7 +38,7 @@ echo "waiting for jobs: $JOBIDS"
 while [ $(squeue -u lu32reb2 -j $JOBIDS | wc -l) -gt 1 ]
 do
     echo "Going to sleep!"
-    sleep 10
+    sleep 100
     # abort if tests take longer than 5 hours
     if [ $(($(date +%s) - $START_TIME)) -gt 18000 ]
     then
@@ -49,6 +51,7 @@ do
 	exit -1	
     fi
 done
+
 
 # compare runtimes with maximum runtime
 # create file with current runtimes
@@ -68,4 +71,6 @@ do
     echo -n "| $current" >> current
 done
 	
-svn commit --user eckhardw-ro --password ra1nING -m "new current runtime for scenario homogeneous-1clj" current 
+svn commit --username eckhardw-ro --password ra1nING -m "new current runtime for scenario homogeneous-1clj" current 
+
+rm ljfluid_640k_rc3.inp

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-#SBATCH -o /home/hpc/pr63so/lu32reb2/trunk/examples/scenarios/homogeneous-1clj/legacy/8.out
-#SBATCH -D /home/hpc/pr63so/lu32reb2/trunk/examples/scenarios/homogeneous-1clj/legacy/
+#SBATCH -o /home/hpc/pr63so/lu32reb2/MarDyn-jenkins/examples/scenarios/homogeneous-1clj/legacy/8.out
+#SBATCH -D /home/hpc/pr63so/lu32reb2/MarDyn-jenkins/examples/scenarios/homogeneous-1clj/legacy/
 #SBATCH -J h1clj-008
 #SBATCH --get-user-env
 #SBATCH --partition=snb
