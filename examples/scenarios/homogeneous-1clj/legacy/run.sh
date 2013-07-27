@@ -29,14 +29,14 @@ JOBCANCELIDS=""
 for ((i = 0; i <= $POW; i=$i+1))
 do  
     let j=2**$i
-    JOBID=$(sbatch script-$j.sh | cut -d " " -f 4)
+    JOBID=$(sbatch --constraint=turbo_off script-$j.sh | cut -d " " -f 4)
     JOBIDS="$JOBIDS$JOBID,"
     JOBCANCELIDS="$JOBCANCELIDS $JOBID"
 done 
 echo "waiting for jobs: $JOBIDS"
 
 # wait for completion of all jobs
-while [ $(squeue --constraint=turbo_off -u lu32reb2 -j $JOBIDS | wc -l) -gt 1 ]
+while [ $(squeue -u lu32reb2 -j $JOBIDS | wc -l) -gt 1 ]
 do
     echo "Going to sleep!"
     sleep 500
