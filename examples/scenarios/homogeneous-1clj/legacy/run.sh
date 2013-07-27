@@ -18,7 +18,7 @@ do
     let j=2**$i
     echo -n "| $j" >> current
 done
-echo "" >> current
+echo "|| time " >> current
 
 # ids of jobs submitted, comma seperated for "squeue"
 JOBIDS=""
@@ -36,7 +36,7 @@ done
 echo "waiting for jobs: $JOBIDS"
 
 # wait for completion of all jobs
-while [ $(squeue -u lu32reb2 -j $JOBIDS | wc -l) -gt 1 ]
+while [ $(squeue --constraint=turbo_off -u lu32reb2 -j $JOBIDS | wc -l) -gt 1 ]
 do
     echo "Going to sleep!"
     sleep 500
