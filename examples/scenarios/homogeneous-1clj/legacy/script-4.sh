@@ -10,7 +10,7 @@
 #SBATCH --mail-type=all
 #SBATCH --mail-user=eckhardw@in.tum.de
 #SBATCH --export=NONE
-#SBATCH --time=00:13:00
+#SBATCH --time=00:16:00
 
 source /etc/profile.d/modules.sh
 
