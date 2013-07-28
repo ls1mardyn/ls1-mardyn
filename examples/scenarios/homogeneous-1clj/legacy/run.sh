@@ -18,7 +18,8 @@ do
     let j=2**$i
     echo -n "| $j" >> current
 done
-echo "|| time " >> current
+echo " " >> current
+echo -n "|| time " >> current
 
 # ids of jobs submitted, comma seperated for "squeue"
 JOBIDS=""
