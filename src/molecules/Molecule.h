@@ -69,6 +69,8 @@ public:
 	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component ID */
 	void setComponent(Component *component) { _component = component; }
+	/** return pointer to component to which the molecule belongs */
+	Component* component() const { return _component; }
 	/** get position coordinate */
 	double r(unsigned short d) const { return _r[d]; }
 	/** set position coordinate */

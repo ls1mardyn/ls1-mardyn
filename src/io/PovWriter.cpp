@@ -5,6 +5,8 @@
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "ensemble/EnsembleBase.h"
+#include "Simulation.h"
 
 #include <ctime>
 #include <sstream>
@@ -64,8 +66,8 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "//*PMRawBegin" << endl;
 		ostrm << "background {rgb <1,1,1>}" << endl;
 		ostrm << "//*PMRawEnd" << endl;
-		vector<Component> dcomponents = domain->getComponents();
-		for (unsigned int i = 0; i < dcomponents.size(); ++i) {
+		vector<Component>* dcomponents = _simulation.getEnsemble()->components();
+		for (unsigned int i = 0; i < dcomponents->size(); ++i) {
 			ostringstream osstrm;
 			osstrm.clear();
 			osstrm.str("");
@@ -73,7 +75,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 			osstrm << " finish{ambient 0.5 diffuse 0.4 phong 0.3 phong_size 3}";
 			ostrm << "#declare T" << i << " = ";
 			//ostrm << "sphere {<0,0,0>,0.5 pigment {color rgb<1,0,0>} finish{ambient 0.5 diffuse 0.4 phong 0.3 phong_size 3} scale 1.}";
-			dcomponents.at(i).writePOVobjs(ostrm, osstrm.str());
+			dcomponents->at(i).writePOVobjs(ostrm, osstrm.str());
 			ostrm << endl;
 		}
 		ostrm << endl;
@@ -99,7 +101,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "light_source { <" << domain->getGlobalLength(0) << "," << domain->getGlobalLength(1) << ",0>, color rgb <1,1,1> }" << endl;
 		ostrm << "light_source { <" << domain->getGlobalLength(0) << "," << domain->getGlobalLength(1) << "," << domain->getGlobalLength(2) << ">, color rgb <1,1,1> }" << endl;
 		ostrm << endl;
-		ostrm << "// " << dcomponents.size() << " objects for the atoms following..." << endl;
+		ostrm << "// " << dcomponents->size() << " objects for the atoms following..." << endl;
 		double mrot[3][3];
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
 			(pos->q()).getRotinvMatrix(mrot);

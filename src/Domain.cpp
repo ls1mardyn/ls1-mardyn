@@ -30,6 +30,7 @@
 #include "ensemble/PressureGradient.h"
 #include "CutoffCorrections.h"
 #include "Simulation.h"
+#include "ensemble/EnsembleBase.h"
 
 #include "utils/Logger.h"
 using Log::global_log;
@@ -170,13 +171,6 @@ double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolec
 
 
 
-vector<Component>& Domain::getComponents(){
-	return _components; 
-}
-
-void Domain::addComponent(Component component){
-	_components.push_back(component);
-}
 
 Comp2Param& Domain::getComp2Params(){
 	return _comp2params; 
@@ -316,7 +310,7 @@ void Domain::calculateGlobalValues(
 					tM->scale_F(vcorr);
 				}
 
-				rot_dof = _components[tM->componentid()].getRotationalDegreesOfFreedom();
+				rot_dof = tM->component()->getRotationalDegreesOfFreedom();
 				if(rot_dof > 0)
 				{
 					limit_rot_energy = 3.0*rot_dof * Ti;
@@ -446,7 +440,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
 			this->_localThermostatN[thermostat]++;
-			this->_localRotationalDOF[thermostat] += _components[cid].getRotationalDegreesOfFreedom();
+			this->_localRotationalDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
 			if(this->_universalUndirectedThermostat[thermostat])
 			{
 				tM->calculate_mv2_Iw2( this->_local2KETrans[thermostat],
@@ -466,7 +460,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
 		{
 			this->_localThermostatN[0]++;
-			this->_localRotationalDOF[0] += _components[ tM->componentid() ].getRotationalDegreesOfFreedom();
+			this->_localRotationalDOF[0] += tM->component()->getRotationalDegreesOfFreedom();
 			if(this->_universalUndirectedThermostat[0])
 			{
 				tM->calculate_mv2_Iw2( this->_local2KETrans[0],
@@ -531,11 +525,12 @@ void Domain::writeCheckpoint( string filename,
 				<< this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
 			checkpointfilestream << setprecision(8);
 		}
-		checkpointfilestream << " NumberOfComponents\t" << _components.size() << endl;
-		for(vector<Component>::const_iterator pos=_components.begin();pos!=_components.end();++pos){
+		vector<Component>* components = _simulation.getEnsemble()->components();
+		checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
+		for(vector<Component>::const_iterator pos=components->begin();pos!=components->end();++pos){
 			pos->write(checkpointfilestream);
 		}
-		unsigned int numperline=_components.size();
+		unsigned int numperline=_simulation.getEnsemble()->components()->size();
 		unsigned int iout=0;
 		for(vector<double>::const_iterator pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
 			checkpointfilestream << *pos;
@@ -594,17 +589,18 @@ void Domain::writeCheckpoint( string filename,
 }
 
 void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
-	_comp2params.initialize(_components, _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ); 
+	_comp2params.initialize(*(_simulation.getEnsemble()->components()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ); 
 }
 
 void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 	double UpotCorrLJ=0.;
 	double VirialCorrLJ=0.;
 	double MySelbstTerm=0.;
-	unsigned int numcomp=_components.size();
+	vector<Component>* components = _simulation.getEnsemble()->components();
+	unsigned int numcomp=components->size();
 	unsigned long nummolecules=0;
 	for(unsigned int i=0;i<numcomp;++i) {
-		Component& ci=_components[i];
+		Component& ci=(*components)[i];
 		nummolecules+=ci.getNumMolecules();
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
@@ -633,7 +629,7 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 		MySelbstTerm += my2 * ci.getNumMolecules();
 
 		for(unsigned int j=0;j<numcomp;++j) {
-			Component& cj=_components[j];
+			Component& cj=(*components)[j];
 			unsigned numtersoffj = cj.numTersoff();
 			// no LJ interaction between Tersoff components
 			if(numtersoffi && numtersoffj) continue;
@@ -736,7 +732,7 @@ void Domain::recordProfile(ParticleContainer* molCont)
 				+ yun * this->_universalNProfileUnits[2] + zun;
 			this->_localNProfile[unID] += 1.0;
 			for(int d=0; d<3; d++) this->_localvProfile[d][unID] += thismol->v(d);
-			this->_localDOFProfile[unID] += 3.0 + (long double)(_components[cid].getRotationalDegreesOfFreedom());
+			this->_localDOFProfile[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
 
 			// record _twice_ the total (ordered + unordered) kinetic energy
 			mv2 = 0.0;
@@ -970,23 +966,27 @@ void Domain::resetProfile()
 
 void Domain::Nadd(unsigned cid, int N, int localN)
 {
-	this->_components[cid].incNumMolecules(N);
+	Ensemble* ensemble = _simulation.getEnsemble();
+	Component* component = ensemble->component(cid);
+	component->incNumMolecules(N);
+	unsigned int rotationDegreesOfFreeedom = component->getRotationalDegreesOfFreedom();
+	
 	this->_globalNumMolecules += N;
-	this->_localRotationalDOF[0] += localN * _components[cid].getRotationalDegreesOfFreedom();
-	this->_universalRotationalDOF[0] += N * _components[cid].getRotationalDegreesOfFreedom();
+	this->_localRotationalDOF[0] += localN * rotationDegreesOfFreeedom;
+	this->_universalRotationalDOF[0] += N * rotationDegreesOfFreeedom;
 	if( (this->_componentwiseThermostat)
 			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
 		int thid = this->_componentToThermostatIdMap[cid];
 		this->_localThermostatN[thid] += localN;
 		this->_universalThermostatN[thid] += N;
-		this->_localRotationalDOF[thid] += localN * _components[cid].getRotationalDegreesOfFreedom();
-		this->_universalRotationalDOF[thid] += N * _components[cid].getRotationalDegreesOfFreedom();
+		this->_localRotationalDOF[thid] += localN * rotationDegreesOfFreeedom;
+		this->_universalRotationalDOF[thid] += N * rotationDegreesOfFreeedom;
 	}
 	this->_localThermostatN[0] += localN;
 	this->_universalThermostatN[0] += N;
-	this->_localRotationalDOF[0] += localN * _components[cid].getRotationalDegreesOfFreedom();
-	this->_universalRotationalDOF[0] += N * _components[cid].getRotationalDegreesOfFreedom();
+	this->_localRotationalDOF[0] += localN * rotationDegreesOfFreeedom;
+	this->_universalRotationalDOF[0] += N * rotationDegreesOfFreeedom;
 }
 
 void Domain::evaluateRho(
@@ -1028,11 +1028,12 @@ void Domain::setTargetTemperature(int thermostat, double targetT)
 			_universalTargetTemperature.erase(0);
 			_universalUndirectedThermostat.erase(0);
 			for(int d=0; d < 3; d++) this->_universalThermostatDirectedVelocity[d].erase(0);
-			for( vector<Component>::iterator tc = this->_components.begin();
-					tc != this->_components.end();
-					tc ++ )
-				if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0))
+			vector<Component>* components = _simulation.getEnsemble()->components();
+			for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
+				if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
 					this->_componentToThermostatIdMap[ tc->ID() ] = -1;
+				}
+			}
 		}
 	}
 }
@@ -1043,11 +1044,12 @@ void Domain::enableComponentwiseThermostat()
 
 	this->_componentwiseThermostat = true;
 	this->_universalTargetTemperature.erase(0);
-	for( vector<Component>::iterator tc = this->_components.begin();
-			tc != this->_components.end();
-			tc ++ )
-		if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0))
+	vector<Component>* components = _simulation.getEnsemble()->components();
+	for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
+		if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
 			this->_componentToThermostatIdMap[ tc->ID() ] = -1;
+		}
+	}
 }
 
 void Domain::enableUndirectedThermostat(int tst)
@@ -1121,10 +1123,10 @@ double Domain::cv()
 //! methods implemented by Stefan Becker <stefan.becker@mv.uni-kl.de>
 // the following two methods are used by the MmspdWriter (writing the output file in a format used by MegaMol)
 double Domain::getSigma(unsigned cid, unsigned nthSigma){
-  return _components[cid].getSigma(nthSigma);
+  return _simulation.getEnsemble()->component(cid)->getSigma(nthSigma);
 }
 unsigned Domain::getNumberOfComponents(){
-  return _components.size();
+  return _simulation.getEnsemble()->components()->size();
 }
 
 void Domain::submitDU(unsigned cid, double DU, double* r)

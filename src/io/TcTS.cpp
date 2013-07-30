@@ -10,6 +10,8 @@
 #include "io/XyzWriter.h"
 #include "io/CheckpointWriter.h"
 #include "utils/Logger.h"
+#include "Simulation.h"
+#include "ensemble/EnsembleBase.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecompBase.h"
@@ -214,7 +216,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
 //    this->_domain->setCurrentTime(0.0);
    for( int d = 0; d < 3; d++ ) this->_domain->setGlobalLength(d, box[d]);
 
-   vector<Component>& dcomponents = this->_domain->getComponents();
+   vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
    dcomponents.resize(1);
    dcomponents[0].setID(0);
    dcomponents[0].addLJcenter(0, 0, 0, 1, 1, 1, cutoff, do_shift);

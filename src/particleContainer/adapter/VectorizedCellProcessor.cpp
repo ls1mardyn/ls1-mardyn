@@ -9,6 +9,8 @@
 #include "particleContainer/ParticleCell.h"
 #include "Domain.h"
 #include "utils/Logger.h"
+#include "ensemble/EnsembleBase.h"
+#include "Simulation.h"
 
 #include <algorithm>
 
@@ -29,7 +31,7 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain,
 			<< std::endl;
 #endif
 
-	ComponentList components = _domain.getComponents();
+	ComponentList components = *(_simulation.getEnsemble()->components());
 	// Get the maximum Component ID.
 	size_t maxID = 0;
 	const ComponentList::const_iterator end = components.end();

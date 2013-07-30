@@ -7,6 +7,8 @@
 #include "ensemble/PressureGradient.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "ensemble/EnsembleBase.h"
+#include "Simulation.h"
 
 
 using namespace std;
@@ -71,7 +73,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 				int thermostat = domain->getThermostat(cid);
 				tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
 				N[thermostat]++;
-				rotDOF[thermostat] += domain->getComponentRotDOF(cid);
+				rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
 			}
 		}
 		else {
@@ -80,11 +82,10 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			double summv2gt = 0.0;
 			double sumIw2gt = 0.0;
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
-				int cid = tM->componentid();
 				tM->upd_postF(dt_half, summv2gt, sumIw2gt);
 				assert(summv2gt >= 0.0);
 				Ngt++;
-				rotDOFgt += domain->getComponentRotDOF(cid);
+				rotDOFgt += tM->component()->getRotationalDegreesOfFreedom();
 			}
 			N[0] = Ngt;
 			rotDOF[0] = rotDOFgt;
@@ -116,7 +117,7 @@ void Leapfrog::transition3to1(ParticleContainer* molCont, Domain* domain) {
 
 void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
-	vector<Component> comp = domain->getComponents();
+	vector<Component> comp = *(_simulation.getEnsemble()->components());
 	vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	for (compit = comp.begin(); compit != comp.end(); compit++) {
@@ -140,7 +141,7 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 }
 
 void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* domain) {
-	vector<Component> comp = domain->getComponents();
+	vector<Component> comp = *(_simulation.getEnsemble()->components());
 	vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	for (compit = comp.begin(); compit != comp.end(); compit++) {

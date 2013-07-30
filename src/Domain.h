@@ -24,6 +24,8 @@
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
+#include "ensemble/EnsembleBase.h"
+#include "Simulation.h"
 
 /* 
  * TODO add comments for variables 
@@ -200,9 +202,6 @@ public:
 		this->_localThermostatN[thermostat] = N;
 		this->_localRotationalDOF[thermostat] = rotDOF;
 	}
-	unsigned int getComponentRotDOF(int cid) { 
-		return _components[cid].getRotationalDegreesOfFreedom(); 
-	}
 
 	//! @brief get input version
 	unsigned long getinpversion();
@@ -221,12 +220,6 @@ public:
 
 	//! @brief set globalRotDOF
 	void setglobalRotDOF(unsigned long grotdof);
-
-	//! @brief get a reference to the vector of components
-	std::vector<Component>& getComponents();
-
-	//! @brief add a component to the vector of components
-	void addComponent(Component component);
 
 	//! @brief get the parameter streams
 	Comp2Param& getComp2Params();
@@ -338,7 +331,6 @@ public:
 	void resetProfile();
 
 	unsigned long N() {return _globalNumMolecules;}
-	unsigned long N(unsigned cid) { return _components[cid].getNumMolecules(); }
 
 	void Nadd(unsigned cid, int N, int localN);
 
@@ -502,8 +494,6 @@ private:
 
 	//! Contains the time t in reduced units
 
-	//! Components resp. molecule types
-	std::vector<Component> _components;
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
 	//! modified Lorentz-Berthelot mixing rule parameters

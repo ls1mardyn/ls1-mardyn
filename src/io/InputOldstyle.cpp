@@ -63,7 +63,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << endl;
 
 
-	vector<Component>& dcomponents = domain->getComponents();
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
 	bool header = true; // When the last header element is reached, "header" is set to false
 
 	while(header) {
@@ -284,7 +284,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 #endif
 
 	string token;
-	vector<Component>& dcomponents = domain->getComponents();
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
 	unsigned int numcomponents = dcomponents.size();
 	unsigned long nummolecules;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
@@ -407,7 +407,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD 
 			for (int j = 0; j < particle_buff_pos; j++) {
 				Molecule *m;
-				ParticleData::ParticleDataToMolecule(particle_buff[j], &m, &domain->getComponents());
+				ParticleData::ParticleDataToMolecule(particle_buff[j], &m, _simulation.getEnsemble()->components());
 				particleContainer->addParticle(*m);
 				
 				// TODO: The following should be done by the addPartice method.

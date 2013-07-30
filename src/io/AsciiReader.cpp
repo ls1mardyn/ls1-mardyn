@@ -9,6 +9,9 @@
 #include "Domain.h"
 #include "utils/Logger.h"
 
+#include "ensemble/EnsembleBase.h"
+#include "Simulation.h"
+
 class DomainDecompBase;
 
 using Log::global_log;
@@ -37,7 +40,7 @@ void AsciiReader::setPhaseSpaceHeaderFile(string filename) {
 
 void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 {
-	vector<Component>& dcomponents = domain->getComponents();
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
 	string token;
 	_phaseSpaceFileStream >> token;
 	domain->setinpversion(0);
@@ -245,7 +248,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 	
 	string token;
 
-	vector<Component>& dcomponents = domain->getComponents();
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
 	
 	double x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz;
 	double Fx,Fy,Fz,Mx,My,Mz;

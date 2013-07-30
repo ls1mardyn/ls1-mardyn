@@ -64,6 +64,7 @@
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
+#include "ensemble/CanonicalEnsemble.h"
 
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
@@ -79,6 +80,7 @@ Simulation* global_simulation;
 Simulation::Simulation() :
 	_rdf(NULL), _ljFlopCounter(NULL), _domainDecomposition(NULL) {
 
+	_ensemble = new CanonicalEnsemble();
 	initialize();
 }
 
@@ -383,12 +385,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	std::list<ChemicalPotential>::iterator cpit;
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
-		double tmp_molecularMass =
-				_domain->getComponents()[cpit->getComponentID()].m();
+		double tmp_molecularMass = global_simulation->getEnsemble()->component(cpit->getComponentID())->m();
 		cpit->setSystem(_domain->getGlobalLength(0),
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
-		cpit->setGlobalN(_domain->N(cpit->getComponentID()));
+		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
@@ -791,13 +792,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double interval;
 			unsigned bins;
 			inputfilestream >> interval >> bins;
-			if (_domain->getComponents().size() <= 0) {
+			if (global_simulation->getEnsemble()->components()->size() <= 0) {
 				global_log->error()
 						<< "PhaseSpaceFile-Specifiation has to occur befor RDF-Token!"
 						<< endl;
 				exit(-1);
 			}
-			_rdf = new RDF(interval, bins, _domain->getComponents());
+			_rdf = new RDF(interval, bins, *(global_simulation->getEnsemble()->components()));
 			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
 			unsigned int RDFOutputTimesteps;
@@ -916,9 +917,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> h;
 		} else if(token == "Widom") {
                         widom = true;
-                } else if (token == "NVE") {
+		} else if (token == "NVE") {
 			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
+			global_log->error() << "Not implemented" << endl;
+			this->exit(1);
 		} else if (token == "initCanonical") {
 			inputfilestream >> _initCanonical;
 		} else if (token == "initGrandCanonical") { /* suboption of chemical potential */
@@ -958,7 +961,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	bool quadrupole_present = false;
 	bool tersoff_present = false;
 
-	const vector<Component> components = _domain->getComponents();
+	const vector<Component> components = *(global_simulation->getEnsemble()->components());
 	for (size_t i = 0; i < components.size(); i++) {
 		lj_present |= components[i].numLJcenters() != 0;
 		charge_present |= components[i].numCharges() != 0;
@@ -994,12 +997,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
                 if(widom) cpit->enableWidom();
 		cpit->setIncrement(idi);
-		double tmp_molecularMass =
-				_domain->getComponents()[cpit->getComponentID()].m();
+		double tmp_molecularMass = global_simulation->getEnsemble()->component(cpit->getComponentID())->m();
 		cpit->setSystem(_domain->getGlobalLength(0),
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
-		cpit->setGlobalN(_domain->N(cpit->getComponentID()));
+		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
@@ -1131,7 +1133,7 @@ void Simulation::simulate() {
 // 			/ _integrator->getTimestepLength());
 	_initSimulation = 0;
 	/* demonstration for the usage of the new ensemble class */
-	CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
+	CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
 			<< ensemble.N() << endl;
@@ -1172,7 +1174,7 @@ void Simulation::simulate() {
 		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
 			this->_rdf->tickRDF();
 			this->_particlePairsHandler->setRDF(_rdf);
-			this->_rdf->accumulateNumberOfMolecules(_domain->getComponents());
+			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->components()));
 		}
 
 		// ensure that all Particles are in the right cells and exchange Particles
@@ -1281,7 +1283,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				velocityScalingThermostat.enableComponentwise();
-				for(unsigned int cid = 0; cid < _domain->getComponents().size(); cid++) {
+				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->components()->size(); cid++) {
 					int thermostatId = _domain->getThermostat(cid);
 					velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
 					velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
@@ -1425,7 +1427,7 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
 	_domainDecomposition->balanceAndExchange(true, _moleculeContainer,
-			_domain->getComponents(), _domain);
+			*(global_simulation->getEnsemble()->components()), _domain);
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();

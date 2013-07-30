@@ -57,6 +57,7 @@ public:
 	DomainBase *domain() { return _domain; }
 	Component* component(int cid) { return &_components[cid]; }
 	Component* component(std::string cid) { return &_components[_componentnamesToIds[cid]]; }
+	std::vector<Component>* components() { return &_components; }
 
 protected:
 	std::vector<Component> _components;
