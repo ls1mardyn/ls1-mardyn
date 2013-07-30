@@ -4,6 +4,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "parallel/ParticleData.h"
+#include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 
 using Log::global_log;
@@ -42,6 +43,12 @@ DomainDecomposition::DomainDecomposition() {
 DomainDecomposition::~DomainDecomposition() {
 	MPI_Type_free(&_mpi_Particle_data);
 }
+
+void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
+	/* no parameters */
+	/* TODO: Maybe add decomposition dimensions, default auto. */
+}
+
 
 void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
 

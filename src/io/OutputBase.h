@@ -8,6 +8,7 @@
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
+class XMLfileUnits;
 
 /**
  * TODO: cleanup all classes implementing this interface
@@ -56,6 +57,8 @@ public:
 	//! be called once at the beginning of the simulation (see Simulation.cpp)
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
+
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
 
 	//! @brief will be called in each time step
 	//!

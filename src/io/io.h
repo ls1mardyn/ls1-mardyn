@@ -21,6 +21,7 @@
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
 #include "io/StatisticsWriter.h"
+#include "io/GridGenerator.h"
 // MmspdWriter by Stefan Becker <stefan.becker@mv.uni-kl.de>
 #include "io/MmspdWriter.h"
 #ifdef VTK

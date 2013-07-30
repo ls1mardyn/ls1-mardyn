@@ -21,8 +21,12 @@
 #include <iomanip>
 
 #include "Component.h"
+#include "Site.h"
+#include "utils/xmlfileUnits.h"
+#include "utils/Logger.h"
 
 using namespace std;
+using Log::global_log;
 
 Component::Component(unsigned int id) {
 	_id = id;
@@ -39,6 +43,51 @@ Component::Component(unsigned int id) {
 	_dipoles = vector<Dipole> ();
 	_tersoff = vector<Tersoff> ();
 }
+
+void Component::readXML(XMLfileUnits& xmlconfig) {
+	global_log->info() << "Reading in component" << endl;
+	std::string cid("");
+	xmlconfig.getNodeValue( "@id", cid );
+	global_log->info() << "Component ID:" << cid << endl;
+	setName(cid);
+
+	XMLfile::Query query = xmlconfig.query( "site" );
+	XMLfile::Query::const_iterator siteIter;
+	for( siteIter = query.begin(); siteIter; siteIter++ ) {
+		xmlconfig.changecurrentnode( siteIter );
+		
+		std::string siteType;
+		xmlconfig.getNodeValue( "@type", siteType );
+		std::cout << "Adding site of type " << siteType << endl;
+		
+		if ( siteType == "LJ126" ) {
+			LJcenter ljSite;
+			ljSite.readXML(xmlconfig);
+			addLJcenter( ljSite );
+		} else
+		if ( siteType == "Charge" ) {
+			Charge chargeSite;
+			chargeSite.readXML(xmlconfig);
+			addCharge(chargeSite);
+		} else
+		if ( siteType == "Dipole" ) {
+			Dipole dipoleSite;
+			dipoleSite.readXML(xmlconfig);
+			addDipole(dipoleSite);
+		} else
+		if ( siteType == "Quadrupole" ) {
+			Quadrupole quadrupoleSite;
+			quadrupoleSite.readXML(xmlconfig);
+			addQuadrupole(quadrupoleSite);
+		} else
+		if ( siteType == "Tersoff" ) {
+			Tersoff tersoffSite;
+			tersoffSite.readXML(xmlconfig);
+			addTersoff(tersoffSite);
+		}
+	}
+}
+
 
 
 void Component::addLJcenter(double x, double y, double z,

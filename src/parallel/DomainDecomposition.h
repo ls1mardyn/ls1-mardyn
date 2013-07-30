@@ -33,6 +33,8 @@ public:
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
+	virtual void readXML(XMLfileUnits& xmlconfig);
+
 	//! @brief exchange molecules between processes
 	//!
 	//! molecules which aren't in the domain of their process any

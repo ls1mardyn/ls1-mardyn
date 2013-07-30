@@ -88,12 +88,13 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 		token.clear();
 		_phaseSpaceFileStream >> token;
 
-		if((token == "currentTime") || (token == "t"))
-		{
-			_phaseSpaceFileStream >> token;
-			domain->setCurrentTime(strtod(token.c_str(), NULL));
-		}
-		else if((token == "Temperature") || (token == "T"))
+// 		if((token == "currentTime") || (token == "t"))
+// 		{
+// 			_phaseSpaceFileStream >> token;
+// 			domain->setCurrentTime(strtod(token.c_str(), NULL));
+// 		}
+// 		else if((token == "Temperature") || (token == "T"))
+		if((token == "Temperature") || (token == "T"))
 		{
 			 _phaseSpaceFileStream >> token;
 			 domain->disableComponentwiseThermostat();

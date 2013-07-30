@@ -12,6 +12,7 @@
 class Molecule;
 class ParticleData;
 class KDNode;
+class XMLfileUnits;
 
 
 /**
@@ -60,8 +61,12 @@ class KDDecomposition2: public DomainDecompBase{
 	 */
 	KDDecomposition2(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold);
 
+    KDDecomposition2(){}
+
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition2();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//###############################################
 	//### The following methods are those of the  ###

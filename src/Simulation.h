@@ -34,6 +34,7 @@ extern Simulation* global_simulation;
 
 class PressureGradient;
 class ParticleInsertion;
+class Ensemble;
 
 //! Reference to the global simulation object 
 #define _simulation (*global_simulation)
@@ -109,6 +110,7 @@ public:
 	//!
 	~Simulation();
 
+	void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief Terminate simulation with a given exit code.
 	//!
@@ -289,8 +291,14 @@ public:
            this->_profileOutputTimesteps = profileOutputTimesteps;
            this->_profileOutputPrefix = profileOutputPrefix;
         }
+	void setSimulationTime(double curtime){ _simulationTime = curtime; }
+	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
+	double getSimulationTime(){ return _simulationTime; }
 
 private:
+
+
+	double _simulationTime; //!< Simulation time t in reduced units
 
 	// enum to get rid of a dynamic cast. With the xml format, there won't be any
 	// need for this hack then.
@@ -365,6 +373,8 @@ private:
 	unsigned long _initGrandCanonical;
 	//! step number for activation of all sorts of statistics
 	unsigned long _initStatistics;
+
+	Ensemble* _ensemble;
 
 	//! Flow regulation
 	PressureGradient* _pressureGradient;
@@ -442,11 +452,6 @@ private:
 	//! internal use of the program.
 	double h;
 	double _forced_checkpoint_time;
-#ifdef STEEREO
-	SteereoSimSteering* _steer;
-	SteereoCouplingSim* _coupling;
-#endif
-
 
 	
 };

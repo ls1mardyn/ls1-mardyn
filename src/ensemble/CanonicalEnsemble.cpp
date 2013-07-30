@@ -1,6 +1,7 @@
 #include <map>
 
 #include "CanonicalEnsemble.h"
+#include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
@@ -10,6 +11,9 @@
 #endif
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
+#include "DomainBase.h"
+#include "BoxDomain.h"
+
 
 using namespace std;
 using Log::global_log;
@@ -49,7 +53,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 #endif
 			global_log->debug() << "Number of molecules in component " << cid << ": " << numMolecules[cid] << endl;
 			_N += numMolecules[cid];
-			(*_components)[cid].setNumMolecules(numMolecules[cid]);
+			_components[cid].setNumMolecules(numMolecules[cid]);
 		}
 #ifdef ENABLE_MPI
 		_simulation.domainDecomposition().collCommFinalize();
@@ -103,8 +107,8 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 #endif
 		  global_log->debug() << "Kinetic energy in component " << cid << ": " << 
 			  "E_trans = " << E_trans[cid] << ", E_rot = " << E_rot[cid] << endl;
-		  (*_components)[cid].setE_trans(E_trans[cid]);
-		  (*_components)[cid].setE_rot(E_rot[cid]);
+		  _components[cid].setE_trans(E_trans[cid]);
+		  _components[cid].setE_rot(E_rot[cid]);
 		  _E_trans += E_trans[cid];
 		  _E_rot   += E_rot[cid];
 	  }
@@ -125,16 +129,16 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		 * the canonical ensemble should have a fixed temperature? */
 		long long totalDegreesOfFreedom = 0;
 		for( int cid = 0; cid < numComponents; cid++) {
-			unsigned int rdf = (*_components)[cid].getRotationalDegreesOfFreedom();
-			long long N      = (*_components)[cid].getNumMolecules();
+			unsigned int rdf = _components[cid].getRotationalDegreesOfFreedom();
+			long long N      = _components[cid].getNumMolecules();
 			long long degreesOfFreedom = (3 + rdf) * N;
 			totalDegreesOfFreedom += degreesOfFreedom;
 
-			double E_kin = (*_components)[cid].E(); 
+			double E_kin = _components[cid].E(); 
 			double T = E_kin / degreesOfFreedom;
 			global_log->debug() << "Temprature of component " << cid << ": " <<
 				              "T = " << T << endl;
-			(*_components)[cid].setT( T );
+			_components[cid].setT( T );
 		}
 		_T = _E / totalDegreesOfFreedom;
 	}
@@ -147,3 +151,25 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	/* save variables to components and ensemble */
 }
 
+void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
+	Ensemble::readXML(xmlconfig);
+
+	xmlconfig.getNodeValueReduced("temperature", _T);
+	global_log->info() << "Temperature: " << _T << endl;
+	string domaintype;
+	xmlconfig.getNodeValue("domain@type", domaintype);
+	global_log->info() << "Domain type: " << domaintype << endl;
+	if( "box" == domaintype) {
+		_domain = new BoxDomain();
+	}
+	else {
+		global_log->error() << "Volume type not supported." << endl;
+		exit(1);
+	}
+	xmlconfig.changecurrentnode("domain");
+	_domain->readXML(xmlconfig);
+	xmlconfig.changecurrentnode("..");
+	_V = _domain->V();
+	global_log->info() << "Volume: " << _V << endl;
+	global_log->warning() << "Box dimensions not set yet in domain class" << endl;
+}

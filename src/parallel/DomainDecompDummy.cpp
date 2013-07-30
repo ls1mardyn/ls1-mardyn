@@ -17,6 +17,10 @@ DomainDecompDummy::DomainDecompDummy() {
 DomainDecompDummy::~DomainDecompDummy() {
 }
 
+void DomainDecompDummy::readXML(XMLfileUnits& xmlconfig) {
+	/* no parameters */
+}
+
 void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
 
 	double rmin[3]; // lower corner of the process-specific domain //ENABLE_MPI

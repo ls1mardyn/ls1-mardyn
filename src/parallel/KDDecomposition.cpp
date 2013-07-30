@@ -68,6 +68,11 @@ KDDecomposition::~KDDecomposition() {
 	KDNode::shutdownMPIDataType();
 }
 
+void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
+	/* no parameters */
+	/* TODO: Maybe add decomposition dimensions, default auto. */
+}
+
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
 	balanceAndExchange(false, moleculeContainer, components, domain);
 }

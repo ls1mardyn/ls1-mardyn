@@ -82,6 +82,10 @@ AdaptiveSubCells::~AdaptiveSubCells() {
 	// empty
 }
 
+void AdaptiveSubCells::readXML(XMLfileUnits& xmlconfig) {
+	/* no parameters */
+}
+
 void AdaptiveSubCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int d = 0; d < 3; d++) {
 		_boundingBoxMin[d] = bBoxMin[d];
@@ -1237,8 +1241,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 #endif
 
 			unsigned long cellid = this->getCellIndexOfMolecule(m);
-			this->_cells[cellid].addParticle(m);
-			//addParticle(*m);
+			_cells[cellid].addParticle(m);
 			DeltaUpot = getEnergy(&particlePairsHandler, m);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);

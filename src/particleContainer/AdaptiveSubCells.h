@@ -3,6 +3,7 @@
 
 #include <vector>
 
+#include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 
 class ParticleCell;
@@ -53,8 +54,12 @@ public:
 	    double bBoxMin[3], double bBoxMax[3],
 	    double cutoffRadius, double LJCutoffRadius );
 
+	//! Default constructor
+	AdaptiveSubCells(){}
 	//! Destructor
 	~AdaptiveSubCells();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	// documentation see father class (ParticleContainer.h)
 	void rebuild(double bBoxMin[3], double bBoxMax[3]);

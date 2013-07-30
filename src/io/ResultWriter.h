@@ -24,8 +24,12 @@ class Domain;
 //! - BetaRot
 class ResultWriter : public OutputBase {
 public:
+	ResultWriter(){}
 	ResultWriter(unsigned long writeFrequency, std::string outputPrefix);
 	~ResultWriter();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
+
 	//! @todo comment
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);

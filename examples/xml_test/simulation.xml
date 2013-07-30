@@ -16,23 +16,15 @@
       <!-- time steps for all simulation phases -->
       <production>100000</production> <!-- for now we only have production steps -->
     </steps>
-    <cutoff type="CenterOfMass" >
-      <!-- cutoff definitions -->
-      <radiusLJ unit="reduced" >5.0</radiusLJ>
-      <radiusTersoff>1.0</radiusTersoff>
-      <electrostatic type="ReactionField" >
-        <epsilon>1.0e+10</epsilon>
-      </electrostatic>
-    </cutoff>
     <ensemble type="NVT">
       <!--Ensemble is the main topic of the simulation -->
       <Nparticles>40000</Nparticles>
       <temperature unit="reduced" >0.7</temperature>	<!-- in future also units="K" -->
-      <volume type="box">
+      <domain type="box">
           <lx unit="reduced">97.</lx>
           <ly unit="reduced">97.</ly>
           <lz unit="reduced">97.</lz>
-      </volume>
+      </domain>
       <!-- instead of lx/ly/lz we might accept density -->
       <components>
           <moleculetype id="1" >
@@ -71,7 +63,7 @@
           <include query="/components/moleculetype[@id='cycC6H12']" >components.xml</include>
           
           <mixing>
-            <rule type="LB" id1="1" id2="2">
+            <rule type="LB" cid1="1" cid2="2">
               <eta>1.0</eta>
               <xi>1.023</xi>
             </rule>
@@ -79,24 +71,49 @@
       </components>
       <!-- Definition of the Phasespacepoint -->
       <phasespacepoint>
+        <!--
         <file type="OldStyle" >test.xdr</file>
-        <generator src="internal" id="kfc" >
-         <!-- elements contain parameters needed for the generator -->
-        </generator>
-        <!-- generator plugins -->
-        <generator src="plugin" lib="test" id="gen1">
-         <!-- parameters needed for the generator -->
+        -->
+        <generator src="internal" id="GridGenerator" >
+          <lattice type="cubic" centering="face">
+            <!-- automatically determined if density and num particles is given -->
+			<vec id="a"> <x>1.0</x> <y>0.0</y> <z>0.0</z> </vec>
+			<vec id="b"> <x>0.0</x> <y>1.0</y> <z>0.0</z> </vec>
+			<vec id="c"> <x>0.0</x> <y>0.0</y> <z>1.0</z> </vec>
+            <dims a="2" b="2" c="2" />
+          </lattice>
+          <basis>
+            <site>
+              <componentid>1</componentid>
+              <coordinate x="0.0" y="0.0" z="0.0" />
+            </site>
+          </basis>
+          <origin> <x>0.0</x> <y>0.0</y> <z>0.0</z> </origin>
         </generator>
       </phasespacepoint>
     </ensemble>
     <algorithm>
-      <parallelisation>DomainDecomposition</parallelisation>
+      <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
+      <cutoffs type="CenterOfMass" >
+        <!-- cutoff definitions -->
+        <radiusLJ unit="reduced" >5.0</radiusLJ>
+        <radiusTersoff>1.0</radiusTersoff>
+        <electrostatic type="ReactionField" >
+          <epsilon>1.0e+10</epsilon>
+        </electrostatic>
+      </cutoffs>
     </algorithm>
     <status>
         <currenttime>0</currenttime>
     </status>
+    <output>
+      <outputplugin name="Resultwriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+    </output>
   </simulation>
 </mardyn>

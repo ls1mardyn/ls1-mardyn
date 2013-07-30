@@ -60,8 +60,12 @@ class KDDecomposition: public DomainDecompBase{
 	//! _decompTree and _ownArea
 	KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency);
 
+    KDDecomposition(){}
+
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//###############################################
 	//### The following methods are those of the  ###

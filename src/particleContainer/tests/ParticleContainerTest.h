@@ -9,6 +9,7 @@
 #define PARTICLECONTAINERTEST_H_
 
 #include "molecules/Component.h"
+#include "molecules/Molecule.h"
 #include "utils/Testing.h"
 #include "utils/TestWithSimulationSetup.h"
 #include <vector>

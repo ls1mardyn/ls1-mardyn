@@ -22,9 +22,12 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Domain.h"
+#include "utils/Logger.h"
+#include "Simulation.h"
 
 #include <ctime>
 
+using Log::global_log;
 using namespace std;
 
 #define ACC_STEPS 1000
@@ -37,6 +40,13 @@ ResultWriter::ResultWriter(unsigned long writeFrequency, string outputPrefix)
 { }
 
 ResultWriter::~ResultWriter(){}
+
+void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+}
 
 void ResultWriter::initOutput(ParticleContainer* particleContainer,
 			      DomainDecompBase* domainDecomp, Domain* domain){
@@ -58,7 +68,7 @@ void ResultWriter::doOutput( ParticleContainer* particleContainer, DomainDecompB
 	_U_pot_acc.addEntry(domain->getAverageGlobalUpot());
 	_p_acc.addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
-		_resultStream << simstep << "\t" << domain->getCurrentTime()
+		_resultStream << simstep << "\t" << _simulation.getSimulationTime()
 		              << "\t\t" << domain->getAverageGlobalUpot() << "\t" << _U_pot_acc.getAverage()
 					  << "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc.getAverage()
 		              << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()

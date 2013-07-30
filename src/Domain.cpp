@@ -74,8 +74,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_local2KETrans[0] = 0.0;
 	this->_local2KERot[0] = 0.0; 
 
-	_currentTime = 0.0;
-
 	this->_universalNVE = false;
 	this->_globalUSteps = 0;
 	this->_globalSigmaU = 0.0;
@@ -98,6 +96,37 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_universalSelectiveThermostatCounter = 0;
 	this->_universalSelectiveThermostatWarning = 0;
 	this->_universalSelectiveThermostatError = 0;
+}
+
+void Domain::readXML(XMLfileUnits& xmlconfig) {
+	string originalpath = xmlconfig.getcurrentnodepath();
+
+	/* volume */
+	if ( xmlconfig.changecurrentnode( "volume" )) {
+		std::string type;
+		xmlconfig.getNodeValue( "@type", type );
+		global_log->info() << "Volume type: " << type << endl;
+		if( type == "box" ) {
+			xmlconfig.getNodeValueReduced( "lx", _globalLength[0] );
+			xmlconfig.getNodeValueReduced( "ly", _globalLength[1] );
+			xmlconfig.getNodeValueReduced( "lz", _globalLength[2] );
+			global_log->info() << "Box size: " << _globalLength[0] << ", "
+				<< _globalLength[1] << ", "
+				<< _globalLength[2] << endl;
+		}
+		else {
+			global_log->error() << "Unsupported volume type " << type << endl;
+		}
+	}
+	xmlconfig.changecurrentnode(originalpath);
+
+	/* temperature */
+	double temperature = 0.;
+	xmlconfig.getNodeValueReduced("temperature", temperature);
+	setGlobalTemperature(temperature);
+	global_log->info() << "Temperature: " << temperature << endl;
+	xmlconfig.changecurrentnode(originalpath);
+
 }
 
 void Domain::setLocalUpot(double Upot) {_localUpot = Upot;}
@@ -140,9 +169,6 @@ double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolec
 
 
 
-void Domain::setCurrentTime(double curtime){ _currentTime = curtime;}
-void Domain::advanceTime(double timestep){ _currentTime += timestep;}
-double Domain::getCurrentTime(){ return _currentTime;}
 
 vector<Component>& Domain::getComponents(){
 	return _components; 
@@ -267,7 +293,7 @@ void Domain::calculateGlobalValues(
 		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
 				&& (0 >= _universalSelectiveThermostatError) )
 		{
-			global_log->warning() << "Explosion warning (time t=" << _currentTime << ")." << endl;
+			global_log->warning() << "Explosion!" << endl;
 			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
 				<< ", beta_rot = " << this->_universalBRot[thermit->first] << "!)" << endl;
@@ -470,7 +496,6 @@ void Domain::writeCheckpoint( string filename,
 		ofstream checkpointfilestream(filename.c_str());
 		checkpointfilestream << "mardyn trunk " << VERSION;
 		checkpointfilestream << "\n";
-		checkpointfilestream << " currentTime\t"  << this->_currentTime << "\n";
 		checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 		if(this->_componentwiseThermostat)
 		{

@@ -96,12 +96,17 @@ LinkedCells::LinkedCells(
 LinkedCells::~LinkedCells() {
 }
 
+void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoff);
+	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
+}
+
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
+		_haloWidthInNumCells[i] = ceil(_cellsInCutoff);
 	}
-
 	int numberOfCells = 1;
 
 	for (int dim = 0; dim < 3; dim++) {
@@ -136,7 +141,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 		    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
 		    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (rebuild): bounding box too small for calculated cell Length" << endl;
-		global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "cellsPerDimension " << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
 		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
 		exit(5);
 	}
@@ -693,7 +698,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	// sqare of the cutoffradius
 	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
-	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
+    double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
 	double dd;
 	double distanceVector[3];
 
@@ -728,7 +733,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 			//dd = cutoffRadiusSquare - 10;
 			if (dd > cutoffRadiusSquare)
 				continue;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
+			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < cutoffRadiusSquare));
 		}
 	}
 	return u;

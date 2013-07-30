@@ -51,7 +51,6 @@
 #include "integrators/Leapfrog.h"
 
 #include "io/io.h"
-#include "io/xmlreader.h"
 #include "io/GeneratorFactory.h"
 
 #include "ensemble/GrandCanonical.h"
@@ -61,12 +60,6 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
 #include "RDF.h"
-
-#ifdef STEEREO
-#include "utils/SteereoIntegration.h"
-#include <steereo/steereoSimSteering.h>
-#include <steereo/steereoCouplingSim.h>
-#endif
 
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
@@ -112,6 +105,177 @@ void Simulation::exit(int exitcode) {
 #endif
 }
 
+
+
+void Simulation::readXML(XMLfileUnits& xmlconfig) {
+
+	/* integrator */
+	string integratorType;
+	xmlconfig.getNodeValue("integrator@type", integratorType);
+	global_log->info() << "Integrator type: " << integratorType << endl;
+	if( "Leapfrog" == integratorType) {
+		_integrator = new Leapfrog();
+	}
+	else {
+		global_log-> error() << "Unknown integrator " << integratorType << endl;
+		this->exit(1);
+	}
+	if(xmlconfig.changecurrentnode("integrator")) {
+		_integrator->readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "Integrator section missing." << endl;
+	}
+
+	/* steps */
+	xmlconfig.getNodeValue("steps/production", _numberOfTimesteps);
+	global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
+
+	/* enseble */
+	string ensembletype;
+	xmlconfig.getNodeValue("ensemble@type", ensembletype);
+	global_log->info() << "Ensemble: " << ensembletype<< endl;
+	if( "NVT" == ensembletype) {
+		_ensemble = new CanonicalEnsemble();
+	}
+	else if( "muVT" == ensembletype) {
+		global_log->error() << "muVT ensemble not completely implemented." << endl;
+		this->exit(1);
+// 		_ensemble = new GrandCanonicalEnsemble();
+	}
+	else {
+		global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
+		this->exit(1);
+	}
+	if(xmlconfig.changecurrentnode("ensemble")) {
+		_ensemble->readXML(xmlconfig);
+		/* store data in the _domain member as long as we do not use the ensemble everywhere */
+		for (int d = 0; d < 3; d++) {
+			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
+		}
+		_domain->setGlobalTemperature(_ensemble->T());
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "Ensemble section missing." << endl;
+	}
+
+	/* algorithm */
+	if(xmlconfig.changecurrentnode("algorithm")) {
+
+		/* cutoffs */
+		if (xmlconfig.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
+			_cutoffRadius = _LJCutoffRadius;
+			global_log->info() << "dimensionless LJ cutoff radius:\t"
+					<< _LJCutoffRadius << endl;
+			global_log->info() << "dimensionless cutoff radius:\t"
+					<< _cutoffRadius << endl;
+		} else {
+			global_log->error() << "Cutoff section missing." << endl;
+			this->exit(1);
+		}
+
+		/* datastructure */
+		string datastructuretype;
+		xmlconfig.getNodeValue("datastructure@type", datastructuretype);
+		global_log->info() << "Datastructure type: " << datastructuretype << endl;
+		if( "LinkedCells" == datastructuretype) {
+			_moleculeContainer = new LinkedCells();
+			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+			lc->setCutoff(_cutoffRadius);
+		}
+		else if( "AdaptiveSubCells" == datastructuretype) {
+			_moleculeContainer = new AdaptiveSubCells();
+		}
+		else {
+			global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
+			this->exit(1);
+		}
+		if(xmlconfig.changecurrentnode("datastructure")) {
+			_moleculeContainer->readXML(xmlconfig);
+			_moleculeContainer->rebuild(_ensemble->domain()->rmin(), _ensemble->domain()->rmax());
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Datastructure section missing" << endl;
+			this->exit(1);
+		}
+
+		/* parallelization */
+		string parallelisationtype("DomainDecomposition");
+		xmlconfig.getNodeValue("parallelisation@type", parallelisationtype);
+		global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
+		if( "DomainDecomposition" == parallelisationtype) {
+			_domainDecomposition = new DomainDecomposition();
+		}
+		else if( "KDDecomposition" == parallelisationtype) {
+			_domainDecomposition = new KDDecomposition();
+		}
+		else if( "KDDecomposition2" == parallelisationtype) {
+			_domainDecomposition = new KDDecomposition2();
+		}
+		else if( "DummyDecomposition" == parallelisationtype) {
+	#ifdef ENABLE_MPI
+		global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
+	#else
+			_domainDecomposition = new DomainDecompDummy();
+	#endif
+		}
+		else {
+			global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
+			this->exit(1);
+		}
+
+	#ifndef ENABLE_MPI
+		if (parallelisationtype != "DummyDecomposition") {
+			global_log->warning()
+				<< "Input demands parallelization, but the current compilation doesn't support parallel execution."
+				<< endl;
+		}
+	#endif
+
+		if(xmlconfig.changecurrentnode("parallelisation")) {
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
+		}
+		else {
+			global_log->warning() << "Parallelisation section missing." << endl;
+		}
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "Algorithm section missing." << endl;
+	}
+
+	/* output */
+	long numOutputPlugins = 0;
+	XMLfile::Query query = xmlconfig.query("output/outputplugin");
+	numOutputPlugins = query.card();
+	global_log->info() << "Number of output plugins: " << numOutputPlugins << endl;
+	if(numOutputPlugins < 1) {
+		global_log->warning() << "No output plugins specified." << endl;
+	}
+
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputPluginIter;
+	for( outputPluginIter = query.begin(); outputPluginIter; outputPluginIter++ ) {
+		xmlconfig.changecurrentnode( outputPluginIter );
+		OutputBase *outputPlugin;
+		string pluginname("");
+		xmlconfig.getNodeValue("@name", pluginname);
+		if(pluginname == "Resultwriter") {
+			outputPlugin = new ResultWriter();
+		}
+		else {
+			global_log->warning() << "Unknown plugin " << pluginname << endl;
+			continue;
+		}
+		outputPlugin->readXML(xmlconfig);
+		_outputPlugins.push_back(outputPlugin);
+	}
+	xmlconfig.changecurrentnode(oldpath);
+}
+
 void Simulation::readConfigFile(string filename) {
 	if (filename.rfind(".xml") == filename.size() - 4) {
 		global_log->info() << "command line config file type is XML (*.xml)"
@@ -130,81 +294,20 @@ void Simulation::readConfigFile(string filename) {
 }
 
 void Simulation::initConfigXML(const string& inputfilename) {
-	int ownrank = 0;
-#ifdef ENABLE_MPI
-	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-#endif
+
 	global_log->info() << "init XML config file: " << inputfilename << endl;
 	XMLfileUnits inp(inputfilename);
-	XMLReader xmlreader(inputfilename);
 
 	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
 	inp.changecurrentnode("/mardyn");
-
-	string version = xmlreader.getVersion();
+	string version("unknown");
+	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
-	global_log->info() << "Reading simulation parameters ..." << endl;
 
-	global_log->info() << "Reading integrator information..." << endl;
-	xmlreader.getIntegrator(_integrator);
-	double timestepLength = 0.0;
-	timestepLength = _integrator->getTimestepLength();
-	global_log->info() << " timestep:             " << timestepLength << endl;
-	if (timestepLength == 0) {
-		/* TODO: perform checks before simulation start as there are command line parameters, too */
-		global_log->error() << "Undefined timestep length." << endl;
-	}
+	inp.changecurrentnode("simulation");
+	readXML(inp);
+	inp.changecurrentnode("..");
 
-	global_log->info() << "Reading parallelization type..." << endl;
-	_domainDecompositionType = xmlreader.getDomainDecompositionType();
-	switch (_domainDecompositionType) {
-	case DUMMY_DECOMPOSITION:
-#ifdef ENABLE_MPI
-		global_log->warning() << "Dummy domain decomposition does not work in a parallel environment." << endl;
-		exit(1);
-//#else
-		// the Dummy Domaindecomposition is already created in initialize()!
-//		_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
-#endif
-		break;
-#ifdef ENABLE_MPI
-		case DOMAIN_DECOMPOSITION:
-			// the Domaindecomposition is already created in initialize()!
-//		_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-		break;
-		case KD_DECOMPOSITION:
-		/* TODO: remove parameters from KDDecomposition constructor */
-			delete _domainDecomposition;
-			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
-		break;
-#endif
-	case UNKNOWN_DECOMPOSITION:
-		global_log->error() << "Unknown domain decomposition type." << endl;
-		exit(1);
-		break;
-	}
-#ifndef ENABLE_MPI
-	if (_domainDecompositionType != DUMMY_DECOMPOSITION) {
-		global_log->warning()
-				<< "Input demands parallelization, but the current compilation doesn't support parallel execution."
-				<< endl;
-	}
-#endif	
-
-	double simBoxLength[3];
-	if (xmlreader.getSimBoxSize(simBoxLength)) {
-		global_log->info() << " simulation box size:  (" << simBoxLength[0]
-				<< ", " << simBoxLength[1] << ", " << simBoxLength[2] << ")"
-				<< endl;
-
-		for (int d = 0; d < 3; d++) {
-			_domain->setGlobalLength(d, simBoxLength[d]);
-		}
-	}
-
-	double temperature = xmlreader.getTemperature();
-	_domain->setGlobalTemperature(temperature);
-	global_log->info() << "Temperature of the enseble: " << temperature << endl;
 
 	if (inp.changecurrentnode("simulation")) {
 		string siminpfile, siminptype;
@@ -217,17 +320,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 						<< endl;
 				initConfigOldstyle(siminpfile);
 			}
-		}
-
-		if (inp.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
-			_cutoffRadius = _LJCutoffRadius;
-			global_log->info() << "dimensionless LJ cutoff radius:\t"
-					<< _LJCutoffRadius << endl;
-			global_log->info() << "dimensionless cutoff radius:\t"
-					<< _cutoffRadius << endl;
-		} else {
-			global_log->error() << "Cutoff section missing." << endl;
-			exit(1);
 		}
 
 		string pspfile;
@@ -244,122 +336,36 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
 				_inputReader->setPhaseSpaceHeaderFile(pspfile);
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+				_inputReader->readPhaseSpaceHeader(_domain, _integrator->getTimestepLength());
 			}
-			/* TODO: Check this part of the code */
-			if (_LJCutoffRadius == 0.0)
-				_LJCutoffRadius = _cutoffRadius;
-			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		}
+		string oldpath = inp.getcurrentnodepath();
+		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
+			_inputReader = new GridGenerator();
+			_inputReader->readXML(inp);
+		}
+		inp.changecurrentnode(oldpath);
 
-		if (inp.changecurrentnode("algorithm")) {
 
-			string datastructype;
-			if (inp.getNodeValue("datastructure@type", datastructype)) {
-				global_log->info() << "datastructure to use:\t"
-						<< datastructype << endl;
-				if (datastructype == "LinkedCells") {
-					int cellsInCutoffRadius = 1;
-					inp.getNodeValue("datastructure/cellsInCutoffRadius",
-							cellsInCutoffRadius);
-					global_log->info()
-							<< "LinkedCells cells in cutoff radius:\t"
-							<< cellsInCutoffRadius << endl;
-					double bBoxMin[3];
-					double bBoxMax[3];
-					global_log->debug() << "Box dimensions:" << endl;
-					for (int d = 0; d < 3; d++) {
-						bBoxMin[d] = _domainDecomposition->getBoundingBoxMin(d,
-								_domain);
-						bBoxMax[d] = _domainDecomposition->getBoundingBoxMax(d,
-								_domain);
-						global_log->debug() << "[" << d << "] " << bBoxMin[d]
-								<< " - " << bBoxMax[d] << endl;
-					}
-					if (_LJCutoffRadius == 0.0)
-						_LJCutoffRadius = _cutoffRadius;
-					global_log->debug() << "Cutoff: " << _cutoffRadius << "\nCellsInCutoff: " << cellsInCutoffRadius << endl;
-					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-						 cellsInCutoffRadius);
-				} else if (datastructype == "AdaptiveSubCells") {
-					double bBoxMin[3];
-					double bBoxMax[3];
-					for (int i = 0; i < 3; i++) {
-						bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,
-								_domain);
-						bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,
-								_domain);
-					}
-					//creates a new Adaptive SubCells datastructure
-					if (_LJCutoffRadius == 0.0)
-						_LJCutoffRadius = _cutoffRadius;
-					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
-				} else {
-					global_log->error() << "UNKOWN DATASTRUCTURE: "
-							<< datastructype << endl;
-					exit(1);
-				}
-			}
-			inp.changecurrentnode("..");
-		} // algo-section
-		else {
-			global_log->info() << "XML config file " << inputfilename
-					<< ": no algo section" << endl;
-		}
-		if (inp.changecurrentnode("output")) {
-			string outputPathAndPrefix;
-			if (inp.getNodeValue("Resultwriter", outputPathAndPrefix)) {
-				// TODO: add the output frequency to the xml!
-				_outputPlugins.push_back(new ResultWriter(1,
-						outputPathAndPrefix));
-				global_log->debug() << "ResultWriter '" << outputPathAndPrefix
-						<< "'.\n";
-			}
-			inp.changecurrentnode("..");
-		} // output-section
-		else {
-			global_log->info() << "XML config file " << inputfilename
-					<< ": no output section" << endl;
-		}
 		inp.changecurrentnode("..");
 	} // simulation-section
-	else {
-		global_log->error() << "XML config file " << inputfilename
-				<< ": no simulation section" << endl;
-	}
 
 	// read particle data
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
 			&_lmu, _domain, _domainDecomposition);
 
-	if (this->_LJCutoffRadius == 0.0)
-		_LJCutoffRadius = this->_cutoffRadius;
 
-	global_log->info() << " reading in components from xml ..." << endl;
-	/* TODO: save components into domain:
-	 * take care of already existing components
-	 * take care about parameter streams
-	 */
-	std::vector<Component>& dcomponents = _domain->getComponents();
-	std::vector<Component> components;
-	xmlreader.getComponents(components);
-	// 	for( unsigned int j = 0; j < components.size(); j++ ) {
-	// 		global_log->info() << components[j] << endl;
-	// 	}
-	long numComponents = dcomponents.size();
-	global_log->info() << " number of components from input: " << numComponents
-			<< endl;
-	global_log->info() << " number of components in xml (not implemented): "
-			<< components.size() << endl;
-
-	// TODO: Check this...
-	// 	_domain->initParameterStreams( _cutoffRadius, _LJCutoffRadius );
+	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// test new Decomposition
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
+	int ownrank = 0;
+#ifdef ENABLE_MPI
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
+#endif
 	unsigned idi = _lmu.size();
 	unsigned j = 0;
 	std::list<ChemicalPotential>::iterator cpit;
@@ -1093,15 +1099,6 @@ void Simulation::prepare_start() {
 				_domain);
 	}
 
-#ifdef STEEREO
-	_steer = initSteereo (_domainDecomposition->getRank(), _domainDecomposition->getNumProcs());
-#ifdef STEEREO_COUPLING
-	_coupling = initCoupling(_steer, (long*) &_simstep);
-#endif  /* STEEREO_COUPLING */
-	registerSteereoCommands (_steer, this);
-	startListeningSteereo (_steer);
-#endif  /* STEEREO */
-
 	//	if ((_initSimulation > _initStatistics) && this->_rdf != NULL) {
 	//		this->_rdf->tickRDF();
 	//		this->_particlePairsHandler->setRDF(_rdf);
@@ -1118,9 +1115,9 @@ void Simulation::simulate() {
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
-	_initSimulation = (unsigned long) (_domain->getCurrentTime()
-			/ _integrator->getTimestepLength());
-
+// 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
+// 			/ _integrator->getTimestepLength());
+	_initSimulation = 0;
 	/* demonstration for the usage of the new ensemble class */
 	CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
@@ -1142,12 +1139,6 @@ void Simulation::simulate() {
 	Timer perStepIoTimer;
 	Timer ioTimer;
 
-#if defined(STEEREO) && defined(STEEREO_COUPLING)
-	_simstep = _initSimulation;
-	//SteereoLogger::setOutputLevel (4);
-	_coupling->waitForConnection();
-#endif
-
 	loopTimer.start();
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		if (_simstep >= _initGrandCanonical) {
@@ -1165,10 +1156,6 @@ void Simulation::simulate() {
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-#if defined(STEEREO) && defined(STEEREO_COUPLING)
-		_steer -> processQueue (1);
-		global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
-#endif
 		// activate RDF sampling
 		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
 			this->_rdf->tickRDF();
@@ -1301,10 +1288,8 @@ void Simulation::simulate() {
 			}
 			velocityScalingThermostat.apply(_moleculeContainer);
 		}
-		_domain->advanceTime(_integrator->getTimestepLength());
-#ifdef STEEREO
-		_steer -> processQueue (0);
-#endif
+
+		advanceSimulationTime(_integrator->getTimestepLength());
 
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables

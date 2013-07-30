@@ -11,6 +11,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "ParticleData.h"
 #include "KDNode.h"
+#include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 
 #include <cmath>
@@ -76,6 +77,11 @@ KDDecomposition2::~KDDecomposition2() {
 		_decompTree->plotNode("kddecomp.vtu");
 	}
 	KDNode::shutdownMPIDataType();
+}
+
+void KDDecomposition2::readXML(XMLfileUnits& xmlconfig) {
+	/* no parameters */
+	/* TODO: Maybe add decomposition dimensions, default auto. */
 }
 
 void KDDecomposition2::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {

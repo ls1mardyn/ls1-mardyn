@@ -6,6 +6,9 @@
 #include "parallel/DomainDecompBase.h"
 #include "parallel/CollectiveCommDummy.h"
 
+
+class XMLfileUnits;
+
 //! @brief implement the %domain decomposition for a single processor
 //! @author Martin Buchholz
 //!
@@ -23,6 +26,8 @@ public:
 
 	//! The destructor has nothing to do
 	virtual ~DomainDecompDummy();
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! molecules which aren't in the domain of their process any
 	//! are moved to the opposite side of the domain (periodic boundary).

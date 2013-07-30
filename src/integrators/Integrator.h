@@ -3,6 +3,7 @@
 
 class ParticleContainer;
 class Domain;
+class XMLfileUnits;
 
 //! @brief Update velocities and positions.
 //! @author Martin Buchholz, Martin Bernreuther, et al.
@@ -35,6 +36,8 @@ public:
 
 	//! The destructor
 	virtual ~Integrator();
+
+	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 	//! @brief informs the integrator about available forces, who then continues integration
 	//!

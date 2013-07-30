@@ -29,6 +29,7 @@ class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
 class Molecule;
+class XMLfileUnits;
 
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
@@ -74,8 +75,12 @@ public:
 	//! @param bBoxMax coordinates of the highest (in all coordinates) corner of the bounding box
 	ParticleContainer(double bBoxMin[3], double bBoxMax[3]);
 
+	//! @brief Default constructor
+	ParticleContainer(){}
 	//! @brief The destructor
 	virtual ~ParticleContainer();
+
+	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 	//! @brief rebuild the datastructure
 	//!
@@ -176,7 +181,6 @@ public:
 	virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
 
 	virtual double getCutoff() = 0;
-	virtual double getLJCutoff() = 0;
 
     /* TODO: This goes into the component class */
 	//! @brief counts all particles inside the bounding box

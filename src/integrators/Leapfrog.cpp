@@ -5,6 +5,7 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 #include "ensemble/PressureGradient.h"
+#include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 
 
@@ -18,6 +19,13 @@ Leapfrog::Leapfrog(double timestepLength) {
 }
 
 Leapfrog::~Leapfrog() {
+}
+
+void Leapfrog::readXML(XMLfileUnits& xmlconfig) {
+	_timestepLength = 0;
+	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
+	global_log->info() << "Timestep: " << _timestepLength << endl;
+	assert(_timestepLength > 0);
 }
 
 void Leapfrog::eventForcesCalculated(ParticleContainer* molCont, Domain* domain) {

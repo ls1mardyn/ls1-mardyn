@@ -211,7 +211,7 @@ void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift
    this->_msimulation->setcutoffRadius(ecutoff);
    this->_msimulation->setLJCutoff(cutoff);
 
-   this->_domain->setCurrentTime(0.0);
+//    this->_domain->setCurrentTime(0.0);
    for( int d = 0; d < 3; d++ ) this->_domain->setGlobalLength(d, box[d]);
 
    vector<Component>& dcomponents = this->_domain->getComponents();

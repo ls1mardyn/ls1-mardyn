@@ -150,7 +150,7 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 	box_max[0] = 2*R_o;
 	box_max[1] = 2*R_o;
 	box_max[2] = 2*R_o;
-	domain->setCurrentTime(0.0);
+	simulation->setSimulationTime(0.0);
 	domain->setGlobalLength(0, box_max[0]);
 	domain->setGlobalLength(1, box_max[1]);
 	domain->setGlobalLength(2, box_max[2]);

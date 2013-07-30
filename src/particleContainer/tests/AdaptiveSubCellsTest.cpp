@@ -6,6 +6,7 @@
  */
 
 #include "AdaptiveSubCellsTest.h"
+#include "particleContainer/ParticleCell.h"
 
 TEST_SUITE_REGISTRATION(AdaptiveSubCellsTest);
 

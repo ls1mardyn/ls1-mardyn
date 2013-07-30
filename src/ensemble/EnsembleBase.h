@@ -1,6 +1,17 @@
 #ifndef ENSEMBLE_BASE_H
 #define ENSEMBLE_BASE_H
 
+#include "molecules/Component.h"
+
+#include <string>
+#include <vector>
+#include <map>
+
+#include "molecules/mixingrules/MixingRuleBase.h"
+#include "molecules/mixingrules/LorentzBerthelot.h"
+#include "DomainBase.h"
+
+
 
 //! list of updateable values
 enum GlobalVariable {
@@ -12,6 +23,8 @@ enum GlobalVariable {
 	PRESSURE           = 1<<5
 };
 
+class XMLfileUnits;
+class DomainBase;
 
 //! @brief Base class for ensembles
 //! @author Christoph Niethammer <niethammer@hlrs.de>
@@ -22,6 +35,7 @@ class Ensemble {
 public:
 	Ensemble() {}
 	virtual ~Ensemble() {}
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief Returns the global number of Molecules of the ensemble.
 	virtual unsigned long N() = 0;
@@ -39,6 +53,14 @@ public:
 	//! @brief Calculate global variables
 	//! @param variable Variable to be updated.
 	virtual void updateGlobalVariable(GlobalVariable variable) = 0;
+
+	DomainBase *domain() { return _domain; }
+
+protected:
+	std::vector<Component> _components;
+	std::map<std::string,int> _componentnamesToIds;
+	std::vector<MixingRuleBase*> _mixingrules;
+	DomainBase *_domain;
 };
 
 #endif

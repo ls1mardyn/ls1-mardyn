@@ -10,6 +10,7 @@ class Molecule;
 class Component;
 class Domain;
 class ParticleContainer;
+class XMLfileUnits;
 
 typedef ParticleContainer TMoleculeContainer;
 
@@ -49,6 +50,8 @@ public:
 	//! @brief The Destructor finalizes MPI
 	virtual ~DomainDecompBase() {
 	}
+
+	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 	//! @brief exchange molecules between processes
 	//!

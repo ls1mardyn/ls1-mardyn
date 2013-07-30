@@ -5,6 +5,7 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/PressureGradient.h"
 #include "utils/Logger.h"
+#include "Simulation.h"
 #include "utils/Timer.h"
 #ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
@@ -82,7 +83,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 		if((token == "currentTime") || (token == "t")) {
 			// set current simulation time
 			_phaseSpaceHeaderFileStream >> token;
-			domain->setCurrentTime( strtod(token.c_str(), NULL) );
+			_simulation.setSimulationTime( strtod(token.c_str(), NULL) );
 		}
 		else if((token == "Temperature") || (token == "T")) {
 			// set global thermostat temperature

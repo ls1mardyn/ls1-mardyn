@@ -32,7 +32,8 @@
 class Component {
 public:
 	Component(unsigned int id = 0);
-
+	void readXML(XMLfileUnits& xmlconfig);
+	
 	void setID(unsigned int id) { _id = id; }
 	unsigned int ID() const { return _id; }
 	unsigned int numSites() const {
@@ -127,6 +128,8 @@ public:
 	double E_rot() const { return _E_rot; }
 	double E() const { return _E_trans + _E_rot; }
 	double T() const { return _T; }
+	void setName(std::string name) { _name = name; }
+	std::string& getName() { return _name; }
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	//! needed by the MegaMol output format
@@ -159,6 +162,8 @@ private:
 	double _T; // temperature
 
 	double maximalTersoffExternalRadius;
+
+	std::string _name;
 };
 
 std::ostream& operator<<(std::ostream& stream, const Component& component);

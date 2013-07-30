@@ -37,6 +37,7 @@ class Molecule;
 class ParticleContainer;
 class DomainDecompBase; 
 class PressureGradient;
+class XMLfileUnits;
 
 //! @brief This class is used to read in the phasespace and to handle macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2011)
@@ -62,12 +63,14 @@ class Domain {
 private:
 	Domain();
 	Domain(Domain &domain);
+
 	Domain& operator=(Domain &domain);
 	
 public:
 	//! The constructor sets _localRank to rank and initializes all member variables
 	Domain(int rank, PressureGradient* pg);
 
+	void readXML(XMLfileUnits& xmlconfig);
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!
 	//! The format of the checkpointfile written by this method is the same as the format
@@ -218,15 +221,6 @@ public:
 
 	//! @brief set globalRotDOF
 	void setglobalRotDOF(unsigned long grotdof);
-
-	//! @brief get the current time
-	double getCurrentTime();
-
-	//! @brief get the current time
-	void setCurrentTime(double curtime);
-
-	//! @brief advance the current time by timestep
-	void advanceTime(double timestep);
 
 	//! @brief get a reference to the vector of components
 	std::vector<Component>& getComponents();
@@ -507,7 +501,6 @@ private:
 	double _VirialCorr;
 
 	//! Contains the time t in reduced units
-	double _currentTime;
 
 	//! Components resp. molecule types
 	std::vector<Component> _components;
