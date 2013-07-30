@@ -295,6 +295,8 @@ public:
 	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
 	double getSimulationTime(){ return _simulationTime; }
 
+	Ensemble* getEnsemble() { return _ensemble; }
+
 private:
 
 

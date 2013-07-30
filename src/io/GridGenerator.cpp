@@ -1,5 +1,8 @@
 #include "io/GridGenerator.h"
 
+#include "Domain.h"
+#include "Simulation.h"
+#include "ensemble/EnsembleBase.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 #include "particleContainer/ParticleContainer.h"
@@ -71,11 +74,13 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	for(siteIter = query.begin(); siteIter; siteIter++) {
 		molecule_t m;
 		xmlconfig.changecurrentnode(siteIter);
-		xmlconfig.getNodeValue("componentid", m.cid);
+		string componentid;
+		xmlconfig.getNodeValue("componentid", componentid);
+		m.cid = _simulation.getEnsemble()->component(componentid)->ID();
 		xmlconfig.getNodeValueReduced("coordinate@x", m.r[0]);
 		xmlconfig.getNodeValueReduced("coordinate@y", m.r[1]);
 		xmlconfig.getNodeValueReduced("coordinate@z", m.r[2]);
-		global_log->info() << "Adding molecule cid=" << m.cid << ", (x,y,z)=(" << m.r[0] << "," << m.r[1] << "," << m.r[2] << ")" << endl;
+		global_log->info() << "Adding molecule cid=" << componentid << "(" << m.cid << "), (x,y,z)=(" << m.r[0] << "," << m.r[1] << "," << m.r[2] << ")" << endl;
 		_basis.addMolecule(m);
 	}
 	xmlconfig.changecurrentnode(oldpath);
@@ -93,8 +98,11 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 	unsigned long numMolecules = 0;
 	molecule_t m; /* molecule type as provided by the generator */
+
+	Component* component = _simulation.getEnsemble()->component(m.cid);
+	Molecule molecule(0, component); /* Molecule type as provided by mardyn */
 	while(_generator.getMolecule(&m) > 0) {
-		Molecule molecule; /* Molecule type as provided by mardyn */
+		molecule.setid(numMolecules);
 		for(int d = 0; d < 3; d++) {
 			molecule.setr(d, m.r[d]);
 		}

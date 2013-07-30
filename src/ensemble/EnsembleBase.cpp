@@ -19,6 +19,8 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode( componentIter );
 		_components[i].readXML(xmlconfig);
 		_componentnamesToIds[_components[i].getName()] = i;
+		_components[i].setID(i);
+		global_log->debug() << _components[i].getName() << " --> " << i << endl;
 	}
 	xmlconfig.changecurrentnode(oldpath);
 
