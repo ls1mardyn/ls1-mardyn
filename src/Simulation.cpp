@@ -206,13 +206,25 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("parallelisation@type", parallelisationtype);
 		global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
 		if( "DomainDecomposition" == parallelisationtype) {
+	#ifdef ENABLE_MPI
 			_domainDecomposition = new DomainDecomposition();
+	#else
+		global_log->error() << "DomainDecomposition not available in sequential mode." << endl;
+	#endif
 		}
 		else if( "KDDecomposition" == parallelisationtype) {
+	#ifdef ENABLE_MPI
 			_domainDecomposition = new KDDecomposition();
+	#else
+		global_log->error() << "KDDecomposition not available in sequential mode." << endl;
+	#endif
 		}
 		else if( "KDDecomposition2" == parallelisationtype) {
+	#ifdef ENABLE_MPI
 			_domainDecomposition = new KDDecomposition2();
+	#else
+		global_log->error() << "KDDecomposition2 not available in sequential mode." << endl;
+	#endif
 		}
 		else if( "DummyDecomposition" == parallelisationtype) {
 	#ifdef ENABLE_MPI
