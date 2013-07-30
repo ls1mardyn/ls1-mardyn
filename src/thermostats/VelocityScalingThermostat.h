@@ -34,3 +34,4 @@ private:
 };
 
 #endif /* VELOCITY_SCALING_THERMOSTAT_H */
+
