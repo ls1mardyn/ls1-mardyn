@@ -5,7 +5,7 @@
 */
 
 #include "SysMon.h"
-
+#include "utils/Logger.h"
 #include <stack>
 
 #include <fstream>
@@ -90,9 +90,9 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 	}
 	
 #ifdef MPI_VERSION
-	int rc,myrank;
-	rc=MPI_Comm_rank(_mpicomm,&myrank);
-	rc=MPI_Reduce(valuesMaxMin.data(),_valuesMaxMin.data(),_valuesMaxMin.size(),mpiTvalue,MPI_MAX,0,MPI_COMM_WORLD);
+	int myrank;
+	MPI_CHECK( MPI_Comm_rank(_mpicomm,&myrank) );
+	MPI_CHECK( MPI_Reduce(valuesMaxMin.data(),_valuesMaxMin.data(),_valuesMaxMin.size(),mpiTvalue,MPI_MAX,0,MPI_COMM_WORLD) );
 	
 	if(myrank==mpiRootRank)
 	{
@@ -121,7 +121,7 @@ int SysMon::getExpressionIndex(const std::string& label) const
 pair<SysMon::Tvalue,SysMon::Tvalue> SysMon::getExpressionMinMaxValues(unsigned int index) const
 {
 	int myrank;
-	int rc=MPI_Comm_rank(MPI_COMM_WORLD,&myrank);
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD,&myrank) );
 	if(myrank==mpiRootRank&&index*2+1<_valuesMaxMin.size())
 		return make_pair(_valuesMaxMin[index*2],_valuesMaxMin[index*2+1]);
 	else
@@ -137,7 +137,7 @@ void SysMon::writeExpressionValues(ostream& ostrm) const
 #ifdef MPI_VERSION
 	// MPI_Comm_get_attr(_mpicomm,MPI_HOST,&mpihost,&flag);
 	int myrank;
-	int rc=MPI_Comm_rank(_mpicomm,&myrank);
+	MPI_CHECK( MPI_Comm_rank(_mpicomm,&myrank) );
 	if(myrank==mpiRootRank) {
 		for(std::list<Expression>::const_iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
 		{
