@@ -99,9 +99,10 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	unsigned long numMolecules = 0;
 	molecule_t m; /* molecule type as provided by the generator */
 
-	Component* component = _simulation.getEnsemble()->component(m.cid);
-	Molecule molecule(0, component); /* Molecule type as provided by mardyn */
+	Ensemble* ensemble = _simulation.getEnsemble();
 	while(_generator.getMolecule(&m) > 0) {
+		Component* component = ensemble->component(m.cid);
+		Molecule molecule(0, component); /* Molecule type as provided by mardyn */
 		molecule.setid(numMolecules);
 		for(int d = 0; d < 3; d++) {
 			molecule.setr(d, m.r[d]);
