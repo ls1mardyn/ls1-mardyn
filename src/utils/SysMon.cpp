@@ -14,6 +14,7 @@
 
 using namespace std;
 
+SysMon* SysMon::s_sysmoninstance=NULL;
 
 #ifdef MPI_VERSION
 	const MPI_Datatype SysMon::mpiTvalue=MPI_DOUBLE;

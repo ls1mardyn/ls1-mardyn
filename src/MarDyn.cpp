@@ -4,6 +4,7 @@
 
 #include "utils/OptionParser.h"
 #include "utils/Logger.h"
+#include "utils/SysMon.h"
 #include "utils/compile_info.h"
 #include "utils/Testing.h"
 #include "utils/FileUtils.h"
@@ -48,15 +49,20 @@ int main(int argc, char** argv) {
 	global_log->set_mpi_output_root(0);
 #endif
 
-    OptionParser op;
-    Values options = initOptions(argc, argv, op);
-    vector<string> args = op.args();
-    unsigned int numargs = args.size();
+	SysMon* sysmon=SysMon::getSysMon();
+	sysmon->addExpression("sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit *","Free+BufferRAM");
+	sysmon->updateExpressionValues();
+	sysmon->writeExpressionValues();
 
-    if( options.is_set_by_user("verbose") ) {
-        global_log->info() << "Enabling verbose log output." << endl;
-        global_log->set_log_level(Log::All);
-    }
+	OptionParser op;
+	Values options = initOptions(argc, argv, op);
+	vector<string> args = op.args();
+	unsigned int numargs = args.size();
+
+	if( options.is_set_by_user("verbose") ) {
+		global_log->info() << "Enabling verbose log output." << endl;
+		global_log->set_log_level(Log::All);
+	}
 
 	/* Print some info about the program itself */
 	char info_str[MAX_INFO_STRING_LENGTH];

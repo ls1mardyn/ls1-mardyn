@@ -22,6 +22,8 @@
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
+#include "utils/SysMon.h"
+
 using optparse::Values;
 
 //#include "MoleculeWrapper.h"

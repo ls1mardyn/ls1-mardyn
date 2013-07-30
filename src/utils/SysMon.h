@@ -52,13 +52,23 @@ public:
 	static const int mpiRootRank;
 #endif
 	
-public:
+private:	// Singleton
+	static SysMon* s_sysmoninstance;
+	SysMon(const SysMon&);
 #ifdef MPI_VERSION
 	SysMon(MPI_Comm mpicomm=MPI_COMM_WORLD) : _mpicomm(mpicomm) { _variableset=new Expression::VariableSet(); }
 #else
 	SysMon() { _variableset=new Expression::VariableSet(); }
 #endif
 	~SysMon() { clear(); delete(_variableset);}
+	
+public:
+	static SysMon* getSysMon()
+	{
+		if(s_sysmoninstance==NULL)
+			s_sysmoninstance = new SysMon();
+		return s_sysmoninstance;
+	}
 	
 	void clear();
 	int addExpression(const std::string& exprstr);

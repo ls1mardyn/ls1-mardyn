@@ -1144,6 +1144,11 @@ void Simulation::simulate() {
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
 		<< endl;
 
+	// System Monitor
+	SysMon* sysmon=SysMon::getSysMon();
+	sysmon->updateExpressionValues();
+	sysmon->writeExpressionValues();
+
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
@@ -1223,6 +1228,10 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
+
+		// System Monitor update
+		sysmon->updateExpressionValues();
+		sysmon->writeExpressionValues();
 
 		// clear halo
 		global_log->debug() << "Delete outer particles" << endl;
@@ -1362,7 +1371,11 @@ void Simulation::simulate() {
 			<< perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 "
 			<< ioTimer.get_etime() << " sec" << endl;
-
+	
+	// System Monitor update
+	sysmon->updateExpressionValues();
+	sysmon->writeExpressionValues();
+	
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
 	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
