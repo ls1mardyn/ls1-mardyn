@@ -22,6 +22,10 @@ class Domain;
 //! - Pressure
 //! - BetaTrans
 //! - BetaRot
+//!
+//! @param writeFrequency Controls the frequency of writing out the data
+//! (every timestep, every 10th, 100th, ... timestep)
+//!
 class ResultWriter : public OutputBase {
 public:
 	ResultWriter(){}

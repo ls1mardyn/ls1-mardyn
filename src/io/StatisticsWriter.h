@@ -15,13 +15,18 @@
 #include <fstream>
 #include <vector>
 
-/**
- * Plot statistics to a file. At the moment, only a histogramm showing the
- * occupancy of the cells is produces.
- *
- * x: number of Molecules
- * y: number of cells with the respective number of molecules
- */
+
+//! @brief Writing plot statistics to a file.
+//!
+//! At the moment, only a histogramm showing the occupancy of the cells is produces.
+//!   - x: number of Molecules
+//!   - y: number of cells with the respective number of molecules
+//!
+//! @param filename Name of the created *.stat-file (including path)
+//! @param particleContainer The molecules that have to be written to the file are stored here
+//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
+//!                     Methods to achieve this are available in domainDecomp
+//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 class StatisticsWriter : public OutputBase{
 
 public:

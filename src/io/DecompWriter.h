@@ -13,7 +13,13 @@ class Domain;
 //class Molecule;
 //class DecompWriter; 
 
-//! @todo comment
+//! @brief writes out information about decomposition of the simulation domain.
+//!
+//! @param filename Name of the written file (including path)
+//! @param particleContainer The molecules that are contained in the simulation domain
+//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
+//!                     Methods to achieve this are available in domainDecomp
+//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 class DecompWriter : public OutputBase {
 public:
 	DecompWriter(unsigned long writeFrequency, std::string mode, std::string filename, unsigned long numberOfTimesteps, bool incremental);
