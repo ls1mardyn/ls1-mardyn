@@ -203,12 +203,6 @@ public:
 		this->_localRotationalDOF[thermostat] = rotDOF;
 	}
 
-	//! @brief get input version
-// 	unsigned long getinpversion();
-
-	//! @brief set input version
-// 	void setinpversion(unsigned long inputVersion);
-
 	//! @brief get globalRho
 	double getglobalRho();
 
