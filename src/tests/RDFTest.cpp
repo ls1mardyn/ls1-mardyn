@@ -89,7 +89,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	rdf.tickRDF();
 
 	// now the same with halo particles present.
-	_domainDecomposition->exchangeMolecules(moleculeContainer,*components, _domain);
+	_domainDecomposition->exchangeMolecules(moleculeContainer, _domain);
 	moleculeContainer->traverseCells(cellProcessor);
 	rdf.collectRDF(_domainDecomposition);
 	rdf.accumulateRDF();
@@ -137,7 +137,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	const vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
-	_domainDecomposition->balanceAndExchange(true, moleculeContainer, *components, _domain);
+	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);
 	moleculeContainer->updateMoleculeCaches();
 
 	RDF rdf(0.018, 100, *components);
@@ -210,7 +210,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	const vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
-	_domainDecomposition->balanceAndExchange(true, moleculeContainer, *components, _domain);
+	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 

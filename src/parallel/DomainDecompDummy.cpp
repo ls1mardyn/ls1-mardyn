@@ -21,7 +21,7 @@ void DomainDecompDummy::readXML(XMLfileUnits& xmlconfig) {
 	/* no parameters */
 }
 
-void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
+void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 
 	double rmin[3]; // lower corner of the process-specific domain //ENABLE_MPI
 	double rmax[3];
@@ -63,7 +63,7 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 					else
 						new_position[d2] = currentMolecule->r(d2);
 				}
-				Component *component = (Component*) &components[currentMolecule->componentid()];
+				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
 				Molecule m1 = Molecule(currentMolecule->id(),component,
 				                       new_position[0], new_position[1], new_position[2],
 				                       currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
@@ -82,7 +82,7 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 					else
 						new_position[d2] = currentMolecule->r(d2);
 				}
-                Component *component = (Component*) &components[currentMolecule->componentid()];
+				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
 				Molecule m1 = Molecule(currentMolecule->id(),component,
 				                       new_position[0], new_position[1], new_position[2],
 				                       currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
@@ -97,8 +97,8 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 	}
 }
 
-void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
-	exchangeMolecules(moleculeContainer, components, domain);
+void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
+	exchangeMolecules(moleculeContainer, domain);
 }
 
 

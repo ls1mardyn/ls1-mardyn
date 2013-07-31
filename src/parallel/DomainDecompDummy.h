@@ -33,10 +33,10 @@ public:
 	//! are moved to the opposite side of the domain (periodic boundary).
 	//! Additionally, the molecules from the boundary region are duplicated
 	//! and copied into the corresponding halo-regions.
-	void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief in the sequential version, no balancing is necessary --> calls exchangeMolecules
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief returns true
 	//!

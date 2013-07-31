@@ -44,7 +44,7 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	}
 
 	// after the exchange, there have to be 21 copies in the halos, i.e. 24 molecules in total
-	_domainDecomposition->exchangeMolecules(container, components, _domain);
+	_domainDecomposition->exchangeMolecules(container, _domain);
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
 	m = container->begin();
