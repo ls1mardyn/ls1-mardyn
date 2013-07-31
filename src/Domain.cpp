@@ -1078,10 +1078,6 @@ unsigned long Domain::getglobalNumMolecules() const { return _globalNumMolecules
 
 void Domain::setglobalNumMolecules(unsigned long glnummol) { _globalNumMolecules = glnummol; }
 
-unsigned long Domain::getinpversion(){ return _inpversion;}
-
-void Domain::setinpversion(unsigned long inpv){ _inpversion = inpv;}
-
 double Domain::getglobalRho(){ return _globalRho;}
 
 void Domain::setglobalRho(double grho){ _globalRho = grho;}

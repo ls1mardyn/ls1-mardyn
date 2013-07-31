@@ -204,10 +204,10 @@ public:
 	}
 
 	//! @brief get input version
-	unsigned long getinpversion();
+// 	unsigned long getinpversion();
 
 	//! @brief set input version
-	void setinpversion(unsigned long inputVersion);
+// 	void setinpversion(unsigned long inputVersion);
 
 	//! @brief get globalRho
 	double getglobalRho();
@@ -366,17 +366,6 @@ private:
 
 	//! rank of the local process
 	int _localRank;
-
-	//! @brief Version of the input file
-	//!
-	//! even though it is desirable, that the format of the input file
-	//! doesn't change, is sometimes does change. When that happens,
-	//! the code which reads in the input file (parser) has to be changed as well.
-	//! old versions of the input file then can't be read any more.
-	//! So whenever the parser is changed, _inpversion is set to the
-	//! date of the change (YYYYMMDD) (hard-coded). Only input files
-	//! with the same version are sure to be processed correctly
-	unsigned long _inpversion;
 
 	//! Potential of the local process
 	double _localUpot;

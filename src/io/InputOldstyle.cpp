@@ -39,7 +39,6 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	global_log->info() << "Opening phase space header file " << _phaseSpaceHeaderFile << endl;
 	_phaseSpaceHeaderFileStream.open( _phaseSpaceHeaderFile.c_str() );
 	_phaseSpaceHeaderFileStream >> token;
-	domain->setinpversion(0);
 	if( token != "mardyn")
 	{
 		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
@@ -54,9 +53,8 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 		exit(1);
 	}
 
-	domain->setinpversion( strtoul(inputversion.c_str(), NULL, 0) );
-	if( domain->getinpversion() < 20080701 ) {
-		global_log->error() << "Input version tool old (" << domain->getinpversion() << ")" << endl;
+	if( strtoul(inputversion.c_str(), NULL, 0) < 20080701 ) {
+		global_log->error() << "Input version tool old (" << inputversion << ")" << endl;
 		exit(1);
 	}
 
@@ -318,8 +316,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	_phaseSpaceFileStream >> token;
 	if((token=="MoleculeFormat") || (token == "M")) {
 
-		if( domain->getinpversion() >= 51129 )  // TODO: Is this a magic number?
-			_phaseSpaceFileStream >> ntypestring;
+        _phaseSpaceFileStream >> ntypestring;
 		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
 		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
 		

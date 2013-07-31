@@ -43,7 +43,6 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
 	string token;
 	_phaseSpaceFileStream >> token;
-	domain->setinpversion(0);
 
 	if( (token != "mardyn") 
 		&& (token != "MOLDY") 
@@ -61,10 +60,11 @@ void AsciiReader::readPhaseSpaceHeader(Domain* domain, double timestep)
 		 global_log->error() << "Wrong input file version (\'" << token << "\' instead of \'trunk\'). Aborting.\n";
 		 exit(1);
 	}
-	_phaseSpaceFileStream >> token;
-	domain->setinpversion(strtoul(token.c_str(),NULL,0));
-	if(domain->getinpversion() < 20080701 ) {
-	    global_log->warning() << "Input: OLD VERSION (" << domain->getinpversion() << ")" << endl;
+
+    string inputversion;
+	_phaseSpaceFileStream >> inputversion;
+	if(strtoul(inputversion.c_str(),NULL,0) < 20080701 ) {
+	    global_log->warning() << "Input: OLD VERSION (" << inputversion << ")" << endl;
 	}
 
 	char c;
@@ -274,7 +274,7 @@ unsigned long AsciiReader::readPhaseSpace(ParticleContainer* particleContainer, 
 		enum Ndatatype { ICRVQD, IRV, ICRV, ICRVFQDM } ntype=ICRVQD;
 
 		global_log->info() << "reading " << domain->getglobalNumMolecules() << " molecules" << endl;
-		if(domain->getinpversion() >= 51129) _phaseSpaceFileStream >> ntypestring;
+		_phaseSpaceFileStream >> ntypestring;
 		ntypestring.erase(ntypestring.find_last_not_of(" \t\n")+1);
 		ntypestring.erase(0,ntypestring.find_first_not_of(" \t\n"));
 		if (ntypestring=="ICRVFQDM")
