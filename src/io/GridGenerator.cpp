@@ -5,6 +5,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "utils/Random.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 
@@ -100,16 +101,30 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 	molecule_t m; /* molecule type as provided by the generator */
 
 	Ensemble* ensemble = _simulation.getEnsemble();
+	Random rng;
+
+	_simulation.getDomain()->disableComponentwiseThermostat();
 	while(_generator.getMolecule(&m) > 0) {
 		Component* component = ensemble->component(m.cid);
 		Molecule molecule(0, component); /* Molecule type as provided by mardyn */
+		double v_abs = sqrt(/*kB=1*/ ensemble->T() / molecule.component()->m());
+		double phi, theta;
+		phi = rng.rnd();
+		theta = rng.rnd();
+		double v[3];
+		v[0] = v_abs * sin(phi);
+		v[1] = v_abs * cos(phi) * sin(theta);
+		v[2] = v_abs * cos(phi) * cos(theta);
 		molecule.setid(numMolecules);
 		for(int d = 0; d < 3; d++) {
 			molecule.setr(d, m.r[d]);
+			molecule.setv(d, v[d]);
 		}
+		global_log->debug() << "molecule: " << molecule << endl;
 		particleContainer->addParticle(molecule);
 		numMolecules++;
 	}
 	global_log->info() << "Number of inserted molecules: " << numMolecules << endl;
+	particleContainer->updateMoleculeCaches();
 	return numMolecules;
 }
