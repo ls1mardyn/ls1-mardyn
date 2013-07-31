@@ -73,7 +73,7 @@ public:
 	void clear();
 	int addExpression(const std::string& exprstr);
 	int addExpression(const std::string& exprstr, const std::string& label)
-		{ unsigned int idx=addExpression(exprstr); if(idx>=0) _expressions.back().setLabel(label); return idx; }
+		{ int idx=addExpression(exprstr); if(idx>=0) _expressions.back().setLabel(label); return idx; }
 	unsigned int numExpressions() { return _expressions.size(); }
 	void updateExpressionValues(bool resetMinMax=false);
 	int getExpressionIndex(const std::string& label) const;
