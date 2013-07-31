@@ -12,10 +12,12 @@
       <!-- MD ODE integrator -->
       <timestep unit="reduced" >0.01</timestep>
     </integrator>
-    <steps>
-      <!-- time steps for all simulation phases -->
-      <production>100000</production> <!-- for now we only have production steps -->
-    </steps>
+    <run>
+      <currenttime>0</currenttime>
+      <production>
+        <steps>100000</steps>
+      </production>
+    </run>
     <ensemble type="NVT">
       <!--Ensemble is the main topic of the simulation -->
       <Nparticles>40000</Nparticles>
@@ -106,9 +108,6 @@
         </electrostatic>
       </cutoffs>
     </algorithm>
-    <status>
-        <currenttime>0</currenttime>
-    </status>
     <output>
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
