@@ -4,6 +4,8 @@
   * license: GPL (http://www.gnu.de/documents/gpl.de.html)
 */
 
+#define EXPRESSION_CPP
+
 #include "Expression.h"
 
 using namespace std;

@@ -52,7 +52,8 @@ int main(int argc, char** argv) {
 	SysMon* sysmon=SysMon::getSysMon();
 	sysmon->addExpression("sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit *","Free+BufferRAM");
 	sysmon->updateExpressionValues();
-	sysmon->writeExpressionValues();
+	//sysmon->writeExpressionValues();
+	global_log->info() << *sysmon;
 
 	OptionParser op;
 	Values options = initOptions(argc, argv, op);

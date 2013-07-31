@@ -125,6 +125,13 @@ class Expression
 				else if(isFloat())
 					ostrm << getValueFloat();
 			}
+			operator std::string() const
+			{
+				std::ostringstream oss;
+				write(oss);
+				return oss.str();
+			}
+		
 		private:
 			Tvaltype _type;
 			Tvalue _value;
@@ -200,6 +207,13 @@ class Expression
 					ostrm << "}";
 				}
 			}
+			operator std::string() const
+			{
+				std::ostringstream oss;
+				write(oss);
+				return oss.str();
+			}
+		
 		private:
 			std::string _name;
 			Value _value;
@@ -307,6 +321,12 @@ class Expression
 			virtual Tfloat evaluateFloat() const { return Tfloat(evaluate()); }
 			virtual Tint evaluateInt() const { return Tint(evaluate()); }
 			virtual void write(std::ostream& ostrm) const =0;
+			operator std::string() const
+			{
+				std::ostringstream oss;
+				write(oss);
+				return oss.str();
+			}
 			void write() const { write(std::cout); }
 			void traverse(std::list<const Node*>& nodelist, enum Etraversetype traversetype=traversetypePOSTFIX) const;
 			void writeSubExpr(std::ostream& ostrm=std::cout, enum Etraversetype traversetype=traversetypePOSTFIX, char sep=' ') const;
@@ -460,11 +480,16 @@ class Expression
 		{
 			if(_rootnode) _rootnode->writeSubExpr(ostrm,traversetype,sep);
 		}
-		void genLabel()
+		operator std::string() const
 		{
 			std::ostringstream oss;
-			writeExpr(oss,traversetypeINFIX);
-			_label=oss.str();
+			writeExpr(oss,traversetypeINFIX,0);
+			return oss.str();
+		}
+		void genLabel()
+		{
+			_label=operator std::string();
+			//_label=static_cast<std::string>(*this);
 		}
 		
 	protected:
@@ -474,5 +499,31 @@ class Expression
 		bool _variablesetcreated;
 };
 // ------------------------------------------------------------------------------ Expression
+
+
+inline std::ostream& operator << (std::ostream& ostrm, const Expression::Value& v)
+{
+	v.write(ostrm);
+	return ostrm;
+}
+
+inline std::ostream& operator << (std::ostream& ostrm, const Expression::Variable& v)
+{
+	v.write(ostrm);
+	return ostrm;
+}
+
+inline std::ostream& operator << (std::ostream& ostrm, const Expression::Node& n)
+{
+	n.write(ostrm);
+	return ostrm;
+}
+
+inline std::ostream& operator << (std::ostream& ostrm, const Expression& e)
+{
+	e.writeExpr(ostrm,Expression::traversetypeINFIX,0);
+	return ostrm;
+}
+
 
 #endif

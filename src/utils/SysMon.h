@@ -42,7 +42,7 @@
 #endif
 
 #include "Expression.h"
-	
+
 // SysMon ------------------------------------------------------------------------------------------
 class SysMon{
 public:
@@ -60,7 +60,7 @@ private:	// Singleton
 #else
 	SysMon() { _variableset=new Expression::VariableSet(); }
 #endif
-	~SysMon() { clear(); delete(_variableset);}
+	~SysMon() { clear(); delete(_variableset); s_sysmoninstance=NULL; }
 	
 public:
 	static SysMon* getSysMon()
@@ -85,6 +85,13 @@ public:
 	std::pair<Tvalue,Tvalue> getExpressionMinMaxValues(unsigned int index) const;
 #endif
 	void writeExpressionValues(std::ostream& ostrm=std::cout) const;
+	std::string stringExpressionValues() const
+	{
+		std::ostringstream oss;
+		writeExpressionValues(oss);
+		return oss.str();
+	}
+	operator std::string() const { return stringExpressionValues(); }
 	
 private:
 	Expression::VariableSet* _variableset;
@@ -110,5 +117,12 @@ private:
 	unsigned int updateVariables_procselfsched();
 };
 // ------------------------------------------------------------------------------------------ SysMon
+
+
+inline std::ostream& operator << (std::ostream& ostrm, const SysMon& s)
+{
+	s.writeExpressionValues(ostrm);
+	return ostrm;
+}
 
 #endif

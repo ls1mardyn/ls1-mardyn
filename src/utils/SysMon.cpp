@@ -4,13 +4,15 @@
   * license: GPL (http://www.gnu.de/documents/gpl.de.html)
 */
 
+#define SYSMON_CPP
+
 #include "SysMon.h"
-#include "utils/Logger.h"
+#include "Logger.h"
+
 #include <stack>
 
 #include <fstream>
 #include <sstream>
-
 
 using namespace std;
 

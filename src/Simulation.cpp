@@ -1155,7 +1155,8 @@ void Simulation::simulate() {
 	// System Monitor
 	SysMon* sysmon=SysMon::getSysMon();
 	sysmon->updateExpressionValues();
-	sysmon->writeExpressionValues();
+	//sysmon->writeExpressionValues();
+	global_log->info() << *sysmon;
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -1241,7 +1242,8 @@ void Simulation::simulate() {
 		if(_simstep%2)
 		{
 			sysmon->updateExpressionValues();
-			sysmon->writeExpressionValues();
+			//sysmon->writeExpressionValues();
+			global_log->info() << *sysmon;
 		}
 
 		// clear halo
@@ -1385,7 +1387,8 @@ void Simulation::simulate() {
 	
 	// System Monitor update
 	sysmon->updateExpressionValues();
-	sysmon->writeExpressionValues();
+	//sysmon->writeExpressionValues();
+	global_log->info() << *sysmon;
 	
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
