@@ -74,7 +74,7 @@
       <!-- Definition of the Phasespacepoint -->
       <phasespacepoint>
         <!--
-        <file type="OldStyle" >test.xdr</file>
+        <file type="ASCII" >test.xdr</file>
         -->
         <generator src="internal" id="GridGenerator" >
           <lattice type="cubic" centering="face">

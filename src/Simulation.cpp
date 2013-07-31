@@ -350,11 +350,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			global_log->info() << "phasespacepoint description file:\t"
 					<< pspfile << endl;
 
-			string pspfiletype("OldStyle");
+			string pspfiletype("ASCII");
 			inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype);
 			global_log->info() << "       phasespacepoint file type:\t"
 					<< pspfiletype << endl;
-			if (pspfiletype == "OldStyle") {
+			if (pspfiletype == "ASCII") {
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
 				_inputReader->setPhaseSpaceHeaderFile(pspfile);

@@ -81,7 +81,7 @@
       -->
       <phasespacepoint>
         <!-- -->
-        <file type="OldStyle" >test.xdr</file>
+        <file type="ASCII" >test.xdr</file>
 
         <!-- options for internal grid generator -->
         <generator src="internal" id="GridGenerator" >
