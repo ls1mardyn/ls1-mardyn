@@ -134,6 +134,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("steps/production", _numberOfTimesteps);
 	global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
 
+	xmlconfig.getNodeValueReduced("run/currenttime", _simulationTime);
+	global_log->info() << "Simulation start time: " << _simulationTime << endl;
+
 	/* enseble */
 	string ensembletype;
 	xmlconfig.getNodeValue("ensemble@type", ensembletype);
