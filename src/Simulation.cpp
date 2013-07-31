@@ -181,6 +181,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			this->exit(1);
 		}
 
+		double epsilonRF = 0;
+		xmlconfig.getNodeValueReduced("electrostatic[@type='ReactionField']/epsilon", epsilonRF);
+		global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
+		_domain->setepsilonRF(epsilonRF);
+
 		/* datastructure */
 		string datastructuretype;
 		xmlconfig.getNodeValue("datastructure@type", datastructuretype);
