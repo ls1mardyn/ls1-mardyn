@@ -31,23 +31,25 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 
 	// the halo is cleared for freshly initialized particle containers.
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-12x12x12.inp", 1.0);
-	vector<Component>& components(_domain->getComponents());
-	CanonicalEnsemble ensemble(container, &components);
+	vector<Component>* components= global_simulation->getEnsemble()->components();
+	CanonicalEnsemble ensemble(container, components);
+
+	Component* component = global_simulation->getEnsemble()->component(0);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
 	ASSERT_EQUAL(1728ul, ensemble.N());
 	// has the ensemble updated the count of particles per component right?
-	ASSERT_EQUAL(1728ul, components[0].getNumMolecules());
+	ASSERT_EQUAL(1728ul, component->getNumMolecules());
 
-	Molecule molecule(1729, &components[0], 5.5, 5.5, 5.5, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.);
+	Molecule molecule(1729, component, 5.5, 5.5, 5.5, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.);
 	container->addParticle(molecule);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
 	ASSERT_EQUAL(1729ul, ensemble.N());
 	// has the ensemble updated the count of particles per component right?
-	ASSERT_EQUAL(1729ul, components[0].getNumMolecules());
+	ASSERT_EQUAL(1729ul, component->getNumMolecules());
 
 	delete _domainDecomposition;
 	delete container;

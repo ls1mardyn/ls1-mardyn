@@ -58,15 +58,15 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
-	const vector<Component>& components = _domain->getComponents();
-	ASSERT_EQUAL((size_t) 1, components.size());
+	const vector<Component>* components = global_simulation->getEnsemble()->components();
+	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 
 	/* The number of pairs counted by the RDF also depends on the particles in the halo.
 	 * So count first with the halo being empty, and then being populated. */
-	RDF rdf(0.018, 100, components);
+	RDF rdf(0.018, 100, *components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
@@ -89,7 +89,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	rdf.tickRDF();
 
 	// now the same with halo particles present.
-	_domainDecomposition->exchangeMolecules(moleculeContainer, _domain->getComponents(), _domain);
+	_domainDecomposition->exchangeMolecules(moleculeContainer,*components, _domain);
 	moleculeContainer->traverseCells(cellProcessor);
 	rdf.collectRDF(_domainDecomposition);
 	rdf.accumulateRDF();
@@ -134,13 +134,13 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
 	
-	const vector<Component>& components = _domain->getComponents();
-	ASSERT_EQUAL((size_t) 1, components.size());
+	const vector<Component>* components = global_simulation->getEnsemble()->components();
+	ASSERT_EQUAL((size_t) 1, components->size());
 
-	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain->getComponents(), _domain);
+	_domainDecomposition->balanceAndExchange(true, moleculeContainer, *components, _domain);
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.018, 100, components);
+	RDF rdf(0.018, 100, *components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
@@ -207,14 +207,14 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
 
-	const vector<Component>& components = _domain->getComponents();
-	ASSERT_EQUAL((size_t) 1, components.size());
+	const vector<Component>* components = global_simulation->getEnsemble()->components();
+	ASSERT_EQUAL((size_t) 1, components->size());
 
-	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain->getComponents(), _domain);
+	_domainDecomposition->balanceAndExchange(true, moleculeContainer, *components, _domain);
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.05, 101, components);
+	RDF rdf(0.05, 101, *components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
