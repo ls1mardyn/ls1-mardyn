@@ -124,13 +124,104 @@
       </electrostatic>
     </algorithm>
 
-    <!-- output plugins -->
-    <output>
-      <!-- Result writer plugin -->
+    <!-- output plugins
+	There are several output plugins which can be used to generate some output files while running simulations.
+	The following comments describe the provided output plugins. -->
+	
+	<!-- general information about properties of the output plugins:
+    The attribute “name“ holds the name of the plugin user want to use performing an output. The names of the provided plugins are listed below:
+      - CheckpointWriter
+      - ResultWriter
+      - XyzWriter
+      - VISWriter
+	  - MmspdWriter
+      - PovWriter	  
+      - StatisticsWriter
+      - DecompWriter
+    The element “writefrequency” contains a integer value which controls the frequency of writing out the data. For example the value “10” makes
+	sure that every 10th timestep data will be written out.
+    The element “outputprefix” holds a string which defines the prefix of the output filename. For example the string “default” will result
+	in a output file named “default.res”. -->
+	<output>
+	
+	  <!-- CheckpointWriter plugin 
+	  This writer will create a restart file which format or structure is the same as used by input files *.inp.
+	  These files can be used to continue a simulation. -->
+	  <outputplugin name="CheckpointWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+    
+      <!-- ResultWriter plugin 
+	  Writes thermodynamic properties to a file. The following values will be written to a file:
+        - Simulation time step
+        - time since the simulation started
+        - Average potential Energy
+        - Pressure
+        - BetaTrans
+        - BetaRot
+        - Specific heat capacity (constant volume) -->
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
+	  
+	  <!-- visualization output plugins
+	  These writers are used to generate files which can be used for visualization purpose by different visualization software.
+	  Depending on the specific software different file formats are supported. -->
+	  
+	  <!-- XyzWriter plugin
+	  The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
+	  (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
+	  <outputplugin name="XyzWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+	  
+	  <!-- VISWriter plugin
+	  Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
+	  of the molecules (using quaternions). The files can be read by software like:
+	    - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
+		- Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
+	  <outputplugin name="VISWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+	  
+	  <!-- MmspdWriter plugin
+      The *.mmspd-format contains the coordinates of the molecules and information about the dimensions of the simulation box.
+	  The file can be read by the software MegaMol (for detail information visit: https://svn.vis.uni-stuttgart.de/trac/megamol/). -->
+	  <outputplugin name="MmspdWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+
+	  <!-- PovWriter
+      This writer creates a file containing the current state of simulation in *.pov-format. It can be used to visualize with
+	  POVray software (for detail information visit: www.povray.org). -->
+	  <outputplugin name="PovWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+
+      <!-- more output plugins -->
+	  
+	  <!-- StatisticsWriter
+      This writer writes plot statistics to a file. At the moment, only a histogramm showing the occupancy of the cells is produced.
+        - x: number of Molecules
+        - y: number of cells with the respective number of molecules -->
+	  <outputplugin name="StatisticsWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+
+	  <!-- DecompWriter
+	  This writer writes out information about the decomposition of the simulation domain. -->
+	  <outputplugin name="DecompWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+	  
     </output>
   </simulation>
 </mardyn>
