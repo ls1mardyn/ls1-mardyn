@@ -183,7 +183,7 @@ public:
 
 	//! Append an int value to the list of values to be sent
 	void appendInt(int intValue) {
-		_recvValues[_setCounter].val_int = intValue;
+		_sendValues[_setCounter].val_int = intValue;
 		_listOfTypes[_setCounter] = MPI_INT;
 		_setCounter++;
 	}
