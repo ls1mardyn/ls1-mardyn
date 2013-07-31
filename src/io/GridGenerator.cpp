@@ -120,7 +120,6 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 			molecule.setr(d, m.r[d]);
 			molecule.setv(d, v[d]);
 		}
-		global_log->debug() << "molecule: " << molecule << endl;
 		particleContainer->addParticle(molecule);
 		numMolecules++;
 	}

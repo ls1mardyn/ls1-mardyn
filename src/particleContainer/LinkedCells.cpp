@@ -320,10 +320,6 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset +1);
 	// open the window of cells activated
 	for (unsigned int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
-		#ifndef NDEBUG
-		global_log->debug() << "Open cells window for cell index= " << cellIndex
-				<< " numMolecules()="<<_cells[cellIndex].getMoleculeCount() << endl;
-		#endif
 		cellProcessor.preprocessCell(_cells[cellIndex]);
 	}
 
@@ -333,11 +329,6 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 		// extend the window of cells with cache activated
 		if (cellIndex + _maxNeighbourOffset < _cells.size()) {
-			#ifndef NDEBUG
-			global_log->debug() << "Opening cells window for cell index=" << (cellIndex + _maxNeighbourOffset)
-					<< " with numMolecules()="<< _cells[cellIndex + _maxNeighbourOffset].getMoleculeCount()
-					<< " currentCell " << cellIndex << endl;
-			#endif
 			cellProcessor.preprocessCell(_cells[cellIndex + _maxNeighbourOffset]);
 		}
 
@@ -386,21 +377,12 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 		// narrow the window of cells activated
 		if (cellIndex >= _minNeighbourOffset) {
-#ifndef NDEBUG
-			global_log->debug() << "Narrowing cells window for cell index=" << (cellIndex - _minNeighbourOffset)
-									<< " with size()="<<_cells[cellIndex - _minNeighbourOffset].getMoleculeCount()
-									<< " currentCell " << cellIndex << endl;
-#endif
 			cellProcessor.postprocessCell(_cells[cellIndex - _minNeighbourOffset]);
 		}
 	} // loop over all cells
 
 	// close the window of cells with cache activated
 	for (unsigned int cellIndex = _cells.size() - _minNeighbourOffset; cellIndex < _cells.size(); cellIndex++) {
-#ifndef NDEBUG
-			global_log->debug() << "Narrowing cells window for cell index=" << cellIndex
-					<< " size()="<<_cells[cellIndex].getMoleculeCount() << endl;
-#endif
 			cellProcessor.postprocessCell(_cells[cellIndex]);
 	}
 	cellProcessor.endTraversal();

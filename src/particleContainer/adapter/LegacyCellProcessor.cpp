@@ -38,11 +38,6 @@ void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
 
 	double zeroVec[3] = {0.0, 0.0, 0.0};
 
-#ifndef NDEBUG
-	// reset forces and momenta to zero
-	global_log->debug() << "Resetting forces and momenta, disconnecting Tersoff pairs." << endl;
-#endif
-
 	// TODO: check if the reset is done twice as leaving this part has no difference on the result.
 	vector<Molecule*>& particlePointers = cell.getParticlePointers();
 	size_t size = cell.getParticlePointers().size();
@@ -181,9 +176,6 @@ void LegacyCellProcessor::processCell(ParticleCell& cell) {
 void LegacyCellProcessor::postprocessCell(ParticleCell& cell) {
 	assert(cell.isInActiveWindow());
 	cell.clearInActiveWindow();
-#ifndef NDEBUG
-	global_log->debug() << "processing Tersoff potential." << endl;
-#endif
 
 	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
 	int currentParticleCount = currentCellParticles.size();

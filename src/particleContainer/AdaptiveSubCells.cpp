@@ -347,10 +347,6 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset +1);
 	// open the window of cells activated
 	for (unsigned int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
-		#ifndef NDEBUG
-		global_log->debug() << "Open cells window for cell index= " << cellIndex
-				<< " numMolecules()="<<_subCells[cellIndex].getMoleculeCount() << endl;
-		#endif
 		cellProcessor.preprocessCell(_subCells[cellIndex]);
 	}
 
