@@ -50,7 +50,7 @@ void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 }
 
 
-void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
+void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 
 	// corners of the process-specific domain
 	double rmin[DIM]; // lower corner
@@ -162,7 +162,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 			// insert received molecules into list of molecules
 			for (int i = 0; i < numrecv; i++) {
 				Molecule *m;
-				ParticleData::ParticleDataToMolecule(particlesRecvBuffs[d][direction][i], &m, &components);
+				ParticleData::ParticleDataToMolecule(particlesRecvBuffs[d][direction][i], &m);
 				moleculeContainer->addParticle(*m);
 				delete m;
 			}
@@ -173,8 +173,8 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 	}
 }
 
-void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
-	exchangeMolecules(moleculeContainer, components, domain);
+void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
+	exchangeMolecules(moleculeContainer, domain);
 }
 
 bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {

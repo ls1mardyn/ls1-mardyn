@@ -73,8 +73,8 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	/* TODO: Maybe add decomposition dimensions, default auto. */
 }
 
-void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
-	balanceAndExchange(false, moleculeContainer, components, domain);
+void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
+	balanceAndExchange(false, moleculeContainer, domain);
 }
 
 void KDDecomposition::balance() {
@@ -82,7 +82,7 @@ void KDDecomposition::balance() {
 }
 
 
-void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const vector<Component>& components, Domain* domain) {
+void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
 	_moleculeContainer = moleculeContainer;
 	KDNode* newDecompTree = NULL;
 	KDNode* newOwnArea = NULL;
@@ -189,7 +189,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 			else if (newMol.r[2] >= highLimit[2])
 				newMol.r[2] -= domain->getGlobalLength(2);
 
-            Component *component = (Component*) &components[newMol.cid];
+			Component *component = _simulation.getEnsemble()->component(newMol.cid);
 			Molecule m1 = Molecule(newMol.id, component, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2], newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2]);
 			moleculeContainer->addParticle(m1);
 		}
@@ -197,7 +197,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 	// create the copies of local molecules due to periodic boundaries
 	// (only for procs covering the whole domain in one dimension)
 	// (If there was a balance, all procs have to be checked)
-	createLocalCopies(moleculeContainer, domain, components);
+	createLocalCopies(moleculeContainer, domain);
 
 	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
 		if (procsToRecvFrom[neighbCount] == _ownRank)
@@ -560,7 +560,7 @@ void KDDecomposition::adjustOuterParticles(KDNode*& newOwnArea, ParticleContaine
 	}
 }
 
-void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain, const vector<Component>& components) {
+void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain) {
 	Molecule* molPtr;
 	// molecules that have to be copied, get a new position
 	double newPosition[3];
@@ -589,7 +589,8 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 					else
 						newPosition[d2] = molPtr->r(d2);
 				}
-                Component *component = (Component*) &components[molPtr->componentid()];
+				
+				Component* component = _simulation.getEnsemble()->component(molPtr->componentid());
 				Molecule m1 = Molecule(molPtr->id(),component,
 				                       newPosition[0], newPosition[1], newPosition[2],
 				                       molPtr->v(0),molPtr->v(1),molPtr->v(2),

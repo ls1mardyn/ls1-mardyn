@@ -1230,8 +1230,11 @@ void Simulation::simulate() {
 		}
 
 		// System Monitor update
-		sysmon->updateExpressionValues();
-		sysmon->writeExpressionValues();
+		if(_simstep%2)
+		{
+			sysmon->updateExpressionValues();
+			sysmon->writeExpressionValues();
+		}
 
 		// clear halo
 		global_log->debug() << "Delete outer particles" << endl;
@@ -1438,9 +1441,8 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	// The particles have moved, so the neighbourhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
-	_domainDecomposition->balanceAndExchange(true, _moleculeContainer,
-			*(global_simulation->getEnsemble()->components()), _domain);
+	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	_domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain);
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();

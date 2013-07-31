@@ -62,7 +62,7 @@ public:
 	//! @param components when creating a new Molecule-object (from the recieved data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain) = 0;
+	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
 	//! @brief balance the load (and optimise communication) and exchange boundary particles
 	//!
@@ -76,7 +76,7 @@ public:
 	//! @param components when creating a new Molecule-object (from the recieved data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain) = 0;
+	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!

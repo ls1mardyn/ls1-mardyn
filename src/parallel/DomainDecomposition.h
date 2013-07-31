@@ -45,10 +45,8 @@ public:
 	//! moved to the right neighbour first and then from the right neighbour
 	//! to the lower neighbour.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param components when creating a new Molecule-object (from the recieved data),
-	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief this decompositin does no balancing, it just exchanges the particles
 	//!
@@ -57,10 +55,8 @@ public:
 	//! between the processes are exchanged, therefore exchangeMolecules is called.
 	//! @param balance has no influence in this implementation
 	//! @param moleculeContainer needed for calculating load and to get the particles
-	//! @param components when creating a new Molecule-object (from the recieved data),
-	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
 	bool procOwnsPos(double x, double y, double z, Domain* domain);

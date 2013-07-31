@@ -60,7 +60,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! _decompTree and _ownArea
 	KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency);
 
-    KDDecomposition(){}
+	KDDecomposition(){}
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
@@ -82,10 +82,8 @@ class KDDecomposition: public DomainDecompBase{
 	//! Therefore, this method just calls balanceAndExchange(0,...), where
 	//! the "0" says that only exchanging and no balancing has to be done.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param components when creating a new Molecule-object (from the recieved data),
-	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, const std::vector<Component>& components, Domain* domain);
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief balance the load (and optimise communication) and exchange boundary particles
 	//!
@@ -101,11 +99,8 @@ class KDDecomposition: public DomainDecompBase{
 	//! - for processes which span the whole domain in at least one direction, ensure periodic boundary
 	//! @param balance if true, a rebalancing should be performed, otherwise only exchange
 	//! @param moleculeContainer needed for calculating load and to get the particles
-	//! @param components when creating a new Molecule-object (from the recieved data),
-	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer,
-	                        const std::vector<Component>& components, Domain* domain);
+	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
 
 
 
@@ -263,7 +258,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param components needed to create new molecules
 	//! @todo make it work with overlapping decomposition trees
 	//! @todo more efficiency (don't run over all molecules)
-	void createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain, const std::vector<Component>& components);
+	void createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	//$ sonstige Methoden

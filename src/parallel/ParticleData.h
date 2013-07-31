@@ -30,7 +30,7 @@ public:
 	static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule);
 
 	//! @brief copy data from object of class class ParticleData to object of class Molecule
-	static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule, const std::vector<Component>* components = NULL);
+	static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule);
 
 #ifndef NDEBUG
 	ParticleData();

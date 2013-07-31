@@ -55,7 +55,7 @@ void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule
 	particleStruct.D[2] = molecule.D(2);
 }
 
-void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule, const std::vector<Component>* components) {
+void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule) {
 	Component* component = _simulation.getEnsemble()->component(particleStruct.cid);
 	*molecule = new Molecule(particleStruct.id, component,
 								particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
