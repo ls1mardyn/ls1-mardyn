@@ -36,6 +36,8 @@ VTK ?= 0
 
 SUPPORT_GENERATOR ?= 0
 
+VECTORIZE_CODE ?= 0
+
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
@@ -86,6 +88,11 @@ ifneq ($(UNIT_TESTS),0)
   include $(CPPUNIT_MAKE_INCLUDE)
 endif
 
+ifeq ($(VECTORIZE_CODE),1)
+CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
+CXXFLAGS += $(CXXFLAGS_VECTORIZE)
+endif
+
 
 ifeq ($(DEPS),1)
   # create .deps subdirectories containing dependency information
@@ -122,6 +129,7 @@ help:
 	@echo "make UNIT_TESTS=0 | 1           compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=0 | 1                  compile with or without the vtk output plugin" 
 	@echo "make SUPPORT_DL_GENERATOR=0 | 1 compile with support for input generators as dynamic libraries"
+	@echo "make VECTORIZE_CODE=0 | 1       compile with support for SSE, AVX, ..., define CXXFLAGS_VECTORIZE=-march=???"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
