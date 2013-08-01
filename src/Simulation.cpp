@@ -286,14 +286,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				string thermostattype;
 				xmlconfig.getNodeValue("@type", thermostattype);
 				if(thermostattype == "VelocityScaling") {
-					string component("global");
+					string componentName("global");
 					int componentId = 0;
 					double temperature = _ensemble->T();
-					xmlconfig.getNodeValue("@component", component);
+					xmlconfig.getNodeValue("@componentId", componentName);
 					xmlconfig.getNodeValue("temperature", temperature);
-					componentId = getEnsemble()->component(component)->ID();
-					global_log->info() << "Adding velocity scaling thermostat for component '" << component << "' (ID: " << componentId << "), T = " << temperature << endl;
-					if(component == "global"){
+					componentId = getEnsemble()->component(componentName)->ID();
+					global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
+					if(componentName == "global"){
 						_domain->setGlobalTemperature(temperature);
 					}
 					else {

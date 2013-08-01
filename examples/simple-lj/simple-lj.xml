@@ -24,7 +24,7 @@
       </domain>
 
       <components>
-          <moleculetype id="1" >
+          <moleculetype id="1" name="Argon">
             <site type="LJ126" id="1" >
               <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
               <mass>10000.0</mass>
@@ -50,6 +50,14 @@
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>
       </electrostatic>
+
+      <!--
+      <thermostats>
+        <thermostat type="VelocityScaling" componentName="Argon">
+          <temperature>1</temperature>
+        </thermostat>
+      </thermostats>
+      -->
     </algorithm>
 
     <output>

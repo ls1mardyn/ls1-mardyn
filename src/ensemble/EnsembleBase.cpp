@@ -14,13 +14,13 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 	_components.resize(numComponents);
 	XMLfile::Query::const_iterator componentIter;
 	string oldpath = xmlconfig.getcurrentnodepath();
-	int i = 0;
-	for( componentIter = query.begin(); componentIter; componentIter++, i++ ) {
+	for( componentIter = query.begin(); componentIter; componentIter++) {
 		xmlconfig.changecurrentnode( componentIter );
-		_components[i].readXML(xmlconfig);
-		_componentnamesToIds[_components[i].getName()] = i;
-		_components[i].setID(i);
-		global_log->debug() << _components[i].getName() << " --> " << i << endl;
+		unsigned int cid = 0;
+		xmlconfig.getNodeValue( "@id", cid );
+		_components[cid - 1].readXML(xmlconfig);
+		_componentnamesToIds[_components[cid - 1].getName()] = cid - 1;
+		global_log->debug() << _components[cid - 1].getName() << " --> " << cid - 1 << endl;
 	}
 	xmlconfig.changecurrentnode(oldpath);
 

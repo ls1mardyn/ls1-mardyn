@@ -46,10 +46,14 @@ Component::Component(unsigned int id) {
 
 void Component::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Reading in component" << endl;
-	std::string cid("");
+	unsigned int cid = 0;
 	xmlconfig.getNodeValue( "@id", cid );
 	global_log->info() << "Component ID:" << cid << endl;
-	setName(cid);
+	setID(cid - 1);
+	string name;
+	xmlconfig.getNodeValue( "@name", name );
+	global_log->info() << "Component name:" << name << endl;
+	setName(name);
 
 	if(xmlconfig.changecurrentnode("momentsofinertia")){
 		double II[3];
