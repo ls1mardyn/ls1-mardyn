@@ -34,7 +34,7 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 	vector<Component>* components= global_simulation->getEnsemble()->components();
 	CanonicalEnsemble ensemble(container, components);
 
-	Component* component = global_simulation->getEnsemble()->component(0);
+	Component* component = ensemble.component(0);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
