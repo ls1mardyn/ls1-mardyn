@@ -357,8 +357,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			if (pspfiletype == "ASCII") {
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
-				_inputReader->setPhaseSpaceHeaderFile(pspfile);
-				_inputReader->readPhaseSpaceHeader(_domain, _integrator->getTimestepLength());
 			}
 		}
 		string oldpath = inp.getcurrentnodepath();
