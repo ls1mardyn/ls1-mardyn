@@ -46,7 +46,6 @@
       </datastructure>
       <cutoffs type="CenterOfMass" >
         <radiusLJ unit="reduced" >5.0</radiusLJ>
-        <radiusTersoff>1.0</radiusTersoff>
       </cutoffs>
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>
