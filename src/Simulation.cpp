@@ -186,31 +186,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
 		_domain->setepsilonRF(epsilonRF);
 
-		/* datastructure */
-		string datastructuretype;
-		xmlconfig.getNodeValue("datastructure@type", datastructuretype);
-		global_log->info() << "Datastructure type: " << datastructuretype << endl;
-		if( "LinkedCells" == datastructuretype) {
-			_moleculeContainer = new LinkedCells();
-			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
-			lc->setCutoff(_cutoffRadius);
-		}
-		else if( "AdaptiveSubCells" == datastructuretype) {
-			_moleculeContainer = new AdaptiveSubCells();
-		}
-		else {
-			global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
-			this->exit(1);
-		}
-		if(xmlconfig.changecurrentnode("datastructure")) {
-			_moleculeContainer->readXML(xmlconfig);
-			_moleculeContainer->rebuild(_ensemble->domain()->rmin(), _ensemble->domain()->rmax());
-			xmlconfig.changecurrentnode("..");
-		} else {
-			global_log->error() << "Datastructure section missing" << endl;
-			this->exit(1);
-		}
-
 		/* parallelization */
 		string parallelisationtype("DomainDecomposition");
 		xmlconfig.getNodeValue("parallelisation@type", parallelisationtype);
@@ -245,6 +220,37 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else {
 			global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
+			this->exit(1);
+		}
+
+		/* datastructure */
+		string datastructuretype;
+		xmlconfig.getNodeValue("datastructure@type", datastructuretype);
+		global_log->info() << "Datastructure type: " << datastructuretype << endl;
+		if( "LinkedCells" == datastructuretype) {
+			_moleculeContainer = new LinkedCells();
+			_particleContainerType = LINKED_CELL; /* TODO: Necessary? */
+			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+			lc->setCutoff(_cutoffRadius);
+		}
+		else if( "AdaptiveSubCells" == datastructuretype) {
+			_moleculeContainer = new AdaptiveSubCells();
+			_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
+		}
+		else {
+			global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
+			this->exit(1);
+		}
+		if(xmlconfig.changecurrentnode("datastructure")) {
+			_moleculeContainer->readXML(xmlconfig);
+			double bBoxMin[3];
+			double bBoxMax[3];
+			/* TODO: replace Domain with DomainBase. */
+			_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
+			_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Datastructure section missing" << endl;
 			this->exit(1);
 		}
 
@@ -625,7 +631,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			inputfilestream >> token;
 			if (token == "LinkedCells") {
-				_particleContainerType = LINKED_CELL;
+				_particleContainerType = LINKED_CELL; /* TODO: Necessary? */ 
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
 				double bBoxMin[3];
@@ -641,7 +647,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 				        cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
-				_particleContainerType = ADAPTIVE_LINKED_CELL;
+				_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {

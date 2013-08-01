@@ -23,3 +23,10 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 		barrier();
 	}
 }
+
+void DomainDecompBase::getBoundingBoxMinMax(Domain *domain, double *min, double *max) {
+	for(int d = 0; d < 3; d++) {
+		min[d] = getBoundingBoxMin(d, domain);
+		max[d] = getBoundingBoxMax(d, domain);
+	}
+}

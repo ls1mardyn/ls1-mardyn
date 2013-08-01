@@ -105,7 +105,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
-		_haloWidthInNumCells[i] = ceil(_cellsInCutoff);
+		_haloWidthInNumCells[i] = ceil(_cellsInCutoff); /* TODO: Single value?! */
 	}
 	int numberOfCells = 1;
 
@@ -116,7 +116,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 			_boxWidthInNumCells[dim] = 1;
 		}
 
-		_cellsPerDimension[dim] = (int) floor((this->_boundingBoxMax[dim] - this->_boundingBoxMin[dim]) / (_cutoffRadius / _haloWidthInNumCells[dim]))
+		_cellsPerDimension[dim] = (int) floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / (_cutoffRadius / _haloWidthInNumCells[dim]))
 		    + 2 * _haloWidthInNumCells[dim];
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
@@ -124,7 +124,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 			exit(1);
 		}
 		numberOfCells *= _cellsPerDimension[dim];
-		_cellLength[dim] = (this->_boundingBoxMax[dim] - this->_boundingBoxMin[dim]) / (_cellsPerDimension[dim] - 2 * _haloWidthInNumCells[dim]);
+		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / (_cellsPerDimension[dim] - 2 * _haloWidthInNumCells[dim]);
 		_haloBoundingBoxMin[dim] = this->_boundingBoxMin[dim] - _haloWidthInNumCells[dim] * _cellLength[dim];
 		_haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim] + _haloWidthInNumCells[dim] * _cellLength[dim];
 		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];

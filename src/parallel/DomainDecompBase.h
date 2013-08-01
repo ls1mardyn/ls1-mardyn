@@ -89,6 +89,8 @@ public:
 	//! @param domain might be needed to get the bounding box
 	virtual bool procOwnsPos(double x, double y, double z, Domain* domain) = 0;
 
+	void getBoundingBoxMinMax(Domain* domain, double* min, double* max);
+
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the minimum of the bounding box is returned
 	//! @param domain here the bounding box is stored
