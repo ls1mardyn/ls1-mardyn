@@ -30,6 +30,15 @@
       <!-- instead of lx/ly/lz we might accept density -->
       <components>
           <moleculetype id="1" >
+            <site type="LJ126" id="1" >
+              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <mass>10000.00</mass>
+              <sigma>1.0</sigma>
+              <epsilon>1.0</epsilon>
+            </site>
+          </moleculetype>
+          <!--
+          <moleculetype id="1" >
             <coord_base>principal_axes</coord_base>
             <site type="LJ126" id="1" >
               <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
@@ -63,7 +72,7 @@
           </moleculetype>
           
           <include query="/components/moleculetype[@id='cycC6H12']" >components.xml</include>
-          
+          -->
           <mixing>
             <rule type="LB" cid1="1" cid2="2">
               <eta>1.0</eta>
@@ -74,15 +83,18 @@
       <!-- Definition of the Phasespacepoint -->
       <phasespacepoint>
         <!--
-        <file type="ASCII" >test.xdr</file>
         -->
+        <file type="ASCII" >lj40000_t300.inp</file>
+        <!--
+        -->
+        <!--
         <generator src="internal" id="GridGenerator" >
-          <lattice type="cubic" centering="face">
-            <!-- automatically determined if density and num particles is given -->
+          <lattice type="cubic" centering="primitive">
+            <comment>automatically determined if density and num particles is given </comment>
 			<vec id="a"> <x>1.0</x> <y>0.0</y> <z>0.0</z> </vec>
 			<vec id="b"> <x>0.0</x> <y>1.0</y> <z>0.0</z> </vec>
 			<vec id="c"> <x>0.0</x> <y>0.0</y> <z>1.0</z> </vec>
-            <dims a="2" b="2" c="2" />
+            <dims a="1" b="1" c="1" />
           </lattice>
           <basis>
             <site>
@@ -92,6 +104,7 @@
           </basis>
           <origin> <x>0.0</x> <y>0.0</y> <z>0.0</z> </origin>
         </generator>
+        -->
       </phasespacepoint>
     </ensemble>
     <algorithm>
@@ -103,15 +116,24 @@
         <!-- cutoff definitions -->
         <radiusLJ unit="reduced" >5.0</radiusLJ>
         <radiusTersoff>1.0</radiusTersoff>
-        <electrostatic type="ReactionField" >
-          <epsilon>1.0e+10</epsilon>
-        </electrostatic>
       </cutoffs>
+      <electrostatic type="ReactionField" >
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+      <thermostats>
+        <!-- <thermostat type="VelocityScaling" component="1"> -->
+        <thermostat type="VelocityScaling">
+          <!-- <temperature>1.0</temperature> -->
+        </thermostat>
+      </thermostats>
     </algorithm>
     <output>
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
+      </outputplugin>
+      <outputplugin name="SysMonOutput">
+        <writefrequency>3</writefrequency>
       </outputplugin>
     </output>
   </simulation>
