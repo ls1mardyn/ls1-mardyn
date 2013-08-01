@@ -19,8 +19,7 @@ using Log::global_log;
 using namespace std;
 
 
-InputOldstyle::InputOldstyle() {
-}
+InputOldstyle::InputOldstyle() {}
 
 InputOldstyle::~InputOldstyle(){}
 
@@ -293,7 +292,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	if (domainDecomp->getRank() == 0) 
 	{ // Rank 0 only
 #endif
-	while(_phaseSpaceFileStream && (token != "NumberOfMolecules") && (token != "N")) _phaseSpaceFileStream >> token;
+	while(_phaseSpaceFileStream && (token != "NumberOfMolecules") && (token != "N")) {
+		_phaseSpaceFileStream >> token;
+	}
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
 		exit(1);
