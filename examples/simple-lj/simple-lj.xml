@@ -35,7 +35,7 @@
       </components>
 
       <phasespacepoint>
-        <file type="Ascii" >simple-lj.inp</file>
+        <file type="ASCII" >simple-lj.inp</file>
       </phasespacepoint>
     </ensemble>
 
