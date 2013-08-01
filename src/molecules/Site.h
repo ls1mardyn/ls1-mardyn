@@ -113,6 +113,7 @@ public:
 		xmlconfig.getNodeValueReduced("epsilon", _eps);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
 		xmlconfig.getNodeValueReduced("cutoff", _rc);
+		_uLJshift6 = 0.0;
 		xmlconfig.getNodeValueReduced("shifted", _uLJshift6);
 	}
 	
