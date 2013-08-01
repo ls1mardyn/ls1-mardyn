@@ -64,7 +64,7 @@
               <dipolmoment>
                 <x>0.0</x> <y>0.0</y> <z>-1.0</z> </orientation>
                 <abs>0.96744548351221815</abs>
-              <dipolmoment>
+              </dipolmoment>
             </site>
           </moleculetype>
       </components>
