@@ -33,9 +33,6 @@ VTKGridWriterTest::~VTKGridWriterTest() {
 
 void VTKGridWriterTest::testEmptyGrid() {
 	ParticleContainer* container = Factory::createEmptyParticleContainer(Factory::LinkedCell);
-	LinkedCells* linkedCells = dynamic_cast<LinkedCells*> (container);
-	assert(linkedCells != NULL);
-
 	VTKGridWriter writer(2, "VTKGridWriterTest");
 
 #ifdef ENABLE_MPI
