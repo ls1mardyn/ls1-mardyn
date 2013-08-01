@@ -7,44 +7,64 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+#include "utils/Logger.h"
+#include "Simulation.h"
 
+using Log::global_log;
 using namespace std;
 
-DecompWriter::DecompWriter(unsigned long writeFrequency, string mode, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+DecompWriter::DecompWriter(unsigned long writeFrequency, string mode, string outputPrefix, bool incremental) {
+	_outputPrefix = outputPrefix;
 	_mode = mode;
 	_writeFrequency = writeFrequency;
 	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix== "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
 DecompWriter::~DecompWriter(){}
 
-void DecompWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+void DecompWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+
+	int incremental = 1;
+	xmlconfig.getNodeValue("incremental", incremental);
+	global_log->info() << "Incremental numbers: " << _incremental << endl;
+
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+
+	xmlconfig.getNodeValue("mode", _mode);
+	global_log->info() << "Mode: " << _mode << endl;
 }
 
-void DecompWriter::doOutput( ParticleContainer* particleContainer,
-														 DomainDecompBase* domainDecomp, Domain* domain,
-			     unsigned long simstep, list<ChemicalPotential>* lmu ) 
-{
-	if(simstep%_writeFrequency == 0) {
-		stringstream filenamestream;
-		if(_filenameisdate) {
-			filenamestream << gettimestring() << ".out";
-		} else {
-			filenamestream << _filename;
-		}
 
+void DecompWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+
+void DecompWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+	if(simstep % _writeFrequency == 0) {
+		stringstream filenamestream;
+		filenamestream << _outputPrefix;
 		if(_incremental) {
-			filenamestream << "-";
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			int num_digits = (int) ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
-			filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
+			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+		}
+		if(_appendTimestamp) {
+			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".decomp";
 
@@ -55,10 +75,12 @@ void DecompWriter::doOutput( ParticleContainer* particleContainer,
 			for(int process = 0; process < domainDecomp->getNumProcs(); process++){
 				if(ownRank==process){
 					ofstream decompstrm(filenamestream.str().c_str(), ios::app);
-					if(ownRank==0) decompstrm << "particleData xyz" << endl;
-					Molecule* tempMol;
-					for(tempMol = particleContainer->begin(); tempMol != particleContainer->end(); tempMol = particleContainer->next()){
-						decompstrm << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << endl;
+					if(ownRank==0) {
+						decompstrm << "particleData xyz" << endl;
+					}
+					Molecule* moleculePtr;
+					for(moleculePtr = particleContainer->begin(); moleculePtr != particleContainer->end(); moleculePtr = particleContainer->next()) {
+						decompstrm << moleculePtr->r(0) << "\t" << moleculePtr->r(1) << "\t" << moleculePtr->r(2) << endl;
 					}
 					decompstrm.close();
 				}
@@ -73,5 +95,4 @@ void DecompWriter::doOutput( ParticleContainer* particleContainer,
 	}  
 }
 
-void DecompWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
-}
+void DecompWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}

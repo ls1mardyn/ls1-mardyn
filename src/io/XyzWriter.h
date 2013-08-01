@@ -22,9 +22,13 @@ class Domain;
 //! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 class XyzWriter : public OutputBase {
 public:
-	XyzWriter(unsigned long writeFrequency, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+    XyzWriter(){}
+	XyzWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental);
 	~XyzWriter();
 	//! @todo comment
+	
+	void readXML(XMLfileUnits& xmlconfig);
+
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	//! @todo comment
@@ -41,10 +45,9 @@ public:
 		return std::string("XyzWriter");
 	}
 private:
-	std::string _filename;
-	unsigned long _numberOfTimesteps;
+	std::string _outputPrefix;
 	unsigned long _writeFrequency;
-	bool _filenameisdate;
+	bool _appendTimestamp;
 	bool _incremental;
 };
 

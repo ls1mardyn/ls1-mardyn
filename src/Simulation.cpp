@@ -330,11 +330,37 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		OutputBase *outputPlugin;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
-		if(pluginname == "Resultwriter") {
+		if(pluginname == "CheckpointWriter") {
+			outputPlugin = new CheckpointWriter();
+		}
+		else if(pluginname == "DecompWriter") {
+			outputPlugin = new DecompWriter();
+		}
+		else if(pluginname == "MmspdWriter") {
+			outputPlugin = new MmspdWriter();
+		}
+		else if(pluginname == "PovWriter") {
+			outputPlugin = new PovWriter();
+		}
+		else if(pluginname == "Resultwriter") {
 			outputPlugin = new ResultWriter();
 		}
 		else if(pluginname == "SysMonOutput") {
 			outputPlugin = new SysMonOutput();
+		}
+		else if(pluginname == "VISWriter") {
+			outputPlugin = new VISWriter();
+		}
+#ifdef VTK
+		else if(pluginname == "VTKMoleculeWriter") {
+			outputPlugin = new VTKMoleculeWriter();
+		}
+		else if(pluginname == "VTKGridWriter") {
+			outputPlugin = new VTKGridWriter();
+		}
+#endif /* VTK */
+		else if(pluginname == "XyzWriter") {
+			outputPlugin = new XyzWriter();
 		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
@@ -646,7 +672,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new XyzWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+						outputPathAndPrefix, true));
 				global_log->debug() << "XyzWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "CheckpointWriter") {
@@ -654,7 +680,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new CheckpointWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+						outputPathAndPrefix, true));
 				global_log->debug() << "CheckpointWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "PovWriter") {
@@ -662,7 +688,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new PovWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+						outputPathAndPrefix, true));
 				global_log->debug() << "POVWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "DecompWriter") {
@@ -672,7 +698,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> mode
 						>> outputPathAndPrefix;
 				_outputPlugins.push_back(new DecompWriter(writeFrequency, mode,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+						outputPathAndPrefix, true));
 				global_log->debug() << "DecompWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			} else if ((token == "VisittWriter") || (token == "VISWriter")) {
@@ -680,7 +706,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new VISWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
+						outputPathAndPrefix, true));
 				global_log->debug() << "VISWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {

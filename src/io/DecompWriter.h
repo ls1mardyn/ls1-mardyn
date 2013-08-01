@@ -22,8 +22,12 @@ class Domain;
 //! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
 class DecompWriter : public OutputBase {
 public:
-	DecompWriter(unsigned long writeFrequency, std::string mode, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+    DecompWriter(){}
+	DecompWriter(unsigned long writeFrequency, std::string mode, std::string outputPrefix, bool incremental);
 	~DecompWriter();
+
+	void readXML(XMLfileUnits& xmlconfig);
+
 	//! @todo comment
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
@@ -41,12 +45,11 @@ public:
 		return std::string("DecompWriter");
 	}
 private:
-	unsigned long _numberOfTimesteps;
 	unsigned long _writeFrequency;
 	std::string _mode;
-	bool _filenameisdate;
+	bool _appendTimestamp;
 	bool _incremental;
-	std::string _filename;
+	std::string _outputPrefix;
 };
 
 #endif /*DECOMPWRITER_H_*/

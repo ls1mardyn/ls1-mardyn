@@ -5,26 +5,48 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+#include "utils/Logger.h"
+#include "Simulation.h"
 
 #include <iomanip>
 #include <fstream>
 #include <sstream>
 
+using Log::global_log;
 using namespace std;
 
-VISWriter::VISWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+VISWriter::VISWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
+	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
 	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix == "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
 VISWriter::~VISWriter(){}
+
+void VISWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	
+	int incremental = 1;
+	xmlconfig.getNodeValue("incremental", incremental);
+	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+}
 
 void VISWriter::initOutput(ParticleContainer* particleContainer,
                            DomainDecompBase* domainDecomp, Domain* domain)
@@ -37,17 +59,16 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
                          unsigned long simstep, list<ChemicalPotential>* lmu) {
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream;
-		if (_filenameisdate) {
-			filenamestream << "mardyn" << gettimestring();
-		}
-		else {
-			filenamestream << _filename;
-		}
+		filenamestream << _outputPrefix;
 
-		if (_incremental) {
+		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			int num_digits = (int) ceil(log(double(_numberOfTimesteps / _writeFrequency)) / log(10.));
-			filenamestream << aligned_number(simstep / _writeFrequency, num_digits, '0');
+			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
+			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+		}
+		if(_appendTimestamp) {
+			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".vis";
 		
@@ -85,6 +106,4 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 	}
 }
 
-void VISWriter::finishOutput(ParticleContainer* particleContainer,
-                             DomainDecompBase* domainDecomp, Domain* domain) {
-}
+void VISWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}

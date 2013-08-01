@@ -5,6 +5,8 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/Logger.h"
+#include "Simulation.h"
 
 #include <fstream>
 #include <sstream>
@@ -16,33 +18,52 @@
 #include <mpi.h>
 #endif
 
+using Log::global_log;
 using namespace std;
 
-MmspdWriter::MmspdWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+MmspdWriter::MmspdWriter(unsigned long writeFrequency, string outputPrefix) {
+	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix == "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
 MmspdWriter::~MmspdWriter(){}
+
+
+void MmspdWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+}
 
 void MmspdWriter::initOutput(ParticleContainer* particleContainer,
 			   DomainDecompBase* domainDecomp, Domain* domain){
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
-#endif  
-	if (_filenameisdate) {
-			_filename = _filename + "mardyn";
-			_filename = _filename + gettimestring();
-		} 
-	_filename = _filename +  ".mmspd";
+#endif
+	stringstream filenamestream;
+	filenamestream << _outputPrefix;
+
+	if(_appendTimestamp) {
+		filenamestream << "-" << gettimestring();
+	}
+	filenamestream << ".mmspd";
+	_filename = filenamestream.str();
 	ofstream mmspdfstream(_filename.c_str(), ios::binary|ios::out);
   
   
@@ -60,8 +81,9 @@ void MmspdWriter::initOutput(ParticleContainer* particleContainer,
   // format marker
   mmspdfstream << "MMSPDu 1.0" << "\n";
   // header line
+  unsigned long numTimesteps = _simulation.getNumTimesteps();
   mmspdfstream << "1 " << "0 0 0 " << domain->getGlobalLength(0) <<" "<< domain->getGlobalLength(1)<< " " << domain->getGlobalLength(2) << " "
-		       << _numberOfTimesteps / _writeFrequency+1    << " " << domain-> getNumberOfComponents() << " " << "0" << "\n";
+		       << numTimesteps / _writeFrequency+1    << " " << domain-> getNumberOfComponents() << " " << "0" << "\n";
 		       
   
   
@@ -167,7 +189,4 @@ void MmspdWriter::doOutput( ParticleContainer* particleContainer,
   }
 } // end doOutput
 
-void MmspdWriter::finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain){
-  
-}
+void MmspdWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}

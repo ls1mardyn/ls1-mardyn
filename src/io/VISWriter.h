@@ -14,6 +14,7 @@ class ChemicalPotential;
 
 class VISWriter : public OutputBase {
 public:
+    VISWriter(){}
 	//! @brief Writes out a file (using *.vis-format) containing coordinates + orientation (using quaternions)
 	//! of each molecule for several timesteps.
 	//!
@@ -27,8 +28,11 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-	VISWriter(unsigned long writeFrequency, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+	VISWriter(unsigned long writeFrequency, std::string outputPrefix, bool incremental);
 	~VISWriter();
+
+	void readXML(XMLfileUnits& xmlconfig);
+
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void doOutput(
@@ -43,12 +47,11 @@ public:
 		return std::string("VISWriter");
 	}
 private:
-	std::string _filename;
+	std::string _outputPrefix;
 	unsigned long _writeFrequency;
-	unsigned long _numberOfTimesteps;
-	bool	_incremental;
-	bool	_filenameisdate;
-	bool  _wroteVIS;
+	bool _incremental;
+	bool _appendTimestamp;
+	bool _wroteVIS;
 };
 
 #endif /*VISWRITER_H_*/

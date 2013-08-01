@@ -15,6 +15,7 @@ class Domain;
 
 class MmspdWriter : public OutputBase{
   public:
+    MmspdWriter(){};
 	//! @brief: writes a mmspd file used by MegaMol
 	//!
 	//! Depending on write frequency (for example: every timestep, or every 10th, 100th, 1000th ...) number of frames
@@ -26,9 +27,11 @@ class MmspdWriter : public OutputBase{
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-    MmspdWriter(unsigned long writeFrequency, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+    MmspdWriter(unsigned long writeFrequency, std::string outputPrefix);
 	~MmspdWriter();
     
+	void readXML(XMLfileUnits& xmlconfig);
+
     void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	//! @todo comment
@@ -40,10 +43,10 @@ class MmspdWriter : public OutputBase{
     void finishOutput( ParticleContainer* particleContainer,
 		       DomainDecompBase* domainDecomp, Domain* domain);
   private:
-      std::string _filename;
-      unsigned long _numberOfTimesteps;
+      std::string _outputPrefix;
+	  std::string _filename;
       unsigned long _writeFrequency;
-      bool _filenameisdate;
+      bool _appendTimestamp;
       bool _incremental;
 };
 

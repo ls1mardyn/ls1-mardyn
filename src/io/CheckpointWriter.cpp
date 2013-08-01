@@ -7,54 +7,70 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
+#include "utils/Logger.h"
 
 
 class DomainDecompBase;
 
+using Log::global_log;
 using namespace std;
 
-CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+CheckpointWriter::CheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
+	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
 	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix == "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
 CheckpointWriter::~CheckpointWriter(){}
 
-void CheckpointWriter::initOutput(ParticleContainer* particleContainer,
-					DomainDecompBase* domainDecomp, Domain* domain) {
+
+void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	
+	int incremental = 1;
+	xmlconfig.getNodeValue("incremental", incremental);
+	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void CheckpointWriter::doOutput( ParticleContainer* particleContainer,
-        DomainDecompBase* domainDecomp, 
-        Domain* domain,
-        unsigned long simstep, 
-        list<ChemicalPotential>* lmu )
-{
-	if( simstep % _writeFrequency != 0 ) return;
-	
+void CheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+
+void CheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
-		if(_filenameisdate) {
-			filenamestream << "mardyn" << gettimestring();
-		} else {
-			filenamestream << _filename;
-		}
+		filenamestream << _outputPrefix;
 
 		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			int num_digits = (int) ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
+			
+			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+		}
+		if(_appendTimestamp) {
+			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".restart.xdr";
 
-	string filename = filenamestream.str();
-	domain->writeCheckpoint(filename, particleContainer, domainDecomp);
+		string filename = filenamestream.str();
+		domain->writeCheckpoint(filename, particleContainer, domainDecomp);
+	}
 }
 
 void CheckpointWriter::finishOutput(

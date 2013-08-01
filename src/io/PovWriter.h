@@ -11,6 +11,7 @@ class Domain;
 
 class PovWriter : public OutputBase {
 public:
+    PovWriter(){}
 	//! @brief writes a POVray file of the current state of the simluation
 	//!
 	//! The file can be used to visualize with POVray software (for detail information visit: www.povray.org)
@@ -20,8 +21,11 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-	PovWriter(unsigned long writeFrequency, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+	PovWriter(unsigned long writeFrequency, std::string filename, bool incremental);
 	~PovWriter();
+
+	void readXML(XMLfileUnits& xmlconfig);
+
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void doOutput(
@@ -36,11 +40,10 @@ public:
 		return std::string("PovWriter");
 	}
 private:
-	std::string _filename;
+	std::string _outputPrefix;
 	unsigned long _writeFrequency;
-	unsigned long _numberOfTimesteps;
 	bool  _incremental;
-	bool  _filenameisdate;
+	bool  _appendTimestamp;
 };
 
 #endif /*POVWRITER_H_*/

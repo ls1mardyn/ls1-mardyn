@@ -7,50 +7,66 @@
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
+#include "utils/Logger.h"
+#include "Simulation.h"
 
 #include <fstream>
 #include <sstream>
 
+using Log::global_log;
 using namespace std;
 
-XyzWriter::XyzWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+XyzWriter::XyzWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
+	_outputPrefix= outputPrefix;
 	_writeFrequency = writeFrequency;
 	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix == "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
 XyzWriter::~XyzWriter(){}
 
-void XyzWriter::initOutput(ParticleContainer* particleContainer,
-			   DomainDecompBase* domainDecomp, Domain* domain){
+void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+
+	int incremental = 1;
+	xmlconfig.getNodeValue("incremental", incremental);
+	global_log->info() << "Incremental numbers: " << _incremental << endl;
+
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void XyzWriter::doOutput( ParticleContainer* particleContainer,
-													DomainDecompBase* domainDecomp, Domain* domain,
-			  unsigned long simstep, list<ChemicalPotential>* lmu ) 
-{
+void XyzWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+
+void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
 	if( simstep % _writeFrequency == 0) {
 		stringstream filenamestream;
-		if(_filenameisdate) {
-			filenamestream << "mardyn" << gettimestring() << ".out";
-		} else {
-			filenamestream << _filename;
-		}
+		filenamestream << _outputPrefix;
 
-		if( _incremental ) {
-			filenamestream << "-";
+		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			int num_digits = (int) ceil( log( double( _numberOfTimesteps / _writeFrequency ) ) / log(10.) );
-			filenamestream << aligned_number( simstep / _writeFrequency, num_digits, '0' ) << ".xyz";
-		} else {
-			filenamestream << ".xyz";
+			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
+			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
+		if(_appendTimestamp) {
+			filenamestream << "-" << gettimestring();
+		}
+		filenamestream << ".xyz";
+		
 		int ownRank = domainDecomp->getRank();
 		if( ownRank == 0 ) {
 			ofstream xyzfilestream( filenamestream.str(). c_str() );
@@ -77,6 +93,4 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer,
 	}
 }
 
-void XyzWriter::finishOutput( ParticleContainer* particleContainer,
-			     DomainDecompBase* domainDecomp, Domain* domain ){
-}
+void XyzWriter::finishOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain ) {}
