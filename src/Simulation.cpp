@@ -1020,36 +1020,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		_LJCutoffRadius = this->_cutoffRadius;
 	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
-	bool lj_present = false;
-	bool charge_present = false;
-	bool dipole_present = false;
-	bool quadrupole_present = false;
-	bool tersoff_present = false;
-
-#if ENABLE_VECTORIZED_CODE
-	const vector<Component> components = *(global_simulation->getEnsemble()->components());
-	for (size_t i = 0; i < components.size(); i++) {
-		lj_present |= components[i].numLJcenters() != 0;
-		charge_present |= components[i].numCharges() != 0;
-		dipole_present |= components[i].numDipoles() != 0;
-		quadrupole_present |= components[i].numQuadrupoles() != 0;
-		tersoff_present |= components[i].numTersoff() != 0;
-	}
-
-	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
-		global_log->warning() << "Using legacy cell processor as charges, dipoles, quadrupoles and tersoff interactions are not available." << endl;
-		global_log->debug() << "xx lj present: " << lj_present << endl;
-		global_log->debug() << "xx charge present: " << charge_present << endl;
-		global_log->debug() << "xx dipole present: " << dipole_present << endl;
-		global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
-		global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-	} else {
-		_cellProcessor = new VectorizedCellProcessor( *_domain,_LJCutoffRadius);
-	}
-#else
-	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-#endif
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
 
@@ -1094,6 +1064,40 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
+
+	global_log->info() << "Initialising cell processor" << endl;
+#if ENABLE_VECTORIZED_CODE
+	bool lj_present = false;
+	bool charge_present = false;
+	bool dipole_present = false;
+	bool quadrupole_present = false;
+	bool tersoff_present = false;
+
+	const vector<Component> components = *(global_simulation->getEnsemble()->components());
+	for (size_t i = 0; i < components.size(); i++) {
+		lj_present |= components[i].numLJcenters() != 0;
+		charge_present |= components[i].numCharges() != 0;
+		dipole_present |= components[i].numDipoles() != 0;
+		quadrupole_present |= components[i].numQuadrupoles() != 0;
+		tersoff_present |= components[i].numTersoff() != 0;
+	}
+
+	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
+		global_log->warning() << "Using legacy cell processor as charges, dipoles, quadrupoles and tersoff interactions are not available." << endl;
+		global_log->debug() << "xx lj present: " << lj_present << endl;
+		global_log->debug() << "xx charge present: " << charge_present << endl;
+		global_log->debug() << "xx dipole present: " << dipole_present << endl;
+		global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
+		global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+	} else {
+		global_log->info() << "Using vectorized cell processor." << endl;
+		_cellProcessor = new VectorizedCellProcessor( *_domain,_LJCutoffRadius);
+	}
+#else
+	global_log->info() << "Using legacy cell processor." << endl;
+	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+#endif
 
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
