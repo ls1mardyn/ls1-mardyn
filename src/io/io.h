@@ -20,7 +20,6 @@
 #include "io/CheckpointWriter.h"
 #include "io/VISWriter.h"
 #include "io/InputOldstyle.h"
-#include "io/StatisticsWriter.h"
 #include "io/SysMonOutput.h"
 #include "io/GridGenerator.h"
 // MmspdWriter by Stefan Becker <stefan.becker@mv.uni-kl.de>

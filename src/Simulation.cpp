@@ -719,26 +719,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
-			} else if (token == "StatisticsWriter") {
-				unsigned long writeFrequency = 0;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-
-				if (_particleContainerType == LINKED_CELL) {
-					_outputPlugins.push_back(new StatisticsWriter(
-							writeFrequency, outputPathAndPrefix,
-							static_cast<LinkedCells&> (*_moleculeContainer)));
-					global_log->debug() << "StatisticsWriter "
-							<< writeFrequency << " '" << outputPathAndPrefix
-							<< "'.\n";
-				} else {
-					global_log->warning()
-							<< "StatisticsWriter only supported with LinkedCells!"
-							<< std::endl;
-					global_log->warning()
-							<< "Generating no statistics output for the grid!"
-							<< std::endl;
-				}
 			}
 			// by Stefan Becker <stefan.becker@mv.uni-kl.de>
 			// output for the MegaMol Simple Particle Data File Format (*.mmspd)
@@ -746,7 +726,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			      unsigned long writeFrequency = 0;
 			      string outputPathAndPrefix;
 			      inputfilestream >> writeFrequency >> outputPathAndPrefix;
-			      _outputPlugins.push_back(new MmspdWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
+			      _outputPlugins.push_back(new MmspdWriter(writeFrequency, outputPathAndPrefix));
 			      global_log->debug() << "MmspdWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 			}
 			else {
