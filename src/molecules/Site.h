@@ -322,7 +322,7 @@ public:
 	void readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
-		xmlconfig.getNodeValueReduced("coords/y", _r[2]);
+		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("dipolemoment/abs", _absMy);
 		xmlconfig.getNodeValueReduced("dipolemoment/x", _e[0]);
 		xmlconfig.getNodeValueReduced("dipolemoment/y", _e[1]);
@@ -370,7 +370,7 @@ public:
 	void readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
 		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
-		xmlconfig.getNodeValueReduced("coords/y", _r[2]);
+		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
 		xmlconfig.getNodeValueReduced("quadrupolemoment/abs", _absQ);
 		xmlconfig.getNodeValueReduced("quadrupolemoment/x", _e[0]);
 		xmlconfig.getNodeValueReduced("quadrupolemoment/y", _e[1]);
