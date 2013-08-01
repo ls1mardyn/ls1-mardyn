@@ -42,16 +42,17 @@ void LJFlopCounter::endTraversal() {
 	const double cflMacro = _currentCounts.calc_Macro * _flops_MacroValues;
 	const double cflMacroSum = _currentCounts.calc_Macro * _flops_MacroSum;
 	const double cflTotal = cflMolDist + cflCenterDist + cflLJKernel + cflLJSum + cflMacro + cflMacroSum;
-
-	Log::global_log->info()
-			<< "FLOP counts in LJ force calculation for this iteration:"
-			<< std::endl << " Molecule distance: " << cflMolDist
-			<< " Center distance: " << cflCenterDist << " LJ Kernel: "
-			<< cflLJKernel << " LJ Sum: " << cflLJSum << " Macroscopic values: "
-			<< cflMacro << " Macroscopic value sum: " << cflMacroSum << std::endl
-			<< "Current total FLOPS: " << cflTotal << std::endl;
-
-
+	
+	// Output should be configurable through an io/LJFlopCounterOutput plugin in the future
+	Log::global_log->info() << "LJ force calculation FLOP counts for this iteration:" << std::endl
+	                        << "\t    Molecule distance:\t" << cflMolDist << std::endl
+	                        << "\t      Center distance:\t" << cflCenterDist << std::endl
+	                        << "\t            LJ Kernel:\t" << cflLJKernel << std::endl
+	                        << "\t               LJ sum:\t" << cflLJSum << std::endl
+	                        << "\t   Macroscopic values:\t" << cflMacro << std::endl
+	                        << "\tMacroscopic value sum:\t" << cflMacroSum << std::endl
+	                        << "\t Total FLOP/iteration:\t" << cflTotal << std::endl;
+	
 	const double flMolDist = _totalCounts.calc_molDist * _flops_MolDist;
 	const double flCenterDist = _totalCounts.calc_LJ * _flops_CenterDist;
 	const double flLJKernel = _totalCounts.calc_LJ * _flops_LJKernel;
@@ -60,12 +61,14 @@ void LJFlopCounter::endTraversal() {
 	const double flMacroSum = _totalCounts.calc_Macro * _flops_MacroSum;
 	_totalFlopCount = flMolDist + flCenterDist + flLJKernel + flLJSum + flMacro + flMacroSum;
 
-	Log::global_log->info() << "Accumulated FLOP counts in LJ force calculation:"
-			<< std::endl << " Molecule distance: " << flMolDist
-			<< " Center distance: " << flCenterDist << " LJ Kernel: "
-			<< flLJKernel << " LJ Sum: " << flLJSum << " Macroscopic values: "
-			<< flMacro << " Macroscopic value sum: " << flMacroSum << std::endl
-			<< "Accumulated total FLOPS: " << _totalFlopCount << std::endl;
+	Log::global_log->info() << "Accumulated FLOP counts in LJ force calculation:" << std::endl
+	                        << "\t      Molecule distance:\t" << flMolDist << std::endl
+	                        << "\t        Center distance:\t" << flCenterDist << std::endl
+	                        << "\t              LJ Kernel:\t" << flLJKernel << std::endl
+	                        << "\t                 LJ Sum:\t" << flLJSum << std::endl
+	                        << "\t     Macroscopic values:\t" << flMacro << std::endl
+	                        << "\t  Macroscopic value sum:\t" << flMacroSum << std::endl
+	                        << "\tAccumulated total FLOPS:\t" << _totalFlopCount << std::endl;
 }
 
 void LJFlopCounter::preprocessCell(ParticleCell & c) {

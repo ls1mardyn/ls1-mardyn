@@ -60,6 +60,8 @@ int SysMon::addExpression(const std::string& exprstr)
 
 void SysMon::updateExpressionValues(bool resetMinMax)
 {
+	if(_expressions.empty()) return;	// no expressions?
+	
 	if(resetMinMax) _initMinMax.assign(numExpressions(),true);
 	
 	//sync();
@@ -133,7 +135,7 @@ pair<SysMon::Tvalue,SysMon::Tvalue> SysMon::getExpressionMinMaxValues(unsigned i
 #endif
 
 
-void SysMon::writeExpressionValues(ostream& ostrm) const
+void SysMon::writeExpressionValues(ostream& ostrm, string header, string lineprefix, string sep, string eol) const
 {
 	size_t numvalues=_values.size();
 	size_t i=0;
@@ -142,38 +144,38 @@ void SysMon::writeExpressionValues(ostream& ostrm) const
 	int myrank;
 	MPI_CHECK( MPI_Comm_rank(_mpicomm,&myrank) );
 	if(myrank==mpiRootRank) {
+		ostrm << header;
 		for(std::list<Expression>::const_iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
 		{
-			ostrm << exprit->getLabel();
+			ostrm << lineprefix << exprit->getLabel();
 			if(i>=numvalues || _initMinMax[i])
 			{
-				ostrm << "\tundefined";
+				ostrm << sep << "undefined";
 			} else {
-				ostrm << "\t" << -_valuesMaxMin[2*i+1] << " .. " << _valuesMaxMin[2*i];
-				ostrm << "\t" << -_valuesMaxMinPeak[2*i+1] << " .. " << _valuesMaxMinPeak[2*i];
+				ostrm << sep << "[" << -_valuesMaxMin[2*i+1] << "," << _valuesMaxMin[2*i] << "]";
+				ostrm << sep << "[" << -_valuesMaxMinPeak[2*i+1] << "," << _valuesMaxMinPeak[2*i] << "]";
 				++i;
 			}
-			ostrm << endl;
+			ostrm << eol;
 		}
 	}
 #else
+	ostrm << header;
 	for(std::list<Expression>::const_iterator exprit=_expressions.begin();exprit!=_expressions.end();++exprit)
 	{
-		ostrm << exprit->getLabel();
+		ostrm << lineprefix << exprit->getLabel();
 		if(i>=numvalues || _initMinMax[i])
 		{
-			ostrm << "\tundefined";
+			ostrm << sep << "undefined";
 		} else {
-			ostrm << "\t" << _values[i];
-			ostrm << "\t" << -_valuesMaxMinPeak[2*i+1] << " .. " << _valuesMaxMinPeak[2*i];
+			ostrm << sep << _values[i];
+			ostrm << sep << "[" << -_valuesMaxMinPeak[2*i+1] << "," << _valuesMaxMinPeak[2*i] << "]";
 			++i;
 		}
-		ostrm << endl;
+		ostrm << eol;
 	}
 #endif
 }
-
-
 
 unsigned int SysMon::updateVariables_sysconf()
 {

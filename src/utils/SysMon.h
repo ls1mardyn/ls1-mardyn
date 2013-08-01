@@ -84,14 +84,23 @@ public:
 #ifdef MPI_VERSION
 	std::pair<Tvalue,Tvalue> getExpressionMinMaxValues(unsigned int index) const;
 #endif
-	void writeExpressionValues(std::ostream& ostrm=std::cout) const;
-	std::string stringExpressionValues() const
+	void writeExpressionValues(std::ostream& ostrm=std::cout
+	                         , std::string header=std::string()
+	                         , std::string lineprefix=std::string()
+	                         , std::string sep=std::string("\t")
+	                         , std::string eol=std::string("\n")
+	                          ) const;
+	std::string InfoString(std::string header=std::string()
+	                     , std::string lineprefix=std::string()
+	                     , std::string sep=std::string("\t")
+	                     , std::string eol=std::string("\n")
+	                      ) const
 	{
 		std::ostringstream oss;
-		writeExpressionValues(oss);
+		writeExpressionValues(oss,header,lineprefix,sep,eol);
 		return oss.str();
 	}
-	operator std::string() const { return stringExpressionValues(); }
+	operator std::string() const { return InfoString(); }
 	
 private:
 	Expression::VariableSet* _variableset;
