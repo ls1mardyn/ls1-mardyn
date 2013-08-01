@@ -122,6 +122,12 @@
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>
       </electrostatic>
+
+      <!-- velocity scaling thermostat, if no component is specified the global thermostat is assumed -->
+      <thermostat type="VelocityScaling" component="1">
+        <!-- target temperature, if not specified the ensemble temperature will be used -->
+        <temperature>0.7</temperature>
+      </thermostat>
     </algorithm>
 
     <!-- output plugins

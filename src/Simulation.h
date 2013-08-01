@@ -23,6 +23,7 @@
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
+#include "thermostats/VelocityScalingThermostat.h"
 
 using optparse::Values;
 
@@ -434,6 +435,8 @@ private:
     
 	//! list of output plugins to use
 	std::list<OutputBase*> _outputPlugins;
+
+	VelocityScalingThermostat _velocityScalingThermostat;
 
 	//! List of ChemicalPotential objects, each of which describes a
 	//! particular control volume for the grand canonical ensemble with

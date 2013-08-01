@@ -263,7 +263,52 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else {
 			global_log->warning() << "Parallelisation section missing." << endl;
 		}
-		xmlconfig.changecurrentnode("..");
+
+		if(xmlconfig.changecurrentnode("thermostats")) {
+			long numThermostats = 0;
+			XMLfile::Query query = xmlconfig.query("thermostat");
+			numThermostats = query.card();
+			global_log->info() << "Number of thermostats: " << numThermostats << endl;
+			if(numThermostats > 1) {
+				global_log->info() << "Enabling component wise thermostat" << endl;
+				_velocityScalingThermostat.enableComponentwise();
+			}
+			string oldpath = xmlconfig.getcurrentnodepath();
+			XMLfile::Query::const_iterator thermostatIter;
+			for( thermostatIter = query.begin(); thermostatIter; thermostatIter++ ) {
+				xmlconfig.changecurrentnode( thermostatIter );
+				string thermostattype;
+				xmlconfig.getNodeValue("@type", thermostattype);
+				if(thermostattype == "VelocityScaling") {
+					string component("global");
+					int componentId = 0;
+					double temperature = _ensemble->T();
+					xmlconfig.getNodeValue("@component", component);
+					xmlconfig.getNodeValue("temperature", temperature);
+					componentId = getEnsemble()->component(component)->ID();
+					global_log->info() << "Adding velocity scaling thermostat for component '" << component << "' (ID: " << componentId << "), T = " << temperature << endl;
+					if(component == "global"){
+						_domain->setGlobalTemperature(temperature);
+					}
+					else {
+						int thermostatID = _domain->getThermostat(componentId);
+						_domain->setTargetTemperature(thermostatID, temperature);
+					}
+					/* TODO */
+				}
+				else {
+					global_log->warning() << "Unknown thermostat " << thermostattype << endl;
+					continue;
+				}
+			}
+			xmlconfig.changecurrentnode(oldpath);
+			xmlconfig.changecurrentnode("..");
+		}
+		else {
+			global_log->warning() << "Thermostats section missing." << endl;
+		}
+
+		xmlconfig.changecurrentnode(".."); /* algorithm section */
 	}
 	else {
 		global_log->error() << "Algorithm section missing." << endl;
@@ -1296,31 +1341,29 @@ void Simulation::simulate() {
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
 								_simstep));
 
-		VelocityScalingThermostat velocityScalingThermostat;
-
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
-				velocityScalingThermostat.enableComponentwise();
+				_velocityScalingThermostat.enableComponentwise();
 				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->components()->size(); cid++) {
 					int thermostatId = _domain->getThermostat(cid);
-					velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
-					velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
+					_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
+					_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
 					double v[3];
 					for(int d = 0; d < 3; d++) {
 						v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
 					}
-					velocityScalingThermostat.setVelocity(thermostatId, v);
+					_velocityScalingThermostat.setVelocity(thermostatId, v);
 				}
 			}
 			else {
-				velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
-				velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
+				_velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
+				_velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
 				/* TODO */
 				// Undirected global thermostat not implemented!
 			}
-			velocityScalingThermostat.apply(_moleculeContainer);
+			_velocityScalingThermostat.apply(_moleculeContainer);
 		}
 
 		advanceSimulationTime(_integrator->getTimestepLength());
