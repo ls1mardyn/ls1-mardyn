@@ -21,13 +21,17 @@ class VTKMoleculeWriter: public OutputBase {
 
 private:
 
-	const unsigned int _writeFrequency;
+	unsigned int _writeFrequency;
 
-	const std::string _fileName;
+	std::string _fileName;
 
 public:
-	VTKMoleculeWriter(unsigned int writeFrequency, const std::string& fileName);
-	virtual ~VTKMoleculeWriter();
+	VTKMoleculeWriter() {}
+
+	VTKMoleculeWriter(unsigned int frequency, std::string name):
+		_writeFrequency(frequency), _fileName(name) {}
+
+	virtual ~VTKMoleculeWriter() {}
 
 	//! @todo document me!
 	virtual void initOutput(ParticleContainer* particleContainer,
@@ -43,6 +47,8 @@ public:
 	//! @todo document me!
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
+
+	void readXML(XMLfileUnits& xmlconfig);
 
 private:
 	void outputParallelVTKFile(unsigned int numProcs, unsigned long simstep,

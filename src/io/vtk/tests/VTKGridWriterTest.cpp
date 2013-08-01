@@ -36,7 +36,7 @@ void VTKGridWriterTest::testEmptyGrid() {
 	LinkedCells* linkedCells = dynamic_cast<LinkedCells*> (container);
 	assert(linkedCells != NULL);
 
-	VTKGridWriter writer(2, "VTKGridWriterTest", *linkedCells);
+	VTKGridWriter writer(2, "VTKGridWriterTest");
 
 #ifdef ENABLE_MPI
 	// in the parallel case we check only that the right files are written.

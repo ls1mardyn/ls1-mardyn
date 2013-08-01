@@ -730,8 +730,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 				if (_particleContainerType == LINKED_CELL) {
 					_outputPlugins.push_back(new VTKGridWriter(writeFrequency,
-							outputPathAndPrefix,
-							static_cast<LinkedCells&> (*_moleculeContainer)));
+							outputPathAndPrefix));
 					global_log->debug() << "VTKGridWriter " << writeFrequency
 							<< " '" << outputPathAndPrefix << "'.\n";
 				} else {
