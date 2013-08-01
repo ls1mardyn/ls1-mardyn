@@ -333,6 +333,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if(pluginname == "Resultwriter") {
 			outputPlugin = new ResultWriter();
 		}
+		else if(pluginname == "SysMonOutput") {
+			outputPlugin = new SysMonOutput();
+		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;
@@ -1195,12 +1198,6 @@ void Simulation::simulate() {
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
 		<< endl;
 
-	// System Monitor
-	SysMon* sysmon=SysMon::getSysMon();
-	sysmon->updateExpressionValues();
-	//sysmon->writeExpressionValues();
-	global_log->info() << *sysmon;
-
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
@@ -1279,14 +1276,6 @@ void Simulation::simulate() {
 
 				j++;
 			}
-		}
-
-		// System Monitor update
-		if(_simstep%2)
-		{
-			sysmon->updateExpressionValues();
-			//sysmon->writeExpressionValues();
-			global_log->info() << *sysmon;
 		}
 
 		// clear halo
@@ -1425,12 +1414,7 @@ void Simulation::simulate() {
 			<< perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 "
 			<< ioTimer.get_etime() << " sec" << endl;
-	
-	// System Monitor update
-	sysmon->updateExpressionValues();
-	//sysmon->writeExpressionValues();
-	global_log->info() << *sysmon;
-	
+
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
 	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
