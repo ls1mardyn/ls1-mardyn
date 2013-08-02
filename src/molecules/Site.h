@@ -105,17 +105,7 @@ public:
 	LJcenter(double x, double y, double z, double m, double eps, double sigma, double rc, double shift)
 			: Site(x, y, z, m), _eps(eps), _sigma(sigma), _rc(rc), _uLJshift6(shift) { }
 
-	void readXML(XMLfileUnits& xmlconfig) {
-		xmlconfig.getNodeValueReduced("coords/x", _r[0]);
-		xmlconfig.getNodeValueReduced("coords/y", _r[1]);
-		xmlconfig.getNodeValueReduced("coords/z", _r[2]);
-		xmlconfig.getNodeValueReduced("mass", _m);
-		xmlconfig.getNodeValueReduced("epsilon", _eps);
-		xmlconfig.getNodeValueReduced("sigma", _sigma);
-		xmlconfig.getNodeValueReduced("cutoff", _rc);
-		_uLJshift6 = 0.0;
-		xmlconfig.getNodeValueReduced("shifted", _uLJshift6);
-	}
+	void readXML(XMLfileUnits& xmlconfig);
 	
 	/// write to stream
 	void write(std::ostream& ostrm) const {
