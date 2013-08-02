@@ -374,9 +374,9 @@ class Expression
 	{
 		public:
 			enum Efunctype {functypeNONE=0
-			              , functypeABS, functypeFLOOR, functypeCEIL
+			              , functypeABS, functypeFLOAT, functypeFLOOR, functypeCEIL
 			              , functypeSQRT
-			              , functypeLOG, functypeLOG2, functypeLOG10
+			              , functypeLOG, functypeLOG2, functypeLOG10, functypeEXP
 			              , functypeSIN, functypeCOS, functypeTAN
 			               };
 			

@@ -10,6 +10,7 @@
 
 using namespace std;
 
+
 Expression::Variable* Expression::VariableSet::addVariable(const string& name)
 {
 	string vgrpname,varname(name);
@@ -112,6 +113,8 @@ Expression::NodeFunction1::NodeFunction1(const string& name, Node* child, Node* 
 {
 	if(name.compare("abs")==0||name.compare("ABS")==0)
 		_functype=functypeABS;
+	else if(name.compare("float")==0||name.compare("FLOAT")==0)
+		_functype=functypeFLOAT;
 	else if(name.compare("floor")==0||name.compare("FLOOR")==0)
 		_functype=functypeFLOOR;
 	else if(name.compare("ceil")==0||name.compare("CEIL")==0)
@@ -124,6 +127,8 @@ Expression::NodeFunction1::NodeFunction1(const string& name, Node* child, Node* 
 		_functype=functypeLOG2;
 	else if(name.compare("log10")==0||name.compare("LOG10")==0)
 		_functype=functypeLOG10;
+	else if(name.compare("exp")==0||name.compare("EXP")==0)
+		_functype=functypeEXP;
 	else if(name.compare("sin")==0||name.compare("SIN")==0)
 		_functype=functypeSIN;
 	else if(name.compare("cos")==0||name.compare("COS")==0)
@@ -145,10 +150,12 @@ Expression::Tvaltype Expression::NodeFunction1::valueType() const
 			case functypeFLOOR:
 			case functypeCEIL:
 				return valtypeINT;
+			case functypeFLOAT:
 			case functypeSQRT:
 			case functypeLOG:
 			case functypeLOG2:
 			case functypeLOG10:
+			case functypeEXP:
 			case functypeSIN:
 			case functypeCOS:
 			case functypeTAN:
@@ -172,12 +179,14 @@ Expression::Value Expression::NodeFunction1::evaluate() const
 					return Value(labs(Tint(_children[1]->evaluate())));
 				else
 					return Value(fabs(Tfloat(_children[1]->evaluate())));
+			case functypeFLOAT: return Value(Tfloat(_children[1]->evaluate()));
 			case functypeFLOOR: return Value(Tint(floor(Tfloat(_children[1]->evaluate()))));
 			case functypeCEIL:  return Value(Tint(ceil(Tfloat(_children[1]->evaluate()))));
 			case functypeSQRT:  return Value(sqrt(Tfloat(_children[1]->evaluate())));
 			case functypeLOG:   return Value(log(Tfloat(_children[1]->evaluate())));
 			case functypeLOG2:  return Value(log2(Tfloat(_children[1]->evaluate())));
 			case functypeLOG10: return Value(log10(Tfloat(_children[1]->evaluate())));
+			case functypeEXP:   return Value(exp(Tfloat(_children[1]->evaluate())));
 			case functypeSIN:   return Value(sin(Tfloat(_children[1]->evaluate())));
 			case functypeCOS:   return Value(cos(Tfloat(_children[1]->evaluate())));
 			case functypeTAN:   return Value(tan(Tfloat(_children[1]->evaluate())));
@@ -194,12 +203,14 @@ void Expression::NodeFunction1::write(ostream& ostrm) const {
 	{
 		case functypeNONE:  ostrm << "undef"; break;
 		case functypeABS:   ostrm << "ABS"; break;
+		case functypeFLOAT: ostrm << "FLOAT"; break;
 		case functypeFLOOR: ostrm << "FLOOR"; break;
 		case functypeCEIL:  ostrm << "CEIL"; break;
 		case functypeSQRT:  ostrm << "SQRT"; break;
 		case functypeLOG:   ostrm << "LOG"; break;
 		case functypeLOG2:  ostrm << "LOG2"; break;
 		case functypeLOG10: ostrm << "LOG10"; break;
+		case functypeEXP:   ostrm << "EXP"; break;
 		case functypeSIN:   ostrm << "SIN"; break;
 		case functypeCOS:   ostrm << "COS"; break;
 		case functypeTAN:   ostrm << "TAN"; break;
