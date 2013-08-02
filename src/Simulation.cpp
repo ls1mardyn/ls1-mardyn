@@ -230,6 +230,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		if( "LinkedCells" == datastructuretype) {
 			_moleculeContainer = new LinkedCells();
 			_particleContainerType = LINKED_CELL; /* TODO: Necessary? */
+			global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 			lc->setCutoff(_cutoffRadius);
 		}
