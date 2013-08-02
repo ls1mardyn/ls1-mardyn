@@ -124,6 +124,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	if(xmlconfig.changecurrentnode("integrator")) {
 		_integrator->readXML(xmlconfig);
+		_integrator->init();
 		xmlconfig.changecurrentnode("..");
 	}
 	else {

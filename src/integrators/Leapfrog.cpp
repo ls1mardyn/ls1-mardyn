@@ -14,14 +14,16 @@
 using namespace std;
 using Log::global_log;
 
-Leapfrog::Leapfrog(double timestepLength) {
-	// set starting state
-	_state = STATE_POST_FORCE_CALCULATION;
-	_timestepLength = timestepLength;
+Leapfrog::Leapfrog(double timestepLength) :	Integrator(timestepLength) {
+	init();
 }
 
-Leapfrog::~Leapfrog() {
+void Leapfrog::init() {
+	// set starting state
+	_state = STATE_POST_FORCE_CALCULATION;
 }
+
+Leapfrog::~Leapfrog() {}
 
 void Leapfrog::readXML(XMLfileUnits& xmlconfig) {
 	_timestepLength = 0;

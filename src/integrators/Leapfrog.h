@@ -43,6 +43,8 @@ public:
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
+	virtual void init();
+
 	//! @brief steps between the force calculation and the end of the time step
 	//!
 	//! checks whether the current state of the integrator allows that this method is called

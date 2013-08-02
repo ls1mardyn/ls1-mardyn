@@ -32,12 +32,16 @@ class XMLfileUnits;
 class Integrator {
 public:
 	//! The constructor
-	Integrator();
+	Integrator(){}
+	Integrator(double timestepLength) : _timestepLength(timestepLength) {}
 
 	//! The destructor
-	virtual ~Integrator();
+	virtual ~Integrator() {}
 
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
+
+	/** Initialize Integrator */
+	virtual void init() = 0;
 
 	//! @brief informs the integrator about available forces, who then continues integration
 	//!
