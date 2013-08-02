@@ -42,6 +42,7 @@ void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
+	_incremental = (incremental != 0);
 	global_log->info() << "Incremental numbers: " << _incremental << endl;
 
 	int appendTimestamp = 0;
