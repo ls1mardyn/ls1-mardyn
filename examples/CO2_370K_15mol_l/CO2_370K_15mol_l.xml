@@ -2,15 +2,13 @@
 <mardyn version="20100525" >
 
   <refunits type="SI" >
-  <!-- standard units - should be  used for internal reduction one day, but default for all values in simulation remain "reduced" -->
-    <length unit="nm">0.0529177</length> <!-- default: nm - also m,pm,fm or Angstroem may be used in the future? -->
-    <mass unit="u">1000</mass>     <!-- also atomistic mass unit Dalton "u" in the future? -->
-    <energy unit="eV">27.2126</energy>  <!-- again: offer other units -->
+    <length unit="nm">0.0529177</length>
+    <mass unit="u">1000</mass>
+    <energy unit="eV">27.2126</energy>
   </refunits>
 
   <simulation type="MD" >
     <integrator type="Leapfrog" >
-      <!-- MD ODE integrator -->
       <timestep unit="reduced" >0.0667516</timestep>
     </integrator>
 
@@ -99,6 +97,11 @@
       <outputplugin name="Resultwriter">
         <writefrequency>5</writefrequency>
         <outputprefix>CO2</outputprefix>
+      </outputplugin>
+      <outputplugin name="SysMonOutput">
+        <expression label="LoadAvg1">procloadavg:loadavg1</expression>
+        <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
+        <writefrequency>10000</writefrequency>
       </outputplugin>
     </output>
 
