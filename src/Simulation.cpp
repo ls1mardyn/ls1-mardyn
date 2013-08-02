@@ -1236,7 +1236,8 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
-		global_log->debug() << "timestep " << _simstep << endl;
+		global_log->debug() << "timestep: " << getSimulationStep() << endl;
+		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 

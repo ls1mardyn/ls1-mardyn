@@ -233,7 +233,7 @@ public:
 	unsigned long getNumTimesteps() { return _numberOfTimesteps; }
 
 	/** Get the number of the actual time step currently processed in the simulation. */
-	unsigned long getSimStep() { return _simstep; }
+	unsigned long getSimulationStep() { return _simstep; }
 
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
