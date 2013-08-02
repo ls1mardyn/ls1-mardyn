@@ -69,11 +69,11 @@
       </outputplugin>
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
+        <outputprefix>simple-lj</outputprefix>
       </outputplugin>
       <outputplugin name="CheckpointWriter">
         <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
+        <outputprefix>simple-lj</outputprefix>
       </outputplugin>
     </output>
 
