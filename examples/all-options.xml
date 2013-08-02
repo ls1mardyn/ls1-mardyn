@@ -43,28 +43,46 @@
               <sigma>2.900109</sigma>
               <epsilon>11.692625</epsilon>
             </site>
-            <site type="LJ126" id="2" >
+            <site type="Charge" id="2" >
               <coords> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coords>
               <mass>16.00</mass>
-              <sigma>2.972625</sigma>
-              <epsilon>105.524481</epsilon>
+              <charge>-1.0</charge>
             </site>
-            <site type="LJ126" id="3" >
+            <site type="Dipole" id="3" >
               <coords> <x>0.0</x> <y>0.0</y> <z>1.212237</z> </coords>
-              <mass>16.00</mass>
-              <sigma>2.972625</sigma>
-              <epsilon>105.524481</epsilon>
+              <dipolemoment>
+                <!-- absolute value of the dipole moment -->
+                <abs>7.34</abs>
+                <!-- unit vector corrdinates specifying the orietation of the dipole -->
+                <x>1.0</x> <y>0.0</y> <z>0.0</z>
+              </dipolemoment>
             </site>
             <site type="Quadrupole" id="4" >
               <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
-              <orientation> <theta>0.0</theta> <phi>0.0</phi> </orientation>
-              <mass>0.0</mass>
-              <shielding>0.6</shielding>
-              <quadrupole>3.458568</quadrupole>
+              <quadrupolemoment>
+                <!-- absolute value of the quadrupole moment -->
+                <abs>3.76</abs>
+                <!-- unit vector corrdinates specifying the orietation of the quadrupole -->
+                <x>1.0</x> <y>0.0</y> <z>0.0</z>
+              </quadrupolemoment>
             </site>
-            <momentsofinertia rotaxes="xy" >
+            <site type="Tersoff" id="5" >
+              <coords> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coords>
+              <A></A>
+              <B></B>
+              <lambda></lambda>
+              <mu></mu>
+              <R></R>
+              <S></S>
+              <c></c>
+              <d></d>
+              <h></h>
+              <beta></beta>
+            </site>
+            <momentsofinertia>
               <Ixx>47.02459341</Ixx>
               <Iyy>47.02459341</Iyy>
+              <Izz>47.02459341</Iyy>
             </momentsofinertia>
           </moleculetype>
           
