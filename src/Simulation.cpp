@@ -1599,28 +1599,4 @@ void Simulation::mkTcTS(Values &options) {
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-
-	/*
-	 unsigned idi = _lmu.size();
-	 unsigned j = 0;
-	 std::list<ChemicalPotential>::iterator cpit;
-	 double Tcur = _domain->getCurrentTemperature(0);
-	 for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-	 cpit->setIncrement(idi);
-	 double tmp_molecularMass = _domain->getComponents()[cpit->getComponentID()].m();
-	 cpit->setSystem(_domain->getGlobalLength(0), _domain->getGlobalLength(1), _domain->getGlobalLength(2),
-	 tmp_molecularMass);
-	 cpit->setGlobalN(_domain->N(cpit->getComponentID()));
-	 cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
-	 cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0), _moleculeContainer->getBoundingBoxMax(0),
-	 _moleculeContainer->getBoundingBoxMin(1), _moleculeContainer->getBoundingBoxMax(1),
-	 _moleculeContainer->getBoundingBoxMin(2), _moleculeContainer->getBoundingBoxMax(2));
-	 double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
-	 if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar)) Tcur = Ttar;
-	 cpit->submitTemperature(Tcur);
-	 if (h != 0.0) cpit->setPlanckConstant(h);
-	 j++;
-	 }
-	 */
 }
-
