@@ -137,35 +137,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValueReduced("run/currenttime", _simulationTime);
 	global_log->info() << "Simulation start time: " << _simulationTime << endl;
 
-	/* enseble */
-	string ensembletype;
-	xmlconfig.getNodeValue("ensemble@type", ensembletype);
-	global_log->info() << "Ensemble: " << ensembletype<< endl;
-	if( "NVT" == ensembletype) {
-		_ensemble = new CanonicalEnsemble();
-	}
-	else if( "muVT" == ensembletype) {
-		global_log->error() << "muVT ensemble not completely implemented." << endl;
-		this->exit(1);
-// 		_ensemble = new GrandCanonicalEnsemble();
-	}
-	else {
-		global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
-		this->exit(1);
-	}
-	if(xmlconfig.changecurrentnode("ensemble")) {
-		_ensemble->readXML(xmlconfig);
-		/* store data in the _domain member as long as we do not use the ensemble everywhere */
-		for (int d = 0; d < 3; d++) {
-			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
-		}
-		_domain->setGlobalTemperature(_ensemble->T());
-		xmlconfig.changecurrentnode("..");
-	}
-	else {
-		global_log->error() << "Ensemble section missing." << endl;
-	}
-
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 
@@ -319,6 +290,35 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		global_log->error() << "Algorithm section missing." << endl;
+	}
+
+	/* enseble */
+	string ensembletype;
+	xmlconfig.getNodeValue("ensemble@type", ensembletype);
+	global_log->info() << "Ensemble: " << ensembletype<< endl;
+	if( "NVT" == ensembletype) {
+		_ensemble = new CanonicalEnsemble();
+	}
+	else if( "muVT" == ensembletype) {
+		global_log->error() << "muVT ensemble not completely implemented." << endl;
+		this->exit(1);
+// 		_ensemble = new GrandCanonicalEnsemble();
+	}
+	else {
+		global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
+		this->exit(1);
+	}
+	if(xmlconfig.changecurrentnode("ensemble")) {
+		_ensemble->readXML(xmlconfig);
+		/* store data in the _domain member as long as we do not use the ensemble everywhere */
+		for (int d = 0; d < 3; d++) {
+			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
+		}
+		_domain->setGlobalTemperature(_ensemble->T());
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "Ensemble section missing." << endl;
 	}
 
 	/* output */
