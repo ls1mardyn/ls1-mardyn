@@ -21,10 +21,13 @@
 #define SITE_H_
 
 #include "utils/xmlfileUnits.h"
+#include "utils/Logger.h"
 
 #include <iostream>
 #include <cmath>
 #include <cassert>
+
+using Log::global_log;
 
 /** Site
  *
@@ -112,7 +115,10 @@ public:
 		xmlconfig.getNodeValueReduced("mass", _m);
 		xmlconfig.getNodeValueReduced("epsilon", _eps);
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
-		xmlconfig.getNodeValueReduced("cutoff", _rc);
+		if( xmlconfig.getNodeValueReduced("cutoff", _rc) == 0 ) {
+			/* TODO: remove rc from LJ site? */
+			global_log->warning() << "Cutoff radius for LJ site not specified" << std::endl;
+		}
 		_uLJshift6 = 0.0;
 		xmlconfig.getNodeValueReduced("shifted", _uLJshift6);
 	}
