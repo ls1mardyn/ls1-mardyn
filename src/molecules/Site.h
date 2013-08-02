@@ -117,6 +117,7 @@ public:
 		xmlconfig.getNodeValueReduced("sigma", _sigma);
 		if( xmlconfig.getNodeValueReduced("cutoff", _rc) == 0 ) {
 			/* TODO: remove rc from LJ site? */
+			_rc = -1.; /* set to invalid value  */
 			global_log->warning() << "Cutoff radius for LJ site not specified" << std::endl;
 		}
 		_uLJshift6 = 0.0;
