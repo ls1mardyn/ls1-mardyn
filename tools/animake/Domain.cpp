@@ -36,6 +36,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       strstrm << prefix << ".xdr";
    }
+   if((format == FORMAT_BERNREUTHER) || (format == FORMAT_BUCHHOLZ))
+   {
+      strstrm << prefix << ".inp";
+   }
    if(format == FORMAT_BUCHHOLZ)
    {
       strstrm << prefix << ".inp";
@@ -49,7 +53,16 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       txtstrstrm << prefix << "_1R.cfg";
    }
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txtstrstrm << prefix << "_1R.xml";
+   }
    txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<mardyn version=\""
+          << TIME << "\">\n";
+   }
    if(format == FORMAT_BUCHHOLZ)
    {
       buchholzstrstrm << prefix << "_1R.xml";
@@ -77,6 +90,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
    double DIP_REF = SIG_REF*REFCARG;
    double QDR_REF = SIG_REF*DIP_REF;
    double REFOMGA = 1.0 / REFTIME;
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "<refunits type=\"SI\"><length unit=\"nm\">" << SIG_REF * 0.0529177 << "</length><mass unit=\"u\">" << REFMASS * 1000.0 << "</mass><energy unit=\"eV\">" << EPS_REF * 27.2126 << "</energy></refunits>\n";
+   }
 
    unsigned fl_units[3];
    double fl_unit[3];
@@ -310,6 +327,73 @@ void Domain::write(char* prefix, int format, double mu, double x)
       xdr << "mardyn trunk " << TIME << "\n";
    }
 
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "<simulation type=\"MD\">\n";
+
+      txt << "<integrator type=\"Leapfrog\"><timestep unit=\"reduced\">"
+          << DT/REFTIME << "</timestep></integrator>\n"
+          << "<run><currenttime>0</currenttime><production><steps>100000000</steps></production></run>\n"
+          << "<algorithm><parallelisation type=\"DomainDecomposition\"></parallelisation><datastructure type=\"LinkedCells\"><cellsInCutoffRadius>1</cellsInCutoffRadius></datastructure><cutoffs type=\"CenterOfMass\"><radiusLJ unit=\"reduced\">"
+          << LJ_CUTOFF/SIG_REF << "</radiusLJ></cutoffs><electrostatic type=\"ReactionField\"><epsilon>1.0e+10</epsilon></electrostatic></algorithm>\n"
+          << "<output>\n"
+          << "<outputplugin name=\"Resultwriter\"><writefrequency>100</writefrequency><outputprefix>"
+          << prefix << "_1R</outputprefix></outputplugin>\n"
+          << "<outputplugin name=\"CheckpointWriter\"><writefrequency>10000</writefrequency><outputprefix>"
+          << prefix << "_1R</outputprefix></outputplugin>\n"
+          << "</output>\n"
+          << "<ensemble type=\"NVT\"><temperature unit=\"reduced\">"
+          << T/EPS_REF << "</temperature>\n"
+          << "<domain type=\"box\"><lx>" << box[0]/SIG_REF
+          << "</lx><ly>" << box[1]/SIG_REF << "</ly><lz>"
+          << box[2]/SIG_REF << "</lz></domain>\n"
+          << "<components>\n";
+
+      txt << "<moleculetype id=\"1\">\n";
+      if((fluid == FLUID_AR) || (fluid == FLUID_CH4))
+      {
+         txt << "<site type=\"LJ126\" id=\"1\"><coord><x>0</x><y>0</y><z>0</z></coord><mass>"
+             << FLUIDMASS/REFMASS << "</mass><sigma>"
+             << SIG_FLUID/SIG_REF << "</sigma><epsilon>"
+             << EPS_FLUID/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n";
+      }
+      else if(fluid == FLUID_EOX)
+      {
+         txt << "<site type=\"LJ126\" id=\"1\"><coord><x>"
+             << R0_C1EOX/SIG_REF << "</x><y>" << R1_C1EOX/SIG_REF
+             << "</y><z>" << R2_C1EOX/SIG_REF << "</z></coord><mass>"
+             << CEOXMASS/REFMASS << "</mass><sigma>"
+             << SIG_CEOX/SIG_REF << "</sigma><epsilon>"
+             << EPS_CEOX/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n"
+             << "<site type=\"LJ126\" id=\"2\"><coord><x>"
+             << R0_C2EOX/SIG_REF << "</x><y>" << R1_C2EOX/SIG_REF
+             << "</y><z>" << R2_C2EOX/SIG_REF << "</z></coord><mass>"
+             << CEOXMASS/REFMASS << "</mass><sigma>"
+             << SIG_CEOX/SIG_REF << "</sigma><epsilon>"
+             << EPS_CEOX/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n"
+             << "<site type=\"LJ126\" id=\"3\"><coord><x>"
+             << R0_O_EOX/SIG_REF << "</x><y>" << R1_O_EOX/SIG_REF
+             << "</y><z>" << R2_O_EOX/SIG_REF << "</z></coord><mass>"
+             << OEOXMASS/REFMASS << "</mass><sigma>"
+             << SIG_OEOX/SIG_REF << "</sigma><epsilon>"
+             << EPS_OEOX/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n"
+             << "<site type=\"Dipol\" id=\"4\"><coord><x>"
+             << R0DIPEOX/SIG_REF << "</x><y>" << R1DIPEOX/SIG_REF
+             << "</y><z>" << R2DIPEOX/SIG_REF
+             << "</z></coord><dipolemoment><orientation><x>0</x><y>0</y><z>1</z></orientation><abs>"
+             << DIPOLEOX/DIP_REF << "</abs></dipolemoment></site>\n";
+      }
+      txt << "</moleculetype>\n";
+
+      txt << "</components>\n"
+          << "<phasespacepoint><file type=\"ASCII\">" << prefix 
+          << ".inp</file></phasespacepoint>\n"
+          << "</ensemble>\n";
+   }
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
       xdr << "T\t" << T/EPS_REF << "\n";
@@ -580,12 +664,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       }
       xdr << "1.0e+10\n";
 
-      xdr << "N" << "\t" << N1 << "\nM" << "\t" << "ICRVQD\n\n";
-
       txt.precision(6);
       txt << "mardynconfig\n# \ntimestepLength\t" << DT/REFTIME
           << "\ncutoffRadius\t" << EL_CUTOFF/SIG_REF
           << "\nLJCutoffRadius\t" << LJ_CUTOFF/SIG_REF;
+   }
+   if((format == FORMAT_BERNREUTHER) || (format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      xdr << "N" << "\t" << N1 << "\nM" << "\t" << "ICRVQD\n";
    }
    if(format == FORMAT_BRANCH)
    {
@@ -627,6 +713,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
           << "_1R.buxyz\n"
           << "RDF\t" << (EL_CUTOFF - 4.0*FLUIDLONG)/(SIG_REF * (double)BINS) << " "
           << BINS << "\nRDFOutputTimesteps\t150000\nRDFOutputPrefix\t" << prefix << "_1R\n";
+   }
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "</simulation></mardyn>\n";
    }
    txt.close();
 
@@ -721,7 +811,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
                      if(cid == 1) w[d] = (I[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I[d]);
                      else w[d] = (I2[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I2[d]);
                   // xdr << "(" << ii[0] << "/" << ii[1] << "/" << ii[2] << "), j = " << j << ", d = " << d << ":\t";
-                  if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+                  if((format == FORMAT_BERNREUTHER) || (format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
                   {
                      xdr << id << " " << cid << "\t" << tr[0]/SIG_REF
                          << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF

@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#define TIME 20120213
+#define TIME 20130802
 
 #define FLUID_NIL -1
 #define FLUID_CH4 0

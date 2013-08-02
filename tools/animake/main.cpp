@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES or VEG\n-r\tuse b-r-anch format (active by default)\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
+   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format (active by default)\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES or VEG\n-r\tuse b-r-anch format\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
    if((argc < 8) || (argc > 23))
    {
       cout << "There are " << argc
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
    double mu = 0.0;
    int fluid;
    int fluid2 = FLUID_NIL;
-   int format = FORMAT_BRANCH;
+   int format = FORMAT_BERNREUTHER;
    char* prefix = argv[1];
    bool muVT = false;
 
@@ -198,12 +198,6 @@ int main(int argc, char** argv)
       cout << usage;
       return 17;
    }
-   if(format == FORMAT_BERNREUTHER)
-   {
-      cout << "B-e-rnreuther format (flag -e) "
-           << "is unavailable at present.\n\n" << usage;
-      return 18;
-   }
    if(!in_fluid) fluid = FLUID_CH4;
    if(!in_N)
    {
@@ -217,10 +211,16 @@ int main(int argc, char** argv)
       cout << usage;
       return 21;
    }
-   if((x < 0.0) || (x > 1.0))
+   if(in_x && ((x < 0.0) || (x > 1.0)))
    {
       cout << "Invalid mole fraction x = " << x << ".\n\n" << usage;
       return 15;
+   }
+   if((fluid2 != FLUID_NIL) && !in_x)
+   {
+      cout << "Unspecified composition: aborting.\n\n";
+      cout << usage;
+      return 24;
    }
    if((in_fluid2 == false) || (fluid2 == FLUID_NIL))
    {
