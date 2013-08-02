@@ -17,6 +17,7 @@ SysMonOutput::SysMonOutput() : _writeFrequency(1) {}
 
 
 void SysMonOutput::readXML(XMLfileUnits& xmlconfig) {
+	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
 	SysMon* sysmon = SysMon::getSysMon();

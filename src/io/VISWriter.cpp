@@ -31,8 +31,11 @@ VISWriter::VISWriter(unsigned long writeFrequency, string outputPrefix, bool inc
 VISWriter::~VISWriter(){}
 
 void VISWriter::readXML(XMLfileUnits& xmlconfig) {
+	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
 	

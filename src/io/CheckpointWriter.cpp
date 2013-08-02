@@ -32,15 +32,18 @@ CheckpointWriter::~CheckpointWriter(){}
 
 
 void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
+	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
-	
+
 	int incremental = 1;
 	xmlconfig.getNodeValue("incremental", incremental);
 	global_log->info() << "Incremental numbers: " << _incremental << endl;
-	
+
 	int appendTimestamp = 0;
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
 	if(appendTimestamp > 0) {
