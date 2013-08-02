@@ -31,7 +31,7 @@
       <components>
           <moleculetype id="1" >
             <site type="LJ126" id="1" >
-              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <mass>10000.00</mass>
               <sigma>1.0</sigma>
               <epsilon>1.0</epsilon>
@@ -41,25 +41,25 @@
           <moleculetype id="1" >
             <coord_base>principal_axes</coord_base>
             <site type="LJ126" id="1" >
-              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <mass>12.00</mass>
               <sigma>2.900109</sigma>
               <epsilon>11.692625</epsilon>
             </site>
             <site type="LJ126" id="2" >
-              <coord> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coord>
+              <coords> <x>0.0</x> <y>0.0</y> <z>-1.212237</z> </coords>
               <mass>16.00</mass>
               <sigma>2.972625</sigma>
               <epsilon>105.524481</epsilon>
             </site>
             <site type="LJ126" id="3" >
-              <coord> <x>0.0</x> <y>0.0</y> <z>1.212237</z> </coord>
+              <coords> <x>0.0</x> <y>0.0</y> <z>1.212237</z> </coords>
               <mass>16.00</mass>
               <sigma>2.972625</sigma>
               <epsilon>105.524481</epsilon>
             </site>
             <site type="Quadrupole" id="4" >
-              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <orientation> <theta>0.0</theta> <phi>0.0</phi> </orientation>
               <mass>0.0</mass>
               <shielding>0.6</shielding>

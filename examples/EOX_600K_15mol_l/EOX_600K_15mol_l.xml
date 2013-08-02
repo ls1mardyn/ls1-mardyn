@@ -33,28 +33,28 @@
       <components>
           <moleculetype id="1" >
             <site type="LJ126" id="1" >
-              <coord> <x>0.0</x> <y>1.46711523</y> <z>0.0</z> </coord>
+              <coords> <x>0.0</x> <y>1.46711523</y> <z>0.0</z> </coords>
               <mass>0.016</mass>
               <sigma>5.84473626</sigma>
               <epsilon>0.000196741979</epsilon>
               <shifted>0</shifted>
             </site>
             <site type="LJ126" id="2" >
-              <coord> <x>1.47398696</x> <y>-0.83835156</y> <z>0.0</z> </coord>
+              <coords> <x>1.47398696</x> <y>-0.83835156</y> <z>0.0</z> </coords>
               <mass>0.014</mass>
               <sigma>6.66431081</sigma>
               <epsilon>0.000268352891</epsilon>
               <shifted>0</shifted>
             </site>
             <site type="LJ126" id="3" >
-              <coord> <x>-1.47398696</x> <y>-0.83835156</y> <z>0.0</z> </coord>
+              <coords> <x>-1.47398696</x> <y>-0.83835156</y> <z>0.0</z> </coords>
               <mass>0.014</mass>
               <sigma>6.66431081</sigma>
               <epsilon>0.000268352891</epsilon>
               <shifted>0</shifted>
             </site>
             <site type="Dipol" id="4" >
-              <coord> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coord>
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <dipolmoment>
                 <orientation> <x>0.0</x> <y>0.0</y> <z>0.0</z> </orientation>
                 <abs>0.967443691</abs>
