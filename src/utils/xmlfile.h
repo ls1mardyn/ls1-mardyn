@@ -27,6 +27,7 @@
 #include <list>
 #include <vector>
 #include <set>
+#include <stack>
 
 #define RAPIDXML_NO_EXCEPTIONS
 #include "rapidxml/rapidxml.hpp"
@@ -169,6 +170,11 @@ public:
 		/// \param	double	default value (default: 0.)
 		/// \return	double	return value
 		double value_double(double defaultvalue=0.) const;
+		/// \brief get the node bool value
+		/// returns the node value as bool value or default value, if node is invalid
+		/// \param	bool	default value (default: false)
+		/// \return	bool	return value
+		bool value_bool(bool defaultvalue=false) const;
 		
 		/// \brief assignment operator
 		/// copy/duplicate other node content to node
@@ -378,6 +384,12 @@ public:
 		/// \return double	node value
 		double getNodeValue_double(double defaultvalue=0.) const
 			{ double value=defaultvalue; getNodeValue(value); return value; }
+		/// \brief get node value as bool
+		/// get the node content and convert it to a bool
+		/// \param bool	default value to return, if node is not found
+		/// \return bool	node value
+		bool getNodeValue_bool(bool defaultvalue=false) const
+			{ bool value=defaultvalue; getNodeValue(value); return value; }
 		
 		/// \brief print XML data to stream
 		/// print the query content using XML syntax
@@ -563,6 +575,22 @@ public:
 	/// \return double	node value
 	double getNodeValue_double(const char* nodepath, double defaultvalue=0.) const
 		{ return getNodeValue_double(std::string(nodepath),defaultvalue); }
+	/// \brief get node value as bool
+	/// get the node content and convert it to a bool
+	/// (an alternative of using <tag>true</tag> is to look for an occurance of an empty element like <tag/>)
+	/// \param std::string&	nodepath
+	/// \param bool&	default value to return, if node is not found
+	/// \return bool	node value
+	bool getNodeValue_bool(const std::string& nodepath, bool defaultvalue=false) const
+		//{ bool value=defaultvalue; getNodeValue(nodepath,value); return value; }
+		{ return query(nodepath.c_str()).getNodeValue_bool(defaultvalue); }
+	/// \brief get node value as bool
+	/// get the node content and convert it to a bool
+	/// \param const char*	nodepath
+	/// \param bool&	default value to return, if node is not found
+	/// \return bool	node value
+	bool getNodeValue_bool(const char* nodepath, bool defaultvalue=false) const
+		{ return getNodeValue_bool(std::string(nodepath),defaultvalue); }
 	
 	/// \brief print node content as XML
 	/// print node content to stream using XML
@@ -613,6 +641,7 @@ private:
 	t_XMLdocument m_xmldoc;
 	Node m_currentnode;
 	mutable std::set<Query*> m_queries;
+	//std::stack<Node> m_lastnodes;
 	
 	void clear();
 	bool initfile_local(const std::string& filepath);
@@ -680,6 +709,7 @@ template bool XMLfile::Node::getValue<int>(int& value)const;
 template bool XMLfile::Node::getValue<long>(long& value)const;
 template bool XMLfile::Node::getValue<float>(float& value)const;
 template bool XMLfile::Node::getValue<double>(double& value)const;
+template bool XMLfile::Node::getValue<bool>(bool& value)const;
 */
 
 #endif
