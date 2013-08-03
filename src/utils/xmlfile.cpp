@@ -590,8 +590,16 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 	bool found=getValue(v);
 	if(found)
 	{
-		v=v.substr(v.find_first_not_of(" "),4);
-		value=(v.compare("true")==0 || v.compare("True")==0 || v.compare("TRUE")==0);
+		int i=atoi(v.c_str());
+		if(i!=0)
+		{
+			value=true;
+		}
+		else
+		{
+			v=v.substr(v.find_first_not_of(" "),4);
+			value=(v.compare("true")==0 || v.compare("True")==0 || v.compare("TRUE")==0 || v.compare("wahr")==0);
+		}
 	}
 	return found;
 }
