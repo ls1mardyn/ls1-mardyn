@@ -139,7 +139,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			global_log->info() << "Reading " << numcomponents << " components" << endl;
 			dcomponents.resize(numcomponents);
 			for( unsigned int i = 0; i < numcomponents; i++ ) {
-                                global_log->info() << "comp. i = " << i << ": ";
+                                global_log->info() << "comp. i = " << i << ": " << endl;
 				dcomponents[i].setID(i);
 				unsigned int numljcenters = 0;
 				unsigned int numcharges = 0;
