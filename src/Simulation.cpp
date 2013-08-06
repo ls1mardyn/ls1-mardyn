@@ -338,6 +338,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		OutputBase *outputPlugin;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
+		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		if(pluginname == "CheckpointWriter") {
 			outputPlugin = new CheckpointWriter();
 		}
