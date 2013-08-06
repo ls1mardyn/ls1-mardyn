@@ -8,10 +8,11 @@
 #include<fstream>
 #include<sstream>
 #include<map>
-#include<algorithm>
 
-#include<cstdlib>
+#include<algorithm>
 #include<cassert>
+#include<cstdlib>
+#include<string>
 
 #include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
@@ -586,6 +587,7 @@ template<> bool XMLfile::Node::getValue<double>(double& value) const
 
 template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 {
+	value = false;
 	string v;
 	bool found=getValue(v);
 	if(found)
@@ -593,12 +595,16 @@ template<> bool XMLfile::Node::getValue<bool>(bool& value) const
 		int i=atoi(v.c_str());
 		if(i!=0)
 		{
+			/* found integer value unequal 0 */
 			value=true;
 		}
 		else
 		{
-			v=v.substr(v.find_first_not_of(" "),4);
-			value=(v.compare("true")==0 || v.compare("True")==0 || v.compare("TRUE")==0 || v.compare("wahr")==0);
+			/* remove white spaces */
+			v.erase( std::remove_if( v.begin(), v.end(), ::isspace ), v.end() );
+			/* convert to upper case letters */
+			std::transform(v.begin(), v.end(), v.begin(), ::toupper);
+			value=(v == "TRUE" || v == "YES" || v == "ON");
 		}
 	}
 	return found;
