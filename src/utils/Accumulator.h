@@ -6,6 +6,7 @@
  */
 
 #include <cassert>
+#include <cmath>
 
 
 /** A generalized Accumlator for scalar values.
@@ -48,6 +49,7 @@ public:
             stddev += diff*diff;
         }
         stddev /= getSize();
+        stddev = sqrt(stddev);
         return stddev;
     }
 
