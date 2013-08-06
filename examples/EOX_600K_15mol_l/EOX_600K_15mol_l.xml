@@ -54,7 +54,7 @@
             <site type="Dipol" id="4" >
               <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
               <dipolemoment>
-                <orientation> <x>0.0</x> <y>0.0</y> <z>0.0</z> </orientation>
+                <orientation> <x>0.0</x> <y>0.0</y> <z>1.0</z> </orientation>
                 <abs>0.967443691</abs>
               </dipolemoment>
             </site>
