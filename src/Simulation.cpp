@@ -249,7 +249,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			double bBoxMax[3];
 			/* TODO: replace Domain with DomainBase. */
 			_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
-			_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			_moleculeContainer->build(bBoxMin, bBoxMax);
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Datastructure section missing" << endl;
