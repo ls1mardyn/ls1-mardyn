@@ -40,7 +40,7 @@ def parse(ls1filename, datFileName):
 				print "totalTime=", totalTime
 	if numTimeSteps == 0:
 		print "Error: count == 0! Apparently there were no usable lines in the output log file.\n"
-		sys.exit(1)
+		#sys.exit(1)  Write 0 then!
 	datfile.write(str(totalTime) + "\n")
 	datfile.close()
 	
