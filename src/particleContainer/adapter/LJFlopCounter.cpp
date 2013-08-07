@@ -80,7 +80,7 @@ void LJFlopCounter::postprocessCell(ParticleCell & c) {
 void LJFlopCounter::processCell(ParticleCell & c) {
 	const MoleculeList & molecules = c.getParticlePointers();
 	if (molecules.size() > 1) {
-		const MoleculeList::const_iterator end_i = --(molecules.end());
+		const MoleculeList::const_iterator end_i = molecules.end() - 1;
 		const MoleculeList::const_iterator end_j = molecules.end();
 
 		for (MoleculeList::const_iterator i = molecules.begin(); i != end_i;
