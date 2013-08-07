@@ -336,7 +336,6 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 		exit(1);
 	}
 
-	vector<unsigned long>::iterator cellIndexIter;
 	vector<unsigned long>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
