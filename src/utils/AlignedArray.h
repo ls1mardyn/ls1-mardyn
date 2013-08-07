@@ -94,7 +94,7 @@ private:
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
 	static T* _allocate(size_t elements) {
-#ifdef __SSE3__
+#if defined(__SSE3__) && ! defined(__PGI)
 		return static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
 #else
 		return static_cast<T*>(memalign(alignment, sizeof(T) * elements));
@@ -103,7 +103,7 @@ private:
 
 	void _free()
 	{
-#ifdef __SSE3__
+#if defined(__SSE3__) && ! defined(__PGI)
 		_mm_free(_p);
 #else
 		free(_p);
