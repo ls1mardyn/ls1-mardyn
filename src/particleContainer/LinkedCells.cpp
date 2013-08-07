@@ -105,7 +105,7 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
-		_haloWidthInNumCells[i] = ceil(_cellsInCutoff); /* TODO: Single value?! */
+		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff); /* TODO: Single value?! */
 	}
 	int numberOfCells = 1;
 
