@@ -19,8 +19,8 @@ ParticleContainer::ParticleContainer(double bBoxMin[3], double bBoxMax[3]) {
 ParticleContainer::~ParticleContainer() {
 }
 
-void ParticleContainer::build(double bBoxMin[3], double bBoxMax[3]) {
-	global_log->info() << "BUILDING PARTICLE CONTAINER" << endl;
+void ParticleContainer::rebuild(double bBoxMin[3], double bBoxMax[3]) {
+	global_log->info() << "REBUILD OF PARTICLE CONTAINER" << endl;
 	for (int i = 0; i < 3; i++) {
 		_boundingBoxMin[i] = bBoxMin[i];
 		_boundingBoxMax[i] = bBoxMax[i];

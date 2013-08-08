@@ -82,16 +82,14 @@ public:
 
 	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
-	//! @brief (re)build the datastructure
+	//! @brief rebuild the datastructure
 	//!
-	//! This method (re-)builds the particle container, either at construction time
-	//! or after a load-balancing step:
 	//! Load-balancing decompositions change the position and size of the local region
 	//! during runtime. Therefore, the datastructure needs to be rebuild completely.
 	//! This method basically does what the constructor does as well, with the difference,
 	//! that there are already particles stored, and particles which don't belong to the
 	//! new region have to be deleted after rebuild
-	virtual void build(double bBoxMin[3], double bBoxMax[3]);
+	virtual void rebuild(double bBoxMin[3], double bBoxMax[3]);
 
 	//! @brief do necessary updates resulting from changed particle positions
 	//!

@@ -156,7 +156,7 @@ void KDDecomposition2::balanceAndExchange(bool balance, ParticleContainer* molec
 		// longer in the new region
 		// TODO Rebuild problem with particles leaving the domain
 		adjustOuterParticles(newOwnArea, moleculeContainer, domain);
-		moleculeContainer->build(bBoxMin, bBoxMax);
+		moleculeContainer->rebuild(bBoxMin, bBoxMax);
 
 		_ownArea = newOwnArea;
 		delete _decompTree;

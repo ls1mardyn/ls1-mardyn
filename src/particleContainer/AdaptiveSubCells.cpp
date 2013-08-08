@@ -26,14 +26,55 @@ AdaptiveSubCells::AdaptiveSubCells(
 		double cutoffRadius, double LJCutoffRadius)
 		: ParticleContainer(bBoxMin, bBoxMax)
 {
+	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
 	_LJCutoffRadius = LJCutoffRadius;
 
 	for (int d = 0; d < 3; d++) {
 		_haloWidthInNumCells[d] = 1;
+		_cellsPerDimension[d] = (int) floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius) + 2*_haloWidthInNumCells[d];
+		// in each dension at least one layer of (inner+boundary) cells necessary
+		if (_cellsPerDimension[d] == 2 * _haloWidthInNumCells[d]) {
+			_cellsPerDimension[d]++;
+		}
+		numberOfCells *= _cellsPerDimension[d];
+		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d]) / (_cellsPerDimension[d] - 2*_haloWidthInNumCells[d]);
+		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloWidthInNumCells[d] * _cellLength[d];
+		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloWidthInNumCells[d] * _cellLength[d];
+		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
 	}
 
-	build(bBoxMin, bBoxMax);
+	// The resize method initializes the _cells array with the number of all cells within the bounding box
+	_cells.resize(numberOfCells);
+	// Initialize the vector containing the _localRho value of each coarse cell
+	_localRho.resize(numberOfCells);
+	// Initialize the vector containing the _metaCellIndex of each coarse cell
+	// The size of _metaCellIndex is by one larger than _cells.
+	// To find out, whether a cell is refined, the _subCell-index difference of
+	// the cell and the next coarse cell is calculated. If the difference is 8, it
+	// is a refined cell, if the difference is 1, it is a coarse cell. To be able
+	// to do this calculation for the last cell, the index of the "next cell" has
+	// to be calculated. To be able to store this index, the vector _metaCellIndex
+	// has to be one element larger.
+	_metaCellIndex.resize(numberOfCells + 1);
+
+	// If the with of the inner region is less than the width of the halo region
+	// a parallelisation isn't possible (with the used algorithms).
+	// In this case, print an error message
+	// _cellsPerDimension is 2 times the halo width + the inner width
+	// so it has to be at least 3 times the halo width
+	if (_cellsPerDimension[0] < 3*_haloWidthInNumCells[0] ||
+	    _cellsPerDimension[1] < 3*_haloWidthInNumCells[1] ||
+	    _cellsPerDimension[2] < 3*_haloWidthInNumCells[2])
+	{
+		global_log->error() << "Error in AdaptiveSubCells (Constructor): bounding box too small for calculated cell Length" << endl;
+		global_log->error() << "cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		exit(5);
+	}
+	// initially, zero updates were performed:
+	_numberOfUpdates = 0;
+	_cellsValid = false;
 }
 
 
@@ -45,14 +86,14 @@ void AdaptiveSubCells::readXML(XMLfileUnits& xmlconfig) {
 	/* no parameters */
 }
 
-void AdaptiveSubCells::build(double bBoxMin[3], double bBoxMax[3]) {
+void AdaptiveSubCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int d = 0; d < 3; d++) {
 		_boundingBoxMin[d] = bBoxMin[d];
 		_boundingBoxMax[d] = bBoxMax[d];
 	}
 
-
 	int numberOfCells = 1;
+
 	for (int d = 0; d < 3; d++) {
 		_cellsPerDimension[d] = (int) floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / (_cutoffRadius / _haloWidthInNumCells[d]))
 		    + 2 * _haloWidthInNumCells[d];

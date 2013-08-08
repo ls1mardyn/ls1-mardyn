@@ -42,51 +42,29 @@ LinkedCells::LinkedCells(
 		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
 		double cellsInCutoffRadius
 )
-		: ParticleContainer(bBoxMin, bBoxMax), _cutoffRadius(cutoffRadius),
-	      _LJCutoffRadius(LJCutoffRadius), _cellsInCutoffRadius(cellsInCutoffRadius)
-{
+		: ParticleContainer(bBoxMin, bBoxMax) {
+	int numberOfCells = 1;
+	_cutoffRadius = cutoffRadius;
+	_LJCutoffRadius = LJCutoffRadius;
+
 	global_log->debug() << "cutoff: " << cutoffRadius << endl;
 	global_log->debug() << "LJ cutoff:" << LJCutoffRadius << endl;
 	global_log->debug() << "# cells in cutoff: " << cellsInCutoffRadius << endl;
 
-	build(bBoxMin, bBoxMax);
-
-	this->_localInsertionsMinusDeletions = 0;
-}
-
-
-LinkedCells::~LinkedCells() {
-}
-
-void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoff);
-	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
-}
-
-
-void LinkedCells::build(double bBoxMin[3], double bBoxMax[3]) {
-	for (int i = 0; i < 3; i++) {
-		this->_boundingBoxMin[i] = bBoxMin[i];
-		this->_boundingBoxMax[i] = bBoxMax[i];
-	}
-
-	int numberOfCells = 1;
-	int boxWidthInNumCells[3];
-
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
-		boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / _cutoffRadius * _cellsInCutoffRadius);
+		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
 		// in each dimension at least one layer of (inner+boundary) cells is necessary
-		if( boxWidthInNumCells[d] == 0 ) {
-			boxWidthInNumCells[d] = 1;
+		if( _boxWidthInNumCells[d] == 0 ) {
+			_boxWidthInNumCells[d] = 1;
 		}
-		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d]) / boxWidthInNumCells[d];
-		_haloWidthInNumCells[d] = ceil(_cellsInCutoffRadius);
+		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d]) / _boxWidthInNumCells[d];
+		_haloWidthInNumCells[d] = ceil(cellsInCutoffRadius);
 		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
 		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloLength[d];
 		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloLength[d];
 
-		_cellsPerDimension[d] = boxWidthInNumCells[d] + 2 * _haloWidthInNumCells[d];
+		_cellsPerDimension[d] = _boxWidthInNumCells[d] + 2 * _haloWidthInNumCells[d];
 
 		numberOfCells *= _cellsPerDimension[d];
 		assert(numberOfCells > 0);
@@ -99,11 +77,71 @@ void LinkedCells::build(double bBoxMin[3], double bBoxMax[3]) {
 	// If the width of the inner region is less than the width of the halo
 	// region a parallelisation is not possible (with the used algorithms).
 	// If a particle leaves this box, it would need to be communicated to the two next neighbours.
-	if (boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
-			boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
-			boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
+	if (_boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
+	    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
+	    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
 		global_log->error() << "_cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		exit(5);
+	}
+	this->_localInsertionsMinusDeletions = 0;
+
+	initializeCells();
+	calculateNeighbourIndices();
+	_cellsValid = false;
+}
+
+
+LinkedCells::~LinkedCells() {
+}
+
+void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoff);
+	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
+}
+
+void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
+	for (int i = 0; i < 3; i++) {
+		this->_boundingBoxMin[i] = bBoxMin[i];
+		this->_boundingBoxMax[i] = bBoxMax[i];
+		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff); /* TODO: Single value?! */
+	}
+	int numberOfCells = 1;
+
+	for (int dim = 0; dim < 3; dim++) {
+		_boxWidthInNumCells[dim] = floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / _cutoffRadius * _haloWidthInNumCells[dim]);
+		// in each dimension at least one layer of (inner+boundary) cells is necessary
+		if( _boxWidthInNumCells[dim] == 0 ) {
+			_boxWidthInNumCells[dim] = 1;
+		}
+
+		_cellsPerDimension[dim] = (int) floor((_boundingBoxMax[dim] - _boundingBoxMin[dim]) / (_cutoffRadius / _haloWidthInNumCells[dim]))
+		    + 2 * _haloWidthInNumCells[dim];
+		// in each dimension at least one layer of (inner+boundary) cells necessary
+		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
+			global_log->error() << "LinkedCells::rebuild: region to small" << endl;
+			exit(1);
+		}
+		numberOfCells *= _cellsPerDimension[dim];
+		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim]) / (_cellsPerDimension[dim] - 2 * _haloWidthInNumCells[dim]);
+		_haloBoundingBoxMin[dim] = this->_boundingBoxMin[dim] - _haloWidthInNumCells[dim] * _cellLength[dim];
+		_haloBoundingBoxMax[dim] = this->_boundingBoxMax[dim] + _haloWidthInNumCells[dim] * _cellLength[dim];
+		_haloLength[dim] = _haloWidthInNumCells[dim] * _cellLength[dim];
+	}
+
+	_cells.resize(numberOfCells);
+
+	// If the with of the inner region is less than the width of the halo region
+	// a parallelisation isn't possible (with the used algorithms).
+	// In this case, print an error message
+	// _cellsPerDimension is 2 times the halo width + the inner width
+	// so it has to be at least 3 times the halo width
+	if (_boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
+		    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
+		    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
+		global_log->error() << "LinkedCells (rebuild): bounding box too small for calculated cell Length" << endl;
+		global_log->error() << "cellsPerDimension " << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
 		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
 		exit(5);
 	}
@@ -112,8 +150,6 @@ void LinkedCells::build(double bBoxMin[3], double bBoxMax[3]) {
 	calculateNeighbourIndices();
 
 	// TODO: We loose particles here as they are not communicated to the new owner
-	// WE: I don't think so - in KDDecomposition, particles are communicated and kept
-	//     in buffers, then the container is rebuilt, then they are inserted.
 	// delete all Particles which are outside of the halo region
 	std::list<Molecule>::iterator particleIterator = _particles.begin();
 	bool erase_mol;
@@ -136,7 +172,6 @@ void LinkedCells::build(double bBoxMin[3], double bBoxMax[3]) {
 	}
 	_cellsValid = false;
 }
-
 
 void LinkedCells::update() {
 	// clear all Cells

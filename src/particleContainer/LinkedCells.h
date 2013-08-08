@@ -109,7 +109,7 @@ public:
 	}
 
 	// documentation see father class (ParticleContainer.h)
-	void build(double bBoxMin[3], double bBoxMax[3]);
+	void rebuild(double bBoxMin[3], double bBoxMax[3]);
 
 	//! Pointers to the particles are put into cells depending on the spacial position
 	//! of the particles.
@@ -214,9 +214,9 @@ public:
 		return _boundingBoxMin;
 	}
 
-//	int* boxWidthInNumCells() {
-//		return _boxWidthInNumCells;
-//	}
+	int* boxWidthInNumCells() {
+		return _boxWidthInNumCells;
+	}
 
 	double* cellLength() {
 		return _cellLength; 
@@ -313,12 +313,11 @@ private:
 	int _cellsInCutoff; //!< Minimal number of cells within the cutoff radius
 	int _cellsPerDimension[3]; //!< Number of Cells in each spacial dimension (including halo)
 	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
-//	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
+	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
     double _LJCutoffRadius;
-    double _cellsInCutoffRadius;
 	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
 
 	//! @brief True if all Particles are in the right cell
