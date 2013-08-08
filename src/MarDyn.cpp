@@ -129,18 +129,6 @@ int main(int argc, char** argv) {
 			simulation.setOutputPrefix( args[numargs - 1] );
 		}
 	}
-	else if(args[0] == "mkesfera") {
-		simulation.mkesfera(options);
-		// set the number of timesteps to be simulated
-		if (numargs > 2) {
-			unsigned long steps = 0;
-			istringstream(args[numargs - 2]) >> steps;
-			simulation.setNumTimesteps(steps);
-		}
-		if( numargs > 3 ) {
-			simulation.setOutputPrefix( args[numargs - 1] );
-		}
-	}
 	else if( fileExists( args[0].c_str()) ) {
 		if (numargs > 1) {
 			unsigned long steps = 0;
@@ -249,22 +237,17 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
     
     OptionGroup mkTcTS_options = OptionGroup(op, "mkTcTS options", "Options for the mkTcTS scenario generator.");
-    mkTcTS_options.add_option("-c").dest("density-1").type("float").help("density 1 (mkTcTS, mkesfera)");
-    mkTcTS_options.add_option("-C").dest("density-2").type("float").help("density 2 (mkTcTS, mkesfera)");
+    mkTcTS_options.add_option("-c").dest("density-1").type("float").help("density 1 (mkTcTS)");
+    mkTcTS_options.add_option("-C").dest("density-2").type("float").help("density 2 (mkTcTS)");
     mkTcTS_options.add_option("-N").dest("num-particles").type("int").help("approximate number of fluid molecules (mkTcTS)");
-    mkTcTS_options.add_option("-T").dest("temperature").type("float").help("temperature (mkTcTS, mkesfera)");
+    mkTcTS_options.add_option("-T").dest("temperature").type("float").help("temperature (mkTcTS)");
     
-    mkTcTS_options.add_option("-R").dest("cutoff-LJ").type("float").help("Lennard-Jones cutoff (mkTcTS, mkesfera)");
-    mkTcTS_options.add_option("-S").dest("shift_LJ").type("bool").help("shift the LJ potential (mkTcTS, mkesfera)").set_default(false);
+    mkTcTS_options.add_option("-R").dest("cutoff-LJ").type("float").help("Lennard-Jones cutoff (mkTcTS)");
+    mkTcTS_options.add_option("-S").dest("shift_LJ").type("bool").help("shift the LJ potential (mkTcTS)").set_default(false);
     mkTcTS_options.add_option("-h").dest("height").type("float").help("height (mkTcTS)");
     mkTcTS_options.add_option("-m").dest("chemical-potential").type("float").help("chemical potential (mkTcTS)");
     mkTcTS_options.add_option("-p").dest("pair-correlation-cutoff").type("float").help("pair correlation cutoff (mkTcTS)");
     op.add_option_group(mkTcTS_options);
-
-	OptionGroup mkesfera_options = OptionGroup(op, "mkesfera options", "Options for the mkesfera scenario generator.");
-	mkesfera_options.add_option("-I").dest("droplet-radius-inner").type("float").help("inner droplet radius (mkesfera)");
-	mkesfera_options.add_option("-O").dest("droplet-radius-outer").type("float").help("outer droplet radius (mkesfera)");
-	op.add_option_group(mkesfera_options);
     
     op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
     op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");

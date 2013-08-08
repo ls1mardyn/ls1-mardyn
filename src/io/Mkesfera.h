@@ -1,7 +1,11 @@
 #ifndef MKESFERA_H
 #define MKESFERA_H
 
+#include "io/InputBase.h"
+
 #include "utils/OptionParser.h"
+#include "utils/xmlfileUnits.h"
+
 #include <list>
 
 class Domain;
@@ -11,21 +15,24 @@ class OutputBase;
 class ParticleContainer;
 class Simulation;
 
-class Mkesfera {
+class MkesferaGenerator : public InputBase {
 
 public:
-	Mkesfera(optparse::Values &options);
+	MkesferaGenerator(){}
+	~MkesferaGenerator(){}
 
-	void generate(Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*> &outputPlugins, Simulation* simulation);
+	void setPhaseSpaceFile(std::string filename){}
+	void setPhaseSpaceHeaderFile(std::string filename){}
+
+	void readPhaseSpaceHeader(Domain* domain, double timestep){}
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+
+	void readXML(XMLfileUnits& xmlconfig);
 
 private:
-	double cutoff;
-	bool do_shift;
 	double R_i, R_o;
 	double rho_i, rho_o;
-	double T;
-	double box[3];
-
+	double center[3]; /**< droplet center */
 };
 
 #endif /* MKESFERA_H */

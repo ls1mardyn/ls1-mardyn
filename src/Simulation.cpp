@@ -444,7 +444,19 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		}
 		string oldpath = inp.getcurrentnodepath();
 		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
-			_inputReader = new GridGenerator();
+			string generatorName;
+			inp.getNodeValue("@name", generatorName);
+			global_log->info() << "Generator: " << generatorName << endl;
+			if(generatorName == "GridGenerator") {
+				_inputReader = new GridGenerator();
+			}
+			else if(generatorName == "mkesfera") {
+				_inputReader = new MkesferaGenerator();
+			}
+			else {
+				global_log->error() << "Unknown generator: " << generatorName << endl;
+				exit(1);
+			}
 			_inputReader->readXML(inp);
 		}
 		inp.changecurrentnode(oldpath);
@@ -1572,19 +1584,6 @@ void Simulation::initialize() {
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
-}
-
-void Simulation::mkesfera(Values& options) {
-	_particleContainerType = LINKED_CELL;
-
-	Mkesfera mkesfera(options);
-	mkesfera.generate(_domain, &_domainDecomposition, &_integrator, &_moleculeContainer, _outputPlugins, this);
-
-	_moleculeContainer->update();
-	_moleculeContainer->deleteOuterParticles();
-
-	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 }
 
 void Simulation::mkTcTS(Values &options) {

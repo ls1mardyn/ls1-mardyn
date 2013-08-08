@@ -19,12 +19,12 @@
 #include "utils/Logger.h"
 #include "utils/OptionParser.h"
 #include "utils/Random.h"
+#include "Simulation.h"
+#include "ensemble/EnsembleBase.h"
 
 #include <cmath>
 #include <vector>
 
-#define DT 0.002
-#define TIME 20111102
 #define VARFRACTION 0.07
 #define BOXOVERLOAD 1.3333
 #define AVGBIN 0.025
@@ -32,23 +32,35 @@
 using namespace std;
 using Log::global_log;
 
-Mkesfera::Mkesfera(optparse::Values& options) {
-	rho_i = options.get("density-1");  /* inner density */
-	global_log->info() << "Inner density: " << rho_i << endl;
-	R_i = options.get("droplet-radius-inner");
-	global_log->info() << "Inner droplet radius: " << R_i << endl;
-	rho_o = options.get("density-2"); /* outer density */
+void MkesferaGenerator::readXML(XMLfileUnits& xmlconfig) {
+#define MAX(a,b) (((a) >= (b)) (a) : (b));
+	double boxLength = 0;
+	for(int d = 0; d < 3; d++) {
+		double length = _simulation.getEnsemble()->domain()->length(d);
+		if(boxLength < length) {
+			boxLength = length;
+		}
+	}
+	global_log->info() << "Box length: " << boxLength << endl;
+	R_o = boxLength / 2;
+
+	xmlconfig.getNodeValueReduced("outer-density", rho_o);
 	global_log->info() << "Outer density: " << rho_o << endl;
-	R_o = options.get("droplet-radius-outer");
-	global_log->info() << "Outer droplet radius: " << R_o << endl;
-	cutoff = options.get("cutoff-LJ");
-	global_log->info() << "Cutoff radius: " << cutoff << endl;
-	do_shift = options.get("shift_LJ");
-	global_log->info() << "Shift LJ potential: " << do_shift << endl;
-	T = options.get("temperature");
+
+	xmlconfig.getNodeValueReduced("droplet/radius", R_i);
+	global_log->info() << "Droplet radius: " << R_i << endl;
+	xmlconfig.getNodeValueReduced("droplet/density", rho_i);
+	global_log->info() << "Droplet density: " << rho_i << endl;
+	for(int d = 0; d < 3; d++) {
+		center[d] = R_o;
+	}
+	xmlconfig.getNodeValueReduced("droplet/center/x", center[0]);
+	xmlconfig.getNodeValueReduced("droplet/center/y", center[1]);
+	xmlconfig.getNodeValueReduced("droplet/center/z", center[2]);
+	global_log->info() << "Droplet center: " << center[0] << ", " << center[0] << ", " << center[0] << endl;
 }
 
-void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list< OutputBase* > &outputPlugins, Simulation* simulation) {
+long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	unsigned fl_units;
 	double rhomax = (rho_i > rho_o)? rho_i: rho_o;
@@ -56,6 +68,10 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 	fl_units = ceil(pow(N_boxes, 1.0/3.0));
 	double fl_unit = 2.0*R_o / (double)fl_units;
 
+	double T = _simulation.getEnsemble()->T();
+	global_log->info() << "Temperature: " << T << endl;
+
+	double cutoff = _simulation.getcutoffRadius();
 	Random* rnd = new Random();
 	rnd->init(
 		(int)(10000.0*R_o) - (int)(3162.3*cutoff)
@@ -80,6 +96,12 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 	double P_out = rho_o / boxdensity;
 	global_log->debug() << "Insertion probability: " << P_in << " inside, " << P_out << " outside" << endl;
 
+	double box_max[3];
+	/* box min is assumed to be 0 */
+	for(int d = 0; d < 3; d++) {
+		box_max[d] = _simulation.getEnsemble()->domain()->length(d);
+	}
+
 	double goffset[3][3]; /**< relative koordinates of face centers */
 	goffset[0][0] = 0.0; goffset[1][0] = 0.5; goffset[2][0] = 0.5;
 	goffset[0][1] = 0.5; goffset[1][1] = 0.0; goffset[2][1] = 0.5;
@@ -92,9 +114,11 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 			for(idx[2]=0; idx[2] < fl_units; idx[2]++) {
 				for(int p=0; p < 3; p++) {
 					double qq = 0.0;
+					double q[3];
 					for(int d = 0; d < 3; d++) {
-						double qrel = (idx[d] + goffset[d][p])*fl_unit - R_o;
-						qq += qrel*qrel;
+						q[d]= (idx[d] + goffset[d][p])*fl_unit - center[d];
+						q[d] = q[d] - round(q[d]/box_max[d])*box_max[d];
+						qq += q[d]*q[d];
 					}
 					double tP = (qq > R_i*R_i)? P_out: P_in;
 					bool tfill = (tP >= rnd->rnd());
@@ -109,72 +133,16 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 	global_log->debug() << "Filling " << N << " out of " << slots << " slots" << endl;
 	global_log->debug() << "Density: " << N / (8.0*R_o*R_o*R_o) << endl;
 
-	simulation->initCanonical(10);
-	simulation->initStatistics(3003003);
-	simulation->setcutoffRadius(cutoff);
-	simulation->setLJCutoff(cutoff);
-	simulation->setTersoffCutoff(0.5);
+	_simulation.initCanonical(10);
+	_simulation.initStatistics(3003003);
 
-	(*integrator) = new Leapfrog(DT);
-
-	/*
-	 * This part contains adapted code to enable most of the analysis features used in the original generator
-	 * We leave this part out as this ist not tested in the current trunk version.
-	 */
-	/*
-	unsigned xun = 1;
-	unsigned yun = (unsigned)round(R_o / AVGBIN);
-	unsigned zun = 1;
-
-	simulation->_doRecordProfile = true;
-	unsigned long profileRecordingTimesteps = 1;
-	unsigned long profileOutputTimesteps = 500000;
-	string profileOutputPrefix = simulation->getOutputPrefix();
-	simulation->profileSettings(profileRecordingTimesteps, profileOutputTimesteps, profileOutputPrefix);
-	domain->setupProfile(xun, yun, zun);
-
-	esfera
-	nprofiledComponent	1
-	nomomentum 16384
-	AlignCentre 333 0.003
-	chemicalPotential 0 component 1 conduct " << (unsigned)round(N/3.0) << " tests every 1 steps
-	Widom;
-	*/
-
-#ifdef ENABLE_MPI
-	(*domainDecomposition) = (DomainDecompBase*) new DomainDecomposition();
-#else
-	(*domainDecomposition) = (DomainDecompBase*) new DomainDecompDummy();
-#endif
-	double box_max[3];
-	box_max[0] = 2*R_o;
-	box_max[1] = 2*R_o;
-	box_max[2] = 2*R_o;
-	simulation->setSimulationTime(0.0);
-	domain->setGlobalLength(0, box_max[0]);
-	domain->setGlobalLength(1, box_max[1]);
-	domain->setGlobalLength(2, box_max[2]);
 	domain->setGlobalTemperature(T);
 	domain->setglobalNumMolecules(N);
-
-	double bBoxMin[3];
-	double bBoxMax[3];
-	for (int d = 0; d < 3; d++) {
-	    bBoxMin[d] = (*domainDecomposition)->getBoundingBoxMin(d, domain);
-	    bBoxMax[d] = (*domainDecomposition)->getBoundingBoxMax(d, domain);
-	}
-	(*moleculeContainer) = new LinkedCells(bBoxMin, bBoxMax, simulation->getcutoffRadius(), simulation->getLJCutoff(), 1);
-
-	vector<Component> &components = *(_simulation.getEnsemble()->components());
-	components.resize(1);
-	components[0].addLJcenter(0.0, 0.0, 0.0,  1.0, 1.0, 1.0, cutoff, (do_shift? 1: 0));
-	components[0].setI11(0);
-	components[0].setI22(0);
-	components[0].setI33(0);
-	domain->setepsilonRF(1e+10);
+	domain->setglobalRho(N / _simulation.getEnsemble()->V() );
 
 	double v_avg = sqrt(3.0 * T);
 
+	Component* component = _simulation.getEnsemble()->component(0);
 	unsigned ID = 1;
 	for(idx[0]=0; idx[0] < fl_units; idx[0]++) {
 		for(idx[1]=0; idx[1] < fl_units; idx[1]++) {
@@ -196,8 +164,8 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 						v[0] = v_avg*cos(phi)*cos(omega);
 						v[1] = v_avg*cos(phi)*sin(omega);
 						v[2] = v_avg*sin(phi);
-						Molecule molecule(ID, &components[0], q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
-						(*moleculeContainer)->addParticle(molecule);
+						Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
+						particleContainer->addParticle(molecule);
 						ID++;
 					}
 				}
@@ -215,5 +183,7 @@ void Mkesfera::generate(Domain* domain, DomainDecompBase** domainDecomposition, 
 		delete[] fill[i];
 	}
 	delete[] fill;
+	global_log->info() << "Inserted number of molecules: " << ID << endl;
+	return ID;
 }
 
