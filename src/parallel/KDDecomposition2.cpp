@@ -80,8 +80,11 @@ KDDecomposition2::~KDDecomposition2() {
 }
 
 void KDDecomposition2::readXML(XMLfileUnits& xmlconfig) {
-	/* no parameters */
 	/* TODO: Maybe add decomposition dimensions, default auto. */
+	xmlconfig.getNodeValue("updateFrequency", _frequency);
+	global_log->info() << "KDDecomposition2 update frequency: " << _frequency << endl;
+	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
+	global_log->info() << "KDDecomposition2 full search threshold: " << _fullSearchThreshold << endl;
 }
 
 void KDDecomposition2::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {

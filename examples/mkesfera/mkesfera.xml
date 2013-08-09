@@ -47,6 +47,12 @@
     </ensemble>
 
     <algorithm>
+      <!--
+      <parallelisation type="KDDecomposition2">
+        <updateFrequency>10</updateFrequency>
+        <fullSearchThreshold>2</fullSearchThreshold>
+      </parallelisation>
+      -->
       <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>2</cellsInCutoffRadius>
