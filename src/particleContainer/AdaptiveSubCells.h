@@ -5,8 +5,8 @@
 
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleCell.h"
 
-class ParticleCell;
 class ChemicalPotential;
 class DomainDecompBase;
 class CellProcessor;
