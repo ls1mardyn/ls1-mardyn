@@ -59,7 +59,7 @@ class KDDecomposition2: public DomainDecompBase{
 	 *                            influences the quality of the load balancing. I recommend to
 	 *                            set it to 2 - 4.
 	 */
-	KDDecomposition2(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold);
+	KDDecomposition2(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2);
 
     KDDecomposition2(){}
 

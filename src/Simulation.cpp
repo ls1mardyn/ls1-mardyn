@@ -207,7 +207,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if( "KDDecomposition2" == parallelisationtype) {
 	#ifdef ENABLE_MPI
-			_domainDecomposition = new KDDecomposition2();
+			_domainDecomposition = new KDDecomposition2(getcutoffRadius(), _domain);
 	#else
 		global_log->error() << "KDDecomposition2 not available in sequential mode." << endl;
 	#endif
