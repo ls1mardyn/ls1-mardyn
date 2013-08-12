@@ -453,6 +453,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			else if(generatorName == "mkesfera") {
 				_inputReader = new MkesferaGenerator();
 			}
+			else if(generatorName == "mkTcTS") {
+				_inputReader = new MkTcTSGenerator();
+			}
 			else {
 				global_log->error() << "Unknown generator: " << generatorName << endl;
 				exit(1);
@@ -1584,20 +1587,4 @@ void Simulation::initialize() {
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
-}
-
-void Simulation::mkTcTS(Values &options) {
-	_particleContainerType = LINKED_CELL;
-
-	TcTS(options, this->_domain, &(this->_domainDecomposition),
-			&(this->_integrator), &(this->_moleculeContainer),
-			&(this->_outputPlugins), this->_rdf, this);
-
-	if (this->_LJCutoffRadius == 0.0)
-		_LJCutoffRadius = this->_cutoffRadius;
-	_moleculeContainer->update();
-	_moleculeContainer->deleteOuterParticles();
-
-	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 }

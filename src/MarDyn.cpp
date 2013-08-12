@@ -117,19 +117,7 @@ int main(int argc, char** argv) {
 	Simulation simulation;
 
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-	if(args[0] == "mkTcTS") {
-		simulation.mkTcTS(options);
-		// set the number of timesteps to be simulated
-		if (numargs > 2) {
-			unsigned long steps = 0;
-			istringstream(args[numargs - 2]) >> steps;
-			simulation.setNumTimesteps(steps);
-		}
-		if( numargs > 3 ) {
-			simulation.setOutputPrefix( args[numargs - 1] );
-		}
-	}
-	else if( fileExists( args[0].c_str()) ) {
+	if( fileExists( args[0].c_str()) ) {
 		if (numargs > 1) {
 			unsigned long steps = 0;
 			istringstream(args[1]) >> steps;
@@ -235,19 +223,6 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
     op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
-    
-    OptionGroup mkTcTS_options = OptionGroup(op, "mkTcTS options", "Options for the mkTcTS scenario generator.");
-    mkTcTS_options.add_option("-c").dest("density-1").type("float").help("density 1 (mkTcTS)");
-    mkTcTS_options.add_option("-C").dest("density-2").type("float").help("density 2 (mkTcTS)");
-    mkTcTS_options.add_option("-N").dest("num-particles").type("int").help("approximate number of fluid molecules (mkTcTS)");
-    mkTcTS_options.add_option("-T").dest("temperature").type("float").help("temperature (mkTcTS)");
-    
-    mkTcTS_options.add_option("-R").dest("cutoff-LJ").type("float").help("Lennard-Jones cutoff (mkTcTS)");
-    mkTcTS_options.add_option("-S").dest("shift_LJ").type("bool").help("shift the LJ potential (mkTcTS)").set_default(false);
-    mkTcTS_options.add_option("-h").dest("height").type("float").help("height (mkTcTS)");
-    mkTcTS_options.add_option("-m").dest("chemical-potential").type("float").help("chemical potential (mkTcTS)");
-    mkTcTS_options.add_option("-p").dest("pair-correlation-cutoff").type("float").help("pair correlation cutoff (mkTcTS)");
-    op.add_option_group(mkTcTS_options);
     
     op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
     op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
