@@ -3,31 +3,19 @@
 
 #include "Mkesfera.h"
 
-#include "particleContainer/ParticleContainer.h"
-#include "particleContainer/LinkedCells.h"
 #include "Domain.h"
-#include "integrators/Integrator.h"
-#include "integrators/Leapfrog.h"
-#include "io/ResultWriter.h"
+#include "ensemble/EnsembleBase.h"
 #include "molecules/Component.h"
-#ifdef ENABLE_MPI
-#include "parallel/DomainDecomposition.h"
-#else
-#include "parallel/DomainDecompDummy.h"
-#endif
+#include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
-#include "utils/OptionParser.h"
 #include "utils/Random.h"
-#include "Simulation.h"
-#include "ensemble/EnsembleBase.h"
 
 #include <cmath>
 #include <vector>
 
 #define VARFRACTION 0.07
 #define BOXOVERLOAD 1.3333
-#define AVGBIN 0.025
 
 using namespace std;
 using Log::global_log;
