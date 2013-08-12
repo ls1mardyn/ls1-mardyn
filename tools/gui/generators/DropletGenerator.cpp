@@ -68,13 +68,14 @@ void DropletGenerator::setClusterParameters(double gas, double fluidDen,
 }
 
 void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-		domain->setCurrentTime(0);
+		global_simulation->setSimulationTime(0);
 
 		domain->disableComponentwiseThermostat();
 		domain->setGlobalTemperature(_temperature);
 		domain->setGlobalLength(0, simBoxLength[0]);
 		domain->setGlobalLength(1, simBoxLength[1]);
 		domain->setGlobalLength(2, simBoxLength[2]);
+		vector<Component>& dcomponents = *(global_simulation->getEnsemble()->components());
 
 		_logger->debug() << "DropletGenerator: set global length=[" << simBoxLength[0]
 		    << "," << simBoxLength[1] << "," <<  simBoxLength[2] << "]" << endl;
@@ -84,7 +85,7 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 			if (_configuration.performPrincipalAxisTransformation()) {
 				principalAxisTransform(component);
 			}
-			domain->addComponent(component);
+			dcomponents.push_back(component);
 		}
 		domain->setepsilonRF(1e+10);
 }
@@ -113,10 +114,8 @@ unsigned long DropletGenerator::readPhaseSpace(
 			<< "OneCLJGenerator  generating cluster distribution. " << " T "
 			<< _temperature << " #molecules " << numOfMolecules << " rho_gas "
 			<< gasDensity << " rho_fluid " << fluidDensity << endl;
-	unsigned long maxID = generateMoleculesCluster(particleContainer, bBoxMin, bBoxMax, domain,
-			domainDecomp);
+	unsigned long maxID = generateMoleculesCluster(particleContainer, bBoxMin, bBoxMax, domain, domainDecomp);
 
-	vector<Component>& dcomponents = domain->getComponents();
 	vector<unsigned long> partsPerComp;
 	partsPerComp.resize(1);
 	particleContainer->update();
@@ -124,6 +123,7 @@ unsigned long DropletGenerator::readPhaseSpace(
 	domain->setglobalNumMolecules(
 			countMolecules(domainDecomp, particleContainer, partsPerComp));
 
+	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->components());
 	for (unsigned int i = 0; i < partsPerComp.size(); i++) {
 		dcomponents[i].setNumMolecules(partsPerComp[i]);
 		domain->setglobalRotDOF(
