@@ -104,7 +104,7 @@ class Expression
 			/**
 				retval		Tint	value
 			**/
-			Tfloat getValueInt() const
+			Tint getValueInt() const
 			{
 				switch(_type)
 				{
@@ -131,6 +131,15 @@ class Expression
 				write(oss);
 				return oss.str();
 			}
+			bool operator==(Value const& v) const;
+			bool operator>(Value const& v) const;
+			bool operator>=(Value const& v) const;
+			bool operator<(Value const& v) const;
+			bool operator<=(Value const& v) const;
+			const Value operator+(Value const& v) const;
+			const Value operator-(Value const& v) const;
+			const Value operator*(Value const& v) const;
+			const Value operator/(Value const& v) const;
 		
 		private:
 			Tvaltype _type;
@@ -369,27 +378,6 @@ class Expression
 	};
 	// ---------------------------------------------------------------------------- NodeVariable
 	
-	// NodeFunction1 ---------------------------------------------------------------------------
-	class NodeFunction1 : public Node
-	{
-		public:
-			enum Efunctype {functypeNONE=0
-			              , functypeABS, functypeFLOAT, functypeFLOOR, functypeCEIL
-			              , functypeSQRT
-			              , functypeLOG, functypeLOG2, functypeLOG10, functypeEXP
-			              , functypeSIN, functypeCOS, functypeTAN
-			               };
-			
-			NodeFunction1(const std::string& name, Node* child, Node* parent=NULL);
-			Tvaltype valueType() const;
-			Value evaluate() const;
-			void write(std::ostream& ostrm) const;
-			
-		protected:
-			enum Efunctype _functype;
-	};
-	// --------------------------------------------------------------------------- NodeFunction1
-	
 	// NodeOperation2 --------------------------------------------------------------------------
 	class NodeOperation2 : public Node
 	{
@@ -414,6 +402,36 @@ class Expression
 			char _operator;
 	};
 	// -------------------------------------------------------------------------- NodeOperation2
+	
+	// NodeFunction ----------------------------------------------------------------------------
+	class NodeFunction : public Node
+	{
+		public:
+			enum Efunctype {functypeNONE=0
+			              , functypeMarker1Arg	// functions with 1 argument
+			              , functypeABS, functypeFLOAT, functypeFLOOR, functypeCEIL
+			              , functypeSQRT
+			              , functypeLN, functypeLB, functypeLG, functypeEXP
+			              , functypeSIN, functypeCOS, functypeTAN
+			              , functypeMarker2Arg	// functions with 2 arguments
+			              , functypeMIN, functypeMAX
+			              , functypePOW
+			               };
+			
+			static Efunctype functype(const std::string& name);
+			
+			NodeFunction(Efunctype func, Node* child1, Node* child0=NULL, Node* parent=NULL)
+				: Node(child0,child1,parent,0), _functype(func) {}
+			// functions with 1 argument use _children[1]
+			// TODO: probably they should use _children[0] (again), but Node::writeSubExpr needs to be adapted
+			Tvaltype valueType() const;
+			Value evaluate() const;
+			void write(std::ostream& ostrm) const;
+			
+		protected:
+			enum Efunctype _functype;
+	};
+	// ---------------------------------------------------------------------------- NodeFunction
 	
 	// -------------------------------------------------------------------- Node and derivatives
 	

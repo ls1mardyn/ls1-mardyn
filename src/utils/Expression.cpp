@@ -11,6 +11,124 @@
 using namespace std;
 
 
+bool Expression::Value::operator==(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return getValueFloat()==v.getValueFloat();
+	else if(isFloat() && v.isInt())
+		return getValueFloat()==v.getValueInt();
+	else if(isInt() && v.isFloat())
+		return getValueInt()==v.getValueFloat();
+	else if(isInt() && v.isInt())
+		return getValueInt()==v.getValueInt();
+	return false;
+}
+
+bool Expression::Value::operator>(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return getValueFloat()>v.getValueFloat();
+	else if(isFloat() && v.isInt())
+		return getValueFloat()>v.getValueInt();
+	else if(isInt() && v.isFloat())
+		return getValueInt()>v.getValueFloat();
+	else if(isInt() && v.isInt())
+		return getValueInt()>v.getValueInt();
+	return false;
+}
+
+bool Expression::Value::operator>=(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return getValueFloat()>=v.getValueFloat();
+	else if(isFloat() && v.isInt())
+		return getValueFloat()>=v.getValueInt();
+	else if(isInt() && v.isFloat())
+		return getValueInt()>=v.getValueFloat();
+	else if(isInt() && v.isInt())
+		return getValueInt()>=v.getValueInt();
+	return false;
+}
+
+bool Expression::Value::operator<(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return getValueFloat()<v.getValueFloat();
+	else if(isFloat() && v.isInt())
+		return getValueFloat()<v.getValueInt();
+	else if(isInt() && v.isFloat())
+		return getValueInt()<v.getValueFloat();
+	else if(isInt() && v.isInt())
+		return getValueInt()<v.getValueInt();
+	return false;
+}
+
+bool Expression::Value::operator<=(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return getValueFloat()<=v.getValueFloat();
+	else if(isFloat() && v.isInt())
+		return getValueFloat()<=v.getValueInt();
+	else if(isInt() && v.isFloat())
+		return getValueInt()<=v.getValueFloat();
+	else if(isInt() && v.isInt())
+		return getValueInt()<=v.getValueInt();
+	return false;
+}
+
+const Expression::Value Expression::Value::operator+(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return Value(getValueFloat()+v.getValueFloat());
+	else if(isFloat() && v.isInt())
+		return Value(getValueFloat()+v.getValueInt());
+	else if(isInt() && v.isFloat())
+		return Value(getValueInt()+v.getValueFloat());
+	else if(isInt() && v.isInt())
+		return Value(getValueInt()+v.getValueInt());
+	return Value();
+}
+
+const Expression::Value Expression::Value::operator-(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return Value(getValueFloat()-v.getValueFloat());
+	else if(isFloat() && v.isInt())
+		return Value(getValueFloat()-v.getValueInt());
+	else if(isInt() && v.isFloat())
+		return Value(getValueInt()-v.getValueFloat());
+	else if(isInt() && v.isInt())
+		return Value(getValueInt()-v.getValueInt());
+	return Value();
+}
+
+const Expression::Value Expression::Value::operator*(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return Value(getValueFloat()*v.getValueFloat());
+	else if(isFloat() && v.isInt())
+		return Value(getValueFloat()*v.getValueInt());
+	else if(isInt() && v.isFloat())
+		return Value(getValueInt()*v.getValueFloat());
+	else if(isInt() && v.isInt())
+		return Value(getValueInt()*v.getValueInt());
+	return Value();
+}
+
+const Expression::Value Expression::Value::operator/(Value const& v) const
+{
+	if(isFloat() && v.isFloat())
+		return Value(getValueFloat()/v.getValueFloat());
+	else if(isFloat() && v.isInt())
+		return Value(getValueFloat()/v.getValueInt());
+	else if(isInt() && v.isFloat())
+		return Value(getValueInt()/v.getValueFloat());
+	else if(isInt() && v.isInt())
+		return Value(getValueInt()/v.getValueInt());
+	return Value();
+}
+
+
 Expression::Variable* Expression::VariableSet::addVariable(const string& name)
 {
 	string vgrpname,varname(name);
@@ -83,19 +201,32 @@ void Expression::Node::writeSubExpr(ostream& ostrm, enum Etraversetype traverset
 			if(_children[1]) _children[1]->writeSubExpr(ostrm,traversetype,sep);
 			break;
 		case traversetypeINFIX:
-			if(_children[0])
-			{
-				if(_children[0]->_priority>_priority) ostrm<<"(";
-				_children[0]->writeSubExpr(ostrm,traversetype,sep);
-				if(_children[0]->_priority>_priority) ostrm<<")";
-			}
-			write(ostrm);
-			if(sep) ostrm << sep;
-			if(_children[1])
-			{
-				if(_children[1]->_priority>_priority) ostrm<<"(";
-				_children[1]->writeSubExpr(ostrm,traversetype,sep);
-				if(_children[1]->_priority>_priority) ostrm<<")";
+			if(dynamic_cast<const NodeFunction*>(this) != NULL)
+			{	// functions format is FUNCTIONNAME(ARGUMENT1, [ARGUMENT2])
+				write(ostrm);
+				ostrm<<"(";
+				if(_children[1]) _children[1]->writeSubExpr(ostrm,traversetype,sep);
+				if(_children[0])
+				{
+					ostrm<<",";
+					_children[0]->writeSubExpr(ostrm,traversetype,sep);
+				}
+				ostrm<<")";
+			} else {
+				if(_children[0])
+				{
+					if(_children[0]->_priority>_priority) ostrm<<"(";
+					_children[0]->writeSubExpr(ostrm,traversetype,sep);
+					if(_children[0]->_priority>_priority) ostrm<<")";
+				}
+				write(ostrm);
+				if(sep) ostrm << sep;
+				if(_children[1])
+				{
+					if(_children[1]->_priority>_priority) ostrm<<"(";
+					_children[1]->writeSubExpr(ostrm,traversetype,sep);
+					if(_children[1]->_priority>_priority) ostrm<<")";
+				}
 			}
 			break;
 		case traversetypePOSTFIX:
@@ -104,116 +235,6 @@ void Expression::Node::writeSubExpr(ostream& ostrm, enum Etraversetype traverset
 			write(ostrm);
 			if(sep) ostrm << sep;
 			break;
-	}
-}
-
-
-Expression::NodeFunction1::NodeFunction1(const string& name, Node* child, Node* parent)
-	: Node(NULL,child,parent,0)
-{
-	if(name.compare("abs")==0||name.compare("ABS")==0)
-		_functype=functypeABS;
-	else if(name.compare("float")==0||name.compare("FLOAT")==0)
-		_functype=functypeFLOAT;
-	else if(name.compare("floor")==0||name.compare("FLOOR")==0)
-		_functype=functypeFLOOR;
-	else if(name.compare("ceil")==0||name.compare("CEIL")==0)
-		_functype=functypeCEIL;
-	else if(name.compare("sqrt")==0||name.compare("SQRT")==0)
-		_functype=functypeSQRT;
-	else if(name.compare("log")==0||name.compare("LOG")==0)
-		_functype=functypeLOG;
-	else if(name.compare("log2")==0||name.compare("LOG2")==0)
-		_functype=functypeLOG2;
-	else if(name.compare("log10")==0||name.compare("LOG10")==0)
-		_functype=functypeLOG10;
-	else if(name.compare("exp")==0||name.compare("EXP")==0)
-		_functype=functypeEXP;
-	else if(name.compare("sin")==0||name.compare("SIN")==0)
-		_functype=functypeSIN;
-	else if(name.compare("cos")==0||name.compare("COS")==0)
-		_functype=functypeCOS;
-	else if(name.compare("tan")==0||name.compare("TAN")==0)
-		_functype=functypeTAN;
-	else
-		_functype=functypeNONE;
-}
-
-Expression::Tvaltype Expression::NodeFunction1::valueType() const
-{
-	if(_children[1])
-	{
-		switch(_functype)
-		{
-			case functypeNONE: return valtypeNONE;
-			case functypeABS: return _children[1]->valueType();
-			case functypeFLOOR:
-			case functypeCEIL:
-				return valtypeINT;
-			case functypeFLOAT:
-			case functypeSQRT:
-			case functypeLOG:
-			case functypeLOG2:
-			case functypeLOG10:
-			case functypeEXP:
-			case functypeSIN:
-			case functypeCOS:
-			case functypeTAN:
-			//default:
-				return valtypeFLOAT;
-			//default: return valtypeNONE;
-		}
-	}
-	return valtypeNONE;
-}
-
-Expression::Value Expression::NodeFunction1::evaluate() const
-{
-	if(_children[1])
-	{
-		switch(_functype)
-		{
-			case functypeNONE: return Value();
-			case functypeABS:
-				if(_children[1]->isInt())
-					return Value(labs(Tint(_children[1]->evaluate())));
-				else
-					return Value(fabs(Tfloat(_children[1]->evaluate())));
-			case functypeFLOAT: return Value(Tfloat(_children[1]->evaluate()));
-			case functypeFLOOR: return Value(Tint(floor(Tfloat(_children[1]->evaluate()))));
-			case functypeCEIL:  return Value(Tint(ceil(Tfloat(_children[1]->evaluate()))));
-			case functypeSQRT:  return Value(sqrt(Tfloat(_children[1]->evaluate())));
-			case functypeLOG:   return Value(log(Tfloat(_children[1]->evaluate())));
-			case functypeLOG2:  return Value(log2(Tfloat(_children[1]->evaluate())));
-			case functypeLOG10: return Value(log10(Tfloat(_children[1]->evaluate())));
-			case functypeEXP:   return Value(exp(Tfloat(_children[1]->evaluate())));
-			case functypeSIN:   return Value(sin(Tfloat(_children[1]->evaluate())));
-			case functypeCOS:   return Value(cos(Tfloat(_children[1]->evaluate())));
-			case functypeTAN:   return Value(tan(Tfloat(_children[1]->evaluate())));
-			//case functypeNONE:
-			default:
-				return Value();
-		}
-	}
-	else return 0.;
-}
-
-void Expression::NodeFunction1::write(ostream& ostrm) const {
-	switch(_functype)
-	{
-		case functypeNONE:  ostrm << "undef"; break;
-		case functypeABS:   ostrm << "ABS"; break;
-		case functypeFLOAT: ostrm << "FLOAT"; break;
-		case functypeFLOOR: ostrm << "FLOOR"; break;
-		case functypeCEIL:  ostrm << "CEIL"; break;
-		case functypeSQRT:  ostrm << "SQRT"; break;
-		case functypeLOG:   ostrm << "LOG"; break;
-		case functypeLOG2:  ostrm << "LOG2"; break;
-		case functypeLOG10: ostrm << "LOG10"; break;
-		case functypeEXP:   ostrm << "EXP"; break;
-		case functypeSIN:   ostrm << "SIN"; break;
-		case functypeCOS:   ostrm << "COS"; break;
-		case functypeTAN:   ostrm << "TAN"; break;
 	}
 }
 
@@ -242,49 +263,185 @@ Expression::Value Expression::NodeOperation2::evaluate() const
 	{
 		switch(_operator)
 		{
-			case '+':
-				if(_children[0]->isInt()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateInt()+_children[1]->evaluateInt());
-				else if (_children[0]->isInt()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateInt()+_children[1]->evaluateFloat());
-				else if (_children[0]->isFloat()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateFloat()+_children[1]->evaluateInt());
-				else if (_children[0]->isFloat()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateFloat()+_children[1]->evaluateFloat());
-				break;
-			case '-':
-				if(_children[0]->isInt()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateInt()-_children[1]->evaluateInt());
-				else if (_children[0]->isInt()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateInt()-_children[1]->evaluateFloat());
-				else if (_children[0]->isFloat()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateFloat()-_children[1]->evaluateInt());
-				else if (_children[0]->isFloat()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateFloat()-_children[1]->evaluateFloat());
-				break;
-			case '*':
-				if(_children[0]->isInt()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateInt()*_children[1]->evaluateInt());
-				else if (_children[0]->isInt()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateInt()*_children[1]->evaluateFloat());
-				else if (_children[0]->isFloat()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateFloat()*_children[1]->evaluateInt());
-				else if (_children[0]->isFloat()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateFloat()*_children[1]->evaluateFloat());
-				break;
-			case '/':
-				if(_children[0]->isInt()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateInt()/_children[1]->evaluateInt());
-				else if (_children[0]->isInt()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateInt()/_children[1]->evaluateFloat());
-				else if (_children[0]->isFloat()&&_children[1]->isInt())
-					return Value(_children[0]->evaluateFloat()/_children[1]->evaluateInt());
-				else if (_children[0]->isFloat()&&_children[1]->isFloat())
-					return Value(_children[0]->evaluateFloat()/_children[1]->evaluateFloat());
-				break;
+			case '+': return _children[0]->evaluate()+_children[1]->evaluate();
+			case '-': return _children[0]->evaluate()-_children[1]->evaluate();
+			case '*': return _children[0]->evaluate()*_children[1]->evaluate();
+			case '/': return _children[0]->evaluate()/_children[1]->evaluate();
 		}
 	}
 	return Value();
+}
+
+
+Expression::NodeFunction::Efunctype Expression::NodeFunction::functype(const std::string& name)
+{
+	if(name.compare("abs")==0||name.compare("ABS")==0)
+		return functypeABS;
+	else if(name.compare("float")==0||name.compare("FLOAT")==0)
+		return functypeFLOAT;
+	else if(name.compare("floor")==0||name.compare("FLOOR")==0)
+		return functypeFLOOR;
+	else if(name.compare("ceil")==0||name.compare("CEIL")==0)
+		return functypeCEIL;
+	else if(name.compare("sqrt")==0||name.compare("SQRT")==0)
+		return functypeSQRT;
+	else if(name.compare("ln")==0||name.compare("LN")==0
+	     || name.compare("logE")==0||name.compare("LOGE")==0)
+		return functypeLN;
+	else if(name.compare("lb")==0||name.compare("LB")==0
+	     || name.compare("log2")==0||name.compare("LOG2")==0)
+		return functypeLB;
+	else if(name.compare("lg")==0||name.compare("LG")==0
+	     || name.compare("log10")==0||name.compare("LOG10")==0)
+		return functypeLG;
+	else if(name.compare("exp")==0||name.compare("EXP")==0)
+		return functypeEXP;
+	else if(name.compare("sin")==0||name.compare("SIN")==0)
+		return functypeSIN;
+	else if(name.compare("cos")==0||name.compare("COS")==0)
+		return functypeCOS;
+	else if(name.compare("tan")==0||name.compare("TAN")==0)
+		return functypeTAN;
+	//
+	else if(name.compare("min")==0||name.compare("MIN")==0)
+		return functypeMIN;
+	else if(name.compare("max")==0||name.compare("MAX")==0)
+		return functypeMAX;
+	else if(name.compare("pow")==0||name.compare("POW")==0)
+		return functypePOW;
+	//
+	else
+		return functypeNONE;
+}
+
+Expression::Tvaltype Expression::NodeFunction::valueType() const
+{
+	if(_functype==functypeNONE) return valtypeNONE;
+	if(_children[1])
+	{
+		switch(_functype)
+		{	// functions with 1 argument
+			case functypeABS:
+				return _children[1]->valueType();
+			case functypeFLOOR:
+			case functypeCEIL:
+				return valtypeINT;
+			case functypeFLOAT:
+			case functypeSQRT:
+			case functypeLN:
+			case functypeLB:
+			case functypeLG:
+			case functypeEXP:
+			case functypeSIN:
+			case functypeCOS:
+			case functypeTAN:
+				return valtypeFLOAT;
+			default: break;	// avoid compiler warnings of values not handled in switch
+		}
+		if(_children[0])
+		{
+			switch(_functype)
+			{	// functions with 2 arguments
+				case functypeMIN:
+					if(_children[0]->evaluate()<_children[1]->evaluate())
+						return _children[0]->valueType();
+					else
+						return _children[1]->valueType();
+				case functypeMAX:
+					if(_children[0]->evaluate()>_children[1]->evaluate())
+						return _children[0]->valueType();
+					else
+						return _children[1]->valueType();
+				case functypePOW:
+					if(_children[0]->valueType()==valtypeINT && _children[1]->valueType()==valtypeINT)
+						return valtypeINT;
+					else
+						return valtypeFLOAT;
+				default: break;	// avoid compiler warnings of values not handled in switch
+			}
+		}
+	}
+	return valtypeNONE;
+}
+
+Expression::Value Expression::NodeFunction::evaluate() const
+{
+	if(_children[1])
+	{
+		switch(_functype)
+		{	// functions with 1 argument
+			case functypeNONE: return Value();
+			case functypeABS:
+				if(_children[1]->isInt())
+					return Value(labs(Tint(_children[1]->evaluate())));
+				else
+					return Value(fabs(Tfloat(_children[1]->evaluate())));
+			case functypeFLOAT: return Value(Tfloat(_children[1]->evaluate()));
+			case functypeFLOOR: return Value(Tint(floor(Tfloat(_children[1]->evaluate()))));
+			case functypeCEIL:  return Value(Tint(ceil(Tfloat(_children[1]->evaluate()))));
+			case functypeSQRT:  return Value(sqrt(Tfloat(_children[1]->evaluate())));
+			case functypeLN:   return Value(log(Tfloat(_children[1]->evaluate())));
+			case functypeLB:  return Value(log2(Tfloat(_children[1]->evaluate())));
+			case functypeLG: return Value(log10(Tfloat(_children[1]->evaluate())));
+			case functypeEXP:   return Value(exp(Tfloat(_children[1]->evaluate())));
+			case functypeSIN:   return Value(sin(Tfloat(_children[1]->evaluate())));
+			case functypeCOS:   return Value(cos(Tfloat(_children[1]->evaluate())));
+			case functypeTAN:   return Value(tan(Tfloat(_children[1]->evaluate())));
+			default: break;	// avoid compiler warnings of values not handled in switch
+		}
+		if(_children[0])
+		{
+			switch(_functype)
+			{	// functions with 2 arguments
+				case functypeMIN:
+					if(_children[0]->evaluate()<_children[1]->evaluate())
+						return _children[0]->evaluate();
+					else
+						return _children[1]->evaluate();
+				case functypeMAX:
+					if(_children[0]->evaluate()>_children[1]->evaluate())
+						return _children[0]->evaluate();
+					else
+						return _children[1]->evaluate();
+				case functypePOW:
+					if(_children[0]->valueType()==valtypeINT && _children[1]->valueType()==valtypeINT)
+					{
+						Tint b=_children[0]->evaluate();
+						Tint e=_children[1]->evaluate();
+						Tint p=1;
+						for(Tint i=0;i<e;++i) p*=b;
+						return Value(p);
+					} else
+						return Value(pow(Tfloat(_children[1]->evaluate()),Tfloat(_children[0]->evaluate())));
+				default: break;	// avoid compiler warnings of values not handled in switch
+			}
+		}
+	}
+	return Value();
+}
+
+void Expression::NodeFunction::write(ostream& ostrm) const {
+	switch(_functype)
+	{	//
+		case functypeNONE:	ostrm << "undef"; break;
+		case functypeABS:	ostrm << "ABS"; break;
+		case functypeFLOAT:	ostrm << "FLOAT"; break;
+		case functypeFLOOR:	ostrm << "FLOOR"; break;
+		case functypeCEIL:	ostrm << "CEIL"; break;
+		case functypeSQRT:	ostrm << "SQRT"; break;
+		case functypeLN:	ostrm << "LN"; break;
+		case functypeLB:	ostrm << "LB"; break;
+		case functypeLG:	ostrm << "LG"; break;
+		case functypeEXP:	ostrm << "EXP"; break;
+		case functypeSIN:	ostrm << "SIN"; break;
+		case functypeCOS:	ostrm << "COS"; break;
+		case functypeTAN:	ostrm << "TAN"; break;
+		//
+		case functypeMIN:	ostrm << "MIN"; break;
+		case functypeMAX:	ostrm << "MAX"; break;
+		case functypePOW:	ostrm << "POW"; break;
+		default: break;	// avoid compiler warnings of values not handled in switch
+	}
 }
 
 
@@ -342,10 +499,22 @@ void Expression::initializeRPN(const string& exprstr, bool genlabel)
 		} else {
 			// function ................................................
 			//string funcname=token;
-			Node* node1=nodestack.top(); nodestack.pop();
-			Node* node0=new NodeFunction1(token,node1);
-			nodestack.push(node0);
-			node1->setParent(node0);
+			NodeFunction::Efunctype func=NodeFunction::functype(token);
+			if(func>NodeFunction::functypeMarker2Arg && nodestack.size()>=2)
+			{
+				Node* node1=nodestack.top(); nodestack.pop();
+				Node* node2=nodestack.top(); nodestack.pop();
+				Node* node0=new NodeFunction(func,node1,node2);
+				nodestack.push(node0);
+				node1->setParent(node0);
+			}
+			else if(func>NodeFunction::functypeMarker1Arg && nodestack.size()>=1)
+			{
+				Node* node1=nodestack.top(); nodestack.pop();
+				Node* node0=new NodeFunction(func,node1);
+				nodestack.push(node0);
+				node1->setParent(node0);
+			}
 		}
 		startpos=endpos+2;
 	}
