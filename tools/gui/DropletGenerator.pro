@@ -74,3 +74,4 @@ SOURCES  += generators/common/DropletPlacement.cpp
 
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
+INCLUDEPATH += ../../src/External
