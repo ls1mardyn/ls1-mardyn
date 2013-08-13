@@ -238,23 +238,6 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	dgroup.add_option("--timestep-length") .type("float") .set_default(0.004) .help("length of one timestep in TODO (default: %default)");
 	op.add_option_group(dgroup);
 
-// 	OptionGroup animake_options = OptionGroup(op, "animake options", "Options for the animake scenario generator.");
-// 	animake_options.add_option("-c").dest("fluid-density").help("density (animake)");
-// 	animake_options.add_option("-f").dest("fluid").help("fluid type (animake) possible values: CH4 (default), Ar, C2H6, N2, CO2, EOX, JES or VEG");
-// 	animake_options.add_option("-g").dest("fluid2").help("second fluid type (animake) possible values: CH4 (default), Ar, C2H6, N2, CO2, EOX, JES or VEG");
-// 	animake_options.add_option("-N").dest("num-particles").help("number of molecules (animake)");
-// 	animake_options.add_option("-T").dest("temperature").help("temperature (animake)");
-// 	animake_options.add_option("-y").dest("length_y").help("box length_y (animake)");
-// 	animake_options.add_option("-z").dest("length_z").help("box length_z (animake)");
-// 	animake_options.add_option("-Y").dest("reference-mass").help("reference mass [u] (animake)").set_default(1.0);
-// 	animake_options.add_option("-s").dest("reference-length").help("reference length [A] (animake)").set_default(1.0);
-// 	animake_options.add_option("-W").dest("reference-energy").help("reference energy and temperature [K] (animake)").set_default(1.0);
-// 	animake_options.add_option("-x").dest("mole-fraction").help("mole fraction fluid1:fluid2 (animake)");
-// 	animake_options.add_option("-m").dest("mu").help("chemical potential (animake)").set_default(0.0);
-// 	animake_options.add_option("-J").dest("mixing-eta").help("Lorenz Berthelot mixing parameter 'eta' (animake)").set_default(1.0);
-// 	animake_options.add_option("-5").dest("mixing-xi").help("Lorenz Berthelot mixing parameter 'xi' (animake)").set_default(1.0);
-// 	op.add_option_group(animake_options);
-	
 	return op.parse_args(argc, argv);
 }
 
