@@ -1,4 +1,8 @@
 #include "particleContainer/ParticleCell.h"
+
+#include <cassert>
+#include <vector>
+
 #include "molecules/Molecule.h"
 
 using namespace std;

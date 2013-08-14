@@ -1,17 +1,13 @@
-/** \file SysMonOutput.cpp
-  * \brief Output plugin for System Monitoring class
-  * license: GPL (http://www.gnu.de/documents/gpl.de.html)
-*/
-
 #include "io/SysMonOutput.h"
-
-#include "utils/Logger.h"
-#include "utils/xmlfileUnits.h"
 
 #include <sstream>
 
+#include "utils/Logger.h"
+#include "utils/SysMon.h"
+
 using Log::global_log;
 using namespace std;
+
 
 SysMonOutput::SysMonOutput() : _writeFrequency(1) {}
 

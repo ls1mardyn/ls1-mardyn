@@ -220,4 +220,4 @@ private:
 
 };
 
-#endif /*KDNODE_H_*/
+#endif /* KDNODE_H_ */

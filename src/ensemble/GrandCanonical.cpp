@@ -4,9 +4,9 @@
  */
 #include "GrandCanonical.h"
 
-#include "utils/Logger.h"
-#include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "utils/Logger.h"
 
 using namespace std;
 using Log::global_log;

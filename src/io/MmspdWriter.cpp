@@ -1,22 +1,19 @@
 #include "io/MmspdWriter.h"
 
-#include "Common.h"
-#include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
-#include "parallel/DomainDecompBase.h"
-#include "utils/Logger.h"
-#include "Simulation.h"
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
 
 #include <fstream>
 #include <sstream>
-#include <iomanip>
-//#include <iostream>
 
-#ifdef ENABLE_MPI
-#include <mpi.h>
-#include <mpi.h>
-#endif
+#include "Common.h"
+#include "Domain.h"
+#include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
 
 using Log::global_log;
 using namespace std;

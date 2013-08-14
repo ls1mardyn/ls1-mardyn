@@ -1,13 +1,10 @@
 #ifndef XYZWRITER_H_
 #define XYZWRITER_H_
 
-#include "io/OutputBase.h"
-#include "ensemble/GrandCanonical.h"
 #include <string>
 
-class ParticleContainer;
-class DomainDecompBase; 
-class Domain;
+#include "ensemble/GrandCanonical.h"
+#include "io/OutputBase.h"
 
 //! @brief Writes out a file (using *.xyz-format) containing coordinates of each molecule.
 //!
@@ -51,4 +48,4 @@ private:
 	bool _incremental;
 };
 
-#endif /*XYZWRITER_H_*/
+#endif /* XYZWRITER_H_ */

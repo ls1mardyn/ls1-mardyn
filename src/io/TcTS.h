@@ -1,14 +1,8 @@
-#ifndef TCTS_H
-#define TCTS_H
+#ifndef TCTS_H_
+#define TCTS_H_
 
-#include "Simulation.h"
-#include "Domain.h"
-#include "RDF.h"
-#include "integrators/Leapfrog.h"
-#include "parallel/DomainDecompBase.h"
 #include "io/InputBase.h"
 
-using namespace std;
 
 class MkTcTSGenerator : public InputBase {
 
@@ -32,4 +26,4 @@ private:
     void _msimulation(int arg1);
 };
 
-#endif /* TCTS_H */
+#endif /* TCTS_H_ */

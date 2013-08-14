@@ -5,10 +5,6 @@
 
 #include "io/OutputBase.h"
 
-class ParticleContainer;
-class DomainDecompBase; 
-class Domain;
-class ChemicalPotential;
 
 class CheckpointWriter : public OutputBase {
 public:

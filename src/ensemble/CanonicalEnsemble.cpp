@@ -1,18 +1,19 @@
+#include "CanonicalEnsemble.h"
+
 #include <map>
 
-#include "CanonicalEnsemble.h"
-#include "utils/xmlfileUnits.h"
-#include "utils/Logger.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
+#include "BoxDomain.h"
+#include "DomainBase.h"
 #include "molecules/Component.h"
+#include "molecules/Molecule.h"
 #ifdef ENABLE_MPI
 #include "parallel/CollectiveCommunication.h"
 #endif
+#include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
-#include "DomainBase.h"
-#include "BoxDomain.h"
+#include "utils/Logger.h"
+#include "utils/xmlfileUnits.h"
 
 
 using namespace std;

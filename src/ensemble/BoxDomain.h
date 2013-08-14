@@ -1,5 +1,5 @@
-#ifndef BOX_DOMAIN_H
-#define BOX_DOMAIN_H
+#ifndef BOX_DOMAIN_H_
+#define BOX_DOMAIN_H_
 
 #include "DomainBase.h"
 
@@ -18,4 +18,4 @@ public:
 	virtual double length(int d);
 };
 
-#endif /* BOX_DOMAIN_H */
+#endif /* BOX_DOMAIN_H_ */

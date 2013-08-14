@@ -3,15 +3,14 @@
 
 #include "TcTS.h"
 
+#include <cmath>
+
+#include "Domain.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
-#include "io/InputBase.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "utils/Random.h"
-
-#include <cmath>
-// #include <cstdlib>
 
 using namespace std;
 using Log::global_log;

@@ -126,5 +126,5 @@ private:
 
 	std::list<Molecule> reservoir;
 };
-#endif
 
+#endif /* GRANDCANONICAL_H_ */

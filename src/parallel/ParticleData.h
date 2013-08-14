@@ -1,14 +1,9 @@
-#ifndef PARTICLE_H_
-#define PARTICLE_H_
-
-#include "molecules/Molecule.h"
+#ifndef PARTICLEDATA_H_
+#define PARTICLEDATA_H_
 
 #include <mpi.h>
-#include "utils/Logger.h"
-#include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
 
-#define DIM 3
+class Molecule;
 
 //! @brief class to represent that particle data that is necessary for the exchange between processes
 //! @author Martin Buchholz
@@ -44,4 +39,4 @@ public:
 	double D[3];
 };
 
-#endif /*PARTICLE_H_*/
+#endif /* PARTICLEDATA_H_ */

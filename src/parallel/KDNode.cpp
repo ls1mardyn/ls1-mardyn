@@ -1,18 +1,13 @@
-/*
- * KDNode.cpp
- *
- *  Created on: Feb 24, 2012
- *      Author: eckhardw
- */
 #include "KDNode.h"
+
+#include <bitset>
+
 #ifdef VTK
 #include "io/vtk/VTKGridWriterImplementation.h"
 #include "io/vtk/VTKGridVertex.h"
 #include "io/vtk/VTKGridCell.h"
 #endif
-
 #include "utils/Logger.h"
-#include <bitset>
 
 using namespace Log;
 

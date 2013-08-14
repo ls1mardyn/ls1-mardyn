@@ -98,4 +98,4 @@ protected:
 	double _timestepLength;
 
 };
-#endif /*INTEGRATOR_H_*/
+#endif /* INTEGRATOR_H_ */

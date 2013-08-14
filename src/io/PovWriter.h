@@ -1,13 +1,10 @@
 #ifndef POVWRITER_H_
 #define POVWRITER_H_
 
-#include "io/OutputBase.h"
-#include "ensemble/GrandCanonical.h"
 #include <string>
 
-class ParticleContainer;
-class DomainDecompBase; 
-class Domain;
+#include "io/OutputBase.h"
+
 
 class PovWriter : public OutputBase {
 public:
@@ -46,4 +43,4 @@ private:
 	bool  _appendTimestamp;
 };
 
-#endif /*POVWRITER_H_*/
+#endif /* POVWRITER_H_ */

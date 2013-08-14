@@ -1,9 +1,9 @@
 #ifndef PARTICLE_CELL_H_
 #define PARTICLE_CELL_H_
 
-#include "Cell.h"
-
 #include <vector>
+
+#include "Cell.h"
 
 class Molecule;
 class CellDataSoA ;

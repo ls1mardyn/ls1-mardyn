@@ -28,11 +28,12 @@
 #ifndef PARASTRM_H_
 #define PARASTRM_H_
 
-#include <cstdlib>
-#include <cassert>
-#include <cstring>
-#include <cstddef>
 #include <malloc.h>
+
+#include <cassert>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 /** Parameter stream
  *

@@ -1,17 +1,10 @@
 #ifndef MMSPDWRITER_H_
 #define MMSPDWRITER_H_
 
-// by Stefan Becker <stefan.becker@mv.uni-kl.de>
-//output writer wirting the output in the *.mmspd file format required for MegaMol
-// a detailed documentation of this file format can be obtained from the MegaMol documentation (see website)
-
-#include "io/OutputBase.h"
-#include "ensemble/GrandCanonical.h"
 #include <string>
 
-class ParticleContainer;
-class DomainDecompBase; 
-class Domain;
+#include "ensemble/GrandCanonical.h"
+#include "io/OutputBase.h"
 
 class MmspdWriter : public OutputBase{
   public:
@@ -50,4 +43,4 @@ class MmspdWriter : public OutputBase{
       bool _incremental;
 };
 
-#endif /*MMSPDWRITER_H_*/
+#endif /* MMSPDWRITER_H_ */

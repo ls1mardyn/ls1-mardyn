@@ -1,16 +1,13 @@
 #ifndef RESULTWRITER_H_
 #define RESULTWRITER_H_
 
-#include "io/OutputBase.h"
+#include <fstream>
+#include <string>
+
 #include "ensemble/GrandCanonical.h"
+#include "io/OutputBase.h"
 #include "utils/Accumulator.h"
 
-#include <string>
-#include <fstream>
-
-class ParticleContainer;
-class DomainDecompBase; 
-class Domain;
 
 //! @brief writes thermodynamic properties to a file
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)

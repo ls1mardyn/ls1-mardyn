@@ -22,13 +22,13 @@
 
 #include <list>
 
-class ParticlePairsHandler;
 class CellProcessor;
-class ParticleContainer;
-class DomainDecompBase;
-class Domain;
 class ChemicalPotential;
+class Domain;
+class DomainDecompBase;
 class Molecule;
+class ParticleContainer;
+class ParticlePairsHandler;
 class XMLfileUnits;
 
 //! @brief This Interface is used to get access to particles and pairs of particles
@@ -211,4 +211,4 @@ protected:
 
 };
 
-#endif /*PARTICLECONTAINER_H_*/
+#endif /* PARTICLECONTAINER_H_ */

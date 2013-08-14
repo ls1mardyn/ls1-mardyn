@@ -23,14 +23,12 @@
 #include <iostream>
 #include <cassert>
 
-#include "molecules/Quaternion.h"
-#include "molecules/Comp2Param.h"
-#include "molecules/Site.h"
 #include "molecules/Component.h"
-#include "integrators/Integrator.h"
-/*
- * maximal size of the Tersoff neighbour list
- */
+#include "molecules/Comp2Param.h"
+#include "molecules/Quaternion.h"
+#include "molecules/Site.h"
+
+/* maximal size of the Tersoff neighbour list */
 #define MAX_TERSOFF_NEIGHBOURS 10
 
 class Domain;
@@ -326,4 +324,4 @@ inline void minusSiteSiteDistance(const double drm[3], const double ds1[3], cons
 	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
 }
 
-#endif /*MOLECULE_H_*/
+#endif /* MOLECULE_H_ */

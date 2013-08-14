@@ -54,4 +54,4 @@ private:
 	bool _wroteVIS;
 };
 
-#endif /*VISWRITER_H_*/
+#endif /* VISWRITER_H_ */

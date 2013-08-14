@@ -97,4 +97,4 @@ public:
 
 };
 
-#endif /*COLLECTIVECOMMDUMMY_H_*/
+#endif /* COLLECTIVECOMMDUMMY_H_ */

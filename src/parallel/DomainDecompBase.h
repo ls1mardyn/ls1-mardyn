@@ -1,10 +1,7 @@
 #ifndef DOMAINDECOMPBASE_H_
 #define DOMAINDECOMPBASE_H_
 
-#include <vector>
-#include <iostream>
-#include <map>
-
+#include <string>
 
 class Molecule;
 class Component;
@@ -179,4 +176,4 @@ public:
 	virtual void collCommBroadcast(int root = 0) = 0;
 };
 
-#endif /*DOMAINDECOMPBASE_H_*/
+#endif /* DOMAINDECOMPBASE_H_ */

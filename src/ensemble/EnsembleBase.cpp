@@ -1,5 +1,7 @@
 #include "EnsembleBase.h"
 
+#include "molecules/mixingrules/MixingRuleBase.h"
+#include "molecules/mixingrules/LorentzBerthelot.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 

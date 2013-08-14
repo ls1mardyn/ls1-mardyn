@@ -1,5 +1,5 @@
-#ifndef LORENTZBERTHELOT_H
-#define LORENTZBERTHELOT_H
+#ifndef LORENTZBERTHELOT_H_
+#define LORENTZBERTHELOT_H_
 
 #include "molecules/mixingrules/MixingRuleBase.h"
 
@@ -15,4 +15,4 @@ private:
 	double _xi;
 };
 
-#endif /* LORENTZBERTHELOT_H */
+#endif /* LORENTZBERTHELOT_H_ */

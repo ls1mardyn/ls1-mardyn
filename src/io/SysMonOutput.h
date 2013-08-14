@@ -1,9 +1,7 @@
-#ifndef SYSMONOUTPUT_H
-#define SYSMONOUTPUT_H
+#ifndef SYSMONOUTPUT_H_
+#define SYSMONOUTPUT_H_
 
 #include "io/OutputBase.h"
-#include "utils/SysMon.h"
-#include "utils/Logger.h"
 
 
 class SysMonOutput : public OutputBase {
@@ -32,4 +30,4 @@ private:
 	unsigned long _writeFrequency;
 };
 
-#endif /* SYSMONOUTPUT_H*/
+#endif /* SYSMONOUTPUT_H_ */

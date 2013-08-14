@@ -3,17 +3,6 @@
 
 #include "io/InputBase.h"
 
-#include "utils/OptionParser.h"
-#include "utils/xmlfileUnits.h"
-
-#include <list>
-
-class Domain;
-class DomainDecompBase;
-class Integrator;
-class OutputBase;
-class ParticleContainer;
-class Simulation;
 
 class MkesferaGenerator : public InputBase {
 

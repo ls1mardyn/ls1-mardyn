@@ -1,13 +1,9 @@
-/*
- * DomainDecompBase.cpp
- *
- *  Created on: Feb 21, 2012
- *      Author: eckhardw
- */
 #include "parallel/DomainDecompBase.h"
+
+#include <fstream>
+
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
-#include <fstream>
 
 void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) {
 	for (int process = 0; process < getNumProcs(); process++) {

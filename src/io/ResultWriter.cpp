@@ -19,13 +19,10 @@
 
 #include "io/ResultWriter.h"
 
-#include "particleContainer/ParticleContainer.h"
-#include "parallel/DomainDecompBase.h"
 #include "Domain.h"
-#include "utils/Logger.h"
+#include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
-
-#include <ctime>
+#include "utils/Logger.h"
 
 using Log::global_log;
 using namespace std;

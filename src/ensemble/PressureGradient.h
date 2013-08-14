@@ -121,5 +121,4 @@ private:
 	/// number of items in the velocity queue
 	std::map<unsigned int, unsigned int> _globalVelocityQueuelength;
 };
-#endif
-
+#endif /* PRESSUREGRADIENT_H_ */

@@ -1,8 +1,8 @@
 #include "DomainDecomposition.h"
 
+#include "Domain.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
-#include "Domain.h"
 #include "parallel/ParticleData.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"

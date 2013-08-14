@@ -1,7 +1,7 @@
 #include "BoxDomain.h"
 
-#include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "utils/xmlfileUnits.h"
 
 using namespace std;
 using Log::global_log;

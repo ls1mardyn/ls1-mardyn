@@ -1,18 +1,18 @@
 #ifndef KDDECOMPOSITION2_H_
 #define KDDECOMPOSITION2_H_
 
-#include <list>
 #include <mpi.h>
+
+#include <list>
+#include <vector>
 
 #define KDDIM 3
 
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
 
-class Molecule;
 class ParticleData;
 class KDNode;
-class XMLfileUnits;
 
 
 /**
@@ -402,4 +402,4 @@ class KDDecomposition2: public DomainDecompBase{
 };
 
 
-#endif /*KDDECOMPOSITION_H_*/
+#endif /* KDDECOMPOSITION2_H_ */

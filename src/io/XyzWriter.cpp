@@ -1,17 +1,15 @@
-// XyzWriter.cpp
-
 #include "io/XyzWriter.h"
-
-#include "Common.h"
-#include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
-#include "parallel/DomainDecompBase.h"
-#include "utils/Logger.h"
-#include "Simulation.h"
 
 #include <fstream>
 #include <sstream>
+
+#include "Common.h"
+#include "Domain.h"
+#include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "utils/Logger.h"
+#include "Simulation.h"
 
 using Log::global_log;
 using namespace std;

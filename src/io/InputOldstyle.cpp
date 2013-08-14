@@ -1,19 +1,23 @@
 #include "io/InputOldstyle.h"
-#include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
-#include "ensemble/GrandCanonical.h"
-#include "ensemble/PressureGradient.h"
-#include "utils/Logger.h"
-#include "Simulation.h"
-#include "utils/Timer.h"
+
 #ifdef ENABLE_MPI
-#include "parallel/ParticleData.h"
-#include "parallel/DomainDecompBase.h"
 #include <mpi.h>
 #endif
 
 #include <climits>
+
+#include "Domain.h"
+#include "ensemble/GrandCanonical.h"
+#include "ensemble/PressureGradient.h"
+#include "Simulation.h"
+#include "molecules/Molecule.h"
+#ifdef ENABLE_MPI
+#include "parallel/ParticleData.h"
+#include "parallel/DomainDecompBase.h"
+#endif
+#include "particleContainer/ParticleContainer.h"
+#include "utils/Logger.h"
+#include "utils/Timer.h"
 
 using Log::global_log;
 using namespace std;

@@ -1,20 +1,19 @@
-// PovWriter.cpp
-
 #include "io/PovWriter.h"
+
+#include <fstream>
+#include <sstream>
+
 #include "Common.h"
 #include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
 #include "ensemble/EnsembleBase.h"
-#include "utils/Logger.h"
+#include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
-
-#include <ctime>
-#include <sstream>
-#include <fstream>
+#include "utils/Logger.h"
 
 using Log::global_log;
 using namespace std;
+
 
 PovWriter::PovWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
 	_outputPrefix = outputPrefix;

@@ -72,4 +72,4 @@ class Comp2Param {
          */
         Array2D<ParaStrm> m_ssparatbl;  /**< table for parameter streams */
 };
-#endif /*COMP2PARAM_H_*/
+#endif /* COMP2PARAM_H_ */

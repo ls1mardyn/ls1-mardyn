@@ -1,16 +1,15 @@
+#include "AdaptiveSubCells.h"
+
 #include <cmath>
 #include <iostream>
 
-#include "AdaptiveSubCells.h"
-
-#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
+#include "Domain.h"
+#include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "ParticleCell.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/CellProcessor.h"
-#include "ParticleCell.h"
-#include "molecules/Molecule.h"
-#include "Domain.h"
-#include "ensemble/GrandCanonical.h"
-#include "parallel/DomainDecompBase.h"
+#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "utils/Logger.h"
 
 using namespace std;

@@ -1,9 +1,10 @@
 #ifndef OUTPUTBASE_H_
 #define OUTPUTBASE_H_
 
-#include "ensemble/GrandCanonical.h"
 #include <list>
 #include <string>
+
+#include "ensemble/GrandCanonical.h"
 
 class ParticleContainer;
 class DomainDecompBase; 
@@ -85,4 +86,4 @@ public:
 	}
 };
 
-#endif /*OUTPUTBASE_H_*/
+#endif /* OUTPUTBASE_H_ */

@@ -92,4 +92,4 @@ private:
 	void transition3to1(ParticleContainer* molCont, Domain* domain);
 
 };
-#endif /*LEAPFROG_H_*/
+#endif /* LEAPFROG_H_ */

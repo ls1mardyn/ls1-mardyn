@@ -1,8 +1,10 @@
 #ifndef KDDECOMPOSITION_H_
 #define KDDECOMPOSITION_H_
 
-#include <list>
 #include <mpi.h>
+
+#include <list>
+#include <vector>
 
 #define KDDIM 3
 

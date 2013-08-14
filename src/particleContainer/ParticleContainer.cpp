@@ -1,8 +1,5 @@
-#include <iostream>
-
 #include "particleContainer/ParticleContainer.h"
 
-#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 

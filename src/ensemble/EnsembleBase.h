@@ -1,5 +1,5 @@
-#ifndef ENSEMBLE_BASE_H
-#define ENSEMBLE_BASE_H
+#ifndef ENSEMBLE_BASE_H_
+#define ENSEMBLE_BASE_H_
 
 #include "molecules/Component.h"
 
@@ -7,10 +7,9 @@
 #include <vector>
 #include <map>
 
-#include "molecules/mixingrules/MixingRuleBase.h"
-#include "molecules/mixingrules/LorentzBerthelot.h"
 #include "DomainBase.h"
 
+class MixingRuleBase;
 
 
 //! list of updateable values
@@ -66,4 +65,4 @@ protected:
 	DomainBase *_domain;
 };
 
-#endif
+#endif /* ENSEMBLE_BASE_H_ */

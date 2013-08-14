@@ -4,12 +4,9 @@
 #include <vector>
 
 #include "molecules/Molecule.h"
-#include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleCell.h"
+#include "particleContainer/ParticleContainer.h"
 
-class ChemicalPotential;
-class DomainDecompBase;
-class CellProcessor;
 
 //! @brief Adaptive SubCell Data Structure
 //! @author Martin Buchholz
@@ -319,4 +316,4 @@ private:
 	int _numberOfUpdates;
 };
 
-#endif /*ADAPTIVESUBCELLS_H_*/
+#endif /* ADAPTIVESUBCELLS_H_ */

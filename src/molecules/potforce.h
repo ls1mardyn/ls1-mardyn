@@ -19,8 +19,8 @@
 #ifndef POTFORCE_H_
 #define POTFORCE_H_
 
-#include "molecules/Molecule.h"
 #include "molecules/Comp2Param.h"
+#include "molecules/Molecule.h"
 
 /// calculate potential and force between 2 Lennard-Jones 12-6 centers
 //inline void PotForceLJ(const double dr[3], const double& dr2, ParaStrm& params, double f[3], double& u)
@@ -824,5 +824,5 @@ inline void TersoffPotForce(Molecule* mi, double params[15], double& UpotTersoff
 	mi->Ftersoffadd(0, f);
 }
 
-#endif /*POTFORCE_H_*/
+#endif /* POTFORCE_H_ */
 

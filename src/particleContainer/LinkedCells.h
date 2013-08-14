@@ -20,13 +20,10 @@
 #ifndef LINKEDCELLS_H_
 #define LINKEDCELLS_H_
 
-#include "particleContainer/ParticleContainer.h"
-#include "particleContainer/ParticleCell.h"
 #include <vector>
 
-class ChemicalPotential;
-class DomainDecompBase;
-class CellProcessor;
+#include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleCell.h"
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -336,4 +333,4 @@ private:
 
 };
 
-#endif /*LINKEDCELLS_H_*/
+#endif /* LINKEDCELLS_H_ */

@@ -1,16 +1,15 @@
-// VISWriter.cpp
-
 #include "io/VISWriter.h"
-#include "Common.h"
-#include "particleContainer/ParticleContainer.h"
-#include "parallel/DomainDecompBase.h"
-#include "molecules/Molecule.h"
-#include "utils/Logger.h"
-#include "Simulation.h"
 
 #include <iomanip>
 #include <fstream>
 #include <sstream>
+
+#include "Common.h"
+#include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
 
 using Log::global_log;
 using namespace std;

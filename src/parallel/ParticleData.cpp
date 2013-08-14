@@ -1,13 +1,11 @@
 #include "parallel/ParticleData.h"
 
-#include "molecules/Molecule.h"
-
 #include <mpi.h>
-#include "utils/Logger.h"
-#include "ensemble/EnsembleBase.h"
-#include "Simulation.h"
 
-#define DIM 3
+#include "ensemble/EnsembleBase.h"
+#include "molecules/Molecule.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
 
 
 void ParticleData::setMPIType(MPI_Datatype &sendPartType) {

@@ -1,5 +1,5 @@
-#ifndef MIXINGRULE_BASE_H
-#define MIXINGRULE_BASE_H
+#ifndef MIXINGRULE_BASE_H_
+#define MIXINGRULE_BASE_H_
 
 #include <string>
 
@@ -16,4 +16,4 @@ private:
 	std::string _cid2;
 };
 
-#endif /* MixingRuleBase */
+#endif /* MIXINGRULE_BASE_H_ */

@@ -6,13 +6,7 @@
 #include "utils/generator/Lattice.h"
 #include "utils/generator/Generator.h"
 
-#include <string>
-#include <fstream>
 
-class XMLfileUnits;
-
-//! @brief This class is used to read in the phasespace using the "old" input file syntax
-//! @author Martin Bernreuther, Martin Buchholz
 class GridGenerator : public InputBase {
 public:
     GridGenerator() {};

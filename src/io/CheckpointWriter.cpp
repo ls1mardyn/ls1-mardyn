@@ -1,16 +1,12 @@
-// CheckpointWriter.cpp
+#include "io/CheckpointWriter.h"
 
 #include <sstream>
-
-#include "CheckpointWriter.h"
+#include <string>
 
 #include "Common.h"
 #include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 
-
-class DomainDecompBase;
 
 using Log::global_log;
 using namespace std;

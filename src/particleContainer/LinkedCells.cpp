@@ -16,19 +16,19 @@
  *   Free Software Foundation, Inc.,                                       *
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
  ***************************************************************************/
-#include <cmath>
-
 #include "particleContainer/LinkedCells.h"
 
+#include <cmath>
+
+#include "Domain.h"
+#include "ensemble/GrandCanonical.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "particleContainer/adapter/CellProcessor.h"
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
-#include "parallel/DomainDecompBase.h"
-#include "ensemble/GrandCanonical.h"
-#include "Domain.h"
 #include "utils/Logger.h"
-#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 
 using namespace std;
 using Log::global_log;

@@ -1,17 +1,15 @@
 #ifndef DOMAINDECOMPOSITION_H_
 #define DOMAINDECOMPOSITION_H_
 
+#include <mpi.h>
+
+#include "parallel/CollectiveCommunication.h"
+#include "parallel/DomainDecompBase.h"
+
 #define DIM 3
 
 #define LOWER  0
 #define HIGHER 1
-
-#include "parallel/DomainDecompBase.h"
-#include "parallel/ParticleData.h"
-#include "parallel/CollectiveCommunication.h"
-
-#include <mpi.h>
-#include <iostream>
 
 //! @brief Basic parallelisation which divides the domain into #procs equal sized cuboids
 //! @author Martin Buchholz
@@ -219,4 +217,4 @@ private:
 	CollectiveCommunication _collComm;
 };
 
-#endif /*DOMAINDECOMPOSITION_H_*/
+#endif /* DOMAINDECOMPOSITION_H_ */

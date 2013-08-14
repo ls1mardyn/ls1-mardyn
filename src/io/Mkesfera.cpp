@@ -3,6 +3,9 @@
 
 #include "Mkesfera.h"
 
+#include <cmath>
+#include <vector>
+
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
 #include "molecules/Component.h"
@@ -10,9 +13,6 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "utils/Random.h"
-
-#include <cmath>
-#include <vector>
 
 #define VARFRACTION 0.07
 #define BOXOVERLOAD 1.3333

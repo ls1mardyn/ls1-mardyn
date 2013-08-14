@@ -6,16 +6,13 @@
  */
 
 #include "GeneratorFactory.h"
-#include "utils/Logger.h"
-#include <errno.h>
-#include <iostream>
-#include <cassert>
-
-
 #ifdef SUPPORT_GENERATOR
 #include "generators/CubicGridGenerator.h"
 #include "generators/DropletGenerator.h"
 #endif
+#include "utils/Logger.h"
+
+
 
 using namespace Log;
 using namespace std;

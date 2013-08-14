@@ -1,12 +1,10 @@
-#ifndef CANONICAL_ENSEMBLE_H
-#define CANONICAL_ENSEMBLE_H
+#ifndef CANONICAL_ENSEMBLE_H_
+#define CANONICAL_ENSEMBLE_H_
 
 #include <vector>
-#include <map>
 
 #include "ensemble/EnsembleBase.h"
 #include "particleContainer/ParticleContainer.h"
-//#include "ensemble/VelocityScalingThermostat.h"
 
 /** @brief Canonical ensemble (NVT) 
  *  @author Christoph Niethammer <niethammer@hlrs.de>
@@ -64,10 +62,10 @@ private:
 	double _E_rot;
 
 	ParticleContainer *_particles;
-	// As the canonical ensemble fixes the temperature here should be the right place for the thermostats
+	// TODO: As the canonical ensemble fixes the temperature here should be the right place for the thermostats
 	//std::map<int, VelocityScalingThermostat> _thermostats;
 	//std::map<int, int> _componentToThermostatMap;
 
 };
 
-#endif  // CANONICAL_ENSEMBLE_H
+#endif  /* CANONICAL_ENSEMBLE_H_ */
