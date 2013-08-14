@@ -97,7 +97,7 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 #ifdef MPI_VERSION
 	int myrank;
 	MPI_CHECK( MPI_Comm_rank(_mpicomm,&myrank) );
-	MPI_CHECK( MPI_Reduce(valuesMaxMin.data(),_valuesMaxMin.data(),_valuesMaxMin.size(),mpiTvalue,MPI_MAX,0,MPI_COMM_WORLD) );
+	MPI_CHECK( MPI_Reduce(&valuesMaxMin[0],&_valuesMaxMin[0],_valuesMaxMin.size(),mpiTvalue,MPI_MAX,0,MPI_COMM_WORLD) );
 	
 	if(myrank==mpiRootRank)
 	{
