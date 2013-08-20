@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <cmath>
+#include <cstdlib>
 
 
 /** A generalized Accumlator for scalar values.
