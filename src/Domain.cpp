@@ -598,10 +598,8 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 	double MySelbstTerm=0.;
 	vector<Component>* components = _simulation.getEnsemble()->components();
 	unsigned int numcomp=components->size();
-	unsigned long nummolecules=0;
 	for(unsigned int i=0;i<numcomp;++i) {
 		Component& ci=(*components)[i];
-		nummolecules+=ci.getNumMolecules();
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
 		unsigned int numdipolesi=ci.numDipoles();
