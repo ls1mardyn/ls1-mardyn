@@ -53,7 +53,7 @@ public:
 	//! @param variable Variable to be updated.
 	virtual void updateGlobalVariable(GlobalVariable variable) = 0;
 
-	DomainBase *domain() { return _domain; }
+	DomainBase* &domain() { return _domain; }
 	Component* component(int cid) { return &_components[cid]; }
 	Component* component(std::string cid) { return &_components[_componentnamesToIds[cid]]; }
 	std::vector<Component>* components() { return &_components; }

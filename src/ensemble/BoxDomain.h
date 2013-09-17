@@ -16,6 +16,7 @@ public:
 	virtual double V();
 
 	virtual double length(int d);
+	void setLength(int d, double l);
 };
 
 #endif /* BOX_DOMAIN_H_ */

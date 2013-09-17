@@ -27,3 +27,7 @@ double BoxDomain::length(int d) {
 	/* optimized as lower corner is set to 0,0,0 */
 	return _rmax[d];
 }
+
+void BoxDomain::setLength(int d, double l) {
+	_rmax[d] = l;
+}
