@@ -1,0 +1,34 @@
+ls1-MarDyn Authors
+==================
+
+The following cumulative list contains the names and Subversion IDs of
+individuals who have committed code to this release of ls1-MarDyn.
+
+Username    Name                        Affiliation(s)
+----------- --------------------------- -------------------------
+
+hpcbern     Martin Bernreuther          HLRS
+horsch      Martin Horsch               UKL, UPB
+hpcchris    Christoph Niethammer        HLRS
+eckhardw    Wolfgang Eckhardt           TUM
+buchholm    Martin Buchholz             TUM
+sbecker     Stefan Becker               UKL
+hpcfalko    Falko Schmidt               HLRS
+hpcdjenz    Domenic Jenz                HLRS
+mheinen     Matthias Heinen             UPB
+swerth      Stephan Werth               UKL
+florian     Florian Grötzner            TUM
+kovacevt    Kovacevic Tijana            TUM
+weisslj     Johannes Weißl              TUM
+wolfe       Wolfgang Hölzl              TUM
+yutaka      Yutaka Nagashima            TUM
+
+
+
+Affiliation abbreviations:
+--------------------------
+
+HLRS = High Performance Computing Center, University of Stuttgart
+UPB = University of Paderborn
+TUM = Technische Universitaet Muenchen
+UKL = University of Kaiserslautern
