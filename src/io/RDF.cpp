@@ -289,11 +289,11 @@ void RDF::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domai
 }
 
 
-void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsigned j) const {
+void RDF::writeToFile(const Domain* domain, const char* filename, unsigned i, unsigned j) const {
 
-	ofstream rdfout(prefix);
+	ofstream rdfout(filename);
 	if( rdfout.fail() ) {
-		global_log->error() << "Failed opening output file '" << prefix << "'" << endl;
+		global_log->error() << "Failed opening output file '" << filename << "'" << endl;
 		return;
 	}
 
