@@ -136,6 +136,7 @@ public:
 
 private:
 
+	void init();
 
 	//! Performs a reduction of the local rdf data of all nodes
 	//! to update the "global" fields

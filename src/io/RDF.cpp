@@ -18,19 +18,22 @@ RDF::RDF() :
 {
 }
 
-
 RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>* components) :
 	_intervalLength(intervalLength),
 	_bins(bins),
-	_numberOfComponents(components->size()),
 	_components(components),
 	_writeFrequency(25000),
 	_outputPrefix("out")
 {
-        _doCollectSiteRDF = false;
+	init();
+}
+
+void RDF::init() {
+	_numberOfComponents = _components->size();
+	_doCollectSiteRDF = false;
 	_numberOfRDFTimesteps = 0;
 	_accumulatedNumberOfRDFTimesteps = 0;
-	_maxDistanceSquare = intervalLength*intervalLength*bins*bins;
+	_maxDistanceSquare = _intervalLength*_intervalLength*_bins*_bins;
 
 	_globalCtr = new unsigned long[_numberOfComponents];
 	_globalAccumulatedCtr = new unsigned long[_numberOfComponents];
@@ -55,11 +58,11 @@ RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>* compo
 		this->_globalAccumulatedSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
 
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
-			this->_localDistribution[i][k] = new unsigned long[bins];
-			this->_globalDistribution[i][k] = new unsigned long[bins];
-			this->_globalAccumulatedDistribution[i][k] = new unsigned long[bins];
+			this->_localDistribution[i][k] = new unsigned long[_bins];
+			this->_globalDistribution[i][k] = new unsigned long[_bins];
+			this->_globalAccumulatedDistribution[i][k] = new unsigned long[_bins];
 
-			for(unsigned l=0; l < bins; l++) {
+			for(unsigned l=0; l < _bins; l++) {
 				this->_localDistribution[i][k][l] = 0;
 				this->_globalDistribution[i][k][l] = 0;
 				this->_globalAccumulatedDistribution[i][k][l] = 0;
@@ -78,10 +81,10 @@ RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>* compo
 					this->_globalSiteDistribution[i][k][m] = new unsigned long*[nj];
 					this->_globalAccumulatedSiteDistribution[i][k][m] = new unsigned long*[nj];
 					for(unsigned n=0; n < nj; n++) {
-						this->_localSiteDistribution[i][k][m][n] = new unsigned long[bins];
-						this->_globalSiteDistribution[i][k][m][n] = new unsigned long[bins];
-						this->_globalAccumulatedSiteDistribution[i][k][m][n] = new unsigned long[bins];
-						for(unsigned l=0; l < bins; l++) {
+						this->_localSiteDistribution[i][k][m][n] = new unsigned long[_bins];
+						this->_globalSiteDistribution[i][k][m][n] = new unsigned long[_bins];
+						this->_globalAccumulatedSiteDistribution[i][k][m][n] = new unsigned long[_bins];
+						for(unsigned l=0; l < _bins; l++) {
 							this->_localSiteDistribution[i][k][m][n][l] = 0;
 							this->_globalSiteDistribution[i][k][m][n][l] = 0;
 							this->_globalAccumulatedSiteDistribution[i][k][m][n][l] = 0;
@@ -114,6 +117,7 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void RDF::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+	init();
 }
 
 void RDF::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
