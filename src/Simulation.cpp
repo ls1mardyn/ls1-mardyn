@@ -890,7 +890,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->components());
 			_outputPlugins.push_back(_rdf);
-			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
 			unsigned int RDFOutputTimesteps;
 			inputfilestream >> RDFOutputTimesteps;
@@ -1153,11 +1152,6 @@ void Simulation::prepare_start() {
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
 
-	// initialize the radial distribution function
-	// TODO this call should not be neccessary!
-	//	if (_rdf != NULL)
-	//		_rdf->reset();
-
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
 		unsigned long uCAT = _pressureGradient->getUCAT();
@@ -1208,11 +1202,6 @@ void Simulation::prepare_start() {
 		(*outputIter)->initOutput(_moleculeContainer, _domainDecomposition,
 				_domain);
 	}
-
-	//	if ((_initSimulation > _initStatistics) && this->_rdf != NULL) {
-	//		this->_rdf->tickRDF();
-	//		this->_particlePairsHandler->setRDF(_rdf);
-	//	}
 
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
@@ -1352,10 +1341,6 @@ void Simulation::simulate() {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
-			//			if (this->_rdf != NULL) {
-			//				this->_rdf->tickRDF();
-			//
-			//			}
 		}
 
 		if (_zoscillation) {
@@ -1474,10 +1459,6 @@ void Simulation::output(unsigned long simstep) {
 		OutputBase* output = (*outputIter);
 		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
-	}
-
-	if (_rdf != NULL) {
-		_rdf->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
