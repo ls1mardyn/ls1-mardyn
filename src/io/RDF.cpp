@@ -96,6 +96,21 @@ RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>& compo
 
 
 void RDF::readXML(XMLfileUnits& xmlconfig) {
+	_writeFrequency = 1;
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_outputPrefix = "mardyn";
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+
+	_bins = 1;
+	xmlconfig.getNodeValue("bins", _bins);
+	global_log->info() << "Number of bins: " << _bins << endl;
+
+	_bins = 1;
+	xmlconfig.getNodeValueReduced("intervallength", _intervalLength);
+	global_log->info() << "Interval length: " << _intervalLength << endl;
 }
 
 void RDF::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
