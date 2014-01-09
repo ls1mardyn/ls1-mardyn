@@ -1,15 +1,9 @@
-/*
- * RDF.cpp
- *
- * @Date: 11.02.2011
- * @Author: eckhardw
- */
-
 #include "io/RDF.h"
 
 #include "Domain.h"
 #include "molecules/Component.h"
 #include "parallel/DomainDecompBase.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
 
 #include <sstream>
@@ -19,7 +13,13 @@
 using namespace std;
 using namespace Log;
 
-RDF::RDF(double intervalLength, unsigned int bins, const std::vector<Component>& components) :
+RDF::RDF() :
+	_components(*_simulation.getEnsemble()->components())
+{
+}
+
+
+RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>& components) :
 	_intervalLength(intervalLength),
 	_bins(bins),
 	_numberOfComponents(components.size()),
@@ -93,6 +93,17 @@ RDF::RDF(double intervalLength, unsigned int bins, const std::vector<Component>&
 		}
 	}
 }
+
+
+void RDF::readXML(XMLfileUnits& xmlconfig) {
+}
+
+void RDF::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+}
+
+void RDF::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+}
+
 
 
 RDF::~RDF() {
@@ -233,7 +244,7 @@ void RDF::setOutputPrefix(string prefix) {
 }
 
 
-void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep) {
+void RDF::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
 	if (simStep > 0 && simStep % _writeFrequency == 0) {

@@ -1469,7 +1469,7 @@ void Simulation::output(unsigned long simstep) {
 	}
 
 	if (_rdf != NULL) {
-		_rdf->doOutput(_domainDecomposition, _domain, simstep);
+		_rdf->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {

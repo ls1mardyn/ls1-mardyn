@@ -1,10 +1,3 @@
-/*
- * RDF.h
- *
- * @Date: 11.02.2011
- * @Author: eckhardw
- */
-
 #ifndef RDF_H
 #define RDF_H
 
@@ -12,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "io/OutputBase.h"
 #include "molecules/Molecule.h"
 
 class Domain;
@@ -37,19 +31,30 @@ class Component;
  * - divide the number density by the number density of the system.
  *
  */
-class RDF {
+class RDF : public OutputBase {
 
 	friend class RDFTest;
 
 public:
 
+	RDF();
 	/**
 	 * @todo Wouldn't make sense to calculate the parameter intervalLength?
 	 *       intervalLength = cutoffRadius / bins
 	 */
-	RDF(double intervalLength, unsigned int bins, const std::vector<Component>& components);
+	RDF(double intervalLength, unsigned int bins, std::vector<Component>& components);
 
 	virtual ~RDF();
+
+	void readXML(XMLfileUnits& xmlconfig);
+
+	void initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+
+	void finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain);
+
+	std::string getPluginName() {
+		return std::string("RDF");
+	}
 
 	//! @todo put this in the constructor (when the transition to the xml file is done),
 	//! or create a seperate output component.
@@ -60,7 +65,7 @@ public:
 	void setOutputPrefix(std::string prefix);
 
 	//! plot all the statistics calculated to one or several files
-	void doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep);
+	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu);
 
 	//! increment the counter indicating for how many iterations
 	//! the molecule pairs have been counted.
@@ -144,17 +149,17 @@ private:
 
 	//! The length of an interval
 	//! Only used for the output to scale the "radius"-axis.
-	const double _intervalLength;
+	double _intervalLength;
 
 	//! The number of bins, i.e. the number of intervals in which the cutoff
 	//! radius will be subdivided.
 	unsigned int _bins;
 
 	//! number of different components (i.e. molecule types).
-	const unsigned int _numberOfComponents;
+	unsigned int _numberOfComponents;
 
 	//! components vector
-	const std::vector<Component>& _components;
+	std::vector<Component>& _components;
 
 	//! number of timesteps over which the counters are being accumulated
 	//! since the last calculation of the RDF.

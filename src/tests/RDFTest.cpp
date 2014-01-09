@@ -58,7 +58,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
-	const vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->update();
@@ -134,7 +134,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
 	
-	const vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);
@@ -207,7 +207,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	double cutoff = moleculeContainer->getCutoff();
 	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
 
-	const vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);
