@@ -881,7 +881,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						<< endl;
 				exit(-1);
 			}
-			_rdf = new RDF(interval, bins, *(global_simulation->getEnsemble()->components()));
+			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->components());
 			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
 			unsigned int RDFOutputTimesteps;

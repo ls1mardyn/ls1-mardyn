@@ -14,15 +14,15 @@ using namespace std;
 using namespace Log;
 
 RDF::RDF() :
-	_components(*_simulation.getEnsemble()->components())
+	_components(_simulation.getEnsemble()->components())
 {
 }
 
 
-RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>& components) :
+RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>* components) :
 	_intervalLength(intervalLength),
 	_bins(bins),
-	_numberOfComponents(components.size()),
+	_numberOfComponents(components->size()),
 	_components(components),
 	_writeFrequency(25000),
 	_outputPrefix("out")
@@ -49,7 +49,7 @@ RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>& compo
 		this->_globalDistribution[i] = new unsigned long*[_numberOfComponents-i];
 		this->_globalAccumulatedDistribution[i] = new unsigned long*[_numberOfComponents-i];
 
-		unsigned ni = _components[i].numSites();
+		unsigned ni = (*_components)[i].numSites();
 		this->_localSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
 		this->_globalSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
 		this->_globalAccumulatedSiteDistribution[i] = new unsigned long***[_numberOfComponents-i];
@@ -65,7 +65,7 @@ RDF::RDF(double intervalLength, unsigned int bins, std::vector<Component>& compo
 				this->_globalAccumulatedDistribution[i][k][l] = 0;
 			}
 
-			unsigned nj = _components[i+k].numSites();
+			unsigned nj = (*_components)[i+k].numSites();
 			if(ni+nj > 2) {
 				this->_doCollectSiteRDF = true;
 
@@ -153,9 +153,9 @@ void RDF::accumulateRDF() {
 	_accumulatedNumberOfRDFTimesteps += _numberOfRDFTimesteps;
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		this->_globalAccumulatedCtr[i] += this->_globalCtr[i];
-		unsigned ni = _components[i].numSites();
+		unsigned ni = (*_components)[i].numSites();
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
-			unsigned nj = _components[i+k].numSites();
+			unsigned nj = (*_components)[i+k].numSites();
 			for(unsigned l=0; l < _bins; l++) {
 				this->_globalAccumulatedDistribution[i][k][l] += this->_globalDistribution[i][k][l];
 				if(ni + nj > 2) {
@@ -194,9 +194,9 @@ void RDF::collectRDF(DomainDecompBase* dode) {
 
 	// communicate site-site RDFs
 	for(unsigned i=0; i < _numberOfComponents; i++) {
-		unsigned ni = _components[i].numSites();
+		unsigned ni = (*_components)[i].numSites();
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
-			unsigned nj = _components[i+k].numSites();
+			unsigned nj = (*_components)[i+k].numSites();
 			if(ni+nj > 2) {
 				dode->collCommInit(_bins * ni * nj);
 				for(unsigned l=0; l < _bins; l++) {
@@ -229,9 +229,9 @@ void RDF::reset() {
 	for(unsigned i=0; i < _numberOfComponents; i++) {
 		_globalCtr[i] = 0;
 
-		unsigned ni = _components[i].numSites();
+		unsigned ni = (*_components)[i].numSites();
 		for(unsigned k=0; i+k < _numberOfComponents; k++) {
-			unsigned nj = _components[i+k].numSites();
+			unsigned nj = (*_components)[i+k].numSites();
 			for(unsigned l=0; l < _bins; l++) {
 				_localDistribution[i][k][l] = 0;
 				_globalDistribution[i][k][l] = 0;
@@ -293,8 +293,8 @@ void RDF::writeToFile(const Domain* domain, const char* prefix, unsigned i, unsi
 		return;
 	}
 
-	unsigned ni = _components[i].numSites();
-	unsigned nj = _components[j].numSites();
+	unsigned ni = (*_components)[i].numSites();
+	unsigned nj = (*_components)[j].numSites();
 
 	double V = domain->getGlobalVolume();
 	double N_i = _globalCtr[i] / (double)_numberOfRDFTimesteps;

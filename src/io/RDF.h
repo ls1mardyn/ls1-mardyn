@@ -42,7 +42,7 @@ public:
 	 * @todo Wouldn't make sense to calculate the parameter intervalLength?
 	 *       intervalLength = cutoffRadius / bins
 	 */
-	RDF(double intervalLength, unsigned int bins, std::vector<Component>& components);
+	RDF(double intervalLength, unsigned int bins, std::vector<Component>* components);
 
 	virtual ~RDF();
 
@@ -159,7 +159,7 @@ private:
 	unsigned int _numberOfComponents;
 
 	//! components vector
-	std::vector<Component>& _components;
+	std::vector<Component>* _components;
 
 	//! number of timesteps over which the counters are being accumulated
 	//! since the last calculation of the RDF.

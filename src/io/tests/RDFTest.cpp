@@ -66,7 +66,7 @@ void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	/* The number of pairs counted by the RDF also depends on the particles in the halo.
 	 * So count first with the halo being empty, and then being populated. */
-	RDF rdf(0.018, 100, *components);
+	RDF rdf(0.018, 100, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
@@ -140,7 +140,7 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.018, 100, *components);
+	RDF rdf(0.018, 100, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
@@ -214,7 +214,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 	moleculeContainer->update();
 	moleculeContainer->updateMoleculeCaches();
 
-	RDF rdf(0.05, 101, *components);
+	RDF rdf(0.05, 101, components);
 	handler.setRDF(&rdf);
 	rdf.tickRDF();
 	moleculeContainer->traverseCells(cellProcessor);
