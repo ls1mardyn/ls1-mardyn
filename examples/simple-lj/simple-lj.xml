@@ -75,6 +75,12 @@
         <writefrequency>10</writefrequency>
         <outputprefix>simple-lj</outputprefix>
       </outputplugin>
+      <outputplugin name="RDF">
+        <writefrequency>10</writefrequency>
+        <outputprefix>simple-lj</outputprefix>
+        <intervallength>0.003</intervallength>
+        <bins>1000</bins>
+      </outputplugin>
     </output>
 
   </simulation>
