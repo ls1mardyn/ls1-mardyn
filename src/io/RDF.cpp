@@ -24,8 +24,8 @@ RDF::RDF(double intervalLength, unsigned int bins, const std::vector<Component>&
 	_bins(bins),
 	_numberOfComponents(components.size()),
 	_components(components),
-	_RDFOutputTimesteps(25000),
-	_RDFOutputPrefix("out")
+	_writeFrequency(25000),
+	_outputPrefix("out")
 {
         _doCollectSiteRDF = false;
 	_numberOfRDFTimesteps = 0;
@@ -225,18 +225,18 @@ void RDF::reset() {
 
 
 void RDF::setOutputTimestep(unsigned int timestep) {
-	_RDFOutputTimesteps = timestep;
+	_writeFrequency = timestep;
 }
 
 void RDF::setOutputPrefix(string prefix) {
-	_RDFOutputPrefix = prefix;
+	_outputPrefix = prefix;
 }
 
 
 void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, unsigned long simStep) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
-	if (simStep > 0 && simStep % _RDFOutputTimesteps == 0) {
+	if (simStep > 0 && simStep % _writeFrequency == 0) {
 		collectRDF(domainDecomposition);
 		
 		if( domainDecomposition->getRank() == 0 ) {
@@ -244,7 +244,7 @@ void RDF::doOutput(DomainDecompBase* domainDecomposition, const Domain* domain, 
 			for (unsigned i = 0; i < _numberOfComponents; i++) {
 				for (unsigned j = i; j < _numberOfComponents; j++) {
 					ostringstream osstrm;
-					osstrm << _RDFOutputPrefix << "_" << i << "-" << j << ".";
+					osstrm << _outputPrefix << "_" << i << "-" << j << ".";
 					osstrm.fill('0');
 					osstrm.width(9);
 					osstrm << std::right << simStep << ".rdf";

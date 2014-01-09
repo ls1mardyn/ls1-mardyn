@@ -199,14 +199,10 @@ private:
 
 	/**
 	 * aggregation interval for the RDF data
-	 *
-	 * @todo I guess this is redundant with _numberOfRDFTimesteps?
 	 */
-	unsigned int _RDFOutputTimesteps;
+	unsigned int _writeFrequency;
 
-	//! the timestep, the respective component IDs, and "rdf" are
-	//! appended to this prefix
-	std::string _RDFOutputPrefix;
+	std::string _outputPrefix;
 };
 
 #endif /* RDF_H */
