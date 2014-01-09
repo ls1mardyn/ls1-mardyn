@@ -111,7 +111,7 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("bins", _bins);
 	global_log->info() << "Number of bins: " << _bins << endl;
 
-	_bins = 1;
+	_intervalLength = 1;
 	xmlconfig.getNodeValueReduced("intervallength", _intervalLength);
 	global_log->info() << "Interval length: " << _intervalLength << endl;
 }
