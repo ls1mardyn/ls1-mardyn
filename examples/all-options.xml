@@ -14,6 +14,9 @@
       <production>
         <steps>100000</steps>
       </production>
+      <equilibration>
+        <steps>20000</steps>
+      </equilibration>
     </run>
 
     <integrator type="Leapfrog" >
@@ -205,6 +208,15 @@
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
+      </outputplugin>
+
+      <!-- RDF plugin
+      This module writes out Radial Distribution Function data -->
+      <outputplugin name="RDF">
+        <writefrequency>100</writefrequency>
+        <outputprefix>default</outputprefix>
+        <bins>1000</bins>
+        <intervallength>0.003</intervallength>
       </outputplugin>
 	  
 	  <!-- visualization output plugins
