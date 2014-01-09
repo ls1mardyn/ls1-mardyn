@@ -59,7 +59,7 @@
 
 #include "thermostats/VelocityScalingThermostat.h"
 
-#include "RDF.h"
+#include "io/RDF.h"
 
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"

@@ -5,7 +5,7 @@
  * @Author: eckhardw
  */
 
-#include "RDF.h"
+#include "io/RDF.h"
 
 #include "Domain.h"
 #include "molecules/Component.h"

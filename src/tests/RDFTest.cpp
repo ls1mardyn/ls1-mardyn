@@ -7,7 +7,7 @@
 
 #include "RDFTest.h"
 
-#include "RDF.h"
+#include "io/RDF.h"
 #include "Domain.h"
 #include "Simulation.h"
 #include "parallel/DomainDecompBase.h"

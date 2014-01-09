@@ -22,7 +22,7 @@
 
 #include "molecules/potforce.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "RDF.h"
+#include "io/RDF.h"
 #include "Domain.h"
 
 //! @brief calculate pair forces and collect macroscopic values
