@@ -85,7 +85,6 @@ Simulation::Simulation() :
 }
 
 Simulation::~Simulation() {
-    delete _rdf;
     delete _domainDecomposition;
     delete _pressureGradient;
     delete _domain;
@@ -354,6 +353,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "PovWriter") {
 			outputPlugin = new PovWriter();
+		}
+		else if(pluginname == "RDF") {
+			_rdf = new RDF();
+			outputPlugin = _rdf;
 		}
 		else if(pluginname == "Resultwriter") {
 			outputPlugin = new ResultWriter();
@@ -886,6 +889,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				exit(-1);
 			}
 			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->components());
+			_outputPlugins.push_back(_rdf);
 			//_domain->setupRDF(interval, bins);
 		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
 			unsigned int RDFOutputTimesteps;
@@ -1470,10 +1474,6 @@ void Simulation::output(unsigned long simstep) {
 		OutputBase* output = (*outputIter);
 		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
-	}
-
-	if (_rdf != NULL) {
-		_rdf->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
