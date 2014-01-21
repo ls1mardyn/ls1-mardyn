@@ -53,8 +53,8 @@ private:
 	std::ofstream _resultStream;
 	unsigned long _writeFrequency;
 	std::string _outputPrefix;
-	Accumulator<double> _U_pot_acc;
-	Accumulator<double> _p_acc;
+	Accumulator<double> *_U_pot_acc;
+	Accumulator<double> *_p_acc;
 };
 
 #endif /*RESULTWRITER_H_*/

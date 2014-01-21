@@ -208,6 +208,7 @@
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
+        <accumulation_steps>1000</accumulation_steps>
       </outputplugin>
 
       <!-- RDF plugin
