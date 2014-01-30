@@ -375,13 +375,14 @@ Molecule ChemicalPotential::loadMolecule()
 {
 	assert(this->reservoir != NULL);
 	Molecule tmp = *reservoir;
+	unsigned rot_dof = tmp.component()->getRotationalDegreesOfFreedom();
 	assert(tmp.componentid() == componentid);
 #ifndef NDEBUG
 	tmp.check(tmp.id());
 #endif
 
 	for(int d=0; d < 3; d++)
-		tmp.setv(d, sqrt(this->T / tmp.mass()) * ((this->rndmomenta.rnd() > 0.5)? 1.0: -1.0));
+		tmp.setv(d, sqrt(this->T * (1.0 + rot_dof/3.0) / tmp.mass()) * ((this->rndmomenta.rnd() > 0.5)? 1.0: -1.0));
 
 	return tmp;
 }

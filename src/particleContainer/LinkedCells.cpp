@@ -797,7 +797,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			mit--;
 			m = &(*mit);
 			m->upd_cache();
-			// reset forces and momenta to zero
+			// reset forces and torques to zero
 			{
 				double zeroVec[3] = {0.0, 0.0, 0.0};
 				m->setF(zeroVec);
