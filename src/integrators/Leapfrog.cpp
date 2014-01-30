@@ -96,7 +96,6 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			sumIw2[0] = sumIw2gt;
 		}
 		for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
-			assert(thermit->second > 0);
 			domain->setLocalSummv2(thermit->second, thermit->first);
 			domain->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
 			domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);

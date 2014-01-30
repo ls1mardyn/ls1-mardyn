@@ -240,7 +240,6 @@ void Domain::calculateGlobalValues(
 		// num_molecules will contain the global number of molecules
 		unsigned long numMolecules = _localThermostatN[thermit->first];
 		double summv2 = _local2KETrans[thermit->first];
-		assert(summv2 >= 0.0);
 		unsigned long rotDOF = _localRotationalDOF[thermit->first];
 		double sumIw2 = (rotDOF > 0)? _local2KERot[thermit->first]: 0.0;
 
@@ -260,6 +259,7 @@ void Domain::calculateGlobalValues(
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
+		assert((summv2 > 0.0) || (numMolecules == 0));
 
 		/* calculate the temperature of the entire system */
 		if(numMolecules > 0)
@@ -269,7 +269,7 @@ void Domain::calculateGlobalValues(
 			_globalTemperatureMap[thermit->first] = _universalTargetTemperature[thermit->first];
 
 		double Ti = Tfactor * _universalTargetTemperature[thermit->first];
-		if((Ti > 0.0) && !_universalNVE)
+		if((Ti > 0.0) && (numMolecules > 0) && !_universalNVE)
 		{
 			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
 			if( sumIw2 == 0.0 ) 
