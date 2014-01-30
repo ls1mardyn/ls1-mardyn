@@ -1,7 +1,4 @@
-/*
- * Martin Horsch, LS1/Mardyn project moderated by Martin Bernreuther
- * (C)2012 GNU General Public License
- */
+
 #include "GrandCanonical.h"
 
 #include "parallel/DomainDecompBase.h"
@@ -15,6 +12,7 @@ ChemicalPotential::ChemicalPotential()
 {
 	 this->ownrank = -1;
 	 this->muTilde = 0.0;
+	 this->T = 1.0;
 	 this->interval = (unsigned)((int)-1);
 	 this->instances = 0;
 	 for(int d=0; d<3; d++)
@@ -34,7 +32,7 @@ ChemicalPotential::ChemicalPotential()
 	 for(int d=0; d<3; d++) this->remainingInsertions[d] = list<double>();
 	 this->remainingInsertionIDs = list<unsigned long>();
 	 this->remainingDecisions = list<float>(); 
-	 //this->reservoir = list<Molecule>();
+	 this->reservoir = NULL;
 	 this->id_increment = 1;
 	 this->lambda = 1.0;
 
@@ -45,6 +43,7 @@ void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, 
 {
 	 this->ownrank = rank;
 	 this->rnd.init(8624);
+	 this->rndmomenta.init(8623);
 	 if(!this->restrictedControlVolume)
 	 {
 	    this->globalV = this->system[0] * this->system[1] * this->system[2];
@@ -166,9 +165,9 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBa
 	       + redc[d]*(control_top[d] - control_bottom[d]);
 	 }
 #ifndef NDEBUG
-				 cout << "rank " << ownrank << " will try to insert ID "
-				      << nextid << " (" << tc[0] << "/" << tc[1]
-				      << "/" << tc[2] << ").\n";  // \\ //
+		// cout << "rank " << ownrank << " will try to insert ID "
+		//      << nextid << " (" << tc[0] << "/" << tc[1]
+		//      << "/" << tc[2] << ").\n";  // \\ //
 #endif
 				 for(int d=0; d < 3; d++)
 	 {
@@ -329,8 +328,9 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde)
 	 return ans;
 }
 
-void ChemicalPotential::submitTemperature(double T)
+void ChemicalPotential::submitTemperature(double T_in)
 {
+	 this->T = T_in;
 	 this->muTilde = this->mu / T;
 	 this->lambda = 0.39894228 * h / sqrt(molecularMass*T);
 	 globalReducedVolume = globalV / (lambda*lambda*lambda);
@@ -341,7 +341,7 @@ void ChemicalPotential::submitTemperature(double T)
 #endif
 	 if(doOutput >= 0.01) return;
 	 cout << "rank " << ownrank << " sets mu~ <- " << muTilde;
-	 cout << ", lambda <- " << lambda;
+	 cout << ", T <- " << T << ", lambda <- " << lambda;
 	 cout << ", and Vred <- " << globalReducedVolume << "\n";
 }
 
@@ -373,17 +373,16 @@ void ChemicalPotential::setControlVolume(
 
 Molecule ChemicalPotential::loadMolecule()
 {
-			assert(!this->reservoir.empty());
-			Molecule tmp = this->reservoir.front();
-			this->reservoir.pop_front();
-			if(this->reservoir.empty())
-			{
-	 tmp.scale_v(-1.0);
-	 this->reservoir.push_back( tmp );
-			}
-			assert(tmp.componentid() == componentid);
+	assert(this->reservoir != NULL);
+	Molecule tmp = *reservoir;
+	assert(tmp.componentid() == componentid);
 #ifndef NDEBUG
-			tmp.check(tmp.id());
+	tmp.check(tmp.id());
 #endif
-			return tmp;
+
+	for(int d=0; d < 3; d++)
+		tmp.setv(d, sqrt(this->T / tmp.mass()) * ((this->rndmomenta.rnd() > 0.5)? 1.0: -1.0));
+
+	return tmp;
 }
+

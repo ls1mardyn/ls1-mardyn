@@ -77,6 +77,7 @@ public:
 	double v(unsigned short d) const { return _v[d]; }
 	/** set velocity */
 	void setv(unsigned short d, double v) { _v[d] = v; }
+	double mass() const { return this->_m; }
 
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
