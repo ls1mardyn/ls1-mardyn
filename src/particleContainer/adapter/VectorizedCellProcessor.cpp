@@ -768,6 +768,12 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_, AllMacroPolicy_>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
 }
 
+double VectorizedCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& cell2)
+{
+	exit(666);
+	return 666;
+}
+
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1,
 		ParticleCell & c2) {
 	assert(&c1 != &c2);

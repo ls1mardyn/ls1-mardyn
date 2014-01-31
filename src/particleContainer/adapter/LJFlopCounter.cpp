@@ -110,6 +110,11 @@ void LJFlopCounter::processCell(ParticleCell & c) {
 	}
 }
 
+double LJFlopCounter::processSingleMolecule(Molecule* m1, ParticleCell& cell2)
+{
+	return 0.0;
+}
+
 void LJFlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	const MoleculeList & molecules1 = c1.getParticlePointers();
 	const MoleculeList & molecules2 = c2.getParticlePointers();

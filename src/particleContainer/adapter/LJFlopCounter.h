@@ -75,6 +75,8 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
+	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
+
 	/**
 	 * \brief Count flops for this cell.
 	 */

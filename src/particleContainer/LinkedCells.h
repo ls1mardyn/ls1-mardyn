@@ -176,13 +176,13 @@ public:
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
-	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;
 	}
 	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain);
+	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor);
 
 	double* boundingBoxMax() {
 		return _boundingBoxMax;

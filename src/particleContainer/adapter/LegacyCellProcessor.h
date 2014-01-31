@@ -39,6 +39,8 @@ public:
 
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
+	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
+
 	void processCell(ParticleCell& cell);
 
 	void postprocessCell(ParticleCell& cell);

@@ -218,9 +218,6 @@ unsigned LinkedCells::countParticles(unsigned int cid) {
 	return N;
 }
 
-/**
- * @todo move this method to the ChemicalPotential, using a call to ParticleContainer::getRegion() !?
- */
 unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];
@@ -317,13 +314,17 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 		if (currentCell.isInnerCell()) {
 			cellProcessor.processCell(currentCell);
-			// loop over all neighbours
+			// loop over all forward neighbours
 			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
 				ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 				cellProcessor.processCellPair(currentCell, neighbourCell);
 			}
 		}
 
+		/*
+		 * why do we need this loop?
+		 * it only computes interactions within the halo
+		 *
 		if (currentCell.isHaloCell()) {
 			cellProcessor.processCell(currentCell);
 			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
@@ -331,12 +332,13 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 				if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) (_cells.size())))
 					continue;
 				ParticleCell& neighbourCell = _cells[neighbourCellIndex];
-				if (!neighbourCell.isHaloCell())
+				if (!neighbourCell.isHaloCell()) 
 					continue;
 
 				cellProcessor.processCellPair(currentCell, neighbourCell);
 			}
 		}
+		 */
 
 		// loop over all boundary cells and calculate forces to forward and backward neighbours
 		if (currentCell.isBoundaryCell()) {
@@ -655,52 +657,45 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 }
 
 
-double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1) {
+double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) {
 
 	double u = 0.0;
-	std::vector<Molecule*>::iterator molIter2;
 	vector<unsigned long>::iterator neighbourOffsetsIter;
-
-	// sqare of the cutoffradius
-	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
-    double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
-	double dd;
-	double distanceVector[3];
 
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 	ParticleCell& currentCell = _cells[cellIndex];
+
+	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+
+	// extend the window of cells with cache activated
+	if (cellIndex + _maxNeighbourOffset < _cells.size()) {
+		cellProcessor.preprocessCell(_cells[cellIndex + _maxNeighbourOffset]);
+	}
 
 	if (m1->numTersoff() > 0) {
 		global_log->error() << "The grand canonical ensemble is not implemented for solids." << endl;
 		exit(484);
 	}
-	// molecules in the cell
-	for (molIter2 = currentCell.getParticlePointers().begin(); molIter2 != currentCell.getParticlePointers().end(); molIter2++) {
-		//cout<<"m1 id "<<m1->id()<<" m2 id"<<(*molIter2)->id()<<endl;
-		if (m1->id() == (*molIter2)->id())
-			continue;
-		dd = (*molIter2)->dist2(*m1, distanceVector);
-		if (dd > cutoffRadiusSquare)
-			continue;
-		
-		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
-	}
+	u += cellProcessor.processSingleMolecule(m1, currentCell);
 
-	// backward and forward neighbours
-	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-		if (neighbourOffsetsIter == _backwardNeighbourOffsets.end())
-			neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-
+	// forward neighbours
+	for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+	{
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		for (molIter2 = neighbourCell.getParticlePointers().begin(); molIter2 != neighbourCell.getParticlePointers().end(); molIter2++) {
-
-			dd = (*molIter2)->dist2(*m1, distanceVector);
-			//dd = cutoffRadiusSquare - 10;
-			if (dd > cutoffRadiusSquare)
-				continue;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
-		}
+		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
+	// backward neighbours
+	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+	{
+		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
+		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+	}
+
+	// narrow the window of cells activated
+	if (cellIndex >= _minNeighbourOffset) {
+		cellProcessor.postprocessCell(_cells[cellIndex - _minNeighbourOffset]);
+	}
+	cellProcessor.endTraversal();
 	return u;
 }
 
@@ -713,7 +708,7 @@ int LinkedCells::grandcanonicalBalance(DomainDecompBase* comm) {
 	return universalInsertionsMinusDeletions;
 }
 
-void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) {
+void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor) {
 	bool accept = true;
 	double DeltaUpot;
 	Molecule* m;
@@ -738,7 +733,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			hasDeletion = mu->getDeletion(this, minco, maxco);
 		if (hasDeletion) {
 			m = &(*(this->_particleIter));
-			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m);
+			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, cellProcessor);
 
 			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
@@ -794,7 +789,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 
 			unsigned long cellid = this->getCellIndexOfMolecule(m);
 			this->_cells[cellid].addParticle(m);
-			DeltaUpot = getEnergy(&particlePairsHandler, m);
+			DeltaUpot = getEnergy(&particlePairsHandler, m, cellProcessor);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 

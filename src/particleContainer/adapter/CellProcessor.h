@@ -4,6 +4,8 @@
 
 #include <cstddef>
 
+class Molecule;
+
 class ParticleCell;
 
 /**
@@ -58,6 +60,8 @@ public:
 	 * @note will not be called for empty cells.
 	 */
 	virtual void processCell(ParticleCell& cell) = 0;
+
+	virtual double processSingleMolecule(Molecule* m1, ParticleCell& cell2) = 0;
 
 	/**
 	 * Called after the cell has been considered for the last time during the traversal.

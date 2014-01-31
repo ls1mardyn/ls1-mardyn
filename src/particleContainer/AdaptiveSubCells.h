@@ -151,14 +151,14 @@ public:
 	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
 
 	void deleteMolecule(unsigned long molid, double x, double y, double z);
-	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
 	int localGrandcanonicalBalance() {
 		return this->_localInsertionsMinusDeletions;
 	}
 
 	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain);
+	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor);
 
 
 private:

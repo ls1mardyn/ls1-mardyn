@@ -371,6 +371,10 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 			}
 		}
 
+		/*
+		 * why do we need this loop?
+		 * it only computes interactions within the halo
+		 *
 		if (currentCell.isHaloCell()) {
 			cellProcessor.processCell(currentCell);
 			for (neighbourOffsetsIter = _forwardNeighbourSubOffsets[cellIndex].begin(); neighbourOffsetsIter != _forwardNeighbourSubOffsets[cellIndex].end(); neighbourOffsetsIter++) {
@@ -384,6 +388,7 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 				cellProcessor.processCellPair(currentCell, neighbourCell);
 			}
 		}
+		 */
 
 		// loop over all boundary cells and calculate forces to forward and backward neighbours
 		if (currentCell.isBoundaryCell()) {
@@ -427,58 +432,55 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1) {
+double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor)
+{
 	double u = 0.0;
-	double cutoffRadiusSquare = _cutoffRadius * _cutoffRadius;
-	double LJCutoffRadiusSquare = _LJCutoffRadius * _LJCutoffRadius;
-	double dd;
-	double distanceVector[3];
-	std::vector<Molecule*>::iterator molIter2;
-	unsigned long m1id = m1->id();
 
 	unsigned long subCellIndex = getSubCellIndexOfMolecule(m1);
 	ParticleCell& currentSubCell = _subCells[subCellIndex];
-	vector<unsigned long>::iterator neighbourSubOffsetsIter;
+	vector<unsigned long>::iterator neighbourOffsetsIter;
+	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+
+	// extend the window of cells with cache activated
+	if (subCellIndex + _maxNeighbourOffset < _subCells.size())
+	{
+#ifndef NDEBUG
+		global_log->debug() << "Opening cached cells window for cell index=" << (subCellIndex + _maxNeighbourOffset)
+				<< " with numMolecules()="<< _subCells[subCellIndex + _maxNeighbourOffset].getMoleculeCount()
+				<< " currentCell " << subCellIndex << endl;
+#endif
+		cellProcessor.preprocessCell(_subCells[subCellIndex + _maxNeighbourOffset]);
+	}
 
 	if (m1->numTersoff() > 0) {
 		global_log->error() << "The grand canonical ensemble is not implemented for solids.\n";
 		exit(848);
 	}
-	// molecules in the same subCell
-	for (molIter2 = currentSubCell.getParticlePointers().begin(); molIter2 != currentSubCell.getParticlePointers().end(); molIter2++) {
-		if (m1id == (*molIter2)->id())
-			continue;
-		dd = (*molIter2)->dist2(*m1, distanceVector);
-		if (dd > cutoffRadiusSquare)
-			continue;
-		u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
+	u += cellProcessor.processSingleMolecule(m1, currentSubCell);
+
+	// forward neighbours
+	for (neighbourOffsetsIter = _forwardNeighbourSubOffsets[subCellIndex].begin(); neighbourOffsetsIter != _forwardNeighbourSubOffsets[subCellIndex].end(); neighbourOffsetsIter++)
+	{
+		ParticleCell& neighbourCell = _subCells[subCellIndex + *neighbourOffsetsIter];
+		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+	}
+	// backward neighbours
+	for (neighbourOffsetsIter = _backwardNeighbourSubOffsets[subCellIndex].begin(); neighbourOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end(); neighbourOffsetsIter++)
+	{
+		ParticleCell& neighbourCell = _subCells[subCellIndex + *neighbourOffsetsIter];
+		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+	}
+	
+	// close the window of cells with cache activated
+	for (unsigned int subCellIndex = _subCells.size() - _minNeighbourOffset; subCellIndex < _subCells.size(); subCellIndex++) {
+#ifndef NDEBUG
+			global_log->debug() << "Narrowing cached cells window for cell index=" << subCellIndex
+					<< " size()="<<_subCells[subCellIndex].getMoleculeCount() << endl;
+#endif
+			cellProcessor.postprocessCell(_subCells[subCellIndex]);
 	}
 
-	// loop over all forward neighbours
-	for (neighbourSubOffsetsIter = _forwardNeighbourSubOffsets[subCellIndex].begin();
-	    neighbourSubOffsetsIter != _forwardNeighbourSubOffsets[subCellIndex].end(); neighbourSubOffsetsIter++) {
-		ParticleCell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
-		// loop over all particles in the subCell
-		for (molIter2 = neighbourSubCell.getParticlePointers().begin(); molIter2 != neighbourSubCell.getParticlePointers().end(); molIter2++) {
-			dd = (*molIter2)->dist2(*m1, distanceVector);
-			if (dd > cutoffRadiusSquare)
-				continue;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
-		}
-	}
-	// loop over all backward neighbours
-	for (neighbourSubOffsetsIter = _backwardNeighbourSubOffsets[subCellIndex].begin();
-	    neighbourSubOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end(); neighbourSubOffsetsIter++) {
-		ParticleCell& neighbourSubCell = _subCells[subCellIndex + *neighbourSubOffsetsIter];
-		// loop over all particles in the subCell
-		for (molIter2 = neighbourSubCell.getParticlePointers().begin(); molIter2 != neighbourSubCell.getParticlePointers().end(); molIter2++) {
-			dd = (*molIter2)->dist2(*m1, distanceVector);
-			if (dd > cutoffRadiusSquare)
-				continue;
-			u += particlePairsHandler->processPair(*m1, **molIter2, distanceVector, MOLECULE_MOLECULE_FLUID, dd, (dd < LJCutoffRadiusSquare));
-		}
-	}
-
+	cellProcessor.endTraversal();
 	return u;
 }
 
@@ -1153,7 +1155,7 @@ int AdaptiveSubCells::grandcanonicalBalance(DomainDecompBase* comm) {
 	return universalInsertionsMinusDeletions;
 }
 
-void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain) {
+void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor) {
 	bool accept = true;
 	double DeltaUpot;
 	Molecule* m;
@@ -1178,7 +1180,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 			hasDeletion = mu->getDeletion(this, minco, maxco);
 		if (hasDeletion) {
 			m = &(*(_particleIter));
-			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m);
+			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, cellProcessor);
 
 			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
@@ -1236,7 +1238,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 
 			unsigned long cellid = this->getCellIndexOfMolecule(m);
 			_cells[cellid].addParticle(m);
-			DeltaUpot = getEnergy(&particlePairsHandler, m);
+			DeltaUpot = getEnergy(&particlePairsHandler, m, cellProcessor);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
 

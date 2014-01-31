@@ -1271,7 +1271,7 @@ void Simulation::simulate() {
                                         this->_domain->setLambda(cpit->getLambda());
                                         this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
 					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature(), this->_domain);
+							_domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor);
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);

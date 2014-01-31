@@ -49,12 +49,33 @@ void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
 	}
 }
 
+double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& cell2)
+{
+	assert(cell2.isInActiveWindow());
+	double distanceVector[3];
+
+	std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
+	int neighbourParticleCount = neighbourCellParticles.size();
+	double u = 0.0;
+
+	for (int j = 0; j < neighbourParticleCount; j++) {
+		Molecule& molecule2 = *neighbourCellParticles[j];
+		if(m1->id() == molecule2.id()) continue;
+		double dd = molecule2.dist2(*m1, distanceVector);
+		if (dd < _cutoffRadiusSquare)
+		{
+			PairType pairType = MOLECULE_MOLECULE_FLUID;
+			u += _particlePairsHandler->processPair(*m1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
+		}
+	}
+	return u;
+}
 
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	assert(cell1.isInActiveWindow());
 	assert(cell2.isInActiveWindow());
-
 	double distanceVector[3];
+
 	std::vector<Molecule*>& currentCellParticles = cell1.getParticlePointers();
 	int currentParticleCount = currentCellParticles.size();
 	std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
