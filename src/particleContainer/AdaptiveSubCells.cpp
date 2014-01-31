@@ -371,10 +371,6 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 			}
 		}
 
-		/*
-		 * why do we need this loop?
-		 * it only computes interactions within the halo
-		 *
 		if (currentCell.isHaloCell()) {
 			cellProcessor.processCell(currentCell);
 			for (neighbourOffsetsIter = _forwardNeighbourSubOffsets[cellIndex].begin(); neighbourOffsetsIter != _forwardNeighbourSubOffsets[cellIndex].end(); neighbourOffsetsIter++) {
@@ -388,7 +384,6 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 				cellProcessor.processCellPair(currentCell, neighbourCell);
 			}
 		}
-		 */
 
 		// loop over all boundary cells and calculate forces to forward and backward neighbours
 		if (currentCell.isBoundaryCell()) {
