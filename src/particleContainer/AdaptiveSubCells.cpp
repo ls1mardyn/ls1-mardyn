@@ -1212,7 +1212,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 		if (hasInsertion) {
 			// for(int d = 0; d < 3; d++)
 			//    ins[d] = ins[d]-coords[d]*proc_domain_L[d]-m_rmin[d];
-			Molecule tmp(mu->loadMolecule());
+			Molecule tmp = mu->loadMolecule();
 			for (int d = 0; d < 3; d++)
 				tmp.setr(d, ins[d]);
 			tmp.setid(nextid);
@@ -1223,7 +1223,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 			m = &(*mit);
 			m->upd_cache();
 			// reset forces and momenta to zero
-			{
+			if(!m->isWidom()) {
 				double zeroVec[3] = {0.0, 0.0, 0.0};
 				m->setF(zeroVec);
 				m->setM(zeroVec);

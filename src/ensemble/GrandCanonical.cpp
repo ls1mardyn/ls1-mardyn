@@ -46,13 +46,13 @@ void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, 
 	 this->rndmomenta.init(8623);
 	 if(!this->restrictedControlVolume)
 	 {
-	    this->globalV = this->system[0] * this->system[1] * this->system[2];
+		this->globalV = this->system[0] * this->system[1] * this->system[2];
 	    
-	    for(int d=0; d < 3; d++)
-	    {
-	 this->control_bottom[d] = 0.0;
-	 this->control_top[d] = this->system[d];
-			}
+		for(int d=0; d < 3; d++)
+		{
+			this->control_bottom[d] = 0.0;
+			this->control_top[d] = this->system[d];
+		}
 	 }
 
 	 this->minredco[0] = (x0 - control_bottom[0]) /
@@ -71,18 +71,18 @@ void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, 
 
 void ChemicalPotential::setSystem(double x, double y, double z, double m)
 {   
-	 this->system[0] = x; this->system[1] = y; this->system[2] = z;
-	 this->molecularMass = m;
-	 if(!this->restrictedControlVolume)
-	 {
-	    this->globalV = x*y*z;
+	this->system[0] = x; this->system[1] = y; this->system[2] = z;
+	this->molecularMass = m;
+	if(!this->restrictedControlVolume)
+	{
+		this->globalV = x*y*z;
 	    
-	    for(int d=0; d < 3; d++)
-	    {
-	 this->control_bottom[d] = 0.0;
-	 this->control_top[d] = this->system[d];
-			}
-	 }
+		for(int d=0; d < 3; d++)
+		{
+			this->control_bottom[d] = 0.0;
+	 		this->control_top[d] = this->system[d];
+		}
+	}
 }
 
 // note that *C must not contain the halo
@@ -380,9 +380,9 @@ Molecule ChemicalPotential::loadMolecule()
 #ifndef NDEBUG
 	tmp.check(tmp.id());
 #endif
-
-	for(int d=0; d < 3; d++)
-		tmp.setv(d, sqrt(this->T * (1.0 + rot_dof/3.0) / tmp.mass()) * ((this->rndmomenta.rnd() > 0.5)? 1.0: -1.0));
+	if(!this->widom)
+		for(int d=0; d < 3; d++)
+			tmp.setv(d, sqrt(this->T * (1.0 + rot_dof/3.0) / tmp.mass()) * ((this->rndmomenta.rnd() > 0.5)? 1.0: -1.0));
 
 	return tmp;
 }
