@@ -467,7 +467,7 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 	// backward neighbours
 	for (neighbourOffsetsIter = _backwardNeighbourSubOffsets[subCellIndex].begin(); neighbourOffsetsIter != _backwardNeighbourSubOffsets[subCellIndex].end(); neighbourOffsetsIter++)
 	{
-		ParticleCell& neighbourCell = _subCells[subCellIndex + *neighbourOffsetsIter];
+		ParticleCell& neighbourCell = _subCells[subCellIndex + *neighbourOffsetsIter];  // minus oder plus?
 		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 	

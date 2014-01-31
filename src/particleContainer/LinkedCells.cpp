@@ -687,7 +687,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 	// backward neighbours
 	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
 	{
-		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
+		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
 		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 
