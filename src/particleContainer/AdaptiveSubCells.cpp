@@ -403,7 +403,7 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 			// loop over all backward neighbours. calculate only forces
 			// to neighbour cells in the halo region, all others already have been calculated
 			for (neighbourOffsetsIter = _backwardNeighbourSubOffsets[cellIndex].begin(); neighbourOffsetsIter != _backwardNeighbourSubOffsets[cellIndex].end(); neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _subCells[cellIndex + *neighbourOffsetsIter];
+				ParticleCell& neighbourCell = _subCells[cellIndex + *neighbourOffsetsIter];  // minus oder plus?
 				if (neighbourCell.isHaloCell()) {
 					cellProcessor.processCellPair(currentCell, neighbourCell);
 				}

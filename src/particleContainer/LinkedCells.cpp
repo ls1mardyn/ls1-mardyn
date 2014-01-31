@@ -353,7 +353,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 			// loop over all backward neighbours. calculate only forces
 			// to neighbour cells in the halo region, all others already have been calculated
 			for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
+				ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
 				if (neighbourCell.isHaloCell()) {
 					cellProcessor.processCellPair(currentCell, neighbourCell);
 				}
