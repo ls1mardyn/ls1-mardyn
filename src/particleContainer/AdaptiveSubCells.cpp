@@ -1223,7 +1223,7 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 			m = &(*mit);
 			m->upd_cache();
 			// reset forces and momenta to zero
-			if(!m->isWidom()) {
+			if(!mu->isWidom()) {
 				double zeroVec[3] = {0.0, 0.0, 0.0};
 				m->setF(zeroVec);
 				m->setM(zeroVec);
