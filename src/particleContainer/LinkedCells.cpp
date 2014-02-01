@@ -663,8 +663,8 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
 
 	// extend the window of cells with cache activated
-	if (cellIndex + _maxNeighbourOffset < _cells.size()) {
-		cellProcessor.preprocessCell(_cells[cellIndex + _maxNeighbourOffset]);
+	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
+		cellProcessor.preprocessCell(_cells[windowCellIndex]);
 	}
 
 	if (m1->numTersoff() > 0) {
@@ -686,10 +686,11 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 
-	// narrow the window of cells activated
-	if (cellIndex >= _minNeighbourOffset) {
-		cellProcessor.postprocessCell(_cells[cellIndex - _minNeighbourOffset]);
+	// close the window of cells activated
+	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
+		cellProcessor.postprocessCell(_cells[windowCellIndex]);
 	}
+
 	cellProcessor.endTraversal();
 	return u;
 }

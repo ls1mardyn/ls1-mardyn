@@ -437,14 +437,8 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
 
 	// extend the window of cells with cache activated
-	if (subCellIndex + _maxNeighbourOffset < _subCells.size())
-	{
-#ifndef NDEBUG
-		global_log->debug() << "Opening cached cells window for cell index=" << (subCellIndex + _maxNeighbourOffset)
-				<< " with numMolecules()="<< _subCells[subCellIndex + _maxNeighbourOffset].getMoleculeCount()
-				<< " currentCell " << subCellIndex << endl;
-#endif
-		cellProcessor.preprocessCell(_subCells[subCellIndex + _maxNeighbourOffset]);
+	for (unsigned int windowCellIndex = subCellIndex - _minNeighbourOffset; windowCellIndex < subCellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
+		cellProcessor.preprocessCell(_cells[windowCellIndex]);
 	}
 
 	if (m1->numTersoff() > 0) {
@@ -466,13 +460,9 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 	
-	// close the window of cells with cache activated
-	for (unsigned int subCellIndex = _subCells.size() - _minNeighbourOffset; subCellIndex < _subCells.size(); subCellIndex++) {
-#ifndef NDEBUG
-			global_log->debug() << "Narrowing cached cells window for cell index=" << subCellIndex
-					<< " size()="<<_subCells[subCellIndex].getMoleculeCount() << endl;
-#endif
-			cellProcessor.postprocessCell(_subCells[subCellIndex]);
+	// close the window of cells activated
+	for (unsigned int windowCellIndex = subCellIndex - _minNeighbourOffset; windowCellIndex < subCellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
+		cellProcessor.postprocessCell(_cells[windowCellIndex]);
 	}
 
 	cellProcessor.endTraversal();
