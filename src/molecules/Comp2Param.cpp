@@ -119,8 +119,8 @@ void Comp2Param::initialize(
 				for (unsigned qj = 0; qj < nqj; qj++) {
 					const Quadrupole& quadrupolej = static_cast<const Quadrupole&> (components[compj].quadrupole(qj));
 					double absqj = quadrupolej.absQ();
-					double qQ025per4pie0 = 0.25 * cvali * absqj;
-					pstrmij << qQ025per4pie0;
+					double qQ05per4pie0 = 0.5 * cvali * absqj;
+					pstrmij << qQ05per4pie0;
 				}
 				// Charge-Dipole
 				for (unsigned int dj = 0; dj < ndj; dj++) {
@@ -137,8 +137,8 @@ void Comp2Param::initialize(
 				for (unsigned ej = 0; ej < nej; ej++) {
 					const Charge& chargej = static_cast<const Charge&> (components[compj].charge(ej));
 					double cvalj = chargej.q();
-					double qQ025per4pie0 = 0.25 * cvalj * absqi;
-					pstrmij << qQ025per4pie0;
+					double qQ05per4pie0 = 0.5 * cvalj * absqi;
+					pstrmij << qQ05per4pie0;
 				}
 				// Quadrupole-Quadrupole
 				for (unsigned int qj = 0; qj < nqj; ++qj) {

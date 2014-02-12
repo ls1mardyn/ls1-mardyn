@@ -223,7 +223,7 @@ inline void PotForce2Charge(const double dr[3], const double& dr2,
 
 /// calculate potential and force between an electric charge and a quadrupole
 inline void PotForceChargeQuadrupole(const double dr[3], const double& dr2,
-                                     const double* ejj, const double& qQ025per4pie0,
+                                     const double* ejj, const double& qQ05per4pie0,
                                      double f[3], double m2[3], double& u)
 {
 	double invdr2 = 1.0 / dr2;
@@ -233,7 +233,7 @@ inline void PotForceChargeQuadrupole(const double dr[3], const double& dr2,
 		costj += ejj[d] * dr[d];
 	}
 	costj *= invdr;
-	double qQinv4dr3 = qQ025per4pie0 * invdr * invdr2;
+	double qQinv4dr3 = qQ05per4pie0 * invdr * invdr2;
 	u = qQinv4dr3 * (3.0 * costj * costj - 1);
 
 	const double partialRijInvdr1 = -3.0 * u * invdr2;
@@ -267,7 +267,7 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
 
 	// const double partialRijInvdr1 = -2.0 * u * invdr2;
 	const double partialTjInvdr1 = uInvcostj*invdr;
-	const double fac = 3.0 * u * invdr*invdr2;
+	const double fac = 3.0 * u * invdr2;
 	for (unsigned short d = 0; d < 3; ++d)
 		f[d] = fac*dr[d] - partialTjInvdr1 * ejj[d];
 
@@ -358,11 +358,11 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Charge-Quadrupole
 		for (unsigned sj = 0; sj < nq2; sj++) {
 			const double* djj = mj.quadrupole_d(sj);
-			double qQ025per4pie0; // 4pie0 = 1 in reduced units
-			params >> qQ025per4pie0;
+			double qQ05per4pie0; // 4pie0 = 1 in reduced units
+			params >> qQ05per4pie0;
 			SiteSiteDistance(drm, dii, djj, drs, dr2);
 			const double* ejj = mj.quadrupole_e(sj);
-			PotForceChargeQuadrupole(drs, dr2, ejj, qQ025per4pie0, f, m2, u);
+			PotForceChargeQuadrupole(drs, dr2, ejj, qQ05per4pie0, f, m2, u);
 
 			mi.Fchargeadd(si, f);
 			mj.Fquadrupolesub(sj, f);
@@ -397,10 +397,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Quadrupole-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
 			const double* djj = mj.charge_d(sj);
-			double qQ025per4pie0; // 4pie0 = 1 in reduced units
-			params >> qQ025per4pie0;
+			double qQ05per4pie0; // 4pie0 = 1 in reduced units
+			params >> qQ05per4pie0;
 			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			PotForceChargeQuadrupole(drs, dr2, eii, qQ025per4pie0, f, m1, u);
+			PotForceChargeQuadrupole(drs, dr2, eii, qQ05per4pie0, f, m1, u);
 
 			mi.Fquadrupolesub(si, f);
 			mj.Fchargeadd(sj, f);
@@ -566,11 +566,11 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Charge-Quadrupole
 		for (unsigned sj = 0; sj < nq2; sj++) {
 			const double* djj = mj.quadrupole_d(sj);
-			double qQ025per4pie0; // 4pie0 = 1 in reduced units
-			params >> qQ025per4pie0;
+			double qQ05per4pie0; // 4pie0 = 1 in reduced units
+			params >> qQ05per4pie0;
 			SiteSiteDistance(drm, dii, djj, drs, dr2);
 			const double* ejj = mj.quadrupole_e(sj);
-			PotForceChargeQuadrupole(drs, dr2, ejj, qQ025per4pie0, f, m2, u);
+			PotForceChargeQuadrupole(drs, dr2, ejj, qQ05per4pie0, f, m2, u);
 			UpotXpoles += u;
 		}
 		// Charge-Dipole
@@ -591,10 +591,10 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Quadrupole-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
 			const double* djj = mj.charge_d(sj);
-			double qQ025per4pie0; // 4pie0 = 1 in reduced units
-			params >> qQ025per4pie0;
+			double qQ05per4pie0; // 4pie0 = 1 in reduced units
+			params >> qQ05per4pie0;
 			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			PotForceChargeQuadrupole(drs, dr2, eii, qQ025per4pie0, f, m1, u);
+			PotForceChargeQuadrupole(drs, dr2, eii, qQ05per4pie0, f, m1, u);
 			UpotXpoles += u;
 		}
 		// Quadrupole-Quadrupole -------------------
