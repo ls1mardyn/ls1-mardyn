@@ -18,7 +18,7 @@ CFG ?= gcc
 # parallelization type
 # Show list of all available parallelization types for the current config with cfg_help
 # Each config should at least provide the two parallelization types SEQ and PAR
-PARTYPE ?= SEQ
+PARTYPE ?= PAR
 
 # choose target
 # Show list of all available targets for the current config with cfg_help
@@ -73,7 +73,7 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK -fpermissive
+CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 ifeq ($(SUPPORT_GENERATOR), 1)
