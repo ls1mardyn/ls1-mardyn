@@ -626,7 +626,7 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 	return this->cellIndexOf3DIndex( cellIndex[0], cellIndex[1], cellIndex[2] );
 }
 
-long int LinkedCells::cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const {
+long int LinkedCells::cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const {
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
 }
 
