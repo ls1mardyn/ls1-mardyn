@@ -290,7 +290,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		exit(1);
 	}
 
-	vector<unsigned long>::iterator neighbourOffsetsIter;
+	vector<long int>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
 	global_log->debug() << "LinkedCells::traverseCells: Processing pairs and preprocessing Tersoff pairs." << endl;
@@ -299,16 +299,16 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset +1);
 	// open the window of cells activated
-	for (unsigned int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
+	for (long int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
 		cellProcessor.preprocessCell(_cells[cellIndex]);
 	}
 
 	// loop over all inner cells and calculate forces to forward neighbours
-	for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
 		ParticleCell& currentCell = _cells[cellIndex];
 
 		// extend the window of cells with cache activated
-		if (cellIndex + _maxNeighbourOffset < _cells.size()) {
+		if (cellIndex + _maxNeighbourOffset < (long int) _cells.size()) {
 			cellProcessor.preprocessCell(_cells[cellIndex + _maxNeighbourOffset]);
 		}
 
@@ -324,7 +324,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		if (currentCell.isHaloCell()) {
 			cellProcessor.processCell(currentCell);
 			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-				int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
+				long int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
 				if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) (_cells.size())))
 					continue;
 				ParticleCell& neighbourCell = _cells[neighbourCellIndex];
@@ -520,7 +520,7 @@ void LinkedCells::initializeCells() {
 	_innerCellIndices.clear();
 	_boundaryCellIndices.clear();
 	_haloCellIndices.clear();
-	unsigned long cellIndex;
+	long int cellIndex;
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
@@ -590,7 +590,7 @@ void LinkedCells::calculateNeighbourIndices() {
 				if (xDistanceSquare + yDistanceSquare + zDistanceSquare <= cutoffRadiusSquare) {
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex, zIndex);
 					if (offset > 0) {
-						_forwardNeighbourOffsets.push_back(abs(offset));
+						_forwardNeighbourOffsets.push_back(offset);
 						if (offset > _maxNeighbourOffset) {
 							_maxNeighbourOffset = offset;
 						}
@@ -655,7 +655,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) {
 
 	double u = 0.0;
-	vector<unsigned long>::iterator neighbourOffsetsIter;
+	vector<long int>::iterator neighbourOffsetsIter;
 
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 	ParticleCell& currentCell = _cells[cellIndex];

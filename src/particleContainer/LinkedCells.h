@@ -280,10 +280,10 @@ private:
 	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
 
-	std::vector<unsigned long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::vector<unsigned long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	unsigned int _maxNeighbourOffset;
-	unsigned int _minNeighbourOffset;
+	std::vector<long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
+	std::vector<long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
+	long _maxNeighbourOffset;
+	long _minNeighbourOffset;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
