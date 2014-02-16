@@ -158,7 +158,8 @@ bool Expression::VariableSet::removeVariable(const string& name)
 		if(vargrp)
 		{
 			//vargrp->removeVariable(name);	// done by Variable destructor
-			if(vargrp->countVariables()) _vargroups.erase(vargrp->getName());
+			/* erase empty VariableGroup */
+			if(!vargrp->countVariables()) _vargroups.erase(vargrp->getName());
 		}
 		return true;
 	}
@@ -267,6 +268,8 @@ Expression::Value Expression::NodeOperation2::evaluate() const
 			case '-': return _children[0]->evaluate()-_children[1]->evaluate();
 			case '*': return _children[0]->evaluate()*_children[1]->evaluate();
 			case '/': return _children[0]->evaluate()/_children[1]->evaluate();
+			// the modulo operator % will be realized with a function MOD
+			// the power operator ^ (**) will be realized with a function POW
 		}
 	}
 	return Value();
@@ -279,10 +282,16 @@ Expression::NodeFunction::Efunctype Expression::NodeFunction::functype(const std
 		return functypeABS;
 	else if(name.compare("float")==0||name.compare("FLOAT")==0)
 		return functypeFLOAT;
+	else if(name.compare("int")==0||name.compare("INT")==0)
+		return functypeINT;
 	else if(name.compare("floor")==0||name.compare("FLOOR")==0)
 		return functypeFLOOR;
 	else if(name.compare("ceil")==0||name.compare("CEIL")==0)
 		return functypeCEIL;
+	//else if(name.compare("trunc")==0||name.compare("TRUNC")==0)
+	//	return functypeTRUNC;
+	else if(name.compare("round")==0||name.compare("ROUND")==0)
+		return functypeROUND;
 	else if(name.compare("sqrt")==0||name.compare("SQRT")==0)
 		return functypeSQRT;
 	else if(name.compare("ln")==0||name.compare("LN")==0
@@ -302,13 +311,27 @@ Expression::NodeFunction::Efunctype Expression::NodeFunction::functype(const std
 		return functypeCOS;
 	else if(name.compare("tan")==0||name.compare("TAN")==0)
 		return functypeTAN;
+	else if(name.compare("asin")==0||name.compare("ASIN")==0)
+		return functypeASIN;
+	else if(name.compare("acos")==0||name.compare("ACOS")==0)
+		return functypeACOS;
+	else if(name.compare("atan")==0||name.compare("ATAN")==0)
+		return functypeATAN;
 	//
 	else if(name.compare("min")==0||name.compare("MIN")==0)
 		return functypeMIN;
 	else if(name.compare("max")==0||name.compare("MAX")==0)
 		return functypeMAX;
+	else if(name.compare("mod")==0||name.compare("MOD")==0)
+		return functypeMOD;
 	else if(name.compare("pow")==0||name.compare("POW")==0)
 		return functypePOW;
+	//
+	else if(name.compare("rcl")==0||name.compare("RCL")==0)
+		return functypeRCL;
+	//
+	else if(name.compare("sto")==0||name.compare("STO")==0)
+		return functypeSTO;
 	//
 	else
 		return functypeNONE;
@@ -323,8 +346,11 @@ Expression::Tvaltype Expression::NodeFunction::valueType() const
 		{	// functions with 1 argument
 			case functypeABS:
 				return _children[1]->valueType();
+			case functypeINT:
 			case functypeFLOOR:
 			case functypeCEIL:
+			//case functypeTRUNC:
+			case functypeROUND:
 				return valtypeINT;
 			case functypeFLOAT:
 			case functypeSQRT:
@@ -335,6 +361,9 @@ Expression::Tvaltype Expression::NodeFunction::valueType() const
 			case functypeSIN:
 			case functypeCOS:
 			case functypeTAN:
+			case functypeASIN:
+			case functypeACOS:
+			case functypeATAN:
 				return valtypeFLOAT;
 			default: break;	// avoid compiler warnings of values not handled in switch
 		}
@@ -352,6 +381,11 @@ Expression::Tvaltype Expression::NodeFunction::valueType() const
 						return _children[0]->valueType();
 					else
 						return _children[1]->valueType();
+				case functypeMOD:
+					if(_children[0]->valueType()==valtypeINT && _children[1]->valueType()==valtypeINT)
+						return valtypeINT;
+					else
+						return valtypeFLOAT;
 				case functypePOW:
 					if(_children[0]->valueType()==valtypeINT && _children[1]->valueType()==valtypeINT)
 						return valtypeINT;
@@ -377,8 +411,11 @@ Expression::Value Expression::NodeFunction::evaluate() const
 				else
 					return Value(fabs(Tfloat(_children[1]->evaluate())));
 			case functypeFLOAT: return Value(Tfloat(_children[1]->evaluate()));
+			case functypeINT: return Value(Tint(Tfloat(_children[1]->evaluate())));
 			case functypeFLOOR: return Value(Tint(floor(Tfloat(_children[1]->evaluate()))));
 			case functypeCEIL:  return Value(Tint(ceil(Tfloat(_children[1]->evaluate()))));
+			//case functypeTRUNC:  return Value(Tint(trunc(Tfloat(_children[1]->evaluate()))));
+			case functypeROUND:  return Value(Tint(round(Tfloat(_children[1]->evaluate()))));
 			case functypeSQRT:  return Value(sqrt(Tfloat(_children[1]->evaluate())));
 			case functypeLN:   return Value(log(Tfloat(_children[1]->evaluate())));
 			case functypeLB:  return Value(log2(Tfloat(_children[1]->evaluate())));
@@ -387,6 +424,9 @@ Expression::Value Expression::NodeFunction::evaluate() const
 			case functypeSIN:   return Value(sin(Tfloat(_children[1]->evaluate())));
 			case functypeCOS:   return Value(cos(Tfloat(_children[1]->evaluate())));
 			case functypeTAN:   return Value(tan(Tfloat(_children[1]->evaluate())));
+			case functypeASIN:   return Value(asin(Tfloat(_children[1]->evaluate())));
+			case functypeACOS:   return Value(acos(Tfloat(_children[1]->evaluate())));
+			case functypeATAN:   return Value(atan(Tfloat(_children[1]->evaluate())));
 			default: break;	// avoid compiler warnings of values not handled in switch
 		}
 		if(_children[0])
@@ -403,6 +443,11 @@ Expression::Value Expression::NodeFunction::evaluate() const
 						return _children[0]->evaluate();
 					else
 						return _children[1]->evaluate();
+				case functypeMOD:
+					if(_children[0]->valueType()==valtypeINT && _children[1]->valueType()==valtypeINT)
+						return Tint(_children[0]->evaluate()) % Tint(_children[1]->evaluate());
+					else
+						return Value(fmod(Tfloat(_children[0]->evaluate()),Tfloat(_children[1]->evaluate())));
 				case functypePOW:
 					if(_children[0]->valueType()==valtypeINT && _children[1]->valueType()==valtypeINT)
 					{
@@ -412,7 +457,7 @@ Expression::Value Expression::NodeFunction::evaluate() const
 						for(Tint i=0;i<e;++i) p*=b;
 						return Value(p);
 					} else
-						return Value(pow(Tfloat(_children[1]->evaluate()),Tfloat(_children[0]->evaluate())));
+						return Value(pow(Tfloat(_children[0]->evaluate()),Tfloat(_children[1]->evaluate())));
 				default: break;	// avoid compiler warnings of values not handled in switch
 			}
 		}
@@ -424,10 +469,14 @@ void Expression::NodeFunction::write(ostream& ostrm) const {
 	switch(_functype)
 	{	//
 		case functypeNONE:	ostrm << "undef"; break;
+		case functypeRCL:	ostrm << "RCL"; break;
 		case functypeABS:	ostrm << "ABS"; break;
 		case functypeFLOAT:	ostrm << "FLOAT"; break;
+		case functypeINT:	ostrm << "INT"; break;
 		case functypeFLOOR:	ostrm << "FLOOR"; break;
 		case functypeCEIL:	ostrm << "CEIL"; break;
+		//case functypeTRUNC:	ostrm << "TRUNC"; break;
+		case functypeROUND:	ostrm << "ROUND"; break;
 		case functypeSQRT:	ostrm << "SQRT"; break;
 		case functypeLN:	ostrm << "LN"; break;
 		case functypeLB:	ostrm << "LB"; break;
@@ -436,10 +485,92 @@ void Expression::NodeFunction::write(ostream& ostrm) const {
 		case functypeSIN:	ostrm << "SIN"; break;
 		case functypeCOS:	ostrm << "COS"; break;
 		case functypeTAN:	ostrm << "TAN"; break;
+		case functypeASIN:	ostrm << "ASIN"; break;
+		case functypeACOS:	ostrm << "ACOS"; break;
+		case functypeATAN:	ostrm << "ATAN"; break;
 		//
+		case functypeSTO:	ostrm << "STO"; break;
 		case functypeMIN:	ostrm << "MIN"; break;
 		case functypeMAX:	ostrm << "MAX"; break;
+		case functypeMOD:	ostrm << "MOD"; break;
 		case functypePOW:	ostrm << "POW"; break;
+		default: break;	// avoid compiler warnings of values not handled in switch
+	}
+}
+
+
+Expression::Tvaltype Expression::NodeFunctionVarSet::valueType() const
+{
+	if(_functype==functypeNONE) return valtypeNONE;
+	if(_children[1])
+	{
+		switch(_functype)
+		{	// functions with 1 argument
+			case functypeRCL:
+			{
+				string varname("_localstore:"+static_cast<string>(*_children[1]));
+				Expression::Tvaltype valtype;
+				Expression::Variable* var=NULL;
+				if(_variableset) var=_variableset->getVariable(varname);
+				if(var) valtype=var->getType();
+				return valtype;
+			}
+			default: break;	// avoid compiler warnings of values not handled in switch
+		}
+		if(_children[0])
+		{
+			switch(_functype)
+			{	// functions with 2 arguments
+				case functypeSTO:
+					return _children[0]->valueType();
+				default: break;	// avoid compiler warnings of values not handled in switch
+			}
+		}
+	}
+	return valtypeNONE;
+}
+
+Expression::Value Expression::NodeFunctionVarSet::evaluate() const
+{
+	if(_children[1])
+	{
+		switch(_functype)
+		{	// functions with 1 argument
+			case functypeRCL:
+			{
+				string varname("_localstore:"+static_cast<string>(*_children[1]));
+				Expression::Value val;
+				Expression::Variable* var=NULL;
+				if(_variableset) var=_variableset->getVariable(varname);
+				if(var) val=var->getValue();
+				return val;
+			}
+			default: break;	// avoid compiler warnings of values not handled in switch
+		}
+		if(_children[0])
+		{
+			switch(_functype)
+			{	// functions with 2 arguments
+				case functypeSTO:
+				{
+					Expression::Value val=_children[0]->evaluate();
+					string varname("_localstore:"+static_cast<string>(*_children[1]));
+					if(_variableset) _variableset->setVariable(varname,val);
+					return val;
+				}
+				default: break;	// avoid compiler warnings of values not handled in switch
+			}
+		}
+	}
+	return Value();
+}
+
+void Expression::NodeFunctionVarSet::write(ostream& ostrm) const {
+	switch(_functype)
+	{	//
+		case functypeRCL:	ostrm << "RCL"; break;
+		//
+		case functypeSTO:	ostrm << "STO"; break;
 		default: break;	// avoid compiler warnings of values not handled in switch
 	}
 }
@@ -500,7 +631,22 @@ void Expression::initializeRPN(const string& exprstr, bool genlabel)
 			// function ................................................
 			//string funcname=token;
 			NodeFunction::Efunctype func=NodeFunction::functype(token);
-			if(func>NodeFunction::functypeMarker2Arg && nodestack.size()>=2)
+			if(func>NodeFunction::functypeMarkerVarSet2Arg && nodestack.size()>=2)
+			{
+				Node* node1=nodestack.top(); nodestack.pop();
+				Node* node2=nodestack.top(); nodestack.pop();
+				Node* node0=new NodeFunctionVarSet(func,_variableset,node1,node2);
+				nodestack.push(node0);
+				node1->setParent(node0);
+			}
+			else if(func>NodeFunction::functypeMarkerVarSet1Arg && nodestack.size()>=1)
+			{
+				Node* node1=nodestack.top(); nodestack.pop();
+				Node* node0=new NodeFunctionVarSet(func,_variableset,node1);
+				nodestack.push(node0);
+				node1->setParent(node0);
+			}
+			else if(func>NodeFunction::functypeMarker2Arg && nodestack.size()>=2)
 			{
 				Node* node1=nodestack.top(); nodestack.pop();
 				Node* node2=nodestack.top(); nodestack.pop();

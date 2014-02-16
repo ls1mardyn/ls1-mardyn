@@ -11,6 +11,7 @@
 
 #define SYSMON_ENABLE_SYSCONF
 #define SYSMON_ENABLE_SYSINFO
+#define SYSMON_ENABLE_MALLINFO
 #define SYSMON_ENABLE_PROCMEMINFO
 #define SYSMON_ENABLE_PROCVMSTAT
 #define SYSMON_ENABLE_PROCLOADAVG
@@ -40,6 +41,11 @@
 #ifdef SYSMON_ENABLE_SYSINFO
 #include <sys/sysinfo.h>
 #endif
+
+#ifdef SYSMON_ENABLE_MALLINFO
+#include <malloc.h>	// mallinfo
+#endif
+
 
 #include "Expression.h"
 
@@ -118,6 +124,7 @@ private:
 private:
 	unsigned int updateVariables_sysconf();
 	unsigned int updateVariables_sysinfo();
+	unsigned int updateVariables_mallinfo();
 	unsigned int updateVariables_procmeminfo();
 	unsigned int updateVariables_procvmstat();
 	unsigned int updateVariables_procloadavg();

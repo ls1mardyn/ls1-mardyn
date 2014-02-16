@@ -67,6 +67,7 @@ void SysMon::updateExpressionValues(bool resetMinMax)
 	//sync();
 	if(_variableset->existVariableGroup("sysconf")) updateVariables_sysconf();
 	if(_variableset->existVariableGroup("sysinfo")) updateVariables_sysinfo();
+	if(_variableset->existVariableGroup("mallinfo")) updateVariables_mallinfo();
 	if(_variableset->existVariableGroup("procmeminfo")) updateVariables_procmeminfo();
 	if(_variableset->existVariableGroup("procvmstat")) updateVariables_procvmstat();
 	if(_variableset->existVariableGroup("procloadavg")) updateVariables_procloadavg();
@@ -250,6 +251,48 @@ unsigned int SysMon::updateVariables_sysinfo()
 		_variableset->setVariable("sysinfo","mem_unit",val);
 		++numvalues;
 	}
+#endif
+	return numvalues;
+}
+
+unsigned int SysMon::updateVariables_mallinfo()
+{
+	unsigned int numvalues=0;
+#ifdef SYSMON_ENABLE_MALLINFO
+	long val=0;
+	
+	struct mallinfo mallinfodata=mallinfo();
+	
+	val=long(mallinfodata.arena);
+	_variableset->setVariable("mallinfo","arena",val);
+	++numvalues;
+	val=long(mallinfodata.ordblks);
+	_variableset->setVariable("mallinfo","ordblks",val);
+	++numvalues;
+	val=long(mallinfodata.smblks);
+	_variableset->setVariable("mallinfo","smblks",val);
+	++numvalues;
+	val=long(mallinfodata.hblks);
+	_variableset->setVariable("mallinfo","hblks",val);
+	++numvalues;
+	val=long(mallinfodata.hblkhd);
+	_variableset->setVariable("mallinfo","hblkhd",val);
+	++numvalues;
+	val=long(mallinfodata.usmblks);
+	_variableset->setVariable("mallinfo","usmblks",val);
+	++numvalues;
+	val=long(mallinfodata.fsmblks);
+	_variableset->setVariable("mallinfo","fsmblks",val);
+	++numvalues;
+	val=long(mallinfodata.uordblks);
+	_variableset->setVariable("mallinfo","uordblks",val);
+	++numvalues;
+	val=long(mallinfodata.fordblks);
+	_variableset->setVariable("mallinfo","fordblks",val);
+	++numvalues;
+	val=long(mallinfodata.keepcost);
+	_variableset->setVariable("mallinfo","keepcost",val);
+	++numvalues;
 #endif
 	return numvalues;
 }

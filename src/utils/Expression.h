@@ -149,6 +149,12 @@ class Expression
 	
 	class Variable;
 	// VariableGroup ---------------------------------------------------------------------------
+	/**
+		A VariableSet might contain Variable- and VariableGroup-Objects,
+		whereas a Variable might belong to a VariableGroup, which is also
+		reflected by the Variable name: <VariableGroup>:<Variable>.
+		The VariableGroup-map acts like a hash table
+	**/
 	class VariableGroup
 	{
 		public:
@@ -351,8 +357,8 @@ class Expression
 	class NodeConstant : public Node
 	{
 		public:
-			NodeConstant(Tint val, Node* parent=NULL) : Node(NULL,NULL,parent,1), _value(val) {}
-			NodeConstant(Tfloat val) : Node(), _value(val) {}
+			NodeConstant(Tint val=0, Node* parent=NULL) : Node(NULL,NULL,parent,1), _value(val) {}
+			NodeConstant(Tfloat val, Node* parent=NULL) : Node(NULL,NULL,parent,1), _value(val) {}
 			Tvaltype valueType() const { return _value.getType(); }
 			Value evaluate() const { return _value; }
 			Tfloat evaluateFloat() const { return _value.getValueFloat(); }
@@ -408,22 +414,45 @@ class Expression
 	{
 		public:
 			enum Efunctype {functypeNONE=0
-			              , functypeMarker1Arg	// functions with 1 argument
-			              , functypeABS, functypeFLOAT, functypeFLOOR, functypeCEIL
-			              , functypeSQRT
-			              , functypeLN, functypeLB, functypeLG, functypeEXP
-			              , functypeSIN, functypeCOS, functypeTAN
-			              , functypeMarker2Arg	// functions with 2 arguments
-			              , functypeMIN, functypeMAX
-			              , functypePOW
+			              , functypeMarker1Arg	// marker for functions with 1 argument ---
+			              , functypeABS	// absolute value
+			              , functypeFLOAT	// floating point value
+			              , functypeINT	// integer value
+			              , functypeFLOOR	// floor/round down integer value
+			              , functypeCEIL	// ceiling/round up integer value
+			              //, functypeTRUNC	// truncated integer value
+			              , functypeROUND	// rounded integer value
+			              , functypeSQRT	// square root
+			              , functypeLN	// natural logarithm
+			              , functypeLB	// binary logarithm
+			              , functypeLG	// decimal logarithm
+			              , functypeEXP	// exponential functions
+			              , functypeSIN	// sine
+			              , functypeCOS	// cosine
+			              , functypeTAN	// tangent
+			              , functypeASIN	// arc sine
+			              , functypeACOS	// arc cosine
+			              , functypeATAN	// arc tangent
+			              , functypeMarker2Arg	// marker for functions with 2 arguments ---
+			              , functypeMIN	// minimum of 2 values
+			              , functypeMAX	// maximum of 2 values
+			              , functypeMOD	// modulo function
+			              , functypePOW	// power function
+			              , functypeMarkerVarSet	// marker for functions using the VariableSet ===
+			              , functypeMarkerVarSet1Arg	// marker for functions using the VariableSet with 1 argument ---
+			              , functypeRCL	// recall stored value <id>
+			              , functypeMarkerVarSet2Arg	// marker for functions using the VariableSet with 2 arguments ---
+			              , functypeSTO	// store value to <id>
 			               };
 			
 			static Efunctype functype(const std::string& name);
 			
-			NodeFunction(Efunctype func, Node* child1, Node* child0=NULL, Node* parent=NULL)
+			NodeFunction(Efunctype func
+			            ,Node* child1, Node* child0=NULL, Node* parent=NULL)
 				: Node(child0,child1,parent,0), _functype(func) {}
 			// functions with 1 argument use _children[1]
 			// TODO: probably they should use _children[0] (again), but Node::writeSubExpr needs to be adapted
+			//       also NodeFunctionStore
 			Tvaltype valueType() const;
 			Value evaluate() const;
 			void write(std::ostream& ostrm) const;
@@ -432,6 +461,28 @@ class Expression
 			enum Efunctype _functype;
 	};
 	// ---------------------------------------------------------------------------- NodeFunction
+	
+	// NodeFunctionVarSet ----------------------------------------------------------------------
+	/*
+		Functions with the capability to store and load values from the given VariableSet
+	*/
+	class NodeFunctionVarSet : public NodeFunction
+	{
+		public:
+			// use enum Efunctype defined in NodeFunction
+			
+			NodeFunctionVarSet(Efunctype func, VariableSet *variableset
+			                 ,Node* child1, Node* child0=NULL, Node* parent=NULL)
+				: NodeFunction(func,child1,child0,parent), _variableset(variableset) {}
+			// functions with 1 argument use _children[1] like NodeFunction (see comments there)
+			Tvaltype valueType() const;
+			Value evaluate() const;
+			void write(std::ostream& ostrm) const;
+			
+		protected:
+			VariableSet* _variableset;
+	};
+	// ---------------------------------------------------------------------- NodeFunctionVarSet
 	
 	// -------------------------------------------------------------------- Node and derivatives
 	
