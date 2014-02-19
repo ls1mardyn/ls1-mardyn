@@ -663,12 +663,15 @@ void Domain::writeGraphite(
             exit(1000+tfluid);
          }
       
-         if(!symmetric) tfluid = fluid2;
-         TFLUIDMASS = FLUIDMASS2;
-         TEPS_FLUID = EPS_FLUID2;
-         TSIG_FLUID = SIG_FLUID2;
-         TFLUIDLONG = FLUIDLONG2;
-         TQDR_FLUID = QDR_FLUID2;
+         if(!symmetric)
+         {
+            tfluid = fluid2;
+            TFLUIDMASS = FLUIDMASS2;
+            TEPS_FLUID = EPS_FLUID2;
+            TSIG_FLUID = SIG_FLUID2;
+            TFLUIDLONG = FLUIDLONG2;
+            TQDR_FLUID = QDR_FLUID2;
+         }
       }
 
       double crga[repl*NCOMP_POLAR];
