@@ -101,6 +101,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			double targetT;
 			_phaseSpaceHeaderFileStream >> thermostat_id;
 			_phaseSpaceHeaderFileStream >> targetT;
+			global_log->info() << "Thermostat number " << thermostat_id << " has T = " << targetT << ".\n";
 			domain->setTargetTemperature( thermostat_id, targetT );
 		}
 		else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
@@ -110,6 +111,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			int component_id;
 			int thermostat_id;
 			_phaseSpaceHeaderFileStream >> component_id >> thermostat_id;
+			global_log->info() << "Component " << component_id << " (internally: " << component_id - 1 << ") is regulated by thermostat number " << thermostat_id << ".\n";
 			component_id--; // FIXME thermostat IDs start with 0 in the program but not in the config file?!
 			if( thermostat_id < 0 ) // thermostat IDs start with 0
 				continue;
