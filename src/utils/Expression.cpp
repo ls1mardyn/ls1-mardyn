@@ -509,7 +509,7 @@ Expression::Tvaltype Expression::NodeFunctionVarSet::valueType() const
 			case functypeRCL:
 			{
 				string varname("_localstore:"+static_cast<string>(*_children[1]));
-				Expression::Tvaltype valtype;
+				Expression::Tvaltype valtype = valtypeNONE;
 				Expression::Variable* var=NULL;
 				if(_variableset) var=_variableset->getVariable(varname);
 				if(var) valtype=var->getType();
