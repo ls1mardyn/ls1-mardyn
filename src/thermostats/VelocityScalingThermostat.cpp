@@ -7,6 +7,7 @@ using namespace std;
 using Log::global_log;
 
 VelocityScalingThermostat::VelocityScalingThermostat() : _globalBetaTrans(1), _globalBetaRot(1), _globalVelocity(NULL), _componentwise(false) {
+	_globalVelocity = new double[3];
 }
 
 VelocityScalingThermostat::~VelocityScalingThermostat() {
@@ -22,17 +23,11 @@ void VelocityScalingThermostat::setBetaRot(int componentId, double beta) {
 }
 
 void VelocityScalingThermostat::setGlobalVelocity(double v[3]) {
-	if(_globalVelocity == NULL) {
-		_globalVelocity = new double[3];
-	}
 	for(int d = 0; d < 3; d++) {
 		_globalVelocity[d] = v[d];
 	}
 }
 void VelocityScalingThermostat::setVelocity(int componentId, double v[3]) {
-	if(_globalVelocity == NULL) {
-		_globalVelocity = new double[3];
-	}
 	if( _componentVelocity.find(componentId) == _componentVelocity.end() ) {
 		_componentVelocity[componentId] = new double[3];
 	}
