@@ -1,12 +1,13 @@
-
 #ifndef POTFORCE_H_
 #define POTFORCE_H_
+
+/**  @file  */
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Molecule.h"
 
-/// calculate potential and force between 2 Lennard-Jones 12-6 centers
-//inline void PotForceLJ(const double dr[3], const double& dr2, ParaStrm& params, double f[3], double& u)
+
+/** @brief Calculates potential and force between 2 Lennard-Jones 12-6 centers. */
 inline void PotForceLJ(const double dr[3], const double& dr2,
                        const double& eps24, const double& sig2,
                        double f[3], double& u6)
@@ -21,17 +22,8 @@ inline void PotForceLJ(const double dr[3], const double& dr2,
 		f[d] = fac * dr[d];
 }
 
-inline void PotForceLJ(const double dr[3],
-                       const double& eps24, const double& sig2,
-                       double f[3], double& u6)
-{
-	double dr2 = 0.;
-	for (unsigned short d = 0; d < 3; ++d)
-		dr2 += dr[d] * dr[d];
-	PotForceLJ(dr, dr2, eps24, sig2, f, u6);
-}
 
-/// calculate potential and force between 2 Dipoles (dr2 given)
+/** @brief Calculate potential and force between 2 Dipoles. */
 inline void PotForce2Dipole(const double dr[3], const double& dr2, const double* eii, const double* ejj,
                             const double& my2, const double& rffac,
                             double f[3], double m1[3], double m2[3], double& u, double& MyRF)
@@ -78,18 +70,8 @@ inline void PotForce2Dipole(const double dr[3], const double& dr2, const double*
 		m2[d] = -partialTjInvdr1 * eXrij[d] + (partialGij - rffac) * eiXej[d];
 }
 
-/// calculate potential and force between 2 Dipoles
-inline void PotForce2Dipole(const double dr[3], const double* eii, const double* ejj,
-                            const double& my2, const double& rffac,
-                            double f[3], double m1[3], double m2[3], double& u, double& MyRF)
-{
-	double dr2 = 0.;
-	for (unsigned short d = 0; d < 3; ++d)
-		dr2 += dr[d] * dr[d];
-	PotForce2Dipole(dr, dr2, eii, ejj, my2, rffac, f, m1, m2, u, MyRF);
-}
 
-/// calculate potential and force between 2 Quadrupoles (dr2 given)
+/** @brief Calculate potential and force between 2 Quadrupoles. */
 inline void PotForce2Quadrupole(const double dr[3], const double& dr2, const double* eii, const double* ejj,
                                 const double& q2075,
                                 double f[3], double m1[3], double m2[3], double& u)
@@ -139,18 +121,8 @@ inline void PotForce2Quadrupole(const double dr[3], const double& dr2, const dou
 		m2[d] = -partialTjInvdr1 * eXrij[d] + partialGij * eiXej[d];
 }
 
-/// calculate potential and force between 2 Quadrupoles
-inline void PotForce2Quadrupole(const double dr[3], const double* eii, const double* ejj,
-                                const double& q2075,
-                                double f[3], double m1[3], double m2[3], double& u)
-{
-	double dr2 = 0.;
-	for (unsigned short d = 0; d < 3; ++d)
-		dr2 += dr[d] * dr[d];
-	PotForce2Quadrupole(dr, dr2, eii, ejj, q2075, f, m1, m2, u);
-}
 
-/// calculate potential and force between a Dipole and Quadrupole (dr2 given)
+/** @brief Calculate potential and force between a Dipole and Quadrupole. */
 inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const double* eii, const double* ejj,
                                  const double& myq15,
                                  double f[3], double m1[3], double m2[3], double& u)
@@ -198,18 +170,8 @@ inline void PotForceDiQuadrupole(const double dr[3], const double& dr2, const do
 		m2[d] = -partialTjInvdr1 * eXrij[d] + partialGij * eiXej[d];
 }
 
-/// calculate potential and force between a Dipole and Quadrupole
-inline void PotForceDiQuadrupole(const double dr[3], const double* eii, const double* ejj,
-                                 const double& myq15,
-                                 double f[3], double m1[3], double m2[3], double& u)
-{
-	double dr2 = 0.;
-	for (unsigned short d = 0; d < 3; ++d)
-		dr2 += dr[d] * dr[d];
-	PotForce2Quadrupole(dr, dr2, eii, ejj, myq15, f, m1, m2, u);
-}
 
-/// calculate potential and force between two point charges (dr2 given)
+/** @brief Calculate potential and force between two point charges. */
 inline void PotForce2Charge(const double dr[3], const double& dr2,
                             const double& q1q2per4pie0, double f[3], double& u)
 {
@@ -221,7 +183,8 @@ inline void PotForce2Charge(const double dr[3], const double& dr2,
 		f[d] = fac * dr[d];
 }
 
-/// calculate potential and force between an electric charge and a quadrupole
+
+/** @brief Calculate potential and force between an electric charge and a quadrupole. */
 inline void PotForceChargeQuadrupole(const double dr[3], const double& dr2,
                                      const double* ejj, const double& qQ05per4pie0,
                                      double f[3], double m2[3], double& u)
@@ -250,7 +213,8 @@ inline void PotForceChargeQuadrupole(const double dr[3], const double& dr2,
 		m2[d] = partialTjInvdr1 * minuseXrij[d];
 }
 
-/// calculate potential and force between an electric charge and a dipole
+
+/** @brief Calculate potential and force between an electric charge and a dipole. */
 inline void PotForceChargeDipole(const double dr[3], const double& dr2,
                                  const double* ejj, const double& minusqmyper4pie0,
                                  double f[3], double m2[3], double& u)
@@ -279,12 +243,23 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
 		m2[d] = partialTjInvdr1 * minuseXrij[d];
 }
 
-/** calculate Potential and Force between molecules (all site-site interactions)
-    paramters are held in precomputed streams, which are initialized in Comp2Param::initialize
-    (cmp. comp2param.h/.cpp)
 
-    drm == distance FROM j TO i ... !!!
-*/
+/** @brief Calculate potential and force between two molecules including all site-site interactions.
+ *
+ * Calculates the potential energy and force between two molecules i and j.
+ * The interaction paramters are held in precomputed streams, which are initialized in Comp2Param::initialize
+ *
+ * @param[in]  mi   molecule i
+ * @param[in]  mj   molecule j
+ * @param[in]  params    reference to the corresponding interaction parameter stream initialized via Comp2Param::initialize
+ * @param[in]  drm   distance vector from molecule j to molecule i
+ * @param[out] Upot6LJ   potential energy resulting from Lennard Jones interactions
+ * @param[out] UpotXpoles   potential energy resulting from Charge, Dipole and Quadrupole interactions
+ * @param[out] MyRF
+ * @todo Document parameter (is this reaction field?)
+ * @param[out] Virial   Virial
+ * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
+ */
 inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ)
 // ???better calc Virial, when molecule forces are calculated:
 //    summing up molecule virials instead of site virials???
@@ -510,9 +485,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	assert(params.eos());
 }
 
-/*
- * calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered)
- */
+/** @brief Calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered) */
 inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
 {
 	double f[3];
@@ -746,7 +719,7 @@ inline double TersoffUIJattr(Molecule* mi, Molecule* mj,
 		return 0.5 * bij * UA;
 }
 
-//! @brief calculate Tersoff potential for a single atom
+//! @brief Calculate the Tersoff potential for a single atom
 //!
 //! parameters: R, S, h, c^2, d^2, A, -lambda, -mu, beta, n_i, pi/(S-R), 1+(c/d)^2, S^2, -B, -0.5/n_i
 //! A "Molecule" may have at most a single Tersoff centre.
