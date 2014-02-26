@@ -136,7 +136,7 @@ public:
 	
 
 	/** set force acting on molecule
-	 * @param F force vector (x,y,z)
+	 * @param[out] F force vector (x,y,z)
 	 */
 	void setF(double F[3]) { for(int d = 0; d < 3; d++ ) { _F[d] = F[d]; } }
 
@@ -198,9 +198,10 @@ public:
 	/** second step of the leap frog integrator */
 	void upd_postF(double dt_halve, double& summv2, double& sumIw2);
 
-	//! calculate summv2 and sumIw2
-	//! @todo what is sumIw2?
-	//! @todo comment
+	/** @brief Calculate twice the translational and rotational kinetic energies
+	 * @param[out] summv2   twice the translational kinetic energy \f$ m v^2 \f$
+	 * @param[out] sumIw2   twice the rotational kinetic energy \f$ I \omega^2 \f$
+	 */
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
 
@@ -282,14 +283,13 @@ std::ostream& operator<<( std::ostream& os, const Molecule& m );
 
 
 
-/* helper function to calculate the distance between 2 sites, given the distance
- * vector between two molecules.
+/** @brief Calculate the distance between two sites of two molecules.
  *
- * @param drm distance vector between the two molecule centers
- * @param ds1 distance vector from the center of molecule1 to its site
- * @param ds2 distance vector from the center of molecule2 to its site
- * @param[out] drs distance vector site-site (output parameter)
- * @param[out] dr2 distance site-site (output parameter)
+ * @param[in]  drm distance vector between the two molecule centers
+ * @param[in]  ds1 distance vector from the center of molecule1 to its site
+ * @param[in]  ds2 distance vector from the center of molecule2 to its site
+ * @param[out] drs distance vector site-site
+ * @param[out] dr2 distance site-site
  *
  */
 inline void SiteSiteDistance(const double drm[3], const double ds1[3], const double ds2[3], double drs[3], double& dr2)

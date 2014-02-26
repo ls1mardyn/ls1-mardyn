@@ -51,10 +51,10 @@ class Comp2Param {
             return m_ssparatbl(i,j);
         }
 
-        /** Initialize the parameter streams for each component-component table entry.
+        /** @brief Initialize the parameter streams for each component-component table entry.
          *
          *   The order of the entries must correspond to the
-         *   PotForce-function found in potforce.h reading the stream
+         *   PotForce() function found in potforce.h reading the stream
          */
         void initialize(const std::vector<Component>& components, const std::vector<double>& mixcoeff, double epsRF, double rc, double rcLJ);
 
