@@ -24,9 +24,9 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_v[0] = vx;
 	_v[1] = vy;
 	_v[2] = vz;
-	_D[0] = Dx;
-	_D[1] = Dy;
-	_D[2] = Dz;
+	_L[0] = Dx;
+	_L[1] = Dy;
+	_L[2] = Dz;
 	_sites_d = _sites_F =_osites_e = NULL;
 	_numTersoffNeighbours = 0;
 	fixedx = rx;
@@ -47,9 +47,9 @@ Molecule::Molecule(const Molecule& m) {
 	_v[1] = m._v[1];
 	_v[2] = m._v[2];
 	_q = m._q;
-	_D[0] = m._D[0];
-	_D[1] = m._D[1];
-	_D[2] = m._D[2];
+	_L[0] = m._L[0];
+	_L[1] = m._L[1];
+	_L[2] = m._L[2];
 	_F[0] = m._F[0];
 	_F[1] = m._F[1];
 	_F[2] = m._F[2];
@@ -77,7 +77,7 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	}
 
 	double w[3];
-	_q.rotate(_D, w);
+	_q.rotate(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
 	Quaternion qhalfstep;
@@ -87,8 +87,8 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	double qcorr = 1. / sqrt(qhalfstep.magnitude2());
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
-		_D[d] = Dcorr * _D[d] + dt_halve * _M[d];
-	qhalfstep.rotate(_D, w);
+		_L[d] = Dcorr * _L[d] + dt_halve * _M[d];
+	qhalfstep.rotate(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
 	Quaternion qincr;
@@ -140,13 +140,13 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	for (unsigned short d = 0; d < 3; ++d) {
 		_v[d] += dtInv2m * _F[d];
 		v2 += _v[d] * _v[d];
-		_D[d] += dt_halve * _M[d];
+		_L[d] += dt_halve * _M[d];
 	}
     assert(!isnan(v2)); // catches NaN
     summv2 += _m * v2;
 
 	double w[3];
-	_q.rotate(_D, w); // L = D = Iw
+	_q.rotate(_L, w); // L = D = Iw
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -159,7 +159,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 
 double Molecule::U_rot() {
 	double w[3];
-	_q.rotate(_D, w);
+	_q.rotate(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -171,7 +171,7 @@ double Molecule::U_rot() {
 void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	summv2 += _m * v2();
 	double w[3];
-	_q.rotate(_D, w);
+	_q.rotate(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -187,7 +187,7 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, do
 	summv2 += _m * (vcx*vcx + vcy*vcy + vcz*vcz);
 
 	double w[3];
-	_q.rotate(_D, w);
+	_q.rotate(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -207,7 +207,7 @@ void Molecule::write(ostream& ostrm) const {
 	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
 	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
 	      << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
-	      << _D[0] << " " << _D[1] << " " << _D[2] << "\t"
+	      << _L[0] << " " << _L[1] << " " << _L[2] << "\t"
 	      << endl;
 }
 

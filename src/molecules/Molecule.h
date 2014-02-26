@@ -1,21 +1,3 @@
-/*************************************************************************
- * Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                       *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or (at *
- * your option) any later version.                                       *
- *                                                                       *
- * This program is distributed in the hope that it will be useful, but   *
- * WITHOUT ANY WARRANTY; without even the implied warranty of            * 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      *
- * General Public License for more details.                              *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the Free Software           *
- * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.   *
- *************************************************************************/
-
 #ifndef MOLECULE_H_
 #define MOLECULE_H_
 
@@ -28,8 +10,8 @@
 #include "molecules/Quaternion.h"
 #include "molecules/Site.h"
 
-/* maximal size of the Tersoff neighbour list */
-#define MAX_TERSOFF_NEIGHBOURS 10
+
+#define MAX_TERSOFF_NEIGHBOURS 10 /**< maximal size of the Tersoff neighbour list */
 
 class Domain;
 
@@ -65,7 +47,7 @@ public:
 	void setid(unsigned long id) { _id = id; }
 	/** get the molecule's component ID */
 	unsigned int componentid() const { return _component->ID(); }
-	/** set the molecule's component ID */
+	/** set the molecule's component */
 	void setComponent(Component *component) { _component = component; }
 	/** return pointer to component to which the molecule belongs */
 	Component* component() const { return _component; }
@@ -77,19 +59,20 @@ public:
 	double v(unsigned short d) const { return _v[d]; }
 	/** set velocity */
 	void setv(unsigned short d, double v) { _v[d] = v; }
-	double mass() const { return this->_m; }
+	/** get molecule's mass */
+	double mass() const { return _m; }
 
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
-	/** get the orientation */
+	/** get molecule's orientation */
 	const Quaternion& q() const { return _q; }
 
 
-	//tijana added
-	inline void setq(Quaternion q){ _q = q;}
+	/** set molecule's orientation */
+	void setq(Quaternion q){ _q = q;}
 
 	/** get coordinate of the rotatational speed */
-	double D(unsigned short d) const { return _D[d]; } /* TODO: we should rename D to L with respect to literature. */
+	double D(unsigned short d) const { return _L[d]; }
 	/** get coordinate of the current angular momentum  onto molecule */ 
 	double M(unsigned short d) const {return _M[d]; }
 
@@ -165,7 +148,7 @@ public:
 	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d]*=s; }
 	void scale_v(double s, double offx, double offy, double offz);
 	void scale_F(double s) { for(unsigned short d=0;d<3;++d) _F[d]*=s; }
-	void scale_D(double s) { for(unsigned short d=0;d<3;++d) _D[d]*=s; }
+	void scale_D(double s) { for(unsigned short d=0;d<3;++d) _L[d]*=s; }
 	void scale_M(double s) { for(unsigned short d=0;d<3;++d) _M[d]*=s; }
 
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
@@ -265,8 +248,7 @@ private:
 	double _v[3];  /**< velocity */
 	Quaternion _q; /**< angular orientation */
 	double _M[3];  /**< torsional moment */
-    // TODO: We should rename _D to _L with respect to the literature.
-	double _D[3];  /**< angular momentum */
+	double _L[3];  /**< angular momentum */
     unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _m; /**< total mass */
