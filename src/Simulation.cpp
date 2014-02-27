@@ -1119,10 +1119,6 @@ void Simulation::prepare_start() {
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
     
-    if(!_cellProcessor) {
-        global_log->warning() << "No cell processor initialised. Using Legacy Cell Processor." << endl;
-        _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-    }
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	/* If enabled count FLOP rate of LS1. */
