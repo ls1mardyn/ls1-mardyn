@@ -1288,8 +1288,7 @@ void Simulation::simulate() {
 			}
 		}
 
-		// clear halo
-		global_log->debug() << "Delete outer particles" << endl;
+		global_log->debug() << "Delete outer particles / clearing halo" << endl;
 		_moleculeContainer->deleteOuterParticles();
 
 		if (_simstep >= _initGrandCanonical) {
