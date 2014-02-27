@@ -27,8 +27,6 @@
 
 using optparse::Values;
 
-//#include "MoleculeWrapper.h"
-
 #ifndef SIMULATION_SRC
 class Simulation;
 //! Global pointer to the simulation object. Do not use directly. Instead use the reference.
@@ -110,7 +108,6 @@ public:
 	Simulation();
 
 	//! @brief destruct simulation object
-	//!
 	~Simulation();
 
 	void readXML(XMLfileUnits& xmlconfig);
@@ -242,14 +239,10 @@ public:
 	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
 	void setTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
 
-	void setMaxID (unsigned long id)
-	{
-		maxid = id;
-	}
-
-	unsigned long getMaxID () const {
-		return maxid;
-	}
+	/** Set the maximum molecule ID. */
+	void setMaxID (unsigned long id) { maxid = id; }
+	/** Get the maximum molecule ID. */
+	unsigned long getMaxID () const { return maxid; }
 
 
 
