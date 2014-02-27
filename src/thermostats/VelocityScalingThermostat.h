@@ -11,14 +11,18 @@ public:
 	VelocityScalingThermostat();
 	~VelocityScalingThermostat();
 	void setGlobalBetaTrans(double beta) { _globalBetaTrans = beta; }
+	double getGlobalBetaTrans() { return _globalBetaTrans; }
 	void setGlobalBetaRot(double beta) { _globalBetaRot = beta; }
+	double getGlobalBetaRot() { return _globalBetaRot; }
 	void setGlobalVelocity(double v[3]);
 
 	void enableComponentwise() { _componentwise = true; }
 	void disableComponentwise() { _componentwise = false; }
 
 	void setBetaTrans(int componentId, double beta);
+	double getBetaTrans(int componentId) { return _componentBetaTrans[componentId]; }
 	void setBetaRot(int componentId, double beta);
+	double getBetaRot(int componentId) { return _componentBetaRot[componentId]; }
 	void setVelocity(int componentId, double v[3]);
 	void apply(ParticleContainer *moleculeContainer);
 

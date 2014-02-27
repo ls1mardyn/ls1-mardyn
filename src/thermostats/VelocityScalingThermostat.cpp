@@ -1,6 +1,8 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
+#include "Domain.h"
 #include "molecules/Molecule.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
 
 using namespace std;
@@ -40,22 +42,16 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 	Molecule *molecule;
 	if(_componentwise ) {
 		for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()) {
+			int thermostatId;
 			double betaTrans = _globalBetaTrans;
 			double betaRot = _globalBetaRot;
 			int cid = molecule->componentid();
+			thermostatId = _simulation.getDomain()->getThermostat(cid);
+			betaTrans = _componentBetaTrans[thermostatId];
+			betaRot   = _componentBetaRot[thermostatId];
 
-			map<int, double>::iterator betaIter;
 			map<int, double*>::iterator vIter;
-			if( (betaIter = _componentBetaTrans.find(cid)) != _componentBetaTrans.end() ) {
-				betaTrans = betaIter->second;
-			}
-			if( (betaIter = _componentBetaRot.find(cid)) != _componentBetaRot.end() ) {
-				betaRot = betaIter->second;
-			}
-
-			//global_log->debug() << "Beta rot: " << betaRot << endl;
-			//global_log->debug() << "Beta trans: " << betaTrans << endl;
-			if( (vIter = _componentVelocity.find(cid)) != _componentVelocity.end()) {
+			if( (vIter = _componentVelocity.find(thermostatId)) != _componentVelocity.end()) {
 				molecule->scale_v(betaTrans);
 			}
 			else {

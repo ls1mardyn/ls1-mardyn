@@ -1344,6 +1344,9 @@ void Simulation::simulate() {
 					int thermostatId = _domain->getThermostat(cid);
 					_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
 					_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
+					global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
+					<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
+					<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << endl;
 					double v[3];
 					for(int d = 0; d < 3; d++) {
 						v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
