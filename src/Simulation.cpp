@@ -330,6 +330,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();
 		}
+		else if(pluginname == "LJFLOPCounter") {
+			/** @todo  Make the LJ Flop counter a real output plugin */
+			_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
+			continue;
+		}
 		else if(pluginname == "MmspdWriter") {
 			outputPlugin = new MmspdWriter();
 		}
@@ -1119,8 +1124,10 @@ void Simulation::prepare_start() {
     }
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
-	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
-	_moleculeContainer->traverseCells(*_ljFlopCounter);
+	/* If enabled count FLOP rate of LS1. */
+	if( NULL != _ljFlopCounter ) {
+		_moleculeContainer->traverseCells(*_ljFlopCounter);
+	}
 
 	// TODO:
 	// here we have to call calcFM() manually, otherwise force and moment are not
@@ -1428,9 +1435,11 @@ void Simulation::simulate() {
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
-	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
-	global_log->info() << "LJ-FLOP-Count per Iteration: " << _ljFlopCounter->getTotalFlopCount() << " FLOPs" <<endl;
-	global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
+	if(NULL != _ljFlopCounter) {
+		double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
+		global_log->info() << "LJ-FLOP-Count per Iteration: " << _ljFlopCounter->getTotalFlopCount() << " FLOPs" <<endl;
+		global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
+	}
 }
 
 void Simulation::output(unsigned long simstep) {

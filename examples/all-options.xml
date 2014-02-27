@@ -195,6 +195,15 @@
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
+
+	  <!-- LJ flop counter plugin
+	  This writer outputs the actual FLOPS rate of the LJ calculations. -->
+	  <outputplugin name="LJFLOPCounter">
+        <!-- TODO: make the LJ flop counter a real output plugin
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+        -->
+      </outputplugin>
     
       <!-- ResultWriter plugin 
 	  Writes thermodynamic properties to a file. The following values will be written to a file:

@@ -12,7 +12,10 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
+using namespace std;
+
 LJFlopCounter::LJFlopCounter(double rc) : _rc2(rc * rc) {
+	global_log->debug() << "Cutoff for LJ Flop Counter: " << rc << endl;
 	_totalCounts.clear();
 }
 
