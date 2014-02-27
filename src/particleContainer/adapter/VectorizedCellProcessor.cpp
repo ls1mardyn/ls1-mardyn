@@ -192,6 +192,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			molecules[m]->Fljcenteradd(i, f);
 			++n;
 		}
+		molecules[m]->calcFM();
 	}
 	// Delete the SoA.
 	_particleCellDataVector.push_back(&soa);

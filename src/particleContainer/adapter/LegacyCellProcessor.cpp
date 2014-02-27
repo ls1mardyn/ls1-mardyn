@@ -208,14 +208,15 @@ void LegacyCellProcessor::postprocessCell(ParticleCell& cell) {
 	if (cell.isInnerCell() || cell.isBoundaryCell()) {
 		for (int i = 0; i < currentParticleCount; i++) {
 			Molecule& molecule1 = *currentCellParticles[i];
-			if (molecule1.numTersoff() == 0)
-				continue;
-
-			if (!knowparams) {
-				delta_r = molecule1.tersoffParameters(params);
-				knowparams = true;
+			/** @todo Fix potential bug in case of different Tersoff sites with different parameters. */
+			if (molecule1.numTersoff() > 0) {
+				if (!knowparams) {
+					delta_r = molecule1.tersoffParameters(params);
+					knowparams = true;
+				}
+				_particlePairsHandler->processTersoffAtom(molecule1, params, delta_r);
 			}
-			_particlePairsHandler->processTersoffAtom(molecule1, params, delta_r);
+			molecule1.calcFM();
 		}
 	}
 }
