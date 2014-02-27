@@ -50,7 +50,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 				betaTrans = betaIter->second;
 			}
 			if( (betaIter = _componentBetaRot.find(cid)) != _componentBetaRot.end() ) {
-				betaTrans = betaIter->second;
+				betaRot = betaIter->second;
 			}
 
 			//global_log->debug() << "Beta rot: " << betaRot << endl;
