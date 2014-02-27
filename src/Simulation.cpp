@@ -1080,6 +1080,7 @@ void Simulation::prepare_start() {
 
 	global_log->info() << "Initialising cell processor" << endl;
 #if ENABLE_VECTORIZED_CODE
+	global_log->debug() << "Checking if vectorized cell processor can be used" << endl;
 	bool lj_present = false;
 	bool charge_present = false;
 	bool dipole_present = false;
@@ -1096,7 +1097,7 @@ void Simulation::prepare_start() {
 	}
 
 	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
-		global_log->warning() << "Using legacy cell processor as charges, dipoles, quadrupoles and tersoff interactions are not available." << endl;
+		global_log->warning() << "Using legacy cell processor. (Vectorized code not yet available for charges, dipoles, quadrupoles and tersoff interactions.)" << endl;
 		global_log->debug() << "xx lj present: " << lj_present << endl;
 		global_log->debug() << "xx charge present: " << charge_present << endl;
 		global_log->debug() << "xx dipole present: " << dipole_present << endl;
