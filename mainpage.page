@@ -1,6 +1,5 @@
-/** \mainpage "MDProject"
+/** \mainpage ls1-MarDyn: The massively parallel molecular dynamics code for large systems
 
-!!New implementation of LS1
 
 Documentation available:
 
@@ -22,7 +21,7 @@ Code Coverage Information:
 - <a href="../lcov_pore-CH3OH"> pore-CH3OH </a>
 - <a href="../lcov_total"> Summary </a>
 
-CCCC Metrics information (number lines of code, complexity, etc...): 
-<a href="http://vmbungartz4.informatik.tu-muenchen.de:8080/jenkins_ls1/job/MardynMetrics/127/ccccResult/">CCCC Metrics </a> 
+CCCC Metrics information (number lines of code, complexity, etc...):
+<a href="http://vmbungartz4.informatik.tu-muenchen.de:8080/jenkins_ls1/job/MardynMetrics/127/ccccResult/">CCCC Metrics </a>
 
 */

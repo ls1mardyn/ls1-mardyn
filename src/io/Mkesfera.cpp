@@ -1,8 +1,7 @@
-/* the following macro has to be defined to use math constants in cmath */
-#define _USE_MATH_DEFINES  1
-
 #include "Mkesfera.h"
 
+/* the following macro has to be defined to use math constants in cmath */
+#define _USE_MATH_DEFINES  1
 #include <cmath>
 #include <vector>
 
