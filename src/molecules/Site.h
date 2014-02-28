@@ -25,13 +25,6 @@ public:
 	const double* r() const { return _r; }  /**< get position vector */
 	double m() const { return _m; }         /**< get mass */
 
-    /* TODO: The following function is nowhere used in the code */
-	/// translate coordinates to new origin
-//	void translateOrigin(double neworigin[3]) {
-//		for (int d = 0; d < 3; d++)
-//			_r[d] -= neworigin[d];
-//	}
-
 	/**
 	 * set the d-th component of the position
 	 */
