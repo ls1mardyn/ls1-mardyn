@@ -4,8 +4,8 @@
 
 See also http://www5.informatik.tu-muenchen.de/scenariogenerator/build.html
 
-First build the Mardyn library, copy it to the directory tools/gui and create the 
-necessary symbolic links: 
+First build the Mardyn library, copy it to the directory tools/gui and create the
+necessary symbolic links:
 Type in the directory src/
 \verbatim
 make -f ../makefile/Makefile.lib UNIT_TESTS=0 VTK=0 TARGET=RELEASE PARTYPE=SEQ lib
@@ -31,9 +31,9 @@ Similar for the VTK libraries the variable VTKLIBPATH:
 \verbatim
 export VTKLIBPATH=/usr/local/lib/vtk-5.8/
 \endverbatim
- 
 
-Create the Makefile for the executable (ScenGen) and build the executable. 
+
+Create the Makefile for the executable (ScenGen) and build the executable.
 \verbatim
 qmake ScenGen.pro -o Makefile.scengen
 make -f Makefile.scengen
@@ -58,7 +58,7 @@ make -f Makefile.droplet
 \endverbatim
 
 Now, there should be a libs/ directory, where the libraries for the generators have
-been placed. 
+been placed.
 
 Finally, set the LD_LIBRARY_PATH and run the scenario generator:
 \verbatim
@@ -69,7 +69,7 @@ export LD_LIBRARY_PATH=.
 
 !!! Using the generators for direct input
 
-As file io may be really slow on some architectures, it is possible to use the 
+As file io may be really slow on some architectures, it is possible to use the
 generators to generate the input directly in Mardyn/ls1. Therefor, the generators have
 to be built as static libraries, which are linked into the Mardyn executable.
 
@@ -79,7 +79,7 @@ the config variable is set as shown:
 CONFIG += staticlib debug mardyn
 \endverbatim
 
-Then, build the generator libraries. libCubicGridGenerator.a and libDropletGenerator.a 
+Then, build the generator libraries. libCubicGridGenerator.a and libDropletGenerator.a
 are created and placed in the directory staticlibs.
 
 Now, build the Mardyn executable with the option SUPPORT_GENERATOR in the makefile set:
@@ -89,8 +89,8 @@ make -f ../makefile/Makefile PARTYPE=SEQ TARGET=RELEASE SUPPORT_GENERATOR=1 -j3
 \endverbatim
 
 Now it is possible to create a setup with the graphical generator. Save that configuration
-to a file (Choose "Generator..." -> "save"). That configuration file can be used to initialize 
-the generator. As it is a plain text file, you can edit it by hand (e.g. increase the number 
+to a file (Choose "Generator..." -> "save"). That configuration file can be used to initialize
+the generator. As it is a plain text file, you can edit it by hand (e.g. increase the number
 of molecules by some orders).
 
 The corresponding line in the mardyn configuration file has to look like:

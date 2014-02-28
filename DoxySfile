@@ -97,7 +97,7 @@ QUIET                               = YES
 # Configuration options related to the input files
 #---------------------------------------------------------------------------
 IGNORE_FILE_NAME                    = DoxyS.ignore
-FILE_PATTERNS                       = *.c *.cc *.cxx *.cpp *.c++ *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx *.hpp *.h++ *.idl *.odl *.cs *.page *.dir *.dxd *.doc
+FILE_PATTERNS                       = *.c *.cc *.cxx *.cpp *.c++ *.java *.ii *.ixx *.ipp *.i++ *.inl *.h *.hh *.hxx *.hpp *.h++ *.idl *.odl *.cs *.dox *.dir *.dxd *.doc
 RECURSIVE                           = YES
 EXCLUDE                             = doxys_docs/ dependencies-external/ tools/ makefile/
 EXCLUDE_SYMLINKS                    = NO

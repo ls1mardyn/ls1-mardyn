@@ -3,41 +3,41 @@ Here is a short cookbook to help you get started.
 
 
 !! Simple Test Case
-You want to know whether your code is working. 
+You want to know whether your code is working.
 
-How do you do it? 
+How do you do it?
 
-There are many ways. Stepping through a debugger or 
-littering your code with stream output calls are two of 
+There are many ways. Stepping through a debugger or
+littering your code with stream output calls are two of
 the simpler ways, but they both have drawbacks.
-Stepping through your code is a good idea, but it 
+Stepping through your code is a good idea, but it
 is not automatic. You have to do it every time you
-make changes. Streaming out text is also fine, 
-but it makes code ugly and it generates far more 
+make changes. Streaming out text is also fine,
+but it makes code ugly and it generates far more
 information than you need most of the time.
 
-Tests in %CppUnit can be run automatically. 
-They are easy to set up and once you have 
-written them, they are always there to help 
+Tests in %CppUnit can be run automatically.
+They are easy to set up and once you have
+written them, they are always there to help
 you keep confidence in the quality of your code.
 
 To make a simple test, here is what you do:
 
-Subclass the \link CppUnit::TestCase TestCase \endlink class. 
-Override the method \link CppUnit::TestCase::runTest() runTest()\endlink. 
-When you want to check a value, call 
+Subclass the \link CppUnit::TestCase TestCase \endlink class.
+Override the method \link CppUnit::TestCase::runTest() runTest()\endlink.
+When you want to check a value, call
 \link CPPUNIT_ASSERT() CPPUNIT_ASSERT(bool) \endlink
-and pass in an expression that is true if the 
-test succeeds. 
+and pass in an expression that is true if the
+test succeeds.
 
-For example, to test the equality comparison 
+For example, to test the equality comparison
 for a Complex number class, write:
 
 \code
-class ComplexNumberTest : public CppUnit::TestCase { 
-public: 
+class ComplexNumberTest : public CppUnit::TestCase {
+public:
   ComplexNumberTest( std::string name ) : CppUnit::TestCase( name ) {}
-  
+
   void runTest() {
     CPPUNIT_ASSERT( Complex (10, 1) == Complex (10, 1) );
     CPPUNIT_ASSERT( !(Complex (1, 1) == Complex (2, 2)) );
@@ -45,82 +45,82 @@ public:
 };
 \endcode
 
-That was a very simple test. Ordinarily, 
-you'll have many little test cases that you'll 
-want to run on the same set of objects. To do 
+That was a very simple test. Ordinarily,
+you'll have many little test cases that you'll
+want to run on the same set of objects. To do
 this, use a fixture.
 
 
 
 !! Test Fixture
 
-A fixture is a known set of objects that 
-serves as a base for a set of test cases. 
-Fixtures come in very handy when you are 
-testing as you develop. 
+A fixture is a known set of objects that
+serves as a base for a set of test cases.
+Fixtures come in very handy when you are
+testing as you develop.
 
-Let's try out this style of development and 
-learn about fixtures along the away. Suppose 
-that we are really developing a complex 
-number class. Let's start by defining a 
+Let's try out this style of development and
+learn about fixtures along the away. Suppose
+that we are really developing a complex
+number class. Let's start by defining a
 empty class named Complex.
 
 \code
 class Complex {};
 \endcode
 
-Now create an instance of ComplexNumberTest 
-above, compile the code and see what happens. 
-The first thing we notice is a few compiler 
-errors. The test uses <tt>operator ==</tt>, but it is 
+Now create an instance of ComplexNumberTest
+above, compile the code and see what happens.
+The first thing we notice is a few compiler
+errors. The test uses <tt>operator ==</tt>, but it is
 not defined. Let's fix that.
 
 \code
-bool operator==( const Complex &a, const Complex &b) 
-{ 
-  return true; 
+bool operator==( const Complex &a, const Complex &b)
+{
+  return true;
 }
 \endcode
 
-Now compile the test, and run it. This time it 
-compiles but the test fails. 
-We need a bit more to get an <tt>operator ==</tt>working 
+Now compile the test, and run it. This time it
+compiles but the test fails.
+We need a bit more to get an <tt>operator ==</tt>working
 correctly, so we revisit the code.
 
 \code
-class Complex { 
+class Complex {
   friend bool operator ==(const Complex& a, const Complex& b);
   double real, imaginary;
 public:
-  Complex( double r, double i = 0 ) 
+  Complex( double r, double i = 0 )
     : real(r)
-	, imaginary(i) 
+	, imaginary(i)
   {
   }
 };
 
 bool operator ==( const Complex &a, const Complex &b )
-{ 
-  return a.real == b.real  &&  a.imaginary == b.imaginary; 
+{
+  return a.real == b.real  &&  a.imaginary == b.imaginary;
 }
 \endcode
 
-If we compile now and run our test it will pass. 
+If we compile now and run our test it will pass.
 
-Now we are ready to add new operations and 
-new tests. At this point a fixture would be 
-handy. We would probably be better off when 
-doing our tests if we decided to instantiate 
-three or four complex numbers and reuse them 
-across our tests. 
+Now we are ready to add new operations and
+new tests. At this point a fixture would be
+handy. We would probably be better off when
+doing our tests if we decided to instantiate
+three or four complex numbers and reuse them
+across our tests.
 
 Here is how we do it:
-- Add member variables for each part of the 
+- Add member variables for each part of the
   \link CppUnit::TestFixture fixture \endlink
 - Override \link CppUnit::TestFixture::setUp() setUp() \endlink
   to initialize the variables
 - Override \link CppUnit::TestFixture::tearDown() tearDown() \endlink
-  to release any permanent resources you allocated in 
+  to release any permanent resources you allocated in
   \link CppUnit::TestFixture::setUp() setUp() \endlink
 
 \code
@@ -132,10 +132,10 @@ public:
   {
     m_10_1 = new Complex( 10, 1 );
     m_1_1 = new Complex( 1, 1 );
-    m_11_2 = new Complex( 11, 2 );  
+    m_11_2 = new Complex( 11, 2 );
   }
 
-  void tearDown() 
+  void tearDown()
   {
     delete m_10_1;
     delete m_1_1;
@@ -144,15 +144,15 @@ public:
 };
 \endcode
 
-Once we have this fixture, we can add the complex 
-addition test case and any others that we need 
+Once we have this fixture, we can add the complex
+addition test case and any others that we need
 over the course of our development.
 
 
 
 !! Test Case
 
-How do you write and invoke individual tests using a fixture? 
+How do you write and invoke individual tests using a fixture?
 
 There are two steps to this process:
 - Write the test case as a method in the fixture class
@@ -169,10 +169,10 @@ public:
   {
     m_10_1 = new Complex( 10, 1 );
     m_1_1 = new Complex( 1, 1 );
-    m_11_2 = new Complex( 11, 2 );  
+    m_11_2 = new Complex( 11, 2 );
   }
 
-  void tearDown() 
+  void tearDown()
   {
     delete m_10_1;
     delete m_1_1;
@@ -195,17 +195,17 @@ public:
 One may create and run instances for each test case like this:
 
 \code
-CppUnit::TestCaller<ComplexNumberTest> test( "testEquality", 
+CppUnit::TestCaller<ComplexNumberTest> test( "testEquality",
                                              &ComplexNumberTest::testEquality );
 CppUnit::TestResult result;
 test.run( &result );
 \endcode
 
-The second argument to the test caller constructor is the address of 
-a method on ComplexNumberTest. When the test caller is run, 
-that specific method will be run.  This is not a useful thing to do, 
-however, as no diagnostics will be displayed.  
-One will normally use a \link ExecutingTest TestRunner \endlink (see below) 
+The second argument to the test caller constructor is the address of
+a method on ComplexNumberTest. When the test caller is run,
+that specific method will be run.  This is not a useful thing to do,
+however, as no diagnostics will be displayed.
+One will normally use a \link ExecutingTest TestRunner \endlink (see below)
 to display the results.
 
 Once you have several tests, organize them into a suite.
@@ -218,8 +218,8 @@ Once you have several tests, organize them into a suite.
 
 How do you set up your tests so that you can run them all at once?
 
-%CppUnit provides a \link CppUnit::TestSuite TestSuite \endlink class 
-that runs any number of TestCases together. 
+%CppUnit provides a \link CppUnit::TestSuite TestSuite \endlink class
+that runs any number of TestCases together.
 
 We saw, above, how to run a single test case.
 
@@ -229,21 +229,21 @@ To create a suite of two or more tests, you do the following:
 CppUnit::TestSuite suite;
 CppUnit::TestResult result;
 suite.addTest( new CppUnit::TestCaller<ComplexNumberTest>(
-                       "testEquality", 
+                       "testEquality",
                        &ComplexNumberTest::testEquality ) );
 suite.addTest( new CppUnit::TestCaller<ComplexNumberTest>(
-                       "testAddition", 
+                       "testAddition",
                        &ComplexNumberTest::testAddition ) );
 suite.run( &result );
-\endcode         
+\endcode
 
-\link CppUnit::TestSuite TestSuites \endlink don't only have to 
-contain callers for TestCases.  They can contain any object 
+\link CppUnit::TestSuite TestSuites \endlink don't only have to
+contain callers for TestCases.  They can contain any object
 that implements the \link CppUnit::Test Test \endlink interface.
-For example, you can create a 
+For example, you can create a
 \link CppUnit::TestSuite TestSuite \endlink in your code and
-I can create one in mine, and we can run them together 
-by creating a \link CppUnit::TestSuite TestSuite \endlink 
+I can create one in mine, and we can run them together
+by creating a \link CppUnit::TestSuite TestSuite \endlink
 that contains both:
 
 \code
@@ -261,22 +261,22 @@ suite.run( &result );
 
 How do you run your tests and collect their results?
 
-Once you have a test suite, you'll want to run it. %CppUnit provides tools 
-to define the suite to be run and to display its results. 
+Once you have a test suite, you'll want to run it. %CppUnit provides tools
+to define the suite to be run and to display its results.
 You make your suite accessible to a \link ExecutingTest TestRunner \endlink
 program with a static method <I>suite</I> that returns a test suite.
 
-For example, to make a ComplexNumberTest suite available to a 
-\link ExecutingTest TestRunner \endlink, add the following code to 
+For example, to make a ComplexNumberTest suite available to a
+\link ExecutingTest TestRunner \endlink, add the following code to
 ComplexNumberTest:
 
 \code
-public: 
+public:
   static CppUnit::TestSuite *suite()
   {
     CppUnit::TestSuite *suiteOfTests = new CppUnit::TestSuite( "ComplexNumberTest" );
-    suiteOfTests->addTest( new CppUnit::TestCaller<ComplexNumberTest>( 
-                                   "testEquality", 
+    suiteOfTests->addTest( new CppUnit::TestCaller<ComplexNumberTest>(
+                                   "testEquality",
                                    &ComplexNumberTest::testEquality ) );
     suiteOfTests->addTest( new CppUnit::TestCaller<ComplexNumberTest>(
                                    "testAddition",
@@ -294,8 +294,8 @@ To use the text version, include the header files for the tests in Main.cpp:
 #include "ComplexNumberTest.h"
 \endcode
 
-And add a call to 
-\link ::CppUnit::TextUi::TestRunner::addTest addTest(CppUnit::Test *) \endlink 
+And add a call to
+\link ::CppUnit::TextUi::TestRunner::addTest addTest(CppUnit::Test *) \endlink
 in the <tt>main()</tt> function:
 
 \code
@@ -309,8 +309,8 @@ int main( int argc, char **argv)
 }
 \endcode
 
-The \link ExecutingTest TestRunner \endlink will run the tests. 
-If all the tests pass, you'll get an informative message. 
+The \link ExecutingTest TestRunner \endlink will run the tests.
+If all the tests pass, you'll get an informative message.
 If any fail, you'll get the following information:
 
 - The name of the test case that failed
@@ -318,8 +318,8 @@ If any fail, you'll get the following information:
 - The line number where the failure occurred
 - All of the text inside the call to CPPUNIT_ASSERT() which detected the failure
 
-%CppUnit distinguishes between <I>failures</I> and <I>errors</I>. A failure is 
-anticipated and checked for with assertions. Errors are unanticipated problems 
+%CppUnit distinguishes between <I>failures</I> and <I>errors</I>. A failure is
+anticipated and checked for with assertions. Errors are unanticipated problems
 like division by zero and other exceptions thrown by the C++ runtime or your code.
 
 
@@ -327,9 +327,9 @@ like division by zero and other exceptions thrown by the C++ runtime or your cod
 
 !! Helper Macros
 
-As you might have noticed, implementing the fixture static <tt>suite()</tt> 
-method is a repetitive and error prone task. A \ref WritingTestFixture set of 
-macros have been created to automatically implements the 
+As you might have noticed, implementing the fixture static <tt>suite()</tt>
+method is a repetitive and error prone task. A \ref WritingTestFixture set of
+macros have been created to automatically implements the
 static <tt>suite()</tt> method.
 
 The following code is a rewrite of ComplexNumberTest using those macros:
@@ -343,7 +343,7 @@ First, we declare the suite, passing the class name to the macro:
 \code
 CPPUNIT_TEST_SUITE( ComplexNumberTest );
 \endcode
-The suite created by the static <tt>suite()</tt> method is named after 
+The suite created by the static <tt>suite()</tt> method is named after
 the class name.
 Then, we declare each test case of the fixture:
 \code
@@ -367,10 +367,10 @@ public:
   {
     m_10_1 = new Complex( 10, 1 );
     m_1_1 = new Complex( 1, 1 );
-    m_11_2 = new Complex( 11, 2 );  
+    m_11_2 = new Complex( 11, 2 );
   }
 
-  void tearDown() 
+  void tearDown()
   {
     delete m_10_1;
     delete m_1_1;
@@ -391,7 +391,7 @@ public:
 \endcode
 
 The name of the \link CppUnit::TestCaller TestCaller \endlink added to the
-suite are a composition of the fixture name and the method name. 
+suite are a composition of the fixture name and the method name.
 
 In the present case, the names would be:
 "ComplexNumberTest.testEquality" and "ComplexNumberTest.testAddition".
@@ -426,9 +426,9 @@ If the expected exception is not thrown, then a assertion failure is reported.
 !! TestFactoryRegistry
 
 The TestFactoryRegistry was created to solve two pitfalls:
-- forgetting to add your fixture suite to the test runner (since it is in 
+- forgetting to add your fixture suite to the test runner (since it is in
   another file, it is easy to forget)
-- compilation bottleneck caused by the inclusion of all test case headers 
+- compilation bottleneck caused by the inclusion of all test case headers
   (see \ref test_runner_code "previous example")
 
 The TestFactoryRegistry is a place where suites can be registered at initialization
@@ -442,12 +442,12 @@ To register the ComplexNumber suite, in the .cpp file, you add:
 CPPUNIT_TEST_SUITE_REGISTRATION( ComplexNumberTest );
 \endcode
 
-Behind the scene, a static variable type of 
+Behind the scene, a static variable type of
 \link CppUnit::AutoRegisterSuite AutoRegisterSuite \endlink is declared.
-On construction, it will 
-\link CppUnit::TestFactoryRegistry::registerFactory(TestFactory*) register \endlink 
-a \link CppUnit::TestSuiteFactory TestSuiteFactory \endlink into the 
-\link CppUnit::TestFactoryRegistry TestFactoryRegistry \endlink. 
+On construction, it will
+\link CppUnit::TestFactoryRegistry::registerFactory(TestFactory*) register \endlink
+a \link CppUnit::TestSuiteFactory TestSuiteFactory \endlink into the
+\link CppUnit::TestFactoryRegistry TestFactoryRegistry \endlink.
 The \link CppUnit::TestSuiteFactory TestSuiteFactory \endlink returns
 the \link CppUnit::TestSuite TestSuite \endlink returned by ComplexNumber::suite().
 
@@ -462,13 +462,13 @@ int main( int argc, char **argv)
 {
   CppUnit::TextUi::TestRunner runner;
 \endcode
-First, we retreive the instance of the 
+First, we retreive the instance of the
 \link CppUnit::TestFactoryRegistry TestFactoryRegistry \endlink:
 \code
   CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
 \endcode
-Then, we obtain and add a new \link CppUnit::TestSuite TestSuite \endlink created 
-by the  \link CppUnit::TestFactoryRegistry TestFactoryRegistry \endlink that 
+Then, we obtain and add a new \link CppUnit::TestSuite TestSuite \endlink created
+by the  \link CppUnit::TestFactoryRegistry TestFactoryRegistry \endlink that
 contains all the test suite registered using CPPUNIT_TEST_SUITE_REGISTRATION().
 \code
   runner.addTest( registry.makeTest() );
@@ -482,13 +482,13 @@ contains all the test suite registered using CPPUNIT_TEST_SUITE_REGISTRATION().
 
 !! Post-build check
 
-Well, now that we have our unit tests running, how about integrating unit 
+Well, now that we have our unit tests running, how about integrating unit
 testing to our build process ?
 
 To do that, the application must returns a value different than 0 to indicate that
 there was an error.
 
-\link CppUnit::TextUi::TestRunner::run() TestRunner::run() \endlink returns 
+\link CppUnit::TextUi::TestRunner::run() TestRunner::run() \endlink returns
 a boolean indicating if the run was successful.
 
 Updating our main programm, we obtains:
@@ -508,9 +508,9 @@ int main( int argc, char **argv)
 
 Now, you need to run your application after compilation.
 
-With Visual C++, this is done in <em>Project Settings/Post-Build step</em>, 
-by adding the following command: <tt>"$(TargetPath)"</tt>. It is expanded to 
-the application executable path. Look up the project 
+With Visual C++, this is done in <em>Project Settings/Post-Build step</em>,
+by adding the following command: <tt>"$(TargetPath)"</tt>. It is expanded to
+the application executable path. Look up the project
 <tt>examples/cppunittest/CppUnitTestMain.dsp</tt> which
 use that technic.
 
