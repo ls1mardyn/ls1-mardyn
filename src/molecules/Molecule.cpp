@@ -331,7 +331,7 @@ void Molecule::calcFM() {
 }
 
 
-/*
+/**
  * catches NaN values and missing data
  *
  * @note Use isnan from cmath to check for nan.
@@ -345,7 +345,7 @@ void Molecule::check(unsigned long id) {
 	for (int d = 0; d < 3; d++) {
 		assert(!isnan(_r[d]));
 		assert(!isnan(_v[d]));
-		assert(!isnan(_D[d]));
+		assert(!isnan(_L[d]));
 		assert(!isnan(_F[d]));
 		assert(!isnan(_M[d]));
 		assert(!isnan(_I[d]));
