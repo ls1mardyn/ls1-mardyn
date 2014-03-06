@@ -165,13 +165,13 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 					double eps, sigma, tcutoff, do_shift;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> eps >> sigma >> tcutoff >> do_shift;
 					dcomponents[i].addLJcenter( x, y, z, m, eps, sigma, tcutoff, (do_shift != 0) );
-                                        global_log->info() << "LJ at [" << x << " " << y << " " << z << "] " << endl;
+                                        global_log->info() << "LJ at [" << x << " " << y << " " << z << "], mass: " << m << ", epsilon: " << eps << ", sigma: " << sigma << endl;
 				}
 				for( unsigned int j = 0; j < numcharges; j++ ) {
 					double q;
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> m >> q;
 					dcomponents[i].addCharge( x, y, z, m, q );
-                                        global_log->info() << "charge at [" << x << " " << y << " " << z << "] " << endl;
+                                        global_log->info() << "charge at [" << x << " " << y << " " << z << "], mass: " << m << ", q: " << q << endl;
 				}
 				for( unsigned int j = 0; j < numdipoles; j++ ) {
 					double eMyx,eMyy,eMyz,absMy;
