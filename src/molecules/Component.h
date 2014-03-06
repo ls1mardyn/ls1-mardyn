@@ -7,9 +7,9 @@
 #include "molecules/Site.h"
 
 /**
- Komponente (Molekueltyp)
-
- @author Martin Bernreuther
+ * @brief Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcenter, Charge, Dipole, Quadrupole, Tersoff).
+ *
+ * @author Martin Bernreuther
  */
 class Component {
 public:
@@ -18,12 +18,15 @@ public:
 	
 	void setID(unsigned int id) { _id = id; }
 	unsigned int ID() const { return _id; }
+
+	/** get number of interaction sites */
 	unsigned int numSites() const {
 		return this->numLJcenters() + this->numCharges()
 		                            + this->numDipoles()
 		                            + this->numQuadrupoles()
 		                            + this->numTersoff();
 	}
+	/** get number of oriented interaction sites (dipoles and quadrupoles) */
 	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
 	unsigned int numLJcenters() const { return _ljcenters.size(); }
 	unsigned int numCharges() const { return _charges.size(); }
@@ -31,7 +34,7 @@ public:
 	unsigned int numQuadrupoles() const { return _quadrupoles.size(); }
 	unsigned int numTersoff() const { return _tersoff.size(); }
 
-	double m() const { return _m; }
+	double m() const { return _m; } /**< get mass of the molecule */
 	double I11() const { return _Ipa[0]; }
 	double I22() const { return _Ipa[1]; }
 	double I33() const { return _Ipa[2]; }
@@ -39,6 +42,7 @@ public:
 	void setI22(double I) { _Ipa[1]=I; }
 	void setI33(double I) { _Ipa[2]=I; }
 
+	/** get number of rotational degrees of freedom */
 	unsigned int getRotationalDegreesOfFreedom() const { return _rot_dof; }
 
 	const std::vector<LJcenter>& ljcenters() const { return _ljcenters; }
@@ -121,7 +125,7 @@ private:
 
 	void updateMassInertia(Site& site);
 
-	unsigned int _id; // IDentification number
+	unsigned int _id; /**< component ID */
 	// LJcenter,Dipole,Quadrupole have different size -> not suitable to store in a _Site_-array
 	//std::vector<Site> _sites;
 	// use separate vectors instead...
@@ -130,12 +134,14 @@ private:
 	std::vector<Dipole> _dipoles;
 	std::vector<Quadrupole> _quadrupoles;
 	std::vector<Tersoff> _tersoff;
-	// for performance reasons better(?) omit Site-class indirection and use cached values
-	double _m; // total mass
-	// Ixx,Iyy,Izz,Ixy,Ixz,Iyz
-	double _I[6]; // moments of inertia tensor
-	unsigned long _rot_dof; // number of rotational degrees of freedom
-	double _Ipa[3]; // moments of inertia for principal axes
+	/* for performance reasons better(?) omit Site-class indirection and use cached values */
+	double _m; /**< total mass */
+	/** moments of inertia tensor
+	 * \f$ I_{xx}, I_{yy}, I_{zz}, I_{xy}, I_{xz}, I_{yz} \f$
+	 */
+	double _I[6];
+	double _Ipa[3]; /**< moments of inertia for principal axes */
+	unsigned long _rot_dof; /**< number of rotational degrees of freedom */
 
 	/* cached values, set by ensemble class! */
 	unsigned long _numMolecules; // number of molecules for this molecule type
