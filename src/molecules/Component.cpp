@@ -55,14 +55,6 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Component name:" << name << endl;
 	setName(name);
 
-	if(xmlconfig.changecurrentnode("momentsofinertia")){
-		double II[3];
-		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
-		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
-		if(xmlconfig.getNodeValueReduced("Izz", II[2]) > 0) { setI33(II[2]); }
-		xmlconfig.changecurrentnode("..");
-	}
-
 	XMLfile::Query query = xmlconfig.query( "site" );
 	XMLfile::Query::const_iterator siteIter;
 	for( siteIter = query.begin(); siteIter; siteIter++ ) {
@@ -97,6 +89,14 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			tersoffSite.readXML(xmlconfig);
 			addTersoff(tersoffSite);
 		}
+	}
+
+	if(xmlconfig.changecurrentnode("momentsofinertia")){
+		double II[3];
+		if(xmlconfig.getNodeValueReduced("Ixx", II[0]) > 0) { setI11(II[0]); }
+		if(xmlconfig.getNodeValueReduced("Iyy", II[1]) > 0) { setI22(II[1]); }
+		if(xmlconfig.getNodeValueReduced("Izz", II[2]) > 0) { setI33(II[2]); }
+		xmlconfig.changecurrentnode("..");
 	}
 }
 
