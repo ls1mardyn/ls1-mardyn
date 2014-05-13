@@ -120,6 +120,8 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 			molecule.setr(d, m.r[d]);
 			molecule.setv(d, v[d]);
 		}
+		Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
+		molecule.setq(q);
 		particleContainer->addParticle(molecule);
 		numMolecules++;
 	}
