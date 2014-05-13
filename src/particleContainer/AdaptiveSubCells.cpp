@@ -312,6 +312,15 @@ unsigned AdaptiveSubCells::countParticles(unsigned int cid, double* cbottom, dou
 	return N;
 }
 
+void AdaptiveSubCells::clear() {
+	vector<ParticleCell>::iterator cellIter;
+	for(cellIter = _cells.begin(); cellIter != _cells.end(); cellIter++) {
+		(*cellIter).removeAllParticles();
+	}
+	_particles.clear();
+}
+
+
 void AdaptiveSubCells::deleteMolecule(unsigned long molid, double x, double y, double z) {
 	int ix = (int) floor((x - _haloBoundingBoxMin[0]) / _cellLength[0]);
 	int iy = (int) floor((y - _haloBoundingBoxMin[1]) / _cellLength[1]);

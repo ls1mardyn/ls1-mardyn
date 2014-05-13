@@ -142,6 +142,8 @@ public:
 	//! @brief returns NULL
 	Molecule* end();
 
+	void clear();
+
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
 	Molecule* deleteCurrent();
 

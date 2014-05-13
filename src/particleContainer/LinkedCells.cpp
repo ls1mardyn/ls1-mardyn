@@ -396,6 +396,15 @@ Molecule* LinkedCells::end() {
 	return NULL;
 }
 
+void LinkedCells::clear() {
+	vector<ParticleCell>::iterator cellIter;
+	for(cellIter = _cells.begin(); cellIter != _cells.end(); cellIter++) {
+		(*cellIter).removeAllParticles();
+	}
+	_particles.clear();
+}
+
+
 Molecule* LinkedCells::deleteCurrent() {
 	_particleIter = _particles.erase(_particleIter);
 	if (_particleIter != _particles.end()) {

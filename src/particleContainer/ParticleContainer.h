@@ -161,6 +161,9 @@ public:
 	//! @brief Has to return the same as next() after it already pointed to the last particle
 	virtual Molecule* end() = 0;
 
+	//! @brief Delete all molecules in container
+	virtual void clear() = 0;
+
 	virtual Molecule* deleteCurrent() = 0;
 
     /* TODO can we combine this with the update method? */
