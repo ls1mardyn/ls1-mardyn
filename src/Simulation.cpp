@@ -403,12 +403,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
 
-	inp.changecurrentnode("simulation");
-	readXML(inp);
-	inp.changecurrentnode("..");
-
-
 	if (inp.changecurrentnode("simulation")) {
+		readXML(inp);
+
 		string siminpfile, siminptype;
 		if (inp.getNodeValue("input", siminpfile)) {
 			global_log->info() << "reading input file:\t" << siminpfile << endl;
@@ -461,6 +458,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 		inp.changecurrentnode("..");
 	} // simulation-section
+	else {
+		global_log->error() << "Simulation section missing" << endl;
+		exit(1);
+	}
+
 
 	// read particle data
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
