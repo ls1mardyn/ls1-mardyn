@@ -126,7 +126,7 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 	// Construct the SoA.
 	assert(!_particleCellDataVector.empty());
 	CellDataSoA* soaPtr = _particleCellDataVector.back();
-	global_log->debug() << " _particleCellDataVector.size()=" << _particleCellDataVector.size() << " soaPtr=" << soaPtr << " nLJCenters=" << nLJCenters << std::endl;
+// 	global_log->debug() << " _particleCellDataVector.size()=" << _particleCellDataVector.size() << " soaPtr=" << soaPtr << " nLJCenters=" << nLJCenters << std::endl;
 	soaPtr->resize(numMolecules,nLJCenters);
 	soaPtr->_num_ljcenters = nLJCenters;
 	soaPtr->_num_molecules = numMolecules;
