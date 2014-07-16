@@ -19,7 +19,9 @@ using namespace std;
 #define FLUID_CO2 4
 #define FLUID_EOX 5
 #define FLUID_JES 6
-#define FLUID_VEG 7
+#define FLUID_MER 7
+#define FLUID_TOL 8
+#define FLUID_VEG 9
 
 #define EPS_AR 3.69853e-04
 #define SIG_AR 6.41600
@@ -95,6 +97,15 @@ using namespace std;
 #define I_YY_JES 0.0060038
 #define I_ZZ_JES 0.0091988
 #define JES_LONG 1.0
+
+#define EPS_OMER 3.18243e-04
+#define SIG_OMER 5.62288
+#define OMERMASS 0.0159994
+#define EPS_CMER 3.9181e-05
+#define SIG_CMER 5.31712
+#define QDR_CMER -3.02883
+#define CMERMASS 0.012011
+#define MER_LONG 4.8638
 
 #define EPS_OVEG 2.9515e-04
 #define SIG_OVEG 5.9695

@@ -212,6 +212,13 @@ void Domain::write(char* prefix, int format, double mu, double x)
       FLUIDLONG = JES_LONG;
       LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
    }
+   else if(fluid == FLUID_MER)
+   {
+      FLUIDMASS = CMERMASS + 2.0*OMERMASS;
+      FLUIDLONG = MER_LONG;
+      QDR_FLUID = QDR_CMER;
+      LJ_CUTOFF = 4.0*SIG_OMER + 0.5*FLUIDLONG;
+   }
    else if(fluid == FLUID_VEG)
    {
       FLUIDMASS = OVEGMASS + 2.0*HVEGMASS;
@@ -288,6 +295,13 @@ void Domain::write(char* prefix, int format, double mu, double x)
       SIG_FLUID2 = SIG_OJES;
       FLUIDLONG2 = JES_LONG;
       LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+   }
+   else if(fluid == FLUID_MER)
+   {
+      FLUIDMASS2 = CMERMASS + 2.0*OMERMASS;
+      FLUIDLONG2 = MER_LONG;
+      QDR_FLUID2 = QDR_CMER;
+      LJ_CUTOFF2 = 4.0*SIG_OMER + 0.5*FLUIDLONG;
    }
    else if(fluid2 == FLUID_VEG)
    {
@@ -415,6 +429,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
       }
+      else if(fluid == FLUID_MER)
+      {
+         xdr << "3 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
       else if(fluid == FLUID_VEG)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
@@ -437,6 +455,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
       else if(fluid == FLUID_JES)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid == FLUID_MER)
+      {
+         xdr << "3 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
       }
       else if(fluid == FLUID_VEG)
       {
@@ -496,6 +518,25 @@ void Domain::write(char* prefix, int format, double mu, double x)
 
          xdr << "0.0 0.0 0.0\n";
       }
+      else if(fluid == FLUID_MER)
+      {
+         xdr << "0.0 0.0 " << -0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 " << +0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 0.0\t" << CMERMASS/REFMASS << " "
+             << EPS_CMER/EPS_REF << " " << SIG_CMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID/QDR_REF;
+
+         xdr << "\n0.0 0.0 0.0\n";
+      }
       else if(fluid == FLUID_VEG)
       {
          xdr << R0_O_VEG/SIG_REF << " " << R1_O_VEG/SIG_REF << " " << R2_O_VEG/SIG_REF << "\t"
@@ -544,6 +585,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
       }
+      else if(fluid2 == FLUID_MER)
+      {
+         xdr << "3 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
       else if(fluid2 == FLUID_VEG)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
@@ -566,6 +611,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
       else if(fluid2 == FLUID_JES)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 == FLUID_MER)
+      {
+         xdr << "3 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
       }
       else if(fluid2 == FLUID_VEG)
       {
@@ -624,6 +673,25 @@ void Domain::write(char* prefix, int format, double mu, double x)
              << "0.0 " << CHG_EJES/REFCARG << "\n";
 
          xdr << "0.0 0.0 0.0\n";
+      }
+      else if(fluid2 == FLUID_MER)
+      {
+         xdr << "0.0 0.0 " << -0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 " << +0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 0.0\t" << CMERMASS/REFMASS << " "
+             << EPS_CMER/EPS_REF << " " << SIG_CMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID/QDR_REF;
+
+         xdr << "\n0.0 0.0 0.0\n";
       }
       else if(fluid2 == FLUID_VEG)
       {

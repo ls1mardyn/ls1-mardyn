@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format (active by default)\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES or VEG\n-r\tuse b-r-anch format\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
+   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format (active by default)\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES, MER, TOL or VEG\n-r\tuse b-r-anch format\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
    if((argc < 8) || (argc > 23))
    {
       cout << "There are " << argc
@@ -76,6 +76,8 @@ int main(int argc, char** argv)
             else if(!strcmp(argv[i], "CO2")) fluid = FLUID_CO2;
             else if(!strcmp(argv[i], "EOX")) fluid = FLUID_EOX;
             else if(!strcmp(argv[i], "JES")) fluid = FLUID_JES;
+            else if(!strcmp(argv[i], "MER")) fluid = FLUID_MER;
+            else if(!strcmp(argv[i], "TOL")) fluid = FLUID_TOL;
             else if(!strcmp(argv[i], "VEG")) fluid = FLUID_VEG;
             else
             {
@@ -96,6 +98,8 @@ int main(int argc, char** argv)
             else if(!strcmp(argv[i], "CO2")) fluid2 = FLUID_CO2;
             else if(!strcmp(argv[i], "EOX")) fluid2 = FLUID_EOX;
             else if(!strcmp(argv[i], "JES")) fluid2 = FLUID_JES;
+            else if(!strcmp(argv[i], "MER")) fluid2 = FLUID_MER;
+            else if(!strcmp(argv[i], "TOL")) fluid2 = FLUID_TOL;
             else if(!strcmp(argv[i], "VEG")) fluid2 = FLUID_VEG;
             else
             {
@@ -186,6 +190,11 @@ int main(int argc, char** argv)
 
    if(!in_ETAF) ETAF = 1.0;
    if(!in_XIF) XIF = 1.0;
+   if(!in_XIF && in_fluid2 && (((fluid == FLUID_MER) && (fluid2 == FLUID_TOL)) || ((fluid == FLUID_TOL) && (fluid2 == FLUID_MER))))
+   {
+      cerr << "Default binary parameter for the modified Berthelot mixing rule with CO2 (Merker) and toluene xi = 0.95.\n";
+      XIF = 0.95;
+   }
    if(!in_rho)
    {
       cout << "Fatal error: no fluid density was specified.\n\n";
