@@ -40,10 +40,6 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       strstrm << prefix << ".inp";
    }
-   if(format == FORMAT_BUCHHOLZ)
-   {
-      strstrm << prefix << ".inp";
-   }
    xdr.open(strstrm.str().c_str(), ios::trunc);
    if(format == FORMAT_BRANCH)
    {

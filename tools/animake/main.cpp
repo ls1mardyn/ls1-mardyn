@@ -27,7 +27,7 @@ int main(int argc, char** argv)
    double mu = 0.0;
    int fluid;
    int fluid2 = FLUID_NIL;
-   int format = FORMAT_BERNREUTHER;
+   int format = FORMAT_BUCHHOLZ;
    char* prefix = argv[1];
    bool muVT = false;
 
