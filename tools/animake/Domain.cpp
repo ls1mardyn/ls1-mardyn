@@ -549,7 +549,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
          if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
          xdr << "\n";
 
-         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID/QDR_REF;
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_CMER/QDR_REF;
 
          xdr << "\n0.0 0.0 0.0\n";
       }
@@ -792,7 +792,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
          if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
          xdr << "\n";
 
-         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_FLUID/QDR_REF;
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_CMER/QDR_REF;
 
          xdr << "\n0.0 0.0 0.0\n";
       }
