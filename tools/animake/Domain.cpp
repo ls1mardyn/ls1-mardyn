@@ -298,7 +298,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
       FLUIDLONG2 = JES_LONG;
       LJ_CUTOFF2 = 4.0*SIG_FLUID2 + 0.5*FLUIDLONG2;
    }
-   else if(fluid == FLUID_MER)
+   else if(fluid2 == FLUID_MER)
    {
       FLUIDMASS2 = CMERMASS + 2.0*OMERMASS;
       FLUIDLONG2 = MER_LONG;
