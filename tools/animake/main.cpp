@@ -13,7 +13,7 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format (active by default)\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES, MER, TOL or VEG\n-r\tuse b-r-anch format\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
+   const char* usage = "usage: animake <prefix> -c <density> [-e] [-f <fluid>] [-g <second component>] [-J <eta>] [-m <chemical potential>] -N <N_fluid> [-r] [-s <size unit [A]>] -T <temperature> [-u] [-W <energy and temperature unit [K]>] [-x <2nd comp. mole fract.>] [-Y <mass unit [u]>] [-y <y dim> [-z <z dim>]] [-5 <xi>]\n\n-e\tuse B-e-rnreuther format\n-f\tCH4 (default), Ar, C2H6, N2, CO2, EOX, JES, MER, TOL or VEG\n-r\tuse b-r-anch format\n-s\tgiven in units of Angstrom; default: 1 = 0.5291772 A\n-u\tuse B-u-chholz format (active by default)\n-W\tgiven in units of K; default value: 1 = 315774.5 K\n-Y\tgiven in units of g/mol; default value: 1 = 1000 g/mol\n\n";
    if((argc < 8) || (argc > 23))
    {
       cout << "There are " << argc
