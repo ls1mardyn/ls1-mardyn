@@ -396,7 +396,7 @@ Molecule ChemicalPotential::loadMolecule()
             {
                double qtr[4];
                double qqtr = 0.0;
-               for(int d=0; d < 3; d++)
+               for(int d=0; d < 4; d++)
                {
                   qtr[d] = -0.5 + this->rndmomenta.rnd();
                   qqtr += qtr[d] * qtr[d];
