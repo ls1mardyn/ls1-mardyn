@@ -375,14 +375,48 @@ Molecule ChemicalPotential::loadMolecule()
 {
 	assert(this->reservoir != NULL);
 	Molecule tmp = *reservoir;
-	unsigned rot_dof = tmp.component()->getRotationalDegreesOfFreedom();
+	unsigned rotdof = tmp.component()->getRotationalDegreesOfFreedom();
 	assert(tmp.componentid() == componentid);
 #ifndef NDEBUG
 	tmp.check(tmp.id());
 #endif
 	if(!this->widom)
-		for(int d=0; d < 3; d++)
-			tmp.setv(d, sqrt(this->T * (1.0 + rot_dof/3.0) / tmp.mass()) * ((this->rndmomenta.rnd() > 0.5)? 1.0: -1.0));
+	{
+            double v[3];
+            double vv = 0.0;
+            for(int d=0; d < 3; d++)
+            {
+               v[d] = -0.5 + this->rndmomenta.rnd();
+               vv += v[d] * v[d];
+            }
+            double vnorm = sqrt(3.0*T / (vv * tmp.mass()));
+            for(int d=0; d < 3; d++) tmp.setv(d, v[d]*vnorm);
+
+            if(rotdof > 0)
+            {
+               double qtr[4];
+               double qqtr = 0.0;
+               for(int d=0; d < 3; d++)
+               {
+                  qtr[d] = -0.5 + this->rndmomenta.rnd();
+                  qqtr += qtr[d] * qtr[d];
+               }
+               double qtrnorm = sqrt(1.0 / qqtr);
+               Quaternion tqtr = Quaternion(qtr[0]*qtrnorm, qtr[1]*qtrnorm, qtr[2]*qtrnorm, qtr[3]*qtrnorm);
+               tmp.setq(tqtr);
+
+               double D[3];
+               double Dnorm = 0.0;
+               for(int d=0; d < 3; d++) D[d] = -0.5 + this->rndmomenta.rnd();
+               double w[3];
+               tqtr.rotate(D, w);
+               double Iw2 = w[0]*w[0] * tmp.component()->I11()
+                          + w[1]*w[1] * tmp.component()->I22()
+                          + w[2]*w[2] * tmp.component()->I33();
+               Dnorm = sqrt(T*rotdof / Iw2);
+               for(int d=0; d < 3; d++) tmp.setD(d, D[d]*Dnorm);
+            }
+	}
 
 	return tmp;
 }

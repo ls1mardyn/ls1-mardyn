@@ -69,14 +69,14 @@ public:
 
 
 	/** set molecule's orientation */
-	void setq(Quaternion q){ _q = q;}
+	void setq(Quaternion q){ _q = q; }
 
 	/** get coordinate of the rotatational speed */
 	double D(unsigned short d) const { return _L[d]; }
 	/** get coordinate of the current angular momentum  onto molecule */ 
-	double M(unsigned short d) const {return _M[d]; }
+	double M(unsigned short d) const { return _M[d]; }
 
-
+        void setD(unsigned short d, double D) { this->_L[d] = D; }
 	inline void move(int d, double dr) { _r[d] += dr; } /* TODO: is this realy needed? */
 
 
