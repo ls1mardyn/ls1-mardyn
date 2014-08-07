@@ -10,7 +10,8 @@ Username    Name                        Affiliation(s)
 hpcbern     Martin Bernreuther          HLRS
 horsch      Martin Horsch               UKL, UPB
 hpcchris    Christoph Niethammer        HLRS
-eckhardw    Wolfgang Eckhardt           TUM
+eckhardw,   Wolfgang Eckhardt           TUM
+eckhardw-ro
 buchholm    Martin Buchholz             TUM
 sbecker     Stefan Becker               UKL
 hpcfalko    Falko Schmidt               HLRS
@@ -22,6 +23,9 @@ kovacevt    Kovacevic Tijana            TUM
 weisslj     Johannes Weißl              TUM
 wolfe       Wolfgang Hölzl              TUM
 yutaka      Yutaka Nagashima            TUM
+mettie      Andre Füssel                HLRS
+rhobert     Robert Hajda                TUM
+dejoy       De-Joy Amankwah             UKL
 
 
 
