@@ -34,21 +34,20 @@ USAGE:
 
 The basic command to run ls1-mardyn is as follows:
 
-mardyn [options] <inputfile> <timesteps> [outputprefix]
+MarDyn [options] <inputfile> <timesteps> [outputprefix]
 
-where 
-mardyn is the executable build in the INSTALLATION section,
-[options] are any -- prefixed options as listed by mardyn --help
+where Mardyn is the executable build in the INSTALLATION section,
+[options] are any -- prefixed options as listed by 'MarDyn --help'
 <inputfile> is a input file
 <timesteps> is the number of time steps to be executed in the simulation loop and
 outputprefiy is an optional prefix for all result files
 
 detailed help can be obtained by running 
-mardyn --help
+MarDyn --help
 
 example files can be found in the examples folder.
 
 For example:
 
 cd examples
-mpirun -np 2 mardyn lj40000_t300.cfg 100
+mpirun -np 2 MarDyn lj40000_t300.cfg 100
