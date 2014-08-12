@@ -66,7 +66,7 @@ void CheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDec
 		if(_appendTimestamp) {
 			filenamestream << "-" << gettimestring();
 		}
-		filenamestream << ".restart.xdr";
+		filenamestream << ".restart.dat";
 
 		string filename = filenamestream.str();
 		domain->writeCheckpoint(filename, particleContainer, domainDecomp);
