@@ -66,4 +66,4 @@ ParticleContainer* utils::TestWithSimulationSetup::initializeFromFile(
 			type, _domain, _domainDecomposition, cutoff, getTestDataFilename(fileName));
 }
 
-#endif
+#endif /* UNIT_TESTS */
