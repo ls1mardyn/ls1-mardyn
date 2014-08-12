@@ -470,7 +470,7 @@ void Domain::writeCheckpoint( string filename,
 	if(!this->_localRank)
 	{
 		ofstream checkpointfilestream(filename.c_str());
-		checkpointfilestream << "mardyn trunk " << VERSION;
+		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 		checkpointfilestream << "\n";
 		checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 		if(this->_componentwiseThermostat)
