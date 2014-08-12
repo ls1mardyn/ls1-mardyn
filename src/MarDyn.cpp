@@ -11,7 +11,7 @@
 #include "Simulation.h"
 
 #if ENABLE_MPI
-#include "parallel/KDDecomposition2.h"
+#include "parallel/KDDecomposition.h"
 #include <mpi.h>
 #endif
 
@@ -154,11 +154,11 @@ int main(int argc, char** argv) {
     if( options.is_set("domain-decomposition") ) {
         string domainDecomp((const char *) options.get("domain-decomposition"));
         global_log->info() << "Setting domain decomposition via command line to " << domainDecomp << endl;
-        if ( domainDecomp == "KDDecomposition2" ) {
+        if ( domainDecomp == "KDDecomposition" ) {
             DomainDecompBase *domainDecomp;
             int updateFrequency = 100;
             int fullSearchThreshold = 3;
-            domainDecomp = (DomainDecompBase*) new KDDecomposition2(simulation.getcutoffRadius(), simulation.getDomain(), updateFrequency, fullSearchThreshold);
+            domainDecomp = (DomainDecompBase*) new KDDecomposition(simulation.getcutoffRadius(), simulation.getDomain(), updateFrequency, fullSearchThreshold);
             simulation.setDomainDecomposition(domainDecomp);
         }
     }
@@ -233,8 +233,8 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
 	dgroup.add_option("--cutoff-radius") .type("float") .set_default(5.0) .help("radius of sphere around a particle in which forces are considered (default: %default)");
 	dgroup.add_option("--cells-in-cutoff") .type("int") .set_default(2) .help("number of cells in cutoff-radius cube (default: %default); only used by LinkedCells particle container");
-	char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition", "KDDecomposition2" };
-	dgroup.add_option("--domain-decomposition").dest("domain-decomposition") .choices(&dd_choices[0], &dd_choices[3]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
+	char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition" };
+	dgroup.add_option("--domain-decomposition").dest("domain-decomposition") .choices(&dd_choices[0], &dd_choices[2]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
 	dgroup.add_option("--timestep-length") .type("float") .set_default(0.004) .help("length of one timestep in TODO (default: %default)");
 	op.add_option_group(dgroup);
 

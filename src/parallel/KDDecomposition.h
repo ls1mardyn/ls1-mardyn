@@ -1,5 +1,5 @@
-#ifndef KDDECOMPOSITION_H_
-#define KDDECOMPOSITION_H_
+#ifndef KDDECOMPOSITION2_H_
+#define KDDECOMPOSITION2_H_
 
 #include <mpi.h>
 
@@ -11,58 +11,57 @@
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
 
-class Molecule;
 class ParticleData;
 class KDNode;
 
-//#######################################################
-//### KDDecomposition class                           ###
-//#######################################################
 
-//! @brief domain decomposition based on a kind of KD-Tree
-//! @author Martin Buchholz
-//!
-//! There are two main goals which shall be achieved by this class.
-//! First, it should be able to distribute the load evenly among the
-//! processes (so create a load-balanced decomposition). The second goal
-//! is to do that in a way so that the domain boundaries are in region
-//! which are not dense (e.g. gas). This reduces the number of
-//! necessary double computations and the amount of communication.
-//!
-//! The technique used is a modified KD-Tree. First, the region is discretised
-//! into cells (size equals (or larger then) cutoffradius). This region is then
-//! divided into two smaller cuboids. Those cuboids are again recursively divided
-//! into smaller cuboids. Three questions arise:
-//! - in which dimension (x,y,z) is the cube divided in each step ?
-//! - where is the "cut" (how many cell-layers on the "left" and on the "right") ?
-//! - how many processes share the "left" and the "right" part ?
-//! This class tries to find an answer to this three questions which balances the
-//! load and and the same time tries to minimize the communication (and double
-//! calculation) costs. This is done by "guessing" the overall costs/time for
-//! each possible division and selection the best. A guess basically works as follows:
-//! for one division, the computation costs for each part are calculated (using
-//! e.g. number of particles, number of pairs, some heuristics, ...). For each
-//! part, these costs are divide by the number of procs which share this part
-//! (here again the best combination is used). Additionally, the costs for the "cut"
-//! are calculated (again heuristics e.g. depending on the number of pairs which are cut)
-//! With all the calculated costs, one can select that division which is cheapest.
-//! This is done recursively until each process has its own region.
-//!
-//! @todo Development of this class is finished, some correctness tests still have to be done
+/**
+ * This class is coppy&paste from KDDecomposition. Basic idea is to build up
+ * all possible subdivisions and do a A*-like search of the best subdivision.
+ *
+ * The function to minimize is the load imbalance:
+ * sum over all children i: \sum (load_i - _optimalLoad)^2
+ *
+ * During the downward pass an estimate is the expected load imbalance, which is
+ * averaged over all children, in the upward pass, the exact imbalance is calculated.
+ *
+ * Note that it is important for the A*-search that the estimate is an underestimation (<=)
+ * of the load imbalance.
+ * Note that some computation of the deviation / expected deviation is done in KDNode.
+ *
+ * \todo Cleanly merge with or replace KDDecomposition
+ * \todo Rewrite this cleanly so that:
+ *       - Communication with own process (if one process needs to create its periodic
+ *         images) is also performed via MPI communication, this should simplify the code
+ *         at now runtime costs.
+ *       - Seperate better between creation of balanced KDTree and the simple communication
+ *         which takes place every time step
+ *       - extract the "ownArea"-thing from the decomposition-methods,
+ *         here KDNode::findAreaForProcess() should do the job.
+ * \todo track the issue with eventually lost particles (test case Stefan Becker).
+ * \todo Profile and tune!
+ */
 class KDDecomposition: public DomainDecompBase{
 
 	friend class KDDecompositionTest;
 
  public:
-	//! @brief create an initial decomposition tree
-	//!
-	//! The constructor has to determine the own rank and the number of neighbours.
-	//! It has to determine the number of cells and create an initial decomposition
-	//! of the domain (no knowledge about particles yet), which is stored in
-	//! _decompTree and _ownArea
-	KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency);
+	/** @brief create an initial decomposition tree
+	 *
+	 * The constructor determines the number of cells and creates an initial decomposition
+	 * of the domain (not yet balanced), which is stored in _decompTree and _ownArea.
+	 * @param cutoffRadius largest cutoff radius of a molecule (determines a basic
+	 *                     cell for loadbalancing)
+	 * @param domain
+	 * @param updateFrequency every n-th timestep, load will be balanced.
+	 * @param fullSearchThreshold If a KDNode has a processor count less or equal this number,
+	 *                            all possible decompositions will be investigated, so it
+	 *                            influences the quality of the load balancing. I recommend to
+	 *                            set it to 2 - 4.
+	 */
+	KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2);
 
-	KDDecomposition(){}
+    KDDecomposition(){}
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
@@ -257,7 +256,6 @@ class KDDecomposition: public DomainDecompBase{
 	//! and stored in the moleculeContainer
 	//! @param moleculeContainer used to walk through the molecules, create copies and store them again
 	//! @param domain needed to get the length of the domain
-	//! @param components needed to create new molecules
 	//! @todo make it work with overlapping decomposition trees
 	//! @todo more efficiency (don't run over all molecules)
 	void createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain);
@@ -299,16 +297,6 @@ class KDDecomposition: public DomainDecompBase{
 	int mod(int number, int modulo);
 
 
-	//! @brief core method of this class which calculates a load-balanced decomposition
-	//!
-	//! Part of the description of this method is already given in the description of this class.
-	//! This method recursively divides a region into two smaller regions. The chosen
-	//! division tries to balance the load in the two parts (weighted with the number of
-	//! processes which have to deal with each of the parts) and tries to minimize the
-	//! communication overhead. A more detailed description is found in the
-	//! dissertation of Martin Buchholz
-	bool recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
-
 	//! @brief exchange decomposition data and build up the resulting tree
 	//!
 	//! After the new decomposition has been determined (by recDecompPar), each
@@ -347,6 +335,18 @@ class KDDecomposition: public DomainDecompBase{
 
 	void balance();
 
+	bool decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
+
+	bool decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup, const double globalMinimalDeviation);
+
+	/**
+	 * Get the load for the area represented by this node.
+	 *
+	 * @note: if this implementation is too slow for large domains, we could change
+	 *        it so that all division costs for
+	 */
+	bool calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup);
+
 	//######################################
 	//###    private member variables    ###
 	//######################################
@@ -375,8 +375,7 @@ class KDDecomposition: public DomainDecompBase{
 
 	//! Number of particles for each cell (including halo?)
 	unsigned int* _numParticlesPerCell;
-	//TODO
-	float* _globalLoadPerCell;
+
 	ParticleContainer* _moleculeContainer;
 
 	//! variable used for different kinds of collective operations
@@ -390,12 +389,12 @@ class KDDecomposition: public DomainDecompBase{
 	//! determines how often rebalancing is done
 	int _frequency;
 
-	//! weighting of costs for distance and force calculations
-	//! Load(cell) = alpha * distancecosts(cell) + (1-alpha) * forcecosts(cell)
-	//! alpha has to be between 0.0 and 1.0 but usually should be larger than 0.3
-	//! For simple fluids (1CLJ), 1.0 is optimal, for complex fluids a smaller value is better
-	//! (e.g. 0.7 for 2CLJQ)
-	double _alpha;
+	/*
+	 * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,
+	 * it is for each dimension divided in the middle only. Otherwise, all possible subdivisions
+	 * are created.
+	 */
+	int _fullSearchThreshold;
 
 	// mpi data type for particle data
 	MPI_Datatype _mpi_Particle_data;
@@ -403,4 +402,4 @@ class KDDecomposition: public DomainDecompBase{
 };
 
 
-#endif /*KDDECOMPOSITION_H_*/
+#endif /* KDDECOMPOSITION2_H_ */

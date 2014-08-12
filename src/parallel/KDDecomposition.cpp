@@ -1,30 +1,28 @@
+#include "KDDecomposition.h"
+
 #include <cfloat>
 #include <sstream>
 #include <fstream>
 #include <climits>
 
-#include "KDDecomposition.h"
-
-#include "molecules/Molecule.h"
 #include "Domain.h"
+#include "KDNode.h"
+#include "molecules/Molecule.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
-#include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "particleContainer/adapter/ParticlePairs2LoadCalcAdapter.h"
-#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "ParticleData.h"
-#include "KDNode.h"
 #include "utils/Logger.h"
+#include "utils/xmlfileUnits.h"
 
 #include <cmath>
 
 using namespace std;
 using Log::global_log;
 
-//#define DEBUG_DECOMP
+#define DEBUG_DECOMP
 
-KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alpha, int updateFrequency)
-		: _steps(0), _frequency(updateFrequency), _alpha(alpha) {
+KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
+		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold) {
 
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_ownRank) );
 	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
@@ -49,7 +47,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	// create initial decomposition
 	// ensure that enough cells for the number of procs are avaialble
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
-	if (! _decompTree->isResolvable()) {
+	if (!_decompTree->isResolvable()) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
 		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
@@ -61,16 +59,32 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, double alp
 	// initialize the mpi data type for particles once in the beginning
 	ParticleData::setMPIType(_mpi_Particle_data);
 	KDNode::initMPIDataType();
+
+	global_log->info() << "Created KDDecomposition with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
+
+#ifdef DEBUG_DECOMP
+	global_log->info() << "Initial Decomposition: " << endl;
+	if (_ownRank == 0) {
+		_decompTree->printTree("");
+	}
+#endif
 }
 
 KDDecomposition::~KDDecomposition() {
 	delete[] _numParticlesPerCell;
+//	_decompTree->serialize(string("kddecomp.dat"));
+	if (_ownRank == 0) {
+		_decompTree->plotNode("kddecomp.vtu");
+	}
 	KDNode::shutdownMPIDataType();
 }
 
 void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
-	/* no parameters */
 	/* TODO: Maybe add decomposition dimensions, default auto. */
+	xmlconfig.getNodeValue("updateFrequency", _frequency);
+	global_log->info() << "KDDecomposition update frequency: " << _frequency << endl;
+	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
+	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
 }
 
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
@@ -91,16 +105,12 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 		getNumParticles(moleculeContainer);
 		newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
-		ParticlePairs2LoadCalcAdapter loadHandler(_globalCellsPerDim, &(_ownArea->_lowCorner[0]), _cellSize, _moleculeContainer);
-		LegacyCellProcessor cellProcessor(moleculeContainer->getCutoff(), 0.0, 0.0, &loadHandler);
-		_moleculeContainer->traverseCells(cellProcessor);
-		_globalLoadPerCell = loadHandler.getLoad();
-		if (recDecompPar(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
+
+		if (decompose(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
 
-		completeTreeInfo(newDecompTree, newOwnArea);
-		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
+		completeTreeInfo(newDecompTree, newOwnArea);		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
 
 #ifdef DEBUG_DECOMP
 		if (_ownRank == 0) {
@@ -188,7 +198,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 				newMol.r[2] += domain->getGlobalLength(2);
 			else if (newMol.r[2] >= highLimit[2])
 				newMol.r[2] -= domain->getGlobalLength(2);
-
+			
 			Component *component = _simulation.getEnsemble()->component(newMol.cid);
 			Molecule m1 = Molecule(newMol.id, component, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2], newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2]);
 			moleculeContainer->addParticle(m1);
@@ -589,7 +599,6 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 					else
 						newPosition[d2] = molPtr->r(d2);
 				}
-				
 				Component* component = _simulation.getEnsemble()->component(molPtr->componentid());
 				Molecule m1 = Molecule(molPtr->id(),component,
 				                       newPosition[0], newPosition[1], newPosition[2],
@@ -604,215 +613,6 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 }
 
 
-bool KDDecomposition::recDecompPar(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup) {
-	bool domainTooSmall = false;
-	// recursion termination criterion
-	if (fatherNode->_numProcs == 1) {
-		// own area must belong to this process!
-		assert(fatherNode->_owningProc == _ownRank);
-		ownArea = fatherNode;
-		return domainTooSmall;
-	}
-	bool coversAll[KDDIM];
-    
-	for (int dim = 0; dim < KDDIM; dim++) {
-		coversAll[dim] = fatherNode->_coversWholeDomain[dim];
-	}
-	int divDir = 0;
-	int divIdx = 0;
-	double maxProcCost = DBL_MAX;
-	int numProcsLeft = 0;
-	int numProcsRight = 0;
-
-	vector<vector<double> > costsLeft(3);
-	vector<vector<double> > costsRight(3);
-	calculateCostsPar(fatherNode, costsLeft, costsRight, commGroup);
-
-#ifdef DEBUG_DECOMP
-	std::stringstream fname;
-	fname << "Division_" << _ownRank << "_step_" << _steps << ".txt";
-	std::ofstream filestream(fname.str().c_str(), ios::app);
-	filestream << " Division at rank=" << _ownRank << " for node [" << fatherNode->_lowCorner[0]
-	           << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
-	           << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "]" << endl;
-#endif
-	for (int dim = 0; dim < 3; dim++) {
-
-		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
-		for (int i = 1; i < fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - 1; i++) {
-			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) fatherNode->_numProcs);
-
-			// costs for initial guessed process distribution
-			int numProcsLeftTest = (int) max(1.0, min(floor(costsLeft[dim][i] / optCostPerProc), (double) (fatherNode->_numProcs - 1)));
-			int numProcsRightTest = fatherNode->_numProcs - numProcsLeftTest;
-#ifdef DEBUG_DECOMP
-			filestream << "divDim=" << dim << " sectionAt=" << i << " costsLeft=" << costsLeft[dim][i] << " costsRight="
-				<< costsRight[dim][i] << " totalCosts=" << (costsLeft[dim][i] + costsRight[dim][i]) <<" initailGuess: numProcsLeftTest=" << numProcsLeftTest << " numProcsRightTest=" << numProcsRightTest << endl;
-#endif
-
-			// Ensure that each sub-area is large enough to be distributed to the chosen number of processes
-			bool ok = false;
-			bool procShiftAllowed = true;
-			int maxProcsLeft = (i + 1) / 2;
-			int maxProcsRight = (fatherNode->_highCorner[dim] - fatherNode->_lowCorner[dim] - i) / 2;
-			for (int innerDim = 0; innerDim < 3; innerDim++) {
-				if (innerDim != dim) {
-					maxProcsLeft *= (fatherNode->_highCorner[innerDim] - fatherNode->_lowCorner[innerDim] + 1) / 2;
-					maxProcsRight *= (fatherNode->_highCorner[innerDim] - fatherNode->_lowCorner[innerDim] + 1) / 2;
-				}
-			}
-			// if not resolvable, continue with next loop
-			if ((numProcsLeftTest + numProcsRightTest) > (maxProcsLeft + maxProcsRight)) {
-				domainTooSmall = true;
-#ifdef DEBUG_DECOMP
-				filestream << " NOT RESOLVABLE!" << endl;
-#endif
-				continue;
-			}
-			if (numProcsLeftTest <= maxProcsLeft && numProcsRightTest <= maxProcsRight)
-				ok = true;
-			if (not (ok)) {
-				domainTooSmall = true;
-				procShiftAllowed = false;
-				int shiftDir;
-				if (maxProcsLeft < numProcsLeftTest)
-					shiftDir = 1; // move procs to right
-				else
-					shiftDir = -1; // move procs to left
-				while (not (ok)) {
-					numProcsLeftTest -= shiftDir;
-					numProcsRightTest += shiftDir;
-					if (maxProcsLeft >= numProcsLeftTest && maxProcsRight >= numProcsRightTest)
-						ok = true;
-				}
-			}
-			// unsigned long numBoundCellsRight = numCellsRight - (unsigned long) (((double) numProcsRightTest) * pow(pow(numCellsRight / numProcsRightTest, 1. / 3.) - 2, 3));
-			double maxProcCostOld = max(costsLeft[dim][i] / (double) numProcsLeftTest, costsRight[dim][i] / (double) numProcsRightTest);
-			// Find out in which direction process distribution has to be shifted
-			int procShift = 1;
-			if (costsLeft[dim][i] / numProcsLeftTest > costsRight[dim][i] / numProcsRightTest) {
-				procShift = -1;
-			}
-			double maxProcCostNew = maxProcCostOld;
-			// if shifted distribution better the old one, continue shifting
-			if (procShiftAllowed) {
-				while (maxProcCostNew <= maxProcCostOld) {
-					maxProcCostOld = maxProcCostNew;
-					numProcsLeftTest = numProcsLeftTest + procShift;
-					numProcsRightTest = numProcsRightTest - procShift;
-					if (numProcsLeftTest > maxProcsLeft || numProcsRightTest > maxProcsRight) {
-						break;
-					}
-					if (numProcsLeftTest >= fatherNode->_numProcs || numProcsLeftTest <= 0 || numProcsRightTest >= fatherNode->_numProcs || numProcsRightTest <= 0) {
-						break;
-					}
-					else {
-						maxProcCostNew = max(costsLeft[dim][i] / (double) numProcsLeftTest, costsRight[dim][i] / (double) numProcsRightTest);
-					}
-				}
-				// shift back one element, as old dist was better
-				numProcsLeftTest = numProcsLeftTest - procShift;
-				numProcsRightTest = numProcsRightTest + procShift;
-			}
-
-			if (maxProcCostOld < maxProcCost) {
-				divDir = dim;
-				divIdx = i + fatherNode->_lowCorner[dim];
-				maxProcCost = maxProcCostOld;
-				numProcsLeft = numProcsLeftTest;
-				numProcsRight = fatherNode->_numProcs - numProcsLeftTest;
-			}
-			// End new version
-
-			if (numProcsLeft <= 0 || numProcsLeft >= fatherNode->_numProcs) {
-				global_log->error() << "ERROR in recDecompPar, part of the domain was not assigned to a proc" << endl;
-				global_simulation->exit(1);
-			}
-		}
-	}
-
-	int costIndex = divIdx - fatherNode->_lowCorner[divDir];
-	double optCostPerProc = (costsLeft[divDir][costIndex] + costsRight[divDir][costIndex]) / ((double) fatherNode->_numProcs);
-#ifdef DEBUG_DECOMP
-	filestream << " Dividing along dim=" << divDir << " divIdx=" << (costIndex) << " optCosts=" << optCostPerProc
-			<< " costLeft=" << costsLeft[divDir][costIndex] << " costsRight=" << costsRight[divDir][costIndex] << endl;
-	filestream << endl;
-	filestream.close();
-#endif
-
-	coversAll[divDir] = false;
-
-	int low1[KDDIM];
-	int low2[KDDIM];
-	int high1[KDDIM];
-	int high2[KDDIM];
-	int id1;
-	int id2;
-	int owner1;
-	int owner2;
-
-	for (int dim = 0; dim < KDDIM; dim++) {
-		low1[dim] = fatherNode->_lowCorner[dim];
-		low2[dim] = fatherNode->_lowCorner[dim];
-		high1[dim] = fatherNode->_highCorner[dim];
-		high2[dim] = fatherNode->_highCorner[dim];
-	}
-
-	low1[divDir] = fatherNode->_lowCorner[divDir];
-	high1[divDir] = divIdx;
-	low2[divDir] = high1[divDir] + 1;
-	high2[divDir] = fatherNode->_highCorner[divDir];
-
-	id1 = fatherNode->_nodeID + 1;
-	id2 = fatherNode->_nodeID + 2 * numProcsLeft;
-	owner1 = fatherNode->_owningProc;
-	owner2 = owner1 + numProcsLeft;
-
-	fatherNode->_child1 = new KDNode(numProcsLeft, low1, high1, id1, owner1, coversAll, fatherNode->_level+1);
-	fatherNode->_child1->_optimalLoadPerProcess = optCostPerProc;
-	fatherNode->_child1->_load = costsLeft[divDir][costIndex];
-	fatherNode->_child2 = new KDNode(numProcsRight, low2, high2, id2, owner2, coversAll, fatherNode->_level+1);
-	fatherNode->_child2->_optimalLoadPerProcess = optCostPerProc;
-	fatherNode->_child2->_load = costsRight[divDir][costIndex];
-
-	vector<int> origRanks;
-	int newNumProcs;
-	if (_ownRank < owner2) {
-		origRanks.resize(numProcsLeft);
-		for (int i = 0; i < numProcsLeft; i++) {
-			//origRanks[i] = i + owner1;
-			origRanks[i] = i;
-		}
-		newNumProcs = numProcsLeft;
-	}
-	else {
-		origRanks.resize(numProcsRight);
-		for (int i = 0; i < numProcsRight; i++) {
-			origRanks[i] = i + numProcsLeft;
-		}
-		newNumProcs = numProcsRight;
-	}
-
-	MPI_Comm newComm;
-	MPI_Group origGroup, newGroup;
-
-	MPI_CHECK( MPI_Comm_group(commGroup, &origGroup) );
-	MPI_CHECK( MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup) );
-	MPI_CHECK( MPI_Comm_create(commGroup, newGroup, &newComm) );
-
-	if (_ownRank < owner2) {
-		// do not use the function call directly in the logical expression, as it may
-		// not be executed due to conditional / short-circuit evaluation!
-		bool subdomainTooSmall = recDecompPar(fatherNode->_child1, ownArea, newComm);
-		domainTooSmall = (domainTooSmall || subdomainTooSmall);
-	} else {
-		assert(_ownRank >= owner2);
-		bool subdomainTooSmall = recDecompPar(fatherNode->_child2, ownArea, newComm);
-		domainTooSmall = (domainTooSmall || subdomainTooSmall);
-	}
-
-	return domainTooSmall;
-}
 
 void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 
@@ -858,6 +658,8 @@ void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {
 				mpiKDNode.getHighCorner(), mpiKDNode.getNodeID(), mpiKDNode.getOwningProc(), coversAll, mpiKDNode.getLevel());
 		ptrToAllNodes[nodeID]->_load = mpiKDNode.getLoad();
 		ptrToAllNodes[nodeID]->_optimalLoadPerProcess = mpiKDNode.getOptimalLoadPerProcess();
+		ptrToAllNodes[nodeID]->_expectedDeviation = mpiKDNode.getExpectedDeviation();
+		ptrToAllNodes[nodeID]->_deviation = mpiKDNode.getDeviation();
 		child1[nodeID] = mpiKDNode.getFirstChildID();
 		child2[nodeID] = mpiKDNode.getSecondChildID();
 		nextSendingProcess = mpiKDNode.getNextSendingProcess();
@@ -887,6 +689,244 @@ void KDDecomposition::printDecompTrees(KDNode* root) {
 	}
 }
 
+#ifdef DEBUG_DECOMP
+void printChildrenInfo(std::ofstream& filestream, KDNode* node, double minDev) {
+	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
+	filestream << " * " << "load=" << node->_load << " optLoad=" << node->_optimalLoadPerProcess << " expDev=" << node->_expectedDeviation << " minDev=" << minDev << endl;
+	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
+	filestream << "   [" << node->_child1->_lowCorner[0] << "," << node->_child1->_lowCorner[1] << "," << node->_child1->_lowCorner[2] << "]"
+			<< "[" << node->_child1->_highCorner[0] << "," << node->_child1->_highCorner[1] << "," << node->_child1->_highCorner[2] << "]"
+			<< " load=" << node->_child1->_load << " #procs=" << node->_child1->_numProcs << " avgLoad=" << node->_child1->calculateAvgLoadPerProc() << endl;
+	for (int i = 0; i < node->_level; i++) { filestream << "   ";}
+	filestream << "   [" << node->_child2->_lowCorner[0] << "," << node->_child2->_lowCorner[1] << "," << node->_child2->_lowCorner[2] << "]"
+				<< "[" << node->_child2->_highCorner[0] << "," << node->_child2->_highCorner[1] << "," << node->_child2->_highCorner[2] << "]"
+				<< " load=" << node->_child2->_load << " #procs=" << node->_child2->_numProcs << " avgLoad=" << node->_child2->calculateAvgLoadPerProc() << endl;
+}
+#endif
+
+bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup) {
+	return decompose(fatherNode, ownArea, commGroup, FLT_MAX);
+}
+
+bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup, const double globalMinimalDeviation) {
+	bool domainTooSmall = false;
+	// recursion termination criterion
+	if (fatherNode->_numProcs == 1) {
+		// own area must belong to this process!
+		assert(fatherNode->_owningProc == _ownRank);
+		ownArea = fatherNode;
+		fatherNode->calculateDeviation();
+		return domainTooSmall;
+	}
+
+	std::list<KDNode*> subdivisions;
+	domainTooSmall = calculateAllSubdivisions(fatherNode, subdivisions, commGroup);
+	assert(subdivisions.size() > 0);
+
+	KDNode* bestSubdivision = NULL;
+	double minimalDeviation = globalMinimalDeviation;
+	list<KDNode*>::iterator iter = subdivisions.begin();
+	int iterations = 0;
+	int log2 = 0;
+	while ((_numProcs >> log2) > 1) {
+		log2++;
+	}
+	// if we are near the root of the tree, we just take the first best subdivision
+	int maxIterations = 1;
+	if (fatherNode->_level > (log2 - _fullSearchThreshold)) {
+		maxIterations = INT_MAX;
+	}
+
+#ifdef DEBUG_DECOMP
+	std::stringstream fname;
+	fname << "Div_proc_" << _ownRank << "_step_" << _steps << ".txt";
+	std::ofstream filestream(fname.str().c_str(), ios::app);
+	filestream.precision(8);
+	for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
+	filestream << "Division at rank=" << _ownRank << " for [" << fatherNode->_lowCorner[0]
+               << ","<< fatherNode->_lowCorner[1] << "," << fatherNode->_lowCorner[2] << "] [" << fatherNode->_highCorner[0]
+               << ","<< fatherNode->_highCorner[1] << "," << fatherNode->_highCorner[2] << "] " <<
+               "level=" << fatherNode->_level << " #divisions=" << subdivisions.size() << endl;
+#endif
+
+	while (iter !=  subdivisions.end() && (iterations < maxIterations) && (*iter)->_expectedDeviation < minimalDeviation) {
+		iterations++;
+#ifdef DEBUG_DECOMP
+		printChildrenInfo(filestream, *iter, minimalDeviation);
+#endif
+		vector<int> origRanks;
+		int newNumProcs;
+		if (_ownRank < (*iter)->_child2->_owningProc) {
+			origRanks.resize((*iter)->_child1->_numProcs);
+			for (int i = 0; i < (*iter)->_child1->_numProcs; i++) {
+				origRanks[i] = i;
+			}
+			newNumProcs = (*iter)->_child1->_numProcs;
+		}
+		else {
+			origRanks.resize((*iter)->_child2->_numProcs);
+			for (int i = 0; i < (*iter)->_child2->_numProcs; i++) {
+				origRanks[i] = i + (*iter)->_child1->_numProcs;
+			}
+			newNumProcs = (*iter)->_child2->_numProcs;
+		}
+
+		MPI_Comm newComm;
+		MPI_Group origGroup, newGroup;
+
+		MPI_CHECK( MPI_Comm_group(commGroup, &origGroup) );
+		MPI_CHECK( MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup) );
+		MPI_CHECK( MPI_Comm_create(commGroup, newGroup, &newComm) );
+
+		KDNode* newOwnArea = NULL;
+		double deviationChildren[] = {0.0, 0.0};
+
+		if (_ownRank < (*iter)->_child2->_owningProc) {
+			// do not use the function call directly in the logical expression, as it may
+			// not be executed due to conditional / short-circuit evaluation!
+			bool subdomainTooSmall = decompose((*iter)->_child1, newOwnArea, newComm, minimalDeviation);
+			deviationChildren[0] = (*iter)->_child1->_deviation;
+			domainTooSmall = (domainTooSmall || subdomainTooSmall);
+		} else {
+			assert(_ownRank >= (*iter)->_child2->_owningProc);
+			bool subdomainTooSmall = decompose((*iter)->_child2, newOwnArea, newComm, minimalDeviation);
+			deviationChildren[1] = (*iter)->_child2->_deviation;
+			domainTooSmall = (domainTooSmall || subdomainTooSmall);
+		}
+
+		MPI_CHECK( MPI_Group_free(&newGroup));
+		MPI_CHECK( MPI_Comm_free(&newComm) );
+		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));
+		(*iter)->_child1->_deviation = deviationChildren[0];
+		(*iter)->_child2->_deviation = deviationChildren[1];
+		(*iter)->calculateDeviation();
+
+#ifdef DEBUG_DECOMP
+		for (int i = 0; i < fatherNode->_level; i++) { filestream << "   ";}
+		filestream << "   deviation=" << (*iter)->_deviation << " (ch1:" << deviationChildren[0] << "ch2:" << deviationChildren[1] << endl;
+#endif
+		if ((*iter)->_deviation < minimalDeviation) {
+			delete bestSubdivision;
+			bestSubdivision = *iter;
+			minimalDeviation = (*iter)->_deviation;
+			ownArea = newOwnArea;
+		} else {
+			delete *iter;
+		}
+		iter++;
+	}
+
+	while (iter !=  subdivisions.end()) {
+		delete *iter;
+		iter++;
+	}
+
+	// reassign children and delete cloned node, if a better solution
+	// was found in this subtree.
+	if (bestSubdivision == NULL) {
+		fatherNode->_deviation = FLT_MAX;
+	} else {
+		*fatherNode = *bestSubdivision;
+		bestSubdivision->_child1 = NULL;
+		bestSubdivision->_child2 = NULL;
+		delete bestSubdivision;
+	}
+#ifdef DEBUG_DECOMP
+	filestream.close();
+#endif
+	return domainTooSmall;
+}
+
+
+bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup) {
+	bool domainTooSmall = false;
+	vector<vector<double> > costsLeft(3);
+	vector<vector<double> > costsRight(3);
+	calculateCostsPar(node, costsLeft, costsRight, commGroup);
+
+	for (int dim = 0; dim < 3; dim++) {
+
+		// if a node has some more processors, we probably don't have to find the
+		// "best" partitioning, but it's sufficient to divide the node in the middle
+		// and shift the processor count according to the load imbalance.
+
+		// loop only from 1 to max-1 (instead 0 to max) to avoid 1-cell-regions
+		int startIndex = 1;
+		int maxEndIndex = node->_highCorner[dim] - node->_lowCorner[dim] - 1;
+		int endIndex = maxEndIndex;
+		if (node->_numProcs > _fullSearchThreshold) {
+			startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
+			endIndex = min(endIndex, startIndex + 1);
+		}
+
+		int i = startIndex;
+		while ( (i < endIndex) || (subdivededNodes.size() == 0 && i < maxEndIndex) ) {
+		//for (int i = startIndex; i < endIndex; i++) {
+			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) node->_numProcs);
+			int optNumProcsLeft = min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
+			int numProcsLeft = (int) max(1, optNumProcsLeft);
+
+			KDNode* clone = new KDNode(*node);
+			if (clone->_level == 0) {
+				clone->_optimalLoadPerProcess = optCostPerProc;
+			}
+
+			clone->split(dim, node->_lowCorner[dim] + i, numProcsLeft);
+			if ( (unsigned int) (clone->_child1->_numProcs + clone->_child2->_numProcs) >
+			        (clone->_child1->getNumMaxProcs() + clone->_child2->getNumMaxProcs())) {
+				domainTooSmall = true;
+				delete clone;
+				// domain is not resolvable at all -> continue
+				// I think, this case should not happen, but Martin Buchholz coded it in his code...
+				// OK, it happens...!
+				i++;
+				continue;
+			}
+
+			while ( (! clone->_child1->isResolvable()) && clone->_child2->isResolvable()) {
+				// shift procs to child 2, adapt owner of child 2
+				clone->_child1->_numProcs--;
+				clone->_child2->_numProcs++;
+				clone->_child2->_owningProc--;
+				clone->_child2->_nodeID = clone->_nodeID + 2 * clone->_child1->_numProcs;
+				domainTooSmall = true;
+			}
+
+			while ( clone->_child1->isResolvable() && (! clone->_child2->isResolvable())) {
+				// shift procs to child 1, , adapt owner of child 2
+				clone->_child1->_numProcs++;
+				clone->_child2->_numProcs--;
+				clone->_child2->_owningProc++;
+				clone->_child2->_nodeID = clone->_nodeID + 2 * clone->_child1->_numProcs;
+				domainTooSmall = true;
+			}
+
+			// In this place, MBu had some processor shifting in his algorithm.
+			// I believe it to be unneccessary, as the ratio of left and right processors
+			// is chosen according to the load ratio (I use round instead of floor).
+			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
+					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
+				global_log->error() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
+				global_simulation->exit(1);
+			}
+			assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
+
+			clone->_child1->_load = costsLeft[dim][i];
+			clone->_child2->_load = costsRight[dim][i];
+			clone->_load = costsLeft[dim][i] + costsRight[dim][i];
+			clone->calculateExpectedDeviation();
+
+			// sort node according to expected deviation
+			list<KDNode*>::iterator iter = subdivededNodes.begin();
+			while (iter != subdivededNodes.end() && ((*iter)->_expectedDeviation < clone->_expectedDeviation)) {
+				iter++;
+			}
+			subdivededNodes.insert(iter, clone);
+			i++;
+		}
+	}
+	return domainTooSmall;
+}
 
 /**
  * Calculate the division cost for all possible divisions of the node area.
@@ -898,14 +938,8 @@ void KDDecomposition::printDecompTrees(KDNode* root) {
  */
 void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& costsLeft, vector<vector<double> >& costsRight, MPI_Comm commGroup) {
 
-	double areaCosts = 0.0;
-
 	vector<vector<double> > cellCosts;
-	vector<vector<double> > sepCostLeft;
-	vector<vector<double> > sepCostRight;
 	cellCosts.resize(3);
-	sepCostLeft.resize(3);
-	sepCostRight.resize(3);
 
 	int newRank;
 	MPI_Group group;
@@ -913,10 +947,6 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 	MPI_CHECK( MPI_Comm_group(commGroup, &group) );
 	MPI_CHECK( MPI_Group_rank(group, &newRank) );
 
-	//vector<vector<double> > costsLeftTemp;
-	//vector<vector<double> > costsRightTemp;
-	//costsLeftTemp.resize(3);
-	//costsRightTemp.resize(3);
 	int dimStartIndex[3];
 	int dimStopIndex[3];
 	dimStartIndex[0] = 0;
@@ -931,11 +961,6 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 	for (int dim = 0; dim < 3; dim++) {
 
 		cellCosts[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostRight[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-
-		//costsLeftTemp[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		//costsRightTemp[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		costsLeft[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 		costsRight[dim].resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
@@ -959,8 +984,6 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 			else
 				cellCosts[dim][i_dim] = cellCosts[dim][i_dim - 1];
 
-			sepCostLeft[dim][i_dim] = 0;
-			sepCostRight[dim][i_dim] = 0;
 			int dim1, dim2;
 			if (dim == 0) {
 				dim1 = 1;
@@ -977,13 +1000,11 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 			for (int i_dim1 = 0; i_dim1 <= area->_highCorner[dim1] - area->_lowCorner[dim1]; i_dim1++) {
 				for (int i_dim2 = 0; i_dim2 <= area->_highCorner[dim2] - area->_lowCorner[dim2]; i_dim2++) {
 					int numParts = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)];
-					float numForcePairs = _globalLoadPerCell[getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)];
 
 					// #######################
 					// ## Cell Costs        ##
 					// #######################
-					cellCosts[dim][i_dim] += _alpha * (double) (numParts * numParts);
-					cellCosts[dim][i_dim] += (1.0 - _alpha) * (double) numForcePairs;
+					cellCosts[dim][i_dim] += (double) (numParts * numParts);
 
 					// all Neighbours
 					for (int neighInd_divDim = i_dim - 1; neighInd_divDim <= i_dim + 1; neighInd_divDim++) {
@@ -1009,45 +1030,8 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 								if (nI_dim2 + area->_lowCorner[dim2] >= _globalCellsPerDim[dim2])
 									nI_dim2 = 0;
 								// count only forward neighbours
-								if (getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area) > getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)) {
-									int numPartsNeigh = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area)];
-									cellCosts[dim][i_dim] += _alpha * (double) (numParts * numPartsNeigh);
-								}
-							}
-						}
-					}
-
-					// #######################
-					// ## Separation Costs  ##
-					// #######################
-
-					// Neighbours on the other (right) side of the dividing plane (consider periodic boundary)
-					int neighInd_divDim = i_dim + 1;
-					if (neighInd_divDim + area->_lowCorner[dim] == _globalCellsPerDim[dim])
-						neighInd_divDim = 0;
-
-					// loop over all nine neighbours right of that plane
-					for (int neighInd_dim1 = i_dim1 - 1; neighInd_dim1 <= i_dim1 + 1; neighInd_dim1++) {
-						// adjust index in case of periodic boundary
-						int nI_dim1 = neighInd_dim1;
-						if (nI_dim1 + area->_lowCorner[dim1] < 0)
-							nI_dim1 = _globalCellsPerDim[dim1] - 1;
-						if (nI_dim1 + area->_lowCorner[dim1] >= _globalCellsPerDim[dim1])
-							nI_dim1 = 0;
-
-						for (int neighInd_dim2 = i_dim2 - 1; neighInd_dim2 <= i_dim2 + 1; neighInd_dim2++) {
-							// adjust index in case of periodic boundary
-							int nI_dim2 = neighInd_dim2;
-							if (nI_dim2 + area->_lowCorner[dim2] < 0)
-								nI_dim2 = _globalCellsPerDim[dim2] - 1;
-							if (nI_dim2 + area->_lowCorner[dim2] >= _globalCellsPerDim[dim2])
-								nI_dim2 = 0;
-							int numPartsNeigh = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, neighInd_divDim, nI_dim1, nI_dim2, area)];
-							if (getGlobalIndex(dim, dim1, dim2, neighInd_divDim, nI_dim1, nI_dim2, area) > getGlobalIndex(dim, dim1, dim2, i_dim, i_dim1, i_dim2, area)) {
-								sepCostRight[dim][i_dim] += _alpha * (double) (numParts * numPartsNeigh);
-							}
-							else {
-								sepCostLeft[dim][i_dim] += _alpha * (double) (numParts * numPartsNeigh);
+								int numPartsNeigh = (int) _numParticlesPerCell[getGlobalIndex(dim, dim1, dim2, nI_dim, nI_dim1, nI_dim2, area)];
+								cellCosts[dim][i_dim] += 0.5 * (double) (numParts * numPartsNeigh);
 							}
 						}
 					}
@@ -1077,27 +1061,18 @@ void KDDecomposition::calculateCostsPar(KDNode* area, vector<vector<double> >& c
 	}
 	for (int dim = 0; dim < 3; dim++) {
 		vector<double> cellCostsSum;
-		vector<double> sepCostSumLeft;
-		vector<double> sepCostSumRight;
 		cellCostsSum.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostSumLeft.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
-		sepCostSumRight.resize(area->_highCorner[dim] - area->_lowCorner[dim] + 1, 0.0);
 
 		int size2 = cellCostsSum.size();
 		MPI_CHECK( MPI_Allreduce(&cellCosts[dim][0], &cellCostsSum[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
-		MPI_CHECK( MPI_Allreduce(&sepCostLeft[dim][0], &sepCostSumLeft[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
-		MPI_CHECK( MPI_Allreduce(&sepCostRight[dim][0], &sepCostSumRight[0], size2, MPI_DOUBLE, MPI_SUM, commGroup) );
 
 		for (int i_dim = 0; i_dim <= area->_highCorner[dim] - area->_lowCorner[dim]; i_dim++) {
-			areaCosts += cellCosts[dim][i_dim];
-
-			// guessed costs for future boundary cells
-			costsLeft[dim][i_dim] = cellCostsSum[i_dim] + sepCostSumLeft[i_dim];
-			costsRight[dim][i_dim] = cellCostsSum[area->_highCorner[dim] - area->_lowCorner[dim]] - cellCostsSum[i_dim] + sepCostSumRight[i_dim];
+			costsLeft[dim][i_dim] = cellCostsSum[i_dim];
+			costsRight[dim][i_dim] = cellCostsSum[area->_highCorner[dim] - area->_lowCorner[dim]] - cellCostsSum[i_dim];
 		}
 	}
-
 }
+
 
 unsigned int KDDecomposition::getGlobalIndex(int divDim, int dim1, int dim2, int index_divDim, int index_dim1, int index_dim2, KDNode* localArea) {
 	int xIndex, yIndex, zIndex;

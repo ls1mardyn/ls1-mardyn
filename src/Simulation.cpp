@@ -20,7 +20,6 @@
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
-#include "parallel/KDDecomposition2.h"
 #else
 #include "parallel/DomainDecompDummy.h"
 #endif
@@ -185,16 +184,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if( "KDDecomposition" == parallelisationtype) {
 	#ifdef ENABLE_MPI
-			_domainDecomposition = new KDDecomposition();
+			_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
 	#else
 		global_log->error() << "KDDecomposition not available in sequential mode." << endl;
-	#endif
-		}
-		else if( "KDDecomposition2" == parallelisationtype) {
-	#ifdef ENABLE_MPI
-			_domainDecomposition = new KDDecomposition2(getcutoffRadius(), _domain);
-	#else
-		global_log->error() << "KDDecomposition2 not available in sequential mode." << endl;
 	#endif
 		}
 		else if( "DummyDecomposition" == parallelisationtype) {
@@ -621,17 +613,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 			else if(token=="KDDecomposition") {
 				delete _domainDecomposition;
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
-			}
-			else if(token=="KDDecomposition2") {
-				delete _domainDecomposition;
 				int updateFrequency = 100;
 				int fullSearchThreshold = 3;
 				string line;
 				getline(inputfilestream, line);
 				stringstream lineStream(line);
 				lineStream >> updateFrequency >> fullSearchThreshold;
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition2(_cutoffRadius, _domain, updateFrequency, fullSearchThreshold);
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, updateFrequency, fullSearchThreshold);
 			}
 #endif
 		} else if (token == "datastructure") {

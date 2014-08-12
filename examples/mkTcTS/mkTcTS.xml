@@ -48,7 +48,7 @@
 
     <algorithm>
       <!--
-      <parallelisation type="KDDecomposition2">
+      <parallelisation type="KDDecomposition">
         <updateFrequency>10</updateFrequency>
         <fullSearchThreshold>2</fullSearchThreshold>
       </parallelisation>
