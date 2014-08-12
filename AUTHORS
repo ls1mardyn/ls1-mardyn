@@ -7,7 +7,7 @@ individuals who have committed code to this release of ls1-MarDyn.
 Username    Name                        Affiliation(s)
 ----------- --------------------------- -------------------------
 
-hpcbern     Martin Bernreuther          HLRS
+hpcbern     Martin Bernreuther          HLRS, IPVS
 horsch      Martin Horsch               UKL, UPB
 hpcchris    Christoph Niethammer        HLRS
 eckhardw,   Wolfgang Eckhardt           TUM
@@ -36,3 +36,4 @@ HLRS = High Performance Computing Center, University of Stuttgart
 UPB = University of Paderborn
 TUM = Technische Universitaet Muenchen
 UKL = University of Kaiserslautern
+IPVS = IPVS-SgS, University of Stuttgart
