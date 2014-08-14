@@ -55,9 +55,13 @@ using namespace std;
 
 Simulation* global_simulation;
 
-Simulation::Simulation() :
-	_rdf(NULL), _ljFlopCounter(NULL), _domainDecomposition(NULL), _forced_checkpoint_time(0) {
-
+Simulation::Simulation()
+	: _simulationTime(0),
+	_initStatistics(0),
+	_rdf(NULL),
+	_ljFlopCounter(NULL),
+	_domainDecomposition(NULL),
+	_forced_checkpoint_time(0) {
 	_ensemble = new CanonicalEnsemble();
 	initialize();
 }
