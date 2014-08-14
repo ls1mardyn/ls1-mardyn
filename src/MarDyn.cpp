@@ -203,7 +203,7 @@ int main(int argc, char** argv) {
 Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op = OptionParser()
 		.usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
-		  "      %prog -t -d <test input data directory> [<name of testcase>]\n\n"
+		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
 				"Use option --help to display all available options.")
 		.version("%prog 0.1")
 		.description("ls1 mardyn (M-olecul-AR DYN-amics)");
