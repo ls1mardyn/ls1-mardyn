@@ -45,7 +45,6 @@
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
-#include "ensemble/CanonicalEnsemble.h"
 
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
