@@ -71,8 +71,8 @@ public:
 	//!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
 	//!        ==> celllength = 100/66 = 1.5152
 	LinkedCells(
-		 double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		  double cellsInCutoffRadius
+		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
+		double cellsInCutoffRadius
 	);
 
 	//! Default constructor
