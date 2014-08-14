@@ -44,9 +44,10 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
 #endif
+
 	/* Initialize the global log file */
-	//string logfileName("MarDyn");
-	//global_log = new Log::Logger(Log::All, logfileName);
+	// string logfileName("MarDyn");
+	// global_log = new Log::Logger(Log::All, logfileName);
 	global_log = new Log::Logger(Log::Info);
 	cout.precision(6);
 #ifdef ENABLE_MPI
@@ -86,14 +87,14 @@ int main(int argc, char** argv) {
 
 #ifdef ENABLE_MPI
 	int world_size = 1;
-	MPI_CHECK( MPI_Comm_size( MPI_COMM_WORLD, &world_size ) );
+	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
 	global_log->info() << "Running with " << world_size << " processes." << endl;
 #endif
 
 	bool tests(options.is_set_by_user("tests"));
 	if (tests) {
 		string testcases;
-		if (numargs == 1 ) {
+		if (numargs == 1) {
 			testcases = args[0];
 			global_log->info() << "Running unit tests: " << testcases << endl;
 		} else {
@@ -122,16 +123,16 @@ int main(int argc, char** argv) {
 	Simulation simulation;
 
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-	if( fileExists( args[0].c_str()) ) {
+	if( fileExists(args[0].c_str()) ) {
 		if (numargs > 1) {
 			unsigned long steps = 0;
 			istringstream(args[1]) >> steps;
 			simulation.setNumTimesteps(steps);
 		}
 		if( numargs > 2 ) {
-			simulation.setOutputPrefix( args[2] );
+			simulation.setOutputPrefix(args[2]);
 		}
-			simulation.readConfigFile( args[0] );
+			simulation.readConfigFile(args[0]);
 	} else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
 		exit(1);
@@ -156,7 +157,7 @@ int main(int argc, char** argv) {
         simulation.setNumTimesteps(options.get("timesteps"));
     }
 #if ENABLE_MPI
-    if( options.is_set("domain-decomposition") ) {
+    if ( options.is_set("domain-decomposition") ) {
         string domainDecomp((const char *) options.get("domain-decomposition"));
         global_log->info() << "Setting domain decomposition via command line to " << domainDecomp << endl;
         if ( domainDecomp == "KDDecomposition" ) {
