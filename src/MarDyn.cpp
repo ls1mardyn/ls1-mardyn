@@ -141,8 +141,7 @@ int main(int argc, char** argv) {
 	if ( (int) options.get("final-checkpoint") > 0 ) {
 		simulation.enableFinalCheckpoint();
 		global_log->info() << "Final checkpoint enabled" << endl;
-	}
-	else {
+	} else {
 		simulation.disableFinalCheckpoint();
 		global_log->info() << "Final checkpoint disbaled." << endl;
 	}
