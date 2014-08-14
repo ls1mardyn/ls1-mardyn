@@ -91,15 +91,13 @@ void Simulation::exit(int exitcode) {
 
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
-
 	/* integrator */
 	string integratorType;
 	xmlconfig.getNodeValue("integrator@type", integratorType);
 	global_log->info() << "Integrator type: " << integratorType << endl;
-	if( "Leapfrog" == integratorType) {
+	if(integratorType == "Leapfrog") {
 		_integrator = new Leapfrog();
-	}
-	else {
+	} else {
 		global_log-> error() << "Unknown integrator " << integratorType << endl;
 		this->exit(1);
 	}
@@ -107,8 +105,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
 		xmlconfig.changecurrentnode("..");
-	}
-	else {
+	} else {
 		global_log->error() << "Integrator section missing." << endl;
 	}
 
@@ -119,7 +116,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	_initStatistics = 0;
 	xmlconfig.getNodeValue("run/equilibration/steps", _initStatistics);
 	global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
-
 	xmlconfig.getNodeValueReduced("run/currenttime", _simulationTime);
 	global_log->info() << "Simulation start time: " << _simulationTime << endl;
 
@@ -127,15 +123,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	string ensembletype;
 	xmlconfig.getNodeValue("ensemble@type", ensembletype);
 	global_log->info() << "Ensemble: " << ensembletype<< endl;
-	if( "NVT" == ensembletype) {
+	if (ensembletype == "NVT") {
 		_ensemble = new CanonicalEnsemble();
-	}
-	else if( "muVT" == ensembletype) {
-		global_log->error() << "muVT ensemble not completely implemented." << endl;
+	} else if (ensembletype == "muVT") {
+		global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
 		this->exit(1);
 // 		_ensemble = new GrandCanonicalEnsemble();
-	}
-	else {
+	} else {
 		global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
 		this->exit(1);
 	}
@@ -154,7 +148,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
-
 		/* cutoffs */
 		if (xmlconfig.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
 			_cutoffRadius = _LJCutoffRadius;
@@ -176,21 +169,21 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		string parallelisationtype("DomainDecomposition");
 		xmlconfig.getNodeValue("parallelisation@type", parallelisationtype);
 		global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
-		if( "DomainDecomposition" == parallelisationtype) {
+		if(parallelisationtype == "DomainDecomposition") {
 	#ifdef ENABLE_MPI
 			_domainDecomposition = new DomainDecomposition();
 	#else
 		global_log->error() << "DomainDecomposition not available in sequential mode." << endl;
 	#endif
 		}
-		else if( "KDDecomposition" == parallelisationtype) {
+		else if(parallelisationtype == "KDDecomposition") {
 	#ifdef ENABLE_MPI
 			_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
 	#else
 		global_log->error() << "KDDecomposition not available in sequential mode." << endl;
 	#endif
 		}
-		else if( "DummyDecomposition" == parallelisationtype) {
+		else if(parallelisationtype == "DummyDecomposition") {
 	#ifdef ENABLE_MPI
 		global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
 	#else
@@ -206,14 +199,14 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		string datastructuretype;
 		xmlconfig.getNodeValue("datastructure@type", datastructuretype);
 		global_log->info() << "Datastructure type: " << datastructuretype << endl;
-		if( "LinkedCells" == datastructuretype) {
+		if(datastructuretype == "LinkedCells") {
 			_moleculeContainer = new LinkedCells();
 			_particleContainerType = LINKED_CELL; /* TODO: Necessary? */
 			global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 			lc->setCutoff(_cutoffRadius);
 		}
-		else if( "AdaptiveSubCells" == datastructuretype) {
+		else if(datastructuretype == "AdaptiveSubCells") {
 			_moleculeContainer = new AdaptiveSubCells();
 			_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
 		}
@@ -386,11 +379,11 @@ void Simulation::readConfigFile(string filename) {
 }
 
 void Simulation::initConfigXML(const string& inputfilename) {
-
 	global_log->info() << "init XML config file: " << inputfilename << endl;
 	XMLfileUnits inp(inputfilename);
 
 	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
+
 	inp.changecurrentnode("/mardyn");
 	string version("unknown");
 	inp.getNodeValue("@version", version);
@@ -608,11 +601,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> token;
 #else
 			inputfilestream >> token;
-			if (token=="DomainDecomposition") {
+			if (token == "DomainDecomposition") {
 				// default DomainDecomposition is already set in initialize();
 				//_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 			}
-			else if(token=="KDDecomposition") {
+			else if(token == "KDDecomposition") {
 				delete _domainDecomposition;
 				int updateFrequency = 100;
 				int fullSearchThreshold = 3;
