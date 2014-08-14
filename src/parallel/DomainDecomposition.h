@@ -11,17 +11,19 @@
 #define LOWER  0
 #define HIGHER 1
 
-//! @brief Basic parallelisation which divides the domain into #procs equal sized cuboids
-//! @author Martin Buchholz
-//!
-//! In a domain decomposition, each process gets part of the spacial domain.
-//! In this implementation, the whole domain has to be a cuboid which is
-//! decomposed into several smaller cuboids.
-//! The main difficulty is that at the boundary, each process needs molecules
-//! from neighbouring domains to be able to calculate the forces on the own
-//! molecules. Another problem is that molecules are moving across the
-//! boundaries of local domains. So methods are implemented to transfer those molecules
-//! @todo reference to a paper describing the %domain decomposition
+/** @brief Basic domain decomposition based parallelisation, dividing the
+ * domain into #procs equal sized cuboids
+ *
+ * In a domain decomposition, each process gets part of the spacial domain.
+ * In this implementation, the whole domain has to be a cuboid which is
+ * decomposed into several, equally sized smaller cuboids.
+ * At the boundary, each process needs molecules from neighbouring domains to
+ * be able to calculate the forces on the own molecules.
+ * Molecules are moving across the boundaries of local domains. So methods are
+ * implemented to transfer those molecules.
+ *
+ * @cite Griebel-2007
+ */
 class DomainDecomposition : public DomainDecompBase {
 public:
 	//! @brief The constructor has to determine the own rank and the number of neighbours and
@@ -31,6 +33,15 @@ public:
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
 
+	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <parallelisation type="DomainDecomposition">
+	     <!-- no parameters -->
+	   </parallelisation>
+	   \endcode
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief exchange molecules between processes

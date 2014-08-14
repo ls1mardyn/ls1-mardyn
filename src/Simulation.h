@@ -97,39 +97,38 @@ public:
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
-	 * <simulation>
-	 *   <integrator type=STRING><!-- see Integrator class documentation --></integrator>
-	 *   <run>
-	 *     <production>
-	 *       <steps>INTEGER</steps>
-	 *     </production>
-	 *     <equilibration>
-	 *       <steps>INTEGER</steps>
-	 *     </equilibration>
-	 *     <currenttime>DOUBLE</currenttime>
-	 *   </run>
-	 *   <ensemble type=STRING> <!-- see Ensemble class documentation --></ensemble>
-	 *   <algorithm>
-	 *     <cutoffs>
-	 *        <radiusLJ>DOUBLE</radiusLJ>
-	 *
-	 *     </cutoffs>
-	 *     <electrostatic type='ReactionField'>
-	 *       <epsilon>DOUBLE</epsilon>
-	 *     </electrostatic>
-	 *     <datastructure type=STRING><!-- see ParticleContainer class documentation --></datastructure>
-	 *     <parallelisation type=STRING><!-- see DomainDecompBase class documentation --></parallelisation>
-	 *     <thermostats>
-	 *       <thermostat type='VelocityScaling' componentId=STRING>
-	 *         <temperature>DOUBLE</temperature>
-	 *       </thermostat>
-	 *     </thermostats>
-	 *   </algorithm>
-	 *   <output>
-	 *     <outputplugin><!-- see OutputBase class documentation --></outputplugin>
-	 *   </output>
-	 * </simulation>
-	 * \endcode
+	   <simulation>
+	     <integrator type=STRING><!-- see Integrator class documentation --></integrator>
+	     <run>
+	       <production>
+	         <steps>INTEGER</steps>
+	       </production>
+	       <equilibration>
+	         <steps>INTEGER</steps>
+	       </equilibration>
+	       <currenttime>DOUBLE</currenttime>
+	     </run>
+	     <ensemble type=STRING> <!-- see Ensemble class documentation --></ensemble>
+	     <algorithm>
+	       <cutoffs>
+	          <radiusLJ>DOUBLE</radiusLJ>
+	       </cutoffs>
+	       <electrostatic type='ReactionField'>
+	         <epsilon>DOUBLE</epsilon>
+	       </electrostatic>
+	       <datastructure type=STRING><!-- see ParticleContainer class documentation --></datastructure>
+	       <parallelisation type=STRING><!-- see DomainDecompBase class documentation --></parallelisation>
+	       <thermostats>
+	         <thermostat type='VelocityScaling' componentId=STRING><!-- componentId can be component id or 'global' -->
+	           <temperature>DOUBLE</temperature>
+	         </thermostat>
+	       </thermostats>
+	     </algorithm>
+	     <output>
+	       <outputplugin><!-- see OutputBase class and specific plugin documentation --></outputplugin>
+	     </output>
+	   </simulation>
+	   \endcode
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 

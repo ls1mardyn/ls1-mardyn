@@ -15,9 +15,10 @@ class ParticleData;
 class KDNode;
 
 
-/**
- * This class is coppy&paste from KDDecomposition. Basic idea is to build up
- * all possible subdivisions and do a A*-like search of the best subdivision.
+/** @brief KD tree based domain decomposition for better load balancing.
+ *
+ * The basic idea is to build up all possible subdivisions and do a A*-like
+ * search of the best subdivision.
  *
  * The function to minimize is the load imbalance:
  * sum over all children i: \sum (load_i - _optimalLoad)^2
@@ -25,21 +26,10 @@ class KDNode;
  * During the downward pass an estimate is the expected load imbalance, which is
  * averaged over all children, in the upward pass, the exact imbalance is calculated.
  *
- * Note that it is important for the A*-search that the estimate is an underestimation (<=)
- * of the load imbalance.
- * Note that some computation of the deviation / expected deviation is done in KDNode.
+ * \note It is important for the A*-search that the estimate is an
+ *       underestimation (<=) of the load imbalance.
  *
- * \todo Cleanly merge with or replace KDDecomposition
- * \todo Rewrite this cleanly so that:
- *       - Communication with own process (if one process needs to create its periodic
- *         images) is also performed via MPI communication, this should simplify the code
- *         at now runtime costs.
- *       - Seperate better between creation of balanced KDTree and the simple communication
- *         which takes place every time step
- *       - extract the "ownArea"-thing from the decomposition-methods,
- *         here KDNode::findAreaForProcess() should do the job.
- * \todo track the issue with eventually lost particles (test case Stefan Becker).
- * \todo Profile and tune!
+ * \note Some computation of the deviation / expected deviation is done in KDNode.
  */
 class KDDecomposition: public DomainDecompBase{
 
@@ -66,6 +56,17 @@ class KDDecomposition: public DomainDecompBase{
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
 
+
+	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <parallelisation type="KDDecomposition">
+	     <updateFrequency>INTEGER</updateFrequency>
+	     <fullSearchThreshold>INTEGER</fullSearchThreshold>
+	   </parallelisation>
+	   \endcode
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//###############################################
