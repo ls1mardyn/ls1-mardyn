@@ -171,14 +171,11 @@ int main(int argc, char** argv) {
     
     global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
 
-    // set the prefix for output files
-    simulation.setOutputPrefix(args[numargs - 1]);
-    /*
-    if( options.is_set_by_user("outputprefix") ) {
-        simulation.setOutputPrefix( options["outputprefix"] );
-    }
-    */
-    global_log->info() << "Using output prefix '" << simulation.getOutputPrefix() << "'" << endl;
+	simulation.setOutputPrefix(args[numargs - 1]);
+	if( options.is_set_by_user("outputprefix") ) {
+		simulation.setOutputPrefix( options["outputprefix"] );
+	}
+	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
 
     simulation.prepare_start();
@@ -209,7 +206,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 		.description("ls1 mardyn (M-olecul-AR DYN-amics)");
 
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
+	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("default prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
     op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
