@@ -180,8 +180,6 @@ int main(int argc, char** argv) {
     */
     global_log->info() << "Using output prefix '" << simulation.getOutputPrefix() << "'" << endl;
 
-    // TODO
-    //simulation.setCutoffRadius(options.get("cutoff_radius"));
 
     simulation.prepare_start();
 
@@ -203,25 +201,12 @@ int main(int argc, char** argv) {
 
 
 Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
-
-        /*
-	op = OptionParser()
-		.usage("%prog [-n steps] [-p prefix] <configfilename> [<number of timesteps>] [<outputprefix>]\n "
-		  "      %prog -t -d <test input data directory> [<name of testcase>]\n\n"
-				"Use option --help to display all available options.")
-		.version("%prog 1.0")
-		.description("MarDyn is a MD simulator. All behavior is controlled via the config file.")
-		// .epilog("background info?")
-		;
-        */
 	op = OptionParser()
 		.usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
 		  "      %prog -t -d <test input data directory> [<name of testcase>]\n\n"
 				"Use option --help to display all available options.")
 		.version("%prog 0.1")
-		.description("ls1 mardyn (M-olecul-AR DYN-amics)")
-		// .epilog("background info?")
-		;
+		.description("ls1 mardyn (M-olecul-AR DYN-amics)");
 
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	// op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("prefix for output files");
@@ -236,11 +221,8 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
 	char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
 	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
-	dgroup.add_option("--cutoff-radius") .type("float") .set_default(5.0) .help("radius of sphere around a particle in which forces are considered (default: %default)");
-	dgroup.add_option("--cells-in-cutoff") .type("int") .set_default(2) .help("number of cells in cutoff-radius cube (default: %default); only used by LinkedCells particle container");
 	char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition" };
 	dgroup.add_option("--domain-decomposition").dest("domain-decomposition") .choices(&dd_choices[0], &dd_choices[2]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
-	dgroup.add_option("--timestep-length") .type("float") .set_default(0.004) .help("length of one timestep in TODO (default: %default)");
 	op.add_option_group(dgroup);
 
 	return op.parse_args(argc, argv);
