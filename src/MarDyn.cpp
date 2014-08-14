@@ -1,19 +1,24 @@
-#include <iostream>
-#include <iomanip>
-#include <ctime>
+#if ENABLE_MPI
+#include <mpi.h>
+#endif
 
-#include "utils/OptionParser.h"
-#include "utils/Logger.h"
-#include "utils/compile_info.h"
-#include "utils/Testing.h"
-#include "utils/FileUtils.h"
-#include "utils/Timer.h"
-#include "Simulation.h"
+#include <ctime>
+#include <iomanip>
+#include <iostream>
+#include <string>
+#include <vector>
+
 
 #if ENABLE_MPI
 #include "parallel/KDDecomposition.h"
-#include <mpi.h>
 #endif
+#include "Simulation.h"
+#include "utils/compile_info.h"
+#include "utils/FileUtils.h"
+#include "utils/Logger.h"
+#include "utils/OptionParser.h"
+#include "utils/Testing.h"
+#include "utils/Timer.h"
 
 using Log::global_log;
 using optparse::OptionParser;
