@@ -88,7 +88,7 @@ int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	int world_size = 1;
 	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
-	global_log->info() << "Running with " << world_size << " processes." << endl;
+	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
 #endif
 
 	bool tests(options.is_set_by_user("tests"));
@@ -102,6 +102,7 @@ int main(int argc, char** argv) {
 		}
 
 		std::string testDataDirectory(options.get("testDataDirectory"));
+		global_log->info() << "Test data directory: " << testDataDirectory << endl;
 		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
 		bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
 
