@@ -156,19 +156,6 @@ int main(int argc, char** argv) {
 	if (options.is_set_by_user("timesteps")) {
 		simulation.setNumTimesteps(options.get("timesteps"));
 	}
-#if ENABLE_MPI
-    if ( options.is_set("domain-decomposition") ) {
-        string domainDecomp((const char *) options.get("domain-decomposition"));
-        global_log->info() << "Setting domain decomposition via command line to " << domainDecomp << endl;
-        if ( domainDecomp == "KDDecomposition" ) {
-            DomainDecompBase *domainDecomp;
-            int updateFrequency = 100;
-            int fullSearchThreshold = 3;
-            domainDecomp = (DomainDecompBase*) new KDDecomposition(simulation.getcutoffRadius(), simulation.getDomain(), updateFrequency, fullSearchThreshold);
-            simulation.setDomainDecomposition(domainDecomp);
-        }
-    }
-#endif
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
 	simulation.setOutputPrefix(args[numargs - 1]);
@@ -177,6 +164,19 @@ int main(int argc, char** argv) {
 	}
 	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
+#if ENABLE_MPI
+	if ( options.is_set("domain-decomposition") ) {
+		string domainDecomp((const char *) options.get("domain-decomposition"));
+		global_log->info() << "Setting domain decomposition via command line to " << domainDecomp << endl;
+		if ( domainDecomp == "KDDecomposition" ) {
+			DomainDecompBase *domainDecomp;
+			int updateFrequency = 100;
+			int fullSearchThreshold = 3;
+			domainDecomp = (DomainDecompBase*) new KDDecomposition(simulation.getcutoffRadius(), simulation.getDomain(), updateFrequency, fullSearchThreshold);
+			simulation.setDomainDecomposition(domainDecomp);
+		}
+	}
+#endif
 
 	simulation.prepare_start();
 
