@@ -153,9 +153,9 @@ int main(int argc, char** argv) {
 		global_log->info() << "Enabling checkpoint after execution time: " << time << " sec" << endl;
 	}
 
-    if (options.is_set_by_user("timesteps")) {
-        simulation.setNumTimesteps(options.get("timesteps"));
-    }
+	if (options.is_set_by_user("timesteps")) {
+		simulation.setNumTimesteps(options.get("timesteps"));
+	}
 #if ENABLE_MPI
     if ( options.is_set("domain-decomposition") ) {
         string domainDecomp((const char *) options.get("domain-decomposition"));
@@ -169,9 +169,8 @@ int main(int argc, char** argv) {
         }
     }
 #endif
+	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
-    global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
-
 	simulation.setOutputPrefix(args[numargs - 1]);
 	if( options.is_set_by_user("outputprefix") ) {
 		simulation.setOutputPrefix( options["outputprefix"] );
@@ -179,21 +178,21 @@ int main(int argc, char** argv) {
 	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
 
-    simulation.prepare_start();
+	simulation.prepare_start();
 
-    Timer sim_timer;
-    sim_timer.start();
-    simulation.simulate();
-    sim_timer.stop();
-    double runtime = sim_timer.get_etime();
-    global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " s" << endl;
+	Timer sim_timer;
+	sim_timer.start();
+	simulation.simulate();
+	sim_timer.stop();
+	double runtime = sim_timer.get_etime();
+	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
 
 	simulation.finalize();
 
-    delete global_log;
+	delete global_log;
 
 #ifdef ENABLE_MPI
-    MPI_Finalize();
+	MPI_Finalize();
 #endif
 }
 
@@ -209,12 +208,12 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("default prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
-    op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
+	op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
-    
+
     op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
     op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
-    
+
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
 	char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
@@ -225,5 +224,3 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 
 	return op.parse_args(argc, argv);
 }
-
-
