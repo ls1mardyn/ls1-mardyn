@@ -1,15 +1,15 @@
-
-// Simulation.cpp
-#include <iostream>
-#include <iterator>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <limits>
-#include <cmath>
-
 #define SIMULATION_SRC
 #include "Simulation.h"
+
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <list>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
@@ -33,6 +33,9 @@
 
 #include "io/io.h"
 #include "io/GeneratorFactory.h"
+#include "io/RDF.h"
+#include "io/TcTS.h"
+#include "io/Mkesfera.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -40,14 +43,9 @@
 
 #include "thermostats/VelocityScalingThermostat.h"
 
-#include "io/RDF.h"
-
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
-
-#include "io/TcTS.h"
-#include "io/Mkesfera.h"
 
 using Log::global_log;
 using optparse::OptionParser;
