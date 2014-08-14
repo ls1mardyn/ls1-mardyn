@@ -112,8 +112,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* steps */
 	xmlconfig.getNodeValue("run/production/steps", _numberOfTimesteps);
 	global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
-
-	_initStatistics = 0;
 	xmlconfig.getNodeValue("run/equilibration/steps", _initStatistics);
 	global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
 	xmlconfig.getNodeValueReduced("run/currenttime", _simulationTime);
