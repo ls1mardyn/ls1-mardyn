@@ -22,6 +22,24 @@ public:
 	void readPhaseSpaceHeader(Domain* domain, double timestep){}
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
+	/** @brief Read in XML configuration for MkesferaGenerator and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <generator name="mkesfera">
+	     <outer-density>DOUBLE</outer-density>
+	     <droplet>
+	       <radius>DOUBLE</radius>
+	       <density>DOUBLE</density>
+	       <center>
+	         <x>DOUBLE</x>
+	         <y>DOUBLE</y>
+	         <z>DOUBLE</z>
+	       </center>
+	     </droplet>
+	   </generator>
+	   \endcode
+	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
 private:

@@ -80,6 +80,15 @@ public:
 	//! Destructor
 	~LinkedCells();
 
+	/** @brief Read in XML configuration for LinkedCells and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <datastructure type="LinkedCells">
+	     <cellsInCutoffRadius>INTEGER</cellsInCutoffRadius>
+	   </datastructure>
+	   \endcode
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	double getHaloWidthNumCells(){

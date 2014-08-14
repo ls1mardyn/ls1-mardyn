@@ -56,6 +56,15 @@ public:
 	//! Destructor
 	~AdaptiveSubCells();
 
+	/** @brief Read in XML configuration for AdaptiveSubCells and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <datastructure type="AdaptiveSubCells">
+	     <!-- no parameters -->
+	   </datastructure>
+	   \endcode
+	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	// documentation see father class (ParticleContainer.h)
