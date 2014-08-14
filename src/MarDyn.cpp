@@ -30,17 +30,17 @@ using namespace std;
 optparse::Values& initOptions(int argc, const char* const argv[], optparse::OptionParser& op);
 
 
-//! @page main
-//! In this project, software for molecular dynamics simulation
-//! with short-range forces is developed. The aim is to have a parallel code (MPI) 
-//! for multi-centered molecules.
-//!
-//! The role of the main function is to run tests for all classes
-//! and to instantiate an object of the Simulation class which
-//! is actually responsible for the simulation
-//!
-int main(int argc, char** argv) {
+/** @page main
+ * In this project, software for molecular dynamics simulation with short-range
+ * forces is developed. The aim is to have a parallel code (MPI) for
+ * multi-centered molecules.
+ *
+ * The role of the main function is to instantiate an object of the Simulation
+ * class which is actually responsible for the simulation and to run tests for
+ * all classes.
+ */
 
+int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
 #endif
