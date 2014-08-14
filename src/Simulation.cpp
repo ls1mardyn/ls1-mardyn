@@ -498,7 +498,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 		j++;
 	}
-
 }
 
 void Simulation::initConfigOldstyle(const string& inputfilename) {
@@ -567,8 +566,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			} else if (phaseSpaceFileFormat == "Generator") {
 				global_log->info() << "phaseSpaceFileFormat is Generator!"
 						<< endl;
-				string generatorName; // name of the library to load
-				string inputFile; // name of the input file for the generator
+				string generatorName;  // name of the library to load
+				string inputFile;  // name of the input file for the generator
 
 				string line;
 				getline(inputfilestream, line);
@@ -625,7 +624,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			inputfilestream >> token;
 			if (token == "LinkedCells") {
-				_particleContainerType = LINKED_CELL; /* TODO: Necessary? */ 
+				_particleContainerType = LINKED_CELL;  /* TODO: Necessary? */
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
 				double bBoxMin[3];
@@ -648,7 +647,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,_domain);
 					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,_domain);
 				}
-				//creates a new Adaptive SubCells datastructure
+				// creates a new Adaptive SubCells datastructure
 				if (_LJCutoffRadius == 0.0)
 					_LJCutoffRadius = _cutoffRadius;
 					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
@@ -710,7 +709,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "VISWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {
-#ifdef VTK			
+#ifdef VTK
 
 				unsigned long writeFrequency = 0;
 				string outputPathAndPrefix;
@@ -1461,7 +1460,6 @@ void Simulation::finalize() {
 }
 
 void Simulation::updateParticleContainerAndDecomposition() {
-
 	// The particles have moved, so the neighbourhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();

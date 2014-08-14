@@ -146,8 +146,8 @@ public:
 	 * calls initConfigXML or initConfigOldStyle
 	 * @param[in]  filename filename of the input file
 	 */
-    void readConfigFile(std::string filename);
-    void readConfigFile(const char* filename) {
+	void readConfigFile(std::string filename);
+	void readConfigFile(const char* filename) {
 		readConfigFile(std::string(filename));
 	}
 

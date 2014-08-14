@@ -110,7 +110,8 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 		}
 
-		completeTreeInfo(newDecompTree, newOwnArea);		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
+		completeTreeInfo(newDecompTree, newOwnArea);
+		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
 
 #ifdef DEBUG_DECOMP
 		if (_ownRank == 0) {
