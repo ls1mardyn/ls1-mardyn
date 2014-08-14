@@ -67,15 +67,15 @@ Simulation::Simulation()
 }
 
 Simulation::~Simulation() {
-    delete _domainDecomposition;
-    delete _pressureGradient;
-    delete _domain;
-    delete _particlePairsHandler;
-    delete _cellProcessor;
-    delete _moleculeContainer;
-    delete _integrator;
-    delete _inputReader;
-    delete _ljFlopCounter;
+	delete _domainDecomposition;
+	delete _pressureGradient;
+	delete _domain;
+	delete _particlePairsHandler;
+	delete _cellProcessor;
+	delete _moleculeContainer;
+	delete _integrator;
+	delete _inputReader;
+	delete _ljFlopCounter;
 }
 
 void Simulation::exit(int exitcode) {
