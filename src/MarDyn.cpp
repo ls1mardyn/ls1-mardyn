@@ -146,11 +146,11 @@ int main(int argc, char** argv) {
 		global_log->info() << "Final checkpoint disbaled." << endl;
 	}
 
+	double time = options.get("timed-checkpoint");
+	simulation.setForcedCheckpointTime(time);
 	if( options.is_set_by_user("timed-checkpoint") ) {
 		global_log->info() << "Enabling checkpoint after execution time: " << time << " sec" << endl;
 	}
-	double time = options.get("timed-checkpoint");
-	simulation.setForcedCheckpointTime(time);
 
     if (options.is_set_by_user("timesteps")) {
         simulation.setNumTimesteps(options.get("timesteps"));
