@@ -388,19 +388,27 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
 
 	if (inp.changecurrentnode("simulation")) {
-		readXML(inp);
-
-		string siminpfile, siminptype;
-		if (inp.getNodeValue("input", siminpfile)) {
-			global_log->info() << "reading input file:\t" << siminpfile << endl;
-			// input type="oldstyle" to include oldstyle input files for backward compatibility - only temporary!!!
-			if (inp.getNodeValue("input@type", siminptype) && siminptype
-					== "oldstyle") {
-				global_log->info() << "         file type:\t" << siminptype
-						<< endl;
+		string siminpfile;
+		int numsimpfiles = inp.getNodeValue("input", siminpfile);
+		if (numsimpfiles == 1) {
+			string siminptype;
+			global_log->info() << "Reading input file: " << siminpfile << endl;
+			inp.getNodeValue("input@type", siminptype);
+			global_log->info() << "Input file type: " << siminptype << endl;
+			if (siminptype == "oldstyle") {
 				initConfigOldstyle(siminpfile);
+				/* Skip the rest of the xml config for old cfg files. */
+				return;
+			} else {
+				global_log->error() << "Unknown input file type: " << siminptype << endl;
+				this->exit(1);;
 			}
+		} else if (numsimpfiles > 1) {
+			global_log->error() << "Multiple input file sections are not supported." << endl;
+			this->exit(1);
 		}
+
+		readXML(inp);
 
 		string pspfile;
 		if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
