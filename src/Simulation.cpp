@@ -727,7 +727,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "VTKWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 #else
-				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
+				Log::global_log->error() << std::endl << "VTK-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
 			} else if (token == "VTKGridWriter") {
 #ifdef VTK
@@ -749,7 +749,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 							<< std::endl;
 				}
 #else
-				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
+				Log::global_log->error() << std::endl << "VTK-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
 			}
 			// by Stefan Becker <stefan.becker@mv.uni-kl.de>
