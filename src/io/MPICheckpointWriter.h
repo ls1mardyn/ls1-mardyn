@@ -19,8 +19,11 @@ public:
 	//! The format of the checkpointfile written by this method is
 	//! Byte offset  0- 5:	string	"MarDyn"
 	//! Byte offset  6-55:	string	version "YYYYMMDD\0"
-	//! Byte offset 56-63:	unsigned int	gap_to_data=displacement-64
-	//! Byte offset 64-(63+gap_to_data)  :	Metadata like tuple structure (ICRVQD) or offsets and cardinality to molecule sets within cubes
+	//! Byte offset 56-63:	unsigned int	gap_to_data=data_displ-64
+	//! Byte offset 64-70:	string	tuple structure "ICRVQD\0"
+	//! Byte offset 71-73:	string	"BB\0"
+	//! Byte offset 74-81:	unsigned long	number of bounding boxes 
+	//! Byte offset 82-(82+numBB*(6*8+2*8)):	numBB*(6*double+2*unsigned long)	bounding boxes
 	//! Byte offset (64+gap_to_data)- :	data tuples
 	//! 
 	//! @param filename Name of the checkpointfile (including path)
