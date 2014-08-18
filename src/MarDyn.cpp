@@ -133,7 +133,7 @@ int main(int argc, char** argv) {
 		if( numargs > 2 ) {
 			simulation.setOutputPrefix(args[2]);
 		}
-			simulation.readConfigFile(args[0]);
+		simulation.readConfigFile(args[0]);
 	} else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
 		exit(1);
@@ -158,7 +158,10 @@ int main(int argc, char** argv) {
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
-	simulation.setOutputPrefix(args[numargs - 1]);
+	string outprefix(args[numargs-1]);
+	size_t foundstr = outprefix.rfind(".");
+	if (foundstr!=string::npos && foundstr==outprefix.size()-4) outprefix.erase(foundstr);	// remove .??? suffix
+	simulation.setOutputPrefix(outprefix.c_str());
 	if( options.is_set_by_user("outputprefix") ) {
 		simulation.setOutputPrefix( options["outputprefix"] );
 	}

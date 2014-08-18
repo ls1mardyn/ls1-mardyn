@@ -349,6 +349,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "XyzWriter") {
 			outputPlugin = new XyzWriter();
 		}
+		/* temporary */
+		else if(pluginname == "MPICheckpointWriter") {
+			outputPlugin = new MPICheckpointWriter();
+		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;
@@ -760,6 +764,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			      inputfilestream >> writeFrequency >> outputPathAndPrefix;
 			      _outputPlugins.push_back(new MmspdWriter(writeFrequency, outputPathAndPrefix));
 			      global_log->debug() << "MmspdWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+			}
+			// temporary
+			else if (token == "MPICheckpointWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new MPICheckpointWriter(writeFrequency,
+						outputPathAndPrefix, true));
+				global_log->debug() << "MPICheckpointWriter " << writeFrequency
+						<< " '" << outputPathAndPrefix << "'.\n";
 			}
 			else {
 				global_log->warning() << "Unknown output plugin " << token << endl;

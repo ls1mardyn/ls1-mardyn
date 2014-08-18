@@ -15,5 +15,6 @@
 #include "io/vtk/VTKGridWriter.h"
 #endif
 #include "io/XyzWriter.h"
+#include "io/MPICheckpointWriter.h"
 
 #endif  /* IO_H_  */
