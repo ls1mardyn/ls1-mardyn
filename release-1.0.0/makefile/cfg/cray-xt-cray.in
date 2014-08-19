@@ -1,0 +1,36 @@
+# Cray XT System using Cray Compiler
+# http://www.cray.com
+# Version:
+
+CFG_INFO = "Cray compiler on Cray XT/XE systems"
+
+CFG_PARTYPES = ""
+CFG_PARTYPES += "SEQ  sequential program\n"
+CFG_PARTYPES += "PAR  MPI parallel program"
+
+CFG_TARGETS = ""
+CFG_TARGETS += "DEBUG    debug version, additional output, several compiler debug options\n"
+CFG_TARGETS += "RELEASE  release version, compiler optimizations enabled"
+
+CXX_SEQ = CC
+CXX_PAR = CC
+DEPMODE = none
+
+# SEQ
+#########################################
+# DEBUG
+CXXFLAGS_SEQ_DEBUG  = -g
+LINKFLAGS_SEQ_DEBUG =
+# RELEASE
+CXXFLAGS_SEQ_RELEASE  = -O2 -DNDEBUG
+LINKFLAGS_SEQ_RELEASE =
+
+# PAR
+#########################################
+# DEBUG
+CXXFLAGS_PAR_DEBUG  = -g -DENABLE_MPI
+LINKFLAGS_PAR_DEBUG =
+#RELEASE
+CXXFLAGS_PAR_RELEASE  = -O2 -DNDEBUG -DENABLE_MPI
+LINKFLAGS_PAR_RELEASE =
+

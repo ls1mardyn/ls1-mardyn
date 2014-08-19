@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+       This config file demonstrates the following case:
+        * phase space point is defined in an ASCII format file
+	* components are are defined in a legacy ASCII format file
+       Support for ASCII format components might is depricated and will
+       be removed in the future. Use converts in the 'tools' folder to
+       use old file formats.
+-->
+<mardyncfg>
+	<header>
+		<version>20071108</version>
+		<!-- might need this in the future, e.g. for curl -->
+		<required-plugins></required-plugins>
+	</header>
+	<experiment>
+		<timestep-length>1.498364304465601E-003</timestep-length>
+		<cutoff-radius>4.33333333333333</cutoff-radius>
+		<phase-space source="test_20480MDQ-all_ascii.inp" format="ASCII"/>
+		<components source="test_20480MDQ-all_ascii.inp" format="ASCII-internal"/>
+		<data-structure>
+			 <linked-cells>1</linked-cells>
+		</data-structure>
+	</experiment>
+</mardyncfg>

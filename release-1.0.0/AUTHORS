@@ -1,0 +1,43 @@
+ls1-MarDyn Authors
+==================
+
+The first predecessor ("Mader program") of the present code was written by Daniel Mader.
+
+The first major revision (called "moldy" or "ls1") of the Mader program was conducted by Martin Bernreuther.
+
+Since the second relaunch, conducted by Martin Buchholz, the program is called "ls1 mardyn" (large systems 1: molecular dynamics).
+
+The list shown below only includes authors who contributed subsequent to the second relaunch, omitting a great number of previous contributors, but including all people who recently modified the source code of ls1 mardyn. Note that contributors who participated on an administrative and management level are also missing from this list, which merely reflects direct access to the code base.
+
+Username    Name                        Affiliation(s)
+----------- --------------------------- -------------------------
+
+hpcbern     Martin Bernreuther          HLRS, IPVS
+horsch      Martin Horsch               UKL, UPB
+hpcchris    Christoph Niethammer        HLRS
+eckhardw,   Wolfgang Eckhardt           TUM
+eckhardw-ro
+buchholm    Martin Buchholz             TUM
+sbecker     Stefan Becker               UKL
+hpcfalko    Falko Schmidt               HLRS
+hpcdjenz    Domenic Jenz                HLRS
+mheinen     Matthias Heinen             UPB
+swerth      Stephan Werth               UKL
+florian     Florian Grötzner            TUM
+kovacevt    Kovacevic Tijana            TUM
+weisslj     Johannes Weißl              TUM
+wolfe       Wolfgang Hölzl              TUM
+yutaka      Yutaka Nagashima            TUM
+mettie      Andre Füssel                HLRS
+rhobert     Robert Hajda                TUM
+dejoy       De-Joy Amankwah             UKL
+
+Affiliation abbreviations:
+--------------------------
+
+HLRS = High Performance Computing Center, University of Stuttgart
+UPB = University of Paderborn
+TUM = Technische Universitaet Muenchen
+UKL = University of Kaiserslautern
+IPVS = IPVS-SgS, University of Stuttgart
+
