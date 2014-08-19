@@ -5,7 +5,6 @@
 # generate jobs from a template job, subsituting parameters
 #
 # Martin Bernreuther <bernreuther@hlrs.de>, November 2011
-# license: GPL (see http://www.gnu.org/licenses/gpl.html)
 
 import sys
 import os
@@ -51,7 +50,7 @@ if sys.version_info < (2, 6):
 #	print "using Python version {0}".format(sys.version_info)
 
 progname=os.path.basename(sys.argv[0])
-optparser = optparse.OptionParser(usage="usage: {0} [options] [configfile]\n{1}\n(version: {2}, author: {3}, license: GPL)".format(progname,desc,version,author))	## %prog
+optparser = optparse.OptionParser(usage="usage: {0} [options] [configfile]\n{1}\n(version: {2}, author: {3})".format(progname,desc,version,author))	## %prog
 optparser.add_option("-V", "--version", action="store_true", dest="print_version", default=False, help="print version and exit [default: {0}]".format("False"))	## %default
 #optparser.add_option("-v", "--verbose", action="store_true", dest="verbose", default=False, help="be more verbose [default: {0}]".format("False"))
 #optparser.add_option("-c", "--config", type="string", dest="configfile", help="configuration file [default: {0}]".format(configfilename))

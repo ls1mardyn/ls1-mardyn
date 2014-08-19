@@ -1,7 +1,3 @@
-/*
- * GNU GPL version 2
- */
-
 #include <iostream>
 #include <cstdlib>
 #include <fstream>

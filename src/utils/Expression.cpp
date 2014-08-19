@@ -1,7 +1,6 @@
 /** \file Expression.cpp
   * \brief Expression (tree) with variables
   * \author Martin Bernreuther <bernreuther@hlrs.de>
-  * license: GPL (http://www.gnu.de/documents/gpl.de.html)
 */
 
 #define EXPRESSION_CPP

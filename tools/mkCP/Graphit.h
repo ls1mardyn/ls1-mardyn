@@ -1,7 +1,3 @@
-/*
- * GNU GPL version 2
- */
-
 #include <map>
 using namespace std;
 

@@ -1,7 +1,6 @@
 /** \file SysMon.cpp
   * \brief System monitoring class
   * \author Martin Bernreuther <bernreuther@hlrs.de>
-  * license: GPL (http://www.gnu.de/documents/gpl.de.html)
 */
 
 #define SYSMON_CPP

@@ -1,7 +1,3 @@
-/*
- * GNU GPL version 2, original version by D. Dylus
- */
-
 #include "Graphit.h"
 #include "Random.h"
 
