@@ -4,7 +4,8 @@ Copyright (c) 2007-2014 University of Paderborn.  All rights reserved.
 Copyright (c) 2009-2014 University of Kaiserslautern.  All rights reserved.
 Copyright (c) 2007-2014 Technische Universität München.  All rights reserved.
 
-[ Formerly: Copyright (c) 2005-2008 University of Stuttgart. All rights reserved. ]
+[ Formerly: Copyright (c) 2005-2008 University of Stuttgart.
+                          All rights reserved. ]
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -28,4 +29,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 The views and conclusions contained in the software and documentation are those
 of the authors and should not be interpreted as representing official policies,
-either expressed or implied, of the FreeBSD Project.
+either expressed or implied, of the FreeBSD Project, the Boltzmann-Zuse Society
+for Computational Molecular Engineering, or the developers of the ls1 mardyn
+program.
+
