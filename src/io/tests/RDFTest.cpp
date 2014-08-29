@@ -55,7 +55,6 @@ void RDFTest::testRDFCountSequential12_AdaptiveCell() {
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-2x2x3.inp", 1.8);
 	testRDFCountSequential12(moleculeContainer);
 	delete moleculeContainer;
-	delete _domainDecomposition;
 #endif
 }
 
