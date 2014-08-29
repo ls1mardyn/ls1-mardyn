@@ -19,7 +19,7 @@
 using namespace std;
 using Log::global_log;
 
-#define DEBUG_DECOMP
+//#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
 		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold) {

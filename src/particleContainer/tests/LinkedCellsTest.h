@@ -17,6 +17,7 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testInsertion);
 	TEST_METHOD(testMoleculeIteration);
 	TEST_METHOD(testUpdateAndDeleteOuterParticles);
+	TEST_METHOD(testUpdateAndDeleteOuterParticlesH2O);
 	TEST_SUITE_END();
 
 public:
@@ -45,6 +46,8 @@ public:
 		LinkedCells container(boundings_min, boundings_max, 2.5, 2.5, 1);
 		this->ParticleContainerTest::testUpdateAndDeleteOuterParticles(&container);
 	}
+
+	void testUpdateAndDeleteOuterParticlesH2O();
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

@@ -6,6 +6,7 @@
  */
 
 #include "LinkedCellsTest.h"
+#include "parallel/DomainDecompDummy.h"
 
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
@@ -16,3 +17,19 @@ LinkedCellsTest::LinkedCellsTest() {
 LinkedCellsTest::~LinkedCellsTest() {
 }
 
+void LinkedCellsTest::testUpdateAndDeleteOuterParticlesH2O() {
+
+	// original pointer will be deleted by tearDown()
+	_domainDecomposition = new DomainDecompDummy();
+
+	LinkedCells* container = static_cast<LinkedCells*> (initializeFromFile(ParticleContainerFactory::LinkedCell, "H20_NaBr_0.01_T_293.15.inp", 27.0));
+	int numMols = container->getNumberOfParticles();
+
+	_domainDecomposition->exchangeMolecules(container, _domain);
+	container->deleteOuterParticles();
+
+	int newNumMols = container->getNumberOfParticles();
+	ASSERT_EQUAL(numMols, newNumMols);
+
+	delete _domainDecomposition;
+}
