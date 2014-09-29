@@ -27,6 +27,7 @@ Domain::Domain(int rank, PressureGradient* pg){
 	_globalUpot = 0;
 	_globalVirial = 0; 
 	_globalRho = 0;
+	this->_Gamma = map<unsigned, double>();
 
 	this->_universalPG = pg;
 
@@ -1165,3 +1166,37 @@ void Domain::submitDU(unsigned cid, double DU, double* r)
    }
 }
 
+void Domain::resetGamma(){
+	for (unsigned i=0; i<_simulation.getEnsemble()->components()->size(); i++){
+		_Gamma[i]=0;
+	}
+}
+
+double Domain::getGamma(unsigned id){
+	return (_Gamma[id]/(2*_globalLength[0]*_globalLength[2]));
+}
+
+void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition){
+	unsigned numComp = _simulation.getEnsemble()->components()->size();
+	double _localGamma[numComp];
+	for (unsigned i=0; i<numComp; i++){
+		_localGamma[i]=0;
+	}
+	for(Molecule* tempMol = _particleContainer->begin(); tempMol != _particleContainer->end(); tempMol = _particleContainer->next()){
+		unsigned cid=tempMol->componentid();
+		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
+		cout << _localGamma[cid] << "\t" << cid << endl;
+	}
+	_domainDecomposition->collCommInit(numComp);
+	for (unsigned i=0; i<numComp; i++){
+		_domainDecomposition->collCommAppendDouble(_localGamma[i]);
+	}
+	_domainDecomposition->collCommAllreduceSum();
+	for (unsigned i=0; i<numComp; i++){	
+		_localGamma[i] = _domainDecomposition->collCommGetDouble();
+	}
+	_domainDecomposition->collCommFinalize();
+	for (unsigned i=0; i<numComp; i++){
+		_Gamma[i]+=_localGamma[i];
+	}
+}

@@ -16,5 +16,6 @@
 #endif
 #include "io/XyzWriter.h"
 #include "io/MPICheckpointWriter.h"
+#include "io/GammaWriter.h"
 
 #endif  /* IO_H_  */

@@ -780,6 +780,15 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "MPICheckpointWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			}
+			else if (token == "GammaWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new GammaWriter(writeFrequency,
+						outputPathAndPrefix));
+				global_log->debug() << "GammaWriter " << writeFrequency << " '"
+						<< outputPathAndPrefix << "'.\n";
+			}
 			else {
 				global_log->warning() << "Unknown output plugin " << token << endl;
 			}
