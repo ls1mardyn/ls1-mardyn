@@ -70,14 +70,14 @@ public:
 
 		switch (pairType) {
 
-            double dummy1, dummy2, dummy3, dummy4;
+            double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
             
             case MOLECULE_MOLECULE : 
                 if ( _rdf != NULL )
                     _rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
-                PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
-
+                PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, Virial3, calculateLJ );
+		_virial = 2*(Virial3[0]+Virial3[1]+Virial3[2]);
                 return _upot6LJ + _upotXpoles;
             case MOLECULE_HALOMOLECULE : 
 

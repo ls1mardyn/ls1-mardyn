@@ -47,6 +47,10 @@
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 
+#include "LongRangeCorrection.h"
+#include "longRange/Homogeneous.h"
+#include "longRange/Planar.h"
+
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -63,6 +67,7 @@ Simulation::Simulation()
 	_domainDecomposition(NULL),
 	_forced_checkpoint_time(0) {
 	_ensemble = new CanonicalEnsemble();
+	_longRangeCorrection = NULL;
 	initialize();
 }
 
@@ -1021,6 +1026,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double rc;
 			inputfilestream >> rc;
 			this->setTersoffCutoff(rc);
+		} else if (token == "slabsLRC") {
+			double slabs;
+			inputfilestream >> slabs;
+			_longRangeCorrection = new Planar(_cutoffRadius,_LJCutoffRadius,_domain,_domainDecomposition,_moleculeContainer,slabs,global_simulation);
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token "
@@ -1034,7 +1043,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 	if (this->_LJCutoffRadius == 0.0)
 		_LJCutoffRadius = this->_cutoffRadius;
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+	//_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+	if (_longRangeCorrection == NULL){
+		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+	}
 
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
@@ -1313,6 +1325,8 @@ void Simulation::simulate() {
 			_integrator->accelerateUniformly(_moleculeContainer, _domain);
 			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
 		}
+		
+		_longRangeCorrection->calculateLongRange();
 
 		/*
 		 * radial distribution function
@@ -1560,4 +1574,5 @@ void Simulation::initialize() {
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
+	_longRangeCorrection = NULL;
 }

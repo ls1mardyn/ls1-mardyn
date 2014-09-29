@@ -75,6 +75,8 @@ public:
 	double D(unsigned short d) const { return _L[d]; }
 	/** get coordinate of the current angular momentum  onto molecule */ 
 	double M(unsigned short d) const { return _M[d]; }
+	/** get the virial **/
+	double Vi(unsigned short d) const { return _Vi[d];}
 
         void setD(unsigned short d, double D) { this->_L[d] = D; }
 	inline void move(int d, double dr) { _r[d] += dr; } /* TODO: is this realy needed? */
@@ -144,6 +146,7 @@ public:
 	 * @param M force vector (x,y,z)
 	 */
 	void setM(double M[3]) { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
+	void setVi(double Vi[3]) { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
 
 	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d]*=s; }
 	void scale_v(double s, double offx, double offy, double offz);
@@ -154,6 +157,8 @@ public:
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 
 	void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
+	
+	void Viadd(const double a[]) { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
 
 	void vadd(const double ax, const double ay, const double az) {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
@@ -250,6 +255,7 @@ private:
 	Quaternion _q; /**< angular orientation */
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
+	double _Vi[3]; /** Virial tensor **/
     unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _m; /**< total mass */

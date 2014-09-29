@@ -260,13 +260,16 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
  * @param[out] Virial   Virial
  * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
  */
-inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ)
+inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double Virial[3], bool calculateLJ)
 // ???better calc Virial, when molecule forces are calculated:
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
 	double f[3];
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
+	Virial[0]=0.;
+	Virial[1]=0.;
+	Virial[2]=0.;
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
 	if ((mi.numTersoff() == 0) || (mi.componentid() != mj.componentid())) {
@@ -298,7 +301,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						mj.Fljcentersub(sj, f);
 						Upot6LJ += u;
 						for (unsigned short d = 0; d < 3; ++d)
-							Virial += drm[d] * f[d];
+							Virial[d] += 0.5*drm[d] * f[d];
 					}
 				}
 			}
@@ -328,7 +331,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
-				Virial += drm[d] * f[d];
+				Virial[d] += 0.5*drm[d] * f[d];
 		}
 		// Charge-Quadrupole
 		for (unsigned sj = 0; sj < nq2; sj++) {
@@ -345,7 +348,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
-				Virial += drm[d] * f[d];
+				Virial[d] += 0.5*drm[d] * f[d];
 		}
 		// Charge-Dipole
 		for (unsigned sj = 0; sj < nd2; sj++) {
@@ -362,7 +365,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
-				Virial += drm[d] * f[d];
+				Virial[d] += 0.5*drm[d] * f[d];
 		}
 	}
 	for (unsigned int si = 0; si < nq1; ++si) {
@@ -383,7 +386,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
-				Virial -= drm[d] * f[d];
+				Virial[d] -= 0.5*drm[d] * f[d];
 		}
 		// Quadrupole-Quadrupole -------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
@@ -402,7 +405,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; ++d)
-				Virial += drm[d] * f[d];
+				Virial[d] += 0.5*drm[d] * f[d];
 		}
 		// Quadrupole-Dipole -----------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
@@ -420,7 +423,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			mj.Madd(m2);
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
-				Virial -= drm[d] * f[d];
+				Virial[d] -= 0.5*drm[d] * f[d];
 		}
 	}
 	for (unsigned int si = 0; si < nd1; ++si) {
@@ -440,7 +443,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
-				Virial -= drm[d] * f[d];
+				Virial[d] -= 0.5*drm[d] * f[d];
 		}
 		// Dipole-Quadrupole -----------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
@@ -458,7 +461,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			mj.Madd(m2);
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; ++d)
-				Virial += drm[d] * f[d];
+				Virial[d] += 0.5*drm[d] * f[d];
 		}
 		// Dipole-Dipole ---------------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
@@ -477,10 +480,13 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			mj.Madd(m2);
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; ++d)
-				Virial += drm[d] * f[d];
+				Virial[d] += 0.5*drm[d] * f[d];
 		}
 	}
 
+	mi.Viadd(Virial);
+	mj.Viadd(Virial);
+	
 	// check whether all parameters were used
 	assert(params.eos());
 }

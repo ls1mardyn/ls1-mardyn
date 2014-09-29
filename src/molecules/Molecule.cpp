@@ -11,10 +11,11 @@ using Log::global_log;
 
 
 Molecule::Molecule(unsigned long id, Component *component,
-	                 double rx, double ry, double rz,
-	                 double vx, double vy, double vz,
-	                 double q0, double q1, double q2, double q3,
-	                 double Dx, double Dy, double Dz)
+	                 double rx,  double ry,  double rz,
+	                 double vx,  double vy,  double vz,
+	                 double q0,  double q1,  double q2, double q3,
+	                 double Dx,  double Dy,  double Dz
+		  )
 		: _q(q0, q1, q2, q3) {
 	_id = id;
 	_component = component;
@@ -27,6 +28,9 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_L[0] = Dx;
 	_L[1] = Dy;
 	_L[2] = Dz;
+	_Vi[0]= 0.;
+	_Vi[1]= 0.;
+	_Vi[2]= 0.;
 	_sites_d = _sites_F =_osites_e = NULL;
 	_numTersoffNeighbours = 0;
 	fixedx = rx;
@@ -56,6 +60,9 @@ Molecule::Molecule(const Molecule& m) {
 	_M[0] = m._M[0];
 	_M[1] = m._M[1];
 	_M[2] = m._M[2];
+	_Vi[0]= m._Vi[0];
+	_Vi[1]= m._Vi[1];
+	_Vi[2]= m._Vi[2];
 	_sites_d = _sites_F =_osites_e = NULL;
 	_numTersoffNeighbours = 0;
 	fixedx = m.fixedx;
@@ -299,6 +306,7 @@ void Molecule::clearFM() {
 	}
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
+	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 }
 
 void Molecule::calcFM() {
@@ -349,6 +357,7 @@ void Molecule::check(unsigned long id) {
 		assert(!isnan(_F[d]));
 		assert(!isnan(_M[d]));
 		assert(!isnan(_I[d]));
+		assert(!isnan(_Vi[d]));
 		assert(!isnan(_invI[d]));
 	}
 #endif

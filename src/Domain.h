@@ -115,7 +115,7 @@ public:
 
 	//! @brief get the virial of the local process
 	double getLocalVirial() const;
-
+	
 	//! @brief get thermostat scaling for translations
 	double getGlobalBetaTrans();
 	double getGlobalBetaTrans(int thermostat);
@@ -339,6 +339,9 @@ public:
 	double getSigma(unsigned cid, unsigned nthSigma);
 	// needed for the MmspdWriter (MegaMol)
 	unsigned getNumberOfComponents();
+	
+	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
+	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
 private:
 
 	//! rank of the local process
@@ -422,6 +425,22 @@ private:
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
         double _universalProfiledComponentMass;  // set from outside
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPDProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPDProfile;
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPXProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPXProfile;
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPYProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPYProfile;
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPZProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPZProfile;
 
         std::map<unsigned, double> _universalTProfile; 
         std::map<unsigned, long double> _localWidomProfile;  // submit individually

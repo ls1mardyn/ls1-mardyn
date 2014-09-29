@@ -42,6 +42,9 @@ class InputBase;
 class Timer;
 class RDF;
 class LJFlopCounter;
+class LongRangeCorrection;
+class Homogeneous;
+class Planar;
 
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -439,6 +442,9 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
+	
+	/** Long Range Correction */
+	LongRangeCorrection* _longRangeCorrection;
 
 public:
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
