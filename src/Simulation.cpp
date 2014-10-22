@@ -1057,6 +1057,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
 	}
 
+	_longRangeCorrection->calculateLongRange();
+
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
 
