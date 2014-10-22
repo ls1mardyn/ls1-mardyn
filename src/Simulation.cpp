@@ -289,6 +289,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else {
 			global_log->warning() << "Thermostats section missing." << endl;
 		}
+		
+		
+	/*	if(xmlconfig.changecurrentnode("planarLRC")) {
+			XMLfile::Query query = xmlconfig.query("slabs");
+			unsigned slabs = query.card();
+			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, slabs, global_simulation);
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
+		}
+		else {
+			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);	
+		}*/
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
 	}
@@ -1053,11 +1065,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	if (this->_LJCutoffRadius == 0.0)
 		_LJCutoffRadius = this->_cutoffRadius;
 	//_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-	if (_longRangeCorrection == NULL){
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
-	}
-
-	_longRangeCorrection->calculateLongRange();
 
 	// @todo comment
 	_integrator = new Leapfrog(timestepLength);
@@ -1138,6 +1145,13 @@ void Simulation::prepare_start() {
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 #endif
+	
+	
+	if (_longRangeCorrection == NULL){
+		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+	}
+
+	_longRangeCorrection->calculateLongRange();
 
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
@@ -1280,7 +1294,6 @@ void Simulation::simulate() {
 		//cout<<"here somehow"<<endl;
 		//_moleculeContainer->traversePairs(_particlePairsHandler);
 		_moleculeContainer->traverseCells(*_cellProcessor);
-
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1316,7 +1329,6 @@ void Simulation::simulate() {
 
 		global_log->debug() << "Delete outer particles / clearing halo" << endl;
 		_moleculeContainer->deleteOuterParticles();
-
 		if (_simstep >= _initGrandCanonical) {
 			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
 					_domainDecomposition);
@@ -1336,9 +1348,8 @@ void Simulation::simulate() {
 			_integrator->accelerateUniformly(_moleculeContainer, _domain);
 			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
 		}
-		
 		_longRangeCorrection->calculateLongRange();
-
+		
 		/*
 		 * radial distribution function
 		 */
@@ -1362,7 +1373,7 @@ void Simulation::simulate() {
 		_domain->calculateGlobalValues(_domainDecomposition,
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
 								_simstep));
-
+		
 		// scale velocity and angular momentum
 		if (!_domain->NVE()) {
 			global_log->debug() << "Velocity scaling" << endl;
