@@ -55,6 +55,7 @@ void XyzWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBas
 
 void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
 	if( simstep % _writeFrequency == 0) {
+	//	vector<Component>&  components = domain->getComponents();
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
 

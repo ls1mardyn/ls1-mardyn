@@ -95,7 +95,7 @@ public:
 	//!
 	//! @param cutoffRadius cutoff radius for electrostatics
 	//! @param cutoffRadiusLJ cutoff radius for the LJ potential
-	void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ);
+//	void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ);
 
 	//! @brief initialize parameter streams
 	//!

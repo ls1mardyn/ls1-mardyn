@@ -10,7 +10,7 @@
 #include "molecules/Molecule.h"
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/PressureGradient.h"
-#include "CutoffCorrections.h"
+//#include "CutoffCorrections.h"
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 
@@ -575,7 +575,7 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 	_comp2params.initialize(*(_simulation.getEnsemble()->components()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ); 
 }
 
-void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
+/*void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 	double UpotCorrLJ=0.;
 	double VirialCorrLJ=0.;
 	double MySelbstTerm=0.;
@@ -677,7 +677,7 @@ void Domain::initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ) {
 	_VirialCorr=VirialCorrLJ+3.*MySelbstTerm;
 
 	global_log->info() << "Far field terms: U_pot_correction  = " << _UpotCorr << " virial_correction = " << _VirialCorr << endl;
-}
+}*/
 
 void Domain::setupProfile(unsigned xun, unsigned yun, unsigned zun)
 {

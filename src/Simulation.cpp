@@ -471,7 +471,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+//	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// test new Decomposition
 	_moleculeContainer->update();
