@@ -1185,7 +1185,7 @@ void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompB
 	for(Molecule* tempMol = _particleContainer->begin(); tempMol != _particleContainer->end(); tempMol = _particleContainer->next()){
 		unsigned cid=tempMol->componentid();
 		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
-		cout << _localGamma[cid] << "\t" << cid << endl;
+	//	cout << _localGamma[cid] << "\t" << cid << endl;
 	}
 	_domainDecomposition->collCommInit(numComp);
 	for (unsigned i=0; i<numComp; i++){
