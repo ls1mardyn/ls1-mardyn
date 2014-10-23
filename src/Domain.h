@@ -185,7 +185,7 @@ public:
 		this->_localThermostatN[thermostat] = N;
 		this->_localRotationalDOF[thermostat] = rotDOF;
 	}
-
+	
 	//! @brief get globalRho
 	double getglobalRho();
 
