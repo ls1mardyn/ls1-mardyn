@@ -49,10 +49,10 @@ void Leapfrog::eventNewTimestep(ParticleContainer* molCont, Domain* domain) {
 void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 	if (this->_state == STATE_NEW_TIMESTEP) {
 		Molecule* tempMolecule;
-		double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
-		double Dcorr = 2. - 1. / domain->getGlobalBetaRot();
+		// double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
+		// double Dcorr = 2. - 1. / domain->getGlobalBetaRot();
 		for (tempMolecule = molCont->begin(); tempMolecule != molCont->end(); tempMolecule = molCont->next()) {
-			tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr);
+			tempMolecule->upd_preF(_timestepLength);
 		}
 
 		this->_state = STATE_PRE_FORCE_CALCULATION;

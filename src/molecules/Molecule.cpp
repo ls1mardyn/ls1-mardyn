@@ -74,12 +74,12 @@ Molecule::Molecule(const Molecule& m) {
 }
 
 
-void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
+void Molecule::upd_preF(double dt) {
 	assert(_m > 0);
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
 	for (unsigned short d = 0; d < 3; ++d) {
-		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
+		_v[d] += dtInv2m * _F[d];
 		_r[d] += dt * _v[d];
 	}
 
@@ -94,7 +94,7 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	double qcorr = 1. / sqrt(qhalfstep.magnitude2());
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
-		_L[d] = Dcorr * _L[d] + dt_halve * _M[d];
+		_L[d] += dt_halve * _M[d];
 	qhalfstep.rotate(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
