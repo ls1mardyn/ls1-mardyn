@@ -41,4 +41,4 @@ private:
   
 };
 
-#endif /* __HOMOGENEOUS_H__ */
+#endif /* __LONGRANGECORRECTION_H__ */
