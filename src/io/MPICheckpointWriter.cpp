@@ -91,7 +91,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		filenamestream << ".MPIrestart.dat";
 
 		string filename = filenamestream.str();
-		global_log->debug() << "MPICheckpointWriter filename:" << filename;
+		global_log->debug() << "MPICheckpointWriter filename:" << filename << endl;
 		
 		unsigned long nummolecules=particleContainer->getNumberOfParticles();
 		unsigned long numbb=1;
@@ -107,7 +107,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		MPI_Status mpistat;
 		unsigned long startidx;
 		if(ownrank==0)
-		{
+		{	// first part of header will be written by rank 0
 			MPI_CHECK( MPI_File_write(mpifh,const_cast<char*>("MarDyn20140817"),15,MPI_CHAR,&mpistat) );
 			mpioffset=64-sizeof(unsigned long);
 			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
@@ -150,10 +150,10 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		mpioffset+=sizeof(unsigned long);
 		MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&nummolecules,1,MPI_UNSIGNED_LONG,&mpistat) );
 		mpioffset+=sizeof(unsigned long);
-		global_log->debug() << "MPICheckpointWriter" << ownrank << "\tBB " << ":\t"
+		global_log->debug() << "MPICheckpointWriter(" << ownrank << ")\tBB " << ":\t"
 		                    << bbmin[0] << ", " << bbmin[1] << ", " << bbmin[2] << " - "
 		                    << bbmax[0] << ", " << bbmax[1] << ", " << bbmax[2]
-		                    << "\tstarting index=" << startidx << " nummolecules=" << nummolecules;
+		                    << "\tstarting index=" << startidx << " nummolecules=" << nummolecules << endl;
 		//
 		MPI_Datatype mpidtParticle;
 		ParticleData::setMPIType(mpidtParticle);
@@ -168,8 +168,11 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		*/
 		mpioffset=64+gap+startidx*mpidtParticlesize;
 		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticle,mpidtParticle,const_cast<char*>("external32"),MPI_INFO_NULL) );
+		ParticleData particleStruct;
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
-			MPI_CHECK( MPI_File_write(mpifh, pos, 1, mpidtParticle, &mpistat) );
+			//global_log->debug() << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
+			ParticleData::MoleculeToParticleData(particleStruct, *pos);
+			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticle, &mpistat) );
 		}
 		MPI_CHECK( MPI_File_close(&mpifh) );
 #else
