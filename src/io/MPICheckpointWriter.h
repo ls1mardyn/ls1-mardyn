@@ -50,6 +50,8 @@ public:
 		return std::string("MPICheckpointWriter");
 	}
 private:
+	static const char _magicVersion[56];
+	
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
 	bool	_incremental;

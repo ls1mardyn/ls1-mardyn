@@ -8,6 +8,7 @@
 #include <sstream>
 #include <fstream>
 #include <string>
+#include <cstring>
 
 #include "Common.h"
 #include "Domain.h"
@@ -26,6 +27,7 @@ using namespace std;
 
 extern Simulation* global_simulation;
 
+const char MPICheckpointWriter::_magicVersion[] = "MarDyn20140817";
 
 MPICheckpointWriter::MPICheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental)
  : _outputPrefix(outputPrefix), _writeFrequency(writeFrequency), _incremental(incremental), _appendTimestamp(false)
@@ -96,6 +98,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned long nummolecules=particleContainer->getNumberOfParticles();
 		unsigned long numbb=1;
 #ifdef ENABLE_MPI
+		//global_log->set_mpi_output_all()
 		int num_procs;
 		MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &num_procs) );
 		unsigned long gap=7+3+sizeof(unsigned long)+num_procs*(6*sizeof(double)+2*sizeof(unsigned long));
@@ -108,11 +111,11 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned long startidx;
 		if(ownrank==0)
 		{	// first part of header will be written by rank 0
-			MPI_CHECK( MPI_File_write(mpifh,const_cast<char*>("MarDyn20140817"),15,MPI_CHAR,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh,_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
 			mpioffset=64-sizeof(unsigned long);
 			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
-			mpioffset+=sizeof(unsigned long);
-			//mpioffset=64;
+			//mpioffset+=sizeof(unsigned long);
+			mpioffset=64;
 			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("ICRVQD"),7,MPI_CHAR,&mpistat) );
 			mpioffset+=7;
 			//
@@ -155,24 +158,28 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		                    << bbmax[0] << ", " << bbmax[1] << ", " << bbmax[2]
 		                    << "\tstarting index=" << startidx << " nummolecules=" << nummolecules << endl;
 		//
-		MPI_Datatype mpidtParticle;
-		ParticleData::setMPIType(mpidtParticle);
-		MPI_Aint mpidtParticlesize=sizeof(ParticleData);	// !=MPI_Type_size
+		MPI_Datatype mpidtParticleM, mpidtParticleD;
+		ParticleData::setMPIType(mpidtParticleM);
+		mpidtParticleD=mpidtParticleM;
+		MPI_Aint mpidtParticleMsize=sizeof(ParticleData);	// !=MPI_Type_size
 		// MPI_Type_get_extent
 		/*
 		ParticleData pd[2];
 		MPI_Aint addr0,addr1;
 		MPI_Get_address(pd,&addr0);
 		MPI_Get_address(&pd[1],&addr1);
-		mpidtParticlesize=addr1-addr0;
+		mpidtParticleMsize=addr1-addr0;
 		*/
-		mpioffset=64+gap+startidx*mpidtParticlesize;
-		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticle,mpidtParticle,const_cast<char*>("external32"),MPI_INFO_NULL) );
+		mpioffset=64+gap+startidx*mpidtParticleMsize;
+		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,const_cast<char*>("external32"),MPI_INFO_NULL) );
+		//MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,const_cast<char*>("internal"),MPI_INFO_NULL) );
+		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
 			//global_log->debug() << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 			ParticleData::MoleculeToParticleData(particleStruct, *pos);
-			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticle, &mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
+			// saving a struct directly will also save padding zeros... 
 		}
 		MPI_CHECK( MPI_File_close(&mpifh) );
 #else
@@ -180,10 +187,8 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned int i;
 		unsigned int offset=0;
 		ofstream ostrm(filename.c_str(),ios::out|ios::binary);
-		ostrm << "MarDyn";
-		offset+=6;
-		ostrm << "20140817";
-		offset+=8;
+		ostrm << _magicVersion;
+		offset+=6+8;
 		for(i=0;i<64-offset-sizeof(unsigned long);++i) ostrm << '\0';
 		ostrm.write((char*)&gap,sizeof(unsigned long));
 		//offset=64
@@ -207,6 +212,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
 			unsigned long id=pos->id();
 			ostrm.write((char*)&id,sizeof(unsigned long));
+			//unsigned int componentid=pos->componentid(); // to be compatible to struct padding
 			unsigned long componentid=pos->componentid();
 			ostrm.write((char*)&componentid,sizeof(unsigned long));
 			double r[3],v[3],q[4],D[3];

@@ -92,11 +92,20 @@
         <outputprefix>mkesfera</outputprefix>
       </outputplugin>
       -->
+    <!--
+      <outputplugin name="MPICheckpointWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>mkesfera</outputprefix>
+        <appendTimestamp>1</appendTimestamp>
+      </outputplugin>
+      -->
       <outputplugin name="PovWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>mkesfera</outputprefix>
       </outputplugin>
+      
     </output>
 
   </simulation>
+  
 </mardyn>
