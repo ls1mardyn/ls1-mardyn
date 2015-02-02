@@ -111,7 +111,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned long startidx;
 		if(ownrank==0)
 		{	// first part of header will be written by rank 0
-			MPI_CHECK( MPI_File_write(mpifh,_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh,(void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
 			mpioffset=64-sizeof(unsigned long);
 			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
 			//mpioffset+=sizeof(unsigned long);
