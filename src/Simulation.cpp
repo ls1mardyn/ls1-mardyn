@@ -1234,7 +1234,7 @@ void Simulation::simulate() {
 	unsigned uCAT = _pressureGradient->getUCAT();
 // 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
 // 			/ _integrator->getTimestepLength());
-	_initSimulation = 0;
+	_initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
 	CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
@@ -1431,7 +1431,6 @@ void Simulation::simulate() {
 		}
 		perStepIoTimer.stop();
 		loopTimer.start();
-
 	}
 	loopTimer.stop();
 	/***************************************************************************/
