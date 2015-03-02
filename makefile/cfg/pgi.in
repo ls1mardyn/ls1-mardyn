@@ -34,3 +34,12 @@ LINKFLAGS_PAR_DEBUG =
 CXXFLAGS_PAR_RELEASE  = -fast -Mipa=fast,inline -Minline=levels:10 -DNDEBUG -DENABLE_MPI
 LINKFLAGS_PAR_RELEASE =
 
+# Vectorization settings:
+#########################################
+# NOT tested!
+ifeq ($(VECTORIZE_CODE),1)
+CXXFLAGS_VECTORIZE = -Mvect=128
+endif
+ifeq ($(VECTORIZE_CODE),2)
+CXXFLAGS_VECTORIZE = -Mvect=256
+endif

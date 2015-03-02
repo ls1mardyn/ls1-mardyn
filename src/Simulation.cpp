@@ -27,7 +27,7 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
-#include "particleContainer/adapter/LJFlopCounter.h"
+#include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
 
@@ -63,7 +63,7 @@ Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
 	_rdf(NULL),
-	_ljFlopCounter(NULL),
+	_flopCounter(NULL),
 	_domainDecomposition(NULL),
 	_forced_checkpoint_time(0) {
 	_ensemble = new CanonicalEnsemble();
@@ -80,7 +80,7 @@ Simulation::~Simulation() {
 	delete _moleculeContainer;
 	delete _integrator;
 	delete _inputReader;
-	delete _ljFlopCounter;
+	delete _flopCounter;
 }
 
 void Simulation::exit(int exitcode) {
@@ -333,7 +333,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "LJFLOPCounter") {
 			/** @todo  Make the LJ Flop counter a real output plugin */
-			_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
+			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 			continue;
 		}
 		else if(pluginname == "MmspdWriter") {
@@ -1128,18 +1128,19 @@ void Simulation::prepare_start() {
 		quadrupole_present |= components[i].numQuadrupoles() != 0;
 		tersoff_present |= components[i].numTersoff() != 0;
 	}
+	global_log->debug() << "xx lj present: " << lj_present << endl;
+	global_log->debug() << "xx charge present: " << charge_present << endl;
+	global_log->debug() << "xx dipole present: " << dipole_present << endl;
+	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
+	global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
 
-	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
-		global_log->warning() << "Using legacy cell processor. (Vectorized code not yet available for charges, dipoles, quadrupoles and tersoff interactions.)" << endl;
-		global_log->debug() << "xx lj present: " << lj_present << endl;
-		global_log->debug() << "xx charge present: " << charge_present << endl;
-		global_log->debug() << "xx dipole present: " << dipole_present << endl;
-		global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
-		global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
+	if (tersoff_present) {
+		global_log->warning() << "Using legacy cell processor. (Vectorized code not supported for tersoff interactions.)" << endl;
+
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 	} else {
 		global_log->info() << "Using vectorized cell processor." << endl;
-		_cellProcessor = new VectorizedCellProcessor( *_domain,_LJCutoffRadius);
+		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
@@ -1162,8 +1163,8 @@ void Simulation::prepare_start() {
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	/* If enabled count FLOP rate of LS1. */
-	if( NULL != _ljFlopCounter ) {
-		_moleculeContainer->traverseCells(*_ljFlopCounter);
+	if( NULL != _flopCounter ) {
+		_moleculeContainer->traverseCells(*_flopCounter);
 	}
 
 	// clear halo
@@ -1463,9 +1464,9 @@ void Simulation::simulate() {
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
-	if(NULL != _ljFlopCounter) {
-		double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
-		global_log->info() << "LJ-FLOP-Count per Iteration: " << _ljFlopCounter->getTotalFlopCount() << " FLOPs" <<endl;
+	if(NULL != _flopCounter) {
+		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
+		global_log->info() << "LJ-FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
 		global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
 	}
 }

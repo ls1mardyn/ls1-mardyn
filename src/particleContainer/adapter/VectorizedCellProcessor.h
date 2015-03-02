@@ -1,7 +1,7 @@
 /**
  * \file
  * \brief VectorizedCellProcessor.h
- * \author Johannes Heckl, Wolfgang Eckhardt
+ * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
  */
 
 #ifndef VECTORIZEDCELLPROCESSOR_H_
@@ -14,36 +14,36 @@
 #include <cmath>
 
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VLJCP_VEC_TYPE) || defined(VLJCP_NOVEC) || defined(VLJCP_VEC_SSE3)
+#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX)
 	#error conflicting macro definitions
 #endif
 
-#define VLJCP_NOVEC 0
-#define VLJCP_VEC_SSE3 1
-#define VLJCP_VEC_AVX 2
+#define VCP_NOVEC 0
+#define VCP_VEC_SSE3 1
+#define VCP_VEC_AVX 2
 
 #if defined(__AVX__) && not defined(AVX128)
-	#define VLJCP_VEC_TYPE VLJCP_VEC_AVX
+	#define VCP_VEC_TYPE VCP_VEC_AVX
 #elif defined(__AVX__) && defined(AVX128)
-	#define VLJCP_VEC_TYPE VLJCP_VEC_SSE3
+	#define VCP_VEC_TYPE VCP_VEC_SSE3
 #elif defined(__SSE3__)
-	#define VLJCP_VEC_TYPE VLJCP_VEC_SSE3
+	#define VCP_VEC_TYPE VCP_VEC_SSE3
 #else
-	#define VLJCP_VEC_TYPE VLJCP_NOVEC
+	#define VCP_VEC_TYPE VCP_NOVEC
 #endif
 
 #ifdef NOVEC
-	#ifdef VLJCP_VEC_TYPE
+	#ifdef VCP_VEC_TYPE
 		#warn Multiple vectorization methods specified. Will not use vectorization at all!
-		#undef VLJCP_VEC_TYPE
+		#undef VCP_VEC_TYPE
 	#endif
-	#define VLJCP_VEC_TYPE VLJCP_NOVEC
+	#define VCP_VEC_TYPE VCP_NOVEC
 #endif
 
 // Include necessary files if we vectorize.
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX
 	#include "immintrin.h"
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
 #endif
 
@@ -55,7 +55,7 @@ class Molecule;
 class CellDataSoA;
 
 /**
- * \brief Vectorized calculation of Lennard Jones force.
+ * \brief Vectorized calculation of the force.
  * \author Johannes Heckl
  */
 class VectorizedCellProcessor : public CellProcessor {
@@ -66,7 +66,7 @@ public:
 	 * \brief Construct and set up the internal parameter table.
 	 * \details Components and parameters should be finalized before this call.
 	 */
-	VectorizedCellProcessor(Domain & domain, double cutoffRadius);
+	VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius);
 
 	~VectorizedCellProcessor();
 
@@ -75,20 +75,20 @@ public:
 	 */
 	void initTraversal(const size_t numCells);
 	/**
-	 * \brief Load the LennardJonesSoA for cell.
+	 * \brief Load the CellDataSoA for cell.
 	 */
 	void preprocessCell(ParticleCell& cell);
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
+
+	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
+
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
 	void processCell(ParticleCell& cell);
-
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
-
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
@@ -110,10 +110,30 @@ private:
 	 * \brief The Domain where macroscopic values will be stored.
 	 */
 	Domain & _domain;
+
 	/**
 	 * \brief The squared cutoff radius.
 	 */
-	const double _rc2;
+	const double _cutoffRadiusSquare;
+
+	/**
+	 * \brief The squared LJ cutoff radius.
+	 */
+	const double _LJcutoffRadiusSquare;
+
+	/**
+	 * \brief Parameter for the reaction field method (see description in Domain.h and Comp2Param.cpp).
+	 */
+	const double _epsRFInvrc3;
+
+	/**
+	 * \brief One LJ center enumeration start index for each component.
+	 * \details All the LJ centers of all components are enumerated.<br>
+	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
+	 * This is necessary for finding the respective parameters for each interaction<br>
+	 * between two centers.
+	 */
+
 	/**
 	 * \brief One LJ center enumeration start index for each component.
 	 * \details All the LJ centers of all components are enumerated.<br>
@@ -135,27 +155,118 @@ private:
 	 */
 	std::vector<DoubleArray> _shift6;
 	/**
-	 * \brief Sum of all potentials.
+	 * \brief Sum of all LJ potentials.
 	 * \details Multiplied by 6.0 for performance reasons.
 	 */
 	double _upot6lj;
+
+	/**
+	 * \brief Sum of all Xpole potentials.
+	 */
+	double _upotXpoles;
+
 	/**
 	 * \brief The virial.
 	 */
 	double _virial;
 
+	/**
+	 * \brief MyRF contribution of all pairs
+	 */
+	double _myRF;
+
+	// lookup array for the distance molecule-molecule on a molecule-center basis.
+	DoubleArray _centers_dist_lookup;
+
 	// vector holding pointers to the above objects, used as a stack for
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-	// lookup array for the distance molecule-molecule on a molecule-center basis.
-	DoubleArray _center_dist_lookup;
+	/**
+	 * \brief The body of the inner loop of the non-vectorized force calculation between LJ centers.
+	 */
+	template<class MacroPolicy>
+		void _loopBodyNovecLJ(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
 
 	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation.
+	 * \brief The body of the inner loop of the non-vectorized force calculation between charges.
+	 * \author Robert Hajda
 	 */
-	template<class ForcePolicy, class MacroPolicy>
-		void _loopBodyNovec(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
+	template<class MacroPolicy>
+		void _loopBodyNovecCharges(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
+
+	/**
+	 * \brief The body of the inner loop of the non-vectorized force calculation between charges and dipoles.
+	 * \author Robert Hajda
+	 */
+	template<class MacroPolicy>
+		void _loopBodyNovecChargesDipoles(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask, const bool& switched);
+
+	/**
+	 * \brief The body of the inner loop of the non-vectorized force calculation between dipoles.
+	 * \author Robert Hajda
+	 */
+	template<class MacroPolicy>
+		void _loopBodyNovecDipoles(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
+
+	/**
+	 * \brief Inner loop body of the non-vectorized force calculation between charges and quadrupoles.
+	 * \author Uwe Ehmann
+	 */
+	template<class MacroPolicy>
+		void _loopBodyNovecChargesQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask, const bool& switched);
+
+	/**
+	 * \brief Inner loop body of the non-vectorized force calculation between dipoles and quadrupoles.
+	 * \author Uwe Ehmann
+	 */
+	template<class MacroPolicy>
+		void _loopBodyNovecDipolesQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask, const bool& switched);
+
+	/**
+	 * \brief Inner loop body of the non-vectorized force calculation between quadrupoles.
+	 * \author Uwe Ehmann
+	 */
+	template<class MacroPolicy>
+		void _loopBodyNovecQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask);
+
+#if VCP_VEC_TYPE==VCP_VEC_SSE3
+	template<class MacroPolicy>
+	inline
+	void _loopBodyLJ(
+			const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
+			const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
+			const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
+			const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
+			__m128d& f_x, __m128d& f_y, __m128d& f_z,
+			__m128d& sum_upot6lj, __m128d& sum_virial,
+			const __m128d& forceMask,
+			const __m128d& e1s1, const __m128d& e2s2,
+			const size_t& id_j0, const size_t& id_j1, const size_t& id_i);
+#endif /* _loopBodyLJ SSE3 */
+
+	/**
+	 * \brief The dist lookup for a molecule and all centers of a type
+	 * \author Robert Hajda
+	 */
+	template<class ForcePolicy>
+#if VCP_VEC_TYPE==VCP_NOVEC
+	unsigned long
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
+	__m128d
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	__m256d
+#endif
+	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
+			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
+	#if VCP_VEC_TYPE==VCP_VEC_SSE3
+			, const __m128d & cutoffRadiusSquareD, size_t end_j, const __m128d m1_r_x, const __m128d m1_r_y, const __m128d m1_r_z
+	#elif VCP_VEC_TYPE==VCP_VEC_AVX
+			, const __m256d & cutoffRadiusSquareD, size_t end_j, const __m256d m1_r_x, const __m256d m1_r_y, const __m256d m1_r_z
+	#endif
+			);
+
+
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
@@ -206,7 +317,7 @@ private:
 			return true;
 		}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
 		{
 			static __m256d ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
@@ -231,12 +342,13 @@ private:
 				default: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)); 
 			}
 		}
-#else
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static size_t InitJ (const size_t i)
 		{
 			return i + (i & static_cast<size_t>(1));
 		}
+
+		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
 		{
 			return _mm_and_pd(_mm_cmplt_pd(m_r2, rc2), _mm_cmpneq_pd(m_r2, _mm_setzero_pd()));
@@ -246,10 +358,8 @@ private:
 		{
 			return i + 1;
 		}
-#endif
-#endif
-	};
-
+#endif /* definition of InitJ & GetForceMask */
+	}; /* end of class SingleCellPolicy_ */
 
 	/**
 	 * \brief Policy class for cell pair force calculation.
@@ -274,7 +384,7 @@ private:
 			return false;
 		}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
 		{
 			return _mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS);
@@ -283,17 +393,16 @@ private:
 		{
 			return _mm256_setzero_pd();
 		}
-#else
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
 			return _mm_cmplt_pd(m_r2, rc2);
 		}
-#endif
-#endif
-	};
+#endif /* definition of GetForceMask */
+	}; /* end of class CellPairPolicy_ */
+
 	/**
 	 * \brief A MacroPolicy for adding up all macroscopic values.
 	 * \details This is used for single cell calculations and for<br>
@@ -301,26 +410,42 @@ private:
 	 */
 	class AllMacroPolicy_ {
 	public:
-		static bool MacroscopicValueCondition(double, double, double)
+		inline static bool MacroscopicValueCondition(double, double, double)
 		{
 			// We want all macroscopic values to be calculated.
 			return true;
 		}
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3 || VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		static __m128d GetMacroMask(__m128d forceMask, __m128d, __m128d, __m128d)
+
+		inline static bool MacroscopicValueConditionSwitched(double, double, double, bool)
+		{
+			return true;
+		}
+
+#if VCP_VEC_TYPE==VCP_VEC_SSE3
+		inline static __m128d GetMacroMask(__m128d forceMask, __m128d, __m128d, __m128d)
 		{
 			// We want all macroscopic values to be calculated, but not those
 			// for pairs which we ignore because of cutoff or other reasons.
 			return forceMask;
 		}
-#endif
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+
+		inline static __m128d GetMacroMaskSwitched(__m128d forceMask, __m128d, __m128d, __m128d, __m128d)
+		{
+			return forceMask;
+		}
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&)
 		{
 			return forceMask;
 		}
-#endif
-	};
+
+		inline static __m256d GetMacroMaskSwitched(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&, const __m256d&)
+		{
+			return forceMask;
+		}
+#endif /* definition of GetMacroMask and GetMacroMaskSwitched */
+	}; /* end of class AllMacroPolicy_ */
+
 	/**
 	 * \brief A MacroPolicy.
 	 * \details Only adds up the macroscopic values for pairs where<br>
@@ -329,7 +454,7 @@ private:
 	 */
 	class SomeMacroPolicy_ {
 	public:
-		static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz)
+		inline static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz)
 		{
 			// Only calculate macroscopic values for pairs where molecule 1
 			// "IsLessThan" molecule 2.
@@ -341,10 +466,18 @@ private:
 					)
 				);
 		}
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3 || VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+
+		inline static bool MacroscopicValueConditionSwitched(double m_dx, double m_dy, double m_dz, bool switched)
+		{
+			// Only calculate macroscopic values for pairs where molecule 1
+			// "IsLessThan" molecule 2.
+			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
+		}
+
+#if VCP_VEC_TYPE==VCP_VEC_SSE3
 		// Only calculate macroscopic values for pairs where molecule 1
 		// "IsLessThan" molecule 2.
-		static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz)
+		inline static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz)
 		{
 			const __m128d zero = _mm_setzero_pd();
 
@@ -363,8 +496,12 @@ private:
 
 			return _mm_and_pd(forceMask, t4);
 		}
-#endif
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
+
+		inline static __m128d GetMacroMaskSwitched(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz, __m128d switched)
+		{
+			return _mm_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
+		}
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz)
 		{
 			const __m256d zero = _mm256_setzero_pd();
@@ -384,8 +521,13 @@ private:
 
 			return _mm256_and_pd(t4, forceMask);
 		}
-#endif
-	};
-};
 
-#endif
+		inline static __m256d GetMacroMaskSwitched(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz, const __m256d& switched)
+		{
+			return _mm256_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
+		}
+#endif /* definition of GetMacroMask and GetMacroMaskSwitched */
+	}; /* end of class SomeMacroPolicy_ */
+}; /* end of class VectorizedCellProcessor */
+
+#endif /* VECTORIZEDCELLPROCESSOR_H_ */

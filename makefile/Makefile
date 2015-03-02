@@ -36,7 +36,13 @@ VTK ?= 0
 
 SUPPORT_GENERATOR ?= 0
 
-VECTORIZE_CODE ?= 0
+# select vectorization mode:
+VECTORIZE_CODE ?= 1
+# 0 - LegacyCellProcessor
+# 1 - VectorizedCellProcessor with SSE intrinsics (default)
+# 2 - VectorizedCellProcessor with AVX intrinsics
+# N - VectorizedCellProcessor with no intrinsics
+# see "make help_vect"
 
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
@@ -88,7 +94,9 @@ ifneq ($(UNIT_TESTS),0)
   include $(CPPUNIT_MAKE_INCLUDE)
 endif
 
-ifeq ($(VECTORIZE_CODE),1)
+ifeq ($(VECTORIZE_CODE),0)
+CXXFLAGS += -D ENABLE_VECTORIZED_CODE=0
+else
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 endif
@@ -122,14 +130,14 @@ help:
 	@echo "Current configuration: $(CFG_INFO)"
 	@echo
 	@echo "options:"
-	@echo "make CFG=...                    choose compiler (see make cfg_list)"
-	@echo "make PARTYPE=SEQ | PAR          choose parallelization type (see cfg_help)"
-	@echo "make TARGET=DEBUG | RELEASE     choose target (see cfg_help)"
-	@echo "make DEPS=0 | 1                 compile using dependancy tracking"
-	@echo "make UNIT_TESTS=0 | 1           compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=0 | 1                  compile with or without the vtk output plugin" 
-	@echo "make SUPPORT_DL_GENERATOR=0 | 1 compile with support for input generators as dynamic libraries"
-	@echo "make VECTORIZE_CODE=0 | 1       compile with support for SSE, AVX, ..., define CXXFLAGS_VECTORIZE=-march=???"
+	@echo "make CFG=...                      choose compiler (see make cfg_list)"
+	@echo "make PARTYPE=SEQ | PAR            choose parallelization type (see cfg_help)"
+	@echo "make TARGET=DEBUG | RELEASE       choose target (see cfg_help)"
+	@echo "make DEPS=0 | 1                   compile using dependancy tracking"
+	@echo "make UNIT_TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=0 | 1                    compile with or without the vtk output plugin" 
+	@echo "make SUPPORT_DL_GENERATOR=0 | 1   compile with support for input generators as dynamic libraries"
+	@echo "make VECTORIZE_CODE=0 | 1 | 2 | N compile with vectorization support (see help_vect)"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
@@ -141,6 +149,33 @@ help:
 	@echo "make depend      generate makefile dependency list"
 	@echo "make lcov        create code coverage information"
 	@echo "make lcov_clean  reset profile data"
+
+help_vect:
+	@echo "Vectorization help:"
+	@echo
+	@echo "make VECTORIZE_CODE= 0 | 1 | 2 | N"
+	@echo " 0 - use the LegacyCellProcessor"
+	@echo " 1 - use the VectorizedCellProcessor with SSE intrinsics"
+	@echo "     This is the default option."
+	@echo "     Should work on all CPUs newer than 2006 or so."
+	@echo "     Speed-up of almost a factor of 2 versus the LegacyCellProcessor."
+	@echo " 2 - use the VectorizedCellProcessor with AVX intrinsics"
+	@echo "     Should work on CPUs newer than 2011"
+	@echo "     (Intel SandyBridge and AMD Bulldozer are the earliest to support it)."
+	@echo "     Speed-up of a factor of 2 to 3 versus the LegacyCellProcessor."
+	@echo "     Please make sure that you are using a reasonably updated compiler!"
+	@echo "     For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
+	@echo " N - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
+	@echo "     For development purposes only. Often slower than the LegacyCellProcessor."
+	@echo
+	@echo " To determine, whether your current CPU supports SSE or AVX, call, respectively: "
+	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep sse3 "
+	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep avx "
+	@echo " If the return line is non-empty, then the CPU supports the respective vectorization mode."
+	@echo " Any further encountered problems are likely due to an outdated or misconfigured compiler."
+	@echo
+	@echo " For the best experience, use AVX with either the latest GNU or Intel compiler on Intel processors."
+
 
 all: $(BINARY)
 

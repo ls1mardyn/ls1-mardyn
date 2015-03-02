@@ -41,7 +41,7 @@ class DomainDecompBase;
 class InputBase;
 class Timer;
 class RDF;
-class LJFlopCounter;
+class FlopCounter;
 class LongRangeCorrection;
 class Homogeneous;
 class Planar;
@@ -424,7 +424,7 @@ private:
 	/** New cellhandler, which will one day replace the particlePairsHandler here completely. */
 	CellProcessor* _cellProcessor;
 
-	LJFlopCounter* _ljFlopCounter;
+	FlopCounter* _flopCounter;
 
 	/** Type of the domain decomposition */
 	DomainDecompType _domainDecompositionType;

@@ -41,3 +41,12 @@ LINKFLAGS_PAR_DEBUG = $(GLOBAL_LINK) -O0 -g
 # RELEASE
 CXXFLAGS_PAR_RELEASE  = $(GLOBAL_INCLUDES) -Wall -O3 -Werror -DNDEBUG -DENABLE_MPI
 LINKFLAGS_PAR_RELEASE = $(GLOBAL_LINK)
+
+# Vectorization settings:
+#########################################
+ifeq ($(VECTORIZE_CODE),1)
+CXXFLAGS_VECTORIZE = -msse3
+endif
+ifeq ($(VECTORIZE_CODE),2)
+CXXFLAGS_VECTORIZE = -mavx
+endif

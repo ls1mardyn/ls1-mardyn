@@ -47,3 +47,20 @@ LINKFLAGS_PAR_COVERAGE = $(LINKFLAGS_PAR_RELEASE) --coverage
 # COVERAGE
 CXXFLAGS_PAR_PROFILE  = $(CXXFLAGS_PAR_RELEASE) -pg
 LINKFLAGS_PAR_PROFILE = $(LINKFLAGS_PAR_RELEASE) -pg
+
+# Vectorization settings:
+#########################################
+ifeq ($(VECTORIZE_CODE),1)
+CXXFLAGS_VECTORIZE = -msse3
+endif
+ifeq ($(VECTORIZE_CODE),2)
+CXXFLAGS_VECTORIZE = -mavx
+endif
+
+# On AMD BUlldozer:
+#ifeq ($(VECTORIZE_CODE),1)
+#CXXFLAGS_VECTORIZE = -msse3 -mfma4 -march=bdver1
+#endif
+#ifeq ($(VECTORIZE_CODE),2)
+#CXXFLAGS_VECTORIZE = -mavx -mfma4 -march=bdver1
+#endif
