@@ -139,6 +139,9 @@ void Molecule::upd_cache() {
 
 
 void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
+
+	calcFM();
+
 	double dtInv2m = dt_halve / _m;
 	double v2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {

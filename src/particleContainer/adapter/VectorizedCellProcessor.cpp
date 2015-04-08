@@ -324,7 +324,6 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			molecules[m]->Fquadrupoleadd(i, f);
 			molecules[m]->Madd(M);
 		}
-		molecules[m]->calcFM();
 	}
 	// Delete the SoA.
 	_particleCellDataVector.push_back(&soa);

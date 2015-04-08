@@ -54,6 +54,10 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 	container->traverseCells(cellProcessor);
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+		m->calcFM();
+	}
+
+	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -87,6 +91,10 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
 	VectorizedCellProcessor cellProcessor( *_domain, 1.3, 1.3);
 	container->traverseCells(cellProcessor);
+
+	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+		m->calcFM();
+	}
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
 		for (int i = 0; i < 3; i++) {
@@ -123,6 +131,10 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	LegacyCellProcessor cellProcessor( ScenarioCutoff, ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
+	for (Molecule* m = container_1->begin(); m != container_1->end(); m = container_1->next()) {
+		m->calcFM();
+	}
+
 	// store potential and virial for verification
 	double legacy_u_pot = _domain ->getLocalUpot();
 	double legacy_virial = _domain ->getLocalVirial();
@@ -143,6 +155,10 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	VectorizedCellProcessor vectorized_cell_proc(*_domain, ScenarioCutoff, ScenarioCutoff);
 
 	container_2->traverseCells(vectorized_cell_proc);
+
+	for (Molecule* m = container_2->begin(); m != container_2->end(); m = container_2->next()) {
+		m->calcFM();
+	}
 
 	double vectorized_u_pot = _domain ->getLocalUpot();
 	double vectorized_virial = _domain ->getLocalVirial();
@@ -202,6 +218,10 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	LegacyCellProcessor cellProcessor(ScenarioCutoff, ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
+	for (Molecule* m = container_1->begin(); m != container_1->end(); m = container_1->next()) {
+		m->calcFM();
+	}
+
 	// store potential and virial for verification
 	double legacy_u_pot = _domain->getLocalUpot();
 	double legacy_virial = _domain->getLocalVirial();
@@ -224,6 +244,10 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 			ScenarioCutoff);
 
 	container_2->traverseCells(vectorized_cell_proc);
+
+	for (Molecule* m = container_2->begin(); m != container_2->end(); m = container_2->next()) {
+		m->calcFM();
+	}
 
 	double vectorized_u_pot = _domain->getLocalUpot();
 	double vectorized_virial = _domain->getLocalVirial();

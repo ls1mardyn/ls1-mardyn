@@ -218,7 +218,6 @@ void LegacyCellProcessor::postprocessCell(ParticleCell& cell) {
 				}
 				_particlePairsHandler->processTersoffAtom(molecule1, params, delta_r);
 			}
-			molecule1.calcFM();
 		}
 	}
 }

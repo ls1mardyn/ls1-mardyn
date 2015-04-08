@@ -46,6 +46,10 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	container->traverseCells(cellProcessor);
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+		m->calcFM();
+	}
+
+	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -79,6 +83,10 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
 	LegacyCellProcessor cellProcessor( 1.3, 1.3, 0, &forceAdapter);
 	container->traverseCells(cellProcessor);
+
+	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+		m->calcFM();
+	}
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
 		for (int i = 0; i < 3; i++) {
