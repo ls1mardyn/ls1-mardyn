@@ -331,7 +331,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();
 		}
-		else if(pluginname == "LJFLOPCounter") {
+		else if(pluginname == "FLOPCounter") {
 			/** @todo  Make the LJ Flop counter a real output plugin */
 			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 			continue;
@@ -1474,7 +1474,7 @@ void Simulation::simulate() {
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
 	if(NULL != _flopCounter) {
 		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
-		global_log->info() << "LJ-FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
+		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
 		global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
 	}
 }

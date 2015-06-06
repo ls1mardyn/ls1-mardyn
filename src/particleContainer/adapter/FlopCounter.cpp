@@ -141,6 +141,10 @@ void FlopCounter::postprocessCell(ParticleCell & c) {
 }
 
 void FlopCounter::processCell(ParticleCell & c) {
+	// don't count halo cells
+	if (c.isHaloCell())
+		return;
+
 	const MoleculeList & molecules = c.getParticlePointers();
 	if (molecules.size() > 1) {
 		const MoleculeList::const_iterator end_i = --(molecules.end());
@@ -214,6 +218,10 @@ void FlopCounter::processCell(ParticleCell & c) {
 }
 
 void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
+	// don't count halo pairs
+	if (c1.isHaloCell() and c2.isHaloCell())
+		return;
+
 	const MoleculeList & molecules1 = c1.getParticlePointers();
 	const MoleculeList & molecules2 = c2.getParticlePointers();
 	if ((molecules1.size() > 0) && (molecules2.size() > 0)) {
