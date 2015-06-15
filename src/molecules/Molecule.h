@@ -48,7 +48,7 @@ public:
 	/** get the molecule's component ID */
 	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component */
-	void setComponent(Component *component) { _component = component; }
+	void setComponent(Component *component) { _component = component; setupCache();}
 	/** return pointer to component to which the molecule belongs */
 	Component* component() const { return _component; }
 	/** get position coordinate */

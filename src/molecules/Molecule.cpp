@@ -262,7 +262,8 @@ double Molecule::tersoffParameters(double params[15]) //returns delta_r
 // private functions
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
-inline void Molecule::setupCache() {
+// mheinen_2015-06-15 --> to inline method setupCache() doesnt work when its called by method setComponent(), defined in Molecule.h
+void Molecule::setupCache() {
 	assert(_component != NULL);
 
 	_m = _component->m();
