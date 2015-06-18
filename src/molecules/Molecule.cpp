@@ -278,7 +278,10 @@ void Molecule::setupCache() {
 	}
 
 	int numsites = _component->numSites();
-	_sites_d = new double[3*numsites];
+    // if allocated before, previous allocated memory should be freed
+    if(_sites_d != NULL)
+        delete [] _sites_d;
+    _sites_d = new double[3*numsites];
 	assert(_sites_d);
 	_ljcenters_d = &(_sites_d[0]);
 	_charges_d = &(_ljcenters_d[3*numLJcenters()]);
@@ -287,12 +290,18 @@ void Molecule::setupCache() {
 	_tersoff_d = &(_quadrupoles_d[3*numQuadrupoles()]);
 
 	int numorientedsites = _component->numOrientedSites();
-	_osites_e = new double[3*numorientedsites];
+    // if allocated before, previous allocated memory should be freed
+    if(_osites_e != NULL)
+        delete [] _osites_e;
+    _osites_e = new double[3*numorientedsites];
 	assert(_osites_e);
 	_dipoles_e = &(_osites_e[0]);
 	_quadrupoles_e = &(_dipoles_e[3*numDipoles()]);
 
-	_sites_F = new double[3*numsites];
+    // if allocated before, previous allocated memory should be freed
+    if(_sites_F != NULL)
+        delete [] _sites_F;
+    _sites_F = new double[3*numsites];
 	assert(_sites_F);
 	_ljcenters_F = &(_sites_F[0]);
 	_charges_F = &(_ljcenters_F[3*numLJcenters()]);
