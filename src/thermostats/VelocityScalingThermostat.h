@@ -29,9 +29,10 @@ public:
 private:
 	double _globalBetaTrans;
 	double _globalBetaRot;
-	double *_globalVelocity;
+	double _globalVelocity[3];
 
 	bool _componentwise;
+        bool _useGlobalVelocity;
 	std::map<int, double> _componentBetaTrans;
 	std::map<int, double> _componentBetaRot;
 	std::map<int, double*> _componentVelocity;
