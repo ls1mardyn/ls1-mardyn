@@ -1146,13 +1146,6 @@ void Simulation::prepare_start() {
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 #endif
-	
-	
-	if (_longRangeCorrection == NULL){
-		_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
-	}
-
-	_longRangeCorrection->calculateLongRange();
 
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
@@ -1167,6 +1160,16 @@ void Simulation::prepare_start() {
 		_moleculeContainer->traverseCells(*_flopCounter);
 	}
 
+    // clear halo
+    global_log->info() << "Clearing halos" << endl;
+    _moleculeContainer->deleteOuterParticles();
+
+    if (_longRangeCorrection == NULL){
+        _longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+    }
+
+    _longRangeCorrection->calculateLongRange();
+
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// or should we better call the integrator->eventForcesCalculated?
@@ -1174,10 +1177,6 @@ void Simulation::prepare_start() {
 			!= _moleculeContainer->end(); tM = _moleculeContainer->next()) {
 		tM->calcFM();
 	}
-
-	// clear halo
-	global_log->info() << "Clearing halos" << endl;
-	_moleculeContainer->deleteOuterParticles();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
