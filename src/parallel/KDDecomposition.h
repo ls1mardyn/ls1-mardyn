@@ -172,7 +172,7 @@ class KDDecomposition: public DomainDecompBase{
 	void collCommAppendLongDouble(long double longDoubleValue){_collComm.appendLongDouble(longDoubleValue);};
 	int collCommGetInt(){return _collComm.getInt(); };
 	unsigned long collCommGetUnsLong(){return _collComm.getUnsLong(); };
-	float collCommGetFloat(){return _collComm.getInt(); };
+	float collCommGetFloat(){return _collComm.getFloat(); };
 	double collCommGetDouble(){ return _collComm.getDouble(); };
 	long double collCommGetLongDouble(){ return _collComm.getLongDouble(); };
 	void collCommAllreduceSum(){ _collComm.allreduceSum(); };
