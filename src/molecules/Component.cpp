@@ -62,7 +62,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		
 		std::string siteType;
 		xmlconfig.getNodeValue( "@type", siteType );
-		std::cout << "Adding site of type " << siteType << endl;
+		global_log->info() << "Adding site of type " << siteType << endl;
 		
 		if ( siteType == "LJ126" ) {
 			LJcenter ljSite;
