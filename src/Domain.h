@@ -167,6 +167,7 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot() const;
+        double getGlobalUpot() const;
 
 	//! @brief get the global average virial per particle
 	//!

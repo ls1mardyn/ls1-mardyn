@@ -1512,7 +1512,7 @@ void Simulation::output(unsigned long simstep) {
 	/* TODO: thermostat */
 	global_log->info() << "Simstep = " << simstep << "\tT = "
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
-			<< _domain->getAverageGlobalUpot() << "\tp = "
+			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
 }
 

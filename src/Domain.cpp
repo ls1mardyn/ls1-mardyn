@@ -149,6 +149,7 @@ double Domain::getGlobalPressure()
 double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
 
 double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolecules; }
+double Domain::getGlobalUpot() const { return _globalUpot; }
 
 
 

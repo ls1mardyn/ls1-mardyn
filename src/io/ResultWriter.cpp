@@ -72,11 +72,11 @@ void ResultWriter::initOutput(ParticleContainer* particleContainer,
 void ResultWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 	unsigned long simstep, list<ChemicalPotential>* lmu )
 {
-	_U_pot_acc->addEntry(domain->getAverageGlobalUpot());
+	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
 		_resultStream << simstep << "\t" << _simulation.getSimulationTime()
-		              << "\t\t" << domain->getAverageGlobalUpot() << "\t" << _U_pot_acc->getAverage()
+		              << "\t\t" << domain->getGlobalUpot() << "\t" << _U_pot_acc->getAverage()
 					  << "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc->getAverage()
 		              << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
 		              << "\t\t" << domain->cv() << "\n";
