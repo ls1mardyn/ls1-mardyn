@@ -1312,8 +1312,12 @@ void Simulation::simulate() {
 							<< "): test deletions and insertions" << endl;
                                         this->_domain->setLambda(cpit->getLambda());
                                         this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
+                                        double localUpotBackup = _domain->getLocalUpot();
+                                        double localVirialBackup = _domain->getLocalVirial();
 					_moleculeContainer->grandcanonicalStep(&(*cpit),
 							_domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor);
+                                        _domain->setLocalUpot(localUpotBackup);
+                                        _domain->setLocalVirial(localVirialBackup);
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);
