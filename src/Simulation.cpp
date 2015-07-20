@@ -1134,12 +1134,22 @@ void Simulation::prepare_start() {
 	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
 	global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
 
-	if (tersoff_present) {
-		global_log->warning() << "Using legacy cell processor. (Vectorized code not supported for tersoff interactions.)" << endl;
+	if (tersoff_present)
+        {
+                global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the Tersoff potential.)" << endl;
 
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-	} else {
+        }
+        else if (this->_lmu.size() > 0)
+        {
+                global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
+
+                _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+        }
+        else
+        {
 		global_log->info() << "Using vectorized cell processor." << endl;
+                
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
 #else
