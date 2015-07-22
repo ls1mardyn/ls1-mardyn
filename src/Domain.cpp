@@ -689,7 +689,7 @@ void Domain::setupProfile(unsigned xun, unsigned yun, unsigned zun)
 	{
 		_universalInvProfileUnit[d] = (double)_universalNProfileUnits[d] / _globalLength[d];
 	}
-	this->resetProfile();
+	this->resetProfile(true);
 }
 
 void Domain::considerComponentInProfile(int cid)
@@ -697,7 +697,7 @@ void Domain::considerComponentInProfile(int cid)
 	this->_universalProfiledComponents[cid] = true;
 }
 
-void Domain::recordProfile(ParticleContainer* molCont)
+void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 {
 	int cid;
 	unsigned xun, yun, zun, unID;
@@ -715,26 +715,31 @@ void Domain::recordProfile(ParticleContainer* molCont)
 			this->_localNProfile[unID] += 1.0;
 			for(int d=0; d<3; d++) this->_localvProfile[d][unID] += thismol->v(d);
 			this->_localDOFProfile[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
+                        
+                        // record _twice_ the total (ordered + unordered) kinetic energy
+                        mv2 = 0.0;
+                        Iw2 = 0.0;
+                        thismol->calculate_mv2_Iw2(mv2, Iw2);
+                        this->_localKineticProfile[unID] += mv2+Iw2;
 
-			// record _twice_ the total (ordered + unordered) kinetic energy
-			mv2 = 0.0;
-			Iw2 = 0.0;
-			thismol->calculate_mv2_Iw2(mv2, Iw2);
-			this->_localKineticProfile[unID] += mv2+Iw2;
-			this->_localPDProfile[unID] += thismol->Vi(1)-0.5*(thismol->Vi(0)+thismol->Vi(2));
-			this->_localPXProfile[unID] += thismol->Vi(0);
-			this->_localPYProfile[unID] += thismol->Vi(1);
-			this->_localPZProfile[unID] += thismol->Vi(2);
+                        if(virialProfile)
+                        {
+			   // this->_localPDProfile[unID] += thismol->Vi(1)-0.5*(thismol->Vi(0)+thismol->Vi(2)); // unnecessary redundancy
+			   this->_localPXProfile[unID] += thismol->Vi(0);
+			   this->_localPYProfile[unID] += thismol->Vi(1);
+			   this->_localPZProfile[unID] += thismol->Vi(2);
+                        }
 		}
 	}
 	this->_globalAccumulatedDatasets++;
 }
 
-void Domain::collectProfile(DomainDecompBase* dode)
+void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
 {
 	unsigned unIDs = this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 		* this->_universalNProfileUnits[2];
-	dode->collCommInit(14*unIDs);
+	if(virialProfile) dode->collCommInit(13*unIDs);
+        else dode->collCommInit(10*unIDs);
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
 		dode->collCommAppendLongDouble(this->_localNProfile[unID]);
@@ -742,10 +747,14 @@ void Domain::collectProfile(DomainDecompBase* dode)
 			dode->collCommAppendLongDouble(_localvProfile[d][unID]);
 		dode->collCommAppendLongDouble(this->_localDOFProfile[unID]);
 		dode->collCommAppendLongDouble(_localKineticProfile[unID]);
-		dode->collCommAppendLongDouble(_localPDProfile[unID]);
-		dode->collCommAppendLongDouble(_localPXProfile[unID]);
-		dode->collCommAppendLongDouble(_localPYProfile[unID]);
-		dode->collCommAppendLongDouble(_localPZProfile[unID]);
+                
+                if(virialProfile)
+                {
+		   // dode->collCommAppendLongDouble(_localPDProfile[unID]); // unnecessary redundancy
+		   dode->collCommAppendLongDouble(_localPXProfile[unID]);
+		   dode->collCommAppendLongDouble(_localPYProfile[unID]);
+		   dode->collCommAppendLongDouble(_localPZProfile[unID]);
+                }
 
                 dode->collCommAppendLongDouble(this->_localWidomProfile[unID]);
                 dode->collCommAppendLongDouble(this->_localWidomInstances[unID]);
@@ -763,14 +772,18 @@ void Domain::collectProfile(DomainDecompBase* dode)
 			= (double)dode->collCommGetLongDouble();
 		this->_universalKineticProfile[unID]
 			= (double)dode->collCommGetLongDouble();
-		this->_universalPDProfile[unID]
-			= (double)dode->collCommGetLongDouble();
-		this->_universalPXProfile[unID]
-			= (double)dode->collCommGetLongDouble();
-		this->_universalPYProfile[unID]
-			= (double)dode->collCommGetLongDouble();
-		this->_universalPZProfile[unID]
-			= (double)dode->collCommGetLongDouble();
+                        
+                if(virialProfile)
+                {
+		   // this->_universalPDProfile[unID]
+			   // = (double)dode->collCommGetLongDouble(); // unnecessary redundancy
+		   this->_universalPXProfile[unID]
+			   = (double)dode->collCommGetLongDouble();
+		   this->_universalPYProfile[unID]
+			   = (double)dode->collCommGetLongDouble();
+		   this->_universalPZProfile[unID]
+			   = (double)dode->collCommGetLongDouble();
+                }
 
 		this->_globalWidomProfile[unID]
 			= (double)dode->collCommGetLongDouble();
@@ -802,7 +815,7 @@ void Domain::collectProfile(DomainDecompBase* dode)
 	dode->collCommFinalize();
 }
 
-void Domain::outputProfile(const char* prefix)
+void Domain::outputProfile(const char* prefix, bool virialProfile)
 {
 	if(this->_localRank) return;
 
@@ -820,8 +833,12 @@ void Domain::outputProfile(const char* prefix)
 	ofstream vzpry(vzpryname.c_str());
 	ofstream Tpry(Tpryname.c_str());
 	ofstream upry(upryname.c_str());
-	ofstream Vipry(Vipryname.c_str());
-	if (!(vzpry && Tpry && rhpry && upry && Vipry))
+        ofstream* Vipry = NULL;
+	if(virialProfile)
+        {
+           Vipry = new ofstream(Vipryname.c_str());
+        }
+	if (!(vzpry && Tpry && rhpry && upry))
 	{
 		return;
 	}
@@ -836,8 +853,8 @@ void Domain::outputProfile(const char* prefix)
              << "mu_at(loc)  mu_at(glob) \t\t mu_T(loc)  mu_T(glob) \t mu_id(loc)  "
              << "mu_id(glob) \t\t mu_res(loc)  mu_res(glob) \t mu(loc)  mu(glob) \t\t #(loc)  "
              << "#(glob)\n";
-	Vipry.precision(5);
-	Vipry << "# y\tvn-vt\tpx\tpy\tpz\n# \n";
+	Vipry->precision(5);
+	*Vipry << "# y\tvn-vt\tpx\tpy\tpz\n# \n";
 
 	double layerVolume = this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]
 		/ this->_universalNProfileUnits[1];
@@ -873,12 +890,17 @@ void Domain::outputProfile(const char* prefix)
                                 widomInstancesy += this->_globalWidomInstances[unID];
                                 widomSigExpyTloc += this->_globalWidomProfileTloc[unID];
                                 widomInstancesyTloc += this->_globalWidomInstancesTloc[unID];
-				Pd += this->_universalPDProfile[unID];
-				Px += this->_universalPXProfile[unID];
-				Py += this->_universalPYProfile[unID];
-				Pz += this->_universalPZProfile[unID];
+                                
+                                if(virialProfile)
+                                {
+				   // Pd += this->_universalPDProfile[unID]; // unnecessary redundancy
+				   Px += this->_universalPXProfile[unID];
+				   Py += this->_universalPYProfile[unID];
+				   Pz += this->_universalPZProfile[unID];
+                                }
 			}
 		}
+		Pd = Py - 0.5*(Px + Pz);
                 double rho_loc = Ny / (layerVolume * this->_globalAccumulatedDatasets);
 
 		if(Ny >= 64.0)
@@ -896,7 +918,7 @@ void Domain::outputProfile(const char* prefix)
                    Tpry << yval << "\t" << (twoEkiny / DOFy) << "\t"
                         << (twoEkindiry / (3.0*Ny)) << "\t" << ((twoEkiny - twoEkindiry) / DOFy) << "\n";
 
-		   Vipry << yval << "\t" << Pd / (layerVolume * this->_globalAccumulatedDatasets) << "\t" << (_globalTemperatureMap[0]*Ny + Px) / (layerVolume * this->_globalAccumulatedDatasets) << "\t" << (_globalTemperatureMap[0]*Ny + Py) / (layerVolume * this->_globalAccumulatedDatasets) << "\t" << (_globalTemperatureMap[0]*Ny + Pz) / (layerVolume * this->_globalAccumulatedDatasets) << "\n";
+		   if(virialProfile) *Vipry << yval << "\t" << Pd / (layerVolume * this->_globalAccumulatedDatasets) << "\t" << (_globalTemperatureMap[0]*Ny + Px) / (layerVolume * this->_globalAccumulatedDatasets) << "\t" << (_globalTemperatureMap[0]*Ny + Py) / (layerVolume * this->_globalAccumulatedDatasets) << "\t" << (_globalTemperatureMap[0]*Ny + Pz) / (layerVolume * this->_globalAccumulatedDatasets) << "\n";
                    if(widomInstancesy >= 100.0)
                    {
                       double mu_res_glob = -log(widomSigExpy / widomInstancesy);
@@ -943,10 +965,14 @@ void Domain::outputProfile(const char* prefix)
 	vzpry.close();
 	Tpry.close();
 	upry.close();
-	Vipry.close();
+	if(virialProfile)
+        {
+           Vipry->close();
+           delete Vipry;
+        }
 }
 
-void Domain::resetProfile()
+void Domain::resetProfile(bool virialProfile)
 {
 	unsigned unIDs = this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 		* this->_universalNProfileUnits[2];
@@ -963,14 +989,18 @@ void Domain::resetProfile()
 		this->_universalDOFProfile[unID] = 0.0;
 		this->_localKineticProfile[unID] = 0.0;
 		this->_universalKineticProfile[unID] = 0.0;
-		this->_localPDProfile[unID] = 0.0;
-		this->_universalPDProfile[unID] = 0.0;
-		this->_localPXProfile[unID] = 0.0;
-		this->_universalPXProfile[unID] = 0.0;
-		this->_localPYProfile[unID] = 0.0;
-		this->_universalPYProfile[unID] = 0.0;
-		this->_localPZProfile[unID] = 0.0;
-		this->_universalPZProfile[unID] = 0.0;
+                
+                if(virialProfile)
+                {
+		   // this->_localPDProfile[unID] = 0.0;
+		   // this->_universalPDProfile[unID] = 0.0;
+		   this->_localPXProfile[unID] = 0.0;
+		   this->_universalPXProfile[unID] = 0.0;
+		   this->_localPYProfile[unID] = 0.0;
+		   this->_universalPYProfile[unID] = 0.0;
+		   this->_localPZProfile[unID] = 0.0;
+		   this->_universalPZProfile[unID] = 0.0;
+                }
 
 		this->_localWidomProfile[unID] = 0.0;
 		this->_globalWidomProfile[unID] = 0.0;

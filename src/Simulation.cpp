@@ -890,7 +890,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> xun >> yun >> zun;
 			_domain->setupProfile(xun, yun, zun);
 			_doRecordProfile = true;
-		} else if (token == "profileRecordingTimesteps") { /* TODO: subotion of profile */
+		} else if (token == "profileVirial") {
+                        _doRecordVirialProfile = true;
+                } else if (token == "profileRecordingTimesteps") { /* TODO: subotion of profile */
 			inputfilestream >> _profileRecordingTimesteps;
 		} else if (token == "profileOutputTimesteps") { /* TODO: subotion of profile */
 			inputfilestream >> _profileOutputTimesteps;
@@ -1134,15 +1136,21 @@ void Simulation::prepare_start() {
 	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
 	global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
 
-	if (tersoff_present)
+	if(tersoff_present)
         {
                 global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the Tersoff potential.)" << endl;
 
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
         }
-        else if (this->_lmu.size() > 0)
+        else if(this->_lmu.size() > 0)
         {
                 global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
+
+                _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+        }
+        else if(this->_doRecordVirialProfile)
+        {
+                global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 
                 _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
         }
@@ -1504,21 +1512,21 @@ void Simulation::output(unsigned long simstep) {
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
-		_domain->recordProfile(_moleculeContainer);
+		_domain->recordProfile(_moleculeContainer, _doRecordVirialProfile);
 	}
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileOutputTimesteps)) {
-		_domain->collectProfile(_domainDecomposition);
+		_domain->collectProfile(_domainDecomposition, _doRecordVirialProfile);
 		if (mpi_rank == 0) {
 			ostringstream osstrm;
 			osstrm << _profileOutputPrefix << ".";
 			osstrm.fill('0');
 			osstrm.width(9);
 			osstrm << right << simstep;
-			_domain->outputProfile(osstrm.str().c_str());
+			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
 			osstrm.str("");
 			osstrm.clear();
 		}
-		_domain->resetProfile();
+		_domain->resetProfile(_doRecordVirialProfile);
 	}
 
 	if (_domain->thermostatWarning())
@@ -1581,7 +1589,7 @@ void Simulation::initialize() {
 	_moleculeContainer = NULL;
 	_integrator = NULL;
 	_inputReader = NULL;
-    _finalCheckpoint = true;
+        _finalCheckpoint = true;
 
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
@@ -1602,6 +1610,7 @@ void Simulation::initialize() {
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
 	_doRecordProfile = false;
+        _doRecordVirialProfile = false;
 	_profileRecordingTimesteps = 7;
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";

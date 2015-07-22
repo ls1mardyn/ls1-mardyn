@@ -303,10 +303,10 @@ public:
 
 	void setupProfile(unsigned xun, unsigned yun, unsigned zun);
 	void considerComponentInProfile(int cid);
-	void recordProfile(ParticleContainer* molCont);
-	void collectProfile(DomainDecompBase* domainDecomp);
-	void outputProfile(const char* prefix);
-	void resetProfile();
+	void recordProfile(ParticleContainer* molCont, bool virialProfile);
+	void collectProfile(DomainDecompBase* domainDecomp, bool virialProfile);
+	void outputProfile(const char* prefix, bool virialProfile);
+	void resetProfile(bool virialProfile);
 
 	unsigned long N() {return _globalNumMolecules;}
 
@@ -433,10 +433,10 @@ private:
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
         double _universalProfiledComponentMass;  // set from outside
-	//! local virial / pressure profile map
-	std::map<unsigned, long double> _localPDProfile;
-	//! global virial / pressure profile map
-	std::map<unsigned, double> _universalPDProfile;
+	// //! local virial / pressure profile map
+	// std::map<unsigned, long double> _localPDProfile;
+	// //! global virial / pressure profile map
+	// std::map<unsigned, double> _universalPDProfile;
 	//! local virial / pressure profile map
 	std::map<unsigned, long double> _localPXProfile;
 	//! global virial / pressure profile map
