@@ -42,7 +42,7 @@ public:
 //	 ~Planar();	
 
 	void calculateLongRange();
-	double lrcPotential(unsigned componentid, unsigned center, double yCoordinate);
+	double lrcLJ(Molecule* mol);
 
 private:
 
@@ -55,12 +55,12 @@ private:
 	unsigned numComp;
 	unsigned *numLJ;
 	unsigned *numDipole;
+	unsigned *numCharge;
 	unsigned numLJSum;
 	unsigned numDipoleSum;
 	unsigned *numLJSum2;
 	unsigned *numDipoleSum2;
 	bool _smooth;
-	bool _semiinfinite;
 	bool _dipole;
 	double *uLJ;
 	double *vNLJ;
@@ -68,7 +68,6 @@ private:
 	double *fLJ;
 	double *rho_g;
 	double *rho_l;
-	double meanRhoL,meanRhoV;
 	double *fDipole;
 	double *uDipole;
 	double *vNDipole;

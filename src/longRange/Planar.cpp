@@ -38,18 +38,13 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	_slabs = slabs;
 	
 	_smooth=true;
-	_semiinfinite=false;
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
-	if (_semiinfinite){
-		global_log->info() << "Semi infinite boundary condition is used" << endl;
-	}
-	meanRhoV=0.;
-	meanRhoL=0.;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->components();
 	numComp=components.size();
 	numLJ = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numDipole = (unsigned *) malloc (sizeof(unsigned)*numComp);
+	numCharge = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numLJSum=0;
 	numDipoleSum = 0;
 	numLJSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
@@ -62,6 +57,10 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 		numLJ[i]=components[i].numLJcenters();
 		numDipole[i]=components[i].numDipoles();
 		numLJSum+=numLJ[i];
+		if (components[i].numCharges() != 0){
+			numDipole[i]++;
+		}
+		numCharge[i]=components[i].numCharges();
 		numDipoleSum+=numDipole[i];
 		for (unsigned j=i+1; j< numComp; j++){
 			numLJSum2[j]+=numLJ[i];
@@ -69,7 +68,7 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 		}
 	}
 	
-	muSquare =  (double*)malloc(sizeof(double)*numDipoleSum);	// am Anfang Dipolestärke auslesen
+	muSquare =  (double*)malloc(sizeof(double)*numDipoleSum);
 	uLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
 	vNLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
 	vTLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
@@ -115,6 +114,19 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 			muSquare[dpcount]=dipolej.absMy()*dipolej.absMy();
 			dpcount++;
 		}
+		double my2=0.;
+		double my[3];
+		my[0] = my[1] = my[2] = 0.;
+		for (unsigned j=0; j<components[i].numCharges(); j++){
+			double tq = components[i].charge(j).q();
+			for (unsigned k=0; k<3; k++){
+				my[k] += tq*components[i].charge(j).r()[k];
+			}
+		}
+		for (unsigned j=0; j<3; j++){
+			my2 += my[j]*my[j];
+		}
+		muSquare[i] += my2;
 	} 	
 	
 	ymax=_domain->getGlobalLength(1);
@@ -125,7 +137,6 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	frequency=10;
 	V=ymax*_domain->getGlobalLength(0)*_domain->getGlobalLength(2); // Volume
 	
-//	s=_slabs; // Number of Slabs; Thickness of a slab should be 0,1 sigma
 	sint=_slabs;
 	
 	simstep = 0;
@@ -271,13 +282,8 @@ void Planar::calculateLongRange(){
 			}
 	 	} 
 	     
-	//    if (simstep% 10000 == 0)
-//	   	for (unsigned i=0; i< _slabs; i++){
-//	   		 cout << i << "\t" << rho_l[i] << "\t" << "\t" << fLJ[i] << "\t" << uLJ[i] << "\t" << vNLJ[i] << "\t" << vTLJ[i] <<  endl;
-//		}
-	     
 		// Distribution of the Force, Energy and Virial to every Node
-		_domainDecomposition->collCommInit(_slabs*(4*numLJSum+1*numDipoleSum));
+		_domainDecomposition->collCommInit(_slabs*(4*numLJSum+4*numDipoleSum));
 		for (unsigned i=0; i<_slabs*numLJSum; i++){
 			_domainDecomposition->collCommAppendDouble(uLJ[i]);
 			_domainDecomposition->collCommAppendDouble(vNLJ[i]);
@@ -285,7 +291,10 @@ void Planar::calculateLongRange(){
 			_domainDecomposition->collCommAppendDouble(fLJ[i]);
 		}
 		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
+			_domainDecomposition->collCommAppendDouble(uDipole[i]);
 			_domainDecomposition->collCommAppendDouble(fDipole[i]);
+			_domainDecomposition->collCommAppendDouble(vNDipole[i]);
+			_domainDecomposition->collCommAppendDouble(vTDipole[i]);
 		}	
 		_domainDecomposition->collCommAllreduceSum();
 		for (unsigned i=0; i<_slabs*numLJSum; i++){
@@ -295,7 +304,10 @@ void Planar::calculateLongRange(){
 			fLJ[i]=_domainDecomposition->collCommGetDouble();
 		}
 		for (unsigned i=0; i<_slabs*numDipoleSum; i++){
+		      uDipole[i]=_domainDecomposition->collCommGetDouble();
 		      fDipole[i]=_domainDecomposition->collCommGetDouble();
+		      vNDipole[i]=_domainDecomposition->collCommGetDouble();
+		      vTDipole[i]=_domainDecomposition->collCommGetDouble();
 		}
 		_domainDecomposition->collCommFinalize();
 	}
@@ -324,26 +336,45 @@ void Planar::calculateLongRange(){
 			tempMol->Fljcenteradd(i,Fa);
 			Virial_c=Via[1];
 			tempMol->Viadd(Via);
-//			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);
+//			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		}
-		if (_dipole)
-		for (unsigned i=0; i<numDipole[cid]; i++){
-			int loc=(tempMol->r(1)+tempMol->dipole_d(i)[1])/delta;
-			if (loc < 0){
-				loc=loc+_slabs;
+		if (_dipole){
+			for (unsigned i=0; i<numDipole[cid]; i++){
+				int loc=(tempMol->r(1)+tempMol->dipole_d(i)[1])/delta;
+				if (loc < 0){
+					loc=loc+_slabs;
+				}
+				else if (loc > sint-1){
+					loc=loc-_slabs;
+				}
+				Fa[1]=fDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
+				Upot_c+=uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
+				Virial_c+=2*vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]+vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
+				Via[0]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
+				Via[1]=vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
+				Via[2]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
+				tempMol->Fdipoleadd(i,Fa);
+				tempMol->Viadd(Via);
+	//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 			}
-			else if (loc > sint-1){
-				loc=loc-_slabs;
+			for (unsigned i=0; i<numCharge[cid]; i++){
+				int loc=(tempMol->r(1)+tempMol->charge_d(i)[1])/delta;
+				if (loc < 0){
+					loc=loc+_slabs;
+				}
+				else if (loc > sint-1){
+					loc=loc-_slabs;
+				}
+				Fa[1]=fDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
+				Upot_c+=uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
+				Virial_c+=(2*vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]+vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]])/numCharge[cid];
+				Via[0]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
+				Via[1]=vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
+				Via[2]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
+				tempMol->Fdipoleadd(i,Fa);
+				tempMol->Viadd(Via);
 			}
-			Fa[1]=fDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-			Upot_c+=uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-			Virial_c+=2*vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]+vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-			Via[0]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-			Via[1]=vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-			Via[2]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-			tempMol->Fdipoleadd(i,Fa);
-			tempMol->Viadd(Via);
-		}
+		}				
 	}
 
 	// Summation of the correction terms
@@ -381,12 +412,6 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 		for (unsigned j=i+1; j<i+_slabs/2; j++){
 			r=sig/((j-i)*delta);
 			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
-			if (_semiinfinite /*&& simstep > 1000*/){
-				if (j>centerM /*&& j-i > 10*/){
-					rhoJ=meanRhoL;
-					rhoI=meanRhoL;
-				}
-			}
 			if (j> i+cutoff_slabs){
 				r2=r*r;
 				r6=r2*r2*r2;
@@ -412,10 +437,6 @@ void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigne
 		for (unsigned j=_slabs/2+i; j<_slabs; j++){
 			r=sig/((_slabs-j+i)*delta);
 			rhoJ=rho_l[j+sj*_slabs+_slabs*numLJSum2[cj]];
-			if (_semiinfinite /*&& simstep > 1000*/){
-				rhoJ=meanRhoV;
-				rhoI=meanRhoV;
-			}
 			if (j <_slabs-cutoff_slabs+i){
 				r2=r*r;
 				r6=r2*r2*r2;
@@ -922,13 +943,38 @@ void Planar::dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj){
 	}  
 }
 
-double Planar::lrcPotential(unsigned componentid, unsigned center, double yCoordinate){
-	int loc=yCoordinate/delta;
-	if (loc < 0){
-		loc=loc+_slabs;
+double Planar::lrcLJ(Molecule* mol){
+	double potentialEnergy = 0.;
+	unsigned cid=mol->componentid();
+	for (unsigned i=0; i<numLJ[cid]; i++){
+		int loc=(mol->r(1)+mol->ljcenter_d(i)[1])/delta;
+		if (loc < 0){
+			loc=loc+_slabs;
+		}
+		else if (loc > sint-1){
+			loc=loc-_slabs;
+		}
+		potentialEnergy += uLJ[loc+i*_slabs+_slabs*numLJSum2[cid]];
 	}
-	else if (loc > sint-1){
-		loc=loc-_slabs;
+	for (unsigned i=0;i<numDipole[cid]; i++){
+		int loc=(mol->r(1)+mol->dipole_d(i)[1])/delta;
+		if (loc < 0){
+			loc=loc+_slabs;
+		}
+		else if (loc > sint-1){
+			loc=loc-_slabs;
+		}
+		potentialEnergy += uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
 	}
-	return uLJ[loc+center*_slabs+_slabs*numLJSum2[componentid]];
+	for (unsigned i=0;i<numCharge[cid]; i++){
+		int loc=(mol->r(1)+mol->charge_d(i)[1])/delta;
+		if (loc < 0){
+			loc=loc+_slabs;
+		}
+		else if (loc > sint-1){
+			loc=loc-_slabs;
+		}
+		potentialEnergy += uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
+	}		
+	return potentialEnergy;
 }
