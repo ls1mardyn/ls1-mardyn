@@ -582,8 +582,7 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 		// by the method exchangeMolecules
 		//if(not(_ownArea->_coversWholeDomain[d]) and not(balance)) continue;
 
-		molPtr = moleculeContainer->begin();
-		while (molPtr != moleculeContainer->end()) {
+		for(molPtr = moleculeContainer->begin(); molPtr != moleculeContainer->end(); molPtr = moleculeContainer->next()) {
 			const double& rd = molPtr->r(d);
 			int copy = 0; // -1: copy to left, 1: copy to right, 0: don't copy
 			if (rd < moleculeContainer->get_halo_L(d))
@@ -608,7 +607,6 @@ void KDDecomposition::createLocalCopies(ParticleContainer* moleculeContainer, Do
 				                       molPtr->D(0),molPtr->D(1),molPtr->D(2));
 				moleculeContainer->addParticle(m1);
 			}
-			molPtr = moleculeContainer->next();
 		}
 	}
 }
