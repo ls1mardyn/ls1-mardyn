@@ -844,7 +844,6 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 
-const __m128d minus_one = _mm_set1_pd(-1.0);
 const __m128d zero = _mm_setzero_pd();
 const __m128d one = _mm_set1_pd(1.0);
 const __m128d two = _mm_set1_pd(2.0);
