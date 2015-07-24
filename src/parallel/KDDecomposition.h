@@ -252,7 +252,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! @brief create copies due to periodic boundary
 	//!
 	//! If a proc's area occupies the whole domain (per dimension), it has two periodic
-	//! boundaries in that dimension. That means that is possesses at least two (up to eight)
+	//! boundaries in that dimension. That means that it possesses at least two (up to eight)
 	//! versions of the same cells/molecules. Those copies are created by this method
 	//! and stored in the moleculeContainer
 	//! @param moleculeContainer used to walk through the molecules, create copies and store them again
