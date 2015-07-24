@@ -5,7 +5,7 @@
 #include "utils/Logger.h"
 
 #define assertion(x) assert(x)
-#define assertion1(x,y) { if (!x) std::cerr << y << std::endl; assert(x);}
+#define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; assert(x);}
 
 using Log::global_log;
 
