@@ -350,6 +350,9 @@ public:
 	//! Calcute the surface tension from the virial tensor
 	void calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition);
 
+    // explosion heuristics, NOTE: turn off when using slab thermostat
+    void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+
 private:
 
 	//! rank of the local process
@@ -495,6 +498,9 @@ private:
 	
 	//! Surface tension component wise
 	std::map<unsigned,double> _Gamma;
+
+    // explosion heuristics, NOTE: turn off when using slab thermostat
+    bool _bDoExplosionHeuristics;
 };
 
 

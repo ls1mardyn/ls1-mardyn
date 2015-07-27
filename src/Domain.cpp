@@ -80,6 +80,9 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_universalSelectiveThermostatCounter = 0;
 	this->_universalSelectiveThermostatWarning = 0;
 	this->_universalSelectiveThermostatError = 0;
+
+    // explosion heuristics, NOTE: turn off when using slab thermostat
+    _bDoExplosionHeuristics = true;
 }
 
 void Domain::readXML(XMLfileUnits& xmlconfig) {
@@ -269,7 +272,7 @@ void Domain::calculateGlobalValues(
 
 		// heuristic handling of the unfortunate special case of an explosion in the system
 		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
-				&& (0 >= _universalSelectiveThermostatError) )
+				&& (0 >= _universalSelectiveThermostatError)  && _bDoExplosionHeuristics == true)
 		{
 			global_log->warning() << "Explosion!" << endl;
 			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first

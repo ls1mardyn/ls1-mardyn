@@ -45,6 +45,7 @@ class FlopCounter;
 class LongRangeCorrection;
 class Homogeneous;
 class Planar;
+class TemperatureControl;
 
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -446,6 +447,9 @@ private:
 	
 	/** Long Range Correction */
 	LongRangeCorrection* _longRangeCorrection;
+
+	/** Temperature Control (Slab Thermostat) */
+    TemperatureControl* _temperatureControl;
 
 public:
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }

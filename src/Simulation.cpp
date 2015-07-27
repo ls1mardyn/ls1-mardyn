@@ -42,6 +42,7 @@
 #include "ensemble/PressureGradient.h"
 
 #include "thermostats/VelocityScalingThermostat.h"
+#include "thermostats/TemperatureControl.h"
 
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
@@ -68,6 +69,7 @@ Simulation::Simulation()
 	_forced_checkpoint_time(0) {
 	_ensemble = new CanonicalEnsemble();
 	_longRangeCorrection = NULL;
+    _temperatureControl = NULL;
 	initialize();
 }
 
@@ -1053,6 +1055,105 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double slabs;
 			inputfilestream >> slabs;
 			_longRangeCorrection = new Planar(_cutoffRadius,_LJCutoffRadius,_domain,_domainDecomposition,_moleculeContainer,slabs,global_simulation);
+
+        /** mheinen 2015-07-27 --> TEMPERATURE_CONTROL
+		 *
+	     * Temperature Control (Slab Thermostat)
+	     *
+	     * - applicable to different regions
+		 * - using different target temperatures
+		 * - using different number of slabs
+		 * - componentwise if required
+	     * - thermostating only selected directions: x, y, z, xy, xz, yz or xyz
+	     *
+	     **/
+
+        } else if (token == "TemperatureControl" || token == "Temperaturecontrol" || token == "temperatureControl") {
+
+            string strToken;
+
+            inputfilestream >> strToken;
+
+            if(strToken == "param")
+            {
+
+                unsigned long nControlFreq;
+                unsigned long nStart;
+                unsigned long nStop;
+
+                inputfilestream >> nControlFreq;
+                inputfilestream >> nStart;
+                inputfilestream >> nStop;
+
+                if(_temperatureControl == NULL)
+                {
+                    _temperatureControl = new TemperatureControl(nControlFreq, nStart, nStop);
+
+                    // turn off explosion heuristics
+                    _domain->SetExplosionHeuristics(false);
+                }
+                else
+                {
+                  global_log->error() << "TemperatureControl object allready exist, programm exit..." << endl;
+                  exit(-1);
+                }
+            }
+            else if (strToken == "region")
+            {
+                double dLowerCorner[3];
+                double dUpperCorner[3];
+                unsigned int nNumSlabs;
+                unsigned int nComp;
+                double dTargetTemperature;
+                double dTemperatureExponent;
+                string strTransDirections;
+
+                // read lower corner
+                for(unsigned short d=0; d<3; d++)
+                {
+                    inputfilestream >> dLowerCorner[d];
+                }
+
+                // read upper corner
+                for(unsigned short d=0; d<3; d++)
+                {
+                    inputfilestream >> dUpperCorner[d];
+                }
+
+                // target component / temperature
+                inputfilestream >> nNumSlabs;
+                inputfilestream >> nComp;
+                inputfilestream >> dTargetTemperature;
+                inputfilestream >> dTemperatureExponent;
+                inputfilestream >> strTransDirections;
+
+                if( strTransDirections != "x"  && strTransDirections != "y"  && strTransDirections != "z"  &&
+                    strTransDirections != "xy" && strTransDirections != "xz" && strTransDirections != "yz" &&
+                    strTransDirections != "xyz")
+                {
+                      global_log->error() << "TemperatureControl: Wrong statement! Expected x, y, z, xy, xz, yz or xyz!" << endl;
+                      exit(-1);
+                }
+
+                if(_temperatureControl == NULL)
+                {
+                      global_log->error() << "TemperatureControl object doesnt exist, programm exit..." << endl;
+                      exit(-1);
+                }
+                else
+                {
+                    // add regions
+                    _temperatureControl->AddRegion(dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections);
+                }
+            }
+            else
+            {
+                global_log->error() << "TemperatureControl: Wrong statement in cfg, programm exit..." << endl;
+                exit(-1);
+            }
+
+        // <-- TEMPERATURE_CONTROL
+
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token "
@@ -1396,7 +1497,8 @@ void Simulation::simulate() {
 								_simstep));
 		
 		// scale velocity and angular momentum
-		if (!_domain->NVE()) {
+		if ( !_domain->NVE() ) // && _temperatureControl == NULL)
+		{
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				_velocityScalingThermostat.enableComponentwise();
@@ -1422,6 +1524,12 @@ void Simulation::simulate() {
 			}
 			_velocityScalingThermostat.apply(_moleculeContainer);
 		}
+		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
+        else
+        {
+            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
+        }
+        // <-- TEMPERATURE_CONTROL
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
