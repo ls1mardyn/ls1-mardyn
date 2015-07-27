@@ -90,10 +90,12 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		if(_appendTimestamp) {
 			char fmt[] = "%Y%m%dT%H%M%S"; // must have fixed size format for all time values/processes
 			char timestring[256];
+#ifdef ENABLE_MPI
 			int count = 0;
 			count = gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
-#ifdef ENABLE_MPI
 			MPI_CHECK(MPI_Bcast(timestring, count, MPI_CHAR, 0, MPI_COMM_WORLD));
+#else
+			gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
 #endif
 			filenamestream << "-" << string(timestring);
 		}
