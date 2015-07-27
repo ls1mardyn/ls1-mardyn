@@ -92,7 +92,9 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			char timestring[256];
 			int count = 0;
 			count = gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
+#ifdef ENABLE_MPI
 			MPI_CHECK(MPI_Bcast(timestring, count, MPI_CHAR, 0, MPI_COMM_WORLD));
+#endif
 			filenamestream << "-" << string(timestring);
 		}
 		filenamestream << ".MPIrestart.dat";
