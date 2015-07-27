@@ -835,9 +835,11 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
 	ofstream upry(upryname.c_str());
         ofstream* Vipry = NULL;
 	if(virialProfile)
-        {
-           Vipry = new ofstream(Vipryname.c_str());
-        }
+    {
+       Vipry = new ofstream(Vipryname.c_str());
+       Vipry->precision(5);
+       *Vipry << "# y\tvn-vt\tpx\tpy\tpz\n# \n";
+    }
 	if (!(vzpry && Tpry && rhpry && upry))
 	{
 		return;
@@ -853,8 +855,6 @@ void Domain::outputProfile(const char* prefix, bool virialProfile)
              << "mu_at(loc)  mu_at(glob) \t\t mu_T(loc)  mu_T(glob) \t mu_id(loc)  "
              << "mu_id(glob) \t\t mu_res(loc)  mu_res(glob) \t mu(loc)  mu(glob) \t\t #(loc)  "
              << "#(glob)\n";
-	Vipry->precision(5);
-	*Vipry << "# y\tvn-vt\tpx\tpy\tpz\n# \n";
 
 	double layerVolume = this->_globalLength[0] * this->_globalLength[1] * this->_globalLength[2]
 		/ this->_universalNProfileUnits[1];
