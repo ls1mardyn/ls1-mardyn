@@ -1,7 +1,7 @@
 # Find out the base directory
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: default
+.PHONY: default help clean cleanall
 default: all
 
 # Check current directory
