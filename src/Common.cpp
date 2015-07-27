@@ -9,14 +9,17 @@
 
 using namespace std;
 
-string gettimestring(const char* fmt) {
+int gettimestr(const char* fmt, char *buffer, int buffsize) {
 	time_t rawtime;
 	struct tm* timeinfo;
-	char buffer[80];
 	time(&rawtime);
 	timeinfo = localtime(&rawtime);
+	return strftime(buffer, buffsize, fmt, timeinfo);
+}
 
-	strftime(buffer, 80, fmt, timeinfo);
+string gettimestring(const char* fmt) {
+	char buffer[80];
+	gettimestr(fmt, buffer, 80);
 	string date(buffer);
 
 	return date;

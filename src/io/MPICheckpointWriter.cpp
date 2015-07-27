@@ -88,7 +88,12 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
 		if(_appendTimestamp) {
-			filenamestream << "-" << gettimestring();
+			char fmt[] = "%Y%m%dT%H%M%S"; // must have fixed size format for all time values/processes
+			char timestring[256];
+			int count = 0;
+			count = gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
+			MPI_CHECK(MPI_Bcast(timestring, count, MPI_CHAR, 0, MPI_COMM_WORLD));
+			filenamestream << "-" << string(timestring);
 		}
 		filenamestream << ".MPIrestart.dat";
 

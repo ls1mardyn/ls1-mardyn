@@ -7,6 +7,14 @@
 
 class Common;
 
+/** Write formated current time to c character array
+ * @param[in]  fmt       time format specifier as for strftime
+ * @param[in]  buffsize  max characters written to buffer
+ * @param[out] buffer    buffer to write to
+ * @return     Number of characters written to buffer. 0 in case of an error.
+ */
+int gettimestr(const char* fmt, char *buffer, int buffsize);
+
 //                                        "%Y-%m-%d_%H-%M-%S"
 std::string gettimestring(const char* fmt = "%y%m%dT%H%M%S");
 
