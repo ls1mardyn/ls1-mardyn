@@ -1124,11 +1124,11 @@ void Simulation::prepare_start() {
 
 	const vector<Component> components = *(global_simulation->getEnsemble()->components());
 	for (size_t i = 0; i < components.size(); i++) {
-		lj_present |= components[i].numLJcenters() != 0;
-		charge_present |= components[i].numCharges() != 0;
-		dipole_present |= components[i].numDipoles() != 0;
-		quadrupole_present |= components[i].numQuadrupoles() != 0;
-		tersoff_present |= components[i].numTersoff() != 0;
+		lj_present |= (components[i].numLJcenters() != 0);
+		charge_present |= (components[i].numCharges() != 0);
+		dipole_present |= (components[i].numDipoles() != 0);
+		quadrupole_present |= (components[i].numQuadrupoles() != 0);
+		tersoff_present |= (components[i].numTersoff() != 0);
 	}
 	global_log->debug() << "xx lj present: " << lj_present << endl;
 	global_log->debug() << "xx charge present: " << charge_present << endl;
@@ -1136,28 +1136,20 @@ void Simulation::prepare_start() {
 	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
 	global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
 
-	if(tersoff_present)
-        {
-                global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the Tersoff potential.)" << endl;
-
+	if(tersoff_present) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the Tersoff potential.)" << endl;
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-        }
-        else if(this->_lmu.size() > 0)
-        {
-                global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
-
-                _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-        }
-        else if(this->_doRecordVirialProfile)
-        {
-                global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
-
-                _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-        }
-        else
-        {
+	}
+	else if(this->_lmu.size() > 0) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+	}
+	else if(this->_doRecordVirialProfile) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+	}
+	else {
 		global_log->info() << "Using vectorized cell processor." << endl;
-                
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
 #else
@@ -1170,7 +1162,6 @@ void Simulation::prepare_start() {
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
-    
 	_moleculeContainer->traverseCells(*_cellProcessor);
 
 	/* If enabled count FLOP rate of LS1. */
