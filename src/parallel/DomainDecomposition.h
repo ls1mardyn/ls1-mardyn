@@ -12,7 +12,7 @@
 #define HIGHER 1
 
 /** @brief Basic domain decomposition based parallelisation, dividing the
- * domain into #procs equal sized cuboids
+ * domain into \#procs equal sized cuboids
  *
  * In a domain decomposition, each process gets part of the spacial domain.
  * In this implementation, the whole domain has to be a cuboid which is
