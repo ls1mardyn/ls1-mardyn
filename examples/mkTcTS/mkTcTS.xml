@@ -58,7 +58,7 @@
           <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
-        <radiusLJ unit="reduced" >5.0</radiusLJ>
+        <radiusLJ unit="reduced" >3.0</radiusLJ>
       </cutoffs>
       <electrostatic type="ReactionField" >
         <epsilon>1.0e+10</epsilon>
