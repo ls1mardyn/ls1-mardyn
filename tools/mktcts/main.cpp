@@ -9,11 +9,11 @@ using namespace std;
 
 int main(int argc, char** argv) 
 {
-   const char* usage = "usage: mkTcTS <prefix> -c <density> [-d <second density>] [-e] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-r] [-S] -T <temperature> [-U] [-u]\n\n-e\tuse B-e-rnreuther format\n-r\tuse b-r-anch format (active by default)\n-S\tshift (active by default)\n-U\tunshift\n-u\tuse B-u-chholz format\n";
-   if((argc < 8) || (argc > 23))
+   const char* usage = "usage: mkTcTS <prefix> -c <density> [-d <second density>] [-e] [-H <pressure1> <pressure2> <mu_low> <mu_high>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-r] [-S] -T <temperature> [-U] [-u]\n\n-e\tuse B-e-rnreuther format\n-r\tuse b-r-anch format\n-S\tshift (active by default)\n-U\tunshift\n-u\tuse B-u-chholz format (active by default)\n";
+   if((argc < 8) || (argc > 28))
    {
       cout << "There are " << argc
-           << " arguments where 8 to 23 should be given.\n\n";
+           << " arguments where 8 to 28 should be given.\n\n";
       cout << usage;
       return 1;
    }
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
    bool in_h = false;
    bool use_mu = false;
    bool gradient = false;
-   unsigned format = FORMAT_BRANCH;
+   unsigned format = FORMAT_BUCHHOLZ;
 
    double cutoff = 2.5;
    double RDF = 12.0;
@@ -32,6 +32,12 @@ int main(int argc, char** argv)
    double rho = 0.319;
    double rho2 = 0.319;
    double T = 1.0779;
+   
+   bool use_hato = false;
+   double p1 = 0.0;
+   double p2 = 0.0;
+   double mu_low = 0.0;
+   double mu_high = 0.0;
 
    char* prefix = argv[1];
 
@@ -60,6 +66,19 @@ int main(int argc, char** argv)
             break;
          }
          else if(argv[i][j] == 'e') format = FORMAT_BERNREUTHER;
+         else if(argv[i][j] == 'H')
+         {
+            use_hato = true;
+            i++;
+            p1 = atof(argv[i]);
+            i++;
+            p2 = atof(argv[i]);
+            i++;
+            mu_low = atof(argv[i]);
+            i++;
+            mu_high = atof(argv[i]);
+            break;
+         }
          else if(argv[i][j] == 'h')
          {
             in_h = true;
@@ -130,6 +149,7 @@ int main(int argc, char** argv)
    Domain* dalet;
    if(gradient) dalet = new Domain(h, N, rho, rho2);
    else dalet = new Domain(N, rho, RDF);
+   if(use_hato) dalet->hato(p1, p2, mu_low, mu_high);
    dalet->write(prefix, cutoff, mu, T, do_shift, use_mu, format);
 
    return 0;
