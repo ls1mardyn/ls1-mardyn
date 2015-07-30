@@ -258,6 +258,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
                         q[m] += box[m]*loffset[m][l] + fl_unit[m][l]*goffset[m][d];
                         q[m] += VARFRACTION * fl_unit[m][l] * (r->rnd() - 0.5);
                         if(q[m] > box[m]) q[m] -= box[m];
+                        else if(q[m] < 0.0) q[m] += box[m];
                      }
                      double phi = 6.283185 * r->rnd();
                      double omega = 6.283185 * r->rnd();
