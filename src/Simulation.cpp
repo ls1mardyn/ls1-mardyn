@@ -1508,7 +1508,7 @@ void Simulation::simulate() {
 								_simstep));
 		
 		// scale velocity and angular momentum
-		if ( !_domain->NVE() ) // && _temperatureControl == NULL)
+		if ( !_domain->NVE() && _temperatureControl == NULL)
 		{
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
@@ -1536,7 +1536,7 @@ void Simulation::simulate() {
 			_velocityScalingThermostat.apply(_moleculeContainer);
 		}
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
-        else
+        else if ( _temperatureControl != NULL)
         {
             _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
