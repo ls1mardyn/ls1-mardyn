@@ -736,7 +736,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new VISWriter(writeFrequency,
-						outputPathAndPrefix, true));
+						outputPathAndPrefix));
 				global_log->debug() << "VISWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {
