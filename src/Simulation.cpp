@@ -357,6 +357,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "VISWriter") {
 			outputPlugin = new VISWriter();
 		}
+		else if(pluginname == "MmspdBinWriter") {
+			outputPlugin = new MmspdBinWriter();
+		}
 #ifdef VTK
 		else if(pluginname == "VTKMoleculeWriter") {
 			outputPlugin = new VTKMoleculeWriter();
@@ -738,6 +741,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_outputPlugins.push_back(new VISWriter(writeFrequency,
 						outputPathAndPrefix));
 				global_log->debug() << "VISWriter " << writeFrequency << " '"
+						<< outputPathAndPrefix << "'.\n";
+			} else if (token == "MmspdBinWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new MmspdBinWriter(writeFrequency,
+						outputPathAndPrefix));
+				global_log->debug() << "MmspdBinWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {
 #ifdef VTK
