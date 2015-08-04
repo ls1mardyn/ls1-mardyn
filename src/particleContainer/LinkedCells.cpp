@@ -34,6 +34,8 @@ LinkedCells::LinkedCells(
 	global_log->debug() << "LJ cutoff:" << LJCutoffRadius << endl;
 	global_log->debug() << "# cells in cutoff: " << cellsInCutoffRadius << endl;
 
+	_cellsInCutoff = ceil(cellsInCutoffRadius);
+
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor((_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius * cellsInCutoffRadius);
