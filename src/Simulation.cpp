@@ -52,6 +52,11 @@
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
 
+#include "NEMD/DriftControl.h"
+#include "NEMD/DistControl.h"
+#include "NEMD/RegionSampling.h"
+#include "NEMD/DensityControl.h"
+
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -70,6 +75,13 @@ Simulation::Simulation()
 	_ensemble = new CanonicalEnsemble();
 	_longRangeCorrection = NULL;
     _temperatureControl = NULL;
+
+    // NEMD features
+    _driftControl = NULL;
+    _distControl = NULL;
+    _densityControl = NULL;
+    _regionSampling = NULL;
+
 	initialize();
 }
 
@@ -1165,6 +1177,241 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
         // <-- TEMPERATURE_CONTROL
 
+
+        // mheinen 2015-05-27 --> DRIFT_CONTROL
+         } else if (token == "DriftControl" || token == "Driftcontrol" || token == "driftControl") {
+
+             string strToken;
+
+             inputfilestream >> strToken;
+
+             if(strToken == "param")
+             {
+                 unsigned long nControlFreq;
+                 unsigned long nStart;
+                 unsigned long nStop;
+
+                 inputfilestream >> nControlFreq;
+                 inputfilestream >> nStart;
+                 inputfilestream >> nStop;
+
+                 if(_driftControl == NULL)
+                 {
+                     _driftControl = new DriftControl(nControlFreq, nStart, nStop);
+                 }
+                 else
+                 {
+                   global_log->error() << "DriftControl object allready exist, programm exit..." << endl;
+                   exit(-1);
+                 }
+             }
+             else if (strToken == "region")
+             {
+                 double dLowerCorner[3];
+                 double dUpperCorner[3];
+                 unsigned int nTargetComponent;
+                 double dDirection[3];
+                 double dDriftVeloTargetVal;
+
+                 // read lower corner
+                 for(unsigned short d=0; d<3; d++)
+                 {
+                     inputfilestream >> dLowerCorner[d];
+                 }
+
+                 // read upper corner
+                 for(unsigned short d=0; d<3; d++)
+                 {
+                     inputfilestream >> dUpperCorner[d];
+                 }
+
+                 // target component ID
+                 inputfilestream >> nTargetComponent;
+
+                 // drift velocity target direction
+                 for(unsigned short d=0; d<3; d++)
+                 {
+                     inputfilestream >> dDirection[d];
+                 }
+
+                 // drift velocity target value
+                 inputfilestream >> dDriftVeloTargetVal;
+
+                 if(_driftControl == NULL)
+                 {
+                       global_log->error() << "DriftControl object doesnt exist, programm exit..." << endl;
+                       exit(-1);
+                 }
+                 else
+                 {
+                     // add regions
+                     _driftControl->AddRegion(dLowerCorner, dUpperCorner, nTargetComponent, dDirection, dDriftVeloTargetVal);
+                 }
+             }
+             else
+             {
+                 global_log->error() << "DriftControl: Wrong statement in cfg, programm exit..." << endl;
+                 exit(-1);
+             }
+         // <-- DRIFT_CONTROL
+
+
+         // mheinen 2015-05-29 --> DENSITY_CONTROL
+         } else if (token == "DensityControl" || token == "Densitycontrol" || token == "densityControl") {
+
+             string strToken;
+
+             inputfilestream >> strToken;
+
+             if(strToken == "param")
+             {
+                 unsigned long nControlFreq;
+                 unsigned long nStart;
+                 unsigned long nStop;
+
+                 inputfilestream >> nControlFreq;
+                 inputfilestream >> nStart;
+                 inputfilestream >> nStop;
+
+                 if(_densityControl == NULL)
+                 {
+                     _densityControl = new DensityControl(_domainDecomposition, _domain, nControlFreq, nStart, nStop);
+                 }
+                 else
+                 {
+                   global_log->error() << "DensityControl object allready exist, programm exit..." << endl;
+                   exit(-1);
+                 }
+             }
+             else if (strToken == "region")
+             {
+                 double dLowerCorner[3];
+                 double dUpperCorner[3];
+                 unsigned int nTargetComponent;
+                 double dTargetDensity;
+
+                 // read lower corner
+                 for(unsigned short d=0; d<3; d++)
+                 {
+                     inputfilestream >> dLowerCorner[d];
+                 }
+
+                 // read upper corner
+                 for(unsigned short d=0; d<3; d++)
+                 {
+                     inputfilestream >> dUpperCorner[d];
+                 }
+
+                 // target component ID
+                 inputfilestream >> nTargetComponent;
+
+                 // target density
+                 inputfilestream >> dTargetDensity;
+
+                 if(_densityControl == NULL)
+                 {
+                       global_log->error() << "DensityControl object doesnt exist, programm exit..." << endl;
+                       exit(-1);
+                 }
+                 else
+                 {
+                     // add regions
+                     _densityControl->AddRegion(dLowerCorner, dUpperCorner, nTargetComponent, dTargetDensity);
+                 }
+             }
+             else
+             {
+                 global_log->error() << "DensityControl: Wrong statement in cfg, programm exit..." << endl;
+                 exit(-1);
+             }
+         // <-- DENSITY_CONTROL
+
+
+         // mheinen 2015-03-16 --> DISTANCE_CONTROL
+         } else if (token == "DistControl" || token == "distControl" ) {
+
+             unsigned long nUpdateFreq;
+             unsigned int nNumShells;
+             double dDistMidToCV;
+             double dInterfaceMidLeft, dInterfaceMidRight;
+
+             inputfilestream >> nUpdateFreq >> nNumShells;
+             inputfilestream >> dDistMidToCV;
+             inputfilestream >> dInterfaceMidLeft >> dInterfaceMidRight;
+
+             if(_distControl == NULL)
+             {
+                 _distControl = new DistControl(_domain, nUpdateFreq, nNumShells);
+
+                 // set distances
+                 _distControl->SetDistances(dDistMidToCV);
+                 _distControl->InitPositions(dInterfaceMidLeft, dInterfaceMidRight);
+             }
+             else
+             {
+               global_log->error() << "DistControl object allready exist, programm exit..." << endl;
+               exit(-1);
+             }
+
+         // <-- DISTANCE_CONTROL
+
+
+         // mheinen 2015-03-18 --> REGION_SAMPLING
+         } else if (token == "RegionSampling" || token == "regionSampling" ) {
+
+             if(_regionSampling == NULL)
+             {
+                 _regionSampling = new RegionSampling(_domain);
+             }
+
+             inputfilestream >> token;
+
+             if(token == "region" || token == "Region")
+             {
+                 double dLowerCorner[3];
+                 double dUpperCorner[3];
+
+                 inputfilestream >> dLowerCorner[0] >> dLowerCorner[1] >> dLowerCorner[2];
+                 inputfilestream >> dUpperCorner[0] >> dUpperCorner[1] >> dUpperCorner[2];
+
+                 _regionSampling->AddRegion(dLowerCorner, dUpperCorner);
+             }
+             else if(token == "Trho" || token == "tRho")
+             {
+                 unsigned short nID;
+                 unsigned long initSamplingProfiles;
+                 unsigned long writeFrequencyProfiles;
+                 unsigned int nNumShellsProfiles;
+
+                 inputfilestream >> nID >> initSamplingProfiles >> writeFrequencyProfiles >> nNumShellsProfiles;
+
+                 _regionSampling->GetSampleRegion(nID)->SetParamProfiles( initSamplingProfiles, writeFrequencyProfiles,
+                                                                          nNumShellsProfiles);
+             }
+             else if(token == "vdf" || token == "VDF")
+             {
+                 unsigned short nID;
+                 unsigned long initSamplingVDF;
+                 unsigned long writeFrequencyVDF;
+                 unsigned int nNumShellsVDF;
+                 unsigned int nNumDiscreteStepsVDF;
+                 double dVeloMax;
+
+                 inputfilestream >> nID >> initSamplingVDF >> writeFrequencyVDF;
+                 inputfilestream >> nNumShellsVDF >> nNumDiscreteStepsVDF >> dVeloMax;
+
+                 _regionSampling->GetSampleRegion(nID)->SetParamVDF( initSamplingVDF, writeFrequencyVDF,
+                                                                     nNumShellsVDF, nNumDiscreteStepsVDF, dVeloMax);
+             }
+             else
+             {
+               global_log->error() << "RegionSampling options using wrong statements, programm exit..." << endl;
+               exit(-1);
+             }
+
+         // <-- REGION_SAMPLING
+
+
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token "
@@ -1353,6 +1600,13 @@ void Simulation::prepare_start() {
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
+
+    // Init NEMD feature objects
+    if(_distControl != NULL)
+        _distControl->Init(_domainDecomposition, _domain, _moleculeContainer);
+
+    if(_regionSampling != NULL)
+        _regionSampling->Init(_domain);
 }
 
 void Simulation::simulate() {
@@ -1402,6 +1656,70 @@ void Simulation::simulate() {
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
+
+	    // mheinen 2015-05-29 --> DENSITY_CONTROL
+	    // should done after calling eventNewTimestep() / before force calculation, because force _F[] on molecule is deleted by method Molecule::setupCache()
+	    // and this method is called when component of molecule changes by calling Molecule::setComponent()
+	    // halo must not be populated, because density may be calculated wrong then.
+
+	//        int nRank = _domainDecomposition->getRank();
+
+	//        cout << "[" << nRank << "]: " << "ProcessIsRelevant() = " << _densityControl->ProcessIsRelevant() << endl;
+
+	        if( _densityControl != NULL && _densityControl->ProcessIsRelevant() &&
+	            _densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
+	            _simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
+	        {
+
+	        Molecule* tM;
+
+	        // init density control
+	        _densityControl->Init(_simstep);
+
+	//            unsigned long nNumMoleculesLocal = 0;
+	//            unsigned long nNumMoleculesGlobal = 0;
+
+	        for( tM  = _moleculeContainer->begin();
+	             tM != _moleculeContainer->end();
+	             tM  = _moleculeContainer->next() )
+	        {
+	            // measure density
+	            _densityControl->MeasureDensity(tM, _domainDecomposition, _simstep);
+
+	//                nNumMoleculesLocal++;
+	        }
+
+	        // calc global values
+	        _densityControl->CalcGlobalValues(_domainDecomposition, _simstep);
+
+
+	        bool bDeleteMolecule;
+	        unsigned long nNumMoleculesDeleted = 0;
+
+	        for( tM  = _moleculeContainer->begin();
+	             tM != NULL;  // _moleculeContainer->end();
+	             )
+	        {
+	            bDeleteMolecule = false;
+
+	            // control density
+	            _densityControl->ControlDensity(_domainDecomposition, tM, this, _simstep, bDeleteMolecule);
+
+
+	            if(true == bDeleteMolecule)
+	            {
+	                tM = _moleculeContainer->deleteCurrent();
+	                nNumMoleculesDeleted++;
+	            }
+	            else
+	            {
+	                tM  = _moleculeContainer->next();
+	            }
+
+	        }
+
+	    }
+	    // <-- DENSITY_CONTROL
 
 		// activate RDF sampling
 		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
@@ -1501,6 +1819,63 @@ void Simulation::simulate() {
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
+
+        // mheinen 2015-02-18 --> DRIFT_CONTROL
+        if(_driftControl != NULL)
+        {
+            Molecule* tM;
+
+            // init drift control
+            _driftControl->Init(_simstep);
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // measure drift
+                _driftControl->MeasureDrift(tM, _domainDecomposition, _simstep);
+
+//                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
+            }
+
+            // calc global values
+            _driftControl->CalcGlobalValues(_domainDecomposition, _simstep);
+
+            // calc scale factors
+            _driftControl->CalcScaleFactors(_simstep);
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // measure drift
+                _driftControl->ControlDrift(tM, _simstep);
+
+//                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
+            }
+        }
+        // <-- DRIFT_CONTROL
+
+
+        // mheinen 2015-03-18 --> REGION_SAMPLING
+        if(_regionSampling != NULL)
+        {
+            Molecule* tM;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // sample profiles and vdf
+                _regionSampling->DoSampling(tM, _domainDecomposition, _simstep);
+            }
+
+            // write data
+            _regionSampling->WriteData(_domainDecomposition, _simstep, _domain);
+        }
+        // <-- REGION_SAMPLING
+
+
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
@@ -1541,6 +1916,73 @@ void Simulation::simulate() {
             _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
+
+
+        // mheinen 2015-03-16 --> DISTANCE_CONTROL
+        if(_distControl != NULL)
+        {
+            Molecule* tM;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // sample density profile
+                _distControl->SampleDensityProfile(tM);
+            }
+
+            // determine interface midpoints and update region positions
+            _distControl->UpdatePositions(_simstep, _domain);
+
+
+            // update CV positions
+            if(_densityControl != NULL)
+            {
+              // left CV
+              _densityControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetCVLeft() );
+
+              // right CV
+              _densityControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetCVRight() );
+            }
+
+            // update thermostat positions
+            if(_temperatureControl != NULL)
+            {
+                // left thermostat region (inertgas)
+                _temperatureControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidLeft() );
+
+                // middle thermostat region (liquid film, non-volatile component)
+                _temperatureControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
+                _temperatureControl->GetControlRegion(2)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
+
+                // left thermostat region (inertgas)
+                _temperatureControl->GetControlRegion(3)->SetLowerCorner(1, _distControl->GetInterfaceMidRight() );
+            }
+
+            // update drift control positions
+            if(_driftControl != NULL)
+            {
+                // left
+                _driftControl->GetControlRegion(1)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
+
+                // right
+                _driftControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
+            }
+
+            // write data
+            _distControl->WriteData(_domainDecomposition, _domain, _simstep);
+            _distControl->WriteDataDensity(_domainDecomposition, _domain, _simstep);
+
+
+            // align system center of mass
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                _distControl->AlignSystemCenterOfMass(_domain, tM, _simstep);
+            }
+        }
+        // <-- DISTANCE_CONTROL
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 

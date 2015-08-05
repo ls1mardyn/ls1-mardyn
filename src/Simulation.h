@@ -47,6 +47,11 @@ class Homogeneous;
 class Planar;
 class TemperatureControl;
 
+class DriftControl;
+class DistControl;
+class RegionSampling;
+class DensityControl;
+
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
@@ -450,6 +455,12 @@ private:
 
 	/** Temperature Control (Slab Thermostat) */
     TemperatureControl* _temperatureControl;
+
+    // NEMD features
+    DriftControl*   _driftControl;
+    DistControl*    _distControl;
+    RegionSampling* _regionSampling;
+    DensityControl* _densityControl;
 
 public:
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
