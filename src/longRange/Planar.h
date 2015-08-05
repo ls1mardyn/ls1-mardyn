@@ -43,6 +43,7 @@ public:
 
 	void calculateLongRange();
 	double lrcLJ(Molecule* mol);
+	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
 
 private:
 

@@ -37,7 +37,7 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	_particleContainer = particleContainer;
 	_slabs = slabs;
 	
-	_smooth=true;
+	_smooth=false;  //true; <-- only applicable to static density profiles
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->components();
