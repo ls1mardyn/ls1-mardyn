@@ -1666,59 +1666,71 @@ void Simulation::simulate() {
 
 	//        cout << "[" << nRank << "]: " << "ProcessIsRelevant() = " << _densityControl->ProcessIsRelevant() << endl;
 
-	        if( _densityControl != NULL && _densityControl->ProcessIsRelevant() &&
-	            _densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
-	            _simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
-	        {
+        unsigned long nNumMoleculesDeletedLocal = 0;
+        unsigned long nNumMoleculesDeletedGlobal = 0;
 
-	        Molecule* tM;
+        if( _densityControl != NULL && _densityControl->ProcessIsRelevant() &&
+            _densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
+            _simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
+        {
 
-	        // init density control
-	        _densityControl->Init(_simstep);
+            Molecule* tM;
 
-	//            unsigned long nNumMoleculesLocal = 0;
-	//            unsigned long nNumMoleculesGlobal = 0;
+            // init density control
+            _densityControl->Init(_simstep);
 
-	        for( tM  = _moleculeContainer->begin();
-	             tM != _moleculeContainer->end();
-	             tM  = _moleculeContainer->next() )
-	        {
-	            // measure density
-	            _densityControl->MeasureDensity(tM, _domainDecomposition, _simstep);
+    //            unsigned long nNumMoleculesLocal = 0;
+    //            unsigned long nNumMoleculesGlobal = 0;
 
-	//                nNumMoleculesLocal++;
-	        }
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // measure density
+                _densityControl->MeasureDensity(tM, _domainDecomposition, _simstep);
 
-	        // calc global values
-	        _densityControl->CalcGlobalValues(_domainDecomposition, _simstep);
+    //                nNumMoleculesLocal++;
+            }
 
-
-	        bool bDeleteMolecule;
-	        unsigned long nNumMoleculesDeleted = 0;
-
-	        for( tM  = _moleculeContainer->begin();
-	             tM != NULL;  // _moleculeContainer->end();
-	             )
-	        {
-	            bDeleteMolecule = false;
-
-	            // control density
-	            _densityControl->ControlDensity(_domainDecomposition, tM, this, _simstep, bDeleteMolecule);
+            // calc global values
+            _densityControl->CalcGlobalValues(_domainDecomposition, _simstep);
 
 
-	            if(true == bDeleteMolecule)
-	            {
-	                tM = _moleculeContainer->deleteCurrent();
-	                nNumMoleculesDeleted++;
-	            }
-	            else
-	            {
-	                tM  = _moleculeContainer->next();
-	            }
+            bool bDeleteMolecule;
 
-	        }
+            for( tM  = _moleculeContainer->begin();
+                 tM != NULL;  // _moleculeContainer->end();
+                 )
+            {
+                bDeleteMolecule = false;
 
-	    }
+                // control density
+                _densityControl->ControlDensity(_domainDecomposition, tM, this, _simstep, bDeleteMolecule);
+
+
+                if(true == bDeleteMolecule)
+                {
+                    tM = _moleculeContainer->deleteCurrent();
+                    nNumMoleculesDeletedLocal++;
+                }
+                else
+                {
+                    tM  = _moleculeContainer->next();
+                }
+
+            }
+
+        }
+
+        // update global number of particles
+        _domainDecomposition->collCommInit(1);
+        _domainDecomposition->collCommAppendUnsLong(nNumMoleculesDeletedLocal);
+        _domainDecomposition->collCommAllreduceSum();
+        nNumMoleculesDeletedGlobal = _domainDecomposition->collCommGetUnsLong();
+        _domainDecomposition->collCommFinalize();
+
+        _domain->setglobalNumMolecules(_domain->getglobalNumMolecules() - nNumMoleculesDeletedGlobal);
+
 	    // <-- DENSITY_CONTROL
 
 		// activate RDF sampling
