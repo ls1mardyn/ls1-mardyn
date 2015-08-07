@@ -339,9 +339,7 @@ void DistControl::UpdatePositions(unsigned long simstep, Domain* domain)
 
     // TODO: check for initial timestep???
 
-
     this->EstimateInterfaceMidpoint(domain);
-
 
     // update positions
 
@@ -351,7 +349,7 @@ void DistControl::UpdatePositions(unsigned long simstep, Domain* domain)
 
 
     // DEBUG
-/*
+#ifdef DEBUG
     cout << "_dInterfaceMidLeft  = " << _dInterfaceMidLeft << endl;
     cout << "_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
 
@@ -366,7 +364,7 @@ void DistControl::UpdatePositions(unsigned long simstep, Domain* domain)
     cout << "_dRightSzoneRight = " << _dRightSzoneRight << endl;
     cout << "_dFluxAreaLeft    = " << _dFluxAreaLeft << endl;
     cout << "_dFluxAreaRight   = " << _dFluxAreaRight << endl;
-*/
+#endif
 
     // reset local values
     this->ResetLocalValues();
@@ -503,14 +501,23 @@ void DistControl::AlignSystemCenterOfMass(Domain* domain, Molecule* mol, unsigne
     double dDeltaRightY = domain->getGlobalLength(1) - _dInterfaceMidRight;
     double dDeltaY = 0.5 * (dDeltaRightY - dDeltaLeftY);
 
-    mol->setr(1, mol->r(1) + dDeltaY);
-/*
+    double dNewPosition = mol->r(1) + dDeltaY;
+    double dBoxLengthY = domain->getGlobalLength(1);
+
+    if (dNewPosition > dBoxLengthY )
+        dNewPosition -= dBoxLengthY;
+    else if (dNewPosition < 0. )
+        dNewPosition += dBoxLengthY;
+
+    mol->setr(1, dNewPosition);
+
+#ifdef DEBUG
     cout << "_dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
     cout << "_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
     cout << "dDeltaLeftY = " << dDeltaLeftY << endl;
     cout << "dDeltaRightY = " << dDeltaRightY << endl;
     cout << "dDeltaY = " << dDeltaY << endl;
-*/
+#endif
 }
 
 
