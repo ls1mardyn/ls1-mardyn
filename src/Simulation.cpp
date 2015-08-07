@@ -1733,6 +1733,72 @@ void Simulation::simulate() {
 
 	    // <-- DENSITY_CONTROL
 
+        // mheinen 2015-03-16 --> DISTANCE_CONTROL
+        if(_distControl != NULL)
+        {
+            Molecule* tM;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // sample density profile
+                _distControl->SampleDensityProfile(tM);
+            }
+
+            // determine interface midpoints and update region positions
+            _distControl->UpdatePositions(_simstep, _domain);
+
+
+            // update CV positions
+            if(_densityControl != NULL)
+            {
+              // left CV
+              _densityControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetCVLeft() );
+
+              // right CV
+              _densityControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetCVRight() );
+            }
+
+            // update thermostat positions
+            if(_temperatureControl != NULL)
+            {
+                // left thermostat region (inertgas)
+                _temperatureControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidLeft() );
+
+                // middle thermostat region (liquid film, non-volatile component)
+                _temperatureControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
+                _temperatureControl->GetControlRegion(2)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
+
+                // left thermostat region (inertgas)
+                _temperatureControl->GetControlRegion(3)->SetLowerCorner(1, _distControl->GetInterfaceMidRight() );
+            }
+
+            // update drift control positions
+            if(_driftControl != NULL)
+            {
+                // left
+                _driftControl->GetControlRegion(1)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
+
+                // right
+                _driftControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
+            }
+
+            // write data
+            _distControl->WriteData(_domainDecomposition, _domain, _simstep);
+            _distControl->WriteDataDensity(_domainDecomposition, _domain, _simstep);
+
+
+            // align system center of mass
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                _distControl->AlignSystemCenterOfMass(_domain, tM, _simstep);
+            }
+        }
+        // <-- DISTANCE_CONTROL
+
 		// activate RDF sampling
 		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
 			this->_rdf->tickRDF();
@@ -1928,73 +1994,6 @@ void Simulation::simulate() {
             _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
-
-
-        // mheinen 2015-03-16 --> DISTANCE_CONTROL
-        if(_distControl != NULL)
-        {
-            Molecule* tM;
-
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
-            {
-                // sample density profile
-                _distControl->SampleDensityProfile(tM);
-            }
-
-            // determine interface midpoints and update region positions
-            _distControl->UpdatePositions(_simstep, _domain);
-
-
-            // update CV positions
-            if(_densityControl != NULL)
-            {
-              // left CV
-              _densityControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetCVLeft() );
-
-              // right CV
-              _densityControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetCVRight() );
-            }
-
-            // update thermostat positions
-            if(_temperatureControl != NULL)
-            {
-                // left thermostat region (inertgas)
-                _temperatureControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidLeft() );
-
-                // middle thermostat region (liquid film, non-volatile component)
-                _temperatureControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
-                _temperatureControl->GetControlRegion(2)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
-
-                // left thermostat region (inertgas)
-                _temperatureControl->GetControlRegion(3)->SetLowerCorner(1, _distControl->GetInterfaceMidRight() );
-            }
-
-            // update drift control positions
-            if(_driftControl != NULL)
-            {
-                // left
-                _driftControl->GetControlRegion(1)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
-
-                // right
-                _driftControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
-            }
-
-            // write data
-            _distControl->WriteData(_domainDecomposition, _domain, _simstep);
-            _distControl->WriteDataDensity(_domainDecomposition, _domain, _simstep);
-
-
-            // align system center of mass
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
-            {
-                _distControl->AlignSystemCenterOfMass(_domain, tM, _simstep);
-            }
-        }
-        // <-- DISTANCE_CONTROL
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
