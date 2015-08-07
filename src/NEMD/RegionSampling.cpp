@@ -262,6 +262,113 @@ void SampleRegion::InitSamplingProfiles(int nDimension, Domain* domain)
         }
     }
 
+
+    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
+
+    // [component][position]
+    _nNumMoleculesCompLocal_py  = new unsigned long*[nNumComponents];
+    _nNumMoleculesCompLocal_ny  = new unsigned long*[nNumComponents];
+    _nNumMoleculesCompGlobal_py = new unsigned long*[nNumComponents];
+    _nNumMoleculesCompGlobal_ny = new unsigned long*[nNumComponents];
+
+    // [component][position]
+    _dDensityCompGlobal_py = new double*[nNumComponents];
+    _dDensityCompGlobal_ny = new double*[nNumComponents];
+
+    // [component][vx,vy,vz][position]
+    _dVelocityCompLocal_py  = new double**[nNumComponents];
+    _dVelocityCompLocal_ny  = new double**[nNumComponents];
+    _dVelocityCompGlobal_py = new double**[nNumComponents];
+    _dVelocityCompGlobal_ny = new double**[nNumComponents];
+
+    // [component][fx,fy,fz][position]
+    _dForceCompLocal_py  = new double**[nNumComponents];
+    _dForceCompLocal_ny  = new double**[nNumComponents];
+    _dForceCompGlobal_py = new double**[nNumComponents];
+    _dForceCompGlobal_ny = new double**[nNumComponents];
+
+
+    for(unsigned short c=0; c < nNumComponents; ++c)
+    {
+        // [component][position]
+        _nNumMoleculesCompLocal_py[c]  = new unsigned long[_nNumShellsProfiles];
+        _nNumMoleculesCompLocal_ny[c]  = new unsigned long[_nNumShellsProfiles];
+        _nNumMoleculesCompGlobal_py[c] = new unsigned long[_nNumShellsProfiles];
+        _nNumMoleculesCompGlobal_ny[c] = new unsigned long[_nNumShellsProfiles];
+
+        // [component][position]
+        _dDensityCompGlobal_py[c] = new double[_nNumShellsProfiles];
+        _dDensityCompGlobal_ny[c] = new double[_nNumShellsProfiles];
+
+        // [component][vx,vy,vz][position]
+        _dVelocityCompLocal_py[c]  = new double*[3];
+        _dVelocityCompLocal_ny[c]  = new double*[3];
+        _dVelocityCompGlobal_py[c] = new double*[3];
+        _dVelocityCompGlobal_ny[c] = new double*[3];
+
+        // [component][fx,fy,fz][position]
+        _dForceCompLocal_py[c]  = new double*[3];
+        _dForceCompLocal_ny[c]  = new double*[3];
+        _dForceCompGlobal_py[c] = new double*[3];
+        _dForceCompGlobal_ny[c] = new double*[3];
+    }
+
+    for(unsigned short c=0; c < nNumComponents; ++c)
+    {
+        for(unsigned short d=0; d < 3; ++d)
+        {
+            // [component][vx,vy,vz][position]
+            _dVelocityCompLocal_py[c][d]  = new double[_nNumShellsProfiles];
+            _dVelocityCompLocal_ny[c][d]  = new double[_nNumShellsProfiles];
+            _dVelocityCompGlobal_py[c][d] = new double[_nNumShellsProfiles];
+            _dVelocityCompGlobal_ny[c][d] = new double[_nNumShellsProfiles];
+
+            // [component][fx,fy,fz][position]
+            _dForceCompLocal_py[c][d]  = new double[_nNumShellsProfiles];
+            _dForceCompLocal_ny[c][d]  = new double[_nNumShellsProfiles];
+            _dForceCompGlobal_py[c][d] = new double[_nNumShellsProfiles];
+            _dForceCompGlobal_ny[c][d] = new double[_nNumShellsProfiles];
+        }
+    }
+
+    for(unsigned short c=0; c < nNumComponents; ++c)
+    {
+        for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
+        {
+            // [component][position]
+            _nNumMoleculesCompLocal_py[c][s] = 0;
+            _nNumMoleculesCompLocal_ny[c][s] = 0;
+            _nNumMoleculesCompGlobal_py[c][s] = 0;
+            _nNumMoleculesCompGlobal_ny[c][s] = 0;
+
+            // [component][position]
+            _dDensityCompGlobal_py[c][s] = 0.;
+            _dDensityCompGlobal_ny[c][s] = 0.;
+        }
+    }
+
+    for(unsigned short c=0; c < nNumComponents; ++c)
+    {
+        for(unsigned short d=0; d < 3; ++d)
+        {
+            for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
+            {
+                // [component][vx,vy,vz][position]
+                _dVelocityCompLocal_py[c][d][s]  = 0.;
+                _dVelocityCompLocal_ny[c][d][s]  = 0.;
+                _dVelocityCompGlobal_py[c][d][s] = 0.;
+                _dVelocityCompGlobal_ny[c][d][s] = 0.;
+
+                // [component][fx,fy,fz][position]
+                _dForceCompLocal_py[c][d][s]  = 0.;
+                _dForceCompLocal_ny[c][d][s]  = 0.;
+                _dForceCompGlobal_py[c][d][s] = 0.;
+                _dForceCompGlobal_ny[c][d][s] = 0.;
+            }
+        }
+    }
+
+    // discretisation
     this->DoDiscretisationProfiles(RS_DIMENSION_Y);
 }
 
@@ -544,6 +651,55 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 
     molecule->calculate_mv2_Iw2(_d2EkinTransCompLocal[0][nPosIndex], _d2EkinRotCompLocal[0][nPosIndex]);
 
+
+    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
+
+    // [component][position]
+    _nNumMoleculesCompLocal_py[0][nPosIndex]   +=  bVelocityIsPlus;;
+    _nNumMoleculesCompLocal_ny[0][nPosIndex]   += !bVelocityIsPlus;
+    _nNumMoleculesCompLocal_py[cid][nPosIndex] +=  bVelocityIsPlus;;
+    _nNumMoleculesCompLocal_ny[cid][nPosIndex] += !bVelocityIsPlus;
+
+    // [component][vx,vy,vz][position]
+    _dVelocityCompLocal_py[0][0][nPosIndex]  +=  bVelocityIsPlus * v[0];
+    _dVelocityCompLocal_py[0][1][nPosIndex]  +=  bVelocityIsPlus * v[1];
+    _dVelocityCompLocal_py[0][2][nPosIndex]  +=  bVelocityIsPlus * v[2];
+
+    _dVelocityCompLocal_ny[0][0][nPosIndex]  += !bVelocityIsPlus * v[0];
+    _dVelocityCompLocal_ny[0][1][nPosIndex]  += !bVelocityIsPlus * v[1];
+    _dVelocityCompLocal_ny[0][2][nPosIndex]  += !bVelocityIsPlus * v[2];
+
+    _dVelocityCompLocal_py[cid][0][nPosIndex]  +=  bVelocityIsPlus * v[0];
+    _dVelocityCompLocal_py[cid][1][nPosIndex]  +=  bVelocityIsPlus * v[1];
+    _dVelocityCompLocal_py[cid][2][nPosIndex]  +=  bVelocityIsPlus * v[2];
+
+    _dVelocityCompLocal_ny[cid][0][nPosIndex]  += !bVelocityIsPlus * v[0];
+    _dVelocityCompLocal_ny[cid][1][nPosIndex]  += !bVelocityIsPlus * v[1];
+    _dVelocityCompLocal_ny[cid][2][nPosIndex]  += !bVelocityIsPlus * v[2];
+
+    // force vector
+    double f[3];
+
+    f[0] = molecule->F(0);
+    f[1] = molecule->F(1);
+    f[2] = molecule->F(2);
+
+    // [component][fx,fy,fz][position]
+    _dForceCompLocal_py[0][0][nPosIndex]  +=  bVelocityIsPlus * f[0];
+    _dForceCompLocal_py[0][1][nPosIndex]  +=  bVelocityIsPlus * f[1];
+    _dForceCompLocal_py[0][2][nPosIndex]  +=  bVelocityIsPlus * f[2];
+
+    _dForceCompLocal_ny[0][0][nPosIndex]  += !bVelocityIsPlus * f[0];
+    _dForceCompLocal_ny[0][1][nPosIndex]  += !bVelocityIsPlus * f[1];
+    _dForceCompLocal_ny[0][2][nPosIndex]  += !bVelocityIsPlus * f[2];
+
+    _dForceCompLocal_py[cid][0][nPosIndex]  +=  bVelocityIsPlus * f[0];
+    _dForceCompLocal_py[cid][1][nPosIndex]  +=  bVelocityIsPlus * f[1];
+    _dForceCompLocal_py[cid][2][nPosIndex]  +=  bVelocityIsPlus * f[2];
+
+    _dForceCompLocal_ny[cid][0][nPosIndex]  += !bVelocityIsPlus * f[0];
+    _dForceCompLocal_ny[cid][1][nPosIndex]  += !bVelocityIsPlus * f[1];
+    _dForceCompLocal_ny[cid][2][nPosIndex]  += !bVelocityIsPlus * f[2];
 }
 
 
@@ -787,6 +943,55 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
         }
     }
 
+
+
+    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
+
+#ifdef ENABLE_MPI
+    for(unsigned int c = 0; c < nNumComponents; ++c)
+    {
+        MPI_Reduce( _nNumMoleculesCompLocal_py[c], _nNumMoleculesCompGlobal_py[c], _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce( _nNumMoleculesCompLocal_ny[c], _nNumMoleculesCompGlobal_ny[c], _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+
+        for(unsigned int d = 0; d < 3; ++d)
+        {
+            MPI_Reduce( _dVelocityCompLocal_py[c][d], _dVelocityCompGlobal_py[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce( _dVelocityCompLocal_ny[c][d], _dVelocityCompGlobal_ny[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+            MPI_Reduce( _dForceCompLocal_py[c][d], _dForceCompGlobal_py[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+            MPI_Reduce( _dForceCompLocal_ny[c][d], _dForceCompGlobal_ny[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        }
+    }
+#endif
+
+
+
+    for(unsigned int c = 0; c < nNumComponents; ++c)
+    {
+        for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+        {
+            // density componentwise
+            _dDensityCompGlobal_py[c][s] = _nNumMoleculesCompGlobal_py[c][s] * dInvertShellVolume * dInvertNumSamples;
+            _dDensityCompGlobal_ny[c][s] = _nNumMoleculesCompGlobal_ny[c][s] * dInvertShellVolume * dInvertNumSamples;
+        }
+    }
+
+    for(unsigned int c = 0; c < nNumComponents; ++c)
+    {
+        for(unsigned int d = 0; d < 3; ++d)
+        {
+            for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+            {
+                // [component][vx,vy,vz][position]
+                _dVelocityCompGlobal_py[c][d][s] *= dInvertNumSamples;
+                _dVelocityCompGlobal_ny[c][d][s] *= dInvertNumSamples;
+
+                // [component][fx,fy,fz][position]
+                _dForceCompGlobal_py[c][d][s] *= dInvertNumSamples;
+                _dForceCompGlobal_ny[c][d][s] *= dInvertNumSamples;
+            }
+        }
+    }
 }
 
 
@@ -1065,11 +1270,231 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
             fileout << outputstream_comp.str();
             fileout.close();
 
-            // global_log->info() << "files closed." << endl;
+            // global_log->info() << "files closed." << endl;   // writing .dat-files
+            std::stringstream outputstream_comp;
+            std::stringstream filenamestream_comp;
+            filenamestream_comp << "T-rho_comp_region" << this->GetID() << "_TS" << simstep << ".dat";
+
+            #ifdef ENABLE_MPI
+                rank = domainDecomp->getRank();
+                // int numprocs = domainDecomp->getNumProcs();
+                if (rank== 0)
+                {
+            #endif
+
+                    unsigned int nNumComponents;
+                    nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
+
+                    // header
+                    outputstream_comp << "           pos";
+
+                    // temperature
+                    for(unsigned short c = 0; c < nNumComponents; ++c)
+                    {
+                        outputstream_comp << "          T[" << c << "]";
+                    }
+
+                    // density
+                    for(unsigned short c = 0; c < nNumComponents; ++c)
+                    {
+                        outputstream_comp << "        rho[" << c << "]";
+                    }
+
+                    outputstream_comp << endl;
+
+                    // data
+                    double dVal;
+
+                    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+                    {
+
+                        outputstream_comp << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
+
+                        for(unsigned short c = 0; c < nNumComponents; ++c)
+                        {
+                            // temperature componentwise
+                            dVal = _dTemperatureCompGlobal[c][s];
+
+                            if( abs(dVal) < 0.00001 )
+                                outputstream_comp << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                            else
+                                outputstream_comp << std::setw(14) << std::setprecision(6) << dVal;
+                        }
+
+                        for(unsigned short c = 0; c < nNumComponents; ++c)
+                        {
+                            // temperature componentwise
+                            dVal = _dDensityCompGlobal[c][s];
+
+                            if( abs(dVal) < 0.00001 )
+                                outputstream_comp << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                            else
+                                outputstream_comp << std::setw(14) << std::setprecision(6) << dVal;
+                        }
+
+                        outputstream_comp << endl;
+                    }
+
+                    // Datei zum schreiben öffnen, daten schreiben
+                    ofstream fileout(filenamestream_comp.str().c_str(), ios::out);
+                    fileout << outputstream_comp.str();
+                    fileout.close();
+
+                    // global_log->info() << "files closed." << endl;
+
+            #ifdef ENABLE_MPI
+                }
+            #endif
 
     #ifdef ENABLE_MPI
         }
     #endif
+
+
+
+
+        // writing .dat-files
+         std::stringstream outputstream_comp_Fv;
+         std::stringstream filenamestream_comp_Fv;
+         filenamestream_comp_Fv << "F-v-rho_comp_region" << this->GetID() << "_TS" << simstep << ".dat";
+
+         #ifdef ENABLE_MPI
+             rank = domainDecomp->getRank();
+             // int numprocs = domainDecomp->getNumProcs();
+             if (rank== 0)
+             {
+         #endif
+
+                 unsigned int nNumComponents;
+                 nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
+
+                 // header
+                 outputstream_comp_Fv << "           pos";
+
+                 // density j+/j-
+                 for(unsigned short c = 0; c < nNumComponents; ++c)
+                 {
+                     outputstream_comp_Fv << "     rho_py[" << c << "]";
+                     outputstream_comp_Fv << "     rho_ny[" << c << "]";
+                 }
+
+                 // velocity vx, vy, vz ; j+/j-
+                 for(unsigned short c = 0; c < nNumComponents; ++c)
+                 {
+                     outputstream_comp_Fv << "      vx_py[" << c << "]";
+                     outputstream_comp_Fv << "      vy_py[" << c << "]";
+                     outputstream_comp_Fv << "      vz_py[" << c << "]";
+                     outputstream_comp_Fv << "      vx_ny[" << c << "]";
+                     outputstream_comp_Fv << "      vy_ny[" << c << "]";
+                     outputstream_comp_Fv << "      vz_ny[" << c << "]";
+                 }
+
+                 // force fx, fy, fz ; j+/j-
+                 for(unsigned short c = 0; c < nNumComponents; ++c)
+                 {
+                     outputstream_comp_Fv << "      fx_py[" << c << "]";
+                     outputstream_comp_Fv << "      fy_py[" << c << "]";
+                     outputstream_comp_Fv << "      fz_py[" << c << "]";
+                     outputstream_comp_Fv << "      fx_ny[" << c << "]";
+                     outputstream_comp_Fv << "      fy_ny[" << c << "]";
+                     outputstream_comp_Fv << "      fz_ny[" << c << "]";
+                 }
+
+                 outputstream_comp_Fv << endl;
+
+                 // data
+                 double dVal;
+
+                 for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+                 {
+
+                     outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
+
+                     // density
+                     for(unsigned short c = 0; c < nNumComponents; ++c)
+                     {
+                         // density j+
+                         dVal = _dDensityCompGlobal_py[c][s];
+
+                         if( abs(dVal) < 0.00001 )
+                             outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                         else
+                             outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+
+                         // density j-
+                         dVal = _dDensityCompGlobal_ny[c][s];
+
+                         if( abs(dVal) < 0.00001 )
+                             outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                         else
+                             outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                     }
+
+                     // velocity
+                     for(unsigned short c = 0; c < nNumComponents; ++c)
+                     {
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // velocity j+
+                             dVal = _dVelocityCompGlobal_py[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
+
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // velocity j-
+                             dVal = _dVelocityCompGlobal_ny[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
+                     }
+
+                     // force
+                     for(unsigned short c = 0; c < nNumComponents; ++c)
+                     {
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // force j+
+                             dVal = _dForceCompGlobal_py[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
+
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // force j-
+                             dVal = _dForceCompGlobal_ny[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
+                     }
+
+                     outputstream_comp_Fv << endl;
+                 }
+
+                 // Datei zum schreiben öffnen, daten schreiben
+                 ofstream fileout(filenamestream_comp_Fv.str().c_str(), ios::out);
+                 fileout << outputstream_comp_Fv.str();
+                 fileout.close();
+
+                 // global_log->info() << "files closed." << endl;
+
+         #ifdef ENABLE_MPI
+             }
+         #endif
 }
 
 
@@ -1396,6 +1821,29 @@ void SampleRegion::ResetLocalValuesProfiles()
         }
     }
 
+
+    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
+
+    for(unsigned short c=0; c < _parent->GetNumComponents(); ++c)
+    {
+        for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
+        {
+            // [component][position]
+            _nNumMoleculesCompLocal_py[c][s] = 0;
+            _nNumMoleculesCompLocal_ny[c][s] = 0;
+
+            for(unsigned short d=0; d < 3; ++d)
+            {
+                // [component][vx,vy,vz][position]
+                _dVelocityCompLocal_py[c][d][s]  = 0.;
+                _dVelocityCompLocal_ny[c][d][s]  = 0.;
+
+                // [component][fx,fy,fz][position]
+                _dForceCompLocal_py[c][d][s]  = 0.;
+                _dForceCompLocal_ny[c][d][s]  = 0.;
+            }
+        }
+    }
 }
 
 

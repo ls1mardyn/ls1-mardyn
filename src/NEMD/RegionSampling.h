@@ -214,6 +214,31 @@ private:
 
     double** _dTemperatureCompGlobal;
     double** _dDensityCompGlobal;
+
+
+    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
+
+    // [component][position]
+    unsigned long** _nNumMoleculesCompLocal_py;
+    unsigned long** _nNumMoleculesCompLocal_ny;
+    unsigned long** _nNumMoleculesCompGlobal_py;
+    unsigned long** _nNumMoleculesCompGlobal_ny;
+
+    // [component][position]
+    double** _dDensityCompGlobal_py;
+    double** _dDensityCompGlobal_ny;
+
+    // [component][vx,vy,vz][position]
+    double*** _dVelocityCompLocal_py;
+    double*** _dVelocityCompLocal_ny;
+    double*** _dVelocityCompGlobal_py;
+    double*** _dVelocityCompGlobal_ny;
+
+    // [component][fx,fy,fz][position]
+    double*** _dForceCompLocal_py;
+    double*** _dForceCompLocal_ny;
+    double*** _dForceCompGlobal_py;
+    double*** _dForceCompGlobal_ny;
 };
 
 
