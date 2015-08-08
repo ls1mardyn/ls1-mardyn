@@ -502,12 +502,17 @@ void DistControl::AlignSystemCenterOfMass(Domain* domain, Molecule* mol, unsigne
     double dDeltaY = 0.5 * (dDeltaRightY - dDeltaLeftY);
 
     double dNewPosition = mol->r(1) + dDeltaY;
+
+/*
+ * seems not to work: simulation crashes!!!
+ *
     double dBoxLengthY = domain->getGlobalLength(1);
 
     if (dNewPosition > dBoxLengthY )
         dNewPosition -= dBoxLengthY;
     else if (dNewPosition < 0. )
         dNewPosition += dBoxLengthY;
+*/
 
     mol->setr(1, dNewPosition);
 
