@@ -258,9 +258,15 @@ double DomainDecomposition::getTime() {
 	return MPI_Wtime();
 }
 
-void DomainDecomposition::setGridSize(int num_procs) {
+void DomainDecomposition::setGridSize(int num_procs)
+{
 	for( int i = 0; i < DIM; i++ )
-	_gridSize[i] = 0;
+	    _gridSize[i] = 0;
+
+        _gridSize[0] = 1;
+//        _gridSize[1] = 1;
+        _gridSize[2] = 1;
+
 	MPI_CHECK( MPI_Dims_create( num_procs, DIM, (int *) &_gridSize ) );
 }
 
