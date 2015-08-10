@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<mardyn version="20110208">
+   <simulation type="MD">
+      <input type="oldstyle">LJTS-1.08-0.32_1R.cfg</input>
+   </simulation>
+</mardyn>
