@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+       This config file demonstrates the following case:
+        * phase space point is defined in an ASCII format file
+        * components are are directly defined as a XML tree
+-->
+<mardyncfg>
+	<header>
+		<version>20080612</version>
+		<!-- might need this in the future, e.g. for curl -->
+		<required-plugins></required-plugins>
+	</header>
+	<experiment>
+		<timestep-length>1.498364304465601E-003</timestep-length>
+		<cutoff-radius>4.33333333333333</cutoff-radius>
+		<temperature unit="kelvin">2.50000000000000</temperature>
+		<current-time>0</current-time>
+		<length>
+			<x>35.3210947328206</x>
+			<y>35.3210947328206</y>
+			<z>35.3210947328206</z>
+		</length>
+		<phase-space source="test_20480MDQ-phase_space_only.inp" format="ASCII" />
+		<components>
+			<data>
+				<components amount="4">
+					<comp id="1">
+						<ljcenter id="1">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.000000000000000E+000</z>
+							<m>2.98409090909091</m>
+							<eps>2.27550000000000</eps>
+							<sigma>1.11460000000000</sigma>
+						</ljcenter>
+						<dipole id="1">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.000000000000000E+000</z>
+							<eMyx>0.000000000000000E+000</eMyx>
+							<eMyy>0.000000000000000E+000</eMyy>
+							<eMyz>1.00000000000000</eMyz>
+							<absMy>0.974804214698860</absMy>
+						</dipole>
+						<dummy1>1.855287569573284E-002</dummy1>
+						<dummy2>1.855287569573284E-002</dummy2>
+						<dummy3>0.000000000000000E+000</dummy3>
+					</comp>
+					<comp id="2">
+						<ljcenter id="1">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>-0.335000000000000</z>
+							<m>0.340909090909091</m>
+							<eps>1.35570000000000</eps>
+							<sigma>1.00000000000000</sigma>
+						</ljcenter>
+						<ljcenter id="2">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.335000000000000</z>
+							<m>0.340909090909091</m>
+							<eps>1.35570000000000</eps>
+							<sigma>1.00000000000000</sigma>
+						</ljcenter>
+						<quadrupole id="1">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.000000000000000E+000</z>
+							<eQx>0.000000000000000E+000</eQx>
+							<eQy>0.000000000000000E+000</eQy>
+							<eQz>1.00000000000000</eQz>
+							<absQ>1.48541594620779</absQ>
+						</quadrupole>
+						<dummy1>0.000000000000000E+000</dummy1>
+						<dummy2>0.000000000000000E+000</dummy2>
+						<dummy3>0.000000000000000E+000</dummy3>
+					</comp>
+					<comp id="3">
+						<ljcenter id="1">
+							<x>-0.126753246753247</x>
+							<y>0.000000000000000E+000</y>
+							<z>-0.222857142857143</z>
+							<m>0.318181818181818</m>
+							<eps>0.863938000000000</eps>
+							<sigma>1.01922857142857</sigma>
+						</ljcenter>
+						<ljcenter id="2">
+							<x>-0.126753246753247</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.222857142857143</z>
+							<m>0.318181818181818</m>
+							<eps>0.863938000000000</eps>
+							<sigma>1.01922857142857</sigma>
+						</ljcenter>
+						<ljcenter id="3">
+							<x>0.221818181818182</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.000000000000000E+000</z>
+							<m>0.363636363636364</m>
+							<eps>0.484823000000000</eps>
+							<sigma>0.841828571428571</sigma>
+						</ljcenter>
+						<dipole id="1">
+							<x>1.610389610389612E-002</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.000000000000000E+000</z>
+							<eMyx>1.00000000000000</eMyx>
+							<eMyy>0.000000000000000E+000</eMyy>
+							<eMyz>0.000000000000000E+000</eMyz>
+							<absMy>2.59947790586363</absMy>
+						</dipole>
+						<dummy1>0.000000000000000E+000</dummy1>
+						<dummy2>0.000000000000000E+000</dummy2>
+						<dummy3>0.000000000000000E+000</dummy3>
+					</comp>
+					<comp id="4">
+						<ljcenter id="1">
+							<x>-0.285714285714286</x>
+							<y>0.000000000000000E+000</y>
+							<z>-0.142857142857143</z>
+							<m>0.227272727272727</m>
+							<eps>0.500000000000000</eps>
+							<sigma>0.857142857142857</sigma>
+						</ljcenter>
+						<ljcenter id="2">
+							<x>0.285714285714286</x>
+							<y>0.000000000000000E+000</y>
+							<z>-0.142857142857143</z>
+							<m>0.227272727272727</m>
+							<eps>0.500000000000000</eps>
+							<sigma>0.857142857142857</sigma>
+						</ljcenter>
+						<ljcenter id="3">
+							<x>0.000000000000000E+000</x>
+							<y>-0.285714285714286</y>
+							<z>0.142857142857143</z>
+							<m>0.227272727272727</m>
+							<eps>0.500000000000000</eps>
+							<sigma>0.857142857142857</sigma>
+						</ljcenter>
+						<ljcenter id="4">
+							<x>0.000000000000000E+000</x>
+							<y>0.285714285714286</y>
+							<z>0.142857142857143</z>
+							<m>0.227272727272727</m>
+							<eps>0.500000000000000</eps>
+							<sigma>0.857142857142857</sigma>
+						</ljcenter>
+						<dipole id="1">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>-0.142857142857143</z>
+							<eMyx>1.00000000000000</eMyx>
+							<eMyy>0.000000000000000E+000</eMyy>
+							<eMyz>0.000000000000000E+000</eMyz>
+							<absMy>1.29973895293181</absMy>
+						</dipole>
+						<quadrupole id="1">
+							<x>0.000000000000000E+000</x>
+							<y>0.000000000000000E+000</y>
+							<z>0.142857142857143</z>
+							<eQx>0.000000000000000E+000</eQx>
+							<eQy>1.00000000000000</eQy>
+							<eQz>0.000000000000000E+000</eQz>
+							<absQ>0.742707973103893</absQ>
+						</quadrupole>
+						<dummy1>0.000000000000000E+000</dummy1>
+						<dummy2>0.000000000000000E+000</dummy2>
+						<dummy3>0.000000000000000E+000</dummy3>
+					</comp>
+					<mixcoeff>
+						<!-- id's won't be parsed -->
+						<xi id="0">1.000000000</xi>
+						<eta id="0">1.000000000</eta>
+						<xi id="0">1.000000000</xi>
+						<eta id="0">1.000000000</eta>
+						<xi id="0">1.000000000</xi>
+						<eta id="0">1.000000000</eta>
+						<xi id="1">1.000000000</xi>
+						<eta id="1">1.000000000</eta>
+						<xi id="1">1.000000000</xi>
+						<eta id="1">1.000000000</eta>
+						<xi id="2">1.000000000</xi>
+						<eta id="2">1.000000000</eta>
+					</mixcoeff>
+					<epsilon-rf>10000000000.0000</epsilon-rf>
+				</components>
+			</data>
+		</components>
+
+		<data-structure>
+			<linked-cells>1</linked-cells>
+		</data-structure>
+	</experiment>
+</mardyncfg>
