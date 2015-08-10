@@ -141,16 +141,17 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD,const_cast<char*>(filename.c_str()),MPI_MODE_WRONLY|MPI_MODE_CREATE,MPI_INFO_NULL,&mpifh) );
 		//MPI_CHECK( MPI_File_preallocate( mpifh, size) )
 		//MPI_CHECK( MPI_File_set_view(mpifh,0,MPI_BYTE,MPI_BYTE,mpidatarep,MPI_INFO_NULL) );
-		MPI_Offset mpioffset;
+		MPI_Offset mpioffset=0;
 		MPI_Status mpistat;
 		unsigned long startidx;
 		if(ownrank==0)
 		{	// the first part of header will be written by rank 0 only
-			MPI_CHECK( MPI_File_write(mpifh,(const void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,(const void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh,(void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
 			mpioffset=64-sizeof(unsigned long)-sizeof(int);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&_endiannesstest,1,MPI_INT,&mpistat) );
 			MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh,&_endiannesstest,1,MPI_INT,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh,(void*)&_endiannesstest,1,MPI_INT,&mpistat) );
 			//mpioffset=64-sizeof(unsigned long);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
@@ -218,7 +219,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		mpidtParticleMsize=addr1-addr0;
 		*/
 		mpioffset=64+gap+startidx*mpidtParticleMsize;
-		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,mpidatarep,MPI_INFO_NULL) );
+		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,(void*)mpidatarep,MPI_INFO_NULL) );
 		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
