@@ -803,7 +803,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string outputPathAndPrefix;
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new MPICheckpointWriter(writeFrequency,
-						outputPathAndPrefix, true));
+						outputPathAndPrefix));
 				global_log->debug() << "MPICheckpointWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			}

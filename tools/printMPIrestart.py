@@ -12,6 +12,9 @@ if sys.hexversion < 0x02070000:	sys.stderr.write("WARNING: running an old Python
 import argparse
 import struct
 
+import os
+import time
+
 import signal
 # kill program silently, if SIGINT is received (e.g. due to Ctrl-C keyboard input)
 signal.signal(signal.SIGINT, signal.SIG_DFL)
@@ -74,12 +77,37 @@ def read_inpfile_endofstring(eos="\00"):
 	return inpfile_buffer
 
 
-magicVersion = read_inpfile_chunk(64-8).rstrip("\00")
+print("# {0}".format(args.inpfile.name))
+#if args.inpfile.name!="<stdin>":
+try:
+	fileinfo = os.stat(args.inpfile.name)
+	print(time.strftime("# modification time:\t%d.%m.%Y %H:%M:%S", time.localtime(fileinfo.st_mtime)))
+	print("# file size        :\t{0} Bytes".format(fileinfo.st_size))
+except OSError as e:
+	#print ("Error {0} stat {1}: {2}".format(e.errno, args.inpfile.name, e.strerror))
+	pass
+
+magicVersion = read_inpfile_chunk(64-8-4).rstrip("\00")
 if printheader: print("[{0},{1}]\tmagic versionstring:\t{2}".format(inpfile_posrange[0],inpfile_posrange[1]-1,magicVersion))
 
-if magicVersion=="MarDyn20140817" or magicVersion=="MarDyn20140819":
+endiannesschar='<'
+if magicVersion=="MarDyn20140817" or magicVersion=="MarDyn20140819" or magicVersion=="MarDyn20150211trunk":
 	
-	gap=read_inpfile_struct0("<Q")
+	if magicVersion=="MarDyn20150211trunk":
+		endiannesstest=read_inpfile_struct0(">i")
+		if endiannesstest==0x0a0b0c0d:
+			# big endian
+			endiannesschar='>'
+			if printheader: print("[{0},{1}]\tendiannesstest: big endian".format(inpfile_posrange[0],inpfile_posrange[1]-1))
+		elif endiannesstest==0x0d0c0b0a:
+			# little endian
+			endiannesschar='<'
+			if printheader: print("[{0},{1}]\tendiannesstest: little endian".format(inpfile_posrange[0],inpfile_posrange[1]-1))
+		else:
+			if printheader: print("WARNING: unknown endianness - assuming little endian")
+	else:
+		read_inpfile_chunk(4)
+	gap=read_inpfile_struct0(endiannesschar+"Q")
 	if printheader:
 		print("[{0},{1}]\tgap:\t{2}".format(inpfile_posrange[0],inpfile_posrange[1]-1,gap))
 		
@@ -89,22 +117,22 @@ if magicVersion=="MarDyn20140817" or magicVersion=="MarDyn20140819":
 		token=read_inpfile_endofstring()
 		if token=="BB":
 			print("[{0},{1}]\ttoken {2} found".format(inpfile_posrange[0],inpfile_posrange[1]-1,token))
-			numbb=read_inpfile_struct0("<Q")
+			numbb=read_inpfile_struct0(endiannesschar+"Q")
 			print("[{0},{1}]\tnumber of bounding boxes:\t{2}".format(inpfile_posrange[0],inpfile_posrange[1]-1,numbb))
 			nummoleculessum=0
 			#minstartidx=None
 			#maxlastidx=None
 			for i in range(numbb):
 				pos=inpfile_position
-				minx=read_inpfile_struct0("<d")
-				miny=read_inpfile_struct0("<d")
-				minz=read_inpfile_struct0("<d")
-				maxx=read_inpfile_struct0("<d")
-				maxy=read_inpfile_struct0("<d")
-				maxz=read_inpfile_struct0("<d")
-				startidx=read_inpfile_struct0("<Q")
+				minx=read_inpfile_struct0(endiannesschar+"d")
+				miny=read_inpfile_struct0(endiannesschar+"d")
+				minz=read_inpfile_struct0(endiannesschar+"d")
+				maxx=read_inpfile_struct0(endiannesschar+"d")
+				maxy=read_inpfile_struct0(endiannesschar+"d")
+				maxz=read_inpfile_struct0(endiannesschar+"d")
+				startidx=read_inpfile_struct0(endiannesschar+"Q")
 				#if minstartidx is None or startidx<minstartidx: minstartidx=startidx
-				nummolecules=read_inpfile_struct0("<Q")
+				nummolecules=read_inpfile_struct0(endiannesschar+"Q")
 				#lastidx=startidx+nummolecules-1
 				#if maxlastidx is None or lastidx>maxlastidx: maxlastidx=lastidx
 				nummoleculessum+=nummolecules
@@ -118,24 +146,24 @@ if magicVersion=="MarDyn20140817" or magicVersion=="MarDyn20140819":
 		i=0
 		while args.inpfile:
 			pos=inpfile_position
-			id=read_inpfile_struct0("<Q")
+			id=read_inpfile_struct0(endiannesschar+"Q")
 			if id is None: break
 			#componentid=read_inpfile_struct0("<i")
 			#read_inpfile_chunk(4)
-			componentid=read_inpfile_struct0("<ixxxx")
-			rx=read_inpfile_struct0("<d")
-			ry=read_inpfile_struct0("<d")
-			rz=read_inpfile_struct0("<d")
-			vx=read_inpfile_struct0("<d")
-			vy=read_inpfile_struct0("<d")
-			vz=read_inpfile_struct0("<d")
-			qw=read_inpfile_struct0("<d")
-			qx=read_inpfile_struct0("<d")
-			qy=read_inpfile_struct0("<d")
-			qz=read_inpfile_struct0("<d")
-			Dx=read_inpfile_struct0("<d")
-			Dy=read_inpfile_struct0("<d")
-			Dz=read_inpfile_struct0("<d")
+			componentid=read_inpfile_struct0(endiannesschar+"ixxxx")
+			rx=read_inpfile_struct0(endiannesschar+"d")
+			ry=read_inpfile_struct0(endiannesschar+"d")
+			rz=read_inpfile_struct0(endiannesschar+"d")
+			vx=read_inpfile_struct0(endiannesschar+"d")
+			vy=read_inpfile_struct0(endiannesschar+"d")
+			vz=read_inpfile_struct0(endiannesschar+"d")
+			qw=read_inpfile_struct0(endiannesschar+"d")
+			qx=read_inpfile_struct0(endiannesschar+"d")
+			qy=read_inpfile_struct0(endiannesschar+"d")
+			qz=read_inpfile_struct0(endiannesschar+"d")
+			Dx=read_inpfile_struct0(endiannesschar+"d")
+			Dy=read_inpfile_struct0(endiannesschar+"d")
+			Dz=read_inpfile_struct0(endiannesschar+"d")
 			i+=1
 			print("[{0},{1}]\tm{2}:\t{3}\t{4}\t{5},{6},{7}\t{8},{9},{10}\t{11};{12},{13},{14}\t{15},{16},{17}".format(pos,inpfile_posrange[1]-1,i,id,componentid,rx,ry,rz,vx,vy,vz,qw,qx,qy,qz,Dx,Dy,Dz))
 else:

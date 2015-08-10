@@ -24,13 +24,24 @@
 using Log::global_log;
 using namespace std;
 
+/*
+//         C++11: 201103L
+#if __cplusplus > 199711L
+// int32_t -> MPI_INT32_T
+#include<cstdint>
+#else
+ typedef int int32_t;
+#endif
+*/
 
 extern Simulation* global_simulation;
 
-const char MPICheckpointWriter::_magicVersion[] = "MarDyn20140817";
+const char MPICheckpointWriter::_magicVersion[] = "MarDyn20150211trunk";
+//    int32_t
+const int MPICheckpointWriter::_endiannesstest = 0x0a0b0c0d;
 
-MPICheckpointWriter::MPICheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental)
- : _outputPrefix(outputPrefix), _writeFrequency(writeFrequency), _incremental(incremental), _appendTimestamp(false)
+MPICheckpointWriter::MPICheckpointWriter(unsigned long writeFrequency, string outputPrefix, bool incremental, string datarep)
+ : _outputPrefix(outputPrefix), _writeFrequency(writeFrequency), _incremental(incremental), _appendTimestamp(false), _datarep(datarep)
 {
 	if (outputPrefix == "")
 	{
@@ -45,7 +56,8 @@ MPICheckpointWriter::MPICheckpointWriter(unsigned long writeFrequency, string ou
 MPICheckpointWriter::~MPICheckpointWriter(){}
 
 
-void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
+void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
+{
 	_writeFrequency = 1;
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "MPICheckpointWriter\twrite frequency: " << _writeFrequency << endl;
@@ -71,11 +83,21 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 		_appendTimestamp = true;
 	}
 	global_log->info() << "MPICheckpointWriter\tappend timestamp: " << _appendTimestamp << endl;
+	
+	_datarep = "";	// -> NULL
+	//_datarep = "external32";	// "native", "internal", "external32"
+	xmlconfig.getNodeValue("datarep", _datarep);
+	if(!_datarep.empty()) global_log->info() << "MPICheckpointWriter\tdata represenatation: " << _datarep << endl;
+	
 }
 
 void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
 
-void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu )
+{
+	const char *mpidatarep = NULL;
+	if (!_datarep.empty()) mpidatarep=const_cast<const char*>(_datarep.c_str());
+	
 	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
@@ -115,23 +137,37 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 		MPI_File mpifh;
 		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD,const_cast<char*>(filename.c_str()),MPI_MODE_WRONLY|MPI_MODE_CREATE,MPI_INFO_NULL,&mpifh) );
+		//MPI_CHECK( MPI_File_preallocate( mpifh, size) )
+		//MPI_CHECK( MPI_File_set_view(mpifh,0,MPI_BYTE,MPI_BYTE,mpidatarep,MPI_INFO_NULL) );
 		MPI_Offset mpioffset;
 		MPI_Status mpistat;
 		unsigned long startidx;
 		if(ownrank==0)
-		{	// first part of header will be written by rank 0
-			MPI_CHECK( MPI_File_write(mpifh,(void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
-			mpioffset=64-sizeof(unsigned long);
-			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
+		{	// the first part of header will be written by rank 0 only
+			MPI_CHECK( MPI_File_write(mpifh,(const void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
+			mpioffset=64-sizeof(unsigned long)-sizeof(int);
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&_endiannesstest,1,MPI_INT,&mpistat) );
+			MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
+			MPI_CHECK( MPI_File_write(mpifh,&_endiannesstest,1,MPI_INT,&mpistat) );
+			//mpioffset=64-sizeof(unsigned long);
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
+			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
+			MPI_CHECK( MPI_File_write(mpifh,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
 			//mpioffset+=sizeof(unsigned long);
-			mpioffset=64;
-			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("ICRVQD"),7,MPI_CHAR,&mpistat) );
+			//mpioffset=64;
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("ICRVQD"),7,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
+			MPI_CHECK( MPI_File_write(mpifh,const_cast<char*>("ICRVQD"),7,MPI_CHAR,&mpistat) );
 			mpioffset+=7;
 			//
-			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("BB"),3,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("BB"),3,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
+			MPI_CHECK( MPI_File_write(mpifh,const_cast<char*>("BB"),3,MPI_CHAR,&mpistat) );
 			mpioffset+=3;
 			numbb=(unsigned long)(num_procs);
-			MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&numbb,1,MPI_UNSIGNED_LONG,&mpistat) );
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&numbb,1,MPI_UNSIGNED_LONG,&mpistat) );
+			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
+			MPI_CHECK( MPI_File_write(mpifh,&numbb,1,MPI_UNSIGNED_LONG,&mpistat) );
 			mpioffset+=sizeof(unsigned long);
 			//
 			startidx=0;
@@ -180,8 +216,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		mpidtParticleMsize=addr1-addr0;
 		*/
 		mpioffset=64+gap+startidx*mpidtParticleMsize;
-		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,const_cast<char*>("external32"),MPI_INFO_NULL) );
-		//MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,const_cast<char*>("internal"),MPI_INFO_NULL) );
+		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,mpidatarep,MPI_INFO_NULL) );
 		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
