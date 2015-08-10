@@ -95,8 +95,10 @@ void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, Domai
 
 void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu )
 {
+#ifdef ENABLE_MPI
 	const char *mpidatarep = NULL;
 	if (!_datarep.empty()) mpidatarep=const_cast<const char*>(_datarep.c_str());
+#endif
 	
 	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
@@ -230,10 +232,12 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned long gap=7+3+sizeof(unsigned long)+(6*sizeof(double)+2*sizeof(unsigned long));
 		unsigned int i;
 		unsigned int offset=0;
+		if (!_datarep.empty())  global_log->info() << "MPICheckpointWriter\tsetting data represenatation (" << _datarep << ") is not supported (yet) in sequential version" << endl;
 		ofstream ostrm(filename.c_str(),ios::out|ios::binary);
 		ostrm << _magicVersion;
-		offset+=6+8;
-		for(i=0;i<64-offset-sizeof(unsigned long);++i) ostrm << '\0';
+		offset+=strlen(_magicVersion);
+		for(i=0;i<64-offset-sizeof(unsigned long)-sizeof(int);++i) ostrm << '\0';
+		ostrm.write((char*)&_endiannesstest,sizeof(int));
 		ostrm.write((char*)&gap,sizeof(unsigned long));
 		//offset=64
 		//ostrm.seekp(offset);
