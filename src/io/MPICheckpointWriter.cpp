@@ -91,27 +91,12 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	
 }
 
-void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
-
-void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu )
+void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
 {
-#ifdef ENABLE_MPI
-	const char *mpidatarep = NULL;
-	if (!_datarep.empty()) mpidatarep=const_cast<const char*>(_datarep.c_str());
-#endif
-	
-	if( simstep % _writeFrequency == 0 ) {
-		stringstream filenamestream;
-		filenamestream << _outputPrefix;
-		
-		if(_incremental) {
-			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			
-			unsigned long numTimesteps = _simulation.getNumTimesteps();
-			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
-			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
-		}
-		if(_appendTimestamp) {
+		if(_incremental && _appendTimestamp)
+		{	// use the same timestamp for all increments: add it to the outputPrefix
+			stringstream outputPrefixstream;
+			outputPrefixstream << _outputPrefix;
 			char fmt[] = "%Y%m%dT%H%M%S"; // must have fixed size format for all time values/processes
 			char timestring[256];
 #ifdef ENABLE_MPI
@@ -121,7 +106,41 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 #else
 			gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
 #endif
-			filenamestream << "-" << string(timestring);
+			outputPrefixstream << "_" << string(timestring);
+			_outputPrefix = outputPrefixstream.str();
+		}
+}
+
+void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu )
+{
+#ifdef ENABLE_MPI
+	const char *mpidatarep = NULL;
+	if (!_datarep.empty()) mpidatarep=_datarep.c_str();
+#endif
+	
+	if( simstep % _writeFrequency == 0 ) {
+		stringstream filenamestream;
+		filenamestream << _outputPrefix;
+		
+		if(_incremental)
+		{	/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
+			
+			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
+			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+		}
+		else if(_appendTimestamp)
+		{	//  different timestamps if incremental is not used (no file numbers)
+			char fmt[] = "%Y%m%dT%H%M%S"; // must have fixed size format for all time values/processes
+			char timestring[256];
+#ifdef ENABLE_MPI
+			int count = 0;
+			count = gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
+			MPI_CHECK(MPI_Bcast(timestring, count, MPI_CHAR, 0, MPI_COMM_WORLD));
+#else
+			gettimestr(fmt, timestring, sizeof(timestring)/sizeof(timestring[0]));
+#endif
+			filenamestream << "_" << string(timestring);
 		}
 		filenamestream << ".MPIrestart.dat";
 
@@ -138,39 +157,39 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		int ownrank;
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 		MPI_File mpifh;
-		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD,const_cast<char*>(filename.c_str()),MPI_MODE_WRONLY|MPI_MODE_CREATE,MPI_INFO_NULL,&mpifh) );
+		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );
 		//MPI_CHECK( MPI_File_preallocate( mpifh, size) )
-		//MPI_CHECK( MPI_File_set_view(mpifh,0,MPI_BYTE,MPI_BYTE,mpidatarep,MPI_INFO_NULL) );
+		MPI_CHECK( MPI_File_set_view(mpifh, 0, MPI_BYTE, MPI_BYTE, mpidatarep, MPI_INFO_NULL) );
 		MPI_Offset mpioffset=0;
 		MPI_Status mpistat;
 		unsigned long startidx;
 		if(ownrank==0)
 		{	// the first part of header will be written by rank 0 only
-			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,(const void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
-			MPI_CHECK( MPI_File_write(mpifh,(void*)_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, _magicVersion, strlen(_magicVersion)+1, MPI_CHAR, &mpistat) );
 			mpioffset=64-sizeof(unsigned long)-sizeof(int);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&_endiannesstest,1,MPI_INT,&mpistat) );
 			MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh,(void*)&_endiannesstest,1,MPI_INT,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, &_endiannesstest, 1, MPI_INT, &mpistat) );
 			//mpioffset=64-sizeof(unsigned long);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, &gap, 1, MPI_UNSIGNED_LONG, &mpistat) );
 			//mpioffset+=sizeof(unsigned long);
 			//mpioffset=64;
-			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("ICRVQD"),7,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,"ICRVQD",7,MPI_CHAR,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh,const_cast<char*>("ICRVQD"),7,MPI_CHAR,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, "ICRVQD", 6+1, MPI_CHAR, &mpistat) );
 			mpioffset+=7;
 			//
-			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,const_cast<char*>("BB"),3,MPI_CHAR,&mpistat) );
+			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,"BB",3,MPI_CHAR,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh,const_cast<char*>("BB"),3,MPI_CHAR,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, "BB", 2+1, MPI_CHAR, &mpistat) );
 			mpioffset+=3;
 			numbb=(unsigned long)(num_procs);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&numbb,1,MPI_UNSIGNED_LONG,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh,&numbb,1,MPI_UNSIGNED_LONG,&mpistat) );
+			MPI_CHECK( MPI_File_write(mpifh, &numbb, 1, MPI_UNSIGNED_LONG, &mpistat) );
 			mpioffset+=sizeof(unsigned long);
 			//
 			startidx=0;
@@ -219,7 +238,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		mpidtParticleMsize=addr1-addr0;
 		*/
 		mpioffset=64+gap+startidx*mpidtParticleMsize;
-		MPI_CHECK( MPI_File_set_view(mpifh,mpioffset,mpidtParticleM,mpidtParticleM,(void*)mpidatarep,MPI_INFO_NULL) );
+		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, mpidatarep, MPI_INFO_NULL) );
 		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
