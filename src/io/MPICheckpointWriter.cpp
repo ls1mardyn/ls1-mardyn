@@ -157,20 +157,21 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		int ownrank;
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 		MPI_File mpifh;
-		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to non-standard MPI 3 implementations (should be const char*)
+		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
+		//                    Why does an explicit C cast  (char*)  not work?  -> should be interpreted like a const_cast in the first place (see e.g. http://en.cppreference.com/w/cpp/language/explicit_cast)
 		//MPI_CHECK( MPI_File_preallocate( mpifh, size) )
-		MPI_CHECK( MPI_File_set_view(mpifh, 0, MPI_BYTE, MPI_BYTE, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to non-standard MPI 3 implementations (should be const char*)
+		MPI_CHECK( MPI_File_set_view(mpifh, 0, MPI_BYTE, MPI_BYTE, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		MPI_Offset mpioffset=0;
 		MPI_Status mpistat;
 		unsigned long startidx;
 		if(ownrank==0)
 		{	// the first part of header will be written by rank 0 only
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,_magicVersion,strlen(_magicVersion)+1,MPI_CHAR,&mpistat) );
-			MPI_CHECK( MPI_File_write(mpifh, const_cast<void*>(_magicVersion), strlen(_magicVersion)+1, MPI_CHAR, &mpistat) );	// arg 2 type cast due to non-standard MPI 3 implementations (should be const void*)
+			MPI_CHECK( MPI_File_write(mpifh, (void*)const_cast<char*>(_magicVersion), strlen(_magicVersion)+1, MPI_CHAR, &mpistat) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const void* now)
 			mpioffset=64-sizeof(unsigned long)-sizeof(int);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&_endiannesstest,1,MPI_INT,&mpistat) );
 			MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh, const_cast<void*>(&_endiannesstest), 1, MPI_INT, &mpistat) );	// arg 2 type cast due to non-standard MPI 3 implementations (should be const void*)
+			MPI_CHECK( MPI_File_write(mpifh, (void*)const_cast<int*>(&_endiannesstest), 1, MPI_INT, &mpistat) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const void* now)
 			//mpioffset=64-sizeof(unsigned long);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&gap,1,MPI_UNSIGNED_LONG,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
@@ -179,12 +180,12 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			//mpioffset=64;
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,"ICRVQD",7,MPI_CHAR,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh, const_cast<void*>("ICRVQD"), 6+1, MPI_CHAR, &mpistat) );	// arg 2 type cast due to non-standard MPI 3 implementations (should be const void*)
+			MPI_CHECK( MPI_File_write(mpifh, (void*)const_cast<char*>("ICRVQD"), 6+1, MPI_CHAR, &mpistat) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const void* now)
 			mpioffset+=7;
 			//
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,"BB",3,MPI_CHAR,&mpistat) );
 			//MPI_CHECK( MPI_File_seek(mpifh,mpioffset,MPI_SEEK_SET) );
-			MPI_CHECK( MPI_File_write(mpifh, const_cast<void*>("BB"), 2+1, MPI_CHAR, &mpistat) );	// arg 2 type cast due to non-standard MPI 3 implementations (should be const void*)
+			MPI_CHECK( MPI_File_write(mpifh, (void*)const_cast<char*>("BB"), 2+1, MPI_CHAR, &mpistat) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const void* now)
 			mpioffset+=3;
 			numbb=(unsigned long)(num_procs);
 			//MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&numbb,1,MPI_UNSIGNED_LONG,&mpistat) );
@@ -238,7 +239,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		mpidtParticleMsize=addr1-addr0;
 		*/
 		mpioffset=64+gap+startidx*mpidtParticleMsize;
-		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to non-standard MPI 3 implementations (should be const char*)
+		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
