@@ -1110,7 +1110,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
                 if(_temperatureControl == NULL)
                 {
-                    _temperatureControl = new TemperatureControl(nControlFreq, nStart, nStop);
+                    _temperatureControl = new TemperatureControl(_domain, _domainDecomposition, nControlFreq, nStart, nStop);
 
                     // turn off explosion heuristics
                     _domain->SetExplosionHeuristics(false);

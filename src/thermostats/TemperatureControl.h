@@ -16,18 +16,19 @@
 class DomainDecompBase;
 class ParticleContainer;
 class AccumulatorBase;
+class TemperatureControl;
 class ControlRegionT
 {
 public:
-    ControlRegionT(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
+    ControlRegionT(TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
     ~ControlRegionT();
 
     void Init();
 
     double* GetLowerCorner() {return _dLowerCorner;}
     double* GetUpperCorner() {return _dUpperCorner;}
-    void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
-    void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal;}
+    void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal; this->UpdateSlabParameters();}
+    void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal; this->UpdateSlabParameters();}
     double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
     void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
     void CalcGlobalValues(DomainDecompBase* domainDecomp);
@@ -37,12 +38,17 @@ public:
 
     void ResetLocalValues();
 
+    void UpdateSlabParameters();
+
 private:
+    TemperatureControl* _parent;
+
     double _dLowerCorner[3];
     double _dUpperCorner[3];
 
     unsigned int _nNumSlabs;
     double _dSlabWidth;
+    double _dSlabWidthInit;
 
     unsigned long* _nNumMoleculesLocal;
     unsigned long* _nNumMoleculesGlobal;
@@ -68,11 +74,12 @@ private:
 };
 
 
-
+class Domain;
+class DomainDecompBase;
 class TemperatureControl
 {
 public:
-    TemperatureControl(unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
+    TemperatureControl(Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
     ~TemperatureControl();
 
     void AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
@@ -90,11 +97,17 @@ public:
     // loops over molecule container
     void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
 
+    Domain* GetDomain() {return _domain;}
+    DomainDecompBase* GetDomainDecomposition() {return _domainDecomp;}
+
 private:
     std::vector<ControlRegionT> _vecControlRegions;
     unsigned long _nControlFreq;
     unsigned long _nStart;
     unsigned long _nStop;
+
+    Domain* _domain;
+    DomainDecompBase* _domainDecomp;
 };
 
 

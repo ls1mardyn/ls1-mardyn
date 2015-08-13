@@ -30,8 +30,8 @@ public:
     // standard region methods
     double* GetLowerCorner() {return _dLowerCorner;}
     double* GetUpperCorner() {return _dUpperCorner;}
-    void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
-    void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal;}
+    void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal; this->UpdateSlabParameters();}
+    void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal; this->UpdateSlabParameters();}
     double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
     void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
     unsigned short GetID() {return _nID;}
@@ -72,6 +72,8 @@ public:
     void WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
     void WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep);
 
+    void UpdateSlabParameters();
+
 private:
     // reset local values
     void ResetLocalValuesProfiles();
@@ -102,6 +104,7 @@ private:
     unsigned int _nNumShellsProfiles;
 
     double _dShellWidthProfiles;
+    double _dShellWidthProfilesInit;
     double _dShellVolumeProfiles;
     double* _dShellMidpointsProfiles;
 
@@ -158,6 +161,7 @@ private:
     bool _SamplingEnabledVDF;
 
     double  _dShellWidthVDF;
+    double  _dShellWidthVDFInit;
     double* _dShellMidpointsVDF;
     double* _dDiscreteVelocityValues;
 

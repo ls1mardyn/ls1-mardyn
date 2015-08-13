@@ -48,7 +48,8 @@ void SampleRegion::InitSamplingProfiles(int nDimension, Domain* domain)
 {
     // shell width
     double dNumShellsTemperature = (double) _nNumShellsProfiles;
-    _dShellWidthProfiles = this->GetWidth(nDimension) / dNumShellsTemperature;
+    _dShellWidthProfilesInit = this->GetWidth(nDimension) / dNumShellsTemperature;
+    _dShellWidthProfiles = _dShellWidthProfilesInit;
 
     // shell volume
     double dArea;
@@ -377,7 +378,8 @@ void SampleRegion::InitSamplingVDF(int nDimension)
 {
     // shell width
     double dNumShellsVDF = (double) _nNumShellsVDF;
-    _dShellWidthVDF = this->GetWidth(nDimension) / dNumShellsVDF;
+    _dShellWidthVDFInit = this->GetWidth(nDimension) / dNumShellsVDF;
+    _dShellWidthVDF = _dShellWidthVDFInit;
 
     // discrete values: shell midpoints, velocity values
     _dShellMidpointsVDF = new double[_nNumShellsVDF];
@@ -1846,7 +1848,18 @@ void SampleRegion::ResetLocalValuesProfiles()
     }
 }
 
+void SampleRegion::UpdateSlabParameters()
+{
+    double dWidth = this->GetWidth(1);
 
+    // update profile sampling parameters
+    // _nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);  <-- number of slabs cannot increase, otherwise data structures have to be reallocated
+    _dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
+
+    // update VDF sampling parameters
+    // _nNumShellsVDF = round(dWidth / _dShellWidthVDFInit); <-- number of slabs cannot increase, otherwise data structures have to be reallocated
+    _dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
+}
 
 
 // class RegionSampling
