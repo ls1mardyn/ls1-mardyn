@@ -103,9 +103,11 @@ void ControlRegionT::Init()
     // temperature control region grows during simulation
     unsigned int nNumSlabsReserve;
     double dBoxWidthY = _parent->GetDomain()->getGlobalLength(1);
-    nNumSlabsReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) ) );
+    nNumSlabsReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
 
+#ifdef DEBUG
     cout << "nNumSlabsReserve = " << nNumSlabsReserve << endl;
+#endif
 
     _nNumMoleculesLocal  = new unsigned long[nNumSlabsReserve];
     _nNumMoleculesGlobal = new unsigned long[nNumSlabsReserve];
