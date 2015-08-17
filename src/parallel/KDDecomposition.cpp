@@ -88,38 +88,6 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
-	balanceAndExchange(false, moleculeContainer, domain);
-}
-
-void KDDecomposition::balance() {
-	
-}
-
-
-void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
-	_moleculeContainer = moleculeContainer;
-	KDNode* newDecompTree = NULL;
-	KDNode* newOwnArea = NULL;
-
-	if (_steps % _frequency == 0 || _steps <= 1) {
-		global_log->info() << "KDDecomposition: rebalancing..." << endl;
-		getNumParticles(moleculeContainer);
-		newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
-
-		if (decompose(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
-			global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
-		}
-
-		completeTreeInfo(newDecompTree, newOwnArea);
-		global_log->info() << "KDDecomposition: rebalancing finished" << endl;
-
-#ifdef DEBUG_DECOMP
-		if (_ownRank == 0) {
-			newDecompTree->printTree("");
-		}
-#endif
-	}
-
 	vector<int> procsToSendTo; // all processes to which this process has to send data
 	vector<int> procsToRecvFrom; // all processes from which this process has to recv data
 	vector<list<Molecule*> > particlePtrsToSend; // pointer to particles to be send
@@ -127,45 +95,12 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 	vector<int> numMolsToSend; // number of particles to be send to other procs
 	vector<int> numMolsToRecv; // number of particles to be recieved from other procs
 	// collect particles to be send and find out number of particles to be recieved
-	if (_steps % _frequency == 0 || _steps <= 1) {
-		int haloCellIdxMin[3]; // Assuming a global 3D Cell index, haloCellIdxMin[3] gives the position
-		// of the low local domain corner within this global 3D cell index
-		int haloCellIdxMax[3]; // same as heloCellIdxMax, only high instead of low Corner
-		for (int dim = 0; dim < 3; dim++) {
-			haloCellIdxMin[dim] = newOwnArea->_lowCorner[dim] - 1;
-			haloCellIdxMax[dim] = newOwnArea->_highCorner[dim] + 1;
-		}
-		vector<int> neighbHaloAreas; // The areas (unit: cells, including halo) of the neighbouring procs
-		// For each proc, 6 int values are reserved (xlow, ylow, zlow, xhigh,...)
-		// These values are not used in this context.
-		getOwningProcs(haloCellIdxMin, haloCellIdxMax, _decompTree, _decompTree, &procsToRecvFrom, &neighbHaloAreas);
-		getPartsToSend(_ownArea, newDecompTree, moleculeContainer, domain, procsToSendTo, numMolsToSend, particlePtrsToSend);
-	}
-	else {
-		getPartsToSend(_ownArea, _decompTree, moleculeContainer, domain, procsToSendTo, numMolsToSend, particlePtrsToSend);
-		procsToRecvFrom = procsToSendTo;
-	}
+
+	getPartsToSend(_ownArea, _decompTree, moleculeContainer, domain,
+			procsToSendTo, numMolsToSend, particlePtrsToSend);
+	procsToRecvFrom = procsToSendTo;
 
 	sendReceiveParticleData(procsToSendTo, procsToRecvFrom, numMolsToSend, numMolsToRecv, particlePtrsToSend, particlesRecvBufs);
-
-	if (_steps % _frequency == 0 || _steps <= 1) {
-		// find out new bounding boxes (of newOwnArea)
-		double bBoxMin[3];
-		double bBoxMax[3];
-		for (int dim = 0; dim < 3; dim++) {
-			bBoxMin[dim] = (newOwnArea->_lowCorner[dim]) * _cellSize[dim];
-			bBoxMax[dim] = (newOwnArea->_highCorner[dim] + 1) * _cellSize[dim];
-		}
-		// shift the region of the moleculeContainer and delete all particles which are no
-		// longer in the new region
-		// TODO Rebuild problem with particles leaving the domain
-		adjustOuterParticles(newOwnArea, moleculeContainer, domain);
-		moleculeContainer->rebuild(bBoxMin, bBoxMax);
-
-		_ownArea = newOwnArea;
-		delete _decompTree;
-		_decompTree = newDecompTree;
-	}
 
 	double lowLimit[3];
 	double highLimit[3];
@@ -185,21 +120,14 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 			newMol = particlesRecvBufs[neighbCount][i];
 			count++;
 			// change coordinates (especially needed if particle was moved across boundary)
-			if (newMol.r[0] < lowLimit[0])
-				newMol.r[0] += domain->getGlobalLength(0);
-			else if (newMol.r[0] >= highLimit[0])
-				newMol.r[0] -= domain->getGlobalLength(0);
+			// TODO: all periodic images spawned?
+			for (int d = 0; d < 3; ++d) {
+				if (newMol.r[d] < lowLimit[d])
+					newMol.r[d] += domain->getGlobalLength(d);
+				else if (newMol.r[d] >= highLimit[d])
+					newMol.r[d] -= domain->getGlobalLength(d);
+			}
 
-			if (newMol.r[1] < lowLimit[1])
-				newMol.r[1] += domain->getGlobalLength(1);
-			else if (newMol.r[1] >= highLimit[1])
-				newMol.r[1] -= domain->getGlobalLength(1);
-
-			if (newMol.r[2] < lowLimit[2])
-				newMol.r[2] += domain->getGlobalLength(2);
-			else if (newMol.r[2] >= highLimit[2])
-				newMol.r[2] -= domain->getGlobalLength(2);
-			
 			Component *component = _simulation.getEnsemble()->component(newMol.cid);
 			Molecule m1 = Molecule(newMol.id, component, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2], newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2]);
 			moleculeContainer->addParticle(m1);
@@ -215,11 +143,139 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 			continue; // don't exchange data with the own process
 		delete[] particlesRecvBufs[neighbCount];
 	}
-	if (_steps % _frequency == 0 || _steps <= 1) {
-		moleculeContainer->update();
-	}
 	particlesRecvBufs.resize(0);
+}
+
+void KDDecomposition::balance() {
+	
+}
+
+
+void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
+
+	const bool rebalance = (_steps % _frequency == 0 || _steps <= 1);
 	_steps++;
+	if (rebalance == false) {
+		exchangeMolecules(moleculeContainer, domain);
+		return;
+	}
+
+	_moleculeContainer = moleculeContainer;
+	KDNode* newDecompTree = NULL;
+	KDNode* newOwnArea = NULL;
+
+//	if (rebalance) {
+	global_log->info() << "KDDecomposition: rebalancing..." << endl;
+	getNumParticles(moleculeContainer);
+	newDecompTree = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
+
+	if (decompose(newDecompTree, newOwnArea, MPI_COMM_WORLD)) {
+		global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
+	}
+
+	completeTreeInfo(newDecompTree, newOwnArea);
+	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
+
+#ifdef DEBUG_DECOMP
+	if (_ownRank == 0) {
+		newDecompTree->printTree("");
+	}
+#endif
+//	} endif rebalance
+
+	vector<int> procsToSendTo; // all processes to which this process has to send data
+	vector<int> procsToRecvFrom; // all processes from which this process has to recv data
+	vector<list<Molecule*> > particlePtrsToSend; // pointer to particles to be send
+	vector<ParticleData*> particlesRecvBufs; // buffer used by my recv call
+	vector<int> numMolsToSend; // number of particles to be send to other procs
+	vector<int> numMolsToRecv; // number of particles to be recieved from other procs
+	// collect particles to be send and find out number of particles to be recieved
+
+//	if (rebalance) {
+	int haloCellIdxMin[3]; // Assuming a global 3D Cell index, haloCellIdxMin[3] gives the position
+	// of the low local domain corner within this global 3D cell index
+	int haloCellIdxMax[3]; // same as heloCellIdxMax, only high instead of low Corner
+	for (int dim = 0; dim < 3; dim++) {
+		haloCellIdxMin[dim] = newOwnArea->_lowCorner[dim] - 1;
+		haloCellIdxMax[dim] = newOwnArea->_highCorner[dim] + 1;
+	}
+	vector<int> neighbHaloAreas; // The areas (unit: cells, including halo) of the neighbouring procs
+	// For each proc, 6 int values are reserved (xlow, ylow, zlow, xhigh,...)
+	// These values are not used in this context.
+	getOwningProcs(haloCellIdxMin, haloCellIdxMax, _decompTree, _decompTree, &procsToRecvFrom, &neighbHaloAreas);
+	getPartsToSend(_ownArea, newDecompTree, moleculeContainer, domain, procsToSendTo, numMolsToSend, particlePtrsToSend);
+//	} endif rebalance
+
+	sendReceiveParticleData(procsToSendTo, procsToRecvFrom, numMolsToSend, numMolsToRecv, particlePtrsToSend, particlesRecvBufs);
+
+//	if (rebalance) {
+	// find out new bounding boxes (of newOwnArea)
+	double bBoxMin[3];
+	double bBoxMax[3];
+	for (int dim = 0; dim < 3; dim++) {
+		bBoxMin[dim] = (newOwnArea->_lowCorner[dim]) * _cellSize[dim];
+		bBoxMax[dim] = (newOwnArea->_highCorner[dim] + 1) * _cellSize[dim];
+	}
+	// shift the region of the moleculeContainer and delete all particles which are no
+	// longer in the new region
+	// TODO Rebuild problem with particles leaving the domain
+	adjustOuterParticles(newOwnArea, moleculeContainer, domain);
+	moleculeContainer->rebuild(bBoxMin, bBoxMax);
+
+	_ownArea = newOwnArea;
+	delete _decompTree;
+	_decompTree = newDecompTree;
+//	} endif rebalance
+
+	double lowLimit[3];
+	double highLimit[3];
+	for (int dim = 0; dim < 3; dim++) {
+		lowLimit[dim] = moleculeContainer->getBoundingBoxMin(dim) - moleculeContainer->get_halo_L(dim);
+		highLimit[dim] = moleculeContainer->getBoundingBoxMax(dim) + moleculeContainer->get_halo_L(dim);
+	}
+
+	// store recieved molecules in the molecule container
+	// TODO move this to sendReceiveParticleData?
+	ParticleData newMol;
+	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
+		if (procsToRecvFrom[neighbCount] == _ownRank)
+			continue; // don't exchange data with the own process
+		int count = 0;
+		for (int i = 0; i < numMolsToRecv[neighbCount]; i++) {
+			newMol = particlesRecvBufs[neighbCount][i];
+			count++;
+			// change coordinates (especially needed if particle was moved across boundary)
+			// TODO: all periodic images spawned?
+			for (int d = 0; d < 3; ++d) {
+				if (newMol.r[d] < lowLimit[d])
+					newMol.r[d] += domain->getGlobalLength(d);
+				else if (newMol.r[d] >= highLimit[d])
+					newMol.r[d] -= domain->getGlobalLength(d);
+			}
+
+			Component *component = _simulation.getEnsemble()->component(newMol.cid);
+			Molecule m1 = Molecule(newMol.id, component, newMol.r[0], newMol.r[1], newMol.r[2], newMol.v[0], newMol.v[1], newMol.v[2], newMol.q[0], newMol.q[1], newMol.q[2], newMol.q[3], newMol.D[0], newMol.D[1], newMol.D[2]);
+			moleculeContainer->addParticle(m1);
+		}
+	}
+	// create the copies of local molecules due to periodic boundaries
+	// (only for procs covering the whole domain in one dimension)
+	// (If there was a balance, all procs have to be checked)
+	createLocalCopies(moleculeContainer, domain);
+
+	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
+		if (procsToRecvFrom[neighbCount] == _ownRank)
+			continue; // don't exchange data with the own process
+		delete[] particlesRecvBufs[neighbCount];
+	}
+
+//	if (rebalance) {
+
+	moleculeContainer->update();
+
+//	}endif rebalance
+
+	particlesRecvBufs.resize(0);
 }
 
 bool KDDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {
@@ -411,9 +467,9 @@ void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, Par
 		regToSendLow[0] = neighbHaloAreas[6 * neighbCount + 0] * _cellSize[0];
 		regToSendLow[1] = neighbHaloAreas[6 * neighbCount + 1] * _cellSize[1];
 		regToSendLow[2] = neighbHaloAreas[6 * neighbCount + 2] * _cellSize[2];
-		regToSendHigh[0] = (neighbHaloAreas[6 * neighbCount + 3] + 1) * _cellSize[0];
-		regToSendHigh[1] = (neighbHaloAreas[6 * neighbCount + 4] + 1) * _cellSize[1];
-		regToSendHigh[2] = (neighbHaloAreas[6 * neighbCount + 5] + 1) * _cellSize[2];
+		regToSendHigh[0] = (neighbHaloAreas[6 * neighbCount + 3] + 1) * _cellSize[0]; // TODO: why is the +1 in here? There is no -1 at regToSendLow?
+		regToSendHigh[1] = (neighbHaloAreas[6 * neighbCount + 4] + 1) * _cellSize[1]; // in generating the neighbHaloAreas indices, one is with a +1, the other one with a -1
+		regToSendHigh[2] = (neighbHaloAreas[6 * neighbCount + 5] + 1) * _cellSize[2]; // TODO ?
 		// Not only the neighbouring region itself, but also the periodic copies have to be checked
 		int shift[3] = { 0, 0, 0 };
 		for (int dim = 0; dim < 3; dim++) {
