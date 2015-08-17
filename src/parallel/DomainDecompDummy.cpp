@@ -42,56 +42,40 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 
 	for (unsigned short d = 0; d < 3; ++d) {
 		phaseSpaceSize[d] = rmax[d] - rmin[d];
+
 		// set limits (outside "inner" region)
 		low_limit = rmin[d] + halo_L[d];
 		high_limit = rmax[d] - halo_L[d];
-		currentMolecule = moleculeContainer->begin();
 
-		//cout << "low_limit: " << low_limit << " / high_limit: " << high_limit << endl;
-		//cout << "halo_L: " << halo_L[0] << " / " << halo_L[1] << " / " << halo_L[2] << endl;
-		//cout << "proc_domain_L: " << proc_domain_L[0] << " / " << proc_domain_L[1] << " / " << proc_domain_L[2] << endl;
-		while (currentMolecule != moleculeContainer->end()) {
-			const double& rd = currentMolecule->r(d);
-			if (rd < low_limit) {
-				// determine the position for the copy of the molecule
-				for (unsigned short d2 = 0; d2 < 3; d2++) {
-					// when moving parallel to the coordinate d2 to another process, the
-					// local coordinates in d2 change
-					if (d2 == d)
-						new_position[d2] = rd + phaseSpaceSize[d2];
-					else
-						new_position[d2] = currentMolecule->r(d2);
-				}
+		for (currentMolecule = moleculeContainer->begin();
+			 currentMolecule != moleculeContainer->end();
+			 currentMolecule = moleculeContainer->next()) {
+
+			const double rd = currentMolecule->r(d);
+
+			const bool copyToLow = rd < low_limit;
+			const bool copyToHigh = rd >= high_limit;
+
+			const bool copy = copyToLow or copyToHigh;
+
+			if (copy) {
+				// to copy the molecule across the lower boundary
+				// we need to increment it's position,
+				// otherwise - decrement it.
+				const int sign = copyToLow ? +1 : -1;
+
+				for (unsigned short d2 = 0; d2 < 3; d2++)
+					new_position[d2] = currentMolecule->r(d2);
+				new_position[d] += sign * phaseSpaceSize[d];
+
 				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
-				Molecule m1 = Molecule(currentMolecule->id(),component,
-				                       new_position[0], new_position[1], new_position[2],
-				                       currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
-				                       currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
-				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2));
+				Molecule m1 = Molecule(currentMolecule->id(), component,
+						new_position[0], new_position[1], new_position[2],
+						currentMolecule->v(0), currentMolecule->v(1), currentMolecule->v(2),
+						currentMolecule->q().qw(), currentMolecule->q().qx(), currentMolecule->q().qy(), currentMolecule->q().qz(),
+						currentMolecule->D(0), currentMolecule->D(1), currentMolecule->D(2));
 				moleculeContainer->addParticle(m1);
-				currentMolecule = moleculeContainer->next();
 			}
-			else if (rd >= high_limit) {
-				// determine the position for the copy of the molecule
-				for (unsigned short d2 = 0; d2 < 3; d2++) {
-					// when moving parallel to the coordinate d2 to another process, the
-					// local coordinates in d2 change
-					if (d2 == d)
-						new_position[d2] = rd - phaseSpaceSize[d2];
-					else
-						new_position[d2] = currentMolecule->r(d2);
-				}
-				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
-				Molecule m1 = Molecule(currentMolecule->id(),component,
-				                       new_position[0], new_position[1], new_position[2],
-				                       currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
-				                       currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
-				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2));
-				moleculeContainer->addParticle(m1);
-				currentMolecule = moleculeContainer->next();
-			}
-			else
-				currentMolecule = moleculeContainer->next();
 		}
 	}
 }
