@@ -295,7 +295,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! This method provides a mathematical modulo (important for negative numbers)
 	//! @param number Number to calculate the modulo for
 	//! @param modulo obviously the modulo
-	int mod(int number, int modulo);
+	int ownMod(int number, int modulo) const;
 
 
 	//! @brief exchange decomposition data and build up the resulting tree
@@ -327,7 +327,7 @@ class KDDecomposition: public DomainDecompBase{
 	//!                        each procID six double values are stored, first the three
 	//!                        coordinates for the low corner of the area, then the high corner
 	//! @todo make it work for overlapping decomposition trees
-	void getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, std::vector<int>* procIDs, std::vector<int>* neighbHaloAreas);
+	void getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, std::vector<int>* procIDs, std::vector<int>* neighbHaloAreas) const;
 
 
 	//! @brief

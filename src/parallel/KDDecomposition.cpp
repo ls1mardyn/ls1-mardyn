@@ -1102,7 +1102,7 @@ unsigned int KDDecomposition::getGlobalIndex(int divDim, int dim1, int dim2, int
 //##########################################################################
 //##########################################################################
 
-int KDDecomposition::mod(int number, int modulo) {
+int KDDecomposition::ownMod(int number, int modulo) const {
 	int result = number % modulo;
 	if (result < 0)
 		result += modulo;
@@ -1110,7 +1110,7 @@ int KDDecomposition::mod(int number, int modulo) {
 }
 
 // TODO: this method could or should be moved to KDNode.
-void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, vector<int>* procIDs, vector<int>* neighbHaloAreas) {
+void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* decompTree, KDNode* testNode, vector<int>* procIDs, vector<int>* neighbHaloAreas) const {
 	// For areas overlapping the domain given by decompTree, the overlapping part is
 	// mapped to the corresponding area on the other side of the domain (periodic boundary)
 	// The boolean variable overlap stores for each coordinate direction whether the area overlaps.
@@ -1126,8 +1126,8 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
 		else
 			coversWholeDomain[dim] = false;
 
-		low[dim] = mod(low[dim], (decompTree->_highCorner[dim] - decompTree->_lowCorner[dim] + 1));
-		high[dim] = mod(high[dim], (decompTree->_highCorner[dim] - decompTree->_lowCorner[dim] + 1));
+		low[dim] = ownMod(low[dim], (decompTree->_highCorner[dim] - decompTree->_lowCorner[dim] + 1));
+		high[dim] = ownMod(high[dim], (decompTree->_highCorner[dim] - decompTree->_lowCorner[dim] + 1));
 
 		if (low[dim] > high[dim])
 			overlap[dim] = true;
