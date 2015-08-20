@@ -61,6 +61,7 @@ private:
 	bool	_incremental;
 	bool	_appendTimestamp;
 	std::string	_datarep;
+	bool	_measureTime;
 };
 
 #endif /*MPICHECKPOINTWRITER_H_*/

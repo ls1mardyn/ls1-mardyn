@@ -10,9 +10,13 @@
 #include <string>
 #include <cstring>
 
+#include <sys/time.h>	// gettimeofday()
+
+
 #include "Common.h"
 #include "Domain.h"
 #include "utils/Logger.h"
+//#include "utils/Timer.h"
 #include "parallel/DomainDecompBase.h"
 
 #ifdef ENABLE_MPI
@@ -77,8 +81,8 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	
 	_appendTimestamp = false;
 	int appendTimestamp = 0;
-	//_appendTimestamp = (appendTimestamp != 0);
 	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	//_appendTimestamp = (appendTimestamp != 0);
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
@@ -89,6 +93,14 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig)
 	xmlconfig.getNodeValue("datarep", _datarep);
 	if(!_datarep.empty()) global_log->info() << "MPICheckpointWriter\tdata represenatation: " << _datarep << endl;
 	
+	_measureTime = false;
+	int measureTime = 0;
+	xmlconfig.getNodeValue("measureTime", measureTime);
+	//_measureTime = (measureTime != 0);
+	if(measureTime > 0) {
+		_measureTime = true;
+	}
+	global_log->info() << "MPICheckpointWriter\tmeasure time: " << _measureTime << endl;
 }
 
 void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain)
@@ -156,6 +168,12 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned long gap=7+3+sizeof(unsigned long)+num_procs*(6*sizeof(double)+2*sizeof(unsigned long));
 		int ownrank;
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
+		double mpistarttime;
+		if(_measureTime)
+		{	// should use Timer instead
+			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+			mpistarttime=MPI_Wtime();
+		}
 		MPI_File mpifh;
 		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		//                    Why does an explicit C cast  (char*)  not work?  -> should be interpreted like a const_cast in the first place (see e.g. http://en.cppreference.com/w/cpp/language/explicit_cast)
@@ -249,11 +267,22 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			// saving a struct directly will also save padding zeros... 
 		}
 		MPI_CHECK( MPI_File_close(&mpifh) );
+		if(_measureTime)
+		{
+			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
+			double mpimeasuredtime=MPI_Wtime()-mpistarttime;
+			if(ownrank==0)
+				global_log->info() << "MPICheckpointWriter measured time to write " << filename << " :\t" << mpimeasuredtime << " sec (par.; " << num_procs << " proc.)" << endl;
+		}
 #else
 		unsigned long gap=7+3+sizeof(unsigned long)+(6*sizeof(double)+2*sizeof(unsigned long));
 		unsigned int i;
 		unsigned int offset=0;
 		if (!_datarep.empty())  global_log->info() << "MPICheckpointWriter\tsetting data represenatation (" << _datarep << ") is not supported (yet) in sequential version" << endl;
+		// should use Timer instead
+		struct timeval tod_start;
+		if(_measureTime) gettimeofday( &tod_start, NULL );
+		//
 		ofstream ostrm(filename.c_str(),ios::out|ios::binary);
 		ostrm << _magicVersion;
 		offset+=strlen(_magicVersion);
@@ -298,6 +327,15 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			ostrm.write((char*)D,3*sizeof(double));
 		}
 		ostrm.close();
+		if(_measureTime)
+		{
+			struct timeval tod_stop;
+			gettimeofday( &tod_stop, NULL );
+			double measuredtime=(double)(tod_end.tv_sec-tod_start.tv_sec)+(double)(tod_end.tv_usec-tod_start.tv_usec)/1.E6;
+			if(ownrank==0)
+				global_log->info() << "MPICheckpointWriter measured time to write " << filename << " :\t" << measuredtime << " sec (seq.)" << endl;
+		}
+*/
 #endif
 	}
 }
