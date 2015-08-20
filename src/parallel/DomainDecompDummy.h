@@ -2,7 +2,7 @@
 #define DOMAINDECOMPDUMMY_H_
 
 #include "parallel/DomainDecompBase.h"
-#include "parallel/CollectiveCommDummy.h"
+#include "parallel/CollectiveCommBase.h"
 
 
 //! @brief implement the %domain decomposition for a single processor
@@ -148,7 +148,7 @@ public:
 private:
 	//! Dummy variable for sequential "collective" communication, basically only
 	//! needed to store values and read them again.
-	CollectiveCommDummy _collComm;
+	CollectiveCommBase _collComm;
 
 };
 
