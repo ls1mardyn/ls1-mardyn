@@ -329,13 +329,11 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		ostrm.close();
 		if(_measureTime)
 		{
-			struct timeval tod_stop;
-			gettimeofday( &tod_stop, NULL );
+			struct timeval tod_end;
+			gettimeofday( &tod_end, NULL );
 			double measuredtime=(double)(tod_end.tv_sec-tod_start.tv_sec)+(double)(tod_end.tv_usec-tod_start.tv_usec)/1.E6;
-			if(ownrank==0)
-				global_log->info() << "MPICheckpointWriter measured time to write " << filename << " :\t" << measuredtime << " sec (seq.)" << endl;
+			global_log->info() << "MPICheckpointWriter measured time to write " << filename << " :\t" << measuredtime << " sec (seq.)" << endl;
 		}
-*/
 #endif
 	}
 }
