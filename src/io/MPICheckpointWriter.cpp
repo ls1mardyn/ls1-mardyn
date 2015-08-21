@@ -131,6 +131,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 #endif
 	
 	if( simstep % _writeFrequency == 0 ) {
+		//Timer timer;
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
 		
@@ -159,7 +160,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		string filename = filenamestream.str();
 		global_log->debug() << "MPICheckpointWriter filename:" << filename << endl;
 		
-		unsigned long nummolecules=particleContainer->getNumberOfParticles();
+		unsigned long numParticles=particleContainer->getNumberOfParticles();
 		unsigned long numbb=1;
 #ifdef ENABLE_MPI
 		//global_log->set_mpi_output_all()
@@ -168,16 +169,17 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		unsigned long gap=7+3+sizeof(unsigned long)+num_procs*(6*sizeof(double)+2*sizeof(unsigned long));
 		int ownrank;
 		MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-		double mpistarttime;
+		double mpistarttime=0;	// =0 to prevent Jenkins/gcc complaining about uninitialized mpistarttime [-Werror=uninitialized]
 		if(_measureTime)
 		{	// should use Timer instead
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			mpistarttime=MPI_Wtime();
+			// timer.start();
 		}
 		MPI_File mpifh;
 		MPI_CHECK( MPI_File_open(MPI_COMM_WORLD, const_cast<char*>(filename.c_str()), MPI_MODE_WRONLY|MPI_MODE_CREATE, MPI_INFO_NULL, &mpifh) );	// arg 2 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		//                    Why does an explicit C cast  (char*)  not work?  -> should be interpreted like a const_cast in the first place (see e.g. http://en.cppreference.com/w/cpp/language/explicit_cast)
-		//MPI_CHECK( MPI_File_preallocate( mpifh, size) )
+		//MPI_CHECK( MPI_File_preallocate( mpifh, mpifilesize); )	// might ensure that data can be written, but might be slow
 		MPI_CHECK( MPI_File_set_view(mpifh, 0, MPI_BYTE, MPI_BYTE, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		MPI_Offset mpioffset=0;
 		MPI_Status mpistat;
@@ -213,7 +215,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			//
 			startidx=0;
 		}
-		MPI_CHECK( MPI_Exscan(&nummolecules, &startidx, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) );
+		MPI_CHECK( MPI_Exscan(&numParticles, &startidx, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD) );
 		//
 		mpioffset=64+7+3+sizeof(unsigned long)+ownrank*(6*sizeof(double)+2*sizeof(unsigned long));
 		double bbmin[3],bbmax[3];
@@ -237,12 +239,12 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		mpioffset+=sizeof(double);
 		MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&startidx,1,MPI_UNSIGNED_LONG,&mpistat) );
 		mpioffset+=sizeof(unsigned long);
-		MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&nummolecules,1,MPI_UNSIGNED_LONG,&mpistat) );
+		MPI_CHECK( MPI_File_write_at(mpifh,mpioffset,&numParticles,1,MPI_UNSIGNED_LONG,&mpistat) );
 		mpioffset+=sizeof(unsigned long);
 		global_log->debug() << "MPICheckpointWriter(" << ownrank << ")\tBB " << ":\t"
 		                    << bbmin[0] << ", " << bbmin[1] << ", " << bbmin[2] << " - "
 		                    << bbmax[0] << ", " << bbmax[1] << ", " << bbmax[2]
-		                    << "\tstarting index=" << startidx << " nummolecules=" << nummolecules << endl;
+		                    << "\tstarting index=" << startidx << " numParticles=" << numParticles << endl;
 		//
 		MPI_Datatype mpidtParticleM, mpidtParticleD;
 		ParticleData::setMPIType(mpidtParticleM);
@@ -265,14 +267,16 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			ParticleData::MoleculeToParticleData(particleStruct, *pos);
 			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );
 			// saving a struct directly will also save padding zeros... 
+			//mpioffset+=mpidtParticleMsize;
 		}
 		MPI_CHECK( MPI_File_close(&mpifh) );
 		if(_measureTime)
 		{
 			MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 			double mpimeasuredtime=MPI_Wtime()-mpistarttime;
-			if(ownrank==0)
-				global_log->info() << "MPICheckpointWriter measured time to write " << filename << " :\t" << mpimeasuredtime << " sec (par.; " << num_procs << " proc.)" << endl;
+			// timer.stop();
+			// double mpimeasuredtime=timer.get_etime();
+			if(ownrank==0) global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << mpimeasuredtime << " sec (par.; " << num_procs << " proc.)" << endl;
 		}
 #else
 		unsigned long gap=7+3+sizeof(unsigned long)+(6*sizeof(double)+2*sizeof(unsigned long));
@@ -281,7 +285,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		if (!_datarep.empty())  global_log->info() << "MPICheckpointWriter\tsetting data represenatation (" << _datarep << ") is not supported (yet) in sequential version" << endl;
 		// should use Timer instead
 		struct timeval tod_start;
-		if(_measureTime) gettimeofday( &tod_start, NULL );
+		if(_measureTime) gettimeofday( &tod_start, NULL );	//timer.start();
 		//
 		ofstream ostrm(filename.c_str(),ios::out|ios::binary);
 		ostrm << _magicVersion;
@@ -292,9 +296,10 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		//offset=64
 		//ostrm.seekp(offset);
 		ostrm << "ICRVQD" << '\0';
-		offset+=7;
+		//offset+=7;
 		ostrm << "BB" << '\0';
 		ostrm.write((char*)&numbb,sizeof(unsigned long));
+		//offset+=3+sizeof(unsigned long);
 		double bbmin[3],bbmax[3];
 		bbmin[0]=domainDecomp->getBoundingBoxMin(0,domain);
 		bbmin[1]=domainDecomp->getBoundingBoxMin(1,domain);
@@ -304,9 +309,11 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 		bbmax[2]=domainDecomp->getBoundingBoxMax(2,domain);
 		ostrm.write((char*)bbmin,3*sizeof(double));
 		ostrm.write((char*)bbmax,3*sizeof(double));
+		//offset+=6*sizeof(double);
 		unsigned long startidx=0;
 		ostrm.write((char*)&startidx,sizeof(unsigned long));
-		ostrm.write((char*)&nummolecules,sizeof(unsigned long));
+		ostrm.write((char*)&numParticles,sizeof(unsigned long));
+		//offset+=2*sizeof(unsigned long);
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
 			unsigned long id=pos->id();
 			ostrm.write((char*)&id,sizeof(unsigned long));
@@ -325,6 +332,7 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			ostrm.write((char*)q,4*sizeof(double));
 			for(i=0;i<3;++i) D[i]=pos->D(i);
 			ostrm.write((char*)D,3*sizeof(double));
+			//offset+=2*sizeof(unsigned long)+13*sizeof(double);
 		}
 		ostrm.close();
 		if(_measureTime)
@@ -332,7 +340,9 @@ void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, Domain
 			struct timeval tod_end;
 			gettimeofday( &tod_end, NULL );
 			double measuredtime=(double)(tod_end.tv_sec-tod_start.tv_sec)+(double)(tod_end.tv_usec-tod_start.tv_usec)/1.E6;
-			global_log->info() << "MPICheckpointWriter measured time to write " << filename << " :\t" << measuredtime << " sec (seq.)" << endl;
+			//timer.stop();
+			//double measuredtime=timer.get_etime();
+			global_log->info() << "MPICheckpointWriter (" << filename << ")\tmeasured time: " << measuredtime << " sec (seq.)" << endl;
 		}
 #endif
 	}
