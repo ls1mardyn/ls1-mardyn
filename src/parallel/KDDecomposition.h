@@ -163,20 +163,20 @@ class KDDecomposition: public DomainDecompBase{
 	// the documentation of the class CollectiveCommunication and of the
 	// father class of this class (DomainDecompBase.h)
 	//##################################################################
-	void collCommInit(int numValues){ _collComm.init(MPI_COMM_WORLD, numValues); };
-	void collCommFinalize(){ _collComm.finalize(); };
-	void collCommAppendInt(int intValue){_collComm.appendInt(intValue);};
-	void collCommAppendUnsLong(unsigned long unsLongValue){_collComm.appendUnsLong(unsLongValue);};
-	void collCommAppendFloat(float floatValue){_collComm.appendFloat(floatValue);};
-	void collCommAppendDouble(double doubleValue){_collComm.appendDouble(doubleValue);};
-	void collCommAppendLongDouble(long double longDoubleValue){_collComm.appendLongDouble(longDoubleValue);};
-	int collCommGetInt(){return _collComm.getInt(); };
-	unsigned long collCommGetUnsLong(){return _collComm.getUnsLong(); };
-	float collCommGetFloat(){return _collComm.getFloat(); };
-	double collCommGetDouble(){ return _collComm.getDouble(); };
-	long double collCommGetLongDouble(){ return _collComm.getLongDouble(); };
-	void collCommAllreduceSum(){ _collComm.allreduceSum(); };
-	void collCommBroadcast(int root = 0){ _collComm.broadcast(root); };
+	void collCommInit(int numValues){ _collCommunication.init(MPI_COMM_WORLD, numValues); };
+	void collCommFinalize(){ _collCommunication.finalize(); };
+	void collCommAppendInt(int intValue){_collCommunication.appendInt(intValue);};
+	void collCommAppendUnsLong(unsigned long unsLongValue){_collCommunication.appendUnsLong(unsLongValue);};
+	void collCommAppendFloat(float floatValue){_collCommunication.appendFloat(floatValue);};
+	void collCommAppendDouble(double doubleValue){_collCommunication.appendDouble(doubleValue);};
+	void collCommAppendLongDouble(long double longDoubleValue){_collCommunication.appendLongDouble(longDoubleValue);};
+	int collCommGetInt(){return _collCommunication.getInt(); };
+	unsigned long collCommGetUnsLong(){return _collCommunication.getUnsLong(); };
+	float collCommGetFloat(){return _collCommunication.getFloat(); };
+	double collCommGetDouble(){ return _collCommunication.getDouble(); };
+	long double collCommGetLongDouble(){ return _collCommunication.getLongDouble(); };
+	void collCommAllreduceSum(){ _collCommunication.allreduceSum(); };
+	void collCommBroadcast(int root = 0){ _collCommunication.broadcast(root); };
 
 	int getUpdateFrequency() { return _frequency; }
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
@@ -380,7 +380,7 @@ class KDDecomposition: public DomainDecompBase{
 	ParticleContainer* _moleculeContainer;
 
 	//! variable used for different kinds of collective operations
-	CollectiveCommunication _collComm;
+	CollectiveCommunication _collCommunication;
 
 	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange 
 	 * is not called exactly once in every simulatin step! */

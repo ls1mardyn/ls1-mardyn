@@ -20,8 +20,6 @@
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
-#else
-#include "parallel/DomainDecompDummy.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -192,7 +190,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	#ifdef ENABLE_MPI
 		global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
 	#else
-			_domainDecomposition = new DomainDecompDummy();
+			_domainDecomposition = new DomainDecompBase();
 	#endif
 		}
 		else {
@@ -1705,7 +1703,7 @@ void Simulation::initialize() {
 
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();

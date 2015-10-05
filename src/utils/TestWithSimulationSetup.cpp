@@ -11,7 +11,6 @@
 #include "Domain.h"
 #include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecompDummy.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"

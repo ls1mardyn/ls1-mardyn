@@ -1,6 +1,7 @@
 #ifndef DOMAINDECOMPBASE_H_
 #define DOMAINDECOMPBASE_H_
 
+#include "parallel/CollectiveCommBase.h"
 #include <string>
 
 class Molecule;
@@ -12,7 +13,7 @@ class XMLfileUnits;
 typedef ParticleContainer TMoleculeContainer;
 
 //! @brief handle boundary region and multiple processes
-//! @author Martin Buchholz
+//! @author Martin Buchholz, Nikola Tchipev
 //!
 //! This program is designed to run on a HPC (High Performance Computer).
 //! But sometimes one might want to execute it on a single processor, possibly even
@@ -41,14 +42,12 @@ typedef ParticleContainer TMoleculeContainer;
 class DomainDecompBase {
 public:
 	//! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
-	DomainDecompBase() {
-	}
+	DomainDecompBase();
 
 	//! @brief The Destructor finalizes MPI
-	virtual ~DomainDecompBase() {
-	}
+	virtual ~DomainDecompBase();
 
-	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief exchange molecules between processes
 	//!
@@ -59,7 +58,7 @@ public:
 	//! @param components when creating a new Molecule-object (from the recieved data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) = 0;
+	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief balance the load (and optimise communication) and exchange boundary particles
 	//!
@@ -73,7 +72,7 @@ public:
 	//! @param components when creating a new Molecule-object (from the recieved data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) = 0;
+	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!
@@ -84,47 +83,47 @@ public:
 	//! @param y y-coordinate of the position to be checked
 	//! @param z z-coordinate of the position to be checked
 	//! @param domain might be needed to get the bounding box
-	virtual bool procOwnsPos(double x, double y, double z, Domain* domain) = 0;
+	virtual bool procOwnsPos(double x, double y, double z, Domain* domain);
 
 	void getBoundingBoxMinMax(Domain* domain, double* min, double* max);
 
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the minimum of the bounding box is returned
 	//! @param domain here the bounding box is stored
-	virtual double getBoundingBoxMin(int dimension, Domain* domain) = 0;
+	virtual double getBoundingBoxMin(int dimension, Domain* domain);
 
 	//! @brief get the maximum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the maximum of the bounding box is returned
 	//! @param domain here the bounding box is stored
-	virtual double getBoundingBoxMax(int dimension, Domain* domain) = 0;
+	virtual double getBoundingBoxMax(int dimension, Domain* domain);
 
 	//! @brief writes information about the current decomposition into the given file
 	//!        The format is not strictly defined and depends on the decompositio
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	virtual void printDecomp(std::string filename, Domain* domain) = 0;
+	virtual void printDecomp(std::string filename, Domain* domain);
 
 
 	//! @brief returns the own rank
 	//! @return rank of the process
-	virtual int getRank() = 0;
+	virtual int getRank();
 
 	//! @brief returns the number of processes
 	//! @return number of processes
-	virtual int getNumProcs() = 0;
+	virtual int getNumProcs();
 
 	//! @brief synchronises all processes
-	virtual void barrier() = 0;
+	virtual void barrier();
 
 	//! @brief returns the time in seconds since some time in the past
-	virtual double getTime() = 0;
+	virtual double getTime();
 
 	//! @brief returns total number of molecules
-	virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd) = 0;
+	virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
 
 	//! @brief checks identity of random number generators
-	virtual void assertIntIdentity(int IX) = 0;
-	virtual void assertDisjunctivity(TMoleculeContainer* mm) = 0;
+	virtual void assertIntIdentity(int IX);
+	virtual void assertDisjunctivity(TMoleculeContainer* mm);
 
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
 	//! @param filename name of the file into which the data will be written
@@ -147,33 +146,36 @@ public:
 	// the documentation of the class CollectiveCommunication.
 	//##################################################################
 	//! has to call init method of a CollComm class
-	virtual void collCommInit(int numValues) = 0;
+	virtual void collCommInit(int numValues);
 	//! has to call finalize method of a CollComm class
-	virtual void collCommFinalize() = 0;
+	virtual void collCommFinalize();
 	//! has to call appendInt method of a CollComm class
-	virtual void collCommAppendInt(int intValue) = 0;
+	virtual void collCommAppendInt(int intValue);
 	//! has to call appendUnsLong method of a CollComm class
-	virtual void collCommAppendUnsLong(unsigned long unsLongValue) = 0;
+	virtual void collCommAppendUnsLong(unsigned long unsLongValue);
 	//! has to call appendFloat method of a CollComm class
-	virtual void collCommAppendFloat(float floatValue) = 0;
+	virtual void collCommAppendFloat(float floatValue);
 	//! has to call appendDouble method of a CollComm class
-	virtual void collCommAppendDouble(double doubleValue) = 0;
+	virtual void collCommAppendDouble(double doubleValue);
 	//! has to call appendLongDouble method of a CollComm class
-	virtual void collCommAppendLongDouble(long double longDoubleValue) = 0;
+	virtual void collCommAppendLongDouble(long double longDoubleValue);
 	//! has to call getInt method of a CollComm class
-	virtual int collCommGetInt() = 0;
+	virtual int collCommGetInt();
 	//! has to call getUnsLong method of a CollComm class
-	virtual unsigned long collCommGetUnsLong() = 0;
+	virtual unsigned long collCommGetUnsLong();
 	//! has to call getFloat method of a CollComm class
-	virtual float collCommGetFloat() = 0;
+	virtual float collCommGetFloat();
 	//! has to call getDouble method of a CollComm class
-	virtual double collCommGetDouble() = 0;
+	virtual double collCommGetDouble();
 	//! has to call getLongDouble method of a CollComm class
-	virtual long double collCommGetLongDouble() = 0;
+	virtual long double collCommGetLongDouble();
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
-	virtual void collCommAllreduceSum() = 0;
+	virtual void collCommAllreduceSum();
 	//! has to call broadcast method of a CollComm class (none in sequential version)
-	virtual void collCommBroadcast(int root = 0) = 0;
+	virtual void collCommBroadcast(int root = 0);
+
+private:
+	CollectiveCommBase _collCommBase;
 };
 
 #endif /* DOMAINDECOMPBASE_H_ */

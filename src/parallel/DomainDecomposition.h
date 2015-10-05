@@ -145,59 +145,59 @@ public:
 	// father class of this class (DomainDecompBase.h)
 	//##################################################################
 	void collCommInit(int numValues) {
-		_collComm.init(_comm, numValues);
+		_collCommunication.init(_comm, numValues);
 	}
 
 	void collCommFinalize() {
-		_collComm.finalize();
+		_collCommunication.finalize();
 	}
 
 	void collCommAppendInt(int intValue) {
-		_collComm.appendInt(intValue);
+		_collCommunication.appendInt(intValue);
 	}
 
 	void collCommAppendUnsLong(unsigned long unsLongValue) {
-		_collComm.appendUnsLong(unsLongValue);
+		_collCommunication.appendUnsLong(unsLongValue);
 	}
 
 	void collCommAppendFloat(float floatValue) {
-		_collComm.appendFloat(floatValue);
+		_collCommunication.appendFloat(floatValue);
 	}
 
 	void collCommAppendDouble(double doubleValue) {
-		_collComm.appendDouble(doubleValue);
+		_collCommunication.appendDouble(doubleValue);
 	}
 
 	void collCommAppendLongDouble(long double longDoubleValue) {
-		_collComm.appendLongDouble(longDoubleValue);
+		_collCommunication.appendLongDouble(longDoubleValue);
 	}
 
 	int collCommGetInt() {
-		return _collComm.getInt();
+		return _collCommunication.getInt();
 	}
 
 	unsigned long collCommGetUnsLong() {
-		return _collComm.getUnsLong();
+		return _collCommunication.getUnsLong();
 	}
 
 	float collCommGetFloat() {
-		return _collComm.getFloat();
+		return _collCommunication.getFloat();
 	}
 
 	double collCommGetDouble() {
-		return _collComm.getDouble();
+		return _collCommunication.getDouble();
 	}
 
 	long double collCommGetLongDouble() {
-		return _collComm.getLongDouble();
+		return _collCommunication.getLongDouble();
 	}
 
 	void collCommAllreduceSum() {
-		_collComm.allreduceSum();
+		_collCommunication.allreduceSum();
 	}
 
 	void collCommBroadcast(int root = 0) {
-		_collComm.broadcast(root);
+		_collCommunication.broadcast(root);
 	}
 
 private:
@@ -225,7 +225,7 @@ private:
 	int _neighbours[DIM][2];
 
 	//! variable used for different kinds of collective operations
-	CollectiveCommunication _collComm;
+	CollectiveCommunication _collCommunication;
 };
 
 #endif /* DOMAINDECOMPOSITION_H_ */

@@ -17,7 +17,7 @@
 //! given to the domain decomposition method, the communication command is executed
 //! by the domain decomp and the values can be read again. This class just has to
 //! ensure that this also works if there is no real domain decomposition but the
-//! class DomainDecompDummy is used.
+//! class DomainDecompBase is used.
 class CollectiveCommBase {
 
 protected:

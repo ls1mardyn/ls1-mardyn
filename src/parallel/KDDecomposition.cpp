@@ -345,9 +345,9 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 
 unsigned KDDecomposition::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
 	int num_procs;
-	MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
+	MPI_CHECK( MPI_Comm_size(this->_collCommunication.getTopology(), &num_procs) );
 	unsigned* moldistribution = new unsigned[num_procs];
-	MPI_CHECK( MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, this->_collComm.getTopology()) );
+	MPI_CHECK( MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, this->_collCommunication.getTopology()) );
 	unsigned globalN = 0;
 	for (int r = 0; r < this->_ownRank; r++)
 		globalN += moldistribution[r];
@@ -364,15 +364,15 @@ unsigned KDDecomposition::Ndistribution(unsigned localN, float* minrnd, float* m
 
 void KDDecomposition::assertIntIdentity(int IX) {
 	if (this->_ownRank) {
-		MPI_CHECK( MPI_Send(&IX, 1, MPI_INT, 0, 2 * _ownRank + 17, this->_collComm.getTopology()) );
+		MPI_CHECK( MPI_Send(&IX, 1, MPI_INT, 0, 2 * _ownRank + 17, this->_collCommunication.getTopology()) );
 	}
 	else {
 		int recv;
 		int num_procs;
-		MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
+		MPI_CHECK( MPI_Comm_size(this->_collCommunication.getTopology(), &num_procs) );
 		MPI_Status s;
 		for (int i = 1; i < num_procs; i++) {
-			MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, this->_collComm.getTopology(), &s) );
+			MPI_CHECK( MPI_Recv(&recv, 1, MPI_INT, i, 2 * i + 17, this->_collCommunication.getTopology(), &s) );
 			if (recv != IX) {
 				global_log->error() << "IX is " << IX << " for rank 0, but " << recv << " for rank " << i << "." << endl;
 				MPI_Abort(MPI_COMM_WORLD, 911);
@@ -395,14 +395,14 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 			tids[i] = m->id();
 			i++;
 		}
-		MPI_CHECK( MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collComm.getTopology()) );
+		MPI_CHECK( MPI_Send(tids, num_molecules, MPI_UNSIGNED_LONG, 0, 2674 + _ownRank, this->_collCommunication.getTopology()) );
 		delete[] tids;
 		global_log->info() << "Data consistency checked: for results see rank 0." << endl;
 	}
 	else {
 		map<unsigned long, int> check;
 		int num_procs;
-		MPI_CHECK( MPI_Comm_size(this->_collComm.getTopology(), &num_procs) );
+		MPI_CHECK( MPI_Comm_size(this->_collCommunication.getTopology(), &num_procs) );
 
 		for (m = mm->begin(); m != mm->end(); m = mm->next())
 			check[m->id()] = 0;
@@ -411,11 +411,11 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 		for (int i = 1; i < num_procs; i++) {
 			int num_recv = 0;
 			unsigned long *recv;
-			MPI_CHECK( MPI_Probe(i, 2674 + i, this->_collComm.getTopology(), &status) );
+			MPI_CHECK( MPI_Probe(i, 2674 + i, this->_collCommunication.getTopology(), &status) );
 			MPI_CHECK( MPI_Get_count(&status, MPI_UNSIGNED_LONG, &num_recv) );
 			recv = new unsigned long[num_recv];
 
-			MPI_CHECK( MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, this->_collComm.getTopology(), &status) );
+			MPI_CHECK( MPI_Recv(recv, num_recv, MPI_UNSIGNED_LONG, i, 2674 + i, this->_collCommunication.getTopology(), &status) );
 			for (int j = 0; j < num_recv; j++) {
 				if (check.find(recv[j]) != check.end()) {
 					global_log->error() << "Ranks " << check[recv[j]] << " and " << i << " both propagate ID " << recv[j] << endl;

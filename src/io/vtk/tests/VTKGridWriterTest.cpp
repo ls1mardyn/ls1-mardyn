@@ -10,7 +10,7 @@
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
@@ -64,7 +64,7 @@ void VTKGridWriterTest::testEmptyGrid() {
 	}
 #else
 	Domain domain(0, NULL);
-	DomainDecompDummy dummy;
+	DomainDecompBase dummy;
 	writer.doOutput(container, &dummy, &domain, 1, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKGridWriterTest_1.vtu"));
 
