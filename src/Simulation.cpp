@@ -238,24 +238,26 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 
 		/* datastructure */
-		string datastructuretype;
-		xmlconfig.getNodeValue("datastructure@type", datastructuretype);
-		global_log->info() << "Datastructure type: " << datastructuretype << endl;
-		if(datastructuretype == "LinkedCells") {
-			_moleculeContainer = new LinkedCells();
-			global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
-			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
-			lc->setCutoff(_cutoffRadius);
-		}
-		else if(datastructuretype == "AdaptiveSubCells") {
-			_moleculeContainer = new AdaptiveSubCells();
-		}
-		else {
-			global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
-			this->exit(1);
-		}
 		if(xmlconfig.changecurrentnode("datastructure")) {
+			string datastructuretype;
+			xmlconfig.getNodeValue("@type", datastructuretype);
+			global_log->info() << "Datastructure type: " << datastructuretype << endl;
+			if(datastructuretype == "LinkedCells") {
+				_moleculeContainer = new LinkedCells();
+				/** @todo Review if we need to know the max cutoff radius useable with any datastructure. */
+				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
+				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+				lc->setCutoff(_cutoffRadius);
+			}
+			else if(datastructuretype == "AdaptiveSubCells") {
+				_moleculeContainer = new AdaptiveSubCells();
+			}
+			else {
+				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
+				this->exit(1);
+			}
 			_moleculeContainer->readXML(xmlconfig);
+
 			double bBoxMin[3];
 			double bBoxMax[3];
 			/* TODO: replace Domain with DomainBase. */
