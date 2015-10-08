@@ -719,14 +719,38 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
-	// all timers except the ioTimer messure inside the main loop
-	Timer loopTimer;
-	Timer decompositionTimer;
-	Timer perStepIoTimer;
-	Timer ioTimer;
 
+	// all timers except the ioTimer messure inside the main loop
+	Timer loopTimer; /* timer for the entire simulation loop (synced) */
+	Timer decompositionTimer; /* timer for decomposition */
+	Timer computationTimer; /* timer for computation */
+	Timer perStepIoTimer; /* timer for io in simulation loop */
+	Timer ioTimer; /* timer for final io */
+
+	loopTimer.set_sync(true);
+#if WITH_PAPI
+	const char *papi_event_list[] = {
+		"PAPI_TOT_CYC",
+		"PAPI_TOT_INS"
+	//	"PAPI_VEC_DP"
+	// 	"PAPI_L2_DCM"
+	// 	"PAPI_L2_ICM"
+	// 	"PAPI_L1_ICM"
+	//	"PAPI_DP_OPS"
+	// 	"PAPI_VEC_INS"
+	};
+	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
+	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
+#endif
 	loopTimer.start();
+
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
+		global_log->debug() << "timestep: " << getSimulationStep() << endl;
+		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
+
+		computationTimer.start();
+
+		/** @todo What is this good for? Where come the numbers from? Needs documentation */
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
@@ -738,31 +762,32 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
-		global_log->debug() << "timestep: " << getSimulationStep() << endl;
-		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
 		// activate RDF sampling
-		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
+		if ((_simstep >= _initStatistics) && _rdf != NULL) {
+			global_log->info() << "Activating the RDF sampling" << endl;
 			this->_rdf->tickRDF();
 			this->_particlePairsHandler->setRDF(_rdf);
 			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->components()));
 		}
 
+		computationTimer.stop();
+		decompositionTimer.start();
+
 		// ensure that all Particles are in the right cells and exchange Particles
 		global_log->debug() << "Updating container and decomposition" << endl;
-		loopTimer.stop();
-		decompositionTimer.start();
 		updateParticleContainerAndDecomposition();
-		decompositionTimer.stop();
-		loopTimer.start();
 
-		// Force calculation
+		decompositionTimer.stop();
+		computationTimer.start();
+
+		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing pairs" << endl;
-		//cout<<"here somehow"<<endl;
-		//_moleculeContainer->traversePairs(_particlePairsHandler);
 		_moleculeContainer->traverseCells(*_cellProcessor);
+
+		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -800,8 +825,10 @@ void Simulation::simulate() {
 			}
 		}
 
-		global_log->debug() << "Delete outer particles / clearing halo" << endl;
+		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
+
+		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		if (_simstep >= _initGrandCanonical) {
 			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
 					_domainDecomposition);
@@ -898,9 +925,9 @@ void Simulation::simulate() {
 			<< endl;
 		/* END PHYSICAL SECTION */
 
-		// measure per timestep IO
-		loopTimer.stop();
+		computationTimer.stop();
 		perStepIoTimer.start();
+
 		output(_simstep);
 		if(_forced_checkpoint_time >= 0 && (loopTimer.get_etime() + ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
@@ -910,7 +937,6 @@ void Simulation::simulate() {
 			_forced_checkpoint_time = -1; /* disable for further timesteps */
 		}
 		perStepIoTimer.stop();
-		loopTimer.start();
 	}
 	loopTimer.stop();
 	/***************************************************************************/
@@ -932,14 +958,17 @@ void Simulation::simulate() {
 	}
 	ioTimer.stop();
 
-	global_log->info() << "Computation in main loop took: "
-			<< loopTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Decomposition took. "
-			<< decompositionTimer.get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop  took:         "
-			<< perStepIoTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Final IO took:                 "
-			<< ioTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+
+#if WITH_PAPI
+	global_log->info() << "PAPI counter values for loop timer:"  << endl;
+	for(int i = 0; i < loopTimer.get_papi_num_counters(); i++) {
+		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer.get_global_papi_counter(i) << endl;
+	}
+#endif /* WITH_PAPI */
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
 	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
