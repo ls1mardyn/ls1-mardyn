@@ -22,9 +22,9 @@ void DomainDecompDummy::readXML(XMLfileUnits& xmlconfig) {
 
 void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 
-	double rmin[3]; // lower corner of the process-specific domain //ENABLE_MPI
-	double rmax[3];
-	double halo_L[3]; // width of the halo strip //ENABLE_MPI
+	double rmin[3]; // lower corner of the process-specific domain
+	double rmax[3]; // upper cornder of the process domain
+	double halo_L[3]; // width of the halo stripe for boundary condition handling
 	for (int i = 0; i < 3; i++) {
 		rmin[i] = moleculeContainer->getBoundingBoxMin(i);
 		rmax[i] = moleculeContainer->getBoundingBoxMax(i);
@@ -46,9 +46,9 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 		low_limit = rmin[d] + halo_L[d];
 		high_limit = rmax[d] - halo_L[d];
 		
-		currentMolecule = moleculeContainer->begin();
 
-		while (currentMolecule != moleculeContainer->end()) {
+		/// @todo This loop depends on the fact, that inserted molecules will go before the current Molecule and will not be iterated in the loop! Shoule be made secure for general use.
+		for (currentMolecule = moleculeContainer->begin(); currentMolecule != moleculeContainer->end(); currentMolecule = moleculeContainer->next()) {
 			const double& rd = currentMolecule->r(d);
 			if (rd < low_limit) {
 				// determine the position for the copy of the molecule
@@ -65,7 +65,6 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 				                       currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
 				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2));
 				moleculeContainer->addParticle(m1);
-				currentMolecule = moleculeContainer->next();
 			}
 			else if (rd >= high_limit) {
 				// determine the position for the copy of the molecule
@@ -82,10 +81,6 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 				                       currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
 				                       currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2));
 				moleculeContainer->addParticle(m1);
-				currentMolecule = moleculeContainer->next();
-			}
-			else {
-				currentMolecule = moleculeContainer->next();
 			}
 		}
 	}
