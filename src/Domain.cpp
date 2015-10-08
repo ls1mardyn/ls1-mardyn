@@ -472,8 +472,8 @@ void Domain::writeCheckpoint( string filename,
 		DomainDecompBase* domainDecomp )
 {
 	domainDecomp->assertDisjunctivity(particleContainer);
-	if(!this->_localRank)
-	{
+	/* Rank 0 writes file header */
+	if(0 == this->_localRank) {
 		ofstream checkpointfilestream(filename.c_str());
 		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 		checkpointfilestream << "\n";
