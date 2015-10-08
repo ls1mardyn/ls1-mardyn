@@ -121,31 +121,37 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Integrator section missing." << endl;
 	}
 
-	/* steps */
-	xmlconfig.getNodeValue("run/production/steps", _numberOfTimesteps);
-	global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
-	xmlconfig.getNodeValue("run/equilibration/steps", _initStatistics);
-	global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
-	xmlconfig.getNodeValueReduced("run/currenttime", _simulationTime);
-	global_log->info() << "Simulation start time: " << _simulationTime << endl;
+	/* run section */
+	if(xmlconfig.changecurrentnode("run")) {
+		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
+		global_log->info() << "Simulation start time: " << _simulationTime << endl;
+		/* steps */
+		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
+		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
+		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
+		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
+		xmlconfig.changecurrentnode("..");
+	} else {
+		global_log->error() << "Run section missing." << endl;
+	}
 
 	/* enseble */
-	string ensembletype;
-	xmlconfig.getNodeValue("ensemble@type", ensembletype);
-	global_log->info() << "Ensemble: " << ensembletype<< endl;
-	if (ensembletype == "NVT") {
-		_ensemble = new CanonicalEnsemble();
-	} else if (ensembletype == "muVT") {
-		global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-		this->exit(1);
-// 		_ensemble = new GrandCanonicalEnsemble();
-	} else {
-		global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
-		this->exit(1);
-	}
 	if(xmlconfig.changecurrentnode("ensemble")) {
+		string ensembletype;
+		xmlconfig.getNodeValue("@type", ensembletype);
+		global_log->info() << "Ensemble: " << ensembletype<< endl;
+		if (ensembletype == "NVT") {
+			_ensemble = new CanonicalEnsemble();
+		} else if (ensembletype == "muVT") {
+			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
+			this->exit(1);
+			// _ensemble = new GrandCanonicalEnsemble();
+		} else {
+			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
+			this->exit(1);
+		}
 		_ensemble->readXML(xmlconfig);
-		/* store data in the _domain member as long as we do not use the ensemble everywhere */
+		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
 		for (int d = 0; d < 3; d++) {
 			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
 		}
@@ -154,6 +160,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		global_log->error() << "Ensemble section missing." << endl;
+		this->exit(1);
 	}
 
 	/* algorithm */
