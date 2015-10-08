@@ -6,10 +6,7 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
-#include <list>
 #include <sstream>
-#include <string>
-#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
