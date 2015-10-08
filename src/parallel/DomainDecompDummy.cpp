@@ -45,11 +45,9 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 		// set limits (outside "inner" region)
 		low_limit = rmin[d] + halo_L[d];
 		high_limit = rmax[d] - halo_L[d];
+		
 		currentMolecule = moleculeContainer->begin();
 
-		//cout << "low_limit: " << low_limit << " / high_limit: " << high_limit << endl;
-		//cout << "halo_L: " << halo_L[0] << " / " << halo_L[1] << " / " << halo_L[2] << endl;
-		//cout << "proc_domain_L: " << proc_domain_L[0] << " / " << proc_domain_L[1] << " / " << proc_domain_L[2] << endl;
 		while (currentMolecule != moleculeContainer->end()) {
 			const double& rd = currentMolecule->r(d);
 			if (rd < low_limit) {
