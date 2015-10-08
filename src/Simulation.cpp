@@ -187,10 +187,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			this->exit(1);
 		}
 
-		double epsilonRF = 0;
-		xmlconfig.getNodeValueReduced("electrostatic[@type='ReactionField']/epsilon", epsilonRF);
-		global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
-		_domain->setepsilonRF(epsilonRF);
+		/* electrostatics */
+		/** @todo This may be better go into a physical section for constants? */
+		if(xmlconfig.changecurrentnode("electrostatic[@type='ReactionField']")) {
+			double epsilonRF = 0;
+			xmlconfig.getNodeValueReduced("epsilon", epsilonRF);
+			global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
+			_domain->setepsilonRF(epsilonRF);
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Electrostatics section for reaction field setup missing." << endl;
+			this->exit(1);
+		}
 
 		/* parallelization */
 		string parallelisationtype("DomainDecomposition");
