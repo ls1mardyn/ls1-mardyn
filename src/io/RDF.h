@@ -20,8 +20,9 @@ class Component;
  * For example, it should be possible to recognize the aggregate state of a system
  * (see http://matdl.org/matdlwiki/index.php/softmatter:Radial_Distribution_Function ).
  *
- * Here the RDF is only determined for atom pairs of which their distance is within
- * the cutoff-radius.
+ * \note The RDF is only determined for molecule pairs within the cutoff radius of the force and
+ *       potential calculation. This means that bins outside the cut-off will always be computed
+ *       to be zero.
  *
  * Calculation:
  * - calculate the distance of the pair, discretize it to intervalls
