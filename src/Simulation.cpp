@@ -166,12 +166,22 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 		/* cutoffs */
-		if (xmlconfig.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
-			_cutoffRadius = _LJCutoffRadius;
-			global_log->info() << "dimensionless LJ cutoff radius:\t"
-					<< _LJCutoffRadius << endl;
-			global_log->info() << "dimensionless cutoff radius:\t"
-					<< _cutoffRadius << endl;
+		if(xmlconfig.changecurrentnode("cutoffs")) {
+			if(xmlconfig.getNodeValueReduced("defaultCutoff", _cutoffRadius)) {
+				global_log->info() << "dimensionless default cutoff radius:\t" << _cutoffRadius << endl;
+			}
+			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
+				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+			}
+			/** @todo introduce maxCutoffRadius here for datastructures, ...
+			 *        maybe use map/list to store cutoffs for different potentials? */
+			_cutoffRadius = max(_cutoffRadius, _LJCutoffRadius);
+			if(_cutoffRadius <= 0) {
+				global_log->error() << "cutoff radius <= 0." << endl;
+				this->exit(1);
+			}
+			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
+			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Cutoff section missing." << endl;
 			this->exit(1);
