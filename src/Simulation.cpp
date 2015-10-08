@@ -201,32 +201,39 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 
 		/* parallelization */
-		string parallelisationtype("DomainDecomposition");
-		xmlconfig.getNodeValue("parallelisation@type", parallelisationtype);
-		global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
-		if(parallelisationtype == "DomainDecomposition") {
-	#ifdef ENABLE_MPI
-			_domainDecomposition = new DomainDecomposition();
-	#else
-		global_log->error() << "DomainDecomposition not available in sequential mode." << endl;
-	#endif
-		}
-		else if(parallelisationtype == "KDDecomposition") {
-	#ifdef ENABLE_MPI
-			_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
-	#else
-		global_log->error() << "KDDecomposition not available in sequential mode." << endl;
-	#endif
-		}
-		else if(parallelisationtype == "DummyDecomposition") {
-	#ifdef ENABLE_MPI
-		global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
-	#else
-			_domainDecomposition = new DomainDecompDummy();
-	#endif
+		if(xmlconfig.changecurrentnode("parallelisation")) {
+			string parallelisationtype("DomainDecomposition");
+			xmlconfig.getNodeValue("@type", parallelisationtype);
+			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
+		#if ENABLE_MPI
+			if(parallelisationtype == "DummyDecomposition") {
+				global_log->error() << "DummyDecompositionnot not available in parallel mode." << endl;
+			}
+			else if(parallelisationtype == "DomainDecomposition") {
+				_domainDecomposition = new DomainDecomposition();
+			}
+			else if(parallelisationtype == "KDDecomposition") {
+				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
+			}
+			else {
+				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
+				this->exit(1);
+			}
+		#else /* serial */
+			if(parallelisationtype != "DummyDecomposition") {
+				global_log->warning() << "Executable was compilated without support for parallel execution." << endl;
+				global_log->error() << parallelisationtype << " not available in sequential mode." << endl;
+				this->exit(1);
+			}
+			else {
+				_domainDecomposition = new DomainDecompDummy();
+			}
+		#endif
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
 		}
 		else {
-			global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
+			global_log->error() << "Parallelisation section missing." << endl;
 			this->exit(1);
 		}
 
@@ -258,22 +265,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			global_log->error() << "Datastructure section missing" << endl;
 			this->exit(1);
-		}
-
-	#ifndef ENABLE_MPI
-		if (parallelisationtype != "DummyDecomposition") {
-			global_log->warning()
-				<< "Input demands parallelization, but the current compilation doesn't support parallel execution."
-				<< endl;
-		}
-	#endif
-
-		if(xmlconfig.changecurrentnode("parallelisation")) {
-			_domainDecomposition->readXML(xmlconfig);
-			xmlconfig.changecurrentnode("..");
-		}
-		else {
-			global_log->warning() << "Parallelisation section missing." << endl;
 		}
 
 		if(xmlconfig.changecurrentnode("thermostats")) {
