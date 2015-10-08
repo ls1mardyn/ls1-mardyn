@@ -206,14 +206,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Datastructure type: " << datastructuretype << endl;
 		if(datastructuretype == "LinkedCells") {
 			_moleculeContainer = new LinkedCells();
-			_particleContainerType = LINKED_CELL; /* TODO: Necessary? */
 			global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 			lc->setCutoff(_cutoffRadius);
 		}
 		else if(datastructuretype == "AdaptiveSubCells") {
 			_moleculeContainer = new AdaptiveSubCells();
-			_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
 		}
 		else {
 			global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
@@ -660,7 +658,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			inputfilestream >> token;
 			if (token == "LinkedCells") {
-				_particleContainerType = LINKED_CELL;  /* TODO: Necessary? */
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
 				double bBoxMin[3];
@@ -676,7 +673,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 				        cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
-				_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
