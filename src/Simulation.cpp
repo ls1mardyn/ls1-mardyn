@@ -424,12 +424,17 @@ void Simulation::readConfigFile(string filename) {
 }
 
 void Simulation::initConfigXML(const string& inputfilename) {
-	global_log->info() << "init XML config file: " << inputfilename << endl;
+	global_log->info() << "Initializing XML config file: " << inputfilename << endl;
 	XMLfileUnits inp(inputfilename);
 
 	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
 
-	inp.changecurrentnode("/mardyn");
+	if(inp.changecurrentnode("/mardyn") < 0) {
+		global_log->error() << "Cound not find root node /mardyn." << endl;
+		global_log->error() << "Not a valid MarDyn XML input file." << endl;
+		this->exit(1);
+	}
+
 	string version("unknown");
 	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
