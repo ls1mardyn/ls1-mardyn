@@ -61,12 +61,20 @@ Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
 	_rdf(NULL),
+	_moleculeContainer(NULL),
+	_particlePairsHandler(NULL),
+	_cellProcessor(NULL),
 	_flopCounter(NULL),
 	_domainDecomposition(NULL),
-	_forced_checkpoint_time(0) {
+	_integrator(NULL),
+	_domain(NULL),
+	_inputReader(NULL),
+	_longRangeCorrection(NULL),
+	_temperatureControl(NULL),
+	_forced_checkpoint_time(0)
+{
 	_ensemble = new CanonicalEnsemble();
-	_longRangeCorrection = NULL;
-    _temperatureControl = NULL;
+
 	initialize();
 }
 
@@ -1687,14 +1695,7 @@ void Simulation::initialize() {
 
 	global_simulation = this;
 
-	_domainDecomposition = NULL;
-	_domain = NULL;
-	_particlePairsHandler = NULL;
-	_cellProcessor = NULL;
-	_moleculeContainer = NULL;
-	_integrator = NULL;
-	_inputReader = NULL;
-        _finalCheckpoint = true;
+	_finalCheckpoint = true;
 
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
