@@ -76,9 +76,8 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 	MPI_Request send_requests[DIM][2];
 	MPI_Request recv_requests[DIM][2];
 
-	int direction;
 
-	for (unsigned short d = 0; d < DIM; d++) {
+	for(int d = 0; d < DIM; d++) {
 		// when moving a particle across a periodic boundary, the molecule position has to change
 		// these offset specify for each dimension (x, y and z) and each direction ("left"/lower
 		// neighbour and "right"/higher neighbour, how the paritcle coordinates have to be changed.
@@ -98,7 +97,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 
 		double regToSendLow[DIM]; // Region that belongs to a neighbouring process
 		double regToSendHigh[DIM]; // -> regToSendLow
-		for (direction = LOWER; direction <= HIGHER; direction++) {
+		for (int direction = LOWER; direction <= HIGHER; direction++) {
 			// find the region that each neighbour will get
 			for (int i = 0; i < DIM; i++) {
 				regToSendLow[i] = rmin[i] - halo_L[i];
@@ -138,7 +137,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 		}
 
 		// Communicate to lower and higher neighbour
-		for (direction = LOWER; direction <= HIGHER; direction++) {
+		for (int direction = LOWER; direction <= HIGHER; direction++) {
 			// Send to lower, receive from upper
 			// Send number of values that have to be sent
 			int numsend = numPartsToSend[d][direction];
@@ -155,7 +154,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 		}
 
 		// Insert molecules into domain
-		for (direction = LOWER; direction <= HIGHER; direction++) {
+		for (int direction = LOWER; direction <= HIGHER; direction++) {
 			int numrecv = numPartsToRecv[d][direction];
 			MPI_CHECK( MPI_Wait(&send_requests[d][direction], &send_statuses[d][direction]) );
 			MPI_CHECK( MPI_Wait(&recv_requests[d][direction], &recv_statuses[d][direction]) );
