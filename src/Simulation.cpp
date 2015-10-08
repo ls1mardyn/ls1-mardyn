@@ -1052,8 +1052,10 @@ void Simulation::initialize() {
 	_numberOfTimesteps = 1;
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
+
+	/** @todo the following features should be documented */
 	_doRecordProfile = false;
-        _doRecordVirialProfile = false;
+	_doRecordVirialProfile = false;
 	_profileRecordingTimesteps = 7;
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";
