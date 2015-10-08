@@ -104,16 +104,16 @@ void Simulation::exit(int exitcode) {
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* integrator */
-	string integratorType;
-	xmlconfig.getNodeValue("integrator@type", integratorType);
-	global_log->info() << "Integrator type: " << integratorType << endl;
-	if(integratorType == "Leapfrog") {
-		_integrator = new Leapfrog();
-	} else {
-		global_log-> error() << "Unknown integrator " << integratorType << endl;
-		this->exit(1);
-	}
 	if(xmlconfig.changecurrentnode("integrator")) {
+		string integratorType;
+		xmlconfig.getNodeValue("@type", integratorType);
+		global_log->info() << "Integrator type: " << integratorType << endl;
+		if(integratorType == "Leapfrog") {
+			_integrator = new Leapfrog();
+		} else {
+			global_log-> error() << "Unknown integrator " << integratorType << endl;
+			this->exit(1);
+		}
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
 		xmlconfig.changecurrentnode("..");
