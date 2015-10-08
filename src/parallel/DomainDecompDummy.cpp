@@ -54,14 +54,12 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 			const double& rd = currentMolecule->r(d);
 			if (rd < low_limit) {
 				// determine the position for the copy of the molecule
-				for (unsigned short d2 = 0; d2 < 3; d2++) {
-					// when moving parallel to the coordinate d2 to another process, the
-					// local coordinates in d2 change
-					if (d2 == d)
-						new_position[d2] = rd + phaseSpaceSize[d2];
-					else
-						new_position[d2] = currentMolecule->r(d2);
+				// when moving parallel to the coordinate d2 to another process, the
+				// local coordinates in d2 change
+				for (int d2 = 0; d2 < 3; d2++) {
+					new_position[d2] = currentMolecule->r(d2);
 				}
+				new_position[d] = rd + phaseSpaceSize[d];
 				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
 				Molecule m1 = Molecule(currentMolecule->id(),component,
 				                       new_position[0], new_position[1], new_position[2],
@@ -73,14 +71,12 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 			}
 			else if (rd >= high_limit) {
 				// determine the position for the copy of the molecule
+				// when moving parallel to the coordinate d2 to another process, the
+				// local coordinates in d2 change
 				for (unsigned short d2 = 0; d2 < 3; d2++) {
-					// when moving parallel to the coordinate d2 to another process, the
-					// local coordinates in d2 change
-					if (d2 == d)
-						new_position[d2] = rd - phaseSpaceSize[d2];
-					else
-						new_position[d2] = currentMolecule->r(d2);
+					new_position[d2] = currentMolecule->r(d2);
 				}
+				new_position[d] = rd - phaseSpaceSize[d];
 				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
 				Molecule m1 = Molecule(currentMolecule->id(),component,
 				                       new_position[0], new_position[1], new_position[2],
@@ -90,8 +86,9 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 				moleculeContainer->addParticle(m1);
 				currentMolecule = moleculeContainer->next();
 			}
-			else
+			else {
 				currentMolecule = moleculeContainer->next();
+			}
 		}
 	}
 }
