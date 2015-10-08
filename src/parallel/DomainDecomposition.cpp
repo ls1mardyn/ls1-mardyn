@@ -83,18 +83,17 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 		// neighbour and "right"/higher neighbour, how the paritcle coordinates have to be changed.
 		// e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
 		// moving to the left get the length of the whole domain added to their x-value
-		double offsetLower[DIM];
-		double offsetHigher[DIM];
-		offsetLower[d] = 0.0;
-		offsetHigher[d] = 0.0;
-
+		double offsets[2];
+		offsets[LOWER] = 0.0;
+		offsets[HIGHER] = 0.0;
 		// process on the left boundary
-		if (_coords[d] == 0)
-			offsetLower[d] = domain->getGlobalLength(d);
+		if (_coords[d] == 0) {
+			offsets[LOWER] = domain->getGlobalLength(d);
+		}
 		// process on the right boundary
-		if (_coords[d] == _gridSize[d] - 1)
-			offsetHigher[d] = -domain->getGlobalLength(d);
-
+		if (_coords[d] == _gridSize[d] - 1) {
+			offsets[HIGHER] = -domain->getGlobalLength(d);
+		}
 		double regToSendLow[DIM]; // Region that belongs to a neighbouring process
 		double regToSendHigh[DIM]; // -> regToSendLow
 		for (int direction = LOWER; direction <= HIGHER; direction++) {
@@ -104,12 +103,12 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 				regToSendHigh[i] = rmax[i] + halo_L[i];
 			}
 			switch (direction) {
-			case LOWER:
-				regToSendHigh[d] = rmin[d] + halo_L[d];
-				break;
-			case HIGHER:
-				regToSendLow[d] = rmax[d] - halo_L[d];
-				break;
+				case LOWER:
+					regToSendHigh[d] = rmin[d] + halo_L[d];
+					break;
+				case HIGHER:
+					regToSendLow[d] = rmax[d] - halo_L[d];
+					break;
 			}
 
 			list<Molecule*> particlePtrsToSend;
@@ -121,11 +120,7 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 
 			std::list<Molecule*>::iterator particlePtrIter;
 			long partCount = 0;
-			double shift = 0.0;
-			if (direction == LOWER)
-				shift = offsetLower[d];
-			if (direction == HIGHER)
-				shift = offsetHigher[d];
+			double shift = offsets[direction];
 
 			for (particlePtrIter = particlePtrsToSend.begin(); particlePtrIter != particlePtrsToSend.end(); particlePtrIter++) {
 				// copy relevant data from the Molecule to ParticleData type
