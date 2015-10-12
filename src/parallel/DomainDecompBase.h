@@ -21,7 +21,7 @@ typedef ParticleContainer TMoleculeContainer;
 //! have two different versions of the program, one sequential version and one parallel version.
 //! But that isn't feasible, as it is hardly possible to keep them both up to date without
 //! investing a lot of additional time.
-//! Befor describing how this problem is solved, you'll have to know a little bit about
+//! Before describing how this problem is solved, you'll have to know a little bit about
 //! how the parallel version works.
 //!
 //! At the moment, domain decomposition is used. The basic idea is, that the region which
@@ -33,7 +33,7 @@ typedef ParticleContainer TMoleculeContainer;
 //! this interface) is called, which then somehow does the communication.
 //!
 //! Assume you have an class which implements this interface and which is capable of
-//! doing all the necessary stuff for the parallelisation. Further assume that
+//! doing all the necessary stuff for the parallelization. Further assume that
 //! you have a second class which also implements this interface which is only capable
 //! of handling one process but doesn't need any MPI (with only one process, there is
 //! no need for message passing between processes). So the main program (or in this
@@ -54,13 +54,14 @@ public:
 	//! molecules which aren't in the domain of their process any
 	//! more are transferred to their neighbours. Additionally, the
 	//! molecules for the halo-region are transferred.
+	//! This implementation is the one used in sequential mode.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param components when creating a new Molecule-object (from the recieved data),
+	//! @param components when creating a new Molecule-object (from the received data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
 	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
-	//! @brief balance the load (and optimise communication) and exchange boundary particles
+	//! @brief balance the load (and optimize communication) and exchange boundary particles
 	//!
 	//! This method is used to perform a new decomposition of the global domain with the
 	//! goal of getting the equal load (and possibly additional goals) on each process.
@@ -69,7 +70,7 @@ public:
 	//! domain (as if exchangeParticles was called after the new decomposition).
 	//! @param balance if true, a rebalancing should be performed, otherwise only exchange
 	//! @param moleculeContainer needed for calculating load and to get the particles
-	//! @param components when creating a new Molecule-object (from the recieved data),
+	//! @param components when creating a new Molecule-object (from the received data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
 	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
@@ -98,7 +99,7 @@ public:
 	virtual double getBoundingBoxMax(int dimension, Domain* domain);
 
 	//! @brief writes information about the current decomposition into the given file
-	//!        The format is not strictly defined and depends on the decompositio
+	//!        The format is not strictly defined and depends on the decomposition
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
 	virtual void printDecomp(std::string filename, Domain* domain);
@@ -112,7 +113,7 @@ public:
 	//! @return number of processes
 	virtual int getNumProcs();
 
-	//! @brief synchronises all processes
+	//! @brief synchronizes all processes
 	virtual void barrier();
 
 	//! @brief returns the time in seconds since some time in the past

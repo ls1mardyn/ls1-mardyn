@@ -507,7 +507,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<Mole
 		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
 				// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
-				globalCellIndex = (iz * _cellsPerDimension[1] + iy) * _cellsPerDimension[0] + ix;
+				globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				// loop over all subcells (either 1 or 8)
 				// traverse all molecules in the current cell
 				for (particleIter = _cells[globalCellIndex].getParticlePointers().begin(); particleIter != _cells[globalCellIndex].getParticlePointers().end(); particleIter++) {
