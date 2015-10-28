@@ -1121,6 +1121,26 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
                   exit(-1);
                 }
             }
+            else if(strToken == "heat")
+            {
+
+                unsigned long nWriteFreq;
+                unsigned long nSlabs;
+
+                inputfilestream >> nWriteFreq;
+                inputfilestream >> nSlabs;
+
+                if(_temperatureControl != NULL)
+                {
+                    // set heat supply measurement parameters
+                    _temperatureControl->SetDeltaEkinParameters(nWriteFreq, nSlabs);
+                }
+                else
+                {
+                    global_log->error() << "TemperatureControl object doesnt exist, programm exit..." << endl;
+                    exit(-1);
+                }
+            }
             else if (strToken == "region")
             {
                 double dLowerCorner[3];

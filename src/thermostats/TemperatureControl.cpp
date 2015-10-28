@@ -17,16 +17,21 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <iomanip>
 
 using namespace std;
 
 
 // class ControlRegionT
 
-ControlRegionT::ControlRegionT(TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections)
+ControlRegionT::ControlRegionT( TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
+                                double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections, unsigned short nRegionID, unsigned int nNumSlabsDeltaEkin )
 {
     // store parent pointer
     _parent = parent;
+
+    // region ID
+    _nRegionID = nRegionID;
 
     // region span
     for(unsigned short d=0; d<3; ++d)
@@ -47,10 +52,15 @@ ControlRegionT::ControlRegionT(TemperatureControl* parent, double dLowerCorner[3
     _dSlabWidthInit = this->GetWidth(1) / ( (double)(_nNumSlabs) );
     _dSlabWidth = _dSlabWidthInit;
 
+    // heat supply data structure
+    _nNumSlabsDeltaEkin = nNumSlabsDeltaEkin;
+    _dSlabWidthDeltaEkin = _parent->GetDomain()->getGlobalLength(1) / ( (double)(_nNumSlabsDeltaEkin) );
+
     // init data structures
     this->Init();
 
     // create accumulator object dependent on which translatoric directions should be thermostated (xyz)
+/*
     if(strTransDirections == "x")
     {
         _accumulator = new AccumulatorX();
@@ -88,6 +98,45 @@ ControlRegionT::ControlRegionT(TemperatureControl* parent, double dLowerCorner[3
     }
     else
         _accumulator = NULL;
+*/
+
+    if(strTransDirections == "x")
+    {
+        _accumulator = new AccumulatorXQ();
+        _nNumThermostatedTransDirections = 1;
+    }
+    else if(strTransDirections == "y")
+    {
+        _accumulator = new AccumulatorYQ();
+        _nNumThermostatedTransDirections = 1;
+    }
+    else if(strTransDirections == "z")
+    {
+        _accumulator = new AccumulatorZQ();
+        _nNumThermostatedTransDirections = 1;
+    }
+    else if(strTransDirections == "xy")
+    {
+        _accumulator = new AccumulatorXYQ();
+        _nNumThermostatedTransDirections = 2;
+    }
+    else if(strTransDirections == "xz")
+    {
+        _accumulator = new AccumulatorXZQ();
+        _nNumThermostatedTransDirections = 2;
+    }
+    else if(strTransDirections == "yz")
+    {
+        _accumulator = new AccumulatorYZQ();
+        _nNumThermostatedTransDirections = 2;
+    }
+    else if(strTransDirections == "xyz")
+    {
+        _accumulator = new AccumulatorXYZQ();
+        _nNumThermostatedTransDirections = 3;
+    }
+    else
+        _accumulator = NULL;
 
 }
 
@@ -101,28 +150,27 @@ void ControlRegionT::Init()
 {
     // allocate more slabs as initially needed as a reserve for the case that the
     // temperature control region grows during simulation
-    unsigned int nNumSlabsReserve;
     double dBoxWidthY = _parent->GetDomain()->getGlobalLength(1);
-    nNumSlabsReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
+    _nNumSlabsReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
 
 #ifdef DEBUG
-    cout << "nNumSlabsReserve = " << nNumSlabsReserve << endl;
+    cout << "_nNumSlabsReserve = " << _nNumSlabsReserve << endl;
 #endif
 
-    _nNumMoleculesLocal  = new unsigned long[nNumSlabsReserve];
-    _nNumMoleculesGlobal = new unsigned long[nNumSlabsReserve];
-    _nRotDOFLocal  = new unsigned long[nNumSlabsReserve];
-    _nRotDOFGlobal = new unsigned long[nNumSlabsReserve];
+    _nNumMoleculesLocal  = new unsigned long[_nNumSlabsReserve];
+    _nNumMoleculesGlobal = new unsigned long[_nNumSlabsReserve];
+    _nRotDOFLocal  = new unsigned long[_nNumSlabsReserve];
+    _nRotDOFGlobal = new unsigned long[_nNumSlabsReserve];
 
-    _d2EkinTransLocal  = new double[nNumSlabsReserve];
-    _d2EkinTransGlobal = new double[nNumSlabsReserve];
-    _d2EkinRotLocal  = new double[nNumSlabsReserve];
-    _d2EkinRotGlobal = new double[nNumSlabsReserve];
+    _d2EkinTransLocal  = new double[_nNumSlabsReserve];
+    _d2EkinTransGlobal = new double[_nNumSlabsReserve];
+    _d2EkinRotLocal  = new double[_nNumSlabsReserve];
+    _d2EkinRotGlobal = new double[_nNumSlabsReserve];
 
-    _dBetaTransGlobal = new double[nNumSlabsReserve];
-    _dBetaRotGlobal   = new double[nNumSlabsReserve];
+    _dBetaTransGlobal = new double[_nNumSlabsReserve];
+    _dBetaRotGlobal   = new double[_nNumSlabsReserve];
 
-    for(unsigned int s = 0; s<nNumSlabsReserve; ++s)
+    for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
     {
         _nNumMoleculesLocal[s]  = 0;
         _nNumMoleculesGlobal[s] = 0;
@@ -137,12 +185,36 @@ void ControlRegionT::Init()
         _dBetaTransGlobal[s] = 0.;
         _dBetaRotGlobal[s]   = 0.;
     }
+
+
+    // mheinen 2015-10-27 --> CALC_HEAT_SUPPLY
+
+    _nNumMoleculesSumLocal = new unsigned long[_nNumSlabsDeltaEkin];
+    _nNumMoleculesSumGlobal = new unsigned long[_nNumSlabsDeltaEkin];
+
+    _dDelta2EkinTransSumLocal = new double[_nNumSlabsDeltaEkin];
+    _dDelta2EkinTransSumGlobal = new double[_nNumSlabsDeltaEkin];
+
+    for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
+    {
+        _nNumMoleculesSumLocal[s]  = 0;
+        _nNumMoleculesSumGlobal[s]  = 0;
+
+        _dDelta2EkinTransSumLocal[s]  = 0.;
+        _dDelta2EkinTransSumGlobal[s]  = 0.;
+    }
+
+    // write out files (headers only)
+    this->WriteHeaderDeltaEkin(_parent->GetDomainDecomposition(), _parent->GetDomain() );
+
+    // <-- CALC_HEAT_SUPPLY
 }
 
 void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
 {
 #ifdef ENABLE_MPI
 
+    // ToDo: communicate _nNumSlabs is enough?? or have to communicate _nNumSlabsReserve (whole data structure)
     MPI_Allreduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumSlabs, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce( _nRotDOFLocal, _nRotDOFGlobal, _nNumSlabs, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
 
@@ -281,15 +353,24 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
     mol->setv(2, mol->v(2) * vcorr);
 */
 
-    _accumulator->ScaleVelocityComponents(mol, vcorr);
+    // calc position index for DeltaEkin profile
+    double dPosY = mol->r(1);
+    nPosIndex = (unsigned int) floor(dPosY / _dSlabWidthDeltaEkin);
 
+    // add kinetic energy
+    _accumulator->ScaleVelocityComponents(mol, vcorr, _dDelta2EkinTransSumLocal[nPosIndex] );
     mol->scale_D(Dcorr);
+
+    // ToDo: add rotational contribution of added kinetic energy
+
+    // count number of molecules, where energy was added
+    _nNumMoleculesSumLocal[nPosIndex]++;
 }
 
 void ControlRegionT::ResetLocalValues()
 {
     // reset local values
-    for(unsigned int s = 0; s<_nNumSlabs; ++s)
+    for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
     {
         _nNumMoleculesLocal[s] = 0;
         _nRotDOFLocal[s] = 0;
@@ -323,6 +404,112 @@ void ControlRegionT::UpdateSlabParameters()
 }
 
 
+void ControlRegionT::CalcGlobalValuesDeltaEkin()
+{
+
+#ifdef ENABLE_MPI
+
+    MPI_Allreduce( _nNumMoleculesSumLocal, _nNumMoleculesSumGlobal, _nNumSlabsDeltaEkin, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce( _dDelta2EkinTransSumLocal, _dDelta2EkinTransSumGlobal, _nNumSlabsDeltaEkin, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
+#else
+    for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
+    {
+        _dDelta2EkinTransSumGlobal[s] = _dDelta2EkinTransSumLocal[s];
+    }
+#endif
+
+}
+
+
+void ControlRegionT::ResetValuesDeltaEkin()
+{
+    // reset local values
+    for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
+    {
+        _nNumMoleculesSumLocal[s] = 0;
+        _dDelta2EkinTransSumLocal[s] = 0.;
+    }
+
+}
+
+void ControlRegionT::WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain* domain)
+{
+    // write header
+    stringstream outputstream;
+
+    std::stringstream filenamestreamDeltaEkin;
+    filenamestreamDeltaEkin << "TemperatureControl_dEkin_region" << this->GetID() << ".dat";
+
+    string strFilename = filenamestreamDeltaEkin.str();
+
+#ifdef ENABLE_MPI
+    int rank = domainDecomp->getRank();
+    // int numprocs = domainDecomp->getNumProcs();
+    if (rank == 0)
+    {
+#endif
+
+    outputstream << "         simstep";
+
+    for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
+    {
+        outputstream << "        slab[" << std::setfill('0') << std::setw(4) << s << "]";  // TODO: add width for slab number
+    }
+    outputstream << endl;
+
+    ofstream fileout(strFilename.c_str(), ios::out);
+    fileout << outputstream.str();
+    fileout.close();
+
+#ifdef ENABLE_MPI
+    }
+#endif
+}
+
+void ControlRegionT::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep)
+{
+    // calc global values
+    this->CalcGlobalValuesDeltaEkin();
+
+    // reset local values
+    this->ResetValuesDeltaEkin();
+
+    // writing .rpf-files
+    std::stringstream outputstreamDeltaEkin;
+    std::stringstream filenamestreamDeltaEkin;
+
+    filenamestreamDeltaEkin << "TemperatureControl_dEkin_region" << this->GetID() << ".dat";
+    string strFilename = filenamestreamDeltaEkin.str();
+
+
+    #ifdef ENABLE_MPI
+        int rank = domainDecomp->getRank();
+        // int numprocs = domainDecomp->getNumProcs();
+        if (rank== 0)
+        {
+    #endif
+
+            // simstep
+            outputstreamDeltaEkin << std::setw(16) << simstep;
+
+            // DeltaEkin data
+            for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
+            {
+                outputstreamDeltaEkin << std::setw(16) << fixed << std::setprecision(3) << _dDelta2EkinTransSumGlobal[s];
+            }
+            outputstreamDeltaEkin << endl;
+
+            ofstream fileout(strFilename.c_str(), ios::app);
+            fileout << outputstreamDeltaEkin.str();
+            fileout.close();
+
+    #ifdef ENABLE_MPI
+        }
+    #endif
+}
+
+
 
 // class TemperatureControl
 
@@ -347,7 +534,7 @@ TemperatureControl::~TemperatureControl()
 
 void TemperatureControl::AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections)
 {
-    _vecControlRegions.push_back(ControlRegionT(this, dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections) );
+    _vecControlRegions.push_back(ControlRegionT(this, dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections, GetNumRegions()+1, _nNumSlabsDeltaEkin ) );
 }
 
 void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep)
@@ -429,6 +616,7 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }
 
+
         // calc global values
         this->CalcGlobalValues(domainDecomposition, simstep);
 
@@ -442,6 +630,24 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }
+
+
+        // write out heat supply
+        this->WriteDataDeltaEkin(domainDecomposition, simstep);
+    }
+}
+
+void TemperatureControl::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep)
+{
+    if(simstep % _nWriteFreqDeltaEkin != 0)
+        return;
+
+    // reset local values
+    std::vector<ControlRegionT>::iterator it;
+
+    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+    {
+        (*it).WriteDataDeltaEkin(domainDecomp, simstep);
     }
 }
 

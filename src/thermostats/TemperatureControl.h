@@ -20,11 +20,12 @@ class TemperatureControl;
 class ControlRegionT
 {
 public:
-    ControlRegionT(TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
+    ControlRegionT( TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
+                    double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections, unsigned short nRegionID, unsigned int nNumSlabsDeltaEkin );
     ~ControlRegionT();
 
     void Init();
-
+    unsigned short GetID() {return _nRegionID;}
     double* GetLowerCorner() {return _dLowerCorner;}
     double* GetUpperCorner() {return _dUpperCorner;}
     void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal; this->UpdateSlabParameters();}
@@ -40,6 +41,12 @@ public:
 
     void UpdateSlabParameters();
 
+    // write out data --> heat supply
+    void CalcGlobalValuesDeltaEkin();
+    void ResetValuesDeltaEkin();
+    void WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain* domain);
+    void WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep);
+
 private:
     TemperatureControl* _parent;
 
@@ -47,6 +54,7 @@ private:
     double _dUpperCorner[3];
 
     unsigned int _nNumSlabs;
+    unsigned int _nNumSlabsReserve;
     double _dSlabWidth;
     double _dSlabWidthInit;
 
@@ -71,6 +79,17 @@ private:
     unsigned short _nRegionID;
 
     AccumulatorBase* _accumulator;
+
+    // heat supply
+    unsigned int _nNumSlabsDeltaEkin;
+    double _dSlabWidthDeltaEkin;
+
+    unsigned long* _nNumMoleculesSumLocal;
+    unsigned long* _nNumMoleculesSumGlobal;
+
+    double* _dDelta2EkinTransSumLocal;
+    double* _dDelta2EkinTransSumGlobal;
+
 };
 
 
@@ -100,11 +119,22 @@ public:
     Domain* GetDomain() {return _domain;}
     DomainDecompBase* GetDomainDecomposition() {return _domainDecomp;}
 
+    // heat supply
+    void SetDeltaEkinParameters( unsigned int nWriteFreqDeltaEkin, unsigned int nNumSlabsDeltaEkin)
+    {
+        _nWriteFreqDeltaEkin = nWriteFreqDeltaEkin; _nNumSlabsDeltaEkin = nNumSlabsDeltaEkin;
+    }
+    void WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep);
+
 private:
     std::vector<ControlRegionT> _vecControlRegions;
     unsigned long _nControlFreq;
     unsigned long _nStart;
     unsigned long _nStop;
+
+    // heat supply
+    unsigned int _nWriteFreqDeltaEkin;
+    unsigned int _nNumSlabsDeltaEkin;
 
     Domain* _domain;
     DomainDecompBase* _domainDecomp;
@@ -121,7 +151,7 @@ protected:
 
 public:
     virtual double CalcKineticEnergyContribution(Molecule* mol) = 0;
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr) = 0;
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum) = 0;
 };
 
 class AccumulatorX : public AccumulatorBase
@@ -273,5 +303,258 @@ public:
         mol->setv(2, mol->v(2) * vcorr);
     }
 };
+
+
+// Accumulators with calculation of heat supply
+
+class AccumulatorXQ : public AccumulatorBase
+{
+public:
+    AccumulatorXQ() {}
+    virtual ~AccumulatorXQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vx = mol->v(0);
+        double m  = mol->mass();
+
+        return m * vx*vx;
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[0] = mol->v(0);
+        v_new[0] = v_old[0] * vcorr;
+
+        // set new velocities
+        mol->setv(0, v_new[0]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
+    }
+};
+
+class AccumulatorYQ : public AccumulatorBase
+{
+public:
+    AccumulatorYQ() {}
+    virtual ~AccumulatorYQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vy = mol->v(1);
+        double m  = mol->mass();
+
+        return m * vy*vy;
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[1] = mol->v(1);
+        v_new[1] = v_old[1] * vcorr;
+
+        // set new velocities
+        mol->setv(1, v_new[1]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
+    }
+};
+
+class AccumulatorZQ : public AccumulatorBase
+{
+public:
+    AccumulatorZQ() {}
+    virtual ~AccumulatorZQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vz = mol->v(2);
+        double m  = mol->mass();
+
+        return m * vz*vz;
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[2] = mol->v(2);
+        v_new[2] = v_old[2] * vcorr;
+
+        // set new velocities
+        mol->setv(2, v_new[2]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+    }
+};
+
+class AccumulatorXYQ : public AccumulatorBase
+{
+public:
+    AccumulatorXYQ() {}
+    virtual ~AccumulatorXYQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vx = mol->v(0);
+        double vy = mol->v(1);
+        double m  = mol->mass();
+
+        return m * (vx*vx + vy*vy);
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[0] = mol->v(0);
+        v_old[1] = mol->v(1);
+        v_new[0] = v_old[0] * vcorr;
+        v_new[1] = v_old[1] * vcorr;
+
+        // set new velocities
+        mol->setv(0, v_new[0]);
+        mol->setv(1, v_new[1]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
+        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
+    }
+};
+
+class AccumulatorXZQ : public AccumulatorBase
+{
+public:
+    AccumulatorXZQ() {}
+    virtual ~AccumulatorXZQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vx = mol->v(0);
+        double vz = mol->v(2);
+        double m  = mol->mass();
+
+        return m * (vx*vx + vz*vz);
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[0] = mol->v(0);
+        v_old[2] = mol->v(2);
+        v_new[0] = v_old[0] * vcorr;
+        v_new[2] = v_old[2] * vcorr;
+
+        // set new velocities
+        mol->setv(0, v_new[0]);
+        mol->setv(2, v_new[2]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
+        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+    }
+};
+
+class AccumulatorYZQ : public AccumulatorBase
+{
+public:
+    AccumulatorYZQ() {}
+    virtual ~AccumulatorYZQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vy = mol->v(1);
+        double vz = mol->v(2);
+        double m  = mol->mass();
+
+        return m * (vy*vy + vz*vz);
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[1] = mol->v(1);
+        v_old[2] = mol->v(2);
+        v_new[1] = v_old[1] * vcorr;
+        v_new[2] = v_old[2] * vcorr;
+
+        // set new velocities
+        mol->setv(1, v_new[1]);
+        mol->setv(2, v_new[2]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
+        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+    }
+};
+
+class AccumulatorXYZQ : public AccumulatorBase
+{
+public:
+    AccumulatorXYZQ() {}
+    virtual ~AccumulatorXYZQ() {}
+
+public:
+    virtual double CalcKineticEnergyContribution(Molecule* mol)
+    {
+        double vx = mol->v(0);
+        double vy = mol->v(1);
+        double vz = mol->v(2);
+        double m  = mol->mass();
+
+        return m * (vx+vx + vy*vy + vz*vz);
+    }
+    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+    {
+        double m  = mol->mass();
+        double v_old[3];
+        double v_new[3];
+
+        // calc new velocities
+        v_old[0] = mol->v(0);
+        v_old[1] = mol->v(1);
+        v_old[2] = mol->v(2);
+        v_new[0] = v_old[0] * vcorr;
+        v_new[1] = v_old[1] * vcorr;
+        v_new[2] = v_old[2] * vcorr;
+
+        // set new velocities
+        mol->setv(0, v_new[0]);
+        mol->setv(1, v_new[1]);
+        mol->setv(2, v_new[2]);
+
+        // accumulate added kinetic energy (heat)
+        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
+        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
+        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+    }
+};
+
 
 #endif /* TEMPERATURECONTROL_H_ */
