@@ -246,14 +246,14 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
             _dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperature / _d2EkinRotGlobal[s], _dTemperatureExponent);
     }
 
-//    cout << "_nNumMoleculesGlobal = " << _nNumMoleculesGlobal << endl;
-//    cout << "_dBetaTransGlobal = " << _dBetaTransGlobal << endl;
+//    cout << "_nNumMoleculesGlobal[0] = " << _nNumMoleculesGlobal[0] << endl;
+//    cout << "_dBetaTransGlobal[0] = " << _dBetaTransGlobal[0] << endl;
 //    cout << "_dTargetTemperature = " << _dTargetTemperature << endl;
-//    cout << "_d2EkinRotGlobal = " << _d2EkinRotGlobal << endl;
+//    cout << "_d2EkinTransGlobal[0] = " << _d2EkinTransGlobal[0] << endl;
 //
-//    cout << "_nRotDOFGlobal = " << _nRotDOFGlobal << endl;
-//    cout << "_dBetaRotGlobal = " << _dBetaRotGlobal << endl;
-//    cout << "_d2EkinRotGlobal = " << _d2EkinRotGlobal << endl;
+//    cout << "_nRotDOFGlobal[0] = " << _nRotDOFGlobal[0] << endl;
+//    cout << "_dBetaRotGlobal[0] = " << _dBetaRotGlobal[0] << endl;
+//    cout << "_d2EkinRotGlobal[0] = " << _d2EkinRotGlobal[0] << endl;
 
 }
 
