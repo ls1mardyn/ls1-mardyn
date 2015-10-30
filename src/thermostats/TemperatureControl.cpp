@@ -436,12 +436,17 @@ void ControlRegionT::ResetValuesDeltaEkin()
 void ControlRegionT::WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain* domain)
 {
     // write header
-    stringstream outputstream;
+    stringstream outputstreamDeltaEkin;
+    stringstream outputstreamN;
 
     std::stringstream filenamestreamDeltaEkin;
-    filenamestreamDeltaEkin << "TemperatureControl_dEkin_region" << this->GetID() << ".dat";
+    std::stringstream filenamestreamN;
 
-    string strFilename = filenamestreamDeltaEkin.str();
+    filenamestreamDeltaEkin << "TemperatureControl_dEkin_region" << this->GetID() << ".dat";
+    filenamestreamN         << "TemperatureControl_N_region" << this->GetID() << ".dat";
+
+    string strFilenameDeltaEkin = filenamestreamDeltaEkin.str();
+    string strFilenameN = filenamestreamN.str();
 
 #ifdef ENABLE_MPI
     int rank = domainDecomp->getRank();
@@ -450,17 +455,24 @@ void ControlRegionT::WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain
     {
 #endif
 
-    outputstream << "         simstep";
+    outputstreamDeltaEkin << "         simstep";
+    outputstreamN         << "         simstep";
 
     for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
     {
-        outputstream << "        slab[" << std::setfill('0') << std::setw(4) << s << "]";  // TODO: add width for slab number
+        outputstreamDeltaEkin << "        slab[" << std::setfill('0') << std::setw(4) << s << "]";
+        outputstreamN         << "        slab[" << std::setfill('0') << std::setw(4) << s << "]";  // TODO: add width for slab number
     }
-    outputstream << endl;
+    outputstreamDeltaEkin << endl;
+    outputstreamN         << endl;
 
-    ofstream fileout(strFilename.c_str(), ios::out);
-    fileout << outputstream.str();
-    fileout.close();
+    ofstream fileoutDeltaEkin(strFilenameDeltaEkin.c_str(), ios::out);
+    fileoutDeltaEkin << outputstreamDeltaEkin.str();
+    fileoutDeltaEkin.close();
+
+    ofstream fileoutN(strFilenameN.c_str(), ios::out);
+    fileoutN << outputstreamN.str();
+    fileoutN.close();
 
 #ifdef ENABLE_MPI
     }
@@ -475,12 +487,18 @@ void ControlRegionT::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned
     // reset local values
     this->ResetValuesDeltaEkin();
 
-    // writing .rpf-files
+    // writing .dat-files
     std::stringstream outputstreamDeltaEkin;
+    std::stringstream outputstreamN;
+
     std::stringstream filenamestreamDeltaEkin;
+    std::stringstream filenamestreamN;
 
     filenamestreamDeltaEkin << "TemperatureControl_dEkin_region" << this->GetID() << ".dat";
-    string strFilename = filenamestreamDeltaEkin.str();
+    filenamestreamN         << "TemperatureControl_N_region"     << this->GetID() << ".dat";
+
+    string strFilenameDeltaEkin = filenamestreamDeltaEkin.str();
+    string strFilenameN         = filenamestreamN.str();
 
 
     #ifdef ENABLE_MPI
@@ -492,17 +510,24 @@ void ControlRegionT::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned
 
             // simstep
             outputstreamDeltaEkin << std::setw(16) << simstep;
+            outputstreamN         << std::setw(16) << simstep;
 
             // DeltaEkin data
             for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
             {
                 outputstreamDeltaEkin << std::setw(16) << fixed << std::setprecision(3) << _dDelta2EkinTransSumGlobal[s];
+                outputstreamN         << std::setw(16) << fixed << std::setprecision(3) << _nNumMoleculesSumGlobal[s];
             }
             outputstreamDeltaEkin << endl;
+            outputstreamN         << endl;
 
-            ofstream fileout(strFilename.c_str(), ios::app);
-            fileout << outputstreamDeltaEkin.str();
-            fileout.close();
+            ofstream fileoutDeltaEkin(strFilenameDeltaEkin.c_str(), ios::app);
+            fileoutDeltaEkin << outputstreamDeltaEkin.str();
+            fileoutDeltaEkin.close();
+
+            ofstream fileoutN(strFilenameN.c_str(), ios::app);
+            fileoutN << outputstreamN.str();
+            fileoutN.close();
 
     #ifdef ENABLE_MPI
         }
