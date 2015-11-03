@@ -56,6 +56,15 @@ ControlRegionD::ControlRegionD(DensityControl* parent, double dLowerCorner[3], d
     // init process relevance
     _bProcessIsRelevant = true;
 
+    // check if control region is outside of simulation volume
+    double dBoxLengthY = _parent->GetDomain()->getGlobalLength(1);
+
+    if ( (_dLowerCorner[1] > dBoxLengthY && _dUpperCorner[1] > dBoxLengthY) || (_dLowerCorner[1] < 0. && _dUpperCorner[1] < 0.) )
+    {
+        cout << "ControlRegionD::ControlRegionD: Control region dimensions are outside of simulation volume! Programm exit..." << endl;
+        exit(-1);
+    }
+
     // init MPI
     this->InitMPI();
 }
