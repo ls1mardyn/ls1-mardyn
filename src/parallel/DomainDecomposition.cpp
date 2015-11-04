@@ -113,14 +113,14 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 				break;
 			}
 
-			list<Molecule*> particlePtrsToSend;
+			vector<Molecule*> particlePtrsToSend;
 			moleculeContainer->getRegion(regToSendLow, regToSendHigh, particlePtrsToSend);
 
 			// initialize send buffer
 			numPartsToSend[d][direction] = particlePtrsToSend.size();
 			particlesSendBuffs[d][direction] = new ParticleData[numPartsToSend[d][direction]];
 
-			std::list<Molecule*>::iterator particlePtrIter;
+			std::vector<Molecule*>::iterator particlePtrIter;
 			long partCount = 0;
 			double shift = 0.0;
 			if (direction == LOWER)

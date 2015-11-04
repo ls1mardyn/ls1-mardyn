@@ -79,6 +79,10 @@ LinkedCells::LinkedCells(
 
 
 LinkedCells::~LinkedCells() {
+	std::vector<ParticleCell>::iterator it;
+	for (it = _cells.begin(); it != _cells.end(); ++it) {
+		it->deallocateAllParticles();
+	}
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
@@ -136,70 +140,56 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 
 	// TODO: We loose particles here as they are not communicated to the new owner
 	// delete all Particles which are outside of the halo region
-	std::list<Molecule>::iterator particleIterator = _particles.begin();
-	bool erase_mol;
-	while (particleIterator != _particles.end()) {
-		erase_mol = false;
-		for (unsigned short d = 0; d < 3; ++d) {
-			const double& rd = particleIterator->r(d);
-			// The molecules has to be within the domain of the process
-			// If it is outside in at least one dimension, it has to be
-			// erased /
-			if (rd < this->_haloBoundingBoxMin[d] || rd >= this->_haloBoundingBoxMax[d])
-				erase_mol = true;
-		}
-		if (erase_mol) {
-			particleIterator = _particles.erase(particleIterator);
-		}
-		else {
-			particleIterator++;
-		}
-	}
+	deleteParticlesOutsideBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
+
 	_cellsValid = false;
 }
 
 void LinkedCells::update() {
-	// clear all Cells
 	std::vector<ParticleCell>::iterator celliter;
-	for (celliter = (_cells).begin(); celliter != (_cells).end(); ++celliter) {
-		(*celliter).removeAllParticles();
+
+	for (celliter = _cells.begin(); celliter != _cells.end(); ++celliter) {
+
+		std::vector<Molecule*> & molsToSort = celliter->filterLeavingMolecules();
+		std::vector<Molecule*>::iterator it;
+
+		for(it = molsToSort.begin(); it != molsToSort.end(); ++it) {
+			bool wasInserted = addParticle(**it);
+
+			// lets stay on the safe side:
+			if(wasInserted) {
+				// all is good, nothing to do, just helping the branch predictor
+			} else {
+				delete *it;
+			}
+		}
+		molsToSort.clear();
 	}
 
-	std::list<Molecule>::iterator pos;
-	for (pos = _particles.begin(); pos != _particles.end(); ++pos) {
-		// determine the cell into which the particle belongs
-		Molecule &m = *pos;
-		unsigned long index = getCellIndexOfMolecule(&m);
-		_cells[index].addParticle(&(*pos));
-	}
 	_cellsValid = true;
 }
 
-void LinkedCells::addParticle(Molecule& particle) {
+bool LinkedCells::addParticle(Molecule& particle) {
+	const bool inBox = particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
-	double x = particle.r(0);
-	double y = particle.r(1);
-	double z = particle.r(2);
-
-	if ( ( x >= _haloBoundingBoxMin[0]) && (x < _haloBoundingBoxMax[0]) &&
-	     ( y >= _haloBoundingBoxMin[1]) && (y < _haloBoundingBoxMax[1]) &&
-	     ( z >= _haloBoundingBoxMin[2]) && (z < _haloBoundingBoxMax[2]) ) {
-
-		_particles.push_front( particle );
-		/* TODO: Have a closer look onto this check as there is no warning or error message.
-		 *
-		 * I (WE) guess this should be a performance optimization: the particle is added into this
-		 * container anyway, it is just not sorted into the cells. But as the container is not valid,
-		 * update() has to be called anyway.
-		 */
-		if (_cellsValid) {
-			int cellIndex = getCellIndexOfMolecule(&particle);
-			_cells[cellIndex].addParticle(&(_particles.front()));
-		}
+	if ( inBox ) {
+		Molecule * mol = new Molecule(particle);
+		addParticlePointer(mol, true);
 	}
+
+	return inBox;
 }
 
+bool LinkedCells::addParticlePointer(Molecule * particle, bool inBoxCheckedAlready) {
+	const bool inBox = inBoxCheckedAlready or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
+	if ( inBox ) {
+		int cellIndex = getCellIndexOfMolecule(particle);
+		_cells[cellIndex].addParticle(particle);
+	}
+
+	return inBox;
+}
 
 /**
  * @todo replace this by a call to component->getNumMolecules() !?
@@ -220,6 +210,7 @@ unsigned LinkedCells::countParticles(unsigned int cid) {
 	return N;
 }
 
+// @todo: couldn't this use getRegion?
 unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];
@@ -261,13 +252,7 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* 
 					continue;
 				if (individualCheck) {
 					for (molIter1 = currentCell.getParticlePointers().begin(); molIter1 != currentCell.getParticlePointers().end(); molIter1++) {
-						if (((*molIter1)->r(0) > cbottom[0]) &&
-						    ((*molIter1)->r(1) > cbottom[1]) &&
-						    ((*molIter1)->r(2) > cbottom[2]) &&
-						    ((*molIter1)->r(0) < ctop[0]) &&
-						    ((*molIter1)->r(1) < ctop[1]) &&
-						    ((*molIter1)->r(2) < ctop[2]) &&
-						    ((*molIter1)->componentid() == cid)) {
+						if ((*molIter1)->inBox(cbottom, ctop) and ((*molIter1)->componentid() == cid)) {
 							N++;
 						}
 					}
@@ -371,49 +356,108 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {
-	return _particles.size();
+	unsigned long N = 0;
+	std::vector<ParticleCell>::iterator it;
+	for(it = _cells.begin(); it != _cells.end(); ++it) {
+		N += it->getMoleculeCount();
+	}
+	return N;
 }
 
 Molecule* LinkedCells::begin() {
-	_particleIter = _particles.begin();
-	if (_particleIter != _particles.end()) {
-		return &(*_particleIter);
+	Molecule* ret = NULL;
+
+	_cellIterator = _cells.begin();
+
+	const std::vector<ParticleCell>::const_iterator cellsEnd = _cells.end();
+
+	while (_cellIterator != cellsEnd and _cellIterator->isEmpty()) {
+		++_cellIterator;
 	}
-	else {
-		return NULL;
+
+	if (_cellIterator != cellsEnd) {
+		_particleIterator = _cellIterator->getParticlePointers().begin();
+
+		ret = *_particleIterator;
 	}
+
+	return ret;
 }
 
 Molecule* LinkedCells::next() {
-	_particleIter++;
-	if (_particleIter != _particles.end()) {
-		return &(*_particleIter);
+	Molecule* ret = NULL;
+
+	++_particleIterator;
+
+	if (_particleIterator != _cellIterator->getParticlePointers().end()) {
+		ret = *_particleIterator;
+	} else {
+		const std::vector<ParticleCell>::const_iterator cellsEnd = _cells.end();
+
+		do {
+			++_cellIterator;
+		} while (_cellIterator != cellsEnd and _cellIterator->isEmpty());
+
+		if (_cellIterator != cellsEnd) {
+			_particleIterator = _cellIterator->getParticlePointers().begin();
+
+			ret = *_particleIterator;
+		}
 	}
-	else {
-		return NULL;
-	}
+
+	return ret;
 }
 
 Molecule* LinkedCells::end() {
 	return NULL;
 }
 
+Molecule* LinkedCells::deleteCurrent() {
+	/*
+	 * if (this is not the last element of a cell's vector)
+	 * { we can swap this element with back() and pop_back(), sparing the costly vector erase() operation}
+	 * else {we need to fetch the next element for returning }
+	 */
+
+	delete *_particleIterator; // free storage for molecule
+
+	std::vector<Molecule*> & cellParticles = _cellIterator->getParticlePointers();
+	Molecule* ret;
+
+	// determine whether current particle is the last one in its cell:
+	const bool isNotLast = ((_particleIterator + 1) != cellParticles.end());
+
+	if (isNotLast) {
+		*_particleIterator = cellParticles.back();
+		// for safety:
+		cellParticles.back() = NULL;
+
+		ret = *_particleIterator;
+	} else {
+		ret = this->next(); // both _particleIterator and _cellIterator might have changed!
+	}
+
+	cellParticles.pop_back();
+
+	return ret;
+}
+
 void LinkedCells::clear() {
 	vector<ParticleCell>::iterator cellIter;
 	for(cellIter = _cells.begin(); cellIter != _cells.end(); cellIter++) {
-		(*cellIter).removeAllParticles();
+		cellIter->deallocateAllParticles();
 	}
-	_particles.clear();
 }
 
-
-Molecule* LinkedCells::deleteCurrent() {
-	_particleIter = _particles.erase(_particleIter);
-	if (_particleIter != _particles.end()) {
-		return &(*_particleIter);
-	}
-	else {
-		return NULL;
+void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
+	Molecule * it;
+	for (it = begin(); it != end();) {
+		bool keepMolecule = it->inBox(boxMin, boxMax);
+		if (keepMolecule) {
+			it = next();
+		} else {
+			it = deleteCurrent();
+		}
 	}
 }
 
@@ -424,30 +468,9 @@ void LinkedCells::deleteOuterParticles() {
 	}
 
 	vector<unsigned long>::iterator cellIndexIter;
-	//std::list<Molecule*>::iterator molIter1;
 	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
 		ParticleCell& currentCell = _cells[*cellIndexIter];
-		currentCell.removeAllParticles();
-	}
-
-	std::list<Molecule>::iterator particleIterator = _particles.begin();
-	bool erase_mol;
-	while (particleIterator != _particles.end()) {
-		erase_mol = false;
-		for (unsigned short d = 0; d < 3; ++d) {
-			const double& rd = particleIterator->r(d);
-			// The molecules has to be within the domain of the process
-			// If it is outside in at least one dimension, it has to be
-			// erased /
-			if (rd < this->_boundingBoxMin[d] || rd >= this->_boundingBoxMax[d])
-				erase_mol = true;
-		}
-		if (erase_mol) {
-			particleIterator = _particles.erase(particleIterator);
-		}
-		else {
-			particleIterator++;
-		}
+		currentCell.deallocateAllParticles();
 	}
 }
 
@@ -475,7 +498,62 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs) {
+void LinkedCells::extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v) {
+	assert(direction != 0);
+
+	int startIndex[3] = { 0, 0, 0 };
+	int stopIndex[3] = {_cellsPerDimension[0]-1, _cellsPerDimension[1]-1, _cellsPerDimension[2]-1};
+
+	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
+	unsigned dim = abs(direction) - 1;
+	if (direction > 0) {
+		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
+	} else {
+		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
+	}
+
+	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+				ParticleCell & cell = _cells[cellIndex];
+				std::vector<Molecule *> & mols = cell.getParticlePointers();
+				v.insert(v.end(), mols.begin(), mols.end());
+				cell.removeAllParticles();
+			}
+		}
+	}
+}
+
+void LinkedCells::getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const {
+	assert(direction != 0);
+
+	int startIndex[3] = { 0, 0, 0 };
+	int stopIndex[3] = {_cellsPerDimension[0]-1, _cellsPerDimension[1]-1, _cellsPerDimension[2]-1};
+
+	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
+	unsigned dim = abs(direction) - 1;
+	if (direction > 0) {
+		startIndex[dim] = _haloWidthInNumCells[dim];
+		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
+	} else {
+		stopIndex[dim] = _boxWidthInNumCells[dim];
+		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
+	}
+
+	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+				const ParticleCell & cell = _cells[cellIndex];
+				const std::vector<Molecule *> & mols = cell.getParticlePointers();
+				v.insert(v.end(), mols.begin(), mols.end());
+			}
+		}
+	}
+}
+
+void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (getRegion) invalid, call update first" << endl;
 		exit(1);
@@ -511,9 +589,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], list<Mole
 				// loop over all subcells (either 1 or 8)
 				// traverse all molecules in the current cell
 				for (particleIter = _cells[globalCellIndex].getParticlePointers().begin(); particleIter != _cells[globalCellIndex].getParticlePointers().end(); particleIter++) {
-					if ((*particleIter)->r(0) >= lowCorner[0] && (*particleIter)->r(0) < highCorner[0] &&
-					    (*particleIter)->r(1) >= lowCorner[1] && (*particleIter)->r(1) < highCorner[1] &&
-					    (*particleIter)->r(2) >= lowCorner[2] && (*particleIter)->r(2) < highCorner[2]) {
+					if ((*particleIter)->inBox(lowCorner, highCorner)) {
 						particlePtrs.push_back(*particleIter);
 					}
 				}
@@ -532,31 +608,46 @@ void LinkedCells::initializeCells() {
 	_boundaryCellIndices.clear();
 	_haloCellIndices.clear();
 	long int cellIndex;
+	double cellBoxMin[3], cellBoxMax[3];
+
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
+		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
+		cellBoxMax[2] = (iz + 1) * _cellLength[2] + _haloBoundingBoxMin[2];
+
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
+			cellBoxMin[1] = iy * _cellLength[1] + _haloBoundingBoxMin[1];
+			cellBoxMax[1] = (iy + 1) * _cellLength[1] + _haloBoundingBoxMin[1];
+
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
+				cellBoxMin[0] = ix * _cellLength[0] + _haloBoundingBoxMin[0];
+				cellBoxMax[0] = (ix + 1) * _cellLength[0] + _haloBoundingBoxMin[0];
 
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				_cells[cellIndex].skipCellFromHaloRegion();
-				_cells[cellIndex].skipCellFromBoundaryRegion();
-				_cells[cellIndex].skipCellFromInnerRegion();
+				ParticleCell & cell = _cells[cellIndex];
+
+				cell.skipCellFromHaloRegion();
+				cell.skipCellFromBoundaryRegion();
+				cell.skipCellFromInnerRegion();
+
+				cell.setBoxMin(cellBoxMin);
+				cell.setBoxMax(cellBoxMax);
 
 				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] ||
 				    ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
 				    iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||
 				    iz >= _cellsPerDimension[2]-_haloWidthInNumCells[2]) {
-					_cells[cellIndex].assignCellToHaloRegion();
+					cell.assignCellToHaloRegion();
 					_haloCellIndices.push_back(cellIndex);
 				}
 				else if (ix < 2*_haloWidthInNumCells[0] || iy < 2*_haloWidthInNumCells[1] || iz < 2*_haloWidthInNumCells[2] ||
 				         ix >= _cellsPerDimension[0]-2*_haloWidthInNumCells[0] ||
 				         iy >= _cellsPerDimension[1]-2*_haloWidthInNumCells[1] ||
 				         iz >= _cellsPerDimension[2]-2*_haloWidthInNumCells[2]) {
-					_cells[cellIndex].assignCellToBoundaryRegion();
+					cell.assignCellToBoundaryRegion();
 					_boundaryCellIndices.push_back(cellIndex);
 				}
 				else {
-					_cells[cellIndex].assignCellToInnerRegion();
+					cell.assignCellToInnerRegion();
 					_innerCellIndices.push_back(cellIndex);
 				}
 			}
@@ -631,7 +722,9 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 			global_log->debug() << "Molecule:\n" << *molecule << endl;
 		}
 #endif
-		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+//		this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
+//		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+		cellIndex[dim] = ((int) floor((molecule->r(dim) - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim];
 
 	}
 	return this->cellIndexOf3DIndex( cellIndex[0], cellIndex[1], cellIndex[2] );
@@ -739,7 +832,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		if (hasDeletion)
 			hasDeletion = mu->getDeletion(this, minco, maxco);
 		if (hasDeletion) {
-			m = &(*(this->_particleIter));
+			m = *_particleIterator;
 			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, cellProcessor);
 
 			accept = mu->decideDeletion(DeltaUpot / T);
@@ -755,16 +848,18 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 					m->setF(zeroVec);
 					m->setM(zeroVec);
 				}
+
 				mu->storeMolecule(*m);
+
 				this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
-				this->_particles.erase(this->_particleIter);
-				this->_particleIter = _particles.begin();
+				//this->_particleIterator = this->begin();
+				this->begin(); // will set _particleIterator to the beginning
 				this->_localInsertionsMinusDeletions--;
 			}
 		}
 
 		if (!mu->hasSample()){
-			m = &(*(_particles.begin()));
+			m = this->begin();
 			mu->storeMolecule(*m);
 		}
 		if (hasInsertion) {
@@ -776,10 +871,13 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			for (int d = 0; d < 3; d++)
 				tmp.setr(d, ins[d]);
 			tmp.setid(nextid);
-			this->_particles.push_back(tmp);
+			// TODO: I (tchipevn) am changing the former code
+			// (add particle, compute energy and if rejected, delete particle)
+			// to: add particle only if accepted
+//			_particles.push_back(tmp);
 
-			std::list<Molecule>::iterator mit = _particles.end();
-			mit--;
+//			std::list<Molecule>::iterator mit = _particles.end();
+			Molecule * mit = &tmp;
 			m = &(*mit);
 			m->upd_cache();
 			// reset forces and torques to zero
@@ -794,8 +892,8 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			<< " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? " << endl;
 #endif
 
-			unsigned long cellid = this->getCellIndexOfMolecule(m);
-			this->_cells[cellid].addParticle(m);
+//			unsigned long cellid = this->getCellIndexOfMolecule(m);
+//			this->_cells[cellid].addParticle(m);
 			DeltaUpot = getEnergy(&particlePairsHandler, m, cellProcessor);
                         domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
 			accept = mu->decideInsertion(DeltaUpot / T);
@@ -806,13 +904,14 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 #endif
 			if (accept) {
 				this->_localInsertionsMinusDeletions++;
+				addParticle(tmp);
 			}
 			else {
 				// this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
-				this->_cells[cellid].deleteMolecule(m->id());
+//				this->_cells[cellid].deleteMolecule(m->id());
 
 				mit->check(m->id());
-				this->_particles.erase(mit);
+//				this->_particles.erase(mit);
 			}
 		}
 	}

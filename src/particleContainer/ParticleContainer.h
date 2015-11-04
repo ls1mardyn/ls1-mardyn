@@ -21,6 +21,7 @@
 #define PARTICLECONTAINER_H_
 
 #include <list>
+#include <vector>
 
 class CellProcessor;
 class ChemicalPotential;
@@ -102,13 +103,21 @@ public:
 
 	//! @brief add a single Molecules to the ParticleContainer.
 	//!
-	//! It is important, that the Particle is entered in "the front" of the container.
-	//! This is important when the container is traversed with the "next" method.
-	//! E.g. a method traversing the container which adds copies of particles
-	//! (periodic boundary) must not run over the added copies.
-	//! This method has to be implemented in derived classes
+	//! Note: a copy of the particle is pushed. Destroying the argument is
+	//! responsibility of the programmer.
+	//!
 	//! @param particle reference to the particle which has to be added
-	virtual void addParticle(Molecule& particle) = 0;
+	//! @return true if successful, false if particle outside domain
+	virtual bool addParticle(Molecule& particle) = 0;
+
+	//! @brief add a single Molecules to the ParticleContainer.
+	//!
+	//! Note: the particle pointer is pushed, without creating a new particle.
+	//! The underlying object should not be destroyed.
+	//!
+	//! @param particle reference to the particle which has to be added
+	//! @return true if successful, false if particle outside domain
+	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -181,7 +190,21 @@ public:
 	//! @brief fills the given list with pointers to all particles in the given region
 	//! @param lowCorner minimum x-, y- and z-coordinate of the region
 	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
+	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
+
+	/**
+	 * @brief move particles from the halo layer in the respective direction into the current vector
+	 * @param direction
+	 * @param v
+	 */
+	virtual void extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v) = 0;
+
+	/**
+	 * @brief copy particles from the boundary layer for filling halo layers
+	 * @param direction
+	 * @param v
+	 */
+	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const = 0;
 
 	virtual double getCutoff() = 0;
 

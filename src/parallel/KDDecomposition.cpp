@@ -90,7 +90,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	vector<int> procsToSendTo; // all processes to which this process has to send data
 	vector<int> procsToRecvFrom; // all processes from which this process has to recv data
-	vector<list<Molecule*> > particlePtrsToSend; // pointer to particles to be send
+	vector<vector<Molecule*> > particlePtrsToSend; // pointer to particles to be send
 	vector<ParticleData*> particlesRecvBufs; // buffer used by my recv call
 	vector<int> numMolsToSend; // number of particles to be send to other procs
 	vector<int> numMolsToRecv; // number of particles to be recieved from other procs
@@ -185,7 +185,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 
 	vector<int> procsToSendTo; // all processes to which this process has to send data
 	vector<int> procsToRecvFrom; // all processes from which this process has to recv data
-	vector<list<Molecule*> > particlePtrsToSend; // pointer to particles to be send
+	vector<vector<Molecule*> > particlePtrsToSend; // pointer to particles to be send
 	vector<ParticleData*> particlesRecvBufs; // buffer used by my recv call
 	vector<int> numMolsToSend; // number of particles to be send to other procs
 	vector<int> numMolsToRecv; // number of particles to be recieved from other procs
@@ -435,8 +435,7 @@ void KDDecomposition::assertDisjunctivity(TMoleculeContainer* mm) {
 //$ private Methoden, die von exchangeMolecule benvtigt werden $
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-// TODO use vector<vector> instead of vector<list<Molecule*> >& particlesToSend ?
-void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, vector<int>& procIDs, vector<int>& numMolsToSend, vector<list<Molecule*> >& particlesToSend) {
+void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, vector<int>& procIDs, vector<int>& numMolsToSend, vector<vector<Molecule*> >& particlesToSend) {
 	int haloCellIdxMin[3]; // Assuming a global 3D Cell index, haloCellIdxMin[3] gives the position
 	                       // of the low local domain corner within this global 3D cell index
 	int haloCellIdxMax[3]; // same as heloCellIdxMax, only high instead of low Corner
@@ -512,7 +511,7 @@ void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, Par
 }
 
 
-void KDDecomposition::sendReceiveParticleData(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv, /*vector<ParticleData*>& particlesSendBufs*/ std::vector<std::list<Molecule*> >& particlePtrsToSend, vector<ParticleData*>& particlesRecvBufs) {
+void KDDecomposition::sendReceiveParticleData(vector<int>& procsToSendTo, vector<int>& procsToRecvFrom, vector<int>& numMolsToSend, vector<int>& numMolsToRecv, /*vector<ParticleData*>& particlesSendBufs*/ std::vector<std::vector<Molecule*> >& particlePtrsToSend, vector<ParticleData*>& particlesRecvBufs) {
 
 	particlesRecvBufs.resize(procsToRecvFrom.size());
 	numMolsToRecv.resize(procsToRecvFrom.size());
@@ -530,7 +529,7 @@ void KDDecomposition::sendReceiveParticleData(vector<int>& procsToSendTo, vector
 	for (int neighbCount = 0; neighbCount < (int) procsToSendTo.size(); neighbCount++) {
 		if (procsToSendTo[neighbCount] == _ownRank)
 			continue; // don't exchange data with the own process
-		list<Molecule*>::iterator particleIter;
+		vector<Molecule*>::iterator particleIter;
 		int partCount = 0;
 
 		for (particleIter = particlePtrsToSend[neighbCount].begin(); particleIter != particlePtrsToSend[neighbCount].end(); particleIter++) {

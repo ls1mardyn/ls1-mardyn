@@ -82,7 +82,17 @@ public:
 	//! @brief Insert a single molecule.
 	//!
 	//! Add the molecule to the list (it is not inserted into a cell yet)
-	void addParticle(Molecule& particle);
+	bool addParticle(Molecule& particle);
+
+	//! @brief Insert a single molecule's pointer.
+	//!
+	//! Add the molecule to the list (it is not inserted into a cell yet)
+	bool addParticlePointer(Molecule* particle, bool inBoxCheckedAlready = false);
+
+	void extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v) {}
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const {};
+
+
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -138,7 +148,7 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
 
 	double getCutoff() {
 		return this->_cutoffRadius;

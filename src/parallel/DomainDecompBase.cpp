@@ -2,12 +2,11 @@
 #include "Simulation.h"
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
-
-
-#include <fstream>
-
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+
+#include <fstream>
+#include <cmath>
 
 DomainDecompBase::DomainDecompBase() {
 }
@@ -18,63 +17,60 @@ DomainDecompBase::~DomainDecompBase() {
 void DomainDecompBase::readXML(XMLfileUnits& /* xmlconfig */) {
 }
 
-void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* /*domain*/) {
 
-	double rmin[3]; // lower corner of the process-specific domain //ENABLE_MPI
-	double rmax[3];
-	double halo_L[3]; // width of the halo strip //ENABLE_MPI
-	for (int i = 0; i < 3; i++) {
-		rmin[i] = moleculeContainer->getBoundingBoxMin(i);
-		rmax[i] = moleculeContainer->getBoundingBoxMax(i);
-		halo_L[i] = moleculeContainer->get_halo_L(i);
+	for (unsigned d = 0; d < 3; ++d) {
+		handleDomainLeavingParticles(d, moleculeContainer);
 	}
 
-	Molecule* currentMolecule;
-	// molecules that have to be copied (because of halo), get a new position
-	double new_position[3];
+	for (unsigned d = 0; d < 3; ++d) {
+		populateHaloLayerWithCopies(d, moleculeContainer);
+	}
+}
 
-	double phaseSpaceSize[3];
+void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const {
 
-	double low_limit; // particles below this limit have to be copied or moved to the lower process
-	double high_limit; // particles above(or equal) this limit have to be copied or moved to the higher process
+	std::vector<Molecule * > mols;
+	std::vector<Molecule *>::iterator it;
+	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
-	for (unsigned short d = 0; d < 3; ++d) {
-		phaseSpaceSize[d] = rmax[d] - rmin[d];
+	// molecules that have crossed the lower boundary need a positive shift
+	// molecules that have crossed the higher boundary need a negative shift
+	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
+	const int sDim = dim+1;
+	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
+		double shift = copysign(shiftMagnitude, static_cast<double>(direction));
+		moleculeContainer->extractHaloParticlesDirection(direction, mols);
 
-		// set limits (outside "inner" region)
-		low_limit = rmin[d] + halo_L[d];
-		high_limit = rmax[d] - halo_L[d];
-
-		for (currentMolecule = moleculeContainer->begin();
-			 currentMolecule != moleculeContainer->end();
-			 currentMolecule = moleculeContainer->next()) {
-
-			const double rd = currentMolecule->r(d);
-
-			const bool copyToLow = rd < low_limit;
-			const bool copyToHigh = rd >= high_limit;
-
-			const bool copy = copyToLow or copyToHigh;
-
-			if (copy) {
-				// to copy the molecule across the lower boundary
-				// we need to increment it's position,
-				// otherwise - decrement it.
-				const int sign = copyToLow ? +1 : -1;
-
-				for (unsigned short d2 = 0; d2 < 3; d2++)
-					new_position[d2] = currentMolecule->r(d2);
-				new_position[d] += sign * phaseSpaceSize[d];
-
-				Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
-				Molecule m1 = Molecule(currentMolecule->id(), component,
-						new_position[0], new_position[1], new_position[2],
-						currentMolecule->v(0), currentMolecule->v(1), currentMolecule->v(2),
-						currentMolecule->q().qw(), currentMolecule->q().qx(), currentMolecule->q().qy(), currentMolecule->q().qz(),
-						currentMolecule->D(0), currentMolecule->D(1), currentMolecule->D(2));
-				moleculeContainer->addParticle(m1);
-			}
+		for (it = mols.begin(); it != mols.end(); ++it) {
+			Molecule * m = *it;
+			m->setr(dim, m->r(dim) + shift);
+			moleculeContainer->addParticlePointer(m);
 		}
+		mols.clear();
+	}
+}
+
+void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
+
+	std::vector<Molecule * > mols;
+	std::vector<Molecule *>::iterator it;
+	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
+
+	// molecules that have crossed the lower boundary need a positive shift
+	// molecules that have crossed the higher boundary need a negative shift
+	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
+	const int sDim = dim+1;
+	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
+		moleculeContainer->getBoundaryParticlesDirection(direction, mols);
+
+		double shift = copysign(shiftMagnitude, static_cast<double>(direction));
+		for (it = mols.begin(); it != mols.end(); ++it) {
+			Molecule m = Molecule(**it);
+			m.setr(dim, m.r(dim) + shift);
+			moleculeContainer->addParticle(m);
+		}
+		mols.clear();
 	}
 }
 

@@ -176,6 +176,10 @@ public:
 	virtual void collCommBroadcast(int root = 0);
 
 private:
+	virtual void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+	virtual void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
+private:
 	CollectiveCommBase _collCommBase;
 };
 

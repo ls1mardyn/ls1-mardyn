@@ -202,7 +202,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param numMolsToSend Here the number of molecules to be sent are stored
 	//!                      The vector has to be initialised in this method
 	//! @param particlesToSend Here the pointers to the particles will be stored
-	void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, std::vector<int>& procIDs, std::vector<int>& numMolsToSend, std::vector<std::list<Molecule*> >& particlesToSend);
+	void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, std::vector<int>& procIDs, std::vector<int>& numMolsToSend, std::vector<std::vector<Molecule*> >& particlesToSend);
 
 	//! @brief transfer of the molecule data to the neighbours
 	//! After each process knows which particles have to be sent, the particles
@@ -219,7 +219,7 @@ class KDDecomposition: public DomainDecompBase{
 	//!       deleted afterwards!
 	void sendReceiveParticleData(std::vector<int>& procsToSendTo,
 			std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend,
-			std::vector<int>& numMolsToRecv, std::vector<std::list<Molecule*> >& particlePtrsToSend,
+			std::vector<int>& numMolsToRecv, std::vector<std::vector<Molecule*> >& particlePtrsToSend,
 			std::vector<ParticleData*>& particlesRecvBufs);
 
 	//! @brief corrects the position of particles outside the domain after a balance step

@@ -51,14 +51,21 @@ public:
 	 */
 	~ParticleCell() ;
 
-	//! removes all elements from the list molecules
+	//! removes all elements from the list molecules without deallocating them
 	void removeAllParticles();
+
+	//! removes and deallocates all elements
+	void deallocateAllParticles();
 
 	//! insert a single molecule into this cell
 	void addParticle(Molecule* particle_ptr);
 
 	//! return a reference to the list of molecules (molecule pointers) in this cell
 	std::vector<Molecule*>& getParticlePointers();
+
+	const std::vector<Molecule*>& getParticlePointers() const;
+
+	bool isEmpty() const;
 
 	bool deleteMolecule(unsigned long molid);
 
@@ -81,16 +88,60 @@ public:
 		_cellDataSoA = p;
 	}
 
+	double getBoxMin(int d) const {
+		return _boxMin[d];
+	}
+
+	void setBoxMin(double b[3]) {
+		for(int d=0; d< 3; ++d) {
+			_boxMin[d] = b[d];
+		}
+	}
+
+	double getBoxMax(int d) const {
+		return _boxMax[d];
+	}
+
+	void setBoxMax(double b[3]) {
+		for (int d = 0; d < 3; ++d) {
+			_boxMax[d] = b[d];
+		}
+	}
+
+	/**
+	 * filter molecules which have left the box
+	 * @return field vector containing leaving molecules
+	 */
+	std::vector<Molecule *> & filterLeavingMolecules();
+
 private:
 	/**
-	 * \brief A list of pointers to the Molecules in this cell.
+	 * \brief lower left front corner
 	 */
-	std::vector<Molecule *> molecules;
+	double _boxMin[3];
+
+	/**
+	 * \brief upper right back corner
+	 */
+	double _boxMax[3];
+
+	/**
+	 * \brief A vector of pointers to the Molecules in this cell.
+	 */
+	std::vector<Molecule *> _molecules;
+
+	/**
+	 * \brief A vector of molecules, which have left this cell
+	 */
+	std::vector<Molecule *> _leavingMolecules;
+
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
 	CellDataSoA * _cellDataSoA;
+
+
 };
 
 #endif /* PARTICLE CELL_H_ */

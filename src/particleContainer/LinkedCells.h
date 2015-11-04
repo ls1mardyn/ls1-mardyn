@@ -111,7 +111,9 @@ public:
 	//!
 	//! Therefore, first the cell (the index) for the molecule has to be determined,
 	//! then the molecule is inserted into that cell.
-	void addParticle(Molecule& particle);
+	bool addParticle(Molecule& particle);
+
+	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -151,9 +153,11 @@ public:
 	//! @brief returns NULL
 	Molecule* end();
 
+	// @todo: where is this function called?
 	void clear();
 
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
+	// i.e. use as follows: for(it = LC.begin(); it != LC.end();) {if(erase) {it = deleteCurrent();} else {it = LC.next()}}
 	Molecule* deleteCurrent();
 
 	//! @brief delete all Particles which are not within the bounding box
@@ -167,8 +171,12 @@ public:
 	//! @brief appends pointers to all particles in the halo region to the list
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
+	void extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v);
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const;
+
+
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
@@ -275,15 +283,27 @@ private:
 	//! y: two cells back, z: one cell up,...)
 	long int cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const;
 
+	/**
+	 * @brief delete particles which lie outside a cuboid region
+	 * @param boxMin lower left front corner
+	 * @param boxMax upper right back corner
+	 */
+	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
+
 
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
 
+#if 0
 	std::list<Molecule> _particles; //!< List containing all molecules from the phasespace
 
 	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
+#else
+	std::vector<ParticleCell>::iterator _cellIterator;
+	std::vector<Molecule*>::iterator _particleIterator;
+#endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
