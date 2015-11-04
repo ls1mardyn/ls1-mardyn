@@ -175,7 +175,7 @@ public:
 	//! has to call broadcast method of a CollComm class (none in sequential version)
 	virtual void collCommBroadcast(int root = 0);
 
-private:
+protected:
 	virtual void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
 
 	virtual void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;

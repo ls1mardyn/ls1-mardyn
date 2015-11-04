@@ -224,6 +224,11 @@ private:
 	//! the second one the direction. For the later use the predefined LOWER and HIGHER macros.
 	int _neighbours[DIM][2];
 
+	//! flag, which tells whether a processor covers the whole domain along a dimension
+	//! if true, we will use the methods provided by the base class for handling the
+	//! respective dimension, instead of packing and unpacking messages to self
+	bool _coversWholeDomain[DIM];
+
 	//! variable used for different kinds of collective operations
 	CollectiveCommunication _collCommunication;
 };

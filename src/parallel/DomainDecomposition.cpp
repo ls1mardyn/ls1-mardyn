@@ -36,6 +36,14 @@ DomainDecomposition::DomainDecomposition() {
 	for (int d = 0; d < DIM; d++) {
 		MPI_CHECK( MPI_Cart_shift(_comm, d, 1, &_neighbours[d][LOWER], &_neighbours[d][HIGHER]) );
 	}
+
+	for (int d = 0; d < DIM; ++d) {
+		if(_gridSize[d] == 1) {
+			_coversWholeDomain[d] = true;
+		} else {
+			_coversWholeDomain[d] = false;
+		}
+	}
 	// Initialize MPI Dataype for the particle exchange once at the beginning.
 	ParticleData::setMPIType(_mpi_Particle_data);
 }
@@ -79,6 +87,13 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 	int direction;
 
 	for (unsigned short d = 0; d < DIM; d++) {
+		if (_coversWholeDomain[d]) {
+			// use the sequential version
+			this->handleDomainLeavingParticles(d, moleculeContainer);
+			this->populateHaloLayerWithCopies(d, moleculeContainer);
+			continue;
+		}
+
 		// when moving a particle across a periodic boundary, the molecule position has to change
 		// these offset specify for each dimension (x, y and z) and each direction ("left"/lower
 		// neighbour and "right"/higher neighbour, how the paritcle coordinates have to be changed.
