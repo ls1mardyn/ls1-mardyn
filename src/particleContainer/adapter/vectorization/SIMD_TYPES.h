@@ -58,12 +58,82 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
  * Control macros are set
  *
  * Include the function macros
  */
 #include "SIMD_DEFINITIONS.h"
-
-
 #endif /* SIMD_TYPES_H */
