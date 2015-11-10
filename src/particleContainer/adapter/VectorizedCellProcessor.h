@@ -7,45 +7,13 @@
 #ifndef VECTORIZEDCELLPROCESSOR_H_
 #define VECTORIZEDCELLPROCESSOR_H_
 
+
 #include "CellProcessor.h"
 #include "utils/AlignedArray.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
-
-// The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX)
-	#error conflicting macro definitions
-#endif
-
-#define VCP_NOVEC 0
-#define VCP_VEC_SSE3 1
-#define VCP_VEC_AVX 2
-
-#if defined(__AVX__) && not defined(AVX128)
-	#define VCP_VEC_TYPE VCP_VEC_AVX
-#elif defined(__AVX__) && defined(AVX128)
-	#define VCP_VEC_TYPE VCP_VEC_SSE3
-#elif defined(__SSE3__)
-	#define VCP_VEC_TYPE VCP_VEC_SSE3
-#else
-	#define VCP_VEC_TYPE VCP_NOVEC
-#endif
-
-#ifdef NOVEC
-	#ifdef VCP_VEC_TYPE
-		#warn Multiple vectorization methods specified. Will not use vectorization at all!
-		#undef VCP_VEC_TYPE
-	#endif
-	#define VCP_VEC_TYPE VCP_NOVEC
-#endif
-
-// Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX
-	#include "immintrin.h"
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	#include "pmmintrin.h"
-#endif
+#include "vectorization/SIMD_TYPES.h"
 
 
 class Component;
@@ -243,6 +211,20 @@ private:
 			const __m128d& forceMask,
 			const __m128d& e1s1, const __m128d& e2s2,
 			const size_t& id_j0, const size_t& id_j1, const size_t& id_i);
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	template<class MacroPolicy>
+	inline
+	void _loopBodyLJ(
+			const __m256d& m1_r_x, const __m256d& m1_r_y, const __m256d& m1_r_z,
+			const __m256d& r1_x, const __m256d& r1_y, const __m256d& r1_z,
+			const __m256d& m2_r_x, const __m256d& m2_r_y, const __m256d& m2_r_z,
+			const __m256d& r2_x, const __m256d& r2_y, const __m256d& r2_z,
+			__m256d& f_x, __m256d& f_y, __m256d& f_z,
+			__m256d& sum_upot6lj, __m256d& sum_virial,
+			const __m256d& forceMask, const __m256d& e0s0,
+			const __m256d& e1s1, const __m256d& e2s2, const __m256d& e3s3,
+			const size_t& id_j0, const size_t& id_j1,  const size_t& id_j2,  const size_t& id_j3,
+			const size_t& id_i);
 #endif /* _loopBodyLJ SSE3 */
 
 	/**

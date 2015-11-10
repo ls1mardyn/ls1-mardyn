@@ -1553,7 +1553,7 @@ inline void _loopBodyQudarupole(
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 
-const __m256d minus_one = _mm256_set1_pd(-1.0);
+//const __m256d minus_one = _mm256_set1_pd(-1.0);
 const __m256d zero = _mm256_setzero_pd();
 const __m256d one = _mm256_set1_pd(1.0);
 const __m256d two = _mm256_set1_pd(2.0);
@@ -1566,6 +1566,98 @@ const __m256d _05 = _mm256_set1_pd(0.5);
 const __m256d _075 = _mm256_set1_pd(0.75);
 const __m256d _1pt5 = _mm256_set1_pd(1.5);
 const __m256d _15 = _mm256_set1_pd(15.0);
+
+static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
+
+template<class MacroPolicy>
+inline
+void VectorizedCellProcessor :: _loopBodyLJ(
+		const __m256d& m1_r_x, const __m256d& m1_r_y, const __m256d& m1_r_z,
+		const __m256d& r1_x, const __m256d& r1_y, const __m256d& r1_z,
+		const __m256d& m2_r_x, const __m256d& m2_r_y, const __m256d& m2_r_z,
+		const __m256d& r2_x, const __m256d& r2_y, const __m256d& r2_z,
+		__m256d& f_x, __m256d& f_y, __m256d& f_z,
+		__m256d& sum_upot6lj, __m256d& sum_virial,
+		const __m256d& forceMask, const __m256d& e0s0,
+		const __m256d& e1s1, const __m256d& e2s2, const __m256d& e3s3,
+		const size_t& id_j0, const size_t& id_j1,  const size_t& id_j2,  const size_t& id_j3,
+		const size_t& id_i)
+{
+	const __m256d c_dx = _mm256_sub_pd(r1_x, r2_x);
+	const __m256d c_dy = _mm256_sub_pd(r1_y, r2_y);
+	const __m256d c_dz = _mm256_sub_pd(r1_z, r2_z);
+	const __m256d c_dxdx = _mm256_mul_pd(c_dx, c_dx);
+	const __m256d c_dydy = _mm256_mul_pd(c_dy, c_dy);
+	const __m256d c_dzdz = _mm256_mul_pd(c_dz, c_dz);
+	const __m256d c_dxdx_dydy = _mm256_add_pd(c_dxdx, c_dydy);
+	const __m256d c_r2 = _mm256_add_pd(c_dxdx_dydy, c_dzdz);
+	const __m256d r2_inv_unmasked = _mm256_div_pd(one, c_r2);
+	const __m256d r2_inv = _mm256_and_pd(r2_inv_unmasked, forceMask);
+
+
+	const __m256d e0e1 = _mm256_unpacklo_pd(e0s0, e1s1);
+	const __m256d s0s1 = _mm256_unpackhi_pd(e0s0, e1s1);
+	const __m256d e2e3 = _mm256_unpacklo_pd(e2s2, e3s3);
+	const __m256d s2s3 = _mm256_unpackhi_pd(e2s2, e3s3);
+
+	const __m256d eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
+	const __m256d sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
+
+	const __m256d lj2 = _mm256_mul_pd(sig2, r2_inv);
+	const __m256d lj4 = _mm256_mul_pd(lj2, lj2);
+	const __m256d lj6 = _mm256_mul_pd(lj4, lj2);
+	const __m256d lj12 = _mm256_mul_pd(lj6, lj6);
+	const __m256d lj12m6 = _mm256_sub_pd(lj12, lj6);
+
+	const __m256d eps24r2inv = _mm256_mul_pd(eps_24, r2_inv);
+	const __m256d lj12lj12m6 = _mm256_add_pd(lj12, lj12m6);
+	const __m256d scale = _mm256_mul_pd(eps24r2inv, lj12lj12m6);
+
+	const __m256d fx = _mm256_mul_pd(c_dx, scale);
+	const __m256d fy = _mm256_mul_pd(c_dy, scale);
+	const __m256d fz = _mm256_mul_pd(c_dz, scale);
+
+
+	const __m256d m_dx = _mm256_sub_pd(m1_r_x, m2_r_x);
+
+	const __m256d m_dy = _mm256_sub_pd(m1_r_y, m2_r_y);
+
+	const __m256d m_dz = _mm256_sub_pd(m1_r_z, m2_r_z);
+
+	const __m256d macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
+
+	// Only go on if at least 1 macroscopic value has to be calculated.
+	if (_mm256_movemask_pd(macroMask) > 0) {
+		const __m256d sh0 = _mm256_maskload_pd(_shift6[id_i] + id_j0, memoryMask_first);
+		const __m256d sh1 = _mm256_maskload_pd(_shift6[id_i] + id_j1, memoryMask_first);
+		const __m256d sh2 = _mm256_maskload_pd(_shift6[id_i] + id_j2, memoryMask_first);
+		const __m256d sh3 = _mm256_maskload_pd(_shift6[id_i] + id_j3, memoryMask_first);
+
+		const __m256d sh0sh1 = _mm256_unpacklo_pd(sh0, sh1);
+		const __m256d sh2sh3 = _mm256_unpacklo_pd(sh2, sh3);
+
+		const __m256d shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
+
+		const __m256d upot = _mm256_mul_pd(eps_24, lj12m6);
+		const __m256d upot_sh = _mm256_add_pd(shift6, upot);
+		const __m256d upot_masked = _mm256_and_pd(upot_sh, macroMask);
+
+		sum_upot6lj = _mm256_add_pd(sum_upot6lj, upot_masked);
+
+		const __m256d vir_x = _mm256_mul_pd(m_dx, fx);
+		const __m256d vir_y = _mm256_mul_pd(m_dy, fy);
+		const __m256d vir_z = _mm256_mul_pd(m_dz, fz);
+
+		const __m256d vir_xy = _mm256_add_pd(vir_x, vir_y);
+		const __m256d virial = _mm256_add_pd(vir_xy, vir_z);
+		const __m256d vir_masked = _mm256_and_pd(virial, macroMask);
+
+		sum_virial = _mm256_add_pd(sum_virial, vir_masked);
+	}
+
+}
+
+
 
 template<class MacroPolicy>
 inline void _loopBodyCharge(
@@ -2213,7 +2305,6 @@ inline void hSum_Add_Store( double * const mem_addr, const __m128d & a ) {
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 
-const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
 
 inline void hSum_Add_Store( double * const mem_addr, const __m256d & a ) {
 	const __m256d a_t1 = _mm256_permute2f128_pd(a, a, 0x1);
@@ -3659,7 +3750,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 
 	static const __m256d ones = _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0));
-	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
 	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
 
 	__m256d sum_upot6lj = _mm256_setzero_pd();
@@ -3726,89 +3816,40 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 					// Only go on if at least 1 of the forces has to be calculated.
 					if (_mm256_movemask_pd(forceMask) > 0) {
 						const __m256d c_r_x2 = _mm256_load_pd(soa2_ljc_r_x + j);
-						const __m256d c_dx = _mm256_sub_pd(c_r_x1, c_r_x2);
 						const __m256d c_r_y2 = _mm256_load_pd(soa2_ljc_r_y + j);
-						const __m256d c_dy = _mm256_sub_pd(c_r_y1, c_r_y2);
 						const __m256d c_r_z2 = _mm256_load_pd(soa2_ljc_r_z + j);
-						const __m256d c_dz = _mm256_sub_pd(c_r_z1, c_r_z2);
-						const __m256d c_dxdx = _mm256_mul_pd(c_dx, c_dx);
-						const __m256d c_dydy = _mm256_mul_pd(c_dy, c_dy);
-						const __m256d c_dzdz = _mm256_mul_pd(c_dz, c_dz);
-						const __m256d c_dxdx_dydy = _mm256_add_pd(c_dxdx, c_dydy);
-						const __m256d c_r2 = _mm256_add_pd(c_dxdx_dydy, c_dzdz);
-						const __m256d r2_inv_unmasked = _mm256_div_pd(one, c_r2);
-						const __m256d r2_inv = _mm256_and_pd(r2_inv_unmasked, forceMask);
+
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
+
 						const size_t id_j0 = soa2_ljc_id[j];
 						const size_t id_j1 = soa2_ljc_id[j + 1];
 						const size_t id_j2 = soa2_ljc_id[j + 2];
 						const size_t id_j3 = soa2_ljc_id[j + 3];
-
 						const __m256d e0s0 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j0, memoryMask_first_second);
 						const __m256d e1s1 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j1, memoryMask_first_second);
 						const __m256d e2s2 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j2, memoryMask_first_second);
 						const __m256d e3s3 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j3, memoryMask_first_second);
 
-						const __m256d e0e1 = _mm256_unpacklo_pd(e0s0, e1s1);
-						const __m256d s0s1 = _mm256_unpackhi_pd(e0s0, e1s1);
-						const __m256d e2e3 = _mm256_unpacklo_pd(e2s2, e3s3);
-						const __m256d s2s3 = _mm256_unpackhi_pd(e2s2, e3s3);
-
-						const __m256d eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
-						const __m256d sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
-
-						const __m256d lj2 = _mm256_mul_pd(sig2, r2_inv);
-						const __m256d lj4 = _mm256_mul_pd(lj2, lj2);
-						const __m256d lj6 = _mm256_mul_pd(lj4, lj2);
-						const __m256d lj12 = _mm256_mul_pd(lj6, lj6);
-						const __m256d lj12m6 = _mm256_sub_pd(lj12, lj6);
-
-						const __m256d eps24r2inv = _mm256_mul_pd(eps_24, r2_inv);
-						const __m256d lj12lj12m6 = _mm256_add_pd(lj12, lj12m6);
-						const __m256d scale = _mm256_mul_pd(eps24r2inv, lj12lj12m6);
-
-						const __m256d fx = _mm256_mul_pd(c_dx, scale);
-						const __m256d fy = _mm256_mul_pd(c_dy, scale);
-						const __m256d fz = _mm256_mul_pd(c_dz, scale);
-
 						const __m256d m_r_x2 = _mm256_load_pd(soa2_ljc_m_r_x + j);
-						const __m256d m_dx = _mm256_sub_pd(m1_r_x, m_r_x2);
 						const __m256d m_r_y2 = _mm256_load_pd(soa2_ljc_m_r_y + j);
-						const __m256d m_dy = _mm256_sub_pd(m1_r_y, m_r_y2);
 						const __m256d m_r_z2 = _mm256_load_pd(soa2_ljc_m_r_z + j);
-						const __m256d m_dz = _mm256_sub_pd(m1_r_z, m_r_z2);
+						__m256d fx, fy, fz;
+						//begin loop_body
+						_loopBodyLJ<MacroPolicy>(
+								m1_r_x, m1_r_y, m1_r_z,
+								c_r_x1,  c_r_y1, c_r_z1,
+								m_r_x2, m_r_y2, m_r_z2,
+								c_r_x2, c_r_y2, c_r_z2,
+								fx, fy, fz,
+								sum_upot6lj, sum_virial,
+								forceMask, e0s0,
+								e1s1, e2s2, e3s3,
+								id_j0, id_j1, id_j2, id_j3,
+								id_i);
 
-						const __m256d macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
+						//end loop_body_lj
 
-						// Only go on if at least 1 macroscopic value has to be calculated.
-						if (_mm256_movemask_pd(macroMask) > 0) {
-							const __m256d sh0 = _mm256_maskload_pd(_shift6[id_i] + id_j0, memoryMask_first);
-							const __m256d sh1 = _mm256_maskload_pd(_shift6[id_i] + id_j1, memoryMask_first);
-							const __m256d sh2 = _mm256_maskload_pd(_shift6[id_i] + id_j2, memoryMask_first);
-							const __m256d sh3 = _mm256_maskload_pd(_shift6[id_i] + id_j3, memoryMask_first);
-
-							const __m256d sh0sh1 = _mm256_unpacklo_pd(sh0, sh1);
-							const __m256d sh2sh3 = _mm256_unpacklo_pd(sh2, sh3);
-
-							const __m256d shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
-
-							const __m256d upot = _mm256_mul_pd(eps_24, lj12m6);
-							const __m256d upot_sh = _mm256_add_pd(shift6, upot);
-							const __m256d upot_masked = _mm256_and_pd(upot_sh, macroMask);
-
-							sum_upot6lj = _mm256_add_pd(sum_upot6lj, upot_masked);
-
-							const __m256d vir_x = _mm256_mul_pd(m_dx, fx);
-							const __m256d vir_y = _mm256_mul_pd(m_dy, fy);
-							const __m256d vir_z = _mm256_mul_pd(m_dz, fz);
-
-							const __m256d vir_xy = _mm256_add_pd(vir_x, vir_y);
-							const __m256d virial = _mm256_add_pd(vir_xy, vir_z);
-							const __m256d vir_masked = _mm256_and_pd(virial, macroMask);
-
-							sum_virial = _mm256_add_pd(sum_virial, vir_masked);
-						}
 						const __m256d old_fx2 = _mm256_load_pd(soa2_ljc_f_x + j);
 						const __m256d new_fx2 = _mm256_sub_pd(old_fx2, fx);
 						_mm256_store_pd(soa2_ljc_f_x + j, new_fx2);
