@@ -67,6 +67,10 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
+	int getHaloWidthNumCells() const {
+		return _haloWidthInNumCells[0];
+	}
+
 	// documentation see father class (ParticleContainer.h)
 	void rebuild(double bBoxMin[3], double bBoxMax[3]);
 
@@ -89,7 +93,7 @@ public:
 	//! Add the molecule to the list (it is not inserted into a cell yet)
 	bool addParticlePointer(Molecule* particle, bool inBoxCheckedAlready = false);
 
-	void extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v) {}
+	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) {}
 	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const {};
 
 

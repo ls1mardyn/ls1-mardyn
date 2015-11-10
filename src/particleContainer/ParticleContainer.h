@@ -151,7 +151,7 @@ public:
 	double getBoundingBoxMin(int dimension) const;
 
 
-	double getHaloWidthNumCells();
+	virtual int getHaloWidthNumCells();
 	//! @brief returns one coordinate of the higher corner of the bounding box
 	//!
 	//! @param dimension the coordinate which should be returned
@@ -197,7 +197,7 @@ public:
 	 * @param direction
 	 * @param v
 	 */
-	virtual void extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v) = 0;
+	virtual void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) = 0;
 
 	/**
 	 * @brief copy particles from the boundary layer for filling halo layers

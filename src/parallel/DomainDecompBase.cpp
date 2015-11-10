@@ -8,7 +8,7 @@
 #include <fstream>
 #include <cmath>
 
-DomainDecompBase::DomainDecompBase() {
+DomainDecompBase::DomainDecompBase() : _rank(0), _numProcs(1) {
 }
 
 DomainDecompBase::~DomainDecompBase() {
@@ -40,7 +40,8 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(direction));
-		moleculeContainer->extractHaloParticlesDirection(direction, mols);
+		const bool removeFromContainer = true;
+		moleculeContainer->getHaloParticlesDirection(direction, mols, removeFromContainer);
 
 		for (it = mols.begin(); it != mols.end(); ++it) {
 			Molecule * m = *it;
@@ -119,11 +120,11 @@ void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain
 }
 
 int DomainDecompBase::getRank() {
-	return 0;
+	return _rank;
 }
 
 int DomainDecompBase::getNumProcs() {
-	return 1;
+	return _numProcs;
 }
 
 void DomainDecompBase::barrier() {

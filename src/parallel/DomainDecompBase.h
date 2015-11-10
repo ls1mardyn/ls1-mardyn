@@ -179,6 +179,13 @@ protected:
 	virtual void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
 
 	virtual void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
+
+	//! the id of the current process
+	int _rank;
+
+	//! total number of processes in the simulation
+	int _numProcs;
+
 private:
 	CollectiveCommBase _collCommBase;
 };

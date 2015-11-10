@@ -8,7 +8,7 @@
 
 #define KDDIM 3
 
-#include "DomainDecompBase.h"
+#include "DomainDecomposition.h"
 #include "parallel/CollectiveCommunication.h"
 
 class ParticleData;
@@ -31,7 +31,7 @@ class KDNode;
  *
  * \note Some computation of the deviation / expected deviation is done in KDNode.
  */
-class KDDecomposition: public DomainDecompBase{
+class KDDecomposition: public DomainDecomposition {
 
 	friend class KDDecompositionTest;
 
@@ -104,11 +104,6 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param domain is e.g. needed to get the size of the local domain
 	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
 
-
-
-	// documentation see father class (DomainDecompBase.h)
-	bool procOwnsPos(double x, double y, double z, Domain* domain);
-
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain);
 	//! @todo comment and thing
@@ -133,50 +128,6 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
 	void printDecomp(std::string filename, Domain* domain);
-
-	// documentation see father class (DomainDecompBase.h)
-	int getRank(void){ return _ownRank;}
-
-	// documentation see father class (DomainDecompBase.h)
-	int getNumProcs(){ return _numProcs;}
-
-	// documentation see father class (DomainDecompBase.h)
-	void barrier() { MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) ); }
-
-	// documentation see father class (DomainDecompBase.h)
-	double getTime() { return MPI_Wtime(); };
-
-	//! @brief returns total number of molecules
-	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
-
-	//! @brief checks identity of random number generators
-	void assertIntIdentity(int IX);
-	void assertDisjunctivity(TMoleculeContainer* mm);
-
-
-	//##################################################################
-	// The following methods with prefix "collComm" are all used
-	// in the context of collective communication. Each of the methods
-	// basically has to call the corresponding method from the class
-	// CollectiveCommunication (or CollectiveCommDummy in the sequential
-	// case). To get information about how to use this methods, read
-	// the documentation of the class CollectiveCommunication and of the
-	// father class of this class (DomainDecompBase.h)
-	//##################################################################
-	void collCommInit(int numValues){ _collCommunication.init(MPI_COMM_WORLD, numValues); };
-	void collCommFinalize(){ _collCommunication.finalize(); };
-	void collCommAppendInt(int intValue){_collCommunication.appendInt(intValue);};
-	void collCommAppendUnsLong(unsigned long unsLongValue){_collCommunication.appendUnsLong(unsLongValue);};
-	void collCommAppendFloat(float floatValue){_collCommunication.appendFloat(floatValue);};
-	void collCommAppendDouble(double doubleValue){_collCommunication.appendDouble(doubleValue);};
-	void collCommAppendLongDouble(long double longDoubleValue){_collCommunication.appendLongDouble(longDoubleValue);};
-	int collCommGetInt(){return _collCommunication.getInt(); };
-	unsigned long collCommGetUnsLong(){return _collCommunication.getUnsLong(); };
-	float collCommGetFloat(){return _collCommunication.getFloat(); };
-	double collCommGetDouble(){ return _collCommunication.getDouble(); };
-	long double collCommGetLongDouble(){ return _collCommunication.getLongDouble(); };
-	void collCommAllreduceSum(){ _collCommunication.allreduceSum(); };
-	void collCommBroadcast(int root = 0){ _collCommunication.broadcast(root); };
 
 	int getUpdateFrequency() { return _frequency; }
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
@@ -352,10 +303,6 @@ class KDDecomposition: public DomainDecompBase{
 	//###    private member variables    ###
 	//######################################
 
-	//! Rank of the local process (to be set by the constructor)
-	int _ownRank;
-	//! total number of processes (to be set by the constructor)
-	int _numProcs;
 
 	//! Length of one cell. The length of the cells is the cutoff-radius, or a
 	//! little bit larger as there has to be a natural number of cells.
@@ -377,12 +324,7 @@ class KDDecomposition: public DomainDecompBase{
 	//! Number of particles for each cell (including halo?)
 	unsigned int* _numParticlesPerCell;
 
-	ParticleContainer* _moleculeContainer;
-
-	//! variable used for different kinds of collective operations
-	CollectiveCommunication _collCommunication;
-
-	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange 
+	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange
 	 * is not called exactly once in every simulatin step! */
 	//! number of simulation steps. Can be used to trigger load-balancing every _frequency steps
 	size_t _steps;
@@ -396,10 +338,6 @@ class KDDecomposition: public DomainDecompBase{
 	 * are created.
 	 */
 	int _fullSearchThreshold;
-
-	// mpi data type for particle data
-	MPI_Datatype _mpi_Particle_data;
-
 };
 
 

@@ -91,7 +91,7 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	double getHaloWidthNumCells(){
+	int getHaloWidthNumCells() {
 		return _haloWidthInNumCells[0];
 	}
 
@@ -171,7 +171,7 @@ public:
 	//! @brief appends pointers to all particles in the halo region to the list
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
-	void extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v);
+	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false);
 	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const;
 
 

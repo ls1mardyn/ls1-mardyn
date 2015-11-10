@@ -498,7 +498,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void LinkedCells::extractHaloParticlesDirection(int direction, std::vector<Molecule*>& v) {
+void LinkedCells::getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer) {
 	assert(direction != 0);
 
 	int startIndex[3] = { 0, 0, 0 };
@@ -519,7 +519,9 @@ void LinkedCells::extractHaloParticlesDirection(int direction, std::vector<Molec
 				ParticleCell & cell = _cells[cellIndex];
 				std::vector<Molecule *> & mols = cell.getParticlePointers();
 				v.insert(v.end(), mols.begin(), mols.end());
-				cell.removeAllParticles();
+				if (removeFromContainer == true) {
+					cell.removeAllParticles();
+				}
 			}
 		}
 	}

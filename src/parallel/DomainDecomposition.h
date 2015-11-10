@@ -5,6 +5,7 @@
 
 #include "parallel/CollectiveCommunication.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/ParticleData.h"
 
 #define DIM 3
 
@@ -31,7 +32,7 @@ public:
 	DomainDecomposition();
 
 	// documentation see father class (DomainDecompBase.h)
-	~DomainDecomposition();
+	virtual ~DomainDecomposition();
 
 	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
 	 *
@@ -55,7 +56,7 @@ public:
 	//! to the lower neighbour.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief this decompositin does no balancing, it just exchanges the particles
 	//!
@@ -65,16 +66,16 @@ public:
 	//! @param balance has no influence in this implementation
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
 	bool procOwnsPos(double x, double y, double z, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
-	double getBoundingBoxMin(int dimension, Domain* domain);
+	virtual double getBoundingBoxMin(int dimension, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
-	double getBoundingBoxMax(int dimension, Domain* domain);
+	virtual double getBoundingBoxMax(int dimension, Domain* domain);
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -103,30 +104,10 @@ public:
 	//!  8 8
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(std::string filename, Domain* domain);
-
-	//! @brief append the molecule date of all processes to the file
-	//!
-	//! Currently, parallel IO isn't used.
-	//! To ensure that not more than one process writes to the file at any time,
-	//! there is a loop over all processes with a barrier in between
-	//! @param filename name of the file into which the data will be written
-	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
-
-	// documentation see father class (DomainDecompBase.h)
-	int getRank(void) {
-		return _rank;
-	}
-
-	// documentation see father class (DomainDecompBase.h)
-	int getNumProcs();
+	virtual void printDecomp(std::string filename, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
 	void barrier() { MPI_CHECK( MPI_Barrier(_comm) ); }
-
-	// documentation see father class (DomainDecompBase.h)
-	double getTime();
 
 	//! @brief returns total number of molecules
 	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
@@ -200,34 +181,39 @@ public:
 		_collCommunication.broadcast(root);
 	}
 
-private:
-	//! determines and returns the rank of the process at the given coordinates
-	int getRank(int x, int y, int z);
-	//! with the given number of processes, the dimensions of the grid are calculated
-	void setGridSize(int num_procs);
+protected:
+	MPI_Datatype _mpi_Particle_data;
 
 	//! new topology after initializing the torus
 	MPI_Comm _comm;
-	int _comm_size;
-	MPI_Group _comm_group;
-	MPI_Group _neighbours_groups[DIM][2];
-
-	MPI_Datatype _mpi_Particle_data;
-	//! Number of processes in each dimension (i.e. 2 for 8 processes)
-	int _gridSize[DIM];
-	//! Grid coordinates of process
-	int _coords[DIM];
-	//!  rank of process
-	int _rank;
-	//! Array of neighbour ranks.
-	//! The first array index specifies the coordinate index,
-	//! the second one the direction. For the later use the predefined LOWER and HIGHER macros.
-	int _neighbours[DIM][2];
 
 	//! flag, which tells whether a processor covers the whole domain along a dimension
 	//! if true, we will use the methods provided by the base class for handling the
 	//! respective dimension, instead of packing and unpacking messages to self
 	bool _coversWholeDomain[DIM];
+
+	struct _CommunicationPartner {
+		int _rank;
+		double _regionLow[3], _regionHigh[3];
+		MPI_Request _sendRequest, _recvRequest;
+		MPI_Status _sendStatus, _recvStatus;
+		std::vector<ParticleData> _sendBuf, _recvBuf;
+		double _shift; //! for periodic boundaries
+	};
+
+private:
+	void initCommunicationPartners(ParticleContainer * moleculeContainer, Domain * domain);
+
+	//! Number of processes in each dimension (i.e. 2 for 8 processes)
+	int _gridSize[DIM];
+
+	//! Grid coordinates of process
+	int _coords[DIM];
+
+	//! Array of neighbour ranks.
+	//! The first array index specifies the coordinate index,
+	//! the second one the direction. For the later use the predefined LOWER and HIGHER macros.
+	_CommunicationPartner _partners[DIM][2];
 
 	//! variable used for different kinds of collective operations
 	CollectiveCommunication _collCommunication;
