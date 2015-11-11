@@ -317,7 +317,7 @@ private:
 				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0));
 				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,0, 0, 0, 0));
 				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0));
-				default: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)); 
+				default: return vcp_simd_ones();
 			}
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
@@ -362,22 +362,23 @@ private:
 			return false;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
+#if VCP_VEC_TYPE!=VCP_NOVEC
+		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
+			#if VCP_VEC_TYPE!=VCP_VEC_SSE3
+				, vcp_double_vec& j_mask
+			#endif
+				)
 		{
+			// Provide a mask with the same logic as used in
+			// bool Condition(double m_r2, double rc2)
 			return vcp_simd_lt(m_r2, rc2);//TODO: merge with sse3
 		}
+	#if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
 			return vcp_simd_zerov(); //TODO: initj check avx <-> sse3
 		}
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
-		{
-			// Provide a mask with the same logic as used in
-			// bool Condition(double m_r2, double rc2)
-			return vcp_simd_lt(m_r2, rc2);//TODO: merge with avx
-		}
+	#endif
 #endif /* definition of GetForceMask */
 	}; /* end of class CellPairPolicy_ */
 
