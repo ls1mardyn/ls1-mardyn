@@ -197,7 +197,7 @@ private:
 	 */
 	template<class MacroPolicy>
 		void _loopBodyNovecQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask);
-
+//TODO: try to merge this somehow
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 	template<class MacroPolicy>
 	inline
@@ -234,16 +234,12 @@ private:
 	template<class ForcePolicy>
 #if VCP_VEC_TYPE==VCP_NOVEC
 	unsigned long
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	vcp_double_vec
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
+#else
 	vcp_double_vec
 #endif
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
-	#if VCP_VEC_TYPE==VCP_VEC_SSE3
-			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
-	#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	#if VCP_VEC_TYPE!=VCP_VEC_NOVEC
 			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 	#endif
 			);
@@ -302,18 +298,18 @@ private:
 #if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
-			static vcp_double_vec ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
-			vcp_double_vec result = _mm256_and_pd(
-									_mm256_and_pd(
-											_mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS),
-											_mm256_cmp_pd(m_r2, _mm256_setzero_pd(), _CMP_NEQ_OS)),
+			static vcp_double_vec ones = vcp_simd_ones();
+			vcp_double_vec result = vcp_simd_and(
+										vcp_simd_and(
+											vcp_simd_lt(m_r2, rc2),
+											vcp_simd_neq(m_r2, vcp_simd_zerov())),
 									j_mask);
 			j_mask = ones;
 			return result;
 		}
 		inline static size_t InitJ (const size_t i)
 		{
-			return (i+1) & ~static_cast<size_t>(3);
+			return (i+1) & ~static_cast<size_t>(3); //TODO: initj check avx <-> sse3
 		}
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
@@ -327,15 +323,15 @@ private:
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static size_t InitJ (const size_t i)
 		{
-			return i + (i & static_cast<size_t>(1));
+			return i + (i & static_cast<size_t>(1)); //TODO: initj check avx <-> sse3
 		}
 
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return _mm_and_pd(_mm_cmplt_pd(m_r2, rc2), _mm_cmpneq_pd(m_r2, _mm_setzero_pd()));
+			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, vcp_simd_zerov()));
 		}
-#else
+#else //novec
 		inline static size_t InitJ (const size_t i)
 		{
 			return i + 1;
@@ -369,18 +365,18 @@ private:
 #if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
-			return _mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS);
+			return vcp_simd_lt(m_r2, rc2);//TODO: merge with sse3
 		}
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
-			return _mm256_setzero_pd();
+			return vcp_simd_zerov(); //TODO: initj check avx <-> sse3
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return _mm_cmplt_pd(m_r2, rc2);
+			return vcp_simd_lt(m_r2, rc2);//TODO: merge with avx
 		}
 #endif /* definition of GetForceMask */
 	}; /* end of class CellPairPolicy_ */
@@ -403,7 +399,7 @@ private:
 			return true;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+#if VCP_VEC_TYPE!=VCP_NOVEC
 		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
 			// We want all macroscopic values to be calculated, but not those
@@ -412,16 +408,6 @@ private:
 		}
 
 		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec, vcp_double_vec)
-		{
-			return forceMask;
-		}
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec&, const vcp_double_vec&, const vcp_double_vec&)
-		{
-			return forceMask;
-		}
-
-		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec&, const vcp_double_vec&, const vcp_double_vec&, const vcp_double_vec&)
 		{
 			return forceMask;
 		}
@@ -456,57 +442,32 @@ private:
 			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+#if VCP_VEC_TYPE!=VCP_NOVEC
 		// Only calculate macroscopic values for pairs where molecule 1
 		// "IsLessThan" molecule 2.
-		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz)
-		{
-			const vcp_double_vec zero = _mm_setzero_pd();
-
-			const vcp_double_vec x_lt = _mm_cmplt_pd(m_dx, zero);
-			const vcp_double_vec y_eq = _mm_cmpeq_pd(m_dy, zero);
-			const vcp_double_vec t1 = _mm_and_pd(y_eq, x_lt);
-
-			const vcp_double_vec y_lt = _mm_cmplt_pd(m_dy, zero);
-			const vcp_double_vec t2 = _mm_or_pd(y_lt, t1);
-
-			const vcp_double_vec z_eq = _mm_cmpeq_pd(m_dz, zero);
-			const vcp_double_vec t3 = _mm_and_pd(z_eq, t2);
-
-			const vcp_double_vec z_lt = _mm_cmplt_pd(m_dz, zero);
-			const vcp_double_vec t4 = _mm_or_pd(z_lt, t3);
-
-			return _mm_and_pd(forceMask, t4);
-		}
-
-		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz, vcp_double_vec switched)
-		{
-			return _mm_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
-		}
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
 		{
-			const vcp_double_vec zero = _mm256_setzero_pd();
+			const vcp_double_vec zero = vcp_simd_zerov();
 
-			const vcp_double_vec x_lt = _mm256_cmp_pd(m_dx, zero, _CMP_LT_OS);
-			const vcp_double_vec y_eq = _mm256_cmp_pd(m_dy, zero, _CMP_EQ_OS);
-			const vcp_double_vec t1 = _mm256_and_pd(x_lt, y_eq);
+			const vcp_double_vec x_lt = vcp_simd_lt(m_dx, zero);
+			const vcp_double_vec y_eq = vcp_simd_eq(m_dy, zero);
+			const vcp_double_vec t1 = vcp_simd_and(x_lt, y_eq);
 
-			const vcp_double_vec y_lt = _mm256_cmp_pd(m_dy, zero, _CMP_LT_OS);
-			const vcp_double_vec t2 = _mm256_or_pd(t1, y_lt);
+			const vcp_double_vec y_lt = vcp_simd_lt(m_dy, zero);
+			const vcp_double_vec t2 = vcp_simd_or(t1, y_lt);
 
-			const vcp_double_vec z_eq = _mm256_cmp_pd(m_dz, zero, _CMP_EQ_OS);
-			const vcp_double_vec t3 = _mm256_and_pd(t2, z_eq);
+			const vcp_double_vec z_eq = vcp_simd_eq(m_dz, zero);
+			const vcp_double_vec t3 = vcp_simd_and(t2, z_eq);
 
-			const vcp_double_vec z_lt = _mm256_cmp_pd(m_dz, zero, _CMP_LT_OS);
-			const vcp_double_vec t4 = _mm256_or_pd(t3, z_lt);
+			const vcp_double_vec z_lt = vcp_simd_lt(m_dz, zero);
+			const vcp_double_vec t4 = vcp_simd_or(t3, z_lt);
 
-			return _mm256_and_pd(t4, forceMask);
+			return vcp_simd_and(t4, forceMask);
 		}
 
 		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
-			return _mm256_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
+			return vcp_simd_xor(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class SomeMacroPolicy_ */
