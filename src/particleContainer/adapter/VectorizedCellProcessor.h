@@ -215,14 +215,14 @@ private:
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
-			const __m256d& m1_r_x, const __m256d& m1_r_y, const __m256d& m1_r_z,
-			const __m256d& r1_x, const __m256d& r1_y, const __m256d& r1_z,
-			const __m256d& m2_r_x, const __m256d& m2_r_y, const __m256d& m2_r_z,
-			const __m256d& r2_x, const __m256d& r2_y, const __m256d& r2_z,
-			__m256d& f_x, __m256d& f_y, __m256d& f_z,
-			__m256d& sum_upot6lj, __m256d& sum_virial,
-			const __m256d& forceMask, const __m256d& e0s0,
-			const __m256d& e1s1, const __m256d& e2s2, const __m256d& e3s3,
+			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
+			const vcp_double_vec& forceMask, const vcp_double_vec& e0s0,
+			const vcp_double_vec& e1s1, const vcp_double_vec& e2s2, const vcp_double_vec& e3s3,
 			const size_t& id_j0, const size_t& id_j1,  const size_t& id_j2,  const size_t& id_j3,
 			const size_t& id_i);
 #endif /* _loopBodyLJ SSE3 */
@@ -237,14 +237,14 @@ private:
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	vcp_double_vec
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	__m256d
+	vcp_double_vec
 #endif
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
 	#if VCP_VEC_TYPE==VCP_VEC_SSE3
 			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 	#elif VCP_VEC_TYPE==VCP_VEC_AVX
-			, const __m256d & cutoffRadiusSquareD, size_t end_j, const __m256d m1_r_x, const __m256d m1_r_y, const __m256d m1_r_z
+			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 	#endif
 			);
 
@@ -300,10 +300,10 @@ private:
 		}
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
+		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
-			static __m256d ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
-			__m256d result = _mm256_and_pd(
+			static vcp_double_vec ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
+			vcp_double_vec result = _mm256_and_pd(
 									_mm256_and_pd(
 											_mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS),
 											_mm256_cmp_pd(m_r2, _mm256_setzero_pd(), _CMP_NEQ_OS)),
@@ -315,7 +315,7 @@ private:
 		{
 			return (i+1) & ~static_cast<size_t>(3);
 		}
-		inline static __m256d InitJ_Mask (const size_t i)
+		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
 			switch (i & static_cast<size_t>(3)) {
 				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0));
@@ -367,11 +367,11 @@ private:
 		}
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
+		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
 			return _mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS);
 		}
-		inline static __m256d InitJ_Mask (const size_t i)
+		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
 			return _mm256_setzero_pd();
 		}
@@ -416,12 +416,12 @@ private:
 			return forceMask;
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&)
+		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec&, const vcp_double_vec&, const vcp_double_vec&)
 		{
 			return forceMask;
 		}
 
-		inline static __m256d GetMacroMaskSwitched(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&, const __m256d&)
+		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec&, const vcp_double_vec&, const vcp_double_vec&, const vcp_double_vec&)
 		{
 			return forceMask;
 		}
@@ -484,27 +484,27 @@ private:
 			return _mm_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz)
+		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
 		{
-			const __m256d zero = _mm256_setzero_pd();
+			const vcp_double_vec zero = _mm256_setzero_pd();
 
-			const __m256d x_lt = _mm256_cmp_pd(m_dx, zero, _CMP_LT_OS);
-			const __m256d y_eq = _mm256_cmp_pd(m_dy, zero, _CMP_EQ_OS);
-			const __m256d t1 = _mm256_and_pd(x_lt, y_eq);
+			const vcp_double_vec x_lt = _mm256_cmp_pd(m_dx, zero, _CMP_LT_OS);
+			const vcp_double_vec y_eq = _mm256_cmp_pd(m_dy, zero, _CMP_EQ_OS);
+			const vcp_double_vec t1 = _mm256_and_pd(x_lt, y_eq);
 
-			const __m256d y_lt = _mm256_cmp_pd(m_dy, zero, _CMP_LT_OS);
-			const __m256d t2 = _mm256_or_pd(t1, y_lt);
+			const vcp_double_vec y_lt = _mm256_cmp_pd(m_dy, zero, _CMP_LT_OS);
+			const vcp_double_vec t2 = _mm256_or_pd(t1, y_lt);
 
-			const __m256d z_eq = _mm256_cmp_pd(m_dz, zero, _CMP_EQ_OS);
-			const __m256d t3 = _mm256_and_pd(t2, z_eq);
+			const vcp_double_vec z_eq = _mm256_cmp_pd(m_dz, zero, _CMP_EQ_OS);
+			const vcp_double_vec t3 = _mm256_and_pd(t2, z_eq);
 
-			const __m256d z_lt = _mm256_cmp_pd(m_dz, zero, _CMP_LT_OS);
-			const __m256d t4 = _mm256_or_pd(t3, z_lt);
+			const vcp_double_vec z_lt = _mm256_cmp_pd(m_dz, zero, _CMP_LT_OS);
+			const vcp_double_vec t4 = _mm256_or_pd(t3, z_lt);
 
 			return _mm256_and_pd(t4, forceMask);
 		}
 
-		inline static __m256d GetMacroMaskSwitched(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz, const __m256d& switched)
+		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
 			return _mm256_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
 		}
