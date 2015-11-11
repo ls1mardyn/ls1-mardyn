@@ -365,7 +365,7 @@ private:
 #if VCP_VEC_TYPE!=VCP_NOVEC
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
 			#if VCP_VEC_TYPE!=VCP_VEC_SSE3
-				, vcp_double_vec& j_mask
+				, vcp_double_vec& sj_mask
 			#endif
 				)
 		{

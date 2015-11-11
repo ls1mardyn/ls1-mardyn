@@ -45,7 +45,8 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm_load_pd(a);}
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm_loaddup_pd(a);}
-	static inline void vcp_simd_store(double* location, vcp_double_vec a) {return _mm_store_pd(location, a);}
+	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {return _mm_store_pd(location, a);}
+	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm_movemask_pd(a);}
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm256_setzero_pd(); }
@@ -67,7 +68,9 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm256_load_pd(a);}
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm256_broadcast_sd(a);}
-	static inline void vcp_simd_store(double* location, vcp_double_vec a) {return _mm256_store_pd(location, a);}
+	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {return _mm256_store_pd(location, a);}
+	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm256_movemask_pd(a);}
+
 
 #endif
 

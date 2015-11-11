@@ -902,7 +902,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Only go on if at least 1 macroscopic value has to be calculated.
-	if (_mm_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		const vcp_double_vec sh1 = _mm_load_sd(_shift6[id_i] + id_j0);
 		const vcp_double_vec sh2 = _mm_load_sd(_shift6[id_i] + id_j1);
 		const vcp_double_vec shift6 = _mm_unpacklo_pd(sh1, sh2);
@@ -959,7 +959,7 @@ inline void _loopBodyCharge(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
 		sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
@@ -1020,7 +1020,7 @@ inline void _loopBodyChargeDipole(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm_movemask_pd(macroMask) > 0)
+	if (vcp_simd_movemask(macroMask) > 0)
 	{
 		const vcp_double_vec minusUpot_unmasked =  vcp_simd_mul(qpper4pie0dr3, re);
 		const vcp_double_vec minusUpot = vcp_simd_and(minusUpot_unmasked, macroMask);
@@ -1111,7 +1111,7 @@ inline void _loopBodyDipole(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// can we precompute some of this?
 		const vcp_double_vec upot = vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(e1e2, vcp_simd_mul(three, re1re2perr2)));
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
@@ -1209,7 +1209,7 @@ inline void _loopBodyChargeQuadrupole(
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// do we have to mask "upot"? It should already have been masked by "qQinv4dr3" which
 		// itself is masked by "invdr2".
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
@@ -1339,7 +1339,7 @@ inline void _loopBodyDipoleQuadrupole(
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// do we have to mask "upot"? It should already have been masked by "myqfac" which
 		// itself is masked by "invdr2".
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
@@ -1505,7 +1505,7 @@ inline void _loopBodyQudarupole(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// do we have to mask "upot"? It should already have been masked by "qfac" ...
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
 		sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
@@ -1627,7 +1627,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 
 	// Only go on if at least 1 macroscopic value has to be calculated.
-	if (_mm256_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		const vcp_double_vec sh0 = _mm256_maskload_pd(_shift6[id_i] + id_j0, memoryMask_first);
 		const vcp_double_vec sh1 = _mm256_maskload_pd(_shift6[id_i] + id_j1, memoryMask_first);
 		const vcp_double_vec sh2 = _mm256_maskload_pd(_shift6[id_i] + id_j2, memoryMask_first);
@@ -1698,7 +1698,7 @@ inline void _loopBodyCharge(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm256_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
 		sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
@@ -1760,7 +1760,7 @@ inline void _loopBodyChargeDipole(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm256_movemask_pd(macroMask) > 0)
+	if (vcp_simd_movemask(macroMask) > 0)
 	{
 		const vcp_double_vec minusUpot_unmasked =  vcp_simd_mul(qpper4pie0dr3, re);
 		const vcp_double_vec minusUpot = vcp_simd_and(minusUpot_unmasked, macroMask);
@@ -1851,7 +1851,7 @@ inline void _loopBodyDipole(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm256_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// can we precompute some of this?
 		const vcp_double_vec upot = vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(e1e2, vcp_simd_mul(three, re1re2perr2)));
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
@@ -1950,7 +1950,7 @@ inline void _loopBodyChargeQuadrupole(
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm256_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// do we have to mask "upot"? ...
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
 		sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
@@ -2079,7 +2079,7 @@ inline void _loopBodyDipoleQuadrupole(
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm256_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// do we have to mask "upot"? ...
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
 		sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
@@ -2246,7 +2246,7 @@ inline void _loopBodyQudarupole(
 
 	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
-	if (_mm256_movemask_pd(macroMask) > 0) {
+	if (vcp_simd_movemask(macroMask) > 0) {
 		// do we have to mask "upot"...
 		const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
 		sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
@@ -2779,7 +2779,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
 
-		if (!_mm_movemask_pd(compute_molecule_ljc)) {
+		if (!vcp_simd_movemask(compute_molecule_ljc)) {
 			i_ljc_idx += soa1_mol_ljc_num[i];
 		}
 		else {
@@ -2797,7 +2797,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_ljc_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_ljc_dist_lookup + j);
 					// Only go on if at least 1 of the forces has to be calculated.
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec c_r_x2 = vcp_simd_load(soa2_ljc_r_x + j);
 						const vcp_double_vec c_r_y2 = vcp_simd_load(soa2_ljc_r_y + j);
@@ -2857,7 +2857,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 		// Computation of site interactions with charges
 
-		if (!_mm_movemask_pd(compute_molecule_charges)) {
+		if (!vcp_simd_movemask(compute_molecule_charges)) {
 			i_charge_idx += soa1_mol_charges_num[i];
 			i_dipole_charge_idx += soa1_mol_dipoles_num[i];
 			i_quadrupole_charge_idx += soa1_mol_quadrupoles_num[i];
@@ -2882,7 +2882,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_charges_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec q2 = vcp_simd_load(soa2_charges_q + j);
 
 						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
@@ -2958,7 +2958,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_charges_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
 
@@ -3047,7 +3047,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_charges_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
 
@@ -3117,7 +3117,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		// Computation of site interactions with dipoles
 
 		// Continue with next molecule if no force has to be calculated
-		if (!_mm_movemask_pd(compute_molecule_dipoles)) {
+		if (!vcp_simd_movemask(compute_molecule_dipoles)) {
 			i_dipole_idx += soa1_mol_dipoles_num[i];
 			i_charge_dipole_idx += soa1_mol_charges_num[i];
 			i_quadrupole_dipole_idx += soa1_mol_quadrupoles_num[i];
@@ -3149,7 +3149,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_dipoles_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec p2 = vcp_simd_load(soa2_dipoles_p + j);
 						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
 						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
@@ -3248,7 +3248,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_dipoles_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
 
@@ -3346,7 +3346,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_dipoles_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
 						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
 						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
@@ -3431,7 +3431,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 		// Computation of site interactions with quadrupoles
 
-		if (!_mm_movemask_pd(compute_molecule_quadrupoles)) {
+		if (!vcp_simd_movemask(compute_molecule_quadrupoles)) {
 			i_quadrupole_idx += soa1_mol_quadrupoles_num[i];
 			i_charge_quadrupole_idx += soa1_mol_charges_num[i];
 			i_dipole_quadrupole_idx += soa1_mol_dipoles_num[i];
@@ -3463,7 +3463,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_quadrupoles_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec mjj = vcp_simd_load(soa2_quadrupoles_m + j);
 						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
@@ -3558,7 +3558,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_quadrupoles_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
 						const vcp_double_vec e_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
@@ -3654,7 +3654,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_quadrupoles_j; j += 2) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
 						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
@@ -3793,7 +3793,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
 
-		if (!_mm256_movemask_pd(compute_molecule_ljc)) {
+		if (!vcp_simd_movemask(compute_molecule_ljc)) {
 			i_ljc_idx += soa1_mol_ljc_num[i];
 		}
 		else {
@@ -3810,7 +3810,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_ljc_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_ljc_dist_lookup + j);
 					// Only go on if at least 1 of the forces has to be calculated.
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec c_r_x2 = vcp_simd_load(soa2_ljc_r_x + j);
 						const vcp_double_vec c_r_y2 = vcp_simd_load(soa2_ljc_r_y + j);
 						const vcp_double_vec c_r_z2 = vcp_simd_load(soa2_ljc_r_z + j);
@@ -3876,7 +3876,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 		// Computation of site interactions with charges
 
-		if (!_mm256_movemask_pd(compute_molecule_charges)) {
+		if (!vcp_simd_movemask(compute_molecule_charges)) {
 			i_charge_idx += soa1_mol_charges_num[i];
 			i_dipole_charge_idx += soa1_mol_dipoles_num[i];
 			i_quadrupole_charge_idx += soa1_mol_quadrupoles_num[i];
@@ -3901,7 +3901,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_charges_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec q2 = vcp_simd_load(soa2_charges_q + j);
 
 						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
@@ -3977,7 +3977,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_charges_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
 
@@ -4066,7 +4066,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_charges_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
 
@@ -4136,7 +4136,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		// Computation of site interactions with dipoles
 
 		// Continue with next molecule if no force has to be calculated
-		if (!_mm256_movemask_pd(compute_molecule_dipoles)) {
+		if (!vcp_simd_movemask(compute_molecule_dipoles)) {
 			i_dipole_idx += soa1_mol_dipoles_num[i];
 			i_charge_dipole_idx += soa1_mol_charges_num[i];
 			i_quadrupole_dipole_idx += soa1_mol_quadrupoles_num[i];
@@ -4168,7 +4168,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_dipoles_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec p2 = vcp_simd_load(soa2_dipoles_p + j);
 						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
 						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
@@ -4267,7 +4267,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_dipoles_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
 
@@ -4365,7 +4365,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_dipoles_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
 						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
 						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
@@ -4450,7 +4450,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 		// Computation of site interactions with quadrupoles
 
-		if (!_mm256_movemask_pd(compute_molecule_quadrupoles)) {
+		if (!vcp_simd_movemask(compute_molecule_quadrupoles)) {
 			i_quadrupole_idx += soa1_mol_quadrupoles_num[i];
 			i_charge_quadrupole_idx += soa1_mol_charges_num[i];
 			i_dipole_quadrupole_idx += soa1_mol_dipoles_num[i];
@@ -4482,7 +4482,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_quadrupoles_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec mjj = vcp_simd_load(soa2_quadrupoles_m + j);
 						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
@@ -4577,7 +4577,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_quadrupoles_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
 						const vcp_double_vec e_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
@@ -4673,7 +4673,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				for (; j < end_quadrupoles_j; j += 4) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (_mm256_movemask_pd(forceMask) > 0) {
+					if (vcp_simd_movemask(forceMask) > 0) {
 
 						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
 						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
