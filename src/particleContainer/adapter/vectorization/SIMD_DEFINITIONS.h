@@ -4,7 +4,7 @@
  *
  * \brief Contains macro definitions for the intrinsics used for the vectorization
  *
- * \author Steffen Seckler (seckler), seckler AT in.tum.de
+ * \author Steffen Seckler
  *
  **************************************************************************************/
 #pragma once

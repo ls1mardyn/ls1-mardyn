@@ -202,14 +202,14 @@ private:
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
-			const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-			const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-			const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-			const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-			__m128d& f_x, __m128d& f_y, __m128d& f_z,
-			__m128d& sum_upot6lj, __m128d& sum_virial,
-			const __m128d& forceMask,
-			const __m128d& e1s1, const __m128d& e2s2,
+			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
+			const vcp_double_vec& forceMask,
+			const vcp_double_vec& e1s1, const vcp_double_vec& e2s2,
 			const size_t& id_j0, const size_t& id_j1, const size_t& id_i);
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	template<class MacroPolicy>
@@ -235,14 +235,14 @@ private:
 #if VCP_VEC_TYPE==VCP_NOVEC
 	unsigned long
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	__m128d
+	vcp_double_vec
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	__m256d
 #endif
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
 	#if VCP_VEC_TYPE==VCP_VEC_SSE3
-			, const __m128d & cutoffRadiusSquareD, size_t end_j, const __m128d m1_r_x, const __m128d m1_r_y, const __m128d m1_r_z
+			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 	#elif VCP_VEC_TYPE==VCP_VEC_AVX
 			, const __m256d & cutoffRadiusSquareD, size_t end_j, const __m256d m1_r_x, const __m256d m1_r_y, const __m256d m1_r_z
 	#endif
@@ -265,7 +265,7 @@ private:
 	 * Returns whether to calculate the force for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static __m128d GetMask(__m128d m_r2, __m128d rc2);<br>
+	 * static vcp_double_vec GetMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The MacroPolicy class must provide the following methods:<br>
@@ -273,7 +273,7 @@ private:
 	 * Returns whether to store macroscopic values for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz);
+	 * static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz);
 	 * <br> Returns the mask indicating for which pairs to store macroscopic values in<br>
 	 * the vectorized code.
 	 *
@@ -331,7 +331,7 @@ private:
 		}
 
 		// Erstellen der Bitmaske, analog zu Condition oben
-		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
+		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			return _mm_and_pd(_mm_cmplt_pd(m_r2, rc2), _mm_cmpneq_pd(m_r2, _mm_setzero_pd()));
 		}
@@ -376,7 +376,7 @@ private:
 			return _mm256_setzero_pd();
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
+		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
@@ -404,14 +404,14 @@ private:
 		}
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static __m128d GetMacroMask(__m128d forceMask, __m128d, __m128d, __m128d)
+		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
 			// We want all macroscopic values to be calculated, but not those
 			// for pairs which we ignore because of cutoff or other reasons.
 			return forceMask;
 		}
 
-		inline static __m128d GetMacroMaskSwitched(__m128d forceMask, __m128d, __m128d, __m128d, __m128d)
+		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
 			return forceMask;
 		}
@@ -459,27 +459,27 @@ private:
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 		// Only calculate macroscopic values for pairs where molecule 1
 		// "IsLessThan" molecule 2.
-		inline static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz)
+		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz)
 		{
-			const __m128d zero = _mm_setzero_pd();
+			const vcp_double_vec zero = _mm_setzero_pd();
 
-			const __m128d x_lt = _mm_cmplt_pd(m_dx, zero);
-			const __m128d y_eq = _mm_cmpeq_pd(m_dy, zero);
-			const __m128d t1 = _mm_and_pd(y_eq, x_lt);
+			const vcp_double_vec x_lt = _mm_cmplt_pd(m_dx, zero);
+			const vcp_double_vec y_eq = _mm_cmpeq_pd(m_dy, zero);
+			const vcp_double_vec t1 = _mm_and_pd(y_eq, x_lt);
 
-			const __m128d y_lt = _mm_cmplt_pd(m_dy, zero);
-			const __m128d t2 = _mm_or_pd(y_lt, t1);
+			const vcp_double_vec y_lt = _mm_cmplt_pd(m_dy, zero);
+			const vcp_double_vec t2 = _mm_or_pd(y_lt, t1);
 
-			const __m128d z_eq = _mm_cmpeq_pd(m_dz, zero);
-			const __m128d t3 = _mm_and_pd(z_eq, t2);
+			const vcp_double_vec z_eq = _mm_cmpeq_pd(m_dz, zero);
+			const vcp_double_vec t3 = _mm_and_pd(z_eq, t2);
 
-			const __m128d z_lt = _mm_cmplt_pd(m_dz, zero);
-			const __m128d t4 = _mm_or_pd(z_lt, t3);
+			const vcp_double_vec z_lt = _mm_cmplt_pd(m_dz, zero);
+			const vcp_double_vec t4 = _mm_or_pd(z_lt, t3);
 
 			return _mm_and_pd(forceMask, t4);
 		}
 
-		inline static __m128d GetMacroMaskSwitched(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz, __m128d switched)
+		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz, vcp_double_vec switched)
 		{
 			return _mm_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
 		}

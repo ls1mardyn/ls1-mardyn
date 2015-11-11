@@ -844,131 +844,131 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 
-const __m128d zero = _mm_setzero_pd();
-const __m128d one = _mm_set1_pd(1.0);
-const __m128d two = _mm_set1_pd(2.0);
-const __m128d three = _mm_set1_pd(3.0);
-const __m128d four = _mm_set1_pd(4.0);
-const __m128d five = _mm_set1_pd(5.0);
-const __m128d six = _mm_set1_pd(6.0);
-const __m128d ten = _mm_set1_pd(10.0);
-const __m128d _05 = _mm_set1_pd(0.5);
-const __m128d _075 = _mm_set1_pd(0.75);
-const __m128d _1pt5 = _mm_set1_pd(1.5);
-const __m128d _15 = _mm_set1_pd(15.0);
+const vcp_double_vec zero = _mm_setzero_pd();
+const vcp_double_vec one = _mm_set1_pd(1.0);
+const vcp_double_vec two = _mm_set1_pd(2.0);
+const vcp_double_vec three = _mm_set1_pd(3.0);
+const vcp_double_vec four = _mm_set1_pd(4.0);
+const vcp_double_vec five = _mm_set1_pd(5.0);
+const vcp_double_vec six = _mm_set1_pd(6.0);
+const vcp_double_vec ten = _mm_set1_pd(10.0);
+const vcp_double_vec _05 = _mm_set1_pd(0.5);
+const vcp_double_vec _075 = _mm_set1_pd(0.75);
+const vcp_double_vec _1pt5 = _mm_set1_pd(1.5);
+const vcp_double_vec _15 = _mm_set1_pd(15.0);
 
 template<class MacroPolicy>
 inline
 void VectorizedCellProcessor :: _loopBodyLJ(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& sum_upot6lj, __m128d& sum_virial,
-		const __m128d& forceMask,
-		const __m128d& e1s1, const __m128d& e2s2,
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask,
+		const vcp_double_vec& e1s1, const vcp_double_vec& e2s2,
 		const size_t& id_j0, const size_t& id_j1, const size_t& id_i)
 {
-	const __m128d c_dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d c_dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d c_dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec c_dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec c_dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec c_dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d c_dxdx = _mm_mul_pd(c_dx, c_dx);
-	const __m128d c_dydy = _mm_mul_pd(c_dy, c_dy);
-	const __m128d c_dzdz = _mm_mul_pd(c_dz, c_dz);
-	const __m128d c_dxdx_dydy = _mm_add_pd(c_dxdx, c_dydy);
-	const __m128d c_r2 = _mm_add_pd(c_dxdx_dydy, c_dzdz);
-	const __m128d r2_inv_unmasked = _mm_div_pd(one, c_r2);
-	const __m128d r2_inv = _mm_and_pd(r2_inv_unmasked, forceMask);
+	const vcp_double_vec c_dxdx = _mm_mul_pd(c_dx, c_dx);
+	const vcp_double_vec c_dydy = _mm_mul_pd(c_dy, c_dy);
+	const vcp_double_vec c_dzdz = _mm_mul_pd(c_dz, c_dz);
+	const vcp_double_vec c_dxdx_dydy = _mm_add_pd(c_dxdx, c_dydy);
+	const vcp_double_vec c_r2 = _mm_add_pd(c_dxdx_dydy, c_dzdz);
+	const vcp_double_vec r2_inv_unmasked = _mm_div_pd(one, c_r2);
+	const vcp_double_vec r2_inv = _mm_and_pd(r2_inv_unmasked, forceMask);
 
-	const __m128d eps_24 = _mm_unpacklo_pd(e1s1, e2s2);
-	const __m128d sig2 = _mm_unpackhi_pd(e1s1, e2s2);
-	const __m128d lj2 = _mm_mul_pd(sig2, r2_inv);
-	const __m128d lj4 = _mm_mul_pd(lj2, lj2);
-	const __m128d lj6 = _mm_mul_pd(lj4, lj2);
-	const __m128d lj12 = _mm_mul_pd(lj6, lj6);
-	const __m128d lj12m6 = _mm_sub_pd(lj12, lj6);
-	const __m128d eps24r2inv = _mm_mul_pd(eps_24, r2_inv);
-	const __m128d lj12lj12m6 = _mm_add_pd(lj12, lj12m6);
-	const __m128d scale = _mm_mul_pd(eps24r2inv, lj12lj12m6);
+	const vcp_double_vec eps_24 = _mm_unpacklo_pd(e1s1, e2s2);
+	const vcp_double_vec sig2 = _mm_unpackhi_pd(e1s1, e2s2);
+	const vcp_double_vec lj2 = _mm_mul_pd(sig2, r2_inv);
+	const vcp_double_vec lj4 = _mm_mul_pd(lj2, lj2);
+	const vcp_double_vec lj6 = _mm_mul_pd(lj4, lj2);
+	const vcp_double_vec lj12 = _mm_mul_pd(lj6, lj6);
+	const vcp_double_vec lj12m6 = _mm_sub_pd(lj12, lj6);
+	const vcp_double_vec eps24r2inv = _mm_mul_pd(eps_24, r2_inv);
+	const vcp_double_vec lj12lj12m6 = _mm_add_pd(lj12, lj12m6);
+	const vcp_double_vec scale = _mm_mul_pd(eps24r2inv, lj12lj12m6);
 	f_x = _mm_mul_pd(c_dx, scale);
 	f_y = _mm_mul_pd(c_dy, scale);
 	f_z = _mm_mul_pd(c_dz, scale);
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Only go on if at least 1 macroscopic value has to be calculated.
 	if (_mm_movemask_pd(macroMask) > 0) {
-		const __m128d sh1 = _mm_load_sd(_shift6[id_i] + id_j0);
-		const __m128d sh2 = _mm_load_sd(_shift6[id_i] + id_j1);
-		const __m128d shift6 = _mm_unpacklo_pd(sh1, sh2);
-		const __m128d upot = _mm_mul_pd(eps_24, lj12m6);
-		const __m128d upot_sh = _mm_add_pd(shift6, upot);
-		const __m128d upot_masked = _mm_and_pd(upot_sh, macroMask);
+		const vcp_double_vec sh1 = _mm_load_sd(_shift6[id_i] + id_j0);
+		const vcp_double_vec sh2 = _mm_load_sd(_shift6[id_i] + id_j1);
+		const vcp_double_vec shift6 = _mm_unpacklo_pd(sh1, sh2);
+		const vcp_double_vec upot = _mm_mul_pd(eps_24, lj12m6);
+		const vcp_double_vec upot_sh = _mm_add_pd(shift6, upot);
+		const vcp_double_vec upot_masked = _mm_and_pd(upot_sh, macroMask);
 		sum_upot6lj = _mm_add_pd(sum_upot6lj, upot_masked);
-		const __m128d vir_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d vir_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d vir_z = _mm_mul_pd(m_dz, f_z);
-		const __m128d vir_xy = _mm_add_pd(vir_x, vir_y);
-		const __m128d virial = _mm_add_pd(vir_xy, vir_z);
-		const __m128d vir_masked = _mm_and_pd(virial, macroMask);
+		const vcp_double_vec vir_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec vir_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec vir_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec vir_xy = _mm_add_pd(vir_x, vir_y);
+		const vcp_double_vec virial = _mm_add_pd(vir_xy, vir_z);
+		const vcp_double_vec vir_masked = _mm_and_pd(virial, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, vir_masked);
 	}
 }
 
 template<class MacroPolicy>
 inline void _loopBodyCharge(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& qii,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		const __m128d& qjj,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& sum_upotXpoles, __m128d& sum_virial,
-		const __m128d& forceMask)
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& qii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& qjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask)
 {
-	const __m128d c_dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d c_dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d c_dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec c_dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec c_dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec c_dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d c_dx2 = _mm_mul_pd(c_dx, c_dx);
-	const __m128d c_dy2 = _mm_mul_pd(c_dy, c_dy);
-	const __m128d c_dz2 = _mm_mul_pd(c_dz, c_dz);
+	const vcp_double_vec c_dx2 = _mm_mul_pd(c_dx, c_dx);
+	const vcp_double_vec c_dy2 = _mm_mul_pd(c_dy, c_dy);
+	const vcp_double_vec c_dz2 = _mm_mul_pd(c_dz, c_dz);
 
-	const __m128d c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
-	const __m128d c_dr2_inv_unmasked = _mm_div_pd(one, c_dr2);
-	const __m128d c_dr2_inv = _mm_and_pd(c_dr2_inv_unmasked, forceMask);
-    const __m128d c_dr_inv = _mm_sqrt_pd(c_dr2_inv);
+	const vcp_double_vec c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
+	const vcp_double_vec c_dr2_inv_unmasked = _mm_div_pd(one, c_dr2);
+	const vcp_double_vec c_dr2_inv = _mm_and_pd(c_dr2_inv_unmasked, forceMask);
+    const vcp_double_vec c_dr_inv = _mm_sqrt_pd(c_dr2_inv);
 
-	const __m128d q1q2per4pie0 = _mm_mul_pd(qii, qjj);
-	const __m128d upot = _mm_mul_pd(q1q2per4pie0, c_dr_inv);
-	const __m128d fac = _mm_mul_pd(upot, c_dr2_inv);
+	const vcp_double_vec q1q2per4pie0 = _mm_mul_pd(qii, qjj);
+	const vcp_double_vec upot = _mm_mul_pd(q1q2per4pie0, c_dr_inv);
+	const vcp_double_vec fac = _mm_mul_pd(upot, c_dr2_inv);
 
 	f_x = _mm_mul_pd(c_dx, fac);
 	f_y = _mm_mul_pd(c_dy, fac);
 	f_z = _mm_mul_pd(c_dz, fac);
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
 	if (_mm_movemask_pd(macroMask) > 0) {
-		const __m128d upot_masked = _mm_and_pd(upot, macroMask);
+		const vcp_double_vec upot_masked = _mm_and_pd(upot, macroMask);
 		sum_upotXpoles = _mm_add_pd(sum_upotXpoles, upot_masked);
 
-		const __m128d virial_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d virial_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d virial_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec virial_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec virial_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec virial_z = _mm_mul_pd(m_dz, f_z);
 
-		const __m128d virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
-		const __m128d virial_masked = _mm_and_pd(virial, macroMask);
+		const vcp_double_vec virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
+		const vcp_double_vec virial_masked = _mm_and_pd(virial, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, virial_masked);
 
 	}
@@ -976,75 +976,75 @@ inline void _loopBodyCharge(
 
 template<class MacroPolicy>
 inline void _loopBodyChargeDipole(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& q,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		const __m128d& e_x, const __m128d& e_y, const __m128d& e_z,
-		const __m128d& p,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& M_x, __m128d& M_y, __m128d& M_z,
-		__m128d& sum_upotXpoles, __m128d& sum_virial,
-		const __m128d& forceMask, const __m128d& switched)
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
+		const vcp_double_vec& p,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched)
 {
-	const __m128d dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d dx2 = _mm_mul_pd(dx, dx);
-	const __m128d dy2 = _mm_mul_pd(dy, dy);
-	const __m128d dz2 = _mm_mul_pd(dz, dz);
+	const vcp_double_vec dx2 = _mm_mul_pd(dx, dx);
+	const vcp_double_vec dy2 = _mm_mul_pd(dy, dy);
+	const vcp_double_vec dz2 = _mm_mul_pd(dz, dz);
 
-	const __m128d dr2 = _mm_add_pd(_mm_add_pd(dx2, dy2), dz2);
+	const vcp_double_vec dr2 = _mm_add_pd(_mm_add_pd(dx2, dy2), dz2);
 
-	const __m128d dr2_inv_unmasked = _mm_div_pd(one, dr2);
-	const __m128d dr2_inv = _mm_and_pd(dr2_inv_unmasked, forceMask);
-	const __m128d dr_inv = _mm_sqrt_pd(dr2_inv);
-	const __m128d dr3_inv = _mm_mul_pd(dr2_inv, dr_inv);
+	const vcp_double_vec dr2_inv_unmasked = _mm_div_pd(one, dr2);
+	const vcp_double_vec dr2_inv = _mm_and_pd(dr2_inv_unmasked, forceMask);
+	const vcp_double_vec dr_inv = _mm_sqrt_pd(dr2_inv);
+	const vcp_double_vec dr3_inv = _mm_mul_pd(dr2_inv, dr_inv);
 
-	const __m128d re = _mm_add_pd(_mm_mul_pd(dx, e_x), _mm_add_pd(_mm_mul_pd(dy, e_y), _mm_mul_pd(dz, e_z)));
+	const vcp_double_vec re = _mm_add_pd(_mm_mul_pd(dx, e_x), _mm_add_pd(_mm_mul_pd(dy, e_y), _mm_mul_pd(dz, e_z)));
 
-	const __m128d qpper4pie0 = _mm_mul_pd(q, p);
-	const __m128d qpper4pie0dr3 = _mm_mul_pd(qpper4pie0, dr3_inv);
+	const vcp_double_vec qpper4pie0 = _mm_mul_pd(q, p);
+	const vcp_double_vec qpper4pie0dr3 = _mm_mul_pd(qpper4pie0, dr3_inv);
 
-	const __m128d fac = _mm_mul_pd(dr2_inv, _mm_mul_pd(three, re));
+	const vcp_double_vec fac = _mm_mul_pd(dr2_inv, _mm_mul_pd(three, re));
 
 	f_x = _mm_mul_pd(qpper4pie0dr3, _mm_sub_pd(e_x, _mm_mul_pd(dx, fac)));
 	f_y = _mm_mul_pd(qpper4pie0dr3, _mm_sub_pd(e_y, _mm_mul_pd(dy, fac)));
 	f_z = _mm_mul_pd(qpper4pie0dr3, _mm_sub_pd(e_z, _mm_mul_pd(dz, fac)));
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
 	if (_mm_movemask_pd(macroMask) > 0)
 	{
-		const __m128d minusUpot_unmasked =  _mm_mul_pd(qpper4pie0dr3, re);
-		const __m128d minusUpot = _mm_and_pd(minusUpot_unmasked, macroMask);
+		const vcp_double_vec minusUpot_unmasked =  _mm_mul_pd(qpper4pie0dr3, re);
+		const vcp_double_vec minusUpot = _mm_and_pd(minusUpot_unmasked, macroMask);
 		sum_upotXpoles = _mm_sub_pd(sum_upotXpoles, minusUpot);
 
-		const __m128d virial_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d virial_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d virial_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec virial_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec virial_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec virial_z = _mm_mul_pd(m_dz, f_z);
 
-		const __m128d virial_unmasked = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
-		const __m128d virial = _mm_and_pd(virial_unmasked, macroMask);
+		const vcp_double_vec virial_unmasked = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
+		const vcp_double_vec virial = _mm_and_pd(virial_unmasked, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, virial);
 	}
 
-	const __m128d e_x_dy = _mm_mul_pd(e_x, dy);
-	const __m128d e_x_dz = _mm_mul_pd(e_x, dz);
-	const __m128d e_y_dx = _mm_mul_pd(e_y, dx);
-	const __m128d e_y_dz = _mm_mul_pd(e_y, dz);
-	const __m128d e_z_dx = _mm_mul_pd(e_z, dx);
-	const __m128d e_z_dy = _mm_mul_pd(e_z, dy);
+	const vcp_double_vec e_x_dy = _mm_mul_pd(e_x, dy);
+	const vcp_double_vec e_x_dz = _mm_mul_pd(e_x, dz);
+	const vcp_double_vec e_y_dx = _mm_mul_pd(e_y, dx);
+	const vcp_double_vec e_y_dz = _mm_mul_pd(e_y, dz);
+	const vcp_double_vec e_z_dx = _mm_mul_pd(e_z, dx);
+	const vcp_double_vec e_z_dy = _mm_mul_pd(e_z, dy);
 
-	const __m128d e_x_dy_minus_e_y_dx = _mm_sub_pd(e_x_dy, e_y_dx);
-	const __m128d e_y_dz_minus_e_z_dy = _mm_sub_pd(e_y_dz, e_z_dy);
-	const __m128d e_z_dx_minus_e_x_dz = _mm_sub_pd(e_z_dx, e_x_dz);
+	const vcp_double_vec e_x_dy_minus_e_y_dx = _mm_sub_pd(e_x_dy, e_y_dx);
+	const vcp_double_vec e_y_dz_minus_e_z_dy = _mm_sub_pd(e_y_dz, e_z_dy);
+	const vcp_double_vec e_z_dx_minus_e_x_dz = _mm_sub_pd(e_z_dx, e_x_dz);
 
 	M_x = _mm_mul_pd(qpper4pie0dr3, e_y_dz_minus_e_z_dy);
 	M_y = _mm_mul_pd(qpper4pie0dr3, e_z_dx_minus_e_x_dz);
@@ -1053,92 +1053,92 @@ inline void _loopBodyChargeDipole(
 
 template<class MacroPolicy>
 inline void _loopBodyDipole(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& eii_x, const __m128d& eii_y, const __m128d& eii_z,
-		const __m128d& pii,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		const __m128d& ejj_x, const __m128d& ejj_y, const __m128d& ejj_z,
-		const __m128d& pjj,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& M1_x, __m128d& M1_y, __m128d& M1_z,
-		__m128d& M2_x, __m128d& M2_y, __m128d& M2_z,
-		__m128d& sum_upotXpoles, __m128d& sum_virial, __m128d& sum_myRF,
-		const __m128d& forceMask,
-		const __m128d& epsRFInvrc3)
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& pii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& pjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
+		const vcp_double_vec& forceMask,
+		const vcp_double_vec& epsRFInvrc3)
 {
-	const __m128d dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d dx2 = _mm_mul_pd(dx, dx);
-	const __m128d dy2 = _mm_mul_pd(dy, dy);
-	const __m128d dz2 = _mm_mul_pd(dz, dz);
+	const vcp_double_vec dx2 = _mm_mul_pd(dx, dx);
+	const vcp_double_vec dy2 = _mm_mul_pd(dy, dy);
+	const vcp_double_vec dz2 = _mm_mul_pd(dz, dz);
 
-	const __m128d dr2 = _mm_add_pd(_mm_add_pd(dx2, dy2), dz2);
+	const vcp_double_vec dr2 = _mm_add_pd(_mm_add_pd(dx2, dy2), dz2);
 
-	const __m128d dr2_inv_unmasked = _mm_div_pd(one, dr2);
-	const __m128d dr2_inv = _mm_and_pd(dr2_inv_unmasked, forceMask);
-	const __m128d dr_inv = _mm_sqrt_pd(dr2_inv);
-	const __m128d dr2three_inv = _mm_mul_pd(three, dr2_inv);
+	const vcp_double_vec dr2_inv_unmasked = _mm_div_pd(one, dr2);
+	const vcp_double_vec dr2_inv = _mm_and_pd(dr2_inv_unmasked, forceMask);
+	const vcp_double_vec dr_inv = _mm_sqrt_pd(dr2_inv);
+	const vcp_double_vec dr2three_inv = _mm_mul_pd(three, dr2_inv);
 
-	const __m128d p1p2 = _mm_and_pd(forceMask, _mm_mul_pd(pii, pjj));
-	const __m128d p1p2per4pie0 = p1p2;
-	const __m128d rffac = _mm_mul_pd(p1p2, epsRFInvrc3);
+	const vcp_double_vec p1p2 = _mm_and_pd(forceMask, _mm_mul_pd(pii, pjj));
+	const vcp_double_vec p1p2per4pie0 = p1p2;
+	const vcp_double_vec rffac = _mm_mul_pd(p1p2, epsRFInvrc3);
 
-	const __m128d p1p2per4pie0r3 = _mm_mul_pd(p1p2per4pie0, _mm_mul_pd(dr_inv, dr2_inv));
-	const __m128d p1p2threeper4pie0r5 = _mm_mul_pd(p1p2per4pie0r3, dr2three_inv);
+	const vcp_double_vec p1p2per4pie0r3 = _mm_mul_pd(p1p2per4pie0, _mm_mul_pd(dr_inv, dr2_inv));
+	const vcp_double_vec p1p2threeper4pie0r5 = _mm_mul_pd(p1p2per4pie0r3, dr2three_inv);
 
-	const __m128d e1e2 = _mm_add_pd(_mm_mul_pd(eii_x, ejj_x), _mm_add_pd(_mm_mul_pd(eii_y, ejj_y), _mm_mul_pd(eii_z, ejj_z)));
-	const __m128d re1 = _mm_add_pd(_mm_mul_pd(dx, eii_x), _mm_add_pd(_mm_mul_pd(dy, eii_y), _mm_mul_pd(dz, eii_z)));
-	const __m128d re2 = _mm_add_pd(_mm_mul_pd(dx, ejj_x), _mm_add_pd(_mm_mul_pd(dy, ejj_y), _mm_mul_pd(dz, ejj_z)));
+	const vcp_double_vec e1e2 = _mm_add_pd(_mm_mul_pd(eii_x, ejj_x), _mm_add_pd(_mm_mul_pd(eii_y, ejj_y), _mm_mul_pd(eii_z, ejj_z)));
+	const vcp_double_vec re1 = _mm_add_pd(_mm_mul_pd(dx, eii_x), _mm_add_pd(_mm_mul_pd(dy, eii_y), _mm_mul_pd(dz, eii_z)));
+	const vcp_double_vec re2 = _mm_add_pd(_mm_mul_pd(dx, ejj_x), _mm_add_pd(_mm_mul_pd(dy, ejj_y), _mm_mul_pd(dz, ejj_z)));
 
-	const __m128d re1threeperr2 = _mm_mul_pd(re1, dr2three_inv);
-	const __m128d re2threeperr2 = _mm_mul_pd(re2, dr2three_inv);
-	const __m128d re1re2perr2 = _mm_mul_pd(dr2_inv, _mm_mul_pd(re1, re2));
+	const vcp_double_vec re1threeperr2 = _mm_mul_pd(re1, dr2three_inv);
+	const vcp_double_vec re2threeperr2 = _mm_mul_pd(re2, dr2three_inv);
+	const vcp_double_vec re1re2perr2 = _mm_mul_pd(dr2_inv, _mm_mul_pd(re1, re2));
 
-	const __m128d e1e2minus5re1re2perr2 = _mm_sub_pd(e1e2, _mm_mul_pd(five, re1re2perr2));
+	const vcp_double_vec e1e2minus5re1re2perr2 = _mm_sub_pd(e1e2, _mm_mul_pd(five, re1re2perr2));
 
 
 	f_x = _mm_mul_pd(p1p2threeper4pie0r5, _mm_add_pd(_mm_mul_pd(dx, e1e2minus5re1re2perr2), _mm_add_pd(_mm_mul_pd(eii_x, re2), _mm_mul_pd(ejj_x, re1))));
 	f_y = _mm_mul_pd(p1p2threeper4pie0r5, _mm_add_pd(_mm_mul_pd(dy, e1e2minus5re1re2perr2), _mm_add_pd(_mm_mul_pd(eii_y, re2), _mm_mul_pd(ejj_y, re1))));
 	f_z = _mm_mul_pd(p1p2threeper4pie0r5, _mm_add_pd(_mm_mul_pd(dz, e1e2minus5re1re2perr2), _mm_add_pd(_mm_mul_pd(eii_z, re2), _mm_mul_pd(ejj_z, re1))));
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
 	if (_mm_movemask_pd(macroMask) > 0) {
 		// can we precompute some of this?
-		const __m128d upot = _mm_mul_pd(p1p2per4pie0r3, _mm_sub_pd(e1e2, _mm_mul_pd(three, re1re2perr2)));
-		const __m128d upot_masked = _mm_and_pd(upot, macroMask);
+		const vcp_double_vec upot = _mm_mul_pd(p1p2per4pie0r3, _mm_sub_pd(e1e2, _mm_mul_pd(three, re1re2perr2)));
+		const vcp_double_vec upot_masked = _mm_and_pd(upot, macroMask);
 		sum_upotXpoles = _mm_add_pd(sum_upotXpoles, upot_masked);
 
-		const __m128d virial_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d virial_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d virial_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec virial_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec virial_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec virial_z = _mm_mul_pd(m_dz, f_z);
 
-		const __m128d virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
-		const __m128d virial_masked = _mm_and_pd(virial, macroMask);
+		const vcp_double_vec virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
+		const vcp_double_vec virial_masked = _mm_and_pd(virial, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, virial_masked);
 
-		const __m128d myRF_masked =  _mm_and_pd(macroMask, _mm_mul_pd(rffac, e1e2));
+		const vcp_double_vec myRF_masked =  _mm_and_pd(macroMask, _mm_mul_pd(rffac, e1e2));
 		sum_myRF = _mm_add_pd(sum_myRF, myRF_masked);
 	}
 
-	const __m128d e1_x_e2_y = _mm_mul_pd(eii_x, ejj_y);
-	const __m128d e1_x_e2_z = _mm_mul_pd(eii_x, ejj_z);
-	const __m128d e1_y_e2_x = _mm_mul_pd(eii_y, ejj_x);
-	const __m128d e1_y_e2_z = _mm_mul_pd(eii_y, ejj_z);
-	const __m128d e1_z_e2_x = _mm_mul_pd(eii_z, ejj_x);
-	const __m128d e1_z_e2_y = _mm_mul_pd(eii_z, ejj_y);
+	const vcp_double_vec e1_x_e2_y = _mm_mul_pd(eii_x, ejj_y);
+	const vcp_double_vec e1_x_e2_z = _mm_mul_pd(eii_x, ejj_z);
+	const vcp_double_vec e1_y_e2_x = _mm_mul_pd(eii_y, ejj_x);
+	const vcp_double_vec e1_y_e2_z = _mm_mul_pd(eii_y, ejj_z);
+	const vcp_double_vec e1_z_e2_x = _mm_mul_pd(eii_z, ejj_x);
+	const vcp_double_vec e1_z_e2_y = _mm_mul_pd(eii_z, ejj_y);
 
-	const __m128d e1_x_e2_y_minus_e1_y_e2_x = _mm_sub_pd(e1_x_e2_y, e1_y_e2_x);
-	const __m128d e1_y_e2_z_minus_e1_z_e2_y = _mm_sub_pd(e1_y_e2_z, e1_z_e2_y);
-	const __m128d e1_z_e2_x_minus_e1_x_e2_z = _mm_sub_pd(e1_z_e2_x, e1_x_e2_z);
+	const vcp_double_vec e1_x_e2_y_minus_e1_y_e2_x = _mm_sub_pd(e1_x_e2_y, e1_y_e2_x);
+	const vcp_double_vec e1_y_e2_z_minus_e1_z_e2_y = _mm_sub_pd(e1_y_e2_z, e1_z_e2_y);
+	const vcp_double_vec e1_z_e2_x_minus_e1_x_e2_z = _mm_sub_pd(e1_z_e2_x, e1_x_e2_z);
 
 	M1_x = _mm_add_pd(_mm_mul_pd(p1p2per4pie0r3, _mm_sub_pd(_mm_mul_pd(re2threeperr2, _mm_sub_pd(_mm_mul_pd(eii_y, dz), _mm_mul_pd(eii_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), _mm_mul_pd(rffac, e1_y_e2_z_minus_e1_z_e2_y));
 	M1_y = _mm_add_pd(_mm_mul_pd(p1p2per4pie0r3, _mm_sub_pd(_mm_mul_pd(re2threeperr2, _mm_sub_pd(_mm_mul_pd(eii_z, dx), _mm_mul_pd(eii_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), _mm_mul_pd(rffac, e1_z_e2_x_minus_e1_x_e2_z));
@@ -1151,85 +1151,85 @@ inline void _loopBodyDipole(
 
 template<class MacroPolicy>
 inline void _loopBodyChargeQuadrupole(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& q,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		const __m128d& ejj_x, const __m128d& ejj_y, const __m128d& ejj_z,
-		const __m128d& m,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& M_x, __m128d& M_y, __m128d& M_z,
-		__m128d& sum_upotXpoles, __m128d& sum_virial,
-		const __m128d& forceMask, const __m128d& switched) {
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched) {
 
-	const __m128d c_dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d c_dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d c_dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec c_dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec c_dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec c_dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d c_dx2 = _mm_mul_pd(c_dx, c_dx);
-	const __m128d c_dy2 = _mm_mul_pd(c_dy, c_dy);
-	const __m128d c_dz2 = _mm_mul_pd(c_dz, c_dz);
+	const vcp_double_vec c_dx2 = _mm_mul_pd(c_dx, c_dx);
+	const vcp_double_vec c_dy2 = _mm_mul_pd(c_dy, c_dy);
+	const vcp_double_vec c_dz2 = _mm_mul_pd(c_dz, c_dz);
 
-	const __m128d c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
+	const vcp_double_vec c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
 
-	const __m128d invdr2_unmasked = _mm_div_pd(one, c_dr2);
-	const __m128d invdr2 = _mm_and_pd(invdr2_unmasked, forceMask);
-	const __m128d invdr = _mm_sqrt_pd(invdr2);
+	const vcp_double_vec invdr2_unmasked = _mm_div_pd(one, c_dr2);
+	const vcp_double_vec invdr2 = _mm_and_pd(invdr2_unmasked, forceMask);
+	const vcp_double_vec invdr = _mm_sqrt_pd(invdr2);
 
-	const __m128d qQ05per4pie0 = _mm_mul_pd(_05, _mm_mul_pd(q, m));
+	const vcp_double_vec qQ05per4pie0 = _mm_mul_pd(_05, _mm_mul_pd(q, m));
 
-	const __m128d ejj_xXdx = _mm_mul_pd(ejj_x, c_dx);
-	const __m128d ejj_yXdy = _mm_mul_pd(ejj_y, c_dy);
-	const __m128d ejj_zXdz = _mm_mul_pd(ejj_z, c_dz);
-	__m128d costj = _mm_add_pd(ejj_xXdx, _mm_add_pd(ejj_yXdy, ejj_zXdz));
+	const vcp_double_vec ejj_xXdx = _mm_mul_pd(ejj_x, c_dx);
+	const vcp_double_vec ejj_yXdy = _mm_mul_pd(ejj_y, c_dy);
+	const vcp_double_vec ejj_zXdz = _mm_mul_pd(ejj_z, c_dz);
+	vcp_double_vec costj = _mm_add_pd(ejj_xXdx, _mm_add_pd(ejj_yXdy, ejj_zXdz));
 	costj = _mm_mul_pd(costj, invdr);
 
-	const __m128d qQinv4dr3 = _mm_mul_pd(qQ05per4pie0, _mm_mul_pd(invdr, invdr2));
-	__m128d part1 = _mm_mul_pd(three, _mm_mul_pd(costj, costj));
-	const __m128d upot = _mm_mul_pd(qQinv4dr3, _mm_sub_pd(part1, one));
+	const vcp_double_vec qQinv4dr3 = _mm_mul_pd(qQ05per4pie0, _mm_mul_pd(invdr, invdr2));
+	vcp_double_vec part1 = _mm_mul_pd(three, _mm_mul_pd(costj, costj));
+	const vcp_double_vec upot = _mm_mul_pd(qQinv4dr3, _mm_sub_pd(part1, one));
 
 	/**********
 	 * Force
 	 **********/
-	const __m128d minus_partialRijInvdr = _mm_mul_pd(three, _mm_mul_pd(upot, invdr2));
-	const __m128d partialTjInvdr = _mm_mul_pd(_mm_mul_pd(six, costj), _mm_mul_pd(qQinv4dr3, invdr));
+	const vcp_double_vec minus_partialRijInvdr = _mm_mul_pd(three, _mm_mul_pd(upot, invdr2));
+	const vcp_double_vec partialTjInvdr = _mm_mul_pd(_mm_mul_pd(six, costj), _mm_mul_pd(qQinv4dr3, invdr));
 
 	part1 = _mm_mul_pd(costj, _mm_mul_pd(partialTjInvdr, invdr));
-	const __m128d fac = _mm_add_pd(part1, minus_partialRijInvdr);
+	const vcp_double_vec fac = _mm_add_pd(part1, minus_partialRijInvdr);
 
 	f_x = _mm_sub_pd(_mm_mul_pd(fac, c_dx), _mm_mul_pd(partialTjInvdr, ejj_x));
 	f_y = _mm_sub_pd(_mm_mul_pd(fac, c_dy), _mm_mul_pd(partialTjInvdr, ejj_y));
 	f_z = _mm_sub_pd(_mm_mul_pd(fac, c_dz), _mm_mul_pd(partialTjInvdr, ejj_z));
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 
 	// Check if we have to add the macroscopic values up for at least one of this pairs
 	if (_mm_movemask_pd(macroMask) > 0) {
 		// do we have to mask "upot"? It should already have been masked by "qQinv4dr3" which
 		// itself is masked by "invdr2".
-		const __m128d upot_masked = _mm_and_pd(upot, macroMask);
+		const vcp_double_vec upot_masked = _mm_and_pd(upot, macroMask);
 		sum_upotXpoles = _mm_add_pd(sum_upotXpoles, upot_masked);
 
-		const __m128d virial_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d virial_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d virial_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec virial_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec virial_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec virial_z = _mm_mul_pd(m_dz, f_z);
 
-		const __m128d virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
-		const __m128d virial_masked = _mm_and_pd(virial, macroMask);
+		const vcp_double_vec virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
+		const vcp_double_vec virial_masked = _mm_and_pd(virial, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, virial_masked);
 	}
 
 	/**********
 	 * Torque
 	 **********/
-	const __m128d minuseXrij_x = _mm_sub_pd(_mm_mul_pd(ejj_z, c_dy), _mm_mul_pd(ejj_y, c_dz));
-	const __m128d minuseXrij_y = _mm_sub_pd(_mm_mul_pd(ejj_x, c_dz), _mm_mul_pd(ejj_z, c_dx));
-	const __m128d minuseXrij_z = _mm_sub_pd(_mm_mul_pd(ejj_y, c_dx), _mm_mul_pd(ejj_x, c_dy));
+	const vcp_double_vec minuseXrij_x = _mm_sub_pd(_mm_mul_pd(ejj_z, c_dy), _mm_mul_pd(ejj_y, c_dz));
+	const vcp_double_vec minuseXrij_y = _mm_sub_pd(_mm_mul_pd(ejj_x, c_dz), _mm_mul_pd(ejj_z, c_dx));
+	const vcp_double_vec minuseXrij_z = _mm_sub_pd(_mm_mul_pd(ejj_y, c_dx), _mm_mul_pd(ejj_x, c_dy));
 
 	M_x = _mm_mul_pd(partialTjInvdr, minuseXrij_x);
 	M_y = _mm_mul_pd(partialTjInvdr, minuseXrij_y);
@@ -1238,83 +1238,83 @@ inline void _loopBodyChargeQuadrupole(
 
 template<class MacroPolicy>
 inline void _loopBodyDipoleQuadrupole(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& eii_x, const __m128d& eii_y, const __m128d& eii_z,
-		const __m128d& p,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		const __m128d& ejj_x, const __m128d& ejj_y, const __m128d& ejj_z,
-		const __m128d& m,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& M1_x, __m128d& M1_y, __m128d& M1_z,
-		__m128d& M2_x, __m128d& M2_y, __m128d& M2_z,
-		__m128d& sum_upotXpoles, __m128d& sum_virial,
-		const __m128d& forceMask, const __m128d& switched) {
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& p,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched) {
 
 
-	const __m128d c_dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d c_dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d c_dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec c_dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec c_dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec c_dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d c_dx2 = _mm_mul_pd(c_dx, c_dx);
-	const __m128d c_dy2 = _mm_mul_pd(c_dy, c_dy);
-	const __m128d c_dz2 = _mm_mul_pd(c_dz, c_dz);
+	const vcp_double_vec c_dx2 = _mm_mul_pd(c_dx, c_dx);
+	const vcp_double_vec c_dy2 = _mm_mul_pd(c_dy, c_dy);
+	const vcp_double_vec c_dz2 = _mm_mul_pd(c_dz, c_dz);
 
-	const __m128d c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
+	const vcp_double_vec c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
 
-	const __m128d invdr2_unmasked = _mm_div_pd(one, c_dr2);
-	const __m128d invdr2 = _mm_and_pd(invdr2_unmasked, forceMask);
-	const __m128d invdr = _mm_sqrt_pd(invdr2);
+	const vcp_double_vec invdr2_unmasked = _mm_div_pd(one, c_dr2);
+	const vcp_double_vec invdr2 = _mm_and_pd(invdr2_unmasked, forceMask);
+	const vcp_double_vec invdr = _mm_sqrt_pd(invdr2);
 
-	const __m128d myqfac = _mm_mul_pd(_mm_mul_pd(_1pt5, _mm_mul_pd(p, m)), _mm_mul_pd(invdr2, invdr2));
+	const vcp_double_vec myqfac = _mm_mul_pd(_mm_mul_pd(_1pt5, _mm_mul_pd(p, m)), _mm_mul_pd(invdr2, invdr2));
 
-	const __m128d eii_xXdx = _mm_mul_pd(eii_x, c_dx);
-	const __m128d eii_yXdy = _mm_mul_pd(eii_y, c_dy);
-	const __m128d eii_zXdz = _mm_mul_pd(eii_z, c_dz);
-	__m128d costi = _mm_add_pd(eii_xXdx, _mm_add_pd(eii_yXdy, eii_zXdz));
+	const vcp_double_vec eii_xXdx = _mm_mul_pd(eii_x, c_dx);
+	const vcp_double_vec eii_yXdy = _mm_mul_pd(eii_y, c_dy);
+	const vcp_double_vec eii_zXdz = _mm_mul_pd(eii_z, c_dz);
+	vcp_double_vec costi = _mm_add_pd(eii_xXdx, _mm_add_pd(eii_yXdy, eii_zXdz));
 	costi = _mm_mul_pd(costi, invdr);
 
-	const __m128d ejj_xXdx = _mm_mul_pd(ejj_x, c_dx);
-	const __m128d ejj_yXdy = _mm_mul_pd(ejj_y, c_dy);
-	const __m128d ejj_zXdz = _mm_mul_pd(ejj_z, c_dz);
-	__m128d costj = _mm_add_pd(ejj_xXdx, _mm_add_pd(ejj_yXdy, ejj_zXdz));
+	const vcp_double_vec ejj_xXdx = _mm_mul_pd(ejj_x, c_dx);
+	const vcp_double_vec ejj_yXdy = _mm_mul_pd(ejj_y, c_dy);
+	const vcp_double_vec ejj_zXdz = _mm_mul_pd(ejj_z, c_dz);
+	vcp_double_vec costj = _mm_add_pd(ejj_xXdx, _mm_add_pd(ejj_yXdy, ejj_zXdz));
 	costj = _mm_mul_pd(costj, invdr);
 
-	const __m128d cos2tj = _mm_mul_pd(costj, costj);
+	const vcp_double_vec cos2tj = _mm_mul_pd(costj, costj);
 
-	const __m128d eiiXejj_x = _mm_mul_pd(eii_x, ejj_x);
-	const __m128d eiiXejj_y = _mm_mul_pd(eii_y, ejj_y);
-	const __m128d eiiXejj_z = _mm_mul_pd(eii_z, ejj_z);
-	const __m128d cosgij = _mm_add_pd(eiiXejj_x, _mm_add_pd(eiiXejj_y, eiiXejj_z));
+	const vcp_double_vec eiiXejj_x = _mm_mul_pd(eii_x, ejj_x);
+	const vcp_double_vec eiiXejj_y = _mm_mul_pd(eii_y, ejj_y);
+	const vcp_double_vec eiiXejj_z = _mm_mul_pd(eii_z, ejj_z);
+	const vcp_double_vec cosgij = _mm_add_pd(eiiXejj_x, _mm_add_pd(eiiXejj_y, eiiXejj_z));
 
 	/************
 	 * Potential
 	 ************/
 	// TODO: Check if upot has to be multiplied by -1 according to DISS_STOLL S.178.
 	// This affects also the implementation in potforce.h
-	const __m128d _5cos2tjminus1 = _mm_sub_pd(_mm_mul_pd(five, cos2tj), one);
-	const __m128d _2costj = _mm_mul_pd(two, costj);
+	const vcp_double_vec _5cos2tjminus1 = _mm_sub_pd(_mm_mul_pd(five, cos2tj), one);
+	const vcp_double_vec _2costj = _mm_mul_pd(two, costj);
 
-	__m128d part1 = _mm_mul_pd(costi, _5cos2tjminus1);
-	__m128d part2 = _mm_mul_pd(_2costj, cosgij);
+	vcp_double_vec part1 = _mm_mul_pd(costi, _5cos2tjminus1);
+	vcp_double_vec part2 = _mm_mul_pd(_2costj, cosgij);
 
-	__m128d const upot = _mm_mul_pd(myqfac, _mm_sub_pd(part2, part1));
+	vcp_double_vec const upot = _mm_mul_pd(myqfac, _mm_sub_pd(part2, part1));
 
-	const __m128d myqfacXinvdr = _mm_mul_pd(myqfac, invdr);
-	const __m128d minus_partialRijInvdr = _mm_mul_pd(four, _mm_mul_pd(upot, invdr2));
-	const __m128d minus_partialTiInvdr = _mm_mul_pd(myqfacXinvdr, _5cos2tjminus1);
+	const vcp_double_vec myqfacXinvdr = _mm_mul_pd(myqfac, invdr);
+	const vcp_double_vec minus_partialRijInvdr = _mm_mul_pd(four, _mm_mul_pd(upot, invdr2));
+	const vcp_double_vec minus_partialTiInvdr = _mm_mul_pd(myqfacXinvdr, _5cos2tjminus1);
 
 	part1 = _mm_mul_pd(five, _mm_mul_pd(costi, costj));
 	part1 = _mm_sub_pd(part1, cosgij); // *-1!
 
-	const __m128d minus_partialTjInvdr = _mm_mul_pd(myqfacXinvdr, _mm_mul_pd(two, part1));
-	const __m128d partialGij = _mm_mul_pd(myqfac, _2costj);
+	const vcp_double_vec minus_partialTjInvdr = _mm_mul_pd(myqfacXinvdr, _mm_mul_pd(two, part1));
+	const vcp_double_vec partialGij = _mm_mul_pd(myqfac, _2costj);
 
 	part1 = _mm_mul_pd(costi, minus_partialTiInvdr);
 	part2 = _mm_mul_pd(costj, minus_partialTjInvdr);
-	__m128d part3 = _mm_add_pd(part1, part2);
-	const __m128d fac = _mm_sub_pd(minus_partialRijInvdr, _mm_mul_pd(part3, invdr));
+	vcp_double_vec part3 = _mm_add_pd(part1, part2);
+	const vcp_double_vec fac = _mm_sub_pd(minus_partialRijInvdr, _mm_mul_pd(part3, invdr));
 
 	// Force components
 	part1 = _mm_mul_pd(fac, c_dx);
@@ -1332,49 +1332,49 @@ inline void _loopBodyDipoleQuadrupole(
 	part3 = _mm_mul_pd(minus_partialTjInvdr, ejj_z);
 	f_z = _mm_add_pd(part1, _mm_add_pd(part2, part3));
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
 
 	// Check if we have to add the macroscopic values up for at least one of this pairs
 	if (_mm_movemask_pd(macroMask) > 0) {
 		// do we have to mask "upot"? It should already have been masked by "myqfac" which
 		// itself is masked by "invdr2".
-		const __m128d upot_masked = _mm_and_pd(upot, macroMask);
+		const vcp_double_vec upot_masked = _mm_and_pd(upot, macroMask);
 		sum_upotXpoles = _mm_add_pd(sum_upotXpoles, upot_masked);
 
-		const __m128d virial_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d virial_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d virial_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec virial_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec virial_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec virial_z = _mm_mul_pd(m_dz, f_z);
 
-		const __m128d virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
-		const __m128d virial_masked = _mm_and_pd(virial, macroMask);
+		const vcp_double_vec virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
+		const vcp_double_vec virial_masked = _mm_and_pd(virial, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, virial_masked);
 	}
 
 	/**********
 	 * Torque
 	 **********/
-	const __m128d eii_x_ejj_y = _mm_mul_pd(eii_x, ejj_y);
-	const __m128d eii_x_ejj_z = _mm_mul_pd(eii_x, ejj_z);
-	const __m128d eii_y_ejj_x = _mm_mul_pd(eii_y, ejj_x);
-	const __m128d eii_y_ejj_z = _mm_mul_pd(eii_y, ejj_z);
-	const __m128d eii_z_ejj_x = _mm_mul_pd(eii_z, ejj_x);
-	const __m128d eii_z_ejj_y = _mm_mul_pd(eii_z, ejj_y);
+	const vcp_double_vec eii_x_ejj_y = _mm_mul_pd(eii_x, ejj_y);
+	const vcp_double_vec eii_x_ejj_z = _mm_mul_pd(eii_x, ejj_z);
+	const vcp_double_vec eii_y_ejj_x = _mm_mul_pd(eii_y, ejj_x);
+	const vcp_double_vec eii_y_ejj_z = _mm_mul_pd(eii_y, ejj_z);
+	const vcp_double_vec eii_z_ejj_x = _mm_mul_pd(eii_z, ejj_x);
+	const vcp_double_vec eii_z_ejj_y = _mm_mul_pd(eii_z, ejj_y);
 
-	const __m128d eii_x_ejj_y_minus_eii_y_ejj_x = _mm_sub_pd(eii_x_ejj_y, eii_y_ejj_x);
-	const __m128d eii_y_ejj_z_minus_eii_z_ejj_y = _mm_sub_pd(eii_y_ejj_z, eii_z_ejj_y);
-	const __m128d eii_z_ejj_x_minus_eii_x_ejj_z = _mm_sub_pd(eii_z_ejj_x, eii_x_ejj_z);
+	const vcp_double_vec eii_x_ejj_y_minus_eii_y_ejj_x = _mm_sub_pd(eii_x_ejj_y, eii_y_ejj_x);
+	const vcp_double_vec eii_y_ejj_z_minus_eii_z_ejj_y = _mm_sub_pd(eii_y_ejj_z, eii_z_ejj_y);
+	const vcp_double_vec eii_z_ejj_x_minus_eii_x_ejj_z = _mm_sub_pd(eii_z_ejj_x, eii_x_ejj_z);
 
-	const __m128d partialGij_eiXej_x = _mm_mul_pd(partialGij, eii_y_ejj_z_minus_eii_z_ejj_y);
-	const __m128d partialGij_eiXej_y = _mm_mul_pd(partialGij, eii_z_ejj_x_minus_eii_x_ejj_z);
-	const __m128d partialGij_eiXej_z = _mm_mul_pd(partialGij, eii_x_ejj_y_minus_eii_y_ejj_x);
+	const vcp_double_vec partialGij_eiXej_x = _mm_mul_pd(partialGij, eii_y_ejj_z_minus_eii_z_ejj_y);
+	const vcp_double_vec partialGij_eiXej_y = _mm_mul_pd(partialGij, eii_z_ejj_x_minus_eii_x_ejj_z);
+	const vcp_double_vec partialGij_eiXej_z = _mm_mul_pd(partialGij, eii_x_ejj_y_minus_eii_y_ejj_x);
 
-	__m128d eXrij_x = _mm_sub_pd(_mm_mul_pd(eii_y, c_dz), _mm_mul_pd(eii_z, c_dy));
-	__m128d eXrij_y = _mm_sub_pd(_mm_mul_pd(eii_z, c_dx), _mm_mul_pd(eii_x, c_dz));
-	__m128d eXrij_z = _mm_sub_pd(_mm_mul_pd(eii_x, c_dy), _mm_mul_pd(eii_y, c_dx));
+	vcp_double_vec eXrij_x = _mm_sub_pd(_mm_mul_pd(eii_y, c_dz), _mm_mul_pd(eii_z, c_dy));
+	vcp_double_vec eXrij_y = _mm_sub_pd(_mm_mul_pd(eii_z, c_dx), _mm_mul_pd(eii_x, c_dz));
+	vcp_double_vec eXrij_z = _mm_sub_pd(_mm_mul_pd(eii_x, c_dy), _mm_mul_pd(eii_y, c_dx));
 
 	M1_x = _mm_sub_pd(_mm_mul_pd(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x);
 	M1_y = _mm_sub_pd(_mm_mul_pd(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y);
@@ -1391,75 +1391,75 @@ inline void _loopBodyDipoleQuadrupole(
 
 template<class MacroPolicy>
 inline void _loopBodyQudarupole(
-		const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-		const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-		const __m128d& eii_x, const __m128d& eii_y, const __m128d& eii_z,
-		const __m128d& mii,
-		const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-		const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-		const __m128d& ejj_x, const __m128d& ejj_y, const __m128d& ejj_z,
-		const __m128d& mjj,
-		__m128d& f_x, __m128d& f_y, __m128d& f_z,
-		__m128d& Mii_x, __m128d& Mii_y, __m128d& Mii_z,
-		__m128d& Mjj_x, __m128d& Mjj_y, __m128d& Mjj_z,
-		__m128d& sum_upotXpoles, __m128d& sum_virial,
-		const __m128d& forceMask)
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& mii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& mjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
+		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask)
 {
-	const __m128d c_dx = _mm_sub_pd(r1_x, r2_x);
-	const __m128d c_dy = _mm_sub_pd(r1_y, r2_y);
-	const __m128d c_dz = _mm_sub_pd(r1_z, r2_z);
+	const vcp_double_vec c_dx = _mm_sub_pd(r1_x, r2_x);
+	const vcp_double_vec c_dy = _mm_sub_pd(r1_y, r2_y);
+	const vcp_double_vec c_dz = _mm_sub_pd(r1_z, r2_z);
 
-	const __m128d c_dx2 = _mm_mul_pd(c_dx, c_dx);
-	const __m128d c_dy2 = _mm_mul_pd(c_dy, c_dy);
-	const __m128d c_dz2 = _mm_mul_pd(c_dz, c_dz);
+	const vcp_double_vec c_dx2 = _mm_mul_pd(c_dx, c_dx);
+	const vcp_double_vec c_dy2 = _mm_mul_pd(c_dy, c_dy);
+	const vcp_double_vec c_dz2 = _mm_mul_pd(c_dz, c_dz);
 
-	const __m128d c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
+	const vcp_double_vec c_dr2 = _mm_add_pd(_mm_add_pd(c_dx2, c_dy2), c_dz2);
 
-	const __m128d invdr2_unmasked = _mm_div_pd(one, c_dr2);
-	const __m128d invdr2 = _mm_and_pd(invdr2_unmasked, forceMask);
-	const __m128d invdr = _mm_sqrt_pd(invdr2);
+	const vcp_double_vec invdr2_unmasked = _mm_div_pd(one, c_dr2);
+	const vcp_double_vec invdr2 = _mm_and_pd(invdr2_unmasked, forceMask);
+	const vcp_double_vec invdr = _mm_sqrt_pd(invdr2);
 
-	__m128d qfac = _mm_mul_pd(_075, invdr);
+	vcp_double_vec qfac = _mm_mul_pd(_075, invdr);
 	qfac = _mm_mul_pd(qfac, _mm_mul_pd(mii, mjj));
 	qfac = _mm_mul_pd(qfac, _mm_mul_pd(invdr2, invdr2));
 
-	const __m128d eii_xXdx = _mm_mul_pd(eii_x, c_dx);
-	const __m128d eii_yXdy = _mm_mul_pd(eii_y, c_dy);
-	const __m128d eii_zXdz = _mm_mul_pd(eii_z, c_dz);
-	__m128d costi = _mm_add_pd(eii_xXdx, _mm_add_pd(eii_yXdy, eii_zXdz));
+	const vcp_double_vec eii_xXdx = _mm_mul_pd(eii_x, c_dx);
+	const vcp_double_vec eii_yXdy = _mm_mul_pd(eii_y, c_dy);
+	const vcp_double_vec eii_zXdz = _mm_mul_pd(eii_z, c_dz);
+	vcp_double_vec costi = _mm_add_pd(eii_xXdx, _mm_add_pd(eii_yXdy, eii_zXdz));
 	costi = _mm_mul_pd(costi, invdr);
 
-	const __m128d ejj_xXdx = _mm_mul_pd(ejj_x, c_dx);
-	const __m128d ejj_yXdy = _mm_mul_pd(ejj_y, c_dy);
-	const __m128d ejj_zXdz = _mm_mul_pd(ejj_z, c_dz);
-	__m128d costj = _mm_add_pd(ejj_xXdx, _mm_add_pd(ejj_yXdy, ejj_zXdz));
+	const vcp_double_vec ejj_xXdx = _mm_mul_pd(ejj_x, c_dx);
+	const vcp_double_vec ejj_yXdy = _mm_mul_pd(ejj_y, c_dy);
+	const vcp_double_vec ejj_zXdz = _mm_mul_pd(ejj_z, c_dz);
+	vcp_double_vec costj = _mm_add_pd(ejj_xXdx, _mm_add_pd(ejj_yXdy, ejj_zXdz));
 	costj = _mm_mul_pd(costj, invdr);
 
-	const __m128d cos2ti = _mm_mul_pd(costi, costi);
-	const __m128d cos2tj = _mm_mul_pd(costj, costj);
+	const vcp_double_vec cos2ti = _mm_mul_pd(costi, costi);
+	const vcp_double_vec cos2tj = _mm_mul_pd(costj, costj);
 
-	const __m128d eiiXejj_x = _mm_mul_pd(eii_x, ejj_x);
-	const __m128d eiiXejj_y = _mm_mul_pd(eii_y, ejj_y);
-	const __m128d eiiXejj_z = _mm_mul_pd(eii_z, ejj_z);
-	const __m128d cosgij = _mm_add_pd(eiiXejj_x, _mm_add_pd(eiiXejj_y, eiiXejj_z));
+	const vcp_double_vec eiiXejj_x = _mm_mul_pd(eii_x, ejj_x);
+	const vcp_double_vec eiiXejj_y = _mm_mul_pd(eii_y, ejj_y);
+	const vcp_double_vec eiiXejj_z = _mm_mul_pd(eii_z, ejj_z);
+	const vcp_double_vec cosgij = _mm_add_pd(eiiXejj_x, _mm_add_pd(eiiXejj_y, eiiXejj_z));
 
-	__m128d term = _mm_mul_pd(five, _mm_mul_pd(costi, costj));
+	vcp_double_vec term = _mm_mul_pd(five, _mm_mul_pd(costi, costj));
 	term = _mm_sub_pd(cosgij, term);
 
 	/************
 	 * Potential
 	 ************/
-	__m128d part1 = _mm_mul_pd(five, _mm_add_pd(cos2ti, cos2tj));
-	__m128d part2 = _mm_mul_pd(_15, _mm_mul_pd(cos2ti, cos2tj));
-	__m128d part3 = _mm_mul_pd(two, _mm_mul_pd(term, term));
-	__m128d upot = _mm_add_pd(part1, part2);
+	vcp_double_vec part1 = _mm_mul_pd(five, _mm_add_pd(cos2ti, cos2tj));
+	vcp_double_vec part2 = _mm_mul_pd(_15, _mm_mul_pd(cos2ti, cos2tj));
+	vcp_double_vec part3 = _mm_mul_pd(two, _mm_mul_pd(term, term));
+	vcp_double_vec upot = _mm_add_pd(part1, part2);
 	upot = _mm_sub_pd(_mm_add_pd(one, part3), upot);
 	upot = _mm_mul_pd(qfac, upot);
 
 	/**********
 	 * Force
 	 **********/
-	const __m128d minus_partialRijInvdr = _mm_mul_pd(five, _mm_mul_pd(upot, invdr2));
+	const vcp_double_vec minus_partialRijInvdr = _mm_mul_pd(five, _mm_mul_pd(upot, invdr2));
 
 	// partialTiInvdr & partialTjInvdr
 	part1 = _mm_mul_pd(qfac, _mm_mul_pd(ten, invdr));
@@ -1467,21 +1467,21 @@ inline void _loopBodyQudarupole(
 
 	// partialTiInvdr only
 	part3 = _mm_mul_pd(three, _mm_mul_pd(costi, cos2tj));
-	__m128d part4 = _mm_add_pd(costi, _mm_add_pd(part3, _mm_mul_pd(part2, costj)));
-	const __m128d minus_partialTiInvdr = _mm_mul_pd(part1, part4);
+	vcp_double_vec part4 = _mm_add_pd(costi, _mm_add_pd(part3, _mm_mul_pd(part2, costj)));
+	const vcp_double_vec minus_partialTiInvdr = _mm_mul_pd(part1, part4);
 
 	// partialTjInvdr only
 	part3 = _mm_mul_pd(three, _mm_mul_pd(costj, cos2ti));
 	part4 = _mm_add_pd(costj, _mm_add_pd(part3, _mm_mul_pd(part2, costi)));
-	const __m128d minus_partialTjInvdr = _mm_mul_pd(part1, part4);
+	const vcp_double_vec minus_partialTjInvdr = _mm_mul_pd(part1, part4);
 
-	const __m128d partialGij = _mm_mul_pd(qfac, _mm_mul_pd(four, term));
+	const vcp_double_vec partialGij = _mm_mul_pd(qfac, _mm_mul_pd(four, term));
 
 	// fac
 	part1 = _mm_mul_pd(minus_partialTiInvdr, costi);
 	part2 = _mm_mul_pd(minus_partialTjInvdr, costj);
 	part3 = _mm_mul_pd(_mm_add_pd(part1, part2), invdr);
-	const __m128d fac = _mm_sub_pd(minus_partialRijInvdr, part3);
+	const vcp_double_vec fac = _mm_sub_pd(minus_partialRijInvdr, part3);
 
 	// Force components
 	part1 = _mm_mul_pd(fac, c_dx);
@@ -1499,44 +1499,44 @@ inline void _loopBodyQudarupole(
 	part3 = _mm_mul_pd(minus_partialTjInvdr, ejj_z);
 	f_z = _mm_add_pd(part1, _mm_add_pd(part2, part3));
 
-	const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-	const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-	const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+	const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+	const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+	const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-	const __m128d macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
+	const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 	// Check if we have to add the macroscopic values up for at least one of this pairs
 	if (_mm_movemask_pd(macroMask) > 0) {
 		// do we have to mask "upot"? It should already have been masked by "qfac" ...
-		const __m128d upot_masked = _mm_and_pd(upot, macroMask);
+		const vcp_double_vec upot_masked = _mm_and_pd(upot, macroMask);
 		sum_upotXpoles = _mm_add_pd(sum_upotXpoles, upot_masked);
 
-		const __m128d virial_x = _mm_mul_pd(m_dx, f_x);
-		const __m128d virial_y = _mm_mul_pd(m_dy, f_y);
-		const __m128d virial_z = _mm_mul_pd(m_dz, f_z);
+		const vcp_double_vec virial_x = _mm_mul_pd(m_dx, f_x);
+		const vcp_double_vec virial_y = _mm_mul_pd(m_dy, f_y);
+		const vcp_double_vec virial_z = _mm_mul_pd(m_dz, f_z);
 
-		const __m128d virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
-		const __m128d virial_masked = _mm_and_pd(virial, macroMask);
+		const vcp_double_vec virial = _mm_add_pd(_mm_add_pd(virial_x, virial_y), virial_z);
+		const vcp_double_vec virial_masked = _mm_and_pd(virial, macroMask);
 		sum_virial = _mm_add_pd(sum_virial, virial_masked);
 	}
 
-	const __m128d eii_x_ejj_y = _mm_mul_pd(eii_x, ejj_y);
-	const __m128d eii_x_ejj_z = _mm_mul_pd(eii_x, ejj_z);
-	const __m128d eii_y_ejj_x = _mm_mul_pd(eii_y, ejj_x);
-	const __m128d eii_y_ejj_z = _mm_mul_pd(eii_y, ejj_z);
-	const __m128d eii_z_ejj_x = _mm_mul_pd(eii_z, ejj_x);
-	const __m128d eii_z_ejj_y = _mm_mul_pd(eii_z, ejj_y);
+	const vcp_double_vec eii_x_ejj_y = _mm_mul_pd(eii_x, ejj_y);
+	const vcp_double_vec eii_x_ejj_z = _mm_mul_pd(eii_x, ejj_z);
+	const vcp_double_vec eii_y_ejj_x = _mm_mul_pd(eii_y, ejj_x);
+	const vcp_double_vec eii_y_ejj_z = _mm_mul_pd(eii_y, ejj_z);
+	const vcp_double_vec eii_z_ejj_x = _mm_mul_pd(eii_z, ejj_x);
+	const vcp_double_vec eii_z_ejj_y = _mm_mul_pd(eii_z, ejj_y);
 
-	const __m128d eii_x_ejj_y_minus_eii_y_ejj_x = _mm_sub_pd(eii_x_ejj_y, eii_y_ejj_x);
-	const __m128d eii_y_ejj_z_minus_eii_z_ejj_y = _mm_sub_pd(eii_y_ejj_z, eii_z_ejj_y);
-	const __m128d eii_z_ejj_x_minus_eii_x_ejj_z = _mm_sub_pd(eii_z_ejj_x, eii_x_ejj_z);
+	const vcp_double_vec eii_x_ejj_y_minus_eii_y_ejj_x = _mm_sub_pd(eii_x_ejj_y, eii_y_ejj_x);
+	const vcp_double_vec eii_y_ejj_z_minus_eii_z_ejj_y = _mm_sub_pd(eii_y_ejj_z, eii_z_ejj_y);
+	const vcp_double_vec eii_z_ejj_x_minus_eii_x_ejj_z = _mm_sub_pd(eii_z_ejj_x, eii_x_ejj_z);
 
-	const __m128d partialGij_eiXej_x = _mm_mul_pd(partialGij, eii_y_ejj_z_minus_eii_z_ejj_y);
-	const __m128d partialGij_eiXej_y = _mm_mul_pd(partialGij, eii_z_ejj_x_minus_eii_x_ejj_z);
-	const __m128d partialGij_eiXej_z = _mm_mul_pd(partialGij, eii_x_ejj_y_minus_eii_y_ejj_x);
+	const vcp_double_vec partialGij_eiXej_x = _mm_mul_pd(partialGij, eii_y_ejj_z_minus_eii_z_ejj_y);
+	const vcp_double_vec partialGij_eiXej_y = _mm_mul_pd(partialGij, eii_z_ejj_x_minus_eii_x_ejj_z);
+	const vcp_double_vec partialGij_eiXej_z = _mm_mul_pd(partialGij, eii_x_ejj_y_minus_eii_y_ejj_x);
 
-	__m128d eXrij_x = _mm_sub_pd(_mm_mul_pd(eii_y, c_dz), _mm_mul_pd(eii_z, c_dy));
-	__m128d eXrij_y = _mm_sub_pd(_mm_mul_pd(eii_z, c_dx), _mm_mul_pd(eii_x, c_dz));
-	__m128d eXrij_z = _mm_sub_pd(_mm_mul_pd(eii_x, c_dy), _mm_mul_pd(eii_y, c_dx));
+	vcp_double_vec eXrij_x = _mm_sub_pd(_mm_mul_pd(eii_y, c_dz), _mm_mul_pd(eii_z, c_dy));
+	vcp_double_vec eXrij_y = _mm_sub_pd(_mm_mul_pd(eii_z, c_dx), _mm_mul_pd(eii_x, c_dz));
+	vcp_double_vec eXrij_z = _mm_sub_pd(_mm_mul_pd(eii_x, c_dy), _mm_mul_pd(eii_y, c_dx));
 
 	Mii_x = _mm_sub_pd(_mm_mul_pd(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x);
 	Mii_y = _mm_sub_pd(_mm_mul_pd(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y);
@@ -2296,7 +2296,7 @@ inline void _loopBodyQudarupole(
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 
-inline void hSum_Add_Store( double * const mem_addr, const __m128d & a ) {
+inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 	_mm_store_sd(
 			mem_addr,
 			_mm_add_sd(_mm_hadd_pd(a, a),
@@ -2329,14 +2329,14 @@ template<class ForcePolicy>
 #if VCP_VEC_TYPE==VCP_NOVEC
 	unsigned long
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	__m128d
+	vcp_double_vec
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	__m256d
 #endif
 inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 		double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
-		, const __m128d & cutoffRadiusSquareD, size_t end_j, const __m128d m1_r_x, const __m128d m1_r_y, const __m128d m1_r_z
+		, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 		, const __m256d & cutoffRadiusSquareD, size_t end_j, const __m256d m1_r_x, const __m256d m1_r_y, const __m256d m1_r_z
 #endif
@@ -2361,26 +2361,26 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 
-	__m128d compute_molecule = _mm_setzero_pd();
+	vcp_double_vec compute_molecule = _mm_setzero_pd();
 
 	// Iterate over centers of second cell
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
 	for (; j < end_j; j+=2) {
-		const __m128d m2_r_x = _mm_load_pd(soa2_m_r_x + j);
-		const __m128d m2_r_y = _mm_load_pd(soa2_m_r_y + j);
-		const __m128d m2_r_z = _mm_load_pd(soa2_m_r_z + j);
+		const vcp_double_vec m2_r_x = _mm_load_pd(soa2_m_r_x + j);
+		const vcp_double_vec m2_r_y = _mm_load_pd(soa2_m_r_y + j);
+		const vcp_double_vec m2_r_z = _mm_load_pd(soa2_m_r_z + j);
 
-		const __m128d m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
-		const __m128d m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
-		const __m128d m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
+		const vcp_double_vec m_dx = _mm_sub_pd(m1_r_x, m2_r_x);
+		const vcp_double_vec m_dy = _mm_sub_pd(m1_r_y, m2_r_y);
+		const vcp_double_vec m_dz = _mm_sub_pd(m1_r_z, m2_r_z);
 
-		const __m128d m_dx2 = _mm_mul_pd(m_dx, m_dx);
-		const __m128d m_dy2 = _mm_mul_pd(m_dy, m_dy);
-		const __m128d m_dz2 = _mm_mul_pd(m_dz, m_dz);
+		const vcp_double_vec m_dx2 = _mm_mul_pd(m_dx, m_dx);
+		const vcp_double_vec m_dy2 = _mm_mul_pd(m_dy, m_dy);
+		const vcp_double_vec m_dz2 = _mm_mul_pd(m_dz, m_dz);
 
-		const __m128d m_r2 = _mm_add_pd(_mm_add_pd(m_dx2, m_dy2), m_dz2);
+		const vcp_double_vec m_r2 = _mm_add_pd(_mm_add_pd(m_dx2, m_dy2), m_dz2);
 
-		const __m128d forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
+		const vcp_double_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
 		_mm_store_pd(soa2_center_dist_lookup + j, forceMask);
 		compute_molecule = _mm_or_pd(compute_molecule, forceMask);
 	}
@@ -2400,7 +2400,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		double forceMask = *reinterpret_cast<double const* const>(forceMask_tmp);
 
 		*(soa2_center_dist_lookup + j) = forceMask;
-		const __m128d forceMask_128 = _mm_set1_pd(forceMask);
+		const vcp_double_vec forceMask_128 = _mm_set1_pd(forceMask);
 		compute_molecule = _mm_or_pd(compute_molecule, forceMask_128);
 	}
 
@@ -2731,16 +2731,16 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 
-	const __m128d ones = _mm_castsi128_pd(_mm_set_epi32(~0, ~0, ~0, ~0));
+	const vcp_double_vec ones = _mm_castsi128_pd(_mm_set_epi32(~0, ~0, ~0, ~0));
 
-	__m128d sum_upot6lj = _mm_setzero_pd();
-	__m128d sum_upotXpoles = _mm_setzero_pd();
-	__m128d sum_virial = _mm_setzero_pd();
-	__m128d sum_myRF = _mm_setzero_pd();
+	vcp_double_vec sum_upot6lj = _mm_setzero_pd();
+	vcp_double_vec sum_upotXpoles = _mm_setzero_pd();
+	vcp_double_vec sum_virial = _mm_setzero_pd();
+	vcp_double_vec sum_myRF = _mm_setzero_pd();
 
-	const __m128d rc2 = _mm_set1_pd(_LJcutoffRadiusSquare);
-	const __m128d cutoffRadiusSquare = _mm_set1_pd(_cutoffRadiusSquare);
-	const __m128d epsRFInvrc3 = _mm_loaddup_pd(&_epsRFInvrc3);
+	const vcp_double_vec rc2 = _mm_set1_pd(_LJcutoffRadiusSquare);
+	const vcp_double_vec cutoffRadiusSquare = _mm_set1_pd(_cutoffRadiusSquare);
+	const vcp_double_vec epsRFInvrc3 = _mm_loaddup_pd(&_epsRFInvrc3);
 
 	/*
 	 *  "var" & (~1):
@@ -2765,21 +2765,21 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 	// Iterate over each center in the first cell.
 	for (size_t i = 0; i < soa1._mol_num; ++i) {
-		const __m128d m1_r_x = _mm_loaddup_pd(soa1_mol_pos_x + i);
-		const __m128d m1_r_y = _mm_loaddup_pd(soa1_mol_pos_y + i);
-		const __m128d m1_r_z = _mm_loaddup_pd(soa1_mol_pos_z + i);
+		const vcp_double_vec m1_r_x = _mm_loaddup_pd(soa1_mol_pos_x + i);
+		const vcp_double_vec m1_r_y = _mm_loaddup_pd(soa1_mol_pos_y + i);
+		const vcp_double_vec m1_r_z = _mm_loaddup_pd(soa1_mol_pos_z + i);
 
 
-		const __m128d compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJcutoffRadiusSquare,
+		const vcp_double_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJcutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
 				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
-		const __m128d compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
+		const vcp_double_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
-		const __m128d compute_molecule_dipoles = calcDistLookup<ForcePolicy>(soa1, i, i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
+		const vcp_double_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(soa1, i, i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
 				soa2_dipoles_dist_lookup, soa2_dipoles_m_r_x, soa2_dipoles_m_r_y, soa2_dipoles_m_r_z,
 				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z);
-		const __m128d compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
+		const vcp_double_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
 
@@ -2790,34 +2790,34 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 			// LJ force computation
 			for (int local_i = 0; local_i < soa1_mol_ljc_num[i]; local_i++) {
-				__m128d sum_fx1 = _mm_setzero_pd();
-				__m128d sum_fy1 = _mm_setzero_pd();
-				__m128d sum_fz1 = _mm_setzero_pd();
-				const __m128d c_r_x1 = _mm_loaddup_pd(soa1_ljc_r_x + i_ljc_idx);
-				const __m128d c_r_y1 = _mm_loaddup_pd(soa1_ljc_r_y + i_ljc_idx);
-				const __m128d c_r_z1 = _mm_loaddup_pd(soa1_ljc_r_z + i_ljc_idx);
+				vcp_double_vec sum_fx1 = _mm_setzero_pd();
+				vcp_double_vec sum_fy1 = _mm_setzero_pd();
+				vcp_double_vec sum_fz1 = _mm_setzero_pd();
+				const vcp_double_vec c_r_x1 = _mm_loaddup_pd(soa1_ljc_r_x + i_ljc_idx);
+				const vcp_double_vec c_r_y1 = _mm_loaddup_pd(soa1_ljc_r_y + i_ljc_idx);
+				const vcp_double_vec c_r_z1 = _mm_loaddup_pd(soa1_ljc_r_z + i_ljc_idx);
 				// Iterate over each pair of centers in the second cell.
 				size_t j = ForcePolicy::InitJ(i_ljc_idx);
 				for (; j < end_ljc_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_ljc_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_ljc_dist_lookup + j);
 					// Only go on if at least 1 of the forces has to be calculated.
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d c_r_x2 = _mm_load_pd(soa2_ljc_r_x + j);
-						const __m128d c_r_y2 = _mm_load_pd(soa2_ljc_r_y + j);
-						const __m128d c_r_z2 = _mm_load_pd(soa2_ljc_r_z + j);
+						const vcp_double_vec c_r_x2 = _mm_load_pd(soa2_ljc_r_x + j);
+						const vcp_double_vec c_r_y2 = _mm_load_pd(soa2_ljc_r_y + j);
+						const vcp_double_vec c_r_z2 = _mm_load_pd(soa2_ljc_r_z + j);
 
 						const size_t id_j0 = soa2_ljc_id[j];
 						const size_t id_j1 = soa2_ljc_id[j + 1];
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
-						const __m128d e1s1 = _mm_load_pd(_eps_sig[id_i] + 2 * id_j0);
-						const __m128d e2s2 = _mm_load_pd(_eps_sig[id_i] + 2 * id_j1);
+						const vcp_double_vec e1s1 = _mm_load_pd(_eps_sig[id_i] + 2 * id_j0);
+						const vcp_double_vec e2s2 = _mm_load_pd(_eps_sig[id_i] + 2 * id_j1);
 
-						const __m128d m_r_x2 = _mm_load_pd(soa2_ljc_m_r_x + j);
-						const __m128d m_r_y2 = _mm_load_pd(soa2_ljc_m_r_y + j);
-						const __m128d m_r_z2 = _mm_load_pd(soa2_ljc_m_r_z + j);
+						const vcp_double_vec m_r_x2 = _mm_load_pd(soa2_ljc_m_r_x + j);
+						const vcp_double_vec m_r_y2 = _mm_load_pd(soa2_ljc_m_r_y + j);
+						const vcp_double_vec m_r_z2 = _mm_load_pd(soa2_ljc_m_r_z + j);
 
-						__m128d fx, fy, fz;
+						vcp_double_vec fx, fy, fz;
 
 						_loopBodyLJ<MacroPolicy>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
@@ -2828,14 +2828,14 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 							e1s1, e2s2,
 							id_j0, id_j1, id_i);
 
-						const __m128d old_fx2 = _mm_load_pd(soa2_ljc_f_x + j);
-						const __m128d new_fx2 = _mm_sub_pd(old_fx2, fx);
+						const vcp_double_vec old_fx2 = _mm_load_pd(soa2_ljc_f_x + j);
+						const vcp_double_vec new_fx2 = _mm_sub_pd(old_fx2, fx);
 						_mm_store_pd(soa2_ljc_f_x + j, new_fx2);
-						const __m128d old_fy2 = _mm_load_pd(soa2_ljc_f_y + j);
-						const __m128d new_fy2 = _mm_sub_pd(old_fy2, fy);
+						const vcp_double_vec old_fy2 = _mm_load_pd(soa2_ljc_f_y + j);
+						const vcp_double_vec new_fy2 = _mm_sub_pd(old_fy2, fy);
 						_mm_store_pd(soa2_ljc_f_y + j, new_fy2);
-						const __m128d old_fz2 = _mm_load_pd(soa2_ljc_f_z + j);
-						const __m128d new_fz2 = _mm_sub_pd(old_fz2, fz);
+						const vcp_double_vec old_fz2 = _mm_load_pd(soa2_ljc_f_z + j);
+						const vcp_double_vec new_fz2 = _mm_sub_pd(old_fz2, fz);
 						_mm_store_pd(soa2_ljc_f_z + j, new_fz2);
 						sum_fx1 = _mm_add_pd(sum_fx1, fx);
 						sum_fy1 = _mm_add_pd(sum_fy1, fy);
@@ -2872,32 +2872,32 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 			// Iterate over centers of actual molecule
 			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++) {
 
-				const __m128d q1 = _mm_loaddup_pd(soa1_charges_q + i_charge_idx + local_i);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_charges_r_x + i_charge_idx + local_i);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_charges_r_y + i_charge_idx + local_i);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_charges_r_z + i_charge_idx + local_i);
+				const vcp_double_vec q1 = _mm_loaddup_pd(soa1_charges_q + i_charge_idx + local_i);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_charges_r_x + i_charge_idx + local_i);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_charges_r_y + i_charge_idx + local_i);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_charges_r_z + i_charge_idx + local_i);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
 				for (; j < end_charges_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_charges_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
-						const __m128d q2 = _mm_load_pd(soa2_charges_q + j);
+						const vcp_double_vec q2 = _mm_load_pd(soa2_charges_q + j);
 
-						const __m128d r2_x = _mm_load_pd(soa2_charges_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_charges_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_charges_r_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_charges_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_charges_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_charges_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_charges_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_charges_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_charges_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_charges_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_charges_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_charges_m_r_z + j);
 
-						__m128d f_x, f_y, f_z;
+						vcp_double_vec f_x, f_y, f_z;
 						_loopBodyCharge<MacroPolicy>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q2,
@@ -2911,9 +2911,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_add_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_add_pd(sum_f1_z, f_z);
 
-						__m128d f2_x = _mm_load_pd(soa2_charges_f_x + j);
-						__m128d f2_y = _mm_load_pd(soa2_charges_f_y + j);
-						__m128d f2_z = _mm_load_pd(soa2_charges_f_z + j);
+						vcp_double_vec f2_x = _mm_load_pd(soa2_charges_f_x + j);
+						vcp_double_vec f2_y = _mm_load_pd(soa2_charges_f_y + j);
+						vcp_double_vec f2_z = _mm_load_pd(soa2_charges_f_z + j);
 
 						f2_x = _mm_sub_pd(f2_x, f_x);
 						f2_y = _mm_sub_pd(f2_y, f_y);
@@ -2942,39 +2942,39 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 			for (int local_i = 0; local_i < soa1_mol_dipoles_num[i]; local_i++)
 			{
-				const __m128d p = _mm_loaddup_pd(soa1_dipoles_p + i_dipole_charge_idx);
-				const __m128d e_x = _mm_loaddup_pd(soa1_dipoles_e_x + i_dipole_charge_idx);
-				const __m128d e_y = _mm_loaddup_pd(soa1_dipoles_e_y + i_dipole_charge_idx);
-				const __m128d e_z = _mm_loaddup_pd(soa1_dipoles_e_z + i_dipole_charge_idx);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_dipoles_r_x + i_dipole_charge_idx);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_dipoles_r_y + i_dipole_charge_idx);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_dipoles_r_z + i_dipole_charge_idx);
+				const vcp_double_vec p = _mm_loaddup_pd(soa1_dipoles_p + i_dipole_charge_idx);
+				const vcp_double_vec e_x = _mm_loaddup_pd(soa1_dipoles_e_x + i_dipole_charge_idx);
+				const vcp_double_vec e_y = _mm_loaddup_pd(soa1_dipoles_e_y + i_dipole_charge_idx);
+				const vcp_double_vec e_z = _mm_loaddup_pd(soa1_dipoles_e_z + i_dipole_charge_idx);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_dipoles_r_x + i_dipole_charge_idx);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_dipoles_r_y + i_dipole_charge_idx);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_dipoles_r_z + i_dipole_charge_idx);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
-				__m128d sum_M_x = _mm_setzero_pd();
-				__m128d sum_M_y = _mm_setzero_pd();
-				__m128d sum_M_z = _mm_setzero_pd();
+				vcp_double_vec sum_M_x = _mm_setzero_pd();
+				vcp_double_vec sum_M_y = _mm_setzero_pd();
+				vcp_double_vec sum_M_z = _mm_setzero_pd();
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
 				for (; j < end_charges_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_charges_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d q = _mm_load_pd(soa2_charges_q + j);
+						const vcp_double_vec q = _mm_load_pd(soa2_charges_q + j);
 
-						const __m128d r2_x = _mm_load_pd(soa2_charges_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_charges_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_charges_r_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_charges_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_charges_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_charges_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_charges_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_charges_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_charges_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_charges_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_charges_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_charges_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
 						_loopBodyChargeDipole<MacroPolicy>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
@@ -2989,9 +2989,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_sub_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_sub_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_charges_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_charges_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_charges_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_charges_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_charges_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_charges_f_z + j);
 
 						sum_f2_x = _mm_add_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_add_pd(sum_f2_y, f_y);
@@ -3031,39 +3031,39 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 			for (int local_i = 0; local_i < soa1_mol_quadrupoles_num[i]; local_i++)
 			{
-				const __m128d m = _mm_loaddup_pd(soa1_quadrupoles_m + i_quadrupole_charge_idx);
-				const __m128d e_x = _mm_loaddup_pd(soa1_quadrupoles_e_x + i_quadrupole_charge_idx);
-				const __m128d e_y = _mm_loaddup_pd(soa1_quadrupoles_e_y + i_quadrupole_charge_idx);
-				const __m128d e_z = _mm_loaddup_pd(soa1_quadrupoles_e_z + i_quadrupole_charge_idx);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_quadrupoles_r_x + i_quadrupole_charge_idx);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_quadrupoles_r_y + i_quadrupole_charge_idx);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_quadrupoles_r_z + i_quadrupole_charge_idx);
+				const vcp_double_vec m = _mm_loaddup_pd(soa1_quadrupoles_m + i_quadrupole_charge_idx);
+				const vcp_double_vec e_x = _mm_loaddup_pd(soa1_quadrupoles_e_x + i_quadrupole_charge_idx);
+				const vcp_double_vec e_y = _mm_loaddup_pd(soa1_quadrupoles_e_y + i_quadrupole_charge_idx);
+				const vcp_double_vec e_z = _mm_loaddup_pd(soa1_quadrupoles_e_z + i_quadrupole_charge_idx);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_quadrupoles_r_x + i_quadrupole_charge_idx);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_quadrupoles_r_y + i_quadrupole_charge_idx);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_quadrupoles_r_z + i_quadrupole_charge_idx);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
-				__m128d sum_M1_x = _mm_setzero_pd();
-				__m128d sum_M1_y = _mm_setzero_pd();
-				__m128d sum_M1_z = _mm_setzero_pd();
+				vcp_double_vec sum_M1_x = _mm_setzero_pd();
+				vcp_double_vec sum_M1_y = _mm_setzero_pd();
+				vcp_double_vec sum_M1_z = _mm_setzero_pd();
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
 				for (; j < end_charges_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_charges_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d q = _mm_load_pd(soa2_charges_q + j);
+						const vcp_double_vec q = _mm_load_pd(soa2_charges_q + j);
 
-						const __m128d r2_x = _mm_load_pd(soa2_charges_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_charges_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_charges_r_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_charges_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_charges_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_charges_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_charges_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_charges_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_charges_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_charges_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_charges_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_charges_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
 						_loopBodyChargeQuadrupole<MacroPolicy>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
@@ -3078,9 +3078,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_sub_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_sub_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_charges_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_charges_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_charges_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_charges_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_charges_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_charges_f_z + j);
 
 						sum_f2_x = _mm_add_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_add_pd(sum_f2_y, f_y);
@@ -3132,41 +3132,41 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 			// Iterate over centers of actual molecule
 			for (int local_i = 0; local_i < soa1_mol_dipoles_num[i]; local_i++) {
 
-				const __m128d p1 = _mm_loaddup_pd(soa1_dipoles_p + i_dipole_idx + local_i);
-				const __m128d e1_x = _mm_loaddup_pd(soa1_dipoles_e_x + i_dipole_idx + local_i);
-				const __m128d e1_y = _mm_loaddup_pd(soa1_dipoles_e_y + i_dipole_idx + local_i);
-				const __m128d e1_z = _mm_loaddup_pd(soa1_dipoles_e_z + i_dipole_idx + local_i);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_dipoles_r_x + i_dipole_idx + local_i);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_dipoles_r_y + i_dipole_idx + local_i);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_dipoles_r_z + i_dipole_idx + local_i);
+				const vcp_double_vec p1 = _mm_loaddup_pd(soa1_dipoles_p + i_dipole_idx + local_i);
+				const vcp_double_vec e1_x = _mm_loaddup_pd(soa1_dipoles_e_x + i_dipole_idx + local_i);
+				const vcp_double_vec e1_y = _mm_loaddup_pd(soa1_dipoles_e_y + i_dipole_idx + local_i);
+				const vcp_double_vec e1_z = _mm_loaddup_pd(soa1_dipoles_e_z + i_dipole_idx + local_i);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_dipoles_r_x + i_dipole_idx + local_i);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_dipoles_r_y + i_dipole_idx + local_i);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_dipoles_r_z + i_dipole_idx + local_i);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
-				__m128d sum_M1_x = _mm_setzero_pd();
-				__m128d sum_M1_y = _mm_setzero_pd();
-				__m128d sum_M1_z = _mm_setzero_pd();
+				vcp_double_vec sum_M1_x = _mm_setzero_pd();
+				vcp_double_vec sum_M1_y = _mm_setzero_pd();
+				vcp_double_vec sum_M1_z = _mm_setzero_pd();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
 				for (; j < end_dipoles_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_dipoles_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
-						const __m128d p2 = _mm_load_pd(soa2_dipoles_p + j);
-						const __m128d e2_x = _mm_load_pd(soa2_dipoles_e_x + j);
-						const __m128d e2_y = _mm_load_pd(soa2_dipoles_e_y + j);
-						const __m128d e2_z = _mm_load_pd(soa2_dipoles_e_z + j);
-						const __m128d r2_x = _mm_load_pd(soa2_dipoles_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_dipoles_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_dipoles_r_z + j);
+						const vcp_double_vec p2 = _mm_load_pd(soa2_dipoles_p + j);
+						const vcp_double_vec e2_x = _mm_load_pd(soa2_dipoles_e_x + j);
+						const vcp_double_vec e2_y = _mm_load_pd(soa2_dipoles_e_y + j);
+						const vcp_double_vec e2_z = _mm_load_pd(soa2_dipoles_e_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_dipoles_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_dipoles_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_dipoles_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_dipoles_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_dipoles_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_dipoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_dipoles_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_dipoles_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_dipoles_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
 						_loopBodyDipole<MacroPolicy>(
 							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
@@ -3184,9 +3184,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_add_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_add_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_dipoles_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_dipoles_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_dipoles_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_dipoles_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_dipoles_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_dipoles_f_z + j);
 
 						sum_f2_x = _mm_sub_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_sub_pd(sum_f2_y, f_y);
@@ -3202,9 +3202,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = _mm_add_pd(sum_M1_y, M1_y);
 						sum_M1_z = _mm_add_pd(sum_M1_z, M1_z);
 
-						__m128d sum_M2_x = _mm_load_pd(soa2_dipoles_M_x + j);
-						__m128d sum_M2_y = _mm_load_pd(soa2_dipoles_M_y + j);
-						__m128d sum_M2_z = _mm_load_pd(soa2_dipoles_M_z + j);
+						vcp_double_vec sum_M2_x = _mm_load_pd(soa2_dipoles_M_x + j);
+						vcp_double_vec sum_M2_y = _mm_load_pd(soa2_dipoles_M_y + j);
+						vcp_double_vec sum_M2_z = _mm_load_pd(soa2_dipoles_M_z + j);
 
 						sum_M2_x = _mm_add_pd(sum_M2_x, M2_x);
 						sum_M2_y = _mm_add_pd(sum_M2_y, M2_y);
@@ -3239,36 +3239,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++)
 			{
 
-				const __m128d q = _mm_loaddup_pd(soa1_charges_q + i_charge_dipole_idx);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_charges_r_x + i_charge_dipole_idx);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_charges_r_y + i_charge_dipole_idx);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_charges_r_z + i_charge_dipole_idx);
+				const vcp_double_vec q = _mm_loaddup_pd(soa1_charges_q + i_charge_dipole_idx);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_charges_r_x + i_charge_dipole_idx);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_charges_r_y + i_charge_dipole_idx);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_charges_r_z + i_charge_dipole_idx);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
 				for (; j < end_dipoles_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_dipoles_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d p = _mm_load_pd(soa2_dipoles_p + j);
+						const vcp_double_vec p = _mm_load_pd(soa2_dipoles_p + j);
 
-						const __m128d e_x = _mm_load_pd(soa2_dipoles_e_x + j);
-						const __m128d e_y = _mm_load_pd(soa2_dipoles_e_y + j);
-						const __m128d e_z = _mm_load_pd(soa2_dipoles_e_z + j);
+						const vcp_double_vec e_x = _mm_load_pd(soa2_dipoles_e_x + j);
+						const vcp_double_vec e_y = _mm_load_pd(soa2_dipoles_e_y + j);
+						const vcp_double_vec e_z = _mm_load_pd(soa2_dipoles_e_z + j);
 
-						const __m128d r2_x = _mm_load_pd(soa2_dipoles_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_dipoles_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_dipoles_r_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_dipoles_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_dipoles_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_dipoles_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_dipoles_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_dipoles_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_dipoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_dipoles_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_dipoles_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_dipoles_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
 						_loopBodyChargeDipole<MacroPolicy>(
 								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
@@ -3283,9 +3283,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_add_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_add_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_dipoles_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_dipoles_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_dipoles_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_dipoles_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_dipoles_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_dipoles_f_z + j);
 
 						sum_f2_x = _mm_sub_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_sub_pd(sum_f2_y, f_y);
@@ -3297,9 +3297,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						// Store torque
 
-						__m128d sum_M2_x = _mm_load_pd(soa2_dipoles_M_x + j);
-						__m128d sum_M2_y = _mm_load_pd(soa2_dipoles_M_y + j);
-						__m128d sum_M2_z = _mm_load_pd(soa2_dipoles_M_z + j);
+						vcp_double_vec sum_M2_x = _mm_load_pd(soa2_dipoles_M_x + j);
+						vcp_double_vec sum_M2_y = _mm_load_pd(soa2_dipoles_M_y + j);
+						vcp_double_vec sum_M2_z = _mm_load_pd(soa2_dipoles_M_z + j);
 
 						sum_M2_x = _mm_add_pd(sum_M2_x, M_x);
 						sum_M2_y = _mm_add_pd(sum_M2_y, M_y);
@@ -3329,41 +3329,41 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 			// Iterate over centers of actual molecule
 			for (int local_i = 0; local_i < soa1_mol_quadrupoles_num[i]; local_i++) {
 
-				const __m128d m = _mm_loaddup_pd(soa1_quadrupoles_m + i_quadrupole_dipole_idx);
-				const __m128d e1_x = _mm_loaddup_pd(soa1_quadrupoles_e_x + i_quadrupole_dipole_idx);
-				const __m128d e1_y = _mm_loaddup_pd(soa1_quadrupoles_e_y + i_quadrupole_dipole_idx);
-				const __m128d e1_z = _mm_loaddup_pd(soa1_quadrupoles_e_z + i_quadrupole_dipole_idx);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_quadrupoles_r_x + i_quadrupole_dipole_idx);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_quadrupoles_r_y + i_quadrupole_dipole_idx);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_quadrupoles_r_z + i_quadrupole_dipole_idx);
+				const vcp_double_vec m = _mm_loaddup_pd(soa1_quadrupoles_m + i_quadrupole_dipole_idx);
+				const vcp_double_vec e1_x = _mm_loaddup_pd(soa1_quadrupoles_e_x + i_quadrupole_dipole_idx);
+				const vcp_double_vec e1_y = _mm_loaddup_pd(soa1_quadrupoles_e_y + i_quadrupole_dipole_idx);
+				const vcp_double_vec e1_z = _mm_loaddup_pd(soa1_quadrupoles_e_z + i_quadrupole_dipole_idx);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_quadrupoles_r_x + i_quadrupole_dipole_idx);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_quadrupoles_r_y + i_quadrupole_dipole_idx);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_quadrupoles_r_z + i_quadrupole_dipole_idx);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
-				__m128d sum_M1_x = _mm_setzero_pd();
-				__m128d sum_M1_y = _mm_setzero_pd();
-				__m128d sum_M1_z = _mm_setzero_pd();
+				vcp_double_vec sum_M1_x = _mm_setzero_pd();
+				vcp_double_vec sum_M1_y = _mm_setzero_pd();
+				vcp_double_vec sum_M1_z = _mm_setzero_pd();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
 				for (; j < end_dipoles_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_dipoles_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
-						const __m128d p = _mm_load_pd(soa2_dipoles_p + j);
-						const __m128d e2_x = _mm_load_pd(soa2_dipoles_e_x + j);
-						const __m128d e2_y = _mm_load_pd(soa2_dipoles_e_y + j);
-						const __m128d e2_z = _mm_load_pd(soa2_dipoles_e_z + j);
-						const __m128d r2_x = _mm_load_pd(soa2_dipoles_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_dipoles_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_dipoles_r_z + j);
+						const vcp_double_vec p = _mm_load_pd(soa2_dipoles_p + j);
+						const vcp_double_vec e2_x = _mm_load_pd(soa2_dipoles_e_x + j);
+						const vcp_double_vec e2_y = _mm_load_pd(soa2_dipoles_e_y + j);
+						const vcp_double_vec e2_z = _mm_load_pd(soa2_dipoles_e_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_dipoles_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_dipoles_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_dipoles_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_dipoles_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_dipoles_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_dipoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_dipoles_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_dipoles_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_dipoles_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
 						_loopBodyDipoleQuadrupole<MacroPolicy>(
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
@@ -3378,9 +3378,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_sub_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_sub_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_dipoles_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_dipoles_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_dipoles_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_dipoles_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_dipoles_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_dipoles_f_z + j);
 
 						sum_f2_x = _mm_add_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_add_pd(sum_f2_y, f_y);
@@ -3396,9 +3396,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = _mm_add_pd(sum_M1_y, M1_y);
 						sum_M1_z = _mm_add_pd(sum_M1_z, M1_z);
 
-						__m128d sum_M2_x = _mm_load_pd(soa2_dipoles_M_x + j);
-						__m128d sum_M2_y = _mm_load_pd(soa2_dipoles_M_y + j);
-						__m128d sum_M2_z = _mm_load_pd(soa2_dipoles_M_z + j);
+						vcp_double_vec sum_M2_x = _mm_load_pd(soa2_dipoles_M_x + j);
+						vcp_double_vec sum_M2_y = _mm_load_pd(soa2_dipoles_M_y + j);
+						vcp_double_vec sum_M2_z = _mm_load_pd(soa2_dipoles_M_z + j);
 
 						sum_M2_x = _mm_add_pd(sum_M2_x, M2_x);
 						sum_M2_y = _mm_add_pd(sum_M2_y, M2_y);
@@ -3446,42 +3446,42 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 			// Iterate over centers of actual molecule
 			for (int local_i = 0; local_i < soa1_mol_quadrupoles_num[i]; local_i++)
 			{
-				const __m128d mii = _mm_loaddup_pd(soa1_quadrupoles_m + i_quadrupole_idx + local_i);
-				const __m128d eii_x = _mm_loaddup_pd(soa1_quadrupoles_e_x + i_quadrupole_idx + local_i);
-				const __m128d eii_y = _mm_loaddup_pd(soa1_quadrupoles_e_y + i_quadrupole_idx + local_i);
-				const __m128d eii_z = _mm_loaddup_pd(soa1_quadrupoles_e_z + i_quadrupole_idx + local_i);
-				const __m128d rii_x = _mm_loaddup_pd(soa1_quadrupoles_r_x + i_quadrupole_idx + local_i);
-				const __m128d rii_y = _mm_loaddup_pd(soa1_quadrupoles_r_y + i_quadrupole_idx + local_i);
-				const __m128d rii_z = _mm_loaddup_pd(soa1_quadrupoles_r_z + i_quadrupole_idx + local_i);
+				const vcp_double_vec mii = _mm_loaddup_pd(soa1_quadrupoles_m + i_quadrupole_idx + local_i);
+				const vcp_double_vec eii_x = _mm_loaddup_pd(soa1_quadrupoles_e_x + i_quadrupole_idx + local_i);
+				const vcp_double_vec eii_y = _mm_loaddup_pd(soa1_quadrupoles_e_y + i_quadrupole_idx + local_i);
+				const vcp_double_vec eii_z = _mm_loaddup_pd(soa1_quadrupoles_e_z + i_quadrupole_idx + local_i);
+				const vcp_double_vec rii_x = _mm_loaddup_pd(soa1_quadrupoles_r_x + i_quadrupole_idx + local_i);
+				const vcp_double_vec rii_y = _mm_loaddup_pd(soa1_quadrupoles_r_y + i_quadrupole_idx + local_i);
+				const vcp_double_vec rii_z = _mm_loaddup_pd(soa1_quadrupoles_r_z + i_quadrupole_idx + local_i);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
-				__m128d sum_M1_x = _mm_setzero_pd();
-				__m128d sum_M1_y = _mm_setzero_pd();
-				__m128d sum_M1_z = _mm_setzero_pd();
+				vcp_double_vec sum_M1_x = _mm_setzero_pd();
+				vcp_double_vec sum_M1_y = _mm_setzero_pd();
+				vcp_double_vec sum_M1_z = _mm_setzero_pd();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
 				for (; j < end_quadrupoles_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_quadrupoles_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d mjj = _mm_load_pd(soa2_quadrupoles_m + j);
-						const __m128d ejj_x = _mm_load_pd(soa2_quadrupoles_e_x + j);
-						const __m128d ejj_y = _mm_load_pd(soa2_quadrupoles_e_y + j);
-						const __m128d ejj_z = _mm_load_pd(soa2_quadrupoles_e_z + j);
-						const __m128d rjj_x = _mm_load_pd(soa2_quadrupoles_r_x + j);
-						const __m128d rjj_y = _mm_load_pd(soa2_quadrupoles_r_y + j);
-						const __m128d rjj_z = _mm_load_pd(soa2_quadrupoles_r_z + j);
+						const vcp_double_vec mjj = _mm_load_pd(soa2_quadrupoles_m + j);
+						const vcp_double_vec ejj_x = _mm_load_pd(soa2_quadrupoles_e_x + j);
+						const vcp_double_vec ejj_y = _mm_load_pd(soa2_quadrupoles_e_y + j);
+						const vcp_double_vec ejj_z = _mm_load_pd(soa2_quadrupoles_e_z + j);
+						const vcp_double_vec rjj_x = _mm_load_pd(soa2_quadrupoles_r_x + j);
+						const vcp_double_vec rjj_y = _mm_load_pd(soa2_quadrupoles_r_y + j);
+						const vcp_double_vec rjj_z = _mm_load_pd(soa2_quadrupoles_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_quadrupoles_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_quadrupoles_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_quadrupoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_quadrupoles_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_quadrupoles_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_quadrupoles_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
 						_loopBodyQudarupole<MacroPolicy>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
@@ -3496,9 +3496,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_add_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_add_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_quadrupoles_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_quadrupoles_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_quadrupoles_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_quadrupoles_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_quadrupoles_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_quadrupoles_f_z + j);
 
 						sum_f2_x = _mm_sub_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_sub_pd(sum_f2_y, f_y);
@@ -3514,9 +3514,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = _mm_add_pd(sum_M1_y, M1_y);
 						sum_M1_z = _mm_add_pd(sum_M1_z, M1_z);
 
-						__m128d sum_M2_x = _mm_load_pd(soa2_quadrupoles_M_x + j);
-						__m128d sum_M2_y = _mm_load_pd(soa2_quadrupoles_M_y + j);
-						__m128d sum_M2_z = _mm_load_pd(soa2_quadrupoles_M_z + j);
+						vcp_double_vec sum_M2_x = _mm_load_pd(soa2_quadrupoles_M_x + j);
+						vcp_double_vec sum_M2_y = _mm_load_pd(soa2_quadrupoles_M_y + j);
+						vcp_double_vec sum_M2_z = _mm_load_pd(soa2_quadrupoles_M_z + j);
 
 						sum_M2_x = _mm_add_pd(sum_M2_x, M2_x);
 						sum_M2_y = _mm_add_pd(sum_M2_y, M2_y);
@@ -3549,35 +3549,35 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++)
 			{
-				const __m128d q = _mm_loaddup_pd(soa1_charges_q + i_charge_quadrupole_idx);
-				const __m128d r1_x = _mm_loaddup_pd(soa1_charges_r_x + i_charge_quadrupole_idx);
-				const __m128d r1_y = _mm_loaddup_pd(soa1_charges_r_y + i_charge_quadrupole_idx);
-				const __m128d r1_z = _mm_loaddup_pd(soa1_charges_r_z + i_charge_quadrupole_idx);
+				const vcp_double_vec q = _mm_loaddup_pd(soa1_charges_q + i_charge_quadrupole_idx);
+				const vcp_double_vec r1_x = _mm_loaddup_pd(soa1_charges_r_x + i_charge_quadrupole_idx);
+				const vcp_double_vec r1_y = _mm_loaddup_pd(soa1_charges_r_y + i_charge_quadrupole_idx);
+				const vcp_double_vec r1_z = _mm_loaddup_pd(soa1_charges_r_z + i_charge_quadrupole_idx);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
 				for (; j < end_quadrupoles_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_quadrupoles_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d m = _mm_load_pd(soa2_quadrupoles_m + j);
-						const __m128d e_x = _mm_load_pd(soa2_quadrupoles_e_x + j);
-						const __m128d e_y = _mm_load_pd(soa2_quadrupoles_e_y + j);
-						const __m128d e_z = _mm_load_pd(soa2_quadrupoles_e_z + j);
-						const __m128d r2_x = _mm_load_pd(soa2_quadrupoles_r_x + j);
-						const __m128d r2_y = _mm_load_pd(soa2_quadrupoles_r_y + j);
-						const __m128d r2_z = _mm_load_pd(soa2_quadrupoles_r_z + j);
+						const vcp_double_vec m = _mm_load_pd(soa2_quadrupoles_m + j);
+						const vcp_double_vec e_x = _mm_load_pd(soa2_quadrupoles_e_x + j);
+						const vcp_double_vec e_y = _mm_load_pd(soa2_quadrupoles_e_y + j);
+						const vcp_double_vec e_z = _mm_load_pd(soa2_quadrupoles_e_z + j);
+						const vcp_double_vec r2_x = _mm_load_pd(soa2_quadrupoles_r_x + j);
+						const vcp_double_vec r2_y = _mm_load_pd(soa2_quadrupoles_r_y + j);
+						const vcp_double_vec r2_z = _mm_load_pd(soa2_quadrupoles_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_quadrupoles_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_quadrupoles_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_quadrupoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_quadrupoles_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_quadrupoles_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_quadrupoles_m_r_z + j);
 
 
-						__m128d f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
 						_loopBodyChargeQuadrupole<MacroPolicy>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
@@ -3592,9 +3592,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_add_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_add_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_quadrupoles_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_quadrupoles_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_quadrupoles_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_quadrupoles_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_quadrupoles_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_quadrupoles_f_z + j);
 
 						sum_f2_x = _mm_sub_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_sub_pd(sum_f2_y, f_y);
@@ -3605,9 +3605,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						_mm_store_pd(soa2_quadrupoles_f_z + j, sum_f2_z);
 
 						// Store torque
-						__m128d sum_M_x = _mm_load_pd(soa2_quadrupoles_M_x + j);
-						__m128d sum_M_y = _mm_load_pd(soa2_quadrupoles_M_y + j);
-						__m128d sum_M_z = _mm_load_pd(soa2_quadrupoles_M_z + j);
+						vcp_double_vec sum_M_x = _mm_load_pd(soa2_quadrupoles_M_x + j);
+						vcp_double_vec sum_M_y = _mm_load_pd(soa2_quadrupoles_M_y + j);
+						vcp_double_vec sum_M_z = _mm_load_pd(soa2_quadrupoles_M_z + j);
 
 						sum_M_x = _mm_add_pd(sum_M_x, M_x);
 						sum_M_y = _mm_add_pd(sum_M_y, M_y);
@@ -3637,42 +3637,42 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 			// Iterate over centers of actual molecule
 			for (int local_i = 0; local_i < soa1_mol_dipoles_num[i]; local_i++)
 			{
-				const __m128d p = _mm_loaddup_pd(soa1_dipoles_p + i_dipole_quadrupole_idx);
-				const __m128d eii_x = _mm_loaddup_pd(soa1_dipoles_e_x + i_dipole_quadrupole_idx);
-				const __m128d eii_y = _mm_loaddup_pd(soa1_dipoles_e_y + i_dipole_quadrupole_idx);
-				const __m128d eii_z = _mm_loaddup_pd(soa1_dipoles_e_z + i_dipole_quadrupole_idx);
-				const __m128d rii_x = _mm_loaddup_pd(soa1_dipoles_r_x + i_dipole_quadrupole_idx);
-				const __m128d rii_y = _mm_loaddup_pd(soa1_dipoles_r_y + i_dipole_quadrupole_idx);
-				const __m128d rii_z = _mm_loaddup_pd(soa1_dipoles_r_z + i_dipole_quadrupole_idx);
+				const vcp_double_vec p = _mm_loaddup_pd(soa1_dipoles_p + i_dipole_quadrupole_idx);
+				const vcp_double_vec eii_x = _mm_loaddup_pd(soa1_dipoles_e_x + i_dipole_quadrupole_idx);
+				const vcp_double_vec eii_y = _mm_loaddup_pd(soa1_dipoles_e_y + i_dipole_quadrupole_idx);
+				const vcp_double_vec eii_z = _mm_loaddup_pd(soa1_dipoles_e_z + i_dipole_quadrupole_idx);
+				const vcp_double_vec rii_x = _mm_loaddup_pd(soa1_dipoles_r_x + i_dipole_quadrupole_idx);
+				const vcp_double_vec rii_y = _mm_loaddup_pd(soa1_dipoles_r_y + i_dipole_quadrupole_idx);
+				const vcp_double_vec rii_z = _mm_loaddup_pd(soa1_dipoles_r_z + i_dipole_quadrupole_idx);
 
-				__m128d sum_f1_x = _mm_setzero_pd();
-				__m128d sum_f1_y = _mm_setzero_pd();
-				__m128d sum_f1_z = _mm_setzero_pd();
+				vcp_double_vec sum_f1_x = _mm_setzero_pd();
+				vcp_double_vec sum_f1_y = _mm_setzero_pd();
+				vcp_double_vec sum_f1_z = _mm_setzero_pd();
 
-				__m128d sum_M1_x = _mm_setzero_pd();
-				__m128d sum_M1_y = _mm_setzero_pd();
-				__m128d sum_M1_z = _mm_setzero_pd();
+				vcp_double_vec sum_M1_x = _mm_setzero_pd();
+				vcp_double_vec sum_M1_y = _mm_setzero_pd();
+				vcp_double_vec sum_M1_z = _mm_setzero_pd();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
 				for (; j < end_quadrupoles_j; j += 2) {
-					const __m128d forceMask = _mm_load_pd(soa2_quadrupoles_dist_lookup + j);
+					const vcp_double_vec forceMask = _mm_load_pd(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (_mm_movemask_pd(forceMask) > 0) {
 
-						const __m128d m = _mm_load_pd(soa2_quadrupoles_m + j);
-						const __m128d ejj_x = _mm_load_pd(soa2_quadrupoles_e_x + j);
-						const __m128d ejj_y = _mm_load_pd(soa2_quadrupoles_e_y + j);
-						const __m128d ejj_z = _mm_load_pd(soa2_quadrupoles_e_z + j);
-						const __m128d rjj_x = _mm_load_pd(soa2_quadrupoles_r_x + j);
-						const __m128d rjj_y = _mm_load_pd(soa2_quadrupoles_r_y + j);
-						const __m128d rjj_z = _mm_load_pd(soa2_quadrupoles_r_z + j);
+						const vcp_double_vec m = _mm_load_pd(soa2_quadrupoles_m + j);
+						const vcp_double_vec ejj_x = _mm_load_pd(soa2_quadrupoles_e_x + j);
+						const vcp_double_vec ejj_y = _mm_load_pd(soa2_quadrupoles_e_y + j);
+						const vcp_double_vec ejj_z = _mm_load_pd(soa2_quadrupoles_e_z + j);
+						const vcp_double_vec rjj_x = _mm_load_pd(soa2_quadrupoles_r_x + j);
+						const vcp_double_vec rjj_y = _mm_load_pd(soa2_quadrupoles_r_y + j);
+						const vcp_double_vec rjj_z = _mm_load_pd(soa2_quadrupoles_r_z + j);
 
-						const __m128d m2_r_x = _mm_load_pd(soa2_quadrupoles_m_r_x + j);
-						const __m128d m2_r_y = _mm_load_pd(soa2_quadrupoles_m_r_y + j);
-						const __m128d m2_r_z = _mm_load_pd(soa2_quadrupoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = _mm_load_pd(soa2_quadrupoles_m_r_x + j);
+						const vcp_double_vec m2_r_y = _mm_load_pd(soa2_quadrupoles_m_r_y + j);
+						const vcp_double_vec m2_r_z = _mm_load_pd(soa2_quadrupoles_m_r_z + j);
 
-						__m128d f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
 						_loopBodyDipoleQuadrupole<MacroPolicy>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,
@@ -3687,9 +3687,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = _mm_add_pd(sum_f1_y, f_y);
 						sum_f1_z = _mm_add_pd(sum_f1_z, f_z);
 
-						__m128d sum_f2_x = _mm_load_pd(soa2_quadrupoles_f_x + j);
-						__m128d sum_f2_y = _mm_load_pd(soa2_quadrupoles_f_y + j);
-						__m128d sum_f2_z = _mm_load_pd(soa2_quadrupoles_f_z + j);
+						vcp_double_vec sum_f2_x = _mm_load_pd(soa2_quadrupoles_f_x + j);
+						vcp_double_vec sum_f2_y = _mm_load_pd(soa2_quadrupoles_f_y + j);
+						vcp_double_vec sum_f2_z = _mm_load_pd(soa2_quadrupoles_f_z + j);
 
 						sum_f2_x = _mm_sub_pd(sum_f2_x, f_x);
 						sum_f2_y = _mm_sub_pd(sum_f2_y, f_y);
@@ -3705,9 +3705,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = _mm_add_pd(sum_M1_y, M1_y);
 						sum_M1_z = _mm_add_pd(sum_M1_z, M1_z);
 
-						__m128d sum_M2_x = _mm_load_pd(soa2_quadrupoles_M_x + j);
-						__m128d sum_M2_y = _mm_load_pd(soa2_quadrupoles_M_y + j);
-						__m128d sum_M2_z = _mm_load_pd(soa2_quadrupoles_M_z + j);
+						vcp_double_vec sum_M2_x = _mm_load_pd(soa2_quadrupoles_M_x + j);
+						vcp_double_vec sum_M2_y = _mm_load_pd(soa2_quadrupoles_M_y + j);
+						vcp_double_vec sum_M2_z = _mm_load_pd(soa2_quadrupoles_M_z + j);
 
 						sum_M2_x = _mm_add_pd(sum_M2_x, M2_x);
 						sum_M2_y = _mm_add_pd(sum_M2_y, M2_y);

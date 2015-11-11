@@ -4,7 +4,7 @@
  *
  * \brief Defines the length of the vectors and the corresponding functions
  *
- * \author Steffen Seckler (seckler), seckler AT in.tum.de
+ * \author Steffen Seckler
  *
  **************************************************************************************/
 #pragma once
@@ -45,6 +45,20 @@
 	#include "immintrin.h"
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
+#endif
+
+
+
+// define necessary types
+
+#if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
+	#define VCP_VECTOR_LENGTH 1
+
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
+	typedef __m128d vcp_double_vec;
+#elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
+	typedef __m256d vcp_double_vec;
+
 #endif
 
 
