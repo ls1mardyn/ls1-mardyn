@@ -882,8 +882,8 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	const vcp_double_vec r2_inv_unmasked = vcp_simd_div(one, c_r2);
 	const vcp_double_vec r2_inv = vcp_simd_and(r2_inv_unmasked, forceMask);
 
-	const vcp_double_vec eps_24 = _mm_unpacklo_pd(e1s1, e2s2);
-	const vcp_double_vec sig2 = _mm_unpackhi_pd(e1s1, e2s2);
+	const vcp_double_vec eps_24 = vcp_simd_unpacklo(e1s1, e2s2);
+	const vcp_double_vec sig2 = vcp_simd_unpackhi(e1s1, e2s2);
 	const vcp_double_vec lj2 = vcp_simd_mul(sig2, r2_inv);
 	const vcp_double_vec lj4 = vcp_simd_mul(lj2, lj2);
 	const vcp_double_vec lj6 = vcp_simd_mul(lj4, lj2);
@@ -905,7 +905,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	if (vcp_simd_movemask(macroMask) > 0) {
 		const vcp_double_vec sh1 = _mm_load_sd(_shift6[id_i] + id_j0);
 		const vcp_double_vec sh2 = _mm_load_sd(_shift6[id_i] + id_j1);
-		const vcp_double_vec shift6 = _mm_unpacklo_pd(sh1, sh2);
+		const vcp_double_vec shift6 = vcp_simd_unpacklo(sh1, sh2);
 		const vcp_double_vec upot = vcp_simd_mul(eps_24, lj12m6);
 		const vcp_double_vec upot_sh = vcp_simd_add(shift6, upot);
 		const vcp_double_vec upot_masked = vcp_simd_and(upot_sh, macroMask);
@@ -1595,10 +1595,10 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	const vcp_double_vec r2_inv = vcp_simd_and(r2_inv_unmasked, forceMask);
 
 
-	const vcp_double_vec e0e1 = _mm256_unpacklo_pd(e0s0, e1s1);
-	const vcp_double_vec s0s1 = _mm256_unpackhi_pd(e0s0, e1s1);
-	const vcp_double_vec e2e3 = _mm256_unpacklo_pd(e2s2, e3s3);
-	const vcp_double_vec s2s3 = _mm256_unpackhi_pd(e2s2, e3s3);
+	const vcp_double_vec e0e1 = vcp_simd_unpacklo(e0s0, e1s1);
+	const vcp_double_vec s0s1 = vcp_simd_unpackhi(e0s0, e1s1);
+	const vcp_double_vec e2e3 = vcp_simd_unpacklo(e2s2, e3s3);
+	const vcp_double_vec s2s3 = vcp_simd_unpackhi(e2s2, e3s3);
 
 	const vcp_double_vec eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
 	const vcp_double_vec sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
@@ -1628,13 +1628,13 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 
 	// Only go on if at least 1 macroscopic value has to be calculated.
 	if (vcp_simd_movemask(macroMask) > 0) {
-		const vcp_double_vec sh0 = _mm256_maskload_pd(_shift6[id_i] + id_j0, memoryMask_first);
-		const vcp_double_vec sh1 = _mm256_maskload_pd(_shift6[id_i] + id_j1, memoryMask_first);
-		const vcp_double_vec sh2 = _mm256_maskload_pd(_shift6[id_i] + id_j2, memoryMask_first);
-		const vcp_double_vec sh3 = _mm256_maskload_pd(_shift6[id_i] + id_j3, memoryMask_first);
+		const vcp_double_vec sh0 = vcp_simd_maskload(_shift6[id_i] + id_j0, memoryMask_first);
+		const vcp_double_vec sh1 = vcp_simd_maskload(_shift6[id_i] + id_j1, memoryMask_first);
+		const vcp_double_vec sh2 = vcp_simd_maskload(_shift6[id_i] + id_j2, memoryMask_first);
+		const vcp_double_vec sh3 = vcp_simd_maskload(_shift6[id_i] + id_j3, memoryMask_first);
 
-		const vcp_double_vec sh0sh1 = _mm256_unpacklo_pd(sh0, sh1);
-		const vcp_double_vec sh2sh3 = _mm256_unpacklo_pd(sh2, sh3);
+		const vcp_double_vec sh0sh1 = vcp_simd_unpacklo(sh0, sh1);
+		const vcp_double_vec sh2sh3 = vcp_simd_unpacklo(sh2, sh3);
 
 		const vcp_double_vec shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
 
@@ -2305,7 +2305,6 @@ inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) 
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 
-
 inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 	const vcp_double_vec a_t1 = _mm256_permute2f128_pd(a, a, 0x1);
 	const vcp_double_vec a_t2 = _mm256_hadd_pd(a, a_t1);
@@ -2315,7 +2314,7 @@ inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) 
 			memoryMask_first,
 			vcp_simd_add(
 				a_t3,
-				_mm256_maskload_pd(mem_addr, memoryMask_first)
+				vcp_simd_maskload(mem_addr, memoryMask_first)
 			)
 
 	);
@@ -2727,7 +2726,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 
-	const vcp_double_vec ones = _mm_castsi128_pd(_mm_set_epi32(~0, ~0, ~0, ~0));
+	const vcp_double_vec ones = vcp_simd_ones();
 
 	vcp_double_vec sum_upot6lj = vcp_simd_zerov();
 	vcp_double_vec sum_upotXpoles = vcp_simd_zerov();
@@ -3822,10 +3821,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const size_t id_j1 = soa2_ljc_id[j + 1];
 						const size_t id_j2 = soa2_ljc_id[j + 2];
 						const size_t id_j3 = soa2_ljc_id[j + 3];
-						const vcp_double_vec e0s0 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j0, memoryMask_first_second);
-						const vcp_double_vec e1s1 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j1, memoryMask_first_second);
-						const vcp_double_vec e2s2 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j2, memoryMask_first_second);
-						const vcp_double_vec e3s3 = _mm256_maskload_pd(_eps_sig[id_i] + 2 * id_j3, memoryMask_first_second);
+						const vcp_double_vec e0s0 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j0, memoryMask_first_second);
+						const vcp_double_vec e1s1 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j1, memoryMask_first_second);
+						const vcp_double_vec e2s2 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j2, memoryMask_first_second);
+						const vcp_double_vec e3s3 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j3, memoryMask_first_second);
 
 						const vcp_double_vec m_r_x2 = vcp_simd_load(soa2_ljc_m_r_x + j);
 						const vcp_double_vec m_r_y2 = vcp_simd_load(soa2_ljc_m_r_y + j);

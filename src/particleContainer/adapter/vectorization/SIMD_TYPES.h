@@ -56,8 +56,10 @@
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 	typedef __m128d vcp_double_vec;
+	typedef __m128i vcp_mask_vec;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 	typedef __m256d vcp_double_vec;
+	typedef __m256i vcp_mask_vec;
 
 #endif
 

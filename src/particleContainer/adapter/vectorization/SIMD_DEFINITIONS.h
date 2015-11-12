@@ -27,6 +27,7 @@
 
 #if VCP_VEC_TYPE==VCP_VEC_SSE3
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm_setzero_pd(); }
+	static inline vcp_double_vec vcp_simd_ones() { return _mm_castsi128_pd( _mm_set_epi32(~0, ~0, ~0, ~0) ); }
 
 	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_cmplt_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_cmpeq_pd(a, b);}
@@ -46,11 +47,15 @@
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm_load_pd(a);}
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm_loaddup_pd(a);}
 	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {return _mm_store_pd(location, a);}
+	static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpacklo_pd(a,b);}
+	static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpackhi_pd(a,b);}
+
+
 	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm_movemask_pd(a);}
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm256_setzero_pd(); }
-	static inline vcp_double_vec vcp_simd_ones() { return _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) ); }
+	static inline vcp_double_vec vcp_simd_ones() { return _mm256_castsi256_pd( _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) ); }
 	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_LT_OS);}
 	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_EQ_OS);}
 	static inline vcp_double_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_NEQ_OS);}
@@ -69,13 +74,31 @@
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm256_load_pd(a);}
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm256_broadcast_sd(a);}
 	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {return _mm256_store_pd(location, a);}
-	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm256_movemask_pd(a);}
+	static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpacklo_pd(a,b);}
+	static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}
 
+	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm256_movemask_pd(a);}
+	static inline vcp_double_vec vcp_simd_maskload(double const * a, vcp_mask_vec b) {return _mm256_maskload_pd(a, b);}
 
 #endif
 
+/*#if VCP_VEC_TYPE != VCP_NOVEC //I do not trust gcc yet to do this properly by itself...
+	#ifdef __ICC
+		static inline vcp_double_vec operator < (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_lt(a, b); }
+		static inline vcp_double_vec operator == (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_eq(a, b); }
+		static inline vcp_double_vec operator != (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_neq(a, b); }
+		static inline vcp_double_vec operator & (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_and(a, b); }
+		static inline vcp_double_vec operator | (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_or(a, b); }
 
 
+
+        static inline vcp_double_vec operator + (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_add(a, b); }
+        static inline vcp_double_vec operator - (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_sub(a, b); }
+        static inline vcp_double_vec operator * (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_mul(a, b); }
+        static inline vcp_double_vec operator / (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_div(a, b); }
+	#endif
+#endif
+*/
 
 
 

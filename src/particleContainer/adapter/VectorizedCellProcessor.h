@@ -371,7 +371,7 @@ private:
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return vcp_simd_lt(m_r2, rc2);//TODO: merge with sse3
+			return vcp_simd_lt(m_r2, rc2);//TODO: merge with sse3s
 		}
 	#if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
