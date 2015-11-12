@@ -1326,7 +1326,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 	}
 
 	template<class MacroPolicy>
-	inline void _loopBodyQudarupole(
+	inline void _loopBodyQuadrupole(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
 			const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
@@ -1500,7 +1500,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
 		vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask,
-		const vcp_double_vec& e1s1, const vcp_double_vec& e2s2,
+		const vcp_double_vec& e0s0, const vcp_double_vec& e1s1,
 		const size_t& id_j0, const size_t& id_j1, const size_t& id_i)
 {
 	const vcp_double_vec c_dx = vcp_simd_sub(r1_x, r2_x);
@@ -1515,8 +1515,8 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	const vcp_double_vec r2_inv_unmasked = vcp_simd_div(one, c_r2);
 	const vcp_double_vec r2_inv = vcp_simd_and(r2_inv_unmasked, forceMask);
 
-	const vcp_double_vec eps_24 = vcp_simd_unpacklo(e1s1, e2s2);
-	const vcp_double_vec sig2 = vcp_simd_unpackhi(e1s1, e2s2);
+	const vcp_double_vec eps_24 = vcp_simd_unpacklo(e0s0, e1s1);
+	const vcp_double_vec sig2 = vcp_simd_unpackhi(e0s0, e1s1);
 	const vcp_double_vec lj2 = vcp_simd_mul(sig2, r2_inv);
 	const vcp_double_vec lj4 = vcp_simd_mul(lj2, lj2);
 	const vcp_double_vec lj6 = vcp_simd_mul(lj4, lj2);
@@ -2081,9 +2081,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double* const soa2_quadrupoles_dist_lookup = soa2._quadrupoles_dist_lookup;
 
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+#if VCP_VEC_TYPE==VCP_VEC_AVX
+	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
+#endif
 
-	const vcp_double_vec ones = vcp_simd_ones();
+	static const vcp_double_vec ones = vcp_simd_ones();
 
 	vcp_double_vec sum_upot6lj = vcp_simd_zerov();
 	vcp_double_vec sum_upotXpoles = vcp_simd_zerov();
@@ -2095,1028 +2097,14 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	const vcp_double_vec epsRFInvrc3 = vcp_simd_broadcast(&_epsRFInvrc3);
 
 	/*
-	 *  "var" & (~1):
-	 *  Making sure that result is a multiple of 2. If "var" can not be divided by 2
-	 *  the result is: "var" decremented by one.
+	 *  "var" & (~VCP_VEC_SIZE_M1):
+	 *  Making sure that result is a multiple of VCP_VEC_SIZE. If "var" can not be divided by VCP_VEC_SIZE
+	 *  the result is: the next smaller multiple of VCP_VEC_SIZE.
 	 */
-	const size_t end_ljc_j = soa2._ljc_num & (~1);
-	const size_t end_charges_j = soa2._charges_num & (~1);
-	const size_t end_dipoles_j = soa2._dipoles_num & (~1);
-	const size_t end_quadrupoles_j = soa2._quadrupoles_num & (~1);
-
-	size_t i_ljc_idx = 0;
-	size_t i_charge_idx = 0;
-	size_t i_charge_dipole_idx = 0;
-	size_t i_charge_quadrupole_idx = 0;
-	size_t i_dipole_charge_idx = 0;
-	size_t i_dipole_idx = 0;
-	size_t i_dipole_quadrupole_idx = 0;
-	size_t i_quadrupole_charge_idx = 0;
-	size_t i_quadrupole_dipole_idx = 0;
-	size_t i_quadrupole_idx = 0;
-
-	// Iterate over each center in the first cell.
-	for (size_t i = 0; i < soa1._mol_num; ++i) {
-		const vcp_double_vec m1_r_x = vcp_simd_broadcast(soa1_mol_pos_x + i);
-		const vcp_double_vec m1_r_y = vcp_simd_broadcast(soa1_mol_pos_y + i);
-		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
-
-
-		const vcp_double_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJcutoffRadiusSquare,
-				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
-				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
-		const vcp_double_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
-				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
-				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
-		const vcp_double_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(soa1, i, i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
-				soa2_dipoles_dist_lookup, soa2_dipoles_m_r_x, soa2_dipoles_m_r_y, soa2_dipoles_m_r_z,
-				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z);
-		const vcp_double_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
-				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
-				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
-
-		if (!vcp_simd_movemask(compute_molecule_ljc)) {
-			i_ljc_idx += soa1_mol_ljc_num[i];
-		}
-		else {
-
-			// LJ force computation
-			for (int local_i = 0; local_i < soa1_mol_ljc_num[i]; local_i++) {
-				vcp_double_vec sum_fx1 = vcp_simd_zerov();
-				vcp_double_vec sum_fy1 = vcp_simd_zerov();
-				vcp_double_vec sum_fz1 = vcp_simd_zerov();
-				const vcp_double_vec c_r_x1 = vcp_simd_broadcast(soa1_ljc_r_x + i_ljc_idx);
-				const vcp_double_vec c_r_y1 = vcp_simd_broadcast(soa1_ljc_r_y + i_ljc_idx);
-				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
-				// Iterate over each pair of centers in the second cell.
-				size_t j = ForcePolicy::InitJ(i_ljc_idx);
-				for (; j < end_ljc_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_ljc_dist_lookup + j);
-					// Only go on if at least 1 of the forces has to be calculated.
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec c_r_x2 = vcp_simd_load(soa2_ljc_r_x + j);
-						const vcp_double_vec c_r_y2 = vcp_simd_load(soa2_ljc_r_y + j);
-						const vcp_double_vec c_r_z2 = vcp_simd_load(soa2_ljc_r_z + j);
-
-						const size_t id_j0 = soa2_ljc_id[j];
-						const size_t id_j1 = soa2_ljc_id[j + 1];
-						const size_t id_i = soa1_ljc_id[i_ljc_idx];
-						const vcp_double_vec e1s1 = vcp_simd_load(_eps_sig[id_i] + 2 * id_j0);
-						const vcp_double_vec e2s2 = vcp_simd_load(_eps_sig[id_i] + 2 * id_j1);
-
-						const vcp_double_vec m_r_x2 = vcp_simd_load(soa2_ljc_m_r_x + j);
-						const vcp_double_vec m_r_y2 = vcp_simd_load(soa2_ljc_m_r_y + j);
-						const vcp_double_vec m_r_z2 = vcp_simd_load(soa2_ljc_m_r_z + j);
-
-						vcp_double_vec fx, fy, fz;
-
-						_loopBodyLJ<MacroPolicy>(
-							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
-							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
-							fx, fy, fz,
-							sum_upot6lj, sum_virial,
-							forceMask,
-							e1s1, e2s2,
-							id_j0, id_j1, id_i);
-
-						const vcp_double_vec old_fx2 = vcp_simd_load(soa2_ljc_f_x + j);
-						const vcp_double_vec new_fx2 = vcp_simd_sub(old_fx2, fx);
-						vcp_simd_store(soa2_ljc_f_x + j, new_fx2);
-						const vcp_double_vec old_fy2 = vcp_simd_load(soa2_ljc_f_y + j);
-						const vcp_double_vec new_fy2 = vcp_simd_sub(old_fy2, fy);
-						vcp_simd_store(soa2_ljc_f_y + j, new_fy2);
-						const vcp_double_vec old_fz2 = vcp_simd_load(soa2_ljc_f_z + j);
-						const vcp_double_vec new_fz2 = vcp_simd_sub(old_fz2, fz);
-						vcp_simd_store(soa2_ljc_f_z + j, new_fz2);
-						sum_fx1 = vcp_simd_add(sum_fx1, fx);
-						sum_fy1 = vcp_simd_add(sum_fy1, fy);
-						sum_fz1 = vcp_simd_add(sum_fz1, fz);
-					}
-				}
-
-				hSum_Add_Store(soa1_ljc_f_x + i_ljc_idx, sum_fx1);
-				hSum_Add_Store(soa1_ljc_f_y + i_ljc_idx, sum_fy1);
-				hSum_Add_Store(soa1_ljc_f_z + i_ljc_idx, sum_fz1);
-
-				// Unvectorized calculation for leftover pairs.
-				switch (soa2._ljc_num & 1) {
-					case 1: {
-						_loopBodyNovecLJ<MacroPolicy>(soa1, i_ljc_idx, soa2, end_ljc_j, soa2_ljc_dist_lookup + j);
-					}
-					break;
-				}
-
-				i_ljc_idx++;
-			}
-		}
-
-		// Computation of site interactions with charges
-
-		if (!vcp_simd_movemask(compute_molecule_charges)) {
-			i_charge_idx += soa1_mol_charges_num[i];
-			i_dipole_charge_idx += soa1_mol_dipoles_num[i];
-			i_quadrupole_charge_idx += soa1_mol_quadrupoles_num[i];
-		}
-		else {
-			// Computation of charge-charge interactions
-
-			// Iterate over centers of actual molecule
-			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++) {
-
-				const vcp_double_vec q1 = vcp_simd_broadcast(soa1_charges_q + i_charge_idx + local_i);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_charges_r_x + i_charge_idx + local_i);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_charges_r_y + i_charge_idx + local_i);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_charges_r_z + i_charge_idx + local_i);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
-				for (; j < end_charges_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec q2 = vcp_simd_load(soa2_charges_q + j);
-
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_charges_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_charges_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_charges_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_charges_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z;
-						_loopBodyCharge<MacroPolicy>(
-								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
-								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q2,
-								f_x, f_y, f_z,
-								sum_upotXpoles, sum_virial,
-								forceMask);
-
-
-
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
-
-						vcp_double_vec f2_x = vcp_simd_load(soa2_charges_f_x + j);
-						vcp_double_vec f2_y = vcp_simd_load(soa2_charges_f_y + j);
-						vcp_double_vec f2_z = vcp_simd_load(soa2_charges_f_z + j);
-
-						f2_x = vcp_simd_sub(f2_x, f_x);
-						f2_y = vcp_simd_sub(f2_y, f_y);
-						f2_z = vcp_simd_sub(f2_z, f_z);
-
-						vcp_simd_store(soa2_charges_f_x + j, f2_x);
-						vcp_simd_store(soa2_charges_f_y + j, f2_y);
-						vcp_simd_store(soa2_charges_f_z + j, f2_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_charges_f_x + i_charge_idx + local_i, sum_f1_x);
-				hSum_Add_Store(soa1_charges_f_y + i_charge_idx + local_i, sum_f1_y);
-				hSum_Add_Store(soa1_charges_f_z + i_charge_idx + local_i, sum_f1_z);
-
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._charges_num; ++j) {
-					_loopBodyNovecCharges<MacroPolicy>(soa1, i_charge_idx + local_i, soa2, j, soa2_charges_dist_lookup + j);
-				}
-
-			}
-
-			// Computation of dipole-charge interactions
-
-			for (int local_i = 0; local_i < soa1_mol_dipoles_num[i]; local_i++)
-			{
-				const vcp_double_vec p = vcp_simd_broadcast(soa1_dipoles_p + i_dipole_charge_idx);
-				const vcp_double_vec e_x = vcp_simd_broadcast(soa1_dipoles_e_x + i_dipole_charge_idx);
-				const vcp_double_vec e_y = vcp_simd_broadcast(soa1_dipoles_e_y + i_dipole_charge_idx);
-				const vcp_double_vec e_z = vcp_simd_broadcast(soa1_dipoles_e_z + i_dipole_charge_idx);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_dipoles_r_x + i_dipole_charge_idx);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_dipoles_r_y + i_dipole_charge_idx);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_dipoles_r_z + i_dipole_charge_idx);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				vcp_double_vec sum_M_x = vcp_simd_zerov();
-				vcp_double_vec sum_M_y = vcp_simd_zerov();
-				vcp_double_vec sum_M_z = vcp_simd_zerov();
-
-				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
-
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_charges_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_charges_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_charges_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_charges_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
-
-						_loopBodyChargeDipole<MacroPolicy>(
-								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
-								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, p,
-								f_x, f_y, f_z, M_x, M_y, M_z,
-								sum_upotXpoles, sum_virial,
-								forceMask, ones);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_charges_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_charges_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_charges_f_z + j);
-
-						sum_f2_x = vcp_simd_add(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_add(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_add(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_charges_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_charges_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_charges_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						sum_M_x = vcp_simd_add(sum_M_x, M_x);
-						sum_M_y = vcp_simd_add(sum_M_y, M_y);
-						sum_M_z = vcp_simd_add(sum_M_z, M_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_dipoles_f_x + i_dipole_charge_idx, sum_f1_x);
-				hSum_Add_Store(soa1_dipoles_f_y + i_dipole_charge_idx, sum_f1_y);
-				hSum_Add_Store(soa1_dipoles_f_z + i_dipole_charge_idx, sum_f1_z);
-
-				// Add old torques and summed calculated torques for center 1
-				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_charge_idx, sum_M_x);
-				hSum_Add_Store(soa1_dipoles_M_y + i_dipole_charge_idx, sum_M_y);
-				hSum_Add_Store(soa1_dipoles_M_z + i_dipole_charge_idx, sum_M_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._charges_num; ++j) {
-					_loopBodyNovecChargesDipoles<MacroPolicy>(soa2, j, soa1, i_dipole_charge_idx, soa2_charges_dist_lookup + j, true);
-				}
-
-				i_dipole_charge_idx++;
-			}
-
-			// Computation of quadrupole-charge interactions
-
-			for (int local_i = 0; local_i < soa1_mol_quadrupoles_num[i]; local_i++)
-			{
-				const vcp_double_vec m = vcp_simd_broadcast(soa1_quadrupoles_m + i_quadrupole_charge_idx);
-				const vcp_double_vec e_x = vcp_simd_broadcast(soa1_quadrupoles_e_x + i_quadrupole_charge_idx);
-				const vcp_double_vec e_y = vcp_simd_broadcast(soa1_quadrupoles_e_y + i_quadrupole_charge_idx);
-				const vcp_double_vec e_z = vcp_simd_broadcast(soa1_quadrupoles_e_z + i_quadrupole_charge_idx);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_quadrupoles_r_x + i_quadrupole_charge_idx);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_quadrupoles_r_y + i_quadrupole_charge_idx);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_quadrupoles_r_z + i_quadrupole_charge_idx);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
-
-				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
-
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_charges_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_charges_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_charges_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_charges_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
-
-						_loopBodyChargeQuadrupole<MacroPolicy>(
-								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
-								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, m,
-								f_x, f_y, f_z, M_x, M_y, M_z,
-								sum_upotXpoles, sum_virial,
-								forceMask, ones);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_charges_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_charges_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_charges_f_z + j);
-
-						sum_f2_x = vcp_simd_add(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_add(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_add(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_charges_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_charges_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_charges_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						sum_M1_x = vcp_simd_add(sum_M1_x, M_x);
-						sum_M1_y = vcp_simd_add(sum_M1_y, M_y);
-						sum_M1_z = vcp_simd_add(sum_M1_z, M_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_quadrupoles_f_x + i_quadrupole_charge_idx, sum_f1_x);
-				hSum_Add_Store(soa1_quadrupoles_f_y + i_quadrupole_charge_idx, sum_f1_y);
-				hSum_Add_Store(soa1_quadrupoles_f_z + i_quadrupole_charge_idx, sum_f1_z);
-
-				// Add old torques and summed calculated torques for center 1
-				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_charge_idx, sum_M1_x);
-				hSum_Add_Store(soa1_quadrupoles_M_y + i_quadrupole_charge_idx, sum_M1_y);
-				hSum_Add_Store(soa1_quadrupoles_M_z + i_quadrupole_charge_idx, sum_M1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._charges_num; ++j) {
-					_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_charge_idx, soa2_charges_dist_lookup + j, true);
-				}
-				i_quadrupole_charge_idx++;
-			}
-
-			i_charge_idx += soa1_mol_charges_num[i];
-		}
-
-		// Computation of site interactions with dipoles
-
-		// Continue with next molecule if no force has to be calculated
-		if (!vcp_simd_movemask(compute_molecule_dipoles)) {
-			i_dipole_idx += soa1_mol_dipoles_num[i];
-			i_charge_dipole_idx += soa1_mol_charges_num[i];
-			i_quadrupole_dipole_idx += soa1_mol_quadrupoles_num[i];
-		}
-		else {
-			// Computation of dipole-dipole interactions
-
-			// Iterate over centers of actual molecule
-			for (int local_i = 0; local_i < soa1_mol_dipoles_num[i]; local_i++) {
-
-				const vcp_double_vec p1 = vcp_simd_broadcast(soa1_dipoles_p + i_dipole_idx + local_i);
-				const vcp_double_vec e1_x = vcp_simd_broadcast(soa1_dipoles_e_x + i_dipole_idx + local_i);
-				const vcp_double_vec e1_y = vcp_simd_broadcast(soa1_dipoles_e_y + i_dipole_idx + local_i);
-				const vcp_double_vec e1_z = vcp_simd_broadcast(soa1_dipoles_e_z + i_dipole_idx + local_i);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_dipoles_r_x + i_dipole_idx + local_i);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_dipoles_r_y + i_dipole_idx + local_i);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_dipoles_r_z + i_dipole_idx + local_i);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
-
-				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
-				for (; j < end_dipoles_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec p2 = vcp_simd_load(soa2_dipoles_p + j);
-						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
-						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
-						const vcp_double_vec e2_z = vcp_simd_load(soa2_dipoles_e_z + j);
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_dipoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_dipoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_dipoles_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_dipoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_dipoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_dipoles_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-
-						_loopBodyDipole<MacroPolicy>(
-							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
-							m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p2,
-							f_x, f_y, f_z,
-							M1_x, M1_y, M1_z,
-							M2_x, M2_y, M2_z,
-							sum_upotXpoles, sum_virial, sum_myRF,
-							forceMask,
-							epsRFInvrc3);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_dipoles_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_dipoles_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_dipoles_f_z + j);
-
-						sum_f2_x = vcp_simd_sub(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_sub(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_sub(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_dipoles_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_dipoles_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_dipoles_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						sum_M1_x = vcp_simd_add(sum_M1_x, M1_x);
-						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
-						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
-
-						vcp_double_vec sum_M2_x = vcp_simd_load(soa2_dipoles_M_x + j);
-						vcp_double_vec sum_M2_y = vcp_simd_load(soa2_dipoles_M_y + j);
-						vcp_double_vec sum_M2_z = vcp_simd_load(soa2_dipoles_M_z + j);
-
-						sum_M2_x = vcp_simd_add(sum_M2_x, M2_x);
-						sum_M2_y = vcp_simd_add(sum_M2_y, M2_y);
-						sum_M2_z = vcp_simd_add(sum_M2_z, M2_z);
-
-						vcp_simd_store(soa2_dipoles_M_x + j, sum_M2_x);
-						vcp_simd_store(soa2_dipoles_M_y + j, sum_M2_y);
-						vcp_simd_store(soa2_dipoles_M_z + j, sum_M2_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_dipoles_f_x + i_dipole_idx + local_i, sum_f1_x);
-				hSum_Add_Store(soa1_dipoles_f_y + i_dipole_idx + local_i, sum_f1_y);
-				hSum_Add_Store(soa1_dipoles_f_z + i_dipole_idx + local_i, sum_f1_z);
-
-				// Add old torques and summed calculated torques for center 1
-				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_idx + local_i, sum_M1_x);
-				hSum_Add_Store(soa1_dipoles_M_y + i_dipole_idx + local_i, sum_M1_y);
-				hSum_Add_Store(soa1_dipoles_M_z + i_dipole_idx + local_i, sum_M1_z);
-
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._dipoles_num; ++j) {
-					_loopBodyNovecDipoles<MacroPolicy>(soa1, i_dipole_idx + local_i, soa2, j, soa2_dipoles_dist_lookup + j);
-				}
-
-			}
-
-			// Computation of charge-dipole interactions
-
-			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++)
-			{
-
-				const vcp_double_vec q = vcp_simd_broadcast(soa1_charges_q + i_charge_dipole_idx);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_charges_r_x + i_charge_dipole_idx);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_charges_r_y + i_charge_dipole_idx);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_charges_r_z + i_charge_dipole_idx);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
-
-						const vcp_double_vec e_x = vcp_simd_load(soa2_dipoles_e_x + j);
-						const vcp_double_vec e_y = vcp_simd_load(soa2_dipoles_e_y + j);
-						const vcp_double_vec e_z = vcp_simd_load(soa2_dipoles_e_z + j);
-
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_dipoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_dipoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_dipoles_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_dipoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_dipoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_dipoles_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
-
-						_loopBodyChargeDipole<MacroPolicy>(
-								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
-								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e_x, e_y, e_z, p,
-								f_x, f_y, f_z, M_x, M_y, M_z,
-								sum_upotXpoles, sum_virial,
-								forceMask, zero);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_dipoles_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_dipoles_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_dipoles_f_z + j);
-
-						sum_f2_x = vcp_simd_sub(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_sub(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_sub(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_dipoles_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_dipoles_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_dipoles_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						vcp_double_vec sum_M2_x = vcp_simd_load(soa2_dipoles_M_x + j);
-						vcp_double_vec sum_M2_y = vcp_simd_load(soa2_dipoles_M_y + j);
-						vcp_double_vec sum_M2_z = vcp_simd_load(soa2_dipoles_M_z + j);
-
-						sum_M2_x = vcp_simd_add(sum_M2_x, M_x);
-						sum_M2_y = vcp_simd_add(sum_M2_y, M_y);
-						sum_M2_z = vcp_simd_add(sum_M2_z, M_z);
-
-						vcp_simd_store(soa2_dipoles_M_x + j, sum_M2_x);
-						vcp_simd_store(soa2_dipoles_M_y + j, sum_M2_y);
-						vcp_simd_store(soa2_dipoles_M_z + j, sum_M2_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_charges_f_x + i_charge_dipole_idx, sum_f1_x);
-				hSum_Add_Store(soa1_charges_f_y + i_charge_dipole_idx, sum_f1_y);
-				hSum_Add_Store(soa1_charges_f_z + i_charge_dipole_idx, sum_f1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._dipoles_num; ++j) {
-					_loopBodyNovecChargesDipoles<MacroPolicy>(soa1, i_charge_dipole_idx, soa2, j, soa2_dipoles_dist_lookup + j, false);
-				}
-
-				i_charge_dipole_idx++;
-			}
-
-			// Computation of quadrupole-dipole interactions
-
-			// Iterate over centers of actual molecule
-			for (int local_i = 0; local_i < soa1_mol_quadrupoles_num[i]; local_i++) {
-
-				const vcp_double_vec m = vcp_simd_broadcast(soa1_quadrupoles_m + i_quadrupole_dipole_idx);
-				const vcp_double_vec e1_x = vcp_simd_broadcast(soa1_quadrupoles_e_x + i_quadrupole_dipole_idx);
-				const vcp_double_vec e1_y = vcp_simd_broadcast(soa1_quadrupoles_e_y + i_quadrupole_dipole_idx);
-				const vcp_double_vec e1_z = vcp_simd_broadcast(soa1_quadrupoles_e_z + i_quadrupole_dipole_idx);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_quadrupoles_r_x + i_quadrupole_dipole_idx);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_quadrupoles_r_y + i_quadrupole_dipole_idx);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_quadrupoles_r_z + i_quadrupole_dipole_idx);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
-
-				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
-						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
-						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
-						const vcp_double_vec e2_z = vcp_simd_load(soa2_dipoles_e_z + j);
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_dipoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_dipoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_dipoles_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_dipoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_dipoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_dipoles_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-
-						_loopBodyDipoleQuadrupole<MacroPolicy>(
-								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
-								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, m,
-								f_x, f_y, f_z, M2_x, M2_y, M2_z, M1_x, M1_y, M1_z,
-								sum_upotXpoles, sum_virial,
-								forceMask, ones);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_dipoles_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_dipoles_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_dipoles_f_z + j);
-
-						sum_f2_x = vcp_simd_add(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_add(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_add(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_dipoles_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_dipoles_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_dipoles_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						sum_M1_x = vcp_simd_add(sum_M1_x, M1_x);
-						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
-						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
-
-						vcp_double_vec sum_M2_x = vcp_simd_load(soa2_dipoles_M_x + j);
-						vcp_double_vec sum_M2_y = vcp_simd_load(soa2_dipoles_M_y + j);
-						vcp_double_vec sum_M2_z = vcp_simd_load(soa2_dipoles_M_z + j);
-
-						sum_M2_x = vcp_simd_add(sum_M2_x, M2_x);
-						sum_M2_y = vcp_simd_add(sum_M2_y, M2_y);
-						sum_M2_z = vcp_simd_add(sum_M2_z, M2_z);
-
-						vcp_simd_store(soa2_dipoles_M_x + j, sum_M2_x);
-						vcp_simd_store(soa2_dipoles_M_y + j, sum_M2_y);
-						vcp_simd_store(soa2_dipoles_M_z + j, sum_M2_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_quadrupoles_f_x + i_quadrupole_dipole_idx, sum_f1_x);
-				hSum_Add_Store(soa1_quadrupoles_f_y + i_quadrupole_dipole_idx, sum_f1_y);
-				hSum_Add_Store(soa1_quadrupoles_f_z + i_quadrupole_dipole_idx, sum_f1_z);
-
-				// Add old torques and summed calculated torques for center 1
-				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_dipole_idx, sum_M1_x);
-				hSum_Add_Store(soa1_quadrupoles_M_y + i_quadrupole_dipole_idx, sum_M1_y);
-				hSum_Add_Store(soa1_quadrupoles_M_z + i_quadrupole_dipole_idx, sum_M1_z);
-
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._dipoles_num; ++j) {
-					_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_dipole_idx, soa2_dipoles_dist_lookup + j, true);
-				}
-
-				i_quadrupole_dipole_idx++;
-
-			}
-
-			i_dipole_idx += soa1_mol_dipoles_num[i];
-		}
-
-		// Computation of site interactions with quadrupoles
-
-		if (!vcp_simd_movemask(compute_molecule_quadrupoles)) {
-			i_quadrupole_idx += soa1_mol_quadrupoles_num[i];
-			i_charge_quadrupole_idx += soa1_mol_charges_num[i];
-			i_dipole_quadrupole_idx += soa1_mol_dipoles_num[i];
-		}
-		else {
-			// Computation of quadrupole-quadrupole interactions
-
-			// Iterate over centers of actual molecule
-			for (int local_i = 0; local_i < soa1_mol_quadrupoles_num[i]; local_i++)
-			{
-				const vcp_double_vec mii = vcp_simd_broadcast(soa1_quadrupoles_m + i_quadrupole_idx + local_i);
-				const vcp_double_vec eii_x = vcp_simd_broadcast(soa1_quadrupoles_e_x + i_quadrupole_idx + local_i);
-				const vcp_double_vec eii_y = vcp_simd_broadcast(soa1_quadrupoles_e_y + i_quadrupole_idx + local_i);
-				const vcp_double_vec eii_z = vcp_simd_broadcast(soa1_quadrupoles_e_z + i_quadrupole_idx + local_i);
-				const vcp_double_vec rii_x = vcp_simd_broadcast(soa1_quadrupoles_r_x + i_quadrupole_idx + local_i);
-				const vcp_double_vec rii_y = vcp_simd_broadcast(soa1_quadrupoles_r_y + i_quadrupole_idx + local_i);
-				const vcp_double_vec rii_z = vcp_simd_broadcast(soa1_quadrupoles_r_z + i_quadrupole_idx + local_i);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
-
-				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
-				for (; j < end_quadrupoles_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec mjj = vcp_simd_load(soa2_quadrupoles_m + j);
-						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
-						const vcp_double_vec ejj_y = vcp_simd_load(soa2_quadrupoles_e_y + j);
-						const vcp_double_vec ejj_z = vcp_simd_load(soa2_quadrupoles_e_z + j);
-						const vcp_double_vec rjj_x = vcp_simd_load(soa2_quadrupoles_r_x + j);
-						const vcp_double_vec rjj_y = vcp_simd_load(soa2_quadrupoles_r_y + j);
-						const vcp_double_vec rjj_z = vcp_simd_load(soa2_quadrupoles_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_quadrupoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_quadrupoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_quadrupoles_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-
-						_loopBodyQudarupole<MacroPolicy>(
-								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
-								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, mjj,
-								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
-								sum_upotXpoles, sum_virial,
-								forceMask);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_quadrupoles_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_quadrupoles_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_quadrupoles_f_z + j);
-
-						sum_f2_x = vcp_simd_sub(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_sub(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_sub(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_quadrupoles_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_quadrupoles_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_quadrupoles_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						sum_M1_x = vcp_simd_add(sum_M1_x, M1_x);
-						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
-						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
-
-						vcp_double_vec sum_M2_x = vcp_simd_load(soa2_quadrupoles_M_x + j);
-						vcp_double_vec sum_M2_y = vcp_simd_load(soa2_quadrupoles_M_y + j);
-						vcp_double_vec sum_M2_z = vcp_simd_load(soa2_quadrupoles_M_z + j);
-
-						sum_M2_x = vcp_simd_add(sum_M2_x, M2_x);
-						sum_M2_y = vcp_simd_add(sum_M2_y, M2_y);
-						sum_M2_z = vcp_simd_add(sum_M2_z, M2_z);
-
-						vcp_simd_store(soa2_quadrupoles_M_x + j, sum_M2_x);
-						vcp_simd_store(soa2_quadrupoles_M_y + j, sum_M2_y);
-						vcp_simd_store(soa2_quadrupoles_M_z + j, sum_M2_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_quadrupoles_f_x + i_quadrupole_idx + local_i, sum_f1_x);
-				hSum_Add_Store(soa1_quadrupoles_f_y + i_quadrupole_idx + local_i, sum_f1_y);
-				hSum_Add_Store(soa1_quadrupoles_f_z + i_quadrupole_idx + local_i, sum_f1_z);
-
-				// Add old torques and summed calculated torques for center 1
-				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_idx + local_i, sum_M1_x);
-				hSum_Add_Store(soa1_quadrupoles_M_y + i_quadrupole_idx + local_i, sum_M1_y);
-				hSum_Add_Store(soa1_quadrupoles_M_z + i_quadrupole_idx + local_i, sum_M1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._quadrupoles_num; ++j) {
-					_loopBodyNovecQuadrupoles<MacroPolicy>(soa1, i_quadrupole_idx + local_i, soa2, j, soa2_quadrupoles_dist_lookup + j);
-				}
-
-			}
-
-			// Computation of charge-quadrupole interactions
-
-			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++)
-			{
-				const vcp_double_vec q = vcp_simd_broadcast(soa1_charges_q + i_charge_quadrupole_idx);
-				const vcp_double_vec r1_x = vcp_simd_broadcast(soa1_charges_r_x + i_charge_quadrupole_idx);
-				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_charges_r_y + i_charge_quadrupole_idx);
-				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_charges_r_z + i_charge_quadrupole_idx);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
-						const vcp_double_vec e_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
-						const vcp_double_vec e_y = vcp_simd_load(soa2_quadrupoles_e_y + j);
-						const vcp_double_vec e_z = vcp_simd_load(soa2_quadrupoles_e_z + j);
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_quadrupoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_quadrupoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_quadrupoles_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_quadrupoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_quadrupoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_quadrupoles_m_r_z + j);
-
-
-						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
-
-						_loopBodyChargeQuadrupole<MacroPolicy>(
-								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
-								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e_x, e_y, e_z, m,
-								f_x, f_y, f_z, M_x, M_y, M_z,
-								sum_upotXpoles, sum_virial,
-								forceMask, zero);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_quadrupoles_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_quadrupoles_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_quadrupoles_f_z + j);
-
-						sum_f2_x = vcp_simd_sub(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_sub(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_sub(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_quadrupoles_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_quadrupoles_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_quadrupoles_f_z + j, sum_f2_z);
-
-						// Store torque
-						vcp_double_vec sum_M_x = vcp_simd_load(soa2_quadrupoles_M_x + j);
-						vcp_double_vec sum_M_y = vcp_simd_load(soa2_quadrupoles_M_y + j);
-						vcp_double_vec sum_M_z = vcp_simd_load(soa2_quadrupoles_M_z + j);
-
-						sum_M_x = vcp_simd_add(sum_M_x, M_x);
-						sum_M_y = vcp_simd_add(sum_M_y, M_y);
-						sum_M_z = vcp_simd_add(sum_M_z, M_z);
-
-						vcp_simd_store(soa2_quadrupoles_M_x + j, sum_M_x);
-						vcp_simd_store(soa2_quadrupoles_M_y + j, sum_M_y);
-						vcp_simd_store(soa2_quadrupoles_M_z + j, sum_M_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_charges_f_x + i_charge_quadrupole_idx, sum_f1_x);
-				hSum_Add_Store(soa1_charges_f_y + i_charge_quadrupole_idx, sum_f1_y);
-				hSum_Add_Store(soa1_charges_f_z + i_charge_quadrupole_idx, sum_f1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._quadrupoles_num; ++j) {
-					_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa1, i_charge_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
-				}
-
-				i_charge_quadrupole_idx++;
-			}
-
-			// Computation of dipole-quadrupole interactions
-
-			// Iterate over centers of actual molecule
-			for (int local_i = 0; local_i < soa1_mol_dipoles_num[i]; local_i++)
-			{
-				const vcp_double_vec p = vcp_simd_broadcast(soa1_dipoles_p + i_dipole_quadrupole_idx);
-				const vcp_double_vec eii_x = vcp_simd_broadcast(soa1_dipoles_e_x + i_dipole_quadrupole_idx);
-				const vcp_double_vec eii_y = vcp_simd_broadcast(soa1_dipoles_e_y + i_dipole_quadrupole_idx);
-				const vcp_double_vec eii_z = vcp_simd_broadcast(soa1_dipoles_e_z + i_dipole_quadrupole_idx);
-				const vcp_double_vec rii_x = vcp_simd_broadcast(soa1_dipoles_r_x + i_dipole_quadrupole_idx);
-				const vcp_double_vec rii_y = vcp_simd_broadcast(soa1_dipoles_r_y + i_dipole_quadrupole_idx);
-				const vcp_double_vec rii_z = vcp_simd_broadcast(soa1_dipoles_r_z + i_dipole_quadrupole_idx);
-
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
-
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
-
-				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j; j += 2) {
-					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
-					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-
-						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
-						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
-						const vcp_double_vec ejj_y = vcp_simd_load(soa2_quadrupoles_e_y + j);
-						const vcp_double_vec ejj_z = vcp_simd_load(soa2_quadrupoles_e_z + j);
-						const vcp_double_vec rjj_x = vcp_simd_load(soa2_quadrupoles_r_x + j);
-						const vcp_double_vec rjj_y = vcp_simd_load(soa2_quadrupoles_r_y + j);
-						const vcp_double_vec rjj_z = vcp_simd_load(soa2_quadrupoles_r_z + j);
-
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_quadrupoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_quadrupoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_quadrupoles_m_r_z + j);
-
-						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
-
-						_loopBodyDipoleQuadrupole<MacroPolicy>(
-								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,
-								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, m,
-								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
-								sum_upotXpoles, sum_virial,
-								forceMask, zero);
-
-						// Store forces
-
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
-
-						vcp_double_vec sum_f2_x = vcp_simd_load(soa2_quadrupoles_f_x + j);
-						vcp_double_vec sum_f2_y = vcp_simd_load(soa2_quadrupoles_f_y + j);
-						vcp_double_vec sum_f2_z = vcp_simd_load(soa2_quadrupoles_f_z + j);
-
-						sum_f2_x = vcp_simd_sub(sum_f2_x, f_x);
-						sum_f2_y = vcp_simd_sub(sum_f2_y, f_y);
-						sum_f2_z = vcp_simd_sub(sum_f2_z, f_z);
-
-						vcp_simd_store(soa2_quadrupoles_f_x + j, sum_f2_x);
-						vcp_simd_store(soa2_quadrupoles_f_y + j, sum_f2_y);
-						vcp_simd_store(soa2_quadrupoles_f_z + j, sum_f2_z);
-
-						// Store torque
-
-						sum_M1_x = vcp_simd_add(sum_M1_x, M1_x);
-						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
-						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
-
-						vcp_double_vec sum_M2_x = vcp_simd_load(soa2_quadrupoles_M_x + j);
-						vcp_double_vec sum_M2_y = vcp_simd_load(soa2_quadrupoles_M_y + j);
-						vcp_double_vec sum_M2_z = vcp_simd_load(soa2_quadrupoles_M_z + j);
-
-						sum_M2_x = vcp_simd_add(sum_M2_x, M2_x);
-						sum_M2_y = vcp_simd_add(sum_M2_y, M2_y);
-						sum_M2_z = vcp_simd_add(sum_M2_z, M2_z);
-
-						vcp_simd_store(soa2_quadrupoles_M_x + j, sum_M2_x);
-						vcp_simd_store(soa2_quadrupoles_M_y + j, sum_M2_y);
-						vcp_simd_store(soa2_quadrupoles_M_z + j, sum_M2_z);
-					}
-				}
-
-				// Add old force and summed calculated forces for center 1
-				hSum_Add_Store(soa1_dipoles_f_x + i_dipole_quadrupole_idx, sum_f1_x);
-				hSum_Add_Store(soa1_dipoles_f_y + i_dipole_quadrupole_idx, sum_f1_y);
-				hSum_Add_Store(soa1_dipoles_f_z + i_dipole_quadrupole_idx, sum_f1_z);
-
-				// Add old torques and summed calculated torques for center 1
-				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_quadrupole_idx, sum_M1_x);
-				hSum_Add_Store(soa1_dipoles_M_y + i_dipole_quadrupole_idx, sum_M1_y);
-				hSum_Add_Store(soa1_dipoles_M_z + i_dipole_quadrupole_idx, sum_M1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._quadrupoles_num; ++j) {
-					_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa1, i_dipole_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
-				}
-				i_dipole_quadrupole_idx++;
-
-			}
-
-			i_quadrupole_idx += soa1_mol_quadrupoles_num[i];
-		}
-	}
-
-	hSum_Add_Store(&_upot6lj, sum_upot6lj);
-	hSum_Add_Store(&_upotXpoles, sum_upotXpoles);
-	hSum_Add_Store(&_virial, sum_virial);
-	hSum_Add_Store(&_myRF, vcp_simd_sub(zero, sum_myRF));
-
-
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
-
-	static const vcp_double_vec ones = vcp_simd_ones();
-	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
-
-	vcp_double_vec sum_upot6lj = vcp_simd_zerov();
-	vcp_double_vec sum_upotXpoles = vcp_simd_zerov();
-	vcp_double_vec sum_virial = vcp_simd_zerov();
-	vcp_double_vec sum_myRF = vcp_simd_zerov();
-
-	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
-	const vcp_double_vec epsRFInvrc3 = vcp_simd_broadcast(&_epsRFInvrc3);
-	const vcp_double_vec rc2 = vcp_simd_set1(_LJcutoffRadiusSquare);
-
-	const size_t end_ljc_j = soa2._ljc_num & (~3);
-	const size_t end_charges_j = soa2._charges_num & (~3);
-	const size_t end_dipoles_j = soa2._dipoles_num & (~3);
-	const size_t end_quadrupoles_j = soa2._quadrupoles_num & (~3);
+	const size_t end_ljc_j = soa2._ljc_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_charges_j = soa2._charges_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_dipoles_j = soa2._dipoles_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_quadrupoles_j = soa2._quadrupoles_num & (~VCP_VEC_SIZE_M1);
 
 	size_t i_ljc_idx = 0;
 	size_t i_charge_idx = 0;
@@ -3163,7 +2151,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
 				// Iterate over each pair of centers in the second cell.
 				size_t j = ForcePolicy::InitJ(i_ljc_idx);
-				for (; j < end_ljc_j; j += 4) {
+				for (; j < end_ljc_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_ljc_dist_lookup + j);
 					// Only go on if at least 1 of the forces has to be calculated.
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3171,37 +2159,52 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec c_r_y2 = vcp_simd_load(soa2_ljc_r_y + j);
 						const vcp_double_vec c_r_z2 = vcp_simd_load(soa2_ljc_r_z + j);
 
+						const vcp_double_vec m_r_x2 = vcp_simd_load(soa2_ljc_m_r_x + j);
+						const vcp_double_vec m_r_y2 = vcp_simd_load(soa2_ljc_m_r_y + j);
+						const vcp_double_vec m_r_z2 = vcp_simd_load(soa2_ljc_m_r_z + j);
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
+						vcp_double_vec fx, fy, fz;
+
+	#if VCP_VEC_TYPE==VCP_VEC_SSE3
+
+						const size_t id_j0 = soa2_ljc_id[j];
+						const size_t id_j1 = soa2_ljc_id[j + 1];
+
+						const vcp_double_vec e0s0 = vcp_simd_load(_eps_sig[id_i] + 2 * id_j0);
+						const vcp_double_vec e1s1 = vcp_simd_load(_eps_sig[id_i] + 2 * id_j1);
+
+						_loopBodyLJ<MacroPolicy>(
+							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
+							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
+							fx, fy, fz,
+							sum_upot6lj, sum_virial,
+							forceMask,
+							e0s0, e1s1,
+							id_j0, id_j1,
+							id_i);
+	#elif VCP_VEC_TYPE==VCP_VEC_AVX
 
 						const size_t id_j0 = soa2_ljc_id[j];
 						const size_t id_j1 = soa2_ljc_id[j + 1];
 						const size_t id_j2 = soa2_ljc_id[j + 2];
 						const size_t id_j3 = soa2_ljc_id[j + 3];
+
 						const vcp_double_vec e0s0 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j0, memoryMask_first_second);
 						const vcp_double_vec e1s1 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j1, memoryMask_first_second);
 						const vcp_double_vec e2s2 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j2, memoryMask_first_second);
 						const vcp_double_vec e3s3 = vcp_simd_maskload(_eps_sig[id_i] + 2 * id_j3, memoryMask_first_second);
 
-						const vcp_double_vec m_r_x2 = vcp_simd_load(soa2_ljc_m_r_x + j);
-						const vcp_double_vec m_r_y2 = vcp_simd_load(soa2_ljc_m_r_y + j);
-						const vcp_double_vec m_r_z2 = vcp_simd_load(soa2_ljc_m_r_z + j);
-						vcp_double_vec fx, fy, fz;
-						//begin loop_body
 						_loopBodyLJ<MacroPolicy>(
-								m1_r_x, m1_r_y, m1_r_z,
-								c_r_x1,  c_r_y1, c_r_z1,
-								m_r_x2, m_r_y2, m_r_z2,
-								c_r_x2, c_r_y2, c_r_z2,
+								m1_r_x, m1_r_y, m1_r_z, c_r_x1,  c_r_y1, c_r_z1,
+								m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 								fx, fy, fz,
 								sum_upot6lj, sum_virial,
-								forceMask, e0s0,
-								e1s1, e2s2, e3s3,
+								forceMask,
+								e0s0, e1s1, e2s2, e3s3,
 								id_j0, id_j1, id_j2, id_j3,
 								id_i);
-
-						//end loop_body_lj
-
+	#endif
 						const vcp_double_vec old_fx2 = vcp_simd_load(soa2_ljc_f_x + j);
 						const vcp_double_vec new_fx2 = vcp_simd_sub(old_fx2, fx);
 						vcp_simd_store(soa2_ljc_f_x + j, new_fx2);
@@ -3254,7 +2257,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
-				for (; j < end_charges_j; j += 4) {
+				for (; j < end_charges_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3330,7 +2333,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j; j += 4) {
+				for (; j < end_charges_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3419,7 +2422,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j; j += 4) {
+				for (; j < end_charges_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3521,7 +2524,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
-				for (; j < end_dipoles_j; j += 4) {
+				for (; j < end_dipoles_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3620,7 +2623,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j; j += 4) {
+				for (; j < end_dipoles_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3718,7 +2721,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j; j += 4) {
+				for (; j < end_dipoles_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3835,7 +2838,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
-				for (; j < end_quadrupoles_j; j += 4) {
+				for (; j < end_quadrupoles_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -3854,7 +2857,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
-						_loopBodyQudarupole<MacroPolicy>(
+						_loopBodyQuadrupole<MacroPolicy>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, mjj,
 								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
@@ -3930,7 +2933,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j; j += 4) {
+				for (; j < end_quadrupoles_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -4026,7 +3029,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j; j += 4) {
+				for (; j < end_quadrupoles_j; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -4118,7 +3121,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	hSum_Add_Store(&_virial, sum_virial);
 	hSum_Add_Store(&_myRF, vcp_simd_sub(zero, sum_myRF));
 
-#endif
 #endif
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
