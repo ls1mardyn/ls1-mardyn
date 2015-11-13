@@ -1605,9 +1605,9 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	const vcp_double_vec lj12lj12m6 = vcp_simd_add(lj12, lj12m6);
 	const vcp_double_vec scale = vcp_simd_mul(eps24r2inv, lj12lj12m6);
 
-	const vcp_double_vec fx = vcp_simd_mul(c_dx, scale);
-	const vcp_double_vec fy = vcp_simd_mul(c_dy, scale);
-	const vcp_double_vec fz = vcp_simd_mul(c_dz, scale);
+	f_x = vcp_simd_mul(c_dx, scale);
+	f_y = vcp_simd_mul(c_dy, scale);
+	f_z = vcp_simd_mul(c_dz, scale);
 
 
 	const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
@@ -1636,9 +1636,9 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 
 		sum_upot6lj = vcp_simd_add(sum_upot6lj, upot_masked);
 
-		const vcp_double_vec vir_x = vcp_simd_mul(m_dx, fx);
-		const vcp_double_vec vir_y = vcp_simd_mul(m_dy, fy);
-		const vcp_double_vec vir_z = vcp_simd_mul(m_dz, fz);
+		const vcp_double_vec vir_x = vcp_simd_mul(m_dx, f_x);
+		const vcp_double_vec vir_y = vcp_simd_mul(m_dy, f_y);
+		const vcp_double_vec vir_z = vcp_simd_mul(m_dz, f_z);
 
 		const vcp_double_vec vir_xy = vcp_simd_add(vir_x, vir_y);
 		const vcp_double_vec virial = vcp_simd_add(vir_xy, vir_z);
