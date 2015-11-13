@@ -14,6 +14,7 @@
 #include <vector>
 #include <cmath>
 #include "vectorization/SIMD_TYPES.h"
+#include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 
 
 class Component;
@@ -197,8 +198,7 @@ private:
 	 */
 	template<class MacroPolicy>
 		void _loopBodyNovecQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask);
-//TODO: try to merge this somehow
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
@@ -209,22 +209,8 @@ private:
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
 			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
 			const vcp_double_vec& forceMask,
-			const vcp_double_vec& e1s1, const vcp_double_vec& e2s2,
-			const size_t& id_j0, const size_t& id_j1, const size_t& id_i);
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
-	template<class MacroPolicy>
-	inline
-	void _loopBodyLJ(
-			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
-			const vcp_double_vec& forceMask, const vcp_double_vec& e0s0,
-			const vcp_double_vec& e1s1, const vcp_double_vec& e2s2, const vcp_double_vec& e3s3,
-			const size_t& id_j0, const size_t& id_j1,  const size_t& id_j2,  const size_t& id_j3,
-			const size_t& id_i);
+			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
+			const vcp_double_vec& shift6);
 #endif /* _loopBodyLJ SSE3 */
 
 	/**
