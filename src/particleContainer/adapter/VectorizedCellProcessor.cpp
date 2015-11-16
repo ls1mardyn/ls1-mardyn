@@ -1629,15 +1629,11 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
 		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
 
-		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
-		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
-		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
-		const vcp_double_vec m_dx2 = vcp_simd_mul(m_dx, m_dx);
-		const vcp_double_vec m_dy2 = vcp_simd_mul(m_dy, m_dy);
-		const vcp_double_vec m_dz2 = vcp_simd_mul(m_dz, m_dz);
-
-		const vcp_double_vec m_r2 = vcp_simd_add(vcp_simd_add(m_dx2, m_dy2), m_dz2);
+		const vcp_double_vec m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		const vcp_double_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
@@ -1677,15 +1673,11 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
 		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
 
-		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
-		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
-		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
-		const vcp_double_vec m_dx2 = vcp_simd_mul(m_dx, m_dx);
-		const vcp_double_vec m_dy2 = vcp_simd_mul(m_dy, m_dy);
-		const vcp_double_vec m_dz2 = vcp_simd_mul(m_dz, m_dz);
-
-		const vcp_double_vec m_r2 = vcp_simd_add(vcp_simd_add(m_dx2, m_dy2), m_dz2);
+		const vcp_double_vec m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		const vcp_double_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);

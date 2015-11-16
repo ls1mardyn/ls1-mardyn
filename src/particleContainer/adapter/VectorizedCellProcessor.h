@@ -285,17 +285,13 @@ private:
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
 			static vcp_double_vec ones = vcp_simd_ones();
-			vcp_double_vec result = vcp_simd_and(
-										vcp_simd_and(
-											vcp_simd_lt(m_r2, rc2),
-											vcp_simd_neq(m_r2, vcp_simd_zerov())),
-									j_mask);
+			vcp_double_vec result = vcp_simd_and( vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() ), j_mask);
 			j_mask = ones;
 			return result;
 		}
 		inline static size_t InitJ (const size_t i)
 		{
-			return (i+1) & ~static_cast<size_t>(3); //TODO: initj check avx <-> sse3
+			return (i+1) & ~static_cast<size_t>(VCP_VEC_SIZE_M1); //TODO: initj check avx <-> sse3
 		}
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
@@ -309,13 +305,13 @@ private:
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static size_t InitJ (const size_t i)
 		{
-			return i + (i & static_cast<size_t>(1)); //TODO: initj check avx <-> sse3
+			return i + (i & static_cast<size_t>(VCP_VEC_SIZE_M1)); //TODO: initj check avx <-> sse3
 		}
 
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, vcp_simd_zerov()));
+			return vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() );
 		}
 #else //novec
 		inline static size_t InitJ (const size_t i)
@@ -357,7 +353,7 @@ private:
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return vcp_simd_lt(m_r2, rc2);
+			return m_r2 < rc2;
 		}
 
 
@@ -438,18 +434,13 @@ private:
 		{
 			const vcp_double_vec zero = vcp_simd_zerov();
 
-			const vcp_double_vec x_lt = vcp_simd_lt(m_dx, zero);
-			const vcp_double_vec y_eq = vcp_simd_eq(m_dy, zero);
-			const vcp_double_vec t1 = vcp_simd_and(x_lt, y_eq);
+			const vcp_double_vec t1 = vcp_simd_and(m_dx< zero, m_dy == zero);
 
-			const vcp_double_vec y_lt = vcp_simd_lt(m_dy, zero);
-			const vcp_double_vec t2 = vcp_simd_or(t1, y_lt);
+			const vcp_double_vec t2 = vcp_simd_or(t1, m_dy < zero);
 
-			const vcp_double_vec z_eq = vcp_simd_eq(m_dz, zero);
-			const vcp_double_vec t3 = vcp_simd_and(t2, z_eq);
+			const vcp_double_vec t3 = vcp_simd_and(t2, vcp_simd_eq(m_dz, zero));
 
-			const vcp_double_vec z_lt = vcp_simd_lt(m_dz, zero);
-			const vcp_double_vec t4 = vcp_simd_or(t3, z_lt);
+			const vcp_double_vec t4 = vcp_simd_or(t3 , m_dz < zero);
 
 			return vcp_simd_and(t4, forceMask);
 		}

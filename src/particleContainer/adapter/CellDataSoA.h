@@ -226,17 +226,17 @@ public:
 			_quadrupoles_num > _quadrupoles_size ) {
 
 			if (_ljc_num > _ljc_size) {
-				_ljc_size = ceil( (double)_ljc_num / 4) * 4;
+				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
 				_ljc_id.resize(_ljc_size);
 			}
 
 			if (_charges_num > _charges_size) {
-				_charges_size = ceil( (double)_charges_num / 4) * 4;
+				_charges_size = ceil( (double)_charges_num / 8) * 8;
 				_charges_q.resize(_charges_size);
 			}
 
 			if (_dipoles_num > _dipoles_size) {
-				_dipoles_size = ceil( (double)_dipoles_num / 4) * 4;
+				_dipoles_size = ceil( (double)_dipoles_num / 8) * 8;
 				_dipoles_p.resize(_dipoles_size);
 				_dipoles_e_x.resize(_dipoles_size);
 				_dipoles_e_y.resize(_dipoles_size);
@@ -247,7 +247,7 @@ public:
 			}
 
 			if (_quadrupoles_num > _quadrupoles_size) {
-				_quadrupoles_size = ceil( (double)_quadrupoles_num / 4) * 4;
+				_quadrupoles_size = ceil( (double)_quadrupoles_num / 8) * 8;
 				_quadrupoles_m.resize(_quadrupoles_size);
 				_quadrupoles_e_x.resize(_quadrupoles_size);
 				_quadrupoles_e_y.resize(_quadrupoles_size);
@@ -274,7 +274,7 @@ public:
 		}
 
 		if (_mol_num > _mol_size) {
-			_mol_size = ceil( (double)molecules_arg / 4) * 4;
+			_mol_size = ceil( (double)molecules_arg / 8) * 8;
 			_mol_pos_x.resize(_mol_size);
 			_mol_pos_y.resize(_mol_size);
 			_mol_pos_z.resize(_mol_size);
