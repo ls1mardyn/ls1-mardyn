@@ -1624,7 +1624,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	// Iterate over centers of second cell
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	for (; j < end_j; j+=2) {
+	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
 		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
 		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
@@ -1659,8 +1659,8 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		double forceMask = *reinterpret_cast<double const* /*const*/>(forceMask_tmp);
 
 		*(soa2_center_dist_lookup + j) = forceMask;
-		const vcp_double_vec forceMask_128 = vcp_simd_set1(forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask_128);
+		const vcp_double_vec forceMask_vec = vcp_simd_set1(forceMask);
+		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
 
 	return compute_molecule;
@@ -1671,7 +1671,8 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
 	vcp_double_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
-	for (; j < end_j; j+=4) {
+	// Iterate over centers of second cell
+	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
 		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
 		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
@@ -1701,20 +1702,22 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 		// can we do this nicer?
 		signed long forceMask_l;
-		// DetectSingleCell() = false for SingleCellDistinctPolicy and CellPairPolicy, true for SingleCellPolicy
+			// DetectSingleCell() = false for SingleCellDistinctPolicy and CellPairPolicy, true for SingleCellPolicy
+			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
+			//however only one of the branches should be chosen by the compiler, since the class is known at compile time.
 		if (ForcePolicy::DetectSingleCell()) {
 			forceMask_l = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j > i_center_idx) ? ~0l : 0l;
 		} else {
 			forceMask_l = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
 		}
 
-//			this casting via void* is required for gcc
+		//this casting via void* is required for gcc
 		void* forceMask_tmp = reinterpret_cast<void*>(&forceMask_l);
 		double forceMask = *reinterpret_cast<double const* /*const*/>(forceMask_tmp);
 
 		*(soa2_center_dist_lookup + j) = forceMask;
-		const vcp_double_vec forceMask_256 = vcp_simd_set1(forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask_256);
+		const vcp_double_vec forceMask_vec = vcp_simd_set1(forceMask);
+		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
 
 	return compute_molecule;

@@ -247,7 +247,7 @@ private:
 	 * Returns whether to calculate the force for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static vcp_double_vec GetMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
+	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The MacroPolicy class must provide the following methods:<br>
@@ -357,8 +357,10 @@ private:
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return vcp_simd_lt(m_r2, rc2);//TODO: merge with sse3s
+			return vcp_simd_lt(m_r2, rc2);
 		}
+
+
 	#if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
