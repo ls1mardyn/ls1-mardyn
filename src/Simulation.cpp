@@ -174,7 +174,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
 		if(parallelisationtype == "DomainDecomposition") {
 	#ifdef ENABLE_MPI
-			_domainDecomposition = new DomainDecomposition();
+			_domainDecomposition = new DomainDecomposition(getcutoffRadius(), _domain);
 	#else
 		global_log->error() << "DomainDecomposition not available in sequential mode." << endl;
 	#endif
@@ -633,8 +633,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 			inputfilestream >> token;
 			if (token == "DomainDecomposition") {
-				// default DomainDecomposition is already set in initialize();
-				//_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+				delete _domainDecomposition;
+				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition(_cutoffRadius, _domain);
 			}
 			else if(token == "KDDecomposition") {
 				delete _domainDecomposition;
@@ -1701,13 +1701,14 @@ void Simulation::initialize() {
 	_inputReader = NULL;
         _finalCheckpoint = true;
 
-#ifndef ENABLE_MPI
-	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
-	_domainDecomposition = new DomainDecompBase();
-#else
-	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-#endif
+        // TODO:
+//#ifndef ENABLE_MPI
+//	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
+//	_domainDecomposition = new DomainDecompBase();
+//#else
+//	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
+//	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+//#endif
 	global_log->info() << "Initialization done" << endl;
 
 	/*

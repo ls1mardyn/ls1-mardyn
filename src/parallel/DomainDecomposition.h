@@ -1,16 +1,8 @@
 #ifndef DOMAINDECOMPOSITION_H_
 #define DOMAINDECOMPOSITION_H_
 
-#include <mpi.h>
+#include "parallel/DomainDecompBaseMPI.h"
 
-#include "parallel/CollectiveCommunication.h"
-#include "parallel/DomainDecompBase.h"
-#include "parallel/ParticleData.h"
-
-#define DIM 3
-
-#define LOWER  0
-#define HIGHER 1
 
 /** @brief Basic domain decomposition based parallelisation, dividing the
  * domain into \#procs equal sized cuboids
@@ -25,16 +17,16 @@
  *
  * @cite Griebel-2007
  */
-class DomainDecomposition : public DomainDecompBase {
+class DomainDecomposition : public DomainDecompBaseMPI {
 public:
 	//! @brief The constructor has to determine the own rank and the number of neighbours and
 	//!        sets up the topology
-	DomainDecomposition();
+	DomainDecomposition(double cutoffRadius, Domain * domain);
 
 	// documentation see father class (DomainDecompBase.h)
-	virtual ~DomainDecomposition();
+	~DomainDecomposition();
 
-	/** @brief Read in XML configuration for KDDecomposition and all its included objects.
+	/** @brief Read in XML configuration for DomainDecomposition and all its included objects.
 	 *
 	 * The following xml object structure is handled by this method:
 	 * \code{.xml}
@@ -43,39 +35,18 @@ public:
 	   </parallelisation>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig);
 
-	//! @brief exchange molecules between processes
-	//!
-	//! molecules which aren't in the domain of their process any
-	//! more are transferred to their neighbours. Additionally, the
-	//! molecules for the halo-region are transferred. To reduce the number
-	//! of neighbours a single process has to communicate with, particles
-	//! that i.e. have to be moved to the lower right neighbour are
-	//! moved to the right neighbour first and then from the right neighbour
-	//! to the lower neighbour.
-	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
-
-	//! @brief this decompositin does no balancing, it just exchanges the particles
-	//!
-	//! This domain decomposition devides the domain into equally sized smaller cuboids, therefore
-	//! a balancing of the load is not possible. The method only has to ensure that the particles
-	//! between the processes are exchanged, therefore exchangeMolecules is called.
-	//! @param balance has no influence in this implementation
-	//! @param moleculeContainer needed for calculating load and to get the particles
-	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
+	void rebalance(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {}
 
 	// documentation see father class (DomainDecompBase.h)
 	bool procOwnsPos(double x, double y, double z, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
-	virtual double getBoundingBoxMin(int dimension, Domain* domain);
+	double getBoundingBoxMin(int dimension, Domain* domain);
 
 	// documentation see father class (DomainDecompBase.h)
-	virtual double getBoundingBoxMax(int dimension, Domain* domain);
+	double getBoundingBoxMax(int dimension, Domain* domain);
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -104,119 +75,16 @@ public:
 	//!  8 8
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	virtual void printDecomp(std::string filename, Domain* domain);
-
-	// documentation see father class (DomainDecompBase.h)
-	void barrier() { MPI_CHECK( MPI_Barrier(_comm) ); }
-
-	//! @brief returns total number of molecules
-	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
-
-	//! @brief checks identity of random number generators
-	void assertIntIdentity(int IX);
-	void assertDisjunctivity(TMoleculeContainer* mm);
-
-	//##################################################################
-	// The following methods with prefix "collComm" are all used
-	// in the context of collective communication. Each of the methods
-	// basically has to call the corresponding method from the class
-	// CollectiveCommunication (or CollectiveCommDummy in the sequential
-	// case). To get information about how to use this methods, read
-	// the documentation of the class CollectiveCommunication and of the
-	// father class of this class (DomainDecompBase.h)
-	//##################################################################
-	void collCommInit(int numValues) {
-		_collCommunication.init(_comm, numValues);
-	}
-
-	void collCommFinalize() {
-		_collCommunication.finalize();
-	}
-
-	void collCommAppendInt(int intValue) {
-		_collCommunication.appendInt(intValue);
-	}
-
-	void collCommAppendUnsLong(unsigned long unsLongValue) {
-		_collCommunication.appendUnsLong(unsLongValue);
-	}
-
-	void collCommAppendFloat(float floatValue) {
-		_collCommunication.appendFloat(floatValue);
-	}
-
-	void collCommAppendDouble(double doubleValue) {
-		_collCommunication.appendDouble(doubleValue);
-	}
-
-	void collCommAppendLongDouble(long double longDoubleValue) {
-		_collCommunication.appendLongDouble(longDoubleValue);
-	}
-
-	int collCommGetInt() {
-		return _collCommunication.getInt();
-	}
-
-	unsigned long collCommGetUnsLong() {
-		return _collCommunication.getUnsLong();
-	}
-
-	float collCommGetFloat() {
-		return _collCommunication.getFloat();
-	}
-
-	double collCommGetDouble() {
-		return _collCommunication.getDouble();
-	}
-
-	long double collCommGetLongDouble() {
-		return _collCommunication.getLongDouble();
-	}
-
-	void collCommAllreduceSum() {
-		_collCommunication.allreduceSum();
-	}
-
-	void collCommBroadcast(int root = 0) {
-		_collCommunication.broadcast(root);
-	}
-
-protected:
-	MPI_Datatype _mpi_Particle_data;
-
-	//! new topology after initializing the torus
-	MPI_Comm _comm;
-
-	//! flag, which tells whether a processor covers the whole domain along a dimension
-	//! if true, we will use the methods provided by the base class for handling the
-	//! respective dimension, instead of packing and unpacking messages to self
-	bool _coversWholeDomain[DIM];
-
-	struct _CommunicationPartner {
-		int _rank;
-		double _regionLow[3], _regionHigh[3];
-		MPI_Request _sendRequest, _recvRequest;
-		MPI_Status _sendStatus, _recvStatus;
-		std::vector<ParticleData> _sendBuf, _recvBuf;
-		double _shift; //! for periodic boundaries
-	};
+	void printDecomp(std::string filename, Domain* domain);
 
 private:
-	void initCommunicationPartners(ParticleContainer * moleculeContainer, Domain * domain);
+	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
 	//! Number of processes in each dimension (i.e. 2 for 8 processes)
 	int _gridSize[DIM];
 
 	//! Grid coordinates of process
 	int _coords[DIM];
-
-	//! Array of neighbour ranks.
-	//! The first array index specifies the coordinate index,
-	//! the second one the direction. For the later use the predefined LOWER and HIGHER macros.
-	_CommunicationPartner _partners[DIM][2];
-
-	//! variable used for different kinds of collective operations
-	CollectiveCommunication _collCommunication;
 };
 
 #endif /* DOMAINDECOMPOSITION_H_ */

@@ -55,7 +55,6 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int update
 	_ownArea = _decompTree->findAreaForProcess(_rank);
 
 	// initialize the mpi data type for particles once in the beginning
-	ParticleData::setMPIType(_mpi_Particle_data);
 	KDNode::initMPIDataType();
 
 	global_log->info() << "Created KDDecomposition with updateFrequency=" << _frequency << ", fullSearchThreshold=" << _fullSearchThreshold << endl;
@@ -438,7 +437,7 @@ void KDDecomposition::sendReceiveParticleData(vector<int>& procsToSendTo, vector
 	for (int neighbCount = 0; neighbCount < (int) procsToSendTo.size(); neighbCount++) {
 		if (procsToSendTo[neighbCount] == _rank)
 			continue; // don't exchange data with the own process
-		MPI_CHECK( MPI_Isend(particlesSendBufs[neighbCount], numMolsToSend[neighbCount], _mpi_Particle_data, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD, &sendRequests[neighbCount]) );
+		MPI_CHECK( MPI_Isend(particlesSendBufs[neighbCount], numMolsToSend[neighbCount], _mpiParticleType, procsToSendTo[neighbCount], 0, MPI_COMM_WORLD, &sendRequests[neighbCount]) );
 //		cout << "[" << _ownRank << "] send " << numMolsToSend[neighbCount] << " particles to rank " << procsToSendTo[neighbCount] << endl;
 	}
 
@@ -448,7 +447,7 @@ void KDDecomposition::sendReceiveParticleData(vector<int>& procsToSendTo, vector
 		if (procsToRecvFrom[neighbCount] == _rank)
 			continue; // don't exchange data with the own process
 		MPI_CHECK( MPI_Probe(procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &status) );
-		MPI_CHECK( MPI_Get_count(&status, _mpi_Particle_data, &(numMolsToRecv[neighbCount])) );
+		MPI_CHECK( MPI_Get_count(&status, _mpiParticleType, &(numMolsToRecv[neighbCount])) );
 //		cout << "[" << _ownRank << "] rcv " << numMolsToRecv[neighbCount] << " particles from rank " << procsToRecvFrom[neighbCount] << endl;
 	}
 
@@ -463,7 +462,7 @@ void KDDecomposition::sendReceiveParticleData(vector<int>& procsToSendTo, vector
 	for (int neighbCount = 0; neighbCount < (int) procsToRecvFrom.size(); neighbCount++) {
 		if (procsToRecvFrom[neighbCount] == _rank)
 			continue; // don't exchange data with the own process
-		MPI_CHECK( MPI_Irecv(particlesRecvBufs[neighbCount], numMolsToRecv[neighbCount], _mpi_Particle_data, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]) );
+		MPI_CHECK( MPI_Irecv(particlesRecvBufs[neighbCount], numMolsToRecv[neighbCount], _mpiParticleType, procsToRecvFrom[neighbCount], 0, MPI_COMM_WORLD, &request[neighbCount]) );
 	}
 
 	// wait for the completion of all send calls

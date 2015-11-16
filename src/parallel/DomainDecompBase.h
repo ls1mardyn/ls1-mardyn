@@ -68,7 +68,8 @@ public:
 	//! This method is then also responsible for redistributing all particles, so after the
 	//! method was called, each process has a domain with all particles belonging to this
 	//! domain (as if exchangeParticles was called after the new decomposition).
-	//! @param balance if true, a rebalancing should be performed, otherwise only exchange
+	//! @param balance if true, a rebalancing is forced;
+	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param components when creating a new Molecule-object (from the received data),
 	//!                   the Molecule-constructor needs this component vector

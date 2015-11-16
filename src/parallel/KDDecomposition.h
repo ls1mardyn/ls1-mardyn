@@ -8,7 +8,7 @@
 
 #define KDDIM 3
 
-#include "DomainDecomposition.h"
+#include "DomainDecompBaseMPI.h"
 #include "parallel/CollectiveCommunication.h"
 
 class ParticleData;
@@ -31,7 +31,7 @@ class KDNode;
  *
  * \note Some computation of the deviation / expected deviation is done in KDNode.
  */
-class KDDecomposition: public DomainDecomposition {
+class KDDecomposition: public DomainDecompBaseMPI {
 
 	friend class KDDecompositionTest;
 
@@ -73,6 +73,8 @@ class KDDecomposition: public DomainDecomposition {
 	//### The following methods are those of the  ###
 	//### base class which have to be implemented ###
 	//###############################################
+
+	void rebalance(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {}
 
 	//! @brief exchange molecules between processes
 	//!
