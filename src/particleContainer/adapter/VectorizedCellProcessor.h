@@ -281,6 +281,13 @@ private:
 			return true;
 		}
 
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_SSE3
+		inline static size_t InitJ (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+		{
+			return (i+1) & ~static_cast<size_t>(VCP_VEC_SIZE_M1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
+		}
+#endif
+
 #if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
@@ -289,10 +296,7 @@ private:
 			j_mask = ones;
 			return result;
 		}
-		inline static size_t InitJ (const size_t i)
-		{
-			return (i+1) & ~static_cast<size_t>(VCP_VEC_SIZE_M1); //TODO: initj check avx <-> sse3
-		}
+
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
 			switch (i & static_cast<size_t>(3)) {
@@ -303,10 +307,6 @@ private:
 			}
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static size_t InitJ (const size_t i)
-		{
-			return i + (i & static_cast<size_t>(VCP_VEC_SIZE_M1)); //TODO: initj check avx <-> sse3
-		}
 
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
