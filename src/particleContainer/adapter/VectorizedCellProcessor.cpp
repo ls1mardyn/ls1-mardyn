@@ -2113,11 +2113,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_ljc_f_y + i_ljc_idx, sum_fy1);
 				hSum_Add_Store(soa1_ljc_f_z + i_ljc_idx, sum_fz1);
 
-				// Unvectorized calculation for leftover pairs.
-				for (; j < soa2._ljc_num; ++j) {
-					//_loopBodyNovecLJ<MacroPolicy>(soa1, i_ljc_idx, soa2, j, soa2_ljc_dist_lookup + j);
-				}
-
 				i_ljc_idx++;
 			}
 		}
@@ -2192,12 +2187,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_charges_f_x + i_charge_idx + local_i, sum_f1_x);
 				hSum_Add_Store(soa1_charges_f_y + i_charge_idx + local_i, sum_f1_y);
 				hSum_Add_Store(soa1_charges_f_z + i_charge_idx + local_i, sum_f1_z);
-
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._charges_num; ++j) {
-					//_loopBodyNovecCharges<MacroPolicy>(soa1, i_charge_idx + local_i, soa2, j, soa2_charges_dist_lookup + j);
-				}
 
 			}
 
@@ -2281,11 +2270,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_charge_idx, sum_M_x);
 				hSum_Add_Store(soa1_dipoles_M_y + i_dipole_charge_idx, sum_M_y);
 				hSum_Add_Store(soa1_dipoles_M_z + i_dipole_charge_idx, sum_M_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._charges_num; ++j) {
-					//_loopBodyNovecChargesDipoles<MacroPolicy>(soa2, j, soa1, i_dipole_charge_idx, soa2_charges_dist_lookup + j, true);
-				}
 
 				i_dipole_charge_idx++;
 			}
@@ -2371,10 +2355,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_quadrupoles_M_y + i_quadrupole_charge_idx, sum_M1_y);
 				hSum_Add_Store(soa1_quadrupoles_M_z + i_quadrupole_charge_idx, sum_M1_z);
 
-				// End iteration over centers with possible left over center
-				for (; j < soa2._charges_num; ++j) {
-					//_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_charge_idx, soa2_charges_dist_lookup + j, true);
-				}
 				i_quadrupole_charge_idx++;
 			}
 
@@ -2489,12 +2469,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_dipoles_M_y + i_dipole_idx + local_i, sum_M1_y);
 				hSum_Add_Store(soa1_dipoles_M_z + i_dipole_idx + local_i, sum_M1_z);
 
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._dipoles_num; ++j) {
-					//_loopBodyNovecDipoles<MacroPolicy>(soa1, i_dipole_idx + local_i, soa2, j, soa2_dipoles_dist_lookup + j);
-				}
-
 			}
 
 			// Computation of charge-dipole interactions
@@ -2578,11 +2552,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_charges_f_x + i_charge_dipole_idx, sum_f1_x);
 				hSum_Add_Store(soa1_charges_f_y + i_charge_dipole_idx, sum_f1_y);
 				hSum_Add_Store(soa1_charges_f_z + i_charge_dipole_idx, sum_f1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._dipoles_num; ++j) {
-					//_loopBodyNovecChargesDipoles<MacroPolicy>(soa1, i_charge_dipole_idx, soa2, j, soa2_dipoles_dist_lookup + j, false);
-				}
 
 				i_charge_dipole_idx++;
 			}
@@ -2682,12 +2651,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_dipole_idx, sum_M1_x);
 				hSum_Add_Store(soa1_quadrupoles_M_y + i_quadrupole_dipole_idx, sum_M1_y);
 				hSum_Add_Store(soa1_quadrupoles_M_z + i_quadrupole_dipole_idx, sum_M1_z);
-
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._dipoles_num; ++j) {
-					//_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_dipole_idx, soa2_dipoles_dist_lookup + j, true);
-				}
 
 				i_quadrupole_dipole_idx++;
 
@@ -2801,11 +2764,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_quadrupoles_M_y + i_quadrupole_idx + local_i, sum_M1_y);
 				hSum_Add_Store(soa1_quadrupoles_M_z + i_quadrupole_idx + local_i, sum_M1_z);
 
-				// End iteration over centers with possible left over center
-				for (; j < soa2._quadrupoles_num; ++j) {
-					//_loopBodyNovecQuadrupoles<MacroPolicy>(soa1, i_quadrupole_idx + local_i, soa2, j, soa2_quadrupoles_dist_lookup + j);
-				}
-
 			}
 
 			// Computation of charge-quadrupole interactions
@@ -2886,11 +2844,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_charges_f_x + i_charge_quadrupole_idx, sum_f1_x);
 				hSum_Add_Store(soa1_charges_f_y + i_charge_quadrupole_idx, sum_f1_y);
 				hSum_Add_Store(soa1_charges_f_z + i_charge_quadrupole_idx, sum_f1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._quadrupoles_num; ++j) {
-					//_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa1, i_charge_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
-				}
 
 				i_charge_quadrupole_idx++;
 			}
@@ -2991,11 +2944,6 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_quadrupole_idx, sum_M1_x);
 				hSum_Add_Store(soa1_dipoles_M_y + i_dipole_quadrupole_idx, sum_M1_y);
 				hSum_Add_Store(soa1_dipoles_M_z + i_dipole_quadrupole_idx, sum_M1_z);
-
-				// End iteration over centers with possible left over center
-				for (; j < soa2._quadrupoles_num; ++j) {
-					//_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa1, i_dipole_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
-				}
 
 				i_dipole_quadrupole_idx++;
 
