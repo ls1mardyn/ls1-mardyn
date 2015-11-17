@@ -77,10 +77,7 @@ int main(int argc, char** argv) {
 #endif
 
 	/* Initialize the global log file */
-	// string logfileName("MarDyn");
-	// global_log = new Log::Logger(Log::All, logfileName);
 	global_log = new Log::Logger(Log::Info);
-	cout.precision(6);
 #ifdef ENABLE_MPI
 	global_log->set_mpi_output_root(0);
 #endif
@@ -90,6 +87,12 @@ int main(int argc, char** argv) {
 	vector<string> args = op.args();
 	unsigned int numargs = args.size();
 
+	if( options.is_set_by_user("logfile") ) {
+		string logfileName(options.get("logfile"));
+		global_log->info() << "Using logfile " << logfileName << endl;
+		delete global_log;
+		global_log = new Log::Logger(Log::Info, logfileName);
+	}
 	if( options.is_set_by_user("verbose") ) {
 		global_log->info() << "Enabling verbose log output." << endl;
 		global_log->set_log_level(Log::All);
@@ -218,6 +221,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
 	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("default prefix for output files");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
+	op.add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--timed-checkpoint").dest("timed-checkpoint").type("float").set_default(-1).help("Execution time of the simulation in seconds after which a checkpoint is forced.");
 
