@@ -61,6 +61,22 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 #endif
 }
 
+/** Run the internal unit tests */
+int run_unit_tests(Values &options, vector<string> &args) {
+	string testcases("");
+	if(args.size() == 1) {
+		testcases = args[0];
+		global_log->info() << "Running unit tests: " << testcases << endl;
+	} else {
+		global_log->info() << "Running all unit tests!" << endl;
+	}
+	std::string testDataDirectory(options.get("testDataDirectory"));
+	global_log->info() << "Test data directory: " << testDataDirectory << endl;
+	Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
+	bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
+	return (testresult) ? 1 : 0 ;
+}
+
 /** @page main
  * In this project, software for molecular dynamics simulation with short-range
  * forces is developed. The aim is to have a parallel code (MPI) for
@@ -70,7 +86,6 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
  * class which is actually responsible for the simulation and to run tests for
  * all classes.
  */
-
 int main(int argc, char** argv) {
 #ifdef ENABLE_MPI
 	MPI_Init(&argc, &argv);
@@ -85,7 +100,6 @@ int main(int argc, char** argv) {
 	OptionParser op;
 	Values options = initOptions(argc, argv, op);
 	vector<string> args = op.args();
-	unsigned int numargs = args.size();
 
 	if( options.is_set_by_user("logfile") ) {
 		string logfileName(options.get("logfile"));
@@ -101,31 +115,15 @@ int main(int argc, char** argv) {
 	program_build_info(global_log->info());
 	program_execution_info(argc, argv, global_log->info());
 
-	bool tests(options.is_set_by_user("tests"));
-	if (tests) {
-		string testcases;
-		if (numargs == 1) {
-			testcases = args[0];
-			global_log->info() << "Running unit tests: " << testcases << endl;
-		} else {
-			global_log->info() << "Running all unit tests!" << endl;
-		}
-
-		std::string testDataDirectory(options.get("testDataDirectory"));
-		global_log->info() << "Test data directory: " << testDataDirectory << endl;
-		Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
-		bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
-
+	if (options.is_set_by_user("tests")) {
+		int testresult = run_unit_tests(options, args);
 		#ifdef ENABLE_MPI
 		MPI_Finalize();
 		#endif
-		if (testresult) {
-			exit(1);
-		} else {
-			exit(0);
-		}
+		exit(testresult);
 	}
 
+	unsigned int numargs = args.size();
 	if (numargs < 1) {
 		op.print_usage();
 		exit(1);
