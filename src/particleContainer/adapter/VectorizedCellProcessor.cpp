@@ -2007,9 +2007,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	 *  the result is: the next smaller multiple of VCP_VEC_SIZE.
 	 */
 	const size_t end_ljc_j = soa2._ljc_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_ljc_j_longloop = (soa2._ljc_num + VCP_VEC_SIZE_M1) & (~VCP_VEC_SIZE_M1);//this is ceil _ljc_num, VCP_VEC_SIZE
 	const size_t end_charges_j = soa2._charges_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_charges_j_longloop = (soa2._charges_num + VCP_VEC_SIZE_M1) & (~VCP_VEC_SIZE_M1);//this is ceil _charges_num, VCP_VEC_SIZE
 	const size_t end_dipoles_j = soa2._dipoles_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_dipoles_j_longloop = (soa2._dipoles_num + VCP_VEC_SIZE_M1) & (~VCP_VEC_SIZE_M1);//this is ceil _dipoles_num, VCP_VEC_SIZE
 	const size_t end_quadrupoles_j = soa2._quadrupoles_num & (~VCP_VEC_SIZE_M1);
+	const size_t end_quadrupoles_j_longloop = (soa2._quadrupoles_num + VCP_VEC_SIZE_M1) & (~VCP_VEC_SIZE_M1);//this is ceil _quadrupoles_num, VCP_VEC_SIZE
 
 	size_t i_ljc_idx = 0;
 	size_t i_charge_idx = 0;
@@ -2056,7 +2060,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
 				// Iterate over each pair of centers in the second cell.
 				size_t j = ForcePolicy::InitJ(i_ljc_idx);
-				for (; j < end_ljc_j; j += VCP_VEC_SIZE) {
+				for (; j < end_ljc_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_ljc_dist_lookup + j);
 					// Only go on if at least 1 of the forces has to be calculated.
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2111,7 +2115,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Unvectorized calculation for leftover pairs.
 				for (; j < soa2._ljc_num; ++j) {
-					_loopBodyNovecLJ<MacroPolicy>(soa1, i_ljc_idx, soa2, j, soa2_ljc_dist_lookup + j);
+					//_loopBodyNovecLJ<MacroPolicy>(soa1, i_ljc_idx, soa2, j, soa2_ljc_dist_lookup + j);
 				}
 
 				i_ljc_idx++;
@@ -2142,7 +2146,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
-				for (; j < end_charges_j; j += VCP_VEC_SIZE) {
+				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2192,7 +2196,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._charges_num; ++j) {
-					_loopBodyNovecCharges<MacroPolicy>(soa1, i_charge_idx + local_i, soa2, j, soa2_charges_dist_lookup + j);
+					//_loopBodyNovecCharges<MacroPolicy>(soa1, i_charge_idx + local_i, soa2, j, soa2_charges_dist_lookup + j);
 				}
 
 			}
@@ -2218,7 +2222,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j; j += VCP_VEC_SIZE) {
+				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2280,7 +2284,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._charges_num; ++j) {
-					_loopBodyNovecChargesDipoles<MacroPolicy>(soa2, j, soa1, i_dipole_charge_idx, soa2_charges_dist_lookup + j, true);
+					//_loopBodyNovecChargesDipoles<MacroPolicy>(soa2, j, soa1, i_dipole_charge_idx, soa2_charges_dist_lookup + j, true);
 				}
 
 				i_dipole_charge_idx++;
@@ -2307,7 +2311,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j; j += VCP_VEC_SIZE) {
+				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2369,7 +2373,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._charges_num; ++j) {
-					_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_charge_idx, soa2_charges_dist_lookup + j, true);
+					//_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_charge_idx, soa2_charges_dist_lookup + j, true);
 				}
 				i_quadrupole_charge_idx++;
 			}
@@ -2409,7 +2413,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
-				for (; j < end_dipoles_j; j += VCP_VEC_SIZE) {
+				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2488,7 +2492,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._dipoles_num; ++j) {
-					_loopBodyNovecDipoles<MacroPolicy>(soa1, i_dipole_idx + local_i, soa2, j, soa2_dipoles_dist_lookup + j);
+					//_loopBodyNovecDipoles<MacroPolicy>(soa1, i_dipole_idx + local_i, soa2, j, soa2_dipoles_dist_lookup + j);
 				}
 
 			}
@@ -2508,7 +2512,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j; j += VCP_VEC_SIZE) {
+				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2577,7 +2581,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._dipoles_num; ++j) {
-					_loopBodyNovecChargesDipoles<MacroPolicy>(soa1, i_charge_dipole_idx, soa2, j, soa2_dipoles_dist_lookup + j, false);
+					//_loopBodyNovecChargesDipoles<MacroPolicy>(soa1, i_charge_dipole_idx, soa2, j, soa2_dipoles_dist_lookup + j, false);
 				}
 
 				i_charge_dipole_idx++;
@@ -2606,7 +2610,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j; j += VCP_VEC_SIZE) {
+				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2682,7 +2686,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._dipoles_num; ++j) {
-					_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_dipole_idx, soa2_dipoles_dist_lookup + j, true);
+					//_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa2, j, soa1, i_quadrupole_dipole_idx, soa2_dipoles_dist_lookup + j, true);
 				}
 
 				i_quadrupole_dipole_idx++;
@@ -2723,7 +2727,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
-				for (; j < end_quadrupoles_j; j += VCP_VEC_SIZE) {
+				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2799,7 +2803,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._quadrupoles_num; ++j) {
-					_loopBodyNovecQuadrupoles<MacroPolicy>(soa1, i_quadrupole_idx + local_i, soa2, j, soa2_quadrupoles_dist_lookup + j);
+					//_loopBodyNovecQuadrupoles<MacroPolicy>(soa1, i_quadrupole_idx + local_i, soa2, j, soa2_quadrupoles_dist_lookup + j);
 				}
 
 			}
@@ -2818,7 +2822,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = vcp_simd_zerov();
 
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j; j += VCP_VEC_SIZE) {
+				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2885,7 +2889,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._quadrupoles_num; ++j) {
-					_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa1, i_charge_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
+					//_loopBodyNovecChargesQuadrupoles<MacroPolicy>(soa1, i_charge_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
 				}
 
 				i_charge_quadrupole_idx++;
@@ -2914,7 +2918,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j; j += VCP_VEC_SIZE) {
+				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
 					const vcp_double_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (vcp_simd_movemask(forceMask) > 0) {
@@ -2990,7 +2994,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// End iteration over centers with possible left over center
 				for (; j < soa2._quadrupoles_num; ++j) {
-					_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa1, i_dipole_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
+					//_loopBodyNovecDipolesQuadrupoles<MacroPolicy>(soa1, i_dipole_quadrupole_idx, soa2, j, soa2_quadrupoles_dist_lookup + j, false);
 				}
 
 				i_dipole_quadrupole_idx++;
