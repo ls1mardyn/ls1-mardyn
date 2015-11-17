@@ -228,6 +228,10 @@ public:
 			if (_ljc_num > _ljc_size) {
 				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
 				_ljc_id.resize(_ljc_size);
+				memset(_ljc_id + _ljc_num, 0, (_ljc_size-_ljc_num) * sizeof(double));//set the remaining values to zero.
+				//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
+				//The array size is however long enough to vectorize over the last few entries.
+				//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
 			}
 
 			if (_charges_num > _charges_size) {

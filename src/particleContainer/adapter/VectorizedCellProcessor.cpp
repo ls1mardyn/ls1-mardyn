@@ -1603,7 +1603,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 
-	unsigned long compute_molecule = 0;
+	unsigned long compute_molecule = 0ul;
 
 	for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2_num_centers; ++j) {
 		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
@@ -1658,7 +1658,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec forceMask_vec = vcp_simd_set1(forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
-
+	memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(double));//set the remaining values to zero.
+	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
+	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 	return compute_molecule;
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
@@ -1712,6 +1714,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
 
+	memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(double));//set the remaining values to zero.
+	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
+	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 	return compute_molecule;
 
 #endif
