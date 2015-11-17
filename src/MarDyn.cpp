@@ -29,6 +29,37 @@ using namespace std;
 
 optparse::Values& initOptions(int argc, const char* const argv[], optparse::OptionParser& op);
 
+/** Helper function outputting program build information to given logger */
+void program_build_info(Log::Logger &log) {
+	char info_str[MAX_INFO_STRING_LENGTH];
+	get_compiler_info(info_str);
+	log << "Compiler: " << info_str << endl;
+	get_compile_time(info_str);
+	log << "Compiled: " << info_str << endl;
+#ifdef ENABLE_MPI
+	get_mpi_info(info_str);
+	log << "MPI library: " << info_str << endl;
+#endif
+}
+
+/** Helper function outputting program invocation information to given logger */
+void program_execution_info(int argc, char **argv, Log::Logger &log) {
+	char info_str[MAX_INFO_STRING_LENGTH];
+	get_timestamp(info_str);
+	log << "Started: " << info_str << endl;
+	get_host(info_str);
+	log << "Execution host: " << info_str << endl;
+	std::stringstream arguments;
+	for (int i = 0; i < argc; i++) {
+		arguments << " " << argv[i];
+	}
+	log << "Started with arguments: " << arguments.str() << endl;
+#ifdef ENABLE_MPI
+	int world_size = 1;
+	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
+	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
+#endif
+}
 
 /** @page main
  * In this project, software for molecular dynamics simulation with short-range
@@ -64,32 +95,8 @@ int main(int argc, char** argv) {
 		global_log->set_log_level(Log::All);
 	}
 
-	/* Print some info about the program itself */
-	char info_str[MAX_INFO_STRING_LENGTH];
-	get_compiler_info(info_str);
-	global_log->info() << "Compiler: " << info_str << endl;
-	get_compile_time(info_str);
-	global_log->info() << "Compiled: " << info_str << endl;
-#ifdef ENABLE_MPI
-	get_mpi_info(info_str);
-	global_log->info() << "MPI library: " << info_str << endl;
-#endif
-	get_timestamp(info_str);
-	global_log->info() << "Started: " << info_str << endl;
-	get_host(info_str);
-	global_log->info() << "Execution host: " << info_str << endl;
-
-	std::stringstream arguments;
-	for (int i = 0; i < argc; i++) {
-		arguments << " " << argv[i];
-	}
-	global_log->info() << "Started with arguments: " << arguments.str() << endl;
-
-#ifdef ENABLE_MPI
-	int world_size = 1;
-	MPI_CHECK(MPI_Comm_size(MPI_COMM_WORLD, &world_size));
-	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
-#endif
+	program_build_info(global_log->info());
+	program_execution_info(argc, argv, global_log->info());
 
 	bool tests(options.is_set_by_user("tests"));
 	if (tests) {
