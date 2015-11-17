@@ -54,6 +54,7 @@
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	typedef double vcp_double_vec;
 	#define VCP_VEC_SIZE 1
+	#define VCP_VEC_SIZE_M1 0
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 	typedef __m128d vcp_double_vec;

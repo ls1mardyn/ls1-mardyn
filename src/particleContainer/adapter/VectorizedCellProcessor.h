@@ -281,12 +281,10 @@ private:
 			return true;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static size_t InitJ (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
 			return (i+1) & ~static_cast<size_t>(VCP_VEC_SIZE_M1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
-#endif
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
@@ -297,28 +295,22 @@ private:
 			return result;
 		}
 
-		inline static vcp_double_vec InitJ_Mask (const size_t i)
+		inline static vcp_double_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
-			switch (i & static_cast<size_t>(3)) {
-				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0));
-				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,0, 0, 0, 0));
-				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0));
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0));
+				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0));
+				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0));
 				default: return vcp_simd_ones();
 			}
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			return vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() );
 		}
-#else //novec
-		inline static size_t InitJ (const size_t i)
-		{
-			return i + 1;
-		}
-#endif /* definition of InitJ & GetForceMask */
+#endif /* definition of InitJ_Mask & GetForceMask */
 	}; /* end of class SingleCellPolicy_ */
 
 	/**
