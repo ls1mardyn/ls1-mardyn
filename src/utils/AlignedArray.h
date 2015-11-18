@@ -77,6 +77,7 @@ public:
 		if (!_p)
 			throw std::bad_alloc();
 		_n = n;
+		//std::memset(_p,0,sizeof(T)*_n);
 	}
 
 	inline size_t get_size() const {
@@ -95,9 +96,13 @@ private:
 	}
 	static T* _allocate(size_t elements) {
 #if defined(__SSE3__) && ! defined(__PGI)
-		return static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		T* ptr=static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		//std::memset(ptr, 0, sizeof(T) * elements);
+		return ptr;
 #else
-		return static_cast<T*>(memalign(alignment, sizeof(T) * elements));
+		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
+		//std::memset(ptr, 0, sizeof(T) * elements);
+		return ptr;
 #endif
 	}
 
