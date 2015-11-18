@@ -210,7 +210,16 @@ public:
 		if (_centers_dist_lookup.get_size() < _centers_size)
 		{
 			_centers_dist_lookup.resize(_centers_size);
+			memset(_centers_dist_lookup,0,_centers_size*sizeof(double));
 		}
+		memset(_centers_dist_lookup,0,_centers_size*sizeof(double));
+	}
+
+	template<class T>
+	static inline void resizeLastZero(AlignedArray<T> array, const size_t& size,const size_t& startZero){
+		array.resize(size);
+		//memset(array + startZero, 0, (size - startZero) * sizeof(T));
+		memset(array, 0, size*sizeof(T));
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
@@ -227,66 +236,67 @@ public:
 
 			if (_ljc_num > _ljc_size) {
 				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
-				_ljc_id.resize(_ljc_size);
-				memset(_ljc_id + _ljc_num, 0, (_ljc_size-_ljc_num) * sizeof(double));//set the remaining values to zero.
-				//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
-				//The array size is however long enough to vectorize over the last few entries.
-				//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
+				resizeLastZero(_ljc_id,_ljc_size,_ljc_num);
 			}
+
 
 			if (_charges_num > _charges_size) {
 				_charges_size = ceil( (double)_charges_num / 8) * 8;
-				_charges_q.resize(_charges_size);
+				resizeLastZero(_charges_q,_charges_size,_charges_num);
 			}
 
 			if (_dipoles_num > _dipoles_size) {
 				_dipoles_size = ceil( (double)_dipoles_num / 8) * 8;
-				_dipoles_p.resize(_dipoles_size);
-				_dipoles_e_x.resize(_dipoles_size);
-				_dipoles_e_y.resize(_dipoles_size);
-				_dipoles_e_z.resize(_dipoles_size);
-				_dipoles_M_x.resize(_dipoles_size);
-				_dipoles_M_y.resize(_dipoles_size);
-				_dipoles_M_z.resize(_dipoles_size);
+				resizeLastZero(_dipoles_p,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_e_x,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_e_y,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_e_z,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_M_x,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_M_y,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_M_z,_dipoles_size, _dipoles_num);
 			}
 
 			if (_quadrupoles_num > _quadrupoles_size) {
 				_quadrupoles_size = ceil( (double)_quadrupoles_num / 8) * 8;
-				_quadrupoles_m.resize(_quadrupoles_size);
-				_quadrupoles_e_x.resize(_quadrupoles_size);
-				_quadrupoles_e_y.resize(_quadrupoles_size);
-				_quadrupoles_e_z.resize(_quadrupoles_size);
-				_quadrupoles_M_x.resize(_quadrupoles_size);
-				_quadrupoles_M_y.resize(_quadrupoles_size);
-				_quadrupoles_M_z.resize(_quadrupoles_size);
+				resizeLastZero(_quadrupoles_m,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_e_x,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_e_y,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_e_z,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_M_x,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_M_y,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_M_z,_quadrupoles_size, _quadrupoles_num);
 			}
 
 			if (_centers_size < _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size)
 			{
-				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;
-
-				_centers_m_r_x.resize(_centers_size);
-				_centers_m_r_y.resize(_centers_size);
-				_centers_m_r_z.resize(_centers_size);
-				_centers_r_x.resize(_centers_size);
-				_centers_r_y.resize(_centers_size);
-				_centers_r_z.resize(_centers_size);
-				_centers_f_x.resize(_centers_size);
-				_centers_f_y.resize(_centers_size);
-				_centers_f_z.resize(_centers_size);
+				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;//divisible by 8, since all others are
+				const size_t cent_num = _ljc_num + _charges_num + _dipoles_num + _quadrupoles_num;
+				resizeLastZero(_centers_m_r_x,_centers_size, cent_num);
+				resizeLastZero(_centers_m_r_y,_centers_size, cent_num);
+				resizeLastZero(_centers_m_r_z,_centers_size, cent_num);
+				resizeLastZero(_centers_r_x,_centers_size, cent_num);
+				resizeLastZero(_centers_r_y,_centers_size, cent_num);
+				resizeLastZero(_centers_r_z,_centers_size, cent_num);
+				resizeLastZero(_centers_f_x,_centers_size, cent_num);
+				resizeLastZero(_centers_f_y,_centers_size, cent_num);
+				resizeLastZero(_centers_f_z,_centers_size, cent_num);
 			}
 		}
 
 		if (_mol_num > _mol_size) {
 			_mol_size = ceil( (double)molecules_arg / 8) * 8;
-			_mol_pos_x.resize(_mol_size);
-			_mol_pos_y.resize(_mol_size);
-			_mol_pos_z.resize(_mol_size);
-			_mol_ljc_num.resize(_mol_size);
-			_mol_charges_num.resize(_mol_size);
-			_mol_dipoles_num.resize(_mol_size);
-			_mol_quadrupoles_num.resize(_mol_size);
+			resizeLastZero(_mol_pos_x,_mol_size, _mol_num);
+			resizeLastZero(_mol_pos_y,_mol_size, _mol_num);
+			resizeLastZero(_mol_pos_z,_mol_size, _mol_num);
+			resizeLastZero(_mol_ljc_num,_mol_size, _mol_num);
+			resizeLastZero(_mol_charges_num,_mol_size, _mol_num);
+			resizeLastZero(_mol_dipoles_num,_mol_size, _mol_num);
+			resizeLastZero(_mol_quadrupoles_num,_mol_size, _mol_num);
 		}
+		memset(_ljc_id + _ljc_num, 0, (_ljc_size-_ljc_num) * sizeof(double));//set the remaining values to zero.
+			//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
+			//The array size is however long enough to vectorize over the last few entries.
+			//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
 
 		resizeDistLookup();
 		initCenterPointers();

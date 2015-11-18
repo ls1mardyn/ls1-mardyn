@@ -885,9 +885,9 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec upot = vcp_simd_mul(q1q2per4pie0, c_dr_inv);
 		const vcp_double_vec fac = vcp_simd_mul(upot, c_dr2_inv);
 
-		f_x = vcp_simd_mul(c_dx, fac);
-		f_y = vcp_simd_mul(c_dy, fac);
-		f_z = vcp_simd_mul(c_dz, fac);
+		f_x = vcp_simd_and(forceMask, vcp_simd_mul(c_dx, fac));
+		f_y = vcp_simd_and(forceMask, vcp_simd_mul(c_dy, fac));
+		f_z = vcp_simd_and(forceMask, vcp_simd_mul(c_dz, fac));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -946,9 +946,9 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 
 		const vcp_double_vec fac = vcp_simd_mul(dr2_inv, vcp_simd_mul(three, re));
 
-		f_x = vcp_simd_mul(qpper4pie0dr3, vcp_simd_sub(e_x, vcp_simd_mul(dx, fac)));
-		f_y = vcp_simd_mul(qpper4pie0dr3, vcp_simd_sub(e_y, vcp_simd_mul(dy, fac)));
-		f_z = vcp_simd_mul(qpper4pie0dr3, vcp_simd_sub(e_z, vcp_simd_mul(dz, fac)));
+		f_x = vcp_simd_and(forceMask, vcp_simd_mul(qpper4pie0dr3, vcp_simd_sub(e_x, vcp_simd_mul(dx, fac))));
+		f_y = vcp_simd_and(forceMask, vcp_simd_mul(qpper4pie0dr3, vcp_simd_sub(e_y, vcp_simd_mul(dy, fac))));
+		f_z = vcp_simd_and(forceMask,  vcp_simd_mul(qpper4pie0dr3, vcp_simd_sub(e_z, vcp_simd_mul(dz, fac))));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -982,9 +982,9 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec e_y_dz_minus_e_z_dy = vcp_simd_sub(e_y_dz, e_z_dy);
 		const vcp_double_vec e_z_dx_minus_e_x_dz = vcp_simd_sub(e_z_dx, e_x_dz);
 
-		M_x = vcp_simd_mul(qpper4pie0dr3, e_y_dz_minus_e_z_dy);
-		M_y = vcp_simd_mul(qpper4pie0dr3, e_z_dx_minus_e_x_dz);
-		M_z = vcp_simd_mul(qpper4pie0dr3, e_x_dy_minus_e_y_dx);
+		M_x = vcp_simd_and(forceMask, vcp_simd_mul(qpper4pie0dr3, e_y_dz_minus_e_z_dy));
+		M_y = vcp_simd_and(forceMask, vcp_simd_mul(qpper4pie0dr3, e_z_dx_minus_e_x_dz));
+		M_z = vcp_simd_and(forceMask, vcp_simd_mul(qpper4pie0dr3, e_x_dy_minus_e_y_dx));
 	}
 
 	template<class MacroPolicy>
@@ -1037,9 +1037,9 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec e1e2minus5re1re2perr2 = vcp_simd_sub(e1e2, vcp_simd_mul(five, re1re2perr2));
 
 
-		f_x = vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dx, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_x, re2), vcp_simd_mul(ejj_x, re1))));
-		f_y = vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dy, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_y, re2), vcp_simd_mul(ejj_y, re1))));
-		f_z = vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dz, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_z, re2), vcp_simd_mul(ejj_z, re1))));
+		f_x = vcp_simd_and(forceMask, vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dx, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_x, re2), vcp_simd_mul(ejj_x, re1)))));
+		f_y = vcp_simd_and(forceMask, vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dy, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_y, re2), vcp_simd_mul(ejj_y, re1)))));
+		f_z = vcp_simd_and(forceMask, vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dz, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_z, re2), vcp_simd_mul(ejj_z, re1)))));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -1076,13 +1076,13 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec e1_y_e2_z_minus_e1_z_e2_y = vcp_simd_sub(e1_y_e2_z, e1_z_e2_y);
 		const vcp_double_vec e1_z_e2_x_minus_e1_x_e2_z = vcp_simd_sub(e1_z_e2_x, e1_x_e2_z);
 
-		M1_x = vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_y, dz), vcp_simd_mul(eii_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), vcp_simd_mul(rffac, e1_y_e2_z_minus_e1_z_e2_y));
-		M1_y = vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_z, dx), vcp_simd_mul(eii_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), vcp_simd_mul(rffac, e1_z_e2_x_minus_e1_x_e2_z));
-		M1_z = vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_x, dy), vcp_simd_mul(eii_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x));
+		M1_x = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_y, dz), vcp_simd_mul(eii_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), vcp_simd_mul(rffac, e1_y_e2_z_minus_e1_z_e2_y)));
+		M1_y = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_z, dx), vcp_simd_mul(eii_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), vcp_simd_mul(rffac, e1_z_e2_x_minus_e1_x_e2_z)));
+		M1_z = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_x, dy), vcp_simd_mul(eii_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x)));
 
-		M2_x = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_y, dz), vcp_simd_mul(ejj_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), vcp_simd_mul(rffac, e1_y_e2_z_minus_e1_z_e2_y));
-		M2_y = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_z, dx), vcp_simd_mul(ejj_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), vcp_simd_mul(rffac, e1_z_e2_x_minus_e1_x_e2_z));
-		M2_z = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_x, dy), vcp_simd_mul(ejj_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x));
+		M2_x = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_y, dz), vcp_simd_mul(ejj_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), vcp_simd_mul(rffac, e1_y_e2_z_minus_e1_z_e2_y)));
+		M2_y = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_z, dx), vcp_simd_mul(ejj_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), vcp_simd_mul(rffac, e1_z_e2_x_minus_e1_x_e2_z)));
+		M2_z = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_x, dy), vcp_simd_mul(ejj_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x)));
 	}
 
 	template<class MacroPolicy>
@@ -1134,9 +1134,14 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		part1 = vcp_simd_mul(costj, vcp_simd_mul(partialTjInvdr, invdr));
 		const vcp_double_vec fac = vcp_simd_add(part1, minus_partialRijInvdr);
 
-		f_x = vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x));
-		f_y = vcp_simd_sub(vcp_simd_mul(fac, c_dy), vcp_simd_mul(partialTjInvdr, ejj_y));
-		f_z = vcp_simd_sub(vcp_simd_mul(fac, c_dz), vcp_simd_mul(partialTjInvdr, ejj_z));
+		vcp_double_vec facMASKED = vcp_simd_and(forceMask, fac);
+		vcp_double_vec c_dxMASKED = vcp_simd_and(forceMask, c_dx);
+		vcp_double_vec partialTjInvdrMASKED = vcp_simd_and(forceMask, partialTjInvdr);
+		vcp_double_vec ejj_xMASKED = vcp_simd_and(forceMask,ejj_x);
+		f_x = vcp_simd_sub(vcp_simd_mul(facMASKED, c_dxMASKED), vcp_simd_mul(partialTjInvdrMASKED, ejj_x));
+		//f_x = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x)));
+		f_y = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dy), vcp_simd_mul(partialTjInvdr, ejj_y)));
+		f_z = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dz), vcp_simd_mul(partialTjInvdr, ejj_z)));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -1167,9 +1172,9 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec minuseXrij_y = vcp_simd_sub(vcp_simd_mul(ejj_x, c_dz), vcp_simd_mul(ejj_z, c_dx));
 		const vcp_double_vec minuseXrij_z = vcp_simd_sub(vcp_simd_mul(ejj_y, c_dx), vcp_simd_mul(ejj_x, c_dy));
 
-		M_x = vcp_simd_mul(partialTjInvdr, minuseXrij_x);
-		M_y = vcp_simd_mul(partialTjInvdr, minuseXrij_y);
-		M_z = vcp_simd_mul(partialTjInvdr, minuseXrij_z);
+		M_x = vcp_simd_and(forceMask, vcp_simd_mul(partialTjInvdr, minuseXrij_x));
+		M_y = vcp_simd_and(forceMask, vcp_simd_mul(partialTjInvdr, minuseXrij_y));
+		M_z = vcp_simd_and(forceMask, vcp_simd_mul(partialTjInvdr, minuseXrij_z));
 	}
 
 	template<class MacroPolicy>
@@ -1256,17 +1261,17 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		part1 = vcp_simd_mul(fac, c_dx);
 		part2 = vcp_simd_mul(minus_partialTiInvdr, eii_x);
 		part3 = vcp_simd_mul(minus_partialTjInvdr, ejj_x);
-		f_x = vcp_simd_add(part1, vcp_simd_add(part2, part3));
+		f_x = vcp_simd_and(vcp_simd_add(part1, vcp_simd_add(part2, part3)), forceMask);
 
 		part1 = vcp_simd_mul(fac, c_dy);
 		part2 = vcp_simd_mul(minus_partialTiInvdr, eii_y);
 		part3 = vcp_simd_mul(minus_partialTjInvdr, ejj_y);
-		f_y = vcp_simd_add(part1, vcp_simd_add(part2, part3));
+		f_y = vcp_simd_and(vcp_simd_add(part1, vcp_simd_add(part2, part3)), forceMask);
 
 		part1 = vcp_simd_mul(fac, c_dz);
 		part2 = vcp_simd_mul(minus_partialTiInvdr, eii_z);
 		part3 = vcp_simd_mul(minus_partialTjInvdr, ejj_z);
-		f_z = vcp_simd_add(part1, vcp_simd_add(part2, part3));
+		f_z = vcp_simd_and(vcp_simd_add(part1, vcp_simd_add(part2, part3)), forceMask);
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -1312,17 +1317,17 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		vcp_double_vec eXrij_y = vcp_simd_sub(vcp_simd_mul(eii_z, c_dx), vcp_simd_mul(eii_x, c_dz));
 		vcp_double_vec eXrij_z = vcp_simd_sub(vcp_simd_mul(eii_x, c_dy), vcp_simd_mul(eii_y, c_dx));
 
-		M1_x = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x);
-		M1_y = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y);
-		M1_z = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_z), partialGij_eiXej_z);
+		M1_x = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x));
+		M1_y = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y));
+		M1_z = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_z), partialGij_eiXej_z));
 
 		eXrij_x = vcp_simd_sub(vcp_simd_mul(ejj_y, c_dz), vcp_simd_mul(ejj_z, c_dy));
 		eXrij_y = vcp_simd_sub(vcp_simd_mul(ejj_z, c_dx), vcp_simd_mul(ejj_x, c_dz));
 		eXrij_z = vcp_simd_sub(vcp_simd_mul(ejj_x, c_dy), vcp_simd_mul(ejj_y, c_dx));
 
-		M2_x = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_x), partialGij_eiXej_x);
-		M2_y = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_y), partialGij_eiXej_y);
-		M2_z = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z);
+		M2_x = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_x), partialGij_eiXej_x));
+		M2_y = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_y), partialGij_eiXej_y));
+		M2_z = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z));
 	}
 
 	template<class MacroPolicy>
@@ -1423,17 +1428,17 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		part1 = vcp_simd_mul(fac, c_dx);
 		part2 = vcp_simd_mul(minus_partialTiInvdr, eii_x);
 		part3 = vcp_simd_mul(minus_partialTjInvdr, ejj_x);
-		f_x = vcp_simd_add(part1, vcp_simd_add(part2, part3));
+		f_x = vcp_simd_and(forceMask, vcp_simd_add(part1, vcp_simd_add(part2, part3)));
 
 		part1 = vcp_simd_mul(fac, c_dy);
 		part2 = vcp_simd_mul(minus_partialTiInvdr, eii_y);
 		part3 = vcp_simd_mul(minus_partialTjInvdr, ejj_y);
-		f_y = vcp_simd_add(part1, vcp_simd_add(part2, part3));
+		f_y = vcp_simd_and(forceMask, vcp_simd_add(part1, vcp_simd_add(part2, part3)));
 
 		part1 = vcp_simd_mul(fac, c_dz);
 		part2 = vcp_simd_mul(minus_partialTiInvdr, eii_z);
 		part3 = vcp_simd_mul(minus_partialTjInvdr, ejj_z);
-		f_z = vcp_simd_add(part1, vcp_simd_add(part2, part3));
+		f_z = vcp_simd_and(forceMask, vcp_simd_add(part1, vcp_simd_add(part2, part3)));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -1474,17 +1479,17 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		vcp_double_vec eXrij_y = vcp_simd_sub(vcp_simd_mul(eii_z, c_dx), vcp_simd_mul(eii_x, c_dz));
 		vcp_double_vec eXrij_z = vcp_simd_sub(vcp_simd_mul(eii_x, c_dy), vcp_simd_mul(eii_y, c_dx));
 
-		Mii_x = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x);
-		Mii_y = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y);
-		Mii_z = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_z), partialGij_eiXej_z);
+		Mii_x = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x));
+		Mii_y = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y));
+		Mii_z = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_z), partialGij_eiXej_z));
 
 		eXrij_x = vcp_simd_sub(vcp_simd_mul(ejj_y, c_dz), vcp_simd_mul(ejj_z, c_dy));
 		eXrij_y = vcp_simd_sub(vcp_simd_mul(ejj_z, c_dx), vcp_simd_mul(ejj_x, c_dz));
 		eXrij_z = vcp_simd_sub(vcp_simd_mul(ejj_x, c_dy), vcp_simd_mul(ejj_y, c_dx));
 
-		Mjj_x = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_x), partialGij_eiXej_x);
-		Mjj_y = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_y), partialGij_eiXej_y);
-		Mjj_z = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z);
+		Mjj_x = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_x), partialGij_eiXej_x));
+		Mjj_y = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_y), partialGij_eiXej_y));
+		Mjj_z = vcp_simd_and(forceMask, vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z));
 	}
 #endif
 
