@@ -216,7 +216,8 @@ public:
 	}
 
 	template<class T>
-	static inline void resizeLastZero(AlignedArray<T> array, const size_t& size,const size_t& startZero){
+	static inline __attribute__((always_inline))
+	void resizeLastZero(AlignedArray<T>& array, const size_t& size,const size_t& startZero){
 		array.resize(size);
 		//memset(array + startZero, 0, (size - startZero) * sizeof(T));
 		//memset(array, 0, size*sizeof(T));

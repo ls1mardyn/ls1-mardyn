@@ -16,14 +16,16 @@
 typedef AlignedArray<double> DoubleArray;
 
 #if VCP_VEC_TYPE!=VCP_NOVEC
-static inline void vcp_getIdJ(size_t (& id_j)[VCP_VEC_SIZE], const size_t* const soa2_ljc_id, size_t j){
+static inline __attribute__((always_inline))
+void vcp_getIdJ(size_t (& id_j)[VCP_VEC_SIZE], const size_t* const soa2_ljc_id, size_t j){
 	for (size_t index = 0; index < VCP_VEC_SIZE; ++index){
 		id_j[index] = soa2_ljc_id[j + index];
 	}
 }
 #endif
 
-static inline void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
+static inline __attribute__((always_inline))
+void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t (& id_j)[VCP_VEC_SIZE]){
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 
@@ -49,7 +51,8 @@ static inline void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2,
 #endif
 }
 
-static inline void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
+static inline __attribute__((always_inline))
+void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		const size_t (& id_j)[VCP_VEC_SIZE]){
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 
