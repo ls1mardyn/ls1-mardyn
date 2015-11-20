@@ -1134,14 +1134,14 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		part1 = vcp_simd_mul(costj, vcp_simd_mul(partialTjInvdr, invdr));
 		const vcp_double_vec fac = vcp_simd_add(part1, minus_partialRijInvdr);
 
-		vcp_double_vec facMASKED = vcp_simd_and(forceMask, fac);
-		vcp_double_vec c_dxMASKED = vcp_simd_and(forceMask, c_dx);
-		vcp_double_vec partialTjInvdrMASKED = vcp_simd_and(forceMask, partialTjInvdr);
-		vcp_double_vec ejj_xMASKED = vcp_simd_and(forceMask,ejj_x);
-		f_x = vcp_simd_sub(vcp_simd_mul(facMASKED, c_dxMASKED), vcp_simd_mul(partialTjInvdrMASKED, ejj_x));
+		//vcp_double_vec facMASKED = vcp_simd_and(forceMask, fac);
+		//vcp_double_vec c_dxMASKED = vcp_simd_and(forceMask, c_dx);
+		//vcp_double_vec partialTjInvdrMASKED = vcp_simd_and(forceMask, partialTjInvdr);
+		//vcp_double_vec ejj_xMASKED = vcp_simd_and(forceMask,ejj_x);
+		f_x = vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x));
 		//f_x = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x)));
-		f_y = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dy), vcp_simd_mul(partialTjInvdr, ejj_y)));
-		f_z = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dz), vcp_simd_mul(partialTjInvdr, ejj_z)));
+		f_y = vcp_simd_sub(vcp_simd_mul(fac, c_dy), vcp_simd_mul(partialTjInvdr, ejj_y));
+		f_z = vcp_simd_sub(vcp_simd_mul(fac, c_dz), vcp_simd_mul(partialTjInvdr, ejj_z));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);

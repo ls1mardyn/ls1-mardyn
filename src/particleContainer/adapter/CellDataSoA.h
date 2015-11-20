@@ -219,7 +219,7 @@ public:
 	static inline void resizeLastZero(AlignedArray<T> array, const size_t& size,const size_t& startZero){
 		array.resize(size);
 		//memset(array + startZero, 0, (size - startZero) * sizeof(T));
-		memset(array, 0, size*sizeof(T));
+		//memset(array, 0, size*sizeof(T));
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
