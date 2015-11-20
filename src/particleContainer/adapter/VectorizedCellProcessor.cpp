@@ -1138,8 +1138,8 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		//vcp_double_vec c_dxMASKED = vcp_simd_and(forceMask, c_dx);
 		//vcp_double_vec partialTjInvdrMASKED = vcp_simd_and(forceMask, partialTjInvdr);
 		//vcp_double_vec ejj_xMASKED = vcp_simd_and(forceMask,ejj_x);
+		//f_x = vcp_simd_sub(vcp_simd_mul(facMASKED, c_dxMASKED), vcp_simd_mul(partialTjInvdrMASKED, ejj_x));
 		f_x = vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x));
-		//f_x = vcp_simd_and(forceMask, vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x)));
 		f_y = vcp_simd_sub(vcp_simd_mul(fac, c_dy), vcp_simd_mul(partialTjInvdr, ejj_y));
 		f_z = vcp_simd_sub(vcp_simd_mul(fac, c_dz), vcp_simd_mul(partialTjInvdr, ejj_z));
 
