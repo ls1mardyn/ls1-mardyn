@@ -2080,16 +2080,12 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
 						vcp_double_vec fx, fy, fz;
 
-						size_t id_j[VCP_VEC_SIZE];
-
-						vcp_getIdJ(id_j, soa2_ljc_id, j);
-
 						vcp_double_vec eps_24;
 						vcp_double_vec sig2;
-						unpackEps24Sig2(eps_24, sig2, _eps_sig[id_i], id_j);
+						unpackEps24Sig2(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id + j);
 
 						vcp_double_vec shift6;
-						unpackShift6(shift6,_shift6[id_i],id_j);
+						unpackShift6(shift6, _shift6[id_i], soa2_ljc_id + j);
 
 						_loopBodyLJ<MacroPolicy>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
