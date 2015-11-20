@@ -95,7 +95,9 @@ private:
 	}
 	static T* _allocate(size_t elements) {
 #if defined(__SSE3__) && ! defined(__PGI)
-		return static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		memset(ptr,0,elements*sizeof(T));
+		return ptr;
 #else
 		return static_cast<T*>(memalign(alignment, sizeof(T) * elements));
 #endif
