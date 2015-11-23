@@ -207,10 +207,18 @@ public:
 	}
 
 	template<class T>
-	static inline __attribute__((always_inline))
-	void resizeAllZero(AlignedArray<T>& array, const size_t& size){
+	inline __attribute__((always_inline))
+	void resizeCentersZero(AlignedArray<T>& array, const size_t& size){
 		array.resize(size, size);
-		memset(array, 0, (size) * sizeof(T));
+		//memset(array, 0, size * sizeof(T));//sets all to zero
+		T* ptr = array;
+		memset(ptr + _ljc_num, 0, _ljc_size - _ljc_num);//ljc
+		ptr += _ljc_size;
+		memset(ptr + _charges_num, 0, _charges_size - _charges_num);//charges
+		ptr+= _charges_size;
+		memset(ptr + _dipoles_num, 0, _dipoles_size - _dipoles_num);//dipoles
+		ptr+= _dipoles_size;
+		memset(ptr + _quadrupoles_num, 0, _quadrupoles_size - _quadrupoles_num);//quadrupoles
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
@@ -227,7 +235,7 @@ public:
 
 			if (_ljc_num > _ljc_size) {
 				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
-				resizeLastZero(_ljc_id,_ljc_size,_ljc_num);
+				_ljc_id.resize(_ljc_size,_ljc_size);//set0 later on...
 			}
 
 
@@ -262,16 +270,16 @@ public:
 			{
 				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;//divisible by 8, since all others are
 				_centers_num = _ljc_num + _charges_num + _dipoles_num + _quadrupoles_num;
-				resizeAllZero(_centers_m_r_x, _centers_size);
-				resizeAllZero(_centers_m_r_y, _centers_size);
-				resizeAllZero(_centers_m_r_z, _centers_size);
-				resizeAllZero(_centers_r_x, _centers_size);
-				resizeAllZero(_centers_r_y, _centers_size);
-				resizeAllZero(_centers_r_z, _centers_size);
-				resizeAllZero(_centers_f_x, _centers_size);
-				resizeAllZero(_centers_f_y, _centers_size);
-				resizeAllZero(_centers_f_z, _centers_size);
-				resizeAllZero(_centers_dist_lookup, _centers_size);
+				resizeCentersZero(_centers_m_r_x, _centers_size);
+				resizeCentersZero(_centers_m_r_y, _centers_size);
+				resizeCentersZero(_centers_m_r_z, _centers_size);
+				resizeCentersZero(_centers_r_x, _centers_size);
+				resizeCentersZero(_centers_r_y, _centers_size);
+				resizeCentersZero(_centers_r_z, _centers_size);
+				resizeCentersZero(_centers_f_x, _centers_size);
+				resizeCentersZero(_centers_f_y, _centers_size);
+				resizeCentersZero(_centers_f_z, _centers_size);
+				resizeCentersZero(_centers_dist_lookup, _centers_size);
 			}
 		}
 
