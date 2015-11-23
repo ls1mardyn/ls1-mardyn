@@ -17,7 +17,7 @@ using namespace Log;
 
 LegacyCellProcessor::LegacyCellProcessor(const double cutoffRadius, const double LJCutoffRadius,
 		const double tersoffCutoffRadius, ParticlePairsHandler* particlePairsHandler)
-: _cutoffRadiusSquare(cutoffRadius * cutoffRadius), _LJCutoffRadiusSquare(LJCutoffRadius * LJCutoffRadius),
+: CellProcessor(cutoffRadius, LJCutoffRadius),
   _tersoffCutoffRadiusSquare(tersoffCutoffRadius*tersoffCutoffRadius), _particlePairsHandler(particlePairsHandler){
 	  /** @todo Check for multiple tersoff potentials with different parameters as the LegacyCellProcessor::postprocessCell() does only use one parameter set. */
 	  global_log->warning() << "Note: The LegacyCellProcessor does not support multiple Tersoff sites with different parameters." << endl;

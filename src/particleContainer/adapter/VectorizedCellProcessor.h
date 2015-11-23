@@ -83,12 +83,12 @@ private:
 	/**
 	 * \brief The squared cutoff radius.
 	 */
-	const double _cutoffRadiusSquare;
+	//const double _cutoffRadiusSquare;
 
 	/**
 	 * \brief The squared LJ cutoff radius.
 	 */
-	const double _LJcutoffRadiusSquare;
+	//const double _LJcutoffRadiusSquare;
 
 	/**
 	 * \brief Parameter for the reaction field method (see description in Domain.h and Comp2Param.cpp).

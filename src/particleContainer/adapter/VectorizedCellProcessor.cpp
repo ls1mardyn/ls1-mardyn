@@ -16,7 +16,7 @@
 using namespace Log;
 
 VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
-		_domain(domain), _cutoffRadiusSquare(cutoffRadius * cutoffRadius), _LJcutoffRadiusSquare(LJcutoffRadius * LJcutoffRadius),
+		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
 		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0), _centers_dist_lookup(128) {
@@ -1740,7 +1740,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 	for (size_t i = 0; i < soa1._mol_num; ++i) {
 		// Computation of LJ interaction
-		unsigned long compute_molecule_lj = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJcutoffRadiusSquare,
+		unsigned long compute_molecule_lj = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2._ljc_dist_lookup, soa2._ljc_m_r_x, soa2._ljc_m_r_y, soa2._ljc_m_r_z);
 		unsigned long compute_molecule_charge  = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx , soa2._charges_num, _cutoffRadiusSquare,
 				soa2._charges_dist_lookup, soa2._charges_m_r_x, soa2._charges_m_r_y, soa2._charges_m_r_z);
@@ -1997,7 +1997,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	vcp_double_vec sum_virial = vcp_simd_zerov();
 	vcp_double_vec sum_myRF = vcp_simd_zerov();
 
-	const vcp_double_vec rc2 = vcp_simd_set1(_LJcutoffRadiusSquare);
+	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
 	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
 	const vcp_double_vec epsRFInvrc3 = vcp_simd_broadcast(&_epsRFInvrc3);
 
@@ -2033,7 +2033,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
 
 		// Iterate over centers of second cell
-		const vcp_double_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJcutoffRadiusSquare,
+		const vcp_double_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
 				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
 		const vcp_double_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
