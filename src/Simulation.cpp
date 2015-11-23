@@ -41,6 +41,7 @@
 #include "thermostats/VelocityScalingThermostat.h"
 #include "thermostats/TemperatureControl.h"
 
+#include "utils/FileUtils.h"
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
@@ -407,19 +408,17 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 }
 
 void Simulation::readConfigFile(string filename) {
-	if (filename.rfind(".xml") == filename.size() - 4) {
-		global_log->info() << "command line config file type is XML (*.xml)"
-				<< endl;
+	string extension(getFileExtension(filename.c_str()));
+	global_log->debug() << "Found config filename extension: " << extension << endl;
+	if (extension == "xml") {
 		initConfigXML(filename);
-	} else if (filename.rfind(".cfg") == filename.size() - 4) {
-		global_log->info()
-				<< "command line config file type is oldstyle (*.cfg)" << endl;
+	}
+	else if (extension == "cfg") {
 		initConfigOldstyle(filename);
-	} else {
-		global_log->info()
-				<< "command line config file type is unknown: trying oldstyle"
-				<< endl;
-		initConfigOldstyle(filename);
+	}
+	else {
+		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
+		this->exit(1);;
 	}
 }
 
