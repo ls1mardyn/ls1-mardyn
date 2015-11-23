@@ -133,18 +133,21 @@ int main(int argc, char** argv) {
 
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	if( fileExists(args[0].c_str()) ) {
-		if (numargs > 1) {
-			unsigned long steps = 0;
-			istringstream(args[1]) >> steps;
-			simulation.setNumTimesteps(steps);
-		}
-		if( numargs > 2 ) {
-			simulation.setOutputPrefix(args[2]);
-		}
+		global_log->info() << "Config file: " << args[0] << endl;
 		simulation.readConfigFile(args[0]);
 	} else {
-		global_log->error() << "Cannot open input file '" << args[0] << "'" << std::endl;
+		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
 		exit(1);
+	}
+
+	/** @todo remove unnamed options, present as --steps, --output-prefix below */
+	if (numargs > 1) {
+		unsigned long steps = 0;
+		istringstream(args[1]) >> steps;
+		simulation.setNumTimesteps(steps);
+	}
+	if( numargs > 2 ) {
+		simulation.setOutputPrefix(args[2]);
 	}
 
 	if ( (int) options.get("final-checkpoint") > 0 ) {
