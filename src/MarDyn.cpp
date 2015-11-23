@@ -200,7 +200,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 		.usage("%prog [<scenario generator with options> | <configfilename>] <number of timesteps> <outputprefix>\n "
 		  "      %prog --tests --test-dir <test input data directory> [<name of testcase>]\n\n"
 				"Use option --help to display all available options.")
-		.version("%prog 0.1")
+		.version("%prog 1.1")
 		.description("ls1 mardyn (M-olecul-AR DYN-amics)");
 
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
