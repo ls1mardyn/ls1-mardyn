@@ -153,7 +153,7 @@ public:
 	DoubleArray _quadrupoles_M_z;
 
 
-	void initCenterPointers()
+	void inline __attribute__((always_inline)) initCenterPointers()
 	{
 		_ljc_m_r_x = _centers_m_r_x;
 		_ljc_m_r_y = _centers_m_r_y;
