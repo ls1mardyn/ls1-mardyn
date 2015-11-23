@@ -217,7 +217,7 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 		.description("ls1 mardyn (M-olecul-AR DYN-amics)");
 
 	op.add_option("-n", "--steps") .dest("timesteps") .metavar("NUM") .type("int") .set_default(1) .help("number of timesteps to simulate (default: %default)");
-	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .help("default prefix for output files");
+	op.add_option("-p", "--outprefix") .dest("outputprefix") .metavar("STR") .type("string") .set_default("MarDyn") .help("default prefix for output files (default: %default)");
 	op.add_option("-v", "--verbose") .action("store_true") .dest("verbose") .metavar("V") .type("bool") .set_default(false) .help("verbose mode: print debugging information (default: %default)");
 	op.add_option("--logfile").dest("logfile").type("string").set_default("MarDyn.log").metavar("STRING").help("enable/disable final checkopint (default: %default)");
 	op.add_option("--final-checkpoint").dest("final-checkpoint").type("int").set_default(1).metavar("(1|0)").help("enable/disable final checkopint (default: %default)");
