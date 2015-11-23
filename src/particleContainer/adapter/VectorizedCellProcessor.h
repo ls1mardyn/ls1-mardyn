@@ -144,9 +144,6 @@ private:
 	 */
 	double _myRF;
 
-	// lookup array for the distance molecule-molecule on a molecule-center basis.
-	DoubleArray _centers_dist_lookup;
-
 	// vector holding pointers to the above objects, used as a stack for
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;

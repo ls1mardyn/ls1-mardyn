@@ -38,7 +38,7 @@ public:
 		_mol_quadrupoles_num(_mol_size),
 		_centers_m_r_x(_centers_size), _centers_m_r_y(_centers_size), _centers_m_r_z(_centers_size),
 		_centers_r_x(_centers_size), _centers_r_y(_centers_size), _centers_r_z(_centers_size),
-		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size),
+		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size), _centers_dist_lookup(_centers_size),
 		_ljc_id(_ljc_size),
 		_charges_q(_charges_size),
 		_dipoles_p(_dipoles_size),
@@ -54,6 +54,7 @@ public:
 	size_t _charges_num;
 	size_t _dipoles_num;
 	size_t _quadrupoles_num;
+	size_t _centers_num;
 
 	size_t _mol_size;
 	size_t _ljc_size;
@@ -199,28 +200,17 @@ public:
 		_quadrupoles_dist_lookup = _dipoles_dist_lookup + _dipoles_size;
 	}
 
-	void setDistLookup(DoubleArray & centers_dist_lookup_arg)
-	{
-		_centers_dist_lookup = centers_dist_lookup_arg;
-		resizeDistLookup();
-	}
-
-	void resizeDistLookup()
-	{
-		if (_centers_dist_lookup.get_size() < _centers_size)
-		{
-			_centers_dist_lookup.resize(_centers_size);
-			memset(_centers_dist_lookup,0,_centers_size*sizeof(double));
-		}
-		memset(_centers_dist_lookup,0,_centers_size*sizeof(double));
+	template<class T>
+	static inline __attribute__((always_inline))
+	void resizeLastZero(AlignedArray<T>& array, const size_t& size,const size_t& startZero){
+		array.resize(size, startZero);
 	}
 
 	template<class T>
 	static inline __attribute__((always_inline))
-	void resizeLastZero(AlignedArray<T>& array, const size_t& size,const size_t& startZero){
-		array.resize(size);
-		//memset(array + startZero, 0, (size - startZero) * sizeof(T));
-		//memset(array, 0, size*sizeof(T));
+	void resizeAllZero(AlignedArray<T>& array, const size_t& size){
+		array.resize(size, size);
+		memset(array, 0, (size) * sizeof(T));
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
@@ -271,16 +261,17 @@ public:
 			if (_centers_size < _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size)
 			{
 				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;//divisible by 8, since all others are
-				const size_t cent_num = _ljc_num + _charges_num + _dipoles_num + _quadrupoles_num;
-				resizeLastZero(_centers_m_r_x,_centers_size, cent_num);
-				resizeLastZero(_centers_m_r_y,_centers_size, cent_num);
-				resizeLastZero(_centers_m_r_z,_centers_size, cent_num);
-				resizeLastZero(_centers_r_x,_centers_size, cent_num);
-				resizeLastZero(_centers_r_y,_centers_size, cent_num);
-				resizeLastZero(_centers_r_z,_centers_size, cent_num);
-				resizeLastZero(_centers_f_x,_centers_size, cent_num);
-				resizeLastZero(_centers_f_y,_centers_size, cent_num);
-				resizeLastZero(_centers_f_z,_centers_size, cent_num);
+				_centers_num = _ljc_num + _charges_num + _dipoles_num + _quadrupoles_num;
+				resizeAllZero(_centers_m_r_x, _centers_size);
+				resizeAllZero(_centers_m_r_y, _centers_size);
+				resizeAllZero(_centers_m_r_z, _centers_size);
+				resizeAllZero(_centers_r_x, _centers_size);
+				resizeAllZero(_centers_r_y, _centers_size);
+				resizeAllZero(_centers_r_z, _centers_size);
+				resizeAllZero(_centers_f_x, _centers_size);
+				resizeAllZero(_centers_f_y, _centers_size);
+				resizeAllZero(_centers_f_z, _centers_size);
+				resizeAllZero(_centers_dist_lookup, _centers_size);
 			}
 		}
 
@@ -294,12 +285,11 @@ public:
 			resizeLastZero(_mol_dipoles_num,_mol_size, _mol_num);
 			resizeLastZero(_mol_quadrupoles_num,_mol_size, _mol_num);
 		}
-		memset(_ljc_id + _ljc_num, 0, (_ljc_size-_ljc_num) * sizeof(double));//set the remaining values to zero.
+		memset(_ljc_id + _ljc_num, 0, (_ljc_size-_ljc_num) * sizeof(size_t));//set the remaining values to zero.
 			//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
 			//The array size is however long enough to vectorize over the last few entries.
 			//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
 
-		resizeDistLookup();
 		initCenterPointers();
 	}
 };

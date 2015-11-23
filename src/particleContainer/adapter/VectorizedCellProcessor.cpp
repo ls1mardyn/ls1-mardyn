@@ -19,7 +19,7 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0), _centers_dist_lookup(128) {
+		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedCellProcessor: using no intrinsics." << std::endl;
@@ -135,7 +135,6 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 //	global_log->debug() << " _particleCellDataVector.size()=" << _particleCellDataVector.size() << " soaPtr=" << soaPtr
 //						<< " nCenters=" << nLJCenters + nCharges + nDipoles + nQuadrupoles << std::endl;
 	CellDataSoA & soa = *soaPtr;
-	soa.setDistLookup(_centers_dist_lookup);
 	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
 	c.setCellDataSoA(soaPtr);
 	_particleCellDataVector.pop_back();
@@ -1658,7 +1657,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec forceMask_vec = vcp_simd_set1(forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
-	memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(double));//set the remaining values to zero.
+	//memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(double));//set the remaining values to zero.
 	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
 	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 	return compute_molecule;
