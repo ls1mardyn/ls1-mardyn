@@ -175,19 +175,6 @@ int main(int argc, char** argv) {
 	}
 	global_log->info() << "Default output prefix: " << simulation.getOutputPrefix() << endl;
 
-#if ENABLE_MPI
-	if ( options.is_set("domain-decomposition") ) {
-		string domainDecomp((const char *) options.get("domain-decomposition"));
-		global_log->info() << "Setting domain decomposition via command line to " << domainDecomp << endl;
-		if ( domainDecomp == "KDDecomposition" ) {
-			DomainDecompBase *domainDecomp;
-			int updateFrequency = 100;
-			int fullSearchThreshold = 3;
-			domainDecomp = (DomainDecompBase*) new KDDecomposition(simulation.getcutoffRadius(), simulation.getDomain(), updateFrequency, fullSearchThreshold);
-			simulation.setDomainDecomposition(domainDecomp);
-		}
-	}
-#endif
 
 	simulation.prepare_start();
 
@@ -230,8 +217,6 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
 	char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
 	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
-	char const* const dd_choices[] = { "DomainDecomposition", "KDDecomposition" };
-	dgroup.add_option("--domain-decomposition").dest("domain-decomposition") .choices(&dd_choices[0], &dd_choices[2]) .set_default(dd_choices[0]) .help("domain decomposition strategy for MPI (default: %default)");
 	op.add_option_group(dgroup);
 
 	return op.parse_args(argc, argv);
