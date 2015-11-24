@@ -5,8 +5,8 @@
  *      Author: tchipevn
  */
 
-#ifndef DOMAINDECOMPBASEMPI_H_
-#define DOMAINDECOMPBASEMPI_H_
+#ifndef DOMAINDECOMPMPIBASE_H_
+#define DOMAINDECOMPMPIBASE_H_
 
 #include "DomainDecompBase.h"
 #include "parallel/CollectiveCommunication.h"
@@ -21,10 +21,10 @@
 #define LOWER  0
 #define HIGHER 1
 
-class DomainDecompBaseMPI: public DomainDecompBase {
+class DomainDecompMPIBase: public DomainDecompBase {
 public:
-	DomainDecompBaseMPI();
-	virtual ~DomainDecompBaseMPI();
+	DomainDecompMPIBase();
+	virtual ~DomainDecompMPIBase();
 
 	// documentation see father class (DomainDecompBase.h)
 	void barrier() { MPI_CHECK( MPI_Barrier(_comm) ); }
@@ -112,11 +112,7 @@ public:
 	//! to the lower neighbour.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
-
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
-
-	virtual void rebalance(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) = 0;
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType);
 
 protected:
 
@@ -135,4 +131,4 @@ private:
 	CollectiveCommunication _collCommunication;
 };
 
-#endif /* DOMAINDECOMPBASEMPI_H_ */
+#endif /* DOMAINDECOMPMPIBASE_H_ */

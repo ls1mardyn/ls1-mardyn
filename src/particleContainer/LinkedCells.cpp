@@ -12,6 +12,7 @@
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "utils/UnorderedVector.h"
 
 using namespace std;
 using Log::global_log;
@@ -364,80 +365,68 @@ unsigned long LinkedCells::getNumberOfParticles() {
 	return N;
 }
 
-Molecule* LinkedCells::begin() {
-	Molecule* ret = NULL;
-
-	_cellIterator = _cells.begin();
+MoleculeIterator LinkedCells::nextNonEmptyCell() {
+	MoleculeIterator ret = LinkedCells::end();
 
 	const std::vector<ParticleCell>::const_iterator cellsEnd = _cells.end();
 
-	while (_cellIterator != cellsEnd and _cellIterator->isEmpty()) {
+	do {
 		++_cellIterator;
-	}
+	} while(_cellIterator != cellsEnd and _cellIterator->isEmpty());
 
 	if (_cellIterator != cellsEnd) {
 		_particleIterator = _cellIterator->getParticlePointers().begin();
-
 		ret = *_particleIterator;
 	}
 
 	return ret;
 }
 
-Molecule* LinkedCells::next() {
-	Molecule* ret = NULL;
+MoleculeIterator LinkedCells::begin() {
+	MoleculeIterator ret = LinkedCells::end();
+
+	_cellIterator = _cells.begin();
+
+	if(_cellIterator->isEmpty()) {
+		ret = nextNonEmptyCell();
+	} else {
+		_particleIterator = _cellIterator->getParticlePointers().begin();
+		ret = *_particleIterator;
+	}
+
+	return ret;
+}
+
+MoleculeIterator LinkedCells::next() {
+	Molecule* ret = LinkedCells::end();
 
 	++_particleIterator;
 
 	if (_particleIterator != _cellIterator->getParticlePointers().end()) {
 		ret = *_particleIterator;
 	} else {
-		const std::vector<ParticleCell>::const_iterator cellsEnd = _cells.end();
-
-		do {
-			++_cellIterator;
-		} while (_cellIterator != cellsEnd and _cellIterator->isEmpty());
-
-		if (_cellIterator != cellsEnd) {
-			_particleIterator = _cellIterator->getParticlePointers().begin();
-
-			ret = *_particleIterator;
-		}
+		ret = nextNonEmptyCell();
 	}
 
 	return ret;
 }
 
-Molecule* LinkedCells::end() {
+MoleculeIterator LinkedCells::end() {
 	return NULL;
 }
 
-Molecule* LinkedCells::deleteCurrent() {
-	/*
-	 * if (this is not the last element of a cell's vector)
-	 * { we can swap this element with back() and pop_back(), sparing the costly vector erase() operation}
-	 * else {we need to fetch the next element for returning }
-	 */
-
+MoleculeIterator LinkedCells::deleteCurrent() {
 	delete *_particleIterator; // free storage for molecule
+	MoleculeIterator ret = LinkedCells::end();
+	std::vector<Molecule *> & v = _cellIterator->getParticlePointers();
 
-	std::vector<Molecule*> & cellParticles = _cellIterator->getParticlePointers();
-	Molecule* ret;
+	UnorderedVector::fastRemove(v, _particleIterator);
 
-	// determine whether current particle is the last one in its cell:
-	const bool isNotLast = ((_particleIterator + 1) != cellParticles.end());
-
-	if (isNotLast) {
-		*_particleIterator = cellParticles.back();
-		// for safety:
-		cellParticles.back() = NULL;
-
+	if(_particleIterator != v.end()) {
 		ret = *_particleIterator;
 	} else {
-		ret = this->next(); // both _particleIterator and _cellIterator might have changed!
+		ret = nextNonEmptyCell();
 	}
-
-	cellParticles.pop_back();
 
 	return ret;
 }
@@ -506,7 +495,7 @@ void LinkedCells::getHaloParticlesDirection(int direction, std::vector<Molecule*
 
 	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
 	unsigned dim = abs(direction) - 1;
-	if (direction > 0) {
+	if (direction < 0) {
 		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
 	} else {
 		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
@@ -535,7 +524,7 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, std::vector<Molec
 
 	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
 	unsigned dim = abs(direction) - 1;
-	if (direction > 0) {
+	if (direction < 0) {
 		startIndex[dim] = _haloWidthInNumCells[dim];
 		stopIndex[dim] = startIndex[dim] + (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
 	} else {
@@ -555,7 +544,7 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, std::vector<Molec
 	}
 }
 
-void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) {
+void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (getRegion) invalid, call update first" << endl;
 		exit(1);
@@ -577,9 +566,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vect
 		}
 		else {
 			// No Part of the given region is owned by this process
-			// --> chose some startIndex which is higher than the stopIndex
-			startIndex[dim] = 1;
-			stopIndex[dim] = 0;
+			return;
 		}
 	}
 
@@ -590,9 +577,20 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vect
 				globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				// loop over all subcells (either 1 or 8)
 				// traverse all molecules in the current cell
-				for (particleIter = _cells[globalCellIndex].getParticlePointers().begin(); particleIter != _cells[globalCellIndex].getParticlePointers().end(); particleIter++) {
+				ParticleCell & currentCell = _cells[globalCellIndex];
+
+				std::vector<Molecule *> & mols = currentCell.getParticlePointers();
+
+				for (particleIter = mols.begin(); particleIter != mols.end(); ) {
 					if ((*particleIter)->inBox(lowCorner, highCorner)) {
 						particlePtrs.push_back(*particleIter);
+						if (removeFromContainer) {
+							UnorderedVector::fastRemove(mols, particleIter);
+						} else {
+							++particleIter;
+						}
+					} else {
+						++particleIter;
 					}
 				}
 			}
@@ -609,6 +607,7 @@ void LinkedCells::initializeCells() {
 	_innerCellIndices.clear();
 	_boundaryCellIndices.clear();
 	_haloCellIndices.clear();
+
 	long int cellIndex;
 	double cellBoxMin[3], cellBoxMax[3];
 
@@ -651,6 +650,45 @@ void LinkedCells::initializeCells() {
 				else {
 					cell.assignCellToInnerRegion();
 					_innerCellIndices.push_back(cellIndex);
+				}
+			}
+		}
+	}
+
+	/*********************  Compute Border indices *********************/
+	for (int dim = 0; dim < 3; ++dim) {
+		for (int dir = 0; dir < 2; ++dir) {
+			for (int typ = 0; typ < 2; ++typ) {
+				_borderCellIndices[dim][dir][typ].clear();
+				int low[3] = {0, 0, 0};
+				int high[3] = {_cellsPerDimension[0]-1, _cellsPerDimension[1]-1, _cellsPerDimension[2]-1};
+
+				if (typ == 1) {
+					if (dir == 0)
+						low[dim]++;
+					else
+						high[dim]--;
+				}
+
+				if (dir == 0) 	high[dim] = low[dim];
+				else 			low[dim] = high[dim];
+
+				for (int iz = low[2]; iz <= high[2]; ++iz) {
+					for (int iy = low[1]; iy <= high[1]; ++iy) {
+						for (int ix = low[0]; ix <= high[0]; ++ix) {
+							cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+#ifndef NDEBUG
+							ParticleCell & cell = _cells[cellIndex];
+
+							assert(not cell.isInnerCell());
+
+							if(typ == 0) assert(cell.isHaloCell());
+							else ; /* assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
+#endif
+
+							_borderCellIndices[dim][dir][typ].push_back(cellIndex);
+						}
+					}
 				}
 			}
 		}

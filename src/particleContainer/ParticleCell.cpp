@@ -1,9 +1,11 @@
 #include "particleContainer/ParticleCell.h"
+#include "molecules/Molecule.h"
+#include "utils/UnorderedVector.h"
 
 #include <cassert>
 #include <vector>
 
-#include "molecules/Molecule.h"
+
 
 using namespace std;
 
@@ -67,11 +69,15 @@ bool ParticleCell::deleteMolecule(unsigned long molecule_id) {
 		Molecule *molecule = *molecule_iter;
 		if (molecule->id() == molecule_id) {
 			found = true;
-			_molecules.erase(molecule_iter);
+			UnorderedVector::fastRemove(_molecules, molecule_iter);
 			break;
 		}
 	}
 	return found;
+}
+
+void ParticleCell::fastRemoveMolecule(std::vector<Molecule *>::iterator& it) {
+	UnorderedVector::fastRemove(_molecules, it);
 }
 
 std::vector<Molecule*>& ParticleCell::filterLeavingMolecules() {

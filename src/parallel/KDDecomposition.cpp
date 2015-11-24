@@ -327,6 +327,12 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 //$ private Methoden, die von exchangeMolecule benvtigt werden $
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
+#if 0
+void KDDecomposition::rebalance(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+//	DomainDecompBaseMPI::;
+}
+#endif
+
 void KDDecomposition::getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, vector<int>& procIDs, vector<int>& numMolsToSend, vector<vector<Molecule*> >& particlesToSend) {
 	int haloCellIdxMin[3]; // Assuming a global 3D Cell index, haloCellIdxMin[3] gives the position
 	                       // of the low local domain corner within this global 3D cell index

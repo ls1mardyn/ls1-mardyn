@@ -32,6 +32,8 @@ class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;
 
+typedef Molecule* MoleculeIterator;
+
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
 //!
@@ -158,22 +160,22 @@ public:
 	double getBoundingBoxMax(int dimension) const;
 
 	//! @brief Returns a pointer to the first particle in the Container
-	virtual Molecule* begin() = 0;
+	virtual MoleculeIterator begin() = 0;
 
 	//! @brief Returns a pointer to the next particle in the Container
 	//!
 	//! The class internally has to store the Particle to which is currently pointed
 	//! With the call of next, this internal pointer is advanced to the next particle
 	//! and this new pointer is returned
-	virtual Molecule* next() = 0;
+	virtual MoleculeIterator next() = 0;
 
 	//! @brief Has to return the same as next() after it already pointed to the last particle
-	virtual Molecule* end() = 0;
+	virtual MoleculeIterator end() = 0;
 
 	//! @brief Delete all molecules in container
 	virtual void clear() = 0;
 
-	virtual Molecule* deleteCurrent() = 0;
+	virtual MoleculeIterator deleteCurrent() = 0;
 
     /* TODO can we combine this with the update method? */
 	//! @brief delete all Particles which are not within the bounding box
@@ -190,7 +192,8 @@ public:
 	//! @brief fills the given list with pointers to all particles in the given region
 	//! @param lowCorner minimum x-, y- and z-coordinate of the region
 	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
+	//! @param removeFromContainer if true, particles are erased, else - left in container
+	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false) = 0;
 
 	/**
 	 * @brief move particles from the halo layer in the respective direction into the current vector

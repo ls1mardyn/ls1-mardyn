@@ -69,6 +69,8 @@ public:
 
 	bool deleteMolecule(unsigned long molid);
 
+	void fastRemoveMolecule(std::vector<Molecule *>::iterator& it);
+
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;
 	

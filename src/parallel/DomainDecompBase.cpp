@@ -39,7 +39,7 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
-		double shift = copysign(shiftMagnitude, static_cast<double>(direction));
+		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 		const bool removeFromContainer = true;
 		moleculeContainer->getHaloParticlesDirection(direction, mols, removeFromContainer);
 
@@ -65,7 +65,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		moleculeContainer->getBoundaryParticlesDirection(direction, mols);
 
-		double shift = copysign(shiftMagnitude, static_cast<double>(direction));
+		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 		for (it = mols.begin(); it != mols.end(); ++it) {
 			Molecule m = Molecule(**it);
 			m.setr(dim, m.r(dim) + shift);

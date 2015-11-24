@@ -1,7 +1,7 @@
 #ifndef DOMAINDECOMPOSITION_H_
 #define DOMAINDECOMPOSITION_H_
 
-#include "parallel/DomainDecompBaseMPI.h"
+#include "DomainDecompMPIBase.h"
 
 
 /** @brief Basic domain decomposition based parallelisation, dividing the
@@ -17,11 +17,11 @@
  *
  * @cite Griebel-2007
  */
-class DomainDecomposition : public DomainDecompBaseMPI {
+class DomainDecomposition : public DomainDecompMPIBase {
 public:
 	//! @brief The constructor has to determine the own rank and the number of neighbours and
 	//!        sets up the topology
-	DomainDecomposition(double cutoffRadius, Domain * domain);
+	DomainDecomposition();
 
 	// documentation see father class (DomainDecompBase.h)
 	~DomainDecomposition();
@@ -37,8 +37,6 @@ public:
 	 */
 	void readXML(XMLfileUnits& xmlconfig);
 
-	void rebalance(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {}
-
 	// documentation see father class (DomainDecompBase.h)
 	bool procOwnsPos(double x, double y, double z, Domain* domain);
 
@@ -47,6 +45,8 @@ public:
 
 	// documentation see father class (DomainDecompBase.h)
 	double getBoundingBoxMax(int dimension, Domain* domain);
+
+	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -77,8 +77,10 @@ public:
 	//! @param domain e.g. needed to get the bounding boxes
 	void printDecomp(std::string filename, Domain* domain);
 
-private:
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
+
+private:
+	bool _neighboursInitialized;
 
 	//! Number of processes in each dimension (i.e. 2 for 8 processes)
 	int _gridSize[DIM];

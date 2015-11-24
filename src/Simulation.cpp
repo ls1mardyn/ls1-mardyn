@@ -174,7 +174,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
 		if(parallelisationtype == "DomainDecomposition") {
 	#ifdef ENABLE_MPI
-			_domainDecomposition = new DomainDecomposition(getcutoffRadius(), _domain);
+			DomainDecomposition * temp = 0;
+			temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+			if (temp != 0) {
+				temp->initCommunicationPartners(getcutoffRadius(), _domain);
+			}
 	#else
 		global_log->error() << "DomainDecomposition not available in sequential mode." << endl;
 	#endif
@@ -479,6 +483,16 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		exit(1);
 	}
 
+#ifdef ENABLE_MPI
+	// if we are using the DomainDecomposition, please complete its initialization:
+	{
+		DomainDecomposition * temp = 0;
+		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+		if (temp != 0) {
+			temp->initCommunicationPartners(_cutoffRadius, _domain);
+		}
+	}
+#endif
 
 	// read particle data
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
@@ -633,8 +647,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #else
 			inputfilestream >> token;
 			if (token == "DomainDecomposition") {
-				delete _domainDecomposition;
-				_domainDecomposition = (DomainDecompBase*) new DomainDecomposition(_cutoffRadius, _domain);
+				DomainDecomposition * temp = 0;
+				temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+				if (temp != 0) {
+					temp->initCommunicationPartners(_cutoffRadius, _domain);
+				}
 			}
 			else if(token == "KDDecomposition") {
 				delete _domainDecomposition;
@@ -1172,6 +1189,17 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		}
 	}
 
+#ifdef ENABLE_MPI
+	// if we are using the DomainDecomposition, please complete its initialization:
+	{
+		DomainDecomposition * temp = 0;
+		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+		if (temp != 0) {
+			temp->initCommunicationPartners(_cutoffRadius, _domain);
+		}
+	}
+#endif
+
 	// read particle data
 	maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain,
 			_domainDecomposition);
@@ -1702,13 +1730,13 @@ void Simulation::initialize() {
         _finalCheckpoint = true;
 
         // TODO:
-//#ifndef ENABLE_MPI
-//	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
-//	_domainDecomposition = new DomainDecompBase();
-//#else
-//	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
-//	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-//#endif
+#ifndef ENABLE_MPI
+	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
+	_domainDecomposition = new DomainDecompBase();
+#else
+	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
+	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+#endif
 	global_log->info() << "Initialization done" << endl;
 
 	/*

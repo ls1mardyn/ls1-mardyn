@@ -10,8 +10,7 @@
 using Log::global_log;
 using namespace std;
 
-DomainDecomposition::DomainDecomposition(double cutoffRadius, Domain * domain) : DomainDecompBaseMPI() {
-
+DomainDecomposition::DomainDecomposition() : DomainDecompMPIBase() {
 	int period[DIM]; // 1(true) when using periodic boundary conditions in the corresponding dimension
 	int reorder; // 1(true) if the ranking may be reordered by MPI_Cart_create
 
@@ -46,7 +45,7 @@ DomainDecomposition::DomainDecomposition(double cutoffRadius, Domain * domain) :
 		}
 	}
 
-	initCommunicationPartners(cutoffRadius, domain);
+	_neighboursInitialized = false;
 }
 
 DomainDecomposition::~DomainDecomposition() {
@@ -54,6 +53,11 @@ DomainDecomposition::~DomainDecomposition() {
 }
 
 void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+
+	if(_neighboursInitialized) {
+		return;
+	}
+	_neighboursInitialized = true;
 
 	// corners of the process-specific domain
 	double rmin[DIM]; // lower corner
@@ -67,11 +71,18 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 		// TODO: this should be safe, as long as molecules don't start flying around
 		// at the speed of one cutoffRadius per timestep
 		halo_L[d] = cutoffRadius;
+
+		_neighbours[d].clear();
 	}
 
 	int direction;
 
 	for (unsigned short d = 0; d < DIM; d++) {
+		if(_coversWholeDomain[d]) {
+			// nothing to do;
+			continue;
+		}
+
 		// set the ranks
 		int ranks[2];
 
@@ -103,12 +114,38 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 				regToSendLow[i] = rmin[i] - halo_L[i];
 				regToSendHigh[i] = rmax[i] + halo_L[i];
 			}
+
+			double haloLow[3];
+			double haloHigh[3];
+			double boundaryLow[3];
+			double boundaryHigh[3];
+
 			switch (direction) {
 			case LOWER:
 				regToSendHigh[d] = rmin[d] + halo_L[d];
+				for (int i = 0; i < DIM; ++i) {
+					haloLow[i] = regToSendLow[i];
+					if (i == d) {
+						haloHigh[i] = boundaryLow[i] = rmin[i];
+					} else {
+						haloHigh[i] = regToSendHigh[i];
+						boundaryLow[i] = regToSendLow[i];
+					}
+					boundaryHigh[i] = regToSendHigh[i];
+				}
 				break;
 			case HIGHER:
 				regToSendLow[d] = rmax[d] - halo_L[d];
+				for (int i = 0; i < DIM; ++i) {
+					boundaryLow[i] = regToSendLow[i];
+					if (i == d) {
+						boundaryHigh[i] = haloLow[i] = rmax[i];
+					} else {
+						boundaryHigh[i] = regToSendHigh[i];
+						haloLow[i] = regToSendLow[i];
+					}
+					haloHigh[i] = regToSendHigh[i];
+				}
 				break;
 			}
 
@@ -119,10 +156,26 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 			if (direction == HIGHER)
 				shift = offsetHigher[d];
 
+			int signedDirection;
+			if(direction == LOWER)
+				signedDirection = -(d+1);
+			if(direction == HIGHER)
+				signedDirection = d+1;
+
 			_neighbours[d].push_back(
-					CommunicationPartner(ranks[direction], regToSendLow, regToSendHigh, shift));
+					CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, signedDirection));
 		}
 	}
+}
+
+void DomainDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+#if 1
+	DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+
+#else
+	DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain, LEAVING_ONLY);
+	DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain, HALO_COPIES);
+#endif
 }
 
 void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {

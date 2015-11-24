@@ -123,7 +123,7 @@ public:
 	//! list, a iterator (_particleIter) for the list is used.
 	//! This method sets this iterator to point to the begin of the list
 	//! and return a pointer to the value pointed to by the iterator
-	Molecule* begin();
+	MoleculeIterator begin();
 
 	//! @brief returns a pointer to the next particle in the Linked Cells
 	//!
@@ -131,15 +131,15 @@ public:
 	//! to the value pointed to by the iterator is returned. If the
 	//! iterator points to the end of the list (which is one element after the last
 	//! element), NULL is returned
-	Molecule* next();
+	MoleculeIterator next();
 
 	//! @brief returns NULL
-	Molecule* end();
+	MoleculeIterator end();
 
 	void clear();
 
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-	Molecule* deleteCurrent();
+	MoleculeIterator deleteCurrent();
 
 	//! @brief delete all Particles which are not within the bounding box
 	void deleteOuterParticles();
@@ -152,7 +152,7 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
 	double getCutoff() {
 		return this->_cutoffRadius;

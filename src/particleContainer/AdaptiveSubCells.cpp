@@ -493,7 +493,7 @@ unsigned long AdaptiveSubCells::getNumberOfParticles() {
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::begin() {
+MoleculeIterator AdaptiveSubCells::begin() {
 	_particleIter = _particles.begin();
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
@@ -505,7 +505,7 @@ Molecule* AdaptiveSubCells::begin() {
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::next() {
+MoleculeIterator AdaptiveSubCells::next() {
 	_particleIter++;
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
@@ -517,13 +517,13 @@ Molecule* AdaptiveSubCells::next() {
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::end() {
+MoleculeIterator AdaptiveSubCells::end() {
 	return NULL;
 }
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::deleteCurrent() {
+MoleculeIterator AdaptiveSubCells::deleteCurrent() {
 	_particleIter = _particles.erase(_particleIter);
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
@@ -595,7 +595,7 @@ void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs) {
+void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs, bool removeFromContainer) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in AdaptiveSubCells (getRegion) invalid, call update first" << endl;
 		exit(1);
@@ -633,6 +633,9 @@ void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vect
 					for (particleIter = _subCells[sCIdx].getParticlePointers().begin(); particleIter != _subCells[sCIdx].getParticlePointers().end(); particleIter++) {
 						if ((*particleIter)->r(0) >= lowCorner[0] && (*particleIter)->r(0) < highCorner[0] && (*particleIter)->r(1) >= lowCorner[1] && (*particleIter)->r(1) < highCorner[1] && (*particleIter)->r(2) >= lowCorner[2] && (*particleIter)->r(2) < highCorner[2]) {
 							particlePtrs.push_back(*particleIter);
+							if (removeFromContainer) {
+								deleteMolecule((*particleIter)->id(), (*particleIter)->r(0), (*particleIter)->r(1), (*particleIter)->r(2));
+							}
 						}
 					}
 				}

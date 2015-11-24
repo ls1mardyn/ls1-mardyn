@@ -5,27 +5,28 @@
  *      Author: tchipevn
  */
 
-#include "DomainDecompBaseMPI.h"
+#include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
 
 using Log::global_log;
 
-DomainDecompBaseMPI::DomainDecompBaseMPI() : _comm(MPI_COMM_WORLD) {
+DomainDecompMPIBase::DomainDecompMPIBase() : _comm(MPI_COMM_WORLD) {
 	// TODO Auto-generated constructor stub
 
 	// Initialize MPI Dataype for the particle exchange once at the beginning.
 	ParticleData::setMPIType(_mpiParticleType);
 }
 
-DomainDecompBaseMPI::~DomainDecompBaseMPI() {
+DomainDecompMPIBase::~DomainDecompMPIBase() {
 	MPI_Type_free(&_mpiParticleType);
 
-	// MPI_COMM_WORLD doesn't need to be freed
+	// MPI_COMM_WORLD doesn't need to be freed, so
 	// if a derived class does something with the communicator
 	// then the derived class should also free it
 }
 
-unsigned DomainDecompBaseMPI::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
+unsigned DomainDecompMPIBase::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {
 	unsigned* moldistribution = new unsigned[_numProcs];
 	MPI_CHECK( MPI_Allgather(&localN, 1, MPI_UNSIGNED, moldistribution, 1, MPI_UNSIGNED, _comm) );
 	unsigned globalN = 0;
@@ -42,7 +43,7 @@ unsigned DomainDecompBaseMPI::Ndistribution(unsigned localN, float* minrnd, floa
 	return globalN;
 }
 
-void DomainDecompBaseMPI::assertIntIdentity(int IX) {
+void DomainDecompMPIBase::assertIntIdentity(int IX) {
 	if (_rank)
 		MPI_CHECK( MPI_Send(&IX, 1, MPI_INT, 0, 2 * _rank + 17, _comm) );
 	else {
@@ -59,7 +60,7 @@ void DomainDecompBaseMPI::assertIntIdentity(int IX) {
 	}
 }
 
-void DomainDecompBaseMPI::assertDisjunctivity(TMoleculeContainer* mm) {
+void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) {
 	using std::map;
 	using std::endl;
 
@@ -108,26 +109,44 @@ void DomainDecompBaseMPI::assertDisjunctivity(TMoleculeContainer* mm) {
 	}
 }
 
-void DomainDecompBaseMPI::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
+void DomainDecompMPIBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType) {
 	using std::vector;
+
+	global_log->set_mpi_output_all();
 
 	for (unsigned short d = 0; d < DIM; d++) {
 		if (_coversWholeDomain[d]) {
 			// use the sequential version
-			DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-			DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+
+			switch(msgType) {
+			case LEAVING_AND_HALO_COPIES:
+				DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
+				DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+				break;
+			case LEAVING_ONLY:
+				DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
+				break;
+			case HALO_COPIES:
+				DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+				break;
+			}
 			continue;
 		}
 
 		const int numNeighbours = _neighbours[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
-			_neighbours[d][i].initCommunication(d, moleculeContainer, _comm, _mpiParticleType);
+			global_log->debug() << "Rank " << _rank << "is initiating communication to" ;
+			_neighbours[d][i].initCommunication(d, moleculeContainer, _comm, _mpiParticleType, msgType);
 		}
 
 		// the following implements a non-blocking recv scheme, which overlaps unpacking of
 		// messages with waiting for other messages to arrive
 		bool allDone = false;
+		double startTime = MPI_Wtime();
+
+		double waitCounter = 1.0;
+		double deadlockTimeOut = 5.0;
 
 		while (not allDone) {
 			allDone = true;
@@ -147,14 +166,33 @@ void DomainDecompBaseMPI::exchangeMolecules(ParticleContainer* moleculeContainer
 				allDone &= _neighbours[d][i].testRecv(moleculeContainer);
 			}
 
-			// TODO: we can catch deadlocks here due to dying MPI processes (or bugs)
+			// catch deadlocks
+			double waitingTime = MPI_Wtime() - startTime;
+			if (waitingTime > waitCounter) {
+				global_log->warning() << "Deadlock warning: Rank " << _rank
+						<< " is waiting for more than " << waitCounter
+						<< " seconds" << std::endl;
+				waitCounter += 1.0;
+				for (int i = 0; i < numNeighbours; ++i) {
+					_neighbours[d][i].deadlockDiagnostic();
+				}
+			}
+
+			if (waitingTime > deadlockTimeOut) {
+				global_log->warning() << "Deadlock error: Rank " << _rank
+						<< " is waiting for more than " << deadlockTimeOut
+						<< " seconds" << std::endl;
+				for (int i = 0; i < numNeighbours; ++i) {
+					_neighbours[d][i].deadlockDiagnostic();
+				}
+				MPI_Abort(_comm,1);
+				exit(1);
+			}
+
 
 		} // while not allDone
 	} // for d
-}
 
-void DomainDecompBaseMPI::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
-	rebalance(forceRebalancing, moleculeContainer, domain);
-	exchangeMolecules(moleculeContainer, domain);
+	global_log->set_mpi_output_root(0);
 }
 

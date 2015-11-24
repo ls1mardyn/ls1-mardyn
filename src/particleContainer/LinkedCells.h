@@ -35,6 +35,9 @@
 //! - inner
 
 class LinkedCells : public ParticleContainer {
+
+	friend class LinkedCellsTest;
+
 public:
 	//! @brief initialize the Linked Cell datastructure
 	//!
@@ -140,7 +143,7 @@ public:
 	//! list, a iterator (_particleIter) for the list is used.
 	//! This method sets this iterator to point to the begin of the list
 	//! and return a pointer to the value pointed to by the iterator
-	Molecule* begin();
+	MoleculeIterator begin();
 
 	//! @brief returns a pointer to the next particle in the Linked Cells
 	//!
@@ -148,17 +151,17 @@ public:
 	//! to the value pointed to by the iterator is returned. If the
 	//! iterator points to the end of the list (which is one element after the last
 	//! element), NULL is returned
-	Molecule* next();
+	MoleculeIterator next();
 
 	//! @brief returns NULL
-	Molecule* end();
-
-	// @todo: where is this function called?
-	void clear();
+	MoleculeIterator end();
 
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
 	// i.e. use as follows: for(it = LC.begin(); it != LC.end();) {if(erase) {it = deleteCurrent();} else {it = LC.next()}}
-	Molecule* deleteCurrent();
+	MoleculeIterator deleteCurrent();
+
+	// @todo: where is this function called?
+	void clear();
 
 	//! @brief delete all Particles which are not within the bounding box
 	void deleteOuterParticles();
@@ -176,7 +179,7 @@ public:
 
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
@@ -290,7 +293,11 @@ private:
 	 */
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
-
+	/**
+	 * advance _cellIterator, until a non-empty cell is found,
+	 * set _particleIterator and return the corresponding Molecule* value
+	 */
+	MoleculeIterator nextNonEmptyCell();
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
@@ -310,6 +317,7 @@ private:
 	std::vector<unsigned long> _innerCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
+	std::vector<unsigned long> _borderCellIndices[3][2][2];
 
 	std::vector<long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
 	std::vector<long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell

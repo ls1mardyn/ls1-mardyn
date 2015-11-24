@@ -8,7 +8,7 @@
 
 #define KDDIM 3
 
-#include "DomainDecompBaseMPI.h"
+#include "DomainDecompMPIBase.h"
 #include "parallel/CollectiveCommunication.h"
 
 class ParticleData;
@@ -31,7 +31,7 @@ class KDNode;
  *
  * \note Some computation of the deviation / expected deviation is done in KDNode.
  */
-class KDDecomposition: public DomainDecompBaseMPI {
+class KDDecomposition: public DomainDecompMPIBase {
 
 	friend class KDDecompositionTest;
 
@@ -73,38 +73,22 @@ class KDDecomposition: public DomainDecompBaseMPI {
 	//### The following methods are those of the  ###
 	//### base class which have to be implemented ###
 	//###############################################
+	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
-	void rebalance(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {}
+#if 0
+	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 
-	//! @brief exchange molecules between processes
-	//!
-	//! molecules which aren't in the domain of their process any
-	//! more are transferred to their neighbours. Additionally, the
-	//! molecules for the halo-region are transferred.
-	//! In this implementation, the methods used for load-balancing and those
-	//! for just exchanging particles without rebalancing are quite similar.
-	//! Therefore, this method just calls balanceAndExchange(0,...), where
-	//! the "0" says that only exchanging and no balancing has to be done.
-	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
-
-	//! @brief balance the load (and optimise communication) and exchange boundary particles
-	//!
-	//! The workflow is as follows (some steps only if balancing shall be done):
-	//! - if balance: _numParticlesPerCell is updated to be able to calculate the load of the cells
-	//! - if balance: A new decomposition tree is calculated (using recDecomp) based on the particle distribution
-	//! - if balance: find out neighbours
-	//! - collect pointers to particles to be send to all neighbours
-	//! - communicate with each neighbour how many particles will be sent and recieved
-	//! - copy data to be sent into buffers
-	//! - if balance: rebuild the molecule container (new size and region), replace the old decomposition tree
-	//! - transfer data and insert the recieved molecules into the moleculeContainer
-	//! - for processes which span the whole domain in at least one direction, ensure periodic boundary
-	//! @param balance if true, a rebalancing should be performed, otherwise only exchange
-	//! @param moleculeContainer needed for calculating load and to get the particles
-	//! @param domain is e.g. needed to get the size of the local domain
-	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
+		const bool rebalance = forceRebalancing or (_steps % _frequency == 0 or _steps <= 1);
+		_steps++;
+		if(not rebalance) {
+			DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain);
+		} else {
+			DomainDecompMPIBase::exchangeProcessLeavingMolecules(moleculeContainer, domain);
+			rebalance();
+			DomainDecompMPIBase::exchangeHaloCopies(moleculeContainer, domain);
+		}
+	}
+#endif
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain);
@@ -135,6 +119,9 @@ class KDDecomposition: public DomainDecompBaseMPI {
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
 
  private:
+	// TODO: remove
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	//$ Methoden, die von balanceAndExchange benoetigt werden $
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$

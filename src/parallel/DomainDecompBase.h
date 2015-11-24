@@ -177,9 +177,9 @@ public:
 	virtual void collCommBroadcast(int root = 0);
 
 protected:
-	virtual void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
+	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
 
-	virtual void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
+	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
 
 	//! the id of the current process
 	int _rank;

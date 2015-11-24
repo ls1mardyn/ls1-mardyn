@@ -19,6 +19,8 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testUpdateAndDeleteOuterParticles);
 	TEST_METHOD(testUpdateAndDeleteOuterParticlesH2O);
 	TEST_METHOD(testUpdateAndDeleteOuterParticles8Particles);
+	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
+//	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
 	TEST_SUITE_END();
 
 public:
@@ -51,6 +53,8 @@ public:
 	void testUpdateAndDeleteOuterParticlesFilename(const char * filename, double cutoff);
 	void testUpdateAndDeleteOuterParticlesH2O();
 	void testUpdateAndDeleteOuterParticles8Particles();
+	void testMoleculeBeginNextEndDeleteCurrent();
+//	void testGetHaloBoundaryParticlesDirection();
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

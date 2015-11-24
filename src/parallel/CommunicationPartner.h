@@ -8,135 +8,51 @@
 #ifndef COMMUNICATIONPARTNER_H_
 #define COMMUNICATIONPARTNER_H_
 
-#include "particleContainer/ParticleContainer.h"
-
+#include "parallel/ParticleData.h"
 #include "mpi.h"
+#include <vector>
+
+typedef enum {
+	LEAVING_AND_HALO_COPIES = 0, 	/** send process-leaving particles and halo-copies together in one message */
+	HALO_COPIES = 1, 				/** send halo-copies only */
+	LEAVING_ONLY = 2 				/** send process-leaving particles only */
+} MessageType;
+
+class ParticleContainer;
 
 /**
  * (Bi-Directional) MPI Communication Partner.
  */
 class CommunicationPartner {
 public:
-	CommunicationPartner(int r, double lo[3], double hi[3], double sh) {
-		_rank = r;
+	CommunicationPartner(int r, double hLo[3], double hHi[3], double bLo[3], double bHi[3], double sh, int signDir);
 
-		for(int d = 0; d < 3; ++d) {
-			_regionLow[d] = lo[d];
-			_regionHigh[d] = hi[d];
-		}
+	CommunicationPartner(const CommunicationPartner& o);
 
-		_shift = sh;
+	// TODO: no operator= implemented!
 
-		// some values, to silence the warnings:
-		_sendRequest = new MPI_Request;
-		_recvRequest = new MPI_Request;
-		_sendStatus = new MPI_Status;
-		_recvStatus = new MPI_Status;
-		_msgSent = _countReceived = _msgReceived = false;
-	}
-
-	CommunicationPartner(const CommunicationPartner& o) {
-		_rank = o._rank;
-
-		for(int d = 0; d < 3; ++d) {
-			_regionLow[d] = o._regionLow[d];
-			_regionHigh[d] = o._regionHigh[d];
-		}
-
-		_shift = o._shift;
-
-		// some values, to silence the warnings:
-		_sendRequest = new MPI_Request;
-		_recvRequest = new MPI_Request;
-		_sendStatus = new MPI_Status;
-		_recvStatus = new MPI_Status;
-		_msgSent = _countReceived = _msgReceived = false;
-	}
-
-	~CommunicationPartner() {
-		delete _sendRequest;
-		delete _recvRequest;
-		delete _sendStatus;
-		delete _recvStatus;
-	}
+	~CommunicationPartner();
 
 	void initCommunication(unsigned short d,
 			ParticleContainer* moleculeContainer, const MPI_Comm& comm,
-			const MPI_Datatype& type) {
-		using std::vector;
-		vector<Molecule*> particles;
-		moleculeContainer->getRegion(_regionLow, _regionHigh, particles);
+			const MPI_Datatype& type, MessageType msgType);
 
-		const int n = particles.size();
+	bool testSend();
 
-		// initialize send buffer
-		_sendBuf.resize(n);
+	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-		for (int i = 0; i < n; ++i) {
-			ParticleData::MoleculeToParticleData(_sendBuf[i], *(particles[i]));
-			// add offsets for particles transfered over the periodic boundary
-			_sendBuf[i].r[d] += _shift;
-		}
+	bool testRecv(ParticleContainer* moleculeContainer);
 
-		MPI_CHECK(
-				MPI_Isend(&(_sendBuf[0]), (int) _sendBuf.size(), type, _rank,
-						99, comm, _sendRequest));
-		_msgSent = _countReceived = _msgReceived = false;
-	}
-
-	bool testSend() {
-		if (not _msgSent) {
-			int flag = 0;
-			MPI_CHECK(MPI_Test(_sendRequest, &flag, _sendStatus));
-			if (flag == 1) {
-				_msgSent = true;
-				_sendBuf.clear();
-			}
-		}
-		return _msgSent;
-	}
-
-	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type) {
-		if (not _countReceived) {
-			int flag = 0;
-			MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
-			if (flag == 1) {
-				_countReceived = true;
-				int numrecv;
-				MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
-				_recvBuf.resize(numrecv);
-				MPI_CHECK(
-						MPI_Irecv(&(_recvBuf[0]), numrecv, type, _rank, 99,
-								comm, _recvRequest));
-			}
-
-		}
-		return _countReceived;
-	}
-
-	bool testRecv(ParticleContainer* moleculeContainer) {
-		if (_countReceived and not _msgReceived) {
-			int flag = 0;
-			MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
-			if (flag == 1) {
-				_msgReceived = true;
-				int numrecv = _recvBuf.size();
-
-				for (int i = 0; i < numrecv; i++) {
-					Molecule *m;
-					ParticleData::ParticleDataToMolecule(_recvBuf[i], &m);
-					moleculeContainer->addParticlePointer(m);
-				}
-				_recvBuf.clear();
-			}
-		}
-		return _msgReceived;
-	}
+	void deadlockDiagnostic();
 
 private:
 	int _rank;
 	double _regionLow[3], _regionHigh[3];
+	double _haloLow[3], _haloHigh[3];
+	double _boundaryLow[3], _boundaryHigh[3];
+
 	double _shift; //! for periodic boundaries
+	int _signedDirection;
 
 	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
