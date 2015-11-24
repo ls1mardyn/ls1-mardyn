@@ -423,7 +423,7 @@ private:
 		{
 			const vcp_double_vec zero = vcp_simd_zerov();
 
-			const vcp_double_vec t1 = vcp_simd_and(m_dx< zero, m_dy == zero);
+			const vcp_double_vec t1 = vcp_simd_and(m_dx < zero, m_dy == zero);
 
 			const vcp_double_vec t2 = vcp_simd_or(t1, m_dy < zero);
 

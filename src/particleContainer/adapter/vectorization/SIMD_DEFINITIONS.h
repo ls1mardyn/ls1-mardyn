@@ -12,9 +12,12 @@
 #ifndef  SIMD_DEFINITIONS_H
 #define  SIMD_DEFINITIONS_H
 
+
 #ifdef IN_IDE_PARSER //just for the ide parser include the simd_types.h -- normally this is not done.
     #include "./SIMD_TYPES.h"
 #endif
+
+#include "math.h"
 
 /*
  * Check whether the file SIMD_TYPES.hpp has been included.
@@ -24,8 +27,34 @@
     #error "SIMD_DEFINITIONS included without SIMD_TYPES! Never include this file directly! Include it only via SIMD_TYPES!"
 #endif /* defined SIMD_TYPES_H */
 
+#if VCP_VEC_TYPE==VCP_NOVEC
+	static inline vcp_double_vec vcp_simd_zerov() { return 0.; }
+	static inline vcp_double_vec vcp_simd_ones() { return 1.; }
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return a < b;}
+	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return a == b;}
+	static inline vcp_double_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b) {return a != b;}
+	static inline vcp_double_vec vcp_simd_and(const vcp_double_vec& a, const vcp_double_vec& b) {return a && b;}
+	static inline vcp_double_vec vcp_simd_or(const vcp_double_vec& a, const vcp_double_vec& b) {return a || b;}
+	static inline vcp_double_vec vcp_simd_xor(const vcp_double_vec& a, const vcp_double_vec& b) {return (a || b) && (not (a && b));}
+
+	static inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return a + b;}
+	static inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return a - b;}
+	static inline vcp_double_vec vcp_simd_mul(const vcp_double_vec& a, const vcp_double_vec& b) {return a * b;}
+	static inline vcp_double_vec vcp_simd_div(const vcp_double_vec& a, const vcp_double_vec& b) {return a / b;}
+	static inline vcp_double_vec vcp_simd_sqrt(const vcp_double_vec& a) {return sqrt(a);}
+
+	static inline vcp_double_vec vcp_simd_set1(const double& a) {return a;}
+
+	static inline vcp_double_vec vcp_simd_load(const double* const a) {return *a;}
+	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return *a;}
+	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {*location = a;}
+	//static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpacklo_pd(a,b);}
+	//static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpackhi_pd(a,b);}
+
+	//static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm_movemask_pd(a);}
+
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm_setzero_pd(); }
 	static inline vcp_double_vec vcp_simd_ones() { return _mm_castsi128_pd( _mm_set_epi32(~0, ~0, ~0, ~0) ); }
 
@@ -46,7 +75,7 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm_load_pd(a);}
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm_loaddup_pd(a);}
-	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {return _mm_store_pd(location, a);}
+	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {_mm_store_pd(location, a);}
 	static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpacklo_pd(a,b);}
 	static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpackhi_pd(a,b);}
 
@@ -73,7 +102,7 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm256_load_pd(a);}
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm256_broadcast_sd(a);}
-	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {return _mm256_store_pd(location, a);}
+	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {_mm256_store_pd(location, a);}
 	static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpacklo_pd(a,b);}
 	static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}
 
