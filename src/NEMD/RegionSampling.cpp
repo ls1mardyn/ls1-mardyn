@@ -1868,6 +1868,22 @@ void SampleRegion::UpdateSlabParameters()
     // update VDF sampling parameters
     // _nNumShellsVDF = round(dWidth / _dShellWidthVDFInit); <-- number of slabs cannot increase, otherwise data structures have to be reallocated
     _dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
+
+
+    // recalculate shell midpoint positions
+    double* dLowerCorner = this->GetLowerCorner();
+
+    // profiles
+    for(unsigned int s = 0; s < _nNumShellsProfiles; s++)
+    {
+        _dShellMidpointsProfiles[s] = (s + 0.5) * _dShellWidthProfiles + dLowerCorner[1];
+    }
+
+    // VDF
+    for(unsigned int s = 0; s < _nNumShellsVDF; s++)
+    {
+        _dShellMidpointsVDF[s] = (s + 0.5) * _dShellWidthVDF + dLowerCorner[1];
+    }
 }
 
 
