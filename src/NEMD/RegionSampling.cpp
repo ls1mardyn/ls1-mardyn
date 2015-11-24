@@ -978,19 +978,28 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
         }
     }
 
+    // average drift velocity and mean force have to be divided by number of sampled particles
+    double dInvertDOF_py, dInvertDOF_ny;
+
     for(unsigned int c = 0; c < nNumComponents; ++c)
     {
         for(unsigned int d = 0; d < 3; ++d)
         {
             for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
             {
+            	// number of sampled particles
+                dInvertDOF_py = (double) (_nNumMoleculesCompGlobal_py[c][s]);
+                dInvertDOF_ny = (double) (_nNumMoleculesCompGlobal_ny[c][s]);
+                dInvertDOF_py = 1. / dInvertDOF_py;
+                dInvertDOF_ny = 1. / dInvertDOF_ny;
+
                 // [component][vx,vy,vz][position]
-                _dVelocityCompGlobal_py[c][d][s] *= dInvertNumSamples;
-                _dVelocityCompGlobal_ny[c][d][s] *= dInvertNumSamples;
+                _dVelocityCompGlobal_py[c][d][s] *= dInvertDOF_py;
+                _dVelocityCompGlobal_ny[c][d][s] *= dInvertDOF_ny;
 
                 // [component][fx,fy,fz][position]
-                _dForceCompGlobal_py[c][d][s] *= dInvertNumSamples;
-                _dForceCompGlobal_ny[c][d][s] *= dInvertNumSamples;
+                _dForceCompGlobal_py[c][d][s] *= dInvertDOF_py;
+                _dForceCompGlobal_ny[c][d][s] *= dInvertDOF_ny;
             }
         }
     }
