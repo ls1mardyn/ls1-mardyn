@@ -1557,17 +1557,33 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 }
 #endif
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+#if VCP_VEC_TYPE==VCP_NOVEC
+/**
+ * sums up values in a and adds the result to *mem_addr
+ */
+inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
+	(*mem_addr) += a; //there is just one value of a, so no second sum needed.
+}
 
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
+/**
+ * sums up values in a and adds the result to *mem_addr
+ */
 inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 	_mm_store_sd(
 			mem_addr,
-			_mm_add_sd(_mm_hadd_pd(a, a),
-			_mm_load_sd(mem_addr)));
+			_mm_add_sd(
+				_mm_hadd_pd(a, a),
+				_mm_load_sd(mem_addr)
+			)
+	);
 }
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
+/**
+ * sums up values in a and adds the result to *mem_addr
+ */
 inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 	const vcp_double_vec a_t1 = _mm256_permute2f128_pd(a, a, 0x1);
 	const vcp_double_vec a_t2 = _mm256_hadd_pd(a, a_t1);
@@ -1579,7 +1595,6 @@ inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) 
 				a_t3,
 				vcp_simd_maskload(mem_addr, memoryMask_first)
 			)
-
 	);
 }
 
@@ -1611,8 +1626,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		const signed long forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? (~0l) : 0l;
-		compute_molecule |= forceMask;
 		*(soa2_center_dist_lookup + j) = forceMask;
+		compute_molecule |= forceMask;
+
 	}
 
 	return compute_molecule;
@@ -1657,9 +1673,6 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec forceMask_vec = vcp_simd_set1(forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
-	//memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(double));//set the remaining values to zero.
-	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
-	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 	return compute_molecule;
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
@@ -1697,7 +1710,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		signed long forceMask_l;
 			// DetectSingleCell() = false for SingleCellDistinctPolicy and CellPairPolicy, true for SingleCellPolicy
 			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
-			//however only one of the branches should be chosen by the compiler, since the class is known at compile time.
+			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
 		if (ForcePolicy::DetectSingleCell()) {
 			forceMask_l = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j > i_center_idx) ? ~0l : 0l;
 		} else {
@@ -1712,10 +1725,6 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec forceMask_vec = vcp_simd_set1(forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
 	}
-
-	//memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) & (~VCP_VEC_SIZE_M1)) * sizeof(double));//set the remaining values to zero.
-	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
-	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 	return compute_molecule;
 
 #endif
