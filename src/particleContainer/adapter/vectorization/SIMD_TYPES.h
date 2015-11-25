@@ -53,13 +53,15 @@
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	typedef double vcp_double_vec;
+	typedef unsigned long vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 1u
 	#define VCP_VEC_SIZE_M1 0u
 
-	typedef long long vcp_mask_vec;
+	typedef unsigned long vcp_mask_vec;
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 	typedef __m128d vcp_double_vec;
+	typedef vcp_double_vec vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 2u
 	#define VCP_VEC_SIZE_M1 1u
 
@@ -67,6 +69,7 @@
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 	typedef __m256d vcp_double_vec;
+	typedef vcp_double_vec vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 4u
 	#define VCP_VEC_SIZE_M1 3u
 

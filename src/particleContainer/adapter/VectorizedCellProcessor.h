@@ -195,7 +195,10 @@ private:
 	 */
 	template<class MacroPolicy>
 		void _loopBodyNovecQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask);
-#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX
+
+
+
+#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_NOVEC
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
@@ -208,7 +211,7 @@ private:
 			const vcp_double_vec& forceMask,
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
 			const vcp_double_vec& shift6);
-#endif /* _loopBodyLJ SSE3 */
+#endif
 
 	/**
 	 * \brief The dist lookup for a molecule and all centers of a type
@@ -222,9 +225,7 @@ private:
 #endif
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
-	#if VCP_VEC_TYPE!=VCP_VEC_NOVEC
 			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
-	#endif
 			);
 
 
@@ -287,7 +288,7 @@ private:
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
 			static vcp_double_vec ones = vcp_simd_ones();
-			vcp_double_vec result = vcp_simd_and( vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() ), j_mask);
+			vcp_double_vec result = vcp_simd_applymask( vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() ), j_mask);
 			j_mask = ones;
 			return result;
 		}
@@ -306,6 +307,11 @@ private:
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			return vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() );
+		}
+#elif VCP_VEC_TYPE==VCP_NOVEC
+		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
+		{
+			return m_r2 < rc2;
 		}
 #endif /* definition of InitJ_Mask & GetForceMask */
 	}; /* end of class SingleCellPolicy_ */
@@ -333,7 +339,7 @@ private:
 			return false;
 		}
 
-#if VCP_VEC_TYPE!=VCP_NOVEC
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
 			#if VCP_VEC_TYPE==VCP_VEC_AVX
 				, vcp_double_vec& sj_mask
@@ -373,7 +379,7 @@ private:
 			return true;
 		}
 
-#if VCP_VEC_TYPE!=VCP_NOVEC
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
 			// We want all macroscopic values to be calculated, but not those
@@ -416,7 +422,7 @@ private:
 			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
 		}
 
-#if VCP_VEC_TYPE!=VCP_NOVEC
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
 		// Only calculate macroscopic values for pairs where molecule 1
 		// "IsLessThan" molecule 2.
 		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
@@ -431,12 +437,12 @@ private:
 
 			const vcp_double_vec t4 = vcp_simd_or(t3 , m_dz < zero);
 
-			return vcp_simd_and(t4, forceMask);
+			return vcp_simd_applymask(t4, forceMask);
 		}
 
 		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
-			return vcp_simd_and(vcp_simd_xor(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched), forceMask);
+			return vcp_simd_applymask(vcp_simd_xor(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched), forceMask);
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class SomeMacroPolicy_ */

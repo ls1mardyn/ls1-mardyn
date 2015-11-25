@@ -37,6 +37,7 @@
 	static inline vcp_double_vec vcp_simd_and(const vcp_double_vec& a, const vcp_double_vec& b) {return a && b;}
 	static inline vcp_double_vec vcp_simd_or(const vcp_double_vec& a, const vcp_double_vec& b) {return a || b;}
 	static inline vcp_double_vec vcp_simd_xor(const vcp_double_vec& a, const vcp_double_vec& b) {return (a || b) && (not (a && b));}
+	static inline vcp_double_vec vcp_simd_applymask(const vcp_double_vec& a, const vcp_double_vec& mask) {return mask?a:0l;}
 
 	static inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return a + b;}
 	static inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return a - b;}
@@ -52,7 +53,8 @@
 	//static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpacklo_pd(a,b);}
 	//static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpackhi_pd(a,b);}
 
-	//static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm_movemask_pd(a);}
+	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return a?1:0;}
+	static inline int vcp_simd_movemask(const vcp_doublesizedmask_vec& a) {return a?1:0;}
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm_setzero_pd(); }
@@ -64,6 +66,7 @@
 	static inline vcp_double_vec vcp_simd_and(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_and_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_or(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_or_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_xor(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_xor_pd(a, b);}
+	static inline vcp_double_vec vcp_simd_applymask(const vcp_double_vec& a, const vcp_double_vec& mask) {return vcp_simd_and(a, mask);}
 
 	static inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_add_pd(a,b);}
 	static inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_sub_pd(a,b);}
@@ -91,6 +94,7 @@
 	static inline vcp_double_vec vcp_simd_and(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_and_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_or(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_or_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_xor(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_xor_pd(a, b);}
+	static inline vcp_double_vec vcp_simd_applymask(const vcp_double_vec& a, const vcp_double_vec& mask) {return vcp_simd_and(a, mask);}
 
 	static inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_add_pd(a,b);}
 	static inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_sub_pd(a,b);}

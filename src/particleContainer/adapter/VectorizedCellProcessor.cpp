@@ -840,7 +840,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 	}
 }
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_NOVEC
 	//const vcp_double_vec minus_one = vcp_simd_set1(-1.0); //currently not used, would produce warning
 	const vcp_double_vec zero = vcp_simd_zerov();
 	const vcp_double_vec one = vcp_simd_set1(1.0);
@@ -877,7 +877,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 
 		const vcp_double_vec c_dr2 = vcp_simd_add(vcp_simd_add(c_dx2, c_dy2), c_dz2);
 		const vcp_double_vec c_dr2_inv_unmasked = vcp_simd_div(one, c_dr2);
-		const vcp_double_vec c_dr2_inv = vcp_simd_and(c_dr2_inv_unmasked, forceMask);//masked
+		const vcp_double_vec c_dr2_inv = vcp_simd_applymask(c_dr2_inv_unmasked, forceMask);//masked
 	    const vcp_double_vec c_dr_inv = vcp_simd_sqrt(c_dr2_inv);//masked
 
 		const vcp_double_vec q1q2per4pie0 = vcp_simd_mul(qii, qjj);
@@ -895,7 +895,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 		// Check if we have to add the macroscopic values up for at least one of this pairs
 		if (vcp_simd_movemask(macroMask) > 0) {
-			const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -903,7 +903,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_and(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 
 		}
@@ -934,7 +934,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec dr2 = vcp_simd_add(vcp_simd_add(dx2, dy2), dz2);
 
 		const vcp_double_vec dr2_inv_unmasked = vcp_simd_div(one, dr2);
-		const vcp_double_vec dr2_inv = vcp_simd_and(dr2_inv_unmasked, forceMask);
+		const vcp_double_vec dr2_inv = vcp_simd_applymask(dr2_inv_unmasked, forceMask);
 		const vcp_double_vec dr_inv = vcp_simd_sqrt(dr2_inv);
 		const vcp_double_vec dr3_inv = vcp_simd_mul(dr2_inv, dr_inv);
 
@@ -958,7 +958,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		if (vcp_simd_movemask(macroMask) > 0)
 		{
 			const vcp_double_vec minusUpot_unmasked =  vcp_simd_mul(qpper4pie0dr3, re);
-			const vcp_double_vec minusUpot = vcp_simd_and(minusUpot_unmasked, macroMask);
+			const vcp_double_vec minusUpot = vcp_simd_applymask(minusUpot_unmasked, macroMask);
 			sum_upotXpoles = vcp_simd_sub(sum_upotXpoles, minusUpot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -966,7 +966,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial_unmasked = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial = vcp_simd_and(virial_unmasked, macroMask);
+			const vcp_double_vec virial = vcp_simd_applymask(virial_unmasked, macroMask);
 			sum_virial = vcp_simd_add(sum_virial, virial);
 		}
 
@@ -1014,11 +1014,11 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec dr2 = vcp_simd_add(vcp_simd_add(dx2, dy2), dz2);
 
 		const vcp_double_vec dr2_inv_unmasked = vcp_simd_div(one, dr2);
-		const vcp_double_vec dr2_inv = vcp_simd_and(dr2_inv_unmasked, forceMask);
+		const vcp_double_vec dr2_inv = vcp_simd_applymask(dr2_inv_unmasked, forceMask);
 		const vcp_double_vec dr_inv = vcp_simd_sqrt(dr2_inv);
 		const vcp_double_vec dr2three_inv = vcp_simd_mul(three, dr2_inv);
 
-		const vcp_double_vec p1p2 = vcp_simd_and(forceMask, vcp_simd_mul(pii, pjj));
+		const vcp_double_vec p1p2 = vcp_simd_applymask(vcp_simd_mul(pii, pjj), forceMask);
 		const vcp_double_vec p1p2per4pie0 = p1p2;
 		const vcp_double_vec rffac = vcp_simd_mul(p1p2, epsRFInvrc3);
 
@@ -1049,7 +1049,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		if (vcp_simd_movemask(macroMask) > 0) {
 			// can we precompute some of this?
 			const vcp_double_vec upot = vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(e1e2, vcp_simd_mul(three, re1re2perr2)));
-			const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -1057,10 +1057,10 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_and(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 
-			const vcp_double_vec myRF_masked =  vcp_simd_and(macroMask, vcp_simd_mul(rffac, e1e2));
+			const vcp_double_vec myRF_masked =  vcp_simd_applymask(vcp_simd_mul(rffac, e1e2), macroMask);
 			sum_myRF = vcp_simd_add(sum_myRF, myRF_masked);
 		}
 
@@ -1109,7 +1109,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec c_dr2 = vcp_simd_add(vcp_simd_add(c_dx2, c_dy2), c_dz2);
 
 		const vcp_double_vec invdr2_unmasked = vcp_simd_div(one, c_dr2);
-		const vcp_double_vec invdr2 = vcp_simd_and(invdr2_unmasked, forceMask);
+		const vcp_double_vec invdr2 = vcp_simd_applymask(invdr2_unmasked, forceMask);
 		const vcp_double_vec invdr = vcp_simd_sqrt(invdr2);
 
 		const vcp_double_vec qQ05per4pie0 = vcp_simd_mul(_05, vcp_simd_mul(q, m));
@@ -1147,7 +1147,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		if (vcp_simd_movemask(macroMask) > 0) {
 			// do we have to mask "upot"? It should already have been masked by "qQinv4dr3" which
 			// itself is masked by "invdr2".
-			const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -1155,7 +1155,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_and(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 		}
 
@@ -1199,7 +1199,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec c_dr2 = vcp_simd_add(vcp_simd_add(c_dx2, c_dy2), c_dz2);
 
 		const vcp_double_vec invdr2_unmasked = vcp_simd_div(one, c_dr2);
-		const vcp_double_vec invdr2 = vcp_simd_and(invdr2_unmasked, forceMask);
+		const vcp_double_vec invdr2 = vcp_simd_applymask(invdr2_unmasked, forceMask);
 		const vcp_double_vec invdr = vcp_simd_sqrt(invdr2);
 
 		const vcp_double_vec myqfac = vcp_simd_mul(vcp_simd_mul(_1pt5, vcp_simd_mul(p, m)), vcp_simd_mul(invdr2, invdr2));
@@ -1277,7 +1277,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		if (vcp_simd_movemask(macroMask) > 0) {
 			// do we have to mask "upot"? It should already have been masked by "myqfac" which
 			// itself is masked by "invdr2".
-			const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -1285,7 +1285,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_and(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 		}
 
@@ -1351,7 +1351,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		const vcp_double_vec c_dr2 = vcp_simd_add(vcp_simd_add(c_dx2, c_dy2), c_dz2);
 
 		const vcp_double_vec invdr2_unmasked = vcp_simd_div(one, c_dr2);
-		const vcp_double_vec invdr2 = vcp_simd_and(invdr2_unmasked, forceMask);
+		const vcp_double_vec invdr2 = vcp_simd_applymask(invdr2_unmasked, forceMask);
 		const vcp_double_vec invdr = vcp_simd_sqrt(invdr2);
 
 		vcp_double_vec qfac = vcp_simd_mul(_075, invdr);
@@ -1442,7 +1442,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 		// Check if we have to add the macroscopic values up for at least one of this pairs
 		if (vcp_simd_movemask(macroMask) > 0) {
 			// do we have to mask "upot"? It should already have been masked by "qfac" ...
-			const vcp_double_vec upot_masked = vcp_simd_and(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -1450,7 +1450,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_and(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 		}
 
@@ -1487,7 +1487,7 @@ void VectorizedCellProcessor :: _loopBodyNovecQuadrupoles (const CellDataSoA& so
 	}
 #endif
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_NOVEC
 
 template<class MacroPolicy>
 inline
@@ -1512,7 +1512,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 	const vcp_double_vec c_dxdx_dydy = vcp_simd_add(c_dxdx, c_dydy);
 	const vcp_double_vec c_r2 = vcp_simd_add(c_dxdx_dydy, c_dzdz);
 	const vcp_double_vec r2_inv_unmasked = vcp_simd_div(one, c_r2);
-	const vcp_double_vec r2_inv = vcp_simd_and(r2_inv_unmasked, forceMask);
+	const vcp_double_vec r2_inv = vcp_simd_applymask(r2_inv_unmasked, forceMask);
 
 
 	const vcp_double_vec lj2 = vcp_simd_mul(sig2, r2_inv);
@@ -1540,7 +1540,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 
 		const vcp_double_vec upot = vcp_simd_mul(eps_24, lj12m6);
 		const vcp_double_vec upot_sh = vcp_simd_add(shift6, upot);
-		const vcp_double_vec upot_masked = vcp_simd_and(upot_sh, macroMask);
+		const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, macroMask);
 
 		sum_upot6lj = vcp_simd_add(sum_upot6lj, upot_masked);
 
@@ -1550,7 +1550,7 @@ void VectorizedCellProcessor :: _loopBodyLJ(
 
 		const vcp_double_vec vir_xy = vcp_simd_add(vir_x, vir_y);
 		const vcp_double_vec virial = vcp_simd_add(vir_xy, vir_z);
-		const vcp_double_vec vir_masked = vcp_simd_and(virial, macroMask);
+		const vcp_double_vec vir_masked = vcp_simd_applymask(virial, macroMask);
 
 		sum_virial = vcp_simd_add(sum_virial, vir_masked);
 	}
@@ -1603,16 +1603,10 @@ inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) 
 
 
 template<class ForcePolicy>
-#if VCP_VEC_TYPE==VCP_NOVEC
-	unsigned long
-#else
-	vcp_double_vec
-#endif
+vcp_doublesizedmask_vec
 inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 		double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
-#if VCP_VEC_TYPE!=VCP_NOVEC
 		, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
-#endif
 		) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
@@ -1625,7 +1619,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
-		const signed long forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? (~0l) : 0l;
+		const unsigned long forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? (~0l) : 0l;
 		*(soa2_center_dist_lookup + j) = forceMask;
 		compute_molecule |= forceMask;
 
@@ -1664,7 +1658,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		// can we do this nicer?
-		const signed long forceMask_l = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
+		const unsigned long forceMask_l = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
 		// this casting via void* is required for gcc
 		const void* forceMask_tmp = reinterpret_cast<const void*>(&forceMask_l);
 		double forceMask = *reinterpret_cast<double const* /*const*/>(forceMask_tmp);
@@ -1707,7 +1701,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		// can we do this nicer?
-		signed long forceMask_l;
+		unsigned long forceMask_l;
 			// DetectSingleCell() = false for SingleCellDistinctPolicy and CellPairPolicy, true for SingleCellPolicy
 			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
 			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
@@ -1732,7 +1726,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 template<class ForcePolicy, class MacroPolicy>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
-#if VCP_VEC_TYPE==VCP_NOVEC
+#if VCP_VEC_TYPE==VCP_NOVEC-1
 	// For the unvectorized version, we only have to iterate over all pairs of
 	// LJ centers and apply the unvectorized loop body.
 	size_t i_ljc_idx = 0;
@@ -2041,16 +2035,16 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
 
 		// Iterate over centers of second cell
-		const vcp_double_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
+		const vcp_doublesizedmask_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
 				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
-		const vcp_double_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
+		const vcp_doublesizedmask_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
-		const vcp_double_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(soa1, i, i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
+		const vcp_doublesizedmask_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(soa1, i, i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
 				soa2_dipoles_dist_lookup, soa2_dipoles_m_r_x, soa2_dipoles_m_r_y, soa2_dipoles_m_r_z,
 				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z);
-		const vcp_double_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
+		const vcp_doublesizedmask_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
 
