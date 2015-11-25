@@ -77,6 +77,7 @@ public:
 		if (!_p)
 			throw std::bad_alloc();
 		_n = n;
+		//std::memset(_p,0,sizeof(T)*_n);
 	}
 
 	inline size_t get_size() const {
@@ -99,7 +100,9 @@ private:
 		memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
 		return ptr;
 #else
-		return static_cast<T*>(memalign(alignment, sizeof(T) * elements));
+		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
+		//std::memset(ptr, 0, sizeof(T) * elements);
+		return ptr;
 #endif
 	}
 
