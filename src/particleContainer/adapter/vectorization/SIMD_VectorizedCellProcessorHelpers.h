@@ -15,6 +15,13 @@
 #include "utils/AlignedArray.h"
 typedef AlignedArray<double> DoubleArray;
 
+/**
+ * unpacks eps_24 and sig2 from the eps_sigI array according to the index array id_j (for mic+avx2: use gather)
+ * @param eps_24 vector in which eps_24 is saved
+ * @param sig2 vector in which sig2 is saved
+ * @param eps_sigI initial eps_sig array
+ * @param id_j array of displacements
+ */
 static inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j){
@@ -45,6 +52,12 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 #endif
 }
 
+/**
+ * unpacks shift6 and saves it in an vcp_double_vec (for mic+avx2: use gather)
+ * @param shift6 place to store it
+ * @param shift6I initial array
+ * @param id_j array of displacements
+ */
 static inline __attribute__((always_inline))
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		const size_t* const id_j){

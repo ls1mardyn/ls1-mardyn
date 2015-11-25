@@ -1305,9 +1305,12 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	const vcp_double_vec epsRFInvrc3 = vcp_simd_broadcast(&_epsRFInvrc3);
 
 	/*
-	 *  "var" & (~VCP_VEC_SIZE_M1):
-	 *  Making sure that result is a multiple of VCP_VEC_SIZE. If "var" can not be divided by VCP_VEC_SIZE
-	 *  the result is: the next smaller multiple of VCP_VEC_SIZE.
+	 *  Here different end values for the loops are defined. For loops, which do not vectorize over the last (possibly "uneven") amount of indices, the normal values are computed. These mark the end of the vectorized part.
+	 *  The longloop values mark the end of the vectorized part, if vectorization is performed for all elements. For these, various conditions have to be fulfilled, to be sure, that no NaN values are stored and no segfaults arise:
+	 *  * arrays have to be long enough
+	 *  * arrays have to be filled with something
+	 *  * _ljc_id has to be set to existing values for each index
+	 *  All of these conditions are fulfilled by setting the non existing values within CellDataSoA.h and AlignedArray.h to zero.
 	 */
 	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2._ljc_num);
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._ljc_num);//this is ceil _ljc_num, VCP_VEC_SIZE
