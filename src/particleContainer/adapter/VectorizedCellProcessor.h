@@ -148,7 +148,6 @@ private:
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
@@ -161,6 +160,95 @@ private:
 			const vcp_double_vec& forceMask,
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
 			const vcp_double_vec& shift6);
+
+	template<class MacroPolicy>
+	inline void _loopBodyCharge(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& qii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& qjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask);
+
+	template<class MacroPolicy>
+	inline void _loopBodyChargeDipole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
+		const vcp_double_vec& p,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+
+	template<class MacroPolicy>
+	inline void _loopBodyDipole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& pii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& pjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
+		const vcp_double_vec& forceMask,
+		const vcp_double_vec& epsRFInvrc3);
+
+	template<class MacroPolicy>
+	inline void _loopBodyChargeQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+
+	template<class MacroPolicy>
+	inline void _loopBodyDipoleQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& p,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+
+	template<class MacroPolicy>
+	inline void _loopBodyQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& mii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& mjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
+		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask);
 
 
 	/**
@@ -227,7 +315,7 @@ private:
 
 		inline static size_t InitJ (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
-			return (i+1) & ~static_cast<size_t>(VCP_VEC_SIZE_M1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
+			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX

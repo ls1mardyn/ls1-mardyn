@@ -132,7 +132,11 @@
 	#endif
 #endif
 
+template<class T>
+static inline T vcp_ceil_to_vec_size(const T& num){return (num + static_cast<T>(VCP_VEC_SIZE_M1)) & (~static_cast<T>(VCP_VEC_SIZE_M1));};
 
+template<class T>
+static inline T vcp_floor_to_vec_size(const T& num){return num & (~static_cast<T>(VCP_VEC_SIZE_M1));};
 
 
 

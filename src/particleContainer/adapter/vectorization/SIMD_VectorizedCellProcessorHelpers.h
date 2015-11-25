@@ -76,7 +76,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 /**
  * sums up values in a and adds the result to *mem_addr
  */
-inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
+static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 #if VCP_VEC_TYPE==VCP_NOVEC
 	(*mem_addr) += a; //there is just one value of a, so no second sum needed.
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
@@ -103,11 +103,27 @@ inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) 
 #endif
 }
 
+/**
+ * loads vector from memory location, adds the value to it and saves the combined result.
+ * @param addr memory address where value should be loaded from and stored to
+ * @param value value that should be added
+ */
+static inline void vcp_simd_load_add_store(double * const addr, const vcp_double_vec& value){
+	vcp_double_vec sum = vcp_simd_load(addr);
+	sum = vcp_simd_add(sum, value);
+	vcp_simd_store(addr, sum);
+}
 
-
-
-
-
+/**
+ * loads vector from memory location, subtracts the value from it and saves the combined result.
+ * @param addr memory address where value should be loaded from and stored to
+ * @param value value that should be subtracted
+ */
+static inline void vcp_simd_load_sub_store(double * const addr, const vcp_double_vec& value){
+	vcp_double_vec sum = vcp_simd_load(addr);
+	sum = vcp_simd_sub(sum, value);
+	vcp_simd_store(addr, sum);
+}
 
 
 
