@@ -148,57 +148,7 @@ private:
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between LJ centers.
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecLJ(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
 
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between charges.
-	 * \author Robert Hajda
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecCharges(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
-
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between charges and dipoles.
-	 * \author Robert Hajda
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecChargesDipoles(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask, const bool& switched);
-
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between dipoles.
-	 * \author Robert Hajda
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecDipoles(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
-
-	/**
-	 * \brief Inner loop body of the non-vectorized force calculation between charges and quadrupoles.
-	 * \author Uwe Ehmann
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecChargesQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask, const bool& switched);
-
-	/**
-	 * \brief Inner loop body of the non-vectorized force calculation between dipoles and quadrupoles.
-	 * \author Uwe Ehmann
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecDipolesQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask, const bool& switched);
-
-	/**
-	 * \brief Inner loop body of the non-vectorized force calculation between quadrupoles.
-	 * \author Uwe Ehmann
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask);
-
-
-
-#if VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_NOVEC
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
@@ -211,18 +161,14 @@ private:
 			const vcp_double_vec& forceMask,
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
 			const vcp_double_vec& shift6);
-#endif
+
 
 	/**
 	 * \brief The dist lookup for a molecule and all centers of a type
 	 * \author Robert Hajda
 	 */
 	template<class ForcePolicy>
-#if VCP_VEC_TYPE==VCP_NOVEC
-	unsigned long
-#else
-	vcp_double_vec
-#endif
+	vcp_doublesizedmask_vec
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
 			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
