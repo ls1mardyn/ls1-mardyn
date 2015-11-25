@@ -73,6 +73,35 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 
 
 
+/**
+ * sums up values in a and adds the result to *mem_addr
+ */
+inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
+#if VCP_VEC_TYPE==VCP_NOVEC
+	(*mem_addr) += a; //there is just one value of a, so no second sum needed.
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3
+	_mm_store_sd(
+		mem_addr,
+		_mm_add_sd(
+			_mm_hadd_pd(a, a),
+			_mm_load_sd(mem_addr)
+		)
+	);
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
+	const vcp_double_vec a_t1 = _mm256_permute2f128_pd(a, a, 0x1);
+	const vcp_double_vec a_t2 = _mm256_hadd_pd(a, a_t1);
+	const vcp_double_vec a_t3 = _mm256_hadd_pd(a_t2, a_t2);
+	_mm256_maskstore_pd(
+		mem_addr,
+		memoryMask_first,
+		vcp_simd_add(
+			a_t3,
+			vcp_simd_maskload(mem_addr, memoryMask_first)
+		)
+	);
+#endif
+}
 
 
 
