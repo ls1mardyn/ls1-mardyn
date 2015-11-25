@@ -21,8 +21,8 @@ class ParticleCell;
 class LegacyCellProcessor : public CellProcessor {
 
 private:
-	const double _cutoffRadiusSquare;
-	const double _LJCutoffRadiusSquare;
+	//const double _cutoffRadiusSquare;
+	//const double _LJCutoffRadiusSquare;
 	const double _tersoffCutoffRadiusSquare;
 	ParticlePairsHandler* const _particlePairsHandler;
 

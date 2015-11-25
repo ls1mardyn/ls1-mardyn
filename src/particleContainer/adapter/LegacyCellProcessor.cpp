@@ -17,7 +17,7 @@ using namespace Log;
 
 LegacyCellProcessor::LegacyCellProcessor(const double cutoffRadius, const double LJCutoffRadius,
 		const double tersoffCutoffRadius, ParticlePairsHandler* particlePairsHandler)
-: _cutoffRadiusSquare(cutoffRadius * cutoffRadius), _LJCutoffRadiusSquare(LJCutoffRadius * LJCutoffRadius),
+: CellProcessor(cutoffRadius, LJCutoffRadius),
   _tersoffCutoffRadiusSquare(tersoffCutoffRadius*tersoffCutoffRadius), _particlePairsHandler(particlePairsHandler){
 	  /** @todo Check for multiple tersoff potentials with different parameters as the LegacyCellProcessor::postprocessCell() does only use one parameter set. */
 	  global_log->warning() << "Note: The LegacyCellProcessor does not support multiple Tersoff sites with different parameters." << endl;
@@ -83,7 +83,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 	std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
 	int neighbourParticleCount = neighbourCellParticles.size();
 
-	if (cell1.isInnerCell()) {
+	if (cell1.isInnerCell()) {//no cell is halo
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
 			Molecule& molecule1 = *currentCellParticles[i];
@@ -104,7 +104,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 	} // inner cell
 
 
-	if (cell1.isHaloCell()) {
+	if (cell1.isHaloCell()) {//both cells are halo
 		assert(cell2.isHaloCell());
 		for (int i = 0; i < currentParticleCount; i++) {
 			Molecule& molecule1 = *currentCellParticles[i];
@@ -125,7 +125,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 	} // isHaloCell
 
 
-	if (cell1.isBoundaryCell()) {
+	if (cell1.isBoundaryCell()) {//first cell is boundary
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
 			Molecule& molecule1 = *currentCellParticles[i];
@@ -137,7 +137,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
 					PairType pairType = MOLECULE_MOLECULE;
-					if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {
+					if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//TODO: boundary <-> halo: macroscopic boundary condition
 						/* Do not sum up values twice. */
 						pairType = MOLECULE_HALOMOLECULE;
 					}
@@ -148,7 +148,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 				}
 			}
 		}
-	} // if ( isBoundaryCell() )
+	} // isBoundaryCell
 }
 
 void LegacyCellProcessor::processCell(ParticleCell& cell) {

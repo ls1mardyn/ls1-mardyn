@@ -50,6 +50,9 @@
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
 
+#include "particleContainer/adapter/VectorizationTuner.h"
+
+
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -692,6 +695,11 @@ void Simulation::prepare_start() {
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
+
+	//FlopCounter flopCounter2 = FlopCounter(_cutoffRadius, _LJCutoffRadius);
+
+	//VectorizationTuner VT;
+	//VT.tune(*(global_simulation->getEnsemble()->components()), *_cellProcessor , flopCounter2);
 }
 
 void Simulation::simulate() {

@@ -68,12 +68,12 @@ public:
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
-	void resize(size_t n) {
+	void resize(size_t n, size_t num_non_zero=0) {
 		if (n == _n)
 			return;
 		_free();
 		_p = 0;
-		_p = _allocate(n);
+		_p = _allocate(n, num_non_zero);
 		if (!_p)
 			throw std::bad_alloc();
 		_n = n;
@@ -94,10 +94,10 @@ private:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
-	static T* _allocate(size_t elements) {
+	static T* _allocate(size_t elements, size_t num_non_zero=0) {
 #if defined(__SSE3__) && ! defined(__PGI)
-		T* ptr=static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
-		//std::memset(ptr, 0, sizeof(T) * elements);
+		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
 		return ptr;
 #else
 		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));

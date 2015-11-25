@@ -7,45 +7,14 @@
 #ifndef VECTORIZEDCELLPROCESSOR_H_
 #define VECTORIZEDCELLPROCESSOR_H_
 
+
 #include "CellProcessor.h"
 #include "utils/AlignedArray.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
-
-// The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX)
-	#error conflicting macro definitions
-#endif
-
-#define VCP_NOVEC 0
-#define VCP_VEC_SSE3 1
-#define VCP_VEC_AVX 2
-
-#if defined(__AVX__) && not defined(AVX128)
-	#define VCP_VEC_TYPE VCP_VEC_AVX
-#elif defined(__AVX__) && defined(AVX128)
-	#define VCP_VEC_TYPE VCP_VEC_SSE3
-#elif defined(__SSE3__)
-	#define VCP_VEC_TYPE VCP_VEC_SSE3
-#else
-	#define VCP_VEC_TYPE VCP_NOVEC
-#endif
-
-#ifdef NOVEC
-	#ifdef VCP_VEC_TYPE
-		#warn Multiple vectorization methods specified. Will not use vectorization at all!
-		#undef VCP_VEC_TYPE
-	#endif
-	#define VCP_VEC_TYPE VCP_NOVEC
-#endif
-
-// Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX
-	#include "immintrin.h"
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	#include "pmmintrin.h"
-#endif
+#include "vectorization/SIMD_TYPES.h"
+#include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 
 
 class Component;
@@ -114,12 +83,12 @@ private:
 	/**
 	 * \brief The squared cutoff radius.
 	 */
-	const double _cutoffRadiusSquare;
+	//const double _cutoffRadiusSquare;
 
 	/**
 	 * \brief The squared LJ cutoff radius.
 	 */
-	const double _LJcutoffRadiusSquare;
+	//const double _LJcutoffRadiusSquare;
 
 	/**
 	 * \brief Parameter for the reaction field method (see description in Domain.h and Comp2Param.cpp).
@@ -175,95 +144,122 @@ private:
 	 */
 	double _myRF;
 
-	// lookup array for the distance molecule-molecule on a molecule-center basis.
-	DoubleArray _centers_dist_lookup;
-
 	// vector holding pointers to the above objects, used as a stack for
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between LJ centers.
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecLJ(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
-
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between charges.
-	 * \author Robert Hajda
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecCharges(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
-
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between charges and dipoles.
-	 * \author Robert Hajda
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecChargesDipoles(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask, const bool& switched);
-
-	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation between dipoles.
-	 * \author Robert Hajda
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecDipoles(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
-
-	/**
-	 * \brief Inner loop body of the non-vectorized force calculation between charges and quadrupoles.
-	 * \author Uwe Ehmann
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecChargesQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask, const bool& switched);
-
-	/**
-	 * \brief Inner loop body of the non-vectorized force calculation between dipoles and quadrupoles.
-	 * \author Uwe Ehmann
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecDipolesQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask, const bool& switched);
-
-	/**
-	 * \brief Inner loop body of the non-vectorized force calculation between quadrupoles.
-	 * \author Uwe Ehmann
-	 */
-	template<class MacroPolicy>
-		void _loopBodyNovecQuadrupoles (const CellDataSoA& soa1, size_t i, const CellDataSoA& soa2, size_t j, const double *const forceMask);
-
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
 	template<class MacroPolicy>
 	inline
 	void _loopBodyLJ(
-			const __m128d& m1_r_x, const __m128d& m1_r_y, const __m128d& m1_r_z,
-			const __m128d& r1_x, const __m128d& r1_y, const __m128d& r1_z,
-			const __m128d& m2_r_x, const __m128d& m2_r_y, const __m128d& m2_r_z,
-			const __m128d& r2_x, const __m128d& r2_y, const __m128d& r2_z,
-			__m128d& f_x, __m128d& f_y, __m128d& f_z,
-			__m128d& sum_upot6lj, __m128d& sum_virial,
-			const __m128d& forceMask,
-			const __m128d& e1s1, const __m128d& e2s2,
-			const size_t& id_j0, const size_t& id_j1, const size_t& id_i);
-#endif /* _loopBodyLJ SSE3 */
+			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
+			const vcp_double_vec& forceMask,
+			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
+			const vcp_double_vec& shift6);
+
+	template<class MacroPolicy>
+	inline void _loopBodyCharge(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& qii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& qjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask);
+
+	template<class MacroPolicy>
+	inline void _loopBodyChargeDipole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
+		const vcp_double_vec& p,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+
+	template<class MacroPolicy>
+	inline void _loopBodyDipole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& pii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& pjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
+		const vcp_double_vec& forceMask,
+		const vcp_double_vec& epsRFInvrc3);
+
+	template<class MacroPolicy>
+	inline void _loopBodyChargeQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+
+	template<class MacroPolicy>
+	inline void _loopBodyDipoleQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& p,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+
+	template<class MacroPolicy>
+	inline void _loopBodyQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& mii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& mjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
+		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_double_vec& forceMask);
+
 
 	/**
 	 * \brief The dist lookup for a molecule and all centers of a type
 	 * \author Robert Hajda
 	 */
 	template<class ForcePolicy>
-#if VCP_VEC_TYPE==VCP_NOVEC
-	unsigned long
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	__m128d
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
-	__m256d
-#endif
+	vcp_doublesizedmask_vec
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
-	#if VCP_VEC_TYPE==VCP_VEC_SSE3
-			, const __m128d & cutoffRadiusSquareD, size_t end_j, const __m128d m1_r_x, const __m128d m1_r_y, const __m128d m1_r_z
-	#elif VCP_VEC_TYPE==VCP_VEC_AVX
-			, const __m256d & cutoffRadiusSquareD, size_t end_j, const __m256d m1_r_x, const __m256d m1_r_y, const __m256d m1_r_z
-	#endif
+			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 			);
 
 
@@ -283,7 +279,7 @@ private:
 	 * Returns whether to calculate the force for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static __m128d GetMask(__m128d m_r2, __m128d rc2);<br>
+	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The MacroPolicy class must provide the following methods:<br>
@@ -291,7 +287,7 @@ private:
 	 * Returns whether to store macroscopic values for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz);
+	 * static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz);
 	 * <br> Returns the mask indicating for which pairs to store macroscopic values in<br>
 	 * the vectorized code.
 	 *
@@ -317,48 +313,41 @@ private:
 			return true;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
+		inline static size_t InitJ (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
-			static __m256d ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
-			__m256d result = _mm256_and_pd(
-									_mm256_and_pd(
-											_mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS),
-											_mm256_cmp_pd(m_r2, _mm256_setzero_pd(), _CMP_NEQ_OS)),
-									j_mask);
+			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
+		}
+
+#if VCP_VEC_TYPE==VCP_VEC_AVX
+		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
+		{
+			static vcp_double_vec ones = vcp_simd_ones();
+			vcp_double_vec result = vcp_simd_applymask( vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() ), j_mask);
 			j_mask = ones;
 			return result;
 		}
-		inline static size_t InitJ (const size_t i)
+
+		inline static vcp_double_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
-			return (i+1) & ~static_cast<size_t>(3);
-		}
-		inline static __m256d InitJ_Mask (const size_t i)
-		{
-			switch (i & static_cast<size_t>(3)) {
-				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0));
-				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,0, 0, 0, 0));
-				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0));
-				default: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)); 
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0));
+				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0));
+				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0));
+				default: return vcp_simd_ones();
 			}
 		}
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static size_t InitJ (const size_t i)
-		{
-			return i + (i & static_cast<size_t>(1));
-		}
-
 		// Erstellen der Bitmaske, analog zu Condition oben
-		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
+		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return _mm_and_pd(_mm_cmplt_pd(m_r2, rc2), _mm_cmpneq_pd(m_r2, _mm_setzero_pd()));
+			return vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() );
 		}
-#else
-		inline static size_t InitJ (const size_t i)
+#elif VCP_VEC_TYPE==VCP_NOVEC
+		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return i + 1;
+			return m_r2 < rc2;
 		}
-#endif /* definition of InitJ & GetForceMask */
+#endif /* definition of InitJ_Mask & GetForceMask */
 	}; /* end of class SingleCellPolicy_ */
 
 	/**
@@ -384,22 +373,25 @@ private:
 			return false;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
-		{
-			return _mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS);
-		}
-		inline static __m256d InitJ_Mask (const size_t i)
-		{
-			return _mm256_setzero_pd();
-		}
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
+		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
+			#if VCP_VEC_TYPE==VCP_VEC_AVX
+				, vcp_double_vec& sj_mask
+			#endif
+				)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return _mm_cmplt_pd(m_r2, rc2);
+			return m_r2 < rc2;
 		}
+
+
+	#if VCP_VEC_TYPE==VCP_VEC_AVX
+		inline static vcp_double_vec InitJ_Mask (const size_t i)
+		{
+			return vcp_simd_zerov(); //TODO: initj check avx <-> sse3
+		}
+	#endif
 #endif /* definition of GetForceMask */
 	}; /* end of class CellPairPolicy_ */
 
@@ -421,25 +413,15 @@ private:
 			return true;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
-		inline static __m128d GetMacroMask(__m128d forceMask, __m128d, __m128d, __m128d)
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
+		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
 			// We want all macroscopic values to be calculated, but not those
 			// for pairs which we ignore because of cutoff or other reasons.
 			return forceMask;
 		}
 
-		inline static __m128d GetMacroMaskSwitched(__m128d forceMask, __m128d, __m128d, __m128d, __m128d)
-		{
-			return forceMask;
-		}
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&)
-		{
-			return forceMask;
-		}
-
-		inline static __m256d GetMacroMaskSwitched(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&, const __m256d&)
+		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
 			return forceMask;
 		}
@@ -474,57 +456,27 @@ private:
 			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_SSE3
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
 		// Only calculate macroscopic values for pairs where molecule 1
 		// "IsLessThan" molecule 2.
-		inline static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz)
+		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
 		{
-			const __m128d zero = _mm_setzero_pd();
+			const vcp_double_vec zero = vcp_simd_zerov();
 
-			const __m128d x_lt = _mm_cmplt_pd(m_dx, zero);
-			const __m128d y_eq = _mm_cmpeq_pd(m_dy, zero);
-			const __m128d t1 = _mm_and_pd(y_eq, x_lt);
+			const vcp_double_vec t1 = vcp_simd_and(m_dx < zero, m_dy == zero);
 
-			const __m128d y_lt = _mm_cmplt_pd(m_dy, zero);
-			const __m128d t2 = _mm_or_pd(y_lt, t1);
+			const vcp_double_vec t2 = vcp_simd_or(t1, m_dy < zero);
 
-			const __m128d z_eq = _mm_cmpeq_pd(m_dz, zero);
-			const __m128d t3 = _mm_and_pd(z_eq, t2);
+			const vcp_double_vec t3 = vcp_simd_and(t2, vcp_simd_eq(m_dz, zero));
 
-			const __m128d z_lt = _mm_cmplt_pd(m_dz, zero);
-			const __m128d t4 = _mm_or_pd(z_lt, t3);
+			const vcp_double_vec t4 = vcp_simd_or(t3 , m_dz < zero);
 
-			return _mm_and_pd(forceMask, t4);
+			return vcp_simd_applymask(t4, forceMask);
 		}
 
-		inline static __m128d GetMacroMaskSwitched(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz, __m128d switched)
+		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
-			return _mm_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
-		}
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
-		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz)
-		{
-			const __m256d zero = _mm256_setzero_pd();
-
-			const __m256d x_lt = _mm256_cmp_pd(m_dx, zero, _CMP_LT_OS);
-			const __m256d y_eq = _mm256_cmp_pd(m_dy, zero, _CMP_EQ_OS);
-			const __m256d t1 = _mm256_and_pd(x_lt, y_eq);
-
-			const __m256d y_lt = _mm256_cmp_pd(m_dy, zero, _CMP_LT_OS);
-			const __m256d t2 = _mm256_or_pd(t1, y_lt);
-
-			const __m256d z_eq = _mm256_cmp_pd(m_dz, zero, _CMP_EQ_OS);
-			const __m256d t3 = _mm256_and_pd(t2, z_eq);
-
-			const __m256d z_lt = _mm256_cmp_pd(m_dz, zero, _CMP_LT_OS);
-			const __m256d t4 = _mm256_or_pd(t3, z_lt);
-
-			return _mm256_and_pd(t4, forceMask);
-		}
-
-		inline static __m256d GetMacroMaskSwitched(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz, const __m256d& switched)
-		{
-			return _mm256_xor_pd(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched);
+			return vcp_simd_applymask(vcp_simd_xor(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched), forceMask);
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class SomeMacroPolicy_ */
