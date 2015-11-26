@@ -322,7 +322,7 @@ private:
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
 			static vcp_double_vec ones = vcp_simd_ones();
-			vcp_double_vec result = vcp_simd_applymask( vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() ), j_mask);
+			vcp_double_vec result = vcp_simd_applymask( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, vcp_simd_zerov()) ), j_mask);
 			j_mask = ones;
 			return result;
 		}
@@ -340,12 +340,12 @@ private:
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return vcp_simd_and(m_r2 < rc2, m_r2 != vcp_simd_zerov() );
+			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, vcp_simd_zerov()) );
 		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return m_r2 < rc2;
+			return vcp_simd_lt(m_r2, rc2);
 		}
 #endif /* definition of InitJ_Mask & GetForceMask */
 	}; /* end of class SingleCellPolicy_ */
@@ -373,26 +373,25 @@ private:
 			return false;
 		}
 
-#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
-			#if VCP_VEC_TYPE==VCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX
 				, vcp_double_vec& sj_mask
-			#endif
+#endif
 				)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return m_r2 < rc2;
+			return vcp_simd_lt(m_r2, rc2);
 		}
 
 
-	#if VCP_VEC_TYPE==VCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
 			return vcp_simd_zerov(); //TODO: initj check avx <-> sse3
 		}
-	#endif
-#endif /* definition of GetForceMask */
+#endif
+ /* definition of GetForceMask */
 	}; /* end of class CellPairPolicy_ */
 
 	/**
@@ -463,13 +462,13 @@ private:
 		{
 			const vcp_double_vec zero = vcp_simd_zerov();
 
-			const vcp_double_vec t1 = vcp_simd_and(m_dx < zero, m_dy == zero);
+			const vcp_double_vec t1 = vcp_simd_and(vcp_simd_lt(m_dx, zero), vcp_simd_eq(m_dy, zero));
 
-			const vcp_double_vec t2 = vcp_simd_or(t1, m_dy < zero);
+			const vcp_double_vec t2 = vcp_simd_or(t1, vcp_simd_lt(m_dy, zero));
 
 			const vcp_double_vec t3 = vcp_simd_and(t2, vcp_simd_eq(m_dz, zero));
 
-			const vcp_double_vec t4 = vcp_simd_or(t3 , m_dz < zero);
+			const vcp_double_vec t4 = vcp_simd_or(t3 , vcp_simd_lt(m_dz, zero));
 
 			return vcp_simd_applymask(t4, forceMask);
 		}
