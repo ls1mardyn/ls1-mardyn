@@ -50,7 +50,6 @@
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
 
-#include "particleContainer/adapter/VectorizationTuner.h"
 
 
 using Log::global_log;
@@ -60,6 +59,7 @@ using optparse::Values;
 using namespace std;
 
 Simulation* global_simulation;
+#include "particleContainer/adapter/VectorizationTuner.h"
 
 Simulation::Simulation()
 	: _simulationTime(0),
@@ -400,6 +400,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "MPICheckpointWriter") {
 			outputPlugin = new MPICheckpointWriter();
 		}
+		else if(pluginname == "VectorizationTuner") {
+			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
+		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;
@@ -696,10 +699,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
-	//FlopCounter flopCounter2 = FlopCounter(_cutoffRadius, _LJCutoffRadius);
 
-	//VectorizationTuner VT;
-	//VT.tune(*(global_simulation->getEnsemble()->components()), *_cellProcessor , flopCounter2);
 }
 
 void Simulation::simulate() {

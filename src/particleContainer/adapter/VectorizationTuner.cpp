@@ -29,8 +29,13 @@
 //preprocessing macros
 //#define MASKING
 
-VectorizationTuner::VectorizationTuner() {
-	// TODO Auto-generated constructor stub
+VectorizationTuner::VectorizationTuner(std::string outputPrefix, double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
+_outputPrefix(outputPrefix), _cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius){
+
+}
+
+VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
+		_outputPrefix("Mardyn"), _cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius){
 
 }
 
@@ -46,8 +51,10 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList, CellProcesso
 
     double gflopsOwn, gflopsPair;
 
-    char const* value;
-    value = getenv("VT_NAME");
+    stringstream filenamestream;
+	filenamestream << _outputPrefix;
+	filenamestream << ".VT.dat";
+    char const* value = filenamestream.str().c_str();
 //    const char fileName = atoi(value);
 
     ofstream myfile;

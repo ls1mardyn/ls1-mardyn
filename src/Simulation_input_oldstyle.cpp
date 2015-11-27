@@ -43,6 +43,7 @@
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
+#include "particleContainer/adapter/VectorizationTuner.h"
 
 using namespace std;
 
@@ -325,6 +326,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						outputPathAndPrefix));
 				global_log->debug() << "GammaWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
+			}
+			else if (token == "VectorizationTuner") {
+				string outputPathAndPrefix;
+				inputfilestream >> outputPathAndPrefix;
+				_outputPlugins.push_back(new VectorizationTuner(outputPathAndPrefix,_cutoffRadius,_LJCutoffRadius,&_cellProcessor));
+				global_log->debug() << "VectorizationTuner " << outputPathAndPrefix << "'.\n";
 			}
 			else {
 				global_log->warning() << "Unknown output plugin " << token << endl;
