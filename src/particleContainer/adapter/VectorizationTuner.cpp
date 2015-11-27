@@ -60,7 +60,7 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList, CellProcesso
 
     stringstream filenamestream;
 	filenamestream << _outputPrefix;
-	filenamestream << ".VT.dat";
+	filenamestream << ".VT.csv";
     char const* value = filenamestream.str().c_str();
 //    const char fileName = atoi(value);
 

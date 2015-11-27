@@ -19,33 +19,62 @@ class ParticleCell;
 //class VectorizedCellProcessor;
 //class FlopCounter;
 
+/**
+ * @brief VectorizationTuner class.
+ * This class is used to get detailed information about the performance of the VectorizedCellProcessor.
+ * For different scenarios, the performance is evaluated and output.
+ * Later this could be used to actually use this class as a tuner, i.e. to use the best possible vectorization method for the actual computation.
+ *
+ */
 class VectorizationTuner : public OutputBase{
 public:
-
+	/**
+	* @brief Constructor of VectorizationTuner for the old input mode.
+	* Here the parameter (outputPrefix) has to be passed explicitly.
+	*
+	* @param outputPrefix
+	* @param cutoffRadius
+	* @param LJCutoffRadius
+	* @param cellProcessor pointer to the pointer of the cellProcessor. This is needed, since the cell processor is not yet set, when this function is called.
+	*/
 	VectorizationTuner(std::string outputPrefix, double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor);
+
+	/**
+	 * @brief Constructor of VectorizationTuner for the xml input mode.
+	 * Here the parameter (outputPrefix) does not have to be passed, it is written from the xml file instead.
+
+	 * @param cutoffRadius
+	 * @param LJCutoffRadius
+	 * @param cellProcessor pointer to the pointer of the cellProcessor. This is needed, since the cell processor is not yet set, when this function is called.
+	 */
 	VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor);
 
+	/**
+	 * destructor of the VectorizationTuner class.
+	 */
 	~VectorizationTuner();
 
-	//, double& gflopsOwn, double& gflopsPair);
+	//documentation in OutputBase
 	void initOutput(ParticleContainer* particleContainer,
 				DomainDecompBase* domainDecomp, Domain* domain);
 
+	//documentation in OutputBase, used to get parameters from xml files.
 	void readXML(XMLfileUnits& xmlconfig) {
 		_outputPrefix = "mardyn";
 		xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 		global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 	}
 
-	//do nothing
+	//documentation in OutputBase, does nothing.
 	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
 			std::list<ChemicalPotential>* lmu){}
 
-	// do nothing
+	//documentation in OutputBase, does nothing.
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain){}
 
+	//documentation in OutputBase.
 	std::string getPluginName() {
 		return std::string("VectorizationTuner");
 	}
