@@ -80,21 +80,86 @@ public:
 	}
 
 private:
+	/// The output prefix, that should be prefixed before the output files.
 	std::string _outputPrefix;
-	CellProcessor** _cellProcessor;
-	double _cutoffRadius;
-	double _LJCutoffRadius;
-	void tune(std::vector<Component> ComponentList, CellProcessor& vcp, FlopCounter& fc);
-    void iterate(std::vector<Component> ComponentList,  CellProcessor& vcp, FlopCounter& fc, int numMols, double& gflopsOwn, double& gflopsPair);
 
+	/// The CellProcessor, that should be used to iterate over the cells.
+	CellProcessor** _cellProcessor;
+
+	/// The cutoff radius
+	double _cutoffRadius;
+
+	/// The cutoff Radius for the LJ potential
+	double _LJCutoffRadius;
+
+	/**
+	 * This function is the main routine of this plugin. Multiple simulations are started from here.
+	 * @param ComponentList
+	 * @param vcp
+	 * @param fc
+	 */
+	void tune(std::vector<Component> ComponentList, CellProcessor& vcp, FlopCounter& fc);
+
+	/**
+	 * Performs multiple iterations of the selected simulation, that is also set up here.
+	 * @param ComponentList
+	 * @param vcp
+	 * @param fc
+	 * @param numMols
+	 * @param gflopsOwn
+	 * @param gflopsPair
+	 */
+	void iterate(std::vector<Component> ComponentList,  CellProcessor& vcp, FlopCounter& fc, int numMols, double& gflopsOwn, double& gflopsPair);
+
+	/**
+	 * @brief Calculation of the molecule interactions within a single cell.
+	 * Initializes the Calculation and preprocesses the cell. Once it is preprocessed, multiple (numRepetitions) iterations are performed on that cell. Afterwards it is postprecessed.
+	 * @param cp
+	 * @param cell1
+	 * @param numRepetitions
+	 */
 	void runOwn(CellProcessor& cp, ParticleCell& cell1, int numRepetitions);
+
+	/** @brief Calculation of the molecule interactions between two neighboring cells.
+	 * Initializes the Calculation and preprocesses both cells. Once they are preprocessed, multiple (numRepetitions) iterations are performed on the cells. Afterwards they are postprecessed.
+	 * @param cp
+	 * @param cell1
+	 * @param cell2
+	 * @param numRepetitions The amount of repetitions, that should be performed on the single cell.
+	 */
 	void runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, int numRepetitions);
 
-	void initSomeMolecules(Component& comp, ParticleCell& cell1, ParticleCell& cell2);
+	/**
+	 * @brief Initializes the Molecules in an equidistant mesh within the box.
+	 *
+	 * @param boxMin
+	 * @param boxMax
+	 * @param comp
+	 * @param cell1
+	 * @param cell2
+	 */
 	void initMeshOfMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2);
-    void initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols);
-    void initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols);
-	void clearMolecules(ParticleCell& cell1);
+
+	/**
+	 * @brief Initializes the molecules uniformly randomly distributed within the box.
+	 * @param boxMin
+	 * @param boxMax
+	 * @param comp
+	 * @param cell1
+	 * @param cell2
+	 * @param numMols
+	 */
+	void initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols);
+
+
+	void initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols);
+
+	/**
+	 * Removes all molecules from the given cell.
+	 *
+	 * @param cell
+	 */
+	void clearMolecules(ParticleCell& cell);
 };
 
 #endif /* VECTORIZATIONTUNER_H_ */

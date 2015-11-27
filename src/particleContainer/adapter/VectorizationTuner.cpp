@@ -95,7 +95,7 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList, CellProcesso
 }
 
 void VectorizationTuner::iterate(std::vector<Component> ComponentList, CellProcessor& vcp, FlopCounter& fc, int numMols, double& gflopsOwn, double& gflopsPair){
-//, double& gflopsOwn, double& gflopsPair) {
+
 
 	// get (first) component
 	Component comp = ComponentList[0];
@@ -215,63 +215,6 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 	cp.postprocessCell(cell2);
 	cp.endTraversal();
 
-}
-
-// initialize eight molecules in the middle of the cell
-void VectorizationTuner::initSomeMolecules(Component& comp, ParticleCell& cell1, ParticleCell& cell2) {
-
-	unsigned long id = 0;
-	double vel[3] = { 0.0, 0.0, 0.0 };
-	double orientation[4] = { 1.0, 0.0, 0.0, 0.0 }; // NOTE the 1.0 in the first coordinate
-	double angularVelocity[3] = { 0.0, 0.0, 0.0 };
-
-	double start_pos1[3] = { 0.25, 0.25, 0.25 };
-	double start_pos2[3] = { 1.25, 0.25, 0.25 };
-	double pos[3];
-
-
-	for (int z = 0; z < 2; ++z) {
-		for (int y = 0; y < 2; ++y) {
-			for (int x = 0; x < 2; ++x) {
-				pos[0] = start_pos1[0] + x*0.5;
-				pos[1] = start_pos1[1] + y*0.5;
-				pos[2] = start_pos1[2] + z*0.5;
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell1.addParticle(m);
-				id++; // id's need to be distinct
-			}
-		}
-	}
-	
-    id = 0;
-	for (int z = 0; z < 2; ++z) {
-		for (int y = 0; y < 2; ++y) {
-			for (int x = 0; x < 2; ++x) {
-				pos[0] = start_pos2[0] + x*0.5;
-				pos[1] = start_pos2[1] + y*0.5;
-				pos[2] = start_pos2[2] + z*0.5;
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell2.addParticle(m);
-				id++; // id's need to be distinct
-			}
-		}
-	}
 }
 
 // should work also if molecules are initialized via initMeshOfMolecules, initUniformRandomMolecules, initNormalRandomMolecules
