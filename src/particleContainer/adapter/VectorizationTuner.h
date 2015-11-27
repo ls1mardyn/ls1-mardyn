@@ -12,7 +12,6 @@
 #include "FlopCounter.h"
 #include <vector>
 #include "io/OutputBase.h"
-#include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 
 class Component;
@@ -29,28 +28,25 @@ public:
 	~VectorizationTuner();
 
 	//, double& gflopsOwn, double& gflopsPair);
-	virtual void initOutput(ParticleContainer* particleContainer,
-				DomainDecompBase* domainDecomp, Domain* domain) {
-		FlopCounter flopCounter2 = FlopCounter(_cutoffRadius, _LJCutoffRadius);
-		tune(*(_simulation.getEnsemble()->components()), **_cellProcessor , flopCounter2);
-	}
+	void initOutput(ParticleContainer* particleContainer,
+				DomainDecompBase* domainDecomp, Domain* domain);
 
-	virtual void readXML(XMLfileUnits& xmlconfig) {
+	void readXML(XMLfileUnits& xmlconfig) {
 		_outputPrefix = "mardyn";
 		xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 		global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
 	}
 
 	//do nothing
-	virtual void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
+	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
 			std::list<ChemicalPotential>* lmu){}
 
 	// do nothing
-	virtual void finishOutput(ParticleContainer* particleContainer,
+	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain){}
 
-	virtual std::string getPluginName() {
+	std::string getPluginName() {
 		return std::string("VectorizationTuner");
 	}
 

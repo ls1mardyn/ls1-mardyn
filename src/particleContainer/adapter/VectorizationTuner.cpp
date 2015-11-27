@@ -43,6 +43,13 @@ VectorizationTuner::~VectorizationTuner() {
 	// TODO Auto-generated destructor stub
 }
 
+void VectorizationTuner::initOutput(ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, Domain* domain) {
+	FlopCounter flopCounter2 = FlopCounter(_cutoffRadius, _LJCutoffRadius);
+	tune(*(_simulation.getEnsemble()->components()), **_cellProcessor , flopCounter2);
+}
+
+
 using namespace std;
 
 void VectorizationTuner::tune(std::vector<Component> ComponentList, CellProcessor& vcp, FlopCounter& fc) {

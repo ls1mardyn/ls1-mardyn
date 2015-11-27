@@ -50,7 +50,7 @@
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
 
-
+#include "particleContainer/adapter/VectorizationTuner.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -59,7 +59,7 @@ using optparse::Values;
 using namespace std;
 
 Simulation* global_simulation;
-#include "particleContainer/adapter/VectorizationTuner.h"
+
 
 Simulation::Simulation()
 	: _simulationTime(0),
