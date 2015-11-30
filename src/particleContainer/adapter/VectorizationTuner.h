@@ -151,7 +151,17 @@ private:
 	 */
 	void initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols);
 
-
+	/**
+	 * @brief Initializes the molecules normally distributed within each cell.
+	 * Be careful with this. I have no idea, whether this works correctly and what happens, if initialized particles are outside of the boundary of cells (note: Steffen Seckler)
+	 *
+	 * @param boxMin
+	 * @param boxMax
+	 * @param comp
+	 * @param cell1
+	 * @param cell2
+	 * @param numMols
+	 */
 	void initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols);
 
 	/**

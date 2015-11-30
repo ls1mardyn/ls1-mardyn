@@ -168,17 +168,18 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, CellProce
 
 }
 
-
+// returns a uniformly distributed random number between zero and one. (zero, one excluded)
 double uniformRandom()
 {
-  return ( (double)(rand()) + 1. )/( (double)(RAND_MAX) + 1. );
+  return ( (double)(rand()) + 1. )/( (double)(RAND_MAX) + 2. );
 }
- // return a normally distributed random number
+
+ // return a normally distributed random number (uses box-muller transform)
 double normalRandom()
 {
   double u1=uniformRandom();
   double u2=uniformRandom();
-  return cos(8.*atan(1.)*u2)*sqrt(-2.*log(u1)); 
+  return cos(8.*atan(1.)*u2)*sqrt(-2.*log(u1)); //box muller transform: cos(2*pi*u2)*sqrt(-2ln(u1))
 }
 
 
@@ -347,33 +348,26 @@ void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double box
 
     id = 0;
 	for(int i = 0; i < numMols; ++i) {
+		pos[0] = start_pos2[0] + ((double)rand()/(double)RAND_MAX);
+		pos[1] = start_pos2[1] + ((double)rand()/(double)RAND_MAX);
+		pos[2] = start_pos2[2] + ((double)rand()/(double)RAND_MAX);
 
+		Molecule* m = new Molecule(
+				id, &comp,
+				pos[0], pos[1], pos[2],
+				vel[0], vel[1], vel[2],
+				orientation[0], orientation[1], orientation[2], orientation[3],
+				angularVelocity[0], angularVelocity[1], angularVelocity[2]
+				);
 
-				pos[0] = start_pos2[0] + ((double)rand()/(double)RAND_MAX);
-				pos[1] = start_pos2[1] + ((double)rand()/(double)RAND_MAX);
-				pos[2] = start_pos2[2] + ((double)rand()/(double)RAND_MAX);
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell2.addParticle(m);
-				id++; // id's need to be distinct
-//	global_log->info() << "pos0 =  " << pos[0] << endl;
-//	global_log->info() << "pos1 =  " << pos[1] << endl;
-//	global_log->info() << "pos2 =  " << pos[2] << endl;
+		cell2.addParticle(m);
+		id++; // id's need to be distinct
 	}
 }
 
 
 void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols) {
 
-//	int numMoleculesX = 20;
-//  int numMoleculesY = 2, numMoleculesZ = 2;
 
 	unsigned long id = 0;
 	double vel[3] = { 0.0, 0.0, 0.0 };
@@ -384,29 +378,27 @@ void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxM
 	double pos[3];
 
 //	double dx = boxMax[0] - boxMin[0] / numMoleculesX;
-//  double pos_randx = ((double)rand()/(double)RAND_MAX);
-//  double pos_randy = ((double)rand()/(double)RAND_MAX);
-//  double pos_randz = ((double)rand()/(double)RAND_MAX);
+
 
 	for(int i = 0; i < numMols; ++i) {
 
 
-				pos[0] = normalRandom();
-				pos[1] = start_pos[1] + normalRandom();
-				pos[2] = start_pos[2] + normalRandom();
+		pos[0] = normalRandom();
+		pos[1] = start_pos[1] + normalRandom();
+		pos[2] = start_pos[2] + normalRandom();
 
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
+		Molecule* m = new Molecule(
+				id, &comp,
+				pos[0], pos[1], pos[2],
+				vel[0], vel[1], vel[2],
+				orientation[0], orientation[1], orientation[2], orientation[3],
+				angularVelocity[0], angularVelocity[1], angularVelocity[2]
+				);
 
-				cell1.addParticle(m);
-				id++; // id's need to be distinct
-	global_log->info() << "pos0 =  " << pos[0] << endl;
-	global_log->info() << "pos1 =  " << pos[1] << endl;
-	global_log->info() << "pos2 =  " << pos[2] << endl;
+		cell1.addParticle(m);
+		id++; // id's need to be distinct
+		global_log->debug() << "pos0 =  " << pos[0] << endl;
+		global_log->debug() << "pos1 =  " << pos[1] << endl;
+		global_log->debug() << "pos2 =  " << pos[2] << endl;
 	}
 }
