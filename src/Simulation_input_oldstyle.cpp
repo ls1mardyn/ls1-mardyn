@@ -329,8 +329,15 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 			else if (token == "VectorizationTuner") {
 				string outputPathAndPrefix;
-				inputfilestream >> outputPathAndPrefix;
-				_outputPlugins.push_back(new VectorizationTuner(outputPathAndPrefix,_cutoffRadius,_LJCutoffRadius,&_cellProcessor));
+				unsigned int minMoleculeCnt, maxMoleculeCnt;
+				int type;
+				MoleculeCntIncreaseTypeEnum moleculeCntIncreaseType;
+				inputfilestream >> outputPathAndPrefix >> minMoleculeCnt >> maxMoleculeCnt >> type;
+				moleculeCntIncreaseType = static_cast<MoleculeCntIncreaseTypeEnum>(type);
+				_outputPlugins.push_back(
+						new VectorizationTuner(outputPathAndPrefix, minMoleculeCnt, maxMoleculeCnt,
+								moleculeCntIncreaseType, _cutoffRadius,_LJCutoffRadius,&_cellProcessor)
+				);
 				global_log->debug() << "VectorizationTuner " << outputPathAndPrefix << "'.\n";
 			}
 			else {

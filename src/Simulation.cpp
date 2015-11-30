@@ -359,7 +359,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			outputPlugin = new DecompWriter();
 		}
 		else if(pluginname == "FLOPCounter") {
-			/** @todo  Make the LJ Flop counter a real output plugin */
+			/** @todo  Make the Flop counter a real output plugin */
 			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 			continue;
 		}
