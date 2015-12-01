@@ -110,6 +110,12 @@ private:
 	/// The cutoff Radius for the LJ potential
 	double _LJCutoffRadius;
 
+	/// The cutoff radius
+	static const double _cutoffRadiusBig=5.;
+
+	/// The cutoff Radius for the LJ potential
+	static const double _LJCutoffRadiusBig=5.;
+
 	/// FlopCounter that utilizes a big cutoff radius
 	FlopCounter* _flopCounterBigRc;
 
@@ -134,7 +140,8 @@ private:
 	 * @param gflopsOwn
 	 * @param gflopsPair
 	 */
-	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwn, double& gflopsPair);
+	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
+			double& gflopsPairNormalEdge, double& gflopsPairNormalPoint);
 
 	/**
 	 * @brief Calculation of the molecule interactions within a single cell.
@@ -166,15 +173,23 @@ private:
 	void initMeshOfMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2);
 
 	/**
-	 * @brief Initializes the molecules uniformly randomly distributed within the box.
+	 * @brief Initializes the molecules uniformly randomly distributed within the box. The box is set using boxMin and boxMax.
 	 * @param boxMin
 	 * @param boxMax
 	 * @param comp
-	 * @param cell1
-	 * @param cell2
+	 * @param cell
 	 * @param numMols
 	 */
-	void initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, unsigned int numMols);
+	void initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell, unsigned int numMols);
+
+
+	/**
+	 * @brief Moves all molecules of the cell by the vector specified by direction.
+	 * @param direction
+	 * @param cell
+	 * @param numMols
+	 */
+	void moveMolecules(double direction[3], ParticleCell& cell);
 
 	/**
 	 * @brief Initializes the molecules normally distributed within each cell.
@@ -195,6 +210,13 @@ private:
 	 * @param cell
 	 */
 	void clearMolecules(ParticleCell& cell);
+
+	void iterateOwn(Timer timer, long long int numRepetitions,
+			ParticleCell& cell,
+			double& gflopsPair, FlopCounter& flopCounter);
+	void iteratePair(Timer timer, long long int numRepetitions,
+			ParticleCell& firstCell, ParticleCell& secondCell,
+			double& gflopsPair, FlopCounter& flopCounter);
 };
 
 #endif /* VECTORIZATIONTUNER_H_ */

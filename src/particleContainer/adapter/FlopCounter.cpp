@@ -101,7 +101,8 @@ double FlopCounter::_Counts::process() const {
 	global_log->info() << " Molecule distance: " << getMoleculeDistanceFlops() << endl;
 	global_log->info() << " Center distance: " << getCenterDistanceFlops() << endl;
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
-		global_log->info() << _potCounts[i].printNameKernelAndMacroFlops() << endl;
+		std::string str = _potCounts[i].printNameKernelAndMacroFlops();
+		if(str.length() > 0) global_log->info() << str;
 	}
 	global_log->info() << " Force/Torque Sum: " << getForceTorqueSumFlops() << endl;
 	global_log->info() << " Macroscopic value sum: " << getMacroValueSumFlops() << endl;
