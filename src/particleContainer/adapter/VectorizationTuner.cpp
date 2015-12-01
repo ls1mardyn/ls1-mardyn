@@ -90,8 +90,9 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
     ofstream myfile;
     myfile.open(value, ofstream::out | ofstream::trunc);
     myfile << "Vectorization Tuner File" << endl
-    		<< "The Cutoff Radii were: " << endl << "NormalRc=" << _cutoffRadius << " , LJCutoffRadiusNormal=" << _LJCutoffRadius << endl
-			<< " , BigRC=" << _cutoffRadiusBig << " , BigLJCR=" << _LJCutoffRadiusBig << endl;
+    		<< "The Cutoff Radii were: " << endl
+			<< "NormalRc=" << _cutoffRadius << " , LJCutoffRadiusNormal=" << _LJCutoffRadius << endl
+			<< "BigRC=" << _cutoffRadiusBig << " , BigLJCR=" << _LJCutoffRadiusBig << endl;
 
     if(_moleculeCntIncreaseType==linear or _moleculeCntIncreaseType==both){
 		myfile << "Linearly distributed molecule counts" << endl;
@@ -188,13 +189,15 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	timer.set_sync(false);
 #endif
 
+	global_log->info() << "--------------------------Molecule count: " << numMols << "--------------------------" << endl;
+
 	//initialize both cells with molecules between 0,0,0 and 1,1,1
     initUniformRandomMolecules(BoxMin, BoxMax, comp, firstCell, numMols);
     initUniformRandomMolecules(BoxMin, BoxMax, comp, secondCell, numMols);
 
 	long long int numRepetitions = 10000;
 
-	global_log->info() << "--------------------------Molecule count: " << numMols << "--------------------------" << endl;
+
     //1+2: bigRC
 	(**_cellProcessor).setCutoffRadius(_cutoffRadiusBig);
 	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadiusBig);
@@ -318,9 +321,6 @@ void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3],
 
 				cell1.addParticle(m);
 				id++; // id's need to be distinct
-//	global_log->info() << "pos0 =  " << pos[0] << endl;
-//	global_log->info() << "pos1 =  " << pos[1] << endl;
-//	global_log->info() << "pos2 =  " << pos[2] << endl;
 			}
 		}
 	}
@@ -371,6 +371,7 @@ void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double box
 				);
 		cell.addParticle(m);
 		id++; // id's need to be distinct
+		//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << endl;
 	}
 }
 
@@ -415,7 +416,8 @@ void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
 	for(unsigned int i=0; i < cnt; ++i){
 		Molecule* mol = cell.getParticlePointers().at(i);
 		mol->move(0, direction[0]);
-		mol->move(0, direction[1]);
-		mol->move(0, direction[2]);
+		mol->move(1, direction[1]);
+		mol->move(2, direction[2]);
+		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << endl;
 	}
 }
