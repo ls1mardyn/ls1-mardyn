@@ -79,7 +79,7 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
 
 	global_log->info() << "VT: begin VECTORIZATION TUNING "<< endl;
 
-    double gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalPoint;
+    double gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner;
 
     stringstream filenamestream;
 	filenamestream << _outputPrefix;
@@ -96,22 +96,22 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
     if(_moleculeCntIncreaseType==linear or _moleculeCntIncreaseType==both){
 		myfile << "Linearly distributed molecule counts" << endl;
 		myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-		    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Point"  << endl;
+		    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner"  << endl;
 		for(unsigned int i = _minMoleculeCnt; i <= std::min(32u, _maxMoleculeCnt); i++){
-			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalPoint);
-			myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", " << gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalPoint << endl;
+			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner);
+			myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", " << gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << endl;
 		}
 		myfile << endl;
     }
     if(_moleculeCntIncreaseType==exponential or _moleculeCntIncreaseType==both){
     	myfile << "Exponentially distributed molecule counts" << endl;
     	myfile << "Num. of Molecules," << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Point"  << endl;
+    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner"  << endl;
     	// logarithmically scaled axis -> exponentially increasing counts
 
     	for(unsigned int i = _minMoleculeCnt; i <= _maxMoleculeCnt; i*=2){
-    		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalPoint);
-    		myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", " << gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalPoint << endl;
+    		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner);
+    		myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", " << gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << endl;
     	}
     }
     myfile.close();
@@ -159,7 +159,7 @@ void VectorizationTuner::iteratePair(Timer timer, long long int numRepetitions,
 }
 
 void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
-		double& gflopsPairNormalEdge, double& gflopsPairNormalPoint){
+		double& gflopsPairNormalEdge, double& gflopsPairNormalCorner){
 
 
 	// get (first) component
@@ -213,9 +213,9 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	//5. pair, normalRC edge
 		moveMolecules(diryplus, secondCell);
 		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalEdge, *_flopCounterNormalRc); //cell2s particles moved by 1,1,0 - common edge
-	//6. pair, normalRC point
+	//6. pair, normalRC corner
 		moveMolecules(dirzplus, secondCell);
-		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalPoint, *_flopCounterNormalRc); //cell2s particles moved by 1,1,1 - common point
+		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalCorner, *_flopCounterNormalRc); //cell2s particles moved by 1,1,1 - common corner
 
 	// clear cells
 	clearMolecules(firstCell);

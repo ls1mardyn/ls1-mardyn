@@ -141,7 +141,7 @@ private:
 	 * @param gflopsPair
 	 */
 	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
-			double& gflopsPairNormalEdge, double& gflopsPairNormalPoint);
+			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner);
 
 	/**
 	 * @brief Calculation of the molecule interactions within a single cell.
