@@ -32,13 +32,13 @@
 VectorizationTuner::VectorizationTuner(std::string outputPrefix, unsigned int minMoleculeCnt, unsigned int maxMoleculeCnt,
 		MoleculeCntIncreaseTypeEnum moleculeCntIncreaseType, double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
 	_outputPrefix(outputPrefix), _minMoleculeCnt(minMoleculeCnt), _maxMoleculeCnt(maxMoleculeCnt), _moleculeCntIncreaseType(moleculeCntIncreaseType),
-	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL){
+	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL){
 
 }
 
 VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
 	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
-	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL){
+	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL){
 
 }
 
@@ -69,6 +69,7 @@ void VectorizationTuner::initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) {
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
+	_flopCounterZeroRc = new FlopCounter( 0., 0.);
 	tune(*(_simulation.getEnsemble()->components()));
 }
 
@@ -79,7 +80,7 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
 
 	global_log->info() << "VT: begin VECTORIZATION TUNING "<< endl;
 
-    double gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner;
+    double gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner,gflopsOwnZero, gflopsPairZero;
 
     stringstream filenamestream;
 	filenamestream << _outputPrefix;
@@ -97,22 +98,26 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
     if(_moleculeCntIncreaseType==linear or _moleculeCntIncreaseType==both){
 		myfile << "Linearly distributed molecule counts" << endl;
 		myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-		    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner"  << endl;
+				<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
 		for(unsigned int i = _minMoleculeCnt; i <= std::min(32u, _maxMoleculeCnt); i++){
-			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner);
-			myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", " << gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << endl;
+			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
+			myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+					<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+					<< gflopsOwnZero << ", " << gflopsPairZero << endl;
 		}
 		myfile << endl;
     }
     if(_moleculeCntIncreaseType==exponential or _moleculeCntIncreaseType==both){
     	myfile << "Exponentially distributed molecule counts" << endl;
     	myfile << "Num. of Molecules," << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner"  << endl;
+    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
     	// logarithmically scaled axis -> exponentially increasing counts
 
     	for(unsigned int i = _minMoleculeCnt; i <= _maxMoleculeCnt; i*=2){
-    		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner);
-    		myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", " << gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << endl;
+    		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
+    		myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+    							<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+    							<< gflopsOwnZero << ", " << gflopsPairZero << endl;
     	}
     }
     myfile.close();
@@ -160,7 +165,7 @@ void VectorizationTuner::iteratePair(Timer timer, long long int numRepetitions,
 }
 
 void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
-		double& gflopsPairNormalEdge, double& gflopsPairNormalCorner){
+		double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero){
 
 
 	// get (first) component
@@ -198,6 +203,11 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	long long int numRepetitions = 10000;
 
 
+	//0a,0b: 0RC
+		(**_cellProcessor).setCutoffRadius(0.);
+		(**_cellProcessor).setLJCutoffRadius(0.);
+		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnZero, *_flopCounterZeroRc);
+		iterateOwn(timer, numRepetitions, firstCell, gflopsPairZero, *_flopCounterZeroRc);
     //1+2: bigRC
 	(**_cellProcessor).setCutoffRadius(_cutoffRadiusBig);
 	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadiusBig);

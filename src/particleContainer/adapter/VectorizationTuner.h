@@ -122,6 +122,9 @@ private:
 	/// FlopCounter that utilizes a normal cutoff radius
 	FlopCounter* _flopCounterNormalRc;
 
+	/// FlopCounter for zero cutoff radius
+	FlopCounter* _flopCounterZeroRc;
+
 
 	/**
 	 * This function is the main routine of this plugin. Multiple simulations are started from here.
@@ -141,7 +144,7 @@ private:
 	 * @param gflopsPair
 	 */
 	void iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
-			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner);
+			double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero);
 
 	/**
 	 * @brief Calculation of the molecule interactions within a single cell.
