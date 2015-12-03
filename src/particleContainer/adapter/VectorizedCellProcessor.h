@@ -1,7 +1,7 @@
 /**
  * \file
  * \brief VectorizedCellProcessor.h
- * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
+ * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann, Steffen Seckler
  */
 
 #ifndef VECTORIZEDCELLPROCESSOR_H_
@@ -476,6 +476,44 @@ private:
 		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
 			return vcp_simd_applymask(vcp_simd_xor(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched), forceMask);
+		}
+#endif /* definition of GetMacroMask and GetMacroMaskSwitched */
+	}; /* end of class SomeMacroPolicy_ */
+
+
+	/**
+	 * \brief A MacroPolicy.
+	 * \details Only adds up the macroscopic values for pairs where<br>
+	 * mol1 < mol2 in the 3D ordering. This is used for double cell calculations<br>
+	 * with one halo Cell.
+	 */
+	class NoMacroPolicy_ {
+	public:
+		inline static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz)
+		{
+			// Only calculate macroscopic values for pairs where molecule 1
+			// "IsLessThan" molecule 2.
+			return false;
+		}
+
+		inline static bool MacroscopicValueConditionSwitched(double m_dx, double m_dy, double m_dz, bool switched)
+		{
+			// Only calculate macroscopic values for pairs where molecule 1
+			// "IsLessThan" molecule 2.
+			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
+		}
+
+#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
+		// Only calculate macroscopic values for pairs where molecule 1
+		// "IsLessThan" molecule 2.
+		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
+		{
+			return vcp_simd_zerov();
+		}
+
+		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
+		{
+			return vcp_simd_zerov();
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class SomeMacroPolicy_ */

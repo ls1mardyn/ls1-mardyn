@@ -2197,6 +2197,9 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
 			_calculatePairs<CellPairPolicy_, AllMacroPolicy_>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
 		}
+		else {
+			_calculatePairs<CellPairPolicy_, NoMacroPolicy_>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+		}
 	} else {//both cells halo
 		return;
 	}
