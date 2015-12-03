@@ -137,7 +137,8 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
 					PairType pairType = MOLECULE_MOLECULE;
-					if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//TODO: boundary <-> halo: macroscopic boundary condition
+					//if (cell2.isHaloCell() && ! molecule1.isLessThan(molecule2)) {//boundary <-> halo: using macroscopic boundary condition
+					if (cell2.isHaloCell() && ! (cell1.getCellIndex()<cell2.getCellIndex())) {//boundary <-> halo: not using macroscopic boundary condition, instead cell indices are compared.
 						/* Do not sum up values twice. */
 						pairType = MOLECULE_HALOMOLECULE;
 					}
