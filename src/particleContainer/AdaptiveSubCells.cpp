@@ -654,12 +654,14 @@ void AdaptiveSubCells::initializeSubCells() {
 				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] || ix >= _cellsPerDimension[0] - _haloWidthInNumCells[0] || iy >= _cellsPerDimension[1] - _haloWidthInNumCells[1] || iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
 					// assign the (first) subCell to the halo region
 					_subCells[subCellIndex].assignCellToHaloRegion();
+					_subCells[subCellIndex].setCellIndex(subCellIndex);
 					_haloSubCellIndices.push_back(subCellIndex);
 					// if nextSubCellIndex-subCellIndex == 8 (or 7, at the end of the array) the current Cell contains subCells
 					if (nextSubCellIndex - subCellIndex > 1) {
 						for (int i = 1; i < 8; i++) {
 							// assign the remaining 7 subCells to the halo region
 							_subCells[subCellIndex + i].assignCellToHaloRegion();
+							_subCells[subCellIndex + i].setCellIndex(subCellIndex + i);
 							_haloSubCellIndices.push_back(subCellIndex);
 						}
 					}
@@ -667,12 +669,14 @@ void AdaptiveSubCells::initializeSubCells() {
 				else if (ix < 2 * _haloWidthInNumCells[0] || iy < 2 * _haloWidthInNumCells[1] || iz < 2 * _haloWidthInNumCells[2] || ix >= _cellsPerDimension[0] - 2 * _haloWidthInNumCells[0] || iy >= _cellsPerDimension[1] - 2 * _haloWidthInNumCells[1] || iz >= _cellsPerDimension[2] - 2 * _haloWidthInNumCells[2]) {
 					// assign the (first) subCell to the boundary region
 					_subCells[subCellIndex].assignCellToBoundaryRegion();
+					_subCells[subCellIndex].setCellIndex(subCellIndex);
 					_boundarySubCellIndices.push_back(subCellIndex);
 					// if nextSubCellIndex-subCellIndex > 1 the current Cell contains subCells
 					if (nextSubCellIndex - subCellIndex > 1) {
 						for (int i = 1; i < 8; i++) {
 							// assign the remaining 7 subCells to the boundary region
 							_subCells[subCellIndex + i].assignCellToBoundaryRegion();
+							_subCells[subCellIndex + i].setCellIndex(subCellIndex + i);
 							_boundarySubCellIndices.push_back(subCellIndex + i);
 						}
 					}
@@ -680,12 +684,14 @@ void AdaptiveSubCells::initializeSubCells() {
 				else {
 					// assign the (first) subCell to the inner region
 					_subCells[subCellIndex].assignCellToInnerRegion();
+					_subCells[subCellIndex].setCellIndex(subCellIndex);
 					_innerSubCellIndices.push_back(subCellIndex);
 					// if nextSubCellIndex-subCellIndex > 1 the current Cell contains subCells
 					if (nextSubCellIndex - subCellIndex > 1) {
 						for (int i = 1; i < 8; i++) {
 							// assign the remaining 7 subCells to the inner region
 							_subCells[subCellIndex + i].assignCellToInnerRegion();
+							_subCells[subCellIndex + i].setCellIndex(subCellIndex + i);
 							_innerSubCellIndices.push_back(subCellIndex + i);
 						}
 					}
@@ -1027,7 +1033,7 @@ unsigned long AdaptiveSubCells::getCellIndexOfMolecule(Molecule* molecule) {
 		if (molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
 			global_log->error() << "AdaptiveSubCells::getCellIndexOfMolecule(Molecule* molecule): Molecule is outside of the bounding box" << endl;
 		}
-		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);//before floor: [0,1] -> {0,1}
 
 	}
 	return (cellIndex[2] * _cellsPerDimension[1] + cellIndex[1]) * _cellsPerDimension[0] + cellIndex[0];
