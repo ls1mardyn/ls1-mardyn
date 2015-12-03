@@ -52,7 +52,6 @@
 
 #include "particleContainer/adapter/VectorizationTuner.h"
 
-
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -60,6 +59,7 @@ using optparse::Values;
 using namespace std;
 
 Simulation* global_simulation;
+
 
 Simulation::Simulation()
 	: _simulationTime(0),
@@ -359,7 +359,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			outputPlugin = new DecompWriter();
 		}
 		else if(pluginname == "FLOPCounter") {
-			/** @todo  Make the LJ Flop counter a real output plugin */
+			/** @todo  Make the Flop counter a real output plugin */
 			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 			continue;
 		}
@@ -399,6 +399,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		/* temporary */
 		else if(pluginname == "MPICheckpointWriter") {
 			outputPlugin = new MPICheckpointWriter();
+		}
+		else if(pluginname == "VectorizationTuner") {
+			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
 		}
 		else {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
@@ -696,10 +699,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
-	//FlopCounter flopCounter2 = FlopCounter(_cutoffRadius, _LJCutoffRadius);
 
-	//VectorizationTuner VT;
-	//VT.tune(*(global_simulation->getEnsemble()->components()), *_cellProcessor , flopCounter2);
 }
 
 void Simulation::simulate() {

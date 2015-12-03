@@ -165,7 +165,7 @@ private:
 			if (_numKernelCalls == 0) { return ostr.str(); } // potential is very likely not present
 
 			ostr << " " << _name << ": kernel: " << _numKernelCalls * _kernelMultiplier
-				<< ", macro: " << _numMacroCalls * _macroMultiplier;
+				<< ", macro: " << _numMacroCalls * _macroMultiplier << std::endl;
 			return ostr.str();
 		}
 

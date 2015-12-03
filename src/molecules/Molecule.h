@@ -78,8 +78,9 @@ public:
 	/** get the virial **/
 	double Vi(unsigned short d) const { return _Vi[d];}
 
-        void setD(unsigned short d, double D) { this->_L[d] = D; }
-	inline void move(int d, double dr) { _r[d] += dr; } /* TODO: is this realy needed? */
+	void setD(unsigned short d, double D) { this->_L[d] = D; }
+
+	inline void move(int d, double dr) { _r[d] += dr; }
 
 
 	/** calculate and return the square velocity */

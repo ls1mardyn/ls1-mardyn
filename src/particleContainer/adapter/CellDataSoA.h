@@ -293,7 +293,7 @@ public:
 			resizeLastZero(_mol_dipoles_num,_mol_size, _mol_num);
 			resizeLastZero(_mol_quadrupoles_num,_mol_size, _mol_num);
 		}
-		memset(_ljc_id + _ljc_num, 0, (_ljc_size-_ljc_num) * sizeof(size_t));//set the remaining values to zero.
+		memset(_ljc_id + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(size_t));//set the remaining values to zero.
 			//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
 			//The array size is however long enough to vectorize over the last few entries.
 			//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.

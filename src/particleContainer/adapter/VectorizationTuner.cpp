@@ -29,8 +29,16 @@
 //preprocessing macros
 //#define MASKING
 
-VectorizationTuner::VectorizationTuner() {
-	// TODO Auto-generated constructor stub
+VectorizationTuner::VectorizationTuner(std::string outputPrefix, unsigned int minMoleculeCnt, unsigned int maxMoleculeCnt,
+		MoleculeCntIncreaseTypeEnum moleculeCntIncreaseType, double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
+	_outputPrefix(outputPrefix), _minMoleculeCnt(minMoleculeCnt), _maxMoleculeCnt(maxMoleculeCnt), _moleculeCntIncreaseType(moleculeCntIncreaseType),
+	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL){
+
+}
+
+VectorizationTuner::VectorizationTuner(double cutoffRadius, double LJCutoffRadius, CellProcessor **cellProcessor):
+	_outputPrefix("Mardyn"), _minMoleculeCnt(2), _maxMoleculeCnt(512), _moleculeCntIncreaseType(both),
+	_cellProcessor(cellProcessor), _cutoffRadius(cutoffRadius), _LJCutoffRadius(LJCutoffRadius), _flopCounterBigRc(NULL), _flopCounterNormalRc(NULL), _flopCounterZeroRc(NULL){
 
 }
 
@@ -38,133 +46,208 @@ VectorizationTuner::~VectorizationTuner() {
 	// TODO Auto-generated destructor stub
 }
 
+void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
+	_outputPrefix = "mardyn";
+
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << std::endl;
+
+	xmlconfig.getNodeValue("minmoleculecnt", _minMoleculeCnt);
+	global_log->info() << "Minimal molecule count: " << _minMoleculeCnt << std::endl;
+
+	xmlconfig.getNodeValue("maxmoleculecnt", _maxMoleculeCnt);
+	global_log->info() << "Maximal molecule count: " << _maxMoleculeCnt << std::endl;
+
+	int type=2;
+	xmlconfig.getNodeValue("moleculecntincreasetype", type);
+	_moleculeCntIncreaseType = static_cast<MoleculeCntIncreaseTypeEnum>(type);
+	global_log->info() << "Molecule count increase type: " << _moleculeCntIncreaseType << std::endl;
+
+}
+
+void VectorizationTuner::initOutput(ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, Domain* domain) {
+	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
+	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
+	_flopCounterZeroRc = new FlopCounter( 0., 0.);
+	tune(*(_simulation.getEnsemble()->components()));
+}
+
+
 using namespace std;
 
-void VectorizationTuner::tune(std::vector<Component> ComponentList, CellProcessor& vcp, FlopCounter& fc) {
+void VectorizationTuner::tune(std::vector<Component> ComponentList) {
 
-	global_log->info() << "begin VECTORIZATION TUNING "<< endl;
+	global_log->info() << "VT: begin VECTORIZATION TUNING "<< endl;
 
-    double gflopsOwn, gflopsPair;
+    double gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner,gflopsOwnZero, gflopsPairZero;
 
-    char const* value;
-    value = getenv("VT_NAME");
-//    const char fileName = atoi(value);
+    stringstream filenamestream;
+	filenamestream << _outputPrefix;
+	filenamestream << ".VT.csv";
+    char const* value = filenamestream.str().c_str();
 
+    global_log->info() << "VT: Writing to file " << value << endl;
     ofstream myfile;
-//    myfile.open("./stats/Gflops.csv", std::ios::trunc);
-    myfile.open(value, ios::trunc);
-    myfile.close();
-    myfile.open(value, ofstream::in | ofstream::out | ofstream::app);
+    myfile.open(value, ofstream::out | ofstream::trunc);
+    myfile << "Vectorization Tuner File" << endl
+    		<< "The Cutoff Radii were: " << endl
+			<< "NormalRc=" << _cutoffRadius << " , LJCutoffRadiusNormal=" << _LJCutoffRadius << endl
+			<< "BigRC=" << _cutoffRadiusBig << " , BigLJCR=" << _LJCutoffRadiusBig << endl;
 
-    myfile << "Linearly" << endl;
-    myfile << "Num. of Molecules," << "Gflops for Own," << "Gflops for Pair" << endl;
-    // linearly
-    for(int i = 2; i <= 32; i++){
-        iterate(ComponentList, vcp, fc, i,  gflopsOwn, gflopsPair);
-        myfile << i << ", " << gflopsOwn << ", " << gflopsPair << endl;
+    if(_moleculeCntIncreaseType==linear or _moleculeCntIncreaseType==both){
+		myfile << "Linearly distributed molecule counts" << endl;
+		myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
+				<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
+		for(unsigned int i = _minMoleculeCnt; i <= std::min(32u, _maxMoleculeCnt); i++){
+			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
+			myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+					<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+					<< gflopsOwnZero << ", " << gflopsPairZero << endl;
+		}
+		myfile << endl;
     }
-    myfile << endl;
-    myfile << "Logarithmically" << endl;
-    myfile << "Num. of Molecules," << "Gflops for Own," << "Gflops for Pair" << endl;
-    // logarithmically
-    for(int i = 2; i <= 512; i*=2){
-        iterate(ComponentList, vcp, fc, i, gflopsOwn, gflopsPair);
-        myfile << i << ", " << gflopsOwn << ", " << gflopsPair << endl;
-    }
+    if(_moleculeCntIncreaseType==exponential or _moleculeCntIncreaseType==both){
+    	myfile << "Exponentially distributed molecule counts" << endl;
+    	myfile << "Num. of Molecules," << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
+    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
+    	// logarithmically scaled axis -> exponentially increasing counts
 
+    	for(unsigned int i = _minMoleculeCnt; i <= _maxMoleculeCnt; i*=2){
+    		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
+    		myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+    							<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+    							<< gflopsOwnZero << ", " << gflopsPairZero << endl;
+    	}
+    }
     myfile.close();
 
-    fc.resetCounters();
+    _flopCounterBigRc->resetCounters();
+    _flopCounterNormalRc->resetCounters();
 
 	global_log->info() << "VECTORIZATION TUNING completed "<< endl;
 
 }
 
-void VectorizationTuner::iterate(std::vector<Component> ComponentList, CellProcessor& vcp, FlopCounter& fc, int numMols, double& gflopsOwn, double& gflopsPair){
-//, double& gflopsOwn, double& gflopsPair) {
+void VectorizationTuner::iterateOwn(Timer timer, long long int numRepetitions,
+		ParticleCell& cell, double& gflopsPair, FlopCounter& flopCounter) {
+	runOwn(flopCounter, cell, 1);
+	// run simulation for a pair of cells
+	timer.start();
+	runOwn(**_cellProcessor, cell, numRepetitions);
+	timer.stop();
+	// get Gflops for pair computations
+	gflopsPair = flopCounter.getTotalFlopCount() * numRepetitions
+			/ timer.get_etime() / (1024 * 1024 * 1024);
+	global_log->info() << "FLOP-Count per Iteration: "
+			<< flopCounter.getTotalFlopCount() << " FLOPs" << endl;
+	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl << endl;
+	flopCounter.resetCounters();
+	timer.reset();
+}
+
+void VectorizationTuner::iteratePair(Timer timer, long long int numRepetitions,
+		ParticleCell& firstCell, ParticleCell& secondCell, double& gflopsPair, FlopCounter& flopCounter) {
+	//count/calculate the needed flops
+	runPair(flopCounter, firstCell, secondCell, 1);
+	// run simulation for a pair of cells
+	timer.start();
+	runPair(**_cellProcessor, firstCell, secondCell, numRepetitions);
+	timer.stop();
+	// get Gflops for pair computations
+	gflopsPair = flopCounter.getTotalFlopCount() * numRepetitions
+			/ timer.get_etime() / (1024 * 1024 * 1024);
+	global_log->info() << "FLOP-Count per Iteration: "
+			<< flopCounter.getTotalFlopCount() << " FLOPs" << endl;
+	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl << endl;
+	flopCounter.resetCounters();
+	timer.reset();
+}
+
+void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
+		double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero){
+
 
 	// get (first) component
 	Component comp = ComponentList[0];
 
 	// construct two cells
-	ParticleCell first;
-	ParticleCell second;
-	first.assignCellToInnerRegion();
-	second.assignCellToInnerRegion();
+	ParticleCell firstCell;
+	ParticleCell secondCell;
+	firstCell.assignCellToInnerRegion();
+	secondCell.assignCellToInnerRegion();
 
     #ifdef MASKING
     srand(time(NULL));
     #else
-    srand(5);
+    srand(5);//much random, much wow :D
     #endif
 
-	double BoxMin[3] = {0.0, 0.0, 0.0};
-	double BoxMax[3] = {1.0, 1.0, 1.0};
+	double BoxMin[3] = {0., 0., 0.};
+	double BoxMax[3] = {1., 1., 1.};
+	double dirxplus[3] = {1., 0., 0.};
+	double diryplus[3] = {0., 1., 0.};
+	double dirzplus[3] = {0., 0., 1.};
 
 	Timer timer;
 #ifdef ENABLE_MPI
 	timer.set_sync(false);
 #endif
 
-//	 initialization
+	global_log->info() << "--------------------------Molecule count: " << numMols << "--------------------------" << endl;
 
-//  initSomeMolecules(comp, first, second);
-//  initMeshOfMolecules(BoxMin, BoxMax, comp, first, second);
-    initUniformRandomMolecules(BoxMin, BoxMax, comp, first, second, numMols);
-//  initNormalRandomMolecules(BoxMin, BoxMax, comp, first, second, numMols);
+	//initialize both cells with molecules between 0,0,0 and 1,1,1
+    initUniformRandomMolecules(BoxMin, BoxMax, comp, firstCell, numMols);
+    initUniformRandomMolecules(BoxMin, BoxMax, comp, secondCell, numMols);
 
-	runOwn(fc, first, 1);
-
-	// repeat many times and measure average time
-	//	long long int numRepetitions = 10000000; // TODO: for realistic measurements (at least for the case with 8 molecules)
 	long long int numRepetitions = 10000;
 
-    // run simulation for a single cell
-	timer.start();
-	runOwn(vcp, first, numRepetitions);
-	timer.stop();
 
-    // get Gflops for own computations
-	gflopsOwn = fc.getTotalFlopCount() * numRepetitions / timer.get_etime() / (1024*1024*1024);
-	global_log->info() << "FLOP-Count per Iteration: " << fc.getTotalFlopCount() << " FLOPs" << endl;
-	global_log->info() << "FLOP-rate: " << gflopsOwn << " GFLOPS" << endl;
-
-    fc.resetCounters();
-    timer.reset();
-
-
-	runPair(fc, first, second, 1);
-
-    // run simulation for a pair of cells
-	timer.start();
-	runPair(vcp, first, second, numRepetitions);
-	timer.stop();
-
-    // get Gflops for pair computations
-	gflopsPair = fc.getTotalFlopCount() * numRepetitions / timer.get_etime() / (1024*1024*1024);
-	global_log->info() << "FLOP-Count per Iteration: " << fc.getTotalFlopCount() << " FLOPs" << endl;
-	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
-
-    fc.resetCounters();
-    timer.reset();
+	//0a,0b: 0RC
+		(**_cellProcessor).setCutoffRadius(0.);
+		(**_cellProcessor).setLJCutoffRadius(0.);
+		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnZero, *_flopCounterZeroRc);
+		iterateOwn(timer, numRepetitions, firstCell, gflopsPairZero, *_flopCounterZeroRc);
+    //1+2: bigRC
+	(**_cellProcessor).setCutoffRadius(_cutoffRadiusBig);
+	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadiusBig);
+    //1. own, bigRC
+		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnBig, *_flopCounterBigRc);
+	//2. pair, bigRC
+		moveMolecules(dirxplus, secondCell);
+		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairBig, *_flopCounterBigRc);
+	//3,...: normalRC
+	(**_cellProcessor).setCutoffRadius(_cutoffRadius);
+	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadius);
+	//3. own, normalRC
+		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnNormal, *_flopCounterNormalRc);
+	//4. pair, normalRC face
+		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalFace, *_flopCounterNormalRc); //cell2s particles moved by 1,0,0 - common face
+	//5. pair, normalRC edge
+		moveMolecules(diryplus, secondCell);
+		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalEdge, *_flopCounterNormalRc); //cell2s particles moved by 1,1,0 - common edge
+	//6. pair, normalRC corner
+		moveMolecules(dirzplus, secondCell);
+		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalCorner, *_flopCounterNormalRc); //cell2s particles moved by 1,1,1 - common corner
 
 	// clear cells
-	clearMolecules(first);
-	clearMolecules(second);
+	clearMolecules(firstCell);
+	clearMolecules(secondCell);
 
 }
 
-
+// returns a uniformly distributed random number between zero and one. (zero, one excluded)
 double uniformRandom()
 {
-  return ( (double)(rand()) + 1. )/( (double)(RAND_MAX) + 1. );
+  return ( (double)(rand()) + 1. )/( (double)(RAND_MAX) + 2. );
 }
- // return a normally distributed random number
+
+ // return a normally distributed random number (uses box-muller transform)
 double normalRandom()
 {
   double u1=uniformRandom();
   double u2=uniformRandom();
-  return cos(8.*atan(1.)*u2)*sqrt(-2.*log(u1)); 
+  return cos(8.*atan(1.)*u2)*sqrt(-2.*log(u1)); //box muller transform: cos(2*pi*u2)*sqrt(-2ln(u1))
 }
 
 
@@ -177,7 +260,6 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numR
 
 	for (int i = 0; i < numRepetitions; ++i) {
 		cp.processCell(cell1);
-//        cp.processCellPair(cell1, cell2);
 	}
 
 	cp.postprocessCell(cell1);
@@ -193,7 +275,6 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 	cp.preprocessCell(cell2);
 
 	for (int i = 0; i < numRepetitions; ++i) {
-//		cp.processCell(cell1);
         cp.processCellPair(cell1, cell2);
 	}
 
@@ -201,63 +282,6 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 	cp.postprocessCell(cell2);
 	cp.endTraversal();
 
-}
-
-// initialize eight molecules in the middle of the cell
-void VectorizationTuner::initSomeMolecules(Component& comp, ParticleCell& cell1, ParticleCell& cell2) {
-
-	unsigned long id = 0;
-	double vel[3] = { 0.0, 0.0, 0.0 };
-	double orientation[4] = { 1.0, 0.0, 0.0, 0.0 }; // NOTE the 1.0 in the first coordinate
-	double angularVelocity[3] = { 0.0, 0.0, 0.0 };
-
-	double start_pos1[3] = { 0.25, 0.25, 0.25 };
-	double start_pos2[3] = { 1.25, 0.25, 0.25 };
-	double pos[3];
-
-
-	for (int z = 0; z < 2; ++z) {
-		for (int y = 0; y < 2; ++y) {
-			for (int x = 0; x < 2; ++x) {
-				pos[0] = start_pos1[0] + x*0.5;
-				pos[1] = start_pos1[1] + y*0.5;
-				pos[2] = start_pos1[2] + z*0.5;
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell1.addParticle(m);
-				id++; // id's need to be distinct
-			}
-		}
-	}
-	
-    id = 0;
-	for (int z = 0; z < 2; ++z) {
-		for (int y = 0; y < 2; ++y) {
-			for (int x = 0; x < 2; ++x) {
-				pos[0] = start_pos2[0] + x*0.5;
-				pos[1] = start_pos2[1] + y*0.5;
-				pos[2] = start_pos2[2] + z*0.5;
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell2.addParticle(m);
-				id++; // id's need to be distinct
-			}
-		}
-	}
 }
 
 // should work also if molecules are initialized via initMeshOfMolecules, initUniformRandomMolecules, initNormalRandomMolecules
@@ -274,7 +298,7 @@ void VectorizationTuner::clearMolecules(ParticleCell & cell) {
 
 
 void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2) {
-
+	//TODO: Bmax, Bmin
 	int numMoleculesX = 3, numMoleculesY = 3, numMoleculesZ = 3;
 
 	unsigned long id = 0;
@@ -307,9 +331,6 @@ void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3],
 
 				cell1.addParticle(m);
 				id++; // id's need to be distinct
-//	global_log->info() << "pos0 =  " << pos[0] << endl;
-//	global_log->info() << "pos1 =  " << pos[1] << endl;
-//	global_log->info() << "pos2 =  " << pos[2] << endl;
 			}
 		}
 	}
@@ -333,90 +354,41 @@ void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3],
 
 				cell2.addParticle(m);
 				id++; // id's need to be distinct
-//	global_log->info() << "pos0 =  " << pos[0] << endl;
-//	global_log->info() << "pos1 =  " << pos[1] << endl;
-//	global_log->info() << "pos2 =  " << pos[2] << endl;
 			}
 		}
 	}
 }
 
-void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols) {
-
-
-//    char* value;
-//    value = getenv("VT_N");
-//    int numMolecules = atoi(value);
-
-
-//	int numMolecules = 2;
-//  int numMoleculesY = 2, numMoleculesZ = 2;
-
+void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell, unsigned int numMols) {
 	unsigned long id = 0;
 	double vel[3] = { 0.0, 0.0, 0.0 };
 	double orientation[4] = { 1.0, 0.0, 0.0, 0.0 }; // NOTE the 1.0 in the first coordinate
 	double angularVelocity[3] = { 0.0, 0.0, 0.0 };
 
-	double start_pos1[3] = { 0.0, 0.0, 0.0 }; // adapt for pair (Bmax Bmin)
-	double start_pos2[3] = { 1.0, 0.0, 0.0 };
 	double pos[3];
 
-//	double dx = boxMax[0] - boxMin[0] / numMoleculesX;
-//  double pos_randx = ((double)rand()/(double)RAND_MAX);
-//  double pos_randy = ((double)rand()/(double)RAND_MAX);
-//  double pos_randz = ((double)rand()/(double)RAND_MAX);
+	for(unsigned int i = 0; i < numMols; ++i) {
+		pos[0] = boxMin[0] + ((double)rand()/(double)RAND_MAX)*(boxMax[0] - boxMin[0]);
+		pos[1] = boxMin[1] + ((double)rand()/(double)RAND_MAX)*(boxMax[1] - boxMin[1]);
+		pos[2] = boxMin[2] + ((double)rand()/(double)RAND_MAX)*(boxMax[2] - boxMin[2]);
 
-	for(int i = 0; i < numMols; ++i) {
-
-
-				pos[0] = start_pos1[0] + ((double)rand()/(double)RAND_MAX);
-				pos[1] = start_pos1[1] + ((double)rand()/(double)RAND_MAX);
-				pos[2] = start_pos1[2] + ((double)rand()/(double)RAND_MAX);
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell1.addParticle(m);
-				id++; // id's need to be distinct
-//	global_log->info() << "pos0 =  " << pos[0] << endl;
-//	global_log->info() << "pos1 =  " << pos[1] << endl;
-//	global_log->info() << "pos2 =  " << pos[2] << endl;
-	}
-
-    id = 0;
-	for(int i = 0; i < numMols; ++i) {
-
-
-				pos[0] = start_pos2[0] + ((double)rand()/(double)RAND_MAX);
-				pos[1] = start_pos2[1] + ((double)rand()/(double)RAND_MAX);
-				pos[2] = start_pos2[2] + ((double)rand()/(double)RAND_MAX);
-
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
-
-				cell2.addParticle(m);
-				id++; // id's need to be distinct
-//	global_log->info() << "pos0 =  " << pos[0] << endl;
-//	global_log->info() << "pos1 =  " << pos[1] << endl;
-//	global_log->info() << "pos2 =  " << pos[2] << endl;
+		Molecule* m = new Molecule(
+				id, &comp,
+				pos[0], pos[1], pos[2],
+				vel[0], vel[1], vel[2],
+				orientation[0], orientation[1], orientation[2], orientation[3],
+				angularVelocity[0], angularVelocity[1], angularVelocity[2]
+				);
+		cell.addParticle(m);
+		id++; // id's need to be distinct
+		//global_log->info() << pos[0] << " " << pos[1] << " " << pos[2] << endl;
 	}
 }
 
 
-void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, int numMols) {
-
-//	int numMoleculesX = 20;
-//  int numMoleculesY = 2, numMoleculesZ = 2;
+void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, unsigned int numMols) {
+//TODO: currently only cell 1
+//TODO: does not really have/need/can_use Bmax, Bmin - is normal dist. proper???
 
 	unsigned long id = 0;
 	double vel[3] = { 0.0, 0.0, 0.0 };
@@ -427,29 +399,35 @@ void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxM
 	double pos[3];
 
 //	double dx = boxMax[0] - boxMin[0] / numMoleculesX;
-//  double pos_randx = ((double)rand()/(double)RAND_MAX);
-//  double pos_randy = ((double)rand()/(double)RAND_MAX);
-//  double pos_randz = ((double)rand()/(double)RAND_MAX);
-
-	for(int i = 0; i < numMols; ++i) {
 
 
-				pos[0] = normalRandom();
-				pos[1] = start_pos[1] + normalRandom();
-				pos[2] = start_pos[2] + normalRandom();
+	for(unsigned int i = 0; i < numMols; ++i) {
 
-				Molecule* m = new Molecule(
-						id, &comp,
-						pos[0], pos[1], pos[2],
-						vel[0], vel[1], vel[2],
-						orientation[0], orientation[1], orientation[2], orientation[3],
-						angularVelocity[0], angularVelocity[1], angularVelocity[2]
-						);
 
-				cell1.addParticle(m);
-				id++; // id's need to be distinct
-	global_log->info() << "pos0 =  " << pos[0] << endl;
-	global_log->info() << "pos1 =  " << pos[1] << endl;
-	global_log->info() << "pos2 =  " << pos[2] << endl;
+		pos[0] = normalRandom();
+		pos[1] = start_pos[1] + normalRandom();
+		pos[2] = start_pos[2] + normalRandom();
+
+		Molecule* m = new Molecule(
+				id, &comp,
+				pos[0], pos[1], pos[2],
+				vel[0], vel[1], vel[2],
+				orientation[0], orientation[1], orientation[2], orientation[3],
+				angularVelocity[0], angularVelocity[1], angularVelocity[2]
+				);
+
+		cell1.addParticle(m);
+		id++; // id's need to be distinct
+	}
+}
+
+void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
+	unsigned int cnt=cell.getMoleculeCount();
+	for(unsigned int i=0; i < cnt; ++i){
+		Molecule* mol = cell.getParticlePointers().at(i);
+		mol->move(0, direction[0]);
+		mol->move(1, direction[1]);
+		mol->move(2, direction[2]);
+		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << endl;
 	}
 }
