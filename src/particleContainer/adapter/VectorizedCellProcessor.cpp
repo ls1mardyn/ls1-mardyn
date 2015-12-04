@@ -389,11 +389,11 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		// Only calculate macroscopic values, if needed.
+		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 
 			const vcp_double_vec upot = vcp_simd_mul(eps_24, lj12m6);
-			const vcp_double_vec upot_sh = vcp_simd_add(shift6, upot);
+			const vcp_double_vec upot_sh = vcp_simd_add(shift6, upot);//shift6 is not masked -> we have to mask it
 			const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, forceMask);
 
 			sum_upot6lj = vcp_simd_add(sum_upot6lj, upot_masked);
@@ -404,9 +404,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 			const vcp_double_vec vir_xy = vcp_simd_add(vir_x, vir_y);
 			const vcp_double_vec virial = vcp_simd_add(vir_xy, vir_z);
-			const vcp_double_vec vir_masked = vcp_simd_applymask(virial, forceMask);
+			//const vcp_double_vec vir_masked = vcp_simd_applymask(virial, forceMask);//already masked, we don't need it.
 
-			sum_virial = vcp_simd_add(sum_virial, vir_masked);
+			sum_virial = vcp_simd_add(sum_virial, virial);
 		}
 	}
 
@@ -450,16 +450,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
-			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
+			//const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask); //already masked
+			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
 			const vcp_double_vec virial_y = vcp_simd_mul(m_dy, f_y);
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
-			sum_virial = vcp_simd_add(sum_virial, virial_masked);
+			//const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);//already masked
+			sum_virial = vcp_simd_add(sum_virial, virial);
 
 		}
 	}
@@ -511,16 +511,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		// Check if we have to add the macroscopic values up.
 		if (calculateMacroscopic)
 		{
-			const vcp_double_vec minusUpot_unmasked =  vcp_simd_mul(qpper4pie0dr3, re);
-			const vcp_double_vec minusUpot = vcp_simd_applymask(minusUpot_unmasked, forceMask);
+			const vcp_double_vec minusUpot =  vcp_simd_mul(qpper4pie0dr3, re);//already masked
+			//const vcp_double_vec minusUpot_masked = vcp_simd_applymask(minusUpot_unmasked, forceMask);
 			sum_upotXpoles = vcp_simd_sub(sum_upotXpoles, minusUpot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
 			const vcp_double_vec virial_y = vcp_simd_mul(m_dy, f_y);
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
-			const vcp_double_vec virial_unmasked = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial = vcp_simd_applymask(virial_unmasked, forceMask);
+			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);//already masked
+			//const vcp_double_vec virial_masked = vcp_simd_applymask(virial_unmasked, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial);
 		}
 
@@ -601,17 +601,17 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 			// can we precompute some of this?
-			const vcp_double_vec upot = vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(e1e2, vcp_simd_mul(three, re1re2perr2)));
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
-			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
+			const vcp_double_vec upot = vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(e1e2, vcp_simd_mul(three, re1re2perr2)));//already masked
+			//const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
+			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
 			const vcp_double_vec virial_y = vcp_simd_mul(m_dy, f_y);
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
-			sum_virial = vcp_simd_add(sum_virial, virial_masked);
+			//const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
+			sum_virial = vcp_simd_add(sum_virial, virial);
 
 			const vcp_double_vec myRF_masked =  vcp_simd_applymask(vcp_simd_mul(rffac, e1e2), forceMask);
 			sum_myRF = vcp_simd_add(sum_myRF, myRF_masked);
@@ -696,18 +696,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
-			// do we have to mask "upot"? It should already have been masked by "qQinv4dr3" which
-			// itself is masked by "invdr2".
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
-			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
+			//const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);//not needed
+			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
 			const vcp_double_vec virial_y = vcp_simd_mul(m_dy, f_y);
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
-			sum_virial = vcp_simd_add(sum_virial, virial_masked);
+			//const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
+			sum_virial = vcp_simd_add(sum_virial, virial);
 		}
 
 		/**********
@@ -824,18 +822,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
-			// do we have to mask "upot"? It should already have been masked by "myqfac" which
-			// itself is masked by "invdr2".
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
-			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
+			//const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
+			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
 			const vcp_double_vec virial_y = vcp_simd_mul(m_dy, f_y);
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
-			sum_virial = vcp_simd_add(sum_virial, virial_masked);
+			//const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
+			sum_virial = vcp_simd_add(sum_virial, virial);
 		}
 
 		/**********
@@ -989,9 +985,8 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 		// Check if we have to add the macroscopic values up for at least one of this pairs
 		if (calculateMacroscopic) {
-			// do we have to mask "upot"? It should already have been masked by "qfac" ...
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
-			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
+			//const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
+			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
 			const vcp_double_vec virial_y = vcp_simd_mul(m_dy, f_y);

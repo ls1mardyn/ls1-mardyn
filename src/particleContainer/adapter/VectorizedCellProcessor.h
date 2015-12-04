@@ -381,7 +381,7 @@ private:
 #if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
-			return vcp_simd_zerov(); //TODO: initj check avx <-> sse3
+			return vcp_simd_zerov();
 		}
 #endif
  /* definition of GetForceMask */
