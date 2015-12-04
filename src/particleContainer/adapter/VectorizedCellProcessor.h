@@ -148,7 +148,7 @@ private:
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline
 	void _loopBodyLJ(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
@@ -161,7 +161,7 @@ private:
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
 			const vcp_double_vec& shift6);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyCharge(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -173,7 +173,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeDipole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -187,7 +187,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyDipole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -204,7 +204,7 @@ private:
 		const vcp_double_vec& forceMask,
 		const vcp_double_vec& epsRFInvrc3);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeQuadrupole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -218,7 +218,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyDipoleQuadrupole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -234,7 +234,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyQuadrupole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -282,17 +282,10 @@ private:
 	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
-	 * The MacroPolicy class must provide the following methods:<br>
-	 * static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz);<br>
-	 * Returns whether to store macroscopic values for a non-vectorized pair.<br>
-	 * <br>
-	 * If the code is to be vectorized:<br>
-	 * static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz);
-	 * <br> Returns the mask indicating for which pairs to store macroscopic values in<br>
-	 * the vectorized code.
+	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.
 	 *
 	 */
-	template<class ForcePolicy, class MacroPolicy>
+	template<class ForcePolicy, bool CalculateMacroscopic>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
 
 	/**
@@ -417,12 +410,12 @@ private:
 		{
 			// We want all macroscopic values to be calculated, but not those
 			// for pairs which we ignore because of cutoff or other reasons.
-			return forceMask;
+			return forceMask;//this is ones, but adds the forcemask to it, which does not hurt, also faster, than generating stuff
 		}
 
 		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec, vcp_double_vec)
 		{
-			return forceMask;
+			return forceMask;//this is ones, but adds the forcemask to it, which does not hurt, also faster, than generating stuff
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class AllMacroPolicy_ */

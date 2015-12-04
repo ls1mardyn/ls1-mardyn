@@ -345,7 +345,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 	const vcp_double_vec _1pt5 = vcp_simd_set1(1.5);
 	const vcp_double_vec _15 = vcp_simd_set1(15.0);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline
 	void VectorizedCellProcessor :: _loopBodyLJ(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
@@ -389,14 +389,12 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
-
-		// Only go on if at least 1 macroscopic value has to be calculated.
-		if (vcp_simd_movemask(macroMask) > 0) {
+		// Only calculate macroscopic values, if needed.
+		if (calculateMacroscopic) {
 
 			const vcp_double_vec upot = vcp_simd_mul(eps_24, lj12m6);
 			const vcp_double_vec upot_sh = vcp_simd_add(shift6, upot);
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, forceMask);
 
 			sum_upot6lj = vcp_simd_add(sum_upot6lj, upot_masked);
 
@@ -406,14 +404,14 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 			const vcp_double_vec vir_xy = vcp_simd_add(vir_x, vir_y);
 			const vcp_double_vec virial = vcp_simd_add(vir_xy, vir_z);
-			const vcp_double_vec vir_masked = vcp_simd_applymask(virial, macroMask);
+			const vcp_double_vec vir_masked = vcp_simd_applymask(virial, forceMask);
 
 			sum_virial = vcp_simd_add(sum_virial, vir_masked);
 		}
 	}
 
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void VectorizedCellProcessor :: _loopBodyCharge(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -450,10 +448,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
-		// Check if we have to add the macroscopic values up for at least one of this pairs
-		if (vcp_simd_movemask(macroMask) > 0) {
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
+		// Check if we have to add the macroscopic values up
+		if (calculateMacroscopic) {
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -461,13 +458,13 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 
 		}
 	}
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void VectorizedCellProcessor :: _loopBodyChargeDipole(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -511,12 +508,11 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
-		// Check if we have to add the macroscopic values up for at least one of this pairs
-		if (vcp_simd_movemask(macroMask) > 0)
+		// Check if we have to add the macroscopic values up.
+		if (calculateMacroscopic)
 		{
 			const vcp_double_vec minusUpot_unmasked =  vcp_simd_mul(qpper4pie0dr3, re);
-			const vcp_double_vec minusUpot = vcp_simd_applymask(minusUpot_unmasked, macroMask);
+			const vcp_double_vec minusUpot = vcp_simd_applymask(minusUpot_unmasked, forceMask);
 			sum_upotXpoles = vcp_simd_sub(sum_upotXpoles, minusUpot);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -524,7 +520,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial_unmasked = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial = vcp_simd_applymask(virial_unmasked, macroMask);
+			const vcp_double_vec virial = vcp_simd_applymask(virial_unmasked, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial);
 		}
 
@@ -544,7 +540,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		M_z = vcp_simd_mul(qpper4pie0dr3, e_x_dy_minus_e_y_dx);
 	}
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void VectorizedCellProcessor :: _loopBodyDipole(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -602,12 +598,11 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
-		// Check if we have to add the macroscopic values up for at least one of this pairs
-		if (vcp_simd_movemask(macroMask) > 0) {
+		// Check if we have to add the macroscopic values up
+		if (calculateMacroscopic) {
 			// can we precompute some of this?
 			const vcp_double_vec upot = vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(e1e2, vcp_simd_mul(three, re1re2perr2)));
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -615,10 +610,10 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 
-			const vcp_double_vec myRF_masked =  vcp_simd_applymask(vcp_simd_mul(rffac, e1e2), macroMask);
+			const vcp_double_vec myRF_masked =  vcp_simd_applymask(vcp_simd_mul(rffac, e1e2), forceMask);
 			sum_myRF = vcp_simd_add(sum_myRF, myRF_masked);
 		}
 
@@ -642,7 +637,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		M2_z = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_x, dy), vcp_simd_mul(ejj_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x));
 	}
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void VectorizedCellProcessor :: _loopBodyChargeQuadrupole(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -699,13 +694,11 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
-
-		// Check if we have to add the macroscopic values up for at least one of this pairs
-		if (vcp_simd_movemask(macroMask) > 0) {
+		// Check if we have to add the macroscopic values up
+		if (calculateMacroscopic) {
 			// do we have to mask "upot"? It should already have been masked by "qQinv4dr3" which
 			// itself is masked by "invdr2".
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -713,7 +706,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 		}
 
@@ -729,7 +722,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		M_z = vcp_simd_mul(partialTjInvdr, minuseXrij_z);
 	}
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void VectorizedCellProcessor :: _loopBodyDipoleQuadrupole(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -829,13 +822,11 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMaskSwitched(forceMask, m_dx, m_dy, m_dz, switched);
-
-		// Check if we have to add the macroscopic values up for at least one of this pairs
-		if (vcp_simd_movemask(macroMask) > 0) {
+		// Check if we have to add the macroscopic values up
+		if (calculateMacroscopic) {
 			// do we have to mask "upot"? It should already have been masked by "myqfac" which
 			// itself is masked by "invdr2".
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -843,7 +834,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 		}
 
@@ -882,7 +873,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		M2_z = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z);
 	}
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void VectorizedCellProcessor :: _loopBodyQuadrupole(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -996,11 +987,10 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
 		const vcp_double_vec m_dz = vcp_simd_sub(m1_r_z, m2_r_z);
 
-		const vcp_double_vec macroMask = MacroPolicy::GetMacroMask(forceMask, m_dx, m_dy, m_dz);
 		// Check if we have to add the macroscopic values up for at least one of this pairs
-		if (vcp_simd_movemask(macroMask) > 0) {
+		if (calculateMacroscopic) {
 			// do we have to mask "upot"? It should already have been masked by "qfac" ...
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, macroMask);
+			const vcp_double_vec upot_masked = vcp_simd_applymask(upot, forceMask);
 			sum_upotXpoles = vcp_simd_add(sum_upotXpoles, upot_masked);
 
 			const vcp_double_vec virial_x = vcp_simd_mul(m_dx, f_x);
@@ -1008,7 +998,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec virial_z = vcp_simd_mul(m_dz, f_z);
 
 			const vcp_double_vec virial = vcp_simd_add(vcp_simd_add(virial_x, virial_y), virial_z);
-			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, macroMask);
+			const vcp_double_vec virial_masked = vcp_simd_applymask(virial, forceMask);
 			sum_virial = vcp_simd_add(sum_virial, virial_masked);
 		}
 
@@ -1175,7 +1165,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 #endif
 }
 
-template<class ForcePolicy, class MacroPolicy>
+template<class ForcePolicy, bool CalculateMacroscopic>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
@@ -1396,7 +1386,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						vcp_double_vec shift6;
 						unpackShift6(shift6, _shift6[id_i], soa2_ljc_id + j);
 
-						_loopBodyLJ<MacroPolicy>(
+						_loopBodyLJ<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
 							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 							fx, fy, fz,
@@ -1466,7 +1456,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
 
 						vcp_double_vec f_x, f_y, f_z;
-						_loopBodyCharge<MacroPolicy>(
+						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q2,
 								f_x, f_y, f_z,
@@ -1538,7 +1528,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
-						_loopBodyChargeDipole<MacroPolicy>(
+						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, p,
 								f_x, f_y, f_z, M_x, M_y, M_z,
@@ -1614,7 +1604,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
-						_loopBodyChargeQuadrupole<MacroPolicy>(
+						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, m,
 								f_x, f_y, f_z, M_x, M_y, M_z,
@@ -1707,7 +1697,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
-						_loopBodyDipole<MacroPolicy>(
+						_loopBodyDipole<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
 							m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p2,
 							f_x, f_y, f_z,
@@ -1789,7 +1779,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
-						_loopBodyChargeDipole<MacroPolicy>(
+						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e_x, e_y, e_z, p,
 								f_x, f_y, f_z, M_x, M_y, M_z,
@@ -1864,7 +1854,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
-						_loopBodyDipoleQuadrupole<MacroPolicy>(
+						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, m,
 								f_x, f_y, f_z, M2_x, M2_y, M2_z, M1_x, M1_y, M1_z,
@@ -1963,7 +1953,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
-						_loopBodyQuadrupole<MacroPolicy>(
+						_loopBodyQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, mjj,
 								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
@@ -2039,7 +2029,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
-						_loopBodyChargeQuadrupole<MacroPolicy>(
+						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e_x, e_y, e_z, m,
 								f_x, f_y, f_z, M_x, M_y, M_z,
@@ -2116,7 +2106,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
-						_loopBodyDipoleQuadrupole<MacroPolicy>(
+						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, m,
 								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
@@ -2178,7 +2168,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 		return;
 	}
 
-	_calculatePairs<SingleCellPolicy_, AllMacroPolicy_>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
+	_calculatePairs<SingleCellPolicy_, true>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
@@ -2191,14 +2181,13 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	}
 
 	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, AllMacroPolicy_>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+		_calculatePairs<CellPairPolicy_, true>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
 	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
-		//_calculatePairs<CellPairPolicy_, SomeMacroPolicy_>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//old version using macro condition
 		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, AllMacroPolicy_>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+			_calculatePairs<CellPairPolicy_, true>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
 		}
 		else {
-			_calculatePairs<CellPairPolicy_, NoMacroPolicy_>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+			_calculatePairs<CellPairPolicy_, false>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
 		}
 	} else {//both cells halo
 		return;
