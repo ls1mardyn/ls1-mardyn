@@ -492,7 +492,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec dr_inv = vcp_simd_sqrt(dr2_inv);
 		const vcp_double_vec dr3_inv = vcp_simd_mul(dr2_inv, dr_inv);
 
-		const vcp_double_vec re = vcp_simd_add(vcp_simd_mul(dx, e_x), vcp_simd_add(vcp_simd_mul(dy, e_y), vcp_simd_mul(dz, e_z)));
+		const vcp_double_vec re = vcp_simd_fma(dx, e_x, vcp_simd_fma(dy, e_y, dz * e_z));
 
 		const vcp_double_vec qpper4pie0 = vcp_simd_mul(q, p);
 		const vcp_double_vec qpper4pie0dr3 = vcp_simd_mul(qpper4pie0, dr3_inv);
@@ -576,9 +576,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec p1p2per4pie0r3 = vcp_simd_mul(p1p2per4pie0, vcp_simd_mul(dr_inv, dr2_inv));
 		const vcp_double_vec p1p2threeper4pie0r5 = vcp_simd_mul(p1p2per4pie0r3, dr2three_inv);
 
-		const vcp_double_vec e1e2 = vcp_simd_add(vcp_simd_mul(eii_x, ejj_x), vcp_simd_add(vcp_simd_mul(eii_y, ejj_y), vcp_simd_mul(eii_z, ejj_z)));
-		const vcp_double_vec re1 = vcp_simd_add(vcp_simd_mul(dx, eii_x), vcp_simd_add(vcp_simd_mul(dy, eii_y), vcp_simd_mul(dz, eii_z)));
-		const vcp_double_vec re2 = vcp_simd_add(vcp_simd_mul(dx, ejj_x), vcp_simd_add(vcp_simd_mul(dy, ejj_y), vcp_simd_mul(dz, ejj_z)));
+		const vcp_double_vec e1e2 = vcp_simd_fma(eii_x, ejj_x, vcp_simd_fma(eii_y, ejj_y, eii_z *  ejj_z));
+		const vcp_double_vec re1 = vcp_simd_fma(dx, eii_x, vcp_simd_fma(dy, eii_y, dz * eii_z));
+		const vcp_double_vec re2 = vcp_simd_fma(dx, ejj_x, vcp_simd_fma(dy, ejj_y, dz * ejj_z));
 
 		const vcp_double_vec re1threeperr2 = vcp_simd_mul(re1, dr2three_inv);
 		const vcp_double_vec re2threeperr2 = vcp_simd_mul(re2, dr2three_inv);
@@ -587,9 +587,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec e1e2minus5re1re2perr2 = vcp_simd_sub(e1e2, vcp_simd_mul(five, re1re2perr2));
 
 
-		f_x = vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dx, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_x, re2), vcp_simd_mul(ejj_x, re1))));
-		f_y = vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dy, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_y, re2), vcp_simd_mul(ejj_y, re1))));
-		f_z = vcp_simd_mul(p1p2threeper4pie0r5, vcp_simd_add(vcp_simd_mul(dz, e1e2minus5re1re2perr2), vcp_simd_add(vcp_simd_mul(eii_z, re2), vcp_simd_mul(ejj_z, re1))));
+		f_x = p1p2threeper4pie0r5 * vcp_simd_fma(dx, e1e2minus5re1re2perr2, vcp_simd_fma(eii_x, re2, ejj_x * re1));
+		f_y = p1p2threeper4pie0r5 * vcp_simd_fma(dy, e1e2minus5re1re2perr2, vcp_simd_fma(eii_y, re2, ejj_y * re1));
+		f_z = p1p2threeper4pie0r5 * vcp_simd_fma(dz, e1e2minus5re1re2perr2, vcp_simd_fma(eii_z, re2, ejj_z * re1));
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -623,13 +623,13 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec e1_y_e2_z_minus_e1_z_e2_y = vcp_simd_sub(e1_y_e2_z, e1_z_e2_y);
 		const vcp_double_vec e1_z_e2_x_minus_e1_x_e2_z = vcp_simd_sub(e1_z_e2_x, e1_x_e2_z);
 
-		M1_x = vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_y, dz), vcp_simd_mul(eii_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), vcp_simd_mul(rffac, e1_y_e2_z_minus_e1_z_e2_y));
-		M1_y = vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_z, dx), vcp_simd_mul(eii_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), vcp_simd_mul(rffac, e1_z_e2_x_minus_e1_x_e2_z));
-		M1_z = vcp_simd_add(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_sub(vcp_simd_mul(re2threeperr2, vcp_simd_sub(vcp_simd_mul(eii_x, dy), vcp_simd_mul(eii_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x));
+		M1_x = vcp_simd_fma(p1p2per4pie0r3, vcp_simd_fms(re2threeperr2, vcp_simd_fms(eii_y, dz, eii_z * dy), e1_y_e2_z_minus_e1_z_e2_y), rffac * e1_y_e2_z_minus_e1_z_e2_y);
+		M1_y = vcp_simd_fma(p1p2per4pie0r3, vcp_simd_fms(re2threeperr2, vcp_simd_fms(eii_z, dx, eii_x * dz), e1_z_e2_x_minus_e1_x_e2_z), rffac * e1_z_e2_x_minus_e1_x_e2_z);
+		M1_z = vcp_simd_fma(p1p2per4pie0r3, vcp_simd_fms(re2threeperr2, vcp_simd_fms(eii_x, dy, eii_y * dx), e1_x_e2_y_minus_e1_y_e2_x), rffac * e1_x_e2_y_minus_e1_y_e2_x);
 
-		M2_x = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_y, dz), vcp_simd_mul(ejj_z, dy))), e1_y_e2_z_minus_e1_z_e2_y)), vcp_simd_mul(rffac, e1_y_e2_z_minus_e1_z_e2_y));
-		M2_y = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_z, dx), vcp_simd_mul(ejj_x, dz))), e1_z_e2_x_minus_e1_x_e2_z)), vcp_simd_mul(rffac, e1_z_e2_x_minus_e1_x_e2_z));
-		M2_z = vcp_simd_sub(vcp_simd_mul(p1p2per4pie0r3, vcp_simd_add(vcp_simd_mul(re1threeperr2, vcp_simd_sub(vcp_simd_mul(ejj_x, dy), vcp_simd_mul(ejj_y, dx))), e1_x_e2_y_minus_e1_y_e2_x)), vcp_simd_mul(rffac, e1_x_e2_y_minus_e1_y_e2_x));
+		M2_x = vcp_simd_fms(p1p2per4pie0r3, vcp_simd_fma(re1threeperr2, vcp_simd_fms(ejj_y, dz, ejj_z * dy), e1_y_e2_z_minus_e1_z_e2_y), rffac * e1_y_e2_z_minus_e1_z_e2_y);
+		M2_y = vcp_simd_fms(p1p2per4pie0r3, vcp_simd_fma(re1threeperr2, vcp_simd_fms(ejj_z, dx, ejj_x * dz), e1_z_e2_x_minus_e1_x_e2_z), rffac * e1_z_e2_x_minus_e1_x_e2_z);
+		M2_z = vcp_simd_fms(p1p2per4pie0r3, vcp_simd_fma(re1threeperr2, vcp_simd_fms(ejj_x, dy, ejj_y * dx), e1_x_e2_y_minus_e1_y_e2_x), rffac * e1_x_e2_y_minus_e1_y_e2_x);
 	}
 
 	template<bool calculateMacroscopic>
@@ -681,9 +681,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		part1 = vcp_simd_mul(costj, vcp_simd_mul(partialTjInvdr, invdr));
 		const vcp_double_vec fac = vcp_simd_add(part1, minus_partialRijInvdr);
 
-		f_x = vcp_simd_sub(vcp_simd_mul(fac, c_dx), vcp_simd_mul(partialTjInvdr, ejj_x));
-		f_y = vcp_simd_sub(vcp_simd_mul(fac, c_dy), vcp_simd_mul(partialTjInvdr, ejj_y));
-		f_z = vcp_simd_sub(vcp_simd_mul(fac, c_dz), vcp_simd_mul(partialTjInvdr, ejj_z));
+		f_x = vcp_simd_fms(fac, c_dx, partialTjInvdr * ejj_x);
+		f_y = vcp_simd_fms(fac, c_dy, partialTjInvdr * ejj_y);
+		f_z = vcp_simd_fms(fac, c_dz, partialTjInvdr * ejj_z);
 
 		const vcp_double_vec m_dx = vcp_simd_sub(m1_r_x, m2_r_x);
 		const vcp_double_vec m_dy = vcp_simd_sub(m1_r_y, m2_r_y);
@@ -704,9 +704,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		/**********
 		 * Torque
 		 **********/
-		const vcp_double_vec minuseXrij_x = vcp_simd_sub(vcp_simd_mul(ejj_z, c_dy), vcp_simd_mul(ejj_y, c_dz));
-		const vcp_double_vec minuseXrij_y = vcp_simd_sub(vcp_simd_mul(ejj_x, c_dz), vcp_simd_mul(ejj_z, c_dx));
-		const vcp_double_vec minuseXrij_z = vcp_simd_sub(vcp_simd_mul(ejj_y, c_dx), vcp_simd_mul(ejj_x, c_dy));
+		const vcp_double_vec minuseXrij_x = vcp_simd_fms(ejj_z, c_dy, ejj_y * c_dz);
+		const vcp_double_vec minuseXrij_y = vcp_simd_fms(ejj_x, c_dz, ejj_z * c_dx);
+		const vcp_double_vec minuseXrij_z = vcp_simd_fms(ejj_y, c_dx, ejj_x * c_dy);
 
 		M_x = vcp_simd_mul(partialTjInvdr, minuseXrij_x);
 		M_y = vcp_simd_mul(partialTjInvdr, minuseXrij_y);
@@ -770,7 +770,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		 ************/
 		// TODO: Check if upot has to be multiplied by -1 according to DISS_STOLL S.178.
 		// This affects also the implementation in potforce.h
-		const vcp_double_vec _5cos2tjminus1 = vcp_simd_sub(vcp_simd_mul(five, cos2tj), one);
+		const vcp_double_vec _5cos2tjminus1 = vcp_simd_fms(five, cos2tj, one);
 		const vcp_double_vec _2costj = vcp_simd_mul(two, costj);
 
 		vcp_double_vec part1 = vcp_simd_mul(costi, _5cos2tjminus1);
@@ -843,21 +843,21 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec partialGij_eiXej_y = vcp_simd_mul(partialGij, eii_z_ejj_x_minus_eii_x_ejj_z);
 		const vcp_double_vec partialGij_eiXej_z = vcp_simd_mul(partialGij, eii_x_ejj_y_minus_eii_y_ejj_x);
 
-		vcp_double_vec eXrij_x = vcp_simd_sub(vcp_simd_mul(eii_y, c_dz), vcp_simd_mul(eii_z, c_dy));
-		vcp_double_vec eXrij_y = vcp_simd_sub(vcp_simd_mul(eii_z, c_dx), vcp_simd_mul(eii_x, c_dz));
-		vcp_double_vec eXrij_z = vcp_simd_sub(vcp_simd_mul(eii_x, c_dy), vcp_simd_mul(eii_y, c_dx));
+		vcp_double_vec eXrij_x = vcp_simd_fms(eii_y, c_dz, eii_z * c_dy);
+		vcp_double_vec eXrij_y = vcp_simd_fms(eii_z, c_dx, eii_x * c_dz);
+		vcp_double_vec eXrij_z = vcp_simd_fms(eii_x, c_dy, eii_y * c_dx);
 
-		M1_x = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x);
-		M1_y = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y);
-		M1_z = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_z), partialGij_eiXej_z);
+		M1_x = vcp_simd_fms(minus_partialTiInvdr, eXrij_x, partialGij_eiXej_x);
+		M1_y = vcp_simd_fms(minus_partialTiInvdr, eXrij_y, partialGij_eiXej_y);
+		M1_z = vcp_simd_fms(minus_partialTiInvdr, eXrij_z, partialGij_eiXej_z);
 
-		eXrij_x = vcp_simd_sub(vcp_simd_mul(ejj_y, c_dz), vcp_simd_mul(ejj_z, c_dy));
-		eXrij_y = vcp_simd_sub(vcp_simd_mul(ejj_z, c_dx), vcp_simd_mul(ejj_x, c_dz));
-		eXrij_z = vcp_simd_sub(vcp_simd_mul(ejj_x, c_dy), vcp_simd_mul(ejj_y, c_dx));
+		eXrij_x = vcp_simd_fms(ejj_y, c_dz, vcp_simd_mul(ejj_z, c_dy));
+		eXrij_y = vcp_simd_fms(ejj_z, c_dx, vcp_simd_mul(ejj_x, c_dz));
+		eXrij_z = vcp_simd_fms(ejj_x, c_dy, vcp_simd_mul(ejj_y, c_dx));
 
-		M2_x = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_x), partialGij_eiXej_x);
-		M2_y = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_y), partialGij_eiXej_y);
-		M2_z = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z);
+		M2_x = vcp_simd_fma(minus_partialTjInvdr, eXrij_x, partialGij_eiXej_x);
+		M2_y = vcp_simd_fma(minus_partialTjInvdr, eXrij_y, partialGij_eiXej_y);
+		M2_z = vcp_simd_fma(minus_partialTjInvdr, eXrij_z, partialGij_eiXej_z);
 	}
 
 	template<bool calculateMacroscopic>
@@ -1001,21 +1001,21 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec partialGij_eiXej_y = vcp_simd_mul(partialGij, eii_z_ejj_x_minus_eii_x_ejj_z);
 		const vcp_double_vec partialGij_eiXej_z = vcp_simd_mul(partialGij, eii_x_ejj_y_minus_eii_y_ejj_x);
 
-		vcp_double_vec eXrij_x = vcp_simd_sub(vcp_simd_mul(eii_y, c_dz), vcp_simd_mul(eii_z, c_dy));
-		vcp_double_vec eXrij_y = vcp_simd_sub(vcp_simd_mul(eii_z, c_dx), vcp_simd_mul(eii_x, c_dz));
-		vcp_double_vec eXrij_z = vcp_simd_sub(vcp_simd_mul(eii_x, c_dy), vcp_simd_mul(eii_y, c_dx));
+		vcp_double_vec eXrij_x = vcp_simd_fms(eii_y, c_dz, eii_z * c_dy);
+		vcp_double_vec eXrij_y = vcp_simd_fms(eii_z, c_dx, eii_x * c_dz);
+		vcp_double_vec eXrij_z = vcp_simd_fms(eii_x, c_dy, eii_y * c_dx);
 
-		Mii_x = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_x), partialGij_eiXej_x);
-		Mii_y = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_y), partialGij_eiXej_y);
-		Mii_z = vcp_simd_sub(vcp_simd_mul(minus_partialTiInvdr, eXrij_z), partialGij_eiXej_z);
+		Mii_x = vcp_simd_fms(minus_partialTiInvdr, eXrij_x, partialGij_eiXej_x);
+		Mii_y = vcp_simd_fms(minus_partialTiInvdr, eXrij_y, partialGij_eiXej_y);
+		Mii_z = vcp_simd_fms(minus_partialTiInvdr, eXrij_z, partialGij_eiXej_z);
 
-		eXrij_x = vcp_simd_sub(vcp_simd_mul(ejj_y, c_dz), vcp_simd_mul(ejj_z, c_dy));
-		eXrij_y = vcp_simd_sub(vcp_simd_mul(ejj_z, c_dx), vcp_simd_mul(ejj_x, c_dz));
-		eXrij_z = vcp_simd_sub(vcp_simd_mul(ejj_x, c_dy), vcp_simd_mul(ejj_y, c_dx));
+		eXrij_x = vcp_simd_fms(ejj_y, c_dz, ejj_z * c_dy);
+		eXrij_y = vcp_simd_fms(ejj_z, c_dx, ejj_x * c_dz);
+		eXrij_z = vcp_simd_fms(ejj_x, c_dy, ejj_y * c_dx);
 
-		Mjj_x = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_x), partialGij_eiXej_x);
-		Mjj_y = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_y), partialGij_eiXej_y);
-		Mjj_z = vcp_simd_add(vcp_simd_mul(minus_partialTjInvdr, eXrij_z), partialGij_eiXej_z);
+		Mjj_x = vcp_simd_fma(minus_partialTjInvdr, eXrij_x, partialGij_eiXej_x);
+		Mjj_y = vcp_simd_fma(minus_partialTjInvdr, eXrij_y, partialGij_eiXej_y);
+		Mjj_z = vcp_simd_fma(minus_partialTjInvdr, eXrij_z, partialGij_eiXej_z);
 	}
 
 
@@ -1059,7 +1059,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
-		const vcp_double_vec m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
+		const vcp_double_vec m_r2 = vcp_simd_fma(m_dx, m_dx, vcp_simd_fma(m_dy, m_dy, m_dz * m_dz));
 
 		const vcp_double_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
@@ -1106,7 +1106,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
-		const vcp_double_vec m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
+		const vcp_double_vec m_r2 = vcp_simd_fma(m_dx, m_dx, vcp_simd_fma(m_dy, m_dy, (m_dz * m_dz)));
 
 		const vcp_double_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);

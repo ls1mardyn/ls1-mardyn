@@ -176,11 +176,14 @@ static inline T vcp_floor_to_vec_size(const T& num){
 
 
 
-// ------------- FMA, gathers:
+// ------------- FMA, fmsub, gathers:
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX2
 	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return _mm256_fmadd_pd(a, b, c);
+	}
+	static inline vcp_double_vec vcp_simd_fms(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return _mm256_fmsub_pd(a, b, c);
 	}
 #endif
 
@@ -188,6 +191,9 @@ static inline T vcp_floor_to_vec_size(const T& num){
 #if VCP_VEC_TYPE!=VCP_VEC_AVX2
 	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return vcp_simd_add(vcp_simd_mul(a, b), c);
+	}
+	static inline vcp_double_vec vcp_simd_fms(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return vcp_simd_sub(vcp_simd_mul(a, b), c);
 	}
 #endif
 
