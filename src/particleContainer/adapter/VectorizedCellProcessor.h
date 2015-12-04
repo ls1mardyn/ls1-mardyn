@@ -1,7 +1,7 @@
 /**
  * \file
  * \brief VectorizedCellProcessor.h
- * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
+ * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann, Steffen Seckler
  */
 
 #ifndef VECTORIZEDCELLPROCESSOR_H_
@@ -148,7 +148,7 @@ private:
 	// managing free objects
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline
 	void _loopBodyLJ(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
@@ -161,7 +161,7 @@ private:
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
 			const vcp_double_vec& shift6);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyCharge(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -173,7 +173,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeDipole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -187,7 +187,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyDipole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -204,7 +204,7 @@ private:
 		const vcp_double_vec& forceMask,
 		const vcp_double_vec& epsRFInvrc3);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeQuadrupole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -218,7 +218,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyDipoleQuadrupole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -234,7 +234,7 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
 
-	template<class MacroPolicy>
+	template<bool calculateMacroscopic>
 	inline void _loopBodyQuadrupole(
 		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
@@ -282,17 +282,10 @@ private:
 	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
-	 * The MacroPolicy class must provide the following methods:<br>
-	 * static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz);<br>
-	 * Returns whether to store macroscopic values for a non-vectorized pair.<br>
-	 * <br>
-	 * If the code is to be vectorized:<br>
-	 * static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec m_dx, vcp_double_vec m_dy, vcp_double_vec m_dz);
-	 * <br> Returns the mask indicating for which pairs to store macroscopic values in<br>
-	 * the vectorized code.
+	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.
 	 *
 	 */
-	template<class ForcePolicy, class MacroPolicy>
+	template<class ForcePolicy, bool CalculateMacroscopic>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
 
 	/**
@@ -388,97 +381,12 @@ private:
 #if VCP_VEC_TYPE==VCP_VEC_AVX
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
-			return vcp_simd_zerov(); //TODO: initj check avx <-> sse3
+			return vcp_simd_zerov();
 		}
 #endif
  /* definition of GetForceMask */
 	}; /* end of class CellPairPolicy_ */
 
-	/**
-	 * \brief A MacroPolicy for adding up all macroscopic values.
-	 * \details This is used for single cell calculations and for<br>
-	 * double cell calculations with no halo cells.
-	 */
-	class AllMacroPolicy_ {
-	public:
-		inline static bool MacroscopicValueCondition(double, double, double)
-		{
-			// We want all macroscopic values to be calculated.
-			return true;
-		}
-
-		inline static bool MacroscopicValueConditionSwitched(double, double, double, bool)
-		{
-			return true;
-		}
-
-#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
-		inline static vcp_double_vec GetMacroMask(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec)
-		{
-			// We want all macroscopic values to be calculated, but not those
-			// for pairs which we ignore because of cutoff or other reasons.
-			return forceMask;
-		}
-
-		inline static vcp_double_vec GetMacroMaskSwitched(vcp_double_vec forceMask, vcp_double_vec, vcp_double_vec, vcp_double_vec, vcp_double_vec)
-		{
-			return forceMask;
-		}
-#endif /* definition of GetMacroMask and GetMacroMaskSwitched */
-	}; /* end of class AllMacroPolicy_ */
-
-	/**
-	 * \brief A MacroPolicy.
-	 * \details Only adds up the macroscopic values for pairs where<br>
-	 * mol1 < mol2 in the 3D ordering. This is used for double cell calculations<br>
-	 * with one halo Cell.
-	 */
-	class SomeMacroPolicy_ {
-	public:
-		inline static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz)
-		{
-			// Only calculate macroscopic values for pairs where molecule 1
-			// "IsLessThan" molecule 2.
-			return (m_dz < 0.0) || (
-					(m_dz == 0.0) && (
-						(m_dy < 0.0) || (
-							(m_dy == 0.0) && (m_dx < 0.0)
-						)
-					)
-				);
-		}
-
-		inline static bool MacroscopicValueConditionSwitched(double m_dx, double m_dy, double m_dz, bool switched)
-		{
-			// Only calculate macroscopic values for pairs where molecule 1
-			// "IsLessThan" molecule 2.
-			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
-		}
-
-#if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
-		// Only calculate macroscopic values for pairs where molecule 1
-		// "IsLessThan" molecule 2.
-		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
-		{
-			const vcp_double_vec zero = vcp_simd_zerov();
-
-			const vcp_double_vec t1 = vcp_simd_and(vcp_simd_lt(m_dx, zero), vcp_simd_eq(m_dy, zero));
-
-			const vcp_double_vec t2 = vcp_simd_or(t1, vcp_simd_lt(m_dy, zero));
-
-			const vcp_double_vec t3 = vcp_simd_and(t2, vcp_simd_eq(m_dz, zero));
-
-			const vcp_double_vec t4 = vcp_simd_or(t3 , vcp_simd_lt(m_dz, zero));
-
-			return vcp_simd_applymask(t4, forceMask);
-		}
-
-		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
-		{
-			return vcp_simd_applymask(vcp_simd_xor(GetMacroMask(forceMask, m_dx, m_dy, m_dz), switched), forceMask);
-		}
-#endif /* definition of GetMacroMask and GetMacroMaskSwitched */
-	}; /* end of class SomeMacroPolicy_ */
 }; /* end of class VectorizedCellProcessor */
 
 #endif /* VECTORIZEDCELLPROCESSOR_H_ */

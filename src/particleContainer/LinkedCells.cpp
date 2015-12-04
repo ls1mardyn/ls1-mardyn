@@ -540,7 +540,7 @@ void LinkedCells::initializeCells() {
 				_cells[cellIndex].skipCellFromHaloRegion();
 				_cells[cellIndex].skipCellFromBoundaryRegion();
 				_cells[cellIndex].skipCellFromInnerRegion();
-
+				_cells[cellIndex].setCellIndex(cellIndex);//set the index of the cell to the index of it...
 				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] ||
 				    ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
 				    iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||

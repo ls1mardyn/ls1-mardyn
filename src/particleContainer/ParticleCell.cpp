@@ -8,7 +8,7 @@
 using namespace std;
 
 ParticleCell::ParticleCell() :
-		_cellDataSoA(0) {
+		_cellDataSoA(0), _cellIndex(0) {
 }
 
 ParticleCell::~ParticleCell() {

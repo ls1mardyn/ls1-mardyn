@@ -18,6 +18,7 @@
 //! much overhead. So during the initialisation, first a regular cell structure is created
 //! (Basically LinkedCells with l=rc, so big coarse cells).
 //! Depending on the local density, the cells are refinded once (8 subcells) or remain coarse.
+//! At most one level of refinement is carried out.
 
 class AdaptiveSubCells : public ParticleContainer {
 public:

@@ -81,16 +81,38 @@ public:
 		_cellDataSoA = p;
 	}
 
+	/**
+	 * Returns the cell index
+	 */
+	unsigned long getCellIndex() {
+		return _cellIndex;
+	}
+
+	/**
+	 * Sets the cell index. On one process, this index must be unique.
+	 * @param cellIndex
+	 */
+	void setCellIndex(unsigned long cellIndex){
+		_cellIndex = cellIndex;
+	}
+
 private:
 	/**
 	 * \brief A list of pointers to the Molecules in this cell.
 	 */
 	std::vector<Molecule *> molecules;
+
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
 	CellDataSoA * _cellDataSoA;
+
+	/**
+	 * \brief The index of the cell.
+	 * On one process every index must be unique.
+	 */
+	unsigned long _cellIndex;
 };
 
 #endif /* PARTICLE CELL_H_ */
