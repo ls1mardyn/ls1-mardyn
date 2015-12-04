@@ -508,12 +508,12 @@ private:
 		// "IsLessThan" molecule 2.
 		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
 		{
-			return forceMask;
+			return vcp_simd_zerov();//always return false
 		}
 
 		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
-			return forceMask;
+			return vcp_simd_zerov();//always return false
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class SomeMacroPolicy_ */
