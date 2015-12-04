@@ -500,7 +500,7 @@ private:
 		{
 			// Only calculate macroscopic values for pairs where molecule 1
 			// "IsLessThan" molecule 2.
-			return MacroscopicValueCondition(m_dx, m_dy, m_dz) ^ switched;
+			return false;
 		}
 
 #if VCP_VEC_TYPE!=VCP_NOVEC or VCP_VEC_TYPE==VCP_NOVEC
@@ -508,12 +508,12 @@ private:
 		// "IsLessThan" molecule 2.
 		inline static vcp_double_vec GetMacroMask(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz)
 		{
-			return vcp_simd_zerov();
+			return forceMask;
 		}
 
 		inline static vcp_double_vec GetMacroMaskSwitched(const vcp_double_vec& forceMask, const vcp_double_vec& m_dx, const vcp_double_vec& m_dy, const vcp_double_vec& m_dz, const vcp_double_vec& switched)
 		{
-			return vcp_simd_zerov();
+			return forceMask;
 		}
 #endif /* definition of GetMacroMask and GetMacroMaskSwitched */
 	}; /* end of class SomeMacroPolicy_ */
