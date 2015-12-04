@@ -27,6 +27,8 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	global_log->info() << "VectorizedCellProcessor: using SSE3 intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	global_log->info() << "VectorizedCellProcessor: using AVX intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2
+	global_log->info() << "VectorizedCellProcessor: using AVX2 intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->components());
@@ -1088,7 +1090,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	return compute_molecule;
 
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
+#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 
 	vcp_double_vec compute_molecule = vcp_simd_zerov();
 

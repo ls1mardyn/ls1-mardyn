@@ -99,7 +99,7 @@
 
 	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm_movemask_pd(a);}
 
-#elif VCP_VEC_TYPE==VCP_VEC_AVX
+#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm256_setzero_pd(); }
 	static inline vcp_double_vec vcp_simd_ones() { return _mm256_castsi256_pd( _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) ); }
 	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_LT_OS);}
@@ -140,7 +140,7 @@
 		//static inline vcp_double_vec operator < (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_lt(a, b); }//next three operators not compatible with gcc 4.7 or below
 		//static inline vcp_double_vec operator == (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_eq(a, b); }
 		//static inline vcp_double_vec operator != (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_neq(a, b); }
-		//static inline vcp_double_vec operator & (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_and(a, b); } //the next three operators are not working with gcc
+		//static inline vcp_double_vec operator & (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_and(a, b); } //the next three operators are not working with gcc at all
 		//static inline vcp_double_vec operator | (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_or(a, b); }
 		//static inline vcp_double_vec operator ^ (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_xor(a, b); }
 
@@ -158,7 +158,9 @@
  * @return
  */
 template<class T>
-static inline T vcp_ceil_to_vec_size(const T& num){return (num + static_cast<T>(VCP_VEC_SIZE_M1)) & (~static_cast<T>(VCP_VEC_SIZE_M1));};
+static inline T vcp_ceil_to_vec_size(const T& num){
+	return (num + static_cast<T>(VCP_VEC_SIZE_M1)) & (~static_cast<T>(VCP_VEC_SIZE_M1));
+}
 
 /**
  * if num is not divisible by VCP_VEC_SIZE finds the next smaller multiple of VCP_VEC_SIZE, otherwise returns num.
@@ -166,10 +168,28 @@ static inline T vcp_ceil_to_vec_size(const T& num){return (num + static_cast<T>(
  * @return
  */
 template<class T>
-static inline T vcp_floor_to_vec_size(const T& num){return num & (~static_cast<T>(VCP_VEC_SIZE_M1));};
+static inline T vcp_floor_to_vec_size(const T& num){
+	return num & (~static_cast<T>(VCP_VEC_SIZE_M1));
+}
 
 
 
+
+
+// ------------- FMA, gathers:
+
+#if VCP_VEC_TYPE==VCP_VEC_AVX2
+	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return _mm256_fmadd_pd(a, b, c);
+	}
+#endif
+
+
+#if VCP_VEC_TYPE!=VCP_VEC_AVX2
+	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return vcp_simd_add(vcp_simd_mul(a, b), c);
+	}
+#endif
 
 
 
