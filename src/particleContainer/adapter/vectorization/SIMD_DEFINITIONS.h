@@ -182,6 +182,9 @@ static inline T vcp_floor_to_vec_size(const T& num){
 	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return _mm256_fmadd_pd(a, b, c);
 	}
+	static inline vcp_double_vec vcp_simd_fnma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return _mm256_fnmadd_pd(a, b, c);//-(a*b) + c
+	}
 	static inline vcp_double_vec vcp_simd_fms(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return _mm256_fmsub_pd(a, b, c);
 	}
@@ -192,12 +195,22 @@ static inline T vcp_floor_to_vec_size(const T& num){
 	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return vcp_simd_add(vcp_simd_mul(a, b), c);
 	}
+	static inline vcp_double_vec vcp_simd_fnma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return vcp_simd_sub(c, vcp_simd_mul(a, b));//-(a*b) + c
+	}
 	static inline vcp_double_vec vcp_simd_fms(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return vcp_simd_sub(vcp_simd_mul(a, b), c);
 	}
 #endif
 
-
+/**
+ * calculates scalar product of a and b.
+ * a1 * b1 + a2 * b2 + a3 * b3
+ * @return
+ */
+static inline vcp_double_vec vcp_simd_scalProd(const vcp_double_vec& a1, const vcp_double_vec& a2, const vcp_double_vec& a3, const vcp_double_vec& b1, const vcp_double_vec& b2, const vcp_double_vec& b3) {
+	return vcp_simd_fma(a1, b1, vcp_simd_fma(a2, b2, a3 * b3));;
+}
 
 
 
