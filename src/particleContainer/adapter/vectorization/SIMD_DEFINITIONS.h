@@ -209,7 +209,7 @@ static inline T vcp_floor_to_vec_size(const T& num){
  * @return
  */
 static inline vcp_double_vec vcp_simd_scalProd(const vcp_double_vec& a1, const vcp_double_vec& a2, const vcp_double_vec& a3, const vcp_double_vec& b1, const vcp_double_vec& b2, const vcp_double_vec& b3) {
-	return vcp_simd_fma(a1, b1, vcp_simd_fma(a2, b2, a3 * b3));;
+	return vcp_simd_fma(a1, b1, vcp_simd_fma(a2, b2, a3 * b3));
 }
 
 

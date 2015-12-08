@@ -60,7 +60,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
  */
 static inline __attribute__((always_inline))
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
-		const size_t* const id_j){
+		const size_t* id_j){
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	shift6 = shift6I[id_j[0]];
 
@@ -69,7 +69,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	const vcp_double_vec sh2 = _mm_load_sd(shift6I + id_j[1]);
 	shift6 = vcp_simd_unpacklo(sh1, sh2);
 
-#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 //avx
+#elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
 	const vcp_double_vec sh0 = vcp_simd_maskload(shift6I + id_j[0], memoryMask_first);
 	const vcp_double_vec sh1 = vcp_simd_maskload(shift6I + id_j[1], memoryMask_first);
@@ -80,7 +80,12 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	const vcp_double_vec sh2sh3 = vcp_simd_unpacklo(sh2, sh3);
 
 	shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
-
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
+		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
+	static const vcp_mask_vec ones = _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+	const vcp_mask_vec indices = _mm256_maskload_epi64((const long long*)id_j, ones);
+	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
 #endif
 }
 
