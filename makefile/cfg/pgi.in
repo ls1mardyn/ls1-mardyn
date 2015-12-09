@@ -43,3 +43,6 @@ endif
 ifeq ($(VECTORIZE_CODE),2)
 CXXFLAGS_VECTORIZE = -Mvect=256
 endif
+ifeq ($(VECTORIZE_CODE),3)
+CXXFLAGS_VECTORIZE = -Mvect=256
+endif

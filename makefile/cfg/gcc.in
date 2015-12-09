@@ -56,6 +56,9 @@ endif
 ifeq ($(VECTORIZE_CODE),2)
 CXXFLAGS_VECTORIZE = -mavx
 endif
+ifeq ($(VECTORIZE_CODE),3)
+CXXFLAGS_VECTORIZE = -mavx2 -mfma
+endif
 
 # On AMD BUlldozer:
 #ifeq ($(VECTORIZE_CODE),1)
