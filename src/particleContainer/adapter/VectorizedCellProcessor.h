@@ -311,7 +311,7 @@ private:
 			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
 			static vcp_double_vec ones = vcp_simd_ones();
@@ -367,8 +367,8 @@ private:
 		}
 
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
-#if VCP_VEC_TYPE==VCP_VEC_AVX
-				, vcp_double_vec& sj_mask
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+				, vcp_double_vec& j_mask
 #endif
 				)
 		{
@@ -378,7 +378,7 @@ private:
 		}
 
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
 			return vcp_simd_zerov();
