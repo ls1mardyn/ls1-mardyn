@@ -13,7 +13,7 @@
 
 
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX) || defined(VCP_VEC_AVX2)
+#if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX)
 	#error conflicting macro definitions
 #endif
 
@@ -21,21 +21,8 @@
 #define VCP_NOVEC 0
 #define VCP_VEC_SSE3 1
 #define VCP_VEC_AVX 2
-#define VCP_VEC_AVX2 3
-
-//AVX2: __AVX2__ (icc,gcc)
-//fma: __FMA__ (icc,gcc) <- always existent for avx2 architectures, but sometimes has to be enabled.
-
-
-#if defined(__AVX2__) && not defined(__FMA__)//fma should always be existent alongside avx2!!!
-	#warn AVX2 enabled, but no FMA found. Please enable fma to use avx2.
-#endif
-
 // define symbols for vectorization
-
-#if defined(__AVX2__) && defined(__FMA__)
-	#define VCP_VEC_TYPE VCP_VEC_AVX2
-#elif defined(__AVX__) && not defined(AVX128)
+#if defined(__AVX__) && not defined(AVX128)
 	#define VCP_VEC_TYPE VCP_VEC_AVX
 #elif defined(__AVX__) && defined(AVX128)
 	#define VCP_VEC_TYPE VCP_VEC_SSE3
@@ -54,7 +41,7 @@
 #endif
 
 // Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#if VCP_VEC_TYPE==VCP_VEC_AVX
 	#include "immintrin.h"
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
@@ -80,7 +67,7 @@
 
 	typedef __m128i vcp_mask_vec;
 
-#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
+#elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 	typedef __m256d vcp_double_vec;
 	typedef vcp_double_vec vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 4u

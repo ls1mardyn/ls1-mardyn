@@ -49,9 +49,6 @@ endif
 ifeq ($(VECTORIZE_CODE),2)
 CXXFLAGS_VECTORIZE = -mavx
 endif
-ifeq ($(VECTORIZE_CODE),3)
-CXXFLAGS_VECTORIZE = -march=core-avx2 -fma # march=... should enable -fma automatically, but we will ensure it.
-endif
 
 # Special compile-rule for the VectorizedCellProcessor to enforce inlining.
 # NOTE: depending on the installation settings, mpicxx may not actually use icpc! 
