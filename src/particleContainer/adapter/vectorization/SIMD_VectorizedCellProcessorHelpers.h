@@ -97,8 +97,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
 	const __m512i indices = _mm512_load_epi64(id_j);
-	shift6 = _mm512_i64extgather_pd(indices, shift6I, _MM_UPCONV_PD_NONE, 8, _MM_HINT_NONE);
-	//shift6 = _mm512_i64gather_pd(indices, shift6I, 8);
+	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);
 #endif
 }
 
