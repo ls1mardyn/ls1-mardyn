@@ -99,6 +99,7 @@ CXXFLAGS += -D ENABLE_VECTORIZED_CODE=0
 else
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
+LDFLAGS += $(LDFLAGS_VECTORIZE)
 endif
 
 ifeq ($(PAPI),1)
@@ -135,15 +136,15 @@ help:
 	@echo "Current configuration: $(CFG_INFO)"
 	@echo
 	@echo "options:"
-	@echo "make CFG=...                      choose compiler (see make cfg_list)"
-	@echo "make PARTYPE=SEQ | PAR            choose parallelization type (see cfg_help)"
-	@echo "make TARGET=DEBUG | RELEASE       choose target (see cfg_help)"
-	@echo "make DEPS=0 | 1                   compile using dependancy tracking"
-	@echo "make UNIT_TESTS=0 | 1             compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=0 | 1                    compile with or without the vtk output plugin" 
-	@echo "make SUPPORT_DL_GENERATOR=0 | 1   compile with support for input generators as dynamic libraries"
-	@echo "make VECTORIZE_CODE=0 | 1 | 2 | N compile with vectorization support (see help_vect)"
-	@echo "make PAPI=0 | 1                   compile with PAPI counter support"
+	@echo "make CFG=...                      			choose compiler (see make cfg_list)"
+	@echo "make PARTYPE=SEQ | PAR            			choose parallelization type (see cfg_help)"
+	@echo "make TARGET=DEBUG | RELEASE       			choose target (see cfg_help)"
+	@echo "make DEPS=0 | 1                   			compile using dependancy tracking"
+	@echo "make UNIT_TESTS=0 | 1             			compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=0 | 1                    	 		compile with or without the vtk output plugin" 
+	@echo "make SUPPORT_DL_GENERATOR=0 | 1   	        compile with support for input generators as dynamic libraries"
+	@echo "make VECTORIZE_CODE=0 | 1 | 2 | 3 | 4 | N	compile with vectorization support (see help_vect)"
+	@echo "make PAPI=0 | 1			                   	compile with PAPI counter support"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
@@ -159,7 +160,7 @@ help:
 help_vect:
 	@echo "Vectorization help:"
 	@echo
-	@echo "make VECTORIZE_CODE= 0 | 1 | 2 | N"
+	@echo "make VECTORIZE_CODE= 0 | 1 | 2 | 3 | 4 | N"
 	@echo " 0 - use the LegacyCellProcessor"
 	@echo " 1 - use the VectorizedCellProcessor with SSE intrinsics"
 	@echo "     This is the default option."
@@ -171,16 +172,26 @@ help_vect:
 	@echo "     Speed-up of a factor of 2 to 3 versus the LegacyCellProcessor."
 	@echo "     Please make sure that you are using a reasonably updated compiler!"
 	@echo "     For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
+	@echo " 3 - use the VectorizedCellProcessor with AVX2 intrinsics"
+	@echo "     Should work on CPUs newer than 2013"
+	@echo "     (Intel Haswell and AMD Excavator are the earliest to support it)."
+	@echo "     Speed-up of single digit percentages compared with pure AVX instrinsics."
+	@echo "     Please make sure that you are using a reasonably updated compiler!"
+	@echo "     For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
+	@echo " 4 - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
+	@echo "     Works only on Xeon Phis of the first generation (knights corner)."
+	@echo "     Speed-up not yet tested."
+	@echo "     Please make sure that you are using a reasonably updated compiler!"
 	@echo " N - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
 	@echo "     For development purposes only. Often slower than the LegacyCellProcessor."
-	@echo
-	@echo " To determine, whether your current CPU supports SSE or AVX, call, respectively: "
+	@echo " To determine, whether your current CPU supports SSE, AVX, AVX2, call, respectively: "
 	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep sse3 "
 	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep avx "
+	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep avx2 "
 	@echo " If the return line is non-empty, then the CPU supports the respective vectorization mode."
 	@echo " Any further encountered problems are likely due to an outdated or misconfigured compiler."
 	@echo
-	@echo " For the best experience, use AVX with either the latest GNU or Intel compiler on Intel processors."
+	@echo " For the best experience, use AVX2 with either the latest GNU or Intel compiler on Intel processors."
 
 
 all: $(BINARY)

@@ -59,6 +59,9 @@ endif
 ifeq ($(VECTORIZE_CODE),3)
 CXXFLAGS_VECTORIZE = -mavx2 -mfma
 endif
+ifeq ($(VECTORIZE_CODE),4)
+$(error gcc does not support mics!!!)
+endif
 
 # On AMD BUlldozer:
 #ifeq ($(VECTORIZE_CODE),1)
