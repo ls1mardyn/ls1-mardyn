@@ -22,7 +22,7 @@ typedef AlignedArray<double> DoubleArray;
  * @param eps_sigI initial eps_sig array
  * @param id_j array of displacements
  */
-static //inline __attribute__((always_inline))
+static inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j){
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
