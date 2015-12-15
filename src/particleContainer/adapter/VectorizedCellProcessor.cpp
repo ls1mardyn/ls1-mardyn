@@ -29,6 +29,8 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	global_log->info() << "VectorizedCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedCellProcessor: using AVX2 intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_MIC
+	global_log->info() << "VectorizedCellProcessor: using MIC intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->components());
@@ -102,7 +104,6 @@ void VectorizedCellProcessor::initTraversal(const size_t numCells) {
 		}
 		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
 	}
-
 }
 
 
@@ -334,7 +335,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 
 	//const vcp_double_vec minus_one = vcp_simd_set1(-1.0); //currently not used, would produce warning
-	const vcp_double_vec zero = vcp_simd_zerov();
+	const vcp_double_vec zero = VCP_SIMD_ZEROV;
 	const vcp_double_vec one = vcp_simd_set1(1.0);
 	const vcp_double_vec two = vcp_simd_set1(2.0);
 	const vcp_double_vec three = vcp_simd_set1(3.0);
@@ -921,7 +922,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 
-	vcp_double_vec compute_molecule = vcp_simd_zerov();
+	vcp_double_vec compute_molecule = VCP_SIMD_ZEROV;
 
 	// Iterate over centers of second cell
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
@@ -965,9 +966,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	return compute_molecule;
 
-#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
 
-	vcp_double_vec compute_molecule = vcp_simd_zerov();
+	vcp_double_vec compute_molecule = VCP_SIMD_ZEROV;
 
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
 	vcp_double_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
@@ -1020,7 +1021,6 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 
 	return compute_molecule;
-
 #endif
 }
 
@@ -1152,10 +1152,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 	static const vcp_double_vec ones = vcp_simd_ones();
 
-	vcp_double_vec sum_upot6lj = vcp_simd_zerov();
-	vcp_double_vec sum_upotXpoles = vcp_simd_zerov();
-	vcp_double_vec sum_virial = vcp_simd_zerov();
-	vcp_double_vec sum_myRF = vcp_simd_zerov();
+	vcp_double_vec sum_upot6lj = VCP_SIMD_ZEROV;
+	vcp_double_vec sum_upotXpoles = VCP_SIMD_ZEROV;
+	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
+	vcp_double_vec sum_myRF = VCP_SIMD_ZEROV;
 
 	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
 	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
@@ -1215,9 +1215,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		else {
 			// LJ force computation
 			for (int local_i = 0; local_i < soa1_mol_ljc_num[i]; local_i++) {
-				vcp_double_vec sum_fx1 = vcp_simd_zerov();
-				vcp_double_vec sum_fy1 = vcp_simd_zerov();
-				vcp_double_vec sum_fz1 = vcp_simd_zerov();
+				vcp_double_vec sum_fx1 = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_fy1 = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_fz1 = VCP_SIMD_ZEROV;
 				const vcp_double_vec c_r_x1 = vcp_simd_broadcast(soa1_ljc_r_x + i_ljc_idx);
 				const vcp_double_vec c_r_y1 = vcp_simd_broadcast(soa1_ljc_r_y + i_ljc_idx);
 				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
@@ -1294,9 +1294,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_charges_r_y + i_charge_idx + local_i);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_charges_r_z + i_charge_idx + local_i);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
@@ -1361,13 +1361,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_dipoles_r_y + i_dipole_charge_idx);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_dipoles_r_z + i_dipole_charge_idx);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				vcp_double_vec sum_M_x = vcp_simd_zerov();
-				vcp_double_vec sum_M_y = vcp_simd_zerov();
-				vcp_double_vec sum_M_z = vcp_simd_zerov();
+				vcp_double_vec sum_M_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
 				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
@@ -1437,13 +1437,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_quadrupoles_r_y + i_quadrupole_charge_idx);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_quadrupoles_r_z + i_quadrupole_charge_idx);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
+				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
 				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
@@ -1528,13 +1528,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_dipoles_r_y + i_dipole_idx + local_i);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_dipoles_r_z + i_dipole_idx + local_i);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
+				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
@@ -1612,9 +1612,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_charges_r_y + i_charge_dipole_idx);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_charges_r_z + i_charge_dipole_idx);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
 				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
@@ -1685,13 +1685,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_quadrupoles_r_y + i_quadrupole_dipole_idx);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_quadrupoles_r_z + i_quadrupole_dipole_idx);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
+				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
@@ -1783,13 +1783,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec rii_y = vcp_simd_broadcast(soa1_quadrupoles_r_y + i_quadrupole_idx + local_i);
 				const vcp_double_vec rii_z = vcp_simd_broadcast(soa1_quadrupoles_r_z + i_quadrupole_idx + local_i);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
+				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
@@ -1863,9 +1863,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec r1_y = vcp_simd_broadcast(soa1_charges_r_y + i_charge_quadrupole_idx);
 				const vcp_double_vec r1_z = vcp_simd_broadcast(soa1_charges_r_z + i_charge_quadrupole_idx);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
 				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
@@ -1936,13 +1936,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec rii_y = vcp_simd_broadcast(soa1_dipoles_r_y + i_dipole_quadrupole_idx);
 				const vcp_double_vec rii_z = vcp_simd_broadcast(soa1_dipoles_r_z + i_dipole_quadrupole_idx);
 
-				vcp_double_vec sum_f1_x = vcp_simd_zerov();
-				vcp_double_vec sum_f1_y = vcp_simd_zerov();
-				vcp_double_vec sum_f1_z = vcp_simd_zerov();
+				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				vcp_double_vec sum_M1_x = vcp_simd_zerov();
-				vcp_double_vec sum_M1_y = vcp_simd_zerov();
-				vcp_double_vec sum_M1_z = vcp_simd_zerov();
+				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);

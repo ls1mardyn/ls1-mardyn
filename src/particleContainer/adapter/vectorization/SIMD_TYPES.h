@@ -22,6 +22,7 @@
 #define VCP_VEC_SSE3 1
 #define VCP_VEC_AVX 2
 #define VCP_VEC_AVX2 3
+#define VCP_VEC_MIC 4
 
 //AVX2: __AVX2__ (icc,gcc)
 //fma: __FMA__ (icc,gcc) <- always existent for avx2 architectures, but sometimes has to be enabled.
@@ -32,8 +33,9 @@
 #endif
 
 // define symbols for vectorization
-
-#if defined(__AVX2__) && defined(__FMA__)
+#if defined(__MIC__)
+	#define VCP_VEC_TYPE VCP_VEC_MIC
+#elif defined(__AVX2__) && defined(__FMA__)
 	#define VCP_VEC_TYPE VCP_VEC_AVX2
 #elif defined(__AVX__) && not defined(AVX128)
 	#define VCP_VEC_TYPE VCP_VEC_AVX
@@ -54,7 +56,7 @@
 #endif
 
 // Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
 	#include "immintrin.h"
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
@@ -87,6 +89,14 @@
 	#define VCP_VEC_SIZE_M1 3u
 
 	typedef __m256i vcp_mask_vec;
+
+#elif VCP_VEC_TYPE==VCP_VEC_MIC//mic
+	typedef __m512d vcp_double_vec;
+	typedef vcp_double_vec vcp_doublesizedmask_vec;
+	#define VCP_VEC_SIZE 8u
+	#define VCP_VEC_SIZE_M1 7u
+
+	typedef __mmask8 vcp_mask_vec;
 
 #endif
 

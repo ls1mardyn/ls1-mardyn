@@ -311,7 +311,7 @@ private:
 			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
 		{
 			static vcp_double_vec ones = vcp_simd_ones();
@@ -319,7 +319,7 @@ private:
 			j_mask = ones;
 			return result;
 		}
-
+	#if VCP_VEC_TYPE!=VCP_VEC_MIC
 		inline static vcp_double_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
 			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
@@ -329,11 +329,26 @@ private:
 				default: return vcp_simd_ones();
 			}
 		}
+	#else
+		inline static vcp_double_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
+		{
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0));
+				case 1: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0));
+				case 2: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0));
+				case 3: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0));
+				case 4: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+				case 5: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+				case 6: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+				default: return vcp_simd_ones();
+			}
+		}
+	#endif
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, vcp_simd_zerov()) );
+			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
 		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
@@ -367,7 +382,7 @@ private:
 		}
 
 		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
 				, vcp_double_vec& j_mask
 #endif
 				)
@@ -378,10 +393,10 @@ private:
 		}
 
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
 		inline static vcp_double_vec InitJ_Mask (const size_t i)
 		{
-			return vcp_simd_zerov();
+			return VCP_SIMD_ZEROV;
 		}
 #endif
  /* definition of GetForceMask */

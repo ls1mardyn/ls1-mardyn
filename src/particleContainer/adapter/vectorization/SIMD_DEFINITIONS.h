@@ -30,7 +30,8 @@
 #if VCP_VEC_TYPE==VCP_NOVEC
 	static inline vcp_double_vec vcp_simd_zerov() { return 0.; }
 	static inline vcp_double_vec vcp_simd_ones() { return 1.; }
-
+	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
+	static const vcp_double_vec VCP_SIMD_ONESV = vcp_simd_ones();
 	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return a < b;}
 	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return a == b;}
 	static inline vcp_double_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b) {return a != b;}
@@ -66,7 +67,8 @@
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm_setzero_pd(); }
 	static inline vcp_double_vec vcp_simd_ones() { return _mm_castsi128_pd( _mm_set_epi32(~0, ~0, ~0, ~0) ); }
-
+	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
+	static const vcp_double_vec VCP_SIMD_ONESV = vcp_simd_ones();
 	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_cmplt_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_cmpeq_pd(a, b);}
 	static inline vcp_double_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_cmpneq_pd(a, b);}
@@ -102,6 +104,8 @@
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm256_setzero_pd(); }
 	static inline vcp_double_vec vcp_simd_ones() { return _mm256_castsi256_pd( _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) ); }
+	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
+	static const vcp_double_vec VCP_SIMD_ONESV = vcp_simd_ones();
 	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_LT_OS);}
 	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_EQ_OS);}
 	static inline vcp_double_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_cmp_pd(a, b, _CMP_NEQ_OS);}
@@ -132,10 +136,53 @@
 
 	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return _mm256_movemask_pd(a);}
 	static inline vcp_double_vec vcp_simd_maskload(double const * a, vcp_mask_vec b) {return _mm256_maskload_pd(a, b);}
+#elif VCP_VEC_TYPE==VCP_VEC_MIC
 
+	static inline vcp_double_vec vcp_simd_zerov() { return _mm512_castsi512_pd( _mm512_set_epi32(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) ); }//exists
+	static inline vcp_double_vec vcp_simd_ones() { return _mm512_castsi512_pd( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) ); }//exists
+	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
+	static const vcp_double_vec VCP_SIMD_ONESV = vcp_simd_ones();
+	static inline vcp_double_vec mask_to_vcp_double_vec(const vcp_mask_vec& mask){return _mm512_mask_mov_pd(VCP_SIMD_ZEROV, mask, VCP_SIMD_ONESV);}
+	static inline vcp_double_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return mask_to_vcp_double_vec(_mm512_cmp_pd_mask(a, b, _CMP_LT_OS));}//exists
+	static inline vcp_double_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return mask_to_vcp_double_vec(_mm512_cmp_pd_mask(a, b, _CMP_EQ_OS));}//exists
+	static inline vcp_double_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b){
+		return mask_to_vcp_double_vec(
+			_mm512_cmp_pd_mask(
+					a,
+					b,
+					_CMP_NEQ_UQ)
+		);}//exists
+	/**
+	 * do not use this to apply a mask, use vcp_simd_applymask instead !!!
+	 * @param a
+	 * @param b
+	 * @return
+	 */
+	static inline vcp_double_vec vcp_simd_and(const vcp_double_vec& a, const vcp_double_vec& b) {
+		return _mm512_castsi512_pd(_mm512_and_epi64(_mm512_castpd_si512(a), _mm512_castpd_si512(b)));
+	}//only for mask vecs -> unsigned char or so...
+	static inline vcp_double_vec vcp_simd_or(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_castsi512_pd(_mm512_or_epi64(_mm512_castpd_si512(a), _mm512_castpd_si512(b)));}
+	static inline vcp_double_vec vcp_simd_xor(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_castsi512_pd(_mm512_xor_epi64(_mm512_castpd_si512(a), _mm512_castpd_si512(b)));}
+	static inline vcp_double_vec vcp_simd_applymask(const vcp_double_vec& a, const vcp_double_vec& mask) {return vcp_simd_and(a, mask);}
+
+	static inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_add_pd(a,b);}
+	static inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_sub_pd(a,b);}
+	static inline vcp_double_vec vcp_simd_mul(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_mul_pd(a,b);}
+	static inline vcp_double_vec vcp_simd_div(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_div_pd(a,b);}
+	static inline vcp_double_vec vcp_simd_sqrt(const vcp_double_vec& a) {return _mm512_sqrt_pd(a);}
+
+	static inline vcp_double_vec vcp_simd_set1(const double& a) {return _mm512_set1_pd(a);}//exists
+
+	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm512_load_pd(a);}
+	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
+	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {_mm512_store_pd(location, a);}
+	//static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpacklo_pd(a,b);}//not needed
+	//static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}//not needed
+
+	static inline int vcp_simd_movemask(const vcp_double_vec& a) {return (int) _mm512_cmp_pd_mask(a, VCP_SIMD_ZEROV, _CMP_NEQ_UQ);}
 #endif
 
-#if VCP_VEC_TYPE != VCP_NOVEC //I do not trust gcc yet to do this properly by itself...
+#if VCP_VEC_TYPE != VCP_NOVEC
 	#ifdef __ICC
 		//static inline vcp_double_vec operator < (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_lt(a, b); }//next three operators not compatible with gcc 4.7 or below
 		//static inline vcp_double_vec operator == (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_eq(a, b); }
@@ -188,10 +235,17 @@ static inline T vcp_floor_to_vec_size(const T& num){
 	static inline vcp_double_vec vcp_simd_fms(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return _mm256_fmsub_pd(a, b, c);
 	}
-#endif
-
-
-#if VCP_VEC_TYPE!=VCP_VEC_AVX2
+#elif VCP_VEC_TYPE==VCP_VEC_MIC
+	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return _mm512_fmadd_pd(a, b, c);
+	}
+	static inline vcp_double_vec vcp_simd_fnma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return _mm512_fnmadd_pd(a, b, c);//-(a*b) + c
+	}
+	static inline vcp_double_vec vcp_simd_fms(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
+		return _mm512_fmsub_pd(a, b, c);
+	}
+#else //no fma available
 	static inline vcp_double_vec vcp_simd_fma(const vcp_double_vec& a, const vcp_double_vec& b, const vcp_double_vec& c) {
 		return vcp_simd_add(vcp_simd_mul(a, b), c);
 	}

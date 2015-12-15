@@ -22,7 +22,7 @@ typedef AlignedArray<double> DoubleArray;
  * @param eps_sigI initial eps_sig array
  * @param id_j array of displacements
  */
-static inline __attribute__((always_inline))
+static //inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j){
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -49,6 +49,13 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 
 	eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
 	sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
+#elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
+		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
+	__m512i indices = _mm512_load_epi64(id_j);
+	indices = _mm512_add_epi64(indices, indices);//only every second...
+	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 #endif
 }
 
@@ -86,6 +93,12 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	static const vcp_mask_vec ones = _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
 	const vcp_mask_vec indices = _mm256_maskload_epi64((const long long*)id_j, ones);
 	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
+#elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
+		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
+		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
+	const __m512i indices = _mm512_load_epi64(id_j);
+	shift6 = _mm512_i64extgather_pd(indices, shift6I, _MM_UPCONV_PD_NONE, 8, _MM_HINT_NONE);
+	//shift6 = _mm512_i64gather_pd(indices, shift6I, 8);
 #endif
 }
 
@@ -118,6 +131,8 @@ static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec
 			vcp_simd_maskload(mem_addr, memoryMask_first)
 		)
 	);
+#elif VCP_VEC_TYPE==VCP_VEC_MIC
+	*mem_addr += _mm512_reduce_add_pd(a);
 #endif
 }
 

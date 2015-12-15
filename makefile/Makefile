@@ -99,6 +99,7 @@ CXXFLAGS += -D ENABLE_VECTORIZED_CODE=0
 else
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
+LDFLAGS += $(LDFLAGS_VECTORIZE)
 endif
 
 ifeq ($(PAPI),1)
@@ -135,15 +136,15 @@ help:
 	@echo "Current configuration: $(CFG_INFO)"
 	@echo
 	@echo "options:"
-	@echo "make CFG=...                      	choose compiler (see make cfg_list)"
-	@echo "make PARTYPE=SEQ | PAR            	choose parallelization type (see cfg_help)"
-	@echo "make TARGET=DEBUG | RELEASE       	choose target (see cfg_help)"
-	@echo "make DEPS=0 | 1                   	compile using dependancy tracking"
-	@echo "make UNIT_TESTS=0 | 1             	compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=0 | 1                    	compile with or without the vtk output plugin" 
-	@echo "make SUPPORT_DL_GENERATOR=0 | 1   	compile with support for input generators as dynamic libraries"
-	@echo "make VECTORIZE_CODE=0 | 1 | 2 | 3 | N	compile with vectorization support (see help_vect)"
-	@echo "make PAPI=0 | 1                   	compile with PAPI counter support"
+	@echo "make CFG=...                      			choose compiler (see make cfg_list)"
+	@echo "make PARTYPE=SEQ | PAR            			choose parallelization type (see cfg_help)"
+	@echo "make TARGET=DEBUG | RELEASE       			choose target (see cfg_help)"
+	@echo "make DEPS=0 | 1                   			compile using dependancy tracking"
+	@echo "make UNIT_TESTS=0 | 1             			compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=0 | 1                    	 		compile with or without the vtk output plugin" 
+	@echo "make SUPPORT_DL_GENERATOR=0 | 1   	        compile with support for input generators as dynamic libraries"
+	@echo "make VECTORIZE_CODE=0 | 1 | 2 | 3 | 4 | N	compile with vectorization support (see help_vect)"
+	@echo "make PAPI=0 | 1			                   	compile with PAPI counter support"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
@@ -159,7 +160,7 @@ help:
 help_vect:
 	@echo "Vectorization help:"
 	@echo
-	@echo "make VECTORIZE_CODE= 0 | 1 | 2 | 3 | N"
+	@echo "make VECTORIZE_CODE= 0 | 1 | 2 | 3 | 4 | N"
 	@echo " 0 - use the LegacyCellProcessor"
 	@echo " 1 - use the VectorizedCellProcessor with SSE intrinsics"
 	@echo "     This is the default option."
@@ -177,6 +178,10 @@ help_vect:
 	@echo "     Speed-up of single digit percentages compared with pure AVX instrinsics."
 	@echo "     Please make sure that you are using a reasonably updated compiler!"
 	@echo "     For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
+	@echo " 4 - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
+	@echo "     Works only on Xeon Phis of the first generation (knights corner)."
+	@echo "     Speed-up not yet tested."
+	@echo "     Please make sure that you are using a reasonably updated compiler!"
 	@echo " N - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
 	@echo "     For development purposes only. Often slower than the LegacyCellProcessor."
 	@echo " To determine, whether your current CPU supports SSE, AVX, AVX2, call, respectively: "
