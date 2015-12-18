@@ -9,7 +9,7 @@
 #define CELLDATASOA_H_
 
 #include "utils/AlignedArray.h"
-
+#include "vectorization/SIMD_TYPES.h"
 /**
  * \brief Structure of Arrays for vectorized force calculation.
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
@@ -212,13 +212,13 @@ public:
 		array.resize(size, size);
 		//memset(array, 0, size * sizeof(T));//sets all to zero
 		T* ptr = array;
-		memset(ptr + _ljc_num, 0, _ljc_size - _ljc_num);//ljc
+		/*memset(ptr + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(T));//ljc
 		ptr += _ljc_size;
-		memset(ptr + _charges_num, 0, _charges_size - _charges_num);//charges
+		memset(ptr + _charges_num, 0, (_charges_size - _charges_num) * sizeof(T));//charges
 		ptr+= _charges_size;
-		memset(ptr + _dipoles_num, 0, _dipoles_size - _dipoles_num);//dipoles
+		memset(ptr + _dipoles_num, 0, (_dipoles_size - _dipoles_num) * sizeof(T));//dipoles
 		ptr+= _dipoles_size;
-		memset(ptr + _quadrupoles_num, 0, _quadrupoles_size - _quadrupoles_num);//quadrupoles
+		memset(ptr + _quadrupoles_num, 0, (_quadrupoles_size - _quadrupoles_num) * sizeof(T));//quadrupoles*/
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
