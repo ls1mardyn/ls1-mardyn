@@ -38,7 +38,8 @@ public:
 		_mol_quadrupoles_num(_mol_size),
 		_centers_m_r_x(_centers_size), _centers_m_r_y(_centers_size), _centers_m_r_z(_centers_size),
 		_centers_r_x(_centers_size), _centers_r_y(_centers_size), _centers_r_z(_centers_size),
-		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size), _centers_dist_lookup(_centers_size),
+		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size),
+		_centers_dist_lookup((_centers_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE),
 		_ljc_id(_ljc_size),
 		_charges_q(_charges_size),
 		_dipoles_p(_dipoles_size),
@@ -82,7 +83,7 @@ public:
 	DoubleArray _centers_f_x;
 	DoubleArray _centers_f_y;
 	DoubleArray _centers_f_z;
-	DoubleArray _centers_dist_lookup;
+	AlignedArray<vcp_mask_single> _centers_dist_lookup;
 
 	double* _ljc_m_r_x;
 	double* _ljc_m_r_y;
@@ -93,7 +94,7 @@ public:
 	double* _ljc_f_x;
 	double* _ljc_f_y;
 	double* _ljc_f_z;
-	double* _ljc_dist_lookup;
+	vcp_mask_single* _ljc_dist_lookup;
 
 	double* _charges_m_r_x;
 	double* _charges_m_r_y;
@@ -104,7 +105,7 @@ public:
 	double* _charges_f_x;
 	double* _charges_f_y;
 	double* _charges_f_z;
-	double* _charges_dist_lookup;
+	vcp_mask_single* _charges_dist_lookup;
 
 	double* _dipoles_m_r_x;
 	double* _dipoles_m_r_y;
@@ -115,7 +116,7 @@ public:
 	double* _dipoles_f_x;
 	double* _dipoles_f_y;
 	double* _dipoles_f_z;
-	double* _dipoles_dist_lookup;
+	vcp_mask_single* _dipoles_dist_lookup;
 
 	double* _quadrupoles_m_r_x;
 	double* _quadrupoles_m_r_y;
@@ -126,7 +127,7 @@ public:
 	double* _quadrupoles_f_x;
 	double* _quadrupoles_f_y;
 	double* _quadrupoles_f_z;
-	double* _quadrupoles_dist_lookup;
+	vcp_mask_single* _quadrupoles_dist_lookup;
 
 	// entries per lj center
 	IndexArray _ljc_id;
@@ -175,7 +176,7 @@ public:
 		_charges_f_x = _ljc_f_x + _ljc_size;
 		_charges_f_y = _ljc_f_y + _ljc_size;
 		_charges_f_z = _ljc_f_z + _ljc_size;
-		_charges_dist_lookup = _ljc_dist_lookup + _ljc_size;
+		_charges_dist_lookup = _ljc_dist_lookup + (_ljc_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE;
 
 		_dipoles_m_r_x = _charges_m_r_x + _charges_size;
 		_dipoles_m_r_y = _charges_m_r_y + _charges_size;
@@ -186,7 +187,7 @@ public:
 		_dipoles_f_x = _charges_f_x + _charges_size;
 		_dipoles_f_y = _charges_f_y + _charges_size;
 		_dipoles_f_z = _charges_f_z + _charges_size;
-		_dipoles_dist_lookup = _charges_dist_lookup + _charges_size;
+		_dipoles_dist_lookup = _charges_dist_lookup + (_charges_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE;
 
 		_quadrupoles_m_r_x = _dipoles_m_r_x + _dipoles_size;
 		_quadrupoles_m_r_y = _dipoles_m_r_y + _dipoles_size;
@@ -197,7 +198,7 @@ public:
 		_quadrupoles_f_x = _dipoles_f_x + _dipoles_size;
 		_quadrupoles_f_y = _dipoles_f_y + _dipoles_size;
 		_quadrupoles_f_z = _dipoles_f_z + _dipoles_size;
-		_quadrupoles_dist_lookup = _dipoles_dist_lookup + _dipoles_size;
+		_quadrupoles_dist_lookup = _dipoles_dist_lookup + (_dipoles_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE;
 	}
 
 	template<class T>
@@ -211,8 +212,8 @@ public:
 	void resizeCentersZero(AlignedArray<T>& array, const size_t& size){
 		array.resize(size, size);
 		//memset(array, 0, size * sizeof(T));//sets all to zero
-		T* ptr = array;
-		/*memset(ptr + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(T));//ljc
+		/*T* ptr = array;
+		memset(ptr + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(T));//ljc
 		ptr += _ljc_size;
 		memset(ptr + _charges_num, 0, (_charges_size - _charges_num) * sizeof(T));//charges
 		ptr+= _charges_size;
@@ -279,7 +280,7 @@ public:
 				resizeCentersZero(_centers_f_x, _centers_size);
 				resizeCentersZero(_centers_f_y, _centers_size);
 				resizeCentersZero(_centers_f_z, _centers_size);
-				resizeCentersZero(_centers_dist_lookup, _centers_size);
+				resizeCentersZero(_centers_dist_lookup, (_centers_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE);
 			}
 		}
 

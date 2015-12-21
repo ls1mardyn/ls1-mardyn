@@ -157,7 +157,7 @@ private:
 			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
 			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
-			const vcp_double_vec& forceMask,
+			const vcp_mask_vec& forceMask,
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
 			const vcp_double_vec& shift6);
 
@@ -171,7 +171,7 @@ private:
 		const vcp_double_vec& qjj,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_double_vec& forceMask);
+		const vcp_mask_vec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeDipole(
@@ -185,7 +185,7 @@ private:
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
 		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+		const vcp_mask_vec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyDipole(
@@ -201,7 +201,7 @@ private:
 		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
 		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
-		const vcp_double_vec& forceMask,
+		const vcp_mask_vec& forceMask,
 		const vcp_double_vec& epsRFInvrc3);
 
 	template<bool calculateMacroscopic>
@@ -216,7 +216,7 @@ private:
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
 		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+		const vcp_mask_vec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyDipoleQuadrupole(
@@ -232,7 +232,7 @@ private:
 		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
 		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_double_vec& forceMask, const vcp_double_vec& switched);
+		const vcp_mask_vec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyQuadrupole(
@@ -248,7 +248,7 @@ private:
 		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
 		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_double_vec& forceMask);
+		const vcp_mask_vec& forceMask);
 
 
 	/**
@@ -256,9 +256,9 @@ private:
 	 * \author Robert Hajda
 	 */
 	template<class ForcePolicy>
-	vcp_doublesizedmask_vec
+	vcp_mask_vec
 	calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
-			double* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
+			vcp_mask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z
 			, const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z
 			);
 
@@ -312,46 +312,37 @@ private:
 		}
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
-		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_double_vec& j_mask)
+		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
 		{
-			static vcp_double_vec ones = vcp_simd_ones();
-			vcp_double_vec result = vcp_simd_applymask( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, vcp_simd_zerov()) ), j_mask);
-			j_mask = ones;
+			vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
+			j_mask = VCP_SIMD_ONESVM;
 			return result;
 		}
 	#if VCP_VEC_TYPE!=VCP_VEC_MIC
-		inline static vcp_double_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
+		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
 			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0));
-				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0));
-				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0));
-				default: return vcp_simd_ones();
+				case 0: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0);
+				case 1: return _mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0);
+				case 2: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
+				default: return VCP_SIMD_ONESVM;
 			}
 		}
 	#else
-		inline static vcp_double_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
+		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
-			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-				case 0: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0));
-				case 1: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0));
-				case 2: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0));
-				case 3: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0));
-				case 4: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-				case 5: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-				case 6: return _mm512_castsi512_pd(_mm512_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
-				default: return vcp_simd_ones();
-			}
+			static const __mmask8 possibleInitJMasks[VCP_VEC_SIZE] = { 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0xFF };
+			return possibleInitJMasks[i & static_cast<size_t>(VCP_VEC_SIZE_M1)];
 		}
 	#endif
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		// Erstellen der Bitmaske, analog zu Condition oben
-		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
+		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
 		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
-		inline static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
+		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
 			return vcp_simd_lt(m_r2, rc2);
 		}
@@ -381,9 +372,9 @@ private:
 			return false;
 		}
 
-		inline static vcp_double_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
+		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
-				, vcp_double_vec& j_mask
+				, vcp_mask_vec& j_mask
 #endif
 				)
 		{
@@ -394,9 +385,9 @@ private:
 
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
-		inline static vcp_double_vec InitJ_Mask (const size_t i)
+		inline static vcp_mask_vec InitJ_Mask (const size_t i)
 		{
-			return VCP_SIMD_ZEROV;
+			return VCP_SIMD_ZEROVM;
 		}
 #endif
  /* definition of GetForceMask */

@@ -68,35 +68,47 @@
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	typedef double vcp_double_vec;
-	typedef unsigned long vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 1u
 	#define VCP_VEC_SIZE_M1 0u
 
-	typedef unsigned long vcp_mask_vec;
+	typedef bool vcp_mask_vec;
+	typedef bool vcp_mask_single;
+	#define VCP_INDICES_PER_MASK_SINGLE 1
+	#define VCP_INDICES_PER_MASK_SINGLE_M1 0
+
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 	typedef __m128d vcp_double_vec;
-	typedef vcp_double_vec vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 2u
 	#define VCP_VEC_SIZE_M1 1u
 
 	typedef __m128i vcp_mask_vec;
+	typedef unsigned long vcp_mask_single;
+	#define VCP_INDICES_PER_MASK_SINGLE 1
+	#define VCP_INDICES_PER_MASK_SINGLE_M1 0
+
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
 	typedef __m256d vcp_double_vec;
-	typedef vcp_double_vec vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 4u
 	#define VCP_VEC_SIZE_M1 3u
 
 	typedef __m256i vcp_mask_vec;
+	typedef unsigned long vcp_mask_single;
+	#define VCP_INDICES_PER_MASK_SINGLE 1
+	#define VCP_INDICES_PER_MASK_SINGLE_M1 0
+
 
 #elif VCP_VEC_TYPE==VCP_VEC_MIC//mic
 	typedef __m512d vcp_double_vec;
-	typedef vcp_double_vec vcp_doublesizedmask_vec;
 	#define VCP_VEC_SIZE 8u
 	#define VCP_VEC_SIZE_M1 7u
 
 	typedef __mmask8 vcp_mask_vec;
+	typedef __mmask8 vcp_mask_single;
+	#define VCP_INDICES_PER_MASK_SINGLE 8
+	#define VCP_INDICES_PER_MASK_SINGLE_M1 7
+
 
 #endif
 
