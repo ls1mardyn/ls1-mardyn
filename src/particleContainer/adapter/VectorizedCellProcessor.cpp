@@ -12,6 +12,7 @@
 #include "ensemble/EnsembleBase.h"
 #include "Simulation.h"
 #include <algorithm>
+#include "vectorization/MaskGatherChooser.h"
 
 using namespace Log;
 
@@ -1057,7 +1058,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		} else {
 			forceMask_local = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? 1 : 0;
 		}
-		forceMask += forceMask_local * bitmultiplier;//TODO: check right ordering that is imposed using this rule.
+		forceMask += forceMask_local * bitmultiplier;
 
 		//*(soa2_center_dist_lookup + j) = forceMask;
 	}
@@ -1070,7 +1071,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 #endif
 }
 
-template<class ForcePolicy, bool CalculateMacroscopic>
+template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
@@ -1252,6 +1253,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		const vcp_mask_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
+		//TODO: add additional index array for lookup. change dist_lookup(forcemask) for masking of last elements.
+
+		size_t end_ljc_loop = MaskGatherChooser::getEndloop(end_ljc_j_longloop);//TODO: add second parameter
+		size_t end_charges_loop = MaskGatherChooser::getEndloop(end_charges_j_longloop);//TODO: add second parameter
+		size_t end_dipoles_loop = MaskGatherChooser::getEndloop(end_dipoles_j_longloop);//TODO: add second parameter
+		size_t end_quadrupoles_loop = MaskGatherChooser::getEndloop(end_quadrupoles_j_longloop);//TODO: add second parameter
+		//TODO: other end_loops
 
 		if (!vcp_simd_movemask(compute_molecule_ljc)) {
 			i_ljc_idx += soa1_mol_ljc_num[i];
@@ -1265,29 +1273,30 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				const vcp_double_vec c_r_x1 = vcp_simd_broadcast(soa1_ljc_r_x + i_ljc_idx);
 				const vcp_double_vec c_r_y1 = vcp_simd_broadcast(soa1_ljc_r_y + i_ljc_idx);
 				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
+
 				// Iterate over each pair of centers in the second cell.
 				size_t j = ForcePolicy::InitJ(i_ljc_idx);
-				for (; j < end_ljc_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_ljc_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_ljc_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Only go on if at least 1 of the forces has to be calculated.
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec c_r_x2 = vcp_simd_load(soa2_ljc_r_x + j);
-						const vcp_double_vec c_r_y2 = vcp_simd_load(soa2_ljc_r_y + j);
-						const vcp_double_vec c_r_z2 = vcp_simd_load(soa2_ljc_r_z + j);
+					if (MaskGatherChooser::computeLoop(forceMask)) {
+						const vcp_double_vec c_r_x2 = MaskGatherChooser::load(soa2_ljc_r_x, j);
+						const vcp_double_vec c_r_y2 = MaskGatherChooser::load(soa2_ljc_r_y, j);
+						const vcp_double_vec c_r_z2 = MaskGatherChooser::load(soa2_ljc_r_z, j);
 
-						const vcp_double_vec m_r_x2 = vcp_simd_load(soa2_ljc_m_r_x + j);
-						const vcp_double_vec m_r_y2 = vcp_simd_load(soa2_ljc_m_r_y + j);
-						const vcp_double_vec m_r_z2 = vcp_simd_load(soa2_ljc_m_r_z + j);
+						const vcp_double_vec m_r_x2 = MaskGatherChooser::load(soa2_ljc_m_r_x, j);
+						const vcp_double_vec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j);
+						const vcp_double_vec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j);
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
 						vcp_double_vec fx, fy, fz;
 
 						vcp_double_vec eps_24;
 						vcp_double_vec sig2;
-						unpackEps24Sig2(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id + j);
+						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, j);//TODO: load/gather
 
 						vcp_double_vec shift6;
-						unpackShift6(shift6, _shift6[id_i], soa2_ljc_id + j);
+						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, j);//TODO: load/gather
 
 						_loopBodyLJ<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
@@ -1297,15 +1306,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 							forceMask,
 							eps_24, sig2,
 							shift6);
-						const vcp_double_vec old_fx2 = vcp_simd_load(soa2_ljc_f_x + j);
-						const vcp_double_vec new_fx2 = vcp_simd_sub(old_fx2, fx);
-						vcp_simd_store(soa2_ljc_f_x + j, new_fx2);
-						const vcp_double_vec old_fy2 = vcp_simd_load(soa2_ljc_f_y + j);
-						const vcp_double_vec new_fy2 = vcp_simd_sub(old_fy2, fy);
-						vcp_simd_store(soa2_ljc_f_y + j, new_fy2);
-						const vcp_double_vec old_fz2 = vcp_simd_load(soa2_ljc_f_z + j);
-						const vcp_double_vec new_fz2 = vcp_simd_sub(old_fz2, fz);
-						vcp_simd_store(soa2_ljc_f_z + j, new_fz2);
+
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_x, j, fx);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_y, j, fy);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_ljc_f_z, j, fz);
+
 						sum_fx1 = sum_fx1 + fx;
 						sum_fy1 = sum_fy1 + fy;
 						sum_fz1 = sum_fz1 + fz;
@@ -1344,19 +1349,19 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
-				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec q2 = vcp_simd_load(soa2_charges_q + j);
+					if (MaskGatherChooser::computeLoop(forceMask)) {
+						const vcp_double_vec q2 = MaskGatherChooser::load(soa2_charges_q, j);
 
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_charges_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_charges_r_z + j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_charges_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_charges_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z;
 						_loopBodyCharge<CalculateMacroscopic>(
@@ -1372,17 +1377,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
 
-						vcp_double_vec f2_x = vcp_simd_load(soa2_charges_f_x + j);
-						vcp_double_vec f2_y = vcp_simd_load(soa2_charges_f_y + j);
-						vcp_double_vec f2_z = vcp_simd_load(soa2_charges_f_z + j);
-
-						f2_x = vcp_simd_sub(f2_x, f_x);
-						f2_y = vcp_simd_sub(f2_y, f_y);
-						f2_z = vcp_simd_sub(f2_z, f_z);
-
-						vcp_simd_store(soa2_charges_f_x + j, f2_x);
-						vcp_simd_store(soa2_charges_f_y + j, f2_y);
-						vcp_simd_store(soa2_charges_f_z + j, f2_z);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y);
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z);
 					}
 				}
 
@@ -1414,20 +1411,20 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
+					if (MaskGatherChooser::computeLoop(forceMask)) {
 
-						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
+						const vcp_double_vec q = MaskGatherChooser::load(soa2_charges_q, j);
 
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_charges_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_charges_r_z + j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_charges_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_charges_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
@@ -1444,9 +1441,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
 
-						vcp_simd_load_add_store(soa2_charges_f_x + j, f_x);//newton 3
-						vcp_simd_load_add_store(soa2_charges_f_y + j, f_y);//newton 3
-						vcp_simd_load_add_store(soa2_charges_f_z + j, f_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z);//newton 3
 
 						// Store torque
 
@@ -1490,20 +1487,20 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_charge_idx);
-				for (; j < end_charges_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_charges_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
+					if (MaskGatherChooser::computeLoop(forceMask)) {
 
-						const vcp_double_vec q = vcp_simd_load(soa2_charges_q + j);
+						const vcp_double_vec q = MaskGatherChooser::load(soa2_charges_q, j);
 
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_charges_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_charges_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_charges_r_z + j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_charges_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_charges_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_charges_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
@@ -1521,9 +1518,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
 
 
-						vcp_simd_load_add_store(soa2_charges_f_x + j, f_x);//newton 3
-						vcp_simd_load_add_store(soa2_charges_f_y + j, f_y);//newton 3
-						vcp_simd_load_add_store(soa2_charges_f_z + j, f_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z);//newton 3
 
 
 						// Store torque
@@ -1582,21 +1579,21 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
-				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec p2 = vcp_simd_load(soa2_dipoles_p + j);
-						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
-						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
-						const vcp_double_vec e2_z = vcp_simd_load(soa2_dipoles_e_z + j);
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_dipoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_dipoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_dipoles_r_z + j);
+					if (MaskGatherChooser::computeLoop(forceMask)) {
+						const vcp_double_vec p2 = MaskGatherChooser::load(soa2_dipoles_p, j);
+						const vcp_double_vec e2_x = MaskGatherChooser::load(soa2_dipoles_e_x, j);
+						const vcp_double_vec e2_y = MaskGatherChooser::load(soa2_dipoles_e_y, j);
+						const vcp_double_vec e2_z = MaskGatherChooser::load(soa2_dipoles_e_z, j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_dipoles_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_dipoles_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_dipoles_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_dipoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_dipoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_dipoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_dipoles_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_dipoles_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
@@ -1616,9 +1613,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
 
-						vcp_simd_load_sub_store(soa2_dipoles_f_x + j, f_x);//newton 3
-						vcp_simd_load_sub_store(soa2_dipoles_f_y + j, f_y);//newton 3
-						vcp_simd_load_sub_store(soa2_dipoles_f_z + j, f_z);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z);//newton 3
 
 
 						// Store torque
@@ -1627,9 +1624,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
 						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
 
-						vcp_simd_load_add_store(soa2_dipoles_M_x + j, M2_x);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_M_y + j, M2_y);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_M_z + j, M2_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_x, j, M2_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_y, j, M2_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_z, j, M2_z);//newton 3
 
 					}
 				}
@@ -1661,24 +1658,24 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
+					if (MaskGatherChooser::computeLoop(forceMask)) {
 
-						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
+						const vcp_double_vec p = MaskGatherChooser::load(soa2_dipoles_p, j);
 
-						const vcp_double_vec e_x = vcp_simd_load(soa2_dipoles_e_x + j);
-						const vcp_double_vec e_y = vcp_simd_load(soa2_dipoles_e_y + j);
-						const vcp_double_vec e_z = vcp_simd_load(soa2_dipoles_e_z + j);
+						const vcp_double_vec e_x = MaskGatherChooser::load(soa2_dipoles_e_x, j);
+						const vcp_double_vec e_y = MaskGatherChooser::load(soa2_dipoles_e_y, j);
+						const vcp_double_vec e_z = MaskGatherChooser::load(soa2_dipoles_e_z, j);
 
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_dipoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_dipoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_dipoles_r_z + j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_dipoles_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_dipoles_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_dipoles_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_dipoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_dipoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_dipoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_dipoles_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_dipoles_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
 
@@ -1695,15 +1692,15 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
 
-						vcp_simd_load_sub_store(soa2_dipoles_f_x + j, f_x);//newton 3
-						vcp_simd_load_sub_store(soa2_dipoles_f_y + j, f_y);//newton 3
-						vcp_simd_load_sub_store(soa2_dipoles_f_z + j, f_z);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z);//newton 3
 
 						// Store torque
 
-						vcp_simd_load_add_store(soa2_dipoles_M_x + j, M_x);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_M_y + j, M_y);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_M_z + j, M_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_x, j, M_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_y, j, M_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_z, j, M_z);//newton 3
 
 					}
 				}
@@ -1739,21 +1736,21 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_dipole_idx);
-				for (; j < end_dipoles_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_dipoles_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
-						const vcp_double_vec p = vcp_simd_load(soa2_dipoles_p + j);
-						const vcp_double_vec e2_x = vcp_simd_load(soa2_dipoles_e_x + j);
-						const vcp_double_vec e2_y = vcp_simd_load(soa2_dipoles_e_y + j);
-						const vcp_double_vec e2_z = vcp_simd_load(soa2_dipoles_e_z + j);
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_dipoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_dipoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_dipoles_r_z + j);
+					if (MaskGatherChooser::computeLoop(forceMask)) {
+						const vcp_double_vec p = MaskGatherChooser::load(soa2_dipoles_p, j);
+						const vcp_double_vec e2_x = MaskGatherChooser::load(soa2_dipoles_e_x, j);
+						const vcp_double_vec e2_y = MaskGatherChooser::load(soa2_dipoles_e_y, j);
+						const vcp_double_vec e2_z = MaskGatherChooser::load(soa2_dipoles_e_z, j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_dipoles_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_dipoles_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_dipoles_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_dipoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_dipoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_dipoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_dipoles_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_dipoles_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
@@ -1770,9 +1767,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
 
-						vcp_simd_load_add_store(soa2_dipoles_f_x + j, f_x);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_f_y + j, f_y);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_f_z + j, f_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z);//newton 3
 
 
 						// Store torque
@@ -1782,9 +1779,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
 
 
-						vcp_simd_load_add_store(soa2_dipoles_M_x + j, M2_x);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_M_y + j, M2_y);//newton 3
-						vcp_simd_load_add_store(soa2_dipoles_M_z + j, M2_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_x, j, M2_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_y, j, M2_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_z, j, M2_z);//newton 3
 
 					}
 				}
@@ -1837,22 +1834,22 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
-				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
+					if (MaskGatherChooser::computeLoop(forceMask)) {
 
-						const vcp_double_vec mjj = vcp_simd_load(soa2_quadrupoles_m + j);
-						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
-						const vcp_double_vec ejj_y = vcp_simd_load(soa2_quadrupoles_e_y + j);
-						const vcp_double_vec ejj_z = vcp_simd_load(soa2_quadrupoles_e_z + j);
-						const vcp_double_vec rjj_x = vcp_simd_load(soa2_quadrupoles_r_x + j);
-						const vcp_double_vec rjj_y = vcp_simd_load(soa2_quadrupoles_r_y + j);
-						const vcp_double_vec rjj_z = vcp_simd_load(soa2_quadrupoles_r_z + j);
+						const vcp_double_vec mjj = MaskGatherChooser::load(soa2_quadrupoles_m, j);
+						const vcp_double_vec ejj_x = MaskGatherChooser::load(soa2_quadrupoles_e_x, j);
+						const vcp_double_vec ejj_y = MaskGatherChooser::load(soa2_quadrupoles_e_y, j);
+						const vcp_double_vec ejj_z = MaskGatherChooser::load(soa2_quadrupoles_e_z, j);
+						const vcp_double_vec rjj_x = MaskGatherChooser::load(soa2_quadrupoles_r_x, j);
+						const vcp_double_vec rjj_y = MaskGatherChooser::load(soa2_quadrupoles_r_y, j);
+						const vcp_double_vec rjj_z = MaskGatherChooser::load(soa2_quadrupoles_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_quadrupoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_quadrupoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_quadrupoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_quadrupoles_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_quadrupoles_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
@@ -1869,9 +1866,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
 
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_x + j, f_x);//newton 3
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_y + j, f_y);//newton 3
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_z + j, f_z);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z);//newton 3
 
 
 						// Store torque
@@ -1880,9 +1877,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
 						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
 
-						vcp_simd_load_add_store(soa2_quadrupoles_M_x + j, M2_x);//newton 3
-						vcp_simd_load_add_store(soa2_quadrupoles_M_y + j, M2_y);//newton 3
-						vcp_simd_load_add_store(soa2_quadrupoles_M_z + j, M2_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_x, j, M2_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_y, j, M2_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_z, j, M2_z);//newton 3
 					}
 				}
 
@@ -1912,22 +1909,22 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
+					if (MaskGatherChooser::computeLoop(forceMask)) {
 
-						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
-						const vcp_double_vec e_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
-						const vcp_double_vec e_y = vcp_simd_load(soa2_quadrupoles_e_y + j);
-						const vcp_double_vec e_z = vcp_simd_load(soa2_quadrupoles_e_z + j);
-						const vcp_double_vec r2_x = vcp_simd_load(soa2_quadrupoles_r_x + j);
-						const vcp_double_vec r2_y = vcp_simd_load(soa2_quadrupoles_r_y + j);
-						const vcp_double_vec r2_z = vcp_simd_load(soa2_quadrupoles_r_z + j);
+						const vcp_double_vec m = MaskGatherChooser::load(soa2_quadrupoles_m, j);
+						const vcp_double_vec e_x = MaskGatherChooser::load(soa2_quadrupoles_e_x, j);
+						const vcp_double_vec e_y = MaskGatherChooser::load(soa2_quadrupoles_e_y, j);
+						const vcp_double_vec e_z = MaskGatherChooser::load(soa2_quadrupoles_e_z, j);
+						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_quadrupoles_r_x, j);
+						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_quadrupoles_r_y, j);
+						const vcp_double_vec r2_z = MaskGatherChooser::load(soa2_quadrupoles_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_quadrupoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_quadrupoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_quadrupoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_quadrupoles_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_quadrupoles_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j);
 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
@@ -1945,16 +1942,16 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
 
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_x + j, f_x);//newton 3
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_y + j, f_y);//newton 3
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_z + j, f_z);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z);//newton 3
 
 
 						// Store torque
 
-						vcp_simd_load_add_store(soa2_quadrupoles_M_x + j, M_x);//newton 3
-						vcp_simd_load_add_store(soa2_quadrupoles_M_y + j, M_y);//newton 3
-						vcp_simd_load_add_store(soa2_quadrupoles_M_z + j, M_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_x, j, M_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_y, j, M_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_z, j, M_z);//newton 3
 
 					}
 				}
@@ -1990,22 +1987,22 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
-				for (; j < end_quadrupoles_j_longloop; j += VCP_VEC_SIZE) {
+				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_mask_vec forceMask = vcp_simd_load(soa2_quadrupoles_dist_lookup + j/VCP_INDICES_PER_MASK_SINGLE);
 					// Check if we have to calculate anything for at least one of the pairs
-					if (vcp_simd_movemask(forceMask) > 0) {
+					if (MaskGatherChooser::computeLoop(forceMask)) {
 
-						const vcp_double_vec m = vcp_simd_load(soa2_quadrupoles_m + j);
-						const vcp_double_vec ejj_x = vcp_simd_load(soa2_quadrupoles_e_x + j);
-						const vcp_double_vec ejj_y = vcp_simd_load(soa2_quadrupoles_e_y + j);
-						const vcp_double_vec ejj_z = vcp_simd_load(soa2_quadrupoles_e_z + j);
-						const vcp_double_vec rjj_x = vcp_simd_load(soa2_quadrupoles_r_x + j);
-						const vcp_double_vec rjj_y = vcp_simd_load(soa2_quadrupoles_r_y + j);
-						const vcp_double_vec rjj_z = vcp_simd_load(soa2_quadrupoles_r_z + j);
+						const vcp_double_vec m = MaskGatherChooser::load(soa2_quadrupoles_m, j);
+						const vcp_double_vec ejj_x = MaskGatherChooser::load(soa2_quadrupoles_e_x, j);
+						const vcp_double_vec ejj_y = MaskGatherChooser::load(soa2_quadrupoles_e_y, j);
+						const vcp_double_vec ejj_z = MaskGatherChooser::load(soa2_quadrupoles_e_z, j);
+						const vcp_double_vec rjj_x = MaskGatherChooser::load(soa2_quadrupoles_r_x, j);
+						const vcp_double_vec rjj_y = MaskGatherChooser::load(soa2_quadrupoles_r_y, j);
+						const vcp_double_vec rjj_z = MaskGatherChooser::load(soa2_quadrupoles_r_z, j);
 
-						const vcp_double_vec m2_r_x = vcp_simd_load(soa2_quadrupoles_m_r_x + j);
-						const vcp_double_vec m2_r_y = vcp_simd_load(soa2_quadrupoles_m_r_y + j);
-						const vcp_double_vec m2_r_z = vcp_simd_load(soa2_quadrupoles_m_r_z + j);
+						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_quadrupoles_m_r_x, j);
+						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_quadrupoles_m_r_y, j);
+						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
 
@@ -2022,9 +2019,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
 						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
 
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_x + j, f_x);//newton 3
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_y + j, f_y);//newton 3
-						vcp_simd_load_sub_store(soa2_quadrupoles_f_z + j, f_z);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y);//newton 3
+						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z);//newton 3
 
 
 						// Store torque
@@ -2033,9 +2030,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
 						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
 
-						vcp_simd_load_add_store(soa2_quadrupoles_M_x + j, M2_x);//newton 3
-						vcp_simd_load_add_store(soa2_quadrupoles_M_y + j, M2_y);//newton 3
-						vcp_simd_load_add_store(soa2_quadrupoles_M_z + j, M2_z);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_x, j, M2_x);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_y, j, M2_y);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_z, j, M2_z);//newton 3
 
 					}
 				}
@@ -2071,7 +2068,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 		return;
 	}
 
-	_calculatePairs<SingleCellPolicy_, true>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
+	_calculatePairs<SingleCellPolicy_, true, MaskingChooser>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));//TODO: switch chooser
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
@@ -2084,13 +2081,13 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	}
 
 	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, true>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+		_calculatePairs<CellPairPolicy_, true, MaskingChooser>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
 	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
 		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, true>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+			_calculatePairs<CellPairPolicy_, true, MaskingChooser>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
 		}
 		else {
-			_calculatePairs<CellPairPolicy_, false>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+			_calculatePairs<CellPairPolicy_, false, MaskingChooser>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
 		}
 	} else {//both cells halo
 		return;

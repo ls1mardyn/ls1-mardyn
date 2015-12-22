@@ -13,6 +13,7 @@
 
 #include "SIMD_TYPES.h"
 #include "utils/AlignedArray.h"
+
 typedef AlignedArray<double> DoubleArray;
 
 /**
@@ -21,26 +22,29 @@ typedef AlignedArray<double> DoubleArray;
  * @param sig2 vector in which sig2 is saved
  * @param eps_sigI initial eps_sig array
  * @param id_j array of displacements
+ * @param offset offset of the id_j array
  */
+template <class MaskGatherChooser>
 static inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
-		const size_t* const id_j){
+		const size_t* const id_j, const size_t& offset){
+const size_t* id_j_shifted = id_j + offset;
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
-	eps_24 = eps_sigI[2 * id_j[0]];
-	sig2 = eps_sigI[2 * id_j[0] + 1];
+	eps_24 = eps_sigI[2 * id_j_shifted[0]];
+	sig2 = eps_sigI[2 * id_j_shifted[0] + 1];
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
-	const vcp_double_vec e0s0 = vcp_simd_load(eps_sigI + 2 * id_j[0]);
-	const vcp_double_vec e1s1 = vcp_simd_load(eps_sigI + 2 * id_j[1]);
+	const vcp_double_vec e0s0 = vcp_simd_load(eps_sigI + 2 * id_j_shifted[0]);
+	const vcp_double_vec e1s1 = vcp_simd_load(eps_sigI + 2 * id_j_shifted[1]);
 	eps_24 = vcp_simd_unpacklo(e0s0, e1s1);
 	sig2 = vcp_simd_unpackhi(e0s0, e1s1);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx
 	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
-	const vcp_double_vec e0s0 = vcp_simd_maskload(eps_sigI + 2 * id_j[0], memoryMask_first_second);
-	const vcp_double_vec e1s1 = vcp_simd_maskload(eps_sigI + 2 * id_j[1], memoryMask_first_second);
-	const vcp_double_vec e2s2 = vcp_simd_maskload(eps_sigI + 2 * id_j[2], memoryMask_first_second);
-	const vcp_double_vec e3s3 = vcp_simd_maskload(eps_sigI + 2 * id_j[3], memoryMask_first_second);
+	const vcp_double_vec e0s0 = vcp_simd_maskload(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
+	const vcp_double_vec e1s1 = vcp_simd_maskload(eps_sigI + 2 * id_j_shifted[1], memoryMask_first_second);
+	const vcp_double_vec e2s2 = vcp_simd_maskload(eps_sigI + 2 * id_j_shifted[2], memoryMask_first_second);
+	const vcp_double_vec e3s3 = vcp_simd_maskload(eps_sigI + 2 * id_j_shifted[3], memoryMask_first_second);
 
 	const vcp_double_vec e0e1 = vcp_simd_unpacklo(e0s0, e1s1);
 	const vcp_double_vec s0s1 = vcp_simd_unpackhi(e0s0, e1s1);
@@ -52,7 +56,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 #elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
-	__m512i indices = _mm512_load_epi64(id_j);
+	__m512i indices = _mm512_load_epi64(id_j_shifted);
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
@@ -64,24 +68,27 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
  * @param shift6 place to store it
  * @param shift6I initial array
  * @param id_j array of displacements
+ * @param offset offset of the id_j array
  */
+template <class MaskGatherChooser>//TODO: use MaskGatherChooser to access id_j
 static inline __attribute__((always_inline))
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
-		const size_t* id_j){
+		const size_t* id_j, const size_t& offset){
+const size_t* id_j_shifted = id_j + offset;
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
-	shift6 = shift6I[id_j[0]];
+	shift6 = shift6I[id_j_shifted[0]];
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
-	const vcp_double_vec sh1 = _mm_load_sd(shift6I + id_j[0]);
-	const vcp_double_vec sh2 = _mm_load_sd(shift6I + id_j[1]);
+	const vcp_double_vec sh1 = _mm_load_sd(shift6I + id_j_shifted[0]);
+	const vcp_double_vec sh2 = _mm_load_sd(shift6I + id_j_shifted[1]);
 	shift6 = vcp_simd_unpacklo(sh1, sh2);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
-	const vcp_double_vec sh0 = vcp_simd_maskload(shift6I + id_j[0], memoryMask_first);
-	const vcp_double_vec sh1 = vcp_simd_maskload(shift6I + id_j[1], memoryMask_first);
-	const vcp_double_vec sh2 = vcp_simd_maskload(shift6I + id_j[2], memoryMask_first);
-	const vcp_double_vec sh3 = vcp_simd_maskload(shift6I + id_j[3], memoryMask_first);
+	const vcp_double_vec sh0 = vcp_simd_maskload(shift6I + id_j_shifted[0], memoryMask_first);
+	const vcp_double_vec sh1 = vcp_simd_maskload(shift6I + id_j_shifted[1], memoryMask_first);
+	const vcp_double_vec sh2 = vcp_simd_maskload(shift6I + id_j_shifted[2], memoryMask_first);
+	const vcp_double_vec sh3 = vcp_simd_maskload(shift6I + id_j_shifted[3], memoryMask_first);
 
 	const vcp_double_vec sh0sh1 = vcp_simd_unpacklo(sh0, sh1);
 	const vcp_double_vec sh2sh3 = vcp_simd_unpacklo(sh2, sh3);
@@ -90,12 +97,12 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
-	const __m256i indices = _mm256_maskload_epi64((const long long*)id_j, VCP_SIMD_ONESVM);
+	const __m256i indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), VCP_SIMD_ONESVM);
 	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
 #elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
-	const __m512i indices = _mm512_load_epi64(id_j);
+	const __m512i indices = _mm512_load_epi64(id_j_shifted);
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);
 #endif
 }
@@ -139,10 +146,11 @@ static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec
  * @param addr memory address where value should be loaded from and stored to
  * @param value value that should be added
  */
-static inline void vcp_simd_load_add_store(double * const addr, const vcp_double_vec& value){
-	vcp_double_vec sum = vcp_simd_load(addr);
+template <class MaskGatherChooser>
+static inline void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_double_vec& value){
+	vcp_double_vec sum = MaskGatherChooser::load(addr, offset);
 	sum = vcp_simd_add(sum, value);
-	vcp_simd_store(addr, sum);
+	MaskGatherChooser::store(addr, offset, sum);
 }
 
 /**
@@ -150,10 +158,11 @@ static inline void vcp_simd_load_add_store(double * const addr, const vcp_double
  * @param addr memory address where value should be loaded from and stored to
  * @param value value that should be subtracted
  */
-static inline void vcp_simd_load_sub_store(double * const addr, const vcp_double_vec& value){
-	vcp_double_vec sum = vcp_simd_load(addr);
+template <class MaskGatherChooser>
+static inline void vcp_simd_load_sub_store(double * const addr, size_t offset, const vcp_double_vec& value){
+	vcp_double_vec sum = MaskGatherChooser::load(addr, offset);
 	sum = vcp_simd_sub(sum, value);
-	vcp_simd_store(addr, sum);
+	MaskGatherChooser::store(addr, offset, sum);
 }
 
 

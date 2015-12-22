@@ -283,9 +283,10 @@ private:
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.
-	 *
+	 * <br>
+	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
-	template<class ForcePolicy, bool CalculateMacroscopic>
+	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
 
 	/**
