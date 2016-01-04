@@ -147,7 +147,7 @@
 
 	static inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return _mm256_movemask_pd(_mm256_castsi256_pd(a));}
 	static inline vcp_double_vec vcp_simd_maskload(double const * a, vcp_mask_vec b) {return _mm256_maskload_pd(a, b);}
-#elif VCP_VEC_TYPE==VCP_VEC_MIC
+#elif VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 
 	static inline vcp_double_vec vcp_simd_zerov() { return _mm512_castsi512_pd( _mm512_set_epi32(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) ); }//exists
 	static inline vcp_double_vec vcp_simd_ones() { return _mm512_castsi512_pd( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) ); }//exists
@@ -181,6 +181,7 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm512_load_pd(a);}
 	static inline vcp_mask_vec vcp_simd_load(const vcp_mask_single* const a) {return *a;}
+	//static inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return a;}
 
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
 	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {_mm512_store_pd(location, a);}

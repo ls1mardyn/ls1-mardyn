@@ -39,7 +39,7 @@ public:
 		_centers_m_r_x(_centers_size), _centers_m_r_y(_centers_size), _centers_m_r_z(_centers_size),
 		_centers_r_x(_centers_size), _centers_r_y(_centers_size), _centers_r_z(_centers_size),
 		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size),
-		_centers_dist_lookup((_centers_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE),
+		_centers_dist_lookup((_centers_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE),
 		_ljc_id(_ljc_size),
 		_charges_q(_charges_size),
 		_dipoles_p(_dipoles_size),
@@ -94,7 +94,7 @@ public:
 	double* _ljc_f_x;
 	double* _ljc_f_y;
 	double* _ljc_f_z;
-	vcp_mask_single* _ljc_dist_lookup;
+	vcp_lookupOrMask_single* _ljc_dist_lookup;
 
 	double* _charges_m_r_x;
 	double* _charges_m_r_y;
@@ -176,7 +176,7 @@ public:
 		_charges_f_x = _ljc_f_x + _ljc_size;
 		_charges_f_y = _ljc_f_y + _ljc_size;
 		_charges_f_z = _ljc_f_z + _ljc_size;
-		_charges_dist_lookup = _ljc_dist_lookup + (_ljc_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE;
+		_charges_dist_lookup = _ljc_dist_lookup + (_ljc_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 
 		_dipoles_m_r_x = _charges_m_r_x + _charges_size;
 		_dipoles_m_r_y = _charges_m_r_y + _charges_size;
@@ -187,7 +187,7 @@ public:
 		_dipoles_f_x = _charges_f_x + _charges_size;
 		_dipoles_f_y = _charges_f_y + _charges_size;
 		_dipoles_f_z = _charges_f_z + _charges_size;
-		_dipoles_dist_lookup = _charges_dist_lookup + (_charges_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE;
+		_dipoles_dist_lookup = _charges_dist_lookup + (_charges_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 
 		_quadrupoles_m_r_x = _dipoles_m_r_x + _dipoles_size;
 		_quadrupoles_m_r_y = _dipoles_m_r_y + _dipoles_size;
@@ -198,7 +198,7 @@ public:
 		_quadrupoles_f_x = _dipoles_f_x + _dipoles_size;
 		_quadrupoles_f_y = _dipoles_f_y + _dipoles_size;
 		_quadrupoles_f_z = _dipoles_f_z + _dipoles_size;
-		_quadrupoles_dist_lookup = _dipoles_dist_lookup + (_dipoles_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE;
+		_quadrupoles_dist_lookup = _dipoles_dist_lookup + (_dipoles_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 	}
 
 	template<class T>
@@ -280,7 +280,7 @@ public:
 				resizeCentersZero(_centers_f_x, _centers_size);
 				resizeCentersZero(_centers_f_y, _centers_size);
 				resizeCentersZero(_centers_f_z, _centers_size);
-				resizeCentersZero(_centers_dist_lookup, (_centers_size + VCP_INDICES_PER_MASK_SINGLE_M1)/VCP_INDICES_PER_MASK_SINGLE);
+				resizeCentersZero(_centers_dist_lookup, (_centers_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE);
 			}
 		}
 

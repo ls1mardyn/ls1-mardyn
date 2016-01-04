@@ -27,8 +27,10 @@ typedef AlignedArray<double> DoubleArray;
 template <class MaskGatherChooser>
 static inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
-		const size_t* const id_j, const size_t& offset){
-const size_t* id_j_shifted = id_j + offset;
+		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
+#if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
+	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+#endif
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	eps_24 = eps_sigI[2 * id_j_shifted[0]];
 	sig2 = eps_sigI[2 * id_j_shifted[0] + 1];
@@ -60,6 +62,12 @@ const size_t* id_j_shifted = id_j + offset;
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+#elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+	__m512i lookupindices = _mm512_load_epi64(lookupORforceMask + offset);//first load necessary lookup indices, from where id_j should be loaded
+	__m512i indices = _mm512_i64gather_epi64(lookupindices, id_j, 8);//gather id_j using the indices
+	indices = _mm512_add_epi64(indices, indices);//only every second...
+	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 #endif
 }
 
@@ -70,11 +78,13 @@ const size_t* id_j_shifted = id_j + offset;
  * @param id_j array of displacements
  * @param offset offset of the id_j array
  */
-template <class MaskGatherChooser>//TODO: use MaskGatherChooser to access id_j
+template <class MaskGatherChooser>
 static inline __attribute__((always_inline))
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
-		const size_t* id_j, const size_t& offset){
-const size_t* id_j_shifted = id_j + offset;
+		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
+#if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
+	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+#endif
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	shift6 = shift6I[id_j_shifted[0]];
 
@@ -102,8 +112,12 @@ const size_t* id_j_shifted = id_j + offset;
 #elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
-	const __m512i indices = _mm512_load_epi64(id_j_shifted);
-	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);
+	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
+	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
+#elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+	__m512i lookupindices = _mm512_load_epi64(lookupORforceMask + offset);//first load necessary lookup indices, from where id_j should be loaded
+	__m512i indices = _mm512_i64gather_epi64(lookupindices, id_j, 8);//gather id_j using the indices
+	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
 }
 
@@ -147,10 +161,10 @@ static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec
  * @param value value that should be added
  */
 template <class MaskGatherChooser>
-static inline void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_double_vec& value){
-	vcp_double_vec sum = MaskGatherChooser::load(addr, offset);
+static inline void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_add(sum, value);
-	MaskGatherChooser::store(addr, offset, sum);
+	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
 
 /**
@@ -159,21 +173,11 @@ static inline void vcp_simd_load_add_store(double * const addr, size_t offset, c
  * @param value value that should be subtracted
  */
 template <class MaskGatherChooser>
-static inline void vcp_simd_load_sub_store(double * const addr, size_t offset, const vcp_double_vec& value){
-	vcp_double_vec sum = MaskGatherChooser::load(addr, offset);
+static inline void vcp_simd_load_sub_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_sub(sum, value);
-	MaskGatherChooser::store(addr, offset, sum);
+	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
-
-
-
-
-
-
-
-
-
-
 
 
 
