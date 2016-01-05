@@ -181,15 +181,21 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm512_load_pd(a);}
 	static inline vcp_mask_vec vcp_simd_load(const vcp_mask_single* const a) {return *a;}
+
 	//static inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return a;}
 
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
 	static inline void vcp_simd_store(double* location, const vcp_double_vec& a) {_mm512_store_pd(location, a);}
 	static inline void vcp_simd_store(vcp_mask_single* location, const vcp_mask_vec& a) {*location = a;}
+
 	//static inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpacklo_pd(a,b);}//not needed
 	//static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}//not needed
 
 	static inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return a != VCP_SIMD_ZEROVM;}
+	#if VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+		static inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return _mm512_load_epi64(a);}
+		static inline void vcp_simd_store(vcp_lookupOrMask_single* location, const vcp_lookupOrMask_vec& a) {_mm512_store_epi64(location, a);}
+	#endif
 #endif
 
 #if VCP_VEC_TYPE != VCP_NOVEC

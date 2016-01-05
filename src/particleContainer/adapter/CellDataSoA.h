@@ -83,7 +83,7 @@ public:
 	DoubleArray _centers_f_x;
 	DoubleArray _centers_f_y;
 	DoubleArray _centers_f_z;
-	AlignedArray<vcp_mask_single> _centers_dist_lookup;
+	AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
 	double* _ljc_m_r_x;
 	double* _ljc_m_r_y;
@@ -105,7 +105,7 @@ public:
 	double* _charges_f_x;
 	double* _charges_f_y;
 	double* _charges_f_z;
-	vcp_mask_single* _charges_dist_lookup;
+	vcp_lookupOrMask_single* _charges_dist_lookup;
 
 	double* _dipoles_m_r_x;
 	double* _dipoles_m_r_y;
@@ -116,7 +116,7 @@ public:
 	double* _dipoles_f_x;
 	double* _dipoles_f_y;
 	double* _dipoles_f_z;
-	vcp_mask_single* _dipoles_dist_lookup;
+	vcp_lookupOrMask_single* _dipoles_dist_lookup;
 
 	double* _quadrupoles_m_r_x;
 	double* _quadrupoles_m_r_y;
@@ -127,7 +127,7 @@ public:
 	double* _quadrupoles_f_x;
 	double* _quadrupoles_f_y;
 	double* _quadrupoles_f_z;
-	vcp_mask_single* _quadrupoles_dist_lookup;
+	vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
 
 	// entries per lj center
 	IndexArray _ljc_id;

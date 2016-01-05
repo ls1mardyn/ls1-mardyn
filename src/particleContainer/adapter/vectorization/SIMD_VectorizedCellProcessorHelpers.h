@@ -63,8 +63,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 #elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-	__m512i lookupindices = _mm512_load_epi64(lookupORforceMask + offset);//first load necessary lookup indices, from where id_j should be loaded
-	__m512i indices = _mm512_i64gather_epi64(lookupindices, id_j, 8);//gather id_j using the indices
+	__m512i indices = _mm512_i64gather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
@@ -115,8 +114,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-	__m512i lookupindices = _mm512_load_epi64(lookupORforceMask + offset);//first load necessary lookup indices, from where id_j should be loaded
-	__m512i indices = _mm512_i64gather_epi64(lookupindices, id_j, 8);//gather id_j using the indices
+	__m512i indices = _mm512_i64gather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
 }

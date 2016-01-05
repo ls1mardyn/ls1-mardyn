@@ -124,7 +124,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #else //
 	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
-	typedef size_t* vcp_lookupOrMask_vec;
+	typedef __m512i vcp_lookupOrMask_vec;
 	typedef size_t vcp_lookupOrMask_single;
 #endif
 

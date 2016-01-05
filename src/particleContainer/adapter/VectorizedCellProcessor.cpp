@@ -1071,7 +1071,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	return compute_molecule;
 #elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
-
+/*
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
 	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
 	// Iterate over centers of second cell
@@ -1086,7 +1086,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
+		const vcp_lookupOrMask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 		vcp_simd_store(soa2_center_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
@@ -1115,13 +1115,13 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		}
 		forceMask += forceMask_local * bitmultiplier;
 
-		//*(soa2_center_dist_lookup + j) = forceMask;
+		// *(soa2_center_dist_lookup + j) = forceMask;
 	}
 	compute_molecule = vcp_simd_or(compute_molecule, forceMask);//from last iteration
 	vcp_simd_store(soa2_center_dist_lookup + k, forceMask);//only one store, since there is only one additional mask.
 	//no memset needed, since each element of soa2_center_dist_lookup corresponds to 8 masked elements.
 	//every element of soa2_center_dist_lookup is therefore set.
-
+*/
 	return compute_molecule;
 #endif
 }
@@ -1177,7 +1177,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_charges_f_z = soa2._charges_f_z;
 	const double * const soa2_charges_q = soa2._charges_q;
 
-	vcp_mask_single* const soa2_charges_dist_lookup = soa2._charges_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = soa2._charges_dist_lookup;
 
 	// Pointer for dipoles
 	const double * const soa1_dipoles_r_x = soa1._dipoles_r_x;
@@ -1212,7 +1212,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_dipoles_M_y = soa2._dipoles_M_y;
 	double * const soa2_dipoles_M_z = soa2._dipoles_M_z;
 
-	vcp_mask_single* const soa2_dipoles_dist_lookup = soa2._dipoles_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = soa2._dipoles_dist_lookup;
 
 	// Pointer for quadrupoles
 	const double * const soa1_quadrupoles_r_x = soa1._quadrupoles_r_x;
@@ -1247,7 +1247,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M_y;
 	double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M_z;
 
-	vcp_mask_single* const soa2_quadrupoles_dist_lookup = soa2._quadrupoles_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = soa2._quadrupoles_dist_lookup;
 
 
 
@@ -1375,7 +1375,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainder = MaskGatherChooser::getRemainder(/*TODO: stuff in here*/);
+					const __mmask8 remainder = MaskGatherChooser::getRemainder(end_ljc_j_cnt);
 					if(remainder != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = vcp_simd_load(soa2_ljc_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE);
 
@@ -2168,7 +2168,7 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 		return;
 	}
 
-	_calculatePairs<SingleCellPolicy_, true, MaskingChooser>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));//TODO: switch chooser
+	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));//TODO: switch chooser
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
@@ -2180,14 +2180,15 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		return;
 	}
 
+
 	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, true, MaskingChooser>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
+		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
 	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
 		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, true, MaskingChooser>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
+			_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
 		}
 		else {
-			_calculatePairs<CellPairPolicy_, false, MaskingChooser>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
+			_calculatePairs<CellPairPolicy_, false, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));//TODO: switch chooser
 		}
 	} else {//both cells halo -> do nothing
 		return;
