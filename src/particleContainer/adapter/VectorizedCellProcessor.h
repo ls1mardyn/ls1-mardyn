@@ -313,14 +313,23 @@ private:
 			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
+		inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+		{
+#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
+			return InitJ(i);
+#else
+			return 0;
+#endif
+		}
+
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
 		{
 			vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
 			j_mask = VCP_SIMD_ONESVM;
 			return result;
 		}
-	#if VCP_VEC_TYPE!=VCP_VEC_MIC
+	#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
 			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
@@ -330,10 +339,10 @@ private:
 				default: return VCP_SIMD_ONESVM;
 			}
 		}
-	#else
+	#else //mic
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
-			static const __mmask8 possibleInitJMasks[VCP_VEC_SIZE] = { 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0xFF };
+			static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0xFF };
 			return possibleInitJMasks[i & static_cast<size_t>(VCP_VEC_SIZE_M1)];
 		}
 	#endif
@@ -368,6 +377,11 @@ private:
 		{
 			return 0;
 		}
+		inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+		{
+			return InitJ(i);
+		}
+
 
 		inline static bool DetectSingleCell ()
 		{
@@ -375,7 +389,7 @@ private:
 		}
 
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 				, vcp_mask_vec& j_mask
 #endif
 				)
@@ -386,10 +400,10 @@ private:
 		}
 
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)
 		{
-			return VCP_SIMD_ZEROVM;
+			return VCP_SIMD_ZEROVM;//totally unimportant, since not used...
 		}
 #endif
  /* definition of GetForceMask */

@@ -25,7 +25,7 @@ typedef AlignedArray<double> DoubleArray;
  * @param offset offset of the id_j array
  */
 template <class MaskGatherChooser>
-static inline __attribute__((always_inline))
+static //inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
@@ -63,7 +63,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 #elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-	__m512i indices = _mm512_i64gather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
+	__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
@@ -78,7 +78,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
  * @param offset offset of the id_j array
  */
 template <class MaskGatherChooser>
-static inline __attribute__((always_inline))
+static //inline __attribute__((always_inline))
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
@@ -114,7 +114,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-	__m512i indices = _mm512_i64gather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
+	__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
 }
@@ -148,7 +148,7 @@ static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec
 			vcp_simd_maskload(mem_addr, memoryMask_first)
 		)
 	);
-#elif VCP_VEC_TYPE==VCP_VEC_MIC
+#elif VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 	*mem_addr += _mm512_reduce_add_pd(a);
 #endif
 }
@@ -159,7 +159,8 @@ static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec
  * @param value value that should be added
  */
 template <class MaskGatherChooser>
-static inline void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+static inline
+void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
 	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_add(sum, value);
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
@@ -177,7 +178,31 @@ static inline void vcp_simd_load_sub_store(double * const addr, size_t offset, c
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
 
+/**
+ * loads vector from memory location, adds the value to it and saves the combined result.
+ * @param addr memory address where value should be loaded from and stored to
+ * @param value value that should be added
+ */
+template <class MaskGatherChooser>
+static inline
+void vcp_simd_load_add_store_masked(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const vcp_mask_vec mask){
+	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+	sum = vcp_simd_add(sum, value);
+	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
+}
 
+/**
+ * loads vector from memory location, subtracts the value from it and saves the combined result.
+ * @param addr memory address where value should be loaded from and stored to
+ * @param value value that should be subtracted
+ */
+template <class MaskGatherChooser>
+static inline
+void vcp_simd_load_sub_store_masked(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const vcp_mask_vec mask){
+	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+	sum = vcp_simd_sub(sum, value);
+	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
+}
 
 
 
