@@ -88,6 +88,8 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			Tersoff tersoffSite;
 			tersoffSite.readXML(xmlconfig);
 			addTersoff(tersoffSite);
+		}else {
+			global_log->warning() << "Unknown site type:" << siteType << endl;
 		}
 	}
 
