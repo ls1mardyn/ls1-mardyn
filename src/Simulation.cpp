@@ -139,7 +139,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Run section missing." << endl;
 	}
 
-	/* enseble */
+	/* ensemble */
 	if(xmlconfig.changecurrentnode("ensemble")) {
 		string ensembletype;
 		xmlconfig.getNodeValue("@type", ensembletype);
