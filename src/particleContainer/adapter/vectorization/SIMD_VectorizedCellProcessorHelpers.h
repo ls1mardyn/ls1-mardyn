@@ -25,7 +25,7 @@ typedef AlignedArray<double> DoubleArray;
  * @param offset offset of the id_j array
  */
 template <class MaskGatherChooser>
-static //inline __attribute__((always_inline))
+static inline __attribute__((always_inline))
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
@@ -78,7 +78,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
  * @param offset offset of the id_j array
  */
 template <class MaskGatherChooser>
-static //inline __attribute__((always_inline))
+static inline __attribute__((always_inline))
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
