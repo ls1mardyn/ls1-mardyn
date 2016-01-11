@@ -708,9 +708,10 @@ void Simulation::simulate() {
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
-// 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
-// 			/ _integrator->getTimestepLength());
-	_initSimulation = 1;
+ 	// _initSimulation = (unsigned long) (_domain->getCurrentTime()
+ 	// 		/ _integrator->getTimestepLength());
+        
+        _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	/* demonstration for the usage of the new ensemble class */
 	CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
@@ -940,7 +941,7 @@ void Simulation::simulate() {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
-			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
 			_forced_checkpoint_time = -1; /* disable for further timesteps */
 		}
 		perStepIoTimer.stop();
@@ -955,7 +956,7 @@ void Simulation::simulate() {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.xdr");
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
-        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
     }
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
