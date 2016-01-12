@@ -101,7 +101,7 @@ private:
 		return ptr;
 #else
 		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
-		//std::memset(ptr, 0, sizeof(T) * elements);
+		std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
 		return ptr;
 #endif
 	}
