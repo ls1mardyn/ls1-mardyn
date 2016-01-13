@@ -97,11 +97,13 @@ private:
 	static T* _allocate(size_t elements, size_t num_non_zero=0) {
 #if defined(__SSE3__) && ! defined(__PGI)
 		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
-		memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+		std::memset(ptr, 0, sizeof(T) * elements);
 		return ptr;
 #else
 		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
-		std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+		std::memset(ptr, 0, elements * sizeof(T));
 		return ptr;
 #endif
 	}

@@ -1017,7 +1017,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 #elif VCP_VEC_TYPE==VCP_VEC_MIC
 	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
 
-	size_t j = ForcePolicy :: InitJ(i_center_idx);
+	size_t j = ForcePolicy :: InitJ(i_center_idx);//j=0 or multiple of vec_size
 	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
 	// Iterate over centers of second cell
 	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
@@ -1034,7 +1034,8 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 		vcp_simd_store(soa2_center_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
-	}
+	}//end_j is floor_to_vec_size
+	//j is now floor_to_vec_size(soa2_num_centers)=end_j
 
 	//last indices are more complicated for MIC, since masks look different
 	size_t k = (end_j+VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;

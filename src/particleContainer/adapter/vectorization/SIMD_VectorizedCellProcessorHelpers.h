@@ -124,7 +124,8 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 /**
  * sums up values in a and adds the result to *mem_addr
  */
-static inline void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
+static //inline
+void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 #if VCP_VEC_TYPE==VCP_NOVEC
 	(*mem_addr) += a; //there is just one value of a, so no second sum needed.
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
