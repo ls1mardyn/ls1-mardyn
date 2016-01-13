@@ -39,6 +39,7 @@ public:
 		_centers_m_r_x(_centers_size), _centers_m_r_y(_centers_size), _centers_m_r_z(_centers_size),
 		_centers_r_x(_centers_size), _centers_r_y(_centers_size), _centers_r_z(_centers_size),
 		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size),
+		//_centers_dist_lookup((_centers_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE),
 		_centers_dist_lookup(_centers_size),
 		_ljc_id(_ljc_size),
 		_charges_q(_charges_size),

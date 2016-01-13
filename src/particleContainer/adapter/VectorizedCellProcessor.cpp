@@ -282,6 +282,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			f[0] = soa._charges_f_x[iCharges];
 			f[1] = soa._charges_f_y[iCharges];
 			f[2] = soa._charges_f_z[iCharges];
+			if(isnan(f[0])||isnan(f[1])||isnan(f[2]) ){
+				printf("nan\n");
+			}
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -1463,7 +1466,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_charge_idx + local_i);
+				size_t j = ForcePolicy::InitJ2(i_charge_idx + local_i);
+				if(soa2_charges_f_x == (double*)0xa67700){
+					printf("j: %lu\n", (unsigned long)j);
+				}
 				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_charges_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -1502,6 +1508,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_charges_j_cnt);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
+
 						const vcp_double_vec q2 = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
 						const vcp_double_vec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j, lookupORforceMask);
 						const vcp_double_vec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j, lookupORforceMask);
@@ -1510,6 +1517,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j, lookupORforceMask);
 						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j, lookupORforceMask);
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
+						if(soa2_charges_f_x == (double*)0xa67700){
+							printf("j: %lu\n", (unsigned long)j);
+						}
 
 						vcp_double_vec f_x, f_y, f_z;
 						_loopBodyCharge<CalculateMacroscopic>(
@@ -1559,7 +1569,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M_z = VCP_SIMD_ZEROV;
 
-				size_t j = ForcePolicy::InitJ(i_charge_idx);
+				size_t j = ForcePolicy::InitJ2(i_charge_idx);
 				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_charges_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -1676,7 +1686,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
-				size_t j = ForcePolicy::InitJ(i_charge_idx);
+				size_t j = ForcePolicy::InitJ2(i_charge_idx);
 				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_charges_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -1812,7 +1822,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_dipole_idx + local_i);
+				size_t j = ForcePolicy::InitJ2(i_dipole_idx + local_i);
 				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_dipoles_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -1943,7 +1953,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				size_t j = ForcePolicy::InitJ(i_dipole_idx);
+				size_t j = ForcePolicy::InitJ2(i_dipole_idx);
 				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_dipoles_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -2066,7 +2076,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_dipole_idx);
+				size_t j = ForcePolicy::InitJ2(i_dipole_idx);
 				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_dipoles_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -2214,7 +2224,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_quadrupole_idx + local_i);
+				size_t j = ForcePolicy::InitJ2(i_quadrupole_idx + local_i);
 				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_quadrupoles_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -2337,7 +2347,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
-				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
+				size_t j = ForcePolicy::InitJ2(i_quadrupole_idx);
 				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_quadrupoles_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -2461,7 +2471,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
 
 				// Iterate over centers of second cell
-				size_t j = ForcePolicy::InitJ(i_quadrupole_idx);
+				size_t j = ForcePolicy::InitJ2(i_quadrupole_idx);
 				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_quadrupoles_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
