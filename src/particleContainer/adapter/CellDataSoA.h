@@ -281,7 +281,7 @@ public:
 				resizeCentersZero(_centers_f_x, _centers_size);
 				resizeCentersZero(_centers_f_y, _centers_size);
 				resizeCentersZero(_centers_f_z, _centers_size);
-				resizeCentersZero(_centers_dist_lookup, (_centers_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE);
+				resizeCentersZero(_centers_dist_lookup, _centers_size);
 			}
 		}
 
