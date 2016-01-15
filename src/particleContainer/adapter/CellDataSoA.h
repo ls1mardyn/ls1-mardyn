@@ -155,7 +155,7 @@ public:
 	DoubleArray _quadrupoles_M_z;
 
 
-	void inline __attribute__((always_inline)) initCenterPointers()
+	void vcp_inline initCenterPointers()
 	{
 		_ljc_m_r_x = _centers_m_r_x;
 		_ljc_m_r_y = _centers_m_r_y;
@@ -203,13 +203,13 @@ public:
 	}
 
 	template<class T>
-	static inline __attribute__((always_inline))
+	static vcp_inline
 	void resizeLastZero(AlignedArray<T>& array, const size_t& size,const size_t& startZero){
 		array.resize(size, startZero);
 	}
 
 	template<class T>
-	inline __attribute__((always_inline))
+	vcp_inline
 	void resizeCentersZero(AlignedArray<T>& array, const size_t& size){
 		array.resize(size, size);
 		//memset(array, 0, size * sizeof(T));//sets all to zero

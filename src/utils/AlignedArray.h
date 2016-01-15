@@ -77,7 +77,6 @@ public:
 		if (!_p)
 			throw std::bad_alloc();
 		_n = n;
-		//std::memset(_p,0,sizeof(T)*_n);
 	}
 
 	inline size_t get_size() const {

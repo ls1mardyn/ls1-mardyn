@@ -25,7 +25,7 @@ typedef AlignedArray<double> DoubleArray;
  * @param offset offset of the id_j array
  */
 template <class MaskGatherChooser>
-static inline __attribute__((always_inline))
+static vcp_inline
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
@@ -78,7 +78,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
  * @param offset offset of the id_j array
  */
 template <class MaskGatherChooser>
-static inline __attribute__((always_inline))
+static vcp_inline
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
@@ -124,7 +124,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 /**
  * sums up values in a and adds the result to *mem_addr
  */
-static //inline
+static vcp_inline
 void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 #if VCP_VEC_TYPE==VCP_NOVEC
 	(*mem_addr) += a; //there is just one value of a, so no second sum needed.
@@ -160,7 +160,7 @@ void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
  * @param value value that should be added
  */
 template <class MaskGatherChooser>
-static inline
+static vcp_inline
 void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
 	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_add(sum, value);
@@ -173,7 +173,8 @@ void vcp_simd_load_add_store(double * const addr, size_t offset, const vcp_doubl
  * @param value value that should be subtracted
  */
 template <class MaskGatherChooser>
-static inline void vcp_simd_load_sub_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+static vcp_inline
+void vcp_simd_load_sub_store(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
 	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_sub(sum, value);
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
@@ -185,7 +186,7 @@ static inline void vcp_simd_load_sub_store(double * const addr, size_t offset, c
  * @param value value that should be added
  */
 template <class MaskGatherChooser>
-static inline
+static vcp_inline
 void vcp_simd_load_add_store_masked(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const vcp_mask_vec mask){
 	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_add(sum, value);
@@ -198,7 +199,7 @@ void vcp_simd_load_add_store_masked(double * const addr, size_t offset, const vc
  * @param value value that should be subtracted
  */
 template <class MaskGatherChooser>
-static inline
+static vcp_inline
 void vcp_simd_load_sub_store_masked(double * const addr, size_t offset, const vcp_double_vec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const vcp_mask_vec mask){
 	vcp_double_vec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = vcp_simd_sub(sum, value);
