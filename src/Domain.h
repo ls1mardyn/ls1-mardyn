@@ -65,7 +65,7 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp );
+			DomainDecompBase* domainDecomp, double currentTime );
 
 	//! @brief initialize far field correction parameters
 	//!

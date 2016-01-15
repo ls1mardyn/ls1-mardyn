@@ -469,7 +469,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 void Domain::writeCheckpoint( string filename, 
 		ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp )
+		DomainDecompBase* domainDecomp, double currentTime )
 {
 	domainDecomp->assertDisjunctivity(particleContainer);
 	/* Rank 0 writes file header */
@@ -500,12 +500,10 @@ void Domain::writeCheckpoint( string filename,
 		{
 			checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << endl;
 		}
+		checkpointfilestream << "currentTime\t" << currentTime << "\n";
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
-		checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-		checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
                 checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
-
 #endif
 		if(this->_globalUSteps > 1)
 		{
