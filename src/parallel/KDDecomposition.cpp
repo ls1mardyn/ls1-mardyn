@@ -202,7 +202,7 @@ void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * do
 		for (int direction = LOWER; direction <= HIGHER; direction++) {
 			double shift[DIM];
 			for (int i = 0; i < 3; ++i) {
-				shift[dimension] = 0.0;
+				shift[i] = 0.0;
 			}
 
 			int regToSendLo[DIM];
@@ -331,6 +331,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		vector<int> numMolsToRecv;
 		vector<int>::iterator indexIt = indices.begin();
 		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
+		recvPartners.reserve(numProcsRecv);
 		for (int i = 0; i < ranks.size(); ++i) {
 			int partnerRank = ranks[i];
 
@@ -376,6 +377,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 
 		vector<int>::iterator indexIt = indices.begin();
 		numProcsSend = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
+		sendPartners.reserve(numProcsSend);
 		for (int i = 0; i < ranks.size(); ++i) {
 			int low[3];
 			int high[3];
