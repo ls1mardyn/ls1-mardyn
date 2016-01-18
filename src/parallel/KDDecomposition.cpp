@@ -24,6 +24,7 @@ using Log::global_log;
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
 		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold) {
 
+	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
 	int highCorner[KDDIM] = {0};
@@ -84,6 +85,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
 }
 
+#if 0
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	vector<int> procsToSendTo; // all processes to which this process has to send data
 	vector<int> procsToRecvFrom; // all processes from which this process has to recv data
@@ -142,13 +144,358 @@ void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Do
 	}
 	particlesRecvBufs.resize(0);
 }
+#endif /* TODO: remove */
 
 void KDDecomposition::balance() {
 	
 }
 
+void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
+	const bool rebalance = forceRebalancing or _steps % _frequency == 0 or _steps <= 1;
+	_steps++;
+	if (rebalance == false) {
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, true);
+	} else {
 
-void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
+		if (_steps != 1) {
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, true);
+		}
+
+		KDNode * newDecompRoot = NULL;
+		KDNode * newOwnLeaf = NULL;
+
+		constructNewTree(moleculeContainer, newDecompRoot, newOwnLeaf);
+		migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
+		delete _decompTree;
+		_decompTree = newDecompRoot;
+//		delete _ownArea; dont delete! this is a pointer only to one of the objects in the whole tree, not a real object
+		_ownArea = newOwnLeaf;
+		initCommunicationPartners(_cutoffRadius, domain);
+
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, true);
+	}
+}
+
+void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+
+//	if(_neighboursInitialized) {
+//		return;
+//	}
+//	_neighboursInitialized = true;
+
+	int ownLo[DIM];
+	int ownHi[DIM];
+
+	for (unsigned short d = 0; d < DIM; d++) {
+		ownLo[d] = _ownArea->_lowCorner[d];
+		ownHi[d] = _ownArea->_highCorner[d];
+
+		_neighbours[d].clear();
+	}
+
+	for (unsigned short dimension = 0; dimension < DIM; dimension++) {
+		if(_coversWholeDomain[dimension]) {
+			// nothing to do;
+			continue;
+		}
+
+		for (int direction = LOWER; direction <= HIGHER; direction++) {
+			double shift[DIM];
+			for (int i = 0; i < 3; ++i) {
+				shift[dimension] = 0.0;
+			}
+
+			int regToSendLo[DIM];
+			int regToSendHi[DIM];
+
+			for (int i = 0; i < DIM; ++i) {
+				regToSendLo[i] = ownLo[i];
+				regToSendHi[i] = ownHi[i];
+			}
+
+			if (ownLo[dimension] == 0) {
+				regToSendLo[dimension] = _globalCellsPerDim[dimension];
+			} else if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
+				regToSendHi[dimension] = -1;
+			}
+
+			switch (direction) {
+			case LOWER:
+				--regToSendLo[dimension];
+				regToSendHi[dimension] = regToSendLo[dimension];
+				if (ownLo[dimension] == 0) {
+					shift[dimension] = domain->getGlobalLength(dimension);
+				}
+				break;
+			case HIGHER:
+				++regToSendHi[dimension];
+				regToSendLo[dimension] = regToSendHi[dimension];
+				if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
+					shift[dimension] = -domain->getGlobalLength(dimension);
+				}
+				break;
+			}
+
+			vector<int> ranks;
+			vector<int> ranges;
+			_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
+			int numNeighbours = ranks.size();
+			vector<int>::iterator indexIt = ranges.begin();
+			for (int n = 0; n < numNeighbours; ++n) {
+				int low[3];
+				int high[3];
+				for (int d=0; d < 3; ++d) {
+					low[d] = *(indexIt++);
+					high[d] = *(indexIt++);
+					if (d == dimension) {
+						assert(low[d] == high[d]);
+					}
+				}
+				switch (direction) {
+				case LOWER:
+					if (low[dimension] + 1 != ownLo[dimension]) {
+						low[dimension] = high[dimension] = ownLo[dimension] - 1;
+					}
+					break;
+				case HIGHER:
+					if (high[dimension] - 1 != ownHi[dimension]) {
+						high[dimension] = low[dimension] = ownHi[dimension] + 1;
+					}
+					break;
+				}
+
+				// enlarge in two "other" dimensions
+				for (unsigned short d=0; d < 3; ++d) {
+					if(d != dimension) {
+						--low[d];
+						++high[d];
+					}
+				}
+
+				// region given by the current low-high range is the halo-range
+				double haloLow[3];
+				double haloHigh[3];
+				getCellBorderFromIntCoords(haloLow, haloHigh, low, high);
+
+				switch (direction) {
+				case LOWER:
+					low[dimension]++;
+					high[dimension]++;
+					break;
+				case HIGHER:
+					low[dimension]--;
+					high[dimension]--;
+					break;
+				}
+
+				double boundaryLow[3];
+				double boundaryHigh[3];
+				getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
+
+				_neighbours[dimension].push_back(CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
+
+			}
+
+		}
+	}
+}
+
+void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const {
+	for(int d = 0 ; d < 3; ++d) {
+		lC[d] = lo[d] * _cellSize[d];
+		hC[d] = (hi[d] + 1) * _cellSize[d];
+	}
+}
+
+void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
+	// 1. compute which processes we will receive from
+	// 2. issue Irecv calls
+	// 3. compute which prcesses we will send to
+	// 4. issue Isend calls
+	// 5. get all
+
+	vector<CommunicationPartner> recvPartners;
+	recvPartners.clear();
+	int numProcsRecv;
+
+	vector<Molecule*> migrateToSelf;
+	bool willMigrateToSelf = false;
+
+	// issue Recv calls
+	{
+		// process-leaving particles have been handled, so we only need actual area
+		vector<int> ranks;
+		vector<int> indices;
+		_decompTree->getOwningProcs(newOwnLeaf._lowCorner, newOwnLeaf._highCorner, ranks, indices);
+
+		vector<int> numMolsToRecv;
+		vector<int>::iterator indexIt = indices.begin();
+		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
+		for (int i = 0; i < ranks.size(); ++i) {
+			int partnerRank = ranks[i];
+
+			if (partnerRank != _rank) {
+				recvPartners.push_back(CommunicationPartner(partnerRank));
+			}
+
+			int low[3];
+			int high[3];
+			for (int d=0; d < 3; ++d) {
+				low[d] = *(indexIt++);
+				high[d] = *(indexIt++);
+			}
+			int numMols = 0;
+			for (int iz = low[2]; iz <= high[2]; ++iz) {
+				for (int iy = low[1]; iy <= high[1]; ++iy) {
+					for (int ix = low[0]; ix <= high[0]; ++ ix) {
+						numMols += _numParticlesPerCell[_globalCellsPerDim[0] * (iz * _globalCellsPerDim[1] + iy) + ix];
+					}
+				}
+			}
+
+			if (partnerRank != _rank) {
+				recvPartners.back().initRecv(numMols, _comm, _mpiParticleType);
+			} else {
+				migrateToSelf.reserve(numMols);
+				// decrement numProcsRecv for following uses
+				willMigrateToSelf = true;
+				numProcsRecv--;
+			}
+		}
+	}
+
+	vector<CommunicationPartner> sendPartners;
+	sendPartners.clear();
+	int numProcsSend;
+	// issue Send calls
+	{
+		// process-leaving particles have been handled, so we only need actual area
+		vector<int> ranks;
+		vector<int> indices;
+		newRoot.getOwningProcs(_ownArea->_lowCorner, _ownArea->_highCorner, ranks, indices);
+
+		vector<int>::iterator indexIt = indices.begin();
+		numProcsSend = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
+		for (int i = 0; i < ranks.size(); ++i) {
+			int low[3];
+			int high[3];
+			double leavingLow[3];
+			double leavingHigh[3];
+			for (int d=0; d < 3; ++d) {
+				low[d] = *(indexIt++);
+				high[d] = *(indexIt++);
+				leavingLow[d] = low[d] * _cellSize[d];
+				leavingHigh[d] = (high[d] + 1) * _cellSize[d];
+			}
+			int partnerRank = ranks[i];
+			if (partnerRank != _rank) {
+				sendPartners.push_back(CommunicationPartner(partnerRank, leavingLow, leavingHigh));
+				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY); // molecules have been taken out of container
+			} else {
+				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, true);
+				// decrement numProcsSend for further uses:
+				assert(willMigrateToSelf == true);
+				numProcsSend--;
+			}
+		}
+	}
+	assert(moleculeContainer->getNumberOfParticles() == 0ul);
+	double newBoxMin[3];
+	double newBoxMax[3];
+	for (int dim = 0; dim < 3; dim++) {
+		newBoxMin[dim] = (newOwnLeaf._lowCorner[dim]) * _cellSize[dim];
+		newBoxMax[dim] = (newOwnLeaf._highCorner[dim] + 1) * _cellSize[dim];
+	}
+	moleculeContainer->rebuild(newBoxMin, newBoxMax);
+
+	global_log->set_mpi_output_all();
+	double waitCounter = 1.0;
+	double deadlockTimeOut = 5.0;
+	bool allDone = false;
+	double startTime = MPI_Wtime();
+	bool migrateToSelfDone = not willMigrateToSelf;
+
+	while (not allDone) {
+		allDone = true;
+
+		// "kickstart" processing of all Isend requests
+		for (int i = 0; i < numProcsSend; ++i) {
+			allDone &= sendPartners[i].testSend();
+		}
+
+		if (migrateToSelfDone != true) {
+			const int numMolsMigToSelf = migrateToSelf.size();
+			for (int i = 0; i < numMolsMigToSelf; i++) {
+				moleculeContainer->addParticlePointer(migrateToSelf[i], false);
+			}
+			migrateToSelfDone = true;
+		}
+
+		// unpack molecules
+		for (int i = 0; i < numProcsRecv; ++i) {
+			allDone &= recvPartners[i].testRecv(moleculeContainer, false);
+		}
+
+		// catch deadlocks
+		double waitingTime = MPI_Wtime() - startTime;
+		if (waitingTime > waitCounter) {
+			global_log->warning() << "Deadlock warning: Rank " << _rank
+					<< " is waiting for more than " << waitCounter << " seconds"
+					<< std::endl;
+			waitCounter += 1.0;
+			for (int i = 0; i < numProcsSend; ++i) {
+				sendPartners[i].deadlockDiagnosticSend();
+			}
+			for (int i = 0; i < numProcsRecv; ++i) {
+				recvPartners[i].deadlockDiagnosticRecv();
+			}
+		}
+
+		if (waitingTime > deadlockTimeOut) {
+			global_log->warning() << "Deadlock error: Rank " << _rank
+					<< " is waiting for more than " << deadlockTimeOut
+					<< " seconds" << std::endl;
+			for (int i = 0; i < numProcsSend; ++i) {
+				sendPartners[i].deadlockDiagnosticSend();
+			}
+			for (int i = 0; i < numProcsRecv; ++i) {
+				recvPartners[i].deadlockDiagnosticRecv();
+			}
+			MPI_Abort(_comm, 1);
+			exit(1);
+		}
+
+	} // while not allDone
+
+	moleculeContainer->update();
+
+	global_log->set_mpi_output_root(0);
+}
+
+void KDDecomposition::constructNewTree(ParticleContainer* moleculeContainer, KDNode *& newRoot, KDNode *& newOwnLeaf) {
+	global_log->info() << "KDDecomposition: rebalancing..." << endl;
+	getNumParticles(moleculeContainer);
+	newRoot = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
+
+	if (decompose(newRoot, newOwnLeaf, MPI_COMM_WORLD)) {
+		global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
+	}
+
+	completeTreeInfo(newRoot, newOwnLeaf);
+	for (int d = 0; d < 3; ++d) {
+		_coversWholeDomain[d] = newOwnLeaf->_coversWholeDomain[d];
+	}
+
+	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
+
+#ifdef DEBUG_DECOMP
+	if (_rank == 0) {
+		newDecompTree->printTree("");
+	}
+#endif
+}
+
+void KDDecomposition::oldBalanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
 
 	const bool rebalance = (_steps % _frequency == 0 || _steps <= 1);
 	_steps++;
@@ -274,6 +621,7 @@ void KDDecomposition::balanceAndExchange(bool balance, ParticleContainer* molecu
 	particlesRecvBufs.resize(0);
 }
 
+//TODO: rewrite with min/max
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {
 	double globalLength = domain->getGlobalLength(dimension);
 	double pos = (_ownArea->_lowCorner[dimension]) * _cellSize[dimension];

@@ -20,8 +20,6 @@ DomainDecomposition::DomainDecomposition() : DomainDecompMPIBase() {
 
 	// Allow reordering of process ranks
 	reorder = 1;
-	// Find out appropriate grid dimensions
-	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
 
 	for (int i = 0; i < DIM; i++) {
 		_gridSize[i] = 0;
@@ -150,31 +148,25 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 			}
 
 			// set the shift
-			double shift = 0.0;
+			double shift[3] = {0., 0., 0.};
 			if (direction == LOWER)
-				shift = offsetLower[d];
+				shift[d] = offsetLower[d];
 			if (direction == HIGHER)
-				shift = offsetHigher[d];
-
-			int signedDirection;
-			if(direction == LOWER)
-				signedDirection = -(d+1);
-			if(direction == HIGHER)
-				signedDirection = d+1;
+				shift[d] = offsetHigher[d];
 
 			_neighbours[d].push_back(
-					CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, signedDirection));
+					CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
 		}
 	}
 }
 
 void DomainDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 #if 1
-	DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
+	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 
 #else
-	DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain, LEAVING_ONLY);
-	DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain, HALO_COPIES);
+	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
+	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
 #endif
 }
 

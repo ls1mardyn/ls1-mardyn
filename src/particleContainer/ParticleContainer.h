@@ -119,7 +119,7 @@ public:
 	//!
 	//! @param particle reference to the particle which has to be added
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false) = 0;
+	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -193,7 +193,8 @@ public:
 	//! @param lowCorner minimum x-, y- and z-coordinate of the region
 	//! @param highwCorner maximum x-, y- and z-coordinate of the region
 	//! @param removeFromContainer if true, particles are erased, else - left in container
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false) = 0;
+	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
+	virtual void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer=false) = 0;
 
 	/**
 	 * @brief move particles from the halo layer in the respective direction into the current vector

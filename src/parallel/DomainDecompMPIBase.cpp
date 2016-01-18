@@ -12,9 +12,14 @@
 using Log::global_log;
 
 DomainDecompMPIBase::DomainDecompMPIBase() : _comm(MPI_COMM_WORLD) {
-	// TODO Auto-generated constructor stub
+	for (int d = 0; d < 3; ++d) {
+		_coversWholeDomain[d] = false;
+	}
 
-	// Initialize MPI Dataype for the particle exchange once at the beginning.
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &_rank) );
+
+	MPI_CHECK( MPI_Comm_size(MPI_COMM_WORLD, &_numProcs) );
+
 	ParticleData::setMPIType(_mpiParticleType);
 }
 
@@ -109,7 +114,7 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) {
 	}
 }
 
-void DomainDecompMPIBase::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType) {
+void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates) {
 	using std::vector;
 
 	global_log->set_mpi_output_all();
@@ -137,7 +142,7 @@ void DomainDecompMPIBase::exchangeMolecules(ParticleContainer* moleculeContainer
 
 		for (int i = 0; i < numNeighbours; ++i) {
 			global_log->debug() << "Rank " << _rank << "is initiating communication to" ;
-			_neighbours[d][i].initCommunication(d, moleculeContainer, _comm, _mpiParticleType, msgType);
+			_neighbours[d][i].initSend(moleculeContainer, _comm, _mpiParticleType, msgType);
 		}
 
 		// the following implements a non-blocking recv scheme, which overlaps unpacking of
@@ -163,7 +168,7 @@ void DomainDecompMPIBase::exchangeMolecules(ParticleContainer* moleculeContainer
 
 			// unpack molecules
 			for(int i = 0; i < numNeighbours; ++i) {
-				allDone &= _neighbours[d][i].testRecv(moleculeContainer);
+				allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates);
 			}
 
 			// catch deadlocks
@@ -174,7 +179,7 @@ void DomainDecompMPIBase::exchangeMolecules(ParticleContainer* moleculeContainer
 						<< " seconds" << std::endl;
 				waitCounter += 1.0;
 				for (int i = 0; i < numNeighbours; ++i) {
-					_neighbours[d][i].deadlockDiagnostic();
+					_neighbours[d][i].deadlockDiagnosticSendRecv();
 				}
 			}
 
@@ -183,7 +188,7 @@ void DomainDecompMPIBase::exchangeMolecules(ParticleContainer* moleculeContainer
 						<< " is waiting for more than " << deadlockTimeOut
 						<< " seconds" << std::endl;
 				for (int i = 0; i < numNeighbours; ++i) {
-					_neighbours[d][i].deadlockDiagnostic();
+					_neighbours[d][i].deadlockDiagnosticSendRecv();
 				}
 				MPI_Abort(_comm,1);
 				exit(1);

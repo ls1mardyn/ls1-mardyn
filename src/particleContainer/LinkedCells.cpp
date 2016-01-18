@@ -181,12 +181,12 @@ bool LinkedCells::addParticle(Molecule& particle) {
 	return inBox;
 }
 
-bool LinkedCells::addParticlePointer(Molecule * particle, bool inBoxCheckedAlready) {
+bool LinkedCells::addParticlePointer(Molecule * particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate) {
 	const bool inBox = inBoxCheckedAlready or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
 	if ( inBox ) {
 		int cellIndex = getCellIndexOfMolecule(particle);
-		_cells[cellIndex].addParticle(particle);
+		_cells[cellIndex].addParticle(particle, checkWhetherDuplicate);
 	}
 
 	return inBox;
@@ -544,7 +544,60 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, std::vector<Molec
 	}
 }
 
-void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
+void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
+	if (_cellsValid == false) {
+		global_log->error() << "Cell structure in LinkedCells (getRegionSimple) invalid, call update first" << endl;
+		exit(1);
+	}
+
+	int startIndex[3];
+	int stopIndex[3];
+	int globalCellIndex;
+	std::vector<Molecule*>::iterator particleIter;
+
+	for (int dim = 0; dim < 3; dim++) {
+		if (lowCorner[dim] <= this->_haloBoundingBoxMax[dim] && highCorner[dim] >= this->_haloBoundingBoxMin[dim]) {
+			startIndex[dim] = (int) floor((lowCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+			stopIndex[dim] = (int) floor((highCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+			if (startIndex[dim] < 0)
+				startIndex[dim] = 0;
+			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
+				stopIndex[dim] = _cellsPerDimension[dim] - 1;
+		}
+		else {
+			// No Part of the given region is owned by this process
+			return;
+		}
+	}
+
+	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+				// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
+				globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
+				// loop over all subcells (either 1 or 8)
+				// traverse all molecules in the current cell
+				ParticleCell & currentCell = _cells[globalCellIndex];
+
+				std::vector<Molecule *> & mols = currentCell.getParticlePointers();
+
+				for (particleIter = mols.begin(); particleIter != mols.end();) {
+					if ((*particleIter)->inBox(lowCorner, highCorner)) {
+						particlePtrs.push_back(*particleIter);
+						if (removeFromContainer) {
+							UnorderedVector::fastRemove(mols, particleIter);
+							// particleIter already points at next molecule, so continue without incrementing
+							continue;
+						}
+					}
+					++particleIter;
+				}
+			}
+		}
+	}
+}
+
+void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (getRegion) invalid, call update first" << endl;
 		exit(1);
@@ -581,16 +634,9 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vect
 
 				std::vector<Molecule *> & mols = currentCell.getParticlePointers();
 
-				for (particleIter = mols.begin(); particleIter != mols.end(); ) {
+				for (particleIter = mols.begin(); particleIter != mols.end(); ++particleIter) {
 					if ((*particleIter)->inBox(lowCorner, highCorner)) {
 						particlePtrs.push_back(*particleIter);
-						if (removeFromContainer) {
-							UnorderedVector::fastRemove(mols, particleIter);
-						} else {
-							++particleIter;
-						}
-					} else {
-						++particleIter;
 					}
 				}
 			}

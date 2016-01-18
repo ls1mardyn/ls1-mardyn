@@ -91,7 +91,7 @@ public:
 	//! @brief Insert a single molecule's pointer.
 	//!
 	//! Add the molecule to the list (it is not inserted into a cell yet)
-	bool addParticlePointer(Molecule* particle, bool inBoxCheckedAlready = false);
+	bool addParticlePointer(Molecule* particle, bool inBoxCheckedAlready = false, bool removeRecvDuplicates = false);
 
 	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) {}
 	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const {};
@@ -152,7 +152,8 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false) {/* TODO */}
 
 	double getCutoff() {
 		return this->_cutoffRadius;

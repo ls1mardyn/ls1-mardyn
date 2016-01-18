@@ -59,7 +59,7 @@ public:
 	//! @param components when creating a new Molecule-object (from the received data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @brief balance the load (and optimize communication) and exchange boundary particles
 	//!

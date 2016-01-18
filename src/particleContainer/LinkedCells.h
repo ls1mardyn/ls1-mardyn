@@ -116,7 +116,7 @@ public:
 	//! then the molecule is inserted into that cell.
 	bool addParticle(Molecule& particle);
 
-	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false);
+	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -179,7 +179,8 @@ public:
 
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }

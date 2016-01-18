@@ -25,7 +25,9 @@ class ParticleContainer;
  */
 class CommunicationPartner {
 public:
-	CommunicationPartner(int r, double hLo[3], double hHi[3], double bLo[3], double bHi[3], double sh, int signDir);
+	CommunicationPartner(int r, double hLo[3], double hHi[3], double bLo[3], double bHi[3], double sh[3]);
+	CommunicationPartner(int r);
+	CommunicationPartner(int r, double leavingLo[3], double leavingHi[3]);
 
 	CommunicationPartner(const CommunicationPartner& o);
 
@@ -33,7 +35,7 @@ public:
 
 	~CommunicationPartner();
 
-	void initCommunication(unsigned short d,
+	void initSend(
 			ParticleContainer* moleculeContainer, const MPI_Comm& comm,
 			const MPI_Datatype& type, MessageType msgType);
 
@@ -41,18 +43,21 @@ public:
 
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-	bool testRecv(ParticleContainer* moleculeContainer);
+	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
 
-	void deadlockDiagnostic();
+	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
+
+	void deadlockDiagnosticSendRecv();
+	void deadlockDiagnosticSend();
+	void deadlockDiagnosticRecv();
 
 private:
 	int _rank;
-	double _regionLow[3], _regionHigh[3];
-	double _haloLow[3], _haloHigh[3];
-	double _boundaryLow[3], _boundaryHigh[3];
+	double _bothLow[3], _bothHigh[3];
+	double _leavingLow[3], _leavingHigh[3];
+	double _copiesLow[3], _copiesHigh[3];
 
-	double _shift; //! for periodic boundaries
-	int _signedDirection;
+	double _shift[3]; //! for periodic boundaries
 
 	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;

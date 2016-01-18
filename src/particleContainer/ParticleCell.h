@@ -58,7 +58,7 @@ public:
 	void deallocateAllParticles();
 
 	//! insert a single molecule into this cell
-	void addParticle(Molecule* particle_ptr);
+	void addParticle(Molecule* particle_ptr, bool checkWhetherDuplicate = false);
 
 	//! return a reference to the list of molecules (molecule pointers) in this cell
 	std::vector<Molecule*>& getParticlePointers();

@@ -12,6 +12,7 @@
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecomposition.h"
 #include "Domain.h"
 
 #include "io/InputOldstyle.h"
@@ -58,6 +59,11 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 	ParticleContainer* moleculeContainer;
 	if (type == LinkedCell) {
 		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
+		DomainDecomposition * temp = 0;
+		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);
+		if (temp != 0) {
+			temp->initCommunicationPartners(cutoff, domain);
+		}
 	} else if (type == AdaptiveSubCell) {
 		moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, cutoff, cutoff);
 	} else {

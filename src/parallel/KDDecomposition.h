@@ -73,22 +73,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//### The following methods are those of the  ###
 	//### base class which have to be implemented ###
 	//###############################################
+	void oldBalanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
-
-#if 0
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
-
-		const bool rebalance = forceRebalancing or (_steps % _frequency == 0 or _steps <= 1);
-		_steps++;
-		if(not rebalance) {
-			DomainDecompMPIBase::exchangeMolecules(moleculeContainer, domain);
-		} else {
-			DomainDecompMPIBase::exchangeProcessLeavingMolecules(moleculeContainer, domain);
-			rebalance();
-			DomainDecompMPIBase::exchangeHaloCopies(moleculeContainer, domain);
-		}
-	}
-#endif
 
 	//! @todo comment and thing
 	double getBoundingBoxMin(int dimension, Domain* domain);
@@ -119,8 +105,9 @@ class KDDecomposition: public DomainDecompMPIBase {
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
 
  private:
-	// TODO: remove
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+	void constructNewTree(ParticleContainer* moleculeContainer, KDNode *& newRoot, KDNode *& newOwnLeaf);
+	void migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const;
+	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	//$ Methoden, die von balanceAndExchange benoetigt werden $
@@ -237,6 +224,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//! @param modulo obviously the modulo
 	int ownMod(int number, int modulo) const;
 
+	void getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const;
+
 
 	//! @brief exchange decomposition data and build up the resulting tree
 	//!
@@ -320,6 +309,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	//! determines how often rebalancing is done
 	int _frequency;
+
+	double _cutoffRadius;
 
 	/*
 	 * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,

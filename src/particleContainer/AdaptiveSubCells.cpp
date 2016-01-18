@@ -230,7 +230,7 @@ bool AdaptiveSubCells::addParticle(Molecule& particle) {
 	return inBox;
 }
 
-bool AdaptiveSubCells::addParticlePointer(Molecule* particle, bool inBoxCheckedAlready) {
+bool AdaptiveSubCells::addParticlePointer(Molecule* particle, bool inBoxCheckedAlready, bool /**/) {
 
 	bool inBox = inBoxCheckedAlready or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
@@ -595,7 +595,7 @@ void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs, bool removeFromContainer) {
+void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in AdaptiveSubCells (getRegion) invalid, call update first" << endl;
 		exit(1);
@@ -633,9 +633,6 @@ void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vect
 					for (particleIter = _subCells[sCIdx].getParticlePointers().begin(); particleIter != _subCells[sCIdx].getParticlePointers().end(); particleIter++) {
 						if ((*particleIter)->r(0) >= lowCorner[0] && (*particleIter)->r(0) < highCorner[0] && (*particleIter)->r(1) >= lowCorner[1] && (*particleIter)->r(1) < highCorner[1] && (*particleIter)->r(2) >= lowCorner[2] && (*particleIter)->r(2) < highCorner[2]) {
 							particlePtrs.push_back(*particleIter);
-							if (removeFromContainer) {
-								deleteMolecule((*particleIter)->id(), (*particleIter)->r(0), (*particleIter)->r(1), (*particleIter)->r(2));
-							}
 						}
 					}
 				}

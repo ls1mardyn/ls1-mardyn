@@ -112,7 +112,7 @@ public:
 	//! to the lower neighbour.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType);
+	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates = false);
 
 protected:
 

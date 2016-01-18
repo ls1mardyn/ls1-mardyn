@@ -12,20 +12,60 @@
 #include <sstream>
 
 CommunicationPartner::CommunicationPartner(int r, double hLo[3], double hHi[3],
-		double bLo[3], double bHi[3], double sh, int signDir) {
+		double bLo[3], double bHi[3], double sh[3]) {
 	_rank = r;
 
 	for (int d = 0; d < 3; ++d) {
-		_haloLow[d] = hLo[d];
-		_haloHigh[d] = hHi[d];
-		_boundaryLow[d] = bLo[d];
-		_boundaryHigh[d] = bHi[d];
-		_regionLow[d] = fmin(hLo[d], bLo[d]);
-		_regionHigh[d] = fmax(hHi[d], bHi[d]);
+		_leavingLow[d] = hLo[d];
+		_leavingHigh[d] = hHi[d];
+		_copiesLow[d] = bLo[d];
+		_copiesHigh[d] = bHi[d];
+		_bothLow[d] = fmin(hLo[d], bLo[d]);
+		_bothHigh[d] = fmax(hHi[d], bHi[d]);
+		_shift[d] = sh[d];
 	}
 
-	_shift = sh;
-	_signedDirection = signDir;
+	// some values, to silence the warnings:
+	_sendRequest = new MPI_Request;
+	_recvRequest = new MPI_Request;
+	_sendStatus = new MPI_Status;
+	_recvStatus = new MPI_Status;
+	_msgSent = _countReceived = _msgReceived = false;
+}
+
+CommunicationPartner::CommunicationPartner(int r) {
+	_rank = r;
+
+	for (int d = 0; d < 3; ++d) {
+		_leavingLow[d] = 0.;
+		_leavingHigh[d] = 0.;
+		_copiesLow[d] = 0.;
+		_copiesHigh[d] = 0.;
+		_bothLow[d] = 0.;
+		_bothHigh[d] = 0.;
+		_shift[d] = 0.;
+	}
+
+	// some values, to silence the warnings:
+	_sendRequest = new MPI_Request;
+	_recvRequest = new MPI_Request;
+	_sendStatus = new MPI_Status;
+	_recvStatus = new MPI_Status;
+	_msgSent = _countReceived = _msgReceived = false;
+}
+
+CommunicationPartner::CommunicationPartner(int r, double leavingLo[3], double leavingHigh[3]) {
+	_rank = r;
+
+	for (int d = 0; d < 3; ++d) {
+		_leavingLow[d] = leavingLo[d];
+		_leavingHigh[d] = leavingHigh[d];
+		_copiesLow[d] = 0.;
+		_copiesHigh[d] = 0.;
+		_bothLow[d] = 0.;
+		_bothHigh[d] = 0.;
+		_shift[d] = 0.;
+	}
 
 	// some values, to silence the warnings:
 	_sendRequest = new MPI_Request;
@@ -39,16 +79,14 @@ CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
 	_rank = o._rank;
 
 	for(int d = 0; d < 3; ++d) {
-		_regionLow[d] = o._regionLow[d];
-		_regionHigh[d] = o._regionHigh[d];
-		_haloLow[d] = o._haloLow[d];
-		_haloHigh[d] = o._haloHigh[d];
-		_boundaryLow[d] = o._boundaryLow[d];
-		_boundaryHigh[d] = o._boundaryHigh[d];
+		_bothLow[d] = o._bothLow[d];
+		_bothHigh[d] = o._bothHigh[d];
+		_leavingLow[d] = o._leavingLow[d];
+		_leavingHigh[d] = o._leavingHigh[d];
+		_copiesLow[d] = o._copiesLow[d];
+		_copiesHigh[d] = o._copiesHigh[d];
+		_shift[d] = o._shift[d];
 	}
-
-	_shift = o._shift;
-	_signedDirection = o._signedDirection;
 
 	// some values, to silence the warnings:
 	_sendRequest = new MPI_Request;
@@ -65,7 +103,7 @@ CommunicationPartner::~CommunicationPartner() {
 	delete _recvStatus;
 }
 
-void CommunicationPartner::initCommunication(unsigned short d,
+void CommunicationPartner::initSend(
 		ParticleContainer* moleculeContainer, const MPI_Comm& comm,
 		const MPI_Datatype& type, MessageType msgType) {
 	using std::vector;
@@ -74,25 +112,23 @@ void CommunicationPartner::initCommunication(unsigned short d,
 	global_log->debug() << _rank << std::endl;
 
 	vector<Molecule*> particles;
-	vector<Molecule*> part2;
 
 	switch(msgType) {
-	case LEAVING_AND_HALO_COPIES:
-//			moleculeContainer->getRegion(_regionLow, _regionHigh, particles);
+	case LEAVING_AND_HALO_COPIES: {
+		moleculeContainer->getRegionSimple(_bothLow, _bothHigh, particles);
 		global_log->debug() << "sending halo and boundary particles together" << std::endl;
-		moleculeContainer->getHaloParticlesDirection(_signedDirection, particles, false);
-		moleculeContainer->getBoundaryParticlesDirection(_signedDirection, particles);
 		break;
-	case LEAVING_ONLY:
-//			moleculeContainer->getRegion(_haloLow, _haloHigh, particles, true);
+	}
+	case LEAVING_ONLY: {
+		moleculeContainer->getRegionSimple(_leavingLow, _leavingHigh, particles, true);
 		global_log->debug() << "sending halo particles only" << std::endl;
-		moleculeContainer->getHaloParticlesDirection(_signedDirection, particles, true);
 		break;
-	case HALO_COPIES:
-//			moleculeContainer->getRegion(_boundaryLow, _boundaryHigh, particles);
+	}
+	case HALO_COPIES: {
+		moleculeContainer->getRegionSimple(_copiesLow, _copiesHigh, particles);
 		global_log->debug() << "sending boundary particles only" << std::endl;
-		moleculeContainer->getBoundaryParticlesDirection(_signedDirection, particles);
 		break;
+	}
 	}
 
 	const int n = particles.size();
@@ -112,7 +148,9 @@ void CommunicationPartner::initCommunication(unsigned short d,
 	for (int i = 0; i < n; ++i) {
 		ParticleData::MoleculeToParticleData(_sendBuf[i], *(particles[i]));
 		// add offsets for particles transfered over the periodic boundary
-		_sendBuf[i].r[d] += _shift;
+		for (int d = 0; d < 3; ++d) {
+			_sendBuf[i].r[d] += _shift[d];
+		}
 	}
 
 	MPI_CHECK(
@@ -151,7 +189,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	return _countReceived;
 }
 
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
 		int flag = 0;
@@ -169,7 +207,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer) {
 			for (int i = 0; i < numrecv; i++) {
 				Molecule *m;
 				ParticleData::ParticleDataToMolecule(_recvBuf[i], &m);
-				moleculeContainer->addParticlePointer(m);
+				moleculeContainer->addParticlePointer(m, removeRecvDuplicates);
 #ifndef NDEBUG
 				buf << m->id() << " ";
 #endif
@@ -183,19 +221,38 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer) {
 	return _msgReceived;
 }
 
-void CommunicationPartner::deadlockDiagnostic() {
+void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
+	_countReceived = true;
+	_recvBuf.resize(numParticles);
+	MPI_CHECK(
+			MPI_Irecv(&(_recvBuf[0]), numParticles, type, _rank, 99,
+					comm, _recvRequest));
+}
+
+void CommunicationPartner::deadlockDiagnosticSendRecv() {
 	using Log::global_log;
-	// intentionally using std::cout instead of global_log, we want the messages from all processes
-	if (not _msgSent) {
-		global_log->warning() << "Send request to " << _rank
-				<< " not yet completed" << std::endl;
-	}
+
+	deadlockDiagnosticSend();
+
 	if (not _countReceived) {
 		global_log->warning() << "Probe request to " << _rank
 				<< " not yet completed" << std::endl;
 	}
+
+	deadlockDiagnosticRecv();
+}
+
+void CommunicationPartner::deadlockDiagnosticSend() {
+	// intentionally using std::cout instead of global_log, we want the messages from all processes
+	if (not _msgSent) {
+		Log::global_log->warning() << "Send request to " << _rank
+				<< " not yet completed" << std::endl;
+	}
+}
+
+void CommunicationPartner::deadlockDiagnosticRecv() {
 	if (not _msgReceived) {
-		global_log->warning() << "Recv request to " << _rank
+		Log::global_log->warning() << "Recv request to " << _rank
 				<< " not yet completed" << std::endl;
 	}
 }
