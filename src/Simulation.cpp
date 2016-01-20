@@ -1689,7 +1689,8 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	// changed and have to be adjusted
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
-	_domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain);
+	bool forceRebalancing = false;
+	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
