@@ -105,7 +105,8 @@ CommunicationPartner::~CommunicationPartner() {
 
 void CommunicationPartner::initSend(
 		ParticleContainer* moleculeContainer, const MPI_Comm& comm,
-		const MPI_Datatype& type, MessageType msgType) {
+		const MPI_Datatype& type, MessageType msgType,
+		bool removeFromContainer) {
 	using std::vector;
 	using Log::global_log;
 
@@ -120,7 +121,7 @@ void CommunicationPartner::initSend(
 		break;
 	}
 	case LEAVING_ONLY: {
-		moleculeContainer->getRegionSimple(_leavingLow, _leavingHigh, particles, true);
+		moleculeContainer->getRegionSimple(_leavingLow, _leavingHigh, particles, removeFromContainer);
 		global_log->debug() << "sending halo particles only" << std::endl;
 		break;
 	}

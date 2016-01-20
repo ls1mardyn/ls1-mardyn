@@ -37,7 +37,7 @@ public:
 
 	void initSend(
 			ParticleContainer* moleculeContainer, const MPI_Comm& comm,
-			const MPI_Datatype& type, MessageType msgType);
+			const MPI_Datatype& type, MessageType msgType, bool removeFromContainer = false);
 
 	bool testSend();
 

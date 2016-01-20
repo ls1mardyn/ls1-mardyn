@@ -153,13 +153,16 @@ void KDDecomposition::balance() {
 void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 	const bool rebalance = forceRebalancing or _steps % _frequency == 0 or _steps <= 1;
 	_steps++;
+	const bool removeRecvDuplicates = true;
+
 	if (rebalance == false) {
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, true);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 	} else {
 
 		if (_steps != 1) {
-			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, true);
+			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
 		}
+		moleculeContainer->deleteOuterParticles();
 
 		KDNode * newDecompRoot = NULL;
 		KDNode * newOwnLeaf = NULL;
@@ -172,7 +175,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 		_ownArea = newOwnLeaf;
 		initCommunicationPartners(_cutoffRadius, domain);
 
-		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, true);
+		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES, removeRecvDuplicates);
 	}
 }
 
@@ -392,7 +395,8 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			int partnerRank = ranks[i];
 			if (partnerRank != _rank) {
 				sendPartners.push_back(CommunicationPartner(partnerRank, leavingLow, leavingHigh));
-				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY); // molecules have been taken out of container
+				const bool removeFromContainer = true;
+				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
 			} else {
 				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, true);
 				// decrement numProcsSend for further uses:
@@ -490,9 +494,17 @@ void KDDecomposition::constructNewTree(ParticleContainer* moleculeContainer, KDN
 
 	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
 
+#ifndef NDEBUG
+	if (_rank == 0) {
+		stringstream fname;
+		fname << "kddecomp_" << _steps - 1 << ".vtu";
+		newRoot->plotNode(fname.str());
+	}
+#endif /* NDEBUG */
+
 #ifdef DEBUG_DECOMP
 	if (_rank == 0) {
-		newDecompTree->printTree("");
+		newRoot->printTree("");
 	}
 #endif
 }

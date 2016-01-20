@@ -161,13 +161,7 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 }
 
 void DomainDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
-#if 1
 	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
-
-#else
-	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY);
-	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, HALO_COPIES);
-#endif
 }
 
 void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
