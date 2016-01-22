@@ -155,7 +155,7 @@ void LinkedCells::update() {
 		std::vector<Molecule*>::iterator it;
 
 		for(it = molsToSort.begin(); it != molsToSort.end(); ++it) {
-			bool wasInserted = addParticle(**it);
+			bool wasInserted = addParticlePointer(*it);
 
 			// lets stay on the safe side:
 			if(wasInserted) {
