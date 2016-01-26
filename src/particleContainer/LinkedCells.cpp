@@ -184,12 +184,14 @@ bool LinkedCells::addParticle(Molecule& particle) {
 bool LinkedCells::addParticlePointer(Molecule * particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate) {
 	const bool inBox = inBoxCheckedAlready or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
+	bool wasInserted = false;
+
 	if ( inBox ) {
 		int cellIndex = getCellIndexOfMolecule(particle);
-		_cells[cellIndex].addParticle(particle, checkWhetherDuplicate);
+		wasInserted = _cells[cellIndex].addParticle(particle, checkWhetherDuplicate);
 	}
 
-	return inBox;
+	return wasInserted;
 }
 
 /**
