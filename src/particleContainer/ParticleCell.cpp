@@ -19,9 +19,8 @@ ParticleCell::ParticleCell() : _molecules(), _cellDataSoA(0) {
 ParticleCell::~ParticleCell() {
 	assert(!_cellDataSoA);
 
-	// ugly, but necessary, because the AdaptiveSubCells still work with a global list of references
 	if(!isEmpty()) {
-		removeAllParticles();
+		deallocateAllParticles();
 	}
 }
 

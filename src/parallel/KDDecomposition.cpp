@@ -335,7 +335,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		vector<int>::iterator indexIt = indices.begin();
 		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		recvPartners.reserve(numProcsRecv);
-		for (int i = 0; i < ranks.size(); ++i) {
+		for (unsigned i = 0; i < ranks.size(); ++i) {
 			int partnerRank = ranks[i];
 
 			if (partnerRank != _rank) {
@@ -381,7 +381,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		vector<int>::iterator indexIt = indices.begin();
 		numProcsSend = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		sendPartners.reserve(numProcsSend);
-		for (int i = 0; i < ranks.size(); ++i) {
+		for (unsigned i = 0; i < ranks.size(); ++i) {
 			int low[3];
 			int high[3];
 			double leavingLow[3];
@@ -432,7 +432,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		if (migrateToSelfDone != true) {
 			const int numMolsMigToSelf = migrateToSelf.size();
 			for (int i = 0; i < numMolsMigToSelf; i++) {
-				moleculeContainer->addParticlePointer(migrateToSelf[i], false);
+				moleculeContainer->addParticlePointer(migrateToSelf[i], false, false);
 			}
 			migrateToSelfDone = true;
 		}

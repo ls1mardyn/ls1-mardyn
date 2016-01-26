@@ -158,6 +158,12 @@ void CommunicationPartner::initSend(
 			MPI_Isend(&(_sendBuf[0]), (int) _sendBuf.size(), type, _rank,
 					99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
+
+	if (removeFromContainer) {
+		for (int i = 0; i < n; ++i) {
+			delete particles[i];
+		}
+	}
 }
 
 bool CommunicationPartner::testSend() {
@@ -209,7 +215,8 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				Molecule *m;
 				ParticleData::ParticleDataToMolecule(_recvBuf[i], &m);
 				const bool inBoxCheckedAlready = false;
-				moleculeContainer->addParticlePointer(m, inBoxCheckedAlready, removeRecvDuplicates);
+				bool wasInserted = moleculeContainer->addParticlePointer(m, inBoxCheckedAlready, removeRecvDuplicates);
+				assert(wasInserted);
 #ifndef NDEBUG
 				buf << m->id() << " ";
 #endif

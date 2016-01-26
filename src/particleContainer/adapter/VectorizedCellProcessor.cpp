@@ -1553,7 +1553,7 @@ inline void _loopBodyQudarupole(
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 
-const __m256d minus_one = _mm256_set1_pd(-1.0);
+//const __m256d minus_one = _mm256_set1_pd(-1.0);
 const __m256d zero = _mm256_setzero_pd();
 const __m256d one = _mm256_set1_pd(1.0);
 const __m256d two = _mm256_set1_pd(2.0);

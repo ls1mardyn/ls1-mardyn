@@ -175,7 +175,7 @@ bool LinkedCells::addParticle(Molecule& particle) {
 
 	if ( inBox ) {
 		Molecule * mol = new Molecule(particle);
-		addParticlePointer(mol, true);
+		addParticlePointer(mol, true, false);
 	}
 
 	return inBox;
