@@ -74,6 +74,7 @@ KDDecomposition::~KDDecomposition() {
 	if (_rank == 0) {
 		_decompTree->plotNode("kddecomp.vtu");
 	}
+	delete _decompTree;
 	KDNode::shutdownMPIDataType();
 }
 
@@ -482,12 +483,14 @@ void KDDecomposition::constructNewTree(ParticleContainer* moleculeContainer, KDN
 	global_log->info() << "KDDecomposition: rebalancing..." << endl;
 	getNumParticles(moleculeContainer);
 	newRoot = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
+	KDNode * toCleanUp = newRoot;
 
 	if (decompose(newRoot, newOwnLeaf, MPI_COMM_WORLD)) {
 		global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 	}
 
 	completeTreeInfo(newRoot, newOwnLeaf);
+	delete toCleanUp;
 	for (int d = 0; d < 3; ++d) {
 		_coversWholeDomain[d] = newOwnLeaf->_coversWholeDomain[d];
 	}
