@@ -73,7 +73,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//### The following methods are those of the  ###
 	//### base class which have to be implemented ###
 	//###############################################
-	void oldBalanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @todo comment and thing
@@ -109,94 +108,10 @@ class KDDecomposition: public DomainDecompMPIBase {
 	void migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const;
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
-	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-	//$ Methoden, die von balanceAndExchange benoetigt werden $
-	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-	//! @brief Each process collects the particles to be send to neighbours
-	//!
-	//! First, all processes (and their region, incl. halo) which need
-	//! part of the sourceArea are determined.
-	//! (Also all necessary periodic copies of the neighbours region)
-	//! Then all particles (pointers to them) from those regions
-	//! are stored in particlesToSend[procid]
-	//! The area given by sourceArea and the area covered by the moleculeContainer
-	//! should be the same!
-	//! @param sourceArea area from which particles should be sent
-	//! @param moleculeContainer needed to get the molecule pointers
-	//! @param domain needed to get the domain size
-	//! @param procIDs Here the ids of the neighbouring procs will be stored
-	//! @param numMolsToSend Here the number of molecules to be sent are stored
-	//!                      The vector has to be initialised in this method
-	//! @param particlesToSend Here the pointers to the particles will be stored
-	void getPartsToSend(KDNode* sourceArea, KDNode* decompTree, ParticleContainer* moleculeContainer, Domain* domain, std::vector<int>& procIDs, std::vector<int>& numMolsToSend, std::vector<std::vector<Molecule*> >& particlesToSend);
-
-	//! @brief transfer of the molecule data to the neighbours
-	//! After each process knows which particles have to be sent, the particles
-	//! can be exchanged.
-	//!
-	//! @param procsToSendTo IDs of processes to which particles have to be sent
-	//! @param procsToRecvFrom IDs of processes from which particles have to be received
-	//! @param numMolsToSend Number of molecules to be sent to each neighbour
-	//! @param numMolsToRecv Number of molecules to be recieved from each neighbour
-	//! @param particlePtrsToSend pointers to the particles
-	//! @param particlesRecvBufs buffers to store recieved particles
-	//!
-	//! @note The particlesRecvBufs is allocated in this method and has to be
-	//!       deleted afterwards!
-	void sendReceiveParticleData(std::vector<int>& procsToSendTo,
-			std::vector<int>& procsToRecvFrom, std::vector<int>& numMolsToSend,
-			std::vector<int>& numMolsToRecv, std::vector<std::vector<Molecule*> >& particlePtrsToSend,
-			std::vector<ParticleData*>& particlesRecvBufs);
-
-	//! @brief corrects the position of particles outside the domain after a balance step
-	//!
-	//! After a new decomposition of the domain, all processes have a new part of
-	//! the domain. Each process sends the particles, which it no longer possesses, to the
-	//! new owner. Those particles which are still owned (old and new region overlap)
-	//! have to be kept. Also particles from the new halo region are kept, all other
-	//! particles have to be deleted. Now it can happen that a particle just left the
-	//! global domain in the step before the rebalancing and now is in the halo region.
-	//! If in this case the new owner of this halo cell is equal to the old owner of
-	//! the particle, the particle has to be kept, but the coordinates have to be changed.
-	//! In the following sketch, the particle marked with "x" belonged to process 2 in the
-	//! old decomposition and just left the global area on the right side and still belongs
-	//! to process 2 in the new decomposition, but the position has to be adjusted.
-	//! This is done by this method.
-	//!  ____________________              ____________________
-	//! |              |     |            |______              |
-	//! |              | P2  |            |      |             |
-	//! |              | old |x    =>     |x P2  |             |
-	//! |              |_____|            |  new |             |
-	//! |                    |            |______|             |
-	//! |____________________|            |____________________|
-	//!
-	//! @param ownArea contains the information about the own area determined by the new decomposition
-	//! @param moleculeContainer needed to walk through all still owned particles
-	//! @param domain needed to find out the size of the global domain
-	void adjustOuterParticles(KDNode*& ownArea, ParticleContainer* moleculeContainer, Domain* domain);
-
-	//! @brief create copies due to periodic boundary
-	//!
-	//! If a proc's area occupies the whole domain (per dimension), it has two periodic
-	//! boundaries in that dimension. That means that it possesses at least two (up to eight)
-	//! versions of the same cells/molecules. Those copies are created by this method
-	//! and stored in the moleculeContainer
-	//! @param moleculeContainer used to walk through the molecules, create copies and store them again
-	//! @param domain needed to get the length of the domain
-	//! @todo make it work with overlapping decomposition trees
-	//! @todo more efficiency (don't run over all molecules)
-	void createLocalCopies(ParticleContainer* moleculeContainer, Domain* domain);
 
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 	//$ sonstige Methoden
 	//$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-
-	/**
-	 * print all Decomposition Trees at all processors.
-	 */
-	void printDecompTrees(KDNode* root);
-
 
 	void calculateCostsPar(KDNode* area, std::vector<std::vector<double> >& costsLeft, std::vector<std::vector<double> >& costsRight, MPI_Comm commGroup);
 
