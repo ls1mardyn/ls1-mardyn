@@ -178,8 +178,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//! @todo _numParticles should perhaps not be a member variable (think about that)
 	void getNumParticles(ParticleContainer* moleculeContainer);
 
-	void balance();
-
 	bool decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup);
 
 	bool decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm commGroup, const double globalMinimalDeviation);
