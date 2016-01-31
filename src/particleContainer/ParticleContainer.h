@@ -181,7 +181,7 @@ public:
 	//! @brief delete all Particles which are not within the bounding box
 	virtual void deleteOuterParticles() = 0;
 
-	//! @brief returns the width of the halo strip (for the given dimension index)
+	//! @brief returns the width of the halo stripe (for the given dimension index)
 	//! @todo remove this method, because a halo_L shouldn't be necessary for every ParticleContainer
 	//!       e.g. replace it by the cutoff-radius
 	virtual double get_halo_L(int index) const = 0;
