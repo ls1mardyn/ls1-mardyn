@@ -6,10 +6,7 @@
 #include <iostream>
 #include <iterator>
 #include <limits>
-#include <list>
 #include <sstream>
-#include <string>
-#include <vector>
 
 #include "Common.h"
 #include "Domain.h"
@@ -62,12 +59,20 @@ Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
 	_rdf(NULL),
+	_moleculeContainer(NULL),
+	_particlePairsHandler(NULL),
+	_cellProcessor(NULL),
 	_flopCounter(NULL),
 	_domainDecomposition(NULL),
-	_forced_checkpoint_time(0) {
+	_integrator(NULL),
+	_domain(NULL),
+	_inputReader(NULL),
+	_longRangeCorrection(NULL),
+	_temperatureControl(NULL),
+	_forced_checkpoint_time(0)
+{
 	_ensemble = new CanonicalEnsemble();
-	_longRangeCorrection = NULL;
-    _temperatureControl = NULL;
+
 	initialize();
 }
 
@@ -97,16 +102,16 @@ void Simulation::exit(int exitcode) {
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	/* integrator */
-	string integratorType;
-	xmlconfig.getNodeValue("integrator@type", integratorType);
-	global_log->info() << "Integrator type: " << integratorType << endl;
-	if(integratorType == "Leapfrog") {
-		_integrator = new Leapfrog();
-	} else {
-		global_log-> error() << "Unknown integrator " << integratorType << endl;
-		this->exit(1);
-	}
 	if(xmlconfig.changecurrentnode("integrator")) {
+		string integratorType;
+		xmlconfig.getNodeValue("@type", integratorType);
+		global_log->info() << "Integrator type: " << integratorType << endl;
+		if(integratorType == "Leapfrog") {
+			_integrator = new Leapfrog();
+		} else {
+			global_log-> error() << "Unknown integrator " << integratorType << endl;
+			this->exit(1);
+		}
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
 		xmlconfig.changecurrentnode("..");
@@ -114,31 +119,37 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->error() << "Integrator section missing." << endl;
 	}
 
-	/* steps */
-	xmlconfig.getNodeValue("run/production/steps", _numberOfTimesteps);
-	global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
-	xmlconfig.getNodeValue("run/equilibration/steps", _initStatistics);
-	global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
-	xmlconfig.getNodeValueReduced("run/currenttime", _simulationTime);
-	global_log->info() << "Simulation start time: " << _simulationTime << endl;
+	/* run section */
+	if(xmlconfig.changecurrentnode("run")) {
+		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
+		global_log->info() << "Simulation start time: " << _simulationTime << endl;
+		/* steps */
+		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
+		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
+		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
+		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
+		xmlconfig.changecurrentnode("..");
+	} else {
+		global_log->error() << "Run section missing." << endl;
+	}
 
 	/* enseble */
-	string ensembletype;
-	xmlconfig.getNodeValue("ensemble@type", ensembletype);
-	global_log->info() << "Ensemble: " << ensembletype<< endl;
-	if (ensembletype == "NVT") {
-		_ensemble = new CanonicalEnsemble();
-	} else if (ensembletype == "muVT") {
-		global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-		this->exit(1);
-// 		_ensemble = new GrandCanonicalEnsemble();
-	} else {
-		global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
-		this->exit(1);
-	}
 	if(xmlconfig.changecurrentnode("ensemble")) {
+		string ensembletype;
+		xmlconfig.getNodeValue("@type", ensembletype);
+		global_log->info() << "Ensemble: " << ensembletype<< endl;
+		if (ensembletype == "NVT") {
+			_ensemble = new CanonicalEnsemble();
+		} else if (ensembletype == "muVT") {
+			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
+			this->exit(1);
+			// _ensemble = new GrandCanonicalEnsemble();
+		} else {
+			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
+			this->exit(1);
+		}
 		_ensemble->readXML(xmlconfig);
-		/* store data in the _domain member as long as we do not use the ensemble everywhere */
+		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
 		for (int d = 0; d < 3; d++) {
 			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
 		}
@@ -147,26 +158,45 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		global_log->error() << "Ensemble section missing." << endl;
+		this->exit(1);
 	}
 
 	/* algorithm */
 	if(xmlconfig.changecurrentnode("algorithm")) {
 		/* cutoffs */
-		if (xmlconfig.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
-			_cutoffRadius = _LJCutoffRadius;
-			global_log->info() << "dimensionless LJ cutoff radius:\t"
-					<< _LJCutoffRadius << endl;
-			global_log->info() << "dimensionless cutoff radius:\t"
-					<< _cutoffRadius << endl;
+		if(xmlconfig.changecurrentnode("cutoffs")) {
+			if(xmlconfig.getNodeValueReduced("defaultCutoff", _cutoffRadius)) {
+				global_log->info() << "dimensionless default cutoff radius:\t" << _cutoffRadius << endl;
+			}
+			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
+				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+			}
+			/** @todo introduce maxCutoffRadius here for datastructures, ...
+			 *        maybe use map/list to store cutoffs for different potentials? */
+			_cutoffRadius = max(_cutoffRadius, _LJCutoffRadius);
+			if(_cutoffRadius <= 0) {
+				global_log->error() << "cutoff radius <= 0." << endl;
+				this->exit(1);
+			}
+			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
+			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Cutoff section missing." << endl;
 			this->exit(1);
 		}
 
-		double epsilonRF = 0;
-		xmlconfig.getNodeValueReduced("electrostatic[@type='ReactionField']/epsilon", epsilonRF);
-		global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
-		_domain->setepsilonRF(epsilonRF);
+		/* electrostatics */
+		/** @todo This may be better go into a physical section for constants? */
+		if(xmlconfig.changecurrentnode("electrostatic[@type='ReactionField']")) {
+			double epsilonRF = 0;
+			xmlconfig.getNodeValueReduced("epsilon", epsilonRF);
+			global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
+			_domain->setepsilonRF(epsilonRF);
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Electrostatics section for reaction field setup missing." << endl;
+			this->exit(1);
+		}
 
 		/* parallelization */
 		string parallelisationtype("DomainDecomposition");
@@ -208,14 +238,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Datastructure type: " << datastructuretype << endl;
 		if(datastructuretype == "LinkedCells") {
 			_moleculeContainer = new LinkedCells();
-			_particleContainerType = LINKED_CELL; /* TODO: Necessary? */
 			global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 			LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 			lc->setCutoff(_cutoffRadius);
 		}
 		else if(datastructuretype == "AdaptiveSubCells") {
 			_moleculeContainer = new AdaptiveSubCells();
-			_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
 		}
 		else {
 			global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
@@ -675,7 +703,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			inputfilestream >> token;
 			if (token == "LinkedCells") {
-				_particleContainerType = LINKED_CELL;  /* TODO: Necessary? */
 				int cellsInCutoffRadius;
 				inputfilestream >> cellsInCutoffRadius;
 				double bBoxMin[3];
@@ -691,7 +718,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 				        cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
-				_particleContainerType = ADAPTIVE_LINKED_CELL; /* TODO: Necessary? */
 				double bBoxMin[3];
 				double bBoxMax[3];
 				for (int i = 0; i < 3; i++) {
@@ -1721,14 +1747,7 @@ void Simulation::initialize() {
 
 	global_simulation = this;
 
-	_domainDecomposition = NULL;
-	_domain = NULL;
-	_particlePairsHandler = NULL;
-	_cellProcessor = NULL;
-	_moleculeContainer = NULL;
-	_integrator = NULL;
-	_inputReader = NULL;
-        _finalCheckpoint = true;
+	_finalCheckpoint = true;
 
         // TODO:
 #ifndef ENABLE_MPI

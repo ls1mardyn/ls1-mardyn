@@ -327,12 +327,6 @@ private:
 
 	double _simulationTime; /**< Simulation time t in reduced units */
 
-	/** enum to get rid of a dynamic cast. With the xml format, there won't be any
-	 * need for this hack then.
-	 */
-	enum ParticleContainerType {LINKED_CELL, ADAPTIVE_LINKED_CELL};
-
-	ParticleContainerType _particleContainerType;
 
 	/** maximum id of particles */
 	unsigned long maxid;
@@ -498,8 +492,6 @@ private:
 	double h;
 	/** Time after which the application should write a checkpoint in seconds. */
 	double _forced_checkpoint_time;
-
-	
 };
 #endif /*SIMULATION_H_*/
 
