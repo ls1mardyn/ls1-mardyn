@@ -1,0 +1,66 @@
+! Eingabedatei fuer Kohlendioxid
+
+! Angaben zu den Referenzgroessen
+! Variable        = [.. Wert  1 ..]
+eps/kB_Ref        =        315774.5   ! [eps/kB_Ref] = K
+mRef              =          1000.0   ! [mRef] = atomare Masseneinheit
+sigmaRef          =       0.5291772   ! [sigmaRef] = Angstroem
+
+!*****************   Zustandspunkt und Simulation   *****************
+! Angaben zum Zustandspunkt
+! Variable        = [.. Wert  1 ..]
+AnzKomp           =               1   ! [AnzKomp] = skalar (Integer, 0--99)
+NKomp( 1)         =           65536   ! [NKomp] = skalar (Integer)
+rho               =           19.44   ! [rho] = mol/l
+T                 =           285.0   ! [T] = K
+
+! Angaben fuer den Algorithmus
+! Variable        = [.. Wert  1 ..]
+dt                =             4.0   ! [dt] = fs
+rc                =            20.3   ! [rc] = Angstroem
+EquiSchritte      =           25000   ! [EquiSchritte] = skalar (Integer)
+SimSchritte       =          300000   ! [SimSchritte] = skalar (Integer)
+BoxRatio(x)       =             1.0   ! [BoxRatio(x)] = skalar
+BoxRatio(y)       =             1.0   ! [BoxRatio(y)] = skalar
+BoxRatio(z)       =             1.0   ! [BoxRatio(z)] = skalar
+Output            =               1   ! [Output] = skalar (Integer)
+
+! Angaben fuer die Visualisierung
+! Variable        = [.. Wert  1 ..]
+Film              =         .FALSE.   ! [Film] = .TRUE./.FALSE.
+BilderMax         =             500   ! [BilderMax] = skalar (Integer)
+FilmAb            =               0   ! [FilmAb] = skalar (Integer)
+OutputVis         =               5   ! [OutputVis] = skalar (Integer)
+
+!*****************   Beschreibung der MolekÃ¼le   *****************
+MaxAnzSites       =               3   ! [MaxAnzSites] = skalar (Integer)
+MaxAnzDipole      =               1   ! [MaxAnzDipole] = skalar (Integer)
+MaxAnzQuadrupole  =               0   ! [MaxAnzQuadrupole] = skalar (Integer)
+
+eps_ReactionField =         1.0E+10   ! [eps_ReactionField] = skalar
+
+! 
+! 
+
+! Angaben zu der Komponente ( 1) :
+! Variable        = [.. Wert  1 ..][.. Wert  2 ..][.. Wert  3 ..][.. Wert  4 ..]
+AnzSites          =               3   ! [AnzSites] = skalar (Integer)
+AnzDipole         =               1   ! [AnzDipole] = skalar (Integer)
+AnzQuadrupole     =               0   ! [AnzQuadrupole] = skalar (Integer)
+
+rSite(1:3,1)      =            0.00            0.0       +0.77692   ! [rSite] = Angstroem
+rSite(1:3,2)      =           -0.78            0.0       -0.44308   ! [rSite] = Angstroem
+rSite(1:3,3)      =           +0.78            0.0       -0.44308   ! [rSite] = Angstroem
+rDipol(1:3,1)     =            0.00            0.0       +0.04123   ! [rQuadrupol] = Angstroem
+
+(eps/kB,m,sig)(1) =          62.126         15.999         3.0929   ! [(eps/kB,m,sig)] = (K,atomare Masseneinheit,Angstroem)
+(eps/kB,m,sig)(2) =          84.739         14.027         3.5266   ! [(eps/kB,m,sig)] = (K,atomare Masseneinheit,Angstroem)
+(eps/kB,m,sig)(3) =          84.739         14.027         3.5266   ! [(eps/kB,m,sig)] = (K,atomare Masseneinheit,Angstroem)
+eMy(1:3);absMy (1)=             0.0            0.0           -1.0         2.459   ! [eQ(1:3);absQ] = (skalar;Debyes)
+
+I_Dummy(1:3)      =             0.0            0.0            0.0   ! [I_Dummy] = atomare Masseneinheit * Angstroem^2
+
+! Angaben fÃ¼r die Visualisierung -- Farben ;  [Farbe] = skalar (Integer, 0--9)
+! Variable        = [.. Wert  1 ..][.. Wert  2 ..][.. Wert  3 ..] ...
+Farbe(1:2, 1)     =               5              
+

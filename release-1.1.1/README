@@ -1,0 +1,67 @@
+INSTALLATION:
+-------------
+
+To build ls1 mardyn with the default target, using the GNU compiler
+and MPI, simply call make in the src directory. 
+
+  cd src
+  make
+
+If you want to use another compiler, disable MPI, ... you can run
+
+  make help
+
+To see a list of all supported target platforms and compilers call
+
+  make cfg_list
+
+and run then make with the desired cofiguration:
+
+  make CFG=<config name>
+
+To display further information about the available suboptions for a configuration use
+
+  make CFG=<cfg name> cfg_help
+
+
+USAGE:
+------
+
+The basic command to run ls1-mardyn is as follows:
+
+MarDyn [options] <inputfile> <timesteps> [outputprefix]
+
+where Mardyn is the executable build in the INSTALLATION section,
+[options] are any -- prefixed options as listed by 'MarDyn --help'
+<inputfile> is a input file
+<timesteps> is the number of time steps to be executed in the simulation loop and
+outputprefiy is an optional prefix for all result files
+
+detailed help can be obtained by running 
+MarDyn --help
+
+example files can be found in the examples folder.
+
+For example:
+
+cd examples
+mpirun -np 2 MarDyn lj40000_t300.cfg 100
+
+
+LS1 MARDYN CONTACT POINT:
+-------------------------
+
+Please address your questions and suggestions to the ls1 mardyn
+contact point:
+
+   E-mail: martin.horsch@mv.uni-kl.de
+   Phone: +49 631 205 3227
+   Fax: +49 631 205 3835
+
+   University of Kaiserslautern
+   Laboratory of Engineering Thermodynamics
+   Erwin-Schroedinger-Str. 44
+   D-67663 Kaiserslautern, Germany
+
+   http://www.ls1-mardyn.de/
+

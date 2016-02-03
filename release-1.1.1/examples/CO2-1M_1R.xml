@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<mardyn version="20110209">
+   <simulation type="MD">
+      <input type="oldstyle">CO2-1M_1R.cfg</input>
+   </simulation>
+</mardyn>
