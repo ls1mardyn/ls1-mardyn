@@ -7,6 +7,7 @@
 
 #ifndef ADAPTIVESUBCELLSTEST_H_
 #define ADAPTIVESUBCELLSTEST_H_
+#if 0
 
 #include "particleContainer/tests/ParticleContainerTest.h"
 #include "particleContainer/AdaptiveSubCells.h"
@@ -47,5 +48,5 @@ public:
 		this->ParticleContainerTest::testUpdateAndDeleteOuterParticles(&container);
 	}
 };
-
+#endif /* 0 */
 #endif /* ADAPTIVESUBCELLSTEST_H_ */
