@@ -94,6 +94,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	if (rebalance == false) {
 		DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 	} else {
+		global_log->info() << "KDDecomposition: rebalancing..." << endl;
 
 		if (_steps != 1) {
 			DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_ONLY, removeRecvDuplicates);
@@ -103,7 +104,8 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 		KDNode * newDecompRoot = NULL;
 		KDNode * newOwnLeaf = NULL;
 
-		constructNewTree(moleculeContainer, newDecompRoot, newOwnLeaf);
+		getNumParticles(moleculeContainer);
+		constructNewTree(newDecompRoot, newOwnLeaf);
 		migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
 		delete _decompTree;
 		_decompTree = newDecompRoot;
@@ -288,7 +290,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			for (int iz = low[2]; iz <= high[2]; ++iz) {
 				for (int iy = low[1]; iy <= high[1]; ++iy) {
 					for (int ix = low[0]; ix <= high[0]; ++ ix) {
-						numMols += _numParticlesPerCell[_globalCellsPerDim[0] * (iz * _globalCellsPerDim[1] + iy) + ix];
+						numMols += _numParticlesPerCell[(iz * _globalCellsPerDim[1] + iy) * _globalCellsPerDim[0] + ix];
 					}
 				}
 			}
@@ -414,9 +416,7 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	global_log->set_mpi_output_root(0);
 }
 
-void KDDecomposition::constructNewTree(ParticleContainer* moleculeContainer, KDNode *& newRoot, KDNode *& newOwnLeaf) {
-	global_log->info() << "KDDecomposition: rebalancing..." << endl;
-	getNumParticles(moleculeContainer);
+void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf) {
 	newRoot = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
 	KDNode * toCleanUp = newRoot;
 

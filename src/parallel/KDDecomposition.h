@@ -104,7 +104,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
 
  private:
-	void constructNewTree(ParticleContainer* moleculeContainer, KDNode *& newRoot, KDNode *& newOwnLeaf);
+	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);
 	void migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const;
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 

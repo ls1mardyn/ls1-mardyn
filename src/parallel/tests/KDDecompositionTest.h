@@ -15,6 +15,7 @@ class KDDecompositionTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(KDDecompositionTest);
 	TEST_METHOD(testCompleteTreeInfo);
+	TEST_METHOD(testRebalancingDeadlocks);
 	TEST_SUITE_END();
 
 public:
@@ -30,6 +31,24 @@ public:
 	 * implementation against it.
 	 */
 	void completeTreeInfo(KDNode*& root, KDNode*& ownArea, int ownRank);
+
+	void testRebalancingDeadlocks();
+
+private:
+
+	/**
+	 * init some random distribution
+	 * @param v the _numParticlesPerCell entry of the KDD
+	 * @param len the dimensions of the _numParticlesPerCell array of the KDD
+	 */
+	void setNumParticlesPerCell(unsigned int * v, int len[3]) const;
+
+	/**
+	 * set the entries to zero
+	 * @param v the _numParticlesPerCell entry of the KDD
+	 * @param total_len the total length of the _numParticlesPerCell array of the KDD
+	 */
+	void clearNumParticlesPerCell(unsigned int *v, int totalLen) const;
 };
 
 #endif /* KDDECOMPOSITIONTEST_H_ */
