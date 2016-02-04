@@ -248,7 +248,7 @@ void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int l
 	}
 }
 
-void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
+bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
 	// 1. compute which processes we will receive from
 	// 2. issue Irecv calls
 	// 3. compute which prcesses we will send to
@@ -405,8 +405,8 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			for (int i = 0; i < numProcsRecv; ++i) {
 				recvPartners[i].deadlockDiagnosticRecv();
 			}
-			MPI_Abort(_comm, 1);
-			exit(1);
+			global_log->warning() << "aborting" << std::endl;
+			break;
 		}
 
 	} // while not allDone
@@ -414,6 +414,18 @@ void KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	moleculeContainer->update();
 
 	global_log->set_mpi_output_root(0);
+
+	int isOK = allDone;
+
+	MPI_Allreduce(MPI_IN_PLACE, &isOK, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+	bool success = false;
+
+	if(isOK == _numProcs) {
+		success = true;
+	}
+
+	return success;
 }
 
 void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf) {

@@ -105,7 +105,14 @@ class KDDecomposition: public DomainDecompMPIBase {
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);
-	void migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const;
+	/**
+	 *
+	 * @param newRoot
+	 * @param newOwnLeaf
+	 * @param moleculeContainer
+	 * @return true if OK, false if deadlock
+	 */
+	bool migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const;
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
 
