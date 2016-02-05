@@ -420,43 +420,43 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 	{
 		const vcp_double_vec c_dx = r1_x - r2_x;
 		const vcp_double_vec c_dy = r1_y - r2_y;
-		const vcp_double_vec c_dz = r1_z - r2_z;//fma not possible since they will be reused...
+		const vcp_double_vec c_dz = r1_z - r2_z;
 
 		const vcp_double_vec c_r2 = vcp_simd_scalProd(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 		const vcp_double_vec r2_inv_unmasked = one / c_r2;
 		const vcp_double_vec r2_inv = vcp_simd_applymask(r2_inv_unmasked, forceMask);
 
 
-		const vcp_double_vec lj2 = sig2 * r2_inv;
-		const vcp_double_vec lj4 = lj2 * lj2;
-		const vcp_double_vec lj6 = lj4 * lj2;
-		const vcp_double_vec lj12 = lj6 * lj6;
-		const vcp_double_vec lj12m6 = lj12 - lj6;
+		const vcp_double_vec lj2 = sig2 * r2_inv;//1FP (scale)
+		const vcp_double_vec lj4 = lj2 * lj2;//1FP (scale)
+		const vcp_double_vec lj6 = lj4 * lj2;//1FP (scale)
+		const vcp_double_vec lj12 = lj6 * lj6;//1FP (scale)
+		const vcp_double_vec lj12m6 = lj12 - lj6;//1FP (scale)
 
-		const vcp_double_vec eps24r2inv = eps_24 * r2_inv;
-		const vcp_double_vec lj12lj12m6 = lj12 + lj12m6;
-		const vcp_double_vec scale = eps24r2inv * lj12lj12m6;
+		const vcp_double_vec eps24r2inv = eps_24 * r2_inv;//1FP (scale)
+		const vcp_double_vec lj12lj12m6 = lj12 + lj12m6;//1FP (scale)
+		const vcp_double_vec scale = eps24r2inv * lj12lj12m6;//1FP (scale)
 
-		f_x = c_dx * scale;
-		f_y = c_dy * scale;
-		f_z = c_dz * scale;
-		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
-		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
-		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
+		f_x = c_dx * scale;//1FP (apply scale)
+		f_y = c_dy * scale;//1FP (apply scale)
+		f_z = c_dz * scale;//1FP (apply scale)
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;//1FP (virial) (does not count)
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;//1FP (virial) (does not count)
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;//1FP (virial) (does not count)
 
-		V_x = m_dx * f_x;
-		V_y = m_dy * f_y;
-		V_z = m_dz * f_z;
+		V_x = m_dx * f_x;//1FP (virial)
+		V_y = m_dy * f_y;//1FP (virial)
+		V_z = m_dz * f_z;//1FP (virial)
 
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 
-			const vcp_double_vec upot_sh = vcp_simd_fma(eps_24, lj12m6, shift6); //shift6 is not masked -> we have to mask upot_shifted
+			const vcp_double_vec upot_sh = vcp_simd_fma(eps_24, lj12m6, shift6); //2 FP upot				//shift6 is not masked -> we have to mask upot_shifted
 			const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, forceMask); //mask it
 
-			sum_upot6lj = sum_upot6lj + upot_masked;
+			sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
 
-			sum_virial = sum_virial +  V_x + V_y + V_z;//vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
+			sum_virial = sum_virial +  V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
 		}
 	}
 
