@@ -18,47 +18,49 @@ FlopCounter::_Counts::_Counts() {
 	// 3 sub + 3 square + 2 add
 	_distanceMultiplier = 8;
 
-	// Kernel: 12 = 1 (inverse R squared) + 8 (compute scale) + 3 (apply scale)
-	// Macro: 7 = 2 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 0 (torques)
-	// sum Macro: 2 (upot + virial) + 0 (RF)
-	initPotCounter(I_LJ, "Lennard-Jones", 12, 7, 6, 2);
+//inverse R squared is one, because only 1/(R^2) has to be calculated, while R^2 already is calculated.
 
-	// Kernel: 7 = 1 (inverse R squared) + 1 (square root) + 2 (compute scale) + 3 (apply scale)
-	// Macro: 5 = 0 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 0 (torques)
+	// Kernel: 15 = 1 (inverse R squared) + 8 (compute scale) + 3 (apply scale) + 3 (virial tensor)
+	// Macro: 4 = 2 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 0 (torques)
 	// sum Macro: 2 (upot + virial) + 0 (RF)
-	initPotCounter(I_CHARGE, "Charge", 7, 5, 6, 2);
+	initPotCounter(I_LJ, "Lennard-Jones", 15, 4, 12, 2);
 
-	// Kernel: 31 = 1 (inverse R squared) + 1 (square root) + 29
-	// Macro: 6 = 1 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 3 (torques)
+	// Kernel: 10 = 1 (inverse R squared) + 1 (square root) + 2 (compute scale) + 3 (apply scale) + 3 (virial tensor)
+	// Macro: 2 = 0 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 0 (torques)
 	// sum Macro: 2 (upot + virial) + 0 (RF)
-	initPotCounter(I_CHARGE_DIPOLE, "Charge-Dipole", 31, 6, 9, 2);
+	initPotCounter(I_CHARGE, "Charge", 10, 2, 12, 2);
 
-	// Kernel: 98 = 1 (inverse R squared) + 1 (square root) + 96
-	// Macro: 8 = 3 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 6 (torques)
+	// Kernel: 34 = 1 (inverse R squared) + 1 (square root) + 29 + 3 (virial tensor)
+	// Macro: 3 = 1 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 3 (torques)
+	// sum Macro: 2 (upot + virial) + 0 (RF)
+	initPotCounter(I_CHARGE_DIPOLE, "Charge-Dipole", 34, 3, 15, 2);
+
+	// Kernel: 101 = 1 (inverse R squared) + 1 (square root) + 96 + 3 (virial tensor)
+	// Macro: 5 = 3 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 6 (torques)
 	// sum Macro: 2 (upot + virial) + 1 (RF)
-	initPotCounter(I_DIPOLE, "Dipole", 98, 8, 12, 3);
+	initPotCounter(I_DIPOLE, "Dipole", 101, 5, 18, 3);
 
-	// Kernel: 49 = 1 (inverse R squared) + 1 (square root) + 47
-	// Macro: 5 = 0 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 3 (torques)
+	// Kernel: 52 = 1 (inverse R squared) + 1 (square root) + 47 + 3 (virial tensor)
+	// Macro: 2 = 0 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 3 (torques)
 	// sum Macro: 2 (upot + virial) + 0 (RF)
-	initPotCounter(I_CHARGE_QUADRUPOLE, "Charge-Quadrupole", 49, 5, 9, 2);
+	initPotCounter(I_CHARGE_QUADRUPOLE, "Charge-Quadrupole", 52, 2, 15, 2);
 
-	// Kernel: 118 = 1 (inverse R squared) + 1 (square root) + 116
-	// Macro: 5 = 0 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 6 (torques)
+	// Kernel: 121 = 1 (inverse R squared) + 1 (square root) + 116 + 3 (virial tensor)
+	// Macro: 2 = 0 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 6 (torques)
 	// sum Macro: 2 (upot + virial) + 0 (RF)
-	initPotCounter(I_DIPOLE_QUADRUPOLE, "Dipole-Quadrupole", 118, 5, 12, 2);
+	initPotCounter(I_DIPOLE_QUADRUPOLE, "Dipole-Quadrupole", 121, 2, 18, 2);
 
-	// Kernel: 128 = 1 (inverse R squared) + 1 (square root) + 126
-	// Macro: 5 = 0 (upot) + 5 (virial)
-	// sum Forces and Torques: 6 (forces) + 6 (torques)
+	// Kernel: 131 = 1 (inverse R squared) + 1 (square root) + 126 + 3 (virial tensor)
+	// Macro: 2 = 0 (upot) + 2 (virial)
+	// sum Forces, Virials and Torques: 6 (forces) + 6 (virials) + 6 (torques)
 	// sum Macro: 2 (upot + virial) + 0 (RF)
-	initPotCounter(I_QUADRUPOLE, "Quadrupole", 128, 5, 12, 2);
+	initPotCounter(I_QUADRUPOLE, "Quadrupole", 131, 2, 18, 2);
 }
 
 void FlopCounter::_PotentialCounts::collCommAppend() {
@@ -231,7 +233,7 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 		const Molecule & Mi = *(molecules1[i]);
 		for (vector<Molecule *>::size_type j = 0; j < numMolecules2; ++j) {
 			const Molecule & Mj = *(molecules2[j]);
-			const bool addMacro = allMacro or Mi.isLessThan(Mj);
+			const bool addMacro = allMacro or c1.getCellIndex() < c2.getCellIndex();
 			handlePair(Mi, Mj, addMacro);
 		}
 	}
