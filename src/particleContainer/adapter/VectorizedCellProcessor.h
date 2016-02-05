@@ -156,6 +156,7 @@ private:
 			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
 			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
 			const vcp_mask_vec& forceMask,
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
@@ -170,6 +171,7 @@ private:
 		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
 		const vcp_double_vec& qjj,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_mask_vec& forceMask);
 
@@ -183,6 +185,7 @@ private:
 		const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
 		const vcp_double_vec& p,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_mask_vec& forceMask);
@@ -198,6 +201,7 @@ private:
 		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 		const vcp_double_vec& pjj,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
 		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
@@ -214,6 +218,7 @@ private:
 		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 		const vcp_double_vec& m,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_mask_vec& forceMask);
@@ -229,6 +234,7 @@ private:
 		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 		const vcp_double_vec& m,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
 		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
@@ -245,6 +251,7 @@ private:
 		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 		const vcp_double_vec& mjj,
 		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
 		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,

@@ -174,6 +174,8 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
 			// check torque
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->M(i), m_2->M(i), Tolerance);
+			//check local molecule-wise virial
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
 		}
 		// advance molecule of first container
 		m_1 = container_1->next();
@@ -260,14 +262,12 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 			std::stringstream str;
 			str << filename << std::endl;
 			str << "Molecule id=" << m_2->id() << " index i=" << i << std::endl;
-			std::stringstream strF;
-			strF << str.str() << "Force Calculation (F)" << std::endl;
 			// check force
-			ASSERT_DOUBLES_EQUAL_MSG(strF.str(), m_1->F(i), m_2->F(i), Tolerance);
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
 			// check torque
-			std::stringstream strM;
-			strM << str.str() << "Torque Calculation (M)" << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(strM.str(), m_1->M(i), m_2->M(i), Tolerance);
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->M(i), m_2->M(i), Tolerance);
+			//check local molecule-wise virial
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
 		}
 		// advance molecule of first container
 		m_1 = container_1->next();
