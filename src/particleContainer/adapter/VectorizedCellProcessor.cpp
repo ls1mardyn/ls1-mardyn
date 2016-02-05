@@ -289,9 +289,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa._ljc_V_x[iLJCenters];
-			V[1] = soa._ljc_V_y[iLJCenters];
-			V[2] = soa._ljc_V_z[iLJCenters];
+			V[0] = soa._ljc_V_x[iLJCenters]*0.5;
+			V[1] = soa._ljc_V_y[iLJCenters]*0.5;
+			V[2] = soa._ljc_V_z[iLJCenters]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -314,9 +314,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa._charges_V_x[iLJCenters];
-			V[1] = soa._charges_V_y[iLJCenters];
-			V[2] = soa._charges_V_z[iLJCenters];
+			V[0] = soa._charges_V_x[iCharges]*0.5;
+			V[1] = soa._charges_V_y[iCharges]*0.5;
+			V[2] = soa._charges_V_z[iCharges]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -344,9 +344,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa._dipoles_V_x[iLJCenters];
-			V[1] = soa._dipoles_V_y[iLJCenters];
-			V[2] = soa._dipoles_V_z[iLJCenters];
+			V[0] = soa._dipoles_V_x[iDipoles]*0.5;
+			V[1] = soa._dipoles_V_y[iDipoles]*0.5;
+			V[2] = soa._dipoles_V_z[iDipoles]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -374,9 +374,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa._quadrupoles_V_x[iLJCenters];
-			V[1] = soa._quadrupoles_V_y[iLJCenters];
-			V[2] = soa._quadrupoles_V_z[iLJCenters];
+			V[0] = soa._quadrupoles_V_x[iQuadrupoles]*0.5;
+			V[1] = soa._quadrupoles_V_y[iQuadrupoles]*0.5;
+			V[2] = soa._quadrupoles_V_z[iQuadrupoles]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -412,6 +412,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
 			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
 			const vcp_mask_vec& forceMask,
 			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
@@ -439,21 +440,23 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		f_x = c_dx * scale;
 		f_y = c_dy * scale;
 		f_z = c_dz * scale;
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
+
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
 
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
-			const vcp_double_vec m_dx = m1_r_x - m2_r_x;
-			const vcp_double_vec m_dy = m1_r_y - m2_r_y;
-			const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
 			const vcp_double_vec upot_sh = vcp_simd_fma(eps_24, lj12m6, shift6); //shift6 is not masked -> we have to mask upot_shifted
 			const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, forceMask); //mask it
 
 			sum_upot6lj = sum_upot6lj + upot_masked;
 
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
-
-			sum_virial = sum_virial + virial;
+			sum_virial = sum_virial +  V_x + V_y + V_z;//vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
 		}
 	}
 
@@ -467,6 +470,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
 			const vcp_double_vec& qjj,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 			const vcp_mask_vec& forceMask)
 	{
@@ -487,17 +491,17 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		f_x = c_dx * fac;
 		f_y = c_dy * fac;
 		f_z = c_dz * fac;
-
 		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 			sum_upotXpoles = sum_upotXpoles + upot;
-
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
-			sum_virial = sum_virial + virial;
+			sum_virial = sum_virial + V_x + V_y + V_z;//vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
 		}
 	}
 
@@ -511,6 +515,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
 			const vcp_double_vec& p,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
 			vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 			const vcp_mask_vec& forceMask)
@@ -541,14 +546,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
+
 		// Check if we have to add the macroscopic values up.
 		if (calculateMacroscopic)
 		{
 			const vcp_double_vec minusUpot =  qpper4pie0dr3 * re;//already masked
 			sum_upotXpoles = sum_upotXpoles - minusUpot;
-
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);//already masked
-			sum_virial = vcp_simd_add(sum_virial, virial);
+			sum_virial = sum_virial + V_x + V_y + V_z; //vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);//already masked
 		}
 
 		const vcp_double_vec e_x_dy_minus_e_y_dx = vcp_simd_fms(e_x, dy, e_y * dx);
@@ -571,6 +578,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 			const vcp_double_vec& pjj,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
 			vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
 			vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
@@ -614,14 +622,19 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
+
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
+
 			// can we precompute some of this?
 			const vcp_double_vec upot = p1p2per4pie0r3 * vcp_simd_fnma(three, re1re2perr2, e1e2);//already masked
 			sum_upotXpoles = sum_upotXpoles + upot;
 
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);//already masked
-			sum_virial = sum_virial + virial;
+			//const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);//already masked
+			sum_virial = sum_virial + V_x + V_y + V_z;
 
 			sum_myRF = vcp_simd_fma(rffac, e1e2, sum_myRF);
 		}
@@ -649,6 +662,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 			const vcp_double_vec& m,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
 			vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 			const vcp_mask_vec& forceMask) {
@@ -688,12 +702,15 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
+
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 			sum_upotXpoles = sum_upotXpoles + upot;
 
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
-			sum_virial = sum_virial + virial;
+			sum_virial = sum_virial + V_x + V_y + V_z;
 		}
 
 		/**********
@@ -719,6 +736,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 			const vcp_double_vec& m,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
 			vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
 			vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
@@ -783,12 +801,15 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
+
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 			sum_upotXpoles = sum_upotXpoles + upot;
 
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
-			sum_virial = sum_virial + virial;
+			sum_virial = sum_virial + V_x + V_y + V_z;
 		}
 
 		/**********
@@ -830,6 +851,7 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
 			const vcp_double_vec& mjj,
 			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
 			vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
 			vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
 			vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
@@ -912,12 +934,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
+		V_x = m_dx * f_x;
+		V_y = m_dy * f_y;
+		V_z = m_dz * f_z;
+
 		// Check if we have to add the macroscopic values up for at least one of this pairs
 		if (calculateMacroscopic) {
 			sum_upotXpoles = sum_upotXpoles + upot;
 
-			const vcp_double_vec virial = vcp_simd_scalProd(m_dx, m_dy, m_dz, f_x, f_y, f_z);
-			sum_virial = sum_virial + virial;
+
+			sum_virial = sum_virial + V_x + V_y + V_z;
 		}
 
 		/**********
@@ -1206,6 +1232,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa1_ljc_f_x = soa1._ljc_f_x;
 	double * const soa1_ljc_f_y = soa1._ljc_f_y;
 	double * const soa1_ljc_f_z = soa1._ljc_f_z;
+	double * const soa1_ljc_V_x = soa1._ljc_V_x;
+	double * const soa1_ljc_V_y = soa1._ljc_V_y;
+	double * const soa1_ljc_V_z = soa1._ljc_V_z;
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const size_t * const soa1_ljc_id = soa1._ljc_id;
 
@@ -1218,6 +1247,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_ljc_f_x = soa2._ljc_f_x;
 	double * const soa2_ljc_f_y = soa2._ljc_f_y;
 	double * const soa2_ljc_f_z = soa2._ljc_f_z;
+	double * const soa2_ljc_V_x = soa2._ljc_V_x;
+	double * const soa2_ljc_V_y = soa2._ljc_V_y;
+	double * const soa2_ljc_V_z = soa2._ljc_V_z;
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = soa2._ljc_dist_lookup;
@@ -1229,6 +1261,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa1_charges_f_x = soa1._charges_f_x;
 	double * const soa1_charges_f_y = soa1._charges_f_y;
 	double * const soa1_charges_f_z = soa1._charges_f_z;
+	double * const soa1_charges_V_x = soa1._charges_V_x;
+	double * const soa1_charges_V_y = soa1._charges_V_y;
+	double * const soa1_charges_V_z = soa1._charges_V_z;
 	const double * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
@@ -1241,6 +1276,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_charges_f_x = soa2._charges_f_x;
 	double * const soa2_charges_f_y = soa2._charges_f_y;
 	double * const soa2_charges_f_z = soa2._charges_f_z;
+	double * const soa2_charges_V_x = soa2._charges_V_x;
+	double * const soa2_charges_V_y = soa2._charges_V_y;
+	double * const soa2_charges_V_z = soa2._charges_V_z;
 	const double * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = soa2._charges_dist_lookup;
@@ -1252,6 +1290,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa1_dipoles_f_x = soa1._dipoles_f_x;
 	double * const soa1_dipoles_f_y = soa1._dipoles_f_y;
 	double * const soa1_dipoles_f_z = soa1._dipoles_f_z;
+	double * const soa1_dipoles_V_x = soa1._dipoles_V_x;
+	double * const soa1_dipoles_V_y = soa1._dipoles_V_y;
+	double * const soa1_dipoles_V_z = soa1._dipoles_V_z;
 	const double * const soa1_dipoles_p = soa1._dipoles_p;
 	const double * const soa1_dipoles_e_x = soa1._dipoles_e_x;
 	const double * const soa1_dipoles_e_y = soa1._dipoles_e_y;
@@ -1270,6 +1311,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_dipoles_f_x = soa2._dipoles_f_x;
 	double * const soa2_dipoles_f_y = soa2._dipoles_f_y;
 	double * const soa2_dipoles_f_z = soa2._dipoles_f_z;
+	double * const soa2_dipoles_V_x = soa2._dipoles_V_x;
+	double * const soa2_dipoles_V_y = soa2._dipoles_V_y;
+	double * const soa2_dipoles_V_z = soa2._dipoles_V_z;
 	const double * const soa2_dipoles_p = soa2._dipoles_p;
 	const double * const soa2_dipoles_e_x = soa2._dipoles_e_x;
 	const double * const soa2_dipoles_e_y = soa2._dipoles_e_y;
@@ -1287,6 +1331,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa1_quadrupoles_f_x = soa1._quadrupoles_f_x;
 	double * const soa1_quadrupoles_f_y = soa1._quadrupoles_f_y;
 	double * const soa1_quadrupoles_f_z = soa1._quadrupoles_f_z;
+	double * const soa1_quadrupoles_V_x = soa1._quadrupoles_V_x;
+	double * const soa1_quadrupoles_V_y = soa1._quadrupoles_V_y;
+	double * const soa1_quadrupoles_V_z = soa1._quadrupoles_V_z;
 	const double * const soa1_quadrupoles_m = soa1._quadrupoles_m;
 	const double * const soa1_quadrupoles_e_x = soa1._quadrupoles_e_x;
 	const double * const soa1_quadrupoles_e_y = soa1._quadrupoles_e_y;
@@ -1305,6 +1352,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_quadrupoles_f_x = soa2._quadrupoles_f_x;
 	double * const soa2_quadrupoles_f_y = soa2._quadrupoles_f_y;
 	double * const soa2_quadrupoles_f_z = soa2._quadrupoles_f_z;
+	double * const soa2_quadrupoles_V_x = soa2._quadrupoles_V_x;
+	double * const soa2_quadrupoles_V_y = soa2._quadrupoles_V_y;
+	double * const soa2_quadrupoles_V_z = soa2._quadrupoles_V_z;
 	const double * const soa2_quadrupoles_m = soa2._quadrupoles_m;
 	const double * const soa2_quadrupoles_e_x = soa2._quadrupoles_e_x;
 	const double * const soa2_quadrupoles_e_y = soa2._quadrupoles_e_y;
@@ -1395,6 +1445,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_fx1 = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_fy1 = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_fz1 = VCP_SIMD_ZEROV;
+
+				vcp_double_vec sum_Vx1 = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_Vy1 = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_Vz1 = VCP_SIMD_ZEROV;
+
 				const vcp_double_vec c_r_x1 = vcp_simd_broadcast(soa1_ljc_r_x + i_ljc_idx);
 				const vcp_double_vec c_r_y1 = vcp_simd_broadcast(soa1_ljc_r_y + i_ljc_idx);
 				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
@@ -1415,6 +1470,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
 						vcp_double_vec fx, fy, fz;
+						vcp_double_vec Vx, Vy, Vz;
 
 						vcp_double_vec eps_24;
 						vcp_double_vec sig2;
@@ -1427,6 +1483,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
 							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 							fx, fy, fz,
+							Vx, Vy, Vz,
 							sum_upot6lj, sum_virial,
 							MaskGatherChooser::getForceMask(lookupORforceMask),
 							eps_24, sig2,
@@ -1439,6 +1496,14 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_fx1 = sum_fx1 + fx;
 						sum_fy1 = sum_fy1 + fy;
 						sum_fz1 = sum_fz1 + fz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_x, j, Vx, lookupORforceMask);
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_y, j, Vy, lookupORforceMask);
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_ljc_V_z, j, Vz, lookupORforceMask);
+
+						sum_Vx1 = sum_Vx1 + Vx;
+						sum_Vy1 = sum_Vy1 + Vy;
+						sum_Vz1 = sum_Vz1 + Vz;
 					}
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
@@ -1457,6 +1522,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
 						vcp_double_vec fx, fy, fz;
+						vcp_double_vec Vx, Vy, Vz;
 
 						vcp_double_vec eps_24;
 						vcp_double_vec sig2;
@@ -1469,6 +1535,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
 							m_r_x2, m_r_y2, m_r_z2, c_r_x2, c_r_y2, c_r_z2,
 							fx, fy, fz,
+							Vx, Vy, Vz,
 							sum_upot6lj, sum_virial,
 							remainderM,//use remainder mask as forcemask
 							eps_24, sig2,
@@ -1481,6 +1548,14 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						sum_fx1 = sum_fx1 + fx;
 						sum_fy1 = sum_fy1 + fy;
 						sum_fz1 = sum_fz1 + fz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_x, j, Vx, lookupORforceMask, remainderM);
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_y, j, Vy, lookupORforceMask, remainderM);
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_z, j, Vz, lookupORforceMask, remainderM);
+
+						sum_Vx1 = sum_Vx1 + Vx;
+						sum_Vy1 = sum_Vy1 + Vy;
+						sum_Vz1 = sum_Vz1 +Vz;
 					}
 				}
 #endif
@@ -1488,13 +1563,14 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_ljc_f_x + i_ljc_idx, sum_fx1);
 				hSum_Add_Store(soa1_ljc_f_y + i_ljc_idx, sum_fy1);
 				hSum_Add_Store(soa1_ljc_f_z + i_ljc_idx, sum_fz1);
-				//printf("fx: %f\t", *(soa1_ljc_f_x + i_ljc_idx));
-				//printf("fy: %f\t", *(soa1_ljc_f_y + i_ljc_idx));
-				//printf("fz: %f", *(soa1_ljc_f_z + i_ljc_idx));
+
+				hSum_Add_Store(soa1_ljc_V_x + i_ljc_idx, sum_Vx1);
+				hSum_Add_Store(soa1_ljc_V_y + i_ljc_idx, sum_Vy1);
+				hSum_Add_Store(soa1_ljc_V_z + i_ljc_idx, sum_Vz1);
+
 				i_ljc_idx++;
 			}
 		}
-		//printf("\n");
 		// Computation of site interactions with charges
 
 		if (!vcp_simd_movemask(compute_molecule_charges)) {
@@ -1517,11 +1593,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
+
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ2(i_charge_idx + local_i);
-				if(soa2_charges_f_x == (double*)0xa67700){
-					printf("j: %lu\n", (unsigned long)j);
-				}
+
 				for (; j < end_charges_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_charges_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
@@ -1537,22 +1615,33 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z;
+						vcp_double_vec Vx, Vy, Vz;
+
 						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q2,
 								f_x, f_y, f_z,
+								Vx, Vy, Vz,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask);
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask);
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask);
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_x, j, Vx, lookupORforceMask);
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_y, j, Vy, lookupORforceMask);
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);
 					}
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
@@ -1569,27 +1658,35 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j, lookupORforceMask);
 						const vcp_double_vec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j, lookupORforceMask);
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
-						if(soa2_charges_f_x == (double*)0xa67700){
-							printf("j: %lu\n", (unsigned long)j);
-						}
 
 						vcp_double_vec f_x, f_y, f_z;
+						vcp_double_vec Vx, Vy, Vz;
+
 						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q2,
 								f_x, f_y, f_z,
+								Vx, Vy, Vz,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask, remainderM);
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask, remainderM);
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask, remainderM);
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_x, j, Vx, lookupORforceMask, remainderM);
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_y, j, Vy, lookupORforceMask, remainderM);
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask, remainderM);
 					}
 				}
 #endif
@@ -1598,6 +1695,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_charges_f_x + i_charge_idx + local_i, sum_f1_x);
 				hSum_Add_Store(soa1_charges_f_y + i_charge_idx + local_i, sum_f1_y);
 				hSum_Add_Store(soa1_charges_f_z + i_charge_idx + local_i, sum_f1_z);
+				// Add old virial and summed calculated virials for center 1
+				hSum_Add_Store(soa1_charges_V_x + i_charge_idx + local_i, sum_V1_x);
+				hSum_Add_Store(soa1_charges_V_y + i_charge_idx + local_i, sum_V1_y);
+				hSum_Add_Store(soa1_charges_V_z + i_charge_idx + local_i, sum_V1_z);
 
 			}
 
@@ -1616,6 +1717,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
+
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
 
 				vcp_double_vec sum_M_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M_y = VCP_SIMD_ZEROV;
@@ -1638,23 +1743,35 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, p,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x - f_x;//negative, since dipole-charge, not charge-dipole -> direction inversed
+						sum_f1_y = sum_f1_y - f_y;
+						sum_f1_z = sum_f1_z - f_z;
 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask);//newton 3
+
+						//store virials
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);//newton 3
 
 						// Store torque
 
@@ -1679,23 +1796,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, p,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x - f_x;
+						sum_f1_y = sum_f1_y - f_y;
+						sum_f1_z = sum_f1_z - f_z;
 
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 						// Store torque
 
@@ -1709,6 +1839,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_dipoles_f_x + i_dipole_charge_idx, sum_f1_x);
 				hSum_Add_Store(soa1_dipoles_f_y + i_dipole_charge_idx, sum_f1_y);
 				hSum_Add_Store(soa1_dipoles_f_z + i_dipole_charge_idx, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_dipoles_V_x + i_dipole_charge_idx, sum_V1_x);
+				hSum_Add_Store(soa1_dipoles_V_y + i_dipole_charge_idx, sum_V1_y);
+				hSum_Add_Store(soa1_dipoles_V_z + i_dipole_charge_idx, sum_V1_z);
 
 				// Add old torques and summed calculated torques for center 1
 				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_charge_idx, sum_M_x);
@@ -1734,6 +1869,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
+
 				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
@@ -1755,24 +1894,37 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, m,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x - f_x;
+						sum_f1_y = sum_f1_y - f_y;
+						sum_f1_z = sum_f1_z - f_z;
 
 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);//newton 3
 
 
 						// Store torque
@@ -1798,24 +1950,38 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, q,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e_x, e_y, e_z, m,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x - f_x;
+						sum_f1_y = sum_f1_y - f_y;
+						sum_f1_z = sum_f1_z - f_z;
 
 
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 
 						// Store torque
@@ -1831,6 +1997,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_quadrupoles_f_x + i_quadrupole_charge_idx, sum_f1_x);
 				hSum_Add_Store(soa1_quadrupoles_f_y + i_quadrupole_charge_idx, sum_f1_y);
 				hSum_Add_Store(soa1_quadrupoles_f_z + i_quadrupole_charge_idx, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_quadrupoles_V_x + i_quadrupole_charge_idx, sum_V1_x);
+				hSum_Add_Store(soa1_quadrupoles_V_y + i_quadrupole_charge_idx, sum_V1_y);
+				hSum_Add_Store(soa1_quadrupoles_V_z + i_quadrupole_charge_idx, sum_V1_z);
 
 				// Add old torques and summed calculated torques for center 1
 				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_charge_idx, sum_M1_x);
@@ -1869,6 +2040,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
+
 				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
@@ -1892,11 +2067,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyDipole<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
 							m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p2,
 							f_x, f_y, f_z,
+							Vx, Vy, Vz,
 							M1_x, M1_y, M1_z,
 							M2_x, M2_y, M2_z,
 							sum_upotXpoles, sum_virial, sum_myRF,
@@ -1913,12 +2090,22 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z, lookupORforceMask);//newton 3
 
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_z, j, Vz, lookupORforceMask);//newton 3
+
 
 						// Store torque
 
-						sum_M1_x = vcp_simd_add(sum_M1_x, M1_x);
-						sum_M1_y = vcp_simd_add(sum_M1_y, M1_y);
-						sum_M1_z = vcp_simd_add(sum_M1_z, M1_z);
+						sum_M1_x = sum_M1_x + M1_x;
+						sum_M1_y = sum_M1_y + M1_y;
+						sum_M1_z = sum_M1_z + M1_z;
 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_x, j, M2_x, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_M_y, j, M2_y, lookupORforceMask);//newton 3
@@ -1944,11 +2131,13 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyDipole<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, p1,
 							m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p2,
 							f_x, f_y, f_z,
+							Vx, Vy, Vz,
 							M1_x, M1_y, M1_z,
 							M2_x, M2_y, M2_z,
 							sum_upotXpoles, sum_virial, sum_myRF,
@@ -1957,13 +2146,23 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 
 						// Store torque
@@ -1983,6 +2182,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_dipoles_f_x + i_dipole_idx + local_i, sum_f1_x);
 				hSum_Add_Store(soa1_dipoles_f_y + i_dipole_idx + local_i, sum_f1_y);
 				hSum_Add_Store(soa1_dipoles_f_z + i_dipole_idx + local_i, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_dipoles_V_x + i_dipole_idx + local_i, sum_V1_x);
+				hSum_Add_Store(soa1_dipoles_V_y + i_dipole_idx + local_i, sum_V1_y);
+				hSum_Add_Store(soa1_dipoles_V_z + i_dipole_idx + local_i, sum_V1_z);
 
 				// Add old torques and summed calculated torques for center 1
 				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_idx + local_i, sum_M1_x);
@@ -2005,6 +2209,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
+
 				size_t j = ForcePolicy::InitJ2(i_dipole_idx);
 				for (; j < end_dipoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_dipoles_dist_lookup, j);
@@ -2026,23 +2234,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e_x, e_y, e_z, p,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z, lookupORforceMask);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_z, j, Vz, lookupORforceMask);//newton 3
 
 						// Store torque
 
@@ -2072,23 +2293,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeDipole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, r1_x, r1_y, r1_z, q,
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e_x, e_y, e_z, p,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 						// Store torque
 
@@ -2102,6 +2336,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_charges_f_x + i_charge_dipole_idx, sum_f1_x);
 				hSum_Add_Store(soa1_charges_f_y + i_charge_dipole_idx, sum_f1_y);
 				hSum_Add_Store(soa1_charges_f_z + i_charge_dipole_idx, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_charges_V_x + i_charge_dipole_idx, sum_V1_x);
+				hSum_Add_Store(soa1_charges_V_y + i_charge_dipole_idx, sum_V1_y);
+				hSum_Add_Store(soa1_charges_V_z + i_charge_dipole_idx, sum_V1_z);
 
 				i_charge_dipole_idx++;
 			}
@@ -2122,6 +2361,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
+
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
 
 				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
@@ -2146,24 +2389,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, m,
-								f_x, f_y, f_z, M2_x, M2_y, M2_z, M1_x, M1_y, M1_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M2_x, M2_y, M2_z, M1_x, M1_y, M1_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x - f_x;
+						sum_f1_y = sum_f1_y - f_y;
+						sum_f1_z = sum_f1_z - f_z;
 
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z, lookupORforceMask);//newton 3
 
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_dipoles_V_z, j, Vz, lookupORforceMask);//newton 3
 
 						// Store torque
 
@@ -2196,23 +2451,37 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_dipoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m2_r_x, m2_r_y, m2_r_z,	r2_x, r2_y, r2_z, e2_x, e2_y, e2_z, p,
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, e1_x, e1_y, e1_z, m,
-								f_x, f_y, f_z, M2_x, M2_y, M2_z, M1_x, M1_y, M1_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M2_x, M2_y, M2_z, M1_x, M1_y, M1_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_sub(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_sub(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_sub(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x - f_x;
+						sum_f1_y = sum_f1_y - f_y;
+						sum_f1_z = sum_f1_z - f_z;
 
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_dipoles_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
+
 
 
 						// Store torque
@@ -2233,6 +2502,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_quadrupoles_f_x + i_quadrupole_dipole_idx, sum_f1_x);
 				hSum_Add_Store(soa1_quadrupoles_f_y + i_quadrupole_dipole_idx, sum_f1_y);
 				hSum_Add_Store(soa1_quadrupoles_f_z + i_quadrupole_dipole_idx, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_quadrupoles_V_x + i_quadrupole_dipole_idx, sum_V1_x);
+				hSum_Add_Store(soa1_quadrupoles_V_y + i_quadrupole_dipole_idx, sum_V1_y);
+				hSum_Add_Store(soa1_quadrupoles_V_z + i_quadrupole_dipole_idx, sum_V1_z);
 
 				// Add old torques and summed calculated torques for center 1
 				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_dipole_idx, sum_M1_x);
@@ -2271,6 +2545,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
+
 				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_z = VCP_SIMD_ZEROV;
@@ -2295,24 +2573,37 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, mjj,
-								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z, lookupORforceMask);//newton 3
 
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_z, j, Vz, lookupORforceMask);//newton 3
 
 						// Store torque
 
@@ -2343,23 +2634,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, mii,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, mjj,
-								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 
 						// Store torque
@@ -2378,6 +2682,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_quadrupoles_f_x + i_quadrupole_idx + local_i, sum_f1_x);
 				hSum_Add_Store(soa1_quadrupoles_f_y + i_quadrupole_idx + local_i, sum_f1_y);
 				hSum_Add_Store(soa1_quadrupoles_f_z + i_quadrupole_idx + local_i, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_quadrupoles_V_x + i_quadrupole_idx + local_i, sum_V1_x);
+				hSum_Add_Store(soa1_quadrupoles_V_y + i_quadrupole_idx + local_i, sum_V1_y);
+				hSum_Add_Store(soa1_quadrupoles_V_z + i_quadrupole_idx + local_i, sum_V1_z);
 
 				// Add old torques and summed calculated torques for center 1
 				hSum_Add_Store(soa1_quadrupoles_M_x + i_quadrupole_idx + local_i, sum_M1_x);
@@ -2399,6 +2708,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
 
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
+
 				size_t j = ForcePolicy::InitJ2(i_quadrupole_idx);
 				for (; j < end_quadrupoles_loop; j += VCP_VEC_SIZE) {
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_quadrupoles_dist_lookup, j);
@@ -2419,23 +2732,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e_x, e_y, e_z, m,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z, lookupORforceMask);//newton 3
+
+						// Store forces
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_z, j, Vz, lookupORforceMask);//newton 3
 
 
 						// Store torque
@@ -2465,23 +2791,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 
 						vcp_double_vec f_x, f_y, f_z, M_x, M_y, M_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyChargeQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q,
 								m2_r_x, m2_r_y, m2_r_z, r2_x, r2_y, r2_z, e_x, e_y, e_z, m,
-								f_x, f_y, f_z, M_x, M_y, M_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M_x, M_y, M_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 
 						// Store torque
@@ -2497,6 +2836,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_charges_f_x + i_charge_quadrupole_idx, sum_f1_x);
 				hSum_Add_Store(soa1_charges_f_y + i_charge_quadrupole_idx, sum_f1_y);
 				hSum_Add_Store(soa1_charges_f_z + i_charge_quadrupole_idx, sum_f1_z);
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_charges_V_x + i_charge_quadrupole_idx, sum_V1_x);
+				hSum_Add_Store(soa1_charges_V_y + i_charge_quadrupole_idx, sum_V1_y);
+				hSum_Add_Store(soa1_charges_V_z + i_charge_quadrupole_idx, sum_V1_z);
 
 				i_charge_quadrupole_idx++;
 			}
@@ -2517,6 +2860,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				vcp_double_vec sum_f1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_y = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_f1_z = VCP_SIMD_ZEROV;
+
+				vcp_double_vec sum_V1_x = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_y = VCP_SIMD_ZEROV;
+				vcp_double_vec sum_V1_z = VCP_SIMD_ZEROV;
 
 				vcp_double_vec sum_M1_x = VCP_SIMD_ZEROV;
 				vcp_double_vec sum_M1_y = VCP_SIMD_ZEROV;
@@ -2542,23 +2889,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, m,
-								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
 								sum_upotXpoles, sum_virial,
 								MaskGatherChooser::getForceMask(lookupORforceMask));
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y, lookupORforceMask);//newton 3
 						vcp_simd_load_sub_store<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z, lookupORforceMask);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_x, j, Vx, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_y, j, Vy, lookupORforceMask);//newton 3
+						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_V_z, j, Vz, lookupORforceMask);//newton 3
 
 
 						// Store torque
@@ -2591,23 +2951,36 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						const vcp_double_vec m2_r_z = MaskGatherChooser::load(soa2_quadrupoles_m_r_z, j, lookupORforceMask);
 
 						vcp_double_vec f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z;
+						vcp_double_vec Vx, Vy, Vz;
 
 						_loopBodyDipoleQuadrupole<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z, rii_x, rii_y, rii_z, eii_x, eii_y, eii_z, p,
 								m2_r_x, m2_r_y, m2_r_z,	rjj_x, rjj_y, rjj_z, ejj_x, ejj_y, ejj_z, m,
-								f_x, f_y, f_z, M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
+								f_x, f_y, f_z,
+								Vx, Vy, Vz,
+								M1_x, M1_y, M1_z, M2_x, M2_y, M2_z,
 								sum_upotXpoles, sum_virial,
 								remainderM);
 
 						// Store forces
 
-						sum_f1_x = vcp_simd_add(sum_f1_x, f_x);
-						sum_f1_y = vcp_simd_add(sum_f1_y, f_y);
-						sum_f1_z = vcp_simd_add(sum_f1_z, f_z);
+						sum_f1_x = sum_f1_x + f_x;
+						sum_f1_y = sum_f1_y + f_y;
+						sum_f1_z = sum_f1_z + f_z;
 
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_x, j, f_x, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_y, j, f_y, lookupORforceMask, remainderM);//newton 3
 						vcp_simd_load_sub_store_masked<MaskGatherChooser>(soa2_quadrupoles_f_z, j, f_z, lookupORforceMask, remainderM);//newton 3
+
+						// Store virials
+
+						sum_V1_x = sum_V1_x + Vx;
+						sum_V1_y = sum_V1_y + Vy;
+						sum_V1_z = sum_V1_z + Vz;
+
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_x, j, Vx, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_y, j, Vy, lookupORforceMask, remainderM);//newton 3
+						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_quadrupoles_V_z, j, Vz, lookupORforceMask, remainderM);//newton 3
 
 
 						// Store torque
@@ -2627,6 +3000,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				hSum_Add_Store(soa1_dipoles_f_x + i_dipole_quadrupole_idx, sum_f1_x);
 				hSum_Add_Store(soa1_dipoles_f_y + i_dipole_quadrupole_idx, sum_f1_y);
 				hSum_Add_Store(soa1_dipoles_f_z + i_dipole_quadrupole_idx, sum_f1_z);
+
+				// Add old virials and summed calculated virials for center 1
+				hSum_Add_Store(soa1_dipoles_V_x + i_dipole_quadrupole_idx, sum_V1_x);
+				hSum_Add_Store(soa1_dipoles_V_y + i_dipole_quadrupole_idx, sum_V1_y);
+				hSum_Add_Store(soa1_dipoles_V_z + i_dipole_quadrupole_idx, sum_V1_z);
 
 				// Add old torques and summed calculated torques for center 1
 				hSum_Add_Store(soa1_dipoles_M_x + i_dipole_quadrupole_idx, sum_M1_x);
