@@ -3,6 +3,7 @@
 #include <cmath>
 
 #define BINS 512
+#define BINS_AUTOCORR 16
 #define DT 0.0025
 #define PRECISION 5
 #define TIME 20150730
@@ -37,7 +38,7 @@ Domain::Domain(unsigned t_N, double t_rho, double t_RDF)
    this->use_hato = false;
 }
 
-void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, int format)
+void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, bool compute_autocorr, int format)
 {
    ofstream xdr, txt, buchholz;
    stringstream strstrm, txtstrstrm, buchholzstrstrm;
@@ -167,14 +168,22 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    if(format == FORMAT_BRANCH) txt << "resultOutputTimesteps\t1500\n";
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
-      txt << "initCanonical\t10\ninitStatistics\t505505\n";
+      txt << "initCanonical\t10\ninitStatistics\t100000\n";
+      
+      if(compute_autocorr)
+      {
+         double rho_max = (rho > rho2)? rho: rho2;
+         double rho_min = (rho > rho2)? rho2: rho;
+         txt << "activatePsi\t" << rho_min * (0.001 + rho_min/(rho_max + 9.0*rho_min)) + 0.000001 << "\nautocorrProfileUnits\t" << ((gradient || this->use_hato)? BINS_AUTOCORR: 1) << "\nautocorrMinStep\t2\nautocorrOutReset\t32768 131072\nautocorrArraySize\t32\nautocorrLevels\t3 16\n";
+      }
       if(gradient || this->use_hato)
       {
-         txt << "output\tXyzWriter 400\t" << prefix << "_1R\nprofile\t1 " << BINS << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t500000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\nAlignCentre\t100 0.01\n";
+         txt << "output\tXyzWriter 400\t" << prefix << "_1R\nprofile\t1 " << BINS << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t200000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\n";
+         if(!this->use_hato && !compute_autocorr) txt << "AlignCentre\t100 0.01\n";
       }
       else
       {
-         txt << "output\tXyzWriter 40000\t" << prefix << "_1R\nRDF\t" << RDF/(double)BINS << " " << BINS << "\nRDFOutputTimesteps\t3000000\nRDFOutputPrefix\t" << prefix << "_1R\n";
+         txt << "output\tXyzWriter 40000\t" << prefix << "_1R\nRDF\t" << RDF/(double)BINS << " " << BINS << "\nRDFOutputTimesteps\t500000\nRDFOutputPrefix\t" << prefix << "_1R\n";
       }
       txt << "nomomentum\t1024\n";
 
@@ -183,7 +192,10 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
          txt << "planckConstant\t" << sqrt(6.2831853 * T) << "\ninitGrandCanonical\t124816\n";
          double p_high = (p1 > p2)? p1: p2;
          double p_low = (p1 > p2)? p2: p1;
-         double coupling = 2.0 * (mu_high - mu_low) / (p_high - p_low);
+         double base_pressure = (p1 > 0)? p1: -p1;
+         if(p2 > base_pressure) base_pressure = p2;
+         else if(-p2 > base_pressure) base_pressure = -p2;
+         double coupling = 4.0 * (mu_high - mu_low) / (p_high - p_low + base_pressure);
          txt << "Hatonian target PTOTAL " << p1 << " chemicalPotential " << mu_low << " " << mu_high << " coupling " << coupling << " " << coupling << " component 1 control 0.0 " << box[1]/6.0 << " 0.0 to " << box[0] << " " << box[1]/3.0 << " " << box[2] << " conduct " << (int)round(N[0] / 500.0) << " tests every 8 steps\n";
          txt << "Hatonian target PTOTAL " << p2 << " chemicalPotential " << mu_low << " " << mu_high << " coupling " << coupling << " " << coupling << " component 1 control 0.0 " << 2.0*box[1]/3.0 << " 0.0 to " << box[0] << " " << 5.0*box[1]/6.0 << " " << box[2] << " conduct " << (int)round(N[1] / 500.0) << " tests every 8 steps\n";
          txt << "AccumulatorSize\t512\n";
