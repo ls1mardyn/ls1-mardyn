@@ -179,6 +179,9 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._ljc_f_x[iLJCenters] = 0.0;
 			soa._ljc_f_y[iLJCenters] = 0.0;
 			soa._ljc_f_z[iLJCenters] = 0.0;
+			soa._ljc_V_x[iLJCenters] = 0.0;
+			soa._ljc_V_y[iLJCenters] = 0.0;
+			soa._ljc_V_z[iLJCenters] = 0.0;
 			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
 			soa._ljc_dist_lookup[iLJCenters] = 0.0;
 		}
@@ -194,6 +197,9 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._charges_f_x[iCharges] = 0.0;
 			soa._charges_f_y[iCharges] = 0.0;
 			soa._charges_f_z[iCharges] = 0.0;
+			soa._charges_V_x[iCharges] = 0.0;
+			soa._charges_V_y[iCharges] = 0.0;
+			soa._charges_V_z[iCharges] = 0.0;
 			soa._charges_dist_lookup[iCharges] = 0.0;
 			// Get the charge
 			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
@@ -210,6 +216,9 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._dipoles_f_x[iDipoles] = 0.0;
 			soa._dipoles_f_y[iDipoles] = 0.0;
 			soa._dipoles_f_z[iDipoles] = 0.0;
+			soa._dipoles_V_x[iDipoles] = 0.0;
+			soa._dipoles_V_y[iDipoles] = 0.0;
+			soa._dipoles_V_z[iDipoles] = 0.0;
 			soa._dipoles_dist_lookup[iDipoles] = 0.0;
 			// Get the dipole moment
 			soa._dipoles_p[iDipoles] = components[molecules[i]->componentid()].dipole(j).absMy();
@@ -232,6 +241,9 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._quadrupoles_f_x[iQuadrupoles] = 0.0;
 			soa._quadrupoles_f_y[iQuadrupoles] = 0.0;
 			soa._quadrupoles_f_z[iQuadrupoles] = 0.0;
+			soa._quadrupoles_V_x[iQuadrupoles] = 0.0;
+			soa._quadrupoles_V_y[iQuadrupoles] = 0.0;
+			soa._quadrupoles_V_z[iQuadrupoles] = 0.0;
 			soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
 			// Get the quadrupole moment
 			soa._quadrupoles_m[iQuadrupoles] = components[molecules[i]->componentid()].quadrupole(j).absQ();
@@ -274,6 +286,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
 			molecules[m]->Fljcenteradd(i, f);
+
+			// Store the resulting virial in the molecule.
+			double V[3];
+			V[0] = soa._ljc_V_x[iLJCenters];
+			V[1] = soa._ljc_V_y[iLJCenters];
+			V[2] = soa._ljc_V_z[iLJCenters];
+			assert(!isnan(V[0]));
+			assert(!isnan(V[1]));
+			assert(!isnan(V[2]));
+			molecules[m]->Viadd(V);
 		}
 
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
@@ -289,10 +311,20 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
 			molecules[m]->Fchargeadd(i, f);
+
+			// Store the resulting virial in the molecule.
+			double V[3];
+			V[0] = soa._charges_V_x[iLJCenters];
+			V[1] = soa._charges_V_y[iLJCenters];
+			V[2] = soa._charges_V_z[iLJCenters];
+			assert(!isnan(V[0]));
+			assert(!isnan(V[1]));
+			assert(!isnan(V[2]));
+			molecules[m]->Viadd(V);
 		}
 
 		for (size_t i = 0; i < mol_dipoles_num; ++i, ++iDipoles) {
-			// Store the resulting force in the molecule.
+			// Store the resulting force & torque in the molecule.
 			double f[3];
 			f[0] = soa._dipoles_f_x[iDipoles];
 			f[1] = soa._dipoles_f_y[iDipoles];
@@ -309,10 +341,20 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(M[2]));
 			molecules[m]->Fdipoleadd(i, f);
 			molecules[m]->Madd(M);
+
+			// Store the resulting virial in the molecule.
+			double V[3];
+			V[0] = soa._dipoles_V_x[iLJCenters];
+			V[1] = soa._dipoles_V_y[iLJCenters];
+			V[2] = soa._dipoles_V_z[iLJCenters];
+			assert(!isnan(V[0]));
+			assert(!isnan(V[1]));
+			assert(!isnan(V[2]));
+			molecules[m]->Viadd(V);
 		}
 
 		for (size_t i = 0; i < mol_quadrupoles_num; ++i, ++iQuadrupoles) {
-			// Store the resulting force in the molecule.
+			// Store the resulting force & torque in the molecule.
 			double f[3];
 			f[0] = soa._quadrupoles_f_x[iQuadrupoles];
 			f[1] = soa._quadrupoles_f_y[iQuadrupoles];
@@ -329,6 +371,16 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(M[2]));
 			molecules[m]->Fquadrupoleadd(i, f);
 			molecules[m]->Madd(M);
+
+			// Store the resulting virial in the molecule.
+			double V[3];
+			V[0] = soa._quadrupoles_V_x[iLJCenters];
+			V[1] = soa._quadrupoles_V_y[iLJCenters];
+			V[2] = soa._quadrupoles_V_z[iLJCenters];
+			assert(!isnan(V[0]));
+			assert(!isnan(V[1]));
+			assert(!isnan(V[2]));
+			molecules[m]->Viadd(V);
 		}
 	}
 	// Delete the SoA.
