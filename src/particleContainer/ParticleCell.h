@@ -116,6 +116,8 @@ public:
 	 */
 	std::vector<Molecule *> & filterLeavingMolecules();
 
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+
 private:
 	/**
 	 * \brief lower left front corner

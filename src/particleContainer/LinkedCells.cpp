@@ -580,20 +580,7 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], std
 				// loop over all subcells (either 1 or 8)
 				// traverse all molecules in the current cell
 				ParticleCell & currentCell = _cells[globalCellIndex];
-
-				std::vector<Molecule *> & mols = currentCell.getParticlePointers();
-
-				for (particleIter = mols.begin(); particleIter != mols.end();) {
-					if ((*particleIter)->inBox(lowCorner, highCorner)) {
-						particlePtrs.push_back(*particleIter);
-						if (removeFromContainer) {
-							UnorderedVector::fastRemove(mols, particleIter);
-							// particleIter already points at next molecule, so continue without incrementing
-							continue;
-						}
-					}
-					++particleIter;
-				}
+				currentCell.getRegion(lowCorner, highCorner, particlePtrs, removeFromContainer);
 			}
 		}
 	}
@@ -633,14 +620,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], std::vect
 				// loop over all subcells (either 1 or 8)
 				// traverse all molecules in the current cell
 				ParticleCell & currentCell = _cells[globalCellIndex];
-
-				std::vector<Molecule *> & mols = currentCell.getParticlePointers();
-
-				for (particleIter = mols.begin(); particleIter != mols.end(); ++particleIter) {
-					if ((*particleIter)->inBox(lowCorner, highCorner)) {
-						particlePtrs.push_back(*particleIter);
-					}
-				}
+				currentCell.getRegion(lowCorner, highCorner, particlePtrs);
 			}
 		}
 	}
