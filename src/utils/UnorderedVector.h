@@ -19,12 +19,15 @@ namespace UnorderedVector {
 //! @return iterator to "next" element
 template<typename T, typename A>
 void fastRemove(std::vector<T, A>& v, typename std::vector<T, A>::iterator& pos) {
+	using std::swap;
 
 	// assumption: if the vector is empty, then the method is not called at all
 	// i.e. v is not empty()
 	assert(not v.empty());
 
-	std::swap(*pos, v.back()); // note: swapping is necessary (as opposed to only copying )
+	// either std::swap, or a user-written function in the namespace
+	swap(*pos, v.back());
+	// note: swapping is necessary (as opposed to only copying )
 
 	v.pop_back(); // end() will change and may become equal to pos, which is intended
 }
