@@ -96,7 +96,37 @@ public:
 		_cellIndex = cellIndex;
 	}
 
+	double getBoxMin(int d) const {
+		return _boxMin[d];
+	}
+
+	void setBoxMin(double b[3]) {
+		for(int d=0; d< 3; ++d) {
+			_boxMin[d] = b[d];
+		}
+	}
+
+	double getBoxMax(int d) const {
+		return _boxMax[d];
+	}
+
+	void setBoxMax(double b[3]) {
+		for (int d = 0; d < 3; ++d) {
+			_boxMax[d] = b[d];
+		}
+	}
+
 private:
+	/**
+	 * \brief lower left front corner
+	 */
+	double _boxMin[3];
+
+	/**
+	 * \brief upper right back corner
+	 */
+	double _boxMax[3];
+
 	/**
 	 * \brief A list of pointers to the Molecules in this cell.
 	 */
