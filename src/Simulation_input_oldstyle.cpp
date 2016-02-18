@@ -47,7 +47,6 @@
 
 using namespace std;
 
-Wall _wall;
 
 void Simulation::initConfigOldstyle(const string& inputfilename) {
 	int ownrank = 0;
@@ -637,20 +636,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> slabs;
 			_longRangeCorrection = new Planar(_cutoffRadius,_LJCutoffRadius,_domain,_domainDecomposition,_moleculeContainer,slabs,global_simulation);
 		} 
-		else if (token == "WallFun_LJ_9_3"){
-		  double rho_w, sig_w, eps_w, y_off, y_cut, yMirr;
-		  unsigned numComponents;
-		  _applyWallFun = true;
-		  inputfilestream  >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut >> yMirr;
-		  double *xi_sf = new double[numComponents];
-		  double *eta_sf = new double[numComponents];
-		  for(unsigned nc = 0; nc < numComponents; nc++ ){
-		    inputfilestream >> xi_sf[nc] >> eta_sf[nc];
-		  }
-		  _wall.initialize(_domain->getComponents(),  rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, yMirr);
-		  delete[] xi_sf;
-		  delete[] eta_sf;
-		}
 		else if (token == "NumberOfFluidComponents"){
 		    double numFluidComp;
 		    inputfilestream >> numFluidComp;

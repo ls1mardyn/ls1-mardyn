@@ -6,7 +6,7 @@
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
-#include "molecules/Wall.h"
+
 
 using optparse::Values;
 
