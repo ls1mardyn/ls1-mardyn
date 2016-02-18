@@ -255,6 +255,15 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
 
+	/**
+	 * \brief test whether molecule is inside a cuboid region
+	 * @param l lower left front corner of cube (equality allowed)
+	 * @param u upper right back corner of cube (equality not allowed)
+	 * @return true if molecule is contained in the box, false otherwise
+	 */
+	bool inBox(double l[3], double u[3]) const
+	{bool in = true; for(int d=0; d < 3; ++d) {in &= (_r[d] >= l[d] and _r[d] < u[d]);} return in;}
+
 private:
     Component *_component;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
