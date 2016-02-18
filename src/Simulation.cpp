@@ -7,12 +7,14 @@
 #include <iterator>
 #include <limits>
 #include <sstream>
+#include <string>
 
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
+#include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
@@ -57,6 +59,8 @@ using optparse::OptionParser;
 using optparse::OptionGroup;
 using optparse::Values;
 using namespace std;
+
+// Wall _wall;
 
 Simulation* global_simulation;
 
@@ -407,6 +411,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->warning() << "Unknown plugin " << pluginname << endl;
 			continue;
 		}
+
+
 		outputPlugin->readXML(xmlconfig);
 		_outputPlugins.push_back(outputPlugin);
 	}
@@ -704,14 +710,17 @@ void Simulation::prepare_start() {
 
 void Simulation::simulate() {
 
+	// by Stefan Becker
+	Molecule* tM;
+
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
- 	// _initSimulation = (unsigned long) (_domain->getCurrentTime()
- 	// 		/ _integrator->getTimestepLength());
-        
-        _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+// 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
+// 			/ _integrator->getTimestepLength());
+    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
 	CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
@@ -781,6 +790,38 @@ void Simulation::simulate() {
 			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->components()));
 		}
 
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		 *realignment tools borrowed from Martin Horsch, for the determination of the centre of mass 
+		 *the halo MUST NOT be present*/
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			unsigned particleNoTest = 0;
+                        for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
+                        particleNoTest++;
+                        global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
+#endif
+#endif
+		 if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			if(_componentSpecificAlignment){
+				//! !!! the sequence of calling the two methods MUST be: FIRST determineXZShift() THEN determineYShift() !!!
+				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+			else{
+				_domain->determineShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI			
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
+#endif
+#endif
+		}
+
+
 		computationTimer.stop();
 		decompositionTimer.start();
 
@@ -833,6 +874,26 @@ void Simulation::simulate() {
 			}
 		}
 
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		  * realignment tools borrowed from Martin Horsch
+		  * For the actual shift the halo MUST be present!
+		  */
+		
+		if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			_domain->realign(_moleculeContainer);
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			global_log->info()<<"particles after realign(), halo present:" << particleNoTest<< "\n";
+#endif
+#endif
+		}
+		
+		// clear halo
+
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
@@ -883,8 +944,8 @@ void Simulation::simulate() {
 								_simstep));
 		
 		// scale velocity and angular momentum
-		if ( !_domain->NVE() && _temperatureControl == NULL)
-		{
+		if ( !_domain->NVE() && _temperatureControl == NULL){
+		if (_thermostatType ==VELSCALE_THERMOSTAT){
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				_velocityScalingThermostat.enableComponentwise();
@@ -909,6 +970,52 @@ void Simulation::simulate() {
 				// Undirected global thermostat not implemented!
 			}
 			_velocityScalingThermostat.apply(_moleculeContainer);
+
+
+		}
+		  else if(_thermostatType == ANDERSEN_THERMOSTAT){ //! the Andersen Thermostat
+//		    global_log->info() << "Andersen Thermostat" << endl;
+		    double nuDt = _nuAndersen * _integrator->getTimestepLength();
+//		    global_log->info() << "Timestep length = " << _integrator->getTimestepLength() << " nuDt = " << nuDt << "\n";
+		    unsigned numPartThermo = 0; // for testing reasons
+		    double tTarget;
+		    double stdDevTrans, stdDevRot;
+		    if(_domain->severalThermostats()) {
+		      for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+			if (_rand.rnd() < nuDt){
+			  numPartThermo++;
+			  int thermostat = _domain->getThermostat(tM->componentid());
+			  tTarget = _domain->getTargetTemperature(thermostat);
+			  stdDevTrans = sqrt(tTarget/tM->gMass());
+			  for(unsigned short d = 0; d < 3; d++){
+			    stdDevRot = sqrt(tTarget*tM->getI(d));
+			    tM->setv(d,_rand.gaussDeviate(stdDevTrans));
+			    tM->setD(d,_rand.gaussDeviate(stdDevRot));
+			  }
+			}
+		      }
+		    }
+		    else{
+		      tTarget = _domain->getTargetTemperature(0);
+		      for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+			if (_rand.rnd() < nuDt){
+			  numPartThermo++;
+			  // action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
+			  stdDevTrans = sqrt(tTarget/tM->gMass());
+			  for(unsigned short d = 0; d < 3; d++){
+			    stdDevRot = sqrt(tTarget*tM->getI(d));
+			    tM->setv(d,_rand.gaussDeviate(stdDevTrans));
+			    tM->setD(d,_rand.gaussDeviate(stdDevRot));
+			  }
+			}
+		      }
+		    }
+//		    global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
+		  }
+
+
+
+
 		}
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
         else if ( _temperatureControl != NULL)
@@ -1009,13 +1116,21 @@ void Simulation::output(unsigned long simstep) {
 			osstrm.fill('0');
 			osstrm.width(9);
 			osstrm << right << simstep;
+			//edited by Michaela Heier 
+			if(this->_domain->isCylindrical()){
+				this->_domain->outputCylProfile(osstrm.str().c_str());
+				_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+			}
+			else{
 			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
+			}
 			osstrm.str("");
 			osstrm.clear();
 		}
 		_domain->resetProfile(_doRecordVirialProfile);
 	}
 
+	
 	if (_domain->thermostatWarning())
 		global_log->warning() << "Thermostat!" << endl;
 	/* TODO: thermostat */
@@ -1103,6 +1218,17 @@ void Simulation::initialize() {
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;
 	h = 0.0;
+
+	_thermostatType = VELSCALE_THERMOSTAT;
+	_nuAndersen = 0.0;
+	_rand.init(8624);
+
+	_doAlignCentre = false;
+	_componentSpecificAlignment = false;
+	_alignmentInterval = 25;
+	_momentumInterval = 1000;
+	_applyWallFun = false;
+
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);

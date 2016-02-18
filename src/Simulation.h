@@ -6,6 +6,7 @@
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
+#include "molecules/Wall.h"
 
 using optparse::Values;
 
@@ -46,6 +47,10 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+
+// by Stefan Becker
+const int ANDERSEN_THERMOSTAT = 2;
+const int VELSCALE_THERMOSTAT = 1;
 
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -373,6 +378,11 @@ private:
 	 */
 	unsigned _collectThermostatDirectedVelocity;
 
+	//! by Stefan Becker: the Type of the thermostat(velocity scaling or Andersen or...)
+	//! appropriate tokens stored as constants at the top of this file
+	int _thermostatType;
+	double _nuAndersen;
+
 	/** Sometimes during equilibration, a solid wall surrounded by
 	 * liquid may experience a stress or an excessive pressure, which
 	 * could damage its structure. With the flag this->_zoscillation,
@@ -434,6 +444,32 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
+
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	//! flags that control the realign tool
+	//! if _doAlignCentre == true => the alignment is carried out
+	bool _doAlignCentre;
+	// if _componentSpecificAlignment == true => a separate realignment with respect to the x,z-direction and the y-direction is carried out.
+	// The separate directions of the realignment are due to different components, i.e. that solid wall is always kept at the bottom (y-direction) whereas
+	// the fluid is kept in the centre of the x,z-plane.
+	bool _componentSpecificAlignment;
+	//! number of discrete timesteps after which the realignemt is carried out 
+	unsigned long _alignmentInterval;
+	//! strength of the realignment
+	double _alignmentCorrection;
+	
+	//! applying a field representing the wall
+	bool _applyWallFun;
+	
+	// Wall _wall;
+
+	//! flags to control the cancel of the momentum 
+	bool _doCancelMomentum;
+	//! number of time steps after which the cancelling is carried outline
+	unsigned _momentumInterval;
+	
+	//! random number generator
+	Random _rand;
 	
 	/** Long Range Correction */
 	LongRangeCorrection* _longRangeCorrection;

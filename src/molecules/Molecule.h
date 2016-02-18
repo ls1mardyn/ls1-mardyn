@@ -82,6 +82,13 @@ public:
 
 	inline void move(int d, double dr) { _r[d] += dr; }
 
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+	// method returns the total mass of a particle
+	double gMass(){return _m;}
+	//by Stefan Becker
+		/** get the moment of inertia of a particle */
+	double getI(unsigned short d) const { return _I[d]; }
+
 
 	/** calculate and return the square velocity */
 	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }

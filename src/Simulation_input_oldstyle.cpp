@@ -47,6 +47,8 @@
 
 using namespace std;
 
+Wall _wall;
+
 void Simulation::initConfigOldstyle(const string& inputfilename) {
 	int ownrank = 0;
 #ifdef ENABLE_MPI
@@ -429,7 +431,15 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> xun >> yun >> zun;
 			_domain->setupProfile(xun, yun, zun);
 			_doRecordProfile = true;
-		} else if (token == "profileVirial") {
+
+		}
+		//by Stefan Becker
+		else if (token == "yOffset") {
+			double yOffset;
+			inputfilestream >> yOffset;
+			_domain->sYOffset(yOffset);
+		}
+		else if (token == "profileVirial") {
                         _doRecordVirialProfile = true;
                 } else if (token == "profileRecordingTimesteps") { /* TODO: subotion of profile */
 			inputfilestream >> _profileRecordingTimesteps;
@@ -460,9 +470,43 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> cid;
 			cid--;
 			_domain->considerComponentInProfile(cid);
-		} else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
+		}
+		// by Stefan Becker <stefan.becker@mv.uni-kl.de>, token determining the corrdinate system of the density profile
+		else if (token == "SessileDrop"){
+			this->_domain->sesDrop();
+		}
+		else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
 			inputfilestream >> _profileOutputPrefix;
 		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
+			inputfilestream >> _collectThermostatDirectedVelocity;
+		} 
+			
+		else if (token == "thermostat"){
+			inputfilestream >> _thermostatType;
+			if(_thermostatType == ANDERSEN_THERMOSTAT){
+			  inputfilestream >>_nuAndersen;
+			  global_log->info() << "Using the Andersen Thermostat with nu = " << _nuAndersen << "\n";
+			}
+		}
+		else if (token == "zOscillator") {
+			_zoscillation = true;
+			inputfilestream >> _zoscillator;
+		}
+		// by Stefan Becker
+		else if(token == "AlignCentre"){	
+			_doAlignCentre = true;
+			inputfilestream >> _alignmentInterval >> _alignmentCorrection;
+		}
+		else if(token == "ComponentForYShift"){
+		    _componentSpecificAlignment = true;
+		    unsigned cidMin, cidMax;
+		    inputfilestream  >> cidMin >> cidMax;
+		    cidMin--; // since internally the component number is reduced by one, i.e. cid == 1 in the input file corresponds to the internal cid == 0
+		    cidMax--;
+		    _domain->considerComponentForYShift(cidMin, cidMax);
+		} else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
+			inputfilestream >> _profileOutputPrefix;
+				} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} else if (token == "zOscillator") {
 			_zoscillation = true;
@@ -592,7 +636,28 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double slabs;
 			inputfilestream >> slabs;
 			_longRangeCorrection = new Planar(_cutoffRadius,_LJCutoffRadius,_domain,_domainDecomposition,_moleculeContainer,slabs,global_simulation);
-
+		} 
+		else if (token == "WallFun_LJ_9_3"){
+		  double rho_w, sig_w, eps_w, y_off, y_cut, yMirr;
+		  unsigned numComponents;
+		  _applyWallFun = true;
+		  inputfilestream  >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut >> yMirr;
+		  double *xi_sf = new double[numComponents];
+		  double *eta_sf = new double[numComponents];
+		  for(unsigned nc = 0; nc < numComponents; nc++ ){
+		    inputfilestream >> xi_sf[nc] >> eta_sf[nc];
+		  }
+		  _wall.initialize(_domain->getComponents(),  rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, yMirr);
+		  delete[] xi_sf;
+		  delete[] eta_sf;
+		}
+		else if (token == "NumberOfFluidComponents"){
+		    double numFluidComp;
+		    inputfilestream >> numFluidComp;
+		    _domain->setNumFluidComponents(numFluidComp);
+		}
+                else if(token != "") {
+					global_log->warning() << "Did not process unknown token " << token << endl;
         /** mheinen 2015-07-27 --> TEMPERATURE_CONTROL
 		 *
 	     * Temperature Control (Slab Thermostat)
