@@ -216,6 +216,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		#if ENABLE_MPI
 			if(parallelisationtype == "DummyDecomposition") {
 				global_log->error() << "DummyDecompositionnot not available in parallel mode." << endl;
+				//_domainDecomposition = new DomainDecompDummy();
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
 				_domainDecomposition = new DomainDecomposition();
@@ -229,21 +230,23 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
-				global_log->warning() << "Executable was compilated without support for parallel execution." << endl;
-				global_log->error() << parallelisationtype << " not available in sequential mode." << endl;
-				this->exit(1);
+				global_log->warning() << "Executable was compilated without support for parallel execution:"
+				                      << parallelisationtype << " not available." << endl;
+				//this->exit(1);
 			}
-			else {
-				_domainDecomposition = new DomainDecompDummy();
-			}
+			_domainDecomposition = new DomainDecompDummy();
 		#endif
-			_domainDecomposition->readXML(xmlconfig);
-			xmlconfig.changecurrentnode("..");
 		}
 		else {
+		#if ENABLE_MPI
 			global_log->error() << "Parallelisation section missing." << endl;
 			this->exit(1);
+		#else /* serial */
+			_domainDecomposition = new DomainDecompDummy();
+		#endif
 		}
+		_domainDecomposition->readXML(xmlconfig);
+		xmlconfig.changecurrentnode("..");
 
 		/* datastructure */
 		if(xmlconfig.changecurrentnode("datastructure")) {
