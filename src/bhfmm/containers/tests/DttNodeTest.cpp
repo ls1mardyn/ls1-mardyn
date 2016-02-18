@@ -5,7 +5,7 @@
  *      Author: tchipevn
  */
 
-#include "DttNodeTest.h"
+#include "bhfmm/containers/tests/DttNodeTest.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
 
@@ -83,8 +83,8 @@ void DttNodeTest::testSoAConvertions(){
 		shift.push_back(4.78*(i+5));
 	}
   for(int i=0; i<10000; i++){
-		root.convertAoSToSoACharge();
-		root.convertSoAToAoSCharge();
+//		root.convertAoSToSoACharge();
+//		root.convertSoAToAoSCharge();
 	}
 
 	std::vector<Molecule*>& p_after = root.getParticlePointers();
