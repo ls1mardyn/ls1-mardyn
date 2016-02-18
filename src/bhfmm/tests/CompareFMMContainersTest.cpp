@@ -32,7 +32,11 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 	// Uniform container
 	ParticleContainer * LCUniform = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", cutoffRadius);
 	bool adaptiveArg = false;
-	bhfmm::FastMultipoleMethod uniform(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
+
+	bhfmm::FastMultipoleMethod uniform;
+	uniform.setParameters(LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
+	uniform.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength);
+
 	uniform.computeElectrostatics(LCUniform);
 	for (Molecule* m = LCUniform->begin(); m != LCUniform->end(); m = LCUniform->next()) {
 		m->calcFM();
@@ -45,7 +49,11 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 	// Adaptive container
 	ParticleContainer * LCAdaptive = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", cutoffRadius);
 	adaptiveArg = true;
-	bhfmm::FastMultipoleMethod adaptive(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
+
+	bhfmm::FastMultipoleMethod adaptive;
+	adaptive.setParameters(LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
+	adaptive.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength);
+
 	adaptive.computeElectrostatics(LCAdaptive);
 	for (Molecule* m = LCAdaptive->begin(); m != LCAdaptive->end(); m = LCAdaptive->next()) {
 		m->calcFM();

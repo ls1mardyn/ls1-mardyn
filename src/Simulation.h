@@ -52,6 +52,10 @@ class TemperatureControl;
 const int ANDERSEN_THERMOSTAT = 2;
 const int VELSCALE_THERMOSTAT = 1;
 
+namespace bhfmm {
+class FastMultipoleMethod;
+} // bhfmm
+
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
@@ -476,6 +480,9 @@ private:
 
 	/** Temperature Control (Slab Thermostat) */
     TemperatureControl* _temperatureControl;
+
+    /** The Fast Multipole Method object */
+	bhfmm::FastMultipoleMethod* _FMM;
 
 public:
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }

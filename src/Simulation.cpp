@@ -52,6 +52,9 @@
 #include "longRange/Homogeneous.h"
 #include "longRange/Planar.h"
 
+#include "bhfmm/FastMultipoleMethod.h"
+#include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
+
 #include "particleContainer/adapter/VectorizationTuner.h"
 
 using Log::global_log;
@@ -79,6 +82,7 @@ Simulation::Simulation()
 	_inputReader(NULL),
 	_longRangeCorrection(NULL),
 	_temperatureControl(NULL),
+	_FMM(NULL),
 	_forced_checkpoint_time(0)
 {
 	_ensemble = new CanonicalEnsemble();
@@ -96,6 +100,7 @@ Simulation::~Simulation() {
 	delete _integrator;
 	delete _inputReader;
 	delete _flopCounter;
+	delete _FMM;
 }
 
 void Simulation::exit(int exitcode) {
@@ -206,6 +211,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		} else {
 			global_log->error() << "Electrostatics section for reaction field setup missing." << endl;
 			this->exit(1);
+		}
+
+		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
+			_FMM = new bhfmm::FastMultipoleMethod();
+			_FMM->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
 		}
 
 		/* parallelization */
@@ -522,7 +533,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		exit(1);
 	}
 
-
 	// read particle data
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
 			&_lmu, _domain, _domainDecomposition);
@@ -622,6 +632,26 @@ void Simulation::prepare_start() {
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
 #endif
+
+	if (_FMM != NULL) {
+
+		double globalLength[3];
+		for (int i = 0; i < 3; i++) {
+			globalLength[i] = _domain->getGlobalLength(i);
+		}
+		double bBoxMin[3];
+		double bBoxMax[3];
+		for (int i = 0; i < 3; i++) {
+			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
+			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
+		}
+
+		_FMM->init(globalLength, bBoxMin, bBoxMax,
+				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength());
+
+		delete _cellProcessor;
+		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
+	}
 
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
