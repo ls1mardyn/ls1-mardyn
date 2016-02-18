@@ -1,13 +1,14 @@
 #ifndef ADAPTIVEPSEUDOPARTICLECONTAINER_H_
 #define ADAPTIVEPSEUDOPARTICLECONTAINER_H_
 
-#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 #include "PseudoParticleContainer.h"
 #include "DttNode.h"
 #include <vector>
 #include <cmath>
 #include <math.h>
 #include <stdlib.h>
+
+#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 
 namespace bhfmm{
 

@@ -2,8 +2,9 @@
 #define DTTNODE_H_
 #include "particleContainer/ParticleCell.h"
 #include "PseudoParticleContainer.h"
-#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 #include <vector>
+
+#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 
 class DttNodeTest;
 

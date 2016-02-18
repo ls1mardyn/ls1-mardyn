@@ -35,7 +35,7 @@ FastMultipoleMethod::FastMultipoleMethod(double globalDomainLength[3],
 			<< pow(LJSubdivisionFactor, 3) << " cells for electrostatic calculations in FMM" << endl;
 
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(*(global_simulation->getDomain()));
-
+	_P2PProcessor->initTraversal(2);
 	if (not adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(
 				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,

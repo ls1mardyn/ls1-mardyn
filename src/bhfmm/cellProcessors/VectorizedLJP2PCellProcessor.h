@@ -1,6 +1,6 @@
 /**
  * \file
- * \brief VectorizedChargeP2PCellProcessor.h
+ * \brief VectorizedLJP2PCellProcessor.h
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann, Steffen Seckler
  */
 
@@ -14,19 +14,20 @@
 #include <cmath>
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-#include "particleContainer/adapter/CellDataSoA.h"
+
 
 class Component;
 class Domain;
 class Comp2Param;
 class Molecule;
-//class CellDataSoA;
+class CellDataSoA;
+
 namespace bhfmm {
 /**
  * \brief Vectorized calculation of the force.
  * \author Johannes Heckl
  */
-class VectorizedChargeP2PCellProcessor : public CellProcessor {
+class VectorizedLJP2PCellProcessor : public CellProcessor {
 public:
 	typedef std::vector<Component> ComponentList;
 
@@ -34,9 +35,9 @@ public:
 	 * \brief Construct and set up the internal parameter table.
 	 * \details Components and parameters should be finalized before this call.
 	 */
-	VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius=0, double LJcutoffRadius=0);
+	VectorizedLJP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius);
 
-	~VectorizedChargeP2PCellProcessor();
+	~VectorizedLJP2PCellProcessor();
 
 	/**
 	 * \brief Reset macroscopic values to 0.0.
@@ -112,11 +113,23 @@ private:
 	 * between two centers.
 	 */
 	std::vector<size_t> _compIDs;
-
 	/**
-	 * \brief Sum of all Xpole potentials.
+	 * \brief Epsilon and sigma for pairs of LJcenters.
+	 * \details Each DoubleArray contains parameters for one center combined with all centers.<br>
+	 * Each set of parameters is a pair (epsilon*24.0, sigma^2).
 	 */
-	double _upotXpoles;
+	std::vector<DoubleArray> _eps_sig;
+	/**
+	 * \brief Shift for pairs of LJcenters.
+	 * \details Each DoubleArray contains the LJ shift*6.0 for one center combined<br>
+	 * with all centers.
+	 */
+	std::vector<DoubleArray> _shift6;
+	/**
+	 * \brief Sum of all LJ potentials.
+	 * \details Multiplied by 6.0 for performance reasons.
+	 */
+	double _upot6lj;
 
 	/**
 	 * \brief The virial.
@@ -128,17 +141,19 @@ private:
 	std::vector<CellDataSoA*> _particleCellDataVector;
 
 	template<bool calculateMacroscopic>
-	inline void _loopBodyCharge(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& qii,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& qjj,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+	inline
+	void _loopBodyLJ(
+			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
+			const vcp_mask_vec& forceMask,
+			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
+			const vcp_double_vec& shift6);
+
 
 	/**
 	 * \brief The dist lookup for a molecule and all centers of a type
@@ -299,7 +314,6 @@ private:
  /* definition of GetForceMask */
 	}; /* end of class CellPairPolicy_ */
 
-}; /* end of class VectorizedChargeP2PCellProcessor */
+}; /* end of class VectorizedLJP2PCellProcessor */
 
 } // namespace bhfmm
-

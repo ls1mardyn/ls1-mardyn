@@ -8,12 +8,12 @@
 #ifndef PSEUDOPARTICLECONTAINER_H_
 #define PSEUDOPARTICLECONTAINER_H_
 
+#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 #include "bhfmm/pseudoParticles/SHMultipoleParticle.h"
 #include "bhfmm/pseudoParticles/SHLocalParticle.h"
 #include "particleContainer/ParticleCell.h"
 #include "bhfmm/cellProcessors/P2MCellProcessor.h"
 #include "bhfmm/cellProcessors/L2PCellProcessor.h"
-#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 
 class ParticleContainer;
 

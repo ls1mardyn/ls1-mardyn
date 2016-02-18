@@ -193,7 +193,9 @@ std::vector<ParticleCell> dtt::DttNode::getLeafParticleCells(){
 void dtt::DttNode::p2p(bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p){
 	// TODO
 //	_leafParticles.convertAoSToSoACharge();
-//	v_c_p2p_c_p->processCell(_leafParticles);
+	v_c_p2p_c_p->preprocessCell(_leafParticles);
+	v_c_p2p_c_p->processCell(_leafParticles);
+	v_c_p2p_c_p->postprocessCell(_leafParticles);
 //	_leafParticles.convertSoAToAoSCharge();
 }
 		
@@ -206,12 +208,16 @@ void dtt::DttNode::p2p(std::vector<ParticleCell> leafParticlesFar,
 	if(!_splitable){
 		//TODO only convert once
 //		_leafParticles.convertAoSToSoACharge();
+		v_c_p2p_c_p->preprocessCell(_leafParticles);
 		for(unsigned int i = 0; i < leafParticlesFar.size(); i++){
 			//TODO only convert once!! 
 //			leafParticlesFar[i].convertAoSToSoACharge(_shift);
+			v_c_p2p_c_p->preprocessCell(leafParticlesFar[i]);
 			v_c_p2p_c_p->processCellPair(_leafParticles,leafParticlesFar[i]);
-//			leafParticlesFar[i].convertSoAToAoSCharge(_shift);
+			v_c_p2p_c_p->postprocessCell(leafParticlesFar[i]);
+			//leafParticlesFar[i].convertSoAToAoSCharge(_shift);
 		}
+		v_c_p2p_c_p->postprocessCell(_leafParticles);
 //		_leafParticles.convertSoAToAoSCharge();
 	}else{
 		for(unsigned int i = 0; i < 8; i++){
