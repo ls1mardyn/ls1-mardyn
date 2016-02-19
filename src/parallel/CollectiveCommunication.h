@@ -271,6 +271,18 @@ public:
 		}
 #endif
 	}
+	
+	void allreduceMax() {
+		for( int i = 0; i < _numValues; i++ ) {
+			MPI_CHECK( MPI_Allreduce( &_sendValues[i], &_recvValues[i], 1, _listOfTypes[i], MPI_MAX, _communicator ) );
+		}
+	}
+	
+	void allreduceMin() {
+		for( int i = 0; i < _numValues; i++ ) {
+			MPI_CHECK( MPI_Allreduce( &_sendValues[i], &_recvValues[i], 1, _listOfTypes[i], MPI_MIN, _communicator ) );
+		}
+	}
 
 	//! number of values (possibly different types) to be communicated
 	int _numValues;

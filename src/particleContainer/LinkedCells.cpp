@@ -162,13 +162,13 @@ void LinkedCells::update() {
 	for (celliter = (_cells).begin(); celliter != (_cells).end(); ++celliter) {
 		(*celliter).removeAllParticles();
 	}
-
 	std::list<Molecule>::iterator pos;
 	for (pos = _particles.begin(); pos != _particles.end(); ++pos) {
 		// determine the cell into which the particle belongs
 		Molecule &m = *pos;
 		unsigned long index = getCellIndexOfMolecule(&m);
 		_cells[index].addParticle(&(*pos));
+		//global_log->info() << " " << m << " | " << endl;
 	}
 	_cellsValid = true;
 }

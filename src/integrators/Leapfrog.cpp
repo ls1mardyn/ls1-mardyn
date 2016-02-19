@@ -2,6 +2,7 @@
 
 #include <map>
 
+#include "parallel/DomainDecompBase.h"
 #include "Domain.h"
 #include "ensemble/EnsembleBase.h"
 #include "ensemble/PressureGradient.h"
@@ -51,8 +52,27 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 		Molecule* tempMolecule;
 		double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
 		double Dcorr = 2. - 1. / domain->getGlobalBetaRot();
+		unsigned molID;
+		unsigned int cid;
+		int thermostat;
+		string moved ("moved");
+		string fixed ("fixed");
+		unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+		unsigned cid_fixed =  domain->getPG()->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
+
+		
 		for (tempMolecule = molCont->begin(); tempMolecule != molCont->end(); tempMolecule = molCont->next()) {
-			tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr);
+		  molID = tempMolecule->id();
+		  cid = tempMolecule->componentid();
+		  thermostat = domain->getThermostat(cid);
+		  
+		  if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!
+		  else {					
+		    if(domain->isScaling1Dim(thermostat) && domain->getAlphaTransCorrection(thermostat) == false){
+			vcorr = 2. - 1. / domain->getGlobalAlphaTrans();
+		    }
+		    tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr, domain);
+		  }
 		}
 
 		this->_state = STATE_PRE_FORCE_CALCULATION;
@@ -69,14 +89,49 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 		map<int, unsigned long> rotDOF;
 		map<int, double> summv2;
 		map<int, double> sumIw2;
+		map<int, double> summv2_1Dim;
+		int molID;
+		unsigned int cid;
+		
+		string moved ("moved");
+		string fixed ("fixed");
+		unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+		unsigned cid_fixed =  domain->getPG()->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
+
 		double dt_half = 0.5 * this->_timestepLength;
 		if (domain->severalThermostats()) {
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
-				int cid = tM->componentid();
-				int thermostat = domain->getThermostat(cid);
-				tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
-				N[thermostat]++;
-				rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+				molID = tM->id();
+				cid = tM->componentid();
+				if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!
+				else {
+				  int thermostat = domain->getThermostat(cid);
+				  tM->upd_postF(dt_half, summv2[thermostat], summv2_1Dim[thermostat], sumIw2[thermostat], domain);
+// 				  if(_simulation.getSimulationStep() > 0){
+// 				      //Correction for summv2 in case of directed velocities: accelerateInstantaneously and SpringForce
+// 				      if(domain->getPG()->isAcceleratingInstantaneously(domain->getNumberOfComponents())){
+// 					  if(tM->componentid() == cid_moved){
+// 					      double vx;
+// 					      vx = tM->v(0);
+// 					      vx -= domain->getPG()->getMissingVelocity(cid_moved, 0);
+// 					      summv2[thermostat] -= vx*vx*tM->mass();
+// 					  }
+// 				      }
+// 				      //Correction for summv2 in case of directed velocities: accelerateInstantaneously and SpringForce
+// 				      if(domain->getPG()->isSpringDamped()){
+// 					  if(tM->componentid() == cid_moved){
+// 					    double Fy, vy;
+// 					    Fy = tM->F_Spring(1);
+// 					    vy = dt_half / tM->mass() * Fy;
+// 					    summv2[thermostat] -= vy*vy*tM->mass();
+// 					  }
+// 				      }
+// 				  }
+					
+				  
+				  N[thermostat]++;
+				  rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+				}
 			}
 		}
 		else {
@@ -84,8 +139,9 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			unsigned long rotDOFgt = 0;
 			double summv2gt = 0.0;
 			double sumIw2gt = 0.0;
+			double summv2_1Dimgt = 0.0;
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
-				tM->upd_postF(dt_half, summv2gt, sumIw2gt);
+				tM->upd_postF(dt_half, summv2gt, summv2_1Dimgt, sumIw2gt, domain);
 				assert(summv2gt >= 0.0);
 				Ngt++;
 				rotDOFgt += tM->component()->getRotationalDegreesOfFreedom();
@@ -94,11 +150,15 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			rotDOF[0] = rotDOFgt;
 			summv2[0] = summv2gt;
 			sumIw2[0] = sumIw2gt;
-		}
+			summv2_1Dim[0] = summv2_1Dimgt;
+		} 
 		for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
 			domain->setLocalSummv2(thermit->second, thermit->first);
 			domain->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
 			domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
+			if(domain->isScaling1Dim(thermit->first)){
+			  domain->setLocalSummv2_1Dim(summv2_1Dim[thermit->first], thermit->first);
+			}
 		}
 
 		this->_state = STATE_POST_FORCE_CALCULATION;
@@ -142,28 +202,37 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	}
 }
 
-void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* domain) {
-	vector<Component> comp = *(_simulation.getEnsemble()->components());
-	vector<Component>::iterator compit;
+void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) {
+	//vector<Component> comp = *(_simulation.getEnsemble()->components());
+	//vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
-	for (compit = comp.begin(); compit != comp.end(); compit++) {
-		unsigned cosetid = domain->getPG()->getComponentSet(compit->ID());
-		if (cosetid != 0)
-			for (unsigned d = 0; d < 3; d++)
-				componentwiseVelocityDelta[d][compit->ID()] = domain->getPG()->getMissingVelocity(cosetid, d);
-		else
-			for (unsigned d = 0; d < 3; d++)
-				componentwiseVelocityDelta[d][compit->ID()] = 0;
-	}
-
-	Molecule* thismol;
-	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
+	string moved ("moved");
+	unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+	
+	//calculates globalN and globalVelocitySum for getMissingVelocity(); necessary!
+	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents());
+	// Just the velocity in x-direction (horizontally) is regulated to a constant value; in y and z the velocity is unrestricted 			
+	for (int d = 0; d < 3; d++)
+	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d);
+	
+	for(int d = 0; d < 3; d++)
+	  domain->getPG()->setGlobalVelSumBeforeAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d, cid_moved) / domain->getPG()->getGlobalN(cid_moved));
+	  
+	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
 		unsigned cid = thismol->componentid();
 		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
 		              componentwiseVelocityDelta[1][cid],
 		              componentwiseVelocityDelta[2][cid]);
 	}
+	// Control of velocity after artificial acceleration
+	//for (compit = comp.begin(); compit != comp.end(); compit++) {
+		//unsigned cid_moved = 1; //domain->getPG()->getComponentSet(compit->ID());
+		domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents());
+	//}
+
+	for(int d = 0; d < 3; d++)
+	  domain->getPG()->setGlobalVelSumAfterAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d,cid_moved) / domain->getPG()->getGlobalN(cid_moved));
 }
 
 void Leapfrog::init1D(unsigned zoscillator, ParticleContainer* molCont) {

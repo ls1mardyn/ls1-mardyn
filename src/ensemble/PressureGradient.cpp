@@ -48,9 +48,40 @@ void PressureGradient::specifyComponentSet(unsigned int cosetid, double v[3], do
 				sqrt(this->_universalTau[cosetid] / (timestep*this->_universalConstantAccelerationTimesteps))
 				: this->_universalTauPrime / (timestep*this->_universalConstantAccelerationTimesteps)
 		);
-		cout << "coset " << cosetid << " will receive "
-			<< _globalVelocityQueuelength[cosetid] << " velocity queue entries." << endl;
 	}
+	// _globalTargetVelocity is distributed to all processes
+	if(!isAcceleratingUniformly())
+	{
+	 for(unsigned short int d = 0; d < 3; d++)
+		{
+			this->_globalTargetVelocity[d][cosetid] = v[d];
+		}
+	}
+}
+
+bool PressureGradient::isAcceleratingInstantaneously(unsigned numberOfComp)
+{
+	  double vel = 0.0;
+	  bool acc = false;
+	  for (unsigned cid = 0; cid < numberOfComp; cid++)
+	    for (int d = 0; d < 3; d++)
+	      vel += abs(this->getGlobalTargetVelocity(d, cid));
+	  
+	  if (vel != 0)
+	    acc = true;
+	    
+	  return acc;
+}
+
+void PressureGradient::specifySpringInfluence(unsigned long minSpringID, unsigned long maxSpringID, double averageYPos, double springConst)
+{
+	this->_minSpringID = minSpringID;
+	this->_maxSpringID = maxSpringID;
+	this->_averageYPos = averageYPos;
+	this->_springConst = springConst;
+	
+	if(!this->_localRank)
+	    cout << "Spring Force Effect is prepared for MolIDs " << this->_minSpringID << " to " << this->_maxSpringID << " with minimum y-Position " << this->_averageYPos << endl;
 }
 
 /*
@@ -193,10 +224,49 @@ double PressureGradient::getUniformAcceleration(unsigned int cosetid, unsigned s
 	return this->_universalAdditionalAcceleration[d][cosetid];
 }
 
-double PressureGradient::getMissingVelocity(unsigned int cosetid, unsigned short int d)
+void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid, unsigned numberOfComp)
 {
-	double vd = this->_globalVelocitySum[d][cosetid] / this->_globalN[cosetid];
-	return this->_globalTargetVelocity[d][cosetid] - vd;
+	for (unsigned compID = 0; compID < numberOfComp; compID++){
+	  this->_localN[compID] = 0;
+	  for(unsigned short int d = 0; d < 3; d++)
+		this->_localVelocitySum[d][compID] = 0.0;
+	}
+	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+	{
+	  if(thismol->componentid() == cid){
+		this->_localN[cid]++;
+		for(unsigned short int d = 0; d < 3; d++)
+			this->_localVelocitySum[d][cid] += thismol->v(d);
+	  }
+	}
+
+	domainDecomp->collCommInit( 4 * _localN.size() );
+	for( map<unsigned int, unsigned int long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	{
+		domainDecomp->collCommAppendUnsLong(lNit->second);
+		for(int d = 0; d < 3; d++)
+			domainDecomp->collCommAppendDouble( this->_localVelocitySum[d][lNit->first]);
+	}
+	domainDecomp->collCommAllreduceSum();
+	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	{
+		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
+		for(int d = 0; d < 3; d++)
+			_globalVelocitySum[d][lNit->first] = domainDecomp->collCommGetDouble();
+	}
+	
+	domainDecomp->collCommFinalize();
+}
+
+double PressureGradient::getMissingVelocity(unsigned int cid, unsigned short int d)
+{
+	double v_directed = this->_globalVelocitySum[d][cid] / this->_globalN[cid];
+	double v_missing = 0.0;
+	
+	if (this->_globalTargetVelocity[d][cid] != 0.0)
+	  v_missing = this->_globalTargetVelocity[d][cid] - v_directed;
+	
+	return v_missing;
 }
 
 double* PressureGradient::getTargetVelocity(unsigned int set)
@@ -213,6 +283,91 @@ double* PressureGradient::getAdditionalAcceleration(unsigned int set)
 	for(int d=0; d < 3; d++)
 		retv[d] = this->_universalAdditionalAcceleration[d][set];
 	return retv;
+}
+
+void PressureGradient::calculateForcesOnComponent(ParticleContainer* molCont, unsigned int cid)
+{
+	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+	{	  
+	  if(thismol->componentid() == cid){
+		this->_localN[cid]++;
+		for(unsigned short int d = 0; d < 3; d++)
+			this->_localForceSum[d][cid] += thismol->F(d);
+	  }
+	}
+}
+
+void PressureGradient::collectForcesOnComponent(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid)
+{
+	domainDecomp->collCommInit( 4 * _localN.size() );
+	for( map<unsigned int, unsigned int long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	{
+		domainDecomp->collCommAppendUnsLong(lNit->second);
+		for(int d = 0; d < 3; d++)
+			domainDecomp->collCommAppendDouble( this->_localForceSum[d][lNit->first]);
+	}
+	domainDecomp->collCommAllreduceSum();
+	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
+	{
+		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
+		for(int d = 0; d < 3; d++)
+			_globalForceSum[d][lNit->first] = domainDecomp->collCommGetDouble();
+	}
+	
+	domainDecomp->collCommFinalize();
+}
+
+void PressureGradient::resetForcesOnComponent(unsigned int cid)
+{
+	this->_localN[cid] = 0;
+	this->_globalN[cid] = 0;
+	for(unsigned short int d = 0; d < 3; d++){
+		this->_localForceSum[d][cid] = 0.0;
+		this->_globalForceSum[d][cid] = 0.0;
+	}
+}
+
+void PressureGradient::calculateSpringForcesOnComponent(ParticleContainer* molCont, unsigned int cid)
+{
+	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+	{
+	  if(thismol->componentid() == cid){
+		    this->_localSpringN[cid]++;
+		    for(unsigned short int d = 0; d < 3; d++)
+			    this->_localSpringForceSum[d][cid] += thismol->F_Spring(d);
+
+	  }
+	}
+}
+
+void PressureGradient::collectSpringForcesOnComponent(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid)
+{
+	    domainDecomp->collCommInit( 4 * _localSpringN.size() );
+	    for( map<unsigned int, unsigned int long>::iterator lNit = _localSpringN.begin(); lNit != _localSpringN.end(); lNit++ )
+	    {
+		domainDecomp->collCommAppendUnsLong(lNit->second);
+		for(int d = 0; d < 3; d++)
+			domainDecomp->collCommAppendDouble( this->_localSpringForceSum[d][lNit->first]);
+	    }
+	    domainDecomp->collCommAllreduceSum();
+	    for( map<unsigned int, unsigned long>::iterator lNit = _localSpringN.begin(); lNit != _localSpringN.end(); lNit++ )
+	    {
+		_globalSpringN[lNit->first] = domainDecomp->collCommGetUnsLong();
+		for(int d = 0; d < 3; d++)
+			_globalSpringForceSum[d][lNit->first] = domainDecomp->collCommGetDouble();
+	    }
+	
+	domainDecomp->collCommFinalize();
+}
+
+void PressureGradient::resetSpringForcesOnComponent(unsigned int cid)
+{
+	this->_localSpringN[cid] = 0;
+	this->_globalSpringN[cid] = 0;
+	for(unsigned short int d = 0; d < 3; d++){
+		this->_localSpringForceSum[d][cid] = 0.0;
+		this->_globalSpringForceSum[d][cid] = 0.0;
+	}
 }
 
 void PressureGradient::specifyTauPrime(double tauPrime, double dt)

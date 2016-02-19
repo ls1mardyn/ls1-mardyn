@@ -10,8 +10,10 @@
 #include "molecules/Quaternion.h"
 #include "molecules/Site.h"
 
-
 #define MAX_TERSOFF_NEIGHBOURS 10 /**< maximal size of the Tersoff neighbour list */
+
+#include <iostream>
+using namespace std;
 
 class Domain;
 
@@ -39,6 +41,7 @@ public:
 		delete[] _sites_d;
 		delete[] _osites_e;
 		delete[] _sites_F;
+		//delete[] _springSites_F;
 	}
 
 	/** get molecule ID */
@@ -61,7 +64,15 @@ public:
 	void setv(unsigned short d, double v) { _v[d] = v; }
 	/** get molecule's mass */
 	double mass() const { return _m; }
-
+	
+	/** set spring force */
+	void setF_Spring(unsigned short d, double F){ _F_Spring[d] = F; }
+	/** get spring force */
+	double F_Spring(unsigned short d) const { return _F_Spring[d]; }
+	/* counts the call of the method potforce.h->PotForceSpring() to ensure that its just called once each timestep */
+	void setCounter(unsigned long counter){_counter = counter; }
+	unsigned long getCounter() const {return _counter; }
+	
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
 	/** get molecule's orientation */
@@ -144,12 +155,15 @@ public:
 	 * @param M force vector (x,y,z)
 	 */
 	void setM(double M[3]) { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
-
-	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d]*=s; }
+	//scale undirected part of the velocity
+	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d] = (_v[d]-_directedVelocity[d])*s + _directedVelocity[d]; }
 	void scale_v(double s, double offx, double offy, double offz);
 	void scale_F(double s) { for(unsigned short d=0;d<3;++d) _F[d]*=s; }
 	void scale_D(double s) { for(unsigned short d=0;d<3;++d) _L[d]*=s; }
 	void scale_M(double s) { for(unsigned short d=0;d<3;++d) _M[d]*=s; }
+	
+	// scale velocity just in one direction; and just the undirected part
+	void scale_v_1Dim(double s, unsigned short d) { _v[d] = (_v[d]-_directedVelocity[d])*s + _directedVelocity[d]; }
 
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 
@@ -190,18 +204,21 @@ public:
 	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
 	void Ftersoffadd(unsigned int i, double a[])
 	{ double* Fsite=&(_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
+	/*void Fspringadd(unsigned int i, double a[])
+	{ double* Fsite=&(_spring_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }*/
 	
 	/** First step of the leap frog integrator */
-	void upd_preF(double dt, double vcorr=1., double Dcorr=1.);
+	void upd_preF(double dt, double vcorr=1., double Dcorr=1., Domain *dom = NULL);
 	/** update the molecules site position caches (rotate sites and save relative positions) */
 	void upd_cache();
 	/** second step of the leap frog integrator */
-	void upd_postF(double dt_halve, double& summv2, double& sumIw2);
+	void upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, double& sumIw2, Domain *dom);
 
 	/** @brief Calculate twice the translational and rotational kinetic energies
 	 * @param[out] summv2   twice the translational kinetic energy \f$ m v^2 \f$
 	 * @param[out] sumIw2   twice the rotational kinetic energy \f$ I \omega^2 \f$
 	 */
+	void calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& sumIw2, int dimToThermostat, Domain *dom);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
 
@@ -241,7 +258,81 @@ public:
 	//! corresponding cell discretisations might be different as well, and therefore
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
-
+	
+	// virial calculation (kinetic and force part) for stresses in solids
+	void addVirialForce(int d, int e, long double virialForce) { this->_virialForce[d][e] += virialForce; }
+	void setVirialForce(int d, int e, long double virialForce) { this->_virialForce[d][e] = virialForce; }
+	long double getVirialForce(int d, int e) { return this->_virialForce[d][e]; }
+	void addVirialKin(int d, int e, long double virialKin) { this->_virialKin[d][e] += virialKin; }
+	void setVirialKin(int d, int e, long double virialKin) { this->_virialKin[d][e] = virialKin; }
+	long double getVirialKin(int d, int e) { return this->_virialKin[d][e]; }
+	
+	void addPressureKin(int d, long double pressureKin) { this->_pressureKin[d] += pressureKin; }
+	void setPressureKin(int d, long double pressureKin) { this->_pressureKin[d] = pressureKin; }
+	long double getPressureKin(int d) { return this->_pressureKin[d]; }
+	void addPressureVirial(int d, long double pressureVirial) { this->_pressureVirial[d] += pressureVirial; }
+	void setPressureVirial(int d, long double pressureVirial) { this->_pressureVirial[d] = pressureVirial; }
+	long double getPressureVirial(int d) { return this->_pressureVirial[d]; }
+	
+	// For measuring pressure and forces in the confinement
+	void addVirialForceConfinement(int d, int e, long double virialForce) { this->_virialForceConfinement[d][e] += virialForce; }
+	void setVirialForceConfinement(int d, int e, long double virialForce) { this->_virialForceConfinement[d][e] = virialForce; }
+	long double getVirialForceConfinement(int d, int e) { return this->_virialForceConfinement[d][e]; }
+	void addVirialKinConfinement(int d, int e, long double virialKin) { this->_virialKinConfinement[d][e] += virialKin; }
+	void setVirialKinConfinement(int d, int e, long double virialKin) { this->_virialKinConfinement[d][e] = virialKin; }
+	long double getVirialKinConfinement(int d, int e) { return this->_virialKinConfinement[d][e]; }
+	
+	void addPressureKinConfinement(int d, long double pressureKin) { this->_pressureKinConfinement[d] += pressureKin; }
+	void setPressureKinConfinement(int d, long double pressureKin) { this->_pressureKinConfinement[d] = pressureKin; }
+	long double getPressureKinConfinement(int d) { return this->_pressureKinConfinement[d]; }
+	void addPressureVirialConfinement(int d, long double pressureVirial) { this->_pressureVirialConfinement[d] += pressureVirial; }
+	void setPressureVirialConfinement(int d, long double pressureVirial) { this->_pressureVirialConfinement[d] = pressureVirial; }
+	long double getPressureVirialConfinement(int d) { return this->_pressureVirialConfinement[d]; }
+	
+	void setDirectedVelocity(int d, double directedVelocity) { this->_directedVelocity[d] = directedVelocity; }
+	double getDirectedVelocity(int d) { return this->_directedVelocity[d]; }
+	
+	// VTK Molecule Date
+	long double getAveragedVelocity(int d) { return this->_vAverage[d]; }
+	long double getAveragedTemperature() { return this->_T; }
+// 	long double getAveragedDensity()  { return this->_rho; }
+	void setAveragedVelocity(int d, double v) { this->_vAverage[d] = v; }
+	void setAveragedTemperature(double T) { this->_T = T; }
+// 	void setAveragedDensity(double rho)  { this->_rho = rho; } 
+	void addAveragedVelocity(int d, double v) { this->_vAverage[d] += v; }
+	void addAveragedTemperature(double T) { this->_T += T; }
+// 	void addAveragedDensity(double rho)  { this->_rho += rho; }
+	unsigned long getAverageCount() {return this->_count; }
+	void setAverageCount(unsigned zero) { this->_count = zero; }
+	void addAverageCount(unsigned count) { this->_count += count; }
+	
+	// Hardy Stresses
+	bool isHardyStress() { return this->_HardyStress; }
+	bool isHardyConfinement() { return this->_HardyConfinement; }
+	void setHardyStress(bool boolean) { this->_HardyStress = boolean; }
+	void setHardyConfinement(bool boolean) { this->_HardyConfinement = boolean; }
+	void calculateHardyIntersection(const double drm[3], double mjx, double mjy, double mjz, Domain *dom, string stress, string weightingFunc);
+	std::map<unsigned, long double> getBondFractionUNID() { return this->_bondFractionUNID; }
+	void addVirialForceHardyStress(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyStress[unID][d][e] += virialForceFraction; }
+	void setVirialForceHardyStress(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyStress[unID][d][e] = virialForceFraction; }
+	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > getVirialForceHardyStress() { return this->_virialForceHardyStress; }
+	void clearVirialForceHardyStress() { _virialForceHardyStress.clear(); }
+	void addVirialForceHardyConfinement(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyConfinement[unID][d][e] += virialForceFraction; }
+	void setVirialForceHardyConfinement(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyConfinement[unID][d][e] = virialForceFraction; }
+	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > getVirialForceHardyConfinement() { return this->_virialForceHardyConfinement; }
+	void clearVirialForceHardyConfinement() { _virialForceHardyConfinement.clear(); }
+	
+	std::string getWeightingFuncStress() { return this->_weightingFuncStress; }
+	std::string getWeightingFuncConfinement() { return this->_weightingFuncConfinement; }
+	void setHardyStressWeighting(string weighting) { this->_weightingFuncStress = weighting; }
+	void setHardyConfinementWeighting(string weighting) { this->_weightingFuncConfinement = weighting; }
+	long double bondFunctionPyramide(long double n0, long double n1, int signF, int signG, long double halfDeltaX, long double halfDeltaY, long double deltaXMol, long double deltaYMol, long double deltaXCentre, long double deltaYCentre);
+	double weightingFunctionPyramide(unsigned xun, unsigned yun, double deltaX, double deltaY, double xStart, double yStart);
+	int signumFunction(long double x) {
+	    if (x > 0) return 1;
+	    if (x < 0) return -1;
+	    return 1; 
+	}
 private:
     Component *_component;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
@@ -250,7 +341,7 @@ private:
 	Quaternion _q; /**< angular orientation */
 	double _M[3];  /**< torsional moment */
 	double _L[3];  /**< angular momentum */
-    unsigned long _id;  /**< IDentification number of that molecule */
+	unsigned long _id;  /**< IDentification number of that molecule */
 
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
@@ -265,9 +356,14 @@ private:
 	double *_dipoles_e, *_quadrupoles_e;
 	// site Forces
 	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
-	double* _sites_F;
+	double *_sites_F; 
+	//double *_springSites_F;
 	double *_ljcenters_F, *_charges_F, *_dipoles_F,
 	       *_quadrupoles_F, *_tersoff_F;
+	//double *_spring_F;
+	       
+	double _F_Spring[3]; /**< spring forces */
+	unsigned long _counter; /**< counts the call of the method potforce.h->PotForceSpring() to ensure that its just called once each timestep */
 
 	Molecule* _Tersoff_neighbours_first[MAX_TERSOFF_NEIGHBOURS];
 	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS]; /* TODO: Comment */
@@ -276,6 +372,36 @@ private:
 
 	// setup cache values/properties
 	void setupCache();
+	
+	// virial calculation (kinetic and force part) for stresses in solids
+	long double _virialForce[3][3], _virialKin[3][3];
+	long double _pressureVirial[3], _pressureKin[3];
+	
+	// pressure and forces for the confinement
+	long double _virialForceConfinement[3][3], _virialKinConfinement[3][3];
+	long double _pressureVirialConfinement[3], _pressureKinConfinement[3];
+	
+	// directed velocity
+	double _directedVelocity[3];
+	double _directedVelocity2[3];
+	
+	// VTK Molecule Data
+	long double _T;
+// 	long double _rho;
+	long double _vAverage[3]; 
+	unsigned long _count;
+	
+	// Hardy stresses
+	bool _HardyStress;
+	bool _HardyConfinement;
+	std::string _weightingFuncStress;
+	std::string _weightingFuncConfinement;
+	std::map<long double, long double> _HardyIntersectionX;
+	std::map<long double, long double> _HardyIntersectionY;
+	std::map<long double, long double> _HardyIntersectionZ;
+	std::map<unsigned, long double>_bondFractionUNID;
+	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyStress;	
+	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyConfinement;	
 };
 
 

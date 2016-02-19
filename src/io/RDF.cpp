@@ -5,6 +5,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
+#include <sys/stat.h>
 
 #include <sstream>
 #include <fstream>
@@ -40,6 +41,12 @@ void RDF::init() {
 	_localDistribution = new unsigned long**[_numberOfComponents];
 	_globalDistribution = new unsigned long**[_numberOfComponents];
 	_globalAccumulatedDistribution = new unsigned long**[_numberOfComponents];
+	
+	// Check if file path already exists; important for independent use of xyz-writer and profile-writer
+	FILE *f;
+	f=fopen("./Results/RDF","r");
+	if(f==0)
+	  mkdir("./Results/RDF", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);  
 
 	this->_localSiteDistribution = new unsigned long****[_numberOfComponents];
 	this->_globalSiteDistribution = new unsigned long****[_numberOfComponents];
@@ -259,7 +266,8 @@ void RDF::setOutputTimestep(unsigned int timestep) {
 }
 
 void RDF::setOutputPrefix(string prefix) {
-	_outputPrefix = prefix;
+	_outputPrefix = "./Results/RDF/"; 
+	_outputPrefix += prefix;
 }
 
 

@@ -4,6 +4,7 @@
 class ParticleContainer;
 class Domain;
 class XMLfileUnits;
+class DomainDecompBase;
 
 //! @brief Update velocities and positions.
 //! @author Martin Buchholz, Martin Bernreuther, et al.
@@ -80,6 +81,7 @@ public:
 			Domain* domain
 	) = 0;
 	virtual void accelerateInstantaneously(
+			DomainDecompBase* domainDecomp,
 			ParticleContainer* molCont,
 			Domain* domain
 	) = 0;

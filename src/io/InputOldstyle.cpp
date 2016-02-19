@@ -103,6 +103,17 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			_phaseSpaceHeaderFileStream >> targetT;
 			global_log->info() << "Thermostat number " << thermostat_id << " has T = " << targetT << ".\n";
 			domain->setTargetTemperature( thermostat_id, targetT );
+			// preparation of one-dimensional thermostat; initialization with arbitrary value != {0 = x, 1 = y, 2 =z}
+			domain->setDim(thermostat_id, 5);
+		}
+		else if((token == "ThermostatTimeSlot") || (token == "ThTS")) {
+			// set up a time slot for each thermostat 
+			int thermostat_id;
+			unsigned long startTime, endTime;
+			_phaseSpaceHeaderFileStream >> thermostat_id;
+			_phaseSpaceHeaderFileStream >> startTime;
+			_phaseSpaceHeaderFileStream >> endTime;
+			domain->setThermostatTimeSlot( thermostat_id, startTime, endTime);
 		}
 		else if((token == "ComponentThermostat") || (token == "CT") || (token == "o")) {
 			// specify a thermostat for a component
@@ -116,6 +127,28 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			if( thermostat_id < 0 ) // thermostat IDs start with 0
 				continue;
 			domain->setComponentThermostat( component_id, thermostat_id );
+		}
+		else if(token == "oneDim") {
+			// set up a one-dimensional thermostat
+			int thermostat_id;
+			int targetDim;
+			_phaseSpaceHeaderFileStream >> thermostat_id;
+			_phaseSpaceHeaderFileStream >> targetDim;
+			domain->enable1DimThermostat(thermostat_id);
+			if (targetDim < 3){
+			  global_log->info() << "Thermostat number " << thermostat_id << " scaled in direction ";
+			  if (targetDim == 0)
+			    global_log->info() << "x\n";
+			  else if (targetDim == 1)
+			    global_log->info() << "y\n";
+			  else
+			    global_log->info() << "z\n";
+			}
+			else{
+			  global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
+			  exit(1);
+			}
+			domain->set1DimThermostat(thermostat_id, targetDim);
 		}
 		else if((token == "Undirected") || (token == "U")) {
 			// set undirected thermostat
@@ -243,11 +276,34 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			_phaseSpaceHeaderFileStream >> token;
 			domain->setglobalNumMolecules( strtoul(token.c_str(),NULL,0) );
 		}
+		else if(token == "State") {
+			unsigned component_id;
+			_phaseSpaceHeaderFileStream >> component_id;
+			string moveStyle;
+			_phaseSpaceHeaderFileStream >> moveStyle;
+			domain->getPG()->specifyMovementStyle(component_id, moveStyle);
+			string fixed ("fixed");
+			string moved ("moved");
+			string free ("free");
+			if(fixed.compare(moveStyle) == 0 || moved.compare(moveStyle) == 0 || free.compare(moveStyle) == 0)
+			  global_log->info() << "Component No. " << component_id << " is " << moveStyle << endl;
+			else{
+			  global_log->info() << "Invalid type of movement \'" << moveStyle << "\' found. [Allowed: fixed, moved, free]" << endl;
+			  global_log->error() << "Invalid type of movement \'" << moveStyle << "\' found. [Allowed: fixed, moved, free]" << endl;
+			  header = false;
+			}
+		}
 		else if((token == "AssignCoset") || (token == "S")) {
 			unsigned component_id, cosetid;
+			string moved ("moved");
 			_phaseSpaceHeaderFileStream >> component_id >> cosetid;
 			component_id--; // FIXME: Component ID starting with 0 in program ...
 			domain->getPG()->assignCoset( component_id, cosetid );
+			if(moved.compare(domain->getPG()->getMovementStyle(component_id+1)) != 0){
+			  global_log->info() << "Invalid type of movement for component No. \'" << component_id+1 << "\' found. [Allowed:  moved]" << endl;
+			  global_log->error() << "Invalid type of movement for component No. \'" << component_id+1 << "\' found. [Allowed: moved]" << endl;
+			  header = false;
+			}
 		}
 		else if((token == "Accelerate") || (token == "A")) {
 			unsigned cosetid;
@@ -261,6 +317,16 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			for(unsigned d = 0; d < 3; d++) 
 				_phaseSpaceHeaderFileStream >> ainit[d];
 			domain->getPG()->specifyComponentSet(cosetid, v, tau, ainit, timestep);
+		}
+		else if(token == "Spring") {
+			unsigned long minSpringID, maxSpringID;
+			_phaseSpaceHeaderFileStream >> minSpringID >> maxSpringID;
+			double averageYPos;
+			_phaseSpaceHeaderFileStream >> averageYPos;
+			double springConst;
+			_phaseSpaceHeaderFileStream >> springConst;
+
+			domain->getPG()->specifySpringInfluence(minSpringID, maxSpringID, averageYPos, springConst);
 		}
 		else {
 			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << endl;

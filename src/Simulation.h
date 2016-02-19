@@ -43,6 +43,8 @@ class Timer;
 class RDF;
 class LJFlopCounter;
 
+class Molecule;
+
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
@@ -256,6 +258,7 @@ public:
 
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
+	unsigned long getInitStatistics() { return _initStatistics; }
 
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
@@ -268,6 +271,10 @@ public:
 	void setMaxID (unsigned long id) { maxid = id; }
 	/** Get the maximum molecule ID. */
 	unsigned long getMaxID () const { return maxid; }
+	
+	/** communicate timestep length in Simulation.cpp*/
+	void  setTimeStepLength(double timeStepLength) { _timeStepLength = timeStepLength; }
+	double getTimeStepLength() const {return _timeStepLength; }
 
 
 
@@ -304,7 +311,14 @@ public:
         void initCanonical(unsigned long t) { this->_initCanonical = t; }
         void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
         void initStatistics(unsigned long t) { this->_initStatistics = t; }
-
+	//FIXME: NOT USED!
+        void slabProfileSettings(unsigned long slabProfileRecordingTimesteps, unsigned long slabProfileOutputTimesteps, std::string slabProfileOutputPrefix)
+        {
+           this->_doRecordSlabProfile = true;
+           this->_slabProfileRecordingTimesteps = slabProfileRecordingTimesteps;
+           this->_slabProfileOutputTimesteps = slabProfileOutputTimesteps;
+           this->_slabProfileOutputPrefix = slabProfileOutputPrefix;
+        }
         void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix)
         {
            this->_doRecordProfile = true;
@@ -312,9 +326,24 @@ public:
            this->_profileOutputTimesteps = profileOutputTimesteps;
            this->_profileOutputPrefix = profileOutputPrefix;
         }
+        void bulkPressureSettings(unsigned long bulkPressureOutputTimesteps, std::string bulkPressureOutputPrefix)
+        {
+           this->_doRecordBulkPressure = true;
+           this->_bulkPressureOutputTimesteps = bulkPressureOutputTimesteps;
+           this->_bulkPressureOutputPrefix = bulkPressureOutputPrefix;
+        }
+        void confinementSettings(unsigned long confinementRecordingTimesteps, unsigned long confinementOutputTimesteps)
+        {
+           this->_doRecordConfinement = true;
+	   this->_confinementRecordingTimesteps = confinementRecordingTimesteps;
+           this->_confinementOutputTimesteps = confinementOutputTimesteps;
+        }
+        
 	void setSimulationTime(double curtime){ _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
 	double getSimulationTime(){ return _simulationTime; }
+	unsigned getStressRecordTimestep() {return _stressProfileRecordingTimesteps; }
+	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
 
 	Ensemble* getEnsemble() { return _ensemble; }
 
@@ -341,9 +370,22 @@ private:
 
 	/** external cutoff radius for the Tersoff potential */
 	double _tersoffCutoffRadius;
+	
+	/** timestep length*/
+	double _timeStepLength;
+	
+	/** Hardy stresses*/
+	bool _HardyStress;
+	bool _HardyConfinement;
+	string _weightingStress;
+	string _weightingConfinement;
 
 	/** flag specifying whether planar interface profiles are recorded */
 	bool _doRecordProfile;
+	bool _doRecordSlabProfile;
+	bool _doRecordStressProfile;
+	bool _doRecordBulkPressure;
+	bool _doRecordConfinement;
 	/** Interval between two evaluations of the profile.
 	 * This means that only 1 / _profileRecordingTimesteps of the
 	 * internally available data are actually used, so if precision is
@@ -351,18 +393,28 @@ private:
 	 * may be accelerated somewhat by increasing the interval.
 	 */
 	unsigned _profileRecordingTimesteps;
+	unsigned _slabProfileRecordingTimesteps;
+	unsigned _stressProfileRecordingTimesteps;
+	unsigned _confinementRecordingTimesteps;
 	/** Aggregation interval for the profile data, i.e. if _profileRecordingTimesteps
 	 * is 100 and _profileOutputTimesteps is 20 000, this means that
 	 * the profiles found in the output are averages over 200 configurations.
 	 */
 	unsigned _profileOutputTimesteps;
+	unsigned _slabProfileOutputTimesteps;
+	unsigned _stressProfileOutputTimesteps;
+	unsigned _bulkPressureOutputTimesteps;
+	unsigned _confinementOutputTimesteps;
 	/** Although the meaning of this should be obvious, it may be noted
 	 * that the time step and "rhpry" (density), "vzpry" (z-velocity),
 	 * and Tpry (kinetic energy) will be attached to the prefix for
 	 * the different profiles.
      */
 	std::string _profileOutputPrefix;
-
+	std::string _slabProfileOutputPrefix;
+	std::string _stressProfileOutputPrefix;
+	std::string _bulkPressureOutputPrefix;
+	std::string _confinementProfileOutputPrefix;
 	/** A thermostat can be specified to account for the directed
 	 * motion, which means that only the undirected kinetic energy is
 	 * maintained constant. In many cases, this is an essential to
@@ -439,6 +491,8 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
+	
+	Molecule* _thismol;
 
 public:
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }

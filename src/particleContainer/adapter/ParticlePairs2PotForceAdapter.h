@@ -66,6 +66,7 @@ public:
      */
 	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ = true) {
 		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
+		
 		params.reset_read();
 
 		switch (pairType) {
@@ -76,12 +77,12 @@ public:
                 if ( _rdf != NULL )
                     _rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
-                PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
+                PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ, _domain);
 
                 return _upot6LJ + _upotXpoles;
             case MOLECULE_HALOMOLECULE : 
 
-                PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);
+                PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ, _domain);
                 return 0.0;
             case MOLECULE_MOLECULE_FLUID : 
                 dummy1 = 0.0; // 6*U_LJ
@@ -129,6 +130,7 @@ private:
 	double _upotTersoff;
 	//! @brief variable used to sum the MyRF contribution of all pairs
 	double _myRF;
+	
 
 //	bool _doRecordRDF;
 };

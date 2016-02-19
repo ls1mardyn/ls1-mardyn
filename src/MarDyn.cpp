@@ -120,7 +120,8 @@ int main(int argc, char** argv) {
 		op.print_usage();
 		exit(1);
 	}
-
+	
+	
 	Simulation simulation;
 
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
@@ -129,6 +130,7 @@ int main(int argc, char** argv) {
 			unsigned long steps = 0;
 			istringstream(args[1]) >> steps;
 			simulation.setNumTimesteps(steps);
+			cout << " sumSteps " << steps <<endl;
 		}
 		if( numargs > 2 ) {
 			simulation.setOutputPrefix(args[2]);
@@ -189,9 +191,7 @@ int main(int argc, char** argv) {
 	sim_timer.stop();
 	double runtime = sim_timer.get_etime();
 	global_log->info() << "main: used " << fixed << setprecision(2) << runtime << " seconds" << endl;
-
 	simulation.finalize();
-
 	delete global_log;
 
 #ifdef ENABLE_MPI

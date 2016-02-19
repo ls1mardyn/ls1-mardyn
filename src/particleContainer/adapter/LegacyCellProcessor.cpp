@@ -20,7 +20,7 @@ LegacyCellProcessor::LegacyCellProcessor(const double cutoffRadius, const double
 : _cutoffRadiusSquare(cutoffRadius * cutoffRadius), _LJCutoffRadiusSquare(LJCutoffRadius * LJCutoffRadius),
   _tersoffCutoffRadiusSquare(tersoffCutoffRadius*tersoffCutoffRadius), _particlePairsHandler(particlePairsHandler){
 	  /** @todo Check for multiple tersoff potentials with different parameters as the LegacyCellProcessor::postprocessCell() does only use one parameter set. */
-	  global_log->warning() << "Note: The LegacyCellProcessor does not support multiple Tersoff sites with different parameters." << endl;
+	  global_log->warning() << "Note: The LegacyCellProcessor does not support multiple Tersoff sites with different parameters." << endl;	  
 }
 
 
@@ -48,6 +48,12 @@ void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
 		molecule1.setF(zeroVec);
 		molecule1.setM(zeroVec);
 		molecule1.clearTersoffNeighbourList();
+		
+		// Initialize counter for _pressureGradient->collectSpringForcesOnComponent()
+		 for(int d = 0; d < 3; d++)
+			molecule1.setF_Spring(d, 0.0);
+		 
+		molecule1.setCounter(0);
 	}
 }
 
@@ -142,6 +148,7 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 						pairType = MOLECULE_HALOMOLECULE;
 					}
 					_particlePairsHandler->processPair(molecule1, molecule2, distanceVector, pairType, dd, (dd < _LJCutoffRadiusSquare));
+
 					if ((num_tersoff > 0) && (molecule2.numTersoff() > 0) && (dd < _tersoffCutoffRadiusSquare)) {
 						_particlePairsHandler->preprocessTersoffPair(molecule1, molecule2, (pairType == MOLECULE_HALOMOLECULE));
 					}
@@ -218,7 +225,7 @@ void LegacyCellProcessor::postprocessCell(ParticleCell& cell) {
 				}
 				_particlePairsHandler->processTersoffAtom(molecule1, params, delta_r);
 			}
-			molecule1.calcFM();
+			molecule1.calcFM();			
 		}
 	}
 }

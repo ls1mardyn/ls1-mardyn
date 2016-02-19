@@ -43,7 +43,7 @@ CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
 ifneq ($(CFGFILE),)
   $(info # Selected configuration: $(CFG) )
-  $(info # Including file $(CFGFILE) )
+  $(info # Including file $(CFGFILE) $(realpath $(PWD) ))
   include $(CFGFILE)
 else
   $(error ERROR: config file for $(CFG) not found - no include )
@@ -163,6 +163,7 @@ clean:
 	find -type f -name '*.gcov' -delete
 	find -type f -name '*.gcda' -delete
 	find -type f -name '*.gcno' -delete
+	rm -rf edit Results
 
 clean_deps:
 	find -path '*/.deps/*' -type f -delete

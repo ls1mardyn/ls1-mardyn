@@ -3,8 +3,11 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <iterator>
 
 #include "utils/Logger.h"
+
+#include "Domain.h"
 
 using namespace std;
 using Log::global_log;
@@ -26,12 +29,38 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_v[2] = vz;
 	_L[0] = Dx;
 	_L[1] = Dy;
-	_L[2] = Dz;
-	_sites_d = _sites_F =_osites_e = NULL;
+	_L[2] = Dz; 
+	_sites_d = _sites_F = _osites_e = NULL;
+	//_springSites_F = NULL;
 	_numTersoffNeighbours = 0;
 	fixedx = rx;
 	fixedy = ry;
-
+	
+	for(int d = 0; d < 3; d++){
+	  _directedVelocity[d] = 0.0;
+	  for(int e = 0; e < 3; e++){
+	    setVirialForce(d, e, 0.0);
+	    setVirialKin(d, e, 0.0);
+	  }
+	  setPressureVirial(d, 0.0);
+	  setPressureKin(d, 0.0);
+	}
+	
+	// VTK Molecule Data
+	_T = 0.0;
+// 	_rho = 0.0;
+	_vAverage[0] = 0.0;
+	_vAverage[1] = 0.0;
+	_vAverage[2] = 0.0;
+	_count = 0;
+	
+	// Hardy stresses
+	_HardyStress = false;
+	_HardyConfinement = false;
+	_virialForceHardyStress.clear();
+	_virialForceHardyConfinement.clear();
+	_weightingFuncStress = string("Linear");
+	_weightingFuncConfinement = string("Linear"); 
 	if(_component != NULL) {
 		setupCache();
 	}
@@ -56,24 +85,68 @@ Molecule::Molecule(const Molecule& m) {
 	_M[0] = m._M[0];
 	_M[1] = m._M[1];
 	_M[2] = m._M[2];
-	_sites_d = _sites_F =_osites_e = NULL;
-	_numTersoffNeighbours = 0;
+	_sites_d = _sites_F = _osites_e = NULL;
+	//_springSites_F = NULL;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
 
+	for(int d = 0; d < 3; d++){
+	  _directedVelocity[d] = 0.0;
+	  for(int e = 0; e < 3; e++){
+	    setVirialForce(d, e, 0.0);
+	    setVirialKin(d, e, 0.0);
+	    setVirialForceConfinement(d, e, 0.0);
+	    setVirialKinConfinement(d, e, 0.0);
+	  }
+	  setPressureVirial(d, 0.0);
+	  setPressureKin(d, 0.0);
+	  setPressureVirialConfinement(d, 0.0);
+	  setPressureKinConfinement(d, 0.0);
+	}
+	
+	// VTK Molecule Data
+	_T = m._T;
+// 	_rho = m._rho;
+	_vAverage[0] = m._vAverage[0];
+	_vAverage[1] = m._vAverage[1];
+	_vAverage[2] = m._vAverage[2];
+	_count = m._count;
+	
+	// Hardy stresses
+	_HardyStress = m._HardyStress;
+	_HardyConfinement = m._HardyConfinement;
+	_virialForceHardyStress.clear();
+	_virialForceHardyConfinement.clear();
+	_weightingFuncStress = m._weightingFuncStress;
+	_weightingFuncConfinement = m._weightingFuncConfinement;
 	if(_component != NULL) {
 		setupCache();
 	}
 }
 
-
-void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
+void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 	assert(_m > 0);
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
-	for (unsigned short d = 0; d < 3; ++d) {
+	int thermostat = dom->getThermostat(this->componentid());
+	int dim;
+	if(dom->isScaling1Dim(thermostat)  && dom->getAlphaTransCorrection(thermostat) == false){
+	    map<int, int> Dim = dom->getDim();
+	    dim = Dim[thermostat];
+		for (unsigned short d = 0; d < 3; ++d) {
+		   if(d == dim)
+		      _v[d] = vcorr * _v[d] + dtInv2m * _F[d];
+		   else
+		      _v[d] = _v[d] + dtInv2m * _F[d];
+		      
+		   _r[d] += dt * _v[d];
+		}
+	}
+	else{
+	    for (unsigned short d = 0; d < 3; ++d) {
 		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
 		_r[d] += dt * _v[d];
+	    }
 	}
 
 	double w[3];
@@ -99,7 +172,6 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr) {
 	_q.scale(qcorr);
 
 }
-
 
 void Molecule::upd_cache() {
 	unsigned int i;
@@ -130,18 +202,20 @@ void Molecule::upd_cache() {
 		_q.rotateinv(_component->tersoff(i).r(), &(_tersoff_d[i*3]));
 }
 
-
-void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
+void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, double& sumIw2, Domain *dom) {
 	double dtInv2m = dt_halve / _m;
-	double v2 = 0.;
-	for (unsigned short d = 0; d < 3; ++d) {
+	double v2 = 0.0;
+	double v_aux = 0.0;
+	for (unsigned short d = 0; d < 3; d++) {
 		_v[d] += dtInv2m * _F[d];
-		v2 += _v[d] * _v[d];
+		// in the case of directed velocities
+		v_aux = _v[d] - _directedVelocity[d];
+		v2 += v_aux * v_aux;
 		_L[d] += dt_halve * _M[d];
 	}
     assert(!isnan(v2)); // catches NaN
     summv2 += _m * v2;
-
+ 
 	double w[3];
 	_q.rotate(_L, w); // L = D = Iw
 	double Iw2 = 0.;
@@ -151,8 +225,26 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	}
     assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
+	
+  // one-dimensional thermostat
+	if(dom->isScaling1Dim(dom->getThermostat(this->componentid()))){
+	    map<int, int> Dim = dom->getDim();
+	    for( map<int, int>::const_iterator gDit = Dim.begin();
+				gDit != Dim.end();
+				gDit++ )
+		{
+		  if(dom->getThermostat(this->componentid()) == gDit->first){
+		    v2 = 0.0;
+		    v_aux = 0.0;
+		    // in the case of directed velocities
+		    v_aux = _v[gDit->second] - _directedVelocity[gDit->second];
+		    v2 += v_aux * v_aux;	
+		    assert(!isnan(v2)); // catches NaN
+		    summv2_1Dim += _m * v2;
+		  }
+		}	  
+	}
 }
-
 
 double Molecule::U_rot() {
 	double w[3];
@@ -165,11 +257,44 @@ double Molecule::U_rot() {
 	return 0.5 * Iw2;
 }
 
-void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
-	summv2 += _m * v2();
+void Molecule::calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& sumIw2, int dimToThermostat, Domain *dom) {
+  
+	// with  correction due to directed movement
+	double v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
+	summv2 += _m * v2;
+	
+	// without correction due to directed movement
+	//summv2 += _m * v2();
+	
+	double v2_1Dim = 0.0;
+	if(dom->isScaling1Dim(dom->getThermostat(this->componentid()))){ 
+	  v2_1Dim = (v(dimToThermostat)-_directedVelocity[dimToThermostat])*(v(dimToThermostat)-_directedVelocity[dimToThermostat]);
+	  summv2_1Dim += _m * v2_1Dim;
+	}
 	double w[3];
 	_q.rotate(_L, w);
 	double Iw2 = 0.;
+	
+	for (unsigned short d = 0; d < 3; ++d) {
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
+	}
+	sumIw2 += Iw2;
+}
+
+void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
+	  
+	// with  correction due to directed movement
+	double v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
+	summv2 += _m * v2;
+	
+	// without correction due to directed movement
+	//summv2 += _m * v2();
+	
+	double w[3];
+	_q.rotate(_L, w);
+	double Iw2 = 0.;
+	
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
 		Iw2 += _I[d] * w[d] * w[d];
@@ -181,6 +306,7 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, do
 	double vcx = _v[0] - offx;
 	double vcy = _v[1] - offy;
 	double vcz = _v[2] - offz;
+
 	summv2 += _m * (vcx*vcx + vcy*vcy + vcz*vcz);
 
 	double w[3];
@@ -197,6 +323,427 @@ void Molecule::scale_v(double s, double offx, double offy, double offz) {
 	this->vsub(offx, offy, offz);
 	this->scale_v(s);
 	this->vadd(offx, offy, offz);
+}
+
+void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx, double mjy, double mjz, Domain *dom, string stress, string weightingFunc) {
+	unsigned long xun=0, yun=0, xun2=0, yun2=0, xun_tot=0, yun_tot=0;
+	unsigned unID=0, unID_tot;
+	double xMax, yMax;
+	long double deltaX=0.0, deltaY=0.0;
+	long double xPlane_min, xPlane_max, yPlane_min, yPlane_max;
+	long double lambda;
+	long double HardyIntersectionX, HardyIntersectionY, HardyIntersectionZ;
+	bool hardyIntersection = true;
+	// the input string "stress" is like a flag, it decides whether the output is prepared for the confinement or the whole system
+	string Stress ("Stress");
+	string Confinement ("Confinement");
+	string Linear ("Linear");
+	string Pyramide ("Pyramide");
+
+	// Vorzeichen bei drm genau verkehrt....
+	double drm[3];
+	for (int i = 0; i < 3; i++)
+	  drm[i] = (-1)*drmEingang[i];
+	
+	long double fracX, fracY, fracZ;
+	double xPlaneShift = 0.0, yPlaneShift = 0.0;
+	xMax = dom->getGlobalLength(0);
+	yMax = dom->getGlobalLength(1);
+	
+	// clearing of all maps
+	_HardyIntersectionX.clear();
+	_HardyIntersectionY.clear();
+	_HardyIntersectionZ.clear();
+	_bondFractionUNID.clear();
+	
+	if (stress == Stress){
+	  // data transfer for determination of the control volumes
+	  xun_tot = dom->getUniversalNProfileUnits_Stress(0);
+	  yun_tot = dom->getUniversalNProfileUnits_Stress(1);
+	
+	  deltaX = 1/dom->getUniversalInvProfileUnit_Stress(0);
+	  deltaY = 1/dom->getUniversalInvProfileUnit_Stress(1);
+	
+	  // assignement of both interacting molecules to their control volumes
+	  xun = floor(_r[0] / deltaX);
+	  yun = floor(_r[1] / deltaY);
+	  xun2 = floor(mjx / deltaX);
+	  yun2 = floor(mjy / deltaY);
+	}else if (stress == Confinement){
+	  // data transfer for determination of the control volumes
+	  xun_tot = dom->getUniversalNProfileUnitsStressConfinement(0);
+	  yun_tot = dom->getUniversalNProfileUnitsStressConfinement(1);
+	
+	  deltaX = 1/dom->getUniversalInvProfileUnitStressConfinement(0);
+	  deltaY = 1/dom->getUniversalInvProfileUnitStressConfinement(1);
+	  
+	  
+	  // assignement of both interacting molecules to their control volumes
+	  xun = floor((_r[0]-dom->getConfinementEdge(0)) / deltaX);
+	  yun = floor((_r[1]/*-dom->get_confinementMidPoint(3)*/) / deltaY);
+	  xun2 = floor((mjx-dom->getConfinementEdge(0)) / deltaX);
+	  yun2 = floor((mjy/*-dom->get_confinementMidPoint(3)*/) / deltaY);
+	  
+	  if ((xun < 0 || xun >= xun_tot || yun < 0 || yun >= yun_tot) && (xun2 < 0 || xun2 >= xun_tot || yun2 < 0 || yun2 >= yun_tot)){
+	    hardyIntersection = false;
+	  }
+	  if (hardyIntersection && (xun < 0 || xun >= xun_tot))
+	    xun = (abs(_r[0]-dom->getConfinementEdge(0)) < abs(_r[0]-(dom->getConfinementEdge(0)+xun_tot*deltaX)))? 0 : xun_tot;
+	  if (hardyIntersection && (yun < 0 || yun >= yun_tot))
+	    yun = (abs(_r[1]/*-dom->get_confinementMidPoint(3)*/) < abs(_r[1]-(/*dom->get_confinementMidPoint(3)+*/yun_tot*deltaY)))? 0 : yun_tot;
+	  if (hardyIntersection && (xun2 < 0 || xun2 >= xun_tot))
+	    xun2 = (abs(mjx-dom->getConfinementEdge(0)) < abs(abs(mjx-(dom->getConfinementEdge(0)+yun_tot*deltaY))))? 0 : xun_tot;
+	  if (hardyIntersection && (yun2 < 0 || yun2 >= yun_tot))
+	    yun2 = (abs(mjy/*-dom->get_confinementMidPoint(3)*/) < abs(mjy-(/*dom->get_confinementMidPoint(3)+*/yun_tot*deltaY)))? 0 : yun_tot;
+	  
+	  // smallest value that is a multiple of (_r[0]-dom->getConfinementEdge(0)) / deltaX    
+	  xPlaneShift = dom->getConfinementEdge(0);
+	  yPlaneShift = 0.0/*dom->get_confinementMidPoint(3)*/;
+	}
+	
+	unID_tot = unsigned(xun_tot*yun_tot);
+	
+	// calculation of the coordinates of the intersection points of the bond between molecules with the edges of the control volumes
+	// differentiation in four cases
+	// ------- case 1 ---------
+	if(hardyIntersection && drm[0] >= 0. && drm[1] >= 0.){
+	  xPlane_min = xun * deltaX + xPlaneShift;
+	  yPlane_min = yun * deltaY + yPlaneShift;
+	  xPlane_max = (xun2+1) * deltaX + xPlaneShift;
+	  yPlane_max = (yun2+1) * deltaY + yPlaneShift;
+	  if(xPlane_min + deltaX != xPlane_max){
+	    for (long double i = xPlane_min + deltaX; i < xPlane_max; i += deltaX){
+	      lambda = (i - _r[0])/(mjx - _r[0]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;	      
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	  if(yPlane_min + deltaY != yPlane_max){
+	    for (long double i = yPlane_min + deltaY; i < yPlane_max; i += deltaY){
+	      lambda = (i - _r[1])/(mjy - _r[1]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	// ------- case 2 ---------  
+	}else if(hardyIntersection && drm[0] >= 0. && drm[1] <= 0.){
+	  xPlane_min = xun * deltaX + xPlaneShift;
+	  yPlane_min = yun2 * deltaY + yPlaneShift;
+	  xPlane_max = (xun2+1) * deltaX + xPlaneShift;
+	  yPlane_max = (yun+1) * deltaY + yPlaneShift;
+	  if(xPlane_min + deltaX != xPlane_max){
+	    for (long double i = xPlane_min + deltaX; i < xPlane_max; i += deltaX){
+	      lambda = (i - _r[0])/(mjx - _r[0]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	  if(yPlane_min + deltaY != yPlane_max){
+	    for (long double i = yPlane_max - deltaY; i > yPlane_min; i -= deltaY){
+	      lambda = (i - _r[1])/(mjy - _r[1]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	// ------- case 3 ---------  
+	}else if(hardyIntersection && drm[0] <= 0. && drm[1] <= 0.){
+	  xPlane_min = xun2 * deltaX + xPlaneShift;
+	  yPlane_min = yun2 * deltaY + yPlaneShift;
+	  xPlane_max = (xun+1) * deltaX + xPlaneShift;
+	  yPlane_max = (yun+1) * deltaY + yPlaneShift;
+	  if(xPlane_min + deltaX != xPlane_max){
+	    for (long double i = xPlane_min + deltaX; i < xPlane_max; i += deltaX){
+	      lambda = (i - _r[0])/(mjx - _r[0]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	  if(yPlane_min + deltaY != yPlane_max){
+	    for (long double i = yPlane_min + deltaY; i < yPlane_max; i += deltaY){
+	      lambda = (i - _r[1])/(mjy - _r[1]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	// ------- case 4 ---------  
+	}else if(hardyIntersection && drm[0] <= 0. && drm[1] >= 0.){
+	  xPlane_min = xun2 * deltaX + xPlaneShift;
+	  yPlane_min = yun * deltaY + yPlaneShift;
+	  xPlane_max = (xun+1) * deltaX + xPlaneShift;
+	  yPlane_max = (yun2+1) * deltaY + yPlaneShift;
+	  if(xPlane_min + deltaX != xPlane_max){
+	    for (long double i = xPlane_min + deltaX; i < xPlane_max; i += deltaX){
+	      lambda = (i - _r[0])/(mjx - _r[0]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	  if(yPlane_min + deltaY != yPlane_max){
+	    for (long double i = yPlane_max - deltaY; i > yPlane_min; i -= deltaY){
+	      lambda = (i - _r[1])/(mjy - _r[1]);
+	      fracX = lambda * (mjx - _r[0]);
+	      fracY = lambda * (mjy - _r[1]);
+	      fracZ = lambda * (mjz - _r[2]);
+	      HardyIntersectionX = _r[0] + fracX;
+	      HardyIntersectionY = _r[1] + fracY;
+	      HardyIntersectionZ = _r[2] + fracZ;
+	      // checks the existence of the key = lambda
+	      if(_HardyIntersectionX.count(lambda) == 0){
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }else{
+		lambda += 1.0E-300;
+		_HardyIntersectionX.insert(std::pair<long double, long double>(lambda, HardyIntersectionX));
+		_HardyIntersectionY.insert(std::pair<long double, long double>(lambda, HardyIntersectionY));
+		_HardyIntersectionZ.insert(std::pair<long double, long double>(lambda, HardyIntersectionZ));
+	      }
+	    }
+	  }
+	}
+		
+	// first and last insert are the particle centre of mass themselves
+	_HardyIntersectionX[0.0] = _r[0];
+	_HardyIntersectionY[0.0] = _r[1];
+	_HardyIntersectionZ[0.0] = _r[2];
+	
+	_HardyIntersectionX[1.0] = mjx;
+	_HardyIntersectionY[1.0] = mjy;
+	_HardyIntersectionZ[1.0] = mjz;
+	
+	
+	long double halfDeltaX = 0, halfDeltaY = 0, deltaXMol = 0, deltaYMol = 0, deltaXCentre = 0, deltaYCentre = 0;
+	int sign[2]= {1,1};
+	// calculate contribution of 2D weighting function being pyramidal
+	if(hardyIntersection && weightingFunc == Pyramide){
+	  halfDeltaX = 0.5*deltaX;
+	  halfDeltaY = 0.5*deltaY;
+	  deltaXMol = mjx-_r[0];
+	  deltaYMol = mjy-_r[1];
+	  sign[0] = signumFunction(deltaXMol);  
+	  sign[1] = signumFunction(deltaYMol);
+	}
+	
+	long double previousValue = 0.0;
+	// assign the _bondFraction[a] to a control volume [b]
+      if(hardyIntersection){
+	for(std::map<long double, long double>::iterator it=_HardyIntersectionX.begin(); it!=_HardyIntersectionX.end(); ++it){
+	  std::map<long double, int> _root;
+	  
+	  if(it->first == 0.0){
+	    previousValue = it->first;
+	    continue;
+	  }
+	  long double xMean, yMean;
+	  xMean = 0.5*(_HardyIntersectionX[previousValue]+_HardyIntersectionX[it->first]);
+	  yMean = 0.5*(_HardyIntersectionY[previousValue]+_HardyIntersectionY[it->first]); 
+	  
+	  // transformation of coordinates from halo cells to in-box-cells
+	  if(xMean < 0.0)
+	    xMean += xMax;
+	  if(xMean > xMax)
+	    xMean -= xMax;
+	  if(yMean < 0.0)
+	    yMean += yMax;
+	  if(yMean > yMax)
+	    yMean -= yMax;
+	  	  
+	  // the bond fraction is assigned to the unID that is between the points _HardyIntersectionX[i] and _HardyIntersectionX[i+1]
+	  if (stress == Stress){
+	    xun = floor(xMean / deltaX);
+	    yun = floor(yMean / deltaY);
+	  }else if (stress == Confinement){
+	    xun = floor((xMean-dom->getConfinementEdge(0)) / deltaX);
+	    yun = floor((yMean/*-dom->get_confinementMidPoint(3)*/) / deltaY);
+	  }
+	  
+	  if (xun >= 0 && yun >= 0 && xun < xun_tot && yun < yun_tot){
+	    unID = xun * yun_tot  + yun;
+	    
+	    if (weightingFunc == Linear && unID >= 0 && unID < unID_tot)
+	      _bondFractionUNID[unID] = (it->first) - previousValue;
+	     
+	    // calculate contribution of 2D weighting function being pyramidal
+	    if(weightingFunc == Pyramide  && unID >= 0 && unID < unID_tot){
+	      _bondFractionUNID[unID] = 0.0;
+	      if (stress == Stress){
+		  deltaXCentre = _r[0]-(xun*deltaX+halfDeltaX);
+		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY);
+		  if(abs(deltaXCentre) > abs(xMax-deltaX)){
+		    if(deltaXCentre < 0) 
+		      deltaXCentre = xMax+deltaXCentre;
+		    else if(deltaXCentre > 0)
+		      deltaXCentre = xMax-deltaXCentre;
+		  }
+		  if(abs(deltaYCentre) > abs(yMax-deltaY)){
+		    cout << " DY0 " << deltaYCentre;
+		    if(deltaYCentre < 0) 
+		      deltaYCentre = yMax+deltaYCentre;
+		    else if(deltaYCentre > 0)
+		      deltaYCentre = yMax-deltaYCentre;
+		    cout << " DY1 " << deltaYCentre;
+		  }
+	      }else if (stress == Confinement){
+		  deltaXCentre = _r[0]-(xun*deltaX+halfDeltaX+dom->getConfinementEdge(0));
+		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY/*+dom->get_confinementMidPoint(3)*/);
+	      }
+
+	      // calculate roots of the function f = lambda*deltaXMol + deltaXCentre and g = lambda*deltaYMol + deltaYCentre due to integration over absolute value of both
+	      if((-1)*deltaXCentre/deltaXMol > previousValue && (-1)*deltaXCentre/deltaXMol < it->first){
+		  _root.insert(std::pair<long double, int>((-1)*deltaXCentre/deltaXMol,sign[0]));}
+	      if((-1)*deltaYCentre/deltaYMol > previousValue && (-1)*deltaYCentre/deltaYMol < it->first){
+		  _root.insert(std::pair<long double, int>((-1)*deltaYCentre/deltaYMol,sign[1]));}
+	      
+	      double signumF = 1.0, signumG = 1.0;
+	      
+	      long double previousValueRoot = previousValue;
+	      for(std::map<long double, int>::iterator it2=_root.begin(); it2!=_root.end(); ++it2){
+		signumF = (previousValueRoot+(it2->first))*0.5*deltaXMol+deltaXCentre;
+		signumG = (previousValueRoot+(it2->first))*0.5*deltaYMol+deltaYCentre;
+		sign[0] = signumFunction(signumF);
+		sign[1] = signumFunction(signumG);
+		if(unID==0 || unID==5 || unID==24){
+		  cout << unID << " xMean " << xMean << " yMean " << yMean << " xun " << xun << " yun " << yun << " x1 " << _r[0] << " y1 " << _r[1] << " x2 " << mjx << " y2 " << mjy << endl;
+		  _bondFractionUNID[unID] += bondFunctionPyramide(previousValueRoot, (it2->first), sign[0], sign[1], halfDeltaX, halfDeltaY, deltaXMol, deltaYMol, deltaXCentre, deltaYCentre);
+		} 
+		previousValueRoot = it2->first;
+	      }
+	      signumF = (previousValueRoot+(it->first))*0.5*deltaXMol+deltaXCentre;
+	      signumG = (previousValueRoot+(it->first))*0.5*deltaYMol+deltaYCentre;
+	      sign[0] = signumFunction(signumF);
+	      sign[1] = signumFunction(signumG);
+	      if(unID==0 || unID==5 || unID==24){
+		cout << unID;
+		_bondFractionUNID[unID] += bondFunctionPyramide(previousValueRoot, it->first, sign[0], sign[1], halfDeltaX, halfDeltaY, deltaXMol, deltaYMol, deltaXCentre, deltaYCentre);
+	      }
+	    }  
+	  }
+	  previousValue = it->first;
+	}
+      }
+}
+ 
+long double Molecule::bondFunctionPyramide(long double n0, long double n1, int signF, int signG, long double halfDeltaX, long double halfDeltaY, long double deltaXMol, long double deltaYMol, long double deltaXCentre, long double deltaYCentre){
+     long double bondFunc, bondFunc0, bondFunc1;
+
+     bondFunc1 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n1*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n1)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n1)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n1+3*deltaXMol*deltaYCentre*n1+2*deltaXMol*deltaYMol*n1*n1)*signG)));
+     bondFunc0 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n0*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n0)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n0)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n0+3*deltaXMol*deltaYCentre*n0+2*deltaXMol*deltaYMol*n0*n0)*signG)));
+     bondFunc = bondFunc1 - bondFunc0;
+     cout << " n0 " << n0 << " n1 " << n1 << " signF " << signF << " signG " << signG << " halfDeltaX " << halfDeltaX << " halfDeltaY " << halfDeltaY << " deltaXMol " << deltaXMol << " deltaYMol " << deltaYMol << " deltaXCentre " << deltaXCentre << " deltaYCentre " << deltaYCentre << " f1 " << bondFunc1 << " f0 " << bondFunc0 << " f " << bondFunc << endl;
+     return bondFunc;
+}
+
+double Molecule::weightingFunctionPyramide(unsigned xun, unsigned yun, double deltaX, double deltaY, double xStart, double yStart){
+     double CentreX, CentreY, weighting;
+     CentreX = xun*deltaX + 0.5*deltaX + xStart;
+     CentreY = yun*deltaY + 0.5*deltaY /*+ yStart*/;
+     weighting = 4/(deltaX*deltaY)*(1-2/deltaX*abs(CentreX-_r[0]))*(1-2/deltaY*abs(CentreY-_r[1]));
+     return weighting;
 }
 
 void Molecule::write(ostream& ostrm) const {
@@ -282,12 +829,14 @@ inline void Molecule::setupCache() {
 	_quadrupoles_e = &(_dipoles_e[3*numDipoles()]);
 
 	_sites_F = new double[3*numsites];
+	//_springSites_F = new double[3*numsites];
 	assert(_sites_F);
 	_ljcenters_F = &(_sites_F[0]);
 	_charges_F = &(_ljcenters_F[3*numLJcenters()]);
 	_dipoles_F = &(_charges_F[3*numCharges()]);
 	_quadrupoles_F = &(_dipoles_F[3*numDipoles()]);
 	_tersoff_F = &(_quadrupoles_F[3*numQuadrupoles()]);
+	//_spring_F = &(_springSites_F[0]);
 
 	this->clearFM();
 }
@@ -296,6 +845,7 @@ void Molecule::clearFM() {
 	int numSites = _component->numSites();
 	for (int i = 0; i < 3*numSites; i++) {
 		_sites_F[i] = 0.;
+		//_springSites_F[i] = 0.;
 	}
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;

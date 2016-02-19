@@ -172,6 +172,10 @@ public:
 	virtual long double collCommGetLongDouble() = 0;
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
 	virtual void collCommAllreduceSum() = 0;
+	//! has to call allreduceMax method of a CollComm class (none in sequential version)
+	virtual void collCommAllreduceMax() = 0;
+	//! has to call allreduceMin method of a CollComm class (none in sequential version)
+	virtual void collCommAllreduceMin() = 0;
 	//! has to call broadcast method of a CollComm class (none in sequential version)
 	virtual void collCommBroadcast(int root = 0) = 0;
 };

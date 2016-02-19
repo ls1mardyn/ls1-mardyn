@@ -5,6 +5,7 @@
 #include <string>
 #include <fstream>
 
+
 //! @brief This class is used to read in the phasespace using the "old" input file syntax
 //! @author Martin Bernreuther, Martin Buchholz
 class InputOldstyle : public InputBase {

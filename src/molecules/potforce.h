@@ -5,7 +5,45 @@
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Molecule.h"
+#include "ensemble/PressureGradient.h"
+#include "Domain.h"
 
+#include <iostream>
+using namespace std;
+
+//Domain _domain2;
+
+/** @brief Calculates force as spring equivalent for upper layer of upper plate. */
+inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, unsigned long minID, const double springConst, unsigned long molID, double currentYPos, double f[3])
+{
+	if (molID <= maxID && molID >= minID){
+	    // spring force is of interest for y-direction
+	    f[0] = 0.0;
+	    f[1] = -springConst*(currentYPos - averageZeroYPos);
+	    f[2] = 0.0;
+	}
+	else{
+	    f[0] = 0.0;
+	    f[1] = 0.0;
+	    f[2] = 0.0;
+	}
+}
+
+/** @brief Calculates force as damper equivalent for upper layer of upper plate.
+inline void PotForceDamper(unsigned long maxID, unsigned long minID, const double dampConst, unsigned long molID, double currentVy, double f[3])
+{
+	if (molID <= maxID && molID >= minID){
+	    // spring force is of interest for y-direction
+	    f[0] = 0.0;
+	    f[1] = -dampConst*currentYy;
+	    f[2] = 0.0;
+	}
+	else{
+	    f[0] = 0.0;
+	    f[1] = 0.0;
+	    f[2] = 0.0;
+	}
+}	 */
 
 /** @brief Calculates potential and force between 2 Lennard-Jones 12-6 centers. */
 inline void PotForceLJ(const double dr[3], const double& dr2,
@@ -258,15 +296,16 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
  * @param[out] MyRF
  * @todo Document parameter (is this reaction field?)
  * @param[out] Virial   Virial
- * @param[in]  caculateLJ    enable or disable calculation of Lennard Jones interactions
+ * @param[in]  calculateLJ    enable or disable calculation of Lennard Jones interactions
  */
-inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ)
-// ???better calc Virial, when molecule forces are calculated:
+inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ, Domain& domain)
+// ???better calc Virial, when molecule forces are calculated:<< endl;
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
 	double f[3];
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
+	long double virialForce;
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
 	if ((mi.numTersoff() == 0) || (mi.componentid() != mj.componentid())) {
@@ -286,7 +325,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 				if (calculateLJ) {
 					PotForceLJ(drs, dr2, eps24, sig2, f, u);
 					u += shift6;
-
+					
 // even for interactions within the cell a neighbor might try to add/subtract
 // better use atomic...
 // and even better use a order where critical sections occure only at some boundary cells...
@@ -298,11 +337,113 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						mj.Fljcentersub(sj, f);
 						Upot6LJ += u;
 						for (unsigned short d = 0; d < 3; ++d)
-							Virial += drm[d] * f[d];
+						  Virial += drm[d] * f[d];
+						  
+						if((mi.isHardyStress() || mj.isHardyStress()) && !(domain.getSimstep() % domain.getStressRecordTimeStep())){
+						  //calculation of the bond length fraction per unID
+						  string stress ("Stress");
+						  string weightingFunc = mi.getWeightingFuncStress();
+						  mi.calculateHardyIntersection(drm, mj.r(0), mj.r(1), mj.r(2), &domain, stress, weightingFunc);
+						  std::map<unsigned, long double> bondFrac;
+						  bondFrac = mi.getBondFractionUNID();
+						  for (unsigned short d = 0; d < 3; ++d){
+						    for (unsigned short e = 0; e < 3; ++e){
+							// the prefactor 0.5 in the virialForce is added because this term is calculated twice (once by molecule mi, once by molecule mj)
+							virialForce = 0.5 * drm[d] * f[e];
+							for(std::map<unsigned, long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){ 
+							    mi.addVirialForceHardyStress(d, e, it->first, virialForce*it->second);
+							    mj.addVirialForceHardyStress(d, e, it->first, virialForce*it->second);							      
+							}
+						    }
+						  }
+						}else if((domain.isStressCalculating(mi.componentid()) || domain.isStressCalculating(mj.componentid())) && !(domain.getSimstep() % domain.getStressRecordTimeStep())){
+						  for (unsigned short d = 0; d < 3; ++d){
+						    for (unsigned short e = 0; e < 3; ++e){
+							virialForce = 0.5 * drm[d] * f[e];
+							mi.addVirialForce(d, e, virialForce);
+							mj.addVirialForce(d, e, virialForce);
+						    }
+						  }
+						}
+						  
+						if(domain.isBulkPressure(mi.componentid()) || domain.isBulkPressure(mj.componentid())){
+						  if((mi.r(0) >= domain.getBulkBoundary(0)-5. && mi.r(0) <= domain.getBulkBoundary(1)+5. && mi.r(1) >= domain.getBulkBoundary(2)-5. && mi.r(1) <= domain.getBulkBoundary(3)+5.)
+						    || (mj.r(0) >= domain.getBulkBoundary(0)-5. && mj.r(0) <= domain.getBulkBoundary(1)+5. && mj.r(1) >= domain.getBulkBoundary(2)-5. && mj.r(1) <= domain.getBulkBoundary(3)+5.)){
+						    for (unsigned short d = 0; d < 3; ++d){
+							virialForce = 0.5 * drm[d] * f[d];
+							mi.addPressureVirial(d, virialForce);
+							mj.addPressureVirial(d, virialForce);
+						    }		      
+						  }
+						}
+						
+						if((mi.isHardyConfinement() || mj.isHardyConfinement()) && (domain.isConfinement(mi.componentid()) || domain.isConfinement(mj.componentid())) && !(domain.getSimstep() % domain.getConfinementRecordTimeStep())){
+						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)
+						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)){
+						    //calculation of the bond length fraction per unID
+						    string stress ("Confinement");
+						    string weightingFunc = mi.getWeightingFuncConfinement();
+						    mi.calculateHardyIntersection(drm, mj.r(0), mj.r(1), mj.r(2), &domain, stress, weightingFunc);
+						    std::map<unsigned, long double> bondFrac;
+						    bondFrac = mi.getBondFractionUNID();
+						    for (unsigned short d = 0; d < 3; ++d){
+							// the prefactor 0.5 in the virialForce is added because this term is calculated twice (once by molecule mi, once by molecule mj)
+							virialForce = 0.5 * drm[d] * f[d];
+							mi.addPressureVirialConfinement(d, virialForce);
+							mj.addPressureVirialConfinement(d, virialForce);
+							for (unsigned e = 0; e < 3; ++e){
+							  virialForce = 0.5 * drm[d] * f[e];
+							  for(std::map<unsigned,long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){
+							    mi.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
+							    mj.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
+							  }
+							}
+						    }
+						  }		      
+						}else if((domain.isConfinement(mi.componentid()) || domain.isConfinement(mj.componentid())) && !(domain.getSimstep() % domain.getConfinementRecordTimeStep())){
+						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)
+						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)){
+						    for (unsigned short d = 0; d < 3; ++d){
+							virialForce = 0.5 * drm[d] * f[d];
+							mi.addPressureVirialConfinement(d, virialForce);
+							mj.addPressureVirialConfinement(d, virialForce);
+							for (unsigned e = 0; e < 3; ++e){
+							  virialForce = 0.5 * drm[d] * f[e];
+							  mi.addVirialForceConfinement(d, e, virialForce);
+							  mj.addVirialForceConfinement(d, e, virialForce);
+							}
+						    }
+						  }		      
+						}
 					}
 				}
 			}
 		}
+	}
+	
+	//TEST: spring force is added to the LJ-force
+	// the molecules to be effected by the spring force lay in one plane and have continous IDs;
+	// to add the spring force just once to each molecule of the upper layer of the upper plate
+	// an if-request is upstreamed
+	if (domain.getPG()->isSpringDamped()){
+	    if (mi.getCounter() == 0){
+		for (unsigned int si = 0; si < 1; ++si) {
+		    PotForceSpring(domain.getPG()->getAverageY(), domain.getPG()->getMaxSpringID(), domain.getPG()->getMinSpringID(), domain.getPG()->getSpringConst(), mi.id(), mi.r(1), f);
+		    mi.Fljcenteradd(si, f);
+		    for (unsigned short d = 0; d < 3; ++d)
+		    {
+			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
+			mi.setF_Spring(d, 0.0);
+		    }
+		
+		    for (unsigned short d = 0; d < 3; ++d)
+			mi.setF_Spring(d, f[d]);
+		    
+		    // Prohibits that the spring force is added to one molecule more than once
+		    mi.setCounter(1);
+		    
+		}
+	    }
 	}
 
 	double m1[3], m2[3]; // angular momenta

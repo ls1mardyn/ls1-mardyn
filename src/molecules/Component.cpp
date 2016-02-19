@@ -270,3 +270,4 @@ std::ostream& operator<<(std::ostream& stream, const Component& component) {
 	component.write(stream);
 	return stream;
 }
+

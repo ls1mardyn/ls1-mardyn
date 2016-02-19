@@ -72,6 +72,7 @@ public:
 			Domain* domain
 	);
 	virtual void accelerateInstantaneously(
+			DomainDecompBase* domainDecomp,
 			ParticleContainer* molCont,
 			Domain* domain
 	);
