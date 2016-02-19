@@ -659,6 +659,10 @@ void Simulation::prepare_start() {
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
 	_moleculeContainer->traverseCells(*_cellProcessor);
+	if (_FMM != NULL) {
+		global_log->info() << "Performing inital FMM force calculation" << endl;
+		_FMM->computeElectrostatics(_moleculeContainer);
+	}
 
 	/* If enabled count FLOP rate of LS1. */
 	if( NULL != _flopCounter ) {
@@ -868,6 +872,10 @@ void Simulation::simulate() {
 		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing pairs" << endl;
 		_moleculeContainer->traverseCells(*_cellProcessor);
+		if (_FMM != NULL) {
+			global_log->debug() << "Performing FMM calculation" << endl;
+			_FMM->computeElectrostatics(_moleculeContainer);
+		}
 
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
