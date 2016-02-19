@@ -82,29 +82,6 @@ private:
 	Domain & _domain;
 
 	/**
-	 * \brief The squared cutoff radius.
-	 */
-	//const double _cutoffRadiusSquare;
-
-	/**
-	 * \brief The squared LJ cutoff radius.
-	 */
-	//const double _LJcutoffRadiusSquare;
-
-	/**
-	 * \brief Parameter for the reaction field method (see description in Domain.h and Comp2Param.cpp).
-	 */
-	const double _epsRFInvrc3;
-
-	/**
-	 * \brief One LJ center enumeration start index for each component.
-	 * \details All the LJ centers of all components are enumerated.<br>
-	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
-	 * This is necessary for finding the respective parameters for each interaction<br>
-	 * between two centers.
-	 */
-
-	/**
 	 * \brief One LJ center enumeration start index for each component.
 	 * \details All the LJ centers of all components are enumerated.<br>
 	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>

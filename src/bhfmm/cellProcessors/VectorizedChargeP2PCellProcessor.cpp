@@ -20,8 +20,7 @@ namespace bhfmm {
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
-		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_compIDs(), _upotXpoles(0.0), _virial(0.0){
+		_compIDs(), _upotXpoles(0.0), _virial(0.0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
@@ -75,8 +74,11 @@ void VectorizedChargeP2PCellProcessor::initTraversal(const size_t numCells) {
 
 
 void VectorizedChargeP2PCellProcessor::endTraversal() {
-	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
-	_domain.setLocalUpot(/*_upot6lj / 6.0 +*/ _upotXpoles /*+ _myRF*/);
+	double currentVirial = _domain.getLocalVirial();
+	double currentUpot = _domain.getLocalUpot();
+
+	_domain.setLocalVirial(currentVirial + _virial);
+	_domain.setLocalUpot(currentUpot + _upotXpoles);
 }
 
 
@@ -93,17 +95,13 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 	size_t nQuadrupoles = 0;
 	
 	for (size_t m = 0;  m < numMolecules; ++m) {
-		nLJCenters += molecules[m]->numLJcenters();
 		nCharges += molecules[m]->numCharges();
-		nDipoles += molecules[m]->numDipoles();
-		nQuadrupoles += molecules[m]->numQuadrupoles();
 	}
 
 	// Construct the SoA.
 	assert(!_particleCellDataVector.empty()); 
 	CellDataSoA* soaPtr = _particleCellDataVector.back();
-//	global_log->debug() << " _particleCellDataVector.size()=" << _particleCellDataVector.size() << " soaPtr=" << soaPtr
-//						<< " nCenters=" << nLJCenters + nCharges + nDipoles + nQuadrupoles << std::endl;
+
 	CellDataSoA & soa = *soaPtr;
 	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
 	c.setCellDataSoA(soaPtr);
@@ -111,16 +109,10 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 	ComponentList components = *(_simulation.getEnsemble()->components());
 
-	size_t iLJCenters = 0;
 	size_t iCharges = 0;
-	size_t iDipoles = 0;
-	size_t iQuadrupoles = 0;
 	// For each molecule iterate over all its centers.
 	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t mol_ljc_num = molecules[i]->numLJcenters();
 		const size_t mol_charges_num = molecules[i]->numCharges();
-		const size_t mol_dipoles_num = molecules[i]->numDipoles();
-		const size_t mol_quadrupoles_num = molecules[i]->numQuadrupoles();
 		const double mol_pos_x = molecules[i]->r(0);
 		const double mol_pos_y = molecules[i]->r(1);
 		const double mol_pos_z = molecules[i]->r(2);
@@ -128,29 +120,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 		soa._mol_pos_x[i] = mol_pos_x;
 		soa._mol_pos_y[i] = mol_pos_y;
 		soa._mol_pos_z[i] = mol_pos_z;
-		soa._mol_ljc_num[i] = mol_ljc_num;
 		soa._mol_charges_num[i] = mol_charges_num;
-		soa._mol_dipoles_num[i] = mol_dipoles_num;
-		soa._mol_quadrupoles_num[i] = mol_quadrupoles_num;
-
-		for (size_t j = 0; j < mol_ljc_num; ++j, ++iLJCenters) {
-			// Store a copy of the molecule position for each center, and the position of
-			// each center. Assign each LJ center its ID and set the force to 0.0.
-			soa._ljc_m_r_x[iLJCenters] = mol_pos_x;
-			soa._ljc_m_r_y[iLJCenters] = mol_pos_y;
-			soa._ljc_m_r_z[iLJCenters] = mol_pos_z;
-			soa._ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
-			soa._ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
-			soa._ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
-			soa._ljc_f_x[iLJCenters] = 0.0;
-			soa._ljc_f_y[iLJCenters] = 0.0;
-			soa._ljc_f_z[iLJCenters] = 0.0;
-			soa._ljc_V_x[iLJCenters] = 0.0;
-			soa._ljc_V_y[iLJCenters] = 0.0;
-			soa._ljc_V_z[iLJCenters] = 0.0;
-			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
-			soa._ljc_dist_lookup[iLJCenters] = 0.0;
-		}
 
 		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges)
 		{
@@ -170,56 +140,6 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			// Get the charge
 			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
 		}
-
-		for (size_t j = 0; j < mol_dipoles_num; ++j, ++iDipoles)
-		{
-			soa._dipoles_m_r_x[iDipoles] = mol_pos_x;
-			soa._dipoles_m_r_y[iDipoles] = mol_pos_y;
-			soa._dipoles_m_r_z[iDipoles] = mol_pos_z;
-			soa._dipoles_r_x[iDipoles] = molecules[i]->dipole_d(j)[0] + mol_pos_x;
-			soa._dipoles_r_y[iDipoles] = molecules[i]->dipole_d(j)[1] + mol_pos_y;
-			soa._dipoles_r_z[iDipoles] = molecules[i]->dipole_d(j)[2] + mol_pos_z;
-			soa._dipoles_f_x[iDipoles] = 0.0;
-			soa._dipoles_f_y[iDipoles] = 0.0;
-			soa._dipoles_f_z[iDipoles] = 0.0;
-			soa._dipoles_V_x[iDipoles] = 0.0;
-			soa._dipoles_V_y[iDipoles] = 0.0;
-			soa._dipoles_V_z[iDipoles] = 0.0;
-			soa._dipoles_dist_lookup[iDipoles] = 0.0;
-			// Get the dipole moment
-			soa._dipoles_p[iDipoles] = components[molecules[i]->componentid()].dipole(j).absMy();
-			soa._dipoles_e_x[iDipoles] = molecules[i]->dipole_e(j)[0];
-			soa._dipoles_e_y[iDipoles] = molecules[i]->dipole_e(j)[1];
-			soa._dipoles_e_z[iDipoles] = molecules[i]->dipole_e(j)[2];
-			soa._dipoles_M_x[iDipoles] = 0.0;
-			soa._dipoles_M_y[iDipoles] = 0.0;
-			soa._dipoles_M_z[iDipoles] = 0.0;
-		}
-
-		for (size_t j = 0; j < mol_quadrupoles_num; ++j, ++iQuadrupoles)
-		{
-			soa._quadrupoles_m_r_x[iQuadrupoles] = mol_pos_x;
-			soa._quadrupoles_m_r_y[iQuadrupoles] = mol_pos_y;
-			soa._quadrupoles_m_r_z[iQuadrupoles] = mol_pos_z;
-			soa._quadrupoles_r_x[iQuadrupoles] = molecules[i]->quadrupole_d(j)[0] + mol_pos_x;
-			soa._quadrupoles_r_y[iQuadrupoles] = molecules[i]->quadrupole_d(j)[1] + mol_pos_y;
-			soa._quadrupoles_r_z[iQuadrupoles] = molecules[i]->quadrupole_d(j)[2] + mol_pos_z;
-			soa._quadrupoles_f_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_f_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_f_z[iQuadrupoles] = 0.0;
-			soa._quadrupoles_V_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_V_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_V_z[iQuadrupoles] = 0.0;
-			soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
-			// Get the quadrupole moment
-			soa._quadrupoles_m[iQuadrupoles] = components[molecules[i]->componentid()].quadrupole(j).absQ();
-			soa._quadrupoles_e_x[iQuadrupoles] = molecules[i]->quadrupole_e(j)[0];
-			soa._quadrupoles_e_y[iQuadrupoles] = molecules[i]->quadrupole_e(j)[1];
-			soa._quadrupoles_e_z[iQuadrupoles] = molecules[i]->quadrupole_e(j)[2];
-			soa._quadrupoles_M_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_M_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_M_z[iQuadrupoles] = 0.0;
-		}
 	}
 }
 
@@ -231,10 +151,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 	MoleculeList & molecules = c.getParticlePointers();
 
 	// For each molecule iterate over all its centers.
-	size_t iLJCenters = 0;
 	size_t iCharges = 0;
-	size_t iDipoles = 0;
-	size_t iQuadrupoles = 0;
 	size_t numMols = molecules.size();
 	for (size_t m = 0; m < numMols; ++m) {
 		const size_t mol_ljc_num = molecules[m]->numLJcenters();
@@ -242,37 +159,12 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 		const size_t mol_dipoles_num = molecules[m]->numDipoles();
 		const size_t mol_quadrupoles_num = molecules[m]->numQuadrupoles();
 
-		for (size_t i = 0; i < mol_ljc_num; ++i, ++iLJCenters) {
-			// Store the resulting force in the molecule.
-			double f[3];
-			f[0] = soa._ljc_f_x[iLJCenters];
-			f[1] = soa._ljc_f_y[iLJCenters];
-			f[2] = soa._ljc_f_z[iLJCenters];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			molecules[m]->Fljcenteradd(i, f);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._ljc_V_x[iLJCenters]*0.5;
-			V[1] = soa._ljc_V_y[iLJCenters]*0.5;
-			V[2] = soa._ljc_V_z[iLJCenters]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
 			double f[3];
 			f[0] = soa._charges_f_x[iCharges];
 			f[1] = soa._charges_f_y[iCharges];
 			f[2] = soa._charges_f_z[iCharges];
-			if(isnan(f[0])||isnan(f[1])||isnan(f[2]) ){
-				printf("nan\n");
-			}
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -283,66 +175,6 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 			V[0] = soa._charges_V_x[iCharges]*0.5;
 			V[1] = soa._charges_V_y[iCharges]*0.5;
 			V[2] = soa._charges_V_z[iCharges]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-
-		for (size_t i = 0; i < mol_dipoles_num; ++i, ++iDipoles) {
-			// Store the resulting force & torque in the molecule.
-			double f[3];
-			f[0] = soa._dipoles_f_x[iDipoles];
-			f[1] = soa._dipoles_f_y[iDipoles];
-			f[2] = soa._dipoles_f_z[iDipoles];
-			double M[3];
-			M[0] = soa._dipoles_M_x[iDipoles];
-			M[1] = soa._dipoles_M_y[iDipoles];
-			M[2] = soa._dipoles_M_z[iDipoles];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			assert(!isnan(M[0]));
-			assert(!isnan(M[1]));
-			assert(!isnan(M[2]));
-			molecules[m]->Fdipoleadd(i, f);
-			molecules[m]->Madd(M);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._dipoles_V_x[iDipoles]*0.5;
-			V[1] = soa._dipoles_V_y[iDipoles]*0.5;
-			V[2] = soa._dipoles_V_z[iDipoles]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-
-		for (size_t i = 0; i < mol_quadrupoles_num; ++i, ++iQuadrupoles) {
-			// Store the resulting force & torque in the molecule.
-			double f[3];
-			f[0] = soa._quadrupoles_f_x[iQuadrupoles];
-			f[1] = soa._quadrupoles_f_y[iQuadrupoles];
-			f[2] = soa._quadrupoles_f_z[iQuadrupoles];
-			double M[3];
-			M[0] = soa._quadrupoles_M_x[iQuadrupoles];
-			M[1] = soa._quadrupoles_M_y[iQuadrupoles];
-			M[2] = soa._quadrupoles_M_z[iQuadrupoles];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			assert(!isnan(M[0]));
-			assert(!isnan(M[1]));
-			assert(!isnan(M[2]));
-			molecules[m]->Fquadrupoleadd(i, f);
-			molecules[m]->Madd(M);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._quadrupoles_V_x[iQuadrupoles]*0.5;
-			V[1] = soa._quadrupoles_V_y[iQuadrupoles]*0.5;
-			V[2] = soa._quadrupoles_V_z[iQuadrupoles]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -694,14 +526,11 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = soa2._charges_dist_lookup;
 
 
-	vcp_double_vec sum_upot6lj = VCP_SIMD_ZEROV;
 	vcp_double_vec sum_upotXpoles = VCP_SIMD_ZEROV;
 	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
-	vcp_double_vec sum_myRF = VCP_SIMD_ZEROV;
 
 	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
 	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
-	const vcp_double_vec epsRFInvrc3 = vcp_simd_broadcast(&_epsRFInvrc3);
 
 	/*
 	 *  Here different end values for the loops are defined. For loops, which do not vectorize over the last (possibly "uneven") amount of indices, the normal values are computed. These mark the end of the vectorized part.
@@ -715,12 +544,6 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	const size_t end_charges_j_longloop = vcp_ceil_to_vec_size(soa2._charges_num);//this is ceil _charges_num, VCP_VEC_SIZE
 	countertype32 end_charges_j_cnt = 0;//count for gather
 	size_t i_charge_idx = 0;
-	size_t i_charge_dipole_idx = 0;
-	size_t i_charge_quadrupole_idx = 0;
-
-	//if(soa1._mol_num < 8){
-	//	printf("less than 8\n");
-	//}
 
 	// Iterate over each center in the first cell.
 	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
@@ -878,7 +701,6 @@ void VectorizedChargeP2PCellProcessor::processCell(ParticleCell & c) {
 	if (c.isHaloCell() || (c.getCellDataSoA()->_mol_num < 2)) {
 		return;
 	}
-//printf("---------------singleCell-------------\n");
 	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
 }
 
@@ -890,7 +712,6 @@ void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCell & c1, Partic
 	if ((c1.getCellDataSoA()->_mol_num == 0) || (c2.getCellDataSoA()->_mol_num == 0)) {
 		return;
 	}
-	//printf("---------------cellPair-------------\n");
 	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
 		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
 	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
