@@ -193,11 +193,18 @@ private:
 	class SingleCellPolicy_ {
 	public:
 
+		/**
+		 * used for remainder calculations
+		 * @param m_r2
+		 * @param rc2
+		 * @return
+		 */
 		inline static bool Condition(double m_r2, double rc2)
 		{
 			// If m_r2 == 0, it has to be 2 LJ centers in the same molecule
 			// (or 2 molecules are at the same location). These are ignored.
-			return (m_r2 < rc2) && (m_r2 != 0.0);
+			return (m_r2 != 0.0);
+			// OLD: return (m_r2 < rc2) && (m_r2 != 0.0);
 		}
 
 		inline static bool DetectSingleCell ()
@@ -223,7 +230,9 @@ private:
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
 		{
-			vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
+			// no cutoff radius anymore, but check for m_r2=0
+			vcp_mask_vec result = vcp_simd_and( vcp_simd_neq(m_r2, VCP_SIMD_ZEROV), j_mask);
+			// OLD: vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
 			j_mask = VCP_SIMD_ONESVM;
 			return result;
 		}
@@ -248,12 +257,14 @@ private:
 		// Erstellen der Bitmaske, analog zu Condition oben
 		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
+			return vcp_simd_neq(m_r2, VCP_SIMD_ZEROV); // no cutoff radius anymore, but check for m_r2=0
+			//OLD:  return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
 		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
-			return vcp_simd_lt(m_r2, rc2);
+			return VCP_SIMD_ONESVM; // no cutoff radius anymore, in a single cell, there cannot be an distance of 0 for the novec case
+			//OLD: return vcp_simd_lt(m_r2, rc2);
 		}
 #endif /* definition of InitJ_Mask & GetForceMask */
 	}; /* end of class SingleCellPolicy_ */
@@ -266,9 +277,8 @@ private:
 
 		inline static bool Condition(double m_r2, double rc2)
 		{
-			// Because we have 2 different cells, no 2 centers on the same
-			// molecule can form a pair.
-			return m_r2 < rc2;
+			return (m_r2 != 0.0);
+			// OLD: return m_r2 < rc2;
 		}
 
 		inline static size_t InitJ (const size_t i)
@@ -292,9 +302,8 @@ private:
 #endif
 				)
 		{
-			// Provide a mask with the same logic as used in
-			// bool Condition(double m_r2, double rc2)
-			return vcp_simd_lt(m_r2, rc2);
+			// test for m_r2 != 0
+			return vcp_simd_neq(m_r2, VCP_SIMD_ZEROV);
 		}
 
 

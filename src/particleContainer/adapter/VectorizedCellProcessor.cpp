@@ -992,9 +992,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
 		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
 		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
-		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
+		const double m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
 
-		const bool forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? (~0l) : 0l;
+		const bool forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
 		*(soa2_center_dist_lookup + j) = forceMask;
 		compute_molecule |= forceMask;
 
@@ -1017,7 +1017,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
 		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
-		const vcp_double_vec m_r2 = vcp_simd_fma(m_dx, m_dx, vcp_simd_fma(m_dy, m_dy, m_dz * m_dz));
+		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
 		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);

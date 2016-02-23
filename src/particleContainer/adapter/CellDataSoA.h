@@ -243,6 +243,11 @@ public:
 		array.resize(size, startZero);
 	}
 
+	/**
+	 * resizes an array for all the centers and ensures, that the additionally allocated space is at least set once (valgrind error prevention reasons)
+	 * @param array
+	 * @param size
+	 */
 	template<class T>
 	vcp_inline
 	void resizeCentersZero(AlignedArray<T>& array, const size_t& size) const{
