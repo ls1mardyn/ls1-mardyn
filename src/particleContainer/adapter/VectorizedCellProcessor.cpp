@@ -183,7 +183,7 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._ljc_V_y[iLJCenters] = 0.0;
 			soa._ljc_V_z[iLJCenters] = 0.0;
 			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
-			soa._ljc_dist_lookup[iLJCenters] = 0.0;
+			//soa._ljc_dist_lookup[iLJCenters] = 0.0;
 		}
 
 		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges)
@@ -200,7 +200,7 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._charges_V_x[iCharges] = 0.0;
 			soa._charges_V_y[iCharges] = 0.0;
 			soa._charges_V_z[iCharges] = 0.0;
-			soa._charges_dist_lookup[iCharges] = 0.0;
+			//soa._charges_dist_lookup[iCharges] = 0.0;
 			// Get the charge
 			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
 		}
@@ -219,7 +219,7 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._dipoles_V_x[iDipoles] = 0.0;
 			soa._dipoles_V_y[iDipoles] = 0.0;
 			soa._dipoles_V_z[iDipoles] = 0.0;
-			soa._dipoles_dist_lookup[iDipoles] = 0.0;
+			//soa._dipoles_dist_lookup[iDipoles] = 0.0;
 			// Get the dipole moment
 			soa._dipoles_p[iDipoles] = components[molecules[i]->componentid()].dipole(j).absMy();
 			soa._dipoles_e_x[iDipoles] = molecules[i]->dipole_e(j)[0];
@@ -244,7 +244,7 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._quadrupoles_V_x[iQuadrupoles] = 0.0;
 			soa._quadrupoles_V_y[iQuadrupoles] = 0.0;
 			soa._quadrupoles_V_z[iQuadrupoles] = 0.0;
-			soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
+			//soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
 			// Get the quadrupole moment
 			soa._quadrupoles_m[iQuadrupoles] = components[molecules[i]->componentid()].quadrupole(j).absQ();
 			soa._quadrupoles_e_x[iQuadrupoles] = molecules[i]->quadrupole_e(j)[0];
@@ -1220,6 +1220,12 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	// initialize dist lookups
+	if(_centers_dist_lookup.get_size() < soa2._centers_size){
+		soa2.resizeCentersZero(_centers_dist_lookup, soa2._centers_size);
+	}
+	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
+
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
 	const double * const soa1_mol_pos_y = soa1._mol_pos_y;
@@ -1252,7 +1258,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_ljc_V_z = soa2._ljc_V_z;
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
-	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = soa2._ljc_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = _ljc_dist_lookup;
 
 	// Pointer for charges
 	const double * const soa1_charges_r_x = soa1._charges_r_x;
@@ -1281,7 +1287,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_charges_V_z = soa2._charges_V_z;
 	const double * const soa2_charges_q = soa2._charges_q;
 
-	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = soa2._charges_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = _charges_dist_lookup;
 
 	// Pointer for dipoles
 	const double * const soa1_dipoles_r_x = soa1._dipoles_r_x;
@@ -1322,7 +1328,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_dipoles_M_y = soa2._dipoles_M_y;
 	double * const soa2_dipoles_M_z = soa2._dipoles_M_z;
 
-	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = soa2._dipoles_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = _dipoles_dist_lookup;
 
 	// Pointer for quadrupoles
 	const double * const soa1_quadrupoles_r_x = soa1._quadrupoles_r_x;
@@ -1363,7 +1369,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M_y;
 	double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M_z;
 
-	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = soa2._quadrupoles_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = _quadrupoles_dist_lookup;
 
 
 

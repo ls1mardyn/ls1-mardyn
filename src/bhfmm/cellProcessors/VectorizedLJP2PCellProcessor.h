@@ -136,9 +136,40 @@ private:
 	 */
 	double _virial;
 
-	// vector holding pointers to the above objects, used as a stack for
-	// managing free objects
+	/**
+	 * \brief vector holding pointers to different CellDataSoA objects, used as a stack for
+	 * managing free objects.
+	 * Initially it is filled upon calling the initTraversal function; when running the preProcessCell function,
+	 * this stack is emptied, while it is filled again, during the postProcessCell step.
+	 */
 	std::vector<CellDataSoA*> _particleCellDataVector;
+
+	/**
+	 * \brief array, that stores the dist_lookup.
+	 * For all vectorization methods, that utilize masking, this stores masks.
+	 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
+	 */
+	AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
+
+	/**
+	 * \brief pointer to the starting point of the dist_lookup of the lennard jones particles.
+	 */
+	vcp_lookupOrMask_single* _ljc_dist_lookup;
+
+	/**
+	 * \brief pointer to the starting point of the dist_lookup of the charge particles.
+	 */
+	vcp_lookupOrMask_single* _charges_dist_lookup;
+
+	/**
+	 * \brief pointer to the starting point of the dist_lookup of the dipole particles.
+	 */
+	vcp_lookupOrMask_single* _dipoles_dist_lookup;
+
+	/**
+	 * \brief pointer to the starting point of the dist_lookup of the quadrupole particles.
+	 */
+	vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
 
 	template<bool calculateMacroscopic>
 	inline

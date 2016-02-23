@@ -136,7 +136,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._charges_V_x[iCharges] = 0.0;
 			soa._charges_V_y[iCharges] = 0.0;
 			soa._charges_V_z[iCharges] = 0.0;
-			soa._charges_dist_lookup[iCharges] = 0.0;
+			//soa._charges_dist_lookup[iCharges] = 0.0;
 			// Get the charge
 			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
 		}
@@ -491,6 +491,13 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	// initialize dist lookups
+	if(_centers_dist_lookup.get_size() < soa2._centers_size){
+		soa2.resizeCentersZero(_centers_dist_lookup,soa2._centers_size);
+	}
+	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
+
+
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
 	const double * const soa1_mol_pos_y = soa1._mol_pos_y;
@@ -523,7 +530,7 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	double * const soa2_charges_V_z = soa2._charges_V_z;
 	const double * const soa2_charges_q = soa2._charges_q;
 
-	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = soa2._charges_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = _charges_dist_lookup;
 
 
 	vcp_double_vec sum_upotXpoles = VCP_SIMD_ZEROV;

@@ -165,7 +165,7 @@ void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			soa._ljc_V_y[iLJCenters] = 0.0;
 			soa._ljc_V_z[iLJCenters] = 0.0;
 			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
-			soa._ljc_dist_lookup[iLJCenters] = 0.0;
+			//soa._ljc_dist_lookup[iLJCenters] = 0.0;
 		}
 	}
 }
@@ -527,6 +527,13 @@ inline VectorizedLJP2PCellProcessor::calcDistLookup (const CellDataSoA & soa1, c
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	// initialize dist lookups
+	if(_centers_dist_lookup.get_size() < soa2._centers_size){
+		soa2.resizeCentersZero(_centers_dist_lookup,soa2._centers_size);
+	}
+	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
+
+
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
 	const double * const soa1_mol_pos_y = soa1._mol_pos_y;
@@ -559,7 +566,7 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 	double * const soa2_ljc_V_z = soa2._ljc_V_z;
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
-	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = soa2._ljc_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = _ljc_dist_lookup;
 
 	vcp_double_vec sum_upot6lj = VCP_SIMD_ZEROV;
 	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
