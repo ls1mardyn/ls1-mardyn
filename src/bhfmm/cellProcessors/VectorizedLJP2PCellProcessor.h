@@ -156,21 +156,6 @@ private:
 		 */
 		vcp_lookupOrMask_single* _ljc_dist_lookup;
 
-		/**
-		 * \brief pointer to the starting point of the dist_lookup of the charge particles.
-		 */
-		vcp_lookupOrMask_single* _charges_dist_lookup;
-
-		/**
-		 * \brief pointer to the starting point of the dist_lookup of the dipole particles.
-		 */
-		vcp_lookupOrMask_single* _dipoles_dist_lookup;
-
-		/**
-		 * \brief pointer to the starting point of the dist_lookup of the quadrupole particles.
-		 */
-		vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
-
 	template<bool calculateMacroscopic>
 	inline
 	void _loopBodyLJ(

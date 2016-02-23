@@ -20,7 +20,7 @@ namespace bhfmm {
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
-		_compIDs(), _upotXpoles(0.0), _virial(0.0) {
+		_compIDs(), _upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
@@ -492,10 +492,10 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
 	// initialize dist lookups
-	if(_centers_dist_lookup.get_size() < soa2._centers_size){
-		soa2.resizeCentersZero(_centers_dist_lookup,soa2._centers_size);
+	if(_centers_dist_lookup.get_size() < soa2._charges_size){
+		soa2.resizeLastZero(_centers_dist_lookup, soa2._charges_size, soa2._charges_num);
 	}
-	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
+	_charges_dist_lookup = _centers_dist_lookup;
 
 
 	// Pointer for molecules

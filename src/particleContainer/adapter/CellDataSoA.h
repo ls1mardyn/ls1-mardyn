@@ -239,7 +239,7 @@ public:
 
 	template<class T>
 	static vcp_inline
-	void resizeLastZero(AlignedArray<T>& array, const size_t& size,const size_t& startZero){
+	void resizeLastZero(AlignedArray<T>& array, const size_t& size, const size_t& startZero){
 		array.resize(size, startZero);
 	}
 

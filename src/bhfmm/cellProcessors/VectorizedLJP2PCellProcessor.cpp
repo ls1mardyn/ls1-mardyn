@@ -21,7 +21,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0) {
+		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0), _ljc_dist_lookup(0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedLJP2PCellProcessor: using no intrinsics." << std::endl;
@@ -528,10 +528,10 @@ inline VectorizedLJP2PCellProcessor::calcDistLookup (const CellDataSoA & soa1, c
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
 	// initialize dist lookups
-	if(_centers_dist_lookup.get_size() < soa2._centers_size){
-		soa2.resizeCentersZero(_centers_dist_lookup,soa2._centers_size);
+	if(_centers_dist_lookup.get_size() < soa2._ljc_size){
+		soa2.resizeLastZero(_centers_dist_lookup, soa2._ljc_size, soa2._ljc_num);
 	}
-	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
+	_ljc_dist_lookup = _centers_dist_lookup;
 
 
 	// Pointer for molecules
