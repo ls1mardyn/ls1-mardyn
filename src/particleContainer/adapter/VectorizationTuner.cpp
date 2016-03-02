@@ -80,7 +80,7 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
 
 	global_log->info() << "VT: begin VECTORIZATION TUNING "<< endl;
 
-    double gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner,gflopsOwnZero, gflopsPairZero;
+    double gflopsOwnBig=0., gflopsPairBig=0., gflopsOwnNormal=0., gflopsPairNormalFace=0., gflopsPairNormalEdge=0., gflopsPairNormalCorner=0.,gflopsOwnZero=0., gflopsPairZero=0.;
 
     stringstream filenamestream;
 	filenamestream << _outputPrefix;
@@ -190,15 +190,13 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	double dirzplus[3] = {0., 0., 1.};
 
 	Timer timer;
-#ifdef ENABLE_MPI
-	timer.set_sync(false);
-#endif
 
 	global_log->info() << "--------------------------Molecule count: " << numMols << "--------------------------" << endl;
 
 	//initialize both cells with molecules between 0,0,0 and 1,1,1
     initUniformRandomMolecules(BoxMin, BoxMax, comp, firstCell, numMols);
     initUniformRandomMolecules(BoxMin, BoxMax, comp, secondCell, numMols);
+    moveMolecules(dirxplus, secondCell);
 
 	long long int numRepetitions = 10000;
 
@@ -207,14 +205,13 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 		(**_cellProcessor).setCutoffRadius(0.);
 		(**_cellProcessor).setLJCutoffRadius(0.);
 		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnZero, *_flopCounterZeroRc);
-		iterateOwn(timer, numRepetitions, firstCell, gflopsPairZero, *_flopCounterZeroRc);
+		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairZero, *_flopCounterZeroRc);
     //1+2: bigRC
 	(**_cellProcessor).setCutoffRadius(_cutoffRadiusBig);
 	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadiusBig);
     //1. own, bigRC
 		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnBig, *_flopCounterBigRc);
 	//2. pair, bigRC
-		moveMolecules(dirxplus, secondCell);
 		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairBig, *_flopCounterBigRc);
 	//3,...: normalRC
 	(**_cellProcessor).setCutoffRadius(_cutoffRadius);
