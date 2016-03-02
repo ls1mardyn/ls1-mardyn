@@ -57,6 +57,10 @@ ifeq ($(VECTORIZE_CODE),4)
 CXXFLAGS_VECTORIZE = -mmic
 LDFLAGS_VECTORIZE = -mmic
 endif
+ifeq ($(VECTORIZE_CODE),5)
+CXXFLAGS_VECTORIZE = -mmic -D__VCP_GATHER__
+LDFLAGS_VECTORIZE = -mmic
+endif
 
 # Special compile-rule for the VectorizedCellProcessor to enforce inlining.
 particleContainer/adapter/VectorizedCellProcessor.o: particleContainer/adapter/VectorizedCellProcessor.cpp
