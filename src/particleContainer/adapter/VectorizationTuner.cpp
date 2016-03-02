@@ -141,7 +141,10 @@ void VectorizationTuner::iterateOwn(Timer timer, long long int numRepetitions,
 			/ timer.get_etime() / (1024 * 1024 * 1024);
 	global_log->info() << "FLOP-Count per Iteration: "
 			<< flopCounter.getTotalFlopCount() << " FLOPs" << endl;
-	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl << endl;
+	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
+	global_log->info() << "number of iterations: " << numRepetitions << endl;
+	global_log->info() << "total time: " << timer.get_etime() << "s" << endl;
+	global_log->info() << "time per iteration: " << timer.get_etime() / numRepetitions << "s " << endl << endl;
 	flopCounter.resetCounters();
 	timer.reset();
 }
@@ -159,7 +162,10 @@ void VectorizationTuner::iteratePair(Timer timer, long long int numRepetitions,
 			/ timer.get_etime() / (1024 * 1024 * 1024);
 	global_log->info() << "FLOP-Count per Iteration: "
 			<< flopCounter.getTotalFlopCount() << " FLOPs" << endl;
-	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl << endl;
+	global_log->info() << "FLOP-rate: " << gflopsPair << " GFLOPS" << endl;
+	global_log->info() << "number of iterations: " << numRepetitions << endl;
+	global_log->info() << "total time: " << timer.get_etime() << "s" << endl;
+	global_log->info() << "time per iteration: " << timer.get_etime() / numRepetitions << "s " << endl << endl;
 	flopCounter.resetCounters();
 	timer.reset();
 }
@@ -198,7 +204,7 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
     initUniformRandomMolecules(BoxMin, BoxMax, comp, secondCell, numMols);
     moveMolecules(dirxplus, secondCell);
 
-	long long int numRepetitions = 10000;
+	long long int numRepetitions = std::max(20000000u / (numMols*numMols), 10u);
 
 
 	//0a,0b: 0RC
@@ -213,6 +219,8 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 		iterateOwn(timer, numRepetitions, firstCell, gflopsOwnBig, *_flopCounterBigRc);
 	//2. pair, bigRC
 		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairBig, *_flopCounterBigRc);
+#if 0
+		TODO: redo these with mesh of molecules
 	//3,...: normalRC
 	(**_cellProcessor).setCutoffRadius(_cutoffRadius);
 	(**_cellProcessor).setLJCutoffRadius(_LJCutoffRadius);
@@ -226,6 +234,7 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	//6. pair, normalRC corner
 		moveMolecules(dirzplus, secondCell);
 		iteratePair(timer, numRepetitions, firstCell, secondCell, gflopsPairNormalCorner, *_flopCounterNormalRc); //cell2s particles moved by 1,1,1 - common corner
+#endif
 
 	// clear cells
 	clearMolecules(firstCell);
