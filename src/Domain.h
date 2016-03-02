@@ -64,6 +64,7 @@ public:
 	//! @param particleContainer The molecules that have to be written to the file are stored here
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
+	//! @param currentTime The current time to be printed.
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, double currentTime);
 

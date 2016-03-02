@@ -67,7 +67,7 @@ void DropletGenerator::setClusterParameters(double gas, double fluidDen,
 
 }
 
-void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
+void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/) {
 		global_simulation->setSimulationTime(0);
 
 		domain->disableComponentwiseThermostat();
@@ -92,7 +92,7 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 unsigned long DropletGenerator::readPhaseSpace(
 		ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain,
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain,
 		DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;

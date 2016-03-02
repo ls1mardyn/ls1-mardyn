@@ -142,7 +142,7 @@ public:
 	void collCommAllreduceSum() {
 	}
 
-	void collCommBroadcast(int root = 0) {
+	void collCommBroadcast(int /*root*/) {
 	}
 
 private:

@@ -59,7 +59,7 @@ public:
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
 
-	virtual void readXML(XMLfileUnits& xmlconfig) {}
+	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
 
 	//! @brief will be called in each time step
 	//!

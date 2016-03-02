@@ -171,7 +171,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 
 	string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
 	_logger->info() << "Writing output to: " << destination << endl;
-	domain.writeCheckpoint(destination, &container, &domainDecomposition);
+	domain.writeCheckpoint(destination, &container, &domainDecomposition, 0.);
 
 #ifndef MARDYN
 	delete global_simulation;

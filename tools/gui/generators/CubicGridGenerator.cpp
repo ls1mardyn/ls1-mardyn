@@ -144,7 +144,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();
