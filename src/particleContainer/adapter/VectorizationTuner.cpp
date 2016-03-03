@@ -15,6 +15,7 @@
 #include "particleContainer/ParticleCell.h"
 #include "CellDataSoA.h"
 #include "Domain.h"
+#include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
 #include "utils/Timer.h"
@@ -82,46 +83,60 @@ void VectorizationTuner::tune(std::vector<Component> ComponentList) {
 
     double gflopsOwnBig=0., gflopsPairBig=0., gflopsOwnNormal=0., gflopsPairNormalFace=0., gflopsPairNormalEdge=0., gflopsPairNormalCorner=0.,gflopsOwnZero=0., gflopsPairZero=0.;
 
-    stringstream filenamestream;
-	filenamestream << _outputPrefix;
-	filenamestream << ".VT.csv";
-    char const* value = filenamestream.str().c_str();
+    string resultfile(_outputPrefix+".VT.csv");
+    global_log->info() << "VT: Writing to file " << resultfile << endl;
+    int rank = global_simulation->domainDecomposition().getRank();
 
-    global_log->info() << "VT: Writing to file " << value << endl;
     ofstream myfile;
-    myfile.open(value, ofstream::out | ofstream::trunc);
-    myfile << "Vectorization Tuner File" << endl
-    		<< "The Cutoff Radii were: " << endl
+    if (rank == 0) {
+    	myfile.open(resultfile.c_str(), ofstream::out | ofstream::trunc);
+    	myfile << "Vectorization Tuner File" << endl
+			<< "The Cutoff Radii were: " << endl
 			<< "NormalRc=" << _cutoffRadius << " , LJCutoffRadiusNormal=" << _LJCutoffRadius << endl
 			<< "BigRC=" << _cutoffRadiusBig << " , BigLJCR=" << _LJCutoffRadiusBig << endl;
+    }
 
     if(_moleculeCntIncreaseType==linear or _moleculeCntIncreaseType==both){
-		myfile << "Linearly distributed molecule counts" << endl;
-		myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-				<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
+    	if (rank==0) {
+			myfile << "Linearly distributed molecule counts" << endl;
+			myfile << "Num. of Molecules, " << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
+					<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
+    	}
 		for(unsigned int i = _minMoleculeCnt; i <= std::min(32u, _maxMoleculeCnt); i++){
 			iterate(ComponentList, i,  gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
-			myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
-					<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
-					<< gflopsOwnZero << ", " << gflopsPairZero << endl;
+			if (rank==0) {
+				myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+						<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+						<< gflopsOwnZero << ", " << gflopsPairZero << endl;
+			}
 		}
-		myfile << endl;
+		if (rank == 0) {
+			myfile << endl;
+		}
     }
     if(_moleculeCntIncreaseType==exponential or _moleculeCntIncreaseType==both){
-    	myfile << "Exponentially distributed molecule counts" << endl;
-    	myfile << "Num. of Molecules," << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
-    			<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
+    	if (rank == 0) {
+			myfile << "Exponentially distributed molecule counts" << endl;
+			myfile << "Num. of Molecules," << "Gflops for Own BigRc, " << "Gflops for Pair BigRc, " << "Gflops for Own NormalRc, " << "Gflops for Pair NormalRc Face, "
+					<< "Gflops for Pair NormalRc Edge, "  << "Gflops for Pair NormalRc Corner, "  << "Gflops for Zero Rc (Own), " << "Gflops for Zero Rc (Pair)" << endl;
     	// logarithmically scaled axis -> exponentially increasing counts
+    	}
 
     	for(unsigned int i = _minMoleculeCnt; i <= _maxMoleculeCnt; i*=2){
     		iterate(ComponentList, i, gflopsOwnBig, gflopsPairBig, gflopsOwnNormal, gflopsPairNormalFace, gflopsPairNormalEdge, gflopsPairNormalCorner, gflopsOwnZero, gflopsPairZero);
-    		myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
-    							<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
-    							<< gflopsOwnZero << ", " << gflopsPairZero << endl;
+    		if (rank == 0) {
+				myfile << i << ", " << gflopsOwnBig << ", " << gflopsPairBig << ", " << gflopsOwnNormal << ", "
+									<< gflopsPairNormalFace << ", " << gflopsPairNormalEdge << ", " << gflopsPairNormalCorner << ", "
+									<< gflopsOwnZero << ", " << gflopsPairZero << endl;
+    		}
     	}
     }
-    myfile.close();
 
+    if (rank == 0) {
+    	myfile.close();
+    }
+
+    _flopCounterZeroRc->resetCounters();
     _flopCounterBigRc->resetCounters();
     _flopCounterNormalRc->resetCounters();
 
