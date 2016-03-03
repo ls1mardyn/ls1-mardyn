@@ -66,8 +66,9 @@ LinkedCells::LinkedCells(
 	    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
 	    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
-		global_log->error() << "_cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
-		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		global_log->error() << "_cellsPerDimension: " << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_haloWidthInNumCells: " << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		global_log->error() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0] << " / " << _boxWidthInNumCells[1] << " / " << _boxWidthInNumCells[2] << endl;
 		exit(5);
 	}
 	this->_localInsertionsMinusDeletions = 0;
