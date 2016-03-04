@@ -100,7 +100,7 @@ void VectorizedLJP2PCellProcessor::initTraversal(const size_t numCells) {
 
 	if (numCells > _particleCellDataVector.size()) {
 		for (size_t i = _particleCellDataVector.size(); i < numCells; i++) {
-			_particleCellDataVector.push_back(new CellDataSoA(64,64,64,64,64));
+			_particleCellDataVector.push_back(new CellDataSoA(0,0,0,0,0));
 		}
 		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
 	}
