@@ -1184,7 +1184,7 @@ void Simulation::output(unsigned long simstep) {
 void Simulation::finalize() {
 	if (_FMM != NULL) {
 		_FMM->printTimers();
-		bhfmm::VectorizedLJP2PCellProcessor* temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
+		bhfmm::VectorizedLJP2PCellProcessor * temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
 		temp->printTimers();
 	}
 
