@@ -48,6 +48,10 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 		_compIDs[c->ID()] = centers;
 		centers += c->numLJcenters();
 	}
+
+#ifdef ENABLE_MPI
+	_timer.set_sync(false);
+#endif
 }
 
 VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
@@ -57,8 +61,13 @@ VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
 	_particleCellDataVector.clear();
 }
 
+void VectorizedChargeP2PCellProcessor::printTimers() {
+	std::cout << "FMM: Time spent in Charge P2P " << _timer.get_etime() << std::endl;
+}
+
 
 void VectorizedChargeP2PCellProcessor::initTraversal(const size_t numCells) {
+	_timer.start();
 	_virial = 0.0;
 	_upotXpoles = 0.0;
 
@@ -80,6 +89,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 
 	_domain.setLocalVirial(currentVirial + _virial);
 	_domain.setLocalUpot(currentUpot + _upotXpoles);
+	_timer.stop();
 }
 
 

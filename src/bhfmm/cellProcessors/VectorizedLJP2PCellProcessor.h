@@ -14,7 +14,7 @@
 #include <cmath>
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-
+#include "utils/Timer.h"
 
 class Component;
 class Domain;
@@ -67,8 +67,11 @@ public:
 	 */
 	void endTraversal();
 
-	void printTimers(){}
+	void printTimers();
+
 private:
+	Timer _timer;
+
 	/**
 	 * \brief An aligned array of doubles.
 	 */

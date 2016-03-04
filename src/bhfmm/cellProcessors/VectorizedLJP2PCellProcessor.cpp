@@ -82,6 +82,10 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 			}
 		}
 	}
+
+#ifdef ENABLE_MPI
+	_timer.set_sync(false);
+#endif
 }
 
 VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
@@ -91,8 +95,13 @@ VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
 	_particleCellDataVector.clear();
 }
 
+void VectorizedLJP2PCellProcessor::printTimers() {
+	std::cout << "FMM: Time spent in LJ P2P " << _timer.get_etime() << std::endl;
+}
+
 
 void VectorizedLJP2PCellProcessor::initTraversal(const size_t numCells) {
+	_timer.start();
 	_virial = 0.0;
 	_upot6lj = 0.0;
 
@@ -110,6 +119,7 @@ void VectorizedLJP2PCellProcessor::initTraversal(const size_t numCells) {
 void VectorizedLJP2PCellProcessor::endTraversal() {
 	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
 	_domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/);
+	_timer.stop();
 }
 
 

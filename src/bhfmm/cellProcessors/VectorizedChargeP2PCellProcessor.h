@@ -9,6 +9,7 @@
 
 #include "particleContainer/adapter/CellProcessor.h"
 #include "utils/AlignedArray.h"
+#include "utils/Timer.h"
 #include <iostream>
 #include <vector>
 #include <cmath>
@@ -66,8 +67,11 @@ public:
 	 */
 	void endTraversal();
 
-	void printTimers(){}
+	void printTimers();
+
 private:
+	Timer _timer;
+
 	/**
 	 * \brief An aligned array of doubles.
 	 */
