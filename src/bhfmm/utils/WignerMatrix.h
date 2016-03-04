@@ -34,7 +34,7 @@ public:
     void print(int maxl);
 
     //const accesssor
-    inline const double acc_c(unsigned l, unsigned m, int k) const {return mat.access_const(l,m,k);}
+    inline double acc_c(unsigned l, unsigned m, int k) const {return mat.access_const(l,m,k);}
 
     //direct accessor
     inline double & acc(unsigned l, unsigned m, int k) {return mat.access(l,m,k);}

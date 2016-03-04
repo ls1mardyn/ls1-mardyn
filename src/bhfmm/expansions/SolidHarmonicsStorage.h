@@ -49,7 +49,7 @@ public:
 	 * @param s1
 	 * @param s2
 	 */
-	friend void bhfmm::swap(SolidHarmonicsStorage& s1, SolidHarmonicsStorage& s2);
+	friend void swap(SolidHarmonicsStorage& s1, SolidHarmonicsStorage& s2);
 
 	/**
 	 * assignment operator: values are copied entrywise
