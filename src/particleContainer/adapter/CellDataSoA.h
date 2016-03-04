@@ -345,6 +345,50 @@ public:
 
 		initCenterPointers();
 	}
+
+	size_t getDynamicSize() const {
+		size_t total = 0;
+
+		total += _mol_pos_x.get_dynamic_memory();
+		total += _mol_pos_y.get_dynamic_memory();
+		total += _mol_pos_z.get_dynamic_memory();
+
+		total += _mol_ljc_num.get_dynamic_memory();
+		total += _mol_charges_num.get_dynamic_memory();
+		total += _mol_dipoles_num.get_dynamic_memory();
+		total += _mol_quadrupoles_num.get_dynamic_memory();
+
+		total += _centers_m_r_x.get_dynamic_memory();
+		total += _centers_m_r_y.get_dynamic_memory();
+		total += _centers_m_r_z.get_dynamic_memory();
+		total += _centers_r_x.get_dynamic_memory();
+		total += _centers_r_y.get_dynamic_memory();
+		total += _centers_r_z.get_dynamic_memory();
+		total += _centers_f_x.get_dynamic_memory();
+		total += _centers_f_y.get_dynamic_memory();
+		total += _centers_f_z.get_dynamic_memory();
+		total += _centers_V_x.get_dynamic_memory();
+		total += _centers_V_y.get_dynamic_memory();
+		total += _centers_V_z.get_dynamic_memory();
+
+		total += _dipoles_p.get_dynamic_memory();
+		total += _dipoles_e_x.get_dynamic_memory();
+		total += _dipoles_e_y.get_dynamic_memory();
+		total += _dipoles_e_z.get_dynamic_memory();
+		total += _dipoles_M_x.get_dynamic_memory();
+		total += _dipoles_M_y.get_dynamic_memory();
+		total += _dipoles_M_z.get_dynamic_memory();
+
+		total += _quadrupoles_m.get_dynamic_memory();
+		total += _quadrupoles_e_x.get_dynamic_memory();
+		total += _quadrupoles_e_y.get_dynamic_memory();
+		total += _quadrupoles_e_z.get_dynamic_memory();
+		total += _quadrupoles_M_x.get_dynamic_memory();
+		total += _quadrupoles_M_y.get_dynamic_memory();
+		total += _quadrupoles_M_z.get_dynamic_memory();
+
+		return total;
+	}
 };
 
 #endif /* CELLDATASOA_H_ */

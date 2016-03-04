@@ -89,6 +89,14 @@ public:
 	operator T*() const {
 		return _p;
 	}
+
+	/**
+	 * \brief Return amount of allocated storage + .
+	 */
+	size_t get_dynamic_memory() const {
+		return _n * sizeof(T);
+	}
+
 private:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
