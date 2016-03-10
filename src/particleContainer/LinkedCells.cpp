@@ -765,7 +765,19 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		}
 
 		if (!mu->hasSample()){
+			bool rightComponent = false;
 			m = &(*(_particles.begin()));
+			std::list<Molecule>::iterator mit;
+			if(m->componentid() != mu->getComponentID()){
+			  for(mit = _particles.begin(); mit!=_particles.end(); ++mit){
+			    if(mit->componentid() == mu->getComponentID()){
+			      rightComponent = true;
+			      break;
+			    }
+			  }
+			}
+			if(rightComponent)
+			  m = &(*(mit));
 			mu->storeMolecule(*m);
 		}
 		if (hasInsertion) {
