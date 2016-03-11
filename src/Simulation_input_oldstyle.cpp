@@ -26,6 +26,8 @@
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+#include "molecules/Wall.h"
+#include "molecules/Mirror.h"
 
 #include "io/io.h"
 #include "io/GeneratorFactory.h"
@@ -631,6 +633,32 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double rc;
 			inputfilestream >> rc;
 			this->setTersoffCutoff(rc);
+		} 
+		else if (token == "WallFun_LJ_9_3"){
+		  double rho_w, sig_w, eps_w, y_off, y_cut;
+		  unsigned numComponents;
+		  _applyWallFun = true;
+		  inputfilestream  >> numComponents >> rho_w >> sig_w >> eps_w >> y_off >> y_cut;
+		  double *xi_sf = new double[numComponents];
+		  double *eta_sf = new double[numComponents];
+		  for(unsigned nc = 0; nc < numComponents; nc++ ){
+		    inputfilestream >> xi_sf[nc] >> eta_sf[nc];
+		  }
+		 
+		  std::vector<Component>* components = global_simulation->getEnsemble()->components();
+		  _wall=new Wall();
+		  _wall->initialize(components,  rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut);
+		  delete[] xi_sf;
+		  delete[] eta_sf;
+
+		}		
+		
+		else if (token == "Mirror"){
+			double yMirr;
+			inputfilestream >> yMirr;
+			std::vector<Component>* components = global_simulation->getEnsemble()->components();
+			_mirror=new Mirror();
+			_mirror->initialize(components, yMirr);
 		} else if (token == "slabsLRC") {
 			double slabs;
 			inputfilestream >> slabs;

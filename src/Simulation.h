@@ -7,7 +7,8 @@
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
 
-
+class Wall;
+class Mirror;
 using optparse::Values;
 
 #ifndef SIMULATION_SRC
@@ -465,7 +466,8 @@ private:
 	//! applying a field representing the wall
 	bool _applyWallFun;
 	
-	// Wall _wall;
+	Wall* _wall;
+	Mirror* _mirror;
 
 	//! flags to control the cancel of the momentum 
 	bool _doCancelMomentum;

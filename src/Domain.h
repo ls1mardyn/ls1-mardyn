@@ -356,6 +356,8 @@ public:
 			     double fraction);
 	void determineYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
 			     double fraction);
+	void noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction);
 	// in this method there is no shift specific to different components, only the profiled component is kept in the centre of the box
 	void determineShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
                              double fraction);

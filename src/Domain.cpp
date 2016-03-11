@@ -1462,6 +1462,58 @@ void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer*
 
    }
 
+// no y-shift will be determined. edited by Michaela Heier
+void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction){
+			        // keep in mind: variables declared as static are initialized only ONCE!
+   //static unsigned timesCalled = 0;
+   //static double initialCentreOfMassY;
+   double localBalance = 0.0;
+   double localMass = 0.0;
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+
+	double tmass = tm->gMass();
+
+	localMass += tmass;
+	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
+
+	
+   }
+   _globalRealignmentBalance[1] = localBalance;
+   _globalRealignmentMass[1] = localMass;
+   // determining the global values by the use of collectiveCommunication
+   domainDecomp->collCommInit(2);
+   domainDecomp->collCommAppendDouble(_globalRealignmentBalance[1]);
+   domainDecomp->collCommAppendDouble(_globalRealignmentMass[1]);
+   domainDecomp->collCommAllreduceSum();
+   _globalRealignmentBalance[1] = domainDecomp->collCommGetDouble();
+   _globalRealignmentMass[1] = domainDecomp->collCommGetDouble();
+   domainDecomp->collCommFinalize();
+
+   /* 
+   The centre of mass of the wall (solely the wall!) is determined once at the beginning of the simulation. 
+   Then the realignment with respect to the y-direction is always carried out so that the wall remains at the initial posistion 
+   (initial y-coordinate)
+   */
+
+   /*
+   if (!timesCalled){
+     initialCentreOfMassY = _globalRealignmentBalance[1] / _globalRealignmentMass[1];
+   }
+   
+   timesCalled++;
+   */
+   
+   //global_log->info() <<"initialCentreOfMassY = " << initialCentreOfMassY << endl;
+   // the realignment motion in y-direction so that the wall is always at the bottom of the simulation box
+   //_universalRealignmentMotion[1] = -fraction*((_globalRealignmentBalance[1] / _globalRealignmentMass[1]) - initialCentreOfMassY);
+
+   // the realignment motion is neglected
+   _universalRealignmentMotion[1] = 0;
+
+   }
+
 
 void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
                              double fraction)
@@ -1513,6 +1565,7 @@ void Domain::realign(
 ) {
    if(!this->_localRank)
    {
+
       global_log->info() << "Centre of mass: (" << _globalRealignmentBalance[0]/_globalRealignmentMass[0] << " / " << _globalRealignmentBalance[1]/_globalRealignmentMass[1] << " / " << _globalRealignmentBalance[2]/_globalRealignmentMass[0] << ") "
 			 << "=> adjustment: (" << _universalRealignmentMotion[0] << ", " << _universalRealignmentMotion[1] << ", " << _universalRealignmentMotion[2] << ").\n";
    }

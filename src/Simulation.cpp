@@ -29,6 +29,8 @@
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+#include "molecules/Wall.h"
+#include "molecules/Mirror.h"
 
 #include "io/io.h"
 #include "io/GeneratorFactory.h"
@@ -63,7 +65,6 @@ using optparse::OptionGroup;
 using optparse::Values;
 using namespace std;
 
-// Wall _wall;
 
 Simulation* global_simulation;
 
@@ -677,6 +678,7 @@ void Simulation::prepare_start() {
         _longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
     }
 
+
     _longRangeCorrection->calculateLongRange();
 
 	// here we have to call calcFM() manually, otherwise force and moment are not
@@ -845,6 +847,12 @@ void Simulation::simulate() {
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
+			// edited by Michaela Heier --> realign can be udes when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
+			if(_doAlignCentre && _applyWallFun){
+				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
+				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
 			else{
 				_domain->determineShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
@@ -876,6 +884,12 @@ void Simulation::simulate() {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
+
+		
+		if(_wall && _applyWallFun){
+		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
+		}
+		
 
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
@@ -1055,6 +1069,9 @@ void Simulation::simulate() {
 		  }
 
 
+		 if(_mirror && _applyWallFun){
+		  _mirror->VelocityChange(_moleculeContainer, _domain);
+		}
 
 
 		}
@@ -1064,6 +1081,7 @@ void Simulation::simulate() {
             _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
+		
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
