@@ -847,8 +847,8 @@ void Simulation::simulate() {
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
-			// edited by Michaela Heier --> realign can be udes when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
-			if(_doAlignCentre && _applyWallFun){
+			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
+			else if(_doAlignCentre && _applyWallFun){
 				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
@@ -1069,7 +1069,7 @@ void Simulation::simulate() {
 		  }
 
 
-		 if(_mirror && _applyWallFun){
+		 if(_mirror && _applyMirror){
 		  _mirror->VelocityChange(_moleculeContainer, _domain);
 		}
 
@@ -1293,6 +1293,7 @@ void Simulation::initialize() {
 	_alignmentInterval = 25;
 	_momentumInterval = 1000;
 	_applyWallFun = false;
+	_applyMirror = false;
 
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;

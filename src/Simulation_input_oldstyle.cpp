@@ -655,6 +655,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		
 		else if (token == "Mirror"){
 			double yMirr;
+			_applyMirror=true;
 			inputfilestream >> yMirr;
 			std::vector<Component>* components = global_simulation->getEnsemble()->components();
 			_mirror=new Mirror();

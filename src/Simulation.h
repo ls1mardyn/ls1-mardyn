@@ -465,6 +465,7 @@ private:
 	
 	//! applying a field representing the wall
 	bool _applyWallFun;
+	bool _applyMirror;
 	
 	Wall* _wall;
 	Mirror* _mirror;
