@@ -60,8 +60,8 @@ LinkedCells::LinkedCells(
 	_cells.resize(numberOfCells);
 
 	// If the width of the inner region is less than the width of the halo
-	// region a parallelisation is not possible (with the used algorithms).
-	// If a particle leaves this box, it would need to be communicated to the two next neighbours.
+	// region a parallelization is not possible (with the used algorithms).
+	// If a particle leaves this box, it would need to be communicated to the two next neighbors.
 	if (_boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
 	    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
 	    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
