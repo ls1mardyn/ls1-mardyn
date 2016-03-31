@@ -119,6 +119,7 @@ public:
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	//! needed by the MegaMol output format
+	double getEps(unsigned int i) const {return _ljcenters[i].eps();}
 	double getSigma(unsigned int i) const {return _ljcenters[i].sigma();}
 
 private:

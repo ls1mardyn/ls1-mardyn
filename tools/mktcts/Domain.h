@@ -19,7 +19,7 @@ class Domain
       unsigned t_N, double t_rho, double t_RDF
    );
    void write(
-      char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, int format
+      char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, bool compute_autocorr, int format
    );
    void hato(double in1, double in2, double inc1, double inc2) { use_hato = true; p1 = in1; p2 = in2; mu_low = inc1; mu_high = inc2; }
 

@@ -68,12 +68,12 @@ public:
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
-	void resize(size_t n) {
+	void resize(size_t n, size_t num_non_zero=0) {
 		if (n == _n)
 			return;
 		_free();
 		_p = 0;
-		_p = _allocate(n);
+		_p = _allocate(n, num_non_zero);
 		if (!_p)
 			throw std::bad_alloc();
 		_n = n;
@@ -89,15 +89,29 @@ public:
 	operator T*() const {
 		return _p;
 	}
+
+	/**
+	 * \brief Return amount of allocated storage + .
+	 */
+	size_t get_dynamic_memory() const {
+		return _n * sizeof(T);
+	}
+
 private:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
-	static T* _allocate(size_t elements) {
+	static T* _allocate(size_t elements, size_t num_non_zero=0) {
 #if defined(__SSE3__) && ! defined(__PGI)
-		return static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
+		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+		std::memset(ptr, 0, sizeof(T) * elements);
+		return ptr;
 #else
-		return static_cast<T*>(memalign(alignment, sizeof(T) * elements));
+		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
+		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+		std::memset(ptr, 0, elements * sizeof(T));
+		return ptr;
 #endif
 	}
 

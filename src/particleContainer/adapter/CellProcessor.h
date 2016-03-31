@@ -27,12 +27,23 @@ class ParticleCell;
  * @author eckhardw
  */
 class CellProcessor {
+protected:
+	double _cutoffRadiusSquare;
+	double _LJCutoffRadiusSquare;
 
 public:
+	CellProcessor(const double cutoffRadius, const double LJCutoffRadius) : 
+		_cutoffRadiusSquare(cutoffRadius * cutoffRadius), 
+		_LJCutoffRadiusSquare(LJCutoffRadius * LJCutoffRadius) {}
     /** 
      * virtual destructor 
      */
 	virtual ~CellProcessor() {}
+
+	double getCutoffRadius() const {return _cutoffRadiusSquare;}
+	double getLJCutoffRadius() const {return _LJCutoffRadiusSquare;}
+	void setCutoffRadius(const double c) {_cutoffRadiusSquare = c * c;}
+	void setLJCutoffRadius(const double ljc) {_LJCutoffRadiusSquare = ljc * ljc;}
 
 	/**
 	 * called before the traversal starts.

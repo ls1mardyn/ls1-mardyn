@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding='ISO-8859-1' standalone='yes' ?>
+<TestRun>
+  <FailedTests>
+    <FailedTest id="18">
+      <Name>CompareFMMContainersTest::compareAtRadius4</Name>
+      <FailureType>Assertion</FailureType>
+      <Location>
+        <File>bhfmm/tests/CompareFMMContainersTest.cpp</File>
+        <Line>66</Line>
+      </Location>
+      <Message>double equality assertion failed
+- Expected: -4.03370546968449
+- Actual  : -4.08018753738745
+- Delta   : 1e-12
+- Force component x should be equal
+</Message>
+    </FailedTest>
+    <FailedTest id="19">
+      <Name>CompareFMMContainersTest::compareAtRadius2</Name>
+      <FailureType>Assertion</FailureType>
+      <Location>
+        <File>bhfmm/tests/CompareFMMContainersTest.cpp</File>
+        <Line>66</Line>
+      </Location>
+      <Message>double equality assertion failed
+- Expected: -4.0556511406293
+- Actual  : -4.01603750747749
+- Delta   : 1e-12
+- Force component x should be equal
+</Message>
+    </FailedTest>
+    <FailedTest id="20">
+      <Name>CompareFMMContainersTest::compareAtRadius1</Name>
+      <FailureType>Assertion</FailureType>
+      <Location>
+        <File>bhfmm/tests/CompareFMMContainersTest.cpp</File>
+        <Line>66</Line>
+      </Location>
+      <Message>double equality assertion failed
+- Expected: -4.00753861819683
+- Actual  : -4.00534583582583
+- Delta   : 1e-12
+- Force component x should be equal
+</Message>
+    </FailedTest>
+  </FailedTests>
+  <SuccessfulTests>
+    <Test id="1">
+      <Name>RDFTest::testRDFCountSequential12_LinkedCell</Name>
+    </Test>
+    <Test id="2">
+      <Name>RDFTest::testRDFCountLinkedCell</Name>
+    </Test>
+    <Test id="3">
+      <Name>RDFTest::testSiteSiteRDFLinkedCell</Name>
+    </Test>
+    <Test id="4">
+      <Name>MarDynInitOptionsTest::testAllOptions</Name>
+    </Test>
+    <Test id="5">
+      <Name>ForceCalculationTest::testForcePotentialCalculationU0</Name>
+    </Test>
+    <Test id="6">
+      <Name>ForceCalculationTest::testForcePotentialCalculationF0</Name>
+    </Test>
+    <Test id="7">
+      <Name>CommonTest::testGetTimeString</Name>
+    </Test>
+    <Test id="8">
+      <Name>CommonTest::testAlignedNumber</Name>
+    </Test>
+    <Test id="9">
+      <Name>CommonTest::testCalculateDistances</Name>
+    </Test>
+    <Test id="10">
+      <Name>CanonicalEnsembleTest::UpdateNumMoleculesSequential</Name>
+    </Test>
+    <Test id="11">
+      <Name>CanonicalEnsembleTest::UpdateNumMoleculesParallel</Name>
+    </Test>
+    <Test id="12">
+      <Name>WignerRotationTest::testM2MWignerRotation</Name>
+    </Test>
+    <Test id="13">
+      <Name>WignerRotationTest::testL2LWignerRotation</Name>
+    </Test>
+    <Test id="14">
+      <Name>WignerRotationTest::testM2LWignerRotation</Name>
+    </Test>
+    <Test id="15">
+      <Name>CompareFMMContainersTest::compareAtRadius4WithoutPeriodicBC</Name>
+    </Test>
+    <Test id="16">
+      <Name>CompareFMMContainersTest::compareAtRadius2WithoutPeriodicBC</Name>
+    </Test>
+    <Test id="17">
+      <Name>CompareFMMContainersTest::compareAtRadius1WithoutPeriodicBC</Name>
+    </Test>
+    <Test id="21">
+      <Name>DttNodeTest::testDepthAtRadius1</Name>
+    </Test>
+    <Test id="22">
+      <Name>DttNodeTest::testDepthAtRadius2</Name>
+    </Test>
+    <Test id="23">
+      <Name>DttNodeTest::testDepthAtRadius4</Name>
+    </Test>
+    <Test id="24">
+      <Name>DttNodeTest::testDivideParticles</Name>
+    </Test>
+    <Test id="25">
+      <Name>DttNodeTest::testSoAConvertions</Name>
+    </Test>
+    <Test id="26">
+      <Name>DttNodeTest::testUpwardDownwardWithNoInteraction</Name>
+    </Test>
+    <Test id="27">
+      <Name>MoleculeTest::testIsLessThan</Name>
+    </Test>
+    <Test id="28">
+      <Name>LinkedCellsTest::testInsertion</Name>
+    </Test>
+    <Test id="29">
+      <Name>LinkedCellsTest::testMoleculeIteration</Name>
+    </Test>
+    <Test id="30">
+      <Name>LinkedCellsTest::testUpdateAndDeleteOuterParticles</Name>
+    </Test>
+    <Test id="31">
+      <Name>LinkedCellsTest::testUpdateAndDeleteOuterParticlesH2O</Name>
+    </Test>
+    <Test id="32">
+      <Name>LinkedCellsTest::testUpdateAndDeleteOuterParticles8Particles</Name>
+    </Test>
+    <Test id="33">
+      <Name>LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent</Name>
+    </Test>
+    <Test id="34">
+      <Name>VectorizedCellProcessorTest::testForcePotentialCalculationU0</Name>
+    </Test>
+    <Test id="35">
+      <Name>VectorizedCellProcessorTest::testForcePotentialCalculationF0</Name>
+    </Test>
+    <Test id="36">
+      <Name>VectorizedCellProcessorTest::testLennardJonesVectorization</Name>
+    </Test>
+    <Test id="37">
+      <Name>VectorizedCellProcessorTest::testChargeChargeVectorization</Name>
+    </Test>
+    <Test id="38">
+      <Name>VectorizedCellProcessorTest::testChargeDipoleVectorization</Name>
+    </Test>
+    <Test id="39">
+      <Name>VectorizedCellProcessorTest::testChargeQuadrupoleVectorization</Name>
+    </Test>
+    <Test id="40">
+      <Name>VectorizedCellProcessorTest::testDipoleDipoleVectorization</Name>
+    </Test>
+    <Test id="41">
+      <Name>VectorizedCellProcessorTest::testDipoleQuadrupoleVectorization</Name>
+    </Test>
+    <Test id="42">
+      <Name>VectorizedCellProcessorTest::testQuadrupoleQuadrupoleVectorization</Name>
+    </Test>
+    <Test id="43">
+      <Name>VectorizedCellProcessorTest::testWaterVectorization</Name>
+    </Test>
+    <Test id="44">
+      <Name>AlignedArrayTest::testAlignment</Name>
+    </Test>
+    <Test id="45">
+      <Name>UnorderedVectorTest::testFastRemovalInt</Name>
+    </Test>
+    <Test id="46">
+      <Name>UnorderedVectorTest::testFastRemovalMoleculePointer</Name>
+    </Test>
+    <Test id="47">
+      <Name>DomainDecompBaseTest::testExchangeMolecules</Name>
+    </Test>
+    <Test id="48">
+      <Name>KDDecompositionTest::testCompleteTreeInfo</Name>
+    </Test>
+    <Test id="49">
+      <Name>KDDecompositionTest::testRebalancingDeadlocks</Name>
+    </Test>
+    <Test id="50">
+      <Name>DomainDecompositionTest::testExchangeMolecules1Proc</Name>
+    </Test>
+    <Test id="51">
+      <Name>KDNodeTest::testEqual</Name>
+    </Test>
+    <Test id="52">
+      <Name>KDNodeTest::testSplit</Name>
+    </Test>
+    <Test id="53">
+      <Name>KDNodeTest::testBuildKDTree</Name>
+    </Test>
+    <Test id="54">
+      <Name>KDNodeTest::testFindAreaForProcess</Name>
+    </Test>
+    <Test id="55">
+      <Name>KDNodeTest::testGetMPIKDNode</Name>
+    </Test>
+    <Test id="56">
+      <Name>KDNodeTest::testserializeDeserialize</Name>
+    </Test>
+  </SuccessfulTests>
+  <Statistics>
+    <Tests>56</Tests>
+    <FailuresTotal>3</FailuresTotal>
+    <Errors>0</Errors>
+    <Failures>3</Failures>
+  </Statistics>
+</TestRun>

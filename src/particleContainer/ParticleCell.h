@@ -90,6 +90,21 @@ public:
 		_cellDataSoA = p;
 	}
 
+	/**
+	 * Returns the cell index
+	 */
+	unsigned long getCellIndex() {
+		return _cellIndex;
+	}
+	
+	/**
+	 * Sets the cell index. On one process, this index must be unique.
+	 * @param cellIndex
+	 */
+	void setCellIndex(unsigned long cellIndex){
+		_cellIndex = cellIndex;
+	}
+	
 	double getBoxMin(int d) const {
 		return _boxMin[d];
 	}
@@ -118,6 +133,7 @@ public:
 
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
+
 private:
 	/**
 	 * \brief lower left front corner
@@ -139,6 +155,7 @@ private:
 	 */
 	std::vector<Molecule *> _leavingMolecules;
 
+
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
@@ -146,6 +163,11 @@ private:
 	CellDataSoA * _cellDataSoA;
 
 
+	/**
+	 * \brief The index of the cell.
+	 * On one process every index must be unique.
+	 */
+	unsigned long _cellIndex;
 };
 
 #endif /* PARTICLE CELL_H_ */

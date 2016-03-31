@@ -9,7 +9,7 @@
 #define CELLDATASOA_H_
 
 #include "utils/AlignedArray.h"
-
+#include "vectorization/SIMD_TYPES.h"
 /**
  * \brief Structure of Arrays for vectorized force calculation.
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
@@ -39,6 +39,8 @@ public:
 		_centers_m_r_x(_centers_size), _centers_m_r_y(_centers_size), _centers_m_r_z(_centers_size),
 		_centers_r_x(_centers_size), _centers_r_y(_centers_size), _centers_r_z(_centers_size),
 		_centers_f_x(_centers_size), _centers_f_y(_centers_size), _centers_f_z(_centers_size),
+		_centers_V_x(_centers_size), _centers_V_y(_centers_size), _centers_V_z(_centers_size),
+		//_centers_dist_lookup(_centers_size),
 		_ljc_id(_ljc_size),
 		_charges_q(_charges_size),
 		_dipoles_p(_dipoles_size),
@@ -54,6 +56,7 @@ public:
 	size_t _charges_num;
 	size_t _dipoles_num;
 	size_t _quadrupoles_num;
+	size_t _centers_num;
 
 	size_t _mol_size;
 	size_t _ljc_size;
@@ -81,7 +84,10 @@ public:
 	DoubleArray _centers_f_x;
 	DoubleArray _centers_f_y;
 	DoubleArray _centers_f_z;
-	DoubleArray _centers_dist_lookup;
+	DoubleArray _centers_V_x;
+	DoubleArray _centers_V_y;
+	DoubleArray _centers_V_z;
+	//AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
 	double* _ljc_m_r_x;
 	double* _ljc_m_r_y;
@@ -92,7 +98,10 @@ public:
 	double* _ljc_f_x;
 	double* _ljc_f_y;
 	double* _ljc_f_z;
-	double* _ljc_dist_lookup;
+	double* _ljc_V_x;
+	double* _ljc_V_y;
+	double* _ljc_V_z;
+	//vcp_lookupOrMask_single* _ljc_dist_lookup;
 
 	double* _charges_m_r_x;
 	double* _charges_m_r_y;
@@ -103,7 +112,10 @@ public:
 	double* _charges_f_x;
 	double* _charges_f_y;
 	double* _charges_f_z;
-	double* _charges_dist_lookup;
+	double* _charges_V_x;
+	double* _charges_V_y;
+	double* _charges_V_z;
+	//vcp_lookupOrMask_single* _charges_dist_lookup;
 
 	double* _dipoles_m_r_x;
 	double* _dipoles_m_r_y;
@@ -114,7 +126,10 @@ public:
 	double* _dipoles_f_x;
 	double* _dipoles_f_y;
 	double* _dipoles_f_z;
-	double* _dipoles_dist_lookup;
+	double* _dipoles_V_x;
+	double* _dipoles_V_y;
+	double* _dipoles_V_z;
+	//vcp_lookupOrMask_single* _dipoles_dist_lookup;
 
 	double* _quadrupoles_m_r_x;
 	double* _quadrupoles_m_r_y;
@@ -125,7 +140,10 @@ public:
 	double* _quadrupoles_f_x;
 	double* _quadrupoles_f_y;
 	double* _quadrupoles_f_z;
-	double* _quadrupoles_dist_lookup;
+	double* _quadrupoles_V_x;
+	double* _quadrupoles_V_y;
+	double* _quadrupoles_V_z;
+	//vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
 
 	// entries per lj center
 	IndexArray _ljc_id;
@@ -152,7 +170,7 @@ public:
 	DoubleArray _quadrupoles_M_z;
 
 
-	void initCenterPointers()
+	void vcp_inline initCenterPointers()
 	{
 		_ljc_m_r_x = _centers_m_r_x;
 		_ljc_m_r_y = _centers_m_r_y;
@@ -163,7 +181,10 @@ public:
 		_ljc_f_x = _centers_f_x;
 		_ljc_f_y = _centers_f_y;
 		_ljc_f_z = _centers_f_z;
-		_ljc_dist_lookup = _centers_dist_lookup;
+		_ljc_V_x = _centers_V_x;
+		_ljc_V_y = _centers_V_y;
+		_ljc_V_z = _centers_V_z;
+		//_ljc_dist_lookup = _centers_dist_lookup;
 
 		_charges_m_r_x = _ljc_m_r_x + _ljc_size;
 		_charges_m_r_y = _ljc_m_r_y + _ljc_size;
@@ -174,7 +195,10 @@ public:
 		_charges_f_x = _ljc_f_x + _ljc_size;
 		_charges_f_y = _ljc_f_y + _ljc_size;
 		_charges_f_z = _ljc_f_z + _ljc_size;
-		_charges_dist_lookup = _ljc_dist_lookup + _ljc_size;
+		_charges_V_x = _ljc_V_x + _ljc_size;
+		_charges_V_y = _ljc_V_y + _ljc_size;
+		_charges_V_z = _ljc_V_z + _ljc_size;
+		//_charges_dist_lookup = _ljc_dist_lookup + (_ljc_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 
 		_dipoles_m_r_x = _charges_m_r_x + _charges_size;
 		_dipoles_m_r_y = _charges_m_r_y + _charges_size;
@@ -185,7 +209,10 @@ public:
 		_dipoles_f_x = _charges_f_x + _charges_size;
 		_dipoles_f_y = _charges_f_y + _charges_size;
 		_dipoles_f_z = _charges_f_z + _charges_size;
-		_dipoles_dist_lookup = _charges_dist_lookup + _charges_size;
+		_dipoles_V_x = _charges_V_x + _charges_size;
+		_dipoles_V_y = _charges_V_y + _charges_size;
+		_dipoles_V_z = _charges_V_z + _charges_size;
+		//_dipoles_dist_lookup = _charges_dist_lookup + (_charges_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 
 		_quadrupoles_m_r_x = _dipoles_m_r_x + _dipoles_size;
 		_quadrupoles_m_r_y = _dipoles_m_r_y + _dipoles_size;
@@ -196,21 +223,44 @@ public:
 		_quadrupoles_f_x = _dipoles_f_x + _dipoles_size;
 		_quadrupoles_f_y = _dipoles_f_y + _dipoles_size;
 		_quadrupoles_f_z = _dipoles_f_z + _dipoles_size;
-		_quadrupoles_dist_lookup = _dipoles_dist_lookup + _dipoles_size;
+		_quadrupoles_V_x = _dipoles_V_x + _dipoles_size;
+		_quadrupoles_V_y = _dipoles_V_y + _dipoles_size;
+		_quadrupoles_V_z = _dipoles_V_z + _dipoles_size;
+		//_quadrupoles_dist_lookup = _dipoles_dist_lookup + (_dipoles_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 	}
 
-	void setDistLookup(DoubleArray & centers_dist_lookup_arg)
-	{
-		_centers_dist_lookup = centers_dist_lookup_arg;
-		resizeDistLookup();
+	void vcp_inline initDistLookupPointers(const AlignedArray<vcp_lookupOrMask_single>& centers_dist_lookup, vcp_lookupOrMask_single*& ljc_dist_lookup,
+			vcp_lookupOrMask_single*& charges_dist_lookup, vcp_lookupOrMask_single*& dipoles_dist_lookup, vcp_lookupOrMask_single*& quadrupoles_dist_lookup) const{
+		ljc_dist_lookup = centers_dist_lookup;
+		charges_dist_lookup = ljc_dist_lookup + (_ljc_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
+		dipoles_dist_lookup = charges_dist_lookup + (_charges_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
+		quadrupoles_dist_lookup = dipoles_dist_lookup + (_dipoles_size + VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
 	}
 
-	void resizeDistLookup()
-	{
-		if (_centers_dist_lookup.get_size() < _centers_size)
-		{
-			_centers_dist_lookup.resize(_centers_size);
-		}
+	template<class T>
+	static vcp_inline
+	void resizeLastZero(AlignedArray<T>& array, const size_t& size, const size_t& startZero){
+		array.resize(size, startZero);
+	}
+
+	/**
+	 * resizes an array for all the centers and ensures, that the additionally allocated space is at least set once (valgrind error prevention reasons)
+	 * @param array
+	 * @param size
+	 */
+	template<class T>
+	vcp_inline
+	void resizeCentersZero(AlignedArray<T>& array, const size_t& size) const{
+		array.resize(size, size);
+		//memset(array, 0, size * sizeof(T));//sets all to zero
+		T* ptr = array;
+		memset(ptr + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(T));//ljc
+		ptr += _ljc_size;
+		memset(ptr + _charges_num, 0, (_charges_size - _charges_num) * sizeof(T));//charges
+		ptr+= _charges_size;
+		memset(ptr + _dipoles_num, 0, (_dipoles_size - _dipoles_num) * sizeof(T));//dipoles
+		ptr+= _dipoles_size;
+		memset(ptr + _quadrupoles_num, 0, (_quadrupoles_size - _quadrupoles_num) * sizeof(T));//quadrupoles
 	}
 
 	void resize(size_t molecules_arg, size_t ljcenters_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
@@ -226,66 +276,118 @@ public:
 			_quadrupoles_num > _quadrupoles_size ) {
 
 			if (_ljc_num > _ljc_size) {
-				_ljc_size = ceil( (double)_ljc_num / 4) * 4;
-				_ljc_id.resize(_ljc_size);
+				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
+				_ljc_id.resize(_ljc_size,_ljc_size);//set0 later on...
 			}
 
+
 			if (_charges_num > _charges_size) {
-				_charges_size = ceil( (double)_charges_num / 4) * 4;
-				_charges_q.resize(_charges_size);
+				_charges_size = ceil( (double)_charges_num / 8) * 8;
+				resizeLastZero(_charges_q,_charges_size,_charges_num);
 			}
 
 			if (_dipoles_num > _dipoles_size) {
-				_dipoles_size = ceil( (double)_dipoles_num / 4) * 4;
-				_dipoles_p.resize(_dipoles_size);
-				_dipoles_e_x.resize(_dipoles_size);
-				_dipoles_e_y.resize(_dipoles_size);
-				_dipoles_e_z.resize(_dipoles_size);
-				_dipoles_M_x.resize(_dipoles_size);
-				_dipoles_M_y.resize(_dipoles_size);
-				_dipoles_M_z.resize(_dipoles_size);
+				_dipoles_size = ceil( (double)_dipoles_num / 8) * 8;
+				resizeLastZero(_dipoles_p,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_e_x,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_e_y,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_e_z,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_M_x,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_M_y,_dipoles_size, _dipoles_num);
+				resizeLastZero(_dipoles_M_z,_dipoles_size, _dipoles_num);
 			}
 
 			if (_quadrupoles_num > _quadrupoles_size) {
-				_quadrupoles_size = ceil( (double)_quadrupoles_num / 4) * 4;
-				_quadrupoles_m.resize(_quadrupoles_size);
-				_quadrupoles_e_x.resize(_quadrupoles_size);
-				_quadrupoles_e_y.resize(_quadrupoles_size);
-				_quadrupoles_e_z.resize(_quadrupoles_size);
-				_quadrupoles_M_x.resize(_quadrupoles_size);
-				_quadrupoles_M_y.resize(_quadrupoles_size);
-				_quadrupoles_M_z.resize(_quadrupoles_size);
+				_quadrupoles_size = ceil( (double)_quadrupoles_num / 8) * 8;
+				resizeLastZero(_quadrupoles_m,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_e_x,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_e_y,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_e_z,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_M_x,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_M_y,_quadrupoles_size, _quadrupoles_num);
+				resizeLastZero(_quadrupoles_M_z,_quadrupoles_size, _quadrupoles_num);
 			}
 
 			if (_centers_size < _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size)
 			{
-				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;
-
-				_centers_m_r_x.resize(_centers_size);
-				_centers_m_r_y.resize(_centers_size);
-				_centers_m_r_z.resize(_centers_size);
-				_centers_r_x.resize(_centers_size);
-				_centers_r_y.resize(_centers_size);
-				_centers_r_z.resize(_centers_size);
-				_centers_f_x.resize(_centers_size);
-				_centers_f_y.resize(_centers_size);
-				_centers_f_z.resize(_centers_size);
+				_centers_size = _ljc_size + _charges_size + _dipoles_size + _quadrupoles_size;//divisible by 8, since all others are
+				_centers_num = _ljc_num + _charges_num + _dipoles_num + _quadrupoles_num;
+				resizeCentersZero(_centers_m_r_x, _centers_size);
+				resizeCentersZero(_centers_m_r_y, _centers_size);
+				resizeCentersZero(_centers_m_r_z, _centers_size);
+				resizeCentersZero(_centers_r_x, _centers_size);
+				resizeCentersZero(_centers_r_y, _centers_size);
+				resizeCentersZero(_centers_r_z, _centers_size);
+				resizeCentersZero(_centers_f_x, _centers_size);
+				resizeCentersZero(_centers_f_y, _centers_size);
+				resizeCentersZero(_centers_f_z, _centers_size);
+				resizeCentersZero(_centers_V_x, _centers_size);
+				resizeCentersZero(_centers_V_y, _centers_size);
+				resizeCentersZero(_centers_V_z, _centers_size);
+				//resizeCentersZero(_centers_dist_lookup, _centers_size);
 			}
 		}
 
 		if (_mol_num > _mol_size) {
-			_mol_size = ceil( (double)molecules_arg / 4) * 4;
-			_mol_pos_x.resize(_mol_size);
-			_mol_pos_y.resize(_mol_size);
-			_mol_pos_z.resize(_mol_size);
-			_mol_ljc_num.resize(_mol_size);
-			_mol_charges_num.resize(_mol_size);
-			_mol_dipoles_num.resize(_mol_size);
-			_mol_quadrupoles_num.resize(_mol_size);
+			_mol_size = ceil( (double)molecules_arg / 8) * 8;
+			resizeLastZero(_mol_pos_x,_mol_size, _mol_num);
+			resizeLastZero(_mol_pos_y,_mol_size, _mol_num);
+			resizeLastZero(_mol_pos_z,_mol_size, _mol_num);
+			resizeLastZero(_mol_ljc_num,_mol_size, _mol_num);
+			resizeLastZero(_mol_charges_num,_mol_size, _mol_num);
+			resizeLastZero(_mol_dipoles_num,_mol_size, _mol_num);
+			resizeLastZero(_mol_quadrupoles_num,_mol_size, _mol_num);
 		}
+		memset(_ljc_id + _ljc_num, 0, (_ljc_size - _ljc_num) * sizeof(size_t));//set the remaining values to zero.
+			//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
+			//The array size is however long enough to vectorize over the last few entries.
+			//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
 
-		resizeDistLookup();
 		initCenterPointers();
+	}
+
+	size_t getDynamicSize() const {
+		size_t total = 0;
+
+		total += _mol_pos_x.get_dynamic_memory();
+		total += _mol_pos_y.get_dynamic_memory();
+		total += _mol_pos_z.get_dynamic_memory();
+
+		total += _mol_ljc_num.get_dynamic_memory();
+		total += _mol_charges_num.get_dynamic_memory();
+		total += _mol_dipoles_num.get_dynamic_memory();
+		total += _mol_quadrupoles_num.get_dynamic_memory();
+
+		total += _centers_m_r_x.get_dynamic_memory();
+		total += _centers_m_r_y.get_dynamic_memory();
+		total += _centers_m_r_z.get_dynamic_memory();
+		total += _centers_r_x.get_dynamic_memory();
+		total += _centers_r_y.get_dynamic_memory();
+		total += _centers_r_z.get_dynamic_memory();
+		total += _centers_f_x.get_dynamic_memory();
+		total += _centers_f_y.get_dynamic_memory();
+		total += _centers_f_z.get_dynamic_memory();
+		total += _centers_V_x.get_dynamic_memory();
+		total += _centers_V_y.get_dynamic_memory();
+		total += _centers_V_z.get_dynamic_memory();
+
+		total += _dipoles_p.get_dynamic_memory();
+		total += _dipoles_e_x.get_dynamic_memory();
+		total += _dipoles_e_y.get_dynamic_memory();
+		total += _dipoles_e_z.get_dynamic_memory();
+		total += _dipoles_M_x.get_dynamic_memory();
+		total += _dipoles_M_y.get_dynamic_memory();
+		total += _dipoles_M_z.get_dynamic_memory();
+
+		total += _quadrupoles_m.get_dynamic_memory();
+		total += _quadrupoles_e_x.get_dynamic_memory();
+		total += _quadrupoles_e_y.get_dynamic_memory();
+		total += _quadrupoles_e_z.get_dynamic_memory();
+		total += _quadrupoles_M_x.get_dynamic_memory();
+		total += _quadrupoles_M_y.get_dynamic_memory();
+		total += _quadrupoles_M_z.get_dynamic_memory();
+
+		return total;
 	}
 };
 

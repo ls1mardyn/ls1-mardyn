@@ -154,6 +154,13 @@ double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumM
 double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
+vector<Component>& Domain::getComponents(){
+	return _components; 
+}
+
+void Domain::addComponent(Component component){
+	_components.push_back(component);
+}
 
 
 
@@ -469,7 +476,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 void Domain::writeCheckpoint( string filename, 
 		ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp )
+		DomainDecompBase* domainDecomp, double currentTime)
 {
 	domainDecomp->assertDisjunctivity(particleContainer);
 	/* Rank 0 writes file header */
@@ -477,6 +484,7 @@ void Domain::writeCheckpoint( string filename,
 		ofstream checkpointfilestream(filename.c_str());
 		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 		checkpointfilestream << "\n";
+		checkpointfilestream << "currentTime\t"  << currentTime << "\n"; //edited by Michaela Heier
 		checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 		if(this->_componentwiseThermostat)
 		{
@@ -502,11 +510,12 @@ void Domain::writeCheckpoint( string filename,
 		}
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
-		checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-		checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
+		//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
+		//checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
                 checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
-
 #endif
+		/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
+		if(this->_globalUSteps > 1)
 		if(this->_globalUSteps > 1)
 		{
 			checkpointfilestream << setprecision(13);
@@ -514,6 +523,7 @@ void Domain::writeCheckpoint( string filename,
 				<< this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
 			checkpointfilestream << setprecision(8);
 		}
+		*/
 		vector<Component>* components = _simulation.getEnsemble()->components();
 		checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
 		for(vector<Component>::const_iterator pos=components->begin();pos!=components->end();++pos){
@@ -697,6 +707,12 @@ void Domain::setupProfile(unsigned xun, unsigned yun, unsigned zun)
 	this->resetProfile(true);
 }
 
+// author: Stefan Becker. Method called by Simulation::output() in order to decide wheter or not a cylindrical profile is to be written out,
+//i.e. wheter the method outputCylProfile() (isCylindrical==true) or the method outputProfile() (isCylindrical==false) is called.
+bool Domain::isCylindrical(){
+	return this->_universalCylindricalGeometry;
+}
+
 void Domain::considerComponentInProfile(int cid)
 {
 	this->_universalProfiledComponents[cid] = true;
@@ -707,18 +723,40 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 	int cid;
 	unsigned xun, yun, zun, unID;
 	double mv2, Iw2;
+	unID = 0;
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
 		cid = thismol->componentid();
 		if(this->_universalProfiledComponents[cid])
 		{
+
+// by Stefan Becker: enquiry if(_universalCylindricalGeometry) ... implemented
+// possible???: if no cylindrical profile is recorded => permanent calculation (before the "if..." ) of "distFor_unID" slows down the code
+// if the profile is however recorded in cylindrical coordinates, the current implementation is fast (?)   => solution?
+			double distFor_unID = pow((thismol->r(0)- this->_universalCentre[0]),2.0) + pow((thismol->r(2)- this->_universalCentre[2]),2.0);
+			if(this->_universalCylindricalGeometry && distFor_unID <= this->_universalR2max){
+				unID = this->unID(thismol->r(0), thismol->r(1), thismol->r(2));
+				if(unID < 0){
+				  global_log->error() << "ERROR: in Domain.cpp/recordProfile: unID < 0!!! Was not calculated in unID() but initialized with -1!\n";
+				}
+			
+			}
+			else if(!this->_universalCylindricalGeometry){
 			xun = (unsigned)floor(thismol->r(0) * this->_universalInvProfileUnit[0]);
 			yun = (unsigned)floor(thismol->r(1) * this->_universalInvProfileUnit[1]);
 			zun = (unsigned)floor(thismol->r(2) * this->_universalInvProfileUnit[2]);
 			unID = xun * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
 				+ yun * this->_universalNProfileUnits[2] + zun;
+			}
+			else{
+				continue;
+			}
+
+// @TODO: (by Stefan Becker)  differentiation of _localNProfile by the component number cid => _localNProfile[cid][unID]!!!
 			this->_localNProfile[unID] += 1.0;
-			for(int d=0; d<3; d++) this->_localvProfile[d][unID] += thismol->v(d);
+			for(int d=0; d<3; d++) {
+				this->_localvProfile[d][unID] += thismol->v(d);
+			}
 			this->_localDOFProfile[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
                         
                         // record _twice_ the total (ordered + unordered) kinetic energy
@@ -744,12 +782,14 @@ void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
 	unsigned unIDs = this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 		* this->_universalNProfileUnits[2];
 	if(virialProfile) dode->collCommInit(13*unIDs);
-        else dode->collCommInit(10*unIDs);
+        else dode->collCommInit(10*unIDs); 
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
 		dode->collCommAppendLongDouble(this->_localNProfile[unID]);
-		for(int d=0; d<3; d++)
+		for(int d=0; d<3; d++){
 			dode->collCommAppendLongDouble(_localvProfile[d][unID]);
+
+		}
 		dode->collCommAppendLongDouble(this->_localDOFProfile[unID]);
 		dode->collCommAppendLongDouble(_localKineticProfile[unID]);
                 
@@ -765,14 +805,17 @@ void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
                 dode->collCommAppendLongDouble(this->_localWidomInstances[unID]);
                 dode->collCommAppendLongDouble(this->_localWidomProfileTloc[unID]);
                 dode->collCommAppendLongDouble(this->_localWidomInstancesTloc[unID]);
+
 	}
 	dode->collCommAllreduceSum();
 	for(unsigned unID = 0; unID < unIDs; unID++)
 	{
 		_universalNProfile[unID] = (double)dode->collCommGetLongDouble();
-		for(int d=0; d<3; d++)
+		for(int d=0; d<3; d++){
 			this->_universalvProfile[d][unID]
 				= (double)dode->collCommGetLongDouble();
+
+		}
 		this->_universalDOFProfile[unID]
 			= (double)dode->collCommGetLongDouble();
 		this->_universalKineticProfile[unID]
@@ -989,6 +1032,8 @@ void Domain::resetProfile(bool virialProfile)
 		{
 			this->_localvProfile[d][unID] = 0.0;
 			this->_universalvProfile[d][unID] = 0.0;
+//			this->_localV2Profile[d][unID] = 0.0;
+//			this->_universalV2Profile[d][unID] = 0.0;
 		}
 		this->_localDOFProfile[unID] = 0.0;
 		this->_universalDOFProfile[unID] = 0.0;
@@ -1236,3 +1281,464 @@ void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompB
 		_Gamma[i]+=_localGamma[i];
 	}
 }
+void Domain::considerComponentForYShift(unsigned cidMin, unsigned cidMax){
+    for (unsigned i = 0; i <= cidMax; i++) _componentForYShift[i] = false;
+    for (unsigned i = 0; i <= cidMax-cidMin; i++) _componentForYShift[cidMin+i] = true;
+#ifndef NDEBUG
+    global_log->info() << "Components used for determination of shift in y-direction:\n";
+    for(unsigned i = 0; i <= cidMax; i++)
+      global_log->info() << "component id "<< i << "\t value: " << _componentForYShift[i] << "\n";
+#endif
+}
+
+
+void Domain::sYOffset(double in_yOff){
+  _yOff = in_yOff;
+}
+
+// author: Stefan Becker, method to determine the integer value of unID, extra method in order to not inflating the method "recordProfile()"
+// method only matched for the case of a cylindrical profile (i.e. sessile drop)
+long int Domain::unID(double qx, double qy, double qz){
+		int xun,yun,zun;// (xun,yun,zun): bin number in a special direction, e.g. yun==5 corresponds to the 5th bin in the radial direction, 
+		long int unID;	// as usual
+		double xc,yc,zc; // distance of a particle with respect to the origin of the cylindrical coordinate system
+
+		unID = -1; // initialization, causes an error message, if unID is not calculated in this method but used in record profile
+
+	    xc = qx - this->_universalCentre[0];
+	    yc = qy - this->_universalCentre[1];
+	    zc = qz - this->_universalCentre[2];
+
+	    // transformation in polar coordinates
+	    double R2 = xc*xc + zc*zc;
+	    double phi = asin(zc/sqrt(R2)) + ((xc>=0.0) ? 0:M_PI);
+	    if(phi<0.0) {phi = phi + 2.0*M_PI;}
+
+	    xun = (int)floor(phi * this->_universalInvProfileUnit[0]);   // bin no. in phi-direction
+	    yun = (int)floor(R2 *  this->_universalInvProfileUnit[1]);   // bin no. in R-direction
+	    zun = (int)floor(yc *  this->_universalInvProfileUnit[2]);   // bin no. in H-direction
+
+	    if((xun >= 0) && (yun >= 0) && (zun >= 0) &&
+	          (xun < (int)_universalNProfileUnits[0]) && (yun < (int)_universalNProfileUnits[1]) && (zun < (int)_universalNProfileUnits[2]))
+	       {
+	          unID = xun * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
+	               + yun * this->_universalNProfileUnits[2] + zun;
+	       }
+	       else 
+	       {
+	          global_log->error() << "Severe error!! Invalid profile unit (" << xun << " / " << yun << " / " << zun << ").\n\n";
+	          global_log->error() << "Coordinates (" << qx << " / " << qy << " / " << qz << ").\n";
+		  global_log->error() << "unID = " << unID << "\n";
+	          //exit(707);
+	       }
+	       return unID;
+}
+
+// author: Stefan Becker, counterpart of method setupProfile(xun,yun,zun) => to be used for profile in cylindrical coordinates
+// the radial component is located in the x,z-plane, the axial component is parallel to the y-direction.
+// In the radial direction the spacing is linear in R^2 in order to obtain equal areas with increasing radius.
+// @TODO: in the input file the token "profile" immedeatly causes a call of "setupProfile(xun,yun,zun)". This in turn sets up a cubic grid
+// by default.
+// Proposal: an enquiry that checks wheter a cubic, or cylindrical, sperical, etc. grid has to be set up. This first requires a check of
+// the input file (what additional token is set that controls the kind of grid beeing used). => code more modular
+void Domain::sesDrop(){
+	this->_universalCylindricalGeometry = true;
+
+	// R^2_max: (squared) maximum radius up to which the profile is recorded
+	// (otherwise erroneous densities recorded at the boundary of the RECTANGULAR simulation box)
+	double minXZ = this->_globalLength[0];
+	if(this->_globalLength[2]<minXZ){
+		minXZ = this->_globalLength[2];
+	}
+	this->_universalR2max = 0.25*minXZ*minXZ;
+
+	// origin of the cylindrical coordinate system
+	this->_universalCentre[0] = 0.5*this->_globalLength[0];
+	this->_universalCentre[1] = 0;
+	this->_universalCentre[2] = 0.5*this->_globalLength[2];
+
+	_universalInvProfileUnit[0] = this->_universalNProfileUnits[0]/(2*M_PI);                   // delta_phi
+	_universalInvProfileUnit[1] = this->_universalNProfileUnits[1]/(this->_universalR2max);  // delta_R^2
+	_universalInvProfileUnit[2] = this->_universalNProfileUnits[2]/(this->_globalLength[1]); // delta_H
+	global_log->info() << "\nInv Profile unit for sessile drop: (phi,R2,H) = (" << _universalInvProfileUnit[0] <<", " <<_universalInvProfileUnit[1]<<", "<<_universalInvProfileUnit[2]<<") \n";
+	
+	this->resetProfile(true);	
+}
+
+/*
+ *By Stefan Becker: 
+ *realign tool, borrowed from Martin Horsch: it effects that the center of mass of all the particles (with respect to the (x,z)-plane)
+ *corresponds with the box center (in the (x,z)plane). With respect to the y-direction, the shift is carried out so 
+ *that the wall remains at the initial position.
+ *Basically the current centre of mass of all the particles is determined and then all the particles are moved towards x==0.5*Lx and z==0*Lz
+ *The method is frequently applied when the specified span of time (i.e. timesteps) is reached. 
+ *Part of this tool in Domain.cpp: (i) determineShift() => determines the vector by which the particles are shifted
+ *                                 (ii) realign() => carries out the actual realignment / shift
+ * when this method is called, the halo should NOT be present
+ */
+void Domain::determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction) 
+{
+   double localBalance[3]; // localBalance[1] not considered, employed only for not confusing: index 0 => x-direction, index 1 => y-direction, index 2 => z-direction
+   for(unsigned d = 0; d < 3; d ++) localBalance[d] = 0.0; // initialising the array by zeros
+   double localMass = 0.0;
+   int cid;
+      
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+      cid = tm->componentid();
+      if(_universalProfiledComponents[cid])
+      {
+	double tmass = tm->gMass();
+	localMass += tmass;
+	for(unsigned d = 0; d < 3; d=d+2){ // counting d=d+2 causes the value d==1 (i.e. y-direction) to be skipped, this is performed by the method determineYShift()
+	  localBalance[d] += tm->r(d) * tmass;
+	}
+      }
+   }
+   
+   for(unsigned d = 0; d < 3; d++) _globalRealignmentBalance[d] = localBalance[d];
+   _globalRealignmentMass[0] = localMass;
+   // determining the global values by the use of collectiveCommunication
+   domainDecomp->collCommInit(4);
+   for(unsigned d = 0; d < 3; d++)  domainDecomp->collCommAppendDouble(_globalRealignmentBalance[d]);
+   domainDecomp->collCommAppendDouble(_globalRealignmentMass[0]);
+   domainDecomp->collCommAllreduceSum();
+   for(unsigned d = 0; d < 3; d++)  _globalRealignmentBalance[d] = domainDecomp->collCommGetDouble();
+   _globalRealignmentMass[0] = domainDecomp->collCommGetDouble();
+   domainDecomp->collCommFinalize();
+   
+   for(unsigned short d = 0; d < 3; d=d+2){
+      _universalRealignmentMotion[d]
+         = -fraction*((_globalRealignmentBalance[d] / _globalRealignmentMass[0]) - 0.5*_globalLength[d]);
+   }  
+}
+
+void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction){
+			        // keep in mind: variables declared as static are initialized only ONCE!
+   static unsigned timesCalled = 0;
+   static double initialCentreOfMassY;
+   double localBalance = 0.0;
+   double localMass = 0.0;
+   int cid;
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+     cid = tm->componentid();
+     if(_componentForYShift[cid])
+     {  
+	double tmass = tm->gMass();
+
+	localMass += tmass;
+	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
+
+	 }
+   }
+   _globalRealignmentBalance[1] = localBalance;
+   _globalRealignmentMass[1] = localMass;
+   // determining the global values by the use of collectiveCommunication
+   domainDecomp->collCommInit(2);
+   domainDecomp->collCommAppendDouble(_globalRealignmentBalance[1]);
+   domainDecomp->collCommAppendDouble(_globalRealignmentMass[1]);
+   domainDecomp->collCommAllreduceSum();
+   _globalRealignmentBalance[1] = domainDecomp->collCommGetDouble();
+   _globalRealignmentMass[1] = domainDecomp->collCommGetDouble();
+   domainDecomp->collCommFinalize();
+   
+   /* 
+   The centre of mass of the wall (solely the wall!) is determined once at the beginning of the simulation. 
+   Then the realignment with respect to the y-direction is always carried out so that the wall remains at the initial posistion 
+   (initial y-coordinate)
+   */
+
+   
+   if (!timesCalled){
+     initialCentreOfMassY = _globalRealignmentBalance[1] / _globalRealignmentMass[1];
+   }
+   timesCalled++;
+   //global_log->info() <<"initialCentreOfMassY = " << initialCentreOfMassY << endl;
+   // the realignment motion in y-direction so that the wall is always at the bottom of the simulation box
+   _universalRealignmentMotion[1] = -fraction*((_globalRealignmentBalance[1] / _globalRealignmentMass[1]) - initialCentreOfMassY);
+
+   }
+
+// no y-shift will be determined. edited by Michaela Heier
+void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction){
+			        // keep in mind: variables declared as static are initialized only ONCE!
+   //static unsigned timesCalled = 0;
+   //static double initialCentreOfMassY;
+   double localBalance = 0.0;
+   double localMass = 0.0;
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+
+	double tmass = tm->gMass();
+
+	localMass += tmass;
+	localBalance += (tm->r(1) - _globalLength[1]*floor(2.0* tm->r(1)/ _globalLength[1]))*tmass; // PBC
+
+	
+   }
+   _globalRealignmentBalance[1] = localBalance;
+   _globalRealignmentMass[1] = localMass;
+   // determining the global values by the use of collectiveCommunication
+   domainDecomp->collCommInit(2);
+   domainDecomp->collCommAppendDouble(_globalRealignmentBalance[1]);
+   domainDecomp->collCommAppendDouble(_globalRealignmentMass[1]);
+   domainDecomp->collCommAllreduceSum();
+   _globalRealignmentBalance[1] = domainDecomp->collCommGetDouble();
+   _globalRealignmentMass[1] = domainDecomp->collCommGetDouble();
+   domainDecomp->collCommFinalize();
+
+   /* 
+   The centre of mass of the wall (solely the wall!) is determined once at the beginning of the simulation. 
+   Then the realignment with respect to the y-direction is always carried out so that the wall remains at the initial posistion 
+   (initial y-coordinate)
+   */
+
+   /*
+   if (!timesCalled){
+     initialCentreOfMassY = _globalRealignmentBalance[1] / _globalRealignmentMass[1];
+   }
+   
+   timesCalled++;
+   */
+   
+   //global_log->info() <<"initialCentreOfMassY = " << initialCentreOfMassY << endl;
+   // the realignment motion in y-direction so that the wall is always at the bottom of the simulation box
+   //_universalRealignmentMotion[1] = -fraction*((_globalRealignmentBalance[1] / _globalRealignmentMass[1]) - initialCentreOfMassY);
+
+   // the realignment motion is neglected
+   _universalRealignmentMotion[1] = 0;
+
+   }
+
+
+void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+                             double fraction)
+{
+   double localBalance[3]; 
+   for(unsigned d = 0; d < 3; d ++) localBalance[d] = 0.0; // initialising the array by zeros
+   double localMass = 0.0;
+   int cid;
+
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+      cid = tm->componentid();
+      if(_universalProfiledComponents[cid])
+      {
+        double tmass = tm->gMass();
+        localMass += tmass;
+        for(unsigned d = 0; d < 3; d++){ 
+          localBalance[d] += tm->r(d) * tmass;
+        }
+      }
+   }
+
+   for(unsigned d = 0; d < 3; d++) _globalRealignmentBalance[d] = localBalance[d];
+   _globalRealignmentMass[0] = localMass;
+   // determining the global values by the use of collectiveCommunication
+   domainDecomp->collCommInit(4);
+   for(unsigned d = 0; d < 3; d++)  domainDecomp->collCommAppendDouble(_globalRealignmentBalance[d]);
+   domainDecomp->collCommAppendDouble(_globalRealignmentMass[0]);
+   domainDecomp->collCommAllreduceSum();
+   for(unsigned d = 0; d < 3; d++)  _globalRealignmentBalance[d] = domainDecomp->collCommGetDouble();
+   _globalRealignmentMass[0] = domainDecomp->collCommGetDouble();
+   domainDecomp->collCommFinalize();
+
+   for(unsigned short d = 0; d < 3; d++){
+      _universalRealignmentMotion[d]
+         = -fraction*((_globalRealignmentBalance[d] / _globalRealignmentMass[0]) - 0.5*_globalLength[d]);
+   }
+  // "quick 'n dirty hack" in order to avoid trouble with the info-line of the realign()-method, this info line uses _globalRealignmentMass[1] which does 
+  // occur in this method (here it is superfluos)
+   _globalRealignmentMass[1] = _globalRealignmentMass[0];
+}
+
+/*
+ * By Stefan Becker, see above comment on determineShift().
+ * this method REQUIRES the presence of the halo
+ */
+void Domain::realign(
+   ParticleContainer* molCont
+) {
+   if(!this->_localRank)
+   {
+
+      global_log->info() << "Centre of mass: (" << _globalRealignmentBalance[0]/_globalRealignmentMass[0] << " / " << _globalRealignmentBalance[1]/_globalRealignmentMass[1] << " / " << _globalRealignmentBalance[2]/_globalRealignmentMass[0] << ") "
+			 << "=> adjustment: (" << _universalRealignmentMotion[0] << ", " << _universalRealignmentMotion[1] << ", " << _universalRealignmentMotion[2] << ").\n";
+   }
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+     for(unsigned short d=0; d<3; d++){
+       tm->move(d, _universalRealignmentMotion[d]);
+     }
+   }
+}
+
+// author: Stefan Becker, method called in the case of a density profile established in cylindrical coordinates. Counterpart of outputProfile(...).
+// reason for a sperate method (in addition to "outputProfile(...)"): method neatly matched to the particular needs of the (cylindrical density) profile, otherwise outpuProfile would be inflated, structure became too compilcated.
+void Domain::outputCylProfile(const char* prefix){
+	if(this->_localRank) return;
+
+	   unsigned IDweight[3];
+	   IDweight[0] = this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2];
+	   IDweight[1] = this->_universalNProfileUnits[2];
+	   IDweight[2] = 1;
+	   for( map<unsigned, bool>::iterator pcit = _universalProfiledComponents.begin();    // Loop ueber alle Komponenten
+	   	           pcit != _universalProfiledComponents.end();
+	   	           pcit++ )
+	   	      {
+	   	         if(!pcit->second) continue;  // ->second weist auf den key-value von map, d.h. den bool-Wert => falls falsche id, d.h. hiervon ist kein Profil zu erstellen => naechste Schleife
+
+			 // density profile
+	   	         string rhoProfName(prefix);
+	   	         rhoProfName += ".rhpr";
+			 // temperature profile
+			 string tmpProfName(prefix);
+			 tmpProfName += ".Tpr";
+			 //string yVelProfname(prefix);
+			 //yVelProfname+= ".vpry";
+			 //string xzVelProfname(prefix);
+			 //xzVelProfname+= ".vprxz";
+			 
+
+	   	         if(!this->_universalCylindricalGeometry)
+	   	         {
+	   	           global_log->error() << "Incorrect call of method \"outputCylProfile()\" !";
+	   	         }
+				 // changed by Michaela Heier
+	   	         /*ofstream* rhoProf = new ofstream(rhoProfName.c_str());
+			 ofstream* tmpProf = new ofstream(tmpProfName.c_str());
+			 ofstream* yVelProf = new ofstream(yVelProfname.c_str());
+			 ofstream* xzVelProf = new ofstream(xzVelProfname.c_str());
+
+	   	         if (!(*rhoProf ) || !(*tmpProf)) // geaendert durch M. Horsch, by Stefan Becker: wozu?
+	   	         {
+	   	            return;
+	   	         }
+	   	     rhoProf->precision(6);
+			 tmpProf->precision(6);
+			 yVelProf->precision(6);
+			 xzVelProf->precision(6);
+			 */
+			//edited by Michaela Heier
+			ofstream rhpr(rhoProfName.c_str());
+			ofstream Tpr(tmpProfName.c_str());
+
+			rhpr.precision(6);
+			Tpr.precision(6);
+
+			//changed by Michaela Heier
+	    //##########################################################################################################################################			 
+			 // density profile: actual writing procedure 
+
+	   	         double segmentVolume; // volume of a single bin, in a0^3 (atomic units) 
+	   	      	 segmentVolume = M_PI/this->_universalInvProfileUnit[1]/this->_universalInvProfileUnit[2]/this->_universalNProfileUnits[0];  // adapted to cylindrical coordinates
+			  
+				rhpr << "//Local profile of the number density. Output file generated by the \"outputCylProfile\" method, located in Domain.cpp. \n";
+	   	        rhpr << "//local density profile: Each matrix corresponds to a single value of \"phi_i\", measured in [rad]\n";
+	   	        rhpr << "//one single matrix of the local number density rho'(phi_i;r_i',h_i') \n//      | r_i'\n//---------------------\n//  h_i'| rho'(r_i',h_i')\n//      | \n";
+	   	        rhpr << "// T' \t sigma_ii' \t eps_ii' \t yOffset \t DELTA_phi \t DELTA_r2' \t DELTA_h' \t quantities in atomic units are denoted by an apostrophe '\n";
+	   	        rhpr << this->_universalTargetTemperature[_simulation.getEnsemble()->components()->size()]<<"\t"<<_simulation.getEnsemble()->component(0)->getSigma(0)<<"\t"<<_simulation.getEnsemble()->component(0)->getEps(0)<<"\t"; //changed by Michaela Heier
+	   	        rhpr << _yOff << "\t" << 1/this->_universalInvProfileUnit[0] << "\t" << 1/this->_universalInvProfileUnit[1] << "\t" << 1/this->_universalInvProfileUnit[2]<< "\n";
+	   	         // info: getSigma() und getEps() implementiert in Component.h
+	   	         // end of header, start of the data-part of the density file 
+	   	         for(unsigned n_phi = 0; n_phi < this->_universalNProfileUnits[0]; n_phi++)
+	   	         {
+	   	        	 rhpr <<"> "<< (n_phi+0.5)/this->_universalInvProfileUnit[0] <<"\n0 \t";
+	   	        	 for(unsigned n_r2 = 0; n_r2 < this->_universalNProfileUnits[1]; n_r2++){
+	   	        		 rhpr << 0.5*(sqrt(n_r2+1) + sqrt(n_r2))/sqrt(this->_universalInvProfileUnit[1]) <<"  \t"; // Eintragen der radialen Koordinaten r_i in Header
+	   	        	 }
+	   	        	 rhpr << "\n";
+	   	        	for(unsigned n_h = 0; n_h < this->_universalNProfileUnits[2]; n_h++)
+	   	        	{
+
+	   	        		double hval = (n_h + 0.5) / this->_universalInvProfileUnit[2];
+	   	        		rhpr << hval<< "  \t";
+	   	        		for(unsigned n_r2 = 0; n_r2< this->_universalNProfileUnits[1]; n_r2++)
+	   	        		{
+	   	        			unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
+	   	        				                                    + n_h * IDweight[2];
+	   	        		   	double rho_loc = this->_universalNProfile[unID] / (segmentVolume * this->_globalAccumulatedDatasets);
+	   	        		   	rhpr << rho_loc << "\t";
+	   	        		}
+	   	        		rhpr << "\n";
+	   	        	}
+	   	         }
+	   	         //rhoProf->close();
+				 rhpr.close();
+	   	         //delete rhpr;*/
+
+		//changed by Michaela Heier
+	    //##########################################################################################################################################
+	   	         // temperature profile: actual writing procedure
+			 Tpr << "//Local temperature profile generated by the \"outputCylProfile\" method.\n";
+			 Tpr << "//Temperature expressed by 2Ekin/#DOF\n";
+			 Tpr << "//one single matrix of the local temperature T(r_i,h_i) \n//      | r_i\n//---------------------\n//  h_i| T(r_i,h_i)\n//      | \n";
+	   	     Tpr << "// T \t sigma_ii \t eps_ii \t yOffset \t DELTA_phi \t DELTA_r2 \t DELTA_h \n";
+	   	     Tpr << this->_universalTargetTemperature[_simulation.getEnsemble()->components()->size()] <<"\t"<<_simulation.getEnsemble()->component(0)->getSigma(0)<<"\t"<<_simulation.getEnsemble()->component(0)->getEps(0)<<"\t"; //changed by Michaela Heier
+	   	     Tpr << _yOff << "\t" << 1/this->_universalInvProfileUnit[0] << "\t" << 1/this->_universalInvProfileUnit[1] << "\t" << 1/this->_universalInvProfileUnit[2]<< "\n";
+	   	     Tpr <<"> "<< 0.5/this->_universalInvProfileUnit[0] <<"\n0 \t";
+			 for(unsigned n_r2 = 0; n_r2 < this->_universalNProfileUnits[1]; n_r2++){
+	   	        		 Tpr << sqrt(n_r2/this->_universalInvProfileUnit[1])+0.5*sqrt(this->_universalInvProfileUnit[1])<<"  \t"; // Eintragen der radialen Koordinaten r_i
+	   	          }
+	   	        	 Tpr << "\n";
+	   	        	for(unsigned n_h = 0; n_h < this->_universalNProfileUnits[2]; n_h++)
+	   	        	{
+	   	        		double hval = (n_h + 0.5) / this->_universalInvProfileUnit[2];
+	   	        		Tpr << hval<< "  \t";
+	   	        		for(unsigned n_r2 = 0; n_r2< this->_universalNProfileUnits[1]; n_r2++)
+	   	        		{
+					  long double DOFc = 0.0;
+					  long double twoEkinc = 0.0;
+					  for(unsigned n_phi = 0; n_phi < this->_universalNProfileUnits[0]; n_phi++){
+					     unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
+	   	        				                                    + n_h * IDweight[2];
+					      DOFc += this->_universalDOFProfile[unID];
+					      twoEkinc += this->_universalKineticProfile[unID];
+					   }
+					   if(DOFc == 0.0){
+					     Tpr << 0 << "\t";
+					   }
+					   else{
+					  Tpr << (twoEkinc/DOFc ) << "\t";
+					   }
+	   	        		}
+	   	        		Tpr << "\n";
+	   	        	}
+			  //tmpProf->close();
+			  //delete tmpProf;
+			  Tpr.close();
+			  }
+}
+
+
+	   	      
+ void Domain::setLocalUpotCompSpecific(double UpotCspec){_localUpotCspecif = UpotCspec;}
+
+ double Domain::getLocalUpotCompSpecific(){return _localUpotCspecif;}
+
+
+double Domain::getAverageGlobalUpotCSpec() {
+  global_log->debug() << "number of fluid molecules = " << getNumFluidMolecules() << "\n";
+  return _globalUpotCspecif / getNumFluidMolecules();
+}
+
+
+void Domain::setNumFluidComponents(unsigned nc){_numFluidComponent = nc;}
+
+unsigned Domain::getNumFluidComponents(){return _numFluidComponent;}
+
+unsigned long Domain::getNumFluidMolecules(){
+  unsigned long numFluidMolecules = 0;
+  for(unsigned i = 0; i < _numFluidComponent; i++){
+    Component& ci=_components[i];
+    numFluidMolecules+=ci.getNumMolecules();
+  }
+  return numFluidMolecules;
+}
+
+
+

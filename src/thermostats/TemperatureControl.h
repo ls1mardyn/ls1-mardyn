@@ -251,7 +251,7 @@ public:
         double vz = mol->v(2);
         double m  = mol->mass();
 
-        return m * (vx+vx + vy*vy + vz*vz);
+        return m * (vx*vx + vy*vy + vz*vz);
     }
     virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
     {

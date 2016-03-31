@@ -61,14 +61,15 @@ LinkedCells::LinkedCells(
 	_cells.resize(numberOfCells);
 
 	// If the width of the inner region is less than the width of the halo
-	// region a parallelisation is not possible (with the used algorithms).
-	// If a particle leaves this box, it would need to be communicated to the two next neighbours.
+	// region a parallelization is not possible (with the used algorithms).
+	// If a particle leaves this box, it would need to be communicated to the two next neighbors.
 	if (_boxWidthInNumCells[0] < 2* _haloWidthInNumCells[0] ||
 	    _boxWidthInNumCells[1] < 2* _haloWidthInNumCells[1] ||
 	    _boxWidthInNumCells[2] < 2* _haloWidthInNumCells[2]) {
 		global_log->error() << "LinkedCells (constructor): bounding box too small for calculated cell length" << endl;
-		global_log->error() << "_cellsPerDimension" << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
-		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		global_log->error() << "_cellsPerDimension: " << _cellsPerDimension[0] << " / " << _cellsPerDimension[1] << " / " << _cellsPerDimension[2] << endl;
+		global_log->error() << "_haloWidthInNumCells: " << _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1] << " / " << _haloWidthInNumCells[2] << endl;
+		global_log->error() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0] << " / " << _boxWidthInNumCells[1] << " / " << _boxWidthInNumCells[2] << endl;
 		exit(5);
 	}
 	this->_localInsertionsMinusDeletions = 0;
@@ -660,7 +661,7 @@ void LinkedCells::initializeCells() {
 
 				cell.setBoxMin(cellBoxMin);
 				cell.setBoxMax(cellBoxMax);
-
+				_cells[cellIndex].setCellIndex(cellIndex);//set the index of the cell to the index of it...
 				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1] || iz < _haloWidthInNumCells[2] ||
 				    ix >= _cellsPerDimension[0]-_haloWidthInNumCells[0] ||
 				    iy >= _cellsPerDimension[1]-_haloWidthInNumCells[1] ||
@@ -928,6 +929,19 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 
 		if (!mu->hasSample()){
 			m = this->begin();
+			//old: m = &(*(_particles.begin()));
+			bool rightComponent = false;
+			MoleculeIterator mit;
+			if(m->componentid() != mu->getComponentID()){
+			  for(mit = this->begin(); mit!=this->end(); mit=this->next()){
+			    if(mit->componentid() == mu->getComponentID()){
+			      rightComponent = true;
+			      break;
+			    }
+			  }
+			}
+			if(rightComponent)
+			  m = &(*(mit));
 			mu->storeMolecule(*m);
 		}
 		if (hasInsertion) {

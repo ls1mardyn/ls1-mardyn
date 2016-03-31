@@ -286,6 +286,7 @@
         <outputprefix>default</outputprefix>
         <appendTimestamp>1</appendTimestamp>
         <datarep>native</datarep>
+        <measureTime>1</measureTime>
       </outputplugin>
 
       <!-- more output plugins -->

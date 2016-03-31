@@ -7,6 +7,8 @@
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
 
+class Wall;
+class Mirror;
 using optparse::Values;
 
 #ifndef SIMULATION_SRC
@@ -46,6 +48,14 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+
+// by Stefan Becker
+const int ANDERSEN_THERMOSTAT = 2;
+const int VELSCALE_THERMOSTAT = 1;
+
+namespace bhfmm {
+class FastMultipoleMethod;
+} // bhfmm
 
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -268,12 +278,6 @@ public:
 	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
 	void setTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
 
-	/** Set the maximum molecule ID. */
-	void setMaxID (unsigned long id) { maxid = id; }
-	/** Get the maximum molecule ID. */
-	unsigned long getMaxID () const { return maxid; }
-
-
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -320,6 +324,7 @@ public:
 	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
 	double getSimulationTime(){ return _simulationTime; }
 
+	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
 
 private:
@@ -329,7 +334,8 @@ private:
 
 
 	/** maximum id of particles */
-	unsigned long maxid;
+	/** @todo remove this from the simulation class */
+	unsigned long _maxMoleculeId;
 
 	/** maximum distance at which the forces between two molecules still have to be calculated. */
 	double _cutoffRadius;
@@ -376,6 +382,11 @@ private:
 	 * velocity is evaluated.
 	 */
 	unsigned _collectThermostatDirectedVelocity;
+
+	//! by Stefan Becker: the Type of the thermostat(velocity scaling or Andersen or...)
+	//! appropriate tokens stored as constants at the top of this file
+	int _thermostatType;
+	double _nuAndersen;
 
 	/** Sometimes during equilibration, a solid wall surrounded by
 	 * liquid may experience a stress or an excessive pressure, which
@@ -438,12 +449,43 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
+
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	//! flags that control the realign tool
+	//! if _doAlignCentre == true => the alignment is carried out
+	bool _doAlignCentre;
+	// if _componentSpecificAlignment == true => a separate realignment with respect to the x,z-direction and the y-direction is carried out.
+	// The separate directions of the realignment are due to different components, i.e. that solid wall is always kept at the bottom (y-direction) whereas
+	// the fluid is kept in the centre of the x,z-plane.
+	bool _componentSpecificAlignment;
+	//! number of discrete timesteps after which the realignemt is carried out 
+	unsigned long _alignmentInterval;
+	//! strength of the realignment
+	double _alignmentCorrection;
+	
+	//! applying a field representing the wall
+	bool _applyWallFun;
+	bool _applyMirror;
+	
+	Wall* _wall;
+	Mirror* _mirror;
+
+	//! flags to control the cancel of the momentum 
+	bool _doCancelMomentum;
+	//! number of time steps after which the cancelling is carried outline
+	unsigned _momentumInterval;
+	
+	//! random number generator
+	Random _rand;
 	
 	/** Long Range Correction */
 	LongRangeCorrection* _longRangeCorrection;
 
 	/** Temperature Control (Slab Thermostat) */
     TemperatureControl* _temperatureControl;
+
+    /** The Fast Multipole Method object */
+	bhfmm::FastMultipoleMethod* _FMM;
 
 public:
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }

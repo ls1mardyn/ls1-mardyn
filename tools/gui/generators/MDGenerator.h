@@ -8,20 +8,23 @@
 #ifndef MDGENERATOR_H_
 #define MDGENERATOR_H_
 
-#include "Generators/Generator.h"
 #include "common/MardynConfiguration.h"
+
+#include "Generators/Generator.h"
 #include "io/InputBase.h"
 #include "molecules/Component.h"
 #include "utils/Logger.h"
 
 #include <iostream>
 #include <list>
+#include <vector>
 
 class Domain;
 class DomainDecompBase;
 class ParticleContainer;
 class ChemicalPotential;
-
+class ParameterCollection;
+class Parameter;
 
 /**
  * This is the base class for all molecule generators and offers functionality
@@ -92,10 +95,10 @@ public:
 	virtual void setLogger(Log::Logger* logger);
 
 	//! NOP
-	void setPhaseSpaceFile(std::string filename) {}
+	void setPhaseSpaceFile(std::string /*filename*/) {}
 
 	//! NOP
-	void setPhaseSpaceHeaderFile(std::string filename) {}
+	void setPhaseSpaceHeaderFile(std::string /*filename*/) {}
 
 	/**
 	 * Generates DrawableMolecules and saves them in the list
@@ -119,7 +122,7 @@ public:
 	 *
 	 * @return generator parameters
 	 */
-	virtual vector<ParameterCollection*> getParameters() = 0;
+	virtual std::vector<ParameterCollection*> getParameters() = 0;
 
 	/**
 	* Sets a new parameter and adds it to the list
