@@ -121,12 +121,12 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 			cout << "current coeffs: " << std::endl;
 			cout << setprecision(17);
-			for ( int j = 0; j < _currentCoeffs.size(); ++j) {
+			for (unsigned int j = 0; j < _currentCoeffs.size(); ++j) {
 				cout << _currentCoeffs[j] << std::endl;
 			}
 			cout << std::endl;
 			cout << "old coeffs: " << std::endl;
-			for (int j = 0; j < _oldCoeffs.size(); ++j) {
+			for (unsigned int j = 0; j < _oldCoeffs.size(); ++j) {
 				cout << _oldCoeffs[j] << std::endl;
 			}
 		}
