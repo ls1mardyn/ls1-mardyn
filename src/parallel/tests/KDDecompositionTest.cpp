@@ -38,6 +38,7 @@ void KDDecompositionTest::testCompleteTreeInfo() {
 		bool coversAll[] = {true, true, true};
 		KDNode* root = new KDNode(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll, 0);
 		root->buildKDTree();
+		_rank = _domainDecomposition->getRank();
 		KDNode* ownArea = root->findAreaForProcess(_rank);
 
 		KDNode result(_domainDecomposition->getNumProcs(), lowerEnd, upperEnd, 0, 0, coversAll, 0);

@@ -39,6 +39,8 @@ class CellDataSoA ;
  * actions should be executed during CellProcessor applications.
  */
 class ParticleCell : public Cell {
+/*private:
+	ParticleCell(const ParticleCell& that);*/
 public:
 	/**
 	 * \brief Initialize data pointers to 0.
@@ -151,7 +153,7 @@ private:
 	std::vector<Molecule *> _molecules;
 
 	/**
-	 * \brief A vector of molecules, which have left this cell
+	 * \brief A vector of molecules, which have left this cell.
 	 */
 	std::vector<Molecule *> _leavingMolecules;
 

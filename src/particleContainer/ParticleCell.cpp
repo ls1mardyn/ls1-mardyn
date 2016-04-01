@@ -20,9 +20,9 @@ ParticleCell::ParticleCell() : _molecules(), _cellDataSoA(0), _cellIndex(0){
 ParticleCell::~ParticleCell() {
 	assert(!_cellDataSoA);
 
-	if(!isEmpty()) {
-		deallocateAllParticles();
-	}
+//	if(!isEmpty()) {
+//		deallocateAllParticles();
+//	}
 }
 
 void ParticleCell::removeAllParticles() {

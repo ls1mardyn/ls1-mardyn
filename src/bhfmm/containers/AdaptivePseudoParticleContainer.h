@@ -19,26 +19,26 @@ typedef struct{
 
 class AdaptivePseudoParticleContainer: public PseudoParticleContainer{
 public:
-	AdaptivePseudoParticleContainer(double domainLength[3],
-		int threshold, int orderOfExpansions, bool periodic = true):
-	PseudoParticleContainer(orderOfExpansions),_periodicBC(periodic), 
-	_threshold(threshold),root(0){
-	assert(_threshold > 0);
-	for(int i=0; i<3; i++){
-		_domainLength[i] = domainLength[i];
+	AdaptivePseudoParticleContainer(double domainLength[3], int threshold,
+			int orderOfExpansions, bool periodic = true) :
+			PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic), _threshold(
+					threshold), root(0) {
+		assert(_threshold > 0);
+		for (int i = 0; i < 3; i++) {
+			_domainLength[i] = domainLength[i];
+		}
 	}
-};
 	
 	AdaptivePseudoParticleContainer(double domainLength[3],
-		int orderOfExpansions, double cellLength[3], int subdivisionFactor,
-		bool periodic ):
-	PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic),
-	_threshold(0), root(0), _subdivisionFactor(subdivisionFactor){
-	for(int i=0; i<3; i++){
-		_domainLength[i] = domainLength[i];
-		_cellLength[i] = cellLength[i];
+			int orderOfExpansions, double cellLength[3], int subdivisionFactor,
+			bool periodic) :
+			PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic), _threshold(
+					0), root(0), _subdivisionFactor(subdivisionFactor) {
+		for (int i = 0; i < 3; i++) {
+			_domainLength[i] = domainLength[i];
+			_cellLength[i] = cellLength[i];
+		}
 	}
-};
 
 	~AdaptivePseudoParticleContainer(){ delete root; };
 

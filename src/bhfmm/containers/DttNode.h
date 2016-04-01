@@ -17,7 +17,7 @@ class dtt::DttNode{
 
 	public:
 		DttNode(int o):_mpCell(o){};
-		DttNode(ParticleCell particles,int threshold,double ctr[3],double domLen[3], 
+		DttNode(ParticleCell& particles,int threshold,double ctr[3],double domLen[3],
 			int order,int depth=0, bool srcOnly=false);
 		
 		~DttNode() { for(unsigned int i=0;i<_children.size();i++){delete _children[i];} }			
@@ -48,8 +48,8 @@ class dtt::DttNode{
 		std::vector<DttNode*> _children; 
 		int _depth;
 		bool _srcOnly;
-		void initTree(ParticleCell particles);		
-    void divideParticles(ParticleCell particles, std::vector<ParticleCell>& cellContainer);
+		//void initTree(ParticleCell particles);
+    void divideParticles(ParticleCell& particles, std::vector<ParticleCell>& cellContainer);
 };
 
 #endif /* DTTNODE_H_ */
