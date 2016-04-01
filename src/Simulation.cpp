@@ -890,6 +890,9 @@ void Simulation::simulate() {
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
 		}
 		
+		 if(_mirror && _applyMirror){
+		  _mirror->VelocityChange(_moleculeContainer, _domain);
+		}
 
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
@@ -1069,9 +1072,9 @@ void Simulation::simulate() {
 		  }
 
 
-		 if(_mirror && _applyMirror){
-		  _mirror->VelocityChange(_moleculeContainer, _domain);
-		}
+		// if(_mirror && _applyMirror){
+		//  _mirror->VelocityChange(_moleculeContainer, _domain);
+		//}
 
 
 		}

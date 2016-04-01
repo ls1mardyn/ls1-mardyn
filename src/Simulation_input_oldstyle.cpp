@@ -654,12 +654,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		}		
 		
 		else if (token == "Mirror"){
-			double yMirr;
+			double yMirr, forceConstant;
 			_applyMirror=true;
-			inputfilestream >> yMirr;
+			inputfilestream >> yMirr >> forceConstant;
 			std::vector<Component>* components = global_simulation->getEnsemble()->components();
 			_mirror=new Mirror();
-			_mirror->initialize(components, yMirr);
+			_mirror->initialize(components, yMirr, forceConstant);
 		} else if (token == "slabsLRC") {
 			double slabs;
 			inputfilestream >> slabs;

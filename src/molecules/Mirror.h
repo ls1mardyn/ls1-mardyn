@@ -43,13 +43,14 @@ public:
   // constructor and destructor
   Mirror();
  ~Mirror();
-  void initialize(const std::vector<Component>* components, double in_yMirr);
+  void initialize(const std::vector<Component>* components, double in_yMirr, double in_forceConstant);
   void VelocityChange( ParticleContainer* partContainer, Domain* domain );
 
   
  	
 private:
   double  _yMirr;
+  double  _forceConstant;
       
 };
 
