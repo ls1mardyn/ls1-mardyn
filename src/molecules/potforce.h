@@ -8,6 +8,8 @@
 #include "ensemble/PressureGradient.h"
 #include "Domain.h"
 
+#include "ensemble/GrandCanonical.h"
+
 #include <iostream>
 using namespace std;
 
@@ -367,8 +369,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						}
 						  
 						if(domain.isBulkPressure(mi.componentid()) || domain.isBulkPressure(mj.componentid())){
-						  if((mi.r(0) >= domain.getBulkBoundary(0)-5. && mi.r(0) <= domain.getBulkBoundary(1)+5. && mi.r(1) >= domain.getBulkBoundary(2)-5. && mi.r(1) <= domain.getBulkBoundary(3)+5.)
-						    || (mj.r(0) >= domain.getBulkBoundary(0)-5. && mj.r(0) <= domain.getBulkBoundary(1)+5. && mj.r(1) >= domain.getBulkBoundary(2)-5. && mj.r(1) <= domain.getBulkBoundary(3)+5.)){
+						  if((mi.r(0) >= domain.getBulkBoundary(0)-domain.getCutoffRadius() && mi.r(0) <= domain.getBulkBoundary(1)+domain.getCutoffRadius() && mi.r(1) >= domain.getBulkBoundary(2)-domain.getCutoffRadius() && mi.r(1) <= domain.getBulkBoundary(3)+domain.getCutoffRadius())
+						    || (mj.r(0) >= domain.getBulkBoundary(0)-domain.getCutoffRadius() && mj.r(0) <= domain.getBulkBoundary(1)+domain.getCutoffRadius() && mj.r(1) >= domain.getBulkBoundary(2)-domain.getCutoffRadius() && mj.r(1) <= domain.getBulkBoundary(3)+domain.getCutoffRadius())){
 						    for (unsigned short d = 0; d < 3; ++d){
 							virialForce = 0.5 * drm[d] * f[d];
 							mi.addPressureVirial(d, virialForce);
@@ -377,9 +379,20 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						  }
 						}
 						
+						if((domain.isBarostat(mi.componentid()) || domain.isBarostat(mj.componentid())) && (domain.getSimstep() >= domain.getBarostatTimeInit() && domain.getSimstep() <= domain.getBarostatTimeEnd())){
+						  if((mi.r(0) >= domain.getControl_bottom(0) && mi.r(0) <= domain.getControl_top(0) && mi.r(1) >= domain.getControl_bottom(1) && mi.r(1) <= domain.getControl_top(1))
+						    || (mj.r(0) >= domain.getControl_bottom(0) && mj.r(0) <= domain.getControl_top(0) && mj.r(1) >= domain.getControl_bottom(1) && mj.r(1) <= domain.getControl_top(1))){
+						    for (unsigned short d = 0; d < 3; ++d){
+							virialForce = 0.5 * drm[d] * f[d];
+							mi.addPressureVirial_barostat(d, virialForce);
+							mj.addPressureVirial_barostat(d, virialForce);
+						    }
+						  }
+						}
+						
 						if((mi.isHardyConfinement() || mj.isHardyConfinement()) && (domain.isConfinement(mi.componentid()) || domain.isConfinement(mj.componentid())) && !(domain.getSimstep() % domain.getConfinementRecordTimeStep())){
-						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)
-						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)){
+						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-domain.getCutoffRadius() && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+domain.getCutoffRadius())
+						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-domain.getCutoffRadius() && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+domain.getCutoffRadius())){
 						    //calculation of the bond length fraction per unID
 						    string stress ("Confinement");
 						    string weightingFunc = mi.getWeightingFuncConfinement();
@@ -401,8 +414,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						    }
 						  }		      
 						}else if((domain.isConfinement(mi.componentid()) || domain.isConfinement(mj.componentid())) && !(domain.getSimstep() % domain.getConfinementRecordTimeStep())){
-						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)
-						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-5. && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+5.)){
+						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-domain.getCutoffRadius() && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+domain.getCutoffRadius())
+						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-domain.getCutoffRadius() && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+domain.getCutoffRadius())){
 						    for (unsigned short d = 0; d < 3; ++d){
 							virialForce = 0.5 * drm[d] * f[d];
 							mi.addPressureVirialConfinement(d, virialForce);

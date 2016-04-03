@@ -107,27 +107,6 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 				else {
 				  int thermostat = domain->getThermostat(cid);
 				  tM->upd_postF(dt_half, summv2[thermostat], summv2_1Dim[thermostat], sumIw2[thermostat], domain);
-// 				  if(_simulation.getSimulationStep() > 0){
-// 				      //Correction for summv2 in case of directed velocities: accelerateInstantaneously and SpringForce
-// 				      if(domain->getPG()->isAcceleratingInstantaneously(domain->getNumberOfComponents())){
-// 					  if(tM->componentid() == cid_moved){
-// 					      double vx;
-// 					      vx = tM->v(0);
-// 					      vx -= domain->getPG()->getMissingVelocity(cid_moved, 0);
-// 					      summv2[thermostat] -= vx*vx*tM->mass();
-// 					  }
-// 				      }
-// 				      //Correction for summv2 in case of directed velocities: accelerateInstantaneously and SpringForce
-// 				      if(domain->getPG()->isSpringDamped()){
-// 					  if(tM->componentid() == cid_moved){
-// 					    double Fy, vy;
-// 					    Fy = tM->F_Spring(1);
-// 					    vy = dt_half / tM->mass() * Fy;
-// 					    summv2[thermostat] -= vy*vy*tM->mass();
-// 					  }
-// 				      }
-// 				  }
-					
 				  
 				  N[thermostat]++;
 				  rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
@@ -216,7 +195,7 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d);
 	
 	for(int d = 0; d < 3; d++)
-	  domain->getPG()->setGlobalVelSumBeforeAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d, cid_moved) / domain->getPG()->getGlobalN(cid_moved));
+	  domain->getPG()->addGlobalVelSumBeforeAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d, cid_moved) / domain->getPG()->getGlobalN(cid_moved));
 	  
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
 		unsigned cid = thismol->componentid();
@@ -226,13 +205,10 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 		              componentwiseVelocityDelta[2][cid]);
 	}
 	// Control of velocity after artificial acceleration
-	//for (compit = comp.begin(); compit != comp.end(); compit++) {
-		//unsigned cid_moved = 1; //domain->getPG()->getComponentSet(compit->ID());
-		domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents());
-	//}
+	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents());
 
 	for(int d = 0; d < 3; d++)
-	  domain->getPG()->setGlobalVelSumAfterAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d,cid_moved) / domain->getPG()->getGlobalN(cid_moved));
+	  domain->getPG()->addGlobalVelSumAfterAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d,cid_moved) / domain->getPG()->getGlobalN(cid_moved));
 }
 
 void Leapfrog::init1D(unsigned zoscillator, ParticleContainer* molCont) {

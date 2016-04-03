@@ -310,6 +310,7 @@ public:
 
         void initCanonical(unsigned long t) { this->_initCanonical = t; }
         void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
+        void endGrandCanonical(unsigned long t) { this->_endGrandCanonical = t; }
         void initStatistics(unsigned long t) { this->_initStatistics = t; }
 	//FIXME: NOT USED!
         void slabProfileSettings(unsigned long slabProfileRecordingTimesteps, unsigned long slabProfileOutputTimesteps, std::string slabProfileOutputPrefix)
@@ -346,6 +347,11 @@ public:
 	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
 
 	Ensemble* getEnsemble() { return _ensemble; }
+	
+	unsigned getBarostatTimeInit() { return _initGrandCanonical; }
+	unsigned getBarostatTimeEnd() { return _endGrandCanonical; }
+	
+	bool isRecordingSlabProfile() { return _doRecordSlabProfile; }
 
 private:
 
@@ -453,6 +459,7 @@ private:
 	unsigned long _initCanonical;
 	/** step number for activation of the muVT ensemble */
 	unsigned long _initGrandCanonical;
+	unsigned long _endGrandCanonical;
 	/** step number for activation of all sorts of statistics */
 	unsigned long _initStatistics;
 

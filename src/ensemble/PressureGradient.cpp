@@ -297,7 +297,7 @@ void PressureGradient::calculateForcesOnComponent(ParticleContainer* molCont, un
 	}
 }
 
-void PressureGradient::collectForcesOnComponent(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid)
+void PressureGradient::collectForcesOnComponent(DomainDecompBase* domainDecomp, unsigned int cid)
 {
 	domainDecomp->collCommInit( 4 * _localN.size() );
 	for( map<unsigned int, unsigned int long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
@@ -340,7 +340,7 @@ void PressureGradient::calculateSpringForcesOnComponent(ParticleContainer* molCo
 	}
 }
 
-void PressureGradient::collectSpringForcesOnComponent(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid)
+void PressureGradient::collectSpringForcesOnComponent(DomainDecompBase* domainDecomp, unsigned int cid)
 {
 	    domainDecomp->collCommInit( 4 * _localSpringN.size() );
 	    for( map<unsigned int, unsigned int long>::iterator lNit = _localSpringN.begin(); lNit != _localSpringN.end(); lNit++ )

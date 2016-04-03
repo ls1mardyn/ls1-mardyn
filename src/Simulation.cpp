@@ -945,12 +945,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "stress") {	   // calculates virial stresses in the desired component
 			unsigned xun, yun;
 			string stress, weightingFunc;
-			inputfilestream >> xun >> yun >> stress >> weightingFunc;
+			inputfilestream >> xun >> yun >> stress;
 			_domain->setupStressProfile(xun, yun);
 			_doRecordStressProfile = true;
-			if(stress == "Hardy") // calculates Hardy Stresses
+			if(stress == "Hardy"){ // calculates Hardy Stresses
 			  _HardyStress = true;
-			_weightingStress = weightingFunc;
+			  inputfilestream >> token;
+			  if (token != "Linear" && token != "Pyramide" ) {
+				global_log->error() << "Expected Hardy stress option 'Linear' or 'Pyramide' instead of '"
+						<< token << "' for the weighting function.\n";
+				exit(1);
+			  }
+			  weightingFunc = token;
+			  _weightingStress = weightingFunc;
+			}
 			global_log->info() << "Stress profile: " << stress << endl;
 		} else if (token == "stressProfileRecordingTimesteps") { /* TODO: suboption of stressProfile */
 			inputfilestream >> _stressProfileRecordingTimesteps;
@@ -982,14 +990,31 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			_domain->setupConfinementProperties(wallThickness, horDist, vertDist, radius2, cid, xmax, ymax, zmax, upperID, lowerID);
 		} else if (token == "confinementProfile") { /* TODO: suboption of confinementProperties */
 			unsigned xun, yun;
-			double correlationLength;
+			double correlationLength = 1.0;
 			string stress, weightingFunc;
-			inputfilestream >> xun >> yun >> stress >> weightingFunc >> correlationLength;
+			inputfilestream >> xun >> yun >> stress;
 			_domain->specifyStressCalcMethodConfinement(stress);
-			_domain->setupConfinementProfile(xun, yun, correlationLength); 
 			if(stress == "Hardy") // calculates Hardy Stresses
 			  _HardyConfinement = true;
-			_weightingConfinement = weightingFunc;
+			
+			if(stress == "Hardy"){ // calculates Hardy Stresses
+			  _HardyConfinement = true;
+			  inputfilestream >> token;
+			  if (token != "Linear" && token != "Pyramide" ) {
+				global_log->error() << "Expected Hardy stress option 'Linear' or 'Pyramide' instead of '"
+						<< token << "' for the weighting function.\n";
+				exit(1);
+			  }
+			  weightingFunc = token;
+			  _weightingConfinement = weightingFunc;
+			  inputfilestream >> correlationLength;
+			  if (correlationLength <= 0 || correlationLength >= 100) {
+				global_log->error() << "Expected Hardy stress option for the correlation length in the range [0;100] instead of '"
+						<< correlationLength << "'.\n";
+				exit(1);
+			  }
+			}
+			_domain->setupConfinementProfile(xun, yun, correlationLength); 
 			global_log->info() << "Confinement stress profile: " << stress << endl;
 		} else if (token == "confinementRecordingTimesteps") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementRecordingTimesteps; 	
@@ -1086,13 +1111,24 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			ChemicalPotential tmu = ChemicalPotential();
 			tmu.setMu(icid, imu);
 			tmu.setInterval(instep);
+			tmu.setOriginalInterval(instep);
 			tmu.setInstances(intest);
+			tmu.setOriginalInstances(intest);
 			if (controlVolume)
 				tmu.setControlVolume(x0, y0, z0, x1, y1, z1);
 			global_log->info() << setprecision(6) << "chemical Potential "
 					<< imu << " component " << icid + 1 << " (internally "
 					<< icid << ") conduct " << intest << " tests every "
 					<< instep << " steps: ";
+			
+			inputfilestream >> token;
+			if (token == "barostat") {
+			  double targetPress;
+			  tmu.setGCMD_barostat(true);
+			  inputfilestream >> targetPress;
+			  tmu.setTargetPressure(targetPress);
+			  _domain->setupBarostat(tmu.getControl_bottom(0), tmu.getControl_top(0), tmu.getControl_bottom(1), tmu.getControl_top(1), tmu.getControl_bottom(2), tmu.getControl_top(2), tmu.getComponentID());
+			}
 			global_log->info() << flush;
 			_lmu.push_back(tmu);
 			global_log->info() << " pushed back." << endl;
@@ -1109,6 +1145,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> _initCanonical;
 		} else if (token == "initGrandCanonical") { /* suboption of chemical potential */
 			inputfilestream >> _initGrandCanonical;
+			inputfilestream >> token;
+			if (token != "end") {
+				global_log->error() << "Expected 'end' instead of '" << token
+						<< "'.\n";
+				exit(1);
+			}
+			inputfilestream >> _endGrandCanonical;
+			global_log->info() << "Grand canonical ensemble in time slot: " << _initGrandCanonical << " until " << _endGrandCanonical << endl;
 		} else if (token == "initStatistics") {
 			inputfilestream >> _initStatistics;
 		} else if (token == "cutoffRadius") {
@@ -1157,13 +1201,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				tmp_molecularMass);
 		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
-
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
 				_moleculeContainer->getBoundingBoxMax(0),
 				_moleculeContainer->getBoundingBoxMin(1),
 				_moleculeContainer->getBoundingBoxMax(1),
 				_moleculeContainer->getBoundingBoxMin(2),
 				_moleculeContainer->getBoundingBoxMax(2));
+		
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
@@ -1271,6 +1315,7 @@ void Simulation::prepare_start() {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
 		}
+		
 	}
 
 	if (_zoscillation) {
@@ -1332,6 +1377,7 @@ void Simulation::simulate() {
 		exit(1);
 		}
 		ForceData << "#step\t\t\tForce_x Force_y Force_z\t\tSpringForce_x SpringForce_y SpringForce_z\t\t";
+		ForceData << "FrictionForce(x)\t\t";
 		ForceData << "Before Acc: VelAverage_x VelAverage_y VelAverage_z\t\t";
 		ForceData << "After Acc: VelAverage_x VelAverage_y VelAverage_z\t\tAfter ThT: VelAverage_x VelAverage_y VelAverage_z\n";
 		
@@ -1355,7 +1401,8 @@ void Simulation::simulate() {
 		global_log->error() << "Could not open file " << "./Results/HeatFlux.dat" << endl;
 		exit(1);
 		}
-		HeatFlux << "#A_Comp_2" << 2*_domain->getGlobalLength(0)*_domain->getGlobalLength(2) << "\n" << "#A_Comp_3" << 2*((_domain->getConfinementEdge(1)-_domain->getConfinementEdge(0)) + _domain->get_confinementMidPoint(3))*_domain->getGlobalLength(2) << "\n\n";
+		HeatFlux << "#A_Comp_2 (upper plate) " << 2*_domain->getGlobalLength(0)*_domain->getGlobalLength(2) << "\n" << "#A_Comp_3 (lower plate)" << 2*((_domain->getConfinementEdge(1)-_domain->getConfinementEdge(0)) + _domain->get_confinementMidPoint(3))*_domain->getGlobalLength(2) << "\n\n";
+		HeatFlux << "#Comp_1 (fluid) " << _domain->getThermostat(0) << "\n#Comp_2 (upper plate) " << _domain->getThermostat(1) << "\n#Comp_3 (lower plate) " <<  _domain->getThermostat(2) << "\n\n";
 		HeatFlux << "#step\t\t\tQ_ThT_ges\tQ_ThT_1\tQ_ThT_2\tQ_ThT_3\n\n";
 	}
 	
@@ -1386,11 +1433,11 @@ void Simulation::simulate() {
 
 	loopTimer.start();
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
-		if (_simstep >= _initGrandCanonical) {
+		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
+				if ((!((_simstep + 2 * j + 3) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || (_simstep == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true)) {
 					cpit->prepareTimestep(_moleculeContainer,
 							_domainDecomposition);
 				}
@@ -1400,6 +1447,7 @@ void Simulation::simulate() {
 		if(_domainDecomposition->getRank() == 0) 
 		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
 		
+		/* FIXME: just call once for simstep==initStatistics?? */
 		// initialize Hardy stresses
 		  if(_HardyStress && _simstep >= this->_initStatistics)
 		    for(_thismol = _moleculeContainer->begin(); _thismol != _moleculeContainer->end(); _thismol = _moleculeContainer->next()){
@@ -1435,31 +1483,20 @@ void Simulation::simulate() {
 		global_log->debug() << "Traversing pairs" << endl;
 		_moleculeContainer->traverseCells(*_cellProcessor);
 		
-		// Collect forces in the confinement for the calculation of the viscosity
-		if ((_simstep > _initStatistics)) {
-		  // collects ID of component that moves due to an external force field
-		   string moved ("moved");
-		   unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
-		   cid--;
-		   if(cid >= 0 && cid < _domain->getNumberOfComponents())
-		       _pressureGradient->calculateForcesOnComponent(_moleculeContainer, cid);
-		   
-		   if(_pressureGradient->isSpringDamped())
-		       _pressureGradient->calculateSpringForcesOnComponent(_moleculeContainer, cid);
-		}
 		//Force Record of spring force and total force
 		int timeStepForce = 1000;
 		if(_simstep%timeStepForce == 0 /*&& _simstep >= _initStatistics*/){
-		      string moved ("moved");
-		      unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
-		      cid--;
-		      if(cid >= 0 && cid < _domain->getNumberOfComponents())
-		       _pressureGradient->collectForcesOnComponent(_domainDecomposition, _moleculeContainer, cid);
+		    string moved ("moved");
+		    int cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+		    cid--;
+		    if (cid >= 0){
+		      if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
+		       _pressureGradient->collectForcesOnComponent(_domainDecomposition, cid);
 		      if(_simstep > _initStatistics){
 			for(int d = 0; d < 3; d++)
 			      Force[d][cid] = _pressureGradient->getGlobalForceSum(d, cid)/timeStepForce;
 			if(_pressureGradient->isSpringDamped()){
-			      _pressureGradient->collectSpringForcesOnComponent(_domainDecomposition, _moleculeContainer, cid);
+			      _pressureGradient->collectSpringForcesOnComponent(_domainDecomposition, cid);
 
 			    if(_domainDecomposition->getRank() == 0)   
 			      for(int d = 0; d < 3; d++)
@@ -1474,32 +1511,69 @@ void Simulation::simulate() {
 			  ForceData << endl;
 			}
 		      
-			if(cid >= 0 && cid < _domain->getNumberOfComponents())
+			if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
 			  _pressureGradient->resetForcesOnComponent(cid);
 			if(_pressureGradient->isSpringDamped())
 			  _pressureGradient->resetSpringForcesOnComponent(cid);
 		      }
+		    }
 		}
 		
-		if ((_simstep > _initStatistics) && _doRecordConfinement)
-		    _domain->collectForcesOnComponentConfinement(_moleculeContainer);
 		// test deletions and insertions
-		if (_simstep >= _initGrandCanonical) {
+		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
+				if ((!((_simstep + 2 * j + 3) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || (_simstep == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true)) {
+					double currentTemp = _domain->getGlobalCurrentTemperature();
+					double currentPressure = 1.0;
+					double targetPressure = 0.0;
+					_domain->setDifferentBarostatInterval(true);
+					if(cpit->isGCMD_barostat()){
+					    double imu;
+					    unsigned icid = cpit->getComponentID();
+					    long double p_Vir = _domain->getPressureVirial_barostat();
+					    long double p_Kin = _domain->getPressureKin_barostat();
+					    double Volume = cpit->getVolume_Barostat();
+					    unsigned long N = _domain->getN_barostat();
+					    targetPressure = cpit->getTargetPressure();
+					    currentPressure = (double)((p_Vir + p_Kin)/(3 * Volume));
+					    currentTemp = (double)(p_Kin/(3 * N));
+					    
+					    cout << " t " << _simstep << " targetPressure " << targetPressure << " currentPressure " << currentPressure << " currentTemp " << currentTemp << " V " << Volume << " N " << N << " Int " << cpit->getInterval() << " deltaI " << cpit->getInstances();
+					    
+					    double deltaPressure = abs(currentPressure-targetPressure);
+					    if(deltaPressure == 0)
+					      deltaPressure = 0.01;
+					    unsigned newInstances = (unsigned)floor(cpit->getOriginalInstances()*10*deltaPressure);
+					    cout << " newInst " << newInstances << endl;
+					    
+					  if(0.99*targetPressure > currentPressure){
+					    imu = 50;
+					    cpit->setMu(icid, imu);
+					    cpit->setInstances(newInstances);
+					  }else if(1.01*targetPressure < currentPressure){
+					    imu = -5;
+					    cpit->setMu(icid, imu);
+					    cpit->setInstances(newInstances);
+					  }else{
+					    imu = 0;
+					    cpit->setInstances(0);
+					    cpit->setMu(icid, imu);
+					  }
+					  // reset barostat specific state variables
+					  _domain->resetBarostat();
+					}
 					global_log->debug() << "Grand canonical ensemble(" << j
 							<< "): test deletions and insertions" << endl;
                                         this->_domain->setLambda(cpit->getLambda());
                                         this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
 					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor);
+							currentTemp, this->_domain, *_cellProcessor);
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);
 #endif
-
 					int localBalance =
 							_moleculeContainer->localGrandcanonicalBalance();
 					int balance = _moleculeContainer->grandcanonicalBalance(
@@ -1510,46 +1584,60 @@ void Simulation::simulate() {
 							<< ")" << " / c = " << cpit->getComponentID()
 							<< "]   " << endl;
 					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
+					
+					// adaptable timestep for barostat: the bigger the difference between targetPressure and currentPressure, the shorter the timestep
+					if(cpit->isGCMD_barostat()){
+					  double deltaPressure = abs(currentPressure-targetPressure);
+					  if(deltaPressure == 0)
+					    deltaPressure = 0.01;
+					  unsigned newInterval = (unsigned)floor(cpit->getOriginalInterval()/deltaPressure) + _simstep;
+					  cpit->setInterval(newInterval);
+					  cout << " newI " << newInterval << endl;
+					}
 				}
-
 				j++;
 			}
 		}
 
 		global_log->debug() << "Delete outer particles / clearing halo" << endl;
 		_moleculeContainer->deleteOuterParticles();
-		if (_simstep >= _initGrandCanonical) {
+		
+		// Collect forces in the confinement for the calculation of the viscosity
+		if ((_simstep > _initStatistics) && _doRecordConfinement)
+		    _domain->collectForcesOnComponentConfinement(_moleculeContainer);
+		
+		if ((_simstep > _initStatistics)) {
+		  // collects ID of component that moves due to an external force field
+		   string moved ("moved");
+		   unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+		   cid--;
+		   if(cid >= 0 && cid < _domain->getNumberOfComponents())
+		       _pressureGradient->calculateForcesOnComponent(_moleculeContainer, cid);
+		   
+		   if(_pressureGradient->isSpringDamped())
+		       _pressureGradient->calculateSpringForcesOnComponent(_moleculeContainer, cid);
+		}
+		
+		// test deletions and insertions
+		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
+			unsigned j = 0;
+			list<ChemicalPotential>::iterator cpit;
+			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+			  if(cpit->isGCMD_barostat()){
+				_domain->recordBarostat(_moleculeContainer);
+				if ((!((_simstep + 2 * j + 4) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || ((_simstep+1) == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true))
+				  _domain->collectBarostat(_domainDecomposition);
+			  }
+			  j++;
+			}
+		}
+		
+		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
 			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
 					_domainDecomposition);
 		}
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-		if (_pressureGradient->isAcceleratingUniformly()) {
-			if (!(_simstep % uCAT)) {
-				global_log->debug() << "Determine the additional acceleration"
-						<< endl;
-				_pressureGradient->determineAdditionalAcceleration(
-						_domainDecomposition, _moleculeContainer, uCAT
-						* _integrator->getTimestepLength());
-			}
-			global_log->debug() << "Process the uniform acceleration" << endl;
-			_integrator->accelerateUniformly(_moleculeContainer, _domain);
-			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
-		}else if (_pressureGradient->isAcceleratingInstantaneously(_domain->getNumberOfComponents())){
-		  if (_simstep >= _initStatistics){// && _simstep%100 == 0) {
-		    	global_log->debug() << "Determine the instantaneous acceleration" << endl;
-			_integrator->accelerateInstantaneously(_domainDecomposition, _moleculeContainer, _domain);
-			// collects ID of component that is moving due to external force field
-			string moved ("moved");
-			unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
-			cid--;
-			if(_domainDecomposition->getRank()==0 && _simstep%timeStepForce == 0){  
-			    ForceData << "\t\t\t\t" << _pressureGradient->getGlobalVelSumBeforeAcc(0, cid) << " " << _pressureGradient->getGlobalVelSumBeforeAcc(1, cid) << " " << _pressureGradient->getGlobalVelSumBeforeAcc(2, cid);
-			    ForceData << "\t\t\t" << _pressureGradient->getGlobalVelSumAfterAcc(0, cid) << " " << _pressureGradient->getGlobalVelSumAfterAcc(1, cid) << " " << _pressureGradient->getGlobalVelSumAfterAcc(2, cid);
-			    //ForceData << endl;
-			}
-		  }
-		}
 		
 		/*
 		 * radial distribution function
@@ -1566,6 +1654,46 @@ void Simulation::simulate() {
 		// Inform the integrator about the calculated forces
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
+		
+		if (_pressureGradient->isAcceleratingUniformly()) {
+			if (!(_simstep % uCAT)) {
+				global_log->debug() << "Determine the additional acceleration"
+						<< endl;
+				_pressureGradient->determineAdditionalAcceleration(
+						_domainDecomposition, _moleculeContainer, uCAT
+						* _integrator->getTimestepLength());
+			}
+			global_log->debug() << "Process the uniform acceleration" << endl;
+			_integrator->accelerateUniformly(_moleculeContainer, _domain);
+			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
+		}else if (_pressureGradient->isAcceleratingInstantaneously(_domain->getNumberOfComponents())){
+		  if (_simstep >= _initStatistics){
+		    	global_log->debug() << "Determine the instantaneous acceleration" << endl;
+			_integrator->accelerateInstantaneously(_domainDecomposition, _moleculeContainer, _domain);
+			// collects ID of component that is moving due to external force field
+			string moved ("moved");
+			unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+			cid--;
+			// initialization for time averaging of velocity sums of moved component
+			if(_simstep == _initStatistics){
+			  for(int d = 0; d < 3; d++){
+			      _pressureGradient->setGlobalVelSumBeforeAcc(d, cid, 0);
+			      _pressureGradient->setGlobalVelSumAfterAcc(d, cid, 0);
+			  }
+			}
+			if(cid >= 0 && _domainDecomposition->getRank()==0 && _simstep%timeStepForce == 0){
+			    double tmp_molecularMass = global_simulation->getEnsemble()->component(cid)->m();
+			    ForceData << "\t\t\t\t" << (_pressureGradient->getGlobalVelSumAfterAcc(0, cid)-_pressureGradient->getGlobalVelSumBeforeAcc(0, cid))/(timeStepForce*getTimeStepLength())*_pressureGradient->getGlobalN(cid)*tmp_molecularMass;
+			    ForceData << "\t\t\t\t" << _pressureGradient->getGlobalVelSumBeforeAcc(0, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumBeforeAcc(1, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumBeforeAcc(2, cid)/timeStepForce;
+			    ForceData << "\t\t\t" << _pressureGradient->getGlobalVelSumAfterAcc(0, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumAfterAcc(1, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumAfterAcc(2, cid)/timeStepForce;
+			    for(int d = 0; d < 3; d++){
+			      _pressureGradient->setGlobalVelSumBeforeAcc(d, cid, 0);
+			      _pressureGradient->setGlobalVelSumAfterAcc(d, cid, 0);
+			    }
+			}
+		  }
+		}
+		
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
@@ -1606,17 +1734,25 @@ void Simulation::simulate() {
 
 			_velocityScalingThermostat.apply(_moleculeContainer, _domainDecomposition);
 			// Control of velocity after thermostat scaling
-			if(_simstep%timeStepForce == 0){
+			if(_simstep >= _initStatistics){
 			    // collects ID of the component that is allowed to move
 			    string moved ("moved");
 			    unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
 			    cid--;
-			    _pressureGradient->prepare_getMissingVelocity(_domainDecomposition, _moleculeContainer, cid, _domain->getNumberOfComponents());
-			    for(int d = 0; d < 3; d++)
-				_pressureGradient->setGlobalVelSumAfterThT(d, cid, _pressureGradient->getGlobalVelSum(d,cid) / _pressureGradient->getGlobalN(cid));
+			    if(_simstep == _initStatistics){
+			      for(int d = 0; d < 3; d++)
+				  _pressureGradient->setGlobalVelSumAfterThT(d, cid, 0);
+			    }
+			    if(cid >= 0){
+			      _pressureGradient->prepare_getMissingVelocity(_domainDecomposition, _moleculeContainer, cid, _domain->getNumberOfComponents());
+			      for(int d = 0; d < 3; d++)
+				_pressureGradient->addGlobalVelSumAfterThT(d, cid, _pressureGradient->getGlobalVelSum(d,cid) / _pressureGradient->getGlobalN(cid));
 			
-			    if(_domainDecomposition->getRank()==0 && _simstep >= _initStatistics){
-				ForceData << "\t\t\t\t" << _pressureGradient->getGlobalVelSumAfterThT(0, cid) << " " << _pressureGradient->getGlobalVelSumAfterThT(1, cid) << " " << _pressureGradient->getGlobalVelSumAfterThT(2, cid) << endl;
+			      if(_domainDecomposition->getRank()==0 && _simstep >= _initStatistics && _simstep%timeStepForce == 0){
+				ForceData << "\t\t\t\t" << _pressureGradient->getGlobalVelSumAfterThT(0, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumAfterThT(1, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumAfterThT(2, cid)/timeStepForce << endl;
+				for(int d = 0; d < 3; d++)
+				    _pressureGradient->setGlobalVelSumAfterThT(d, cid, 0);
+			      }
 			    }
 			}
 		}
@@ -1646,7 +1782,7 @@ void Simulation::simulate() {
 		  if(_domainDecomposition->getRank()==0){
 		    unsigned long N = _domain->get_universalNConfinement();
 		    long double p_Vir = _domain->get_universalPressureVirial_Confinement();
-		    long double p_Kin = _domain->get_universalPressureKin_Confinement()/_confinementRecordingTimesteps;
+		    long double p_Kin = _domain->get_universalPressureKin_Confinement();
 		    long double dof = _domain->get_universalDOFProfile_Confinement();
 		    long double eKin = _domain->get_universalKineticProfile_Confinement();
 		    std::map<int,long double> force;
@@ -1666,7 +1802,8 @@ void Simulation::simulate() {
 		    cout << "T1: " << p_Kin << " | " << 3*N << endl;
 		    cout << "T2: " << eKin << " | " << dof << endl;
 		    cout << "T1/T2: " << p_Kin/eKin << endl;
-
+		    cout << " p_Vir " << p_Vir << " p_Kin " << p_Kin << " V " << Volume << endl;
+		    		   
 		    Confinement << _simstep << "\t\t\t" << N << "\t\t\t" << Volume << "\t\t" << Surface << "\t\t" << dMax << "\t\t" << dAverage << "\t\t";
 		    Confinement << density << "\t\t" << pressure << "\t" << temperature1 << "\t" << temperature2 << "\t\t\t";
 		    Confinement << force[0] << "\t" << force[1] << "\t" << viscosity << "\n";
@@ -1946,6 +2083,7 @@ void Simulation::initialize() {
 	_zoscillator = 512;
 	_initCanonical = 5000;
 	_initGrandCanonical = 10000000;
+	_endGrandCanonical = 100000000;
 	_initStatistics = 20000;
 	h = 0.0;
 	_pressureGradient = new PressureGradient(ownrank);

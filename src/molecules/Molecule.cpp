@@ -102,6 +102,8 @@ Molecule::Molecule(const Molecule& m) {
 	  setPressureKin(d, 0.0);
 	  setPressureVirialConfinement(d, 0.0);
 	  setPressureKinConfinement(d, 0.0);
+	  setPressureVirial_barostat(d, 0.0);
+	  setPressureKin_barostat(d, 0.0);
 	}
 	
 	// VTK Molecule Data
@@ -326,7 +328,8 @@ void Molecule::scale_v(double s, double offx, double offy, double offz) {
 }
 
 void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx, double mjy, double mjz, Domain *dom, string stress, string weightingFunc) {
-	unsigned long xun=0, yun=0, xun2=0, yun2=0, xun_tot=0, yun_tot=0;
+	long int xun=0, yun=0, xun_tot=0, yun_tot=0;
+	long int xun2=0, yun2=0;
 	unsigned unID=0, unID_tot;
 	double xMax, yMax;
 	long double deltaX=0.0, deltaY=0.0;
@@ -339,7 +342,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	string Confinement ("Confinement");
 	string Linear ("Linear");
 	string Pyramide ("Pyramide");
-
+	
 	// Vorzeichen bei drm genau verkehrt....
 	double drm[3];
 	for (int i = 0; i < 3; i++)
@@ -369,6 +372,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  yun = floor(_r[1] / deltaY);
 	  xun2 = floor(mjx / deltaX);
 	  yun2 = floor(mjy / deltaY);
+	  
 	}else if (stress == Confinement){
 	  // data transfer for determination of the control volumes
 	  xun_tot = dom->getUniversalNProfileUnitsStressConfinement(0);
@@ -380,32 +384,24 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  
 	  // assignement of both interacting molecules to their control volumes
 	  xun = floor((_r[0]-dom->getConfinementEdge(0)) / deltaX);
-	  yun = floor((_r[1]/*-dom->get_confinementMidPoint(3)*/) / deltaY);
+	  yun = floor((_r[1]-(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5))) / deltaY);
 	  xun2 = floor((mjx-dom->getConfinementEdge(0)) / deltaX);
-	  yun2 = floor((mjy/*-dom->get_confinementMidPoint(3)*/) / deltaY);
+	  yun2 = floor((mjy-(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5))) / deltaY);
 	  
 	  if ((xun < 0 || xun >= xun_tot || yun < 0 || yun >= yun_tot) && (xun2 < 0 || xun2 >= xun_tot || yun2 < 0 || yun2 >= yun_tot)){
 	    hardyIntersection = false;
 	  }
-	  if (hardyIntersection && (xun < 0 || xun >= xun_tot))
-	    xun = (abs(_r[0]-dom->getConfinementEdge(0)) < abs(_r[0]-(dom->getConfinementEdge(0)+xun_tot*deltaX)))? 0 : xun_tot;
-	  if (hardyIntersection && (yun < 0 || yun >= yun_tot))
-	    yun = (abs(_r[1]/*-dom->get_confinementMidPoint(3)*/) < abs(_r[1]-(/*dom->get_confinementMidPoint(3)+*/yun_tot*deltaY)))? 0 : yun_tot;
-	  if (hardyIntersection && (xun2 < 0 || xun2 >= xun_tot))
-	    xun2 = (abs(mjx-dom->getConfinementEdge(0)) < abs(abs(mjx-(dom->getConfinementEdge(0)+yun_tot*deltaY))))? 0 : xun_tot;
-	  if (hardyIntersection && (yun2 < 0 || yun2 >= yun_tot))
-	    yun2 = (abs(mjy/*-dom->get_confinementMidPoint(3)*/) < abs(mjy-(/*dom->get_confinementMidPoint(3)+*/yun_tot*deltaY)))? 0 : yun_tot;
-	  
+	  	  
 	  // smallest value that is a multiple of (_r[0]-dom->getConfinementEdge(0)) / deltaX    
 	  xPlaneShift = dom->getConfinementEdge(0);
-	  yPlaneShift = 0.0/*dom->get_confinementMidPoint(3)*/;
+	  yPlaneShift = dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5);
 	}
 	
 	unID_tot = unsigned(xun_tot*yun_tot);
 	
 	// calculation of the coordinates of the intersection points of the bond between molecules with the edges of the control volumes
 	// differentiation in four cases
-	// ------- case 1 ---------
+	// ------- case 1 --------- /> 
 	if(hardyIntersection && drm[0] >= 0. && drm[1] >= 0.){
 	  xPlane_min = xun * deltaX + xPlaneShift;
 	  yPlane_min = yun * deltaY + yPlaneShift;
@@ -455,7 +451,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	      }
 	    }
 	  }
-	// ------- case 2 ---------  
+	// ------- case 2 --------- \> 
 	}else if(hardyIntersection && drm[0] >= 0. && drm[1] <= 0.){
 	  xPlane_min = xun * deltaX + xPlaneShift;
 	  yPlane_min = yun2 * deltaY + yPlaneShift;
@@ -505,7 +501,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	      }
 	    }
 	  }
-	// ------- case 3 ---------  
+	// ------- case 3 --------- </ 
 	}else if(hardyIntersection && drm[0] <= 0. && drm[1] <= 0.){
 	  xPlane_min = xun2 * deltaX + xPlaneShift;
 	  yPlane_min = yun2 * deltaY + yPlaneShift;
@@ -555,7 +551,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	      }
 	    }
 	  }
-	// ------- case 4 ---------  
+	// ------- case 4 --------- <\ // 
 	}else if(hardyIntersection && drm[0] <= 0. && drm[1] >= 0.){
 	  xPlane_min = xun2 * deltaX + xPlaneShift;
 	  yPlane_min = yun * deltaY + yPlaneShift;
@@ -616,7 +612,6 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	_HardyIntersectionY[1.0] = mjy;
 	_HardyIntersectionZ[1.0] = mjz;
 	
-	
 	long double halfDeltaX = 0, halfDeltaY = 0, deltaXMol = 0, deltaYMol = 0, deltaXCentre = 0, deltaYCentre = 0;
 	int sign[2]= {1,1};
 	// calculate contribution of 2D weighting function being pyramidal
@@ -626,7 +621,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  deltaXMol = mjx-_r[0];
 	  deltaYMol = mjy-_r[1];
 	  sign[0] = signumFunction(deltaXMol);  
-	  sign[1] = signumFunction(deltaYMol);
+	  sign[1] = signumFunction(deltaYMol);	    
 	}
 	
 	long double previousValue = 0.0;
@@ -659,7 +654,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	    yun = floor(yMean / deltaY);
 	  }else if (stress == Confinement){
 	    xun = floor((xMean-dom->getConfinementEdge(0)) / deltaX);
-	    yun = floor((yMean/*-dom->get_confinementMidPoint(3)*/) / deltaY);
+	    yun = floor((yMean-(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5))) / deltaY);
 	  }
 	  
 	  if (xun >= 0 && yun >= 0 && xun < xun_tot && yun < yun_tot){
@@ -674,52 +669,63 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	      if (stress == Stress){
 		  deltaXCentre = _r[0]-(xun*deltaX+halfDeltaX);
 		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY);
-		  if(abs(deltaXCentre) > abs(xMax-deltaX)){
-		    if(deltaXCentre < 0) 
-		      deltaXCentre = xMax+deltaXCentre;
-		    else if(deltaXCentre > 0)
-		      deltaXCentre = xMax-deltaXCentre;
+		  if(abs(deltaXCentre) > abs(xMax/2)){
+		    if(_r[0] > mjx){
+		      if(deltaXCentre < 0) 
+			deltaXCentre = xMax+deltaXCentre;
+		      else if(deltaXCentre > 0)
+			deltaXCentre = xMax-deltaXCentre;
+		    }else{
+		      if(deltaXCentre < 0) 
+			deltaXCentre = (-1)*(xMax+deltaXCentre);
+		      else if(deltaXCentre > 0)
+			deltaXCentre = (-1)*(xMax-deltaXCentre);
+		    } 
 		  }
-		  if(abs(deltaYCentre) > abs(yMax-deltaY)){
-		    cout << " DY0 " << deltaYCentre;
-		    if(deltaYCentre < 0) 
-		      deltaYCentre = yMax+deltaYCentre;
-		    else if(deltaYCentre > 0)
-		      deltaYCentre = yMax-deltaYCentre;
-		    cout << " DY1 " << deltaYCentre;
+		  if(abs(deltaYCentre) > abs(yMax/2)){
+		    if(_r[1] > mjy){
+		      if(deltaYCentre < 0) 
+			deltaYCentre = yMax+deltaYCentre;
+		      else if(deltaYCentre > 0)
+			deltaYCentre = yMax-deltaYCentre;
+		    }else{
+		      if(deltaYCentre < 0) 
+			deltaYCentre = (-1)*(yMax+deltaYCentre);
+		      else if(deltaYCentre > 0)
+			deltaYCentre = (-1)*(yMax-deltaYCentre);
+		    }
 		  }
 	      }else if (stress == Confinement){
 		  deltaXCentre = _r[0]-(xun*deltaX+halfDeltaX+dom->getConfinementEdge(0));
-		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY/*+dom->get_confinementMidPoint(3)*/);
+		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY+(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5)));
 	      }
-
+	        
+	      _root.insert(std::pair<long double, int>(previousValue,1));
+	      _root.insert(std::pair<long double, int>(it->first,1));
+	      
 	      // calculate roots of the function f = lambda*deltaXMol + deltaXCentre and g = lambda*deltaYMol + deltaYCentre due to integration over absolute value of both
 	      if((-1)*deltaXCentre/deltaXMol > previousValue && (-1)*deltaXCentre/deltaXMol < it->first){
 		  _root.insert(std::pair<long double, int>((-1)*deltaXCentre/deltaXMol,sign[0]));}
 	      if((-1)*deltaYCentre/deltaYMol > previousValue && (-1)*deltaYCentre/deltaYMol < it->first){
-		  _root.insert(std::pair<long double, int>((-1)*deltaYCentre/deltaYMol,sign[1]));}
+		  _root.insert(std::pair<long double, int>((-1)*deltaYCentre/deltaYMol,sign[1]));}  
 	      
 	      double signumF = 1.0, signumG = 1.0;
 	      
-	      long double previousValueRoot = previousValue;
+	      long double previousValueRoot = 0;
 	      for(std::map<long double, int>::iterator it2=_root.begin(); it2!=_root.end(); ++it2){
+		if(it2->first == previousValue){
+		  previousValueRoot = previousValue;
+		  continue;
+		}
+		
 		signumF = (previousValueRoot+(it2->first))*0.5*deltaXMol+deltaXCentre;
 		signumG = (previousValueRoot+(it2->first))*0.5*deltaYMol+deltaYCentre;
 		sign[0] = signumFunction(signumF);
 		sign[1] = signumFunction(signumG);
-		if(unID==0 || unID==5 || unID==24){
-		  cout << unID << " xMean " << xMean << " yMean " << yMean << " xun " << xun << " yun " << yun << " x1 " << _r[0] << " y1 " << _r[1] << " x2 " << mjx << " y2 " << mjy << endl;
+
 		  _bondFractionUNID[unID] += bondFunctionPyramide(previousValueRoot, (it2->first), sign[0], sign[1], halfDeltaX, halfDeltaY, deltaXMol, deltaYMol, deltaXCentre, deltaYCentre);
-		} 
+
 		previousValueRoot = it2->first;
-	      }
-	      signumF = (previousValueRoot+(it->first))*0.5*deltaXMol+deltaXCentre;
-	      signumG = (previousValueRoot+(it->first))*0.5*deltaYMol+deltaYCentre;
-	      sign[0] = signumFunction(signumF);
-	      sign[1] = signumFunction(signumG);
-	      if(unID==0 || unID==5 || unID==24){
-		cout << unID;
-		_bondFractionUNID[unID] += bondFunctionPyramide(previousValueRoot, it->first, sign[0], sign[1], halfDeltaX, halfDeltaY, deltaXMol, deltaYMol, deltaXCentre, deltaYCentre);
 	      }
 	    }  
 	  }
@@ -734,14 +740,14 @@ long double Molecule::bondFunctionPyramide(long double n0, long double n1, int s
      bondFunc1 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n1*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n1)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n1)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n1+3*deltaXMol*deltaYCentre*n1+2*deltaXMol*deltaYMol*n1*n1)*signG)));
      bondFunc0 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n0*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n0)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n0)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n0+3*deltaXMol*deltaYCentre*n0+2*deltaXMol*deltaYMol*n0*n0)*signG)));
      bondFunc = bondFunc1 - bondFunc0;
-     cout << " n0 " << n0 << " n1 " << n1 << " signF " << signF << " signG " << signG << " halfDeltaX " << halfDeltaX << " halfDeltaY " << halfDeltaY << " deltaXMol " << deltaXMol << " deltaYMol " << deltaYMol << " deltaXCentre " << deltaXCentre << " deltaYCentre " << deltaYCentre << " f1 " << bondFunc1 << " f0 " << bondFunc0 << " f " << bondFunc << endl;
+
      return bondFunc;
 }
 
 double Molecule::weightingFunctionPyramide(unsigned xun, unsigned yun, double deltaX, double deltaY, double xStart, double yStart){
      double CentreX, CentreY, weighting;
      CentreX = xun*deltaX + 0.5*deltaX + xStart;
-     CentreY = yun*deltaY + 0.5*deltaY /*+ yStart*/;
+     CentreY = yun*deltaY + 0.5*deltaY + yStart;
      weighting = 4/(deltaX*deltaY)*(1-2/deltaX*abs(CentreX-_r[0]))*(1-2/deltaY*abs(CentreY-_r[1]));
      return weighting;
 }

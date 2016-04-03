@@ -728,22 +728,22 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		minco[d] = this->getBoundingBoxMin(d);
 		maxco[d] = this->getBoundingBoxMax(d);
 	}
-
 	bool hasDeletion = true;
 	bool hasInsertion = true;
 	double ins[3];
 	unsigned nextid = 0;
 	while (hasDeletion || hasInsertion) {
-		if (hasDeletion)
+		if (hasDeletion){
 			hasDeletion = mu->getDeletion(this, minco, maxco);
+		}
 		if (hasDeletion) {
 			m = &(*(this->_particleIter));
 			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, cellProcessor);
-
 			accept = mu->decideDeletion(DeltaUpot / T);
+
 #ifndef NDEBUG
-			if(accept) global_log->debug() << "r" << mu->rank() << "d" << m->id() << endl;
-			else global_log->debug() << "   (r" << mu->rank() << "-d" << m->id() << ")" << endl;
+			if(accept) global_log->debug() << " delete " << "r" << mu->rank() << "d" << m->id() << " CID " << m->componentid() << " mu " << mu->getMu() << endl;
+			else global_log->debug() << " delete " << "   (r" << mu->rank() << "-d" << m->id() << ")" << endl;
 #endif
 			if (accept) {
 				m->upd_cache();
@@ -762,7 +762,19 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		}
 
 		if (!mu->hasSample()){
+			bool rightComponent = false;
 			m = &(*(_particles.begin()));
+			std::list<Molecule>::iterator mit;
+			if(m->componentid() != mu->getComponentID()){
+			  for(mit = _particles.begin(); mit!=_particles.end(); ++mit){
+			    if(mit->componentid() == mu->getComponentID()){
+			      rightComponent = true;
+			      break;
+			    }
+			  }
+			}
+			if(rightComponent)
+			  m = &(*(mit));
 			mu->storeMolecule(*m);
 		}
 		if (hasInsertion) {
@@ -775,7 +787,6 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 				tmp.setr(d, ins[d]);
 			tmp.setid(nextid);
 			this->_particles.push_back(tmp);
-
 			std::list<Molecule>::iterator mit = _particles.end();
 			mit--;
 			m = &(*mit);
@@ -788,7 +799,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			}
 			m->check(nextid);
 #ifndef NDEBUG
-			global_log->debug() << "rank " << mu->rank() << ": insert " << m->id()
+			global_log->debug() << "rank " << mu->rank() << ": insert " << m->id() << " CID " << m->componentid() << " mu " << mu->getMu() 
 			<< " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? " << endl;
 #endif
 
@@ -799,8 +810,8 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			accept = mu->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG
-			if(accept) global_log->debug() << "r" << mu->rank() << "i" << mit->id() << ")" << endl;
-			else global_log->debug() << "   (r" << mu->rank() << "-i" << mit->id() << ")" << endl;
+			if(accept) global_log->debug() << " insert " << "r" << mu->rank() << "i" << mit->id() << " CID " << mit->componentid() << " mu " << mu->getMu()  << endl;
+			else global_log->debug() << " insert " << "   (r" << mu->rank() << "-i" << mit->id() << ")" << endl;
 #endif
 			if (accept) {
 				this->_localInsertionsMinusDeletions++;

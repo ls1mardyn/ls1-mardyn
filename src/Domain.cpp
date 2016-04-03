@@ -90,6 +90,9 @@ Domain::Domain(int rank, PressureGradient* pg){
 	  this->_stressCalc[cid] = false;
 	  this->_universalProfiledComponents[cid] = false;
 	  this->_universalProfiledComponentsSlab[cid] = false;
+	  this->_bulkComponent[cid] = false;
+	  this->_barostatComponent[cid] = false;
+	  this->_differentBarostatInterval = false;
 	}
 	this->_local2KETrans_1Dim[0] = 0.0;
 	this->_universalATrans = map<int, double>();
@@ -307,7 +310,6 @@ void Domain::calculateGlobalValues(
 		{
 			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
 			_universalThT_heatFlux[thermit->first] += summv2 - 3.0*numMolecules*Ti;
-			//cout << "t " << getSimstep() << " r " << this->_localRank << " ThT " << thermit->first << " Qges " << _universalThT_heatFlux[thermit->first] << " E_current " << summv2 << " E_objective " << 3.0*numMolecules*Ti << " T_Factor " << Ti << endl;
 			if(_scale_v_1Dim[thermit->first]){ 
 			  _universalATrans[thermit->first] = pow((3.0*numMolecules*Ti - summv2) / summv2_1Dim + 1, 0.4);
 			  this->_alphaTransCorrection[thermit->first] = false;
@@ -1445,13 +1447,18 @@ void Domain::recordSlabProfile(ParticleContainer* molCont){
 			thismol->calculate_mv2_Iw2(mv2, Iw2);
 			this->_localKineticProfileSlab[unID] += mv2+Iw2;
 		}
-		for(int d=0; d<3; d++)
+		for(int d=0; d<3; d++){
+// 		  if(thismol->id() > 5681)
+// 		    cout << " ID " << thismol->id() <<  " v " << d << " " << thismol->getAveragedVelocity(d);
 		  thismol->addAveragedVelocity(d,thismol->v(d));
+		}
 		mv2 = 0.0;
 		Iw2 = 0.0;
 		thismol->calculate_mv2_Iw2(mv2, Iw2);
 		thismol->addAveragedTemperature((mv2+Iw2)/(3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom())));
 		thismol->addAverageCount(1);
+// 		if(thismol->id() > 5681)
+// 		    cout << " ID " << thismol->id() <<  " T " << thismol->getAveragedTemperature() << " C " << thismol->getAverageCount() << " mv2 " << mv2 << " Iw2 " << Iw2 << " rotFG " << thismol->component()->getRotationalDegreesOfFreedom() << endl;
 	}
 	this->_globalAccumulatedDatasetsSlab++;
 }
@@ -2241,6 +2248,74 @@ void Domain::resetBulkPressure()
 	this->_universalPressureKin = 0.0;
 }
 
+void Domain::setupBarostat(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax, unsigned cid)
+{
+	this->_control_top[0] = xmax;
+	this->_control_top[1] = ymax;
+	this->_control_top[2] = zmax;
+	this->_control_bottom[0] = xmin;
+	this->_control_bottom[1] = ymin;
+	this->_control_bottom[2] = zmin;
+	
+	this->_barostatComponent[cid] = true;
+	
+	this->resetBarostat();
+}
+
+void Domain::recordBarostat(ParticleContainer* molCont)
+{
+	unsigned cid;
+	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+	{
+		cid = thismol->componentid();
+		if(this->_barostatComponent[cid] && thismol->r(0) >= this->_control_bottom[0] && thismol->r(0) <= this->_control_top[0] && thismol->r(1) >= this->_control_bottom[1] && thismol->r(1) <= this->_control_top[1] 
+		  && thismol->r(2) >= this->_control_bottom[2] && thismol->r(2) <= this->_control_top[2]){
+			this->_localN_barostat += 1.0;
+			for(int d = 0; d < 3; d++){
+			    this->_localPressureVirial_barostat += thismol->getPressureVirial_barostat(d);
+			    this->_localPressureKin_barostat += thismol->getPressureKin_barostat(d);
+			}
+		}
+				
+	  // reset collected virial values of each molecule
+	    for(int d = 0; d < 3; d++){
+		thismol->setPressureVirial_barostat(d, 0.0);
+		thismol->setPressureKin_barostat(d, 0.0);
+	    }
+	}
+	this->_globalAccumulatedDatasets_barostat++;
+	cout << " T " << _globalAccumulatedDatasets_barostat << " K " << _localPressureKin_barostat << " V " << _localPressureVirial_barostat << " N " << _localN_barostat << endl;
+}
+
+void Domain::collectBarostat(DomainDecompBase* dode)
+{
+	dode->collCommInit(3);
+	dode->collCommAppendLongDouble(this->_localN_barostat);
+	dode->collCommAppendLongDouble(this->_localPressureVirial_barostat);
+	dode->collCommAppendLongDouble(this->_localPressureKin_barostat);
+	dode->collCommAllreduceSum();
+	this->_universalN_barostat = (double)dode->collCommGetLongDouble();
+	this->_universalPressureVirial_barostat = (double)dode->collCommGetLongDouble();
+	this->_universalPressureKin_barostat = (double)dode->collCommGetLongDouble();
+	dode->collCommFinalize();
+	
+	this->_universalN_barostat = this->_universalN_barostat/this->_globalAccumulatedDatasets_barostat;
+	this->_universalPressureVirial_barostat = this->_universalPressureVirial_barostat/this->_globalAccumulatedDatasets_barostat;
+	this->_universalPressureKin_barostat = this->_universalPressureKin_barostat/this->_globalAccumulatedDatasets_barostat;
+}
+
+void Domain::resetBarostat()
+{
+	this->_localN_barostat = 0.0;
+	this->_localPressureVirial_barostat = 0.0;
+	this->_localPressureKin_barostat = 0.0;
+	this->_globalAccumulatedDatasets_barostat = 0;
+	this->_universalN_barostat = 0.0;
+	this->_universalPressureVirial_barostat = 0.0;
+	this->_universalPressureKin_barostat = 0.0;
+}
+
+
 // Calculates the fluid properties in the confinement
 // if (radius 2 == 0) horDist = half length of the lower plate
 void Domain::setupConfinementProperties(double wallThickness, double horDist, double vertDist, double radius2, int cid, double xmax, double ymax, double zmax, unsigned long upperID, unsigned long lowerID)
@@ -2302,6 +2377,7 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
       _universalInvProfileUnitStressConfinement[0] = 1/correlationLength;
       _universalInvProfileUnitStressConfinement[1] = 1/correlationLength;
       _universalInvProfileUnitStressConfinement[2] = _universalNProfileUnitsStressConfinement[2] / _globalLength[2];
+      
     }else{ // for Virial Stress
       this->_universalNProfileUnitsStressConfinement[0] = this->_universalNProfileUnitsConfinement[0];
       this->_universalNProfileUnitsStressConfinement[1] = this->_universalNProfileUnitsConfinement[1];
@@ -2421,32 +2497,34 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    this->_localvProfile_Confinement[d][unID] += thismol->v(d);
 			    this->_localFluidForce_Confinement[d][unID] += thismol->F(d);
 			}
-
-			if(thismol->isHardyConfinement()){
-			  double weightingFrac = 1.0;
-			  string weightingFunc = thismol->getWeightingFuncConfinement();
-			  string Linear ("Linear");
-			  string Pyramide ("Pyramide");
-			  if(weightingFunc == Pyramide)
-			      weightingFrac = thismol->weightingFunctionPyramide(stressCalc_xun, stressCalc_yun, 1/this->_universalInvProfileUnitStressConfinement[0], 1/this->_universalInvProfileUnitStressConfinement[1], this->_confinementEdge[0], this->_confinementMidPoint[3]);
-			  for(std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >::iterator it=virialHardy.begin(); it!=virialHardy.end(); ++it){
-			    for(int d = 0; d < 3; d++)
-			      for(int e = d; e < 3; e++){
-				if(d == e){
-				   this->_localStressConfinement[d][it->first] += virialHardy[it->first][d][e];
-				   // update just once per molecule
-				   if(it == virialHardy.begin())
+			// stress calculation just in fluid
+			if(cid == cid_free){
+			  if(thismol->isHardyConfinement()){
+			    // for Linear the weightingFrac = 1 as long as a particle is in the control volume
+			    double weightingFrac = 1.0;
+			    string weightingFunc = thismol->getWeightingFuncConfinement();
+			    string Linear ("Linear");
+			    string Pyramide ("Pyramide");
+			    if(weightingFunc == Pyramide)
+			      weightingFrac = thismol->weightingFunctionPyramide(stressCalc_xun, stressCalc_yun, 1/this->_universalInvProfileUnitStressConfinement[0], 1/this->_universalInvProfileUnitStressConfinement[1], this->_confinementEdge[0], this->_confinementMidPoint[3] - this->_confinementEdge[5]);
+			    for(std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >::iterator it=virialHardy.begin(); it!=virialHardy.end(); ++it){
+			      for(int d = 0; d < 3; d++)
+				for(int e = d; e < 3; e++){
+				  if(d == e){
+				    this->_localStressConfinement[d][it->first] += virialHardy[it->first][d][e];
+				    // update just once per molecule
+				    if(it == virialHardy.begin())
 				      this->_localStressConfinement[d][stressCalc_unID] += weightingFrac*thismol->getVirialKinConfinement(d, e);
-				}else{
-				   this->_localStressConfinement[2+d+e][it->first] += virialHardy[it->first][d][e];
-				   // update just once per molecule
-				   if(it == virialHardy.begin())
+				  }else{
+				    this->_localStressConfinement[2+d+e][it->first] += virialHardy[it->first][d][e];
+				    // update just once per molecule
+				    if(it == virialHardy.begin())
 				      this->_localStressConfinement[2+d+e][stressCalc_unID] += weightingFrac*thismol->getVirialKinConfinement(d, e);
+				  }
 				}
-			      }
-			  }
-			}else{
-			  for(int d = 0; d < 3; d++)
+			    }
+			  }else{
+			    for(int d = 0; d < 3; d++)
 			      for(int e = d; e < 3; e++){
 				if(d == e){
 				   this->_localStressConfinement[d][stressCalc_unID] += thismol->getVirialForceConfinement(d, e);
@@ -2456,6 +2534,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 				   this->_localStressConfinement[2+d+e][stressCalc_unID] += thismol->getVirialKinConfinement(d, e);
 				}
 			      }
+			  }
 			}
 			this->_localDOFProfile_Confinement[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
 			// record _twice_ the total (ordered + unordered) kinetic energy
@@ -3518,7 +3597,16 @@ unsigned long Domain::getSimstep(){
 unsigned Domain::getStressRecordTimeStep(){
     return _simulation.getStressRecordTimestep();
 }
+unsigned Domain::getBarostatTimeInit(){
+    return _simulation.getBarostatTimeInit();
+}
+unsigned Domain::getBarostatTimeEnd(){
+    return _simulation.getBarostatTimeEnd();
+}
 unsigned Domain::getConfinementRecordTimeStep(){
     return _simulation.getConfinementRecordTimestep();
+}
+double Domain::getCutoffRadius(){
+    return _simulation.getLJCutoff(); 
 }
 

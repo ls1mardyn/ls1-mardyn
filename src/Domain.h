@@ -10,6 +10,8 @@
 #include "ensemble/EnsembleBase.h"
 #include "Simulation.h"
 
+#include "ensemble/GrandCanonical.h"
+
 /* 
  * TODO add comments for variables 
  */
@@ -170,9 +172,11 @@ public:
 
 	//! @brief get globalNumMolecules
 	unsigned long getglobalNumMolecules() const;
+	unsigned long getglobalOrigNumMolecules() const { return _globalOrigNumMolecules; }
 
 	//! @brief set globalNumMolecules
 	void setglobalNumMolecules(unsigned long glnummol);
+	void setglobalOrigNumMolecules(unsigned long glnummol) { _globalOrigNumMolecules = glnummol; }
 
 	//! @brief get the global pressure
 	double getGlobalPressure();
@@ -307,6 +311,11 @@ public:
 	bool isBulkPressure(int component) {return this->_bulkComponent[component]; }
 	double getBulkBoundary(int dim) {return this->_bulkCorner[dim]; }
 	
+	// barostat
+	bool isBarostat(int component) {return this->_barostatComponent[component]; }
+	double getControl_top(int d) {return this->_control_top[d]; }
+	double getControl_bottom(int d) {return this->_control_bottom[d]; }
+	
 	//! @brief returns whether there are several distinct thermostats in the system
 	bool severalThermostats() { return this->_componentwiseThermostat; }
 	//! @brief thermostat to be applied to component cid
@@ -390,6 +399,18 @@ public:
 	long double getStressXX() {return this->_stressXX; }
 	long double getStressYY() {return this->_stressYY; }
 	
+	// barostat
+	long double getPressureVirial_barostat() {return this->_universalPressureVirial_barostat; }
+	long double getPressureKin_barostat() {return this->_universalPressureKin_barostat; }
+	long double getN_barostat() {return this->_universalN_barostat; }
+	unsigned getAccumulatedDatasets_barostat() {return this->_globalAccumulatedDatasets_barostat; }
+	void setupBarostat(double xmin, double xmax, double ymin, double ymax, double zmin, double zmax, unsigned cid);
+	void recordBarostat(ParticleContainer* molCont);
+	void collectBarostat(DomainDecompBase* dode);
+	void resetBarostat();
+	void setDifferentBarostatInterval(bool boolean) {this->_differentBarostatInterval = boolean; }
+	bool getDifferentBarostatInterval() {return this->_differentBarostatInterval; }
+	
 	// Cylindrical Density Profile
 	void confinementDensity(double radius1, double radius2, double xCentre, double yCentre);
 	bool isCylindrical();
@@ -457,6 +478,9 @@ public:
 	unsigned long getSimstep();
 	unsigned getStressRecordTimeStep();
 	unsigned getConfinementRecordTimeStep();
+	double getCutoffRadius();
+	unsigned getBarostatTimeInit();
+	unsigned getBarostatTimeEnd();
 private:
 
 	//! rank of the local process
@@ -475,6 +499,7 @@ private:
 	//! global Number of Molecules
 	//! @todo redundancy?
 	unsigned long _globalNumMolecules;
+	unsigned long _globalOrigNumMolecules;
 	//! side length of the cubic simulation box
 	double _globalLength[3];
 
@@ -603,6 +628,14 @@ private:
 	double _bulkVolume;
 	double _universalBulkPressure, _universalBulkDensity, _universalBulkTemp, _stressXX, _stressYY;
 	unsigned _globalAccumulatedDatasets_BulkPressure;
+	
+	//barostat
+	std::map<unsigned, bool> _barostatComponent;
+	double _control_top[3], _control_bottom[3];
+	long double _localPressureKin_barostat, _localPressureVirial_barostat, _universalPressureKin_barostat, _universalPressureVirial_barostat;
+	long double _localN_barostat, _universalN_barostat;
+	unsigned _globalAccumulatedDatasets_barostat;
+	bool _differentBarostatInterval;
 	
 	// Cylindrical Density Profile
 	bool _universalCylindricalGeometry;

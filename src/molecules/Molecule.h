@@ -274,6 +274,14 @@ public:
 	void setPressureVirial(int d, long double pressureVirial) { this->_pressureVirial[d] = pressureVirial; }
 	long double getPressureVirial(int d) { return this->_pressureVirial[d]; }
 	
+	// barostat
+	void addPressureKin_barostat(int d, long double pressureKin) { this->_pressureKin_barostat[d] += pressureKin; }
+	void setPressureKin_barostat(int d, long double pressureKin) { this->_pressureKin_barostat[d] = pressureKin; }
+	long double getPressureKin_barostat(int d) { return this->_pressureKin_barostat[d]; }
+	void addPressureVirial_barostat(int d, long double pressureVirial) { this->_pressureVirial_barostat[d] += pressureVirial; }
+	void setPressureVirial_barostat(int d, long double pressureVirial) { this->_pressureVirial_barostat[d] = pressureVirial; }
+	long double getPressureVirial_barostat(int d) { return this->_pressureVirial_barostat[d]; }
+	
 	// For measuring pressure and forces in the confinement
 	void addVirialForceConfinement(int d, int e, long double virialForce) { this->_virialForceConfinement[d][e] += virialForce; }
 	void setVirialForceConfinement(int d, int e, long double virialForce) { this->_virialForceConfinement[d][e] = virialForce; }
@@ -376,6 +384,9 @@ private:
 	// virial calculation (kinetic and force part) for stresses in solids
 	long double _virialForce[3][3], _virialKin[3][3];
 	long double _pressureVirial[3], _pressureKin[3];
+	
+	// barostat
+	long double _pressureVirial_barostat[3], _pressureKin_barostat[3];
 	
 	// pressure and forces for the confinement
 	long double _virialForceConfinement[3][3], _virialKinConfinement[3][3];

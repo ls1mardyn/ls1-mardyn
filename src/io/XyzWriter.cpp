@@ -81,11 +81,13 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			unsigned long numTimesteps = _simulation.getNumTimesteps();
 			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
-			vtk <<  "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+			if(_simulation.isRecordingSlabProfile())
+			  vtk <<  "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
 		if(_appendTimestamp) {
 			filenamestream << "-" << gettimestring();
-			vtk << "-" << gettimestring();
+			if(_simulation.isRecordingSlabProfile())
+			  vtk << "-" << gettimestring();
 		}
 		filenamestream << ".xyz";
 		vtk << ".vtk";
@@ -106,6 +108,10 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 				ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
 				ofstream particleDataFilestream( vtk.str().c_str(), ios::app );
 				Molecule* tempMol;
+				double temp = 0.0;
+				double v[3];
+				for(int d = 0; d < 3; d++)
+				  v[d] = 0.0;
 				for( tempMol = particleContainer->begin(); tempMol != particleContainer->end(); tempMol = particleContainer->next()){
 					if( tempMol->componentid() == 0) { xyzfilestream <<  "Ar ";}
 					else if( tempMol->componentid() == 1 ) { xyzfilestream <<  "Xe ";}
@@ -113,24 +119,27 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 					else if( tempMol->componentid() == 3 ) { xyzfilestream <<  "O ";}
 					else { xyzfilestream << "H ";}
 					xyzfilestream << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << "\t" << tempMol->id() << endl;
-					double temp = tempMol->getAveragedTemperature()/tempMol->getAverageCount();
-					if (temp != temp)
-					  temp = 0.0;
-					double v[3];
-					for(int d = 0; d < 3; d++){
-					  v[d] = tempMol->getAveragedVelocity(d)/tempMol->getAverageCount();
-					  if(v[d] != v[d])
-					    v[d] = 0.0;
+					if(_simulation.isRecordingSlabProfile()){
+					  temp = tempMol->getAveragedTemperature()/tempMol->getAverageCount();
+					  if (temp != temp)
+					    temp = 0.0;
+					  for(int d = 0; d < 3; d++){
+					    v[d] = tempMol->getAveragedVelocity(d)/tempMol->getAverageCount();
+					    if(v[d] != v[d])
+					      v[d] = 0.0;
+					  }
 					}
 					
-					particleDataFilestream << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << "\t"
-					<< temp << "\t" << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << tempMol->componentid() << "\t" << tempMol->id() << endl;
+					if(_simulation.isRecordingSlabProfile()){
+					  particleDataFilestream << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << "\t"
+					  << temp << "\t" << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << tempMol->componentid() << "\t" << tempMol->id() << endl;
 
-					tempMol->setAveragedVelocity(0,0);
-					tempMol->setAveragedVelocity(1,0);
-					tempMol->setAveragedVelocity(2,0);
-					tempMol->setAverageCount(0);
-					tempMol->setAveragedTemperature(0);
+					  tempMol->setAveragedVelocity(0,0);
+					  tempMol->setAveragedVelocity(1,0);
+					  tempMol->setAveragedVelocity(2,0);
+					  tempMol->setAverageCount(0);
+					  tempMol->setAveragedTemperature(0);
+					}
 				}
 				xyzfilestream.close();
 				particleDataFilestream.close();
@@ -195,8 +204,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			      if(molID > maxMolID)
 				maxMolID = molID;
 			  }
-			}
-			
+			}		
 			
 			oldXyzFilestream.close();
 			
@@ -218,32 +226,51 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			fileOutput.clear();
 			
 			// VTK Molecule Data for VMD
-			float coordinates[3*domain->getglobalNumMolecules()];
-			int nvars = 2;
-			int vardims[] = {1, 3/*, 1*/};
-			const char *varnames[] = {"temperature", "velocity"/*, "component"*/};
-			float temperature[domain->getglobalNumMolecules()];
-// 			int componentID[domain->getglobalNumMolecules()];
-			float velocity[domain->getglobalNumMolecules()][3];
-			float *vars[] = {(float *)temperature, (float *)velocity/*, (int *)componentID*/};
+			if(_simulation.isRecordingSlabProfile()){
+			  float coordinates[3*domain->getglobalNumMolecules()];
+			  int nvars = 2;
+			  int vardims[] = {1, 3/*, 1*/};
+			  const char *varnames[] = {"temperature", "velocity"/*, "component"*/};
+			  float temperature[domain->getglobalNumMolecules()];
+// 			  int componentID[domain->getglobalNumMolecules()];
+			  float velocity[domain->getglobalNumMolecules()][3];
+			  float *vars[] = {(float *)temperature, (float *)velocity/*, (int *)componentID*/};
+			  cout << " Orig " << domain->getglobalOrigNumMolecules() << " " << domain->getglobalNumMolecules() << endl;
+			  while(!oldVTK.eof()) {
+			    stringstream cache;
+			    string cache2;
+			    oldVTK >> xPos >> yPos >> zPos >> tempVTK >> vTotal[0] >> vTotal[1] >> vTotal[2] >> compID >> molID;
+			    cache << xPos << "\t" << yPos << "\t" << zPos << "\t" << tempVTK << "\t" << vTotal[0] << "\t" << vTotal[1]  << "\t" << vTotal[2] << "\t" << compID << "\t" << molID << "\n";
+			    cache2 = cache.str();
+			    fileOutput[molID] = cache2;
+			  }
+			  unsigned long countVTK = 1;
+			  for (std::map<int,std::string>::iterator it=fileOutput.begin(); it!=fileOutput.end(); ++it){
+				  stringstream cache3;
+				  
+				  cache3 << it->second;
+				  cache3 >> xPos >> yPos >> zPos >> tempVTK >> vTotal[0] >> vTotal[1] >> vTotal[2] >> compID >> molID;
+				  
+				  coordinates[-3+3*countVTK] = xPos;
+				  coordinates[-3+3*countVTK+1] = yPos;
+				  coordinates[-3+3*countVTK+2] = zPos;
+// 			    	  componentID[molID-1] = compID;
+				  temperature[countVTK-1] = tempVTK;
+				  velocity[countVTK-1][0] = vTotal[0];
+				  velocity[countVTK-1][1] = vTotal[1];
+				  velocity[countVTK-1][2] = vTotal[2];
+				  countVTK++;
+			  }
 			
-			while(!oldVTK.eof()) {
-			  token.clear();
-			  oldVTK >> xPos >> yPos >> zPos >> tempVTK >> vTotal[0] >> vTotal[1] >> vTotal[2] >> compID >> molID;
-			  coordinates[-3+3*molID] = xPos;
-			  coordinates[-3+3*molID+1] = yPos;
-			  coordinates[-3+3*molID+2] = zPos;
-// 			  componentID[molID-1] = compID;
-			  temperature[molID-1] = tempVTK;
-			  velocity[molID-1][0] = vTotal[0];
-			  velocity[molID-1][1] = vTotal[1];
-			  velocity[molID-1][2] = vTotal[2];
+			  //NEW: Deletes the old XYZ-File
+			  fileOutput.clear();
+			
+			  oldVTK.close();
+			  remove(vtk.str().c_str());
+			
+			  // Output to VTK
+			  write_point_mesh(vtk.str().c_str(), 0, numberOfMolecules, coordinates, nvars, vardims, varnames, vars);
 			}
-			oldVTK.close();
-			remove(vtk.str().c_str());
-			// Output to VTK
-// 			write_regular_mesh(vtkname.c_str(), 0, dims, nvars, vardims, centering, varnames, vars);
-			write_point_mesh(vtk.str().c_str(), 0, numberOfMolecules, coordinates, nvars, vardims, varnames, vars);
 		}
 	}
 }

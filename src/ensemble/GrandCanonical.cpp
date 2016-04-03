@@ -37,6 +37,11 @@ ChemicalPotential::ChemicalPotential()
 	 this->lambda = 1.0;
 
          this->widom = false;
+	 
+	 // barostat specific variables
+	this->_volume_Barostat = 0.0;
+	this->_targetPressure = 0.0;
+	this->_barostat = false;
 }
 
 void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1)

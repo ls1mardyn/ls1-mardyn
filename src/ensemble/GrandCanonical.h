@@ -19,8 +19,11 @@ public:
 
 	void setMu(int cid, double chempot) { this->mu = chempot; this->componentid = cid; }
 	unsigned getInterval() { return this->interval; }
+	unsigned getOriginalInterval() { return this->originalInterval; }
 	void setInterval(unsigned delta) { this->interval = delta; }
+	void setOriginalInterval(unsigned delta) { this->originalInterval = delta; }
 	void setInstances(unsigned n) { this->instances = n; }
+	void setOriginalInstances(unsigned n) { this->originalInstances = n; }
 	void setSystem(double x, double y, double z, double m);
 	void setGlobalN(unsigned long N) { this->globalN = N; }
 	void setNextID(unsigned long id) { this->nextid = id; }
@@ -34,6 +37,8 @@ public:
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);
+	unsigned getOriginalInstances() {return this->originalInstances;}
+	unsigned getInstances() {return this->instances;}
 
 	Molecule loadMolecule();
 	void storeMolecule( Molecule& old )
@@ -70,7 +75,18 @@ public:
 
 	double getLambda() { return this->lambda; }
 	float getDensityCoefficient() { return this->decisive_density; }
-
+	
+	// barostat specific functions
+	double getVolume_Barostat(){ return this->globalV; }
+	double getTargetPressure(){ return this->_targetPressure; }
+	void setVolume_Barostat(double volume){ this->_volume_Barostat = volume; }
+	void setTargetPressure(double pressure){ this->_targetPressure = pressure; }
+	bool isGCMD_barostat(){ return this->_barostat; }
+	void setGCMD_barostat(bool baro){ this->_barostat = baro; }
+	
+	double getControl_bottom(int d){ return this->control_bottom[d]; }
+	double getControl_top(int d){ return this->control_top[d]; }
+	
 private:
 	int ownrank;  // only for debugging purposes (indicate rank in console output)
 
@@ -81,7 +97,9 @@ private:
 	double muTilde;
 	unsigned int componentid;
 	unsigned interval;  // how often?
+	unsigned originalInterval;
 	unsigned instances;  // how many trial insertions and deletions?
+	unsigned originalInstances;
 	Random rnd, rndmomenta;
 	double system[3];  // extent of the system
 	float minredco[3];  // minimal coordinates of the subdomain reduced w. r. t. the system size
@@ -108,6 +126,11 @@ private:
 	double lambda;
 
         bool widom;  // Widom method -> determine mu by test insertions which are all rejected
+        
+        // barostat specific variables
+	double _volume_Barostat;
+	double _targetPressure;
+	bool _barostat;
 
 	Molecule* reservoir;
 };

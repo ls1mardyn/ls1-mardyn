@@ -88,11 +88,20 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer, Doma
 			  }
 			}
 			if(_simulation.getDomain()->isBulkPressure(molecule->componentid())){
-			  if((molecule->r(0) >= _simulation.getDomain()->getBulkBoundary(0)-5. && molecule->r(0) <= _simulation.getDomain()->getBulkBoundary(1)+5. && molecule->r(1) >= _simulation.getDomain()->getBulkBoundary(2)-5. && molecule->r(1) <= _simulation.getDomain()->getBulkBoundary(3)+5.)){
+			  if((molecule->r(0) >= _simulation.getDomain()->getBulkBoundary(0)-_simulation.getLJCutoff() && molecule->r(0) <= _simulation.getDomain()->getBulkBoundary(1)+_simulation.getLJCutoff() && molecule->r(1) >= _simulation.getDomain()->getBulkBoundary(2)-_simulation.getLJCutoff() && molecule->r(1) <= _simulation.getDomain()->getBulkBoundary(3)+_simulation.getLJCutoff())){
 			    for (unsigned short d = 0; d < 3; ++d){
 				long double v_d = molecule->v(d) - molecule->getDirectedVelocity(d);
 				long double kinTrans = v_d * v_d * molecule->mass();
 				molecule->addPressureKin(d, kinTrans);
+			    }
+			  }
+			}
+			if(_simulation.getDomain()->isBarostat(molecule->componentid()) && ((_simulation.getDomain()->getSimstep() >= _simulation.getBarostatTimeInit() && _simulation.getDomain()->getSimstep() <= _simulation.getBarostatTimeEnd()))){
+			  if((molecule->r(0) >= _simulation.getDomain()->getControl_bottom(0) && molecule->r(0) <= _simulation.getDomain()->getControl_top(0) && molecule->r(1) >= _simulation.getDomain()->getControl_bottom(1) && molecule->r(1) <= _simulation.getDomain()->getControl_top(1))){
+			    for (unsigned short d = 0; d < 3; ++d){
+				long double v_d = molecule->v(d) - molecule->getDirectedVelocity(d);
+				long double kinTrans = v_d * v_d * molecule->mass();
+				molecule->addPressureKin_barostat(d, kinTrans);
 			    }
 			  }
 			}
@@ -192,8 +201,14 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
      double x = floor(molecule->r(0)) + 0.5;
      double y = floor(molecule->r(1)) + 0.5;
      unsigned cid = molecule->componentid();
+//      if(molecule->id() > 5681)
+// 		 cout << " ID " << molecule->id() << " CID " << cid;
      for (int d=0; d<3; d++){
 	molecule->setDirectedVelocity(d, _universalDirectedVelocity[cid][x][y][d]); 
+// 	if(molecule->id() > 5681)
+// 		 cout << " vAv " << _universalDirectedVelocity[cid][x][y][d];
      }
+//      if(molecule->id() > 5681)
+//        cout << endl;
    }
 }

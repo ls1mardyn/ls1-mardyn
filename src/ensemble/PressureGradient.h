@@ -124,6 +124,9 @@ public:
 	void setGlobalVelSumBeforeAcc(int d, unsigned cosetid, long double VelSum) {_globalVelSumBeforeAcc[d][cosetid] = VelSum; }
 	void setGlobalVelSumAfterAcc(int d, unsigned cosetid, long double VelSum) {_globalVelSumAfterAcc[d][cosetid] = VelSum; }
 	void setGlobalVelSumAfterThT(int d, unsigned cosetid, long double VelSum) {_globalVelSumAfterThT[d][cosetid] = VelSum; }
+	void addGlobalVelSumBeforeAcc(int d, unsigned cosetid, long double VelSum) {_globalVelSumBeforeAcc[d][cosetid] += VelSum; }
+	void addGlobalVelSumAfterAcc(int d, unsigned cosetid, long double VelSum) {_globalVelSumAfterAcc[d][cosetid] += VelSum; }
+	void addGlobalVelSumAfterThT(int d, unsigned cosetid, long double VelSum) {_globalVelSumAfterThT[d][cosetid] += VelSum; }
 	double getGlobalVelSumBeforeAcc(int d, int cosetid) {return this->_globalVelSumBeforeAcc[d][cosetid]; }
 	double getGlobalVelSumAfterAcc(int d, int cosetid) {return this->_globalVelSumAfterAcc[d][cosetid]; }
 	double getGlobalVelSumAfterThT(int d, int cosetid) {return this->_globalVelSumAfterThT[d][cosetid]; }
@@ -133,10 +136,10 @@ public:
 	double getGlobalSpringForceSum(int d, int cosetid){return this->_globalSpringForceSum[d][cosetid]; }
 	//! @brief collects the total force vector of each component "cosetid" as well as the spring force vector
 	void calculateForcesOnComponent(ParticleContainer* molCont, unsigned int cid);
-	void collectForcesOnComponent(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid);
+	void collectForcesOnComponent(DomainDecompBase* domainDecomp, unsigned int cid);
 	void resetForcesOnComponent(unsigned int cid);
 	void calculateSpringForcesOnComponent(ParticleContainer* molCont, unsigned int cid);
-	void collectSpringForcesOnComponent(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid);
+	void collectSpringForcesOnComponent(DomainDecompBase* domainDecomp, unsigned int cid);
 	void resetSpringForcesOnComponent(unsigned int cid);
 	//! @brief counts the call of the method pressureGradient->collectSpringForcesOnComponent() to ensure that its just called once each timestep */
 	void setCounter(unsigned long counter){_counter = counter; }

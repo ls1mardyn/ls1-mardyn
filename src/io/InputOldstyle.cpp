@@ -182,6 +182,16 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			_phaseSpaceHeaderFileStream >> numcomponents;
 			global_log->info() << "Reading " << numcomponents << " components" << endl;
 			dcomponents.resize(numcomponents);
+			
+			// intialization of a default value for the movement style of a component: 'free'
+			string free ("free");
+			string moved ("moved");
+			string fixed ("fixed");
+			for(unsigned cid = 1; cid <= numcomponents; cid++){
+			  if(moved.compare(domain->getPG()->getMovementStyle(cid)) != 0 && fixed.compare(domain->getPG()->getMovementStyle(cid)) != 0)
+			    domain->getPG()->specifyMovementStyle(cid, free);
+			}
+			
 			for( unsigned int i = 0; i < numcomponents; i++ ) {
                                 global_log->info() << "comp. i = " << i << ": " << endl;
 				dcomponents[i].setID(i);
@@ -275,6 +285,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			// FIXME: Is this part called in any case as the token is handled in the readPhaseSpace method?
 			_phaseSpaceHeaderFileStream >> token;
 			domain->setglobalNumMolecules( strtoul(token.c_str(),NULL,0) );
+			domain->setglobalOrigNumMolecules( strtoul(token.c_str(),NULL,0) );
 		}
 		else if(token == "State") {
 			unsigned component_id;
@@ -383,6 +394,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	MPI_Bcast(&nummolecules, 1, MPI_UNSIGNED_LONG, 0, MPI_COMM_WORLD);
 #endif
 	domain->setglobalNumMolecules( nummolecules );
+	domain->setglobalOrigNumMolecules( nummolecules );
 	global_log->info() << " number of molecules: " << nummolecules << endl;
 
 	
