@@ -6,6 +6,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
+#include "ensemble/CavityEnsemble.h"
 
 using namespace std;
 using Log::global_log;
@@ -94,6 +95,102 @@ void DomainDecompDummy::exchangeMolecules(ParticleContainer* moleculeContainer, 
 				currentMolecule = moleculeContainer->next();
 		}
 	}
+}
+
+void DomainDecompDummy::exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain)
+{
+   cavityEnsemble->haloClear();
+   
+   Molecule* currentMolecule;
+   Molecule* newMolecule;
+   double new_position[3];
+   
+   map<unsigned long, Molecule*> texp;
+   map<unsigned long, unsigned long> texp_cluster;
+   map<unsigned long, Molecule*>::iterator texit;
+   
+   cavityEnsemble->processBoundary();
+   
+   for(int d = 0; d < 3; d++)
+   {
+      texp = cavityEnsemble->exportBottom(d);
+      texp_cluster = cavityEnsemble->exportClusterBottom(d);
+      
+      for(texit = texp.begin(); texit != texp.end(); texit++)
+      {
+         currentMolecule = texit->second;
+         assert(currentMolecule->id() == texit->first);
+         for (int d2 = 0; d2 < 3; d2++)
+         {
+            // For DomainDecompDummy (sequential linked cells), the position ALWAYS needs to be shifted!
+            //
+            if(d2 == d) new_position[d2] = currentMolecule->r(d2) + cavityEnsemble->systemSize(d2);
+            else new_position[d2] = currentMolecule->r(d2);
+         }
+         Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
+         newMolecule = new Molecule(
+            texit->first, component,
+            new_position[0], new_position[1], new_position[2],
+            currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
+            currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
+            currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2)
+         );
+         cavityEnsemble->haloInsert(newMolecule, true);
+         if(texp_cluster.count(texit->first) > 0)
+         {
+            cavityEnsemble->haloCluster(texit->first, texp_cluster[texit->first]);
+         }
+      }
+      
+      texp = cavityEnsemble->exportTop(d);
+      texp_cluster = cavityEnsemble->exportClusterTop(d);
+      
+      for(texit = texp.begin(); texit != texp.end(); texit++)
+      {
+         currentMolecule = texit->second;
+         assert(currentMolecule->id() == texit->first);
+         for (int d2 = 0; d2 < 3; d2++)
+         {
+            // For DomainDecompDummy (sequential linked cells), the position ALWAYS needs to be shifted!
+            //
+            if(d2 == d) new_position[d2] = currentMolecule->r(d2) - cavityEnsemble->systemSize(d2);
+            else new_position[d2] = currentMolecule->r(d2);
+         }
+         Component* component = _simulation.getEnsemble()->component(currentMolecule->componentid());
+         Molecule* newMolecule = new Molecule(
+            texit->first, component,
+            new_position[0], new_position[1], new_position[2],
+            currentMolecule->v(0),currentMolecule->v(1),currentMolecule->v(2),
+            currentMolecule->q().qw(),currentMolecule->q().qx(),currentMolecule->q().qy(),currentMolecule->q().qz(),
+            currentMolecule->D(0),currentMolecule->D(1),currentMolecule->D(2)
+         );
+         cavityEnsemble->haloInsert(newMolecule, true);
+         if(texp_cluster.count(texit->first) > 0)
+         {
+            cavityEnsemble->haloCluster(texit->first, texp_cluster[texit->first]);
+         }
+      }
+   }
+}
+
+unsigned DomainDecompDummy::gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation)
+{
+   unsigned max_grid_points = 0;
+   
+   (*globalSizePopulation) = map<unsigned, unsigned>();
+   map<unsigned long, unsigned>::iterator lcsit;
+   for(lcsit = localClusterSize->begin(); lcsit != localClusterSize->end(); lcsit++)
+   {
+      if(lcsit->second > max_grid_points) max_grid_points = lcsit->second;
+      
+      if(globalSizePopulation->count(lcsit->second) == 0)
+      {
+         (*globalSizePopulation)[lcsit->second] = 1;
+      }
+      else (*globalSizePopulation)[lcsit->second] ++;
+   }
+   
+   return max_grid_points;
 }
 
 void DomainDecompDummy::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {

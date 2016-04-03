@@ -342,7 +342,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	string Confinement ("Confinement");
 	string Linear ("Linear");
 	string Pyramide ("Pyramide");
-	
+
 	// Vorzeichen bei drm genau verkehrt....
 	double drm[3];
 	for (int i = 0; i < 3; i++)
@@ -372,7 +372,6 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  yun = floor(_r[1] / deltaY);
 	  xun2 = floor(mjx / deltaX);
 	  yun2 = floor(mjy / deltaY);
-	  
 	}else if (stress == Confinement){
 	  // data transfer for determination of the control volumes
 	  xun_tot = dom->getUniversalNProfileUnitsStressConfinement(0);
@@ -612,6 +611,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	_HardyIntersectionY[1.0] = mjy;
 	_HardyIntersectionZ[1.0] = mjz;
 	
+	
 	long double halfDeltaX = 0, halfDeltaY = 0, deltaXMol = 0, deltaYMol = 0, deltaXCentre = 0, deltaYCentre = 0;
 	int sign[2]= {1,1};
 	// calculate contribution of 2D weighting function being pyramidal
@@ -621,7 +621,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  deltaXMol = mjx-_r[0];
 	  deltaYMol = mjy-_r[1];
 	  sign[0] = signumFunction(deltaXMol);  
-	  sign[1] = signumFunction(deltaYMol);	    
+	  sign[1] = signumFunction(deltaYMol);
 	}
 	
 	long double previousValue = 0.0;
@@ -736,7 +736,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
  
 long double Molecule::bondFunctionPyramide(long double n0, long double n1, int signF, int signG, long double halfDeltaX, long double halfDeltaY, long double deltaXMol, long double deltaYMol, long double deltaXCentre, long double deltaYCentre){
      long double bondFunc, bondFunc0, bondFunc1;
-
+     
      bondFunc1 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n1*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n1)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n1)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n1+3*deltaXMol*deltaYCentre*n1+2*deltaXMol*deltaYMol*n1*n1)*signG)));
      bondFunc0 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n0*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n0)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n0)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n0+3*deltaXMol*deltaYCentre*n0+2*deltaXMol*deltaYMol*n0*n0)*signG)));
      bondFunc = bondFunc1 - bondFunc0;

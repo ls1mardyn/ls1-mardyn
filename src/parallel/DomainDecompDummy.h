@@ -4,7 +4,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "parallel/CollectiveCommDummy.h"
 
-
 //! @brief implement the %domain decomposition for a single processor
 //! @author Martin Buchholz
 //!
@@ -30,6 +29,8 @@ public:
 	//! Additionally, the molecules from the boundary region are duplicated
 	//! and copied into the corresponding halo-regions.
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+        void exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain);
+        unsigned gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation);
 
 	//! @brief in the sequential version, no balancing is necessary --> calls exchangeMolecules
 	void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain);

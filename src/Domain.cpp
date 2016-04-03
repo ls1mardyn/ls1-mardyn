@@ -27,8 +27,14 @@ Domain::Domain(int rank, PressureGradient* pg){
 	_localRank = rank;
 	_localUpot = 0;
 	_localVirial = 0;   
+	for(int d=0; d < 3; d++) this->_localVirialI[d] = 0.0;
+        this->_localVirialIILL = 0.0;
+        this->_localVirialIILM = 0.0;
 	_globalUpot = 0;
 	_globalVirial = 0; 
+        for(int d=0; d < 3; d++) this->_globalVirialI[d] = 0.0;
+        this->_globalVirialIILL = 0.0;
+        this->_globalVirialIILM = 0.0;
 	_globalRho = 0;
 
 	this->_universalPG = pg;
@@ -153,7 +159,26 @@ void Domain::setLocalUpot(double Upot) {_localUpot = Upot;}
 
 double Domain::getLocalUpot() const {return _localUpot; }
 
-void Domain::setLocalVirial(double Virial) {_localVirial = Virial;}
+void Domain::setLocalVirial(double Virial)
+{
+   _localVirial = Virial;
+   this->_localVirialI[0] = Virial/3.0;
+   this->_localVirialI[1] = Virial/3.0;
+   this->_localVirialI[2] = Virial/3.0;
+   this->_localVirialIILL = 0.0;
+   this->_localVirialIILM = 0.0;
+}
+
+void Domain::setLocalVirial(double VIx, double VIy, double VIz, double VIILL, double VIILM)
+{
+   _localVirial = VIx+VIy+VIz;
+   this->_localVirialI[0] = VIx;
+   this->_localVirialI[1] = VIy;
+   this->_localVirialI[2] = VIz;
+   this->_localVirialIILL = VIILL;
+   this->_localVirialIILM = VIILM;
+}
+
 
 double Domain::getLocalVirial() const {return _localVirial; }
 
@@ -200,6 +225,11 @@ void Domain::calculateGlobalValues(
 		) {
 	double Upot = _localUpot;
 	double Virial = _localVirial;
+        double VIx = this->_localVirialI[0];
+        double VIy = this->_localVirialI[1];
+        double VIz = this->_localVirialI[2];
+        double VIILL = this->_localVirialIILL;
+        double VIILM = this->_localVirialIILM;
 
 	// To calculate Upot, Ukin and Pressure, intermediate values from all      
 	// processes are needed. Here the         
@@ -211,12 +241,22 @@ void Domain::calculateGlobalValues(
 	// to this point           
 	
 	/* FIXME stuff for the ensemble class */
-	domainDecomp->collCommInit(2);
+	domainDecomp->collCommInit(7);
 	domainDecomp->collCommAppendDouble(Upot);
 	domainDecomp->collCommAppendDouble(Virial);
+	domainDecomp->collCommAppendDouble(VIx);
+        domainDecomp->collCommAppendDouble(VIy);
+        domainDecomp->collCommAppendDouble(VIz);
+        domainDecomp->collCommAppendDouble(VIILL);
+        domainDecomp->collCommAppendDouble(VIILM);
 	domainDecomp->collCommAllreduceSum();
 	Upot = domainDecomp->collCommGetDouble();
 	Virial = domainDecomp->collCommGetDouble();
+	VIx = domainDecomp->collCommGetDouble();
+        VIy = domainDecomp->collCommGetDouble();
+        VIz = domainDecomp->collCommGetDouble();
+        VIILL = domainDecomp->collCommGetDouble();
+        VIILM = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
 
 	/* FIXME: why should process 0 do this alone? 
@@ -225,6 +265,11 @@ void Domain::calculateGlobalValues(
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
 	_globalUpot = Upot + _UpotCorr;
 	_globalVirial = Virial + _VirialCorr;
+	_globalVirialI[0] = VIx + _VirialCorr/3.0;
+        _globalVirialI[1] = VIy + _VirialCorr/3.0;
+        _globalVirialI[2] = VIz + _VirialCorr/3.0;
+        _globalVirialIILL = VIILL;
+        _globalVirialIILM = VIILM;
 
 	/*
 	 * thermostat ID 0 represents the entire system
@@ -1447,18 +1492,13 @@ void Domain::recordSlabProfile(ParticleContainer* molCont){
 			thismol->calculate_mv2_Iw2(mv2, Iw2);
 			this->_localKineticProfileSlab[unID] += mv2+Iw2;
 		}
-		for(int d=0; d<3; d++){
-// 		  if(thismol->id() > 5681)
-// 		    cout << " ID " << thismol->id() <<  " v " << d << " " << thismol->getAveragedVelocity(d);
+		for(int d=0; d<3; d++)
 		  thismol->addAveragedVelocity(d,thismol->v(d));
-		}
 		mv2 = 0.0;
 		Iw2 = 0.0;
 		thismol->calculate_mv2_Iw2(mv2, Iw2);
 		thismol->addAveragedTemperature((mv2+Iw2)/(3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom())));
 		thismol->addAverageCount(1);
-// 		if(thismol->id() > 5681)
-// 		    cout << " ID " << thismol->id() <<  " T " << thismol->getAveragedTemperature() << " C " << thismol->getAverageCount() << " mv2 " << mv2 << " Iw2 " << Iw2 << " rotFG " << thismol->component()->getRotationalDegreesOfFreedom() << endl;
 	}
 	this->_globalAccumulatedDatasetsSlab++;
 }
@@ -2377,7 +2417,6 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
       _universalInvProfileUnitStressConfinement[0] = 1/correlationLength;
       _universalInvProfileUnitStressConfinement[1] = 1/correlationLength;
       _universalInvProfileUnitStressConfinement[2] = _universalNProfileUnitsStressConfinement[2] / _globalLength[2];
-      
     }else{ // for Virial Stress
       this->_universalNProfileUnitsStressConfinement[0] = this->_universalNProfileUnitsConfinement[0];
       this->_universalNProfileUnitsStressConfinement[1] = this->_universalNProfileUnitsConfinement[1];
@@ -3027,7 +3066,6 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	
 	double segmentVolumeStress; // volume of a single bin, in a0^3 (LJ)
 	segmentVolumeStress = 1.0/this->_universalInvProfileUnitStressConfinement[0]/this->_universalInvProfileUnitStressConfinement[1]/this->_universalInvProfileUnitStressConfinement[2];
-	
 	
 	// Eintragen des Flags '>' zwecks Kompatibilität
       if (this->_outputFormat == this->_all || this->_outputFormat == this->_matlab){

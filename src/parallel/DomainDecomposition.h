@@ -56,6 +56,8 @@ public:
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+        void exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain);
+        unsigned gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation);
 
 	//! @brief this decompositin does no balancing, it just exchanges the particles
 	//!

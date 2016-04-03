@@ -11,7 +11,6 @@
 #include "Simulation.h"
 
 #include "ensemble/GrandCanonical.h"
-
 /* 
  * TODO add comments for variables 
  */
@@ -116,6 +115,7 @@ public:
 
 	//! @brief set the virial of the local process
 	void setLocalVirial(double Virial);
+        void setLocalVirial(double VIx, double VIy, double VIz, double VIILL, double VIILM);
 
 	//! @brief get the virial of the local process
 	double getLocalVirial() const;
@@ -136,6 +136,10 @@ public:
 	//! @brief get thermostat scaling for rotations
 	long double getThT_heatFlux(int thermostat) { return _universalThT_heatFlux[thermostat]; }
 	void setThT_heatFlux(int thermostat, double value) { _universalThT_heatFlux[thermostat] = value; }
+	
+	double getGlobalVirial(int d) { return this->_globalVirialI[d]; }
+        double getGlobalVirialIILL() { return this->_globalVirialIILL; }
+        double getGlobalVirialIILM() { return this->_globalVirialIILM; }
 	
 	//! @brief return the length of the domain
 	//!
@@ -490,10 +494,16 @@ private:
 	double _localUpot;
 	//! Virial of the local process
 	double _localVirial;
+	double _localVirialI[3];
+        double _localVirialIILL;
+        double _localVirialIILM;
 	//! global Potential
 	double _globalUpot;
 	//! global virial
 	double _globalVirial;
+	double _globalVirialI[3];
+        double _globalVirialIILL;
+        double _globalVirialIILM;
 	//! global density
 	double _globalRho;
 	//! global Number of Molecules

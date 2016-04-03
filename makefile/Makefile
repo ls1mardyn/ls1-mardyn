@@ -44,6 +44,8 @@ CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 ifneq ($(CFGFILE),)
   $(info # Selected configuration: $(CFG) )
   $(info # Including file $(CFGFILE) $(realpath $(PWD) ))
+  $(info $(realpath $(MAKEFILEDIR)cfg/$(CFG).in ))
+  $(info $(dir $(realpath $(lastword $(MAKEFILE_LIST)))))
   include $(CFGFILE)
 else
   $(error ERROR: config file for $(CFG) not found - no include )

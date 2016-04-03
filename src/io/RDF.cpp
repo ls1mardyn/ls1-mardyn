@@ -271,7 +271,7 @@ void RDF::setOutputPrefix(string prefix) {
 }
 
 
-void RDF::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu) {
+void RDF::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
 	if (simStep > 0 && simStep % _writeFrequency == 0) {

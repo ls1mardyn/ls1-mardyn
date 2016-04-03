@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "Domain.h"
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -728,22 +729,22 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		minco[d] = this->getBoundingBoxMin(d);
 		maxco[d] = this->getBoundingBoxMax(d);
 	}
+
 	bool hasDeletion = true;
 	bool hasInsertion = true;
 	double ins[3];
 	unsigned nextid = 0;
 	while (hasDeletion || hasInsertion) {
-		if (hasDeletion){
+		if (hasDeletion)
 			hasDeletion = mu->getDeletion(this, minco, maxco);
-		}
 		if (hasDeletion) {
 			m = &(*(this->_particleIter));
 			DeltaUpot = -1.0 * getEnergy(&particlePairsHandler, m, cellProcessor);
-			accept = mu->decideDeletion(DeltaUpot / T);
 
+			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
-			if(accept) global_log->debug() << " delete " << "r" << mu->rank() << "d" << m->id() << " CID " << m->componentid() << " mu " << mu->getMu() << endl;
-			else global_log->debug() << " delete " << "   (r" << mu->rank() << "-d" << m->id() << ")" << endl;
+			if(accept) global_log->debug() << "r" << mu->rank() << "d" << m->id() << endl;
+			else global_log->debug() << "   (r" << mu->rank() << "-d" << m->id() << ")" << endl;
 #endif
 			if (accept) {
 				m->upd_cache();
@@ -787,6 +788,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 				tmp.setr(d, ins[d]);
 			tmp.setid(nextid);
 			this->_particles.push_back(tmp);
+
 			std::list<Molecule>::iterator mit = _particles.end();
 			mit--;
 			m = &(*mit);
@@ -799,7 +801,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			}
 			m->check(nextid);
 #ifndef NDEBUG
-			global_log->debug() << "rank " << mu->rank() << ": insert " << m->id() << " CID " << m->componentid() << " mu " << mu->getMu() 
+			global_log->debug() << "rank " << mu->rank() << ": insert " << m->id()
 			<< " at the reduced position (" << ins[0] << "/" << ins[1] << "/" << ins[2] << ")? " << endl;
 #endif
 
@@ -810,8 +812,8 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 			accept = mu->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG
-			if(accept) global_log->debug() << " insert " << "r" << mu->rank() << "i" << mit->id() << " CID " << mit->componentid() << " mu " << mu->getMu()  << endl;
-			else global_log->debug() << " insert " << "   (r" << mu->rank() << "-i" << mit->id() << ")" << endl;
+			if(accept) global_log->debug() << "r" << mu->rank() << "i" << mit->id() << ")" << endl;
+			else global_log->debug() << "   (r" << mu->rank() << "-i" << mit->id() << ")" << endl;
 #endif
 			if (accept) {
 				this->_localInsertionsMinusDeletions++;
@@ -830,4 +832,76 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domain* do
 		m->check(m->id());
 #endif
 	}
+}
+
+int LinkedCells::countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR)
+{
+        int m1neigh = 0;
+        vector<long int>::iterator neighbourOffsetsIter;
+
+        assert(_cellsValid);
+        // cout << "\t\t\t\t\tcavity " << m1->id() << " (" << m1->r(0) << " / " << m1->r(1) << " / " << m1->r(2) << "): ";
+        unsigned long cellIndex = getCellIndexOfMolecule(m1);
+        // cout << "cell " << cellIndex << " (out of " << _cells.size() << " local cells).\n";
+        // cout << flush;
+        ParticleCell& currentCell = _cells[cellIndex];
+
+        cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+
+        // cout << "\t\t\t\t\tPreprocessing cells " << cellIndex - _minNeighbourOffset << " to " << cellIndex + _maxNeighbourOffset << ".\n";
+        // cout << flush;
+        // extend the window of cells with cache activated
+        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
+                cellProcessor.preprocessCell(_cells[windowCellIndex]);
+        }
+
+        m1neigh += cellProcessor.countNeighbours(m1, currentCell, RR);
+
+        // forward neighbours
+        for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        {
+                ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
+        }
+        // backward neighbours
+        for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        {
+                ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
+                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
+        }
+
+        // cout << "\t\t\t\t\tPostprocessing cells " << cellIndex - _minNeighbourOffset << " to " << cellIndex + _maxNeighbourOffset << ".\n";
+        // cout << flush;
+        // close the window of cells activated
+        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
+                cellProcessor.postprocessCell(_cells[windowCellIndex]);
+        }
+
+        cellProcessor.endTraversal();
+        return m1neigh;
+}
+
+unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm)
+{
+   return ce->communicateNumCavities(comm);
+}
+
+void LinkedCells::cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor)
+{
+   ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
+   map<unsigned long, Molecule*>* pc = ce->particleContainer();
+   double RR = ce->getRR();
+   
+   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++)
+   {
+      assert(pcit->second != NULL);
+      // cout << flush;
+      // cout << "\t\t\t\tRank " << domain->rank() << " counting neighbours for vertex " << pcit->first << " (i.e. " << pcit->second->id() << ").\n";
+      // cout << flush;
+      Molecule* m1 = pcit->second;
+      unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
+      unsigned long m1id = pcit->first;
+      assert(m1id = m1->id());
+      ce->decideActivity(neigh, m1id);
+   }
 }

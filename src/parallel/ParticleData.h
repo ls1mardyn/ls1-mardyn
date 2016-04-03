@@ -23,15 +23,17 @@ public:
 
 	//! @brief copy data from object of class Molecule to object of class ParticleData
 	static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule);
+        static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule, unsigned long cluster_id);
 
 	//! @brief copy data from object of class class ParticleData to object of class Molecule
-	static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule);
+	static unsigned long ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule);
 
 #ifndef NDEBUG
 	ParticleData();
 #endif
 
 	unsigned long id;
+        unsigned long cluster;
 	int cid;
 	double r[3];
 	double v[3];

@@ -41,6 +41,7 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
+#include "ensemble/CavityEnsemble.h"
 
 #include "thermostats/VelocityScalingThermostat.h"
 
@@ -549,6 +550,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	double timestepLength;
 	unsigned cosetid = 0;
         bool widom = false;
+        bool ultra = false;
+        map<unsigned, double*> cavity_grid;
 
 	// The first line of the config file has to contain the token "MDProjectConfig"
 	inputfilestream >> token;
@@ -1136,6 +1139,57 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> h;
 		} else if(token == "Widom") {
                         widom = true;
+		} else if(token == "cavity") {
+                        unsigned cavity_cid;
+                        inputfilestream >> cavity_cid;
+                        cavity_cid--;
+                        inputfilestream >> token;
+                        if (token != "radius") {
+                                global_log->error() << "Expected 'radius' instead of '"
+                                                << token << "'.\n";
+                                global_log->debug()
+                                                << "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
+                                exit(1);
+                        }
+                        double cavity_radius;
+                        inputfilestream >> cavity_radius;
+                        int neighbours;
+                        inputfilestream >> neighbours;
+                        inputfilestream >> token;
+                        if (token != "grid") {
+                                global_log->error() << "Expected 'grid' instead of '"
+                                                << token << "'.\n";
+                                global_log->debug()
+                                                << "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
+                                exit(1);
+                        }
+                        unsigned gridx, gridy, gridz;
+                        inputfilestream >> gridx >> gridy >> gridz;
+                        inputfilestream >> token;
+                        if (token != "every") {
+                                global_log->error() << "Expected 'every' instead of '"
+                                                << token << "'.\n";
+                                global_log->debug()
+                                                << "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
+                                exit(1);
+                        }
+                        unsigned cavity_steps;
+                        inputfilestream >> cavity_steps;
+                        inputfilestream >> token;
+                        if (token != "steps") {
+                                global_log->error() << "Expected 'steps' instead of '"
+                                                << token << "'.\n";
+                                global_log->debug()
+                                                << "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
+                                exit(1);
+                        }
+                        this->_mcav[cavity_cid] = CavityEnsemble();
+                        this->_mcav[cavity_cid].setInterval(cavity_steps);
+                        this->_mcav[cavity_cid].setMaxNeighbours(neighbours, cavity_radius*cavity_radius);
+                        cavity_grid[cavity_cid] = new double[3];
+                        (cavity_grid[cavity_cid])[0] = gridx;
+                        (cavity_grid[cavity_cid])[1] = gridy;
+                        (cavity_grid[cavity_cid])[2] = gridz;
 		} else if (token == "NVE") {
 			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
@@ -1167,6 +1221,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double rc;
 			inputfilestream >> rc;
 			this->setTersoffCutoff(rc);
+		} else if (token == "ultra") {
+                        ultra = true;
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token "
@@ -1201,13 +1257,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				tmp_molecularMass);
 		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
+
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
 				_moleculeContainer->getBoundingBoxMax(0),
 				_moleculeContainer->getBoundingBoxMin(1),
 				_moleculeContainer->getBoundingBoxMax(1),
 				_moleculeContainer->getBoundingBoxMin(2),
 				_moleculeContainer->getBoundingBoxMax(2));
-		
 		/* TODO: thermostat */
 		double Tcur = _domain->getCurrentTemperature(0);
 		/* FIXME: target temperature from thermostat ID 0 or 1?  */
@@ -1222,6 +1278,33 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 		j++;
 	}
+	
+ 	unsigned long Nbasis = 3 * (this->_domain->getglobalNumMolecules() + 3 * this->_lmu.size());
+	map<unsigned, CavityEnsemble>::iterator ceit;
+        for(ceit = _mcav.begin(); ceit != _mcav.end(); ceit++)
+        {
+           if(ultra) ceit->second.enableUltra();
+           ceit->second.setSystem(_domain->getGlobalLength(0), _domain->getGlobalLength(1), _domain->getGlobalLength(2));
+           ceit->second.setIdOffset((1 + ceit->first) * Nbasis);
+
+           ceit->second.setSubdomain( ownrank, _moleculeContainer->getBoundingBoxMin(0),
+                                               _moleculeContainer->getBoundingBoxMax(0),
+                                               _moleculeContainer->getBoundingBoxMin(1),
+                                               _moleculeContainer->getBoundingBoxMax(1),
+                                               _moleculeContainer->getBoundingBoxMin(2),
+                                               _moleculeContainer->getBoundingBoxMax(2)  );
+           double Tcur = _domain->getCurrentTemperature(0);
+           double Ttar =_domain->severalThermostats()? _domain->getTargetTemperature(1)
+                                                     : _domain->getTargetTemperature(0);
+           if ((Tcur < 0.667 * Ttar) || (Tcur > 1.5 * Ttar)) Tcur = Ttar;
+           ceit->second.submitTemperature(Tcur);
+           
+           ceit->second.init(
+              global_simulation->getEnsemble()->component(ceit->first),
+              (cavity_grid[ceit->first])[0], (cavity_grid[ceit->first])[1], (cavity_grid[ceit->first])[2]
+           );
+           ceit->second.communicateNumCavities(this->_domainDecomposition);
+        }
 }
 
 void Simulation::prepare_start() {
@@ -1298,7 +1381,7 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	if (_lmu.size() > 0) {
+	if (_lmu.size() + _mcav.size() > 0) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
@@ -1315,7 +1398,10 @@ void Simulation::prepare_start() {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
 		}
-		
+                map<unsigned, CavityEnsemble>::iterator ceit;
+		for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
+                   ceit->second.submitTemperature(Tcur);
+                }
 	}
 
 	if (_zoscillation) {
@@ -1444,10 +1530,20 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
+		if (_simstep >= _initStatistics) {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+                      {
+                         ceit->second.preprocessStep();
+                      }
+                   }
+                }
+		
 		if(_domainDecomposition->getRank() == 0) 
 		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
 		
-		/* FIXME: just call once for simstep==initStatistics?? */
 		// initialize Hardy stresses
 		  if(_HardyStress && _simstep >= this->_initStatistics)
 		    for(_thismol = _moleculeContainer->begin(); _thismol != _moleculeContainer->end(); _thismol = _moleculeContainer->next()){
@@ -1475,6 +1571,19 @@ void Simulation::simulate() {
 		global_log->debug() << "Updating container and decomposition" << endl;
 		loopTimer.stop();
 		decompositionTimer.start();
+                if (_simstep >= _initStatistics) {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if( (!((_simstep + 2 * ceit->first + 4) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first + 2) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first) % ceit->second.getInterval())) )
+                      {
+                         _domainDecomposition->exchangeCavities(&ceit->second, _domain);
+                      }
+                   }
+                }
+                
 		updateParticleContainerAndDecomposition();
 		decompositionTimer.stop();
 		loopTimer.start();
@@ -1598,6 +1707,29 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
+		
+		if(_simstep >= _initStatistics)
+                {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+                      {
+                         global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
+                         
+                         this->_moleculeContainer->cavityStep(
+                            &ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
+                         );
+                      }
+                           
+                      if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
+                      {                                   
+                         this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
+                      }
+                   }
+                }
 
 		global_log->debug() << "Delete outer particles / clearing halo" << endl;
 		_moleculeContainer->deleteOuterParticles();
@@ -1638,7 +1770,6 @@ void Simulation::simulate() {
 		}
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
-		
 		/*
 		 * radial distribution function
 		 */
@@ -1647,6 +1778,23 @@ void Simulation::simulate() {
 				this->_domain->record_cv();
 			}
 		}
+		
+		/*
+                 * cavity (cluster) analysis
+                 */
+                if (_simstep >= _initStatistics) {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if( (!((_simstep + 2 * ceit->first + 5) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first + 2) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
+                      {
+                         ceit->second.detectClusters();
+                      }
+                   }
+                }
+
 		if (_zoscillation) {
 			global_log->debug() << "alert z-oscillators" << endl;
 			_integrator->zOscillation(_zoscillator, _moleculeContainer);
@@ -1802,8 +1950,7 @@ void Simulation::simulate() {
 		    cout << "T1: " << p_Kin << " | " << 3*N << endl;
 		    cout << "T2: " << eKin << " | " << dof << endl;
 		    cout << "T1/T2: " << p_Kin/eKin << endl;
-		    cout << " p_Vir " << p_Vir << " p_Kin " << p_Kin << " V " << Volume << endl;
-		    		   
+
 		    Confinement << _simstep << "\t\t\t" << N << "\t\t\t" << Volume << "\t\t" << Surface << "\t\t" << dMax << "\t\t" << dAverage << "\t\t";
 		    Confinement << density << "\t\t" << pressure << "\t" << temperature1 << "\t" << temperature2 << "\t\t\t";
 		    Confinement << force[0] << "\t" << force[1] << "\t" << viscosity << "\n";
@@ -1901,7 +2048,7 @@ void Simulation::output(unsigned long simstep) {
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
 		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
-		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
+		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &this->_lmu, &this->_mcav);
 	}
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
 		_domain->recordProfile(_moleculeContainer);
@@ -2091,4 +2238,6 @@ void Simulation::initialize() {
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
+        
+        this->_mcav = map<unsigned, CavityEnsemble>();
 }

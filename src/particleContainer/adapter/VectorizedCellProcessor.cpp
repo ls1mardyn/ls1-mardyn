@@ -774,6 +774,11 @@ double VectorizedCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell
 	exit(666);
 	return 666;
 }
+int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, double RR)
+{
+        exit(666);
+        return 666;
+}
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1,
 		ParticleCell & c2) {

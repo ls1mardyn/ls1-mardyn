@@ -201,14 +201,8 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
      double x = floor(molecule->r(0)) + 0.5;
      double y = floor(molecule->r(1)) + 0.5;
      unsigned cid = molecule->componentid();
-//      if(molecule->id() > 5681)
-// 		 cout << " ID " << molecule->id() << " CID " << cid;
      for (int d=0; d<3; d++){
 	molecule->setDirectedVelocity(d, _universalDirectedVelocity[cid][x][y][d]); 
-// 	if(molecule->id() > 5681)
-// 		 cout << " vAv " << _universalDirectedVelocity[cid][x][y][d];
      }
-//      if(molecule->id() > 5681)
-//        cout << endl;
    }
 }

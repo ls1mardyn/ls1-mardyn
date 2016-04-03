@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "Domain.h"
+#include "ensemble/CavityEnsemble.h"
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #include "ParticleCell.h"
@@ -1257,4 +1258,29 @@ void AdaptiveSubCells::grandcanonicalStep(ChemicalPotential* mu, double T, Domai
 		m->check(m->id());
 #endif
 	}
+}
+
+int AdaptiveSubCells::countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR)
+{
+   /*** ADD CAVITY ENSEMBLE ***/
+
+   exit(666);
+   
+   return 0;
+}
+
+unsigned long AdaptiveSubCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm)
+{
+   /*** ADD CAVITY ENSEMBLE ***/
+
+   exit(666);
+   
+   return 0;
+}
+
+void AdaptiveSubCells::cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor)
+{
+   /*** ADD CAVITY ENSEMBLE ***/
+
+   exit(666);
 }

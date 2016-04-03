@@ -73,7 +73,7 @@ void MPICheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 
 void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
 
-void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav ) {
 	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;

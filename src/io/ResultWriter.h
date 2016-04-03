@@ -46,7 +46,7 @@ public:
 	void doOutput(
 			ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu
+			unsigned long simstep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav
 	);
 
 	void finishOutput(ParticleContainer* particleContainer,
@@ -62,6 +62,13 @@ private:
 	std::string _outputPrefix;
 	Accumulator<double> *_U_pot_acc;
 	Accumulator<double> *_p_acc;
+        Accumulator<double>* _v1x_acc;
+        Accumulator<double>* _v1y_acc;
+        Accumulator<double>* _v1z_acc;
+        Accumulator<double>* _b_v2ll_acc;
+        Accumulator<double>* _b_v2lm_acc;
+        Accumulator<double>* _aa_vv11dia_acc;
+        Accumulator<double>* _aa_vv11off_acc;
 };
 
 #endif /*RESULTWRITER_H_*/

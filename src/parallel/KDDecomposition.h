@@ -86,6 +86,8 @@ class KDDecomposition: public DomainDecompBase{
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+        void exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain);
+        unsigned gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation);
 
 	//! @brief balance the load (and optimise communication) and exchange boundary particles
 	//!

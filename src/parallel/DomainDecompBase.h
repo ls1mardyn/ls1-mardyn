@@ -2,14 +2,17 @@
 #define DOMAINDECOMPBASE_H_
 
 #include <string>
+#include <map>
 
 class Molecule;
 class Component;
 class Domain;
 class ParticleContainer;
 class XMLfileUnits;
+class CavityEnsemble;
 
 typedef ParticleContainer TMoleculeContainer;
+using namespace std;
 
 //! @brief handle boundary region and multiple processes
 //! @author Martin Buchholz
@@ -60,6 +63,8 @@ public:
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
 	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) = 0;
+        virtual void exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain) = 0;
+        virtual unsigned gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation) = 0;
 
 	//! @brief balance the load (and optimise communication) and exchange boundary particles
 	//!
@@ -103,7 +108,6 @@ public:
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
 	virtual void printDecomp(std::string filename, Domain* domain) = 0;
-
 
 	//! @brief returns the own rank
 	//! @return rank of the process

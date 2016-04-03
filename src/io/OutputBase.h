@@ -4,6 +4,7 @@
 #include <list>
 #include <string>
 
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 
 class ParticleContainer;
@@ -70,7 +71,7 @@ public:
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu
+			std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav
 	) = 0;
 
 	//! @brief will be called at the end of the simulation

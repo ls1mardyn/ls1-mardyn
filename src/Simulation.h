@@ -1,6 +1,7 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
@@ -347,12 +348,10 @@ public:
 	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
 
 	Ensemble* getEnsemble() { return _ensemble; }
-	
+
 	unsigned getBarostatTimeInit() { return _initGrandCanonical; }
 	unsigned getBarostatTimeEnd() { return _endGrandCanonical; }
-	
 	bool isRecordingSlabProfile() { return _doRecordSlabProfile; }
-
 private:
 
 
@@ -537,6 +536,8 @@ private:
 	 * gradient of the chemical potential.
 	 */
 	std::list<ChemicalPotential> _lmu;
+        
+        std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).

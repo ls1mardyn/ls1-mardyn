@@ -90,6 +90,22 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 void KDDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) {
 	balanceAndExchange(false, moleculeContainer, domain);
 }
+void KDDecomposition::exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain)
+{
+   // IMPLEMENTATION MISSING
+   
+   exit(777);
+}
+
+
+unsigned KDDecomposition::gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation)
+{
+   // IMPLEMENTATION MISSING
+   
+   exit(777);
+   
+   return 777;
+}
 
 void KDDecomposition::balance() {
 	

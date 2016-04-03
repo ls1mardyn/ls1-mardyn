@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "io/OutputBase.h"
 
@@ -32,7 +33,7 @@ public:
 	void doOutput(
 			ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu
+			unsigned long simstep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav
 	);
 	//! @todo comment
 	void finishOutput(ParticleContainer* particleContainer,

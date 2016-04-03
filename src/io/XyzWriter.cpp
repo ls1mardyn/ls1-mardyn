@@ -59,20 +59,32 @@ void XyzWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBas
 	// Check if file path already exists; important for independent use of xyz-writer and profile-writer
 	FILE *f;
 	FILE *g;
+	FILE *h;
 	f=fopen("./Results/Profile","r");
 	g=fopen("./Results/ParticleData","r");
+	h=fopen("./Results/Cavity","r");
 	if(f==0)
 	  mkdir("./Results/Profile", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 	if(g==0)
 	  mkdir("./Results/ParticleData", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	if(h==0)
+	  mkdir("./Results/Cavity", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 }
 
-void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav   ) {
 	if( simstep % _writeFrequency == 0) {
+                map<unsigned, CavityEnsemble>::iterator ceit;
 		stringstream filenamestream;
+                map<unsigned, stringstream*> cav_filenamestream;
 		stringstream vtk;
 		filenamestream << "./Results/Profile/";
 		filenamestream << _outputPrefix;
+                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                {
+                   cav_filenamestream[ceit->first] = new stringstream;
+		   *cav_filenamestream[ceit->first] << "./Results/Cavity/";
+                   *cav_filenamestream[ceit->first] << _outputPrefix << "-c" << ceit->first;
+                }
 		vtk << "./Results/ParticleData/";
 		vtk << _outputPrefix;
 		
@@ -81,6 +93,8 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			unsigned long numTimesteps = _simulation.getNumTimesteps();
 			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
 			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+                        for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                           *cav_filenamestream[ceit->first] << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 			if(_simulation.isRecordingSlabProfile())
 			  vtk <<  "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
 		}
@@ -90,6 +104,9 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			  vtk << "-" << gettimestring();
 		}
 		filenamestream << ".xyz";
+                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                   *cav_filenamestream[ceit->first] << ".cav.xyz";
+
 		vtk << ".vtk";
 		
 		
@@ -99,12 +116,23 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			xyzfilestream << domain->getglobalNumMolecules() << endl;
 			xyzfilestream << "comment line" << endl;
 			xyzfilestream.close();
+                        
+                        for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                        {
+                           ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str() );
+                           cavfilestream << ceit->second.numCavities() << endl;
+                           cavfilestream << "comment line" << endl;
+                           cavfilestream.close();
+			   
+                        }
+
 		}
 		
 		//NEW: Molecule-ID is written in the XYZ-File; afterwards Rank == 0 sorts the Molecules in each Timestep according to their ID
 		for( int process = 0; process < domainDecomp->getNumProcs(); process++ ){
 			domainDecomp->barrier();
 			if( ownRank == process ){
+			  
 				ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
 				ofstream particleDataFilestream( vtk.str().c_str(), ios::app );
 				Molecule* tempMol;
@@ -119,8 +147,8 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 					else if( tempMol->componentid() == 3 ) { xyzfilestream <<  "O ";}
 					else { xyzfilestream << "H ";}
 					xyzfilestream << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << "\t" << tempMol->id() << endl;
-					if(_simulation.isRecordingSlabProfile()){
-					  temp = tempMol->getAveragedTemperature()/tempMol->getAverageCount();
+					 temp = tempMol->getAveragedTemperature()/tempMol->getAverageCount();
+					 if(_simulation.isRecordingSlabProfile()){
 					  if (temp != temp)
 					    temp = 0.0;
 					  for(int d = 0; d < 3; d++){
@@ -128,9 +156,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 					    if(v[d] != v[d])
 					      v[d] = 0.0;
 					  }
-					}
-					
-					if(_simulation.isRecordingSlabProfile()){
+							
 					  particleDataFilestream << tempMol->r(0) << "\t" << tempMol->r(1) << "\t" << tempMol->r(2) << "\t"
 					  << temp << "\t" << v[0] << "\t" << v[1] << "\t" << v[2] << "\t" << tempMol->componentid() << "\t" << tempMol->id() << endl;
 
@@ -143,6 +169,25 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 				}
 				xyzfilestream.close();
 				particleDataFilestream.close();
+				
+                                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                                {
+                                   ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
+                                   
+                                   map<unsigned long, Molecule*> tcav = ceit->second.activeParticleContainer();
+                                   map<unsigned long, Molecule*>::iterator tcit;
+                                   for(tcit = tcav.begin(); tcit != tcav.end(); tcit++)
+                                   {
+                                      if( ceit->first == 0 ) { cavfilestream << "C ";}
+                                      else if( ceit->first == 1 ) { cavfilestream << "N ";}
+                                      else if( ceit->first == 2 ) { cavfilestream << "O ";}
+                                      else if( ceit->first == 3 ) { cavfilestream << "F ";}
+                                      else { cavfilestream << "Ne "; }
+                                      cavfilestream << tcit->second->r(0) << "\t" << tcit->second->r(1) << "\t" << tcit->second->r(2) << "\n";
+                                   }
+                                
+                                   cavfilestream.close();
+				}
 			}
 		}
 		//NEW: Sorting of Molecules in the same Order as in Timestep t=0 for a continously Post-Processing in VMD 
@@ -204,7 +249,8 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			      if(molID > maxMolID)
 				maxMolID = molID;
 			  }
-			}		
+			}
+			
 			
 			oldXyzFilestream.close();
 			
@@ -235,7 +281,8 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 // 			  int componentID[domain->getglobalNumMolecules()];
 			  float velocity[domain->getglobalNumMolecules()][3];
 			  float *vars[] = {(float *)temperature, (float *)velocity/*, (int *)componentID*/};
-			  cout << " Orig " << domain->getglobalOrigNumMolecules() << " " << domain->getglobalNumMolecules() << endl;
+			  
+			
 			  while(!oldVTK.eof()) {
 			    stringstream cache;
 			    string cache2;

@@ -6,6 +6,7 @@
 #include "parallel/ParticleData.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "ensemble/CavityEnsemble.h"
 
 using Log::global_log;
 using namespace std;
@@ -174,7 +175,201 @@ void DomainDecomposition::exchangeMolecules(ParticleContainer* moleculeContainer
 }
 
 void DomainDecomposition::balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) {
-	exchangeMolecules(moleculeContainer, domain);
+        exchangeMolecules(moleculeContainer, domain);
+}
+
+void DomainDecomposition::exchangeCavities(CavityEnsemble* cavityEnsemble, Domain* domain)
+{
+   assert(DIM == 3);
+   cavityEnsemble->haloClear();
+   
+   if(cavityEnsemble->isUltra()) return;
+   
+   // temporary data for the particle exchange
+   int numPartsToSend[DIM][2];
+   int numPartsToRecv[DIM][2];
+   ParticleData* particlesSendBuffs[DIM][2];
+   ParticleData* particlesRecvBuffs[DIM][2];
+
+   // MPI communication status and requests
+   MPI_Status status;
+   MPI_Status send_statuses[DIM][2];
+   MPI_Status recv_statuses[DIM][2];
+   MPI_Request send_requests[DIM][2];
+   MPI_Request recv_requests[DIM][2];
+
+   map<unsigned long, Molecule*> particlePtrsToSend;
+   map<unsigned long, Molecule*>::iterator particlePtrIter;
+   map<unsigned long, unsigned long> cavityClusters;
+   
+   cavityEnsemble->processBoundary();
+   
+   int direction;
+   for(int d = 0; d < DIM; d++)
+   {
+      double offsetLower[DIM];
+      double offsetHigher[DIM];
+      offsetLower[d] = 0.0;
+      offsetHigher[d] = 0.0;
+      // process on the lower boundary
+      if (_coords[d] == 0) offsetLower[d] = domain->getGlobalLength(d);
+      // process on the upper boundary
+      if (_coords[d] == _gridSize[d] - 1) offsetHigher[d] = -domain->getGlobalLength(d);
+      
+      for (direction = LOWER; direction <= HIGHER; direction++)
+      {
+         particlePtrsToSend = (direction == LOWER)? cavityEnsemble->exportBottom(d)
+                                                  : cavityEnsemble->exportTop(d);
+         cavityClusters = (direction == LOWER)? cavityEnsemble->exportClusterBottom(d)
+                                              : cavityEnsemble->exportClusterTop(d);
+         
+         numPartsToSend[d][direction] = particlePtrsToSend.size();
+         particlesSendBuffs[d][direction] = new ParticleData[numPartsToSend[d][direction]];
+
+         long partCount = 0;
+         double shift = (direction == LOWER)? offsetLower[d]: offsetHigher[d];
+
+         for (particlePtrIter = particlePtrsToSend.begin(); particlePtrIter != particlePtrsToSend.end(); particlePtrIter++)
+         {
+            // copy relevant data from the Molecule to ParticleData type
+            ParticleData::MoleculeToParticleData(particlesSendBuffs[d][direction][partCount], *(particlePtrIter->second), cavityClusters[particlePtrIter->first]);
+            // add offsets for particles transfered over the periodic boundary
+            particlesSendBuffs[d][direction][partCount].r[d] += shift;
+            partCount++;
+         }
+      }
+      
+      // Exchange the boundary cavities by MPI
+      for (direction = LOWER; direction <= HIGHER; direction++)
+      {
+         // Send number of values that have to be sent
+         int numsend = numPartsToSend[d][direction];
+         int numrecv;
+
+         // Send values to lower/upper and receive values from upper/lower
+         MPI_CHECK( MPI_Isend(particlesSendBuffs[d][direction], numsend, _mpi_Particle_data, _neighbours[d][direction], 99, _comm, &send_requests[d][direction]) );
+         MPI_CHECK( MPI_Probe(_neighbours[d][(direction + 1) % 2], 99, _comm, &status) );
+         MPI_CHECK( MPI_Get_count(&status, _mpi_Particle_data, &numrecv) );
+         // initialize receive buffer
+         particlesRecvBuffs[d][direction] = new ParticleData[numrecv];
+         numPartsToRecv[d][direction] = numrecv;
+         MPI_CHECK( MPI_Irecv(particlesRecvBuffs[d][direction], numrecv, _mpi_Particle_data, _neighbours[d][(direction + 1) % 2], 99, _comm, &recv_requests[d][direction]) );
+      }
+      
+      // Insert cavities into the halo of the cavity ensemble
+      for (direction = LOWER; direction <= HIGHER; direction++) {
+         unsigned long cluster;
+         int numrecv = numPartsToRecv[d][direction];
+         MPI_CHECK( MPI_Wait(&send_requests[d][direction], &send_statuses[d][direction]) );
+         MPI_CHECK( MPI_Wait(&recv_requests[d][direction], &recv_statuses[d][direction]) );
+         // insert received molecules into list of molecules
+         for (int i = 0; i < numrecv; i++)
+         {
+            Molecule* m;
+            cluster = ParticleData::ParticleDataToMolecule(particlesRecvBuffs[d][direction][i], &m);
+            cavityEnsemble->haloInsert(m, true);
+            cavityEnsemble->haloCluster(m->id(), cluster);
+         }
+         // free memory
+         delete[] particlesRecvBuffs[d][direction];
+         delete[] particlesSendBuffs[d][direction];
+      }
+   }
+}
+
+unsigned DomainDecomposition::gatherClusters(map<unsigned long, unsigned>* localClusterSize, map<unsigned, unsigned>* globalSizePopulation)
+{
+   unsigned max_grid_points = 0;
+   
+   map<unsigned long, unsigned>::iterator clsit;
+   map<unsigned long, unsigned> globalClusterSize;
+   unsigned localBufferCount = localClusterSize->size();
+   // cout << "\t\t\tGather clusters: Rank " << _rank << " contributes " << localBufferCount << " clusters.\n";
+
+   int num_procs;
+   MPI_CHECK( MPI_Comm_size(_comm, &num_procs) );
+   unsigned globalBufferCount[num_procs];
+   globalBufferCount[0] = 0;
+   
+   if (_rank != 0)
+   {
+      MPI_CHECK( MPI_Send(&localBufferCount, 1, MPI_UNSIGNED, 0, _rank, _comm) );
+   }
+   else
+   {
+      // cout << "\t\tGather clusters:\n\t\t\tAt rank 0, there are " << localBufferCount << " clusters.\n";
+      unsigned recv;
+      MPI_Status s;
+      for(int i = 1; i < num_procs; i++)
+      {
+         MPI_CHECK( MPI_Recv(&recv, 1, MPI_UNSIGNED, i, i, _comm, &s) );
+         globalBufferCount[i] = recv;
+         // cout << "\t\t\tRank " << i << " contributes " << recv << " clusters.\n";
+      }
+   }
+    
+   if (_rank != 0)
+   {
+      unsigned long tulbuf[localBufferCount];
+      unsigned tusbuf[localBufferCount];
+      
+      clsit = localClusterSize->begin();
+      for(unsigned k = 0; k < localBufferCount; k++)
+      {
+         assert(clsit != localClusterSize->end());
+         tulbuf[k] = clsit->first;
+         tusbuf[k] = clsit->second;
+         clsit++;
+      }
+      
+      MPI_CHECK( MPI_Send(tulbuf, localBufferCount, MPI_UNSIGNED_LONG, 0, num_procs + _rank, _comm) );
+      MPI_CHECK( MPI_Send(tusbuf, localBufferCount, MPI_UNSIGNED, 0, 2*num_procs + _rank, _comm) );
+   }
+   else
+   {
+      for(clsit = localClusterSize->begin(); clsit != localClusterSize->end(); clsit++)
+      {
+         globalClusterSize[clsit->first] = clsit->second;
+      }
+      
+      for(int i = 1; i < num_procs; i++)
+      {
+         unsigned long tulbuf[ globalBufferCount[i] ];
+         unsigned tusbuf[ globalBufferCount[i] ];
+         
+         MPI_Status s;
+         MPI_CHECK( MPI_Recv(tulbuf, globalBufferCount[i], MPI_UNSIGNED_LONG, i, num_procs + i, _comm, &s) );
+         MPI_CHECK( MPI_Recv(tusbuf, globalBufferCount[i], MPI_UNSIGNED, i, 2*num_procs + i, _comm, &s) );
+         
+         for(unsigned k = 0; k < globalBufferCount[i]; k++)
+         {
+            if(globalClusterSize.count(tulbuf[k]) == 0)
+            {
+               globalClusterSize[ tulbuf[k] ] = tusbuf[k];
+            }
+            else globalClusterSize[ tulbuf[k] ] += tusbuf[k];
+         }
+      }
+   }
+   
+   if(_rank == 0)
+   {
+      (*globalSizePopulation) = map<unsigned, unsigned>();
+      for(clsit = globalClusterSize.begin(); clsit != globalClusterSize.end(); clsit++)
+      {
+         if(clsit->second > max_grid_points)
+         {
+            max_grid_points = clsit->second;
+         }
+         if(globalSizePopulation->count(clsit->second) == 0)
+         {
+            (*globalSizePopulation)[clsit->second] = 1;
+         }
+         else (*globalSizePopulation)[clsit->second] ++;
+      }
+   }
+   
+   return max_grid_points;
 }
 
 bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {

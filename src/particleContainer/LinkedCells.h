@@ -194,6 +194,10 @@ public:
 	}
 	int grandcanonicalBalance(DomainDecompBase* comm);
 	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor);
+        
+        int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
+        unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
+        void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
 
 	double* boundingBoxMax() {
 		return _boundingBoxMax;

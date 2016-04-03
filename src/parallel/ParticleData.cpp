@@ -6,10 +6,10 @@
 #include "molecules/Molecule.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
-
+#include "parallel/CollectiveCommunication.h"
 
 void ParticleData::setMPIType(MPI_Datatype &sendPartType) {
-	int blocklengths[] = { 1, 1, 13 }; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
+	int blocklengths[] = { 2, 1, 13 }; // 2 unsLong values (id, cluster), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
 	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE };
 
 	MPI_Aint displacements[3];
@@ -35,8 +35,14 @@ MPI_CHECK( MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType)
 	MPI_CHECK( MPI_Type_commit(&sendPartType) );
 }
 
-void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule) {
+void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule)
+{
+   MoleculeToParticleData(particleStruct, molecule, 0);
+}
+void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule, unsigned long cluster_id)
+{
 	particleStruct.id = molecule.id();
+        particleStruct.cluster = cluster_id;
 	particleStruct.cid = molecule.componentid();
 	particleStruct.r[0] = molecule.r(0);
 	particleStruct.r[1] = molecule.r(1);
@@ -53,7 +59,7 @@ void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule
 	particleStruct.D[2] = molecule.D(2);
 }
 
-void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule) {
+unsigned long ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule) {
 	Component* component = _simulation.getEnsemble()->component(particleStruct.cid);
 	*molecule = new Molecule(particleStruct.id, component,
 								particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
@@ -61,10 +67,15 @@ void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule
 								particleStruct.q[0], particleStruct.q[1], particleStruct.q[2], particleStruct.q[3],
 								particleStruct.D[0], particleStruct.D[1], particleStruct.D[2]
 	);
+        return particleStruct.cluster;
 }
 
 #ifndef NDEBUG
-ParticleData::ParticleData() : id(0), cid(-1) {
+ParticleData::ParticleData()
+{
+        id = 0;
+        cluster = 0;
+        cid = -1;
 	for (int i = 0; i < 3; i++ ) {
 		r[i] = 0.0;
 		v[i] = 0.0;

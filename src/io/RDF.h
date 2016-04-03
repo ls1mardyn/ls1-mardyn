@@ -65,7 +65,7 @@ public:
 	void setOutputPrefix(std::string prefix);
 
 	//! plot all the statistics calculated to one or several files
-	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu);
+	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav);
 
 	//! increment the counter indicating for how many iterations
 	//! the molecule pairs have been counted.

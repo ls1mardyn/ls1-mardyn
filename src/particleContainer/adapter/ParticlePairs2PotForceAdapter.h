@@ -34,6 +34,9 @@ public:
 	//! they are increased by the pairs contribution
 	void init() {
 		_virial = 0;
+		for(int d=0; d < 3; d++) this->_virialI[d] = 0.0;
+                this->_virialIILL = 0.0;
+                this->_virialIILM = 0.0;
 		_upot6LJ = 0;
 		_upotXpoles = 0;
 		_myRF = 0;
@@ -46,7 +49,8 @@ public:
 	//! and stored in _domain
 	void finish() {
 		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _upotTersoff + _myRF);
-		_domain.setLocalVirial(_virial + 3.0 * _myRF);
+		//_domain.setLocalVirial(_virial + 3.0 * _myRF);
+                _domain.setLocalVirial(_virialI[0] + _myRF, _virialI[1] + _myRF, _virialI[2] + _myRF, _virialIILL, _virialIILM);
 	}
 
     /** calculate force between pairs and collect macroscopic contribution
@@ -77,7 +81,7 @@ public:
                 if ( _rdf != NULL )
                     _rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
-                PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ, _domain);
+                PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, _virialI[0], _virialI[1], _virialI[2], _virialIILL, _virialIILM, calculateLJ, _domain);
 
                 return _upot6LJ + _upotXpoles;
             case MOLECULE_HALOMOLECULE : 
@@ -122,6 +126,9 @@ private:
 
 	//! @brief variable used to sum the virial contribution of all pairs
 	double _virial;
+	double _virialI[3];
+        double _virialIILL;
+        double _virialIILM;
 	//! @brief variable used to sum the Upot6LJ contribution of all pairs
 	double _upot6LJ;
 	//! @brief variable used to sum the UpotXpoles contribution of all pairs

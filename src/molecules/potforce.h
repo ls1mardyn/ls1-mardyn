@@ -9,7 +9,6 @@
 #include "Domain.h"
 
 #include "ensemble/GrandCanonical.h"
-
 #include <iostream>
 using namespace std;
 
@@ -48,18 +47,22 @@ inline void PotForceDamper(unsigned long maxID, unsigned long minID, const doubl
 }	 */
 
 /** @brief Calculates potential and force between 2 Lennard-Jones 12-6 centers. */
-inline void PotForceLJ(const double dr[3], const double& dr2,
+inline void PotForceLJ(const double dr[3], const double& invdr2,
                        const double& eps24, const double& sig2,
-                       double f[3], double& u6)
+                       double& sfac, double& ffac, double f[3], double& u6)
 {
-	double invdr2 = 1. / dr2;
 	double lj6 = sig2 * invdr2; lj6 = lj6 * lj6 * lj6;
 	double lj12 = lj6 * lj6;
 	double lj12m6 = lj12 - lj6;
 	u6 = eps24 * lj12m6;
+	
 	double fac = eps24 * (lj12 + lj12m6) * invdr2;
 	for (unsigned short d = 0; d < 3; ++d)
 		f[d] = fac * dr[d];
+		
+        ffac = eps24 * (lj12 + lj12m6) * invdr2;
+	for(unsigned short d = 0; d < 3; d++) f[d] = ffac * dr[d];
+        sfac = eps24 * invdr2 * (26.0*lj12 - 7.0*lj6);
 }
 
 
@@ -300,10 +303,17 @@ inline void PotForceChargeDipole(const double dr[3], const double& dr2,
  * @param[out] Virial   Virial
  * @param[in]  calculateLJ    enable or disable calculation of Lennard Jones interactions
  */
-inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ, Domain& domain)
+inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, double& VirialIX, double& VirialIY, double& VirialIZ, double& VirialIILL, double& VirialIILM, bool calculateLJ, Domain& domain)
 // ???better calc Virial, when molecule forces are calculated:<< endl;
 //    summing up molecule virials instead of site virials???
 { // Force Calculation
+        double sfac, ffac, tfac, steric, drx2, dry2, drz2;
+        
+        drx2 = drm[0]*drm[0];
+        dry2 = drm[1]*drm[1];
+        drz2 = drm[2]*drm[2];
+        steric = drx2*dry2 + drx2*drz2 + dry2*drz2;
+        
 	double f[3];
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
@@ -325,7 +335,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 				double shift6;
 				params >> shift6; // must be 0.0 for full LJ
 				if (calculateLJ) {
-					PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                                        double invdr2 = 1. / dr2;
+					PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u);  // sfac = (d^2 u / dr^2), ffac = -du / r dr
 					u += shift6;
 					
 // even for interactions within the cell a neighbor might try to add/subtract
@@ -340,7 +351,17 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						Upot6LJ += u;
 						for (unsigned short d = 0; d < 3; ++d)
 						  Virial += drm[d] * f[d];
+						VirialIX += drm[0] * f[0];
+                                                VirialIY += drm[1] * f[1];
+                                                VirialIZ += drm[2] * f[2];
 						  
+                                                tfac = sfac + ffac;
+                                                VirialIILL += drm[0]*drm[0] * (invdr2*drm[0]*drm[0]*tfac - ffac);
+                                                VirialIILL += drm[1]*drm[1] * (invdr2*drm[1]*drm[1]*tfac - ffac);
+                                                VirialIILL += drm[2]*drm[2] * (invdr2*drm[2]*drm[2]*tfac - ffac);
+                                                
+                                                VirialIILM += invdr2 * steric * tfac;
+						
 						if((mi.isHardyStress() || mj.isHardyStress()) && !(domain.getSimstep() % domain.getStressRecordTimeStep())){
 						  //calculation of the bond length fraction per unID
 						  string stress ("Stress");
@@ -483,6 +504,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
 				Virial += drm[d] * f[d];
+                        VirialIX += drm[0] * f[0];
+                        VirialIY += drm[1] * f[1];
+                        VirialIZ += drm[2] * f[2];
 		}
 		// Charge-Quadrupole
 		for (unsigned sj = 0; sj < nq2; sj++) {
@@ -500,6 +524,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
 				Virial += drm[d] * f[d];
+                        VirialIX += drm[0] * f[0];
+                        VirialIY += drm[1] * f[1];
+                        VirialIZ += drm[2] * f[2];
 		}
 		// Charge-Dipole
 		for (unsigned sj = 0; sj < nd2; sj++) {
@@ -517,6 +544,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
 				Virial += drm[d] * f[d];
+                        VirialIX += drm[0] * f[0];
+                        VirialIY += drm[1] * f[1];
+                        VirialIZ += drm[2] * f[2];
 		}
 	}
 	for (unsigned int si = 0; si < nq1; ++si) {
@@ -538,6 +568,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
 				Virial -= drm[d] * f[d];
+                        VirialIX -= drm[0] * f[0];
+                        VirialIY -= drm[1] * f[1];
+                        VirialIZ -= drm[2] * f[2];
 		}
 		// Quadrupole-Quadrupole -------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
@@ -557,6 +590,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; ++d)
 				Virial += drm[d] * f[d];
+                        VirialIX += drm[0] * f[0];
+                        VirialIY += drm[1] * f[1];
+                        VirialIZ += drm[2] * f[2];
 		}
 		// Quadrupole-Dipole -----------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
@@ -575,6 +611,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
 				Virial -= drm[d] * f[d];
+                        VirialIX -= drm[0] * f[0];
+                        VirialIY -= drm[1] * f[1];
+                        VirialIZ -= drm[2] * f[2];
 		}
 	}
 	for (unsigned int si = 0; si < nd1; ++si) {
@@ -595,6 +634,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; d++)
 				Virial -= drm[d] * f[d];
+                        VirialIX -= drm[0] * f[0];
+                        VirialIY -= drm[1] * f[1];
+                        VirialIZ -= drm[2] * f[2];
 		}
 		// Dipole-Quadrupole -----------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
@@ -613,6 +655,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; ++d)
 				Virial += drm[d] * f[d];
+                        VirialIX += drm[0] * f[0];
+                        VirialIY += drm[1] * f[1];
+                        VirialIZ += drm[2] * f[2];
 		}
 		// Dipole-Dipole ---------------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
@@ -632,6 +677,9 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 			UpotXpoles += u;
 			for (unsigned short d = 0; d < 3; ++d)
 				Virial += drm[d] * f[d];
+                        VirialIX += drm[0] * f[0];
+                        VirialIY += drm[1] * f[1];
+                        VirialIZ += drm[2] * f[2];
 		}
 	}
 
@@ -639,9 +687,22 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	assert(params.eos());
 }
 
+inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, double& Virial, bool calculateLJ, Domain& domain)
+{
+   double VirIX = 0.0;
+   double VirIY = 0.0;
+   double VirIZ = 0.0;
+   double VirIILL = 0.0;
+   double VirIILM = 0.0;
+   
+   PotForce(mi, mj, params, drm, Upot6LJ, UpotXpoles, MyRF, Virial, VirIX, VirIY, VirIZ, VirIILL, VirIILM, calculateLJ, domain);
+   Virial += VirIX + VirIY + VirIZ;
+}
+
 /** @brief Calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered) */
 inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
 {
+        double sfac, ffac;
 	double f[3];
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
@@ -663,7 +724,8 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 				params >> shift6; // must be 0.0 for full LJ
 
 				if (calculateLJ) {
-					PotForceLJ(drs, dr2, eps24, sig2, f, u);
+                                        double invdr2 = 1. / dr2;
+					PotForceLJ(drs, invdr2, eps24, sig2, sfac, ffac, f, u);
 					u += shift6;
 					Upot6LJ += u;
 				}
