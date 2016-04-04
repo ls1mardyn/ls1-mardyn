@@ -249,7 +249,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				                      << parallelisationtype << " not available." << endl;
 				//this->exit(1);
 			}
-			//_domainDecomposition = new DomainDecompBase();
+			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
 		}
 		else {

@@ -458,7 +458,7 @@ private:
 	// The separate directions of the realignment are due to different components, i.e. that solid wall is always kept at the bottom (y-direction) whereas
 	// the fluid is kept in the centre of the x,z-plane.
 	bool _componentSpecificAlignment;
-	//! number of discrete timesteps after which the realignemt is carried out 
+	//! number of discrete timesteps after which the realignment is carried out
 	unsigned long _alignmentInterval;
 	//! strength of the realignment
 	double _alignmentCorrection;
@@ -472,19 +472,19 @@ private:
 
 	//! flags to control the cancel of the momentum 
 	bool _doCancelMomentum;
-	//! number of time steps after which the cancelling is carried outline
+	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
 	
 	//! random number generator
 	Random _rand;
-	
+
 	/** Long Range Correction */
 	LongRangeCorrection* _longRangeCorrection;
 
 	/** Temperature Control (Slab Thermostat) */
-    TemperatureControl* _temperatureControl;
+	TemperatureControl* _temperatureControl;
 
-    /** The Fast Multipole Method object */
+	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
 public:
@@ -501,10 +501,10 @@ public:
 	void initialize();
 
 private:
-    
-    /** Enable final checkpoint after simulation run. */
-    bool _finalCheckpoint;
-    
+
+	/** Enable final checkpoint after simulation run. */
+	bool _finalCheckpoint;
+
 	/** List of output plugins to use */
 	std::list<OutputBase*> _outputPlugins;
 
