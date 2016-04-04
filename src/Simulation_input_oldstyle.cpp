@@ -230,6 +230,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> writeFrequency >> outputPathAndPrefix;
 				_outputPlugins.push_back(new CheckpointWriter(writeFrequency,
 						outputPathAndPrefix, true));
+				if(writeFrequency == 0 ){
+					global_log->error() << "Write frequency must be a positive nonzero integer, but is " << writeFrequency << endl;
+					exit(-1);
+				}
 				global_log->debug() << "CheckpointWriter " << writeFrequency
 						<< " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "PovWriter") {

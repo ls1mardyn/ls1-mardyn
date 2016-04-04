@@ -32,6 +32,11 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
 
+	if(_writeFrequency == 0 ){
+		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		exit(-1);
+	}
+
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;

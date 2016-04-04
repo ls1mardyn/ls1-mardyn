@@ -218,12 +218,12 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		}
 
-		/* parallelization */
+		/* parallelisation */
 		if(xmlconfig.changecurrentnode("parallelisation")) {
 			string parallelisationtype("DomainDecomposition");
 			xmlconfig.getNodeValue("@type", parallelisationtype);
 			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
-		#if ENABLE_MPI
+		#ifdef ENABLE_MPI
 			if(parallelisationtype == "DummyDecomposition") {
 				global_log->error() << "DummyDecompositionnot not available in parallel mode." << endl;
 				//_domainDecomposition = new DomainDecompDummy();
@@ -253,7 +253,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		#endif
 		}
 		else {
-		#if ENABLE_MPI
+		#ifdef ENABLE_MPI
 			global_log->error() << "Parallelisation section missing." << endl;
 			this->exit(1);
 		#else /* serial */
@@ -548,7 +548,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	}
 #endif
 
-	// read particle data
+	// read particle data (or generate particles, if a generator is chosen)
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
 			&_lmu, _domain, _domainDecomposition);
 
