@@ -257,7 +257,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->error() << "Parallelisation section missing." << endl;
 			this->exit(1);
 		#else /* serial */
-			_domainDecomposition = new DomainDecompBase();
+			//_domainDecomposition = new DomainDecompBase();
 		#endif
 		}
 		_domainDecomposition->readXML(xmlconfig);
@@ -270,7 +270,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
 				_moleculeContainer = new LinkedCells();
-				/** @todo Review if we need to know the max cutoff radius useable with any datastructure. */
+				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
 				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 				lc->setCutoff(_cutoffRadius);

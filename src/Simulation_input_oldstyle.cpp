@@ -446,9 +446,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		}
 		else if (token == "profileVirial") {
                         _doRecordVirialProfile = true;
-                } else if (token == "profileRecordingTimesteps") { /* TODO: subotion of profile */
+                } else if (token == "profileRecordingTimesteps") { /* TODO: suboption of profile */
 			inputfilestream >> _profileRecordingTimesteps;
-		} else if (token == "profileOutputTimesteps") { /* TODO: subotion of profile */
+		} else if (token == "profileOutputTimesteps") { /* TODO: suboption of profile */
 			inputfilestream >> _profileOutputTimesteps;
 		} else if (token == "RDF") {
 			double interval;
@@ -456,33 +456,33 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> interval >> bins;
 			if (global_simulation->getEnsemble()->components()->size() <= 0) {
 				global_log->error()
-						<< "PhaseSpaceFile-Specifiation has to occur befor RDF-Token!"
+						<< "PhaseSpaceFile-Specification has to occur before RDF-Token!"
 						<< endl;
 				exit(-1);
 			}
 			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->components());
 			_outputPlugins.push_back(_rdf);
-		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
+		} else if (token == "RDFOutputTimesteps") { /* TODO: suboption of RDF */
 			unsigned int RDFOutputTimesteps;
 			inputfilestream >> RDFOutputTimesteps;
 			_rdf->setOutputTimestep(RDFOutputTimesteps);
-		} else if (token == "RDFOutputPrefix") { /* TODO: subotion of RDF */
+		} else if (token == "RDFOutputPrefix") { /* TODO: suboption of RDF */
 			std::string RDFOutputPrefix;
 			inputfilestream >> RDFOutputPrefix;
 			_rdf->setOutputPrefix(RDFOutputPrefix);
-		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
+		} else if (token == "profiledComponent") { /* TODO: suboption of profile, check if required to enable output in general */
 			unsigned cid;
 			inputfilestream >> cid;
 			cid--;
 			_domain->considerComponentInProfile(cid);
 		}
-		// by Stefan Becker <stefan.becker@mv.uni-kl.de>, token determining the corrdinate system of the density profile
+		// by Stefan Becker <stefan.becker@mv.uni-kl.de>, token determining the coordinate system of the density profile
 		else if (token == "SessileDrop"){
 			this->_domain->sesDrop();
 		}
-		else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
+		else if (token == "profileOutputPrefix") { /* TODO: suboption of profile */
 			inputfilestream >> _profileOutputPrefix;
-		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
+		} else if (token == "collectThermostatDirectedVelocity") { /* suboption of the thermostat replace with direct thermostat */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} 
 			
@@ -509,9 +509,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		    cidMin--; // since internally the component number is reduced by one, i.e. cid == 1 in the input file corresponds to the internal cid == 0
 		    cidMax--;
 		    _domain->considerComponentForYShift(cidMin, cidMax);
-		} else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
+		} else if (token == "profileOutputPrefix") { /* TODO: suboption of profile */
 			inputfilestream >> _profileOutputPrefix;
-				} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
+				} else if (token == "collectThermostatDirectedVelocity") { /* suboption of the thermostat replace with direct thermostat */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} else if (token == "zOscillator") {
 			_zoscillation = true;
