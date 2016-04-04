@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
 	}
 
 	if (options.is_set_by_user("timesteps")) {
-		simulation.setNumTimesteps(options.get("timesteps"));
+		simulation.setNumTimesteps(options.get("timesteps").operator unsigned long int());
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     
