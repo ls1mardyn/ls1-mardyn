@@ -1312,7 +1312,9 @@ void Simulation::initialize() {
 	_componentSpecificAlignment = false;
 	_alignmentInterval = 25;
 	_momentumInterval = 1000;
+	_wall = NULL;
 	_applyWallFun = false;
+	_mirror = NULL;
 	_applyMirror = false;
 
 	_pressureGradient = new PressureGradient(ownrank);
