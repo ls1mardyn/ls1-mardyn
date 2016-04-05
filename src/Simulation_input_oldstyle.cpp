@@ -56,7 +56,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
 #endif
 
-        global_log->info() << "\n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: martin.horsch@mv.uni-kl.de\n# \n# Phone: +49 631 205 3227\n# Fax: +49 631 205 3835\n# University of Kaiserslautern\n# \n# Jun. Prof. Dr.-Ing. Martin Horsch\n# Laboratory of Engineering Thermodynamics\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n\n";
+        global_log->info() << "\n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: contact@ls1-mardyn.de\n# \n# Phone: +49 631 205 3227\n# Fax: +49 631 205 3835\n# University of Kaiserslautern\n# Computational Molecular Engineering\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n\n";
 
 	global_log->info() << "init oldstyle config file: " << inputfilename
 			<< endl;
@@ -658,12 +658,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		}		
 		
 		else if (token == "Mirror"){
-			double yMirr;
+			double yMirr, forceConstant;
 			_applyMirror=true;
-			inputfilestream >> yMirr;
+			inputfilestream >> yMirr >> forceConstant;
 			std::vector<Component>* components = global_simulation->getEnsemble()->components();
 			_mirror=new Mirror();
-			_mirror->initialize(components, yMirr);
+			_mirror->initialize(components, yMirr, forceConstant);
 		} else if (token == "slabsLRC") {
 			double slabs;
 			inputfilestream >> slabs;
