@@ -50,6 +50,9 @@ void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
+	else{
+		_appendTimestamp = false;
+	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 

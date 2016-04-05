@@ -219,18 +219,25 @@ void AdaptiveSubCells::update() {
 	_cellsValid = true;
 }
 
-void AdaptiveSubCells::addParticle(Molecule& particle) {
+bool AdaptiveSubCells::addParticle(Molecule& particle) {
 
-	double x = particle.r(0);
-	double y = particle.r(1);
-	double z = particle.r(2);
+	const bool inBox = particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
-	if (x >= _haloBoundingBoxMin[0] && x < _haloBoundingBoxMax[0] &&
-	    y >= _haloBoundingBoxMin[1] && y < _haloBoundingBoxMax[1] &&
-	    z >= _haloBoundingBoxMin[2] && z < _haloBoundingBoxMax[2]) {
-		_particles.push_front(particle);
+	if ( inBox ) {
+		addParticlePointer(new Molecule(particle), true);
+	}
+
+	return inBox;
+}
+
+bool AdaptiveSubCells::addParticlePointer(Molecule* particle, bool inBoxCheckedAlready, bool /**/) {
+
+	bool inBox = inBoxCheckedAlready or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
+
+	if ( inBox ) {
+		_particles.push_front(*particle);
 		if (_cellsValid) {
-			int subIndex = getSubCellIndexOfMolecule(&particle);
+			int subIndex = getSubCellIndexOfMolecule(&_particles.front());
 			if (subIndex < (int) 0 || subIndex >= (int) _subCells.size()) // FIXME: Should this go to an assert?
 			{
 				global_log->error() << "Found invalid index in AdaptiveSubCells::addParticle()" << endl;
@@ -239,6 +246,8 @@ void AdaptiveSubCells::addParticle(Molecule& particle) {
 			_subCells[subIndex].addParticle(&(_particles.front()));
 		}
 	}
+
+	return inBox;
 }
 
 
@@ -484,7 +493,7 @@ unsigned long AdaptiveSubCells::getNumberOfParticles() {
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::begin() {
+MoleculeIterator AdaptiveSubCells::begin() {
 	_particleIter = _particles.begin();
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
@@ -496,7 +505,7 @@ Molecule* AdaptiveSubCells::begin() {
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::next() {
+MoleculeIterator AdaptiveSubCells::next() {
 	_particleIter++;
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
@@ -508,13 +517,13 @@ Molecule* AdaptiveSubCells::next() {
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::end() {
+MoleculeIterator AdaptiveSubCells::end() {
 	return NULL;
 }
 
 // this method remains unchanged
 
-Molecule* AdaptiveSubCells::deleteCurrent() {
+MoleculeIterator AdaptiveSubCells::deleteCurrent() {
 	_particleIter = _particles.erase(_particleIter);
 	if (_particleIter != _particles.end()) {
 		return &(*_particleIter);
@@ -586,7 +595,7 @@ void AdaptiveSubCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], list<Molecule*> &particlePtrs) {
+void AdaptiveSubCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in AdaptiveSubCells (getRegion) invalid, call update first" << endl;
 		exit(1);

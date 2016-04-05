@@ -2,7 +2,7 @@
 #define KDNODE_H_
 
 // include because of macro KDDIM
-#include "parallel/KDDecomposition.h"
+#include "parallel/KDDecomposition.h" /* TODO seriously..? */
 
 #include "parallel/MPIKDNode.h"
 
@@ -127,6 +127,16 @@ public:
 			_deviation = _child1->_deviation + _child2->_deviation;
 		}
 	}
+
+	/**
+	 *
+	 * @param low
+	 * @param high
+	 * @param procIDs
+	 * @param neighbHaloAreas
+	 */
+	void getOwningProcs(const int low[KDDIM], const int high[KDDIM], std::vector<int>& procIDs, std::vector<int>& neighbHaloAreas) const;
+
 
 	/**
 	 * Split this node, i.e. create two children (note, that its children must be

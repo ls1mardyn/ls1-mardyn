@@ -7,7 +7,7 @@
 
 #include "VTKMoleculeWriterTest.h"
 #include "particleContainer/LinkedCells.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
@@ -84,7 +84,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	}
 #else
 	Domain domain(0, NULL);
-	DomainDecompDummy dummy;
+	DomainDecompBase dummy;
 	writer.doOutput(&container, &dummy, &domain, 1, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKMoleculeWriterTest_1.vtu"));
 

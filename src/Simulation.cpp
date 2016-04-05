@@ -19,8 +19,6 @@
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
-#else
-#include "parallel/DomainDecompDummy.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
@@ -220,18 +218,23 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		}
 
-		/* parallelization */
+		/* parallelisation */
 		if(xmlconfig.changecurrentnode("parallelisation")) {
 			string parallelisationtype("DomainDecomposition");
 			xmlconfig.getNodeValue("@type", parallelisationtype);
 			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
-		#if ENABLE_MPI
+		#ifdef ENABLE_MPI
 			if(parallelisationtype == "DummyDecomposition") {
-				global_log->error() << "DummyDecompositionnot not available in parallel mode." << endl;
+				global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
 				//_domainDecomposition = new DomainDecompDummy();
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
-				_domainDecomposition = new DomainDecomposition();
+				DomainDecomposition * temp = 0;
+							temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+							if (temp != 0) {
+								temp->initCommunicationPartners(getcutoffRadius(), _domain);
+							}
+							_domainDecomposition = new DomainDecomposition();
 			}
 			else if(parallelisationtype == "KDDecomposition") {
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
@@ -242,23 +245,25 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
-				global_log->warning() << "Executable was compilated without support for parallel execution:"
-				                      << parallelisationtype << " not available." << endl;
+				global_log->warning()
+						<< "Executable was compiled without support for parallel execution: "
+						<< parallelisationtype
+						<< " not available. Using serial mode." << endl;
 				//this->exit(1);
 			}
-			_domainDecomposition = new DomainDecompDummy();
+			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
 		}
 		else {
-		#if ENABLE_MPI
+		#ifdef ENABLE_MPI
 			global_log->error() << "Parallelisation section missing." << endl;
 			this->exit(1);
 		#else /* serial */
-			_domainDecomposition = new DomainDecompDummy();
+			//_domainDecomposition = new DomainDecompBase(); // already set in initialize()
 		#endif
 		}
-		_domainDecomposition->readXML(xmlconfig);
-		xmlconfig.changecurrentnode("..");
 
 		/* datastructure */
 		if(xmlconfig.changecurrentnode("datastructure")) {
@@ -267,7 +272,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->info() << "Datastructure type: " << datastructuretype << endl;
 			if(datastructuretype == "LinkedCells") {
 				_moleculeContainer = new LinkedCells();
-				/** @todo Review if we need to know the max cutoff radius useable with any datastructure. */
+				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
 				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
 				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
 				lc->setCutoff(_cutoffRadius);
@@ -534,7 +539,18 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		exit(1);
 	}
 
-	// read particle data
+#ifdef ENABLE_MPI
+	// if we are using the DomainDecomposition, please complete its initialization:
+	{
+		DomainDecomposition * temp = 0;
+		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+		if (temp != 0) {
+			temp->initCommunicationPartners(_cutoffRadius, _domain);
+		}
+	}
+#endif
+
+	// read particle data (or generate particles, if a generator is chosen)
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
 			&_lmu, _domain, _domainDecomposition);
 
@@ -585,7 +601,6 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		j++;
 	}
 }
-
 
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
@@ -1221,7 +1236,8 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	// changed and have to be adjusted
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
-	_domainDecomposition->balanceAndExchange(true, _moleculeContainer, _domain);
+	bool forceRebalancing = false;
+	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
@@ -1254,9 +1270,10 @@ void Simulation::initialize() {
 
 	_finalCheckpoint = true;
 
+        // TODO:
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
@@ -1295,7 +1312,9 @@ void Simulation::initialize() {
 	_componentSpecificAlignment = false;
 	_alignmentInterval = 25;
 	_momentumInterval = 1000;
+	_wall = NULL;
 	_applyWallFun = false;
+	_mirror = NULL;
 	_applyMirror = false;
 
 	_pressureGradient = new PressureGradient(ownrank);

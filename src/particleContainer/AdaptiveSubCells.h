@@ -68,6 +68,10 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
+	int getHaloWidthNumCells() const {
+		return _haloWidthInNumCells[0];
+	}
+
 	// documentation see father class (ParticleContainer.h)
 	void rebuild(double bBoxMin[3], double bBoxMax[3]);
 
@@ -83,7 +87,17 @@ public:
 	//! @brief Insert a single molecule.
 	//!
 	//! Add the molecule to the list (it is not inserted into a cell yet)
-	void addParticle(Molecule& particle);
+	bool addParticle(Molecule& particle);
+
+	//! @brief Insert a single molecule's pointer.
+	//!
+	//! Add the molecule to the list (it is not inserted into a cell yet)
+	bool addParticlePointer(Molecule* particle, bool inBoxCheckedAlready = false, bool removeRecvDuplicates = false);
+
+	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) {}
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const {};
+
+
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -110,7 +124,7 @@ public:
 	//! list, a iterator (_particleIter) for the list is used.
 	//! This method sets this iterator to point to the begin of the list
 	//! and return a pointer to the value pointed to by the iterator
-	Molecule* begin();
+	MoleculeIterator begin();
 
 	//! @brief returns a pointer to the next particle in the Linked Cells
 	//!
@@ -118,15 +132,15 @@ public:
 	//! to the value pointed to by the iterator is returned. If the
 	//! iterator points to the end of the list (which is one element after the last
 	//! element), NULL is returned
-	Molecule* next();
+	MoleculeIterator next();
 
 	//! @brief returns NULL
-	Molecule* end();
+	MoleculeIterator end();
 
 	void clear();
 
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-	Molecule* deleteCurrent();
+	MoleculeIterator deleteCurrent();
 
 	//! @brief delete all Particles which are not within the bounding box
 	void deleteOuterParticles();
@@ -139,7 +153,8 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false) {/* TODO */}
 
 	double getCutoff() {
 		return this->_cutoffRadius;

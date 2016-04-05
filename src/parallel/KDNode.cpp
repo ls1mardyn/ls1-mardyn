@@ -9,6 +9,8 @@
 #endif
 #include "utils/Logger.h"
 
+#include <algorithm> /* for min and max ?*/
+
 using namespace Log;
 
 KDNode* KDNode::findAreaForProcess(int rank) {
@@ -319,4 +321,31 @@ void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
 #else
 	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!" << std::endl;
 #endif
+}
+
+void KDNode::getOwningProcs(const int low[KDDIM], const int high[KDDIM], std::vector<int>& procIDs, std::vector<int>& neighbAreas) const {
+
+	int overlapLow[3];
+	int overlapHigh[3];
+
+	bool areasIntersect = true;
+	for (int dim = 0; dim < KDDIM; dim++) {
+		overlapLow[dim]  = std::max(low[dim],  _lowCorner[dim]);
+		overlapHigh[dim] = std::min(high[dim], _highCorner[dim]);
+		areasIntersect &= overlapLow[dim] <= _highCorner[dim] and overlapHigh[dim] >= _lowCorner[dim];
+	}
+
+	if (areasIntersect) {
+		if (_numProcs > 1) {
+			_child1->getOwningProcs(overlapLow, overlapHigh, procIDs, neighbAreas);
+			_child2->getOwningProcs(overlapLow, overlapHigh, procIDs, neighbAreas);
+		}
+		else { // leaf node found, add it (and it's area)
+			procIDs.push_back(_owningProc);
+			for (int d = 0; d < KDDIM; ++d) {
+				neighbAreas.push_back(overlapLow[d]);
+				neighbAreas.push_back(overlapHigh[d]);
+			}
+		}
+	}
 }

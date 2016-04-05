@@ -39,6 +39,8 @@ class CellDataSoA ;
  * actions should be executed during CellProcessor applications.
  */
 class ParticleCell : public Cell {
+/*private:
+	ParticleCell(const ParticleCell& that);*/
 public:
 	/**
 	 * \brief Initialize data pointers to 0.
@@ -51,16 +53,25 @@ public:
 	 */
 	~ParticleCell() ;
 
-	//! removes all elements from the list molecules
+	//! removes all elements from the list molecules without deallocating them
 	void removeAllParticles();
 
+	//! removes and deallocates all elements
+	void deallocateAllParticles();
+
 	//! insert a single molecule into this cell
-	void addParticle(Molecule* particle_ptr);
+	bool addParticle(Molecule* particle_ptr, bool checkWhetherDuplicate = false);
 
 	//! return a reference to the list of molecules (molecule pointers) in this cell
 	std::vector<Molecule*>& getParticlePointers();
 
+	const std::vector<Molecule*>& getParticlePointers() const;
+
+	bool isEmpty() const;
+
 	bool deleteMolecule(unsigned long molid);
+
+	void fastRemoveMolecule(std::vector<Molecule *>::iterator& it);
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;
@@ -87,7 +98,7 @@ public:
 	unsigned long getCellIndex() {
 		return _cellIndex;
 	}
-
+	
 	/**
 	 * Sets the cell index. On one process, this index must be unique.
 	 * @param cellIndex
@@ -95,7 +106,7 @@ public:
 	void setCellIndex(unsigned long cellIndex){
 		_cellIndex = cellIndex;
 	}
-
+	
 	double getBoxMin(int d) const {
 		return _boxMin[d];
 	}
@@ -116,6 +127,15 @@ public:
 		}
 	}
 
+	/**
+	 * filter molecules which have left the box
+	 * @return field vector containing leaving molecules
+	 */
+	std::vector<Molecule *> & filterLeavingMolecules();
+
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+
+
 private:
 	/**
 	 * \brief lower left front corner
@@ -128,15 +148,22 @@ private:
 	double _boxMax[3];
 
 	/**
-	 * \brief A list of pointers to the Molecules in this cell.
+	 * \brief A vector of pointers to the Molecules in this cell.
 	 */
-	std::vector<Molecule *> molecules;
+	std::vector<Molecule *> _molecules;
+
+	/**
+	 * \brief A vector of molecules, which have left this cell.
+	 */
+	std::vector<Molecule *> _leavingMolecules;
+
 
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
 	CellDataSoA * _cellDataSoA;
+
 
 	/**
 	 * \brief The index of the cell.

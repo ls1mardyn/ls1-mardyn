@@ -1559,9 +1559,11 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_y, j, Vy, lookupORforceMask, remainderM);
 						vcp_simd_load_add_store_masked<MaskGatherChooser>(soa2_ljc_V_z, j, Vz, lookupORforceMask, remainderM);
 
+
 						sum_Vx1 = sum_Vx1 + Vx;
 						sum_Vy1 = sum_Vy1 + Vy;
 						sum_Vz1 = sum_Vz1 +Vz;
+
 					}
 				}
 #endif

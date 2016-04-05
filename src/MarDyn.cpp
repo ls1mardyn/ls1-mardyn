@@ -155,7 +155,7 @@ int main(int argc, char** argv) {
 		global_log->info() << "Final checkpoint enabled" << endl;
 	} else {
 		simulation.disableFinalCheckpoint();
-		global_log->info() << "Final checkpoint disbaled." << endl;
+		global_log->info() << "Final checkpoint disabled." << endl;
 	}
 
 	double time = options.get("timed-checkpoint");
@@ -165,7 +165,7 @@ int main(int argc, char** argv) {
 	}
 
 	if (options.is_set_by_user("timesteps")) {
-		simulation.setNumTimesteps(options.get("timesteps"));
+		simulation.setNumTimesteps(options.get("timesteps").operator unsigned long int());
 	}
 	global_log->info() << "Simulating " << simulation.getNumTimesteps() << " steps." << endl;
     

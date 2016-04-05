@@ -21,7 +21,7 @@ void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* domain)
 {
 
   double regionLowCorner[3], regionHighCorner[3];
-  list<Molecule*> particlePtrsForRegion;
+  vector<Molecule*> particlePtrsForRegion;
   
   //global_log->info() << "Mirror is called\n";
 
@@ -36,7 +36,7 @@ void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* domain)
     // regionLowCorner[1] = (partContainer->getBoundingBoxMin(1) > _yMirr) ? (partContainer->getBoundingBoxMin(1)) : _yMirr;
     partContainer->getRegion(regionLowCorner, regionHighCorner, particlePtrsForRegion);
 
-    std::list<Molecule*>::iterator particlePtrIter;
+    std::vector<Molecule*>::iterator particlePtrIter;
     
     for(particlePtrIter = particlePtrsForRegion.begin(); particlePtrIter != particlePtrsForRegion.end(); particlePtrIter++){
 		double additionalForce[3];

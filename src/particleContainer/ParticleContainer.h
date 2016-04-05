@@ -21,6 +21,7 @@
 #define PARTICLECONTAINER_H_
 
 #include <list>
+#include <vector>
 
 class CellProcessor;
 class ChemicalPotential;
@@ -30,6 +31,8 @@ class Molecule;
 class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;
+
+typedef Molecule* MoleculeIterator;
 
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
@@ -102,13 +105,21 @@ public:
 
 	//! @brief add a single Molecules to the ParticleContainer.
 	//!
-	//! It is important, that the Particle is entered in "the front" of the container.
-	//! This is important when the container is traversed with the "next" method.
-	//! E.g. a method traversing the container which adds copies of particles
-	//! (periodic boundary) must not run over the added copies.
-	//! This method has to be implemented in derived classes
+	//! Note: a copy of the particle is pushed. Destroying the argument is
+	//! responsibility of the programmer.
+	//!
 	//! @param particle reference to the particle which has to be added
-	virtual void addParticle(Molecule& particle) = 0;
+	//! @return true if successful, false if particle outside domain
+	virtual bool addParticle(Molecule& particle) = 0;
+
+	//! @brief add a single Molecules to the ParticleContainer.
+	//!
+	//! Note: the particle pointer is pushed, without creating a new particle.
+	//! The underlying object should not be destroyed.
+	//!
+	//! @param particle reference to the particle which has to be added
+	//! @return true if successful, false if particle outside domain
+	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -142,29 +153,29 @@ public:
 	double getBoundingBoxMin(int dimension) const;
 
 
-	double getHaloWidthNumCells();
+	virtual int getHaloWidthNumCells();
 	//! @brief returns one coordinate of the higher corner of the bounding box
 	//!
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMax(int dimension) const;
 
 	//! @brief Returns a pointer to the first particle in the Container
-	virtual Molecule* begin() = 0;
+	virtual MoleculeIterator begin() = 0;
 
 	//! @brief Returns a pointer to the next particle in the Container
 	//!
 	//! The class internally has to store the Particle to which is currently pointed
 	//! With the call of next, this internal pointer is advanced to the next particle
 	//! and this new pointer is returned
-	virtual Molecule* next() = 0;
+	virtual MoleculeIterator next() = 0;
 
 	//! @brief Has to return the same as next() after it already pointed to the last particle
-	virtual Molecule* end() = 0;
+	virtual MoleculeIterator end() = 0;
 
 	//! @brief Delete all molecules in container
 	virtual void clear() = 0;
 
-	virtual Molecule* deleteCurrent() = 0;
+	virtual MoleculeIterator deleteCurrent() = 0;
 
     /* TODO can we combine this with the update method? */
 	//! @brief delete all Particles which are not within the bounding box
@@ -181,7 +192,23 @@ public:
 	//! @brief fills the given list with pointers to all particles in the given region
 	//! @param lowCorner minimum x-, y- and z-coordinate of the region
 	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs) = 0;
+	//! @param removeFromContainer if true, particles are erased, else - left in container
+	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
+	virtual void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer=false) = 0;
+
+	/**
+	 * @brief move particles from the halo layer in the respective direction into the current vector
+	 * @param direction
+	 * @param v
+	 */
+	virtual void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) = 0;
+
+	/**
+	 * @brief copy particles from the boundary layer for filling halo layers
+	 * @param direction
+	 * @param v
+	 */
+	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const = 0;
 
 	virtual double getCutoff() = 0;
 

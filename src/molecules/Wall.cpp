@@ -49,7 +49,7 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
 {
 
   double regionLowCorner[3], regionHighCorner[3];
-  list<Molecule*> particlePtrsForRegion;
+  vector<Molecule*> particlePtrsForRegion;
   
   /*! LJ-9-3 potential applied in y-direction */
   if(partContainer->getBoundingBoxMin(1) < _yc){ // if linked cell within the potential range (inside the potential's cutoff)
@@ -60,7 +60,7 @@ void Wall::calcTSLJ_9_3( ParticleContainer* partContainer, Domain* domain)
     //regionHighCorner[1] = (partContainer->getBoundingBoxMax(1) < _yc) ? (partContainer->getBoundingBoxMax(1)) : ;
     partContainer->getRegion(regionLowCorner, regionHighCorner, particlePtrsForRegion);
     
-    std::list<Molecule*>::iterator particlePtrIter;
+    std::vector<Molecule*>::iterator particlePtrIter;
 
     for(particlePtrIter = particlePtrsForRegion.begin(); particlePtrIter != particlePtrsForRegion.end(); particlePtrIter++){
       //! so far for 1CLJ only, several 1CLJ-components possible

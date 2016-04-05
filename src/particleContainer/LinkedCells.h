@@ -35,6 +35,9 @@
 //! - inner
 
 class LinkedCells : public ParticleContainer {
+
+	friend class LinkedCellsTest;
+
 public:
 	//! @brief initialize the Linked Cell datastructure
 	//!
@@ -91,7 +94,7 @@ public:
 	 */
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
-	double getHaloWidthNumCells(){
+	int getHaloWidthNumCells() {
 		return _haloWidthInNumCells[0];
 	}
 
@@ -111,7 +114,9 @@ public:
 	//!
 	//! Therefore, first the cell (the index) for the molecule has to be determined,
 	//! then the molecule is inserted into that cell.
-	void addParticle(Molecule& particle);
+	bool addParticle(Molecule& particle);
+
+	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -138,7 +143,7 @@ public:
 	//! list, a iterator (_particleIter) for the list is used.
 	//! This method sets this iterator to point to the begin of the list
 	//! and return a pointer to the value pointed to by the iterator
-	Molecule* begin();
+	MoleculeIterator begin();
 
 	//! @brief returns a pointer to the next particle in the Linked Cells
 	//!
@@ -146,15 +151,17 @@ public:
 	//! to the value pointed to by the iterator is returned. If the
 	//! iterator points to the end of the list (which is one element after the last
 	//! element), NULL is returned
-	Molecule* next();
+	MoleculeIterator next();
 
 	//! @brief returns NULL
-	Molecule* end();
-
-	void clear();
+	MoleculeIterator end();
 
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-	Molecule* deleteCurrent();
+	// i.e. use as follows: for(it = LC.begin(); it != LC.end();) {if(erase) {it = deleteCurrent();} else {it = LC.next()}}
+	MoleculeIterator deleteCurrent();
+
+	// @todo: where is this function called?
+	void clear();
 
 	//! @brief delete all Particles which are not within the bounding box
 	void deleteOuterParticles();
@@ -167,8 +174,13 @@ public:
 	//! @brief appends pointers to all particles in the halo region to the list
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
+	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false);
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const;
+
+
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
@@ -275,21 +287,38 @@ private:
 	//! y: two cells back, z: one cell up,...)
 	long int cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const;
 
+	/**
+	 * @brief delete particles which lie outside a cuboid region
+	 * @param boxMin lower left front corner
+	 * @param boxMax upper right back corner
+	 */
+	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
+	/**
+	 * advance _cellIterator, until a non-empty cell is found,
+	 * set _particleIterator and return the corresponding Molecule* value
+	 */
+	MoleculeIterator nextNonEmptyCell();
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
 
+#if 0
 	std::list<Molecule> _particles; //!< List containing all molecules from the phasespace
 
 	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
+#else
+	std::vector<ParticleCell>::iterator _cellIterator;
+	std::vector<Molecule*>::iterator _particleIterator;
+#endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
 	std::vector<unsigned long> _innerCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
+	std::vector<unsigned long> _borderCellIndices[3][2][2];
 
 	std::vector<long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
 	std::vector<long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell

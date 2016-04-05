@@ -195,7 +195,7 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete _leafContainer;
 	delete[] _coeffVector;
 	delete[] _occVector;
-	delete _CosSin;
+	delete[] _CosSin;
 }
 
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {

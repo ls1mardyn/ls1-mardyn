@@ -8,7 +8,7 @@
 
 static const bool debug = false;
 
-dtt::DttNode::DttNode(ParticleCell particles,int threshold,double ctr[3],double domLen[3],
+dtt::DttNode::DttNode(ParticleCell& particles,int threshold,double ctr[3],double domLen[3],
 		int order ,int depth, bool srcOnly) :
 		_mpCell(order), _occ(true),_leafParticles(), _threshold(threshold), _order(order),
 		_splitable(false), _depth(depth), _srcOnly(srcOnly){
@@ -230,7 +230,7 @@ void dtt::DttNode::m2l( bhfmm::SHMultipoleParticle& multipole, bhfmm::Vector3<do
 	_mpCell.local.addMultipoleParticle(multipole, periodicShift);
 }
 
-void dtt::DttNode::divideParticles( ParticleCell particles, std::vector<ParticleCell>& cell_container ){
+void dtt::DttNode::divideParticles( ParticleCell& particles, std::vector<ParticleCell>& cell_container ){
   	int child;
 	std::vector<Molecule*>& currentCellParticles = particles.getParticlePointers();
 	int currentParticleCount = currentCellParticles.size();

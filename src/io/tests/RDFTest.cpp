@@ -11,7 +11,7 @@
 #include "Domain.h"
 #include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
@@ -35,7 +35,7 @@ RDFTest::~RDFTest() {
 
 void RDFTest::testRDFCountSequential12_LinkedCell() {
 	// original pointer will be freed by the tearDown()-method.
-	_domainDecomposition = new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3.inp", 1.8);
 	testRDFCountSequential12(moleculeContainer);
