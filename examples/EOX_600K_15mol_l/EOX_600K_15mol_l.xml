@@ -74,7 +74,7 @@
     <algorithm>
       <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
-          <cellsInCutoffRadius>2</cellsInCutoffRadius>
+          <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>
       <cutoffs type="CenterOfMass" >
         <radiusLJ unit="reduced" >33.0702</radiusLJ>
