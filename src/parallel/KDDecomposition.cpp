@@ -106,7 +106,12 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 
 		getNumParticles(moleculeContainer);
 		constructNewTree(newDecompRoot, newOwnLeaf);
-		migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
+		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
+		if (not migrationSuccessful) {
+			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << endl;
+			global_log->error() << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << endl;
+			global_simulation->exit(1);
+		}
 		delete _decompTree;
 		_decompTree = newDecompRoot;
 //		delete _ownArea; dont delete! this is a pointer only to one of the objects in the whole tree, not a real object
