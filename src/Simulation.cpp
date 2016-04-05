@@ -243,25 +243,29 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				this->exit(1);
 			}
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
-				global_log->warning() << "Executable was compiled without support for parallel execution:"
-				                      << parallelisationtype << " not available." << endl;
+				global_log->warning()
+						<< "Executable was compiled without support for parallel execution: "
+						<< parallelisationtype
+						<< " not available. Using serial mode." << endl;
 				//this->exit(1);
 			}
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
 		}
 		else {
 		#ifdef ENABLE_MPI
 			global_log->error() << "Parallelisation section missing." << endl;
 			this->exit(1);
 		#else /* serial */
-			//_domainDecomposition = new DomainDecompBase();
+			//_domainDecomposition = new DomainDecompBase(); // already set in initialize()
 		#endif
 		}
-		_domainDecomposition->readXML(xmlconfig);
-		xmlconfig.changecurrentnode("..");
 
 		/* datastructure */
 		if(xmlconfig.changecurrentnode("datastructure")) {
