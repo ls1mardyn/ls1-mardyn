@@ -243,8 +243,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
 				this->exit(1);
 			}
-			_domainDecomposition->readXML(xmlconfig);
-			xmlconfig.changecurrentnode("..");
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
 				global_log->warning()
