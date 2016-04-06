@@ -8,7 +8,7 @@
 #include "MDGenerator.h"
 
 #include "ensemble/GrandCanonical.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #include "io/CheckpointWriter.h"
 #include "ensemble/PressureGradient.h"
 #include "particleContainer/LinkedCells.h"
@@ -87,7 +87,7 @@ void MDGenerator::generatePreview() {
 	int rank = 0;
 	PressureGradient gradient(rank);
 	Domain domain(rank, &gradient);
-	DomainDecompDummy domainDecomposition;
+	DomainDecompBase domainDecomposition;
 	list<ChemicalPotential> lmu;
 
 	double bBoxMin[3] = { 0,0,0};
@@ -140,7 +140,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	int rank = 0;
 	PressureGradient gradient(rank);
 	Domain domain(rank, &gradient);
-	DomainDecompDummy domainDecomposition;
+	DomainDecompBase domainDecomposition;
 	list<ChemicalPotential> lmu;
 
 #ifndef MARDYN

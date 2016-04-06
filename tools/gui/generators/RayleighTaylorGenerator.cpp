@@ -64,7 +64,7 @@ RayleighTaylorGenerator::~RayleighTaylorGenerator() {
 }
 
 void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
-	domain->setCurrentTime(0);
+	//domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_T);
@@ -372,10 +372,10 @@ void RayleighTaylorGenerator::addMolecule(
 	}
 	//End Copy
 
-	Molecule m(id, componentType, x, y, z, // position
+	Molecule m(id, &(_components[componentType]), x, y, z, // position
 			velocity[0], -velocity[1], velocity[2], // velocity
 			orientation[0], orientation[1], orientation[2], orientation[3],
-			w[0], w[1], w[2], &_components);
+			w[0], w[1], w[2]);
 	particleContainer->addParticle(m);
 }
 

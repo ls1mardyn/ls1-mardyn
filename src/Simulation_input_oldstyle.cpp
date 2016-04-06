@@ -281,7 +281,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "VTKWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 #else
-				Log::global_log->error() << std::endl << "VTK-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
+				Log::global_log->warning() << std::endl << "VTK-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
 #endif
 			} else if (token == "VTKGridWriter") {
 #ifdef VTK

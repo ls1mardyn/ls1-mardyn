@@ -103,7 +103,7 @@ void AqueousNaClGenerator::calculateSimulationBoxLength() {
 
 void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator..." << endl;
-	domain->setCurrentTime(0);
+	//domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);

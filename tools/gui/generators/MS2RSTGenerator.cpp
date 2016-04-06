@@ -118,7 +118,7 @@ _simBoxLength = pow(volume, 1./3.);
 void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_logger->info() << "Reading PhaseSpaceHeader from MS2RSTGenerator..." << endl;
 
-	domain->setCurrentTime(0);
+	//domain->setCurrentTime(0);
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);
 	domain->setGlobalLength(0, _simBoxLength);

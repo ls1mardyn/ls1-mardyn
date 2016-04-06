@@ -86,7 +86,7 @@ public:
 	}
 
 	//! For purposes of child class only
-	virtual void broadcast(int root = 0) {
+	virtual void broadcast(int /*root*/ = 0) {
 	}
 
 	//! For purposes of child class only

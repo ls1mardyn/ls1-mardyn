@@ -17,7 +17,6 @@ using namespace std;
 #include "MDGenerator.h"
 #include "common/ComponentParameters.h"
 #include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecompDummy.h"
 
 #ifndef RAYLEIGHTALORGENERATOR_H_
 #define RAYLEIGHTALORGENERATOR_H_
