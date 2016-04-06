@@ -72,3 +72,4 @@ SOURCES  += generators/common/OutputConfiguration.cpp
 
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
+INCLUDEPATH += ../../src/External/

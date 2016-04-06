@@ -63,7 +63,7 @@ RayleighTaylorGenerator::RayleighTaylorGenerator() : MDGenerator("RayleighTaylor
 RayleighTaylorGenerator::~RayleighTaylorGenerator() {
 }
 
-void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
+void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/) {
 	//domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
@@ -83,7 +83,7 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 }
 
 unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();

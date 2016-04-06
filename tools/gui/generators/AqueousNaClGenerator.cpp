@@ -125,7 +125,7 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 
 unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();

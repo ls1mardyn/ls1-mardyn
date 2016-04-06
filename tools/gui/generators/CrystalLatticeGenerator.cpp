@@ -175,10 +175,10 @@ unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particl
 }
 
 void CrystalLatticeGenerator::addMolecule(double x, double y, double z, unsigned long id, unsigned cid, ParticleContainer* particleContainer) {
-	Molecule m(id, cid, x, y, z, // position
+	Molecule m(id, &_components[cid], x, y, z, // position
 			0.0, 0.0, 0.0, // velocity
 			1.0, 0.0, 0.0, 0.0, // orientation
-			0.0, 0.0, 0.0, &_components);
+			0.0, 0.0, 0.0);
 	particleContainer->addParticle(m);
 }
 

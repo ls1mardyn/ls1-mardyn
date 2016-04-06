@@ -81,10 +81,9 @@ public:
 
 private:
 
-	typedef struct Ion {
+	struct Ion {
 		int cid;
 		int position[3];
-
 	};
 
 	void calculateSimulationBoxLength();
