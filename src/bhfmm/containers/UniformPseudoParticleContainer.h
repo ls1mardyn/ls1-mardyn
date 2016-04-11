@@ -50,6 +50,7 @@ private:
 
 	int _wellSep;
 	int _maxLevel;
+	int _globalLevel;
 	std::vector<std::vector<MpCell> > _mpCell;
 	double _cellLength[3];
 	int _globalNumCellsPerDim;
@@ -69,17 +70,26 @@ private:
 	// M2M
 	void CombineMpCell_Wigner(double *cellWid, int& mpCells, int& curLevel);
 
+	// M2M
+	void CombineMpCell_MPI(double *cellWid, int& mpCells, int& curLevel);
+
 	// M2L
 	void GatherWellSepLo(double *cellWid, int mpCells, int& curLevel);
 
 	// M2L
 	void GatherWellSepLo_Wigner(double *cellWid, int mpCells, int& curLevel);
 
+	// M2L
+	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int& curLevel);
+
 	// L2L
 	void PropagateCellLo(double *cellWid, int mpCells, int& curLevel);
 
 	// L2L
 	void PropagateCellLo_Wigner(double *cellWid, int mpCells, int& curLevel);
+
+	// L2L
+	void PropagateCellLo_MPI(double *cellWid, int mpCells, int& curLevel);
 
 	// for parallelization
 	void AllReduceMultipoleMoments();
