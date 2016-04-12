@@ -45,6 +45,9 @@ public:
 
 	void printTimers();
 
+	//for parallelization
+	void communicateHalos();
+
 private:
 	LeafNodesContainer* _leafContainer;
 
@@ -62,8 +65,15 @@ private:
 	double* _coeffVector; // array for MPI allgather
 	double* _coeffVector_me;
 
+	double* _leftBuffer, * _rightBuffer, * _topBuffer, * _bottomBuffer, * _frontBuffer, * _backBuffer; //arrays for MPI halo transfer (send)
+	double* _leftBufferRec, * _rightBufferRec, * _topBufferRec, * _bottomBufferRec, * _frontBufferRec, * _backBufferRec; //arrays for MPI halo transfer (receive)
+
+
 	bool _periodicBC;
 
+	int _numProcessorsPerDim;
+	Vector3<int> _processorPositionGlobalLevel;
+	Vector3<double> _bBoxMin;
 	// M2M
 	void CombineMpCell(double *cellWid, int& mpCells, int& curLevel);
 
@@ -71,7 +81,7 @@ private:
 	void CombineMpCell_Wigner(double *cellWid, int& mpCells, int& curLevel);
 
 	// M2M
-	void CombineMpCell_MPI(double *cellWid, int& mpCells, int& curLevel);
+	void CombineMpCell_MPI(double *cellWid, int& mpCells, int& curLevel, Vector3<int> offset);
 
 	// M2L
 	void GatherWellSepLo(double *cellWid, int mpCells, int& curLevel);
@@ -89,12 +99,22 @@ private:
 	void PropagateCellLo_Wigner(double *cellWid, int mpCells, int& curLevel);
 
 	// L2L
-	void PropagateCellLo_MPI(double *cellWid, int mpCells, int& curLevel);
+	void PropagateCellLo_MPI(double *cellWid, int mpCells, int& curLevel, Vector3<int> offset);
 
 	// for parallelization
 	void AllReduceMultipoleMoments();
 	void AllReduceLocalMoments(int mpCells, int _curLevel);
+	void AllReduceMultipoleMomentsLevel(int mpCells, int _curLevel);
 
+	void getXHaloValues(int localMpCellsBottom,int bottomLevel);
+	void getYHaloValues(int localMpCellsBottom,int bottomLevel);
+	void getZHaloValues(int localMpCellsBottom,int bottomLevel);
+	void setXHaloValues(int localMpCellsBottom,int bottomLevel);
+	void setYHaloValues(int localMpCellsBottom,int bottomLevel);
+	void setZHaloValues(int localMpCellsBottom,int bottomLevel);
+	void communicateHalosX();
+	void communicateHalosY();
+	void communicateHalosZ();
 	// Lookup
 	inline const WignerMatrix& M2M_Wigner(const int& idx) const {
 		return _M2M_Wigner[idx];

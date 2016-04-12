@@ -43,6 +43,7 @@ public:
 	virtual void upwardPass(P2MCellProcessor * cp) = 0;
 	virtual void horizontalPass(VectorizedChargeP2PCellProcessor * cp) = 0;
 	virtual void downwardPass(L2PCellProcessor *cp) = 0;
+	virtual void communicateHalos() = 0;
 
 	// P2M
 	virtual void processMultipole(ParticleCell& cell) = 0;
