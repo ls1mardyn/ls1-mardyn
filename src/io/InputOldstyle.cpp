@@ -403,7 +403,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		componentid --; // TODO: Component IDs start with 0 in the program.
 
 		// store only those molecules within the domain of this process
-		// The neccessary check is performed in the particleContainer addPartice method
+		// The necessary check is performed in the particleContainer addPartice method
 		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
 		Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
 #ifdef ENABLE_MPI

@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
 	global_log = new Log::Logger(Log::Info);
 #ifdef ENABLE_MPI
 	global_log->set_mpi_output_root(0);
+	//global_log->set_mpi_output_all();
 #endif
 
 	OptionParser op;

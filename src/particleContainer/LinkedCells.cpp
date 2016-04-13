@@ -42,7 +42,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 				<< " multiple cells per cutoff radius." << endl
 				<< "\tIf you can provide a case, where this is not true, please contact us."
 				<< endl;
-		exit(-1);
+		global_simulation->exit(-1);
 	}
 
 	for (int d = 0; d < 3; d++) {
@@ -81,19 +81,19 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		global_log->error()
+		global_log->error_always_output()
 				<< "LinkedCells (constructor): bounding box too small for calculated cell length"
 				<< endl;
-		global_log->error() << "_cellsPerDimension: " << _cellsPerDimension[0]
+		global_log->error_always_output() << "_cellsPerDimension: " << _cellsPerDimension[0]
 				<< " / " << _cellsPerDimension[1] << " / "
 				<< _cellsPerDimension[2] << endl;
-		global_log->error() << "_haloWidthInNumCells: "
+		global_log->error_always_output() << "_haloWidthInNumCells: "
 				<< _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1]
 				<< " / " << _haloWidthInNumCells[2] << endl;
-		global_log->error() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
+		global_log->error_always_output() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
 				<< " / " << _boxWidthInNumCells[1] << " / "
 				<< _boxWidthInNumCells[2] << endl;
-		exit(5);
+		global_simulation->exit(5);
 	}
 	this->_localInsertionsMinusDeletions = 0;
 
@@ -120,7 +120,7 @@ void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
 				<< " multiple cells per cutoff radius." << endl
 				<< "\tIf you can provide a case, where this is not true, please contact us."
 				<< endl;
-		exit(-1);
+		global_simulation->exit(-1);
 	}
 	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
 }
@@ -148,9 +148,9 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 				+ 2 * _haloWidthInNumCells[dim];
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			global_log->error() << "LinkedCells::rebuild: region to small"
+			global_log->error_always_output() << "LinkedCells::rebuild: region to small"
 					<< endl;
-			exit(1);
+			global_simulation->exit(1);
 		}
 		numberOfCells *= _cellsPerDimension[dim];
 		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim])
@@ -172,16 +172,16 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		global_log->error()
+		global_log->error_always_output()
 				<< "LinkedCells (rebuild): bounding box too small for calculated cell Length"
 				<< endl;
-		global_log->error() << "cellsPerDimension " << _cellsPerDimension[0]
+		global_log->error_always_output() << "cellsPerDimension " << _cellsPerDimension[0]
 				<< " / " << _cellsPerDimension[1] << " / "
 				<< _cellsPerDimension[2] << endl;
-		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
+		global_log->error_always_output() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
 				<< " / " << _haloWidthInNumCells[1] << " / "
 				<< _haloWidthInNumCells[2] << endl;
-		exit(5);
+		global_simulation->exit(5);
 	}
 
 	initializeCells();
@@ -348,7 +348,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (traversePairs) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	vector<long int>::iterator neighbourOffsetsIter;
@@ -548,7 +548,7 @@ void LinkedCells::deleteOuterParticles() {
 		global_log->error()
 				<< "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	vector<unsigned long>::iterator cellIndexIter;
@@ -568,7 +568,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (getHaloParticles) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	std::vector<Molecule*>::iterator particleIter;
@@ -655,7 +655,7 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3],
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegionSimple) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	int startIndex[3];
@@ -703,7 +703,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegion) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	int startIndex[3];
@@ -957,18 +957,18 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 
 	unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
 	if (hash >= _cells.size()) {
-		global_log->error()
+		global_log->error_always_output()
 				<< "coordinates for atom deletion lie outside bounding box."
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	bool found = this->_cells[hash].deleteMolecule(molid);
 
 	if (!found) {
-		global_log->error() << "could not delete molecule " << molid << "."
+		global_log->error_always_output() << "could not delete molecule " << molid << "."
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 }
 
@@ -994,7 +994,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 		global_log->error()
 				<< "The grand canonical ensemble is not implemented for solids."
 				<< endl;
-		exit(484);
+		global_simulation->exit(484);
 	}
 	u += cellProcessor.processSingleMolecule(m1, currentCell);
 
