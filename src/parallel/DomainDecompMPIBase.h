@@ -114,7 +114,7 @@ public:
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates = false);
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
-	 std::vector<CommunicationPartner> getNeighbours() {return _neighbours;}
+	 //std::vector<CommunicationPartner> getNeighbours() {return _neighbours;}
 	 virtual std::vector<int> getNeighbourRanks() =0;
 
 #endif

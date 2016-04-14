@@ -27,12 +27,17 @@ namespace bhfmm {
 UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		double domainLength[3], double bBoxMin[3], double bBoxMax[3],
 		double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions,
-		std::vector<int> neighbours, bool periodic) :
+		bool periodic) :
 		PseudoParticleContainer(orderOfExpansions), _leafContainer(0), _wellSep(1),
 		_M2M_Wigner(4, WignerMatrix(orderOfExpansions, true)), _L2L_Wigner(4, WignerMatrix(orderOfExpansions, true)) {
 
 	_periodicBC = periodic;
-	_neighbours = neighbours;
+
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+	_neighbours = domainDecomp.getNeighbourRanks();
+#endif
+
 #if WIGNER == 1 && defined(NEW_FMM)
 	global_log->error() << "not supported yet" << endl;
 	exit(-1);
@@ -320,7 +325,7 @@ void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	// P2M
 	_leafContainer->traverseCellPairs(*cp);
-#if ndefined(ENABLE_MPI) && ndefined(NEW_FMM)
+#if not defined(ENABLE_MPI) && not defined(NEW_FMM)
 	// M2M
 	AllReduceMultipoleMoments();
 #endif
@@ -753,17 +758,17 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 	int m1, m2, m2x, m2y, m2z;
 	// int m1x, m1y, m1z;
 //	int m22x, m22y, m22z; // for periodic image
-	int _size, _rank, loop_min, loop_max;
+//	int _size, _rank, loop_min, loop_max;
 	int _row_length;
 
-	_row_length=localMpCells*localMpCells*localMpCells;
+//	_row_length=localMpCells*localMpCells*localMpCells;
 
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_rank= domainDecomp.getRank();
-	_size= domainDecomp.getNumProcs();
+//	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+//	_rank= domainDecomp.getRank();
+//	_size= domainDecomp.getNumProcs();
 
-	loop_min = localMpCells*localMpCells+2;
-	loop_max = _row_length-(localMpCells*localMpCells+2);
+//	loop_min = localMpCells*localMpCells+2;
+//	loop_max = _row_length-(localMpCells*localMpCells+2);
 
 	Vector3<double> periodicShift(0.0);
 
@@ -969,7 +974,6 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 //	int loop_max = (int) ((long) (_rank + 1) * (long) (mpCells * mpCells * mpCells) / (long) _size);
 //	int loop_min = localMpCells * localMpCells + 2;
 //	int loop_max = localMpCells * localMpCells * localMpCells - (localMpCells * localMpCells + 2);
-	int m1;
 	for (m1z = 0; m1z < localMpCells-4; m1z++) {
 		for (m1y = 0; m1y < localMpCells-4; m1y++) {
 			for (m1x = 0; m1x < localMpCells-4; m1x++) {
@@ -1202,7 +1206,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCells
 
 	int coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
-		const MpCell & currentCell = _mpCell[level][cellIndex];
+		const MpCell & currentCell = _mpCell[curLevel][cellIndex];
 
 		// NOTE: coeffIndex modified in following call:
 		currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
@@ -1217,7 +1221,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCells
 	coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
 
-		MpCell & currentCell = _mpCell[level][cellIndex];
+		MpCell & currentCell = _mpCell[curLevel][cellIndex];
 
 		currentCell.occ = _occVector[cellIndex];
 		currentCell.multipole.readValuesFromMPIBuffer(_coeffVector, coeffIndex);

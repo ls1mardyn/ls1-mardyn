@@ -25,7 +25,7 @@ namespace bhfmm {
 class UniformPseudoParticleContainer: public PseudoParticleContainer {
 public:
 	UniformPseudoParticleContainer(double domainLength[3], double bBoxMin[3], double bBoxMax[3],
-			double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions, std::vector<int> neighbours,bool periodic = true);
+			double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions,bool periodic = true);
 	~UniformPseudoParticleContainer();
 
 	void clear();

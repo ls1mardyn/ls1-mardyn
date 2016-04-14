@@ -58,7 +58,7 @@ void FastMultipoleMethod::setParameters(unsigned LJSubdivisionFactor,
 }
 
 void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
-		double bBoxMax[3], double LJCellLength[3], std::vector<int> neighbours) {
+		double bBoxMax[3], double LJCellLength[3]) {
 
 	if (_LJCellSubdivisionFactor != 1
 			and _LJCellSubdivisionFactor != 2
@@ -85,7 +85,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(
 				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,
-				_LJCellSubdivisionFactor, _order, neighbours, _periodic);
+				_LJCellSubdivisionFactor, _order, _periodic);
 
 	} else {
 		// TODO: Debugging in Progress!

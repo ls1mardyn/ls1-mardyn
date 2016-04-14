@@ -102,10 +102,10 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	int getUpdateFrequency() { return _frequency; }
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
-	virtual std::vector<int> getNeighbourRank(){
-		global_log->error() << "not implemented \n";
+	virtual std::vector<int> getNeighbourRanks(){
+		//global_log->error() << "not implemented \n";
 		exit(-1);
-		return NULL;
+		return std::vector<int> (0);
 	}
 
  private:
