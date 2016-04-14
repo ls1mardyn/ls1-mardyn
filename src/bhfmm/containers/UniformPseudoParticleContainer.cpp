@@ -225,11 +225,15 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	}
 #endif
 	_domain = global_simulation->getDomain();
-
 	_globalNumCells = pow(_globalNumCellsPerDim, 3);
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	_globalLevelNumCells = pow(8,_globalLevel);
+	_occVector = new int[_globalLevelNumCells];
+	std::fill(_occVector, _occVector + _globalLevelNumCells, 0);
+#else
 	_occVector = new int[_globalNumCells];
 	std::fill(_occVector, _occVector + _globalNumCells, 0);
-
+#endif
 	_coeffVectorLength = 0;
 //	_coeffVectorLength = _mpCell[0][0].multipole.get
 	for (int j = 0; j <= _maxOrd; j++) {
@@ -238,9 +242,31 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		}
 	}
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
+	_xHaloOccSize = _xHaloSize;
+	_yHaloOccSize = _yHaloSize;
+	_zHaloOccSize = _zHaloSize;
+
 	_xHaloSize *= _coeffVectorLength;
 	_yHaloSize *= _coeffVectorLength;
 	_zHaloSize *= _coeffVectorLength;
+
+	_leftOccBuffer = new int[_xHaloOccSize];
+	_rightOccBuffer = new int[_xHaloOccSize];
+
+	_bottomOccBuffer = new int[_yHaloOccSize];
+	_topOccBuffer = new int[_yHaloOccSize];
+
+	_backOccBuffer = new int[_zHaloOccSize];
+	_frontOccBuffer = new int[_zHaloOccSize];
+
+	_leftOccBufferRec = new int[_xHaloOccSize];
+	_rightOccBufferRec = new int[_xHaloOccSize];
+
+	_bottomOccBufferRec = new int[_yHaloOccSize];
+	_topOccBufferRec = new int[_yHaloOccSize];
+
+	_backOccBufferRec = new int[_zHaloOccSize];
+	_frontOccBufferRec = new int[_zHaloOccSize];
 
 	_leftBuffer = new double[_xHaloSize * 2];
 	_rightBuffer = new double[_xHaloSize * 2];
@@ -261,10 +287,14 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_frontBufferRec = new double[_zHaloSize * 2];
 #endif
 
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	_coeffVectorLength *= _globalLevelNumCells;
+#else
 	_coeffVectorLength *= _globalNumCells;
+#endif
+
 	_coeffVector = new double[_coeffVectorLength * 2];
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
-
 	Log::global_log->info() << "UniformPseudoParticleContainer: coeffVectorLength="
 			<< _coeffVectorLength << " Size of MPI Buffers is "
 			<< (8 * (_coeffVectorLength * 2 + _globalNumCells)
@@ -1263,7 +1293,12 @@ void UniformPseudoParticleContainer::clear() {
 	// clear the MPI buffers
 #ifdef ENABLE_MPI
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength*2, 0.0);
+#ifdef NEW_FMM
+	std::fill(_occVector, _occVector + _globalLevelNumCells, 0);
+
+#else
 	std::fill(_occVector, _occVector + _globalNumCells, 0);
+#endif
 #endif
 }
 
@@ -1283,11 +1318,19 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+#ifdef NEW_FMM
+	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalLevelNumCells, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#else
 	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalNumCells, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-	coeffIndex = 0;
-	for (int cellIndex = 0; cellIndex < _globalNumCells; cellIndex++) {
+#endif
 
+	coeffIndex = 0;
+#ifdef NEW_FMM
+	for (int cellIndex = 0; cellIndex < _globalLevelNumCells; cellIndex++) {
+#else
+	for (int cellIndex = 0; cellIndex < _globalNumCells; cellIndex++) {
+#endif
 		MpCell & currentCell = _mpCell[_maxLevel][cellIndex];
 
 		currentCell.occ = _occVector[cellIndex];
@@ -1377,36 +1420,45 @@ void UniformPseudoParticleContainer::getXHaloValues(int localMpCellsBottom,int b
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
-	for(int level=bottomLevel; level<_globalLevel;level--){
+	int coeffOccIndex = 0;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 
 		//left Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = 2; y < localMpCells-2; y++) {
 				for (int x = 2; x < 4; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					const MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.writeValuesToMPIBuffer(_leftBuffer, coeffIndex);
+					_leftOccBuffer[coeffOccIndex] = currentCell.occ;
+					coeffOccIndex++;
+
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.writeValuesToMPIBuffer(_leftBuffer, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
+	}
+	coeffIndex = 0;
+	coeffOccIndex = 0;
+	localMpCells = localMpCellsBottom;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//right Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = 2; y < localMpCells-2; y++) {
 				for (int x = localMpCells-4; x < localMpCells-2; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					const MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.writeValuesToMPIBuffer(_rightBuffer, coeffIndex);
+					_rightOccBuffer[coeffOccIndex] = currentCell.occ;
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.writeValuesToMPIBuffer(_rightBuffer, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
 	}
 #endif
 }
@@ -1417,37 +1469,44 @@ void UniformPseudoParticleContainer::getYHaloValues(int localMpCellsBottom,int b
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
-	for(int level=bottomLevel; level<_globalLevel;level--){
-
-
+	int coeffOccIndex = 0;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//bottom Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = 2; y < 4; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					const MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.writeValuesToMPIBuffer(_bottomBuffer, coeffIndex);
+					_bottomOccBuffer[coeffOccIndex] = currentCell.occ;
+					coeffOccIndex++;
+
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.writeValuesToMPIBuffer(_bottomBuffer, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
+	}
+	coeffIndex = 0;
+	coeffOccIndex = 0;
+	localMpCells = localMpCellsBottom;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//top Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = localMpCells-4; y < localMpCells-2; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					const MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.writeValuesToMPIBuffer(_topBuffer, coeffIndex);
+					_topOccBuffer[coeffOccIndex] = currentCell.occ;
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.writeValuesToMPIBuffer(_topBuffer, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
 	}
 #endif
 }
@@ -1458,35 +1517,44 @@ void UniformPseudoParticleContainer::getZHaloValues(int localMpCellsBottom,int b
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
-	for(int level=bottomLevel; level<_globalLevel;level--){
-
+	int coeffOccIndex = 0;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//back Border
-		coeffIndex = 0;
 		for (int z = 2; z < 4; z++) {
 			for (int y = 0; y < localMpCells; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					const MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.writeValuesToMPIBuffer(_backBuffer, coeffIndex);
+					_backOccBuffer[coeffOccIndex] = currentCell.occ;
+					coeffOccIndex++;
+
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.writeValuesToMPIBuffer(_backBuffer, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
+	}
+	coeffIndex = 0;
+	coeffOccIndex = 0;
+	localMpCells = localMpCellsBottom;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//front Border
-		coeffIndex = 0;
 		for (int z = localMpCells-4; z < localMpCells-2; z++) {
 			for (int y = 0; y < localMpCells; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					const MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.writeValuesToMPIBuffer(_frontBuffer, coeffIndex);
+					_frontOccBuffer[coeffOccIndex] = currentCell.occ;
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.writeValuesToMPIBuffer(_frontBuffer, coeffIndex);
 				}
 			}
 		}
+		localMpCells = (localMpCells - 4) / 2 + 4;
 	}
 #endif
 }
@@ -1495,38 +1563,45 @@ void UniformPseudoParticleContainer::setXHaloValues(int localMpCellsBottom,int b
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 
 	int coeffIndex = 0;
+	int coeffOccIndex = 0;
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
-	for(int level=bottomLevel; level<_globalLevel;level--){
-
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//left Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = 2; y < localMpCells-2; y++) {
 				for (int x = 0; x < 2; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.readValuesFromMPIBuffer(_leftBufferRec, coeffIndex);
+					currentCell.occ = _leftOccBufferRec[coeffOccIndex];
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.readValuesFromMPIBuffer(_leftBufferRec, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
+	}
+	coeffIndex = 0;
+	coeffOccIndex = 0;
+	localMpCells = localMpCellsBottom;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//right Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = 2; y < localMpCells-2; y++) {
 				for (int x = localMpCells-2; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.readValuesFromMPIBuffer(_rightBufferRec, coeffIndex);
+					currentCell.occ = _rightOccBufferRec[coeffOccIndex];
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.readValuesFromMPIBuffer(_rightBufferRec, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
 	}
 #endif
 }
@@ -1537,37 +1612,43 @@ void UniformPseudoParticleContainer::setYHaloValues(int localMpCellsBottom,int b
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
-	for(int level=bottomLevel; level<_globalLevel;level--){
-
-
+	int coeffOccIndex = 0;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//bottom Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = 0; y < 2; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.readValuesFromMPIBuffer(_bottomBufferRec, coeffIndex);
+					currentCell.occ = _bottomOccBufferRec[coeffOccIndex];
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.readValuesFromMPIBuffer(_bottomBufferRec, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
+	}
+	coeffIndex = 0;
+	coeffOccIndex = 0;
+	localMpCells = localMpCellsBottom;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//top Border
-		coeffIndex = 0;
 		for (int z = 2; z < localMpCells-2; z++) {
 			for (int y = localMpCells-2; y < localMpCells; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.readValuesFromMPIBuffer(_topBufferRec, coeffIndex);
+					currentCell.occ = _topOccBufferRec[coeffOccIndex];
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.readValuesFromMPIBuffer(_topBufferRec, coeffIndex);
 				}
 			}
 		}
-
+		localMpCells = (localMpCells - 4) / 2 + 4;
 	}
 #endif
 }
@@ -1576,37 +1657,47 @@ void UniformPseudoParticleContainer::setZHaloValues(int localMpCellsBottom,int b
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 
 	int coeffIndex = 0;
+	int coeffOccIndex = 0;
+
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
-	for(int level=bottomLevel; level<_globalLevel;level--){
-
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//back Border
-		coeffIndex = 0;
 		for (int z = 0; z < 2; z++) {
 			for (int y = 0; y < localMpCells; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.readValuesFromMPIBuffer(_backBufferRec, coeffIndex);
+					currentCell.occ = _backOccBufferRec[coeffOccIndex];
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.readValuesFromMPIBuffer(_backBufferRec, coeffIndex);
 				}
 			}
 		}
+		localMpCells = (localMpCells - 4) / 2 + 4;
+	}
+	coeffIndex = 0;
+	coeffOccIndex = 0;
 
+	localMpCells = localMpCellsBottom;
+	for(int level=bottomLevel; level>_globalLevel;level--){
 		//front Border
-		coeffIndex = 0;
 		for (int z = localMpCells-2; z < localMpCells; z++) {
 			for (int y = 0; y < localMpCells; y++) {
 				for (int x = 0; x < localMpCells; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
 					MpCell & currentCell = _mpCell[level][cellIndex];
 
-					if(currentCell.occ == 0) continue;
-					currentCell.local.readValuesFromMPIBuffer(_frontBufferRec, coeffIndex);
+					currentCell.occ = _frontOccBufferRec[coeffOccIndex];
+					coeffOccIndex++;
+					//if(currentCell.occ == 0) continue;
+					currentCell.multipole.readValuesFromMPIBuffer(_frontBufferRec, coeffIndex);
 				}
 			}
 		}
+		localMpCells = (localMpCells - 4) / 2 + 4;
 	}
 #endif
 }
@@ -1614,10 +1705,15 @@ void UniformPseudoParticleContainer::setZHaloValues(int localMpCellsBottom,int b
 void UniformPseudoParticleContainer::communicateHalos(){
 
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
-	int numProcessors;
-	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
-	int numProcessorsPerDim = pow(2,log2(numProcessors)/3);
-	int localMpCellsBottom = pow(2,_maxLevel) / numProcessorsPerDim  + 4;
+	std::fill(_leftBuffer, _leftBuffer + _xHaloSize * 2, 0.0);
+	std::fill(_rightBuffer, _rightBuffer + _xHaloSize * 2, 0.0);
+	std::fill(_frontBuffer, _frontBuffer + _zHaloSize * 2, 0.0);
+	std::fill(_backBuffer, _backBuffer + _zHaloSize * 2, 0.0);
+	std::fill(_topBuffer, _topBuffer + _yHaloSize * 2, 0.0);
+	std::fill(_bottomBuffer, _bottomBuffer + _yHaloSize * 2, 0.0);
+
+
+	int localMpCellsBottom = pow(2,_maxLevel) / _numProcessorsPerDim  + 4;
 	getXHaloValues(localMpCellsBottom,_maxLevel);
 	communicateHalosX();
 	setXHaloValues(localMpCellsBottom,_maxLevel);
@@ -1635,13 +1731,26 @@ void UniformPseudoParticleContainer::communicateHalos(){
 void UniformPseudoParticleContainer::communicateHalosX(){
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	MPI_Request low, high;
+	MPI_Request lowOcc, highOcc;
+
 	MPI_Status lowRecv,highRecv;
+	MPI_Status lowOccRecv,highOccRecv;
+
 	MPI_Isend(_leftBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[0], 1,
 			MPI_COMM_WORLD, &low);
 	MPI_Isend(_rightBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[1], 1,
 			MPI_COMM_WORLD, &high);
+
+	MPI_Isend(_leftOccBuffer, _xHaloOccSize, MPI_INT, _neighbours[0], 2,
+				MPI_COMM_WORLD, &lowOcc);
+	MPI_Isend(_rightOccBuffer, _xHaloOccSize, MPI_INT, _neighbours[1], 2,
+				MPI_COMM_WORLD, &highOcc);
+
 	MPI_Recv(_leftBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[0],1,MPI_COMM_WORLD, &lowRecv);
 	MPI_Recv(_rightBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[1],1,MPI_COMM_WORLD, &highRecv);
+
+	MPI_Recv(_leftOccBufferRec, _xHaloOccSize,MPI_INT, _neighbours[0],2,MPI_COMM_WORLD, &lowOccRecv);
+	MPI_Recv(_rightOccBufferRec, _xHaloOccSize,MPI_INT, _neighbours[1],2,MPI_COMM_WORLD, &highOccRecv);
 
 #endif
 }
@@ -1649,13 +1758,26 @@ void UniformPseudoParticleContainer::communicateHalosX(){
 void UniformPseudoParticleContainer::communicateHalosY(){
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	MPI_Request low, high;
+	MPI_Request lowOcc, highOcc;
+
 	MPI_Status lowRecv,highRecv;
+	MPI_Status lowOccRecv,highOccRecv;
+
 	MPI_Isend(_bottomBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 1,
 			MPI_COMM_WORLD, &low);
 	MPI_Isend(_topBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 1,
 			MPI_COMM_WORLD, &high);
+
+	MPI_Isend(_bottomOccBuffer, _yHaloOccSize, MPI_INT, _neighbours[2], 2,
+			MPI_COMM_WORLD, &lowOcc);
+	MPI_Isend(_topOccBuffer, _yHaloOccSize, MPI_INT, _neighbours[3], 2,
+			MPI_COMM_WORLD, &highOcc);
+
 	MPI_Recv(_bottomBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 1, MPI_COMM_WORLD, &lowRecv);
 	MPI_Recv(_topBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 1, MPI_COMM_WORLD, &highRecv);
+
+	MPI_Recv(_bottomOccBufferRec, _yHaloOccSize, MPI_INT, _neighbours[2], 2, MPI_COMM_WORLD, &lowOccRecv);
+	MPI_Recv(_topOccBufferRec, _yHaloOccSize, MPI_INT, _neighbours[3], 2, MPI_COMM_WORLD, &highOccRecv);
 
 #endif
 }
@@ -1663,13 +1785,26 @@ void UniformPseudoParticleContainer::communicateHalosY(){
 void UniformPseudoParticleContainer::communicateHalosZ(){
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	MPI_Request low, high;
+	MPI_Request lowOcc, highOcc;
+
 	MPI_Status lowRecv,highRecv;
+	MPI_Status lowOccRecv,highOccRecv;
+
 	MPI_Isend(_backBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 1,
 			MPI_COMM_WORLD, &low);
 	MPI_Isend(_frontBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 1,
 			MPI_COMM_WORLD, &high);
+
+	MPI_Isend(_backOccBuffer, _zHaloOccSize, MPI_INT, _neighbours[4], 2,
+			MPI_COMM_WORLD, &lowOcc);
+	MPI_Isend(_frontOccBuffer, _zHaloOccSize, MPI_INT, _neighbours[5], 2,
+			MPI_COMM_WORLD, &highOcc);
+
 	MPI_Recv(_backBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 1, MPI_COMM_WORLD, &lowRecv);
 	MPI_Recv(_frontBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 1, MPI_COMM_WORLD, &highRecv);
+
+	MPI_Recv(_backOccBufferRec, _zHaloOccSize, MPI_INT, _neighbours[4], 2, MPI_COMM_WORLD, &lowOccRecv);
+	MPI_Recv(_frontOccBufferRec, _zHaloOccSize, MPI_INT, _neighbours[5], 2, MPI_COMM_WORLD, &highOccRecv);
 
 #endif
 }

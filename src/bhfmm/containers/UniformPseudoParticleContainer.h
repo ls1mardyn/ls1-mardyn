@@ -67,6 +67,9 @@ private:
 
 	double* _leftBuffer, * _rightBuffer, * _topBuffer, * _bottomBuffer, * _frontBuffer, * _backBuffer; //arrays for MPI halo transfer (send)
 	double* _leftBufferRec, * _rightBufferRec, * _topBufferRec, * _bottomBufferRec, * _frontBufferRec, * _backBufferRec; //arrays for MPI halo transfer (receive)
+	int* _leftOccBuffer, * _rightOccBuffer, * _topOccBuffer, * _bottomOccBuffer, * _frontOccBuffer, * _backOccBuffer; //arrays for MPI halo transfer (send)
+	int* _leftOccBufferRec, * _rightOccBufferRec, * _topOccBufferRec, * _bottomOccBufferRec, * _frontOccBufferRec, * _backOccBufferRec; //arrays for MPI halo transfer (receive)
+
 
 
 	bool _periodicBC;
@@ -76,6 +79,9 @@ private:
 	Vector3<double> _bBoxMin;
 	std::vector<int> _neighbours;
 	int _xHaloSize,_yHaloSize,_zHaloSize;
+	int _xHaloOccSize,_yHaloOccSize,_zHaloOccSize;
+
+	int _globalLevelNumCells;
 	// M2M
 	void CombineMpCell(double *cellWid, int& mpCells, int& curLevel);
 
