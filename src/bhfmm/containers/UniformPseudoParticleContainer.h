@@ -25,7 +25,7 @@ namespace bhfmm {
 class UniformPseudoParticleContainer: public PseudoParticleContainer {
 public:
 	UniformPseudoParticleContainer(double domainLength[3], double bBoxMin[3], double bBoxMax[3],
-			double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions, bool peridic = true);
+			double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions, std::vector<int> neighbours,bool periodic = true);
 	~UniformPseudoParticleContainer();
 
 	void clear();
@@ -74,6 +74,8 @@ private:
 	int _numProcessorsPerDim;
 	Vector3<int> _processorPositionGlobalLevel;
 	Vector3<double> _bBoxMin;
+	std::vector<int> _neighbours;
+	int _xHaloSize,_yHaloSize,_zHaloSize;
 	// M2M
 	void CombineMpCell(double *cellWid, int& mpCells, int& curLevel);
 

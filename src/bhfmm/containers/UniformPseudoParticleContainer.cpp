@@ -27,12 +27,16 @@ namespace bhfmm {
 UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		double domainLength[3], double bBoxMin[3], double bBoxMax[3],
 		double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions,
-		bool periodic) :
+		std::vector<int> neighbours, bool periodic) :
 		PseudoParticleContainer(orderOfExpansions), _leafContainer(0), _wellSep(1),
 		_M2M_Wigner(4, WignerMatrix(orderOfExpansions, true)), _L2L_Wigner(4, WignerMatrix(orderOfExpansions, true)) {
 
 	_periodicBC = periodic;
-
+	_neighbours = neighbours;
+#if WIGNER == 1 && defined(NEW_FMM)
+	global_log->error() << "not supported yet" << endl;
+	exit(-1);
+#endif
 #ifdef ENABLE_MPI
 	_timerProcessCells.set_sync(false);
 	_timerAllreduce.set_sync(false);
@@ -75,10 +79,30 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	//allocate Multipole and Local particles
 	int num_cells_in_level = 1;
 	_mpCell.reserve(_maxLevel + 1);
+	int num_cells_in_level_one_dim;
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	num_cells_in_level_one_dim = 1;
+
+	for (int n = 0; n <= _globalLevel; n++) {
+		_mpCell.push_back(std::vector<MpCell>(num_cells_in_level, _maxOrd));
+		num_cells_in_level *= 8;
+	}
+	//num_cells_in_level = 8;
+	num_cells_in_level_one_dim = 2;
+	for (int n = _globalLevel + 1; n <= _maxLevel; n++) {
+		_mpCell.push_back(std::vector<MpCell>((int) pow(num_cells_in_level_one_dim + 4,3), _maxOrd));
+		_xHaloSize += num_cells_in_level_one_dim * num_cells_in_level_one_dim;
+		_yHaloSize += (num_cells_in_level_one_dim + 4) * num_cells_in_level_one_dim;
+		_zHaloSize += (num_cells_in_level_one_dim + 4) * (num_cells_in_level_one_dim + 4);
+
+		num_cells_in_level_one_dim *= 2;
+	}
+#else
 	for (int n = 0; n <= _maxLevel; n++) {
 		_mpCell.push_back(std::vector<MpCell>(num_cells_in_level, _maxOrd));
 		num_cells_in_level *= 8;
 	}
+#endif
 //	assert(
 //			num_cells_in_level
 //					== _globalNumCellsPerDim * _globalNumCellsPerDim
@@ -86,7 +110,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 	// initalize centers and radii
 	num_cells_in_level = 1;
-	int num_cells_in_level_one_dim = 1;
+	num_cells_in_level_one_dim = 1;
 	Vector3<double> current_pos;
 	Vector3<double> current_cell_length(domainLength);
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
@@ -128,10 +152,10 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	num_cells_in_level = 1;
 	int numc_cells_in_level_one_dim_old = num_cells_in_level_one_dim;
 	num_cells_in_level_one_dim = 1;
-	int xPosition, yPosition, zPosition;
-	int cellsPerGlobalDimension = pow(2,_globalLevel);
-	int myRank;
-	MPI_Comm_rank(MPI_IN_PLACE,&myRank);
+//	int xPosition, yPosition, zPosition;
+//	int cellsPerGlobalDimension = pow(2,_globalLevel);
+//	int myRank;
+//	MPI_Comm_rank(MPI_IN_PLACE,&myRank);
 //	localX = myRank % cellsPerGlobalDimension;
 //	localY = (myRank / cellsPerGlobalDimension) % cellsPerGlobalDimension;
 //	localZ = (myRank / (cellsPerGlobalDimension * cellsPerGlobalDimension)) % cellsPerGlobalDimension;
@@ -1500,6 +1524,47 @@ void UniformPseudoParticleContainer::communicateHalos(){
 	getZHaloValues(localMpCellsBottom,_maxLevel);
 	communicateHalosZ();
 	setZHaloValues(localMpCellsBottom,_maxLevel);
+
+#endif
+}
+void UniformPseudoParticleContainer::communicateHalosX(){
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	MPI_Request low, high;
+	MPI_Status lowRecv,highRecv;
+	MPI_Isend(_leftBuffer, _xHaloSize, MPI_DOUBLE, _neighbours[0], 1,
+	              MPI_IN_PLACE, low);
+	MPI_Isend(_rightBuffer, _xHaloSize, MPI_DOUBLE, _neighbours[1], 1,
+		              MPI_IN_PLACE, high);
+	MPI_Recv(_leftBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[0],1,MPI_IN_PLACE,lowRecv);
+	MPI_Recv(_rightBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[1],1,MPI_IN_PLACE,highRecv);
+
+#endif
+}
+
+void UniformPseudoParticleContainer::communicateHalosY(){
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	MPI_Request low, high;
+	MPI_Status lowRecv,highRecv;
+	MPI_Isend(_bottomBuffer, _yHaloSize, MPI_DOUBLE, _neighbours[2], 1,
+	              MPI_IN_PLACE, low);
+	MPI_Isend(_topBuffer, _yHaloSize, MPI_DOUBLE, _neighbours[3], 1,
+		              MPI_IN_PLACE, high);
+	MPI_Recv(_bottomBufferRec, _yHaloSize,MPI_DOUBLE, _neighbours[2],1,MPI_IN_PLACE,lowRecv);
+	MPI_Recv(_topBufferRec, _yHaloSize,MPI_DOUBLE, _neighbours[3],1,MPI_IN_PLACE,highRecv);
+
+#endif
+}
+
+void UniformPseudoParticleContainer::communicateHalosZ(){
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	MPI_Request low, high;
+	MPI_Status lowRecv,highRecv;
+	MPI_Isend(_backBuffer, _zHaloSize, MPI_DOUBLE, _neighbours[4], 1,
+	              MPI_IN_PLACE, low);
+	MPI_Isend(_frontBuffer, _zHaloSize, MPI_DOUBLE, _neighbours[5], 1,
+		              MPI_IN_PLACE, high);
+	MPI_Recv(_backBufferRec, _zHaloSize,MPI_DOUBLE, _neighbours[4],1,MPI_IN_PLACE,lowRecv);
+	MPI_Recv(_frontBufferRec, _zHaloSize,MPI_DOUBLE, _neighbours[5],1,MPI_IN_PLACE,highRecv);
 
 #endif
 }

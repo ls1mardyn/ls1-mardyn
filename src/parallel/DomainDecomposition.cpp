@@ -209,3 +209,14 @@ void DomainDecomposition::printDecomp(string filename, Domain* domain) {
 	}
 }
 
+virtual std::vector<int> DomainDecomposition::getNeighbourRanks(){
+	std::vector<int> neighbours;
+	for(int d = 0; d < DIM;d++){
+		for(int n = 0; n < 2; n++){
+			neighbours.push_back(_neighbours[d][n].getRank());
+		}
+	}
+	return neighbours;
+}
+
+

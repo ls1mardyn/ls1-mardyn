@@ -34,7 +34,7 @@ public:
 			bool periodic = true, bool adaptive = false);
 
 	void init(double globalDomainLength[3], double bBoxMin[3],
-			double bBoxMax[3], double LJCellLength[3]);
+			double bBoxMax[3], double LJCellLength[3], std::vector<int> neighbours);
 
 	void computeElectrostatics(ParticleContainer * ljContainer);
 

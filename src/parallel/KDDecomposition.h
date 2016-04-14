@@ -102,6 +102,11 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	int getUpdateFrequency() { return _frequency; }
 	void getUpdateFrequency(int frequency) { _frequency = frequency; }
+	virtual std::vector<int> getNeighbourRank(){
+		global_log->error() << "not implemented \n";
+		exit(-1);
+		return NULL;
+	}
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);

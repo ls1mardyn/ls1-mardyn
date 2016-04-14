@@ -79,6 +79,8 @@ public:
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
+	virtual std::vector<int> getNeighbourRanks();
+
 private:
 	bool _neighboursInitialized;
 

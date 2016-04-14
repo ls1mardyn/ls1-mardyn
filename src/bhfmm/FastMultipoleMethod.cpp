@@ -58,7 +58,7 @@ void FastMultipoleMethod::setParameters(unsigned LJSubdivisionFactor,
 }
 
 void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
-		double bBoxMax[3], double LJCellLength[3]) {
+		double bBoxMax[3], double LJCellLength[3], std::vector<int> neighbours) {
 
 	if (_LJCellSubdivisionFactor != 1
 			and _LJCellSubdivisionFactor != 2
@@ -76,10 +76,16 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 			*(global_simulation->getDomain()));
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	if (_adaptive){
+		global_log->error() << "not supported yet" << endl;
+		exit(-1);
+	}
+#endif
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(
 				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,
-				_LJCellSubdivisionFactor, _order, _periodic);
+				_LJCellSubdivisionFactor, _order, neighbours, _periodic);
 
 	} else {
 		// TODO: Debugging in Progress!

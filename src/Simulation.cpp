@@ -661,9 +661,9 @@ void Simulation::prepare_start() {
 			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
-
+		std::vector<int> neighbours = _domainDecomposition->getNeighbourRanks();
 		_FMM->init(globalLength, bBoxMin, bBoxMax,
-				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength());
+				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength(), neighbours);
 
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
