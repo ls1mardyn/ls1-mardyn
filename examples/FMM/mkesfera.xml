@@ -63,7 +63,10 @@
         <fullSearchThreshold>2</fullSearchThreshold>
       </parallelisation>
       -->
+      <!--
       <parallelisation type="DummyDecomposition"></parallelisation>
+      -->
+      <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>

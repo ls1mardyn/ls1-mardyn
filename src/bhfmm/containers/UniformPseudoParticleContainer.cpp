@@ -63,7 +63,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	}
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	_bBoxMin[0] = bBoxMin[0];
-	_bBoxMin[1] = bBoxMin[2];
+	_bBoxMin[1] = bBoxMin[1];
 	_bBoxMin[2] = bBoxMin[2];
 #endif
 
@@ -75,6 +75,10 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	int numProcessors;
 	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
 	_globalLevel = log2(numProcessors)/3;
+	if(_globalLevel > _maxLevel){
+		std::cout << "too many MPI ranks \n";
+		exit(-1);
+	}
 	//numProcessers has to be a power of 8
 	assert(log2(numProcessors) == _globalLevel * 3);
 	_numProcessorsPerDim = pow(2,log2(numProcessors/3));
@@ -94,8 +98,11 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	}
 	//num_cells_in_level = 8;
 	num_cells_in_level_one_dim = 2;
+	_xHaloSize = 0;
+	_yHaloSize = 0;
+	_zHaloSize = 0;
 	for (int n = _globalLevel + 1; n <= _maxLevel; n++) {
-		_mpCell.push_back(std::vector<MpCell>((int) pow(num_cells_in_level_one_dim + 4,3), _maxOrd));
+		_mpCell.push_back(std::vector<MpCell>((int) pow(num_cells_in_level_one_dim + 4 , 3), _maxOrd));
 		_xHaloSize += num_cells_in_level_one_dim * num_cells_in_level_one_dim;
 		_yHaloSize += (num_cells_in_level_one_dim + 4) * num_cells_in_level_one_dim;
 		_zHaloSize += (num_cells_in_level_one_dim + 4) * (num_cells_in_level_one_dim + 4);
@@ -156,7 +163,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	//ToDo multiple trees from different roots (so far only one)
 	num_cells_in_level = 1;
 	int numc_cells_in_level_one_dim_old = num_cells_in_level_one_dim;
-	num_cells_in_level_one_dim = 1;
+	num_cells_in_level_one_dim = 2;
 //	int xPosition, yPosition, zPosition;
 //	int cellsPerGlobalDimension = pow(2,_globalLevel);
 //	int myRank;
@@ -230,6 +237,30 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 			_coeffVectorLength++;
 		}
 	}
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	_xHaloSize *= _coeffVectorLength;
+	_yHaloSize *= _coeffVectorLength;
+	_zHaloSize *= _coeffVectorLength;
+
+	_leftBuffer = new double[_xHaloSize * 2];
+	_rightBuffer = new double[_xHaloSize * 2];
+
+	_bottomBuffer = new double[_yHaloSize * 2];
+	_topBuffer = new double[_yHaloSize * 2];
+
+	_backBuffer = new double[_zHaloSize * 2];
+	_frontBuffer = new double[_zHaloSize * 2];
+
+	_leftBufferRec = new double[_xHaloSize * 2];
+	_rightBufferRec = new double[_xHaloSize * 2];
+
+	_bottomBufferRec = new double[_yHaloSize * 2];
+	_topBufferRec = new double[_yHaloSize * 2];
+
+	_backBufferRec = new double[_zHaloSize * 2];
+	_frontBufferRec = new double[_zHaloSize * 2];
+#endif
+
 	_coeffVectorLength *= _globalNumCells;
 	_coeffVector = new double[_coeffVectorLength * 2];
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
@@ -358,7 +389,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 			CombineMpCell(cellWid, curCellsEdge, curLevel);
 		}
 		if(curLevel == _globalLevel){
-			AllReduceMultipoleMomentsLevel(pow(curCellsEdge+4,3),curLevel);
+			AllReduceMultipoleMomentsLevel(pow(_globalLevel,3),curLevel);
 		}
 #elif WIGNER==0
 		CombineMpCell(cellWid, curCellsEdge, curLevel);
@@ -1039,16 +1070,30 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 			cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
 		}
 		else{
-			cellIndexV[i] = rint((cell.getBoxMin(i)-_bBoxMin[i]) / _cellLength[i]);
+			cellIndexV[i] = rint((cell.getBoxMin(i)-_bBoxMin[i]) / _cellLength[i]) + 2;
+			if(cellIndexV[i] < 2){
+				std::cout << "Negative value " << cellIndexV[i] << " boxMin: " << cell.getBoxMin(i) << " bBoxMin: " << _bBoxMin[i] << " cellLength: " << _cellLength[i] << " \n";
+			}
+			//ToDo check why value -2 occurs
+
 		}
 
 #else
 		cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
 #endif
 	}
-
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	int cellIndex;
+	if (_maxLevel == _globalLevel){
+		cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1]) * _globalNumCellsPerDim) + cellIndexV[0];
+	}
+	else{
+		const int numCellsOnLocalMaxLevel = (_globalNumCellsPerDim / _numProcessorsPerDim + 4);
+		cellIndex = ((numCellsOnLocalMaxLevel * cellIndexV[2] + cellIndexV[1])	* numCellsOnLocalMaxLevel) + cellIndexV[0];
+	}
+#else
 	int cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1])	* _globalNumCellsPerDim) + cellIndexV[0];
-
+#endif
 
 //	assert(cell.isInActiveWindow());
 
@@ -1085,10 +1130,31 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 	int cellIndexV[3];
 	for (int i = 0; i < 3; i++) {
+	#if defined(ENABLE_MPI) && defined(NEW_FMM)
+		if(_maxLevel == _globalLevel){
+			cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
+		}
+		else{
+			cellIndexV[i] = rint((cell.getBoxMin(i)-_bBoxMin[i]) / _cellLength[i]) + 2;
+		}
+
+#else
 		cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
+#endif
 	}
 
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	int cellIndex;
+	if (_maxLevel == _globalLevel){
+		cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1]) * _globalNumCellsPerDim) + cellIndexV[0];
+	}
+	else{
+		const int numCellsOnLocalMaxLevel = (_globalNumCellsPerDim / _numProcessorsPerDim + 4);
+		cellIndex = ((numCellsOnLocalMaxLevel * cellIndexV[2] + cellIndexV[1])	* numCellsOnLocalMaxLevel) + cellIndexV[0];
+	}
+#else
 	int cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1]) * _globalNumCellsPerDim) + cellIndexV[0];
+#endif
 
 	bhfmm::SolidHarmonicsExpansion leLocal(_maxOrd);
 	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
@@ -1142,6 +1208,41 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 }
 
 void UniformPseudoParticleContainer::clear() {
+
+#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	for (int n = _maxLevel; n > _globalLevel; n--) {
+		int localMpCells = pow(2, n) / _numProcessorsPerDim + 4;
+
+		for (int m1z = 0; m1z < localMpCells; m1z++) {
+			for (int m1y = 0; m1y < localMpCells; m1y++) {
+				for (int m1x = 0; m1x < localMpCells; m1x++) {
+					int cellIndexNew = (m1z * localMpCells + m1y) * localMpCells + m1x;
+
+					_mpCell[n][cellIndexNew].occ = 0;
+
+					_mpCell[n][cellIndexNew].multipole.clear();
+					_mpCell[n][cellIndexNew].local.clear();
+				}
+			}
+		}
+	}
+	for (int n = _globalLevel; n >= 1; n--) {
+		int mpCells = pow(2, n);
+
+		for (int m1z = 0; m1z < mpCells; m1z++) {
+			for (int m1y = 0; m1y < mpCells; m1y++) {
+				for (int m1x = 0; m1x < mpCells; m1x++) {
+					int cellIndexNew = (m1z * mpCells + m1y) * mpCells + m1x;
+
+					_mpCell[n][cellIndexNew].occ = 0;
+
+					_mpCell[n][cellIndexNew].multipole.clear();
+					_mpCell[n][cellIndexNew].local.clear();
+				}
+			}
+		}
+	}
+#else
 	for (int n = _maxLevel; n >= 1; n--) {
 		int mpCells = pow(2, n);
 
@@ -1158,7 +1259,7 @@ void UniformPseudoParticleContainer::clear() {
 			}
 		}
 	}
-
+#endif
 	// clear the MPI buffers
 #ifdef ENABLE_MPI
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength*2, 0.0);
@@ -1535,12 +1636,12 @@ void UniformPseudoParticleContainer::communicateHalosX(){
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	MPI_Request low, high;
 	MPI_Status lowRecv,highRecv;
-	MPI_Isend(_leftBuffer, _xHaloSize, MPI_DOUBLE, _neighbours[0], 1,
+	MPI_Isend(_leftBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[0], 1,
 			MPI_COMM_WORLD, &low);
-	MPI_Isend(_rightBuffer, _xHaloSize, MPI_DOUBLE, _neighbours[1], 1,
+	MPI_Isend(_rightBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[1], 1,
 			MPI_COMM_WORLD, &high);
-	MPI_Recv(_leftBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[0],1,MPI_COMM_WORLD, &lowRecv);
-	MPI_Recv(_rightBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[1],1,MPI_COMM_WORLD, &highRecv);
+	MPI_Recv(_leftBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[0],1,MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_rightBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[1],1,MPI_COMM_WORLD, &highRecv);
 
 #endif
 }
@@ -1549,12 +1650,12 @@ void UniformPseudoParticleContainer::communicateHalosY(){
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	MPI_Request low, high;
 	MPI_Status lowRecv,highRecv;
-	MPI_Isend(_bottomBuffer, _yHaloSize, MPI_DOUBLE, _neighbours[2], 1,
+	MPI_Isend(_bottomBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 1,
 			MPI_COMM_WORLD, &low);
-	MPI_Isend(_topBuffer, _yHaloSize, MPI_DOUBLE, _neighbours[3], 1,
+	MPI_Isend(_topBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 1,
 			MPI_COMM_WORLD, &high);
-	MPI_Recv(_bottomBufferRec, _yHaloSize, MPI_DOUBLE, _neighbours[2], 1, MPI_COMM_WORLD, &lowRecv);
-	MPI_Recv(_topBufferRec, _yHaloSize, MPI_DOUBLE, _neighbours[3], 1, MPI_COMM_WORLD, &highRecv);
+	MPI_Recv(_bottomBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 1, MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_topBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 1, MPI_COMM_WORLD, &highRecv);
 
 #endif
 }
@@ -1563,12 +1664,12 @@ void UniformPseudoParticleContainer::communicateHalosZ(){
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	MPI_Request low, high;
 	MPI_Status lowRecv,highRecv;
-	MPI_Isend(_backBuffer, _zHaloSize, MPI_DOUBLE, _neighbours[4], 1,
+	MPI_Isend(_backBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 1,
 			MPI_COMM_WORLD, &low);
-	MPI_Isend(_frontBuffer, _zHaloSize, MPI_DOUBLE, _neighbours[5], 1,
+	MPI_Isend(_frontBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 1,
 			MPI_COMM_WORLD, &high);
-	MPI_Recv(_backBufferRec, _zHaloSize, MPI_DOUBLE, _neighbours[4], 1, MPI_COMM_WORLD, &lowRecv);
-	MPI_Recv(_frontBufferRec, _zHaloSize, MPI_DOUBLE, _neighbours[5], 1, MPI_COMM_WORLD, &highRecv);
+	MPI_Recv(_backBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 1, MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_frontBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 1, MPI_COMM_WORLD, &highRecv);
 
 #endif
 }
