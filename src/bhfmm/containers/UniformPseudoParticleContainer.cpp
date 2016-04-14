@@ -73,7 +73,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	assert(_maxLevel == log2(domainLength[2] / cellLength[2]));
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	int numProcessors;
-	MPI_Comm_size(MPI_IN_PLACE,&numProcessors);
+	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
 	_globalLevel = log2(numProcessors)/3;
 	//numProcessers has to be a power of 8
 	assert(log2(numProcessors) == _globalLevel * 3);
@@ -1514,7 +1514,7 @@ void UniformPseudoParticleContainer::communicateHalos(){
 
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	int numProcessors;
-	MPI_Comm_size(MPI_IN_PLACE,&numProcessors);
+	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
 	int numProcessorsPerDim = pow(2,log2(numProcessors)/3);
 	int localMpCellsBottom = pow(2,_maxLevel) / numProcessorsPerDim  + 4;
 	getXHaloValues(localMpCellsBottom,_maxLevel);
@@ -1536,11 +1536,11 @@ void UniformPseudoParticleContainer::communicateHalosX(){
 	MPI_Request low, high;
 	MPI_Status lowRecv,highRecv;
 	MPI_Isend(_leftBuffer, _xHaloSize, MPI_DOUBLE, _neighbours[0], 1,
-	              MPI_IN_PLACE, low);
+			MPI_COMM_WORLD, &low);
 	MPI_Isend(_rightBuffer, _xHaloSize, MPI_DOUBLE, _neighbours[1], 1,
-		              MPI_IN_PLACE, high);
-	MPI_Recv(_leftBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[0],1,MPI_IN_PLACE,lowRecv);
-	MPI_Recv(_rightBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[1],1,MPI_IN_PLACE,highRecv);
+			MPI_COMM_WORLD, &high);
+	MPI_Recv(_leftBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[0],1,MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_rightBufferRec, _xHaloSize,MPI_DOUBLE, _neighbours[1],1,MPI_COMM_WORLD, &highRecv);
 
 #endif
 }
@@ -1550,11 +1550,11 @@ void UniformPseudoParticleContainer::communicateHalosY(){
 	MPI_Request low, high;
 	MPI_Status lowRecv,highRecv;
 	MPI_Isend(_bottomBuffer, _yHaloSize, MPI_DOUBLE, _neighbours[2], 1,
-	              MPI_IN_PLACE, low);
+			MPI_COMM_WORLD, &low);
 	MPI_Isend(_topBuffer, _yHaloSize, MPI_DOUBLE, _neighbours[3], 1,
-		              MPI_IN_PLACE, high);
-	MPI_Recv(_bottomBufferRec, _yHaloSize,MPI_DOUBLE, _neighbours[2],1,MPI_IN_PLACE,lowRecv);
-	MPI_Recv(_topBufferRec, _yHaloSize,MPI_DOUBLE, _neighbours[3],1,MPI_IN_PLACE,highRecv);
+			MPI_COMM_WORLD, &high);
+	MPI_Recv(_bottomBufferRec, _yHaloSize, MPI_DOUBLE, _neighbours[2], 1, MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_topBufferRec, _yHaloSize, MPI_DOUBLE, _neighbours[3], 1, MPI_COMM_WORLD, &highRecv);
 
 #endif
 }
@@ -1564,11 +1564,11 @@ void UniformPseudoParticleContainer::communicateHalosZ(){
 	MPI_Request low, high;
 	MPI_Status lowRecv,highRecv;
 	MPI_Isend(_backBuffer, _zHaloSize, MPI_DOUBLE, _neighbours[4], 1,
-	              MPI_IN_PLACE, low);
+			MPI_COMM_WORLD, &low);
 	MPI_Isend(_frontBuffer, _zHaloSize, MPI_DOUBLE, _neighbours[5], 1,
-		              MPI_IN_PLACE, high);
-	MPI_Recv(_backBufferRec, _zHaloSize,MPI_DOUBLE, _neighbours[4],1,MPI_IN_PLACE,lowRecv);
-	MPI_Recv(_frontBufferRec, _zHaloSize,MPI_DOUBLE, _neighbours[5],1,MPI_IN_PLACE,highRecv);
+			MPI_COMM_WORLD, &high);
+	MPI_Recv(_backBufferRec, _zHaloSize, MPI_DOUBLE, _neighbours[4], 1, MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_frontBufferRec, _zHaloSize, MPI_DOUBLE, _neighbours[5], 1, MPI_COMM_WORLD, &highRecv);
 
 #endif
 }
