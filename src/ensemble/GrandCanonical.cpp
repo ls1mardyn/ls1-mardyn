@@ -409,7 +409,7 @@ Molecule ChemicalPotential::loadMolecule()
                double Dnorm = 0.0;
                for(int d=0; d < 3; d++) D[d] = -0.5 + this->rndmomenta.rnd();
                double w[3];
-               tqtr.rotate(D, w);
+               tqtr.rotateinv(D, w);
                double Iw2 = w[0]*w[0] * tmp.component()->I11()
                           + w[1]*w[1] * tmp.component()->I22()
                           + w[2]*w[2] * tmp.component()->I33();

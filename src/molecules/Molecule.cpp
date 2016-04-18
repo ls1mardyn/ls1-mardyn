@@ -84,7 +84,7 @@ void Molecule::upd_preF(double dt) {
 	}
 
 	double w[3];
-	_q.rotate(_L, w);
+	_q.rotateinv(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
 	Quaternion qhalfstep;
@@ -95,7 +95,7 @@ void Molecule::upd_preF(double dt) {
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
 		_L[d] += dt_halve * _M[d];
-	qhalfstep.rotate(_L, w);
+	qhalfstep.rotateinv(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
 	Quaternion qincr;
@@ -116,25 +116,25 @@ void Molecule::upd_cache() {
 
 	ns = numLJcenters();
 	for (i = 0; i < ns; ++i)
-		_q.rotateinv(_component->ljcenter(i).r(), &(_ljcenters_d[i*3]));
+		_q.rotate(_component->ljcenter(i).r(), &(_ljcenters_d[i*3]));
 	ns = numCharges();
 	for (i = 0; i < ns; ++i)
-		_q.rotateinv(_component->charge(i).r(), &(_charges_d[i*3]));
+		_q.rotate(_component->charge(i).r(), &(_charges_d[i*3]));
 	ns = numDipoles();
 	for (i = 0; i < ns; ++i) {
 		const Dipole& di = _component->dipole(i);
-		_q.rotateinv(di.r(), &(_dipoles_d[i*3]));
-		_q.rotateinv(di.e(), &(_dipoles_e[i*3]));
+		_q.rotate(di.r(), &(_dipoles_d[i*3]));
+		_q.rotate(di.e(), &(_dipoles_e[i*3]));
 	}
 	ns = numQuadrupoles();
 	for (i = 0; i < ns; ++i) {
 		const Quadrupole& qi = _component->quadrupole(i);
-		_q.rotateinv(qi.r(), &(_quadrupoles_d[i*3]));
-		_q.rotateinv(qi.e(), &(_quadrupoles_e[i*3]));
+		_q.rotate(qi.r(), &(_quadrupoles_d[i*3]));
+		_q.rotate(qi.e(), &(_quadrupoles_e[i*3]));
 	}
 	ns = numTersoff();
 	for (i = 0; i < ns; i++)
-		_q.rotateinv(_component->tersoff(i).r(), &(_tersoff_d[i*3]));
+		_q.rotate(_component->tersoff(i).r(), &(_tersoff_d[i*3]));
 }
 
 
@@ -153,7 +153,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
     summv2 += _m * v2;
 
 	double w[3];
-	_q.rotate(_L, w); // L = D = Iw
+	_q.rotateinv(_L, w); // L = D = Iw
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -166,7 +166,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 
 double Molecule::U_rot() {
 	double w[3];
-	_q.rotate(_L, w);
+	_q.rotateinv(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -178,7 +178,7 @@ double Molecule::U_rot() {
 void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	summv2 += _m * v2();
 	double w[3];
-	_q.rotate(_L, w);
+	_q.rotateinv(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -194,7 +194,7 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, do
 	summv2 += _m * (vcx*vcx + vcy*vcy + vcz*vcz);
 
 	double w[3];
-	_q.rotate(_L, w);
+	_q.rotateinv(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
