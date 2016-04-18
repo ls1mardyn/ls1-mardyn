@@ -661,7 +661,6 @@ void Simulation::prepare_start() {
 			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
-		std::vector<int> neighbours = _domainDecomposition->getNeighbourRanks();
 		_FMM->init(globalLength, bBoxMin, bBoxMax,
 				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength());
 
@@ -675,6 +674,8 @@ void Simulation::prepare_start() {
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
 	_moleculeContainer->traverseCells(*_cellProcessor);
+	_FMM = NULL;
+
 	if (_FMM != NULL) {
 		global_log->info() << "Performing inital FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);

@@ -39,7 +39,7 @@ void SHLocalParticle::addMultipoleParticle(const MultipoleParticle& multipole, V
 
 	// distance-vector FROM local TO multipole
 	Vector3<double> r_target_to_source = shifted_center - _center;
-
+	//std::cout << r_target_to_source <<" \n";
 	// assert that cells are not touching
 	assert(r_target_to_source.L2Norm() >= _radius + multipole.getRadius());
 

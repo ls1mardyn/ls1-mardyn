@@ -35,11 +35,18 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_neighbours = domainDecomp.getNeighbourRanks();
-#endif
+	std::vector<int> neigh = domainDecomp.getNeighbourRanks();
+	for(int i = 0; i<6; ++i){
+		_neighbours.push_back(neigh[i]);
+		//std::cout << neigh[i] << " , ";
+	}
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+	//std::cout << rank<<"\n";
 
+#endif
 #if WIGNER == 1 && defined(NEW_FMM)
-	global_log->error() << "not supported yet" << endl;
+	//global_log->error() << "not supported yet" << endl;
 	exit(-1);
 #endif
 #ifdef ENABLE_MPI
@@ -161,7 +168,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 //	int localX,localY,localZ;
 	//here it is supposed that every processor has exactly one subtree consisting only of one root node
 	//ToDo multiple trees from different roots (so far only one)
-	num_cells_in_level = 1;
+	//num_cells_in_level = 1;
 	int num_cells_in_level_one_dim_old = num_cells_in_level_one_dim;
 	num_cells_in_level_one_dim = 2;
 //	int xPosition, yPosition, zPosition;
@@ -194,7 +201,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 				}
 			}
 			num_cells_in_level_one_dim *= 2;
-			num_cells_in_level *= 8; //ToDo: is it needed anymore?
+			//num_cells_in_level *= 8; //ToDo: is it needed anymore?
 			current_cell_length = Vector3<double>(domainLength)
 					* (1.0 / (num_cells_in_level_one_dim * _numProcessorsPerDim));
 		}
@@ -372,6 +379,33 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete[] _coeffVector;
 	delete[] _occVector;
 	delete _CosSin;
+#if defined(NEW_FMM)
+	delete[] _leftBuffer;
+	delete[] _rightBuffer;
+	delete[] _topBuffer;
+	delete[] _bottomBuffer;
+	delete[] _frontBuffer;
+	delete[] _backBuffer;
+	delete[] _leftBufferRec;
+	delete[] _rightBufferRec;
+	delete[] _topBufferRec;
+	delete[] _bottomBufferRec;
+	delete[] _frontBufferRec;
+	delete[] _backBufferRec;
+	delete[] _leftOccBuffer;
+	delete[] _rightOccBuffer;
+	delete[] _topOccBuffer;
+	delete[] _bottomOccBuffer;
+	delete[] _frontOccBuffer;
+	delete[] _backOccBuffer;
+	delete[] _leftOccBufferRec;
+	delete[] _rightOccBufferRec;
+	delete[] _topOccBufferRec;
+	delete[] _bottomOccBufferRec;
+	delete[] _frontOccBufferRec;
+	delete[] _backOccBufferRec;
+#endif
+
 }
 
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
@@ -386,7 +420,7 @@ void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	// P2M
 	_leafContainer->traverseCellPairs(*cp);
-#if not defined(ENABLE_MPI) && not defined(NEW_FMM)
+#if not defined(NEW_FMM)
 	// M2M
 	AllReduceMultipoleMoments();
 #endif
@@ -492,7 +526,7 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 		if(curLevel >= _globalLevel){
 		    int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
 		    const Vector3<int> offset = (_globalLevel == curLevel)? _processorPositionGlobalLevel: Vector3<int>(2);
-
+		    //std::cout << curLevel << " " << offset << " " << curCellsEdgeLocal << "\n";
 			PropagateCellLo_MPI(cellWid, curCellsEdgeLocal, curLevel,offset);
 		}
 		else{
@@ -1126,6 +1160,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 		cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
 #endif
 	}
+	//std::cout << "ci " << cellIndexV[0] <<" , " <<cellIndexV[1] << " , " <<cellIndexV[2] << " \n";
 #if defined(ENABLE_MPI) && defined(NEW_FMM)
 	int cellIndex;
 	if (_maxLevel == _globalLevel){
@@ -1230,7 +1265,8 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 			f[0] = f_vec3[0];
 			f[1] = f_vec3[1];
 			f[2] = f_vec3[2];
-
+			//if(f[0] > 1 || f[1] > 1 || f[2] >1)
+				//std::cout << f[0] << " , " << f[1] << " , " << f[2] << "\n";
 			double virial = 0.0;
 			for(int l=0; l<3; l++){
 				virial +=-f[l]*dr[l];
@@ -1319,7 +1355,7 @@ void UniformPseudoParticleContainer::clear() {
 void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 	_timerAllreduce.start();
 #ifdef ENABLE_MPI
-
+	//std::cout << "error \n";
 	int coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < _globalNumCells; cellIndex++) {
 		const MpCell & currentCell = _mpCell[_maxLevel][cellIndex];
@@ -1748,7 +1784,7 @@ void UniformPseudoParticleContainer::communicateHalos(){
 	getZHaloValues(localMpCellsBottom,_maxLevel);
 	communicateHalosZ();
 	setZHaloValues(localMpCellsBottom,_maxLevel);
-
+	MPI_Barrier(MPI_COMM_WORLD);
 #endif
 }
 void UniformPseudoParticleContainer::communicateHalosX(){
@@ -1761,18 +1797,18 @@ void UniformPseudoParticleContainer::communicateHalosX(){
 
 	MPI_Isend(_leftBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[0], 1,
 			MPI_COMM_WORLD, &low);
-	MPI_Isend(_rightBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[1], 1,
+	MPI_Isend(_rightBuffer, _xHaloSize * 2, MPI_DOUBLE, _neighbours[1], 3,
 			MPI_COMM_WORLD, &high);
 
 	MPI_Isend(_leftOccBuffer, _xHaloOccSize, MPI_INT, _neighbours[0], 2,
 				MPI_COMM_WORLD, &lowOcc);
-	MPI_Isend(_rightOccBuffer, _xHaloOccSize, MPI_INT, _neighbours[1], 2,
+	MPI_Isend(_rightOccBuffer, _xHaloOccSize, MPI_INT, _neighbours[1], 4,
 				MPI_COMM_WORLD, &highOcc);
 
-	MPI_Recv(_leftBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[0],1,MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_leftBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[0],3,MPI_COMM_WORLD, &lowRecv);
 	MPI_Recv(_rightBufferRec, _xHaloSize * 2,MPI_DOUBLE, _neighbours[1],1,MPI_COMM_WORLD, &highRecv);
 
-	MPI_Recv(_leftOccBufferRec, _xHaloOccSize,MPI_INT, _neighbours[0],2,MPI_COMM_WORLD, &lowOccRecv);
+	MPI_Recv(_leftOccBufferRec, _xHaloOccSize,MPI_INT, _neighbours[0],4,MPI_COMM_WORLD, &lowOccRecv);
 	MPI_Recv(_rightOccBufferRec, _xHaloOccSize,MPI_INT, _neighbours[1],2,MPI_COMM_WORLD, &highOccRecv);
 
 #endif
@@ -1788,18 +1824,18 @@ void UniformPseudoParticleContainer::communicateHalosY(){
 
 	MPI_Isend(_bottomBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 1,
 			MPI_COMM_WORLD, &low);
-	MPI_Isend(_topBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 1,
+	MPI_Isend(_topBuffer, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 3,
 			MPI_COMM_WORLD, &high);
 
 	MPI_Isend(_bottomOccBuffer, _yHaloOccSize, MPI_INT, _neighbours[2], 2,
 			MPI_COMM_WORLD, &lowOcc);
-	MPI_Isend(_topOccBuffer, _yHaloOccSize, MPI_INT, _neighbours[3], 2,
+	MPI_Isend(_topOccBuffer, _yHaloOccSize, MPI_INT, _neighbours[3], 4,
 			MPI_COMM_WORLD, &highOcc);
 
-	MPI_Recv(_bottomBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 1, MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_bottomBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[2], 3, MPI_COMM_WORLD, &lowRecv);
 	MPI_Recv(_topBufferRec, _yHaloSize * 2, MPI_DOUBLE, _neighbours[3], 1, MPI_COMM_WORLD, &highRecv);
 
-	MPI_Recv(_bottomOccBufferRec, _yHaloOccSize, MPI_INT, _neighbours[2], 2, MPI_COMM_WORLD, &lowOccRecv);
+	MPI_Recv(_bottomOccBufferRec, _yHaloOccSize, MPI_INT, _neighbours[2], 4, MPI_COMM_WORLD, &lowOccRecv);
 	MPI_Recv(_topOccBufferRec, _yHaloOccSize, MPI_INT, _neighbours[3], 2, MPI_COMM_WORLD, &highOccRecv);
 
 #endif
@@ -1815,18 +1851,18 @@ void UniformPseudoParticleContainer::communicateHalosZ(){
 
 	MPI_Isend(_backBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 1,
 			MPI_COMM_WORLD, &low);
-	MPI_Isend(_frontBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 1,
+	MPI_Isend(_frontBuffer, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 3,
 			MPI_COMM_WORLD, &high);
 
 	MPI_Isend(_backOccBuffer, _zHaloOccSize, MPI_INT, _neighbours[4], 2,
 			MPI_COMM_WORLD, &lowOcc);
-	MPI_Isend(_frontOccBuffer, _zHaloOccSize, MPI_INT, _neighbours[5], 2,
+	MPI_Isend(_frontOccBuffer, _zHaloOccSize, MPI_INT, _neighbours[5], 4,
 			MPI_COMM_WORLD, &highOcc);
 
-	MPI_Recv(_backBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 1, MPI_COMM_WORLD, &lowRecv);
+	MPI_Recv(_backBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[4], 3, MPI_COMM_WORLD, &lowRecv);
 	MPI_Recv(_frontBufferRec, _zHaloSize * 2, MPI_DOUBLE, _neighbours[5], 1, MPI_COMM_WORLD, &highRecv);
 
-	MPI_Recv(_backOccBufferRec, _zHaloOccSize, MPI_INT, _neighbours[4], 2, MPI_COMM_WORLD, &lowOccRecv);
+	MPI_Recv(_backOccBufferRec, _zHaloOccSize, MPI_INT, _neighbours[4], 4, MPI_COMM_WORLD, &lowOccRecv);
 	MPI_Recv(_frontOccBufferRec, _zHaloOccSize, MPI_INT, _neighbours[5], 2, MPI_COMM_WORLD, &highOccRecv);
 
 #endif

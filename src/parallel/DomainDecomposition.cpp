@@ -210,13 +210,27 @@ void DomainDecomposition::printDecomp(string filename, Domain* domain) {
 }
 
 std::vector<int> DomainDecomposition::getNeighbourRanks(){
+#if defined(ENABLE_MPI)
+	int numProcs;
+	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
 	std::vector<int> neighbours;
-	for(int d = 0; d < DIM;d++){
-		for(int n = 0; n < 2; n++){
-			neighbours.push_back(_neighbours[d][n].getRank());
+	if(numProcs == 1){
+		int rank;
+		MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+		for(int i = 0; i<6; i++)
+			neighbours.push_back(rank);
+	}
+	else{
+		for(int d = 0; d < DIM;d++){
+			for(int n = 0; n < 2; n++){
+				neighbours.push_back(_neighbours[d][n].getRank());
+			}
 		}
 	}
 	return neighbours;
+#else
+	return std::vector<int>(0);
+#endif
 }
 
 
