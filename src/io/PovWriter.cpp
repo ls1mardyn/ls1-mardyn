@@ -123,7 +123,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "// " << dcomponents->size() << " objects for the atoms following..." << endl;
 		double mrot[3][3];
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
-			(pos->q()).getRotinvMatrix(mrot);
+			(pos->q()).getRotMatrix(mrot);
 			//cout << "object { T0 rotate <0,0,0> translate <0,0,0>}" << endl;
 			ostrm << "object { T" << pos->componentid();
 			ostrm << " matrix <"
