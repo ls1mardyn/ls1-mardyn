@@ -16,6 +16,7 @@
 #include "bhfmm/utils/RotationParameter.h"
 #include <vector>
 #include <map>
+#include "parallel/HaloBufferNoOverlap.h"
 
 class Domain;
 class DomainDecompBase;
@@ -65,21 +66,14 @@ private:
 	double* _coeffVector; // array for MPI allgather
 	double* _coeffVector_me;
 
-	double* _leftBuffer, * _rightBuffer, * _topBuffer, * _bottomBuffer, * _frontBuffer, * _backBuffer; //arrays for MPI halo transfer (send)
-	double* _leftBufferRec, * _rightBufferRec, * _topBufferRec, * _bottomBufferRec, * _frontBufferRec, * _backBufferRec; //arrays for MPI halo transfer (receive)
-	int* _leftOccBuffer, * _rightOccBuffer, * _topOccBuffer, * _bottomOccBuffer, * _frontOccBuffer, * _backOccBuffer; //arrays for MPI halo transfer (send)
-	int* _leftOccBufferRec, * _rightOccBufferRec, * _topOccBufferRec, * _bottomOccBufferRec, * _frontOccBufferRec, * _backOccBufferRec; //arrays for MPI halo transfer (receive)
-
-
-
+	HaloBufferNoOverlap<double> * _multipoleRecBuffer, *_multipoleBuffer;
+	HaloBufferNoOverlap<int> *_occBuffer, *_occRecBuffer;
 	bool _periodicBC;
 
 	int _numProcessorsPerDim;
 	Vector3<int> _processorPositionGlobalLevel;
 	Vector3<double> _bBoxMin;
 	std::vector<int> _neighbours;
-	int _xHaloSize,_yHaloSize,_zHaloSize;
-	int _xHaloOccSize,_yHaloOccSize,_zHaloOccSize;
 
 	int _globalLevelNumCells;
 	// M2M
@@ -120,9 +114,19 @@ private:
 	void setXHaloValues(int localMpCellsBottom,int bottomLevel);
 	void setYHaloValues(int localMpCellsBottom,int bottomLevel);
 	void setZHaloValues(int localMpCellsBottom,int bottomLevel);
+	void getHaloValues(int localMpCellsBottom,int bottomLevel, double *buffer, int *bufferOcc,
+			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
+	void setHaloValues(int localMpCellsBottom,int bottomLevel, double *bufferRec, int *bufferOccRec,
+			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
+
 	void communicateHalosX();
 	void communicateHalosY();
 	void communicateHalosZ();
+	void communicateHalosAlongAxis(double * lowerNeighbourBuffer, double * higherNeighbourBuffer,
+			double * lowerNeighbourBufferRec, double * higherNeighbourBufferRec,
+			int * lowerNeighbourOccBuffer, int * higherNeighbourOccBuffer,
+			int * lowerNeighbourOccBufferRec, int * higherNeighbourOccBufferRec,
+			int lowerNeighbour, int higherNeighbour, int haloSize, int haloOccSize);
 	// Lookup
 	inline const WignerMatrix& M2M_Wigner(const int& idx) const {
 		return _M2M_Wigner[idx];
