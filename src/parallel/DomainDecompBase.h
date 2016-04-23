@@ -4,6 +4,10 @@
 #include "parallel/CollectiveCommBase.h"
 #include <string>
 
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
+
 class Molecule;
 class Component;
 class Domain;
@@ -179,6 +183,9 @@ public:
 	virtual std::vector<int> getNeighbourRanks(){
 		return std::vector<int>(0);
 	}
+#if defined(ENABLE_MPI)
+	virtual MPI_Comm getCommunicator() = 0;
+#endif
 
 protected:
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;

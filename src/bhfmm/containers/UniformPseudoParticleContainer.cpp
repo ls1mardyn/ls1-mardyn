@@ -41,8 +41,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	for(int i = 0; i<6; ++i){
 		_neighbours.push_back(neigh[i]);
 	}
-
-
+	_comm = domainDecomp.getCommunicator();
 #endif
 #if WIGNER == 1
 	//global_log->error() << "not supported yet" << endl;
@@ -78,7 +77,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	assert(_maxLevel == log2(domainLength[2] / cellLength[2]));
 #if defined(ENABLE_MPI)
 	int numProcessors;
-	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
+	MPI_Comm_size(_comm,&numProcessors);
 	_globalLevel = log2(numProcessors)/3;
 	if(_globalLevel > _maxLevel){
 		std::cout << "too many MPI ranks \n";
@@ -1170,8 +1169,8 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 		_occVector[cellIndex] = currentCell.occ;
 	}
 
-	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalLevelNumCells, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm);
+	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalLevelNumCells, MPI_INT, MPI_SUM, _comm);
 
 
 	coeffIndex = 0;
@@ -1205,8 +1204,8 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCells
 		_occVector[cellIndex] = currentCell.occ;
 	}
 
-	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-	MPI_Allreduce(MPI_IN_PLACE, _occVector, numCellsLevel, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm);
+	MPI_Allreduce(MPI_IN_PLACE, _occVector, numCellsLevel, MPI_INT, MPI_SUM, _comm);
 
 	coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
@@ -1241,7 +1240,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 		currentCell.local.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
 
 	}
-	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, coeffIndex, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, coeffIndex, MPI_DOUBLE, MPI_SUM, _comm);
 
 	coeffIndex = 0;
 
@@ -1364,7 +1363,7 @@ void UniformPseudoParticleContainer::communicateHalos(){
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBuffer->getFrontBuffer(), _occRecBuffer->getFrontBuffer(), 0, 0, 0, 0, -2, 0);
 
 
-	MPI_Barrier(MPI_COMM_WORLD);
+	MPI_Barrier(_comm);
 #endif
 }
 
@@ -1381,20 +1380,20 @@ void UniformPseudoParticleContainer::communicateHalosAlongAxis(double * lowerNei
 	MPI_Status lowOccRecv,highOccRecv;
 
 	MPI_Isend(lowerNeighbourBuffer, haloSize, MPI_DOUBLE, lowerNeighbour, 1,
-			MPI_COMM_WORLD, &low);
+			_comm, &low);
 	MPI_Isend(higherNeighbourBuffer, haloSize, MPI_DOUBLE, higherNeighbour, 3,
-			MPI_COMM_WORLD, &high);
+			_comm, &high);
 
 	MPI_Isend(lowerNeighbourOccBuffer, haloOccSize, MPI_INT, lowerNeighbour, 2,
-					MPI_COMM_WORLD, &lowOcc);
+			_comm, &lowOcc);
 	MPI_Isend(higherNeighbourOccBuffer, haloOccSize, MPI_INT, higherNeighbour, 4,
-					MPI_COMM_WORLD, &highOcc);
+			_comm, &highOcc);
 
-	MPI_Recv(lowerNeighbourBufferRec, haloSize,MPI_DOUBLE, lowerNeighbour,3,MPI_COMM_WORLD, &lowRecv);
-	MPI_Recv(higherNeighbourBufferRec, haloSize,MPI_DOUBLE, higherNeighbour,1,MPI_COMM_WORLD, &highRecv);
+	MPI_Recv(lowerNeighbourBufferRec, haloSize,MPI_DOUBLE, lowerNeighbour,3,_comm, &lowRecv);
+	MPI_Recv(higherNeighbourBufferRec, haloSize,MPI_DOUBLE, higherNeighbour,1,_comm, &highRecv);
 
-	MPI_Recv(lowerNeighbourOccBufferRec, haloOccSize,MPI_INT, lowerNeighbour,4,MPI_COMM_WORLD, &lowOccRecv);
-	MPI_Recv(higherNeighbourOccBufferRec, haloOccSize,MPI_INT, higherNeighbour,2,MPI_COMM_WORLD, &highOccRecv);
+	MPI_Recv(lowerNeighbourOccBufferRec, haloOccSize,MPI_INT, lowerNeighbour,4,_comm, &lowOccRecv);
+	MPI_Recv(higherNeighbourOccBufferRec, haloOccSize,MPI_INT, higherNeighbour,2,_comm, &highOccRecv);
 
 #endif
 }

@@ -164,6 +164,8 @@ private:
 	Timer _timerGatherEvalLM;
 	Timer _timerAllreduce_me;
 
+	MPI_Comm _comm;
+
 
 };
 
