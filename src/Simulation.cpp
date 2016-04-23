@@ -674,7 +674,6 @@ void Simulation::prepare_start() {
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing inital force calculation" << endl;
 	_moleculeContainer->traverseCells(*_cellProcessor);
-	_FMM = NULL;
 
 	if (_FMM != NULL) {
 		global_log->info() << "Performing inital FMM force calculation" << endl;

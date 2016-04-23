@@ -33,7 +33,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 	_periodicBC = periodic;
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 
 	std::vector<int> neigh = domainDecomp.getNeighbourRanks();
@@ -43,7 +43,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 
 #endif
-#if WIGNER == 1 && defined(NEW_FMM)
+#if WIGNER == 1
 	//global_log->error() << "not supported yet" << endl;
 	exit(-1);
 #endif
@@ -65,7 +65,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		cellLength[i] = _leafContainer->getCellLength()[i];
 		_cellLength[i] = cellLength[i];
 	}
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	_bBoxMin[0] = bBoxMin[0];
 	_bBoxMin[1] = bBoxMin[1];
 	_bBoxMin[2] = bBoxMin[2];
@@ -75,7 +75,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_maxLevel = log2(_globalNumCellsPerDim);
 	assert(_maxLevel == log2(domainLength[1] / cellLength[1]));
 	assert(_maxLevel == log2(domainLength[2] / cellLength[2]));
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	int numProcessors;
 	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
 	_globalLevel = log2(numProcessors)/3;
@@ -86,6 +86,8 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	//numProcessers has to be a power of 8
 	assert(log2(numProcessors) == _globalLevel * 3);
 	_numProcessorsPerDim = pow(2,log2(numProcessors)/3);
+#else
+	_globalLevel = _maxLevel;
 #endif
 
 
@@ -93,7 +95,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	int num_cells_in_level = 1;
 	_mpCell.reserve(_maxLevel + 1);
 	int num_cells_in_level_one_dim;
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+
 	num_cells_in_level_one_dim = 1;
 
 	for (int n = 0; n <= _globalLevel; n++) {
@@ -113,12 +115,6 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 		num_cells_in_level_one_dim *= 2;
 	}
-#else
-	for (int n = 0; n <= _maxLevel; n++) {
-		_mpCell.push_back(std::vector<MpCell>(num_cells_in_level, _maxOrd));
-		num_cells_in_level *= 8;
-	}
-#endif
 //	assert(
 //			num_cells_in_level
 //					== _globalNumCellsPerDim * _globalNumCellsPerDim
@@ -129,12 +125,14 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	num_cells_in_level_one_dim = 1;
 	Vector3<double> current_pos;
 	Vector3<double> current_cell_length(domainLength);
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+
+#if defined(ENABLE_MPI)
 	Vector3<double> globalLevelCellLength = Vector3<double>(domainLength)
 						* (1.0 / pow(2,_globalLevel));
 	_processorPositionGlobalLevel[0] = bBoxMin[0]/ globalLevelCellLength[0];
 	_processorPositionGlobalLevel[1] = bBoxMin[1]/ globalLevelCellLength[1];
 	_processorPositionGlobalLevel[2] = bBoxMin[2]/ globalLevelCellLength[2];
+#endif
 
 	for (int n = 0; n <= _globalLevel; ++n) {
 		for (int z = 0; z < num_cells_in_level_one_dim; ++z) {
@@ -192,41 +190,13 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 			current_cell_length = Vector3<double>(domainLength)
 					* (1.0 / (num_cells_in_level_one_dim * _numProcessorsPerDim));
 		}
-#else
-	for (int n = 0; n <= _maxLevel; ++n) {
-		for (int z = 0; z < num_cells_in_level_one_dim; ++z) {
-			for (int y = 0; y < num_cells_in_level_one_dim; ++y) {
-				for (int x = 0; x < num_cells_in_level_one_dim; ++x) {
-					current_pos[0] = (x + 0.5) * current_cell_length[0];
-					current_pos[1] = (y + 0.5) * current_cell_length[1];
-					current_pos[2] = (z + 0.5) * current_cell_length[2];
-					int cellIndex = ((z * num_cells_in_level_one_dim + y)
-							* num_cells_in_level_one_dim) + x;
-					_mpCell[n][cellIndex].multipole.setCenter(current_pos);
-					_mpCell[n][cellIndex].multipole.setRadius(
-							current_cell_length.L2Norm() * 0.5);
 
-					_mpCell[n][cellIndex].local.setCenter(current_pos);
-					_mpCell[n][cellIndex].local.setRadius(
-							current_cell_length.L2Norm() * 0.5);
-				}
-			}
-		}
-		num_cells_in_level_one_dim *= 2;
-		num_cells_in_level *= 8; //ToDo: is it needed anymore?
-		current_cell_length = Vector3<double>(domainLength)
-				* (1.0 / num_cells_in_level_one_dim);
-	}
-#endif
 	_domain = global_simulation->getDomain();
 	_globalNumCells = pow(_globalNumCellsPerDim, 3);
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	_globalLevelNumCells = pow(8,_globalLevel);
 	_occVector = new int[_globalLevelNumCells];
 	std::fill(_occVector, _occVector + _globalLevelNumCells, 0);
-#else
-	_occVector = new int[_globalNumCells];
-	std::fill(_occVector, _occVector + _globalNumCells, 0);
 #endif
 	_coeffVectorLength = 0;
 //	_coeffVectorLength = _mpCell[0][0].multipole.get
@@ -235,7 +205,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 			_coeffVectorLength++;
 		}
 	}
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	_xHaloOccSize = _xHaloSize;
 	_yHaloOccSize = _yHaloSize;
 	_zHaloOccSize = _zHaloSize;
@@ -281,10 +251,8 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_frontBufferRec = new double[_zHaloSize * 2];
 #endif
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	_coeffVectorLength *= _globalLevelNumCells;
-#else
-	_coeffVectorLength *= _globalNumCells;
 #endif
 
 	_coeffVector = new double[_coeffVectorLength * 2];
@@ -366,7 +334,7 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete[] _coeffVector;
 	delete[] _occVector;
 	delete _CosSin;
-#if defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	delete[] _leftBuffer;
 	delete[] _rightBuffer;
 	delete[] _topBuffer;
@@ -407,15 +375,10 @@ void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	// P2M
 	_leafContainer->traverseCellPairs(*cp);
-#if not defined(NEW_FMM)
-	// M2M
-	AllReduceMultipoleMoments();
-#endif
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+
 	if(_maxLevel == _globalLevel){
 		AllReduceMultipoleMoments();
 	}
-#endif
 
 	_timerCombineMpCell.start();
 
@@ -429,7 +392,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 
 		curCellsEdge /=2;
 		for(int i=0; i <3; i++)	cellWid[i] *=2;
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI) && WIGNER==0
 		if(curLevel >= _globalLevel){
 		    int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
 		    const Vector3<int> offset = (_globalLevel == curLevel)? _processorPositionGlobalLevel: Vector3<int>(2);
@@ -468,7 +431,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 			cellWid[i] /=2;
 		}
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI) && WIGNER==0
 		if(curLevel > _globalLevel){
 		    int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
 			GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel);
@@ -481,7 +444,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 #else
 		GatherWellSepLo_Wigner(cellWid, curCellsEdge, curLevel);
 #endif
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 		if(curLevel <= _globalLevel){
 			AllReduceLocalMoments(curCellsEdge, curLevel);
 		}
@@ -505,7 +468,7 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 			cellWid[i] /= 2;
 		}
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI) && WIGNER==0
 		if(curLevel >= _globalLevel){
 		    int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
 		    const Vector3<int> offset = (_globalLevel == curLevel)? _processorPositionGlobalLevel: Vector3<int>(2);
@@ -838,19 +801,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 
 
 	int m1, m2, m2x, m2y, m2z;
-	// int m1x, m1y, m1z;
-//	int m22x, m22y, m22z; // for periodic image
-//	int _size, _rank, loop_min, loop_max;
+
 	int _row_length;
 
-//	_row_length=localMpCells*localMpCells*localMpCells;
-
-//	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-//	_rank= domainDecomp.getRank();
-//	_size= domainDecomp.getNumProcs();
-
-//	loop_min = localMpCells*localMpCells+2;
-//	loop_max = _row_length-(localMpCells*localMpCells+2);
 
 	Vector3<double> periodicShift(0.0);
 
@@ -861,9 +814,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 				m1v[0] = m1x - 2;
 				m1v[1] = m1y - 2;
 				m1v[2] = m1z - 2;
-//		m1v[0] = m1 % localMpCells;
-//		m1v[1] = (m1 / localMpCells) % localMpCells;
-//		m1v[2] = (m1 / (localMpCells * localMpCells)) % localMpCells;
+
 				if (_mpCell[curLevel][m1].occ == 0 ){
 					continue;
 				}
@@ -873,12 +824,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 						std::cout << "Error \n";
 						exit(-1);
 					}
-//
-//			// to get periodic image
-//			m22z = (mpCells + m2z) % mpCells;
-//			periodicShift[2] = 0.0;
-//			if (m2z < 0) 		periodicShift[2] = -mpCells * cellWid[2];
-//			if (m2z >= mpCells) periodicShift[2] = mpCells * cellWid[2];
+
 
 					m2v[2] = m2z;
 					for (m2y = LoLim(1) + 2; m2y <= HiLim(1) + 2; m2y++) {
@@ -886,13 +832,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 							std::cout << "Error \n";
 							exit(-1);
 						}
-//
-//				// to get periodic image
-//				m22y = (mpCells + m2y) % mpCells;
-//
-//				periodicShift[1] = 0.0;
-//				if (m2y < 0)		periodicShift[1] = -mpCells * cellWid[1];
-//				if (m2y >= mpCells)	periodicShift[1] = mpCells * cellWid[1];
+
 
 						m2v[1] = m2y;
 						for (m2x = LoLim(0) + 2; m2x <= HiLim(0) + 2; m2x++) {
@@ -900,14 +840,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 								std::cout << "Error \n";
 								exit(-1);
 							}
-//
-//					// to get periodic image
-//					m22x = (mpCells + m2x) % mpCells;
-//
-//					periodicShift[0] = 0.0;
-//					if (m2x < 0)		periodicShift[0] = -mpCells * cellWid[0];
-//					if (m2x >= mpCells) periodicShift[0] = mpCells * cellWid[0];
-//					//
+
 							m2v[0] = m2x;
 
 							if (abs(m2v[0] - m1x) <= _wellSep &&
@@ -1056,13 +989,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 	else{
 		localMpCellsRow = localMpCells;
 	}
-//	int _rank= domainDecomp.getRank();
-//	int _size= domainDecomp.getNumProcs();
 
-//	int loop_min = (int) ((long) (_rank + 0) * (long) (mpCells * mpCells * mpCells) / (long) _size);
-//	int loop_max = (int) ((long) (_rank + 1) * (long) (mpCells * mpCells * mpCells) / (long) _size);
-//	int loop_min = localMpCells * localMpCells + 2;
-//	int loop_max = localMpCells * localMpCells * localMpCells - (localMpCells * localMpCells + 2);
 	for (m1z = 0; m1z < localMpCells-4; m1z++) {
 		for (m1y = 0; m1y < localMpCells-4; m1y++) {
 			for (m1x = 0; m1x < localMpCells-4; m1x++) {
@@ -1088,32 +1015,6 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 			}
 		}
 	}
-//		m1v[0] = m1 % localMpCells;
-//		m1v[1] = (m1 / localMpCells) % localMpCells;
-//		m1v[2] = (m1 / (localMpCells * localMpCells)) % localMpCells;
-//		//adjust for halo
-//		m1x = m1v[0] - 2;
-//		m1y = m1v[1] - 2;
-//		m1z = m1v[2] - 2;
-
-//		if (_mpCell[curLevel][m1].occ == 0)
-//			continue;
-//
-//		for (iDir = 0; iDir < 8; iDir++) {
-//			//adjust for halo
-//			m2v[0] = 2 * m1x + 2;
-//			m2v[1] = 2 * m1y + 2;
-//			m2v[2] = 2 * m1z + 2;
-//
-//			if (IsOdd(iDir))     m2v[0] = m2v[0] + 1;
-//			if (IsOdd(iDir / 2)) m2v[1] = m2v[1] + 1;
-//			if (IsOdd(iDir / 4)) m2v[2] = m2v[2] + 1;
-//
-//			m2 = (m2v[2] * mpCellsN + m2v[1]) * mpCellsN + m2v[0];
-//
-//			_mpCell[curLevel][m1].local.actOnLocalParticle(
-//					_mpCell[curLevel + 1][m2].local);
-//		} // iDir
 
 	_timerPropagateCellLo.stop();
 } // PropogateCellLo_MPI
@@ -1123,7 +1024,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 	int cellIndexV[3];
 	for (int i = 0; i < 3; i++) {
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 		if(_maxLevel == _globalLevel){
 			cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
 		}
@@ -1141,7 +1042,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 		cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
 #endif
 	}
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	int cellIndex;
 	if (_maxLevel == _globalLevel){
 		cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1]) * _globalNumCellsPerDim) + cellIndexV[0];
@@ -1189,7 +1090,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 	int cellIndexV[3];
 	for (int i = 0; i < 3; i++) {
-	#if defined(ENABLE_MPI) && defined(NEW_FMM)
+	#if defined(ENABLE_MPI)
 		if(_maxLevel == _globalLevel){
 			cellIndexV[i] = rint(cell.getBoxMin(i) / _cellLength[i]);
 		}
@@ -1202,7 +1103,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 #endif
 	}
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	int cellIndex;
 	if (_maxLevel == _globalLevel){
 		cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1]) * _globalNumCellsPerDim) + cellIndexV[0];
@@ -1268,7 +1169,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 
 void UniformPseudoParticleContainer::clear() {
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+
 	for (int n = _maxLevel; n > _globalLevel; n--) {
 		int localMpCells = pow(2, n) / _numProcessorsPerDim + 4;
 
@@ -1301,33 +1202,11 @@ void UniformPseudoParticleContainer::clear() {
 			}
 		}
 	}
-#else
-	for (int n = _maxLevel; n >= 1; n--) {
-		int mpCells = pow(2, n);
 
-		for (int m1z = 0; m1z < mpCells; m1z++) {
-			for (int m1y = 0; m1y < mpCells; m1y++) {
-				for (int m1x = 0; m1x < mpCells; m1x++) {
-					int cellIndexNew = (m1z * mpCells + m1y) * mpCells + m1x;
-
-					_mpCell[n][cellIndexNew].occ = 0;
-
-					_mpCell[n][cellIndexNew].multipole.clear();
-					_mpCell[n][cellIndexNew].local.clear();
-				}
-			}
-		}
-	}
-#endif
 	// clear the MPI buffers
 #ifdef ENABLE_MPI
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength*2, 0.0);
-#ifdef NEW_FMM
 	std::fill(_occVector, _occVector + _globalLevelNumCells, 0);
-
-#else
-	std::fill(_occVector, _occVector + _globalNumCells, 0);
-#endif
 #endif
 }
 
@@ -1346,19 +1225,11 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#ifdef NEW_FMM
 	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalLevelNumCells, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-#else
-	MPI_Allreduce(MPI_IN_PLACE, _occVector, _globalNumCells, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-#endif
 
 	coeffIndex = 0;
-#ifdef NEW_FMM
 	for (int cellIndex = 0; cellIndex < _globalLevelNumCells; cellIndex++) {
-#else
-	for (int cellIndex = 0; cellIndex < _globalNumCells; cellIndex++) {
-#endif
 		MpCell & currentCell = _mpCell[_maxLevel][cellIndex];
 
 		currentCell.occ = _occVector[cellIndex];
@@ -1443,7 +1314,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 }
 
 void UniformPseudoParticleContainer::getXHaloValues(int localMpCellsBottom,int bottomLevel){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
@@ -1492,7 +1363,7 @@ void UniformPseudoParticleContainer::getXHaloValues(int localMpCellsBottom,int b
 }
 
 void UniformPseudoParticleContainer::getYHaloValues(int localMpCellsBottom,int bottomLevel){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
@@ -1540,7 +1411,7 @@ void UniformPseudoParticleContainer::getYHaloValues(int localMpCellsBottom,int b
 }
 
 void UniformPseudoParticleContainer::getZHaloValues(int localMpCellsBottom,int bottomLevel){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
@@ -1588,7 +1459,7 @@ void UniformPseudoParticleContainer::getZHaloValues(int localMpCellsBottom,int b
 }
 
 void UniformPseudoParticleContainer::setXHaloValues(int localMpCellsBottom,int bottomLevel){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 
 	int coeffIndex = 0;
 	int coeffOccIndex = 0;
@@ -1637,7 +1508,7 @@ void UniformPseudoParticleContainer::setXHaloValues(int localMpCellsBottom,int b
 }
 
 void UniformPseudoParticleContainer::setYHaloValues(int localMpCellsBottom,int bottomLevel){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
@@ -1684,7 +1555,7 @@ void UniformPseudoParticleContainer::setYHaloValues(int localMpCellsBottom,int b
 }
 
 void UniformPseudoParticleContainer::setZHaloValues(int localMpCellsBottom,int bottomLevel){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 
 	int coeffIndex = 0;
 	int coeffOccIndex = 0;
@@ -1734,7 +1605,7 @@ void UniformPseudoParticleContainer::setZHaloValues(int localMpCellsBottom,int b
 
 void UniformPseudoParticleContainer::communicateHalos(){
 
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	std::fill(_leftBuffer, _leftBuffer + _xHaloSize * 2, 0.0);
 	std::fill(_rightBuffer, _rightBuffer + _xHaloSize * 2, 0.0);
 	std::fill(_frontBuffer, _frontBuffer + _zHaloSize * 2, 0.0);
@@ -1758,7 +1629,7 @@ void UniformPseudoParticleContainer::communicateHalos(){
 #endif
 }
 void UniformPseudoParticleContainer::communicateHalosX(){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	MPI_Request low, high;
 	MPI_Request lowOcc, highOcc;
 
@@ -1785,7 +1656,7 @@ void UniformPseudoParticleContainer::communicateHalosX(){
 }
 
 void UniformPseudoParticleContainer::communicateHalosY(){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	MPI_Request low, high;
 	MPI_Request lowOcc, highOcc;
 
@@ -1812,7 +1683,7 @@ void UniformPseudoParticleContainer::communicateHalosY(){
 }
 
 void UniformPseudoParticleContainer::communicateHalosZ(){
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	MPI_Request low, high;
 	MPI_Request lowOcc, highOcc;
 

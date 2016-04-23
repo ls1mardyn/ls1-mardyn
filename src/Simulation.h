@@ -57,9 +57,7 @@ namespace bhfmm {
 class FastMultipoleMethod;
 } // bhfmm
 
-#ifndef NEW_FMM
-#define NEW_FMM
-#endif
+
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *

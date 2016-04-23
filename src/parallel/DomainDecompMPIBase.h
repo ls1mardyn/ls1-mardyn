@@ -113,11 +113,10 @@ public:
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates = false);
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+
 	 //std::vector<CommunicationPartner> getNeighbours() {return _neighbours;}
 	 virtual std::vector<int> getNeighbourRanks() =0;
 
-#endif
 protected:
 
 	std::vector<CommunicationPartner> _neighbours[DIM];

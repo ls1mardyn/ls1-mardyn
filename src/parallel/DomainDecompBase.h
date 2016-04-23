@@ -176,7 +176,9 @@ public:
 	//! has to call broadcast method of a CollComm class (none in sequential version)
 	virtual void collCommBroadcast(int root = 0);
 	//returns the ranks of the neighbours
-	virtual std::vector<int> getNeighbourRanks() = 0;
+	virtual std::vector<int> getNeighbourRanks(){
+		return std::vector<int>(0);
+	}
 
 protected:
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;

@@ -76,7 +76,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 			*(global_simulation->getDomain()));
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	if (_adaptive){
 		global_log->error() << "not supported yet" << endl;
 		exit(-1);
@@ -109,7 +109,7 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 
 	// P2M, M2P
 	_pseudoParticleContainer->upwardPass(_P2MProcessor);
-#if defined(ENABLE_MPI) && defined(NEW_FMM)
+#if defined(ENABLE_MPI)
 	//ToDo exchange halo data
 	//std::cout << "Communicate Halos";
 	_pseudoParticleContainer->communicateHalos();
