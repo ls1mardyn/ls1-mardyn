@@ -53,10 +53,6 @@ public:
   void processTree(){}
   void printTimers(){};
 
-  void communicateHalos(){
-	  //global_log->error() << "not supported yet \n";
-	  exit(-1);
-  }
 private:	
 	bool _periodicBC;
 

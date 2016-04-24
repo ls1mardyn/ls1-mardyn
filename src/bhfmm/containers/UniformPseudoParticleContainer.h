@@ -46,8 +46,7 @@ public:
 
 	void printTimers();
 
-	//for parallelization
-	void communicateHalos();
+
 
 private:
 	LeafNodesContainer* _leafContainer;
@@ -120,7 +119,8 @@ private:
 	void setHaloValues(int localMpCellsBottom,int bottomLevel, double *bufferRec,
 //			int *bufferOccRec,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
-
+	//for parallelization
+	void communicateHalos();
 	void communicateHalosX();
 	void communicateHalosY();
 	void communicateHalosZ();

@@ -109,11 +109,7 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 
 	// P2M, M2P
 	_pseudoParticleContainer->upwardPass(_P2MProcessor);
-#if defined(ENABLE_MPI)
-	//ToDo exchange halo data
-	//std::cout << "Communicate Halos";
-	_pseudoParticleContainer->communicateHalos();
-#endif
+
 	// M2L, P2P
 	if (_adaptive) {
 		_P2PProcessor->initTraversal(2);

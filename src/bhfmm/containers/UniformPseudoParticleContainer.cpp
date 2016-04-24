@@ -356,6 +356,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 #endif
 	}
 	_timerCombineMpCell.stop();
+	communicateHalos();
 }
 
 void UniformPseudoParticleContainer::horizontalPass(
