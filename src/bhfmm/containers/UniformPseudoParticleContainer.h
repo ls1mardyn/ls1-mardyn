@@ -66,7 +66,6 @@ private:
 	double* _coeffVector_me;
 
 	HaloBufferNoOverlap<double> * _multipoleRecBuffer, *_multipoleBuffer;
-//	HaloBufferNoOverlap<int> *_occBuffer, *_occRecBuffer;
 	bool _periodicBC;
 
 	int _numProcessorsPerDim;
@@ -114,10 +113,8 @@ private:
 	void setYHaloValues(int localMpCellsBottom,int bottomLevel);
 	void setZHaloValues(int localMpCellsBottom,int bottomLevel);
 	void getHaloValues(int localMpCellsBottom,int bottomLevel, double *buffer,
-//			int *bufferOcc,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
 	void setHaloValues(int localMpCellsBottom,int bottomLevel, double *bufferRec,
-//			int *bufferOccRec,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
 	//for parallelization
 	void communicateHalos();
@@ -126,10 +123,7 @@ private:
 	void communicateHalosZ();
 	void communicateHalosAlongAxis(double * lowerNeighbourBuffer, double * higherNeighbourBuffer,
 			double * lowerNeighbourBufferRec, double * higherNeighbourBufferRec,
-//			int * lowerNeighbourOccBuffer, int * higherNeighbourOccBuffer,
-//			int * lowerNeighbourOccBufferRec, int * higherNeighbourOccBufferRec,
 			int lowerNeighbour, int higherNeighbour, int haloSize
-//			,int haloOccSize
 			);
 	// Lookup
 	inline const WignerMatrix& M2M_Wigner(const int& idx) const {
