@@ -233,4 +233,77 @@ std::vector<int> DomainDecomposition::getNeighbourRanks(){
 #endif
 }
 
+/**
+ * The key of this function is that opposite sites are always neighbouring each other in the array (i.e. leftAreaIndex = 0, righAreaIndex = 1, ...)
+ *
+**/
+std::vector<int> DomainDecomposition::getNeighbourRanksFullShell(){
+#if defined(ENABLE_MPI)
+	int numProcs;
+	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
+	int myRank;
+	MPI_Comm_size(MPI_COMM_WORLD,&myRank);
 
+	std::vector<int> neighbours(26,-1);
+	if(numProcs == 1){
+		int rank;
+		MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+		for(int i = 0; i<26; i++)
+			neighbours[i] = rank;
+	}
+	else{
+		for(int i = 0; i < 2*DIM;i++){
+			neighbours[i] = (_neighbours[i/2][i%2].getRank());
+		}
+		std::vector<int> offsets(6,0);
+		//calculate the rank offsets in every dimension in plus and minus direction
+		for(int i = 0; i < DIM * 2; i++){
+			offsets[i] = neighbours[i]-myRank;
+		}
+		//calculate remaining 20 neighbours through offsets
+
+		//edges
+		//low x direction
+		for(int i = 0; i < 4; i++){ //all edges that are adjacent to lower x area (left)
+			neighbours[2*i+6] = neighbours[0] + offsets[i+2];
+		}
+		//higher x direction
+		for(int i = 0; i < 4; i++){ //all edges that are adjacent to higher x area (right)
+			//always get opposite edges next to each other
+			int indexShift = (i%2 == 0)? +1 : -1;
+			neighbours[2*i+7] = neighbours[1] + offsets[i+2+indexShift];
+		}
+
+		//low y direction
+		for(int i = 0; i < 2; i++){ //all edges that are adjacent to lower y  area (bottom) not adjacent to lower x (left)
+			neighbours[2*i+14] = neighbours[2] + offsets[i+4];
+		}
+		//higher y direction
+		for(int i = 0; i < 2; i++){ //all edges that are adjacent to higher y area (top) and not adjacent to lower x (right)
+			//always get opposite edges next to each other
+			int indexShift = (i%2 == 0)? +1 : -1;
+			neighbours[2*i+15] = neighbours[3] + offsets[i+4+indexShift];
+		}
+
+		//corners
+		//lower x direction
+		int index = 18;
+		for(int i = 0; i < 2; i++){//y offset
+			for(int j = 0; j < 2; j++){ // z offset
+				neighbours[index] = neighbours[0] + offsets[2+i] + offsets[4+j];
+				index = index + 2;
+			}
+		}
+
+		for(int i = 1; i >= 0; i--){//y offset
+			for(int j = 1; j >= 0; j--){ // z offset
+				neighbours[index] = neighbours[0] + offsets[2+i] + offsets[4+j];
+				index = index + 2;
+			}
+		}
+	}
+	return neighbours;
+#else
+	return std::vector<int>(0);
+#endif
+}

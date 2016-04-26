@@ -107,6 +107,11 @@ class KDDecomposition: public DomainDecompMPIBase {
 		exit(-1);
 		return std::vector<int> (0);
 	}
+	virtual std::vector<int> getNeighbourRanksFullShell(){
+		//global_log->error() << "not implemented \n";
+		exit(-1);
+		return std::vector<int> (0);
+	}
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);

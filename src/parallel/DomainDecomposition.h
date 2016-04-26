@@ -80,6 +80,7 @@ public:
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
 	std::vector<int> getNeighbourRanks();
+	std::vector<int> getNeighbourRanksFullShell();
 
 private:
 	bool _neighboursInitialized;

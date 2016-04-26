@@ -11,13 +11,13 @@
 template <class T>
 class HaloBufferOverlap {
 public:
-	HaloBufferOverlap(int areaHaloSize, int edgeHaloSize, MPI_Comm comm,
-		int cornerHaloSize, std::vector<int> areaNeighbours,std::vector<int> edgeNeighbours,std::vector<int> cornerNeighbours, int isSend);
+	HaloBufferOverlap(int areaHaloSize, int edgeHaloSize,
+		int cornerHaloSize, MPI_Comm comm, std::vector<int>& areaNeighbours,std::vector<int>& edgeNeighbours,std::vector<int>& cornerNeighbours, int isSend);
 	virtual ~HaloBufferOverlap();
 	void initCommunicationDouble();
 	void startCommunication();
 	void wait();
-	void initNoOverlap(int xHaloSize, int yHaloSize, int zHaloSize);
+	int testIfFinished();
 	std::vector<T *>& getAreaBuffers(){
 		return _areaBuffers;
 	}
@@ -43,7 +43,7 @@ private:
 	std::vector<T *>  _areaBuffers,  _edgeBuffers,  _cornerBuffers; //arrays for MPI halo transfer (send)
 	int _areaHaloSize,_edgeHaloSize,_cornerHaloSize;
 	std::vector<int> _areaNeighbours, _edgeNeighbours,_cornerNeighbours;
-	MPI_Request * _areaRequests, _edgeRequests, _cornerRequests;
+	MPI_Request * _areaRequests, *_edgeRequests, *_cornerRequests;
 	MPI_Comm _comm;
 	int _isSend;
 };
@@ -52,9 +52,19 @@ private:
 
 
 template <class T>
-HaloBufferOverlap<T>::HaloBufferOverlap(int areaHaloSize, int edgeHaloSize, MPI_Comm comm,
-		int cornerHaloSize, std::vector<int> areaNeighbours,std::vector<int> edgeNeighbours,std::vector<int> cornerNeighbours, int isSend):
-_areaBuffers(6,0), _edgeBuffers(12,0), _cornerBuffers(8,0), _areaNeighbours(areaNeighbours), _edgeNeighbours(edgeNeighbours), _cornerNeighbours(cornerNeighbours) {
+HaloBufferOverlap<T>::HaloBufferOverlap(int areaHaloSize, int edgeHaloSize,
+		int cornerHaloSize, MPI_Comm comm, std::vector<int>& areaNeighbours,std::vector<int>& edgeNeighbours,std::vector<int>& cornerNeighbours, int isSend):
+_areaBuffers(6), _edgeBuffers(12), _cornerBuffers(8) {
+	for(int i=0; i<areaNeighbours.size();i++){
+		_areaNeighbours[i] = areaNeighbours[i];
+	}
+	for(int i=0; i<edgeNeighbours.size();i++){
+		_edgeNeighbours[i] = edgeNeighbours[i];
+	}
+	for(int i=0; i<cornerNeighbours.size();i++){
+		_cornerNeighbours[i] = cornerNeighbours[i];
+	}
+
 	_areaHaloSize = areaHaloSize;
 	_edgeHaloSize = edgeHaloSize;
 	_cornerHaloSize = cornerHaloSize;
@@ -73,7 +83,8 @@ _areaBuffers(6,0), _edgeBuffers(12,0), _cornerBuffers(8,0), _areaNeighbours(area
 		_cornerBuffers[i] = new T[cornerHaloSize];
 	}
 	_isSend = isSend;
-	initCommunication();
+	initCommunicationDouble();
+
 }
 
 template <class T>
@@ -90,39 +101,47 @@ HaloBufferOverlap<T>::~HaloBufferOverlap() {
 }
 
 template <class T>
-void HaloBufferNoOverlap<T>::clear(){
-	std::fill(_leftBuffer, _leftBuffer + _xHaloSize , 0.0);
-	std::fill(_rightBuffer, _rightBuffer + _xHaloSize , 0.0);
-	std::fill(_frontBuffer, _frontBuffer + _zHaloSize, 0.0);
-	std::fill(_backBuffer, _backBuffer + _zHaloSize, 0.0);
-	std::fill(_topBuffer, _topBuffer + _yHaloSize, 0.0);
-	std::fill(_bottomBuffer, _bottomBuffer + _yHaloSize, 0.0);
+void HaloBufferOverlap<T>::clear(){
+	for(int i = 0; i < _areaBuffers.size(); i++){
+		std::fill(_areaBuffers[i], _areaBuffers[i] + _areaHaloSize , 0.0);
+	}
+	for(int i = 0; i < _edgeBuffers.size(); i++){
+		std::fill(_edgeBuffers[i], _edgeBuffers[i] + _edgeHaloSize , 0.0);
+	}
+	for(int i = 0; i < _cornerBuffers.size(); i++){
+		std::fill(_cornerBuffers[i], _cornerBuffers[i] + _cornerHaloSize , 0.0);
+	}
 }
 
+//we assume here that the neighbour arrays are sorted in the way that sites and their opposite sites are always alternating in the array
 template <class T>
 void HaloBufferOverlap<T>::initCommunicationDouble(){
 	for (int i = 0; i < _areaBuffers.size(); i++){
 		if(_isSend){
-			MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], 1, _comm, &_areaRequests[i]);
+			MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 		}
 		else{
-			MPI_Recv_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], 1, _comm, &_areaRequests[i]);
+			//adjusts that the tag of receive corresponds to send
+			int indexShift = (i%2 == 0)? +1: -1;
+			MPI_Recv_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42 + indexShift, _comm, &_areaRequests[i]);
 		}
 	}
 	for (int i = 0; i < _edgeBuffers.size(); i++){
 		if(_isSend){
-			MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], 1, _comm, &_edgeRequests[i]);
+			MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 		}
 		else{
-			MPI_Recv_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], 1, _comm, &_edgeRequests[i]);
+			int indexShift = (i%2 == 0)? +1: -1;
+			MPI_Recv_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42 + indexShift, _comm, &_edgeRequests[i]);
 		}
 	}
 	for (int i = 0; i < _cornerBuffers.size(); i++){
 		if(_isSend){
-			MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], 1, _comm, &_cornerRequests[i]);
+			MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		}
 		else{
-			MPI_Recv_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], 1, _comm, &_cornerRequests[i]);
+			int indexShift = (i%2 == 0)? +1: -1;
+			MPI_Recv_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42 + indexShift, _comm, &_cornerRequests[i]);
 		}
 	}
 }

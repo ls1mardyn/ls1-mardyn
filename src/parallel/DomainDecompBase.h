@@ -183,6 +183,11 @@ public:
 	virtual std::vector<int> getNeighbourRanks(){
 		return std::vector<int>(0);
 	}
+	//returns the ranks of the neighbours
+	virtual std::vector<int> getNeighbourRanksFullShell(){
+		std::cout << "Not yet implemented";
+		return std::vector<int>(0);
+	}
 #if defined(ENABLE_MPI)
 	virtual MPI_Comm getCommunicator() = 0;
 #endif

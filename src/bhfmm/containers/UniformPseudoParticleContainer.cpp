@@ -12,6 +12,7 @@
 #include "bhfmm/utils/RotationParameterLookUp.h"
 #include "particleContainer/ParticleContainer.h"
 #include "bhfmm/HaloBufferNoOverlap.h"
+#include "bhfmm/HaloBufferOverlap.h"
 
 #include <algorithm>
 
@@ -33,13 +34,21 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		_M2M_Wigner(4, WignerMatrix(orderOfExpansions, true)), _L2L_Wigner(4, WignerMatrix(orderOfExpansions, true)) {
 
 	_periodicBC = periodic;
-
+	//enable overlapping communication;
+	_overlapComm = 0;
 #if defined(ENABLE_MPI)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-
-	std::vector<int> neigh = domainDecomp.getNeighbourRanks();
-	for(int i = 0; i<6; ++i){
-		_neighbours.push_back(neigh[i]);
+	if(!_overlapComm){
+		std::vector<int> neigh = domainDecomp.getNeighbourRanks();
+		for(int i = 0; i<6; ++i){
+			_neighbours.push_back(neigh[i]);
+		}
+	}
+	else{
+		std::vector<int> neigh = domainDecomp.getNeighbourRanksFullShell();
+		for(int i = 0; i<26; ++i){
+			_neighbours.push_back(neigh[i]);
+		}
 	}
 	_comm = domainDecomp.getCommunicator();
 #endif
@@ -111,12 +120,15 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	int xHaloSize = 0;
 	int yHaloSize = 0;
 	int zHaloSize = 0;
+	int edgeHaloSize = 0;
+	int cornerHaloSize = 0;
 	for (int n = _globalLevel + 1; n <= _maxLevel; n++) {
 		_mpCellLocal.push_back(std::vector<MpCell>((int) pow(num_cells_in_level_one_dim + 4 , 3), _maxOrd));
 		xHaloSize += 2 * num_cells_in_level_one_dim * num_cells_in_level_one_dim;
 		yHaloSize += 2 * (num_cells_in_level_one_dim + 4) * num_cells_in_level_one_dim;
 		zHaloSize += 2 * (num_cells_in_level_one_dim + 4) * (num_cells_in_level_one_dim + 4);
-
+		edgeHaloSize += 4*num_cells_in_level_one_dim;
+		cornerHaloSize += 4;
 		num_cells_in_level_one_dim *= 2;
 	}
 //	assert(
@@ -216,9 +228,31 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	xHaloSize *= _coeffVectorLength;
 	yHaloSize *= _coeffVectorLength;
 	zHaloSize *= _coeffVectorLength;
-	_multipoleBuffer = new HaloBufferNoOverlap<double>(xHaloSize * 2,yHaloSize * 2,zHaloSize * 2);
-	_multipoleRecBuffer = new HaloBufferNoOverlap<double>(xHaloSize * 2,yHaloSize * 2,zHaloSize * 2);
+	cornerHaloSize *= _coeffVectorLength;
+	edgeHaloSize *= _coeffVectorLength;
+	int areaHaloSize = xHaloSize;
+	if(!_overlapComm){
+		_multipoleBuffer = new HaloBufferNoOverlap<double>(xHaloSize * 2,yHaloSize * 2,zHaloSize * 2);
+		_multipoleRecBuffer = new HaloBufferNoOverlap<double>(xHaloSize * 2,yHaloSize * 2,zHaloSize * 2);
+	}
+	else{
+		std::vector<int> areaNeighbours;
+		std::vector<int> edgesNeighbours;
+		std::vector<int> cornerNeighbours;
 
+		for(int i = 0; i < 6 ; i++){
+			areaNeighbours.push_back(_neighbours[i]);
+		}
+		for(int i = 6; i < 18 ; i++){
+			edgesNeighbours.push_back(_neighbours[i]);
+		}
+		for(int i = 18; i < 26 ; i++){
+			cornerNeighbours.push_back(_neighbours[i]);
+		}
+		_multipoleBufferOverlap = new HaloBufferOverlap<double>(areaHaloSize * 2,edgeHaloSize * 2, cornerHaloSize * 2, _comm, areaNeighbours, edgesNeighbours, cornerNeighbours, 1);
+		_multipoleRecBufferOverlap = new HaloBufferOverlap<double>(areaHaloSize * 2,edgeHaloSize * 2, cornerHaloSize * 2, _comm, areaNeighbours, edgesNeighbours, cornerNeighbours, 0);
+
+	}
 #endif
 
 #if defined(ENABLE_MPI)

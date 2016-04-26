@@ -17,6 +17,7 @@
 #include <vector>
 #include <map>
 #include "bhfmm/HaloBufferNoOverlap.h"
+#include "bhfmm/HaloBufferOverlap.h"
 
 class Domain;
 class DomainDecompBase;
@@ -74,6 +75,8 @@ private:
 	double* _coeffVector_me;
 
 	HaloBufferNoOverlap<double> * _multipoleRecBuffer, *_multipoleBuffer;
+	HaloBufferOverlap<double> * _multipoleRecBufferOverlap, *_multipoleBufferOverlap;
+
 	bool _periodicBC;
 
 	int _numProcessorsPerDim;
@@ -171,7 +174,7 @@ private:
 	Timer _timerAllreduce_me;
 
 	MPI_Comm _comm;
-
+	int _overlapComm;
 
 };
 
