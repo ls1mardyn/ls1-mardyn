@@ -776,7 +776,7 @@ void Simulation::simulate() {
     _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
-	CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
+	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
 			<< ensemble.N() << endl;
@@ -785,7 +785,7 @@ void Simulation::simulate() {
 		<< endl;
 	ensemble.updateGlobalVariable(TEMPERATURE);
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-		<< endl;
+		<< endl;*/
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -880,36 +880,46 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
-
-
 		computationTimer.stop();
-		decompositionTimer.start();
 
-		// ensure that all Particles are in the right cells and exchange Particles
-		global_log->debug() << "Updating container and decomposition" << endl;
-		updateParticleContainerAndDecomposition();
+		bool overlapCommComp = true;
 
-		decompositionTimer.stop();
+		if (overlapCommComp) {
+			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer);
+		} else {
+			decompositionTimer.start();
+			// ensure that all Particles are in the right cells and exchange Particles
+			global_log->debug() << "Updating container and decomposition"
+					<< endl;
+			updateParticleContainerAndDecomposition();
+			decompositionTimer.stop();
+
+			computationTimer.start();
+			// Force calculation and other pair interaction related computations
+			global_log->debug() << "Traversing pairs" << endl;
+			_moleculeContainer->traverseCells(*_cellProcessor);
+			computationTimer.stop();
+		}
 		computationTimer.start();
-
-		// Force calculation and other pair interaction related computations
-		global_log->debug() << "Traversing pairs" << endl;
-		_moleculeContainer->traverseCells(*_cellProcessor);
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
 
 		
+
+
+
+
 		if(_wall && _applyWallFun){
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
 		}
 		
-		 if(_mirror && _applyMirror){
+		if(_mirror && _applyMirror){
 		  _mirror->VelocityChange(_moleculeContainer, _domain);
 		}
 
-		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
+		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -1014,7 +1024,7 @@ void Simulation::simulate() {
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
-								_simstep));
+								_simstep));//*/  //TODO: uncomment !!!!!
 		
 		// scale velocity and angular momentum
 		if ( !_domain->NVE() && _temperatureControl == NULL){
@@ -1106,7 +1116,7 @@ void Simulation::simulate() {
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
-		ensemble.updateGlobalVariable(NUM_PARTICLES);
+		/*ensemble.updateGlobalVariable(NUM_PARTICLES);
 		global_log->debug() << "Number of particles in the Ensemble: "
 				<< ensemble.N() << endl;
 		ensemble.updateGlobalVariable(ENERGY);
@@ -1114,7 +1124,7 @@ void Simulation::simulate() {
 				<< ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
 		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-			<< endl;
+			<< endl;*/
 		/* END PHYSICAL SECTION */
 
 		computationTimer.stop();
@@ -1178,7 +1188,7 @@ void Simulation::output(unsigned long simstep) {
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
-		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
+		global_log->debug() << "Output from " << output->getPluginName() << endl;
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
 	}
 
@@ -1243,7 +1253,59 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	_moleculeContainer->updateMoleculeCaches();
 }
 
-/* FIXME: we shoud provide a more general way of doing this */
+void Simulation::performOverlappingDecompositionAndCellTraversalStep(
+		Timer& decompositionTimer, Timer& computationTimer) {
+	decompositionTimer.start();
+	// ensure that all Particles are in the right cells and exchange Particles
+	global_log->debug() << "Updating container and decomposition" << endl;
+
+	// The particles have moved, so the neighbourhood relations have
+	// changed and have to be adjusted
+	_moleculeContainer->update();
+	decompositionTimer.stop();
+
+	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	bool forceRebalancing = false;
+	if (not _domainDecomposition->queryBalanceAndExchangeNonBlocking(
+			forceRebalancing, _moleculeContainer, _domain)) { // do serial/blocking version
+		decompositionTimer.start();
+		_domainDecomposition->balanceAndExchange(forceRebalancing,
+				_moleculeContainer, _domain);
+		// The cache of the molecules must be updated/build after the exchange process,
+		// as the cache itself isn't transferred
+		_moleculeContainer->updateMoleculeCaches();
+
+		decompositionTimer.stop();
+
+		computationTimer.start();
+		// Force calculation and other pair interaction related computations
+		global_log->debug() << "Traversing pairs" << endl;
+		_moleculeContainer->traverseCells(*_cellProcessor);
+		computationTimer.stop();
+		return;
+	}
+	// perform non-blocking version:
+
+	decompositionTimer.start();
+
+	_domainDecomposition->balanceAndExchange(forceRebalancing,
+			_moleculeContainer, _domain);
+
+	// The cache of the molecules must be updated/build after the exchange process,
+	// as the cache itself isn't transferred
+	_moleculeContainer->updateMoleculeCaches();
+
+	decompositionTimer.stop();
+
+	computationTimer.start();
+	// Force calculation and other pair interaction related computations
+	global_log->debug() << "Traversing pairs" << endl;
+	_moleculeContainer->traverseCells(*_cellProcessor);
+	computationTimer.stop();
+}
+
+
+/* FIXME: we should provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
 	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
 	if ((xi < 0.1) || (xi > 0.9))

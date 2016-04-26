@@ -151,7 +151,7 @@ double Domain::getGlobalPressure()
 
 double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
 
-double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolecules; }
+double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 vector<Component>& Domain::getComponents(){
@@ -197,8 +197,6 @@ void Domain::calculateGlobalValues(
 	Virial = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
 
-	/* FIXME: why should process 0 do this alone? 
-	 * we should keep symmetry of all proccesses! */
 	// Process 0 has to add the dipole correction:
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
 	_globalUpot = Upot + _UpotCorr;
@@ -1116,14 +1114,14 @@ void Domain::setTargetTemperature(int thermostat, double targetT)
 	if(!(this->_universalUndirectedThermostat[thermostat] == true))
 		this->_universalUndirectedThermostat[thermostat] = false;
 
-	/* FIXME: Substantial change in program behaviour! */
+	/* FIXME: Substantial change in program behavior! */
 	if(thermostat == 0) {
 		global_log->warning() << "Disabling the component wise thermostat!" << endl;
 		disableComponentwiseThermostat();
 	}
 	if(thermostat >= 1) {
 		if( ! _componentwiseThermostat ) {
-			/* FIXME: Substantial change in program behaviour! */
+			/* FIXME: Substantial change in program behavior! */
 			global_log->warning() << "Enabling the component wise thermostat!" << endl;
 			_componentwiseThermostat = true;
 			_universalTargetTemperature.erase(0);
@@ -1202,8 +1200,9 @@ void Domain::record_cv()
 	if(_localRank != 0) return;
 
 	this->_globalUSteps ++;
-	this->_globalSigmaU += this->_globalUpot;
-	this->_globalSigmaUU += this->_globalUpot*_globalUpot;
+	double globalUpot = getGlobalUpot();
+	this->_globalSigmaU += globalUpot;
+	this->_globalSigmaUU += globalUpot * globalUpot;
 }
 
 double Domain::cv()

@@ -73,6 +73,10 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//### The following methods are those of the  ###
 	//### base class which have to be implemented ###
 	//###############################################
+
+
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+
 	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @todo comment and thing
@@ -101,7 +105,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	void printDecomp(std::string filename, Domain* domain);
 
 	int getUpdateFrequency() { return _frequency; }
-	void getUpdateFrequency(int frequency) { _frequency = frequency; }
+	void setUpdateFrequency(int frequency) { _frequency = frequency; }
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);
