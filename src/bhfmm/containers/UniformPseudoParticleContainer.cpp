@@ -93,13 +93,17 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 	//allocate Multipole and Local particles
 	int num_cells_in_level = 1;
-	_mpCell.reserve(_maxLevel + 1);
+	_mpCellGlobalTop.reserve(_globalLevel + 1);
+#ifdef ENABLE_MPI
+	_mpCellLocal.reserve(_maxLevel-_globalLevel);
+#endif
+
 	int num_cells_in_level_one_dim;
 
 	num_cells_in_level_one_dim = 1;
 
 	for (int n = 0; n <= _globalLevel; n++) {
-		_mpCell.push_back(std::vector<MpCell>(num_cells_in_level, _maxOrd));
+		_mpCellGlobalTop.push_back(std::vector<MpCell>(num_cells_in_level, _maxOrd));
 		num_cells_in_level *= 8;
 	}
 	//num_cells_in_level = 8;
@@ -108,7 +112,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	int yHaloSize = 0;
 	int zHaloSize = 0;
 	for (int n = _globalLevel + 1; n <= _maxLevel; n++) {
-		_mpCell.push_back(std::vector<MpCell>((int) pow(num_cells_in_level_one_dim + 4 , 3), _maxOrd));
+		_mpCellLocal.push_back(std::vector<MpCell>((int) pow(num_cells_in_level_one_dim + 4 , 3), _maxOrd));
 		xHaloSize += 2 * num_cells_in_level_one_dim * num_cells_in_level_one_dim;
 		yHaloSize += 2 * (num_cells_in_level_one_dim + 4) * num_cells_in_level_one_dim;
 		zHaloSize += 2 * (num_cells_in_level_one_dim + 4) * (num_cells_in_level_one_dim + 4);
@@ -133,6 +137,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_processorPositionGlobalLevel[1] = bBoxMin[1]/ globalLevelCellLength[1];
 	_processorPositionGlobalLevel[2] = bBoxMin[2]/ globalLevelCellLength[2];
 #endif
+	//initialization of global top part of tree
 
 	for (int n = 0; n <= _globalLevel; ++n) {
 		for (int z = 0; z < num_cells_in_level_one_dim; ++z) {
@@ -143,12 +148,12 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 					current_pos[2] = (z + 0.5) * current_cell_length[2];
 					int cellIndex = ((z * num_cells_in_level_one_dim + y)
 							* num_cells_in_level_one_dim) + x;
-					_mpCell[n][cellIndex].multipole.setCenter(current_pos);
-					_mpCell[n][cellIndex].multipole.setRadius(
+					_mpCellGlobalTop[n][cellIndex].multipole.setCenter(current_pos);
+					_mpCellGlobalTop[n][cellIndex].multipole.setRadius(
 							current_cell_length.L2Norm() * 0.5);
 
-					_mpCell[n][cellIndex].local.setCenter(current_pos);
-					_mpCell[n][cellIndex].local.setRadius(
+					_mpCellGlobalTop[n][cellIndex].local.setCenter(current_pos);
+					_mpCellGlobalTop[n][cellIndex].local.setRadius(
 							current_cell_length.L2Norm() * 0.5);
 				}
 			}
@@ -163,10 +168,12 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	//here it is supposed that every processor has exactly one subtree consisting only of one root node
 	//ToDo multiple trees from different roots (so far only one)
 	//num_cells_in_level = 1;
+
+	//initialization of local tree
 	int num_cells_in_level_one_dim_old = num_cells_in_level_one_dim;
 	num_cells_in_level_one_dim = 2;
 
-	for (int n = _globalLevel+1; n <= _maxLevel; ++n) {
+	for (int n = 0; n < _maxLevel-_globalLevel; ++n) {
 			for (int z = -2; z < num_cells_in_level_one_dim+2; ++z) {
 				for (int y = -2; y < num_cells_in_level_one_dim+2; ++y) {
 					for (int x = -2; x < num_cells_in_level_one_dim+2; ++x) {
@@ -175,12 +182,12 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 						current_pos[2] = (z + 0.5) * current_cell_length[2] + bBoxMin[2];
 						int cellIndex = (((z + 2) * (num_cells_in_level_one_dim + 4) + y + 2)
 								* (num_cells_in_level_one_dim + 4)) + x + 2;
-						_mpCell[n][cellIndex].multipole.setCenter(current_pos);
-						_mpCell[n][cellIndex].multipole.setRadius(
+						_mpCellLocal[n][cellIndex].multipole.setCenter(current_pos);
+						_mpCellLocal[n][cellIndex].multipole.setRadius(
 								current_cell_length.L2Norm() * 0.5);
 
-						_mpCell[n][cellIndex].local.setCenter(current_pos);
-						_mpCell[n][cellIndex].local.setRadius(
+						_mpCellLocal[n][cellIndex].local.setCenter(current_pos);
+						_mpCellLocal[n][cellIndex].local.setRadius(
 								current_cell_length.L2Norm() * 0.5);
 					}
 				}
@@ -285,7 +292,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	}
 
 	/* Initialize M2L-Wigner matrices */
-	processTreeInitM2LWigner();
+	//processTreeInitM2LWigner();
 
 	delete RotationParameterLookUp::tab;
 
@@ -432,7 +439,7 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 
 
 
-void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells, int& curLevel){
+void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells, int curLevel){
 	int iDir, m1=0, m1x, m1y, m1z, m2=0;
 	int m2v[3] = {0, 0, 0};
 	int mpCellsN=2*mpCells;
@@ -456,18 +463,18 @@ void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells
 
 					m2=(m2v[2]*mpCellsN + m2v[1])*mpCellsN + m2v[0];
 
-					if(_mpCell[curLevel+1][m2].occ==0) continue;
+					if(_mpCellGlobalTop[curLevel+1][m2].occ==0) continue;
 
-					_mpCell[curLevel][m1].occ +=_mpCell[curLevel+1][m2].occ;
+					_mpCellGlobalTop[curLevel][m1].occ +=_mpCellGlobalTop[curLevel+1][m2].occ;
 
-					_mpCell[curLevel][m1].multipole.addMultipoleParticle(_mpCell[curLevel+1][m2].multipole);
+					_mpCellGlobalTop[curLevel][m1].multipole.addMultipoleParticle(_mpCellGlobalTop[curLevel+1][m2].multipole);
 				} // iDir closed
 			}// m1x closed
 		}// m1y closed
 	} // m1z closed
 }
 
-void UniformPseudoParticleContainer::CombineMpCell_Wigner(double *cellWid, int& mpCells, int& curLevel){
+void UniformPseudoParticleContainer::CombineMpCell_Wigner(double *cellWid, int& mpCells, int curLevel){
 	int iDir, m1=0, m1x, m1y, m1z, m2=0;
 	int m2v[3] = {0, 0, 0};
 	int mpCellsN=2*mpCells;
@@ -492,16 +499,16 @@ void UniformPseudoParticleContainer::CombineMpCell_Wigner(double *cellWid, int& 
 
 					m2=(m2v[2]*mpCellsN + m2v[1])*mpCellsN + m2v[0];
 
-					if(_mpCell[curLevel+1][m2].occ==0) continue;
+					if(_mpCellGlobalTop[curLevel+1][m2].occ==0) continue;
 
-					_mpCell[curLevel][m1].occ +=_mpCell[curLevel+1][m2].occ;
+					_mpCellGlobalTop[curLevel][m1].occ +=_mpCellGlobalTop[curLevel+1][m2].occ;
 
 					/* get Wigner matrix */
 					const int idxPhi = iDir%2;
 					const int negatePhi = 1 - ((iDir%4)/2)*2;
 					const int idxWig = iDir/4;
 
-					_mpCell[curLevel][m1].multipole.addMultipoleParticle_Wigner(_mpCell[curLevel+1][m2].multipole, M2M_Wigner(idxWig),
+					_mpCellGlobalTop[curLevel][m1].multipole.addMultipoleParticle_Wigner(_mpCellGlobalTop[curLevel+1][m2].multipole, M2M_Wigner(idxWig),
 							M2M_Wigner(idxWig+2), CosSin_ptr(idxPhi), negatePhi, magnitude);
 				} // iDir closed
 			}// m1x closed
@@ -509,18 +516,27 @@ void UniformPseudoParticleContainer::CombineMpCell_Wigner(double *cellWid, int& 
 	} // m1z closed
 }
 
-void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, int& localMpCells, int& curLevel, Vector3<int> offset){
+void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, int& localMpCells, int curLevel, Vector3<int> offset){
 	int iDir, m1=0, m1x, m1y, m1z, m2=0;
 	int m2v[3] = {0, 0, 0};
 	//take care of halo cells
 	int localMpCellsN=2*(localMpCells-4)+4;
 	int localMpCellsRow;
+	std::vector<std::vector<MpCell> > * mpCellCurLevel;
+	int curLevelp1 = curLevel -_globalLevel;
+
 	if(curLevel == _globalLevel){
 		localMpCellsRow = (localMpCells-4) * _numProcessorsPerDim;
+		mpCellCurLevel = &_mpCellGlobalTop;
+
 	}
 	else{
 		localMpCellsRow = localMpCells;
+		mpCellCurLevel = &_mpCellLocal;
+		//adjust level to local tree
+		curLevel = curLevel - _globalLevel - 1;
 	}
+	//current level plus 1
 
 	for(m1z=0; m1z<localMpCells-4; m1z++){
 		for(m1y=0; m1y<localMpCells-4; m1y++){
@@ -540,11 +556,11 @@ void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, int& loc
 
 					m2=(m2v[2]*localMpCellsN + m2v[1])*localMpCellsN + m2v[0];
 
-					if(_mpCell[curLevel+1][m2].occ==0) continue;
+					if(_mpCellLocal[curLevelp1][m2].occ==0) continue;
 
-					_mpCell[curLevel][m1].occ +=_mpCell[curLevel+1][m2].occ;
+					(*mpCellCurLevel)[curLevel][m1].occ +=_mpCellLocal[curLevelp1][m2].occ;
+					(*mpCellCurLevel)[curLevel][m1].multipole.addMultipoleParticle(_mpCellLocal[curLevelp1][m2].multipole);
 
-					_mpCell[curLevel][m1].multipole.addMultipoleParticle(_mpCell[curLevel+1][m2].multipole);
 				} // iDir closed
 			}// m1x closed
 		}// m1y closed
@@ -554,7 +570,7 @@ void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, int& loc
 #define HiLim(t) ToEven(m1v[t])+ 2*_wellSep+1
 #define LoLim(t) ToEven(m1v[t])- 2*_wellSep
 
-void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCells, int& curLevel){
+void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCells, int curLevel){
 	_timerGatherWellSepLo.start();
 
 	int m1v[3];
@@ -582,7 +598,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 		m1v[0] = m1 % mpCells;
 		m1v[1] = (m1 / mpCells) % mpCells;
 		m1v[2] = (m1 / (mpCells * mpCells)) % mpCells;
-		if (_mpCell[curLevel][m1].occ == 0)
+		if (_mpCellGlobalTop[curLevel][m1].occ == 0)
 			continue;
 
 		for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
@@ -630,11 +646,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 						continue;
 					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
 
-					if (_mpCell[curLevel][m2].occ == 0)
+					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
 						continue;
 
-					_mpCell[curLevel][m1].local.addMultipoleParticle(
-							_mpCell[curLevel][m2].multipole, periodicShift);
+					_mpCellGlobalTop[curLevel][m1].local.addMultipoleParticle(
+							_mpCellGlobalTop[curLevel][m2].multipole, periodicShift);
 				} // m2x closed
 			} // m2y closed
 		} // m2z closed
@@ -644,7 +660,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 
 } // GatherWellSepLo closed
 
-void UniformPseudoParticleContainer::GatherWellSepLo_Wigner(double *cellWid, int mpCells, int& curLevel){
+void UniformPseudoParticleContainer::GatherWellSepLo_Wigner(double *cellWid, int mpCells, int curLevel){
 	_timerGatherWellSepLo.start();
 
 	int m1v[3];
@@ -672,7 +688,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_Wigner(double *cellWid, int
 		m1v[0] = m1 % mpCells;
 		m1v[1] = (m1 / mpCells) % mpCells;
 		m1v[2] = (m1 / (mpCells * mpCells)) % mpCells;
-		if (_mpCell[curLevel][m1].occ == 0)
+		if (_mpCellGlobalTop[curLevel][m1].occ == 0)
 			continue;
 
 		for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
@@ -720,11 +736,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_Wigner(double *cellWid, int
 						continue;
 					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
 
-					if (_mpCell[curLevel][m2].occ == 0)
+					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
 						continue;
 
-					_mpCell[curLevel][m1].local.addMultipoleParticle_Wigner(
-							_mpCell[curLevel][m2].multipole, periodicShift, cellWid, _M2L_Wigner);
+					_mpCellGlobalTop[curLevel][m1].local.addMultipoleParticle_Wigner(
+							_mpCellGlobalTop[curLevel][m2].multipole, periodicShift, cellWid, _M2L_Wigner);
 				} // m2x closed
 			} // m2y closed
 		} // m2z closed
@@ -734,18 +750,17 @@ void UniformPseudoParticleContainer::GatherWellSepLo_Wigner(double *cellWid, int
 
 }
 
-void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int& curLevel){
+void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int curLevel){
 	_timerGatherWellSepLo.start();
 
 	int m1x,m1y,m1z;
 	int m2v[3];
 	int m1v[3];
-
-
+	//adjust for local level
+	curLevel = curLevel - _globalLevel - 1;
 	int m1, m2, m2x, m2y, m2z;
 
 	int _row_length;
-
 
 	Vector3<double> periodicShift(0.0);
 
@@ -756,8 +771,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 				m1v[0] = m1x - 2;
 				m1v[1] = m1y - 2;
 				m1v[2] = m1z - 2;
-
-				if (_mpCell[curLevel][m1].occ == 0 ){
+				if (_mpCellLocal[curLevel][m1].occ == 0 ){
 					continue;
 				}
 
@@ -790,12 +804,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 								abs(m2v[2] - m1z) <= _wellSep)
 								continue;
 							m2 = (m2z * localMpCells + m2y) * localMpCells + m2x;
-
-							if (_mpCell[curLevel][m2].occ == 0)
+							if (_mpCellLocal[curLevel][m2].occ == 0)
 								continue;
 
-							_mpCell[curLevel][m1].local.addMultipoleParticle(
-									_mpCell[curLevel][m2].multipole, periodicShift);
+							_mpCellLocal[curLevel][m1].local.addMultipoleParticle(
+									_mpCellLocal[curLevel][m2].multipole, periodicShift);
 						} // m2x closed
 					} // m2y closed
 				} // m2z closed
@@ -807,7 +820,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 
 } // GatherWellSepLo closed
 
-void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCells, int& curLevel){
+void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCells, int curLevel){
 	_timerPropagateCellLo.start();
 	int m1v[3];
 	int m2v[3];
@@ -837,7 +850,7 @@ void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCell
 		m1y = m1v[1];
 		m1z = m1v[2];
 
-		if (_mpCell[curLevel][m1].occ == 0)
+		if (_mpCellGlobalTop[curLevel][m1].occ == 0)
 			continue;
 
 		for (iDir = 0; iDir < 8; iDir++) {
@@ -851,14 +864,14 @@ void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCell
 
 			m2 = (m2v[2] * mpCellsN + m2v[1]) * mpCellsN + m2v[0];
 
-			_mpCell[curLevel][m1].local.actOnLocalParticle(
-					_mpCell[curLevel + 1][m2].local);
+			_mpCellGlobalTop[curLevel][m1].local.actOnLocalParticle(
+					_mpCellGlobalTop[curLevel + 1][m2].local);
 		} // iDir
 	}
 	_timerPropagateCellLo.stop();
 } // PropogateCellLo
 
-void UniformPseudoParticleContainer::PropagateCellLo_Wigner(double *cellWid, int mpCells, int& curLevel){
+void UniformPseudoParticleContainer::PropagateCellLo_Wigner(double *cellWid, int mpCells, int curLevel){
 	_timerPropagateCellLo.start();
 	int m1v[3];
 	int m2v[3];
@@ -884,7 +897,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Wigner(double *cellWid, int
 		m1y = m1v[1];
 		m1z = m1v[2];
 
-		if (_mpCell[curLevel][m1].occ == 0)
+		if (_mpCellGlobalTop[curLevel][m1].occ == 0)
 			continue;
 
 		for (iDir = 0; iDir < 8; iDir++) {
@@ -903,8 +916,8 @@ void UniformPseudoParticleContainer::PropagateCellLo_Wigner(double *cellWid, int
 			const int negatePhi = 1 - ((iDir%4)/2)*2;
 			const int idxWig = iDir/4;
 
-			_mpCell[curLevel][m1].local.actOnLocalParticle_Wigner(
-					_mpCell[curLevel + 1][m2].local, L2L_Wigner(idxWig),
+			_mpCellGlobalTop[curLevel][m1].local.actOnLocalParticle_Wigner(
+					_mpCellGlobalTop[curLevel + 1][m2].local, L2L_Wigner(idxWig),
 							L2L_Wigner(idxWig+2), CosSin_ptr(idxPhi), negatePhi, magnitude);
 
 		} // iDir
@@ -912,7 +925,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Wigner(double *cellWid, int
 	_timerPropagateCellLo.stop();
 } // PropogateCellLo
 
-void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int localMpCells, int& curLevel, Vector3<int> offset){
+void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int localMpCells, int curLevel, Vector3<int> offset){
 	_timerPropagateCellLo.start();
 //	int m1v[3];
 	int m2v[3];
@@ -925,19 +938,28 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 //	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	//correct length in case of globalLevel is reached
 	int localMpCellsRow;
+	std::vector<std::vector<MpCell> > * mpCellCurLevel;
+	int curLevelp1 = curLevel -_globalLevel;
+
 	if(curLevel == _globalLevel){
 		localMpCellsRow = (localMpCells-4) * _numProcessorsPerDim;
+		mpCellCurLevel = &_mpCellGlobalTop;
+
 	}
 	else{
 		localMpCellsRow = localMpCells;
+		mpCellCurLevel = &_mpCellLocal;
+		curLevel = curLevel - _globalLevel - 1;
 	}
 
 	for (m1z = 0; m1z < localMpCells-4; m1z++) {
 		for (m1y = 0; m1y < localMpCells-4; m1y++) {
 			for (m1x = 0; m1x < localMpCells-4; m1x++) {
 				m1=((m1z+offset[2])*localMpCellsRow + m1y+offset[1])*localMpCellsRow + m1x+offset[0];
-				if (_mpCell[curLevel][m1].occ == 0)
+
+				if ((*mpCellCurLevel)[curLevel][m1].occ == 0){
 					continue;
+				}
 
 				for (iDir = 0; iDir < 8; iDir++) {
 					//adjust for halo
@@ -951,8 +973,8 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 
 					m2 = (m2v[2] * mpCellsN + m2v[1]) * mpCellsN + m2v[0];
 
-					_mpCell[curLevel][m1].local.actOnLocalParticle(
-							_mpCell[curLevel + 1][m2].local);
+					(*mpCellCurLevel)[curLevel][m1].local.actOnLocalParticle(
+							_mpCellLocal[curLevelp1][m2].local);
 				} // iDir
 			}
 		}
@@ -965,6 +987,16 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 
 void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 	int cellIndexV[3];
+	std::vector<std::vector<MpCell> > * mpCellMaxLevel;
+	int maxLevel;
+	if(_maxLevel == _globalLevel){
+		mpCellMaxLevel = &_mpCellGlobalTop;
+		maxLevel = _maxLevel;
+	}
+	else{
+		mpCellMaxLevel = &_mpCellLocal;
+		maxLevel = _maxLevel - _globalLevel - 1;
+	}
 	for (int i = 0; i < 3; i++) {
 #if defined(ENABLE_MPI)
 		if(_maxLevel == _globalLevel){
@@ -1021,16 +1053,27 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 			}	// for k closed
 
 			bhfmm::Vector3<double> site_pos_vec3(dr);
-			_mpCell[_maxLevel][cellIndex].multipole.addSource(site_pos_vec3, chargei.q());
+			(*mpCellMaxLevel)[maxLevel][cellIndex].multipole.addSource(site_pos_vec3, chargei.q());
 
 		}// for j closed
 	} // current particle closed
 
-	_mpCell[_maxLevel][cellIndex].occ = Occupied;
+	(*mpCellMaxLevel)[maxLevel][cellIndex].occ = Occupied;
 }
 
 void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 	int cellIndexV[3];
+	std::vector<std::vector<MpCell> > * mpCellMaxLevel;
+
+	int maxLevel;
+	if(_maxLevel == _globalLevel){
+		mpCellMaxLevel = &_mpCellGlobalTop;
+		maxLevel = _maxLevel;
+	}
+	else{
+		mpCellMaxLevel = &_mpCellLocal;
+		maxLevel = _maxLevel - _globalLevel - 1;
+	}
 	for (int i = 0; i < 3; i++) {
 	#if defined(ENABLE_MPI)
 		if(_maxLevel == _globalLevel){
@@ -1084,7 +1127,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 				dr[k]=molecule1.r(k)+dii[k];
 			}       // for k closed
 
-			_mpCell[_maxLevel][cellIndex].local.actOnTarget(dr,chargei.q(),u,f_vec3);
+			(*mpCellMaxLevel)[maxLevel][cellIndex].local.actOnTarget(dr,chargei.q(),u,f_vec3);
 			f[0] = f_vec3[0];
 			f[1] = f_vec3[1];
 			f[2] = f_vec3[2];
@@ -1112,18 +1155,18 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 void UniformPseudoParticleContainer::clear() {
 
 
-	for (int n = _maxLevel; n > _globalLevel; n--) {
-		int localMpCells = pow(2, n) / _numProcessorsPerDim + 4;
+	for (int n = 0; n < _maxLevel-_globalLevel; n++) {
+		int localMpCells = pow(2, n + 1) + 4;
 
 		for (int m1z = 0; m1z < localMpCells; m1z++) {
 			for (int m1y = 0; m1y < localMpCells; m1y++) {
 				for (int m1x = 0; m1x < localMpCells; m1x++) {
 					int cellIndexNew = (m1z * localMpCells + m1y) * localMpCells + m1x;
 
-					_mpCell[n][cellIndexNew].occ = 0;
+					_mpCellLocal[n][cellIndexNew].occ = 0;
 
-					_mpCell[n][cellIndexNew].multipole.clear();
-					_mpCell[n][cellIndexNew].local.clear();
+					_mpCellLocal[n][cellIndexNew].multipole.clear();
+					_mpCellLocal[n][cellIndexNew].local.clear();
 				}
 			}
 		}
@@ -1136,10 +1179,10 @@ void UniformPseudoParticleContainer::clear() {
 				for (int m1x = 0; m1x < mpCells; m1x++) {
 					int cellIndexNew = (m1z * mpCells + m1y) * mpCells + m1x;
 
-					_mpCell[n][cellIndexNew].occ = 0;
+					_mpCellGlobalTop[n][cellIndexNew].occ = 0;
 
-					_mpCell[n][cellIndexNew].multipole.clear();
-					_mpCell[n][cellIndexNew].local.clear();
+					_mpCellGlobalTop[n][cellIndexNew].multipole.clear();
+					_mpCellGlobalTop[n][cellIndexNew].local.clear();
 				}
 			}
 		}
@@ -1157,7 +1200,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 #ifdef ENABLE_MPI
 	int coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < _globalNumCells; cellIndex++) {
-		const MpCell & currentCell = _mpCell[_maxLevel][cellIndex];
+		const MpCell & currentCell = _mpCellGlobalTop[_maxLevel][cellIndex];
 
 		// NOTE: coeffIndex modified in following call:
 		currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
@@ -1172,7 +1215,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 
 	coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < _globalLevelNumCells; cellIndex++) {
-		MpCell & currentCell = _mpCell[_maxLevel][cellIndex];
+		MpCell & currentCell = _mpCellGlobalTop[_maxLevel][cellIndex];
 
 		currentCell.occ = _occVector[cellIndex];
 		currentCell.multipole.readValuesFromMPIBuffer(_coeffVector, coeffIndex);
@@ -1192,7 +1235,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCells
 	int coeffIndex = 0;
 
 	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
-		const MpCell & currentCell = _mpCell[curLevel][cellIndex];
+		const MpCell & currentCell = _mpCellGlobalTop[curLevel][cellIndex];
 
 		// NOTE: coeffIndex modified in following call:
 		currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
@@ -1207,7 +1250,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCells
 	coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
 
-		MpCell & currentCell = _mpCell[curLevel][cellIndex];
+		MpCell & currentCell = _mpCellGlobalTop[curLevel][cellIndex];
 
 		currentCell.occ = _occVector[cellIndex];
 		currentCell.multipole.readValuesFromMPIBuffer(_coeffVector, coeffIndex);
@@ -1231,7 +1274,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 	coeffIndex = 0;
 
 	for (int cellIndex = 0; cellIndex < _row_Length; cellIndex++) {
-		const MpCell & currentCell = _mpCell[_curLevel][cellIndex];
+		const MpCell & currentCell = _mpCellGlobalTop[_curLevel][cellIndex];
 
 		if(currentCell.occ == 0) continue;
 		currentCell.local.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
@@ -1242,7 +1285,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 	coeffIndex = 0;
 
 	for (int cellIndex = 0; cellIndex < _row_Length; cellIndex++) {
-		MpCell & currentCell = _mpCell[_curLevel][cellIndex];
+		MpCell & currentCell = _mpCellGlobalTop[_curLevel][cellIndex];
 
 		if(currentCell.occ == 0) continue;
 		currentCell.local.readValuesFromMPIBuffer(_coeffVector, coeffIndex);
@@ -1259,13 +1302,12 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 void UniformPseudoParticleContainer::getHaloValues(int localMpCellsBottom,int bottomLevel, double *buffer,
 		int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh){
 #if defined(ENABLE_MPI)
-
 	int coeffIndex = 0;
 	int localMpCells = localMpCellsBottom;
 	int cellIndex;
 	int xLowLevel, yLowLevel, zLowLevel;
 	int xHighLevel, yHighLevel, zHighLevel;
-	for(int level=bottomLevel; level>_globalLevel;level--){
+	for(int level=bottomLevel - _globalLevel - 1; level>= 0;level--){
 		xLowLevel = (xLow < 0)? localMpCells + xLow : xLow;
 		yLowLevel = (yLow < 0)? localMpCells + yLow : yLow;
 		zLowLevel = (zLow < 0)? localMpCells + zLow : zLow;
@@ -1277,7 +1319,7 @@ void UniformPseudoParticleContainer::getHaloValues(int localMpCellsBottom,int bo
 			for (int y = yLowLevel; y < yHighLevel; y++) {
 				for (int x = xLowLevel; x < xHighLevel; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
-					const MpCell & currentCell = _mpCell[level][cellIndex];
+					const MpCell & currentCell = _mpCellLocal[level][cellIndex];
 					currentCell.multipole.writeValuesToMPIBuffer(buffer, coeffIndex);
 				}
 			}
@@ -1297,7 +1339,7 @@ void UniformPseudoParticleContainer::setHaloValues(int localMpCellsBottom,int bo
 	int cellIndex;
 	int xLowLevel, yLowLevel, zLowLevel;
 	int xHighLevel, yHighLevel, zHighLevel;
-	for(int level=bottomLevel; level>_globalLevel;level--){
+	for(int level=bottomLevel - _globalLevel - 1; level>= 0;level--){
 		xLowLevel = (xLow < 0)? localMpCells + xLow : xLow;
 		yLowLevel = (yLow < 0)? localMpCells + yLow : yLow;
 		zLowLevel = (zLow < 0)? localMpCells + zLow : zLow;
@@ -1308,7 +1350,7 @@ void UniformPseudoParticleContainer::setHaloValues(int localMpCellsBottom,int bo
 			for (int y = yLowLevel; y < yHighLevel; y++) {
 				for (int x = xLowLevel; x < xHighLevel; x++) {
 					cellIndex = (z * localMpCells + y) * localMpCells + x;
-					MpCell & currentCell = _mpCell[level][cellIndex];
+					MpCell & currentCell = _mpCellLocal[level][cellIndex];
 
 					currentCell.multipole.readValuesFromMPIBuffer(bufferRec, coeffIndex);
 					int empty = 1;
@@ -1524,8 +1566,8 @@ void UniformPseudoParticleContainer::GatherWellSepLoInitM2LWigner(double *cellWi
 						continue;
 					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
 
-					const SHMultipoleParticle& sh_multipole = _mpCell[curLevel][m2].multipole;
-					const SHLocalParticle& sh_local = _mpCell[curLevel][m1].local;
+					const SHMultipoleParticle& sh_multipole = _mpCellGlobalTop[curLevel][m2].multipole;
+					const SHLocalParticle& sh_local = _mpCellGlobalTop[curLevel][m1].local;
 
 					// compute periodically-shifted center
 					Vector3<double> shifted_center = sh_multipole.getCenter() + periodicShift;

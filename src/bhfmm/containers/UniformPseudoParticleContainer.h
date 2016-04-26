@@ -54,7 +54,15 @@ private:
 	int _wellSep;
 	int _maxLevel;
 	int _globalLevel;
-	std::vector<std::vector<MpCell> > _mpCell;
+	//In the parallel version the octree is divided into two trees:
+	//- A local subtree starting at _globalLevel + 1 which contains only the
+	//ancestor nodes from the node that was assigned to the MPI process on
+	//the _globalLevel
+	//- A global tree which caintains all the octree elements of the FMM tree
+	//from level 0 to _globalLevel
+	std::vector<std::vector<MpCell> > _mpCellGlobalTop;
+	std::vector<std::vector<MpCell> > _mpCellLocal;
+
 	double _cellLength[3];
 	int _globalNumCellsPerDim;
 	Domain* _domain;
@@ -75,31 +83,31 @@ private:
 
 	int _globalLevelNumCells;
 	// M2M
-	void CombineMpCell(double *cellWid, int& mpCells, int& curLevel);
+	void CombineMpCell(double *cellWid, int& mpCells, int curLevel);
 
 	// M2M
-	void CombineMpCell_Wigner(double *cellWid, int& mpCells, int& curLevel);
+	void CombineMpCell_Wigner(double *cellWid, int& mpCells, int curLevel);
 
 	// M2M
-	void CombineMpCell_MPI(double *cellWid, int& mpCells, int& curLevel, Vector3<int> offset);
+	void CombineMpCell_MPI(double *cellWid, int& mpCells, int curLevel, Vector3<int> offset);
 
 	// M2L
-	void GatherWellSepLo(double *cellWid, int mpCells, int& curLevel);
+	void GatherWellSepLo(double *cellWid, int mpCells, int curLevel);
 
 	// M2L
-	void GatherWellSepLo_Wigner(double *cellWid, int mpCells, int& curLevel);
+	void GatherWellSepLo_Wigner(double *cellWid, int mpCells, int curLevel);
 
 	// M2L
-	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int& curLevel);
+	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int curLevel);
 
 	// L2L
-	void PropagateCellLo(double *cellWid, int mpCells, int& curLevel);
+	void PropagateCellLo(double *cellWid, int mpCells, int curLevel);
 
 	// L2L
-	void PropagateCellLo_Wigner(double *cellWid, int mpCells, int& curLevel);
+	void PropagateCellLo_Wigner(double *cellWid, int mpCells, int curLevel);
 
 	// L2L
-	void PropagateCellLo_MPI(double *cellWid, int mpCells, int& curLevel, Vector3<int> offset);
+	void PropagateCellLo_MPI(double *cellWid, int mpCells, int curLevel, Vector3<int> offset);
 
 	// for parallelization
 	void AllReduceMultipoleMoments();
