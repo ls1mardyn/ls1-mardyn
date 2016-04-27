@@ -14,6 +14,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/NonBlockingMPIHandlerBase.h"
 #include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
@@ -1286,22 +1287,14 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 	}
 	// perform non-blocking version:
 
-	decompositionTimer.start();
+	//TODO: exchange the constructor for a real non-blocking version
+	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
+			_domainDecomposition, _moleculeContainer, _domain, _cellProcessor);
 
-	_domainDecomposition->balanceAndExchange(forceRebalancing,
-			_moleculeContainer, _domain);
+	nonBlockingMPIHandler->initBalanceAndExchange(forceRebalancing);
 
-	// The cache of the molecules must be updated/build after the exchange process,
-	// as the cache itself isn't transferred
-	_moleculeContainer->updateMoleculeCaches();
+	nonBlockingMPIHandler->performComputation();
 
-	decompositionTimer.stop();
-
-	computationTimer.start();
-	// Force calculation and other pair interaction related computations
-	global_log->debug() << "Traversing pairs" << endl;
-	_moleculeContainer->traverseCells(*_cellProcessor);
-	computationTimer.stop();
 }
 
 
