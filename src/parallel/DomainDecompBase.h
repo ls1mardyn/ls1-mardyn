@@ -65,11 +65,11 @@ public:
 	//!
 	//! A non-blocking behaviour is typically possible, as long as no rebalancing has to be done.
 	//!
-	//! @param balance if true, a rebalancing is forced;
+	//! @param forceRebalancing if true, a rebalancing is forced;
 	//! 					otherwise automatic balancing of Decomposition is applied
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual bool queryBalanceAndExchangeNonBlocking(bool balance, ParticleContainer* moleculeContainer, Domain* domain);
+	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 
 	//! @brief balance the load (and optimize communication) and exchange boundary particles

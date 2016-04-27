@@ -1256,44 +1256,15 @@ void Simulation::updateParticleContainerAndDecomposition() {
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 		Timer& decompositionTimer, Timer& computationTimer) {
-	decompositionTimer.start();
-	// ensure that all Particles are in the right cells and exchange Particles
-	global_log->debug() << "Updating container and decomposition" << endl;
-
-	// The particles have moved, so the neighbourhood relations have
-	// changed and have to be adjusted
-	_moleculeContainer->update();
-	decompositionTimer.stop();
 
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
-	if (not _domainDecomposition->queryBalanceAndExchangeNonBlocking(
-			forceRebalancing, _moleculeContainer, _domain)) { // do serial/blocking version
-		decompositionTimer.start();
-		_domainDecomposition->balanceAndExchange(forceRebalancing,
-				_moleculeContainer, _domain);
-		// The cache of the molecules must be updated/build after the exchange process,
-		// as the cache itself isn't transferred
-		_moleculeContainer->updateMoleculeCaches();
-
-		decompositionTimer.stop();
-
-		computationTimer.start();
-		// Force calculation and other pair interaction related computations
-		global_log->debug() << "Traversing pairs" << endl;
-		_moleculeContainer->traverseCells(*_cellProcessor);
-		computationTimer.stop();
-		return;
-	}
-	// perform non-blocking version:
 
 	//TODO: exchange the constructor for a real non-blocking version
 	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
 			_domainDecomposition, _moleculeContainer, _domain, _cellProcessor);
 
-	nonBlockingMPIHandler->initBalanceAndExchange(forceRebalancing);
-
-	nonBlockingMPIHandler->performComputation();
+	nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
 
 }
 
