@@ -76,7 +76,7 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 }
 
 bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain){
-	return true;
+	return false;
 }
 
 void DomainDecompBase::balanceAndExchange(bool /* forceRebalancing */, ParticleContainer* moleculeContainer, Domain* domain) {

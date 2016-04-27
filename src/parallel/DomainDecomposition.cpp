@@ -160,6 +160,11 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 	}
 }
 
+bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/,
+		ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/) {
+	return true;
+}
+
 void DomainDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 }

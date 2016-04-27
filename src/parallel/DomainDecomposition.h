@@ -79,6 +79,9 @@ public:
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
+	// documentation in parent class
+	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+
 private:
 	bool _neighboursInitialized;
 
