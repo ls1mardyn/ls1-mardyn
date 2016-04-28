@@ -30,8 +30,8 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		double domainLength[3], double bBoxMin[3], double bBoxMax[3],
 		double LJCellLength[3], unsigned LJSubdivisionFactor, int orderOfExpansions,
 		bool periodic) :
-		PseudoParticleContainer(orderOfExpansions), _leafContainer(0), _wellSep(1),
-		_M2M_Wigner(4, WignerMatrix(orderOfExpansions, true)), _L2L_Wigner(4, WignerMatrix(orderOfExpansions, true)) {
+		PseudoParticleContainer(orderOfExpansions), _leafContainer(0), _wellSep(1)
+		 {
 
 	_periodicBC = periodic;
 	//enable overlapping communication;
@@ -266,78 +266,12 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 			<< (8 * (_coeffVectorLength * 2 + _globalNumCells)
 					/ (1024.0 * 1024.0)) << " MB;" << std::endl;
 
-	/* Initialize sin/cos(phi) lookup */
-	double phi[4];
-	phi[0] = -3*M_PI/4;
-	phi[1] = -M_PI/4;
-	phi[2] = 3*M_PI/4;
-	phi[3] = M_PI/4;
-
-	_CosSin = new double[(_maxOrd+1)*4];
-	// We only use negative phi -> cos(-x)=cos(x), sin(-x)=-sin(x)
-	for (int m = 0; m <= _maxOrd; ++m) {
-		CosSin_ptr(0)[2*m] 		= cos(m*phi[0]);
-		CosSin_ptr(0)[2*m + 1] 	= sin(m*phi[0]);
-		CosSin_ptr(1)[2*m] 		= cos(m*phi[1]);
-		CosSin_ptr(1)[2*m + 1] 	= sin(m*phi[1]);
-	}
-
-	/* Initialize M2M-Wigner matrices */
-	double theta = atan(sqrt(2.0));
-	_M2M_Wigner[0].evaluate(M_PI-theta);
-	_M2M_Wigner[1].evaluate(theta);
-	_M2M_Wigner[2].evaluate(-(M_PI-theta));
-	_M2M_Wigner[3].evaluate(-theta);
-	/* Initialize Lookup table */
-	RotationParameterLookUp::tab = new RotationParameterLookUp(_maxOrd);
-	RotationParameterLookUp::tab->initFromDirEval();
-
-	// pre-multiply prefactors
-	for (unsigned i = 0; i<_M2M_Wigner.size(); ++i) {
-		WignerMatrix &W = _M2M_Wigner[i];
-		for (int l = 0; l <= _maxOrd; ++l) {
-			for (int m = 0; m <= l; ++m) {
-				for (int k = -l; k<=l; ++k) {
-					const double factor = RotationParameterLookUp::tab->acc_c(l,m,k);
-					W.acc(l,m,k) *= factor ;
-				}
-			}
-		}
-
-	}
-
-	_L2L_Wigner[0].evaluate(M_PI-theta);
-	_L2L_Wigner[1].evaluate(theta);
-	_L2L_Wigner[2].evaluate(-(M_PI-theta));
-	_L2L_Wigner[3].evaluate(-theta);
-
-	// pre-multiply prefactors
-	for (unsigned i = 0; i<_L2L_Wigner.size(); ++i) {
-		WignerMatrix &W = _L2L_Wigner[i];
-		for (int l = 0; l <= _maxOrd; ++l) {
-			for (int m = 0; m <= l; ++m) {
-				for (int k = -l; k<=l; ++k) {
-					const double factor = RotationParameterLookUp::tab->acc_c(l,k,m);
-					W.acc(l,m,k) *= factor ;
-				}
-			}
-		}
-
-	}
-
-	/* Initialize M2L-Wigner matrices */
-	//processTreeInitM2LWigner();
-
-	delete RotationParameterLookUp::tab;
-
-
 }
 
 UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete _leafContainer;
 	delete[] _coeffVector;
 	delete[] _occVector;
-	delete _CosSin;
 #if defined(ENABLE_MPI)
 	delete _multipoleBuffer;
 	delete _multipoleRecBuffer;
@@ -366,7 +300,9 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 
 	int curCellsEdge=_globalNumCellsPerDim;
 	double cellWid[3];
-
+	if(_globalLevel >= _maxLevel - 1){
+		communicateHalos();
+	}
 	for(int i=0; i <3; i++)	cellWid[i]=_cellLength[i];
 
 	// when considering periodic boundary conditions, there is actually work up to level 1!
@@ -383,17 +319,18 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 		else{
 			CombineMpCell(cellWid, curCellsEdge, curLevel);
 		}
+		if(curLevel == _globalLevel + 1){
+			communicateHalos();
+		}
 		if(curLevel == _globalLevel){
 			AllReduceMultipoleMomentsLevel(_globalLevelNumCells,curLevel);
 		}
-#elif WIGNER==0
-		CombineMpCell(cellWid, curCellsEdge, curLevel);
 #else
-		CombineMpCell_Wigner(cellWid, curCellsEdge, curLevel);
+		CombineMpCell(cellWid, curCellsEdge, curLevel);
 #endif
 	}
 	_timerCombineMpCell.stop();
-	communicateHalos();
+
 }
 
 void UniformPseudoParticleContainer::horizontalPass(
@@ -422,10 +359,8 @@ void UniformPseudoParticleContainer::horizontalPass(
 		else{
 			GatherWellSepLo(cellWid, curCellsEdge, curLevel);
 		}
-#elif WIGNER==0
-		GatherWellSepLo(cellWid, curCellsEdge, curLevel);
 #else
-		GatherWellSepLo_Wigner(cellWid, curCellsEdge, curLevel);
+		GatherWellSepLo(cellWid, curCellsEdge, curLevel);
 #endif
 #if defined(ENABLE_MPI)
 		if(curLevel <= _globalLevel){
@@ -460,10 +395,8 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 		else{
 			PropagateCellLo(cellWid, curCellsEdge, curLevel);
 		}
-#elif WIGNER==0
-		PropagateCellLo(cellWid, curCellsEdge, curLevel);
 #else
-		PropagateCellLo_Wigner(cellWid, curCellsEdge, curLevel);
+		PropagateCellLo(cellWid, curCellsEdge, curLevel);
 #endif
 	}
 
@@ -508,47 +441,7 @@ void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells
 	} // m1z closed
 }
 
-void UniformPseudoParticleContainer::CombineMpCell_Wigner(double *cellWid, int& mpCells, int curLevel){
-	int iDir, m1=0, m1x, m1y, m1z, m2=0;
-	int m2v[3] = {0, 0, 0};
-	int mpCellsN=2*mpCells;
 
-	const double magnitude = sqrt(3.0)/4.0 *cellWid[0];
-
-	for(m1z=0; m1z<mpCells; m1z++){
-		for(m1y=0; m1y<mpCells; m1y++){
-			for(m1x=0; m1x<mpCells; m1x++){
-				m1=(m1z*mpCells + m1y)*mpCells + m1x;
-
-				for(iDir=0; iDir<8; iDir++){
-
-					m2v[0]=2*m1x;
-					m2v[1]=2*m1y;
-					m2v[2]=2*m1z;
-
-					if(IsOdd(iDir  )) m2v[0]=m2v[0]+1;
-					if(IsOdd(iDir/2)) m2v[1]=m2v[1]+1;
-					if(IsOdd(iDir/4)) m2v[2]=m2v[2]+1;
-
-
-					m2=(m2v[2]*mpCellsN + m2v[1])*mpCellsN + m2v[0];
-
-					if(_mpCellGlobalTop[curLevel+1][m2].occ==0) continue;
-
-					_mpCellGlobalTop[curLevel][m1].occ +=_mpCellGlobalTop[curLevel+1][m2].occ;
-
-					/* get Wigner matrix */
-					const int idxPhi = iDir%2;
-					const int negatePhi = 1 - ((iDir%4)/2)*2;
-					const int idxWig = iDir/4;
-
-					_mpCellGlobalTop[curLevel][m1].multipole.addMultipoleParticle_Wigner(_mpCellGlobalTop[curLevel+1][m2].multipole, M2M_Wigner(idxWig),
-							M2M_Wigner(idxWig+2), CosSin_ptr(idxPhi), negatePhi, magnitude);
-				} // iDir closed
-			}// m1x closed
-		}// m1y closed
-	} // m1z closed
-}
 
 void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, int& localMpCells, int curLevel, Vector3<int> offset){
 	int iDir, m1=0, m1x, m1y, m1z, m2=0;
@@ -694,95 +587,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 
 } // GatherWellSepLo closed
 
-void UniformPseudoParticleContainer::GatherWellSepLo_Wigner(double *cellWid, int mpCells, int curLevel){
-	_timerGatherWellSepLo.start();
 
-	int m1v[3];
-	int m2v[3];
-
-	int m1, m2, m2x, m2y, m2z;
-	// int m1x, m1y, m1z;
-	int m22x, m22y, m22z; // for periodic image
-	int _size, _rank, loop_min, loop_max;
-	int _row_length;
-
-	_row_length=mpCells*mpCells*mpCells;
-
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_rank= domainDecomp.getRank();
-	_size= domainDecomp.getNumProcs();
-
-	loop_min = (int) ((long) (_rank + 0) * (long) (_row_length) / (long) _size);
-	loop_max = (int) ((long) (_rank + 1) * (long) (_row_length) / (long) _size);
-
-	Vector3<double> periodicShift;
-
-	for (m1 = loop_min; m1 < loop_max; m1++) {
-
-		m1v[0] = m1 % mpCells;
-		m1v[1] = (m1 / mpCells) % mpCells;
-		m1v[2] = (m1 / (mpCells * mpCells)) % mpCells;
-		if (_mpCellGlobalTop[curLevel][m1].occ == 0)
-			continue;
-
-		for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
-			if (_periodicBC == false and (m2z < 0 or m2z >= mpCells)) {
-				continue;
-			}
-
-			// to get periodic image
-			m22z = (mpCells + m2z) % mpCells;
-			periodicShift[2] = 0.0;
-			if (m2z < 0) 		periodicShift[2] = -mpCells * cellWid[2];
-			if (m2z >= mpCells) periodicShift[2] = mpCells * cellWid[2];
-
-			m2v[2] = m2z;
-			for (m2y = LoLim(1); m2y <= HiLim(1); m2y++) {
-				if (_periodicBC == false and (m2y < 0 or m2y >= mpCells)) {
-					continue;
-				}
-
-				// to get periodic image
-				m22y = (mpCells + m2y) % mpCells;
-
-				periodicShift[1] = 0.0;
-				if (m2y < 0)		periodicShift[1] = -mpCells * cellWid[1];
-				if (m2y >= mpCells)	periodicShift[1] = mpCells * cellWid[1];
-
-				m2v[1] = m2y;
-				for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
-					if (_periodicBC == false and (m2x < 0 or m2x >= mpCells)) {
-						continue;
-					}
-
-					// to get periodic image
-					m22x = (mpCells + m2x) % mpCells;
-
-					periodicShift[0] = 0.0;
-					if (m2x < 0)		periodicShift[0] = -mpCells * cellWid[0];
-					if (m2x >= mpCells) periodicShift[0] = mpCells * cellWid[0];
-					//
-					m2v[0] = m2x;
-
-					if (abs(m2v[0] - m1v[0]) <= _wellSep &&
-						abs(m2v[1] - m1v[1]) <= _wellSep &&
-						abs(m2v[2] - m1v[2]) <= _wellSep)
-						continue;
-					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
-
-					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
-						continue;
-
-					_mpCellGlobalTop[curLevel][m1].local.addMultipoleParticle_Wigner(
-							_mpCellGlobalTop[curLevel][m2].multipole, periodicShift, cellWid, _M2L_Wigner);
-				} // m2x closed
-			} // m2y closed
-		} // m2z closed
-	} //m1 closed
-
-	_timerGatherWellSepLo.stop();
-
-}
 
 void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int curLevel){
 	_timerGatherWellSepLo.start();
@@ -905,59 +710,6 @@ void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCell
 	_timerPropagateCellLo.stop();
 } // PropogateCellLo
 
-void UniformPseudoParticleContainer::PropagateCellLo_Wigner(double *cellWid, int mpCells, int curLevel){
-	_timerPropagateCellLo.start();
-	int m1v[3];
-	int m2v[3];
-
-	int iDir, m1, m1x, m1y, m1z, m2;
-
-	int mpCellsN = 2*mpCells;
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	int _rank= domainDecomp.getRank();
-	int _size= domainDecomp.getNumProcs();
-
-	int loop_min = (int) ((long) (_rank + 0) * (long) (mpCells * mpCells * mpCells) / (long) _size);
-	int loop_max = (int) ((long) (_rank + 1) * (long) (mpCells * mpCells * mpCells) / (long) _size);
-
-	const double magnitude = sqrt(3.0)/4.0 *cellWid[0];
-
-	for (m1 = loop_min; m1 < loop_max; m1++) {
-
-		m1v[0] = m1 % mpCells;
-		m1v[1] = (m1 / mpCells) % mpCells;
-		m1v[2] = (m1 / (mpCells * mpCells)) % mpCells;
-		m1x = m1v[0];
-		m1y = m1v[1];
-		m1z = m1v[2];
-
-		if (_mpCellGlobalTop[curLevel][m1].occ == 0)
-			continue;
-
-		for (iDir = 0; iDir < 8; iDir++) {
-			m2v[0] = 2 * m1x;
-			m2v[1] = 2 * m1y;
-			m2v[2] = 2 * m1z;
-
-			if (IsOdd(iDir))     m2v[0] = m2v[0] + 1;
-			if (IsOdd(iDir / 2)) m2v[1] = m2v[1] + 1;
-			if (IsOdd(iDir / 4)) m2v[2] = m2v[2] + 1;
-
-			m2 = (m2v[2] * mpCellsN + m2v[1]) * mpCellsN + m2v[0];
-
-			/* get Wigner matrix */
-			const int idxPhi = iDir%2;
-			const int negatePhi = 1 - ((iDir%4)/2)*2;
-			const int idxWig = iDir/4;
-
-			_mpCellGlobalTop[curLevel][m1].local.actOnLocalParticle_Wigner(
-					_mpCellGlobalTop[curLevel + 1][m2].local, L2L_Wigner(idxWig),
-							L2L_Wigner(idxWig+2), CosSin_ptr(idxPhi), negatePhi, magnitude);
-
-		} // iDir
-	}
-	_timerPropagateCellLo.stop();
-} // PropogateCellLo
 
 void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int localMpCells, int curLevel, Vector3<int> offset){
 	_timerPropagateCellLo.start();
@@ -1415,7 +1167,17 @@ void UniformPseudoParticleContainer::setHaloValues(int localMpCellsBottom,int bo
 
 #endif
 }
+
 void UniformPseudoParticleContainer::communicateHalos(){
+	if(!_overlapComm){
+		communicateHalosNoOverlap();
+	}
+	else{
+		communicateHalosOverlapStart();
+		_multipoleRecBufferOverlap->wait();
+	}
+}
+void UniformPseudoParticleContainer::communicateHalosNoOverlap(){
 
 #if defined(ENABLE_MPI)
 
@@ -1469,6 +1231,168 @@ void UniformPseudoParticleContainer::communicateHalos(){
 #endif
 }
 
+
+void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
+
+#if defined(ENABLE_MPI)
+	//start receiving
+	_multipoleRecBufferOverlap->startCommunication();
+
+	//fill buffers
+	_multipoleBufferOverlap->clear();
+
+	int localMpCellsBottom = pow(2,_maxLevel) / _numProcessorsPerDim  + 4;
+
+	//fill buffers of the halo areas of the simulation cube
+
+	int lowDirection[6] = {2,4,2,-2,2,-2};
+	int highDirection[6] = {-4,-2,2,-2,2,-2};
+
+
+	for(int i=0; i<6; i = i + 2){
+		getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[i],
+							lowDirection[(0+i)%6], lowDirection[(1+i)%6], lowDirection[(2+i)%6], lowDirection[(3+i)%6], lowDirection[(4+i)%6], lowDirection[(5+i)%6]);
+
+		getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[i+1],
+					highDirection[(0+i)%6], highDirection[(1+i)%6], highDirection[(2+i)%6], highDirection[(3+i)%6], highDirection[(4+i)%6], highDirection[(5+i)%6]);
+	}
+
+	//fill edges buffers of the halo areas
+	//adjacent edges to lower x area
+
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[0],
+									2, 4,2,4,2,-2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[2],
+									2, 4,-4,-2,2,-2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[4],
+									2, 4,2,-2,2,4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[6],
+									2, 4,2,-2,-4,-2);
+
+	//adjacent edges to higher x area
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[1],
+									-4, -2,-4,-2,2,-2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[3],
+									-4, -2,2,4,2,-2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[5],
+									-4, -2,2,-2,-4,-2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[7],
+									-4, -2,2,-2,2,4);
+
+	//remaining edges
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[8],
+									2, -2,2,4,2,4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[10],
+									2, -2,2,4,-4,-2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[11],
+									2, -2,-4,-2,2,4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[9],
+									2, -2,-4,-2,-4,-2);
+
+
+	//corners
+
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[0],
+										2, 4, 2, 4, 2, 4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[1],
+										-4, -2, -4, -2, -4, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[2],
+										2, 4, 2, 4, -4, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[3],
+										-4, -2, -4, -2, 2, 4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[4],
+										2, 4, -4, -2, 2, 4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[5],
+										-4, -2, 2, 4, -4, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[6],
+										2, 4, -4, -2, -4, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getCornerBuffers()[7],
+										-4, -2, 2, 4, 2, 4);
+
+	//start sending
+	_multipoleBufferOverlap->startCommunication();
+
+#endif
+}
+
+void UniformPseudoParticleContainer::communicateHalosOverlapSetHalos(){
+
+#if defined(ENABLE_MPI)
+
+	//read buffers
+
+	int localMpCellsBottom = pow(2,_maxLevel) / _numProcessorsPerDim  + 4;
+
+	//read buffers of the halo areas of the simulation cube
+
+	int lowDirection[6] = {0,2,2,-2,2,-2};
+	int highDirection[6] = {-2,0,2,-2,2,-2};
+
+
+	for(int i=0; i<6; i = i + 2){
+		setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[i],
+							lowDirection[(0+i)%6], lowDirection[(1+i)%6], lowDirection[(2+i)%6], lowDirection[(3+i)%6], lowDirection[(4+i)%6], lowDirection[(5+i)%6]);
+
+		setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[i+1],
+					highDirection[(0+i)%6], highDirection[(1+i)%6], highDirection[(2+i)%6], highDirection[(3+i)%6], highDirection[(4+i)%6], highDirection[(5+i)%6]);
+	}
+
+	//read edges buffers of the halo areas
+	//adjacent edges to lower x area
+
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[0],
+									0, 2,0,2,2,-2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[2],
+									0, 2,-2,0,2,-2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[4],
+									0, 2, 2,-2, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[6],
+									0, 2,2,-2,-2, 0);
+
+	//adjacent edges to higher x area
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[1],
+									-2, 0, -2, 0, 2,-2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[3],
+									-2, 0, 0, 2, 2,-2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[5],
+									-2, 0, 2, -2, -2, 0);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[7],
+									-2, 0,2,-2, 0, 2);
+
+	//remaining edges
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[8],
+									2, -2, 0, 2, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[10],
+									2, -2, 0, 2, -2, 0);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[11],
+									2, -2, -2, 0, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[9],
+									2, -2,-2,0,-2,0);
+
+
+	//corners
+
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[0],
+										0, 2, 0, 2, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[1],
+										-2, 0, -2, 0, -2, 0);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[2],
+										0, 2, 0, 2, -2, 0);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[3],
+										-2, 0, -2, 0, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[4],
+										0, 2, -2, -2, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[5],
+										-2, 0, 0, 2, -2, 0);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[6],
+										0, 2, -2, 0, -2, 0);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[7],
+										-2, 0, 0, 2, 0, 2);
+
+#endif
+}
+
+
 void UniformPseudoParticleContainer::communicateHalosAlongAxis(double * lowerNeighbourBuffer, double * higherNeighbourBuffer,
 		double * lowerNeighbourBufferRec, double * higherNeighbourBufferRec,
 		int lowerNeighbour, int higherNeighbour, int haloSize
@@ -1503,161 +1427,19 @@ void UniformPseudoParticleContainer::processTree() {
 		for(int i=0; i <3; i++){
 			cellWid[i] /=2;
 		}
-#if WIGNER==0
+
 		GatherWellSepLo(cellWid, curCellsEdge, curLevel);
-#else
-		GatherWellSepLo_Wigner(cellWid, curCellsEdge, curLevel);
-#endif
+
 		AllReduceLocalMoments(curCellsEdge, curLevel);
 
 		if(curLevel<_maxLevel) {
-#if WIGNER==0
 			PropagateCellLo(cellWid, curCellsEdge, curLevel);
-#else
-			PropagateCellLo_Wigner(cellWid, curCellsEdge, curLevel);
-#endif
+
 		}
 	}
 }
 
-void UniformPseudoParticleContainer::processTreeInitM2LWigner() {
 
-
-	int curCellsEdge = 1;
-	double cellWid[3];
-
-	for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
-
-	for(int curLevel=1; curLevel<=_maxLevel; curLevel++){
-		curCellsEdge *=2;
-		for(int i=0; i <3; i++){
-			cellWid[i] /=2;
-		}
-		GatherWellSepLoInitM2LWigner(cellWid, curCellsEdge, curLevel);
-
-	}
-}
-
-void UniformPseudoParticleContainer::GatherWellSepLoInitM2LWigner(double *cellWid, int mpCells, int& curLevel) {
-	int m1v[3];
-	int m2v[3];
-
-	int m1, m2, m2x, m2y, m2z;
-	// int m1x, m1y, m1z;
-	int m22x, m22y, m22z; // for periodic image
-	int _size, _rank, loop_min, loop_max;
-	int _row_length;
-
-	_row_length=mpCells*mpCells*mpCells;
-
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_rank= domainDecomp.getRank();
-	_size= domainDecomp.getNumProcs();
-
-	loop_min = (int) ((long) (_rank + 0) * (long) (_row_length) / (long) _size);
-	loop_max = (int) ((long) (_rank + 1) * (long) (_row_length) / (long) _size);
-
-	Vector3<double> periodicShift;
-
-	for (m1 = loop_min; m1 < loop_max; m1++) {
-
-		m1v[0] = m1 % mpCells;
-		m1v[1] = (m1 / mpCells) % mpCells;
-		m1v[2] = (m1 / (mpCells * mpCells)) % mpCells;
-//		if (_mpCell[curLevel][m1].occ == 0)
-//			continue;
-
-		for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
-			// to get periodic image
-			m22z = (mpCells + m2z) % mpCells;
-			periodicShift[2] = 0.0;
-			if (m2z < 0) 		periodicShift[2] = -mpCells * cellWid[2];
-			if (m2z >= mpCells) periodicShift[2] = mpCells * cellWid[2];
-
-			m2v[2] = m2z;
-			for (m2y = LoLim(1); m2y <= HiLim(1); m2y++) {
-				// to get periodic image
-				m22y = (mpCells + m2y) % mpCells;
-
-				periodicShift[1] = 0.0;
-				if (m2y < 0)		periodicShift[1] = -mpCells * cellWid[1];
-				if (m2y >= mpCells)	periodicShift[1] = mpCells * cellWid[1];
-
-				m2v[1] = m2y;
-				for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
-					// to get periodic image
-					m22x = (mpCells + m2x) % mpCells;
-
-					periodicShift[0] = 0.0;
-					if (m2x < 0)		periodicShift[0] = -mpCells * cellWid[0];
-					if (m2x >= mpCells) periodicShift[0] = mpCells * cellWid[0];
-					//
-					m2v[0] = m2x;
-
-					if (abs(m2v[0] - m1v[0]) <= _wellSep &&
-						abs(m2v[1] - m1v[1]) <= _wellSep &&
-						abs(m2v[2] - m1v[2]) <= _wellSep)
-						continue;
-					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
-
-					const SHMultipoleParticle& sh_multipole = _mpCellGlobalTop[curLevel][m2].multipole;
-					const SHLocalParticle& sh_local = _mpCellGlobalTop[curLevel][m1].local;
-
-					// compute periodically-shifted center
-					Vector3<double> shifted_center = sh_multipole.getCenter() + periodicShift;
-
-					// distance-vector FROM local TO multipole
-					Vector3<double> r_target_to_source = shifted_center - sh_local.getCenter();
-
-					/* compute index vector and add param to map */
-					Vector3<int> idxVec(rint(r_target_to_source[0]/(cellWid[0])),
-							rint(r_target_to_source[1]/(cellWid[1])),
-							rint(r_target_to_source[2]/(cellWid[2])));
-
-					// continue if element is already in container
-					if (_M2L_Wigner.find(idxVec) != _M2L_Wigner.end() ) continue;
-
-					double projXY_len = sqrt(
-							r_target_to_source[0] * r_target_to_source[0]
-									+ r_target_to_source[1] * r_target_to_source[1]);
-
-					double phi = atan2(r_target_to_source[1], r_target_to_source[0]);
-					double theta = atan2(projXY_len, r_target_to_source[2]);
-
-					double* CosSin = new double[(_maxOrd+1)*2];
-					for (int m = 0; m <= _maxOrd; ++m) {
-						CosSin[2*m] 		= cos(m*phi);
-						CosSin[2*m + 1] 	= sin(m*phi);
-					}
-
-					WignerMatrix W_pos(_maxOrd, true);
-					WignerMatrix W_neg(_maxOrd, true);
-
-					W_pos.evaluate(theta);
-					W_neg.evaluate(-theta);
-
-					// pre-multiply prefactors
-					for (int l = 0; l <= _maxOrd; ++l) {
-						for (int m = 0; m <= l; ++m) {
-							for (int k = -l; k<=l; ++k) {
-								W_pos.acc(l,m,k) *= bhfmm::RotationParameterLookUp::tab->acc_c(l,m,k);
-								W_neg.acc(l,m,k) *= bhfmm::RotationParameterLookUp::tab->acc_c(l,k,m);
-							}
-						}
-					}
-
-					RotationParams& param = _M2L_Wigner[idxVec];// {W_pos, W_neg, CosSin};
-					param.W[0] = W_pos;
-					param.W[1] = W_neg;
-					param.SinCos = CosSin;
-
-				} // m2x closed
-			} // m2y closed
-		} // m2z closed
-	} //m1 closed
-
-
-}
 
 void UniformPseudoParticleContainer::printTimers() {
 	std::cout << "\t\t" << _timerAllreduce.get_etime()       		<< "\t\t" <<"s in Allreduce" << std::endl;

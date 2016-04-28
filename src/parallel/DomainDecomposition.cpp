@@ -294,10 +294,10 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell(){
 				index = index + 2;
 			}
 		}
-
+		index = 19;
 		for(int i = 1; i >= 0; i--){//y offset
 			for(int j = 1; j >= 0; j--){ // z offset
-				neighbours[index] = neighbours[0] + offsets[2+i] + offsets[4+j];
+				neighbours[index] = neighbours[1] + offsets[2+i] + offsets[4+j];
 				index = index + 2;
 			}
 		}

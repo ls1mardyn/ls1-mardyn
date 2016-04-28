@@ -89,25 +89,16 @@ private:
 	void CombineMpCell(double *cellWid, int& mpCells, int curLevel);
 
 	// M2M
-	void CombineMpCell_Wigner(double *cellWid, int& mpCells, int curLevel);
-
-	// M2M
 	void CombineMpCell_MPI(double *cellWid, int& mpCells, int curLevel, Vector3<int> offset);
 
 	// M2L
 	void GatherWellSepLo(double *cellWid, int mpCells, int curLevel);
 
 	// M2L
-	void GatherWellSepLo_Wigner(double *cellWid, int mpCells, int curLevel);
-
-	// M2L
 	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int curLevel);
 
 	// L2L
 	void PropagateCellLo(double *cellWid, int mpCells, int curLevel);
-
-	// L2L
-	void PropagateCellLo_Wigner(double *cellWid, int mpCells, int curLevel);
 
 	// L2L
 	void PropagateCellLo_MPI(double *cellWid, int mpCells, int curLevel, Vector3<int> offset);
@@ -128,6 +119,10 @@ private:
 	void setHaloValues(int localMpCellsBottom,int bottomLevel, double *bufferRec,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
 	//for parallelization
+	void communicateHalosNoOverlap();
+	void communicateHalosOverlapStart();
+	//has to be called after receive finished
+	void communicateHalosOverlapSetHalos();
 	void communicateHalos();
 	void communicateHalosX();
 	void communicateHalosY();
@@ -136,30 +131,6 @@ private:
 			double * lowerNeighbourBufferRec, double * higherNeighbourBufferRec,
 			int lowerNeighbour, int higherNeighbour, int haloSize
 			);
-	// Lookup
-	inline const WignerMatrix& M2M_Wigner(const int& idx) const {
-		return _M2M_Wigner[idx];
-	}
-
-	// Lookup
-	inline const WignerMatrix& L2L_Wigner(const int& idx) const {
-		return _L2L_Wigner[idx];
-	}
-
-	inline double* CosSin_ptr(const int& idx) const {
-		return _CosSin + idx*2*(_maxOrd+1);
-	}
-
-	std::vector<WignerMatrix> _M2M_Wigner;
-	std::vector<WignerMatrix> _L2L_Wigner;
-	double* _CosSin;
-
-	std::map<Vector3<int>, RotationParams,  Vector3<int>::compare> _M2L_Wigner;
-
-	// Initializing M2L Wigner matrices
-	void processTreeInitM2LWigner();
-
-	void GatherWellSepLoInitM2LWigner(double *cellWid, int mpCells, int& curLevel);
 
 
 	Timer _timerProcessCells;
