@@ -8,7 +8,7 @@
 #include "NonBlockingMPIHandlerBase.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
-#include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecompMPIBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Domain.h"
 #include "particleContainer/adapter/CellProcessor.h"
@@ -16,7 +16,7 @@
 using Log::global_log;
 
 NonBlockingMPIHandlerBase::NonBlockingMPIHandlerBase(Timer* decompositionTimer,
-		Timer* computationTimer, DomainDecompBase* domainDecomposition,
+		Timer* computationTimer, DomainDecompMPIBase* domainDecomposition,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		CellProcessor* cellProcessor) :
 		_decompositionTimer(decompositionTimer), _computationTimer(

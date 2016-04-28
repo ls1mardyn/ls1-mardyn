@@ -114,6 +114,12 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) {
 	}
 }
 
+void DomainDecompMPIBase::balanceAndExchangeInitNonBlocking(bool /*forceRebalancing*/,
+		ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+	// for now, nothing to be done here
+	// later switch between different communication schemes might go in here.
+};
+
 void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates) {
 	using std::vector;
 

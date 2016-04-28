@@ -160,6 +160,10 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 	}
 }
 
+int DomainDecomposition::getNonBlockingStageCount(){
+	return 3;
+}
+
 bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/,
 		ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/) {
 	return true;

@@ -101,6 +101,18 @@ public:
 		_collCommunication.broadcast(root);
 	}
 
+	/**
+	 * Initialises the non-blocking balance and exchange.
+	 * Nothing really important needs to be done here.
+	 * Some ideas: decide between possible communication schemes,...
+	 *
+	 * @param forceRebalancing true if rebalancing should be forced
+	 * @param moleculeContainer pointer to the molecule container
+	 * @param domain pointer to the domain
+	 */
+	virtual void balanceAndExchangeInitNonBlocking(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain);
+
 	//! @brief exchange molecules between processes
 	//!
 	//! molecules which aren't in the domain of their process any

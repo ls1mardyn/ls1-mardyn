@@ -79,7 +79,10 @@ public:
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
-	// documentation in parent class
+	// documentation in base class
+	virtual int getNonBlockingStageCount();
+
+	// documentation in base class
 	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 private:

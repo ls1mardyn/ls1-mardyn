@@ -229,6 +229,16 @@ public:
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
 
+	//! @brief Update the caches of the molecules, that lie in inner cells.
+	//! The caches of boundary and halo cells is not updated.
+	//! This method is used for a multi-step scheme of overlapping mpi communication
+	virtual void updateInnerMoleculeCaches() = 0;
+
+	//! @brief Update the caches of the molecules, that lie in the boundary or halo cells.
+	//! The caches of boundary and halo cells is updated, the caches of the inner cells are not updated.
+	//! This method is used for a multi-step scheme of overlapping mpi communication
+	virtual void updateBoundaryAndHaloMoleculeCaches() = 0;
+
 	//! @brief Update the caches of the molecules.
 	void updateMoleculeCaches();
 

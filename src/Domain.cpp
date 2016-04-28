@@ -210,7 +210,7 @@ void Domain::calculateGlobalValues(
 	if( _componentwiseThermostat )
 	{
 #ifndef NDEBUG
-		global_log->debug() << "* applying a componentwise thermostat" << endl;
+		global_log->debug() << "* applying a component-wise thermostat" << endl;
 #endif
 		this->_localThermostatN[0] = 0;
 		this->_localRotationalDOF[0] = 0;

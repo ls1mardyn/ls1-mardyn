@@ -86,6 +86,9 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
 }
 
+int KDDecomposition::getNonBlockingStageCount(){
+	return 3;
+}
 
 bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
 	return not (forceRebalancing or _steps % _frequency == 0 or _steps <= 1);

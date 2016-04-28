@@ -61,6 +61,14 @@ public:
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
 
+	/**
+	 * Specifies the amount of non-blocking stages, when performing overlapping balanceAndExchange and computation.
+	 * For a communication scheme, where only direct neighbours communicate, 3 stages of communication are necessary,
+	 * since the particles have to be transmitted in the x-direction first, then in the y-direction, then in the z-direction.
+	 * @return The amount of communication stages. Returns -1 if it is not possible.
+	 */
+	int getNonBlockingStageCount();
+
 	//! @brief Checks whether the balance and exchange step can be performed non-blocking.
 	//!
 	//! A non-blocking behaviour is typically possible, as long as no rebalancing has to be done.
@@ -70,7 +78,6 @@ public:
 	//! @param moleculeContainer needed for calculating load and to get the particles
 	//! @param domain is e.g. needed to get the size of the local domain
 	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
-
 
 	//! @brief balance the load (and optimize communication) and exchange boundary particles
 	//!

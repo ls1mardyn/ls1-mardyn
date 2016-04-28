@@ -243,6 +243,12 @@ public:
 
 	ParticleCell getCell(int idx){ return _cells[idx];}
 
+	// documentation in base class
+	virtual void updateInnerMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateBoundaryAndHaloMoleculeCaches();
+
 private:
 	//####################################
 	//######### PRIVATE METHODS ##########

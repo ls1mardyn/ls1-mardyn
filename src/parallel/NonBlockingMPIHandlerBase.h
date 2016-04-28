@@ -7,7 +7,7 @@
 #pragma once
 
 class Timer;
-class DomainDecompBase;
+class DomainDecompMPIBase;
 class ParticleContainer;
 class Domain;
 class CellProcessor;
@@ -30,7 +30,7 @@ public:
 	 * @param cellProcessor the cell processor
 	 */
 	NonBlockingMPIHandlerBase(Timer* decompositionTimer,
-			Timer* computationTimer, DomainDecompBase* domainDecomposition,
+			Timer* computationTimer, DomainDecompMPIBase* domainDecomposition,
 			ParticleContainer* moleculeContainer, Domain* domain,
 			CellProcessor* cellProcessor);
 
@@ -69,7 +69,7 @@ protected:
 
 	Timer* _decompositionTimer;
 	Timer* _computationTimer;
-	DomainDecompBase* _domainDecomposition;
+	DomainDecompMPIBase* _domainDecomposition;
 	ParticleContainer* _moleculeContainer;
 	Domain* _domain;
 	CellProcessor* _cellProcessor;

@@ -75,6 +75,10 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	}
 }
 
+int DomainDecompBase::getNonBlockingStageCount(){
+	return -1;
+}
+
 bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain){
 	return false;
 }
