@@ -37,15 +37,18 @@ LINKFLAGS_PAR_RELEASE =
 
 # Vectorization settings:
 #########################################
-ifeq ($(VECTORIZE_CODE),1)
+ifeq ($(VECTORIZE_CODE),SSE)
 CXXFLAGS_VECTORIZE = -msse3
 endif
-ifeq ($(VECTORIZE_CODE),2)
+ifeq ($(VECTORIZE_CODE),AVX)
 CXXFLAGS_VECTORIZE = -mavx
 endif
-ifeq ($(VECTORIZE_CODE),3)
+ifeq ($(VECTORIZE_CODE),AVX2)
 CXXFLAGS_VECTORIZE = -mavx2 -mfma
 endif
-ifeq ($(VECTORIZE_CODE),4)
-$(error gcc does not support mics!!!)
+ifeq ($(VECTORIZE_CODE),KNC_MASK)
+$(error gcc does not support KNC)
+endif
+ifeq ($(VECTORIZE_CODE),KNC_G_S)
+$(error gcc does not support KNC)
 endif
