@@ -12,7 +12,6 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
 #include "molecules/Molecule.h"
@@ -279,7 +278,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				lc->setCutoff(_cutoffRadius);
 			}
 			else if(datastructuretype == "AdaptiveSubCells") {
-				_moleculeContainer = new AdaptiveSubCells();
+				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
+				global_simulation->exit(-1);
 			}
 			else {
 				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
@@ -1244,11 +1244,18 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 	bool forceRebalancing = false;
 
 	//TODO: exchange the constructor for a real non-blocking version
+
+#ifdef ENABLE_MPI
+#ifdef ENABLE_OVERLAPPING
+	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIMultiStepHandler(&decompositionTimer, &computationTimer,
+			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+#else
 	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
-			_domainDecomposition, _moleculeContainer, _domain, _cellProcessor);
+				_domainDecomposition, _moleculeContainer, _domain, _cellProcessor);
+#endif
 
 	nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
-
+#endif
 }
 
 

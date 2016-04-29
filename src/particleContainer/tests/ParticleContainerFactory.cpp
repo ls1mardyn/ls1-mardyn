@@ -8,7 +8,6 @@
 #include "particleContainer/tests/ParticleContainerFactory.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/AdaptiveSubCells.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
@@ -68,8 +67,6 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 			temp->initCommunicationPartners(cutoff, domain);
 		}
 		#endif
-	} else if (type == AdaptiveSubCell) {
-		moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, cutoff, cutoff);
 	} else {
 		global_log->error() << "ParticleContainerFactory: Unsupported type requested! " << std::endl;
 		return NULL;
