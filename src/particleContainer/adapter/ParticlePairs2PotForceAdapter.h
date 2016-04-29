@@ -37,7 +37,6 @@ public:
 		_upot6LJ = 0;
 		_upotXpoles = 0;
 		_myRF = 0;
-		_upotTersoff = 0;
 	}
 
 	//! @brief calculate macroscopic values
@@ -45,7 +44,7 @@ public:
 	//! After all pairs have been processes, Upot and Virial can be calculated
 	//! and stored in _domain
 	void finish() {
-		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _upotTersoff + _myRF);
+		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF);
 		_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	}
 
@@ -96,20 +95,6 @@ public:
         return 0.0;
 	}
 
-	//! Only for so-called original pairs (pair type 0) the contributions
-	//! to the macroscopic values have to be collected
-	//!
-	//! @brief register Tersoff neighbours
-	void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) {
-		particle1.addTersoffNeighbour(&particle2, pairType);
-		particle2.addTersoffNeighbour(&particle1, pairType);
-	}
-
-	//! @brief process Tersoff interaction
-	//!
-	void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) {
-		TersoffPotForce(&particle1, params, _upotTersoff, delta_r);
-	}
 
 //	void recordRDF() {
 //		this->_doRecordRDF = true;
@@ -125,8 +110,6 @@ private:
 	double _upot6LJ;
 	//! @brief variable used to sum the UpotXpoles contribution of all pairs
 	double _upotXpoles;
-	//! @brief variable used to sum the Tersoff internal energy contribution of all pairs
-	double _upotTersoff;
 	//! @brief variable used to sum the MyRF contribution of all pairs
 	double _myRF;
 

@@ -33,7 +33,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 	for (unsigned int i = 0; i < stageCount; ++i) {
 		_decompositionTimer->start();
-		_domainDecomposition->prepareNonBlockingStage(forceRebalancing,
+		_domainDecomposition->prepareNonBlockingStage(false,
 				_moleculeContainer, _domain, i);
 		_decompositionTimer->stop();
 
@@ -45,7 +45,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 		_computationTimer->stop();
 
 		_decompositionTimer->start();
-		_domainDecomposition->finishNonBlockingStage(forceRebalancing,
+		_domainDecomposition->finishNonBlockingStage(false,
 				_moleculeContainer, _domain, i);
 		_decompositionTimer->stop();
 	}
@@ -62,6 +62,8 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(
 		bool forceRebalancing) {
+
+	assert(!forceRebalancing);
 
 	_decompositionTimer->start();
 	_domainDecomposition->balanceAndExchangeInitNonBlocking(forceRebalancing,

@@ -288,9 +288,6 @@ public:
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
 	double getLJCutoff() const { return _LJCutoffRadius; }
 	void setLJCutoff(double LJCutoffRadius) { _LJCutoffRadius = LJCutoffRadius; }
-	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
-	void setTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
-
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -356,9 +353,6 @@ private:
 	/** LJ cutoff (may be smaller than the RDF/electrostatics cutoff) */
 	double _LJCutoffRadius;
 
-	/** external cutoff radius for the Tersoff potential */
-	double _tersoffCutoffRadius;
-
 	/** flag specifying whether planar interface profiles are recorded */
 	bool _doRecordProfile;
 	/** Interval between two evaluations of the profile.
@@ -400,19 +394,6 @@ private:
 	//! appropriate tokens stored as constants at the top of this file
 	int _thermostatType;
 	double _nuAndersen;
-
-	/** Sometimes during equilibration, a solid wall surrounded by
-	 * liquid may experience a stress or an excessive pressure, which
-	 * could damage its structure. With the flag this->_zoscillation,
-	 * the z coordinate for some of the solid atoms (i.e. those which
-	 * include Tersoff sites) is fixed, so that no motion in z
-	 * direction can occur for the wall structure.
-	 */
-	bool _zoscillation;
-	/** The fixed z coordinate applies to 1 out of this->_zoscillator
-	 * atoms for all solid components.
-	 */
-	unsigned _zoscillator;
 
 	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
 

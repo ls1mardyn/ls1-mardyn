@@ -44,7 +44,6 @@ public:
 	//! The constructor sets the following variables:
 	//! - _cutoffRadius
 	//! - _LJCutoffRadius
-	//! - _tersoffCutoffRadius
 	//! - _haloWidthInNumCells[3]
 	//! - _cellsPerDimension[3]
 	//! - _cellLength[3]
@@ -61,7 +60,6 @@ public:
 	//! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
 	//! @param cutoffRadius distance for which forces have to be calculated
 	//! @param LJCutoffRadius distance for which lennard jones forces have to be calculated
-	//! @param tersoffCutoffRadius distance for which tersoff forces have to be calculated
 	//! @param cellsInCutoffRadius describes the width of cells relative to the cutoffRadius: \n
 	//!        equal (or larger) to the cutoffRadius divided by the length of a cell
 	//!        as for the number of cells in each dimension only natural numbers are allowed,
@@ -133,6 +131,10 @@ public:
 //	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
 	void traverseCells(CellProcessor& cellProcessor);
+
+	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();

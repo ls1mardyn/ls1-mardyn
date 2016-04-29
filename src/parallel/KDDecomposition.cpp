@@ -90,6 +90,20 @@ int KDDecomposition::getNonBlockingStageCount(){
 	return 3;
 }
 
+void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
+		ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber) {
+	const bool removeRecvDuplicates = true;
+	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+}
+
+void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
+		ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber) {
+	const bool removeRecvDuplicates = true;
+	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+}
+
 bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
 	return not (forceRebalancing or _steps % _frequency == 0 or _steps <= 1);
 }

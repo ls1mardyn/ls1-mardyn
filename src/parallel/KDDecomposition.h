@@ -78,6 +78,16 @@ class KDDecomposition: public DomainDecompMPIBase {
 	virtual int getNonBlockingStageCount();
 
 	// documentation in base class
+	virtual void prepareNonBlockingStage(bool forceRebalancing,
+				ParticleContainer* moleculeContainer, Domain* domain,
+				unsigned int stageNumber);
+
+	// documentation in base class
+	virtual void finishNonBlockingStage(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber);
+
+	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);

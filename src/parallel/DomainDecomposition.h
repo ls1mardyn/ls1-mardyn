@@ -83,6 +83,16 @@ public:
 	virtual int getNonBlockingStageCount();
 
 	// documentation in base class
+	virtual void prepareNonBlockingStage(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber);
+
+	// documentation in base class
+	virtual void finishNonBlockingStage(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber);
+
+	// documentation in base class
 	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 private:

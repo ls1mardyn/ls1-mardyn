@@ -156,10 +156,14 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				unsigned int numcharges = 0;
 				unsigned int numdipoles = 0;
 				unsigned int numquadrupoles = 0;
-				unsigned int numtersoff = 0;
+				unsigned int numtersoff = 0; //previously tersoff
 				_phaseSpaceHeaderFileStream >> numljcenters >> numcharges >> numdipoles 
 					>> numquadrupoles >> numtersoff;
-
+				if (numtersoff != 0) {
+					global_log->error() << "tersoff no longer supported."
+							<< std::endl;
+					global_simulation->exit(-1);
+				}
 				double x, y, z, m;
 				for( unsigned int j = 0; j < numljcenters; j++ ) {
 					double eps, sigma, tcutoff, do_shift;
@@ -184,15 +188,6 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 					_phaseSpaceHeaderFileStream >> x >> y >> z >> eQx >> eQy >> eQz >> absQ;
 					dcomponents[i].addQuadrupole(x,y,z,eQx,eQy,eQz,absQ);
                                         global_log->info() << "quad at [" << x << " " << y << " " << z << "] " << endl;
-				}
-				for( unsigned int j = 0; j < numtersoff; j++ ) {
-					double x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta;
-					_phaseSpaceHeaderFileStream >> x >> y >> z;
-					_phaseSpaceHeaderFileStream >> m >> A >> B;
-					_phaseSpaceHeaderFileStream >> lambda >> mu >> R >> S;
-					_phaseSpaceHeaderFileStream >> c >> d >> h >> n >> beta;
-					dcomponents[i].addTersoff( x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta );
-                                        global_log->info() << "solid at [" << x << " " << y << " " << z << "] " << endl;
 				}
 				double IDummy1,IDummy2,IDummy3;
 				// FIXME! Was soll das hier? Was ist mit der Initialisierung im Fall I <= 0.

@@ -164,10 +164,6 @@ public:
 		return this->_LJCutoffRadius;
 	}
 
-	double getTersoffCutoff() {
-		return this->_tersoffCutoffRadius;
-	}
-
 	//! @todo remove this, using Component::getNumMolecules()
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(unsigned int cid);
@@ -304,8 +300,6 @@ private:
 	double _cutoffRadius;
 	//! LJ cutoff radius
 	double _LJCutoffRadius;
-	//! Tersoff cutoff radius
-	double _tersoffCutoffRadius;
 	//! balance of the grand canonical ensemble
 	int _localInsertionsMinusDeletions;
 

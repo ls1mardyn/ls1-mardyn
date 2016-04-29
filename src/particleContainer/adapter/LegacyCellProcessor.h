@@ -23,13 +23,12 @@ class LegacyCellProcessor : public CellProcessor {
 private:
 	//const double _cutoffRadiusSquare;
 	//const double _LJCutoffRadiusSquare;
-	const double _tersoffCutoffRadiusSquare;
 	ParticlePairsHandler* const _particlePairsHandler;
 
 public:
 
 	LegacyCellProcessor(const double cutoffRadius, const double LJCutoffRadius,
-			const double tersoffCutoffRadius, ParticlePairsHandler* particlePairsHandler);
+			ParticlePairsHandler* particlePairsHandler);
 
 	virtual ~LegacyCellProcessor();
 

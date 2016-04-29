@@ -141,6 +141,10 @@ public:
 
 	virtual void traverseCells(CellProcessor& cellProcessor) = 0;
 
+	virtual void traverseNonInnermostCells(CellProcessor& cellProcessor) = 0;
+
+	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
+
 	//! @return the number of particles stored in this container
 	//!
 	//! This number may includes particles which are outside of

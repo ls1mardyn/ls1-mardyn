@@ -65,19 +65,10 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 				for (size_t center_j = 0;
 						center_j < components[comp_j].numLJcenters();
 						++center_j) {
-					if ((components[comp_i].ID() == components[comp_j].ID())
-							&& (components[comp_i].numTersoff() > 0
-									|| components[comp_j].numTersoff() > 0)) {
-						// No LJ interaction between solid atoms of the same component.
-						_eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j)] = 0.0;
-						_eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j) + 1] = 0.0;
-						_shift6[_compIDs[comp_i] + center_i][_compIDs[comp_j] + center_j] = 0.0;
-					} else {
-						// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
-						p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j)];
-						p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j) + 1];
-						p >> _shift6[_compIDs[comp_i] + center_i][_compIDs[comp_j] + center_j];
-					}
+					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
+					p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j)];
+					p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j) + 1];
+					p >> _shift6[_compIDs[comp_i] + center_i][_compIDs[comp_j] + center_j];
 				}
 			}
 		}

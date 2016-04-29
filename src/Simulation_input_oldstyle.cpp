@@ -494,8 +494,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 		}
 		else if (token == "zOscillator") {
-			_zoscillation = true;
-			inputfilestream >> _zoscillator;
+			global_log->error()
+					<< "zOscillator was used for the Tersoff potential, which is no longer supported."
+					<< std::endl;
+			global_simulation->exit(-1);
 		}
 		// by Stefan Becker
 		else if(token == "AlignCentre"){	
@@ -513,9 +515,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> _profileOutputPrefix;
 				} else if (token == "collectThermostatDirectedVelocity") { /* suboption of the thermostat replace with direct thermostat */
 			inputfilestream >> _collectThermostatDirectedVelocity;
-		} else if (token == "zOscillator") {
-			_zoscillation = true;
-			inputfilestream >> _zoscillator;
 		}
 		// chemicalPotential <mu> component <cid> [control <x0> <y0> <z0>
 		// to <x1> <y1> <z1>] conduct <ntest> tests every <nstep> steps
@@ -634,9 +633,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> rc;
 			this->setLJCutoff(rc);
 		} else if (token == "tersoffCutoffRadius") {
-			double rc;
-			inputfilestream >> rc;
-			this->setTersoffCutoff(rc);
+			global_log->error() << "tersoff no longer supported." << std::endl;
+			global_simulation->exit(-1);
 		} 
 		else if (token == "WallFun_LJ_9_3"){
 		  double rho_w, sig_w, eps_w, y_off, y_cut;

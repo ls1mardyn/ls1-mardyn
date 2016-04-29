@@ -67,7 +67,7 @@ public:
 	 * since the particles have to be transmitted in the x-direction first, then in the y-direction, then in the z-direction.
 	 * @return The amount of communication stages. Returns -1 if it is not possible.
 	 */
-	int getNonBlockingStageCount();
+	virtual int getNonBlockingStageCount();
 
 	//! @brief Checks whether the balance and exchange step can be performed non-blocking.
 	//!
