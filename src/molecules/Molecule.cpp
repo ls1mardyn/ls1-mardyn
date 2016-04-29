@@ -32,7 +32,6 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
 	_sites_d = _sites_F =_osites_e = NULL;
-	_numTersoffNeighbours = 0;
 	fixedx = rx;
 	fixedy = ry;
 
@@ -64,7 +63,6 @@ Molecule::Molecule(const Molecule& m) {
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
 	_sites_d = _sites_F =_osites_e = NULL;
-	_numTersoffNeighbours = 0;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
 
@@ -132,9 +130,6 @@ void Molecule::upd_cache() {
 		_q.rotate(qi.r(), &(_quadrupoles_d[i*3]));
 		_q.rotate(qi.e(), &(_quadrupoles_e[i*3]));
 	}
-	ns = numTersoff();
-	for (i = 0; i < ns; i++)
-		_q.rotate(_component->tersoff(i).r(), &(_tersoff_d[i*3]));
 }
 
 
@@ -218,47 +213,6 @@ void Molecule::write(ostream& ostrm) const {
 	      << endl;
 }
 
-void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
-	// this->_Tersoff_neighbours.insert(pair<Molecule*, bool>(m, (pairType > 0)));
-	for (int j = 0; j < _numTersoffNeighbours; j++) {
-		if (m->_id == _Tersoff_neighbours_first[j]->id()) {
-			this->_Tersoff_neighbours_first[j] = m;
-			this->_Tersoff_neighbours_second[j] = pairType;
-			return;
-		}
-	}
-
-	this->_Tersoff_neighbours_first[_numTersoffNeighbours] = m;
-	this->_Tersoff_neighbours_second[_numTersoffNeighbours] = pairType;
-	this->_numTersoffNeighbours++;
-	if (_numTersoffNeighbours > MAX_TERSOFF_NEIGHBOURS) {
-		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->_id << " has more than " << MAX_TERSOFF_NEIGHBOURS << " Tersoff neighbours." << endl;
-		exit(1);
-	}
-}
-
-double Molecule::tersoffParameters(double params[15]) //returns delta_r
-{
-	const Tersoff* t = &_component->tersoff()[0];
-	params[ 0] = t->R();
-	params[ 1] = t->S();
-	params[ 2] = t->h();
-	params[ 3] = t->cSquare();
-	params[ 4] = t->dSquare();
-	params[ 5] = t->A();
-	params[ 6] = t->minusLambda();
-	params[ 7] = t->minusMu();
-	params[ 8] = t->beta();
-	params[ 9] = t->n();
-	params[10] = M_PI / (t->S() - t->R());
-	params[11] = 1.0 + t->cSquare() / t->dSquare();
-	params[12] = t->S() * t->S();
-	params[13] = -(t->B());
-	params[14] = -0.5 / t->n();
-
-	return 0.000001 * (t->S() - t->R());
-}
-
 // private functions
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
@@ -287,7 +241,6 @@ void Molecule::setupCache() {
 	_charges_d = &(_ljcenters_d[3*numLJcenters()]);
 	_dipoles_d = &(_charges_d[3*numCharges()]);
 	_quadrupoles_d = &(_dipoles_d[3*numDipoles()]);
-	_tersoff_d = &(_quadrupoles_d[3*numQuadrupoles()]);
 
 	int numorientedsites = _component->numOrientedSites();
     // if allocated before, previous allocated memory should be freed
@@ -307,7 +260,6 @@ void Molecule::setupCache() {
 	_charges_F = &(_ljcenters_F[3*numLJcenters()]);
 	_dipoles_F = &(_charges_F[3*numCharges()]);
 	_quadrupoles_F = &(_dipoles_F[3*numDipoles()]);
-	_tersoff_F = &(_quadrupoles_F[3*numQuadrupoles()]);
 
 	this->clearFM();
 }

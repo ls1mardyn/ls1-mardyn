@@ -5,6 +5,7 @@
 #include "Site.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "Simulation.h"
 
 using namespace std;
 using Log::global_log;
@@ -16,13 +17,11 @@ Component::Component(unsigned int id) {
 	_rot_dof = 0;
 	_Ipa[0] = _Ipa[1] = _Ipa[2] = 0.;
 	_numMolecules = 0;
-	this->maximalTersoffExternalRadius = 0.0;
 
 	_ljcenters = vector<LJcenter> ();
 	_charges = vector<Charge> ();
 	_quadrupoles = vector<Quadrupole> ();
 	_dipoles = vector<Dipole> ();
-	_tersoff = vector<Tersoff> ();
 }
 
 void Component::readXML(XMLfileUnits& xmlconfig) {
@@ -66,9 +65,8 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			addQuadrupole(quadrupoleSite);
 		} else
 		if ( siteType == "Tersoff" ) {
-			Tersoff tersoffSite;
-			tersoffSite.readXML(xmlconfig);
-			addTersoff(tersoffSite);
+			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
+			global_simulation->exit(-1);
 		}else {
 			global_log->warning() << "Unknown site type:" << siteType << endl;
 		}
@@ -117,9 +115,6 @@ void Component::updateMassInertia() {
 	}
 	for (size_t i = 0; i < _charges.size(); i++) {
 		updateMassInertia(_charges[i]);
-	}
-	for (size_t i = 0; i < _tersoff.size(); i++) {
-		updateMassInertia(_tersoff[i]);
 	}
 }
 
@@ -183,26 +178,11 @@ void Component::addQuadrupole(Quadrupole& quadrupolesite) {
 }
 
 
-void Component::addTersoff(double x, double y, double z,
-                           double m, double A, double B, double lambda, double mu, double R,
-                           double S, double c, double d, double h, double n, double beta) {
-	if (S > this->maximalTersoffExternalRadius) maximalTersoffExternalRadius = S;
-	Tersoff tersoffsite(x, y, z, m, A, B, lambda, mu, R, S, c, d, h, n, beta);
-	_tersoff.push_back(tersoffsite);
-	updateMassInertia(tersoffsite);
-}
-
-void Component::addTersoff(Tersoff& tersoffsite)
-{
-	_tersoff.push_back(tersoffsite);
-	updateMassInertia(tersoffsite);
-}
 
 
 void Component::write(std::ostream& ostrm) const {
 	ostrm << _ljcenters.size() << "\t" << _charges.size() << "\t"
-	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t"
-	      << _tersoff.size() << "\n";
+	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t";
 	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
@@ -216,10 +196,6 @@ void Component::write(std::ostream& ostrm) const {
 		ostrm << endl;
 	}
 	for (std::vector<Quadrupole>::const_iterator pos = _quadrupoles.begin(); pos != _quadrupoles.end(); ++pos) {
-		pos->write(ostrm);
-		ostrm << endl;
-	}
-	for (std::vector<Tersoff>::const_iterator pos = _tersoff.begin(); pos != _tersoff.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
 	}

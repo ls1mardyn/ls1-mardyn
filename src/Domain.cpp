@@ -511,8 +511,7 @@ void Domain::writeCheckpoint( string filename,
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 		//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-		//checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
-                checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
+        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
 #endif
 		/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
 		if(this->_globalUSteps > 1)
@@ -602,7 +601,6 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
 		unsigned int numdipolesi=ci.numDipoles();
-		unsigned int numtersoffi = ci.numTersoff();
 
 		// effective dipoles computed from point charge distributions
 		double chargeBalance[3];
@@ -627,9 +625,6 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 
 		for(unsigned int j=0;j<numcomp;++j) {
 			Component& cj=(*components)[j];
-			unsigned numtersoffj = cj.numTersoff();
-			// no LJ interaction between Tersoff components
-			if(numtersoffi && numtersoffj) continue;
 			unsigned int numljcentersj=cj.numLJcenters();
 			ParaStrm& params=_comp2params(i,j);
 			params.reset_read();

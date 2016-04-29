@@ -98,13 +98,9 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 			plotCenter(molecule, centerID, Quadrupole);
 			centerID++;
 		}
-		for (size_t i = 0; i < molecule.numTersoff(); i++) {
-			plotCenter(molecule, centerID, Tersoff);
-			centerID++;
-		}
-
 	} else {
-		PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
+		PointData::DataArray_sequence& pointDataArraySequence =
+				(*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
 		PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
 		// id
 		data_iterator->push_back(molecule.id());

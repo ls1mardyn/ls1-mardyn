@@ -612,7 +612,6 @@ void Simulation::prepare_start() {
 	bool charge_present = false;
 	bool dipole_present = false;
 	bool quadrupole_present = false;
-	bool tersoff_present = false;
 
 	const vector<Component> components = *(global_simulation->getEnsemble()->components());
 	for (size_t i = 0; i < components.size(); i++) {
@@ -620,25 +619,19 @@ void Simulation::prepare_start() {
 		charge_present |= (components[i].numCharges() != 0);
 		dipole_present |= (components[i].numDipoles() != 0);
 		quadrupole_present |= (components[i].numQuadrupoles() != 0);
-		tersoff_present |= (components[i].numTersoff() != 0);
 	}
 	global_log->debug() << "xx lj present: " << lj_present << endl;
 	global_log->debug() << "xx charge present: " << charge_present << endl;
 	global_log->debug() << "xx dipole present: " << dipole_present << endl;
 	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
-	global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
 
-	if(tersoff_present) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the Tersoff potential.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-	}
-	else if(this->_lmu.size() > 0) {
+	if(this->_lmu.size() > 0) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else {
 		global_log->info() << "Using vectorized cell processor." << endl;
@@ -646,7 +639,7 @@ void Simulation::prepare_start() {
 	}
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
-	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 #endif
 
 	if (_FMM != NULL) {
@@ -740,11 +733,6 @@ void Simulation::prepare_start() {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
 		}
-	}
-
-	if (_zoscillation) {
-		global_log->debug() << "Initializing z-oscillators" << endl;
-		_integrator->init1D(_zoscillator, _moleculeContainer);
 	}
 
 	// initialize output
@@ -999,11 +987,6 @@ void Simulation::simulate() {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
-		}
-
-		if (_zoscillation) {
-			global_log->debug() << "alert z-oscillators" << endl;
-			_integrator->zOscillation(_zoscillator, _moleculeContainer);
 		}
 
 		// Inform the integrator about the calculated forces
@@ -1285,7 +1268,6 @@ void Simulation::initialize() {
 	 */
 	_cutoffRadius = 0.0;
 	_LJCutoffRadius = 0.0;
-	_tersoffCutoffRadius = 3.0;
 	_numberOfTimesteps = 1;
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
@@ -1297,8 +1279,6 @@ void Simulation::initialize() {
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";
 	_collectThermostatDirectedVelocity = 100;
-	_zoscillation = false;
-	_zoscillator = 512;
 	_initCanonical = 5000;
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;

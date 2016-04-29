@@ -356,7 +356,7 @@ void AdaptiveSubCells::traverseCells(CellProcessor& cellProcessor) {
 	vector<unsigned long>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
-	global_log->debug() << "LinkedCells::traverseCells: Processing pairs and preprocessing Tersoff pairs." << endl;
+	global_log->debug() << "LinkedCells::traverseCells: Processing pairs." << endl;
 	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< endl;
 #endif
 
@@ -459,10 +459,6 @@ double AdaptiveSubCells::getEnergy(ParticlePairsHandler* particlePairsHandler, M
 		cellProcessor.preprocessCell(_cells[windowCellIndex]);
 	}
 
-	if (m1->numTersoff() > 0) {
-		global_log->error() << "The grand canonical ensemble is not implemented for solids.\n";
-		exit(848);
-	}
 	u += cellProcessor.processSingleMolecule(m1, currentSubCell);
 
 	// forward neighbours

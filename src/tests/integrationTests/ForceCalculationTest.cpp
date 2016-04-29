@@ -42,7 +42,7 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	LegacyCellProcessor cellProcessor( 1.1, 1.1, 1.1, &forceAdapter);
+	LegacyCellProcessor cellProcessor( 1.1, 1.1, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
@@ -81,7 +81,7 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	LegacyCellProcessor cellProcessor( 1.3, 1.3, 0, &forceAdapter);
+	LegacyCellProcessor cellProcessor( 1.3, 1.3, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
 	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {

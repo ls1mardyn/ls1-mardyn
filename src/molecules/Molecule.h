@@ -11,11 +11,9 @@
 #include "molecules/Site.h"
 
 
-#define MAX_TERSOFF_NEIGHBOURS 10 /**< maximal size of the Tersoff neighbour list */
-
 class Domain;
 
-//! @brief Molecule modeled as LJ sphere with point polarities + Tersoff potential
+//! @brief Molecule modeled as LJ sphere with point polarities
 class Molecule {
 
 public:
@@ -110,7 +108,6 @@ public:
 	unsigned int numCharges() const { return _component->numCharges(); }
 	unsigned int numDipoles() const { return _component->numDipoles(); }
 	unsigned int numQuadrupoles() const { return _component->numQuadrupoles(); }
-	unsigned int numTersoff() const { return _component->numTersoff(); }
 
 	const double* site_d(unsigned int i) const { return &(_sites_d[3*i]); }
 	const double* site_F(unsigned int i) const { return &(_sites_F[3*i]); }
@@ -201,9 +198,7 @@ public:
 	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
 	void Fquadrupolesub(unsigned int i, double a[])
 	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
-	void Ftersoffadd(unsigned int i, double a[])
-	{ double* Fsite=&(_tersoff_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	
+
 	/** First step of the leap frog integrator */
 	void upd_preF(double dt);
 	/** update the molecules site position caches (rotate sites and save relative positions) */
@@ -220,13 +215,6 @@ public:
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
-
-	inline unsigned getCurTN() { return this->_numTersoffNeighbours; }
-	inline Molecule* getTersoffNeighbour(unsigned i) { return this->_Tersoff_neighbours_first[i]; }
-	inline bool getPairCode(unsigned i) { return this->_Tersoff_neighbours_second[i]; }
-	inline void clearTersoffNeighbourList() { this->_numTersoffNeighbours = 0; }
-	void addTersoffNeighbour(Molecule* m, bool pairType);
-	double tersoffParameters(double params[15]); //returns delta_r
 
 	/** clear forces and moments */
 	void clearFM();
@@ -282,7 +270,7 @@ private:
 	/* TODO: Maybe change to absolute positions for many center molecules. */
 	double *_sites_d;
 	double *_ljcenters_d, *_charges_d, *_dipoles_d,
-	       *_quadrupoles_d, *_tersoff_d;
+	       *_quadrupoles_d;
 	// site orientation
 	double *_osites_e;
 	double *_dipoles_e, *_quadrupoles_e;
@@ -290,11 +278,8 @@ private:
 	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
 	double* _sites_F;
 	double *_ljcenters_F, *_charges_F, *_dipoles_F,
-	       *_quadrupoles_F, *_tersoff_F;
+	       *_quadrupoles_F;
 
-	Molecule* _Tersoff_neighbours_first[MAX_TERSOFF_NEIGHBOURS];
-	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS]; /* TODO: Comment */
-	int _numTersoffNeighbours;
 	double fixedx, fixedy;
 
 	// setup cache values/properties
