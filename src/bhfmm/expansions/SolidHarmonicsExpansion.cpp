@@ -9,6 +9,8 @@
 #include "bhfmm/utils/RotationParameterLookUp.h"
 #include <iomanip>
 
+using namespace std;
+
 namespace bhfmm {
 
 // CONSTRUCTORS //

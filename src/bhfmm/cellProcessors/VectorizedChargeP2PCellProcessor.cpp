@@ -15,6 +15,7 @@
 #include "VectorizedChargeP2PCellProcessor.h"
 
 using namespace Log;
+using namespace std;
 namespace bhfmm {
 
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
