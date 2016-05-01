@@ -1,6 +1,5 @@
 // file      : xsd/cxx/version.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_VERSION_HXX
@@ -23,7 +22,7 @@
 // 3.0.0.b2    02999952
 //
 
-#define XSD_STR_VERSION "3.3.0.b1"
-#define XSD_INT_VERSION 3029951L
+#define XSD_STR_VERSION "4.0.0"
+#define XSD_INT_VERSION 4000000L
 
 #endif  // XSD_CXX_VERSION_HXX

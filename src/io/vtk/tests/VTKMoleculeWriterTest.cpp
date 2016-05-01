@@ -41,17 +41,19 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
 
-	Molecule dummyMolecule1(0,&components[0],2.20,3.0,3.4,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule1(0,&components[0],2.20,3.0,3.4,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule1);
 
-	Molecule dummyMolecule2(0,&components[0], 1.0,0,0,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule2(0,&components[0], 1.0,0,0,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule2);
 
-	Molecule dummyMolecule3(0,&components[0], 0,1.0,0,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule3(0,&components[0], 0,1.0,0,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule3);
 
-	Molecule dummyMolecule4(0,&components[0], 1.0,1.5,0.234,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule4(0,&components[0], 1.0,1.5,0.234,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule4);
+
+	container.updateMoleculeCaches();
 
 	VTKMoleculeWriter writer(2, "VTKMoleculeWriterTest");
 
@@ -93,7 +95,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 
 	try {
 		std::auto_ptr<VTKFile_t> vtkFile(VTKFile ("VTKMoleculeWriterTest_2.vtu", xml_schema::flags::dont_validate));
-		ASSERT_EQUAL( 4, ( int)vtkFile->UnstructuredGrid()->Piece().NumberOfPoints());
+		ASSERT_EQUAL( 4, (int) vtkFile->UnstructuredGrid()->Piece().NumberOfPoints());
 
 
 		Points::DataArray_sequence& pointsArraySequence = vtkFile->UnstructuredGrid()->Piece().Points().DataArray();

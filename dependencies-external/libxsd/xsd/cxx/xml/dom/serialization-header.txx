@@ -1,6 +1,5 @@
 // file      : xsd/cxx/xml/dom/serialization-header.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <vector>
@@ -33,12 +32,8 @@ namespace xsd
         prefix (const C* ns, xercesc::DOMElement& e, const C* hint)
         {
           string xns (ns);
-
-#if _XERCES_VERSION >= 30000
           const XMLCh* p (e.lookupPrefix (xns.c_str ()));
-#else
-          const XMLCh* p (e.lookupNamespacePrefix (xns.c_str (), false));
-#endif
+
           if (p != 0)
             return transcode<C> (p);
 
@@ -125,13 +120,7 @@ namespace xsd
         void
         clear (xercesc::DOMElement& e)
         {
-          // HP aCC cannot handle using namespace xercesc;
-          //
-          using xercesc::DOMNode;
-          using xercesc::DOMAttr;
-          using xercesc::DOMNamedNodeMap;
-          using xercesc::XMLString;
-          using xercesc::SchemaSymbols;
+          using namespace xercesc;
 
           // Remove child nodes.
           //

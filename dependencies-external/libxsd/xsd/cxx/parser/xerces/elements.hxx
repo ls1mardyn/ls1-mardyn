@@ -1,12 +1,11 @@
 // file      : xsd/cxx/parser/xerces/elements.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_XERCES_ELEMENTS_HXX
 #define XSD_CXX_PARSER_XERCES_ELEMENTS_HXX
 
-#include <memory>  // std::auto_ptr
+#include <memory>  // std::auto_ptr/unique_ptr
 #include <string>
 #include <iosfwd>
 #include <vector>
@@ -16,12 +15,20 @@
 #include <xercesc/sax2/SAX2XMLReader.hpp>
 #include <xercesc/sax2/DefaultHandler.hpp>
 
+#include <xercesc/util/XercesVersion.hpp>
+
+#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
+
 #include <xsd/cxx/xml/elements.hxx>
 #include <xsd/cxx/xml/error-handler.hxx>
 
 #include <xsd/cxx/parser/exceptions.hxx>
 #include <xsd/cxx/parser/elements.hxx>
 #include <xsd/cxx/parser/document.hxx>
+
+#if _XERCES_VERSION < 30000
+#  error Xerces-C++ 2-series is not supported
+#endif
 
 namespace xsd
 {
@@ -79,7 +86,7 @@ namespace xsd
         //
         //
         template <typename C>
-        struct document: cxx::parser::document<C> // VC 7.1 likes it qualified
+        struct document: cxx::parser::document<C> // VC likes it qualified
         {
         public:
           document (parser_base<C>& root,
@@ -371,7 +378,7 @@ namespace xsd
                  const properties<C>&);
 
         private:
-          std::auto_ptr<xercesc::SAX2XMLReader>
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader>
           create_sax_ (flags, const properties<C>&);
 
         private:
@@ -386,8 +393,8 @@ namespace xsd
           event_router (cxx::parser::document<C>&, bool polymorphic);
 
           // I know, some of those consts are stupid. But that's what
-          // Xerces folks put into their interfaces and VC 7.1 thinks
-          // there are different signatures if one strips this fluff off.
+          // Xerces folks put into their interfaces and VC thinks there
+          // are different signatures if one strips this fluff off.
           //
           virtual void
           setDocumentLocator (const xercesc::Locator* const);
@@ -403,13 +410,8 @@ namespace xsd
                       const XMLCh* const lname,
                       const XMLCh* const qname);
 
-#if _XERCES_VERSION >= 30000
           virtual void
           characters (const XMLCh* const s, const XMLSize_t length);
-#else
-          virtual void
-          characters (const XMLCh* const s, const unsigned int length);
-#endif
 
           virtual void
           startPrefixMapping (const XMLCh* const prefix,
