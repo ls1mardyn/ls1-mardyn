@@ -7,6 +7,11 @@
 
 #include "NonBlockingMPIMultiStepHandler.h"
 #include <assert.h>
+#include "utils/Logger.h"
+#include "utils/Timer.h"
+#include "DomainDecompMPIBase.h"
+#include "particleContainer/ParticleContainer.h"
+
 
 using Log::global_log;
 using namespace std;
@@ -31,7 +36,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 	assert(stageCount > 0);
 
-	for (unsigned int i = 0; i < stageCount; ++i) {
+	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
 		_decompositionTimer->start();
 		_domainDecomposition->prepareNonBlockingStage(false,
 				_moleculeContainer, _domain, i);

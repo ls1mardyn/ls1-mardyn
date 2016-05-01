@@ -871,7 +871,13 @@ void Simulation::simulate() {
 		}
 		computationTimer.stop();
 
+
+
+#ifdef ENABLE_MPI
 		bool overlapCommComp = true;
+#else
+		bool overlapCommComp = false;
+#endif
 
 		if (overlapCommComp) {
 			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer);
@@ -1251,7 +1257,7 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
 #else
 	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
-				_domainDecomposition, _moleculeContainer, _domain, _cellProcessor);
+			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
 #endif
 
 	nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);

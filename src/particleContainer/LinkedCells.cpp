@@ -343,6 +343,14 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 	return N;
 }
 
+void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
+	throw "Not yet implemented.";
+}
+
+void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount){
+	throw "Not yet implemented.";
+}
+
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
 		global_log->error()
