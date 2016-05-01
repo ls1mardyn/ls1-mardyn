@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/stream-extraction-map.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xsd/cxx/tree/types.hxx>
@@ -31,7 +30,7 @@ namespace xsd
           &extractor_impl<S, type>,
           false);
 
-        typedef simple_type<type> simple_type;
+        typedef simple_type<C, type> simple_type;
         register_type (
           qualified_name (bits::any_simple_type<C> (), xsd),
           &extractor_impl<S, simple_type>,
@@ -97,7 +96,7 @@ namespace xsd
           &extractor_impl<S, id>,
           false);
 
-        typedef idref<type, C, ncname> idref;
+        typedef idref<C, ncname, type> idref;
         register_type (
           qualified_name (bits::idref<C> (), xsd),
           &extractor_impl<S, idref>,
@@ -219,9 +218,9 @@ namespace xsd
       void stream_extraction_map<S, C>::
       register_type (const qualified_name& name,
                      extractor e,
-                     bool override)
+                     bool replace)
       {
-        if (override || type_map_.find (name) == type_map_.end ())
+        if (replace || type_map_.find (name) == type_map_.end ())
           type_map_[name] = e;
       }
 
@@ -233,11 +232,34 @@ namespace xsd
       }
 
       template <typename S, typename C>
-      std::auto_ptr<type> stream_extraction_map<S, C>::
+      XSD_AUTO_PTR<type> stream_extraction_map<S, C>::
       extract (istream<S>& s, flags f, container* c)
       {
-        std::basic_string<C> name, ns;
-        s >> ns >> name;
+        std::basic_string<C> ns, name;
+
+        // The namespace and name strings are pooled.
+        //
+        std::size_t id;
+        istream_common::as_size<std::size_t> as_size (id);
+        s >> as_size;
+
+        if (id != 0)
+          s.pool_string (id, ns);
+        else
+        {
+          s >> ns;
+          s.pool_add (ns);
+        }
+
+        s >> as_size;
+
+        if (id != 0)
+          s.pool_string (id, name);
+        else
+        {
+          s >> name;
+          s.pool_add (name);
+        }
 
         if (extractor e = find (qualified_name (name, ns)))
         {
@@ -280,10 +302,10 @@ namespace xsd
       //
       //
       template<typename S, typename T>
-      std::auto_ptr<type>
+      XSD_AUTO_PTR<type>
       extractor_impl (istream<S>& s, flags f, container* c)
       {
-        return std::auto_ptr<type> (new T (s, f, c));
+        return XSD_AUTO_PTR<type> (new T (s, f, c));
       }
 
 

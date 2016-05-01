@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/stream-extraction.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_STREAM_EXTRACTION_HXX
@@ -29,12 +28,18 @@ namespace xsd
 
       // simple_type
       //
-      template <typename B>
+      template <typename C, typename B>
       template <typename S>
-      inline simple_type<B>::
+      inline simple_type<C, B>::
       simple_type (istream<S>& s, flags f, container* c)
-          : type (s, f, c)
+          : type (s, f & ~flags::extract_content, c)
       {
+        if (f & flags::extract_content)
+        {
+          std::basic_string<C> t;
+          s >> t;
+          this->content_.reset (new text_content_type (t));
+        }
       }
 
       // fundamental_base
@@ -55,7 +60,7 @@ namespace xsd
       template <typename S>
       list<T, C, ST, false>::
       list (istream<S>& s, flags f, container* c)
-          : sequence<T> (f, c)
+          : sequence<T> (c)
       {
         std::size_t size;
         istream_common::as_size<std::size_t> as_size (size);
@@ -66,18 +71,15 @@ namespace xsd
           this->reserve (size);
 
           while (size--)
-          {
-            std::auto_ptr<T> p (new T (s, f, c));
-            push_back (p);
-          }
+            this->push_back (traits<T, C, ST>::create (s, f, c));
         }
       }
 
       template <typename T, typename C, schema_type::value ST>
       template <typename S>
       list<T, C, ST, true>::
-      list (istream<S>& s, flags f, container* c)
-          : sequence<T> (f, c)
+      list (istream<S>& s, flags, container* c)
+          : sequence<T> (c)
       {
         std::size_t size;
         istream_common::as_size<std::size_t> as_size (size);
@@ -91,7 +93,7 @@ namespace xsd
           {
             T x;
             s >> x;
-            push_back (x);
+            this->push_back (x);
           }
         }
       }
@@ -204,9 +206,9 @@ namespace xsd
 
       // idref
       //
-      template <typename T, typename C, typename B>
+      template <typename C, typename B, typename T>
       template <typename S>
-      inline idref<T, C, B>::
+      inline idref<C, B, T>::
       idref (istream<S>& s, flags f, container* c)
           : B (s, f, c), identity_ (*this)
       {

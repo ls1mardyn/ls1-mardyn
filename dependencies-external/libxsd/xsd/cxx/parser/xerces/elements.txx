@@ -1,6 +1,5 @@
 // file      : xsd/cxx/parser/xerces/elements.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <istream>
@@ -12,6 +11,7 @@
 #include <xercesc/sax2/XMLReaderFactory.hpp>
 #include <xercesc/validators/schema/SchemaSymbols.hpp>
 #include <xercesc/util/XMLUni.hpp>
+#include <xercesc/util/XMLString.hpp>
 
 #include <xsd/cxx/xml/string.hxx>
 #include <xsd/cxx/xml/sax/std-input-source.hxx>
@@ -94,7 +94,7 @@ namespace xsd
 
           error_handler<C> eh;
           xml::sax::bits::error_handler_proxy<C> eh_proxy (eh);
-          std::auto_ptr<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
 
           parse (uri, eh_proxy, *sax, f, p);
 
@@ -123,7 +123,7 @@ namespace xsd
           xml::auto_initializer init ((f & flags::dont_initialize) == 0);
 
           xml::sax::bits::error_handler_proxy<C> eh_proxy (eh);
-          std::auto_ptr<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
 
           parse (uri, eh_proxy, *sax, f, p);
 
@@ -152,7 +152,7 @@ namespace xsd
                const properties<C>& p)
         {
           xml::sax::bits::error_handler_proxy<C> eh_proxy (eh);
-          std::auto_ptr<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
 
           parse (uri, eh_proxy, *sax, f, p);
 
@@ -389,7 +389,7 @@ namespace xsd
         {
           error_handler<C> eh;
           xml::sax::bits::error_handler_proxy<C> eh_proxy (eh);
-          std::auto_ptr<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
 
           parse (is, eh_proxy, *sax, f, p);
 
@@ -404,7 +404,7 @@ namespace xsd
                const properties<C>& p)
         {
           xml::sax::bits::error_handler_proxy<C> eh_proxy (eh);
-          std::auto_ptr<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
 
           parse (is, eh_proxy, *sax, f, p);
 
@@ -420,7 +420,7 @@ namespace xsd
                const properties<C>& p)
         {
           xml::sax::bits::error_handler_proxy<C> eh_proxy (eh);
-          std::auto_ptr<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
+          XSD_AUTO_PTR<xercesc::SAX2XMLReader> sax (create_sax_ (f, p));
 
           parse (is, eh_proxy, *sax, f, p);
 
@@ -527,14 +527,8 @@ namespace xsd
               xml::string (e.message ()).c_str (),
               id.c_str (),
               id.c_str (),
-#if _XERCES_VERSION >= 30000
               static_cast<XMLFileLoc> (e.line ()),
-              static_cast<XMLFileLoc> (e.column ())
-#else
-              static_cast<XMLSSize_t> (e.line ()),
-              static_cast<XMLSSize_t> (e.column ())
-#endif
-            );
+              static_cast<XMLFileLoc> (e.column ()));
 
             eh.fatalError (se);
           }
@@ -565,14 +559,8 @@ namespace xsd
               xml::string (e.message ()).c_str (),
               id.c_str (),
               id.c_str (),
-#if _XERCES_VERSION >= 30000
               static_cast<XMLFileLoc> (e.line ()),
-              static_cast<XMLFileLoc> (e.column ())
-#else
-              static_cast<XMLSSize_t> (e.line ()),
-              static_cast<XMLSSize_t> (e.column ())
-#endif
-            );
+              static_cast<XMLFileLoc> (e.column ()));
 
             eh.fatalError (se);
           }
@@ -580,16 +568,12 @@ namespace xsd
 
 
         template <typename C>
-        std::auto_ptr<xercesc::SAX2XMLReader> document<C>::
+        XSD_AUTO_PTR<xercesc::SAX2XMLReader> document<C>::
         create_sax_ (flags f, const properties<C>& p)
         {
-          // HP aCC cannot handle using namespace xercesc;
-          //
-          using xercesc::SAX2XMLReader;
-          using xercesc::XMLReaderFactory;
-          using xercesc::XMLUni;
+          using namespace xercesc;
 
-          std::auto_ptr<SAX2XMLReader> sax (
+          XSD_AUTO_PTR<SAX2XMLReader> sax (
             XMLReaderFactory::createXMLReader ());
 
           sax->setFeature (XMLUni::fgSAX2CoreNameSpaces, true);
@@ -670,6 +654,9 @@ namespace xsd
                      const XMLCh* const /*qname*/,
                      const xercesc::Attributes& attributes)
         {
+          using xercesc::XMLUni;
+          using xercesc::XMLString;
+
           typedef std::basic_string<C> string;
 
           {
@@ -792,13 +779,19 @@ namespace xsd
             }
           }
 
-#if _XERCES_VERSION >= 30000
           for (XMLSize_t i (0), end (attributes.getLength()); i < end; ++i)
-#else
-          for (unsigned int i (0), end (attributes.getLength()); i < end; ++i)
-#endif
           {
-            string ns (xml::transcode<C> (attributes.getURI (i)));
+            const XMLCh* xns (attributes.getURI (i));
+
+            // When SAX2 reports the xmlns attribute, it does not include
+            // the proper attribute namespace. So we have to detect and
+            // rectify this case.
+            //
+            if (XMLString::equals (attributes.getQName (i),
+                                   XMLUni::fgXMLNSString))
+              xns = XMLUni::fgXMLNSURIName;
+
+            string ns (xml::transcode<C> (xns));
             string name (xml::transcode<C> (attributes.getLocalName (i)));
             string value (xml::transcode<C> (attributes.getValue (i)));
 
@@ -868,11 +861,7 @@ namespace xsd
 
         template <typename C>
         void event_router<C>::
-#if _XERCES_VERSION >= 30000
         characters (const XMLCh* const s, const XMLSize_t n)
-#else
-        characters (const XMLCh* const s, const unsigned int n)
-#endif
         {
           typedef std::basic_string<C> string;
 
@@ -949,16 +938,8 @@ namespace xsd
             if (id != 0)
               e.id (xml::transcode<C> (id));
 
-#if _XERCES_VERSION >= 30000
             e.line (static_cast<unsigned long> (loc_->getLineNumber ()));
             e.column (static_cast<unsigned long> (loc_->getColumnNumber ()));
-#else
-            XMLSSize_t l (loc_->getLineNumber ());
-            XMLSSize_t c (loc_->getColumnNumber ());
-
-            e.line (l == -1 ? 0 : static_cast<unsigned long> (l));
-            e.column (c == -1 ? 0: static_cast<unsigned long> (c));
-#endif
           }
         }
       }

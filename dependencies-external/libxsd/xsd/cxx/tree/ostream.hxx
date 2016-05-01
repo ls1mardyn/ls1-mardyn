@@ -1,12 +1,16 @@
 // file      : xsd/cxx/tree/ostream.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_OSTREAM_HXX
 #define XSD_CXX_TREE_OSTREAM_HXX
 
+#include <map>
+#include <string>
+#include <memory>  // std::auto_ptr/unique_ptr
 #include <cstddef> // std::size_t
+
+#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
 
 namespace xsd
 {
@@ -126,7 +130,7 @@ namespace xsd
       public:
         explicit
         ostream (S& s)
-            : s_ (s)
+            : s_ (s), seq_ (1)
         {
         }
 
@@ -136,13 +140,55 @@ namespace xsd
           return s_;
         }
 
+        // If the string is not in the pool, add it and return 0. Otherwise
+        // return the string's pool id. In the former case the application
+        // should serialize the original string.
+        //
+        // The returned ids are sequential and start with 1. 0 is reserved
+        // as a special marker to be used by the application for the first
+        // encounter of the string.
+        //
+        template <typename C>
+        std::size_t
+        pool_string (const std::basic_string<C>& s)
+        {
+          typedef pool_impl<C> pool_type;
+
+          if (pool_.get () == 0)
+            pool_.reset (new pool_type);
+
+          pool_type& p (*static_cast<pool_type*> (pool_.get ()));
+
+          std::pair<typename pool_type::iterator, bool> r (
+            p.insert (std::pair<std::basic_string<C>, std::size_t> (s, seq_)));
+
+          if (!r.second)
+            return r.first->second;
+
+          seq_++;
+          return 0;
+        }
+
       private:
         ostream (const ostream&);
         ostream&
         operator= (const ostream&);
 
       private:
+        struct pool
+        {
+          virtual
+          ~pool () {}
+        };
+
+        template <typename C>
+        struct pool_impl: pool, std::map<std::basic_string<C>, std::size_t>
+        {
+        };
+
         S& s_;
+        std::size_t seq_;
+        XSD_AUTO_PTR<pool> pool_;
       };
 
 
