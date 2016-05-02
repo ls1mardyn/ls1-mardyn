@@ -362,6 +362,33 @@ void UniformPseudoParticleContainer::horizontalPass(
 
 	for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
 
+#if defined(ENABLE_MPI)
+
+	//iterate through local areas of local tree without halos
+	for(int curLevel= 1; curLevel<=_maxLevel; curLevel++){
+
+		curCellsEdge *=2;
+		for(int i=0; i <3; i++){
+			cellWid[i] /=2;
+		}
+		if(curLevel > _globalLevel){
+			int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
+			GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel, 0);
+		}
+	}
+#endif
+
+	if(_overlapComm){
+		//wait till communication finished
+		_multipoleRecBufferOverlap->wait();
+
+		//set halo values
+		communicateHalosOverlapSetHalos();
+	}
+
+	curCellsEdge=1;
+	for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
+
 	for(int curLevel=1; curLevel<=_maxLevel; curLevel++){
 
 		curCellsEdge *=2;
@@ -369,10 +396,10 @@ void UniformPseudoParticleContainer::horizontalPass(
 			cellWid[i] /=2;
 		}
 
-#if defined(ENABLE_MPI) && WIGNER==0
+#if defined(ENABLE_MPI)
 		if(curLevel > _globalLevel){
 		    int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
-			GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel);
+			GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel, 1);
 		}
 		else{
 			GatherWellSepLo(cellWid, curCellsEdge, curLevel);
@@ -607,7 +634,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 
 
 
-void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int curLevel){
+void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int curLevel, int doHalos){
 	_timerGatherWellSepLo.start();
 
 	int m1x,m1y,m1z;
@@ -620,38 +647,53 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 	int _row_length;
 
 	Vector3<double> periodicShift(0.0);
+	int zStart = 2;
+	int xStart = 2;
+	int yStart = 2;
+	int zEnd = localMpCells - 2;
+	int xEnd = localMpCells - 2;
+	int yEnd = localMpCells - 2;
+	if(doHalos){ //in this case only iterate over halo values
+		xStart = yStart = zStart = 0;
+		xEnd = yEnd = zEnd = localMpCells;
+//		std::cout << xEnd << yEnd << zEnd <<"\n";
+	}
+	for (m1z = zStart; m1z < zEnd; m1z++) {
 
-	for (m1z = 2; m1z < localMpCells-2; m1z++) {
-		for (m1y = 2; m1y < localMpCells-2; m1y++) {
-			for (m1x = 2; m1x < localMpCells-2; m1x++) {
+		for (m1y = yStart; m1y < yEnd; m1y++) {
+
+			for (m1x = xStart; m1x < xEnd; m1x++) {
+				if(doHalos and not(m1z < 2 or m1z >= localMpCells - 2) and not(m1y < 2 or m1y >= localMpCells - 2) and not(m1x < 2 or m1x >= localMpCells - 2)){
+					continue;
+				}
+//				if(doHalos){
+//					std::cout <<"m1: " <<m1x << m1y << m1z << "\n";
+//				}
 				m1=((m1z)*localMpCells + m1y)*localMpCells + m1x;
-				m1v[0] = m1x - 2;
-				m1v[1] = m1y - 2;
-				m1v[2] = m1z - 2;
+				m1v[0] = m1x;
+				m1v[1] = m1y;
+				m1v[2] = m1z;
 				if (_mpCellLocal[curLevel][m1].occ == 0 ){
 					continue;
 				}
 
-				for (m2z = LoLim(2) + 2; m2z <= HiLim(2) + 2; m2z++) {
-					if (m2z < 0 or m2z >= localMpCells) {
-						std::cout << "Error \n";
-						exit(-1);
+				for (m2z = LoLim(2); m2z <= HiLim(2); m2z++) {
+					if ((m2z < 2 or m2z >= localMpCells - 2)) { // don't do halo cells as m2
+						continue;
 					}
 
 
 					m2v[2] = m2z;
-					for (m2y = LoLim(1) + 2; m2y <= HiLim(1) + 2; m2y++) {
-						if (m2y < 0 or m2y >= localMpCells) {
-							std::cout << "Error \n";
-							exit(-1);
+					for (m2y = LoLim(1); m2y <= HiLim(1); m2y++) {
+						if ((m2y < 2 or m2y >= localMpCells - 2)) {
+							continue;
 						}
 
 
 						m2v[1] = m2y;
-						for (m2x = LoLim(0) + 2; m2x <= HiLim(0) + 2; m2x++) {
-							if (m2x < 0 or m2x >= localMpCells) {
-								std::cout << "Error \n";
-								exit(-1);
+						for (m2x = LoLim(0); m2x <= HiLim(0); m2x++) {
+							if ((m2x < 2 or m2x >= localMpCells - 2)) {
+								continue;
 							}
 
 							m2v[0] = m2x;
@@ -661,11 +703,19 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 								abs(m2v[2] - m1z) <= _wellSep)
 								continue;
 							m2 = (m2z * localMpCells + m2y) * localMpCells + m2x;
+//							if(doHalos){
+//								std::cout <<"m2: " <<m2x << m2y << m2z << "\n";
+//							}
 							if (_mpCellLocal[curLevel][m2].occ == 0)
 								continue;
-
-							_mpCellLocal[curLevel][m1].local.addMultipoleParticle(
-									_mpCellLocal[curLevel][m2].multipole, periodicShift);
+							if(!doHalos){
+								_mpCellLocal[curLevel][m1].local.addMultipoleParticle(
+										_mpCellLocal[curLevel][m2].multipole, periodicShift);
+							}
+							else{ //here m1 is a halo cell
+								_mpCellLocal[curLevel][m2].local.addMultipoleParticle(
+										_mpCellLocal[curLevel][m1].multipole, periodicShift);
+							}
 						} // m2x closed
 					} // m2y closed
 				} // m2z closed
@@ -1192,9 +1242,9 @@ void UniformPseudoParticleContainer::communicateHalos(){
 	}
 	else{
 		communicateHalosOverlapStart();
-		_multipoleRecBufferOverlap->wait();
-		//_multipoleBufferOverlap->wait();
-		communicateHalosOverlapSetHalos();
+//		_multipoleRecBufferOverlap->wait();
+//		//_multipoleBufferOverlap->wait();
+//		communicateHalosOverlapSetHalos();
 	}
 }
 void UniformPseudoParticleContainer::communicateHalosNoOverlap(){

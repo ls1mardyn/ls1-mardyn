@@ -95,7 +95,7 @@ private:
 	void GatherWellSepLo(double *cellWid, int mpCells, int curLevel);
 
 	// M2L
-	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int curLevel);
+	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int curLevel, int doHalos);
 
 	// L2L
 	void PropagateCellLo(double *cellWid, int mpCells, int curLevel);
