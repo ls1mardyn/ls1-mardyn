@@ -35,7 +35,12 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 	_periodicBC = periodic;
 	//enable overlapping communication;
+#if defined(ENABLE_MPI)
 	_overlapComm = 1;
+#else
+	_overlapComm = 0;
+#endif
+
 #if defined(ENABLE_MPI)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	if(!_overlapComm){
@@ -268,7 +273,11 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 
 #if defined(ENABLE_MPI)
-	_coeffVectorLength *= _globalLevelNumCells;
+	int numCells = 0;
+	for(int i = _globalLevel; i >=0 ; i--){
+		numCells += pow(8,i);
+	}
+	_coeffVectorLength *= numCells;
 #endif
 
 	_coeffVector = new double[_coeffVectorLength * 2];
@@ -340,13 +349,14 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 		if(curLevel == _globalLevel + 1){
 			communicateHalos();
 		}
-		if(curLevel == _globalLevel){
-			AllReduceMultipoleMomentsLevel(_globalLevelNumCells,curLevel);
-		}
+
 #else
 		CombineMpCell(cellWid, curCellsEdge, curLevel);
 #endif
+
 	}
+	AllReduceMultipoleMomentsLevelToTop(_globalLevelNumCells,_globalLevel);
+
 	_timerCombineMpCell.stop();
 
 }
@@ -407,13 +417,13 @@ void UniformPseudoParticleContainer::horizontalPass(
 #else
 		GatherWellSepLo(cellWid, curCellsEdge, curLevel);
 #endif
-#if defined(ENABLE_MPI)
-		if(curLevel <= _globalLevel){
-			AllReduceLocalMoments(curCellsEdge, curLevel);
-		}
-#else
-		AllReduceLocalMoments(curCellsEdge, curLevel);
-#endif
+//#if defined(ENABLE_MPI)
+//		if(curLevel <= _globalLevel){
+//			AllReduceLocalMoments(curCellsEdge, curLevel);
+//		}
+//#else
+//		AllReduceLocalMoments(curCellsEdge, curLevel);
+//#endif
 	}
 }
 
@@ -557,15 +567,15 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 	_row_length=mpCells*mpCells*mpCells;
 
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_rank= domainDecomp.getRank();
-	_size= domainDecomp.getNumProcs();
-
-	loop_min = (int) ((long) (_rank + 0) * (long) (_row_length) / (long) _size);
-	loop_max = (int) ((long) (_rank + 1) * (long) (_row_length) / (long) _size);
+//	_rank= domainDecomp.getRank();
+//	_size= domainDecomp.getNumProcs();
+//
+//	loop_min = (int) ((long) (_rank + 0) * (long) (_row_length) / (long) _size);
+//	loop_max = (int) ((long) (_rank + 1) * (long) (_row_length) / (long) _size);
 
 	Vector3<double> periodicShift;
 
-	for (m1 = loop_min; m1 < loop_max; m1++) {
+	for (m1 = 0; m1 < _row_length; m1++) {
 
 		m1v[0] = m1 % mpCells;
 		m1v[1] = (m1 / mpCells) % mpCells;
@@ -617,9 +627,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 						abs(m2v[2] - m1v[2]) <= _wellSep)
 						continue;
 					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
-
-					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
-						continue;
+//
+//					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
+//						continue;
 
 					_mpCellGlobalTop[curLevel][m1].local.addMultipoleParticle(
 							_mpCellGlobalTop[curLevel][m2].multipole, periodicShift);
@@ -1082,35 +1092,43 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 	_timerAllreduce.stop();
 }
 
-void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCellsLevel,int curLevel) {
+void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int numCellsLevel,int startingLevel) {
 	_timerAllreduce.start();
 #ifdef ENABLE_MPI
 
 	int coeffIndex = 0;
+	int numCellsTotal = numCellsLevel;
+	int numCellsLevelTemp = numCellsLevel;
 
-	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
-		const MpCell & currentCell = _mpCellGlobalTop[curLevel][cellIndex];
+	for(int level = startingLevel; level >=0 ; level--){
+		for (int cellIndex = 0; cellIndex < numCellsLevelTemp; cellIndex++) {
+			const MpCell & currentCell = _mpCellGlobalTop[level][cellIndex];
 
-		// NOTE: coeffIndex modified in following call:
-		currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
+			// NOTE: coeffIndex modified in following call:
+			currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
 
-		assert(cellIndex < numCellsLevel);
-		_occVector[cellIndex] = currentCell.occ;
+//			assert(cellIndex < numCellsLevelTemp);
+//			_occVector[cellIndex] = currentCell.occ;
+		}
+		numCellsLevelTemp /= 8;
 	}
 
 	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm);
-	MPI_Allreduce(MPI_IN_PLACE, _occVector, numCellsLevel, MPI_INT, MPI_SUM, _comm);
+	//MPI_Allreduce(MPI_IN_PLACE, _occVector, numCellsLevel, MPI_INT, MPI_SUM, _comm);
 
 	coeffIndex = 0;
-	for (int cellIndex = 0; cellIndex < numCellsLevel; cellIndex++) {
+	numCellsLevelTemp = numCellsLevel;
+	for(int level = startingLevel; level >=0 ; level--){
+		for (int cellIndex = 0; cellIndex < numCellsLevelTemp; cellIndex++) {
 
-		MpCell & currentCell = _mpCellGlobalTop[curLevel][cellIndex];
+			MpCell & currentCell = _mpCellGlobalTop[level][cellIndex];
 
-		currentCell.occ = _occVector[cellIndex];
-		currentCell.multipole.readValuesFromMPIBuffer(_coeffVector, coeffIndex);
+//			currentCell.occ = _occVector[cellIndex];
+			currentCell.multipole.readValuesFromMPIBuffer(_coeffVector, coeffIndex);
 
+		}
+		numCellsLevelTemp /= 8;
 	}
-
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
 
 #endif

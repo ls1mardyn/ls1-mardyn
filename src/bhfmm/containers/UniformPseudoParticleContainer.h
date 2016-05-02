@@ -59,7 +59,7 @@ private:
 	//- A local subtree starting at _globalLevel + 1 which contains only the
 	//ancestor nodes from the node that was assigned to the MPI process on
 	//the _globalLevel
-	//- A global tree which caintains all the octree elements of the FMM tree
+	//- A global tree which contains all the octree elements of the FMM tree
 	//from level 0 to _globalLevel
 	std::vector<std::vector<MpCell> > _mpCellGlobalTop;
 	std::vector<std::vector<MpCell> > _mpCellLocal;
@@ -106,7 +106,7 @@ private:
 	// for parallelization
 	void AllReduceMultipoleMoments();
 	void AllReduceLocalMoments(int mpCells, int _curLevel);
-	void AllReduceMultipoleMomentsLevel(int mpCells, int _curLevel);
+	void AllReduceMultipoleMomentsLevelToTop(int mpCells, int _curLevel);
 
 	void getXHaloValues(int localMpCellsBottom,int bottomLevel);
 	void getYHaloValues(int localMpCellsBottom,int bottomLevel);
