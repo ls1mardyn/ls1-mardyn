@@ -150,9 +150,10 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 		const double mol_pos_y = molecules[i]->r(1);
 		const double mol_pos_z = molecules[i]->r(2);
 
-		soa._mol_pos_x[i] = mol_pos_x;
-		soa._mol_pos_y[i] = mol_pos_y;
-		soa._mol_pos_z[i] = mol_pos_z;
+		soa._mol_pos.x(i) = mol_pos_x;
+		soa._mol_pos.y(i) = mol_pos_y;
+		soa._mol_pos.z(i) = mol_pos_z;
+
 		soa._mol_ljc_num[i] = mol_ljc_num;
 		soa._mol_charges_num[i] = mol_charges_num;
 		soa._mol_dipoles_num[i] = mol_dipoles_num;
@@ -980,9 +981,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	bool compute_molecule = false;
 
 	for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 		const double m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
 
 		const bool forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
@@ -1017,9 +1018,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
@@ -1060,10 +1061,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
-
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		// can we do this nicer?
@@ -1115,9 +1115,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	unsigned char bitmultiplier = 1;
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j, bitmultiplier *= 2) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
@@ -1218,9 +1218,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
-	const double * const soa1_mol_pos_y = soa1._mol_pos_y;
-	const double * const soa1_mol_pos_z = soa1._mol_pos_z;
+	const double * const soa1_mol_pos_x = &(soa1._mol_pos.x());
+	const double * const soa1_mol_pos_y = &(soa1._mol_pos.y());
+	const double * const soa1_mol_pos_z = &(soa1._mol_pos.z());
 
 	// Pointer for LJ centers
 	const double * const soa1_ljc_r_x = soa1._ljc_r_x;

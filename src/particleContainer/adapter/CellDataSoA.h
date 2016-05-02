@@ -8,8 +8,9 @@
 #ifndef CELLDATASOA_H_
 #define CELLDATASOA_H_
 
-#include "utils/AlignedArray.h"
+#include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
+
 /**
  * \brief Structure of Arrays for vectorized force calculation.
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
@@ -31,7 +32,7 @@ public:
 		_dipoles_size(dipoles_arg + (dipoles_arg & 1)),
 		_quadrupoles_size(quadrupoles_arg + (quadrupoles_arg & 1)),
 		_centers_size(_ljc_size + _charges_size + _dipoles_size + _quadrupoles_size),
-		_mol_pos_x(_mol_size), _mol_pos_y(_mol_size), _mol_pos_z(_mol_size),
+		_mol_pos(_mol_size),
 		_mol_ljc_num(_mol_size),
 		_mol_charges_num(_mol_size),
 		_mol_dipoles_num(_mol_size),
@@ -66,9 +67,7 @@ public:
 	size_t _centers_size;
 
 	// entries per molecule
-	DoubleArray _mol_pos_x;
-	DoubleArray _mol_pos_y;
-	DoubleArray _mol_pos_z;
+	AlignedArrayTriplet _mol_pos;
 	AlignedArray<int> _mol_ljc_num;
 	AlignedArray<int> _mol_charges_num;
 	AlignedArray<int> _mol_dipoles_num;
@@ -330,9 +329,7 @@ public:
 
 		if (_mol_num > _mol_size) {
 			_mol_size = ceil( (double)molecules_arg / 8) * 8;
-			resizeLastZero(_mol_pos_x,_mol_size, _mol_num);
-			resizeLastZero(_mol_pos_y,_mol_size, _mol_num);
-			resizeLastZero(_mol_pos_z,_mol_size, _mol_num);
+			_mol_pos.resize(_mol_size);
 			resizeLastZero(_mol_ljc_num,_mol_size, _mol_num);
 			resizeLastZero(_mol_charges_num,_mol_size, _mol_num);
 			resizeLastZero(_mol_dipoles_num,_mol_size, _mol_num);
@@ -349,10 +346,7 @@ public:
 	size_t getDynamicSize() const {
 		size_t total = 0;
 
-		total += _mol_pos_x.get_dynamic_memory();
-		total += _mol_pos_y.get_dynamic_memory();
-		total += _mol_pos_z.get_dynamic_memory();
-
+		total += _mol_pos.get_dynamic_memory();
 		total += _mol_ljc_num.get_dynamic_memory();
 		total += _mol_charges_num.get_dynamic_memory();
 		total += _mol_dipoles_num.get_dynamic_memory();
