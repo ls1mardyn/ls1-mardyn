@@ -534,9 +534,9 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 	_ljc_dist_lookup = _centers_dist_lookup;
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = &(soa1._mol_pos.x());
-	const double * const soa1_mol_pos_y = &(soa1._mol_pos.y());
-	const double * const soa1_mol_pos_z = &(soa1._mol_pos.z());
+	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for LJ centers
 	const double * const soa1_ljc_r_x = soa1._ljc_r_x;

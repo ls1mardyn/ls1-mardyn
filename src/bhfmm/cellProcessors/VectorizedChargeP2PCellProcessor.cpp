@@ -508,9 +508,9 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	_charges_dist_lookup = _centers_dist_lookup;
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = &(soa1._mol_pos.x());
-	const double * const soa1_mol_pos_y = &(soa1._mol_pos.y());
-	const double * const soa1_mol_pos_z = &(soa1._mol_pos.z());
+	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for charges
 	const double * const soa1_charges_r_x = soa1._charges_r_x;

@@ -214,12 +214,12 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			//soa._dipoles_dist_lookup[iDipoles] = 0.0;
 			// Get the dipole moment
 			soa._dipoles_p[iDipoles] = components[molecules[i]->componentid()].dipole(j).absMy();
-			soa._dipoles_e_x[iDipoles] = molecules[i]->dipole_e(j)[0];
-			soa._dipoles_e_y[iDipoles] = molecules[i]->dipole_e(j)[1];
-			soa._dipoles_e_z[iDipoles] = molecules[i]->dipole_e(j)[2];
-			soa._dipoles_M_x[iDipoles] = 0.0;
-			soa._dipoles_M_y[iDipoles] = 0.0;
-			soa._dipoles_M_z[iDipoles] = 0.0;
+			soa._dipoles_e.x(iDipoles) = molecules[i]->dipole_e(j)[0];
+			soa._dipoles_e.y(iDipoles) = molecules[i]->dipole_e(j)[1];
+			soa._dipoles_e.z(iDipoles) = molecules[i]->dipole_e(j)[2];
+			soa._dipoles_M.x(iDipoles) = 0.0;
+			soa._dipoles_M.y(iDipoles) = 0.0;
+			soa._dipoles_M.z(iDipoles) = 0.0;
 		}
 
 		for (size_t j = 0; j < mol_quadrupoles_num; ++j, ++iQuadrupoles)
@@ -239,12 +239,12 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 			//soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
 			// Get the quadrupole moment
 			soa._quadrupoles_m[iQuadrupoles] = components[molecules[i]->componentid()].quadrupole(j).absQ();
-			soa._quadrupoles_e_x[iQuadrupoles] = molecules[i]->quadrupole_e(j)[0];
-			soa._quadrupoles_e_y[iQuadrupoles] = molecules[i]->quadrupole_e(j)[1];
-			soa._quadrupoles_e_z[iQuadrupoles] = molecules[i]->quadrupole_e(j)[2];
-			soa._quadrupoles_M_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_M_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_M_z[iQuadrupoles] = 0.0;
+			soa._quadrupoles_e.x(iQuadrupoles) = molecules[i]->quadrupole_e(j)[0];
+			soa._quadrupoles_e.y(iQuadrupoles) = molecules[i]->quadrupole_e(j)[1];
+			soa._quadrupoles_e.z(iQuadrupoles) = molecules[i]->quadrupole_e(j)[2];
+			soa._quadrupoles_M.x(iQuadrupoles) = 0.0;
+			soa._quadrupoles_M.y(iQuadrupoles) = 0.0;
+			soa._quadrupoles_M.z(iQuadrupoles) = 0.0;
 		}
 	}
 }
@@ -322,9 +322,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			f[1] = soa._dipoles_f_y[iDipoles];
 			f[2] = soa._dipoles_f_z[iDipoles];
 			double M[3];
-			M[0] = soa._dipoles_M_x[iDipoles];
-			M[1] = soa._dipoles_M_y[iDipoles];
-			M[2] = soa._dipoles_M_z[iDipoles];
+			M[0] = soa._dipoles_M.x(iDipoles);
+			M[1] = soa._dipoles_M.y(iDipoles);
+			M[2] = soa._dipoles_M.z(iDipoles);
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -352,9 +352,9 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 			f[1] = soa._quadrupoles_f_y[iQuadrupoles];
 			f[2] = soa._quadrupoles_f_z[iQuadrupoles];
 			double M[3];
-			M[0] = soa._quadrupoles_M_x[iQuadrupoles];
-			M[1] = soa._quadrupoles_M_y[iQuadrupoles];
-			M[2] = soa._quadrupoles_M_z[iQuadrupoles];
+			M[0] = soa._quadrupoles_M.x(iQuadrupoles);
+			M[1] = soa._quadrupoles_M.y(iQuadrupoles);
+			M[2] = soa._quadrupoles_M.z(iQuadrupoles);
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -1218,9 +1218,9 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = &(soa1._mol_pos.x());
-	const double * const soa1_mol_pos_y = &(soa1._mol_pos.y());
-	const double * const soa1_mol_pos_z = &(soa1._mol_pos.z());
+	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for LJ centers
 	const double * const soa1_ljc_r_x = soa1._ljc_r_x;
@@ -1291,12 +1291,12 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa1_dipoles_V_y = soa1._dipoles_V_y;
 	double * const soa1_dipoles_V_z = soa1._dipoles_V_z;
 	const double * const soa1_dipoles_p = soa1._dipoles_p;
-	const double * const soa1_dipoles_e_x = soa1._dipoles_e_x;
-	const double * const soa1_dipoles_e_y = soa1._dipoles_e_y;
-	const double * const soa1_dipoles_e_z = soa1._dipoles_e_z;
-	double * const soa1_dipoles_M_x = soa1._dipoles_M_x;
-	double * const soa1_dipoles_M_y = soa1._dipoles_M_y;
-	double * const soa1_dipoles_M_z = soa1._dipoles_M_z;
+	const double * const soa1_dipoles_e_x = soa1._dipoles_e.xBegin();
+	const double * const soa1_dipoles_e_y = soa1._dipoles_e.yBegin();
+	const double * const soa1_dipoles_e_z = soa1._dipoles_e.zBegin();
+	double * const soa1_dipoles_M_x = soa1._dipoles_M.xBegin();
+	double * const soa1_dipoles_M_y = soa1._dipoles_M.yBegin();
+	double * const soa1_dipoles_M_z = soa1._dipoles_M.zBegin();
 	const int * const soa1_mol_dipoles_num = soa1._mol_dipoles_num;
 
 	const double * const soa2_dipoles_m_r_x = soa2._dipoles_m_r_x;
@@ -1312,12 +1312,12 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_dipoles_V_y = soa2._dipoles_V_y;
 	double * const soa2_dipoles_V_z = soa2._dipoles_V_z;
 	const double * const soa2_dipoles_p = soa2._dipoles_p;
-	const double * const soa2_dipoles_e_x = soa2._dipoles_e_x;
-	const double * const soa2_dipoles_e_y = soa2._dipoles_e_y;
-	const double * const soa2_dipoles_e_z = soa2._dipoles_e_z;
-	double * const soa2_dipoles_M_x = soa2._dipoles_M_x;
-	double * const soa2_dipoles_M_y = soa2._dipoles_M_y;
-	double * const soa2_dipoles_M_z = soa2._dipoles_M_z;
+	const double * const soa2_dipoles_e_x = soa2._dipoles_e.xBegin();
+	const double * const soa2_dipoles_e_y = soa2._dipoles_e.yBegin();
+	const double * const soa2_dipoles_e_z = soa2._dipoles_e.zBegin();
+	double * const soa2_dipoles_M_x = soa2._dipoles_M.xBegin();
+	double * const soa2_dipoles_M_y = soa2._dipoles_M.yBegin();
+	double * const soa2_dipoles_M_z = soa2._dipoles_M.zBegin();
 
 	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = _dipoles_dist_lookup;
 
@@ -1332,12 +1332,12 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa1_quadrupoles_V_y = soa1._quadrupoles_V_y;
 	double * const soa1_quadrupoles_V_z = soa1._quadrupoles_V_z;
 	const double * const soa1_quadrupoles_m = soa1._quadrupoles_m;
-	const double * const soa1_quadrupoles_e_x = soa1._quadrupoles_e_x;
-	const double * const soa1_quadrupoles_e_y = soa1._quadrupoles_e_y;
-	const double * const soa1_quadrupoles_e_z = soa1._quadrupoles_e_z;
-	double * const soa1_quadrupoles_M_x = soa1._quadrupoles_M_x;
-	double * const soa1_quadrupoles_M_y = soa1._quadrupoles_M_y;
-	double * const soa1_quadrupoles_M_z = soa1._quadrupoles_M_z;
+	const double * const soa1_quadrupoles_e_x = soa1._quadrupoles_e.xBegin();
+	const double * const soa1_quadrupoles_e_y = soa1._quadrupoles_e.yBegin();
+	const double * const soa1_quadrupoles_e_z = soa1._quadrupoles_e.zBegin();
+	double * const soa1_quadrupoles_M_x = soa1._quadrupoles_M.xBegin();
+	double * const soa1_quadrupoles_M_y = soa1._quadrupoles_M.yBegin();
+	double * const soa1_quadrupoles_M_z = soa1._quadrupoles_M.zBegin();
 	const int * const soa1_mol_quadrupoles_num = soa1._mol_quadrupoles_num;
 
 	const double * const soa2_quadrupoles_m_r_x = soa2._quadrupoles_m_r_x;
@@ -1353,12 +1353,12 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_quadrupoles_V_y = soa2._quadrupoles_V_y;
 	double * const soa2_quadrupoles_V_z = soa2._quadrupoles_V_z;
 	const double * const soa2_quadrupoles_m = soa2._quadrupoles_m;
-	const double * const soa2_quadrupoles_e_x = soa2._quadrupoles_e_x;
-	const double * const soa2_quadrupoles_e_y = soa2._quadrupoles_e_y;
-	const double * const soa2_quadrupoles_e_z = soa2._quadrupoles_e_z;
-	double * const soa2_quadrupoles_M_x = soa2._quadrupoles_M_x;
-	double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M_y;
-	double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M_z;
+	const double * const soa2_quadrupoles_e_x = soa2._quadrupoles_e.xBegin();
+	const double * const soa2_quadrupoles_e_y = soa2._quadrupoles_e.yBegin();
+	const double * const soa2_quadrupoles_e_z = soa2._quadrupoles_e.zBegin();
+	double * const soa2_quadrupoles_M_x = soa2._quadrupoles_M.xBegin();
+	double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M.yBegin();
+	double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M.zBegin();
 
 	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = _quadrupoles_dist_lookup;
 
