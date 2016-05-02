@@ -78,7 +78,7 @@ public:
 		_types.reserve(numValues);
 	}
 
-	//! @brief delete memory and MPI_Type
+	// documentation in base class
 	void finalize() {
 		CollectiveCommBase::finalize();
 		_types.clear();
@@ -86,43 +86,45 @@ public:
 		assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
-	//! Append an int value to the list of values to be sent
+	// documentation in base class
 	void appendInt(int intValue) {
 		CollectiveCommBase::appendInt(intValue);
 		_types.push_back(MPI_INT);
 	}
 
-	//! Append a unsigned long value to the list of values to be sent
+	// documentation in base class
 	void appendUnsLong(unsigned long unsLongValue) {
 		CollectiveCommBase::appendUnsLong(unsLongValue);
 		_types.push_back(MPI_UNSIGNED_LONG);
 	}
 
-	//! Append a float value to the list of values to be sent
+	// documentation in base class
 	void appendFloat(float floatValue) {
 		CollectiveCommBase::appendFloat(floatValue);
 		_types.push_back(MPI_FLOAT);
 	}
 
-	//! Append a double value to the list of values to be sent
+	// documentation in base class
 	void appendDouble(double doubleValue) {
 		CollectiveCommBase::appendDouble(doubleValue);
 		_types.push_back(MPI_DOUBLE);
 	}
 
-	//! Append a long double value to the list of values to be sent
+	// documentation in base class
 	void appendLongDouble(long double longDoubleValue) {
 		CollectiveCommBase::appendLongDouble(longDoubleValue);
 		_types.push_back(MPI_LONG_DOUBLE);
 	}
 
+	//! Get the MPI communicator
+	//! @return MPI communicator
 	MPI_Comm getTopology() {
 		return _communicator;
 	}
 
-	//! Getters don't need to be overridden, see parent class
+	// Getters don't need to be overridden, see parent class
 
-	//! Broadcast all values from the process with rank 0 to all others
+	// documentation in base class
 	void broadcast(int root = 0) {
 		setMPIType();
 		valType * startOfValues = &(_values[0]);
@@ -132,7 +134,7 @@ public:
 		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
 	}
 
-	//! Do Allreduce off all values with reduce operation add
+	// documentation in base class
 	void allreduceSum() {
 #if ENABLE_AGGLOMERATED_REDUCE
 		setMPIType();
