@@ -35,7 +35,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 	_periodicBC = periodic;
 	//enable overlapping communication;
-	_overlapComm = 0;
+	_overlapComm = 1;
 #if defined(ENABLE_MPI)
 	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
 	if(!_overlapComm){
@@ -46,9 +46,17 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	}
 	else{
 		std::vector<int> neigh = domainDecomp.getNeighbourRanksFullShell();
+		int myRank;
+//		MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+//		std::cout << myRank << " ";
 		for(int i = 0; i<26; ++i){
 			_neighbours.push_back(neigh[i]);
+//			std::cout << neigh[i] << " ";
 		}
+//		std::cout << "\n";
+//		MPI_Barrier(MPI_COMM_WORLD);
+
 	}
 	_comm = domainDecomp.getCommunicator();
 #endif
@@ -128,7 +136,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		yHaloSize += 2 * (num_cells_in_level_one_dim + 4) * num_cells_in_level_one_dim;
 		zHaloSize += 2 * (num_cells_in_level_one_dim + 4) * (num_cells_in_level_one_dim + 4);
 		edgeHaloSize += 4*num_cells_in_level_one_dim;
-		cornerHaloSize += 4;
+		cornerHaloSize += 8;
 		num_cells_in_level_one_dim *= 2;
 	}
 //	assert(
@@ -249,6 +257,10 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 		for(int i = 18; i < 26 ; i++){
 			cornerNeighbours.push_back(_neighbours[i]);
 		}
+//		for(int i=0 ; i< 26; i++){
+//			std::cout << _neighbours[i] <<" ";
+//		}
+//		std::cout <<"n";
 		_multipoleBufferOverlap = new HaloBufferOverlap<double>(areaHaloSize * 2,edgeHaloSize * 2, cornerHaloSize * 2, _comm, areaNeighbours, edgesNeighbours, cornerNeighbours, 1);
 		_multipoleRecBufferOverlap = new HaloBufferOverlap<double>(areaHaloSize * 2,edgeHaloSize * 2, cornerHaloSize * 2, _comm, areaNeighbours, edgesNeighbours, cornerNeighbours, 0);
 
@@ -273,8 +285,14 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete[] _coeffVector;
 	delete[] _occVector;
 #if defined(ENABLE_MPI)
-	delete _multipoleBuffer;
-	delete _multipoleRecBuffer;
+	if(!_overlapComm){
+		delete _multipoleBuffer;
+		delete _multipoleRecBuffer;
+	}
+	else{
+		delete _multipoleBufferOverlap;
+		delete _multipoleRecBufferOverlap;
+	}
 #endif
 
 }
@@ -1175,6 +1193,8 @@ void UniformPseudoParticleContainer::communicateHalos(){
 	else{
 		communicateHalosOverlapStart();
 		_multipoleRecBufferOverlap->wait();
+		//_multipoleBufferOverlap->wait();
+		communicateHalosOverlapSetHalos();
 	}
 }
 void UniformPseudoParticleContainer::communicateHalosNoOverlap(){
@@ -1238,56 +1258,68 @@ void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
 	//start receiving
 	_multipoleRecBufferOverlap->startCommunication();
 
-	//fill buffers
+	//clear buffers
 	_multipoleBufferOverlap->clear();
 
 	int localMpCellsBottom = pow(2,_maxLevel) / _numProcessorsPerDim  + 4;
 
 	//fill buffers of the halo areas of the simulation cube
 
-	int lowDirection[6] = {2,4,2,-2,2,-2};
-	int highDirection[6] = {-4,-2,2,-2,2,-2};
+//	int lowDirection[6] = {2,4,2,-2,2,-2};
+//	int highDirection[6] = {-4,-2,2,-2,2,-2};
+//
+//
+//	for(int i=6; i < 6; i = i + 2){
+//		getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[i],
+//				lowDirection[(0-i+6)%6], lowDirection[(1-i+6)%6], lowDirection[(2-i+6)%6], lowDirection[(3-i+6)%6], lowDirection[(4-i+6)%6], lowDirection[(5-i+6)%6]);
+//
+//		getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[i+1],
+//				highDirection[(0-i+6)%6], highDirection[(1-i+6)%6], highDirection[(2-i+6)%6], highDirection[(3-i+6)%6], highDirection[(4-i+6)%6], highDirection[(5-i+6)%6]);
+//	}
 
-
-	for(int i=0; i<6; i = i + 2){
-		getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[i],
-							lowDirection[(0+i)%6], lowDirection[(1+i)%6], lowDirection[(2+i)%6], lowDirection[(3+i)%6], lowDirection[(4+i)%6], lowDirection[(5+i)%6]);
-
-		getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[i+1],
-					highDirection[(0+i)%6], highDirection[(1+i)%6], highDirection[(2+i)%6], highDirection[(3+i)%6], highDirection[(4+i)%6], highDirection[(5+i)%6]);
-	}
-
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[0],
+									2, 4, 2, -2, 2, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[1],
+									-4, -2, 2, -2, 2, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[2],
+									2, -2, 2, 4, 2, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[3],
+									2, -2, -4, -2, 2, -2);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[4],
+									2, -2, 2, -2, 2, 4);
+	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getAreaBuffers()[5],
+									2, -2, 2, -2, -4, -2);
 	//fill edges buffers of the halo areas
 	//adjacent edges to lower x area
 
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[0],
-									2, 4,2,4,2,-2);
+									2, 4, 2, 4, 2, -2);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[2],
-									2, 4,-4,-2,2,-2);
+									2, 4, -4, -2, 2, -2);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[4],
-									2, 4,2,-2,2,4);
+									2, 4, 2, -2, 2, 4);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[6],
-									2, 4,2,-2,-4,-2);
+									2, 4, 2, -2, -4, -2);
 
 	//adjacent edges to higher x area
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[1],
-									-4, -2,-4,-2,2,-2);
+									-4, -2, -4, -2, 2, -2);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[3],
-									-4, -2,2,4,2,-2);
+									-4, -2, 2, 4, 2, -2);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[5],
-									-4, -2,2,-2,-4,-2);
+									-4, -2, 2, -2, -4, -2);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[7],
-									-4, -2,2,-2,2,4);
+									-4, -2, 2, -2, 2, 4);
 
 	//remaining edges
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[8],
-									2, -2,2,4,2,4);
+									2, -2, 2, 4, 2, 4);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[10],
-									2, -2,2,4,-4,-2);
+									2, -2, 2, 4, -4, -2);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[11],
-									2, -2,-4,-2,2,4);
+									2, -2, -4, -2, 2, 4);
 	getHaloValues(localMpCellsBottom,_maxLevel, _multipoleBufferOverlap->getEdgeBuffers()[9],
-									2, -2,-4,-2,-4,-2);
+									2, -2, -4, -2, -4, -2);
 
 
 	//corners
@@ -1325,17 +1357,29 @@ void UniformPseudoParticleContainer::communicateHalosOverlapSetHalos(){
 
 	//read buffers of the halo areas of the simulation cube
 
-	int lowDirection[6] = {0,2,2,-2,2,-2};
-	int highDirection[6] = {-2,0,2,-2,2,-2};
-
-
-	for(int i=0; i<6; i = i + 2){
-		setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[i],
-							lowDirection[(0+i)%6], lowDirection[(1+i)%6], lowDirection[(2+i)%6], lowDirection[(3+i)%6], lowDirection[(4+i)%6], lowDirection[(5+i)%6]);
-
-		setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[i+1],
-					highDirection[(0+i)%6], highDirection[(1+i)%6], highDirection[(2+i)%6], highDirection[(3+i)%6], highDirection[(4+i)%6], highDirection[(5+i)%6]);
-	}
+//	int lowDirection[6] = {0,2,2,-2,2,-2};
+//	int highDirection[6] = {-2,0,2,-2,2,-2};
+//
+//
+//	for(int i=0; i<6; i = i + 2){
+//		setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[i],
+//				lowDirection[(0-i+6)%6], lowDirection[(1-i+6)%6], lowDirection[(2-i+6)%6], lowDirection[(3-i+6)%6], lowDirection[(4-i+6)%6], lowDirection[(5-i+6)%6]);
+//
+//		setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[i+1],
+//				highDirection[(0-i+6)%6], highDirection[(1-i+6)%6], highDirection[(2-i+6)%6], highDirection[(3-i+6)%6], highDirection[(4-i+6)%6], highDirection[(5-i+6)%6]);
+//	}
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[0],
+									0, 2, 2, -2, 2, -2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[1],
+									-2, 0, 2, -2, 2, -2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[2],
+									2, -2, 0, 2, 2, -2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[3],
+									2, -2, -2, 0, 2, -2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[4],
+									2, -2, 2, -2, 0, 2);
+	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getAreaBuffers()[5],
+									2, -2, 2, -2, -2, 0);
 
 	//read edges buffers of the halo areas
 	//adjacent edges to lower x area
@@ -1357,7 +1401,7 @@ void UniformPseudoParticleContainer::communicateHalosOverlapSetHalos(){
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[5],
 									-2, 0, 2, -2, -2, 0);
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[7],
-									-2, 0,2,-2, 0, 2);
+									-2, 0, 2, -2, 0, 2);
 
 	//remaining edges
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[8],
@@ -1367,7 +1411,7 @@ void UniformPseudoParticleContainer::communicateHalosOverlapSetHalos(){
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[11],
 									2, -2, -2, 0, 0, 2);
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getEdgeBuffers()[9],
-									2, -2,-2,0,-2,0);
+									2, -2, -2, 0, -2, 0);
 
 
 	//corners
@@ -1381,7 +1425,7 @@ void UniformPseudoParticleContainer::communicateHalosOverlapSetHalos(){
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[3],
 										-2, 0, -2, 0, 0, 2);
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[4],
-										0, 2, -2, -2, 0, 2);
+										0, 2, -2, 0, 0, 2);
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[5],
 										-2, 0, 0, 2, -2, 0);
 	setHaloValues(localMpCellsBottom,_maxLevel, _multipoleRecBufferOverlap->getCornerBuffers()[6],

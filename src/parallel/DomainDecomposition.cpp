@@ -242,7 +242,7 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell(){
 	int numProcs;
 	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
 	int myRank;
-	MPI_Comm_size(MPI_COMM_WORLD,&myRank);
+	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
 
 	std::vector<int> neighbours(26,-1);
 	if(numProcs == 1){
@@ -259,7 +259,10 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell(){
 		//calculate the rank offsets in every dimension in plus and minus direction
 		for(int i = 0; i < DIM * 2; i++){
 			offsets[i] = neighbours[i]-myRank;
+//			std::cout << offsets[i] << " ";
 		}
+//		std::cout << "\n";
+
 		//calculate remaining 20 neighbours through offsets
 
 		//edges
