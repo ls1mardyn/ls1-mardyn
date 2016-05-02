@@ -63,7 +63,7 @@ private:
 	//from level 0 to _globalLevel
 	std::vector<std::vector<MpCell> > _mpCellGlobalTop;
 	std::vector<std::vector<MpCell> > _mpCellLocal;
-
+	MPI_Request _allReduceRequest;
 	double _cellLength[3];
 	int _globalNumCellsPerDim;
 	Domain* _domain;
@@ -107,6 +107,7 @@ private:
 	void AllReduceMultipoleMoments();
 	void AllReduceLocalMoments(int mpCells, int _curLevel);
 	void AllReduceMultipoleMomentsLevelToTop(int mpCells, int _curLevel);
+	void AllReduceMultipoleMomentsSetValues(int mpCells, int _curLevel);
 
 	void getXHaloValues(int localMpCellsBottom,int bottomLevel);
 	void getYHaloValues(int localMpCellsBottom,int bottomLevel);

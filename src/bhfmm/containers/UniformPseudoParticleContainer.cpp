@@ -389,13 +389,16 @@ void UniformPseudoParticleContainer::horizontalPass(
 #endif
 
 	if(_overlapComm){
-		//wait till communication finished
+		//wait till communication of halos finished
 		_multipoleRecBufferOverlap->wait();
 
 		//set halo values
 		communicateHalosOverlapSetHalos();
 	}
-
+	//wait till allreduce finished
+	MPI_Status allreduceStatus;
+	MPI_Wait(&_allReduceRequest, &allreduceStatus);
+	AllReduceMultipoleMomentsSetValues(pow(8,_globalLevel), _globalLevel);
 	curCellsEdge=1;
 	for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
 
@@ -1097,7 +1100,6 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int num
 #ifdef ENABLE_MPI
 
 	int coeffIndex = 0;
-	int numCellsTotal = numCellsLevel;
 	int numCellsLevelTemp = numCellsLevel;
 
 	for(int level = startingLevel; level >=0 ; level--){
@@ -1113,10 +1115,17 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int num
 		numCellsLevelTemp /= 8;
 	}
 
-	MPI_Allreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm);
+	MPI_Iallreduce(MPI_IN_PLACE, _coeffVector, _coeffVectorLength*2, MPI_DOUBLE, MPI_SUM, _comm, &_allReduceRequest);
 	//MPI_Allreduce(MPI_IN_PLACE, _occVector, numCellsLevel, MPI_INT, MPI_SUM, _comm);
 
-	coeffIndex = 0;
+
+#endif
+	_timerAllreduce.stop();
+}
+void UniformPseudoParticleContainer::AllReduceMultipoleMomentsSetValues(int numCellsLevel,int startingLevel) {
+
+	int coeffIndex = 0;
+	int numCellsLevelTemp = numCellsLevel;
 	numCellsLevelTemp = numCellsLevel;
 	for(int level = startingLevel; level >=0 ; level--){
 		for (int cellIndex = 0; cellIndex < numCellsLevelTemp; cellIndex++) {
@@ -1130,11 +1139,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int num
 		numCellsLevelTemp /= 8;
 	}
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
-
-#endif
-	_timerAllreduce.stop();
 }
-
 void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _curLevel) {
 	_timerAllreduce_me.start();
 
