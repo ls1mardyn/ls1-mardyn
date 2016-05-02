@@ -9,7 +9,9 @@
 
 #include "CollectiveCommunicationSingleNonBlocking.h"
 #include <map>
+#include <utils/Logger.h>
 
+using Log::global_log;
 /**
  * CollectiveCommunicationNonBlocking provides an interface to access multiple CollectiveCommunicationSingleNonBlocking objects.
  * This allows the use of multiple different collective calls, which is needed for the different ensembles.
@@ -18,15 +20,19 @@
 class CollectiveCommunicationNonBlocking {
 public:
 	//! Constructor, does nothing yet
-	CollectiveCommunicationNonBlocking(){};
+	CollectiveCommunicationNonBlocking():_comms() {
+	}
 
 	//! @brief allocate memory for the values to be sent, initialize counters for specific
 	//! @param key The key of the collective communication
 	//! @param communicator MPI communicator for the
 	//! @param numValues number of values that shall be communicated
 	void init(int key, MPI_Comm communicator, int numValues) {
-		_comms.emplace(key);
-		_comms[key].init(communicator,numValues);
+		if (!_comms.emplace(key).second) {
+			global_log->error() << "CollectiveCommunicationNonBlocking: key "
+					<< key << " already existent" << std::endl;
+		}
+		_comms[key].init(communicator, numValues);
 	}
 
 	//! @brief delete memory and MPI_Type
@@ -139,6 +145,14 @@ public:
 	//! @param key The key of the collective communication
 	void allreduceSum(int key) {
 		_comms[key].allreduceSum();
+	}
+
+	/**
+	 * Waits until collective operation is finished.
+	 * @param key The key of the collective communication
+	 */
+	void wait(int key) {
+		_comms[key].wait();
 	}
 
 private:
