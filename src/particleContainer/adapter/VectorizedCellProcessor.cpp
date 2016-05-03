@@ -3130,7 +3130,7 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 
 	} else {
 		assert(c1Halo != c2Halo);							// one of them is halo and
-		assert(not c1.getCellIndex() < c2.getCellIndex());	// c1.index not < c2.index
+		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
 
 		const bool CalculateMacroscopic = false;
 

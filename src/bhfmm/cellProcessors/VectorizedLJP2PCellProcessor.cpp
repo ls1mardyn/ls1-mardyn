@@ -170,6 +170,7 @@ void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 
 void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
+	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	MoleculeList & molecules = c.getParticlePointers();

@@ -396,6 +396,7 @@ void SolidHarmonicsExpansion::scaleM(double factor) {
 }
 
 void SolidHarmonicsExpansion::rotatePhi(const double* CosSinPhi, int negate) {
+	using std::isnan; // C++11 required
 	/* Dachsel Paper eq. (5) */
 
 	for (int l = 0; l <= _order; ++l) {

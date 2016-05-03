@@ -134,6 +134,7 @@ void Molecule::upd_cache() {
 
 
 void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
+	using std::isnan; // C++11 required
 
 	calcFM();
 
@@ -265,6 +266,8 @@ void Molecule::setupCache() {
 }
 
 void Molecule::clearFM() {
+	using std::isnan; // C++11 required
+
 	int numSites = _component->numSites();
 	for (int i = 0; i < 3*numSites; i++) {
 		_sites_F[i] = 0.;
@@ -275,6 +278,8 @@ void Molecule::clearFM() {
 }
 
 void Molecule::calcFM() {
+	using std::isnan; // C++11 required
+
 	//_M[0] = _M[1] = _M[2] = 0.;
 	unsigned int ns = numSites();
 	for (unsigned int si = 0; si < ns; ++si) {
@@ -313,6 +318,7 @@ void Molecule::calcFM() {
  */
 void Molecule::check(unsigned long id) {
 #ifndef NDEBUG
+	using std::isnan; // C++11 required
 	assert(_id == id);
 	assert(_m > 0.0);
 	for (int d = 0; d < 3; d++) {

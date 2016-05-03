@@ -1175,7 +1175,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 
 
 void LinkedCells::updateInnerMoleculeCaches(){
-	for (ParticleCell cell : _cells){
+	for (ParticleCell& cell : _cells){
 		if(cell.isInnerCell()){
 			for (Molecule* m : cell.getParticlePointers()) {
 				m->upd_cache();
@@ -1186,7 +1186,7 @@ void LinkedCells::updateInnerMoleculeCaches(){
 }
 
 void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
-	for (ParticleCell cell : _cells) {
+	for (ParticleCell& cell : _cells) {
 		if (cell.isHaloCell() or cell.isBoundaryCell()) {
 			for (Molecule* m : cell.getParticlePointers()) {
 				m->upd_cache();
