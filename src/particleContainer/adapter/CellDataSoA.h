@@ -78,58 +78,6 @@ public:
 	AlignedArrayTriplet _centers_f;
 	AlignedArrayTriplet _centers_V;
 
-	double* _ljc_m_r_x;
-	double* _ljc_m_r_y;
-	double* _ljc_m_r_z;
-	double* _ljc_r_x;
-	double* _ljc_r_y;
-	double* _ljc_r_z;
-	double* _ljc_f_x;
-	double* _ljc_f_y;
-	double* _ljc_f_z;
-	double* _ljc_V_x;
-	double* _ljc_V_y;
-	double* _ljc_V_z;
-
-	double* _charges_m_r_x;
-	double* _charges_m_r_y;
-	double* _charges_m_r_z;
-	double* _charges_r_x;
-	double* _charges_r_y;
-	double* _charges_r_z;
-	double* _charges_f_x;
-	double* _charges_f_y;
-	double* _charges_f_z;
-	double* _charges_V_x;
-	double* _charges_V_y;
-	double* _charges_V_z;
-
-	double* _dipoles_m_r_x;
-	double* _dipoles_m_r_y;
-	double* _dipoles_m_r_z;
-	double* _dipoles_r_x;
-	double* _dipoles_r_y;
-	double* _dipoles_r_z;
-	double* _dipoles_f_x;
-	double* _dipoles_f_y;
-	double* _dipoles_f_z;
-	double* _dipoles_V_x;
-	double* _dipoles_V_y;
-	double* _dipoles_V_z;
-
-	double* _quadrupoles_m_r_x;
-	double* _quadrupoles_m_r_y;
-	double* _quadrupoles_m_r_z;
-	double* _quadrupoles_r_x;
-	double* _quadrupoles_r_y;
-	double* _quadrupoles_r_z;
-	double* _quadrupoles_f_x;
-	double* _quadrupoles_f_y;
-	double* _quadrupoles_f_z;
-	double* _quadrupoles_V_x;
-	double* _quadrupoles_V_y;
-	double* _quadrupoles_V_z;
-
 	// entries per lj center
 	IndexArray _ljc_id;
 
@@ -146,61 +94,57 @@ public:
 	AlignedArrayTriplet _quadrupoles_e; // orientation vector of quadrupole moment
 	AlignedArrayTriplet _quadrupoles_M; // torque vector
 
+	vcp_inline double* ljc_m_r_xBegin() const { return _centers_m_r.xBegin();}
+	vcp_inline double* ljc_m_r_yBegin() const { return _centers_m_r.yBegin();}
+	vcp_inline double* ljc_m_r_zBegin() const { return _centers_m_r.zBegin();}
+	vcp_inline double* ljc_r_xBegin()   const { return _centers_r.xBegin()  ;}
+	vcp_inline double* ljc_r_yBegin()   const { return _centers_r.yBegin()  ;}
+	vcp_inline double* ljc_r_zBegin()   const { return _centers_r.zBegin()  ;}
+	vcp_inline double* ljc_f_xBegin()   const { return _centers_f.xBegin()  ;}
+	vcp_inline double* ljc_f_yBegin()   const { return _centers_f.yBegin()  ;}
+	vcp_inline double* ljc_f_zBegin()   const { return _centers_f.zBegin()  ;}
+	vcp_inline double* ljc_V_xBegin()   const { return _centers_V.xBegin()  ;}
+	vcp_inline double* ljc_V_yBegin()   const { return _centers_V.yBegin()  ;}
+	vcp_inline double* ljc_V_zBegin()   const { return _centers_V.zBegin()  ;}
 
-	void vcp_inline initCenterPointers()
-	{
-		_ljc_m_r_x = _centers_m_r.xBegin();
-		_ljc_m_r_y = _centers_m_r.yBegin();
-		_ljc_m_r_z = _centers_m_r.zBegin();
-		_ljc_r_x = _centers_r.xBegin();
-		_ljc_r_y = _centers_r.yBegin();
-		_ljc_r_z = _centers_r.zBegin();
-		_ljc_f_x = _centers_f.xBegin();
-		_ljc_f_y = _centers_f.yBegin();
-		_ljc_f_z = _centers_f.zBegin();
-		_ljc_V_x = _centers_V.xBegin();
-		_ljc_V_y = _centers_V.yBegin();
-		_ljc_V_z = _centers_V.zBegin();
+	vcp_inline double* charges_m_r_xBegin() const { return ljc_m_r_xBegin() + _ljc_size;}
+	vcp_inline double* charges_m_r_yBegin() const { return ljc_m_r_yBegin() + _ljc_size;}
+	vcp_inline double* charges_m_r_zBegin() const { return ljc_m_r_zBegin() + _ljc_size;}
+	vcp_inline double* charges_r_xBegin()   const { return ljc_r_xBegin()   + _ljc_size;}
+	vcp_inline double* charges_r_yBegin()   const { return ljc_r_yBegin()   + _ljc_size;}
+	vcp_inline double* charges_r_zBegin()   const { return ljc_r_zBegin()   + _ljc_size;}
+	vcp_inline double* charges_f_xBegin()   const { return ljc_f_xBegin()   + _ljc_size;}
+	vcp_inline double* charges_f_yBegin()   const { return ljc_f_yBegin()   + _ljc_size;}
+	vcp_inline double* charges_f_zBegin()   const { return ljc_f_zBegin()   + _ljc_size;}
+	vcp_inline double* charges_V_xBegin()   const { return ljc_V_xBegin()   + _ljc_size;}
+	vcp_inline double* charges_V_yBegin()   const { return ljc_V_yBegin()   + _ljc_size;}
+	vcp_inline double* charges_V_zBegin()   const { return ljc_V_zBegin()   + _ljc_size;}
 
-		_charges_m_r_x = _ljc_m_r_x + _ljc_size;
-		_charges_m_r_y = _ljc_m_r_y + _ljc_size;
-		_charges_m_r_z = _ljc_m_r_z + _ljc_size;
-		_charges_r_x = _ljc_r_x + _ljc_size;
-		_charges_r_y = _ljc_r_y + _ljc_size;
-		_charges_r_z = _ljc_r_z + _ljc_size;
-		_charges_f_x = _ljc_f_x + _ljc_size;
-		_charges_f_y = _ljc_f_y + _ljc_size;
-		_charges_f_z = _ljc_f_z + _ljc_size;
-		_charges_V_x = _ljc_V_x + _ljc_size;
-		_charges_V_y = _ljc_V_y + _ljc_size;
-		_charges_V_z = _ljc_V_z + _ljc_size;
+	vcp_inline double* dipoles_m_r_xBegin() const { return charges_m_r_xBegin() + _charges_size;}
+	vcp_inline double* dipoles_m_r_yBegin() const { return charges_m_r_yBegin() + _charges_size;}
+	vcp_inline double* dipoles_m_r_zBegin() const { return charges_m_r_zBegin() + _charges_size;}
+	vcp_inline double* dipoles_r_xBegin()   const { return charges_r_xBegin()   + _charges_size;}
+	vcp_inline double* dipoles_r_yBegin()   const { return charges_r_yBegin()   + _charges_size;}
+	vcp_inline double* dipoles_r_zBegin()   const { return charges_r_zBegin()   + _charges_size;}
+	vcp_inline double* dipoles_f_xBegin()   const { return charges_f_xBegin()   + _charges_size;}
+	vcp_inline double* dipoles_f_yBegin()   const { return charges_f_yBegin()   + _charges_size;}
+	vcp_inline double* dipoles_f_zBegin()   const { return charges_f_zBegin()   + _charges_size;}
+	vcp_inline double* dipoles_V_xBegin()   const { return charges_V_xBegin()   + _charges_size;}
+	vcp_inline double* dipoles_V_yBegin()   const { return charges_V_yBegin()   + _charges_size;}
+	vcp_inline double* dipoles_V_zBegin()   const { return charges_V_zBegin()   + _charges_size;}
 
-		_dipoles_m_r_x = _charges_m_r_x + _charges_size;
-		_dipoles_m_r_y = _charges_m_r_y + _charges_size;
-		_dipoles_m_r_z = _charges_m_r_z + _charges_size;
-		_dipoles_r_x = _charges_r_x + _charges_size;
-		_dipoles_r_y = _charges_r_y + _charges_size;
-		_dipoles_r_z = _charges_r_z + _charges_size;
-		_dipoles_f_x = _charges_f_x + _charges_size;
-		_dipoles_f_y = _charges_f_y + _charges_size;
-		_dipoles_f_z = _charges_f_z + _charges_size;
-		_dipoles_V_x = _charges_V_x + _charges_size;
-		_dipoles_V_y = _charges_V_y + _charges_size;
-		_dipoles_V_z = _charges_V_z + _charges_size;
-
-		_quadrupoles_m_r_x = _dipoles_m_r_x + _dipoles_size;
-		_quadrupoles_m_r_y = _dipoles_m_r_y + _dipoles_size;
-		_quadrupoles_m_r_z = _dipoles_m_r_z + _dipoles_size;
-		_quadrupoles_r_x = _dipoles_r_x + _dipoles_size;
-		_quadrupoles_r_y = _dipoles_r_y + _dipoles_size;
-		_quadrupoles_r_z = _dipoles_r_z + _dipoles_size;
-		_quadrupoles_f_x = _dipoles_f_x + _dipoles_size;
-		_quadrupoles_f_y = _dipoles_f_y + _dipoles_size;
-		_quadrupoles_f_z = _dipoles_f_z + _dipoles_size;
-		_quadrupoles_V_x = _dipoles_V_x + _dipoles_size;
-		_quadrupoles_V_y = _dipoles_V_y + _dipoles_size;
-		_quadrupoles_V_z = _dipoles_V_z + _dipoles_size;
-	}
+	vcp_inline double* quadrupoles_m_r_xBegin() const { return dipoles_m_r_xBegin() + _dipoles_size;}
+	vcp_inline double* quadrupoles_m_r_yBegin() const { return dipoles_m_r_yBegin() + _dipoles_size;}
+	vcp_inline double* quadrupoles_m_r_zBegin() const { return dipoles_m_r_zBegin() + _dipoles_size;}
+	vcp_inline double* quadrupoles_r_xBegin()   const { return dipoles_r_xBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_r_yBegin()   const { return dipoles_r_yBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_r_zBegin()   const { return dipoles_r_zBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_f_xBegin()   const { return dipoles_f_xBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_f_yBegin()   const { return dipoles_f_yBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_f_zBegin()   const { return dipoles_f_zBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_V_xBegin()   const { return dipoles_V_xBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_V_yBegin()   const { return dipoles_V_yBegin()   + _dipoles_size;}
+	vcp_inline double* quadrupoles_V_zBegin()   const { return dipoles_V_zBegin()   + _dipoles_size;}
 
 	void vcp_inline initDistLookupPointers(const AlignedArray<vcp_lookupOrMask_single>& centers_dist_lookup, vcp_lookupOrMask_single*& ljc_dist_lookup,
 			vcp_lookupOrMask_single*& charges_dist_lookup, vcp_lookupOrMask_single*& dipoles_dist_lookup, vcp_lookupOrMask_single*& quadrupoles_dist_lookup) const{
@@ -319,8 +263,6 @@ public:
 			//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
 			//The array size is however long enough to vectorize over the last few entries.
 			//This sets the entries, that do not make sense in that vectorization to zero. In this case this is needed to allow indirect access using this vector.
-
-		initCenterPointers();
 	}
 
 	size_t getDynamicSize() const {

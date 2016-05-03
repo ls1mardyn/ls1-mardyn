@@ -137,6 +137,19 @@ void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 	ComponentList components = *(_simulation.getEnsemble()->components());
 
+	double* const soa_ljc_m_r_x = soa.ljc_m_r_xBegin();
+	double* const soa_ljc_m_r_y = soa.ljc_m_r_yBegin();
+	double* const soa_ljc_m_r_z = soa.ljc_m_r_zBegin();
+	double* const soa_ljc_r_x = soa.ljc_r_xBegin();
+	double* const soa_ljc_r_y = soa.ljc_r_yBegin();
+	double* const soa_ljc_r_z = soa.ljc_r_zBegin();
+	double* const soa_ljc_f_x = soa.ljc_f_xBegin();
+	double* const soa_ljc_f_y = soa.ljc_f_yBegin();
+	double* const soa_ljc_f_z = soa.ljc_f_zBegin();
+	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
+	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
+	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
+
 	size_t iLJCenters = 0;
 	// For each molecule iterate over all its centers.
 	for (size_t i = 0; i < molecules.size(); ++i) {
@@ -153,18 +166,18 @@ void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
 		for (size_t j = 0; j < mol_ljc_num; ++j, ++iLJCenters) {
 			// Store a copy of the molecule position for each center, and the position of
 			// each center. Assign each LJ center its ID and set the force to 0.0.
-			soa._ljc_m_r_x[iLJCenters] = mol_pos_x;
-			soa._ljc_m_r_y[iLJCenters] = mol_pos_y;
-			soa._ljc_m_r_z[iLJCenters] = mol_pos_z;
-			soa._ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
-			soa._ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
-			soa._ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
-			soa._ljc_f_x[iLJCenters] = 0.0;
-			soa._ljc_f_y[iLJCenters] = 0.0;
-			soa._ljc_f_z[iLJCenters] = 0.0;
-			soa._ljc_V_x[iLJCenters] = 0.0;
-			soa._ljc_V_y[iLJCenters] = 0.0;
-			soa._ljc_V_z[iLJCenters] = 0.0;
+			soa_ljc_m_r_x[iLJCenters] = mol_pos_x;
+			soa_ljc_m_r_y[iLJCenters] = mol_pos_y;
+			soa_ljc_m_r_z[iLJCenters] = mol_pos_z;
+			soa_ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
+			soa_ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
+			soa_ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
+			soa_ljc_f_x[iLJCenters] = 0.0;
+			soa_ljc_f_y[iLJCenters] = 0.0;
+			soa_ljc_f_z[iLJCenters] = 0.0;
+			soa_ljc_V_x[iLJCenters] = 0.0;
+			soa_ljc_V_y[iLJCenters] = 0.0;
+			soa_ljc_V_z[iLJCenters] = 0.0;
 			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
 			//soa._ljc_dist_lookup[iLJCenters] = 0.0;
 		}
@@ -178,6 +191,13 @@ void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
 
 	MoleculeList & molecules = c.getParticlePointers();
 
+	double* const soa_ljc_f_x = soa.ljc_f_xBegin();
+	double* const soa_ljc_f_y = soa.ljc_f_yBegin();
+	double* const soa_ljc_f_z = soa.ljc_f_zBegin();
+	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
+	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
+	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
+
 	// For each molecule iterate over all its centers.
 	size_t iLJCenters = 0;
 	size_t numMols = molecules.size();
@@ -187,9 +207,9 @@ void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
 		for (size_t i = 0; i < mol_ljc_num; ++i, ++iLJCenters) {
 			// Store the resulting force in the molecule.
 			double f[3];
-			f[0] = soa._ljc_f_x[iLJCenters];
-			f[1] = soa._ljc_f_y[iLJCenters];
-			f[2] = soa._ljc_f_z[iLJCenters];
+			f[0] = soa_ljc_f_x[iLJCenters];
+			f[1] = soa_ljc_f_y[iLJCenters];
+			f[2] = soa_ljc_f_z[iLJCenters];
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -197,9 +217,9 @@ void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa._ljc_V_x[iLJCenters]*0.5;
-			V[1] = soa._ljc_V_y[iLJCenters]*0.5;
-			V[2] = soa._ljc_V_z[iLJCenters]*0.5;
+			V[0] = soa_ljc_V_x[iLJCenters]*0.5;
+			V[1] = soa_ljc_V_y[iLJCenters]*0.5;
+			V[2] = soa_ljc_V_z[iLJCenters]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -539,30 +559,30 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for LJ centers
-	const double * const soa1_ljc_r_x = soa1._ljc_r_x;
-	const double * const soa1_ljc_r_y = soa1._ljc_r_y;
-	const double * const soa1_ljc_r_z = soa1._ljc_r_z;
-	double * const soa1_ljc_f_x = soa1._ljc_f_x;
-	double * const soa1_ljc_f_y = soa1._ljc_f_y;
-	double * const soa1_ljc_f_z = soa1._ljc_f_z;
-	double * const soa1_ljc_V_x = soa1._ljc_V_x;
-	double * const soa1_ljc_V_y = soa1._ljc_V_y;
-	double * const soa1_ljc_V_z = soa1._ljc_V_z;
+	const double * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
+	const double * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
+	const double * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
+	      double * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
+	      double * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
+	      double * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
+	      double * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
+	      double * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
+	      double * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const size_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const double * const soa2_ljc_m_r_x = soa2._ljc_m_r_x;
-	const double * const soa2_ljc_m_r_y = soa2._ljc_m_r_y;
-	const double * const soa2_ljc_m_r_z = soa2._ljc_m_r_z;
-	const double * const soa2_ljc_r_x = soa2._ljc_r_x;
-	const double * const soa2_ljc_r_y = soa2._ljc_r_y;
-	const double * const soa2_ljc_r_z = soa2._ljc_r_z;
-	double * const soa2_ljc_f_x = soa2._ljc_f_x;
-	double * const soa2_ljc_f_y = soa2._ljc_f_y;
-	double * const soa2_ljc_f_z = soa2._ljc_f_z;
-	double * const soa2_ljc_V_x = soa2._ljc_V_x;
-	double * const soa2_ljc_V_y = soa2._ljc_V_y;
-	double * const soa2_ljc_V_z = soa2._ljc_V_z;
+	const double * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
+	const double * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
+	const double * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
+	const double * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
+	const double * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
+	const double * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
+	      double * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
+	      double * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
+	      double * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
+	      double * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
+	      double * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
+	      double * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = _ljc_dist_lookup;
