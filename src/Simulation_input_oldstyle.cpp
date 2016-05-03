@@ -10,7 +10,6 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
 
 #ifdef ENABLE_MPI
@@ -191,16 +190,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
 				        cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
-				double bBoxMin[3];
-				double bBoxMax[3];
-				for (int i = 0; i < 3; i++) {
-					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,_domain);
-					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,_domain);
-				}
-				// creates a new Adaptive SubCells datastructure
-				if (_LJCutoffRadius == 0.0)
-					_LJCutoffRadius = _cutoffRadius;
-					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
+				global_log->error() << "AdaptiveSubCells no longer supported." << std::endl;
+				global_simulation->exit(-1);
 			} else {
 				global_log->error() << "UNKOWN DATASTRUCTURE: " << token
 						<< endl;

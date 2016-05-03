@@ -114,88 +114,141 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) {
 	}
 }
 
+void DomainDecompMPIBase::balanceAndExchangeInitNonBlocking(
+		bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/,
+		Domain* /*domain*/) {
+	// for now, nothing to be done here
+	// later switch between different communication schemes might go in here.
+}
+
+void DomainDecompMPIBase::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates){
+	if(DomainDecompBase::getNonBlockingStageCount() == 3){
+		initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber);
+	}
+}
+
+void DomainDecompMPIBase::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates){
+	if(DomainDecompBase::getNonBlockingStageCount() == 3){
+		finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber);
+	}
+}
+
+void DomainDecompMPIBase::initExchangeMoleculesMPI1D(
+		ParticleContainer* moleculeContainer, Domain* /*domain*/,
+		MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d) {
+	if (_coversWholeDomain[d]) {
+		// use the sequential version
+
+		switch (msgType) {
+		case LEAVING_AND_HALO_COPIES:
+			DomainDecompBase::handleDomainLeavingParticles(d,
+					moleculeContainer);
+			DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+			break;
+		case LEAVING_ONLY:
+			DomainDecompBase::handleDomainLeavingParticles(d,
+					moleculeContainer);
+			break;
+		case HALO_COPIES:
+			DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
+			break;
+		}
+		return;
+	}
+
+	const int numNeighbours = _neighbours[d].size();
+
+	for (int i = 0; i < numNeighbours; ++i) {
+		global_log->debug() << "Rank " << _rank
+				<< "is initiating communication to";
+		_neighbours[d][i].initSend(moleculeContainer, _comm, _mpiParticleType,
+				msgType);
+	}
+}
+
+void DomainDecompMPIBase::finalizeExchangeMoleculesMPI1D(
+		ParticleContainer* moleculeContainer, Domain* /*domain*/,
+		MessageType msgType, bool removeRecvDuplicates, unsigned short d) {
+	if (_coversWholeDomain[d]) {
+		return;
+	}
+
+	const int numNeighbours = _neighbours[d].size();
+	// the following implements a non-blocking recv scheme, which overlaps unpacking of
+	// messages with waiting for other messages to arrive
+	bool allDone = false;
+	double startTime = MPI_Wtime();
+
+	double waitCounter = 1.0;
+	double deadlockTimeOut = 5.0;
+
+	while (not allDone) {
+		allDone = true;
+
+		// "kickstart" processing of all Isend requests
+		for (int i = 0; i < numNeighbours; ++i) {
+			allDone &= _neighbours[d][i].testSend();
+		}
+
+		// get the counts and issue the Irecv-s
+		for (int i = 0; i < numNeighbours; ++i) {
+			allDone &= _neighbours[d][i].iprobeCount(_comm, _mpiParticleType);
+		}
+
+		// unpack molecules
+		for (int i = 0; i < numNeighbours; ++i) {
+			allDone &= _neighbours[d][i].testRecv(moleculeContainer,
+					removeRecvDuplicates);
+		}
+
+		// catch deadlocks
+		double waitingTime = MPI_Wtime() - startTime;
+		if (waitingTime > waitCounter) {
+			global_log->warning() << "Deadlock warning: Rank " << _rank
+					<< " is waiting for more than " << waitCounter << " seconds"
+					<< std::endl;
+			waitCounter += 1.0;
+			for (int i = 0; i < numNeighbours; ++i) {
+				_neighbours[d][i].deadlockDiagnosticSendRecv();
+			}
+		}
+
+		if (waitingTime > deadlockTimeOut) {
+			global_log->warning() << "Deadlock error: Rank " << _rank
+					<< " is waiting for more than " << deadlockTimeOut
+					<< " seconds" << std::endl;
+			for (int i = 0; i < numNeighbours; ++i) {
+				_neighbours[d][i].deadlockDiagnosticSendRecv();
+			}
+			MPI_Abort(_comm, 1);
+			exit(1);
+		}
+
+	} // while not allDone
+}
+
+
+void DomainDecompMPIBase::exchangeMoleculesMPI1D(
+		ParticleContainer* moleculeContainer, Domain* domain,
+		MessageType msgType, bool removeRecvDuplicates, unsigned short d) {
+
+	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType,
+					removeRecvDuplicates, d);
+
+	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType,
+						removeRecvDuplicates, d);
+
+}
+
 void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates) {
-	using std::vector;
 
 	global_log->set_mpi_output_all();
 
 	for (unsigned short d = 0; d < DIM; d++) {
-		if (_coversWholeDomain[d]) {
-			// use the sequential version
-
-			switch(msgType) {
-			case LEAVING_AND_HALO_COPIES:
-				DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-				DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
-				break;
-			case LEAVING_ONLY:
-				DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
-				break;
-			case HALO_COPIES:
-				DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
-				break;
-			}
-			continue;
-		}
-
-		const int numNeighbours = _neighbours[d].size();
-
-		for (int i = 0; i < numNeighbours; ++i) {
-			global_log->debug() << "Rank " << _rank << "is initiating communication to" ;
-			_neighbours[d][i].initSend(moleculeContainer, _comm, _mpiParticleType, msgType);
-		}
-
-		// the following implements a non-blocking recv scheme, which overlaps unpacking of
-		// messages with waiting for other messages to arrive
-		bool allDone = false;
-		double startTime = MPI_Wtime();
-
-		double waitCounter = 1.0;
-		double deadlockTimeOut = 5.0;
-
-		while (not allDone) {
-			allDone = true;
-
-			// "kickstart" processing of all Isend requests
-			for(int i = 0; i < numNeighbours; ++i) {
-				allDone &= _neighbours[d][i].testSend();
-			}
-
-			// get the counts and issue the Irecv-s
-			for(int i = 0; i < numNeighbours; ++i) {
-				allDone &= _neighbours[d][i].iprobeCount(_comm, _mpiParticleType);
-			}
-
-			// unpack molecules
-			for(int i = 0; i < numNeighbours; ++i) {
-				allDone &= _neighbours[d][i].testRecv(moleculeContainer, removeRecvDuplicates);
-			}
-
-			// catch deadlocks
-			double waitingTime = MPI_Wtime() - startTime;
-			if (waitingTime > waitCounter) {
-				global_log->warning() << "Deadlock warning: Rank " << _rank
-						<< " is waiting for more than " << waitCounter
-						<< " seconds" << std::endl;
-				waitCounter += 1.0;
-				for (int i = 0; i < numNeighbours; ++i) {
-					_neighbours[d][i].deadlockDiagnosticSendRecv();
-				}
-			}
-
-			if (waitingTime > deadlockTimeOut) {
-				global_log->warning() << "Deadlock error: Rank " << _rank
-						<< " is waiting for more than " << deadlockTimeOut
-						<< " seconds" << std::endl;
-				for (int i = 0; i < numNeighbours; ++i) {
-					_neighbours[d][i].deadlockDiagnosticSendRecv();
-				}
-				MPI_Abort(_comm,1);
-				exit(1);
-			}
-
-
-		} // while not allDone
+		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType,
+				removeRecvDuplicates, d);
 	} // for d
 
 	global_log->set_mpi_output_root(0);

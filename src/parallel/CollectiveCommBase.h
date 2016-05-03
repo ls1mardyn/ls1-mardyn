@@ -85,18 +85,20 @@ public:
 		_values.push_back(toPush);
 	}
 
-	//! For purposes of child class only
+	//! Performs a broadcast of the values to all processes in the communicator
+	//! @param root of the broadcast
 	virtual void broadcast(int /*root*/ = 0) {
 	}
 
-	//! For purposes of child class only
+	//! Performs an all-reduce (sum)
 	virtual void allreduceSum() {
 	}
 
 	//! Get the next value from the list, which must be int
 	//! @details no check is performed that the type is correct,
 	//! so we rely on the sanity of the programmer to ensure
-	//! FIFO ordering w.r.t. append-get order
+	//! FIFO ordering w.r.t. append-get order3
+	//! @return the value
 	int getInt() {
 		return (_getter++)->v_int;
 	}
@@ -105,6 +107,7 @@ public:
 	//! @details no check is performed that the type is correct,
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
+	//! @return the value
 	unsigned long getUnsLong() {
 		return (_getter++)->v_unsLong;
 	}
@@ -113,6 +116,7 @@ public:
 	//! @details no check is performed that the type is correct,
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
+	//! @return the value
 	float getFloat() {
 		return (_getter++)->v_float;
 	}
@@ -121,6 +125,7 @@ public:
 	//! @details no check is performed that the type is correct,
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
+	//! @return the value
 	double getDouble() {
 		return (_getter++)->v_double;
 	}
@@ -129,11 +134,13 @@ public:
 	//! @details no check is performed that the type is correct,
 	//! so we rely on the sanity of the programmer to ensure
 	//! FIFO ordering w.r.t. append-get order
+	//! @return the value
 	long double getLongDouble() {
 		return (_getter++)->v_longDouble;
 	}
 
 	//! @brief delete memory and MPI_Type
+	//! @return the value
 	virtual void finalize() {
 		_values.clear();
 	}

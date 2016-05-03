@@ -343,6 +343,14 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 	return N;
 }
 
+void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
+	throw "Not yet implemented.";
+}
+
+void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount){
+	throw "Not yet implemented.";
+}
+
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
 		global_log->error()
@@ -1162,5 +1170,28 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 #ifndef NDEBUG
 		m->check(m->id());
 #endif
+	}
+}
+
+
+void LinkedCells::updateInnerMoleculeCaches(){
+	for (ParticleCell cell : _cells){
+		if(cell.isInnerCell()){
+			for (Molecule* m : cell.getParticlePointers()) {
+				m->upd_cache();
+				m->clearFM();
+			}
+		}
+	}
+}
+
+void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
+	for (ParticleCell cell : _cells) {
+		if (cell.isHaloCell() or cell.isBoundaryCell()) {
+			for (Molecule* m : cell.getParticlePointers()) {
+				m->upd_cache();
+				m->clearFM();
+			}
+		}
 	}
 }

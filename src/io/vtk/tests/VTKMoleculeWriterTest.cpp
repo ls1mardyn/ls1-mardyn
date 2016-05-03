@@ -101,7 +101,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 		Points::DataArray_sequence& pointsArraySequence = vtkFile->UnstructuredGrid()->Piece().Points().DataArray();
 		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
 
-		ASSERT_EQUAL_MSG("check number of point coordinates", 12, ( int) coordinates_iterator->size());
+		ASSERT_EQUAL_MSG("check number of point coordinates", 12, (int) coordinates_iterator->size());
 		ASSERT_EQUAL_MSG("check point coordinates", 2.2, coordinates_iterator->at(9));
 		ASSERT_EQUAL_MSG("check point coordinates", 3., coordinates_iterator->at(10));
 		ASSERT_EQUAL_MSG("check point coordinates", 3.4, coordinates_iterator->at(11));

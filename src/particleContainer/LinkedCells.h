@@ -132,6 +132,10 @@ public:
 
 	void traverseCells(CellProcessor& cellProcessor);
 
+	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
 
@@ -240,6 +244,12 @@ public:
 	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
 	ParticleCell getCell(int idx){ return _cells[idx];}
+
+	// documentation in base class
+	virtual void updateInnerMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateBoundaryAndHaloMoleculeCaches();
 
 private:
 	//####################################

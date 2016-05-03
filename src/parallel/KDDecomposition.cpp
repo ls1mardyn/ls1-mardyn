@@ -44,7 +44,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int update
 		_numParticlesPerCell[i] = 0;
 
 	// create initial decomposition
-	// ensure that enough cells for the number of procs are avaialble
+	// ensure that enough cells for the number of procs are available
 	_decompTree = new KDNode(_numProcs, lowCorner, highCorner, 0, 0, coversWholeDomain, 0);
 	if (!_decompTree->isResolvable()) {
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
@@ -84,6 +84,28 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition update frequency: " << _frequency << endl;
 	xmlconfig.getNodeValue("fullSearchThreshold", _fullSearchThreshold);
 	global_log->info() << "KDDecomposition full search threshold: " << _fullSearchThreshold << endl;
+}
+
+int KDDecomposition::getNonBlockingStageCount(){
+	return 3;
+}
+
+void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
+		ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber) {
+	const bool removeRecvDuplicates = true;
+	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+}
+
+void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
+		ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber) {
+	const bool removeRecvDuplicates = true;
+	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
+}
+
+bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
+	return not (forceRebalancing or _steps % _frequency == 0 or _steps <= 1);
 }
 
 void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {

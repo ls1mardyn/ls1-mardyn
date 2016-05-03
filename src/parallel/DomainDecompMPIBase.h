@@ -101,6 +101,43 @@ public:
 		_collCommunication.broadcast(root);
 	}
 
+	/**
+	 * Initialises the non-blocking balance and exchange.
+	 * Nothing really important needs to be done here.
+	 * Some ideas: decide between possible communication schemes,...
+	 *
+	 * @param forceRebalancing true if rebalancing should be forced
+	 * @param moleculeContainer pointer to the molecule container
+	 * @param domain pointer to the domain
+	 */
+	virtual void balanceAndExchangeInitNonBlocking(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain);
+
+	/**
+	 * Prepares the stageNumber'th stage.
+	 * This includes sending particles, that have to be send in that stage.
+	 * @param forceRebalancing true if rebalancing should be forced
+	 * @param moleculeContainer pointer to the molecule container
+	 * @param domain pointer to the domain
+	 * @param stageNumber the number of the stage, the communication is in.
+	 */
+	virtual void prepareNonBlockingStage(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber) = 0;
+
+
+	/**
+	 * Finishes the stageNumber'th stage.
+	 * This includes receiving the particles, that have to be received in that stage.
+	 * @param forceRebalancing true if rebalancing should be forced
+	 * @param moleculeContainer pointer to the molecule container
+	 * @param domain pointer to the domain
+	 * @param stageNumber the number of the stage, the communication is in.
+	 */
+	virtual void finishNonBlockingStage(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber) = 0;
+
 	//! @brief exchange molecules between processes
 	//!
 	//! molecules which aren't in the domain of their process any
@@ -115,6 +152,41 @@ public:
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates = false);
 
 protected:
+
+	void exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
+			Domain* domain, MessageType msgType, bool removeRecvDuplicates,
+			unsigned short d);
+
+	void initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
+			Domain* domain, MessageType msgType, bool removeRecvDuplicates,
+			unsigned short d);
+
+	void finalizeExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
+			Domain* domain, MessageType msgType, bool removeRecvDuplicates,
+			unsigned short d);
+
+	/**
+	 * Prepares the stageNumber'th stage.
+	 * This includes sending particles, that have to be send in that stage.
+	 * @param moleculeContainer pointer to the molecule container
+	 * @param domain pointer to the domain
+	 * @param stageNumber the number of the stage, the communication is in.
+	 */
+	virtual void prepareNonBlockingStageImpl(
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber,  MessageType msgType, bool removeRecvDuplicates = false);
+
+	/**
+	 * Finishes the stageNumber'th stage.
+	 * This includes receiving the particles, that have to be received in that stage.
+	 * @param forceRebalancing true if rebalancing should be forced
+	 * @param moleculeContainer pointer to the molecule container
+	 * @param domain pointer to the domain
+	 * @param stageNumber the number of the stage, the communication is in.
+	 */
+	virtual void finishNonBlockingStageImpl(
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber,  MessageType msgType, bool removeRecvDuplicates = false);
 
 	std::vector<CommunicationPartner> _neighbours[DIM];
 

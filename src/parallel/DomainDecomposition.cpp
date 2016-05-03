@@ -160,6 +160,27 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 	}
 }
 
+int DomainDecomposition::getNonBlockingStageCount(){
+	return 3;
+}
+
+void DomainDecomposition::prepareNonBlockingStage(bool forceRebalancing,
+		ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber) {
+	DomainDecompMPIBase::prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+}
+
+void DomainDecomposition::finishNonBlockingStage(bool forceRebalancing,
+		ParticleContainer* moleculeContainer, Domain* domain,
+		unsigned int stageNumber) {
+	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES);
+}
+
+bool DomainDecomposition::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/,
+		ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/) {
+	return true;
+}
+
 void DomainDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
 	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 }
