@@ -18,8 +18,6 @@ ParticleCell::ParticleCell() :
 }
 
 ParticleCell::~ParticleCell() {
-	assert(!_cellDataSoA);
-
 //	if(!isEmpty()) {
 //		deallocateAllParticles();
 //	}

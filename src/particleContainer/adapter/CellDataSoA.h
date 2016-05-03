@@ -26,6 +26,7 @@ public:
 		_charges_num(charges_arg),
 		_dipoles_num(dipoles_arg),
 		_quadrupoles_num(quadrupoles_arg),
+		_centers_num(lj_centers_arg + charges_arg + dipoles_arg + quadrupoles_arg),
 		_mol_size( molecules_arg + (molecules_arg & 1)),
 		_ljc_size(lj_centers_arg + (lj_centers_arg & 1)),
 		_charges_size(charges_arg + (charges_arg & 1)),

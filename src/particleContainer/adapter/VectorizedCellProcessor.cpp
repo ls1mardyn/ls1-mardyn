@@ -3082,30 +3082,60 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
 void VectorizedCellProcessor::processCell(ParticleCell & c) {
-	if (c.isHaloCell() || (c.getCellDataSoA()._mol_num < 2)) {
+	CellDataSoA& soa = c.getCellDataSoA();
+	if (c.isHaloCell() or soa._mol_num < 2) {
 		return;
 	}
-//printf("---------------singleCell-------------\n");
-	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(c.getCellDataSoA(), c.getCellDataSoA());
+	const bool CalculateMacroscopic = true;
+	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	assert(&c1 != &c2);
+	const CellDataSoA& soa1 = c1.getCellDataSoA();
+	const CellDataSoA& soa2 = c2.getCellDataSoA();
+	const bool c1Halo = c1.isHaloCell();
+	const bool c2Halo = c2.isHaloCell();
 
-	if ((c1.getCellDataSoA()._mol_num == 0) || (c2.getCellDataSoA()._mol_num == 0)) {
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, or both cells are Halo, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
-	//printf("---------------cellPair-------------\n");
-	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(c1.getCellDataSoA(), c2.getCellDataSoA());
-	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
-		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, true, MaskGatherC>(c1.getCellDataSoA(), c2.getCellDataSoA());
+
+	// Macroscopic conditions:
+	// if none of the cells is halo, then compute
+	// if one of them is halo:
+	// 		if c1-index < c2-index, then compute
+	// 		else, then don't compute
+	// This saves the Molecule::isLessThan checks
+	// and works similar to the "Half-Shell" scheme
+
+	if ((not c1Halo and not c2Halo) or						// no cell is halo or
+			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but c1.index < c2.index
+	{
+		const bool CalculateMacroscopic = true;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-		else {
-			_calculatePairs<CellPairPolicy_, false, MaskGatherC>(c1.getCellDataSoA(), c2.getCellDataSoA());
+
+	} else {
+		assert(c1Halo != c2Halo);							// one of them is halo and
+		assert(not c1.getCellIndex() < c2.getCellIndex());	// c1.index not < c2.index
+
+		const bool CalculateMacroscopic = false;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-	} else {//both cells halo -> do nothing
-		return;
 	}
 }
