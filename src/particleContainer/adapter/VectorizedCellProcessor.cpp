@@ -284,6 +284,7 @@ void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
 
 
 void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
+	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	MoleculeList & molecules = c.getParticlePointers();
