@@ -9,12 +9,12 @@
 
 using namespace std;
 
-ParticleCell::ParticleCell() : _molecules(), _cellDataSoA(0), _cellIndex(0){
-	for(int d = 0; d < 3; ++d) {
+ParticleCell::ParticleCell() :
+		_molecules(), _cellDataSoA(0, 0, 0, 0, 0), _cellIndex(0) {
+	for (int d = 0; d < 3; ++d) {
 		_boxMin[d] = 0.0;
 		_boxMax[d] = 0.0;
 	}
-
 }
 
 ParticleCell::~ParticleCell() {

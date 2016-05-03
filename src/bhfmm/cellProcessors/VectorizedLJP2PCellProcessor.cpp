@@ -80,10 +80,6 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 }
 
 VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
-	for (size_t i = 0; i < _particleCellDataVector.size(); ++i) {
-		delete _particleCellDataVector[i];
-	}
-	_particleCellDataVector.clear();
 }
 
 void VectorizedLJP2PCellProcessor::printTimers() {
@@ -97,13 +93,6 @@ void VectorizedLJP2PCellProcessor::initTraversal(const size_t numCells) {
 	_upot6lj = 0.0;
 
 	global_log->debug() << "VectorizedLJCellProcessor::initTraversal() to " << numCells << " cells." << std::endl;
-
-	if (numCells > _particleCellDataVector.size()) {
-		for (size_t i = _particleCellDataVector.size(); i < numCells; i++) {
-			_particleCellDataVector.push_back(new CellDataSoA(0,0,0,0,0));
-		}
-		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
-	}
 }
 
 
@@ -115,8 +104,6 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 
 
 void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
-	assert(!c.getCellDataSoA());
-
 	const MoleculeList & molecules = c.getParticlePointers();
 
 	// Determine the total number of centers.
@@ -128,12 +115,8 @@ void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
 	}
 
 	// Construct the SoA.
-	assert(!_particleCellDataVector.empty()); 
-	CellDataSoA* soaPtr = _particleCellDataVector.back();
-	CellDataSoA & soa = *soaPtr;
+	CellDataSoA & soa = c.getCellDataSoA();
 	soa.resize(numMolecules,nLJCenters,0,0,0);
-	c.setCellDataSoA(soaPtr);
-	_particleCellDataVector.pop_back();
 
 	ComponentList components = *(_simulation.getEnsemble()->components());
 
@@ -186,8 +169,7 @@ void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 
 void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
-	assert(c.getCellDataSoA());
-	CellDataSoA& soa = *c.getCellDataSoA();
+	CellDataSoA& soa = c.getCellDataSoA();
 
 	MoleculeList & molecules = c.getParticlePointers();
 
@@ -226,9 +208,6 @@ void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
 			molecules[m]->Viadd(V);
 		}
 	}
-	// Delete the SoA.
-	_particleCellDataVector.push_back(&soa);
-	c.setCellDataSoA(0);
 }
 
 
@@ -767,31 +746,28 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 }
 
 void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
-	assert(c.getCellDataSoA());
-	if (c.isHaloCell() || (c.getCellDataSoA()->_mol_num < 2)) {
+	if (c.isHaloCell() || (c.getCellDataSoA()._mol_num < 2)) {
 		return;
 	}
 //printf("---------------singleCell-------------\n");
-	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
+	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(c.getCellDataSoA(), c.getCellDataSoA());
 }
 
 void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	assert(&c1 != &c2);
-	assert(c1.getCellDataSoA());
-	assert(c2.getCellDataSoA());
 
-	if ((c1.getCellDataSoA()->_mol_num == 0) || (c2.getCellDataSoA()->_mol_num == 0)) {
+	if ((c1.getCellDataSoA()._mol_num == 0) || (c2.getCellDataSoA()._mol_num == 0)) {
 		return;
 	}
 	//printf("---------------cellPair-------------\n");
 	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(c1.getCellDataSoA(), c2.getCellDataSoA());
 	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
 		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+			_calculatePairs<CellPairPolicy_, true, MaskGatherC>(c1.getCellDataSoA(), c2.getCellDataSoA());
 		}
 		else {
-			_calculatePairs<CellPairPolicy_, false, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+			_calculatePairs<CellPairPolicy_, false, MaskGatherC>(c1.getCellDataSoA(), c2.getCellDataSoA());
 		}
 	} else {//both cells halo -> do nothing
 		return;

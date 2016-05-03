@@ -105,14 +105,6 @@ private:
 	double _virial;
 
 	/**
-	 * \brief vector holding pointers to different CellDataSoA objects, used as a stack for
-	 * managing free objects.
-	 * Initially it is filled upon calling the initTraversal function; when running the preProcessCell function,
-	 * this stack is emptied, while it is filled again, during the postProcessCell step.
-	 */
-	std::vector<CellDataSoA*> _particleCellDataVector;
-
-	/**
 	 * \brief array, that stores the dist_lookup.
 	 * For all vectorization methods, that utilize masking, this stores masks.
 	 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
