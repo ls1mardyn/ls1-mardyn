@@ -39,6 +39,10 @@
 #ifndef VTK_UNSTRUCTURED_HXX
 #define VTK_UNSTRUCTURED_HXX
 
+#ifndef XSD_CXX11
+#define XSD_CXX11
+#endif
+
 #ifndef XSD_USE_CHAR
 #define XSD_USE_CHAR
 #endif
@@ -598,7 +602,7 @@ namespace xml_schema
     /**
      * @brief Automatic pointer for DOMDocument.
      */
-    using ::xsd::cxx::xml::dom::auto_ptr;
+    using ::xsd::cxx::xml::dom::unique_ptr;
 
 #ifndef XSD_CXX_TREE_TREE_NODE_KEY__XML_SCHEMA
 #define XSD_CXX_TREE_TREE_NODE_KEY__XML_SCHEMA
@@ -622,9 +626,10 @@ class CellData;
 class Points;
 class Cells;
 
-#include <memory>    // ::std::auto_ptr
+#include <memory>    // ::std::unique_ptr
 #include <limits>    // std::numeric_limits
 #include <algorithm> // std::binary_search
+#include <utility>   // std::move
 
 #include <xsd/cxx/xml/char-utf8.hxx>
 
@@ -813,7 +818,7 @@ class DataArray_t: public ::DataArrayList_t
    * instead of making a copy.
    */
   void
-  type (::std::auto_ptr< type_type > p);
+  type (::std::unique_ptr< type_type > p);
 
   //@}
 
@@ -871,7 +876,7 @@ class DataArray_t: public ::DataArrayList_t
    * instead of making a copy.
    */
   void
-  Name (::std::auto_ptr< Name_type > p);
+  Name (::std::unique_ptr< Name_type > p);
 
   //@}
 
@@ -1188,7 +1193,7 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  PointData (::std::auto_ptr< PointData_type > p);
+  PointData (::std::unique_ptr< PointData_type > p);
 
   //@}
 
@@ -1246,7 +1251,7 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  CellData (::std::auto_ptr< CellData_type > p);
+  CellData (::std::unique_ptr< CellData_type > p);
 
   //@}
 
@@ -1304,7 +1309,7 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  Points (::std::auto_ptr< Points_type > p);
+  Points (::std::unique_ptr< Points_type > p);
 
   //@}
 
@@ -1362,7 +1367,7 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  Cells (::std::auto_ptr< Cells_type > p);
+  Cells (::std::unique_ptr< Cells_type > p);
 
   //@}
 
@@ -1479,15 +1484,15 @@ class PieceUnstructuredGrid_t: public ::xml_schema::type
   /**
    * @brief Create an instance from the ultimate base and
    * initializers for required elements and attributes
-   * (::std::auto_ptr version).
+   * (::std::unique_ptr version).
    *
    * This constructor will try to use the passed values directly
    * instead of making copies.
    */
-  PieceUnstructuredGrid_t (::std::auto_ptr< PointData_type >,
-                           ::std::auto_ptr< CellData_type >,
-                           ::std::auto_ptr< Points_type >,
-                           ::std::auto_ptr< Cells_type >,
+  PieceUnstructuredGrid_t (::std::unique_ptr< PointData_type >,
+                           ::std::unique_ptr< CellData_type >,
+                           ::std::unique_ptr< Points_type >,
+                           ::std::unique_ptr< Cells_type >,
                            const NumberOfPoints_type&,
                            const NumberOfCells_type&);
 
@@ -1633,7 +1638,7 @@ class UnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  Piece (::std::auto_ptr< Piece_type > p);
+  Piece (::std::unique_ptr< Piece_type > p);
 
   //@}
 
@@ -1651,12 +1656,12 @@ class UnstructuredGrid_t: public ::xml_schema::type
   /**
    * @brief Create an instance from the ultimate base and
    * initializers for required elements and attributes
-   * (::std::auto_ptr version).
+   * (::std::unique_ptr version).
    *
    * This constructor will try to use the passed values directly
    * instead of making copies.
    */
-  UnstructuredGrid_t (::std::auto_ptr< Piece_type >);
+  UnstructuredGrid_t (::std::unique_ptr< Piece_type >);
 
   /**
    * @brief Create an instance from a DOM element.

@@ -4,7 +4,7 @@ $(info included vtkwriter.mk!)
 VTK_SOURCES = $(shell find ./ -name "*.cpp" | grep -v "/tests/" | grep "/vtk/")
 
 SOURCES += $(VTK_SOURCES)
-CXXFLAGS += -DVTK -Wno-deprecated
+CXXFLAGS += -DVTK
 
 INCLUDES += -I../dependencies-external/libxsd 
 ifneq ($(VTK_INCDIR),)

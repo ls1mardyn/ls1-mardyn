@@ -36,10 +36,9 @@
 //
 // End prologue.
 
-#include "vtk-unstructured.h"
-
 #include <xsd/cxx/pre.hxx>
 
+#include "vtk-unstructured.h"
 
 // DataArrayList_t
 //
@@ -87,9 +86,9 @@ type (const type_type& x)
 }
 
 void DataArray_t::
-type (::std::auto_ptr< type_type > x)
+type (::std::unique_ptr< type_type > x)
 {
-  this->type_.set (x);
+  this->type_.set (std::move (x));
 }
 
 const DataArray_t::Name_type& DataArray_t::
@@ -111,9 +110,9 @@ Name (const Name_type& x)
 }
 
 void DataArray_t::
-Name (::std::auto_ptr< Name_type > x)
+Name (::std::unique_ptr< Name_type > x)
 {
-  this->Name_.set (x);
+  this->Name_.set (std::move (x));
 }
 
 const DataArray_t::NumberOfComponents_type& DataArray_t::
@@ -193,9 +192,9 @@ PointData (const PointData_type& x)
 }
 
 void PieceUnstructuredGrid_t::
-PointData (::std::auto_ptr< PointData_type > x)
+PointData (::std::unique_ptr< PointData_type > x)
 {
-  this->PointData_.set (x);
+  this->PointData_.set (std::move (x));
 }
 
 const PieceUnstructuredGrid_t::CellData_type& PieceUnstructuredGrid_t::
@@ -217,9 +216,9 @@ CellData (const CellData_type& x)
 }
 
 void PieceUnstructuredGrid_t::
-CellData (::std::auto_ptr< CellData_type > x)
+CellData (::std::unique_ptr< CellData_type > x)
 {
-  this->CellData_.set (x);
+  this->CellData_.set (std::move (x));
 }
 
 const PieceUnstructuredGrid_t::Points_type& PieceUnstructuredGrid_t::
@@ -241,9 +240,9 @@ Points (const Points_type& x)
 }
 
 void PieceUnstructuredGrid_t::
-Points (::std::auto_ptr< Points_type > x)
+Points (::std::unique_ptr< Points_type > x)
 {
-  this->Points_.set (x);
+  this->Points_.set (std::move (x));
 }
 
 const PieceUnstructuredGrid_t::Cells_type& PieceUnstructuredGrid_t::
@@ -265,9 +264,9 @@ Cells (const Cells_type& x)
 }
 
 void PieceUnstructuredGrid_t::
-Cells (::std::auto_ptr< Cells_type > x)
+Cells (::std::unique_ptr< Cells_type > x)
 {
-  this->Cells_.set (x);
+  this->Cells_.set (std::move (x));
 }
 
 const PieceUnstructuredGrid_t::NumberOfPoints_type& PieceUnstructuredGrid_t::
@@ -329,9 +328,9 @@ Piece (const Piece_type& x)
 }
 
 void UnstructuredGrid_t::
-Piece (::std::auto_ptr< Piece_type > x)
+Piece (::std::unique_ptr< Piece_type > x)
 {
-  this->Piece_.set (x);
+  this->Piece_.set (std::move (x));
 }
 
 
@@ -694,17 +693,17 @@ PieceUnstructuredGrid_t (const PointData_type& PointData,
 }
 
 PieceUnstructuredGrid_t::
-PieceUnstructuredGrid_t (::std::auto_ptr< PointData_type > PointData,
-                         ::std::auto_ptr< CellData_type > CellData,
-                         ::std::auto_ptr< Points_type > Points,
-                         ::std::auto_ptr< Cells_type > Cells,
+PieceUnstructuredGrid_t (::std::unique_ptr< PointData_type > PointData,
+                         ::std::unique_ptr< CellData_type > CellData,
+                         ::std::unique_ptr< Points_type > Points,
+                         ::std::unique_ptr< Cells_type > Cells,
                          const NumberOfPoints_type& NumberOfPoints,
                          const NumberOfCells_type& NumberOfCells)
 : ::xml_schema::type (),
-  PointData_ (PointData, this),
-  CellData_ (CellData, this),
-  Points_ (Points, this),
-  Cells_ (Cells, this),
+  PointData_ (std::move (PointData), this),
+  CellData_ (std::move (CellData), this),
+  Points_ (std::move (Points), this),
+  Cells_ (std::move (Cells), this),
   NumberOfPoints_ (NumberOfPoints, this),
   NumberOfCells_ (NumberOfCells, this)
 {
@@ -757,12 +756,12 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "PointData" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< PointData_type > r (
+      ::std::unique_ptr< PointData_type > r (
         PointData_traits::create (i, f, this));
 
       if (!PointData_.present ())
       {
-        this->PointData_.set (r);
+        this->PointData_.set (::std::move (r));
         continue;
       }
     }
@@ -771,12 +770,12 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "CellData" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< CellData_type > r (
+      ::std::unique_ptr< CellData_type > r (
         CellData_traits::create (i, f, this));
 
       if (!CellData_.present ())
       {
-        this->CellData_.set (r);
+        this->CellData_.set (::std::move (r));
         continue;
       }
     }
@@ -785,12 +784,12 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "Points" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< Points_type > r (
+      ::std::unique_ptr< Points_type > r (
         Points_traits::create (i, f, this));
 
       if (!Points_.present ())
       {
-        this->Points_.set (r);
+        this->Points_.set (::std::move (r));
         continue;
       }
     }
@@ -799,12 +798,12 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "Cells" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< Cells_type > r (
+      ::std::unique_ptr< Cells_type > r (
         Cells_traits::create (i, f, this));
 
       if (!Cells_.present ())
       {
-        this->Cells_.set (r);
+        this->Cells_.set (::std::move (r));
         continue;
       }
     }
@@ -914,9 +913,9 @@ UnstructuredGrid_t (const Piece_type& Piece)
 }
 
 UnstructuredGrid_t::
-UnstructuredGrid_t (::std::auto_ptr< Piece_type > Piece)
+UnstructuredGrid_t (::std::unique_ptr< Piece_type > Piece)
 : ::xml_schema::type (),
-  Piece_ (Piece, this)
+  Piece_ (std::move (Piece), this)
 {
 }
 
@@ -957,12 +956,12 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "Piece" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< Piece_type > r (
+      ::std::unique_ptr< Piece_type > r (
         Piece_traits::create (i, f, this));
 
       if (!Piece_.present ())
       {
-        this->Piece_.set (r);
+        this->Piece_.set (::std::move (r));
         continue;
       }
     }
@@ -1135,10 +1134,10 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "DataArray" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< DataArray_type > r (
+      ::std::unique_ptr< DataArray_type > r (
         DataArray_traits::create (i, f, this));
 
-      this->DataArray_.push_back (r);
+      this->DataArray_.push_back (::std::move (r));
       continue;
     }
 
@@ -1217,10 +1216,10 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "DataArray" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< DataArray_type > r (
+      ::std::unique_ptr< DataArray_type > r (
         DataArray_traits::create (i, f, this));
 
-      this->DataArray_.push_back (r);
+      this->DataArray_.push_back (::std::move (r));
       continue;
     }
 
@@ -1299,10 +1298,10 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "DataArray" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< DataArray_type > r (
+      ::std::unique_ptr< DataArray_type > r (
         DataArray_traits::create (i, f, this));
 
-      this->DataArray_.push_back (r);
+      this->DataArray_.push_back (::std::move (r));
       continue;
     }
 
@@ -1381,10 +1380,10 @@ parse (::xsd::cxx::xml::dom::parser< char >& p,
     //
     if (n.name () == "DataArray" && n.namespace_ ().empty ())
     {
-      ::std::auto_ptr< DataArray_type > r (
+      ::std::unique_ptr< DataArray_type > r (
         DataArray_traits::create (i, f, this));
 
-      this->DataArray_.push_back (r);
+      this->DataArray_.push_back (::std::move (r));
       continue;
     }
 

@@ -94,7 +94,7 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKMoleculeWriterTest_2.vtu"));
 
 	try {
-		std::auto_ptr<VTKFile_t> vtkFile(VTKFile ("VTKMoleculeWriterTest_2.vtu", xml_schema::flags::dont_validate));
+		std::unique_ptr<VTKFile_t> vtkFile(VTKFile ("VTKMoleculeWriterTest_2.vtu", xml_schema::flags::dont_validate));
 		ASSERT_EQUAL( 4, (int) vtkFile->UnstructuredGrid()->Piece().NumberOfPoints());
 
 

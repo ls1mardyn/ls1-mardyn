@@ -39,6 +39,10 @@
 #ifndef VTK_PUNSTRUCTURED_HXX
 #define VTK_PUNSTRUCTURED_HXX
 
+#ifndef XSD_CXX11
+#define XSD_CXX11
+#endif
+
 #ifndef XSD_USE_CHAR
 #define XSD_USE_CHAR
 #endif
@@ -598,7 +602,7 @@ namespace xml_schema
     /**
      * @brief Automatic pointer for DOMDocument.
      */
-    using ::xsd::cxx::xml::dom::auto_ptr;
+    using ::xsd::cxx::xml::dom::unique_ptr;
 
 #ifndef XSD_CXX_TREE_TREE_NODE_KEY__XML_SCHEMA
 #define XSD_CXX_TREE_TREE_NODE_KEY__XML_SCHEMA
@@ -620,9 +624,10 @@ class PPoints;
 class PCells;
 class Piece;
 
-#include <memory>    // ::std::auto_ptr
+#include <memory>    // ::std::unique_ptr
 #include <limits>    // std::numeric_limits
 #include <algorithm> // std::binary_search
+#include <utility>   // std::move
 
 #include <xsd/cxx/xml/char-utf8.hxx>
 
@@ -697,7 +702,7 @@ class PUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  PPointData (::std::auto_ptr< PPointData_type > p);
+  PPointData (::std::unique_ptr< PPointData_type > p);
 
   //@}
 
@@ -755,7 +760,7 @@ class PUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  PCellData (::std::auto_ptr< PCellData_type > p);
+  PCellData (::std::unique_ptr< PCellData_type > p);
 
   //@}
 
@@ -813,7 +818,7 @@ class PUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  PPoints (::std::auto_ptr< PPoints_type > p);
+  PPoints (::std::unique_ptr< PPoints_type > p);
 
   //@}
 
@@ -871,7 +876,7 @@ class PUnstructuredGrid_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  PCells (::std::auto_ptr< PCells_type > p);
+  PCells (::std::unique_ptr< PCells_type > p);
 
   //@}
 
@@ -992,15 +997,15 @@ class PUnstructuredGrid_t: public ::xml_schema::type
   /**
    * @brief Create an instance from the ultimate base and
    * initializers for required elements and attributes
-   * (::std::auto_ptr version).
+   * (::std::unique_ptr version).
    *
    * This constructor will try to use the passed values directly
    * instead of making copies.
    */
-  PUnstructuredGrid_t (::std::auto_ptr< PPointData_type >,
-                       ::std::auto_ptr< PCellData_type >,
-                       ::std::auto_ptr< PPoints_type >,
-                       ::std::auto_ptr< PCells_type >);
+  PUnstructuredGrid_t (::std::unique_ptr< PPointData_type >,
+                       ::std::unique_ptr< PCellData_type >,
+                       ::std::unique_ptr< PPoints_type >,
+                       ::std::unique_ptr< PCells_type >);
 
   /**
    * @brief Create an instance from a DOM element.
@@ -1162,7 +1167,7 @@ class VTKFile_t: public ::xml_schema::type
    * of making a copy.
    */
   void
-  PUnstructuredGrid (::std::auto_ptr< PUnstructuredGrid_type > p);
+  PUnstructuredGrid (::std::unique_ptr< PUnstructuredGrid_type > p);
 
   //@}
 
@@ -1238,7 +1243,7 @@ class VTKFile_t: public ::xml_schema::type
    * of making a copy.
    */
   void
-  UnstructuredGrid (::std::auto_ptr< UnstructuredGrid_type > p);
+  UnstructuredGrid (::std::unique_ptr< UnstructuredGrid_type > p);
 
   //@}
 
@@ -1296,7 +1301,7 @@ class VTKFile_t: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  type (::std::auto_ptr< type_type > p);
+  type (::std::unique_ptr< type_type > p);
 
   //@}
 
@@ -2160,7 +2165,7 @@ class Piece: public ::xml_schema::type
    * instead of making a copy.
    */
   void
-  Source (::std::auto_ptr< Source_type > p);
+  Source (::std::unique_ptr< Source_type > p);
 
   //@}
 
@@ -2274,7 +2279,7 @@ class Piece: public ::xml_schema::type
  *
  * This function uses exceptions to report parsing errors.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::std::string& uri,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
@@ -2290,7 +2295,7 @@ VTKFile (const ::std::string& uri,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::std::string& uri,
          ::xml_schema::error_handler& eh,
          ::xml_schema::flags f = 0,
@@ -2308,7 +2313,7 @@ VTKFile (const ::std::string& uri,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::std::string& uri,
          ::xercesc::DOMErrorHandler& eh,
          ::xml_schema::flags f = 0,
@@ -2324,7 +2329,7 @@ VTKFile (const ::std::string& uri,
  *
  * This function uses exceptions to report parsing errors.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
@@ -2340,7 +2345,7 @@ VTKFile (::std::istream& is,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          ::xml_schema::error_handler& eh,
          ::xml_schema::flags f = 0,
@@ -2358,7 +2363,7 @@ VTKFile (::std::istream& is,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          ::xercesc::DOMErrorHandler& eh,
          ::xml_schema::flags f = 0,
@@ -2378,7 +2383,7 @@ VTKFile (::std::istream& is,
  *
  * This function uses exceptions to report parsing errors.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          const ::std::string& id,
          ::xml_schema::flags f = 0,
@@ -2400,7 +2405,7 @@ VTKFile (::std::istream& is,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          const ::std::string& id,
          ::xml_schema::error_handler& eh,
@@ -2423,7 +2428,7 @@ VTKFile (::std::istream& is,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::std::istream& is,
          const ::std::string& id,
          ::xercesc::DOMErrorHandler& eh,
@@ -2440,7 +2445,7 @@ VTKFile (::std::istream& is,
  *
  * This function uses exceptions to report parsing errors.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xercesc::InputSource& is,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
@@ -2456,7 +2461,7 @@ VTKFile (::xercesc::InputSource& is,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xercesc::InputSource& is,
          ::xml_schema::error_handler& eh,
          ::xml_schema::flags f = 0,
@@ -2474,7 +2479,7 @@ VTKFile (::xercesc::InputSource& is,
  *
  * This function reports parsing errors by calling the error handler.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (::xercesc::InputSource& is,
          ::xercesc::DOMErrorHandler& eh,
          ::xml_schema::flags f = 0,
@@ -2488,7 +2493,7 @@ VTKFile (::xercesc::InputSource& is,
  * @param p Parsing properties. 
  * @return A pointer to the root of the object model.
  */
-::std::auto_ptr< ::VTKFile_t >
+::std::unique_ptr< ::VTKFile_t >
 VTKFile (const ::xercesc::DOMDocument& d,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
@@ -2505,8 +2510,8 @@ VTKFile (const ::xercesc::DOMDocument& d,
  * own_dom parsing flags to assign ownership of the DOM document
  * to the object model.
  */
-::std::auto_ptr< ::VTKFile_t >
-VTKFile (::xml_schema::dom::auto_ptr< ::xercesc::DOMDocument > d,
+::std::unique_ptr< ::VTKFile_t >
+VTKFile (::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument > d,
          ::xml_schema::flags f = 0,
          const ::xml_schema::properties& p = ::xml_schema::properties ());
 
@@ -2681,7 +2686,7 @@ VTKFile (::xercesc::DOMDocument& d,
  * @param f Serialization flags.
  * @return A pointer to the new Xerces-C++ DOM document.
  */
-::xml_schema::dom::auto_ptr< ::xercesc::DOMDocument >
+::xml_schema::dom::unique_ptr< ::xercesc::DOMDocument >
 VTKFile (const ::VTKFile_t& x, 
          const ::xml_schema::namespace_infomap& m = ::xml_schema::namespace_infomap (),
          ::xml_schema::flags f = 0);
