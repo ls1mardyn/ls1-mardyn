@@ -388,13 +388,13 @@ void UniformPseudoParticleContainer::horizontalPass(
 	}
 #endif
 
-	if(_overlapComm){
-		//wait till communication of halos finished
-		_multipoleRecBufferOverlap->wait();
-
-		//set halo values
-		communicateHalosOverlapSetHalos();
-	}
+//	if(_overlapComm){
+//		//wait till communication of halos finished
+//		_multipoleRecBufferOverlap->wait();
+//
+//		//set halo values
+//		communicateHalosOverlapSetHalos();
+//	}
 	//wait till allreduce finished
 //	MPI_Status allreduceStatus;
 //	MPI_Wait(&_allReduceRequest, &allreduceStatus);
@@ -406,6 +406,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 #if defined(ENABLE_MPI)
 
 		if(finishedFlag == 1){ //communication of halos finished
+			communicateHalosOverlapSetHalos();
 			curCellsEdge=1;
 			for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
 
@@ -441,6 +442,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 				}
 		#else
 				GatherWellSepLo(cellWid, curCellsEdge, curLevel);
+				finishedFlag = -1;
 		#endif
 			}
 		}
