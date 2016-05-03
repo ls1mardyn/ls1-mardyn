@@ -179,7 +179,7 @@ template <class T>
 int HaloBufferOverlap<T>::testIfFinished(){
 	int areaFlag, edgeFlag, cornerFlag;
 	MPI_Status * areaStatusArray = new MPI_Status[_areaBuffers.size()];
-	MPI_Testtall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray);
+	MPI_Testall(_areaBuffers.size(),_areaRequests, &areaFlag, areaStatusArray);
 
 	MPI_Status * edgeStatusArray = new MPI_Status[_edgeBuffers.size()];
 	MPI_Testall(_edgeBuffers.size(),_edgeRequests, &edgeFlag, edgeStatusArray);

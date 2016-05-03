@@ -396,38 +396,83 @@ void UniformPseudoParticleContainer::horizontalPass(
 		communicateHalosOverlapSetHalos();
 	}
 	//wait till allreduce finished
-	MPI_Status allreduceStatus;
-	MPI_Wait(&_allReduceRequest, &allreduceStatus);
-	AllReduceMultipoleMomentsSetValues(pow(8,_globalLevel), _globalLevel);
-	curCellsEdge=1;
-	for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
+//	MPI_Status allreduceStatus;
+//	MPI_Wait(&_allReduceRequest, &allreduceStatus);
 
-	for(int curLevel=1; curLevel<=_maxLevel; curLevel++){
-
-		curCellsEdge *=2;
-		for(int i=0; i <3; i++){
-			cellWid[i] /=2;
-		}
-
+	int finishedFlag = 0;
+	initBusyWaiting();
+	while(finishedFlag != -1){
+		finishedFlag = busyWaiting();
 #if defined(ENABLE_MPI)
-		if(curLevel > _globalLevel){
-		    int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
-			GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel, 1);
+
+		if(finishedFlag == 1){ //communication of halos finished
+			curCellsEdge=1;
+			for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
+
+			for(int curLevel=1; curLevel<=_maxLevel; curLevel++){
+
+				curCellsEdge *=2;
+				for(int i=0; i <3; i++){
+					cellWid[i] /=2;
+				}
+
+				if(curLevel > _globalLevel){
+					int curCellsEdgeLocal = (int) (curCellsEdge/_numProcessorsPerDim)+4;
+					GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel, 1);
+				}
+			}
 		}
-		else{
-			GatherWellSepLo(cellWid, curCellsEdge, curLevel);
-		}
-#else
-		GatherWellSepLo(cellWid, curCellsEdge, curLevel);
 #endif
-//#if defined(ENABLE_MPI)
-//		if(curLevel <= _globalLevel){
-//			AllReduceLocalMoments(curCellsEdge, curLevel);
-//		}
-//#else
-//		AllReduceLocalMoments(curCellsEdge, curLevel);
-//#endif
+		if(finishedFlag == 2){ //communication of global allreduce finished
+			AllReduceMultipoleMomentsSetValues(pow(8,_globalLevel), _globalLevel);
+			curCellsEdge=1;
+			for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
+
+			for(int curLevel=1; curLevel<=_maxLevel; curLevel++){
+
+				curCellsEdge *=2;
+				for(int i=0; i <3; i++){
+					cellWid[i] /=2;
+				}
+
+		#if defined(ENABLE_MPI)
+				if(curLevel <= _globalLevel){
+					GatherWellSepLo(cellWid, curCellsEdge, curLevel);
+				}
+		#else
+				GatherWellSepLo(cellWid, curCellsEdge, curLevel);
+		#endif
+			}
+		}
 	}
+
+
+}
+
+int UniformPseudoParticleContainer::busyWaiting(){
+#ifdef ENABLE_MPI
+	if(_allReduceProcessed and _halosProcessed){
+		return -1;
+	}
+	if(!_halosProcessed){
+		if(_multipoleRecBufferOverlap->testIfFinished()){
+			_halosProcessed = 1;
+			return 1;
+		}
+	}
+	if(!_allReduceProcessed){
+		int flag;
+		MPI_Status status;
+		MPI_Test(&_allReduceRequest, &flag, &status);
+		if(flag){
+			_allReduceProcessed = 1;
+			return 2;
+		}
+	}
+	return 0;
+#else
+	return 2;
+#endif
 }
 
 void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {

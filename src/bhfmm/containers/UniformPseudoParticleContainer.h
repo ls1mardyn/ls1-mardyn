@@ -132,8 +132,13 @@ private:
 			double * lowerNeighbourBufferRec, double * higherNeighbourBufferRec,
 			int lowerNeighbour, int higherNeighbour, int haloSize
 			);
-
-
+	int busyWaiting();
+	void initBusyWaiting(){
+		_allReduceProcessed = 0;
+		_halosProcessed = 0;
+	}
+	int _allReduceProcessed;
+	int _halosProcessed;
 	Timer _timerProcessCells;
 	Timer _timerAllreduce;
 	Timer _timerCombineMpCell;
