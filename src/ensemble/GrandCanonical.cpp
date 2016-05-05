@@ -37,6 +37,8 @@ ChemicalPotential::ChemicalPotential()
 	 this->lambda = 1.0;
 
          this->widom = false;
+     global_log->warning() << "Grand Canonical likely needs fixing." << std::endl;
+     global_log->warning() << "Functionality preserved as much as possible, but code is somewhat hard to read/understand. (Nikola Tchipev)" << std::endl;
 }
 
 void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1)

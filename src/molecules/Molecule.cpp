@@ -1,4 +1,5 @@
 #include "Molecule.h"
+#include "particleContainer/adapter/CellDataSoA.h"
 
 #include <cassert>
 #include <cmath>
@@ -31,13 +32,30 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
-	_sites_d = _sites_F =_osites_e = NULL;
 	fixedx = rx;
 	fixedy = ry;
 
-	if(_component != NULL) {
-		setupCache();
+	_soa = nullptr;
+	_soa_index_lj = 0;
+	_soa_index_c = 0;
+	_soa_index_d = 0;
+	_soa_index_q = 0;
+
+	if(_component != nullptr) {
+		_m = _component->m();
+		_I[0] = _component->I11();
+		_I[1] = _component->I22();
+		_I[2] = _component->I33();
+		for (unsigned short d = 0; d < 3; ++d) {
+			if (_I[d] != 0.)
+				_invI[d] = 1. / _I[d];
+			else
+				_invI[d] = 0.;
+		}
 	}
+	_F[0] = _F[1] = _F[2] = 0.;
+	_M[0] = _M[1] = _M[2] = 0.;
+	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 }
 
 Molecule::Molecule(const Molecule& m) {
@@ -62,15 +80,190 @@ Molecule::Molecule(const Molecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
-	_sites_d = _sites_F =_osites_e = NULL;
 	fixedx = m.fixedx;
 	fixedy = m.fixedy;
 
-	if(_component != NULL) {
-		setupCache();
-	}
+	_soa = m._soa;
+	_soa_index_lj = m._soa_index_lj;
+	_soa_index_c = m._soa_index_c;
+	_soa_index_d = m._soa_index_d;
+	_soa_index_q = m._soa_index_q;
+
+	_m = m._m;
+	_I[0] = m._I[0];
+	_I[1] = m._I[1];
+	_I[2] = m._I[2];
+	_invI[0] = m._invI[0];
+	_invI[1] = m._invI[1];
+	_invI[2] = m._invI[2];
 }
 
+std::array<double, 3> Molecule::ljcenter_d_abs(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_lj;
+	std::array<double,3> ret;
+	double* rx = _soa->ljc_r_xBegin();
+	double* ry = _soa->ljc_r_yBegin();
+	double* rz = _soa->ljc_r_zBegin();
+	ret[0] = rx[index_in_soa];
+	ret[1] = ry[index_in_soa];
+	ret[2] = rz[index_in_soa];
+	return ret;
+}
+
+std::array<double, 3> Molecule::charge_d_abs(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_c;
+	std::array<double, 3> ret;
+	double* rx = _soa->charges_r_xBegin();
+	double* ry = _soa->charges_r_yBegin();
+	double* rz = _soa->charges_r_zBegin();
+	ret[0] = rx[index_in_soa];
+	ret[1] = ry[index_in_soa];
+	ret[2] = rz[index_in_soa];
+	return ret;
+}
+
+std::array<double, 3> Molecule::dipole_d_abs(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_d;
+	std::array<double, 3> ret;
+	double* rx = _soa->dipoles_r_xBegin();
+	double* ry = _soa->dipoles_r_yBegin();
+	double* rz = _soa->dipoles_r_zBegin();
+	ret[0] = rx[index_in_soa];
+	ret[1] = ry[index_in_soa];
+	ret[2] = rz[index_in_soa];
+	return ret;
+}
+
+std::array<double, 3> Molecule::quadrupole_d_abs(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_q;
+	std::array<double, 3> ret;
+	double* rx = _soa->quadrupoles_r_xBegin();
+	double* ry = _soa->quadrupoles_r_yBegin();
+	double* rz = _soa->quadrupoles_r_zBegin();
+	ret[0] = rx[index_in_soa];
+	ret[1] = ry[index_in_soa];
+	ret[2] = rz[index_in_soa];
+	return ret;
+}
+
+std::array<double, 3> Molecule::ljcenter_F(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_lj;
+	std::array<double, 3> ret;
+	double* fx = _soa->ljc_f_xBegin();
+	double* fy = _soa->ljc_f_yBegin();
+	double* fz = _soa->ljc_f_zBegin();
+	ret[0] = fx[index_in_soa];
+	ret[1] = fy[index_in_soa];
+	ret[2] = fz[index_in_soa];
+	return ret;
+}
+std::array<double, 3> Molecule::charge_F(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_c;
+	std::array<double, 3> ret;
+	double* fx = _soa->charges_f_xBegin();
+	double* fy = _soa->charges_f_yBegin();
+	double* fz = _soa->charges_f_zBegin();
+	ret[0] = fx[index_in_soa];
+	ret[1] = fy[index_in_soa];
+	ret[2] = fz[index_in_soa];
+	return ret;
+}
+std::array<double, 3> Molecule::dipole_F(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_d;
+	std::array<double, 3> ret;
+	double* fx = _soa->dipoles_f_xBegin();
+	double* fy = _soa->dipoles_f_yBegin();
+	double* fz = _soa->dipoles_f_zBegin();
+	ret[0] = fx[index_in_soa];
+	ret[1] = fy[index_in_soa];
+	ret[2] = fz[index_in_soa];
+	return ret;
+}
+std::array<double, 3> Molecule::quadrupole_F(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_q;
+	std::array<double, 3> ret;
+	double* fx = _soa->quadrupoles_f_xBegin();
+	double* fy = _soa->quadrupoles_f_yBegin();
+	double* fz = _soa->quadrupoles_f_zBegin();
+	ret[0] = fx[index_in_soa];
+	ret[1] = fy[index_in_soa];
+	ret[2] = fz[index_in_soa];
+	return ret;
+}
+
+std::array<double, 3> Molecule::dipole_e(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_d;
+	std::array<double, 3> ret;
+	ret[0] = _soa->_dipoles_e.x(index_in_soa);
+	ret[1] = _soa->_dipoles_e.y(index_in_soa);
+	ret[2] = _soa->_dipoles_e.z(index_in_soa);
+	return ret;
+}
+std::array<double, 3> Molecule::quadrupole_e(unsigned int i) const {
+	const unsigned index_in_soa = i + _soa_index_q;
+	std::array<double, 3> ret;
+	ret[0] = _soa->_quadrupoles_e.x(index_in_soa);
+	ret[1] = _soa->_quadrupoles_e.y(index_in_soa);
+	ret[2] = _soa->_quadrupoles_e.z(index_in_soa);
+	return ret;
+}
+
+void Molecule::Fljcenteradd(unsigned int i, double a[]) {
+	const unsigned index_in_soa = i + _soa_index_lj;
+	double* fx = _soa->ljc_f_xBegin();
+	double* fy = _soa->ljc_f_yBegin();
+	double* fz = _soa->ljc_f_zBegin();
+	fx[index_in_soa] += a[0];
+	fy[index_in_soa] += a[1];
+	fz[index_in_soa] += a[2];
+}
+
+void Molecule::Fchargeadd(unsigned int i, double a[]) {
+	const unsigned index_in_soa = i + _soa_index_c;
+	double* fx = _soa->charges_f_xBegin();
+	double* fy = _soa->charges_f_yBegin();
+	double* fz = _soa->charges_f_zBegin();
+	fx[index_in_soa] += a[0];
+	fy[index_in_soa] += a[1];
+	fz[index_in_soa] += a[2];
+}
+
+void Molecule::Fdipoleadd(unsigned int i, double a[]) {
+	const unsigned index_in_soa = i + _soa_index_d;
+	double* fx = _soa->dipoles_f_xBegin();
+	double* fy = _soa->dipoles_f_yBegin();
+	double* fz = _soa->dipoles_f_zBegin();
+	fx[index_in_soa] += a[0];
+	fy[index_in_soa] += a[1];
+	fz[index_in_soa] += a[2];
+}
+
+void Molecule::Fquadrupoleadd(unsigned int i, double a[]) {
+	const unsigned index_in_soa = i + _soa_index_q;
+	double* fx = _soa->quadrupoles_f_xBegin();
+	double* fy = _soa->quadrupoles_f_yBegin();
+	double* fz = _soa->quadrupoles_f_zBegin();
+	fx[index_in_soa] += a[0];
+	fy[index_in_soa] += a[1];
+	fz[index_in_soa] += a[2];
+}
+
+void Molecule::Fljcentersub(unsigned int i, double a[]) {
+	double minusA[3] = {-a[0], -a[1], -a[2]};
+	Fljcenteradd(i, minusA);
+}
+void Molecule::Fchargesub(unsigned int i, double a[]) {
+	double minusA[3] = {-a[0], -a[1], -a[2]};
+	Fchargeadd(i, minusA);
+}
+void Molecule::Fdipolesub(unsigned int i, double a[]) {
+	double minusA[3] = {-a[0], -a[1], -a[2]};
+	Fdipoleadd(i, minusA);
+}
+void Molecule::Fquadrupolesub(unsigned int i, double a[]) {
+	double minusA[3] = {-a[0], -a[1], -a[2]};
+	Fquadrupoleadd(i, minusA);
+}
 
 void Molecule::upd_preF(double dt) {
 	assert(_m > 0);
@@ -105,36 +298,8 @@ void Molecule::upd_preF(double dt) {
 
 }
 
-
-void Molecule::upd_cache() {
-	unsigned int i;
-	unsigned int ns;
-
-	_q.normalize();
-
-	ns = numLJcenters();
-	for (i = 0; i < ns; ++i)
-		_q.rotate(_component->ljcenter(i).r(), &(_ljcenters_d[i*3]));
-	ns = numCharges();
-	for (i = 0; i < ns; ++i)
-		_q.rotate(_component->charge(i).r(), &(_charges_d[i*3]));
-	ns = numDipoles();
-	for (i = 0; i < ns; ++i) {
-		const Dipole& di = _component->dipole(i);
-		_q.rotate(di.r(), &(_dipoles_d[i*3]));
-		_q.rotate(di.e(), &(_dipoles_e[i*3]));
-	}
-	ns = numQuadrupoles();
-	for (i = 0; i < ns; ++i) {
-		const Quadrupole& qi = _component->quadrupole(i);
-		_q.rotate(qi.r(), &(_quadrupoles_d[i*3]));
-		_q.rotate(qi.e(), &(_quadrupoles_e[i*3]));
-	}
-}
-
-
 void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
-	using std::isnan; // C++11 required
+	using std::isnan; // C++11 needed
 
 	calcFM();
 
@@ -217,74 +382,69 @@ void Molecule::write(ostream& ostrm) const {
 // private functions
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
-// mheinen_2015-06-15 --> to inline method setupCache() doesnt work when its called by method setComponent(), defined in Molecule.h
-void Molecule::setupCache() {
-	assert(_component != NULL);
-
-	_m = _component->m();
-	_I[0] = _component->I11();
-	_I[1] = _component->I22();
-	_I[2] = _component->I33();
-	for (unsigned short d = 0; d < 3; ++d) {
-		if (_I[d] != 0.)
-			_invI[d] = 1. / _I[d];
-		else
-			_invI[d] = 0.;
-	}
-
-	int numsites = _component->numSites();
-    // if allocated before, previous allocated memory should be freed
-    if(_sites_d != NULL)
-        delete [] _sites_d;
-    _sites_d = new double[3*numsites];
-	assert(_sites_d);
-	_ljcenters_d = &(_sites_d[0]);
-	_charges_d = &(_ljcenters_d[3*numLJcenters()]);
-	_dipoles_d = &(_charges_d[3*numCharges()]);
-	_quadrupoles_d = &(_dipoles_d[3*numDipoles()]);
-
-	int numorientedsites = _component->numOrientedSites();
-    // if allocated before, previous allocated memory should be freed
-    if(_osites_e != NULL)
-        delete [] _osites_e;
-    _osites_e = new double[3*numorientedsites];
-	assert(_osites_e);
-	_dipoles_e = &(_osites_e[0]);
-	_quadrupoles_e = &(_dipoles_e[3*numDipoles()]);
-
-    // if allocated before, previous allocated memory should be freed
-    if(_sites_F != NULL)
-        delete [] _sites_F;
-    _sites_F = new double[3*numsites];
-	assert(_sites_F);
-	_ljcenters_F = &(_sites_F[0]);
-	_charges_F = &(_ljcenters_F[3*numLJcenters()]);
-	_dipoles_F = &(_charges_F[3*numCharges()]);
-	_quadrupoles_F = &(_dipoles_F[3*numDipoles()]);
-
-	this->clearFM();
-}
-
 void Molecule::clearFM() {
-	using std::isnan; // C++11 required
-
-	int numSites = _component->numSites();
-	for (int i = 0; i < 3*numSites; i++) {
-		_sites_F[i] = 0.;
-	}
+	assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+
+	// clear SoA-cache (quickest way)
+	unsigned ns = numLJcenters();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_lj;
+		_soa->ljc_f_xBegin()[index_in_soa] = 0.0;
+		_soa->ljc_f_yBegin()[index_in_soa] = 0.0;
+		_soa->ljc_f_zBegin()[index_in_soa] = 0.0;
+		_soa->ljc_V_xBegin()[index_in_soa] = 0.0;
+		_soa->ljc_V_yBegin()[index_in_soa] = 0.0;
+		_soa->ljc_V_zBegin()[index_in_soa] = 0.0;
+	}
+	ns = numCharges();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_c;
+		_soa->charges_f_xBegin()[index_in_soa] = 0.0;
+		_soa->charges_f_yBegin()[index_in_soa] = 0.0;
+		_soa->charges_f_zBegin()[index_in_soa] = 0.0;
+		_soa->charges_V_xBegin()[index_in_soa] = 0.0;
+		_soa->charges_V_yBegin()[index_in_soa] = 0.0;
+		_soa->charges_V_zBegin()[index_in_soa] = 0.0;
+	}
+	ns = numDipoles();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_d;
+		_soa->dipoles_f_xBegin()[index_in_soa] = 0.0;
+		_soa->dipoles_f_yBegin()[index_in_soa] = 0.0;
+		_soa->dipoles_f_zBegin()[index_in_soa] = 0.0;
+		_soa->dipoles_V_xBegin()[index_in_soa] = 0.0;
+		_soa->dipoles_V_yBegin()[index_in_soa] = 0.0;
+		_soa->dipoles_V_zBegin()[index_in_soa] = 0.0;
+		_soa->_dipoles_e.x(index_in_soa) = 0.0;
+		_soa->_dipoles_e.y(index_in_soa) = 0.0;
+		_soa->_dipoles_e.z(index_in_soa) = 0.0;
+	}
+	ns = numQuadrupoles();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_q;
+		_soa->quadrupoles_f_xBegin()[index_in_soa] = 0.0;
+		_soa->quadrupoles_f_yBegin()[index_in_soa] = 0.0;
+		_soa->quadrupoles_f_zBegin()[index_in_soa] = 0.0;
+		_soa->quadrupoles_V_xBegin()[index_in_soa] = 0.0;
+		_soa->quadrupoles_V_yBegin()[index_in_soa] = 0.0;
+		_soa->quadrupoles_V_zBegin()[index_in_soa] = 0.0;
+		_soa->_quadrupoles_e.x(index_in_soa) = 0.0;
+		_soa->_quadrupoles_e.y(index_in_soa) = 0.0;
+		_soa->_quadrupoles_e.z(index_in_soa) = 0.0;
+	}
 }
 
 void Molecule::calcFM() {
-	using std::isnan; // C++11 required
+	using std::isnan; // C++11 needed
 
 	//_M[0] = _M[1] = _M[2] = 0.;
 	unsigned int ns = numSites();
 	for (unsigned int si = 0; si < ns; ++si) {
-		const double* Fsite = site_F(si);
-		const double* dsite = site_d(si);
+		const std::array<double,3> Fsite = site_F(si);
+		const std::array<double,3> dsite = site_d(si);
 #ifndef NDEBUG
 		/*
 		 * catches NaN assignments
@@ -301,7 +461,7 @@ void Molecule::calcFM() {
 		}
 #endif
 
-		Fadd(Fsite);
+		Fadd(Fsite.data());
 		_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
 		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
 		_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
@@ -318,7 +478,8 @@ void Molecule::calcFM() {
  */
 void Molecule::check(unsigned long id) {
 #ifndef NDEBUG
-	using std::isnan; // C++11 required
+	using std::isnan; // C++11 needed
+
 	assert(_id == id);
 	assert(_m > 0.0);
 	for (int d = 0; d < 3; d++) {
@@ -372,14 +533,5 @@ std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
 
 unsigned long Molecule::totalMemsize() const {
 	unsigned long size = sizeof (*this);
-
-	//_sites_d
-	size += sizeof(double) * _component->numSites()* 3;
-	// site orientation _osites_e
-	size += sizeof(double) * _component->numOrientedSites() * 4;
-	// site Forces _sites_F
-	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
-	size += sizeof(double) * _component->numSites() * 3;
-
 	return size;
 }

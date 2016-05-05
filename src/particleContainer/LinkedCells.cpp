@@ -983,36 +983,54 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 		Molecule* m1, CellProcessor& cellProcessor) {
 
-	double u = 0.0;
+	// TODO: this will modify the forces on the (real) molecules, no?
+	// TODO: and the global Upot, Virial, ..., no?
+
+	static ParticleCell dummyCell;
+	static std::vector<size_t> compIDs = getCompIDs();
+	{
+		// (potentially re-) initialize dummyCell
+		dummyCell.assignCellToInnerRegion();
+		dummyCell.removeAllParticles();
+		dummyCell.addParticle(m1, false);
+		dummyCell.buildSoACaches(compIDs);
+		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
+	}
+
 	vector<long int>::iterator neighbourOffsetsIter;
 
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 	ParticleCell& currentCell = _cells[cellIndex];
 
-	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+	double oldEnergy = global_simulation->getDomain()->getLocalUpot();
+
+	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1 + 1); // one more +1 for the dummyCell
+
+	cellProcessor.preprocessCell(dummyCell);
 
 	// extend the window of cells with cache activated
 	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset;
 			windowCellIndex < cellIndex + _maxNeighbourOffset + 1;
 			windowCellIndex++) {
 		cellProcessor.preprocessCell(_cells[windowCellIndex]);
+		// TODO: this will activate more cells than necessary?
 	}
 
-	u += cellProcessor.processSingleMolecule(m1, currentCell);
+	cellProcessor.processCellPair(dummyCell, currentCell);
 
 	// forward neighbours
 	for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+		cellProcessor.processCellPair(dummyCell, neighbourCell);
 	}
 	// backward neighbours
 	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
-		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+		cellProcessor.processCellPair(dummyCell, neighbourCell);
 	}
 
 	// close the window of cells activated
@@ -1021,9 +1039,12 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 			windowCellIndex++) {
 		cellProcessor.postprocessCell(_cells[windowCellIndex]);
 	}
+	cellProcessor.postprocessCell(dummyCell);
 
 	cellProcessor.endTraversal();
-	return u;
+	double newEnergy = global_simulation->getDomain()->getLocalUpot();
+
+	return newEnergy - oldEnergy;
 }
 
 int LinkedCells::grandcanonicalBalance(DomainDecompBase* comm) {
@@ -1074,7 +1095,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 						<< ")" << endl;
 #endif
 			if (accept) {
-				m->upd_cache();
+//				m->upd_cache(); TODO what to do here?
 				// reset forces and momenta to zero
 				{
 					double zeroVec[3] = { 0.0, 0.0, 0.0 };
@@ -1126,7 +1147,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 //			std::list<Molecule>::iterator mit = _particles.end();
 			Molecule * mit = &tmp;
 			m = &(*mit);
-			m->upd_cache();
+//			m->upd_cache(); TODO: what to do here?
 			// reset forces and torques to zero
 			if (!mu->isWidom()) {
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
@@ -1175,23 +1196,48 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 
 
 void LinkedCells::updateInnerMoleculeCaches(){
+	std::vector<size_t> compIDs = getCompIDs();
+
 	for (ParticleCell& cell : _cells){
 		if(cell.isInnerCell()){
-			for (Molecule* m : cell.getParticlePointers()) {
-				m->upd_cache();
-				m->clearFM();
-			}
+			cell.buildSoACaches(compIDs);
 		}
 	}
 }
 
 void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
+	std::vector<size_t> compIDs = getCompIDs();
+
 	for (ParticleCell& cell : _cells) {
 		if (cell.isHaloCell() or cell.isBoundaryCell()) {
-			for (Molecule* m : cell.getParticlePointers()) {
-				m->upd_cache();
-				m->clearFM();
-			}
+			cell.buildSoACaches(compIDs);
 		}
 	}
+}
+
+void LinkedCells::updateMoleculeCaches() {
+	std::vector<size_t> compIDs = getCompIDs();
+
+	for (ParticleCell& cell : _cells) {
+		cell.buildSoACaches(compIDs);
+	}
+}
+
+std::vector<size_t> LinkedCells::getCompIDs() const {
+	Domain * dom = global_simulation->getDomain();
+	std::vector<Component>& components = dom->getComponents();
+	// Get the maximum Component ID.
+	size_t maxID = 0;
+	for (auto c = components.begin(); c != components.end(); ++c)
+		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
+
+	// Assign a center list start index for each component.
+	std::vector<size_t> compIDs;
+	compIDs.resize(maxID + 1, 0);
+	size_t centers = 0;
+	for (auto c = components.begin(); c != components.end(); ++c) {
+		compIDs[c->ID()] = centers;
+		centers += c->numLJcenters();
+	}
+	return compIDs;
 }

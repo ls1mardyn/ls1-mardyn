@@ -244,7 +244,7 @@ public:
 	virtual void updateBoundaryAndHaloMoleculeCaches() = 0;
 
 	//! @brief Update the caches of the molecules.
-	void updateMoleculeCaches();
+	virtual void updateMoleculeCaches() = 0;
 
 protected:
 

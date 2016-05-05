@@ -78,7 +78,7 @@ public:
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components) const;
 
-	void observeRDF(Molecule& mi, Molecule& mj, double dd, double distanceVector[3]) const {
+	void observeRDF(Molecule& mi, Molecule& mj, double dd, double /*distanceVector*/ [3]) const {
 		observeRDF(dd, mi.componentid(), mj.componentid());
 
 		if(_doCollectSiteRDF) {
@@ -89,9 +89,9 @@ public:
 			if(si+sj > 2) {
 				for(unsigned m = 0; m < si; m++) {
 					for(unsigned n = 0; n < sj; n++) {
-						const double* dii = mi.site_d(m);
-						const double* djj = mj.site_d(n);
-						SiteSiteDistance(distanceVector, dii, djj, drs, dr2);
+						const std::array<double,3> dii = mi.site_d_abs(m);
+						const std::array<double,3> djj = mj.site_d_abs(n);
+						SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 						observeRDF(dr2, mi.componentid(), mj.componentid(), m, n);
 					}
 				}

@@ -678,7 +678,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 		int ni= molecule1.numCharges();
 
 		for(int j=0; j<ni; j++){
-			const double* dii = molecule1.charge_d(j);
+			const std::array<double,3> dii = molecule1.charge_d(j);
 			const Charge& chargei=static_cast<const Charge&> (molecule1.component()->charge(j));
 			double dr[3];
 
@@ -721,7 +721,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 		int ni= molecule1.numCharges();
 
 		for(int j=0; j<ni; j++){
-			const double* dii = molecule1.charge_d(j);
+			const std::array<double,3> dii = molecule1.charge_d(j);
 			const Charge& chargei=static_cast<const Charge&> (molecule1.component()->charge(j));
 			Vector3<double> dr;
 

@@ -92,227 +92,24 @@ void VectorizedCellProcessor::endTraversal() {
 	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles + _myRF);
 }
 
-
-void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
-
-	const MoleculeList & molecules = c.getParticlePointers();
-
-	// Determine the total number of centers.
-	size_t numMolecules = molecules.size();
-	size_t nLJCenters = 0;
-	size_t nCharges = 0;
-	size_t nDipoles = 0;
-	size_t nQuadrupoles = 0;
-	
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		nLJCenters += molecules[m]->numLJcenters();
-		nCharges += molecules[m]->numCharges();
-		nDipoles += molecules[m]->numDipoles();
-		nQuadrupoles += molecules[m]->numQuadrupoles();
-	}
-
-	// Construct the SoA.
-	CellDataSoA & soa = c.getCellDataSoA();
-	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
-
-	ComponentList components = *(_simulation.getEnsemble()->components());
-
-	double* const soa_ljc_m_r_x = soa.ljc_m_r_xBegin();
-	double* const soa_ljc_m_r_y = soa.ljc_m_r_yBegin();
-	double* const soa_ljc_m_r_z = soa.ljc_m_r_zBegin();
-	double* const soa_ljc_r_x = soa.ljc_r_xBegin();
-	double* const soa_ljc_r_y = soa.ljc_r_yBegin();
-	double* const soa_ljc_r_z = soa.ljc_r_zBegin();
-	double* const soa_ljc_f_x = soa.ljc_f_xBegin();
-	double* const soa_ljc_f_y = soa.ljc_f_yBegin();
-	double* const soa_ljc_f_z = soa.ljc_f_zBegin();
-	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
-	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
-	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
-
-	double* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
-	double* const soa_charges_m_r_y = soa.charges_m_r_yBegin();
-	double* const soa_charges_m_r_z = soa.charges_m_r_zBegin();
-	double* const soa_charges_r_x = soa.charges_r_xBegin();
-	double* const soa_charges_r_y = soa.charges_r_yBegin();
-	double* const soa_charges_r_z = soa.charges_r_zBegin();
-	double* const soa_charges_f_x = soa.charges_f_xBegin();
-	double* const soa_charges_f_y = soa.charges_f_yBegin();
-	double* const soa_charges_f_z = soa.charges_f_zBegin();
-	double* const soa_charges_V_x = soa.charges_V_xBegin();
-	double* const soa_charges_V_y = soa.charges_V_yBegin();
-	double* const soa_charges_V_z = soa.charges_V_zBegin();
-
-	double* const soa_dipoles_m_r_x = soa.dipoles_m_r_xBegin();
-	double* const soa_dipoles_m_r_y = soa.dipoles_m_r_yBegin();
-	double* const soa_dipoles_m_r_z = soa.dipoles_m_r_zBegin();
-	double* const soa_dipoles_r_x = soa.dipoles_r_xBegin();
-	double* const soa_dipoles_r_y = soa.dipoles_r_yBegin();
-	double* const soa_dipoles_r_z = soa.dipoles_r_zBegin();
-	double* const soa_dipoles_f_x = soa.dipoles_f_xBegin();
-	double* const soa_dipoles_f_y = soa.dipoles_f_yBegin();
-	double* const soa_dipoles_f_z = soa.dipoles_f_zBegin();
-	double* const soa_dipoles_V_x = soa.dipoles_V_xBegin();
-	double* const soa_dipoles_V_y = soa.dipoles_V_yBegin();
-	double* const soa_dipoles_V_z = soa.dipoles_V_zBegin();
-
-	double* const soa_quadrupoles_m_r_x = soa.quadrupoles_m_r_xBegin();
-	double* const soa_quadrupoles_m_r_y = soa.quadrupoles_m_r_yBegin();
-	double* const soa_quadrupoles_m_r_z = soa.quadrupoles_m_r_zBegin();
-	double* const soa_quadrupoles_r_x = soa.quadrupoles_r_xBegin();
-	double* const soa_quadrupoles_r_y = soa.quadrupoles_r_yBegin();
-	double* const soa_quadrupoles_r_z = soa.quadrupoles_r_zBegin();
-	double* const soa_quadrupoles_f_x = soa.quadrupoles_f_xBegin();
-	double* const soa_quadrupoles_f_y = soa.quadrupoles_f_yBegin();
-	double* const soa_quadrupoles_f_z = soa.quadrupoles_f_zBegin();
-	double* const soa_quadrupoles_V_x = soa.quadrupoles_V_xBegin();
-	double* const soa_quadrupoles_V_y = soa.quadrupoles_V_yBegin();
-	double* const soa_quadrupoles_V_z = soa.quadrupoles_V_zBegin();
-
-	size_t iLJCenters = 0;
-	size_t iCharges = 0;
-	size_t iDipoles = 0;
-	size_t iQuadrupoles = 0;
-	// For each molecule iterate over all its centers.
-	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t mol_ljc_num = molecules[i]->numLJcenters();
-		const size_t mol_charges_num = molecules[i]->numCharges();
-		const size_t mol_dipoles_num = molecules[i]->numDipoles();
-		const size_t mol_quadrupoles_num = molecules[i]->numQuadrupoles();
-		const double mol_pos_x = molecules[i]->r(0);
-		const double mol_pos_y = molecules[i]->r(1);
-		const double mol_pos_z = molecules[i]->r(2);
-
-		soa._mol_pos.x(i) = mol_pos_x;
-		soa._mol_pos.y(i) = mol_pos_y;
-		soa._mol_pos.z(i) = mol_pos_z;
-
-		soa._mol_ljc_num[i] = mol_ljc_num;
-		soa._mol_charges_num[i] = mol_charges_num;
-		soa._mol_dipoles_num[i] = mol_dipoles_num;
-		soa._mol_quadrupoles_num[i] = mol_quadrupoles_num;
-
-		for (size_t j = 0; j < mol_ljc_num; ++j, ++iLJCenters) {
-			// Store a copy of the molecule position for each center, and the position of
-			// each center. Assign each LJ center its ID and set the force to 0.0.
-			soa_ljc_m_r_x[iLJCenters] = mol_pos_x;
-			soa_ljc_m_r_y[iLJCenters] = mol_pos_y;
-			soa_ljc_m_r_z[iLJCenters] = mol_pos_z;
-			soa_ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
-			soa_ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
-			soa_ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
-			soa_ljc_f_x[iLJCenters] = 0.0;
-			soa_ljc_f_y[iLJCenters] = 0.0;
-			soa_ljc_f_z[iLJCenters] = 0.0;
-			soa_ljc_V_x[iLJCenters] = 0.0;
-			soa_ljc_V_y[iLJCenters] = 0.0;
-			soa_ljc_V_z[iLJCenters] = 0.0;
-			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
-			//soa._ljc_dist_lookup[iLJCenters] = 0.0;
-		}
-
-		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges)
-		{
-			soa_charges_m_r_x[iCharges] = mol_pos_x;
-			soa_charges_m_r_y[iCharges] = mol_pos_y;
-			soa_charges_m_r_z[iCharges] = mol_pos_z;
-			soa_charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
-			soa_charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
-			soa_charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
-			soa_charges_f_x[iCharges] = 0.0;
-			soa_charges_f_y[iCharges] = 0.0;
-			soa_charges_f_z[iCharges] = 0.0;
-			soa_charges_V_x[iCharges] = 0.0;
-			soa_charges_V_y[iCharges] = 0.0;
-			soa_charges_V_z[iCharges] = 0.0;
-			//soa._charges_dist_lookup[iCharges] = 0.0;
-			// Get the charge
-			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
-		}
-
-		for (size_t j = 0; j < mol_dipoles_num; ++j, ++iDipoles)
-		{
-			soa_dipoles_m_r_x[iDipoles] = mol_pos_x;
-			soa_dipoles_m_r_y[iDipoles] = mol_pos_y;
-			soa_dipoles_m_r_z[iDipoles] = mol_pos_z;
-			soa_dipoles_r_x[iDipoles] = molecules[i]->dipole_d(j)[0] + mol_pos_x;
-			soa_dipoles_r_y[iDipoles] = molecules[i]->dipole_d(j)[1] + mol_pos_y;
-			soa_dipoles_r_z[iDipoles] = molecules[i]->dipole_d(j)[2] + mol_pos_z;
-			soa_dipoles_f_x[iDipoles] = 0.0;
-			soa_dipoles_f_y[iDipoles] = 0.0;
-			soa_dipoles_f_z[iDipoles] = 0.0;
-			soa_dipoles_V_x[iDipoles] = 0.0;
-			soa_dipoles_V_y[iDipoles] = 0.0;
-			soa_dipoles_V_z[iDipoles] = 0.0;
-			//soa._dipoles_dist_lookup[iDipoles] = 0.0;
-			// Get the dipole moment
-			soa._dipoles_p[iDipoles] = components[molecules[i]->componentid()].dipole(j).absMy();
-			soa._dipoles_e.x(iDipoles) = molecules[i]->dipole_e(j)[0];
-			soa._dipoles_e.y(iDipoles) = molecules[i]->dipole_e(j)[1];
-			soa._dipoles_e.z(iDipoles) = molecules[i]->dipole_e(j)[2];
-			soa._dipoles_M.x(iDipoles) = 0.0;
-			soa._dipoles_M.y(iDipoles) = 0.0;
-			soa._dipoles_M.z(iDipoles) = 0.0;
-		}
-
-		for (size_t j = 0; j < mol_quadrupoles_num; ++j, ++iQuadrupoles)
-		{
-			soa_quadrupoles_m_r_x[iQuadrupoles] = mol_pos_x;
-			soa_quadrupoles_m_r_y[iQuadrupoles] = mol_pos_y;
-			soa_quadrupoles_m_r_z[iQuadrupoles] = mol_pos_z;
-			soa_quadrupoles_r_x[iQuadrupoles] = molecules[i]->quadrupole_d(j)[0] + mol_pos_x;
-			soa_quadrupoles_r_y[iQuadrupoles] = molecules[i]->quadrupole_d(j)[1] + mol_pos_y;
-			soa_quadrupoles_r_z[iQuadrupoles] = molecules[i]->quadrupole_d(j)[2] + mol_pos_z;
-			soa_quadrupoles_f_x[iQuadrupoles] = 0.0;
-			soa_quadrupoles_f_y[iQuadrupoles] = 0.0;
-			soa_quadrupoles_f_z[iQuadrupoles] = 0.0;
-			soa_quadrupoles_V_x[iQuadrupoles] = 0.0;
-			soa_quadrupoles_V_y[iQuadrupoles] = 0.0;
-			soa_quadrupoles_V_z[iQuadrupoles] = 0.0;
-			//soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
-			// Get the quadrupole moment
-			soa._quadrupoles_m[iQuadrupoles] = components[molecules[i]->componentid()].quadrupole(j).absQ();
-			soa._quadrupoles_e.x(iQuadrupoles) = molecules[i]->quadrupole_e(j)[0];
-			soa._quadrupoles_e.y(iQuadrupoles) = molecules[i]->quadrupole_e(j)[1];
-			soa._quadrupoles_e.z(iQuadrupoles) = molecules[i]->quadrupole_e(j)[2];
-			soa._quadrupoles_M.x(iQuadrupoles) = 0.0;
-			soa._quadrupoles_M.y(iQuadrupoles) = 0.0;
-			soa._quadrupoles_M.z(iQuadrupoles) = 0.0;
-		}
-	}
-}
-
-
 void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	MoleculeList & molecules = c.getParticlePointers();
 
-	double* const soa_ljc_f_x = soa.ljc_f_xBegin();
-	double* const soa_ljc_f_y = soa.ljc_f_yBegin();
-	double* const soa_ljc_f_z = soa.ljc_f_zBegin();
 	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
 	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
 	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
 
-	double* const soa_charges_f_x = soa.charges_f_xBegin();
-	double* const soa_charges_f_y = soa.charges_f_yBegin();
-	double* const soa_charges_f_z = soa.charges_f_zBegin();
 	double* const soa_charges_V_x = soa.charges_V_xBegin();
 	double* const soa_charges_V_y = soa.charges_V_yBegin();
 	double* const soa_charges_V_z = soa.charges_V_zBegin();
 
-	double* const soa_dipoles_f_x = soa.dipoles_f_xBegin();
-	double* const soa_dipoles_f_y = soa.dipoles_f_yBegin();
-	double* const soa_dipoles_f_z = soa.dipoles_f_zBegin();
 	double* const soa_dipoles_V_x = soa.dipoles_V_xBegin();
 	double* const soa_dipoles_V_y = soa.dipoles_V_yBegin();
 	double* const soa_dipoles_V_z = soa.dipoles_V_zBegin();
 
-	double* const soa_quadrupoles_f_x = soa.quadrupoles_f_xBegin();
-	double* const soa_quadrupoles_f_y = soa.quadrupoles_f_yBegin();
-	double* const soa_quadrupoles_f_z = soa.quadrupoles_f_zBegin();
 	double* const soa_quadrupoles_V_x = soa.quadrupoles_V_xBegin();
 	double* const soa_quadrupoles_V_y = soa.quadrupoles_V_yBegin();
 	double* const soa_quadrupoles_V_z = soa.quadrupoles_V_zBegin();
@@ -330,16 +127,6 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		const size_t mol_quadrupoles_num = molecules[m]->numQuadrupoles();
 
 		for (size_t i = 0; i < mol_ljc_num; ++i, ++iLJCenters) {
-			// Store the resulting force in the molecule.
-			double f[3];
-			f[0] = soa_ljc_f_x[iLJCenters];
-			f[1] = soa_ljc_f_y[iLJCenters];
-			f[2] = soa_ljc_f_z[iLJCenters];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			molecules[m]->Fljcenteradd(i, f);
-
 			// Store the resulting virial in the molecule.
 			double V[3];
 			V[0] = soa_ljc_V_x[iLJCenters]*0.5;
@@ -352,19 +139,6 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 		}
 
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
-			// Store the resulting force in the molecule.
-			double f[3];
-			f[0] = soa_charges_f_x[iCharges];
-			f[1] = soa_charges_f_y[iCharges];
-			f[2] = soa_charges_f_z[iCharges];
-			if(isnan(f[0])||isnan(f[1])||isnan(f[2]) ){
-				printf("nan\n");
-			}
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			molecules[m]->Fchargeadd(i, f);
-
 			// Store the resulting virial in the molecule.
 			double V[3];
 			V[0] = soa_charges_V_x[iCharges]*0.5;
@@ -378,21 +152,13 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 		for (size_t i = 0; i < mol_dipoles_num; ++i, ++iDipoles) {
 			// Store the resulting force & torque in the molecule.
-			double f[3];
-			f[0] = soa_dipoles_f_x[iDipoles];
-			f[1] = soa_dipoles_f_y[iDipoles];
-			f[2] = soa_dipoles_f_z[iDipoles];
 			double M[3];
 			M[0] = soa._dipoles_M.x(iDipoles);
 			M[1] = soa._dipoles_M.y(iDipoles);
 			M[2] = soa._dipoles_M.z(iDipoles);
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
 			assert(!isnan(M[0]));
 			assert(!isnan(M[1]));
 			assert(!isnan(M[2]));
-			molecules[m]->Fdipoleadd(i, f);
 			molecules[m]->Madd(M);
 
 			// Store the resulting virial in the molecule.
@@ -408,21 +174,13 @@ void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
 
 		for (size_t i = 0; i < mol_quadrupoles_num; ++i, ++iQuadrupoles) {
 			// Store the resulting force & torque in the molecule.
-			double f[3];
-			f[0] = soa_quadrupoles_f_x[iQuadrupoles];
-			f[1] = soa_quadrupoles_f_y[iQuadrupoles];
-			f[2] = soa_quadrupoles_f_z[iQuadrupoles];
 			double M[3];
 			M[0] = soa._quadrupoles_M.x(iQuadrupoles);
 			M[1] = soa._quadrupoles_M.y(iQuadrupoles);
 			M[2] = soa._quadrupoles_M.z(iQuadrupoles);
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
 			assert(!isnan(M[0]));
 			assert(!isnan(M[1]));
 			assert(!isnan(M[2]));
-			molecules[m]->Fquadrupoleadd(i, f);
 			molecules[m]->Madd(M);
 
 			// Store the resulting virial in the molecule.

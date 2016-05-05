@@ -46,7 +46,7 @@ public:
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */

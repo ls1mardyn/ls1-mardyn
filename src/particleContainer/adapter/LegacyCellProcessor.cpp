@@ -35,17 +35,6 @@ void LegacyCellProcessor::initTraversal(const size_t numCells)
 void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
 	assert(!cell.isInActiveWindow());
 	cell.setInActiveWindow();
-
-	double zeroVec[3] = {0.0, 0.0, 0.0};
-
-	// TODO: check if the reset is done twice as leaving this part has no difference on the result.
-	vector<Molecule*>& particlePointers = cell.getParticlePointers();
-	size_t size = cell.getParticlePointers().size();
-	for (size_t i = 0; i < size; i++) {
-		Molecule& molecule1 = *particlePointers[i];
-		molecule1.setF(zeroVec);
-		molecule1.setM(zeroVec);
-	}
 }
 
 double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& cell2)

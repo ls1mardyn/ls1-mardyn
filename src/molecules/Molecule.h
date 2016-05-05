@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include <array>
 
 #include "molecules/Component.h"
 #include "molecules/Comp2Param.h"
@@ -12,6 +13,7 @@
 
 
 class Domain;
+class CellDataSoA;
 
 //! @brief Molecule modeled as LJ sphere with point polarities
 class Molecule {
@@ -21,7 +23,7 @@ public:
 	// but if it is left away, all pointer data is not initialized (which is not
 	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
 	// use it's instances.
-	Molecule(unsigned long id = 0, Component *component = NULL,
+	Molecule(unsigned long id = 0, Component *component = nullptr,
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,
 	         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
@@ -34,9 +36,8 @@ private:
 
 public:
 	~Molecule() {
-		delete[] _sites_d;
-		delete[] _osites_e;
-		delete[] _sites_F;
+		// don't delete SoA
+		_soa = nullptr;
 	}
 
 	/** get molecule ID */
@@ -46,7 +47,7 @@ public:
 	/** get the molecule's component ID */
 	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component */
-	void setComponent(Component *component) { _component = component; setupCache();}
+	void setComponent(Component *component) { _component = component;}
 	/** return pointer to component to which the molecule belongs */
 	Component* component() const { return _component; }
 	/** get position coordinate */
@@ -98,6 +99,12 @@ public:
 	/** return total kinetic energy of the molecule */
 	double U_kin() { return U_trans() + U_rot(); }
 	
+	void setSoA(CellDataSoA * const s) {_soa = s;}
+	void setStartIndexSoA_LJ(unsigned i) {_soa_index_lj = i;}
+	void setStartIndexSoA_C(unsigned i) {_soa_index_c = i;}
+	void setStartIndexSoA_D(unsigned i) {_soa_index_d = i;}
+	void setStartIndexSoA_Q(unsigned i) {_soa_index_q = i;}
+
 	/* TODO: Maybe we should better do this using the component directly? 
 	 * In the GNU STL vector.size() causes two memory accesses and one subtraction!
 	 */
@@ -109,14 +116,112 @@ public:
 	unsigned int numDipoles() const { return _component->numDipoles(); }
 	unsigned int numQuadrupoles() const { return _component->numQuadrupoles(); }
 
-	const double* site_d(unsigned int i) const { return &(_sites_d[3*i]); }
-	const double* site_F(unsigned int i) const { return &(_sites_F[3*i]); }
-	const double* ljcenter_d(unsigned int i) const { return &(_ljcenters_d[3*i]); }
-	const double* charge_d(unsigned int i) const { return &(_charges_d[3*i]); }
-	const double* dipole_d(unsigned int i) const { return &(_dipoles_d[3*i]); }
-	const double* dipole_e(unsigned int i) const { return &(_dipoles_e[3*i]); }
-	const double* quadrupole_d(unsigned int i) const { return &(_quadrupoles_d[3*i]); }
-	const double* quadrupole_e(unsigned int i) const { return &(_quadrupoles_e[3*i]); }
+	std::array<double, 3> site_d(unsigned int i) const {
+		const unsigned n1 = numLJcenters(), n2 = numCharges()+ n1, n3 = numDipoles() + n2;
+#ifndef NDEBUG
+		const unsigned n4 = numQuadrupoles() + n3;
+#endif
+		if(i < n1) {
+			return ljcenter_d(i);
+		} else if (i < n2) {
+			return charge_d(i - n1);
+		} else if (i < n3) {
+			return dipole_d(i - n2);
+		} else { assert(i < n4);
+			return quadrupole_d(i - n3);
+		}
+	}
+	std::array<double, 3> ljcenter_d(unsigned int i) const {
+		std::array<double, 3> ret;
+		computeLJcenter_d(i,ret.data());
+		return ret;
+	}
+	std::array<double, 3> charge_d(unsigned int i) const {
+		std::array<double, 3> ret;
+		computeCharge_d(i,ret.data());
+		return ret;
+	}
+	std::array<double, 3> dipole_d(unsigned int i) const {
+		std::array<double, 3> ret;
+		computeDipole_d(i, ret.data());
+		return ret;
+	}
+	std::array<double, 3> quadrupole_d(unsigned int i) const {
+		std::array<double, 3> ret;
+		computeQuadrupole_d(i, ret.data());
+		return ret;
+	}
+
+	std::array<double, 3> site_d_abs(unsigned int i) const {
+		const unsigned n1 = numLJcenters(), n2 = numCharges()+ n1, n3 = numDipoles() + n2;
+#ifndef NDEBUG
+		const unsigned n4 = numQuadrupoles() + n3;
+#endif
+		if(i < n1) {
+			return ljcenter_d_abs(i);
+		} else if (i < n2) {
+			return charge_d_abs(i - n1);
+		} else if (i < n3) {
+			return dipole_d_abs(i - n2);
+		} else { assert(i < n4);
+			return quadrupole_d_abs(i - n3);
+		}
+	}
+	std::array<double, 3> ljcenter_d_abs(unsigned int i) const;
+	std::array<double, 3> charge_d_abs(unsigned int i) const;
+	std::array<double, 3> dipole_d_abs(unsigned int i) const;
+	std::array<double, 3> quadrupole_d_abs(unsigned int i) const;
+
+	std::array<double, 3> dipole_e(unsigned int i) const;
+	std::array<double, 3> quadrupole_e(unsigned int i) const;
+
+	std::array<double, 3> site_F(unsigned int i) const {
+		const unsigned n1 = numLJcenters(), n2 = numCharges()+ n1, n3 = numDipoles() + n2;
+#ifndef NDEBUG
+		const unsigned n4 = numQuadrupoles() + n3;
+#endif
+		if(i < n1) {
+			return ljcenter_F(i);
+		} else if (i < n2) {
+			return charge_F(i - n1);
+		} else if (i < n3) {
+			return dipole_F(i - n2);
+		} else { assert(i < n4);
+			return quadrupole_F(i - n3);
+		}
+	}
+	std::array<double, 3> ljcenter_F(unsigned int i) const;
+	std::array<double, 3> charge_F(unsigned int i) const;
+	std::array<double, 3> dipole_F(unsigned int i) const;
+	std::array<double, 3> quadrupole_F(unsigned int i) const;
+
+	void normalizeQuaternion() {
+		_q.normalize();
+	}
+	void computeLJcenter_d(unsigned int i, double result[3]) const {
+		assert(_q.isNormalized());
+		_q.rotate(_component->ljcenter(i).r(), result);
+	}
+	void computeCharge_d(unsigned int i, double result[3]) const {
+		assert(_q.isNormalized());
+		_q.rotate(_component->charge(i).r(), result);
+	}
+	void computeDipole_d(unsigned int i, double result[3]) const {
+		assert(_q.isNormalized());
+		_q.rotate(_component->dipole(i).r(), result);
+	}
+	void computeQuadrupole_d(unsigned int i, double result[3]) const {
+		assert(_q.isNormalized());
+		_q.rotate(_component->quadrupole(i).r(), result);
+	}
+	void computeDipole_e(unsigned int i, double result[3]) const {
+		assert(_q.isNormalized());
+		_q.rotate(_component->dipole(i).e(), result);
+	}
+	void computeQuadrupole_e(unsigned int i, double result[3]) const {
+		assert(_q.isNormalized());
+		_q.rotate(_component->quadrupole(i).e(), result);
+	}
 
 
 	/**
@@ -182,27 +287,17 @@ public:
 		_r[1] = fixedy;
 	}
 
-	void Fljcenteradd(unsigned int i, double a[])
-	{ double* Fsite=&(_ljcenters_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	void Fljcentersub(unsigned int i, double a[])
-	{ double* Fsite=&(_ljcenters_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
-	void Fchargeadd(unsigned int i, double a[])
-	{ double* Fsite=&(_charges_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	void Fchargesub(unsigned int i, double a[])
-	{ double* Fsite=&(_charges_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
-	void Fdipoleadd(unsigned int i, double a[])
-	{ double* Fsite=&(_dipoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	void Fdipolesub(unsigned int i, double a[])
-	{ double* Fsite=&(_dipoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
-	void Fquadrupoleadd(unsigned int i, double a[])
-	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]+=a[d]; }
-	void Fquadrupolesub(unsigned int i, double a[])
-	{ double* Fsite=&(_quadrupoles_F[3*i]); for(unsigned short d=0;d<3;++d) Fsite[d]-=a[d]; }
+	void Fljcenteradd(unsigned int i, double a[]);
+	void Fljcentersub(unsigned int i, double a[]);
+	void Fchargeadd(unsigned int i, double a[]);
+	void Fchargesub(unsigned int i, double a[]);
+	void Fdipoleadd(unsigned int i, double a[]);
+	void Fdipolesub(unsigned int i, double a[]);
+	void Fquadrupoleadd(unsigned int i, double a[]);
+	void Fquadrupolesub(unsigned int i, double a[]);
 
 	/** First step of the leap frog integrator */
 	void upd_preF(double dt);
-	/** update the molecules site position caches (rotate sites and save relative positions) */
-	void upd_cache();
 	/** second step of the leap frog integrator */
 	void upd_postF(double dt_halve, double& summv2, double& sumIw2);
 
@@ -265,25 +360,15 @@ private:
 
 	double _m; /**< total mass */
 	double _I[3],_invI[3];  // moment of inertia for principal axes and it's inverse
-	// global site coordinates relative to site origin
-	// row order: dx1,dy1,dz1,dx2,dy2,dz2,...
-	/* TODO: Maybe change to absolute positions for many center molecules. */
-	double *_sites_d;
-	double *_ljcenters_d, *_charges_d, *_dipoles_d,
-	       *_quadrupoles_d;
-	// site orientation
-	double *_osites_e;
-	double *_dipoles_e, *_quadrupoles_e;
-	// site Forces
-	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
-	double* _sites_F;
-	double *_ljcenters_F, *_charges_F, *_dipoles_F,
-	       *_quadrupoles_F;
+
+	/* absolute positions are stored in the soa. Work-arounds to get the relative ones*/
+	CellDataSoA * _soa;
+	unsigned _soa_index_lj;
+	unsigned _soa_index_c;
+	unsigned _soa_index_d;
+	unsigned _soa_index_q;
 
 	double fixedx, fixedy;
-
-	// setup cache values/properties
-	void setupCache();
 };
 
 
@@ -307,11 +392,33 @@ inline void SiteSiteDistance(const double drm[3], const double ds1[3], const dou
 	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
 }
 
+/** @brief Calculate the distance between two sites of two molecules.
+ *
+ * @param[in]  ds1 absolute position of site 1
+ * @param[in]  ds2 absolute position of site 2
+ * @param[out] drs distance vector site-site
+ * @param[out] dr2 distance site-site
+ *
+ */
+inline void SiteSiteDistanceAbs(const double ds1[3], const double ds2[3], double drs[3], double& dr2)
+{
+	for (unsigned short d = 0; d < 3; ++d)
+		drs[d] = ds1[d] - ds2[d];
+	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
+}
+
 
 inline void minusSiteSiteDistance(const double drm[3], const double ds1[3], const double ds2[3], double drs[3], double& dr2)
 {
 	for (unsigned short d = 0; d < 3; ++d)
 		drs[d] = ds2[d] - drm[d] - ds1[d];
+	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
+}
+
+inline void minusSiteSiteDistanceAbs(const double ds1[3], const double ds2[3], double drs[3], double& dr2)
+{
+	for (unsigned short d = 0; d < 3; ++d)
+		drs[d] = ds2[d] - ds1[d];
 	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
 }
 

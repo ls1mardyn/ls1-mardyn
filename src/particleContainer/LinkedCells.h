@@ -243,13 +243,16 @@ public:
 	//! If the molecule is not inside the bounding box, an error is printed
 	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
-	ParticleCell getCell(int idx){ return _cells[idx];}
+	ParticleCell& getCell(int idx){ return _cells[idx];}
 
 	// documentation in base class
 	virtual void updateInnerMoleculeCaches();
 
 	// documentation in base class
 	virtual void updateBoundaryAndHaloMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateMoleculeCaches();
 
 private:
 	//####################################
@@ -359,6 +362,8 @@ private:
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
+
+	std::vector<size_t> getCompIDs() const;
 
 };
 

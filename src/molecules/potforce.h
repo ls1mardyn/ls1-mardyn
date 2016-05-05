@@ -276,10 +276,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	const unsigned int nc1 = mi.numLJcenters();
 	const unsigned int nc2 = mj.numLJcenters();
 	for (unsigned int si = 0; si < nc1; ++si) {
-		const double* dii = mi.ljcenter_d(si);
+		const std::array<double,3> dii = mi.ljcenter_d_abs(si);
 		for (unsigned int sj = 0; sj < nc2; ++sj) {
-			const double* djj = mj.ljcenter_d(sj);
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
+			const std::array<double,3> djj = mj.ljcenter_d_abs(sj);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 			double eps24;
 			params >> eps24;
 			double sig2;
@@ -317,13 +317,13 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	const unsigned int nd1 = mi.numDipoles();
 	const unsigned int nd2 = mj.numDipoles();
 	for (unsigned si = 0; si < ne1; si++) {
-		const double* dii = mi.charge_d(si);
+		const std::array<double,3> dii = mi.charge_d_abs(si);
 		// Charge-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
-			const double* djj = mj.charge_d(sj);
+			const std::array<double,3> djj = mj.charge_d_abs(sj);
 			double q1q2per4pie0; // 4pie0 = 1 in reduced units
 			params >> q1q2per4pie0;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 			PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
 
 			mi.Fchargeadd(si, f);
@@ -335,12 +335,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		}
 		// Charge-Quadrupole
 		for (unsigned sj = 0; sj < nq2; sj++) {
-			const double* djj = mj.quadrupole_d(sj);
+			const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
 			double qQ05per4pie0; // 4pie0 = 1 in reduced units
 			params >> qQ05per4pie0;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.quadrupole_e(sj);
-			PotForceChargeQuadrupole(drs, dr2, ejj, qQ05per4pie0, f, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.quadrupole_e(sj);
+			PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, m2, u);
 
 			mi.Fchargeadd(si, f);
 			mj.Fquadrupolesub(sj, f);
@@ -352,12 +352,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		}
 		// Charge-Dipole
 		for (unsigned sj = 0; sj < nd2; sj++) {
-			const double* djj = mj.dipole_d(sj);
+			const std::array<double,3> djj = mj.dipole_d_abs(sj);
 			double minusqmyper4pie0;
 			params >> minusqmyper4pie0;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.dipole_e(sj);
-			PotForceChargeDipole(drs, dr2, ejj, minusqmyper4pie0, f, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.dipole_e(sj);
+			PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, m2, u);
 
 			mi.Fchargeadd(si, f);
 			mj.Fdipolesub(sj, f);
@@ -369,16 +369,16 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		}
 	}
 	for (unsigned int si = 0; si < nq1; ++si) {
-		const double* dii = mi.quadrupole_d(si);
-		const double* eii = mi.quadrupole_e(si);
+		const std::array<double,3> dii = mi.quadrupole_d_abs(si);
+		const std::array<double,3> eii = mi.quadrupole_e(si);
 
 		// Quadrupole-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
-			const double* djj = mj.charge_d(sj);
+			const std::array<double,3> djj = mj.charge_d_abs(sj);
 			double qQ05per4pie0; // 4pie0 = 1 in reduced units
 			params >> qQ05per4pie0;
-			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			PotForceChargeQuadrupole(drs, dr2, eii, qQ05per4pie0, f, m1, u);
+			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, m1, u);
 
 			mi.Fquadrupolesub(si, f);
 			mj.Fchargeadd(sj, f);
@@ -391,12 +391,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Quadrupole-Quadrupole -------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
 			//double drs[3];
-			const double* djj = mj.quadrupole_d(sj);
+			const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
 			double q2075;
 			params >> q2075;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.quadrupole_e(sj);
-			PotForce2Quadrupole(drs, dr2, eii, ejj, q2075, f, m1, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.quadrupole_e(sj);
+			PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, m1, m2, u);
 
 			mi.Fquadrupoleadd(si, f);
 			mj.Fquadrupolesub(sj, f);
@@ -410,12 +410,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Quadrupole-Dipole -----------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
 			//double drs[3];
-			const double* djj = mj.dipole_d(sj);
+			const std::array<double,3> djj = mj.dipole_d_abs(sj);
 			double qmy15;
 			params >> qmy15;
-			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.dipole_e(sj);
-			PotForceDiQuadrupole(drs, dr2, ejj, eii, qmy15, f, m2, m1, u);
+			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.dipole_e(sj);
+			PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, m2, m1, u);
 
 			mi.Fquadrupolesub(si, f);
 			mj.Fdipoleadd(sj, f);
@@ -427,15 +427,15 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		}
 	}
 	for (unsigned int si = 0; si < nd1; ++si) {
-		const double* dii = mi.dipole_d(si);
-		const double* eii = mi.dipole_e(si);
+		const std::array<double,3> dii = mi.dipole_d_abs(si);
+		const std::array<double,3> eii = mi.dipole_e(si);
 		// Dipole-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
-			const double* djj = mj.charge_d(sj);
+			const std::array<double,3> djj = mj.charge_d_abs(sj);
 			double minusqmyper4pie0;
 			params >> minusqmyper4pie0;
-			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			PotForceChargeDipole(drs, dr2, eii, minusqmyper4pie0, f, m1, u);
+			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, m1, u);
 
 			mi.Fdipolesub(si, f);
 			mj.Fchargeadd(sj, f);
@@ -448,12 +448,12 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		// Dipole-Quadrupole -----------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
 			//double drs[3];
-			const double* djj = mj.quadrupole_d(sj);
+			const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
 			double myq15;
 			params >> myq15;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.quadrupole_e(sj);
-			PotForceDiQuadrupole(drs, dr2, eii, ejj, myq15, f, m1, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.quadrupole_e(sj);
+			PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, m1, m2, u);
 
 			mi.Fdipoleadd(si, f);
 			mj.Fquadrupolesub(sj, f);
@@ -465,14 +465,14 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		}
 		// Dipole-Dipole ---------------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
-			const double* djj = mj.dipole_d(sj);
+			const std::array<double,3> djj = mj.dipole_d_abs(sj);
 			double my2;
 			params >> my2;
 			double rffac;
 			params >> rffac;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.dipole_e(sj);
-			PotForce2Dipole(drs, dr2, eii, ejj, my2, rffac, f, m1, m2, u, MyRF);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.dipole_e(sj);
+			PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, m1, m2, u, MyRF);
 
 			mi.Fdipoleadd(si, f);
 			mj.Fdipolesub(sj, f);
@@ -502,10 +502,10 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		const unsigned int nc1 = mi.numLJcenters();
 		const unsigned int nc2 = mj.numLJcenters();
 		for (unsigned int si = 0; si < nc1; ++si) {
-			const double* dii = mi.ljcenter_d(si);
+			const std::array<double,3> dii = mi.ljcenter_d_abs(si);
 			for (unsigned int sj = 0; sj < nc2; ++sj) {
-				const double* djj = mj.ljcenter_d(sj);
-				SiteSiteDistance(drm, dii, djj, drs, dr2);
+				const std::array<double,3> djj = mj.ljcenter_d_abs(sj);
+				SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 				double eps24;
 				params >> eps24;
 				double sig2;
@@ -531,106 +531,106 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	const unsigned int nd1 = mi.numDipoles();
 	const unsigned int nd2 = mj.numDipoles();
 	for (unsigned si = 0; si < ne1; si++) {
-		const double* dii = mi.charge_d(si);
+		const std::array<double,3> dii = mi.charge_d_abs(si);
 		// Charge-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
-			const double* djj = mj.charge_d(sj);
+			const std::array<double,3> djj = mj.charge_d_abs(sj);
 			double q1q2per4pie0; // 4pie0 = 1 in reduced units
 			params >> q1q2per4pie0;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 			PotForce2Charge(drs, dr2, q1q2per4pie0, f, u);
 			UpotXpoles += u;
 		}
 		// Charge-Quadrupole
 		for (unsigned sj = 0; sj < nq2; sj++) {
-			const double* djj = mj.quadrupole_d(sj);
+			const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
 			double qQ05per4pie0; // 4pie0 = 1 in reduced units
 			params >> qQ05per4pie0;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.quadrupole_e(sj);
-			PotForceChargeQuadrupole(drs, dr2, ejj, qQ05per4pie0, f, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.quadrupole_e(sj);
+			PotForceChargeQuadrupole(drs, dr2, ejj.data(), qQ05per4pie0, f, m2, u);
 			UpotXpoles += u;
 		}
 		// Charge-Dipole
 		for (unsigned sj = 0; sj < nd2; sj++) {
-			const double* djj = mj.dipole_d(sj);
+			const std::array<double,3> djj = mj.dipole_d_abs(sj);
 			double minusqmyper4pie0;
 			params >> minusqmyper4pie0;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.dipole_e(sj);
-			PotForceChargeDipole(drs, dr2, ejj, minusqmyper4pie0, f, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.dipole_e(sj);
+			PotForceChargeDipole(drs, dr2, ejj.data(), minusqmyper4pie0, f, m2, u);
 			UpotXpoles += u;
 		}
 	}
 	for (unsigned int si = 0; si < nq1; ++si) {
-		const double* dii = mi.quadrupole_d(si);
-		const double* eii = mi.quadrupole_e(si);
+		const std::array<double,3> dii = mi.quadrupole_d_abs(si);
+		const std::array<double,3> eii = mi.quadrupole_e(si);
 
 		// Quadrupole-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
-			const double* djj = mj.charge_d(sj);
+			const std::array<double,3> djj = mj.charge_d_abs(sj);
 			double qQ05per4pie0; // 4pie0 = 1 in reduced units
 			params >> qQ05per4pie0;
-			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			PotForceChargeQuadrupole(drs, dr2, eii, qQ05per4pie0, f, m1, u);
+			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			PotForceChargeQuadrupole(drs, dr2, eii.data(), qQ05per4pie0, f, m1, u);
 			UpotXpoles += u;
 		}
 		// Quadrupole-Quadrupole -------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
-			const double* djj = mj.quadrupole_d(sj);
+			const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
 			double q2075;
 			params >> q2075;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.quadrupole_e(sj);
-			PotForce2Quadrupole(drs, dr2, eii, ejj, q2075, f, m1, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.quadrupole_e(sj);
+			PotForce2Quadrupole(drs, dr2, eii.data(), ejj.data(), q2075, f, m1, m2, u);
 			UpotXpoles += u;
 		}
 		// Quadrupole-Dipole -----------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
-			const double* djj = mj.dipole_d(sj);
+			const std::array<double,3> djj = mj.dipole_d_abs(sj);
 			double qmy15;
 			params >> qmy15;
-			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.dipole_e(sj);
+			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.dipole_e(sj);
 			//for(unsigned short d=0;d<3;++d) drs[d]=-drs[d]; // avoid that and toggle add/sub below
-			PotForceDiQuadrupole(drs, dr2, ejj, eii, qmy15, f, m2, m1, u);
+			PotForceDiQuadrupole(drs, dr2, ejj.data(), eii.data(), qmy15, f, m2, m1, u);
 			UpotXpoles += u;
 		}
 	}
 	for (unsigned int si = 0; si < nd1; ++si) {
-		const double* dii = mi.dipole_d(si);
-		const double* eii = mi.dipole_e(si);
+		const std::array<double,3> dii = mi.dipole_d_abs(si);
+		const std::array<double,3> eii = mi.dipole_e(si);
 		// Dipole-Charge
 		for (unsigned sj = 0; sj < ne2; sj++) {
-			const double* djj = mj.charge_d(sj);
+			const std::array<double,3> djj = mj.charge_d_abs(sj);
 			double minusqmyper4pie0;
 			params >> minusqmyper4pie0;
-			minusSiteSiteDistance(drm, dii, djj, drs, dr2);
-			PotForceChargeDipole(drs, dr2, eii, minusqmyper4pie0, f, m1, u);
+			minusSiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			PotForceChargeDipole(drs, dr2, eii.data(), minusqmyper4pie0, f, m1, u);
 			UpotXpoles += u;
 		}
 		// Dipole-Quadrupole -----------------------
 		for (unsigned int sj = 0; sj < nq2; ++sj) {
 			//double drs[3];
-			const double* djj = mj.quadrupole_d(sj);
+			const std::array<double,3> djj = mj.quadrupole_d_abs(sj);
 			double myq15;
 			params >> myq15;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.quadrupole_e(sj);
-			PotForceDiQuadrupole(drs, dr2, eii, ejj, myq15, f, m1, m2, u);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.quadrupole_e(sj);
+			PotForceDiQuadrupole(drs, dr2, eii.data(), ejj.data(), myq15, f, m1, m2, u);
 			UpotXpoles += u;
 		}
 		// Dipole-Dipole ---------------------------
 		for (unsigned int sj = 0; sj < nd2; ++sj) {
 			//double drs[3];
-			const double* djj = mj.dipole_d(sj);
+			const std::array<double,3> djj = mj.dipole_d_abs(sj);
 			double my2;
 			params >> my2;
 			double rffac;
 			params >> rffac;
-			SiteSiteDistance(drm, dii, djj, drs, dr2);
-			const double* ejj = mj.dipole_e(sj);
-			PotForce2Dipole(drs, dr2, eii, ejj, my2, rffac, f, m1, m2, u, MyRF);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			const std::array<double,3> ejj = mj.dipole_e(sj);
+			PotForce2Dipole(drs, dr2, eii.data(), ejj.data(), my2, rffac, f, m1, m2, u, MyRF);
 			UpotXpoles += u;
 		}
 	}

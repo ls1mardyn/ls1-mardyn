@@ -105,79 +105,20 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 
 
 void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
-	const MoleculeList & molecules = c.getParticlePointers();
-
-	// Determine the total number of centers.
-	size_t numMolecules = molecules.size();
-	size_t nLJCenters = 0;
-	
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		nLJCenters += molecules[m]->numLJcenters();
-	}
-
-	// Construct the SoA.
-	CellDataSoA & soa = c.getCellDataSoA();
-	soa.resize(numMolecules,nLJCenters,0,0,0);
-
-	ComponentList components = *(_simulation.getEnsemble()->components());
-
-	double* const soa_ljc_m_r_x = soa.ljc_m_r_xBegin();
-	double* const soa_ljc_m_r_y = soa.ljc_m_r_yBegin();
-	double* const soa_ljc_m_r_z = soa.ljc_m_r_zBegin();
-	double* const soa_ljc_r_x = soa.ljc_r_xBegin();
-	double* const soa_ljc_r_y = soa.ljc_r_yBegin();
-	double* const soa_ljc_r_z = soa.ljc_r_zBegin();
-	double* const soa_ljc_f_x = soa.ljc_f_xBegin();
-	double* const soa_ljc_f_y = soa.ljc_f_yBegin();
-	double* const soa_ljc_f_z = soa.ljc_f_zBegin();
-	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
-	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
-	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
-
-	size_t iLJCenters = 0;
-	// For each molecule iterate over all its centers.
-	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t mol_ljc_num = molecules[i]->numLJcenters();
-		const double mol_pos_x = molecules[i]->r(0);
-		const double mol_pos_y = molecules[i]->r(1);
-		const double mol_pos_z = molecules[i]->r(2);
-
-		soa._mol_pos.x(i) = mol_pos_x;
-		soa._mol_pos.y(i) = mol_pos_y;
-		soa._mol_pos.z(i) = mol_pos_z;
-		soa._mol_ljc_num[i] = mol_ljc_num;
-
-		for (size_t j = 0; j < mol_ljc_num; ++j, ++iLJCenters) {
-			// Store a copy of the molecule position for each center, and the position of
-			// each center. Assign each LJ center its ID and set the force to 0.0.
-			soa_ljc_m_r_x[iLJCenters] = mol_pos_x;
-			soa_ljc_m_r_y[iLJCenters] = mol_pos_y;
-			soa_ljc_m_r_z[iLJCenters] = mol_pos_z;
-			soa_ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
-			soa_ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
-			soa_ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
-			soa_ljc_f_x[iLJCenters] = 0.0;
-			soa_ljc_f_y[iLJCenters] = 0.0;
-			soa_ljc_f_z[iLJCenters] = 0.0;
-			soa_ljc_V_x[iLJCenters] = 0.0;
-			soa_ljc_V_y[iLJCenters] = 0.0;
-			soa_ljc_V_z[iLJCenters] = 0.0;
-			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
-			//soa._ljc_dist_lookup[iLJCenters] = 0.0;
-		}
-	}
+	// as pre new integration of Caches in SoAs, 
+	// this function should do nothing
 }
 
 
 void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
+	// as pre new integration of Caches in SoAs, 
+	// this function should only accumulate virials
+
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
 	MoleculeList & molecules = c.getParticlePointers();
 
-	double* const soa_ljc_f_x = soa.ljc_f_xBegin();
-	double* const soa_ljc_f_y = soa.ljc_f_yBegin();
-	double* const soa_ljc_f_z = soa.ljc_f_zBegin();
 	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
 	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
 	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
@@ -189,16 +130,6 @@ void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
 		const size_t mol_ljc_num = molecules[m]->numLJcenters();
 
 		for (size_t i = 0; i < mol_ljc_num; ++i, ++iLJCenters) {
-			// Store the resulting force in the molecule.
-			double f[3];
-			f[0] = soa_ljc_f_x[iLJCenters];
-			f[1] = soa_ljc_f_y[iLJCenters];
-			f[2] = soa_ljc_f_z[iLJCenters];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			molecules[m]->Fljcenteradd(i, f);
-
 			// Store the resulting virial in the molecule.
 			double V[3];
 			V[0] = soa_ljc_V_x[iLJCenters]*0.5;
@@ -794,7 +725,7 @@ void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCe
 
 	} else {
 		assert(c1Halo != c2Halo);							// one of them is halo and
-		assert(not c1.getCellIndex() < c2.getCellIndex());	// c1.index not < c2.index
+		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
 
 		const bool CalculateMacroscopic = false;
 

@@ -81,6 +81,8 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
+	// as pre new integration of Caches in SoAs, 
+	// this function work as before, as it builds secondary SoAs
 	const MoleculeList & molecules = c.getParticlePointers();
 
 	// Determine the total number of centers.
@@ -149,6 +151,8 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 
 void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
+	// as pre new integration of Caches in SoAs, 
+	// this function work as before, as it builds secondary SoAs
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
@@ -756,7 +760,7 @@ void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCell & c1, Partic
 
 	} else {
 		assert(c1Halo != c2Halo);							// one of them is halo and
-		assert(not c1.getCellIndex() < c2.getCellIndex());	// c1.index not < c2.index
+		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
 
 		const bool CalculateMacroscopic = false;
 
