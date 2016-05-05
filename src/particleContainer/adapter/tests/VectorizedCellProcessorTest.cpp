@@ -322,3 +322,7 @@ void VectorizedCellProcessorTest::testWaterVectorization() {
 	testElectrostaticVectorization(filename, 6.16);
 }
 
+void VectorizedCellProcessorTest::testMultiComponentMultiPotentials() {
+	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
+	testElectrostaticVectorization(filename, 35.0);
+}
