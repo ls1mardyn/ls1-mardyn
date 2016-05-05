@@ -588,6 +588,8 @@ private:
 	double currentTime;  //edited by Michaela Heier
 
 
+	// TODO: do the components belong here, or in class EnsembleBase?
+	// TODO: currently they exist in both places!
 	//! Components resp. molecule types
 	std::vector<Component> _components;
 

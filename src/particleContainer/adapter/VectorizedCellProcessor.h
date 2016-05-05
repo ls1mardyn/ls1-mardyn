@@ -104,14 +104,6 @@ private:
 	 */
 
 	/**
-	 * \brief One LJ center enumeration start index for each component.
-	 * \details All the LJ centers of all components are enumerated.<br>
-	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
-	 * This is necessary for finding the respective parameters for each interaction<br>
-	 * between two centers.
-	 */
-	std::vector<size_t> _compIDs;
-	/**
 	 * \brief Epsilon and sigma for pairs of LJcenters.
 	 * \details Each DoubleArray contains parameters for one center combined with all centers.<br>
 	 * Each set of parameters is a pair (epsilon*24.0, sigma^2).

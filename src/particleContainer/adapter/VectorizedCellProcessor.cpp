@@ -21,7 +21,7 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0) {
+		_eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedCellProcessor: using no intrinsics." << std::endl;
@@ -43,10 +43,11 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
 
 	// Assign a center list start index for each component.
-	_compIDs.resize(maxID + 1, 0);
+	std::vector<size_t> compIDs;
+	compIDs.resize(maxID + 1, 0);
 	size_t centers = 0;
 	for (ComponentList::const_iterator c = components.begin(); c != end; ++c) {
-		_compIDs[c->ID()] = centers;
+		compIDs[c->ID()] = centers;
 		centers += c->numLJcenters();
 	}
 
@@ -66,9 +67,9 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 						center_j < components[comp_j].numLJcenters();
 						++center_j) {
 					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
-					p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j)];
-					p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j) + 1];
-					p >> _shift6[_compIDs[comp_i] + center_i][_compIDs[comp_j] + center_j];
+					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)];
+					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1];
+					p >> _shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j];
 				}
 			}
 		}

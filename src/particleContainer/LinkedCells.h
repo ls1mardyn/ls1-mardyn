@@ -363,8 +363,6 @@ private:
 	//! should be set to true.
 	bool _cellsValid;
 
-	std::vector<size_t> getCompIDs() const;
-
 };
 
 #endif /* LINKEDCELLS_H_ */

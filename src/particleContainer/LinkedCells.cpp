@@ -987,13 +987,12 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 	// TODO: and the global Upot, Virial, ..., no?
 
 	static ParticleCell dummyCell;
-	static std::vector<size_t> compIDs = getCompIDs();
 	{
 		// (potentially re-) initialize dummyCell
 		dummyCell.assignCellToInnerRegion();
 		dummyCell.removeAllParticles();
 		dummyCell.addParticle(m1, false);
-		dummyCell.buildSoACaches(compIDs);
+		dummyCell.buildSoACaches();
 		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
 	}
 
@@ -1196,48 +1195,23 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 
 
 void LinkedCells::updateInnerMoleculeCaches(){
-	std::vector<size_t> compIDs = getCompIDs();
-
 	for (ParticleCell& cell : _cells){
 		if(cell.isInnerCell()){
-			cell.buildSoACaches(compIDs);
+			cell.buildSoACaches();
 		}
 	}
 }
 
 void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
-	std::vector<size_t> compIDs = getCompIDs();
-
 	for (ParticleCell& cell : _cells) {
 		if (cell.isHaloCell() or cell.isBoundaryCell()) {
-			cell.buildSoACaches(compIDs);
+			cell.buildSoACaches();
 		}
 	}
 }
 
 void LinkedCells::updateMoleculeCaches() {
-	std::vector<size_t> compIDs = getCompIDs();
-
 	for (ParticleCell& cell : _cells) {
-		cell.buildSoACaches(compIDs);
+		cell.buildSoACaches();
 	}
-}
-
-std::vector<size_t> LinkedCells::getCompIDs() const {
-	Domain * dom = global_simulation->getDomain();
-	std::vector<Component>& components = dom->getComponents();
-	// Get the maximum Component ID.
-	size_t maxID = 0;
-	for (auto c = components.begin(); c != components.end(); ++c)
-		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
-
-	// Assign a center list start index for each component.
-	std::vector<size_t> compIDs;
-	compIDs.resize(maxID + 1, 0);
-	size_t centers = 0;
-	for (auto c = components.begin(); c != components.end(); ++c) {
-		compIDs[c->ID()] = centers;
-		centers += c->numLJcenters();
-	}
-	return compIDs;
 }

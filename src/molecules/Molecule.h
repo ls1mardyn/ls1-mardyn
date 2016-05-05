@@ -50,6 +50,8 @@ public:
 	void setComponent(Component *component) { _component = component;}
 	/** return pointer to component to which the molecule belongs */
 	Component* component() const { return _component; }
+	/** get component lookUpID */
+	unsigned getComponentLookUpID() const { return _component->getLookUpId();}
 	/** get position coordinate */
 	double r(unsigned short d) const { return _r[d]; }
 	/** set position coordinate */

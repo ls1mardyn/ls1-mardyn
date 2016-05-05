@@ -21,7 +21,7 @@ namespace bhfmm {
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
-		_compIDs(), _upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
+		_upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
@@ -34,21 +34,6 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 #elif VCP_VEC_TYPE==VCP_VEC_MIC
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using MIC intrinsics." << std::endl;
 #endif
-
-	ComponentList components = *(_simulation.getEnsemble()->components());
-	// Get the maximum Component ID.
-	size_t maxID = 0;
-	const ComponentList::const_iterator end = components.end();
-	for (ComponentList::const_iterator c = components.begin(); c != end; ++c)
-		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
-
-	// Assign a center list start index for each component.
-	_compIDs.resize(maxID + 1, 0);
-	size_t centers = 0;
-	for (ComponentList::const_iterator c = components.begin(); c != end; ++c) {
-		_compIDs[c->ID()] = centers;
-		centers += c->numLJcenters();
-	}
 
 #ifdef ENABLE_MPI
 	_timer.set_sync(false);

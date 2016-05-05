@@ -263,6 +263,8 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 		}
 	}
 
+	_simulation.getEnsemble()->setComponentLookUpIDs();
+
 	_phaseSpaceHeaderFileStream.close();
 }
 

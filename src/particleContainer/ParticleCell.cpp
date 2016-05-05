@@ -145,7 +145,7 @@ void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vec
 	}
 }
 
-void ParticleCell::buildSoACaches(const std::vector<size_t>& compIDs) {
+void ParticleCell::buildSoACaches() {
 
 	// Determine the total number of centers.
 	size_t numMolecules = _molecules.size();
@@ -236,7 +236,7 @@ void ParticleCell::buildSoACaches(const std::vector<size_t>& compIDs) {
 			soa_ljc_r_x[iLJCenters] = centerPos[0] + mol_pos_x;
 			soa_ljc_r_y[iLJCenters] = centerPos[1] + mol_pos_y;
 			soa_ljc_r_z[iLJCenters] = centerPos[2] + mol_pos_z;
-			soa._ljc_id[iLJCenters] = compIDs[M.componentid()] + j;
+			soa._ljc_id[iLJCenters] = M.getComponentLookUpID() + j;
 		}
 		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges) {
 			double centerPos[3];

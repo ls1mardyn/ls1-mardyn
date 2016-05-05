@@ -109,6 +109,14 @@ public:
 	double getEps(unsigned int i) const {return _ljcenters[i].eps();}
 	double getSigma(unsigned int i) const {return _ljcenters[i].sigma();}
 
+	unsigned getLookUpId() const {
+		return _lookUpID;
+	}
+
+	void setLookUpId(unsigned lookUpId) {
+		_lookUpID = lookUpId;
+	}
+
 private:
 
 	void updateMassInertia(Site& site);
@@ -137,6 +145,20 @@ private:
 	double _T; // temperature
 
 	std::string _name;
+
+	/**
+	 * for use by the Vectorization:
+	 * a look-up table is set up there,
+	 * which needs to know about the sites of all present components
+	 *
+	 * 
+	 * \brief One LJ center enumeration start index for each component.
+	 * \details All the LJ centers of all components are enumerated.<br>
+	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
+	 * This is necessary for finding the respective parameters for each interaction<br>
+	 * between two centers.
+	 */
+	unsigned _lookUpID;
 };
 
 std::ostream& operator<<(std::ostream& stream, const Component& component);
