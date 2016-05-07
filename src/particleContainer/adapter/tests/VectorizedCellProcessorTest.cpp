@@ -323,6 +323,9 @@ void VectorizedCellProcessorTest::testWaterVectorization() {
 }
 
 void VectorizedCellProcessorTest::testMultiComponentMultiPotentials() {
+	test_log->info()<< "Bug confirmed: there is a problem with VCP::processCell(...) " <<
+			"when one component has dipoles/quadrupoles, but another component has only charges and the molecules appear in a certain order." << std::endl;
+	test_log->info() << "SingleCellPolicy::InitJ(i) should probably be changed to return i, instead of i+1." << std::endl;
 	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
 	testElectrostaticVectorization(filename, 35.0);
 }
