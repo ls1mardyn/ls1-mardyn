@@ -101,6 +101,8 @@ public:
 	/** return total kinetic energy of the molecule */
 	double U_kin() { return U_trans() + U_rot(); }
 	
+	void setupSoACache(CellDataSoA * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ);
+
 	void setSoA(CellDataSoA * const s) {_soa = s;}
 	void setStartIndexSoA_LJ(unsigned i) {_soa_index_lj = i;}
 	void setStartIndexSoA_C(unsigned i) {_soa_index_c = i;}

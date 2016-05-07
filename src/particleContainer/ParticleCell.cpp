@@ -162,41 +162,13 @@ void ParticleCell::buildSoACaches() {
 	}
 
 	// Construct the SoA.
-	CellDataSoA & soa = _cellDataSoA;
-	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
-
-	double* const soa_ljc_m_r_x = soa.ljc_m_r_xBegin();
-	double* const soa_ljc_m_r_y = soa.ljc_m_r_yBegin();
-	double* const soa_ljc_m_r_z = soa.ljc_m_r_zBegin();
-	double* const soa_ljc_r_x = soa.ljc_r_xBegin();
-	double* const soa_ljc_r_y = soa.ljc_r_yBegin();
-	double* const soa_ljc_r_z = soa.ljc_r_zBegin();
-
-	double* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
-	double* const soa_charges_m_r_y = soa.charges_m_r_yBegin();
-	double* const soa_charges_m_r_z = soa.charges_m_r_zBegin();
-	double* const soa_charges_r_x = soa.charges_r_xBegin();
-	double* const soa_charges_r_y = soa.charges_r_yBegin();
-	double* const soa_charges_r_z = soa.charges_r_zBegin();
-
-	double* const soa_dipoles_m_r_x = soa.dipoles_m_r_xBegin();
-	double* const soa_dipoles_m_r_y = soa.dipoles_m_r_yBegin();
-	double* const soa_dipoles_m_r_z = soa.dipoles_m_r_zBegin();
-	double* const soa_dipoles_r_x = soa.dipoles_r_xBegin();
-	double* const soa_dipoles_r_y = soa.dipoles_r_yBegin();
-	double* const soa_dipoles_r_z = soa.dipoles_r_zBegin();
-
-	double* const soa_quadrupoles_m_r_x = soa.quadrupoles_m_r_xBegin();
-	double* const soa_quadrupoles_m_r_y = soa.quadrupoles_m_r_yBegin();
-	double* const soa_quadrupoles_m_r_z = soa.quadrupoles_m_r_zBegin();
-	double* const soa_quadrupoles_r_x = soa.quadrupoles_r_xBegin();
-	double* const soa_quadrupoles_r_y = soa.quadrupoles_r_yBegin();
-	double* const soa_quadrupoles_r_z = soa.quadrupoles_r_zBegin();
+	_cellDataSoA.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
 
 	size_t iLJCenters = 0;
 	size_t iCharges = 0;
 	size_t iDipoles = 0;
 	size_t iQuadrupoles = 0;
+
 	// For each molecule iterate over all its centers.
 	for (size_t i = 0; i < _molecules.size(); ++i) {
 		Molecule & M = *_molecules[i];
@@ -204,84 +176,23 @@ void ParticleCell::buildSoACaches() {
 		const size_t mol_charges_num = M.numCharges();
 		const size_t mol_dipoles_num = M.numDipoles();
 		const size_t mol_quadrupoles_num = M.numQuadrupoles();
-		const double mol_pos_x = M.r(0);
-		const double mol_pos_y = M.r(1);
-		const double mol_pos_z = M.r(2);
 
-		soa._mol_pos.x(i) = mol_pos_x;
-		soa._mol_pos.y(i) = mol_pos_y;
-		soa._mol_pos.z(i) = mol_pos_z;
+		_cellDataSoA._mol_ljc_num[i] = mol_ljc_num;
+		_cellDataSoA._mol_charges_num[i] = mol_charges_num;
+		_cellDataSoA._mol_dipoles_num[i] = mol_dipoles_num;
+		_cellDataSoA._mol_quadrupoles_num[i] = mol_quadrupoles_num;
 
-		soa._mol_ljc_num[i] = mol_ljc_num;
-		soa._mol_charges_num[i] = mol_charges_num;
-		soa._mol_dipoles_num[i] = mol_dipoles_num;
-		soa._mol_quadrupoles_num[i] = mol_quadrupoles_num;
+		_cellDataSoA._mol_pos.x(i) = M.r(0);
+		_cellDataSoA._mol_pos.y(i) = M.r(1);
+		_cellDataSoA._mol_pos.z(i) = M.r(2);
 
-		M.setSoA(&soa);
-		M.setStartIndexSoA_LJ(iLJCenters);
-		M.setStartIndexSoA_C(iCharges);
-		M.setStartIndexSoA_D(iDipoles);
-		M.setStartIndexSoA_Q(iQuadrupoles);
+		M.setupSoACache(&_cellDataSoA, iLJCenters, iCharges, iDipoles, iQuadrupoles);
+
+		iLJCenters += mol_ljc_num;
+		iCharges += mol_charges_num;
+		iDipoles += mol_dipoles_num;
+		iQuadrupoles += mol_quadrupoles_num;
 
 		M.clearFM();
-
-		M.normalizeQuaternion();
-
-		for (size_t j = 0; j < mol_ljc_num; ++j, ++iLJCenters) {
-			double centerPos[3];
-			M.computeLJcenter_d(j,centerPos);
-			soa_ljc_m_r_x[iLJCenters] = mol_pos_x;
-			soa_ljc_m_r_y[iLJCenters] = mol_pos_y;
-			soa_ljc_m_r_z[iLJCenters] = mol_pos_z;
-			soa_ljc_r_x[iLJCenters] = centerPos[0] + mol_pos_x;
-			soa_ljc_r_y[iLJCenters] = centerPos[1] + mol_pos_y;
-			soa_ljc_r_z[iLJCenters] = centerPos[2] + mol_pos_z;
-			soa._ljc_id[iLJCenters] = M.getComponentLookUpID() + j;
-		}
-		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges) {
-			double centerPos[3];
-			M.computeCharge_d(j, centerPos);
-			soa_charges_m_r_x[iCharges] = mol_pos_x;
-			soa_charges_m_r_y[iCharges] = mol_pos_y;
-			soa_charges_m_r_z[iCharges] = mol_pos_z;
-			soa_charges_r_x[iCharges] = centerPos[0] + mol_pos_x;
-			soa_charges_r_y[iCharges] = centerPos[1] + mol_pos_y;
-			soa_charges_r_z[iCharges] = centerPos[2] + mol_pos_z;
-			soa._charges_q[iCharges] = M.component()->charge(j).q();
-		}
-
-		for (size_t j = 0; j < mol_dipoles_num; ++j, ++iDipoles) {
-			double centerPos[3];
-			M.computeDipole_d(j, centerPos);
-			double orientation[3];
-			M.computeDipole_e(j, orientation);
-			soa_dipoles_m_r_x[iDipoles] = mol_pos_x;
-			soa_dipoles_m_r_y[iDipoles] = mol_pos_y;
-			soa_dipoles_m_r_z[iDipoles] = mol_pos_z;
-			soa_dipoles_r_x[iDipoles] = centerPos[0] + mol_pos_x;
-			soa_dipoles_r_y[iDipoles] = centerPos[1] + mol_pos_y;
-			soa_dipoles_r_z[iDipoles] = centerPos[2] + mol_pos_z;
-			soa._dipoles_p[iDipoles] = M.component()->dipole(j).absMy();
-			soa._dipoles_e.x(iDipoles) = orientation[0];
-			soa._dipoles_e.y(iDipoles) = orientation[1];
-			soa._dipoles_e.z(iDipoles) = orientation[2];
-		}
-
-		for (size_t j = 0; j < mol_quadrupoles_num; ++j, ++iQuadrupoles) {
-			double centerPos[3];
-			M.computeQuadrupole_d(j, centerPos);
-			double orientation[3];
-			M.computeQuadrupole_e(j, orientation);
-			soa_quadrupoles_m_r_x[iQuadrupoles] = mol_pos_x;
-			soa_quadrupoles_m_r_y[iQuadrupoles] = mol_pos_y;
-			soa_quadrupoles_m_r_z[iQuadrupoles] = mol_pos_z;
-			soa_quadrupoles_r_x[iQuadrupoles] = centerPos[0] + mol_pos_x;
-			soa_quadrupoles_r_y[iQuadrupoles] = centerPos[1] + mol_pos_y;
-			soa_quadrupoles_r_z[iQuadrupoles] = centerPos[2] + mol_pos_z;
-			soa._quadrupoles_m[iQuadrupoles] = M.component()->quadrupole(j).absQ();
-			soa._quadrupoles_e.x(iQuadrupoles) = orientation[0];
-			soa._quadrupoles_e.y(iQuadrupoles) = orientation[1];
-			soa._quadrupoles_e.z(iQuadrupoles) = orientation[2];
-		}
 	}
 }
