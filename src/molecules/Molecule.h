@@ -278,16 +278,6 @@ public:
 	void vsub(const double ax, const double ay, const double az) {
 		_v[0] -= ax; _v[1] -= ay; _v[2] -= az;
 	}
-	void setXY() { fixedx = _r[0]; fixedy = _r[1]; }
-	void resetXY()
-	{
-		_v[0] = 0.0;
-		_v[1] = 0.0;
-		_F[1] = 0.0;
-		_F[0] = 0.0;
-		_r[0] = fixedx;
-		_r[1] = fixedy;
-	}
 
 	void Fljcenteradd(unsigned int i, double a[]);
 	void Fljcentersub(unsigned int i, double a[]);
@@ -369,8 +359,6 @@ private:
 	unsigned _soa_index_c;
 	unsigned _soa_index_d;
 	unsigned _soa_index_q;
-
-	double fixedx, fixedy;
 };
 
 

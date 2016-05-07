@@ -32,8 +32,6 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
-	fixedx = rx;
-	fixedy = ry;
 
 	_soa = nullptr;
 	_soa_index_lj = 0;
@@ -80,8 +78,6 @@ Molecule::Molecule(const Molecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
-	fixedx = m.fixedx;
-	fixedy = m.fixedy;
 
 	_soa = m._soa;
 	_soa_index_lj = m._soa_index_lj;
