@@ -24,57 +24,91 @@ import cmd
 from subprocess import Popen
 from shlex import split
 
+mpi = '-1'
 newMarDyn = ''
-oldMarDyn = ''
+oldMarDyn = '-1'
 cfgFilename = ''
 inpFilename = ''
 comparePlugin = 'ResultWriter'
+numIterations = '25'
 
 
-options, remainder = getopt(argv[1:], '', ['newMarDyn=',
-                                                      'oldMarDyn=',
-                                                      'cfgFilename=',
-                                                      'inpFilename='
-                                                      ])
-# Options will come eventually
-#print 'OPTIONS   :', options
-#
-# for opt, arg in options:
-#     if opt in ('-o', '--output'):
-#         output_filename = arg
-#     elif opt in ('-v', '--verbose'):
-#         verbose = True
-#     elif opt == '--version':
-#         version = arg
+options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:h', 
+                            ['mpi=',
+                             'newMarDyn=',
+                             'oldMarDyn=',
+                             'cfgFilename=',
+                             'inpFilename=',
+                             'plugin=',
+                             'numIterations=',
+                             'help'
+                             ])
 
-if len(options) == 0:
-    print "No options given:"
-    print "    trying format <newMarDyn> <oldMarDyn> <cfgFilename> <inpFilename>"
-    print "    with default values ResultWriter, frequency 1, 50 iterations\n\n\n"
-    if len(argv) != 5:
-        print "did not specify 4 arguments"
+for opt, arg in options:
+    if opt in ('-n', '--newMarDyn'):
+        newMarDyn = arg
+    elif opt in ('-o', '--oldMarDyn'):
+        oldMarDyn = arg
+    elif opt in ('-c', '--cfgFilename'):
+        cfgFilename = arg
+    elif opt in ('-i', '--inpFilename'):
+        inpFilename = arg
+    elif opt in ('-m', '--mpi'):
+        mpi = arg
+    elif opt in ('-p', '--plugin'):
+        comparePlugin = arg
+    elif opt in ('-I', '--numIterations'):
+        numIterations = arg
+    elif opt in ('-h', '--help'):
+        print "Make sure two versions of mardyn produce identical simulation results. Sample usage:"
+        print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.cfg -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
         exit(1)
     else:
-        newMarDyn = argv[1]
-        oldMarDyn = argv[2]
-        cfgFilename = argv[3]
-        inpFilename = argv[4]
+        print "unknown option: " + opt
+        exit(1)
+
+SEQ = (mpi == '-1')
+PAR = not SEQ   
         
+noReferenceRun = (oldMarDyn == '-1')
+doReferenceRun = not noReferenceRun
+
+MPI_START='mpirun' # e.g. I need to set it to mpirun.mpich locally
+
+if comparePlugin == 'ResultWriter':
+    comparePostfix = '.res'
+elif comparePlugin == 'GammaWriter':
+    comparePostfix = '.gamma'
+else:
+    print "Plugin " + comparePlugin + " not supported yet."
+    print "Have a look whether you can add it yourself."
+    exit(1)
+    
+
+
+if noReferenceRun:
+    print "no old version given. Will try to reuse existing output, by not erasing it at start."
         
 # JUMP to validationRuns - extract path to validationRuns from argv[0]!
-pathToValidationRuns = ntpath.dirname(argv[0])
+pathToValidationRuns = ntpath.dirname(os.path.realpath(__file__))
+pathToValidationRuns = os.path.realpath(pathToValidationRuns)
+
+print pathToValidationRuns
         
 # first clean all the folders
 cleanUpCommand = ['rm']
 cleanUpCommand.extend(glob(pathToValidationRuns + '/*.cfg'))
 cleanUpCommand.extend(glob(pathToValidationRuns + '/*.inp'))
 cleanUpCommand.extend(glob(pathToValidationRuns + '/new/*'))
-cleanUpCommand.extend(glob(pathToValidationRuns + '/reference/*'))
+if doReferenceRun:
+    cleanUpCommand.extend(glob(pathToValidationRuns + '/reference/*'))
 cleanUpCommand.extend(glob(pathToValidationRuns + '/MarDyn*'))
 call(cleanUpCommand)
 
 # copy all there
-call(['cp', oldMarDyn, newMarDyn, cfgFilename, inpFilename, pathToValidationRuns])
+call(['cp', newMarDyn, cfgFilename, inpFilename, pathToValidationRuns])
+if doReferenceRun:
+    call(['cp', oldMarDyn, pathToValidationRuns])
 
 # go there
 os.chdir(pathToValidationRuns)
@@ -88,36 +122,52 @@ newMarDynBase = ntpath.basename(newMarDyn)
 print "append ComparisonWriter here"
 with open(cfgBase, "a") as myfile:
     myfile.write("output " + comparePlugin + " 1 val.comparison")
+    
+comparisonFilename = 'val.comparison' + comparePostfix
 
-call(['cp', cfgBase, 'reference/'])
-call(['cp', inpBase, 'reference/'])
-call(['cp', oldMarDynBase, 'reference/'])
+if doReferenceRun:
+    call(['cp', cfgBase, 'reference/'])
+    call(['cp', inpBase, 'reference/'])
+    call(['cp', oldMarDynBase, 'reference/'])
 call(['cp', cfgBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp', newMarDynBase, 'new/'])
 
 # first run
 os.chdir('new')
-call(['./' + newMarDynBase, cfgBase, '50'])
-Popen(split("sed -i.bak /MarDyn/d val.comparison.res"))
+cmd = []
+if PAR:
+    cmd.extend([MPI_START, '-n', str(mpi)])
+cmd.extend(['./' + newMarDynBase, cfgBase, numIterations]); 
+print cmd
+call(cmd)
+Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
 os.chdir('..')
 
 ## second run
-os.chdir('reference')
-call(['./' + oldMarDynBase, cfgBase, '50'])
-Popen(split("sed -i.bak /MarDyn/d val.comparison.res"))
-os.chdir('..')
+if doReferenceRun:
+    os.chdir('reference')
+    cmd = []
+    if PAR:
+        cmd.extend([MPI_START, '-n', str(mpi)])
+    cmd.extend(['./' + oldMarDynBase, cfgBase, numIterations])
+    call(cmd)
+    Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+    os.chdir('..')
 
 #call(['diff' 'reference/val.comparison.res' 'new/val.comparison.res'])
-child = Popen(split("diff reference/val.comparison.res new/val.comparison.res"))
+child = Popen(split("diff reference/" + comparisonFilename + " new/" + comparisonFilename))
 child.communicate()[0]
 returnValue = child.returncode
 
 
 if returnValue == 0:
+    print ""
     print "Identical values!"
+    print ""
     exit(0)
 else:
+    print ""
     print "mismatches"
-    print returnValue
+    print ""
     exit(1)
