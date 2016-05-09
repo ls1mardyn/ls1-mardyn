@@ -141,7 +141,8 @@ if PAR:
 cmd.extend(['./' + newMarDynBase, cfgBase, numIterations]); 
 print cmd
 call(cmd)
-Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+p.wait()
 os.chdir('..')
 
 ## second run
@@ -152,7 +153,8 @@ if doReferenceRun:
         cmd.extend([MPI_START, '-n', str(mpi)])
     cmd.extend(['./' + oldMarDynBase, cfgBase, numIterations])
     call(cmd)
-    Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+    p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+    p.wait()
     os.chdir('..')
 
 #call(['diff' 'reference/val.comparison.res' 'new/val.comparison.res'])
