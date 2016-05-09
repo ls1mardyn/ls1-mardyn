@@ -104,48 +104,6 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	_timer.stop();
 }
 
-
-void VectorizedLJP2PCellProcessor::preprocessCell(ParticleCell & c) {
-	// as pre new integration of Caches in SoAs, 
-	// this function should do nothing
-}
-
-
-void VectorizedLJP2PCellProcessor::postprocessCell(ParticleCell & c) {
-	// as pre new integration of Caches in SoAs, 
-	// this function should only accumulate virials
-
-	using std::isnan; // C++11 required
-	CellDataSoA& soa = c.getCellDataSoA();
-
-	MoleculeList & molecules = c.getParticlePointers();
-
-	double* const soa_ljc_V_x = soa.ljc_V_xBegin();
-	double* const soa_ljc_V_y = soa.ljc_V_yBegin();
-	double* const soa_ljc_V_z = soa.ljc_V_zBegin();
-
-	// For each molecule iterate over all its centers.
-	size_t iLJCenters = 0;
-	size_t numMols = molecules.size();
-	for (size_t m = 0; m < numMols; ++m) {
-		const size_t mol_ljc_num = molecules[m]->numLJcenters();
-
-		for (size_t i = 0; i < mol_ljc_num; ++i, ++iLJCenters) {
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa_ljc_V_x[iLJCenters]*0.5;
-			V[1] = soa_ljc_V_y[iLJCenters]*0.5;
-			V[2] = soa_ljc_V_z[iLJCenters]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-	}
-}
-
-
-
 	//const vcp_double_vec minus_one = vcp_simd_set1(-1.0); //currently not used, would produce warning
 	const vcp_double_vec zero = VCP_SIMD_ZEROV;
 	const vcp_double_vec one = vcp_simd_set1(1.0);

@@ -61,7 +61,7 @@ public:
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */

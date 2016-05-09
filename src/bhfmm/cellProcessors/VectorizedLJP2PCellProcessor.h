@@ -46,7 +46,7 @@ public:
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
@@ -61,7 +61,7 @@ public:
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */

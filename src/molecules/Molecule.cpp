@@ -462,6 +462,50 @@ void Molecule::calcFM() {
 		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
 		_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
 	}
+
+	// accumulate virial, dipoles_M and quadrupoles_M:
+	double temp_M[3] = { 0., 0., 0. };
+	double temp_Vi[3] = { 0., 0., 0. };
+
+	ns = numLJcenters();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_lj;
+		temp_Vi[0] += _soa->ljc_V_xBegin()[index_in_soa];
+		temp_Vi[1] += _soa->ljc_V_yBegin()[index_in_soa];
+		temp_Vi[2] += _soa->ljc_V_zBegin()[index_in_soa];
+	}
+	ns = numCharges();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_c;
+		temp_Vi[0] += _soa->charges_V_xBegin()[index_in_soa];
+		temp_Vi[1] += _soa->charges_V_yBegin()[index_in_soa];
+		temp_Vi[2] += _soa->charges_V_zBegin()[index_in_soa];
+	}
+	ns = numDipoles();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_d;
+		temp_Vi[0] += _soa->dipoles_V_xBegin()[index_in_soa];
+		temp_Vi[1] += _soa->dipoles_V_yBegin()[index_in_soa];
+		temp_Vi[2] += _soa->dipoles_V_zBegin()[index_in_soa];
+		temp_M[0] += _soa->_dipoles_M.x(index_in_soa);
+		temp_M[1] += _soa->_dipoles_M.y(index_in_soa);
+		temp_M[2] += _soa->_dipoles_M.z(index_in_soa);
+	}
+	ns = numQuadrupoles();
+	for (unsigned i = 0; i < ns; ++i) {
+		const unsigned index_in_soa = i + _soa_index_q;
+		temp_Vi[0] += _soa->quadrupoles_V_xBegin()[index_in_soa];
+		temp_Vi[1] += _soa->quadrupoles_V_yBegin()[index_in_soa];
+		temp_Vi[2] += _soa->quadrupoles_V_zBegin()[index_in_soa];
+		temp_M[0] += _soa->_quadrupoles_M.x(index_in_soa);
+		temp_M[1] += _soa->_quadrupoles_M.y(index_in_soa);
+		temp_M[2] += _soa->_quadrupoles_M.z(index_in_soa);
+	}
+	temp_Vi[0] *= 0.5;
+	temp_Vi[1] *= 0.5;
+	temp_Vi[2] *= 0.5;
+	Viadd(temp_Vi);
+	Madd(temp_M);
 }
 
 
