@@ -2324,7 +2324,7 @@ void Domain::recordBarostat(ParticleContainer* molCont)
 	    }
 	}
 	this->_globalAccumulatedDatasets_barostat++;
-	cout << " T " << _globalAccumulatedDatasets_barostat << " K " << _localPressureKin_barostat << " V " << _localPressureVirial_barostat << " N " << _localN_barostat << endl;
+// 	cout << " T " << _globalAccumulatedDatasets_barostat << " K " << _localPressureKin_barostat << " V " << _localPressureVirial_barostat << " N " << _localN_barostat << endl;
 }
 
 void Domain::collectBarostat(DomainDecompBase* dode)
