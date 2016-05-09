@@ -1593,7 +1593,7 @@ void Simulation::simulate() {
 		_moleculeContainer->traverseCells(*_cellProcessor);
 		
 		//Force Record of spring force and total force
-		int timeStepForce = 1000;
+		unsigned long timeStepForce = 1000;
 		if(_simstep%timeStepForce == 0 /*&& _simstep >= _initStatistics*/){
 		    string moved ("moved");
 		    int cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
@@ -1601,6 +1601,9 @@ void Simulation::simulate() {
 		    if (cid >= 0){
 		      if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
 		       _pressureGradient->collectForcesOnComponent(_domainDecomposition, cid);
+		      if(_simstep == timeStepForce && _pressureGradient->isSpringDamped())
+			_pressureGradient->resetSpringForcesOnComponent(cid);
+		      
 		      if(_simstep > _initStatistics){
 			for(int d = 0; d < 3; d++)
 			      Force[d][cid] = _pressureGradient->getGlobalForceSum(d, cid)/timeStepForce;
@@ -1616,10 +1619,7 @@ void Simulation::simulate() {
 			  ForceData << _simstep << "\t\t\t" << Force[0][cid] << " " << Force[1][cid] << " " << Force[2][cid];
 			  if(_pressureGradient->isSpringDamped())
 			    ForceData << "\t\t\t" << SpringForce[0][cid] << " " << SpringForce[1][cid] << " " << SpringForce[2][cid];
-			  if (_simstep < _initStatistics)
-			  ForceData << endl;
 			}
-		      
 			if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
 			  _pressureGradient->resetForcesOnComponent(cid);
 			if(_pressureGradient->isSpringDamped())
@@ -1745,7 +1745,6 @@ void Simulation::simulate() {
 		   cid--;
 		   if(cid >= 0 && cid < _domain->getNumberOfComponents())
 		       _pressureGradient->calculateForcesOnComponent(_moleculeContainer, cid);
-		   
 		   if(_pressureGradient->isSpringDamped())
 		       _pressureGradient->calculateSpringForcesOnComponent(_moleculeContainer, cid);
 		}

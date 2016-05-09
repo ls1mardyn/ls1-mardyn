@@ -335,7 +335,6 @@ void PressureGradient::calculateSpringForcesOnComponent(ParticleContainer* molCo
 		    this->_localSpringN[cid]++;
 		    for(unsigned short int d = 0; d < 3; d++)
 			    this->_localSpringForceSum[d][cid] += thismol->F_Spring(d);
-
 	  }
 	}
 }
@@ -356,7 +355,6 @@ void PressureGradient::collectSpringForcesOnComponent(DomainDecompBase* domainDe
 		for(int d = 0; d < 3; d++)
 			_globalSpringForceSum[d][lNit->first] = domainDecomp->collCommGetDouble();
 	    }
-	
 	domainDecomp->collCommFinalize();
 }
 
