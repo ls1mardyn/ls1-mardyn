@@ -63,7 +63,6 @@ private:
 	//from level 0 to _globalLevel
 	std::vector<std::vector<MpCell> > _mpCellGlobalTop;
 	std::vector<std::vector<MpCell> > _mpCellLocal;
-	MPI_Request _allReduceRequest;
 	double _cellLength[3];
 	int _globalNumCellsPerDim;
 	Domain* _domain;
@@ -73,10 +72,12 @@ private:
 	int _coeffVectorLength;
 	double* _coeffVector; // array for MPI allgather
 	double* _coeffVector_me;
-
+#ifdef ENABLE_MPI
 	HaloBufferNoOverlap<double> * _multipoleRecBuffer, *_multipoleBuffer;
 	HaloBufferOverlap<double> * _multipoleRecBufferOverlap, *_multipoleBufferOverlap;
+	MPI_Request _allReduceRequest;
 
+#endif
 	bool _periodicBC;
 
 	int _numProcessorsPerDim;
@@ -149,8 +150,10 @@ private:
 	Timer _timerGatherEvalM;
 	Timer _timerGatherEvalLM;
 	Timer _timerAllreduce_me;
+#ifdef ENABLE_MPI
 
 	MPI_Comm _comm;
+#endif
 	int _overlapComm;
 
 };

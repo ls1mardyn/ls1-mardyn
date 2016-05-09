@@ -677,10 +677,10 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 						abs(m2v[2] - m1v[2]) <= _wellSep)
 						continue;
 					m2 = (m22z * mpCells + m22y) * mpCells + m22x;
-//
-//					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
-//						continue;
-
+#ifndef ENABLE_MPI
+					if (_mpCellGlobalTop[curLevel][m2].occ == 0)
+						continue;
+#endif
 					_mpCellGlobalTop[curLevel][m1].local.addMultipoleParticle(
 							_mpCellGlobalTop[curLevel][m2].multipole, periodicShift);
 				} // m2x closed
@@ -1170,7 +1170,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int num
 	_timerAllreduce.stop();
 }
 void UniformPseudoParticleContainer::AllReduceMultipoleMomentsSetValues(int numCellsLevel,int startingLevel) {
-
+#ifdef ENABLE_MPI
 	int coeffIndex = 0;
 	int numCellsLevelTemp = numCellsLevel;
 	numCellsLevelTemp = numCellsLevel;
@@ -1186,6 +1186,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsSetValues(int numC
 		numCellsLevelTemp /= 8;
 	}
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
+#endif
 }
 void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _curLevel) {
 	_timerAllreduce_me.start();

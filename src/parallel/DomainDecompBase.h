@@ -6,8 +6,8 @@
 
 #ifdef ENABLE_MPI
 #include <mpi.h>
-#include <iostream>
 #endif
+#include <iostream>
 
 class Molecule;
 class Component;

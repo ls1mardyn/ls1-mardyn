@@ -7,6 +7,7 @@
 
 #ifndef HALOBUFFEROVERLAP_H_
 #define HALOBUFFEROVERLAP_H_
+#ifdef ENABLE_MPI
 
 template <class T>
 class HaloBufferOverlap {
@@ -229,5 +230,5 @@ int HaloBufferOverlap<T>::testIfFinished(){
 	MPI_Testall(_cornerBuffers.size(),_cornerRequests, &cornerFlag, cornerStatusArray);
 	return areaFlag * edgeFlag * cornerFlag;
 }
-
+#endif
 #endif /* HALOBUFFEROVERLAP_H_ */
