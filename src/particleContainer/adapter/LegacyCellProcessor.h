@@ -34,7 +34,7 @@ public:
 
 	void initTraversal(const size_t numCells);
 
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& /*cell*/) {}
 
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
@@ -42,7 +42,7 @@ public:
 
 	void processCell(ParticleCell& cell);
 
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& /*cell*/) {}
 
 	void endTraversal();
 };

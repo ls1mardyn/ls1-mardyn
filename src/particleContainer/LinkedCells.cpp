@@ -370,21 +370,11 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 #endif
 
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
-	// open the window of cells activated
-	for (long int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
-		cellProcessor.preprocessCell(_cells[cellIndex]);
-	}
 
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (long int cellIndex = 0; cellIndex < (long int) _cells.size();
 			cellIndex++) {
 		ParticleCell& currentCell = _cells[cellIndex];
-
-		// extend the window of cells with cache activated
-		if (cellIndex + _maxNeighbourOffset < (long int) _cells.size()) {
-			cellProcessor.preprocessCell(
-					_cells[cellIndex + _maxNeighbourOffset]);
-		}
 
 		if (currentCell.isInnerCell()) {
 			cellProcessor.processCell(currentCell);
@@ -440,19 +430,8 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 				}
 			}
 		} // if ( isBoundaryCell() )
-
-		// narrow the window of cells activated
-		if (cellIndex >= _minNeighbourOffset) {
-			cellProcessor.postprocessCell(
-					_cells[cellIndex - _minNeighbourOffset]);
-		}
 	} // loop over all cells
 
-	// close the window of cells with cache activated
-	for (unsigned int cellIndex = _cells.size() - _minNeighbourOffset;
-			cellIndex < _cells.size(); cellIndex++) {
-		cellProcessor.postprocessCell(_cells[cellIndex]);
-	}
 	cellProcessor.endTraversal();
 }
 
@@ -1005,16 +984,6 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1 + 1); // one more +1 for the dummyCell
 
-	cellProcessor.preprocessCell(dummyCell);
-
-	// extend the window of cells with cache activated
-	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset;
-			windowCellIndex < cellIndex + _maxNeighbourOffset + 1;
-			windowCellIndex++) {
-		cellProcessor.preprocessCell(_cells[windowCellIndex]);
-		// TODO: this will activate more cells than necessary?
-	}
-
 	cellProcessor.processCellPair(dummyCell, currentCell);
 
 	// forward neighbours
@@ -1031,14 +1000,6 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
 		cellProcessor.processCellPair(dummyCell, neighbourCell);
 	}
-
-	// close the window of cells activated
-	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset;
-			windowCellIndex < cellIndex + _maxNeighbourOffset + 1;
-			windowCellIndex++) {
-		cellProcessor.postprocessCell(_cells[windowCellIndex]);
-	}
-	cellProcessor.postprocessCell(dummyCell);
 
 	cellProcessor.endTraversal();
 	double newEnergy = global_simulation->getDomain()->getLocalUpot();

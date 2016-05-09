@@ -31,15 +31,8 @@ void LegacyCellProcessor::initTraversal(const size_t numCells)
 	_particlePairsHandler->init();
 }
 
-
-void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
-	assert(!cell.isInActiveWindow());
-	cell.setInActiveWindow();
-}
-
 double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& cell2)
 {
-	assert(cell2.isInActiveWindow());
 	double distanceVector[3];
 
 	std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
@@ -60,8 +53,6 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 }
 
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
-	assert(cell1.isInActiveWindow());
-	assert(cell2.isInActiveWindow());
 	double distanceVector[3];
 
 	std::vector<Molecule*>& currentCellParticles = cell1.getParticlePointers();
@@ -108,7 +99,6 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 }
 
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
-	assert(cell.isInActiveWindow());
 	double distanceVector[3];
 	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
 	int currentParticleCount = currentCellParticles.size();
@@ -128,11 +118,6 @@ void LegacyCellProcessor::processCell(ParticleCell& cell) {
 			}
 		}
 	} // if (isInnerCell())
-}
-
-void LegacyCellProcessor::postprocessCell(ParticleCell& cell) {
-	assert(cell.isInActiveWindow());
-	cell.clearInActiveWindow();
 }
 
 void LegacyCellProcessor::endTraversal() {

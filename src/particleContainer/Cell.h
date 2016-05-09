@@ -3,7 +3,7 @@
 
 class Cell {
 public:
-	Cell() : haloCell(false), boundaryCell(false), innerCell(false), inActiveWindow(false) {}
+	Cell() : haloCell(false), boundaryCell(false), innerCell(false) {}
 	
 	virtual ~Cell() {}
 
@@ -19,10 +19,6 @@ public:
 	bool isBoundaryCell() const { return boundaryCell; }
 	bool isInnerCell() const { return innerCell; }
 
-	void setInActiveWindow() { inActiveWindow = true;}
-	void clearInActiveWindow() { inActiveWindow = false;}
-	bool isInActiveWindow() { return inActiveWindow; }
-
 protected:
 	//! true when the cell is in the halo region 
 	bool haloCell;
@@ -30,9 +26,6 @@ protected:
 	bool boundaryCell;
 	//! true when the cell is in the inner region
 	bool innerCell;
-
-	//! for debugging to check that all cells are processed by the cell handler
-	bool inActiveWindow;
 };
 
 #endif /* CELL_H_ */
