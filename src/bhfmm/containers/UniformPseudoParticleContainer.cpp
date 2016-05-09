@@ -1376,8 +1376,8 @@ void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
 
 #if defined(ENABLE_MPI)
 	//start receiving
-	_multipoleRecBufferOverlap->startCommunication();
-
+//	_multipoleRecBufferOverlap->startCommunication();
+	_multipoleRecBufferOverlap->communicate();
 	//clear buffers
 	_multipoleBufferOverlap->clear();
 
@@ -1462,7 +1462,8 @@ void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
 										-4, -2, 2, 4, 2, 4);
 
 	//start sending
-	_multipoleBufferOverlap->startCommunication();
+//	_multipoleBufferOverlap->startCommunication();
+	_multipoleBufferOverlap->communicate();
 
 #endif
 }

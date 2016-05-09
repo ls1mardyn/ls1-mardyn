@@ -16,6 +16,9 @@ public:
 	virtual ~HaloBufferOverlap();
 	void initCommunicationDouble();
 	void startCommunication();
+	//communicate without persistent sends and receives
+	void communicate();
+
 	void wait();
 	int testIfFinished();
 	std::vector<T *>& getAreaBuffers(){
@@ -83,7 +86,7 @@ _areaBuffers(6), _edgeBuffers(12), _cornerBuffers(8), _areaNeighbours(areaNeighb
 		_cornerBuffers[i] = new T[cornerHaloSize];
 	}
 	_isSend = isSend;
-	initCommunicationDouble();
+	//initCommunicationDouble();
 
 }
 
@@ -153,6 +156,44 @@ void HaloBufferOverlap<T>::initCommunicationDouble(){
 		}
 	}
 }
+
+template <class T>
+void HaloBufferOverlap<T>::communicate(){
+	for (int i = 0; i < _areaBuffers.size(); i++){
+		if(_isSend){
+			MPI_Isend(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
+			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
+
+		}
+		else{
+			//adjusts that the tag of receive corresponds to send
+			int indexShift = (i%2 == 0)? +1: -1;
+			MPI_Irecv(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42 + indexShift, _comm, &_areaRequests[i]);
+		}
+	}
+	for (int i = 0; i < _edgeBuffers.size(); i++){
+		if(_isSend){
+			MPI_Isend(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
+			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
+
+		}
+		else{
+			int indexShift = (i%2 == 0)? +1: -1;
+			MPI_Irecv(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42 + indexShift, _comm, &_edgeRequests[i]);
+		}
+	}
+	for (int i = 0; i < _cornerBuffers.size(); i++){
+		if(_isSend){
+			MPI_Isend(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
+		//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
+		}
+		else{
+			int indexShift = (i%2 == 0)? +1: -1;
+			MPI_Irecv(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42 + indexShift, _comm, &_cornerRequests[i]);
+		}
+	}
+}
+
 template <class T>
 void HaloBufferOverlap<T>::startCommunication(){
 	 MPI_Startall(_areaBuffers.size(), _areaRequests);
