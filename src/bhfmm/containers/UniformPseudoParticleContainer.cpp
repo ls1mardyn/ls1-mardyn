@@ -81,6 +81,9 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_timerPropagateCellLoLokal.set_sync(false);
 	_timerProcessFarField.set_sync(false);
 	_timerCommunicationHalos.set_sync(false);
+	_timerHaloGather.set_sync(false);
+	_timerHaloIf.set_sync(false);
+
 #endif
 	_leafContainer = new LeafNodesContainer(bBoxMin, bBoxMax, LJCellLength,
 			LJSubdivisionFactor, periodic);
@@ -700,7 +703,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 
 void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int curLevel, int doHalos){
 	_timerGatherWellSepLoLokal.start();
-
+	if(doHalos){
+		_timerHaloGather.start();
+	}
 	int m1x,m1y,m1z;
 	int m2v[3];
 	int m1v[3];
@@ -727,9 +732,12 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 		for (m1y = yStart; m1y < yEnd; m1y++) {
 
 			for (m1x = xStart; m1x < xEnd; m1x++) {
+				if(doHalos) _timerHaloIf.start();
 				if(doHalos and not(m1z < 2 or m1z >= localMpCells - 2) and not(m1y < 2 or m1y >= localMpCells - 2) and not(m1x < 2 or m1x >= localMpCells - 2)){
+					_timerHaloIf.stop();
 					continue;
 				}
+				if(doHalos) _timerHaloIf.stop();
 //				if(doHalos){
 //					std::cout <<"m1: " <<m1x << m1y << m1z << "\n";
 //				}
@@ -788,7 +796,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 	} //m1z closed
 
 	_timerGatherWellSepLoLokal.stop();
-
+	if(doHalos){
+		_timerHaloGather.stop();
+	}
 } // GatherWellSepLo closed
 
 void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCells, int curLevel){
@@ -1623,6 +1633,8 @@ void UniformPseudoParticleContainer::printTimers() {
 	std::cout << "\t\t" << _timerGatherWellSepLoLokal.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoLokal" << std::endl;
 	std::cout << "\t\t" << _timerPropagateCellLoLokal.get_etime() 		<< "\t\t" <<"s in PropagateCellLoLokal" << std::endl;
 	std::cout << "\t\t" << _timerCommunicationHalos.get_etime() 		<< "\t\t" <<"s in Halo communication" << std::endl;
+	std::cout << "\t\t" << _timerHaloGather.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoHalos" << std::endl;
+	std::cout << "\t\t" << _timerHaloIf.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoHaloIf" << std::endl;
 
 }
 

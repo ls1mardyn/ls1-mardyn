@@ -150,6 +150,8 @@ private:
 	Timer _timerPropagateCellLoLokal;
 	Timer _timerProcessFarField;
 	Timer _timerCommunicationHalos;
+	Timer _timerHaloGather;
+	Timer _timerHaloIf;
 
 	Timer _timerGatherEvalM;
 	Timer _timerGatherEvalLM;
