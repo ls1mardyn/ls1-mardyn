@@ -667,10 +667,10 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
-	global_log->info() << "Performing inital force calculation" << endl;
+	global_log->info() << "Performing initial force calculation" << endl;
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	if (_FMM != NULL) {
-		global_log->info() << "Performing inital FMM force calculation" << endl;
+		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 

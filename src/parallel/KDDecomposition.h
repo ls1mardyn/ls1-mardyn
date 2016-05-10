@@ -51,7 +51,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 */
 	KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2);
 
-    KDDecomposition(){}
+    KDDecomposition():_totalMeanProcessorSpeed(1.){}
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
@@ -213,6 +213,31 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 *        it so that all division costs for
 	 */
 	bool calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup);
+	
+	
+	void updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
+			std::vector<double>& accumulatedProcessorSpeeds) {
+		if (processorSpeeds.size() == 0) {
+			processorSpeeds.resize(_numProcs/2, 1.);
+			processorSpeeds.resize(_numProcs, 1.);
+			_totalProcessorSpeed = _numProcs;
+			_totalMeanProcessorSpeed = 1.;
+			accumulatedProcessorSpeeds.clear();
+			//return;
+		}
+		if (processorSpeeds.size() + 1 != accumulatedProcessorSpeeds.size()) {
+			accumulatedProcessorSpeeds.resize(processorSpeeds.size() + 1);
+		}
+		accumulatedProcessorSpeeds[0] = 0.;
+		for (size_t i = 0; i < processorSpeeds.size(); i++) {
+			assert(processorSpeeds[i] > 0);
+			accumulatedProcessorSpeeds[i + 1] = accumulatedProcessorSpeeds[i] + processorSpeeds[i];
+		}
+		_totalProcessorSpeed =
+				accumulatedProcessorSpeeds[processorSpeeds.size()];
+		_totalMeanProcessorSpeed = _totalProcessorSpeed
+				/ processorSpeeds.size();
+	}
 
 	//######################################
 	//###    private member variables    ###
@@ -240,7 +265,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	unsigned int* _numParticlesPerCell;
 
 	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange
-	 * is not called exactly once in every simulatin step! */
+	 * is not called exactly once in every simulation step! */
 	//! number of simulation steps. Can be used to trigger load-balancing every _frequency steps
 	size_t _steps;
 
@@ -252,9 +277,15 @@ class KDDecomposition: public DomainDecompMPIBase {
 	/*
 	 * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,
 	 * it is for each dimension divided in the middle only. Otherwise, all possible subdivisions
-	 * are created.
+	 * are created. // TODO hetero: change description
 	 */
 	int _fullSearchThreshold;
+
+
+	std::vector<double> _processorSpeeds;
+	std::vector<double> _accumulatedProcessorSpeeds;//length nprocs+1, first element is 0.
+	double _totalMeanProcessorSpeed;
+	double _totalProcessorSpeed;
 };
 
 

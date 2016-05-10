@@ -22,7 +22,7 @@ using Log::global_log;
 //#define DEBUG_DECOMP
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
-		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold) {
+		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.) {
 
 	_cutoffRadius = cutoffRadius;
 
@@ -104,12 +104,17 @@ void KDDecomposition::finishNonBlockingStage(bool /*forceRebalancing*/,
 	DomainDecompMPIBase::finishNonBlockingStageImpl(moleculeContainer, domain, stageNumber, LEAVING_AND_HALO_COPIES, removeRecvDuplicates);
 }
 
+//check whether or not to do rebalancing in the specified step
+bool doRebalancing(bool forceRebalancing, size_t steps, int frequency){
+	return forceRebalancing or steps % frequency == 0 or steps <= 1;
+}
+
 bool KDDecomposition::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
-	return not (forceRebalancing or _steps % _frequency == 0 or _steps <= 1);
+	return not doRebalancing(forceRebalancing, _steps, _frequency);
 }
 
 void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) {
-	const bool rebalance = forceRebalancing or _steps % _frequency == 0 or _steps <= 1;
+	const bool rebalance = doRebalancing(forceRebalancing, _steps, _frequency);
 	_steps++;
 	const bool removeRecvDuplicates = true;
 
@@ -459,6 +464,8 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf) 
 	newRoot = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
 	KDNode * toCleanUp = newRoot;
 
+	updateMeanProcessorSpeeds(_processorSpeeds,_accumulatedProcessorSpeeds);
+
 	if (decompose(newRoot, newOwnLeaf, MPI_COMM_WORLD)) {
 		global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
 	}
@@ -630,7 +637,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		// own area must belong to this process!
 		assert(fatherNode->_owningProc == _rank);
 		ownArea = fatherNode;
-		fatherNode->calculateDeviation();
+		fatherNode->calculateDeviation(&_processorSpeeds, _totalMeanProcessorSpeed);
 		return domainTooSmall;
 	}
 
@@ -642,13 +649,14 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 	double minimalDeviation = globalMinimalDeviation;
 	list<KDNode*>::iterator iter = subdivisions.begin();
 	int iterations = 0;
-	int log2 = 0;
-	while ((_numProcs >> log2) > 1) {
-		log2++;
+	int log2proc = 0;// calculates the logarithm of _numProcs (base 2)
+	while ((_numProcs >> log2proc) > 1) {
+		log2proc++;
 	}
 	// if we are near the root of the tree, we just take the first best subdivision
+	// this is even valid for heterogeneous balancing, since the subdivisions are calculated accordingly.
 	int maxIterations = 1;
-	if (fatherNode->_level > (log2 - _fullSearchThreshold)) {
+	if (fatherNode->_level > (log2proc - _fullSearchThreshold)) {//only do proper search, if this condition is fulfilled (numProcs < 2^(level + threshold))
 		maxIterations = INT_MAX;
 	}
 
@@ -669,19 +677,21 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 #ifdef DEBUG_DECOMP
 		printChildrenInfo(filestream, *iter, minimalDeviation);
 #endif
+
+		// compute the next subdivision depending on the current rank (either first or second subdivision)
 		vector<int> origRanks;
 		int newNumProcs;
-		if (_rank < (*iter)->_child2->_owningProc) {
+		if (_rank < (*iter)->_child2->_owningProc) {  // assign the current rank to either the first (child1)...
 			origRanks.resize((*iter)->_child1->_numProcs);
 			for (int i = 0; i < (*iter)->_child1->_numProcs; i++) {
-				origRanks[i] = i;
+				origRanks[i] = i;  // this group will consist of the first (*iter)->_child1->_numProcs processes/ranks of the current communicator (origGroup)
 			}
 			newNumProcs = (*iter)->_child1->_numProcs;
 		}
-		else {
+		else {                                       // ...or the second group (child2) for the MPI communication
 			origRanks.resize((*iter)->_child2->_numProcs);
 			for (int i = 0; i < (*iter)->_child2->_numProcs; i++) {
-				origRanks[i] = i + (*iter)->_child1->_numProcs;
+				origRanks[i] = i + (*iter)->_child1->_numProcs; // this group consists of the last (*iter)->_child2->_numProcs processes/ranks of the current communicator (origGroup)
 			}
 			newNumProcs = (*iter)->_child2->_numProcs;
 		}
@@ -690,19 +700,19 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		MPI_Group origGroup, newGroup;
 
 		MPI_CHECK( MPI_Comm_group(commGroup, &origGroup) );
-		MPI_CHECK( MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup) );
+		MPI_CHECK( MPI_Group_incl(origGroup, newNumProcs, &origRanks[0], &newGroup) );//create new MPI group based on rank (as calculated before)
 		MPI_CHECK( MPI_Comm_create(commGroup, newGroup, &newComm) );
 
 		KDNode* newOwnArea = NULL;
 		double deviationChildren[] = {0.0, 0.0};
 
-		if (_rank < (*iter)->_child2->_owningProc) {
+		if (_rank < (*iter)->_child2->_owningProc) {  // compute the subdivision of the first child ...
 			// do not use the function call directly in the logical expression, as it may
 			// not be executed due to conditional / short-circuit evaluation!
 			bool subdomainTooSmall = decompose((*iter)->_child1, newOwnArea, newComm, minimalDeviation);
 			deviationChildren[0] = (*iter)->_child1->_deviation;
 			domainTooSmall = (domainTooSmall || subdomainTooSmall);
-		} else {
+		} else {									  // ... or the second child
 			assert(_rank >= (*iter)->_child2->_owningProc);
 			bool subdomainTooSmall = decompose((*iter)->_child2, newOwnArea, newComm, minimalDeviation);
 			deviationChildren[1] = (*iter)->_child2->_deviation;
@@ -711,7 +721,10 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 
 		MPI_CHECK( MPI_Group_free(&newGroup));
 		MPI_CHECK( MPI_Comm_free(&newComm) );
-		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));
+		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));  // reduce the deviations
+		// TODO hetero: check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
+		//       with the allreduce (sum) implementation trees with a low maximal level are preferred (balanced trees).
+		//		 shouldn't this better be an average????
 		(*iter)->_child1->_deviation = deviationChildren[0];
 		(*iter)->_child2->_deviation = deviationChildren[1];
 		(*iter)->calculateDeviation();
@@ -721,7 +734,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		filestream << "   deviation=" << (*iter)->_deviation << " (ch1:" << deviationChildren[0] << "ch2:" << deviationChildren[1] << endl;
 #endif
 		if ((*iter)->_deviation < minimalDeviation) {
-			delete bestSubdivision;
+			delete bestSubdivision;// (deleting of NULL is ok and does not produce errors, since delete checks for NULL)
 			bestSubdivision = *iter;
 			minimalDeviation = (*iter)->_deviation;
 			ownArea = newOwnArea;
@@ -753,14 +766,61 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 }
 
 
-bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup) {
+bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdividedNodes, MPI_Comm commGroup) {
 	bool domainTooSmall = false;
 	vector<vector<double> > costsLeft(3);
 	vector<vector<double> > costsRight(3);
 	calculateCostsPar(node, costsLeft, costsRight, commGroup);
+	global_log->debug() << "calculateAllSubdivisions: " << std::endl;
+	double leftRightLoadRatio = 1.;  // divide load 50/50 -> this can be changed later on if the topology of the system should be taken into account.
+	// update leftRightRatio to something meaningful (that is representable by the compute power distribution of the processes:
 
-	for (int dim = 0; dim < 3; dim++) {
+	// speed that is close to LeftRightRatio
+	double optimalSpeed = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs]
+			- _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio / (1. + leftRightLoadRatio);
+	double searchSpeed = optimalSpeed + _accumulatedProcessorSpeeds[node->_owningProc];
+	std::vector<double>::iterator iter = std::lower_bound(_accumulatedProcessorSpeeds.begin() + node->_owningProc,
+			_accumulatedProcessorSpeeds.begin() + node->_owningProc + node->_numProcs + 1, searchSpeed); // +1 since _accumulatedProcessorSpeeds are shifted and of size (numprocs+1)
+	// returns iterator to first instance of array, that is >= optimalSpeed = totalspeed * rho / (1+rho)
+	// calculated as following: rho * R = L; L leftLoad, R rightLoad, rho=ratio
+	// G = L + R   => rho * (G - L) = L   => L = rho / (1 + rho) * G
 
+	int leftRightLoadRatioIndex;
+	if (fabs(*(iter - 1) - searchSpeed) < fabs(*iter - searchSpeed)) { // iter-1 always exists, since _accumulatedProcessorSpeeds[0] = 0
+		leftRightLoadRatioIndex = min((int) (iter - 1 - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+	} else {
+		leftRightLoadRatioIndex = min((int) (iter - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+	}
+	leftRightLoadRatioIndex = max(1, leftRightLoadRatioIndex);
+
+	leftRightLoadRatio = (_accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex] - _accumulatedProcessorSpeeds[node->_owningProc]) /
+			(_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc + leftRightLoadRatioIndex]);
+
+
+	bool forceRatio = true;  // if you want to enable forcing the above ratio, enable this.
+	bool splitLoad = true;  // indicates, whether to split the domain according to the load
+							// or whether the domain should simply be split in half and the number of processes should be distributed accordingly.
+	bool splitBiggest = true;
+
+	int dimInit = 0;
+	int dimEnd = 3;
+	if(splitBiggest){
+		int max = costsLeft[0].size();
+		int maxInd = 0;
+		for (int dim = 1; dim < 3; dim++){
+			if (costsLeft[dim].size() > max){
+				max = costsLeft[dim].size();
+				maxInd = dim;
+			}
+		}
+		dimInit = maxInd;
+		dimEnd = dimInit + 1;
+	}
+
+	for (int dim = dimInit; dim < dimEnd; dim++) {
+		if (costsLeft[dim].size()==0){
+			continue;
+		}
 		// if a node has some more processors, we probably don't have to find the
 		// "best" partitioning, but it's sufficient to divide the node in the middle
 		// and shift the processor count according to the load imbalance.
@@ -769,17 +829,60 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 		int startIndex = 1;
 		int maxEndIndex = node->_highCorner[dim] - node->_lowCorner[dim] - 1;
 		int endIndex = maxEndIndex;
-		if (node->_numProcs > _fullSearchThreshold) {
-			startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
-			endIndex = min(endIndex, startIndex + 1);
+
+		if (node->_numProcs > _fullSearchThreshold or forceRatio) {
+			if (splitLoad) {  // we choose the index to be the best possible for splitting the ratios.
+				double minError = fabs(costsLeft[dim][0] / costsRight[dim][0] - leftRightLoadRatio);
+				size_t index = 0;
+				double error;
+				for (size_t i = 1; i < costsLeft[dim].size(); ++i) {
+					error = fabs(costsLeft[dim][i] / costsRight[dim][i] - leftRightLoadRatio);
+					if (error < minError) {
+						minError = error;
+						index = i;
+					}
+				}
+				startIndex = max((size_t)startIndex, index);
+				endIndex = min(startIndex + 1, endIndex);
+				global_log->debug() << "splitLoad: startindex " << index << " of " << costsLeft[dim].size() <<std::endl;
+			} else {  // If we have more than _fullSearchThreshold processes left, we split the domain in half.
+				startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
+				endIndex = min(endIndex, startIndex + 1);
+			}
 		}
 
+
 		int i = startIndex;
-		while ( (i < endIndex) || (subdivededNodes.size() == 0 && i < maxEndIndex) ) {
-		//for (int i = startIndex; i < endIndex; i++) {
+		while ( ((i < endIndex) || (subdividedNodes.size() == 0 && i < maxEndIndex))) {
+			//for (int i = startIndex; i < endIndex; i++) {
+
 			double optCostPerProc = (costsLeft[dim][i] + costsRight[dim][i]) / ((double) node->_numProcs);
-			int optNumProcsLeft = min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
-			int numProcsLeft = (int) max(1, optNumProcsLeft);
+			int optNumProcsLeft;
+			if (splitLoad) {  // if we split the load in a specific ratio, numProcsLeft is calculated differently
+				if(_accumulatedProcessorSpeeds.size()==0){
+					global_log->error() << "no processor speeds given" << std::endl;
+					global_simulation->exit(-1);
+				}
+				double optimalLoad = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio
+						/ (1. + leftRightLoadRatio);
+				double searchLoad = optimalLoad + _accumulatedProcessorSpeeds[node->_owningProc];
+				std::vector<double>::iterator iter = std::lower_bound(_accumulatedProcessorSpeeds.begin() + node->_owningProc,
+						_accumulatedProcessorSpeeds.begin() + node->_owningProc + node->_numProcs + 1, searchLoad);  // +1 since _accumulatedProcessorSpeeds are shifted and of size (numprocs+1)
+				// returns iterator to first instance of array, that is >= optimalSpeed = totalspeed * rho / (1+rho)
+				// calculated as following: rho * R = L; L leftLoad, R rightLoad, rho=ratio
+				// G = L + R   => rho * (G - L) = L   => L = rho / (1 + rho) * G
+
+				if (fabs(*(iter - 1) - searchLoad) < fabs(*iter - searchLoad)) {  // iter-1 always exists, since _accumulatedProcessorSpeeds[0] = 0
+					optNumProcsLeft = min((int)(iter - 1 - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+				} else {
+					optNumProcsLeft = min((int)(iter - _accumulatedProcessorSpeeds.begin() - node->_owningProc), node->_numProcs - 1);
+				}
+
+			} else{
+				optNumProcsLeft = min(round(costsLeft[dim][i] / optCostPerProc), (double) (node->_numProcs - 1));
+			}
+
+			int numProcsLeft = max(1, optNumProcsLeft);
 
 			KDNode* clone = new KDNode(*node);
 			if (clone->_level == 0) {
@@ -795,7 +898,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 				// I think, this case should not happen, but Martin Buchholz coded it in his code...
 				// OK, it happens...!
 				i++;
-				continue;
+				continue;  // no break, since other configurations can be proper (due to division of whole numbers (ganzzahldivision))
 			}
 
 			while ( (! clone->_child1->isResolvable()) && clone->_child2->isResolvable()) {
@@ -817,10 +920,11 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			}
 
 			// In this place, MBu had some processor shifting in his algorithm.
-			// I believe it to be unneccessary, as the ratio of left and right processors
+			// I believe it to be unnecessary, as the ratio of left and right processors
 			// is chosen according to the load ratio (I use round instead of floor).
 			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
+				//continue;
 				global_log->error() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
 				global_simulation->exit(1);
 			}
@@ -829,14 +933,14 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			clone->_child1->_load = costsLeft[dim][i];
 			clone->_child2->_load = costsRight[dim][i];
 			clone->_load = costsLeft[dim][i] + costsRight[dim][i];
-			clone->calculateExpectedDeviation();
+			clone->calculateExpectedDeviation(&_accumulatedProcessorSpeeds);
 
 			// sort node according to expected deviation
-			list<KDNode*>::iterator iter = subdivededNodes.begin();
-			while (iter != subdivededNodes.end() && ((*iter)->_expectedDeviation < clone->_expectedDeviation)) {
+			list<KDNode*>::iterator iter = subdividedNodes.begin();
+			while (iter != subdividedNodes.end() && ((*iter)->_expectedDeviation < clone->_expectedDeviation)) {
 				iter++;
 			}
-			subdivededNodes.insert(iter, clone);
+			subdividedNodes.insert(iter, clone);
 			i++;
 		}
 	}

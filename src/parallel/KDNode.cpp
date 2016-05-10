@@ -74,6 +74,8 @@ void KDNode::buildKDTree() {
 		cellsPerDim[dim] = _highCorner[dim] - _lowCorner[dim] + 1;
 	}
 	int divDir = 0;
+
+	// split in the dimension with the most cells
 	int maxCells = cellsPerDim[0];
 	if (cellsPerDim[1] > maxCells) {
 		divDir = 1;
@@ -156,6 +158,7 @@ bool KDNode::isResolvable() {
 }
 
 unsigned int KDNode::getNumMaxProcs() {
+	// we need at least 2 cells in each dimension per process (
 	unsigned int maxProcs = 1;
 	for (int dim = 0; dim < 3; dim++) {
 		maxProcs *= (_highCorner[dim] - _lowCorner[dim] + 1) / 2;
@@ -173,6 +176,7 @@ void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 		coversAll[dim] = _coversWholeDomain[dim];
 	}
 
+	// if we cut it along the dimension divDimension, it can no longer cover the whole domain
 	coversAll[divDimension] = false;
 
 	int low1[KDDIM];

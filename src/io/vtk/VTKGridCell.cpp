@@ -7,7 +7,9 @@
 
 #include "VTKGridCell.h"
 
-VTKGridCell::VTKGridCell() { }
+VTKGridCell::VTKGridCell() :
+		_index(0), _numberOfMolecules(0), _load(0.), _level(0) {
+}
 
 VTKGridCell::~VTKGridCell() { }
 
