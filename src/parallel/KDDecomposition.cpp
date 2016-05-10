@@ -802,12 +802,12 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 							// or whether the domain should simply be split in half and the number of processes should be distributed accordingly.
 	bool splitBiggest = true;
 
-	int dimInit = 0;
-	int dimEnd = 3;
+	size_t dimInit = 0;
+	size_t dimEnd = 3;
 	if(splitBiggest){
-		int max = costsLeft[0].size();
-		int maxInd = 0;
-		for (int dim = 1; dim < 3; dim++){
+		size_t max = costsLeft[0].size();
+		size_t maxInd = 0;
+		for (unsigned int dim = 1; dim < 3; dim++){
 			if (costsLeft[dim].size() > max){
 				max = costsLeft[dim].size();
 				maxInd = dim;
@@ -817,7 +817,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 		dimEnd = dimInit + 1;
 	}
 
-	for (int dim = dimInit; dim < dimEnd; dim++) {
+	for (size_t dim = dimInit; dim < dimEnd; dim++) {
 		if (costsLeft[dim].size()==0){
 			continue;
 		}
