@@ -73,10 +73,14 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_timerProcessCells.set_sync(false);
 	_timerAllreduce.set_sync(false);
 	_timerAllreduce_me.set_sync(false);
-	_timerCombineMpCell.set_sync(false);
-	_timerGatherWellSepLo.set_sync(false);
-	_timerPropagateCellLo.set_sync(false);
+	_timerCombineMpCellGlobal.set_sync(false);
+	_timerGatherWellSepLoGlobal.set_sync(false);
+	_timerPropagateCellLoGlobal.set_sync(false);
+	_timerCombineMpCellLokal.set_sync(false);
+	_timerGatherWellSepLoLokal.set_sync(false);
+	_timerPropagateCellLoLokal.set_sync(false);
 	_timerProcessFarField.set_sync(false);
+	_timerCommunicationHalos.set_sync(false);
 #endif
 	_leafContainer = new LeafNodesContainer(bBoxMin, bBoxMax, LJCellLength,
 			LJSubdivisionFactor, periodic);
@@ -323,7 +327,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 		AllReduceMultipoleMoments();
 	}
 
-	_timerCombineMpCell.start();
+	_timerCombineMpCellGlobal.start();
 
 	int curCellsEdge=_globalNumCellsPerDim;
 	double cellWid[3];
@@ -357,7 +361,7 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	}
 	AllReduceMultipoleMomentsLevelToTop(_globalLevelNumCells,_globalLevel);
 
-	_timerCombineMpCell.stop();
+	_timerCombineMpCellGlobal.stop();
 
 }
 
@@ -603,7 +607,7 @@ void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, int& loc
 #define LoLim(t) ToEven(m1v[t])- 2*_wellSep
 
 void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCells, int curLevel){
-	_timerGatherWellSepLo.start();
+	_timerGatherWellSepLoGlobal.start();
 
 	int m1v[3];
 	int m2v[3];
@@ -688,14 +692,14 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 		} // m2z closed
 	} //m1 closed
 
-	_timerGatherWellSepLo.stop();
+	_timerGatherWellSepLoGlobal.stop();
 
 } // GatherWellSepLo closed
 
 
 
 void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int localMpCells, int curLevel, int doHalos){
-	_timerGatherWellSepLo.start();
+	_timerGatherWellSepLoLokal.start();
 
 	int m1x,m1y,m1z;
 	int m2v[3];
@@ -783,12 +787,12 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 		} //m1y closed
 	} //m1z closed
 
-	_timerGatherWellSepLo.stop();
+	_timerGatherWellSepLoLokal.stop();
 
 } // GatherWellSepLo closed
 
 void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCells, int curLevel){
-	_timerPropagateCellLo.start();
+	_timerPropagateCellLoGlobal.start();
 	int m1v[3];
 	int m2v[3];
 
@@ -835,12 +839,12 @@ void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCell
 					_mpCellGlobalTop[curLevel + 1][m2].local);
 		} // iDir
 	}
-	_timerPropagateCellLo.stop();
+	_timerPropagateCellLoGlobal.stop();
 } // PropogateCellLo
 
 
 void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int localMpCells, int curLevel, Vector3<int> offset){
-	_timerPropagateCellLo.start();
+	_timerPropagateCellLoLokal.start();
 //	int m1v[3];
 	int m2v[3];
 
@@ -894,7 +898,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, int lo
 		}
 	}
 
-	_timerPropagateCellLo.stop();
+	_timerPropagateCellLoLokal.stop();
 } // PropogateCellLo_MPI
 
 
@@ -1308,6 +1312,7 @@ void UniformPseudoParticleContainer::setHaloValues(int localMpCellsBottom,int bo
 }
 
 void UniformPseudoParticleContainer::communicateHalos(){
+	_timerCommunicationHalos.start();
 	if(!_overlapComm){
 		communicateHalosNoOverlap();
 	}
@@ -1317,6 +1322,7 @@ void UniformPseudoParticleContainer::communicateHalos(){
 //		//_multipoleBufferOverlap->wait();
 //		communicateHalosOverlapSetHalos();
 	}
+	_timerCommunicationHalos.stop();
 }
 void UniformPseudoParticleContainer::communicateHalosNoOverlap(){
 
@@ -1610,9 +1616,14 @@ void UniformPseudoParticleContainer::processTree() {
 void UniformPseudoParticleContainer::printTimers() {
 	std::cout << "\t\t" << _timerAllreduce.get_etime()       		<< "\t\t" <<"s in Allreduce" << std::endl;
 	std::cout << "\t\t" << _timerAllreduce_me.get_etime()			<< "\t\t" <<"s in Allreduce_me"<<std::endl;
-	std::cout << "\t\t" << _timerCombineMpCell.get_etime()     		<< "\t\t" <<"s in CombineMpCell" << std::endl;
-	std::cout << "\t\t" << _timerGatherWellSepLo.get_etime() 		<< "\t\t" <<"s in GatherWellSepLo" << std::endl;
-	std::cout << "\t\t" << _timerPropagateCellLo.get_etime() 		<< "\t\t" <<"s in PropagateCellLo" << std::endl;
+	std::cout << "\t\t" << _timerCombineMpCellGlobal.get_etime()     		<< "\t\t" <<"s in CombineMpCellGlobal" << std::endl;
+	std::cout << "\t\t" << _timerGatherWellSepLoGlobal.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoGlobal" << std::endl;
+	std::cout << "\t\t" << _timerPropagateCellLoGlobal.get_etime() 		<< "\t\t" <<"s in PropagateCellLoGlobal" << std::endl;
+	std::cout << "\t\t" << _timerCombineMpCellLokal.get_etime()     		<< "\t\t" <<"s in CombineMpCellLokal" << std::endl;
+	std::cout << "\t\t" << _timerGatherWellSepLoLokal.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoLokal" << std::endl;
+	std::cout << "\t\t" << _timerPropagateCellLoLokal.get_etime() 		<< "\t\t" <<"s in PropagateCellLoLokal" << std::endl;
+	std::cout << "\t\t" << _timerCommunicationHalos.get_etime() 		<< "\t\t" <<"s in Halo communication" << std::endl;
+
 }
 
 

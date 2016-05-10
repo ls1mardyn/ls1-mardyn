@@ -142,10 +142,14 @@ private:
 	int _halosProcessed;
 	Timer _timerProcessCells;
 	Timer _timerAllreduce;
-	Timer _timerCombineMpCell;
-	Timer _timerGatherWellSepLo;
-	Timer _timerPropagateCellLo;
+	Timer _timerGatherWellSepLoGlobal;
+	Timer _timerPropagateCellLoGlobal;
+	Timer _timerCombineMpCellGlobal;
+	Timer _timerCombineMpCellLokal;
+	Timer _timerGatherWellSepLoLokal;
+	Timer _timerPropagateCellLoLokal;
 	Timer _timerProcessFarField;
+	Timer _timerCommunicationHalos;
 
 	Timer _timerGatherEvalM;
 	Timer _timerGatherEvalLM;
