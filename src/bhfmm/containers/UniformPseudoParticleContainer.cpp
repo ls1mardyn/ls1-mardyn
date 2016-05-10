@@ -83,6 +83,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_timerCommunicationHalos.set_sync(false);
 	_timerHaloGather.set_sync(false);
 	_timerHaloIf.set_sync(false);
+	_timerFMMcomplete.set_sync(false);
 
 #endif
 	_leafContainer = new LeafNodesContainer(bBoxMin, bBoxMax, LJCellLength,
@@ -314,6 +315,7 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 }
 
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
+	_timerFMMcomplete.start();
 	_leafContainer->clearParticles();
 
 	Molecule* tM;
@@ -514,6 +516,8 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 
 	// L2P
 	_leafContainer->traverseCellPairs(*cp);
+
+	_timerFMMcomplete.stop();
 }
 
 
@@ -1635,6 +1639,7 @@ void UniformPseudoParticleContainer::printTimers() {
 	std::cout << "\t\t" << _timerCommunicationHalos.get_etime() 		<< "\t\t" <<"s in Halo communication" << std::endl;
 	std::cout << "\t\t" << _timerHaloGather.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoHalos" << std::endl;
 	std::cout << "\t\t" << _timerHaloIf.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoHaloIf" << std::endl;
+	std::cout << "\t\t" << _timerFMMcomplete.get_etime() 		<< "\t\t" <<"s in total FMM" << std::endl;
 
 }
 

@@ -152,6 +152,7 @@ private:
 	Timer _timerCommunicationHalos;
 	Timer _timerHaloGather;
 	Timer _timerHaloIf;
+	Timer _timerFMMcomplete;
 
 	Timer _timerGatherEvalM;
 	Timer _timerGatherEvalLM;
