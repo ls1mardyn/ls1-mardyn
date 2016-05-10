@@ -101,7 +101,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 		setNumParticlesPerCell(kdd->_numParticlesPerCell, kdd->_globalCellsPerDim);
 
-		kdd->constructNewTree(newDecompRoot, newOwnLeaf);
+		kdd->constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
 
 		clearNumParticlesPerCell(kdd->_numParticlesPerCell, kdd->_globalNumCells);
 

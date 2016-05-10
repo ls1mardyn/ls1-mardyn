@@ -668,7 +668,13 @@ void Simulation::prepare_start() {
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing initial force calculation" << endl;
+	Timer t;
+	t.start();
 	_moleculeContainer->traverseCells(*_cellProcessor);
+	t.stop();
+	if(dynamic_cast<KDDecomposition*>(_domainDecomposition)){
+		dynamic_cast<KDDecomposition*>(_domainDecomposition)->setComputationTime(t.get_etime());
+	}
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
@@ -889,11 +895,15 @@ void Simulation::simulate() {
 			updateParticleContainerAndDecomposition();
 			decompositionTimer.stop();
 
+			double currentEtime = computationTimer.get_etime();
 			computationTimer.start();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			_moleculeContainer->traverseCells(*_cellProcessor);
 			computationTimer.stop();
+			if (dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
+				dynamic_cast<KDDecomposition*>(_domainDecomposition)->setComputationTime(computationTimer.get_etime() - currentEtime);
+			}
 		}
 		computationTimer.start();
 		if (_FMM != NULL) {
@@ -901,7 +911,7 @@ void Simulation::simulate() {
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
 
-		
+
 
 
 
@@ -1121,7 +1131,8 @@ void Simulation::simulate() {
 		perStepIoTimer.start();
 
 		output(_simstep);
-		if(_forced_checkpoint_time >= 0 && (loopTimer.get_etime() + ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
+		if(_forced_checkpoint_time >= 0 && (decompositionTimer.get_etime() + computationTimer.get_etime()
+				+ ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
@@ -1163,7 +1174,7 @@ void Simulation::simulate() {
 #endif /* WITH_PAPI */
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
+	double elapsed_time = loopTimer.get_etime();
 	if(NULL != _flopCounter) {
 		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
 		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;

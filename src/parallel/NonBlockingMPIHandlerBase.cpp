@@ -62,6 +62,7 @@ void NonBlockingMPIHandlerBase::performComputation() {
 }
 
 void NonBlockingMPIHandlerBase::initBalanceAndExchange(bool forceRebalancing) {
+
 	_decompositionTimer->start();
 
 	_domainDecomposition->balanceAndExchange(forceRebalancing,

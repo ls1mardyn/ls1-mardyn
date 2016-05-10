@@ -51,7 +51,11 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 */
 	KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2);
 
-    KDDecomposition():_totalMeanProcessorSpeed(1.){}
+	KDDecomposition() :
+			_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(
+					1.), _cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
+					1.), _oneLoopComputationTime(1.) {
+	}
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
@@ -120,8 +124,12 @@ class KDDecomposition: public DomainDecompMPIBase {
 	int getUpdateFrequency() { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
 
+	void setComputationTime(double t){
+		_oneLoopComputationTime = t;
+	}
+
  private:
-	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);
+	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**
 	 *
 	 * @param newRoot
@@ -216,28 +224,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	
 	
 	void updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
-			std::vector<double>& accumulatedProcessorSpeeds) {
-		if (processorSpeeds.size() == 0) {
-			processorSpeeds.resize(_numProcs/2, 1.);
-			processorSpeeds.resize(_numProcs, 1.);
-			_totalProcessorSpeed = _numProcs;
-			_totalMeanProcessorSpeed = 1.;
-			accumulatedProcessorSpeeds.clear();
-			//return;
-		}
-		if (processorSpeeds.size() + 1 != accumulatedProcessorSpeeds.size()) {
-			accumulatedProcessorSpeeds.resize(processorSpeeds.size() + 1);
-		}
-		accumulatedProcessorSpeeds[0] = 0.;
-		for (size_t i = 0; i < processorSpeeds.size(); i++) {
-			assert(processorSpeeds[i] > 0);
-			accumulatedProcessorSpeeds[i + 1] = accumulatedProcessorSpeeds[i] + processorSpeeds[i];
-		}
-		_totalProcessorSpeed =
-				accumulatedProcessorSpeeds[processorSpeeds.size()];
-		_totalMeanProcessorSpeed = _totalProcessorSpeed
-				/ processorSpeeds.size();
-	}
+			std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer);
 
 	//######################################
 	//###    private member variables    ###
@@ -286,6 +273,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 	std::vector<double> _accumulatedProcessorSpeeds;//length nprocs+1, first element is 0.
 	double _totalMeanProcessorSpeed;
 	double _totalProcessorSpeed;
+	double _oneLoopComputationTime;
+	const bool _heterogeneousSystems = true;
 };
 
 

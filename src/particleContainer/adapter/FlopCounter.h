@@ -106,9 +106,13 @@ public:
 	void resetCounters() {
 		_currentCounts.clear();
 //		_totalCounts.clear();
-		_totalFlopCount = 0.0;
+		_totalFlopCount = 0.;
+		_myFlopCount = 0.;
 	}
 
+	double getMyFlopCount() const {
+		return _myFlopCount;
+	}
 private:
 	void handlePair(const Molecule& Mi, const Molecule& Mj,
 			bool addMacro = true);
@@ -263,6 +267,8 @@ private:
 //	_Counts _totalCounts; TODO: is this needed?
 	_Counts MULTIPLIERS;
 	double _totalFlopCount;
+	double _myFlopCount;
+	bool _synchronized;
 };
 
 #endif /* FLOPCOUNTER_H_ */

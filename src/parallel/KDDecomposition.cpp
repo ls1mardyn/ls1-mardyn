@@ -13,6 +13,7 @@
 #include "ParticleData.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
+#include "particleContainer/adapter/FlopCounter.h"
 
 #include <cmath>
 
@@ -21,8 +22,9 @@ using Log::global_log;
 
 //#define DEBUG_DECOMP
 
-KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold)
-		: _steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.) {
+KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold) :
+		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
+				1.), _oneLoopComputationTime(1.) {
 
 	_cutoffRadius = cutoffRadius;
 
@@ -132,7 +134,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 		KDNode * newOwnLeaf = NULL;
 
 		getNumParticles(moleculeContainer);
-		constructNewTree(newDecompRoot, newOwnLeaf);
+		constructNewTree(newDecompRoot, newOwnLeaf, moleculeContainer);
 		bool migrationSuccessful = migrateParticles(*newDecompRoot, *newOwnLeaf, moleculeContainer);
 		if (not migrationSuccessful) {
 			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << endl;
@@ -460,11 +462,11 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	return success;
 }
 
-void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf) {
+void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer) {
 	newRoot = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
 	KDNode * toCleanUp = newRoot;
 
-	updateMeanProcessorSpeeds(_processorSpeeds,_accumulatedProcessorSpeeds);
+	updateMeanProcessorSpeeds(_processorSpeeds,_accumulatedProcessorSpeeds, moleculeContainer);
 
 	if (decompose(newRoot, newOwnLeaf, MPI_COMM_WORLD)) {
 		global_log->warning() << "Domain too small to achieve a perfect load balancing" << endl;
@@ -492,6 +494,58 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf) 
 	}
 #endif
 }
+
+void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
+		std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer) {
+	if (_heterogeneousSystems) {
+		FlopCounter fl(global_simulation->getcutoffRadius(), global_simulation->getLJCutoff());
+		moleculeContainer->traverseCells(fl);
+		double flopCount = fl.getMyFlopCount();
+		double flopRate = flopCount / _oneLoopComputationTime;
+		collCommInit(_numProcs);
+		for (int i = 0; i < getRank(); i++) {
+			collCommAppendDouble(0.);
+		}
+		collCommAppendDouble(flopRate);
+		for (int i = getRank() + 1; i < _numProcs; i++) {
+			collCommAppendDouble(0.);
+		}
+		collCommAllreduceSum();
+		if (processorSpeeds.size() == 0) {
+			processorSpeeds.resize(_numProcs);
+			accumulatedProcessorSpeeds.clear();
+		}
+		for (int i = 0; i < _numProcs; i++) {
+			processorSpeeds[i] = collCommGetDouble();
+		}
+		collCommFinalize();
+	}
+	else{
+		if (processorSpeeds.size() == 0) {
+			processorSpeeds.resize(_numProcs, 1.);
+			_totalProcessorSpeed = _numProcs;
+			_totalMeanProcessorSpeed = 1.;
+			accumulatedProcessorSpeeds.clear();
+		}
+	}
+
+
+
+
+	if (processorSpeeds.size() + 1 != accumulatedProcessorSpeeds.size()) {
+		accumulatedProcessorSpeeds.resize(processorSpeeds.size() + 1);
+	}
+	accumulatedProcessorSpeeds[0] = 0.;
+	for (size_t i = 0; i < processorSpeeds.size(); i++) {
+		assert(processorSpeeds[i] > 0);
+		accumulatedProcessorSpeeds[i + 1] = accumulatedProcessorSpeeds[i] + processorSpeeds[i];
+	}
+	_totalProcessorSpeed =
+			accumulatedProcessorSpeeds[processorSpeeds.size()];
+	_totalMeanProcessorSpeed = _totalProcessorSpeed
+			/ processorSpeeds.size();
+}
+
 
 //TODO: rewrite with min/max
 double KDDecomposition::getBoundingBoxMin(int dimension, Domain* domain) {

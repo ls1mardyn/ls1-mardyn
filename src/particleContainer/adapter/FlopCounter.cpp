@@ -82,7 +82,7 @@ void FlopCounter::_Counts::allReduce() {
 	domainDecomp.collCommAppendDouble(_moleculeDistances);
 
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
-		_potCounts[i].collCommAppend();
+		_potCounts[i].collCommAppend();//adds 2 values each
 	}
 
 	domainDecomp.collCommAllreduceSum();
@@ -115,6 +115,8 @@ double FlopCounter::_Counts::process() const {
 
 FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius) {
 	_totalFlopCount = 0.0;
+	_myFlopCount = 0.;
+	_synchronized = true;
 }
 
 void FlopCounter::initTraversal(const size_t numCells) {
@@ -123,7 +125,10 @@ void FlopCounter::initTraversal(const size_t numCells) {
 
 
 void FlopCounter::endTraversal() {
-	_currentCounts.allReduce();
+	_myFlopCount = _currentCounts.getTotalFlops();
+	if(_synchronized){
+		_currentCounts.allReduce();
+	}
 
 	Log::global_log->info()
 				<< "FLOP counts in force calculation for this iteration:" << std::endl;
