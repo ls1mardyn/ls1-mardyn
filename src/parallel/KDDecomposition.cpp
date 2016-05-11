@@ -502,6 +502,9 @@ void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSp
 		moleculeContainer->traverseCells(fl);
 		double flopCount = fl.getMyFlopCount();
 		double flopRate = flopCount / _oneLoopComputationTime;
+		if (flopRate == 0.) {  // for unit_tests...
+			flopRate = 1.;
+		}
 		collCommInit(_numProcs);
 		for (int i = 0; i < getRank(); i++) {
 			collCommAppendDouble(0.);

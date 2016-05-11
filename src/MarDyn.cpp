@@ -219,8 +219,8 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
-	char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
-	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
+	char const* const pc_choices[] = { "LinkedCells" };
+	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[1]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
 	op.add_option_group(dgroup);
 
 	return op.parse_args(argc, argv);
