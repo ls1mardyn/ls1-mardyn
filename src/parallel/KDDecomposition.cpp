@@ -22,10 +22,20 @@ using Log::global_log;
 
 //#define DEBUG_DECOMP
 
+KDDecomposition::KDDecomposition() :
+		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.), _cutoffRadius(
+				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.) {
+	global_log->set_mpi_output_all();
+	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
+	global_log->set_mpi_output_root(0);
+}
+
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold) :
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
 				1.) {
-
+	global_log->set_mpi_output_all();
+	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
+	global_log->set_mpi_output_root(0);
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};
@@ -463,6 +473,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 }
 
 void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer) {
+
 	newRoot = new KDNode(_numProcs, &(_decompTree->_lowCorner[0]), &(_decompTree->_highCorner[0]), 0, 0, _decompTree->_coversWholeDomain, 0);
 	KDNode * toCleanUp = newRoot;
 
@@ -601,7 +612,7 @@ void KDDecomposition::printDecomp(string filename, Domain* domain) {
 
 
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
-//$ private Methoden, die von exchangeMolecule benvtigt werden $
+//$ private Methoden, die von exchangeMolecule benötigt werden $
 //$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
 void KDDecomposition::completeTreeInfo(KDNode*& root, KDNode*& ownArea) {

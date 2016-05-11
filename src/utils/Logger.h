@@ -113,7 +113,7 @@ private:
 
 	// don't allow copy-construction
 	Logger(const Logger&) : _log_level(Log::Error), _msg_log_level(Log::Error), _do_output(true),
-			_filename(""), _log_stream(0), logLevelNames(), _starttime()
+			_filename(""), _log_stream(0), logLevelNames(), _starttime(), _rank(0)
 	{ }
 
 	// don't allow assignment
@@ -233,10 +233,10 @@ public:
 	/* methods for easy handling of output processes */
 
 	/// allow logging only for a single process
-	bool set_mpi_output_root(int root = 0);
+	void set_mpi_output_root(int root = 0);
 
 	/// all processes shall perform logging
-	bool set_mpi_output_all();
+	void set_mpi_output_all();
 
 	/// allow a set of processes for logging
 	bool set_mpi_output_ranks(int num_nums, int* nums);

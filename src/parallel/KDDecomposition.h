@@ -51,11 +51,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 */
 	KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2);
 
-	KDDecomposition() :
-			_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(
-					1.), _cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
-					1.) {
-	}
+	KDDecomposition();
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
