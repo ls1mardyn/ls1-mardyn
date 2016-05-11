@@ -481,7 +481,10 @@ private:
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
+
 public:
+	//! computational time for one execution of traverseCell
+	double getOneLoopCompTime(){return _oneLoopCompTime;}
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
 	void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
 	std::string getOutputPrefix() { return _outputPrefix; }
@@ -493,6 +496,12 @@ public:
 
 	/** initialize all member variables with a suitable value */
 	void initialize();
+	void setName(std::string name) {
+		_programName = name;
+	}
+	std::string getName() {
+		return _programName;
+	}
 
 private:
 
@@ -526,8 +535,14 @@ private:
 	 * internal use of the program.
 	 */
 	double h;
+
 	/** Time after which the application should write a checkpoint in seconds. */
 	double _forced_checkpoint_time;
+
+	//! computational time for one loop
+	double _oneLoopCompTime;
+
+	std::string _programName;
 };
 #endif /*SIMULATION_H_*/
 

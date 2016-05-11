@@ -54,7 +54,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	KDDecomposition() :
 			_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(
 					1.), _cutoffRadius(1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
-					1.), _oneLoopComputationTime(1.) {
+					1.) {
 	}
 
 	// documentation see father class (DomainDecompBase.h)
@@ -123,10 +123,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	int getUpdateFrequency() { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
-
-	void setComputationTime(double t){
-		_oneLoopComputationTime = t;
-	}
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
@@ -273,7 +269,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 	std::vector<double> _accumulatedProcessorSpeeds;//length nprocs+1, first element is 0.
 	double _totalMeanProcessorSpeed;
 	double _totalProcessorSpeed;
-	double _oneLoopComputationTime;
 	const bool _heterogeneousSystems = true;
 };
 

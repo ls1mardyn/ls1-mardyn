@@ -287,9 +287,9 @@ void KDNode::deserialize(std::istream& file) {
 	}
 }
 
-void KDNode::plotNode(const std::string& vtkFile) const {
+void KDNode::plotNode(const std::string& vtkFile, const std::vector<double>* processorSpeeds) const {
 #ifdef VTK
-	VTKGridWriterImplementation writer(_owningProc);
+	VTKGridWriterImplementation writer(_owningProc, processorSpeeds);
 	writer.initializeVTKFile();
 	plotNode(writer);
 	writer.writeVTKFile(vtkFile);
@@ -316,7 +316,7 @@ void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
 
 		VTKGridCell cell;
 		cell.setCellData(_owningProc, _load, _level);
-
+		cell.setIndex(_nodeID);
 		for (int i = 0; i < 8; i++) {
 			cell.setVertex(i, &vertices[i]);
 		}

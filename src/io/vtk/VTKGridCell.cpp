@@ -8,7 +8,7 @@
 #include "VTKGridCell.h"
 
 VTKGridCell::VTKGridCell() :
-		_index(0), _numberOfMolecules(0), _load(0.), _level(0) {
+		_index(0), _rank(0), _load(0.), _level(0) {
 }
 
 VTKGridCell::~VTKGridCell() { }
@@ -31,15 +31,15 @@ unsigned int VTKGridCell::getIndex() const {
 }
 
 
-void VTKGridCell::setCellData(int numberOfMolecules, double load, int level) {
-	_numberOfMolecules = numberOfMolecules;
+void VTKGridCell::setCellData(int rank, double load, int level) {
+	_rank = rank;
 	_load = load;
 	_level = level;
 }
 
 
-int VTKGridCell::getNumberOfMolecules() const {
-	return _numberOfMolecules;
+int VTKGridCell::getRank() const {
+	return _rank;
 }
 
 

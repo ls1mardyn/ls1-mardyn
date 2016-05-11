@@ -16,7 +16,7 @@ TEST_SUITE_REGISTRATION(KDDecompositionTest);
 
 using namespace std;
 
-KDDecompositionTest::KDDecompositionTest() {
+KDDecompositionTest::KDDecompositionTest():_rank(0) {
 }
 
 KDDecompositionTest::~KDDecompositionTest() {

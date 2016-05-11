@@ -25,7 +25,7 @@ private:
 	//! the index of the cell (should correspond to the index in the linked-cell data structure).
 	unsigned int _index;
 
-	int _numberOfMolecules;
+	int _rank;
 
 	/**
 	 * computational load (used when plotting KDDecomposition)
@@ -56,7 +56,7 @@ public:
 	 */
 	void setCellData(int numberOfMolecules, double load, int level);
 
-	int getNumberOfMolecules() const;
+	int getRank() const;
 
 	double getLoad() const;
 

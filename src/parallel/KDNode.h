@@ -188,7 +188,7 @@ public:
 	/**
 	 * plot the leafs of the KDTree with vtk.
 	 */
-	void plotNode(const std::string& vtkFile) const;
+	void plotNode(const std::string& vtkFile, const std::vector<double>* processorSpeeds=nullptr) const;
 
 	/**
 	 * Initialize the mpi datatype. Has to be called once initially.

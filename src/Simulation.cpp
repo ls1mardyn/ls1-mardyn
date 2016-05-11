@@ -82,7 +82,9 @@ Simulation::Simulation()
 	_longRangeCorrection(NULL),
 	_temperatureControl(NULL),
 	_FMM(NULL),
-	_forced_checkpoint_time(0)
+	_forced_checkpoint_time(0),
+	_oneLoopCompTime(1.),
+	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
 
@@ -672,11 +674,8 @@ void Simulation::prepare_start() {
 	t.start();
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	t.stop();
-#ifdef ENABLE_MPI
-	if(dynamic_cast<KDDecomposition*>(_domainDecomposition)){
-		dynamic_cast<KDDecomposition*>(_domainDecomposition)->setComputationTime(t.get_etime());
-	}
-#endif
+	_oneLoopCompTime = t.get_etime();
+
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
@@ -903,11 +902,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Traversing pairs" << endl;
 			_moleculeContainer->traverseCells(*_cellProcessor);
 			computationTimer.stop();
-#ifdef ENABLE_MPI
-			if (dynamic_cast<KDDecomposition*>(_domainDecomposition)) {
-				dynamic_cast<KDDecomposition*>(_domainDecomposition)->setComputationTime(computationTimer.get_etime() - currentEtime);
-			}
-#endif
+			_oneLoopCompTime = computationTimer.get_etime() - currentEtime;
 		}
 		computationTimer.start();
 		if (_FMM != NULL) {

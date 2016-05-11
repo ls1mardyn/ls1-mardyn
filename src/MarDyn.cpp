@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
 	}
 
 	Simulation simulation;
-
+	simulation.setName(op.prog());
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	if( fileExists(args[0].c_str()) ) {
 		global_log->info() << "Config file: " << args[0] << endl;

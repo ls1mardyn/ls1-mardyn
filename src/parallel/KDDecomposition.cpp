@@ -24,7 +24,7 @@ using Log::global_log;
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold) :
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
-				1.), _oneLoopComputationTime(1.) {
+				1.) {
 
 	_cutoffRadius = cutoffRadius;
 
@@ -74,7 +74,7 @@ KDDecomposition::~KDDecomposition() {
 	delete[] _numParticlesPerCell;
 //	_decompTree->serialize(string("kddecomp.dat"));
 	if (_rank == 0) {
-		_decompTree->plotNode("kddecomp.vtu");
+		_decompTree->plotNode("kddecomp.vtu", &_processorSpeeds);
 	}
 	delete _decompTree;
 	KDNode::shutdownMPIDataType();
@@ -484,7 +484,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 	if (_rank == 0) {
 		stringstream fname;
 		fname << "kddecomp_" << _steps - 1 << ".vtu";
-		newRoot->plotNode(fname.str());
+		newRoot->plotNode(fname.str(), &_processorSpeeds);
 	}
 #endif /* NDEBUG */
 
@@ -501,7 +501,7 @@ void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSp
 		FlopCounter fl(global_simulation->getcutoffRadius(), global_simulation->getLJCutoff());
 		moleculeContainer->traverseCells(fl);
 		double flopCount = fl.getMyFlopCount();
-		double flopRate = flopCount / _oneLoopComputationTime;
+		double flopRate = flopCount / global_simulation->getOneLoopCompTime();
 		if (flopRate == 0.) {  // for unit_tests...
 			flopRate = 1.;
 		}
