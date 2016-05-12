@@ -13,7 +13,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "bhfmm/HaloBufferNoOverlap.h"
 #include "bhfmm/HaloBufferOverlap.h"
-
+#include <string>
 #include <algorithm>
 
 namespace bhfmm {
@@ -82,7 +82,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_timerProcessFarField.set_sync(false);
 	_timerCommunicationHalos.set_sync(false);
 	_timerHaloGather.set_sync(false);
-	_timerHaloIf.set_sync(false);
+	_timerBusyWaiting.set_sync(false);
 	_timerFMMcomplete.set_sync(false);
 
 #endif
@@ -410,11 +410,13 @@ void UniformPseudoParticleContainer::horizontalPass(
 
 	int finishedFlag = 0;
 	initBusyWaiting();
+	_timerBusyWaiting.start();
 	while(finishedFlag != -1){
 		finishedFlag = busyWaiting();
 #if defined(ENABLE_MPI)
 
 		if(finishedFlag == 1){ //communication of halos finished
+			_timerBusyWaiting.stop();
 			communicateHalosOverlapSetHalos();
 			curCellsEdge=1;
 			for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
@@ -431,9 +433,11 @@ void UniformPseudoParticleContainer::horizontalPass(
 					GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel, 1);
 				}
 			}
+			_timerBusyWaiting.start();
 		}
 #endif
 		if(finishedFlag == 2){ //communication of global allreduce finished
+			_timerBusyWaiting.stop();
 			AllReduceMultipoleMomentsSetValues(pow(8,_globalLevel), _globalLevel);
 			curCellsEdge=1;
 			for(int i=0; i <3; i++) cellWid[i] = _domain->getGlobalLength(i);
@@ -454,8 +458,10 @@ void UniformPseudoParticleContainer::horizontalPass(
 				finishedFlag = -1;
 		#endif
 			}
+			_timerBusyWaiting.start();
 		}
 	}
+	_timerBusyWaiting.stop();
 
 
 }
@@ -468,6 +474,7 @@ int UniformPseudoParticleContainer::busyWaiting(){
 	if(!_halosProcessed){
 		if(_multipoleRecBufferOverlap->testIfFinished()){
 			_halosProcessed = 1;
+
 			return 1;
 		}
 	}
@@ -477,6 +484,7 @@ int UniformPseudoParticleContainer::busyWaiting(){
 		MPI_Test(&_allReduceRequest, &flag, &status);
 		if(flag){
 			_allReduceProcessed = 1;
+
 			return 2;
 		}
 	}
@@ -736,12 +744,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 		for (m1y = yStart; m1y < yEnd; m1y++) {
 
 			for (m1x = xStart; m1x < xEnd; m1x++) {
-				if(doHalos) _timerHaloIf.start();
 				if(doHalos and not(m1z < 2 or m1z >= localMpCells - 2) and not(m1y < 2 or m1y >= localMpCells - 2) and not(m1x < 2 or m1x >= localMpCells - 2)){
-					_timerHaloIf.stop();
 					continue;
 				}
-				if(doHalos) _timerHaloIf.stop();
 //				if(doHalos){
 //					std::cout <<"m1: " <<m1x << m1y << m1z << "\n";
 //				}
@@ -1625,21 +1630,52 @@ void UniformPseudoParticleContainer::processTree() {
 	}
 }
 
+void printTimer(double localTimer, std::string nameOfTimer, MPI_Comm comm){
+	double globalTimerMax;
+	double globalTimerMin;
+	double globalTimerSum;
+	int numRanks;
+	int myRank;
+	MPI_Comm_size(comm,&numRanks);
+	MPI_Comm_rank(comm,&myRank);
+	MPI_Reduce(&localTimer, &globalTimerMax, 1, MPI_DOUBLE, MPI_MAX, 0, comm);
+	MPI_Reduce(&localTimer, &globalTimerMin, 1, MPI_DOUBLE, MPI_MIN, 0, comm);
+	MPI_Reduce(&localTimer, &globalTimerSum, 1, MPI_DOUBLE, MPI_SUM, 0, comm);
 
+	if(myRank == 0){
+		std::cout << "\t\t Timer: " << globalTimerMax       		<< "\t\t" <<"s in " << nameOfTimer <<"(Max)" << std::endl;
+		std::cout << "\t\t Timer: " << globalTimerMin       		<< "\t\t" <<"s in " << nameOfTimer <<"(Min)" << std::endl;
+		std::cout << "\t\t Timer: " << globalTimerSum/numRanks      << "\t\t" <<"s in " << nameOfTimer <<"(Avg)" << std::endl;
+	}
+}
 
 void UniformPseudoParticleContainer::printTimers() {
-	std::cout << "\t\t" << _timerAllreduce.get_etime()       		<< "\t\t" <<"s in Allreduce" << std::endl;
-	std::cout << "\t\t" << _timerAllreduce_me.get_etime()			<< "\t\t" <<"s in Allreduce_me"<<std::endl;
-	std::cout << "\t\t" << _timerCombineMpCellGlobal.get_etime()     		<< "\t\t" <<"s in CombineMpCellGlobal" << std::endl;
-	std::cout << "\t\t" << _timerGatherWellSepLoGlobal.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoGlobal" << std::endl;
-	std::cout << "\t\t" << _timerPropagateCellLoGlobal.get_etime() 		<< "\t\t" <<"s in PropagateCellLoGlobal" << std::endl;
-	std::cout << "\t\t" << _timerCombineMpCellLokal.get_etime()     		<< "\t\t" <<"s in CombineMpCellLokal" << std::endl;
-	std::cout << "\t\t" << _timerGatherWellSepLoLokal.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoLokal" << std::endl;
-	std::cout << "\t\t" << _timerPropagateCellLoLokal.get_etime() 		<< "\t\t" <<"s in PropagateCellLoLokal" << std::endl;
-	std::cout << "\t\t" << _timerCommunicationHalos.get_etime() 		<< "\t\t" <<"s in Halo communication" << std::endl;
-	std::cout << "\t\t" << _timerHaloGather.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoHalos" << std::endl;
-	std::cout << "\t\t" << _timerHaloIf.get_etime() 		<< "\t\t" <<"s in GatherWellSepLoHaloIf" << std::endl;
-	std::cout << "\t\t" << _timerFMMcomplete.get_etime() 		<< "\t\t" <<"s in total FMM" << std::endl;
+
+
+
+	printTimer(_timerAllreduce.get_etime(),"Allreduce",_comm);
+
+	//std::cout << "\t\t" << _timerAllreduce_me.get_etime()			<< "\t\t" <<"s in Allreduce_me"<<std::endl;
+	printTimer(_timerCombineMpCellGlobal.get_etime(),"CombineMpCellGlobal",_comm);
+
+	printTimer(_timerGatherWellSepLoGlobal.get_etime(),"GatherWellSepLoGlobal",_comm);
+
+	printTimer(_timerPropagateCellLoGlobal.get_etime(),"PropagateCellLoGlobal",_comm);
+
+	printTimer(_timerCombineMpCellLokal.get_etime(),"CombineMpCellLokal",_comm);
+
+	printTimer(_timerGatherWellSepLoLokal.get_etime(),"GatherWellSepLoLokal",_comm);
+
+	printTimer(_timerPropagateCellLoLokal.get_etime(),"PropagateCellLoLokal",_comm);
+
+	printTimer(_timerCommunicationHalos.get_etime(),"Halo communication",_comm);
+
+	printTimer(_timerHaloGather.get_etime(),"GatherWellSepLoHalos",_comm);
+
+	printTimer(_timerBusyWaiting.get_etime(),"BusyWaiting",_comm);
+
+	printTimer(_timerFMMcomplete.get_etime(),"total FMM",_comm);
+
 
 }
 

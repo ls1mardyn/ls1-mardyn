@@ -151,7 +151,7 @@ private:
 	Timer _timerProcessFarField;
 	Timer _timerCommunicationHalos;
 	Timer _timerHaloGather;
-	Timer _timerHaloIf;
+	Timer _timerBusyWaiting;
 	Timer _timerFMMcomplete;
 
 	Timer _timerGatherEvalM;
