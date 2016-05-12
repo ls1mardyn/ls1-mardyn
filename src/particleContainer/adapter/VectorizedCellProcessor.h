@@ -31,6 +31,8 @@ class VectorizedCellProcessor : public CellProcessor {
 public:
 	typedef std::vector<Component> ComponentList;
 
+	VectorizedCellProcessor& operator=(const VectorizedCellProcessor&) = delete;
+
 	/**
 	 * \brief Construct and set up the internal parameter table.
 	 * \details Components and parameters should be finalized before this call.
@@ -52,7 +54,7 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -336,7 +338,7 @@ private:
 			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
-		inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+		inline static size_t InitJ2 (const size_t i __attribute__((unused)))//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
 #if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
 			return InitJ(i);
@@ -413,7 +415,7 @@ private:
 
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-				, vcp_mask_vec& j_mask
+				, vcp_mask_vec& /*j_mask*/
 #endif
 				)
 		{
@@ -424,7 +426,7 @@ private:
 
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-		inline static vcp_mask_vec InitJ_Mask (const size_t i)
+		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 		{
 			return VCP_SIMD_ZEROVM;//totally unimportant, since not used...
 		}

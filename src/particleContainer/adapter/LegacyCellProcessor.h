@@ -26,6 +26,7 @@ private:
 	ParticlePairsHandler* const _particlePairsHandler;
 
 public:
+	LegacyCellProcessor& operator=(const LegacyCellProcessor&) = delete;
 
 	LegacyCellProcessor(const double cutoffRadius, const double LJCutoffRadius,
 			ParticlePairsHandler* particlePairsHandler);

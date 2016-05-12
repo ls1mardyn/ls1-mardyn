@@ -2,7 +2,7 @@
 
 class MaskingChooser {
 public:
-	inline static size_t getEndloop(const size_t& long_loop, const countertype32& number_calculate /* number of interactions, that are calculated*/) {
+	inline static size_t getEndloop(const size_t& long_loop, const countertype32& /*number_calculate*/ /* number of interactions, that are calculated*/) {
 		return long_loop;
 	}
 
