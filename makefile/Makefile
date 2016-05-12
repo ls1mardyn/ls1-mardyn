@@ -46,6 +46,10 @@ VECTORIZE_CODE ?= SSE
 # KNC_G_S  - VectorizedCellProcessor with KNC intrinsics and gather-scatter (not fully optimized yet in this branch)
 # SOA      - VectorizedCellProcessor with no intrinsics
 # see "make help_vect"
+vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S SOA
+ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
+  $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
+endif
 
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
