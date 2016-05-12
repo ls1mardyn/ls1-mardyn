@@ -24,10 +24,12 @@ public:
 
 	void calculateLongRange();
 	double lrcLJ(Molecule* mol);
+	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
+	void directDensityProfile();
 
 private:
 
-	void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj,double centerM); 
+	void centerCenter(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj); 
 	void centerSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
 	void siteSite(double sig,double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj);
 	void dipoleDipole(unsigned ci,unsigned cj,unsigned si,unsigned sj);
@@ -41,7 +43,7 @@ private:
 	unsigned *numLJSum2;
 	unsigned *numDipoleSum2;
 	bool _smooth;
-	bool _dipole;
+//	bool _dipole;
 	double *uLJ;
 	double *vNLJ;
 	double *vTLJ;
