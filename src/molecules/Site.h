@@ -67,7 +67,8 @@ protected:
  */
 class LJcenter : public Site {
 public:
-	LJcenter() {}
+	LJcenter():
+		Site(0., 0., 0., 1.), _eps(0.), _sigma(0.), _rc(1.), _uLJshift6(1.) {}
 	/** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -143,7 +144,9 @@ private:
  */
 class Charge : public Site {
 public:
-	Charge() {}
+	Charge() :
+			Site(0., 0., 0., 1.), _q(0.) {
+	}
     /** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -213,7 +216,7 @@ protected:
  */
 class Dipole : public OrientedSite {
 public:
-	Dipole() {}
+	Dipole():OrientedSite(0., 0., 0., 0., 1., 1., 1.), _absMy(0.) {}
     /** Constructor
      *
      * \param[in] x        relative x coordinate
@@ -261,7 +264,7 @@ private:
  */
 class Quadrupole : public OrientedSite {
 public:
-	Quadrupole() {}
+	Quadrupole():OrientedSite(0., 0., 0., 0., 0., 0., 0.), _absQ(0.) {}
     /** Constructor
      *
      * \param[in] x        relative x coordinate

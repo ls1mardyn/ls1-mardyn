@@ -12,11 +12,10 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
-FlopCounter::_Counts::_Counts() {
-	_moleculeDistances = 0.0;
-
+FlopCounter::_Counts::_Counts():
+	_moleculeDistances(0.), _distanceMultiplier(8){
 	// 3 sub + 3 square + 2 add
-	_distanceMultiplier = 8;
+
 
 //inverse R squared is one, because only 1/(R^2) has to be calculated, while R^2 already is calculated.
 
@@ -113,13 +112,11 @@ double FlopCounter::_Counts::process() const {
 	return getTotalFlops();
 }
 
-FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius) {
-	_totalFlopCount = 0.0;
-	_myFlopCount = 0.;
-	_synchronized = true;
+FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius),
+		_currentCounts(), _totalFlopCount(0.), _myFlopCount(0.), _synchronized(true){
 }
 
-void FlopCounter::initTraversal(const size_t numCells) {
+void FlopCounter::initTraversal(const size_t /*numCells*/) {
 	_currentCounts.clear();
 }
 
@@ -140,10 +137,10 @@ void FlopCounter::endTraversal() {
 //	_totalFlopCount = _totalCounts.process();
 }
 
-void FlopCounter::preprocessCell(ParticleCell & c) {
+void FlopCounter::preprocessCell(ParticleCell & /*c*/) {
 }
 
-void FlopCounter::postprocessCell(ParticleCell & c) {
+void FlopCounter::postprocessCell(ParticleCell & /*c*/) {
 }
 
 void FlopCounter::handlePair(const Molecule& Mi, const Molecule& Mj, bool addMacro) {

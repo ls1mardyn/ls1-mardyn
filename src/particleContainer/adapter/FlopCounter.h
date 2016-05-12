@@ -82,7 +82,7 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
 
 	/**
 	 * \brief Count flops for this cell.
@@ -265,7 +265,6 @@ private:
 
 	_Counts _currentCounts;
 //	_Counts _totalCounts; TODO: is this needed?
-	_Counts MULTIPLIERS;
 	double _totalFlopCount;
 	double _myFlopCount;
 	bool _synchronized;

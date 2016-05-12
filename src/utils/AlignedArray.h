@@ -109,7 +109,7 @@ private:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
-	static T* _allocate(size_t elements, size_t num_non_zero=0) {
+	static T* _allocate(size_t elements, size_t /*num_non_zero*/=0) {
 #if defined(__SSE3__) && ! defined(__PGI)
 		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
 		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
