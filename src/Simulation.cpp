@@ -930,9 +930,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> radius1 >> radius2 >> xCentre >> yCentre;
 			this->_domain->confinementDensity(radius1, radius2, xCentre, yCentre);				  
 		} else if (token == "slabProfile") {	// records discrete information about temperature, density and velocity averaged over in-plane-direction
-			unsigned xun, yun;
-			inputfilestream >> xun >> yun;
-			_domain->setupSlabProfile(xun, yun);
+			unsigned xun, yun, zun;
+			inputfilestream >> xun >> yun >> zun;
+			_domain->setupSlabProfile(xun, yun, zun);
 			_doRecordSlabProfile = true;
 		} else if (token == "slabProfileRecordingTimesteps") { /* TODO: suboption of slabProfile */
 			inputfilestream >> _slabProfileRecordingTimesteps;
@@ -946,10 +946,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "slabProfileOutputPrefix") { /* TODO: suboption of slabProfile */
 			inputfilestream >> _slabProfileOutputPrefix;
 		} else if (token == "stress") {	   // calculates virial stresses in the desired component
-			unsigned xun, yun;
+			unsigned xun, yun, zun;
 			string stress, weightingFunc;
-			inputfilestream >> xun >> yun >> stress;
-			_domain->setupStressProfile(xun, yun);
+			inputfilestream >> xun >> yun >> zun >> stress;
+			_domain->setupStressProfile(xun, yun, zun);
 			_doRecordStressProfile = true;
 			if(stress == "Hardy"){ // calculates Hardy Stresses
 			  _HardyStress = true;
@@ -1649,13 +1649,15 @@ void Simulation::simulate() {
 					    currentPressure = (double)((p_Vir + p_Kin)/(3 * Volume));
 					    currentTemp = (double)(p_Kin/(3 * N));
 					    
-					    cout << " t " << _simstep << " targetPressure " << targetPressure << " currentPressure " << currentPressure << " currentTemp " << currentTemp << " V " << Volume << " N " << N << " Int " << cpit->getInterval() << " deltaI " << cpit->getInstances();
+					    if(_domainDecomposition->getRank()==0)
+					      cout << " t " << _simstep << " targetPressure " << targetPressure << " currentPressure " << currentPressure << " currentTemp " << currentTemp << " Volume " << Volume << " N " << N;
 					    
 					    double deltaPressure = abs(currentPressure-targetPressure);
 					    if(deltaPressure == 0)
 					      deltaPressure = 0.01;
 					    unsigned newInstances = (unsigned)floor(cpit->getOriginalInstances()*10*deltaPressure);
-					    cout << " newInst " << newInstances << endl;
+					    if(_domainDecomposition->getRank()==0)
+					      cout << " newInst " << newInstances << endl;
 					    
 					  if(0.99*targetPressure > currentPressure){
 					    imu = 50;
@@ -1701,7 +1703,8 @@ void Simulation::simulate() {
 					    deltaPressure = 0.01;
 					  unsigned newInterval = (unsigned)floor(cpit->getOriginalInterval()/deltaPressure) + _simstep;
 					  cpit->setInterval(newInterval);
-					  cout << " newI " << newInterval << endl;
+					  if(_domainDecomposition->getRank()==0)
+					    cout << " newI " << newInterval << endl;
 					}
 				}
 				j++;

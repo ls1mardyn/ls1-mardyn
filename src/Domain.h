@@ -353,8 +353,8 @@ public:
 	PressureGradient* getPG() { return this->_universalPG; }
 
 	void setupProfile(unsigned xun, unsigned yun, unsigned zun);
-	void setupSlabProfile(unsigned xun, unsigned yun);
-	void setupStressProfile(unsigned xun, unsigned yun);
+	void setupSlabProfile(unsigned xun, unsigned yun, unsigned zun);
+	void setupStressProfile(unsigned xun, unsigned yun, unsigned zun);
 	void setupBulkPressure(double xmin, double xmax, double ymin, double ymax, unsigned cid);
 	void setupConfinementProperties(double wallThickness, double horDist, double vertDist, double radius2, int cid, double xmax, double ymax, double zmax, unsigned long upperID, unsigned long lowerID);
 	void setupConfinementProfile(unsigned xun,unsigned yun, double correlationLength);
