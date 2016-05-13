@@ -73,8 +73,8 @@ int run_unit_tests(Values &options, vector<string> &args) {
 	std::string testDataDirectory(options.get("testDataDirectory"));
 	global_log->info() << "Test data directory: " << testDataDirectory << endl;
 	Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
-	bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
-	return (testresult) ? 1 : 0 ;
+	int testresult = runTests(testLogLevel, testDataDirectory, testcases);
+	return testresult;
 }
 
 /** @page main
