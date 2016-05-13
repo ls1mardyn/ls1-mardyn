@@ -1205,8 +1205,8 @@ void Simulation::output(unsigned long simstep) {
 			osstrm << right << simstep;
 			//edited by Michaela Heier 
 			if(this->_domain->isCylindrical()){
-				this->_domain->outputCylProfile(osstrm.str().c_str());
-				_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 			}
 			else{
 			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);

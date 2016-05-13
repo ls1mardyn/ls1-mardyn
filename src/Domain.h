@@ -344,7 +344,7 @@ public:
 	// returning the parameter that controls wheter or not a cylindrical profile is created. method called by Simulation::output()
 	bool isCylindrical();
 	// writing out a 3-dimensional density profile in cylindrical coordinates, counterpart of outputProfile.
-	void outputCylProfile(const char* prefix);
+	void outputCylProfile(const char* prefix, bool virialProfile);
 	// setting the offset in y-direction (obtained from the config file), needed in the density profile output file 
 	void sYOffset(double in_yOff);
 	// end
