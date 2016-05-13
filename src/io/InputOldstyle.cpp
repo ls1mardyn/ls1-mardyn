@@ -371,40 +371,39 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	for( unsigned long i = 0; i < domain->getglobalNumMolecules(); i++ ) {
 
 #ifdef ENABLE_MPI
-		if (domainDecomp->getRank() == 0) 
-		{ // Rank 0 only
+		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif	
-		switch ( ntype ) {
-			case ICRVQD:
-				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
-					>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
-				break;
-			case ICRV :
-				_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
-				break;
-			case IRV :
-				_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
-				break;
-		}
-		if(        ( x < 0.0 || x >= domain->getGlobalLength(0) )
-				|| ( y < 0.0 || y >= domain->getGlobalLength(1) ) 
-				|| ( z < 0.0 || z >= domain->getGlobalLength(2) ) ) 
-		{
-			global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
-		}
+			switch ( ntype ) {
+				case ICRVQD:
+					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
+						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
+					break;
+				case ICRV :
+					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz;
+					break;
+				case IRV :
+					_phaseSpaceFileStream >> id >> x >> y >> z >> vx >> vy >> vz;
+					break;
+			}
+			if(        ( x < 0.0 || x >= domain->getGlobalLength(0) )
+					|| ( y < 0.0 || y >= domain->getGlobalLength(1) )
+					|| ( z < 0.0 || z >= domain->getGlobalLength(2) ) )
+			{
+				global_log->warning() << "Molecule " << id << " out of box: " << x << ";" << y << ";" << z << endl;
+			}
 
-		if( componentid > numcomponents ) {
-			global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
-			exit(1);
-		}
-		componentid --; // TODO: Component IDs start with 0 in the program.
+			if( componentid > numcomponents ) {
+				global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
+				global_simulation->exit(1);
+			}
+			componentid --; // TODO: Component IDs start with 0 in the program.
 
-		// store only those molecules within the domain of this process
-		// The necessary check is performed in the particleContainer addPartice method
-		// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
-		Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
+			// store only those molecules within the domain of this process
+			// The necessary check is performed in the particleContainer addPartice method
+			// FIXME: Datastructures? Pass pointer instead of object, so that we do not need to copy?!
+			Molecule m1 = Molecule(id,&dcomponents[componentid],x,y,z,vx,vy,vz,q0,q1,q2,q3,Dx,Dy,Dz);
 #ifdef ENABLE_MPI
-		ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
+			ParticleData::MoleculeToParticleData(particle_buff[particle_buff_pos], m1);
 		} // Rank 0 only
 		
 		particle_buff_pos++;

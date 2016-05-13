@@ -127,7 +127,7 @@ int main(int argc, char** argv) {
 	unsigned int numargs = args.size();
 	if (numargs < 1) {
 		op.print_usage();
-		exit(1);
+		global_simulation->exit(-13);
 	}
 
 	Simulation simulation;
@@ -138,7 +138,7 @@ int main(int argc, char** argv) {
 		simulation.readConfigFile(args[0]);
 	} else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
-		exit(1);
+		global_simulation->exit(-54);
 	}
 
 	/** @todo remove unnamed options, present as --steps, --output-prefix below */

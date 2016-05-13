@@ -6,6 +6,7 @@
  */
 
 #include "OptionParser.h"
+#include "Simulation.h"
 
 #include <cstdlib>
 #include <algorithm>
@@ -17,6 +18,7 @@
 #else
 # define _(s) ((const char *) (s))
 #endif
+
 
 using namespace std;
 
@@ -343,11 +345,11 @@ void OptionParser::process_opt(const Option& o, const string& opt, const string&
 	}
 	else if (o.action() == "help") {
 		print_help();
-		std::exit(0);
+		global_simulation->exit(0);
 	}
 	else if (o.action() == "version") {
 		print_version();
-		std::exit(0);
+		global_simulation->exit(0);
 	}
 	else if (o.action() == "callback" && o.callback()) {
 		(*o.callback())(o, opt, value, *this);
@@ -435,12 +437,12 @@ void OptionParser::print_version() const {
 }
 
 void OptionParser::exit() const {
-	std::exit(2);
+	global_simulation->exit(2);
 }
 void OptionParser::error(const string& msg) const {
 	print_usage(cerr);
 	cerr << prog() << ": " << _("error") << ": " << msg << endl;
-	exit();
+	global_simulation->exit(-4);
 }
 ////////// } class OptionParser //////////
 
