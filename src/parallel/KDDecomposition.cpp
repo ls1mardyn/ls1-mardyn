@@ -25,17 +25,19 @@ using Log::global_log;
 KDDecomposition::KDDecomposition() :
 		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.), _cutoffRadius(
 				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.) {
+	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_mpi_output_root(0);
+	global_log->set_do_output(before);
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold) :
 		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
 				1.) {
+	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
-	global_log->set_mpi_output_root(0);
+	global_log->set_do_output(before);
 	_cutoffRadius = cutoffRadius;
 
 	int lowCorner[KDDIM] = {0};

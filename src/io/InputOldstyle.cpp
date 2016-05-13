@@ -359,6 +359,11 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	int particle_buff_pos = 0;
 	MPI_Datatype mpi_Particle;
 	ParticleData::setMPIType(mpi_Particle);
+
+	int size;
+	MPI_CHECK(MPI_Type_size(mpi_Particle, &size));
+	global_log->debug() << "size of custom datatype is " << size << std::endl;
+
 #endif
 	
 	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
@@ -408,7 +413,8 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		
 		particle_buff_pos++;
 		if ((particle_buff_pos >= PARTICLE_BUFFER_SIZE) || (i == domain->getglobalNumMolecules() - 1)) {
-			MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
+			//MPI_Bcast(&particle_buff_pos, 1, MPI_INT, 0, MPI_COMM_WORLD);
+			global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
 			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD 
 			for (int j = 0; j < particle_buff_pos; j++) {
 				Molecule *m;
@@ -428,7 +434,8 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 					}
 				}
 				delete m;
-			}			
+			}
+			global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
 			particle_buff_pos = 0;
 		}
 #else
