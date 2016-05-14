@@ -6,7 +6,9 @@
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
-
+#ifdef USE_VT
+#include "VT.h"
+#endif
 class Wall;
 class Mirror;
 using optparse::Values;

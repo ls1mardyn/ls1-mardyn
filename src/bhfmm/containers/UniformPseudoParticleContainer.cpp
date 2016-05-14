@@ -294,6 +294,8 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 			<< _coeffVectorLength << " Size of MPI Buffers is "
 			<< (8 * (_coeffVectorLength * 2 + _globalNumCells)
 					/ (1024.0 * 1024.0)) << " MB;" << std::endl;
+	Log::global_log->info() << "UniformPseudoParticleContainer: globalLevel = "
+				<< _globalLevel << " maxLevel= " <<_maxLevel << std::endl;
 
 }
 
