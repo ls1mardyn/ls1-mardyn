@@ -105,7 +105,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 
 void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) {
 #ifdef USE_VT
-	VT_traceoff();
+	VT_traceon();
 #endif
 	// build
 	_pseudoParticleContainer->build(ljContainer);
