@@ -914,6 +914,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 				}
 				startIndex = max((size_t)startIndex, index);
 				endIndex = min(startIndex + 1, endIndex);
+				startIndex = min(endIndex-1, startIndex);
 				global_log->debug() << "splitLoad: startindex " << index << " of " << costsLeft[dim].size() <<std::endl;
 			} else {  // If we have more than _fullSearchThreshold processes left, we split the domain in half.
 				startIndex = max(startIndex, (node->_highCorner[dim] - node->_lowCorner[dim] - 1) / 2);
