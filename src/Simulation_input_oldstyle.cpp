@@ -662,9 +662,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		    double numFluidComp;
 		    inputfilestream >> numFluidComp;
 		    _domain->setNumFluidComponents(numFluidComp);
-		}
-                else if(token != "") {
-					global_log->warning() << "Did not process unknown token " << token << endl;
+
         /** mheinen 2015-07-27 --> TEMPERATURE_CONTROL
 		 *
 	     * Temperature Control (Slab Thermostat)
@@ -685,21 +683,22 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
             if(strToken == "param")
             {
-
                 unsigned long nControlFreq;
                 unsigned long nStart;
                 unsigned long nStop;
+                bool bUseExplosionHeuristics = true;
 
                 inputfilestream >> nControlFreq;
                 inputfilestream >> nStart;
                 inputfilestream >> nStop;
+                inputfilestream >> bUseExplosionHeuristics;
 
                 if(_temperatureControl == NULL)
                 {
                     _temperatureControl = new TemperatureControl(nControlFreq, nStart, nStop);
 
                     // turn off explosion heuristics
-                    _domain->SetExplosionHeuristics(false);
+                    _domain->SetExplosionHeuristics(bUseExplosionHeuristics);
                 }
                 else
                 {
