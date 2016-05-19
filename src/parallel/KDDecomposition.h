@@ -266,6 +266,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	double _totalMeanProcessorSpeed;
 	double _totalProcessorSpeed;
 	const bool _heterogeneousSystems = true;
+	int _processorSpeedUpdateCount;
 };
 
 

@@ -484,7 +484,15 @@ private:
 
 public:
 	//! computational time for one execution of traverseCell
-	double getOneLoopCompTime(){return _oneLoopCompTime;}
+	double getAndResetOneLoopCompTime() {
+		if(_loopCompTimeSteps==0){
+			return 1.;
+		}
+		double t = _loopCompTime/_loopCompTimeSteps;
+		_loopCompTime = 0.;
+		_loopCompTimeSteps = 0;
+		return t;
+	}
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
 	void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
 	std::string getOutputPrefix() { return _outputPrefix; }
@@ -540,7 +548,9 @@ private:
 	double _forced_checkpoint_time;
 
 	//! computational time for one loop
-	double _oneLoopCompTime;
+	double _loopCompTime;
+
+	int _loopCompTimeSteps;
 
 	std::string _programName;
 };

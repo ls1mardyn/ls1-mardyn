@@ -24,7 +24,7 @@ using Log::global_log;
 
 KDDecomposition::KDDecomposition() :
 		_globalNumCells(1), _decompTree(NULL), _ownArea(NULL), _numParticlesPerCell(NULL), _steps(0), _frequency(1.), _cutoffRadius(
-				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.) {
+				1.), _fullSearchThreshold(8), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(1.), _processorSpeedUpdateCount(0) {
 	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
@@ -32,8 +32,8 @@ KDDecomposition::KDDecomposition() :
 }
 
 KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency, int fullSearchThreshold) :
-		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.), _totalProcessorSpeed(
-				1.) {
+		_steps(0), _frequency(updateFrequency), _fullSearchThreshold(fullSearchThreshold), _totalMeanProcessorSpeed(1.),
+		_totalProcessorSpeed(1.), _processorSpeedUpdateCount(0) {
 	bool before = global_log->get_do_output();
 	global_log->set_mpi_output_all();
 	global_log->debug() << "KDDecomposition: Rank " << _rank << " executing file " << global_simulation->getName() << std::endl;
@@ -510,20 +510,27 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 
 void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
 		std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer) {
+	// update the processor speed exactly twice (first update at preprocessor stage (no speeds known yet)
+	// second update after first real measurements
+	if(_processorSpeedUpdateCount > 1){
+		return;
+	}
+	_processorSpeedUpdateCount++;
+
 	if (_heterogeneousSystems) {
 		FlopCounter fl(global_simulation->getcutoffRadius(), global_simulation->getLJCutoff());
 		moleculeContainer->traverseCells(fl);
 		double flopCount = fl.getMyFlopCount();
-		double flopRate = flopCount / global_simulation->getOneLoopCompTime();
-		if (flopRate == 0.) {  // for unit_tests...
+		double flopRate = flopCount / global_simulation->getAndResetOneLoopCompTime();
+		if (flopRate == 0.) {  // for unit_tests and first simulation
 			flopRate = 1.;
 		}
 		collCommInit(_numProcs);
-		for (int i = 0; i < getRank(); i++) {
+		for (int i = 0; i < _rank; i++) {
 			collCommAppendDouble(0.);
 		}
 		collCommAppendDouble(flopRate);
-		for (int i = getRank() + 1; i < _numProcs; i++) {
+		for (int i = _rank + 1; i < _numProcs; i++) {
 			collCommAppendDouble(0.);
 		}
 		collCommAllreduceSum();

@@ -83,7 +83,8 @@ Simulation::Simulation()
 	_temperatureControl(NULL),
 	_FMM(NULL),
 	_forced_checkpoint_time(0),
-	_oneLoopCompTime(1.),
+	_loopCompTime(0.),
+	_loopCompTimeSteps(0),
 	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
@@ -674,7 +675,8 @@ void Simulation::prepare_start() {
 	t.start();
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	t.stop();
-	_oneLoopCompTime = t.get_etime();
+	_loopCompTime = t.get_etime();
+	_loopCompTimeSteps = 1;
 
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
@@ -896,13 +898,14 @@ void Simulation::simulate() {
 			updateParticleContainerAndDecomposition();
 			decompositionTimer.stop();
 
-			double currentEtime = computationTimer.get_etime();
-			computationTimer.start();
+			double startEtime = computationTimer.get_etime();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
+			computationTimer.start();
 			_moleculeContainer->traverseCells(*_cellProcessor);
 			computationTimer.stop();
-			_oneLoopCompTime = computationTimer.get_etime() - currentEtime;
+			_loopCompTime += computationTimer.get_etime() - startEtime;
+			_loopCompTimeSteps ++;
 		}
 		computationTimer.start();
 		if (_FMM != NULL) {
