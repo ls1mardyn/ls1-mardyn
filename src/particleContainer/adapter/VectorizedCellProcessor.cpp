@@ -712,6 +712,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	// Iterate over centers of second cell
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
+	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
 	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
 		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
@@ -723,7 +724,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
+		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
@@ -736,7 +737,12 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
-		const unsigned long forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
+		vcp_mask_single forceMask;
+		if (ForcePolicy::DetectSingleCell()) {
+			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? ~0l : 0l;
+		} else {
+			forceMask = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
+		}
 
 		*(soa2_center_dist_lookup + j) = forceMask;
 		const vcp_mask_vec forceMask_vec = vcp_simd_set1(forceMask);
@@ -784,7 +790,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
 			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
 		if (ForcePolicy::DetectSingleCell()) {
-			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j > i_center_idx) ? ~0l : 0l;
+			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? ~0l : 0l;
 		} else {
 			forceMask = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
 		}
@@ -839,7 +845,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
 			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
 		if (ForcePolicy::DetectSingleCell()) {
-			forceMask_local = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j > i_center_idx) ? 1 : 0;
+			forceMask_local = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? 1 : 0;
 		} else {
 			forceMask_local = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? 1 : 0;
 		}

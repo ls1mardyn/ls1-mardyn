@@ -335,7 +335,7 @@ private:
 		inline static size_t InitJ (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{//i+1: only calculate j>i
 			// however we do a floor for alignment purposes. ->  we have to mark some of the indices to not be computed (this is handled using the InitJ_Mask)
-			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
+			return vcp_floor_to_vec_size(i); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
 		inline static size_t InitJ2 (const size_t i __attribute__((unused)))//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
@@ -347,36 +347,38 @@ private:
 #endif
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
 		{
 			vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
 			j_mask = VCP_SIMD_ONESVM;
 			return result;
 		}
-	#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+	#if VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
 			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-				case 0: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0);
-				case 1: return _mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0);
-				case 2: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
-				default: return VCP_SIMD_ONESVM;
+				case 0: return _mm_set_epi32(~0, ~0, ~0, ~0);
+				default: return _mm_set_epi32(~0, ~0, 0, 0);
+			}
+		}
+	#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
+		{
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+				case 1: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0);
+				case 2: return _mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0);
+				default: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
 			}
 		}
 	#else //mic
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
-			static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0xFF };
+			static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80 };
 			return possibleInitJMasks[i & static_cast<size_t>(VCP_VEC_SIZE_M1)];
 		}
 	#endif
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		// Erstellen der Bitmaske, analog zu Condition oben
-		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
-		{
-			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
-		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
@@ -414,7 +416,7 @@ private:
 		}
 
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
 				, vcp_mask_vec& /*j_mask*/
 #endif
 				)
@@ -425,7 +427,7 @@ private:
 		}
 
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 		{
 			return VCP_SIMD_ZEROVM;//totally unimportant, since not used...
