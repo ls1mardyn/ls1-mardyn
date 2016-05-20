@@ -52,3 +52,11 @@ endif
 ifeq ($(VECTORIZE_CODE),KNC_G_S)
 $(error gcc does not support KNC)
 endif
+
+# On AMD BUlldozer:
+ifeq ($(VECTORIZE_CODE),SSEAMD)
+CXXFLAGS_VECTORIZE = -msse3 -mfma4 -march=bdver1
+endif
+ifeq ($(VECTORIZE_CODE),AVXAMD)
+CXXFLAGS_VECTORIZE = -mavx -mfma4 -march=bdver1
+endif
