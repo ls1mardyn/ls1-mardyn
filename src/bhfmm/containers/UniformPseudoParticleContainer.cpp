@@ -276,7 +276,9 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 //		std::cout <<"n";
 		_multipoleBufferOverlap = new HaloBufferOverlap<double>(areaHaloSize * 2,edgeHaloSize * 2, cornerHaloSize * 2, _comm, areaNeighbours, edgesNeighbours, cornerNeighbours, 1);
 		_multipoleRecBufferOverlap = new HaloBufferOverlap<double>(areaHaloSize * 2,edgeHaloSize * 2, cornerHaloSize * 2, _comm, areaNeighbours, edgesNeighbours, cornerNeighbours, 0);
-
+		_multipoleRecBufferOverlap->communicate();
+		//take care that every process has initiated receive in first iteration
+		MPI_Barrier(_comm);
 	}
 #endif
 
@@ -435,6 +437,8 @@ void UniformPseudoParticleContainer::horizontalPass(
 					GatherWellSepLo_MPI(cellWid, curCellsEdgeLocal, curLevel, 1);
 				}
 			}
+			//start receiving for next iteration; important for ready send
+			_multipoleRecBufferOverlap->communicate();
 			_timerBusyWaiting.start();
 		}
 #endif
@@ -1405,7 +1409,7 @@ void UniformPseudoParticleContainer::communicateHalosOverlapStart(){
 #if defined(ENABLE_MPI)
 	//start receiving
 //	_multipoleRecBufferOverlap->startCommunication();
-	_multipoleRecBufferOverlap->communicate();
+//	_multipoleRecBufferOverlap->communicate();
 	//clear buffers
 	_multipoleBufferOverlap->clear();
 

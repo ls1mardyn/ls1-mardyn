@@ -125,7 +125,7 @@ template <class T>
 void HaloBufferOverlap<T>::initCommunicationDouble(){
 	for (int i = 0; i < _areaBuffers.size(); i++){
 		if(_isSend){
-			MPI_Send_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
+			MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 
 		}
@@ -137,7 +137,7 @@ void HaloBufferOverlap<T>::initCommunicationDouble(){
 	}
 	for (int i = 0; i < _edgeBuffers.size(); i++){
 		if(_isSend){
-			MPI_Send_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
+			MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 
 		}
@@ -148,7 +148,7 @@ void HaloBufferOverlap<T>::initCommunicationDouble(){
 	}
 	for (int i = 0; i < _cornerBuffers.size(); i++){
 		if(_isSend){
-			MPI_Send_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
+			MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		}
 		else{
@@ -162,7 +162,7 @@ template <class T>
 void HaloBufferOverlap<T>::communicate(){
 	for (int i = 0; i < _areaBuffers.size(); i++){
 		if(_isSend){
-			MPI_Isend(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
+			MPI_Irsend(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 			//MPI_Rsend_init(_areaBuffers[i], _areaHaloSize, MPI_DOUBLE, _areaNeighbours[i], i + 42, _comm, &_areaRequests[i]);
 
 		}
@@ -174,7 +174,7 @@ void HaloBufferOverlap<T>::communicate(){
 	}
 	for (int i = 0; i < _edgeBuffers.size(); i++){
 		if(_isSend){
-			MPI_Isend(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
+			MPI_Irsend(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 			//MPI_Rsend_init(_edgeBuffers[i], _edgeHaloSize, MPI_DOUBLE, _edgeNeighbours[i], i + 42, _comm, &_edgeRequests[i]);
 
 		}
@@ -185,7 +185,7 @@ void HaloBufferOverlap<T>::communicate(){
 	}
 	for (int i = 0; i < _cornerBuffers.size(); i++){
 		if(_isSend){
-			MPI_Isend(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
+			MPI_Irsend(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		//	MPI_Rsend_init(_cornerBuffers[i], _cornerHaloSize, MPI_DOUBLE, _cornerNeighbours[i], i + 42, _comm, &_cornerRequests[i]);
 		}
 		else{
