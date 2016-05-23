@@ -290,19 +290,11 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 				PotForceLJ(drs, dr2, eps24, sig2, f, u);
 				u += shift6;
 
-	// even for interactions within the cell a neighbor might try to add/subtract
-	// better use atomic...
-	// and even better use a order where critical sections occur only at some boundary cells...
-#if defined(ENABLE_OPENMP)
-#pragma omp critical
-#endif
-				{
-					mi.Fljcenteradd(si, f);
-					mj.Fljcentersub(sj, f);
-					Upot6LJ += u;
-					for (unsigned short d = 0; d < 3; ++d)
-						Virial[d] += 0.5*drm[d] * f[d];
-				}
+				mi.Fljcenteradd(si, f);
+				mj.Fljcentersub(sj, f);
+				Upot6LJ += u;
+				for (unsigned short d = 0; d < 3; ++d)
+					Virial[d] += 0.5*drm[d] * f[d];
 			}
 		}
 	}
