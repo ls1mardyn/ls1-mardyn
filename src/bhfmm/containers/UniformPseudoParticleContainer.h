@@ -80,7 +80,8 @@ private:
 #endif
 	bool _periodicBC;
 
-	int _numProcessorsPerDim;
+	Vector3<int> _numProcessorsPerDim;
+	Vector3<int> _numCellsOnGlobalLevel;
 	Vector3<int> _processorPositionGlobalLevel;
 	Vector3<double> _bBoxMin;
 	std::vector<int> _neighbours;
@@ -90,19 +91,19 @@ private:
 	void CombineMpCell(double *cellWid, int& mpCells, int curLevel);
 
 	// M2M
-	void CombineMpCell_MPI(double *cellWid, int& mpCells, int curLevel, Vector3<int> offset);
+	void CombineMpCell_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, Vector3<int> offset);
 
 	// M2L
 	void GatherWellSepLo(double *cellWid, int mpCells, int curLevel);
 
 	// M2L
-	void GatherWellSepLo_MPI(double *cellWid, int mpCells, int curLevel, int doHalos);
+	void GatherWellSepLo_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos);
 
 	// L2L
 	void PropagateCellLo(double *cellWid, int mpCells, int curLevel);
 
 	// L2L
-	void PropagateCellLo_MPI(double *cellWid, int mpCells, int curLevel, Vector3<int> offset);
+	void PropagateCellLo_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, Vector3<int> offset);
 
 	// for parallelization
 	void AllReduceMultipoleMoments();
@@ -110,15 +111,10 @@ private:
 	void AllReduceMultipoleMomentsLevelToTop(int mpCells, int _curLevel);
 	void AllReduceMultipoleMomentsSetValues(int mpCells, int _curLevel);
 
-	void getXHaloValues(int localMpCellsBottom,int bottomLevel);
-	void getYHaloValues(int localMpCellsBottom,int bottomLevel);
-	void getZHaloValues(int localMpCellsBottom,int bottomLevel);
-	void setXHaloValues(int localMpCellsBottom,int bottomLevel);
-	void setYHaloValues(int localMpCellsBottom,int bottomLevel);
-	void setZHaloValues(int localMpCellsBottom,int bottomLevel);
-	void getHaloValues(int localMpCellsBottom,int bottomLevel, double *buffer,
+
+	void getHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *buffer,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
-	void setHaloValues(int localMpCellsBottom,int bottomLevel, double *bufferRec,
+	void setHaloValues(Vector3<int> localMpCellsBottom,int bottomLevel, double *bufferRec,
 			int xLow, int xHigh, int yLow, int yHigh, int zLow, int zHigh);
 	//for parallelization
 	void communicateHalosNoOverlap();

@@ -153,7 +153,6 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 				shift[d] = offsetLower[d];
 			if (direction == HIGHER)
 				shift[d] = offsetHigher[d];
-
 			_neighbours[d].push_back(
 					CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
 		}
@@ -214,16 +213,22 @@ std::vector<int> DomainDecomposition::getNeighbourRanks(){
 	int numProcs;
 	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
 	std::vector<int> neighbours;
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	if(numProcs == 1){
-		int rank;
-		MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
 		for(int i = 0; i<6; i++)
 			neighbours.push_back(rank);
 	}
 	else{
 		for(int d = 0; d < DIM;d++){
 			for(int n = 0; n < 2; n++){
-				neighbours.push_back(_neighbours[d][n].getRank());
+				if(_coversWholeDomain[d]){
+					neighbours.push_back(rank);
+				}
+				else{
+					neighbours.push_back(_neighbours[d][n].getRank());
+				}
 			}
 		}
 	}
@@ -246,14 +251,19 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell(){
 
 	std::vector<int> neighbours(26,-1);
 	if(numProcs == 1){
-		int rank;
-		MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
 		for(int i = 0; i<26; i++)
-			neighbours[i] = rank;
+			neighbours[i] = myRank;
 	}
 	else{
 		for(int i = 0; i < 2*DIM;i++){
-			neighbours[i] = (_neighbours[i/2][i%2].getRank());
+			if(_coversWholeDomain[i/2]){
+				neighbours[i] = myRank;
+			}
+			else{
+				neighbours[i] = (_neighbours[i/2][i%2].getRank());
+			}
+//			std::cout << neighbours[i] << "\n";
 		}
 		std::vector<int> offsets(6,0);
 		//calculate the rank offsets in every dimension in plus and minus direction
