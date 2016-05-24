@@ -77,7 +77,8 @@ public:
 	//documentation in OutputBase, does nothing.
 	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu){}
+			std::list<ChemicalPotential>* lmu,
+			std::map<unsigned, CavityEnsemble>* mcav){}
 
 	//documentation in OutputBase, does nothing.
 	void finishOutput(ParticleContainer* particleContainer,
