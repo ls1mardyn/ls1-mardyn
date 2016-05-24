@@ -182,7 +182,8 @@ void Component::addQuadrupole(Quadrupole& quadrupolesite) {
 
 void Component::write(std::ostream& ostrm) const {
 	ostrm << _ljcenters.size() << "\t" << _charges.size() << "\t"
-	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t";
+	      << _dipoles.size() << "\t" << _quadrupoles.size() << "\t"
+		  << 0 << "\n";  // the 0 indicates a zero amount of tersoff sites.
 	for (std::vector<LJcenter>::const_iterator pos = _ljcenters.begin(); pos != _ljcenters.end(); ++pos) {
 		pos->write(ostrm);
 		ostrm << endl;
