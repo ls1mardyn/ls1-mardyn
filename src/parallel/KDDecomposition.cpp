@@ -1003,7 +1003,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			if ((clone->_child1->_numProcs <= 0 || clone->_child1->_numProcs >= node->_numProcs) ||
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				//continue;
-				global_log->error() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
+				global_log->error_always_output() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
 				global_simulation->exit(1);
 			}
 			assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );

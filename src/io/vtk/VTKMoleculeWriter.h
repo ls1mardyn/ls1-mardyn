@@ -26,7 +26,9 @@ private:
 	std::string _fileName;
 
 public:
-	VTKMoleculeWriter() {}
+	VTKMoleculeWriter() :
+			_writeFrequency(50), _fileName("") {
+	}
 
 	VTKMoleculeWriter(unsigned int frequency, std::string name):
 		_writeFrequency(frequency), _fileName(name) {}

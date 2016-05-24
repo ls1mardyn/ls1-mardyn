@@ -64,8 +64,8 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &rank) );
 	DomainDecomposition domainDecomposition;
 	Domain domain(rank, NULL);
-	writer.doOutput(&container, &domainDecomposition, &domain, 1, NULL);
-	writer.doOutput(&container, &domainDecomposition, &domain, 2, NULL);
+	writer.doOutput(&container, &domainDecomposition, &domain, 1, NULL, NULL);
+	writer.doOutput(&container, &domainDecomposition, &domain, 2, NULL, NULL);
 
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 	if (rank == 0) {
