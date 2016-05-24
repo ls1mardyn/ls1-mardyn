@@ -700,6 +700,14 @@ private:
 	long double _globalForce_Confinement[3];
 	std::map<int, unsigned long>_localFluidicArea;
 	std::map<int, unsigned long>_globalFluidicArea;
+	std::map<int, std::map<unsigned long, long double> > _localDiffusiveHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _globalDiffusiveHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _localConvectiveKinHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _globalConvectiveKinHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _localConvectivePotHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _globalConvectivePotHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _localTotalHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _globalTotalHeatflux;
 	
 	
         std::map<unsigned, double> _universalTProfile; 

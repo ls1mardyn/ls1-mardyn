@@ -297,6 +297,13 @@ public:
 	void setPressureVirialConfinement(int d, long double pressureVirial) { this->_pressureVirialConfinement[d] = pressureVirial; }
 	long double getPressureVirialConfinement(int d) { return this->_pressureVirialConfinement[d]; }
 	
+	void addDiffusiveHeatflux(int d, long double virialForceFraction) { this->_diffusiveHeatflux[d] += virialForceFraction; }
+	void setDiffusiveHeatflux(int d, long double virialForceFraction) { this->_diffusiveHeatflux[d] = virialForceFraction; }
+	long double getDiffusiveHeatflux(int d) { return this->_diffusiveHeatflux[d]; }
+	void addConvectivePotHeatflux(int d, long double virialForceFraction) { this->_convectivePotHeatflux[d] += virialForceFraction; }
+	void setConvectivePotHeatflux(int d, long double virialForceFraction) { this->_convectivePotHeatflux[d] = virialForceFraction; }
+	long double getConvectivePotHeatflux(int d) { return this->_convectivePotHeatflux[d]; }
+	
 	void setDirectedVelocity(int d, double directedVelocity) { this->_directedVelocity[d] = directedVelocity; }
 	double getDirectedVelocity(int d) { return this->_directedVelocity[d]; }
 	
@@ -413,6 +420,9 @@ private:
 	std::map<unsigned, long double>_bondFractionUNID;
 	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyStress;	
 	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyConfinement;	
+	
+	std::map<unsigned, double> _diffusiveHeatflux;
+	std::map<unsigned, double> _convectivePotHeatflux;
 };
 
 

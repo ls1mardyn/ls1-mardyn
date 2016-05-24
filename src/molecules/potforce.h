@@ -318,6 +318,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
 	long double virialForce;
+	long double virialHeat_i, virialHeat_j;
+	long double convectivePotHeat_i, convectivePotHeat_j;
 	// LJ centers
 	// no LJ interaction between solid atoms of the same component
 	if ((mi.numTersoff() == 0) || (mi.componentid() != mj.componentid())) {
@@ -427,11 +429,19 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 							mj.addPressureVirialConfinement(d, virialForce);
 							for (unsigned e = 0; e < 3; ++e){
 							  virialForce = 0.5 * drm[d] * f[e];
+							  virialHeat_i = virialForce * mi.v(e);
+							  virialHeat_j = virialForce * mj.v(e);
+							  mi.addDiffusiveHeatflux(d, virialHeat_i);
+							  mj.addDiffusiveHeatflux(d, virialHeat_j);
 							  for(std::map<unsigned,long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){
 							    mi.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
 							    mj.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
 							  }
 							}
+							convectivePotHeat_i = 0.5 * u * mi.v(d);
+							convectivePotHeat_j = 0.5 * u * mj.v(d);
+							mi.addConvectivePotHeatflux(d, convectivePotHeat_i);
+							mj.addConvectivePotHeatflux(d, convectivePotHeat_j);
 						    }
 						  }		      
 						}else if((domain.isConfinement(mi.componentid()) || domain.isConfinement(mj.componentid())) && !(domain.getSimstep() % domain.getConfinementRecordTimeStep())){
@@ -445,7 +455,15 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 							  virialForce = 0.5 * drm[d] * f[e];
 							  mi.addVirialForceConfinement(d, e, virialForce);
 							  mj.addVirialForceConfinement(d, e, virialForce);
+							  virialHeat_i = virialForce * mi.v(e);
+							  virialHeat_j = virialForce * mj.v(e);
+							  mi.addDiffusiveHeatflux(d, virialHeat_i);
+							  mj.addDiffusiveHeatflux(d, virialHeat_j);
 							}
+							convectivePotHeat_i = 0.5 * u * mi.v(d);
+							convectivePotHeat_j = 0.5 * u * mj.v(d);
+							mi.addConvectivePotHeatflux(d, convectivePotHeat_i);
+							mj.addConvectivePotHeatflux(d, convectivePotHeat_j);
 						    }
 						  }		      
 						}

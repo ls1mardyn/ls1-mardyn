@@ -41,9 +41,17 @@ Molecule::Molecule(unsigned long id, Component *component,
 	  for(int e = 0; e < 3; e++){
 	    setVirialForce(d, e, 0.0);
 	    setVirialKin(d, e, 0.0);
+	    setVirialForceConfinement(d, e, 0.0);
+	    setVirialKinConfinement(d, e, 0.0);
 	  }
 	  setPressureVirial(d, 0.0);
 	  setPressureKin(d, 0.0);
+	  setPressureVirialConfinement(d, 0.0);
+	  setPressureKinConfinement(d, 0.0);
+	  setPressureVirial_barostat(d, 0.0);
+	  setPressureKin_barostat(d, 0.0);
+	  setDiffusiveHeatflux(d, 0.0);
+	  setConvectivePotHeatflux(d, 0.0);
 	}
 	
 	// VTK Molecule Data
@@ -104,6 +112,8 @@ Molecule::Molecule(const Molecule& m) {
 	  setPressureKinConfinement(d, 0.0);
 	  setPressureVirial_barostat(d, 0.0);
 	  setPressureKin_barostat(d, 0.0);
+	  setDiffusiveHeatflux(d, 0.0);
+	  setConvectivePotHeatflux(d, 0.0);
 	}
 	
 	// VTK Molecule Data
