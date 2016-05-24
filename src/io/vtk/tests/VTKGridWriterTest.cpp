@@ -65,10 +65,10 @@ void VTKGridWriterTest::testEmptyGrid() {
 #else
 	Domain domain(0, NULL);
 	DomainDecompBase dummy;
-	writer.doOutput(container, &dummy, &domain, 1, NULL);
+	writer.doOutput(container, &dummy, &domain, 1, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKGridWriterTest_1.vtu"));
 
-	writer.doOutput(container, &dummy, &domain, 2, NULL);
+	writer.doOutput(container, &dummy, &domain, 2, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKGridWriterTest_2.vtu"));
 
 	removeFile("VTKGridWriterTest_2.vtu");
