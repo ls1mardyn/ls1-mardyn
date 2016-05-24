@@ -87,10 +87,10 @@ void VTKMoleculeWriterTest::testDoOutput() {
 #else
 	Domain domain(0, NULL);
 	DomainDecompBase dummy;
-	writer.doOutput(&container, &dummy, &domain, 1, NULL);
+	writer.doOutput(&container, &dummy, &domain, 1, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKMoleculeWriterTest_1.vtu"));
 
-	writer.doOutput(&container, &dummy, &domain, 2, NULL);
+	writer.doOutput(&container, &dummy, &domain, 2, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKMoleculeWriterTest_2.vtu"));
 
 	try {
