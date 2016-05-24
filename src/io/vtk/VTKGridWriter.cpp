@@ -41,7 +41,8 @@ void VTKGridWriter::readXML(XMLfileUnits& xmlconfig) {
 void  VTKGridWriter::doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu
+			std::list<ChemicalPotential>* lmu,
+			std::map<unsigned, CavityEnsemble>* mcav
 	) {
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
