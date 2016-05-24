@@ -56,6 +56,10 @@ public:
 
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
 
+	// provisionally, the code from the legacy cell processor is used here
+	//
+        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
+
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */

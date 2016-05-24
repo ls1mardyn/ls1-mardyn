@@ -23,6 +23,7 @@
 #include <list>
 #include <vector>
 
+class CavityEnsemble;
 class CellProcessor;
 class ChemicalPotential;
 class Domain;
@@ -233,6 +234,10 @@ public:
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
 
+        virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
+        virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
+        virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
+	
 	//! @brief Update the caches of the molecules, that lie in inner cells.
 	//! The caches of boundary and halo cells is not updated.
 	//! This method is used for a multi-step scheme of overlapping mpi communication

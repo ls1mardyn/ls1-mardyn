@@ -731,6 +731,68 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 	}
 }
 
+int LinkedCells::countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR)
+{
+        int m1neigh = 0;
+        vector<long int>::iterator neighbourOffsetsIter;
+
+        assert(_cellsValid);
+        unsigned long cellIndex = getCellIndexOfMolecule(m1);
+        ParticleCell& currentCell = _cells[cellIndex];
+
+        cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+
+        // extend the window of cells with cache activated
+        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
+                cellProcessor.preprocessCell(_cells[windowCellIndex]);
+        }
+
+        m1neigh += cellProcessor.countNeighbours(m1, currentCell, RR);
+
+        // forward neighbours
+        for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        {
+                ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
+        }
+        // backward neighbours
+        for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        {
+                ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
+                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
+        }
+
+        // close the window of cells activated
+        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
+                cellProcessor.postprocessCell(_cells[windowCellIndex]);
+        }
+
+        cellProcessor.endTraversal();
+        return m1neigh;
+}
+
+unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm)
+{
+   return ce->communicateNumCavities(comm);
+}
+
+void LinkedCells::cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor)
+{
+   ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
+   map<unsigned long, Molecule*>* pc = ce->particleContainer();
+   double RR = ce->getRR();
+   
+   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++)
+   {
+      assert(pcit->second != NULL);
+      Molecule* m1 = pcit->second;
+      unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
+      unsigned long m1id = pcit->first;
+      assert(m1id = m1->id());
+      ce->decideActivity(neigh, m1id);
+   }
+}
+
 //################################################
 //############ PRIVATE METHODS ###################
 //################################################

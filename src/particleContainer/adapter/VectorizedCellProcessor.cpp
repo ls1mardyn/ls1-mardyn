@@ -2752,6 +2752,25 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
+// provisionally, the code from the legacy cell processor is used here
+//
+int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, double RR)
+{
+        int tn = 0;
+        double distanceVector[3];
+
+        std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
+        int neighbourParticleCount = neighbourCellParticles.size();
+
+        for (int j = 0; j < neighbourParticleCount; j++) {
+                Molecule& molecule2 = *neighbourCellParticles[j];
+                if(m1->id() == molecule2.id()) continue;
+                double dd = molecule2.dist2(*m1, distanceVector);
+                if (dd < RR) tn++;
+        }
+        return tn;
+}
+
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	assert(&c1 != &c2);
 	const CellDataSoA& soa1 = c1.getCellDataSoA();

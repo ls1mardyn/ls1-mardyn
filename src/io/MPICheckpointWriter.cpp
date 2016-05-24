@@ -123,7 +123,7 @@ void MPICheckpointWriter::initOutput(ParticleContainer* particleContainer, Domai
 		}
 }
 
-void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu )
+void MPICheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu, map<unsigned, CavityEnsemble>* mcav )
 {
 #ifdef ENABLE_MPI
 	const char *mpidatarep = NULL;

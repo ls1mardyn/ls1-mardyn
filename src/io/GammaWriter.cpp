@@ -33,7 +33,7 @@ void GammaWriter::initOutput(ParticleContainer* particleContainer,
 }
 
 void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-			     unsigned long simstep, std::list<ChemicalPotential>* lmu ) 
+			     unsigned long simstep, std::list<ChemicalPotential>* lmu, map<unsigned, CavityEnsemble>* mcav ) 
 {
 	domain->calculateGamma(particleContainer,domainDecomp);
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){

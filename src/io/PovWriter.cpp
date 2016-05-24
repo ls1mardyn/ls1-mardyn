@@ -62,7 +62,8 @@ void PovWriter::initOutput(ParticleContainer* particleContainer,
 
 void PovWriter::doOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain,
-                         unsigned long simstep, list<ChemicalPotential>* lmu) {
+                         unsigned long simstep, list<ChemicalPotential>* lmu,
+			 map<unsigned, CavityEnsemble>* mcav) {
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;

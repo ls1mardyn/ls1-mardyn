@@ -509,7 +509,7 @@ void Domain::writeCheckpoint( string filename,
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 		//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
+        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
 #endif
 		/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
 		if(this->_globalUSteps > 1)

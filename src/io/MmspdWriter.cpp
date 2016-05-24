@@ -123,7 +123,8 @@ void MmspdWriter::initOutput(ParticleContainer* particleContainer,
 
 void MmspdWriter::doOutput( ParticleContainer* particleContainer,
 		   DomainDecompBase* domainDecomp, Domain* domain,
-		   unsigned long simstep, std::list<ChemicalPotential>* lmu){
+		   unsigned long simstep, std::list<ChemicalPotential>* lmu,
+		   map<unsigned, CavityEnsemble>* mcav ){
 	if (simstep % _writeFrequency == 0) {
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
