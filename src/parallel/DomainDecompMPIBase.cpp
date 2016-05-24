@@ -182,7 +182,7 @@ void DomainDecompMPIBase::finalizeExchangeMoleculesMPI1D(
 	double startTime = MPI_Wtime();
 
 	double waitCounter = 1.0;
-	double deadlockTimeOut = 5.0;
+	double deadlockTimeOut = 60.0;
 
 	while (not allDone) {
 		allDone = true;
