@@ -1,6 +1,7 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
