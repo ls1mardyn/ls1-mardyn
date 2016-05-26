@@ -398,6 +398,9 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	AllReduceMultipoleMomentsLevelToTop(_globalLevelNumCells,_globalLevel);
 
 	_timerCombineMpCellGlobal.stop();
+	//trigger communication by testing with MPI test
+	initBusyWaiting();
+	busyWaiting();
 
 }
 
