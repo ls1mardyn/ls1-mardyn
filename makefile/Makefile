@@ -51,6 +51,14 @@ ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
   $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
 endif
 
+# allow FFT acceleration of FMM (requires FFTW!) ?
+ENABLE_FFM_FFT ?= 0
+
+ifeq ($(ENABLE_FFM_FFT), 1)
+OPENMP_SIMD = 1
+USE_FFTW = 1
+endif
+
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
 
@@ -62,7 +70,7 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/)")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -E -v "(/tests/|/vtk/)")
 SOURCES_SEQ += $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/)")
@@ -109,6 +117,14 @@ CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
 endif
 
+ifeq ($(OPENMP_SIMD),1)
+CXXFLAGS += $(CXXFLAGS_OPENMP)
+endif
+
+ifeq ($(ENABLE_FFM_FFT),1)
+CXXFLAGS += -DFMM_FFT
+endif
+
 ifeq ($(PAPI),1)
 CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
@@ -127,6 +143,11 @@ endif
 ifeq ($(VTK), 1)
   VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk ) 
   include $(VTK_MAKEFILE)
+endif
+
+ifeq ($(USE_FFTW), 1)
+  FFTW_MAKEFILE := $(realpath $(MAKEFILEDIR)/fft.mk ) 
+  include $(FFTW_MAKEFILE)
 endif
 
 $(BINARY): $(OBJECTS)

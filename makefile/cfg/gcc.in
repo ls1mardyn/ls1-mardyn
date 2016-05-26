@@ -73,3 +73,9 @@ endif
 ifeq ($(VECTORIZE_CODE),AVXAMD)
 CXXFLAGS_VECTORIZE = -mavx -mfma4 -march=bdver1
 endif
+
+# OpenMP settings:
+#########################################
+ifeq ($(OPENMP_SIMD),1)
+CXXFLAGS_OPENMP += -fopenmp-simd
+endif

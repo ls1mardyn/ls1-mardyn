@@ -62,6 +62,12 @@ CXXFLAGS_VECTORIZE = -mmic -D__VCP_GATHER__
 LDFLAGS_VECTORIZE = -mmic
 endif
 
+# OpenMP settings:
+#########################################
+ifeq ($(OPENMP_SIMD),1)
+CXXFLAGS_OPENMP += -qopenmp-simd
+endif
+
 # Special compile-rule for the VectorizedCellProcessor to enforce inlining.
 particleContainer/adapter/VectorizedCellProcessor.o: particleContainer/adapter/VectorizedCellProcessor.cpp
 	$(DEPCOMP) $(CXX) $(CXXFLAGS) -inline-forceinline -c $< -o $@

@@ -11,6 +11,9 @@
 #include "bhfmm/utils/Vector3.h"
 #include "bhfmm/expansions/SolidHarmonicsStorage.h"
 #include "bhfmm/utils/WignerMatrix.h"
+#ifdef FMM_FFT
+#include "bhfmm/fft/FFTAccelerableExpansion.h"
+#endif
 #include <cstdlib>
 #include <cmath>
 
@@ -65,7 +68,11 @@ Vector3<double> forceLAndGradM(const SolidHarmonicsExpansion & LE, const SolidHa
  * Makes use of two triangular matrices (SolidHarmonicsStorage objects)
  * for the real and imaginary part (or (-imaginary), see formula 13.4.9 in Rapaport).
  */
-class SolidHarmonicsExpansion {
+class SolidHarmonicsExpansion
+#ifdef FMM_FFT
+: public FFTAccelerableExpansion
+#endif
+{
 public:
 	/**
 	 * constructor
@@ -278,6 +285,10 @@ public:
 	double & getC(int l, int m) {
 		return acc_C(l,m);
 	}
+  //for FFTAccelerableExpansion
+  double & get_C(unsigned l, unsigned m) {
+		return acc_C(l,m);
+	}
 
 	/**
 	 * Access to S values directly. Intended to be used only for MPI communication.
@@ -286,6 +297,10 @@ public:
 	 * @return value at (l,m)
 	 */
 	double & getS(int l, int m) {
+		return acc_S(l,m);
+	}
+  //for FFTAccelerableExpansion
+  double & get_S(unsigned l, unsigned m) {
 		return acc_S(l,m);
 	}
 
