@@ -391,6 +391,7 @@ private:
 	bool _doRecordStressProfile;
 	bool _doRecordBulkPressure;
 	bool _doRecordConfinement;
+	bool _doShearRate;
 	/** Interval between two evaluations of the profile.
 	 * This means that only 1 / _profileRecordingTimesteps of the
 	 * internally available data are actually used, so if precision is

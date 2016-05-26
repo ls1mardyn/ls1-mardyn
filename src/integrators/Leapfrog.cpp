@@ -211,6 +211,26 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	  domain->getPG()->addGlobalVelSumAfterAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d,cid_moved) / domain->getPG()->getGlobalN(cid_moved));
 }
 
+void Leapfrog::shearRate(ParticleContainer* molCont, Domain* domain) {
+	double shearVelocityDelta, shearVelocityTarget;
+	double shearRateBox[4];
+	shearRateBox[0] = domain->getPG()->getShearRateBox(0);
+	shearRateBox[1] = domain->getPG()->getShearRateBox(1);
+	shearRateBox[2] = domain->getPG()->getShearRateBox(2);
+	shearRateBox[3] = domain->getPG()->getShearRateBox(3);
+	double shearYmax = shearRateBox[3] - shearRateBox[2];
+	double shearRate = domain->getPG()->getShearRate();
+	unsigned cid = domain->getPG()->getShearComp();
+	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
+		// Just the velocity in x-direction (horizontally) is regulated to a constant value; in y and z the velocity is unrestricted 			
+		if(thismol->componentid() == cid && (thismol->r(1) <= shearRateBox[3] && thismol->r(1) >= shearRateBox[2]) && (thismol->r(0) <= shearRateBox[1] && thismol->r(0) >= shearRateBox[0])){
+		  shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - thismol->r(1)) * shearRate);
+		  shearVelocityDelta = shearVelocityTarget - thismol->v(0);
+		  thismol->vadd(shearVelocityDelta,0.0,0.0);
+		}
+	}
+}
+
 void Leapfrog::init1D(unsigned zoscillator, ParticleContainer* molCont) {
 	Molecule* thismol;
 	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())

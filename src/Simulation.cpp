@@ -1024,7 +1024,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "confinementOutputTimesteps") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementOutputTimesteps;
 		} else if (token == "confinementProfilePrefix") { /* TODO: suboption of confinementProfile */
-			inputfilestream >> _confinementProfileOutputPrefix;	
+			inputfilestream >> _confinementProfileOutputPrefix;
+		} else if (token == "shearRate") {	// calculates the pressure, temperature and density in the bulk fluid (due to desired component and control volume)
+			double xmin, xmax, ymin, ymax, shearRate;
+			unsigned cid;
+			inputfilestream >> xmin >> xmax >> ymin >> ymax >> cid >> shearRate;
+			cid--;
+			_doShearRate = true;
+			_pressureGradient->setupShearRate(xmin, xmax, ymin, ymax, cid, shearRate);	
 		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} else if (token == "zOscillator") {
@@ -1804,7 +1811,9 @@ void Simulation::simulate() {
 		// Inform the integrator about the calculated forces
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
-		
+		// shear rate accelerates the fluid
+		if(_doShearRate)
+			_integrator->shearRate(_moleculeContainer, _domain);
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
 				global_log->debug() << "Determine the additional acceleration"
@@ -2220,6 +2229,7 @@ void Simulation::initialize() {
 	_doRecordBulkPressure = false;
 	_doRecordConfinement = false;
 	_doRecordStressProfile = false;
+	_doShearRate = false;
 	_HardyStress = false;
 	_HardyConfinement = false;
 	_weightingStress = string("Linear");

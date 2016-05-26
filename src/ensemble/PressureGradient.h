@@ -101,6 +101,11 @@ public:
 	//! @brief total number of particles that belong to the specified component set
 	double getCosetN(unsigned int cosetid) { return this->_globalN[cosetid]; }
 	unsigned int maxCoset() { return this->_universalTau.size(); }
+	//! @brief shear rate acceleration of the fluid
+	void setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate);
+	double getShearRateBox(int d) { return this->_shearRateBox[d]; }
+	double getShearRate() { return this->_shearRate; }
+	unsigned getShearComp() { return this->_shearComp; }
 	
 	//! @brief returns the component -> set ID map
 	std::map<unsigned int, unsigned int> getComponentSets() { return this->_universalComponentSetID; }
@@ -205,6 +210,11 @@ private:
 	std::map<unsigned int, long double> _globalSpringForceSum[3];
 	/// counts the call of the method pressureGradient->collectSpringForcesOnComponent()
 	unsigned long _counter;
-	
+	/// maximal dimension of the box in which the fluid should be accelerated by a certain shear rate
+	double _shearRateBox[4];
+	/// shear rate for the fluid acceleration
+	double _shearRate;
+	/// component that is sheared
+	unsigned _shearComp;
 };	
 #endif /* PRESSUREGRADIENT_H_ */

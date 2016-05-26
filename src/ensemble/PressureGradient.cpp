@@ -285,6 +285,16 @@ double* PressureGradient::getAdditionalAcceleration(unsigned int set)
 	return retv;
 }
 
+void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate)
+{	
+	this->_shearRateBox[0] = xmin;
+	this->_shearRateBox[1] = xmax;
+	this->_shearRateBox[2] = ymin;
+	this->_shearRateBox[3] = ymax;
+	this->_shearRate = shearRate;
+	this->_shearComp = cid;
+}
+
 void PressureGradient::calculateForcesOnComponent(ParticleContainer* molCont, unsigned int cid)
 {
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
