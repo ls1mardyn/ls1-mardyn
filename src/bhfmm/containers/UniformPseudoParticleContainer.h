@@ -133,9 +133,11 @@ private:
 	void initBusyWaiting(){
 		_allReduceProcessed = 0;
 		_halosProcessed = 0;
+		_sendProcessed = 0;
 	}
 	int _allReduceProcessed;
 	int _halosProcessed;
+	int _sendProcessed;
 	Timer _timerProcessCells;
 	Timer _timerAllreduce;
 	Timer _timerGatherWellSepLoGlobal;

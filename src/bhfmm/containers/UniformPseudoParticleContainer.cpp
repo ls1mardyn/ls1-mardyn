@@ -507,8 +507,15 @@ void UniformPseudoParticleContainer::horizontalPass(
 
 int UniformPseudoParticleContainer::busyWaiting(){
 #ifdef ENABLE_MPI
-	if(_allReduceProcessed and _halosProcessed){
+	if(_allReduceProcessed and _halosProcessed and _sendProcessed){
 		return -1;
+	}
+	if(!_sendProcessed){
+	    if(_multipoleBufferOverlap->testIfFinished()){
+			_sendProcessed = 1;
+
+			return 3;
+		}
 	}
 	if(!_halosProcessed){
 		if(_multipoleRecBufferOverlap->testIfFinished()){
