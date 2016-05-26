@@ -8,7 +8,6 @@
 #ifndef BASICOPTFFT_H_
 #define BASICOPTFFT_H_
 
-
 #include "bhfmm/fft/tools/optimizedFFT/optFFT_API.h"
 #include "bhfmm/fft/tools/optimizedFFT/basic/optimizedFFT.h"
 
@@ -17,18 +16,23 @@
  * 
  * Use the code in the basic folder
  */
-class BasicOptFFT : public optFFT_API 
-{
-  public:
-  
-    BasicOptFFT() {}
-    ~BasicOptFFT() {}
-  
-    void optimizedFFT (FFT_precision** & Real, FFT_precision** & Imag, const int size_x, const int size_y) 
-    { ::optimizedFFT(Real, Imag, size_y); }
-    
-    void optimizedIFFT(FFT_precision** & Real, FFT_precision** & Imag, const int size_x, const int size_y) 
-    { ::optimizedIFFT(Real, Imag, size_y); }
+class BasicOptFFT: public optFFT_API {
+public:
+
+	BasicOptFFT() {
+	}
+	~BasicOptFFT() {
+	}
+
+	void optimizedFFT(FFT_precision** & Real, FFT_precision** & Imag,
+			const int size_x, const int size_y) {
+		::optimizedFFT(Real, Imag, size_y);
+	}
+
+	void optimizedIFFT(FFT_precision** & Real, FFT_precision** & Imag,
+			const int size_x, const int size_y) {
+		::optimizedIFFT(Real, Imag, size_y);
+	}
 };
 
 #endif

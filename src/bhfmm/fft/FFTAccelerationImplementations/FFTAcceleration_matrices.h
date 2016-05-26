@@ -7,7 +7,6 @@
 #ifndef FFTACC_MAT_H_
 #define FFTACC_MAT_H_
 
-
 #include "bhfmm/fft/FFTAccelerationImplementations/FFTDataContainer_matrices.h"
 #include "bhfmm/fft/FFTAccelerationAPI.h"
 #include "bhfmm/fft/FFTSettings_preprocessor.h"
@@ -18,20 +17,25 @@
  * 
  * Use FFTDataContainer_matrices as Data container (2 matrices)
  */
-class FFTAcceleration_matrices : public FFTAccelerationAPI {
-  
-  public:
+class FFTAcceleration_matrices: public FFTAccelerationAPI {
 
-    //child class will be upcasted, virtual destructor required to call the right child class destructor
-    virtual ~FFTAcceleration_matrices() {} 
+public:
 
-    void FFT_initialize_Target(FFTAccelerableExpansion & Expansion);
-    
-    void FFT_M2L(FFTAccelerableExpansion & Source, FFTAccelerableExpansion & Target, FFTDataContainer* TransferFunction);
-    void FFT_M2L_vec(FFTAccelerableExpansion & Source, FFTAccelerableExpansion & Target, FFTDataContainer* TransferFunction);
-    
-  protected:
-    FFTDataContainer_matrices* getFFTData(FFTAccelerableExpansion & Expansion);
+	//child class will be upcasted, virtual destructor required to call the right child class destructor
+	virtual ~FFTAcceleration_matrices() {
+	}
+
+	void FFT_initialize_Target(FFTAccelerableExpansion & Expansion);
+
+	void FFT_M2L(FFTAccelerableExpansion & Source,
+			FFTAccelerableExpansion & Target,
+			FFTDataContainer* TransferFunction);
+	void FFT_M2L_vec(FFTAccelerableExpansion & Source,
+			FFTAccelerableExpansion & Target,
+			FFTDataContainer* TransferFunction);
+
+protected:
+	FFTDataContainer_matrices* getFFTData(FFTAccelerableExpansion & Expansion);
 };
 
 #endif

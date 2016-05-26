@@ -18,14 +18,15 @@
 using namespace std;
 
 //struct storing a int[2] for the map
-struct pos{
-  int x, y;
+struct pos {
+	int x, y;
 };
 
 //comparator of pos (=int[2])
-struct pos_comp
-{
-  bool operator()(const pos &l, const pos &r) const { return (l.x < r.x || (l.x == r.x && l.y < r.y)); }
+struct pos_comp {
+	bool operator()(const pos &l, const pos &r) const {
+		return (l.x < r.x || (l.x == r.x && l.y < r.y));
+	}
 };
 
 /**
@@ -33,29 +34,30 @@ struct pos_comp
  * and use FFTW to perform the FFT/IFFT
  * Use a map<pos,FFTW_API*> to store the various FFTW_API needed to perform the optimized FFT
  */
-class FakedOptFFT : public optFFT_API 
-{
-  
-  public:
-  
-    FakedOptFFT() {} //cout << "Using faked opt FFT (see bhfmm/fft/tools/optimizedFFT)" <<  endl;}
-    ~FakedOptFFT() { //free all entry of the map and the map
-      map<pos,FFTW_API*,pos_comp>::iterator itr = _fftw_api_map.begin();
-      while ( itr != _fftw_api_map.end() )
-      {
-          delete ((*itr).second);
-          _fftw_api_map.erase(itr++);
-      }
-      _fftw_api_map.clear();
-    }
-  
-    void optimizedFFT (FFT_precision** & Real, FFT_precision** & Imag, const int size_x, const int size_y); 
-    void optimizedIFFT(FFT_precision** & Real, FFT_precision** & Imag, const int size_x, const int size_y);
-    
-  private:
-    map<pos,FFTW_API*,pos_comp> _fftw_api_map; //storage of the various FFTW_API required
-    
-    FFTW_API* getFFTW_API(const int size_x, const int size_y); //memoized function using the map
+class FakedOptFFT: public optFFT_API {
+
+public:
+
+	FakedOptFFT() {
+	} //cout << "Using faked opt FFT (see bhfmm/fft/tools/optimizedFFT)" <<  endl;}
+	~FakedOptFFT() { //free all entry of the map and the map
+		map<pos, FFTW_API*, pos_comp>::iterator itr = _fftw_api_map.begin();
+		while (itr != _fftw_api_map.end()) {
+			delete ((*itr).second);
+			_fftw_api_map.erase(itr++);
+		}
+		_fftw_api_map.clear();
+	}
+
+	void optimizedFFT(FFT_precision** & Real, FFT_precision** & Imag,
+			const int size_x, const int size_y);
+	void optimizedIFFT(FFT_precision** & Real, FFT_precision** & Imag,
+			const int size_x, const int size_y);
+
+private:
+	map<pos, FFTW_API*, pos_comp> _fftw_api_map; //storage of the various FFTW_API required
+
+	FFTW_API* getFFTW_API(const int size_x, const int size_y); //memoized function using the map
 };
 
 #endif

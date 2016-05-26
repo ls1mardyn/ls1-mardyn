@@ -22,8 +22,10 @@ SolidHarmonicsExpansion::SolidHarmonicsExpansion(int order, bool initializeToZer
 SolidHarmonicsExpansion::SolidHarmonicsExpansion(const SolidHarmonicsExpansion & rhs) :
 		_order(rhs._order), _c(rhs._c), _s(rhs._s) {
 #ifdef FMM_FFT
-      if(issetFFTData()) _FFTData = rhs._FFTData->copyContainer(); //copy the FFTData from FFTAccelerableExpansion inheritance if needed
-#endif
+	//copy the FFTData from FFTAccelerableExpansion inheritance if needed
+	if (issetFFTData())
+		_FFTData = rhs._FFTData->copyContainer();
+#endif  /* FMM_FFT */
 }
 
 // DESTRUCTOR //

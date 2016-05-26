@@ -13,7 +13,7 @@
 #include "bhfmm/utils/WignerMatrix.h"
 #ifdef FMM_FFT
 #include "bhfmm/fft/FFTAccelerableExpansion.h"
-#endif
+#endif  /* FMM_FFT */
 #include <cstdlib>
 #include <cmath>
 
@@ -70,8 +70,8 @@ Vector3<double> forceLAndGradM(const SolidHarmonicsExpansion & LE, const SolidHa
  */
 class SolidHarmonicsExpansion
 #ifdef FMM_FFT
-: public FFTAccelerableExpansion
-#endif
+		: public FFTAccelerableExpansion
+#endif  /* FMM_FFT */
 {
 public:
 	/**

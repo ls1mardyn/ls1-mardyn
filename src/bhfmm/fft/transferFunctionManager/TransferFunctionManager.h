@@ -23,36 +23,37 @@
  * Delegate FFT conversions and handling of the true implementation of 
  * the abstract FFTDataContainer to a FFTAcceleration
  */
-class TransferFunctionManager : public TransferFunctionManagerAPI {
-    
-  public:
-    /**
-     * Constructor
-     * 
-     * @param int ord, order of the expansions
-     * @param FFTAcceleration* FFTA, FFTAcceleration implementation used for the FMM
-     * @param bool verbose, output some stats during destruction
-     * @param bool v_child, as a verbose child that will be upcasted, shouldn't be verbose at this level
-     */
-    TransferFunctionManager(int ord, FFTAccelerationAPI* FFTA, bool verbose);
+class TransferFunctionManager: public TransferFunctionManagerAPI {
 
-    //! virtual destructor since inheriting classes will be upcasted
-    virtual ~TransferFunctionManager();
+public:
+	/**
+	 * Constructor
+	 *
+	 * @param int ord, order of the expansions
+	 * @param FFTAcceleration* FFTA, FFTAcceleration implementation used for the FMM
+	 * @param bool verbose, output some stats during destruction
+	 * @param bool v_child, as a verbose child that will be upcasted, shouldn't be verbose at this level
+	 */
+	TransferFunctionManager(int ord, FFTAccelerationAPI* FFTA, bool verbose);
 
-    /**
-     * get a transfer function corresponding the the input vector
-     * 
-     * @param utils::Vector<double,3> r, vector between the source and the target
-     * @return FFTDataContainer*, the transfer function
-     */
-    FFTDataContainer* getTransferFunction(int x, int y, int z, double cell_size_x, double cell_size_y, double cell_size_z); 
+	//! virtual destructor since inheriting classes will be upcasted
+	virtual ~TransferFunctionManager();
 
-  protected:
-    int _ord; //order of the expansions
-    bool _verbose; //verbose setting
-    int _asked; //stat
-    int _builded; //stat
-    FFTAccelerationAPI* _FFTAcceleration; //FFTAcceleration to delegate FFT operations
+	/**
+	 * get a transfer function corresponding the the input vector
+	 *
+	 * @param utils::Vector<double,3> r, vector between the source and the target
+	 * @return FFTDataContainer*, the transfer function
+	 */
+	FFTDataContainer* getTransferFunction(int x, int y, int z,
+			double cell_size_x, double cell_size_y, double cell_size_z);
+
+protected:
+	int _ord; //order of the expansions
+	bool _verbose; //verbose setting
+	int _asked; //stat
+	int _builded; //stat
+	FFTAccelerationAPI* _FFTAcceleration; //FFTAcceleration to delegate FFT operations
 
 };
 
