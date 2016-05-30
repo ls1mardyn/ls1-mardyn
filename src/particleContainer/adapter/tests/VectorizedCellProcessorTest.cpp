@@ -128,7 +128,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), Tolerance);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	LegacyCellProcessor cellProcessor( ScenarioCutoff, ScenarioCutoff, ScenarioCutoff, &forceAdapter);
+	LegacyCellProcessor cellProcessor( ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
 	for (Molecule* m = container_1->begin(); m != container_1->end(); m = container_1->next()) {
@@ -217,7 +217,7 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	ASSERT_DOUBLES_EQUAL_MSG("virial initialization 1", 0.0, _domain->getLocalVirial(), Tolerance);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	LegacyCellProcessor cellProcessor(ScenarioCutoff, ScenarioCutoff, ScenarioCutoff, &forceAdapter);
+	LegacyCellProcessor cellProcessor(ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
 	for (Molecule* m = container_1->begin(); m != container_1->end(); m = container_1->next()) {
@@ -322,3 +322,10 @@ void VectorizedCellProcessorTest::testWaterVectorization() {
 	testElectrostaticVectorization(filename, 6.16);
 }
 
+void VectorizedCellProcessorTest::testMultiComponentMultiPotentials() {
+	test_log->info()<< "Bug confirmed: there is a problem with VCP::processCell(...) " <<
+			"when one component has dipoles/quadrupoles, but another component has only charges and the molecules appear in a certain order." << std::endl;
+	test_log->info() << "SingleCellPolicy::InitJ(i) should probably be changed to return i, instead of i+1." << std::endl;
+	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
+	testElectrostaticVectorization(filename, 35.0);
+}

@@ -18,5 +18,6 @@
 #include "io/XyzWriter.h"
 #include "io/MPICheckpointWriter.h"
 #include "io/GammaWriter.h"
+#include "io/CavityWriter.h"
 
 #endif  /* IO_H_  */

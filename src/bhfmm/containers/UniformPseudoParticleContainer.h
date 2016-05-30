@@ -14,6 +14,16 @@
 #include "utils/Timer.h"
 #include "bhfmm/utils/WignerMatrix.h"
 #include "bhfmm/utils/RotationParameter.h"
+
+#ifdef FMM_FFT
+#include "bhfmm/fft/FFTAccelerationAPI.h"
+#include "bhfmm/fft/FFTAccelerationAPI_extensions.h"
+#include "bhfmm/fft/FFTSettings.h"
+#include "bhfmm/fft/FFTFactory.h"
+#include "bhfmm/fft/FFTOrderReduction.h"
+#include "bhfmm/fft/TransferFunctionManagerAPI.h"
+#endif /* FMM_FFT */
+
 #include <vector>
 #include <map>
 #include "bhfmm/HaloBufferNoOverlap.h"
@@ -80,6 +90,7 @@ private:
 #endif
 	bool _periodicBC;
 
+
 	Vector3<int> _numProcessorsPerDim;
 	Vector3<int> _numCellsOnGlobalLevel;
 	Vector3<int> _processorPositionGlobalLevel;
@@ -87,6 +98,13 @@ private:
 	std::vector<int> _neighbours;
 
 	int _globalLevelNumCells;
+
+#ifdef FMM_FFT
+	TransferFunctionManagerAPI* _FFT_TM;
+	FFTAccelerationAPI* _FFTAcceleration;
+#endif  /* FMM_FFT */
+
+
 	// M2M
 	void CombineMpCell(double *cellWid, int& mpCells, int curLevel);
 
@@ -98,6 +116,15 @@ private:
 
 	// M2L
 	void GatherWellSepLo_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos);
+  
+
+#ifdef FMM_FFT
+	// M2L
+	void GatherWellSepLo_FFT(double *cellWid, int mpCells, int& curLevel);
+
+	template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
+	void GatherWellSepLo_FFT_template(double *cellWid, int mpCells, int& curLevel);
+#endif /* FMM_FFT */
 
 	// L2L
 	void PropagateCellLo(double *cellWid, int mpCells, int curLevel);

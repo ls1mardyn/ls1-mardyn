@@ -53,7 +53,7 @@ void XyzWriter::readXML(XMLfileUnits& xmlconfig) {
 
 void XyzWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
 
-void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu, map<unsigned, CavityEnsemble>* mcav ) {
 	if( simstep % _writeFrequency == 0) {
 		vector<Component>*  components = _simulation.getEnsemble()->components();
 		stringstream filenamestream;

@@ -15,12 +15,14 @@
 #include "vectorization/MaskGatherChooser.h"
 
 using namespace Log;
+using namespace std;
 
 VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_compIDs(), _eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0) {
+		_eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0),
+		_ljc_dist_lookup(nullptr), _charges_dist_lookup(nullptr), _dipoles_dist_lookup(nullptr), _quadrupoles_dist_lookup(nullptr){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedCellProcessor: using no intrinsics." << std::endl;
@@ -42,10 +44,11 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
 
 	// Assign a center list start index for each component.
-	_compIDs.resize(maxID + 1, 0);
+	std::vector<size_t> compIDs;
+	compIDs.resize(maxID + 1, 0);
 	size_t centers = 0;
 	for (ComponentList::const_iterator c = components.begin(); c != end; ++c) {
-		_compIDs[c->ID()] = centers;
+		compIDs[c->ID()] = centers;
 		centers += c->numLJcenters();
 	}
 
@@ -64,19 +67,10 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 				for (size_t center_j = 0;
 						center_j < components[comp_j].numLJcenters();
 						++center_j) {
-					if ((components[comp_i].ID() == components[comp_j].ID())
-							&& (components[comp_i].numTersoff() > 0
-									|| components[comp_j].numTersoff() > 0)) {
-						// No LJ interaction between solid atoms of the same component.
-						_eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j)] = 0.0;
-						_eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j) + 1] = 0.0;
-						_shift6[_compIDs[comp_i] + center_i][_compIDs[comp_j] + center_j] = 0.0;
-					} else {
-						// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
-						p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j)];
-						p >> _eps_sig[_compIDs[comp_i] + center_i][2 * (_compIDs[comp_j] + center_j) + 1];
-						p >> _shift6[_compIDs[comp_i] + center_i][_compIDs[comp_j] + center_j];
-					}
+					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
+					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)];
+					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1];
+					p >> _shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j];
 				}
 			}
 		}
@@ -84,10 +78,6 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 }
 
 VectorizedCellProcessor :: ~VectorizedCellProcessor () {
-	for (size_t i = 0; i < _particleCellDataVector.size(); ++i) {
-		delete _particleCellDataVector[i];
-	}
-	_particleCellDataVector.clear();
 }
 
 
@@ -96,15 +86,6 @@ void VectorizedCellProcessor::initTraversal(const size_t numCells) {
 	_upot6lj = 0.0;
 	_upotXpoles = 0.0;
 	_myRF = 0.0;
-
-	global_log->debug() << "VectorizedLJCellProcessor::initTraversal() to " << numCells << " cells." << std::endl;
-
-	if (numCells > _particleCellDataVector.size()) {
-		for (size_t i = _particleCellDataVector.size(); i < numCells; i++) {
-			_particleCellDataVector.push_back(new CellDataSoA(64,64,64,64,64));
-		}
-		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
-	}
 }
 
 
@@ -112,283 +93,6 @@ void VectorizedCellProcessor::endTraversal() {
 	_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles + _myRF);
 }
-
-
-void VectorizedCellProcessor::preprocessCell(ParticleCell & c) {
-	assert(!c.getCellDataSoA());
-
-	const MoleculeList & molecules = c.getParticlePointers();
-
-	// Determine the total number of centers.
-	size_t numMolecules = molecules.size();
-	size_t nLJCenters = 0;
-	size_t nCharges = 0;
-	size_t nDipoles = 0;
-	size_t nQuadrupoles = 0;
-	
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		nLJCenters += molecules[m]->numLJcenters();
-		nCharges += molecules[m]->numCharges();
-		nDipoles += molecules[m]->numDipoles();
-		nQuadrupoles += molecules[m]->numQuadrupoles();
-	}
-
-	// Construct the SoA.
-	assert(!_particleCellDataVector.empty()); 
-	CellDataSoA* soaPtr = _particleCellDataVector.back();
-//	global_log->debug() << " _particleCellDataVector.size()=" << _particleCellDataVector.size() << " soaPtr=" << soaPtr
-//						<< " nCenters=" << nLJCenters + nCharges + nDipoles + nQuadrupoles << std::endl;
-	CellDataSoA & soa = *soaPtr;
-	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
-	c.setCellDataSoA(soaPtr);
-	_particleCellDataVector.pop_back();
-
-	ComponentList components = *(_simulation.getEnsemble()->components());
-
-	size_t iLJCenters = 0;
-	size_t iCharges = 0;
-	size_t iDipoles = 0;
-	size_t iQuadrupoles = 0;
-	// For each molecule iterate over all its centers.
-	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t mol_ljc_num = molecules[i]->numLJcenters();
-		const size_t mol_charges_num = molecules[i]->numCharges();
-		const size_t mol_dipoles_num = molecules[i]->numDipoles();
-		const size_t mol_quadrupoles_num = molecules[i]->numQuadrupoles();
-		const double mol_pos_x = molecules[i]->r(0);
-		const double mol_pos_y = molecules[i]->r(1);
-		const double mol_pos_z = molecules[i]->r(2);
-
-		soa._mol_pos_x[i] = mol_pos_x;
-		soa._mol_pos_y[i] = mol_pos_y;
-		soa._mol_pos_z[i] = mol_pos_z;
-		soa._mol_ljc_num[i] = mol_ljc_num;
-		soa._mol_charges_num[i] = mol_charges_num;
-		soa._mol_dipoles_num[i] = mol_dipoles_num;
-		soa._mol_quadrupoles_num[i] = mol_quadrupoles_num;
-
-		for (size_t j = 0; j < mol_ljc_num; ++j, ++iLJCenters) {
-			// Store a copy of the molecule position for each center, and the position of
-			// each center. Assign each LJ center its ID and set the force to 0.0.
-			soa._ljc_m_r_x[iLJCenters] = mol_pos_x;
-			soa._ljc_m_r_y[iLJCenters] = mol_pos_y;
-			soa._ljc_m_r_z[iLJCenters] = mol_pos_z;
-			soa._ljc_r_x[iLJCenters] = molecules[i]->ljcenter_d(j)[0] + mol_pos_x;
-			soa._ljc_r_y[iLJCenters] = molecules[i]->ljcenter_d(j)[1] + mol_pos_y;
-			soa._ljc_r_z[iLJCenters] = molecules[i]->ljcenter_d(j)[2] + mol_pos_z;
-			soa._ljc_f_x[iLJCenters] = 0.0;
-			soa._ljc_f_y[iLJCenters] = 0.0;
-			soa._ljc_f_z[iLJCenters] = 0.0;
-			soa._ljc_V_x[iLJCenters] = 0.0;
-			soa._ljc_V_y[iLJCenters] = 0.0;
-			soa._ljc_V_z[iLJCenters] = 0.0;
-			soa._ljc_id[iLJCenters] = _compIDs[molecules[i]->componentid()] + j;
-			//soa._ljc_dist_lookup[iLJCenters] = 0.0;
-		}
-
-		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges)
-		{
-			soa._charges_m_r_x[iCharges] = mol_pos_x;
-			soa._charges_m_r_y[iCharges] = mol_pos_y;
-			soa._charges_m_r_z[iCharges] = mol_pos_z;
-			soa._charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
-			soa._charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
-			soa._charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
-			soa._charges_f_x[iCharges] = 0.0;
-			soa._charges_f_y[iCharges] = 0.0;
-			soa._charges_f_z[iCharges] = 0.0;
-			soa._charges_V_x[iCharges] = 0.0;
-			soa._charges_V_y[iCharges] = 0.0;
-			soa._charges_V_z[iCharges] = 0.0;
-			//soa._charges_dist_lookup[iCharges] = 0.0;
-			// Get the charge
-			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
-		}
-
-		for (size_t j = 0; j < mol_dipoles_num; ++j, ++iDipoles)
-		{
-			soa._dipoles_m_r_x[iDipoles] = mol_pos_x;
-			soa._dipoles_m_r_y[iDipoles] = mol_pos_y;
-			soa._dipoles_m_r_z[iDipoles] = mol_pos_z;
-			soa._dipoles_r_x[iDipoles] = molecules[i]->dipole_d(j)[0] + mol_pos_x;
-			soa._dipoles_r_y[iDipoles] = molecules[i]->dipole_d(j)[1] + mol_pos_y;
-			soa._dipoles_r_z[iDipoles] = molecules[i]->dipole_d(j)[2] + mol_pos_z;
-			soa._dipoles_f_x[iDipoles] = 0.0;
-			soa._dipoles_f_y[iDipoles] = 0.0;
-			soa._dipoles_f_z[iDipoles] = 0.0;
-			soa._dipoles_V_x[iDipoles] = 0.0;
-			soa._dipoles_V_y[iDipoles] = 0.0;
-			soa._dipoles_V_z[iDipoles] = 0.0;
-			//soa._dipoles_dist_lookup[iDipoles] = 0.0;
-			// Get the dipole moment
-			soa._dipoles_p[iDipoles] = components[molecules[i]->componentid()].dipole(j).absMy();
-			soa._dipoles_e_x[iDipoles] = molecules[i]->dipole_e(j)[0];
-			soa._dipoles_e_y[iDipoles] = molecules[i]->dipole_e(j)[1];
-			soa._dipoles_e_z[iDipoles] = molecules[i]->dipole_e(j)[2];
-			soa._dipoles_M_x[iDipoles] = 0.0;
-			soa._dipoles_M_y[iDipoles] = 0.0;
-			soa._dipoles_M_z[iDipoles] = 0.0;
-		}
-
-		for (size_t j = 0; j < mol_quadrupoles_num; ++j, ++iQuadrupoles)
-		{
-			soa._quadrupoles_m_r_x[iQuadrupoles] = mol_pos_x;
-			soa._quadrupoles_m_r_y[iQuadrupoles] = mol_pos_y;
-			soa._quadrupoles_m_r_z[iQuadrupoles] = mol_pos_z;
-			soa._quadrupoles_r_x[iQuadrupoles] = molecules[i]->quadrupole_d(j)[0] + mol_pos_x;
-			soa._quadrupoles_r_y[iQuadrupoles] = molecules[i]->quadrupole_d(j)[1] + mol_pos_y;
-			soa._quadrupoles_r_z[iQuadrupoles] = molecules[i]->quadrupole_d(j)[2] + mol_pos_z;
-			soa._quadrupoles_f_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_f_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_f_z[iQuadrupoles] = 0.0;
-			soa._quadrupoles_V_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_V_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_V_z[iQuadrupoles] = 0.0;
-			//soa._quadrupoles_dist_lookup[iQuadrupoles] = 0.0;
-			// Get the quadrupole moment
-			soa._quadrupoles_m[iQuadrupoles] = components[molecules[i]->componentid()].quadrupole(j).absQ();
-			soa._quadrupoles_e_x[iQuadrupoles] = molecules[i]->quadrupole_e(j)[0];
-			soa._quadrupoles_e_y[iQuadrupoles] = molecules[i]->quadrupole_e(j)[1];
-			soa._quadrupoles_e_z[iQuadrupoles] = molecules[i]->quadrupole_e(j)[2];
-			soa._quadrupoles_M_x[iQuadrupoles] = 0.0;
-			soa._quadrupoles_M_y[iQuadrupoles] = 0.0;
-			soa._quadrupoles_M_z[iQuadrupoles] = 0.0;
-		}
-	}
-}
-
-
-void VectorizedCellProcessor::postprocessCell(ParticleCell & c) {
-	assert(c.getCellDataSoA());
-	CellDataSoA& soa = *c.getCellDataSoA();
-
-	MoleculeList & molecules = c.getParticlePointers();
-
-	// For each molecule iterate over all its centers.
-	size_t iLJCenters = 0;
-	size_t iCharges = 0;
-	size_t iDipoles = 0;
-	size_t iQuadrupoles = 0;
-	size_t numMols = molecules.size();
-	for (size_t m = 0; m < numMols; ++m) {
-		const size_t mol_ljc_num = molecules[m]->numLJcenters();
-		const size_t mol_charges_num = molecules[m]->numCharges();
-		const size_t mol_dipoles_num = molecules[m]->numDipoles();
-		const size_t mol_quadrupoles_num = molecules[m]->numQuadrupoles();
-
-		for (size_t i = 0; i < mol_ljc_num; ++i, ++iLJCenters) {
-			// Store the resulting force in the molecule.
-			double f[3];
-			f[0] = soa._ljc_f_x[iLJCenters];
-			f[1] = soa._ljc_f_y[iLJCenters];
-			f[2] = soa._ljc_f_z[iLJCenters];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			molecules[m]->Fljcenteradd(i, f);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._ljc_V_x[iLJCenters]*0.5;
-			V[1] = soa._ljc_V_y[iLJCenters]*0.5;
-			V[2] = soa._ljc_V_z[iLJCenters]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-
-		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
-			// Store the resulting force in the molecule.
-			double f[3];
-			f[0] = soa._charges_f_x[iCharges];
-			f[1] = soa._charges_f_y[iCharges];
-			f[2] = soa._charges_f_z[iCharges];
-			if(isnan(f[0])||isnan(f[1])||isnan(f[2]) ){
-				printf("nan\n");
-			}
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			molecules[m]->Fchargeadd(i, f);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._charges_V_x[iCharges]*0.5;
-			V[1] = soa._charges_V_y[iCharges]*0.5;
-			V[2] = soa._charges_V_z[iCharges]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-
-		for (size_t i = 0; i < mol_dipoles_num; ++i, ++iDipoles) {
-			// Store the resulting force & torque in the molecule.
-			double f[3];
-			f[0] = soa._dipoles_f_x[iDipoles];
-			f[1] = soa._dipoles_f_y[iDipoles];
-			f[2] = soa._dipoles_f_z[iDipoles];
-			double M[3];
-			M[0] = soa._dipoles_M_x[iDipoles];
-			M[1] = soa._dipoles_M_y[iDipoles];
-			M[2] = soa._dipoles_M_z[iDipoles];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			assert(!isnan(M[0]));
-			assert(!isnan(M[1]));
-			assert(!isnan(M[2]));
-			molecules[m]->Fdipoleadd(i, f);
-			molecules[m]->Madd(M);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._dipoles_V_x[iDipoles]*0.5;
-			V[1] = soa._dipoles_V_y[iDipoles]*0.5;
-			V[2] = soa._dipoles_V_z[iDipoles]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-
-		for (size_t i = 0; i < mol_quadrupoles_num; ++i, ++iQuadrupoles) {
-			// Store the resulting force & torque in the molecule.
-			double f[3];
-			f[0] = soa._quadrupoles_f_x[iQuadrupoles];
-			f[1] = soa._quadrupoles_f_y[iQuadrupoles];
-			f[2] = soa._quadrupoles_f_z[iQuadrupoles];
-			double M[3];
-			M[0] = soa._quadrupoles_M_x[iQuadrupoles];
-			M[1] = soa._quadrupoles_M_y[iQuadrupoles];
-			M[2] = soa._quadrupoles_M_z[iQuadrupoles];
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
-			assert(!isnan(M[0]));
-			assert(!isnan(M[1]));
-			assert(!isnan(M[2]));
-			molecules[m]->Fquadrupoleadd(i, f);
-			molecules[m]->Madd(M);
-
-			// Store the resulting virial in the molecule.
-			double V[3];
-			V[0] = soa._quadrupoles_V_x[iQuadrupoles]*0.5;
-			V[1] = soa._quadrupoles_V_y[iQuadrupoles]*0.5;
-			V[2] = soa._quadrupoles_V_z[iQuadrupoles]*0.5;
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
-		}
-	}
-	// Delete the SoA.
-	_particleCellDataVector.push_back(&soa);
-	c.setCellDataSoA(0);
-}
-
-
 
 	//const vcp_double_vec minus_one = vcp_simd_set1(-1.0); //currently not used, would produce warning
 	const vcp_double_vec zero = VCP_SIMD_ZEROV;
@@ -989,9 +693,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	bool compute_molecule = false;
 
 	for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 		const double m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
 
 		const bool forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
@@ -1008,6 +712,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	// Iterate over centers of second cell
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
+	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
 	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
 		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
@@ -1019,20 +724,25 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD);
+		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
 
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
-		const unsigned long forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
+		vcp_mask_single forceMask;
+		if (ForcePolicy::DetectSingleCell()) {
+			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? ~0l : 0l;
+		} else {
+			forceMask = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
+		}
 
 		*(soa2_center_dist_lookup + j) = forceMask;
 		const vcp_mask_vec forceMask_vec = vcp_simd_set1(forceMask);
@@ -1069,10 +779,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
-
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		// can we do this nicer?
@@ -1081,7 +790,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
 			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
 		if (ForcePolicy::DetectSingleCell()) {
-			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j > i_center_idx) ? ~0l : 0l;
+			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? ~0l : 0l;
 		} else {
 			forceMask = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
 		}
@@ -1124,9 +833,9 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	unsigned char bitmultiplier = 1;
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j, bitmultiplier *= 2) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
@@ -1136,7 +845,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
 			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
 		if (ForcePolicy::DetectSingleCell()) {
-			forceMask_local = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j > i_center_idx) ? 1 : 0;
+			forceMask_local = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? 1 : 0;
 		} else {
 			forceMask_local = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? 1 : 0;
 		}
@@ -1227,147 +936,147 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
-	const double * const soa1_mol_pos_y = soa1._mol_pos_y;
-	const double * const soa1_mol_pos_z = soa1._mol_pos_z;
+	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for LJ centers
-	const double * const soa1_ljc_r_x = soa1._ljc_r_x;
-	const double * const soa1_ljc_r_y = soa1._ljc_r_y;
-	const double * const soa1_ljc_r_z = soa1._ljc_r_z;
-	double * const soa1_ljc_f_x = soa1._ljc_f_x;
-	double * const soa1_ljc_f_y = soa1._ljc_f_y;
-	double * const soa1_ljc_f_z = soa1._ljc_f_z;
-	double * const soa1_ljc_V_x = soa1._ljc_V_x;
-	double * const soa1_ljc_V_y = soa1._ljc_V_y;
-	double * const soa1_ljc_V_z = soa1._ljc_V_z;
+	const double * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
+	const double * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
+	const double * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
+	      double * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
+	      double * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
+	      double * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
+	      double * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
+	      double * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
+	      double * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
 	const size_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const double * const soa2_ljc_m_r_x = soa2._ljc_m_r_x;
-	const double * const soa2_ljc_m_r_y = soa2._ljc_m_r_y;
-	const double * const soa2_ljc_m_r_z = soa2._ljc_m_r_z;
-	const double * const soa2_ljc_r_x = soa2._ljc_r_x;
-	const double * const soa2_ljc_r_y = soa2._ljc_r_y;
-	const double * const soa2_ljc_r_z = soa2._ljc_r_z;
-	double * const soa2_ljc_f_x = soa2._ljc_f_x;
-	double * const soa2_ljc_f_y = soa2._ljc_f_y;
-	double * const soa2_ljc_f_z = soa2._ljc_f_z;
-	double * const soa2_ljc_V_x = soa2._ljc_V_x;
-	double * const soa2_ljc_V_y = soa2._ljc_V_y;
-	double * const soa2_ljc_V_z = soa2._ljc_V_z;
+	const double * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
+	const double * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
+	const double * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
+	const double * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
+	const double * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
+	const double * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
+	      double * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
+	      double * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
+	      double * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
+	      double * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
+	      double * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
+	      double * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = _ljc_dist_lookup;
 
 	// Pointer for charges
-	const double * const soa1_charges_r_x = soa1._charges_r_x;
-	const double * const soa1_charges_r_y = soa1._charges_r_y;
-	const double * const soa1_charges_r_z = soa1._charges_r_z;
-	double * const soa1_charges_f_x = soa1._charges_f_x;
-	double * const soa1_charges_f_y = soa1._charges_f_y;
-	double * const soa1_charges_f_z = soa1._charges_f_z;
-	double * const soa1_charges_V_x = soa1._charges_V_x;
-	double * const soa1_charges_V_y = soa1._charges_V_y;
-	double * const soa1_charges_V_z = soa1._charges_V_z;
+	const double * const soa1_charges_r_x = soa1.charges_r_xBegin();
+	const double * const soa1_charges_r_y = soa1.charges_r_yBegin();
+	const double * const soa1_charges_r_z = soa1.charges_r_zBegin();
+	      double * const soa1_charges_f_x = soa1.charges_f_xBegin();
+	      double * const soa1_charges_f_y = soa1.charges_f_yBegin();
+	      double * const soa1_charges_f_z = soa1.charges_f_zBegin();
+	      double * const soa1_charges_V_x = soa1.charges_V_xBegin();
+	      double * const soa1_charges_V_y = soa1.charges_V_yBegin();
+	      double * const soa1_charges_V_z = soa1.charges_V_zBegin();
 	const double * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const double * const soa2_charges_m_r_x = soa2._charges_m_r_x;
-	const double * const soa2_charges_m_r_y = soa2._charges_m_r_y;
-	const double * const soa2_charges_m_r_z = soa2._charges_m_r_z;
-	const double * const soa2_charges_r_x = soa2._charges_r_x;
-	const double * const soa2_charges_r_y = soa2._charges_r_y;
-	const double * const soa2_charges_r_z = soa2._charges_r_z;
-	double * const soa2_charges_f_x = soa2._charges_f_x;
-	double * const soa2_charges_f_y = soa2._charges_f_y;
-	double * const soa2_charges_f_z = soa2._charges_f_z;
-	double * const soa2_charges_V_x = soa2._charges_V_x;
-	double * const soa2_charges_V_y = soa2._charges_V_y;
-	double * const soa2_charges_V_z = soa2._charges_V_z;
+	const double * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
+	const double * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
+	const double * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
+	const double * const soa2_charges_r_x   = soa2.charges_r_xBegin();
+	const double * const soa2_charges_r_y   = soa2.charges_r_yBegin();
+	const double * const soa2_charges_r_z   = soa2.charges_r_zBegin();
+	      double * const soa2_charges_f_x   = soa2.charges_f_xBegin();
+	      double * const soa2_charges_f_y   = soa2.charges_f_yBegin();
+	      double * const soa2_charges_f_z   = soa2.charges_f_zBegin();
+	      double * const soa2_charges_V_x   = soa2.charges_V_xBegin();
+	      double * const soa2_charges_V_y   = soa2.charges_V_yBegin();
+	      double * const soa2_charges_V_z   = soa2.charges_V_zBegin();
 	const double * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = _charges_dist_lookup;
 
 	// Pointer for dipoles
-	const double * const soa1_dipoles_r_x = soa1._dipoles_r_x;
-	const double * const soa1_dipoles_r_y = soa1._dipoles_r_y;
-	const double * const soa1_dipoles_r_z = soa1._dipoles_r_z;
-	double * const soa1_dipoles_f_x = soa1._dipoles_f_x;
-	double * const soa1_dipoles_f_y = soa1._dipoles_f_y;
-	double * const soa1_dipoles_f_z = soa1._dipoles_f_z;
-	double * const soa1_dipoles_V_x = soa1._dipoles_V_x;
-	double * const soa1_dipoles_V_y = soa1._dipoles_V_y;
-	double * const soa1_dipoles_V_z = soa1._dipoles_V_z;
+	const double * const soa1_dipoles_r_x = soa1.dipoles_r_xBegin();
+	const double * const soa1_dipoles_r_y = soa1.dipoles_r_yBegin();
+	const double * const soa1_dipoles_r_z = soa1.dipoles_r_zBegin();
+	      double * const soa1_dipoles_f_x = soa1.dipoles_f_xBegin();
+	      double * const soa1_dipoles_f_y = soa1.dipoles_f_yBegin();
+	      double * const soa1_dipoles_f_z = soa1.dipoles_f_zBegin();
+	      double * const soa1_dipoles_V_x = soa1.dipoles_V_xBegin();
+	      double * const soa1_dipoles_V_y = soa1.dipoles_V_yBegin();
+	      double * const soa1_dipoles_V_z = soa1.dipoles_V_zBegin();
 	const double * const soa1_dipoles_p = soa1._dipoles_p;
-	const double * const soa1_dipoles_e_x = soa1._dipoles_e_x;
-	const double * const soa1_dipoles_e_y = soa1._dipoles_e_y;
-	const double * const soa1_dipoles_e_z = soa1._dipoles_e_z;
-	double * const soa1_dipoles_M_x = soa1._dipoles_M_x;
-	double * const soa1_dipoles_M_y = soa1._dipoles_M_y;
-	double * const soa1_dipoles_M_z = soa1._dipoles_M_z;
+	const double * const soa1_dipoles_e_x = soa1._dipoles_e.xBegin();
+	const double * const soa1_dipoles_e_y = soa1._dipoles_e.yBegin();
+	const double * const soa1_dipoles_e_z = soa1._dipoles_e.zBegin();
+	double * const soa1_dipoles_M_x = soa1._dipoles_M.xBegin();
+	double * const soa1_dipoles_M_y = soa1._dipoles_M.yBegin();
+	double * const soa1_dipoles_M_z = soa1._dipoles_M.zBegin();
 	const int * const soa1_mol_dipoles_num = soa1._mol_dipoles_num;
 
-	const double * const soa2_dipoles_m_r_x = soa2._dipoles_m_r_x;
-	const double * const soa2_dipoles_m_r_y = soa2._dipoles_m_r_y;
-	const double * const soa2_dipoles_m_r_z = soa2._dipoles_m_r_z;
-	const double * const soa2_dipoles_r_x = soa2._dipoles_r_x;
-	const double * const soa2_dipoles_r_y = soa2._dipoles_r_y;
-	const double * const soa2_dipoles_r_z = soa2._dipoles_r_z;
-	double * const soa2_dipoles_f_x = soa2._dipoles_f_x;
-	double * const soa2_dipoles_f_y = soa2._dipoles_f_y;
-	double * const soa2_dipoles_f_z = soa2._dipoles_f_z;
-	double * const soa2_dipoles_V_x = soa2._dipoles_V_x;
-	double * const soa2_dipoles_V_y = soa2._dipoles_V_y;
-	double * const soa2_dipoles_V_z = soa2._dipoles_V_z;
+	const double * const soa2_dipoles_m_r_x = soa2.dipoles_m_r_xBegin();
+	const double * const soa2_dipoles_m_r_y = soa2.dipoles_m_r_yBegin();
+	const double * const soa2_dipoles_m_r_z = soa2.dipoles_m_r_zBegin();
+	const double * const soa2_dipoles_r_x   = soa2.dipoles_r_xBegin();
+	const double * const soa2_dipoles_r_y   = soa2.dipoles_r_yBegin();
+	const double * const soa2_dipoles_r_z   = soa2.dipoles_r_zBegin();
+	      double * const soa2_dipoles_f_x   = soa2.dipoles_f_xBegin();
+	      double * const soa2_dipoles_f_y   = soa2.dipoles_f_yBegin();
+	      double * const soa2_dipoles_f_z   = soa2.dipoles_f_zBegin();
+	      double * const soa2_dipoles_V_x   = soa2.dipoles_V_xBegin();
+	      double * const soa2_dipoles_V_y   = soa2.dipoles_V_yBegin();
+	      double * const soa2_dipoles_V_z   = soa2.dipoles_V_zBegin();
 	const double * const soa2_dipoles_p = soa2._dipoles_p;
-	const double * const soa2_dipoles_e_x = soa2._dipoles_e_x;
-	const double * const soa2_dipoles_e_y = soa2._dipoles_e_y;
-	const double * const soa2_dipoles_e_z = soa2._dipoles_e_z;
-	double * const soa2_dipoles_M_x = soa2._dipoles_M_x;
-	double * const soa2_dipoles_M_y = soa2._dipoles_M_y;
-	double * const soa2_dipoles_M_z = soa2._dipoles_M_z;
+	const double * const soa2_dipoles_e_x = soa2._dipoles_e.xBegin();
+	const double * const soa2_dipoles_e_y = soa2._dipoles_e.yBegin();
+	const double * const soa2_dipoles_e_z = soa2._dipoles_e.zBegin();
+	double * const soa2_dipoles_M_x = soa2._dipoles_M.xBegin();
+	double * const soa2_dipoles_M_y = soa2._dipoles_M.yBegin();
+	double * const soa2_dipoles_M_z = soa2._dipoles_M.zBegin();
 
 	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = _dipoles_dist_lookup;
 
 	// Pointer for quadrupoles
-	const double * const soa1_quadrupoles_r_x = soa1._quadrupoles_r_x;
-	const double * const soa1_quadrupoles_r_y = soa1._quadrupoles_r_y;
-	const double * const soa1_quadrupoles_r_z = soa1._quadrupoles_r_z;
-	double * const soa1_quadrupoles_f_x = soa1._quadrupoles_f_x;
-	double * const soa1_quadrupoles_f_y = soa1._quadrupoles_f_y;
-	double * const soa1_quadrupoles_f_z = soa1._quadrupoles_f_z;
-	double * const soa1_quadrupoles_V_x = soa1._quadrupoles_V_x;
-	double * const soa1_quadrupoles_V_y = soa1._quadrupoles_V_y;
-	double * const soa1_quadrupoles_V_z = soa1._quadrupoles_V_z;
+	const double * const soa1_quadrupoles_r_x = soa1.quadrupoles_r_xBegin();
+	const double * const soa1_quadrupoles_r_y = soa1.quadrupoles_r_yBegin();
+	const double * const soa1_quadrupoles_r_z = soa1.quadrupoles_r_zBegin();
+	      double * const soa1_quadrupoles_f_x = soa1.quadrupoles_f_xBegin();
+	      double * const soa1_quadrupoles_f_y = soa1.quadrupoles_f_yBegin();
+	      double * const soa1_quadrupoles_f_z = soa1.quadrupoles_f_zBegin();
+	      double * const soa1_quadrupoles_V_x = soa1.quadrupoles_V_xBegin();
+	      double * const soa1_quadrupoles_V_y = soa1.quadrupoles_V_yBegin();
+	      double * const soa1_quadrupoles_V_z = soa1.quadrupoles_V_zBegin();
 	const double * const soa1_quadrupoles_m = soa1._quadrupoles_m;
-	const double * const soa1_quadrupoles_e_x = soa1._quadrupoles_e_x;
-	const double * const soa1_quadrupoles_e_y = soa1._quadrupoles_e_y;
-	const double * const soa1_quadrupoles_e_z = soa1._quadrupoles_e_z;
-	double * const soa1_quadrupoles_M_x = soa1._quadrupoles_M_x;
-	double * const soa1_quadrupoles_M_y = soa1._quadrupoles_M_y;
-	double * const soa1_quadrupoles_M_z = soa1._quadrupoles_M_z;
+	const double * const soa1_quadrupoles_e_x = soa1._quadrupoles_e.xBegin();
+	const double * const soa1_quadrupoles_e_y = soa1._quadrupoles_e.yBegin();
+	const double * const soa1_quadrupoles_e_z = soa1._quadrupoles_e.zBegin();
+	      double * const soa1_quadrupoles_M_x = soa1._quadrupoles_M.xBegin();
+	      double * const soa1_quadrupoles_M_y = soa1._quadrupoles_M.yBegin();
+	      double * const soa1_quadrupoles_M_z = soa1._quadrupoles_M.zBegin();
 	const int * const soa1_mol_quadrupoles_num = soa1._mol_quadrupoles_num;
 
-	const double * const soa2_quadrupoles_m_r_x = soa2._quadrupoles_m_r_x;
-	const double * const soa2_quadrupoles_m_r_y = soa2._quadrupoles_m_r_y;
-	const double * const soa2_quadrupoles_m_r_z = soa2._quadrupoles_m_r_z;
-	const double * const soa2_quadrupoles_r_x = soa2._quadrupoles_r_x;
-	const double * const soa2_quadrupoles_r_y = soa2._quadrupoles_r_y;
-	const double * const soa2_quadrupoles_r_z = soa2._quadrupoles_r_z;
-	double * const soa2_quadrupoles_f_x = soa2._quadrupoles_f_x;
-	double * const soa2_quadrupoles_f_y = soa2._quadrupoles_f_y;
-	double * const soa2_quadrupoles_f_z = soa2._quadrupoles_f_z;
-	double * const soa2_quadrupoles_V_x = soa2._quadrupoles_V_x;
-	double * const soa2_quadrupoles_V_y = soa2._quadrupoles_V_y;
-	double * const soa2_quadrupoles_V_z = soa2._quadrupoles_V_z;
+	const double * const soa2_quadrupoles_m_r_x = soa2.quadrupoles_m_r_xBegin();
+	const double * const soa2_quadrupoles_m_r_y = soa2.quadrupoles_m_r_yBegin();
+	const double * const soa2_quadrupoles_m_r_z = soa2.quadrupoles_m_r_zBegin();
+	const double * const soa2_quadrupoles_r_x   = soa2.quadrupoles_r_xBegin();
+	const double * const soa2_quadrupoles_r_y   = soa2.quadrupoles_r_yBegin();
+	const double * const soa2_quadrupoles_r_z   = soa2.quadrupoles_r_zBegin();
+	      double * const soa2_quadrupoles_f_x   = soa2.quadrupoles_f_xBegin();
+	      double * const soa2_quadrupoles_f_y   = soa2.quadrupoles_f_yBegin();
+	      double * const soa2_quadrupoles_f_z   = soa2.quadrupoles_f_zBegin();
+	      double * const soa2_quadrupoles_V_x   = soa2.quadrupoles_V_xBegin();
+	      double * const soa2_quadrupoles_V_y   = soa2.quadrupoles_V_yBegin();
+	      double * const soa2_quadrupoles_V_z   = soa2.quadrupoles_V_zBegin();
 	const double * const soa2_quadrupoles_m = soa2._quadrupoles_m;
-	const double * const soa2_quadrupoles_e_x = soa2._quadrupoles_e_x;
-	const double * const soa2_quadrupoles_e_y = soa2._quadrupoles_e_y;
-	const double * const soa2_quadrupoles_e_z = soa2._quadrupoles_e_z;
-	double * const soa2_quadrupoles_M_x = soa2._quadrupoles_M_x;
-	double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M_y;
-	double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M_z;
+	const double * const soa2_quadrupoles_e_x = soa2._quadrupoles_e.xBegin();
+	const double * const soa2_quadrupoles_e_y = soa2._quadrupoles_e.yBegin();
+	const double * const soa2_quadrupoles_e_z = soa2._quadrupoles_e.zBegin();
+	      double * const soa2_quadrupoles_M_x = soa2._quadrupoles_M.xBegin();
+	      double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M.yBegin();
+	      double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M.zBegin();
 
 	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = _quadrupoles_dist_lookup;
 
@@ -3035,33 +2744,79 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
 void VectorizedCellProcessor::processCell(ParticleCell & c) {
-	assert(c.getCellDataSoA());
-	if (c.isHaloCell() || (c.getCellDataSoA()->_mol_num < 2)) {
+	CellDataSoA& soa = c.getCellDataSoA();
+	if (c.isHaloCell() or soa._mol_num < 2) {
 		return;
 	}
-//printf("---------------singleCell-------------\n");
-	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
+	const bool CalculateMacroscopic = true;
+	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
+}
+
+// provisionally, the code from the legacy cell processor is used here
+//
+int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, double RR)
+{
+        int tn = 0;
+        double distanceVector[3];
+
+        std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
+        int neighbourParticleCount = neighbourCellParticles.size();
+
+        for (int j = 0; j < neighbourParticleCount; j++) {
+                Molecule& molecule2 = *neighbourCellParticles[j];
+                if(m1->id() == molecule2.id()) continue;
+                double dd = molecule2.dist2(*m1, distanceVector);
+                if (dd < RR) tn++;
+        }
+        return tn;
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	assert(&c1 != &c2);
-	assert(c1.getCellDataSoA());
-	assert(c2.getCellDataSoA());
+	const CellDataSoA& soa1 = c1.getCellDataSoA();
+	const CellDataSoA& soa2 = c2.getCellDataSoA();
+	const bool c1Halo = c1.isHaloCell();
+	const bool c2Halo = c2.isHaloCell();
 
-	if ((c1.getCellDataSoA()->_mol_num == 0) || (c2.getCellDataSoA()->_mol_num == 0)) {
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, or both cells are Halo, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
-	//printf("---------------cellPair-------------\n");
-	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
-	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
-		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+
+	// Macroscopic conditions:
+	// if none of the cells is halo, then compute
+	// if one of them is halo:
+	// 		if c1-index < c2-index, then compute
+	// 		else, then don't compute
+	// This saves the Molecule::isLessThan checks
+	// and works similar to the "Half-Shell" scheme
+
+	if ((not c1Halo and not c2Halo) or						// no cell is halo or
+			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but c1.index < c2.index
+	{
+		const bool CalculateMacroscopic = true;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-		else {
-			_calculatePairs<CellPairPolicy_, false, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+
+	} else {
+		assert(c1Halo != c2Halo);							// one of them is halo and
+		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
+
+		const bool CalculateMacroscopic = false;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-	} else {//both cells halo -> do nothing
-		return;
 	}
 }

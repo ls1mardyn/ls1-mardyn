@@ -43,26 +43,11 @@ void RDFTest::testRDFCountSequential12_LinkedCell() {
 	delete _domainDecomposition;
 }
 
-/**
- * TODO: Somehow this test fails in case of MPI,
- * I suspect the issue to reside in AdaptiveSubCells.
- */
-void RDFTest::testRDFCountSequential12_AdaptiveCell() {
-	// original pointer will be freed by the tearDown()-method.
-#ifdef ENABLE_MPI
-	test_log->info() << "Not executing RDFTest::testRDFCountSequential12_AdaptiveCell(); Compile without MPI" << endl;
-#else
-	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-2x2x3.inp", 1.8);
-	testRDFCountSequential12(moleculeContainer);
-	delete moleculeContainer;
-#endif
-}
-
 void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
+	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 	vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
@@ -128,16 +113,10 @@ void RDFTest::testRDFCountLinkedCell() {
 	delete moleculeContainer;
 }
 
-void RDFTest::testRDFCountAdaptiveCell() {
-	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-12x12x12.inp", 1.8);
-	testRDFCount(moleculeContainer);
-	delete moleculeContainer;
-}
-
 void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
+	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 	
 	vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());
@@ -215,7 +194,7 @@ void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
+	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 
 	vector<Component>* components = global_simulation->getEnsemble()->components();
 	ASSERT_EQUAL((size_t) 1, components->size());

@@ -15,12 +15,13 @@
 #include "VectorizedChargeP2PCellProcessor.h"
 
 using namespace Log;
+using namespace std;
 namespace bhfmm {
 
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
-		_compIDs(), _upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
+		_upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
@@ -34,31 +35,12 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using MIC intrinsics." << std::endl;
 #endif
 
-	ComponentList components = *(_simulation.getEnsemble()->components());
-	// Get the maximum Component ID.
-	size_t maxID = 0;
-	const ComponentList::const_iterator end = components.end();
-	for (ComponentList::const_iterator c = components.begin(); c != end; ++c)
-		maxID = std::max(maxID, static_cast<size_t>(c->ID()));
-
-	// Assign a center list start index for each component.
-	_compIDs.resize(maxID + 1, 0);
-	size_t centers = 0;
-	for (ComponentList::const_iterator c = components.begin(); c != end; ++c) {
-		_compIDs[c->ID()] = centers;
-		centers += c->numLJcenters();
-	}
-
 #ifdef ENABLE_MPI
 	_timer.set_sync(false);
 #endif
 }
 
 VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
-	for (size_t i = 0; i < _particleCellDataVector.size(); ++i) {
-		delete _particleCellDataVector[i];
-	}
-	_particleCellDataVector.clear();
 }
 
 void VectorizedChargeP2PCellProcessor::printTimers() {
@@ -70,16 +52,6 @@ void VectorizedChargeP2PCellProcessor::initTraversal(const size_t numCells) {
 	_timer.start();
 	_virial = 0.0;
 	_upotXpoles = 0.0;
-
-	global_log->debug() << "VectorizedLJCellProcessor::initTraversal() to " << numCells << " cells." << std::endl;
-
-	if (numCells > _particleCellDataVector.size()) {
-		for (size_t i = _particleCellDataVector.size(); i < numCells; i++) {
-			_particleCellDataVector.push_back(new CellDataSoA(0,0,0,0,0));
-		}
-		global_log->debug() << "resize CellDataSoA to " << numCells << " cells." << std::endl;
-		global_log->debug() << "amount of data for one CellDataSoA " << (_particleCellDataVector[0]->getDynamicSize()) << " bytes" << std::endl;
-	}
 }
 
 
@@ -94,8 +66,8 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
-	assert(!c.getCellDataSoA());
-
+	// as pre new integration of Caches in SoAs, 
+	// this function work as before, as it builds secondary SoAs
 	const MoleculeList & molecules = c.getParticlePointers();
 
 	// Determine the total number of centers.
@@ -110,15 +82,23 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 	}
 
 	// Construct the SoA.
-	assert(!_particleCellDataVector.empty()); 
-	CellDataSoA* soaPtr = _particleCellDataVector.back();
-
-	CellDataSoA & soa = *soaPtr;
+	CellDataSoA & soa = c.getCellDataSoA();
 	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
-	c.setCellDataSoA(soaPtr);
-	_particleCellDataVector.pop_back();
 
 	ComponentList components = *(_simulation.getEnsemble()->components());
+
+	double* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
+	double* const soa_charges_m_r_y = soa.charges_m_r_yBegin();
+	double* const soa_charges_m_r_z = soa.charges_m_r_zBegin();
+	double* const soa_charges_r_x = soa.charges_r_xBegin();
+	double* const soa_charges_r_y = soa.charges_r_yBegin();
+	double* const soa_charges_r_z = soa.charges_r_zBegin();
+	double* const soa_charges_f_x = soa.charges_f_xBegin();
+	double* const soa_charges_f_y = soa.charges_f_yBegin();
+	double* const soa_charges_f_z = soa.charges_f_zBegin();
+	double* const soa_charges_V_x = soa.charges_V_xBegin();
+	double* const soa_charges_V_y = soa.charges_V_yBegin();
+	double* const soa_charges_V_z = soa.charges_V_zBegin();
 
 	size_t iCharges = 0;
 	// For each molecule iterate over all its centers.
@@ -128,25 +108,25 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 		const double mol_pos_y = molecules[i]->r(1);
 		const double mol_pos_z = molecules[i]->r(2);
 
-		soa._mol_pos_x[i] = mol_pos_x;
-		soa._mol_pos_y[i] = mol_pos_y;
-		soa._mol_pos_z[i] = mol_pos_z;
+		soa._mol_pos.x(i) = mol_pos_x;
+		soa._mol_pos.y(i) = mol_pos_y;
+		soa._mol_pos.z(i) = mol_pos_z;
 		soa._mol_charges_num[i] = mol_charges_num;
 
 		for (size_t j = 0; j < mol_charges_num; ++j, ++iCharges)
 		{
-			soa._charges_m_r_x[iCharges] = mol_pos_x;
-			soa._charges_m_r_y[iCharges] = mol_pos_y;
-			soa._charges_m_r_z[iCharges] = mol_pos_z;
-			soa._charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
-			soa._charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
-			soa._charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
-			soa._charges_f_x[iCharges] = 0.0;
-			soa._charges_f_y[iCharges] = 0.0;
-			soa._charges_f_z[iCharges] = 0.0;
-			soa._charges_V_x[iCharges] = 0.0;
-			soa._charges_V_y[iCharges] = 0.0;
-			soa._charges_V_z[iCharges] = 0.0;
+			soa_charges_m_r_x[iCharges] = mol_pos_x;
+			soa_charges_m_r_y[iCharges] = mol_pos_y;
+			soa_charges_m_r_z[iCharges] = mol_pos_z;
+			soa_charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
+			soa_charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
+			soa_charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
+			soa_charges_f_x[iCharges] = 0.0;
+			soa_charges_f_y[iCharges] = 0.0;
+			soa_charges_f_z[iCharges] = 0.0;
+			soa_charges_V_x[iCharges] = 0.0;
+			soa_charges_V_y[iCharges] = 0.0;
+			soa_charges_V_z[iCharges] = 0.0;
 			//soa._charges_dist_lookup[iCharges] = 0.0;
 			// Get the charge
 			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
@@ -156,10 +136,19 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 
 void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
-	assert(c.getCellDataSoA());
-	CellDataSoA& soa = *c.getCellDataSoA();
+	// as pre new integration of Caches in SoAs, 
+	// this function work as before, as it builds secondary SoAs
+	using std::isnan; // C++11 required
+	CellDataSoA& soa = c.getCellDataSoA();
 
 	MoleculeList & molecules = c.getParticlePointers();
+
+	double* const soa_charges_f_x = soa.charges_f_xBegin();
+	double* const soa_charges_f_y = soa.charges_f_yBegin();
+	double* const soa_charges_f_z = soa.charges_f_zBegin();
+	double* const soa_charges_V_x = soa.charges_V_xBegin();
+	double* const soa_charges_V_y = soa.charges_V_yBegin();
+	double* const soa_charges_V_z = soa.charges_V_zBegin();
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
@@ -173,9 +162,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
 			double f[3];
-			f[0] = soa._charges_f_x[iCharges];
-			f[1] = soa._charges_f_y[iCharges];
-			f[2] = soa._charges_f_z[iCharges];
+			f[0] = soa_charges_f_x[iCharges];
+			f[1] = soa_charges_f_y[iCharges];
+			f[2] = soa_charges_f_z[iCharges];
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -183,18 +172,15 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa._charges_V_x[iCharges]*0.5;
-			V[1] = soa._charges_V_y[iCharges]*0.5;
-			V[2] = soa._charges_V_z[iCharges]*0.5;
+			V[0] = soa_charges_V_x[iCharges]*0.5;
+			V[1] = soa_charges_V_y[iCharges]*0.5;
+			V[2] = soa_charges_V_z[iCharges]*0.5;
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
 			molecules[m]->Viadd(V);
 		}
 	}
-	// Delete the SoA.
-	_particleCellDataVector.push_back(&soa);
-	c.setCellDataSoA(0);
 }
 
 
@@ -271,9 +257,9 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 	bool compute_molecule = false;
 
 	for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 		const double m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
 		const bool forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
@@ -308,9 +294,9 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
@@ -351,10 +337,9 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
-
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
 		// can we do this nicer?
@@ -406,9 +391,9 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 	unsigned char bitmultiplier = 1;
 	// End iteration over centers with possible left over center
 	for (; j < soa2_num_centers; ++j, bitmultiplier *= 2) {
-		const double m_dx = soa1._mol_pos_x[i] - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos_y[i] - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos_z[i] - soa2_m_r_z[j];
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
 
 		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
 
@@ -508,37 +493,36 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	}
 	_charges_dist_lookup = _centers_dist_lookup;
 
-
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = soa1._mol_pos_x;
-	const double * const soa1_mol_pos_y = soa1._mol_pos_y;
-	const double * const soa1_mol_pos_z = soa1._mol_pos_z;
+	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for charges
-	const double * const soa1_charges_r_x = soa1._charges_r_x;
-	const double * const soa1_charges_r_y = soa1._charges_r_y;
-	const double * const soa1_charges_r_z = soa1._charges_r_z;
-	double * const soa1_charges_f_x = soa1._charges_f_x;
-	double * const soa1_charges_f_y = soa1._charges_f_y;
-	double * const soa1_charges_f_z = soa1._charges_f_z;
-	double * const soa1_charges_V_x = soa1._charges_V_x;
-	double * const soa1_charges_V_y = soa1._charges_V_y;
-	double * const soa1_charges_V_z = soa1._charges_V_z;
+	const double * const soa1_charges_r_x = soa1.charges_r_xBegin();
+	const double * const soa1_charges_r_y = soa1.charges_r_yBegin();
+	const double * const soa1_charges_r_z = soa1.charges_r_zBegin();
+	      double * const soa1_charges_f_x = soa1.charges_f_xBegin();
+	      double * const soa1_charges_f_y = soa1.charges_f_yBegin();
+	      double * const soa1_charges_f_z = soa1.charges_f_zBegin();
+	      double * const soa1_charges_V_x = soa1.charges_V_xBegin();
+	      double * const soa1_charges_V_y = soa1.charges_V_yBegin();
+	      double * const soa1_charges_V_z = soa1.charges_V_zBegin();
 	const double * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const double * const soa2_charges_m_r_x = soa2._charges_m_r_x;
-	const double * const soa2_charges_m_r_y = soa2._charges_m_r_y;
-	const double * const soa2_charges_m_r_z = soa2._charges_m_r_z;
-	const double * const soa2_charges_r_x = soa2._charges_r_x;
-	const double * const soa2_charges_r_y = soa2._charges_r_y;
-	const double * const soa2_charges_r_z = soa2._charges_r_z;
-	double * const soa2_charges_f_x = soa2._charges_f_x;
-	double * const soa2_charges_f_y = soa2._charges_f_y;
-	double * const soa2_charges_f_z = soa2._charges_f_z;
-	double * const soa2_charges_V_x = soa2._charges_V_x;
-	double * const soa2_charges_V_y = soa2._charges_V_y;
-	double * const soa2_charges_V_z = soa2._charges_V_z;
+	const double * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
+	const double * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
+	const double * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
+	const double * const soa2_charges_r_x   = soa2.charges_r_xBegin();
+	const double * const soa2_charges_r_y   = soa2.charges_r_yBegin();
+	const double * const soa2_charges_r_z   = soa2.charges_r_zBegin();
+	      double * const soa2_charges_f_x   = soa2.charges_f_xBegin();
+	      double * const soa2_charges_f_y   = soa2.charges_f_yBegin();
+	      double * const soa2_charges_f_z   = soa2.charges_f_zBegin();
+	      double * const soa2_charges_V_x   = soa2.charges_V_xBegin();
+	      double * const soa2_charges_V_y   = soa2.charges_V_yBegin();
+	      double * const soa2_charges_V_z   = soa2.charges_V_zBegin();
 	const double * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = _charges_dist_lookup;
@@ -715,32 +699,61 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
 void VectorizedChargeP2PCellProcessor::processCell(ParticleCell & c) {
-	assert(c.getCellDataSoA());
-	if (c.isHaloCell() || (c.getCellDataSoA()->_mol_num < 2)) {
+	CellDataSoA& soa = c.getCellDataSoA();
+	if (c.isHaloCell() or soa._mol_num < 2) {
 		return;
 	}
-	_calculatePairs<SingleCellPolicy_, true, MaskGatherC>(*(c.getCellDataSoA()), *(c.getCellDataSoA()));
+	const bool CalculateMacroscopic = true;
+	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
 void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	assert(&c1 != &c2);
-	assert(c1.getCellDataSoA());
-	assert(c2.getCellDataSoA());
+	const CellDataSoA& soa1 = c1.getCellDataSoA();
+	const CellDataSoA& soa2 = c2.getCellDataSoA();
+	const bool c1Halo = c1.isHaloCell();
+	const bool c2Halo = c2.isHaloCell();
 
-	if ((c1.getCellDataSoA()->_mol_num == 0) || (c2.getCellDataSoA()->_mol_num == 0)) {
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, or both cells are Halo, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
 		return;
 	}
-	if (!(c1.isHaloCell() || c2.isHaloCell())) {//no cell is halo
-		_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
-	} else if (c1.isHaloCell() == (!c2.isHaloCell())) {//exactly one cell is halo, therefore we only calculate some of the interactions.
-		if (c1.getCellIndex() < c2.getCellIndex()){//using this method one can neglect the macroscopic boundary condition.
-			_calculatePairs<CellPairPolicy_, true, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+
+	// Macroscopic conditions:
+	// if none of the cells is halo, then compute
+	// if one of them is halo:
+	// 		if c1-index < c2-index, then compute
+	// 		else, then don't compute
+	// This saves the Molecule::isLessThan checks
+	// and works similar to the "Half-Shell" scheme
+
+	if ((not c1Halo and not c2Halo) or						// no cell is halo or
+			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but c1.index < c2.index
+	{
+		const bool CalculateMacroscopic = true;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-		else {
-			_calculatePairs<CellPairPolicy_, false, MaskGatherC>(*(c1.getCellDataSoA()), *(c2.getCellDataSoA()));
+
+	} else {
+		assert(c1Halo != c2Halo);							// one of them is halo and
+		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
+
+		const bool CalculateMacroscopic = false;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
-	} else {//both cells halo -> do nothing
-		return;
 	}
 }
 

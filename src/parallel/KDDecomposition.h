@@ -51,7 +51,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 */
 	KDDecomposition(double cutoffRadius, Domain* domain, int updateFrequency = 100, int fullSearchThreshold = 2);
 
-    KDDecomposition(){}
+	KDDecomposition();
 
 	// documentation see father class (DomainDecompBase.h)
 	~KDDecomposition();
@@ -73,6 +73,23 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//### The following methods are those of the  ###
 	//### base class which have to be implemented ###
 	//###############################################
+
+	// documentation in base class
+	virtual int getNonBlockingStageCount();
+
+	// documentation in base class
+	virtual void prepareNonBlockingStage(bool forceRebalancing,
+				ParticleContainer* moleculeContainer, Domain* domain,
+				unsigned int stageNumber);
+
+	// documentation in base class
+	virtual void finishNonBlockingStage(bool forceRebalancing,
+			ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber);
+
+	// documentation in base class
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+
 	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
 
 	//! @todo comment and thing
@@ -101,7 +118,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	void printDecomp(std::string filename, Domain* domain);
 
 	int getUpdateFrequency() { return _frequency; }
-	void getUpdateFrequency(int frequency) { _frequency = frequency; }
+	void setUpdateFrequency(int frequency) { _frequency = frequency; }
 	virtual std::vector<int> getNeighbourRanks(){
 		//global_log->error() << "not implemented \n";
 		exit(-1);
@@ -114,7 +131,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	}
 
  private:
-	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf);
+	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**
 	 *
 	 * @param newRoot
@@ -206,6 +223,10 @@ class KDDecomposition: public DomainDecompMPIBase {
 	 *        it so that all division costs for
 	 */
 	bool calculateAllSubdivisions(KDNode* node, std::list<KDNode*>& subdivededNodes, MPI_Comm commGroup);
+	
+	
+	void updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
+			std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer);
 
 	//######################################
 	//###    private member variables    ###
@@ -233,7 +254,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	unsigned int* _numParticlesPerCell;
 
 	/* TODO: This may not be equal to the number simulation steps if balanceAndExchange
-	 * is not called exactly once in every simulatin step! */
+	 * is not called exactly once in every simulation step! */
 	//! number of simulation steps. Can be used to trigger load-balancing every _frequency steps
 	size_t _steps;
 
@@ -245,9 +266,17 @@ class KDDecomposition: public DomainDecompMPIBase {
 	/*
 	 * Threshold for full tree search. If a node has more than _fullSearchThreshold processors,
 	 * it is for each dimension divided in the middle only. Otherwise, all possible subdivisions
-	 * are created.
+	 * are created. // TODO hetero: change description
 	 */
 	int _fullSearchThreshold;
+
+
+	std::vector<double> _processorSpeeds;
+	std::vector<double> _accumulatedProcessorSpeeds;//length nprocs+1, first element is 0.
+	double _totalMeanProcessorSpeed;
+	double _totalProcessorSpeed;
+	const bool _heterogeneousSystems = true;
+	int _processorSpeedUpdateCount;
 };
 
 

@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/list.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_LIST_HXX
@@ -11,7 +10,7 @@
 #include <xercesc/dom/DOMAttr.hpp>
 #include <xercesc/dom/DOMElement.hpp>
 
-#include <xsd/cxx/tree/elements.hxx> // tree::istream
+#include <xsd/cxx/tree/elements.hxx>
 #include <xsd/cxx/tree/istream-fwd.hxx> // tree::istream
 #include <xsd/cxx/tree/containers.hxx>  // fundamental_p, sequence
 
@@ -22,8 +21,7 @@ namespace xsd
     namespace tree
     {
       // Class template for xsd:list mapping. Based on the sequence
-      // template. Note that I cannot get rid of 'fund' because HP
-      // aCC3 likes it this way.
+      // template.
       //
       template <typename T,
                 typename C,
@@ -39,8 +37,8 @@ namespace xsd
       {
       public:
         explicit
-        list (flags f = 0, container* c = 0)
-            : sequence<T> (f, c)
+        list (container* c = 0)
+            : sequence<T> (c)
         {
         }
 
@@ -60,8 +58,8 @@ namespace xsd
         template <typename S>
         list (istream<S>&, flags = 0, container* c = 0);
 
-        list (const list<T, C, ST, false>& v, flags f = 0, container* c = 0)
-            : sequence<T> (v, f, c)
+        list (const list<T, C, ST, false>& l, flags f = 0, container* c = 0)
+            : sequence<T> (l, f, c)
         {
         }
 
@@ -77,7 +75,9 @@ namespace xsd
 
       private:
         void
-        init (const std::basic_string<C>&, const xercesc::DOMElement*);
+        init (const std::basic_string<C>&,
+              const xercesc::DOMElement*,
+              flags);
       };
 
 
@@ -88,8 +88,8 @@ namespace xsd
       {
       public:
         explicit
-        list (flags f = 0, container* c = 0)
-            : sequence<T> (f, c)
+        list (container* c = 0)
+            : sequence<T> (c)
         {
         }
 
@@ -108,8 +108,8 @@ namespace xsd
         template <typename S>
         list (istream<S>&, flags = 0, container* c = 0);
 
-        list (const list<T, C, ST, true>& s, flags f = 0, container* c = 0)
-            : sequence<T> (s, f, c)
+        list (const list<T, C, ST, true>& l, flags f = 0, container* c = 0)
+            : sequence<T> (l, f, c)
         {
         }
 

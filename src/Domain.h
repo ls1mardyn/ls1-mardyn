@@ -13,7 +13,7 @@
 /* 
  * TODO add comments for variables 
  */
-#define CHECKPOINT_FILE_VERSION 20140131  /**< checkpoint file version */
+#define CHECKPOINT_FILE_VERSION 20160512  /**< checkpoint file version */
 
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
@@ -344,7 +344,7 @@ public:
 	// returning the parameter that controls wheter or not a cylindrical profile is created. method called by Simulation::output()
 	bool isCylindrical();
 	// writing out a 3-dimensional density profile in cylindrical coordinates, counterpart of outputProfile.
-	void outputCylProfile(const char* prefix);
+	void outputCylProfile(const char* prefix, bool virialProfile);
 	// setting the offset in y-direction (obtained from the config file), needed in the density profile output file 
 	void sYOffset(double in_yOff);
 	// end
@@ -588,6 +588,8 @@ private:
 	double currentTime;  //edited by Michaela Heier
 
 
+	// TODO: do the components belong here, or in class EnsembleBase?
+	// TODO: currently they exist in both places!
 	//! Components resp. molecule types
 	std::vector<Component> _components;
 

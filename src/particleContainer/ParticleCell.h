@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "Cell.h"
+#include "particleContainer/adapter/CellDataSoA.h"
 
 class Molecule;
-class CellDataSoA ;
 
 //! @brief ParticleCell data structure.
 //! @author Martin Buchholz
@@ -80,16 +80,8 @@ public:
 	 * \brief Get the structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	CellDataSoA* getCellDataSoA() const {
+	CellDataSoA& getCellDataSoA() {
 		return _cellDataSoA;
-	}
-
-	/**
-	 * \brief Set the sturcture of arrays for VectorizedCellProcessor.
-	 * \author Johannes Heckl
-	 */
-	void setCellDataSoA(CellDataSoA * p) {
-		_cellDataSoA = p;
 	}
 
 	/**
@@ -135,6 +127,7 @@ public:
 
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
+    void buildSoACaches();
 
 private:
 	/**
@@ -162,7 +155,7 @@ private:
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	CellDataSoA * _cellDataSoA;
+	CellDataSoA _cellDataSoA;
 
 
 	/**

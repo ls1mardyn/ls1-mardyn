@@ -31,6 +31,8 @@ class VectorizedCellProcessor : public CellProcessor {
 public:
 	typedef std::vector<Component> ComponentList;
 
+	VectorizedCellProcessor& operator=(const VectorizedCellProcessor&) = delete;
+
 	/**
 	 * \brief Construct and set up the internal parameter table.
 	 * \details Components and parameters should be finalized before this call.
@@ -46,13 +48,17 @@ public:
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
+
+	// provisionally, the code from the legacy cell processor is used here
+	//
+        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -61,7 +67,7 @@ public:
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */
@@ -104,14 +110,6 @@ private:
 	 */
 
 	/**
-	 * \brief One LJ center enumeration start index for each component.
-	 * \details All the LJ centers of all components are enumerated.<br>
-	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
-	 * This is necessary for finding the respective parameters for each interaction<br>
-	 * between two centers.
-	 */
-	std::vector<size_t> _compIDs;
-	/**
 	 * \brief Epsilon and sigma for pairs of LJcenters.
 	 * \details Each DoubleArray contains parameters for one center combined with all centers.<br>
 	 * Each set of parameters is a pair (epsilon*24.0, sigma^2).
@@ -143,14 +141,6 @@ private:
 	 * \brief MyRF contribution of all pairs
 	 */
 	double _myRF;
-
-	/**
-	 * \brief vector holding pointers to different CellDataSoA objects, used as a stack for
-	 * managing free objects.
-	 * Initially it is filled upon calling the initTraversal function; when running the preProcessCell function,
-	 * this stack is emptied, while it is filled again, during the postProcessCell step.
-	 */
-	std::vector<CellDataSoA*> _particleCellDataVector;
 
 	/**
 	 * \brief array, that stores the dist_lookup.
@@ -349,10 +339,10 @@ private:
 		inline static size_t InitJ (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{//i+1: only calculate j>i
 			// however we do a floor for alignment purposes. ->  we have to mark some of the indices to not be computed (this is handled using the InitJ_Mask)
-			return vcp_floor_to_vec_size(i+1); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
+			return vcp_floor_to_vec_size(i); // this is i+1 if i+1 is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
-		inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+		inline static size_t InitJ2 (const size_t i __attribute__((unused)))//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
 #if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
 			return InitJ(i);
@@ -361,36 +351,38 @@ private:
 #endif
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
 		{
 			vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
 			j_mask = VCP_SIMD_ONESVM;
 			return result;
 		}
-	#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+	#if VCP_VEC_TYPE==VCP_VEC_SSE3
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
 			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-				case 0: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0);
-				case 1: return _mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0);
-				case 2: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
-				default: return VCP_SIMD_ONESVM;
+				case 0: return _mm_set_epi32(~0, ~0, ~0, ~0);
+				default: return _mm_set_epi32(~0, ~0, 0, 0);
+			}
+		}
+	#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
+		{
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+				case 1: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0);
+				case 2: return _mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0);
+				default: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
 			}
 		}
 	#else //mic
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i+1 onwards.
 		{
-			static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80, 0xFF };
+			static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80 };
 			return possibleInitJMasks[i & static_cast<size_t>(VCP_VEC_SIZE_M1)];
 		}
 	#endif
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-		// Erstellen der Bitmaske, analog zu Condition oben
-		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
-		{
-			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
-		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
 		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
 		{
@@ -428,8 +420,8 @@ private:
 		}
 
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-				, vcp_mask_vec& j_mask
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
+				, vcp_mask_vec& /*j_mask*/
 #endif
 				)
 		{
@@ -439,8 +431,8 @@ private:
 		}
 
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-		inline static vcp_mask_vec InitJ_Mask (const size_t i)
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
+		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 		{
 			return VCP_SIMD_ZEROVM;//totally unimportant, since not used...
 		}

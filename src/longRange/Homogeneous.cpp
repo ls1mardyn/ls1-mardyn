@@ -34,7 +34,6 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
 		unsigned int numdipolesi=ci.numDipoles();
-		unsigned int numtersoffi = ci.numTersoff();
 
 		// effective dipoles computed from point charge distributions
 		double chargeBalance[3];
@@ -59,9 +58,6 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 
 		for(unsigned int j=0;j<numcomp;++j) {
 			Component& cj=_components[j];
-			unsigned numtersoffj = cj.numTersoff();
-			// no LJ interaction between Tersoff components
-			if(numtersoffi && numtersoffj) continue;
 			unsigned int numljcentersj=cj.numLJcenters();
 			ParaStrm& params=_comp2params(i,j);
 			params.reset_read();

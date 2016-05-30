@@ -18,7 +18,7 @@ CFG ?= gcc
 # parallelization type
 # Show list of all available parallelization types for the current config with cfg_help
 # Each config should at least provide the two parallelization types SEQ and PAR
-PARTYPE ?= PAR
+PARTYPE ?= SEQ
 
 # choose target
 # Show list of all available targets for the current config with cfg_help
@@ -37,12 +37,27 @@ VTK ?= 0
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
-VECTORIZE_CODE ?= 1
-# 0 - LegacyCellProcessor
-# 1 - VectorizedCellProcessor with SSE intrinsics (default)
-# 2 - VectorizedCellProcessor with AVX intrinsics
-# N - VectorizedCellProcessor with no intrinsics
+VECTORIZE_CODE ?= SSE
+# AOS      - LegacyCellProcessor
+# SSE      - VectorizedCellProcessor with SSE intrinsics (default)
+# AVX      - VectorizedCellProcessor with AVX intrinsics
+# AVX2     - VectorizedCellProcessor with AVX2 intrinsics
+# KNC_MASK - VectorizedCellProcessor with KNC intrinsics and masking
+# KNC_G_S  - VectorizedCellProcessor with KNC intrinsics and gather-scatter (not fully optimized yet in this branch)
+# SOA      - VectorizedCellProcessor with no intrinsics
 # see "make help_vect"
+vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S SOA SSEAMD AVXAMD
+ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
+  $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
+endif
+
+# allow FFT acceleration of FMM (requires FFTW!) ?
+ENABLE_FFM_FFT ?= 0
+
+ifeq ($(ENABLE_FFM_FFT), 1)
+OPENMP_SIMD = 1
+USE_FFTW = 1
+endif
 
 #build name and include config file
 CFGFILE := $(realpath $(MAKEFILEDIR)cfg/$(CFG).in )
@@ -55,7 +70,7 @@ else
   $(error ERROR: config file for $(CFG) not found - no include )
 endif
 
-SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/)")
+SOURCES_COMMON = $(shell find ./ -name "*.cpp" | grep -E -v "(parallel/|/tests/|/vtk/|/fft/)")
 SOURCES_SEQ = $(shell find parallel/ -name "*.cpp" | grep "Dummy" | grep -E -v "(/tests/|/vtk/)")
 SOURCES_SEQ += $(shell find parallel/ -name "*.cpp" | grep "DomainDecompBase" | grep -E -v "/tests/")
 SOURCES_PAR = $(shell find parallel/ -name "*.cpp" | grep -E -v "(/tests/|/vtk/)")
@@ -70,16 +85,16 @@ ifneq ($(realpath .svn),)
   $(info Building from a svn version.)
   SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
   ifneq ($(SVN_VERSION),)
-    BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)
+    BINARY = $(BINARY_BASENAME)_$(SVN_VERSION).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   else
-    BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)
+    BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
   endif
 else
-  BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)
+  BINARY = $(BINARY_BASENAME).$(PARTYPE)_$(TARGET)_$(VECTORIZE_CODE)
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
+CXXFLAGS = $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK -std=c++11
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 ifeq ($(SUPPORT_GENERATOR), 1)
@@ -94,12 +109,20 @@ ifneq ($(UNIT_TESTS),0)
   include $(CPPUNIT_MAKE_INCLUDE)
 endif
 
-ifeq ($(VECTORIZE_CODE),0)
+ifeq ($(VECTORIZE_CODE),AOS)
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=0
 else
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
+endif
+
+ifeq ($(OPENMP_SIMD),1)
+CXXFLAGS += $(CXXFLAGS_OPENMP)
+endif
+
+ifeq ($(ENABLE_FFM_FFT),1)
+CXXFLAGS += -DFMM_FFT
 endif
 
 ifeq ($(PAPI),1)
@@ -120,6 +143,11 @@ endif
 ifeq ($(VTK), 1)
   VTK_MAKEFILE := $(realpath $(MAKEFILEDIR)/vtkwriter.mk ) 
   include $(VTK_MAKEFILE)
+endif
+
+ifeq ($(USE_FFTW), 1)
+  FFTW_MAKEFILE := $(realpath $(MAKEFILEDIR)/fft.mk ) 
+  include $(FFTW_MAKEFILE)
 endif
 
 $(BINARY): $(OBJECTS)
@@ -143,7 +171,7 @@ help:
 	@echo "make UNIT_TESTS=0 | 1             			compile with or without unit tests (and build cppunit if neccessary)"
 	@echo "make VTK=0 | 1                    	 		compile with or without the vtk output plugin" 
 	@echo "make SUPPORT_DL_GENERATOR=0 | 1   	        compile with support for input generators as dynamic libraries"
-	@echo "make VECTORIZE_CODE=0 | 1 | 2 | 3 | 4 | N	compile with vectorization support (see help_vect)"
+	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | ...	compile with vectorization support (see help_vect)"
 	@echo "make PAPI=0 | 1			                   	compile with PAPI counter support"
 	@echo
 	@echo "targets:"
@@ -160,30 +188,33 @@ help:
 help_vect:
 	@echo "Vectorization help:"
 	@echo
-	@echo "make VECTORIZE_CODE= 0 | 1 | 2 | 3 | 4 | N"
-	@echo " 0 - use the LegacyCellProcessor"
-	@echo " 1 - use the VectorizedCellProcessor with SSE intrinsics"
-	@echo "     This is the default option."
-	@echo "     Should work on all CPUs newer than 2006 or so."
-	@echo "     Speed-up of almost a factor of 2 versus the LegacyCellProcessor."
-	@echo " 2 - use the VectorizedCellProcessor with AVX intrinsics"
-	@echo "     Should work on CPUs newer than 2011"
-	@echo "     (Intel SandyBridge and AMD Bulldozer are the earliest to support it)."
-	@echo "     Speed-up of a factor of 2 to 3 versus the LegacyCellProcessor."
-	@echo "     Please make sure that you are using a reasonably updated compiler!"
-	@echo "     For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
-	@echo " 3 - use the VectorizedCellProcessor with AVX2 intrinsics"
-	@echo "     Should work on CPUs newer than 2013"
-	@echo "     (Intel Haswell and AMD Excavator are the earliest to support it)."
-	@echo "     Speed-up of single digit percentages compared with pure AVX instrinsics."
-	@echo "     Please make sure that you are using a reasonably updated compiler!"
-	@echo "     For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
-	@echo " 4 - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
-	@echo "     Works only on Xeon Phis of the first generation (knights corner)."
-	@echo "     Speed-up not yet tested."
-	@echo "     Please make sure that you are using a reasonably updated compiler!"
-	@echo " N - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
-	@echo "     For development purposes only. Often slower than the LegacyCellProcessor."
+	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | AVX2 | KNC_MASK | KNC_G_S"
+	@echo " AOS      - use the LegacyCellProcessor"
+	@echo " SSE      - use the VectorizedCellProcessor with SSE intrinsics"
+	@echo "            This is the default option."
+	@echo "            Should work on all CPUs newer than 2006 or so."
+	@echo "            Speed-up of almost a factor of 2 versus the LegacyCellProcessor."
+	@echo " AVX      - use the VectorizedCellProcessor with AVX intrinsics"
+	@echo "            Should work on CPUs newer than 2011"
+	@echo "            (Intel SandyBridge and AMD Bulldozer are the earliest to support it)."
+	@echo "            Speed-up of a factor of 2 to 3 versus the LegacyCellProcessor."
+	@echo "            Please make sure that you are using a reasonably updated compiler!"
+	@echo "            For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
+	@echo " AVX2     - use the VectorizedCellProcessor with AVX2 intrinsics"
+	@echo "            Should work on CPUs newer than 2013"
+	@echo "            (Intel Haswell and AMD Excavator are the earliest to support it)."
+	@echo "            Speed-up of single digit percentages compared with pure AVX instrinsics."
+	@echo "            Please make sure that you are using a reasonably updated compiler!"
+	@echo "            For AMD Bulldozer, please use the GNU compiler with the additional flags (see cfg/gcc.in)."
+	@echo " KNC_MASK - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
+	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
+	@echo "            Speed-up not yet tested."
+	@echo " KNC_G_S  - use the VectorizedCellProcessor with MIC (knights corner) intrinsics."
+	@echo "            Works only on Xeon Phis of the first generation (knights corner)."
+	@echo "            Speed-up not yet tested."
+	@echo "            Please make sure that you are using a reasonably updated compiler!"
+	@echo " SOA      - use the VectorizedCellProcessor with no intrinsics ("no-vec" mode)"
+	@echo "            For development purposes only. Often slower than the LegacyCellProcessor."
 	@echo " To determine, whether your current CPU supports SSE, AVX, AVX2, call, respectively: "
 	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep sse3 "
 	@echo " cat /proc/cpuinfo | grep flags | tail -n 1 | grep avx "

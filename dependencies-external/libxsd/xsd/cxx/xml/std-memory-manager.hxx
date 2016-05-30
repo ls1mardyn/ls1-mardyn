@@ -1,6 +1,5 @@
 // file      : xsd/cxx/xml/std-memory-manager.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_STD_MEMORY_MANAGER_HXX
@@ -18,12 +17,10 @@ namespace xsd
       class std_memory_manager: public xercesc::MemoryManager
       {
       public:
+        // Xerces-C++ MemoryManager interface.
+        //
         virtual void*
-#if _XERCES_VERSION >= 30000
         allocate(XMLSize_t size)
-#else
-        allocate(size_t size)
-#endif
         {
           return operator new (size);
         }
@@ -35,13 +32,20 @@ namespace xsd
 	    operator delete (p);
         }
 
-#if _XERCES_VERSION >= 30000
         virtual xercesc::MemoryManager*
         getExceptionMemoryManager()
         {
           return xercesc::XMLPlatformUtils::fgMemoryManager;
         }
-#endif
+
+        // Standard deleter interface.
+        //
+        void
+        operator() (void* p) const
+        {
+          if (p)
+	    operator delete (p);
+        }
       };
     }
   }

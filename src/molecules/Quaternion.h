@@ -15,7 +15,7 @@ public:
 	double qx() const { return m_qx; }
 	double qy() const { return m_qy; }
 	double qz() const { return m_qz; }
-	double magnitude2() {
+	double magnitude2() const {
 		return m_qw * m_qw + m_qx * m_qx + m_qy * m_qy + m_qz * m_qz;
 	}
 	void scale(double s) {
@@ -83,6 +83,10 @@ public:
 	//  { differentiate_dbl(w,dqdt); dqdt.scale(.5); }
 	void getRotMatrix(double R[3][3]) const;
 	void getRotinvMatrix(double R[3][3]) const;
+
+	bool isNormalized() const {
+		return fabs(magnitude2() - 1.0) <= 1e-15;
+	}
 
 private:
 	double m_qw, m_qx, m_qy, m_qz; // components

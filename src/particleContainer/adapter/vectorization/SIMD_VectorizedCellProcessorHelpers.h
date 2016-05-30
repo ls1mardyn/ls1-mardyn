@@ -27,7 +27,7 @@ typedef AlignedArray<double> DoubleArray;
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
-		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
+		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))){
 #if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
 	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif

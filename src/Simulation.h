@@ -1,6 +1,7 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
@@ -253,6 +254,19 @@ public:
 	 */
 	void updateParticleContainerAndDecomposition();
 
+	/**
+	 * Performs both the decomposition and the celltraversal in an overlapping way.
+	 * The overlapping is needed to speed up the overall computation. The order of cells
+	 * traversed will be different, than for the non-overlapping case, slightly different results are possible.
+	 * @param decompositionTimer The timer for the decomposition
+	 * @param computationTimer The timer for the computation
+	 */
+	void performOverlappingDecompositionAndCellTraversalStep(Timer& decompositionTimer, Timer& computationTimer);
+
+	/**
+	 * Set the private _domainDecomposition variable to a new pointer.
+	 * @param domainDecomposition the new va
+	 */
 	void setDomainDecomposition(DomainDecompBase* domainDecomposition) {
 		_domainDecomposition = domainDecomposition;
 	}
@@ -278,9 +292,6 @@ public:
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
 	double getLJCutoff() const { return _LJCutoffRadius; }
 	void setLJCutoff(double LJCutoffRadius) { _LJCutoffRadius = LJCutoffRadius; }
-	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
-	void setTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
-
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -346,9 +357,6 @@ private:
 	/** LJ cutoff (may be smaller than the RDF/electrostatics cutoff) */
 	double _LJCutoffRadius;
 
-	/** external cutoff radius for the Tersoff potential */
-	double _tersoffCutoffRadius;
-
 	/** flag specifying whether planar interface profiles are recorded */
 	bool _doRecordProfile;
 	/** Interval between two evaluations of the profile.
@@ -390,19 +398,6 @@ private:
 	//! appropriate tokens stored as constants at the top of this file
 	int _thermostatType;
 	double _nuAndersen;
-
-	/** Sometimes during equilibration, a solid wall surrounded by
-	 * liquid may experience a stress or an excessive pressure, which
-	 * could damage its structure. With the flag this->_zoscillation,
-	 * the z coordinate for some of the solid atoms (i.e. those which
-	 * include Tersoff sites) is fixed, so that no motion in z
-	 * direction can occur for the wall structure.
-	 */
-	bool _zoscillation;
-	/** The fixed z coordinate applies to 1 out of this->_zoscillator
-	 * atoms for all solid components.
-	 */
-	unsigned _zoscillator;
 
 	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
 
@@ -490,7 +485,18 @@ private:
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
+
 public:
+	//! computational time for one execution of traverseCell
+	double getAndResetOneLoopCompTime() {
+		if(_loopCompTimeSteps==0){
+			return 1.;
+		}
+		double t = _loopCompTime/_loopCompTimeSteps;
+		_loopCompTime = 0.;
+		_loopCompTimeSteps = 0;
+		return t;
+	}
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
 	void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
 	std::string getOutputPrefix() { return _outputPrefix; }
@@ -502,6 +508,12 @@ public:
 
 	/** initialize all member variables with a suitable value */
 	void initialize();
+	void setName(std::string name) {
+		_programName = name;
+	}
+	std::string getName() {
+		return _programName;
+	}
 
 private:
 
@@ -526,6 +538,7 @@ private:
 	 * gradient of the chemical potential.
 	 */
 	std::list<ChemicalPotential> _lmu;
+        std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).
@@ -535,8 +548,16 @@ private:
 	 * internal use of the program.
 	 */
 	double h;
+
 	/** Time after which the application should write a checkpoint in seconds. */
 	double _forced_checkpoint_time;
+
+	//! computational time for one loop
+	double _loopCompTime;
+
+	int _loopCompTimeSteps;
+
+	std::string _programName;
 };
 #endif /*SIMULATION_H_*/
 

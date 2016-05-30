@@ -9,6 +9,8 @@
 #include "bhfmm/utils/RotationParameterLookUp.h"
 #include <iomanip>
 
+using namespace std;
+
 namespace bhfmm {
 
 // CONSTRUCTORS //
@@ -19,6 +21,11 @@ SolidHarmonicsExpansion::SolidHarmonicsExpansion(int order, bool initializeToZer
 
 SolidHarmonicsExpansion::SolidHarmonicsExpansion(const SolidHarmonicsExpansion & rhs) :
 		_order(rhs._order), _c(rhs._c), _s(rhs._s) {
+#ifdef FMM_FFT
+	//copy the FFTData from FFTAccelerableExpansion inheritance if needed
+	if (issetFFTData())
+		_FFTData = rhs._FFTData->copyContainer();
+#endif  /* FMM_FFT */
 }
 
 // DESTRUCTOR //
@@ -394,6 +401,7 @@ void SolidHarmonicsExpansion::scaleM(double factor) {
 }
 
 void SolidHarmonicsExpansion::rotatePhi(const double* CosSinPhi, int negate) {
+	using std::isnan; // C++11 required
 	/* Dachsel Paper eq. (5) */
 
 	for (int l = 0; l <= _order; ++l) {

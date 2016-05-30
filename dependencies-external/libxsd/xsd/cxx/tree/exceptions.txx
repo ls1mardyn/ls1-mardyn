@@ -1,7 +1,8 @@
 // file      : xsd/cxx/tree/exceptions.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
+
+#include <xsd/cxx/tree/bits/literals.hxx>
 
 namespace xsd
 {
@@ -33,6 +34,35 @@ namespace xsd
       {
       }
 
+      template <typename C>
+      std::basic_ostream<C>&
+      operator<< (std::basic_ostream<C>& os, const error<C>& e)
+      {
+        return os << e.id () << C (':') << e.line () << C (':') << e.column ()
+                  << (e.severity () == severity::error
+                      ? bits::ex_error_error<C> ()
+                      : bits::ex_error_warning<C> ()) << e.message ();
+      }
+
+      // diagnostics
+      //
+      template <typename C>
+      std::basic_ostream<C>&
+      operator<< (std::basic_ostream<C>& os, const diagnostics<C>& d)
+      {
+        for (typename diagnostics<C>::const_iterator b (d.begin ()), i (b);
+             i != d.end ();
+             ++i)
+        {
+          if (i != b)
+            os << C ('\n');
+
+          os << *i;
+        }
+
+        return os;
+      }
+
       // parsing
       //
       template <typename C>
@@ -61,6 +91,15 @@ namespace xsd
         return "instance document parsing failed";
       }
 
+      template <typename C>
+      void parsing<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        if (diagnostics_.empty ())
+          os << bits::ex_parsing_msg<C> ();
+        else
+          os << diagnostics_;
+      }
 
       // expected_element
       //
@@ -85,6 +124,17 @@ namespace xsd
         return "expected element not encountered";
       }
 
+      template <typename C>
+      void expected_element<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_eel_expected<C> ();
+
+        if (!namespace_ ().empty ())
+          os << namespace_ () << C ('#');
+
+        os << name () << C ('\'');
+      }
 
       // unexpected_element
       //
@@ -114,6 +164,34 @@ namespace xsd
         return "unexpected element encountered";
       }
 
+      template <typename C>
+      void unexpected_element<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        if (!expected_name ().empty ())
+        {
+          os << bits::ex_uel_expected<C> ();
+
+          if (!expected_namespace ().empty ())
+            os << expected_namespace () << C ('#');
+
+          os << expected_name () << bits::ex_uel_instead<C> ();
+
+          if (!encountered_namespace ().empty ())
+            os << encountered_namespace () << C ('#');
+
+          os << encountered_name () << C ('\'');
+        }
+        else
+        {
+          os << bits::ex_uel_unexpected<C> ();
+
+          if (!encountered_namespace ().empty ())
+            os << encountered_namespace () << C ('#');
+
+          os << encountered_name () << C ('\'');
+        }
+      }
 
       // expected_attribute
       //
@@ -138,6 +216,17 @@ namespace xsd
         return "expected attribute not encountered";
       }
 
+      template <typename C>
+      void expected_attribute<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_eat_expected<C> ();
+
+        if (!namespace_ ().empty ())
+          os << namespace_ () << C ('#');
+
+        os << name () << C ('\'');
+      }
 
       // unexpected_enumerator
       //
@@ -161,6 +250,12 @@ namespace xsd
         return "unexpected enumerator encountered";
       }
 
+      template <typename C>
+      void unexpected_enumerator<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_uen_unexpected<C> () << enumerator () << C ('\'');
+      }
 
       // expected_text_content
       //
@@ -171,6 +266,12 @@ namespace xsd
         return "expected text content";
       }
 
+      template <typename C>
+      void expected_text_content<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_etc_msg<C> ();
+      }
 
       // no_type_info
       //
@@ -196,6 +297,18 @@ namespace xsd
         return "no type information available for a type";
       }
 
+      template <typename C>
+      void no_type_info<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_nti_no_type_info<C> ();
+
+        if (!type_namespace ().empty ())
+          os << type_namespace () << C ('#');
+
+        os << type_name () << C ('\'');
+      }
+
       // no_element_info
       //
       template <typename C>
@@ -219,6 +332,18 @@ namespace xsd
       {
         return "no parsing or serialization information available for "
           "an element";
+      }
+
+      template <typename C>
+      void no_element_info<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_nei_no_element_info<C> ();
+
+        if (!element_namespace ().empty ())
+          os << element_namespace () << C ('#');
+
+        os << element_name () << C ('\'');
       }
 
       // not_derived
@@ -249,6 +374,22 @@ namespace xsd
         return "type is not derived";
       }
 
+      template <typename C>
+      void not_derived<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_nd_type<C> ();
+
+        if (!derived_type_namespace ().empty ())
+          os << derived_type_namespace () << C ('#');
+
+        os << derived_type_name () << bits::ex_nd_not_derived<C> ();
+
+        if (!base_type_namespace ().empty ())
+          os << base_type_namespace () << C ('#');
+
+        os << base_type_name () << C ('\'');
+      }
 
       // duplicate_id
       //
@@ -272,6 +413,12 @@ namespace xsd
         return "ID already exist";
       }
 
+      template <typename C>
+      void duplicate_id<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_di_id<C> () << id () << bits::ex_di_already_exist<C> ();
+      }
 
       // serialization
       //
@@ -301,6 +448,16 @@ namespace xsd
         return "serialization failed";
       }
 
+      template <typename C>
+      void serialization<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        if (diagnostics_.empty ())
+          os << bits::ex_serialization_msg<C> ();
+        else
+          os << diagnostics_;
+      }
+
 
       // no_prefix_mapping
       //
@@ -324,6 +481,13 @@ namespace xsd
         return "no mapping provided for a namespace prefix";
       }
 
+      template <typename C>
+      void no_prefix_mapping<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_npm_no_mapping<C> () << prefix () << C ('\'');
+      }
+
 
       // bounds
       //
@@ -332,6 +496,13 @@ namespace xsd
       what () const throw ()
       {
         return "buffer boundary rules have been violated";
+      }
+
+      template <typename C>
+      void bounds<C>::
+      print (std::basic_ostream<C>& os) const
+      {
+        os << bits::ex_bounds_msg<C> ();
       }
     }
   }

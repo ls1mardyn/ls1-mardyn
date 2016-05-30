@@ -1,6 +1,5 @@
 // file      : xsd/cxx/xml/sax/std-input-source.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_SAX_STD_INPUT_SOURCE_HXX
@@ -29,27 +28,14 @@ namespace xsd
           {
           }
 
-#if _XERCES_VERSION >= 30000
           virtual XMLFilePos
           curPos () const
           {
             return static_cast<XMLFilePos> (is_.tellg ());
           }
-#else
-          virtual unsigned int
-          curPos () const
-          {
-            return static_cast<unsigned int> (is_.tellg ());
-          }
-#endif
 
-#if _XERCES_VERSION >= 30000
           virtual XMLSize_t
           readBytes (XMLByte* const buf, const XMLSize_t size)
-#else
-          virtual unsigned int
-          readBytes (XMLByte* const buf, const unsigned int size)
-#endif
           {
             // Some implementations don't clear gcount if you
             // call read() on a stream that is in the eof state.
@@ -78,25 +64,17 @@ namespace xsd
             // Make sure that if we failed, readBytes won't be called
             // again.
             //
-            if (!is_.fail ())
-            {
-#if _XERCES_VERSION >= 30000
-              return static_cast<XMLSize_t> (is_.gcount ());
-#else
-              return static_cast<unsigned int> (is_.gcount ());
-#endif
-            }
-            else
-              return 0;
+            return !is_.fail ()
+              ? static_cast<XMLSize_t> (is_.gcount ())
+              : 0;
           }
 
-#if _XERCES_VERSION >= 30000
           virtual const XMLCh*
           getContentType () const
           {
             return 0;
           }
-#endif
+
         private:
           std::istream& is_;
         };

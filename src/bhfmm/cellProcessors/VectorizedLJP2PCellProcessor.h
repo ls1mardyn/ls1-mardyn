@@ -46,13 +46,14 @@ public:
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
+        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) { exit(0); return 0; }
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -61,7 +62,7 @@ public:
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */
@@ -109,14 +110,6 @@ private:
 	 */
 
 	/**
-	 * \brief One LJ center enumeration start index for each component.
-	 * \details All the LJ centers of all components are enumerated.<br>
-	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
-	 * This is necessary for finding the respective parameters for each interaction<br>
-	 * between two centers.
-	 */
-	std::vector<size_t> _compIDs;
-	/**
 	 * \brief Epsilon and sigma for pairs of LJcenters.
 	 * \details Each DoubleArray contains parameters for one center combined with all centers.<br>
 	 * Each set of parameters is a pair (epsilon*24.0, sigma^2).
@@ -139,25 +132,18 @@ private:
 	 */
 	double _virial;
 
+
 	/**
-		 * \brief vector holding pointers to different CellDataSoA objects, used as a stack for
-		 * managing free objects.
-		 * Initially it is filled upon calling the initTraversal function; when running the preProcessCell function,
-		 * this stack is emptied, while it is filled again, during the postProcessCell step.
-		 */
-		std::vector<CellDataSoA*> _particleCellDataVector;
+	 * \brief array, that stores the dist_lookup.
+	 * For all vectorization methods, that utilize masking, this stores masks.
+	 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
+	 */
+	AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
-		/**
-		 * \brief array, that stores the dist_lookup.
-		 * For all vectorization methods, that utilize masking, this stores masks.
-		 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
-		 */
-		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
-
-		/**
-		 * \brief pointer to the starting point of the dist_lookup of the lennard jones particles.
-		 */
-		vcp_lookupOrMask_single* _ljc_dist_lookup;
+	/**
+	 * \brief pointer to the starting point of the dist_lookup of the lennard jones particles.
+	 */
+	vcp_lookupOrMask_single* _ljc_dist_lookup;
 
 	template<bool calculateMacroscopic>
 	inline

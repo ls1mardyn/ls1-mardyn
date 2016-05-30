@@ -39,7 +39,8 @@ void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
 void VTKMoleculeWriter::doOutput(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 		Domain* domain, unsigned long simstep,
-		std::list<ChemicalPotential>* lmu
+		std::list<ChemicalPotential>* lmu,
+		std::map<unsigned, CavityEnsemble>* mcav
 ) {
 	if (simstep % _writeFrequency != 0) {
 		return;

@@ -27,7 +27,7 @@
  *                  should be executed
  * @return false if no errors occured, true otherwise
  */
-bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases = std::string(""));
+int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases = std::string(""));
 
 //! delegate to Test::setTestDataDirectory
 void setTestDataDirectory(std::string& testDataDirectory);

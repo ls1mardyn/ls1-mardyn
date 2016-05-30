@@ -77,7 +77,8 @@ public:
 	//documentation in OutputBase, does nothing.
 	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu){}
+			std::list<ChemicalPotential>* lmu,
+			std::map<unsigned, CavityEnsemble>* mcav){}
 
 	//documentation in OutputBase, does nothing.
 	void finishOutput(ParticleContainer* particleContainer,
@@ -111,10 +112,10 @@ private:
 	double _LJCutoffRadius;
 
 	/// The cutoff radius
-	static const double _cutoffRadiusBig=5.;
+	static constexpr double _cutoffRadiusBig=5.;
 
 	/// The cutoff Radius for the LJ potential
-	static const double _LJCutoffRadiusBig=5.;
+	static constexpr double _LJCutoffRadiusBig=5.;
 
 	/// FlopCounter that utilizes a big cutoff radius
 	FlopCounter* _flopCounterBigRc;

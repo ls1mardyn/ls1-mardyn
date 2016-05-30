@@ -58,6 +58,9 @@ public:
 	Component* component(std::string name) { return &_components[_componentnamesToIds[name]]; }
 	std::vector<Component>* components() { return &_components; }
 
+	//! prepare the _compIDs used by the Vectorized*CellProcessors
+	void setComponentLookUpIDs();
+
 protected:
 	std::vector<Component> _components;
 	std::map<std::string,int> _componentnamesToIds;

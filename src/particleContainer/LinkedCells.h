@@ -44,7 +44,6 @@ public:
 	//! The constructor sets the following variables:
 	//! - _cutoffRadius
 	//! - _LJCutoffRadius
-	//! - _tersoffCutoffRadius
 	//! - _haloWidthInNumCells[3]
 	//! - _cellsPerDimension[3]
 	//! - _cellLength[3]
@@ -61,7 +60,6 @@ public:
 	//! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
 	//! @param cutoffRadius distance for which forces have to be calculated
 	//! @param LJCutoffRadius distance for which lennard jones forces have to be calculated
-	//! @param tersoffCutoffRadius distance for which tersoff forces have to be calculated
 	//! @param cellsInCutoffRadius describes the width of cells relative to the cutoffRadius: \n
 	//!        equal (or larger) to the cutoffRadius divided by the length of a cell
 	//!        as for the number of cells in each dimension only natural numbers are allowed,
@@ -133,6 +131,10 @@ public:
 //	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
 	void traverseCells(CellProcessor& cellProcessor);
+
+	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
@@ -207,6 +209,10 @@ public:
 	int grandcanonicalBalance(DomainDecompBase* comm);
 	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor);
 
+        int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
+        unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
+        void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
+	
 	double* boundingBoxMax() {
 		return _boundingBoxMax;
 	}
@@ -241,7 +247,16 @@ public:
 	//! If the molecule is not inside the bounding box, an error is printed
 	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
-	ParticleCell getCell(int idx){ return _cells[idx];}
+	ParticleCell& getCell(int idx){ return _cells[idx];}
+
+	// documentation in base class
+	virtual void updateInnerMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateBoundaryAndHaloMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateMoleculeCaches();
 
 private:
 	//####################################

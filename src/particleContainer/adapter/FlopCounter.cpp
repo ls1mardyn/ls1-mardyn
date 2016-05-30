@@ -12,11 +12,10 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 
-FlopCounter::_Counts::_Counts() {
-	_moleculeDistances = 0.0;
-
+FlopCounter::_Counts::_Counts():
+	_moleculeDistances(0.), _distanceMultiplier(8){
 	// 3 sub + 3 square + 2 add
-	_distanceMultiplier = 8;
+
 
 //inverse R squared is one, because only 1/(R^2) has to be calculated, while R^2 already is calculated.
 
@@ -82,7 +81,7 @@ void FlopCounter::_Counts::allReduce() {
 	domainDecomp.collCommAppendDouble(_moleculeDistances);
 
 	for (int i = 0; i < NUM_POTENTIALS; ++i) {
-		_potCounts[i].collCommAppend();
+		_potCounts[i].collCommAppend();//adds 2 values each
 	}
 
 	domainDecomp.collCommAllreduceSum();
@@ -113,20 +112,20 @@ double FlopCounter::_Counts::process() const {
 	return getTotalFlops();
 }
 
-FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius) {
-	_totalFlopCount = 0.0;
-
-	 global_log->warning() << "The FlopCounter does not count Flops for the Tersoff potential." << std::endl;
-
+FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProcessor(cutoffRadius, LJCutoffRadius),
+		_currentCounts(), _totalFlopCount(0.), _myFlopCount(0.), _synchronized(true){
 }
 
-void FlopCounter::initTraversal(const size_t numCells) {
+void FlopCounter::initTraversal(const size_t /*numCells*/) {
 	_currentCounts.clear();
 }
 
 
 void FlopCounter::endTraversal() {
-	_currentCounts.allReduce();
+	_myFlopCount = _currentCounts.getTotalFlops();
+	if(_synchronized){
+		_currentCounts.allReduce();
+	}
 
 	Log::global_log->info()
 				<< "FLOP counts in force calculation for this iteration:" << std::endl;
@@ -138,10 +137,10 @@ void FlopCounter::endTraversal() {
 //	_totalFlopCount = _totalCounts.process();
 }
 
-void FlopCounter::preprocessCell(ParticleCell & c) {
+void FlopCounter::preprocessCell(ParticleCell & /*c*/) {
 }
 
-void FlopCounter::postprocessCell(ParticleCell & c) {
+void FlopCounter::postprocessCell(ParticleCell & /*c*/) {
 }
 
 void FlopCounter::handlePair(const Molecule& Mi, const Molecule& Mj, bool addMacro) {
@@ -185,7 +184,7 @@ void FlopCounter::handlePair(const Molecule& Mi, const Molecule& Mj, bool addMac
 void FlopCounter::processCell(ParticleCell & c) {
 	using std::vector;
 
-	// we don't execute any flops if cell is a halo cell (TODO: adapt for Tersoff, when vectorized)
+	// we don't execute any flops if cell is a halo cell
 	if (c.isHaloCell())
 		return;
 
@@ -211,7 +210,7 @@ void FlopCounter::processCell(ParticleCell & c) {
 void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	using std::vector;
 
-	// we don't execute any flops if both cells are halo cells (TODO: adapt for Tersoff, when vectorized)
+	// we don't execute any flops if both cells are halo cells
 	if (c1.isHaloCell() and c2.isHaloCell())
 		return;
 

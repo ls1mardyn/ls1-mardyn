@@ -1,6 +1,5 @@
 // file      : xsd/cxx/parser/non-validating/xml-schema-pimpl.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <limits>
@@ -1157,7 +1156,7 @@ namespace xsd
         }
 
         template <typename C>
-        std::auto_ptr<buffer> base64_binary_pimpl<C>::
+        XSD_AUTO_PTR<buffer> base64_binary_pimpl<C>::
         post_base64_binary ()
         {
           typedef typename std::basic_string<C>::size_type size_type;
@@ -1199,7 +1198,7 @@ namespace xsd
           size_type quad_count (size / 4);
           size_type capacity (quad_count * 3 + 1);
 
-          std::auto_ptr<buffer> buf (new buffer (capacity, capacity));
+          XSD_AUTO_PTR<buffer> buf (new buffer (capacity, capacity));
           char* dst (buf->data ());
 
           size_type si (0), di (0); // Source and destination indexes.
@@ -1309,7 +1308,7 @@ namespace xsd
         }
 
         template <typename C>
-        std::auto_ptr<buffer> hex_binary_pimpl<C>::
+        XSD_AUTO_PTR<buffer> hex_binary_pimpl<C>::
         post_hex_binary ()
         {
           typedef typename ro_string<C>::size_type size_type;
@@ -1318,7 +1317,7 @@ namespace xsd
           size_type size (trim_right (tmp));
 
           buffer::size_t n (size / 2);
-          std::auto_ptr<buffer> buf (new buffer (n));
+          XSD_AUTO_PTR<buffer> buf (new buffer (n));
 
           const C* src (tmp.data ());
           char* dst (buf->data ());

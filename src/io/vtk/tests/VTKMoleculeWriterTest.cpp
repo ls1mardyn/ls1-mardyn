@@ -41,17 +41,19 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	dummyComponent.addLJcenter(0,0,0,0,0,0,0,false);
 	components.push_back(dummyComponent);
 
-	Molecule dummyMolecule1(0,&components[0],2.20,3.0,3.4,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule1(0,&components[0],2.20,3.0,3.4,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule1);
 
-	Molecule dummyMolecule2(0,&components[0], 1.0,0,0,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule2(0,&components[0], 1.0,0,0,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule2);
 
-	Molecule dummyMolecule3(0,&components[0], 0,1.0,0,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule3(0,&components[0], 0,1.0,0,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule3);
 
-	Molecule dummyMolecule4(0,&components[0], 1.0,1.5,0.234,0,0,0,0,0,0,0,0,0,0);
+	Molecule dummyMolecule4(0,&components[0], 1.0,1.5,0.234,0,0,0,0,0,0,1,0,0,0);
 	container.addParticle(dummyMolecule4);
+
+	container.updateMoleculeCaches();
 
 	VTKMoleculeWriter writer(2, "VTKMoleculeWriterTest");
 
@@ -62,8 +64,8 @@ void VTKMoleculeWriterTest::testDoOutput() {
 	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &rank) );
 	DomainDecomposition domainDecomposition;
 	Domain domain(rank, NULL);
-	writer.doOutput(&container, &domainDecomposition, &domain, 1, NULL);
-	writer.doOutput(&container, &domainDecomposition, &domain, 2, NULL);
+	writer.doOutput(&container, &domainDecomposition, &domain, 1, NULL, NULL);
+	writer.doOutput(&container, &domainDecomposition, &domain, 2, NULL, NULL);
 
 	MPI_CHECK( MPI_Barrier(MPI_COMM_WORLD) );
 	if (rank == 0) {
@@ -85,21 +87,21 @@ void VTKMoleculeWriterTest::testDoOutput() {
 #else
 	Domain domain(0, NULL);
 	DomainDecompBase dummy;
-	writer.doOutput(&container, &dummy, &domain, 1, NULL);
+	writer.doOutput(&container, &dummy, &domain, 1, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKMoleculeWriterTest_1.vtu"));
 
-	writer.doOutput(&container, &dummy, &domain, 2, NULL);
+	writer.doOutput(&container, &dummy, &domain, 2, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKMoleculeWriterTest_2.vtu"));
 
 	try {
-		std::auto_ptr<VTKFile_t> vtkFile(VTKFile ("VTKMoleculeWriterTest_2.vtu", xml_schema::flags::dont_validate));
-		ASSERT_EQUAL( 4, ( int)vtkFile->UnstructuredGrid()->Piece().NumberOfPoints());
+		std::unique_ptr<VTKFile_t> vtkFile(VTKFile ("VTKMoleculeWriterTest_2.vtu", xml_schema::flags::dont_validate));
+		ASSERT_EQUAL( 4, (int) vtkFile->UnstructuredGrid()->Piece().NumberOfPoints());
 
 
 		Points::DataArray_sequence& pointsArraySequence = vtkFile->UnstructuredGrid()->Piece().Points().DataArray();
 		Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
 
-		ASSERT_EQUAL_MSG("check number of point coordinates", 12, ( int) coordinates_iterator->size());
+		ASSERT_EQUAL_MSG("check number of point coordinates", 12, (int) coordinates_iterator->size());
 		ASSERT_EQUAL_MSG("check point coordinates", 2.2, coordinates_iterator->at(9));
 		ASSERT_EQUAL_MSG("check point coordinates", 3., coordinates_iterator->at(10));
 		ASSERT_EQUAL_MSG("check point coordinates", 3.4, coordinates_iterator->at(11));

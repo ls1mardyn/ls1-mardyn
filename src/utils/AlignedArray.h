@@ -13,14 +13,16 @@
 #include <new>
 #include <cstring>
 
+#define CACHE_LINE_SIZE 64
+
 /**
  * \brief An aligned array.
  * \details Has pointer to T semantics.
  * \tparam T The type of the array elements.
  * \tparam alignment The alignment restriction. Must be a power of 2, should not be 8.
- * \author Johannes Heckl
+ * \author Johannes Heckl, Nikola Tchipev
  */
-template<class T, size_t alignment = 64>
+template<class T, size_t alignment = CACHE_LINE_SIZE>
 class AlignedArray {
 public:
 	/**
@@ -97,11 +99,17 @@ public:
 		return _n * sizeof(T);
 	}
 
+	static size_t _round_up(size_t n) {
+		size_t multiple = CACHE_LINE_SIZE / sizeof(T);
+		//assert(multiple * sizeof(T) == CACHE_LINE_SIZE);
+		return ((n + multiple - 1) / multiple) * multiple;
+	}
+
 private:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
-	static T* _allocate(size_t elements, size_t num_non_zero=0) {
+	static T* _allocate(size_t elements, size_t /*num_non_zero*/=0) {
 #if defined(__SSE3__) && ! defined(__PGI)
 		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
 		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));

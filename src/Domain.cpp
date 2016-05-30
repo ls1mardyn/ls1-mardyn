@@ -151,7 +151,7 @@ double Domain::getGlobalPressure()
 
 double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumMolecules; }
 
-double Domain::getAverageGlobalUpot() const { return _globalUpot/_globalNumMolecules; }
+double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
 vector<Component>& Domain::getComponents(){
@@ -197,8 +197,6 @@ void Domain::calculateGlobalValues(
 	Virial = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
 
-	/* FIXME: why should process 0 do this alone? 
-	 * we should keep symmetry of all proccesses! */
 	// Process 0 has to add the dipole correction:
 	// m_UpotCorr and m_VirialCorr already contain constant (internal) dipole correction
 	_globalUpot = Upot + _UpotCorr;
@@ -212,7 +210,7 @@ void Domain::calculateGlobalValues(
 	if( _componentwiseThermostat )
 	{
 #ifndef NDEBUG
-		global_log->debug() << "* applying a componentwise thermostat" << endl;
+		global_log->debug() << "* applying a component-wise thermostat" << endl;
 #endif
 		this->_localThermostatN[0] = 0;
 		this->_localRotationalDOF[0] = 0;
@@ -511,8 +509,7 @@ void Domain::writeCheckpoint( string filename,
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 		//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-		//checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
-                checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
+        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
 #endif
 		/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
 		if(this->_globalUSteps > 1)
@@ -602,7 +599,6 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
 		unsigned int numdipolesi=ci.numDipoles();
-		unsigned int numtersoffi = ci.numTersoff();
 
 		// effective dipoles computed from point charge distributions
 		double chargeBalance[3];
@@ -627,9 +623,6 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 
 		for(unsigned int j=0;j<numcomp;++j) {
 			Component& cj=(*components)[j];
-			unsigned numtersoffj = cj.numTersoff();
-			// no LJ interaction between Tersoff components
-			if(numtersoffi && numtersoffj) continue;
 			unsigned int numljcentersj=cj.numLJcenters();
 			ParaStrm& params=_comp2params(i,j);
 			params.reset_read();
@@ -1116,14 +1109,14 @@ void Domain::setTargetTemperature(int thermostat, double targetT)
 	if(!(this->_universalUndirectedThermostat[thermostat] == true))
 		this->_universalUndirectedThermostat[thermostat] = false;
 
-	/* FIXME: Substantial change in program behaviour! */
+	/* FIXME: Substantial change in program behavior! */
 	if(thermostat == 0) {
 		global_log->warning() << "Disabling the component wise thermostat!" << endl;
 		disableComponentwiseThermostat();
 	}
 	if(thermostat >= 1) {
 		if( ! _componentwiseThermostat ) {
-			/* FIXME: Substantial change in program behaviour! */
+			/* FIXME: Substantial change in program behavior! */
 			global_log->warning() << "Enabling the component wise thermostat!" << endl;
 			_componentwiseThermostat = true;
 			_universalTargetTemperature.erase(0);
@@ -1202,8 +1195,9 @@ void Domain::record_cv()
 	if(_localRank != 0) return;
 
 	this->_globalUSteps ++;
-	this->_globalSigmaU += this->_globalUpot;
-	this->_globalSigmaUU += this->_globalUpot*_globalUpot;
+	double globalUpot = getGlobalUpot();
+	this->_globalSigmaU += globalUpot;
+	this->_globalSigmaUU += globalUpot * globalUpot;
 }
 
 double Domain::cv()
@@ -1579,7 +1573,7 @@ void Domain::realign(
 
 // author: Stefan Becker, method called in the case of a density profile established in cylindrical coordinates. Counterpart of outputProfile(...).
 // reason for a sperate method (in addition to "outputProfile(...)"): method neatly matched to the particular needs of the (cylindrical density) profile, otherwise outpuProfile would be inflated, structure became too compilcated.
-void Domain::outputCylProfile(const char* prefix){
+void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 	if(this->_localRank) return;
 
 	   unsigned IDweight[3];
@@ -1602,6 +1596,10 @@ void Domain::outputCylProfile(const char* prefix){
 			 //yVelProfname+= ".vpry";
 			 //string xzVelProfname(prefix);
 			 //xzVelProfname+= ".vprxz";
+			 //virial profile
+			string VprProfName(prefix);
+			VprProfName += ".Vpr";
+			 
 			 
 
 	   	         if(!this->_universalCylindricalGeometry)
@@ -1626,9 +1624,11 @@ void Domain::outputCylProfile(const char* prefix){
 			//edited by Michaela Heier
 			ofstream rhpr(rhoProfName.c_str());
 			ofstream Tpr(tmpProfName.c_str());
+			ofstream Vpr(VprProfName.c_str());
 
 			rhpr.precision(6);
 			Tpr.precision(6);
+			if(virialProfile) Vpr.precision(6);
 
 			//changed by Michaela Heier
 	    //##########################################################################################################################################			 
@@ -1661,8 +1661,9 @@ void Domain::outputCylProfile(const char* prefix){
 	   	        		{
 	   	        			unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
 	   	        				                                    + n_h * IDweight[2];
-	   	        		   	double rho_loc = this->_universalNProfile[unID] / (segmentVolume * this->_globalAccumulatedDatasets);
-	   	        		   	rhpr << rho_loc << "\t";
+																	
+	   	        		   	double rho_loc_cyl = this->_universalNProfile[unID] / (segmentVolume * this->_globalAccumulatedDatasets);
+	   	        		   	rhpr << rho_loc_cyl << "\t";
 	   	        		}
 	   	        		rhpr << "\n";
 	   	        	}
@@ -1698,12 +1699,14 @@ void Domain::outputCylProfile(const char* prefix){
 	   	        				                                    + n_h * IDweight[2];
 					      DOFc += this->_universalDOFProfile[unID];
 					      twoEkinc += this->_universalKineticProfile[unID];
+					
 					   }
 					   if(DOFc == 0.0){
 					     Tpr << 0 << "\t";
 					   }
 					   else{
-					  Tpr << (twoEkinc/DOFc ) << "\t";
+					 Tpr << (twoEkinc/DOFc ) << "\t";
+
 					   }
 	   	        		}
 	   	        		Tpr << "\n";
@@ -1711,7 +1714,60 @@ void Domain::outputCylProfile(const char* prefix){
 			  //tmpProf->close();
 			  //delete tmpProf;
 			  Tpr.close();
+			  
+
+
+			  	//added by Michaela Heier
+	    //##########################################################################################################################################			 
+			 // pressure profile: actual writing procedure 
+
+	   	         //double segmentVolume; // volume of a single bin, in a0^3 (atomic units) 
+	   	      	// segmentVolume = M_PI/this->_universalInvProfileUnit[1]/this->_universalInvProfileUnit[2]/this->_universalNProfileUnits[0];  // adapted to cylindrical coordinates
+			  if(virialProfile){
+				Vpr << "//Local profile of the pressure. Output file generated by the \"outputCylProfile\" method, located in Domain.cpp. \n";
+	   	        Vpr << "//local pressure profile: Each matrix corresponds to a single value of \"phi_i\", measured in [rad]\n";
+	   	        Vpr << "//one single matrix of the local number pressure p'(phi_i;r_i',h_i') \n//      | r_i'\n//---------------------\n//  h_i'| p'(r_i',h_i')\n//      | \n";
+	   	        Vpr << "// T' \t sigma_ii' \t eps_ii' \t yOffset \t DELTA_phi \t DELTA_r2' \t DELTA_h' \t quantities in atomic units are denoted by an apostrophe '\n";
+	   	        Vpr << this->_universalTargetTemperature[_simulation.getEnsemble()->components()->size()]<<"\t"<<_simulation.getEnsemble()->component(0)->getSigma(0)<<"\t"<<_simulation.getEnsemble()->component(0)->getEps(0)<<"\t"; 
+	   	        Vpr << _yOff << "\t" << 1/this->_universalInvProfileUnit[0] << "\t" << 1/this->_universalInvProfileUnit[1] << "\t" << 1/this->_universalInvProfileUnit[2]<< "\n";
+	   	         // info: getSigma() und getEps() implementiert in Component.h
+	   	         // end of header, start of the data-part of the density file 
+	   	         for(unsigned n_phi = 0; n_phi < this->_universalNProfileUnits[0]; n_phi++)
+	   	         {
+	   	        	 Vpr <<"> "<< (n_phi+0.5)/this->_universalInvProfileUnit[0] <<"\n0 \t";
+	   	        	 for(unsigned n_r2 = 0; n_r2 < this->_universalNProfileUnits[1]; n_r2++){
+	   	        		 Vpr << 0.5*(sqrt(n_r2+1) + sqrt(n_r2))/sqrt(this->_universalInvProfileUnit[1]) <<"  \t"; // Eintragen der radialen Koordinaten r_i in Header
+	   	        	 }
+	   	        	 Vpr << "\n";
+	   	        	for(unsigned n_h = 0; n_h < this->_universalNProfileUnits[2]; n_h++)
+	   	        	{
+
+	   	        		double hval = (n_h + 0.5) / this->_universalInvProfileUnit[2];
+	   	        		Vpr << hval<< "  \t";
+						//long double Px = 0.0;
+						//long double Py = 0.0;
+						//long double Pz = 0.0;
+	   	        		for(unsigned n_r2 = 0; n_r2< this->_universalNProfileUnits[1]; n_r2++)
+	   	        		{
+	   	        			unsigned unID = n_phi * IDweight[0] + n_r2 * IDweight[1]
+	   	        				                                    + n_h * IDweight[2];
+							//Px += this->_universalPXProfile[unID];
+							//Py += this->_universalPYProfile[unID];
+							//Pz += this->_universalPZProfile[unID];
+
+	   	        		   	double virial_cyl =(_globalTemperatureMap[0]*this->_universalNProfile[unID]+this->_universalPYProfile[unID]) / (segmentVolume * this->_globalAccumulatedDatasets);
+	   	        		   	Vpr << virial_cyl << "\t";
+						}
+	   	        		
+	   	        		Vpr << "\n";
+	   	        	}
+	   	         }
+	   	         //rhoProf->close();
+				 Vpr.close();
 			  }
+	   	         //delete rhpr;*/
+				 }
+
 }
 
 

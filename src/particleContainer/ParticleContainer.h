@@ -23,6 +23,7 @@
 #include <list>
 #include <vector>
 
+class CavityEnsemble;
 class CellProcessor;
 class ChemicalPotential;
 class Domain;
@@ -141,6 +142,10 @@ public:
 
 	virtual void traverseCells(CellProcessor& cellProcessor) = 0;
 
+	virtual void traverseNonInnermostCells(CellProcessor& cellProcessor) = 0;
+
+	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
+
 	//! @return the number of particles stored in this container
 	//!
 	//! This number may includes particles which are outside of
@@ -229,8 +234,22 @@ public:
 	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
 	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
 
+        virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
+        virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
+        virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
+	
+	//! @brief Update the caches of the molecules, that lie in inner cells.
+	//! The caches of boundary and halo cells is not updated.
+	//! This method is used for a multi-step scheme of overlapping mpi communication
+	virtual void updateInnerMoleculeCaches() = 0;
+
+	//! @brief Update the caches of the molecules, that lie in the boundary or halo cells.
+	//! The caches of boundary and halo cells is updated, the caches of the inner cells are not updated.
+	//! This method is used for a multi-step scheme of overlapping mpi communication
+	virtual void updateBoundaryAndHaloMoleculeCaches() = 0;
+
 	//! @brief Update the caches of the molecules.
-	void updateMoleculeCaches();
+	virtual void updateMoleculeCaches() = 0;
 
 protected:
 

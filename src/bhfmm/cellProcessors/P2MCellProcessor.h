@@ -21,6 +21,7 @@ public:
 	~P2MCellProcessor();
 
 	virtual double processSingleMolecule(Molecule* m1, ParticleCell& cell2) {return 0.0;}
+        virtual int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) { exit(0); return 0; }
 
 	void initTraversal(const size_t numCells) {}
 	void preprocessCell(ParticleCell& cell) {}

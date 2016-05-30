@@ -6,6 +6,8 @@
 
 #include "parallel/MPIKDNode.h"
 
+#include <vector>
+
 class VTKGridWriterImplementation;
 
 //! @brief represents a node in the decomposition tree when using KDDecomposition
@@ -109,19 +111,33 @@ public:
 		return _load / ((double) _numProcs);
 	}
 
-	void calculateExpectedDeviation() {
-		double child1Dev = _child1->calculateAvgLoadPerProc() - _optimalLoadPerProcess;
+	void calculateExpectedDeviation(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
+		double meanProcessorSpeed[] = { 1., 1. };
+		double averagedMeanProcessorSpeed = 1.;
+		if (accumulatedProcessorSpeeds != nullptr && accumulatedProcessorSpeeds->size() != 0) {
+			meanProcessorSpeed[0] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc]
+					- (*accumulatedProcessorSpeeds)[_owningProc]) / (_child1->_numProcs);
+			meanProcessorSpeed[1] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc + _child2->_numProcs]
+					- (*accumulatedProcessorSpeeds)[_child2->_owningProc]) / (_child2->_numProcs);
+			averagedMeanProcessorSpeed = (meanProcessorSpeed[0] + meanProcessorSpeed[1]) / 2;
+		}
+		double child1Dev = _child1->calculateAvgLoadPerProc()
+				- _optimalLoadPerProcess * meanProcessorSpeed[0] / averagedMeanProcessorSpeed;
 		child1Dev = child1Dev * child1Dev;
-		double child2Dev = _child2->calculateAvgLoadPerProc() - _optimalLoadPerProcess;
+		double child2Dev = _child2->calculateAvgLoadPerProc()
+				- _optimalLoadPerProcess * meanProcessorSpeed[1] / averagedMeanProcessorSpeed;
 		child2Dev = child2Dev * child2Dev;
-		_expectedDeviation = child1Dev * (double) _child1->_numProcs
-		                     + child2Dev * (double) _child2->_numProcs;
+		_expectedDeviation = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
 	}
 
-	void calculateDeviation() {
+	void calculateDeviation(std::vector<double>* processorSpeeds = nullptr, const double &totalMeanProcessorSpeed = 1.) {
 		if (_numProcs == 1) {
+			double speed = 1.;
+			if (processorSpeeds != nullptr && processorSpeeds->size() > (unsigned int)_owningProc) {
+				speed = (*processorSpeeds)[_owningProc];
+			}
 			//_deviation = _load - _optimalLoadPerProcess;
-			double dev = _load - _optimalLoadPerProcess;
+			double dev = _load - _optimalLoadPerProcess * speed / totalMeanProcessorSpeed;
 			_deviation = dev * dev;
 		} else {
 			_deviation = _child1->_deviation + _child2->_deviation;
@@ -172,7 +188,7 @@ public:
 	/**
 	 * plot the leafs of the KDTree with vtk.
 	 */
-	void plotNode(const std::string& vtkFile) const;
+	void plotNode(const std::string& vtkFile, const std::vector<double>* processorSpeeds=nullptr) const;
 
 	/**
 	 * Initialize the mpi datatype. Has to be called once initially.

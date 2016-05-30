@@ -12,8 +12,8 @@
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/NonBlockingMPIHandlerBase.h"
 #include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
@@ -39,6 +39,7 @@
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
+#include "ensemble/CavityEnsemble.h"
 
 #include "thermostats/VelocityScalingThermostat.h"
 #include "thermostats/TemperatureControl.h"
@@ -82,7 +83,10 @@ Simulation::Simulation()
 	_longRangeCorrection(NULL),
 	_temperatureControl(NULL),
 	_FMM(NULL),
-	_forced_checkpoint_time(0)
+	_forced_checkpoint_time(0),
+	_loopCompTime(0.),
+	_loopCompTimeSteps(0),
+	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
 
@@ -281,7 +285,8 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				lc->setCutoff(_cutoffRadius);
 			}
 			else if(datastructuretype == "AdaptiveSubCells") {
-				_moleculeContainer = new AdaptiveSubCells();
+				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
+				global_simulation->exit(-1);
 			}
 			else {
 				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
@@ -422,6 +427,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 #endif /* VTK */
 		else if(pluginname == "XyzWriter") {
 			outputPlugin = new XyzWriter();
+		}
+		else if(pluginname == "CavityWriter") {
+			outputPlugin = new CavityWriter();
 		}
 		/* temporary */
 		else if(pluginname == "MPICheckpointWriter") {
@@ -615,7 +623,6 @@ void Simulation::prepare_start() {
 	bool charge_present = false;
 	bool dipole_present = false;
 	bool quadrupole_present = false;
-	bool tersoff_present = false;
 
 	const vector<Component> components = *(global_simulation->getEnsemble()->components());
 	for (size_t i = 0; i < components.size(); i++) {
@@ -623,25 +630,19 @@ void Simulation::prepare_start() {
 		charge_present |= (components[i].numCharges() != 0);
 		dipole_present |= (components[i].numDipoles() != 0);
 		quadrupole_present |= (components[i].numQuadrupoles() != 0);
-		tersoff_present |= (components[i].numTersoff() != 0);
 	}
 	global_log->debug() << "xx lj present: " << lj_present << endl;
 	global_log->debug() << "xx charge present: " << charge_present << endl;
 	global_log->debug() << "xx dipole present: " << dipole_present << endl;
 	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
-	global_log->debug() << "xx tersoff present: " << tersoff_present << endl;
 
-	if(tersoff_present) {
-		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the Tersoff potential.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-	}
-	else if(this->_lmu.size() > 0) {
+	if(this->_lmu.size() > 0) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else {
 		global_log->info() << "Using vectorized cell processor." << endl;
@@ -649,7 +650,7 @@ void Simulation::prepare_start() {
 	}
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
-	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 #endif
 
 	if (_FMM != NULL) {
@@ -675,11 +676,16 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
-	global_log->info() << "Performing inital force calculation" << endl;
+	global_log->info() << "Performing initial force calculation" << endl;
+	Timer t;
+	t.start();
 	_moleculeContainer->traverseCells(*_cellProcessor);
+	t.stop();
+	_loopCompTime = t.get_etime();
+	_loopCompTimeSteps = 1;
 
 	if (_FMM != NULL) {
-		global_log->info() << "Performing inital FMM force calculation" << endl;
+		global_log->info() << "Performing initial FMM force calculation" << endl;
 		_FMM->computeElectrostatics(_moleculeContainer);
 	}
 
@@ -726,7 +732,7 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	if (_lmu.size() > 0) {
+	if (_lmu.size() + _mcav.size() > 0) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
@@ -743,11 +749,10 @@ void Simulation::prepare_start() {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
 		}
-	}
-
-	if (_zoscillation) {
-		global_log->debug() << "Initializing z-oscillators" << endl;
-		_integrator->init1D(_zoscillator, _moleculeContainer);
+                map<unsigned, CavityEnsemble>::iterator ceit;
+		for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
+                   ceit->second.submitTemperature(Tcur);
+                }
 	}
 
 	// initialize output
@@ -779,7 +784,7 @@ void Simulation::simulate() {
     _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
-	CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
+	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
 			<< ensemble.N() << endl;
@@ -788,7 +793,7 @@ void Simulation::simulate() {
 		<< endl;
 	ensemble.updateGlobalVariable(TEMPERATURE);
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-		<< endl;
+		<< endl;*/
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
@@ -836,6 +841,16 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
+		if (_simstep >= _initStatistics) {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+                      {
+                         ceit->second.preprocessStep();
+                      }
+                   }
+                }
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
@@ -883,36 +898,55 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
-
-
 		computationTimer.stop();
-		decompositionTimer.start();
 
-		// ensure that all Particles are in the right cells and exchange Particles
-		global_log->debug() << "Updating container and decomposition" << endl;
-		updateParticleContainerAndDecomposition();
 
-		decompositionTimer.stop();
+
+#ifdef ENABLE_MPI
+		bool overlapCommComp = true;
+#else
+		bool overlapCommComp = false;
+#endif
+
+		if (overlapCommComp) {
+			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer);
+		} else {
+			decompositionTimer.start();
+			// ensure that all Particles are in the right cells and exchange Particles
+			global_log->debug() << "Updating container and decomposition"
+					<< endl;
+			updateParticleContainerAndDecomposition();
+			decompositionTimer.stop();
+
+			double startEtime = computationTimer.get_etime();
+			// Force calculation and other pair interaction related computations
+			global_log->debug() << "Traversing pairs" << endl;
+			computationTimer.start();
+			_moleculeContainer->traverseCells(*_cellProcessor);
+			computationTimer.stop();
+			_loopCompTime += computationTimer.get_etime() - startEtime;
+			_loopCompTimeSteps ++;
+		}
 		computationTimer.start();
-
-		// Force calculation and other pair interaction related computations
-		global_log->debug() << "Traversing pairs" << endl;
-		_moleculeContainer->traverseCells(*_cellProcessor);
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
 		}
 
-		
+
+
+
+
+
 		if(_wall && _applyWallFun){
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
 		}
 		
-		 if(_mirror && _applyMirror){
+		if(_mirror && _applyMirror){
 		  _mirror->VelocityChange(_moleculeContainer, _domain);
 		}
 
-		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
+		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
@@ -968,8 +1002,31 @@ void Simulation::simulate() {
 #endif
 		}
 		
+		if(_simstep >= _initStatistics)
+                {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+                      {
+                         global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
+                         
+                         this->_moleculeContainer->cavityStep(
+                            &ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
+                         );
+                      }
+                           
+                      if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
+                      {                                   
+                         this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
+                      }
+                   }
+                }
+		
 		// clear halo
-
+	        //
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
@@ -1004,11 +1061,6 @@ void Simulation::simulate() {
 			}
 		}
 
-		if (_zoscillation) {
-			global_log->debug() << "alert z-oscillators" << endl;
-			_integrator->zOscillation(_zoscillator, _moleculeContainer);
-		}
-
 		// Inform the integrator about the calculated forces
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
@@ -1017,7 +1069,7 @@ void Simulation::simulate() {
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
-								_simstep));
+								_simstep));//*/  //TODO: uncomment !!!!!
 		
 		// scale velocity and angular momentum
 		if ( !_domain->NVE() && _temperatureControl == NULL){
@@ -1109,7 +1161,7 @@ void Simulation::simulate() {
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
-		ensemble.updateGlobalVariable(NUM_PARTICLES);
+		/*ensemble.updateGlobalVariable(NUM_PARTICLES);
 		global_log->debug() << "Number of particles in the Ensemble: "
 				<< ensemble.N() << endl;
 		ensemble.updateGlobalVariable(ENERGY);
@@ -1117,14 +1169,15 @@ void Simulation::simulate() {
 				<< ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
 		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-			<< endl;
+			<< endl;*/
 		/* END PHYSICAL SECTION */
 
 		computationTimer.stop();
 		perStepIoTimer.start();
 
 		output(_simstep);
-		if(_forced_checkpoint_time >= 0 && (loopTimer.get_etime() + ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
+		if(_forced_checkpoint_time >= 0 && (decompositionTimer.get_etime() + computationTimer.get_etime()
+				+ ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
@@ -1166,7 +1219,7 @@ void Simulation::simulate() {
 #endif /* WITH_PAPI */
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
+	double elapsed_time = loopTimer.get_etime();
 	if(NULL != _flopCounter) {
 		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
 		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
@@ -1181,8 +1234,8 @@ void Simulation::output(unsigned long simstep) {
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
-		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
-		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
+		global_log->debug() << "Output from " << output->getPluginName() << endl;
+		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
@@ -1198,8 +1251,8 @@ void Simulation::output(unsigned long simstep) {
 			osstrm << right << simstep;
 			//edited by Michaela Heier 
 			if(this->_domain->isCylindrical()){
-				this->_domain->outputCylProfile(osstrm.str().c_str());
-				_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 			}
 			else{
 			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
@@ -1246,7 +1299,29 @@ void Simulation::updateParticleContainerAndDecomposition() {
 	_moleculeContainer->updateMoleculeCaches();
 }
 
-/* FIXME: we shoud provide a more general way of doing this */
+void Simulation::performOverlappingDecompositionAndCellTraversalStep(
+		Timer& decompositionTimer, Timer& computationTimer) {
+
+	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	bool forceRebalancing = false;
+
+	//TODO: exchange the constructor for a real non-blocking version
+
+#ifdef ENABLE_MPI
+#ifdef ENABLE_OVERLAPPING
+	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIMultiStepHandler(&decompositionTimer, &computationTimer,
+			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+#else
+	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
+			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+#endif
+
+	nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
+#endif
+}
+
+
+/* FIXME: we should provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
 	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
 	if ((xi < 0.1) || (xi > 0.9))
@@ -1288,7 +1363,6 @@ void Simulation::initialize() {
 	 */
 	_cutoffRadius = 0.0;
 	_LJCutoffRadius = 0.0;
-	_tersoffCutoffRadius = 3.0;
 	_numberOfTimesteps = 1;
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
@@ -1300,8 +1374,6 @@ void Simulation::initialize() {
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";
 	_collectThermostatDirectedVelocity = 100;
-	_zoscillation = false;
-	_zoscillator = 512;
 	_initCanonical = 5000;
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;
@@ -1326,4 +1398,6 @@ void Simulation::initialize() {
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
 	_longRangeCorrection = NULL;
+        
+        this->_mcav = map<unsigned, CavityEnsemble>();
 }

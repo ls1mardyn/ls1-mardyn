@@ -165,16 +165,3 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 		              componentwiseVelocityDelta[2][cid]);
 	}
 }
-
-void Leapfrog::init1D(unsigned zoscillator, ParticleContainer* molCont) {
-	Molecule* thismol;
-	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
-		if (!(thismol->id() % zoscillator) && thismol->numTersoff()) thismol->setXY();
-}
-
-void Leapfrog::zOscillation(unsigned zoscillator, ParticleContainer* molCont) {
-	Molecule* thismol;
-	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
-		/* TODO: use cid instead of complicated id + tersoff */
-		if (!(thismol->id() % zoscillator) && thismol->numTersoff()) thismol->resetXY();
-}

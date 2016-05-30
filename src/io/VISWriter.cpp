@@ -59,7 +59,8 @@ void VISWriter::initOutput(ParticleContainer* particleContainer,
 
 void VISWriter::doOutput(ParticleContainer* particleContainer,
                          DomainDecompBase* domainDecomp, Domain* domain,
-                         unsigned long simstep, list<ChemicalPotential>* lmu) {
+                         unsigned long simstep, list<ChemicalPotential>* lmu,
+			 map<unsigned, CavityEnsemble>* mcav) {
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream, outputstream;
 		filenamestream << _outputPrefix;

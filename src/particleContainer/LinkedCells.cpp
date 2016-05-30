@@ -42,7 +42,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 				<< " multiple cells per cutoff radius." << endl
 				<< "\tIf you can provide a case, where this is not true, please contact us."
 				<< endl;
-		exit(-1);
+		global_simulation->exit(-1);
 	}
 
 	for (int d = 0; d < 3; d++) {
@@ -81,19 +81,19 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		global_log->error()
+		global_log->error_always_output()
 				<< "LinkedCells (constructor): bounding box too small for calculated cell length"
 				<< endl;
-		global_log->error() << "_cellsPerDimension: " << _cellsPerDimension[0]
+		global_log->error_always_output() << "_cellsPerDimension: " << _cellsPerDimension[0]
 				<< " / " << _cellsPerDimension[1] << " / "
 				<< _cellsPerDimension[2] << endl;
-		global_log->error() << "_haloWidthInNumCells: "
+		global_log->error_always_output() << "_haloWidthInNumCells: "
 				<< _haloWidthInNumCells[0] << " / " << _haloWidthInNumCells[1]
 				<< " / " << _haloWidthInNumCells[2] << endl;
-		global_log->error() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
+		global_log->error_always_output() << "_boxWidthInNumCells: " << _boxWidthInNumCells[0]
 				<< " / " << _boxWidthInNumCells[1] << " / "
 				<< _boxWidthInNumCells[2] << endl;
-		exit(5);
+		global_simulation->exit(5);
 	}
 	this->_localInsertionsMinusDeletions = 0;
 
@@ -120,7 +120,7 @@ void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
 				<< " multiple cells per cutoff radius." << endl
 				<< "\tIf you can provide a case, where this is not true, please contact us."
 				<< endl;
-		exit(-1);
+		global_simulation->exit(-1);
 	}
 	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
 }
@@ -148,9 +148,9 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 				+ 2 * _haloWidthInNumCells[dim];
 		// in each dimension at least one layer of (inner+boundary) cells necessary
 		if (_cellsPerDimension[dim] == 2 * _haloWidthInNumCells[dim]) {
-			global_log->error() << "LinkedCells::rebuild: region to small"
+			global_log->error_always_output() << "LinkedCells::rebuild: region to small"
 					<< endl;
-			exit(1);
+			global_simulation->exit(1);
 		}
 		numberOfCells *= _cellsPerDimension[dim];
 		_cellLength[dim] = (_boundingBoxMax[dim] - _boundingBoxMin[dim])
@@ -172,16 +172,16 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	if (_boxWidthInNumCells[0] < 2 * _haloWidthInNumCells[0]
 			|| _boxWidthInNumCells[1] < 2 * _haloWidthInNumCells[1]
 			|| _boxWidthInNumCells[2] < 2 * _haloWidthInNumCells[2]) {
-		global_log->error()
+		global_log->error_always_output()
 				<< "LinkedCells (rebuild): bounding box too small for calculated cell Length"
 				<< endl;
-		global_log->error() << "cellsPerDimension " << _cellsPerDimension[0]
+		global_log->error_always_output() << "cellsPerDimension " << _cellsPerDimension[0]
 				<< " / " << _cellsPerDimension[1] << " / "
 				<< _cellsPerDimension[2] << endl;
-		global_log->error() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
+		global_log->error_always_output() << "_haloWidthInNumCells" << _haloWidthInNumCells[0]
 				<< " / " << _haloWidthInNumCells[1] << " / "
 				<< _haloWidthInNumCells[2] << endl;
-		exit(5);
+		global_simulation->exit(5);
 	}
 
 	initializeCells();
@@ -343,40 +343,38 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 	return N;
 }
 
+void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
+	throw "Not yet implemented.";
+}
+
+void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount){
+	throw "Not yet implemented.";
+}
+
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (traversePairs) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	vector<long int>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
 	global_log->debug()
-			<< "LinkedCells::traverseCells: Processing pairs and preprocessing Tersoff pairs."
+			<< "LinkedCells::traverseCells: Processing pairs."
 			<< endl;
 	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset
 			<< "; _maxNeighbourOffset=" << _maxNeighbourOffset << endl;
 #endif
 
 	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
-	// open the window of cells activated
-	for (long int cellIndex = 0; cellIndex < _maxNeighbourOffset; cellIndex++) {
-		cellProcessor.preprocessCell(_cells[cellIndex]);
-	}
 
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (long int cellIndex = 0; cellIndex < (long int) _cells.size();
 			cellIndex++) {
 		ParticleCell& currentCell = _cells[cellIndex];
-
-		// extend the window of cells with cache activated
-		if (cellIndex + _maxNeighbourOffset < (long int) _cells.size()) {
-			cellProcessor.preprocessCell(
-					_cells[cellIndex + _maxNeighbourOffset]);
-		}
 
 		if (currentCell.isInnerCell()) {
 			cellProcessor.processCell(currentCell);
@@ -432,19 +430,8 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 				}
 			}
 		} // if ( isBoundaryCell() )
-
-		// narrow the window of cells activated
-		if (cellIndex >= _minNeighbourOffset) {
-			cellProcessor.postprocessCell(
-					_cells[cellIndex - _minNeighbourOffset]);
-		}
 	} // loop over all cells
 
-	// close the window of cells with cache activated
-	for (unsigned int cellIndex = _cells.size() - _minNeighbourOffset;
-			cellIndex < _cells.size(); cellIndex++) {
-		cellProcessor.postprocessCell(_cells[cellIndex]);
-	}
 	cellProcessor.endTraversal();
 }
 
@@ -548,7 +535,7 @@ void LinkedCells::deleteOuterParticles() {
 		global_log->error()
 				<< "Cell structure in LinkedCells (deleteOuterParticles) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	vector<unsigned long>::iterator cellIndexIter;
@@ -568,7 +555,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (getHaloParticles) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	std::vector<Molecule*>::iterator particleIter;
@@ -655,7 +642,7 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3],
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegionSimple) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	int startIndex[3];
@@ -703,7 +690,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegion) invalid, call update first"
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	int startIndex[3];
@@ -742,6 +729,68 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 			}
 		}
 	}
+}
+
+int LinkedCells::countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR)
+{
+        int m1neigh = 0;
+        vector<long int>::iterator neighbourOffsetsIter;
+
+        assert(_cellsValid);
+        unsigned long cellIndex = getCellIndexOfMolecule(m1);
+        ParticleCell& currentCell = _cells[cellIndex];
+
+        cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+
+        // extend the window of cells with cache activated
+        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
+                cellProcessor.preprocessCell(_cells[windowCellIndex]);
+        }
+
+        m1neigh += cellProcessor.countNeighbours(m1, currentCell, RR);
+
+        // forward neighbours
+        for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        {
+                ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
+        }
+        // backward neighbours
+        for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        {
+                ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
+                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
+        }
+
+        // close the window of cells activated
+        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
+                cellProcessor.postprocessCell(_cells[windowCellIndex]);
+        }
+
+        cellProcessor.endTraversal();
+        return m1neigh;
+}
+
+unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm)
+{
+   return ce->communicateNumCavities(comm);
+}
+
+void LinkedCells::cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor)
+{
+   ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
+   map<unsigned long, Molecule*>* pc = ce->particleContainer();
+   double RR = ce->getRR();
+   
+   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++)
+   {
+      assert(pcit->second != NULL);
+      Molecule* m1 = pcit->second;
+      unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
+      unsigned long m1id = pcit->first;
+      assert(m1id = m1->id());
+      ce->decideActivity(neigh, m1id);
+   }
 }
 
 //################################################
@@ -957,71 +1006,67 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 
 	unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
 	if (hash >= _cells.size()) {
-		global_log->error()
+		global_log->error_always_output()
 				<< "coordinates for atom deletion lie outside bounding box."
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 
 	bool found = this->_cells[hash].deleteMolecule(molid);
 
 	if (!found) {
-		global_log->error() << "could not delete molecule " << molid << "."
+		global_log->error_always_output() << "could not delete molecule " << molid << "."
 				<< endl;
-		exit(1);
+		global_simulation->exit(1);
 	}
 }
 
 double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 		Molecule* m1, CellProcessor& cellProcessor) {
 
-	double u = 0.0;
+	// TODO: this will modify the forces on the (real) molecules, no?
+	// TODO: and the global Upot, Virial, ..., no?
+
+	static ParticleCell dummyCell;
+	{
+		// (potentially re-) initialize dummyCell
+		dummyCell.assignCellToInnerRegion();
+		dummyCell.removeAllParticles();
+		dummyCell.addParticle(m1, false);
+		dummyCell.buildSoACaches();
+		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
+	}
+
 	vector<long int>::iterator neighbourOffsetsIter;
 
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 	ParticleCell& currentCell = _cells[cellIndex];
 
-	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+	double oldEnergy = global_simulation->getDomain()->getLocalUpot();
 
-	// extend the window of cells with cache activated
-	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset;
-			windowCellIndex < cellIndex + _maxNeighbourOffset + 1;
-			windowCellIndex++) {
-		cellProcessor.preprocessCell(_cells[windowCellIndex]);
-	}
+	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1 + 1); // one more +1 for the dummyCell
 
-	if (m1->numTersoff() > 0) {
-		global_log->error()
-				<< "The grand canonical ensemble is not implemented for solids."
-				<< endl;
-		exit(484);
-	}
-	u += cellProcessor.processSingleMolecule(m1, currentCell);
+	cellProcessor.processCellPair(dummyCell, currentCell);
 
 	// forward neighbours
 	for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+		cellProcessor.processCellPair(dummyCell, neighbourCell);
 	}
 	// backward neighbours
 	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
-		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
-	}
-
-	// close the window of cells activated
-	for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset;
-			windowCellIndex < cellIndex + _maxNeighbourOffset + 1;
-			windowCellIndex++) {
-		cellProcessor.postprocessCell(_cells[windowCellIndex]);
+		cellProcessor.processCellPair(dummyCell, neighbourCell);
 	}
 
 	cellProcessor.endTraversal();
-	return u;
+	double newEnergy = global_simulation->getDomain()->getLocalUpot();
+
+	return newEnergy - oldEnergy;
 }
 
 int LinkedCells::grandcanonicalBalance(DomainDecompBase* comm) {
@@ -1072,7 +1117,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 						<< ")" << endl;
 #endif
 			if (accept) {
-				m->upd_cache();
+//				m->upd_cache(); TODO what to do here?
 				// reset forces and momenta to zero
 				{
 					double zeroVec[3] = { 0.0, 0.0, 0.0 };
@@ -1124,7 +1169,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 //			std::list<Molecule>::iterator mit = _particles.end();
 			Molecule * mit = &tmp;
 			m = &(*mit);
-			m->upd_cache();
+//			m->upd_cache(); TODO: what to do here?
 			// reset forces and torques to zero
 			if (!mu->isWidom()) {
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
@@ -1168,5 +1213,28 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 #ifndef NDEBUG
 		m->check(m->id());
 #endif
+	}
+}
+
+
+void LinkedCells::updateInnerMoleculeCaches(){
+	for (ParticleCell& cell : _cells){
+		if(cell.isInnerCell()){
+			cell.buildSoACaches();
+		}
+	}
+}
+
+void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
+	for (ParticleCell& cell : _cells) {
+		if (cell.isHaloCell() or cell.isBoundaryCell()) {
+			cell.buildSoACaches();
+		}
+	}
+}
+
+void LinkedCells::updateMoleculeCaches() {
+	for (ParticleCell& cell : _cells) {
+		cell.buildSoACaches();
 	}
 }

@@ -73,8 +73,8 @@ int run_unit_tests(Values &options, vector<string> &args) {
 	std::string testDataDirectory(options.get("testDataDirectory"));
 	global_log->info() << "Test data directory: " << testDataDirectory << endl;
 	Log::logLevel testLogLevel = options.is_set("verbose") && options.get("verbose") ? Log::All : Log::Info;
-	bool testresult = runTests(testLogLevel, testDataDirectory, testcases);
-	return (testresult) ? 1 : 0 ;
+	int testresult = runTests(testLogLevel, testDataDirectory, testcases);
+	return testresult;
 }
 
 /** @page main
@@ -95,6 +95,7 @@ int main(int argc, char** argv) {
 	global_log = new Log::Logger(Log::Info);
 #ifdef ENABLE_MPI
 	global_log->set_mpi_output_root(0);
+	//global_log->set_mpi_output_all();
 #endif
 
 	OptionParser op;
@@ -126,18 +127,18 @@ int main(int argc, char** argv) {
 	unsigned int numargs = args.size();
 	if (numargs < 1) {
 		op.print_usage();
-		exit(1);
+		global_simulation->exit(-13);
 	}
 
 	Simulation simulation;
-
+	simulation.setName(op.prog());
 	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
 	if( fileExists(args[0].c_str()) ) {
 		global_log->info() << "Config file: " << args[0] << endl;
 		simulation.readConfigFile(args[0]);
 	} else {
 		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
-		exit(1);
+		global_simulation->exit(-54);
 	}
 
 	/** @todo remove unnamed options, present as --steps, --output-prefix below */
@@ -218,8 +219,8 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
 
 	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
 	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
-	char const* const pc_choices[] = { "LinkedCells", "AdaptiveSubCells" };
-	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[2]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
+	char const* const pc_choices[] = { "LinkedCells" };
+	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[1]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
 	op.add_option_group(dgroup);
 
 	return op.parse_args(argc, argv);
