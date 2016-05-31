@@ -122,8 +122,13 @@ private:
 	// M2L
 	void GatherWellSepLo_FFT(double *cellWid, int mpCells, int& curLevel);
 
+	void GatherWellSepLo_FFT_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos);
+
 	template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 	void GatherWellSepLo_FFT_template(double *cellWid, int mpCells, int& curLevel);
+
+	template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
+	void GatherWellSepLo_FFT_MPI_template(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos);
 #endif /* FMM_FFT */
 
 	// L2L
