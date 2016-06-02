@@ -50,6 +50,29 @@ void MkesferaGenerator::readXML(XMLfileUnits& xmlconfig) {
 long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	unsigned fl_units;
+	double box_max[3];
+	double box_min_local[3];
+#ifdef ENABLE_MPI
+	double box_max_local[3];
+	double R_o_temp = 0;
+#endif
+
+	/* box min is assumed to be 0 */
+	for(int d = 0; d < 3; d++) {
+		box_max[d] = _simulation.getEnsemble()->domain()->length(d);
+#ifdef ENABLE_MPI
+		box_max_local[d] = particleContainer->getBoundingBoxMax(d);
+		box_min_local[d] = particleContainer->getBoundingBoxMin(d);
+		std::cout << box_max_local[d] << " global: " << box_max[d] <<"\n";
+		R_o_temp = max(R_o_temp,R_o * (box_max_local[d] - box_min_local[d]) /box_max[d]);
+#else
+		box_min_local[d] = 0;
+#endif
+
+	}
+#ifdef ENABLE_MPI
+	R_o = R_o_temp;
+#endif
 	double rhomax = (rho_i > rho_o)? rho_i: rho_o;
 	double N_boxes = 8.0*R_o*R_o*R_o * (BOXOVERLOAD*rhomax) / 3.0;
 	fl_units = ceil(pow(N_boxes, 1.0/3.0));
@@ -83,11 +106,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	double P_out = rho_o / boxdensity;
 	global_log->debug() << "Insertion probability: " << P_in << " inside, " << P_out << " outside" << endl;
 
-	double box_max[3];
-	/* box min is assumed to be 0 */
-	for(int d = 0; d < 3; d++) {
-		box_max[d] = _simulation.getEnsemble()->domain()->length(d);
-	}
+
 
 	double goffset[3][3]; /**< relative koordinates of face centers */
 	goffset[0][0] = 0.0; goffset[1][0] = 0.5; goffset[2][0] = 0.5;
@@ -103,7 +122,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 					double qq = 0.0;
 					double q[3];
 					for(int d = 0; d < 3; d++) {
-						q[d]= (idx[d] + goffset[d][p])*fl_unit - center[d];
+						q[d]= box_min_local[d] + (idx[d] + goffset[d][p])*fl_unit - center[d];
 						q[d] = q[d] - round(q[d]/box_max[d])*box_max[d];
 						qq += q[d]*q[d];
 					}
@@ -117,6 +136,11 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 			}
 		}
 	}
+	int startID = 0;
+#ifdef ENABLE_MPI
+	MPI_Allreduce(MPI_IN_PLACE, &N, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+	MPI_Exscan(&N, &startID, 1 , MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
 	global_log->debug() << "Filling " << N << " out of " << slots << " slots" << endl;
 	global_log->debug() << "Density: " << N / (8.0*R_o*R_o*R_o) << endl;
 
@@ -127,7 +151,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	double v_avg = sqrt(3.0 * T);
 
 	Component* component = _simulation.getEnsemble()->component(0);
-	unsigned ID = 1;
+	unsigned ID = 1 + startID;
 	for(idx[0]=0; idx[0] < fl_units; idx[0]++) {
 		for(idx[1]=0; idx[1] < fl_units; idx[1]++) {
 			for(idx[2]=0; idx[2] < fl_units; idx[2]++) {
@@ -137,9 +161,15 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 						double q[3];
 						for(int d=0; d < 3; d++)
 						{
-							q[d] = (idx[d] + VARFRACTION*(rnd->rnd() - 0.5) + goffset[d][p])*fl_unit;
+							q[d] = box_min_local[d] + (idx[d] + VARFRACTION*(rnd->rnd() - 0.5) + goffset[d][p])*fl_unit;
+#ifdef ENABLE_MPI
+							if(q[d] < box_min_local[d]) q[d] += (box_max_local - box_min_local);
+							else if(q[d] > box_max_local[d]) q[d] -= (box_max_local - box_min_local);
+#else
 							if(q[d] < 0.0) q[d] += 2.0*R_o;
 							else if(q[d] > 2.0*R_o) q[d] -= 2.0*R_o;
+
+#endif
 						}
 						double phi = 2*M_PI * rnd->rnd();
 						double omega = 2*M_PI * rnd->rnd();
@@ -167,6 +197,9 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 		delete[] fill[i];
 	}
 	delete[] fill;
+#ifdef ENABLE_MPI
+	MPI_Allreduce(MPI_IN_PLACE, &ID, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
 	global_log->info() << "Inserted number of molecules: " << ID << endl;
 	return ID;
 }
