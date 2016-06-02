@@ -1878,7 +1878,8 @@ void Domain::recordStressProfile(ParticleContainer* molCont){
 		else{
 			 xun = (unsigned)floor(thismol->r(0) * this->_universalInvProfileUnit_Stress[0]);
 			 yun = (unsigned)floor(thismol->r(1) * this->_universalInvProfileUnit_Stress[1]);
-			 unID = xun * this->_universalNProfileUnits_Stress[1]  + yun;  
+			 zun = (unsigned)floor(thismol->r(2) * this->_universalInvProfileUnit_Stress[2]);
+			 unID = xun * this->_universalNProfileUnits_Stress[1] * this->_universalNProfileUnits_Stress[2]  + yun * this->_universalNProfileUnits_Stress[2] + zun;
    			 this->_localNProfileResidual_Stress[unID] += 1.0;
 			 countResidual++;
 		}
@@ -2227,7 +2228,7 @@ void Domain::resetStressProfile()
 	}
 	this->_globalAccumulatedDatasets_Stress = 0;
 	
-	size_t rows = 6, cols = this->_universalNProfileUnits_Stress[0]*this->_universalNProfileUnits_Stress[1];
+	size_t rows = 6, cols = this->_universalNProfileUnits_Stress[0]*this->_universalNProfileUnits_Stress[1]*this->_universalNProfileUnits_Stress[2];
 
 	 for(unsigned i = 0; i < rows; i++){
 	      for(unsigned j = 0; j < cols; j++){
