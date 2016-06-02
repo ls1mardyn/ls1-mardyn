@@ -1030,7 +1030,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI(double *cellWid, Ve
 					GatherWellSepLo_FFT_MPI_template<true, false, false, true>(
 							cellWid, mpCells, curLevel, doHalos);
 				} else {
-					GatherWellSepLo_FFT_template<true, false, false, false>(
+					GatherWellSepLo_FFT_MPI_template<true, false, false, false>(
 							cellWid, mpCells, curLevel, doHalos);
 				}
 			}
@@ -1079,7 +1079,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI(double *cellWid, Ve
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		double *cellWid, int mpCells, int& curLevel) {
-	_timerGatherWellSepLo.start();
+	_timerGatherWellSepLoGlobal.start();
 
 	int m1v[3];
 	int m2v[3];
@@ -1087,14 +1087,15 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 	int m1, m2, m2x, m2y, m2z;
 	// int m1x, m1y, m1z;
 	int m22x, m22y, m22z; // for periodic image
-	int _size, _rank, loop_min, loop_max;
+//	int _size, _rank,
+	int loop_min, loop_max;
 	int row_length;
 
 	row_length = mpCells * mpCells * mpCells;
 
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_rank = domainDecomp.getRank();
-	_size = domainDecomp.getNumProcs();
+//	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+//	_rank = domainDecomp.getRank();
+//	_size = domainDecomp.getNumProcs();
 
 	loop_min = 0;
 	loop_max = row_length;
@@ -1261,28 +1262,29 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		_FFTAcceleration->FFT_finalize_Target(target, radius);
 	}
 
-	_timerGatherWellSepLo.stop();
+	_timerGatherWellSepLoGlobal.stop();
 
 } // GatherWellSepLo_FFT_template closed
 
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos) {
-	_timerGatherWellSepLo.start();
-
+	_timerGatherWellSepLoLokal.start();
+	//adjust for local level
+	curLevel = curLevel - _globalLevel - 1;
 	int m1v[3];
 	int m2v[3];
 	int m1x, m1y, m1z;
 	int m1, m2, m2x, m2y, m2z;
 	// int m1x, m1y, m1z;
 	int m22x, m22y, m22z; // for periodic image
-	int _size, _rank, loop_min, loop_max;
-	int row_length;
-
-
-	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
-	_rank = domainDecomp.getRank();
-	_size = domainDecomp.getNumProcs();
+//	int _size, _rank, loop_min, loop_max;
+//	int row_length;
+//
+//
+//	DomainDecompBase& domainDecomp = global_simulation->domainDecomposition();
+//	_rank = domainDecomp.getRank();
+//	_size = domainDecomp.getNumProcs();
 
 
 	Vector3<double> periodicShift(0.0);
@@ -1383,6 +1385,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 									continue;
 							}
 							if(doHalos){//exchange m1 and m2 as m2 is the real target
+//								std::cout << m2 << " and m1: " << m1 << " \n";
 								int temp = m2;
 								m2 = m1;
 								m1 = temp;
@@ -1396,11 +1399,13 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 								m1v[0] = tempAr[0];
 								m1v[1] = tempAr[1];
 								m1v[2] = tempAr[2];
+//								std::cout << m2 << " and now m1: " << m1 << " \n";
+
 
 
 							}
-							tf = _FFT_TM->getTransferFunction(m2x - m1v[0],
-									m2y - m1v[1], m2z - m1v[2], base_unit, base_unit,
+							tf = _FFT_TM->getTransferFunction(m2v[0] - m1v[0],
+									m2v[1] - m1v[1], m2v[2] - m1v[2], base_unit, base_unit,
 									base_unit);
 
 							if (UseM2L_2way) {
@@ -1479,7 +1484,10 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		for (m1y = yStart; m1y < yEnd; m1y++) {
 
 			for (m1x = xStart; m1x < xEnd; m1x++) {
-				if(doHalos and not(m1z < 2 or m1z >= localMpCells[2] - 2) and not(m1y < 2 or m1y >= localMpCells[1] - 2) and not(m1x < 2 or m1x >= localMpCells[0] - 2)){
+				if(doHalos and not(m1z < 4 or m1z >= localMpCells[2] - 4) and not(m1y < 4 or m1y >= localMpCells[1] - 4) and not(m1x < 4 or m1x >= localMpCells[0] - 4)){
+					continue;
+				}
+				if(not(doHalos) and (m1z < 4 or m1z >= localMpCells[2] - 4 or m1y < 4 or m1y >= localMpCells[1] - 4 or m1x < 4 or m1x >= localMpCells[0] - 4)){
 					continue;
 				}
 				m1=((m1z)*localMpCells[1] + m1y)*localMpCells[0] + m1x;
@@ -1495,7 +1503,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		}
 	}
 
-	_timerGatherWellSepLo.stop();
+	_timerGatherWellSepLoLokal.stop();
 
 } // GatherWellSepLo_FFT_MPI_template closed
 #endif /* FMM_FFT */
