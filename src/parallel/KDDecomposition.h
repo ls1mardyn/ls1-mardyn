@@ -2,7 +2,7 @@
 #define KDDECOMPOSITION2_H_
 
 #include <mpi.h>
-
+#include <algorithm>
 #include <list>
 #include <vector>
 
