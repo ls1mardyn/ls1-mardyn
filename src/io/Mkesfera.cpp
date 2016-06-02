@@ -63,7 +63,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 #ifdef ENABLE_MPI
 		box_max_local[d] = particleContainer->getBoundingBoxMax(d);
 		box_min_local[d] = particleContainer->getBoundingBoxMin(d);
-		std::cout << box_max_local[d] << " global: " << box_max[d] <<"\n";
+		//std::cout << box_max_local[d] << " global: " << box_max[d] <<"\n";
 		R_o_temp = max(R_o_temp,R_o * (box_max_local[d] - box_min_local[d]) /box_max[d]);
 #else
 		box_min_local[d] = 0;
@@ -165,12 +165,14 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 #ifdef ENABLE_MPI
 							if(q[d] < box_min_local[d]) q[d] += (box_max_local - box_min_local);
 							else if(q[d] > box_max_local[d]) q[d] -= (box_max_local - box_min_local);
+							//std::cout << "q[d] :" <<q[d];
+
 #else
 							if(q[d] < 0.0) q[d] += 2.0*R_o;
 							else if(q[d] > 2.0*R_o) q[d] -= 2.0*R_o;
-
 #endif
 						}
+						//std::cout << "\n";
 						double phi = 2*M_PI * rnd->rnd();
 						double omega = 2*M_PI * rnd->rnd();
 
