@@ -480,6 +480,7 @@ public:
 	std::string getStressCalcMethodConfinement() { return this->_stressCalcMethodConfinement; }
 	
 	unsigned long getSimstep();
+	unsigned long getInitStatistics();
 	unsigned getStressRecordTimeStep();
 	unsigned getConfinementRecordTimeStep();
 	double getCutoffRadius();

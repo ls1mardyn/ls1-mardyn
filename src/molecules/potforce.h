@@ -15,8 +15,9 @@ using namespace std;
 //Domain _domain2;
 
 /** @brief Calculates force as spring equivalent for upper layer of upper plate. */
-inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, unsigned long minID, const double springConst, unsigned long molID, double currentYPos, double f[3])
+inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, unsigned long minID, const double springConst, unsigned long molID, double currentYPos, double f[3], unsigned long initStatistics, unsigned long simstep)
 {
+  if(simstep > initStatistics){
 	if (molID <= maxID && molID >= minID){
 	    // spring force is of interest for y-direction
 	    f[0] = 0.0;
@@ -28,6 +29,21 @@ inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, un
 	    f[1] = 0.0;
 	    f[2] = 0.0;
 	}
+  }
+  else{
+	if (molID <= maxID && molID >= minID){
+	    // spring force is of interest for y-direction
+	    double uniformIncrease = simstep/initStatistics;
+	    f[0] = 0.0;
+	    f[1] = -springConst*uniformIncrease*(currentYPos - averageZeroYPos);
+	    f[2] = 0.0;
+	}
+	else{
+	    f[0] = 0.0;
+	    f[1] = 0.0;
+	    f[2] = 0.0;
+	}
+  } 
 }
 
 /** @brief Calculates force as damper equivalent for upper layer of upper plate.
@@ -480,7 +496,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	if (domain.getPG()->isSpringDamped()){
 	    if (mi.getCounter() == 0){
 		for (unsigned int si = 0; si < 1; ++si) {
-		    PotForceSpring(domain.getPG()->getAverageY(), domain.getPG()->getMaxSpringID(), domain.getPG()->getMinSpringID(), domain.getPG()->getSpringConst(), mi.id(), mi.r(1), f);
+		    PotForceSpring(domain.getPG()->getAverageY(), domain.getPG()->getMaxSpringID(), domain.getPG()->getMinSpringID(), domain.getPG()->getSpringConst(), mi.id(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep());
 		    mi.Fljcenteradd(si, f);
 		    for (unsigned short d = 0; d < 3; ++d)
 		    {

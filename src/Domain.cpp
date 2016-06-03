@@ -3708,6 +3708,9 @@ void Domain::submitDU(unsigned cid, double DU, double* r)
 unsigned long Domain::getSimstep(){
     return _simulation.getSimulationStep(); 
 }
+unsigned long Domain::getInitStatistics(){
+  return _simulation.getInitStatistics(); 
+}
 unsigned Domain::getStressRecordTimeStep(){
     return _simulation.getStressRecordTimestep();
 }
