@@ -1315,9 +1315,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		for (m1y = yStart; m1y < yEnd; m1y++) {
 
 			for (m1x = xStart; m1x < xEnd; m1x++) {
+
 				if(doHalos and not(m1z < 2 or m1z >= localMpCells[2] - 2) and not(m1y < 2 or m1y >= localMpCells[1] - 2) and not(m1x < 2 or m1x >= localMpCells[0] - 2)){
 					continue;
 				}
+
 				m1=((m1z)*localMpCells[1] + m1y)*localMpCells[0] + m1x;
 				if (_mpCellLocal[curLevel][m1].occ == 0)
 					continue;
@@ -1332,6 +1334,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 			}
 		}
 	}
+
 
 	//M2L in Fourier space
 	for (m1z = zStart; m1z < zEnd; m1z++) {
@@ -1479,26 +1482,23 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 	} //m1z closed
 
 	//Finalize FFT
-	for (m1z = zStart; m1z < zEnd; m1z++) {
+	if(doHalos){
+		for (m1z = 2; m1z < localMpCells[2] - 2; m1z++) {
 
-		for (m1y = yStart; m1y < yEnd; m1y++) {
+			for (m1y = 2; m1y < localMpCells[1] - 2; m1y++) {
 
-			for (m1x = xStart; m1x < xEnd; m1x++) {
-				if(doHalos and not(m1z < 4 or m1z >= localMpCells[2] - 4) and not(m1y < 4 or m1y >= localMpCells[1] - 4) and not(m1x < 4 or m1x >= localMpCells[0] - 4)){
-					continue;
+				for (m1x = 2; m1x < localMpCells[0] - 2; m1x++) {
+
+					m1=((m1z)*localMpCells[1] + m1y)*localMpCells[0] + m1x;
+					if (_mpCellLocal[curLevel][m1].occ == 0)
+						continue;
+
+					radius = _mpCellLocal[curLevel][m1].local.getRadius();
+					FFTAccelerableExpansion& target =
+							static_cast<bhfmm::SHLocalParticle&>(_mpCellLocal[curLevel][m1].local).getExpansion();
+					_FFTAcceleration->FFT_finalize_Target(target, radius);
+
 				}
-				if(not(doHalos) and (m1z < 4 or m1z >= localMpCells[2] - 4 or m1y < 4 or m1y >= localMpCells[1] - 4 or m1x < 4 or m1x >= localMpCells[0] - 4)){
-					continue;
-				}
-				m1=((m1z)*localMpCells[1] + m1y)*localMpCells[0] + m1x;
-				if (_mpCellLocal[curLevel][m1].occ == 0)
-					continue;
-
-				radius = _mpCellLocal[curLevel][m1].local.getRadius();
-				FFTAccelerableExpansion& target =
-						static_cast<bhfmm::SHLocalParticle&>(_mpCellLocal[curLevel][m1].local).getExpansion();
-				_FFTAcceleration->FFT_finalize_Target(target, radius);
-
 			}
 		}
 	}

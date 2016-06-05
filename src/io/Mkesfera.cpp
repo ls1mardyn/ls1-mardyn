@@ -65,20 +65,37 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	double box_max[3];
 	double box_min_local[3];
 	/* box min is assumed to be 0 */
+	int startx[3];
+	int endx[3];
 	for(int d = 0; d < 3; d++) {
-		box_max[d] = _simulation.getEnsemble()->domain()->length(d);
-#ifdef ENABLE_MPI
-		box_max_local[d] = particleContainer->getBoundingBoxMax(d);
-		box_min_local[d] = particleContainer->getBoundingBoxMin(d);
-		//std::cout << box_max_local[d] << " global: " << box_max[d] <<"\n";
-		fl_units_local[d] = ceil(OVERLAPFACTOR * ceil((double)fl_units * (box_max_local[d] - box_min_local[d]) /box_max[d]));
-#else
-		box_min_local[d] = 0;
-		fl_units_local[d] = fl_units;
-#endif
-//		std::cout << fl_units<< " " << fl_units_local[d] <<" " <<box_min_local[d] << " " << box_max_local[d]<<"\n";
-		MPI_Barrier(MPI_COMM_WORLD);
+			box_max[d] = _simulation.getEnsemble()->domain()->length(d);
+	#ifdef ENABLE_MPI
+			box_max_local[d] = particleContainer->getBoundingBoxMax(d);
+			box_min_local[d] = particleContainer->getBoundingBoxMin(d);
+			//std::cout << box_max_local[d] << " global: " << box_max[d] <<"\n";
+	#else
+			box_min_local[d] = 0;
+			fl_units_local[d] = fl_units;
+	#endif
+	//		std::cout << fl_units<< " " << fl_units_local[d] <<" " <<box_min_local[d] << " " << box_max_local[d]<<"\n";
+			MPI_Barrier(MPI_COMM_WORLD);
 	}
+	for(int d = 0; d < 3; d++){
+		startx[d] = floor(box_min_local[d] / fl_unit - 0.5);
+		endx[d] = ceil(box_max_local[d] / fl_unit);
+
+	}
+	for(int d = 0; d < 3; d++){
+
+		endx[d] = min(fl_units - 1, endx[d] + 1);
+
+		startx[d] = max(0,startx[d]-1);
+		//std::cout << startx[d] << " end: " << endx[d] << "\n";
+
+		fl_units_local[d] = endx[d] - startx[d] + 1;
+
+	}
+
 	double T = _simulation.getEnsemble()->T();
 	global_log->info() << "Temperature: " << T << endl;
 
@@ -119,21 +136,8 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 
 	unsigned N = 0;
 	int idx[3];
-	int startx[3];
-	int endx[3];
 
-	for(int d = 0; d < 3; d++){
-		startx[d] = floor(box_min_local[d] / fl_unit - 0.5);
-		endx[d] = ceil(box_max_local[d] / fl_unit);
 
-	}
-	for(int d = 0; d < 3; d++){
-
-		endx[d] = min(fl_units - 1, endx[d] + 1);
-
-		startx[d] = max(0,startx[d]-1);
-		//std::cout << startx[d] << " end: " << endx[d] << "\n";
-	}
 	for(idx[0]=0; idx[0] < fl_units; idx[0]++) {
 		for(idx[1]=0; idx[1] < fl_units; idx[1]++) {
 			for(idx[2]=0; idx[2] < fl_units; idx[2]++) {
@@ -159,8 +163,9 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 
 
 					if(idx[0] - startx[0] >= fl_units_local[0] or idx[1] - startx[1] >= fl_units_local[1] or idx[2] - startx[2] >= fl_units_local[2] or startx[0] > idx[0] or startx[1] > idx[1] or startx[2] > idx[2]){
-						std::cout << "Not enough overlap! Increase Overlap parameter in Mkesfera.cpp! \n";
-						global_log->error() << "Not enough overlap! Increase Overlap parameter in Mkesfera.cpp! \n";
+//						std::cout << "Not enough overlap! Increase Overlap parameter in Mkesfera.cpp! \n";
+//						std::cout << "min: "<<box_min_local[0] << " " << box_min_local[1] << " " << box_min_local[2] << " max: " << box_max_local[0] << " " << box_max_local[1] << " " << box_max_local[2] << " fl_unit: " << fl_unit << startx[0]<< " start: " << startx[1] << " "<< startx[2]<< " id: " << idx[0] << " "<< idx[1] << " "<< idx[2] << " end: " << endx[0] << " "<< endx[1] << " "<< endx[2] << "\n";
+						global_log->error() << "Error in calculation of start and end values! \n";
 						exit(0);
 //						std::cout << idx[0] - startx[0] << " " << idx[1] - startx[1] << " " << idx[2] - startx[2] << " \n";
 //						std::cout << idx[0]<< " " << idx[1] <<" "<< idx[2] <<" " <<startx[0] << " " << startx[1] << " " << startx[2] << "\n";
