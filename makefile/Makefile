@@ -81,7 +81,7 @@ OBJECTS = $(SOURCES:.cpp=.o)
 INCLUDES = -I$(SRCDIR) -I$(SRCDIR)/External
 
 BINARY_BASENAME = MarDyn
-ifneq ($(realpath .svn),)
+ifneq ($(shell realpath .svn),)
   $(info Building from a svn version.)
   SVN_VERSION = $(shell svnversion | sed -e "s/:/-/")
   ifneq ($(SVN_VERSION),)
