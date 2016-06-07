@@ -52,9 +52,9 @@ ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
 endif
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
-ENABLE_FFM_FFT ?= 0
+ENABLE_FMM_FFT ?= 0
 
-ifeq ($(ENABLE_FFM_FFT), 1)
+ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
 endif
@@ -121,7 +121,7 @@ ifeq ($(OPENMP_SIMD),1)
 CXXFLAGS += $(CXXFLAGS_OPENMP)
 endif
 
-ifeq ($(ENABLE_FFM_FFT),1)
+ifeq ($(ENABLE_FMM_FFT),1)
 CXXFLAGS += -DFMM_FFT
 endif
 
@@ -160,19 +160,23 @@ $(BINARY): $(OBJECTS)
 
 .PHONY: help all clean cleanall depend cfg_list cfg_help lcov clean_deps
 
+hl=$(shell tput smul)
+norm=$(shell tput sgr0)
+underline=${hl}$(1)${norm}
 help:
 	@echo "Current configuration: $(CFG_INFO)"
 	@echo
-	@echo "options:"
-	@echo "make CFG=...                      			choose compiler (see make cfg_list)"
-	@echo "make PARTYPE=SEQ | PAR            			choose parallelization type (see cfg_help)"
-	@echo "make TARGET=DEBUG | RELEASE       			choose target (see cfg_help)"
-	@echo "make DEPS=0 | 1                   			compile using dependancy tracking"
-	@echo "make UNIT_TESTS=0 | 1             			compile with or without unit tests (and build cppunit if neccessary)"
-	@echo "make VTK=0 | 1                    	 		compile with or without the vtk output plugin" 
-	@echo "make SUPPORT_DL_GENERATOR=0 | 1   	        compile with support for input generators as dynamic libraries"
-	@echo "make VECTORIZE_CODE=AOS | SSE | AVX | ...	compile with vectorization support (see help_vect)"
-	@echo "make PAPI=0 | 1			                   	compile with PAPI counter support"
+	@echo "options (underlined options are default values):"
+	@echo "make CFG=$(call underline,gcc), ...                      			choose compiler (see make cfg_list)"
+	@echo "make PARTYPE=$(call underline,SEQ) | PAR            			choose parallelization type (see cfg_help)"
+	@echo "make TARGET=DEBUG | $(call underline,RELEASE)       			choose target (see cfg_help)"
+	@echo "make DEPS=$(call underline,0) | 1                   			compile using dependancy tracking"
+	@echo "make UNIT_TESTS=$(call underline,0) | 1             			compile with or without unit tests (and build cppunit if neccessary)"
+	@echo "make VTK=$(call underline,0) | 1                    	 		compile with or without the vtk output plugin" 
+	@echo "make SUPPORT_GENERATOR=$(call underline,0) | 1   	     		   	compile with support for input generators as dynamic libraries"
+	@echo "make VECTORIZE_CODE=AOS | $(call underline,SSE) | AVX | ...		compile with vectorization support (see help_vect)"
+	@echo "make PAPI=$(call underline,0) | 1			                   	compile with PAPI counter support"
+	@echo "make ENABLE_FMM_FFT=$(call underline,0) | 1				compile using an FFT accelerated FMM method"
 	@echo
 	@echo "targets:"
 	@echo "make all         build $(BINARY)"
