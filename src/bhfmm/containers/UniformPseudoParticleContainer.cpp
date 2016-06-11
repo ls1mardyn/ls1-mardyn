@@ -1344,7 +1344,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 			m1z = mloop / (xEnd * yEnd) + zStart;
 
 			if(doHalos and not(m1z < 2 or m1z >= localMpCells[2] - 2) and not(m1y < 2 or m1y >= localMpCells[1] - 2) and not(m1x < 2 or m1x >= localMpCells[0] - 2)){
-				continue; //only initialize halo values
+				continue; //only initialize halo values in doHalos run
 			}
 
 			m1=((m1z)*localMpCells[1] + m1y)*localMpCells[0] + m1x;
@@ -1359,16 +1359,20 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 			_FFTAcceleration->FFT_initialize_Source(source, radius);
 			_FFTAcceleration->FFT_initialize_Target(target);
 		}
-
+		int numInnerCells[3];
+		for(int d = 0; d < 3; d++){
+			numInnerCells[d] = localMpCells[d] - 4;
+		}
 
 		//M2L in Fourier space
 		#pragma omp for schedule(dynamic,1)
-		for (int mloop = 0 ; mloop < xEnd * yEnd * zEnd; mloop++){
-			m1x = mloop % xEnd  + xStart;
-			m1y = (mloop / xEnd) % yEnd + yStart;
-			m1z = mloop / (xEnd * yEnd) + zStart;
-			if(doHalos and ((m1x >= 4 and m1x >= 4 and m1z >= 4 and m1x < localMpCells[0] - 4 and m1y < localMpCells[1] - 4 and m1z < localMpCells[2] -4) or (
-					m1z < 2 or m1z >= localMpCells[2] - 2 or m1y < 2 or m1y >= localMpCells[1] - 2 or m1x < 2 or m1x >= localMpCells[0] - 2))){ // either inner or halo cell
+		for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
+			m1x = mloop % numInnerCells[0]  + 2;
+			m1y = (mloop / numInnerCells[0]) % numInnerCells[1] + 2;
+			m1z = mloop / (numInnerCells[0] * numInnerCells[1]) + 2;
+			if(doHalos and (m1x >= 4 and m1x >= 4 and m1z >= 4 and m1x < localMpCells[0] - 4 and m1y < localMpCells[1] - 4 and m1z < localMpCells[2] -4))
+					//or (m1z < 2 or m1z >= localMpCells[2] - 2 or m1y < 2 or m1y >= localMpCells[1] - 2 or m1x < 2 or m1x >= localMpCells[0] - 2))) //cannot be halo cell anymore
+			{ // either inner or halo cell
 				continue;
 			}
 
@@ -1510,10 +1514,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 
 		//Finalize FFT
 		if(doHalos){
-			int numInnerCells[3];
-			for(int d = 0; d < 3; d++){
-				numInnerCells[d] = localMpCells[d] - 4;
-			}
+
 #pragma omp for schedule(dynamic,1)
 			for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
 				m1x = mloop % numInnerCells[0]  + 2;
