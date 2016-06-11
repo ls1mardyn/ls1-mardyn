@@ -846,19 +846,15 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, Vector
 		int yEnd = localMpCells[1] - 2 - yStart;
 		int zEnd = localMpCells[2] - 2 - zStart;
 
-		if(doHalos){ //in this case only iterate over contributions from halo cells
-			xStart = yStart = zStart = 0;
-			xEnd = localMpCells[0];
-			yEnd = localMpCells[1];
-			zEnd = localMpCells[2];
-		}
+
 		#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < xEnd * yEnd * zEnd; mloop++){
 			m1x = mloop % xEnd  + xStart;
 			m1y = (mloop / xEnd) % yEnd + yStart;
 			m1z = mloop / (xEnd * yEnd) + zStart;
-			if(doHalos and ((m1x >= 4 and m1x >= 4 and m1z >= 4 and m1x < localMpCells[0] - 4 and m1y < localMpCells[1] - 4 and m1z < localMpCells[2] -4) or (
-					m1z < 2 or m1z >= localMpCells[2] - 2 or m1y < 2 or m1y >= localMpCells[1] - 2 or m1x < 2 or m1x >= localMpCells[0] - 2))){ // either inner or halo cell
+			if(doHalos and (m1x >= 4 and m1x >= 4 and m1z >= 4 and m1x < localMpCells[0] - 4 and m1y < localMpCells[1] - 4 and m1z < localMpCells[2] -4)
+					//or (m1z < 2 or m1z >= localMpCells[2] - 2 or m1y < 2 or m1y >= localMpCells[1] - 2 or m1x < 2 or m1x >= localMpCells[0] - 2)) //cannot be halo cell
+					){ // either inner or halo cell
 				continue;
 			}
 
