@@ -381,9 +381,9 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	// P2M
 	_leafContainer->traverseCellPairs(*cp);
 
-	if(_maxLevel == _globalLevel){
-		AllReduceMultipoleMoments();
-	}
+//	if(_maxLevel == _globalLevel){
+//		AllReduceMultipoleMoments();
+//	}
 
 	_timerCombineMpCellGlobal.start();
 
@@ -722,6 +722,9 @@ void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, Vector3<
 				(*mpCellCurLevel)[curLevel][m1].multipole.addMultipoleParticle(_mpCellLocal[curLevelp1][m2].multipole);
 
 			} // iDir closed
+			if(curLevel == _globalLevel){
+				(*mpCellCurLevel)[curLevel][m1].occ++; //ensure that complete subtree is never considered to be empty
+			}
 		} // mloop closed
 	}
 }
@@ -1130,8 +1133,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		//Initialize FFT
 #pragma omp for schedule(dynamic,1)
 		for (m1 = loop_min; m1 < loop_max; m1++) {
-			if (_mpCellGlobalTop[curLevel][m1].occ == 0)
-				continue;
+//			if (_mpCellGlobalTop[curLevel][m1].occ == 0)
+//				continue;
 
 			radius = _mpCellGlobalTop[curLevel][m1].local.getRadius();
 			FFTAccelerableExpansion& source =
@@ -1192,8 +1195,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 							continue;
 						m2 = (m22z * mpCells + m22y) * mpCells + m22x;
 
-						if (_mpCellGlobalTop[curLevel][m2].occ == 0)
+#ifndef ENABLE_MPI
+						if (_mpCellGlobalTop[curLevel][m2].occ == 0){
 							continue;
+						}
+#endif
 
 						if (UseM2L_2way) {
 							if (m1 > m2)
@@ -1325,7 +1331,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		int yEnd = localMpCells[1] - 2 - yStart;
 		int zEnd = localMpCells[2] - 2 - zStart;
 
-		if(doHalos){ //in this case only iterate over halo values
+		if(doHalos){ //in this case also iterate over halo values
 			xStart = yStart = zStart = 0;
 			xEnd = localMpCells[0];
 			yEnd = localMpCells[1];
@@ -1366,7 +1372,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 			m1x = mloop % numInnerCells[0]  + 2;
 			m1y = (mloop / numInnerCells[0]) % numInnerCells[1] + 2;
 			m1z = mloop / (numInnerCells[0] * numInnerCells[1]) + 2;
-			if(doHalos and (m1x >= 4 and m1x >= 4 and m1z >= 4 and m1x < localMpCells[0] - 4 and m1y < localMpCells[1] - 4 and m1z < localMpCells[2] -4))
+			if(doHalos and (m1x >= 4 and m1y >= 4 and m1z >= 4 and m1x < localMpCells[0] - 4 and m1y < localMpCells[1] - 4 and m1z < localMpCells[2] -4))
 					//or (m1z < 2 or m1z >= localMpCells[2] - 2 or m1y < 2 or m1y >= localMpCells[1] - 2 or m1x < 2 or m1x >= localMpCells[0] - 2))) //cannot be halo cell anymore
 			{ // either inner or halo cell
 				continue;
