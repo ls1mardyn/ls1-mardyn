@@ -1110,11 +1110,16 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 			accept = mu->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
 			if (accept)
-				global_log->debug() << "r" << mu->rank() << "d" << m->id()
-						<< endl;
+			{
+				cout << "r" << mu->rank() << "d" << m->id()
+				     << endl;
+				cout.flush();
+			}
+			/*
 			else
-				global_log->debug() << "   (r" << mu->rank() << "-d" << m->id()
-						<< ")" << endl;
+				cout << "   (r" << mu->rank() << "-d" << m->id()
+				     << ")" << endl;
+			*/
 #endif
 			if (accept) {
 				// m->upd_cache(); TODO what to do here? somebody deleted the method "upd_cache"!!! why???
@@ -1194,10 +1199,13 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 			accept = mu->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG
-			/*
 			if (accept)
+			{
 				cout << "r" << mu->rank() << "i" << mit->id()
 						<< ")" << endl;
+				cout.flush();
+			}
+			/*
 			else
 				cout << "   (r" << mu->rank() << "-i"
 						<< mit->id() << ")" << endl;
