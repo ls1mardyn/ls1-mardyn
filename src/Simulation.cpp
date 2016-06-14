@@ -934,6 +934,24 @@ void Simulation::simulate() {
 
 
 
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		  * realignment tools borrowed from Martin Horsch
+		  * For the actual shift the halo MUST be present!
+		  */
+		
+		if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			_domain->realign(_moleculeContainer);
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			cout <<"particles after realign(), halo present: " << particleNoTest<< "\n";
+#endif
+#endif
+		}
+
 
 
 		if(_wall && _applyWallFun){
@@ -980,24 +998,6 @@ void Simulation::simulate() {
 
 				j++;
 			}
-		}
-
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		  * realignment tools borrowed from Martin Horsch
-		  * For the actual shift the halo MUST be present!
-		  */
-		
-		if(_doAlignCentre && !(_simstep % _alignmentInterval))
-		{
-			_domain->realign(_moleculeContainer);
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
-			global_log->info()<<"particles after realign(), halo present:" << particleNoTest<< "\n";
-#endif
-#endif
 		}
 		
 		if(_simstep >= _initStatistics)

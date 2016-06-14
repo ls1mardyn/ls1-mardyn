@@ -718,6 +718,8 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 	long int unID;
 	double mv2, Iw2;
 	unID = 0;
+	unsigned lNin = 0;
+	unsigned lNout = 0;
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
 		cid = thismol->componentid();
@@ -730,10 +732,8 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 			double distFor_unID = pow((thismol->r(0)- this->_universalCentre[0]),2.0) + pow((thismol->r(2)- this->_universalCentre[2]),2.0);
 			if(this->_universalCylindricalGeometry && distFor_unID <= this->_universalR2max){
 				unID = this->unID(thismol->r(0), thismol->r(1), thismol->r(2));
-				if(unID < 0){
-				  global_log->error() << "ERROR: in Domain.cpp/recordProfile: unID < 0!!! Was not calculated in unID() but initialized with -1!\n";
-				}
-			
+				assert(unID >= 0);
+				assert(unID < (this->_universalNProfileUnits[0]*this->_universalNProfileUnits[1]*this->_universalNProfileUnits[2]));
 			}
 			else if(!this->_universalCylindricalGeometry){
 			xun = (unsigned)floor(thismol->r(0) * this->_universalInvProfileUnit[0]);
@@ -743,10 +743,12 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 				+ yun * this->_universalNProfileUnits[2] + zun;
 			}
 			else{
+				lNout++;
 				continue;
 			}
 
 // @TODO: (by Stefan Becker)  differentiation of _localNProfile by the component number cid => _localNProfile[cid][unID]!!!
+			lNin++;
 			this->_localNProfile[unID] += 1.0;
 			for(int d=0; d<3; d++) {
 				this->_localvProfile[d][unID] += thismol->v(d);
@@ -769,6 +771,9 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 		}
 	}
 	this->_globalAccumulatedDatasets++;
+#ifndef NDEBUG
+	cout << "Rank " << this->_localRank << " counted " << lNin << " molecules inside and " << lNout << " outside.\n";
+#endif
 }
 
 void Domain::collectProfile(DomainDecompBase* dode, bool virialProfile)
@@ -1650,11 +1655,11 @@ void Domain::outputCylProfile(const char* prefix, bool virialProfile){
 	   	         // end of header, start of the data-part of the density file 
 	   	         for(unsigned n_phi = 0; n_phi < this->_universalNProfileUnits[0]; n_phi++)
 	   	         {
-	   	        	 rhpr <<"> "<< (n_phi+0.5)/this->_universalInvProfileUnit[0] <<"\n0 \t";
+	   	        	 rhpr <<"# > "<< (n_phi+0.5)/this->_universalInvProfileUnit[0] <<"\n# 0 \t";
 	   	        	 for(unsigned n_r2 = 0; n_r2 < this->_universalNProfileUnits[1]; n_r2++){
 	   	        		 rhpr << 0.5*(sqrt(n_r2+1) + sqrt(n_r2))/sqrt(this->_universalInvProfileUnit[1]) <<"  \t"; // Eintragen der radialen Koordinaten r_i in Header
 	   	        	 }
-	   	        	 rhpr << "\n";
+	   	        	 rhpr << "\n# \n";
 	   	        	for(unsigned n_h = 0; n_h < this->_universalNProfileUnits[2]; n_h++)
 	   	        	{
 
