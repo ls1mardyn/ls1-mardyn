@@ -1117,12 +1117,13 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 						<< ")" << endl;
 #endif
 			if (accept) {
-//				m->upd_cache(); TODO what to do here?
+				// m->upd_cache(); TODO what to do here? somebody deleted the method "upd_cache"!!! why???
 				// reset forces and momenta to zero
 				{
 					double zeroVec[3] = { 0.0, 0.0, 0.0 };
 					m->setF(zeroVec);
 					m->setM(zeroVec);
+					m->setVi(zeroVec);
 				}
 
 				mu->storeMolecule(*m);
@@ -1167,20 +1168,23 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 //			_particles.push_back(tmp);
 
 //			std::list<Molecule>::iterator mit = _particles.end();
-			Molecule * mit = &tmp;
+			Molecule* mit = &tmp;
 			m = &(*mit);
-//			m->upd_cache(); TODO: what to do here?
+			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why???
 			// reset forces and torques to zero
 			if (!mu->isWidom()) {
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
 				m->setF(zeroVec);
 				m->setM(zeroVec);
+				m->setVi(zeroVec);
 			}
 			m->check(nextid);
 #ifndef NDEBUG
-			global_log->debug() << "rank " << mu->rank() << ": insert "
+			/*
+			cout << "rank " << mu->rank() << ": insert "
 					<< m->id() << " at the reduced position (" << ins[0] << "/"
 					<< ins[1] << "/" << ins[2] << ")? " << endl;
+			*/
 #endif
 
 //			unsigned long cellid = this->getCellIndexOfMolecule(m);
@@ -1190,30 +1194,39 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 			accept = mu->decideInsertion(DeltaUpot / T);
 
 #ifndef NDEBUG
+			/*
 			if (accept)
-				global_log->debug() << "r" << mu->rank() << "i" << mit->id()
+				cout << "r" << mu->rank() << "i" << mit->id()
 						<< ")" << endl;
 			else
-				global_log->debug() << "   (r" << mu->rank() << "-i"
+				cout << "   (r" << mu->rank() << "-i"
 						<< mit->id() << ")" << endl;
+			*/
 #endif
 			if (accept) {
 				this->_localInsertionsMinusDeletions++;
+				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				tmp.setVi(zeroVec);
 				addParticle(tmp);
 			} else {
 				// this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
 //				this->_cells[cellid].deleteMolecule(m->id());
-
+				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				mit->setF(zeroVec);
+				mit->setM(zeroVec);
+				mit->setVi(zeroVec);
 				mit->check(m->id());
 //				this->_particles.erase(mit);
 			}
 		}
 	}
-	for (m = this->begin(); m != this->end(); m = this->next()) {
 #ifndef NDEBUG
+	for (m = this->begin(); m != this->end(); m = this->next()) {
+		// cout << *m << "\n";
+		// cout.flush();
 		m->check(m->id());
-#endif
 	}
+#endif
 }
 
 
