@@ -820,7 +820,8 @@ void Simulation::simulate() {
 	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
 	loopTimer.start();
-
+	unsigned particleNoTest = 0;
+	
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
@@ -851,6 +852,24 @@ void Simulation::simulate() {
                 }
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
+		
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		  * realignment tools borrowed from Martin Horsch
+		  * For the actual shift the halo MUST be present!
+		  */
+		
+		if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			_domain->realign(_moleculeContainer);
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			cout <<"particles after realign(), halo present: " << particleNoTest<< "\n";
+#endif
+#endif
+		}
 
 		// activate RDF sampling
 		if ((_simstep >= _initStatistics) && _rdf != NULL) {
@@ -865,7 +884,7 @@ void Simulation::simulate() {
 		 *the halo MUST NOT be present*/
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
-			unsigned particleNoTest = 0;
+			particleNoTest = 0;
                         for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
                         particleNoTest++;
                         global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
@@ -929,27 +948,6 @@ void Simulation::simulate() {
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
-		}
-
-
-
-
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		  * realignment tools borrowed from Martin Horsch
-		  * For the actual shift the halo MUST be present!
-		  */
-		
-		if(_doAlignCentre && !(_simstep % _alignmentInterval))
-		{
-			_domain->realign(_moleculeContainer);
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
-			cout <<"particles after realign(), halo present: " << particleNoTest<< "\n";
-#endif
-#endif
 		}
 
 
