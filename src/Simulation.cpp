@@ -820,7 +820,11 @@ void Simulation::simulate() {
 	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
 	loopTimer.start();
-	
+#ifndef NDEBUG
+#ifndef ENABLE_MPI
+		unsigned particleNoTest;
+#endif
+#endif
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
@@ -857,6 +861,7 @@ void Simulation::simulate() {
 		  * realignment tools borrowed from Martin Horsch
 		  * For the actual shift the halo MUST be present!
 		  */
+
 		
 		if(_doAlignCentre && !(_simstep % _alignmentInterval))
 		{
