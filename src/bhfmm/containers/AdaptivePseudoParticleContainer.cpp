@@ -53,7 +53,7 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 
 
 
-void AdaptivePseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
+void AdaptivePseudoParticleContainer::upwardPass(P2MCellProcessor* /*cp*/) {
 	root->upwardPass();
 }
 
@@ -65,7 +65,7 @@ void AdaptivePseudoParticleContainer::horizontalPass(VectorizedChargeP2PCellProc
 	}
 }
 
-void AdaptivePseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
+void AdaptivePseudoParticleContainer::downwardPass(L2PCellProcessor* /*cp*/) {
 	// L2L and L2P
 	root->downwardPass();
 }
@@ -96,7 +96,7 @@ void AdaptivePseudoParticleContainer::buildHaloTrees(){
 	}	
 }
 
-void AdaptivePseudoParticleContainer::print_stack_op(int op, dtt::DttNode * t, dtt::DttNode * s ){
+void AdaptivePseudoParticleContainer::print_stack_op(int op, dtt::DttNode * /*t*/, dtt::DttNode * /*s*/ ){
 	if(!debug){ return; }
 	switch(op){
 		case NO_WORK:

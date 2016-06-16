@@ -343,11 +343,11 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 	return N;
 }
 
-void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
+void LinkedCells::traverseNonInnermostCells(CellProcessor& /*cellProcessor*/){
 	throw "Not yet implemented.";
 }
 
-void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount){
+void LinkedCells::traversePartialInnermostCells(CellProcessor& /*cellProcessor*/, unsigned int /*stage*/, int /*stageCount*/){
 	throw "Not yet implemented.";
 }
 
@@ -731,7 +731,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 	}
 }
 
-int LinkedCells::countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR)
+int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR)
 {
         int m1neigh = 0;
         vector<long int>::iterator neighbourOffsetsIter;
@@ -776,7 +776,7 @@ unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* com
    return ce->communicateNumCavities(comm);
 }
 
-void LinkedCells::cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor)
+void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, CellProcessor& cellProcessor)
 {
    ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
    map<unsigned long, Molecule*>* pc = ce->particleContainer();
@@ -891,8 +891,9 @@ void LinkedCells::initializeCells() {
 
 							if (typ == 0)
 								assert(cell.isHaloCell());
-							else
-								; /* assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
+							else{
+								 /* assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
+							}
 #endif
 
 							_borderCellIndices[dim][dir][typ].push_back(
@@ -1021,7 +1022,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 	}
 }
 
-double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
+double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 		Molecule* m1, CellProcessor& cellProcessor) {
 
 	// TODO: this will modify the forces on the (real) molecules, no?

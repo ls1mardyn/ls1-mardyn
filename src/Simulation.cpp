@@ -820,8 +820,8 @@ void Simulation::simulate() {
 	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
 	loopTimer.start();
-	unsigned particleNoTest = 0;
 	
+
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
@@ -863,6 +863,7 @@ void Simulation::simulate() {
 			_domain->realign(_moleculeContainer);
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
+			unsigned particleNoTest = 0;
 			particleNoTest = 0;
 			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
 			particleNoTest++;

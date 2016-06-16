@@ -66,8 +66,8 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 
 }
 
-void VectorizationTuner::initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain) {
+void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
@@ -185,8 +185,9 @@ void VectorizationTuner::iteratePair(Timer timer, long long int numRepetitions,
 	timer.reset();
 }
 
-void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
-		double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero){
+void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig,
+		double& gflopsPairBig, double& /*gflopsOwnNormal*/, double& /*gflopsPairNormalFace*/, double& /*gflopsPairNormalEdge*/,
+		double& /*gflopsPairNormalCorner*/, double& gflopsOwnZero, double& gflopsPairZero) {
 
 
 	// get (first) component
@@ -207,8 +208,8 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	double BoxMin[3] = {0., 0., 0.};
 	double BoxMax[3] = {1., 1., 1.};
 	double dirxplus[3] = {1., 0., 0.};
-	double diryplus[3] = {0., 1., 0.};
-	double dirzplus[3] = {0., 0., 1.};
+	//double diryplus[3] = {0., 1., 0.};
+	//double dirzplus[3] = {0., 0., 1.};
 
 	Timer timer;
 
@@ -407,7 +408,8 @@ void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double box
 }
 
 
-void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, unsigned int numMols) {
+void VectorizationTuner::initNormalRandomMolecules(double /*boxMin*/[3], double /*boxMax*/[3], Component& comp,
+		ParticleCell& cell1, ParticleCell& /*cell2*/, unsigned int numMols) {
 //TODO: currently only cell 1
 //TODO: does not really have/need/can_use Bmax, Bmin - is normal dist. proper???
 

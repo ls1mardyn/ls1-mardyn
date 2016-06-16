@@ -48,7 +48,7 @@ void VectorizedChargeP2PCellProcessor::printTimers() {
 }
 
 
-void VectorizedChargeP2PCellProcessor::initTraversal(const size_t numCells) {
+void VectorizedChargeP2PCellProcessor::initTraversal(const size_t /*numCells*/) {
 	_timer.start();
 	_virial = 0.0;
 	_upotXpoles = 0.0;
@@ -154,10 +154,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 	size_t iCharges = 0;
 	size_t numMols = molecules.size();
 	for (size_t m = 0; m < numMols; ++m) {
-		const size_t mol_ljc_num = molecules[m]->numLJcenters();
 		const size_t mol_charges_num = molecules[m]->numCharges();
-		const size_t mol_dipoles_num = molecules[m]->numDipoles();
-		const size_t mol_quadrupoles_num = molecules[m]->numQuadrupoles();
 
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
@@ -243,7 +240,8 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 		}
 	}
 
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 template<class ForcePolicy>
 vcp_mask_vec
 inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
@@ -484,6 +482,7 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 	return counter>0?VCP_SIMD_ONESVM:VCP_SIMD_ZEROVM;//do not compute stuff if nothing needs to be computed.
 #endif
 }
+#pragma GCC diagnostic pop
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
@@ -531,7 +530,6 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	vcp_double_vec sum_upotXpoles = VCP_SIMD_ZEROV;
 	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
 
-	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
 	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
 
 	/*

@@ -61,21 +61,21 @@ private:
 	// helper classes to avoid code duplication
 	class l_m {
 	public:
-		inline static int sum(int l, int m, int k) {
+		inline static int sum(int l, int m, int /*k*/) {
 			return l + m;
 		}
 	};
 
 	class l_k {
 	public:
-		inline static int sum(int l, int m, int k) {
+		inline static int sum(int l, int /*m*/, int k) {
 			return l + k;
 		}
 	};
 
 	class m_k {
 	public:
-		inline static int sum(int l, int m, int k) {
+		inline static int sum(int /*l*/, int m, int k) {
 			return m + k;
 		}
 	};

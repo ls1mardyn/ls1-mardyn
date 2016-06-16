@@ -170,7 +170,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	}
 }
 
-void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain * domain) {
 
 //	if(_neighboursInitialized) {
 //		return;

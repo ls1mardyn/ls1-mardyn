@@ -79,7 +79,7 @@ int DomainDecompBase::getNonBlockingStageCount(){
 	return -1;
 }
 
-bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain){
+bool DomainDecompBase::queryBalanceAndExchangeNonBlocking(bool /*forceRebalancing*/, ParticleContainer* /*moleculeContainer*/, Domain* /*domain*/){
 	return false;
 }
 
@@ -99,7 +99,7 @@ bool DomainDecompBase::procOwnsPos(double x, double y, double z, Domain* domain)
 		return true;
 }
 
-double DomainDecompBase::getBoundingBoxMin(int dimension, Domain* domain) {
+double DomainDecompBase::getBoundingBoxMin(int /*dimension*/, Domain* /*domain*/) {
 	return 0.0;
 }
 double DomainDecompBase::getBoundingBoxMax(int dimension, Domain* domain) {

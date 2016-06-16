@@ -312,7 +312,7 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 
 
 
-void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells, int& curLevel){
+void UniformPseudoParticleContainer::CombineMpCell(double */*cellWid*/, int& mpCells, int& curLevel){
 	int iDir, m1=0, m1x, m1y, m1z, m2=0;
 	int m2v[3] = {0, 0, 0};
 	int mpCellsN=2*mpCells;
@@ -845,7 +845,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 } // GatherWellSepLo_FFT_template closed
 #endif /* FMM_FFT */
 
-void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCells, int& curLevel){
+void UniformPseudoParticleContainer::PropagateCellLo(double */*cellWid*/, int mpCells, int& curLevel){
 	_timerPropagateCellLo.start();
 	int m1v[3];
 	int m2v[3];

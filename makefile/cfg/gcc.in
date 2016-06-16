@@ -21,10 +21,10 @@ DEPMODE = gcc3
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -Weffc++ -g -ggdb
+CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -g -ggdb -Weffc++ 
 LINKFLAGS_SEQ_DEBUG = 
 # RELEASE
-CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -Werror -DNDEBUG
+CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -Wextra -Werror -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
 # COVERAGE
 CXXFLAGS_SEQ_COVERAGE  = $(CXXFLAGS_SEQ_RELEASE) --coverage
@@ -36,10 +36,10 @@ LINKFLAGS_SEQ_PROFILE = $(LINKFLAGS_SEQ_RELEASE) -pg
 # PAR
 #########################################
 # DEBUG
-CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -Weffc++ -g -ggdb -DENABLE_MPI
+CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -g -ggdb -DENABLE_MPI -Weffc++ 
 LINKFLAGS_PAR_DEBUG =
 # RELEASE
-CXXFLAGS_PAR_RELEASE  = -O3 -Wall -Werror -DNDEBUG -DENABLE_MPI
+CXXFLAGS_PAR_RELEASE  = -O3 -Wall -Wextra -Werror -DNDEBUG -DENABLE_MPI
 LINKFLAGS_PAR_RELEASE =
 # COVERAGE
 CXXFLAGS_PAR_COVERAGE  = $(CXXFLAGS_PAR_RELEASE) --coverage

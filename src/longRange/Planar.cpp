@@ -15,7 +15,7 @@
 using namespace std;
 using Log::global_log;
 
-Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation){
+Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation){
 	cutoff=cutoffLJ; 
 	_domain = domain;
 	_domainDecomposition = domainDecomposition;

@@ -484,7 +484,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 }
 
 /** @brief Calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered) */
-inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
+inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*/[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
 {
 	double f[3];
 	double u;

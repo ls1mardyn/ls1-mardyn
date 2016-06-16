@@ -9,7 +9,7 @@ Mirror::Mirror(){}
 
 Mirror::~Mirror(){}
 
-void Mirror::initialize(const std::vector<Component>* components, double in_yMirr, double in_forceConstant)
+void Mirror::initialize(const std::vector<Component>* /*components*/, double in_yMirr, double in_forceConstant)
 {
   global_log->info() << "Initializing the mirror function.\n";
   this->_yMirr = in_yMirr;
@@ -17,7 +17,7 @@ void Mirror::initialize(const std::vector<Component>* components, double in_yMir
        
 }
 
-void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* domain)
+void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* /*domain*/)
 {
 
   double regionLowCorner[3], regionHighCorner[3];

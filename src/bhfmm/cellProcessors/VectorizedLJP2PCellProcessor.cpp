@@ -174,7 +174,8 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 		}
 	}
 
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 template<class ForcePolicy>
 vcp_mask_vec
 inline VectorizedLJP2PCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
@@ -415,6 +416,7 @@ inline VectorizedLJP2PCellProcessor::calcDistLookup (const CellDataSoA & soa1, c
 	return counter>0?VCP_SIMD_ONESVM:VCP_SIMD_ZEROVM;//do not compute stuff if nothing needs to be computed.
 #endif
 }
+#pragma GCC diagnostic pop
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
@@ -462,8 +464,6 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
 
 	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
-	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
-	const vcp_double_vec epsRFInvrc3 = vcp_simd_broadcast(&_epsRFInvrc3);
 
 	/*
 	 *  Here different end values for the loops are defined. For loops, which do not vectorize over the last (possibly "uneven") amount of indices, the normal values are computed. These mark the end of the vectorized part.

@@ -52,8 +52,13 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
-        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) { exit(0); return 0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
+		return 0.0;
+	}
+	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) {
+		exit(0);
+		return 0;
+	}
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -283,7 +288,7 @@ private:
 			return m_r2 < rc2;
 		}
 
-		inline static size_t InitJ (const size_t i)
+		inline static size_t InitJ (const size_t /*i*/)
 		{
 			return 0;
 		}
@@ -300,7 +305,7 @@ private:
 
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-				, vcp_mask_vec& j_mask
+				, vcp_mask_vec& /*j_mask*/
 #endif
 				)
 		{
@@ -311,7 +316,7 @@ private:
 
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-		inline static vcp_mask_vec InitJ_Mask (const size_t i)
+		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 		{
 			return VCP_SIMD_ZEROVM;//totally unimportant, since not used...
 		}

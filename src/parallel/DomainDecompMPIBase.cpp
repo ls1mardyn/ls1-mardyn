@@ -170,7 +170,7 @@ void DomainDecompMPIBase::initExchangeMoleculesMPI1D(
 
 void DomainDecompMPIBase::finalizeExchangeMoleculesMPI1D(
 		ParticleContainer* moleculeContainer, Domain* /*domain*/,
-		MessageType msgType, bool removeRecvDuplicates, unsigned short d) {
+		MessageType /*msgType*/, bool removeRecvDuplicates, unsigned short d) {
 	if (_coversWholeDomain[d]) {
 		return;
 	}

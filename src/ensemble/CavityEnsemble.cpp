@@ -266,7 +266,7 @@ bool CavityEnsemble::decideActivity(unsigned neighbours, unsigned long tmid)
    return isActive;
 }
 
-bool CavityEnsemble::decideActivity(double uPotTilde, unsigned long tmid)
+bool CavityEnsemble::decideActivity(double /*uPotTilde*/, unsigned long tmid)
 {
    /*** ADD CAVITY ENSEMBLE ***/
    

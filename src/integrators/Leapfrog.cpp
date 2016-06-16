@@ -46,7 +46,7 @@ void Leapfrog::eventNewTimestep(ParticleContainer* molCont, Domain* domain) {
 	}
 }
 
-void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
+void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 	if (this->_state == STATE_NEW_TIMESTEP) {
 		Molecule* tempMolecule;
 		// double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
@@ -108,7 +108,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	}
 }
 
-void Leapfrog::transition3to1(ParticleContainer* molCont, Domain* domain) {
+void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/) {
 	if (this->_state == STATE_POST_FORCE_CALCULATION) {
 		this->_state = STATE_NEW_TIMESTEP;
 	}

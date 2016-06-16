@@ -17,8 +17,8 @@ GammaWriter::GammaWriter(unsigned long writeFrequency, string outputPrefix)
 
 GammaWriter::~GammaWriter(){}
 
-void GammaWriter::initOutput(ParticleContainer* particleContainer,
-			      DomainDecompBase* domainDecomp, Domain* domain){
+void GammaWriter::initOutput(ParticleContainer* /*particleContainer*/,
+			      DomainDecompBase* domainDecomp, Domain* /*domain*/){
 	 
 	// initialize result file
 	string resultfile(_outputPrefix+".gamma");
@@ -33,7 +33,7 @@ void GammaWriter::initOutput(ParticleContainer* particleContainer,
 }
 
 void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-			     unsigned long simstep, std::list<ChemicalPotential>* lmu, map<unsigned, CavityEnsemble>* mcav ) 
+			     unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/ )
 {
 	domain->calculateGamma(particleContainer,domainDecomp);
 	if((domainDecomp->getRank() == 0) && (simstep % _writeFrequency == 0)){
@@ -46,7 +46,7 @@ void GammaWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBa
 	}
 }
 
-void GammaWriter::finishOutput(ParticleContainer* particleContainer,
-				DomainDecompBase* domainDecomp, Domain* domain){
+void GammaWriter::finishOutput(ParticleContainer* /*particleContainer*/,
+				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
 	_gammaStream.close();
 }

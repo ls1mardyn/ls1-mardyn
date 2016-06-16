@@ -52,8 +52,8 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
-        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) { exit(0); return 0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
+        int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) { exit(0); return 0; }
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -172,7 +172,7 @@ private:
 		 * @param rc2
 		 * @return
 		 */
-		inline static bool Condition(double m_r2, double rc2)
+		inline static bool Condition(double m_r2, double /*rc2*/)
 		{
 			// If m_r2 == 0, it has to be 2 LJ centers in the same molecule
 			// (or 2 molecules are at the same location). These are ignored.
@@ -201,7 +201,7 @@ private:
 		}
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
+		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& /*rc2*/, vcp_mask_vec& j_mask)
 		{
 			// no cutoff radius anymore, but check for m_r2=0
 			vcp_mask_vec result = vcp_simd_and( vcp_simd_neq(m_r2, VCP_SIMD_ZEROV), j_mask);
@@ -228,13 +228,13 @@ private:
 	#endif
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 		// Erstellen der Bitmaske, analog zu Condition oben
-		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
+		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec /*rc2*/)
 		{
 			return vcp_simd_neq(m_r2, VCP_SIMD_ZEROV); // no cutoff radius anymore, but check for m_r2=0
 			//OLD:  return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
 		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
-		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2)
+		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec /*rc2*/)
 		{
 			return VCP_SIMD_ONESVM; // no cutoff radius anymore, in a single cell, there cannot be an distance of 0 for the novec case
 			//OLD: return vcp_simd_lt(m_r2, rc2);
@@ -248,13 +248,13 @@ private:
 	class CellPairPolicy_ {
 	public:
 
-		inline static bool Condition(double m_r2, double rc2)
+		inline static bool Condition(double m_r2, double /*rc2*/)
 		{
 			return (m_r2 != 0.0);
 			// OLD: return m_r2 < rc2;
 		}
 
-		inline static size_t InitJ (const size_t i)
+		inline static size_t InitJ (const size_t /*i*/)
 		{
 			return 0;
 		}
@@ -269,9 +269,9 @@ private:
 			return false;
 		}
 
-		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2
+		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& /*rc2*/
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-				, vcp_mask_vec& j_mask
+				, vcp_mask_vec& /*j_mask*/
 #endif
 				)
 		{
@@ -281,7 +281,7 @@ private:
 
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-		inline static vcp_mask_vec InitJ_Mask (const size_t i)
+		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 		{
 			return VCP_SIMD_ZEROVM;//totally unimportant, since not used...
 		}

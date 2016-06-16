@@ -22,7 +22,7 @@ public:
 	AdaptivePseudoParticleContainer(double domainLength[3], int threshold,
 			int orderOfExpansions, bool periodic = true) :
 			PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic), _threshold(
-					threshold), root(0) {
+					threshold), root(0), halo_node(0), _subdivisionFactor(0) {
 		assert(_threshold > 0);
 		for (int i = 0; i < 3; i++) {
 			_domainLength[i] = domainLength[i];
@@ -48,8 +48,8 @@ public:
 	void horizontalPass(VectorizedChargeP2PCellProcessor * cp);
 	void downwardPass(L2PCellProcessor *cp);
 
-  void processMultipole(ParticleCell& cell){}
-  void processFarField(ParticleCell& cell){}
+  void processMultipole(ParticleCell& /*cell*/){}
+  void processFarField(ParticleCell& /*cell*/){}
   void processTree(){}
   void printTimers(){};
 private:	

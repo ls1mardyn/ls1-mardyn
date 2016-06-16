@@ -70,6 +70,9 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 #endif
 }
 
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 /**
  * unpacks shift6 and saves it in an vcp_double_vec (for mic+avx2: use gather)
  * @param shift6 place to store it
@@ -118,7 +121,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
 }
-
+#pragma GCC diagnostic pop
 
 
 /**

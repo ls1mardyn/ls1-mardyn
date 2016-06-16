@@ -51,9 +51,9 @@ void CavityWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void CavityWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+void CavityWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
 
-void CavityWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu, map<unsigned, CavityEnsemble>* mcav ) {
+void CavityWriter::doOutput( ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/, unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* mcav ) {
 	if( simstep % _writeFrequency == 0) {
                 map<unsigned, CavityEnsemble>::iterator ceit;
            
@@ -109,4 +109,4 @@ void CavityWriter::doOutput( ParticleContainer* particleContainer, DomainDecompB
 	}
 }
 
-void CavityWriter::finishOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain ) {}
+void CavityWriter::finishOutput( ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/ ) {}

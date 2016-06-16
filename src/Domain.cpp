@@ -1226,7 +1226,7 @@ unsigned Domain::getNumberOfComponents(){
   return _simulation.getEnsemble()->components()->size();
 }
 
-void Domain::submitDU(unsigned cid, double DU, double* r)
+void Domain::submitDU(unsigned /*cid*/, double DU, double* r)
 {
    unsigned xun, yun, zun;
    xun = (unsigned)floor(r[0] * this->_universalInvProfileUnit[0]);
@@ -1464,7 +1464,7 @@ void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer*
 
 // no y-shift will be determined. edited by Michaela Heier
 void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction){
+			     double /*fraction*/){
 			        // keep in mind: variables declared as static are initialized only ONCE!
    //static unsigned timesCalled = 0;
    //static double initialCentreOfMassY;
