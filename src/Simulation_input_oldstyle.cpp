@@ -162,7 +162,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				getline(inputfilestream, line);
 				stringstream lineStream(line);
 				lineStream >> updateFrequency >> fullSearchThreshold;
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, updateFrequency, fullSearchThreshold);
+				bool hetero=false, cutsmaller=false, forceRatio=false;
+				if(line.find("hetero") != string::npos){
+					hetero=true;
+				}
+				if(line.find("cutSmaller") != string::npos){
+					cutsmaller=true;  // allow domain to be split not only along biggest side
+				}
+				if(line.find("forceRatio") != string::npos){
+					forceRatio=true;  // allow domain to be split not only along biggest side
+				}
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, updateFrequency,
+						fullSearchThreshold, hetero, cutsmaller, forceRatio);
 			}
 #endif
 		} else if (token == "datastructure") {

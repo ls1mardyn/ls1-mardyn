@@ -188,6 +188,7 @@ help:
 	@echo "make depend      generate makefile dependency list"
 	@echo "make lcov        create code coverage information"
 	@echo "make lcov_clean  reset profile data"
+	@echo "make test  		run the unit tests"
 
 help_vect:
 	@echo "Vectorization help:"
@@ -268,6 +269,9 @@ lcov:
 
 lcov_clean:
 	 lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
+
+test:
+	$(SRCDIR)/MarDyn -t -d $(SRCDIR)/../test_input/
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
