@@ -856,26 +856,6 @@ void Simulation::simulate() {
                 }
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
-		
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		  * realignment tools borrowed from Martin Horsch
-		  * For the actual shift the halo MUST be present!
-		  */
-
-		
-		if(_doAlignCentre && !(_simstep % _alignmentInterval))
-		{
-			_domain->realign(_moleculeContainer);
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-			unsigned particleNoTest = 0;
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
-			cout <<"particles after realign(), halo present: " << particleNoTest<< "\n";
-#endif
-#endif
-		}
 
 		// activate RDF sampling
 		if ((_simstep >= _initStatistics) && _rdf != NULL) {
@@ -1157,6 +1137,7 @@ void Simulation::simulate() {
         }
         // <-- TEMPERATURE_CONTROL
 		
+		
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
@@ -1178,6 +1159,26 @@ void Simulation::simulate() {
 		perStepIoTimer.start();
 
 		output(_simstep);
+		
+		
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		  * realignment tools borrowed from Martin Horsch
+		  * For the actual shift the halo MUST NOT be present!
+		  */
+		if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			_domain->realign(_moleculeContainer);
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			unsigned particleNoTest = 0;
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
+#endif
+#endif
+		}
+		
 		if(_forced_checkpoint_time >= 0 && (decompositionTimer.get_etime() + computationTimer.get_etime()
 				+ ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
