@@ -234,7 +234,7 @@ private:
 			//OLD:  return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
 		}
 #elif VCP_VEC_TYPE==VCP_NOVEC
-		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec /*rc2*/)
+		inline static vcp_mask_vec GetForceMask(vcp_double_vec /*m_r2*/, vcp_double_vec /*rc2*/)
 		{
 			return VCP_SIMD_ONESVM; // no cutoff radius anymore, in a single cell, there cannot be an distance of 0 for the novec case
 			//OLD: return vcp_simd_lt(m_r2, rc2);
