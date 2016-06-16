@@ -974,9 +974,10 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(
 #ifndef NDEBUG
 		if (molecule->r(dim) < _haloBoundingBoxMin[dim]
 				|| molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
-			global_log->error() << "Molecule is outside of bounding box"
+			cout << "Molecule is outside of bounding box"
 					<< endl;
-			global_log->debug() << "Molecule:\n" << *molecule << endl;
+			cout << "Molecule:\n" << *molecule << endl;
+			exit(1);
 		}
 #endif
 //		this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
