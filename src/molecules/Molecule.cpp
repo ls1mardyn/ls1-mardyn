@@ -519,6 +519,8 @@ void Molecule::calcFM() {
  * If that's not available (C99), compare the value with itself. If the value
  * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void Molecule::check(unsigned long id) {
 #ifndef NDEBUG
 	using std::isnan; // C++11 needed
@@ -544,6 +546,7 @@ void Molecule::check(unsigned long id) {
 	}
 #endif
 }
+#pragma GCC diagnostic pop
 
 bool Molecule::isLessThan(const Molecule& m2) const {
 	if (_r[2] < m2.r(2))

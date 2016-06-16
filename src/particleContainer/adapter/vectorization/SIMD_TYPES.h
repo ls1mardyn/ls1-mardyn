@@ -149,6 +149,5 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-variable"
 #include "SIMD_DEFINITIONS.h"
-#pragma GCC diagnostic pop
 
 #endif /* SIMD_TYPES_H */
