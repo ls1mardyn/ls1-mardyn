@@ -729,45 +729,49 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 // by Stefan Becker: enquiry if(_universalCylindricalGeometry) ... implemented
 // possible???: if no cylindrical profile is recorded => permanent calculation (before the "if..." ) of "distFor_unID" slows down the code
 // if the profile is however recorded in cylindrical coordinates, the current implementation is fast (?)   => solution?
-			double distFor_unID = pow((thismol->r(0)- this->_universalCentre[0]),2.0) + pow((thismol->r(2)- this->_universalCentre[2]),2.0);
-			if(this->_universalCylindricalGeometry && distFor_unID <= this->_universalR2max){
-				unID = this->unID(thismol->r(0), thismol->r(1), thismol->r(2));
-				assert(unID >= 0);
-				assert(unID < (this->_universalNProfileUnits[0]*this->_universalNProfileUnits[1]*this->_universalNProfileUnits[2]));
-			}
-			else if(!this->_universalCylindricalGeometry){
-			xun = (unsigned)floor(thismol->r(0) * this->_universalInvProfileUnit[0]);
-			yun = (unsigned)floor(thismol->r(1) * this->_universalInvProfileUnit[1]);
-			zun = (unsigned)floor(thismol->r(2) * this->_universalInvProfileUnit[2]);
-			unID = xun * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
-				+ yun * this->_universalNProfileUnits[2] + zun;
-			}
-			else{
-				lNout++;
-				continue;
+
+			if (this->_universalCylindricalGeometry) {
+				double distFor_unID = pow((thismol->r(0) - this->_universalCentre[0]), 2.0)
+						+ pow((thismol->r(2) - this->_universalCentre[2]), 2.0);
+				if (distFor_unID <= this->_universalR2max) {
+					unID = this->unID(thismol->r(0), thismol->r(1), thismol->r(2));
+					assert(unID >= 0);
+					assert(
+							unID
+									< (this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
+											* this->_universalNProfileUnits[2]));
+				} else {
+					lNout++;
+					continue;
+				}
+			} else {
+				xun = (unsigned) floor(thismol->r(0) * this->_universalInvProfileUnit[0]);
+				yun = (unsigned) floor(thismol->r(1) * this->_universalInvProfileUnit[1]);
+				zun = (unsigned) floor(thismol->r(2) * this->_universalInvProfileUnit[2]);
+				unID = xun * this->_universalNProfileUnits[1] * this->_universalNProfileUnits[2]
+						+ yun * this->_universalNProfileUnits[2] + zun;
 			}
 
 // @TODO: (by Stefan Becker)  differentiation of _localNProfile by the component number cid => _localNProfile[cid][unID]!!!
 			lNin++;
 			this->_localNProfile[unID] += 1.0;
-			for(int d=0; d<3; d++) {
+			for (int d = 0; d < 3; d++) {
 				this->_localvProfile[d][unID] += thismol->v(d);
 			}
-			this->_localDOFProfile[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
-                        
-                        // record _twice_ the total (ordered + unordered) kinetic energy
-                        mv2 = 0.0;
-                        Iw2 = 0.0;
-                        thismol->calculate_mv2_Iw2(mv2, Iw2);
-                        this->_localKineticProfile[unID] += mv2+Iw2;
+			this->_localDOFProfile[unID] += 3.0 + (long double) (thismol->component()->getRotationalDegreesOfFreedom());
 
-                        if(virialProfile)
-                        {
-			   // this->_localPDProfile[unID] += thismol->Vi(1)-0.5*(thismol->Vi(0)+thismol->Vi(2)); // unnecessary redundancy
-			   this->_localPXProfile[unID] += thismol->Vi(0);
-			   this->_localPYProfile[unID] += thismol->Vi(1);
-			   this->_localPZProfile[unID] += thismol->Vi(2);
-                        }
+			// record _twice_ the total (ordered + unordered) kinetic energy
+			mv2 = 0.0;
+			Iw2 = 0.0;
+			thismol->calculate_mv2_Iw2(mv2, Iw2);
+			this->_localKineticProfile[unID] += mv2 + Iw2;
+
+			if (virialProfile) {
+				// this->_localPDProfile[unID] += thismol->Vi(1)-0.5*(thismol->Vi(0)+thismol->Vi(2)); // unnecessary redundancy
+				this->_localPXProfile[unID] += thismol->Vi(0);
+				this->_localPYProfile[unID] += thismol->Vi(1);
+				this->_localPZProfile[unID] += thismol->Vi(2);
+			}
 		}
 	}
 	this->_globalAccumulatedDatasets++;
