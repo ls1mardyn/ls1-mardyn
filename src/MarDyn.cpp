@@ -217,11 +217,11 @@ Values& initOptions(int argc, const char* const argv[], OptionParser& op) {
     op.add_option("-t", "--tests").action("store_true").dest("tests").metavar("T").type("bool").set_default(false).help("unit tests: run built-in unit tests (default: %default)");
     op.add_option("-d", "--test-dir").dest("testDataDirectory") .metavar("STR") .set_default("") .help("unit tests: specify the directory where the in input data required by the tests resides");
 
-	OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
-	dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
-	char const* const pc_choices[] = { "LinkedCells" };
-	dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[1]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
-	op.add_option_group(dgroup);
+	//OptionGroup dgroup = OptionGroup(op, "Developer options", "Advanced options for developers and experienced users.");
+	//dgroup.add_option("--phasespace-file") .metavar("FILE") .help("path to file containing phase space data");
+	//char const* const pc_choices[] = { "LinkedCells" };
+	//dgroup.add_option("--particle-container") .choices(&pc_choices[0], &pc_choices[1]) .set_default(pc_choices[0]) .help("container used for locating nearby particles (default: %default)");
+	//op.add_option_group(dgroup);
 
 	return op.parse_args(argc, argv);
 }
