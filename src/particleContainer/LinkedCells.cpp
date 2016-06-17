@@ -1111,8 +1111,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 #ifndef NDEBUG
 			if (accept)
 			{
-				cout << "r" << mu->rank() << "d" << m->id()
-				     << endl;
+				cout << "r" << mu->rank() << "d" << m->id() << " with energy " << DeltaUpot << endl;
 				cout.flush();
 			}
 			/*
@@ -1175,7 +1174,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 //			std::list<Molecule>::iterator mit = _particles.end();
 			Molecule* mit = &tmp;
 			m = &(*mit);
-			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why???
+			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why??? -- update caches do no longer exist ;)
 			// reset forces and torques to zero
 			if (!mu->isWidom()) {
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
@@ -1201,8 +1200,7 @@ void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
 #ifndef NDEBUG
 			if (accept)
 			{
-				cout << "r" << mu->rank() << "i" << mit->id()
-						<< ")" << endl;
+				cout << "r" << mu->rank() << "i" << mit->id() << " with energy " << DeltaUpot << endl;
 				cout.flush();
 			}
 			/*
