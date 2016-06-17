@@ -539,7 +539,7 @@ void Molecule::check(unsigned long id) {
 	}
 	if(isnan(_Vi[0]) || isnan(_Vi[1]) || isnan(_Vi[2]))
 	{
-	   cout << "\n\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")";
+	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
 	   _Vi[0] = 0.0;
 	   _Vi[1] = 0.0;
 	   _Vi[2] = 0.0;
