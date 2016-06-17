@@ -81,7 +81,7 @@ VectorizedCellProcessor :: ~VectorizedCellProcessor () {
 }
 
 
-void VectorizedCellProcessor::initTraversal(const size_t /*numCells*/) {
+void VectorizedCellProcessor::initTraversal() {
 	_virial = 0.0;
 	_upot6lj = 0.0;
 	_upotXpoles = 0.0;

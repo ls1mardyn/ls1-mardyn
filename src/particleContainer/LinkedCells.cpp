@@ -369,7 +369,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 			<< "; _maxNeighbourOffset=" << _maxNeighbourOffset << endl;
 #endif
 
-	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+	cellProcessor.initTraversal();
 
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (long int cellIndex = 0; cellIndex < (long int) _cells.size();
@@ -740,7 +740,7 @@ int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/,
         unsigned long cellIndex = getCellIndexOfMolecule(m1);
         ParticleCell& currentCell = _cells[cellIndex];
 
-        cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1);
+        cellProcessor.initTraversal();
 
         // extend the window of cells with cache activated
         for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
@@ -1026,8 +1026,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 		Molecule* m1, CellProcessor& cellProcessor) {
 
-	// TODO: this will modify the forces on the (real) molecules, no?
-	// TODO: and the global Upot, Virial, ..., no?
+	double u = 0.0;
 
 	static ParticleCell dummyCell;
 	{
@@ -1046,29 +1045,28 @@ double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 
 	double oldEnergy = global_simulation->getDomain()->getLocalUpot();
 
-	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset + 1 + 1); // one more +1 for the dummyCell
+	cellProcessor.initTraversal();
 
-	cellProcessor.processCellPair(dummyCell, currentCell);
+	u += cellProcessor.processSingleMolecule(m1, currentCell);
 
 	// forward neighbours
 	for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		cellProcessor.processCellPair(dummyCell, neighbourCell);
+		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 	// backward neighbours
 	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
-		cellProcessor.processCellPair(dummyCell, neighbourCell);
+		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 
 	cellProcessor.endTraversal();
-	double newEnergy = global_simulation->getDomain()->getLocalUpot();
 
-	return newEnergy - oldEnergy;
+	return u;
 }
 
 int LinkedCells::grandcanonicalBalance(DomainDecompBase* comm) {

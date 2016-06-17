@@ -42,7 +42,7 @@ public:
 	/**
 	 * \brief Reset macroscopic values to 0.0.
 	 */
-	void initTraversal(const size_t numCells);
+	void initTraversal();
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */

@@ -70,7 +70,7 @@ public:
 	/**
 	 * \brief Initializes the internal counters.
 	 */
-	void initTraversal(const size_t);
+	void initTraversal();
 
 	/**
 	 * \brief Only pass through to child.

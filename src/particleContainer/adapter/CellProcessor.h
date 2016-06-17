@@ -50,7 +50,7 @@ public:
 	 *
 	 * @param numCells number of cells in window
 	 */
-	virtual void initTraversal(const size_t numCells) = 0;
+	virtual void initTraversal() = 0;
 
 	/**
 	 * Called before a cell is touched for the first time during an interation.

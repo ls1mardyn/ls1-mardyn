@@ -276,7 +276,7 @@ double normalRandom()
 // pass also second cell as argument, when it comes to that
 void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numRepetitions) {
 
-	cp.initTraversal(1);
+	cp.initTraversal();
 
 	cp.preprocessCell(cell1);
 
@@ -291,7 +291,7 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numR
 void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, int numRepetitions) {
 
 
-	cp.initTraversal(2);
+	cp.initTraversal();
 
 	cp.preprocessCell(cell1);
 	cp.preprocessCell(cell2);

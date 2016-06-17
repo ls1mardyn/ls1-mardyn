@@ -33,7 +33,7 @@ public:
 
 	virtual ~LegacyCellProcessor();
 
-	void initTraversal(const size_t numCells);
+	void initTraversal();
 
 	void preprocessCell(ParticleCell& /*cell*/) {}
 

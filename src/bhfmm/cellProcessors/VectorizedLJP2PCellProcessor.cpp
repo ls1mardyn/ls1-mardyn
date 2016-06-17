@@ -89,12 +89,12 @@ void VectorizedLJP2PCellProcessor::printTimers() {
 }
 
 
-void VectorizedLJP2PCellProcessor::initTraversal(const size_t numCells) {
+void VectorizedLJP2PCellProcessor::initTraversal() {
 	_timer.start();
 	_virial = 0.0;
 	_upot6lj = 0.0;
 
-	global_log->debug() << "VectorizedLJCellProcessor::initTraversal() to " << numCells << " cells." << std::endl;
+	global_log->debug() << "VectorizedLJCellProcessor::initTraversal()." << std::endl;
 }
 
 

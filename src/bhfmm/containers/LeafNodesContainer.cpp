@@ -169,7 +169,7 @@ void LeafNodesContainer::traverseCellPairs(CellProcessor& cellProcessor) {
 	global_log->debug() << "_minNeighbourOffset=" << _minNeighbourOffset << "; _maxNeighbourOffset=" << _maxNeighbourOffset<< endl;
 #endif
 
-	cellProcessor.initTraversal(_maxNeighbourOffset + _minNeighbourOffset +1);
+	cellProcessor.initTraversal();
 	// preprocess all cells
 	for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
 		cellProcessor.preprocessCell(_cells[cellIndex]);

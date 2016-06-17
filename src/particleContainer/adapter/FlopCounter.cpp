@@ -116,7 +116,7 @@ FlopCounter::FlopCounter(double cutoffRadius, double LJCutoffRadius) : CellProce
 		_currentCounts(), _totalFlopCount(0.), _myFlopCount(0.), _synchronized(true){
 }
 
-void FlopCounter::initTraversal(const size_t /*numCells*/) {
+void FlopCounter::initTraversal() {
 	_currentCounts.clear();
 }
 

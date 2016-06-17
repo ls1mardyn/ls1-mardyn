@@ -48,7 +48,7 @@ void VectorizedChargeP2PCellProcessor::printTimers() {
 }
 
 
-void VectorizedChargeP2PCellProcessor::initTraversal(const size_t /*numCells*/) {
+void VectorizedChargeP2PCellProcessor::initTraversal() {
 	_timer.start();
 	_virial = 0.0;
 	_upotXpoles = 0.0;
