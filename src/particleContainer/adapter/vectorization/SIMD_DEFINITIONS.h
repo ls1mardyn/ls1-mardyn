@@ -215,7 +215,7 @@
         static inline vcp_double_vec operator * (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_mul(a, b); }
         static inline vcp_double_vec operator / (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_div(a, b); }
 		#else
-		#pragma message "icc commands skipped, since ICC >= 1600 or "
+		#pragma message "icc commands skipped, since ICC >= 1600 and not MIC"
 		#endif
 	#else
 		#pragma message "icc commands for vectorization not compiled, since no icc detected."
