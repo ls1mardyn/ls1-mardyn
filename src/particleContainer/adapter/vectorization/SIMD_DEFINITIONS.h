@@ -208,13 +208,16 @@
 		//static inline vcp_double_vec operator | (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_or(a, b); }
 		//static inline vcp_double_vec operator ^ (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_xor(a, b); }
 
-#pragma message "icc commands for vectorization."
+		#pragma message "icc commands for vectorization compiled."
         static inline vcp_double_vec operator + (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_add(a, b); }
         static inline vcp_double_vec operator - (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_sub(a, b); }
         static inline vcp_double_vec operator * (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_mul(a, b); }
         static inline vcp_double_vec operator / (const vcp_double_vec& a, const vcp_double_vec& b) { return vcp_simd_div(a, b); }
-
+	#else
+		#pragma message "icc commands for vectorization not compiled, since no icc detected."
 	#endif
+#else
+	#pragma message "icc commands for vectorization skipped, since novec"
 #endif
 
 /**
