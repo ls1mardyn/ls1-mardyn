@@ -161,7 +161,7 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 }
 
 int DomainDecomposition::getNonBlockingStageCount(){
-	return 3;
+	return 3;  // three stages: first x, then y, then z
 }
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
