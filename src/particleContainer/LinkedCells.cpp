@@ -788,7 +788,7 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
       Molecule* m1 = pcit->second;
       unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
       unsigned long m1id = pcit->first;
-      assert(m1id = m1->id());
+      assert(m1id == m1->id());
       ce->decideActivity(neigh, m1id);
    }
 }
@@ -798,6 +798,7 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
 //################################################
 
 void LinkedCells::initializeCells() {
+	_innerMostCellIndices.clear();
 	_innerCellIndices.clear();
 	_boundaryCellIndices.clear();
 	_haloCellIndices.clear();
@@ -824,6 +825,7 @@ void LinkedCells::initializeCells() {
 				cell.skipCellFromHaloRegion();
 				cell.skipCellFromBoundaryRegion();
 				cell.skipCellFromInnerRegion();
+				cell.skipCellFromInnerMostRegion();
 
 				cell.setBoxMin(cellBoxMin);
 				cell.setBoxMax(cellBoxMax);
@@ -851,9 +853,15 @@ void LinkedCells::initializeCells() {
 										- 2 * _haloWidthInNumCells[2]) {
 					cell.assignCellToBoundaryRegion();
 					_boundaryCellIndices.push_back(cellIndex);
-				} else {
+				} else if (ix < 3 * _haloWidthInNumCells[0] || iy < 3 * _haloWidthInNumCells[1]
+						|| iz < 3 * _haloWidthInNumCells[2] || ix >= _cellsPerDimension[0] - 3 * _haloWidthInNumCells[0]
+						|| iy >= _cellsPerDimension[1] - 3 * _haloWidthInNumCells[1]
+						|| iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
 					cell.assignCellToInnerRegion();
 					_innerCellIndices.push_back(cellIndex);
+				} else {
+					cell.assignCellToInnerMostRegion();
+					_innerMostCellIndices.push_back(cellIndex);
 				}
 			}
 		}
