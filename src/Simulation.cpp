@@ -14,6 +14,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
+#include "parallel/NonBlockingMPIMultiStepHandler.h"
 #include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI

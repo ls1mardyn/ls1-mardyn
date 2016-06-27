@@ -8,6 +8,8 @@
 #include "LinkedCellsTest.h"
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
+#include "particleContainer/adapter/CellProcessor.h"
+#include <vector>
 
 TEST_SUITE_REGISTRATION(LinkedCellsTest);
 
@@ -149,3 +151,84 @@ void LinkedCellsTest::testGetHaloBoundaryParticlesDirection() {
 }
 
 #endif /* 0 */
+
+class CellProcessorStub: public CellProcessor {
+public:
+	CellProcessorStub(size_t num_cells) :
+			CellProcessor(0., 0.), _num_cells(num_cells) {
+		_cellProcessCount.assign(num_cells, 0);
+		_cellPairProcessCount.assign(num_cells * num_cells, 0);
+	}
+	virtual void initTraversal() {
+	}
+
+	virtual void preprocessCell(ParticleCell& /*cell*/) {
+	}
+
+	virtual void processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
+		_cellPairProcessCount[_num_cells * cell1.getCellIndex() + cell2.getCellIndex()] += sign;
+		_cellPairProcessCount[_num_cells * cell2.getCellIndex() + cell1.getCellIndex()] += sign;  // newton 3
+	}
+
+	virtual void processCell(ParticleCell& cell) {
+		_cellProcessCount[cell.getCellIndex()] += sign;
+	}
+
+	virtual double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
+		return 0.;
+	}
+
+	virtual int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) {
+		return 0;
+	}
+
+	virtual void postprocessCell(ParticleCell& /*cell*/) {
+	}
+
+	virtual void endTraversal() {
+
+	}
+
+	void checkZero(){
+		for (int i : _cellProcessCount) {
+			ASSERT_EQUAL(i, 0);
+		}
+		for (int i:_cellPairProcessCount) {
+			ASSERT_EQUAL(i,0);
+		}
+	}
+
+	void inverseSign() {
+		sign *= -1;
+	}
+private:
+	std::vector<int> _cellProcessCount;
+	std::vector<int> _cellPairProcessCount;
+	int _num_cells;
+	int sign = 1;
+};
+
+void LinkedCellsTest::testTraversalMethods() {
+	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, 25.);
+	int* boxWidthInNumCells = dynamic_cast<LinkedCells*>(container)->boxWidthInNumCells();
+	int haloWidthInNumCells = container->getHaloWidthNumCells();
+	size_t numCells = (boxWidthInNumCells[0] + 2 * haloWidthInNumCells)
+			* (boxWidthInNumCells[1] + 2 * haloWidthInNumCells) * (boxWidthInNumCells[2] + 2 * haloWidthInNumCells);
+	CellProcessorStub cpStub(numCells);
+
+	container->traverseCells(cpStub);
+	cpStub.inverseSign();
+	container->traversePartialInnermostCells(cpStub, 0, 1);
+	container->traverseNonInnermostCells(cpStub);
+	cpStub.checkZero();
+	cpStub.inverseSign();
+
+	container->traverseCells(cpStub);
+	cpStub.inverseSign();
+	container->traversePartialInnermostCells(cpStub, 0, 3);
+	container->traversePartialInnermostCells(cpStub, 1, 3);
+	container->traversePartialInnermostCells(cpStub, 2, 3);
+	container->traverseNonInnermostCells(cpStub);
+	cpStub.checkZero();
+}

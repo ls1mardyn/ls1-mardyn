@@ -378,7 +378,6 @@ void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, un
 	for (long int cellIndex = lower; cellIndex < upper; cellIndex++) {
 		traverseCell(_innerMostCellIndices[cellIndex], cellProcessor);
 	} // loop over all cells
-
 }
 
 void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProcessor) {
@@ -883,7 +882,9 @@ void LinkedCells::initializeCells() {
 					_innerCellIndices.push_back(cellIndex);
 				} else {
 					cell.assignCellToInnerMostRegion();
+					cell.assignCellToInnerRegion();
 					_innerMostCellIndices.push_back(cellIndex);
+					_innerCellIndices.push_back(cellIndex);
 				}
 			}
 		}

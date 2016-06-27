@@ -54,6 +54,9 @@ endif
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0
 
+# allow acceleration of MPI communication through overlapping communication ?
+ENABLE_OVERLAPPING ?= 0
+
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
@@ -123,6 +126,10 @@ endif
 
 ifeq ($(ENABLE_FMM_FFT),1)
 CXXFLAGS += -DFMM_FFT
+endif
+
+ifeq ($(ENABLE_OVERLAPPING),1)
+CXXFLAGS += -DENABLE_OVERLAPPING
 endif
 
 ifeq ($(PAPI),1)
