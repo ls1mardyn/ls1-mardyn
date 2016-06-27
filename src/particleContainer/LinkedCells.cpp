@@ -343,12 +343,90 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 	return N;
 }
 
-void LinkedCells::traverseNonInnermostCells(CellProcessor& /*cellProcessor*/){
-	throw "Not yet implemented.";
+void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
+	if (_cellsValid == false) {
+		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
+		global_simulation->exit(1);
+	}
+	// loop over all inner cells and calculate forces to forward neighbours
+
+	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+		ParticleCell& currentCell = _cells[cellIndex];
+		if (!currentCell.isInnerMostCell()) {
+			traverseCell(cellIndex, cellProcessor);
+		}
+	} // loop over all cells
 }
 
-void LinkedCells::traversePartialInnermostCells(CellProcessor& /*cellProcessor*/, unsigned int /*stage*/, int /*stageCount*/){
-	throw "Not yet implemented.";
+void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount){
+	if (_cellsValid == false) {
+		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
+		global_simulation->exit(1);
+	}
+
+	// loop over parts of innermost cells and calculate forces to forward neighbours
+	// _innerMostCellIndices
+	const long int lower =  _innerMostCellIndices.size() * stage / stageCount;
+	const long int upper =  _innerMostCellIndices.size() * (stage+1) / stageCount;
+
+#ifndef NDEBUG
+	global_log->debug() << "LinkedCells::traversePartialInnermostCells: Processing cells." << endl;
+	global_log->debug() << "lower=" << lower << "; upper="
+			<< upper << endl;
+#endif
+
+	for (long int cellIndex = lower; cellIndex < upper; cellIndex++) {
+		traverseCell(_innerMostCellIndices[cellIndex], cellProcessor);
+	} // loop over all cells
+
+}
+
+void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProcessor) {
+	vector<long int>::iterator neighbourOffsetsIter;
+
+	ParticleCell& currentCell = _cells[cellIndex];
+	if (currentCell.isInnerCell()) {
+		cellProcessor.processCell(currentCell);
+		// loop over all forward neighbours
+		for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+			cellProcessor.processCellPair(currentCell, neighbourCell);
+		}
+	} else if (currentCell.isHaloCell()) {
+		cellProcessor.processCell(currentCell);
+		for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+			long int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
+			if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) ((_cells.size()))))
+				continue;
+
+			ParticleCell& neighbourCell = _cells[neighbourCellIndex];
+			if (!neighbourCell.isHaloCell())
+				continue;
+
+			cellProcessor.processCellPair(currentCell, neighbourCell);
+		}
+	} else
+	// loop over all boundary cells and calculate forces to forward and backward neighbours
+	if (currentCell.isBoundaryCell()) {
+		cellProcessor.processCell(currentCell);
+		// loop over all forward neighbours
+		for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+			cellProcessor.processCellPair(currentCell, neighbourCell);
+		}
+		// loop over all backward neighbours. calculate only forces
+		// to neighbour cells in the halo region, all others already have been calculated
+		for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
+				neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
+			ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
+			if (neighbourCell.isHaloCell()) {
+				cellProcessor.processCellPair(currentCell, neighbourCell);
+			}
+		}
+	} // if ( isBoundaryCell() )
 }
 
 void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
@@ -359,7 +437,6 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		global_simulation->exit(1);
 	}
 
-	vector<long int>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
 	global_log->debug()
@@ -374,62 +451,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (long int cellIndex = 0; cellIndex < (long int) _cells.size();
 			cellIndex++) {
-		ParticleCell& currentCell = _cells[cellIndex];
-
-		if (currentCell.isInnerCell()) {
-			cellProcessor.processCell(currentCell);
-			// loop over all forward neighbours
-			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-					neighbourOffsetsIter != _forwardNeighbourOffsets.end();
-					neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex
-						+ *neighbourOffsetsIter];
-				cellProcessor.processCellPair(currentCell, neighbourCell);
-			}
-		}
-
-		if (currentCell.isHaloCell()) {
-			cellProcessor.processCell(currentCell);
-			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-					neighbourOffsetsIter != _forwardNeighbourOffsets.end();
-					neighbourOffsetsIter++) {
-				long int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
-				if ((neighbourCellIndex < 0)
-						|| (neighbourCellIndex >= (int) (_cells.size())))
-					continue;
-				ParticleCell& neighbourCell = _cells[neighbourCellIndex];
-				if (!neighbourCell.isHaloCell())
-					continue;
-
-				cellProcessor.processCellPair(currentCell, neighbourCell);
-			}
-		}
-
-		// loop over all boundary cells and calculate forces to forward and backward neighbours
-		if (currentCell.isBoundaryCell()) {
-			cellProcessor.processCell(currentCell);
-
-			// loop over all forward neighbours
-			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
-					neighbourOffsetsIter != _forwardNeighbourOffsets.end();
-					neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex
-						+ *neighbourOffsetsIter];
-				cellProcessor.processCellPair(currentCell, neighbourCell);
-			}
-
-			// loop over all backward neighbours. calculate only forces
-			// to neighbour cells in the halo region, all others already have been calculated
-			for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
-					neighbourOffsetsIter != _backwardNeighbourOffsets.end();
-					neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex
-						- *neighbourOffsetsIter];  // minus oder plus?
-				if (neighbourCell.isHaloCell()) {
-					cellProcessor.processCellPair(currentCell, neighbourCell);
-				}
-			}
-		} // if ( isBoundaryCell() )
+		traverseCell(cellIndex, cellProcessor);
 	} // loop over all cells
 
 	cellProcessor.endTraversal();

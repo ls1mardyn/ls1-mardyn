@@ -315,6 +315,14 @@ private:
 	 */
 	MoleculeIterator nextNonEmptyCell();
 
+	/**
+	 * traverses sindle cell
+	 * @param cellIndex
+	 * @param cellProcessor
+	 * @return
+	 */
+	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
+
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
@@ -324,6 +332,7 @@ private:
 
 	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
 #else
+
 	std::vector<ParticleCell>::iterator _cellIterator;
 	std::vector<Molecule*>::iterator _particleIterator;
 #endif
