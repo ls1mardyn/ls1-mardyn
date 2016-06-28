@@ -961,8 +961,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 
 //	assert(cell.isInActiveWindow());
 
-	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
+	int currentParticleCount = cell.getMoleculeCount();
 
 
 	int Occupied = 0;
@@ -970,7 +969,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 	// loop over all particles in the cell
 	for (int i = 0; i < currentParticleCount; i++) {
 		++Occupied;
-		Molecule& molecule1 = *currentCellParticles[i];
+		Molecule& molecule1 = cell.moleculesAt(i);
 		int ni= molecule1.numCharges();
 
 		for(int j=0; j<ni; j++){
@@ -1000,8 +999,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 	int cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1]) * _globalNumCellsPerDim) + cellIndexV[0];
 
 	bhfmm::SolidHarmonicsExpansion leLocal(_maxOrd);
-	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
+	int currentParticleCount = cell.getMoleculeCount();
 	double u = 0;
 	double uSum = 0.0;
 	double f[3] = {0.0, 0.0, 0.0};
@@ -1013,7 +1011,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 
 	// loop over all particles in the cell
 	for (int i = 0; i < currentParticleCount; i++) {
-		Molecule& molecule1 = *currentCellParticles[i];
+		Molecule& molecule1 = cell.moleculesAt(i);
 		int ni= molecule1.numCharges();
 
 		for(int j=0; j<ni; j++){

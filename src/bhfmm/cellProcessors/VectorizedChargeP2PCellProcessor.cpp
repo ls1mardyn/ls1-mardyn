@@ -68,17 +68,16 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
-	const MoleculeList & molecules = c.getParticlePointers();
 
 	// Determine the total number of centers.
-	size_t numMolecules = molecules.size();
+	size_t numMolecules = c.getMoleculeCount();
 	size_t nLJCenters = 0;
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
 	
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		nCharges += molecules[m]->numCharges();
+	for (auto m = c.moleculesBegin();  m != c.moleculesEnd(); ++m) {
+		nCharges += (*m)->numCharges();
 	}
 
 	// Construct the SoA.
@@ -102,11 +101,13 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 	size_t iCharges = 0;
 	// For each molecule iterate over all its centers.
-	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t mol_charges_num = molecules[i]->numCharges();
-		const double mol_pos_x = molecules[i]->r(0);
-		const double mol_pos_y = molecules[i]->r(1);
-		const double mol_pos_z = molecules[i]->r(2);
+	for (size_t i = 0; i < numMolecules; ++i) {
+		Molecule& mol = c.moleculesAt(i);
+
+		const size_t mol_charges_num = mol.numCharges();
+		const double mol_pos_x = mol.r(0);
+		const double mol_pos_y = mol.r(1);
+		const double mol_pos_z = mol.r(2);
 
 		soa._mol_pos.x(i) = mol_pos_x;
 		soa._mol_pos.y(i) = mol_pos_y;
@@ -118,9 +119,9 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			soa_charges_m_r_x[iCharges] = mol_pos_x;
 			soa_charges_m_r_y[iCharges] = mol_pos_y;
 			soa_charges_m_r_z[iCharges] = mol_pos_z;
-			soa_charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
-			soa_charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
-			soa_charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
+			soa_charges_r_x[iCharges] = mol.charge_d(j)[0] + mol_pos_x;
+			soa_charges_r_y[iCharges] = mol.charge_d(j)[1] + mol_pos_y;
+			soa_charges_r_z[iCharges] = mol.charge_d(j)[2] + mol_pos_z;
 			soa_charges_f_x[iCharges] = 0.0;
 			soa_charges_f_y[iCharges] = 0.0;
 			soa_charges_f_z[iCharges] = 0.0;
@@ -129,7 +130,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			soa_charges_V_z[iCharges] = 0.0;
 			//soa._charges_dist_lookup[iCharges] = 0.0;
 			// Get the charge
-			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
+			soa._charges_q[iCharges] = components[mol.componentid()].charge(j).q();
 		}
 	}
 }
@@ -141,8 +142,6 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
-	MoleculeList & molecules = c.getParticlePointers();
-
 	double* const soa_charges_f_x = soa.charges_f_xBegin();
 	double* const soa_charges_f_y = soa.charges_f_yBegin();
 	double* const soa_charges_f_z = soa.charges_f_zBegin();
@@ -152,9 +151,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
-	size_t numMols = molecules.size();
-	for (size_t m = 0; m < numMols; ++m) {
-		const size_t mol_charges_num = molecules[m]->numCharges();
+	for (auto m = c.moleculesBegin(); m != c.moleculesEnd(); ++m) {
+
+		const size_t mol_charges_num = (*m)->numCharges();
 
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
@@ -165,7 +164,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
-			molecules[m]->Fchargeadd(i, f);
+			(*m)->Fchargeadd(i, f);
 
 			// Store the resulting virial in the molecule.
 			double V[3];
@@ -175,7 +174,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
+			(*m)->Viadd(V);
 		}
 	}
 }

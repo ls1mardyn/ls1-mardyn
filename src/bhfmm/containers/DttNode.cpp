@@ -41,12 +41,11 @@ dtt::DttNode::DttNode(ParticleCell& particles,int threshold,double ctr[3],double
 	if(_depth <= 0 && _threshold >= pCount){
 		_splitable = false;
 
-		std::vector<Molecule*>& currentCellParticles = particles.getParticlePointers();
-		int currentParticleCount = currentCellParticles.size();
+		int currentParticleCount = particles.getMoleculeCount();
 
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = *currentCellParticles[i];
+			Molecule& molecule1 = particles.moleculesAt(i);
 			_leafParticles.addParticle(&molecule1);
 		} // current particle closed
 
@@ -77,15 +76,14 @@ bool dtt::DttNode::upwardPass(){
 	if(!_occ){ return false; }
 
 	if(!_splitable){
-		std::vector<Molecule*>& currentCellParticles = _leafParticles.getParticlePointers();
-		int currentParticleCount = currentCellParticles.size();
+		int currentParticleCount = _leafParticles.getMoleculeCount();
 
 		int Occupied = 0;
 
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
 			++Occupied;
-			Molecule& molecule1 = *currentCellParticles[i];
+			Molecule& molecule1 = _leafParticles.moleculesAt(i);
 			
 			int ni= molecule1.numCharges();
 
@@ -124,8 +122,7 @@ void dtt::DttNode::downwardPass(){
 			_children[i]->downwardPass();
 		}
 	}else{
-		std::vector<Molecule*>& currentCellParticles = _leafParticles.getParticlePointers();
-		int currentParticleCount = currentCellParticles.size();
+		int currentParticleCount = _leafParticles.getMoleculeCount();
 		bhfmm::SolidHarmonicsExpansion leLocal(_order);
 		double u = 0;
 		double uSum = 0.0;
@@ -137,7 +134,7 @@ void dtt::DttNode::downwardPass(){
 		double P_zzSum=0.0;
 
 		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = *currentCellParticles[i];
+			Molecule& molecule1 = _leafParticles.moleculesAt(i);
 			int ni = molecule1.numCharges();
 
 			for(int j=0; j<ni; j++){
@@ -232,11 +229,10 @@ void dtt::DttNode::m2l( bhfmm::SHMultipoleParticle& multipole, bhfmm::Vector3<do
 
 void dtt::DttNode::divideParticles( ParticleCell& particles, std::vector<ParticleCell>& cell_container ){
   	int child;
-	std::vector<Molecule*>& currentCellParticles = particles.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
+	int currentParticleCount = particles.getMoleculeCount();
 	// loop over all particles in the cell
 	for (int i = 0; i < currentParticleCount; i++) {
-		Molecule& molecule1 = *currentCellParticles[i];
+		Molecule& molecule1 = particles.moleculesAt(i);
 		int c[3];
 		c[0] = molecule1.r(0) < _ctr[0] ? 0 : 1;
 		c[1] = molecule1.r(1) < _ctr[1] ? 1 : 0;
