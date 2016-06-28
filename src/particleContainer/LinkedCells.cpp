@@ -10,7 +10,7 @@
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
-
+#include <array>
 using namespace std;
 using Log::global_log;
 
