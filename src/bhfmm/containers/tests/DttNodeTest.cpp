@@ -5,6 +5,7 @@
  *      Author: tchipevn
  */
 
+#include "parallel/DomainDecompBase.h"
 #include "bhfmm/containers/tests/DttNodeTest.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
@@ -87,8 +88,7 @@ void DttNodeTest::testSoAConvertions(){
 //		root.convertSoAToAoSCharge();
 	}
 
-	std::vector<Molecule*>& p_after = root.getParticlePointers();
-	Molecule& m = *p_after[0]; 
+	Molecule& m = root.moleculesAt(0);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong x coordinate",p_pos[0],m.r(0), 1e-12);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong y coordinate",p_pos[1],m.r(1), 1e-12);
 	ASSERT_DOUBLES_EQUAL_MSG("P(1) wrong z coordinate",p_pos[2],m.r(2), 1e-12);
@@ -128,6 +128,11 @@ void DttNodeTest::testDepthAtRadius4(){
 }
 
 void DttNodeTest::testDivideParticles() {
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "not executing testDivideParticles for more than 1 proc" << std::endl;
+		return;
+	}
+
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
 	ParticleCell root;
