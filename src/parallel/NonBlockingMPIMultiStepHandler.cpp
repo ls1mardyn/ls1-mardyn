@@ -44,7 +44,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 
 		_computationTimer->start();
 		// Force calculation and other pair interaction related computations
-		global_log->debug() << "Traversing pairs" << std::endl;
+		global_log->debug() << "Traversing innermost cells" << std::endl;
 		_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i,
 				stageCount);
 		_computationTimer->stop();
@@ -54,15 +54,16 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 				_moleculeContainer, _domain, i);
 		_decompositionTimer->stop();
 	}
-	_cellProcessor->endTraversal();
+
 	_decompositionTimer->start();
 	_moleculeContainer->updateBoundaryAndHaloMoleculeCaches();  // update the caches of the other molecules (non-inner cells)
 	_decompositionTimer->stop();
 
 	_computationTimer->start();
 	// remaining force calculation and other pair interaction related computations
-	global_log->debug() << "Traversing pairs" << std::endl;
+	global_log->debug() << "Traversing non-innermost cells" << std::endl;
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
+	_cellProcessor->endTraversal();
 	_computationTimer->stop();
 }
 

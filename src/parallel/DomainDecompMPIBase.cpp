@@ -123,17 +123,14 @@ void DomainDecompMPIBase::balanceAndExchangeInitNonBlocking(
 
 void DomainDecompMPIBase::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates){
-	if(DomainDecompBase::getNonBlockingStageCount() == 3){
-		if(DomainDecompBase::getNonBlockingStageCount() == 0){
-
-		}
+	if(getNonBlockingStageCount() == 3){
 		initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber);
 	}
 }
 
 void DomainDecompMPIBase::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates){
-	if(DomainDecompBase::getNonBlockingStageCount() == 3){
+	if(getNonBlockingStageCount() == 3){
 		finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber);
 	}
 }
