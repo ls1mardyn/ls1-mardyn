@@ -174,6 +174,11 @@ public:
 	//! and this new pointer is returned
 	virtual MoleculeIterator next() = 0;
 
+	//! @brief Returns a pointer to the current particle pointed by internal iterator
+	//!
+	//! In some while-loop traversals this is needed.
+	virtual MoleculeIterator current() = 0;
+
 	//! @brief Has to return the same as next() after it already pointed to the last particle
 	virtual MoleculeIterator end() = 0;
 
@@ -230,9 +235,6 @@ public:
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
-	virtual int localGrandcanonicalBalance() = 0;
-	virtual int grandcanonicalBalance(DomainDecompBase* comm) = 0;
-	virtual void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
 
         virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
         virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;

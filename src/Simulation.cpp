@@ -960,8 +960,8 @@ void Simulation::simulate() {
                                         this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
                                         double localUpotBackup = _domain->getLocalUpot();
                                         double localVirialBackup = _domain->getLocalVirial();
-					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor);
+					cpit->grandcanonicalStep(_moleculeContainer,
+							_domain->getGlobalCurrentTemperature(), this->_domain, _cellProcessor);
                                         _domain->setLocalUpot(localUpotBackup);
                                         _domain->setLocalVirial(localVirialBackup);
 #ifndef NDEBUG
@@ -969,10 +969,8 @@ void Simulation::simulate() {
 					cpit->assertSynchronization(_domainDecomposition);
 #endif
 
-					int localBalance =
-							_moleculeContainer->localGrandcanonicalBalance();
-					int balance = _moleculeContainer->grandcanonicalBalance(
-							_domainDecomposition);
+					int localBalance = cpit->getLocalGrandcanonicalBalance();
+					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
 					global_log->debug() << "   b["
 							<< ((balance > 0) ? "+" : "") << balance << "("
 							<< ((localBalance > 0) ? "+" : "") << localBalance

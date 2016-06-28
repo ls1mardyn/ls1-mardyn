@@ -3,7 +3,6 @@
 #include <cmath>
 
 #include "Domain.h"
-#include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
@@ -95,7 +94,6 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 				<< _boxWidthInNumCells[2] << endl;
 		global_simulation->exit(5);
 	}
-	this->_localInsertionsMinusDeletions = 0;
 
 	initializeCells();
 	calculateNeighbourIndices();
@@ -509,6 +507,10 @@ MoleculeIterator LinkedCells::next() {
 	}
 
 	return ret;
+}
+
+MoleculeIterator LinkedCells::current() {
+	return *_particleIterator;
 }
 
 MoleculeIterator LinkedCells::end() {
@@ -1098,173 +1100,6 @@ double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 
 	return u;
 }
-
-int LinkedCells::grandcanonicalBalance(DomainDecompBase* comm) {
-	comm->collCommInit(1);
-	comm->collCommAppendInt(this->_localInsertionsMinusDeletions);
-	comm->collCommAllreduceSum();
-	int universalInsertionsMinusDeletions = comm->collCommGetInt();
-	comm->collCommFinalize();
-	return universalInsertionsMinusDeletions;
-}
-
-void LinkedCells::grandcanonicalStep(ChemicalPotential* mu, double T,
-		Domain* domain, CellProcessor& cellProcessor) {
-	bool accept = true;
-	double DeltaUpot;
-	Molecule* m;
-	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
-
-	this->_localInsertionsMinusDeletions = 0;
-
-	mu->submitTemperature(T);
-	double minco[3];
-	double maxco[3];
-	for (int d = 0; d < 3; d++) {
-		minco[d] = this->getBoundingBoxMin(d);
-		maxco[d] = this->getBoundingBoxMax(d);
-	}
-
-	bool hasDeletion = true;
-	bool hasInsertion = true;
-	double ins[3];
-	unsigned nextid = 0;
-	while (hasDeletion || hasInsertion) {
-		if (hasDeletion)
-			hasDeletion = mu->getDeletion(this, minco, maxco);
-		if (hasDeletion) {
-			m = *_particleIterator;
-			DeltaUpot = -1.0
-					* getEnergy(&particlePairsHandler, m, cellProcessor);
-
-			accept = mu->decideDeletion(DeltaUpot / T);
-#ifndef NDEBUG
-			if (accept)
-			{
-				cout << "r" << mu->rank() << "d" << m->id() << " with energy " << DeltaUpot << endl;
-				cout.flush();
-			}
-			/*
-			else
-				cout << "   (r" << mu->rank() << "-d" << m->id()
-				     << ")" << endl;
-			*/
-#endif
-			if (accept) {
-				// m->upd_cache(); TODO what to do here? somebody deleted the method "upd_cache"!!! why???
-				// reset forces and momenta to zero
-				{
-					double zeroVec[3] = { 0.0, 0.0, 0.0 };
-					m->setF(zeroVec);
-					m->setM(zeroVec);
-					m->setVi(zeroVec);
-				}
-
-				mu->storeMolecule(*m);
-
-				this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
-				//this->_particleIterator = this->begin();
-				this->begin(); // will set _particleIterator to the beginning
-				this->_localInsertionsMinusDeletions--;
-			}
-		}
-
-		if (!mu->hasSample()) {
-			m = this->begin();
-			//old: m = &(*(_particles.begin()));
-			bool rightComponent = false;
-			MoleculeIterator mit;
-			if (m->componentid() != mu->getComponentID()) {
-				for (mit = this->begin(); mit != this->end(); mit =
-						this->next()) {
-					if (mit->componentid() == mu->getComponentID()) {
-						rightComponent = true;
-						break;
-					}
-				}
-			}
-			if (rightComponent)
-				m = &(*(mit));
-			mu->storeMolecule(*m);
-		}
-		if (hasInsertion) {
-			nextid = mu->getInsertion(ins);
-			hasInsertion = (nextid > 0);
-		}
-		if (hasInsertion) {
-			Molecule tmp = mu->loadMolecule();
-			for (int d = 0; d < 3; d++)
-				tmp.setr(d, ins[d]);
-			tmp.setid(nextid);
-			// TODO: I (tchipevn) am changing the former code
-			// (add particle, compute energy and if rejected, delete particle)
-			// to: add particle only if accepted
-//			_particles.push_back(tmp);
-
-//			std::list<Molecule>::iterator mit = _particles.end();
-			Molecule* mit = &tmp;
-			m = &(*mit);
-			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why??? -- update caches do no longer exist ;)
-			// reset forces and torques to zero
-			if (!mu->isWidom()) {
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				m->setF(zeroVec);
-				m->setM(zeroVec);
-				m->setVi(zeroVec);
-			}
-			m->check(nextid);
-#ifndef NDEBUG
-			/*
-			cout << "rank " << mu->rank() << ": insert "
-					<< m->id() << " at the reduced position (" << ins[0] << "/"
-					<< ins[1] << "/" << ins[2] << ")? " << endl;
-			*/
-#endif
-
-//			unsigned long cellid = this->getCellIndexOfMolecule(m);
-//			this->_cells[cellid].addParticle(m);
-			DeltaUpot = getEnergy(&particlePairsHandler, m, cellProcessor);
-			domain->submitDU(mu->getComponentID(), DeltaUpot, ins);
-			accept = mu->decideInsertion(DeltaUpot / T);
-
-#ifndef NDEBUG
-			if (accept)
-			{
-				cout << "r" << mu->rank() << "i" << mit->id() << " with energy " << DeltaUpot << endl;
-				cout.flush();
-			}
-			/*
-			else
-				cout << "   (r" << mu->rank() << "-i"
-						<< mit->id() << ")" << endl;
-			*/
-#endif
-			if (accept) {
-				this->_localInsertionsMinusDeletions++;
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				tmp.setVi(zeroVec);
-				addParticle(tmp);
-			} else {
-				// this->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
-//				this->_cells[cellid].deleteMolecule(m->id());
-				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				mit->setF(zeroVec);
-				mit->setM(zeroVec);
-				mit->setVi(zeroVec);
-				mit->check(m->id());
-//				this->_particles.erase(mit);
-			}
-		}
-	}
-#ifndef NDEBUG
-	for (m = this->begin(); m != this->end(); m = this->next()) {
-		// cout << *m << "\n";
-		// cout.flush();
-		m->check(m->id());
-	}
-#endif
-}
-
 
 void LinkedCells::updateInnerMoleculeCaches(){
 	for (ParticleCell& cell : _cells){

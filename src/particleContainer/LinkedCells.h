@@ -155,6 +155,9 @@ public:
 	//! element), NULL is returned
 	MoleculeIterator next();
 
+	//! @brief returns current particle
+	MoleculeIterator current();
+
 	//! @brief returns NULL
 	MoleculeIterator end();
 
@@ -203,15 +206,9 @@ public:
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
-	int localGrandcanonicalBalance() {
-		return this->_localInsertionsMinusDeletions;
-	}
-	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor);
-
-        int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
-        unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
-        void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
+	int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
+	unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
+	void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
 	
 	double* boundingBoxMax() {
 		return _boundingBoxMax;
@@ -361,7 +358,7 @@ private:
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
     double _LJCutoffRadius;
-	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
+
 
 	//! @brief True if all Particles are in the right cell
 	//!
