@@ -308,14 +308,7 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 
 // should work also if molecules are initialized via initMeshOfMolecules, initUniformRandomMolecules, initNormalRandomMolecules
 void VectorizationTuner::clearMolecules(ParticleCell & cell) {
-	std::vector<Molecule*>& cellMolecules = cell.getParticlePointers();
-
-	int numMolecules = cellMolecules.size();
-	for(int i = 0; i < numMolecules; ++i) {
-		delete cellMolecules[i];
-	}
-
-	cell.removeAllParticles();
+	cell.deallocateAllParticles();
 }
 
 
@@ -447,10 +440,10 @@ void VectorizationTuner::initNormalRandomMolecules(double /*boxMin*/[3], double 
 void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
 	unsigned int cnt=cell.getMoleculeCount();
 	for(unsigned int i=0; i < cnt; ++i){
-		Molecule* mol = cell.getParticlePointers().at(i);
-		mol->move(0, direction[0]);
-		mol->move(1, direction[1]);
-		mol->move(2, direction[2]);
+		Molecule& mol = cell.moleculesAt(i);
+		mol.move(0, direction[0]);
+		mol.move(1, direction[1]);
+		mol.move(2, direction[2]);
 		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << endl;
 	}
 }

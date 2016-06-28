@@ -2758,19 +2758,18 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 //
 int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, double RR)
 {
-        int tn = 0;
-        double distanceVector[3];
+	int tn = 0;
+	double distanceVector[3];
 
-        std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
-        int neighbourParticleCount = neighbourCellParticles.size();
+	int neighbourParticleCount = cell2.getMoleculeCount();
 
-        for (int j = 0; j < neighbourParticleCount; j++) {
-                Molecule& molecule2 = *neighbourCellParticles[j];
-                if(m1->id() == molecule2.id()) continue;
-                double dd = molecule2.dist2(*m1, distanceVector);
-                if (dd < RR) tn++;
-        }
-        return tn;
+	for (int j = 0; j < neighbourParticleCount; j++) {
+		Molecule& molecule2 = cell2.moleculesAt(j);
+		if(m1->id() == molecule2.id()) continue;
+		double dd = molecule2.dist2(*m1, distanceVector);
+		if (dd < RR) tn++;
+	}
+	return tn;
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
