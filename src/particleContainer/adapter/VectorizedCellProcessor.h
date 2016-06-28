@@ -44,7 +44,7 @@ public:
 	/**
 	 * \brief Reset macroscopic values to 0.0.
 	 */
-	void initTraversal(const size_t numCells);
+	void initTraversal();
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
@@ -404,7 +404,7 @@ private:
 			return m_r2 < rc2;
 		}
 
-		inline static size_t InitJ (const size_t i)
+		inline static size_t InitJ (const size_t /*i*/)
 		{
 			return 0;
 		}

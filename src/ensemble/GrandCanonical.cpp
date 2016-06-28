@@ -3,6 +3,7 @@
 
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
+#include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "utils/Logger.h"
 
 using namespace std;
@@ -39,6 +40,8 @@ ChemicalPotential::ChemicalPotential()
          this->widom = false;
      global_log->warning() << "Grand Canonical likely needs fixing." << std::endl;
      global_log->warning() << "Functionality preserved as much as possible, but code is somewhat hard to read/understand. (Nikola Tchipev)" << std::endl;
+
+     this->_localInsertionsMinusDeletions = 0;
 }
 
 void ChemicalPotential::setSubdomain(int rank, double x0, double x1, double y0, double y1, double z0, double z1)
@@ -423,3 +426,168 @@ Molecule ChemicalPotential::loadMolecule()
 	return tmp;
 }
 
+int ChemicalPotential::grandcanonicalBalance(DomainDecompBase* comm) {
+	comm->collCommInit(1);
+	comm->collCommAppendInt(this->_localInsertionsMinusDeletions);
+	comm->collCommAllreduceSum();
+	int universalInsertionsMinusDeletions = comm->collCommGetInt();
+	comm->collCommFinalize();
+	return universalInsertionsMinusDeletions;
+}
+
+void ChemicalPotential::grandcanonicalStep(TMoleculeContainer* moleculeContainer, double T,
+		Domain* domain, CellProcessor* cellProcessor) {
+	bool accept = true;
+	double DeltaUpot;
+	Molecule* m;
+	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
+
+	this->_localInsertionsMinusDeletions = 0;
+
+	this->submitTemperature(T);
+	double minco[3];
+	double maxco[3];
+	for (int d = 0; d < 3; d++) {
+		minco[d] = moleculeContainer->getBoundingBoxMin(d);
+		maxco[d] = moleculeContainer->getBoundingBoxMax(d);
+	}
+
+	bool hasDeletion = true;
+	bool hasInsertion = true;
+	double ins[3];
+	unsigned nextid = 0;
+	while (hasDeletion || hasInsertion) {
+		if (hasDeletion)
+			hasDeletion = this->getDeletion(moleculeContainer, minco, maxco);
+		if (hasDeletion) {
+			m = moleculeContainer->current();
+			DeltaUpot = -1.0
+					* moleculeContainer->getEnergy(&particlePairsHandler, m, *cellProcessor);
+
+			accept = this->decideDeletion(DeltaUpot / T);
+#ifndef NDEBUG
+			if (accept)
+			{
+				cout << "r" << this->rank() << "d" << m->id() << " with energy " << DeltaUpot << endl;
+				cout.flush();
+			}
+			/*
+			else
+				cout << "   (r" << this->rank() << "-d" << m->id()
+				     << ")" << endl;
+			*/
+#endif
+			if (accept) {
+				// m->upd_cache(); TODO what to do here? somebody deleted the method "upd_cache"!!! why???
+				// reset forces and momenta to zero
+				{
+					double zeroVec[3] = { 0.0, 0.0, 0.0 };
+					m->setF(zeroVec);
+					m->setM(zeroVec);
+					m->setVi(zeroVec);
+				}
+
+				this->storeMolecule(*m);
+
+				moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+				//moleculeContainer->_particleIterator = moleculeContainer->begin();
+				moleculeContainer->begin(); // will set _particleIterator to the beginning
+				this->_localInsertionsMinusDeletions--;
+			}
+		}
+
+		if (!this->hasSample()) {
+			m = moleculeContainer->begin();
+			//old: m = &(*(_particles.begin()));
+			bool rightComponent = false;
+			MoleculeIterator mit;
+			if (m->componentid() != this->getComponentID()) {
+				for (mit = moleculeContainer->begin(); mit != moleculeContainer->end(); mit =
+						moleculeContainer->next()) {
+					if (mit->componentid() == this->getComponentID()) {
+						rightComponent = true;
+						break;
+					}
+				}
+			}
+			if (rightComponent)
+				m = &(*(mit));
+			this->storeMolecule(*m);
+		}
+		if (hasInsertion) {
+			nextid = this->getInsertion(ins);
+			hasInsertion = (nextid > 0);
+		}
+		if (hasInsertion) {
+			Molecule tmp = this->loadMolecule();
+			for (int d = 0; d < 3; d++)
+				tmp.setr(d, ins[d]);
+			tmp.setid(nextid);
+			// TODO: I (tchipevn) am changing the former code
+			// (add particle, compute energy and if rejected, delete particle)
+			// to: add particle only if accepted
+//			_particles.push_back(tmp);
+
+//			std::list<Molecule>::iterator mit = _particles.end();
+			Molecule* mit = &tmp;
+			m = &(*mit);
+			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why??? -- update caches do no longer exist ;)
+			// reset forces and torques to zero
+			if (!this->isWidom()) {
+				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				m->setF(zeroVec);
+				m->setM(zeroVec);
+				m->setVi(zeroVec);
+			}
+			m->check(nextid);
+#ifndef NDEBUG
+			/*
+			cout << "rank " << this->rank() << ": insert "
+					<< m->id() << " at the reduced position (" << ins[0] << "/"
+					<< ins[1] << "/" << ins[2] << ")? " << endl;
+			*/
+#endif
+
+//			unsigned long cellid = moleculeContainer->getCellIndexOfMolecule(m);
+//			moleculeContainer->_cells[cellid].addParticle(m);
+			DeltaUpot = moleculeContainer->getEnergy(&particlePairsHandler, m, *cellProcessor);
+			domain->submitDU(this->getComponentID(), DeltaUpot, ins);
+			accept = this->decideInsertion(DeltaUpot / T);
+
+#ifndef NDEBUG
+			if (accept)
+			{
+				cout << "r" << this->rank() << "i" << mit->id() << " with energy " << DeltaUpot << endl;
+				cout.flush();
+			}
+			/*
+			else
+				cout << "   (r" << this->rank() << "-i"
+						<< mit->id() << ")" << endl;
+			*/
+#endif
+			if (accept) {
+				this->_localInsertionsMinusDeletions++;
+				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				tmp.setVi(zeroVec);
+				moleculeContainer->addParticle(tmp);
+			} else {
+				// moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+//				moleculeContainer->_cells[cellid].deleteMolecule(m->id());
+				double zeroVec[3] = { 0.0, 0.0, 0.0 };
+				mit->setF(zeroVec);
+				mit->setM(zeroVec);
+				mit->setVi(zeroVec);
+				mit->check(m->id());
+//				moleculeContainer->_particles.erase(mit);
+			}
+		}
+	}
+#ifndef NDEBUG
+	for (m = moleculeContainer->begin(); m != moleculeContainer->end(); m = moleculeContainer->next()) {
+		// cout << *m << "\n";
+		// cout.flush();
+		m->check(m->id());
+	}
+#endif
+}

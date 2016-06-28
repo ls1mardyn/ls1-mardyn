@@ -118,7 +118,7 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 
 	// M2L, P2P
 	if (_adaptive) {
-		_P2PProcessor->initTraversal(2);
+		_P2PProcessor->initTraversal();
 	}
 	_pseudoParticleContainer->horizontalPass(_P2PProcessor);
 

@@ -195,7 +195,7 @@ private:
 	//! in the reduce operation. MPI specifies the signature of such functions
 	//! This methods checks from which basic datatypes the given datatype
 	//! was constructed and performs an add operation for each of the basic types.
-	static void add(valType *invec, valType *inoutvec, int *len,
+	static void add(valType *invec, valType *inoutvec, int */*len*/,
 			MPI_Datatype *dtype) {
 		int numints;
 		int numaddr;

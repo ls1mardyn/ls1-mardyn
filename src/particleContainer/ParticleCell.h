@@ -62,16 +62,31 @@ public:
 	//! insert a single molecule into this cell
 	bool addParticle(Molecule* particle_ptr, bool checkWhetherDuplicate = false);
 
-	//! return a reference to the list of molecules (molecule pointers) in this cell
-	std::vector<Molecule*>& getParticlePointers();
+	Molecule& moleculesAt(std::vector<Molecule>::size_type i) {
+		return *_molecules.at(i);
+	}
 
-	const std::vector<Molecule*>& getParticlePointers() const;
+	std::vector<Molecule *>::iterator moleculesBegin() {
+		return _molecules.begin();
+	}
+
+	std::vector<Molecule *>::const_iterator moleculesCBegin() const {
+		return _molecules.cbegin();
+	}
+
+	std::vector<Molecule *>::iterator moleculesEnd() {
+		return _molecules.end();
+	}
+
+	std::vector<Molecule *>::const_iterator moleculesCEnd() const {
+		return _molecules.cend();
+	}
 
 	bool isEmpty() const;
 
 	bool deleteMolecule(unsigned long molid);
 
-	void fastRemoveMolecule(std::vector<Molecule *>::iterator& it);
+	bool deleteMolecule(std::vector<Molecule * >::iterator& pos);
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;

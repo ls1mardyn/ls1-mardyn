@@ -626,13 +626,14 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 
 
 
-void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells, int curLevel){
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
+
+void UniformPseudoParticleContainer::CombineMpCell(double */*cellWid*/, int& mpCells, int curLevel){
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 	{
 		int iDir, m1=0, m1x, m1y, m1z, m2=0;
 		int m2v[3] = {0, 0, 0};
 		int mpCellsN=2*mpCells;
-	#pragma omp for schedule(dynamic,1)
+	//#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < mpCells * mpCells * mpCells; mloop++){
 			m1x = mloop % mpCells;
 			m1y = (mloop / mpCells) % mpCells;
@@ -665,7 +666,7 @@ void UniformPseudoParticleContainer::CombineMpCell(double *cellWid, int& mpCells
 
 
 void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells,offset)
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells,offset)
 	{
 		int iDir, m1=0, m1x, m1y, m1z, m2=0;
 		int m2v[3] = {0, 0, 0};
@@ -696,7 +697,7 @@ void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, Vector3<
 		for(int d = 0; d < 3; d++){
 			numInnerCells[d] = localMpCells[d] - 4;
 		}
-		#pragma omp for schedule(dynamic,1)
+		//#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
 			m1x = mloop % numInnerCells[0];
 			m1y = (mloop / numInnerCells[0]) % numInnerCells[1];
@@ -734,7 +735,7 @@ void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, Vector3<
 
 void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCells, int curLevel){
 	_timerGatherWellSepLoGlobal.start();
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 	{
 		int m1v[3];
 		int m2v[3];
@@ -755,7 +756,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 	//	loop_max = (int) ((long) (_rank + 1) * (long) (_row_length) / (long) _size);
 
 		Vector3<double> periodicShift;
-#pragma omp for schedule(dynamic,1)
+//#pragma omp for schedule(dynamic,1)
 		for (m1 = 0; m1 < _row_length; m1++) {
 
 			m1v[0] = m1 % mpCells;
@@ -830,7 +831,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, Vector
 	if(doHalos){
 		_timerHaloGather.start();
 	}
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 	{
 		int m1x,m1y,m1z;
 		int m2v[3];
@@ -850,7 +851,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, Vector
 		int zEnd = localMpCells[2] - 2 - zStart;
 
 
-		#pragma omp for schedule(dynamic,1)
+		//#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < xEnd * yEnd * zEnd; mloop++){
 			m1x = mloop % xEnd  + xStart;
 			m1y = (mloop / xEnd) % yEnd + yStart;
@@ -1101,7 +1102,7 @@ template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool Us
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		double *cellWid, int mpCells, int& curLevel) {
 	_timerGatherWellSepLoGlobal.start();
-#pragma omp parallel firstprivate(curLevel, mpCells, cellWid)
+//#pragma omp parallel firstprivate(curLevel, mpCells, cellWid)
 	{
 		int m1v[3];
 		int m2v[3];
@@ -1131,7 +1132,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		FFTDataContainer* tf;
 
 		//Initialize FFT
-#pragma omp for schedule(dynamic,1)
+//#pragma omp for schedule(dynamic,1)
 		for (m1 = loop_min; m1 < loop_max; m1++) {
 //			if (_mpCellGlobalTop[curLevel][m1].occ == 0)
 //				continue;
@@ -1147,7 +1148,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		}
 
 		//M2L in Fourier space
-#pragma omp for schedule(dynamic,1)
+//#pragma omp for schedule(dynamic,1)
 		for (m1 = loop_min; m1 < loop_max; m1++) {
 
 			m1v[0] = m1 % mpCells;
@@ -1279,7 +1280,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_template(
 		} //m1 closed
 
 		//Finalize FFT
-#pragma omp for schedule(dynamic,1)
+//#pragma omp for schedule(dynamic,1)
 		for (m1 = loop_min; m1 < loop_max; m1++) {
 			if (_mpCellGlobalTop[curLevel][m1].occ == 0)
 				continue;
@@ -1298,7 +1299,7 @@ template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool Us
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos) {
 	_timerGatherWellSepLoLokal.start();
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 	{
 		//adjust for local level
 		curLevel = curLevel - _globalLevel - 1;
@@ -1339,7 +1340,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		}
 
 		//Initialize FFT
-#pragma omp for schedule(dynamic,1)
+//#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < xEnd * yEnd * zEnd; mloop++){
 			m1x = mloop % xEnd  + xStart;
 			m1y = (mloop / xEnd) % yEnd + yStart;
@@ -1367,7 +1368,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		}
 
 		//M2L in Fourier space
-		#pragma omp for schedule(dynamic,1)
+		//#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
 			m1x = mloop % numInnerCells[0]  + 2;
 			m1y = (mloop / numInnerCells[0]) % numInnerCells[1] + 2;
@@ -1517,7 +1518,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 		//Finalize FFT
 		if(doHalos){
 
-#pragma omp for schedule(dynamic,1)
+//#pragma omp for schedule(dynamic,1)
 			for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
 				m1x = mloop % numInnerCells[0]  + 2;
 				m1y = (mloop / numInnerCells[0]) % numInnerCells[1] + 2;
@@ -1541,9 +1542,10 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_MPI_template(
 } // GatherWellSepLo_FFT_MPI_template closed
 #endif /* FMM_FFT */
 
-void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCells, int curLevel){
+
+void UniformPseudoParticleContainer::PropagateCellLo(double */*cellWid*/, int mpCells, int curLevel){
 	_timerPropagateCellLoGlobal.start();
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 	{
 		int m1v[3];
 		int m2v[3];
@@ -1563,7 +1565,7 @@ void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCell
 	//	int loop_max = (int) ((long) (_rank + 1) * (long) (mpCells * mpCells * mpCells) / (long) _size);
 		int loop_min = 0;
 		int loop_max = mpCells * mpCells * mpCells;
-	#pragma omp for schedule(dynamic,1)
+	//#pragma omp for schedule(dynamic,1)
 		for (m1 = loop_min; m1 < loop_max; m1++) {
 
 			m1v[0] = m1 % mpCells;
@@ -1598,7 +1600,7 @@ void UniformPseudoParticleContainer::PropagateCellLo(double *cellWid, int mpCell
 
 void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 	_timerPropagateCellLoLokal.start();
-#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells, offset)
+//#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells, offset)
 	{
 	//	int m1v[3];
 		int m2v[3];
@@ -1633,7 +1635,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, Vector
 		for(int d = 0; d < 3; d++){
 			numInnerCells[d] = localMpCells[d] - 4;
 		}
-	#pragma omp for schedule(dynamic,1)
+	//#pragma omp for schedule(dynamic,1)
 		for (int mloop = 0 ; mloop < numInnerCells[0] * numInnerCells[1] * numInnerCells[2]; mloop++){
 			m1x = mloop % numInnerCells[0];
 			m1y = (mloop / numInnerCells[0]) % numInnerCells[1];
@@ -1717,8 +1719,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 
 //	assert(cell.isInActiveWindow());
 
-	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
+	int currentParticleCount = cell.getMoleculeCount();
 
 
 	int Occupied = 0;
@@ -1726,7 +1727,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 	// loop over all particles in the cell
 	for (int i = 0; i < currentParticleCount; i++) {
 		++Occupied;
-		Molecule& molecule1 = *currentCellParticles[i];
+		Molecule& molecule1 = cell.moleculesAt(i);
 		int ni= molecule1.numCharges();
 
 		for(int j=0; j<ni; j++){
@@ -1791,8 +1792,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 #endif
 
 	bhfmm::SolidHarmonicsExpansion leLocal(_maxOrd);
-	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
+	int currentParticleCount = cell.getMoleculeCount();
 	double u = 0;
 	double uSum = 0.0;
 	double f[3] = {0.0, 0.0, 0.0};
@@ -1804,7 +1804,7 @@ void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
 
 	// loop over all particles in the cell
 	for (int i = 0; i < currentParticleCount; i++) {
-		Molecule& molecule1 = *currentCellParticles[i];
+		Molecule& molecule1 = cell.moleculesAt(i);
 		int ni= molecule1.numCharges();
 
 		for(int j=0; j<ni; j++){

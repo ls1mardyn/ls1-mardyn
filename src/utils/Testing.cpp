@@ -41,7 +41,7 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 	int testresult;
 
 #ifndef UNIT_TESTS
-	test_log->error() << std::endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
+	test_log->error() << std::endl << "Running unit tests demanded, but program compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
 	testresult = true;
 
 #else /* UNIT_TESTS */

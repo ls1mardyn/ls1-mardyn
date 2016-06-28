@@ -70,7 +70,7 @@ public:
 	/**
 	 * \brief Initializes the internal counters.
 	 */
-	void initTraversal(const size_t);
+	void initTraversal();
 
 	/**
 	 * \brief Only pass through to child.
@@ -83,7 +83,7 @@ public:
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }  // why 0.0 flops???
-	int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) { return 0.0; }  // analogous to "process single molecule"
+	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) { return 0.0; }  // analogous to "process single molecule"
 
 	/**
 	 * \brief Count flops for this cell.

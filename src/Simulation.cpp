@@ -14,6 +14,7 @@
 #include "particleContainer/LinkedCells.h"
 #include "parallel/DomainDecompBase.h"
 #include "parallel/NonBlockingMPIHandlerBase.h"
+#include "parallel/NonBlockingMPIMultiStepHandler.h"
 #include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
@@ -822,6 +823,11 @@ void Simulation::simulate() {
 	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
 	loopTimer.start();
+#ifndef NDEBUG
+#ifndef ENABLE_MPI
+		unsigned particleNoTest;
+#endif
+#endif
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
@@ -867,7 +873,7 @@ void Simulation::simulate() {
 		 *the halo MUST NOT be present*/
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
-			unsigned particleNoTest = 0;
+			particleNoTest = 0;
                         for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
                         particleNoTest++;
                         global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
@@ -935,9 +941,6 @@ void Simulation::simulate() {
 
 
 
-
-
-
 		if(_wall && _applyWallFun){
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
 		}
@@ -959,8 +962,8 @@ void Simulation::simulate() {
                                         this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
                                         double localUpotBackup = _domain->getLocalUpot();
                                         double localVirialBackup = _domain->getLocalVirial();
-					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor);
+					cpit->grandcanonicalStep(_moleculeContainer,
+							_domain->getGlobalCurrentTemperature(), this->_domain, _cellProcessor);
                                         _domain->setLocalUpot(localUpotBackup);
                                         _domain->setLocalVirial(localVirialBackup);
 #ifndef NDEBUG
@@ -968,10 +971,8 @@ void Simulation::simulate() {
 					cpit->assertSynchronization(_domainDecomposition);
 #endif
 
-					int localBalance =
-							_moleculeContainer->localGrandcanonicalBalance();
-					int balance = _moleculeContainer->grandcanonicalBalance(
-							_domainDecomposition);
+					int localBalance = cpit->getLocalGrandcanonicalBalance();
+					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
 					global_log->debug() << "   b["
 							<< ((balance > 0) ? "+" : "") << balance << "("
 							<< ((localBalance > 0) ? "+" : "") << localBalance
@@ -982,24 +983,6 @@ void Simulation::simulate() {
 
 				j++;
 			}
-		}
-
-		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
-		  * realignment tools borrowed from Martin Horsch
-		  * For the actual shift the halo MUST be present!
-		  */
-		
-		if(_doAlignCentre && !(_simstep % _alignmentInterval))
-		{
-			_domain->realign(_moleculeContainer);
-#ifndef NDEBUG 
-#ifndef ENABLE_MPI
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
-			global_log->info()<<"particles after realign(), halo present:" << particleNoTest<< "\n";
-#endif
-#endif
 		}
 		
 		if(_simstep >= _initStatistics)
@@ -1155,6 +1138,7 @@ void Simulation::simulate() {
         }
         // <-- TEMPERATURE_CONTROL
 		
+		
 
 		advanceSimulationTime(_integrator->getTimestepLength());
 
@@ -1176,6 +1160,26 @@ void Simulation::simulate() {
 		perStepIoTimer.start();
 
 		output(_simstep);
+		
+		
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		  * realignment tools borrowed from Martin Horsch
+		  * For the actual shift the halo MUST NOT be present!
+		  */
+		if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			_domain->realign(_moleculeContainer);
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			unsigned particleNoTest = 0;
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
+#endif
+#endif
+		}
+		
 		if(_forced_checkpoint_time >= 0 && (decompositionTimer.get_etime() + computationTimer.get_etime()
 				+ ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */

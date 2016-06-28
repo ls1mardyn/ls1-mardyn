@@ -2,6 +2,7 @@
 #define LINKEDCELLS_H_
 
 #include <vector>
+#include <array>
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleCell.h"
@@ -155,6 +156,9 @@ public:
 	//! element), NULL is returned
 	MoleculeIterator next();
 
+	//! @brief returns current particle
+	MoleculeIterator current();
+
 	//! @brief returns NULL
 	MoleculeIterator end();
 
@@ -203,15 +207,9 @@ public:
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
-	int localGrandcanonicalBalance() {
-		return this->_localInsertionsMinusDeletions;
-	}
-	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain, CellProcessor& cellProcessor);
-
-        int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
-        unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
-        void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
+	int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
+	unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
+	void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
 	
 	double* boundingBoxMax() {
 		return _boundingBoxMax;
@@ -315,6 +313,14 @@ private:
 	 */
 	MoleculeIterator nextNonEmptyCell();
 
+	/**
+	 * traverses sindle cell
+	 * @param cellIndex
+	 * @param cellProcessor
+	 * @return
+	 */
+	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
+
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
@@ -324,19 +330,21 @@ private:
 
 	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
 #else
+
 	std::vector<ParticleCell>::iterator _cellIterator;
 	std::vector<Molecule*>::iterator _particleIterator;
 #endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
+	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long> _innerCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
 	std::vector<unsigned long> _borderCellIndices[3][2][2];
 
-	std::vector<long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::vector<long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
+	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
+	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
 
@@ -351,7 +359,7 @@ private:
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
     double _LJCutoffRadius;
-	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
+
 
 	//! @brief True if all Particles are in the right cell
 	//!

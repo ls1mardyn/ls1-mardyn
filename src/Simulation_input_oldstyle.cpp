@@ -162,7 +162,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				getline(inputfilestream, line);
 				stringstream lineStream(line);
 				lineStream >> updateFrequency >> fullSearchThreshold;
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, updateFrequency, fullSearchThreshold);
+				bool hetero=false, cutsmaller=false, forceRatio=false;
+				if(line.find("hetero") != string::npos){
+					hetero=true;
+				}
+				if(line.find("cutSmaller") != string::npos){
+					cutsmaller=true;  // allow domain to be split not only along biggest side
+				}
+				if(line.find("forceRatio") != string::npos){
+					forceRatio=true;  // allow domain to be split not only along biggest side
+				}
+				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, updateFrequency,
+						fullSearchThreshold, hetero, cutsmaller, forceRatio);
 			}
 #endif
 		} else if (token == "datastructure") {
@@ -547,7 +558,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					global_log->debug()
 							<< "Syntax: chemicalPotential <mu> component <cid> "
 							<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-							<< "conduct <ntest> tests every <nstep> steps\n";
+							<< "conduct <ntest> tests every <nstep> steps" << endl;
 					exit(1);
 				}
 				inputfilestream >> x1 >> y1 >> z1;
@@ -559,7 +570,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug()
 						<< "Syntax: chemicalPotential <mu> component <cid> "
 						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-						<< "conduct <ntest> tests every <nstep> steps\n";
+						<< "conduct <ntest> tests every <nstep> steps" << endl;
 				exit(1);
 			}
 			unsigned intest;
@@ -605,7 +616,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			global_log->info() << setprecision(6) << "chemical Potential "
 					<< imu << " component " << icid + 1 << " (internally "
 					<< icid << ") conduct " << intest << " tests every "
-					<< instep << " steps: ";
+					<< instep << " steps: " << endl;
 			global_log->info() << flush;
 			_lmu.push_back(tmu);
 			global_log->info() << " pushed back." << endl;

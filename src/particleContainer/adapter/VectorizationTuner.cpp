@@ -66,8 +66,8 @@ void VectorizationTuner::readXML(XMLfileUnits& xmlconfig) {
 
 }
 
-void VectorizationTuner::initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain) {
+void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
@@ -185,8 +185,9 @@ void VectorizationTuner::iteratePair(Timer timer, long long int numRepetitions,
 	timer.reset();
 }
 
-void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig, double& gflopsPairBig, double& gflopsOwnNormal, double& gflopsPairNormalFace,
-		double& gflopsPairNormalEdge, double& gflopsPairNormalCorner, double& gflopsOwnZero, double& gflopsPairZero){
+void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned int numMols, double& gflopsOwnBig,
+		double& gflopsPairBig, double& /*gflopsOwnNormal*/, double& /*gflopsPairNormalFace*/, double& /*gflopsPairNormalEdge*/,
+		double& /*gflopsPairNormalCorner*/, double& gflopsOwnZero, double& gflopsPairZero) {
 
 
 	// get (first) component
@@ -207,8 +208,8 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 	double BoxMin[3] = {0., 0., 0.};
 	double BoxMax[3] = {1., 1., 1.};
 	double dirxplus[3] = {1., 0., 0.};
-	double diryplus[3] = {0., 1., 0.};
-	double dirzplus[3] = {0., 0., 1.};
+	//double diryplus[3] = {0., 1., 0.};
+	//double dirzplus[3] = {0., 0., 1.};
 
 	Timer timer;
 
@@ -275,7 +276,7 @@ double normalRandom()
 // pass also second cell as argument, when it comes to that
 void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numRepetitions) {
 
-	cp.initTraversal(1);
+	cp.initTraversal();
 
 	cp.preprocessCell(cell1);
 
@@ -290,7 +291,7 @@ void VectorizationTuner::runOwn(CellProcessor& cp, ParticleCell& cell1, int numR
 void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, ParticleCell& cell2, int numRepetitions) {
 
 
-	cp.initTraversal(2);
+	cp.initTraversal();
 
 	cp.preprocessCell(cell1);
 	cp.preprocessCell(cell2);
@@ -307,14 +308,7 @@ void VectorizationTuner::runPair(CellProcessor& cp, ParticleCell& cell1, Particl
 
 // should work also if molecules are initialized via initMeshOfMolecules, initUniformRandomMolecules, initNormalRandomMolecules
 void VectorizationTuner::clearMolecules(ParticleCell & cell) {
-	std::vector<Molecule*>& cellMolecules = cell.getParticlePointers();
-
-	int numMolecules = cellMolecules.size();
-	for(int i = 0; i < numMolecules; ++i) {
-		delete cellMolecules[i];
-	}
-
-	cell.removeAllParticles();
+	cell.deallocateAllParticles();
 }
 
 
@@ -407,7 +401,8 @@ void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double box
 }
 
 
-void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxMax[3], Component& comp, ParticleCell& cell1, ParticleCell& cell2, unsigned int numMols) {
+void VectorizationTuner::initNormalRandomMolecules(double /*boxMin*/[3], double /*boxMax*/[3], Component& comp,
+		ParticleCell& cell1, ParticleCell& /*cell2*/, unsigned int numMols) {
 //TODO: currently only cell 1
 //TODO: does not really have/need/can_use Bmax, Bmin - is normal dist. proper???
 
@@ -445,10 +440,10 @@ void VectorizationTuner::initNormalRandomMolecules(double boxMin[3], double boxM
 void VectorizationTuner::moveMolecules(double direction[3], ParticleCell& cell){
 	unsigned int cnt=cell.getMoleculeCount();
 	for(unsigned int i=0; i < cnt; ++i){
-		Molecule* mol = cell.getParticlePointers().at(i);
-		mol->move(0, direction[0]);
-		mol->move(1, direction[1]);
-		mol->move(2, direction[2]);
+		Molecule& mol = cell.moleculesAt(i);
+		mol.move(0, direction[0]);
+		mol.move(1, direction[1]);
+		mol.move(2, direction[2]);
 		//global_log->info() << mol->r(0) << " " << mol->r(1) << " " << mol->r(2) << endl;
 	}
 }

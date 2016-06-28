@@ -535,7 +535,7 @@ private:
         float _globalDecisiveDensity;  // set from outside
 
 	//! writing out a density profile in cylindrical coordinates
-	bool _universalCylindricalGeometry;
+	bool _universalCylindricalGeometry=false;
 	//! centre of the cylindrical coordinate system
 	double _universalCentre[3];
 	//! outermost radial distance up to which the binning is applied

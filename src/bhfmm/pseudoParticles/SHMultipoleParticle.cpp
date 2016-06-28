@@ -79,7 +79,7 @@ void SHMultipoleParticle::actOnLocalParticle(LocalParticle& local) const {
 	sh_local.getExpansion() += convoluteLM(setAtMinusR(_expansionL), evaluateMOfR(_order, r_target_to_source));
 }
 
-void SHMultipoleParticle::actOnTarget(const Vector3<double>& position, double charge, double& pot,
+void SHMultipoleParticle::actOnTarget(const Vector3<double>& position, double /*charge*/, double& pot,
 		Vector3<double>& force) const {
 	Vector3<double> r_pseudo_to_target = position - _center;
 

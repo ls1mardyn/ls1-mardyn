@@ -53,7 +53,6 @@ Molecule::Molecule(unsigned long id, Component *component,
 	}
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
-	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
 }
 
 Molecule::Molecule(const Molecule& m) {
@@ -372,6 +371,7 @@ void Molecule::write(ostream& ostrm) const {
 	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
 	      << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
 	      << _L[0] << " " << _L[1] << " " << _L[2] << "\t"
+	      << _Vi[0] << " " << _Vi[1] << " " << _Vi[2] << "\t"
 	      << endl;
 }
 
@@ -504,6 +504,9 @@ void Molecule::calcFM() {
 	temp_Vi[0] *= 0.5;
 	temp_Vi[1] *= 0.5;
 	temp_Vi[2] *= 0.5;
+	assert(!isnan(temp_Vi[0]));
+	assert(!isnan(temp_Vi[1]));
+	assert(!isnan(temp_Vi[2]));
 	Viadd(temp_Vi);
 	Madd(temp_M);
 }
@@ -516,6 +519,8 @@ void Molecule::calcFM() {
  * If that's not available (C99), compare the value with itself. If the value
  * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 void Molecule::check(unsigned long id) {
 #ifndef NDEBUG
 	using std::isnan; // C++11 needed
@@ -529,11 +534,19 @@ void Molecule::check(unsigned long id) {
 		assert(!isnan(_F[d]));
 		assert(!isnan(_M[d]));
 		assert(!isnan(_I[d]));
-		assert(!isnan(_Vi[d]));
+		// assert(!isnan(_Vi[d]));
 		assert(!isnan(_invI[d]));
+	}
+	if(isnan(_Vi[0]) || isnan(_Vi[1]) || isnan(_Vi[2]))
+	{
+	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
+	   _Vi[0] = 0.0;
+	   _Vi[1] = 0.0;
+	   _Vi[2] = 0.0;
 	}
 #endif
 }
+#pragma GCC diagnostic pop
 
 bool Molecule::isLessThan(const Molecule& m2) const {
 	if (_r[2] < m2.r(2))
@@ -566,7 +579,8 @@ std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
 	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;
 	os << "q:  [[" << m.q().qw() << ", " << m.q().qx() << "], [" << m.q().qy() << ", " << m.q().qz()<< "]]\n" ;
-	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")" ;
+	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")\n";
+	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(1) << ", " << m.Vi(2) << ")" ;
 	return os;
 }
 

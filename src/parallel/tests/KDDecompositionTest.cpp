@@ -89,7 +89,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 
 	const int numReps = 10;
 	if (_rank == 0) {
-		cout << "running " << numReps << " repetitions" << std::endl;
+		//cout << "running " << numReps << " repetitions" << std::endl;
 	}
 	for (int i = 0; i < numReps; ++i) {
 
@@ -146,7 +146,7 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_currentCoeffs.clear();
 
 		if(_rank == 0) {
-			cout << "repetition " << i << " completed" << std::endl;
+			//cout << "repetition " << i << " completed" << std::endl;
 		}
 	}
 

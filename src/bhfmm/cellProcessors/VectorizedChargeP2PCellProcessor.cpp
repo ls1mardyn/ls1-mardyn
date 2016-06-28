@@ -48,7 +48,7 @@ void VectorizedChargeP2PCellProcessor::printTimers() {
 }
 
 
-void VectorizedChargeP2PCellProcessor::initTraversal(const size_t numCells) {
+void VectorizedChargeP2PCellProcessor::initTraversal() {
 	_timer.start();
 	_virial = 0.0;
 	_upotXpoles = 0.0;
@@ -68,17 +68,16 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
-	const MoleculeList & molecules = c.getParticlePointers();
 
 	// Determine the total number of centers.
-	size_t numMolecules = molecules.size();
+	size_t numMolecules = c.getMoleculeCount();
 	size_t nLJCenters = 0;
 	size_t nCharges = 0;
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
 	
-	for (size_t m = 0;  m < numMolecules; ++m) {
-		nCharges += molecules[m]->numCharges();
+	for (auto m = c.moleculesBegin();  m != c.moleculesEnd(); ++m) {
+		nCharges += (*m)->numCharges();
 	}
 
 	// Construct the SoA.
@@ -102,11 +101,13 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 
 	size_t iCharges = 0;
 	// For each molecule iterate over all its centers.
-	for (size_t i = 0; i < molecules.size(); ++i) {
-		const size_t mol_charges_num = molecules[i]->numCharges();
-		const double mol_pos_x = molecules[i]->r(0);
-		const double mol_pos_y = molecules[i]->r(1);
-		const double mol_pos_z = molecules[i]->r(2);
+	for (size_t i = 0; i < numMolecules; ++i) {
+		Molecule& mol = c.moleculesAt(i);
+
+		const size_t mol_charges_num = mol.numCharges();
+		const double mol_pos_x = mol.r(0);
+		const double mol_pos_y = mol.r(1);
+		const double mol_pos_z = mol.r(2);
 
 		soa._mol_pos.x(i) = mol_pos_x;
 		soa._mol_pos.y(i) = mol_pos_y;
@@ -118,9 +119,9 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			soa_charges_m_r_x[iCharges] = mol_pos_x;
 			soa_charges_m_r_y[iCharges] = mol_pos_y;
 			soa_charges_m_r_z[iCharges] = mol_pos_z;
-			soa_charges_r_x[iCharges] = molecules[i]->charge_d(j)[0] + mol_pos_x;
-			soa_charges_r_y[iCharges] = molecules[i]->charge_d(j)[1] + mol_pos_y;
-			soa_charges_r_z[iCharges] = molecules[i]->charge_d(j)[2] + mol_pos_z;
+			soa_charges_r_x[iCharges] = mol.charge_d(j)[0] + mol_pos_x;
+			soa_charges_r_y[iCharges] = mol.charge_d(j)[1] + mol_pos_y;
+			soa_charges_r_z[iCharges] = mol.charge_d(j)[2] + mol_pos_z;
 			soa_charges_f_x[iCharges] = 0.0;
 			soa_charges_f_y[iCharges] = 0.0;
 			soa_charges_f_z[iCharges] = 0.0;
@@ -129,7 +130,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 			soa_charges_V_z[iCharges] = 0.0;
 			//soa._charges_dist_lookup[iCharges] = 0.0;
 			// Get the charge
-			soa._charges_q[iCharges] = components[molecules[i]->componentid()].charge(j).q();
+			soa._charges_q[iCharges] = components[mol.componentid()].charge(j).q();
 		}
 	}
 }
@@ -141,8 +142,6 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
-	MoleculeList & molecules = c.getParticlePointers();
-
 	double* const soa_charges_f_x = soa.charges_f_xBegin();
 	double* const soa_charges_f_y = soa.charges_f_yBegin();
 	double* const soa_charges_f_z = soa.charges_f_zBegin();
@@ -152,12 +151,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
-	size_t numMols = molecules.size();
-	for (size_t m = 0; m < numMols; ++m) {
-		const size_t mol_ljc_num = molecules[m]->numLJcenters();
-		const size_t mol_charges_num = molecules[m]->numCharges();
-		const size_t mol_dipoles_num = molecules[m]->numDipoles();
-		const size_t mol_quadrupoles_num = molecules[m]->numQuadrupoles();
+	for (auto m = c.moleculesBegin(); m != c.moleculesEnd(); ++m) {
+
+		const size_t mol_charges_num = (*m)->numCharges();
 
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
@@ -168,7 +164,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
-			molecules[m]->Fchargeadd(i, f);
+			(*m)->Fchargeadd(i, f);
 
 			// Store the resulting virial in the molecule.
 			double V[3];
@@ -178,7 +174,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
-			molecules[m]->Viadd(V);
+			(*m)->Viadd(V);
 		}
 	}
 }
@@ -243,7 +239,8 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
 		}
 	}
 
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 template<class ForcePolicy>
 vcp_mask_vec
 inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
@@ -484,6 +481,7 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 	return counter>0?VCP_SIMD_ONESVM:VCP_SIMD_ZEROVM;//do not compute stuff if nothing needs to be computed.
 #endif
 }
+#pragma GCC diagnostic pop
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
@@ -531,7 +529,6 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	vcp_double_vec sum_upotXpoles = VCP_SIMD_ZEROV;
 	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
 
-	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
 	const vcp_double_vec cutoffRadiusSquare = vcp_simd_set1(_cutoffRadiusSquare);
 
 	/*

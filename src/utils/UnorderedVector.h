@@ -25,6 +25,10 @@ void fastRemove(std::vector<T, A>& v, typename std::vector<T, A>::iterator& pos)
 	// i.e. v is not empty()
 	assert(not v.empty());
 
+	// assert that the iterator points inside this vector
+	assert(pos >= v.begin());
+	assert(pos < v.end());
+
 	// either std::swap, or a user-written function in the namespace
 	swap(*pos, v.back());
 	// note: swapping is necessary (as opposed to only copying )

@@ -21,6 +21,9 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testUpdateAndDeleteOuterParticles8Particles);
 	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
 //	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
+#ifdef ENABLE_OVERLAPPING
+	TEST_METHOD(testTraversalMethods);
+#endif
 	TEST_SUITE_END();
 
 public:
@@ -54,6 +57,7 @@ public:
 	void testUpdateAndDeleteOuterParticlesH2O();
 	void testUpdateAndDeleteOuterParticles8Particles();
 	void testMoleculeBeginNextEndDeleteCurrent();
+	void testTraversalMethods();
 //	void testGetHaloBoundaryParticlesDirection();
 };
 

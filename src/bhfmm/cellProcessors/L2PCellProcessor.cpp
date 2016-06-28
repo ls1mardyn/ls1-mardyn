@@ -26,7 +26,7 @@ L2PCellProcessor::L2PCellProcessor(
 L2PCellProcessor::~L2PCellProcessor() {
 }
 
-void L2PCellProcessor::initTraversal(const size_t numCells) {
+void L2PCellProcessor::initTraversal() {
 //	using std::cout;
 //	using std::endl;
 //	Domain* domain = global_simulation->getDomain();

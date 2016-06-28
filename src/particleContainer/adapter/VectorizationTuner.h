@@ -75,14 +75,14 @@ public:
 	void readXML(XMLfileUnits& xmlconfig);
 
 	//documentation in OutputBase, does nothing.
-	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav){}
+	void doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/,
+			Domain* /*domain*/, unsigned long /*simstep*/,
+			std::list<ChemicalPotential>* /*lmu*/,
+			std::map<unsigned, CavityEnsemble>* /*mcav*/){}
 
 	//documentation in OutputBase, does nothing.
-	void finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain){}
+	void finishOutput(ParticleContainer* /*particleContainer*/,
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){}
 
 	//documentation in OutputBase.
 	std::string getPluginName() {

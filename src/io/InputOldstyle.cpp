@@ -200,7 +200,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			}
 
 #ifndef NDEBUG
-			for (int i = 0; i < numcomponents; i++) {
+			for (unsigned int i = 0; i < numcomponents; i++) {
 				global_log->debug() << "Component " << (i+1) << " of " << numcomponents << endl;
 				global_log->debug() << dcomponents[i] << endl;
 			}

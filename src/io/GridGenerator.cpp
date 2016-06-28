@@ -96,7 +96,8 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	_generator.init(_lattice, _basis, _origin);
 }
 
-long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* /*lmu*/,
+		Domain* /*domain*/, DomainDecompBase* /*domainDecomp*/) {
 	unsigned long numMolecules = 0;
 	molecule_t m; /* molecule type as provided by the generator */
 

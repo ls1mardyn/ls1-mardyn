@@ -484,35 +484,35 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 }
 
 /** @brief Calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered) */
-inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
+inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*/[3], double& Upot6LJ, double& UpotXpoles, double& MyRF, bool calculateLJ)
 {
 	double f[3];
 	double u;
 	double drs[3], dr2; // site distance vector & length^2
 	// no LJ interaction between equal solid atoms
-	if (mi.componentid() != mj.componentid()) {
-		const unsigned int nc1 = mi.numLJcenters();
-		const unsigned int nc2 = mj.numLJcenters();
-		for (unsigned int si = 0; si < nc1; ++si) {
-			const std::array<double,3> dii = mi.ljcenter_d_abs(si);
-			for (unsigned int sj = 0; sj < nc2; ++sj) {
-				const std::array<double,3> djj = mj.ljcenter_d_abs(sj);
-				SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
-				double eps24;
-				params >> eps24;
-				double sig2;
-				params >> sig2;
-				double shift6;
-				params >> shift6; // must be 0.0 for full LJ
 
-				if (calculateLJ) {
-					PotForceLJ(drs, dr2, eps24, sig2, f, u);
-					u += shift6;
-					Upot6LJ += u;
-				}
+	const unsigned int nc1 = mi.numLJcenters();
+	const unsigned int nc2 = mj.numLJcenters();
+	for (unsigned int si = 0; si < nc1; ++si) {
+		const std::array<double,3> dii = mi.ljcenter_d_abs(si);
+		for (unsigned int sj = 0; sj < nc2; ++sj) {
+			const std::array<double,3> djj = mj.ljcenter_d_abs(sj);
+			SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
+			double eps24;
+			params >> eps24;
+			double sig2;
+			params >> sig2;
+			double shift6;
+			params >> shift6; // must be 0.0 for full LJ
+
+			if (calculateLJ) {
+				PotForceLJ(drs, dr2, eps24, sig2, f, u);
+				u += shift6;
+				Upot6LJ += u;
 			}
 		}
 	}
+
 
 	double m1[3], m2[3]; // angular momenta
 

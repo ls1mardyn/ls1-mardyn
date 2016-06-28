@@ -81,7 +81,7 @@ VectorizedCellProcessor :: ~VectorizedCellProcessor () {
 }
 
 
-void VectorizedCellProcessor::initTraversal(const size_t numCells) {
+void VectorizedCellProcessor::initTraversal() {
 	_virial = 0.0;
 	_upot6lj = 0.0;
 	_upotXpoles = 0.0;
@@ -679,7 +679,8 @@ void VectorizedCellProcessor::endTraversal() {
 		Mjj_z = vcp_simd_fma(minus_partialTjInvdr, eXrij_z, partialGij_eiXej_z);
 	}
 
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
 template<class ForcePolicy>
 vcp_mask_vec
 inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
@@ -926,6 +927,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	return counter>0?VCP_SIMD_ONESVM:VCP_SIMD_ZEROVM;//do not compute stuff if nothing needs to be computed.
 #endif
 }
+#pragma GCC diagnostic pop
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
@@ -2756,19 +2758,18 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 //
 int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, double RR)
 {
-        int tn = 0;
-        double distanceVector[3];
+	int tn = 0;
+	double distanceVector[3];
 
-        std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
-        int neighbourParticleCount = neighbourCellParticles.size();
+	int neighbourParticleCount = cell2.getMoleculeCount();
 
-        for (int j = 0; j < neighbourParticleCount; j++) {
-                Molecule& molecule2 = *neighbourCellParticles[j];
-                if(m1->id() == molecule2.id()) continue;
-                double dd = molecule2.dist2(*m1, distanceVector);
-                if (dd < RR) tn++;
-        }
-        return tn;
+	for (int j = 0; j < neighbourParticleCount; j++) {
+		Molecule& molecule2 = cell2.moleculesAt(j);
+		if(m1->id() == molecule2.id()) continue;
+		double dd = molecule2.dist2(*m1, distanceVector);
+		if (dd < RR) tn++;
+	}
+	return tn;
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {

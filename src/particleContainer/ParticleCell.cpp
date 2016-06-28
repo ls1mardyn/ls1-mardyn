@@ -28,8 +28,7 @@ void ParticleCell::removeAllParticles() {
 }
 
 void ParticleCell::deallocateAllParticles() {
-	std::vector<Molecule * >::iterator it;
-	for(it = _molecules.begin(); it != _molecules.end(); ++it) {
+	for(auto it = _molecules.begin(); it != _molecules.end(); ++it) {
 		delete *it;
 	}
 	removeAllParticles();
@@ -38,10 +37,10 @@ void ParticleCell::deallocateAllParticles() {
 bool ParticleCell::addParticle(Molecule* particle_ptr, bool checkWhetherDuplicate) {
 	bool wasInserted = false;
 
-#ifndef NDEBUG
+/*#ifndef NDEBUG
 	bool isIn = particle_ptr->inBox(_boxMin, _boxMax);
 //	assert(isIn);
-#endif
+#endif*/
 	if (checkWhetherDuplicate == false) {
 		_molecules.push_back(particle_ptr);
 		wasInserted = true;
@@ -69,14 +68,6 @@ bool ParticleCell::addParticle(Molecule* particle_ptr, bool checkWhetherDuplicat
 	return wasInserted;
 }
 
-vector<Molecule*>& ParticleCell::getParticlePointers() {
-	return _molecules;
-}
-
-const vector<Molecule*>& ParticleCell::getParticlePointers() const {
-	return _molecules;
-}
-
 bool ParticleCell::isEmpty() const {
 	return _molecules.empty();
 }
@@ -100,8 +91,14 @@ bool ParticleCell::deleteMolecule(unsigned long molecule_id) {
 	return found;
 }
 
-void ParticleCell::fastRemoveMolecule(std::vector<Molecule *>::iterator& it) {
-	UnorderedVector::fastRemove(_molecules, it);
+bool ParticleCell::deleteMolecule(std::vector<Molecule * >::iterator& pos) {
+	assert(pos >= moleculesBegin());
+	assert(pos < moleculesEnd());
+
+	bool found = true;
+	delete *pos;
+	UnorderedVector::fastRemove(_molecules, pos);
+	return found;
 }
 
 std::vector<Molecule*>& ParticleCell::filterLeavingMolecules() {
