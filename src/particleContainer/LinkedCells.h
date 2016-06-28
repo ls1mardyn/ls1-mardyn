@@ -2,6 +2,7 @@
 #define LINKEDCELLS_H_
 
 #include <vector>
+#include <array>
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleCell.h"
@@ -342,8 +343,8 @@ private:
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
 	std::vector<unsigned long> _borderCellIndices[3][2][2];
 
-	std::vector<long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::vector<long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
+	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
+	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
 

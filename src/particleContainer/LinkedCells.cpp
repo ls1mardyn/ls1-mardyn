@@ -376,20 +376,19 @@ void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, un
 }
 
 void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProcessor) {
-	vector<long int>::iterator neighbourOffsetsIter;
 
 	ParticleCell& currentCell = _cells[cellIndex];
 	if (currentCell.isInnerCell()) {
 		cellProcessor.processCell(currentCell);
 		// loop over all forward neighbours
-		for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
 			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 			cellProcessor.processCellPair(currentCell, neighbourCell);
 		}
 	} else if (currentCell.isHaloCell()) {
 		cellProcessor.processCell(currentCell);
-		for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
 			long int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
 			if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) ((_cells.size()))))
@@ -406,14 +405,14 @@ void LinkedCells::traverseCell(const long int cellIndex, CellProcessor& cellProc
 	if (currentCell.isBoundaryCell()) {
 		cellProcessor.processCell(currentCell);
 		// loop over all forward neighbours
-		for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+		for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 				neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
 			ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 			cellProcessor.processCellPair(currentCell, neighbourCell);
 		}
 		// loop over all backward neighbours. calculate only forces
 		// to neighbour cells in the halo region, all others already have been calculated
-		for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
+		for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 				neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
 			ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
 			if (neighbourCell.isHaloCell()) {
@@ -748,8 +747,6 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR)
 {
         int m1neigh = 0;
-        vector<long int>::iterator neighbourOffsetsIter;
-
         assert(_cellsValid);
         unsigned long cellIndex = getCellIndexOfMolecule(m1);
         ParticleCell& currentCell = _cells[cellIndex];
@@ -764,13 +761,13 @@ int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/,
         m1neigh += cellProcessor.countNeighbours(m1, currentCell, RR);
 
         // forward neighbours
-        for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
         {
                 ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
                 m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
         }
         // backward neighbours
-        for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
+        for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
         {
                 ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
                 m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
@@ -931,8 +928,10 @@ void LinkedCells::initializeCells() {
 
 void LinkedCells::calculateNeighbourIndices() {
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
-	_forwardNeighbourOffsets.clear();
-	_backwardNeighbourOffsets.clear();
+	_forwardNeighbourOffsets.fill(0);
+	_backwardNeighbourOffsets.fill(0);
+	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
+
 	_maxNeighbourOffset = 0;
 	_minNeighbourOffset = 0;
 	double xDistanceSquare;
@@ -969,13 +968,15 @@ void LinkedCells::calculateNeighbourIndices() {
 					long int offset = cellIndexOf3DIndex(xIndex, yIndex,
 							zIndex);
 					if (offset > 0) {
-						_forwardNeighbourOffsets.push_back(offset);
+						_forwardNeighbourOffsets[forwardNeighbourIndex] = offset;
+						++forwardNeighbourIndex;
 						if (offset > _maxNeighbourOffset) {
 							_maxNeighbourOffset = offset;
 						}
 					}
 					if (offset < 0) {
-						_backwardNeighbourOffsets.push_back(abs(offset));
+						_backwardNeighbourOffsets[backwardNeighbourIndex] = abs(offset);
+						++backwardNeighbourIndex;
 						if (abs(offset) > _minNeighbourOffset) {
 							_minNeighbourOffset = abs(offset);
 						}
@@ -984,6 +985,9 @@ void LinkedCells::calculateNeighbourIndices() {
 			}
 		}
 	}
+
+	assert(forwardNeighbourIndex == 13);
+	assert(backwardNeighbourIndex == 13);
 
 	global_log->info() << "Neighbour offsets are bounded by "
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
@@ -1061,8 +1065,6 @@ double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
 	}
 
-	vector<long int>::iterator neighbourOffsetsIter;
-
 	unsigned long cellIndex = getCellIndexOfMolecule(m1);
 	ParticleCell& currentCell = _cells[cellIndex];
 
@@ -1073,14 +1075,14 @@ double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 	u += cellProcessor.processSingleMolecule(m1, currentCell);
 
 	// forward neighbours
-	for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
+	for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
 	}
 	// backward neighbours
-	for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
+	for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
