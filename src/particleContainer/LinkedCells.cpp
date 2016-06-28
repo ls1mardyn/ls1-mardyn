@@ -881,8 +881,7 @@ void LinkedCells::initializeCells() {
 					cell.assignCellToInnerRegion();
 					_innerCellIndices.push_back(cellIndex);
 				} else {
-					cell.assignCellToInnerMostRegion();
-					cell.assignCellToInnerRegion();
+					cell.assignCellToInnerMostAndInnerRegion();
 					_innerMostCellIndices.push_back(cellIndex);
 					_innerCellIndices.push_back(cellIndex);
 				}

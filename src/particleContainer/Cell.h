@@ -10,7 +10,7 @@ public:
 	void assignCellToHaloRegion() { haloCell = true; }
 	void assignCellToBoundaryRegion() { boundaryCell = true; }
 	void assignCellToInnerRegion() { innerCell = true; }
-	void assignCellToInnerMostRegion() { innerCell = true; innerMostCell = true; }
+	void assignCellToInnerMostAndInnerRegion() { innerCell = true; innerMostCell = true; }
 	
 	void skipCellFromHaloRegion() { haloCell = false; }
 	void skipCellFromBoundaryRegion() { boundaryCell = false; }

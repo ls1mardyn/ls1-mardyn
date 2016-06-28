@@ -189,12 +189,27 @@ public:
 
 	}
 
-	void checkZero(){
+	void checkZero() {
 		for (int i : _cellProcessCount) {
 			ASSERT_EQUAL(i, 0);
 		}
-		for (int i:_cellPairProcessCount) {
-			ASSERT_EQUAL(i,0);
+		for (int i : _cellPairProcessCount) {
+			ASSERT_EQUAL(i, 0);
+		}
+	}
+
+	void checkOnlyInner(LinkedCells* container) {
+		for (int i = 0; i < _num_cells; i++) {
+			if (_cellProcessCount[i] != 0) {
+				ASSERT_TRUE(container->getCell(i).isInnerCell());
+			}
+		}
+		for (int i = 0; i < _num_cells; i++) {
+			for (int j = 0; j < _num_cells; j++) {
+				if (_cellPairProcessCount[i * _num_cells + j] != 0) {
+					ASSERT_TRUE(container->getCell(i).isInnerCell() && container->getCell(j).isInnerCell());
+				}
+			}
 		}
 	}
 
@@ -231,4 +246,22 @@ void LinkedCellsTest::testTraversalMethods() {
 	container->traversePartialInnermostCells(cpStub, 2, 3);
 	container->traverseNonInnermostCells(cpStub);
 	cpStub.checkZero();
+	cpStub.inverseSign();
+
+	container->traversePartialInnermostCells(cpStub, 0, 1);
+	cpStub.checkOnlyInner(static_cast<LinkedCells*>(container));
+	cpStub.inverseSign();
+	container->traversePartialInnermostCells(cpStub, 0, 1);
+	cpStub.inverseSign();
+
+	container->traversePartialInnermostCells(cpStub, 0, 3);
+	container->traversePartialInnermostCells(cpStub, 1, 3);
+	container->traversePartialInnermostCells(cpStub, 2, 3);
+	cpStub.checkOnlyInner(static_cast<LinkedCells*>(container));
+	cpStub.inverseSign();
+	container->traversePartialInnermostCells(cpStub, 0, 3);
+	container->traversePartialInnermostCells(cpStub, 1, 3);
+	container->traversePartialInnermostCells(cpStub, 2, 3);
+	cpStub.inverseSign();
+
 }
