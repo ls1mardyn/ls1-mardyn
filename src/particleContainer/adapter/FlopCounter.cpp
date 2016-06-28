@@ -188,8 +188,7 @@ void FlopCounter::processCell(ParticleCell & c) {
 	if (c.isHaloCell())
 		return;
 
-	const vector<Molecule *> & molecules = c.getParticlePointers();
-	const vector<Molecule *>::size_type numMolecules = molecules.size();
+	const vector<Molecule *>::size_type numMolecules = c.getMoleculeCount();
 
 	if (numMolecules == 0) {
 		return;
@@ -199,9 +198,9 @@ void FlopCounter::processCell(ParticleCell & c) {
 	const bool addMacro = true;
 
 	for (vector<Molecule *>::size_type i = 0; i < numMolecules; ++i) {
-		const Molecule& Mi = *(molecules[i]);
+		const Molecule& Mi = c.moleculesAt(i);
 		for (vector<Molecule *>::size_type j = i + 1; j < numMolecules; ++j) {
-			const Molecule& Mj = *(molecules[j]);
+			const Molecule& Mj = c.moleculesAt(j);
 			handlePair(Mi, Mj, addMacro);
 		}
 	}
@@ -214,11 +213,8 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	if (c1.isHaloCell() and c2.isHaloCell())
 		return;
 
-	const vector<Molecule *> & molecules1 = c1.getParticlePointers();
-	const vector<Molecule *> & molecules2 = c2.getParticlePointers();
-
-	const vector<Molecule *>::size_type numMolecules1 = molecules1.size();
-	const vector<Molecule *>::size_type numMolecules2 = molecules2.size();
+	const vector<Molecule *>::size_type numMolecules1 = c1.getMoleculeCount();
+	const vector<Molecule *>::size_type numMolecules2 = c2.getMoleculeCount();
 
 	if ((numMolecules1 == 0) or (numMolecules2 == 0)) {
 		return;
@@ -229,9 +225,9 @@ void FlopCounter::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	const bool allMacro = (!c1.isHaloCell()) and (!c2.isHaloCell());
 
 	for (vector<Molecule *>::size_type i = 0; i < numMolecules1; ++i) {
-		const Molecule & Mi = *(molecules1[i]);
+		const Molecule & Mi = c1.moleculesAt(i);
 		for (vector<Molecule *>::size_type j = 0; j < numMolecules2; ++j) {
-			const Molecule & Mj = *(molecules2[j]);
+			const Molecule & Mj = c2.moleculesAt(j);
 			const bool addMacro = allMacro or c1.getCellIndex() < c2.getCellIndex();
 			handlePair(Mi, Mj, addMacro);
 		}

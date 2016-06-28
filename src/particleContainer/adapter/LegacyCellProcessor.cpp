@@ -35,12 +35,11 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 {
 	double distanceVector[3];
 
-	std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
-	int neighbourParticleCount = neighbourCellParticles.size();
+	int neighbourParticleCount = cell2.getMoleculeCount();
 	double u = 0.0;
 
 	for (int j = 0; j < neighbourParticleCount; j++) {
-		Molecule& molecule2 = *neighbourCellParticles[j];
+		Molecule& molecule2 = cell2.moleculesAt(j);
 		if(m1->id() == molecule2.id()) continue;
 		double dd = molecule2.dist2(*m1, distanceVector);
 		if (dd < _cutoffRadiusSquare)
@@ -57,11 +56,10 @@ int LegacyCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, doub
         int tn = 0;
         double distanceVector[3];
 
-        std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
-        int neighbourParticleCount = neighbourCellParticles.size();
+        int neighbourParticleCount = cell2.getMoleculeCount();
 
         for (int j = 0; j < neighbourParticleCount; j++) {
-                Molecule& molecule2 = *neighbourCellParticles[j];
+                Molecule& molecule2 = cell2.moleculesAt(j);
                 if(m1->id() == molecule2.id()) continue;
                 double dd = molecule2.dist2(*m1, distanceVector);
                 if (dd < RR) tn++;
@@ -72,18 +70,16 @@ int LegacyCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, doub
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	double distanceVector[3];
 
-	std::vector<Molecule*>& currentCellParticles = cell1.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
-	std::vector<Molecule*>& neighbourCellParticles = cell2.getParticlePointers();
-	int neighbourParticleCount = neighbourCellParticles.size();
+	int currentParticleCount = cell1.getMoleculeCount();
+	int neighbourParticleCount = cell2.getMoleculeCount();
 
 	if (cell1.isInnerCell()) {//no cell is halo
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = *currentCellParticles[i];
+			Molecule& molecule1 = cell1.moleculesAt(i);
 
 			for (int j = 0; j < neighbourParticleCount; j++) {
-				Molecule& molecule2 = *neighbourCellParticles[j];
+				Molecule& molecule2 = cell2.moleculesAt(j);
 				if(molecule1.id() == molecule2.id()) continue;  // for grand canonical ensemble and traversal of pseudocells
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
@@ -97,9 +93,9 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 	if (cell1.isBoundaryCell()) {//first cell is boundary
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = *currentCellParticles[i];
+			Molecule& molecule1 = cell1.moleculesAt(i);
 			for (int j = 0; j < neighbourParticleCount; j++) {
-				Molecule& molecule2 = *neighbourCellParticles[j];
+				Molecule& molecule2 = cell2.moleculesAt(j);
 
 				double dd = molecule2.dist2(molecule1, distanceVector);
 				if (dd < _cutoffRadiusSquare) {
@@ -118,15 +114,14 @@ void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cel
 
 void LegacyCellProcessor::processCell(ParticleCell& cell) {
 	double distanceVector[3];
-	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
-	int currentParticleCount = currentCellParticles.size();
+	int currentParticleCount = cell.getMoleculeCount();
 
 	if (cell.isInnerCell() || cell.isBoundaryCell()) {
 		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = *currentCellParticles[i];
+			Molecule& molecule1 = cell.moleculesAt(i);
 
 			for (int j = i+1; j < currentParticleCount; j++) {
-				Molecule& molecule2 = *currentCellParticles[j];
+				Molecule& molecule2 = cell.moleculesAt(j);
 				assert(&molecule1 != &molecule2);
 				double dd = molecule2.dist2(molecule1, distanceVector);
 
