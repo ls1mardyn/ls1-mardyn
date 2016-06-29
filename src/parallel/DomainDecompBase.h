@@ -206,7 +206,9 @@ public:
 		return std::vector<int>(0);
 	}
 #if defined(ENABLE_MPI)
-	virtual MPI_Comm getCommunicator() = 0;
+	virtual MPI_Comm getCommunicator(){
+	    return MPI_COMM_WORLD;
+	}
 #endif
 
 protected:
