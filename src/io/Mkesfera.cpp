@@ -59,12 +59,14 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	fl_units = ceil(pow(N_boxes, 1.0/3.0));
 	double fl_unit = 2.0*R_o / (double)fl_units;
 
-#ifdef ENABLE_MPI
-	double box_max_local[3];
-#endif
+
+
+
 	int fl_units_local[3];
 	double box_max[3];
+	//borders of local subregion in parallel computation
 	double box_min_local[3];
+	double box_max_local[3];
 	/* box min is assumed to be 0 */
 	int startx[3];
 	int endx[3];
@@ -73,13 +75,12 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	#ifdef ENABLE_MPI
 			box_max_local[d] = particleContainer->getBoundingBoxMax(d);
 			box_min_local[d] = particleContainer->getBoundingBoxMin(d);
-			//std::cout << box_max_local[d] << " global: " << box_max[d] <<"\n";
+
 	#else
 			box_min_local[d] = 0;
 			fl_units_local[d] = fl_units;
+			box_max_local[d] = box_max[d];
 	#endif
-	//		std::cout << fl_units<< " " << fl_units_local[d] <<" " <<box_min_local[d] << " " << box_max_local[d]<<"\n";
-			MPI_Barrier(MPI_COMM_WORLD);
 	}
 	for(int d = 0; d < 3; d++){
 		startx[d] = floor(box_min_local[d] / fl_unit - 0.5);
@@ -91,7 +92,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 		endx[d] = min(fl_units - 1, endx[d] + 1);
 
 		startx[d] = max(0,startx[d]-1);
-		//std::cout << startx[d] << " end: " << endx[d] << "\n";
+
 
 		fl_units_local[d] = endx[d] - startx[d] + 1;
 
@@ -164,12 +165,8 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 
 
 					if(idx[0] - startx[0] >= fl_units_local[0] or idx[1] - startx[1] >= fl_units_local[1] or idx[2] - startx[2] >= fl_units_local[2] or startx[0] > idx[0] or startx[1] > idx[1] or startx[2] > idx[2]){
-//						std::cout << "Not enough overlap! Increase Overlap parameter in Mkesfera.cpp! \n";
-//						std::cout << "min: "<<box_min_local[0] << " " << box_min_local[1] << " " << box_min_local[2] << " max: " << box_max_local[0] << " " << box_max_local[1] << " " << box_max_local[2] << " fl_unit: " << fl_unit << startx[0]<< " start: " << startx[1] << " "<< startx[2]<< " id: " << idx[0] << " "<< idx[1] << " "<< idx[2] << " end: " << endx[0] << " "<< endx[1] << " "<< endx[2] << "\n";
 						global_log->error() << "Error in calculation of start and end values! \n";
 						exit(0);
-//						std::cout << idx[0] - startx[0] << " " << idx[1] - startx[1] << " " << idx[2] - startx[2] << " \n";
-//						std::cout << idx[0]<< " " << idx[1] <<" "<< idx[2] <<" " <<startx[0] << " " << startx[1] << " " << startx[2] << "\n";
 					}
 					fill[idx[0]-startx[0]][idx[1]-startx[1]][idx[2]-startx[2]][p] = tfill;
 					if(tfill) {
