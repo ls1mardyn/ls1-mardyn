@@ -24,6 +24,9 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_r[0] = rx;
 	_r[1] = ry;
 	_r[2] = rz;
+	_rOld[0] = rx;
+	_rOld[1] = ry;
+	_rOld[2] = rz;
 	_v[0] = vx;
 	_v[1] = vy;
 	_v[2] = vz;
@@ -80,6 +83,9 @@ Molecule::Molecule(const Molecule& m) {
 	_r[0] = m._r[0];
 	_r[1] = m._r[1];
 	_r[2] = m._r[2];
+	_rOld[0] = m._rOld[0];
+	_rOld[1] = m._rOld[1];
+	_rOld[2] = m._rOld[2];
 	_v[0] = m._v[0];
 	_v[1] = m._v[1];
 	_v[2] = m._v[2];
@@ -150,13 +156,20 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 		      _v[d] = vcorr * _v[d] + dtInv2m * _F[d];
 		   else
 		      _v[d] = _v[d] + dtInv2m * _F[d];
-		      
+		   
+		   //rOld necessary for the calculation of the diffusion coefficient
+		    _rOld[d] = _r[d];  
+		   
 		   _r[d] += dt * _v[d];
 		}
 	}
 	else{
 	    for (unsigned short d = 0; d < 3; ++d) {
 		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
+		
+		//rOld necessary for the calculation of the diffusion coefficient
+		 _rOld[d] = _r[d];
+		
 		_r[d] += dt * _v[d];
 	    }
 	}

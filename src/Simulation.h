@@ -346,6 +346,7 @@ public:
 	double getSimulationTime(){ return _simulationTime; }
 	unsigned getStressRecordTimestep() {return _stressProfileRecordingTimesteps; }
 	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
+	bool isShearRate() { return _doShearRate; }
 
 	Ensemble* getEnsemble() { return _ensemble; }
 

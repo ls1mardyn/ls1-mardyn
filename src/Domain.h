@@ -481,11 +481,13 @@ public:
 	
 	unsigned long getSimstep();
 	unsigned long getInitStatistics();
+	double getTimestepLength();
 	unsigned getStressRecordTimeStep();
 	unsigned getConfinementRecordTimeStep();
 	double getCutoffRadius();
 	unsigned getBarostatTimeInit();
 	unsigned getBarostatTimeEnd();
+	bool isShearRate();
 private:
 
 	//! rank of the local process
@@ -709,6 +711,9 @@ private:
 	std::map<int, std::map<unsigned long, long double> > _globalConvectivePotHeatflux;
 	std::map<int, std::map<unsigned long, long double> > _localTotalHeatflux;
 	std::map<int, std::map<unsigned long, long double> > _globalTotalHeatflux;
+	std::map<int, std::map<unsigned long, long double> > _localDiffusiveMovement;
+	std::map<int, std::map<unsigned long, long double> > _globalDiffusiveMovement;
+	bool _isConfinement;
 	
 	
         std::map<unsigned, double> _universalTProfile; 

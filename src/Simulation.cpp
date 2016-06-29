@@ -1644,6 +1644,7 @@ void Simulation::simulate() {
 					double currentTemp = _domain->getGlobalCurrentTemperature();
 					double currentPressure = 1.0;
 					double targetPressure = 0.0;
+					double dampFac = 1.0;
 					_domain->setDifferentBarostatInterval(true);
 					if(cpit->isGCMD_barostat()){
 					    double imu;
@@ -1659,10 +1660,13 @@ void Simulation::simulate() {
 					    if(_domainDecomposition->getRank()==0)
 					      cout << " t " << _simstep << " targetPressure " << targetPressure << " currentPressure " << currentPressure << " currentTemp " << currentTemp << " Volume " << Volume << " N " << N;
 					    
+					    // artificial prefactor (~damping function) applied to the number number of test insertions and time interval between test
+					    dampFac = (_simstep - _endGrandCanonical) * (_simstep - _endGrandCanonical)/((_initGrandCanonical - _endGrandCanonical) * (_initGrandCanonical - _endGrandCanonical)); 
+					    
 					    double deltaPressure = abs(currentPressure-targetPressure);
 					    if(deltaPressure == 0)
 					      deltaPressure = 0.01;
-					    unsigned newInstances = (unsigned)floor(cpit->getOriginalInstances()*10*deltaPressure);
+					    unsigned newInstances = (unsigned)floor(cpit->getOriginalInstances()*10*deltaPressure*dampFac);
 					    if(_domainDecomposition->getRank()==0)
 					      cout << " newInst " << newInstances << endl;
 					    
@@ -1706,9 +1710,10 @@ void Simulation::simulate() {
 					// adaptable timestep for barostat: the bigger the difference between targetPressure and currentPressure, the shorter the timestep
 					if(cpit->isGCMD_barostat()){
 					  double deltaPressure = abs(currentPressure-targetPressure);
+					  
 					  if(deltaPressure == 0)
 					    deltaPressure = 0.01;
-					  unsigned newInterval = (unsigned)floor(cpit->getOriginalInterval()/deltaPressure) + _simstep;
+					  unsigned newInterval = (unsigned)floor(cpit->getOriginalInterval()/deltaPressure/dampFac) + _simstep;
 					  cpit->setInterval(newInterval);
 					  if(_domainDecomposition->getRank()==0)
 					    cout << " newI " << newInterval << endl;

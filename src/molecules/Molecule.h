@@ -56,6 +56,8 @@ public:
 	Component* component() const { return _component; }
 	/** get position coordinate */
 	double r(unsigned short d) const { return _r[d]; }
+	/** get position coordinate from the previous timestep */
+	double rOld(unsigned short d) const { return _rOld[d]; }
 	/** set position coordinate */
 	void setr(unsigned short d, double r) { _r[d] = r; }
 	/** get velocity coordinate */
@@ -351,6 +353,7 @@ public:
 private:
     Component *_component;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
+	double _rOld[3]; /**< position coordinates from the previous timestep*/
 	double _F[3];  /**< forces */
 	double _v[3];  /**< velocity */
 	Quaternion _q; /**< angular orientation */
