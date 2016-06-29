@@ -7,7 +7,9 @@
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
-
+#ifdef USE_VT
+#include "VT.h"
+#endif
 class Wall;
 class Mirror;
 using optparse::Values;
@@ -57,6 +59,7 @@ const int VELSCALE_THERMOSTAT = 1;
 namespace bhfmm {
 class FastMultipoleMethod;
 } // bhfmm
+
 
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)

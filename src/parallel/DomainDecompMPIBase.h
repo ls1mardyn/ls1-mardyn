@@ -151,6 +151,14 @@ public:
 	//! @param domain is e.g. needed to get the size of the local domain
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType, bool removeRecvDuplicates = false);
 
+	virtual std::vector<int> getNeighbourRanks() =0;
+	virtual std::vector<int> getNeighbourRanksFullShell() =0;
+
+#if defined(ENABLE_MPI)
+	virtual MPI_Comm getCommunicator(){
+		return _comm;
+	}
+#endif
 protected:
 
 	void exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,

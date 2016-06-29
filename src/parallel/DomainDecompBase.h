@@ -4,6 +4,11 @@
 #include "parallel/CollectiveCommBase.h"
 #include <string>
 
+#ifdef ENABLE_MPI
+#include <mpi.h>
+#endif
+#include <iostream>
+
 class Molecule;
 class Component;
 class Domain;
@@ -191,6 +196,18 @@ public:
 	virtual void collCommAllreduceSum();
 	//! has to call broadcast method of a CollComm class (none in sequential version)
 	virtual void collCommBroadcast(int root = 0);
+	//returns the ranks of the neighbours
+	virtual std::vector<int> getNeighbourRanks(){
+		return std::vector<int>(0);
+	}
+	//returns the ranks of the neighbours
+	virtual std::vector<int> getNeighbourRanksFullShell(){
+		std::cout << "Not yet implemented";
+		return std::vector<int>(0);
+	}
+#if defined(ENABLE_MPI)
+	virtual MPI_Comm getCommunicator() = 0;
+#endif
 
 protected:
 	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;

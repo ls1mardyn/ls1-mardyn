@@ -51,6 +51,10 @@ public:
 	void deadlockDiagnosticSend();
 	void deadlockDiagnosticRecv();
 
+	int getRank(){
+		return _rank;
+	}
+
 private:
 	int _rank;
 	double _bothLow[3], _bothHigh[3];

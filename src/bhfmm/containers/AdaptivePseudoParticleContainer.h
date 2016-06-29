@@ -52,6 +52,7 @@ public:
   void processFarField(ParticleCell& /*cell*/){}
   void processTree(){}
   void printTimers(){};
+
 private:	
 	bool _periodicBC;
 

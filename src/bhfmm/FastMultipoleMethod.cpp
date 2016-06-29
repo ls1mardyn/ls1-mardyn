@@ -12,6 +12,9 @@
 #include "bhfmm/containers/UniformPseudoParticleContainer.h"
 #include "bhfmm/containers/AdaptivePseudoParticleContainer.h"
 #include "utils/xmlfileUnits.h"
+#ifdef USE_VT
+#include "VT.h"
+#endif
 
 using Log::global_log;
 using std::endl;
@@ -76,6 +79,12 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 
 	_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 			*(global_simulation->getDomain()));
+#if defined(ENABLE_MPI)
+	if (_adaptive){
+		global_log->error() << "not supported yet" << endl;
+		exit(-1);
+	}
+#endif
 	if (not _adaptive) {
 		_pseudoParticleContainer = new UniformPseudoParticleContainer(
 				globalDomainLength, bBoxMin, bBoxMax, LJCellLength,
@@ -95,6 +104,9 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 }
 
 void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) {
+#ifdef USE_VT
+	VT_traceon();
+#endif
 	// build
 	_pseudoParticleContainer->build(ljContainer);
 
@@ -112,7 +124,9 @@ void FastMultipoleMethod::computeElectrostatics(ParticleContainer* ljContainer) 
 
 	// L2L, L2P
 	_pseudoParticleContainer->downwardPass(_L2PProcessor);
-
+#ifdef USE_VT
+	VT_traceoff();
+#endif
 }
 
 void FastMultipoleMethod::printTimers() {

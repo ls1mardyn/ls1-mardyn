@@ -120,6 +120,9 @@ void Simulation::exit(int exitcode) {
 
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
+#ifdef USE_VT
+	VT_traceoff();
+#endif
 	/* integrator */
 	if(xmlconfig.changecurrentnode("integrator")) {
 		string integratorType;
@@ -663,7 +666,6 @@ void Simulation::prepare_start() {
 			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
-
 		_FMM->init(globalLength, bBoxMin, bBoxMax,
 				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength());
 

@@ -9,6 +9,7 @@
 #define L2PCELLPROCESSOR_H_
 #include "particleContainer/adapter/CellProcessor.h"
 #include "utils/Timer.h"
+#include <stdlib.h>
 
 namespace bhfmm {
 

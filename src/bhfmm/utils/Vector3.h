@@ -90,6 +90,12 @@ public:
 		return Vector3(result);
 	}
 
+	void operator*=(double scalar) {
+			type result[3];
+			_content[0] = _content[0] * scalar;
+			_content[1] = _content[1] * scalar;
+			_content[2] = _content[2] * scalar;
+	}
 	type MaxNorm() const {
 		type norm;
 		norm = std::max(abs(_content[0]), abs(_content[1]));

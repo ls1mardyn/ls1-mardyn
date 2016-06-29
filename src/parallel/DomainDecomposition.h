@@ -79,6 +79,13 @@ public:
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
+    //returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local area)
+	std::vector<int> getNeighbourRanks();
+	
+    //returns a vector of all 26 neighbour ranks in x y and z direction
+	std::vector<int> getNeighbourRanksFullShell();
+
+
 	// documentation in base class
 	virtual int getNonBlockingStageCount();
 
@@ -94,6 +101,7 @@ public:
 
 	// documentation in base class
 	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+
 
 private:
 	bool _neighboursInitialized;
