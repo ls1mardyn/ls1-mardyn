@@ -358,6 +358,7 @@ public:
 	void setupBulkPressure(double xmin, double xmax, double ymin, double ymax, unsigned cid);
 	void setupConfinementProperties(double wallThickness, double horDist, double vertDist, double radius2, int cid, double xmax, double ymax, double zmax, unsigned long upperID, unsigned long lowerID);
 	void setupConfinementProfile(unsigned xun,unsigned yun, double correlationLength);
+	void setupConfinementRecTime(unsigned long confinementRecordingTimesteps) { this->_confinementRecordingTimesteps = confinementRecordingTimesteps;}
 	void considerComponentInProfile(int cid) { this->_universalProfiledComponents[cid] = true; }
 	void considerComponentInProfileSlab(int cid) { this->_universalProfiledComponentsSlab[cid] = true; }
 	void recordProfile(ParticleContainer* molCont);
@@ -714,6 +715,7 @@ private:
 	std::map<int, std::map<unsigned long, long double> > _localDiffusiveMovement;
 	std::map<int, std::map<unsigned long, long double> > _globalDiffusiveMovement;
 	bool _isConfinement;
+	unsigned long _confinementRecordingTimesteps;
 	
 	
         std::map<unsigned, double> _universalTProfile; 

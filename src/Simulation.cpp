@@ -1021,6 +1021,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			global_log->info() << "Confinement stress profile: " << stress << endl;
 		} else if (token == "confinementRecordingTimesteps") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementRecordingTimesteps; 	
+			_domain->setupConfinementRecTime(_confinementRecordingTimesteps);
 		} else if (token == "confinementOutputTimesteps") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementOutputTimesteps;
 		} else if (token == "confinementProfilePrefix") { /* TODO: suboption of confinementProfile */

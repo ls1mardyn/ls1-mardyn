@@ -101,6 +101,7 @@ Domain::Domain(int rank, PressureGradient* pg){
 	  this->_differentBarostatInterval = false;
 	}
 	this->_isConfinement = false;
+	this->_confinementRecordingTimesteps = 0.0;
 	this->_local2KETrans_1Dim[0] = 0.0;
 	this->_universalATrans = map<int, double>();
 	this->_universalATrans[0] = 1.0;
@@ -2565,11 +2566,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    this->_localvProfile_Confinement[d][unID] += thismol->v(d);
 			    this->_localFluidForce_Confinement[d][unID] += thismol->F(d);
 			    this->_localDiffusiveMovement[d][unID] += thismol->rOld(d) - thismol->r(d) - thismol->getDirectedVelocity(d)*getTimestepLength();
-			    if (d==2 && unID==1)
-			      cout << " Diff " << this->_localDiffusiveMovement[d][unID];
 			    this->_localDiffusiveMovement[d][unID] *= this->_localDiffusiveMovement[d][unID];
-			    if (d==2 && unID==1)
-			      cout << " Diff " << this->_localDiffusiveMovement[d][unID] << endl;
 			}
 			// stress calculation just in fluid
 			if(cid == cid_free){
@@ -2871,13 +2868,9 @@ void Domain::collectConfinementProperties(DomainDecompBase* dode)
 	for(unsigned unID = 0; unID < unIDs; unID++){
 	      for(int d = 0; d < 3; d++){
 		    this->_globalForceConfinement[d][unID] = this->_globalForceConfinement[d][unID]/this->_globalAccumulatedDatasets_ConfinementProperties;
-		    if (d==2 && unID==1)
-			      cout << " DiffGlob " << this->_globalDiffusiveMovement[d][unID] << endl;
-		    this->_globalDiffusiveMovement[d][unID] = this->_globalDiffusiveMovement[d][unID]/(2*this->_globalNConfinement[unID]*this->_globalAccumulatedDatasets_ConfinementProperties*getTimestepLength());
+		    this->_globalDiffusiveMovement[d][unID] = this->_globalDiffusiveMovement[d][unID]/(2*this->_globalNConfinement[unID]*this->_globalAccumulatedDatasets_ConfinementProperties*this->_confinementRecordingTimesteps*getTimestepLength());
 		    if (this->_globalDiffusiveMovement[d][unID] != this->_globalDiffusiveMovement[d][unID])
 		      this->_globalDiffusiveMovement[d][unID] = 0.0;
-		    if (d==2 && unID==1)
-			      cout << " DiffGlob " << this->_globalDiffusiveMovement[d][unID] << " N " << this->_globalNConfinement[unID] << " Ndt " << this->_globalAccumulatedDatasets_ConfinementProperties << " dt " << getTimestepLength() << endl;
 	      }
 	}
 	
