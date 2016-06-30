@@ -36,7 +36,7 @@ LINKFLAGS_SEQ_PROFILE = $(LINKFLAGS_SEQ_RELEASE) -pg
 # PAR
 #########################################
 # DEBUG
-CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -g -ggdb -DENABLE_MPI #-Weffc++ 
+CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -g -ggdb -DENABLE_MPI -Wno-unused-parameter #-Weffc++ 
 LINKFLAGS_PAR_DEBUG =
 # RELEASE
 CXXFLAGS_PAR_RELEASE  = -O3 -Wall -Werror -DNDEBUG -DENABLE_MPI
