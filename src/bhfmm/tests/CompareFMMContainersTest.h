@@ -17,9 +17,9 @@ class CompareFMMContainersTest: public utils::TestWithSimulationSetup {
 	TEST_METHOD(compareAtRadius2WithoutPeriodicBC);
 	TEST_METHOD(compareAtRadius1WithoutPeriodicBC);
 
-	/*TEST_METHOD(compareAtRadius4);
+	TEST_METHOD(compareAtRadius4);
 	TEST_METHOD(compareAtRadius2);
-	TEST_METHOD(compareAtRadius1);*/
+	TEST_METHOD(compareAtRadius1);
 
 	TEST_SUITE_END();
 
