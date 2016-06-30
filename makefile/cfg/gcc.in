@@ -21,7 +21,7 @@ DEPMODE = gcc3
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -g -ggdb #-Weffc++ 
+CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -g -ggdb -Wno-unused-parameter #-Weffc++ 
 LINKFLAGS_SEQ_DEBUG = 
 # RELEASE
 CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -Werror -DNDEBUG
