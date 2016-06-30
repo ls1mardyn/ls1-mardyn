@@ -665,7 +665,7 @@ void UniformPseudoParticleContainer::CombineMpCell(double */*cellWid*/, int& mpC
 
 
 
-void UniformPseudoParticleContainer::CombineMpCell_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
+void UniformPseudoParticleContainer::CombineMpCell_MPI(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 //#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells,offset)
 	{
 		int iDir, m1=0, m1x, m1y, m1z, m2=0;
@@ -826,7 +826,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo(double *cellWid, int mpCell
 
 
 
-void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos){
+void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, int doHalos){
 	_timerGatherWellSepLoLokal.start();
 	if(doHalos){
 		_timerHaloGather.start();
@@ -1598,7 +1598,7 @@ void UniformPseudoParticleContainer::PropagateCellLo(double */*cellWid*/, int mp
 } // PropogateCellLo
 
 
-void UniformPseudoParticleContainer::PropagateCellLo_MPI(double *cellWid, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
+void UniformPseudoParticleContainer::PropagateCellLo_MPI(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
 	_timerPropagateCellLoLokal.start();
 //#pragma omp parallel firstprivate(curLevel, doHalos, localMpCells, offset)
 	{
