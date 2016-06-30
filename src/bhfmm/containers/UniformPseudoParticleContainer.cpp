@@ -346,8 +346,8 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 	delete _leafContainer;
 	delete[] _coeffVector;
-	delete[] _occVector;
 #if defined(ENABLE_MPI)
+	delete[] _occVector;
 	if(!_overlapComm){
 		delete _multipoleBuffer;
 		delete _multipoleRecBuffer;
