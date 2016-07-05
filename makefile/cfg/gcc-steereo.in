@@ -70,6 +70,10 @@ endif
 
 # OpenMP settings:
 #########################################
-ifeq ($(OPENMP_SIMD),1)
-CXXFLAGS_OPENMP += -fopenmp-simd
+ifeq ($(OPENMP),1)
+FLAGS_OPENMP += -fopenmp
+else
+  ifeq ($(OPENMP_SIMD),1)
+  FLAGS_OPENMP += -fopenmp-simd
+  endif
 endif

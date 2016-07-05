@@ -57,8 +57,12 @@ endif
 
 # OpenMP settings:
 #########################################
-ifeq ($(OPENMP_SIMD),1)
-CXXFLAGS_OPENMP += -qopenmp-simd
+ifeq ($(OPENMP),1)
+FLAGS_OPENMP += -qopenmp
+else
+  ifeq ($(OPENMP_SIMD),1)
+  FLAGS_OPENMP += -qopenmp-simd
+  endif
 endif
 
 # Special compile-rule for the VectorizedCellProcessor to enforce inlining.

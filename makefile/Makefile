@@ -57,6 +57,9 @@ ENABLE_FMM_FFT ?= 0
 # allow acceleration of MPI communication through overlapping communication ?
 ENABLE_OVERLAPPING ?= 0
 
+# allow OpenMP? Leave off for now, unless you are developing it.
+OPENMP ?= 0
+
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
@@ -120,8 +123,13 @@ CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
 endif
 
-ifeq ($(OPENMP_SIMD),1)
-CXXFLAGS += $(CXXFLAGS_OPENMP)
+ifeq ($(OPENMP), 1)
+CXXFLAGS += -DENABLE_OPENMP $(FLAGS_OPENMP)
+LDFLAGS += $(FLAGS_OPENMP)
+else
+  ifeq ($(OPENMP_SIMD),1)
+  CXXFLAGS += $(FLAGS_OPENMP)
+  endif
 endif
 
 ifeq ($(ENABLE_FMM_FFT),1)
