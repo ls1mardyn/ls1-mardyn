@@ -68,7 +68,10 @@
 
 	static vcp_inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return a;}
 	static vcp_inline vcp_double_vec vcp_simd_maskload(const double* const a, const vcp_mask_vec& mask) {return vcp_simd_applymask(vcp_simd_load(a),mask);}
-	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size){
+	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& /*i*/){
+		return true;
+	}
+	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& /*size*/){
 		return false;
 	}
 
@@ -113,6 +116,12 @@
 
 	static vcp_inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return _mm_movemask_epi8(a);}
 	static vcp_inline vcp_double_vec vcp_simd_maskload(const double* const a, const vcp_mask_vec& mask) {return vcp_simd_applymask(vcp_simd_load(a),mask);}
+	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
+		switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+			case 0: return _mm_set_epi32(~0, ~0, ~0, ~0);
+			default: return _mm_set_epi32(~0, ~0, 0, 0);
+		}
+	}
 	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
 		switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
 			case 0: return _mm_set_epi32(0, 0, 0, 0);
@@ -158,12 +167,20 @@
 
 	static vcp_inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return _mm256_movemask_pd(_mm256_castsi256_pd(a));}
 	static vcp_inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec mask) {return _mm256_maskload_pd(a, mask);}
+	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
+		switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+			case 0: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+			case 1: return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, 0, 0);
+			case 2: return _mm256_set_epi32(~0, ~0, ~0, ~0, 0, 0, 0, 0);
+			default: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
+		}
+	}
 	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
 		switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+			case 0: return VCP_SIMD_ZEROVM;
 			case 1: return _mm256_set_epi32(0, 0, 0, 0, 0, 0, ~0, ~0);
 			case 2: return _mm256_set_epi32(0, 0, 0, 0, ~0, ~0, ~0, ~0);
-			case 3: return _mm256_set_epi32(0, 0, ~0, ~0, ~0, ~0, ~0, ~0);
-			default: return VCP_SIMD_ZEROVM;
+			default: return _mm256_set_epi32(0, 0, ~0, ~0, ~0, ~0, ~0, ~0);
 		}
 	}
 #elif VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
@@ -216,15 +233,14 @@
 		static vcp_inline void vcp_simd_store(vcp_lookupOrMask_single* location, const vcp_lookupOrMask_vec& a) {_mm512_store_epi64(location, a);}
 	#endif
 
+	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
+		static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0xFF, 0xFE, 0xFC, 0xF8, 0xF0, 0xE0, 0xC0, 0x80 };
+		return possibleInitJMasks[i & static_cast<size_t>(VCP_VEC_SIZE_M1)];
+	}
+
 	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
 		static const vcp_mask_vec possibleRemainderJMasks[VCP_VEC_SIZE] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
 		return possibleRemainderJMasks[size & static_cast<size_t>(VCP_VEC_SIZE_M1)];
-		/*switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-			case 1: return _mm256_set_epi32(0, 0, 0, 0, 0, 0, ~0, ~0);
-			case 2: return _mm256_set_epi32(0, 0, 0, 0, ~0, ~0, ~0, ~0);
-			case 3: return _mm256_set_epi32(0, 0, ~0, ~0, ~0, ~0, ~0, ~0);
-			default: return VCP_SIMD_ZEROVM;
-		}*/
 	}
 #endif
 

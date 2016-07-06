@@ -795,7 +795,7 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 		counter += _popcnt32(forceMask);
 	}
 
-	return counter>0?VCP_SIMD_ONESVM:VCP_SIMD_ZEROVM;//do not compute stuff if nothing needs to be computed.
+	return counter > 0 ? VCP_SIMD_ONESVM : VCP_SIMD_ZEROVM;	//do not compute stuff if nothing needs to be computed.
 #endif
 }
 
