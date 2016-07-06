@@ -690,26 +690,6 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 #endif
 ) {
 
-/*
-#if VCP_VEC_TYPE==VCP_NOVEC
-
-	vcp_mask_vec compute_molecule = false;
-	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	for (; j < soa2_num_centers; ++j) {
-		const vcp_double_vec m_dx = m1_r_x - soa2_m_r_x[j];
-		const vcp_double_vec m_dy = m1_r_y - soa2_m_r_y[j];
-		const vcp_double_vec m_dz = m1_r_z - soa2_m_r_z[j];
-
-		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
-
-		const vcp_mask_vec forceMask = ForcePolicy :: GetForceMask(m_r2, cutoffRadiusSquare);
-		*(soa2_center_dist_lookup + j) = forceMask;
-		compute_molecule |= forceMask;
-
-	}
-
-	return compute_molecule;
-*/
 #if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
 
 	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
@@ -751,7 +731,7 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 
 	return compute_molecule;
 
-#else VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#else // VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 	counter=0;
 	static const __m512i eight = _mm512_set_epi32(
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

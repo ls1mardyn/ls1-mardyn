@@ -336,7 +336,7 @@ private:
 #endif
 		}
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER or VCP_VEC_TYPE==VCP_VEC_SSE3
+
 		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask)
 		{
 			vcp_mask_vec result = vcp_simd_and( vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) ), j_mask);
@@ -361,6 +361,11 @@ private:
 				default: return _mm256_set_epi32(~0, ~0, 0, 0, 0, 0, 0, 0);
 			}
 		}
+	#elif VCP_VEC_TYPE==VCP_NOVEC
+		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)//calculations only for i onwards.
+			{
+				return true; // calculate everything
+			}
 	#else //mic
 		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i onwards.
 		{
@@ -368,16 +373,7 @@ private:
 			return possibleInitJMasks[i & static_cast<size_t>(VCP_VEC_SIZE_M1)];
 		}
 	#endif
-#elif VCP_VEC_TYPE==VCP_NOVEC
-		inline static vcp_mask_vec InitJ_Mask (const size_t i)//calculations only for i onwards.
-		{
-			return true;
-		}
-		inline static vcp_mask_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2, vcp_mask_vec& /*j_mask*/)
-		{
-			return vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV) );
-		}
-#endif /* definition of InitJ_Mask & GetForceMask */
+
 	}; /* end of class SingleCellPolicy_ */
 
 	/**
