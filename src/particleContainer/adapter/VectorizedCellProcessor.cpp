@@ -680,15 +680,10 @@ void VectorizedCellProcessor::endTraversal() {
 	}
 
 template<class ForcePolicy>
-vcp_mask_vec
+countertype32
 inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
-		const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z,
-		countertype32&
-#if VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-		counter
-#endif
-) {
+		const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z) {
 
 #if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
 
@@ -729,10 +724,10 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
 
-	return compute_molecule;
+	return vcp_simd_movemask(compute_molecule)?1:0;
 
 #else // VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-	counter=0;
+	int counter = 0;
 	static const __m512i eight = _mm512_set_epi32(
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 		0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08
@@ -795,7 +790,7 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 		counter += _popcnt32(forceMask);
 	}
 
-	return counter > 0 ? VCP_SIMD_ONESVM : VCP_SIMD_ZEROVM;	//do not compute stuff if nothing needs to be computed.
+	return counter;	//do not compute stuff if nothing needs to be computed.
 #endif
 }
 
@@ -974,16 +969,16 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	 */
 	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2._ljc_num);
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._ljc_num);//this is ceil _ljc_num, VCP_VEC_SIZE
-	countertype32 end_ljc_j_cnt = 0;//count for gather
+
 	const size_t end_charges_j = vcp_floor_to_vec_size(soa2._charges_num);
 	const size_t end_charges_j_longloop = vcp_ceil_to_vec_size(soa2._charges_num);//this is ceil _charges_num, VCP_VEC_SIZE
-	countertype32 end_charges_j_cnt = 0;//count for gather
+
 	const size_t end_dipoles_j = vcp_floor_to_vec_size(soa2._dipoles_num);
 	const size_t end_dipoles_j_longloop = vcp_ceil_to_vec_size(soa2._dipoles_num);//this is ceil _dipoles_num, VCP_VEC_SIZE
-	countertype32 end_dipoles_j_cnt = 0;//count for gather
+
 	const size_t end_quadrupoles_j = vcp_floor_to_vec_size(soa2._quadrupoles_num);
 	const size_t end_quadrupoles_j_longloop = vcp_ceil_to_vec_size(soa2._quadrupoles_num);//this is ceil _quadrupoles_num, VCP_VEC_SIZE
-	countertype32 end_quadrupoles_j_cnt = 0;//count for gather
+
 	size_t i_ljc_idx = 0;
 	size_t i_charge_idx = 0;
 	size_t i_charge_dipole_idx = 0;
@@ -1005,25 +1000,25 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		const vcp_double_vec m1_r_y = vcp_simd_broadcast(soa1_mol_pos_y + i);
 		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
-		const vcp_mask_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
+		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
-				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z, end_ljc_j_cnt);
-		const vcp_mask_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
+				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
+		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
-				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z, end_charges_j_cnt);
-		const vcp_mask_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
+				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
+		const countertype32 compute_molecule_dipoles = calcDistLookup<ForcePolicy>(i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
 				soa2_dipoles_dist_lookup, soa2_dipoles_m_r_x, soa2_dipoles_m_r_y, soa2_dipoles_m_r_z,
-				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z, end_dipoles_j_cnt);
-		const vcp_mask_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
+				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z);
+		const countertype32 compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
-				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z, end_quadrupoles_j_cnt);
+				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
 
-		size_t end_ljc_loop = MaskGatherChooser::getEndloop(end_ljc_j_longloop, end_ljc_j_cnt);
-		size_t end_charges_loop = MaskGatherChooser::getEndloop(end_charges_j_longloop, end_charges_j_cnt);
-		size_t end_dipoles_loop = MaskGatherChooser::getEndloop(end_dipoles_j_longloop, end_dipoles_j_cnt);
-		size_t end_quadrupoles_loop = MaskGatherChooser::getEndloop(end_quadrupoles_j_longloop, end_quadrupoles_j_cnt);
+		size_t end_ljc_loop = MaskGatherChooser::getEndloop(end_ljc_j_longloop, compute_molecule_ljc);
+		size_t end_charges_loop = MaskGatherChooser::getEndloop(end_charges_j_longloop, compute_molecule_charges);
+		size_t end_dipoles_loop = MaskGatherChooser::getEndloop(end_dipoles_j_longloop, compute_molecule_dipoles);
+		size_t end_quadrupoles_loop = MaskGatherChooser::getEndloop(end_quadrupoles_j_longloop, compute_molecule_quadrupoles);
 
-		if (!vcp_simd_movemask(compute_molecule_ljc)) {
+		if (compute_molecule_ljc==0) {
 			i_ljc_idx += soa1_mol_ljc_num[i];
 		}
 		else {
@@ -1095,7 +1090,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_ljc_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_ljc_dist_lookup, j, remainderM);
 
@@ -1162,7 +1157,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		}
 		// Computation of site interactions with charges
 
-		if (!vcp_simd_movemask(compute_molecule_charges)) {
+		if (compute_molecule_charges == 0) {
 			i_charge_idx += soa1_mol_charges_num[i];
 			i_dipole_charge_idx += soa1_mol_dipoles_num[i];
 			i_quadrupole_charge_idx += soa1_mol_quadrupoles_num[i];
@@ -1235,7 +1230,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_charges_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 
@@ -1371,7 +1366,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_charges_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 						const vcp_double_vec q = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
@@ -1525,7 +1520,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_charges_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 						const vcp_double_vec q = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
@@ -1606,7 +1601,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		// Computation of site interactions with dipoles
 
 		// Continue with next molecule if no force has to be calculated
-		if (!vcp_simd_movemask(compute_molecule_dipoles)) {
+		if (compute_molecule_dipoles==0) {
 			i_dipole_idx += soa1_mol_dipoles_num[i];
 			i_charge_dipole_idx += soa1_mol_charges_num[i];
 			i_quadrupole_dipole_idx += soa1_mol_quadrupoles_num[i];
@@ -1704,7 +1699,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_dipoles_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_dipoles_dist_lookup, j, remainderM);
 						const vcp_double_vec p2 = MaskGatherChooser::load(soa2_dipoles_p, j, lookupORforceMask);
@@ -1864,7 +1859,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_dipoles_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_dipoles_dist_lookup, j, remainderM);
 						const vcp_double_vec p = MaskGatherChooser::load(soa2_dipoles_p, j, lookupORforceMask);
@@ -2024,7 +2019,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_dipoles_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_dipoles_dist_lookup, j, remainderM);
 						const vcp_double_vec p = MaskGatherChooser::load(soa2_dipoles_p, j, lookupORforceMask);
@@ -2111,7 +2106,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 
 		// Computation of site interactions with quadrupoles
 
-		if (!vcp_simd_movemask(compute_molecule_quadrupoles)) {
+		if (compute_molecule_quadrupoles==0) {
 			i_quadrupole_idx += soa1_mol_quadrupoles_num[i];
 			i_charge_quadrupole_idx += soa1_mol_charges_num[i];
 			i_dipole_quadrupole_idx += soa1_mol_dipoles_num[i];
@@ -2207,7 +2202,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_quadrupoles_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_quadrupoles_dist_lookup, j, remainderM);
 						const vcp_double_vec mjj = MaskGatherChooser::load(soa2_quadrupoles_m, j, lookupORforceMask);
@@ -2363,7 +2358,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_quadrupoles_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_quadrupoles_dist_lookup, j, remainderM);
 						const vcp_double_vec m = MaskGatherChooser::load(soa2_quadrupoles_m, j, lookupORforceMask);
@@ -2524,7 +2519,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 				}
 #if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
-					const __mmask8 remainderM = MaskGatherChooser::getRemainder(end_quadrupoles_j_cnt);
+					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_quadrupoles_dist_lookup, j, remainderM);
 						const vcp_double_vec m = MaskGatherChooser::load(soa2_quadrupoles_m, j, lookupORforceMask);

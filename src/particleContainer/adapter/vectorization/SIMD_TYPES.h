@@ -27,8 +27,6 @@
 
 
 typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
-//AVX2: __AVX2__ (icc,gcc)
-//fma: __FMA__ (icc,gcc) <- always existent for avx2 architectures, but sometimes has to be enabled.
 
 
 #if defined(__AVX2__) && not defined(__FMA__)//fma should always be existent alongside avx2!!!
@@ -121,7 +119,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 7
 		typedef __mmask8 vcp_lookupOrMask_vec;
 		typedef __mmask8 vcp_lookupOrMask_single;
-	#else
+	#else  // VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 		typedef __m512i vcp_lookupOrMask_vec;
@@ -129,11 +127,6 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#endif
 
 #endif
-
-
-
-
-
 
 
 
