@@ -200,7 +200,7 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm512_load_pd(a);}
 	static inline vcp_mask_vec vcp_simd_load(const vcp_mask_single* const a) {return *a;}
-	static inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec mask) {return _mm512_mask_load_pd(a, mask);}
+	static inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec mask) {return _mm512_mask_load_pd(VCP_SIMD_ZEROV, mask, a);}
 	//static inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return a;}
 
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
