@@ -691,15 +691,15 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 
-	bool compute_molecule = false;
+	vcp_mask_vec compute_molecule = false;
+	size_t j = ForcePolicy :: InitJ(i_center_idx);
+	for (; j < soa2_num_centers; ++j) {
+		const vcp_double_vec m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const vcp_double_vec m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const vcp_double_vec m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
+		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
 
-	for (size_t j = ForcePolicy :: InitJ(i_center_idx); j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
-		const double m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
-
-		const bool forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
+		const vcp_mask_vec forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
 		*(soa2_center_dist_lookup + j) = forceMask;
 		compute_molecule |= forceMask;
 
@@ -707,55 +707,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	return compute_molecule;
 
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-
-	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
-
-	// Iterate over centers of second cell
-	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
-	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
-		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
-		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
-		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
-
-		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
-		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
-		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
-
-		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
-
-		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
-		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
-	}
-
-	// End iteration over centers with possible left over center
-	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
-
-		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
-
-		vcp_mask_single forceMask;
-		if (ForcePolicy::DetectSingleCell()) {
-			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? ~0l : 0l;
-		} else {
-			forceMask = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
-		}
-
-		*(soa2_center_dist_lookup + j) = forceMask;
-		const vcp_mask_vec forceMask_vec = vcp_simd_set1(forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
-	}
-	memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(vcp_mask_single));//set the remaining values to zero.
-	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
-	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
-
-	return compute_molecule;
-
-#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
+#elif VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 
 	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
 
@@ -777,34 +729,25 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
+	vcp_mask_vec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
+	if(vcp_simd_movemask(remainderMask)){
+		const vcp_double_vec m2_r_x = vcp_simd_maskload(soa2_m_r_x + j, remainderMask);
+		const vcp_double_vec m2_r_y = vcp_simd_maskload(soa2_m_r_y + j, remainderMask);
+		const vcp_double_vec m2_r_z = vcp_simd_maskload(soa2_m_r_z + j, remainderMask);
 
-	// End iteration over centers with possible left over center
-	for (; j < soa2_num_centers; ++j) {
-		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
-		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
-		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
-		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
 
-		// can we do this nicer?
-		vcp_mask_single forceMask;
-			// DetectSingleCell() = false for SingleCellDistinctPolicy and CellPairPolicy, true for SingleCellPolicy
-			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
-			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
-		if (ForcePolicy::DetectSingleCell()) {
-			forceMask = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? ~0l : 0l;
-		} else {
-			forceMask = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? ~0l : 0l;
-		}
+		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		*(soa2_center_dist_lookup + j) = forceMask;
-		const vcp_mask_vec forceMask_vec = vcp_simd_set1(forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask_vec);
+		const vcp_mask_vec forceMask = vcp_simd_and(remainderMask, ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask));
+		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
+		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
-	memset(soa2_center_dist_lookup + j, 0, ((VCP_VEC_SIZE-(soa2_num_centers-end_j)) % VCP_VEC_SIZE) * sizeof(vcp_mask_single));//set the remaining values to zero.
-	//This is needed to allow vectorization even of the last elements, their count does not necessarily divide by VCP_VEC_SIZE.
-	//The array size is however long enough to vectorize over the last few entries. This sets the entries, that do not make sense in that vectorization to zero.
 
 	return compute_molecule;
+
 #elif VCP_VEC_TYPE==VCP_VEC_MIC
 	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
 

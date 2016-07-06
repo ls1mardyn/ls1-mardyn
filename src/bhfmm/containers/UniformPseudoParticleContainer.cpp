@@ -15,6 +15,7 @@
 #include "bhfmm/HaloBufferOverlap.h"
 #include <string>
 #include <algorithm>
+#include <array>
 
 namespace bhfmm {
 
