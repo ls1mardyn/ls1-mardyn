@@ -157,7 +157,7 @@
 	static inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}
 
 	static inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return _mm256_movemask_pd(_mm256_castsi256_pd(a));}
-	static inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec b) {return _mm256_maskload_pd(a, b);}
+	static inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec mask) {return _mm256_maskload_pd(a, mask);}
 	static inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
 		switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
 			case 1: return _mm256_set_epi32(0, 0, 0, 0, 0, 0, ~0, ~0);
@@ -200,7 +200,7 @@
 
 	static inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm512_load_pd(a);}
 	static inline vcp_mask_vec vcp_simd_load(const vcp_mask_single* const a) {return *a;}
-
+	static inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec mask) {return _mm512_mask_load_pd(a, mask);}
 	//static inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return a;}
 
 	static inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
@@ -215,6 +215,17 @@
 		static inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return _mm512_load_epi64(a);}
 		static inline void vcp_simd_store(vcp_lookupOrMask_single* location, const vcp_lookupOrMask_vec& a) {_mm512_store_epi64(location, a);}
 	#endif
+
+	static inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
+		static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
+		return possibleInitJMasks[size & static_cast<size_t>(VCP_VEC_SIZE_M1)];
+		/*switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+			case 1: return _mm256_set_epi32(0, 0, 0, 0, 0, 0, ~0, ~0);
+			case 2: return _mm256_set_epi32(0, 0, 0, 0, ~0, ~0, ~0, ~0);
+			case 3: return _mm256_set_epi32(0, 0, ~0, ~0, ~0, ~0, ~0, ~0);
+			default: return VCP_SIMD_ZEROVM;
+		}*/
+	}
 #endif
 
 #if VCP_VEC_TYPE != VCP_NOVEC
