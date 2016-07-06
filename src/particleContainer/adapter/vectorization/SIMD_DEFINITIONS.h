@@ -217,8 +217,8 @@
 	#endif
 
 	static inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
-		static const vcp_mask_vec possibleInitJMasks[VCP_VEC_SIZE] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
-		return possibleInitJMasks[size & static_cast<size_t>(VCP_VEC_SIZE_M1)];
+		static const vcp_mask_vec possibleRemainderJMasks[VCP_VEC_SIZE] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F };
+		return possibleRemainderJMasks[size & static_cast<size_t>(VCP_VEC_SIZE_M1)];
 		/*switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
 			case 1: return _mm256_set_epi32(0, 0, 0, 0, 0, 0, ~0, ~0);
 			case 2: return _mm256_set_epi32(0, 0, 0, 0, ~0, ~0, ~0, ~0);

@@ -742,12 +742,67 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
 		const vcp_mask_vec forceMask = vcp_simd_and(remainderMask, ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask));
-		vcp_simd_store(soa2_center_dist_lookup + j, forceMask);
+		vcp_simd_store(soa2_center_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
 	}
 
 	return compute_molecule;
 
+#elif VCP_VEC_TYPE==VCP_VEC_MIC
+	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
+
+	size_t j = ForcePolicy :: InitJ(i_center_idx);//j=0 or multiple of vec_size
+	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
+	// Iterate over centers of second cell
+	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
+		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
+		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
+		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
+
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
+
+		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
+
+		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
+		vcp_simd_store(soa2_center_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
+		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
+	}//end_j is floor_to_vec_size
+	//j is now floor_to_vec_size(soa2_num_centers)=end_j
+
+	//last indices are more complicated for MIC, since masks look different
+	size_t k = (end_j+VCP_INDICES_PER_LOOKUP_SINGLE_M1)/VCP_INDICES_PER_LOOKUP_SINGLE;
+	vcp_mask_vec forceMask = VCP_SIMD_ZEROVM;
+	unsigned char bitmultiplier = 1;
+	// End iteration over centers with possible left over center
+	for (; j < soa2_num_centers; ++j, bitmultiplier *= 2) {
+		const double m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
+		const double m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
+		const double m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
+
+		const double m_r2 = m_dx * m_dx + m_dy * m_dy + m_dz * m_dz;
+
+		// can we do this nicer?
+		unsigned char forceMask_local;
+			// DetectSingleCell() = false for SingleCellDistinctPolicy and CellPairPolicy, true for SingleCellPolicy
+			// we need this, since in contrast to sse3 we can no longer guarantee, that j>=i by default (j==i is handled by ForcePolicy::Condition).
+			// however only one of the branches should be chosen by the compiler, since the class is known at compile time.
+		if (ForcePolicy::DetectSingleCell()) {
+			forceMask_local = (ForcePolicy::Condition(m_r2, cutoffRadiusSquare) && j >= i_center_idx) ? 1 : 0;
+		} else {
+			forceMask_local = ForcePolicy::Condition(m_r2, cutoffRadiusSquare) ? 1 : 0;
+		}
+		forceMask += forceMask_local * bitmultiplier;
+
+		//*(soa2_center_dist_lookup + j) = forceMask;
+	}
+	compute_molecule = vcp_simd_or(compute_molecule, forceMask);//from last iteration
+	vcp_simd_store(soa2_center_dist_lookup + k, forceMask);//only one store, since there is only one additional mask.
+	//no memset needed, since each element of soa2_center_dist_lookup corresponds to 8 masked elements.
+	//every element of soa2_center_dist_lookup is therefore set.
+
+	return compute_molecule;
 #elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 	counter=0;
 	static const __m512i eight = _mm512_set_epi32(
