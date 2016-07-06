@@ -679,35 +679,38 @@ void VectorizedCellProcessor::endTraversal() {
 		Mjj_z = vcp_simd_fma(minus_partialTjInvdr, eXrij_z, partialGij_eiXej_z);
 	}
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 template<class ForcePolicy>
 vcp_mask_vec
-inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const size_t & i, const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
+inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
 		const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z,
-		countertype32& counter
-		) {
+		countertype32&
+#if VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+		counter
+#endif
+) {
 
+/*
 #if VCP_VEC_TYPE==VCP_NOVEC
 
 	vcp_mask_vec compute_molecule = false;
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
 	for (; j < soa2_num_centers; ++j) {
-		const vcp_double_vec m_dx = soa1._mol_pos.x(i) - soa2_m_r_x[j];
-		const vcp_double_vec m_dy = soa1._mol_pos.y(i) - soa2_m_r_y[j];
-		const vcp_double_vec m_dz = soa1._mol_pos.z(i) - soa2_m_r_z[j];
+		const vcp_double_vec m_dx = m1_r_x - soa2_m_r_x[j];
+		const vcp_double_vec m_dy = m1_r_y - soa2_m_r_y[j];
+		const vcp_double_vec m_dz = m1_r_z - soa2_m_r_z[j];
+
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);;
 
-		const vcp_mask_vec forceMask = ForcePolicy :: Condition(m_r2, cutoffRadiusSquare) ? true : false;
+		const vcp_mask_vec forceMask = ForcePolicy :: GetForceMask(m_r2, cutoffRadiusSquare);
 		*(soa2_center_dist_lookup + j) = forceMask;
 		compute_molecule |= forceMask;
 
 	}
 
 	return compute_molecule;
-
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3 or VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC
+*/
+#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
 
 	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
 
@@ -748,7 +751,7 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 
 	return compute_molecule;
 
-#elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#else VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 	counter=0;
 	static const __m512i eight = _mm512_set_epi32(
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -815,7 +818,6 @@ inline VectorizedCellProcessor::calcDistLookup (const CellDataSoA & soa1, const 
 	return counter>0?VCP_SIMD_ONESVM:VCP_SIMD_ZEROVM;//do not compute stuff if nothing needs to be computed.
 #endif
 }
-#pragma GCC diagnostic pop
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
@@ -1023,16 +1025,16 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		const vcp_double_vec m1_r_y = vcp_simd_broadcast(soa1_mol_pos_y + i);
 		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
-		const vcp_mask_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(soa1, i, i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
+		const vcp_mask_vec compute_molecule_ljc = calcDistLookup<ForcePolicy>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
 				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z, end_ljc_j_cnt);
-		const vcp_mask_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(soa1, i, i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
+		const vcp_mask_vec compute_molecule_charges = calcDistLookup<ForcePolicy>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z, end_charges_j_cnt);
-		const vcp_mask_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(soa1, i, i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
+		const vcp_mask_vec compute_molecule_dipoles = calcDistLookup<ForcePolicy>(i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
 				soa2_dipoles_dist_lookup, soa2_dipoles_m_r_x, soa2_dipoles_m_r_y, soa2_dipoles_m_r_z,
 				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z, end_dipoles_j_cnt);
-		const vcp_mask_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(soa1, i, i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
+		const vcp_mask_vec compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z, end_quadrupoles_j_cnt);
 
