@@ -6,7 +6,6 @@
  */
 
 #include "SolidHarmonicsExpansion.h"
-#include "bhfmm/utils/RotationParameterLookUp.h"
 #include <iomanip>
 
 using namespace std;
@@ -480,6 +479,7 @@ SolidHarmonicsExpansion rotatePhi(const SolidHarmonicsExpansion & E, const doubl
 }
 
 SolidHarmonicsExpansion rotateThetaL(const SolidHarmonicsExpansion & LE, const WignerMatrix& W) {
+	assert(W.getType() == bhfmm::ROT_TYPE_L);
 	const bool initializeToZero = false;
 	const int order = LE.getOrder();
 	SolidHarmonicsExpansion L_result(order, initializeToZero);
@@ -489,6 +489,7 @@ SolidHarmonicsExpansion rotateThetaL(const SolidHarmonicsExpansion & LE, const W
 }
 
 SolidHarmonicsExpansion rotateThetaM(const SolidHarmonicsExpansion & ME, const WignerMatrix& W) {
+	assert(W.getType() == bhfmm::ROT_TYPE_M);
 	const bool initializeToZero = false;
 	const int order = ME.getOrder();
 	SolidHarmonicsExpansion M_result(order, initializeToZero);

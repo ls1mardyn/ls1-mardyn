@@ -11,8 +11,13 @@
 #include <iomanip>
 #include <algorithm>
 #include "WignerMatrix.h"
+#include "utils/Logger.h"
+using Log::global_log;
 
 namespace bhfmm {
+
+bool WignerMatrix::_sqrtFactorialLookUpInitialized = false;
+std::vector<double> WignerMatrix::_sqrtFactorialLookUp;
 
 inline int minus_one_pow(int m)
 {
@@ -115,6 +120,8 @@ void WignerMatrix::evaluate(double theta)
 	} else {
 		evaluate_0_Pip2(theta);
 	}
+
+	scale();
 }
 
 void WignerMatrix::mirror_k() {
@@ -161,6 +168,58 @@ void WignerMatrix::print(int maxl) {
 	cout.flags(flagSettings);
 }
 
+void WignerMatrix::initializeSqrtLookUp() {
+
+	unsigned numEntries = 2 * order + 1;
+	_sqrtFactorialLookUp.resize(numEntries);
+
+	// stores sqrt(i!)
+	_sqrtFactorialLookUp[0] = 1.0;
+	for(unsigned i = 1; i < numEntries; ++i) {
+		_sqrtFactorialLookUp[i] = sqrt(static_cast<double>(i)) * _sqrtFactorialLookUp[i-1];
+	}
+}
+
+void WignerMatrix::scale() {
+	if(not _sqrtFactorialLookUpInitialized) {
+		initializeSqrtLookUp();
+	}
+
+	if(_type == ROT_TYPE_L) {
+		for (unsigned l = 0; l <= order; ++l) {
+			for (unsigned m = 0; m <= l; ++m) {
+
+				unsigned k = 0; {
+					const double factor = lookUpFactor(l, m, k);
+					acc(l, m, k) *= factor;
+				}
+				for (unsigned k = 1; k<=l; ++k) {
+					const double factor = lookUpFactor(l, m, k);
+					acc(l,m,-k) *= factor;
+					acc(l,m,k) *= factor;
+				}
+			}
+		}
+	} else if (_type == ROT_TYPE_M) {
+		//lookUpFactor(l, k, m) instead of lookUpFactor(l, m, k)
+		for (unsigned l = 0; l <= order; ++l) {
+			for (unsigned m = 0; m <= l; ++m) {
+
+				unsigned k = 0; {
+					const double factor = lookUpFactor(l, k, m);
+					acc(l,m,k) *= factor;
+				}
+				for (unsigned k = 1; k<=l; ++k) {
+					const double factor = lookUpFactor(l, k, m);
+					acc(l,m,-k) *= factor;
+					acc(l,m,k) *= factor;
+				}
+			}
+		}
+	} else {
+		global_log->error() << "type must be either L or M" << std::endl;
+	}
+}
 
 }  // namespace bhfmm
 

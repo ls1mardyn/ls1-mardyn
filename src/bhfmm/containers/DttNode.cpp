@@ -3,7 +3,6 @@
 #include "Domain.h"
 #include "UniformPseudoParticleContainer.h"
 #include "utils/Logger.h"
-#include "bhfmm/utils/RotationParameterLookUp.h"
 #include <stdlib.h>
 
 static const bool debug = false;

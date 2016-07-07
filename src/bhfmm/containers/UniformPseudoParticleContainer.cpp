@@ -9,7 +9,6 @@
 #include "Simulation.h"
 #include "Domain.h"
 #include "utils/Logger.h"
-#include "bhfmm/utils/RotationParameterLookUp.h"
 #include "particleContainer/ParticleContainer.h"
 #include "bhfmm/HaloBufferNoOverlap.h"
 #include "bhfmm/HaloBufferOverlap.h"

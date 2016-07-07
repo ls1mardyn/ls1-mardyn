@@ -12,7 +12,6 @@
 #include "bhfmm/pseudoParticles/SHLocalParticle.h"
 #include "bhfmm/expansions/SolidHarmonicsExpansion.h"
 #include "bhfmm/utils/WignerMatrix.h"
-#include "bhfmm/utils/RotationParameterLookUp.h"
 #include "bhfmm/utils/Vector3.h"
 
 TEST_SUITE_REGISTRATION(WignerRotationTest);
@@ -79,30 +78,11 @@ void WignerRotationTest::testM2MWignerRotation() {
 	bhfmm::SolidHarmonicsExpansion L_trafo = convoluteLL(MP.getExpansion(), evaluateLOfR(order, translation_vector));
 
 	/* translate using Wigner-rotation */
-	bhfmm::WignerMatrix W_pos(order, true);
-	bhfmm::WignerMatrix W_neg(order, true);
+	bhfmm::WignerMatrix W_pos(bhfmm::ROT_TYPE_L, order, true);
+	bhfmm::WignerMatrix W_neg(bhfmm::ROT_TYPE_L, order, true);
 
 	W_pos.evaluate(theta);
 	W_neg.evaluate(-theta);
-
-	/* initialize rotation parameter table */
-	bhfmm::RotationParameterLookUp::tab = new bhfmm::RotationParameterLookUp(order);
-	bhfmm::RotationParameterLookUp::tab->initFromDirEval();
-
-	// pre-multiply prefactors
-	for (int l = 0; l <= order; ++l) {
-		for (int m = 0; m <= l; ++m) {
-			for (int k = -l; k<=l; ++k) {
-				const double factor = bhfmm::RotationParameterLookUp::tab->acc_c(l,m,k);
-				W_pos.acc(l,m,k) *= factor;
-				W_neg.acc(l,m,k) *= factor;
-			}
-		}
-	}
-
-	/* clean up */
-	delete bhfmm::RotationParameterLookUp::tab;
-
 
 	bhfmm::SolidHarmonicsExpansion L_trafo_Wigner = rotatePhi(MP.getExpansion(), CosSin, 1);
 
@@ -195,29 +175,11 @@ void WignerRotationTest::testL2LWignerRotation() {
 	bhfmm::SolidHarmonicsExpansion M_trafo = convoluteLM(evaluateLOfR(order, translation_vector), MP.getExpansion());
 
 	/* translate using Wigner-rotation */
-	bhfmm::WignerMatrix W_pos(order, true);
-	bhfmm::WignerMatrix W_neg(order, true);
+	bhfmm::WignerMatrix W_pos(bhfmm::ROT_TYPE_M, order, true);
+	bhfmm::WignerMatrix W_neg(bhfmm::ROT_TYPE_M, order, true);
 
 	W_pos.evaluate(theta);
 	W_neg.evaluate(-theta);
-
-	/* initialize rotation parameter table */
-	bhfmm::RotationParameterLookUp::tab = new bhfmm::RotationParameterLookUp(order);
-	bhfmm::RotationParameterLookUp::tab->initFromDirEval();
-
-	// pre-multiply prefactors
-	for (int l = 0; l <= order; ++l) {
-		for (int m = 0; m <= l; ++m) {
-			for (int k = -l; k<=l; ++k) {
-				const double factor = bhfmm::RotationParameterLookUp::tab->acc_c(l,k,m);
-				W_pos.acc(l,m,k) *= factor;
-				W_neg.acc(l,m,k) *= factor;
-			}
-		}
-	}
-
-	/* clean up */
-	delete bhfmm::RotationParameterLookUp::tab;
 
 	bhfmm::SolidHarmonicsExpansion M_trafo_Wigner = rotatePhi(MP.getExpansion(), CosSin, +1);
 
@@ -312,28 +274,11 @@ void WignerRotationTest::testM2LWignerRotation() {
 	bhfmm::SolidHarmonicsExpansion LM_trafo = convoluteLM(setAtMinusR(MP.getConstExpansion()), evaluateMOfR(order, translation_vector));
 
 	/* translate using Wigner-rotation */
-	bhfmm::WignerMatrix W_pos(order, true);
-	bhfmm::WignerMatrix W_neg(order, true);
+	bhfmm::WignerMatrix W_pos(bhfmm::ROT_TYPE_L, order, true);
+	bhfmm::WignerMatrix W_neg(bhfmm::ROT_TYPE_M, order, true);
 
 	W_pos.evaluate(theta);
 	W_neg.evaluate(-theta);
-
-	/* initialize rotation parameter table */
-	bhfmm::RotationParameterLookUp::tab = new bhfmm::RotationParameterLookUp(order);
-	bhfmm::RotationParameterLookUp::tab->initFromDirEval();
-
-	// pre-multiply prefactors
-	for (int l = 0; l <= order; ++l) {
-		for (int m = 0; m <= l; ++m) {
-			for (int k = -l; k<=l; ++k) {
-				W_pos.acc(l,m,k) *= bhfmm::RotationParameterLookUp::tab->acc_c(l,m,k);
-				W_neg.acc(l,m,k) *= bhfmm::RotationParameterLookUp::tab->acc_c(l,k,m);
-			}
-		}
-	}
-
-	/* clean up */
-	delete bhfmm::RotationParameterLookUp::tab;
 
 	bhfmm::SolidHarmonicsExpansion LM_trafo_Wigner = rotatePhi(setAtMinusR(MP.getConstExpansion()), CosSin, +1);
 	LM_trafo_Wigner = rotateThetaL(LM_trafo_Wigner, W_pos);
