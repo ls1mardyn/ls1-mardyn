@@ -3,15 +3,16 @@
 class MaskingChooser {
 private:
 	vcp_mask_vec compute_molecule=VCP_SIMD_ZEROVM;
-	vcp_lookupOrMask_single* const storeCalcDistLookupLocation;
+	vcp_mask_single* const storeCalcDistLookupLocation;
 public:
-	MaskingChooser(vcp_lookupOrMask_single* const soa2_center_dist_lookup, size_t /*j*/):
+	MaskingChooser(vcp_mask_single* const soa2_center_dist_lookup, size_t /*j*/):
 		storeCalcDistLookupLocation(soa2_center_dist_lookup){
 	}
 
 	inline int getCount(){
 		return vcp_simd_movemask(compute_molecule)?1:0;
 	}
+
 	inline void storeCalcDistLookup(size_t j, vcp_mask_vec forceMask){
 		vcp_simd_store(storeCalcDistLookupLocation + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
 		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
@@ -75,6 +76,9 @@ public:
 
 		indices = _mm512_add_epi32(indices, eight);
 		counter += _popcnt32(forceMask);
+	}
+	inline int getCount(){
+		return counter;
 	}
 	inline static size_t getEndloop(const size_t& long_loop, const countertype32& number_calculate /* number of interactions, that are calculated*/) {
 		return vcp_floor_to_vec_size(number_calculate);

@@ -221,8 +221,8 @@
 	//static vcp_inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return a;}
 
 	static vcp_inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
-	static vcp_inline void vcp_simd_store(double* location, const vcp_double_vec& a) {_mm512_store_pd(location, a);}
-	static vcp_inline void vcp_simd_store(vcp_mask_single* location, const vcp_mask_vec& a) {*location = a;}
+	static vcp_inline void vcp_simd_store(double* const location, const vcp_double_vec& a) {_mm512_store_pd(location, a);}
+	static vcp_inline void vcp_simd_store(vcp_mask_single* const location, const vcp_mask_vec& a) {*location = a;}
 
 	//static vcp_inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpacklo_pd(a,b);}//not needed
 	//static vcp_inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}//not needed
