@@ -69,6 +69,7 @@ public:
 	inline void storeCalcDistLookup(size_t j, vcp_mask_vec forceMask){
 		_mm512_mask_packstorelo_epi32(storeCalcDistLookupLocation + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
 		_mm512_mask_packstorehi_epi32(storeCalcDistLookupLocation + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
+
 		static const __m512i eight = _mm512_set_epi32(
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08

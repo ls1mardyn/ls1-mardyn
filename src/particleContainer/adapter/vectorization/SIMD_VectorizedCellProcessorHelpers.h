@@ -109,7 +109,7 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
-	const __m256i indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), VCP_SIMD_ONESVM);
+	const __m256i indices = _mm256_maskload_epi64((const long*)(id_j_shifted), VCP_SIMD_ONESVM);
 	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
 #elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
