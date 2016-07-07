@@ -51,22 +51,20 @@ public:
 #if VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 class GatherChooser { //MIC ONLY!!!
 private:
-	static const __m512i eight = _mm512_set_epi32(
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08
-	);
-	static const __m512i first_indices = _mm512_set_epi32(
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
-	);
+	static const __m512i eight;
+	static const __m512i first_indices;
 	__m512i indices;
 	vcp_lookupOrMask_single* const storeCalcDistLookupLocation;
 	int counter = 0;
 public:
-	GatherChooser(vcp_lookupOrMask_single* const soa2_center_dist_lookup, size_t j):
-		storeCalcDistLookupLocation(soa2_center_dist_lookup)
-	{
-		indices = _mm512_mask_add_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF), first_indices, _mm512_set1_epi32(j));
+	GatherChooser(vcp_lookupOrMask_single* const soa2_center_dist_lookup, size_t j) :
+			storeCalcDistLookupLocation(soa2_center_dist_lookup), eight(
+					_mm512_set_epi32(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+							0x08, 0x08)), first_indices(
+					_mm512_set_epi32(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x07, 0x06, 0x05, 0x04, 0x03, 0x02,
+							0x01, 0x00)) {
+		indices = _mm512_mask_add_epi32(_mm512_setzero_epi32(), static_cast<__mmask16 >(0x00FF), first_indices,
+				_mm512_set1_epi32(j));
 	}
 
 	inline void storeCalcDistLookup(size_t j, vcp_mask_vec forceMask){
