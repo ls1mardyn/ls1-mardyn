@@ -34,7 +34,7 @@ $(info # Parallel defined!)
 MPICMD=mpirun -n 2 
 endif
 
-test: $(BINARY)
-	$(info # Running test with $(MPICMD)) 
-	$(MPICMD) ./$(BINARY) -t -d ../test_input/
+#test: $(BINARY)
+#	$(info # Running test with $(MPICMD)) 
+#	$(MPICMD) ./$(BINARY) -t -d ../test_input/
 
