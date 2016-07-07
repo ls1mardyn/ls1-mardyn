@@ -1,7 +1,22 @@
 #include "SIMD_TYPES.h"
 
 class MaskingChooser {
+private:
+	vcp_mask_vec compute_molecule=VCP_SIMD_ZEROVM;
+	vcp_lookupOrMask_single* const storeCalcDistLookupLocation;
 public:
+	MaskingChooser(vcp_lookupOrMask_single* const soa2_center_dist_lookup, size_t /*j*/):
+		storeCalcDistLookupLocation(soa2_center_dist_lookup){
+	}
+
+	inline int getCount(){
+		return vcp_simd_movemask(compute_molecule)?1:0;
+	}
+	inline void storeCalcDistLookup(size_t j, vcp_mask_vec forceMask){
+		vcp_simd_store(storeCalcDistLookupLocation + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
+		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
+	}
+
 	inline static size_t getEndloop(const size_t& long_loop, const countertype32& /*number_calculate*/ /* number of interactions, that are calculated*/) {
 		return long_loop;
 	}
@@ -35,7 +50,32 @@ public:
 };
 #if VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
 class GatherChooser { //MIC ONLY!!!
+private:
+	static const __m512i eight = _mm512_set_epi32(
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08
+	);
+	static const __m512i first_indices = _mm512_set_epi32(
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+	);
+	__m512i indices;
+	vcp_lookupOrMask_single* const storeCalcDistLookupLocation;
+	int counter = 0;
 public:
+	GatherChooser(vcp_lookupOrMask_single* const soa2_center_dist_lookup, size_t j):
+		storeCalcDistLookupLocation(soa2_center_dist_lookup)
+	{
+		indices = _mm512_mask_add_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF), first_indices, _mm512_set1_epi32(j));
+	}
+
+	inline void storeCalcDistLookup(size_t j, vcp_mask_vec forceMask){
+		_mm512_mask_packstorelo_epi32(storeCalcDistLookupLocation + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
+		_mm512_mask_packstorehi_epi32(storeCalcDistLookupLocation + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
+
+		indices = _mm512_add_epi32(indices, eight);
+		counter += _popcnt32(forceMask);
+	}
 	inline static size_t getEndloop(const size_t& long_loop, const countertype32& number_calculate /* number of interactions, that are calculated*/) {
 		return vcp_floor_to_vec_size(number_calculate);
 	}

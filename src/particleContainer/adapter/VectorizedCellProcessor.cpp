@@ -679,20 +679,18 @@ void VectorizedCellProcessor::endTraversal() {
 		Mjj_z = vcp_simd_fma(minus_partialTjInvdr, eXrij_z, partialGij_eiXej_z);
 	}
 
-template<class ForcePolicy>
+template<class ForcePolicy, class MaskGatherChooser>
 countertype32
 inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
 		const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z) {
 
-#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
-
-	vcp_mask_vec compute_molecule = VCP_SIMD_ZEROVM;
-
 	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	vcp_mask_vec initJ_mask = ForcePolicy::InitJ_Mask(i_center_idx);
-	// Iterate over centers of second cell
-	for (; j < end_j; j+=VCP_VEC_SIZE) {//end_j is chosen accordingly when function is called. (teilbar durch VCP_VEC_SIZE)
+	vcp_mask_vec initJ_mask = ForcePolicy :: InitJ_Mask(i_center_idx);
+
+	MaskGatherChooser mgc(soa2_center_dist_lookup, j);
+
+	for (; j < end_j; j += VCP_VEC_SIZE) {
 		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
 		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
 		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
@@ -704,11 +702,12 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
 		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
-		vcp_simd_store(soa2_center_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
+
+		mgc.storeCalcDistLookup(j, forceMask);
+
 	}
-	vcp_mask_vec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
-	if(vcp_simd_movemask(remainderMask)){
+	const vcp_mask_vec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
+	if (vcp_simd_movemask(remainderMask)) {
 		const vcp_double_vec m2_r_x = vcp_simd_maskload(soa2_m_r_x + j, remainderMask);
 		const vcp_double_vec m2_r_y = vcp_simd_maskload(soa2_m_r_y + j, remainderMask);
 		const vcp_double_vec m2_r_z = vcp_simd_maskload(soa2_m_r_z + j, remainderMask);
@@ -719,79 +718,12 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 
 		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
 
-		const vcp_mask_vec forceMask = vcp_simd_and(remainderMask, ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask));
-		vcp_simd_store(soa2_center_dist_lookup + j/VCP_INDICES_PER_LOOKUP_SINGLE, forceMask);
-		compute_molecule = vcp_simd_or(compute_molecule, forceMask);
+		const vcp_mask_vec forceMask = vcp_simd_and(remainderMask, ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask));//AND remainderMask -> set unimportant ones to zero.
+		mgc.storeCalcDistLookup(j, forceMask);
 	}
 
-	return vcp_simd_movemask(compute_molecule)?1:0;
+	return mgc.getCount();	//do not compute stuff if nothing needs to be computed.
 
-#else // VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
-	int counter = 0;
-	static const __m512i eight = _mm512_set_epi32(
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08
-	);
-	static const __m512i first_indices = _mm512_set_epi32(
-		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-		0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
-	);
-	static const __mmask8 possibleRemainderMasks[8] = { 0x00, 0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F  };
-
-	// distance and force mask computation
-	//size_t i_center_idx = soa1._mol_num_ljc_acc[i];
-
-	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	__mmask8 initJ_mask = ForcePolicy :: InitJ_Mask(i_center_idx);
-
-	__m512i indices = _mm512_mask_add_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF), first_indices, _mm512_set1_epi32(j));
-	const __mmask8 remainderMask = possibleRemainderMasks[soa2_num_centers & static_cast<size_t>(7)];
-
-	for (; j < end_j; j += 8) {
-		const __m512d m_r_x2 = _mm512_load_pd(soa2_m_r_x + j);
-		const __m512d m_r_y2 = _mm512_load_pd(soa2_m_r_y + j);
-		const __m512d m_r_z2 = _mm512_load_pd(soa2_m_r_z + j);
-
-		const __m512d m_dx = _mm512_sub_pd(m1_r_x, m_r_x2);
-		const __m512d m_dy = _mm512_sub_pd(m1_r_y, m_r_y2);
-		const __m512d m_dz = _mm512_sub_pd(m1_r_z, m_r_z2);
-
-		const __m512d m_dxdx = _mm512_mul_pd(m_dx, m_dx);
-		const __m512d m_dxdx_dydy = _mm512_fmadd_pd(m_dy, m_dy, m_dxdx);
-		const __m512d m_r2 = _mm512_fmadd_pd(m_dz, m_dz, m_dxdx_dydy);
-
-		const __mmask8 forceMask = ForcePolicy :: GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
-
-		_mm512_mask_packstorelo_epi32(soa2_center_dist_lookup + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
-		_mm512_mask_packstorehi_epi32(soa2_center_dist_lookup + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
-
-		indices = _mm512_add_epi32(indices, eight);
-		counter += _popcnt32(forceMask);
-	}
-	if (remainderMask != 0x00) {
-		const __m512d m_r_x2 = _mm512_mask_load_pd(zero, remainderMask, soa2_m_r_x + j);
-		const __m512d m_r_y2 = _mm512_mask_load_pd(zero, remainderMask, soa2_m_r_y + j);
-		const __m512d m_r_z2 = _mm512_mask_load_pd(zero, remainderMask, soa2_m_r_z + j);
-
-		const __m512d m_dx = _mm512_sub_pd(m1_r_x, m_r_x2);
-		const __m512d m_dy = _mm512_sub_pd(m1_r_y, m_r_y2);
-		const __m512d m_dz = _mm512_sub_pd(m1_r_z, m_r_z2);
-
-		const __m512d m_dxdx = _mm512_mul_pd(m_dx, m_dx);
-		const __m512d m_dxdx_dydy = _mm512_fmadd_pd(m_dy, m_dy, m_dxdx);
-		const __m512d m_r2 = _mm512_fmadd_pd(m_dz, m_dz, m_dxdx_dydy);
-
-		const __mmask8 forceMask = remainderMask & ForcePolicy :: GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);//AND remainderMask -> set unimportant ones to zero.
-
-		_mm512_mask_packstorelo_epi32(soa2_center_dist_lookup + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
-		_mm512_mask_packstorehi_epi32(soa2_center_dist_lookup + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
-
-		indices = _mm512_add_epi32(indices, eight);
-		counter += _popcnt32(forceMask);
-	}
-
-	return counter;	//do not compute stuff if nothing needs to be computed.
-#endif
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
@@ -1000,16 +932,16 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		const vcp_double_vec m1_r_y = vcp_simd_broadcast(soa1_mol_pos_y + i);
 		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
-		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
+		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
 				rc2, end_ljc_j, m1_r_x, m1_r_y, m1_r_z);
-		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
+		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
 				cutoffRadiusSquare,	end_charges_j, m1_r_x, m1_r_y, m1_r_z);
-		const countertype32 compute_molecule_dipoles = calcDistLookup<ForcePolicy>(i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
+		const countertype32 compute_molecule_dipoles = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_dipole_idx, soa2._dipoles_num, _cutoffRadiusSquare,
 				soa2_dipoles_dist_lookup, soa2_dipoles_m_r_x, soa2_dipoles_m_r_y, soa2_dipoles_m_r_z,
 				cutoffRadiusSquare,	end_dipoles_j, m1_r_x, m1_r_y, m1_r_z);
-		const countertype32 compute_molecule_quadrupoles = calcDistLookup<ForcePolicy>(i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
+		const countertype32 compute_molecule_quadrupoles = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_quadrupole_idx, soa2._quadrupoles_num, _cutoffRadiusSquare,
 				soa2_quadrupoles_dist_lookup, soa2_quadrupoles_m_r_x, soa2_quadrupoles_m_r_y, soa2_quadrupoles_m_r_z,
 				cutoffRadiusSquare, end_quadrupoles_j, m1_r_x, m1_r_y, m1_r_z);
 

@@ -283,7 +283,7 @@ private:
 	 * \brief The dist lookup for a molecule and all centers of a type
 	 * \author Robert Hajda
 	 */
-	template<class ForcePolicy>
+	template<class ForcePolicy, class MaskGatherChooser>
 	countertype32
 	calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
 			vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
