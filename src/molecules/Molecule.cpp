@@ -406,9 +406,9 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  
 	  // assignement of both interacting molecules to their control volumes
 	  xun = floor((_r[0]-dom->getConfinementEdge(0)) / deltaX);
-	  yun = floor((_r[1]-(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5))) / deltaY);
+	  yun = floor((_r[1]-(dom->get_confinementMidPoint(3))) / deltaY);
 	  xun2 = floor((mjx-dom->getConfinementEdge(0)) / deltaX);
-	  yun2 = floor((mjy-(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5))) / deltaY);
+	  yun2 = floor((mjy-(dom->get_confinementMidPoint(3))) / deltaY);
 	  
 	  if ((xun < 0 || xun >= xun_tot || yun < 0 || yun >= yun_tot) && (xun2 < 0 || xun2 >= xun_tot || yun2 < 0 || yun2 >= yun_tot)){
 	    hardyIntersection = false;
@@ -416,7 +416,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  	  
 	  // smallest value that is a multiple of (_r[0]-dom->getConfinementEdge(0)) / deltaX    
 	  xPlaneShift = dom->getConfinementEdge(0);
-	  yPlaneShift = dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5);
+	  yPlaneShift = dom->get_confinementMidPoint(3);
 	}
 	
 	unID_tot = unsigned(xun_tot*yun_tot);
@@ -677,7 +677,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	    yun = floor(yMean / deltaY);
 	  }else if (stress == Confinement){
 	    xun = floor((xMean-dom->getConfinementEdge(0)) / deltaX);
-	    yun = floor((yMean-(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5))) / deltaY);
+	    yun = floor((yMean-(dom->get_confinementMidPoint(3))) / deltaY);
 	  }
 	  
 	  if (xun >= 0 && yun >= 0 && xun < xun_tot && yun < yun_tot){
@@ -720,7 +720,7 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 		  }
 	      }else if (stress == Confinement){
 		  deltaXCentre = _r[0]-(xun*deltaX+halfDeltaX+dom->getConfinementEdge(0));
-		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY+(dom->get_confinementMidPoint(3)-dom->getConfinementEdge(5)));
+		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY+(dom->get_confinementMidPoint(3)));
 	      }
 	        
 	      _root.insert(std::pair<long double, int>(previousValue,1));

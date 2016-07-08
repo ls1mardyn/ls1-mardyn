@@ -81,7 +81,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer, Doma
 			  for(int d = 0; d < 3; d++){
 			    long double v_d = molecule->v(d) - molecule->getDirectedVelocity(d);
 			    for(int e = 0; e < 3; e++){
-			      long double v_e = molecule->v(e) - molecule->getDirectedVelocity(d);
+			      long double v_e = molecule->v(e) - molecule->getDirectedVelocity(e);
 			      long double kinTrans = v_d * v_e * molecule->mass();
 			      molecule->addVirialKin(d, e, kinTrans);
 			    }
@@ -112,7 +112,7 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer, Doma
 				long double kinTrans = v_d * v_d * molecule->mass();
 				molecule->addPressureKinConfinement(d, kinTrans);
 				for(int e = 0; e < 3; e++){
-				  long double v_e = molecule->v(e) - molecule->getDirectedVelocity(d);
+				  long double v_e = molecule->v(e) - molecule->getDirectedVelocity(e);
 				  long double kinTrans = v_d * v_e * molecule->mass();
 				  molecule->addVirialKinConfinement(d, e, kinTrans);
 				}

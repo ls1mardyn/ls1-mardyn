@@ -33,7 +33,7 @@ inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, un
   else{
 	if (molID <= maxID && molID >= minID){
 	    // spring force is of interest for y-direction
-	    double uniformIncrease = simstep/initStatistics;
+	    double uniformIncrease = sqrt(simstep/initStatistics);
 	    f[0] = 0.0;
 	    f[1] = -springConst*uniformIncrease*(currentYPos - averageZeroYPos);
 	    f[2] = 0.0;
@@ -430,8 +430,8 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						}
 						
 						if((mi.isHardyConfinement() || mj.isHardyConfinement()) && (domain.isConfinement(mi.componentid()) || domain.isConfinement(mj.componentid())) && !(domain.getSimstep() % domain.getConfinementRecordTimeStep())){
-						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-domain.getCutoffRadius() && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+domain.getCutoffRadius())
-						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getConfinementEdge(5)-domain.getCutoffRadius() && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getConfinementEdge(5)+domain.getCutoffRadius())){
+						  if((mi.r(1) >= domain.get_confinementMidPoint(3)-domain.getCutoffRadius() && mi.r(1) <= domain.get_confinementMidPoint(1)+domain.getCutoffRadius())
+						    || (mj.r(1) >= domain.get_confinementMidPoint(3)-domain.getCutoffRadius() && mj.r(1) <= domain.get_confinementMidPoint(1)+domain.getCutoffRadius())){
 						    //calculation of the bond length fraction per unID
 						    string stress ("Confinement");
 						    string weightingFunc = mi.getWeightingFuncConfinement();

@@ -1639,6 +1639,7 @@ void Simulation::simulate() {
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
 			unsigned j = 0;
+			
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 				if ((!((_simstep + 2 * j + 3) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || (_simstep == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true)) {
@@ -1653,16 +1654,21 @@ void Simulation::simulate() {
 					    long double p_Vir = _domain->getPressureVirial_barostat();
 					    long double p_Kin = _domain->getPressureKin_barostat();
 					    double Volume = cpit->getVolume_Barostat();
+					    if (_doRecordConfinement){
+					      Volume = _domain->get_confinedVolume();
+					    }
 					    unsigned long N = _domain->getN_barostat();
 					    targetPressure = cpit->getTargetPressure();
 					    currentPressure = (double)((p_Vir + p_Kin)/(3 * Volume));
 					    currentTemp = (double)(p_Kin/(3 * N));
 					    
-					    if(_domainDecomposition->getRank()==0)
-					      cout << " t " << _simstep << " targetPressure " << targetPressure << " currentPressure " << currentPressure << " currentTemp " << currentTemp << " Volume " << Volume << " N " << N;
-					    
 					    // artificial prefactor (~damping function) applied to the number number of test insertions and time interval between test
-					    dampFac = (_simstep - _endGrandCanonical) * (_simstep - _endGrandCanonical)/((_initGrandCanonical - _endGrandCanonical) * (_initGrandCanonical - _endGrandCanonical)); 
+					    dampFac = ((long double)(_endGrandCanonical - _simstep))/((long double)(_endGrandCanonical - _initGrandCanonical)); 
+					    dampFac = 0.1 + dampFac * dampFac;
+					    
+					    if(_domainDecomposition->getRank()==0)
+					      cout << " t " << _simstep << " targetPressure " << targetPressure << " currentPressure " << currentPressure << " currentTemp " << currentTemp 
+					      << " Volume " << Volume << " N " << N << " damping " << dampFac;
 					    
 					    double deltaPressure = abs(currentPressure-targetPressure);
 					    if(deltaPressure == 0)
@@ -1680,9 +1686,9 @@ void Simulation::simulate() {
 					    cpit->setMu(icid, imu);
 					    cpit->setInstances(newInstances);
 					  }else{
-					    imu = 0;
-					    cpit->setInstances(0);
+					    imu = -0.1;
 					    cpit->setMu(icid, imu);
+					    cpit->setInstances(5);
 					  }
 					  // reset barostat specific state variables
 					  _domain->resetBarostat();
@@ -1714,7 +1720,17 @@ void Simulation::simulate() {
 					  
 					  if(deltaPressure == 0)
 					    deltaPressure = 0.01;
-					  unsigned newInterval = (unsigned)floor(cpit->getOriginalInterval()/deltaPressure/dampFac) + _simstep;
+					  unsigned newInterval = (unsigned)floor(cpit->getOriginalInterval()/deltaPressure/dampFac);
+					  if(_doRecordConfinement && _confinementRecordingTimesteps <= 10)
+					    newInterval = newInterval * 0.5 * _confinementRecordingTimesteps;
+					  else if(_doRecordConfinement && _confinementRecordingTimesteps > 10)
+					    newInterval = newInterval * 0.5 * 10;
+					  if(newInterval > 50000)
+					    newInterval = 50000;
+					  if(newInterval < 5 * _confinementRecordingTimesteps)
+					    newInterval = 5 * _confinementRecordingTimesteps;
+					  newInterval += _simstep;
+					  
 					  cpit->setInterval(newInterval);
 					  if(_domainDecomposition->getRank()==0)
 					    cout << " newI " << newInterval << endl;
@@ -1763,20 +1779,6 @@ void Simulation::simulate() {
 		       _pressureGradient->calculateForcesOnComponent(_moleculeContainer, cid);
 		   if(_pressureGradient->isSpringDamped())
 		       _pressureGradient->calculateSpringForcesOnComponent(_moleculeContainer, cid);
-		}
-		
-		// test deletions and insertions
-		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
-			unsigned j = 0;
-			list<ChemicalPotential>::iterator cpit;
-			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-			  if(cpit->isGCMD_barostat()){
-				_domain->recordBarostat(_moleculeContainer);
-				if ((!((_simstep + 2 * j + 4) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || ((_simstep+1) == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true))
-				  _domain->collectBarostat(_domainDecomposition);
-			  }
-			  j++;
-			}
 		}
 		
 		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
@@ -1989,6 +1991,22 @@ void Simulation::simulate() {
 		    for (int tht_id = 0; tht_id <= 3; tht_id++)
 			_domain->setThT_heatFlux(tht_id, 0.0);
 		}
+		
+		// test deletions and insertions for barostat
+		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
+			unsigned j = 0;
+			list<ChemicalPotential>::iterator cpit;
+			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
+			  if(cpit->isGCMD_barostat()){
+				if(!(_doRecordConfinement))
+				  _domain->recordBarostat(_moleculeContainer);
+				if ((!((_simstep + 2 * j + 4) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || ((_simstep+1) == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true))
+				  _domain->collectBarostat(_domainDecomposition);
+			  }
+			  j++;
+			}
+		}
+		
 		if(_domainDecomposition->getRank()==0 && /*(_simstep > _initStatistics) &&*/ _doRecordBulkPressure && !(_simstep % _bulkPressureOutputTimesteps)){
 		    BulkPressure << _simstep << "\t\t\t" << _domain->getGlobalBulkPressure() << "\t\t\t" << _domain->getGlobalBulkDensity() << "\t\t\t" << _domain->getGlobalBulkTemperature() << endl;
 		}

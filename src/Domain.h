@@ -415,6 +415,7 @@ public:
 	void resetBarostat();
 	void setDifferentBarostatInterval(bool boolean) {this->_differentBarostatInterval = boolean; }
 	bool getDifferentBarostatInterval() {return this->_differentBarostatInterval; }
+	void checkMergeConfinementBarostatPossible();
 	
 	// Cylindrical Density Profile
 	void confinementDensity(double radius1, double radius2, double xCentre, double yCentre);
@@ -630,7 +631,7 @@ private:
 	//! global N profile map
 	std::map<unsigned, long double> _universalNProfileResidual_Stress;
 	//! how many _evaluated_ timesteps are currently accumulated in the profile?
-	unsigned _globalAccumulatedDatasets_Stress;
+	unsigned long _globalAccumulatedDatasets_Stress;
 	double _maxSlabDist2_Stress;
 	double _universalCenterZ_Stress;
 	std::map<unsigned, bool> _stressProfiledComponents;
@@ -641,14 +642,14 @@ private:
 	long double _localNBulk, _universalNBulk;
 	double _bulkVolume;
 	double _universalBulkPressure, _universalBulkDensity, _universalBulkTemp, _stressXX, _stressYY;
-	unsigned _globalAccumulatedDatasets_BulkPressure;
+	unsigned long _globalAccumulatedDatasets_BulkPressure;
 	
 	//barostat
 	std::map<unsigned, bool> _barostatComponent;
 	double _control_top[3], _control_bottom[3];
 	long double _localPressureKin_barostat, _localPressureVirial_barostat, _universalPressureKin_barostat, _universalPressureVirial_barostat;
 	long double _localN_barostat, _universalN_barostat;
-	unsigned _globalAccumulatedDatasets_barostat;
+	unsigned long _globalAccumulatedDatasets_barostat;
 	bool _differentBarostatInterval;
 	
 	// Cylindrical Density Profile
