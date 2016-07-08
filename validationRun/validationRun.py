@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# This script test that no changes to simulation output were introduced between two MarDyn binaries
+# This script tests that no changes to simulation output were introduced between two MarDyn binaries
 # E.g. we change the structure of the cache-s to SoA-s and we want that the program gives the same
 # physical output as before.
 #
@@ -21,8 +21,9 @@ from ntpath import basename
 import os
 import ntpath
 import cmd
-from subprocess import Popen
+from subprocess import Popen, PIPE
 from shlex import split
+import compareHelpers
 
 mpi = '-1'
 newMarDyn = ''
@@ -140,8 +141,11 @@ if PAR:
     cmd.extend([MPI_START, '-n', str(mpi)])
 cmd.extend(['./' + newMarDynBase, cfgBase, numIterations]); 
 print cmd
-call(cmd)
-p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+out, err = p.communicate()
+
+p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
+# These are the lines containing timestamps, and have to be removed for proper comparison.
 p.wait()
 os.chdir('..')
 
@@ -152,16 +156,16 @@ if doReferenceRun:
     if PAR:
         cmd.extend([MPI_START, '-n', str(mpi)])
     cmd.extend(['./' + oldMarDynBase, cfgBase, numIterations])
-    call(cmd)
+    print cmd
+    p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+    out, err = p.communicate()
+    
     p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
     p.wait()
     os.chdir('..')
 
 #call(['diff' 'reference/val.comparison.res' 'new/val.comparison.res'])
-child = Popen(split("diff reference/" + comparisonFilename + " new/" + comparisonFilename))
-child.communicate()[0]
-returnValue = child.returncode
-
+returnValue=compareHelpers.compareFiles("reference/" + comparisonFilename, "new/" + comparisonFilename)
 
 if returnValue == 0:
     print ""
