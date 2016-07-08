@@ -60,9 +60,14 @@ ENABLE_OVERLAPPING ?= 0
 # allow OpenMP? Leave off for now, unless you are developing it.
 OPENMP ?= 0
 
+PAPI ?= 0
+
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
+else
+OPENMP_SIMD = 0
+USE_FFTW = 0
 endif
 
 #build name and include config file
@@ -147,7 +152,7 @@ endif
 
 
 ifeq ($(DEPS),1)
-  # create .deps subdirectories containing dependency information
+# create .deps subdirectories containing dependency information
   $(shell find -type d ! -name .deps -execdir mkdir -p {}/.deps \;)
   DEPCOMP = depmode=$(DEPMODE) source=$< object=$@ $(MAKEFILEDIR)depcomp
 else
@@ -283,10 +288,24 @@ lcov:
 	genhtml --output-director $(SRCDIR)/../lcov/ Mardyn.info
 
 lcov_clean:
-	 lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
+	lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
+
+.PHONY: test
+
 
 test:
-	$(SRCDIR)/MarDyn -t -d $(SRCDIR)/../test_input/
+	@test -L $(BINARY_BASENAME) || { echo "\n----no executable found. Compile the program first.---\n"; exit 1; }
+	@$(eval FILENAME := $(shell ls -l $(BINARY_BASENAME) | tr -s ' ' | cut -d ' ' -f 11))
+	@echo testing with executable: $(FILENAME)
+	@if test $(findstring PAR, $(FILENAME)); then \
+		echo parallel execution ; \
+    	mpirun -n 2 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+    	mpirun -n 1 $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+    else \
+    	echo Serial execution ; \
+    	$(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/ ; \
+    fi
+#	$(MPICMD) $(SRCDIR)/$(BINARY_BASENAME) -t -d $(SRCDIR)/../test_input/
 
 # include potentially generated dependency information
 -include $(shell find -path '*/.deps/*' -type f)
