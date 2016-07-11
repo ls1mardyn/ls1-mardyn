@@ -406,8 +406,8 @@ void SolidHarmonicsExpansion::rotatePhi(const double* CosSinPhi, int negate) {
 	for (int l = 0; l <= _order; ++l) {
 
 		for (int m = 0; m <= l; ++m) {
-			double val_M_c, val_M_s;
-			signed_acc_const_CS(l, m, val_M_c, val_M_s);
+			const double val_M_c = acc_C(l, m);
+			const double val_M_s = acc_S(l, m);
 
 			assert(!isnan(val_M_c));
 			assert(!isnan(val_M_s));
