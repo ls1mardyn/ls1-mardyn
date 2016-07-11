@@ -522,10 +522,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		    cidMin--; // since internally the component number is reduced by one, i.e. cid == 1 in the input file corresponds to the internal cid == 0
 		    cidMax--;
 		    _domain->considerComponentForYShift(cidMin, cidMax);
-		} else if (token == "profileOutputPrefix") { /* TODO: suboption of profile */
-			inputfilestream >> _profileOutputPrefix;
-				} else if (token == "collectThermostatDirectedVelocity") { /* suboption of the thermostat replace with direct thermostat */
-			inputfilestream >> _collectThermostatDirectedVelocity;
 		}
 		// chemicalPotential <mu> component <cid> [control <x0> <y0> <z0>
 		// to <x1> <y1> <z1>] conduct <ntest> tests every <nstep> steps
@@ -757,7 +753,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
                 unsigned long nControlFreq;
                 unsigned long nStart;
                 unsigned long nStop;
-                bool bUseExplosionHeuristics = true;
+                bool bUseExplosionHeuristics;
 
                 inputfilestream >> nControlFreq;
                 inputfilestream >> nStart;
@@ -773,7 +769,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
                 }
                 else
                 {
-                  global_log->error() << "TemperatureControl object allready exist, programm exit..." << endl;
+                  global_log->error() << "TemperatureControl object already exist, program exit..." << endl;
                   exit(-1);
                 }
             }
@@ -832,12 +828,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
             }
 
         // <-- TEMPERATURE_CONTROL
-
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token " << token << endl;
 		}
 	}
+	/*if(inputfilestream.fail()){
+		global_log->error() << "Reading input data ended with failure (failbit or badbit). rdstate:"
+				<< (inputfilestream.bad() ? "badbit" : "failbit") << endl << "last token was: " << token << endl;
+		exit(-1);
+	}*/
 
 #ifdef ENABLE_MPI
 	// if we are using the DomainDecomposition, please complete its initialization:
