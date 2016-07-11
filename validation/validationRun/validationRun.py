@@ -84,18 +84,18 @@ else:
     print "Plugin " + comparePlugin + " not supported yet."
     print "Have a look whether you can add it yourself."
     exit(1)
-    
+
 
 
 if noReferenceRun:
     print "no old version given. Will try to reuse existing output, by not erasing it at start."
-        
+
 # JUMP to validationRuns - extract path to validationRuns from argv[0]!
 pathToValidationRuns = ntpath.dirname(os.path.realpath(__file__))
 pathToValidationRuns = os.path.realpath(pathToValidationRuns)
 
 print pathToValidationRuns
-        
+
 # first clean all the folders
 cleanUpCommand = ['rm']
 cleanUpCommand.extend(glob(pathToValidationRuns + '/*.cfg'))
@@ -134,35 +134,29 @@ call(['cp', cfgBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp', newMarDynBase, 'new/'])
 
-# first run
-os.chdir('new')
-cmd = []
-if PAR:
-    cmd.extend([MPI_START, '-n', str(mpi)])
-cmd.extend(['./' + newMarDynBase, "--final-checkpoint=0", cfgBase, numIterations]); 
-print cmd
-p = Popen(cmd, stdout=PIPE, stderr=PIPE)
-out, err = p.communicate()
-
-p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
-# These are the lines containing timestamps, and have to be removed for proper comparison.
-p.wait()
-os.chdir('..')
-
-## second run
-if doReferenceRun:
-    os.chdir('reference')
+def doRun(directory, MardynExe):
+    # first run
+    os.chdir(directory)
     cmd = []
     if PAR:
         cmd.extend([MPI_START, '-n', str(mpi)])
-    cmd.extend(['./' + oldMarDynBase, "--final-checkpoint=0", cfgBase, numIterations])
+    cmd.extend(['./' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
     print cmd
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
     
-    p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))
+    p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
+    # These are the lines containing timestamps, and have to be removed for proper comparison.
     p.wait()
     os.chdir('..')
+
+
+# first run
+doRun('new', newMarDynBase)
+
+## second run
+if doReferenceRun:
+    doRun('reference', oldMarDynBase)
 
 #call(['diff' 'reference/val.comparison.res' 'new/val.comparison.res'])
 returnValue=compareHelpers.compareFiles("reference/" + comparisonFilename, "new/" + comparisonFilename)
