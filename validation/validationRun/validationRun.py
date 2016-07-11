@@ -144,6 +144,7 @@ def doRun(directory, MardynExe, remoteLocation=""):
     print cmd
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
+    print out, err
     
     p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
     # These are the lines containing timestamps, and have to be removed for proper comparison.
