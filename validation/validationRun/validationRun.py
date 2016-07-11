@@ -134,7 +134,7 @@ call(['cp', cfgBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp', newMarDynBase, 'new/'])
 
-def doRun(directory, MardynExe):
+def doRun(directory, MardynExe, remoteLocation=""):
     # first run
     os.chdir(directory)
     cmd = []
