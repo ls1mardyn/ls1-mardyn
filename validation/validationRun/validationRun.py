@@ -139,7 +139,7 @@ os.chdir('new')
 cmd = []
 if PAR:
     cmd.extend([MPI_START, '-n', str(mpi)])
-cmd.extend(['./' + newMarDynBase, cfgBase, numIterations]); 
+cmd.extend(['./' + newMarDynBase, cfgBase, numIterations, "--final-checkpoint=0"]); 
 print cmd
 p = Popen(cmd, stdout=PIPE, stderr=PIPE)
 out, err = p.communicate()
@@ -155,7 +155,7 @@ if doReferenceRun:
     cmd = []
     if PAR:
         cmd.extend([MPI_START, '-n', str(mpi)])
-    cmd.extend(['./' + oldMarDynBase, cfgBase, numIterations])
+    cmd.extend(['./' + oldMarDynBase, cfgBase, numIterations, "--final-checkpoint=0"])
     print cmd
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
