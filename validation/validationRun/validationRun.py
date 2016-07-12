@@ -122,7 +122,7 @@ newMarDynBase = ntpath.basename(newMarDyn)
 
 print "append ComparisonWriter here"
 with open(cfgBase, "a") as myfile:
-    myfile.write("output " + comparePlugin + " 1 val.comparison\n")
+    myfile.write("output " + comparePlugin + " 1 val.comparison")
     
 comparisonFilename = 'val.comparison' + comparePostfix
 

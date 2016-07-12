@@ -91,7 +91,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		exit(1);
 	}
 
-	while (inputfilestream) {
+	while (inputfilestream && !inputfilestream.eof()) {
 		token.clear();
 		inputfilestream >> token;
 		global_log->debug() << " [[" << token << "]]" << endl;
@@ -210,6 +210,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				exit(1);
 			}
 		} else if (token == "output") {
+			token.clear();
 			inputfilestream >> token;
 			if (token == "ResultWriter") {
 				unsigned long writeFrequency;
@@ -833,11 +834,6 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->warning() << "Did not process unknown token " << token << endl;
 		}
 	}
-	/*if(inputfilestream.fail()){
-		global_log->error() << "Reading input data ended with failure (failbit or badbit). rdstate:"
-				<< (inputfilestream.bad() ? "badbit" : "failbit") << endl << "last token was: " << token << endl;
-		exit(-1);
-	}*/
 
 #ifdef ENABLE_MPI
 	// if we are using the DomainDecomposition, please complete its initialization:
