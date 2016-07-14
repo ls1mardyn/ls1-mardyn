@@ -3,7 +3,7 @@
 #define CELLPROCESSOR_H_
 
 #include <cstddef>
-
+#include <cmath>
 class Molecule;
 
 class ParticleCell;
@@ -40,8 +40,8 @@ public:
      */
 	virtual ~CellProcessor() {}
 
-	double getCutoffRadius() const {return _cutoffRadiusSquare;}
-	double getLJCutoffRadius() const {return _LJCutoffRadiusSquare;}
+	double getCutoffRadius() const {return sqrt(_cutoffRadiusSquare);}
+	double getLJCutoffRadius() const {return sqrt(_LJCutoffRadiusSquare);}
 	void setCutoffRadius(const double c) {_cutoffRadiusSquare = c * c;}
 	void setLJCutoffRadius(const double ljc) {_LJCutoffRadiusSquare = ljc * ljc;}
 
