@@ -637,11 +637,12 @@ void Simulation::prepare_start() {
 	global_log->debug() << "xx dipole present: " << dipole_present << endl;
 	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
 
-	if(this->_lmu.size() > 0) {
+	/*if(this->_lmu.size() > 0) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
-	else if(this->_doRecordVirialProfile) {
+	else*/
+	if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
@@ -956,16 +957,16 @@ void Simulation::simulate() {
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					global_log->debug() << "Grand canonical ensemble(" << j
-							<< "): test deletions and insertions" << endl;
-                                        this->_domain->setLambda(cpit->getLambda());
-                                        this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
-                                        double localUpotBackup = _domain->getLocalUpot();
-                                        double localVirialBackup = _domain->getLocalVirial();
-					cpit->grandcanonicalStep(_moleculeContainer,
-							_domain->getGlobalCurrentTemperature(), this->_domain, _cellProcessor);
-                                        _domain->setLocalUpot(localUpotBackup);
-                                        _domain->setLocalVirial(localVirialBackup);
+					global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
+							<< endl;
+					this->_domain->setLambda(cpit->getLambda());
+					this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
+					double localUpotBackup = _domain->getLocalUpot();
+					double localVirialBackup = _domain->getLocalVirial();
+					cpit->grandcanonicalStep(_moleculeContainer, _domain->getGlobalCurrentTemperature(), this->_domain,
+							_cellProcessor);
+					_domain->setLocalUpot(localUpotBackup);
+					_domain->setLocalVirial(localVirialBackup);
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);
@@ -973,11 +974,9 @@ void Simulation::simulate() {
 
 					int localBalance = cpit->getLocalGrandcanonicalBalance();
 					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
-					global_log->debug() << "   b["
-							<< ((balance > 0) ? "+" : "") << balance << "("
-							<< ((localBalance > 0) ? "+" : "") << localBalance
-							<< ")" << " / c = " << cpit->getComponentID()
-							<< "]   " << endl;
+					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
+							<< ((localBalance > 0) ? "+" : "") << localBalance << ")" << " / c = "
+							<< cpit->getComponentID() << "]   " << endl;
 					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
 				}
 

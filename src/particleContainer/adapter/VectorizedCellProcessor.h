@@ -54,7 +54,9 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
+		return 0.0;
+	}
 
 	// provisionally, the code from the legacy cell processor is used here
 	//

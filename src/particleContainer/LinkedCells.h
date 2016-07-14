@@ -109,13 +109,9 @@ public:
 	//! ParticleContainer is it's corresponding cell.
 	void update();
 
-	//! @brief Insert a single molecule.
-	//!
-	//! Therefore, first the cell (the index) for the molecule has to be determined,
-	//! then the molecule is inserted into that cell.
-	bool addParticle(Molecule& particle);
+	bool addParticle(Molecule& particle, const bool& rebuildCaches=false) override;
 
-	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false);
+	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -203,7 +199,7 @@ public:
 	//! @brief counts particles in the intersection of bounding box and control volume
 	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
 
-	void deleteMolecule(unsigned long molid, double x, double y, double z);
+	void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
 	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 

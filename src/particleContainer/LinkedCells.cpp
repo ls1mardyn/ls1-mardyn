@@ -7,6 +7,7 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
@@ -216,19 +217,19 @@ void LinkedCells::update() {
 	_cellsValid = true;
 }
 
-bool LinkedCells::addParticle(Molecule& particle) {
+bool LinkedCells::addParticle(Molecule& particle, const bool& rebuildCaches) {
 	const bool inBox = particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
 	if (inBox) {
 		Molecule * mol = new Molecule(particle);
-		addParticlePointer(mol, true, false);
+		addParticlePointer(mol, true, false, rebuildCaches);
 	}
 
 	return inBox;
 }
 
 bool LinkedCells::addParticlePointer(Molecule * particle,
-		bool inBoxCheckedAlready, bool checkWhetherDuplicate) {
+		bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
 	const bool inBox = inBoxCheckedAlready
 			or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
@@ -238,6 +239,9 @@ bool LinkedCells::addParticlePointer(Molecule * particle,
 		int cellIndex = getCellIndexOfMolecule(particle);
 		wasInserted = _cells[cellIndex].addParticle(particle,
 				checkWhetherDuplicate);
+		if(rebuildCaches){
+			_cells[cellIndex].buildSoACaches();
+		}
 	}
 
 	return wasInserted;
@@ -1024,7 +1028,7 @@ long int LinkedCells::cellIndexOf3DIndex(long int xIndex, long int yIndex,
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
-		double z) {
+		double z, const bool& rebuildCaches) {
 
 	int ix = (int) floor(
 			(x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
@@ -1048,10 +1052,20 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 				<< endl;
 		global_simulation->exit(1);
 	}
+	else if (rebuildCaches) {
+		_cells[hash].buildSoACaches();
+	}
 }
 
-double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
-		Molecule* m1, CellProcessor& cellProcessor) {
+double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
+		Molecule* m1, CellProcessor& cellProcessorI) {
+	CellProcessor* cellProcessor;
+	if (dynamic_cast<LegacyCellProcessor*>(&cellProcessorI)) {
+		cellProcessor = &cellProcessorI;
+	} else {
+		cellProcessor = new LegacyCellProcessor(cellProcessorI.getCutoffRadius(), cellProcessorI.getLJCutoffRadius(),
+				particlePairsHandler);
+	}
 
 	double u = 0.0;
 
@@ -1070,27 +1084,30 @@ double LinkedCells::getEnergy(ParticlePairsHandler* /*particlePairsHandler*/,
 
 	double oldEnergy = global_simulation->getDomain()->getLocalUpot();
 
-	cellProcessor.initTraversal();
+	cellProcessor->initTraversal();
 
-	u += cellProcessor.processSingleMolecule(m1, currentCell);
+	u += cellProcessor->processSingleMolecule(m1, currentCell);
 
 	// forward neighbours
 	for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+		u += cellProcessor->processSingleMolecule(m1, neighbourCell);
 	}
 	// backward neighbours
 	for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter]; // minus oder plus?
-		u += cellProcessor.processSingleMolecule(m1, neighbourCell);
+		u += cellProcessor->processSingleMolecule(m1, neighbourCell);
 	}
 
-	cellProcessor.endTraversal();
+	cellProcessor->endTraversal();
 
+	if (!dynamic_cast<LegacyCellProcessor*>(&cellProcessorI)) {
+		delete cellProcessor;
+	}
 	return u;
 }
 

@@ -38,8 +38,6 @@ ChemicalPotential::ChemicalPotential()
 	 this->lambda = 1.0;
 
          this->widom = false;
-     global_log->warning() << "Grand Canonical likely needs fixing." << std::endl;
-     global_log->warning() << "Functionality preserved as much as possible, but code is somewhat hard to read/understand. (Nikola Tchipev)" << std::endl;
 
      this->_localInsertionsMinusDeletions = 0;
 }
@@ -489,7 +487,7 @@ void ChemicalPotential::grandcanonicalStep(TMoleculeContainer* moleculeContainer
 
 				this->storeMolecule(*m);
 
-				moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
+				moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2), true/*rebuildCaches*/);
 				//moleculeContainer->_particleIterator = moleculeContainer->begin();
 				moleculeContainer->begin(); // will set _particleIterator to the beginning
 				this->_localInsertionsMinusDeletions--;
@@ -570,7 +568,7 @@ void ChemicalPotential::grandcanonicalStep(TMoleculeContainer* moleculeContainer
 				this->_localInsertionsMinusDeletions++;
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
 				tmp.setVi(zeroVec);
-				moleculeContainer->addParticle(tmp);
+				moleculeContainer->addParticle(tmp, true/*rebuildCaches*/);
 			} else {
 				// moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
 //				moleculeContainer->_cells[cellid].deleteMolecule(m->id());

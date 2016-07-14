@@ -110,8 +110,9 @@ public:
 	//! responsibility of the programmer.
 	//!
 	//! @param particle reference to the particle which has to be added
+	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticle(Molecule& particle) = 0;
+	virtual bool addParticle(Molecule& particle, const bool& rebuildCaches=false) = 0;
 
 	//! @brief add a single Molecules to the ParticleContainer.
 	//!
@@ -119,8 +120,11 @@ public:
 	//! The underlying object should not be destroyed.
 	//!
 	//! @param particle reference to the particle which has to be added
+	//! @param inBoxCheckedAlready
+	//! @param checkWhetherDuplicate
+	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false) = 0;
+	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -231,7 +235,7 @@ public:
 	virtual unsigned countParticles(unsigned int cid, double* cbottom, double* ctop) = 0;
 
     /* TODO: Have a look on this */
-	virtual void deleteMolecule(unsigned long molid, double x, double y, double z) = 0;
+	virtual void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) = 0;
 
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
