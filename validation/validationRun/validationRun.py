@@ -24,13 +24,14 @@ import cmd
 from subprocess import Popen, PIPE
 from shlex import split
 import compareHelpers
+from twisted.internet.defer import returnValue
 
 mpi = '-1'
 newMarDyn = ''
 oldMarDyn = '-1'
 cfgFilename = ''
 inpFilename = ''
-comparePlugin = 'ResultWriter'
+comparePlugins = ['ResultWriter', 'GammaWriter']
 numIterations = '25'
 
 
@@ -44,6 +45,7 @@ options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:h',
                              'numIterations=',
                              'help'
                              ])
+nonDefaultPlugins = False
 
 for opt, arg in options:
     if opt in ('-n', '--newMarDyn'):
@@ -57,12 +59,16 @@ for opt, arg in options:
     elif opt in ('-m', '--mpi'):
         mpi = arg
     elif opt in ('-p', '--plugin'):
-        comparePlugin = arg
+        if(not nonDefaultPlugins):  # first encounter of "-p" -> clear plugin list
+            nonDefaultPlugins = True
+            comparePlugins = []
+        comparePlugins.append(arg)
     elif opt in ('-I', '--numIterations'):
         numIterations = arg
     elif opt in ('-h', '--help'):
         print "Make sure two versions of mardyn produce identical simulation results. Sample usage:"
         print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.cfg -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
+        print """ multiple -p are possible. """
         exit(1)
     else:
         print "unknown option: " + opt
@@ -76,15 +82,16 @@ doReferenceRun = not noReferenceRun
 
 MPI_START='mpirun' # e.g. I need to set it to mpirun.mpich locally
 
-if comparePlugin == 'ResultWriter':
-    comparePostfix = '.res'
-elif comparePlugin == 'GammaWriter':
-    comparePostfix = '.gamma'
-else:
-    print "Plugin " + comparePlugin + " not supported yet."
-    print "Have a look whether you can add it yourself."
-    exit(1)
-
+comparePostfixes = []
+for comparePlugin in comparePlugins:
+    if comparePlugin == 'ResultWriter':
+        comparePostfixes.append('.res')
+    elif comparePlugin == 'GammaWriter':
+        comparePostfixes.append('.gamma')
+    else:
+        print "Plugin " + comparePlugin + " not supported yet."
+        print "Have a look whether you can add it yourself."
+        exit(1)
 
 
 if noReferenceRun:
@@ -120,11 +127,14 @@ inpBase = ntpath.basename(inpFilename)
 oldMarDynBase = ntpath.basename(oldMarDyn)
 newMarDynBase = ntpath.basename(newMarDyn)
 
-print "append ComparisonWriter here"
+#print "append ComparisonWriter here"
 with open(cfgBase, "a") as myfile:
-    myfile.write("output " + comparePlugin + " 1 val.comparison")
+    for comparePlugin in comparePlugins:
+        myfile.write("output " + comparePlugin + " 1 val.comparison\n")
     
-comparisonFilename = 'val.comparison' + comparePostfix
+comparisonFilenames = []
+for comparePostfix in comparePostfixes:
+    comparisonFilenames.append('val.comparison' + comparePostfix)
 
 if doReferenceRun:
     call(['cp', cfgBase, 'reference/'])
@@ -144,11 +154,13 @@ def doRun(directory, MardynExe, remoteLocation=""):
     print cmd
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
-    print out, err
+    #print out, err
     
-    p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
-    # These are the lines containing timestamps, and have to be removed for proper comparison.
-    p.wait()
+    for comparisonFilename in  comparisonFilenames:
+        # possible switch/if statements if other comparison plugins require different output.
+        p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
+        # These are the lines containing timestamps, and have to be removed for proper comparison.
+        p.wait()
     os.chdir('..')
 
 
@@ -158,9 +170,17 @@ doRun('new', newMarDynBase)
 ## second run
 if doReferenceRun:
     doRun('reference', oldMarDynBase)
-
+returnValue = 0
 #call(['diff' 'reference/val.comparison.res' 'new/val.comparison.res'])
-returnValue=compareHelpers.compareFiles("reference/" + comparisonFilename, "new/" + comparisonFilename)
+print ""
+for i in range(len(comparePlugins)):
+    localReturn = compareHelpers.compareFiles("reference/" + comparisonFilenames[i], "new/" + comparisonFilenames[i])
+    returnValue += localReturn
+    if localReturn == 0:
+        print "Identical values! for ", comparePlugins[i]
+    else:
+        print "mismatches for ", comparePlugins[i]
+
 
 if returnValue == 0:
     print ""
