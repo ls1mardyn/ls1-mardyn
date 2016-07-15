@@ -24,7 +24,7 @@ import cmd
 from subprocess import Popen, PIPE
 from shlex import split
 import compareHelpers
-from twisted.internet.defer import returnValue
+#from twisted.internet.defer import returnValue
 
 mpi = '-1'
 newMarDyn = ''
