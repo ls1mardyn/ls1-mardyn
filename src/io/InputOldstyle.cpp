@@ -294,7 +294,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	unsigned long nummolecules;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
-	enum Ndatatype { ICRVQD, IRV, ICRV } ntype = ICRVQD;
+	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -328,8 +328,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
         _phaseSpaceFileStream >> ntypestring;
 		ntypestring.erase( ntypestring.find_last_not_of( " \t\n") + 1 );
 		ntypestring.erase( 0, ntypestring.find_first_not_of( " \t\n" ) );
-		
-		if (ntypestring == "ICRVQD") ntype = ICRVQD;
+
+		if (ntypestring == "ICRVQDV") ntype = ICRVQDV;
+		else if (ntypestring == "ICRVQD") ntype = ICRVQD;
 		else if (ntypestring == "ICRV") ntype = ICRV;
 		else if (ntypestring == "IRV")  ntype = IRV;
 		else {
@@ -366,11 +367,11 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 
 #endif
 	
-	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz;
+	double x, y, z, vx, vy, vz, q0, q1, q2, q3, Dx, Dy, Dz, Vix, Viy, Viz;
 	unsigned long id;
 	unsigned int componentid;
 
-	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=0.;
+	x=y=z=vx=vy=vz=q1=q2=q3=Dx=Dy=Dz=Vix=Viy=Viz=0.;
 	q0=1.;
 
 	for( unsigned long i = 0; i < domain->getglobalNumMolecules(); i++ ) {
@@ -379,6 +380,10 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		if (domainDecomp->getRank() == 0) { // Rank 0 only
 #endif	
 			switch ( ntype ) {
+				case ICRVQDV:
+					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
+						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz >> Vix >> Viy >> Viz;
+					break;
 				case ICRVQD:
 					_phaseSpaceFileStream >> id >> componentid >> x >> y >> z >> vx >> vy >> vz
 						>> q0 >> q1 >> q2 >> q3 >> Dx >> Dy >> Dz;
