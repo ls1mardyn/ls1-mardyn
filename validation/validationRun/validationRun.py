@@ -166,9 +166,9 @@ def doRun(directory, MardynExe, remoteLocation=""):
     #print out, err
     
     if "RDF" in comparePlugins:
-        p = Popen(['ls', '-t'] + glob("val.comparison*.rdf"), stdout=PIPE, stderr=PIPE)
+        p = Popen(['ls', '-r'] + glob("val.comparison*.rdf"), stdout=PIPE, stderr=PIPE)
         out, err = p.communicate()
-        p = Popen(split("mv "+ split(out)[0] + " val.comparison.rdf")) 
+        p = Popen(split("cp "+ split(out)[0] + " val.comparison.rdf"))
         # Copy newest rdf file to val.comparison.rdf
         p.wait()
     for comparisonFilename in  comparisonFilenames:
