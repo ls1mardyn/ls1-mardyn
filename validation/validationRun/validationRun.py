@@ -31,7 +31,7 @@ newMarDyn = ''
 oldMarDyn = '-1'
 cfgFilename = ''
 inpFilename = ''
-comparePlugins = ['ResultWriter', 'GammaWriter']
+comparePlugins = ['ResultWriter', 'GammaWriter', 'RDF']
 numIterations = '25'
 
 
@@ -68,7 +68,7 @@ for opt, arg in options:
     elif opt in ('-h', '--help'):
         print "Make sure two versions of mardyn produce identical simulation results. Sample usage:"
         print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.cfg -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
-        print """ multiple -p are possible. """
+        print """ multiple -p are possible. Currently ResultWriter, GammaWriter and RDF are supported."""
         exit(1)
     else:
         print "unknown option: " + opt
@@ -88,6 +88,8 @@ for comparePlugin in comparePlugins:
         comparePostfixes.append('.res')
     elif comparePlugin == 'GammaWriter':
         comparePostfixes.append('.gamma')
+    elif comparePlugin == 'RDF':
+        comparePostfixes.append('.rdf')
     else:
         print "Plugin " + comparePlugin + " not supported yet."
         print "Have a look whether you can add it yourself."
@@ -130,8 +132,15 @@ newMarDynBase = ntpath.basename(newMarDyn)
 #print "append ComparisonWriter here"
 with open(cfgBase, "a") as myfile:
     for comparePlugin in comparePlugins:
-        myfile.write("output " + comparePlugin + " 1 val.comparison\n")
-    
+        if comparePlugin == 'RDF':  # somehow configuring RDF within the cfg is different...
+            myfile.write("\
+             initStatistics 0\n\
+             RDF 0.003 1000\n\
+             RDFOutputTimesteps 10\n\
+             RDFOutputPrefix val.comparison\n")
+        else:
+            myfile.write("output " + comparePlugin + " 1 val.comparison\n")
+
 comparisonFilenames = []
 for comparePostfix in comparePostfixes:
     comparisonFilenames.append('val.comparison' + comparePostfix)
@@ -156,6 +165,12 @@ def doRun(directory, MardynExe, remoteLocation=""):
     out, err = p.communicate()
     #print out, err
     
+    if "RDF" in comparePlugins:
+        p = Popen(['ls', '-t'] + glob("val.comparison*.rdf"), stdout=PIPE, stderr=PIPE)
+        out, err = p.communicate()
+        p = Popen(split("mv "+ split(out)[0] + " val.comparison.rdf")) 
+        # Copy newest rdf file to val.comparison.rdf
+        p.wait()
     for comparisonFilename in  comparisonFilenames:
         # possible switch/if statements if other comparison plugins require different output.
         p = Popen(split("sed -i.bak /[Mm]ar[Dd]yn/d " + comparisonFilename))  # deletes lines containing MarDyn, mardyn, Mardyn or marDyn. 
