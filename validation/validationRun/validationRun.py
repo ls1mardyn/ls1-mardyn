@@ -132,12 +132,8 @@ newMarDynBase = ntpath.basename(newMarDyn)
 #print "append ComparisonWriter here"
 with open(cfgBase, "a") as myfile:
     for comparePlugin in comparePlugins:
-        if comparePlugin == 'RDF':  # somehow configuring RDF within the cfg is different...
-            myfile.write("\
-             initStatistics 0\n\
-             RDF 0.003 1000\n\
-             RDFOutputTimesteps 10\n\
-             RDFOutputPrefix val.comparison\n")
+        if comparePlugin == 'RDF':  # configuring RDF within the cfg is different...
+            myfile.write("initStatistics 0\nRDF 0.003 1000\nRDFOutputTimesteps 10\nRDFOutputPrefix val.comparison\n")
         else:
             myfile.write("output " + comparePlugin + " 1 val.comparison\n")
 
