@@ -644,9 +644,12 @@ void Simulation::prepare_start() {
 	else*/
 	if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
-	}
-	else {
+		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+	} else if (_rdf != NULL) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)"
+				<< endl;
+		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+	} else {
 		global_log->info() << "Using vectorized cell processor." << endl;
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}

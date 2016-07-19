@@ -75,8 +75,8 @@ for opt, arg in options:
         exit(1)
 
 SEQ = (mpi == '-1')
-PAR = not SEQ   
-        
+PAR = not SEQ
+
 noReferenceRun = (oldMarDyn == '-1')
 doReferenceRun = not noReferenceRun
 
