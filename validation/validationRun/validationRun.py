@@ -33,9 +33,11 @@ cfgFilename = ''
 inpFilename = ''
 comparePlugins = ['ResultWriter', 'GammaWriter', 'RDF']
 numIterations = '25'
+baseisnormal = 0
+remote = ''
+remoteprefix = '/scratch'
 
-
-options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:h', 
+options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:hbr:R:', 
                             ['mpi=',
                              'newMarDyn=',
                              'oldMarDyn=',
@@ -43,10 +45,12 @@ options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:h',
                              'inpFilename=',
                              'plugin=',
                              'numIterations=',
-                             'help'
+                             'help',
+                             'baseisnormal',
+                             'remote=',
+                             'remoteprefix='
                              ])
 nonDefaultPlugins = False
-
 for opt, arg in options:
     if opt in ('-n', '--newMarDyn'):
         newMarDyn = arg
@@ -68,8 +72,19 @@ for opt, arg in options:
     elif opt in ('-h', '--help'):
         print "Make sure two versions of mardyn produce identical simulation results. Sample usage:"
         print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.cfg -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
-        print """ multiple -p are possible. Currently ResultWriter, GammaWriter and RDF are supported."""
+        print " multiple -p are possible. Currently ResultWriter, GammaWriter and RDF are supported."
+        print " -b specifies, that the base (old file) is assumed to be sequential and non-remote "
+        print " -r specifies the remote host "
+        print " --remoteprefix changes the prefix of the directory, that is used on the remote host. as relative path to $HOME or absolute path if path starts with /"
         exit(1)
+    elif opt in ('-b', '--baseisnormal'):
+        baseisnormal = 1
+    elif opt in ('-r', '--remote'):
+        remote = arg
+        print "remote", remote, arg
+    elif opt in ('-R', '--remoteprefix'):
+        remoteprefix = arg
+        print "remoteprefix", remoteprefix, arg
     else:
         print "unknown option: " + opt
         exit(1)
@@ -149,17 +164,35 @@ call(['cp', cfgBase, 'new/'])
 call(['cp', inpBase, 'new/'])
 call(['cp', newMarDynBase, 'new/'])
 
-def doRun(directory, MardynExe, remoteLocation=""):
+def doRun(directory, MardynExe):
     # first run
     os.chdir(directory)
     cmd = []
-    if PAR:
+    
+    doRemote = remote and (directory == 'new' or not baseisnormal)
+    
+    if doRemote:
+        remotedirectory = remoteprefix + "/" + directory
+        command = "rsync -r ../" + directory + " " + remote + ":" + remoteprefix
+        print command
+        p = Popen(split(command))
+        p.wait()
+        command = "cd " + remotedirectory + "; pwd; "
+        cmd.extend(['ssh', remote, command])
+        
+    if PAR and (directory == 'new' or not baseisnormal):
         cmd.extend([MPI_START, '-n', str(mpi)])
     cmd.extend(['./' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
     print cmd
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
-    #print out, err
+    print err
+    
+    if doRemote:  # sync back
+        command = "rsync " + remote + ":" + remotedirectory + "/* ./"
+        print command
+        p = Popen(split(command))
+        p.wait()
     
     if "RDF" in comparePlugins:
         p = Popen(['ls', '-r'] + glob("val.comparison*.rdf"), stdout=PIPE, stderr=PIPE)
@@ -174,12 +207,13 @@ def doRun(directory, MardynExe, remoteLocation=""):
         p.wait()
     os.chdir('..')
 
-
+print "new run:"
 # first run
 doRun('new', newMarDynBase)
 
 ## second run
 if doReferenceRun:
+    print "reference run:"
     doRun('reference', oldMarDynBase)
 returnValue = 0
 #call(['diff' 'reference/val.comparison.res' 'new/val.comparison.res'])
