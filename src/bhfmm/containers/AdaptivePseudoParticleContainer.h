@@ -10,14 +10,14 @@
 
 #include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 
-namespace bhfmm{
+namespace bhfmm {
 
-typedef struct{
-	dtt::DttNode *target,*source;
+typedef struct {
+	dtt::DttNode *target, *source;
 	bhfmm::Vector3<double> shift;
-}TargetSourceTupel;
+} TargetSourceTupel;
 
-class AdaptivePseudoParticleContainer: public PseudoParticleContainer{
+class AdaptivePseudoParticleContainer: public PseudoParticleContainer {
 public:
 	AdaptivePseudoParticleContainer(double domainLength[3], int threshold,
 			int orderOfExpansions, bool periodic = true) :
@@ -28,7 +28,7 @@ public:
 			_domainLength[i] = domainLength[i];
 		}
 	}
-	
+
 	AdaptivePseudoParticleContainer(double domainLength[3],
 			int orderOfExpansions, double cellLength[3], int subdivisionFactor,
 			bool periodic) :
@@ -40,7 +40,10 @@ public:
 		}
 	}
 
-	~AdaptivePseudoParticleContainer(){ delete root; };
+	~AdaptivePseudoParticleContainer() {
+		delete root;
+	}
+	;
 
 	void clear();
 	void build(ParticleContainer* pc);
@@ -48,12 +51,17 @@ public:
 	void horizontalPass(VectorizedChargeP2PCellProcessor * cp);
 	void downwardPass(L2PCellProcessor *cp);
 
-  void processMultipole(ParticleCell& /*cell*/){}
-  void processFarField(ParticleCell& /*cell*/){}
-  void processTree(){}
-  void printTimers(){};
+	void processMultipole(ParticleCell& /*cell*/) {
+	}
+	void processFarField(ParticleCell& /*cell*/) {
+	}
+	void processTree() {
+	}
+	void printTimers() {
+	}
+	;
 
-private:	
+private:
 	bool _periodicBC;
 
 	VectorizedChargeP2PCellProcessor * vc_p2p_cp;
@@ -62,16 +70,18 @@ private:
 	std::vector<TargetSourceTupel> stack;
 	dtt::DttNode *root, *halo_node;
 	double _domainLength[3];
-	double _cellLength[3];	
+	double _cellLength[3];
 	int _subdivisionFactor;
 
 	void buildHaloTrees();
 	void work_on_stack();
-	void push_on_stack(dtt::DttNode * trg, dtt::DttNode * src, Vector3<double> shift, int split);
-	void print_stack_op(int op, dtt::DttNode * t = NULL, dtt::DttNode * s = NULL);
-	
+	void push_on_stack(dtt::DttNode * trg, dtt::DttNode * src,
+			Vector3<double> shift, int split);
+	void print_stack_op(int op, dtt::DttNode * t = NULL,
+			dtt::DttNode * s = NULL);
 
-};//AdaptivePseudoParticleContainer
+};
+//AdaptivePseudoParticleContainer
 
 }//nemspace bhfmm
 
