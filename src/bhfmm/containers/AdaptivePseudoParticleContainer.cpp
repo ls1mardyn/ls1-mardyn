@@ -32,10 +32,10 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	if (_threshold == 0) {
 		int depth = log2(
 				(_domainLength[0] / _cellLength[0]) * _subdivisionFactor);
-		root = new dtt::DttNode(_Cells, _threshold, ctr, _domainLength, _maxOrd,
+		root = new DttNode(_Cells, _threshold, ctr, _domainLength, _maxOrd,
 				depth);
 	} else {
-		root = new dtt::DttNode(_Cells, _threshold, ctr, _domainLength, _maxOrd,
+		root = new DttNode(_Cells, _threshold, ctr, _domainLength, _maxOrd,
 				0);
 	}
 
@@ -78,7 +78,7 @@ void AdaptivePseudoParticleContainer::buildHaloTrees() {
 			_domainLength[2] / 2 };
 
 	bhfmm::Vector3<double> shift;
-	halo_node = new dtt::DttNode(_Cells, _threshold, ctr, _domainLength,
+	halo_node = new DttNode(_Cells, _threshold, ctr, _domainLength,
 			_maxOrd, root_depth, true);
 	TargetSourceTupel tst;
 	tst.target = root;
@@ -101,7 +101,7 @@ void AdaptivePseudoParticleContainer::buildHaloTrees() {
 }
 
 void AdaptivePseudoParticleContainer::print_stack_op(int op,
-		dtt::DttNode * /*t*/, dtt::DttNode * /*s*/) {
+		DttNode * /*t*/, DttNode * /*s*/) {
 	if (!debug) {
 		return;
 	}
@@ -124,10 +124,10 @@ void AdaptivePseudoParticleContainer::print_stack_op(int op,
 	}
 }
 
-void AdaptivePseudoParticleContainer::push_on_stack(dtt::DttNode * trg,
-		dtt::DttNode * src, Vector3<double> shift, int split = split_target) {
-	std::vector<dtt::DttNode*> *src_chs = new std::vector<dtt::DttNode*>();
-	std::vector<dtt::DttNode*> *trg_chs = new std::vector<dtt::DttNode*>();
+void AdaptivePseudoParticleContainer::push_on_stack(DttNode * trg,
+		DttNode * src, Vector3<double> shift, int split = split_target) {
+	std::vector<DttNode*> *src_chs = new std::vector<DttNode*>();
+	std::vector<DttNode*> *trg_chs = new std::vector<DttNode*>();
 
 	TargetSourceTupel tst;
 	tst.shift = shift;
@@ -137,7 +137,7 @@ void AdaptivePseudoParticleContainer::push_on_stack(dtt::DttNode * trg,
 			tst.source = src;
 			for (unsigned int i = 0; i < trg_chs->size(); i++) {
 				tst.target = (*trg_chs)[i];
-				if (!(tst.target->_occ)) {
+				if (tst.target->isEmpty()) {
 					print_stack_op(NO_WORK, tst.target, tst.source);
 					continue;
 				}
@@ -154,7 +154,7 @@ void AdaptivePseudoParticleContainer::push_on_stack(dtt::DttNode * trg,
 			tst.target = trg;
 			for (unsigned int i = 0; i < src_chs->size(); i++) {
 				tst.source = (*src_chs)[i];
-				if (!(tst.source->_occ)) {
+				if (tst.source->isEmpty()) {
 					print_stack_op(NO_WORK, tst.target, tst.source);
 					continue;
 				}
@@ -173,7 +173,7 @@ void AdaptivePseudoParticleContainer::push_on_stack(dtt::DttNode * trg,
 				for (unsigned int j = i; j < trg_chs->size(); j++) {
 					tst.target = (*trg_chs)[i];
 					tst.source = (*trg_chs)[j];
-					if (!(tst.target->_occ) || !(tst.source->_occ)) {
+					if (tst.target->isEmpty() or tst.source->isEmpty()) {
 						print_stack_op(NO_WORK, tst.target, tst.source);
 						continue;
 					}
@@ -197,24 +197,23 @@ void AdaptivePseudoParticleContainer::work_on_stack() {
 	TargetSourceTupel tst = stack.back();
 	stack.pop_back();
 	print_stack_op(POP, tst.target, tst.source);
-	double comp_r = tst.target->_mpCell.local.getRadius()
-			- tst.source->_mpCell.multipole.getRadius();
-	double distVec[3];
-	for (int i = 0; i < 3; i++) {
-		distVec[i] = tst.target->_ctr[i] - (tst.source->_ctr[i] + tst.shift[i]);
-	}
-	double dist = sqrt(
-			distVec[0] * distVec[0] + distVec[1] * distVec[1]
-					+ distVec[2] * distVec[2]);
 
-	if (dist > epsilon || dist < -epsilon) {
-		if (((tst.target->_domLen[0] + tst.source->_domLen[0]) / dist
-				< 1 + epsilon) && comp_r <= epsilon && comp_r >= -epsilon) {
+	double comp_r = tst.target->getMpCell().local.getRadius()
+			- tst.source->getMpCell().multipole.getRadius();
+
+	//TODO: hardcoded cells of equal size
+	bool sameSize = std::abs(comp_r) <= epsilon;
+
+	double dist = (tst.target->getCenter() - (tst.source->getCenter() + tst.shift)).L2Norm();
+
+	if (dist > epsilon) {
+//		TODO: assuming cubic cells
+		if (((tst.target->getSize(0) + tst.source->getSize(0)) / dist < 1 + epsilon) and sameSize) {
 			print_stack_op(M2L);
-			tst.target->m2l(tst.source->_mpCell.multipole, tst.shift);
+			tst.target->m2l(tst.source->getMpCell().multipole, tst.shift);
 			if (tst.shift[0] == 0.0 && tst.shift[1] == 0.0
 					&& tst.shift[2] == 0.0) {
-				tst.source->m2l(tst.target->_mpCell.multipole, tst.shift);
+				tst.source->m2l(tst.target->getMpCell().multipole, tst.shift);
 			}
 		} else if (comp_r < -epsilon) {
 			push_on_stack(tst.target, tst.source, tst.shift, split_source);

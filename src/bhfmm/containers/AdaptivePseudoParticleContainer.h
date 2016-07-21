@@ -13,8 +13,8 @@
 namespace bhfmm {
 
 typedef struct {
-	dtt::DttNode *target, *source;
-	bhfmm::Vector3<double> shift;
+	DttNode *target, *source;
+	Vector3<double> shift;
 } TargetSourceTupel;
 
 class AdaptivePseudoParticleContainer: public PseudoParticleContainer {
@@ -68,17 +68,17 @@ private:
 	ParticleCell _Cells;
 	int _threshold;
 	std::vector<TargetSourceTupel> stack;
-	dtt::DttNode *root, *halo_node;
+	DttNode *root, *halo_node;
 	double _domainLength[3];
 	double _cellLength[3];
 	int _subdivisionFactor;
 
 	void buildHaloTrees();
 	void work_on_stack();
-	void push_on_stack(dtt::DttNode * trg, dtt::DttNode * src,
+	void push_on_stack(DttNode * trg, DttNode * src,
 			Vector3<double> shift, int split);
-	void print_stack_op(int op, dtt::DttNode * t = NULL,
-			dtt::DttNode * s = NULL);
+	void print_stack_op(int op, DttNode * t = NULL,
+			DttNode * s = NULL);
 
 };
 //AdaptivePseudoParticleContainer

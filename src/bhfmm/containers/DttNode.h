@@ -1,18 +1,21 @@
 #ifndef DTTNODE_H_
 #define DTTNODE_H_
+
 #include "particleContainer/ParticleCell.h"
 #include "PseudoParticleContainer.h"
-#include <vector>
-
 #include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
+#include "bhfmm/utils/Vector3.h"
+
+#include <vector>
+#include <cassert>
 
 class DttNodeTest;
 
-namespace dtt {
+namespace bhfmm {
 class DttNode;
 }
 
-class dtt::DttNode {
+class bhfmm::DttNode {
 	friend class ::DttNodeTest;
 
 public:
@@ -29,11 +32,6 @@ public:
 		}
 	}
 
-	double _ctr[3], _domLen[3];
-	bhfmm::MpCell _mpCell;
-	bool _occ;
-	ParticleCell _leafParticles;
-
 	bool get_children(std::vector<DttNode*> & ch) {
 		ch = _children;
 		return _splitable;
@@ -41,18 +39,41 @@ public:
 
 	bool upwardPass();
 	void downwardPass();
-	void p2p(bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p);
+	void p2p(VectorizedChargeP2PCellProcessor * v_c_p2p_c_p);
 	void p2p(std::vector<ParticleCell> leafParticlesFar,
-			bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p,
-			bhfmm::Vector3<double> shift);
-	void m2l(bhfmm::SHMultipoleParticle& multipole,
-			bhfmm::Vector3<double> periodicShift);
+			VectorizedChargeP2PCellProcessor * v_c_p2p_c_p,
+			Vector3<double> shift);
+	void m2l(const SHMultipoleParticle& multipole,
+			Vector3<double> periodicShift);
 
 	std::vector<ParticleCell> getLeafParticleCells();
 	int getMaxDepth();
 	void printSplitable(bool print);
 
+	bool isEmpty() const {
+		return not _occ;
+	}
+
+	Vector3<double> getCenter() const {
+		return _ctr;
+	}
+	Vector3<double> getSize() const {
+		return _domLen;
+	}
+	double getSize(int d) const {
+		assert(d < 2 and d >= 0);
+		return _domLen[d];
+	}
+	MpCell& getMpCell() {
+		return _mpCell;
+	}
+
 private:
+	Vector3<double> _ctr, _domLen;
+	MpCell _mpCell;
+	bool _occ;
+	ParticleCell _leafParticles;
+
 	double _threshold;
 	int _order;
 	bool _splitable;

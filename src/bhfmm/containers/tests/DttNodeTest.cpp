@@ -45,7 +45,7 @@ void DttNodeTest::testUpwardDownwardWithNoInteraction(){
 	}
 	int depth = log2((globalDomainLength[0] / 1.0));
   
-	dtt::DttNode dummy(root, 0,ctr,globalDomainLength,globalDomainLength,orderOfExpansions,depth);
+	bhfmm::DttNode dummy(root, 0,ctr,globalDomainLength,globalDomainLength,orderOfExpansions,depth);
   
 	dummy.upwardPass();
 //	dummy._mp_cell.local = dummy._mp_cell.multipole;
@@ -110,7 +110,7 @@ void DttNodeTest::testDepth(double cutoffRadius){
 	
 	int depth = log2((globalDomainLength[0] / cutoffRadius));
   
-	dtt::DttNode dummy(root, 0,ctr,globalDomainLength,orderOfExpansions,depth);
+	bhfmm::DttNode dummy(root, 0,ctr,globalDomainLength,orderOfExpansions,depth);
 
 	ASSERT_EQUAL_MSG("WRONG DEPTH!",dummy.getMaxDepth(),depth);
 	
@@ -145,7 +145,7 @@ void DttNodeTest::testDivideParticles() {
 	std::vector<ParticleCell> children(8, ParticleCell());
 
 	int dummyOrder = 10;
-	dtt::DttNode dummy(dummyOrder);
+	bhfmm::DttNode dummy(dummyOrder);
 	dummy._ctr[0] = 4.;
 	dummy._ctr[1] = 4.;
 	dummy._ctr[2] = 4.;

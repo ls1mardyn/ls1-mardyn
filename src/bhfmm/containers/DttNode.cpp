@@ -7,7 +7,9 @@
 
 static const bool debug = false;
 
-dtt::DttNode::DttNode(ParticleCell& particles, int threshold, double ctr[3],
+namespace bhfmm {
+
+DttNode::DttNode(ParticleCell& particles, int threshold, double ctr[3],
 		double domLen[3], int order, int depth, bool srcOnly) :
 		_mpCell(order), _occ(true), _leafParticles(), _threshold(threshold), _order(
 				order), _splitable(false), _depth(depth), _srcOnly(srcOnly) {
@@ -77,14 +79,14 @@ dtt::DttNode::DttNode(ParticleCell& particles, int threshold, double ctr[3],
 									+ child_domLen[2] / 2;
 
 			_children.push_back(
-					new dtt::DttNode(particleContainer[i], _threshold,
+					new DttNode(particleContainer[i], _threshold,
 							child_ctr, child_domLen, _order, _depth - 1,
 							_srcOnly));
 		}
 	}
 }
 
-bool dtt::DttNode::upwardPass() {
+bool DttNode::upwardPass() {
 	if (!_occ) {
 		return false;
 	}
@@ -131,7 +133,7 @@ bool dtt::DttNode::upwardPass() {
 	return true;
 }
 
-void dtt::DttNode::downwardPass() {
+void DttNode::downwardPass() {
 	if (_splitable) {
 		for (unsigned int i = 0; i < 8; i++) {
 			if (!_children[i]->_occ)
@@ -192,7 +194,7 @@ void dtt::DttNode::downwardPass() {
 	}
 }
 
-std::vector<ParticleCell> dtt::DttNode::getLeafParticleCells() {
+std::vector<ParticleCell> DttNode::getLeafParticleCells() {
 	std::vector<ParticleCell> retval(0);
 	if (!_splitable) {
 		retval.push_back(_leafParticles);
@@ -208,7 +210,7 @@ std::vector<ParticleCell> dtt::DttNode::getLeafParticleCells() {
 	return retval;
 }
 
-void dtt::DttNode::p2p(bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p) {
+void DttNode::p2p(bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p) {
 	// TODO
 //	_leafParticles.convertAoSToSoACharge();
 	v_c_p2p_c_p->preprocessCell(_leafParticles);
@@ -217,7 +219,7 @@ void dtt::DttNode::p2p(bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p) {
 //	_leafParticles.convertSoAToAoSCharge();
 }
 
-void dtt::DttNode::p2p(std::vector<ParticleCell> leafParticlesFar,
+void DttNode::p2p(std::vector<ParticleCell> leafParticlesFar,
 		bhfmm::VectorizedChargeP2PCellProcessor * v_c_p2p_c_p,
 		bhfmm::Vector3<double> shift) {
 	std::vector<double> _shift;
@@ -245,12 +247,12 @@ void dtt::DttNode::p2p(std::vector<ParticleCell> leafParticlesFar,
 	}
 }
 
-void dtt::DttNode::m2l(bhfmm::SHMultipoleParticle& multipole,
-		bhfmm::Vector3<double> periodicShift) {
+void DttNode::m2l(const SHMultipoleParticle& multipole,
+		Vector3<double> periodicShift) {
 	_mpCell.local.addMultipoleParticle(multipole, periodicShift);
 }
 
-void dtt::DttNode::divideParticles(ParticleCell& particles,
+void DttNode::divideParticles(ParticleCell& particles,
 		std::vector<ParticleCell>& cell_container) {
 	int child;
 	int currentParticleCount = particles.getMoleculeCount();
@@ -267,7 +269,7 @@ void dtt::DttNode::divideParticles(ParticleCell& particles,
 	}
 }
 
-int dtt::DttNode::getMaxDepth() {
+int DttNode::getMaxDepth() {
 	int max = 0;
 	int act = 0;
 	if (!_splitable)
@@ -282,7 +284,7 @@ int dtt::DttNode::getMaxDepth() {
 	return max + 1;
 }
 
-void dtt::DttNode::printSplitable(bool print) {
+void DttNode::printSplitable(bool print) {
 	if (!print) {
 		return;
 	}
@@ -301,3 +303,5 @@ void dtt::DttNode::printSplitable(bool print) {
 		std::cout << "]";
 	}
 }
+
+} // namespace bhfmm
