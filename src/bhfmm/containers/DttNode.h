@@ -34,10 +34,10 @@ public:
 
 	bool get_children(std::vector<DttNode*> & ch) {
 		ch = _children;
-		return _splitable;
+		return not _isLeafNode;
 	}
 
-	bool upwardPass();
+	void upwardPass();
 	void downwardPass();
 	void p2p(VectorizedChargeP2PCellProcessor * v_c_p2p_c_p);
 	void p2p(std::vector<ParticleCell> leafParticlesFar,
@@ -51,7 +51,11 @@ public:
 	void printSplitable(bool print);
 
 	bool isEmpty() const {
-		return not _occ;
+		return _mpCell.occ == 0;
+	}
+
+	bool isOccupied() const {
+		return not isEmpty();
 	}
 
 	Vector3<double> getCenter() const {
@@ -71,12 +75,11 @@ public:
 private:
 	Vector3<double> _ctr, _domLen;
 	MpCell _mpCell;
-	bool _occ;
 	ParticleCell _leafParticles;
 
 	double _threshold;
 	int _order;
-	bool _splitable;
+	bool _isLeafNode;
 	std::vector<DttNode*> _children;
 	int _depth;
 	bool _srcOnly;

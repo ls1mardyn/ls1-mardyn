@@ -11,12 +11,13 @@ namespace bhfmm {
 
 DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
 		Vector3<double> domLen, int order, int depth, bool srcOnly) :
-		_ctr(ctr), _domLen(domLen), _mpCell(order), _occ(true), _leafParticles(), _threshold(
-				threshold), _order(order), _splitable(false), _depth(depth), _srcOnly(
+		_ctr(ctr), _domLen(domLen), _mpCell(order), _leafParticles(), _threshold(
+				threshold), _order(order), _isLeafNode(true), _depth(depth), _srcOnly(
 				srcOnly) {
 
-	if (particles.getMoleculeCount() == 0) {
-		_occ = false;
+	_mpCell.occ = particles.getMoleculeCount();
+	if (isEmpty()) {
+		_isLeafNode = true;
 		return;
 	}
 
@@ -35,7 +36,7 @@ DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
 	}
 
 	if (_depth <= 0 && _threshold >= pCount) {
-		_splitable = false;
+		_isLeafNode = true;
 
 		int currentParticleCount = particles.getMoleculeCount();
 
@@ -46,7 +47,7 @@ DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
 		} // current particle closed
 
 	} else {
-		_splitable = true;
+		_isLeafNode = false;
 
 		std::vector<ParticleCell> particleContainer(8, ParticleCell());
 		divideParticles(particles, particleContainer);
@@ -74,19 +75,17 @@ DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
 	}
 }
 
-bool DttNode::upwardPass() {
-	if (!_occ) {
-		return false;
+void DttNode::upwardPass() {
+	if (isEmpty()) {
+		return;
 	}
 
-	if (!_splitable) {
+	if (_isLeafNode) {
+		// P2M
 		int currentParticleCount = _leafParticles.getMoleculeCount();
-
-		int Occupied = 0;
 
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
-			++Occupied;
 			Molecule& molecule1 = _leafParticles.moleculesAt(i);
 
 			int ni = molecule1.numCharges();
@@ -107,29 +106,31 @@ bool DttNode::upwardPass() {
 			}	// for j closed
 		} // current particle closed
 
-		_mpCell.occ = 1;
-		return true;
-	}
-
-	for (int i = 0; i < 8; i++) {
-		if (_children[i]->_occ) {
-			_children[i]->upwardPass();
-			_mpCell.multipole.addMultipoleParticle(
-					_children[i]->_mpCell.multipole);
+	} else {
+		// M2M
+		for (int i = 0; i < 8; i++) {
+			if (_children[i]->isOccupied()) {
+				_children[i]->upwardPass();
+				_mpCell.multipole.addMultipoleParticle(
+						_children[i]->_mpCell.multipole);
+			}
 		}
 	}
-	return true;
 }
 
 void DttNode::downwardPass() {
-	if (_splitable) {
+	if (not _isLeafNode) {
+		// L2L
 		for (unsigned int i = 0; i < 8; i++) {
-			if (!_children[i]->_occ)
+			if (_children[i]->isEmpty())
 				continue;
 			_mpCell.local.actOnLocalParticle(_children[i]->_mpCell.local);
 			_children[i]->downwardPass();
 		}
+
 	} else {
+		// L2P
+
 		int currentParticleCount = _leafParticles.getMoleculeCount();
 		bhfmm::SolidHarmonicsExpansion leLocal(_order);
 		double u = 0;
@@ -173,23 +174,17 @@ void DttNode::downwardPass() {
 				virialSum += 0.5 * virial;
 			}
 		}
-
-//		_domain->addLocalUpot(uSum);
-//		_domain->addLocalVirial(virialSum);
-//		_domain->addLocalP_xx(P_xxSum);
-//		_domain->addLocalP_yy(P_yySum);
-//		_domain->addLocalP_zz(P_zzSum);
 	}
 }
 
 std::vector<ParticleCell> DttNode::getLeafParticleCells() {
 	std::vector<ParticleCell> retval(0);
-	if (!_splitable) {
+	if (_isLeafNode) {
 		retval.push_back(_leafParticles);
 	} else {
 		std::vector<ParticleCell> lower;
 		for (unsigned int i = 0; i < 8; i++) {
-			if (!_children[i]->_occ)
+			if (_children[i]->isEmpty())
 				continue;
 			lower = _children[i]->getLeafParticleCells();
 			retval.insert(retval.end(), lower.begin(), lower.end());
@@ -214,7 +209,7 @@ void DttNode::p2p(std::vector<ParticleCell> leafParticlesFar,
 	for (int i = 0; i < 3; i++) {
 		_shift.push_back(shift[i]);
 	}
-	if (!_splitable) {
+	if (_isLeafNode) {
 		//TODO only convert once
 //		_leafParticles.convertAoSToSoACharge();
 		v_c_p2p_c_p->preprocessCell(_leafParticles);
@@ -258,31 +253,32 @@ void DttNode::divideParticles(ParticleCell& particles,
 }
 
 int DttNode::getMaxDepth() {
-	int max = 0;
-	int act = 0;
-	if (!_splitable)
+	if (_isLeafNode) {
 		return 0;
-	for (unsigned int i = 0; i < 8; i++) {
-		if (_children[i]->_occ)
-			act = _children[i]->getMaxDepth();
-		if (max < act) {
-			max = act;
+	} else {
+		int max = 0;
+
+		for (unsigned int i = 0; i < 8; i++) {
+			if (_children[i]->isOccupied()) {
+				max = std::max(max, _children[i]->getMaxDepth());
+			}
 		}
+		return max + 1;
 	}
-	return max + 1;
+
 }
 
 void DttNode::printSplitable(bool print) {
 	if (!print) {
 		return;
 	}
-	if (!_splitable) {
-		if (!_occ)
+	if (_isLeafNode) {
+		if (isEmpty())
 			std::cout << "EMPTY";
 		return;
 	}
 	for (int i = 0; i < 8; i++) {
-		if (!_children[i]->_occ) {
+		if (_children[i]->isEmpty()) {
 			std::cout << "EMPTY";
 			continue;
 		}
