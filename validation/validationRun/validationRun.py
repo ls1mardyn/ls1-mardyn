@@ -24,7 +24,9 @@ import cmd
 from subprocess import Popen, PIPE
 from shlex import split
 import compareHelpers
-#from twisted.internet.defer import returnValue
+from datetime import date
+import time
+# from twisted.internet.defer import returnValue
 
 mpi = '-1'
 newMarDyn = ''
@@ -37,7 +39,7 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 
-options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:hbr:R:', 
+options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:hbr:R:',
                             ['mpi=',
                              'newMarDyn=',
                              'oldMarDyn=',
@@ -95,7 +97,7 @@ PAR = not SEQ
 noReferenceRun = (oldMarDyn == '-1')
 doReferenceRun = not noReferenceRun
 
-MPI_START='mpirun' # e.g. I need to set it to mpirun.mpich locally
+MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
 
 comparePostfixes = []
 for comparePlugin in comparePlugins:
@@ -144,7 +146,7 @@ inpBase = ntpath.basename(inpFilename)
 oldMarDynBase = ntpath.basename(oldMarDyn)
 newMarDynBase = ntpath.basename(newMarDyn)
 
-#print "append ComparisonWriter here"
+# print "append ComparisonWriter here"
 with open(cfgBase, "a") as myfile:
     for comparePlugin in comparePlugins:
         if comparePlugin == 'RDF':  # configuring RDF within the cfg is different...
@@ -173,7 +175,7 @@ def doRun(directory, MardynExe):
     
     if doRemote:
         remotedirectory = remoteprefix + "/" + directory
-        command = "rsync -r ../" + directory + " " + remote + ":" + remoteprefix
+        command = "rsync --delete-before -r ../" + directory + " " + remote + ":" + remoteprefix
         print command
         p = Popen(split(command))
         p.wait()
@@ -184,8 +186,11 @@ def doRun(directory, MardynExe):
         cmd.extend([MPI_START, '-n', str(mpi)])
     cmd.extend(['./' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
     print cmd
+    t = time.time()
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()
+    t = time.time() - t
+    print "elapsed time:", t
     print err
     
     if doRemote:  # sync back
