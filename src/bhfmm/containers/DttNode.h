@@ -23,8 +23,8 @@ public:
 			_mpCell(o) {
 	}
 
-	DttNode(ParticleCell& particles, int threshold, double ctr[3],
-			double domLen[3], int order, int depth = 0, bool srcOnly = false);
+	DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
+			Vector3<double> domLen, int order, int depth = 0, bool srcOnly = false);
 
 	~DttNode() {
 		for (unsigned int i = 0; i < _children.size(); i++) {

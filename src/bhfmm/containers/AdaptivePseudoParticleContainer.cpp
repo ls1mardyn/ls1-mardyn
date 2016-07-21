@@ -20,15 +20,17 @@ void AdaptivePseudoParticleContainer::clear() {
 
 void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	double lowBound[3] = { 0.0, 0.0, 0.0 };
+	double highBound[3] = { _domainLength[0], _domainLength[1], _domainLength[2]};
 
 	Molecule* tM;
 	for (tM = pc->begin(); tM != pc->end(); tM = pc->next()) {
-		if (tM->inBox(lowBound, _domainLength)) {
+		if (tM->inBox(lowBound, highBound)) {
 			_Cells.addParticle(tM);
 		}
 	}
-	double ctr[3] = { _domainLength[0] / 2, _domainLength[1] / 2,
-			_domainLength[2] / 2 };
+
+	Vector3<double> ctr = _domainLength * 0.5;
+
 	if (_threshold == 0) {
 		int depth = log2(
 				(_domainLength[0] / _cellLength[0]) * _subdivisionFactor);

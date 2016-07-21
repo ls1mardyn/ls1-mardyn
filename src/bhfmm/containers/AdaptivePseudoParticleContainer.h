@@ -1,14 +1,17 @@
 #ifndef ADAPTIVEPSEUDOPARTICLECONTAINER_H_
 #define ADAPTIVEPSEUDOPARTICLECONTAINER_H_
 
+#include "bhfmm/utils/Vector3.h"
 #include "PseudoParticleContainer.h"
 #include "DttNode.h"
+#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
+
 #include <vector>
 #include <cmath>
 #include <math.h>
 #include <stdlib.h>
 
-#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
+
 
 namespace bhfmm {
 
@@ -22,22 +25,17 @@ public:
 	AdaptivePseudoParticleContainer(double domainLength[3], int threshold,
 			int orderOfExpansions, bool periodic = true) :
 			PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic), _threshold(
-					threshold), root(0), halo_node(0), _subdivisionFactor(0) {
+					threshold), root(0), halo_node(0), _domainLength(
+					domainLength), _subdivisionFactor(0) {
 		assert(_threshold > 0);
-		for (int i = 0; i < 3; i++) {
-			_domainLength[i] = domainLength[i];
-		}
 	}
 
 	AdaptivePseudoParticleContainer(double domainLength[3],
 			int orderOfExpansions, double cellLength[3], int subdivisionFactor,
 			bool periodic) :
 			PseudoParticleContainer(orderOfExpansions), _periodicBC(periodic), _threshold(
-					0), root(0), _subdivisionFactor(subdivisionFactor) {
-		for (int i = 0; i < 3; i++) {
-			_domainLength[i] = domainLength[i];
-			_cellLength[i] = cellLength[i];
-		}
+					0), root(0), _domainLength(domainLength), _cellLength(
+					cellLength), _subdivisionFactor(subdivisionFactor) {
 	}
 
 	~AdaptivePseudoParticleContainer() {
@@ -69,8 +67,7 @@ private:
 	int _threshold;
 	std::vector<TargetSourceTupel> stack;
 	DttNode *root, *halo_node;
-	double _domainLength[3];
-	double _cellLength[3];
+	Vector3<double> _domainLength, _cellLength;
 	int _subdivisionFactor;
 
 	void buildHaloTrees();

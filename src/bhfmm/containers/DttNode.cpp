@@ -9,32 +9,24 @@ static const bool debug = false;
 
 namespace bhfmm {
 
-DttNode::DttNode(ParticleCell& particles, int threshold, double ctr[3],
-		double domLen[3], int order, int depth, bool srcOnly) :
-		_mpCell(order), _occ(true), _leafParticles(), _threshold(threshold), _order(
-				order), _splitable(false), _depth(depth), _srcOnly(srcOnly) {
-	for (unsigned int i = 0; i < 3; i++) {
-		_ctr[i] = ctr[i];
-		_domLen[i] = domLen[i];
-	}
+DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
+		Vector3<double> domLen, int order, int depth, bool srcOnly) :
+		_ctr(ctr), _domLen(domLen), _mpCell(order), _occ(true), _leafParticles(), _threshold(
+				threshold), _order(order), _splitable(false), _depth(depth), _srcOnly(
+				srcOnly) {
+
 	if (particles.getMoleculeCount() == 0) {
 		_occ = false;
 		return;
 	}
-	double scalar = _domLen[0] * _domLen[0] + _domLen[1] * _domLen[1]
-			+ _domLen[2] * _domLen[2];
-	double radius = sqrt(scalar) * 0.5;
-	double c[3];
-	for (int k = 0; k < 3; k++) {
-		c[k] = _ctr[k];
-	}
 
-	bhfmm::Vector3<double> v3Ctr(c);
+	double radius = 0.5 * _domLen.L2Norm();
+
 	if (!_srcOnly) {
-		_mpCell.local.setCenter(v3Ctr);
+		_mpCell.local.setCenter(_ctr);
 		_mpCell.local.setRadius(radius);
 	}
-	_mpCell.multipole.setCenter(v3Ctr);
+	_mpCell.multipole.setCenter(_ctr);
 	_mpCell.multipole.setRadius(radius);
 
 	int pCount = particles.getMoleculeCount();
@@ -59,11 +51,7 @@ DttNode::DttNode(ParticleCell& particles, int threshold, double ctr[3],
 		std::vector<ParticleCell> particleContainer(8, ParticleCell());
 		divideParticles(particles, particleContainer);
 
-		double child_ctr[3];
-		double child_domLen[3];
-		child_domLen[0] = _domLen[0] / 2;
-		child_domLen[1] = _domLen[1] / 2;
-		child_domLen[2] = _domLen[2] / 2;
+		Vector3<double> child_ctr, child_domLen(_domLen * 0.5);
 
 		for (int i = 0; i < 8; i++) {
 			child_ctr[0] =
