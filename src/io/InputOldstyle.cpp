@@ -454,7 +454,6 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		
 		if(id > maxid) maxid = id;
 
-		componentid=
 		std::list<ChemicalPotential>::iterator cpit;
 		for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
 			if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
