@@ -63,27 +63,34 @@ void DttNodeTest::testSoAConvertions(){
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
 	ParticleCell root;
+	double l[3], u[3];
+	for (int d = 0; d < 3; ++d) {
+		l[d] = container->getBoundingBoxMin(d);
+		u[d] = container->getBoundingBoxMax(d);
+	}
+	root.setBoxMin(l);
+	root.setBoxMax(u);
 
 	double p_pos[3];
 	bool check = true;
 
 	Molecule * it;
-	for(it = container->begin(); it != container->end(); it = container->next()) {
+	for (it = container->begin(); it != container->end(); it = container->next()) {
 		root.addParticle(it);
-		
-		if(check){
+
+		if (check) {
 			p_pos[0] = it->r(0);
 			p_pos[1] = it->r(1);
 			p_pos[2] = it->r(2);
-		check = false;
-		}		
+			check = false;
+		}
 	}
 
 	std::vector<double> shift;
-	for(int i=0; i<3; i++){
-		shift.push_back(4.78*(i+5));
+	for (int i = 0; i < 3; i++) {
+		shift.push_back(4.78 * (i + 5));
 	}
-  for(int i=0; i<10000; i++){
+	for (int i = 0; i < 10000; i++) {
 //		root.convertAoSToSoACharge();
 //		root.convertSoAToAoSCharge();
 	}
@@ -97,20 +104,23 @@ void DttNodeTest::testSoAConvertions(){
 void DttNodeTest::testDepth(double cutoffRadius){
 	double globalDomainLength[3] = {8., 8., 8.};
 	double ctr[3] = {4., 4., 4.};
+	bhfmm::Vector3<double> gDL_vec3(globalDomainLength);
+	bhfmm::Vector3<double> ctr_vec3(ctr);
+
 	int orderOfExpansions = 2;
 
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
-	ParticleCell root;
+	std::vector<Molecule *> particles;
 
 	Molecule * it;
 	for(it = container->begin(); it != container->end(); it = container->next()) {
-		root.addParticle(it);
+		particles.push_back(it);
 	}
 	
 	int depth = log2((globalDomainLength[0] / cutoffRadius));
   
-	bhfmm::DttNode dummy(root, 0,ctr,globalDomainLength,orderOfExpansions,depth);
+	bhfmm::DttNode dummy(particles, 0,ctr,globalDomainLength,orderOfExpansions,depth);
 
 	ASSERT_EQUAL_MSG("WRONG DEPTH!",dummy.getMaxDepth(),depth);
 	
@@ -118,13 +128,13 @@ void DttNodeTest::testDepth(double cutoffRadius){
 }
 
 void DttNodeTest::testDepthAtRadius1(){
-	testDepth(1.0);		
+	testDepth(1.0);
 }
 void DttNodeTest::testDepthAtRadius2(){
-	testDepth(2.0);		
+	testDepth(2.0);
 }
 void DttNodeTest::testDepthAtRadius4(){
-	testDepth(4.0);		
+	testDepth(4.0);
 }
 
 void DttNodeTest::testDivideParticles() {
@@ -135,14 +145,13 @@ void DttNodeTest::testDivideParticles() {
 
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
-	ParticleCell root;
-
+	std::vector<Molecule *> particles;
 	Molecule * it;
 	for(it = container->begin(); it != container->end(); it = container->next()) {
-		root.addParticle(it);
+		particles.push_back(it);
 	}
 
-	std::vector<ParticleCell> children(8, ParticleCell());
+	std::array<std::vector<Molecule*>, 8> children;
 
 	int dummyOrder = 10;
 	bhfmm::DttNode dummy(dummyOrder);
@@ -150,16 +159,16 @@ void DttNodeTest::testDivideParticles() {
 	dummy._ctr[1] = 4.;
 	dummy._ctr[2] = 4.;
 
-	dummy.divideParticles(root,children); // TODO: root should be passed by reference?
+	dummy.divideParticles(particles,children); // TODO: root should be passed by reference?
 
-	ASSERT_EQUAL_MSG("cell(0) should contain no particles", children[0].getMoleculeCount(), 0);
-	ASSERT_EQUAL_MSG("cell(1) should contain one  particle", children[1].getMoleculeCount(), 1);
-	ASSERT_EQUAL_MSG("cell(2) should contain no  particles", children[2].getMoleculeCount(), 0);
-	ASSERT_EQUAL_MSG("cell(3) should contain no  particles", children[3].getMoleculeCount(), 0);
-	ASSERT_EQUAL_MSG("cell(4) should contain no  particles", children[4].getMoleculeCount(), 0);
-	ASSERT_EQUAL_MSG("cell(5) should contain no  particles", children[5].getMoleculeCount(), 0);
-	ASSERT_EQUAL_MSG("cell(6) should contain two  particles", children[6].getMoleculeCount(), 2);
-	ASSERT_EQUAL_MSG("cell(7) should contain one particles", children[7].getMoleculeCount(), 0);
+	ASSERT_EQUAL_MSG("cell(0) should contain one particle ", children[0].size(), 2ul);
+	ASSERT_EQUAL_MSG("cell(1) should contain no  particle ", children[1].size(), 0ul);
+	ASSERT_EQUAL_MSG("cell(2) should contain no  particles", children[2].size(), 0ul);
+	ASSERT_EQUAL_MSG("cell(3) should contain no  particles", children[3].size(), 0ul);
+	ASSERT_EQUAL_MSG("cell(4) should contain no  particles", children[4].size(), 0ul);
+	ASSERT_EQUAL_MSG("cell(5) should contain no  particles", children[5].size(), 0ul);
+	ASSERT_EQUAL_MSG("cell(6) should contain no  particles", children[6].size(), 0ul);
+	ASSERT_EQUAL_MSG("cell(7) should contain two particles", children[7].size(), 1ul);
 
 	delete container;
 }

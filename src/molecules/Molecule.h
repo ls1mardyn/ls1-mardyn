@@ -338,7 +338,7 @@ public:
 	 * @param u upper right back corner of cube (equality not allowed)
 	 * @return true if molecule is contained in the box, false otherwise
 	 */
-	bool inBox(double l[3], double u[3]) const
+	bool inBox(const double l[3], const double u[3]) const
 	{bool in = true; for(int d=0; d < 3; ++d) {in &= (_r[d] >= l[d] and _r[d] < u[d]);} return in;}
 
 private:

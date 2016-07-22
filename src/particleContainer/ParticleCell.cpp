@@ -37,10 +37,11 @@ void ParticleCell::deallocateAllParticles() {
 bool ParticleCell::addParticle(Molecule* particle_ptr, bool checkWhetherDuplicate) {
 	bool wasInserted = false;
 
-/*#ifndef NDEBUG
+#ifndef NDEBUG
 	bool isIn = particle_ptr->inBox(_boxMin, _boxMax);
-//	assert(isIn);
-#endif*/
+	assert(isIn);
+#endif
+
 	if (checkWhetherDuplicate == false) {
 		_molecules.push_back(particle_ptr);
 		wasInserted = true;

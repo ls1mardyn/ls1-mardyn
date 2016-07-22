@@ -63,7 +63,7 @@ private:
 	bool _periodicBC;
 
 	VectorizedChargeP2PCellProcessor * vc_p2p_cp;
-	ParticleCell _Cells;
+	std::vector<Molecule *> _particles;
 	int _threshold;
 	std::vector<TargetSourceTupel> stack;
 	DttNode *root, *halo_node;

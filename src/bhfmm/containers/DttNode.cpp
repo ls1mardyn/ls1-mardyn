@@ -9,13 +9,15 @@ static const bool debug = false;
 
 namespace bhfmm {
 
-DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
+DttNode::DttNode(const std::vector<Molecule*>& particles, int threshold, Vector3<double> ctr,
 		Vector3<double> domLen, int order, int depth, bool srcOnly) :
 		_ctr(ctr), _domLen(domLen), _mpCell(order), _leafParticles(), _threshold(
 				threshold), _order(order), _isLeafNode(true), _depth(depth), _srcOnly(
 				srcOnly) {
+	_leafParticles.setBoxMin((_ctr - _domLen*0.5).data());
+	_leafParticles.setBoxMax((_ctr + _domLen*0.5).data());
 
-	_mpCell.occ = particles.getMoleculeCount();
+	_mpCell.occ = particles.size();
 	if (isEmpty()) {
 		_isLeafNode = true;
 		return;
@@ -30,45 +32,52 @@ DttNode::DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
 	_mpCell.multipole.setCenter(_ctr);
 	_mpCell.multipole.setRadius(radius);
 
-	int pCount = particles.getMoleculeCount();
+	///////////// deactivate threshold for now
+	int pCount = particles.size();
 	if (threshold == 0) {
 		pCount *= -1;
 	}
+	/////////////
 
-	if (_depth <= 0 && _threshold >= pCount) {
+	if (_depth <= 0 and pCount <= _threshold) {
 		_isLeafNode = true;
 
-		int currentParticleCount = particles.getMoleculeCount();
+		int currentParticleCount = particles.size();
 
 		// loop over all particles in the cell
 		for (int i = 0; i < currentParticleCount; i++) {
-			Molecule& molecule1 = particles.moleculesAt(i);
-			_leafParticles.addParticle(&molecule1);
+			Molecule* mol = particles[i];
+			_leafParticles.addParticle(mol);
 		} // current particle closed
 
 	} else {
 		_isLeafNode = false;
 
-		std::vector<ParticleCell> particleContainer(8, ParticleCell());
-		divideParticles(particles, particleContainer);
+		std::array<std::vector<Molecule*>, 8> childParticles;
+		divideParticles(particles, childParticles);
 
-		Vector3<double> child_ctr, child_domLen(_domLen * 0.5);
+		Vector3<double> child_domLen(_domLen * 0.5);
+		Vector3<double> c_dL_half(child_domLen * 0.5);
 
 		for (int i = 0; i < 8; i++) {
-			child_ctr[0] =
-					i % 2 == 0 ?
-							_ctr[0] - child_domLen[0] / 2 :
-							_ctr[0] + child_domLen[0] / 2;
-			child_ctr[1] =
-					i % 4 > 1 ?
-							_ctr[1] - child_domLen[1] / 2 :
-							_ctr[1] + child_domLen[1] / 2;
-			child_ctr[2] =
-					i > 3 ? _ctr[2] - child_domLen[2] / 2 : _ctr[2]
-									+ child_domLen[2] / 2;
+			bool left_right;
+			double sign;
+			Vector3<double> child_ctr(_ctr);
+
+			left_right = i % 2 == 0;
+			sign = left_right ? -1. : 1.;
+			child_ctr[0] += sign * c_dL_half[0];
+
+			left_right = i % 4 <= 1;
+			sign = left_right ? -1. : 1.;
+			child_ctr[1] += sign * c_dL_half[1];
+
+			left_right = i <= 3;
+			sign = left_right ? -1. : 1.;
+			child_ctr[2] += sign * c_dL_half[2];
 
 			_children.push_back(
-					new DttNode(particleContainer[i], _threshold,
+					new DttNode(childParticles[i], _threshold,
 							child_ctr, child_domLen, _order, _depth - 1,
 							_srcOnly));
 		}
@@ -235,24 +244,24 @@ void DttNode::m2l(const SHMultipoleParticle& multipole,
 	_mpCell.local.addMultipoleParticle(multipole, periodicShift);
 }
 
-void DttNode::divideParticles(ParticleCell& particles,
-		std::vector<ParticleCell>& cell_container) {
-	int child;
-	int currentParticleCount = particles.getMoleculeCount();
+void DttNode::divideParticles(const std::vector<Molecule *>& particles,
+		std::array<std::vector<Molecule *>, 8>& cell_container) const {
+
+	int currentParticleCount = particles.size();
 	// loop over all particles in the cell
 	for (int i = 0; i < currentParticleCount; i++) {
-		Molecule& molecule1 = particles.moleculesAt(i);
-		int c[3];
-		c[0] = molecule1.r(0) < _ctr[0] ? 0 : 1;
-		c[1] = molecule1.r(1) < _ctr[1] ? 1 : 0;
-		c[2] = molecule1.r(2) < _ctr[2] ? 1 : 0;
+		Molecule* mol = particles[i];
 
-		child = c[0] + 2 * c[1] + 4 * c[2];
-		cell_container[child].addParticle(&molecule1);
+		int child = 0;
+		child += mol->r(0) < _ctr[0] ? 0 : 1;
+		child += mol->r(1) < _ctr[1] ? 0 : 2;
+		child += mol->r(2) < _ctr[2] ? 0 : 4;
+
+		cell_container[child].push_back(mol);
 	}
 }
 
-int DttNode::getMaxDepth() {
+int DttNode::getMaxDepth() const {
 	if (_isLeafNode) {
 		return 0;
 	} else {
@@ -268,7 +277,7 @@ int DttNode::getMaxDepth() {
 
 }
 
-void DttNode::printSplitable(bool print) {
+void DttNode::printSplitable(bool print) const {
 	if (!print) {
 		return;
 	}

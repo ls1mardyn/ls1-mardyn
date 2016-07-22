@@ -118,7 +118,7 @@ public:
 		return _boxMin[d];
 	}
 
-	void setBoxMin(double b[3]) {
+	void setBoxMin(const double b[3]) {
 		for(int d=0; d< 3; ++d) {
 			_boxMin[d] = b[d];
 		}
@@ -128,7 +128,7 @@ public:
 		return _boxMax[d];
 	}
 
-	void setBoxMax(double b[3]) {
+	void setBoxMax(const double b[3]) {
 		for (int d = 0; d < 3; ++d) {
 			_boxMax[d] = b[d];
 		}

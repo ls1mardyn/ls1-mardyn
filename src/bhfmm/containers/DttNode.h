@@ -23,7 +23,7 @@ public:
 			_mpCell(o) {
 	}
 
-	DttNode(ParticleCell& particles, int threshold, Vector3<double> ctr,
+	DttNode(const std::vector<Molecule *>& particles, int threshold, Vector3<double> ctr,
 			Vector3<double> domLen, int order, int depth = 0, bool srcOnly = false);
 
 	~DttNode() {
@@ -47,8 +47,8 @@ public:
 			Vector3<double> periodicShift);
 
 	std::vector<ParticleCell> getLeafParticleCells();
-	int getMaxDepth();
-	void printSplitable(bool print);
+	int getMaxDepth() const;
+	void printSplitable(bool print) const;
 
 	bool isEmpty() const {
 		return _mpCell.occ == 0;
@@ -84,8 +84,8 @@ private:
 	int _depth;
 	bool _srcOnly;
 	//void initTree(ParticleCell particles);
-	void divideParticles(ParticleCell& particles,
-			std::vector<ParticleCell>& cellContainer);
+	void divideParticles(const std::vector<Molecule *>& particles,
+			std::array<std::vector<Molecule *>, 8>& cell_container) const;
 };
 
 #endif /* DTTNODE_H_ */

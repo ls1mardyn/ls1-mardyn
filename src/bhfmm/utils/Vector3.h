@@ -148,6 +148,10 @@ public:
 	~Vector3() {
 	}
 
+	const type * data() const {
+		return _content;
+	}
+
 	friend std::ostream& operator<<<type>(std::ostream& stream, const Vector3& v);
 //	friend Vector3 operator*<type>(double scalar, const Vector3& v);
 

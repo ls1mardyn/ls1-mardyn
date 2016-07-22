@@ -25,7 +25,7 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	Molecule* tM;
 	for (tM = pc->begin(); tM != pc->end(); tM = pc->next()) {
 		if (tM->inBox(lowBound, highBound)) {
-			_Cells.addParticle(tM);
+			_particles.push_back(tM);
 		}
 	}
 
@@ -34,10 +34,10 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	if (_threshold == 0) {
 		int depth = log2(
 				(_domainLength[0] / _cellLength[0]) * _subdivisionFactor);
-		root = new DttNode(_Cells, _threshold, ctr, _domainLength, _maxOrd,
+		root = new DttNode(_particles, _threshold, ctr, _domainLength, _maxOrd,
 				depth);
 	} else {
-		root = new DttNode(_Cells, _threshold, ctr, _domainLength, _maxOrd,
+		root = new DttNode(_particles, _threshold, ctr, _domainLength, _maxOrd,
 				0);
 	}
 
@@ -80,7 +80,7 @@ void AdaptivePseudoParticleContainer::buildHaloTrees() {
 			_domainLength[2] / 2 };
 
 	bhfmm::Vector3<double> shift;
-	halo_node = new DttNode(_Cells, _threshold, ctr, _domainLength,
+	halo_node = new DttNode(_particles, _threshold, ctr, _domainLength,
 			_maxOrd, root_depth, true);
 	TargetSourceTupel tst;
 	tst.target = root;
