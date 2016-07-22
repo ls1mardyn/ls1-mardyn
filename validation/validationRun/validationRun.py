@@ -38,7 +38,7 @@ numIterations = '25'
 baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
-
+# shortopts: if they have an argument, then add : after shortcut
 options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:',
                             ['mpicmd=',
                              'mpi=',
@@ -198,7 +198,10 @@ def doRun(directory, MardynExe):
     out, err = p.communicate()
     t = time.time() - t
     print "elapsed time:", t
-    print err
+    if p.returncode:
+        print "error while executing program:"
+        print out, err
+        sys.exit(-1)
     
     if doRemote:  # sync back
         command = "rsync " + remote + ":" + remotedirectory + "/* ./"
