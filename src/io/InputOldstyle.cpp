@@ -447,7 +447,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 #else
 		particleContainer->addParticle(m1);
 		
-		componentid=m->componentid();
+		componentid=m1->componentid();
 		// TODO: The following should be done by the addPartice method.
 		dcomponents[componentid].incNumMolecules();
 		domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
