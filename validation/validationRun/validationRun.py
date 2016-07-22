@@ -189,7 +189,8 @@ def doRun(directory, MardynExe):
         cmd.extend(['ssh', remote, command])
         
     if PAR and (directory == 'new' or not baseisnormal):
-        cmd.extend([MPI_START, '-n', str(mpi)])
+        cmd.extend(split(MPI_START))
+        cmd.extend(['-n', str(mpi)])
     cmd.extend(['./' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
     print cmd
     t = time.time()
