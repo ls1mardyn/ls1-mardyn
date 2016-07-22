@@ -201,7 +201,7 @@ def doRun(directory, MardynExe):
     if p.returncode:
         print "error while executing program:"
         print out, err
-        sys.exit(-1)
+        exit(-1)
     
     if doRemote:  # sync back
         command = "rsync " + remote + ":" + remotedirectory + "/* ./"
