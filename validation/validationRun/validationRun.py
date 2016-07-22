@@ -39,8 +39,9 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 
-options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:hbr:R:',
-                            ['mpi=',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:',
+                            ['mpicmd=',
+                             'mpi=',
                              'newMarDyn=',
                              'oldMarDyn=',
                              'cfgFilename=',
@@ -53,6 +54,9 @@ options, remainder = getopt(argv[1:], 'm:n:o:c:i:p:I:hbr:R:',
                              'remoteprefix='
                              ])
 nonDefaultPlugins = False
+
+MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
+
 for opt, arg in options:
     if opt in ('-n', '--newMarDyn'):
         newMarDyn = arg
@@ -64,6 +68,8 @@ for opt, arg in options:
         inpFilename = arg
     elif opt in ('-m', '--mpi'):
         mpi = arg
+    elif opt in ('-M', '--mpicmd'):
+        MPI_START = arg
     elif opt in ('-p', '--plugin'):
         if(not nonDefaultPlugins):  # first encounter of "-p" -> clear plugin list
             nonDefaultPlugins = True
@@ -97,7 +103,7 @@ PAR = not SEQ
 noReferenceRun = (oldMarDyn == '-1')
 doReferenceRun = not noReferenceRun
 
-MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
+
 
 comparePostfixes = []
 for comparePlugin in comparePlugins:
