@@ -425,10 +425,11 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 				Molecule *m;
 				ParticleData::ParticleDataToMolecule(particle_buff[j], &m);
 				particleContainer->addParticle(*m);
+				componentid=m->componentid();
 				
 				// TODO: The following should be done by the addPartice method.
-				dcomponents[m->componentid()].incNumMolecules();
-				domain->setglobalRotDOF(dcomponents[m->componentid()].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
+				dcomponents[componentid].incNumMolecules();
+				domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 				
 				if(m->id() > maxid) maxid = m->id();
 
@@ -446,12 +447,14 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 #else
 		particleContainer->addParticle(m1);
 		
-		 // TODO: The following should be done by the addPartice method.
+		componentid=m->componentid();
+		// TODO: The following should be done by the addPartice method.
 		dcomponents[componentid].incNumMolecules();
 		domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 		
 		if(id > maxid) maxid = id;
 
+		componentid=
 		std::list<ChemicalPotential>::iterator cpit;
 		for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
 			if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
