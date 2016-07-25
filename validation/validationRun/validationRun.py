@@ -207,7 +207,7 @@ def doRun(directory, MardynExe):
         exit(-1)
     
     if doRemote:  # sync back
-        command = "rsync " + remote + ":" + remotedirectory + "/* ./"
+        command = "rsync " + rsyncremote + ":" + remotedirectory + "/* ./"
         print command
         p = Popen(split(command))
         p.wait()
