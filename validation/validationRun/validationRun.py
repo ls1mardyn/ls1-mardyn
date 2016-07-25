@@ -175,7 +175,7 @@ def doRun(directory, MardynExe):
     os.chdir(directory)
     cmd = []
     
-    doRemote = remote and True
+    doRemote = remote
     
     if doRemote:
         remotedirectory = remoteprefix + "/" + directory
