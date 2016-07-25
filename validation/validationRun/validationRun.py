@@ -180,8 +180,11 @@ def doRun(directory, MardynExe):
     doRemote = remote
     
     if doRemote:
+        rsyncremote = remote
+        if remote.endswith('-mic0') or remote.endswith('-mic1'):
+            rsyncremote = remote[:-5]
         remotedirectory = remoteprefix + "/" + directory
-        command = "rsync --delete-before -r ../" + directory + " " + remote + ":" + remoteprefix
+        command = "rsync --delete-before -r ../" + directory + " " + rsyncremote + ":" + remoteprefix
         print command
         p = Popen(split(command))
         p.wait()
