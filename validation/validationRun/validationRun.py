@@ -81,7 +81,7 @@ for opt, arg in options:
         print "Make sure two versions of mardyn produce identical simulation results. Sample usage:"
         print """ ./vr -m 4 -n MarDyn.PAR_RELEASE_AVX2 -o MarDyn.PAR_RELEASE_AOS -c ../examples/surface-tension_LRC/C6H12_500/C6H12_500_1R.cfg -i ../examples/surface-tension_LRC/C6H12_500/C6H12_500.inp -p GammaWriter -I 10 """
         print " multiple -p are possible. Currently ResultWriter, GammaWriter and RDF are supported."
-        print " -b specifies, that the base (old file) is assumed to be sequential and non-remote "
+        print " -b specifies, that the base (old file) is assumed to be sequential"
         print " -r specifies the remote host "
         print " --remoteprefix changes the prefix of the directory, that is used on the remote host. as relative path to $HOME or absolute path if path starts with /"
         exit(1)
@@ -89,10 +89,8 @@ for opt, arg in options:
         baseisnormal = 1
     elif opt in ('-r', '--remote'):
         remote = arg
-        print "remote", remote, arg
     elif opt in ('-R', '--remoteprefix'):
         remoteprefix = arg
-        print "remoteprefix", remoteprefix, arg
     else:
         print "unknown option: " + opt
         exit(1)
@@ -177,7 +175,7 @@ def doRun(directory, MardynExe):
     os.chdir(directory)
     cmd = []
     
-    doRemote = remote and (directory == 'new' or not baseisnormal)
+    doRemote = remote and True
     
     if doRemote:
         remotedirectory = remoteprefix + "/" + directory
