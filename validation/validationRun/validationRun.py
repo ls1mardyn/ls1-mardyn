@@ -56,6 +56,7 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:',
 nonDefaultPlugins = False
 
 MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
+print options
 
 for opt, arg in options:
     if opt in ('-n', '--newMarDyn'):
