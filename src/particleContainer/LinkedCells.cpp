@@ -1074,7 +1074,11 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 		// (potentially re-) initialize dummyCell
 		dummyCell.assignCellToInnerRegion();
 		dummyCell.removeAllParticles();
+		double l[3] = {m1->r(0)-10., m1->r(1)-10., m1->r(2)-10.}, u[3] = {m1->r(0)+10., m1->r(1)+10., m1->r(2)+10.};
+		dummyCell.setBoxMin(l);
+		dummyCell.setBoxMax(u);
 		dummyCell.addParticle(m1, false);
+
 		dummyCell.buildSoACaches();
 		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
 	}
