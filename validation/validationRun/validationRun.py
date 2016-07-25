@@ -89,6 +89,7 @@ for opt, arg in options:
         baseisnormal = 1
     elif opt in ('-r', '--remote'):
         remote = arg
+        print "remote", remote
     elif opt in ('-R', '--remoteprefix'):
         remoteprefix = arg
     else:
