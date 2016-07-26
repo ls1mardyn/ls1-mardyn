@@ -177,7 +177,7 @@ def doRun(directory, MardynExe):
     os.chdir(directory)
     cmd = []
     
-    doRemote = remote
+    doRemote = remote and (directory == 'new' or not baseisnormal) 
     
     if doRemote:
         rsyncremote = remote
