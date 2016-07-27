@@ -99,11 +99,14 @@ for opt, arg in options:
     elif opt in ('--baseIsLocal'):
         baseIsLocal = True
     elif opt in ('-b', '--baseIsLocal'):
-        baseIsLocal = False
         baseRemote = arg
     else:
         print "unknown option: " + opt
         exit(1)
+
+if baseIsLocal and baseRemote:
+    print "defined baseIsLocal and defined a base remote host. this contradicts itself. exiting..."
+    exit(1)
 
 SEQ = (mpi == '-1')
 PAR = not SEQ
