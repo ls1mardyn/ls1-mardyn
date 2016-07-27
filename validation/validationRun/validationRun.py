@@ -190,7 +190,7 @@ def doRun(directory, MardynExe):
         command = "mkdir -p " + remoteprefix    
         mkdircmd = []
         mkdircmd.extend(['ssh', rsyncremote, command])
-        p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        p = Popen(mkdircmd, stdout=PIPE, stderr=PIPE)
         out, err = p.communicate()
         if p.returncode:
             print "error on mkdir -p:"
