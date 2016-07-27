@@ -60,6 +60,12 @@ void DttNodeTest::testUpwardDownwardWithNoInteraction(){
 }
 
 void DttNodeTest::testSoAConvertions(){
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "DomainDecompositionTest::testSoAConvertions()" << " not executed (rerun with only 1 Process!)"
+				<< std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
 	ParticleCell root;
@@ -102,6 +108,12 @@ void DttNodeTest::testSoAConvertions(){
 }
 
 void DttNodeTest::testDepth(double cutoffRadius){
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "DomainDecompositionTest::testDepth()" << " not executed (rerun with only 1 Process!)"
+				<< std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
 	double globalDomainLength[3] = {8., 8., 8.};
 	double ctr[3] = {4., 4., 4.};
 	bhfmm::Vector3<double> gDL_vec3(globalDomainLength);
