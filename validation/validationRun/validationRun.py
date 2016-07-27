@@ -51,9 +51,11 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:',
                              'help',
                              'baseisnormal',
                              'remote=',
-                             'remoteprefix='
+                             'remoteprefix=',
+                             'baseIsLocal'
                              ])
 nonDefaultPlugins = False
+baseIsLocal = False
 
 MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
 print options
@@ -93,6 +95,8 @@ for opt, arg in options:
         print "remote", remote
     elif opt in ('-R', '--remoteprefix'):
         remoteprefix = arg
+    elif opt in ('baseIsLocal'):
+        baseIsLocal = True
     else:
         print "unknown option: " + opt
         exit(1)
@@ -177,7 +181,7 @@ def doRun(directory, MardynExe):
     os.chdir(directory)
     cmd = []
     
-    doRemote = remote and (directory == 'new' or not baseisnormal) 
+    doRemote = remote and (directory == 'new' or not baseisnormal) and (directory == 'new' or not baseIsLocal)
     
     if doRemote:
         rsyncremote = remote
