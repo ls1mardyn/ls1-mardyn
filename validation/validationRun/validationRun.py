@@ -60,7 +60,7 @@ baseIsLocal = False
 
 MPI_START = 'mpirun'  # e.g. I need to set it to mpirun.mpich locally
 print options
-
+baseRemote=""
 for opt, arg in options:
     if opt in ('-n', '--newMarDyn'):
         newMarDyn = arg
@@ -98,7 +98,7 @@ for opt, arg in options:
         remoteprefix = arg
     elif opt in ('--baseIsLocal'):
         baseIsLocal = True
-    elif opt in ('-b', '--baseIsLocal'):
+    elif opt in ('-b', '--baseRemote'):
         baseRemote = arg
     else:
         print "unknown option: " + opt
@@ -107,6 +107,8 @@ for opt, arg in options:
 if baseIsLocal and baseRemote:
     print "defined baseIsLocal and defined a base remote host. this contradicts itself. exiting..."
     exit(1)
+    
+    
 
 SEQ = (mpi == '-1')
 PAR = not SEQ
