@@ -192,6 +192,9 @@ def doRun(directory, MardynExe):
         print command
         p = Popen(split(command))
         p.wait()
+        if p.returncode:
+            print "error on rsync"
+            exit(-1)
         command = "cd " + remotedirectory + "&& pwd && "
         cmd.extend(['ssh', remote, command])
         
