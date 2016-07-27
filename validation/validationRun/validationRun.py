@@ -39,7 +39,7 @@ baseisnormal = 0
 remote = ''
 remoteprefix = '/scratch'
 # shortopts: if they have an argument, then add : after shortcut
-options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:',
+options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:b:',
                             ['mpicmd=',
                              'mpi=',
                              'newMarDyn=',
@@ -52,7 +52,8 @@ options, remainder = getopt(argv[1:], 'M:m:n:o:c:i:p:I:hbr:R:',
                              'baseisnormal',
                              'remote=',
                              'remoteprefix=',
-                             'baseIsLocal'
+                             'baseIsLocal',
+                             'baseRemote='
                              ])
 nonDefaultPlugins = False
 baseIsLocal = False
@@ -97,6 +98,9 @@ for opt, arg in options:
         remoteprefix = arg
     elif opt in ('--baseIsLocal'):
         baseIsLocal = True
+    elif opt in ('-b', '--baseIsLocal'):
+        baseIsLocal = False
+        baseRemote = arg
     else:
         print "unknown option: " + opt
         exit(1)
@@ -178,15 +182,19 @@ call(['cp', newMarDynBase, 'new/'])
 
 def doRun(directory, MardynExe):
     # first run
+    if baseRemote and directory == "reference":
+        localRemote = baseRemote
+    else:
+        localRemote = remote
     os.chdir(directory)
     cmd = []
     
-    doRemote = remote and (directory == 'new' or not baseisnormal) and (directory == 'new' or not baseIsLocal)
+    doRemote = localRemote and (directory == 'new' or not baseIsLocal)
     
     if doRemote:
-        rsyncremote = remote
-        if remote.endswith('-mic0') or remote.endswith('-mic1'):
-            rsyncremote = remote[:-5]
+        rsyncremote = localRemote
+        if localRemote.endswith('-mic0') or localRemote.endswith('-mic1'):
+            rsyncremote = localRemote[:-5]
         command = "mkdir -p " + remoteprefix    
         mkdircmd = []
         mkdircmd.extend(['ssh', rsyncremote, command])
@@ -206,7 +214,7 @@ def doRun(directory, MardynExe):
             print "error on rsync"
             exit(1)
         command = "cd " + remotedirectory + "&& pwd && "
-        cmd.extend(['ssh', remote, command])
+        cmd.extend(['ssh', localRemote, command])
         
     if PAR and (directory == 'new' or not baseisnormal):
         cmd.extend(split(MPI_START))
