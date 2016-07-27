@@ -187,6 +187,16 @@ def doRun(directory, MardynExe):
         rsyncremote = remote
         if remote.endswith('-mic0') or remote.endswith('-mic1'):
             rsyncremote = remote[:-5]
+        command = "mkdir -p " + remoteprefix    
+        mkdircmd = []
+        mkdircmd.extend(['ssh', rsyncremote, command])
+        p = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        out, err = p.communicate()
+        if p.returncode:
+            print "error on mkdir -p:"
+            print out, err
+            exit(-1)        
+        
         remotedirectory = remoteprefix + "/" + directory
         command = "rsync --delete-before -r ../" + directory + " " + rsyncremote + ":" + remoteprefix
         print command
