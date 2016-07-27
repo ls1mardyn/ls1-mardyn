@@ -195,7 +195,7 @@ def doRun(directory, MardynExe):
         if p.returncode:
             print "error on mkdir -p:"
             print out, err
-            exit(-1)        
+            exit(1)        
         
         remotedirectory = remoteprefix + "/" + directory
         command = "rsync --delete-before -r ../" + directory + " " + rsyncremote + ":" + remoteprefix
@@ -204,7 +204,7 @@ def doRun(directory, MardynExe):
         p.wait()
         if p.returncode:
             print "error on rsync"
-            exit(-1)
+            exit(1)
         command = "cd " + remotedirectory + "&& pwd && "
         cmd.extend(['ssh', remote, command])
         
@@ -221,7 +221,7 @@ def doRun(directory, MardynExe):
     if p.returncode:
         print "error while executing program:"
         print out, err
-        exit(-1)
+        exit(1)
     
     if doRemote:  # sync back
         command = "rsync " + rsyncremote + ":" + remotedirectory + "/* ./"
