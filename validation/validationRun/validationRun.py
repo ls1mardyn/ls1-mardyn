@@ -192,7 +192,7 @@ def doRun(directory, MardynExe):
         print command
         p = Popen(split(command))
         p.wait()
-        command = "cd " + remotedirectory + "; pwd; "
+        command = "cd " + remotedirectory + "&& pwd && "
         cmd.extend(['ssh', remote, command])
         
     if PAR and (directory == 'new' or not baseisnormal):
