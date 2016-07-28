@@ -10,7 +10,7 @@
 
 #include "utils/Testing.h"
 
-class KDNodeTest : public utils::Test {
+class KDNodeTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(KDNodeTest);
 	TEST_METHOD(testEqual);
