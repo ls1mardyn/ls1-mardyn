@@ -98,7 +98,7 @@ for opt, arg in options:
         remoteprefix = arg
     elif opt in ('--baseIsLocal'):
         baseIsLocal = True
-    elif opt in ('-b', '--baseRemote'):
+    elif opt in ('-B', '--baseRemote'):
         baseRemote = arg
     else:
         print "unknown option: " + opt
