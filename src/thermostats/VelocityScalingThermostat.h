@@ -47,9 +47,21 @@ private:
 	
 	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _directedVelocity;
 	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _universalDirectedVelocity;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _directedVelocitySlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _universalDirectedVelocitySlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _directedVelocityStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _universalDirectedVelocityStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _directedVelocityConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _universalDirectedVelocityConfinement;	
 	std::map< int, std::map< unsigned, std::map< unsigned, double > > > _universalDirectedVelocityTest;
-	std::map< int, std::map< double, std::map< double, unsigned long> > > _countedMolecules;	
-	std::map< int, std::map< double, std::map< double, unsigned long > > > _universalCountedMolecules;	
+	std::map< int, std::map< double, std::map< double, unsigned long > > > _countedMolecules;	
+	std::map< int, std::map< double, std::map< double, unsigned long > > > _universalCountedMolecules;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _countedMoleculesSlab;	
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _universalCountedMoleculesSlab;	
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _countedMoleculesStress;	
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _universalCountedMoleculesStress;	
+	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _countedMoleculesConfinement;	
+	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _universalCountedMoleculesConfinement;	
 	std::map <unsigned, double> _universalInvProfileUnit_Stress;
 	std::map <unsigned, double> _bulkCorner;
 	std::map <unsigned, double> _universalInvProfileUnitConfinement;

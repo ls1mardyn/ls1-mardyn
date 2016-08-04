@@ -260,6 +260,8 @@ public:
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
 	unsigned long getInitStatistics() { return _initStatistics; }
+	unsigned getDirectedVelocityTime() { return _directedVelocityTime; }
+	bool getBoolDirVel() { return _boolDirectedVel; }
 
 	double getcutoffRadius() const { return _cutoffRadius; }
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
@@ -353,6 +355,8 @@ public:
 	unsigned getBarostatTimeInit() { return _initGrandCanonical; }
 	unsigned getBarostatTimeEnd() { return _endGrandCanonical; }
 	bool isRecordingSlabProfile() { return _doRecordSlabProfile; }
+	bool isRecordingStressProfile() { return _doRecordStressProfile; }
+	bool isRecordingConfinementProfile() { return _doRecordConfinement; }
 private:
 
 
@@ -436,6 +440,8 @@ private:
 	 * velocity is evaluated.
 	 */
 	unsigned _collectThermostatDirectedVelocity;
+	unsigned _directedVelocityTime;
+	bool _boolDirectedVel;
 
 	/** Sometimes during equilibration, a solid wall surrounded by
 	 * liquid may experience a stress or an excessive pressure, which

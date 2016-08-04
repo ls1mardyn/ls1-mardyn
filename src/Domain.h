@@ -216,6 +216,8 @@ public:
 	double getUniversalInvProfileUnit_Stress(int d) {return this->_universalInvProfileUnit_Stress[d]; }
 	int getUniversalNProfileUnitsConfinement(int d) {return this->_universalNProfileUnitsConfinement[d]; }
 	double getUniversalInvProfileUnitConfinement(int d) {return this->_universalInvProfileUnitConfinement[d]; }
+	int getUniversalNProfileUnitsSlab(int d) {return this->_universalNProfileUnitsSlab[d]; }
+	double getUniversalInvProfileUnitSlab(int d) {return this->_universalInvProfileUnitSlab[d]; }
 	
 	int getUniversalNProfileUnitsStressConfinement(int d) {return this->_universalNProfileUnitsStressConfinement[d]; }
 	double getUniversalInvProfileUnitStressConfinement(int d) {return this->_universalInvProfileUnitStressConfinement[d]; }
@@ -470,6 +472,7 @@ public:
 	double get_confinedVolume() { return this->_confinedVolume; }
 	double get_confinedSolidSurface() { return this->_confinedSolidSurface; }
 	bool isConfinement(int component) { return this->_confinementComponent[component]; }
+	bool isConfinementHardy(int component) { return this->_confinementComponentHardy[component]; }
 	double get_confinementMidPoint(int d) { return this->_confinementMidPoint[d]; }
 	void collectForcesOnComponentConfinement(ParticleContainer* molCont);
 	unsigned getRank() { return this->_localRank; }
@@ -682,6 +685,7 @@ private:
 	std::map<int, long double> _confinementEdge;
 	std::map<int, long double> _confinementMidPoint;
 	std::map<int, bool> _confinementComponent;
+	std::map<int, bool> _confinementComponentHardy;
 	std::map<int, unsigned long> _confinementMidPointID;
 	long double _dMax;
 	double _dAveraged;

@@ -81,6 +81,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		global_log->debug() << "Updating energy" << endl;
 	  double *E_trans = new double [numComponents];
 	  double *E_rot = new double[numComponents];
+	  string Default ("Default");
 	  for( int cid = 0; cid < numComponents; cid++)
 		  E_trans[cid] = E_rot[cid] = 0.0;
 	  for( tM = _particles->begin(); tM != _particles->end(); tM = _particles->next() ) {
@@ -88,7 +89,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		  const int cid = molecule.componentid();
 		  double E_trans_loc = 0.0;
 		  double E_rot_loc = 0.0;
-		  molecule.calculate_mv2_Iw2( E_trans_loc, E_rot_loc );
+		  molecule.calculate_mv2_Iw2( E_trans_loc, E_rot_loc, Default );
 		  E_trans[cid] += E_trans_loc;  // 2*k_{B} * E_{trans}
 		  E_rot[cid]   += E_rot_loc;  // 2*k_{B} * E_{rot}
 	  }

@@ -24,6 +24,9 @@ public:
 	void setOriginalInterval(unsigned delta) { this->originalInterval = delta; }
 	void setInstances(unsigned n) { this->instances = n; }
 	void setOriginalInstances(unsigned n) { this->originalInstances = n; }
+	unsigned getCountBarostating() { return this->baroCounter; }
+	void setCountBarostating(unsigned num) { this->baroCounter = num; } 
+	void addCountBarostating(unsigned num) { this->baroCounter += num; } 
 	void setSystem(double x, double y, double z, double m);
 	void setGlobalN(unsigned long N) { this->globalN = N; }
 	void setNextID(unsigned long id) { this->nextid = id; }
@@ -100,6 +103,7 @@ private:
 	unsigned originalInterval;
 	unsigned instances;  // how many trial insertions and deletions?
 	unsigned originalInstances;
+	unsigned baroCounter;
 	Random rnd, rndmomenta;
 	double system[3];  // extent of the system
 	float minredco[3];  // minimal coordinates of the subdomain reduced w. r. t. the system size

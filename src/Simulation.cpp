@@ -929,11 +929,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double radius1, radius2, xCentre, yCentre;
 			inputfilestream >> radius1 >> radius2 >> xCentre >> yCentre;
 			this->_domain->confinementDensity(radius1, radius2, xCentre, yCentre);				  
+		} else if (token == "directedVelocityTimeSpan") {	// records discrete information about temperature, density and velocity averaged over in-plane-direction
+			unsigned dirVelTime;
+			inputfilestream >> dirVelTime;
+			_directedVelocityTime = dirVelTime;
+			_boolDirectedVel = true;
+			global_log->info() << "Directed velocity is ";
+			if(_boolDirectedVel != true)
+			  global_log->info() << "not ";
+			global_log->info() << "calculated each " << _directedVelocityTime << " timesteps." << endl;
 		} else if (token == "slabProfile") {	// records discrete information about temperature, density and velocity averaged over in-plane-direction
 			unsigned xun, yun, zun;
 			inputfilestream >> xun >> yun >> zun;
 			_domain->setupSlabProfile(xun, yun, zun);
-			_doRecordSlabProfile = true;
+			_doRecordSlabProfile = true;	
 		} else if (token == "slabProfileRecordingTimesteps") { /* TODO: suboption of slabProfile */
 			inputfilestream >> _slabProfileRecordingTimesteps;
 		} else if (token == "slabProfileOutputTimesteps") { /* TODO: suboption of slabProfile */
@@ -1138,6 +1147,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			  tmu.setGCMD_barostat(true);
 			  inputfilestream >> targetPress;
 			  tmu.setTargetPressure(targetPress);
+			  tmu.setCountBarostating(0);
 			  _domain->setupBarostat(tmu.getControl_bottom(0), tmu.getControl_top(0), tmu.getControl_bottom(1), tmu.getControl_top(1), tmu.getControl_bottom(2), tmu.getControl_top(2), tmu.getComponentID());
 			}
 			global_log->info() << flush;
@@ -1674,6 +1684,11 @@ void Simulation::simulate() {
 					    if(deltaPressure == 0)
 					      deltaPressure = 0.01;
 					    unsigned newInstances = (unsigned)floor(cpit->getOriginalInstances()*10*deltaPressure*dampFac);
+					    
+					    // amount of instances are reglemented to be not bigger than 3 times the amount of original instances
+					    if(newInstances > 3 * cpit->getOriginalInstances())
+					      newInstances = 3 * cpit->getOriginalInstances();
+					    
 					    if(_domainDecomposition->getRank()==0)
 					      cout << " newInst " << newInstances << endl;
 					    
@@ -1716,6 +1731,7 @@ void Simulation::simulate() {
 					
 					// adaptable timestep for barostat: the bigger the difference between targetPressure and currentPressure, the shorter the timestep
 					if(cpit->isGCMD_barostat()){
+					  cpit->addCountBarostating(1);
 					  double deltaPressure = abs(currentPressure-targetPressure);
 					  
 					  if(deltaPressure == 0)
@@ -1725,6 +1741,11 @@ void Simulation::simulate() {
 					    newInterval = newInterval * 0.5 * _confinementRecordingTimesteps;
 					  else if(_doRecordConfinement && _confinementRecordingTimesteps > 10)
 					    newInterval = newInterval * 0.5 * 10;
+					  
+					  // after 7 times barostating a break of 50000 timesteps is forced for equilibration
+					  if(cpit->getCountBarostating()%7 == 0)
+					    newInterval = 50000;
+					  
 					  if(newInterval > 50000)
 					    newInterval = 50000;
 					  if(newInterval < 5 * _confinementRecordingTimesteps)
@@ -2254,6 +2275,8 @@ void Simulation::initialize() {
 	_doRecordConfinement = false;
 	_doRecordStressProfile = false;
 	_doShearRate = false;
+	_boolDirectedVel = false;
+	_directedVelocityTime = 100;
 	_HardyStress = false;
 	_HardyConfinement = false;
 	_weightingStress = string("Linear");

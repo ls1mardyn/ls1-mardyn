@@ -99,6 +99,8 @@ Domain::Domain(int rank, PressureGradient* pg){
 	  this->_bulkComponent[cid] = false;
 	  this->_barostatComponent[cid] = false;
 	  this->_differentBarostatInterval = false;
+	  this->_confinementComponent[cid] = false;
+	  this->_confinementComponentHardy[cid] = false;
 	}
 	this->_isConfinement = false;
 	this->_confinementRecordingTimesteps = 0.0;
@@ -864,6 +866,7 @@ void Domain::recordProfile(ParticleContainer* molCont)
 	int cid;
 	unsigned xun, yun, zun, unID;
 	double mv2, Iw2;
+	string Default ("Default");
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
 		cid = thismol->componentid();
@@ -894,7 +897,7 @@ void Domain::recordProfile(ParticleContainer* molCont)
 			// record _twice_ the total (ordered + unordered) kinetic energy
 			mv2 = 0.0;
 			Iw2 = 0.0;
-			thismol->calculate_mv2_Iw2(mv2, Iw2);
+			thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
 			this->_localKineticProfile[unID] += mv2+Iw2;
 		}
 	}
@@ -1467,6 +1470,7 @@ void Domain::recordSlabProfile(ParticleContainer* molCont){
   unsigned xun, yun, zun;
   long int unID;
   double mv2, Iw2;
+  string Slab ("Slab");
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
 		cid = thismol->componentid();
@@ -1492,14 +1496,14 @@ void Domain::recordSlabProfile(ParticleContainer* molCont){
 			// record _twice_ the total (ordered + unordered) kinetic energy
 			mv2 = 0.0;
 			Iw2 = 0.0;
-			thismol->calculate_mv2_Iw2(mv2, Iw2);
+			thismol->calculate_mv2_Iw2(mv2, Iw2, Slab);
 			this->_localKineticProfileSlab[unID] += mv2+Iw2;
 		}
 		for(int d=0; d<3; d++)
 		  thismol->addAveragedVelocity(d,thismol->v(d));
 		mv2 = 0.0;
 		Iw2 = 0.0;
-		thismol->calculate_mv2_Iw2(mv2, Iw2);
+		thismol->calculate_mv2_Iw2(mv2, Iw2, Slab);
 		thismol->addAveragedTemperature((mv2+Iw2)/(3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom())));
 		thismol->addAverageCount(1);
 	}
@@ -2416,6 +2420,8 @@ void Domain::setupConfinementProperties(double wallThickness, double horDist, do
 	}else{
 	    this->_confinementComponent[cid] = true;
 	}
+	//FIXME Hardy is always just applied to component 1 (cid = 0)
+	this->_confinementComponentHardy[0] = true;
 }
 
 void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlationLength)
@@ -2448,6 +2454,9 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
       _universalInvProfileUnitStressConfinement[1] = 1/correlationLength;
       _universalInvProfileUnitStressConfinement[2] = _universalNProfileUnitsStressConfinement[2] / _globalLength[2];
     }else{ // for Virial Stress
+      for(unsigned cid = 0; cid < getNumberOfComponents(); cid++)
+	this->_confinementComponentHardy[cid] = false;
+      
       this->_universalNProfileUnitsStressConfinement[0] = this->_universalNProfileUnitsConfinement[0];
       this->_universalNProfileUnitsStressConfinement[1] = this->_universalNProfileUnitsConfinement[1];
       this->_universalNProfileUnitsStressConfinement[2] = this->_universalNProfileUnitsConfinement[2];
@@ -2460,6 +2469,8 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
      size_t rows = 6, cols = this->_universalNProfileUnitsStressConfinement[0]*this->_universalNProfileUnitsStressConfinement[1];
      this->_localStressConfinement = this->allocStressMatrix(rows, cols);
      this->_globalStressConfinement = this->allocStressMatrix(rows, cols);
+     
+    // cout << " corL " << correlationLength << " xStr " << this->_universalNProfileUnitsStressConfinement[0] << " yStr " << this->_universalNProfileUnitsStressConfinement[1] << " zStr " << this->_universalNProfileUnitsStressConfinement[2] << " stressUNIDs " << cols << endl;
      
     
     if (this->_outputFormat == this->_all || this->_outputFormat == this->_matlab)
@@ -2476,6 +2487,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	unsigned xun, yun, unID, binID, stressCalc_xun, stressCalc_yun, stressCalc_unID;
 	double origLowUp, origHiLow;
 	string hardy ("Hardy");
+	string Confinement ("Confinement");
 		
 	// needed for the communication of the current coordinates of the midpoints
 	double confinementMidPointAux[4];
@@ -2530,6 +2542,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 		}
 	      }
 	      thismol->clearVirialForceHardyConfinement();
+	      thismol->clearDiffusiveHeatfluxHardyConfinement();
 	    }
 	    // this molecule-ID will not be taken into account for the search of midpoints; helps to find the midpoints by function collCommAllreduceMin()
 	    if (this->_confinementMidPointID[0] == 0)
@@ -2555,6 +2568,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 		if(this->_confinementComponent[cid] && thismol->r(0) >= this->_confinementEdge[0] && thismol->r(0) <= this->_confinementEdge[1] && thismol->r(1) >= this->_confinementMidPoint[3] - this->_confinementEdge[5] && thismol->r(1) <= this->_confinementMidPoint[1] + this->_confinementEdge[5])
 		{
 			std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > virialHardy = thismol->getVirialForceHardyConfinement();
+			std::map<unsigned, std::map<unsigned, double> > heatDiffHardy = thismol->getDiffusiveHeatfluxHardyConfinement();
 			xun = (unsigned)floor((thismol->r(0)-this->_confinementEdge[0]) * this->_universalInvProfileUnitConfinement[0]);
 			yun = (unsigned)floor((thismol->r(1)-(this->_confinementMidPoint[3]-this->_confinementEdge[5])) * this->_universalInvProfileUnitConfinement[1]); 
 			unID = xun * this->_universalNProfileUnitsConfinement[1] + yun;
@@ -2572,7 +2586,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    this->_localPressureKin_Confinement[unID] += thismol->getPressureKinConfinement(d);
 			    this->_localvProfile_Confinement[d][unID] += thismol->v(d);
 			    this->_localFluidForce_Confinement[d][unID] += thismol->F(d);
-			    this->_localDiffusiveMovement[d][unID] += thismol->rOld(d) - thismol->r(d) - thismol->getDirectedVelocity(d)*getTimestepLength();
+			    this->_localDiffusiveMovement[d][unID] += thismol->rOld(d) - thismol->r(d) - thismol->getDirectedVelocityConfinement(d)*getTimestepLength();
 			    this->_localDiffusiveMovement[d][unID] *= this->_localDiffusiveMovement[d][unID];
 			}
 			
@@ -2584,6 +2598,14 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    this->_localPressureKin_barostat += thismol->getPressureKinConfinement(d);
 			  }
 			}
+			
+			// kinetic energy
+			this->_localDOFProfile_Confinement[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
+			// record _twice_ the total (ordered + unordered) kinetic energy
+			double mv2 = 0.0;
+			double Iw2 = 0.0;
+			thismol->calculate_mv2_Iw2(mv2, Iw2, Confinement);
+			this->_localKineticProfile_Confinement[unID] += mv2+Iw2;
 			
 			// stress calculation just in fluid
 			if(cid == cid_free){
@@ -2598,18 +2620,23 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    for(std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >::iterator it=virialHardy.begin(); it!=virialHardy.end(); ++it){
 			      for(int d = 0; d < 3; d++)
 				for(int e = d; e < 3; e++){
+				  //if(weightingFrac > 1)
+				//	  cout << " unID " << it->first << " unID_Stress " << stressCalc_unID << " weightingFrac " << weightingFrac << endl;
 				  if(d == e){
 				    this->_localStressConfinement[d][it->first] += virialHardy[it->first][d][e];
-				    this->_localConvectivePotHeatflux[d][it->first] += thismol->getConvectivePotHeatflux(d);
-				    this->_localDiffusiveHeatflux[d][it->first] += thismol->getDiffusiveHeatflux(d);
+				    this->_localDiffusiveHeatflux[d][it->first] += heatDiffHardy[it->first][d];
 				    // update just once per molecule
-				    if(it == virialHardy.begin())
+				    if(it == virialHardy.begin()){
 				      this->_localStressConfinement[d][stressCalc_unID] += weightingFrac*thismol->getVirialKinConfinement(d, e);
+				      this->_localConvectiveKinHeatflux[d][stressCalc_unID] += 0.5 * mv2 * (thismol->v(d) - thismol->getDirectedVelocityConfinement(d)) * weightingFrac;
+				      this->_localConvectivePotHeatflux[d][stressCalc_unID] += thismol->getConvectivePotHeatflux(d) * weightingFrac;
+				    }
 				  }else{
 				    this->_localStressConfinement[2+d+e][it->first] += virialHardy[it->first][d][e];
 				    // update just once per molecule
-				    if(it == virialHardy.begin())
+				    if(it == virialHardy.begin()){
 				      this->_localStressConfinement[2+d+e][stressCalc_unID] += weightingFrac*thismol->getVirialKinConfinement(d, e);
+				    }
 				  }
 				}
 			    }
@@ -2621,22 +2648,13 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 				   this->_localStressConfinement[d][stressCalc_unID] += thismol->getVirialKinConfinement(d, e);
 				   this->_localConvectivePotHeatflux[d][stressCalc_unID] += thismol->getConvectivePotHeatflux(d);
 				   this->_localDiffusiveHeatflux[d][stressCalc_unID] += thismol->getDiffusiveHeatflux(d);
+				   this->_localConvectiveKinHeatflux[d][stressCalc_unID] += 0.5 * mv2 * (thismol->v(d) - thismol->getDirectedVelocityConfinement(d));
 				}else{
 				   this->_localStressConfinement[2+d+e][stressCalc_unID] += thismol->getVirialForceConfinement(d, e);
 				   this->_localStressConfinement[2+d+e][stressCalc_unID] += thismol->getVirialKinConfinement(d, e);
 				}
 			      }
 			  }
-			}
-			this->_localDOFProfile_Confinement[unID] += 3.0 + (long double)(thismol->component()->getRotationalDegreesOfFreedom());
-			// record _twice_ the total (ordered + unordered) kinetic energy
-			double mv2 = 0.0;
-			double Iw2 = 0.0;
-			thismol->calculate_mv2_Iw2(mv2, Iw2);
-			this->_localKineticProfile_Confinement[unID] += mv2+Iw2;
-			if(cid == cid_free){
-			  for(int d = 0; d < 3; d++)
-			    this->_localConvectiveKinHeatflux[d][stressCalc_unID] += 0.5 * mv2 * thismol->v(d);
 			}
 		}
 		// positions of the asperity-midpoints are located to calculate the distance between the two plates and the confined volume
@@ -2683,6 +2701,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 		}
 	    }
 	    thismol->clearVirialForceHardyConfinement();
+	    thismol->clearDiffusiveHeatfluxHardyConfinement();
 	  }
 	 
 	  // in the upper loop, just one to two CPUs are responsible to the finding of the midpoint coordinates; here this current value is communicated to all CPUs
@@ -2991,9 +3010,9 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 
 	 if (this->_stressCalcMethodConfinement == hardy){
 	    nvars = 6;
-	    nvars_Stress = 6;
+	    nvars_Stress = 7;
 	 }else{
-	    nvars = 12;
+	    nvars = 13;
 	    nvars_Stress = 1;
 	 }
 	 
@@ -3005,13 +3024,14 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 float velocity[NZ][NY][NX][3];
 	 float fluidForce[NZ][NY][NX][3];
 	 float fluidicComponent[NZ][NY][NX];
-	 float q_convective[NZ][NY][NX][3];
-	 float q_total[NZ][NY][NX][3];
 	 float diffusion[NZ][NY][NX][3];
 	 float HydrodynamicStress[NZ_Stress][NY_Stress][NX_Stress];
 	 float vanMisesStress[NZ_Stress][NY_Stress][NX_Stress];
 	 float NormalStress[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float ShearStress[NZ_Stress][NY_Stress][NX_Stress][3];
+	 float q_convective[NZ_Stress][NY_Stress][NX_Stress][3];
+	 float q_convective_pot[NZ_Stress][NY_Stress][NX_Stress][3];
+	 float q_total[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float *vars[nvars], *vars_Stress[nvars_Stress];
 	 int vardims[nvars], vardims_Stress[nvars_Stress], centering[nvars], centering_Stress[nvars_Stress];
 	 const char *varnames[nvars];
@@ -3030,6 +3050,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vardims_Stress[3] = 3;
 	    vardims_Stress[4] = 3;
 	    vardims_Stress[5] = 3;
+	    vardims_Stress[6] = 3;
 	    for(int d = 0; d < nvars; d++)
 	      centering[d] = 1;
 	    for(int d = 0; d < nvars_Stress; d++)
@@ -3045,7 +3066,8 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    varnames_Stress[2] = "NormalStress(xx,yy,zz)";
 	    varnames_Stress[3] = "ShearStress(xy,xz,yz)";
 	    varnames_Stress[4] = "q_convective";
-	    varnames_Stress[5] = "q_total";
+	    varnames_Stress[5] = "q_convective_pot";
+	    varnames_Stress[6] = "q_total";
 	    vars[0] = (float *)density;
 	    vars[1] = (float *)temperature;
 	    vars[2] = (float *)velocity;
@@ -3057,7 +3079,8 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vars_Stress[2] = (float *)NormalStress;
 	    vars_Stress[3] = (float *)ShearStress;
 	    vars_Stress[4] = (float *)q_convective;
-	    vars_Stress[5] = (float *)q_total;
+	    vars_Stress[5] = (float *)q_convective_pot;
+	    vars_Stress[6] = (float *)q_total;
 	 }else{
 	    vardims[0] = 1;
 	    vardims[1] = 1;
@@ -3071,6 +3094,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vardims[9] = 3;
 	    vardims[10] = 3;
 	    vardims[11] = 3;
+	    vardims[12] = 3;
 	    vardims_Stress[0] = 3;
 	    for(int d = 0; d < nvars; d++)
 	      centering[d] = 1;
@@ -3086,8 +3110,9 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    varnames[7] = "ShearStress(xy,xz,yz)";
 	    varnames[8] = "fluidicComponent";
 	    varnames[9] = "q_convective";
-	    varnames[10] = "q_total";
-	    varnames[11] = "diffusion";
+	    varnames[10] = "q_convective_pot";
+	    varnames[11] = "q_total";
+	    varnames[12] = "diffusion";
 	    varnames_Stress[0] = "HydrodynamicStress";
 	    vars[0] = (float *)density;
 	    vars[1] = (float *)temperature;
@@ -3099,8 +3124,9 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vars[7] = (float *)ShearStress;
 	    vars[8] = (float *)fluidicComponent;
 	    vars[9] = (float *)q_convective;
-	    vars[10] = (float *)q_total;
-	    vars[11] = (float *)diffusion;
+	    vars[10] = (float *)q_convective_pot;
+	    vars[11] = (float *)q_total;
+	    vars[12] = (float *)diffusion;
 	    vars_Stress[0] = (float *)HydrodynamicStress;
 	 }
 	 
@@ -3432,7 +3458,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	  {
 	    double stress_locxx = 0.0, stress_locyy = 0.0, stress_loczz = 0.0, stress_locxy = 0.0, stress_locxz = 0.0, stress_locyz = 0.0, stress_lochydr = 0.0, stress_locmises = 0.0;
 	    double aux_mis1 = 0.0, aux_mis2 = 0.0, aux_mis3 = 0.0, aux_mis4 = 0.0;
-	    double q_x_convective = 0.0, q_y_convective = 0.0, q_z_convective = 0.0, q_x_total = 0.0, q_y_total = 0.0, q_z_total = 0.0;
+	    double q_x_convective = 0.0, q_y_convective = 0.0, q_z_convective = 0.0, q_x_convective_pot = 0.0, q_y_convective_pot = 0.0, q_z_convective_pot = 0.0, q_x_total = 0.0, q_y_total = 0.0, q_z_total = 0.0;
 	    unsigned unID = n_x * this->_universalNProfileUnitsStressConfinement[1]  + n_y;
 	    
 	    // Stresses
@@ -3460,22 +3486,34 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    
 	    
 	    // Heat Flux
-		q_x_convective = (this->_globalConvectiveKinHeatflux[0][unID] + this->_globalConvectivePotHeatflux[0][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
-		q_y_convective = (this->_globalConvectiveKinHeatflux[1][unID] + this->_globalConvectivePotHeatflux[1][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
-		q_z_convective = (this->_globalConvectiveKinHeatflux[2][unID] + this->_globalConvectivePotHeatflux[2][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
-		q_x_total = this->_globalDiffusiveHeatflux[0][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_x_convective;
-		q_y_total = this->_globalDiffusiveHeatflux[1][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_y_convective;
-		q_z_total = this->_globalDiffusiveHeatflux[2][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_z_convective;
+		q_x_convective = (this->_globalConvectiveKinHeatflux[0][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_y_convective = (this->_globalConvectiveKinHeatflux[1][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_z_convective = (this->_globalConvectiveKinHeatflux[2][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_x_convective_pot = (this->_globalConvectivePotHeatflux[0][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_y_convective_pot = (this->_globalConvectivePotHeatflux[1][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_z_convective_pot = (this->_globalConvectivePotHeatflux[2][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_x_total = (-1)*this->_globalDiffusiveHeatflux[0][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_x_convective;
+		q_y_total = (-1)*this->_globalDiffusiveHeatflux[1][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_y_convective;
+		q_z_total = (-1)*this->_globalDiffusiveHeatflux[2][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_z_convective;
 	    
 	    q_convective[0][n_y][n_x][0] = q_x_convective;
 	    q_convective[0][n_y][n_x][1] = q_y_convective;
 	    q_convective[0][n_y][n_x][2] = q_z_convective;
+	    q_convective_pot[0][n_y][n_x][0] = q_x_convective_pot;
+	    q_convective_pot[0][n_y][n_x][1] = q_y_convective_pot;
+	    q_convective_pot[0][n_y][n_x][2] = q_z_convective_pot;
 	    q_total[0][n_y][n_x][0] = q_x_total;
 	    q_total[0][n_y][n_x][1] = q_y_total;
 	    q_total[0][n_y][n_x][2] = q_z_total;
-	    diffusion[0][n_y][n_x][0] = this->_globalDiffusiveMovement[0][unID];
-	    diffusion[0][n_y][n_x][1] = this->_globalDiffusiveMovement[1][unID];
-	    diffusion[0][n_y][n_x][2] = this->_globalDiffusiveMovement[2][unID];
+	  }
+	  
+	  for(unsigned n_y = 0; n_y < this->_universalNProfileUnitsConfinement[1]; n_y++){
+	    for(unsigned n_x = 0; n_x< this->_universalNProfileUnitsConfinement[0]; n_x++){
+	      unsigned unID = n_x * this->_universalNProfileUnitsConfinement[1]  + n_y;
+	      diffusion[0][n_y][n_x][0] = this->_globalDiffusiveMovement[0][unID];
+	      diffusion[0][n_y][n_x][1] = this->_globalDiffusiveMovement[1][unID];
+	      diffusion[0][n_y][n_x][2] = this->_globalDiffusiveMovement[2][unID];
+	    }
 	  }
 	 /* Use VisitWriter.cpp to write a regular mesh with data. */
 	 if (this->_stressCalcMethodConfinement == hardy)

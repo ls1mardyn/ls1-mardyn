@@ -221,7 +221,7 @@ public:
 	 * @param[out] sumIw2   twice the rotational kinetic energy \f$ I \omega^2 \f$
 	 */
 	void calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& sumIw2, int dimToThermostat, Domain *dom);
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2);
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2, string directedVelType);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
 
 	/** write information to stream */
@@ -308,6 +308,12 @@ public:
 	
 	void setDirectedVelocity(int d, double directedVelocity) { this->_directedVelocity[d] = directedVelocity; }
 	double getDirectedVelocity(int d) { return this->_directedVelocity[d]; }
+	void setDirectedVelocitySlab(int d, double directedVelocity) { this->_directedVelocitySlab[d] = directedVelocity; }
+	double getDirectedVelocitySlab(int d) { return this->_directedVelocitySlab[d]; }
+	void setDirectedVelocityStress(int d, double directedVelocity) { this->_directedVelocityStress[d] = directedVelocity; }
+	double getDirectedVelocityStress(int d) { return this->_directedVelocityStress[d]; }
+	void setDirectedVelocityConfinement(int d, double directedVelocity) { this->_directedVelocityConfinement[d] = directedVelocity; }
+	double getDirectedVelocityConfinement(int d) { return this->_directedVelocityConfinement[d]; }
 	
 	// VTK Molecule Date
 	long double getAveragedVelocity(int d) { return this->_vAverage[d]; }
@@ -350,6 +356,12 @@ public:
 	    if (x < 0) return -1;
 	    return 1; 
 	}
+	
+	// Heat flux (Hardy-like)
+	void addDiffusiveHeatfluxHardyConfinement(int d, unsigned unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d] += diffHeatflux; }
+	void setDiffusiveHeatfluxHardyConfinement(int d, unsigned unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d] = diffHeatflux; }
+	std::map<unsigned, std::map<unsigned, double > > getDiffusiveHeatfluxHardyConfinement() { return this->_diffusiveHeatfluxHardyConfinement; }
+	void clearDiffusiveHeatfluxHardyConfinement() { _diffusiveHeatfluxHardyConfinement.clear(); }
 private:
     Component *_component;  /**< IDentification number of its component type */
 	double _r[3];  /**< position coordinates */
@@ -405,6 +417,7 @@ private:
 	// directed velocity
 	double _directedVelocity[3];
 	double _directedVelocity2[3];
+	double _directedVelocitySlab[3], _directedVelocityStress[3], _directedVelocityConfinement[3];
 	
 	// VTK Molecule Data
 	long double _T;
@@ -426,6 +439,8 @@ private:
 	
 	std::map<unsigned, double> _diffusiveHeatflux;
 	std::map<unsigned, double> _convectivePotHeatflux;
+	std::map<unsigned, std::map<unsigned, double> > _diffusiveHeatfluxHardyConfinement;
+	
 };
 
 

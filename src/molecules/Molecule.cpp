@@ -55,6 +55,10 @@ Molecule::Molecule(unsigned long id, Component *component,
 	  setPressureKin_barostat(d, 0.0);
 	  setDiffusiveHeatflux(d, 0.0);
 	  setConvectivePotHeatflux(d, 0.0);
+	  setDirectedVelocity(d, 0.0);
+	  setDirectedVelocitySlab(d, 0.0);
+	  setDirectedVelocityStress(d, 0.0);
+	  setDirectedVelocityConfinement(d, 0.0);
 	}
 	
 	// VTK Molecule Data
@@ -120,6 +124,10 @@ Molecule::Molecule(const Molecule& m) {
 	  setPressureKin_barostat(d, 0.0);
 	  setDiffusiveHeatflux(d, 0.0);
 	  setConvectivePotHeatflux(d, 0.0);
+	  setDirectedVelocity(d, 0.0);
+	  setDirectedVelocitySlab(d, 0.0);
+	  setDirectedVelocityStress(d, 0.0);
+	  setDirectedVelocityConfinement(d, 0.0);
 	}
 	
 	// VTK Molecule Data
@@ -307,10 +315,25 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& su
 	sumIw2 += Iw2;
 }
 
-void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
+void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, string directedVelocityType) {
 	  
+	string Default ("Default");
+	string Slab ("Slab");
+	string Stress ("Stress");
+	string Confinement ("Confinement");
+	
 	// with  correction due to directed movement
-	double v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
+	double v2;
+	if(directedVelocityType == Slab)
+	  v2 = (_v[0]-_directedVelocitySlab[0])*(_v[0]-_directedVelocitySlab[0]) + (_v[1]-_directedVelocitySlab[1])*(_v[1]-_directedVelocitySlab[1]) + (_v[2]-_directedVelocitySlab[2])*(_v[2]-_directedVelocitySlab[2]);
+	else if(directedVelocityType == Stress)
+	  v2 = (_v[0]-_directedVelocityStress[0])*(_v[0]-_directedVelocityStress[0]) + (_v[1]-_directedVelocityStress[1])*(_v[1]-_directedVelocityStress[1]) + (_v[2]-_directedVelocityStress[2])*(_v[2]-_directedVelocityStress[2]);
+	else if(directedVelocityType == Confinement)
+	  v2 = (_v[0]-_directedVelocityConfinement[0])*(_v[0]-_directedVelocityConfinement[0]) + (_v[1]-_directedVelocityConfinement[1])*(_v[1]-_directedVelocityConfinement[1]) + (_v[2]-_directedVelocityConfinement[2])*(_v[2]-_directedVelocityConfinement[2]);
+	else if(directedVelocityType == Default)
+	  v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
+	else
+	  v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
 	summv2 += _m * v2;
 	
 	// without correction due to directed movement
@@ -417,6 +440,8 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  // smallest value that is a multiple of (_r[0]-dom->getConfinementEdge(0)) / deltaX    
 	  xPlaneShift = dom->getConfinementEdge(0);
 	  yPlaneShift = dom->get_confinementMidPoint(3);
+	  
+	  //cout << " x1 " << _r[0] << " y1 " << _r[1] << " x2 " << mjx << " y2 " << mjy << " xun " << xun << " yun " << yun << " xun2 " << xun2 << " yun2 " << yun2 << " dx " << deltaX << " dy " << deltaY << " unX " << xun_tot << " unY " << yun_tot << " shX " << xPlaneShift << " shY " << yPlaneShift << endl;
 	}
 	
 	unID_tot = unsigned(xun_tot*yun_tot);
@@ -720,7 +745,33 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 		  }
 	      }else if (stress == Confinement){
 		  deltaXCentre = _r[0]-(xun*deltaX+halfDeltaX+dom->getConfinementEdge(0));
-		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY+(dom->get_confinementMidPoint(3)));
+		  deltaYCentre = _r[1]-(yun*deltaY+halfDeltaY+dom->get_confinementMidPoint(3));
+		  if(abs(deltaXCentre) > abs(xMax/2)){
+		    if(_r[0] > mjx){
+		      if(deltaXCentre < 0) 
+			deltaXCentre = xMax+deltaXCentre;
+		      else if(deltaXCentre > 0)
+			deltaXCentre = xMax-deltaXCentre;
+		    }else{
+		      if(deltaXCentre < 0) 
+			deltaXCentre = (-1)*(xMax+deltaXCentre);
+		      else if(deltaXCentre > 0)
+			deltaXCentre = (-1)*(xMax-deltaXCentre);
+		    } 
+		  }
+		  if(abs(deltaYCentre) > abs(yMax/2)){
+		    if(_r[1] > mjy){
+		      if(deltaYCentre < 0) 
+			deltaYCentre = yMax+deltaYCentre;
+		      else if(deltaYCentre > 0)
+			deltaYCentre = yMax-deltaYCentre;
+		    }else{
+		      if(deltaYCentre < 0) 
+			deltaYCentre = (-1)*(yMax+deltaYCentre);
+		      else if(deltaYCentre > 0)
+			deltaYCentre = (-1)*(yMax-deltaYCentre);
+		    }
+		  }
 	      }
 	        
 	      _root.insert(std::pair<long double, int>(previousValue,1));
@@ -760,8 +811,13 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 long double Molecule::bondFunctionPyramide(long double n0, long double n1, int signF, int signG, long double halfDeltaX, long double halfDeltaY, long double deltaXMol, long double deltaYMol, long double deltaXCentre, long double deltaYCentre){
      long double bondFunc, bondFunc0, bondFunc1;
      
-     bondFunc1 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n1*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n1)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n1)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n1+3*deltaXMol*deltaYCentre*n1+2*deltaXMol*deltaYMol*n1*n1)*signG)));
-     bondFunc0 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n0*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n0)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n0)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n0+3*deltaXMol*deltaYCentre*n0+2*deltaXMol*deltaYMol*n0*n0)*signG)));
+     //bondFunc1 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n1*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n1)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n1)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n1+3*deltaXMol*deltaYCentre*n1+2*deltaXMol*deltaYMol*n1*n1)*signG)));
+     //bondFunc0 = 1/(6*halfDeltaX*halfDeltaX*halfDeltaY*halfDeltaY)*(n0*(3*halfDeltaX*(2*halfDeltaY-(2*deltaYCentre+deltaYMol*n0)*signG)+signF*((-3)*halfDeltaY*(2*deltaXCentre+deltaXMol*n0)+(6*deltaXCentre*deltaYCentre+3*deltaXCentre*deltaYMol*n0+3*deltaXMol*deltaYCentre*n0+2*deltaXMol*deltaYMol*n0*n0)*signG)));
+     bondFunc1 = 1/(halfDeltaX*halfDeltaY)*(n1-1/(2*halfDeltaX)*n1*(deltaXMol*n1+2*deltaXCentre)*signF-1/(2*halfDeltaY)*n1*(deltaYMol*n1+2*deltaYCentre)*signG
+		    +1/(halfDeltaX*halfDeltaY*6)*n1*signF*signG*(n1*deltaXMol*(2*deltaYMol*n1+3*deltaYCentre)+3*deltaXCentre*(deltaYMol*n1+2*deltaYCentre)));
+     bondFunc0 = 1/(halfDeltaX*halfDeltaY)*(n0-1/(2*halfDeltaX)*n0*(deltaXMol*n0+2*deltaXCentre)*signF-1/(2*halfDeltaY)*n0*(deltaYMol*n0+2*deltaYCentre)*signG
+		    +1/(halfDeltaX*halfDeltaY*6)*n0*signF*signG*(n0*deltaXMol*(2*deltaYMol*n0+3*deltaYCentre)+3*deltaXCentre*(deltaYMol*n0+2*deltaYCentre)));
+     
      bondFunc = bondFunc1 - bondFunc0;
 
      return bondFunc;
@@ -771,7 +827,10 @@ double Molecule::weightingFunctionPyramide(unsigned xun, unsigned yun, double de
      double CentreX, CentreY, weighting;
      CentreX = xun*deltaX + 0.5*deltaX + xStart;
      CentreY = yun*deltaY + 0.5*deltaY + yStart;
-     weighting = 4/(deltaX*deltaY)*(1-2/deltaX*abs(CentreX-_r[0]))*(1-2/deltaY*abs(CentreY-_r[1]));
+     if(abs(CentreX-_r[0]) < 0.5*deltaX && abs(CentreY-_r[1]) < 0.5*deltaY)
+	weighting = 4/(deltaX*deltaY)*(1-2/deltaX*abs(CentreX-_r[0]))*(1-2/deltaY*abs(CentreY-_r[1]));
+     else
+        weighting = 0.0;
      return weighting;
 }
 

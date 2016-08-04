@@ -15,6 +15,7 @@ ChemicalPotential::ChemicalPotential()
 	 this->T = 1.0;
 	 this->interval = (unsigned)((int)-1);
 	 this->instances = 0;
+	 this->baroCounter = 0;
 	 for(int d=0; d<3; d++)
 	 {
 	    this->system[d] = 1.0;
