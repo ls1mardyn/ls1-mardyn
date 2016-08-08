@@ -891,7 +891,12 @@ void Simulation::simulate() {
 				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 			}
 			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
-			else if(_doAlignCentre && _applyWallFun){
+			else if(_doAlignCentre && _applyWallFun_LJ_9_3){
+				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
+				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+			else if(_doAlignCentre && _applyWallFun_LJ_10_4){
 				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
@@ -945,8 +950,12 @@ void Simulation::simulate() {
 
 
 
-		if(_wall && _applyWallFun){
+		if(_wall && _applyWallFun_LJ_9_3){
 		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
+		}
+
+		if(_wall && _applyWallFun_LJ_10_4){
+		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
 		}
 		
 		if(_mirror && _applyMirror){
@@ -1394,7 +1403,8 @@ void Simulation::initialize() {
 	_alignmentInterval = 25;
 	_momentumInterval = 1000;
 	_wall = NULL;
-	_applyWallFun = false;
+	_applyWallFun_LJ_9_3 = false;
+	_applyWallFun_LJ_10_4 = false;
 	_mirror = NULL;
 	_applyMirror = false;
 

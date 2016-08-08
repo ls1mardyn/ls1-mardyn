@@ -462,7 +462,8 @@ private:
 	double _alignmentCorrection;
 	
 	//! applying a field representing the wall
-	bool _applyWallFun;
+	bool _applyWallFun_LJ_9_3;
+	bool _applyWallFun_LJ_10_4;
 	bool _applyMirror;
 	
 	Wall* _wall;
