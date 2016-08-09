@@ -161,6 +161,10 @@ public:
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMin(int dimension) const;
 
+	//! @brief checks, whether given coordinates are within the bounding box
+	//! @param r the coordinates to check
+	//! @return true if coordinates within bounding box, false otherwise
+	bool isInBoundingBox(double r[3]) const;
 
 	virtual int getHaloWidthNumCells();
 	//! @brief returns one coordinate of the higher corner of the bounding box

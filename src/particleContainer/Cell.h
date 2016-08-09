@@ -27,9 +27,9 @@ protected:
 	bool haloCell;
 	//! true when the cell is in the boundary region
 	bool boundaryCell;
-	//! true when the cell is in the inner region
+	//! true when the cell is in the inner region. Innermost cells are always also innerCells.
 	bool innerCell;
-	//! true when the cell is in the innermost region (does not have neighbors, that are boundary cells
+	//! true when the cell is in the innermost region (does not have neighbors, that are boundary cells)
 	bool innerMostCell;
 };
 

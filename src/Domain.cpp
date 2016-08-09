@@ -776,7 +776,7 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 	}
 	this->_globalAccumulatedDatasets++;
 #ifndef NDEBUG
-	cout << "Rank " << this->_localRank << " counted " << lNin << " molecules inside and " << lNout << " outside.\n";
+	//cout << "Rank " << this->_localRank << " counted " << lNin << " molecules inside and " << lNout << " outside.\n";
 	// cout << "Universal centre situated at (" << this->_universalCentre[0] << " / " << this->_universalCentre[1] << " / " << this->_universalCentre[2] << ").\n";
 #endif
 }

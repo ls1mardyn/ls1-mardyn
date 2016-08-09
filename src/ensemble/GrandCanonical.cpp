@@ -91,96 +91,88 @@ void ChemicalPotential::setSystem(double x, double y, double z, double m)
 // note that *C must not contain the halo
 // but when the decisions are evaluated, the halo must be taken into account!
 //
-void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm)
-{
-	 this->remainingDeletions.clear();
+void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm) {
+	this->remainingDeletions.clear();
 #ifndef NDEBUG
-	 for(int d=0; d<3; d++) 
-	   assert(this->remainingInsertions[d].empty());
+	for (int d = 0; d < 3; d++)
+		assert(this->remainingInsertions[d].empty());
 #endif
-	 this->remainingDecisions.clear();
+	this->remainingDecisions.clear();
 
-	 // get information on the system decomposition
-	 //
-	 unsigned localN;
-	 if( (maxredco[0] < 0.0) || (maxredco[1] < 0.0) ||
-	     (maxredco[2] < 0.0) || (minredco[0] > 1.0) ||
-	     (minredco[1] > 1.0) || (minredco[2] > 1.0)    ) localN = 0;
-	 else if( (minredco[0] < 0.0) || (minredco[1] < 0.0) ||
-	          (minredco[2] < 0.0) || (maxredco[0] > 1.0) ||
-	    (maxredco[1] > 1.0) || (maxredco[2] > 1.0)    )
-			localN = cell->countParticles(
-				 this->componentid, this->control_bottom, this->control_top
-			);
-	 else localN = cell->countParticles(this->componentid);
-	 float minrnd = 0.0;
-	 float maxrnd = 1.0;
-	 this->globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
+	// get information on the system decomposition
+	//
+	unsigned localN;
+	if ((maxredco[0] < 0.0) || (maxredco[1] < 0.0) || (maxredco[2] < 0.0) || (minredco[0] > 1.0) || (minredco[1] > 1.0)
+			|| (minredco[2] > 1.0))
+		localN = 0;
+	else if ((minredco[0] < 0.0) || (minredco[1] < 0.0) || (minredco[2] < 0.0) || (maxredco[0] > 1.0)
+			|| (maxredco[1] > 1.0) || (maxredco[2] > 1.0))
+		localN = cell->countParticles(this->componentid, this->control_bottom, this->control_top);
+	else
+		localN = cell->countParticles(this->componentid);
+	float minrnd = 0.0;
+	float maxrnd = 1.0;
+	this->globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
 #ifndef NDEBUG
-	 global_log->debug() << " believes N(" << componentid << ")=" << globalN << ", rho=" << globalN/globalV
-	         << ", the decisive density quotient equals " << (float)globalN/globalReducedVolume << "\n";
+	global_log->debug() << " believes N(" << componentid << ")=" << globalN << ", rho=" << globalN / globalV
+			<< ", the decisive density quotient equals " << (float) globalN / globalReducedVolume << "\n";
 #endif
 
-   // construct deletions (disabled for Widom test particle method)
-   //
-   float sel, dec;
-   unsigned localIndex;
-   if(!this->widom)
-   {
-      for(unsigned i=0; i < this->instances; i++)
-      {
-         sel = this->rnd.rnd();
-         dec = this->rnd.rnd();
+	// construct deletions (disabled for Widom test particle method)
+	//
+	float sel, dec;
+	unsigned localIndex;
+	if (!this->widom) {
+		for (unsigned i = 0; i < this->instances; i++) {
+			sel = this->rnd.rnd();
+			dec = this->rnd.rnd();
 #ifndef NDEBUG
-         // if(!ownrank) cout << "global index " << sel << " chosen for deletion.\n";
+			// if(!ownrank) cout << "global index " << sel << " chosen for deletion.\n";
 #endif
-         if((sel >= minrnd) && (sel < maxrnd))
-         {
-            localIndex = (unsigned)floor(localN*(sel-minrnd)/(maxrnd-minrnd));
+			if ((sel >= minrnd) && (sel < maxrnd)) {
+				localIndex = (unsigned) floor(localN * (sel - minrnd) / (maxrnd - minrnd));
 #ifndef NDEBUG
-            // cout << "rank " << ownrank << " will try to delete index " << localIndex << ".\n";  // \\ //
+				// cout << "rank " << ownrank << " will try to delete index " << localIndex << ".\n";  // \\ //
 #endif
-            this->remainingDeletions.push_back(localIndex);
-            this->remainingDecisions.push_back(dec);
-         }
-      }
-   }
-
-	 int insertions = this->instances;
-#ifndef NDEBUG
-	 global_log->debug() << "Number of insertions: " << insertions << ".\n";
-#endif
-
-	 // construct insertions
-	 //
-	 float redc[3];
-	 double tc[3];
-	 for(int i=0; i < insertions; i++)
-	 {
-	    for(int d=0; d < 3; d++) redc[d] = this->rnd.rnd();
-	    dec = this->rnd.rnd();
-	    if(    (redc[0] >= minredco[0]) && (redc[1] >= minredco[1]) && (redc[2] >= minredco[2]) 
-	        && (redc[0] <  maxredco[0]) && (redc[1] <  maxredco[1]) && (redc[2] <  maxredco[2]) )
-	    {
-	 for(int d=0; d < 3; d++)
-	 {
-	    tc[d] = control_bottom[d]
-	       + redc[d]*(control_top[d] - control_bottom[d]);
-	 }
-#ifndef NDEBUG
-		// cout << "rank " << ownrank << " will try to insert ID "
-		//      << nextid << " (" << tc[0] << "/" << tc[1]
-		//      << "/" << tc[2] << ").\n";  // \\ //
-#endif
-				 for(int d=0; d < 3; d++)
-	 {
-	    this->remainingInsertions[d].push_back(tc[d]);
-	 }
-				 this->remainingDecisions.push_back(dec);
-				 this->remainingInsertionIDs.push_back(this->nextid);
+				this->remainingDeletions.push_back(localIndex);
+				this->remainingDecisions.push_back(dec);
 			}
-			this->nextid += id_increment;
-	 }
+		}
+	}
+
+	int insertions = this->instances;
+#ifndef NDEBUG
+	global_log->debug() << "Number of insertions: " << insertions << ".\n";
+#endif
+
+	// construct insertions
+	//
+	float redc[3];
+	double tc[3];
+	for (int i = 0; i < insertions; i++) {
+		for (int d = 0; d < 3; d++)
+			redc[d] = this->rnd.rnd();
+		dec = this->rnd.rnd();
+		if ((redc[0] >= minredco[0]) && (redc[1] >= minredco[1]) && (redc[2] >= minredco[2]) && (redc[0] < maxredco[0])
+				&& (redc[1] < maxredco[1]) && (redc[2] < maxredco[2])) {
+			for (int d = 0; d < 3; d++) {
+				tc[d] = control_bottom[d] + redc[d] * (control_top[d] - control_bottom[d]);
+			}
+#ifndef NDEBUG
+			// cout << "rank " << ownrank << " will try to insert ID "
+			//      << nextid << " (" << tc[0] << "/" << tc[1]
+			//      << "/" << tc[2] << ").\n";  // \\ //
+#endif
+			if (cell->isInBoundingBox(tc)) {  // necessary because of rounding errors
+				for (int d = 0; d < 3; d++) {
+					this->remainingInsertions[d].push_back(tc[d]);
+				}
+				this->remainingDecisions.push_back(dec);
+				this->remainingInsertionIDs.push_back(this->nextid);
+			}
+		}
+		this->nextid += id_increment;
+	}
 }
 
 bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco, double* maxco)
