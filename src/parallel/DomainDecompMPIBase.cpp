@@ -8,6 +8,7 @@
 #include "DomainDecompMPIBase.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
+#include "Simulation.h"
 
 using Log::global_log;
 
@@ -222,8 +223,7 @@ void DomainDecompMPIBase::finalizeExchangeMoleculesMPI1D(
 			for (int i = 0; i < numNeighbours; ++i) {
 				_neighbours[d][i].deadlockDiagnosticSendRecv();
 			}
-			MPI_Abort(_comm, 1);
-			exit(1);
+			global_simulation->exit(1);
 		}
 
 	} // while not allDone

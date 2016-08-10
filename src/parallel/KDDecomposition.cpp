@@ -459,7 +459,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				recvPartners[i].deadlockDiagnosticRecv();
 			}
 			global_log->warning() << "aborting" << std::endl;
-			break;
+			global_simulation->exit(1);
 		}
 
 	} // while not allDone
