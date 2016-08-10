@@ -146,7 +146,6 @@ void MDGenerator::generateOutput(const std::string& directory) {
 #ifndef MARDYN
 	global_simulation = new Simulation();
 	global_simulation->setcutoffRadius(3.0);
-	global_simulation->setTersoffCutoff(3.0);
 #endif
 
 	double bBoxMin[3] = { 0,0,0};
