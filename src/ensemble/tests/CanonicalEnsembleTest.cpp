@@ -31,10 +31,10 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 
 	// the halo is cleared for freshly initialized particle containers.
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-12x12x12.inp", 1.0);
-	vector<Component>* components= global_simulation->getEnsemble()->components();
+	vector<Component>* components= global_simulation->getEnsemble()->getComponents();
 	CanonicalEnsemble ensemble(container, components);
 
-	Component* component = ensemble.component(0);
+	Component* component = ensemble.getComponent(0);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
