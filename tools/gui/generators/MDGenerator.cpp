@@ -114,7 +114,7 @@ void MDGenerator::generatePreview() {
 
 	Molecule* molecule = container.begin();
 	while (molecule != container.end()) {
-		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, domain.getComponents().size()-1));
+		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, global_simulation->getEnsemble()->getComponents()->size()-1));
 		molecule = container.next();
 	}
 #endif

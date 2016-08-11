@@ -84,7 +84,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 	CellDataSoA & soa = c.getCellDataSoA();
 	soa.resize(numMolecules,nLJCenters,nCharges,nDipoles,nQuadrupoles);
 
-	ComponentList components = *(_simulation.getEnsemble()->components());
+	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 
 	double* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
 	double* const soa_charges_m_r_y = soa.charges_m_r_yBegin();

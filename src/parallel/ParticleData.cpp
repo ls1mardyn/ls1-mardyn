@@ -54,7 +54,7 @@ void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule
 }
 
 void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule) {
-	Component* component = _simulation.getEnsemble()->component(particleStruct.cid);
+	Component* component = _simulation.getEnsemble()->getComponent(particleStruct.cid);
 	*molecule = new Molecule(particleStruct.id, component,
 								particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
 								particleStruct.v[0], particleStruct.v[1], particleStruct.v[2],

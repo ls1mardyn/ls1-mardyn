@@ -332,7 +332,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					}
 					else {
 						int componentId = 0;
-						componentId = getEnsemble()->component(componentName)->ID();
+						componentId = getEnsemble()->getComponent(componentName)->ID();
 						int thermostatID = _domain->getThermostat(componentId);
 						_domain->setTargetTemperature(thermostatID, temperature);
 						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
@@ -583,11 +583,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	std::list<ChemicalPotential>::iterator cpit;
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
-		double tmp_molecularMass = global_simulation->getEnsemble()->component(cpit->getComponentID())->m();
+		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
 		cpit->setSystem(_domain->getGlobalLength(0),
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
-		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
+		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
@@ -625,7 +625,7 @@ void Simulation::prepare_start() {
 	bool dipole_present = false;
 	bool quadrupole_present = false;
 
-	const vector<Component> components = *(global_simulation->getEnsemble()->components());
+	const vector<Component> components = *(global_simulation->getEnsemble()->getComponents());
 	for (size_t i = 0; i < components.size(); i++) {
 		lj_present |= (components[i].numLJcenters() != 0);
 		charge_present |= (components[i].numCharges() != 0);
@@ -869,7 +869,7 @@ void Simulation::simulate() {
 			global_log->info() << "Activating the RDF sampling" << endl;
 			this->_rdf->tickRDF();
 			this->_particlePairsHandler->setRDF(_rdf);
-			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->components()));
+			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
@@ -1071,7 +1071,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				_velocityScalingThermostat.enableComponentwise();
-				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->components()->size(); cid++) {
+				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->getComponents()->size(); cid++) {
 					int thermostatId = _domain->getThermostat(cid);
 					_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
 					_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));

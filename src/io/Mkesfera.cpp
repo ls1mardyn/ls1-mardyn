@@ -189,7 +189,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 
 	double v_avg = sqrt(3.0 * T);
 
-	Component* component = _simulation.getEnsemble()->component(0);
+	Component* component = _simulation.getEnsemble()->getComponent(0);
 	unsigned ID = 1+ startID;
 	unsigned int numberOfMolecules = 0;
 	for(idx[0]= 0; idx[0] < fl_units; idx[0]++) {

@@ -100,7 +100,7 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 	domain->setGlobalLength(2, _simBoxLength);
 
 	for (unsigned int i = 0; i < _components.size(); i++) {
-		domain->addComponent(_components[i]);
+		global_simulation->getEnsemble()->addComponent(_components[i]);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;

@@ -77,7 +77,7 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*time
 		if (_configuration.performPrincipalAxisTransformation()) {
 			principalAxisTransform(component);
 		}
-		domain->addComponent(component);
+		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 }

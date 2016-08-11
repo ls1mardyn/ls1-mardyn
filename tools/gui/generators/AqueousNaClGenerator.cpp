@@ -114,7 +114,7 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		Component component = _components[i];
 		principalAxisTransform(component);
-		domain->addComponent(component);
+		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator done." << endl;

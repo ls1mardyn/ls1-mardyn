@@ -24,32 +24,51 @@ private:
 	
 public:
 
-	CanonicalEnsemble() : _N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0)
-		{}
+	CanonicalEnsemble() :
+			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0), _particles(nullptr) {
+	}
 
-	CanonicalEnsemble( ParticleContainer *particles, std::vector<Component> *components) :
-		_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0),
-		_particles(particles)  {
-			_components = *components;
-		}
-	~CanonicalEnsemble(){}
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	CanonicalEnsemble(ParticleContainer *particles, std::vector<Component> *components) :
+			_N(0), _V(0), _T(0), _mu(0), _p(0), _E(0), _E_trans(0), _E_rot(0), _particles(particles) {
+		_components = *components;
+	}
 
-	unsigned long N() { return _N; }
-	double V() { return _V; }
-	double T() { return _T; }
+	~CanonicalEnsemble() {
+	}
 
-	double mu(){ return _mu;}
-	double p() { return _p; }
-	double E() { return _E; }
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
-	void updateGlobalVariable( GlobalVariable variable );
+	unsigned long N() override {
+		return _N;
+	}
+	double V() override {
+		return _V;
+	}
+	double T() override {
+		return _T;
+	}
+
+	double mu() override {
+		return _mu;
+	}
+	double p() override {
+		return _p;
+	}
+	double E() override {
+		return _E;
+	}
+
+	void updateGlobalVariable( GlobalVariable variable ) override;
 
 
-	int numComponents() { return _components.size(); }
-	std::vector<Component>& components() { return _components; }
+
 
 private:
+
+	int numComponents() {
+		return _components.size();
+	}
+
 	unsigned long _N;
 	double _V;
 	double _T;

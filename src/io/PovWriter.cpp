@@ -91,7 +91,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "//*PMRawBegin" << endl;
 		ostrm << "background {rgb <1,1,1>}" << endl;
 		ostrm << "//*PMRawEnd" << endl;
-		vector<Component>* dcomponents = _simulation.getEnsemble()->components();
+		vector<Component>* dcomponents = _simulation.getEnsemble()->getComponents();
 		for (unsigned int i = 0; i < dcomponents->size(); ++i) {
 			ostringstream osstrm;
 			osstrm.clear();

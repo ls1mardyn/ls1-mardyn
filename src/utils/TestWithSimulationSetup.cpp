@@ -28,12 +28,12 @@ utils::TestWithSimulationSetup::TestWithSimulationSetup()
 
 utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 	if (_domain != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
+		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
 		delete _domain;
 	}
 
 	if (_domainDecomposition != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
+		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
 		delete _domainDecomposition;
 	}
 }

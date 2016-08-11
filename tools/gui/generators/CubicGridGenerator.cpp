@@ -127,7 +127,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	domain->setGlobalLength(1, _simBoxLength);
 	domain->setGlobalLength(2, _simBoxLength);
 
-	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->components());
+	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		Component component = _components[i];
 		if (_configuration.performPrincipalAxisTransformation()) {
