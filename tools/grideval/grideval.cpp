@@ -36,9 +36,9 @@ int main(int argc, char** argv)
    unsigned digits_specified = false;
    unsigned digits = 0;
    
-   unsigned num_threshold = 11;
-   unsigned min_threshold = 3;
-   unsigned max_threshold = 3000;
+   // unsigned num_threshold = 11;
+   // unsigned min_threshold = 3;
+   unsigned max_threshold = 2000;
    
    for(int i=2; i < argc; i++)
    {
@@ -92,12 +92,7 @@ int main(int argc, char** argv)
          {
             i++;
             max_threshold = atoi(argv[i]);
-            if(max_threshold < 23)
-            {
-               cout << "\nMaximal threshold too small.\n\n";
-               cout << argv[0] << usage;
-               exit(10);
-            }
+            if(max_threshold < 160) max_threshold = 160;
             break;
          }
          else if(argv[i][j] == 'r')
@@ -138,6 +133,7 @@ int main(int argc, char** argv)
    
    cout << "# frame\t\tN_cav\t";
    map<unsigned, unsigned> thresholds;
+   /*
    double thrfactor = pow((double)max_threshold/min_threshold, 1.0/(num_threshold - 1.0));
    double tthreshold = min_threshold;
    for(unsigned i = 0; i < num_threshold; i++)
@@ -146,6 +142,23 @@ int main(int argc, char** argv)
       thresholds[(unsigned)round(tthreshold)] = 0;
       tthreshold *= thrfactor;
    }
+   */
+   thresholds[round(0.004 * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.004 * (double)max_threshold) << ")";
+   thresholds[round(0.01  * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.01  * (double)max_threshold) << ")";
+   thresholds[round(0.02  * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.02  * (double)max_threshold) << ")";
+   thresholds[round(0.04  * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.04  * (double)max_threshold) << ")";
+   thresholds[round(0.1   * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.1   * (double)max_threshold) << ")";
+   thresholds[round(0.2   * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.2   * (double)max_threshold) << ")";
+   thresholds[round(0.4   * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.4   * (double)max_threshold) << ")";
+   thresholds[max_threshold] = 0;
+   cout << "\t(N_cav >= " << max_threshold << ")";
    cout << "\t\ti_cav(max)\n# \n";
    
    char lnin[256];
@@ -270,6 +283,7 @@ int main(int argc, char** argv)
          cout << "\t" << threshit->second;
       }
       cout << "\t\t" << maxsize << "\n";
+      cout.flush();
       
       if(!integral)
       {
