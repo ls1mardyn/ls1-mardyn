@@ -154,18 +154,6 @@ double Domain::getAverageGlobalVirial() const { return _globalVirial/_globalNumM
 double Domain::getAverageGlobalUpot() const { return getGlobalUpot()/_globalNumMolecules; }
 double Domain::getGlobalUpot() const { return _globalUpot; }
 
-/*vector<Component>& Domain::getComponents(){
-	return _components;
-}
-
-void Domain::addComponent(Component component){
-	_components.push_back(component);
-}*/
-
-
-
-
-
 Comp2Param& Domain::getComp2Params(){
 	return _comp2params;
 }
@@ -592,7 +580,7 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 	double UpotCorrLJ=0.;
 	double VirialCorrLJ=0.;
 	double MySelbstTerm=0.;
-	vector<Component>* components = _simulation.getEnsemble()->components();
+	vector<Component>* components = _simulation.getEnsemble()->getComponents();
 	unsigned int numcomp=components->size();
 	for(unsigned int i=0;i<numcomp;++i) {
 		Component& ci=(*components)[i];

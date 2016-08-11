@@ -789,7 +789,7 @@ void Simulation::simulate() {
     _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
-	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
+	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
 			<< ensemble.N() << endl;
