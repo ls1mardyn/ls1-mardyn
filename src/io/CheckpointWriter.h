@@ -43,6 +43,7 @@ private:
 	unsigned long _writeFrequency;
 	bool	_incremental;
 	bool	_appendTimestamp;
+	double timestepLength;
 };
 
 #endif /*CHECKPOINTWRITER_H_*/

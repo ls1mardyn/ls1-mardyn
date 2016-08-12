@@ -66,7 +66,7 @@ public:
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, double currentTime);
+			DomainDecompBase* domainDecomp, double currentTime, double timestepLength);
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -586,6 +586,7 @@ private:
 
 	//! Contains the time t in reduced units
 	double currentTime;  //edited by Michaela Heier
+	double timestepLength;
 
 
 	// TODO: do the components belong here, or in class EnsembleBase?

@@ -346,6 +346,8 @@ private:
 
 	double _simulationTime; /**< Simulation time t in reduced units */
 
+	double timestepLength;
+
 
 	/** maximum id of particles */
 	/** @todo remove this from the simulation class */

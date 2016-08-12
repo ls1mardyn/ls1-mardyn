@@ -75,7 +75,7 @@ void CheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDeco
 		filenamestream << ".restart.dat";
 
 		string filename = filenamestream.str();
-		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime());
+		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime(), timestepLength);
 	}
 }
 

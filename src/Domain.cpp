@@ -474,7 +474,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 void Domain::writeCheckpoint( string filename, 
 		ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, double currentTime)
+		DomainDecompBase* domainDecomp, double currentTime, double timesteplength)
 {
 	domainDecomp->assertDisjunctivity(particleContainer);
 	/* Rank 0 writes file header */
@@ -482,7 +482,7 @@ void Domain::writeCheckpoint( string filename,
 		ofstream checkpointfilestream(filename.c_str());
 		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 		checkpointfilestream << "\n";
-		checkpointfilestream << "currentTime\t"  << currentTime << "\n"; //edited by Michaela Heier
+		checkpointfilestream << "currentTime\t"  << currentTime+timesteplength << "\n"; //edited by Michaela Heier
 		checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 		if(this->_componentwiseThermostat)
 		{
