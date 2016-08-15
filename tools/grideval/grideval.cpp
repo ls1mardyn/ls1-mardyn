@@ -92,7 +92,7 @@ int main(int argc, char** argv)
          {
             i++;
             max_threshold = atoi(argv[i]);
-            if(max_threshold < 160) max_threshold = 160;
+            if(max_threshold < 380) max_threshold = 380;
             break;
          }
          else if(argv[i][j] == 'r')
@@ -143,6 +143,8 @@ int main(int argc, char** argv)
       tthreshold *= thrfactor;
    }
    */
+   thresholds[round(0.002 * (double)max_threshold)] = 0;
+   cout << "\t(N_cav >= " << round(0.002 * (double)max_threshold) << ")";
    thresholds[round(0.004 * (double)max_threshold)] = 0;
    cout << "\t(N_cav >= " << round(0.004 * (double)max_threshold) << ")";
    thresholds[round(0.01  * (double)max_threshold)] = 0;
