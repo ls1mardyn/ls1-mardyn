@@ -7,7 +7,6 @@
 #ifndef VECTORIZEDCELLPROCESSOR_H_
 #define VECTORIZEDCELLPROCESSOR_H_
 
-
 #include "CellProcessor.h"
 #include "utils/AlignedArray.h"
 #include <iostream>
@@ -16,6 +15,9 @@
 #include "vectorization/SIMD_TYPES.h"
 #include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 
+#ifdef ENABLE_OPENMP
+#include <omp.h>
+#endif
 
 class Component;
 class Domain;
@@ -60,7 +62,7 @@ public:
 
 	// provisionally, the code from the legacy cell processor is used here
 	//
-        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
+	int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
 
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
@@ -144,36 +146,63 @@ private:
 	 */
 	double _myRF;
 
-	/**
-	 * \brief array, that stores the dist_lookup.
-	 * For all vectorization methods, that utilize masking, this stores masks.
-	 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
-	 */
-	AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
+	struct VLJCPThreadData {
+	public:
+		VLJCPThreadData(): _ljc_dist_lookup(nullptr), _charges_dist_lookup(nullptr), _dipoles_dist_lookup(nullptr), _quadrupoles_dist_lookup(nullptr){
+			_upot6ljV.resize(_numVectorElements);
+			_upotXpolesV.resize(_numVectorElements);
+			_virialV.resize(_numVectorElements);
+			_myRFV.resize(_numVectorElements);
 
-	/**
-	 * \brief pointer to the starting point of the dist_lookup of the lennard jones particles.
-	 */
-	vcp_lookupOrMask_single* _ljc_dist_lookup;
+			for (size_t j = 0; j < _numVectorElements; ++j) {
+				_upot6ljV[j] = 0.0;
+				_upotXpolesV[j] = 0.0;
+				_virialV[j] = 0.0;
+				_myRFV[j] = 0.0;
+			}
+		}
 
-	/**
-	 * \brief pointer to the starting point of the dist_lookup of the charge particles.
-	 */
-	vcp_lookupOrMask_single* _charges_dist_lookup;
+		/**
+		 * \brief array, that stores the dist_lookup.
+		 * For all vectorization methods, that utilize masking, this stores masks.
+		 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
+		 */
+		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
-	/**
-	 * \brief pointer to the starting point of the dist_lookup of the dipole particles.
-	 */
-	vcp_lookupOrMask_single* _dipoles_dist_lookup;
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the lennard jones particles.
+		 */
+		vcp_lookupOrMask_single* _ljc_dist_lookup;
 
-	/**
-	 * \brief pointer to the starting point of the dist_lookup of the quadrupole particles.
-	 */
-	vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the charge particles.
+		 */
+		vcp_lookupOrMask_single* _charges_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the dipole particles.
+		 */
+		vcp_lookupOrMask_single* _dipoles_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the quadrupole particles.
+		 */
+		vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
+
+		AlignedArray<double> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
+	};
+
+	#ifdef ENABLE_OPENMP
+		std :: vector<VLJCPThreadData * > _threadData;
+	#else
+		VLJCPThreadData* _threadData;
+	#endif
+
+	static const size_t _numVectorElements = VCP_VEC_SIZE;
+	size_t _numThreads;
 
 	template<bool calculateMacroscopic>
-	inline
-	void _loopBodyLJ(
+	inline void _loopBodyLJ(
 			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
 			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
 			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,

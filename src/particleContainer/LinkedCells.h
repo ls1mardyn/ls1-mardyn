@@ -7,6 +7,10 @@
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleCell.h"
 
+#ifdef ENABLE_OPENMP
+#include <omp.h>
+#endif
+
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
 //!
@@ -128,6 +132,10 @@ public:
 //	void traversePairs(ParticlePairsHandler* particlePairsHandler);
 
 	void traverseCells(CellProcessor& cellProcessor);
+
+	void traverseCellsOrig(CellProcessor& cellProcessor);
+
+	void traverseCellsC08(CellProcessor& cellProcessor);
 
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
 
@@ -284,7 +292,8 @@ private:
 	//! of cells between the two cells (this is received by substracting one of the difference).
 	void calculateNeighbourIndices();
 
-	
+	//! @brief addition for compact SimpleMD-style traversal
+	void calculateCellPairOffsets();
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -295,6 +304,9 @@ private:
 	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
 	long int cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const;
+
+	//! @brief given the index in the cell vector, return the index of the cell.
+	void threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const;
 
 	/**
 	 * @brief delete particles which lie outside a cuboid region
@@ -343,6 +355,12 @@ private:
 	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
 	long _maxNeighbourOffset;
 	long _minNeighbourOffset;
+
+	// addition for compact SimpleMD-style traversal
+	std::vector<std::pair<unsigned long, unsigned long> > _cellPairOffsets;
+
+	unsigned int _numActiveColours;
+	std::vector<std::vector<long int> > _cellIndicesPerColour;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)

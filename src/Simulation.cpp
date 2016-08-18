@@ -810,6 +810,10 @@ void Simulation::simulate() {
 	Timer computationTimer; /* timer for computation */
 	Timer perStepIoTimer; /* timer for io in simulation loop */
 	Timer ioTimer; /* timer for final io */
+	// temporary addition until merging OpenMP is complete
+	#ifdef ENABLE_OPENMP
+		Timer forceCalculationTimer; /* timer for final io */
+	#endif
 
 	loopTimer.set_sync(true);
 #if WITH_PAPI
@@ -937,7 +941,15 @@ void Simulation::simulate() {
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer.start();
+			// temporary addition until merging OpenMP is complete
+			#ifdef ENABLE_OPENMP
+				forceCalculationTimer.start();
+			#endif
 			_moleculeContainer->traverseCells(*_cellProcessor);
+			// temporary addition until merging OpenMP is complete
+			#ifdef ENABLE_OPENMP
+				forceCalculationTimer.stop();
+			#endif
 			computationTimer.stop();
 			_loopCompTime += computationTimer.get_etime() - startEtime;
 			_loopCompTimeSteps ++;
@@ -1222,6 +1234,10 @@ void Simulation::simulate() {
 	ioTimer.stop();
 
 	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+	// temporary addition until merging OpenMP is complete
+	#ifdef ENABLE_OPENMP
+		global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
+	#endif
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;

@@ -21,8 +21,7 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0),
-		_ljc_dist_lookup(nullptr), _charges_dist_lookup(nullptr), _dipoles_dist_lookup(nullptr), _quadrupoles_dist_lookup(nullptr){
+		_eps_sig(), _shift6(), _upot6lj(0.0), _upotXpoles(0.0), _virial(0.0), _myRF(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedCellProcessor: using no intrinsics." << std::endl;
@@ -75,21 +74,90 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 			}
 		}
 	}
+
+	#ifdef ENABLE_OPENMP
+		// initialize thread data
+		_numThreads = omp_get_max_threads();
+		global_log->info() << "VectorizedCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+		_threadData.resize(_numThreads);
+
+		#pragma omp parallel
+		{
+			VLJCPThreadData * myown = new VLJCPThreadData();
+			const int myid = omp_get_thread_num();
+			_threadData[myid] = myown;
+		}
+	#else
+		_numThreads = 1;
+		_threadData = new VLJCPThreadData();
+	#endif
 }
 
 VectorizedCellProcessor :: ~VectorizedCellProcessor () {
+	#ifdef ENABLE_OPENMP
+		#pragma omp parallel
+		{
+			const int myid = omp_get_thread_num();
+			delete _threadData[myid];
+		}
+	#endif
 }
 
 
 void VectorizedCellProcessor::initTraversal() {
-	_virial = 0.0;
-	_upot6lj = 0.0;
-	_upotXpoles = 0.0;
-	_myRF = 0.0;
+	#ifdef ENABLE_OPENMP
+		#pragma omp master
+		{
+			_virial = 0.0;
+			_upot6lj = 0.0;
+			_upotXpoles = 0.0;
+			_myRF = 0.0;
+		}
+	#else
+		_virial = 0.0;
+		_upot6lj = 0.0;
+		_upotXpoles = 0.0;
+		_myRF = 0.0;
+	#endif
 }
 
 
 void VectorizedCellProcessor::endTraversal() {
+	double glob_upot6lj = 0.0;
+	double glob_upotXpoles = 0.0;
+	double glob_virial = 0.0;
+	double glob_myRF = 0.0;
+
+	#ifdef ENABLE_OPENMP
+		#pragma omp parallel reduction(+:glob_upot6lj, glob_upotXpoles, glob_virial, glob_myRF)
+		{
+			const int tid = omp_get_thread_num();
+
+			// reduce vectors and clear local variable
+			double thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
+
+			load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
+			load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
+			load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
+			load_hSum_Store_Clear(&thread_myRF, _threadData[tid]->_myRFV);
+
+			// add to global sum
+			glob_upot6lj += thread_upot;
+			glob_upotXpoles += thread_upotXpoles;
+			glob_virial += thread_virial;
+			glob_myRF += thread_myRF;
+		}
+	#else
+		load_hSum_Store_Clear(&glob_upot6lj, _threadData->_upot6ljV);
+		load_hSum_Store_Clear(&glob_upotXpoles, _threadData->_upotXpolesV);
+		load_hSum_Store_Clear(&glob_virial, _threadData->_virialV);
+		load_hSum_Store_Clear(&glob_myRF, _threadData->_myRFV);
+	#endif
+
+	_upot6lj = glob_upot6lj;
+	_upotXpoles = glob_upotXpoles;
+	_virial = glob_virial;
+	_myRF = glob_myRF;
 	_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	_domain.setLocalUpot(_upot6lj / 6.0 + _upotXpoles + _myRF);
 }
@@ -728,11 +796,18 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	#ifdef ENABLE_OPENMP
+		const int tid = omp_get_thread_num();
+		VLJCPThreadData &my_threadData = *_threadData[tid];
+	#else
+		VLJCPThreadData &my_threadData = *_threadData;
+	#endif
+
 	// initialize dist lookups
-	if(_centers_dist_lookup.get_size() < soa2._centers_size){
-		soa2.resizeCentersZero(_centers_dist_lookup, soa2._centers_size);
+	if(my_threadData._centers_dist_lookup.get_size() < soa2._centers_size){
+		soa2.resizeCentersZero(my_threadData._centers_dist_lookup, soa2._centers_size);
 	}
-	soa2.initDistLookupPointers(_centers_dist_lookup, _ljc_dist_lookup, _charges_dist_lookup, _dipoles_dist_lookup, _quadrupoles_dist_lookup);
+	soa2.initDistLookupPointers(my_threadData._centers_dist_lookup, my_threadData._ljc_dist_lookup, my_threadData._charges_dist_lookup, my_threadData._dipoles_dist_lookup, my_threadData._quadrupoles_dist_lookup);
 
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
@@ -766,7 +841,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	      double * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
-	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = _ljc_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
 	// Pointer for charges
 	const double * const soa1_charges_r_x = soa1.charges_r_xBegin();
@@ -795,7 +870,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	      double * const soa2_charges_V_z   = soa2.charges_V_zBegin();
 	const double * const soa2_charges_q = soa2._charges_q;
 
-	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = _charges_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
 	// Pointer for dipoles
 	const double * const soa1_dipoles_r_x = soa1.dipoles_r_xBegin();
@@ -836,7 +911,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	double * const soa2_dipoles_M_y = soa2._dipoles_M.yBegin();
 	double * const soa2_dipoles_M_z = soa2._dipoles_M.zBegin();
 
-	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = _dipoles_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = my_threadData._dipoles_dist_lookup;
 
 	// Pointer for quadrupoles
 	const double * const soa1_quadrupoles_r_x = soa1.quadrupoles_r_xBegin();
@@ -877,7 +952,7 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 	      double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M.yBegin();
 	      double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M.zBegin();
 
-	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = _quadrupoles_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = my_threadData._quadrupoles_dist_lookup;
 
 
 
@@ -2535,10 +2610,10 @@ void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const 
 		}
 	}
 
-	hSum_Add_Store(&_upot6lj, sum_upot6lj);
-	hSum_Add_Store(&_upotXpoles, sum_upotXpoles);
-	hSum_Add_Store(&_virial, sum_virial);
-	hSum_Add_Store(&_myRF, vcp_simd_sub(zero, sum_myRF));
+	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
+	hSum_Add_Store(my_threadData._upotXpolesV, sum_upotXpoles);
+	hSum_Add_Store(my_threadData._virialV, sum_virial);
+	hSum_Add_Store(my_threadData._myRFV, vcp_simd_sub(zero, sum_myRF));
 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
