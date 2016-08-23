@@ -497,6 +497,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "collectThermostatDirectedVelocity") { /* suboption of the thermostat replace with direct thermostat */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} 
+
+		//makes a 2D output of the kartesian coordinate system
+		else if (token == "Kartesian2DOutput"){
+			_kartesian2DProfile = true;
+			global_log->info()<<"Wirting the new Kartesian2DOutput\n";
+		}
 			
 		else if (token == "thermostat"){
 			inputfilestream >> _thermostatType;

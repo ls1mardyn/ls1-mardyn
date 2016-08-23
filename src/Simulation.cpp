@@ -1196,7 +1196,7 @@ void Simulation::simulate() {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
-			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, timestepLength);
+			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
 			_forced_checkpoint_time = -1; /* disable for further timesteps */
 		}
 		perStepIoTimer.stop();
@@ -1211,7 +1211,7 @@ void Simulation::simulate() {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.xdr");
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
-        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, timestepLength);
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
     }
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
@@ -1266,11 +1266,17 @@ void Simulation::output(unsigned long simstep) {
 			osstrm << right << simstep;
 			//edited by Michaela Heier 
 			if(this->_domain->isCylindrical()){
+				global_log->info()<<"Writing CylindricalPorfile\n";
 				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 			}
+			else if(_kartesian2DProfile){
+				global_log->info()<<"Writing Kartesian2DPorfile\n";
+				this->_domain->outputKartesian2DProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+			}
 			else{
-			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
+				global_log->info()<<"Writing OutputPorfile\n";
+				this->_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
 			}
 			osstrm.str("");
 			osstrm.clear();
@@ -1407,6 +1413,7 @@ void Simulation::initialize() {
 	_applyWallFun_LJ_10_4 = false;
 	_mirror = NULL;
 	_applyMirror = false;
+	_kartesian2DProfile = false;
 
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;

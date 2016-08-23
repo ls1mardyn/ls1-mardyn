@@ -346,8 +346,6 @@ private:
 
 	double _simulationTime; /**< Simulation time t in reduced units */
 
-	double timestepLength;
-
 
 	/** maximum id of particles */
 	/** @todo remove this from the simulation class */
@@ -476,6 +474,8 @@ private:
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
 	
+	bool _kartesian2DProfile;
+
 	//! random number generator
 	Random _rand;
 

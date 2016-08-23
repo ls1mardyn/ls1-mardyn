@@ -66,7 +66,7 @@ public:
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, double currentTime, double timestepLength);
+			DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -333,7 +333,7 @@ public:
 	void collectProfile(DomainDecompBase* domainDecomp, bool virialProfile);
 	void outputProfile(const char* prefix, bool virialProfile);
 	void resetProfile(bool virialProfile);
-
+	void outputKartesian2DProfile(const char* prefix, bool virialProfile);
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods employed for setting up a density profile in cylindrical coordinates
 	//begin
@@ -586,7 +586,6 @@ private:
 
 	//! Contains the time t in reduced units
 	double currentTime;  //edited by Michaela Heier
-	double timestepLength;
 
 
 	// TODO: do the components belong here, or in class EnsembleBase?
