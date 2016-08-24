@@ -77,7 +77,7 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode(siteIter);
 		string componentid;
 		xmlconfig.getNodeValue("componentid", componentid);
-		m.cid = _simulation.getEnsemble()->getComponent(componentid)->ID();
+		m.cid = _simulation.getEnsemble()->component(componentid)->ID();
 		xmlconfig.getNodeValueReduced("coordinate@x", m.r[0]);
 		xmlconfig.getNodeValueReduced("coordinate@y", m.r[1]);
 		xmlconfig.getNodeValueReduced("coordinate@z", m.r[2]);
@@ -106,7 +106,7 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 
 	_simulation.getDomain()->disableComponentwiseThermostat();
 	while(_generator.getMolecule(&m) > 0) {
-		Component* component = ensemble->getComponent(m.cid);
+		Component* component = ensemble->component(m.cid);
 		Molecule molecule(0, component); /* Molecule type as provided by mardyn */
 		double v_abs = sqrt(/*kB=1*/ ensemble->T() / molecule.component()->m());
 		double phi, theta;

@@ -436,7 +436,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning() << "KDDecomposition::migrateParticles: Deadlock warning: Rank " << _rank
+			global_log->warning() << "Deadlock warning: Rank " << _rank
 					<< " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -449,7 +449,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error() << "KDDecomposition::migrateParticles: Deadlock error: Rank " << _rank
+			global_log->warning() << "Deadlock error: Rank " << _rank
 					<< " is waiting for more than " << deadlockTimeOut
 					<< " seconds" << std::endl;
 			for (int i = 0; i < numProcsSend; ++i) {
@@ -458,14 +458,15 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			for (int i = 0; i < numProcsRecv; ++i) {
 				recvPartners[i].deadlockDiagnosticRecv();
 			}
-			global_simulation->exit(458);
+			global_log->warning() << "aborting" << std::endl;
+			break;
 		}
 
 	} // while not allDone
 
-	global_log->set_mpi_output_root(0);
-
 	moleculeContainer->update();
+
+	global_log->set_mpi_output_root(0);
 
 	int isOK = allDone;
 

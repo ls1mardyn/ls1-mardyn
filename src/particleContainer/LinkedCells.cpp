@@ -97,49 +97,6 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 
 	initializeCells();
 	calculateNeighbourIndices();
-	calculateCellPairOffsets();
-
-	// get number of active threads
-	#ifdef ENABLE_OPENMP
-		int num_active_threads = omp_get_max_threads();
-	#else
-		int num_active_threads = 1;
-	#endif
-
-	int strides[3];
-	if(num_active_threads > 1) {
-		strides[0] = 2;
-		strides[1] = 2;
-		strides[2] = 2;
-		_numActiveColours = 8;
-	} else {
-		strides[0] = 1;
-		strides[1] = 1;
-		strides[2] = 1;
-		_numActiveColours = 1;
-	}
-	_cellIndicesPerColour.resize(_numActiveColours);
-
-	// initialize the vector of cells per color
-	// with the index of each cell in the respective color
-	// in a 8-coloring-scheme each cell in a 2x2x2 block has a unique color
-	for (unsigned col = 0; col < _numActiveColours; ++col) {
-		int start_indices[3];
-		threeDIndexOfCellIndex((int)(col), start_indices, strides);
-
-		_cellIndicesPerColour[col].clear();
-
-		// compute indices first
-		for (int z = start_indices[2]; z < _cellsPerDimension[2]-1; z += strides[2]) {
-			for (int y = start_indices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {
-				for (int x = start_indices[0]; x < _cellsPerDimension[0]-1; x += strides[0]) {
-					long int cellIndex = cellIndexOf3DIndex(x,y,z);
-					_cellIndicesPerColour[col].push_back(cellIndex);
-				} // x
-			} // y
-		} // z
-	} // col
-
 	_cellsValid = false;
 }
 
@@ -477,15 +434,6 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		global_simulation->exit(1);
 	}
 
-	#ifdef ENABLE_OPENMP
-		traverseCellsC08(cellProcessor);
-	#else
-		traverseCellsOrig(cellProcessor);
-	#endif
-}
-
-void LinkedCells::traverseCellsOrig(CellProcessor& cellProcessor) {
-	vector<long int>::iterator neighbourOffsetsIter;
 
 #ifndef NDEBUG
 	global_log->debug()
@@ -498,65 +446,12 @@ void LinkedCells::traverseCellsOrig(CellProcessor& cellProcessor) {
 	cellProcessor.initTraversal();
 
 	// loop over all inner cells and calculate forces to forward neighbours
-	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+	for (long int cellIndex = 0; cellIndex < (long int) _cells.size();
+			cellIndex++) {
 		traverseCell(cellIndex, cellProcessor);
 	} // loop over all cells
 
 	cellProcessor.endTraversal();
-}
-
-void LinkedCells::traverseCellsC08(CellProcessor& cellProcessor){
-	#ifdef ENABLE_OPENMP
-		cellProcessor.initTraversal();
-
-		#pragma omp parallel
-		{
-			for (unsigned col = 0; col < _numActiveColours; ++col) {
-				const int numIndicesOfThisColour = _cellIndicesPerColour[col].size();
-
-				#pragma omp for schedule(dynamic)
-				for(int i = 0; i < numIndicesOfThisColour; ++i) {
-					long int baseIndex = _cellIndicesPerColour[col][i];
-
-					const int num_pairs = _cellPairOffsets.size();
-					for(int j = 0; j < num_pairs; ++j) {
-						pair<long int, long int> current_pair = _cellPairOffsets[j];
-
-						long int offset1 = current_pair.first;
-						long int cellIndex1 = baseIndex + offset1;
-						if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-							continue;
-
-						long int offset2 = current_pair.second;
-						long int cellIndex2 = baseIndex + offset2;
-						if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-							continue;
-
-						ParticleCell& cell1 = _cells[cellIndex1];
-						ParticleCell& cell2 = _cells[cellIndex2];
-
-						if(cell1.isHaloCell() and cell2.isHaloCell()) {
-							continue;
-						}
-
-						if(cellIndex1 == cellIndex2) {
-							cellProcessor.processCell(cell1);
-						}
-						else {
-							if(!cell1.isHaloCell()) {
-								cellProcessor.processCellPair(cell1, cell2);
-							}
-							else {
-								cellProcessor.processCellPair(cell2, cell1);
-							}
-						}
-					}
-				} // for-loop over indices of this colour
-			} // for-loop over colours
-		} // end pragma omp parallel
-
-		cellProcessor.endTraversal();
-	#endif
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {
@@ -1102,50 +997,6 @@ void LinkedCells::calculateNeighbourIndices() {
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
 }
 
-void LinkedCells::calculateCellPairOffsets() {
-	_cellPairOffsets.clear();
-	_cellPairOffsets.reserve(14);
-
-	long int o   = cellIndexOf3DIndex(0,0,0); // origin
-	long int x   = cellIndexOf3DIndex(1,0,0); // displacement to the right
-	long int y   = cellIndexOf3DIndex(0,1,0); // displacement ...
-	long int z   = cellIndexOf3DIndex(0,0,1);
-	long int xy  = cellIndexOf3DIndex(1,1,0);
-	long int yz  = cellIndexOf3DIndex(0,1,1);
-	long int xz  = cellIndexOf3DIndex(1,0,1);
-	long int xyz = cellIndexOf3DIndex(1,1,1);
-
-	// minimize number of cells simultaneously in memory:
-
-	_cellPairOffsets.push_back(make_pair(o, xyz));
-	// evict xyz
-
-	_cellPairOffsets.push_back(make_pair(o, yz ));
-	_cellPairOffsets.push_back(make_pair(x, yz ));
-	// evict yz
-
-	_cellPairOffsets.push_back(make_pair(o, x  ));
-
-	_cellPairOffsets.push_back(make_pair(o, xy ));
-	_cellPairOffsets.push_back(make_pair(xy, z ));
-	// evict xy
-
-	_cellPairOffsets.push_back(make_pair(o, z  ));
-	_cellPairOffsets.push_back(make_pair(x, z  ));
-	_cellPairOffsets.push_back(make_pair(y, z  ));
-	// evict z
-
-	_cellPairOffsets.push_back(make_pair(o, y  ));
-	_cellPairOffsets.push_back(make_pair(x, y  ));
-	// evict x
-
-	_cellPairOffsets.push_back(make_pair(o, xz ));
-	_cellPairOffsets.push_back(make_pair(y, xz ));
-	// evict xz
-
-	_cellPairOffsets.push_back(make_pair(o, o  ));
-}
-
 unsigned long int LinkedCells::getCellIndexOfMolecule(
 		Molecule* molecule) const {
 	int cellIndex[3]; // 3D Cell index
@@ -1174,12 +1025,6 @@ long int LinkedCells::cellIndexOf3DIndex(long int xIndex, long int yIndex,
 		long int zIndex) const {
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0]
 			+ xIndex;
-}
-
-void LinkedCells::threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const {
-	r[2] = ind / (dim[0] * dim[1]);
-	r[1] = (ind - r[2] * dim[0] * dim[1]) / dim[0];
-	r[0] = ind - dim[0] * (r[1] + dim[1] * r[2]);
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,

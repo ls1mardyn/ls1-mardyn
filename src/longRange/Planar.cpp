@@ -25,7 +25,7 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	_smooth=true; // Deactivate this for transient simulations!
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
-	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
+	vector<Component>&  components = *_simulation.getEnsemble()->components();
 	numComp=components.size();
 	numLJ = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numDipole = (unsigned *) malloc (sizeof(unsigned)*numComp);

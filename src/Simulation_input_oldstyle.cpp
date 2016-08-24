@@ -466,13 +466,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double interval;
 			unsigned bins;
 			inputfilestream >> interval >> bins;
-			if (global_simulation->getEnsemble()->getComponents()->size() <= 0) {
+			if (global_simulation->getEnsemble()->components()->size() <= 0) {
 				global_log->error()
 						<< "PhaseSpaceFile-Specification has to occur before RDF-Token!"
 						<< endl;
 				exit(-1);
 			}
-			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->getComponents());
+			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->components());
 			_outputPlugins.push_back(_rdf);
 		} else if (token == "RDFOutputTimesteps") { /* TODO: suboption of RDF */
 			unsigned int RDFOutputTimesteps;
@@ -497,6 +497,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "collectThermostatDirectedVelocity") { /* suboption of the thermostat replace with direct thermostat */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} 
+
+		//makes a 2D output of the kartesian coordinate system
+		else if (token == "Kartesian2DOutput"){
+			_kartesian2DProfile = true;
+			global_log->info()<<"Wirting the new Kartesian2DOutput\n";
+		}
 			
 		else if (token == "thermostat"){
 			inputfilestream >> _thermostatType;
@@ -706,7 +712,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		    inputfilestream >> xi_sf[nc] >> eta_sf[nc];
 		  }
 		 
-		  std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+		  std::vector<Component>* components = global_simulation->getEnsemble()->components();
 		  _wall=new Wall();
 		  _wall->initializeLJ93(components,  rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut);
 		  delete[] xi_sf;
@@ -724,7 +730,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		    inputfilestream >> xi_sf[nc] >> eta_sf[nc];
 		  }
 		 
-		  std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+		  std::vector<Component>* components = global_simulation->getEnsemble()->components();
 		  _wall=new Wall();
 		  _wall->initializeLJ104(components,  rho_w, sig_w, eps_w, xi_sf, eta_sf, y_off, y_cut, Delta);
 		  delete[] xi_sf;
@@ -736,7 +742,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double yMirr, forceConstant;
 			_applyMirror=true;
 			inputfilestream >> yMirr >> forceConstant;
-			std::vector<Component>* components = global_simulation->getEnsemble()->getComponents();
+			std::vector<Component>* components = global_simulation->getEnsemble()->components();
 			_mirror=new Mirror();
 			_mirror->initialize(components, yMirr, forceConstant);
 		} else if (token == "slabsLRC") {
@@ -886,11 +892,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
                 if(widom) cpit->enableWidom();
 		cpit->setIncrement(idi);
-		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
+		double tmp_molecularMass = global_simulation->getEnsemble()->component(cpit->getComponentID())->m();
 		cpit->setSystem(_domain->getGlobalLength(0),
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
-		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
+		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + _maxMoleculeId)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
@@ -934,7 +940,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
            ceit->second.submitTemperature(Tcur);
            
            ceit->second.init(
-              global_simulation->getEnsemble()->getComponent(ceit->first),
+              global_simulation->getEnsemble()->component(ceit->first),
               (cavity_grid[ceit->first])[0], (cavity_grid[ceit->first])[1], (cavity_grid[ceit->first])[2]
            );
            ceit->second.communicateNumCavities(this->_domainDecomposition);

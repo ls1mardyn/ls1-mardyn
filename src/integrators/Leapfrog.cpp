@@ -119,7 +119,7 @@ void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/
 
 void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
-	vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
+	vector<Component> comp = *(_simulation.getEnsemble()->components());
 	vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	for (compit = comp.begin(); compit != comp.end(); compit++) {
@@ -143,7 +143,7 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 }
 
 void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* domain) {
-	vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
+	vector<Component> comp = *(_simulation.getEnsemble()->components());
 	vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	for (compit = comp.begin(); compit != comp.end(); compit++) {
