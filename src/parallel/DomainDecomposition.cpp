@@ -88,7 +88,7 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 		// when moving a particle across a periodic boundary, the molecule position has to change
 		// these offset specify for each dimension (x, y and z) and each direction ("left"/lower
-		// neighbour and "right"/higher neighbour, how the paritcle coordinates have to be changed.
+		// neighbour and "right"/higher neighbour, how the particle coordinates have to be changed.
 		// e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
 		// moving to the left get the length of the whole domain added to their x-value
 		double offsetLower[DIM];

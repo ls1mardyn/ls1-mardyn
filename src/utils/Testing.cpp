@@ -98,10 +98,10 @@ void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 }
 
 
-std::string utils::Test::getTestDataFilename(const std::string& file) {
+std::string utils::Test::getTestDataFilename(const std::string& file, bool checkExistence) {
 	std::string fullPath = testDataDirectory + file;
 
-	if (!fileExists(fullPath.c_str())) {
+	if (!fileExists(fullPath.c_str()) and checkExistence) {
 		test_log->error() << "File " << fullPath << " for test input data does not exits!" << std::endl;
 		exit(-1);
 	}
