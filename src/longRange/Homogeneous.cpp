@@ -17,7 +17,7 @@ using namespace std;
 
 Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation _simulation) {
 	_domain = domain;
-	_components = *_simulation.getEnsemble()->components();
+	_components = *_simulation.getEnsemble()->getComponents();
 	_comp2params = _domain->getComp2Params();
 	global_log->info() << "Long range correction for homogeneous systems is used " << endl;
 	double UpotCorrLJ=0.;

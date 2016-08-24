@@ -36,7 +36,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	global_log->info() << "VectorizedLJP2PCellProcessor: using MIC intrinsics." << std::endl;
 #endif
 
-	ComponentList components = *(_simulation.getEnsemble()->components());
+	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 	// Get the maximum Component ID.
 	size_t maxID = 0;
 	const ComponentList::const_iterator end = components.end();

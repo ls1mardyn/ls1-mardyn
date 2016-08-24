@@ -157,6 +157,14 @@ void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 #endif
 }
 
+static vcp_inline
+void load_hSum_Store_Clear(double * const compact, double * const wide) {
+	vcp_double_vec wide_reg = vcp_simd_load(wide);
+	hSum_Add_Store(compact, wide_reg);
+	wide_reg = vcp_simd_zerov();
+	vcp_simd_store(wide, wide_reg);
+}
+
 /**
  * loads vector from memory location, adds the value to it and saves the combined result.
  * @param addr memory address where value should be loaded from and stored to

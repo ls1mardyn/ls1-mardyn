@@ -474,8 +474,6 @@ private:
 	//! number of time steps after which the canceling is carried outline
 	unsigned _momentumInterval;
 	
-	bool _kartesian2DProfile;
-
 	//! random number generator
 	Random _rand;
 

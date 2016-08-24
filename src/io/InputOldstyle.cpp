@@ -66,7 +66,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << endl;
 
 
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	bool header = true; // When the last header element is reached, "header" is set to false
 
 	while(header) {
@@ -289,7 +289,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 #endif
 
 	string token;
-	vector<Component>& dcomponents = *(_simulation.getEnsemble()->components());
+	vector<Component>& dcomponents = *(_simulation.getEnsemble()->getComponents());
 	unsigned int numcomponents = dcomponents.size();
 	unsigned long nummolecules;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file

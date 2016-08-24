@@ -12,7 +12,7 @@
 class MixingRuleBase;
 
 
-//! list of updateable values
+//! list of updatable values
 enum GlobalVariable {
 	NUM_PARTICLES      = 1<<0,
 	ENERGY             = 1<<1,
@@ -32,7 +32,9 @@ class DomainBase;
 //! (\mu p t) variables as well as a function to update global variables.
 class Ensemble {
 public:
-	Ensemble() {}
+	Ensemble() :
+			_domain(nullptr) {
+	}
 	virtual ~Ensemble() {}
 	virtual void readXML(XMLfileUnits& xmlconfig);
 
@@ -54,9 +56,10 @@ public:
 	virtual void updateGlobalVariable(GlobalVariable variable) = 0;
 
 	DomainBase* &domain() { return _domain; }
-	Component* component(int cid) { return &_components[cid]; }
-	Component* component(std::string name) { return &_components[_componentnamesToIds[name]]; }
-	std::vector<Component>* components() { return &_components; }
+	Component* getComponent(int cid) { return &_components[cid]; }
+	Component* getComponent(std::string name) { return &_components[_componentnamesToIds[name]]; }
+	std::vector<Component>* getComponents() { return &_components; }
+	void addComponent(Component& component) { _components.push_back(component); }
 
 	//! prepare the _compIDs used by the Vectorized*CellProcessors
 	void setComponentLookUpIDs();

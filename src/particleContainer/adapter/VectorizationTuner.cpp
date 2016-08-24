@@ -71,7 +71,7 @@ void VectorizationTuner::initOutput(ParticleContainer* /*particleContainer*/,
 	_flopCounterNormalRc = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
 	_flopCounterBigRc = new FlopCounter(_cutoffRadiusBig, _LJCutoffRadiusBig);
 	_flopCounterZeroRc = new FlopCounter( 0., 0.);
-	tune(*(_simulation.getEnsemble()->components()));
+	tune(*(_simulation.getEnsemble()->getComponents()));
 }
 
 

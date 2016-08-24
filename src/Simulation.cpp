@@ -332,7 +332,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 					}
 					else {
 						int componentId = 0;
-						componentId = getEnsemble()->component(componentName)->ID();
+						componentId = getEnsemble()->getComponent(componentName)->ID();
 						int thermostatID = _domain->getThermostat(componentId);
 						_domain->setTargetTemperature(thermostatID, temperature);
 						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
@@ -583,11 +583,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	std::list<ChemicalPotential>::iterator cpit;
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
-		double tmp_molecularMass = global_simulation->getEnsemble()->component(cpit->getComponentID())->m();
+		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
 		cpit->setSystem(_domain->getGlobalLength(0),
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
-		cpit->setGlobalN(global_simulation->getEnsemble()->component(cpit->getComponentID())->getNumMolecules());
+		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
@@ -625,7 +625,7 @@ void Simulation::prepare_start() {
 	bool dipole_present = false;
 	bool quadrupole_present = false;
 
-	const vector<Component> components = *(global_simulation->getEnsemble()->components());
+	const vector<Component> components = *(global_simulation->getEnsemble()->getComponents());
 	for (size_t i = 0; i < components.size(); i++) {
 		lj_present |= (components[i].numLJcenters() != 0);
 		charge_present |= (components[i].numCharges() != 0);
@@ -789,7 +789,7 @@ void Simulation::simulate() {
     _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
-	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->components());
+	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
 			<< ensemble.N() << endl;
@@ -810,6 +810,10 @@ void Simulation::simulate() {
 	Timer computationTimer; /* timer for computation */
 	Timer perStepIoTimer; /* timer for io in simulation loop */
 	Timer ioTimer; /* timer for final io */
+	// temporary addition until merging OpenMP is complete
+	#ifdef ENABLE_OPENMP
+		Timer forceCalculationTimer; /* timer for final io */
+	#endif
 
 	loopTimer.set_sync(true);
 #if WITH_PAPI
@@ -869,7 +873,7 @@ void Simulation::simulate() {
 			global_log->info() << "Activating the RDF sampling" << endl;
 			this->_rdf->tickRDF();
 			this->_particlePairsHandler->setRDF(_rdf);
-			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->components()));
+			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		}
 
 		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
@@ -937,7 +941,15 @@ void Simulation::simulate() {
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer.start();
+			// temporary addition until merging OpenMP is complete
+			#ifdef ENABLE_OPENMP
+				forceCalculationTimer.start();
+			#endif
 			_moleculeContainer->traverseCells(*_cellProcessor);
+			// temporary addition until merging OpenMP is complete
+			#ifdef ENABLE_OPENMP
+				forceCalculationTimer.stop();
+			#endif
 			computationTimer.stop();
 			_loopCompTime += computationTimer.get_etime() - startEtime;
 			_loopCompTimeSteps ++;
@@ -1071,7 +1083,7 @@ void Simulation::simulate() {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				_velocityScalingThermostat.enableComponentwise();
-				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->components()->size(); cid++) {
+				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->getComponents()->size(); cid++) {
 					int thermostatId = _domain->getThermostat(cid);
 					_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
 					_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
@@ -1222,6 +1234,10 @@ void Simulation::simulate() {
 	ioTimer.stop();
 
 	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+	// temporary addition until merging OpenMP is complete
+	#ifdef ENABLE_OPENMP
+		global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
+	#endif
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
@@ -1266,17 +1282,11 @@ void Simulation::output(unsigned long simstep) {
 			osstrm << right << simstep;
 			//edited by Michaela Heier 
 			if(this->_domain->isCylindrical()){
-				global_log->info()<<"Writing CylindricalPorfile\n";
 				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
 			}
-			else if(_kartesian2DProfile){
-				global_log->info()<<"Writing Kartesian2DPorfile\n";
-				this->_domain->outputKartesian2DProfile(osstrm.str().c_str(),_doRecordVirialProfile);
-			}
 			else{
-				global_log->info()<<"Writing OutputPorfile\n";
-				this->_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
+			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
 			}
 			osstrm.str("");
 			osstrm.clear();
@@ -1413,7 +1423,6 @@ void Simulation::initialize() {
 	_applyWallFun_LJ_10_4 = false;
 	_mirror = NULL;
 	_applyMirror = false;
-	_kartesian2DProfile = false;
 
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;

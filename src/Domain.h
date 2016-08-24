@@ -219,12 +219,6 @@ public:
 	//! @brief set globalRotDOF
 	void setglobalRotDOF(unsigned long grotdof);
 
-	//! @brief get a reference to the vector of components
-	std::vector<Component>& getComponents();
-
-	//! @brief add a component to the vector of components
-	void addComponent(Component component);
-
 	//! @brief get the parameter streams
 	Comp2Param& getComp2Params();
 
@@ -333,7 +327,7 @@ public:
 	void collectProfile(DomainDecompBase* domainDecomp, bool virialProfile);
 	void outputProfile(const char* prefix, bool virialProfile);
 	void resetProfile(bool virialProfile);
-	void outputKartesian2DProfile(const char* prefix, bool virialProfile);
+
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods employed for setting up a density profile in cylindrical coordinates
 	//begin
@@ -586,12 +580,6 @@ private:
 
 	//! Contains the time t in reduced units
 	double currentTime;  //edited by Michaela Heier
-
-
-	// TODO: do the components belong here, or in class EnsembleBase?
-	// TODO: currently they exist in both places!
-	//! Components resp. molecule types
-	std::vector<Component> _components;
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
