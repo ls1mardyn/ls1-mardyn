@@ -601,7 +601,7 @@ MoleculeIterator LinkedCells::begin() {
 }
 
 MoleculeIterator LinkedCells::next() {
-	Molecule* ret = LinkedCells::end();
+	MoleculeIterator ret = LinkedCells::end();
 
 	++_particleIterator;
 
