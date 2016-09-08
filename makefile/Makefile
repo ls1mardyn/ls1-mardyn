@@ -1,7 +1,7 @@
 # Find out the base directory
 MAKEFILEDIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 
-.PHONY: default help clean cleanall
+.PHONY: all default help clean cleanall test
 default: all
 
 # Check current directory
@@ -289,8 +289,6 @@ lcov:
 
 lcov_clean:
 	lcov --directory $(SRCDIR) -b $(SRCDIR) --zerocounters
-
-.PHONY: test
 
 
 test:
