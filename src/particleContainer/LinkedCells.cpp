@@ -1244,8 +1244,6 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 
 	assert(not currentCell.isHaloCell());
 
-	double oldEnergy = global_simulation->getDomain()->getLocalUpot();
-
 	cellProcessor->initTraversal();
 
 	u += cellProcessor->processSingleMolecule(m1, currentCell);
