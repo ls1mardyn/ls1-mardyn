@@ -474,6 +474,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 	if (isOK == _numProcs) {
 		success = true;
 	} else {
+		global_log->error() << "writing checkpoint to kddecomperror.restart.dat" << std::endl;
 		global_simulation->getDomain()->writeCheckpoint("kddecomperror.restart.dat", moleculeContainer, this, global_simulation->getSimulationTime());
 	}
 
