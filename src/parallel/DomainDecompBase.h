@@ -129,24 +129,24 @@ public:
 
 	//! @brief returns the own rank
 	//! @return rank of the process
-	virtual int getRank();
+	virtual int getRank() const;
 
 	//! @brief returns the number of processes
 	//! @return number of processes
-	virtual int getNumProcs();
+	virtual int getNumProcs() const;
 
 	//! @brief synchronizes all processes
-	virtual void barrier();
+	virtual void barrier() const;
 
 	//! @brief returns the time in seconds since some time in the past
-	virtual double getTime();
+	virtual double getTime() const;
 
 	//! @brief returns total number of molecules
 	virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
 
 	//! @brief checks identity of random number generators
 	virtual void assertIntIdentity(int IX);
-	virtual void assertDisjunctivity(TMoleculeContainer* mm);
+	virtual void assertDisjunctivity(TMoleculeContainer* mm) const;
 
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
 	//! @param filename name of the file into which the data will be written
@@ -157,7 +157,7 @@ public:
 	//! there is a loop over all processes with a barrier in between
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
+	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) const;
 
 
 	//##################################################################

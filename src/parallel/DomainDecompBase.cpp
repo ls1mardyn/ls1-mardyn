@@ -107,7 +107,7 @@ double DomainDecompBase::getBoundingBoxMax(int dimension, Domain* domain) {
 }
 
 
-double DomainDecompBase::getTime() {
+double DomainDecompBase::getTime() const {
 	return double(clock()) / CLOCKS_PER_SEC;
 }
 
@@ -120,25 +120,25 @@ unsigned DomainDecompBase::Ndistribution(unsigned localN, float* minrnd, float* 
 void DomainDecompBase::assertIntIdentity(int /* IX */) {
 }
 
-void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) {
+void DomainDecompBase::assertDisjunctivity(TMoleculeContainer* /* mm */) const {
 }
 
 void DomainDecompBase::printDecomp(std::string /* filename */, Domain* /* domain */) {
 	global_log->warning() << "printDecomp useless in serial mode" << std::endl;
 }
 
-int DomainDecompBase::getRank() {
+int DomainDecompBase::getRank() const {
 	return _rank;
 }
 
-int DomainDecompBase::getNumProcs() {
+int DomainDecompBase::getNumProcs() const {
 	return _numProcs;
 }
 
-void DomainDecompBase::barrier() {
+void DomainDecompBase::barrier() const {
 }
 
-void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) {
+void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) const{
 	for (int process = 0; process < getNumProcs(); process++) {
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream(filename.c_str(), std::ios::app);

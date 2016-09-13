@@ -304,7 +304,7 @@ void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int l
 bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newOwnLeaf, ParticleContainer* moleculeContainer) const {
 	// 1. compute which processes we will receive from
 	// 2. issue Irecv calls
-	// 3. compute which prcesses we will send to
+	// 3. compute which processes we will send to
 	// 4. issue Isend calls
 	// 5. get all
 
@@ -327,11 +327,6 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		numProcsRecv = ranks.size(); // value may change from ranks.size(), see "numProcsSend--" below
 		recvPartners.reserve(numProcsRecv);
 		for (unsigned i = 0; i < ranks.size(); ++i) {
-			int partnerRank = ranks[i];
-
-			if (partnerRank != _rank) {
-				recvPartners.push_back(CommunicationPartner(partnerRank));
-			}
 
 			int low[3];
 			int high[3];
@@ -348,7 +343,10 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				}
 			}
 
+			int partnerRank = ranks[i];
+
 			if (partnerRank != _rank) {
+				recvPartners.push_back(CommunicationPartner(partnerRank));
 				recvPartners.back().initRecv(numMols, _comm, _mpiParticleType);
 			} else {
 				migrateToSelf.reserve(numMols);
@@ -458,7 +456,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			for (int i = 0; i < numProcsRecv; ++i) {
 				recvPartners[i].deadlockDiagnosticRecv();
 			}
-			global_simulation->exit(458);
+
 		}
 
 	} // while not allDone
@@ -473,8 +471,10 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 
 	bool success = false;
 
-	if(isOK == _numProcs) {
+	if (isOK == _numProcs) {
 		success = true;
+	} else {
+		global_simulation->getDomain()->writeCheckpoint("kddecomperror.restart.dat", moleculeContainer, this, global_simulation->getSimulationTime());
 	}
 
 	return success;

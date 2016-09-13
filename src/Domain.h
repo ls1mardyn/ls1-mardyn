@@ -66,7 +66,7 @@ public:
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, double currentTime);
+			const DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
 	//!

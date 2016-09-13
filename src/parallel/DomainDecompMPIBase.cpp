@@ -66,7 +66,7 @@ void DomainDecompMPIBase::assertIntIdentity(int IX) {
 	}
 }
 
-void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) {
+void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) const {
 	using std::map;
 	using std::endl;
 
@@ -250,7 +250,7 @@ void DomainDecompMPIBase::exchangeMoleculesMPI(ParticleContainer* moleculeContai
 	for (unsigned short d = 0; d < DIM; d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType,
 				removeRecvDuplicates, d);
-	} // for d
+	}
 
 	global_log->set_mpi_output_root(0);
 }

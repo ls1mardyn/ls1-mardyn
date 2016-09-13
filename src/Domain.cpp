@@ -462,7 +462,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 
 void Domain::writeCheckpoint( string filename,
 		ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, double currentTime)
+		const DomainDecompBase* domainDecomp, double currentTime)
 {
 	domainDecomp->assertDisjunctivity(particleContainer);
 	/* Rank 0 writes file header */

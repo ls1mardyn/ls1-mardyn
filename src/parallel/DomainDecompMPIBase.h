@@ -27,14 +27,16 @@ public:
 	virtual ~DomainDecompMPIBase();
 
 	// documentation see father class (DomainDecompBase.h)
-	void barrier() { MPI_CHECK( MPI_Barrier(_comm) ); }
+	void barrier() const override {
+		MPI_CHECK(MPI_Barrier(_comm));
+	}
 
 	//! @brief returns total number of molecules
 	unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
 
 	//! @brief checks identity of random number generators
 	void assertIntIdentity(int IX);
-	void assertDisjunctivity(TMoleculeContainer* mm);
+	void assertDisjunctivity(TMoleculeContainer* mm) const override;
 
 	//##################################################################
 	// The following methods with prefix "collComm" are all used

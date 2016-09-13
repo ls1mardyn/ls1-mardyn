@@ -60,15 +60,15 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 	// corners of the process-specific domain
 	double rmin[DIM]; // lower corner
 	double rmax[DIM]; // higher corner
-	double halo_L[DIM]; // width of the halo strip
+	double halo_width[DIM]; // width of the halo strip
 
 	for (int d = 0; d < DIM; d++) {
 		rmin[d] = getBoundingBoxMin(d, domain);
 		rmax[d] = getBoundingBoxMax(d, domain);
 
 		// TODO: this should be safe, as long as molecules don't start flying around
-		// at the speed of one cutoffRadius per timestep
-		halo_L[d] = cutoffRadius;
+		// at the speed of one cutoffRadius per time step
+		halo_width[d] = cutoffRadius;
 
 		_neighbours[d].clear();
 	}
@@ -86,9 +86,9 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 		MPI_CHECK( MPI_Cart_shift(_comm, d, 1, &ranks[LOWER], &ranks[HIGHER]) );
 
-		// when moving a particle across a periodic boundary, the molecule position has to change
-		// these offset specify for each dimension (x, y and z) and each direction ("left"/lower
-		// neighbour and "right"/higher neighbour, how the particle coordinates have to be changed.
+		// When moving a particle across a periodic boundary, the molecule position has to change.
+		// These offsets specify for each dimension (x, y and z) and each direction ("left"/lower
+		// neighbor and "right"/higher neighbor, how the particle coordinates have to be changed.
 		// e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
 		// moving to the left get the length of the whole domain added to their x-value
 		double offsetLower[DIM];
@@ -109,8 +109,8 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 			// set the regions
 			for (int i = 0; i < DIM; i++) {
-				regToSendLow[i] = rmin[i] - halo_L[i];
-				regToSendHigh[i] = rmax[i] + halo_L[i];
+				regToSendLow[i] = rmin[i] - halo_width[i];
+				regToSendHigh[i] = rmax[i] + halo_width[i];
 			}
 
 			double haloLow[3];
@@ -120,7 +120,7 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 
 			switch (direction) {
 			case LOWER:
-				regToSendHigh[d] = rmin[d] + halo_L[d];
+				regToSendHigh[d] = rmin[d] + halo_width[d];
 				for (int i = 0; i < DIM; ++i) {
 					haloLow[i] = regToSendLow[i];
 					if (i == d) {
@@ -133,7 +133,7 @@ void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain 
 				}
 				break;
 			case HIGHER:
-				regToSendLow[d] = rmax[d] - halo_L[d];
+				regToSendLow[d] = rmax[d] - halo_width[d];
 				for (int i = 0; i < DIM; ++i) {
 					boundaryLow[i] = regToSendLow[i];
 					if (i == d) {
