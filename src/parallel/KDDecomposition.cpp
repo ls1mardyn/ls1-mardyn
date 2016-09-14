@@ -456,7 +456,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			for (int i = 0; i < numProcsRecv; ++i) {
 				recvPartners[i].deadlockDiagnosticRecv();
 			}
-
+			break;
 		}
 
 	} // while not allDone
@@ -469,16 +469,13 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 
 	MPI_Allreduce(MPI_IN_PLACE, &isOK, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-	bool success = false;
-
 	if (isOK == _numProcs) {
-		success = true;
+		return true;
 	} else {
 		global_log->error() << "writing checkpoint to kddecomperror.restart.dat" << std::endl;
 		global_simulation->getDomain()->writeCheckpoint("kddecomperror.restart.dat", moleculeContainer, this, global_simulation->getSimulationTime());
+		return false;
 	}
-
-	return success;
 }
 
 void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer) {
