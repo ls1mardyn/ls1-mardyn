@@ -830,14 +830,14 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		iter++;
 	}
 
-	// reassign children and delete cloned node, if a better solution
+	// reassign children and delete cloned node, if a solution
 	// was found in this subtree.
 	if (bestSubdivision == NULL) {
 		fatherNode->_deviation = FLT_MAX;
 	} else {
-		*fatherNode = *bestSubdivision;
-		bestSubdivision->_child1 = NULL;
-		bestSubdivision->_child2 = NULL;
+		*fatherNode = *bestSubdivision;  // assignment operator (NOT copy operator) -> also assigns children to fatherNode
+		bestSubdivision->_child1 = NULL;  // remove children from bestSubdivision, otherwise they will be deleted
+		bestSubdivision->_child2 = NULL;  // remove children from bestSubdivision, otherwise they will be deleted
 		delete bestSubdivision;
 	}
 #ifdef DEBUG_DECOMP

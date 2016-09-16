@@ -44,7 +44,7 @@ public:
 
 
 	/**
-	 * Copy constructor copies all execpt the children (are set to NULL!)
+	 * Copy constructor copies everything except for the children (are set to NULL!)
 	 */
 	KDNode(const KDNode& other) : _numProcs(other._numProcs), _nodeID(other._nodeID),
 			_owningProc(other._owningProc), _child1(NULL), _child2(NULL),
