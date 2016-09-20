@@ -47,10 +47,10 @@ public:
 	void downwardPass(L2PCellProcessor *cp);
 
 	// P2M
-	void processMultipole(ParticleCell& cell);
+	void processMultipole(ParticleCellPointers& cell);
 
 	// L2P
-	void processFarField(ParticleCell& cell);
+	void processFarField(ParticleCellPointers& cell);
 
 	// M2M, M2L, L2L
 	void processTree();

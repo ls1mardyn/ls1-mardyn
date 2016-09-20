@@ -12,9 +12,9 @@
 #include <cmath>
 class Molecule;
 
-class ParticleCell;
-
 namespace bhfmm {
+
+class ParticleCellPointers;
 
 /**
  * simpler copy of the main CellProcessor.
@@ -37,7 +37,7 @@ public:
 	 *
 	 * @note will not be called for empty cells.
 	 */
-	virtual void processCell(ParticleCell& cell) = 0;
+	virtual void processCell(ParticleCellPointers& cell) = 0;
 
 	/**
 	 * Called after the traversal finished.

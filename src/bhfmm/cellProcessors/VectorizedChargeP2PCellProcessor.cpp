@@ -5,7 +5,6 @@
 
 #include "particleContainer/adapter/CellDataSoA.h"
 #include "molecules/Molecule.h"
-#include "particleContainer/ParticleCell.h"
 #include "Domain.h"
 #include "utils/Logger.h"
 #include "ensemble/EnsembleBase.h"
@@ -65,7 +64,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 }
 
 
-void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
+void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) {
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
 
@@ -136,7 +135,7 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCell & c) {
 }
 
 
-void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCell & c) {
+void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c) {
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
 	using std::isnan; // C++11 required
@@ -695,7 +694,7 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
-void VectorizedChargeP2PCellProcessor::processCell(ParticleCell & c) {
+void VectorizedChargeP2PCellProcessor::processCell(ParticleCellPointers & c) {
 	CellDataSoA& soa = c.getCellDataSoA();
 	if (c.isHaloCell() or soa._mol_num < 2) {
 		return;
@@ -704,7 +703,7 @@ void VectorizedChargeP2PCellProcessor::processCell(ParticleCell & c) {
 	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
-void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
+void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCellPointers & c1, ParticleCellPointers & c2) {
 	assert(&c1 != &c2);
 	const CellDataSoA& soa1 = c1.getCellDataSoA();
 	const CellDataSoA& soa2 = c2.getCellDataSoA();

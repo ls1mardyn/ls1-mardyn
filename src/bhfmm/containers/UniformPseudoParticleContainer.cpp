@@ -1670,7 +1670,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_MPI(double* /*cellWid*/, Ve
 
 
 
-void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
+void UniformPseudoParticleContainer::processMultipole(ParticleCellPointers& cell){
 	int cellIndexV[3];
 	std::vector<std::vector<MpCell> > * mpCellMaxLevel;
 	int maxLevel;
@@ -1748,7 +1748,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 	(*mpCellMaxLevel)[maxLevel][cellIndex].occ = Occupied;
 }
 
-void UniformPseudoParticleContainer::processFarField(ParticleCell& cell) {
+void UniformPseudoParticleContainer::processFarField(ParticleCellPointers& cell) {
 	int cellIndexV[3];
 	std::vector<std::vector<MpCell> > * mpCellMaxLevel;
 

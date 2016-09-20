@@ -145,7 +145,7 @@ void LeafNodesContainer::addParticle(Molecule& particle) {
 
 void LeafNodesContainer::clearParticles() {
 	// clear all Cells
-	std::vector<ParticleCell>::iterator celliter;
+	std::vector<ParticleCellPointers>::iterator celliter;
 	for (celliter = (_cells).begin(); celliter != (_cells).end(); ++celliter) {
 		(*celliter).removeAllParticles();
 	}
@@ -188,13 +188,13 @@ void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cel
 
 	// loop over all inner cells and calculate forces to forward neighbours
 	for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
-		ParticleCell& currentCell = _cells[cellIndex];
+		ParticleCellPointers& currentCell = _cells[cellIndex];
 
 		if (currentCell.isInnerCell()) {
 			cellProcessor.processCell(currentCell);
 			// loop over all neighbours
 			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+				ParticleCellPointers& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 				cellProcessor.processCellPair(currentCell, neighbourCell);
 			}
 		}
@@ -205,7 +205,7 @@ void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cel
 				int neighbourCellIndex = cellIndex + *neighbourOffsetsIter;
 				if ((neighbourCellIndex < 0) || (neighbourCellIndex >= (int) (_cells.size())))
 					continue;
-				ParticleCell& neighbourCell = _cells[neighbourCellIndex];
+				ParticleCellPointers& neighbourCell = _cells[neighbourCellIndex];
 				if (!neighbourCell.isHaloCell())
 					continue;
 
@@ -219,14 +219,14 @@ void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cel
 
 			// loop over all forward neighbours
 			for (neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
+				ParticleCellPointers& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
 				cellProcessor.processCellPair(currentCell, neighbourCell);
 			}
 
 			// loop over all backward neighbours. calculate only forces
 			// to neighbour cells in the halo region, all others already have been calculated
 			for (neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++) {
-				ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
+				ParticleCellPointers& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
 				if (neighbourCell.isHaloCell()) {
 					cellProcessor.processCellPair(currentCell, neighbourCell);
 				}

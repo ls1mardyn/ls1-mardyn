@@ -11,7 +11,7 @@
 #include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 #include "bhfmm/pseudoParticles/SHMultipoleParticle.h"
 #include "bhfmm/pseudoParticles/SHLocalParticle.h"
-#include "particleContainer/ParticleCell.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 #include "bhfmm/cellProcessors/P2MCellProcessor.h"
 #include "bhfmm/cellProcessors/L2PCellProcessor.h"
 
@@ -45,9 +45,9 @@ public:
 	virtual void downwardPass(L2PCellProcessor *cp) = 0;
 
 	// P2M
-	virtual void processMultipole(ParticleCell& cell) = 0;
+	virtual void processMultipole(ParticleCellPointers& cell) = 0;
 	// L2P
-	virtual void processFarField(ParticleCell& cell) = 0;
+	virtual void processFarField(ParticleCellPointers& cell) = 0;
 	// M2M M2L L2L
 	virtual void processTree() = 0;
 

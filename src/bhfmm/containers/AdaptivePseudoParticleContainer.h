@@ -49,9 +49,9 @@ public:
 	void horizontalPass(VectorizedChargeP2PCellProcessor * cp);
 	void downwardPass(L2PCellProcessor *cp);
 
-	void processMultipole(ParticleCell& /*cell*/) {
+	void processMultipole(ParticleCellPointers& /*cell*/) {
 	}
-	void processFarField(ParticleCell& /*cell*/) {
+	void processFarField(ParticleCellPointers& /*cell*/) {
 	}
 	void processTree() {
 	}

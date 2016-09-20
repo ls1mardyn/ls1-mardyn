@@ -10,7 +10,7 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "bhfmm/containers/PseudoParticleContainer.h"
-#include "particleContainer/ParticleCell.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 
 
 namespace bhfmm {
@@ -26,7 +26,7 @@ P2MCellProcessor::P2MCellProcessor(
 P2MCellProcessor::~P2MCellProcessor() {
 }
 
-void P2MCellProcessor::processCell(ParticleCell& cell) {
+void P2MCellProcessor::processCell(ParticleCellPointers& cell) {
 	if (!cell.isHaloCell()) {
 		_P2MTimer.start();
 		_pseudoParticleContainer->processMultipole(cell);

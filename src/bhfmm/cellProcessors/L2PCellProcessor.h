@@ -21,7 +21,7 @@ public:
 	~L2PCellProcessor();
 
 	void initTraversal();
-	void processCell(ParticleCell& cell);
+	void processCell(ParticleCellPointers& cell);
 	void endTraversal();
 
 	void printTimers();

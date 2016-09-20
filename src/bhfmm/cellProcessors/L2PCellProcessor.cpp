@@ -36,7 +36,7 @@ void L2PCellProcessor::initTraversal() {
 //	cout << "L2P init: LocalP_zz     " << domain->getLocalP_zz() << endl;
 }
 
-void L2PCellProcessor::processCell(ParticleCell& cell) {
+void L2PCellProcessor::processCell(ParticleCellPointers& cell) {
 	if (!cell.isHaloCell()) {
 		_L2PTimer.start();
 		_pseudoParticleContainer->processFarField(cell);

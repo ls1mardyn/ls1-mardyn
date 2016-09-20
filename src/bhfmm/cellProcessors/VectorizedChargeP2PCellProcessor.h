@@ -7,7 +7,7 @@
 #pragma once
 
 #include <stdlib.h>
-#include "particleContainer/ParticleCell.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 #include "utils/AlignedArray.h"
 #include "utils/Timer.h"
 #include <iostream>
@@ -46,23 +46,19 @@ public:
 	/**
 	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCellPointers& cell);
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
-	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
-
-	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }
-        int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) { exit(0); return 0; }
-
+	void processCellPair(ParticleCellPointers& cell1, ParticleCellPointers& cell2);
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
-	void processCell(ParticleCell& cell);
+	void processCell(ParticleCellPointers& cell);
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCellPointers& cell);
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */

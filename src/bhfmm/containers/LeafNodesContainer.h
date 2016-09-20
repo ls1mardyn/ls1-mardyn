@@ -14,7 +14,7 @@
 #ifndef LEAFNODESCONTAINER_H_
 #define LEAFNODESCONTAINER_H_
 
-#include "particleContainer/ParticleCell.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 #include <vector>
 
 namespace bhfmm {
@@ -54,7 +54,7 @@ private:
 	double _cellLength[3];
 	int _numInnerCellsPerDimension[3];
 	int _numCellsPerDimension[3];
-	std::vector<ParticleCell> _cells;
+	std::vector<ParticleCellPointers> _cells;
 	std::vector<unsigned long> _forwardNeighbourOffsets;
 	std::vector<unsigned long> _backwardNeighbourOffsets;
 	unsigned _maxNeighbourOffset;
