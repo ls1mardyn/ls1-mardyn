@@ -8,7 +8,7 @@
 #ifndef P2MCELLPROCESSOR_H_
 #define P2MCELLPROCESSOR_H_
 
-#include "particleContainer/adapter/CellProcessor.h"
+#include "bhfmm/cellProcessors/SimpleCellProcessor.h"
 #include "utils/Timer.h"
 #include <stdlib.h>
 
@@ -16,7 +16,7 @@ namespace bhfmm {
 
 class PseudoParticleContainer;
 
-class P2MCellProcessor: public CellProcessor {
+class P2MCellProcessor: public SimpleCellProcessor {
 public:
 	P2MCellProcessor(PseudoParticleContainer * pseudoParticleContainer);
 	~P2MCellProcessor();
@@ -25,10 +25,7 @@ public:
     virtual int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) { exit(0); return 0; }
 
 	void initTraversal() {}
-	void preprocessCell(ParticleCell& /*cell*/) {}
-	void processCellPair(ParticleCell& /*cell1*/, ParticleCell& /*cell2*/) {}
 	void processCell(ParticleCell& cell);
-	void postprocessCell(ParticleCell& /*cell*/) {}
 	void endTraversal() {}
 
 	void printTimers();

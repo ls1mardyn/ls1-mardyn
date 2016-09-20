@@ -10,13 +10,13 @@
 #include "Domain.h"
 #include "parallel/DomainDecompBase.h"
 #include "bhfmm/containers/PseudoParticleContainer.h"
+#include "particleContainer/ParticleCell.h"
 
 
 namespace bhfmm {
 
 P2MCellProcessor::P2MCellProcessor(
 		PseudoParticleContainer * pseudoParticleContainer) :
-		CellProcessor(0.0, 0.0),
 		_pseudoParticleContainer(pseudoParticleContainer) {
 #ifdef ENABLE_MPI
 	_P2MTimer.set_sync(false);

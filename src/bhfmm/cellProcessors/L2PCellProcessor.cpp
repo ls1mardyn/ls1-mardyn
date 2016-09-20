@@ -16,7 +16,6 @@ namespace bhfmm {
 
 L2PCellProcessor::L2PCellProcessor(
 		PseudoParticleContainer * pseudoParticleContainer) :
-		CellProcessor(0.0, 0.0),
 		_pseudoParticleContainer(pseudoParticleContainer) {
 #ifdef ENABLE_MPI
 	_L2PTimer.set_sync(false);

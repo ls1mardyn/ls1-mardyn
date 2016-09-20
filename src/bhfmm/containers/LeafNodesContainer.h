@@ -17,10 +17,9 @@
 #include "particleContainer/ParticleCell.h"
 #include <vector>
 
-class CellProcessor;
-
 namespace bhfmm {
 
+class SimpleCellProcessor;
 class VectorizedChargeP2PCellProcessor;
 
 class LeafNodesContainer {
@@ -37,7 +36,7 @@ public:
 
 	void addParticle(Molecule& particle);
 	void clearParticles();
-	void traverseCells(CellProcessor& cellProcessor);
+	void traverseCells(SimpleCellProcessor& cellProcessor);
 	void traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor);
 
 private:
