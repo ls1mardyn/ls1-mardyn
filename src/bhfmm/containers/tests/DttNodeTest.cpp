@@ -9,6 +9,7 @@
 #include "bhfmm/containers/tests/DttNodeTest.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "bhfmm/containers/ParticleCellPointers.h"
 
 TEST_SUITE_REGISTRATION(DttNodeTest);
 
@@ -27,7 +28,7 @@ void DttNodeTest::testUpwardDownwardWithNoInteraction(){
 
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
-	ParticleCell root;
+	ParticleCellPointers root;
 
 	double p_pos[3];
 	bool check = true;
@@ -68,7 +69,7 @@ void DttNodeTest::testSoAConvertions(){
 	}
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
-	ParticleCell root;
+	bhfmm::ParticleCellPointers root;
 	double l[3], u[3];
 	for (int d = 0; d < 3; ++d) {
 		l[d] = container->getBoundingBoxMin(d);
