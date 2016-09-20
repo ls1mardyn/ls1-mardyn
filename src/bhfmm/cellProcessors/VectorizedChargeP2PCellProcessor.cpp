@@ -19,7 +19,7 @@ using namespace std;
 namespace bhfmm {
 
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
-		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
+		_domain(domain),
 		// maybe move the following to somewhere else:
 		_upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
 

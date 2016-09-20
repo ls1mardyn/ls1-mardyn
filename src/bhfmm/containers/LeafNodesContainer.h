@@ -21,6 +21,8 @@ class CellProcessor;
 
 namespace bhfmm {
 
+class VectorizedChargeP2PCellProcessor;
+
 class LeafNodesContainer {
 public:
 	LeafNodesContainer(double bBoxMin[3], double bBoxMax[3],
@@ -35,7 +37,8 @@ public:
 
 	void addParticle(Molecule& particle);
 	void clearParticles();
-	void traverseCellPairs(CellProcessor& cellProcessor);
+	void traverseCells(CellProcessor& cellProcessor);
+	void traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor);
 
 private:
 	void initializeCells();

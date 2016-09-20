@@ -7,7 +7,7 @@
 #pragma once
 
 #include <stdlib.h>
-#include "particleContainer/adapter/CellProcessor.h"
+#include "particleContainer/ParticleCell.h"
 #include "utils/AlignedArray.h"
 #include "utils/Timer.h"
 #include <iostream>
@@ -27,7 +27,7 @@ namespace bhfmm {
  * \brief Vectorized calculation of the force.
  * \author Johannes Heckl
  */
-class VectorizedChargeP2PCellProcessor : public CellProcessor {
+class VectorizedChargeP2PCellProcessor {
 public:
 	typedef std::vector<Component> ComponentList;
 
@@ -71,6 +71,8 @@ public:
 	void printTimers();
 
 private:
+	double _cutoffRadiusSquare;
+
 	Timer _timer;
 
 	/**

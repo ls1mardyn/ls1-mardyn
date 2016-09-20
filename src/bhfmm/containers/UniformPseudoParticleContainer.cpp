@@ -379,7 +379,7 @@ void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 
 void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	// P2M
-	_leafContainer->traverseCellPairs(*cp);
+	_leafContainer->traverseCells(*cp);
 
 //	if(_maxLevel == _globalLevel){
 //		AllReduceMultipoleMoments();
@@ -619,7 +619,7 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 	}
 
 	// L2P
-	_leafContainer->traverseCellPairs(*cp);
+	_leafContainer->traverseCells(*cp);
 
 	_timerFMMcomplete.stop();
 }

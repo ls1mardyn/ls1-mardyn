@@ -8,6 +8,7 @@
 #include "LeafNodesContainer.h"
 #include "molecules/Molecule.h"
 #include "utils/Logger.h"
+#include "bhfmm/cellProcessors/VectorizedChargeP2PCellProcessor.h"
 #include "particleContainer/adapter/CellProcessor.h"
 
 
@@ -160,7 +161,17 @@ unsigned long int LeafNodesContainer::getCellIndexOfMolecule(Molecule* molecule)
 	return this->cellIndexOf3DIndex( cellIndex[0], cellIndex[1], cellIndex[2] );
 }
 
-void LeafNodesContainer::traverseCellPairs(CellProcessor& cellProcessor) {
+void LeafNodesContainer::traverseCells(CellProcessor& cellProcessor) {
+	cellProcessor.initTraversal();
+
+	for (unsigned int cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+		cellProcessor.processCell(_cells[cellIndex]);
+	}
+
+	cellProcessor.endTraversal();
+}
+
+void LeafNodesContainer::traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor) {
 
 	vector<unsigned long>::iterator neighbourOffsetsIter;
 
