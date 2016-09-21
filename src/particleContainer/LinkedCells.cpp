@@ -260,12 +260,12 @@ void LinkedCells::update() {
 	_cellsValid = true;
 }
 
-bool LinkedCells::addParticle(Molecule& particle, const bool& rebuildCaches) {
-	const bool inBox = particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
+bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
+	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
 	if (inBox) {
 		Molecule * mol = new Molecule(particle);
-		addParticlePointer(mol, true, false, rebuildCaches);
+		addParticlePointer(mol, true, checkWhetherDuplicate, rebuildCaches);
 	}
 
 	return inBox;

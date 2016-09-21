@@ -112,7 +112,7 @@ public:
 	//! @param particle reference to the particle which has to be added
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
-	virtual bool addParticle(Molecule& particle, const bool& rebuildCaches=false) = 0;
+	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
 	//! @brief add a single Molecules to the ParticleContainer.
 	//!

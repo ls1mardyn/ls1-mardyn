@@ -560,7 +560,8 @@ void ChemicalPotential::grandcanonicalStep(TMoleculeContainer* moleculeContainer
 				this->_localInsertionsMinusDeletions++;
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
 				tmp.setVi(zeroVec);
-				moleculeContainer->addParticle(tmp, true/*rebuildCaches*/);
+				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
+				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 			} else {
 				// moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
 //				moleculeContainer->_cells[cellid].deleteMolecule(m->id());

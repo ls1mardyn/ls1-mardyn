@@ -113,7 +113,7 @@ public:
 	//! ParticleContainer is it's corresponding cell.
 	void update();
 
-	bool addParticle(Molecule& particle, const bool& rebuildCaches=false) override;
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
 	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false);
 
