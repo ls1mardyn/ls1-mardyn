@@ -87,6 +87,10 @@ void LeafNodesContainer::initializeCells() {
 				cellPosition[1] = _boundingBoxMin[1] + (iy-1) * _cellLength[1];
 				cellPosition[2] = _boundingBoxMin[2] + (iz-1) * _cellLength[2];
 				_cells[cellIndex].setBoxMin(cellPosition);
+				cellPosition[0] = _boundingBoxMin[0] + (ix  ) * _cellLength[0];
+				cellPosition[1] = _boundingBoxMin[1] + (iy  ) * _cellLength[1];
+				cellPosition[2] = _boundingBoxMin[2] + (iz  ) * _cellLength[2];
+				_cells[cellIndex].setBoxMax(cellPosition);
 			}
 		}
 	}
