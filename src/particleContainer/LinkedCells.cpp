@@ -1229,21 +1229,23 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 
 	cellProcessor->initTraversal();
 
-	u += cellProcessor->processSingleMolecule(m1, currentCell);
+	Molecule * molWithSoA = &(dummyCell.moleculesAt(0));
+
+	u += cellProcessor->processSingleMolecule(molWithSoA, currentCell);
 
 	// forward neighbours
 	for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _forwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-		u += cellProcessor->processSingleMolecule(m1, neighbourCell);
+		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
 	}
 	// backward neighbours
 	for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin();
 			neighbourOffsetsIter != _backwardNeighbourOffsets.end();
 			neighbourOffsetsIter++) {
 		ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];
-		u += cellProcessor->processSingleMolecule(m1, neighbourCell);
+		u += cellProcessor->processSingleMolecule(molWithSoA, neighbourCell);
 	}
 
 	cellProcessor->endTraversal();
