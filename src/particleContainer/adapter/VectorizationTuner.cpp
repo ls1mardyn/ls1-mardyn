@@ -336,7 +336,7 @@ void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3],
 				pos[1] = start_pos1[1] + y*dx;
 				pos[2] = start_pos1[2] + z*dx;
 
-				Molecule* m = new Molecule(
+				Molecule m = Molecule(
 						id, &comp,
 						pos[0], pos[1], pos[2],
 						vel[0], vel[1], vel[2],
@@ -359,7 +359,7 @@ void VectorizationTuner::initMeshOfMolecules(double boxMin[3], double boxMax[3],
 				pos[1] = start_pos2[1] + y*dx;
 				pos[2] = start_pos2[2] + z*dx;
 
-				Molecule* m = new Molecule(
+				Molecule m = Molecule(
 						id, &comp,
 						pos[0], pos[1], pos[2],
 						vel[0], vel[1], vel[2],
@@ -387,7 +387,7 @@ void VectorizationTuner::initUniformRandomMolecules(double boxMin[3], double box
 		pos[1] = boxMin[1] + ((double)rand()/(double)RAND_MAX)*(boxMax[1] - boxMin[1]);
 		pos[2] = boxMin[2] + ((double)rand()/(double)RAND_MAX)*(boxMax[2] - boxMin[2]);
 
-		Molecule* m = new Molecule(
+		Molecule m = Molecule(
 				id, &comp,
 				pos[0], pos[1], pos[2],
 				vel[0], vel[1], vel[2],
@@ -424,7 +424,7 @@ void VectorizationTuner::initNormalRandomMolecules(double /*boxMin*/[3], double 
 		pos[1] = start_pos[1] + normalRandom();
 		pos[2] = start_pos[2] + normalRandom();
 
-		Molecule* m = new Molecule(
+		Molecule m = Molecule(
 				id, &comp,
 				pos[0], pos[1], pos[2],
 				vel[0], vel[1], vel[2],

@@ -66,9 +66,9 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 		cells[1].setBoxMin(l);
 		cells[1].setBoxMax(u);
 	}
-	cells[1].addParticle(new Molecule(dummyMolecule1));
-	cells[1].addParticle(new Molecule(dummyMolecule2));
-	cells[1].addParticle(new Molecule(dummyMolecule3));
+	cells[1].addParticle(dummyMolecule1);
+	cells[1].addParticle(dummyMolecule2);
+	cells[1].addParticle(dummyMolecule3);
 
 	// cell[2] is empty
 
@@ -78,7 +78,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 		cells[3].setBoxMin(l);
 		cells[3].setBoxMax(u);
 	}
-	cells[3].addParticle(new Molecule(dummyMolecule4));
+	cells[3].addParticle(dummyMolecule4);
 
 	// cell[4] is empty
 

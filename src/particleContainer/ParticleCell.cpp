@@ -34,23 +34,23 @@ void ParticleCell::deallocateAllParticles() {
 	removeAllParticles();
 }
 
-bool ParticleCell::addParticle(Molecule* particle_ptr, bool checkWhetherDuplicate) {
+bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 	bool wasInserted = false;
 
 #ifndef NDEBUG
-	bool isIn = particle_ptr->inBox(_boxMin, _boxMax);
+	bool isIn = particle.inBox(_boxMin, _boxMax);
 	assert(isIn);
 #endif
 
 	if (checkWhetherDuplicate == false) {
-		_molecules.push_back(particle_ptr);
+		_molecules.push_back(new Molecule(particle));
 		wasInserted = true;
 	} else {
 
 		// perform a check whether this molecule exists (has been received) already
 
 		vector<Molecule*>::const_iterator it;
-		unsigned long pID = particle_ptr->id();
+		unsigned long pID = particle.id();
 
 		bool found = false;
 
@@ -62,7 +62,7 @@ bool ParticleCell::addParticle(Molecule* particle_ptr, bool checkWhetherDuplicat
 		}
 
 		if (not found) {
-			_molecules.push_back(particle_ptr);
+			_molecules.push_back(new Molecule(particle));
 			wasInserted = true;
 		}
 	}

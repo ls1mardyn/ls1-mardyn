@@ -260,9 +260,8 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	bool wasInserted = false;
 
 	if (inBox) {
-		Molecule * mol = new Molecule(particle);
-		int cellIndex = getCellIndexOfMolecule(mol);
-		wasInserted = _cells[cellIndex].addParticle(mol, checkWhetherDuplicate);
+		int cellIndex = getCellIndexOfMolecule(&particle);
+		wasInserted = _cells[cellIndex].addParticle(particle, checkWhetherDuplicate);
 		if (rebuildCaches) {
 			_cells[cellIndex].buildSoACaches();
 		}
@@ -1213,11 +1212,10 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 	{
 		// (potentially re-) initialize dummyCell
 		dummyCell.assignCellToInnerRegion();
-		dummyCell.removeAllParticles();
 		double l[3] = {m1->r(0)-10., m1->r(1)-10., m1->r(2)-10.}, u[3] = {m1->r(0)+10., m1->r(1)+10., m1->r(2)+10.};
 		dummyCell.setBoxMin(l);
 		dummyCell.setBoxMax(u);
-		dummyCell.addParticle(m1, false);
+		dummyCell.addParticle(*m1);
 
 		dummyCell.buildSoACaches();
 		dummyCell.setCellIndex(_cells.back().getCellIndex() * 10);
@@ -1253,6 +1251,9 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 	if (!dynamic_cast<LegacyCellProcessor*>(&cellProcessorI)) {
 		delete cellProcessor;
 	}
+
+	dummyCell.deallocateAllParticles();
+
 	return u;
 }
 
