@@ -115,8 +115,6 @@ public:
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
-	bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false);
-
 	//! @brief calculate the forces between the molecules.
 	//!
 	//! Only molecules with a distance not larger than the cutoff radius are to be used. \n

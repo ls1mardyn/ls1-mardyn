@@ -44,9 +44,10 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 		moleculeContainer->getHaloParticlesDirection(direction, mols, removeFromContainer);
 
 		for (it = mols.begin(); it != mols.end(); ++it) {
-			Molecule * m = *it;
-			m->setr(dim, m->r(dim) + shift);
-			moleculeContainer->addParticlePointer(m);
+			Molecule m = **it;
+			m.setr(dim, (*it)->r(dim) + shift);
+			moleculeContainer->addParticle(m);
+			delete *it;
 		}
 		mols.clear();
 	}

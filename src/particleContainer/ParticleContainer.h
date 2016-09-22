@@ -110,21 +110,11 @@ public:
 	//! responsibility of the programmer.
 	//!
 	//! @param particle reference to the particle which has to be added
+	//! @param inBoxCheckedAlready - if true, spare check whether molecule is in bounding box
+	//! @param checkWhetherDuplicate - if true, check whether molecule already exists and don't insert it.
 	//! @param rebuildCaches specifies, whether the caches should be rebuild
 	//! @return true if successful, false if particle outside domain
 	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
-
-	//! @brief add a single Molecules to the ParticleContainer.
-	//!
-	//! Note: the particle pointer is pushed, without creating a new particle.
-	//! The underlying object should not be destroyed.
-	//!
-	//! @param particle reference to the particle which has to be added
-	//! @param inBoxCheckedAlready
-	//! @param checkWhetherDuplicate
-	//! @param rebuildCaches specifies, whether the caches should be rebuild
-	//! @return true if successful, false if particle outside domain
-	virtual bool addParticlePointer(Molecule * particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!

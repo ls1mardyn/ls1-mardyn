@@ -387,7 +387,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				const bool removeFromContainer = true;
 				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
 			} else {
-				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, true);
+				bool removeFromContainer = true;
+				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, removeFromContainer);
 				// decrement numProcsSend for further uses:
 				assert(willMigrateToSelf == true);
 				numProcsSend--;
@@ -421,7 +422,8 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		if (migrateToSelfDone != true) {
 			const int numMolsMigToSelf = migrateToSelf.size();
 			for (int i = 0; i < numMolsMigToSelf; i++) {
-				moleculeContainer->addParticlePointer(migrateToSelf[i], false, false);
+				moleculeContainer->addParticle(*migrateToSelf[i], false, false);
+				delete migrateToSelf[i];
 			}
 			migrateToSelfDone = true;
 		}

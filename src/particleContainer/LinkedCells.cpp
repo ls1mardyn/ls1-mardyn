@@ -245,14 +245,8 @@ void LinkedCells::update() {
 		std::vector<Molecule*>::iterator it;
 
 		for (it = molsToSort.begin(); it != molsToSort.end(); ++it) {
-			bool wasInserted = addParticlePointer(*it);
-
-			// lets stay on the safe side:
-			if (wasInserted) {
-				// all is good, nothing to do, just helping the branch predictor
-			} else {
-				delete *it;
-			}
+			addParticle(**it);
+			delete *it;
 		}
 		molsToSort.clear();
 	}
@@ -263,26 +257,13 @@ void LinkedCells::update() {
 bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
 	const bool inBox = inBoxCheckedAlready or particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
 
-	if (inBox) {
-		Molecule * mol = new Molecule(particle);
-		addParticlePointer(mol, true, checkWhetherDuplicate, rebuildCaches);
-	}
-
-	return inBox;
-}
-
-bool LinkedCells::addParticlePointer(Molecule * particle,
-		bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {
-	const bool inBox = inBoxCheckedAlready
-			or particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax);
-
 	bool wasInserted = false;
 
 	if (inBox) {
-		int cellIndex = getCellIndexOfMolecule(particle);
-		wasInserted = _cells[cellIndex].addParticle(particle,
-				checkWhetherDuplicate);
-		if(rebuildCaches){
+		Molecule * mol = new Molecule(particle);
+		int cellIndex = getCellIndexOfMolecule(mol);
+		wasInserted = _cells[cellIndex].addParticle(mol, checkWhetherDuplicate);
+		if (rebuildCaches) {
 			_cells[cellIndex].buildSoACaches();
 		}
 	}
