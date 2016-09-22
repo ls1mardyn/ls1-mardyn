@@ -31,7 +31,6 @@ public:
 	);
 	Molecule(const Molecule& m);
 
-private:
 	Molecule& operator=(const Molecule& m);
 
 public:

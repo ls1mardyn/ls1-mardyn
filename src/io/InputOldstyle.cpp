@@ -422,24 +422,23 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 			global_log->debug() << "broadcasting(sending/receiving) particles with buffer_position " << particle_buff_pos << std::endl;
 			MPI_Bcast(particle_buff, PARTICLE_BUFFER_SIZE, mpi_Particle, 0, MPI_COMM_WORLD); // TODO: MPI_COMM_WORLD 
 			for (int j = 0; j < particle_buff_pos; j++) {
-				Molecule *m;
-				ParticleData::ParticleDataToMolecule(particle_buff[j], &m);
-				particleContainer->addParticle(*m);
-				componentid=m->componentid();
+				Molecule m;
+				ParticleData::ParticleDataToMolecule(particle_buff[j], m);
+				particleContainer->addParticle(m);
+				componentid=m.componentid();
 				
 				// TODO: The following should be done by the addPartice method.
 				dcomponents[componentid].incNumMolecules();
 				domain->setglobalRotDOF(dcomponents[componentid].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
 				
-				if(m->id() > maxid) maxid = m->id();
+				if(m.id() > maxid) maxid = m.id();
 
 				std::list<ChemicalPotential>::iterator cpit;
 				for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
 					if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-						cpit->storeMolecule(*m);
+						cpit->storeMolecule(m);
 					}
 				}
-				delete m;
 			}
 			global_log->debug() << "broadcasting(sending/receiving) complete" << particle_buff_pos << std::endl;
 			particle_buff_pos = 0;

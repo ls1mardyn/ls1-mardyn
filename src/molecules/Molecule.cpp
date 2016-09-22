@@ -93,6 +93,46 @@ Molecule::Molecule(const Molecule& m) {
 	_invI[2] = m._invI[2];
 }
 
+Molecule& Molecule::operator=(const Molecule& m) {
+	_id = m._id;
+	_component = m._component;
+	_r[0] = m._r[0];
+	_r[1] = m._r[1];
+	_r[2] = m._r[2];
+	_v[0] = m._v[0];
+	_v[1] = m._v[1];
+	_v[2] = m._v[2];
+	_q = m._q;
+	_L[0] = m._L[0];
+	_L[1] = m._L[1];
+	_L[2] = m._L[2];
+	_F[0] = m._F[0];
+	_F[1] = m._F[1];
+	_F[2] = m._F[2];
+	_M[0] = m._M[0];
+	_M[1] = m._M[1];
+	_M[2] = m._M[2];
+	_Vi[0]= m._Vi[0];
+	_Vi[1]= m._Vi[1];
+	_Vi[2]= m._Vi[2];
+
+	_soa = m._soa;
+	_soa_index_lj = m._soa_index_lj;
+	_soa_index_c = m._soa_index_c;
+	_soa_index_d = m._soa_index_d;
+	_soa_index_q = m._soa_index_q;
+
+	_m = m._m;
+	_I[0] = m._I[0];
+	_I[1] = m._I[1];
+	_I[2] = m._I[2];
+	_invI[0] = m._invI[0];
+	_invI[1] = m._invI[1];
+	_invI[2] = m._invI[2];
+
+	return *this;
+}
+
 std::array<double, 3> Molecule::ljcenter_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double,3> ret;

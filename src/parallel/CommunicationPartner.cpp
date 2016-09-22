@@ -212,16 +212,13 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 #endif
 
 			for (int i = 0; i < numrecv; i++) {
-				Molecule *m;
-				ParticleData::ParticleDataToMolecule(_recvBuf[i], &m);
+				Molecule m;
+				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
 				const bool inBoxCheckedAlready = false;
-				bool wasInserted = moleculeContainer->addParticlePointer(m, inBoxCheckedAlready, removeRecvDuplicates);
+				moleculeContainer->addParticle(m, inBoxCheckedAlready, removeRecvDuplicates);
 #ifndef NDEBUG
-				buf << m->id() << " ";
+				buf << m.id() << " ";
 #endif
-				if (not wasInserted) {
-					delete m;
-				}
 			}
 #ifndef NDEBUG
 			global_log->debug() << buf.str() << std::endl;
