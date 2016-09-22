@@ -48,7 +48,7 @@ public:
 	//! insert a single molecule into this cell
 	bool addParticle(Molecule* particle_ptr);
 
-	Molecule& moleculesAt(std::vector<Molecule>::size_type i) {
+	Molecule& moleculesAt(std::vector<Molecule *>::size_type i) {
 		return *_molecules.at(i);
 	}
 
