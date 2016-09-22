@@ -216,7 +216,7 @@ public:
 	 * @param direction
 	 * @param v
 	 */
-	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const = 0;
+	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) = 0;
 
 	virtual double getCutoff() = 0;
 

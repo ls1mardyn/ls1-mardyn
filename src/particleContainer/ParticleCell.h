@@ -66,27 +66,11 @@ public:
 		return *_molecules.at(i);
 	}
 
-	std::vector<Molecule *>::iterator moleculesBegin() {
-		return _molecules.begin();
-	}
-
-	std::vector<Molecule *>::const_iterator moleculesCBegin() const {
-		return _molecules.cbegin();
-	}
-
-	std::vector<Molecule *>::iterator moleculesEnd() {
-		return _molecules.end();
-	}
-
-	std::vector<Molecule *>::const_iterator moleculesCEnd() const {
-		return _molecules.cend();
-	}
-
 	bool isEmpty() const;
 
-	bool deleteMolecule(unsigned long molid);
+	bool deleteMoleculeByID(unsigned long molid);
 
-	bool deleteMolecule(std::vector<Molecule * >::iterator& pos);
+	bool deleteMoleculeByIndex(std::vector<Molecule *>::size_type index);
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;

@@ -279,12 +279,11 @@ unsigned LinkedCells::countParticles(unsigned int cid) {
 	for (unsigned i = 0; i < _cells.size(); i++) {
 		ParticleCell& currentCell = _cells[i];
 		if (!currentCell.isHaloCell()) {
-			for (auto mIt = currentCell.moleculesBegin();
-					mIt != currentCell.moleculesEnd();
-					mIt++) {
-
-				if ((*mIt)->componentid() == cid)
-					N++;
+			const int numMols = currentCell.getMoleculeCount();
+			for (int i = 0; i < numMols; ++i) {
+				Molecule& m = currentCell.moleculesAt(i);
+				if(m.componentid() == cid)
+					++N;
 			}
 		}
 	}
@@ -342,21 +341,19 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
 				ParticleCell& currentCell = _cells[cellid];
 				if (currentCell.isHaloCell())
 					continue;
+
+				const int numMols = currentCell.getMoleculeCount();
 				if (individualCheck) {
-					for (auto mIt = currentCell.moleculesBegin();
-							mIt != currentCell.moleculesEnd();
-							mIt++) {
-						if ((*mIt)->inBox(cbottom, ctop)
-								and ((*mIt)->componentid() == cid)) {
-							N++;
-						}
+					for (int i = 0; i < numMols; ++i) {
+						Molecule& m = currentCell.moleculesAt(i);
+						if(m.inBox(cbottom, ctop) and m.componentid() == cid)
+							++N;
 					}
 				} else {
-					for (auto mIt = currentCell.moleculesBegin();
-							mIt != currentCell.moleculesEnd();
-							mIt++) {
-						if ((*mIt)->componentid() == cid)
-							N++;
+					for (int i = 0; i < numMols; ++i) {
+						Molecule& m = currentCell.moleculesAt(i);
+						if(m.componentid() == cid)
+							++N;
 					}
 				}
 			}
@@ -559,8 +556,8 @@ MoleculeIterator LinkedCells::nextNonEmptyCell() {
 	} while (_cellIterator != cellsEnd and _cellIterator->isEmpty());
 
 	if (_cellIterator != cellsEnd) {
-		_particleIterator = _cellIterator->moleculesBegin();
-		ret = *_particleIterator;
+		_particleIndex = 0;
+		ret = &(_cellIterator->moleculesAt(_particleIndex));
 	}
 
 	return ret;
@@ -574,8 +571,8 @@ MoleculeIterator LinkedCells::begin() {
 	if (_cellIterator->isEmpty()) {
 		ret = nextNonEmptyCell();
 	} else {
-		_particleIterator = _cellIterator->moleculesBegin();
-		ret = *_particleIterator;
+		_particleIndex = 0;
+		ret = &(_cellIterator->moleculesAt(_particleIndex));
 	}
 
 	return ret;
@@ -584,10 +581,10 @@ MoleculeIterator LinkedCells::begin() {
 MoleculeIterator LinkedCells::next() {
 	MoleculeIterator ret = LinkedCells::end();
 
-	++_particleIterator;
+	++_particleIndex;
 
-	if (_particleIterator != _cellIterator->moleculesEnd()) {
-		ret = *_particleIterator;
+	if (_particleIndex != static_cast<std::vector<Molecule *>::size_type>(_cellIterator->getMoleculeCount())) {
+		ret = &(_cellIterator->moleculesAt(_particleIndex));
 	} else {
 		ret = nextNonEmptyCell();
 	}
@@ -596,19 +593,19 @@ MoleculeIterator LinkedCells::next() {
 }
 
 MoleculeIterator LinkedCells::current() {
-	return *_particleIterator;
+	return &(_cellIterator->moleculesAt(_particleIndex));
 }
 
 MoleculeIterator LinkedCells::end() {
-	return NULL;
+	return nullptr;
 }
 
 MoleculeIterator LinkedCells::deleteCurrent() {
-	_cellIterator->deleteMolecule(_particleIterator);
+	_cellIterator->deleteMoleculeByIndex(_particleIndex);
 
 	MoleculeIterator ret;
-	if (_particleIterator != _cellIterator->moleculesEnd()) {
-		ret = *_particleIterator;
+	if (_particleIndex != static_cast<std::vector<Molecule *>::size_type>(_cellIterator->getMoleculeCount())) {
+		ret = &(_cellIterator->moleculesAt(_particleIndex));
 	} else {
 		ret = nextNonEmptyCell();
 	}
@@ -672,10 +669,9 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 			cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
 		ParticleCell& currentCell = _cells[*cellIndexIter];
 		// loop over all molecules in the cell
-		for (particleIter = currentCell.moleculesBegin();
-				particleIter != currentCell.moleculesEnd();
-				++particleIter) {
-			haloParticlePtrs.push_back(*particleIter);
+		const int numMols = currentCell.getMoleculeCount();
+		for (int i = 0; i < numMols; ++i) {
+			haloParticlePtrs.push_back(&(currentCell.moleculesAt(i)));
 		}
 	}
 }
@@ -701,7 +697,12 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
 				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
-				v.insert(v.end(), cell.moleculesBegin(), cell.moleculesEnd());
+
+				const int numMols = cell.getMoleculeCount();
+				for (int i = 0; i < numMols; ++i) {
+					v.push_back(&(cell.moleculesAt(i)));
+				}
+
 				if (removeFromContainer == true) {
 					cell.removeAllParticles();
 				}
@@ -711,7 +712,7 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 }
 
 void LinkedCells::getBoundaryParticlesDirection(int direction,
-		std::vector<Molecule*>& v) const {
+		std::vector<Molecule*>& v) {
 	assert(direction != 0);
 
 	int startIndex[3] = { 0, 0, 0 };
@@ -732,8 +733,11 @@ void LinkedCells::getBoundaryParticlesDirection(int direction,
 		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
 				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				const ParticleCell & cell = _cells[cellIndex];
-				v.insert(v.end(), cell.moleculesCBegin(), cell.moleculesCEnd());
+				ParticleCell & cell = _cells[cellIndex];
+				int numMols = cell.getMoleculeCount();
+				for (int i = 0; i < numMols; ++i) {
+					v.push_back(&(cell.moleculesAt(i)));
+				}
 			}
 		}
 	}
@@ -1181,7 +1185,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 		global_simulation->exit(1);
 	}
 
-	bool found = this->_cells[hash].deleteMolecule(molid);
+	bool found = this->_cells[hash].deleteMoleculeByID(molid);
 
 	if (!found) {
 		global_log->error_always_output() << "could not delete molecule " << molid << "."

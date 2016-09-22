@@ -77,7 +77,7 @@ int ParticleCell::getMoleculeCount() const {
 	return _molecules.size();
 }
 
-bool ParticleCell::deleteMolecule(unsigned long molecule_id) {
+bool ParticleCell::deleteMoleculeByID(unsigned long molecule_id) {
 	bool found = false;
 	vector<Molecule*>::iterator molecule_iter;
 
@@ -92,13 +92,14 @@ bool ParticleCell::deleteMolecule(unsigned long molecule_id) {
 	return found;
 }
 
-bool ParticleCell::deleteMolecule(std::vector<Molecule * >::iterator& pos) {
-	assert(pos >= moleculesBegin());
-	assert(pos < moleculesEnd());
+bool ParticleCell::deleteMoleculeByIndex(std::vector<Molecule * >::size_type index) {
+//	assert(index >= 0); - this is always true now
+	assert(index < _molecules.size());
 
 	bool found = true;
-	delete *pos;
-	UnorderedVector::fastRemove(_molecules, pos);
+	std::vector<Molecule *>::iterator it = _molecules.begin() + index;
+	delete *it;
+	UnorderedVector::fastRemove(_molecules, it);
 	return found;
 }
 

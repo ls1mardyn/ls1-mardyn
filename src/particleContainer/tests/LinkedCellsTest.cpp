@@ -87,7 +87,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	LC._cellIterator = cells.begin() + 1;
 	molIt = LC.nextNonEmptyCell();
 	ASSERT_TRUE_MSG("nextNonEmpty::_cellIterator", LC._cellIterator == LC._cells.begin() + 3);
-	ASSERT_TRUE_MSG("nextNonEmpty::_particleIterator", (*LC._particleIterator)->id() == 4ul);
+	ASSERT_TRUE_MSG("nextNonEmpty::_particleIterator", LC.current()->id() == 4ul);
 	ASSERT_TRUE_MSG("nextNonEmpty::return", molIt->id() == 4ul);
 
 	// BEGIN:
@@ -112,7 +112,7 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	molIt = LC.begin();
 
 	molIt = LC.deleteCurrent();
-	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 3ul); // 3 copied in place of 1
+	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->id()); // 3 copied in place of 1
 	molIt = LC.deleteCurrent();
 	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 2ul); // 2 copied in place of 3
 	molIt = LC.deleteCurrent();

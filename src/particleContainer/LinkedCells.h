@@ -183,7 +183,7 @@ public:
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
 	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false);
-	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) const;
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v);
 
 
 	// documentation see father class (ParticleContainer.h)
@@ -338,7 +338,7 @@ private:
 #else
 
 	std::vector<ParticleCell>::iterator _cellIterator;
-	std::vector<Molecule*>::iterator _particleIterator;
+	std::vector<Molecule*>::size_type _particleIndex;
 #endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
