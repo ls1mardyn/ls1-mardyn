@@ -805,7 +805,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 		MPI_CHECK( MPI_Group_free(&newGroup));
 		MPI_CHECK( MPI_Comm_free(&newComm) );
 		MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, deviationChildren, 2, MPI_DOUBLE, MPI_SUM, commGroup));  // reduce the deviations
-		// TODO hetero: check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
+		// TODO hetero (Steffen): check whether there really has to be an allreduce (sum), since each of the processes should already possess the deviations of all its children.
 		//       with the allreduce (sum) implementation trees with a low maximal level are preferred (balanced trees).
 		//		 shouldn't this better be an average????
 		(*iter)->_child1->_deviation = deviationChildren[0];
