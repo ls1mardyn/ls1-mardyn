@@ -95,7 +95,7 @@ public:
 	//! @param d x direction (0), y direction (1), or z direction (2)
 	double getUniformAcceleration(unsigned int cosetid, unsigned short int d);
 	//! @brief calculates globalN and globalVelocitySum
-	void prepare_getMissingVelocity(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cosetid, unsigned numberOfComp);
+	void prepare_getMissingVelocity(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cosetid, unsigned numberOfComp, unsigned directedVelTime);
 	//! @brief returns the difference between the desired velocity and the global average velocity
 	double getMissingVelocity(unsigned int cosetid, unsigned short int d); 
 	//! @brief total number of particles that belong to the specified component set
@@ -106,6 +106,9 @@ public:
 	double getShearRateBox(int d) { return this->_shearRateBox[d]; }
 	double getShearRate() { return this->_shearRate; }
 	unsigned getShearComp() { return this->_shearComp; }
+	double getDirectedShearVel(unsigned yun) {return this->_directedShearVel[yun]; }
+	double getDirectedShearVelAverage(unsigned yun) {return this->_directedShearVelAverage[yun]; }
+	void prepareShearRate(ParticleContainer* molCont, DomainDecompBase* domainDecomp, unsigned directedVelTime);
 	
 	//! @brief returns the component -> set ID map
 	std::map<unsigned int, unsigned int> getComponentSets() { return this->_universalComponentSetID; }
@@ -216,5 +219,22 @@ private:
 	double _shearRate;
 	/// component that is sheared
 	unsigned _shearComp;
+	std::map<unsigned int, long double> _directedShearVel;
+	std::map<unsigned int, long double> _directedShearVelAverage;
+	std::map<unsigned int, unsigned long> _localShearN;
+	std::map<unsigned int, unsigned long> _globalShearN;
+	std::map<unsigned int, long double> _localShearVelocitySum;
+	std::map<unsigned int, long double> _globalShearVelocitySum;
+	std::map<unsigned int, long double> _averagedShearVelocitySum;
+	std::map<unsigned int, unsigned long> _averagedShearN;
+	std::map<unsigned int, std::deque<long double> > _globalPriorShearVelocitySums;
+	std::map<unsigned int, std::deque<unsigned long> > _globalPriorShearN;
+        
+        std::map<unsigned int, long double> _directedAccVel[3];
+	std::map<unsigned int, long double> _directedAccVelAverage[3];
+	std::map<unsigned int, long double> _averagedAccVelocitySum[3];
+	std::map<unsigned int, unsigned long> _averagedAccN;
+	std::map<unsigned int, std::deque<long double> > _globalPriorAccVelocitySums[3];
+	std::map<unsigned int, std::deque<unsigned long> > _globalPriorAccN;
 };	
 #endif /* PRESSUREGRADIENT_H_ */

@@ -934,10 +934,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> dirVelTime;
 			_directedVelocityTime = dirVelTime;
 			_boolDirectedVel = true;
-			global_log->info() << "Directed velocity is ";
-			if(_boolDirectedVel != true)
-			  global_log->info() << "not ";
-			global_log->info() << "calculated each " << _directedVelocityTime << " timesteps." << endl;
+			global_log->info() << "Directed velocity is calculated each " << _directedVelocityTime << " timesteps." << endl;
 		} else if (token == "slabProfile") {	// records discrete information about temperature, density and velocity averaged over in-plane-direction
 			unsigned xun, yun, zun;
 			inputfilestream >> xun >> yun >> zun;
@@ -1000,6 +997,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			cid--;
 			_doRecordConfinement = true;
 			_domain->setupConfinementProperties(wallThickness, horDist, vertDist, radius2, cid, xmax, ymax, zmax, upperID, lowerID);
+		} else if (token == "confinementPropertiesFixedArea") {	// 
+			double xmin, xmax, ymin, ymax, zmax;
+			int cid;
+			inputfilestream >> xmin >> xmax >> ymin >> ymax >> zmax >> cid;
+			cid--;
+			_doRecordConfinement = true;
+			_domain->setupConfinementPropertiesFixed(xmin, xmax, ymin, ymax, zmax, cid);
 		} else if (token == "confinementProfile") { /* TODO: suboption of confinementProperties */
 			unsigned xun, yun;
 			double correlationLength = 1.0;
@@ -1241,6 +1245,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			this->setTersoffCutoff(rc);
 		} else if (token == "ultra") {
                         ultra = true;
+		} else if (token == "cancelMomentum") {
+                        _cancelMomentum = true;
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token "
@@ -1508,6 +1514,10 @@ void Simulation::simulate() {
 		HeatFlux << "#A_Comp_2 (upper plate) " << 2*_domain->getGlobalLength(0)*_domain->getGlobalLength(2) << "\n" << "#A_Comp_3 (lower plate)" << 2*((_domain->getConfinementEdge(1)-_domain->getConfinementEdge(0)) + _domain->get_confinementMidPoint(3))*_domain->getGlobalLength(2) << "\n\n";
 		HeatFlux << "#Comp_1 (fluid) " << _domain->getThermostat(0) << "\n#Comp_2 (upper plate) " << _domain->getThermostat(1) << "\n#Comp_3 (lower plate) " <<  _domain->getThermostat(2) << "\n\n";
 		HeatFlux << "#step\t\t\tQ_ThT_ges\tQ_ThT_1\tQ_ThT_2\tQ_ThT_3\n\n";
+		
+		//Check discjunction of thermostat layers
+		if(_domain->isThermostatLayer() == true)
+		  _domain->checkThermostatLayerDisjunct();
 	}
 	
 		
@@ -1558,9 +1568,6 @@ void Simulation::simulate() {
                       }
                    }
                 }
-		
-		if(_domainDecomposition->getRank() == 0) 
-		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
 		
 		// initialize Hardy stresses
 		  if(_HardyStress && _simstep >= this->_initStatistics)
@@ -1614,9 +1621,9 @@ void Simulation::simulate() {
 		unsigned long timeStepForce = 1000;
 		if(_simstep%timeStepForce == 0 /*&& _simstep >= _initStatistics*/){
 		    string moved ("moved");
-		    int cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+		    unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
 		    cid--;
-		    if (cid >= 0){
+		    if (cid >= 0 && cid < _domain->getNumberOfComponents()){
 		      if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
 		       _pressureGradient->collectForcesOnComponent(_domainDecomposition, cid);
 		      if(_simstep == timeStepForce && _pressureGradient->isSpringDamped())
@@ -1840,9 +1847,13 @@ void Simulation::simulate() {
 		// Inform the integrator about the calculated forces
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
+		
+		if(_domainDecomposition->getRank() == 0) 
+		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
+		
 		// shear rate accelerates the fluid
 		if(_doShearRate)
-			_integrator->shearRate(_moleculeContainer, _domain);
+			_integrator->shearRate(_domainDecomposition, _moleculeContainer, _domain);
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
 				global_log->debug() << "Determine the additional acceleration"
@@ -1869,7 +1880,7 @@ void Simulation::simulate() {
 			      _pressureGradient->setGlobalVelSumAfterAcc(d, cid, 0);
 			  }
 			}
-			if(cid >= 0 && _domainDecomposition->getRank()==0 && _simstep%timeStepForce == 0){
+			if(cid >= 0 && cid < _domain->getNumberOfComponents() && _domainDecomposition->getRank()==0 && _simstep%timeStepForce == 0){
 			    double tmp_molecularMass = global_simulation->getEnsemble()->component(cid)->m();
 			    ForceData << "\t\t\t\t" << (_pressureGradient->getGlobalVelSumAfterAcc(0, cid)-_pressureGradient->getGlobalVelSumBeforeAcc(0, cid))/(timeStepForce*getTimeStepLength())*_pressureGradient->getGlobalN(cid)*tmp_molecularMass;
 			    ForceData << "\t\t\t\t" << _pressureGradient->getGlobalVelSumBeforeAcc(0, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumBeforeAcc(1, cid)/timeStepForce << " " << _pressureGradient->getGlobalVelSumBeforeAcc(2, cid)/timeStepForce;
@@ -1882,6 +1893,10 @@ void Simulation::simulate() {
 		  }
 		}
 		
+		// Calculate directed velocities
+		if(_boolDirectedVel == true)
+		  _velocityScalingThermostat.calculateDirectedVelocities(_moleculeContainer, _domainDecomposition);
+		
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
@@ -1892,8 +1907,8 @@ void Simulation::simulate() {
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
 				_velocityScalingThermostat.enableComponentwise();
-				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->components()->size(); cid++) {
-					int thermostatId = _domain->getThermostat(cid);
+				for(int thermostatId = 1; thermostatId <= _domain->maxThermostat(); thermostatId++) {
+					unsigned int cid = _domain->getCidToThermostat(thermostatId);
 					if(_domain->isScaling1Dim(thermostatId) && _domain->getAlphaTransCorrection(thermostatId) == false){
 					      _velocityScalingThermostat.setAlphaTrans(thermostatId, _domain->getGlobalAlphaTrans(thermostatId));
 					      _velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
@@ -1919,7 +1934,6 @@ void Simulation::simulate() {
 				/* TODO */
 				// Undirected global thermostat not implemented!
 			}
-
 			_velocityScalingThermostat.apply(_moleculeContainer, _domainDecomposition);
 			// Control of velocity after thermostat scaling
 			if(_simstep >= _initStatistics){
@@ -1931,8 +1945,8 @@ void Simulation::simulate() {
 			      for(int d = 0; d < 3; d++)
 				  _pressureGradient->setGlobalVelSumAfterThT(d, cid, 0);
 			    }
-			    if(cid >= 0){
-			      _pressureGradient->prepare_getMissingVelocity(_domainDecomposition, _moleculeContainer, cid, _domain->getNumberOfComponents());
+			    if(cid >= 0 && cid < _domain->getNumberOfComponents()){  
+			      _pressureGradient->prepare_getMissingVelocity(_domainDecomposition, _moleculeContainer, cid, _domain->getNumberOfComponents(), getDirectedVelocityTime());
 			      for(int d = 0; d < 3; d++)
 				_pressureGradient->addGlobalVelSumAfterThT(d, cid, _pressureGradient->getGlobalVelSum(d,cid) / _pressureGradient->getGlobalN(cid));
 			
@@ -1941,11 +1955,13 @@ void Simulation::simulate() {
 				for(int d = 0; d < 3; d++)
 				    _pressureGradient->setGlobalVelSumAfterThT(d, cid, 0);
 			      }
+			      
 			    }
 			}
 		}
+		
 		advanceSimulationTime(_integrator->getTimestepLength());
-
+		
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
@@ -1959,11 +1975,12 @@ void Simulation::simulate() {
 		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
 			<< endl;
 		/* END PHYSICAL SECTION */
-
+		
 		// measure per timestep IO
 		loopTimer.stop();
 		perStepIoTimer.start();
 		output(_simstep);
+		
 		// Writing confinement Properties as output
 		if((_simstep > _initStatistics) && _doRecordConfinement && !(_simstep % _confinementOutputTimesteps)){
 		  _domain->collectConfinementProperties(_domainDecomposition);
@@ -2031,6 +2048,12 @@ void Simulation::simulate() {
 		if(_domainDecomposition->getRank()==0 && /*(_simstep > _initStatistics) &&*/ _doRecordBulkPressure && !(_simstep % _bulkPressureOutputTimesteps)){
 		    BulkPressure << _simstep << "\t\t\t" << _domain->getGlobalBulkPressure() << "\t\t\t" << _domain->getGlobalBulkDensity() << "\t\t\t" << _domain->getGlobalBulkTemperature() << endl;
 		}
+		
+		// Cancelling momentum for each component seperately 
+		if(_cancelMomentum)
+		  _domain->cancelMomentum(_domainDecomposition, _moleculeContainer);
+		
+		
 		if(_forced_checkpoint_time >= 0 && (loopTimer.get_etime() + ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
@@ -2179,7 +2202,7 @@ void Simulation::output(unsigned long simstep) {
 		    _domain->setGlobalBulkPressure(bulkPressure);
 		    _domain->setGlobalBulkDensity(_domain->getBulkN()/(_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()));
 		    _domain->setGlobalBulkTemperature(_domain->getPressureKin()/(3*_domain->getBulkN()));
-		    cout << "BP: " << bulkPressure << " PV: " << _domain->getPressureVirial()/(3*_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()) << " PK: " << _domain->getPressureKin()/(3*_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()) << " rho: " << _domain->getBulkN()/(_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()) << " T: " << _domain->getPressureKin()/(3*_domain->getBulkN()) << " Data: " << _domain->getAccumulatedDatasetsBulkPressure() << endl;
+		    //cout << "BP: " << bulkPressure << " PV: " << _domain->getPressureVirial()/(3*_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()) << " PK: " << _domain->getPressureKin()/(3*_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()) << " rho: " << _domain->getBulkN()/(_domain->getBulkVolume() * _domain->getAccumulatedDatasetsBulkPressure()) << " T: " << _domain->getPressureKin()/(3*_domain->getBulkN()) << " Data: " << _domain->getAccumulatedDatasetsBulkPressure() << endl;
 		}
 		_domain->resetBulkPressure();
 	}
@@ -2275,8 +2298,9 @@ void Simulation::initialize() {
 	_doRecordConfinement = false;
 	_doRecordStressProfile = false;
 	_doShearRate = false;
+	_cancelMomentum = false;
 	_boolDirectedVel = false;
-	_directedVelocityTime = 100;
+	_directedVelocityTime = 1000;
 	_HardyStress = false;
 	_HardyConfinement = false;
 	_weightingStress = string("Linear");
@@ -2300,3 +2324,11 @@ void Simulation::initialize() {
         
         this->_mcav = map<unsigned, CavityEnsemble>();
 }
+
+
+// for Velocity Scaling apply()
+unsigned Simulation::getCIDMovement(std::string moveStyle, unsigned numberOfComp){ return _domain->getPG()->getCidMovement(moveStyle, numberOfComp); }
+
+bool Simulation::isAcceleratingInstantaneously(){ return _domain->getPG()->isAcceleratingInstantaneously(_domain->getNumberOfComponents()); }
+
+double Simulation::getMovedVel(int d, unsigned cid){ return _domain->getPG()->getGlobalVelSum(d,cid) / _domain->getPG()->getGlobalN(cid); }

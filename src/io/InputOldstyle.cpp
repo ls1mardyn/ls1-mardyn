@@ -87,6 +87,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			// set current simulation time
 			_phaseSpaceHeaderFileStream >> token;
 			_simulation.setSimulationTime( strtod(token.c_str(), NULL) );
+                        _simulation.setSimulationStart( strtod(token.c_str(), NULL) );
 		}
 		else if((token == "Temperature") || (token == "T")) {
 			// set global thermostat temperature
@@ -127,6 +128,19 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			if( thermostat_id < 0 ) // thermostat IDs start with 0
 				continue;
 			domain->setComponentThermostat( component_id, thermostat_id );
+		}
+		else if(token == "ThLayer") {
+			// specify a thermostat for a component
+			if( !domain->severalThermostats() )
+				domain->enableLayerwiseThermostat();
+			int thermostat_id;
+			double xmin, xmax, ymin, ymax, zmin, zmax;
+			_phaseSpaceHeaderFileStream >> thermostat_id >> xmin >> xmax >> ymin >> ymax >> zmin >> zmax;
+			if( thermostat_id < 0 ) // thermostat IDs start with 0
+				continue;
+			if(xmin >= xmax || ymin >= ymax || zmin >= zmax)
+			  global_log->info() << "Layer definition is wrong. It has to be: xmin < xmax, ymin < ymax and zmin < zmax." << endl;
+			domain->setThermostatLayer( thermostat_id, xmin, xmax, ymin, ymax, zmin, zmax );
 		}
 		else if(token == "oneDim") {
 			// set up a one-dimensional thermostat

@@ -91,8 +91,6 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_alphaTransCorrection = map<int, bool>();
 	this->_stressCalc = map<int, bool>();
 	for(unsigned cid = 0; cid < getNumberOfComponents(); cid++){
-	  this->_scale_v_1Dim[cid] = false;
-	  this->_alphaTransCorrection[cid] = false;
 	  this->_stressCalc[cid] = false;
 	  this->_universalProfiledComponents[cid] = false;
 	  this->_universalProfiledComponentsSlab[cid] = false;
@@ -102,7 +100,14 @@ Domain::Domain(int rank, PressureGradient* pg){
 	  this->_confinementComponent[cid] = false;
 	  this->_confinementComponentHardy[cid] = false;
 	}
+	this->_enableThermostatLayers = false;
+	for(int cid = 0; cid < maxThermostat(); cid++){
+	  this->_scale_v_1Dim[cid] = false;
+	  this->_alphaTransCorrection[cid] = false;
+	}
+	
 	this->_isConfinement = false;
+	this->_confinementAreaFixed = false;
 	this->_confinementRecordingTimesteps = 0.0;
 	this->_local2KETrans_1Dim[0] = 0.0;
 	this->_universalATrans = map<int, double>();
@@ -262,7 +267,6 @@ void Domain::calculateGlobalValues(
         VIILL = domainDecomp->collCommGetDouble();
         VIILM = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
-
 	/* FIXME: why should process 0 do this alone? 
 	 * we should keep symmetry of all proccesses! */
 	// Process 0 has to add the dipole correction:
@@ -278,9 +282,8 @@ void Domain::calculateGlobalValues(
 	/*
 	 * thermostat ID 0 represents the entire system
 	 */
-
 	map<int, unsigned long>::iterator thermit;
-	if( _componentwiseThermostat )
+	if( _componentwiseThermostat || _enableThermostatLayers)
 	{ 
 #ifndef NDEBUG
 		global_log->debug() << "* applying a componentwise thermostat" << endl;
@@ -339,6 +342,7 @@ void Domain::calculateGlobalValues(
 		numMolecules = domainDecomp->collCommGetUnsLong();
 		rotDOF = domainDecomp->collCommGetUnsLong();
 		domainDecomp->collCommFinalize();
+		if(!this->_localRank)
 		global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF 
 			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << endl;
 			
@@ -358,7 +362,7 @@ void Domain::calculateGlobalValues(
 		if((Ti > 0.0) && (numMolecules > 0) && !_universalNVE && getSimstep()>=_thermostatTimeSlot[0][thermit->first] && getSimstep()<=_thermostatTimeSlot[1][thermit->first])
 		{
 			_universalBTrans[thermit->first] = pow(3.0*numMolecules*Ti / summv2, 0.4);
-			_universalThT_heatFlux[thermit->first] += summv2 - 3.0*numMolecules*Ti;
+			_universalThT_heatFlux[thermit->first] += 0.5*(summv2 - 3.0*numMolecules*Ti);
 			if(_scale_v_1Dim[thermit->first]){ 
 			  _universalATrans[thermit->first] = pow((3.0*numMolecules*Ti - summv2) / summv2_1Dim + 1, 0.4);
 			  this->_alphaTransCorrection[thermit->first] = false;
@@ -384,7 +388,7 @@ void Domain::calculateGlobalValues(
 		// heuristic handling of the unfortunate special case of an explosion in the system
 		if( ( (_universalBTrans[thermit->first] < MIN_BETA) || (_universalBRot[thermit->first] < MIN_BETA) )
 				&& (0 >= _universalSelectiveThermostatError) )
-		{
+		{	
 			global_log->warning() << "Explosion!" << endl;
 			global_log->debug() << "Selective thermostat will be applied to set " << thermit->first
 				<< " (beta_trans = " << this->_universalBTrans[thermit->first]
@@ -491,14 +495,13 @@ void Domain::calculateGlobalValues(
 		this->_universalSelectiveThermostatWarning--;
 	if(this->_universalSelectiveThermostatError > 0)
 		this->_universalSelectiveThermostatError--;
-
 }
 
 void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
 	Molecule* tM;
-	if(this->_componentwiseThermostat)
-	{				
+	if(this->_componentwiseThermostat || this->_enableThermostatLayers)
+	{		
 		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
 				thit != _universalUndirectedThermostat.end();
 				thit ++ )
@@ -510,7 +513,10 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
-			if(this->_universalUndirectedThermostat[thermostat])
+			if(isThermostatLayer() == true){
+			  thermostat = moleculeInLayer(tM->r(0), tM->r(1), tM->r(2));
+			}
+			if(this->_universalUndirectedThermostat[thermostat] && thermostat != -10)
 			{
 				for(int d=0; d < 3; d++)
 					_localThermostatDirectedVelocity[d][thermostat] += tM->v(d);
@@ -531,16 +537,17 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
 	Molecule* tM;
-
-	if(this->_componentwiseThermostat)
-	{
+	if(this->_componentwiseThermostat || this->_enableThermostatLayers)
+	{	
 		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
+			if(isThermostatLayer() == true)
+			  thermostat = moleculeInLayer(tM->r(0), tM->r(1), tM->r(2));
 			this->_localThermostatN[thermostat]++;
 			this->_localRotationalDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
-			if(this->_universalUndirectedThermostat[thermostat])
+			if(this->_universalUndirectedThermostat[thermostat]  && thermostat != -10)
 			{
 				tM->calculate_mv2_Iw2( this->_local2KETrans[thermostat],
 						this->_local2KERot[thermostat],
@@ -591,8 +598,9 @@ void Domain::writeCheckpoint( string filename,
 		checkpointfilestream << "\n";
 		checkpointfilestream << "currentTime\t" << _simulation.getSimulationTime() << endl;
 		checkpointfilestream << "Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
-		if(this->_componentwiseThermostat)
+		if(this->_componentwiseThermostat || this->_enableThermostatLayers)
 		{
+		    if(!this->_enableThermostatLayers){
 			for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
 					thermit != this->_componentToThermostatIdMap.end();
 					thermit++ )
@@ -601,6 +609,7 @@ void Domain::writeCheckpoint( string filename,
 				checkpointfilestream << "CT\t" << 1+thermit->first
 					<< "\t" << thermit->second << "\n";
 			}
+		    }
 			for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
 					Tit != this->_universalTargetTemperature.end();
 					Tit++ )
@@ -608,7 +617,16 @@ void Domain::writeCheckpoint( string filename,
 				if((0 >= Tit->first) || (0 >= Tit->second)) continue;
 				checkpointfilestream << "ThT " << Tit->first << "\t" << Tit->second << "\n";
 			}
-			
+		    if(this->_enableThermostatLayers){
+			for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
+					Tit != this->_universalTargetTemperature.end();
+					Tit++ )
+			{
+				if((0 >= Tit->first) || (0 >= Tit->second)) continue;
+				checkpointfilestream << "ThLayer " << Tit->first << "\t" << _thermostatLayer[0][Tit->first] << "\t" << _thermostatLayer[1][Tit->first] << "\t"
+				<< _thermostatLayer[2][Tit->first] << "\t" << _thermostatLayer[3][Tit->first] << "\t" <<  _thermostatLayer[4][Tit->first] << "\t" << _thermostatLayer[5][Tit->first] << "\n";
+			}
+		    }
 			for( map<int, int>::iterator ThTime = this->_componentToThermostatIdMap.begin(); 
 					ThTime != this->_componentToThermostatIdMap.end();
 					ThTime++ )
@@ -686,8 +704,8 @@ void Domain::writeCheckpoint( string filename,
 #endif
 		if(this->_globalUSteps > 1)
 		{
-			if(getPG()->isSpringDamped())
-			    checkpointfilestream << "# ";
+			//if(getPG()->isSpringDamped())
+			checkpointfilestream << "#";
 			checkpointfilestream << setprecision(13);
 			checkpointfilestream << "I\t" << this->_globalUSteps << " "
 				<< this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
@@ -2398,6 +2416,7 @@ void Domain::setupConfinementProperties(double wallThickness, double horDist, do
 	midPoint_y1 = wallThickness + vertDist;
 	
 	//this->_isConfinement = true;
+	this->_confinementAreaFixed = false;
 	
 	this->_confinementMidPointID[0] = upperID;
 	this->_confinementMidPointID[1] = lowerID;
@@ -2424,6 +2443,34 @@ void Domain::setupConfinementProperties(double wallThickness, double horDist, do
 	this->_confinementComponentHardy[0] = true;
 }
 
+void Domain::setupConfinementPropertiesFixed(double xmin, double xmax, double ymin, double ymax, double zmax, int cid)
+{
+	this->_confinementAreaFixed = true;
+	this->_confinementMidPointID[0] = 0;
+	this->_confinementMidPointID[1] = 0;
+	this->_confinementEdge[0] = xmin;
+	this->_confinementEdge[1] = xmax;
+	this->_confinementEdge[2] = zmax;
+	this->_confinementEdge[3] = 0.0;
+	this->_confinementEdge[4] = ymax-ymin;
+	this->_confinementEdge[5] = 0.0;
+	this->_confinementMidPoint[0] = xmax;
+	this->_confinementMidPoint[1] = ymax;
+	this->_confinementMidPoint[2] = xmin;
+	this->_confinementMidPoint[3] = ymin;
+	
+	if (cid < 0){
+	  // if (cid < 0) confinement properties of all components are recorded and the area of recording is enlarged including both walls
+	  this->_confinementEdge[5] = 0.0;
+	  for (unsigned compID = 0; compID < getNumberOfComponents(); compID++)
+	    this->_confinementComponent[compID] = true;
+	}else{
+	    this->_confinementComponent[cid] = true;
+	}
+	//FIXME Hardy is always just applied to component 1 (cid = 0)
+	this->_confinementComponentHardy[0] = true;
+}
+
 void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlationLength)
 {
     // choice different stress calculation methods
@@ -2437,7 +2484,7 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
       
     // inverse step width of the increments (defining the elemental volumes)
     _universalInvProfileUnitConfinement[0] = _universalNProfileUnitsConfinement[0] / (this->_confinementEdge[1] - this->_confinementEdge[0]);
-    _universalInvProfileUnitConfinement[1] = _universalNProfileUnitsConfinement[1] / (this->_confinementEdge[4] + this->_confinementEdge[3] + 0.5*this->_confinementMidPoint[3] + 1.5*this->_confinementEdge[5]);
+    _universalInvProfileUnitConfinement[1] = _universalNProfileUnitsConfinement[1] / (this->_confinementEdge[4] + this->_confinementEdge[3] + 2*this->_confinementEdge[5]);
     _universalInvProfileUnitConfinement[2] = _universalNProfileUnitsConfinement[2] / _globalLength[2];
     
     // Hardy stress calculation is just valid for control volumes with certain correlation length
@@ -2446,7 +2493,6 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
     // choice different stress calculation methods
     if(this->_stressCalcMethodConfinement == hardy){
       this->_universalNProfileUnitsStressConfinement[0] = ceil((this->_confinementEdge[1] - this->_confinementEdge[0])/correlationLength);
-      //this->_universalNProfileUnitsStressConfinement[1] = ceil((this->_confinementEdge[4] + this->_confinementEdge[3] + 0.5*this->_confinementMidPoint[3] + 1.5*this->_confinementEdge[5])/correlationLength);
       this->_universalNProfileUnitsStressConfinement[1] = ceil((this->_confinementEdge[4])/correlationLength);
       this->_universalNProfileUnitsStressConfinement[2] = 1;
     
@@ -2469,8 +2515,6 @@ void Domain::setupConfinementProfile(unsigned xun, unsigned yun, double correlat
      size_t rows = 6, cols = this->_universalNProfileUnitsStressConfinement[0]*this->_universalNProfileUnitsStressConfinement[1];
      this->_localStressConfinement = this->allocStressMatrix(rows, cols);
      this->_globalStressConfinement = this->allocStressMatrix(rows, cols);
-     
-    // cout << " corL " << correlationLength << " xStr " << this->_universalNProfileUnitsStressConfinement[0] << " yStr " << this->_universalNProfileUnitsStressConfinement[1] << " zStr " << this->_universalNProfileUnitsStressConfinement[2] << " stressUNIDs " << cols << endl;
      
     
     if (this->_outputFormat == this->_all || this->_outputFormat == this->_matlab)
@@ -2514,7 +2558,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	unsigned cid_free =  getPG()->getCidMovement(free, getNumberOfComponents()) - 1;
 	
 	// finds once the IDs of the midpoint molecules of the asperities
-	if(simstep == initStatistics || this->_confinementMidPointID[0] == 0 || this->_confinementMidPointID[1] == 0){
+	if(simstep == initStatistics && (this->_confinementMidPointID[0] == 0 || this->_confinementMidPointID[1] == 0) && this->_confinementAreaFixed == false){
 	    int count1 = 0;
 	    int count2 = 0;
 	    double auxFactor = 1.0;
@@ -2534,11 +2578,11 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	      for(int d = 0; d < 3; d++){
 		thismol->setPressureVirialConfinement(d, 0.0);
 		thismol->setPressureKinConfinement(d, 0.0);
-		thismol->setDiffusiveHeatflux(d, 0.0);
 		thismol->setConvectivePotHeatflux(d, 0.0);
 		for(int e = 0; e < 3; e++){
 		  thismol->setVirialForceConfinement(d, e, 0.0);
 		  thismol->setVirialKinConfinement(d, e, 0.0);
+		  thismol->setDiffusiveHeatflux(d, e, 0.0);
 		}
 	      }
 	      thismol->clearVirialForceHardyConfinement();
@@ -2568,7 +2612,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 		if(this->_confinementComponent[cid] && thismol->r(0) >= this->_confinementEdge[0] && thismol->r(0) <= this->_confinementEdge[1] && thismol->r(1) >= this->_confinementMidPoint[3] - this->_confinementEdge[5] && thismol->r(1) <= this->_confinementMidPoint[1] + this->_confinementEdge[5])
 		{
 			std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > virialHardy = thismol->getVirialForceHardyConfinement();
-			std::map<unsigned, std::map<unsigned, double> > heatDiffHardy = thismol->getDiffusiveHeatfluxHardyConfinement();
+			std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > heatDiffHardy = thismol->getDiffusiveHeatfluxHardyConfinement();
 			xun = (unsigned)floor((thismol->r(0)-this->_confinementEdge[0]) * this->_universalInvProfileUnitConfinement[0]);
 			yun = (unsigned)floor((thismol->r(1)-(this->_confinementMidPoint[3]-this->_confinementEdge[5])) * this->_universalInvProfileUnitConfinement[1]); 
 			unID = xun * this->_universalNProfileUnitsConfinement[1] + yun;
@@ -2620,16 +2664,15 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			    for(std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >::iterator it=virialHardy.begin(); it!=virialHardy.end(); ++it){
 			      for(int d = 0; d < 3; d++)
 				for(int e = d; e < 3; e++){
-				  //if(weightingFrac > 1)
-				//	  cout << " unID " << it->first << " unID_Stress " << stressCalc_unID << " weightingFrac " << weightingFrac << endl;
 				  if(d == e){
 				    this->_localStressConfinement[d][it->first] += virialHardy[it->first][d][e];
-				    this->_localDiffusiveHeatflux[d][it->first] += heatDiffHardy[it->first][d];
+                                    for(int f = 0; f < 3; f++)
+                                      this->_localDiffusiveHeatflux[d][it->first] += heatDiffHardy[it->first][d][f]*(thismol->v(f) - thismol->getDirectedVelocityConfinement(f)); 
 				    // update just once per molecule
 				    if(it == virialHardy.begin()){
 				      this->_localStressConfinement[d][stressCalc_unID] += weightingFrac*thismol->getVirialKinConfinement(d, e);
 				      this->_localConvectiveKinHeatflux[d][stressCalc_unID] += 0.5 * mv2 * (thismol->v(d) - thismol->getDirectedVelocityConfinement(d)) * weightingFrac;
-				      this->_localConvectivePotHeatflux[d][stressCalc_unID] += thismol->getConvectivePotHeatflux(d) * weightingFrac;
+				      this->_localConvectivePotHeatflux[d][stressCalc_unID] += thismol->getConvectivePotHeatflux(d) * (thismol->v(d) - thismol->getDirectedVelocityConfinement(d)) * weightingFrac;
 				    }
 				  }else{
 				    this->_localStressConfinement[2+d+e][it->first] += virialHardy[it->first][d][e];
@@ -2646,9 +2689,10 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 				if(d == e){
 				   this->_localStressConfinement[d][stressCalc_unID] += thismol->getVirialForceConfinement(d, e);
 				   this->_localStressConfinement[d][stressCalc_unID] += thismol->getVirialKinConfinement(d, e);
-				   this->_localConvectivePotHeatflux[d][stressCalc_unID] += thismol->getConvectivePotHeatflux(d);
-				   this->_localDiffusiveHeatflux[d][stressCalc_unID] += thismol->getDiffusiveHeatflux(d);
+				   this->_localConvectivePotHeatflux[d][stressCalc_unID] += thismol->getConvectivePotHeatflux(d) * (thismol->v(d) - thismol->getDirectedVelocityConfinement(d));
 				   this->_localConvectiveKinHeatflux[d][stressCalc_unID] += 0.5 * mv2 * (thismol->v(d) - thismol->getDirectedVelocityConfinement(d));
+                                   for(int f = 0; f < 3; f++)
+                                       this->_localDiffusiveHeatflux[d][stressCalc_unID] += thismol->getDiffusiveHeatflux(d, f)*(thismol->v(f) - thismol->getDirectedVelocityConfinement(f));
 				}else{
 				   this->_localStressConfinement[2+d+e][stressCalc_unID] += thismol->getVirialForceConfinement(d, e);
 				   this->_localStressConfinement[2+d+e][stressCalc_unID] += thismol->getVirialKinConfinement(d, e);
@@ -2658,7 +2702,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			}
 		}
 		// positions of the asperity-midpoints are located to calculate the distance between the two plates and the confined volume
-		if(cid == cid_moved || cid == cid_fixed)
+		if(cid == cid_moved || cid == cid_fixed || this->_confinementAreaFixed == true)
 		{
 			xun = (unsigned)floor((thismol->r(0)-this->_confinementEdge[0]) * this->_universalInvProfileUnitConfinement[0]);
 			yun = (unsigned)floor((thismol->r(1)-(this->_confinementMidPoint[3]-this->_confinementEdge[5])) * this->_universalInvProfileUnitConfinement[1]); 
@@ -2686,6 +2730,11 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			  // highest molecule in lower plate bin
 			  if(cid == cid_fixed && _highLower[binID] < thismol->r(1) && thismol->r(1) <= this->_confinementMidPoint[1])
 			      _highLower[binID] = thismol->r(1);	
+			  
+			  if(this->_confinementAreaFixed == true){
+			    _lowUpper[binID] = this->_confinementMidPoint[1];
+			    _lowUpper[binID] = this->_confinementMidPoint[3];
+			  }
 			}
 		}
 				
@@ -2693,11 +2742,11 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	    for(int d = 0; d < 3; d++){
 		thismol->setPressureVirialConfinement(d, 0.0);
 		thismol->setPressureKinConfinement(d, 0.0);
-		thismol->setDiffusiveHeatflux(d, 0.0);
 		thismol->setConvectivePotHeatflux(d, 0.0);
 		for(int e = 0; e < 3; e++){
 		  thismol->setVirialForceConfinement(d, e, 0.0);
 		  thismol->setVirialKinConfinement(d, e, 0.0);
+		  thismol->setDiffusiveHeatflux(d, e, 0.0);
 		}
 	    }
 	    thismol->clearVirialForceHardyConfinement();
@@ -2705,13 +2754,14 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	  }
 	 
 	  // in the upper loop, just one to two CPUs are responsible to the finding of the midpoint coordinates; here this current value is communicated to all CPUs
-	  if(this->isShearRate() == false){
+	  if(this->isShearRate() == false && this->_confinementAreaFixed == false){
 	    dode->collCommInit(4);
 	    for(int i = 0; i < 4; i++)
 	      dode->collCommAppendDouble(confinementMidPointAux[i]);
 	    dode->collCommAllreduceSum();
-	    for(int i = 0; i < 4; i++)
+	    for(int i = 0; i < 4; i++){
 	      this->_confinementMidPoint[i] = (double)dode->collCommGetDouble();
+	    }
 	    dode->collCommFinalize();
 	  }
 	  this->_globalAccumulatedDatasets_ConfinementProperties++;
@@ -2720,44 +2770,45 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	  if(getSimstep() >= getBarostatTimeInit() && getSimstep() <= getBarostatTimeEnd())
 		this->_globalAccumulatedDatasets_barostat++;
 	  
-	  // calculate the distance between upper and lower plate in each bin	
-	  dode->collCommInit(1*unIDs_dist);
-	  for(binID = 0; binID < unIDs_dist; binID++)
-	  {
+	  
+	    // calculate the distance between upper and lower plate in each bin	
+	    dode->collCommInit(1*unIDs_dist);
+	    for(binID = 0; binID < unIDs_dist; binID++)
+	    {
 		dode->collCommAppendDouble(this->_lowUpper[binID]);
-	  }
-	  dode->collCommAllreduceMin();
-	  for(binID = 0; binID < unIDs_dist; binID++)
-	  {
+	    }
+	    dode->collCommAllreduceMin();
+	    for(binID = 0; binID < unIDs_dist; binID++)
+	    {
 		this->_lowUpper[binID] = (double)dode->collCommGetDouble();
 		// prevents outliers for averaging
-		if(this->_lowUpper[binID] == origLowUp){
+		if(this->_lowUpper[binID] == origLowUp && this->_confinementAreaFixed == false){
 		  if(binID == 0)
 		    this->_lowUpper[binID] = 0.0;
 		  else
 		    this->_lowUpper[binID] = this->_lowUpper[binID-1];
 		}
-	  }
-	  dode->collCommFinalize();
-	  dode->collCommInit(1*unIDs_dist);
-	  for(binID = 0; binID < unIDs_dist; binID++)
-	  {
+	    }
+	    dode->collCommFinalize();
+	    dode->collCommInit(1*unIDs_dist);
+	    for(binID = 0; binID < unIDs_dist; binID++)
+	    {
 		dode->collCommAppendDouble(this->_highLower[binID]);
-	  }
-	  dode->collCommAllreduceMax();
-	  for(binID = 0; binID < unIDs_dist; binID++)
-	  {
+	    }
+	    dode->collCommAllreduceMax();
+	    for(binID = 0; binID < unIDs_dist; binID++)
+	    {
 		this->_highLower[binID] = (double)dode->collCommGetDouble();
 		// prevents outliers for averaging
-		if(this->_highLower[binID] == origHiLow){
+		if(this->_highLower[binID] == origHiLow && this->_confinementAreaFixed == false){
 		  if(binID == 0)
 		    this->_highLower[binID] = 0.0;
 		  else
 		    this->_highLower[binID] = this->_highLower[binID-1];
 		}
-	  }
-	  dode->collCommFinalize();
-	  for(binID = 0; binID < unIDs_dist; binID++){
+	    }
+	    dode->collCommFinalize();
+	    for(binID = 0; binID < unIDs_dist; binID++){
 		if(this->_lowUpper[binID] == 0.0 || this->_highLower[binID] == 0.0){
 		  this->_lowUpper[binID] = 0.0;
 		  this->_highLower[binID] = 0.0;
@@ -2778,9 +2829,9 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 		  for(unsigned boolID = unID_lower; boolID <= unID_upper; boolID++)
 		    this->_localFluidicArea[boolID] += 1;
 		}		  
-	  }
+	    }
 	  
-	  this->_dMax += this->_confinementMidPoint[1]-this->_confinementMidPoint[3];
+	    this->_dMax += this->_confinementMidPoint[1]-this->_confinementMidPoint[3];
 	}
 }
 
@@ -2861,7 +2912,7 @@ void Domain::collectConfinementProperties(DomainDecompBase* dode)
 		  this->_globalFluidicArea[unID] = 0;
 		
 		// averaging results; just of the fluidic part
-		if(this->_globalFluidicArea[unID] == 1)
+		if((this->_globalFluidicArea[unID] == 1 && this->_confinementAreaFixed == false) || this->_confinementAreaFixed == true)
 		{
 		    this->_universalNConfinement += this->_globalNConfinement[unID];
 		    this->_universalPressureVirial_Confinement += this->_globalPressureVirial_Confinement[unID];
@@ -2906,7 +2957,7 @@ void Domain::collectConfinementProperties(DomainDecompBase* dode)
 	  this->_dAveraged += _dBin[binID];
 	}
 	this->_dAveraged = this->_dAveraged/(unIDs_dist - _dBinFailureCount);
-	if (this->isShearRate() == true)
+	if (this->isShearRate() == true || this->_confinementAreaFixed == true)
 	  this->_dAveraged = this->_confinementMidPoint[1] - this->_confinementMidPoint[3];
 	
 	for(unsigned unID = 0; unID < unIDs; unID++){
@@ -3010,9 +3061,9 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 
 	 if (this->_stressCalcMethodConfinement == hardy){
 	    nvars = 6;
-	    nvars_Stress = 7;
+	    nvars_Stress = 8;
 	 }else{
-	    nvars = 13;
+	    nvars = 14;
 	    nvars_Stress = 1;
 	 }
 	 
@@ -3029,8 +3080,9 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	 float vanMisesStress[NZ_Stress][NY_Stress][NX_Stress];
 	 float NormalStress[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float ShearStress[NZ_Stress][NY_Stress][NX_Stress][3];
-	 float q_convective[NZ_Stress][NY_Stress][NX_Stress][3];
+	 float q_convective_kin[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float q_convective_pot[NZ_Stress][NY_Stress][NX_Stress][3];
+	 float q_diffusive[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float q_total[NZ_Stress][NY_Stress][NX_Stress][3];
 	 float *vars[nvars], *vars_Stress[nvars_Stress];
 	 int vardims[nvars], vardims_Stress[nvars_Stress], centering[nvars], centering_Stress[nvars_Stress];
@@ -3051,6 +3103,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vardims_Stress[4] = 3;
 	    vardims_Stress[5] = 3;
 	    vardims_Stress[6] = 3;
+	    vardims_Stress[7] = 3;
 	    for(int d = 0; d < nvars; d++)
 	      centering[d] = 1;
 	    for(int d = 0; d < nvars_Stress; d++)
@@ -3065,9 +3118,10 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    varnames_Stress[1] = "vanMisesStress";
 	    varnames_Stress[2] = "NormalStress(xx,yy,zz)";
 	    varnames_Stress[3] = "ShearStress(xy,xz,yz)";
-	    varnames_Stress[4] = "q_convective";
+	    varnames_Stress[4] = "q_convective_kin";
 	    varnames_Stress[5] = "q_convective_pot";
-	    varnames_Stress[6] = "q_total";
+	    varnames_Stress[6] = "q_diffusive";
+	    varnames_Stress[7] = "q_total";
 	    vars[0] = (float *)density;
 	    vars[1] = (float *)temperature;
 	    vars[2] = (float *)velocity;
@@ -3078,9 +3132,10 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vars_Stress[1] = (float *)vanMisesStress;
 	    vars_Stress[2] = (float *)NormalStress;
 	    vars_Stress[3] = (float *)ShearStress;
-	    vars_Stress[4] = (float *)q_convective;
+	    vars_Stress[4] = (float *)q_convective_kin;
 	    vars_Stress[5] = (float *)q_convective_pot;
-	    vars_Stress[6] = (float *)q_total;
+	    vars_Stress[6] = (float *)q_diffusive;
+	    vars_Stress[7] = (float *)q_total;
 	 }else{
 	    vardims[0] = 1;
 	    vardims[1] = 1;
@@ -3095,6 +3150,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vardims[10] = 3;
 	    vardims[11] = 3;
 	    vardims[12] = 3;
+	    vardims[13] = 3;
 	    vardims_Stress[0] = 3;
 	    for(int d = 0; d < nvars; d++)
 	      centering[d] = 1;
@@ -3109,10 +3165,11 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    varnames[6] = "NormalStress(xx,yy,zz)";
 	    varnames[7] = "ShearStress(xy,xz,yz)";
 	    varnames[8] = "fluidicComponent";
-	    varnames[9] = "q_convective";
+	    varnames[9] = "q_convective_kin";
 	    varnames[10] = "q_convective_pot";
-	    varnames[11] = "q_total";
-	    varnames[12] = "diffusion";
+	    varnames[11] = "q_diffusive";
+	    varnames[12] = "q_total";
+	    varnames[13] = "diffusion";
 	    varnames_Stress[0] = "HydrodynamicStress";
 	    vars[0] = (float *)density;
 	    vars[1] = (float *)temperature;
@@ -3123,10 +3180,11 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    vars[6] = (float *)NormalStress;
 	    vars[7] = (float *)ShearStress;
 	    vars[8] = (float *)fluidicComponent;
-	    vars[9] = (float *)q_convective;
+	    vars[9] = (float *)q_convective_kin;
 	    vars[10] = (float *)q_convective_pot;
-	    vars[11] = (float *)q_total;
-	    vars[12] = (float *)diffusion;
+	    vars[11] = (float *)q_diffusive;
+	    vars[12] = (float *)q_total;
+	    vars[13] = (float *)diffusion;
 	    vars_Stress[0] = (float *)HydrodynamicStress;
 	 }
 	 
@@ -3458,7 +3516,7 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	  {
 	    double stress_locxx = 0.0, stress_locyy = 0.0, stress_loczz = 0.0, stress_locxy = 0.0, stress_locxz = 0.0, stress_locyz = 0.0, stress_lochydr = 0.0, stress_locmises = 0.0;
 	    double aux_mis1 = 0.0, aux_mis2 = 0.0, aux_mis3 = 0.0, aux_mis4 = 0.0;
-	    double q_x_convective = 0.0, q_y_convective = 0.0, q_z_convective = 0.0, q_x_convective_pot = 0.0, q_y_convective_pot = 0.0, q_z_convective_pot = 0.0, q_x_total = 0.0, q_y_total = 0.0, q_z_total = 0.0;
+	    double q_x_convective_kin = 0.0, q_y_convective_kin = 0.0, q_z_convective_kin = 0.0, q_x_convective_pot = 0.0, q_y_convective_pot = 0.0, q_z_convective_pot = 0.0, q_x_diffusive = 0.0, q_y_diffusive = 0.0, q_z_diffusive = 0.0, q_x_total = 0.0, q_y_total = 0.0, q_z_total = 0.0;
 	    unsigned unID = n_x * this->_universalNProfileUnitsStressConfinement[1]  + n_y;
 	    
 	    // Stresses
@@ -3486,22 +3544,28 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    
 	    
 	    // Heat Flux
-		q_x_convective = (this->_globalConvectiveKinHeatflux[0][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
-		q_y_convective = (this->_globalConvectiveKinHeatflux[1][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
-		q_z_convective = (this->_globalConvectiveKinHeatflux[2][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_x_convective_kin = (this->_globalConvectiveKinHeatflux[0][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_y_convective_kin = (this->_globalConvectiveKinHeatflux[1][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_z_convective_kin = (this->_globalConvectiveKinHeatflux[2][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
 		q_x_convective_pot = (this->_globalConvectivePotHeatflux[0][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
 		q_y_convective_pot = (this->_globalConvectivePotHeatflux[1][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
 		q_z_convective_pot = (this->_globalConvectivePotHeatflux[2][unID])/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
-		q_x_total = (-1)*this->_globalDiffusiveHeatflux[0][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_x_convective;
-		q_y_total = (-1)*this->_globalDiffusiveHeatflux[1][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_y_convective;
-		q_z_total = (-1)*this->_globalDiffusiveHeatflux[2][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties) + q_z_convective;
+		q_x_diffusive = this->_globalDiffusiveHeatflux[0][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_y_diffusive = this->_globalDiffusiveHeatflux[1][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_z_diffusive = this->_globalDiffusiveHeatflux[2][unID]/(segmentVolumeStress * this->_globalAccumulatedDatasets_ConfinementProperties);
+		q_x_total = q_x_diffusive + q_x_convective_kin + q_x_convective_pot;
+		q_y_total = q_y_diffusive + q_y_convective_kin + q_y_convective_pot;
+		q_z_total = q_z_diffusive + q_z_convective_kin + q_z_convective_pot;
 	    
-	    q_convective[0][n_y][n_x][0] = q_x_convective;
-	    q_convective[0][n_y][n_x][1] = q_y_convective;
-	    q_convective[0][n_y][n_x][2] = q_z_convective;
+	    q_convective_kin[0][n_y][n_x][0] = q_x_convective_kin;
+	    q_convective_kin[0][n_y][n_x][1] = q_y_convective_kin;
+	    q_convective_kin[0][n_y][n_x][2] = q_z_convective_kin;
 	    q_convective_pot[0][n_y][n_x][0] = q_x_convective_pot;
 	    q_convective_pot[0][n_y][n_x][1] = q_y_convective_pot;
 	    q_convective_pot[0][n_y][n_x][2] = q_z_convective_pot;
+	    q_x_diffusive[0][n_y][n_x][0] = q_x_diffusive;
+	    q_y_diffusive[0][n_y][n_x][0] = q_y_diffusive;
+	    q_z_diffusive[0][n_y][n_x][0] = q_z_diffusive;
 	    q_total[0][n_y][n_x][0] = q_x_total;
 	    q_total[0][n_y][n_x][1] = q_y_total;
 	    q_total[0][n_y][n_x][2] = q_z_total;
@@ -3604,10 +3668,13 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	this->_globalNumMolecules += N;
 	this->_localRotationalDOF[0] += localN * rotationDegreesOfFreeedom;
 	this->_universalRotationalDOF[0] += N * rotationDegreesOfFreeedom;
-	if( (this->_componentwiseThermostat)
+	if( (this->_componentwiseThermostat || this->_enableThermostatLayers)
 			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
 		int thid = this->_componentToThermostatIdMap[cid];
+		if(isThermostatLayer() == true){
+			cout << "Check thermostating; layerwise thermostating could be wrong in that case!\n";
+		}
 		this->_localThermostatN[thid] += localN;
 		this->_universalThermostatN[thid] += N;
 		this->_localRotationalDOF[thid] += localN * rotationDegreesOfFreeedom;
@@ -3687,6 +3754,77 @@ void Domain::set1DimThermostat(int thermostat, int dimension)
 	}
 }
 
+void Domain::setThermostatLayer(int thermostat, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax)
+{
+	if(thermostat < 0)
+	{
+		global_log->warning() << "Warning: thermostat layer \'" << thermostat << "\' will be ignored." << endl;
+		return;
+	}
+	setComponentThermostat(thermostat, thermostat); 
+	
+	this->_thermostatLayer[0][thermostat] = xmin;
+	this->_thermostatLayer[1][thermostat] = xmax;
+	this->_thermostatLayer[2][thermostat] = ymin;
+	this->_thermostatLayer[3][thermostat] = ymax;
+	this->_thermostatLayer[4][thermostat] = zmin;
+	this->_thermostatLayer[5][thermostat] = zmax;
+	
+	this->_enableThermostatLayers = true;
+}
+
+void Domain::checkThermostatLayerDisjunct()
+{
+   if(maxThermostat() > 1)  
+     for(int layer1 = 1; layer1 <= maxThermostat() - 1; layer1++){
+       double layer1_dx = this->_thermostatLayer[1][layer1] - this->_thermostatLayer[0][layer1];
+       double layer1_dy = this->_thermostatLayer[3][layer1] - this->_thermostatLayer[2][layer1];
+       double layer1_dz = this->_thermostatLayer[5][layer1] - this->_thermostatLayer[4][layer1];
+       
+       for(int layer2 = layer1 + 1; layer2 <= maxThermostat(); layer2++){
+	 double layer2_dx = this->_thermostatLayer[1][layer2] - this->_thermostatLayer[0][layer2];
+	 double layer2_dy = this->_thermostatLayer[3][layer2] - this->_thermostatLayer[2][layer2];
+	 double layer2_dz = this->_thermostatLayer[5][layer2] - this->_thermostatLayer[4][layer2];
+	 double dx = this->_thermostatLayer[0][layer1] - this->_thermostatLayer[0][layer2];
+	 double dy = this->_thermostatLayer[2][layer1] - this->_thermostatLayer[2][layer2];
+	 double dz = this->_thermostatLayer[4][layer1] - this->_thermostatLayer[4][layer2];
+	 int disjunct = 0;
+	 
+	 if(dx > layer2_dx || (-1)*dx > layer1_dx){}
+	 else disjunct++;
+	 if(dy > layer2_dy || (-1)*dy > layer1_dy){}
+	 else disjunct++;
+	 if(dz > layer2_dz || (-1)*dz > layer1_dz){}
+	 else disjunct++;
+	   
+	 if(disjunct >= 3){
+	   global_log->info() << "Thermostat layer number " << layer1 << " is disjunct with layer number " << layer2 << " (total number of thermostats: " << maxThermostat() << ").\n";
+	   exit(345);
+	 }
+       }
+     }
+}
+
+int Domain::moleculeInLayer(double molX, double molY, double molZ)
+{	
+    int layer = -10, inside = 0;
+    for(int layer1 = 1; layer1 <= maxThermostat(); layer1++){
+      inside = 0;
+      if(this->_thermostatLayer[1][layer1] >= molX && this->_thermostatLayer[0][layer1] < molX) {inside++;}
+      if(this->_thermostatLayer[3][layer1] >= molY && this->_thermostatLayer[2][layer1] < molY) {inside++;}
+      if(this->_thermostatLayer[5][layer1] >= molZ && this->_thermostatLayer[4][layer1] < molZ) {inside++;}
+      
+      if(inside == 3){
+	layer = layer1;
+	break;
+      }
+    }
+     if(inside == 3)
+	return layer;
+      else
+	return -10;
+}
+
 void Domain::setThermostatTimeSlot(int thermostat, unsigned long startTime, unsigned long endTime){
   
 	if(thermostat < 0)
@@ -3709,6 +3847,19 @@ void Domain::enableComponentwiseThermostat()
 	for( vector<Component>::iterator tc = components->begin(); tc != components->end(); tc ++ ) {
 		if(!(this->_componentToThermostatIdMap[ tc->ID() ] > 0)) {
 			this->_componentToThermostatIdMap[ tc->ID() ] = -1;
+		}
+	}
+}
+
+void Domain::enableLayerwiseThermostat()
+{
+	if(this->_enableThermostatLayers) return;
+
+	this->_enableThermostatLayers = true;
+	this->_universalTargetTemperature.erase(0);
+	for( int tc = 1; tc <= maxThermostat(); tc ++ ) {
+		if(!(this->_componentToThermostatIdMap[ tc ] > 0)) {
+			this->_componentToThermostatIdMap[ tc ] = -1;
 		}
 	}
 }
@@ -3804,6 +3955,56 @@ void Domain::submitDU(unsigned cid, double DU, double* r)
    {
       _localWidomProfileTloc[unID] += exp(-DU/Tloc);
       _localWidomInstancesTloc[unID] += 1.0;
+   }
+}
+
+void Domain::cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* molCont)
+{
+   unsigned numComp = getNumberOfComponents();
+  
+   unsigned long numberOfMoleculesPerComp[numComp];
+   double localMomentum[numComp][3];
+   for(unsigned num = 0; num < numComp; num++){
+    numberOfMoleculesPerComp[num] = 0; 
+    for(unsigned d = 0; d < 3; d++) localMomentum[num][d] = 0.0;
+   }
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+      double tmass = tm->mass();
+      unsigned comp = tm->componentid();
+      numberOfMoleculesPerComp[comp]++;
+      for(unsigned d = 0; d < 3; d++)
+         localMomentum[comp][d] += tm->v(d) * tmass;
+   }
+   unsigned long globalNumberOfMoleculesPerComp[numComp];
+   double globalMomentum[numComp][3];
+   for(unsigned num = 0; num < numComp; num++){
+    globalNumberOfMoleculesPerComp[num] = numberOfMoleculesPerComp[num];
+    for(unsigned d = 0; d < 3; d++) globalMomentum[num][d] = localMomentum[num][d];
+   }
+    
+   domainDecomp->collCommInit(4*numComp);
+   for(unsigned num = 0; num < numComp; num++){
+    domainDecomp->collCommAppendUnsLong(globalNumberOfMoleculesPerComp[num]); 
+    for(unsigned short d = 0; d<3; d++)domainDecomp->collCommAppendDouble(globalMomentum[num][d]);
+   }
+    
+   domainDecomp->collCommAllreduceSum();
+   for(unsigned num = 0; num < numComp; num++){
+    globalNumberOfMoleculesPerComp[num] = domainDecomp->collCommGetUnsLong();
+    for(unsigned short d = 0; d < 3; d++) globalMomentum[num][d]  = domainDecomp->collCommGetDouble();
+   }
+   domainDecomp->collCommFinalize();
+    
+   for(unsigned num = 0; num < numComp; num++)
+    for(unsigned short d = 0; d < 3; d++) globalMomentum[num][d] /= globalNumberOfMoleculesPerComp[num];
+   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   {
+      double tmass = tm->mass();
+      unsigned comp = tm->componentid();
+      tm->vsub(globalMomentum[comp][0]/tmass, globalMomentum[comp][1]/tmass, globalMomentum[comp][2]/tmass);
+      if(_simulation.getBoolDirVel() == true)
+	tm->vDirSub(globalMomentum[comp][0]/tmass, globalMomentum[comp][1]/tmass, globalMomentum[comp][2]/tmass, _simulation.isRecordingSlabProfile(), _simulation.isRecordingStressProfile(), _simulation.isRecordingConfinementProfile());
    }
 }
 

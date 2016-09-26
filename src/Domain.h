@@ -164,6 +164,10 @@ public:
 	void setTargetTemperature(int thermostat, double T);
 	void set1DimThermostat(int thermostat, int dimension);
 	void setThermostatTimeSlot(int thermostat_id, unsigned long startTime, unsigned long endTime);
+	void setThermostatLayer(int thermostat_id, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax);
+	void checkThermostatLayerDisjunct();
+	bool isThermostatLayer() {return _enableThermostatLayers; }
+	int moleculeInLayer(double x, double y, double z);
 
 	//! @brief get the mixcoeff
 	std::vector<double> & getmixcoeff();
@@ -325,19 +329,23 @@ public:
 	//! @brief returns whether there are several distinct thermostats in the system
 	bool severalThermostats() { return this->_componentwiseThermostat; }
 	//! @brief thermostat to be applied to component cid
-	//! @param cid ID of the respective component
+	//! @param cid ID of the respective thermostat
 	int getThermostat(int cid) { return this->_componentToThermostatIdMap[cid]; }
+	//! @param cid ID of the respective component
+	unsigned int getCidToThermostat(int Tht) { return this->_componentToThermostatIdMap.find(Tht)->second; }
 	//! @brief disables the componentwise thermostat (so that a single thermostat is applied to all DOF)
 	void disableComponentwiseThermostat() { this->_componentwiseThermostat = false; }
 	//! @brief enables the componentwise thermostat
 	void enableComponentwiseThermostat();
+	//! @brief enables the layerwise thermostat
+	void enableLayerwiseThermostat();
 	//! @brief returns the ID of the "last" thermostat in the system
 	//!
 	//! The idea is that ID -1 refers to DOF without thermostats,
 	//! while ID 0 refers to the entire system (or to the unique thermostat if the componentwise
 	//! thermostat is disabled). In case of componentwise thermostats being applied,
 	//! these have the IDs from 1 to this->maxThermostat().
-	unsigned maxThermostat() {
+	int maxThermostat() {
 		return (_componentwiseThermostat)? (_universalThermostatN.size() - 2): 0;
 	}
 	//! @brief associates a component with a thermostat
@@ -348,6 +356,8 @@ public:
 		this->_componentToThermostatIdMap[cid] = thermostat;
 		this->_universalThermostatN[thermostat] = 0;
 	}
+	
+	//int numberOfThermostats() { return _componentToThermostatIdMap.size(); }
 	//! @brief enables the "undirected" flag for the specified thermostat
 	//! @param tst internal ID of the respective thermostat
 	void enableUndirectedThermostat(int thermostat);
@@ -359,6 +369,7 @@ public:
 	void setupStressProfile(unsigned xun, unsigned yun, unsigned zun);
 	void setupBulkPressure(double xmin, double xmax, double ymin, double ymax, unsigned cid);
 	void setupConfinementProperties(double wallThickness, double horDist, double vertDist, double radius2, int cid, double xmax, double ymax, double zmax, unsigned long upperID, unsigned long lowerID);
+	void setupConfinementPropertiesFixed(double xmin, double xmax, double ymin, double ymax, double zmax, int cid);
 	void setupConfinementProfile(unsigned xun,unsigned yun, double correlationLength);
 	void setupConfinementRecTime(unsigned long confinementRecordingTimesteps) { this->_confinementRecordingTimesteps = confinementRecordingTimesteps;}
 	void considerComponentInProfile(int cid) { this->_universalProfiledComponents[cid] = true; }
@@ -493,6 +504,8 @@ public:
 	unsigned getBarostatTimeInit();
 	unsigned getBarostatTimeEnd();
 	bool isShearRate();
+	// Cancelling momentum for each component seperately
+	void cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* molCont);
 private:
 
 	//! rank of the local process
@@ -523,6 +536,7 @@ private:
 
 	//! does a componentwise thermostat apply?
 	bool _componentwiseThermostat;
+	bool _enableThermostatLayers;
 	//! thermostat IDs. negative: no thermostat, 0: global, positive: componentwise
 	//! in the case of a componentwise thermostat, all components are assigned
 	//! a thermostat ID different from zero.
@@ -554,6 +568,7 @@ private:
 	std::map<int, double> _universalThermostatDirectedVelocity[3];
 	std::map<int, double> _localThermostatDirectedVelocity[3];
 	std::map<int, unsigned long>_thermostatTimeSlot[2];
+	std::map<int, double> _thermostatLayer[6];
 
 	/* FIXME: This info should go into an ensemble class */
 	bool _universalNVE;
@@ -720,6 +735,7 @@ private:
 	std::map<int, std::map<unsigned long, long double> > _localDiffusiveMovement;
 	std::map<int, std::map<unsigned long, long double> > _globalDiffusiveMovement;
 	bool _isConfinement;
+	bool _confinementAreaFixed;
 	unsigned long _confinementRecordingTimesteps;
 	
 	

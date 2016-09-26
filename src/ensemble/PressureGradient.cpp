@@ -18,12 +18,14 @@ using namespace std;
 PressureGradient::PressureGradient(int rank) {
 	this->_localRank = rank;
 	this->_universalConstantAccelerationTimesteps = 0;
-	if(!rank)
+	if(!rank){
 		for(unsigned short int d=0; d < 3; d++)
 			this->_globalVelocitySum[d] = map<unsigned int, long double>();
+	}
 	this->_universalConstantTau = true;
 	this->_universalZetaFlow = 0.0;
 	this->_universalTauPrime = 0.0;
+	
 }
 
 void PressureGradient::specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep)
@@ -224,13 +226,23 @@ double PressureGradient::getUniformAcceleration(unsigned int cosetid, unsigned s
 	return this->_universalAdditionalAcceleration[d][cosetid];
 }
 
-void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid, unsigned numberOfComp)
+void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cid, unsigned numberOfComp, unsigned directedVelTime)
 {
-	for (unsigned compID = 0; compID < numberOfComp; compID++){
-	  this->_localN[compID] = 0;
-	  for(unsigned short int d = 0; d < 3; d++)
-		this->_localVelocitySum[d][compID] = 0.0;
+        
+	  this->_localN[cid] = 0;
+          this->_globalN[cid] = 0;  
+	  for(unsigned short int d = 0; d < 3; d++){
+		this->_localVelocitySum[d][cid] = 0.0;
+		this->_globalVelocitySum[d][cid] = 0.0;
+          }
+
+
+        if(!this->_localRank && _globalPriorAccVelocitySums[0].size() == 0){
+            for(unsigned short int d = 0; d < 3; d++)
+                this->_averagedAccVelocitySum[d][cid] = 0.0;
+	    this->_averagedAccN[cid] = 0;
 	}
+
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
 	  if(thismol->componentid() == cid){
@@ -240,31 +252,63 @@ void PressureGradient::prepare_getMissingVelocity(DomainDecompBase* domainDecomp
 	  }
 	}
 
-	domainDecomp->collCommInit( 4 * _localN.size() );
-	for( map<unsigned int, unsigned int long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
-	{
-		domainDecomp->collCommAppendUnsLong(lNit->second);
-		for(int d = 0; d < 3; d++)
-			domainDecomp->collCommAppendDouble( this->_localVelocitySum[d][lNit->first]);
-	}
+	domainDecomp->collCommInit(4);
+        domainDecomp->collCommAppendUnsLong(this->_localN[cid]);
+	for(int d = 0; d < 3; d++)
+		domainDecomp->collCommAppendDouble( this->_localVelocitySum[d][cid]);
 	domainDecomp->collCommAllreduceSum();
-	for( map<unsigned int, unsigned long>::iterator lNit = _localN.begin(); lNit != _localN.end(); lNit++ )
-	{
-		_globalN[lNit->first] = domainDecomp->collCommGetUnsLong();
-		for(int d = 0; d < 3; d++)
-			_globalVelocitySum[d][lNit->first] = domainDecomp->collCommGetDouble();
-	}
+        _globalN[cid] = domainDecomp->collCommGetUnsLong();
+        for(int d = 0; d < 3; d++)
+                _globalVelocitySum[d][cid] = domainDecomp->collCommGetDouble();
 	
+	domainDecomp->collCommFinalize();
+
+        for(int d = 0; d < 3; d++){
+	  if(this->_globalN[cid] != 0)
+	    this->_directedAccVel[d][cid] = this->_globalVelocitySum[d][cid]/this->_globalN[cid];
+	  else
+	    this->_directedAccVel[d][cid] = 0.0;
+        }
+
+	for(int d = 0; d < 3; d++){
+                this->_globalPriorAccVelocitySums[d][cid].push_back(this->_globalVelocitySum[d][cid]);
+                this->_averagedAccVelocitySum[d][cid] += this->_globalVelocitySum[d][cid]; 
+        }
+        this->_globalPriorAccN[cid].push_back(this->_globalN[cid]);
+        this->_averagedAccN[cid] += this->_globalN[cid];
+	
+        for(int d = 0; d < 3; d++){
+                if(this->_averagedAccN[cid] != 0)
+                    this->_directedAccVelAverage[d][cid] = this->_averagedAccVelocitySum[d][cid]/this->_averagedAccN[cid];
+                else
+                    this->_directedAccVelAverage[d][cid] = 0.0;
+        }
+        if(this->_globalPriorAccVelocitySums[cid].size() == directedVelTime){
+            for(int d = 0; d < 3; d++){
+                this->_averagedAccVelocitySum[d][cid] -= this->_globalPriorAccVelocitySums[d][cid].front();
+                this->_globalPriorAccVelocitySums[d][cid].pop_front();
+            }
+            this->_averagedAccN[cid] -= this->_globalPriorAccN[cid].front();
+            this->_globalPriorAccN[cid].pop_front();
+	}
+
+	domainDecomp->collCommInit(3);
+        for(int d = 0; d < 3; d++)
+		domainDecomp->collCommAppendDouble(this->_directedAccVelAverage[d][cid]);
+	domainDecomp->collCommBroadcast();
+        for(int d = 0; d < 3; d++)
+		this->_directedAccVelAverage[d][cid] = domainDecomp->collCommGetDouble();
 	domainDecomp->collCommFinalize();
 }
 
 double PressureGradient::getMissingVelocity(unsigned int cid, unsigned short int d)
 {
-	double v_directed = this->_globalVelocitySum[d][cid] / this->_globalN[cid];
+	double v_directed = this->_directedAccVel[d][cid];
+        double v_directedAverage = this->_directedAccVelAverage[d][cid];
 	double v_missing = 0.0;
-	
+
 	if (this->_globalTargetVelocity[d][cid] != 0.0)
-	  v_missing = this->_globalTargetVelocity[d][cid] - v_directed;
+	  v_missing = this->_globalTargetVelocity[d][cid] - 2*v_directed + v_directedAverage;
 	
 	return v_missing;
 }
@@ -293,6 +337,93 @@ void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, dou
 	this->_shearRateBox[3] = ymax;
 	this->_shearRate = shearRate;
 	this->_shearComp = cid;
+}
+
+void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecompBase* domainDecomp, unsigned directedVelTime)
+{	
+	unsigned yuns = ceil((_shearRateBox[3] - _shearRateBox[2])*10);
+	unsigned yun; 
+	
+	for(yun = 0; yun < yuns; yun++){
+	    this->_localShearN[yun] = 0;
+	    this->_globalShearN[yun] = 0;
+	    this->_localShearVelocitySum[yun] = 0.0;
+	    this->_globalShearVelocitySum[yun] = 0.0;
+	}
+	
+	if(!this->_localRank && _globalPriorShearVelocitySums[0].size() == 0){
+	  for(yun = 0; yun < yuns; yun++){
+	    this->_averagedShearVelocitySum[yun] = 0.0;
+	    this->_averagedShearN[yun] = 0;
+	  }
+	}
+	  
+	  
+	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+	{
+	  if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] && thismol->r(1) <= _shearRateBox[3]){
+		yun = floor((thismol->r(1) - this->_shearRateBox[2])*10);
+		this->_localShearN[yun]++;
+		this->_localShearVelocitySum[yun] += thismol->v(0);
+	  }
+	}
+	
+	domainDecomp->collCommInit( 2*yuns );
+	for(yun = 0; yun < yuns; yun++){
+	    domainDecomp->collCommAppendUnsLong(this->_localShearN[yun]);
+	    domainDecomp->collCommAppendDouble( this->_localShearVelocitySum[yun]);
+	}
+	domainDecomp->collCommAllreduceSum();
+	for(yun = 0; yun < yuns; yun++){
+	    this->_globalShearN[yun] = domainDecomp->collCommGetUnsLong();
+	    this->_globalShearVelocitySum[yun] = domainDecomp->collCommGetDouble();
+	}
+	domainDecomp->collCommFinalize();
+	for(yun = 0; yun < yuns; yun++){
+	  if(this->_globalShearN[yun] != 0)
+	    this->_directedShearVel[yun] = this->_globalShearVelocitySum[yun]/this->_globalShearN[yun];
+	  else
+	    this->_directedShearVel[yun] = 0.0;
+	}
+	
+	map<unsigned int, long double>::iterator gVSit;
+	if(!this->_localRank)
+	{
+		for(gVSit = this->_globalShearVelocitySum.begin(); gVSit != this->_globalShearVelocitySum.end(); gVSit++)
+		{
+				this->_globalPriorShearVelocitySums[gVSit->first].push_back(this->_globalShearVelocitySum[gVSit->first]);
+				this->_globalPriorShearN[gVSit->first].push_back(this->_globalShearN[gVSit->first]);
+				this->_averagedShearVelocitySum[gVSit->first] += this->_globalShearVelocitySum[gVSit->first]; 
+				this->_averagedShearN[gVSit->first] += this->_globalShearN[gVSit->first];
+		}
+	}
+
+	if(!this->_localRank)
+	{
+		for(gVSit = this->_globalShearVelocitySum.begin(); gVSit != this->_globalShearVelocitySum.end(); gVSit++)
+		{
+			this->_directedShearVelAverage[gVSit->first] = this->_averagedShearVelocitySum[gVSit->first]/this->_averagedShearN[gVSit->first];
+			if(this->_globalPriorShearVelocitySums[gVSit->first].size() == directedVelTime){
+			  this->_averagedShearVelocitySum[gVSit->first] -= this->_globalPriorShearVelocitySums[gVSit->first].front();
+			  this->_averagedShearN[gVSit->first] -= this->_globalPriorShearN[gVSit->first].front();
+			  this->_globalPriorShearVelocitySums[gVSit->first].pop_front();
+			  this->_globalPriorShearN[gVSit->first].pop_front();
+			}
+		}
+	}
+
+	domainDecomp->collCommInit(yuns);
+	for( map<unsigned int, long double>::iterator lNit = this->_globalShearVelocitySum.begin();
+			lNit != this->_globalShearVelocitySum.end();
+			lNit++ )
+		domainDecomp->collCommAppendDouble(this->_directedShearVelAverage[lNit->first]);
+	domainDecomp->collCommBroadcast();
+	for( map<unsigned int, long double>::iterator lNit = this->_globalShearVelocitySum.begin();
+			lNit != this->_globalShearVelocitySum.end();
+			lNit++ ){
+		this->_directedShearVelAverage[lNit->first] = domainDecomp->collCommGetDouble();
+	}
+	domainDecomp->collCommFinalize();
 }
 
 void PressureGradient::calculateForcesOnComponent(ParticleContainer* molCont, unsigned int cid)

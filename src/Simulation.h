@@ -279,7 +279,10 @@ public:
 	void  setTimeStepLength(double timeStepLength) { _timeStepLength = timeStepLength; }
 	double getTimeStepLength() const {return _timeStepLength; }
 
-
+        // for velocity scaling apply
+        unsigned getCIDMovement(std::string moveStyle, unsigned numberOfComp);
+        bool isAcceleratingInstantaneously();
+        double getMovedVel(int d, unsigned cid);
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -349,6 +352,8 @@ public:
 	unsigned getStressRecordTimestep() {return _stressProfileRecordingTimesteps; }
 	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
 	bool isShearRate() { return _doShearRate; }
+	double getSimulationStart(){return _simStart; }
+        void setSimulationStart(double simStart){ _simStart = simStart/_timeStepLength; }
 
 	Ensemble* getEnsemble() { return _ensemble; }
 
@@ -361,6 +366,7 @@ private:
 
 
 	double _simulationTime; /**< Simulation time t in reduced units */
+	double _simStart;
 
 	/** enum to get rid of a dynamic cast. With the xml format, there won't be any
 	 * need for this hack then.
@@ -397,6 +403,7 @@ private:
 	bool _doRecordBulkPressure;
 	bool _doRecordConfinement;
 	bool _doShearRate;
+	bool _cancelMomentum;
 	/** Interval between two evaluations of the profile.
 	 * This means that only 1 / _profileRecordingTimesteps of the
 	 * internally available data are actually used, so if precision is

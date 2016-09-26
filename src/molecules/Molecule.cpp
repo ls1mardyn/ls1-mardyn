@@ -46,6 +46,7 @@ Molecule::Molecule(unsigned long id, Component *component,
 	    setVirialKin(d, e, 0.0);
 	    setVirialForceConfinement(d, e, 0.0);
 	    setVirialKinConfinement(d, e, 0.0);
+	    setDiffusiveHeatflux(d, e, 0.0);
 	  }
 	  setPressureVirial(d, 0.0);
 	  setPressureKin(d, 0.0);
@@ -53,7 +54,6 @@ Molecule::Molecule(unsigned long id, Component *component,
 	  setPressureKinConfinement(d, 0.0);
 	  setPressureVirial_barostat(d, 0.0);
 	  setPressureKin_barostat(d, 0.0);
-	  setDiffusiveHeatflux(d, 0.0);
 	  setConvectivePotHeatflux(d, 0.0);
 	  setDirectedVelocity(d, 0.0);
 	  setDirectedVelocitySlab(d, 0.0);
@@ -115,6 +115,7 @@ Molecule::Molecule(const Molecule& m) {
 	    setVirialKin(d, e, 0.0);
 	    setVirialForceConfinement(d, e, 0.0);
 	    setVirialKinConfinement(d, e, 0.0);
+	    setDiffusiveHeatflux(d, e, 0.0);
 	  }
 	  setPressureVirial(d, 0.0);
 	  setPressureKin(d, 0.0);
@@ -122,7 +123,6 @@ Molecule::Molecule(const Molecule& m) {
 	  setPressureKinConfinement(d, 0.0);
 	  setPressureVirial_barostat(d, 0.0);
 	  setPressureKin_barostat(d, 0.0);
-	  setDiffusiveHeatflux(d, 0.0);
 	  setConvectivePotHeatflux(d, 0.0);
 	  setDirectedVelocity(d, 0.0);
 	  setDirectedVelocitySlab(d, 0.0);
@@ -155,6 +155,9 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
 	int thermostat = dom->getThermostat(this->componentid());
+	if(dom->isThermostatLayer() == true){
+		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
+	}
 	int dim;
 	if(dom->isScaling1Dim(thermostat)  && dom->getAlphaTransCorrection(thermostat) == false){
 	    map<int, int> Dim = dom->getDim();
@@ -260,13 +263,17 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 	sumIw2 += Iw2;
 	
   // one-dimensional thermostat
-	if(dom->isScaling1Dim(dom->getThermostat(this->componentid()))){
+	int thermostat = dom->getThermostat(this->componentid());
+	if(dom->isThermostatLayer() == true){
+		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
+	}
+	if(dom->isScaling1Dim(thermostat)){
 	    map<int, int> Dim = dom->getDim();
 	    for( map<int, int>::const_iterator gDit = Dim.begin();
 				gDit != Dim.end();
 				gDit++ )
 		{
-		  if(dom->getThermostat(this->componentid()) == gDit->first){
+		  if(thermostat == gDit->first){
 		    v2 = 0.0;
 		    v_aux = 0.0;
 		    // in the case of directed velocities
@@ -300,7 +307,11 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& su
 	//summv2 += _m * v2();
 	
 	double v2_1Dim = 0.0;
-	if(dom->isScaling1Dim(dom->getThermostat(this->componentid()))){ 
+	int thermostat = dom->getThermostat(this->componentid());
+	if(dom->isThermostatLayer() == true){
+		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
+	}
+	if(dom->isScaling1Dim(thermostat)){ 
 	  v2_1Dim = (v(dimToThermostat)-_directedVelocity[dimToThermostat])*(v(dimToThermostat)-_directedVelocity[dimToThermostat]);
 	  summv2_1Dim += _m * v2_1Dim;
 	}
@@ -440,8 +451,6 @@ void Molecule::calculateHardyIntersection(const double drmEingang[3], double mjx
 	  // smallest value that is a multiple of (_r[0]-dom->getConfinementEdge(0)) / deltaX    
 	  xPlaneShift = dom->getConfinementEdge(0);
 	  yPlaneShift = dom->get_confinementMidPoint(3);
-	  
-	  //cout << " x1 " << _r[0] << " y1 " << _r[1] << " x2 " << mjx << " y2 " << mjy << " xun " << xun << " yun " << yun << " xun2 " << xun2 << " yun2 " << yun2 << " dx " << deltaX << " dy " << deltaY << " unX " << xun_tot << " unY " << yun_tot << " shX " << xPlaneShift << " shY " << yPlaneShift << endl;
 	}
 	
 	unID_tot = unsigned(xun_tot*yun_tot);
@@ -1041,3 +1050,37 @@ unsigned long Molecule::totalMemsize() const {
 
 	return size;
 }
+
+void Molecule::vDirSub(const double ax, const double ay, const double az, bool slab, bool stress, bool confinement){
+	
+	this->_directedVelocity[0] -= ax;
+	this->_directedVelocity[1] -= ay;
+	this->_directedVelocity[2] -= az;
+	
+	if(slab){
+	  this->_directedVelocitySlab[0] -= ax;
+	  this->_directedVelocitySlab[1] -= ay;
+	  this->_directedVelocitySlab[2] -= az;
+	}
+	
+	if(stress){
+	  this->_directedVelocityStress[0] -= ax;
+	  this->_directedVelocityStress[1] -= ay;
+	  this->_directedVelocityStress[2] -= az;
+	}
+	if(confinement){
+	  this->_directedVelocityConfinement[0] -= ax;
+	  this->_directedVelocityConfinement[1] -= ay;
+	  this->_directedVelocityConfinement[2] -= az;
+	}
+}
+
+// void Molecule::scale_vAcc(double s, double vx, double vy, double vz){
+//         _v[0] = (_v[0]-vx)*s + vx;
+//         _v[1] = (_v[1]-vx)*s + vx;
+//         _v[2] = (_v[2]-vx)*s + vx;
+// }
+// void Molecule::scale_v_1DimAcc(double s, unsigned short d, double vd){
+//     _v[d] = (_v[d]-vd)*s + vd;
+// }
+

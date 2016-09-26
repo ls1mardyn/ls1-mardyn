@@ -5,6 +5,7 @@
 #include "parallel/DomainDecompBase.h"
 
 #include <map>
+#include <deque>
 
 class VelocityScalingThermostat {
 public:
@@ -52,16 +53,47 @@ private:
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _directedVelocityStress;
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _universalDirectedVelocityStress;
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _directedVelocityConfinement;
-	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _universalDirectedVelocityConfinement;	
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _universalDirectedVelocityConfinement;
+	//std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _directedVelocityConfinementTest;
+	//std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > >_universalDirectedVelocityConfinementTest;
 	std::map< int, std::map< unsigned, std::map< unsigned, double > > > _universalDirectedVelocityTest;
 	std::map< int, std::map< double, std::map< double, unsigned long > > > _countedMolecules;	
 	std::map< int, std::map< double, std::map< double, unsigned long > > > _universalCountedMolecules;
+	
+	std::map< int, unsigned long > _countedMoleculesAll;
+	std::map< int, unsigned long > _universalCountedMoleculesAll;
+	std::map< int, double > _directedVelocityAll[3];
+	std::map< int, double > _universalDirectedVelocityAll[3];
+	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _countedMoleculesSlab;	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _universalCountedMoleculesSlab;	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _countedMoleculesStress;	
 	std::map< int, std::map< unsigned, std::map< unsigned, std::map< double, unsigned long > > > > _universalCountedMoleculesStress;	
 	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _countedMoleculesConfinement;	
-	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _universalCountedMoleculesConfinement;	
+	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _universalCountedMoleculesConfinement;
+	//std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _countedMoleculesConfinementTest;
+	//std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _universalCountedMoleculesConfinementTest;
+	std::map< int, std::map< double, std::map< double, unsigned long > > > _averagedN;
+	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _averagedVelSum;
+	std::map< int, std::map< double, std::map< double, std::map< unsigned, double > > > > _currentDirectedVel;
+	std::map< int, std::map< double, std::map< double, std::deque< unsigned long > > > > _universalPriorN;
+	std::map< int, std::map< double, std::map< double, std::deque< double > > > > _universalPriorVelSums[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _averagedNSlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _averagedVelSumSlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _currentDirectedVelSlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< unsigned long > > > > > _universalPriorNSlab;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< double > > > > > _universalPriorVelSumsSlab[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, unsigned long > > > > _averagedNStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _averagedVelSumStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > > _currentDirectedVelStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< unsigned long > > > > > _universalPriorNStress;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, std::deque< double > > > > > _universalPriorVelSumsStress[3];
+	std::map< int, std::map< unsigned, std::map< unsigned, unsigned long > > > _averagedNConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _averagedVelSumConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::map< unsigned, double > > > > _currentDirectedVelConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::deque< unsigned long > > > > _universalPriorNConfinement;
+	std::map< int, std::map< unsigned, std::map< unsigned, std::deque< double > > > > _universalPriorVelSumsConfinement[3];
+		
 	std::map <unsigned, double> _universalInvProfileUnit_Stress;
 	std::map <unsigned, double> _bulkCorner;
 	std::map <unsigned, double> _universalInvProfileUnitConfinement;

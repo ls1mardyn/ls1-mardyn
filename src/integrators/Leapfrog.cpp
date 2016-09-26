@@ -65,6 +65,9 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 		  molID = tempMolecule->id();
 		  cid = tempMolecule->componentid();
 		  thermostat = domain->getThermostat(cid);
+		  if(domain->isThermostatLayer() == true){
+			thermostat = domain->moleculeInLayer(tempMolecule->r(0), tempMolecule->r(1), tempMolecule->r(2));
+		  }
 		  
 		  if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!
 		  else {					
@@ -106,6 +109,9 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 				if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!
 				else {
 				  int thermostat = domain->getThermostat(cid);
+				  if(domain->isThermostatLayer() == true){
+				      thermostat = domain->moleculeInLayer(tM->r(0), tM->r(1), tM->r(2));
+				  }
 				  tM->upd_postF(dt_half, summv2[thermostat], summv2_1Dim[thermostat], sumIw2[thermostat], domain);
 				  
 				  N[thermostat]++;
@@ -187,9 +193,9 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	string moved ("moved");
 	unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
-	
 	//calculates globalN and globalVelocitySum for getMissingVelocity(); necessary!
-	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents());
+	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents(), _simulation.getDirectedVelocityTime());
+	
 	// Just the velocity in x-direction (horizontally) is regulated to a constant value; in y and z the velocity is unrestricted 			
 	for (int d = 0; d < 3; d++)
 	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d);
@@ -205,14 +211,14 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 		              componentwiseVelocityDelta[2][cid]);
 	}
 	// Control of velocity after artificial acceleration
-	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents());
+	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents(), _simulation.getDirectedVelocityTime());
 
 	for(int d = 0; d < 3; d++)
 	  domain->getPG()->addGlobalVelSumAfterAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d,cid_moved) / domain->getPG()->getGlobalN(cid_moved));
 }
 
-void Leapfrog::shearRate(ParticleContainer* molCont, Domain* domain) {
-	double shearVelocityDelta, shearVelocityTarget;
+void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) {
+	double shearVelocityDelta, shearVelocityTarget, directedVel, directedVelAverage;
 	double shearRateBox[4];
 	shearRateBox[0] = domain->getPG()->getShearRateBox(0);
 	shearRateBox[1] = domain->getPG()->getShearRateBox(1);
@@ -221,11 +227,18 @@ void Leapfrog::shearRate(ParticleContainer* molCont, Domain* domain) {
 	double shearYmax = shearRateBox[3] - shearRateBox[2];
 	double shearRate = domain->getPG()->getShearRate();
 	unsigned cid = domain->getPG()->getShearComp();
+	unsigned yun;
+	
+	domain->getPG()->prepareShearRate(molCont, domainDecomp, _simulation.getDirectedVelocityTime());
+
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
 		// Just the velocity in x-direction (horizontally) is regulated to a constant value; in y and z the velocity is unrestricted 			
 		if(thismol->componentid() == cid && (thismol->r(1) <= shearRateBox[3] && thismol->r(1) >= shearRateBox[2]) && (thismol->r(0) <= shearRateBox[1] && thismol->r(0) >= shearRateBox[0])){
+		  yun = floor((thismol->r(1) - shearRateBox[2])*10);
+		  directedVel = domain->getPG()->getDirectedShearVel(yun);
+		  directedVelAverage = domain->getPG()->getDirectedShearVelAverage(yun);
 		  shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - thismol->r(1)) * shearRate);
-		  shearVelocityDelta = shearVelocityTarget - thismol->v(0);
+		  shearVelocityDelta = shearVelocityTarget - 2*directedVel + directedVelAverage;
 		  thismol->vadd(shearVelocityDelta,0.0,0.0);
 		}
 	}

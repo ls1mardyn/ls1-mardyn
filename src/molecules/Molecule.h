@@ -159,6 +159,7 @@ public:
 	void setM(double M[3]) { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
 	//scale undirected part of the velocity
 	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d] = (_v[d]-_directedVelocity[d])*s + _directedVelocity[d]; }
+	//void scale_vAcc(double s, double vx, double vy, double vz);
 	void scale_v(double s, double offx, double offy, double offz);
 	void scale_F(double s) { for(unsigned short d=0;d<3;++d) _F[d]*=s; }
 	void scale_D(double s) { for(unsigned short d=0;d<3;++d) _L[d]*=s; }
@@ -166,6 +167,7 @@ public:
 	
 	// scale velocity just in one direction; and just the undirected part
 	void scale_v_1Dim(double s, unsigned short d) { _v[d] = (_v[d]-_directedVelocity[d])*s + _directedVelocity[d]; }
+	//void scale_v_1DimAcc(double s, unsigned short d, double vd);
 
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 
@@ -177,6 +179,7 @@ public:
 	void vsub(const double ax, const double ay, const double az) {
 		_v[0] -= ax; _v[1] -= ay; _v[2] -= az;
 	}
+	void vDirSub(const double ax, const double ay, const double az, bool slab, bool stress, bool confinement);
 	void setXY() { fixedx = _r[0]; fixedy = _r[1]; }
 	void resetXY()
 	{
@@ -299,9 +302,9 @@ public:
 	void setPressureVirialConfinement(int d, long double pressureVirial) { this->_pressureVirialConfinement[d] = pressureVirial; }
 	long double getPressureVirialConfinement(int d) { return this->_pressureVirialConfinement[d]; }
 	
-	void addDiffusiveHeatflux(int d, long double virialForceFraction) { this->_diffusiveHeatflux[d] += virialForceFraction; }
-	void setDiffusiveHeatflux(int d, long double virialForceFraction) { this->_diffusiveHeatflux[d] = virialForceFraction; }
-	long double getDiffusiveHeatflux(int d) { return this->_diffusiveHeatflux[d]; }
+	void addDiffusiveHeatflux(int d, int e, long double virialForceFraction) { this->_diffusiveHeatflux[d][e] += virialForceFraction; }
+	void setDiffusiveHeatflux(int d, int e, long double virialForceFraction) { this->_diffusiveHeatflux[d][e] = virialForceFraction; }
+	long double getDiffusiveHeatflux(int d, int e) { return this->_diffusiveHeatflux[d][e]; }
 	void addConvectivePotHeatflux(int d, long double virialForceFraction) { this->_convectivePotHeatflux[d] += virialForceFraction; }
 	void setConvectivePotHeatflux(int d, long double virialForceFraction) { this->_convectivePotHeatflux[d] = virialForceFraction; }
 	long double getConvectivePotHeatflux(int d) { return this->_convectivePotHeatflux[d]; }
@@ -358,12 +361,11 @@ public:
 	}
 	
 	// Heat flux (Hardy-like)
-	void addDiffusiveHeatfluxHardyConfinement(int d, unsigned unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d] += diffHeatflux; }
-	void setDiffusiveHeatfluxHardyConfinement(int d, unsigned unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d] = diffHeatflux; }
-	std::map<unsigned, std::map<unsigned, double > > getDiffusiveHeatfluxHardyConfinement() { return this->_diffusiveHeatfluxHardyConfinement; }
+	void addDiffusiveHeatfluxHardyConfinement(int d, int e, unsigned unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d][e] += diffHeatflux; }
+	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > getDiffusiveHeatfluxHardyConfinement() { return this->_diffusiveHeatfluxHardyConfinement; }
 	void clearDiffusiveHeatfluxHardyConfinement() { _diffusiveHeatfluxHardyConfinement.clear(); }
 private:
-    Component *_component;  /**< IDentification number of its component type */
+        Component *_component;  /**< IDentification number of its component type */ 
 	double _r[3];  /**< position coordinates */
 	double _rOld[3]; /**< position coordinates from the previous timestep*/
 	double _F[3];  /**< forces */
@@ -437,9 +439,9 @@ private:
 	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyStress;	
 	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyConfinement;	
 	
-	std::map<unsigned, double> _diffusiveHeatflux;
+	std::map<unsigned, std::map<unsigned, double> > _diffusiveHeatflux;
 	std::map<unsigned, double> _convectivePotHeatflux;
-	std::map<unsigned, std::map<unsigned, double> > _diffusiveHeatfluxHardyConfinement;
+	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > _diffusiveHeatfluxHardyConfinement;
 	
 };
 

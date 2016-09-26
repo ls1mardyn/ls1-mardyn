@@ -85,7 +85,7 @@ public:
 			ParticleContainer* molCont,
 			Domain* domain
 	) = 0;
-	virtual void shearRate(ParticleContainer* molCont, Domain* domain) = 0;
+	virtual void shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) = 0;
 	virtual void init1D(
 			unsigned zoscillator,
 			ParticleContainer* molCont

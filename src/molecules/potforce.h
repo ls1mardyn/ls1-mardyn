@@ -437,9 +437,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						    string weightingFunc = mi.getWeightingFuncConfinement();
 						    if(domain.isConfinementHardy(mi.componentid()) || domain.isConfinementHardy(mj.componentid())){
 						      mi.calculateHardyIntersection(drm, mj.r(0), mj.r(1), mj.r(2), &domain, stress, weightingFunc);
-						      //cout << " c1 " << domain.isConfinementHardy(mi.componentid()) << " c2 " << domain.isConfinementHardy(mj.componentid());
 						    }
-						    //cout << endl;
 						    std::map<unsigned, long double> bondFrac;
 						    if(domain.isConfinementHardy(mi.componentid()) || domain.isConfinementHardy(mj.componentid()))
 						      bondFrac = mi.getBondFractionUNID();
@@ -451,19 +449,17 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 							if(domain.isConfinementHardy(mi.componentid()) || domain.isConfinementHardy(mj.componentid())){
 							  for (unsigned e = 0; e < 3; ++e){
 							    virialForce = 0.5 * drm[d] * f[e];
-							    virialHeat_i = virialForce * (mi.v(e) - mi.getDirectedVelocityConfinement(e));
-							    virialHeat_j = virialForce * (mj.v(e) - mj.getDirectedVelocityConfinement(e));
+							    virialHeat_i = virialForce;// * (mi.v(e) - mi.getDirectedVelocityConfinement(e));
+							    virialHeat_j = virialForce;// * (mj.v(e) - mj.getDirectedVelocityConfinement(e));
 							    for(std::map<unsigned,long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){
 							      mi.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
 							      mj.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
-							      mi.addDiffusiveHeatfluxHardyConfinement(d, it->first, virialHeat_i*it->second);
-							      mj.addDiffusiveHeatfluxHardyConfinement(d, it->first, virialHeat_j*it->second);
-							      //if(it->second > 1)
-								//cout << " x1 " << mi.r(0) << " y1 " << mi.r(1) << " x2 " << mj.r(0) << " y2 " << mj.r(1) << " unID " << it->first << " bondFrac " << it->second << endl;
+							      mi.addDiffusiveHeatfluxHardyConfinement(d, e, it->first, virialHeat_i*it->second);
+							      mj.addDiffusiveHeatfluxHardyConfinement(d, e, it->first, virialHeat_j*it->second);
 							    }
 							  }
-							  convectivePotHeat_i = 0.5 * u/6 * (mi.v(d) - mi.getDirectedVelocityConfinement(d));
-							  convectivePotHeat_j = 0.5 * u/6 * (mj.v(d) - mj.getDirectedVelocityConfinement(d));
+							  convectivePotHeat_i = 0.5 * u/6;// * (mi.v(d) - mi.getDirectedVelocityConfinement(d));
+							  convectivePotHeat_j = 0.5 * u/6;// * (mj.v(d) - mj.getDirectedVelocityConfinement(d));
 							  mi.addConvectivePotHeatflux(d, convectivePotHeat_i);
 							  mj.addConvectivePotHeatflux(d, convectivePotHeat_j);
 							}
@@ -480,13 +476,13 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 							  virialForce = 0.5 * drm[d] * f[e];
 							  mi.addVirialForceConfinement(d, e, virialForce);
 							  mj.addVirialForceConfinement(d, e, virialForce);
-							  virialHeat_i = virialForce * (mi.v(e) - mi.getDirectedVelocityConfinement(e));
-							  virialHeat_j = virialForce * (mj.v(e) - mj.getDirectedVelocityConfinement(e));
-							  mi.addDiffusiveHeatflux(d, virialHeat_i);
-							  mj.addDiffusiveHeatflux(d, virialHeat_j);
+							  virialHeat_i = virialForce;// * (mi.v(e) - mi.getDirectedVelocityConfinement(e));
+							  virialHeat_j = virialForce;// * (mj.v(e) - mj.getDirectedVelocityConfinement(e));
+							  mi.addDiffusiveHeatflux(d, e, virialHeat_i);
+							  mj.addDiffusiveHeatflux(d, e, virialHeat_j);
 							}
-							convectivePotHeat_i = 0.5 * u/6 * (mi.v(d) - mi.getDirectedVelocityConfinement(d));
-							convectivePotHeat_j = 0.5 * u/6 * (mj.v(d) - mj.getDirectedVelocityConfinement(d));
+							convectivePotHeat_i = 0.5 * u/6;// * (mi.v(d) - mi.getDirectedVelocityConfinement(d));
+							convectivePotHeat_j = 0.5 * u/6;// * (mj.v(d) - mj.getDirectedVelocityConfinement(d));
 							mi.addConvectivePotHeatflux(d, convectivePotHeat_i);
 							mj.addConvectivePotHeatflux(d, convectivePotHeat_j);
 						    }
