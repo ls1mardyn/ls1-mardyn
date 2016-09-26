@@ -1256,6 +1256,8 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 
 	dummyCell.deallocateAllParticles();
 
+    assert(not std::isnan(u)); // catches NaN
+
 	return u;
 }
 
