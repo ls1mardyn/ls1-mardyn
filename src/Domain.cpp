@@ -3563,9 +3563,9 @@ void Domain::outputConfinementProperties(const char* prefix, PressureGradient* p
 	    q_convective_pot[0][n_y][n_x][0] = q_x_convective_pot;
 	    q_convective_pot[0][n_y][n_x][1] = q_y_convective_pot;
 	    q_convective_pot[0][n_y][n_x][2] = q_z_convective_pot;
-	    q_x_diffusive[0][n_y][n_x][0] = q_x_diffusive;
-	    q_y_diffusive[0][n_y][n_x][0] = q_y_diffusive;
-	    q_z_diffusive[0][n_y][n_x][0] = q_z_diffusive;
+	    q_diffusive[0][n_y][n_x][0] = q_x_diffusive;
+	    q_diffusive[0][n_y][n_x][1] = q_y_diffusive;
+	    q_diffusive[0][n_y][n_x][2] = q_z_diffusive;
 	    q_total[0][n_y][n_x][0] = q_x_total;
 	    q_total[0][n_y][n_x][1] = q_y_total;
 	    q_total[0][n_y][n_x][2] = q_z_total;
