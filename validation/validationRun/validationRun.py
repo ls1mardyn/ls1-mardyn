@@ -218,7 +218,7 @@ def doRun(directory, MardynExe):
         if p.returncode:
             print "error on rsync"
             exit(1)
-        command = "cd " + remotedirectory + "&& pwd && "
+        command = "cd " + remotedirectory + " && pwd && "
         cmd.extend(['ssh', localRemote, command])
         
     if PAR and (directory == 'new' or not baseisnormal):
