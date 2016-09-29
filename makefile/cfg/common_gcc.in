@@ -15,6 +15,12 @@ endif
 ifeq ($(VECTORIZE_CODE),KNC_G_S)
 $(error gcc does not support KNC)
 endif
+ifeq ($(VECTORIZE_CODE),KNL_MASK)
+CXXFLAGS_VECTORIZE = -march=knl
+endif
+ifeq ($(VECTORIZE_CODE),KNL_G_S)
+CXXFLAGS_VECTORIZE = -march=knl -D__VCP_GATHER__
+endif
 
 # On AMD BUlldozer:
 ifeq ($(VECTORIZE_CODE),SSEAMD)

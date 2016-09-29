@@ -23,6 +23,12 @@ ifeq ($(VECTORIZE_CODE),KNC_G_S)
 CXXFLAGS_VECTORIZE = -mmic -D__VCP_GATHER__
 LDFLAGS_VECTORIZE = -mmic
 endif
+ifeq ($(VECTORIZE_CODE),KNL_MASK)
+CXXFLAGS_VECTORIZE = -xMIC-AVX512
+endif
+ifeq ($(VECTORIZE_CODE),KNL_G_S)
+CXXFLAGS_VECTORIZE = -xMIC-AVX512 -D__VCP_GATHER__
+endif
 
 # OpenMP settings:
 #########################################
