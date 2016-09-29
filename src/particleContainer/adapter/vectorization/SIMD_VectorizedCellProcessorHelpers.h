@@ -221,6 +221,7 @@ void vcp_simd_load_sub_store_masked(double * const addr, size_t offset, const vc
 /**
  * \brief Policy class for single cell force calculation.
  */
+template<bool ApplyCutoff>
 class SingleCellPolicy_ {
 public:
 
@@ -243,30 +244,24 @@ public:
 		return vcp_simd_getInitMask(i);
 	}
 
-	inline static vcp_mask_vec GetForceMask(const vcp_double_vec& m_r2, const vcp_double_vec& rc2,
-			vcp_mask_vec& j_mask) {
-		vcp_mask_vec result = vcp_simd_and(vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV)),
-				j_mask);
+	inline static vcp_mask_vec GetForceMask(const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& j_mask) {
+		vcp_mask_vec result = vcp_simd_and(vcp_simd_neq(m_r2, VCP_SIMD_ZEROV), j_mask);
 		j_mask = VCP_SIMD_ONESVM;
+
+		if (ApplyCutoff == true) {
+			 result = vcp_simd_and(vcp_simd_lt(m_r2, rc2), result);
+		}
+
 		return result;
 	}
-
-
-
 }; /* end of class SingleCellPolicy_ */
 
 /**
  * \brief Policy class for cell pair force calculation.
  */
+template<bool ApplyCutoff>
 class CellPairPolicy_ {
 public:
-
-	inline static bool Condition(double m_r2, double rc2)
-	{
-		// Because we have 2 different cells, no 2 centers on the same
-		// molecule can form a pair.
-		return m_r2 < rc2;
-	}
 
 	inline static size_t InitJ (const size_t /*i*/)
 	{
@@ -280,20 +275,26 @@ public:
 	inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& /*j_mask*/)
 	{
 		// Provide a mask with the same logic as used in
-		// bool Condition(double m_r2, double rc2)
-		return vcp_simd_lt(m_r2, rc2);
+		vcp_mask_vec result;
+		if (ApplyCutoff == true) {
+			result = vcp_simd_lt(m_r2, rc2);
+		} else {
+			result = VCP_SIMD_ONESVM;
+		}
+
+		// Note: add m_r2 != 0.0, when (if) Molecules' Sites get split between cells
+
+		return result;
 	}
 
 	inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 	{
 		return VCP_SIMD_ONESVM;//totally unimportant, since not used...
 	}
-
 }; /* end of class CellPairPolicy_ */
 
 /**
  * \brief The dist lookup for a molecule and all centers of a type
- * \author Robert Hajda
  */
 template<class ForcePolicy, class MaskGatherChooser>
 countertype32

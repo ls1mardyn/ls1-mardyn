@@ -398,7 +398,8 @@ void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
-	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
+	const bool ApplyCutoff = true;
+	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
 void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
@@ -426,15 +427,17 @@ void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCe
 	// This saves the Molecule::isLessThan checks
 	// and works similar to the "Half-Shell" scheme
 
+	const bool ApplyCutoff = true;
+
 	if ((not c1Halo and not c2Halo) or						// no cell is halo or
 			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but c1.index < c2.index
 	{
 		const bool CalculateMacroscopic = true;
 
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
 
 	} else {
@@ -444,9 +447,9 @@ void VectorizedLJP2PCellProcessor::processCellPair(ParticleCell & c1, ParticleCe
 		const bool CalculateMacroscopic = false;
 
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
 	}
 }
