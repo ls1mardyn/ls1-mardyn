@@ -63,14 +63,14 @@ public:
 	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false);
 
 	Molecule& moleculesAt(std::vector<Molecule>::size_type i) {
-		return *_molecules.at(i);
+		return _molecules.at(i);
 	}
 
 	bool isEmpty() const;
 
 	bool deleteMoleculeByID(unsigned long molid);
 
-	bool deleteMoleculeByIndex(std::vector<Molecule *>::size_type index);
+	bool deleteMoleculeByIndex(std::vector<Molecule>::size_type index);
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;
@@ -122,7 +122,7 @@ public:
 	 * filter molecules which have left the box
 	 * @return field vector containing leaving molecules
 	 */
-	std::vector<Molecule *> & filterLeavingMolecules();
+	std::vector<Molecule> & filterLeavingMolecules();
 
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
@@ -142,12 +142,12 @@ private:
 	/**
 	 * \brief A vector of pointers to the Molecules in this cell.
 	 */
-	std::vector<Molecule *> _molecules;
+	std::vector<Molecule> _molecules;
 
 	/**
 	 * \brief A vector of molecules, which have left this cell.
 	 */
-	std::vector<Molecule *> _leavingMolecules;
+	std::vector<Molecule> _leavingMolecules;
 
 
 	/**

@@ -338,7 +338,7 @@ private:
 #else
 
 	std::vector<ParticleCell>::iterator _cellIterator;
-	std::vector<Molecule*>::size_type _particleIndex;
+	std::vector<Molecule>::size_type _particleIndex;
 #endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)

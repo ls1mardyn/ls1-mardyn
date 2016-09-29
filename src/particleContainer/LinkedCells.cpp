@@ -240,13 +240,11 @@ void LinkedCells::update() {
 
 	for (celliter = _cells.begin(); celliter != _cells.end(); ++celliter) {
 
-		std::vector<Molecule*> & molsToSort =
+		std::vector<Molecule> & molsToSort =
 				celliter->filterLeavingMolecules();
-		std::vector<Molecule*>::iterator it;
 
-		for (it = molsToSort.begin(); it != molsToSort.end(); ++it) {
-			addParticle(**it);
-			delete *it;
+		for (auto it = molsToSort.begin(); it != molsToSort.end(); ++it) {
+			addParticle(*it);
 		}
 		molsToSort.clear();
 	}
@@ -699,7 +697,7 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 
 				const int numMols = cell.getMoleculeCount();
 				for (int i = 0; i < numMols; ++i) {
-					v.push_back(&(cell.moleculesAt(i)));
+					v.push_back(new Molecule(cell.moleculesAt(i)));
 				}
 
 				if (removeFromContainer == true) {
