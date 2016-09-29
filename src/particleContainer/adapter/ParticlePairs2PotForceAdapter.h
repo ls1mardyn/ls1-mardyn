@@ -6,6 +6,7 @@
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
 #include "io/RDF.h"
 #include "Domain.h"
+#include "WrapOpenMP.h"
 
 //! @brief calculate pair forces and collect macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -19,12 +20,32 @@
 class ParticlePairs2PotForceAdapter : public ParticlePairsHandler {
 public:
 	//! Constructor
-	ParticlePairs2PotForceAdapter(Domain& domain) : _domain(domain) {
+	ParticlePairs2PotForceAdapter(Domain& domain) :
+		_domain(domain), _virial(0.0), _upot6LJ(0.0), _upotXpoles(0.0), _myRF(0.0) {
 		//this->_doRecordRDF = false;
+
+		const int numThreads = omp_get_max_threads();
+		Log::global_log->info() << "ParticlePairs2PotForceAdapter: allocate data for " << numThreads << " threads." << std::endl;
+		_threadData.resize(numThreads);
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			PP2PFAThreadData * myown = new PP2PFAThreadData();
+			const int myid = omp_get_thread_num();
+			_threadData[myid] = myown;
+		} // end pragma omp parallel
 	}
 
 	//! Destructor
 	~ParticlePairs2PotForceAdapter() {
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			const int myid = omp_get_thread_num();
+			delete _threadData[myid];
+		} // end pragma omp parallel
 	}
 
 	//! @brief initialize macroscopic values
@@ -37,6 +58,15 @@ public:
 		_upot6LJ = 0;
 		_upotXpoles = 0;
 		_myRF = 0;
+
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			const int myid = omp_get_thread_num();
+			_threadData[myid]->initComp2Param(_domain.getComp2Params());
+			_threadData[myid]->clear();
+		}
 	}
 
 	//! @brief calculate macroscopic values
@@ -44,9 +74,60 @@ public:
 	//! After all pairs have been processes, Upot and Virial can be calculated
 	//! and stored in _domain
 	void finish() {
+		double glob_virial = 0.0;
+		double glob_upot6LJ = 0.0;
+		double glob_upotXpoles = 0.0;
+		double glob_myRF = 0.0;
+
+		#if defined(_OPENMP)
+		#pragma omp parallel reduction(+:glob_virial, glob_upot6LJ, glob_upotXpoles, glob_myRF)
+		#endif
+		{
+			const int myid = omp_get_thread_num();
+			glob_virial += _threadData[myid]->_virial;
+			glob_upot6LJ += _threadData[myid]->_upot6LJ;
+			glob_upotXpoles += _threadData[myid]->_upotXpoles;
+			glob_myRF += _threadData[myid]->_myRF;
+		} // end pragma omp parallel reduction
+
+		_virial = glob_virial;
+		_upot6LJ = glob_upot6LJ;
+		_upotXpoles = glob_upotXpoles;
+		_myRF = glob_myRF;
+
 		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF);
 		_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	}
+
+	struct PP2PFAThreadData {
+		PP2PFAThreadData() : _virial(0.0), _upot6LJ(0.0), _upotXpoles(0.0), _myRF(0.0), _comp2Param(0) {}
+
+		~PP2PFAThreadData() {
+			if(_comp2Param != 0) {
+				delete _comp2Param;
+				_comp2Param = 0;
+			}
+		}
+
+		void initComp2Param(Comp2Param& c2p) {
+			_comp2Param = new Comp2Param(c2p);
+		}
+
+		void clear() {
+			_virial = 0.0;
+			_upot6LJ = 0.0;
+			_upotXpoles = 0.0;
+			_myRF = 0.0;
+		}
+
+		double _virial;
+		double _upot6LJ;
+		double _upotXpoles;
+		double _myRF;
+		Comp2Param * _comp2Param;
+	};
+
+	std::vector<PP2PFAThreadData *> _threadData;
 
     /** calculate force between pairs and collect macroscopic contribution
      *
@@ -64,7 +145,10 @@ public:
      * @return                interaction energy
      */
 	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ = true) {
-		ParaStrm& params = _domain.getComp2Params()(molecule1.componentid(), molecule2.componentid());
+		const int tid = omp_get_thread_num();
+		PP2PFAThreadData &my_threadData = *_threadData[tid];
+
+		ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());
 		params.reset_read();
 
 		switch (pairType) {
@@ -75,9 +159,9 @@ public:
                 if ( _rdf != NULL )
                     _rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
-                PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, Virial3, calculateLJ );
-                _virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
-                return _upot6LJ + _upotXpoles;
+                PotForce(molecule1, molecule2, params, distanceVector, my_threadData._upot6LJ, my_threadData._upotXpoles, my_threadData._myRF, Virial3, calculateLJ );
+                my_threadData._virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
+                return my_threadData._upot6LJ + my_threadData._upotXpoles;
             case MOLECULE_HALOMOLECULE : 
 
                 PotForce(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, dummy4, calculateLJ);

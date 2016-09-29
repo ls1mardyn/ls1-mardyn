@@ -75,50 +75,42 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 		}
 	}
 
-	#ifdef ENABLE_OPENMP
-		// initialize thread data
-		_numThreads = omp_get_max_threads();
-		global_log->info() << "VectorizedCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
-		_threadData.resize(_numThreads);
+	// initialize thread data
+	_numThreads = omp_get_max_threads();
+	global_log->info() << "VectorizedCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	_threadData.resize(_numThreads);
 
-		#pragma omp parallel
-		{
-			VLJCPThreadData * myown = new VLJCPThreadData();
-			const int myid = omp_get_thread_num();
-			_threadData[myid] = myown;
-		}
-	#else
-		_numThreads = 1;
-		_threadData = new VLJCPThreadData();
+	#if defined(_OPENMP)
+	#pragma omp parallel
 	#endif
+	{
+		VLJCPThreadData * myown = new VLJCPThreadData();
+		const int myid = omp_get_thread_num();
+		_threadData[myid] = myown;
+	} // end pragma omp parallel
 }
 
 VectorizedCellProcessor :: ~VectorizedCellProcessor () {
-	#ifdef ENABLE_OPENMP
-		#pragma omp parallel
-		{
-			const int myid = omp_get_thread_num();
-			delete _threadData[myid];
-		}
+	#if defined(_OPENMP)
+	#pragma omp parallel
 	#endif
+	{
+		const int myid = omp_get_thread_num();
+		delete _threadData[myid];
+	}
 }
 
 
 void VectorizedCellProcessor::initTraversal() {
-	#ifdef ENABLE_OPENMP
-		#pragma omp master
-		{
-			_virial = 0.0;
-			_upot6lj = 0.0;
-			_upotXpoles = 0.0;
-			_myRF = 0.0;
-		}
-	#else
+	#if defined(_OPENMP)
+	#pragma omp master
+	#endif
+	{
 		_virial = 0.0;
 		_upot6lj = 0.0;
 		_upotXpoles = 0.0;
 		_myRF = 0.0;
-	#endif
+	} // end pragma omp master
 }
 
 
@@ -128,31 +120,26 @@ void VectorizedCellProcessor::endTraversal() {
 	double glob_virial = 0.0;
 	double glob_myRF = 0.0;
 
-	#ifdef ENABLE_OPENMP
-		#pragma omp parallel reduction(+:glob_upot6lj, glob_upotXpoles, glob_virial, glob_myRF)
-		{
-			const int tid = omp_get_thread_num();
-
-			// reduce vectors and clear local variable
-			double thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
-
-			load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
-			load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
-			load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
-			load_hSum_Store_Clear(&thread_myRF, _threadData[tid]->_myRFV);
-
-			// add to global sum
-			glob_upot6lj += thread_upot;
-			glob_upotXpoles += thread_upotXpoles;
-			glob_virial += thread_virial;
-			glob_myRF += thread_myRF;
-		}
-	#else
-		load_hSum_Store_Clear(&glob_upot6lj, _threadData->_upot6ljV);
-		load_hSum_Store_Clear(&glob_upotXpoles, _threadData->_upotXpolesV);
-		load_hSum_Store_Clear(&glob_virial, _threadData->_virialV);
-		load_hSum_Store_Clear(&glob_myRF, _threadData->_myRFV);
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:glob_upot6lj, glob_upotXpoles, glob_virial, glob_myRF)
 	#endif
+	{
+		const int tid = omp_get_thread_num();
+
+		// reduce vectors and clear local variable
+		double thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
+
+		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
+		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
+		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
+		load_hSum_Store_Clear(&thread_myRF, _threadData[tid]->_myRFV);
+
+		// add to global sum
+		glob_upot6lj += thread_upot;
+		glob_upotXpoles += thread_upotXpoles;
+		glob_virial += thread_virial;
+		glob_myRF += thread_myRF;
+	} // end pragma omp parallel reduction
 
 	_upot6lj = glob_upot6lj;
 	_upotXpoles = glob_upotXpoles;
@@ -795,13 +782,9 @@ inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, con
 }
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
-	#ifdef ENABLE_OPENMP
-		const int tid = omp_get_thread_num();
-		VLJCPThreadData &my_threadData = *_threadData[tid];
-	#else
-		VLJCPThreadData &my_threadData = *_threadData;
-	#endif
+void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	const int tid = omp_get_thread_num();
+	VLJCPThreadData &my_threadData = *_threadData[tid];
 
 	// initialize dist lookups
 	if(my_threadData._centers_dist_lookup.get_size() < soa2._centers_size){

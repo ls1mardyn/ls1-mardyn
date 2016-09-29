@@ -16,15 +16,14 @@
 using Log::global_log;
 using namespace std;
 
-NonBlockingMPIMultiStepHandler::NonBlockingMPIMultiStepHandler(
-		Timer* decompositionTimer, Timer* computationTimer,
+NonBlockingMPIMultiStepHandler::NonBlockingMPIMultiStepHandler(Timer* decompositionTimer,
+		Timer* computationTimer, Timer* forceCalculationTimer,
 		DomainDecompMPIBase* domainDecomposition,
 		ParticleContainer* moleculeContainer, Domain* domain,
 		CellProcessor* cellProcessor) :
-		NonBlockingMPIHandlerBase(decompositionTimer, computationTimer,
-				domainDecomposition, moleculeContainer, domain, cellProcessor) {
+				NonBlockingMPIHandlerBase(decompositionTimer, computationTimer, forceCalculationTimer,
+						domainDecomposition, moleculeContainer, domain, cellProcessor) {
 	// just calling the constructor of the base class is enough
-
 }
 
 NonBlockingMPIMultiStepHandler::~NonBlockingMPIMultiStepHandler() {
@@ -35,7 +34,9 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	int stageCount = _domainDecomposition->getNonBlockingStageCount();
 
 	assert(stageCount > 0);
+	_forceCalculationTimer->start();
 	_cellProcessor->initTraversal();
+	_forceCalculationTimer->stop();
 	for (unsigned int i = 0; i < static_cast<unsigned int>(stageCount); ++i) {
 		_decompositionTimer->start();
 		_domainDecomposition->prepareNonBlockingStage(false,
@@ -45,8 +46,10 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 		_computationTimer->start();
 		// Force calculation and other pair interaction related computations
 		global_log->debug() << "Traversing innermost cells" << std::endl;
+		_forceCalculationTimer->start();
 		_moleculeContainer->traversePartialInnermostCells(*_cellProcessor, i,
 				stageCount);
+		_forceCalculationTimer->stop();
 		_computationTimer->stop();
 
 		_decompositionTimer->start();
@@ -62,8 +65,10 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 	_computationTimer->start();
 	// remaining force calculation and other pair interaction related computations
 	global_log->debug() << "Traversing non-innermost cells" << std::endl;
+	_forceCalculationTimer->start();
 	_moleculeContainer->traverseNonInnermostCells(*_cellProcessor);
 	_cellProcessor->endTraversal();
+	_forceCalculationTimer->stop();
 	_computationTimer->stop();
 }
 

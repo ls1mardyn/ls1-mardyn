@@ -41,7 +41,7 @@ public:
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
 
-        int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
+	int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
 
 	void processCell(ParticleCell& cell);
 

@@ -20,7 +20,7 @@ namespace bhfmm {
 VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius) :
 		_domain(domain),
 		// maybe move the following to somewhere else:
-		_upotXpoles(0.0), _virial(0.0), _charges_dist_lookup(0) {
+		_upotXpoles(0.0), _virial(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using no intrinsics." << std::endl;
@@ -34,12 +34,33 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	global_log->info() << "VectorizedChargeP2PCellProcessor: using MIC intrinsics." << std::endl;
 #endif
 
+	// initialize thread data
+	_numThreads = omp_get_max_threads();
+	global_log->info() << "VectorizedChargeP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	_threadData.resize(_numThreads);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		VCP2PCPThreadData * myown = new VCP2PCPThreadData();
+		const int myid = omp_get_thread_num();
+		_threadData[myid] = myown;
+	} // end pragma omp parallel
+
 #ifdef ENABLE_MPI
 	_timer.set_sync(false);
 #endif
 }
 
 VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int myid = omp_get_thread_num();
+		delete _threadData[myid];
+	}
 }
 
 void VectorizedChargeP2PCellProcessor::printTimers() {
@@ -49,15 +70,43 @@ void VectorizedChargeP2PCellProcessor::printTimers() {
 
 void VectorizedChargeP2PCellProcessor::initTraversal() {
 	_timer.start();
-	_virial = 0.0;
-	_upotXpoles = 0.0;
+
+	#if defined(_OPENMP)
+	#pragma omp master
+	#endif
+	{
+		_upotXpoles = 0.0;
+		_virial = 0.0;
+	} // end pragma omp master
+
 }
 
 
 void VectorizedChargeP2PCellProcessor::endTraversal() {
 	double currentVirial = _domain.getLocalVirial();
 	double currentUpot = _domain.getLocalUpot();
+	double glob_upotXpoles = 0.0;
+	double glob_virial = 0.0;
 
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:glob_upotXpoles, glob_virial)
+	#endif
+	{
+		const int tid = omp_get_thread_num();
+
+		// reduce vectors and clear local variable
+		double thread_upotXpoles = 0.0, thread_virial = 0.0;
+
+		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
+		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
+
+		// add to global sum
+		glob_upotXpoles += thread_upotXpoles;
+		glob_virial += thread_virial;
+	} // end pragma omp parallel reduction
+
+	_upotXpoles = glob_upotXpoles;
+	_virial = glob_virial;
 	_domain.setLocalVirial(currentVirial + _virial);
 	_domain.setLocalUpot(currentUpot + _upotXpoles);
 	_timer.stop();
@@ -483,12 +532,15 @@ inline VectorizedChargeP2PCellProcessor::calcDistLookup (const CellDataSoA & soa
 #pragma GCC diagnostic pop
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	const int tid = omp_get_thread_num();
+	VCP2PCPThreadData &my_threadData = *_threadData[tid];
+
 	// initialize dist lookups
-	if(_centers_dist_lookup.get_size() < soa2._charges_size){
-		soa2.resizeLastZero(_centers_dist_lookup, soa2._charges_size, soa2._charges_num);
+	if(my_threadData._centers_dist_lookup.get_size() < soa2._charges_size){
+		soa2.resizeLastZero(my_threadData._centers_dist_lookup, soa2._charges_size, soa2._charges_num);
 	}
-	_charges_dist_lookup = _centers_dist_lookup;
+	my_threadData._charges_dist_lookup = my_threadData._centers_dist_lookup;
 
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
@@ -522,7 +574,7 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 	      double * const soa2_charges_V_z   = soa2.charges_V_zBegin();
 	const double * const soa2_charges_q = soa2._charges_q;
 
-	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = _charges_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
 
 	vcp_double_vec sum_upotXpoles = VCP_SIMD_ZEROV;
@@ -685,14 +737,11 @@ void VectorizedChargeP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa
 			}
 			i_charge_idx += soa1_mol_charges_num[i];
 		}
-
-
 	}
 
-	hSum_Add_Store(&_upotXpoles, sum_upotXpoles);
-	hSum_Add_Store(&_virial, sum_virial);
-
-} // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
+	hSum_Add_Store(my_threadData._upotXpolesV, sum_upotXpoles);
+	hSum_Add_Store(my_threadData._virialV, sum_virial);
+} // void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2)
 
 void VectorizedChargeP2PCellProcessor::processCell(ParticleCellPointers & c) {
 	CellDataSoA& soa = c.getCellDataSoA();

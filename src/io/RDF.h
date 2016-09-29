@@ -105,8 +105,15 @@ public:
 	void observeRDF(double dd, unsigned i, unsigned j) const {
 		if(_numberOfRDFTimesteps <= 0) return;
 		if(dd > _maxDistanceSquare) return;
-		if(i > j) { this->observeRDF(dd, j, i); return; }
+		if(i > j) {
+			this->observeRDF(dd, j, i);
+			return;
+		}
+
 		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		#if defined _OPENMP
+		#pragma omp atomic
+		#endif
 		this->_localDistribution[i][j-i][l] ++;
 	}
 
@@ -123,9 +130,17 @@ public:
 		}
 
 		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		#if defined _OPENMP
+		#pragma omp atomic
+		#endif
 		this->_localSiteDistribution[i][j-i][m][n][l] ++;
-                if((i == j) && (m != n)) this->_localSiteDistribution[i][j-i][n][m][l] ++;
-//		std::cout << "Observed RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
+		if((i == j) && (m != n)){
+			#if defined _OPENMP
+			#pragma omp atomic
+			#endif
+			this->_localSiteDistribution[i][j-i][n][m][l] ++;
+		}
+		//std::cout << "Observed RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
 	}
 
 	bool siteRDF() {
