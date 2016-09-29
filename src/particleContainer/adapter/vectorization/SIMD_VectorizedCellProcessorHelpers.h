@@ -218,9 +218,129 @@ void vcp_simd_load_sub_store_masked(double * const addr, size_t offset, const vc
 }
 
 
+/**
+ * \brief Policy class for single cell force calculation.
+ */
+class SingleCellPolicy_ {
+public:
+
+	inline static size_t InitJ (const size_t i)  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+	{  // i: only calculate j>=i
+		// however we do a floor for alignment purposes. ->  we have to mark some of the indices to not be computed (this is handled using the InitJ_Mask)
+		return vcp_floor_to_vec_size(i);  // this is i if i is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
+	}
+
+	inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+	{
+#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
+		return InitJ(i);
+#else
+		return 0;
+#endif
+	}
+
+	inline static vcp_mask_vec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
+		return vcp_simd_getInitMask(i);
+	}
+
+	inline static vcp_mask_vec GetForceMask(const vcp_double_vec& m_r2, const vcp_double_vec& rc2,
+			vcp_mask_vec& j_mask) {
+		vcp_mask_vec result = vcp_simd_and(vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV)),
+				j_mask);
+		j_mask = VCP_SIMD_ONESVM;
+		return result;
+	}
 
 
 
+}; /* end of class SingleCellPolicy_ */
+
+/**
+ * \brief Policy class for cell pair force calculation.
+ */
+class CellPairPolicy_ {
+public:
+
+	inline static bool Condition(double m_r2, double rc2)
+	{
+		// Because we have 2 different cells, no 2 centers on the same
+		// molecule can form a pair.
+		return m_r2 < rc2;
+	}
+
+	inline static size_t InitJ (const size_t /*i*/)
+	{
+		return 0;
+	}
+	inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+	{
+		return InitJ(i);
+	}
+
+	inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& /*j_mask*/)
+	{
+		// Provide a mask with the same logic as used in
+		// bool Condition(double m_r2, double rc2)
+		return vcp_simd_lt(m_r2, rc2);
+	}
+
+	inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
+	{
+		return VCP_SIMD_ONESVM;//totally unimportant, since not used...
+	}
+
+}; /* end of class CellPairPolicy_ */
+
+/**
+ * \brief The dist lookup for a molecule and all centers of a type
+ * \author Robert Hajda
+ */
+template<class ForcePolicy, class MaskGatherChooser>
+countertype32
+static inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
+		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
+		const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z) {
+
+	size_t j = ForcePolicy :: InitJ(i_center_idx);
+	vcp_mask_vec initJ_mask = ForcePolicy :: InitJ_Mask(i_center_idx);
+
+	MaskGatherChooser mgc(soa2_center_dist_lookup, j);
+
+	for (; j < end_j; j += VCP_VEC_SIZE) {
+		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
+		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
+		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
+
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
+
+		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
+
+		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
+
+		mgc.storeCalcDistLookup(j, forceMask);
+
+	}
+	const vcp_mask_vec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
+	if (vcp_simd_movemask(remainderMask)) {
+		const vcp_double_vec m2_r_x = vcp_simd_maskload(soa2_m_r_x + j, remainderMask);
+		const vcp_double_vec m2_r_y = vcp_simd_maskload(soa2_m_r_y + j, remainderMask);
+		const vcp_double_vec m2_r_z = vcp_simd_maskload(soa2_m_r_z + j, remainderMask);
+
+		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
+		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
+		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
+
+		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
+
+		const vcp_mask_vec forceMask = vcp_simd_and(remainderMask, ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask));//AND remainderMask -> set unimportant ones to zero.
+		mgc.storeCalcDistLookup(j, forceMask);
+	}
+
+	return mgc.getCount();	//do not compute stuff if nothing needs to be computed.
+
+}
 
 
 #endif /* SIMD_VECTORIZEDCELLPROCESSORHELPERS_H */
