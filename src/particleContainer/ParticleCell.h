@@ -5,8 +5,7 @@
 
 #include "Cell.h"
 #include "particleContainer/adapter/CellDataSoA.h"
-
-class Molecule;
+#include "molecules/Molecule.h"
 
 //! @brief ParticleCell data structure.
 //! @author Martin Buchholz
