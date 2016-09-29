@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/type-serializer-map.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_TYPE_SERIALIZER_MAP_HXX
@@ -16,6 +15,7 @@
 #include <xsd/cxx/tree/elements.hxx>
 
 #include <xsd/cxx/xml/qualified-name.hxx>
+#include <xsd/cxx/xml/dom/auto-ptr.hxx>
 #include <xsd/cxx/xml/dom/serialization-header.hxx> // namespace_infomap
 
 namespace xsd
@@ -35,7 +35,7 @@ namespace xsd
         register_type (const type_id&,
                        const qualified_name& name,
                        serializer,
-                       bool override = true);
+                       bool replace = true);
 
         void
         unregister_type (const type_id&);
@@ -70,7 +70,7 @@ namespace xsd
         // Create DOMDocument with root element suitable for serializing
         // x into it.
         //
-        xml::dom::auto_ptr<xercesc::DOMDocument>
+        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
         serialize (const C* name, // element name
                    const C* ns,   // element namespace
                    const xml::dom::namespace_infomap<C>&,

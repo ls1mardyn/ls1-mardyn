@@ -1,31 +1,52 @@
 #ifndef MKESFERA_H
 #define MKESFERA_H
 
-#include "utils/OptionParser.h"
-#include <list>
+#include "io/InputBase.h"
 
-class Domain;
-class DomainDecompBase;
-class Integrator;
-class OutputBase;
-class ParticleContainer;
-class Simulation;
-
-class Mkesfera {
+/** @brief Single droplet scenario generator.
+ *
+ * Creates a droplet with a given center position and radius inside the simulation box.
+ * The density of the droplet and its surrounding can be chosen seperately.
+ * The droplet and its surrounding consist both out of molecules from the component
+ * with ID=1 in the xml input file.
+ */
+class MkesferaGenerator : public InputBase {
 
 public:
-	Mkesfera(optparse::Values &options);
+	MkesferaGenerator(){}
+	~MkesferaGenerator(){}
 
-	void generate(Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*> &outputPlugins, Simulation* simulation);
+	void setPhaseSpaceFile(std::string /*filename*/){}
+	void setPhaseSpaceHeaderFile(std::string /*filename*/){}
+
+	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/){}
+	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
+
+	/** @brief Read in XML configuration for MkesferaGenerator and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <generator name="mkesfera">
+	     <outer-density>DOUBLE</outer-density>
+	     <droplet>
+	       <radius>DOUBLE</radius>
+	       <density>DOUBLE</density>
+	       <center>
+	         <x>DOUBLE</x>
+	         <y>DOUBLE</y>
+	         <z>DOUBLE</z>
+	       </center>
+	     </droplet>
+	   </generator>
+	   \endcode
+	 */
+	void readXML(XMLfileUnits& xmlconfig);
 
 private:
-	double cutoff;
-	bool do_shift;
 	double R_i, R_o;
 	double rho_i, rho_o;
-	double T;
-	double box[3];
-
+	double center[3]; /**< droplet center */
 };
 
 #endif /* MKESFERA_H */
+

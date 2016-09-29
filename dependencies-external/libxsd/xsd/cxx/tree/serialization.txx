@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/serialization.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <string>
@@ -92,9 +91,29 @@ namespace xsd
       // Insertion operators for type.
       //
       inline void
-      operator<< (xercesc::DOMElement& e, const type&)
+      operator<< (xercesc::DOMElement& e, const type& x)
       {
         xml::dom::clear<char> (e);
+
+        if (!x.null_content () && x.dom_content ().present ())
+        {
+          // Clone the contents of the element.
+          //
+          using namespace xercesc;
+
+          DOMDocument& doc (*e.getOwnerDocument ());
+          const DOMElement& se (x.dom_content ().get ());
+          DOMNamedNodeMap& sa (*se.getAttributes ());
+
+          for (XMLSize_t i (0), n (sa.getLength ()); i != n; ++i)
+            e.setAttributeNode (
+              static_cast<DOMAttr*> (doc.importNode (sa.item (i), true)));
+
+          for (DOMNode* sn (se.getFirstChild ());
+               sn != 0;
+               sn = sn->getNextSibling ())
+            e.appendChild (doc.importNode (sn, true));
+        }
       }
 
       inline void
@@ -110,23 +129,30 @@ namespace xsd
 
       // Insertion operators for simple_type.
       //
-      template <typename B>
+      template <typename C, typename B>
       inline void
-      operator<< (xercesc::DOMElement& e, const simple_type<B>&)
+      operator<< (xercesc::DOMElement& e, const simple_type<C, B>& x)
       {
-        xml::dom::clear<char> (e);
-      }
-
-      template <typename B>
-      inline void
-      operator<< (xercesc::DOMAttr&, const simple_type<B>&)
-      {
+        if (x.null_content ())
+          xml::dom::clear<char> (e);
+        else
+          e << x.text_content ();
       }
 
       template <typename C, typename B>
       inline void
-      operator<< (list_stream<C>&, const simple_type<B>&)
+      operator<< (xercesc::DOMAttr& a, const simple_type<C, B>& x)
       {
+        if (!x.null_content ())
+          a << x.text_content ();
+      }
+
+      template <typename C, typename B>
+      inline void
+      operator<< (list_stream<C>& ls, const simple_type<C, B>& x)
+      {
+        if (!x.null_content ())
+          ls << x.text_content ();
       }
 
       // Insertion operators for list.
@@ -533,23 +559,23 @@ namespace xsd
 
       // idref
       //
-      template <typename T, typename C, typename B>
+      template <typename C, typename B, typename T>
       inline void
-      operator<< (xercesc::DOMElement& e, const idref<T, C, B>& x)
+      operator<< (xercesc::DOMElement& e, const idref<C, B, T>& x)
       {
         bits::insert<C> (e, x);
       }
 
-      template <typename T, typename C, typename B>
+      template <typename C, typename B, typename T>
       inline void
-      operator<< (xercesc::DOMAttr& a, const idref<T, C, B>& x)
+      operator<< (xercesc::DOMAttr& a, const idref<C, B, T>& x)
       {
         bits::insert<C> (a, x);
       }
 
-      template <typename T, typename C, typename B>
+      template <typename C, typename B, typename T>
       inline void
-      operator<< (list_stream<C>& ls, const idref<T, C, B>& x)
+      operator<< (list_stream<C>& ls, const idref<C, B, T>& x)
       {
         ls.os_ << x;
       }

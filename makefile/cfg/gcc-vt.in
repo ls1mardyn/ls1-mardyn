@@ -34,3 +34,7 @@ LINKFLAGS_PAR_DEBUG =
 # RELEASE
 CXXFLAGS_PAR_RELEASE  = -O2 -g -DNDEBUG -DENABLE_MPI 
 LINKFLAGS_PAR_RELEASE =
+
+# Further settings, common to all configurations, which use gcc
+#########################################
+include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)

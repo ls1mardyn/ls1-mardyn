@@ -1,20 +1,3 @@
-/*************************************************************************
- * Copyright (C) 2012 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                       *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or (at *
- * your option) any later version.                                       *
- *                                                                       *
- * This program is distributed in the hope that it will be useful, but   *
- * WITHOUT ANY WARRANTY; without even the implied warranty of            * 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      *
- * General Public License for more details.                              *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the Free Software           *
- * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.   *
- *************************************************************************/
 
 #ifndef DOMAIN_H_
 #define DOMAIN_H_
@@ -24,11 +7,13 @@
 
 #include "molecules/Comp2Param.h"
 #include "molecules/Component.h"
+#include "ensemble/EnsembleBase.h"
+#include "Simulation.h"
 
 /* 
  * TODO add comments for variables 
  */
-#define VERSION 20120726  /**< checkpoint file version */
+#define CHECKPOINT_FILE_VERSION 20160512  /**< checkpoint file version */
 
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
@@ -37,6 +22,7 @@ class Molecule;
 class ParticleContainer;
 class DomainDecompBase; 
 class PressureGradient;
+class XMLfileUnits;
 
 //! @brief This class is used to read in the phasespace and to handle macroscopic values
 //! @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2011)
@@ -62,12 +48,14 @@ class Domain {
 private:
 	Domain();
 	Domain(Domain &domain);
+
 	Domain& operator=(Domain &domain);
 	
 public:
 	//! The constructor sets _localRank to rank and initializes all member variables
 	Domain(int rank, PressureGradient* pg);
 
+	void readXML(XMLfileUnits& xmlconfig);
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!
 	//! The format of the checkpointfile written by this method is the same as the format
@@ -76,8 +64,9 @@ public:
 	//! @param particleContainer The molecules that have to be written to the file are stored here
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
+	//! @param currentTime The current time to be printed.
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp );
+			const DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -107,7 +96,7 @@ public:
 	//!
 	//! @param cutoffRadius cutoff radius for electrostatics
 	//! @param cutoffRadiusLJ cutoff radius for the LJ potential
-	void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ);
+//	void initFarFieldCorr(double cutoffRadius, double cutoffRadiusLJ);
 
 	//! @brief initialize parameter streams
 	//!
@@ -121,13 +110,25 @@ public:
 
 	//! @brief get the potential of the local process
 	double getLocalUpot() const;
+	
+	//! @brief set the fluid and fluid-solid potential of the local process
+	void setLocalUpotCompSpecific(double UpotCspec);
+
+	//! @brief set the number of fluid phase components (specified in the config-file)
+	void setNumFluidComponents(unsigned nc);
+	
+	//! @brief get the numbr of fluid molecules as specified in the config file (*_1R.cfg)
+	unsigned getNumFluidComponents();
+	
+	//! @brief get the fluid and fluid-solid potential of the local process
+	double getLocalUpotCompSpecific();
 
 	//! @brief set the virial of the local process
 	void setLocalVirial(double Virial);
 
 	//! @brief get the virial of the local process
 	double getLocalVirial() const;
-
+	
 	//! @brief get thermostat scaling for translations
 	double getGlobalBetaTrans();
 	double getGlobalBetaTrans(int thermostat);
@@ -179,6 +180,14 @@ public:
 	//! Before this method is called, it has to be sure that the
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot() const;
+        double getGlobalUpot() const;
+
+	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
+	double getAverageGlobalUpotCSpec();
+
+	//! by Stefan Becker: determine and return the totel number of fluid molecules
+	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules 
+	unsigned long getNumFluidMolecules();
 
 	//! @brief get the global average virial per particle
 	//!
@@ -197,16 +206,7 @@ public:
 		this->_localThermostatN[thermostat] = N;
 		this->_localRotationalDOF[thermostat] = rotDOF;
 	}
-	unsigned int getComponentRotDOF(int cid) { 
-		return _components[cid].getRotationalDegreesOfFreedom(); 
-	}
-
-	//! @brief get input version
-	unsigned long getinpversion();
-
-	//! @brief set input version
-	void setinpversion(unsigned long inputVersion);
-
+	
 	//! @brief get globalRho
 	double getglobalRho();
 
@@ -218,21 +218,6 @@ public:
 
 	//! @brief set globalRotDOF
 	void setglobalRotDOF(unsigned long grotdof);
-
-	//! @brief get the current time
-	double getCurrentTime();
-
-	//! @brief get the current time
-	void setCurrentTime(double curtime);
-
-	//! @brief advance the current time by timestep
-	void advanceTime(double timestep);
-
-	//! @brief get a reference to the vector of components
-	std::vector<Component>& getComponents();
-
-	//! @brief add a component to the vector of components
-	void addComponent(Component component);
 
 	//! @brief get the parameter streams
 	Comp2Param& getComp2Params();
@@ -338,13 +323,47 @@ public:
 
 	void setupProfile(unsigned xun, unsigned yun, unsigned zun);
 	void considerComponentInProfile(int cid);
-	void recordProfile(ParticleContainer* molCont);
-	void collectProfile(DomainDecompBase* domainDecomp);
-	void outputProfile(const char* prefix);
-	void resetProfile();
+	void recordProfile(ParticleContainer* molCont, bool virialProfile);
+	void collectProfile(DomainDecompBase* domainDecomp, bool virialProfile);
+	void outputProfile(const char* prefix, bool virialProfile);
+	void resetProfile(bool virialProfile);
+
+
+	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods employed for setting up a density profile in cylindrical coordinates
+	//begin
+	// prerequisite for the cylindrical coordinate system: R2max, centre, InvProfileUnit[3] => counterpart of setupProfile(), beyond that recordProfile() is extended
+	void sesDrop();
+	// number of the current bin a particle is located in. Actual parameters: global cartesian coordinates of the particle with respect to the simulation box coordinate system
+	long int unID(double qx, double qy, double qz);
+	// returning the parameter that controls wheter or not a cylindrical profile is created. method called by Simulation::output()
+	bool isCylindrical();
+	// writing out a 3-dimensional density profile in cylindrical coordinates, counterpart of outputProfile.
+	void outputCylProfile(const char* prefix, bool virialProfile);
+	// setting the offset in y-direction (obtained from the config file), needed in the density profile output file 
+	void sYOffset(double in_yOff);
+	// end
+
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods providing a shift of the particles in the simulation box so that 
+	// the center of mass is placed in the middle of the box with respect of the x- and z-direction ( 0- and 2-direction), and the
+	// wall is kept at its initial position
+	void determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction);
+	void determineYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction);
+	void noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+			     double fraction);
+	// in this method there is no shift specific to different components, only the profiled component is kept in the centre of the box
+	void determineShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
+                             double fraction);
+
+	// carrying out the actual shift of ALL particles
+	void realign( ParticleContainer* molCont);
+	
+	// method defining the component that is employed for determining the shift distance in y-direction
+	void considerComponentForYShift(unsigned cidMin, unsigned cidMax);
+
 
 	unsigned long N() {return _globalNumMolecules;}
-	unsigned long N(unsigned cid) { return _components[cid].getNumMolecules(); }
 
 	void Nadd(unsigned cid, int N, int localN);
 
@@ -376,28 +395,38 @@ public:
 	double getSigma(unsigned cid, unsigned nthSigma);
 	// needed for the MmspdWriter (MegaMol)
 	unsigned getNumberOfComponents();
+	
+	void setUpotCorr(double upotcorr){ _UpotCorr = upotcorr; }
+	void setVirialCorr(double virialcorr){ _VirialCorr = virialcorr; }
+	//! reset the surface tension
+	void resetGamma();
+
+	double getGamma(unsigned id);
+	//! Calcute the surface tension from the virial tensor
+	void calculateGamma(ParticleContainer* _particleContainer, DomainDecompBase* _domainDecomposition);
+
+    // explosion heuristics, NOTE: turn off when using slab thermostat
+    void SetExplosionHeuristics(bool bVal) { _bDoExplosionHeuristics = bVal; }
+
 private:
 
 	//! rank of the local process
 	int _localRank;
 
-	//! @brief Version of the input file
-	//!
-	//! even though it is desirable, that the format of the input file
-	//! doesn't change, is sometimes does change. When that happens,
-	//! the code which reads in the input file (parser) has to be changed as well.
-	//! old versions of the input file then can't be read any more.
-	//! So whenever the parser is changed, _inpversion is set to the
-	//! date of the change (YYYYMMDD) (hard-coded). Only input files
-	//! with the same version are sure to be processed correctly
-	unsigned long _inpversion;
-
 	//! Potential of the local process
 	double _localUpot;
+	//! by Stefan Becker: component specific potential of the local process (fluid-fluid and fluid-solid, but not solid-solid)
+	double _localUpotCspecif;
+	//! by Stefan Becker: number of fluid components specified in the config file 
+	//! --> used to determine the average component specific potential energy
+	unsigned _numFluidComponent;
+
 	//! Virial of the local process
 	double _localVirial;
 	//! global Potential
 	double _globalUpot;
+	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
+	double _globalUpotCspecif;
 	//! global virial
 	double _globalVirial;
 	//! global density
@@ -470,6 +499,22 @@ private:
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
         double _universalProfiledComponentMass;  // set from outside
+	// //! local virial / pressure profile map
+	// std::map<unsigned, long double> _localPDProfile;
+	// //! global virial / pressure profile map
+	// std::map<unsigned, double> _universalPDProfile;
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPXProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPXProfile;
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPYProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPYProfile;
+	//! local virial / pressure profile map
+	std::map<unsigned, long double> _localPZProfile;
+	//! global virial / pressure profile map
+	std::map<unsigned, double> _universalPZProfile;
 
         std::map<unsigned, double> _universalTProfile; 
         std::map<unsigned, long double> _localWidomProfile;  // submit individually
@@ -482,6 +527,33 @@ private:
         std::map<unsigned, double> _globalWidomInstancesTloc;
         double _universalLambda;  // set from outside
         float _globalDecisiveDensity;  // set from outside
+
+	//! writing out a density profile in cylindrical coordinates
+	bool _universalCylindricalGeometry=false;
+	//! centre of the cylindrical coordinate system
+	double _universalCentre[3];
+	//! outermost radial distance up to which the binning is applied
+	double _universalR2max;
+	//! offset in y-direction => to be written out along with the density profile
+	double _yOff;
+	// end
+
+	//! by Stefan Becker => implementing a new velocity profile: 
+	//! local squared value of the velocity components
+	//!@TODO: kind of redundant to kinetic profile
+//	std::map<unsigned,double> _localV2Profile[3];
+	//! global squared value of the velocity components
+//	std::map<unsigned,double> _universalV2Profile[3];
+
+	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>  => concerning the realignment tool: realignment to the centre of mass
+	// begin 
+	// _globalRealignmentMass[0] corresponds to the xz-shift,  _globalRealignmentMass[1] to the y-shift
+	double _globalRealignmentMass[2];
+	double _globalRealignmentBalance[3];
+	double _universalRealignmentMotion[3];
+	// The component responsible for the shift in y-direction
+	std::map<unsigned,bool> _componentForYShift;
+	//end
 
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;
@@ -507,15 +579,19 @@ private:
 	double _VirialCorr;
 
 	//! Contains the time t in reduced units
-	double _currentTime;
+	double currentTime;  //edited by Michaela Heier
 
-	//! Components resp. molecule types
-	std::vector<Component> _components;
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;
 	//! modified Lorentz-Berthelot mixing rule parameters
 	//! @todo more explanation
 	std::vector<double> _mixcoeff;
+	
+	//! Surface tension component wise
+	std::map<unsigned,double> _Gamma;
+
+    // explosion heuristics, NOTE: turn off when using slab thermostat
+    bool _bDoExplosionHeuristics;
 };
 
 

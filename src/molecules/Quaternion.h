@@ -1,22 +1,3 @@
-/***************************************************************************
- *   Copyright (C) 2005 by Martin Bernreuther   *
- *   Martin.Bernreuther@informatik.uni-stuttgart.de   *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
 #ifndef QUATERNION_H_
 #define QUATERNION_H_
 
@@ -34,7 +15,7 @@ public:
 	double qx() const { return m_qx; }
 	double qy() const { return m_qy; }
 	double qz() const { return m_qz; }
-	double magnitude2() {
+	double magnitude2() const {
 		return m_qw * m_qw + m_qx * m_qx + m_qy * m_qy + m_qz * m_qz;
 	}
 	void scale(double s) {
@@ -102,6 +83,10 @@ public:
 	//  { differentiate_dbl(w,dqdt); dqdt.scale(.5); }
 	void getRotMatrix(double R[3][3]) const;
 	void getRotinvMatrix(double R[3][3]) const;
+
+	bool isNormalized() const {
+		return fabs(magnitude2() - 1.0) <= 1e-15;
+	}
 
 private:
 	double m_qw, m_qx, m_qy, m_qz; // components

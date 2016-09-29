@@ -1,7 +1,7 @@
 /**
  * \file
  * \brief VectorizedCellProcessor.h
- * \author Johannes Heckl, Wolfgang Eckhardt
+ * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann, Steffen Seckler
  */
 
 #ifndef VECTORIZEDCELLPROCESSOR_H_
@@ -12,41 +12,12 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include "vectorization/SIMD_TYPES.h"
+#include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 
-// The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
-#if defined(VLJCP_VEC_TYPE) || defined(VLJCP_NOVEC) || defined(VLJCP_VEC_SSE3)
-	#error conflicting macro definitions
+#ifdef ENABLE_OPENMP
+#include <omp.h>
 #endif
-
-#define VLJCP_NOVEC 0
-#define VLJCP_VEC_SSE3 1
-#define VLJCP_VEC_AVX 2
-
-#if defined(__AVX__) && not defined(AVX128)
-	#define VLJCP_VEC_TYPE VLJCP_VEC_AVX
-#elif defined(__AVX__) && defined(AVX128)
-	#define VLJCP_VEC_TYPE VLJCP_VEC_SSE3
-#elif defined(__SSE3__)
-	#define VLJCP_VEC_TYPE VLJCP_VEC_SSE3
-#else
-	#define VLJCP_VEC_TYPE VLJCP_NOVEC
-#endif
-
-#ifdef NOVEC
-	#ifdef VLJCP_VEC_TYPE
-		#warn Multiple vectorization methods specified. Will not use vectorization at all!
-		#undef VLJCP_VEC_TYPE
-	#endif
-	#define VLJCP_VEC_TYPE VLJCP_NOVEC
-#endif
-
-// Include necessary files if we vectorize.
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-	#include "immintrin.h"
-#elif VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
-	#include "pmmintrin.h"
-#endif
-
 
 class Component;
 class Domain;
@@ -55,33 +26,44 @@ class Molecule;
 class CellDataSoA;
 
 /**
- * \brief Vectorized calculation of Lennard Jones force.
+ * \brief Vectorized calculation of the force.
  * \author Johannes Heckl
  */
 class VectorizedCellProcessor : public CellProcessor {
 public:
 	typedef std::vector<Component> ComponentList;
 
+	VectorizedCellProcessor& operator=(const VectorizedCellProcessor&) = delete;
+
 	/**
 	 * \brief Construct and set up the internal parameter table.
 	 * \details Components and parameters should be finalized before this call.
 	 */
-	VectorizedCellProcessor(Domain & domain, double cutoffRadius);
+	VectorizedCellProcessor(Domain & domain, double cutoffRadius, double LJcutoffRadius);
 
 	~VectorizedCellProcessor();
 
 	/**
 	 * \brief Reset macroscopic values to 0.0.
 	 */
-	void initTraversal(const size_t numCells);
+	void initTraversal();
 	/**
-	 * \brief Load the LennardJonesSoA for cell.
+	 * \brief Load the CellDataSoA for cell.
 	 */
-	void preprocessCell(ParticleCell& cell);
+	void preprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell1 and cell2.
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
+
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) {
+		return 0.0;
+	}
+
+	// provisionally, the code from the legacy cell processor is used here
+	//
+	int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
+
 	/**
 	 * \brief Calculate forces between pairs of Molecules in cell.
 	 */
@@ -89,7 +71,7 @@ public:
 	/**
 	 * \brief Free the LennardJonesSoA for cell.
 	 */
-	void postprocessCell(ParticleCell& cell);
+	void postprocessCell(ParticleCell& /*cell*/) {}
 	/**
 	 * \brief Store macroscopic values in the Domain.
 	 */
@@ -107,10 +89,22 @@ private:
 	 * \brief The Domain where macroscopic values will be stored.
 	 */
 	Domain & _domain;
+
 	/**
 	 * \brief The squared cutoff radius.
 	 */
-	const double _rc2;
+	//const double _cutoffRadiusSquare;
+
+	/**
+	 * \brief The squared LJ cutoff radius.
+	 */
+	//const double _LJcutoffRadiusSquare;
+
+	/**
+	 * \brief Parameter for the reaction field method (see description in Domain.h and Comp2Param.cpp).
+	 */
+	const double _epsRFInvrc3;
+
 	/**
 	 * \brief One LJ center enumeration start index for each component.
 	 * \details All the LJ centers of all components are enumerated.<br>
@@ -118,7 +112,7 @@ private:
 	 * This is necessary for finding the respective parameters for each interaction<br>
 	 * between two centers.
 	 */
-	std::vector<size_t> _compIDs;
+
 	/**
 	 * \brief Epsilon and sigma for pairs of LJcenters.
 	 * \details Each DoubleArray contains parameters for one center combined with all centers.<br>
@@ -132,27 +126,201 @@ private:
 	 */
 	std::vector<DoubleArray> _shift6;
 	/**
-	 * \brief Sum of all potentials.
+	 * \brief Sum of all LJ potentials.
 	 * \details Multiplied by 6.0 for performance reasons.
 	 */
 	double _upot6lj;
+
+	/**
+	 * \brief Sum of all Xpole potentials.
+	 */
+	double _upotXpoles;
+
 	/**
 	 * \brief The virial.
 	 */
 	double _virial;
 
-	// vector holding pointers to the above objects, used as a stack for
-	// managing free objects
-	std::vector<CellDataSoA*> _particleCellDataVector;
+	/**
+	 * \brief MyRF contribution of all pairs
+	 */
+	double _myRF;
 
-	// lookup array for the distance molecule-molecule on a molecule-center basis.
-	DoubleArray _center_dist_lookup;
+	struct VLJCPThreadData {
+	public:
+		VLJCPThreadData(): _ljc_dist_lookup(nullptr), _charges_dist_lookup(nullptr), _dipoles_dist_lookup(nullptr), _quadrupoles_dist_lookup(nullptr){
+			_upot6ljV.resize(_numVectorElements);
+			_upotXpolesV.resize(_numVectorElements);
+			_virialV.resize(_numVectorElements);
+			_myRFV.resize(_numVectorElements);
+
+			for (size_t j = 0; j < _numVectorElements; ++j) {
+				_upot6ljV[j] = 0.0;
+				_upotXpolesV[j] = 0.0;
+				_virialV[j] = 0.0;
+				_myRFV[j] = 0.0;
+			}
+		}
+
+		/**
+		 * \brief array, that stores the dist_lookup.
+		 * For all vectorization methods, that utilize masking, this stores masks.
+		 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
+		 */
+		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the lennard jones particles.
+		 */
+		vcp_lookupOrMask_single* _ljc_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the charge particles.
+		 */
+		vcp_lookupOrMask_single* _charges_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the dipole particles.
+		 */
+		vcp_lookupOrMask_single* _dipoles_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the quadrupole particles.
+		 */
+		vcp_lookupOrMask_single* _quadrupoles_dist_lookup;
+
+		AlignedArray<double> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
+	};
+
+	#ifdef ENABLE_OPENMP
+		std :: vector<VLJCPThreadData * > _threadData;
+	#else
+		VLJCPThreadData* _threadData;
+	#endif
+
+	static const size_t _numVectorElements = VCP_VEC_SIZE;
+	size_t _numThreads;
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyLJ(
+			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
+			const vcp_mask_vec& forceMask,
+			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
+			const vcp_double_vec& shift6);
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyCharge(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& qii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& qjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_mask_vec& forceMask);
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyChargeDipole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
+		const vcp_double_vec& p,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_mask_vec& forceMask);
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyDipole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& pii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& pjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
+		const vcp_mask_vec& forceMask,
+		const vcp_double_vec& epsRFInvrc3);
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyChargeQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& q,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_mask_vec& forceMask);
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyDipoleQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& p,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& m,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
+		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_mask_vec& forceMask);
+
+	template<bool calculateMacroscopic>
+	inline void _loopBodyQuadrupole(
+		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
+		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
+		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
+		const vcp_double_vec& mii,
+		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
+		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
+		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
+		const vcp_double_vec& mjj,
+		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
+		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
+		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
+		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
+		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
+		const vcp_mask_vec& forceMask);
+
 
 	/**
-	 * \brief The body of the inner loop of the non-vectorized force calculation.
+	 * \brief The dist lookup for a molecule and all centers of a type
+	 * \author Robert Hajda
 	 */
-	template<class ForcePolicy, class MacroPolicy>
-		void _loopBodyNovec(const CellDataSoA & soa1, size_t i, const CellDataSoA & soa2, size_t j, const double *const forceMask);
+	template<class ForcePolicy, class MaskGatherChooser>
+	countertype32
+	calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
+			vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
+			const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z);
+
+
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
@@ -165,24 +333,15 @@ private:
 	 * Returns the value which j is to be initialized as in the inner loop<br>
 	 * depending on the vectorization method.<br>
 	 * <br>
-	 * static bool Condition(double m_r2, double rc2);<br>
-	 * Returns whether to calculate the force for a non-vectorized pair.<br>
-	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static __m128d GetMask(__m128d m_r2, __m128d rc2);<br>
+	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
-	 * The MacroPolicy class must provide the following methods:<br>
-	 * static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz);<br>
-	 * Returns whether to store macroscopic values for a non-vectorized pair.<br>
+	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.
 	 * <br>
-	 * If the code is to be vectorized:<br>
-	 * static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz);
-	 * <br> Returns the mask indicating for which pairs to store macroscopic values in<br>
-	 * the vectorized code.
-	 *
+	 * The class MaskGatherChooser is a class, that specifies the used loading,storing and masking routines.
 	 */
-	template<class ForcePolicy, class MacroPolicy>
+	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
 
 	/**
@@ -191,62 +350,36 @@ private:
 	class SingleCellPolicy_ {
 	public:
 
-		inline static bool Condition(double m_r2, double rc2)
-		{
-			// If m_r2 == 0, it has to be 2 LJ centers in the same molecule
-			// (or 2 molecules are at the same location). These are ignored.
-			return (m_r2 < rc2) && (m_r2 != 0.0);
+		inline static size_t InitJ (const size_t i)  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
+		{  // i: only calculate j>=i
+			// however we do a floor for alignment purposes. ->  we have to mark some of the indices to not be computed (this is handled using the InitJ_Mask)
+			return vcp_floor_to_vec_size(i);  // this is i if i is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
 		}
 
-		inline static bool DetectSingleCell ()
+		inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
-			return true;
+#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
+			return InitJ(i);
+#else
+			return 0;
+#endif
 		}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
-		{
-			static __m256d ones = _mm256_castsi256_pd( _mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF) );
-			__m256d result = _mm256_and_pd(
-									_mm256_and_pd(
-											_mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS),
-											_mm256_cmp_pd(m_r2, _mm256_setzero_pd(), _CMP_NEQ_OS)),
-									j_mask);
-			j_mask = ones;
+		inline static vcp_mask_vec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
+			return vcp_simd_getInitMask(i);
+		}
+
+		inline static vcp_mask_vec GetForceMask(const vcp_double_vec& m_r2, const vcp_double_vec& rc2,
+				vcp_mask_vec& j_mask) {
+			vcp_mask_vec result = vcp_simd_and(vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV)),
+					j_mask);
+			j_mask = VCP_SIMD_ONESVM;
 			return result;
 		}
-		inline static size_t InitJ (const size_t i)
-		{
-			return (i+1) & ~static_cast<size_t>(3);
-		}
-		inline static __m256d InitJ_Mask (const size_t i)
-		{
-			switch (i & static_cast<size_t>(3)) {
-				case 0: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0));
-				case 1: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,0, 0, 0, 0));
-				case 2: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0, 0, 0, 0));
-				default: return _mm256_castsi256_pd(_mm256_set_epi32(0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF)); 
-			}
-		}
-#else
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
-		inline static size_t InitJ (const size_t i)
-		{
-			return i + (i & static_cast<size_t>(1));
-		}
-		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
-		{
-			return _mm_and_pd(_mm_cmplt_pd(m_r2, rc2), _mm_cmpneq_pd(m_r2, _mm_setzero_pd()));
-		}
-#else
-		inline static size_t InitJ (const size_t i)
-		{
-			return i + 1;
-		}
-#endif
-#endif
-	};
 
+
+
+	}; /* end of class SingleCellPolicy_ */
 
 	/**
 	 * \brief Policy class for cell pair force calculation.
@@ -261,128 +394,29 @@ private:
 			return m_r2 < rc2;
 		}
 
-		inline static size_t InitJ (const size_t i)
+		inline static size_t InitJ (const size_t /*i*/)
 		{
 			return 0;
 		}
-
-		inline static bool DetectSingleCell ()
+		inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 		{
-			return false;
+			return InitJ(i);
 		}
 
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		inline static __m256d GetForceMask (const __m256d& m_r2, const __m256d& rc2, __m256d& j_mask)
-		{
-			return _mm256_cmp_pd(m_r2, rc2, _CMP_LT_OS);
-		}
-		inline static __m256d InitJ_Mask (const size_t i)
-		{
-			return _mm256_setzero_pd();
-		}
-#else
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3
-		inline static __m128d GetForceMask(__m128d m_r2, __m128d rc2)
+		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& /*j_mask*/)
 		{
 			// Provide a mask with the same logic as used in
 			// bool Condition(double m_r2, double rc2)
-			return _mm_cmplt_pd(m_r2, rc2);
+			return vcp_simd_lt(m_r2, rc2);
 		}
-#endif
-#endif
-	};
-	/**
-	 * \brief A MacroPolicy for adding up all macroscopic values.
-	 * \details This is used for single cell calculations and for<br>
-	 * double cell calculations with no halo cells.
-	 */
-	class AllMacroPolicy_ {
-	public:
-		static bool MacroscopicValueCondition(double, double, double)
+
+		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
 		{
-			// We want all macroscopic values to be calculated.
-			return true;
+			return VCP_SIMD_ONESVM;//totally unimportant, since not used...
 		}
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3 || VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		static __m128d GetMacroMask(__m128d forceMask, __m128d, __m128d, __m128d)
-		{
-			// We want all macroscopic values to be calculated, but not those
-			// for pairs which we ignore because of cutoff or other reasons.
-			return forceMask;
-		}
-#endif
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d&, const __m256d&, const __m256d&)
-		{
-			return forceMask;
-		}
-#endif
-	};
-	/**
-	 * \brief A MacroPolicy.
-	 * \details Only adds up the macroscopic values for pairs where<br>
-	 * mol1 < mol2 in the 3D ordering. This is used for double cell calculations<br>
-	 * with one halo Cell.
-	 */
-	class SomeMacroPolicy_ {
-	public:
-		static bool MacroscopicValueCondition(double m_dx, double m_dy, double m_dz)
-		{
-			// Only calculate macroscopic values for pairs where molecule 1
-			// "IsLessThan" molecule 2.
-			return (m_dz < 0.0) || (
-					(m_dz == 0.0) && (
-						(m_dy < 0.0) || (
-							(m_dy == 0.0) && (m_dx < 0.0)
-						)
-					)
-				);
-		}
-#if VLJCP_VEC_TYPE==VLJCP_VEC_SSE3 || VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		// Only calculate macroscopic values for pairs where molecule 1
-		// "IsLessThan" molecule 2.
-		static __m128d GetMacroMask(__m128d forceMask, __m128d m_dx, __m128d m_dy, __m128d m_dz)
-		{
-			const __m128d zero = _mm_setzero_pd();
 
-			const __m128d x_lt = _mm_cmplt_pd(m_dx, zero);
-			const __m128d y_eq = _mm_cmpeq_pd(m_dy, zero);
-			const __m128d t1 = _mm_and_pd(y_eq, x_lt);
+	}; /* end of class CellPairPolicy_ */
 
-			const __m128d y_lt = _mm_cmplt_pd(m_dy, zero);
-			const __m128d t2 = _mm_or_pd(y_lt, t1);
+}; /* end of class VectorizedCellProcessor */
 
-			const __m128d z_eq = _mm_cmpeq_pd(m_dz, zero);
-			const __m128d t3 = _mm_and_pd(z_eq, t2);
-
-			const __m128d z_lt = _mm_cmplt_pd(m_dz, zero);
-			const __m128d t4 = _mm_or_pd(z_lt, t3);
-
-			return _mm_and_pd(forceMask, t4);
-		}
-#endif
-#if VLJCP_VEC_TYPE==VLJCP_VEC_AVX
-		inline static __m256d GetMacroMask(const __m256d& forceMask, const __m256d& m_dx, const __m256d& m_dy, const __m256d& m_dz)
-		{
-			const __m256d zero = _mm256_setzero_pd();
-
-			const __m256d x_lt = _mm256_cmp_pd(m_dx, zero, _CMP_LT_OS);
-			const __m256d y_eq = _mm256_cmp_pd(m_dy, zero, _CMP_EQ_OS);
-			const __m256d t1 = _mm256_and_pd(x_lt, y_eq);
-
-			const __m256d y_lt = _mm256_cmp_pd(m_dy, zero, _CMP_LT_OS);
-			const __m256d t2 = _mm256_or_pd(t1, y_lt);
-
-			const __m256d z_eq = _mm256_cmp_pd(m_dz, zero, _CMP_EQ_OS);
-			const __m256d t3 = _mm256_and_pd(t2, z_eq);
-
-			const __m256d z_lt = _mm256_cmp_pd(m_dz, zero, _CMP_LT_OS);
-			const __m256d t4 = _mm256_or_pd(t3, z_lt);
-
-			return _mm256_and_pd(t4, forceMask);
-		}
-#endif
-	};
-};
-
-#endif
+#endif /* VECTORIZEDCELLPROCESSOR_H_ */

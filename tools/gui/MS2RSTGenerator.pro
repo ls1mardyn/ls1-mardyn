@@ -2,7 +2,7 @@ TEMPLATE = lib
 
 CONFIG += dll debug
 #CONFIG += staticlib debug mardyn
-
+CONFIG += c++11
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
 
@@ -75,3 +75,4 @@ SOURCES  += generators/common/MS2RestartReader.cpp
 
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
+INCLUDEPATH += ../../src/External/

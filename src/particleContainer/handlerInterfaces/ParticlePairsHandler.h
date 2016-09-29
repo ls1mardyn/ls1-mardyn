@@ -1,21 +1,3 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
 
 #ifndef PARTICLEPAIRSHANDLER_H_
 #define PARTICLEPAIRSHANDLER_H_
@@ -79,8 +61,6 @@ public:
 	//! @param pairType describes whether the pair is a original pair(0) or a duplicated pair(1)
 	//!                 for details about pair types see comments on traversePairs() in ParticleContainer
 	virtual double processPair(Molecule& particle1, Molecule& particle2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ) = 0;
-	virtual void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) = 0;
-	virtual void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) = 0;
 
 	/**
 	 * @todo it is not clean to have particleHandlers need to know about the rdf.

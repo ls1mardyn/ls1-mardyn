@@ -13,28 +13,34 @@
 
 #include <sstream>
 #include <iostream>
-using namespace std;
 #include <vector>
- #ifdef ENABLE_MPI
+
+using namespace std;
+using namespace Log;
+
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #include <parallel/DomainDecompBase.h>
 #endif
 
-VTKMoleculeWriter::VTKMoleculeWriter(unsigned int writeFrequency, const std::string& fileName)
-: _writeFrequency(writeFrequency), _fileName(fileName) {
+
+void VTKMoleculeWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
+	xmlconfig.getNodeValue("outputprefix", _fileName);
+	global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
+
 	if (_writeFrequency <= 0) {
 		Log::global_log->error() << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
 	}
 }
 
-VTKMoleculeWriter::~VTKMoleculeWriter() {
-}
-
 
 void VTKMoleculeWriter::doOutput(
 		ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-		Domain* domain, unsigned long simstep,
-		std::list<ChemicalPotential>* lmu
+		Domain* /*domain*/, unsigned long simstep,
+		std::list<ChemicalPotential>* /*lmu*/,
+		std::map<unsigned, CavityEnsemble>* /*mcav*/
 ) {
 	if (simstep % _writeFrequency != 0) {
 		return;
@@ -92,9 +98,9 @@ void VTKMoleculeWriter::outputParallelVTKFile(unsigned int numProcs, unsigned lo
 
 
 //! NOP
-void VTKMoleculeWriter::initOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain) {}
+void VTKMoleculeWriter::initOutput(ParticleContainer* /*particleContainer*/,
+		DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
 
 //! NOP
-void VTKMoleculeWriter::finishOutput(ParticleContainer* particleContainer,
-		DomainDecompBase* domainDecomp, Domain* domain) {}
+void VTKMoleculeWriter::finishOutput(ParticleContainer* /*particleContainer*/,
+		DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}

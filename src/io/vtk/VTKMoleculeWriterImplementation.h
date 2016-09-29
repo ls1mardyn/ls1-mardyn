@@ -42,7 +42,7 @@ private:
 	//! if all centers should be ploted separately
 	bool _plotCenters;
 
-	enum CenterType { Charge = 1, LJ = 2, Dipole = 3, Quadrupole = 4, Tersoff = 5 };
+	enum CenterType { Charge = 1, LJ = 2, Dipole = 3, Quadrupole = 4};
 
 	/**
 	 * plots one single center

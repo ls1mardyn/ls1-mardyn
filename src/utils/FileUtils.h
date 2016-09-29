@@ -8,10 +8,17 @@
 #ifndef FILEUTILS_H_
 #define FILEUTILS_H_
 
+#include <string>
+
 /**
  * Check if a file exists.
  */
 bool fileExists(const char* fileName);
+
+/*
+ * Get the file name extension marked by the last '.' in the filename.
+ */
+std::string getFileExtension(const char* fileName);
 
 /**
  * Delete a file from the system.

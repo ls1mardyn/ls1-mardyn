@@ -24,11 +24,9 @@ class VTKGridWriter : public OutputBase {
 
 private:
 
-	const unsigned int _writeFrequency;
+	unsigned int _writeFrequency;
 
-	const std::string _fileName;
-
-	const LinkedCells& _container;
+	std::string _fileName;
 
 	VTKGridCell* _cells;
 
@@ -46,7 +44,10 @@ public:
 	 * @param container the LinkedCells particle container. It has to be the same container
 	 *                  which is handed in to the methods initOutput() / doOutput() / finishOutput()!
 	 */
-	VTKGridWriter(unsigned int writeFrequency, const std::string& fileName, const LinkedCells& container);
+	VTKGridWriter();
+
+	VTKGridWriter(unsigned int frequency, std::string name);
+
 	virtual ~VTKGridWriter();
 
 	virtual void initOutput(ParticleContainer* particleContainer,
@@ -64,19 +65,22 @@ public:
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu
+			std::list<ChemicalPotential>* lmu,
+			std::map<unsigned, CavityEnsemble>* mcav
 	);
 
 	virtual void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 
+	void readXML(XMLfileUnits& xmlconfig);
+
 private:
 
-	void setupVTKGrid();
+	void setupVTKGrid(ParticleContainer* particleContainer);
 
 	void releaseVTKGrid();
 
-	void getCellData(VTKGridCell& cell);
+	void getCellData(LinkedCells* container, VTKGridCell& cell);
 
 	void outputParallelVTKFile(unsigned int numProcs, unsigned long simstep,
 			VTKGridWriterImplementation& impl);

@@ -1,48 +1,69 @@
 #include "io/MmspdWriter.h"
 
-#include "Common.h"
-#include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
-#include "parallel/DomainDecompBase.h"
-
-#include <fstream>
-#include <sstream>
-#include <iomanip>
-//#include <iostream>
-
 #ifdef ENABLE_MPI
-#include <mpi.h>
 #include <mpi.h>
 #endif
 
+#include <fstream>
+#include <sstream>
+
+#include "Common.h"
+#include "Domain.h"
+#include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
+#include "parallel/DomainDecompBase.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
+
+using Log::global_log;
 using namespace std;
 
-MmspdWriter::MmspdWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+MmspdWriter::MmspdWriter(unsigned long writeFrequency, string outputPrefix) {
+	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
-	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix == "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
 MmspdWriter::~MmspdWriter(){}
 
-void MmspdWriter::initOutput(ParticleContainer* particleContainer,
+
+void MmspdWriter::readXML(XMLfileUnits& xmlconfig) {
+	_writeFrequency = 1;
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_outputPrefix = "mardyn";
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+}
+
+void MmspdWriter::initOutput(ParticleContainer* /*particleContainer*/,
 			   DomainDecompBase* domainDecomp, Domain* domain){
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
 	if (rank == 0){
-#endif  
-	if (_filenameisdate) {
-			_filename = _filename + "mardyn";
-			_filename = _filename + gettimestring();
-		} 
-	_filename = _filename +  ".mmspd";
+#endif
+	stringstream filenamestream;
+	filenamestream << _outputPrefix;
+
+	if(_appendTimestamp) {
+		filenamestream << "-" << gettimestring();
+	}
+	filenamestream << ".mmspd";
+	_filename = filenamestream.str();
 	ofstream mmspdfstream(_filename.c_str(), ios::binary|ios::out);
   
   
@@ -60,8 +81,9 @@ void MmspdWriter::initOutput(ParticleContainer* particleContainer,
   // format marker
   mmspdfstream << "MMSPDu 1.0" << "\n";
   // header line
+  unsigned long numTimesteps = _simulation.getNumTimesteps();
   mmspdfstream << "1 " << "0 0 0 " << domain->getGlobalLength(0) <<" "<< domain->getGlobalLength(1)<< " " << domain->getGlobalLength(2) << " "
-		       << _numberOfTimesteps / _writeFrequency+1    << " " << domain-> getNumberOfComponents() << " " << "0" << "\n";
+		       << numTimesteps / _writeFrequency+1    << " " << domain-> getNumberOfComponents() << " " << "0" << "\n";
 		       
   
   
@@ -101,7 +123,8 @@ void MmspdWriter::initOutput(ParticleContainer* particleContainer,
 
 void MmspdWriter::doOutput( ParticleContainer* particleContainer,
 		   DomainDecompBase* domainDecomp, Domain* domain,
-		   unsigned long simstep, std::list<ChemicalPotential>* lmu){
+		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
+		   map<unsigned, CavityEnsemble>* /*mcav*/ ){
 	if (simstep % _writeFrequency == 0) {
 #ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
@@ -167,7 +190,4 @@ void MmspdWriter::doOutput( ParticleContainer* particleContainer,
   }
 } // end doOutput
 
-void MmspdWriter::finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain){
-  
-}
+void MmspdWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}

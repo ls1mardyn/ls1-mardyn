@@ -1,13 +1,16 @@
 #ifndef OUTPUTBASE_H_
 #define OUTPUTBASE_H_
 
-#include "ensemble/GrandCanonical.h"
 #include <list>
 #include <string>
+
+#include "ensemble/GrandCanonical.h"
+#include "ensemble/CavityEnsemble.h"
 
 class ParticleContainer;
 class DomainDecompBase; 
 class Domain;
+class XMLfileUnits;
 
 /**
  * TODO: cleanup all classes implementing this interface
@@ -57,6 +60,8 @@ public:
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
 
+	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
+
 	//! @brief will be called in each time step
 	//!
 	//! Most of the times, the output should either be done every time step or at least
@@ -66,7 +71,8 @@ public:
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu
+			std::list<ChemicalPotential>* lmu,
+			std::map<unsigned, CavityEnsemble>* mcav
 	) = 0;
 
 	//! @brief will be called at the end of the simulation
@@ -82,4 +88,4 @@ public:
 	}
 };
 
-#endif /*OUTPUTBASE_H_*/
+#endif /* OUTPUTBASE_H_ */

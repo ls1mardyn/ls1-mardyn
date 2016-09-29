@@ -7,7 +7,7 @@
 
 #include "CanonicalEnsembleTest.h"
 #include "ensemble/CanonicalEnsemble.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "Domain.h"
 
@@ -27,27 +27,29 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 #ifndef ENABLE_MPI
 
 	// original pointer will be deleted by tearDown()
-	_domainDecomposition = new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 
 	// the halo is cleared for freshly initialized particle containers.
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-12x12x12.inp", 1.0);
-	vector<Component>& components(_domain->getComponents());
-	CanonicalEnsemble ensemble(container, &components);
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-12x12x12.inp", 1.0);
+	vector<Component>* components= global_simulation->getEnsemble()->getComponents();
+	CanonicalEnsemble ensemble(container, components);
+
+	Component* component = ensemble.getComponent(0);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
 	ASSERT_EQUAL(1728ul, ensemble.N());
 	// has the ensemble updated the count of particles per component right?
-	ASSERT_EQUAL(1728ul, components[0].getNumMolecules());
+	ASSERT_EQUAL(1728ul, component->getNumMolecules());
 
-	Molecule molecule(1729, &components[0], 5.5, 5.5, 5.5, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.);
+	Molecule molecule(1729, component, 5.5, 5.5, 5.5, 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.);
 	container->addParticle(molecule);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?
 	ASSERT_EQUAL(1729ul, ensemble.N());
 	// has the ensemble updated the count of particles per component right?
-	ASSERT_EQUAL(1729ul, components[0].getNumMolecules());
+	ASSERT_EQUAL(1729ul, component->getNumMolecules());
 
 	delete _domainDecomposition;
 	delete container;

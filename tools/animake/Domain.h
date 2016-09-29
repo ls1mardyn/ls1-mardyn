@@ -1,7 +1,3 @@
-/*
- * GNU GPL version 2
- */
-
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
@@ -9,7 +5,7 @@
 
 using namespace std;
 
-#define TIME 20120213
+#define TIME 20130802
 
 #define FLUID_NIL -1
 #define FLUID_CH4 0
@@ -19,7 +15,9 @@ using namespace std;
 #define FLUID_CO2 4
 #define FLUID_EOX 5
 #define FLUID_JES 6
-#define FLUID_VEG 7
+#define FLUID_MER 7
+#define FLUID_TOL 8
+#define FLUID_VEG 9
 
 #define EPS_AR 3.69853e-04
 #define SIG_AR 6.41600
@@ -69,9 +67,9 @@ using namespace std;
 #define R1DIPEOX +0.0
 #define R2DIPEOX +0.07792
 #define CUTLJEOX 40.833
-#define I_XX_EOX  54.154
-#define I_YY_EOX 115.11
-#define I_ZZ_EOX  60.951
+#define I_XX_EOX 0.054154
+#define I_YY_EOX 0.11511
+#define I_ZZ_EOX 0.60951
 
 #define EPS_OJES 6.58951e-04
 #define SIG_OJES 5.89277
@@ -95,6 +93,45 @@ using namespace std;
 #define I_YY_JES 0.0060038
 #define I_ZZ_JES 0.0091988
 #define JES_LONG 1.0
+
+#define EPS_OMER 3.18243e-04
+#define SIG_OMER 5.62288
+#define OMERMASS 0.0159994
+#define EPS_CMER 3.9181e-05
+#define SIG_CMER 5.31712
+#define QDR_CMER -3.02883
+#define CMERMASS 0.012011
+#define MER_LONG 4.8638
+
+#define R1_CH3_TOL +0.0
+#define R2_CH3_TOL -5.1999
+#define R1_CTR_TOL +0.0
+#define R2_CTR_TOL -1.8130
+#define R1_CHA_TOL +2.9707
+#define R2_CHA_TOL -0.8715
+#define R1_CHB_TOL -2.9707
+#define R2_CHB_TOL -0.8715
+#define R1_CHC_TOL +2.9767
+#define R2_CHC_TOL +2.5625
+#define R1_CHD_TOL -2.9767
+#define R2_CHD_TOL +2.5625
+#define R1_CHE_TOL +0.0
+#define R2_CHE_TOL +4.2958
+#define CH3TOLMASS 0.015035
+#define CTRTOLMASS 0.012011
+#define CH_TOLMASS 0.013019
+#define EPS_CH3TOL 3.9107e-04
+#define EPS_CTRTOL 3.4645e-05
+#define EPS_CH_TOL 3.18328e-04
+#define SIG_CH3TOL 6.77656
+#define SIG_CTRTOL 5.2799
+#define SIG_CH_TOL 6.1907
+#define DIP_CTRTOL 0.173144
+#define QDR_CH_TOL -1.2548
+#define I_XX_TOL 1.33752
+#define I_YY_TOL 0.87701
+#define I_ZZ_TOL 0.46050
+#define TOL_LONG 9.4957
 
 #define EPS_OVEG 2.9515e-04
 #define SIG_OVEG 5.9695

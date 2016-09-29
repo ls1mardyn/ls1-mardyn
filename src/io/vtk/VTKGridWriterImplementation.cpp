@@ -15,9 +15,9 @@
 
 using namespace Log;
 
-VTKGridWriterImplementation::VTKGridWriterImplementation(int rank)
+VTKGridWriterImplementation::VTKGridWriterImplementation(int rank, const std::vector<double>* processorSpeeds)
 : _vtkFile(NULL), _parallelVTKFile(NULL), _numCellsPlotted(0),
-  _numVerticesPlotted(0), _rank(rank) {
+  _numVerticesPlotted(0), _rank(rank), _processorSpeeds(processorSpeeds) {
 }
 
 
@@ -40,16 +40,20 @@ void VTKGridWriterImplementation::initializeVTKFile() {
 	//pointData.DataArray().push_back(position);
 
 	CellData cellData;
-	DataArray_t cells_count(type::Int32, "numberOfMolecules", 1);
-	cellData.DataArray().push_back(cells_count);
+	DataArray_t ranks(type::Int32, "rank", 1);
+	cellData.DataArray().push_back(ranks);
 	DataArray_t cells_load(type::Float32, "load", 1);
 	cellData.DataArray().push_back(cells_load);
 	DataArray_t cells_level(type::Int32, "level", 1);
 	cellData.DataArray().push_back(cells_level);
-	DataArray_t node_rank(type::Int32, "node-rank", 1);
-	cellData.DataArray().push_back(node_rank);
 	DataArray_t index(type::UInt32, "index", 1);
 	cellData.DataArray().push_back(index);
+	if (_processorSpeeds != nullptr && _processorSpeeds->size() != 0) {
+		DataArray_t procSpeeds(type::Float32, "processorSpeeds", 1);
+		cellData.DataArray().push_back(procSpeeds);
+		DataArray_t relLoad(type::Float32, "relativeLoad", 1);
+		cellData.DataArray().push_back(relLoad);
+	}
 
 	// 3 coordinates
 	Points points;
@@ -109,16 +113,20 @@ void VTKGridWriterImplementation::plotCell(VTKGridCell& cell) {
 	CellData::DataArray_sequence& cellDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().CellData().DataArray();
 	CellData::DataArray_iterator it3 = cellDataArraySequence.begin();
 
-	it3->push_back(cell.getNumberOfMolecules());
+	it3->push_back(cell.getRank());
 	it3++;
 	it3->push_back(cell.getLoad());
 	it3++;
 	it3->push_back(cell.getLevel());
 	it3++;
-	it3->push_back(_rank);
-	it3++;
 	it3->push_back(cell.getIndex());
 	it3++;
+	if (_processorSpeeds != nullptr && _processorSpeeds->size() != 0) {
+		it3->push_back((*_processorSpeeds)[cell.getRank()]);
+		it3++;
+		it3->push_back(cell.getLoad()/(*_processorSpeeds)[cell.getRank()]);
+		it3++;
+	}
 }
 
 

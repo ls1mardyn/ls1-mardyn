@@ -1,15 +1,12 @@
-/*
- * GNU GPL version 2
- */
-
 #include "Domain.h"
 #include "Random.h"
 #include <cmath>
 
-#define BINS 2048
-#define DT 0.002
+#define BINS 512
+#define BINS_AUTOCORR 16
+#define DT 0.0025
 #define PRECISION 5
-#define TIME 20111102
+#define TIME 20150730
 #define VARFRACTION 0.125
 
 Domain::Domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
@@ -23,6 +20,8 @@ Domain::Domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
    this->box[0] = sqrt(V / t_h);
    this->box[1] = t_h;
    this->box[2] = sqrt(V / t_h);
+   
+   this->use_hato = false;
 }
 
 Domain::Domain(unsigned t_N, double t_rho, double t_RDF)
@@ -35,9 +34,11 @@ Domain::Domain(unsigned t_N, double t_rho, double t_RDF)
    this->box[0] = pow((double)t_N/rho, 1.0/3.0);
    this->box[1] = this->box[0];
    this->box[2] = this->box[0];
+   
+   this->use_hato = false;
 }
 
-void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, int format)
+void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu, bool compute_autocorr, int format)
 {
    ofstream xdr, txt, buchholz;
    stringstream strstrm, txtstrstrm, buchholzstrstrm;
@@ -167,23 +168,44 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
    if(format == FORMAT_BRANCH) txt << "resultOutputTimesteps\t1500\n";
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
-      txt << "output\tXyzWriter 60000\t" << prefix << "_1R\ninitCanonical\t10\ninitStatistics\t3003003\n";
-      if(gradient)
+      txt << "initCanonical\t10\ninitStatistics\t100000\n";
+      
+      if(compute_autocorr)
       {
-         txt << "profile\t1 " << BINS << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t3000000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\nAlignCentre\t100 0.01\n";
+         double rho_max = (rho > rho2)? rho: rho2;
+         double rho_min = (rho > rho2)? rho2: rho;
+         txt << "activatePsi\t" << rho_min * (0.001 + rho_min/(rho_max + 9.0*rho_min)) + 0.000001 << "\nautocorrProfileUnits\t" << ((gradient || this->use_hato)? BINS_AUTOCORR: 1) << "\nautocorrMinStep\t2\nautocorrOutReset\t32768 131072\nautocorrArraySize\t32\nautocorrLevels\t3 16\n";
+      }
+      if(gradient || this->use_hato)
+      {
+         txt << "output\tXyzWriter 400\t" << prefix << "_1R\nprofile\t1 " << BINS << " 1\nprofileRecordingTimesteps\t1\nprofileOutputTimesteps\t200000\nprofiledComponent\t1\nprofileOutputPrefix\t" << prefix << "_1R\n";
+         if(!this->use_hato && !compute_autocorr) txt << "AlignCentre\t100 0.01\n";
       }
       else
       {
-         txt << "RDF\t" << RDF/(double)BINS << " " << BINS << "\nRDFOutputTimesteps\t3000000\nRDFOutputPrefix\t" << prefix << "_1R\n";
+         txt << "output\tXyzWriter 40000\t" << prefix << "_1R\nRDF\t" << RDF/(double)BINS << " " << BINS << "\nRDFOutputTimesteps\t500000\nRDFOutputPrefix\t" << prefix << "_1R\n";
       }
       txt << "nomomentum\t1024\n";
 
-      if(use_mu)
+      if(this->use_hato)
+      {
+         txt << "planckConstant\t" << sqrt(6.2831853 * T) << "\ninitGrandCanonical\t124816\n";
+         double p_high = (p1 > p2)? p1: p2;
+         double p_low = (p1 > p2)? p2: p1;
+         double base_pressure = (p1 > 0)? p1: -p1;
+         if(p2 > base_pressure) base_pressure = p2;
+         else if(-p2 > base_pressure) base_pressure = -p2;
+         double coupling = 4.0 * (mu_high - mu_low) / (p_high - p_low + base_pressure);
+         txt << "Hatonian target PTOTAL " << p1 << " chemicalPotential " << mu_low << " " << mu_high << " coupling " << coupling << " " << coupling << " component 1 control 0.0 " << box[1]/6.0 << " 0.0 to " << box[0] << " " << box[1]/3.0 << " " << box[2] << " conduct " << (int)round(N[0] / 500.0) << " tests every 8 steps\n";
+         txt << "Hatonian target PTOTAL " << p2 << " chemicalPotential " << mu_low << " " << mu_high << " coupling " << coupling << " " << coupling << " component 1 control 0.0 " << 2.0*box[1]/3.0 << " 0.0 to " << box[0] << " " << 5.0*box[1]/6.0 << " " << box[2] << " conduct " << (int)round(N[1] / 500.0) << " tests every 8 steps\n";
+         txt << "AccumulatorSize\t512\n";
+      }
+      else if(use_mu)
       {
          if(gradient)
          {
-            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 0 0 to " << box[0] << " " << 0.1*box[1] << " " << box[2] << "\tconduct " << (int)round(N[0] / 2500.0) << " tests every 2 steps\n";
-            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 " << 0.5*box[1] << " 0 to " << box[0] << " " << 0.6*box[1] << " " << box[2] << "\tconduct " << (int)round(N[1] / 2500.0) << " tests every 2 steps\n";
+            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 0 0 to " << box[0] << " " << 0.1*box[1] << " " << box[2] << "\tconduct " << (int)round(N[0] / 2000.0) << " tests every 2 steps\n";
+            txt << "chemicalPotential\t" << mu << " component 1\tcontrol 0 " << 0.5*box[1] << " 0 to " << box[0] << " " << 0.6*box[1] << " " << box[2] << "\tconduct " << (int)round(N[1] / 2000.0) << " tests every 2 steps\n";
          }
          else
          {
@@ -200,23 +222,31 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
       xdr << "mardyn " << TIME << " tersoff\n"
           << "# mardyn input file, ls1 project\n"
           << "# generated by the mkTcTS tool\n# \n"
-          << "t\t0\nL\t" << box[0] << " " << box[1]
-          << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t0 0 0 1e+10\nT\t" << T << "\nN\t"
+          << "t\t0\nT\t" << T << "\nL\t" << box[0] << " " << box[1]
+          << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t0 0 0 1e+10\nN\t"
           << N[0]+N[1] << "\nM\tICRVQD\n\n";
    }
    if(format == FORMAT_BUCHHOLZ)
    {
       xdr << "mardyn trunk " << TIME << "\n"
-          << "t\t0\nL\t" << box[0] << " " << box[1]
+          << "t\t0\nT\t" << T << "\nL\t" << box[0] << " " << box[1]
           << " " << box[2] << "\nC\t1\t1 0 0 0 0\t0 0 0 1 1 1\t" << cutoff << " "
-          << (do_shift? "1": "0") << "\t0 0 0 1e+10\nT\t" << T << "\nN\t"
+          << (do_shift? "1": "0") << "\t0 0 0 1e+10\nN\t"
           << N[0]+N[1] << "\nM\tICRVQD\n\n";
    }
 
    double v = sqrt(3.0 * T);
    double loffset[3][2];
-   loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
-   loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;
+   if(this->use_hato)
+   {
+      loffset[0][0] = 0.1; loffset[1][0] = 0.0; loffset[2][0] = 0.1;
+      loffset[0][1] = 0.1; loffset[1][1] = 0.5; loffset[2][1] = 0.1;
+   }
+   else
+   {
+      loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
+      loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;
+   }
    double goffset[3][3];
    goffset[0][0] = 0.0; goffset[1][0] = 0.5; goffset[2][0] = 0.5;
    goffset[0][1] = 0.5; goffset[1][1] = 0.0; goffset[2][1] = 0.5;
@@ -240,6 +270,7 @@ void Domain::write(char* prefix, double cutoff, double mu, double T, bool do_shi
                         q[m] += box[m]*loffset[m][l] + fl_unit[m][l]*goffset[m][d];
                         q[m] += VARFRACTION * fl_unit[m][l] * (r->rnd() - 0.5);
                         if(q[m] > box[m]) q[m] -= box[m];
+                        else if(q[m] < 0.0) q[m] += box[m];
                      }
                      double phi = 6.283185 * r->rnd();
                      double omega = 6.283185 * r->rnd();

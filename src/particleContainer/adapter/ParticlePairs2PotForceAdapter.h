@@ -1,28 +1,10 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
 
 #ifndef PARTICLEPAIRS2POTFORCEADAPTER_H_
 #define PARTICLEPAIRS2POTFORCEADAPTER_H_
 
 #include "molecules/potforce.h"
 #include "particleContainer/handlerInterfaces/ParticlePairsHandler.h"
-#include "RDF.h"
+#include "io/RDF.h"
 #include "Domain.h"
 
 //! @brief calculate pair forces and collect macroscopic values
@@ -55,7 +37,6 @@ public:
 		_upot6LJ = 0;
 		_upotXpoles = 0;
 		_myRF = 0;
-		_upotTersoff = 0;
 	}
 
 	//! @brief calculate macroscopic values
@@ -63,7 +44,7 @@ public:
 	//! After all pairs have been processes, Upot and Virial can be calculated
 	//! and stored in _domain
 	void finish() {
-		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _upotTersoff + _myRF);
+		_domain.setLocalUpot(_upot6LJ / 6. + _upotXpoles + _myRF);
 		_domain.setLocalVirial(_virial + 3.0 * _myRF);
 	}
 
@@ -88,14 +69,14 @@ public:
 
 		switch (pairType) {
 
-            double dummy1, dummy2, dummy3, dummy4;
+            double dummy1, dummy2, dummy3, dummy4[3], Virial3[3];
             
             case MOLECULE_MOLECULE : 
                 if ( _rdf != NULL )
                     _rdf->observeRDF(molecule1, molecule2, dd, distanceVector);
 
-                PotForce( molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, _virial, calculateLJ );
-
+                PotForce(molecule1, molecule2, params, distanceVector, _upot6LJ, _upotXpoles, _myRF, Virial3, calculateLJ );
+                _virial += 2*(Virial3[0]+Virial3[1]+Virial3[2]);
                 return _upot6LJ + _upotXpoles;
             case MOLECULE_HALOMOLECULE : 
 
@@ -114,20 +95,6 @@ public:
         return 0.0;
 	}
 
-	//! Only for so-called original pairs (pair type 0) the contributions
-	//! to the macroscopic values have to be collected
-	//!
-	//! @brief register Tersoff neighbours
-	void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) {
-		particle1.addTersoffNeighbour(&particle2, pairType);
-		particle2.addTersoffNeighbour(&particle1, pairType);
-	}
-
-	//! @brief process Tersoff interaction
-	//!
-	void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) {
-		TersoffPotForce(&particle1, params, _upotTersoff, delta_r);
-	}
 
 //	void recordRDF() {
 //		this->_doRecordRDF = true;
@@ -143,8 +110,6 @@ private:
 	double _upot6LJ;
 	//! @brief variable used to sum the UpotXpoles contribution of all pairs
 	double _upotXpoles;
-	//! @brief variable used to sum the Tersoff internal energy contribution of all pairs
-	double _upotTersoff;
 	//! @brief variable used to sum the MyRF contribution of all pairs
 	double _myRF;
 

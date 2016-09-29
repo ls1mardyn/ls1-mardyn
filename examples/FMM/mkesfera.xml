@@ -1,0 +1,138 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<mardyn version="20100525" >
+
+  <simulation type="MD" >
+    <integrator type="Leapfrog" >
+      <!-- MD ODE integrator -->
+      <timestep unit="reduced" >0.002</timestep>
+    </integrator>
+
+    <run>
+      <currenttime>0</currenttime>
+      <production>
+        <steps>100</steps>
+      </production>
+    </run>
+
+    <ensemble type="NVT">
+      <!-- Nparticles determined by the input file -->
+      <temperature unit="reduced" >0.95</temperature>
+      <domain type="box">
+          <lx>40.00</lx>
+          <ly>40.00</ly>
+          <lz>40.00</lz>
+      </domain>
+
+      <components>
+          <moleculetype id="1" name="Argon">
+            <site type="LJ126" id="1" >
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.0</z> </coords>
+              <mass>1.0</mass>
+              <sigma>1.0</sigma>
+              <epsilon>1.0</epsilon>
+            </site>
+            <site type="Charge" id="2" >
+              <coords> <x>0.0</x> <y>0.0</y> <z>0.005</z> </coords>
+              <mass>1.0</mass>
+              <charge>+1.0</charge>
+            </site>
+            <site type="Charge" id="3" >
+              <coords> <x>0.0</x> <y>0.0</y> <z>-0.005</z> </coords>
+              <mass>1.0</mass>
+              <charge>-1.0</charge>
+            </site>
+          </moleculetype>
+      </components>
+
+      <phasespacepoint>
+        <generator name="mkesfera">
+          <droplet>
+            <radius>10.00</radius>
+            <density>0.6231</density>
+            <center> <x>20.00</x> <y>20.00</y> <z>20.00</z> </center>
+          </droplet>
+          <outer-density>0.06516</outer-density>
+        </generator>
+      </phasespacepoint>
+    </ensemble>
+
+    <algorithm>
+      <!--
+      <parallelisation type="KDDecomposition">
+        <updateFrequency>10</updateFrequency>
+        <fullSearchThreshold>2</fullSearchThreshold>
+      </parallelisation>
+      -->
+      <parallelisation type="DummyDecomposition"></parallelisation>
+      <datastructure type="LinkedCells">
+          <cellsInCutoffRadius>1</cellsInCutoffRadius>
+      </datastructure>
+      <cutoffs type="CenterOfMass" >
+        <radiusLJ unit="reduced" >5.0</radiusLJ>
+      </cutoffs>
+
+	  <electrostatic type="FastMultipoleMethod">
+	    <orderOfExpansions>10</orderOfExpansions>
+	    <LJCellSubdivisionFactor>1</LJCellSubdivisionFactor>
+		<adaptiveContainer>0</adaptiveContainer>
+		<systemIsPeriodic>1</systemIsPeriodic>
+	  </electrostatic>
+
+	  <!-- TODO: we will probably want to disable ReactionField, when FMM is used?
+	  For now it causes abortion, so I'm plugging it back in. -->
+      <electrostatic type="ReactionField" >
+        <epsilon>1.0e+10</epsilon>
+      </electrostatic>
+
+      <!--
+      <thermostats>
+        <thermostat type="VelocityScaling" componentName="Argon">
+          <temperature>1</temperature>
+        </thermostat>
+      </thermostats>
+      -->
+    </algorithm>
+
+    <output>
+
+      <outputplugin name="SysMonOutput">
+        <expression>procloadavg:loadavg1</expression>
+        <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
+        <expression>procselfstatm:size 1048576. /</expression>
+        <writefrequency>10</writefrequency>
+      </outputplugin>
+
+      <outputplugin name="Resultwriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>mkesfera</outputprefix>
+      </outputplugin>
+
+      <!--
+      <outputplugin name="CheckpointWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>mkesfera</outputprefix>
+      </outputplugin>
+      -->
+
+      <!--
+      <outputplugin name="MPICheckpointWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>mkesfera</outputprefix>
+        <appendTimestamp>1</appendTimestamp>
+        <datarep>native</datarep>
+        <measureTime>1</measureTime>
+      </outputplugin>
+      -->
+
+      <!--
+      <outputplugin name="PovWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>mkesfera</outputprefix>
+      </outputplugin>
+      -->
+      
+    </output>
+
+  </simulation>
+  
+</mardyn>

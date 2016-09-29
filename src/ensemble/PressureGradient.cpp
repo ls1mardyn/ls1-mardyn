@@ -1,16 +1,12 @@
-/*
- * M. T. Horsch, LS1/Mardyn project moderated by Martin Bernreuther
- * (C)2010 GNU General Public License
- */
 #include "PressureGradient.h"
-#include "parallel/DomainDecompBase.h"
-#include "particleContainer/ParticleContainer.h"
-#include "molecules/Molecule.h"
-
-#include "utils/Logger.h"
 
 #include <cmath>
 #include <iostream>
+
+#include "molecules/Molecule.h"
+#include "parallel/DomainDecompBase.h"
+#include "particleContainer/ParticleContainer.h"
+#include "utils/Logger.h"
 
 using namespace Log;
 using namespace std;

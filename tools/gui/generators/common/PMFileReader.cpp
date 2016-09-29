@@ -116,7 +116,13 @@ void readDipole(ComponentParameters* parameters, Generator* generator, ifstream&
 			dipoleParameter->setValue(value);
 			generator->setParameter(dipoleParameter);
 		}
+
+		ParameterWithDoubleValue* dipoleParameter =
+				dynamic_cast<ParameterWithDoubleValue*> (ParameterCollection::findParameter(parameters, baseName + ".eMyz"));
+		dipoleParameter->setValue(1.0);
+		generator->setParameter(dipoleParameter);
 	}
+
 }
 
 
@@ -138,6 +144,11 @@ void readQuadrupole(ComponentParameters* parameters, Generator* generator, ifstr
 			quadrupoleParameter->setValue(value);
 			generator->setParameter(quadrupoleParameter);
 		}
+
+		ParameterWithDoubleValue* quadrupoleParameter =
+				dynamic_cast<ParameterWithDoubleValue*> (ParameterCollection::findParameter(parameters, baseName + ".eQz"));
+		quadrupoleParameter->setValue(1.0);
+		generator->setParameter(quadrupoleParameter);
 	}
 }
 

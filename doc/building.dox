@@ -1,0 +1,96 @@
+/*! \page "Building and Running Mardyn"
+
+!!! Makefile
+
+Building using the makefile should always work, as this is the only reliable way
+to build Mardyn on clusters / supercomputers.
+
+Note that dependency tracking does not work properly, so better always do a
+"make clean"...
+
+!! Sequential Version
+
+To build Mardyn in the sequential version (i.e. for single processor use),
+CD into the src directory, type
+
+\verbatim
+make -f ../makefile/Makefile PARTYPE=SEQ TARGET=DEBUG UNIT_TESTS=1 VTK=1 -j3
+\endverbatim
+
+!! Running sequential
+
+- The most reliable thing is to copy the executable as well as all(!) input files
+  into the same directory.
+- Execute
+\verbatim
+./MarDyn lj40000_t300.cfg 10
+\endverbatim
+where lj40000_t300.cfg is the scenario file and 10 iterations are performed
+
+!! Parallel Version
+
+To build Mardyn in the parallel version for MPI, CD into the src directory, type
+
+\verbatim
+make -f ../makefile/Makefile PARTYPE=PAR TARGET=DEBUG UNIT_TESTS=1 VTK=1 -j3
+\endverbatim
+
+!!! Eclipse
+
+(recommended for development)
+
+Download and install Eclipse CDT (http://www.eclipse.org/) together with the
+Subclipse Plugin (SVN client, available at http://subclipse.tigris.org/).
+
+The following screen shots show the settings to build Mardyn sequentially in debug mode:
+
+\image eclipse_path.png
+
+\image eclipse_preprocessor.png
+
+\image eclipse_includes.png
+
+\image eclipse_libraries.png
+
+!!! Building with support for vectorization (SSE / AVX)
+
+Note that vectorization is work in progress (trunk is stable, but not complete, as currently only
+(multi-centered) lennard-jones molecules are supported. Therefor, I disable it by default.
+
+!! Code
+
+Vectorization is hand-coded in intrinsics, which are (at least) supported by GNU compiler, Intel compiler
+and PGI compiler. All code is contained in particleContainer/adapter/VectorizedCellProcessor, which
+is intended as a simple replacement for the LegacyCellProcessor.
+
+To build Mardyn with support for vectorization, enable the choice of the appropriate Cellprocessor
+in Simulation::initConfigOldStyle(), after the config file has been processed, by setting the #ifdef to 1:
+
+\code
+#if 1
+	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+	} else {
+		_cellProcessor = new VectorizedCellProcessor( *_domain,_LJCutoffRadius);
+	}
+#else
+	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
+#endif
+\endcode
+
+!! Compiler
+
+The recommended (and tested) compiler for Intel processors is the intel compiler, for AMD processors, use
+the GNU compiler. Gcc works as well for Intel processors, however the performance may be slightly lower.
+Icc seems to generate non-working code for AMD-processors, maybe this also depends on the version of the
+linux-kernel, this issue has not yet been clarified.
+
+! Icc / gcc for Intel Processors
+
+ To enable vectorization, specify the compile flags -msse3 for SSE or -mavx for AVX support.
+
+! Gcc for AMD Processors (AMD Bulldozer)
+
+To enable AVX, specify -mavx -mfma4 -march=bdver1 as compile flag.
+
+*/

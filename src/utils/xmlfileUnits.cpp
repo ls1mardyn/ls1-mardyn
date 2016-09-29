@@ -13,6 +13,8 @@ using namespace std;
 #include <cstring>
 #include <cmath>
 
+const char *const XMLfileUnits::roottag = { "/mardyn" };
+const char *const XMLfileUnits::refunitstag = { "refunits" };
 const char *const XMLfileUnits::unitattributetag = { "unit" };
 
 const short int XMLfileUnits::unittypequantifiers[numUnitTypes][8] = { { 0,0,0,0,0,0,0,0 }
@@ -374,7 +376,7 @@ void XMLfileUnits::ValueUnit::initialize(double value,const string& symbol)
 XMLfileUnits::XMLfileUnits(const string& filepath)
 	: XMLfile(filepath)
 {
-	if (changecurrentnode("/mardyn/refunits")) {
+	if (changecurrentnode(string(roottag)+string(refunitstag))) {
 		double v;
 		string u;
 		for(unsigned int i=1;i<numUnitTypes;++i)

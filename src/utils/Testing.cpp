@@ -23,10 +23,10 @@ Log::Logger* test_log;
     #include <tarch/tests/TestCaseRegistry.h>
     #include <tarch/tests/TestCaseCollection.h>
   #endif
-#endif
+#endif /* UNIT_TESTS */
 
 
-bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases) {
+int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases) {
 	Log::logLevel globalLogLevel = Log::global_log->get_log_level();
 
 	test_log = new Log::Logger(testLogLevel);
@@ -38,13 +38,13 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 
 	setTestDataDirectory(testDataDirectory);
 
-	bool testresult;
+	int testresult;
 
 #ifndef UNIT_TESTS
-	test_log->error() << std::endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
+	test_log->error() << std::endl << "Running unit tests demanded, but program compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
 	testresult = true;
 
-#else 
+#else /* UNIT_TESTS */
 	test_log->info() << "Running unit tests!" << std::endl;
 #ifdef USE_CPPUNIT
 	CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry();
@@ -55,7 +55,7 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 	runner.run(testcases);
 
 	CppUnit::TestResultCollector& collector = runner.result();
-	testresult = collector.testFailuresTotal() != 0;
+	testresult = collector.testFailuresTotal();
 
 	std::ofstream stream("results.xml");
 	CppUnit::XmlOutputter outputter( &collector, stream );
@@ -67,7 +67,7 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 	testCases.run();
 	testresult = testCases.getNumberOfErrors() != 0;
 #endif
-#endif
+#endif /* UNIT_TESTS */
 
 	Log::global_log->set_log_level(globalLogLevel);
 	return testresult;
@@ -76,7 +76,7 @@ bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const 
 void setTestDataDirectory(std::string& testDataDirectory) {
 #ifdef UNIT_TESTS
 	utils::Test::setTestDataDirectory(testDataDirectory);
-#endif
+#endif /* UNIT_TESTS */
 }
 
 
@@ -98,14 +98,14 @@ void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 }
 
 
-std::string utils::Test::getTestDataFilename(const std::string& file) {
+std::string utils::Test::getTestDataFilename(const std::string& file, bool checkExistence) {
 	std::string fullPath = testDataDirectory + file;
 
-	if (!fileExists(fullPath.c_str())) {
+	if (!fileExists(fullPath.c_str()) and checkExistence) {
 		test_log->error() << "File " << fullPath << " for test input data does not exits!" << std::endl;
 		exit(-1);
 	}
 	return fullPath;
 }
 
-#endif
+#endif /* UNIT_TESTS */

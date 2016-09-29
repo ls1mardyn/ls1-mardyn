@@ -8,10 +8,11 @@
 #include<fstream>
 #include<sstream>
 #include<map>
-#include<algorithm>
 
-#include<cstdlib>
+#include<algorithm>
 #include<cassert>
+#include<cstdlib>
+#include<string>
 
 #include "utils/Logger.h"
 #include "rapidxml/rapidxml_print.hpp"
@@ -90,9 +91,12 @@ long XMLfile::changecurrentnode(const string& nodepath)
 	std::list<Node> nodes;
 	unsigned long foundnodes=query(nodes,nodepath.c_str());
 	if(foundnodes && nodes.front().type()==Node::ELEMENT_Node)
+	{
+		//m_lastnodes.push(m_currentnode);
 		m_currentnode=nodes.front();
-	else
+	} else {
 		foundnodes=-foundnodes;
+	}
 	return foundnodes;
 }
 
@@ -100,6 +104,7 @@ bool XMLfile::changecurrentnode(const Query::const_iterator& pos)
 {
 	if(pos && (*pos).type()==Node::ELEMENT_Node)
 	{
+		//m_lastnodes.push(m_currentnode);
 		m_currentnode=*pos;
 		return true;
 	}
@@ -580,6 +585,31 @@ template<> bool XMLfile::Node::getValue<double>(double& value) const
 	return found;
 }
 
+template<> bool XMLfile::Node::getValue<bool>(bool& value) const
+{
+	value = false;
+	string v;
+	bool found=getValue(v);
+	if(found)
+	{
+		int i=atoi(v.c_str());
+		if(i!=0)
+		{
+			/* found integer value unequal 0 */
+			value=true;
+		}
+		else
+		{
+			/* remove white spaces */
+			v.erase( std::remove_if( v.begin(), v.end(), ::isspace ), v.end() );
+			/* convert to upper case letters */
+			std::transform(v.begin(), v.end(), v.begin(), ::toupper);
+			value=(v == "TRUE" || v == "YES" || v == "ON");
+		}
+	}
+	return found;
+}
+
 
 string XMLfile::Node::value_string(string defaultvalue) const
 {
@@ -628,6 +658,16 @@ double XMLfile::Node::value_double(double defaultvalue) const
 		getValue(value);
 	else
 		cerr << "XMLfile::Node::value_double: invalid node" << endl;
+	return value;
+}
+
+bool XMLfile::Node::value_bool(bool defaultvalue) const
+{
+	bool value=defaultvalue;
+	if(m_xmlnode)
+		getValue(value);
+	else
+		cerr << "XMLfile::Node::value_bool: invalid node" << endl;
 	return value;
 }
 
@@ -709,12 +749,13 @@ template<typename T> unsigned long XMLfile::Query::getNodeValue(T& value) const
 	if(!empty()) front().getValue(value);
 	return card();
 }
-template unsigned long XMLfile::Query::getNodeValue(float& value) const;
-template unsigned long XMLfile::Query::getNodeValue(double& value) const;
 template unsigned long XMLfile::Query::getNodeValue(int& value) const;
 template unsigned long XMLfile::Query::getNodeValue(long& value) const;
 template unsigned long XMLfile::Query::getNodeValue(unsigned int& value) const;
 template unsigned long XMLfile::Query::getNodeValue(unsigned long& value) const;
+template unsigned long XMLfile::Query::getNodeValue(float& value) const;
+template unsigned long XMLfile::Query::getNodeValue(double& value) const;
+template unsigned long XMLfile::Query::getNodeValue(bool& value) const;
 template unsigned long XMLfile::Query::getNodeValue(std::string& value) const;
 
 void XMLfile::Query::printXML(std::ostream& ostrm) const

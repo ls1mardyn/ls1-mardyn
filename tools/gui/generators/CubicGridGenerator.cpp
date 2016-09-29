@@ -119,7 +119,7 @@ void CubicGridGenerator::calculateSimulationBoxLength() {
 
 void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << endl;
-	domain->setCurrentTime(0);
+	global_simulation->setSimulationTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);
@@ -127,12 +127,13 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	domain->setGlobalLength(1, _simBoxLength);
 	domain->setGlobalLength(2, _simBoxLength);
 
+	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		Component component = _components[i];
 		if (_configuration.performPrincipalAxisTransformation()) {
 			principalAxisTransform(component);
 		}
-		domain->addComponent(component);
+		dcomponents.push_back(component);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
@@ -143,7 +144,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();

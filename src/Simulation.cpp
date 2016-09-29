@@ -1,79 +1,63 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
-
-// Simulation.cpp
-#include <iostream>
-#include <iterator>
-#include <string>
-#include <sstream>
-#include <iomanip>
-#include <limits>
-#include <cmath>
-
 #define SIMULATION_SRC
 #include "Simulation.h"
+
+#include <cmath>
+#include <iomanip>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <sstream>
+#include <string>
 
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
-#include "particleContainer/AdaptiveSubCells.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/NonBlockingMPIHandlerBase.h"
+#include "parallel/NonBlockingMPIMultiStepHandler.h"
+#include "molecules/Molecule.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #include "parallel/KDDecomposition.h"
-#include "parallel/KDDecomposition2.h"
-#else
-#include "parallel/DomainDecompDummy.h"
 #endif
 
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
-#include "particleContainer/adapter/LJFlopCounter.h"
+#include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+#include "molecules/Wall.h"
+#include "molecules/Mirror.h"
 
 #include "io/io.h"
-#include "io/xmlreader.h"
 #include "io/GeneratorFactory.h"
+#include "io/RDF.h"
+#include "io/TcTS.h"
+#include "io/Mkesfera.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
 #include "ensemble/PressureGradient.h"
+#include "ensemble/CavityEnsemble.h"
 
 #include "thermostats/VelocityScalingThermostat.h"
+#include "thermostats/TemperatureControl.h"
 
-#include "RDF.h"
-
-#ifdef STEEREO
-#include "utils/SteereoIntegration.h"
-#include <steereo/steereoSimSteering.h>
-#include <steereo/steereoCouplingSim.h>
-#endif
-
+#include "utils/FileUtils.h"
 #include "utils/OptionParser.h"
 #include "utils/Timer.h"
 #include "utils/Logger.h"
 
-#include "io/TcTS.h"
-#include "io/Mkesfera.h"
+#include "longRange/LongRangeCorrection.h"
+#include "longRange/Homogeneous.h"
+#include "longRange/Planar.h"
+
+#include "bhfmm/FastMultipoleMethod.h"
+#include "bhfmm/cellProcessors/VectorizedLJP2PCellProcessor.h"
+
+#include "particleContainer/adapter/VectorizationTuner.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -81,25 +65,46 @@ using optparse::OptionGroup;
 using optparse::Values;
 using namespace std;
 
+
 Simulation* global_simulation;
 
-Simulation::Simulation() :
-	_rdf(NULL), _ljFlopCounter(NULL), _domainDecomposition(NULL) {
+
+Simulation::Simulation()
+	: _simulationTime(0),
+	_initStatistics(0),
+	_rdf(NULL),
+	_moleculeContainer(NULL),
+	_particlePairsHandler(NULL),
+	_cellProcessor(NULL),
+	_flopCounter(NULL),
+	_domainDecomposition(NULL),
+	_integrator(NULL),
+	_domain(NULL),
+	_inputReader(NULL),
+	_longRangeCorrection(NULL),
+	_temperatureControl(NULL),
+	_FMM(NULL),
+	_forced_checkpoint_time(0),
+	_loopCompTime(0.),
+	_loopCompTimeSteps(0),
+	_programName("")
+{
+	_ensemble = new CanonicalEnsemble();
 
 	initialize();
 }
 
 Simulation::~Simulation() {
-    delete _rdf;
-    delete _domainDecomposition;
-    delete _pressureGradient;
-    delete _domain;
-    delete _particlePairsHandler;
-    delete _cellProcessor;
-    delete _moleculeContainer;
-    delete _integrator;
-    delete _inputReader;
-    delete _ljFlopCounter;
+	delete _domainDecomposition;
+	delete _pressureGradient;
+	delete _domain;
+	delete _particlePairsHandler;
+	delete _cellProcessor;
+	delete _moleculeContainer;
+	delete _integrator;
+	delete _inputReader;
+	delete _flopCounter;
+	delete _FMM;
 }
 
 void Simulation::exit(int exitcode) {
@@ -112,123 +117,394 @@ void Simulation::exit(int exitcode) {
 #endif
 }
 
-void Simulation::readConfigFile(string filename) {
-	if (filename.rfind(".xml") == filename.size() - 4) {
-		global_log->info() << "command line config file type is XML (*.xml)"
-				<< endl;
-		initConfigXML(filename);
-	} else if (filename.rfind(".cfg") == filename.size() - 4) {
-		global_log->info()
-				<< "command line config file type is oldstyle (*.cfg)" << endl;
-		initConfigOldstyle(filename);
+
+
+void Simulation::readXML(XMLfileUnits& xmlconfig) {
+#ifdef USE_VT
+	VT_traceoff();
+#endif
+	/* integrator */
+	if(xmlconfig.changecurrentnode("integrator")) {
+		string integratorType;
+		xmlconfig.getNodeValue("@type", integratorType);
+		global_log->info() << "Integrator type: " << integratorType << endl;
+		if(integratorType == "Leapfrog") {
+			_integrator = new Leapfrog();
+		} else {
+			global_log-> error() << "Unknown integrator " << integratorType << endl;
+			this->exit(1);
+		}
+		_integrator->readXML(xmlconfig);
+		_integrator->init();
+		xmlconfig.changecurrentnode("..");
 	} else {
-		global_log->info()
-				<< "command line config file type is unknown: trying oldstyle"
-				<< endl;
+		global_log->error() << "Integrator section missing." << endl;
+	}
+
+	/* run section */
+	if(xmlconfig.changecurrentnode("run")) {
+		xmlconfig.getNodeValueReduced("currenttime", _simulationTime);
+		global_log->info() << "Simulation start time: " << _simulationTime << endl;
+		/* steps */
+		xmlconfig.getNodeValue("equilibration/steps", _initStatistics);
+		global_log->info() << "Number of equilibration steps: " << _initStatistics << endl;
+		xmlconfig.getNodeValue("production/steps", _numberOfTimesteps);
+		global_log->info() << "Number of timesteps: " << _numberOfTimesteps << endl;
+		xmlconfig.changecurrentnode("..");
+	} else {
+		global_log->error() << "Run section missing." << endl;
+	}
+
+	/* ensemble */
+	if(xmlconfig.changecurrentnode("ensemble")) {
+		string ensembletype;
+		xmlconfig.getNodeValue("@type", ensembletype);
+		global_log->info() << "Ensemble: " << ensembletype<< endl;
+		if (ensembletype == "NVT") {
+			_ensemble = new CanonicalEnsemble();
+		} else if (ensembletype == "muVT") {
+			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
+			this->exit(1);
+			// _ensemble = new GrandCanonicalEnsemble();
+		} else {
+			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
+			this->exit(1);
+		}
+		_ensemble->readXML(xmlconfig);
+		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
+		for (int d = 0; d < 3; d++) {
+			_domain->setGlobalLength(d, _ensemble->domain()->length(d));
+		}
+		_domain->setGlobalTemperature(_ensemble->T());
+		xmlconfig.changecurrentnode("..");
+	}
+	else {
+		global_log->error() << "Ensemble section missing." << endl;
+		this->exit(1);
+	}
+
+	/* algorithm */
+	if(xmlconfig.changecurrentnode("algorithm")) {
+		/* cutoffs */
+		if(xmlconfig.changecurrentnode("cutoffs")) {
+			if(xmlconfig.getNodeValueReduced("defaultCutoff", _cutoffRadius)) {
+				global_log->info() << "dimensionless default cutoff radius:\t" << _cutoffRadius << endl;
+			}
+			if(xmlconfig.getNodeValueReduced("radiusLJ", _LJCutoffRadius)) {
+				global_log->info() << "dimensionless LJ cutoff radius:\t" << _LJCutoffRadius << endl;
+			}
+			/** @todo introduce maxCutoffRadius here for datastructures, ...
+			 *        maybe use map/list to store cutoffs for different potentials? */
+			_cutoffRadius = max(_cutoffRadius, _LJCutoffRadius);
+			if(_cutoffRadius <= 0) {
+				global_log->error() << "cutoff radius <= 0." << endl;
+				this->exit(1);
+			}
+			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Cutoff section missing." << endl;
+			this->exit(1);
+		}
+
+		/* electrostatics */
+		/** @todo This may be better go into a physical section for constants? */
+		if(xmlconfig.changecurrentnode("electrostatic[@type='ReactionField']")) {
+			double epsilonRF = 0;
+			xmlconfig.getNodeValueReduced("epsilon", epsilonRF);
+			global_log->info() << "Epsilon Reaction Field: " << epsilonRF << endl;
+			_domain->setepsilonRF(epsilonRF);
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Electrostatics section for reaction field setup missing." << endl;
+			this->exit(1);
+		}
+
+		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
+			_FMM = new bhfmm::FastMultipoleMethod();
+			_FMM->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
+		}
+
+		/* parallelisation */
+		if(xmlconfig.changecurrentnode("parallelisation")) {
+			string parallelisationtype("DomainDecomposition");
+			xmlconfig.getNodeValue("@type", parallelisationtype);
+			global_log->info() << "Parallelisation type: " << parallelisationtype << endl;
+		#ifdef ENABLE_MPI
+			if(parallelisationtype == "DummyDecomposition") {
+				global_log->error() << "DummyDecomposition not available in parallel mode." << endl;
+				//_domainDecomposition = new DomainDecompDummy();
+			}
+			else if(parallelisationtype == "DomainDecomposition") {
+				DomainDecomposition * temp = 0;
+							temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+							if (temp != 0) {
+								temp->initCommunicationPartners(getcutoffRadius(), _domain);
+							}
+							_domainDecomposition = new DomainDecomposition();
+			}
+			else if(parallelisationtype == "KDDecomposition") {
+				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
+			}
+			else {
+				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
+				this->exit(1);
+			}
+		#else /* serial */
+			if(parallelisationtype != "DummyDecomposition") {
+				global_log->warning()
+						<< "Executable was compiled without support for parallel execution: "
+						<< parallelisationtype
+						<< " not available. Using serial mode." << endl;
+				//this->exit(1);
+			}
+			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
+		#endif
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
+		}
+		else {
+		#ifdef ENABLE_MPI
+			global_log->error() << "Parallelisation section missing." << endl;
+			this->exit(1);
+		#else /* serial */
+			//_domainDecomposition = new DomainDecompBase(); // already set in initialize()
+		#endif
+		}
+
+		/* datastructure */
+		if(xmlconfig.changecurrentnode("datastructure")) {
+			string datastructuretype;
+			xmlconfig.getNodeValue("@type", datastructuretype);
+			global_log->info() << "Datastructure type: " << datastructuretype << endl;
+			if(datastructuretype == "LinkedCells") {
+				_moleculeContainer = new LinkedCells();
+				/** @todo Review if we need to know the max cutoff radius usable with any datastructure. */
+				global_log->info() << "Setting cell cutoff radius for linked cell datastructure to " << _cutoffRadius << endl;
+				LinkedCells *lc = static_cast<LinkedCells*>(_moleculeContainer);
+				lc->setCutoff(_cutoffRadius);
+			}
+			else if(datastructuretype == "AdaptiveSubCells") {
+				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
+				global_simulation->exit(-1);
+			}
+			else {
+				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
+				this->exit(1);
+			}
+			_moleculeContainer->readXML(xmlconfig);
+
+			double bBoxMin[3];
+			double bBoxMax[3];
+			/* TODO: replace Domain with DomainBase. */
+			_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
+			_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+			xmlconfig.changecurrentnode("..");
+		} else {
+			global_log->error() << "Datastructure section missing" << endl;
+			this->exit(1);
+		}
+
+		if(xmlconfig.changecurrentnode("thermostats")) {
+			long numThermostats = 0;
+			XMLfile::Query query = xmlconfig.query("thermostat");
+			numThermostats = query.card();
+			global_log->info() << "Number of thermostats: " << numThermostats << endl;
+			if(numThermostats > 1) {
+				global_log->info() << "Enabling component wise thermostat" << endl;
+				_velocityScalingThermostat.enableComponentwise();
+			}
+			string oldpath = xmlconfig.getcurrentnodepath();
+			XMLfile::Query::const_iterator thermostatIter;
+			for( thermostatIter = query.begin(); thermostatIter; thermostatIter++ ) {
+				xmlconfig.changecurrentnode( thermostatIter );
+				string thermostattype;
+				xmlconfig.getNodeValue("@type", thermostattype);
+				if(thermostattype == "VelocityScaling") {
+					double temperature = _ensemble->T();
+					xmlconfig.getNodeValue("temperature", temperature);
+					string componentName("global");
+					xmlconfig.getNodeValue("@componentId", componentName);
+					if(componentName == "global"){
+						_domain->setGlobalTemperature(temperature);
+						global_log->info() << "Adding global velocity scaling thermostat, T = " << temperature << endl;
+					}
+					else {
+						int componentId = 0;
+						componentId = getEnsemble()->getComponent(componentName)->ID();
+						int thermostatID = _domain->getThermostat(componentId);
+						_domain->setTargetTemperature(thermostatID, temperature);
+						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
+					}
+				}
+				else {
+					global_log->warning() << "Unknown thermostat " << thermostattype << endl;
+					continue;
+				}
+			}
+			xmlconfig.changecurrentnode(oldpath);
+			xmlconfig.changecurrentnode("..");
+		}
+		else {
+			global_log->warning() << "Thermostats section missing." << endl;
+		}
+		
+		
+	/*	if(xmlconfig.changecurrentnode("planarLRC")) {
+			XMLfile::Query query = xmlconfig.query("slabs");
+			unsigned slabs = query.card();
+			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, slabs, global_simulation);
+			_domainDecomposition->readXML(xmlconfig);
+			xmlconfig.changecurrentnode("..");
+		}
+		else {
+			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);	
+		}*/
+
+		xmlconfig.changecurrentnode(".."); /* algorithm section */
+	}
+	else {
+		global_log->error() << "Algorithm section missing." << endl;
+	}
+
+	/* output */
+	long numOutputPlugins = 0;
+	XMLfile::Query query = xmlconfig.query("output/outputplugin");
+	numOutputPlugins = query.card();
+	global_log->info() << "Number of output plugins: " << numOutputPlugins << endl;
+	if(numOutputPlugins < 1) {
+		global_log->warning() << "No output plugins specified." << endl;
+	}
+
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputPluginIter;
+	for( outputPluginIter = query.begin(); outputPluginIter; outputPluginIter++ ) {
+		xmlconfig.changecurrentnode( outputPluginIter );
+		OutputBase *outputPlugin;
+		string pluginname("");
+		xmlconfig.getNodeValue("@name", pluginname);
+		global_log->info() << "Enabling output plugin: " << pluginname << endl;
+		if(pluginname == "CheckpointWriter") {
+			outputPlugin = new CheckpointWriter();
+		}
+		else if(pluginname == "DecompWriter") {
+			outputPlugin = new DecompWriter();
+		}
+		else if(pluginname == "FLOPCounter") {
+			/** @todo  Make the Flop counter a real output plugin */
+			_flopCounter = new FlopCounter(_cutoffRadius, _LJCutoffRadius);
+			continue;
+		}
+		else if(pluginname == "MmspdWriter") {
+			outputPlugin = new MmspdWriter();
+		}
+		else if(pluginname == "PovWriter") {
+			outputPlugin = new PovWriter();
+		}
+		else if(pluginname == "RDF") {
+			_rdf = new RDF();
+			outputPlugin = _rdf;
+		}
+		else if(pluginname == "Resultwriter") {
+			outputPlugin = new ResultWriter();
+		}
+		else if(pluginname == "SysMonOutput") {
+			outputPlugin = new SysMonOutput();
+		}
+		else if(pluginname == "VISWriter") {
+			outputPlugin = new VISWriter();
+		}
+		else if(pluginname == "MmspdBinWriter") {
+			outputPlugin = new MmspdBinWriter();
+		}
+#ifdef VTK
+		else if(pluginname == "VTKMoleculeWriter") {
+			outputPlugin = new VTKMoleculeWriter();
+		}
+		else if(pluginname == "VTKGridWriter") {
+			outputPlugin = new VTKGridWriter();
+		}
+#endif /* VTK */
+		else if(pluginname == "XyzWriter") {
+			outputPlugin = new XyzWriter();
+		}
+		else if(pluginname == "CavityWriter") {
+			outputPlugin = new CavityWriter();
+		}
+		/* temporary */
+		else if(pluginname == "MPICheckpointWriter") {
+			outputPlugin = new MPICheckpointWriter();
+		}
+		else if(pluginname == "VectorizationTuner") {
+			outputPlugin = new VectorizationTuner(_cutoffRadius, _LJCutoffRadius, &_cellProcessor);
+		}
+		else {
+			global_log->warning() << "Unknown plugin " << pluginname << endl;
+			continue;
+		}
+
+
+		outputPlugin->readXML(xmlconfig);
+		_outputPlugins.push_back(outputPlugin);
+	}
+	xmlconfig.changecurrentnode(oldpath);
+}
+
+void Simulation::readConfigFile(string filename) {
+	string extension(getFileExtension(filename.c_str()));
+	global_log->debug() << "Found config filename extension: " << extension << endl;
+	if (extension == "xml") {
+		initConfigXML(filename);
+	}
+	else if (extension == "cfg") {
 		initConfigOldstyle(filename);
+	}
+	else {
+		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
+		this->exit(1);;
 	}
 }
 
 void Simulation::initConfigXML(const string& inputfilename) {
-	int ownrank = 0;
-#ifdef ENABLE_MPI
-	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-#endif
-	global_log->info() << "init XML config file: " << inputfilename << endl;
+	global_log->info() << "Initializing XML config file: " << inputfilename << endl;
 	XMLfileUnits inp(inputfilename);
-	XMLReader xmlreader(inputfilename);
 
 	global_log->debug() << "Input XML:" << endl << string(inp) << endl;
-	inp.changecurrentnode("/mardyn");
 
-	string version = xmlreader.getVersion();
+	if(inp.changecurrentnode("/mardyn") < 0) {
+		global_log->error() << "Cound not find root node /mardyn." << endl;
+		global_log->error() << "Not a valid MarDyn XML input file." << endl;
+		this->exit(1);
+	}
+
+	string version("unknown");
+	inp.getNodeValue("@version", version);
 	global_log->info() << "MarDyn XML config file version: " << version << endl;
-	global_log->info() << "Reading simulation parameters ..." << endl;
-
-	global_log->info() << "Reading integrator information..." << endl;
-	xmlreader.getIntegrator(_integrator);
-	double timestepLength = 0.0;
-	timestepLength = _integrator->getTimestepLength();
-	global_log->info() << " timestep:             " << timestepLength << endl;
-	if (timestepLength == 0) {
-		/* TODO: perform checks before simulation start as there are command line parameters, too */
-		global_log->error() << "Undefined timestep length." << endl;
-	}
-
-	global_log->info() << "Reading parallelization type..." << endl;
-	_domainDecompositionType = xmlreader.getDomainDecompositionType();
-	switch (_domainDecompositionType) {
-	case DUMMY_DECOMPOSITION:
-#ifdef ENABLE_MPI
-		global_log->warning() << "Dummy domain decomposition does not work in a parallel environment." << endl;
-		exit(1);
-//#else
-		// the Dummy Domaindecomposition is already created in initialize()!
-//		_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
-#endif
-		break;
-#ifdef ENABLE_MPI
-		case DOMAIN_DECOMPOSITION:
-			// the Domaindecomposition is already created in initialize()!
-//		_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-		break;
-		case KD_DECOMPOSITION:
-		/* TODO: remove parameters from KDDecomposition constructor */
-			delete _domainDecomposition;
-			_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
-		break;
-#endif
-	case UNKNOWN_DECOMPOSITION:
-		global_log->error() << "Unknown domain decomposition type." << endl;
-		exit(1);
-		break;
-	}
-#ifndef ENABLE_MPI
-	if (_domainDecompositionType != DUMMY_DECOMPOSITION) {
-		global_log->warning()
-				<< "Input demands parallelization, but the current compilation doesn't support parallel execution."
-				<< endl;
-	}
-#endif	
-
-	double simBoxLength[3];
-	if (xmlreader.getSimBoxSize(simBoxLength)) {
-		global_log->info() << " simulation box size:  (" << simBoxLength[0]
-				<< ", " << simBoxLength[1] << ", " << simBoxLength[2] << ")"
-				<< endl;
-
-		for (int d = 0; d < 3; d++) {
-			_domain->setGlobalLength(d, simBoxLength[d]);
-		}
-	}
-
-	double temperature = xmlreader.getTemperature();
-	_domain->setGlobalTemperature(temperature);
-	global_log->info() << "Temperature of the enseble: " << temperature << endl;
 
 	if (inp.changecurrentnode("simulation")) {
-		string siminpfile, siminptype;
-		if (inp.getNodeValue("input", siminpfile)) {
-			global_log->info() << "reading input file:\t" << siminpfile << endl;
-			// input type="oldstyle" to include oldstyle input files for backward compatibility - only temporary!!!
-			if (inp.getNodeValue("input@type", siminptype) && siminptype
-					== "oldstyle") {
-				global_log->info() << "         file type:\t" << siminptype
-						<< endl;
+		/** @todo this is all for old input files. Remove! */
+		string siminpfile;
+		int numsimpfiles = inp.getNodeValue("input", siminpfile);
+		if (numsimpfiles == 1) {
+			string siminptype;
+			global_log->info() << "Reading input file: " << siminpfile << endl;
+			inp.getNodeValue("input@type", siminptype);
+			global_log->info() << "Input file type: " << siminptype << endl;
+			if (siminptype == "oldstyle") {
 				initConfigOldstyle(siminpfile);
+				/* Skip the rest of the xml config for old cfg files. */
+				return;
+			} else {
+				global_log->error() << "Unknown input file type: " << siminptype << endl;
+				this->exit(1);;
 			}
+		} else if (numsimpfiles > 1) {
+			global_log->error() << "Multiple input file sections are not supported." << endl;
+			this->exit(1);
 		}
 
-		if (inp.getNodeValueReduced("cutoffs/radiusLJ", _LJCutoffRadius)) {
-			_cutoffRadius = _LJCutoffRadius;
-			global_log->info() << "dimensionless LJ cutoff radius:\t"
-					<< _LJCutoffRadius << endl;
-			global_log->info() << "dimensionless cutoff radius:\t"
-					<< _cutoffRadius << endl;
-		} else {
-			global_log->error() << "Cutoff section missing." << endl;
-			exit(1);
-		}
+		readXML(inp);
 
 		string pspfile;
 		if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
@@ -236,141 +512,82 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			global_log->info() << "phasespacepoint description file:\t"
 					<< pspfile << endl;
 
-			string pspfiletype("OldStyle");
+			string pspfiletype("ASCII");
 			inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype);
 			global_log->info() << "       phasespacepoint file type:\t"
 					<< pspfiletype << endl;
-			if (pspfiletype == "OldStyle") {
+			if (pspfiletype == "ASCII") {
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
-				_inputReader->setPhaseSpaceHeaderFile(pspfile);
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			}
-			/* TODO: Check this part of the code */
-			if (_LJCutoffRadius == 0.0)
-				_LJCutoffRadius = _cutoffRadius;
-			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
 		}
+		string oldpath = inp.getcurrentnodepath();
+		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
+			string generatorName;
+			inp.getNodeValue("@name", generatorName);
+			global_log->info() << "Generator: " << generatorName << endl;
+			if(generatorName == "GridGenerator") {
+				_inputReader = new GridGenerator();
+			}
+			else if(generatorName == "mkesfera") {
+				_inputReader = new MkesferaGenerator();
+			}
+			else if(generatorName == "mkTcTS") {
+				_inputReader = new MkTcTSGenerator();
+			}
+			else {
+				global_log->error() << "Unknown generator: " << generatorName << endl;
+				exit(1);
+			}
+			_inputReader->readXML(inp);
+		}
+		inp.changecurrentnode(oldpath);
 
-		if (inp.changecurrentnode("algorithm")) {
 
-			string datastructype;
-			if (inp.getNodeValue("datastructure@type", datastructype)) {
-				global_log->info() << "datastructure to use:\t"
-						<< datastructype << endl;
-				if (datastructype == "LinkedCells") {
-					int cellsInCutoffRadius = 1;
-					inp.getNodeValue("datastructure/cellsInCutoffRadius",
-							cellsInCutoffRadius);
-					global_log->info()
-							<< "LinkedCells cells in cutoff radius:\t"
-							<< cellsInCutoffRadius << endl;
-					double bBoxMin[3];
-					double bBoxMax[3];
-					global_log->debug() << "Box dimensions:" << endl;
-					for (int d = 0; d < 3; d++) {
-						bBoxMin[d] = _domainDecomposition->getBoundingBoxMin(d,
-								_domain);
-						bBoxMax[d] = _domainDecomposition->getBoundingBoxMax(d,
-								_domain);
-						global_log->debug() << "[" << d << "] " << bBoxMin[d]
-								<< " - " << bBoxMax[d] << endl;
-					}
-					if (_LJCutoffRadius == 0.0)
-						_LJCutoffRadius = _cutoffRadius;
-					global_log->debug() << "Cutoff: " << _cutoffRadius << "\nCellsInCutoff: " << cellsInCutoffRadius << endl;
-					_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-						 cellsInCutoffRadius);
-				} else if (datastructype == "AdaptiveSubCells") {
-					double bBoxMin[3];
-					double bBoxMax[3];
-					for (int i = 0; i < 3; i++) {
-						bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,
-								_domain);
-						bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,
-								_domain);
-					}
-					//creates a new Adaptive SubCells datastructure
-					if (_LJCutoffRadius == 0.0)
-						_LJCutoffRadius = _cutoffRadius;
-					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
-				} else {
-					global_log->error() << "UNKOWN DATASTRUCTURE: "
-							<< datastructype << endl;
-					exit(1);
-				}
-			}
-			inp.changecurrentnode("..");
-		} // algo-section
-		else {
-			global_log->info() << "XML config file " << inputfilename
-					<< ": no algo section" << endl;
-		}
-		if (inp.changecurrentnode("output")) {
-			string outputPathAndPrefix;
-			if (inp.getNodeValue("Resultwriter", outputPathAndPrefix)) {
-				// TODO: add the output frequency to the xml!
-				_outputPlugins.push_back(new ResultWriter(1,
-						outputPathAndPrefix));
-				global_log->debug() << "ResultWriter '" << outputPathAndPrefix
-						<< "'.\n";
-			}
-			inp.changecurrentnode("..");
-		} // output-section
-		else {
-			global_log->info() << "XML config file " << inputfilename
-					<< ": no output section" << endl;
-		}
 		inp.changecurrentnode("..");
 	} // simulation-section
 	else {
-		global_log->error() << "XML config file " << inputfilename
-				<< ": no simulation section" << endl;
+		global_log->error() << "Simulation section missing" << endl;
+		exit(1);
 	}
 
-	// read particle data
+#ifdef ENABLE_MPI
+	// if we are using the DomainDecomposition, please complete its initialization:
+	{
+		DomainDecomposition * temp = 0;
+		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+		if (temp != 0) {
+			temp->initCommunicationPartners(_cutoffRadius, _domain);
+		}
+	}
+#endif
+
+	// read particle data (or generate particles, if a generator is chosen)
 	unsigned long maxid = _inputReader->readPhaseSpace(_moleculeContainer,
 			&_lmu, _domain, _domainDecomposition);
 
-	if (this->_LJCutoffRadius == 0.0)
-		_LJCutoffRadius = this->_cutoffRadius;
 
-	global_log->info() << " reading in components from xml ..." << endl;
-	/* TODO: save components into domain:
-	 * take care of already existing components
-	 * take care about parameter streams
-	 */
-	std::vector<Component>& dcomponents = _domain->getComponents();
-	std::vector<Component> components;
-	xmlreader.getComponents(components);
-	// 	for( unsigned int j = 0; j < components.size(); j++ ) {
-	// 		global_log->info() << components[j] << endl;
-	// 	}
-	long numComponents = dcomponents.size();
-	global_log->info() << " number of components from input: " << numComponents
-			<< endl;
-	global_log->info() << " number of components in xml (not implemented): "
-			<< components.size() << endl;
-
-	// TODO: Check this...
-	// 	_domain->initParameterStreams( _cutoffRadius, _LJCutoffRadius );
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
+//	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// test new Decomposition
 	_moleculeContainer->update();
 	_moleculeContainer->deleteOuterParticles();
 
+	int ownrank = 0;
+#ifdef ENABLE_MPI
+	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
+#endif
 	unsigned idi = _lmu.size();
 	unsigned j = 0;
 	std::list<ChemicalPotential>::iterator cpit;
 	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 		cpit->setIncrement(idi);
-		double tmp_molecularMass =
-				_domain->getComponents()[cpit->getComponentID()].m();
+		double tmp_molecularMass = global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->m();
 		cpit->setSystem(_domain->getGlobalLength(0),
 				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
 				tmp_molecularMass);
-		cpit->setGlobalN(_domain->N(cpit->getComponentID()));
+		cpit->setGlobalN(global_simulation->getEnsemble()->getComponent(cpit->getComponentID())->getNumMolecules());
 		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
 
 		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
@@ -395,636 +612,104 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 		j++;
 	}
-
-}
-
-void Simulation::initConfigOldstyle(const string& inputfilename) {
-	int ownrank = 0;
-#ifdef ENABLE_MPI
-	MPI_CHECK( MPI_Comm_rank(MPI_COMM_WORLD, &ownrank) );
-#endif
-
-	global_log->info() << "init oldstyle config file: " << inputfilename
-			<< endl;
-
-	// open filestream to the input file
-	ifstream inputfilestream(inputfilename.c_str());
-	if (!inputfilestream.is_open()) {
-		global_log->error() << "Could not open file " << inputfilename << endl;
-		exit(1);
-	}
-
-	//  std::string inputPath;
-	//  unsigned int lastIndex = inputfilename.find_last_of('/',inputfilename.size()-1);
-	//  if (lastIndex == string::npos)
-	//    inputPath="";
-	//  else
-	//    inputPath = inputfilename.substr(0, lastIndex+1);
-
-
-	// used to store one token of the inputfilestream
-	string token;
-
-	double timestepLength;
-	unsigned cosetid = 0;
-        bool widom = false;
-
-	// The first line of the config file has to contain the token "MDProjectConfig"
-	inputfilestream >> token;
-	if ((token != "mardynconfig") && (token != "MDProjectConfig")) {
-		global_log->error() << "Not a mardynconfig file! First token: "
-				<< token << endl;
-		exit(1);
-	}
-
-	while (inputfilestream) {
-		token.clear();
-		inputfilestream >> token;
-		global_log->debug() << " [[" << token << "]]" << endl;
-
-		if (token.substr(0, 1) == "#") {
-			inputfilestream.ignore(std::numeric_limits<streamsize>::max(), '\n');
-			continue;
-		}
-		if (token == "phaseSpaceFile") {
-			string phaseSpaceFileFormat;
-			inputfilestream >> phaseSpaceFileFormat;
-
-			if (timestepLength == 0.0) {
-				global_log->error() << "timestep missing." << endl;
-				exit(1);
-			}
-			if (phaseSpaceFileFormat == "OldStyle") {
-				string phaseSpaceFileName;
-				inputfilestream >> phaseSpaceFileName;
-				_inputReader = (InputBase*) new InputOldstyle();
-				_inputReader->setPhaseSpaceFile(phaseSpaceFileName);
-				_inputReader->setPhaseSpaceHeaderFile(phaseSpaceFileName);
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			} else if (phaseSpaceFileFormat == "Generator") {
-				global_log->info() << "phaseSpaceFileFormat is Generator!"
-						<< endl;
-				string generatorName; // name of the library to load
-				string inputFile; // name of the input file for the generator
-
-				string line;
-				getline(inputfilestream, line);
-				stringstream lineStream(line);
-				lineStream >> generatorName >> inputFile;
-				_inputReader = GeneratorFactory::loadGenerator(generatorName,
-						inputFile);
-				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
-			} else {
-				global_log->error() << "Don't recognize phasespaceFile reader "
-						<< phaseSpaceFileFormat << endl;
-				exit(1);
-			}
-			if (_LJCutoffRadius == 0.0)
-				_LJCutoffRadius = _cutoffRadius;
-			_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-		} else if (token == "timestepLength") {
-			inputfilestream >> timestepLength;
-		} else if (token == "cutoffRadius") {
-			inputfilestream >> _cutoffRadius;
-		} else if (token == "LJCutoffRadius") {
-			inputfilestream >> _LJCutoffRadius;
-		} else if ((token == "parallelization") || (token == "parallelisation")) {
-#ifndef ENABLE_MPI
-			global_log->warning()
-					<< "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
-					<< endl;
-			inputfilestream >> token;
-#else
-			inputfilestream >> token;
-			if (token=="DomainDecomposition") {
-				// default DomainDecomposition is already set in initialize();
-				//_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
-			}
-			else if(token=="KDDecomposition") {
-				delete _domainDecomposition;
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, 1.0, 100);
-			}
-			else if(token=="KDDecomposition2") {
-				delete _domainDecomposition;
-				int updateFrequency = 100;
-				int fullSearchThreshold = 3;
-				string line;
-				getline(inputfilestream, line);
-				stringstream lineStream(line);
-				lineStream >> updateFrequency >> fullSearchThreshold;
-				_domainDecomposition = (DomainDecompBase*) new KDDecomposition2(_cutoffRadius, _domain, updateFrequency, fullSearchThreshold);
-			}
-#endif
-		} else if (token == "datastructure") {
-
-			if (_domainDecomposition == NULL) {
-				global_log->error()
-						<< "_domainDecomposition is NULL! Probably you compiled for MPI, but didn't specify line \"parallelization\" before line \"datastructure\"!"
-						<< endl;
-				exit(1);
-			}
-
-			inputfilestream >> token;
-			if (token == "LinkedCells") {
-				_particleContainerType = LINKED_CELL;
-				int cellsInCutoffRadius;
-				inputfilestream >> cellsInCutoffRadius;
-				double bBoxMin[3];
-				double bBoxMax[3];
-				for (int i = 0; i < 3; i++) {
-					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,
-							_domain);
-					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,
-							_domain);
-				}
-				if (this->_LJCutoffRadius == 0.0)
-					_LJCutoffRadius = this->_cutoffRadius;
-				_moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius,
-				        cellsInCutoffRadius);
-			} else if (token == "AdaptiveSubCells") {
-				_particleContainerType = ADAPTIVE_LINKED_CELL;
-				double bBoxMin[3];
-				double bBoxMax[3];
-				for (int i = 0; i < 3; i++) {
-					bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i,_domain);
-					bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i,_domain);
-				}
-				//creates a new Adaptive SubCells datastructure
-				if (_LJCutoffRadius == 0.0)
-					_LJCutoffRadius = _cutoffRadius;
-					_moleculeContainer = new AdaptiveSubCells(bBoxMin, bBoxMax, _cutoffRadius, _LJCutoffRadius);
-			} else {
-				global_log->error() << "UNKOWN DATASTRUCTURE: " << token
-						<< endl;
-				exit(1);
-			}
-		} else if (token == "output") {
-			inputfilestream >> token;
-			if (token == "ResultWriter") {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new ResultWriter(writeFrequency,
-						outputPathAndPrefix));
-				global_log->debug() << "ResultWriter '" << outputPathAndPrefix
-						<< "'.\n";
-			} else if (token == "XyzWriter") {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new XyzWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
-				global_log->debug() << "XyzWriter " << writeFrequency << " '"
-						<< outputPathAndPrefix << "'.\n";
-			} else if (token == "CheckpointWriter") {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new CheckpointWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
-				global_log->debug() << "CheckpointWriter " << writeFrequency
-						<< " '" << outputPathAndPrefix << "'.\n";
-			} else if (token == "PovWriter") {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new PovWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
-				global_log->debug() << "POVWriter " << writeFrequency << " '"
-						<< outputPathAndPrefix << "'.\n";
-			} else if (token == "DecompWriter") {
-				unsigned long writeFrequency;
-				string mode;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> mode
-						>> outputPathAndPrefix;
-				_outputPlugins.push_back(new DecompWriter(writeFrequency, mode,
-						outputPathAndPrefix, _numberOfTimesteps, true));
-				global_log->debug() << "DecompWriter " << writeFrequency
-						<< " '" << outputPathAndPrefix << "'.\n";
-			} else if ((token == "VisittWriter") || (token == "VISWriter")) {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new VISWriter(writeFrequency,
-						outputPathAndPrefix, _numberOfTimesteps, true));
-				global_log->debug() << "VISWriter " << writeFrequency << " '"
-						<< outputPathAndPrefix << "'.\n";
-			} else if (token == "VTKWriter") {
-#ifdef VTK			
-
-				unsigned long writeFrequency = 0;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new VTKMoleculeWriter(writeFrequency,
-						outputPathAndPrefix));
-				global_log->debug() << "VTKWriter " << writeFrequency << " '"
-						<< outputPathAndPrefix << "'.\n";
-#else
-				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
-#endif
-			} else if (token == "VTKGridWriter") {
-#ifdef VTK
-				unsigned long writeFrequency = 0;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-
-				if (_particleContainerType == LINKED_CELL) {
-					_outputPlugins.push_back(new VTKGridWriter(writeFrequency,
-							outputPathAndPrefix,
-							static_cast<LinkedCells&> (*_moleculeContainer)));
-					global_log->debug() << "VTKGridWriter " << writeFrequency
-							<< " '" << outputPathAndPrefix << "'.\n";
-				} else {
-					global_log->warning()
-							<< "VTKGridWriter only supported with LinkedCells!"
-							<< std::endl;
-					global_log->warning()
-							<< "Generating no VTK output for the grid!"
-							<< std::endl;
-				}
-#else
-				Log::global_log->error() << std::endl << "VKT-Plotting demanded, but programme compiled without -DVTK!" << std::endl << std::endl;
-#endif
-			} else if (token == "StatisticsWriter") {
-				unsigned long writeFrequency = 0;
-				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-
-				if (_particleContainerType == LINKED_CELL) {
-					_outputPlugins.push_back(new StatisticsWriter(
-							writeFrequency, outputPathAndPrefix,
-							static_cast<LinkedCells&> (*_moleculeContainer)));
-					global_log->debug() << "StatisticsWriter "
-							<< writeFrequency << " '" << outputPathAndPrefix
-							<< "'.\n";
-				} else {
-					global_log->warning()
-							<< "StatisticsWriter only supported with LinkedCells!"
-							<< std::endl;
-					global_log->warning()
-							<< "Generating no statistics output for the grid!"
-							<< std::endl;
-				}
-			}
-			// by Stefan Becker <stefan.becker@mv.uni-kl.de>
-			// output for the MegaMol Simple Particle Data File Format (*.mmspd)
-			else if (token == "MmspdWriter"){
-			      unsigned long writeFrequency = 0;
-			      string outputPathAndPrefix;
-			      inputfilestream >> writeFrequency >> outputPathAndPrefix;
-			      _outputPlugins.push_back(new MmspdWriter(writeFrequency, outputPathAndPrefix, _numberOfTimesteps, true));
-			      global_log->debug() << "MmspdWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
-			}
-			else {
-				global_log->warning() << "Unknown output plugin " << token << endl;
-			}
-		} else if (token == "accelerate") {
-			cosetid++;
-			inputfilestream >> token;
-			global_log->debug() << "Found specifier '" << token << "'\n";
-
-			if (token != "comp") {
-				global_log->error() << "Expected 'comp' instead of '" << token
-						<< "'.\n";
-				exit(1);
-			}
-			int cid = 0;
-			while (cid >= 0) {
-				inputfilestream >> cid;
-				if (cid > 0)
-					global_log->info() << "acc. for component " << cid << endl;
-				cid--;
-				_pressureGradient->assignCoset((unsigned) cid, cosetid);
-			}
-			double v;
-			inputfilestream >> v;
-			global_log->debug() << "velocity " << v << endl;
-			inputfilestream >> token;
-			global_log->debug() << "Found specifier '" << token << "'\n";
-
-			if (token != "towards") {
-				global_log->error() << "Expected 'towards' instead of '"
-						<< token << "'.\n";
-				exit(1);
-			}
-			double dir[3];
-			double dirnorm = 0;
-			for (unsigned d = 0; d < 3; d++) {
-				inputfilestream >> dir[d];
-				dirnorm += dir[d] * dir[d];
-			}
-			dirnorm = 1.0 / sqrt(dirnorm);
-			for (unsigned d = 0; d < 3; d++)
-				dir[d] *= dirnorm;
-			inputfilestream >> token;
-			global_log->debug() << "Found specifier '" << token << "'\n";
-
-			if (token != "within") {
-				global_log->error() << "Expected 'within' instead of '"
-						<< token << "'.\n";
-				exit(1);
-			}
-			double tau;
-			inputfilestream >> tau;
-			inputfilestream >> token;
-			global_log->debug() << "Found specifier '" << token << "'\n";
-
-			if (token != "from") {
-				global_log->error() << "Expected 'from' instead of '" << token
-						<< "'.\n";
-				exit(1);
-			}
-			double ainit[3];
-			for (unsigned d = 0; d < 3; d++)
-				inputfilestream >> ainit[3];
-			if (timestepLength == 0.0) {
-				global_log->error() << "timestep missing." << endl;
-				exit(1);
-			}
-			_pressureGradient->specifyComponentSet(cosetid, dir, tau, ainit,
-					timestepLength);
-		} else if (token == "constantAccelerationTimesteps") {
-			unsigned uCAT;
-			inputfilestream >> uCAT;
-			_pressureGradient->setUCAT(uCAT);
-		} else if (token == "zetaFlow") {
-			double zeta;
-			inputfilestream >> zeta;
-			_pressureGradient->setZetaFlow(zeta);
-		} else if (token == "tauPrimeFlow") {
-			double tauPrime;
-			inputfilestream >> tauPrime;
-			if (timestepLength == 0.0) {
-				global_log->error() << "timestep missing." << endl;
-				exit(1);
-			}
-			_pressureGradient->specifyTauPrime(tauPrime, timestepLength);
-		} else if (token == "profile") {
-			unsigned xun, yun, zun;
-			inputfilestream >> xun >> yun >> zun;
-			_domain->setupProfile(xun, yun, zun);
-			_doRecordProfile = true;
-		} else if (token == "profileRecordingTimesteps") { /* TODO: subotion of profile */
-			inputfilestream >> _profileRecordingTimesteps;
-		} else if (token == "profileOutputTimesteps") { /* TODO: subotion of profile */
-			inputfilestream >> _profileOutputTimesteps;
-		} else if (token == "RDF") {
-			double interval;
-			unsigned bins;
-			inputfilestream >> interval >> bins;
-			if (_domain->getComponents().size() <= 0) {
-				global_log->error()
-						<< "PhaseSpaceFile-Specifiation has to occur befor RDF-Token!"
-						<< endl;
-				exit(-1);
-			}
-			_rdf = new RDF(interval, bins, _domain->getComponents());
-			//_domain->setupRDF(interval, bins);
-		} else if (token == "RDFOutputTimesteps") { /* TODO: subotion of RDF */
-			unsigned int RDFOutputTimesteps;
-			inputfilestream >> RDFOutputTimesteps;
-			_rdf->setOutputTimestep(RDFOutputTimesteps);
-		} else if (token == "RDFOutputPrefix") { /* TODO: subotion of RDF */
-			std::string RDFOutputPrefix;
-			inputfilestream >> RDFOutputPrefix;
-			_rdf->setOutputPrefix(RDFOutputPrefix);
-		} else if (token == "profiledComponent") { /* TODO: subotion of profile, check if required to enable output in general */
-			unsigned cid;
-			inputfilestream >> cid;
-			cid--;
-			_domain->considerComponentInProfile(cid);
-		} else if (token == "profileOutputPrefix") { /* TODO: subotion of profile */
-			inputfilestream >> _profileOutputPrefix;
-		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
-			inputfilestream >> _collectThermostatDirectedVelocity;
-		} else if (token == "zOscillator") {
-			_zoscillation = true;
-			inputfilestream >> _zoscillator;
-		}
-		// chemicalPotential <mu> component <cid> [control <x0> <y0> <z0>
-		// to <x1> <y1> <z1>] conduct <ntest> tests every <nstep> steps
-		else if (token == "chemicalPotential") {
-			double imu;
-			inputfilestream >> imu;
-			inputfilestream >> token;
-			if (token != "component") {
-				global_log->error() << "Expected 'component' instead of '"
-						<< token << "'.\n";
-				global_log->debug()
-						<< "Syntax: chemicalPotential <mu> component <cid> "
-						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-						<< "conduct <ntest> tests every <nstep> steps" << endl;
-				exit(1);
-			}
-			unsigned icid;
-			inputfilestream >> icid;
-			icid--;
-			inputfilestream >> token;
-			double x0, y0, z0, x1, y1, z1;
-			bool controlVolume = false;
-			if (token == "control") {
-				controlVolume = true;
-				inputfilestream >> x0 >> y0 >> z0;
-				inputfilestream >> token;
-				if (token != "to") {
-					global_log->error() << "Expected 'to' instead of '"
-							<< token << "'.\n";
-					global_log->debug()
-							<< "Syntax: chemicalPotential <mu> component <cid> "
-							<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-							<< "conduct <ntest> tests every <nstep> steps\n";
-					exit(1);
-				}
-				inputfilestream >> x1 >> y1 >> z1;
-				inputfilestream >> token;
-			}
-			if (token != "conduct") {
-				global_log->error() << "Expected 'conduct' instead of '"
-						<< token << "'.\n";
-				global_log->debug()
-						<< "Syntax: chemicalPotential <mu> component <cid> "
-						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-						<< "conduct <ntest> tests every <nstep> steps\n";
-				exit(1);
-			}
-			unsigned intest;
-			inputfilestream >> intest;
-			inputfilestream >> token;
-			if (token != "tests") {
-				global_log->error() << "Expected 'tests' instead of '" << token
-						<< "'.\n";
-				global_log->debug()
-						<< "Syntax: chemicalPotential <mu> component <cid> "
-						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-						<< "conduct <ntest> tests every <nstep> steps" << endl;
-				exit(1);
-			}
-			inputfilestream >> token;
-			if (token != "every") {
-				global_log->error() << "Expected 'every' instead of '" << token
-						<< "'.\n";
-				global_log->debug()
-						<< "Syntax: chemicalPotential <mu> component <cid> "
-						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-						<< "conduct <ntest> tests every <nstep> steps" << endl;
-				exit(1);
-			}
-			unsigned instep;
-			inputfilestream >> instep;
-			inputfilestream >> token;
-			if (token != "steps") {
-				global_log->error() << "Expected 'steps' instead of '" << token
-						<< "'.\n";
-				global_log->debug()
-						<< "Syntax: chemicalPotential <mu> component <cid> "
-						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
-						<< "conduct <ntest> tests every <nstep> steps" << endl;
-				exit(1);
-			}
-			ChemicalPotential tmu = ChemicalPotential();
-			tmu.setMu(icid, imu);
-			tmu.setInterval(instep);
-			tmu.setInstances(intest);
-			if (controlVolume)
-				tmu.setControlVolume(x0, y0, z0, x1, y1, z1);
-			global_log->info() << setprecision(6) << "chemical Potential "
-					<< imu << " component " << icid + 1 << " (internally "
-					<< icid << ") conduct " << intest << " tests every "
-					<< instep << " steps: ";
-			_lmu.push_back(tmu);
-			global_log->info() << " pushed back." << endl;
-		} else if (token == "planckConstant") {
-			inputfilestream >> h;
-		} else if(token == "Widom") {
-                        widom = true;
-                } else if (token == "NVE") {
-			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
-			_domain->thermostatOff();
-		} else if (token == "initCanonical") {
-			inputfilestream >> _initCanonical;
-		} else if (token == "initGrandCanonical") { /* suboption of chemical potential */
-			inputfilestream >> _initGrandCanonical;
-		} else if (token == "initStatistics") {
-			inputfilestream >> _initStatistics;
-		} else if (token == "cutoffRadius") {
-			double rc;
-			inputfilestream >> rc;
-			this->setcutoffRadius(rc);
-		} else if (token == "LJCutoffRadius") {
-			double rc;
-			inputfilestream >> rc;
-			this->setLJCutoff(rc);
-		} else if (token == "tersoffCutoffRadius") {
-			double rc;
-			inputfilestream >> rc;
-			this->setTersoffCutoff(rc);
-		} else {
-			if (token != "")
-				global_log->warning() << "Did not process unknown token "
-						<< token << endl;
-		}
-	}
-
-	// read particle data
-	maxid = _inputReader->readPhaseSpace(_moleculeContainer, &_lmu, _domain,
-			_domainDecomposition);
-
-	if (this->_LJCutoffRadius == 0.0)
-		_LJCutoffRadius = this->_cutoffRadius;
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-
-	bool lj_present = false;
-	bool charge_present = false;
-	bool dipole_present = false;
-	bool quadrupole_present = false;
-	bool tersoff_present = false;
-
-	const vector<Component> components = _domain->getComponents();
-	for (size_t i = 0; i < components.size(); i++) {
-		lj_present |= components[i].numLJcenters() != 0;
-		charge_present |= components[i].numCharges() != 0;
-		dipole_present |= components[i].numDipoles() != 0;
-		quadrupole_present |= components[i].numQuadrupoles() != 0;
-		tersoff_present |= components[i].numTersoff() != 0;
-	}
-	global_log->info() << "xx lj present: " << lj_present << endl;
-	global_log->info() << "xx charge present: " << charge_present << endl;
-	global_log->info() << "xx dipole present: " << dipole_present << endl;
-	global_log->info() << "xx quadrupole present: " << quadrupole_present << endl;
-	global_log->info() << "xx tersoff present: " << tersoff_present << endl;
-
-#if 0
-	if (charge_present || dipole_present || quadrupole_present || tersoff_present) {
-		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-	} else {
-		_cellProcessor = new VectorizedCellProcessor( *_domain,_LJCutoffRadius);
-	}
-#else
-	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-#endif
-	// @todo comment
-	_integrator = new Leapfrog(timestepLength);
-
-	// test new Decomposition
-	_moleculeContainer->update();
-	_moleculeContainer->deleteOuterParticles();
-
-	unsigned idi = _lmu.size();
-	unsigned j = 0;
-	std::list<ChemicalPotential>::iterator cpit;
-	for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-                if(widom) cpit->enableWidom();
-		cpit->setIncrement(idi);
-		double tmp_molecularMass =
-				_domain->getComponents()[cpit->getComponentID()].m();
-		cpit->setSystem(_domain->getGlobalLength(0),
-				_domain->getGlobalLength(1), _domain->getGlobalLength(2),
-				tmp_molecularMass);
-		cpit->setGlobalN(_domain->N(cpit->getComponentID()));
-		cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
-
-		cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0),
-				_moleculeContainer->getBoundingBoxMax(0),
-				_moleculeContainer->getBoundingBoxMin(1),
-				_moleculeContainer->getBoundingBoxMax(1),
-				_moleculeContainer->getBoundingBoxMin(2),
-				_moleculeContainer->getBoundingBoxMax(2));
-		/* TODO: thermostat */
-		double Tcur = _domain->getCurrentTemperature(0);
-		/* FIXME: target temperature from thermostat ID 0 or 1?  */
-		double
-				Ttar =_domain->severalThermostats() ? _domain->getTargetTemperature(1)
-								: _domain->getTargetTemperature(0);
-		if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar))
-			Tcur = Ttar;
-		cpit->submitTemperature(Tcur);
-		if (h != 0.0)
-			cpit->setPlanckConstant(h);
-
-		j++;
-	}
 }
 
 void Simulation::prepare_start() {
 	global_log->info() << "Initializing simulation" << endl;
 
+	global_log->info() << "Initialising cell processor" << endl;
+#if ENABLE_VECTORIZED_CODE
+	global_log->debug() << "Checking if vectorized cell processor can be used" << endl;
+	bool lj_present = false;
+	bool charge_present = false;
+	bool dipole_present = false;
+	bool quadrupole_present = false;
+
+	const vector<Component> components = *(global_simulation->getEnsemble()->getComponents());
+	for (size_t i = 0; i < components.size(); i++) {
+		lj_present |= (components[i].numLJcenters() != 0);
+		charge_present |= (components[i].numCharges() != 0);
+		dipole_present |= (components[i].numDipoles() != 0);
+		quadrupole_present |= (components[i].numQuadrupoles() != 0);
+	}
+	global_log->debug() << "xx lj present: " << lj_present << endl;
+	global_log->debug() << "xx charge present: " << charge_present << endl;
+	global_log->debug() << "xx dipole present: " << dipole_present << endl;
+	global_log->debug() << "xx quadrupole present: " << quadrupole_present << endl;
+
+	/*if(this->_lmu.size() > 0) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support grand canonical simulations.)" << endl;
+		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+	}
+	else*/
+	if(this->_doRecordVirialProfile) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
+		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+	} else if (_rdf != NULL) {
+		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support rdf sampling.)"
+				<< endl;
+		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+	} else {
+		global_log->info() << "Using vectorized cell processor." << endl;
+		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
+	}
+#else
+	global_log->info() << "Using legacy cell processor." << endl;
+	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
+#endif
+
+	if (_FMM != NULL) {
+
+		double globalLength[3];
+		for (int i = 0; i < 3; i++) {
+			globalLength[i] = _domain->getGlobalLength(i);
+		}
+		double bBoxMin[3];
+		double bBoxMax[3];
+		for (int i = 0; i < 3; i++) {
+			bBoxMin[i] = _domainDecomposition->getBoundingBoxMin(i, _domain);
+			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
+		}
+		_FMM->init(globalLength, bBoxMin, bBoxMax,
+				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength());
+
+		delete _cellProcessor;
+		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
+	}
+
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
-	global_log->info() << "Performing inital force calculation" << endl;
-    
-    if(!_cellProcessor) {
-        global_log->warning() << "No cell processor initialised. Using Legacy Cell Processor." << endl;
-        _cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _tersoffCutoffRadius, _particlePairsHandler);
-    }
+	global_log->info() << "Performing initial force calculation" << endl;
+	Timer t;
+	t.start();
 	_moleculeContainer->traverseCells(*_cellProcessor);
+	t.stop();
+	_loopCompTime = t.get_etime();
+	_loopCompTimeSteps = 1;
 
-	_ljFlopCounter = new LJFlopCounter(_LJCutoffRadius);
-	_moleculeContainer->traverseCells(*_ljFlopCounter);
+	if (_FMM != NULL) {
+		global_log->info() << "Performing initial FMM force calculation" << endl;
+		_FMM->computeElectrostatics(_moleculeContainer);
+	}
 
-	// TODO:
+	/* If enabled count FLOP rate of LS1. */
+	if( NULL != _flopCounter ) {
+		_moleculeContainer->traverseCells(*_flopCounter);
+	}
+
+    // clear halo
+    global_log->info() << "Clearing halos" << endl;
+    _moleculeContainer->deleteOuterParticles();
+
+    if (_longRangeCorrection == NULL){
+        _longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+    }
+
+
+    _longRangeCorrection->calculateLongRange();
+
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// or should we better call the integrator->eventForcesCalculated?
@@ -1032,15 +717,6 @@ void Simulation::prepare_start() {
 			!= _moleculeContainer->end(); tM = _moleculeContainer->next()) {
 		tM->calcFM();
 	}
-
-	// clear halo
-	global_log->info() << "Clearing halos" << endl;
-	_moleculeContainer->deleteOuterParticles();
-
-	// initialize the radial distribution function
-	// TODO this call should not be neccessary!
-	//	if (_rdf != NULL)
-	//		_rdf->reset();
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
@@ -1061,7 +737,7 @@ void Simulation::prepare_start() {
 			true, 1.0);
 	global_log->debug() << "Calculating global values finished." << endl;
 
-	if (_lmu.size() > 0) {
+	if (_lmu.size() + _mcav.size() > 0) {
 		/* TODO: thermostat */
 		double Tcur = _domain->getGlobalCurrentTemperature();
 		/* FIXME: target temperature from thermostat ID 0 or 1? */
@@ -1078,11 +754,10 @@ void Simulation::prepare_start() {
 			cpit->submitTemperature(Tcur);
 			cpit->setPlanckConstant(h);
 		}
-	}
-
-	if (_zoscillation) {
-		global_log->debug() << "Initializing z-oscillators" << endl;
-		_integrator->init1D(_zoscillator, _moleculeContainer);
+                map<unsigned, CavityEnsemble>::iterator ceit;
+		for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
+                   ceit->second.submitTemperature(Tcur);
+                }
 	}
 
 	// initialize output
@@ -1093,36 +768,28 @@ void Simulation::prepare_start() {
 				_domain);
 	}
 
-#ifdef STEEREO
-	_steer = initSteereo (_domainDecomposition->getRank(), _domainDecomposition->getNumProcs());
-#ifdef STEEREO_COUPLING
-	_coupling = initCoupling(_steer, (long*) &_simstep);
-#endif  /* STEEREO_COUPLING */
-	registerSteereoCommands (_steer, this);
-	startListeningSteereo (_steer);
-#endif  /* STEEREO */
-
-	//	if ((_initSimulation > _initStatistics) && this->_rdf != NULL) {
-	//		this->_rdf->tickRDF();
-	//		this->_particlePairsHandler->setRDF(_rdf);
-	//	}
-
 	global_log->info() << "System initialised\n" << endl;
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
+
+
 }
 
 void Simulation::simulate() {
+
+	// by Stefan Becker
+	Molecule* tM;
 
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
-	_initSimulation = (unsigned long) (_domain->getCurrentTime()
-			/ _integrator->getTimestepLength());
-
+// 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
+// 			/ _integrator->getTimestepLength());
+    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
-	CanonicalEnsemble ensemble(_moleculeContainer, &(_domain->getComponents()));
+	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	global_log->debug() << "Number of particles in the Ensemble: "
 			<< ensemble.N() << endl;
@@ -1131,25 +798,52 @@ void Simulation::simulate() {
 		<< endl;
 	ensemble.updateGlobalVariable(TEMPERATURE);
 	global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-		<< endl;
+		<< endl;*/
 
 	/***************************************************************************/
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
-	// all timers except the ioTimer messure inside the main loop
-	Timer loopTimer;
-	Timer decompositionTimer;
-	Timer perStepIoTimer;
-	Timer ioTimer;
 
-#if defined(STEEREO) && defined(STEEREO_COUPLING)
-	_simstep = _initSimulation;
-	//SteereoLogger::setOutputLevel (4);
-	_coupling->waitForConnection();
+	// all timers except the ioTimer messure inside the main loop
+	Timer loopTimer; /* timer for the entire simulation loop (synced) */
+	Timer decompositionTimer; /* timer for decomposition */
+	Timer computationTimer; /* timer for computation */
+	Timer perStepIoTimer; /* timer for io in simulation loop */
+	Timer ioTimer; /* timer for final io */
+	// temporary addition until merging OpenMP is complete
+	#ifdef ENABLE_OPENMP
+		Timer forceCalculationTimer; /* timer for final io */
+	#endif
+
+	loopTimer.set_sync(true);
+#if WITH_PAPI
+	const char *papi_event_list[] = {
+		"PAPI_TOT_CYC",
+		"PAPI_TOT_INS"
+	//	"PAPI_VEC_DP"
+	// 	"PAPI_L2_DCM"
+	// 	"PAPI_L2_ICM"
+	// 	"PAPI_L1_ICM"
+	//	"PAPI_DP_OPS"
+	// 	"PAPI_VEC_INS"
+	};
+	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
+	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
+#endif
+	loopTimer.start();
+#ifndef NDEBUG
+#ifndef ENABLE_MPI
+		unsigned particleNoTest;
+#endif
 #endif
 
-	loopTimer.start();
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
+		global_log->debug() << "timestep: " << getSimulationStep() << endl;
+		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
+
+		computationTimer.start();
+
+		/** @todo What is this good for? Where come the numbers from? Needs documentation */
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
@@ -1161,72 +855,188 @@ void Simulation::simulate() {
 				j++;
 			}
 		}
-		global_log->debug() << "timestep " << _simstep << endl;
+		if (_simstep >= _initStatistics) {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+                      {
+                         ceit->second.preprocessStep();
+                      }
+                   }
+                }
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
-#if defined(STEEREO) && defined(STEEREO_COUPLING)
-		_steer -> processQueue (1);
-		global_log->debug() << "molecules in simulation: " << _moleculeContainer->getNumberOfParticles() << std::endl;
-#endif
 		// activate RDF sampling
-		if ((_simstep >= this->_initStatistics) && this->_rdf != NULL) {
+		if ((_simstep >= _initStatistics) && _rdf != NULL) {
+			global_log->info() << "Activating the RDF sampling" << endl;
 			this->_rdf->tickRDF();
 			this->_particlePairsHandler->setRDF(_rdf);
-			this->_rdf->accumulateNumberOfMolecules(_domain->getComponents());
+			this->_rdf->accumulateNumberOfMolecules(*(global_simulation->getEnsemble()->getComponents()));
 		}
 
-		// ensure that all Particles are in the right cells and exchange Particles
-		global_log->debug() << "Updating container and decomposition" << endl;
-		loopTimer.stop();
-		decompositionTimer.start();
-		updateParticleContainerAndDecomposition();
-		decompositionTimer.stop();
-		loopTimer.start();
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		 *realignment tools borrowed from Martin Horsch, for the determination of the centre of mass 
+		 *the halo MUST NOT be present*/
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			particleNoTest = 0;
+                        for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
+                        particleNoTest++;
+                        global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
+#endif
+#endif
+		 if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			if(_componentSpecificAlignment){
+				//! !!! the sequence of calling the two methods MUST be: FIRST determineXZShift() THEN determineYShift() !!!
+				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+			// edited by Michaela Heier --> realign can be used when LJ93-Potential will be used. Only the shift in the xz-plane will be used. 
+			else if(_doAlignCentre && _applyWallFun_LJ_9_3){
+				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
+				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+			else if(_doAlignCentre && _applyWallFun_LJ_10_4){
+				global_log->info() << "realign in the xz-plane without a shift in y-direction\n";
+				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+				_domain->noYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+			else{
+				_domain->determineShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
+			}
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI			
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
+#endif
+#endif
+		}
+		computationTimer.stop();
 
-		// Force calculation
-		global_log->debug() << "Traversing pairs" << endl;
-		//cout<<"here somehow"<<endl;
-		//_moleculeContainer->traversePairs(_particlePairsHandler);
-		_moleculeContainer->traverseCells(*_cellProcessor);
 
+
+#ifdef ENABLE_MPI
+		bool overlapCommComp = true;
+#else
+		bool overlapCommComp = false;
+#endif
+
+		if (overlapCommComp) {
+			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer);
+		} else {
+			decompositionTimer.start();
+			// ensure that all Particles are in the right cells and exchange Particles
+			global_log->debug() << "Updating container and decomposition"
+					<< endl;
+			updateParticleContainerAndDecomposition();
+			decompositionTimer.stop();
+
+			double startEtime = computationTimer.get_etime();
+			// Force calculation and other pair interaction related computations
+			global_log->debug() << "Traversing pairs" << endl;
+			computationTimer.start();
+			// temporary addition until merging OpenMP is complete
+			#ifdef ENABLE_OPENMP
+				forceCalculationTimer.start();
+			#endif
+			_moleculeContainer->traverseCells(*_cellProcessor);
+			// temporary addition until merging OpenMP is complete
+			#ifdef ENABLE_OPENMP
+				forceCalculationTimer.stop();
+			#endif
+			computationTimer.stop();
+			_loopCompTime += computationTimer.get_etime() - startEtime;
+			_loopCompTimeSteps ++;
+		}
+		computationTimer.start();
+		if (_FMM != NULL) {
+			global_log->debug() << "Performing FMM calculation" << endl;
+			_FMM->computeElectrostatics(_moleculeContainer);
+		}
+
+
+
+		if(_wall && _applyWallFun_LJ_9_3){
+		  _wall->calcTSLJ_9_3(_moleculeContainer, _domain);
+		}
+
+		if(_wall && _applyWallFun_LJ_10_4){
+		  _wall->calcTSLJ_10_4(_moleculeContainer, _domain);
+		}
+		
+		if(_mirror && _applyMirror){
+		  _mirror->VelocityChange(_moleculeContainer, _domain);
+		}
+
+		/** @todo For grand canonical ensemble? Should go into appropriate ensemble class. Needs documentation. */
 		// test deletions and insertions
 		if (_simstep >= _initGrandCanonical) {
 			unsigned j = 0;
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					global_log->debug() << "Grand canonical ensemble(" << j
-							<< "): test deletions and insertions" << endl;
-                                        this->_domain->setLambda(cpit->getLambda());
-                                        this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
-					_moleculeContainer->grandcanonicalStep(&(*cpit),
-							_domain->getGlobalCurrentTemperature(), this->_domain);
+					global_log->debug() << "Grand canonical ensemble(" << j << "): test deletions and insertions"
+							<< endl;
+					this->_domain->setLambda(cpit->getLambda());
+					this->_domain->setDensityCoefficient(cpit->getDensityCoefficient());
+					double localUpotBackup = _domain->getLocalUpot();
+					double localVirialBackup = _domain->getLocalVirial();
+					cpit->grandcanonicalStep(_moleculeContainer, _domain->getGlobalCurrentTemperature(), this->_domain,
+							_cellProcessor);
+					_domain->setLocalUpot(localUpotBackup);
+					_domain->setLocalVirial(localVirialBackup);
 #ifndef NDEBUG
 					/* check if random numbers inserted are the same for all processes... */
 					cpit->assertSynchronization(_domainDecomposition);
 #endif
 
-					int localBalance =
-							_moleculeContainer->localGrandcanonicalBalance();
-					int balance = _moleculeContainer->grandcanonicalBalance(
-							_domainDecomposition);
-					global_log->debug() << "   b["
-							<< ((balance > 0) ? "+" : "") << balance << "("
-							<< ((localBalance > 0) ? "+" : "") << localBalance
-							<< ")" << " / c = " << cpit->getComponentID()
-							<< "]   " << endl;
+					int localBalance = cpit->getLocalGrandcanonicalBalance();
+					int balance = cpit->grandcanonicalBalance(_domainDecomposition);
+					global_log->debug() << "   b[" << ((balance > 0) ? "+" : "") << balance << "("
+							<< ((localBalance > 0) ? "+" : "") << localBalance << ")" << " / c = "
+							<< cpit->getComponentID() << "]   " << endl;
 					_domain->Nadd(cpit->getComponentID(), balance, localBalance);
 				}
 
 				j++;
 			}
 		}
-
+		
+		if(_simstep >= _initStatistics)
+                {
+                   map<unsigned, CavityEnsemble>::iterator ceit;
+                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+                   {
+                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+                      {
+                         global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
+                         
+                         this->_moleculeContainer->cavityStep(
+                            &ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
+                         );
+                      }
+                           
+                      if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
+                          (!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
+                      {                                   
+                         this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
+                      }
+                   }
+                }
+		
 		// clear halo
-		global_log->debug() << "Delete outer particles" << endl;
+	        //
+		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
+		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		if (_simstep >= _initGrandCanonical) {
 			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
 					_domainDecomposition);
@@ -1246,7 +1056,8 @@ void Simulation::simulate() {
 			_integrator->accelerateUniformly(_moleculeContainer, _domain);
 			_pressureGradient->adjustTau(this->_integrator->getTimestepLength());
 		}
-
+		_longRangeCorrection->calculateLongRange();
+		
 		/*
 		 * radial distribution function
 		 */
@@ -1254,15 +1065,6 @@ void Simulation::simulate() {
 			if (this->_lmu.size() == 0) {
 				this->_domain->record_cv();
 			}
-			//			if (this->_rdf != NULL) {
-			//				this->_rdf->tickRDF();
-			//
-			//			}
-		}
-
-		if (_zoscillation) {
-			global_log->debug() << "alert z-oscillators" << endl;
-			_integrator->zOscillation(_zoscillator, _moleculeContainer);
 		}
 
 		// Inform the integrator about the calculated forces
@@ -1273,43 +1075,100 @@ void Simulation::simulate() {
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
 				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
-								_simstep));
-
-		VelocityScalingThermostat velocityScalingThermostat;
-
+								_simstep));//*/  //TODO: uncomment !!!!!
+		
 		// scale velocity and angular momentum
-		if (!_domain->NVE()) {
+		if ( !_domain->NVE() && _temperatureControl == NULL){
+		if (_thermostatType ==VELSCALE_THERMOSTAT){
 			global_log->debug() << "Velocity scaling" << endl;
 			if (_domain->severalThermostats()) {
-				velocityScalingThermostat.enableComponentwise();
-				for(unsigned int cid = 0; cid < _domain->getComponents().size(); cid++) {
+				_velocityScalingThermostat.enableComponentwise();
+				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->getComponents()->size(); cid++) {
 					int thermostatId = _domain->getThermostat(cid);
-					velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
-					velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
+					_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
+					_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
+					global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
+					<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
+					<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << endl;
 					double v[3];
 					for(int d = 0; d < 3; d++) {
 						v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
 					}
-					velocityScalingThermostat.setVelocity(thermostatId, v);
+					_velocityScalingThermostat.setVelocity(thermostatId, v);
 				}
 			}
 			else {
-				velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
-				velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
+				_velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
+				_velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
 				/* TODO */
 				// Undirected global thermostat not implemented!
 			}
-			velocityScalingThermostat.apply(_moleculeContainer);
+			_velocityScalingThermostat.apply(_moleculeContainer);
+
+
 		}
-		_domain->advanceTime(_integrator->getTimestepLength());
-#ifdef STEEREO
-		_steer -> processQueue (0);
-#endif
+		  else if(_thermostatType == ANDERSEN_THERMOSTAT){ //! the Andersen Thermostat
+//		    global_log->info() << "Andersen Thermostat" << endl;
+		    double nuDt = _nuAndersen * _integrator->getTimestepLength();
+//		    global_log->info() << "Timestep length = " << _integrator->getTimestepLength() << " nuDt = " << nuDt << "\n";
+		    unsigned numPartThermo = 0; // for testing reasons
+		    double tTarget;
+		    double stdDevTrans, stdDevRot;
+		    if(_domain->severalThermostats()) {
+		      for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+			if (_rand.rnd() < nuDt){
+			  numPartThermo++;
+			  int thermostat = _domain->getThermostat(tM->componentid());
+			  tTarget = _domain->getTargetTemperature(thermostat);
+			  stdDevTrans = sqrt(tTarget/tM->gMass());
+			  for(unsigned short d = 0; d < 3; d++){
+			    stdDevRot = sqrt(tTarget*tM->getI(d));
+			    tM->setv(d,_rand.gaussDeviate(stdDevTrans));
+			    tM->setD(d,_rand.gaussDeviate(stdDevRot));
+			  }
+			}
+		      }
+		    }
+		    else{
+		      tTarget = _domain->getTargetTemperature(0);
+		      for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+			if (_rand.rnd() < nuDt){
+			  numPartThermo++;
+			  // action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
+			  stdDevTrans = sqrt(tTarget/tM->gMass());
+			  for(unsigned short d = 0; d < 3; d++){
+			    stdDevRot = sqrt(tTarget*tM->getI(d));
+			    tM->setv(d,_rand.gaussDeviate(stdDevTrans));
+			    tM->setD(d,_rand.gaussDeviate(stdDevRot));
+			  }
+			}
+		      }
+		    }
+//		    global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
+		  }
+
+
+		// if(_mirror && _applyMirror){
+		//  _mirror->VelocityChange(_moleculeContainer, _domain);
+		//}
+
+
+		}
+		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
+        else if ( _temperatureControl != NULL)
+        {
+            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
+        }
+        // <-- TEMPERATURE_CONTROL
+		
+		
+
+		advanceSimulationTime(_integrator->getTimestepLength());
 
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
-		ensemble.updateGlobalVariable(NUM_PARTICLES);
+		/*ensemble.updateGlobalVariable(NUM_PARTICLES);
 		global_log->debug() << "Number of particles in the Ensemble: "
 				<< ensemble.N() << endl;
 		ensemble.updateGlobalVariable(ENERGY);
@@ -1317,23 +1176,42 @@ void Simulation::simulate() {
 				<< ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
 		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-			<< endl;
+			<< endl;*/
 		/* END PHYSICAL SECTION */
 
-		// measure per timestep IO
-		loopTimer.stop();
+		computationTimer.stop();
 		perStepIoTimer.start();
+
 		output(_simstep);
-		if(_forced_checkpoint_time > 0 && (loopTimer.get_etime() + ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
+		
+		
+		/*! by Stefan Becker <stefan.becker@mv.uni-kl.de> 
+		  * realignment tools borrowed from Martin Horsch
+		  * For the actual shift the halo MUST NOT be present!
+		  */
+		if(_doAlignCentre && !(_simstep % _alignmentInterval))
+		{
+			_domain->realign(_moleculeContainer);
+#ifndef NDEBUG 
+#ifndef ENABLE_MPI
+			unsigned particleNoTest = 0;
+			particleNoTest = 0;
+			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
+			particleNoTest++;
+			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
+#endif
+#endif
+		}
+		
+		if(_forced_checkpoint_time >= 0 && (decompositionTimer.get_etime() + computationTimer.get_etime()
+				+ ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
-			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
-			_forced_checkpoint_time = 0; /* disable for further timesteps */
+			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
+			_forced_checkpoint_time = -1; /* disable for further timesteps */
 		}
 		perStepIoTimer.stop();
-		loopTimer.start();
-
 	}
 	loopTimer.stop();
 	/***************************************************************************/
@@ -1345,7 +1223,7 @@ void Simulation::simulate() {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.xdr");
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
-        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition);
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
     }
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
@@ -1355,20 +1233,29 @@ void Simulation::simulate() {
 	}
 	ioTimer.stop();
 
-	global_log->info() << "Computation in main loop took: "
-			<< loopTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Decomposition took. "
-			<< decompositionTimer.get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop  took:         "
-			<< perStepIoTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Final IO took:                 "
-			<< ioTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+	// temporary addition until merging OpenMP is complete
+	#ifdef ENABLE_OPENMP
+		global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
+	#endif
+	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
+	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+
+#if WITH_PAPI
+	global_log->info() << "PAPI counter values for loop timer:"  << endl;
+	for(int i = 0; i < loopTimer.get_papi_num_counters(); i++) {
+		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer.get_global_papi_counter(i) << endl;
+	}
+#endif /* WITH_PAPI */
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double elapsed_time = loopTimer.get_etime() + decompositionTimer.get_etime();
-	double flop_rate = _ljFlopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
-	global_log->info() << "LJ-FLOP-Count per Iteration: " << _ljFlopCounter->getTotalFlopCount() << " FLOPs" <<endl;
-	global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
+	double elapsed_time = loopTimer.get_etime();
+	if(NULL != _flopCounter) {
+		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
+		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
+		global_log->info() << "FLOP-rate: " << flop_rate << " MFLOPS" << endl;
+	}
 }
 
 void Simulation::output(unsigned long simstep) {
@@ -1378,42 +1265,52 @@ void Simulation::output(unsigned long simstep) {
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
-		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
-		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu));
-	}
-
-	if (_rdf != NULL) {
-		_rdf->doOutput(_domainDecomposition, _domain, simstep);
+		global_log->debug() << "Output from " << output->getPluginName() << endl;
+		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &(_lmu), &(_mcav));
 	}
 
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
-		_domain->recordProfile(_moleculeContainer);
+		_domain->recordProfile(_moleculeContainer, _doRecordVirialProfile);
 	}
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileOutputTimesteps)) {
-		_domain->collectProfile(_domainDecomposition);
+		_domain->collectProfile(_domainDecomposition, _doRecordVirialProfile);
 		if (mpi_rank == 0) {
 			ostringstream osstrm;
 			osstrm << _profileOutputPrefix << ".";
 			osstrm.fill('0');
 			osstrm.width(9);
 			osstrm << right << simstep;
-			_domain->outputProfile(osstrm.str().c_str());
+			//edited by Michaela Heier 
+			if(this->_domain->isCylindrical()){
+				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+				//_domain->outputProfile(osstrm.str().c_str(),_doRecordVirialProfile);
+			}
+			else{
+			_domain->outputProfile(osstrm.str().c_str(), _doRecordVirialProfile);
+			}
 			osstrm.str("");
 			osstrm.clear();
 		}
-		_domain->resetProfile();
+		_domain->resetProfile(_doRecordVirialProfile);
 	}
 
+	
 	if (_domain->thermostatWarning())
 		global_log->warning() << "Thermostat!" << endl;
 	/* TODO: thermostat */
 	global_log->info() << "Simstep = " << simstep << "\tT = "
 			<< _domain->getGlobalCurrentTemperature() << "\tU_pot = "
-			<< _domain->getAverageGlobalUpot() << "\tp = "
+			<< _domain->getGlobalUpot() << "\tp = "
 			<< _domain->getGlobalPressure() << endl;
 }
 
 void Simulation::finalize() {
+	if (_FMM != NULL) {
+		_FMM->printTimers();
+		bhfmm::VectorizedLJP2PCellProcessor * temp = dynamic_cast<bhfmm::VectorizedLJP2PCellProcessor*>(_cellProcessor);
+		temp->printTimers();
+	}
+
 	if (_domainDecomposition != NULL) {
 		delete _domainDecomposition;
 		_domainDecomposition = NULL;
@@ -1422,19 +1319,40 @@ void Simulation::finalize() {
 }
 
 void Simulation::updateParticleContainerAndDecomposition() {
-
 	// The particles have moved, so the neighbourhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain->getComponents(), _domain);
-	_domainDecomposition->balanceAndExchange(true, _moleculeContainer,
-			_domain->getComponents(), _domain);
+	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	bool forceRebalancing = false;
+	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
 }
 
-/* FIXME: we shoud provide a more general way of doing this */
+void Simulation::performOverlappingDecompositionAndCellTraversalStep(
+		Timer& decompositionTimer, Timer& computationTimer) {
+
+	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
+	bool forceRebalancing = false;
+
+	//TODO: exchange the constructor for a real non-blocking version
+
+#ifdef ENABLE_MPI
+#ifdef ENABLE_OVERLAPPING
+	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIMultiStepHandler(&decompositionTimer, &computationTimer,
+			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+#else
+	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
+			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+#endif
+
+	nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
+#endif
+}
+
+
+/* FIXME: we should provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
 	double xi = (double) (simstep - _initSimulation) / (double) (_initCanonical - _initSimulation);
 	if ((xi < 0.1) || (xi > 0.9))
@@ -1459,18 +1377,12 @@ void Simulation::initialize() {
 
 	global_simulation = this;
 
-	_domainDecomposition = NULL;
-	_domain = NULL;
-	_particlePairsHandler = NULL;
-	_cellProcessor = NULL;
-	_moleculeContainer = NULL;
-	_integrator = NULL;
-	_inputReader = NULL;
-    _finalCheckpoint = true;
+	_finalCheckpoint = true;
 
+        // TODO:
 #ifndef ENABLE_MPI
 	global_log->info() << "Initializing the alibi domain decomposition ... " << endl;
-	_domainDecomposition = (DomainDecompBase*) new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
@@ -1482,77 +1394,42 @@ void Simulation::initialize() {
 	 */
 	_cutoffRadius = 0.0;
 	_LJCutoffRadius = 0.0;
-	_tersoffCutoffRadius = 3.0;
 	_numberOfTimesteps = 1;
 	_outputPrefix = string("mardyn");
 	_outputPrefix.append(gettimestring());
+
+	/** @todo the following features should be documented */
 	_doRecordProfile = false;
+	_doRecordVirialProfile = false;
 	_profileRecordingTimesteps = 7;
 	_profileOutputTimesteps = 12500;
 	_profileOutputPrefix = "out";
 	_collectThermostatDirectedVelocity = 100;
-	_zoscillation = false;
-	_zoscillator = 512;
 	_initCanonical = 5000;
 	_initGrandCanonical = 10000000;
 	_initStatistics = 20000;
 	h = 0.0;
+
+	_thermostatType = VELSCALE_THERMOSTAT;
+	_nuAndersen = 0.0;
+	_rand.init(8624);
+
+	_doAlignCentre = false;
+	_componentSpecificAlignment = false;
+	_alignmentInterval = 25;
+	_momentumInterval = 1000;
+	_wall = NULL;
+	_applyWallFun_LJ_9_3 = false;
+	_applyWallFun_LJ_10_4 = false;
+	_mirror = NULL;
+	_applyMirror = false;
+
 	_pressureGradient = new PressureGradient(ownrank);
 	global_log->info() << "Constructing domain ..." << endl;
 	_domain = new Domain(ownrank, this->_pressureGradient);
 	global_log->info() << "Domain construction done." << endl;
 	_particlePairsHandler = new ParticlePairs2PotForceAdapter(*_domain);
+	_longRangeCorrection = NULL;
+        
+        this->_mcav = map<unsigned, CavityEnsemble>();
 }
-
-void Simulation::mkesfera(Values& options) {
-	_particleContainerType = LINKED_CELL;
-
-	Mkesfera mkesfera(options);
-	mkesfera.generate(_domain, &_domainDecomposition, &_integrator, &_moleculeContainer, _outputPlugins, this);
-
-	_moleculeContainer->update();
-	_moleculeContainer->deleteOuterParticles();
-
-	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-}
-
-void Simulation::mkTcTS(Values &options) {
-	_particleContainerType = LINKED_CELL;
-
-	TcTS(options, this->_domain, &(this->_domainDecomposition),
-			&(this->_integrator), &(this->_moleculeContainer),
-			&(this->_outputPlugins), this->_rdf, this);
-
-	if (this->_LJCutoffRadius == 0.0)
-		_LJCutoffRadius = this->_cutoffRadius;
-	_moleculeContainer->update();
-	_moleculeContainer->deleteOuterParticles();
-
-	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
-
-	/*
-	 unsigned idi = _lmu.size();
-	 unsigned j = 0;
-	 std::list<ChemicalPotential>::iterator cpit;
-	 double Tcur = _domain->getCurrentTemperature(0);
-	 for(cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
-	 cpit->setIncrement(idi);
-	 double tmp_molecularMass = _domain->getComponents()[cpit->getComponentID()].m();
-	 cpit->setSystem(_domain->getGlobalLength(0), _domain->getGlobalLength(1), _domain->getGlobalLength(2),
-	 tmp_molecularMass);
-	 cpit->setGlobalN(_domain->N(cpit->getComponentID()));
-	 cpit->setNextID(j + (int) (1.001 * (256 + maxid)));
-	 cpit->setSubdomain(ownrank, _moleculeContainer->getBoundingBoxMin(0), _moleculeContainer->getBoundingBoxMax(0),
-	 _moleculeContainer->getBoundingBoxMin(1), _moleculeContainer->getBoundingBoxMax(1),
-	 _moleculeContainer->getBoundingBoxMin(2), _moleculeContainer->getBoundingBoxMax(2));
-	 double Ttar = _domain->severalThermostats() ? _domain->getTargetTemperature(1) : _domain->getTargetTemperature(0);
-	 if ((Tcur < 0.85 * Ttar) || (Tcur > 1.15 * Ttar)) Tcur = Ttar;
-	 cpit->submitTemperature(Tcur);
-	 if (h != 0.0) cpit->setPlanckConstant(h);
-	 j++;
-	 }
-	 */
-}
-

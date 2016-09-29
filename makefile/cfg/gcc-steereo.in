@@ -41,3 +41,7 @@ LINKFLAGS_PAR_DEBUG = $(GLOBAL_LINK) -O0 -g
 # RELEASE
 CXXFLAGS_PAR_RELEASE  = $(GLOBAL_INCLUDES) -Wall -O3 -Werror -DNDEBUG -DENABLE_MPI
 LINKFLAGS_PAR_RELEASE = $(GLOBAL_LINK)
+
+# Further settings, common to all configurations, which use gcc
+#########################################
+include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)

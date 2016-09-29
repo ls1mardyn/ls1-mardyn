@@ -3,6 +3,8 @@
 #define CELLPROCESSOR_H_
 
 #include <cstddef>
+#include <cmath>
+class Molecule;
 
 class ParticleCell;
 
@@ -25,19 +27,30 @@ class ParticleCell;
  * @author eckhardw
  */
 class CellProcessor {
+protected:
+	double _cutoffRadiusSquare;
+	double _LJCutoffRadiusSquare;
 
 public:
+	CellProcessor(const double cutoffRadius, const double LJCutoffRadius) : 
+		_cutoffRadiusSquare(cutoffRadius * cutoffRadius), 
+		_LJCutoffRadiusSquare(LJCutoffRadius * LJCutoffRadius) {}
     /** 
      * virtual destructor 
      */
 	virtual ~CellProcessor() {}
+
+	double getCutoffRadius() const {return sqrt(_cutoffRadiusSquare);}
+	double getLJCutoffRadius() const {return sqrt(_LJCutoffRadiusSquare);}
+	void setCutoffRadius(const double c) {_cutoffRadiusSquare = c * c;}
+	void setLJCutoffRadius(const double ljc) {_LJCutoffRadiusSquare = ljc * ljc;}
 
 	/**
 	 * called before the traversal starts.
 	 *
 	 * @param numCells number of cells in window
 	 */
-	virtual void initTraversal(const size_t numCells) = 0;
+	virtual void initTraversal() = 0;
 
 	/**
 	 * Called before a cell is touched for the first time during an interation.
@@ -59,6 +72,10 @@ public:
 	 */
 	virtual void processCell(ParticleCell& cell) = 0;
 
+	virtual double processSingleMolecule(Molecule* m1, ParticleCell& cell2) = 0;
+
+        virtual int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) = 0;
+	
 	/**
 	 * Called after the cell has been considered for the last time during the traversal.
 	 */

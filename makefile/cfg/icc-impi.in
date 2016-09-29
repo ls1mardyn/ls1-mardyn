@@ -42,3 +42,6 @@ LINKFLAGS_PAR_RELEASE =
 CXXFLAGS_PAR_COVERAGE  = $(CXXFLAGS_PAR_RELEASE) -g -prof-gen=srcpos
 LINKFLAGS_PAR_COVERAGE = $(LINKFLAGS_PAR_RELEASE) -g -prof-gen=srcpos
 
+# Further settings, common to all configurations, which use the Intel compiler
+#########################################
+include $(realpath $(MAKEFILEDIR)/cfg/common_icc.in)

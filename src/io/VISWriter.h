@@ -14,16 +14,32 @@ class ChemicalPotential;
 
 class VISWriter : public OutputBase {
 public:
-	//! @brief writes a .vis_ file
+    VISWriter(){}
+	//! @brief Writes out a file (using *.vis-format) containing coordinates + orientation (using quaternions)
+	//! of each molecule for several timesteps.
 	//!
-	VISWriter(unsigned long writeFrequency, std::string filename, unsigned long numberOfTimesteps, bool incremental);
+	//! Depending on write frequency (for example: every timestep, or every 10th, 100th, 1000th ...) number of frames
+	//! can be controlled. The *.vis-file can be visualized by visualization software like:
+	//!   - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
+	//!   - MegaMol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/)
+	//!
+	//! @param filename Name of the *.vis-file (including path)
+	//! @param particleContainer The molecules that have to be written to the file are stored here
+	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
+	//!                     Methods to achieve this are available in domainDecomp
+	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
+	VISWriter(unsigned long writeFrequency, std::string outputPrefix);
 	~VISWriter();
+
+	void readXML(XMLfileUnits& xmlconfig);
+
 	void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
 	void doOutput(
 			ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu
+			unsigned long simstep, std::list<ChemicalPotential>* lmu,
+			std::map<unsigned, CavityEnsemble>* mcav
 	);
 	void finishOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain);
@@ -32,12 +48,10 @@ public:
 		return std::string("VISWriter");
 	}
 private:
-	std::string _filename;
+	std::string _outputPrefix;
 	unsigned long _writeFrequency;
-	unsigned long _numberOfTimesteps;
-	bool	_incremental;
-	bool	_filenameisdate;
-	bool  _wroteVIS;
+	bool _appendTimestamp;
+	bool _wroteVIS;
 };
 
-#endif /*VISWRITER_H_*/
+#endif /* VISWRITER_H_ */

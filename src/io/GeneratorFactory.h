@@ -8,9 +8,9 @@
 #ifndef GENERATORFACTORY_H_
 #define GENERATORFACTORY_H_
 
-#include "io/InputBase.h"
-#include <vector>
 #include <string>
+
+#include "io/InputBase.h"
 
 /**
  * This class serves as an interface to the generators in the dynamic libraries.

@@ -1,7 +1,7 @@
 mardyn trunk 20090721
 # molecules are arranged so that the potential=0 (eps=1, sigma=1)
 currentTime     0.00
-#rho   0.001893
+# rho   0.001893
 # Vmax 0.006831
 Temperature     0.700000
 Length          3.0000 3.0000 3.0000

@@ -1,7 +1,3 @@
-/*
- * GNU GPL version 2
- */
-
 #include "Domain.h"
 #include "Random.h"
 #include <cmath>
@@ -36,7 +32,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       strstrm << prefix << ".xdr";
    }
-   if(format == FORMAT_BUCHHOLZ)
+   if((format == FORMAT_BERNREUTHER) || (format == FORMAT_BUCHHOLZ))
    {
       strstrm << prefix << ".inp";
    }
@@ -49,7 +45,16 @@ void Domain::write(char* prefix, int format, double mu, double x)
    {
       txtstrstrm << prefix << "_1R.cfg";
    }
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txtstrstrm << prefix << "_1R.xml";
+   }
    txt.open(txtstrstrm.str().c_str(), ios::trunc);
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "<?xml version=\'1.0\' encoding=\'UTF-8\'?>\n<mardyn version=\""
+          << TIME << "\">\n";
+   }
    if(format == FORMAT_BUCHHOLZ)
    {
       buchholzstrstrm << prefix << "_1R.xml";
@@ -77,6 +82,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
    double DIP_REF = SIG_REF*REFCARG;
    double QDR_REF = SIG_REF*DIP_REF;
    double REFOMGA = 1.0 / REFTIME;
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "<refunits type=\"SI\"><length unit=\"nm\">" << SIG_REF * 0.0529177 << "</length><mass unit=\"u\">" << REFMASS * 1000.0 << "</mass><energy unit=\"eV\">" << EPS_REF * 27.2126 << "</energy></refunits>\n";
+   }
 
    unsigned fl_units[3];
    double fl_unit[3];
@@ -195,6 +204,19 @@ void Domain::write(char* prefix, int format, double mu, double x)
       FLUIDLONG = JES_LONG;
       LJ_CUTOFF = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
    }
+   else if(fluid == FLUID_MER)
+   {
+      FLUIDMASS = CMERMASS + 2.0*OMERMASS;
+      FLUIDLONG = MER_LONG;
+      QDR_FLUID = QDR_CMER;
+      LJ_CUTOFF = 4.0*SIG_OMER + 0.5*FLUIDLONG;
+   }
+   else if(fluid == FLUID_TOL)
+   {
+      FLUIDMASS = CH3TOLMASS + CTRTOLMASS + 5.0*CH_TOLMASS;
+      FLUIDLONG = TOL_LONG;
+      LJ_CUTOFF = 4.0*SIG_CH_TOL + 0.5*FLUIDLONG;
+   }
    else if(fluid == FLUID_VEG)
    {
       FLUIDMASS = OVEGMASS + 2.0*HVEGMASS;
@@ -223,14 +245,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       FLUIDMASS2 = ARMASS;
       EPS_FLUID2 = EPS_AR;
       SIG_FLUID2 = SIG_AR;
-      LJ_CUTOFF2 = 2.5*SIG_FLUID;
+      LJ_CUTOFF2 = 2.5*SIG_FLUID2;
    }
    else if(fluid2 == FLUID_CH4)
    {
       FLUIDMASS2 = CH4MASS;
       EPS_FLUID2 = EPS_CH4;
       SIG_FLUID2 = SIG_CH4;
-      LJ_CUTOFF2 = 2.5*SIG_FLUID;
+      LJ_CUTOFF2 = 2.5*SIG_FLUID2;
    }
    else if(fluid2 == FLUID_C2H6)
    {
@@ -239,7 +261,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
       SIG_FLUID2 = SIG_C2H6;
       FLUIDLONG2 = C2H6LONG;
       QDR_FLUID2 = QDR_C2H6;
-      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID2 + 0.5*FLUIDLONG2;
    }
    else if(fluid2 == FLUID_N2)
    {
@@ -248,7 +270,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
       SIG_FLUID2 = SIG_N2;
       FLUIDLONG2 = N2LONG;
       QDR_FLUID2 = QDR_N2;
-      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID2 + 0.5*FLUIDLONG2;
    }
    else if(fluid2 == FLUID_CO2)
    {
@@ -257,7 +279,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
       SIG_FLUID2 = SIG_CO2;
       FLUIDLONG2 = CO2LONG;
       QDR_FLUID2 = QDR_CO2;
-      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID2 + 0.5*FLUIDLONG2;
    }
    else if(fluid2 == FLUID_EOX)
    {
@@ -270,7 +292,20 @@ void Domain::write(char* prefix, int format, double mu, double x)
       EPS_FLUID2 = EPS_OJES;
       SIG_FLUID2 = SIG_OJES;
       FLUIDLONG2 = JES_LONG;
-      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID2 + 0.5*FLUIDLONG2;
+   }
+   else if(fluid2 == FLUID_MER)
+   {
+      FLUIDMASS2 = CMERMASS + 2.0*OMERMASS;
+      FLUIDLONG2 = MER_LONG;
+      QDR_FLUID2 = QDR_CMER;
+      LJ_CUTOFF2 = 4.0*SIG_OMER + 0.5*FLUIDLONG2;
+   }
+   else if(fluid2 == FLUID_TOL)
+   {
+      FLUIDMASS2 = CH3TOLMASS + CTRTOLMASS + 5.0*CH_TOLMASS;
+      FLUIDLONG2 = TOL_LONG;
+      LJ_CUTOFF2 = 4.0*SIG_CH_TOL + 0.5*FLUIDLONG2;
    }
    else if(fluid2 == FLUID_VEG)
    {
@@ -278,7 +313,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
       EPS_FLUID2 = EPS_OVEG;
       SIG_FLUID2 = SIG_OVEG;
       FLUIDLONG2 = VEG_LONG;
-      LJ_CUTOFF2 = 4.0*SIG_FLUID + 0.5*FLUIDLONG;
+      LJ_CUTOFF2 = 4.0*SIG_FLUID2 + 0.5*FLUIDLONG2;
    }
    else fluid2 = FLUID_NIL;
 
@@ -310,6 +345,73 @@ void Domain::write(char* prefix, int format, double mu, double x)
       xdr << "mardyn trunk " << TIME << "\n";
    }
 
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "<simulation type=\"MD\">\n";
+
+      txt << "<integrator type=\"Leapfrog\"><timestep unit=\"reduced\">"
+          << DT/REFTIME << "</timestep></integrator>\n"
+          << "<run><currenttime>0</currenttime><production><steps>100000000</steps></production></run>\n"
+          << "<algorithm><parallelisation type=\"DomainDecomposition\"></parallelisation><datastructure type=\"LinkedCells\"><cellsInCutoffRadius>1</cellsInCutoffRadius></datastructure><cutoffs type=\"CenterOfMass\"><radiusLJ unit=\"reduced\">"
+          << LJ_CUTOFF/SIG_REF << "</radiusLJ></cutoffs><electrostatic type=\"ReactionField\"><epsilon>1.0e+10</epsilon></electrostatic></algorithm>\n"
+          << "<output>\n"
+          << "<outputplugin name=\"Resultwriter\"><writefrequency>100</writefrequency><outputprefix>"
+          << prefix << "_1R</outputprefix></outputplugin>\n"
+          << "<outputplugin name=\"CheckpointWriter\"><writefrequency>10000</writefrequency><outputprefix>"
+          << prefix << "_1R</outputprefix></outputplugin>\n"
+          << "</output>\n"
+          << "<ensemble type=\"NVT\"><temperature unit=\"reduced\">"
+          << T/EPS_REF << "</temperature>\n"
+          << "<domain type=\"box\"><lx>" << box[0]/SIG_REF
+          << "</lx><ly>" << box[1]/SIG_REF << "</ly><lz>"
+          << box[2]/SIG_REF << "</lz></domain>\n"
+          << "<components>\n";
+
+      txt << "<moleculetype id=\"1\">\n";
+      if((fluid == FLUID_AR) || (fluid == FLUID_CH4))
+      {
+         txt << "<site type=\"LJ126\" id=\"1\"><coord><x>0</x><y>0</y><z>0</z></coord><mass>"
+             << FLUIDMASS/REFMASS << "</mass><sigma>"
+             << SIG_FLUID/SIG_REF << "</sigma><epsilon>"
+             << EPS_FLUID/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n";
+      }
+      else if(fluid == FLUID_EOX)
+      {
+         txt << "<site type=\"LJ126\" id=\"1\"><coord><x>"
+             << R0_C1EOX/SIG_REF << "</x><y>" << R1_C1EOX/SIG_REF
+             << "</y><z>" << R2_C1EOX/SIG_REF << "</z></coord><mass>"
+             << CEOXMASS/REFMASS << "</mass><sigma>"
+             << SIG_CEOX/SIG_REF << "</sigma><epsilon>"
+             << EPS_CEOX/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n"
+             << "<site type=\"LJ126\" id=\"2\"><coord><x>"
+             << R0_C2EOX/SIG_REF << "</x><y>" << R1_C2EOX/SIG_REF
+             << "</y><z>" << R2_C2EOX/SIG_REF << "</z></coord><mass>"
+             << CEOXMASS/REFMASS << "</mass><sigma>"
+             << SIG_CEOX/SIG_REF << "</sigma><epsilon>"
+             << EPS_CEOX/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n"
+             << "<site type=\"LJ126\" id=\"3\"><coord><x>"
+             << R0_O_EOX/SIG_REF << "</x><y>" << R1_O_EOX/SIG_REF
+             << "</y><z>" << R2_O_EOX/SIG_REF << "</z></coord><mass>"
+             << OEOXMASS/REFMASS << "</mass><sigma>"
+             << SIG_OEOX/SIG_REF << "</sigma><epsilon>"
+             << EPS_OEOX/EPS_REF
+             << "</epsilon><shifted>0</shifted></site>\n"
+             << "<site type=\"Dipol\" id=\"4\"><coord><x>"
+             << R0DIPEOX/SIG_REF << "</x><y>" << R1DIPEOX/SIG_REF
+             << "</y><z>" << R2DIPEOX/SIG_REF
+             << "</z></coord><dipolemoment><orientation><x>0</x><y>0</y><z>1</z></orientation><abs>"
+             << DIPOLEOX/DIP_REF << "</abs></dipolemoment></site>\n";
+      }
+      txt << "</moleculetype>\n";
+
+      txt << "</components>\n"
+          << "<phasespacepoint><file type=\"ASCII\">" << prefix 
+          << ".inp</file></phasespacepoint>\n"
+          << "</ensemble>\n";
+   }
    if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
    {
       xdr << "T\t" << T/EPS_REF << "\n";
@@ -330,6 +432,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       else if(fluid == FLUID_JES)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid == FLUID_MER)
+      {
+         xdr << "3 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid == FLUID_TOL)
+      {
+         xdr << "7 0 5 1 0\n";  // LJ, C, Q, D, Tersoff
       }
       else if(fluid == FLUID_VEG)
       {
@@ -353,6 +463,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       else if(fluid == FLUID_JES)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid == FLUID_MER)
+      {
+         xdr << "3 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid == FLUID_TOL)
+      {
+         xdr << "7 0 1 5 0\n";  // LJ, C, D, Q, Tersoff
       }
       else if(fluid == FLUID_VEG)
       {
@@ -412,6 +530,104 @@ void Domain::write(char* prefix, int format, double mu, double x)
 
          xdr << "0.0 0.0 0.0\n";
       }
+      else if(fluid == FLUID_MER)
+      {
+         xdr << "0.0 0.0 " << -0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 " << +0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 0.0\t" << CMERMASS/REFMASS << " "
+             << EPS_CMER/EPS_REF << " " << SIG_CMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_CMER/QDR_REF;
+
+         xdr << "\n0.0 0.0 0.0\n";
+      }
+      else if(fluid == FLUID_TOL)
+      {
+         xdr << "0.0 " << R1_CH3_TOL/SIG_REF << " "
+             << R2_CH3_TOL/SIG_REF << "\t" << CH3TOLMASS/REFMASS
+             << " " << EPS_CH3TOL/EPS_REF << " "
+             << SIG_CH3TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 " << R1_CTR_TOL/SIG_REF << " "
+             << R2_CTR_TOL/SIG_REF << "\t" << CTRTOLMASS/REFMASS
+             << " " << EPS_CTRTOL/EPS_REF << " "
+             << SIG_CTRTOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 " << R1_CHA_TOL/SIG_REF << " "
+             << R2_CHA_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHB_TOL/SIG_REF << " "
+             << R2_CHB_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHC_TOL/SIG_REF << " "
+             << R2_CHC_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHD_TOL/SIG_REF << " "
+             << R2_CHD_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHE_TOL/SIG_REF << " "
+             << R2_CHE_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         if(format == FORMAT_BUCHHOLZ)
+         {
+            xdr << "0.0 " << R1_CTR_TOL/SIG_REF << " "
+                << R2_CTR_TOL/SIG_REF << "\t0.0 0.0 -1.0 "
+                << DIP_CTRTOL/DIP_REF << "\n";
+         }
+
+         xdr << "0.0 " << R1_CHA_TOL/SIG_REF << " "
+             << R2_CHA_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHB_TOL/SIG_REF << " "
+             << R2_CHB_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHC_TOL/SIG_REF << " "
+             << R2_CHC_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHD_TOL/SIG_REF << " "
+             << R2_CHD_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHE_TOL/SIG_REF << " "
+             << R2_CHE_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+
+         if(format == FORMAT_BRANCH)
+         {
+            xdr << "0.0 " << R1_CTR_TOL/SIG_REF << " "
+                << R2_CTR_TOL/SIG_REF << "\t0.0 0.0 -1.0 "
+                << DIP_CTRTOL/DIP_REF << "\n";
+         }
+
+         xdr << "0.0 0.0 0.0\n";
+      }
       else if(fluid == FLUID_VEG)
       {
          xdr << R0_O_VEG/SIG_REF << " " << R1_O_VEG/SIG_REF << " " << R2_O_VEG/SIG_REF << "\t"
@@ -460,6 +676,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
       }
+      else if(fluid2 == FLUID_MER)
+      {
+         xdr << "3 0 1 0 0\n";  // LJ, C, Q, D, Tersoff
+      }
+      else if(fluid2 == FLUID_TOL)
+      {
+         xdr << "7 0 5 1 0\n";  // LJ, C, Q, D, Tersoff
+      }
       else if(fluid2 == FLUID_VEG)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, Q, D, Tersoff
@@ -482,6 +706,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       else if(fluid2 == FLUID_JES)
       {
          xdr << "1 3 0 0 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 == FLUID_MER)
+      {
+         xdr << "3 0 0 1 0\n";  // LJ, C, D, Q, Tersoff
+      }
+      else if(fluid2 == FLUID_TOL)
+      {
+         xdr << "7 0 1 5 0\n";  // LJ, C, D, Q, Tersoff
       }
       else if(fluid2 == FLUID_VEG)
       {
@@ -541,6 +773,104 @@ void Domain::write(char* prefix, int format, double mu, double x)
 
          xdr << "0.0 0.0 0.0\n";
       }
+      else if(fluid2 == FLUID_MER)
+      {
+         xdr << "0.0 0.0 " << -0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 " << +0.5*MER_LONG/SIG_REF << "\t"
+             << OMERMASS/REFMASS << " " << EPS_OMER/EPS_REF
+             << " " << SIG_OMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n" << "0.0 0.0 0.0\t" << CMERMASS/REFMASS << " "
+             << EPS_CMER/EPS_REF << " " << SIG_CMER/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF/SIG_REF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 0.0 0.0\t0.0 0.0 1.0\t" << QDR_CMER/QDR_REF;
+
+         xdr << "\n0.0 0.0 0.0\n";
+      }
+      else if(fluid2 == FLUID_TOL)
+      {
+         xdr << "0.0 " << R1_CH3_TOL/SIG_REF << " "
+             << R2_CH3_TOL/SIG_REF << "\t" << CH3TOLMASS/REFMASS
+             << " " << EPS_CH3TOL/EPS_REF << " "
+             << SIG_CH3TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 " << R1_CTR_TOL/SIG_REF << " "
+             << R2_CTR_TOL/SIG_REF << "\t" << CTRTOLMASS/REFMASS
+             << " " << EPS_CTRTOL/EPS_REF << " "
+             << SIG_CTRTOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         xdr << "0.0 " << R1_CHA_TOL/SIG_REF << " "
+             << R2_CHA_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHB_TOL/SIG_REF << " "
+             << R2_CHB_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHC_TOL/SIG_REF << " "
+             << R2_CHC_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHD_TOL/SIG_REF << " "
+             << R2_CHD_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+         xdr << "0.0 " << R1_CHE_TOL/SIG_REF << " "
+             << R2_CHE_TOL/SIG_REF << "\t" << CH_TOLMASS/REFMASS
+             << " " << EPS_CH_TOL/EPS_REF << " "
+             << SIG_CH_TOL/SIG_REF;
+         if(format == FORMAT_BUCHHOLZ) xdr << "\t" << LJ_CUTOFF << " 0";
+         xdr << "\n";
+
+         if(format == FORMAT_BUCHHOLZ)
+         {
+            xdr << "0.0 " << R1_CTR_TOL/SIG_REF << " "
+                << R2_CTR_TOL/SIG_REF << "\t0.0 0.0 -1.0 "
+                << DIP_CTRTOL/DIP_REF << "\n";
+         }
+
+         xdr << "0.0 " << R1_CHA_TOL/SIG_REF << " "
+             << R2_CHA_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHB_TOL/SIG_REF << " "
+             << R2_CHB_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHC_TOL/SIG_REF << " "
+             << R2_CHC_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHD_TOL/SIG_REF << " "
+             << R2_CHD_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+         xdr << "0.0 " << R1_CHE_TOL/SIG_REF << " "
+             << R2_CHE_TOL/SIG_REF << "\t" << "1.0 0.0 0.0\t"
+             << QDR_CH_TOL/QDR_REF << "\n";
+
+         if(format == FORMAT_BRANCH)
+         {
+            xdr << "0.0 " << R1_CTR_TOL/SIG_REF << " "
+                << R2_CTR_TOL/SIG_REF << "\t0.0 0.0 -1.0 "
+                << DIP_CTRTOL/DIP_REF << "\n";
+         }
+
+         xdr << "0.0 0.0 0.0\n";
+      }
       else if(fluid2 == FLUID_VEG)
       {
          xdr << R0_O_VEG/SIG_REF << " " << R1_O_VEG/SIG_REF << " " << R2_O_VEG/SIG_REF << "\t"
@@ -580,12 +910,14 @@ void Domain::write(char* prefix, int format, double mu, double x)
       }
       xdr << "1.0e+10\n";
 
-      xdr << "N" << "\t" << N1 << "\nM" << "\t" << "ICRVQD\n\n";
-
       txt.precision(6);
       txt << "mardynconfig\n# \ntimestepLength\t" << DT/REFTIME
           << "\ncutoffRadius\t" << EL_CUTOFF/SIG_REF
           << "\nLJCutoffRadius\t" << LJ_CUTOFF/SIG_REF;
+   }
+   if((format == FORMAT_BERNREUTHER) || (format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+   {
+      xdr << "N" << "\t" << N1 << "\nM" << "\t" << "ICRVQD\n";
    }
    if(format == FORMAT_BRANCH)
    {
@@ -628,6 +960,10 @@ void Domain::write(char* prefix, int format, double mu, double x)
           << "RDF\t" << (EL_CUTOFF - 4.0*FLUIDLONG)/(SIG_REF * (double)BINS) << " "
           << BINS << "\nRDFOutputTimesteps\t150000\nRDFOutputPrefix\t" << prefix << "_1R\n";
    }
+   if(format == FORMAT_BERNREUTHER)
+   {
+      txt << "</simulation></mardyn>\n";
+   }
    txt.close();
 
    double I[3];
@@ -643,6 +979,12 @@ void Domain::write(char* prefix, int format, double mu, double x)
       I[0] = I_XX_JES;
       I[1] = I_YY_JES;
       I[2] = I_ZZ_JES;
+   }
+   else if(fluid == FLUID_TOL)
+   {
+      I[0] = I_XX_TOL;
+      I[1] = I_YY_TOL;
+      I[2] = I_ZZ_TOL;
    }
    else if(fluid == FLUID_VEG)
    {
@@ -669,6 +1011,12 @@ void Domain::write(char* prefix, int format, double mu, double x)
       I2[0] = I_XX_JES;
       I2[1] = I_YY_JES;
       I2[2] = I_ZZ_JES;
+   }
+   else if(fluid2 == FLUID_TOL)
+   {
+      I2[0] = I_XX_TOL;
+      I2[1] = I_YY_TOL;
+      I2[2] = I_ZZ_TOL;
    }
    else if(fluid2 == FLUID_VEG)
    {
@@ -721,7 +1069,7 @@ void Domain::write(char* prefix, int format, double mu, double x)
                      if(cid == 1) w[d] = (I[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I[d]);
                      else w[d] = (I2[d] == 0)? 0.0: ((r->rnd() > 0.5)? 1: -1) * sqrt(2.0*r->rnd()*T / I2[d]);
                   // xdr << "(" << ii[0] << "/" << ii[1] << "/" << ii[2] << "), j = " << j << ", d = " << d << ":\t";
-                  if((format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
+                  if((format == FORMAT_BERNREUTHER) || (format == FORMAT_BRANCH) || (format == FORMAT_BUCHHOLZ))
                   {
                      xdr << id << " " << cid << "\t" << tr[0]/SIG_REF
                          << " " << tr[1]/SIG_REF << " " << tr[2]/SIG_REF

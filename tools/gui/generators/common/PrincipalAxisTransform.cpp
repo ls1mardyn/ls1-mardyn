@@ -50,6 +50,12 @@ void principalAxisTransform(Component& component) {
 	for (size_t i = 0; i < component.numCharges(); i++) {
 		shiftCenterAndBuildMatrix(component.charge(i), centerOfMass, momentMatrix);
 	}
+	for (size_t i = 0; i < component.numDipoles(); i++) {
+		shiftCenterAndBuildMatrix(component.dipole(i), centerOfMass, momentMatrix);
+	}
+	for (size_t i = 0; i < component.numQuadrupoles(); i++) {
+		shiftCenterAndBuildMatrix(component.quadrupole(i), centerOfMass, momentMatrix);
+	}
 
 	std::cout << "momentMatrix:" << endl;
 	for (int i = 0; i < 3; i++) {
@@ -65,9 +71,15 @@ void principalAxisTransform(Component& component) {
 	eigen_decomposition(momentMatrix, eigenVectors, eigenValues);
 
 	// the code I use has a different sign in the second column
-	eigenVectors[0][1] = - eigenVectors[0][1];
-	eigenVectors[1][1] = - eigenVectors[1][1];
-	eigenVectors[2][1] = - eigenVectors[2][1];
+	// this is original: at least second and third vector are exchanged
+	// eigenVectors[0][1] = - eigenVectors[0][1];
+	// eigenVectors[1][1] = - eigenVectors[1][1];
+	// eigenVectors[2][1] = - eigenVectors[2][1];
+	for (int i = 0; i < 3; i++) {
+		double tmp = eigenVectors[1][i];
+		eigenVectors[1][i] = eigenVectors[2][i];
+		eigenVectors[2][i] = tmp;
+	}
 
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
@@ -90,6 +102,12 @@ void principalAxisTransform(Component& component) {
 	}
 	for (size_t i = 0; i < component.numCharges(); i++) {
 		transformCoordinatesAndBuildMatrix(component.charge(i), eigenVectors, momentMatrix);
+	}
+	for (size_t i = 0; i < component.numDipoles(); i++) {
+		transformCoordinatesAndBuildMatrix(component.dipole(i), eigenVectors, momentMatrix);
+	}
+	for (size_t i = 0; i < component.numQuadrupoles(); i++) {
+		transformCoordinatesAndBuildMatrix(component.quadrupole(i), eigenVectors, momentMatrix);
 	}
 	component.setI11(momentMatrix[0][0]);
 	component.setI22(momentMatrix[1][1]);

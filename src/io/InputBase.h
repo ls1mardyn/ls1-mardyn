@@ -8,6 +8,7 @@ class ParticleContainer;
 class DomainDecompBase;
 class Domain;
 class ChemicalPotential;
+class XMLfileUnits;
 
 //! @brief interface for any kind of input class
 //!
@@ -28,6 +29,8 @@ public:
 	//! @brief read the phase space components and header information
 	//! @param timestep timestep length
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep) = 0;
+
+	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
 
 	/**
 	 *  @brief read the actual phase space information

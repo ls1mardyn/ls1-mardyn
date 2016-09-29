@@ -1,32 +1,15 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
-
 #ifndef LINKEDCELLS_H_
 #define LINKEDCELLS_H_
 
+#include <vector>
+#include <array>
+
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleCell.h"
-#include <vector>
 
-class ChemicalPotential;
-class DomainDecompBase;
-class CellProcessor;
+#ifdef ENABLE_OPENMP
+#include <omp.h>
+#endif
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -57,13 +40,15 @@ class CellProcessor;
 //! - inner
 
 class LinkedCells : public ParticleContainer {
+
+	friend class LinkedCellsTest;
+
 public:
 	//! @brief initialize the Linked Cell datastructure
 	//!
 	//! The constructor sets the following variables:
 	//! - _cutoffRadius
 	//! - _LJCutoffRadius
-	//! - _tersoffCutoffRadius
 	//! - _haloWidthInNumCells[3]
 	//! - _cellsPerDimension[3]
 	//! - _cellLength[3]
@@ -80,7 +65,6 @@ public:
 	//! @param bBoxMax higher corner of the bounding box of the domain belonging to this container
 	//! @param cutoffRadius distance for which forces have to be calculated
 	//! @param LJCutoffRadius distance for which lennard jones forces have to be calculated
-	//! @param tersoffCutoffRadius distance for which tersoff forces have to be calculated
 	//! @param cellsInCutoffRadius describes the width of cells relative to the cutoffRadius: \n
 	//!        equal (or larger) to the cutoffRadius divided by the length of a cell
 	//!        as for the number of cells in each dimension only natural numbers are allowed,
@@ -93,14 +77,27 @@ public:
 	//!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
 	//!        ==> celllength = 100/66 = 1.5152
 	LinkedCells(
-		 double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		  double cellsInCutoffRadius
+		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
+		double cellsInCutoffRadius
 	);
 
+	//! Default constructor
+	LinkedCells(){}
 	//! Destructor
 	~LinkedCells();
 
-	double getHaloWidthNumCells(){
+	/** @brief Read in XML configuration for LinkedCells and all its included objects.
+	 *
+	 * The following xml object structure is handled by this method:
+	 * \code{.xml}
+	   <datastructure type="LinkedCells">
+	     <cellsInCutoffRadius>INTEGER</cellsInCutoffRadius>
+	   </datastructure>
+	   \endcode
+	 */
+	virtual void readXML(XMLfileUnits& xmlconfig);
+
+	int getHaloWidthNumCells() {
 		return _haloWidthInNumCells[0];
 	}
 
@@ -116,11 +113,7 @@ public:
 	//! ParticleContainer is it's corresponding cell.
 	void update();
 
-	//! @brief Insert a single molecule.
-	//!
-	//! Therefore, first the cell (the index) for the molecule has to be determined,
-	//! then the molecule is inserted into that cell.
-	void addParticle(Molecule& particle);
+	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -138,6 +131,14 @@ public:
 
 	void traverseCells(CellProcessor& cellProcessor);
 
+	void traverseCellsOrig(CellProcessor& cellProcessor);
+
+	void traverseCellsC08(CellProcessor& cellProcessor);
+
+	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+
+	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
 
@@ -147,7 +148,7 @@ public:
 	//! list, a iterator (_particleIter) for the list is used.
 	//! This method sets this iterator to point to the begin of the list
 	//! and return a pointer to the value pointed to by the iterator
-	Molecule* begin();
+	MoleculeIterator begin();
 
 	//! @brief returns a pointer to the next particle in the Linked Cells
 	//!
@@ -155,13 +156,20 @@ public:
 	//! to the value pointed to by the iterator is returned. If the
 	//! iterator points to the end of the list (which is one element after the last
 	//! element), NULL is returned
-	Molecule* next();
+	MoleculeIterator next();
+
+	//! @brief returns current particle
+	MoleculeIterator current();
 
 	//! @brief returns NULL
-	Molecule* end();
+	MoleculeIterator end();
 
 	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-	Molecule* deleteCurrent();
+	// i.e. use as follows: for(it = LC.begin(); it != LC.end();) {if(erase) {it = deleteCurrent();} else {it = LC.next()}}
+	MoleculeIterator deleteCurrent();
+
+	// @todo: where is this function called?
+	void clear();
 
 	//! @brief delete all Particles which are not within the bounding box
 	void deleteOuterParticles();
@@ -174,15 +182,19 @@ public:
 	//! @brief appends pointers to all particles in the halo region to the list
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
-	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::list<Molecule*> &particlePtrs);
+	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false);
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v);
 
-	double getCutoff() {
-		return _cutoffRadius;
-	}
-	double getLJCutoff() {
-		return _LJCutoffRadius;
-	}
+
+	// documentation see father class (ParticleContainer.h)
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
+	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+
+	double getCutoff() { return _cutoffRadius; }
+	void setCutoff(double rc) { _cutoffRadius = rc; }
+
+	int getCellsInCutoff() { return _cellsInCutoff; }
+	void setCellsInCutoff(int n) { _cellsInCutoff = n; }
 
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(unsigned int cid);
@@ -193,16 +205,14 @@ public:
 	//! @brief counts particles in the intersection of bounding box and control volume
 	unsigned countParticles(unsigned int cid, double* cbottom, double* ctop);
 
-	void deleteMolecule(unsigned long molid, double x, double y, double z);
+	void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) override;
 	/* TODO: The particle container should not contain any physics, search a new place for this. */
-	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1);
+	double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor);
 
-	int localGrandcanonicalBalance() {
-		return this->_localInsertionsMinusDeletions;
-	}
-	int grandcanonicalBalance(DomainDecompBase* comm);
-	void grandcanonicalStep(ChemicalPotential* mu, double T, Domain* domain);
-
+	int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR);
+	unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm);
+	void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor);
+	
 	double* boundingBoxMax() {
 		return _boundingBoxMax;
 	}
@@ -237,7 +247,16 @@ public:
 	//! If the molecule is not inside the bounding box, an error is printed
 	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
 
-	ParticleCell getCell(int idx){ return _cells[idx];}
+	ParticleCell& getCell(int idx){ return _cells[idx];}
+
+	// documentation in base class
+	virtual void updateInnerMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateBoundaryAndHaloMoleculeCaches();
+
+	// documentation in base class
+	virtual void updateMoleculeCaches();
 
 private:
 	//####################################
@@ -271,7 +290,8 @@ private:
 	//! of cells between the two cells (this is received by substracting one of the difference).
 	void calculateNeighbourIndices();
 
-	
+	//! @brief addition for compact SimpleMD-style traversal
+	void calculateCellPairOffsets();
 
 	//! @brief given the 3D index of a cell, return the index in the cell vector.
 	//!
@@ -281,40 +301,77 @@ private:
 	//! The method can also be used to get the offset between two cells in the cell
 	//! vector when called with the 3D cell index offsets (e.g. x: one cell to the left,
 	//! y: two cells back, z: one cell up,...)
-	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
+	long int cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const;
 
+	//! @brief given the index in the cell vector, return the index of the cell.
+	void threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const;
 
+	/**
+	 * @brief delete particles which lie outside a cuboid region
+	 * @param boxMin lower left front corner
+	 * @param boxMax upper right back corner
+	 */
+	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
+
+	/**
+	 * advance _cellIterator, until a non-empty cell is found,
+	 * set _particleIterator and return the corresponding Molecule* value
+	 */
+	MoleculeIterator nextNonEmptyCell();
+
+	/**
+	 * traverses sindle cell
+	 * @param cellIndex
+	 * @param cellProcessor
+	 * @return
+	 */
+	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
 
+#if 0
 	std::list<Molecule> _particles; //!< List containing all molecules from the phasespace
 
 	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
+#else
+
+	std::vector<ParticleCell>::iterator _cellIterator;
+	std::vector<Molecule*>::size_type _particleIndex;
+#endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
+	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long> _innerCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
 	std::vector<unsigned long> _boundaryCellIndices; //!< Vector containing the indices (for the cells vector) of all boundary cells
 	std::vector<unsigned long> _haloCellIndices; //!< Vector containing the indices (for the cells vector) of all halo cells
+	std::vector<unsigned long> _borderCellIndices[3][2][2];
 
-	std::vector<unsigned long> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
-	std::vector<unsigned long> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
-	unsigned int _maxNeighbourOffset;
-	unsigned int _minNeighbourOffset;
+	std::array<long, 13> _forwardNeighbourOffsets; //!< Neighbours that come in the total ordering after a cell
+	std::array<long, 13> _backwardNeighbourOffsets; //!< Neighbours that come in the total ordering before a cell
+	long _maxNeighbourOffset;
+	long _minNeighbourOffset;
+
+	// addition for compact SimpleMD-style traversal
+	std::vector<std::pair<unsigned long, unsigned long> > _cellPairOffsets;
+
+	unsigned int _numActiveColours;
+	std::vector<std::vector<long int> > _cellIndicesPerColour;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
 
+	int _cellsInCutoff; //!< Minimal number of cells within the cutoff radius
 	int _cellsPerDimension[3]; //!< Number of Cells in each spacial dimension (including halo)
 	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
-	double _LJCutoffRadius; //!< LJ cutoff radius
-	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
+    double _LJCutoffRadius;
+
 
 	//! @brief True if all Particles are in the right cell
 	//!
@@ -332,4 +389,4 @@ private:
 
 };
 
-#endif /*LINKEDCELLS_H_*/
+#endif /* LINKEDCELLS_H_ */

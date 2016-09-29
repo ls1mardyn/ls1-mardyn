@@ -1,16 +1,21 @@
 #include "thermostats/VelocityScalingThermostat.h"
 
+#include "Domain.h"
 #include "molecules/Molecule.h"
+#include "Simulation.h"
 #include "utils/Logger.h"
 
 using namespace std;
 using Log::global_log;
 
-VelocityScalingThermostat::VelocityScalingThermostat() : _globalBetaTrans(1), _globalBetaRot(1), _globalVelocity(NULL), _componentwise(false) {
+VelocityScalingThermostat::VelocityScalingThermostat() {
+	this->_globalBetaTrans = 1.0;
+	this->_globalBetaRot = 1.0;
+	this->_componentwise = false;
+	this->_useGlobalVelocity = false;
 }
 
 VelocityScalingThermostat::~VelocityScalingThermostat() {
-	delete[] _globalVelocity;
 }
 
 void VelocityScalingThermostat::setBetaTrans(int componentId, double beta) {
@@ -22,17 +27,12 @@ void VelocityScalingThermostat::setBetaRot(int componentId, double beta) {
 }
 
 void VelocityScalingThermostat::setGlobalVelocity(double v[3]) {
-	if(_globalVelocity == NULL) {
-		_globalVelocity = new double[3];
-	}
 	for(int d = 0; d < 3; d++) {
 		_globalVelocity[d] = v[d];
 	}
+        this->_useGlobalVelocity = true;
 }
 void VelocityScalingThermostat::setVelocity(int componentId, double v[3]) {
-	if(_globalVelocity == NULL) {
-		_globalVelocity = new double[3];
-	}
 	if( _componentVelocity.find(componentId) == _componentVelocity.end() ) {
 		_componentVelocity[componentId] = new double[3];
 	}
@@ -45,22 +45,16 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 	Molecule *molecule;
 	if(_componentwise ) {
 		for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()) {
+			int thermostatId;
 			double betaTrans = _globalBetaTrans;
 			double betaRot = _globalBetaRot;
 			int cid = molecule->componentid();
+			thermostatId = _simulation.getDomain()->getThermostat(cid);
+			betaTrans = _componentBetaTrans[thermostatId];
+			betaRot   = _componentBetaRot[thermostatId];
 
-			map<int, double>::iterator betaIter;
 			map<int, double*>::iterator vIter;
-			if( (betaIter = _componentBetaTrans.find(cid)) != _componentBetaTrans.end() ) {
-				betaTrans = betaIter->second;
-			}
-			if( (betaIter = _componentBetaRot.find(cid)) != _componentBetaRot.end() ) {
-				betaTrans = betaIter->second;
-			}
-
-			//global_log->debug() << "Beta rot: " << betaRot << endl;
-			//global_log->debug() << "Beta trans: " << betaTrans << endl;
-			if( (vIter = _componentVelocity.find(cid)) != _componentVelocity.end()) {
+			if( (vIter = _componentVelocity.find(thermostatId)) != _componentVelocity.end()) {
 				molecule->scale_v(betaTrans);
 			}
 			else {
@@ -78,14 +72,12 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 		global_log->debug() << "Beta rot: " << betaRot << endl;
 		global_log->debug() << "Beta trans: " << betaTrans << endl;
 		for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()) {
-			if(_globalVelocity == NULL) {
-				molecule->scale_v(betaTrans);
-			}
-			else {
+			if(this->_useGlobalVelocity) {
 				molecule->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
 				molecule->scale_v(betaTrans);
 				molecule->vadd(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
 			}
+			else molecule->scale_v(betaTrans);
 			molecule->scale_D(betaRot);
 		}
 	}

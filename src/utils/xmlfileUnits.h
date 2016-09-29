@@ -24,6 +24,8 @@
 class XMLfileUnits : public XMLfile
 {
 public:
+	static const char *const roottag;
+	static const char *const refunitstag;
 	static const char *const unitattributetag;
 	
 	enum UnitType { Unknown_Unit=-1, No_Unit=0,

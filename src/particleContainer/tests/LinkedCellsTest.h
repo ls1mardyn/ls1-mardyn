@@ -17,6 +17,13 @@ class LinkedCellsTest: public ParticleContainerTest {
 	TEST_METHOD(testInsertion);
 	TEST_METHOD(testMoleculeIteration);
 	TEST_METHOD(testUpdateAndDeleteOuterParticles);
+	TEST_METHOD(testUpdateAndDeleteOuterParticlesH2O);
+	TEST_METHOD(testUpdateAndDeleteOuterParticles8Particles);
+	TEST_METHOD(testMoleculeBeginNextEndDeleteCurrent);
+//	TEST_METHOD(testGetHaloBoundaryParticlesDirection);
+#ifdef ENABLE_OVERLAPPING
+	TEST_METHOD(testTraversalMethods);
+#endif
 	TEST_SUITE_END();
 
 public:
@@ -45,6 +52,13 @@ public:
 		LinkedCells container(boundings_min, boundings_max, 2.5, 2.5, 1);
 		this->ParticleContainerTest::testUpdateAndDeleteOuterParticles(&container);
 	}
+
+	void testUpdateAndDeleteOuterParticlesFilename(const char * filename, double cutoff);
+	void testUpdateAndDeleteOuterParticlesH2O();
+	void testUpdateAndDeleteOuterParticles8Particles();
+	void testMoleculeBeginNextEndDeleteCurrent();
+	void testTraversalMethods();
+//	void testGetHaloBoundaryParticlesDirection();
 };
 
 #endif /* LINKEDCELLSTEST_H_ */

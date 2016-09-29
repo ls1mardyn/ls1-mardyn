@@ -2,6 +2,7 @@
 #
 # build several configurations and run unit tests
 
+# TODO: add the (four) vectorization modes (what about CFGs?)
 BUILD1="PARTYPE=SEQ TARGET=DEBUG   UNIT_TESTS=1 VTK=1"
 BUILD2="PARTYPE=SEQ TARGET=RELEASE UNIT_TESTS=1"
 BUILD3="PARTYPE=SEQ TARGET=RELEASE UNIT_TESTS=0"

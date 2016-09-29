@@ -2,7 +2,7 @@ TEMPLATE = lib
 
 CONFIG += dll debug
 #CONFIG += staticlib debug mardyn
-
+CONFIG += c++11
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
 
@@ -72,4 +72,5 @@ SOURCES  += generators/common/OutputConfiguration.cpp
 
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
+INCLUDEPATH += ../../src/External/
 

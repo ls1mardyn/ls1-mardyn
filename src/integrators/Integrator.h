@@ -3,6 +3,7 @@
 
 class ParticleContainer;
 class Domain;
+class XMLfileUnits;
 
 //! @brief Update velocities and positions.
 //! @author Martin Buchholz, Martin Bernreuther, et al.
@@ -31,10 +32,16 @@ class Domain;
 class Integrator {
 public:
 	//! The constructor
-	Integrator();
+	Integrator(){}
+	Integrator(double timestepLength) : _timestepLength(timestepLength) {}
 
 	//! The destructor
-	virtual ~Integrator();
+	virtual ~Integrator() {}
+
+	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
+
+	/** Initialize Integrator */
+	virtual void init() = 0;
 
 	//! @brief informs the integrator about available forces, who then continues integration
 	//!
@@ -76,14 +83,6 @@ public:
 			ParticleContainer* molCont,
 			Domain* domain
 	) = 0;
-	virtual void init1D(
-			unsigned zoscillator,
-			ParticleContainer* molCont
-	) = 0;
-	virtual void zOscillation(
-			unsigned zoscillator,
-			ParticleContainer* molCont
-	) = 0;
 
 protected:
 
@@ -91,4 +90,4 @@ protected:
 	double _timestepLength;
 
 };
-#endif /*INTEGRATOR_H_*/
+#endif /* INTEGRATOR_H_ */

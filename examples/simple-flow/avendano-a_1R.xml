@@ -1,0 +1,6 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<mardyn version="20111116">
+   <simulation type="MD">
+      <input type="oldstyle">avendano-a_1R.cfg</input>
+   </simulation>
+</mardyn>

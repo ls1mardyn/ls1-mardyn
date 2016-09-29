@@ -1,314 +1,162 @@
-/*
- * GNU GPL version 2
- */
+/* the following macro has to be defined to use math constants in cmath */
+#define _USE_MATH_DEFINES  1
 
 #include "TcTS.h"
-#include "utils/Random.h"
-#include "molecules/Molecule.h"
-#include "particleContainer/LinkedCells.h"
-#include "io/ResultWriter.h"
-#include "io/XyzWriter.h"
-#include "io/CheckpointWriter.h"
-#include "utils/Logger.h"
-
-#ifdef ENABLE_MPI
-#include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecomposition.h"
-#endif
 
 #include <cmath>
-#include <cstdlib>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdio>
-#include <math.h>
-#include <string.h>
+
+#include "Domain.h"
+#include "ensemble/EnsembleBase.h"
+#include "molecules/Molecule.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
+#include "utils/Random.h"
 
 using namespace std;
 using Log::global_log;
 
-#define BINS 2048
-#define DT 0.002
 #define PRECISION 5
 #define VARFRACTION 0.125
 
-TcTS::TcTS(Values &options, Domain* domain, DomainDecompBase** domainDecomposition, Integrator** integrator, ParticleContainer** moleculeContainer, std::list<OutputBase*>* outputPlugins, RDF* irdf, Simulation* isimulation) 
-{
-   this->_domain = domain;
-   this->_domainDecomposition = domainDecomposition;
-   this->_integrator = integrator;
-   this->_moleculeContainer = moleculeContainer;
-   this->_outputPlugins = outputPlugins;
-   this->_mrdf = irdf;
-   this->_msimulation = isimulation;
-
-   const char* usage = "usage: mkTcTS -c <density> [-C <second density>] [-h <height>] [-m <chemical potential>] -N <particles> [-p <pair correlation cutoff>] [-R <cutoff>] [-S] -T <temperature>\n\n-S\tshift (NOT active by default!!)\n";
-
-   bool do_shift = false;
-   bool in_h = false;
-   bool use_mu = false;
-   bool gradient = false;
-
-   double cutoff = 2.5;
-   double dRDF = 12.0;
-   double h = 0.0;
-   double mu = 0.0;
-   unsigned N = 131072;
-   double rho = 0.319;
-   double rho2 = 0.319;
-   double T = 1.0779;
-
-   /* non optional argumentds */
-   rho = options.get("density-1");
-   N   = options.get("num-particles");
-   T   = options.get("temperature");
-   
-   /* optional arguments */
-   if(options.is_set("cutoff-LJ")) {
-       cutoff = options.get("cutoff-LJ");
-   }
-   if(options.is_set("shift_LJ")) {
-       do_shift = options.get("shift_LJ");
-   }
-   if(options.is_set("density-2")) {
-       rho2 = options.get("density-2");
-       gradient = true;
-   }
-   if(options.is_set("height")) {
-       in_h = true;
-       h = options.get("height");
-   }
-   if(options.is_set("chemical-potential")) {
-       use_mu = true;
-       mu = options.get("chemical-potential");
-   }
-   if(options.is_set("pair-correlation-cutoff")) {
-       dRDF = options.get("pair-correlation-cutoff");
-   }
-   
-   global_log->info() << "Fluid density 1: " << rho << endl;
-   global_log->info() << "Fluid density 2: " << rho2 << endl;
-   global_log->info() << "Number of particles: " << N << endl;
-   global_log->info() << "Temperature: " << T << endl;
-   global_log->info() << "Cutoff radius: " << cutoff << endl;
-
-   if(in_h && !gradient)
-   {
-      cout << "The box dimension can only be specified for "
-           << "systems with a density gradient.\n\n" << usage;
-      exit(5);
-   }
-
-   if(!in_h) h = pow((double)N/rho, 1.0/3.0);
-
-   if(gradient) this->domain(h, N, rho, rho2);
-   else this->domain(N, rho, dRDF);
-   this->write((char *) isimulation->getOutputPrefix().c_str(), cutoff, mu, T, do_shift, use_mu);
+void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
+// 	TODO: Add option to controll the layer thicknesses
+// 	xmlconfig.getNodeValue("layer1/heigth", heigth1);
+// 	global_log->info() << "Layer 1, heigth: " << heigth1 << endl;
+	xmlconfig.getNodeValue("layer1/density", rho1);
+	global_log->info() << "Layer 1, density: " << rho1 << endl;
+	rho2 = rho1;
+	xmlconfig.getNodeValue("layer2/density", rho2);
+	global_log->info() << "Layer 2, density: " << rho2 << endl;
 }
 
-void TcTS::domain(double t_h, unsigned t_N, double t_rho, double t_rho2)
-{
-   this->gradient = true;
-   this->rho = t_rho;
-   this->rho2 = t_rho2;
-   this->dRDF = 0.0;
+long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* /*lmu*/,
+		Domain* domain, DomainDecompBase* /*domainDecomp*/) {
 
-   double V = 2.0 * t_N / (rho + rho2);
-   this->box[0] = sqrt(V / t_h);
-   this->box[1] = t_h;
-   this->box[2] = sqrt(V / t_h);
+	double T = _simulation.getEnsemble()->T();
+	double box[3];
+	for( int d = 0; d < 3; d++ ) {
+	   box[d] = _simulation.getEnsemble()->domain()->length(d);
+	}
+
+	unsigned fl_units[3][2];
+	double fl_unit[3][2];
+	double N_id[2];
+	for(int i=0; i < 2; i++) {
+		N_id[i] = box[0]*(0.5*box[1])*box[2] * ((i == 0)? rho1: rho2);
+		double N_boxes = N_id[i] / 3.0; /* 3 molecules per box */
+		fl_units[1][i] = (unsigned int) round(
+							pow(
+								(N_boxes * (0.5*box[1]) * (0.5*box[1]))
+										/ (box[0] * box[2]), 1.0/3.0
+							)
+						);
+		if(fl_units[1][i] == 0) fl_units[1][i] = 1;
+		double bxbz_id = N_boxes / fl_units[1][i];
+		fl_units[0][i] = (unsigned int) round(sqrt(box[0] * bxbz_id / box[2]));
+		if(fl_units[0][i] == 0) fl_units[0][i] = 1;
+		fl_units[2][i] = (unsigned int) ceil(bxbz_id / fl_units[0][i]);
+		for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? 0.5: 1.0) * box[d] / (double)fl_units[d][i];
+		global_log->debug() << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << endl;
+	}
+
+	Random* rnd = new Random();
+	rnd->init(
+		(int)(10000.0*box[0]) - (int)(3162.3*_simulation.getcutoffRadius())
+			+ (int)(1000.0*T)
+			+ (int)(100.0*box[1])
+	);
+
+	bool fill0[fl_units[0][0]][fl_units[1][0]][fl_units[2][0]][3];
+	bool fill1[fl_units[0][1]][fl_units[1][1]][fl_units[2][1]][3];
+	unsigned N[2];
+	unsigned slots[2];
+	for(unsigned l=0; l < 2; l++) {
+		for(unsigned i=0; i < fl_units[0][l]; i++) {
+			for(unsigned j=0; j < fl_units[1][l]; j++) {
+				for(unsigned k=0; k < fl_units[2][l]; k++) {
+					for(unsigned d=0; d < 3; d++) {
+						if(l == 0) fill0[i][j][k][d] = true;
+						else fill1[i][j][k][d] = true;
+					}
+				}
+			}
+		}
+		slots[l] = 3 * fl_units[0][l] * fl_units[1][l] * fl_units[2][l];
+		N[l] = slots[l];
+	}
+	bool tswap;
+	double pswap;
+	for(unsigned l=0; l < 2; l++) {
+		for(unsigned m=0; m < PRECISION; m++) {
+			tswap = (N[l] < N_id[l]);
+			pswap = (N_id[l] - (double)N[l]) / ((tswap? slots[l]: 0) - (double)N[l]);
+			// cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
+			for(unsigned i=0; i < fl_units[0][l]; i++) {
+				for(unsigned j=0; j < fl_units[1][l]; j++) {
+					for(unsigned k=0; k < fl_units[2][l]; k++) {
+						for(unsigned d=0; d < 3; d++) {
+							if(pswap >= rnd->rnd()) {
+								if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d])) N[l] --;
+								if(l == 0) fill0[i][j][k][d] = tswap;
+								else fill1[i][j][k][d] = tswap;
+								if(tswap) N[l] ++;
+							}
+						}
+					}
+				}
+			}
+		}
+		global_log->debug() << "Filling " << N[l] << " of 3*"
+			<< fl_units[0][l] << "*" << fl_units[1][l] << "*" << fl_units[2][l]
+			<< " = " << slots[l] << " slots (ideally " << N_id[l] << ")" << endl;
+	}
+
+	double loffset[3][2];
+	loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
+	loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;
+	double goffset[3][3] = {
+		{0.0, 0.5, 0.5},
+		{0.5, 0.0, 0.5},
+		{0.5, 0.5, 0.0}
+	};
+
+	double v_avg = sqrt(3.0 * T);
+
+	Component* component = _simulation.getEnsemble()->getComponent(0);
+	unsigned ID = 1;
+	for(unsigned l=0; l < 2; l++) {
+		for(unsigned i=0; i < fl_units[0][l]; i++) {
+			for(unsigned j=0; j < fl_units[1][l]; j++) {
+				for(unsigned k=0; k < fl_units[2][l]; k++) {
+					for(unsigned d=0; d < 3; d++) {
+						if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d])) {
+							double q[3];
+							q[0] = i * fl_unit[0][l];
+							q[1] = j * fl_unit[1][l];
+							q[2] = k * fl_unit[2][l];
+							for(int m=0; m < 3; m++) {
+								q[m] += box[m]*loffset[m][l] + fl_unit[m][l]*goffset[m][d];
+								q[m] += VARFRACTION * fl_unit[m][l] * (rnd->rnd() - 0.5);
+								if(q[m] > box[m]) q[m] -= box[m];
+							}
+							double phi = 2*M_PI * rnd->rnd();
+							double omega = 2*M_PI * rnd->rnd();
+
+							double v[3];
+							v[0] = v_avg*cos(phi)*cos(omega);
+							v[1] = v_avg*cos(phi)*sin(omega);
+							v[2] = v_avg*sin(phi);
+							Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
+							particleContainer->addParticle(molecule);
+							ID++;
+						}
+					}
+				}
+			}
+		}
+	}
+	domain->setGlobalTemperature(T);
+	domain->setglobalNumMolecules(ID-1);
+	domain->setglobalRho(ID / _simulation.getEnsemble()->V() );
+	return ID;
 }
-
-void TcTS::domain(unsigned t_N, double t_rho, double t_RDF)
-{
-   this->gradient = false;
-   this->rho = t_rho;
-   this->rho2 = t_rho;
-   this->dRDF = t_RDF;
-
-   this->box[0] = pow((double)t_N/rho, 1.0/3.0);
-   this->box[1] = this->box[0];
-   this->box[2] = this->box[0];
-}
-
-void TcTS::write(char* prefix, double cutoff, double mu, double T, bool do_shift, bool use_mu)
-{
-   unsigned fl_units[3][2];
-   double fl_unit[3][2];
-   double N_id[2];
-   for(int i=0; i < 2; i++)
-   {
-      N_id[i] = box[0]*(0.5*box[1])*box[2] * ((i == 0)? rho: rho2);
-      double N_boxes = N_id[i] / 3.0;
-      fl_units[1][i] = (unsigned int) round(
-                          pow(
-                             (N_boxes * (0.5*box[1]) * (0.5*box[1]))
-                                      / (this->box[0] * this->box[2]), 1.0/3.0
-                          )
-                       );
-      if(fl_units[1][i] == 0) fl_units[1][i] = 1;
-      double bxbz_id = N_boxes / fl_units[1][i];
-      fl_units[0][i] = (unsigned int) round(sqrt(this->box[0] * bxbz_id / this->box[2]));
-      if(fl_units[0][i] == 0) fl_units[0][i] = 1;
-      fl_units[2][i] = (unsigned int) ceil(bxbz_id / fl_units[0][i]);
-      for(int d=0; d < 3; d++) fl_unit[d][i] = ((d == 1)? 0.5: 1.0) * box[d] / (double)fl_units[d][i];
-      global_log->debug() << "Elementary cell " << i << ": " << fl_unit[0][i] << " x " << fl_unit[1][i] << " x " << fl_unit[2][i] << ".\n";
-   }
-
-   Random* r = new Random();
-   r->init(
-      (int)(10000.0*box[0]) - (int)(3162.3*cutoff)
-        + (int)(1000.0*T) - (int)(316.23*mu)
-        + (int)(100.0*box[1])
-   );
-
-   bool fill0[fl_units[0][0]][fl_units[1][0]][fl_units[2][0]][3];
-   bool fill1[fl_units[0][1]][fl_units[1][1]][fl_units[2][1]][3];
-   unsigned N[2];
-   unsigned slots[2];
-   for(unsigned l=0; l < 2; l++)
-   {
-      for(unsigned i=0; i < fl_units[0][l]; i++)
-         for(unsigned j=0; j < fl_units[1][l]; j++)
-            for(unsigned k=0; k < fl_units[2][l]; k++)
-               for(unsigned d=0; d < 3; d++)
-               {
-                  if(l == 0) fill0[i][j][k][d] = true;
-                  else fill1[i][j][k][d] = true;
-               }
-      slots[l] = 3 * fl_units[0][l] * fl_units[1][l] * fl_units[2][l];
-      N[l] = slots[l];
-   }
-   bool tswap;
-   double pswap;
-   for(unsigned l=0; l < 2; l++)
-   {
-      for(unsigned m=0; m < PRECISION; m++)
-      {
-         tswap = (N[l] < N_id[l]);
-         pswap = (N_id[l] - (double)N[l]) / ((tswap? slots[l]: 0) - (double)N[l]);
-         // cout << "N = " << N[l] << ", N_id = " << N_id[l] << " => tswap = " << tswap << ", pswap = " << pswap << "\n";
-         for(unsigned i=0; i < fl_units[0][l]; i++)
-            for(unsigned j=0; j < fl_units[1][l]; j++)
-               for(unsigned k=0; k < fl_units[2][l]; k++)
-                  for(unsigned d=0; d < 3; d++)
-                     if(pswap >= r->rnd())
-                     {
-                        if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d])) N[l] --;
-                        if(l == 0) fill0[i][j][k][d] = tswap;
-                        else fill1[i][j][k][d] = tswap;
-                        if(tswap) N[l] ++;
-                     }
-      }
-      global_log->debug() << "Filling " << N[l] << " of 3*"
-           << fl_units[0][l] << "*" << fl_units[1][l] << "*" << fl_units[2][l]
-           << " = " << slots[l] << " slots (ideally " << N_id[l] << ").\n";
-   }
-
-   *this->_integrator = new Leapfrog(DT);
-   double ecutoff = (dRDF > cutoff)? 1.031623*dRDF: cutoff;
-   this->_msimulation->setcutoffRadius(ecutoff);
-   this->_msimulation->setLJCutoff(cutoff);
-
-   this->_domain->setCurrentTime(0.0);
-   for( int d = 0; d < 3; d++ ) this->_domain->setGlobalLength(d, box[d]);
-
-   vector<Component>& dcomponents = this->_domain->getComponents();
-   dcomponents.resize(1);
-   dcomponents[0].setID(0);
-   dcomponents[0].addLJcenter(0, 0, 0, 1, 1, 1, cutoff, do_shift);
-   dcomponents[0].setI11(0);
-   dcomponents[0].setI22(0);
-   dcomponents[0].setI33(0);
-   this->_domain->setepsilonRF(1.0e+10);
-
-   this->_domain->setGlobalTemperature(T);
-   this->_domain->setglobalNumMolecules(N[0]+N[1]);
-
-#ifdef ENABLE_MPI
-   *(this->_domainDecomposition) = (DomainDecompBase*) new DomainDecomposition();
-#endif
-   double bBoxMin[3];
-   double bBoxMax[3];
-   for (int i = 0; i < 3; i++) {
-      bBoxMin[i] = (*_domainDecomposition)->getBoundingBoxMin(i, _domain);
-      bBoxMax[i] = (*_domainDecomposition)->getBoundingBoxMax(i, _domain);
-   }
-   *(this->_moleculeContainer) = new LinkedCells(bBoxMin, bBoxMax, ecutoff, cutoff, 1);
-   stringstream opstream;
-   opstream << prefix << "_1R";
-   this->_msimulation->setOutputPrefix(opstream.str().c_str());
-   // Output plugins should not be added statically but as requested by the config
-   //this->_outputPlugins->push_back(new ResultWriter(1500, opstream.str().c_str()));
-   //this->_outputPlugins->push_back(new XyzWriter(60000, opstream.str().c_str(), 100000000, true));
-   //this->_outputPlugins->push_back(new CheckpointWriter(60000, opstream.str().c_str(), 100000000, true));
-   this->_msimulation->initCanonical(10);
-   this->_msimulation->initStatistics(3003003);
-   if(gradient)
-   {
-      this->_domain->setupProfile(1, BINS, 1);
-      this->_msimulation->profileSettings(1, 3000000, opstream.str());
-      this->_domain->considerComponentInProfile(1);
-   }
-   else
-   {
-      this->_mrdf = new RDF(dRDF/(double)BINS, BINS, dcomponents);
-      this->_mrdf->setOutputTimestep(3000000);
-      this->_mrdf->setOutputPrefix(opstream.str());
-   }
-
-   double v = sqrt(3.0 * T);
-   double loffset[3][2];
-   loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
-   loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;
-   double goffset[3][3];
-   goffset[0][0] = 0.0; goffset[1][0] = 0.5; goffset[2][0] = 0.5;
-   goffset[0][1] = 0.5; goffset[1][1] = 0.0; goffset[2][1] = 0.5;
-   goffset[0][2] = 0.5; goffset[1][2] = 0.5; goffset[2][2] = 0.0;
-
-   this->_domain->setglobalRotDOF(0);
-   // unsigned maxid = 1;
-   unsigned ID = 1;
-   for(unsigned l=0; l < 2; l++)
-      for(unsigned i=0; i < fl_units[0][l]; i++)
-         for(unsigned j=0; j < fl_units[1][l]; j++)
-            for(unsigned k=0; k < fl_units[2][l]; k++)
-               for(unsigned d=0; d < 3; d++)
-               {
-                  if(((l == 0) && fill0[i][j][k][d]) || ((l == 1) && fill1[i][j][k][d]))
-                  {
-                     double q[3];
-                     q[0] = i * fl_unit[0][l];
-                     q[1] = j * fl_unit[1][l];
-                     q[2] = k * fl_unit[2][l];
-                     for(int m=0; m < 3; m++)
-                     {
-                        q[m] += box[m]*loffset[m][l] + fl_unit[m][l]*goffset[m][d];
-                        q[m] += VARFRACTION * fl_unit[m][l] * (r->rnd() - 0.5);
-                        if(q[m] > box[m]) q[m] -= box[m];
-                     }
-                     double phi = 6.283185 * r->rnd();
-                     double omega = 6.283185 * r->rnd();
-
-                     Molecule m1 = Molecule(ID, &dcomponents[0], q[0], q[1], q[2], v*cos(phi)*cos(omega), v*cos(phi)*sin(omega), v*sin(phi), 1, 0, 0, 0, 0, 0, 0);
-                     (*this->_moleculeContainer)->addParticle(m1);
-                     dcomponents[0].incNumMolecules();
-                     // domain->setglobalRotDOF(dcomponents[0].getRotationalDegreesOfFreedom() + domain->getglobalRotDOF());
-		
-                     // if(id > maxid) maxid = id;
-
-                     /*
-                     std::list<ChemicalPotential>::iterator cpit;
-                     for(cpit = lmu->begin(); cpit != lmu->end(); cpit++) {
-                        if( !cpit->hasSample() && (componentid == cpit->getComponentID()) ) {
-                           cpit->storeMolecule(m1);
-                        }
-                     }
-                     */
-
-                     ID++;
-                  }
-               }
-}
-

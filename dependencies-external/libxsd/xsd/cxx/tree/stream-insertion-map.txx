@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/stream-insertion-map.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xsd/cxx/tree/types.hxx>
@@ -32,7 +31,7 @@ namespace xsd
           &inserter_impl<S, type>,
           false);
 
-        typedef simple_type<type> simple_type;
+        typedef simple_type<C, type> simple_type;
         register_type (
           typeid (simple_type),
           qualified_name (bits::any_simple_type<C> (), xsd),
@@ -108,7 +107,7 @@ namespace xsd
           &inserter_impl<S, id>,
           false);
 
-        typedef idref<type, C, ncname> idref;
+        typedef idref<C, ncname, type> idref;
         register_type (
           typeid (idref),
           qualified_name (bits::idref<C> (), xsd),
@@ -248,9 +247,9 @@ namespace xsd
       register_type (const type_id& tid,
                      const qualified_name& name,
                      inserter i,
-                     bool override)
+                     bool replace)
       {
-        if (override || type_map_.find (&tid) == type_map_.end ())
+        if (replace || type_map_.find (&tid) == type_map_.end ())
           type_map_[&tid] = type_info (name, i);
       }
 
@@ -269,7 +268,24 @@ namespace xsd
         {
           const qualified_name& qn (ti->name ());
 
-          s << qn.namespace_ () << qn.name ();
+          // Pool the namespace and name strings.
+          //
+          const std::basic_string<C>& ns (qn.namespace_ ());
+          const std::basic_string<C>& n (qn.name ());
+
+          std::size_t ns_id (s.pool_string (ns));
+          std::size_t n_id (s.pool_string (n));
+
+          s << ostream_common::as_size<std::size_t> (ns_id);
+
+          if (ns_id == 0)
+            s << ns;
+
+          s << ostream_common::as_size<std::size_t> (n_id);
+
+          if (n_id == 0)
+            s << n;
+
           ti->inserter () (s, x);
         }
         else

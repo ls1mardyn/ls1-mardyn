@@ -1,54 +1,81 @@
-// PovWriter.cpp
-
 #include "io/PovWriter.h"
+
+#include <fstream>
+#include <sstream>
+
 #include "Common.h"
 #include "Domain.h"
-#include "particleContainer/ParticleContainer.h"
+#include "ensemble/EnsembleBase.h"
 #include "molecules/Molecule.h"
+#include "particleContainer/ParticleContainer.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
 
-#include <ctime>
-#include <sstream>
-#include <fstream>
-
+using Log::global_log;
 using namespace std;
 
-PovWriter::PovWriter(unsigned long writeFrequency, string filename, unsigned long numberOfTimesteps, bool incremental) {
-	_filename = filename;
+
+PovWriter::PovWriter(unsigned long writeFrequency, string outputPrefix, bool incremental) {
+	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
 	_incremental = incremental;
-	_numberOfTimesteps = numberOfTimesteps;
 
-	if (filename == "default")
-		_filenameisdate = true;
-	else
-		_filenameisdate = false;
+	if (outputPrefix == "default") {
+		_appendTimestamp = true;
+	}
+	else {
+		_appendTimestamp = false;
+	}
 }
 
-PovWriter::~PovWriter() {
+PovWriter::~PovWriter() {}
+
+
+void PovWriter::readXML(XMLfileUnits& xmlconfig) {
+	_writeFrequency = 1;
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+
+	_outputPrefix = "mardyn";
+	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
+	global_log->info() << "Output prefix: " << _outputPrefix << endl;
+	
+	int incremental = 1;
+	xmlconfig.getNodeValue("incremental", incremental);
+	_incremental = (incremental != 0);
+	global_log->info() << "Incremental numbers: " << _incremental << endl;
+	
+	int appendTimestamp = 0;
+	xmlconfig.getNodeValue("appendTimestamp", appendTimestamp);
+	if(appendTimestamp > 0) {
+		_appendTimestamp = true;
+	}
+	else{
+		_appendTimestamp = false;
+	}
+	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void PovWriter::initOutput(ParticleContainer* particleContainer,
-                           DomainDecompBase* domainDecomp, Domain* domain) {
+void PovWriter::initOutput(ParticleContainer* /*particleContainer*/,
+                           DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 }
 
 void PovWriter::doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain,
-                         unsigned long simstep, list<ChemicalPotential>* lmu) {
+                         DomainDecompBase* /*domainDecomp*/, Domain* domain,
+                         unsigned long simstep, list<ChemicalPotential>* /*lmu*/,
+			 map<unsigned, CavityEnsemble>* /*mcav*/) {
 	if (simstep % _writeFrequency == 0) {
-
 		stringstream filenamestream;
-		if (_filenameisdate) {
-			filenamestream << "mardyn" << gettimestring();
-		}
-		else {
-			filenamestream << _filename;
-		}
+		filenamestream << _outputPrefix;
 
-		if (_incremental) {
-			filenamestream << "-";
+		if(_incremental) {
 			/* align file numbers with preceding '0's in the required range from 0 to _numberOfTimesteps. */
-			int num_digits = (int) ceil(log(double(_numberOfTimesteps / _writeFrequency)) / log(10.));
-			filenamestream << aligned_number(simstep / _writeFrequency, num_digits, '0');
+			unsigned long numTimesteps = _simulation.getNumTimesteps();
+			int num_digits = (int) ceil( log( double( numTimesteps / _writeFrequency ) ) / log(10.) );
+			filenamestream << "-" << aligned_number( simstep / _writeFrequency, num_digits, '0' );
+		}
+		if(_appendTimestamp) {
+			filenamestream << "-" << gettimestring();
 		}
 		filenamestream << ".pov";
 
@@ -64,16 +91,15 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "//*PMRawBegin" << endl;
 		ostrm << "background {rgb <1,1,1>}" << endl;
 		ostrm << "//*PMRawEnd" << endl;
-		vector<Component> dcomponents = domain->getComponents();
-		for (unsigned int i = 0; i < dcomponents.size(); ++i) {
+		vector<Component>* dcomponents = _simulation.getEnsemble()->getComponents();
+		for (unsigned int i = 0; i < dcomponents->size(); ++i) {
 			ostringstream osstrm;
 			osstrm.clear();
 			osstrm.str("");
 			osstrm << " pigment {color rgb <" << (i + 1) % 2 << "," << (i + 1) / 2 % 2 << "," << (i + 1) / 4 % 2 << ">}";
 			osstrm << " finish{ambient 0.5 diffuse 0.4 phong 0.3 phong_size 3}";
 			ostrm << "#declare T" << i << " = ";
-			//ostrm << "sphere {<0,0,0>,0.5 pigment {color rgb<1,0,0>} finish{ambient 0.5 diffuse 0.4 phong 0.3 phong_size 3} scale 1.}";
-			dcomponents.at(i).writePOVobjs(ostrm, osstrm.str());
+			dcomponents->at(i).writePOVobjs(ostrm, osstrm.str());
 			ostrm << endl;
 		}
 		ostrm << endl;
@@ -82,10 +108,6 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		float yloc = 1.1 * domain->getGlobalLength(1);
 		float zloc = -1.5 * domain->getGlobalLength(2);
 		ostrm << " location <" << xloc << ", " << yloc << ", " << zloc << ">" << endl;
-		//ostrm << " direction <0, 0, 1>" << endl;
-		//ostrm << " right <1.33333, 0, 0>" << endl;
-		//ostrm << " up <0, 1, 0>" << endl;
-		//ostrm << " sky <0, 1, 0>" << endl;
 		ostrm << " look_at <" << .5 * domain->getGlobalLength(0) << ", " << .5 * domain->getGlobalLength(1) << ", " << .5 * domain->getGlobalLength(2) << ">" << endl;
 		ostrm << "}" << endl;
 		ostrm << endl;
@@ -99,10 +121,10 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "light_source { <" << domain->getGlobalLength(0) << "," << domain->getGlobalLength(1) << ",0>, color rgb <1,1,1> }" << endl;
 		ostrm << "light_source { <" << domain->getGlobalLength(0) << "," << domain->getGlobalLength(1) << "," << domain->getGlobalLength(2) << ">, color rgb <1,1,1> }" << endl;
 		ostrm << endl;
-		ostrm << "// " << dcomponents.size() << " objects for the atoms following..." << endl;
+		ostrm << "// " << dcomponents->size() << " objects for the atoms following..." << endl;
 		double mrot[3][3];
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
-			(pos->q()).getRotinvMatrix(mrot);
+			(pos->q()).getRotMatrix(mrot);
 			//cout << "object { T0 rotate <0,0,0> translate <0,0,0>}" << endl;
 			ostrm << "object { T" << pos->componentid();
 			ostrm << " matrix <"
@@ -113,25 +135,8 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 			      << ">";
 			ostrm << "}" << endl;
 		}
-
-		// RK
-		/* map cluster ID to color */
-		//if ((pos->clusterid() != -1) && (m_clusters.find(pos->clusterid())->second > MINCLUSTERSIZE)) {
-		//	ostrm << "  pigment {color rgb<" <<
-		//			(0.25*(pos->clusterid()%5)) << "," <<
-		//			(0.25*((pos->clusterid()/5)%5)) << "," <<
-		//			(0.25*((pos->clusterid()/125)%5)) << "," <<
-		//			">}";
-		//}
-		//else {
-		//	ostrm << "  pigment {color rgb<0.9,0.9,0.9>}";
-		//}
-		// /RK
-
 		ostrm.close();
 	}
 }
 
-void PovWriter::finishOutput(ParticleContainer* particleContainer,
-                             DomainDecompBase* domainDecomp, Domain* domain) {
-}
+void PovWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}

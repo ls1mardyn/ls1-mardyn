@@ -16,22 +16,38 @@
 
 using namespace Log;
 
-VTKGridWriter::VTKGridWriter(unsigned int writeFrequency, const std::string& fileName, const LinkedCells& container)
-: _writeFrequency(writeFrequency), _fileName(fileName), _container(container), _numCells(0), _numVertices(0) {
+VTKGridWriter::VTKGridWriter()
+: _numCells(0), _numVertices(0) {
+}
 
+VTKGridWriter::VTKGridWriter(unsigned int frequency, std::string name)
+	: _writeFrequency(frequency), _fileName(name), _numCells(0), _numVertices(0) {
 }
 
 VTKGridWriter::~VTKGridWriter() { }
 
+void VTKGridWriter::readXML(XMLfileUnits& xmlconfig) {
+	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
+	global_log->info() << "VTKMoleculeWriter: Write frequency: " << _writeFrequency << std::endl;
+	xmlconfig.getNodeValue("outputprefix", _fileName);
+	global_log->info() << "VTKMoleculeWriter: Output prefix: " << _fileName << std::endl;
+
+	if (_writeFrequency <= 0) {
+		Log::global_log->error() << "VTKMoleculeWriter: writeFrequency must be > 0!" << std::endl;
+	}
+}
+
 
 void  VTKGridWriter::doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu
+			Domain* /*domain*/, unsigned long simstep,
+			std::list<ChemicalPotential>* /*lmu*/,
+			std::map<unsigned, CavityEnsemble>* /*mcav*/
 	) {
 
+	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
 #ifndef NDEBUG
-	if (static_cast<const void*>(&_container) != static_cast<const void*>(particleContainer)) {
+	if (container == NULL) {
 		global_log->error() << "VTKGridWriter works only with PlottableLinkCells!" << std::endl;
 		exit(1);
 	}
@@ -46,10 +62,10 @@ void  VTKGridWriter::doOutput(
 	VTKGridWriterImplementation impl(rank);
 	impl.initializeVTKFile();
 
-	setupVTKGrid();
+	setupVTKGrid(particleContainer);
 
 	for (int i = 0; i < _numCells; i++) {
-		getCellData(_cells[i]);
+		getCellData(container, _cells[i]);
 		impl.plotCell(_cells[i]);
 	}
 
@@ -95,20 +111,21 @@ void  VTKGridWriter::outputParallelVTKFile(unsigned int numProcs, unsigned long 
 
 
 void  VTKGridWriter::initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomposition, Domain* domain) {
+			DomainDecompBase* /*domainDecomposition*/, Domain* /*domain*/) {
 #ifndef NDEBUG
-	if (static_cast<const void*>(&_container) != static_cast<const void*>(particleContainer)) {
+	if (dynamic_cast<LinkedCells*>(particleContainer) == NULL) {
 		global_log->error() << "VTKGridWriter works only with LinkCells!" << std::endl;
 		exit(1);
 	}
 #endif
 }
 
-void VTKGridWriter::setupVTKGrid() {
+void VTKGridWriter::setupVTKGrid(ParticleContainer* particleContainer) {
+	LinkedCells* lc = dynamic_cast<LinkedCells*>(particleContainer);
 
 	int numCellsPerDimension[3];
 	for (int i = 0; i < 3; i++) {
-		numCellsPerDimension[i] = (_container._cellsPerDimension[i] - 2* _container._haloWidthInNumCells[i]);
+		numCellsPerDimension[i] = (lc->_cellsPerDimension[i] - 2* lc->_haloWidthInNumCells[i]);
 	}
 
 	_numCells = numCellsPerDimension[2] * numCellsPerDimension[1] * numCellsPerDimension[0];
@@ -123,9 +140,9 @@ void VTKGridWriter::setupVTKGrid() {
 				int vertexIndex = i * (numCellsPerDimension[1]+1) * (numCellsPerDimension[0]+1) + j * (numCellsPerDimension[0]+1) + k;
 
 				assert(vertexIndex < _numVertices);
-				int x = k * _container._cellLength[0];
-				int y = j * _container._cellLength[1];
-				int z = i * _container._cellLength[2];
+				int x = k * lc->_cellLength[0];
+				int y = j * lc->_cellLength[1];
+				int z = i * lc->_cellLength[2];
 				_vertices[vertexIndex].setCoordinates(x, y, z);
 			}
 		}
@@ -138,9 +155,9 @@ void VTKGridWriter::setupVTKGrid() {
 				int cellsIndex = i * numCellsPerDimension[1] * numCellsPerDimension[0] + j * numCellsPerDimension[0] + k;
 				assert(cellsIndex < _numCells);
 				// calculate the indices of the inner cells, taking the halo into account
-				int containerIndex = _container.cellIndexOf3DIndex(k + _container._haloWidthInNumCells[0],
-						j + _container._haloWidthInNumCells[1],
-						i + _container._haloWidthInNumCells[2]);
+				int containerIndex = lc->cellIndexOf3DIndex(k + lc->_haloWidthInNumCells[0],
+						j + lc->_haloWidthInNumCells[1],
+						i + lc->_haloWidthInNumCells[2]);
 				_cells[cellsIndex].setIndex(containerIndex);
 
 				for (int l = 0; l < 8; l++) {
@@ -162,11 +179,11 @@ void VTKGridWriter::releaseVTKGrid() {
 	_numVertices = 0;
 }
 
-void VTKGridWriter::getCellData(VTKGridCell& cell) {
-	int numberOfMolecules = _container._cells[cell.getIndex()].getMoleculeCount();
+void VTKGridWriter::getCellData(LinkedCells* container, VTKGridCell& cell) {
+	int numberOfMolecules = container->_cells[cell.getIndex()].getMoleculeCount();
 	cell.setCellData(numberOfMolecules, 0.0, 0);
 }
 
 //! NOP
-void  VTKGridWriter::finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain) { }
+void  VTKGridWriter::finishOutput(ParticleContainer* /*particleContainer*/,
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) { }

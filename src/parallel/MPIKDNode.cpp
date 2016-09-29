@@ -1,11 +1,13 @@
 #include "MPIKDNode.h"
 
-#include <assert.h>
+#include <cassert>
+
+#include "utils/Logger.h"
 
 #define assertion(x) assert(x)
-#define assertion1(x,y) { if (!x) std::cerr << y << std::endl; assert(x);}
+#define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; assert(x);}
 
-
+using Log::global_log;
 
 MPIKDNodePacked::MPIKDNodePacked(const std::bitset<3>& coversWholeDomain, const int& numProcs,
 		const int* lowCorner, const int* highCorner, const int& nodeID, const int& owningProc,
@@ -357,7 +359,7 @@ void MPIKDNodePacked::initDatatype() {
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
-			std::cout << "i=" << i << std::endl;
+			global_log->debug() << "i=" << i << std::endl;
 		}
 		assertion1( disp[i] > disp[i-1], i );
 	}

@@ -1,8 +1,18 @@
-#ifndef ENSEMBLE_BASE_H
-#define ENSEMBLE_BASE_H
+#ifndef ENSEMBLE_BASE_H_
+#define ENSEMBLE_BASE_H_
+
+#include "molecules/Component.h"
+
+#include <string>
+#include <vector>
+#include <map>
+
+#include "DomainBase.h"
+
+class MixingRuleBase;
 
 
-//! list of updateable values
+//! list of updatable values
 enum GlobalVariable {
 	NUM_PARTICLES      = 1<<0,
 	ENERGY             = 1<<1,
@@ -12,6 +22,8 @@ enum GlobalVariable {
 	PRESSURE           = 1<<5
 };
 
+class XMLfileUnits;
+class DomainBase;
 
 //! @brief Base class for ensembles
 //! @author Christoph Niethammer <niethammer@hlrs.de>
@@ -20,8 +32,11 @@ enum GlobalVariable {
 //! (\mu p t) variables as well as a function to update global variables.
 class Ensemble {
 public:
-	Ensemble() {}
+	Ensemble() :
+			_domain(nullptr) {
+	}
 	virtual ~Ensemble() {}
+	virtual void readXML(XMLfileUnits& xmlconfig);
 
 	//! @brief Returns the global number of Molecules of the ensemble.
 	virtual unsigned long N() = 0;
@@ -39,6 +54,21 @@ public:
 	//! @brief Calculate global variables
 	//! @param variable Variable to be updated.
 	virtual void updateGlobalVariable(GlobalVariable variable) = 0;
+
+	DomainBase* &domain() { return _domain; }
+	Component* getComponent(int cid) { return &_components[cid]; }
+	Component* getComponent(std::string name) { return &_components[_componentnamesToIds[name]]; }
+	std::vector<Component>* getComponents() { return &_components; }
+	void addComponent(Component& component) { _components.push_back(component); }
+
+	//! prepare the _compIDs used by the Vectorized*CellProcessors
+	void setComponentLookUpIDs();
+
+protected:
+	std::vector<Component> _components;
+	std::map<std::string,int> _componentnamesToIds;
+	std::vector<MixingRuleBase*> _mixingrules;
+	DomainBase *_domain;
 };
 
-#endif
+#endif /* ENSEMBLE_BASE_H_ */

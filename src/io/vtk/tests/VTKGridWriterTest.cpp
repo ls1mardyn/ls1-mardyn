@@ -10,7 +10,7 @@
 #include "Domain.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
 #endif
@@ -33,10 +33,7 @@ VTKGridWriterTest::~VTKGridWriterTest() {
 
 void VTKGridWriterTest::testEmptyGrid() {
 	ParticleContainer* container = Factory::createEmptyParticleContainer(Factory::LinkedCell);
-	LinkedCells* linkedCells = dynamic_cast<LinkedCells*> (container);
-	assert(linkedCells != NULL);
-
-	VTKGridWriter writer(2, "VTKGridWriterTest", *linkedCells);
+	VTKGridWriter writer(2, "VTKGridWriterTest");
 
 #ifdef ENABLE_MPI
 	// in the parallel case we check only that the right files are written.
@@ -45,8 +42,8 @@ void VTKGridWriterTest::testEmptyGrid() {
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	DomainDecomposition domainDecomposition;
 	Domain domain(rank, NULL);
-	writer.doOutput(container, &domainDecomposition, &domain, 1, NULL);
-	writer.doOutput(container, &domainDecomposition, &domain, 2, NULL);
+	writer.doOutput(container, &domainDecomposition, &domain, 1, NULL, NULL);
+	writer.doOutput(container, &domainDecomposition, &domain, 2, NULL, NULL);
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank == 0) {
@@ -67,11 +64,11 @@ void VTKGridWriterTest::testEmptyGrid() {
 	}
 #else
 	Domain domain(0, NULL);
-	DomainDecompDummy dummy;
-	writer.doOutput(container, &dummy, &domain, 1, NULL);
+	DomainDecompBase dummy;
+	writer.doOutput(container, &dummy, &domain, 1, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", !fileExists("VTKGridWriterTest_1.vtu"));
 
-	writer.doOutput(container, &dummy, &domain, 2, NULL);
+	writer.doOutput(container, &dummy, &domain, 2, NULL, NULL);
 	ASSERT_TRUE_MSG("Check that files are written in the right interval.", fileExists("VTKGridWriterTest_2.vtu"));
 
 	removeFile("VTKGridWriterTest_2.vtu");
