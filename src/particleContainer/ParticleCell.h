@@ -53,9 +53,6 @@ public:
 	 */
 	~ParticleCell() ;
 
-	//! removes all elements from the list molecules without deallocating them
-	void removeAllParticles();
-
 	//! removes and deallocates all elements
 	void deallocateAllParticles();
 

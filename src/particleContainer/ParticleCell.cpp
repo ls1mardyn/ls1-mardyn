@@ -23,12 +23,8 @@ ParticleCell::~ParticleCell() {
 //	}
 }
 
-void ParticleCell::removeAllParticles() {
-	_molecules.clear();
-}
-
 void ParticleCell::deallocateAllParticles() {
-	removeAllParticles();
+	_molecules.clear();
 }
 
 bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {

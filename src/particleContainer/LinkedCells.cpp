@@ -701,7 +701,7 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 				}
 
 				if (removeFromContainer == true) {
-					cell.removeAllParticles();
+					cell.deallocateAllParticles();
 				}
 			}
 		}
