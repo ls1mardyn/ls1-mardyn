@@ -121,6 +121,56 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	ASSERT_TRUE_MSG("delete() last", molIt == LC.end()); // cell 4 became empty, we arrived at end()
 }
 
+void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential() {
+	// NOTE: we do not open an OpenMP parallel region!
+	// Hence, this test is always executed sequentially!
+
+	Molecule dummyMolecule1(1, &_components[0], 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule2(2, &_components[0], 2.0,2.0,2.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule3(3, &_components[0], 3.0,3.0,3.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
+	Molecule dummyMolecule4(4, &_components[0], 5.1,5.1,5.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
+
+	LinkedCells LC;
+
+	std::vector<ParticleCell> & cells = LC._cells;
+
+	cells.resize(5);
+
+	// cell[0] is empty
+
+	// cell[1] contains 1,2,3
+	{
+		double l[3] = {0., 0., 0.}, u[3] = {5., 5., 5.};
+		cells[1].setBoxMin(l);
+		cells[1].setBoxMax(u);
+	}
+	cells[1].addParticle(dummyMolecule1);
+	cells[1].addParticle(dummyMolecule2);
+	cells[1].addParticle(dummyMolecule3);
+
+	// cell[2] is empty
+
+	// cell[3] contains 4
+	{
+		double l[3] = {5., 5., 5.}, u[3] = {5.5, 5.5, 5.5};
+		cells[3].setBoxMin(l);
+		cells[3].setBoxMax(u);
+	}
+	cells[3].addParticle(dummyMolecule4);
+
+	// cell[4] is empty
+
+	ParticleIterator begin = LC.iteratorBegin();
+	ParticleIterator end = LC.iteratorEnd();
+
+	// test that molecule IDs are: 1, 2, 3, 4, in this order
+	// and begin and end work correctly
+	unsigned long uID = 1;
+	for (ParticleIterator mol = begin; mol != end; ++mol, ++uID) {
+		ASSERT_EQUAL(uID, (*mol)->id());
+	}
+}
+
 #if 0
 void LinkedCellsTest::testGetHaloBoundaryParticlesDirection() {
 #if 0

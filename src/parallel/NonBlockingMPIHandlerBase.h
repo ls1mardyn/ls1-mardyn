@@ -30,7 +30,8 @@ public:
 	 * @param cellProcessor the cell processor
 	 */
 	NonBlockingMPIHandlerBase(Timer* decompositionTimer,
-			Timer* computationTimer, DomainDecompMPIBase* domainDecomposition,
+			Timer* computationTimer, Timer* forceCalculationTimer,
+			DomainDecompMPIBase* domainDecomposition,
 			ParticleContainer* moleculeContainer, Domain* domain,
 			CellProcessor* cellProcessor);
 
@@ -69,6 +70,7 @@ protected:
 
 	Timer* _decompositionTimer;
 	Timer* _computationTimer;
+	Timer* _forceCalculationTimer;
 	DomainDecompMPIBase* _domainDecomposition;
 	ParticleContainer* _moleculeContainer;
 	Domain* _domain;

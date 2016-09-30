@@ -22,7 +22,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 		CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain),
 		// maybe move the following to somewhere else:
 		_epsRFInvrc3(2. * (domain.getepsilonRF() - 1.) / ((cutoffRadius * cutoffRadius * cutoffRadius) * (2. * domain.getepsilonRF() + 1.))), 
-		_eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0), _ljc_dist_lookup(0) {
+		_eps_sig(), _shift6(), _upot6lj(0.0), _virial(0.0){
 
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VectorizedLJP2PCellProcessor: using no intrinsics." << std::endl;
@@ -76,12 +76,33 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 		}
 	}
 
+	// initialize thread data
+	_numThreads = omp_get_max_threads();
+	global_log->info() << "VectorizedLJP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
+	_threadData.resize(_numThreads);
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		VLJP2PCPThreadData * myown = new VLJP2PCPThreadData();
+		const int myid = omp_get_thread_num();
+		_threadData[myid] = myown;
+	} // end pragma omp parallel
+
 #ifdef ENABLE_MPI
 	_timer.set_sync(false);
 #endif
 }
 
 VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int myid = omp_get_thread_num();
+		delete _threadData[myid];
+	}
 }
 
 void VectorizedLJP2PCellProcessor::printTimers() {
@@ -91,14 +112,42 @@ void VectorizedLJP2PCellProcessor::printTimers() {
 
 void VectorizedLJP2PCellProcessor::initTraversal() {
 	_timer.start();
-	_virial = 0.0;
-	_upot6lj = 0.0;
 
-	global_log->debug() << "VectorizedLJCellProcessor::initTraversal()." << std::endl;
+	#if defined(_OPENMP)
+	#pragma omp master
+	#endif
+	{
+		_upot6lj = 0.0;
+		_virial = 0.0;
+	} // end pragma omp master
+
+	global_log->debug() << "VectorizedLJP2PCellProcessor::initTraversal()." << std::endl;
 }
 
 
 void VectorizedLJP2PCellProcessor::endTraversal() {
+	double glob_upot6lj = 0.0;
+	double glob_virial = 0.0;
+
+	#if defined(_OPENMP)
+	#pragma omp parallel reduction(+:glob_upot6lj, glob_virial)
+	#endif
+	{
+		const int tid = omp_get_thread_num();
+
+		// reduce vectors and clear local variable
+		double thread_upot = 0.0, thread_virial = 0.0;
+
+		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
+		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
+
+		// add to global sum
+		glob_upot6lj += thread_upot;
+		glob_virial += thread_virial;
+	} // end pragma omp parallel reduction
+
+	_upot6lj = glob_upot6lj;
+	_virial = glob_virial;
 	_domain.setLocalVirial(_virial /*+ 3.0 * _myRF*/);
 	_domain.setLocalUpot(_upot6lj / 6.0 /*+ _upotXpoles + _myRF*/);
 	_timer.stop();
@@ -175,12 +224,15 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	}
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
-void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
+	const int tid = omp_get_thread_num();
+	VLJP2PCPThreadData &my_threadData = *_threadData[tid];
+
 	// initialize dist lookups
-	if(_centers_dist_lookup.get_size() < soa2._ljc_size){
-		soa2.resizeLastZero(_centers_dist_lookup, soa2._ljc_size, soa2._ljc_num);
+	if(my_threadData._centers_dist_lookup.get_size() < soa2._ljc_size){
+		soa2.resizeLastZero(my_threadData._centers_dist_lookup, soa2._ljc_size, soa2._ljc_num);
 	}
-	_ljc_dist_lookup = _centers_dist_lookup;
+	my_threadData._ljc_dist_lookup = my_threadData._centers_dist_lookup;
 
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
@@ -214,7 +266,7 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 	      double * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
 	const size_t * const soa2_ljc_id = soa2._ljc_id;
 
-	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = _ljc_dist_lookup;
+	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
 	vcp_double_vec sum_upot6lj = VCP_SIMD_ZEROV;
 	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
@@ -384,12 +436,10 @@ void VectorizedLJP2PCellProcessor :: _calculatePairs(const CellDataSoA & soa1, c
 				i_ljc_idx++;
 			}
 		}
-
 	}
 
-	hSum_Add_Store(&_upot6lj, sum_upot6lj);
-	hSum_Add_Store(&_virial, sum_virial);
-
+	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
+	hSum_Add_Store(my_threadData._virialV, sum_virial);
 }
 
 void VectorizedLJP2PCellProcessor::processCell(ParticleCell & c) {

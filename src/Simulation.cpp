@@ -9,6 +9,8 @@
 #include <sstream>
 #include <string>
 
+#include "WrapOpenMP.h"
+
 #include "Common.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
@@ -713,10 +715,17 @@ void Simulation::prepare_start() {
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
 	// or should we better call the integrator->eventForcesCalculated?
-	for (Molecule* tM = _moleculeContainer->begin(); tM
-			!= _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-		tM->calcFM();
-	}
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = _moleculeContainer->iteratorBegin();
+		const ParticleIterator end = _moleculeContainer->iteratorEnd();
+
+		for (ParticleIterator i = begin; i != end; ++i){
+			(*i)->calcFM();
+		}
+	} // end pragma omp parallel
 
 	if (_pressureGradient->isAcceleratingUniformly()) {
 		global_log->info() << "Initialising uniform acceleration." << endl;
@@ -756,8 +765,8 @@ void Simulation::prepare_start() {
 		}
                 map<unsigned, CavityEnsemble>::iterator ceit;
 		for (ceit = _mcav.begin(); ceit != _mcav.end(); ceit++) {
-                   ceit->second.submitTemperature(Tcur);
-                }
+		   ceit->second.submitTemperature(Tcur);
+		}
 	}
 
 	// initialize output
@@ -811,9 +820,9 @@ void Simulation::simulate() {
 	Timer perStepIoTimer; /* timer for io in simulation loop */
 	Timer ioTimer; /* timer for final io */
 	// temporary addition until merging OpenMP is complete
-	#ifdef ENABLE_OPENMP
-		Timer forceCalculationTimer; /* timer for final io */
-	#endif
+	//#if defined(_OPENMP)
+	Timer forceCalculationTimer; /* timer for force calculation */
+	//#endif
 
 	loopTimer.set_sync(true);
 #if WITH_PAPI
@@ -881,13 +890,13 @@ void Simulation::simulate() {
 		 *the halo MUST NOT be present*/
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
-			particleNoTest = 0;
-                        for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
-                        particleNoTest++;
-                        global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
+		particleNoTest = 0;
+		for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
+			particleNoTest++;
+		global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
-		 if(_doAlignCentre && !(_simstep % _alignmentInterval))
+        if(_doAlignCentre && !(_simstep % _alignmentInterval))
 		{
 			if(_componentSpecificAlignment){
 				//! !!! the sequence of calling the two methods MUST be: FIRST determineXZShift() THEN determineYShift() !!!
@@ -912,7 +921,7 @@ void Simulation::simulate() {
 #ifndef ENABLE_MPI			
 			particleNoTest = 0;
 			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
+				particleNoTest++;
 			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
@@ -928,8 +937,9 @@ void Simulation::simulate() {
 #endif
 
 		if (overlapCommComp) {
-			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer);
-		} else {
+			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer, forceCalculationTimer);
+		}
+		else {
 			decompositionTimer.start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition"
@@ -942,14 +952,14 @@ void Simulation::simulate() {
 			global_log->debug() << "Traversing pairs" << endl;
 			computationTimer.start();
 			// temporary addition until merging OpenMP is complete
-			#ifdef ENABLE_OPENMP
-				forceCalculationTimer.start();
-			#endif
+			//#if defined(_OPENMP)
+			forceCalculationTimer.start();
+			//#endif
 			_moleculeContainer->traverseCells(*_cellProcessor);
 			// temporary addition until merging OpenMP is complete
-			#ifdef ENABLE_OPENMP
-				forceCalculationTimer.stop();
-			#endif
+			//#if defined(_OPENMP)
+			forceCalculationTimer.stop();
+			//#endif
 			computationTimer.stop();
 			_loopCompTime += computationTimer.get_etime() - startEtime;
 			_loopCompTimeSteps ++;
@@ -1009,30 +1019,30 @@ void Simulation::simulate() {
 		}
 		
 		if(_simstep >= _initStatistics)
-                {
-                   map<unsigned, CavityEnsemble>::iterator ceit;
-                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
-                   {
-                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
-                      {
-                         global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
-                         
-                         this->_moleculeContainer->cavityStep(
-                            &ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
-                         );
-                      }
-                           
-                      if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
-                          (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
-                          (!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
-                      {                                   
-                         this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
-                      }
-                   }
-                }
+		{
+			map<unsigned, CavityEnsemble>::iterator ceit;
+			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
+			{
+				if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
+				{
+					global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
+
+					this->_moleculeContainer->cavityStep(
+							&ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
+					);
+				}
+
+				if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
+						(!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
+						(!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
+				{
+					this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
+				}
+			}
+		}
 		
 		// clear halo
-	        //
+	    //
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
@@ -1079,79 +1089,78 @@ void Simulation::simulate() {
 		
 		// scale velocity and angular momentum
 		if ( !_domain->NVE() && _temperatureControl == NULL){
-		if (_thermostatType ==VELSCALE_THERMOSTAT){
-			global_log->debug() << "Velocity scaling" << endl;
-			if (_domain->severalThermostats()) {
-				_velocityScalingThermostat.enableComponentwise();
-				for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->getComponents()->size(); cid++) {
-					int thermostatId = _domain->getThermostat(cid);
-					_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
-					_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
-					global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
-					<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
-					<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << endl;
-					double v[3];
-					for(int d = 0; d < 3; d++) {
-						v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
+			if (_thermostatType ==VELSCALE_THERMOSTAT){
+				global_log->debug() << "Velocity scaling" << endl;
+				if (_domain->severalThermostats()) {
+					_velocityScalingThermostat.enableComponentwise();
+					for(unsigned int cid = 0; cid < global_simulation->getEnsemble()->getComponents()->size(); cid++) {
+						int thermostatId = _domain->getThermostat(cid);
+						_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
+						_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
+						global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
+						<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
+						<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << endl;
+						double v[3];
+						for(int d = 0; d < 3; d++) {
+							v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
+						}
+						_velocityScalingThermostat.setVelocity(thermostatId, v);
 					}
-					_velocityScalingThermostat.setVelocity(thermostatId, v);
 				}
+				else {
+					_velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
+					_velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
+					/* TODO */
+					// Undirected global thermostat not implemented!
+				}
+				_velocityScalingThermostat.apply(_moleculeContainer);
+
+
 			}
-			else {
-				_velocityScalingThermostat.setGlobalBetaTrans(_domain->getGlobalBetaTrans());
-				_velocityScalingThermostat.setGlobalBetaRot(_domain->getGlobalBetaRot());
-				/* TODO */
-				// Undirected global thermostat not implemented!
+			else if(_thermostatType == ANDERSEN_THERMOSTAT){ //! the Andersen Thermostat
+				//global_log->info() << "Andersen Thermostat" << endl;
+				double nuDt = _nuAndersen * _integrator->getTimestepLength();
+				//global_log->info() << "Timestep length = " << _integrator->getTimestepLength() << " nuDt = " << nuDt << "\n";
+				unsigned numPartThermo = 0; // for testing reasons
+				double tTarget;
+				double stdDevTrans, stdDevRot;
+				if(_domain->severalThermostats()) {
+					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+						if (_rand.rnd() < nuDt){
+							numPartThermo++;
+							int thermostat = _domain->getThermostat(tM->componentid());
+							tTarget = _domain->getTargetTemperature(thermostat);
+							stdDevTrans = sqrt(tTarget/tM->gMass());
+							for(unsigned short d = 0; d < 3; d++){
+								stdDevRot = sqrt(tTarget*tM->getI(d));
+								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
+								tM->setD(d,_rand.gaussDeviate(stdDevRot));
+							}
+						}
+					}
+				}
+				else{
+					tTarget = _domain->getTargetTemperature(0);
+					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+						if (_rand.rnd() < nuDt){
+							numPartThermo++;
+							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
+							stdDevTrans = sqrt(tTarget/tM->gMass());
+							for(unsigned short d = 0; d < 3; d++){
+								stdDevRot = sqrt(tTarget*tM->getI(d));
+								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
+								tM->setD(d,_rand.gaussDeviate(stdDevRot));
+							}
+						}
+					}
+				}
+				//		    global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
 			}
-			_velocityScalingThermostat.apply(_moleculeContainer);
 
 
-		}
-		  else if(_thermostatType == ANDERSEN_THERMOSTAT){ //! the Andersen Thermostat
-//		    global_log->info() << "Andersen Thermostat" << endl;
-		    double nuDt = _nuAndersen * _integrator->getTimestepLength();
-//		    global_log->info() << "Timestep length = " << _integrator->getTimestepLength() << " nuDt = " << nuDt << "\n";
-		    unsigned numPartThermo = 0; // for testing reasons
-		    double tTarget;
-		    double stdDevTrans, stdDevRot;
-		    if(_domain->severalThermostats()) {
-		      for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-			if (_rand.rnd() < nuDt){
-			  numPartThermo++;
-			  int thermostat = _domain->getThermostat(tM->componentid());
-			  tTarget = _domain->getTargetTemperature(thermostat);
-			  stdDevTrans = sqrt(tTarget/tM->gMass());
-			  for(unsigned short d = 0; d < 3; d++){
-			    stdDevRot = sqrt(tTarget*tM->getI(d));
-			    tM->setv(d,_rand.gaussDeviate(stdDevTrans));
-			    tM->setD(d,_rand.gaussDeviate(stdDevRot));
-			  }
-			}
-		      }
-		    }
-		    else{
-		      tTarget = _domain->getTargetTemperature(0);
-		      for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-			if (_rand.rnd() < nuDt){
-			  numPartThermo++;
-			  // action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
-			  stdDevTrans = sqrt(tTarget/tM->gMass());
-			  for(unsigned short d = 0; d < 3; d++){
-			    stdDevRot = sqrt(tTarget*tM->getI(d));
-			    tM->setv(d,_rand.gaussDeviate(stdDevTrans));
-			    tM->setD(d,_rand.gaussDeviate(stdDevRot));
-			  }
-			}
-		      }
-		    }
-//		    global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
-		  }
-
-
-		// if(_mirror && _applyMirror){
-		//  _mirror->VelocityChange(_moleculeContainer, _domain);
-		//}
-
+			// if(_mirror && _applyMirror){
+			//  _mirror->VelocityChange(_moleculeContainer, _domain);
+			//}
 
 		}
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
@@ -1235,9 +1244,9 @@ void Simulation::simulate() {
 
 	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
 	// temporary addition until merging OpenMP is complete
-	#ifdef ENABLE_OPENMP
-		global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
-	#endif
+	//#if defined(_OPENMP)
+	global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
+	//#endif
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
@@ -1331,24 +1340,26 @@ void Simulation::updateParticleContainerAndDecomposition() {
 }
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(
-		Timer& decompositionTimer, Timer& computationTimer) {
+		Timer& decompositionTimer, Timer& computationTimer, Timer& forceCalculationTimer) {
 
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
 
 	//TODO: exchange the constructor for a real non-blocking version
 
-#ifdef ENABLE_MPI
-#ifdef ENABLE_OVERLAPPING
-	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIMultiStepHandler(&decompositionTimer, &computationTimer,
-			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
-#else
-	NonBlockingMPIHandlerBase* nonBlockingMPIHandler = new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer,
-			static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
-#endif
+	#ifdef ENABLE_MPI
+		#ifdef ENABLE_OVERLAPPING
+			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
+					new NonBlockingMPIMultiStepHandler(&decompositionTimer, &computationTimer, &forceCalculationTimer,
+							static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+		#else
+			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
+					new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer, &forceCalculationTimer,
+							static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+		#endif
 
-	nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
-#endif
+		nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
+	#endif
 }
 
 

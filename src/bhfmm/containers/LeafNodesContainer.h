@@ -38,12 +38,17 @@ public:
 	void clearParticles();
 	void traverseCells(SimpleCellProcessor& cellProcessor);
 	void traverseCellPairs(VectorizedChargeP2PCellProcessor& cellProcessor);
+	void traverseCellPairsOrig(VectorizedChargeP2PCellProcessor& cellProcessor);
+	void traverseCellPairsC08(VectorizedChargeP2PCellProcessor& cellProcessor);
 
 private:
 	void initializeCells();
 	long int cellIndexOf3DIndex(int xIndex, int yIndex, int zIndex) const;
 	void calculateNeighbourIndices();
+	void calculateCellPairOffsets();
 	unsigned long int getCellIndexOfMolecule(Molecule* molecule) const;
+	//! @brief given the index in the cell vector, return the index of the cell.
+	void threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const;
 
 	bool _periodicBC;
 
@@ -59,6 +64,12 @@ private:
 	std::vector<unsigned long> _backwardNeighbourOffsets;
 	unsigned _maxNeighbourOffset;
 	unsigned _minNeighbourOffset;
+
+	// addition for compact SimpleMD-style traversal
+	std::vector<std::pair<unsigned long, unsigned long> > _cellPairOffsets;
+
+	unsigned int _numActiveColours;
+	std::vector<std::vector<long int> > _cellIndicesPerColour;
 
 };
 

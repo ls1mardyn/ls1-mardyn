@@ -16,6 +16,7 @@
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 #include "particleContainer/adapter/CellDataSoA.h"
+#include "WrapOpenMP.h"
 
 class Component;
 class Domain;
@@ -75,10 +76,12 @@ private:
 	 * \brief An aligned array of doubles.
 	 */
 	typedef AlignedArray<double> DoubleArray;
+
 	/**
 	 * \brief a vector of Molecule pointers.
 	 */
 	typedef std::vector<Molecule *> MoleculeList;
+
 	/**
 	 * \brief The Domain where macroscopic values will be stored.
 	 */
@@ -94,17 +97,37 @@ private:
 	 */
 	double _virial;
 
-	/**
-	 * \brief array, that stores the dist_lookup.
-	 * For all vectorization methods, that utilize masking, this stores masks.
-	 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
-	 */
-	AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
+	struct VCP2PCPThreadData {
+	public:
+		VCP2PCPThreadData(): _charges_dist_lookup(nullptr){
+			_upotXpolesV.resize(_numVectorElements);
+			_virialV.resize(_numVectorElements);
 
-	/**
-	 * \brief pointer to the starting point of the dist_lookup of the charge particles.
-	 */
-	vcp_lookupOrMask_single* _charges_dist_lookup;
+			for (size_t j = 0; j < _numVectorElements; ++j) {
+				_upotXpolesV[j] = 0.0;
+				_virialV[j] = 0.0;
+			}
+		}
+
+		/**
+		 * \brief array, that stores the dist_lookup.
+		 * For all vectorization methods, that utilize masking, this stores masks.
+		 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
+		 */
+		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
+
+		/**
+		 * \brief pointer to the starting point of the dist_lookup of the charge particles.
+		 */
+		vcp_lookupOrMask_single* _charges_dist_lookup;
+
+		AlignedArray<double> _upotXpolesV, _virialV;
+	};
+
+	std::vector<VCP2PCPThreadData *> _threadData;
+
+	static const size_t _numVectorElements = VCP_VEC_SIZE;
+	size_t _numThreads;
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyCharge(

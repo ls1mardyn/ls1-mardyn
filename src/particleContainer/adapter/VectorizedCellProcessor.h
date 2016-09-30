@@ -14,10 +14,7 @@
 #include <cmath>
 #include "vectorization/SIMD_TYPES.h"
 #include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-
-#ifdef ENABLE_OPENMP
-#include <omp.h>
-#endif
+#include "WrapOpenMP.h"
 
 class Component;
 class Domain;
@@ -192,11 +189,7 @@ private:
 		AlignedArray<double> _upot6ljV, _upotXpolesV, _virialV, _myRFV;
 	};
 
-	#ifdef ENABLE_OPENMP
-		std :: vector<VLJCPThreadData * > _threadData;
-	#else
-		VLJCPThreadData* _threadData;
-	#endif
+	std::vector<VLJCPThreadData *> _threadData;
 
 	static const size_t _numVectorElements = VCP_VEC_SIZE;
 	size_t _numThreads;

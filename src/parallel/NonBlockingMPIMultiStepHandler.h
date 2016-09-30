@@ -21,7 +21,8 @@ public:
 	 * @param cellProcessor the cell processor
 	 */
 	NonBlockingMPIMultiStepHandler(Timer* decompositionTimer,
-			Timer* computationTimer, DomainDecompMPIBase* domainDecomposition,
+			Timer* computationTimer, Timer* forceCalculationTimer,
+			DomainDecompMPIBase* domainDecomposition,
 			ParticleContainer* moleculeContainer, Domain* domain,
 			CellProcessor* cellProcessor);
 

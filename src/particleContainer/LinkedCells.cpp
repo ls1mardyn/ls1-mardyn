@@ -100,11 +100,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	calculateCellPairOffsets();
 
 	// get number of active threads
-	#ifdef ENABLE_OPENMP
-		int num_active_threads = omp_get_max_threads();
-	#else
-		int num_active_threads = 1;
-	#endif
+	int num_active_threads = omp_get_max_threads();
 
 	int strides[3];
 	if(num_active_threads > 1) {
@@ -238,6 +234,9 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 void LinkedCells::update() {
 	std::vector<ParticleCell>::iterator celliter;
 
+	#if defined(_OPENMP)
+	#pragma omp parallel for schedule(static, 1)
+	#endif
 	for (celliter = _cells.begin(); celliter != _cells.end(); ++celliter) {
 
 		std::vector<Molecule> & molsToSort =
@@ -266,6 +265,60 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	}
 
 	return wasInserted;
+}
+
+int LinkedCells::addParticles(std::vector<Molecule*>& particles, bool checkWhetherDuplicate) {
+	int oldNumberOfParticles = _cells.size();
+
+	typedef std::vector<Molecule*>::size_type index_t;
+	static std::vector< std::vector<ParticleCell>::size_type > index_vector;
+	index_vector.resize(particles.size());
+
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const int thread_id = omp_get_thread_num();
+		const int num_threads = omp_get_num_threads();
+
+		const index_t start = (thread_id    ) * particles.size() / num_threads;
+		const index_t end   = (thread_id + 1) * particles.size() / num_threads;
+		for (index_t i = start; i < end; ++i) {
+			Molecule* particle = particles[i];
+			#ifndef NDEBUG
+				assert(particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
+			#endif
+
+			const unsigned long cellIndex = getCellIndexOfMolecule(particle);
+			assert(cellIndex < _cells.size());
+			index_vector[i] = cellIndex;
+		}
+
+		#if defined(_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		typedef std::vector<ParticleCell>::size_type cell_index_t;
+		const cell_index_t cells_start = (thread_id    ) * _cells.size() / num_threads;
+		const cell_index_t cells_end   = (thread_id + 1) * _cells.size() / num_threads;
+
+		for (index_t i = 0; i < particles.size(); ++i) {
+			index_t index = index_vector[i];
+			if (cells_start <= index and index < cells_end) {
+				_cells[index].addParticle(*particles[i], checkWhetherDuplicate);
+				delete particles[i];
+			}
+		}
+	} // end pragma omp parallel
+
+	index_vector.clear();
+
+	int numberOfAddedParticles = _cells.size() - oldNumberOfParticles;
+	global_log->debug()<<"In LinkedCells::addParticles :"<<endl;
+	global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<endl;
+	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<endl;
+
+	return numberOfAddedParticles;
 }
 
 /**
@@ -452,7 +505,7 @@ void LinkedCells::traverseCells(CellProcessor& cellProcessor) {
 		global_simulation->exit(1);
 	}
 
-	#ifdef ENABLE_OPENMP
+	#if defined(_OPENMP)
 		traverseCellsC08(cellProcessor);
 	#else
 		traverseCellsOrig(cellProcessor);
@@ -481,57 +534,59 @@ void LinkedCells::traverseCellsOrig(CellProcessor& cellProcessor) {
 }
 
 void LinkedCells::traverseCellsC08(CellProcessor& cellProcessor){
-	#ifdef ENABLE_OPENMP
-		cellProcessor.initTraversal();
+	cellProcessor.initTraversal();
 
-		#pragma omp parallel
-		{
-			for (unsigned col = 0; col < _numActiveColours; ++col) {
-				const int numIndicesOfThisColour = _cellIndicesPerColour[col].size();
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		for (unsigned col = 0; col < _numActiveColours; ++col) {
+			const int numIndicesOfThisColour = _cellIndicesPerColour[col].size();
 
-				#pragma omp for schedule(dynamic)
-				for(int i = 0; i < numIndicesOfThisColour; ++i) {
-					long int baseIndex = _cellIndicesPerColour[col][i];
+			#if defined(_OPENMP)
+			#pragma omp for schedule(dynamic)
+			#endif
+			for(int i = 0; i < numIndicesOfThisColour; ++i) {
+				long int baseIndex = _cellIndicesPerColour[col][i];
 
-					const int num_pairs = _cellPairOffsets.size();
-					for(int j = 0; j < num_pairs; ++j) {
-						pair<long int, long int> current_pair = _cellPairOffsets[j];
+				const int num_pairs = _cellPairOffsets.size();
+				for(int j = 0; j < num_pairs; ++j) {
+					pair<long int, long int> current_pair = _cellPairOffsets[j];
 
-						long int offset1 = current_pair.first;
-						long int cellIndex1 = baseIndex + offset1;
-						if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
-							continue;
+					long int offset1 = current_pair.first;
+					long int cellIndex1 = baseIndex + offset1;
+					if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
+						continue;
 
-						long int offset2 = current_pair.second;
-						long int cellIndex2 = baseIndex + offset2;
-						if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
-							continue;
+					long int offset2 = current_pair.second;
+					long int cellIndex2 = baseIndex + offset2;
+					if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
+						continue;
 
-						ParticleCell& cell1 = _cells[cellIndex1];
-						ParticleCell& cell2 = _cells[cellIndex2];
+					ParticleCell& cell1 = _cells[cellIndex1];
+					ParticleCell& cell2 = _cells[cellIndex2];
 
-						if(cell1.isHaloCell() and cell2.isHaloCell()) {
-							continue;
-						}
+					if(cell1.isHaloCell() and cell2.isHaloCell()) {
+						continue;
+					}
 
-						if(cellIndex1 == cellIndex2) {
-							cellProcessor.processCell(cell1);
+					if(cellIndex1 == cellIndex2) {
+						cellProcessor.processCell(cell1);
+					}
+					else {
+						if(!cell1.isHaloCell()) {
+							cellProcessor.processCellPair(cell1, cell2);
 						}
 						else {
-							if(!cell1.isHaloCell()) {
-								cellProcessor.processCellPair(cell1, cell2);
-							}
-							else {
-								cellProcessor.processCellPair(cell2, cell1);
-							}
+							cellProcessor.processCellPair(cell2, cell1);
 						}
 					}
-				} // for-loop over indices of this colour
-			} // for-loop over colours
-		} // end pragma omp parallel
+				}
+			} // for-loop over indices of this colour
+		} // for-loop over colours
+	} // end pragma omp parallel
 
-		cellProcessor.endTraversal();
-	#endif
+	cellProcessor.endTraversal();
 }
 
 unsigned long LinkedCells::getNumberOfParticles() {
@@ -639,8 +694,10 @@ void LinkedCells::deleteOuterParticles() {
 	}
 
 	vector<unsigned long>::iterator cellIndexIter;
-	for (cellIndexIter = _haloCellIndices.begin();
-			cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
+	#if defined(_OPENMP)
+	#pragma omp parallel for schedule(static, 1)
+	#endif
+	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
 		ParticleCell& currentCell = _cells[*cellIndexIter];
 		currentCell.deallocateAllParticles();
 	}
@@ -1260,23 +1317,32 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 }
 
 void LinkedCells::updateInnerMoleculeCaches(){
-	for (ParticleCell& cell : _cells){
-		if(cell.isInnerCell()){
-			cell.buildSoACaches();
+	#if defined(_OPENMP)
+	#pragma omp parallel for schedule(static)
+	#endif
+	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+		if(_cells[cellIndex].isInnerCell()){
+			_cells[cellIndex].buildSoACaches();
 		}
 	}
 }
 
 void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
-	for (ParticleCell& cell : _cells) {
-		if (cell.isHaloCell() or cell.isBoundaryCell()) {
-			cell.buildSoACaches();
+	#if defined(_OPENMP)
+	#pragma omp parallel for schedule(static)
+	#endif
+	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+		if (_cells[cellIndex].isHaloCell() or _cells[cellIndex].isBoundaryCell()) {
+			_cells[cellIndex].buildSoACaches();
 		}
 	}
 }
 
 void LinkedCells::updateMoleculeCaches() {
-	for (ParticleCell& cell : _cells) {
-		cell.buildSoACaches();
+	#if defined(_OPENMP)
+	#pragma omp parallel for schedule(static)
+	#endif
+	for (long int cellIndex = 0; cellIndex < (long int) _cells.size(); cellIndex++) {
+		_cells[cellIndex].buildSoACaches();
 	}
 }

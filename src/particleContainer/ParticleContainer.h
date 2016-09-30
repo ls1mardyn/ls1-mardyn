@@ -22,6 +22,7 @@
 
 #include <list>
 #include <vector>
+#include "ParticleIterator.h"
 
 class CavityEnsemble;
 class CellProcessor;
@@ -116,6 +117,10 @@ public:
 	//! @return true if successful, false if particle outside domain
 	virtual bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) = 0;
 
+	//! @brief adds a whole vector of particles
+	//! @param particles reference to a vector of pointers to particles
+	virtual int addParticles(std::vector<Molecule*>& particles, bool checkWhetherDuplicate=false) = 0;
+
 	//! @brief traverse pairs which are close to each other
 	//!
 	//! Only interactions between particles which have a distance which is not
@@ -139,6 +144,10 @@ public:
 	virtual void traverseNonInnermostCells(CellProcessor& cellProcessor) = 0;
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
+
+	virtual ParticleIterator iteratorBegin () = 0;
+	
+	virtual ParticleIterator iteratorEnd () = 0;
 
 	//! @return the number of particles stored in this container
 	//!
@@ -234,9 +243,9 @@ public:
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
 
-        virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
-        virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
-        virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
+	virtual int countNeighbours(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor, double RR) = 0;
+	virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
+	virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
 	
 	//! @brief Update the caches of the molecules, that lie in inner cells.
 	//! The caches of boundary and halo cells is not updated.

@@ -261,7 +261,7 @@ public:
 	 * @param decompositionTimer The timer for the decomposition
 	 * @param computationTimer The timer for the computation
 	 */
-	void performOverlappingDecompositionAndCellTraversalStep(Timer& decompositionTimer, Timer& computationTimer);
+	void performOverlappingDecompositionAndCellTraversalStep(Timer& decompositionTimer, Timer& computationTimer, Timer& forceCalculationTimer);
 
 	/**
 	 * Set the private _domainDecomposition variable to a new pointer.

@@ -5,11 +5,11 @@
 #include <array>
 
 #include "particleContainer/ParticleContainer.h"
+#include "particleContainer/ParticleIterator.h"
 #include "particleContainer/ParticleCell.h"
 
-#ifdef ENABLE_OPENMP
-#include <omp.h>
-#endif
+#include "WrapOpenMP.h"
+
 
 //! @brief Linked Cell Data Structure
 //! @author Martin Buchholz
@@ -114,6 +114,8 @@ public:
 	void update();
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
+
+	int addParticles(std::vector<Molecule*>& particles, bool checkWhetherDuplicate=false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -257,6 +259,17 @@ public:
 
 	// documentation in base class
 	virtual void updateMoleculeCaches();
+
+	ParticleIterator iteratorBegin () {
+		ParticleIterator :: CellIndex_T offset = omp_get_thread_num();
+		ParticleIterator :: CellIndex_T stride = omp_get_num_threads();
+
+		return ParticleIterator(&_cells, offset, stride);
+	}
+	
+	ParticleIterator iteratorEnd () {
+		return ParticleIterator :: invalid();
+	}
 
 private:
 	//####################################
