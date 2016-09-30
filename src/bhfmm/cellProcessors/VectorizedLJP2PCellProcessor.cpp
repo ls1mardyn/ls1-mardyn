@@ -32,8 +32,8 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	global_log->info() << "VectorizedLJP2PCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedLJP2PCellProcessor: using AVX2 intrinsics." << std::endl;
-#elif VCP_VEC_TYPE==VCP_VEC_MIC
-	global_log->info() << "VectorizedLJP2PCellProcessor: using MIC intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_KNC
+	global_log->info() << "VectorizedLJP2PCellProcessor: using KNC intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
@@ -371,7 +371,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 						sum_Vz1 = sum_Vz1 + Vz;
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
 					if(remainderM != 0x00){

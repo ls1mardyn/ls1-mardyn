@@ -28,7 +28,7 @@ template <class MaskGatherChooser>
 static vcp_inline
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
 		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))){
-#if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER
 	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -55,14 +55,14 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 
 	eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
 	sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
-#elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
+#elif VCP_VEC_TYPE==VCP_VEC_KNC //mic knows gather, too
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
 	__m512i indices = _mm512_load_epi64(id_j_shifted);
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
-#elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 	__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
@@ -84,7 +84,7 @@ template <class MaskGatherChooser>
 static vcp_inline
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
-#if VCP_VEC_TYPE != VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER
 	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -111,12 +111,12 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
 	const __m256i indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), VCP_SIMD_ONESVM);
 	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
-#elif VCP_VEC_TYPE==VCP_VEC_MIC //mic knows gather, too
+#elif VCP_VEC_TYPE==VCP_VEC_KNC //mic knows gather, too
 		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
 		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
 	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
-#elif VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 	__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
@@ -152,7 +152,7 @@ void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 			vcp_simd_maskload(mem_addr, memoryMask_first)
 		)
 	);
-#elif VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 	*mem_addr += _mm512_reduce_add_pd(a);
 #endif
 }
@@ -233,7 +233,7 @@ public:
 
 	inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{
-#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER
 		return InitJ(i);
 #else
 		return 0;

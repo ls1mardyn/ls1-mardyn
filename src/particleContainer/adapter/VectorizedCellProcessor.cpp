@@ -31,8 +31,8 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	global_log->info() << "VectorizedCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedCellProcessor: using AVX2 intrinsics." << std::endl;
-#elif VCP_VEC_TYPE==VCP_VEC_MIC
-	global_log->info() << "VectorizedCellProcessor: using MIC intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_KNC
+	global_log->info() << "VectorizedCellProcessor: using KNC intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
@@ -1031,7 +1031,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						sum_Vz1 = sum_Vz1 + Vz;
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
 					if(remainderM != 0x00){
@@ -1171,7 +1171,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
@@ -1307,7 +1307,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						sum_M_z = vcp_simd_add(sum_M_z, M_z);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
@@ -1461,7 +1461,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						sum_M1_z = vcp_simd_add(sum_M1_z, M_z);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
@@ -1640,7 +1640,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
@@ -1800,7 +1800,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
@@ -1960,7 +1960,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
@@ -2143,7 +2143,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_z, j, M2_z, lookupORforceMask);//newton 3
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
@@ -2299,7 +2299,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
@@ -2460,7 +2460,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){

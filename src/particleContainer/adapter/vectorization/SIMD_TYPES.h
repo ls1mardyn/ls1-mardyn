@@ -22,8 +22,8 @@
 #define VCP_VEC_SSE3 1
 #define VCP_VEC_AVX 2
 #define VCP_VEC_AVX2 3
-#define VCP_VEC_MIC 4
-#define VCP_VEC_MIC_GATHER 5
+#define VCP_VEC_KNC 4
+#define VCP_VEC_KNC_GATHER 5
 
 
 typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
@@ -36,9 +36,9 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 // define symbols for vectorization
 #if defined(__MIC__)
 	#if defined(__VCP_GATHER__)
-		#define VCP_VEC_TYPE VCP_VEC_MIC_GATHER
+		#define VCP_VEC_TYPE VCP_VEC_KNC_GATHER
 	#else
-		#define VCP_VEC_TYPE VCP_VEC_MIC
+		#define VCP_VEC_TYPE VCP_VEC_KNC
 	#endif
 #elif defined(__AVX2__) && defined(__FMA__)
 	#define VCP_VEC_TYPE VCP_VEC_AVX2
@@ -61,7 +61,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #endif
 
 // Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 	#include "immintrin.h"
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
@@ -107,19 +107,19 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
-#elif VCP_VEC_TYPE==VCP_VEC_MIC or VCP_VEC_TYPE==VCP_VEC_MIC_GATHER//mic
+#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER//mic
 	typedef __m512d vcp_double_vec;
 	#define VCP_VEC_SIZE 8u
 	#define VCP_VEC_SIZE_M1 7u
 
 	typedef __mmask8 vcp_mask_vec;
 	typedef __mmask8 vcp_mask_single;
-	#if VCP_VEC_TYPE==VCP_VEC_MIC
+	#if VCP_VEC_TYPE==VCP_VEC_KNC
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 8
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 7
 		typedef __mmask8 vcp_lookupOrMask_vec;
 		typedef __mmask8 vcp_lookupOrMask_single;
-	#else  // VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+	#else  // VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 		typedef __m512i vcp_lookupOrMask_vec;

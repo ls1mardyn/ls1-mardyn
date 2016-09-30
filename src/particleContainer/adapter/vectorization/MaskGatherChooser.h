@@ -49,7 +49,7 @@ public:
 	}
 
 };
-#if VCP_VEC_TYPE==VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 class GatherChooser { //MIC ONLY!!!
 private:
 	__m512i indices;
@@ -137,7 +137,7 @@ public:
 };
 #endif
 
-#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER
 	typedef MaskingChooser MaskGatherC;
 #else
 	typedef GatherChooser MaskGatherC;
