@@ -49,7 +49,7 @@ public:
 	}
 
 };
-#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 class GatherChooser { //MIC ONLY!!!
 private:
 	__m512i indices;
@@ -67,8 +67,12 @@ public:
 	}
 
 	inline void storeCalcDistLookup(size_t j, vcp_mask_vec forceMask){
-		_mm512_mask_packstorelo_epi32(storeCalcDistLookupLocation + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
-		_mm512_mask_packstorehi_epi32(storeCalcDistLookupLocation + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			_mm512_mask_packstorelo_epi32(storeCalcDistLookupLocation + counter, static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
+			_mm512_mask_packstorehi_epi32(storeCalcDistLookupLocation + counter + (64 / sizeof(vcp_lookupOrMask_single)), static_cast<__mmask16>(forceMask), indices);//these two lines are an unaligned store
+		#else
+			_mm512_mask_compressstoreu_epi32(storeCalcDistLookupLocation + counter, static_cast<__mmask16>(forceMask), indices);
+		#endif
 
 		static const __m512i eight = _mm512_set_epi32(
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -76,7 +80,7 @@ public:
 		);
 
 		indices = _mm512_add_epi32(indices, eight);
-		counter += _popcnt32(forceMask);
+		counter += _popcnt64(forceMask);
 	}
 	inline int getCount(){
 		return counter;
@@ -86,34 +90,58 @@ public:
 	}
 
 	inline static vcp_lookupOrMask_vec loadLookupOrForceMask(const vcp_lookupOrMask_single* const dist_lookup, const size_t& offset){
-		return _mm512_mask_loadunpackhi_epi32(
-			_mm512_mask_loadunpacklo_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF), (dist_lookup + offset)),
-			static_cast<__mmask16>(0x00FF),
-			dist_lookup + offset + (64 / sizeof(vcp_lookupOrMask_single))
-		);
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			return _mm512_mask_loadunpackhi_epi32(
+				_mm512_mask_loadunpacklo_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF), (dist_lookup + offset)),
+				static_cast<__mmask16>(0x00FF),
+				dist_lookup + offset + (64 / sizeof(vcp_lookupOrMask_single))
+			);
+		#else
+			return _mm512_maskz_loadu_epi32(static_cast<__mmask16>(0x00FF), dist_lookup + offset);
+		#endif
+
 	}
 
 	inline static vcp_lookupOrMask_vec loadLookupOrForceMaskRemainder(const vcp_lookupOrMask_single* const dist_lookup, const size_t& offset, const __mmask8& remainderMask){
-		return _mm512_mask_loadunpackhi_epi32(
-			_mm512_mask_loadunpacklo_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF) & remainderMask, (dist_lookup + offset)),
-			static_cast<__mmask16>(0x00FF) & remainderMask,
-			dist_lookup + offset + (64 / sizeof(vcp_lookupOrMask_single))
-		);
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			return _mm512_mask_loadunpackhi_epi32(
+				_mm512_mask_loadunpacklo_epi32(_mm512_setzero_epi32(), static_cast<__mmask16>(0x00FF) & remainderMask, (dist_lookup + offset)),
+				static_cast<__mmask16>(0x00FF) & remainderMask,
+				dist_lookup + offset + (64 / sizeof(vcp_lookupOrMask_single))
+			);
+		#else
+			return _mm512_maskz_loadu_epi32(static_cast<__mmask16>(0x00FF) & remainderMask, dist_lookup + offset);
+		#endif
 	}
 
 	inline static vcp_double_vec load(const double* const src,
 			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
-		return _mm512_i32logather_pd(lookup, src, 8);
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			return _mm512_i32logather_pd(lookup, src, 8);
+		#else
+			__m256i lookup_256i = _mm512_castsi512_si256 (lookup);
+			return _mm512_i32gather_pd(lookup_256i, src, 8);
+		#endif
 	}
 
 	inline static void store(double* const addr, const size_t& offset,
 			vcp_double_vec& value, const vcp_lookupOrMask_vec& lookup) {
-		_mm512_i32loscatter_pd(addr, lookup, value, 8);
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			_mm512_i32loscatter_pd(addr, lookup, value, 8);
+		#else
+			__m256i lookup_256i = _mm512_castsi512_si256 (lookup);
+			_mm512_i32scatter_pd(addr, lookup_256i, value, 8);
+		#endif
 	}
 
 	inline static void storeMasked(double* const addr, const size_t& offset,
 			vcp_double_vec& value, const vcp_lookupOrMask_vec& lookup, const vcp_mask_vec mask) {
-		_mm512_mask_i32loscatter_pd(addr, mask, lookup, value, 8);
+		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+			_mm512_mask_i32loscatter_pd(addr, mask, lookup, value, 8);
+		#else
+			__m256i lookup_256i = _mm512_castsi512_si256 (lookup);
+			_mm512_mask_i32scatter_pd(addr, mask, lookup_256i, value, 8);
+		#endif
 	}
 
 	inline static bool computeLoop(const vcp_lookupOrMask_vec& forceMask) {
@@ -137,7 +165,7 @@ public:
 };
 #endif
 
-#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER and VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
 	typedef MaskingChooser MaskGatherC;
 #else
 	typedef GatherChooser MaskGatherC;

@@ -24,6 +24,8 @@
 #define VCP_VEC_AVX2 3
 #define VCP_VEC_KNC 4
 #define VCP_VEC_KNC_GATHER 5
+#define VCP_VEC_KNL 6
+#define VCP_VEC_KNL_GATHER 7
 
 
 typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
@@ -34,7 +36,16 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #endif
 
 // define symbols for vectorization
-#if defined(__MIC__)
+#if defined(__AVX512F__)
+	#if not defined(__AVX512ER__)
+	#error currently only KNL is supported, not SKX
+	#endif
+	#if defined(__VCP_GATHER__)
+		#define VCP_VEC_TYPE VCP_VEC_KNL_GATHER
+	#else
+		#define VCP_VEC_TYPE VCP_VEC_KNL
+	#endif
+#elif defined(__MIC__)
 	#if defined(__VCP_GATHER__)
 		#define VCP_VEC_TYPE VCP_VEC_KNC_GATHER
 	#else
@@ -61,7 +72,12 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 #endif
 
 // Include necessary files if we vectorize.
-#if VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2 or VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+#if VCP_VEC_TYPE==VCP_VEC_AVX or \
+	VCP_VEC_TYPE==VCP_VEC_AVX2 or \
+	VCP_VEC_TYPE==VCP_VEC_KNC or \
+	VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or\
+	VCP_VEC_TYPE==VCP_VEC_KNL or \
+	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 	#include "immintrin.h"
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
 	#include "pmmintrin.h"
@@ -107,19 +123,23 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
-#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER//mic
+#elif VCP_VEC_TYPE==VCP_VEC_KNC or \
+	  VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
+	  VCP_VEC_TYPE==VCP_VEC_KNL or \
+	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 	typedef __m512d vcp_double_vec;
 	#define VCP_VEC_SIZE 8u
 	#define VCP_VEC_SIZE_M1 7u
 
 	typedef __mmask8 vcp_mask_vec;
 	typedef __mmask8 vcp_mask_single;
-	#if VCP_VEC_TYPE==VCP_VEC_KNC
+	#if VCP_VEC_TYPE==VCP_VEC_KNC or\
+		VCP_VEC_TYPE==VCP_VEC_KNL
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 8
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 7
 		typedef __mmask8 vcp_lookupOrMask_vec;
 		typedef __mmask8 vcp_lookupOrMask_single;
-	#else  // VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+	#else  // VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 		typedef __m512i vcp_lookupOrMask_vec;

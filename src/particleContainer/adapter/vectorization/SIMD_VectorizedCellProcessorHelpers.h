@@ -16,6 +16,14 @@
 
 typedef AlignedArray<double> DoubleArray;
 
+#if VCP_VEC_TYPE==VCP_VEC_AVX2 or \
+	VCP_VEC_TYPE==VCP_VEC_KNC or \
+	VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
+	VCP_VEC_TYPE==VCP_VEC_KNL or \
+	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+static_assert (sizeof(size_t) == 8, "Code assumes, that sizeof(size_t) is 8. Contact SCCS developers if this fails.");
+#endif /* sizeof(size_t) */
+
 /**
  * unpacks eps_24 and sig2 from the eps_sigI array according to the index array id_j (for mic+avx2: use gather)
  * @param eps_24 vector in which eps_24 is saved
@@ -27,10 +35,12 @@ typedef AlignedArray<double> DoubleArray;
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleArray& eps_sigI,
-		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))){
-#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER
+		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
+
+#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
 	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
+
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	eps_24 = eps_sigI[2 * id_j_shifted[0]];
 	sig2 = eps_sigI[2 * id_j_shifted[0] + 1];
@@ -42,6 +52,7 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 	sig2 = vcp_simd_unpackhi(e0s0, e1s1);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx
+	//TODO: add gather for AVX2 (here only)
 	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
 	const vcp_double_vec e0s0 = vcp_simd_maskload(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
 	const vcp_double_vec e1s1 = vcp_simd_maskload(eps_sigI + 2 * id_j_shifted[1], memoryMask_first_second);
@@ -55,15 +66,22 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 
 	eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
 	sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
-#elif VCP_VEC_TYPE==VCP_VEC_KNC //mic knows gather, too
-		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
-		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
 	__m512i indices = _mm512_load_epi64(id_j_shifted);
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
-#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-	__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+
+	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
+	#else
+		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, id_j, 8);//gather id_j using the indices
+	#endif
+
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
@@ -83,10 +101,11 @@ void unpackEps24Sig2(vcp_double_vec& eps_24, vcp_double_vec& sig2, const DoubleA
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
-		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask){
-#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER
+		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
+#if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
 	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
+
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
 	shift6 = shift6I[id_j_shifted[0]];
 
@@ -106,23 +125,39 @@ void unpackShift6(vcp_double_vec& shift6, const DoubleArray& shift6I,
 	const vcp_double_vec sh2sh3 = vcp_simd_unpacklo(sh2, sh3);
 
 	shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
+
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
-		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
-		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
 	const __m256i indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), VCP_SIMD_ONESVM);
 	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
-#elif VCP_VEC_TYPE==VCP_VEC_KNC //mic knows gather, too
-		#define BUILD_BUG_ON1212(condition) ((void)sizeof(char[1 - 2*!!(condition)]))
-		BUILD_BUG_ON1212(sizeof(size_t) % 8);//check whether size_t is of size 8...
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
 	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
-#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
-	__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+
+	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
+		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
+	#else
+		__m256i lookupORforceMask_256i = _mm512_castsi512_si256 (lookupORforceMask);
+		__m512i indices = _mm512_i32gather_epi64(lookupORforceMask_256i, id_j, 8);//gather id_j using the lookupindices
+	#endif
+
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 #endif
 }
 #pragma GCC diagnostic pop
 
+
+#if VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+static vcp_inline
+double horizontal_add_256 (__m256d a) {
+    __m256d t1 = _mm256_hadd_pd(a,a);
+    __m128d t2 = _mm256_extractf128_pd(t1,1);
+    __m128d t3 = _mm_add_sd(_mm256_castpd256_pd128(t1),t2);
+    return _mm_cvtsd_f64(t3);
+}
+#endif
 
 /**
  * sums up values in a and adds the result to *mem_addr
@@ -154,6 +189,12 @@ void hSum_Add_Store( double * const mem_addr, const vcp_double_vec & a ) {
 	);
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 	*mem_addr += _mm512_reduce_add_pd(a);
+
+#elif VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	// NOTE: separate, because only the Intel compiler provides _mm512_reduce_add_pd
+	__m256d low = _mm512_castpd512_pd256(a);
+	__m256d high = _mm512_extractf64x4_pd(a, 1);
+	*mem_addr += horizontal_add_256(low + high);
 #endif
 }
 
@@ -233,7 +274,7 @@ public:
 
 	inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
 	{
-#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER
+#if VCP_VEC_TYPE!=VCP_VEC_KNC_GATHER and VCP_VEC_TYPE!=VCP_VEC_KNL_GATHER
 		return InitJ(i);
 #else
 		return 0;
