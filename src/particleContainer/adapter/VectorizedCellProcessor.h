@@ -162,7 +162,7 @@ private:
 		/**
 		 * \brief array, that stores the dist_lookup.
 		 * For all vectorization methods, that utilize masking, this stores masks.
-		 * To utilize the gather operations of the MIC architecture, the dist_lookup is able to store the indices of the required particles.
+		 * To utilize the gather operations of the KNC architecture, the dist_lookup is able to store the indices of the required particles.
 		 */
 		AlignedArray<vcp_lookupOrMask_single> _centers_dist_lookup;
 
@@ -302,19 +302,6 @@ private:
 		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
 		const vcp_mask_vec& forceMask);
 
-
-	/**
-	 * \brief The dist lookup for a molecule and all centers of a type
-	 * \author Robert Hajda
-	 */
-	template<class ForcePolicy, class MaskGatherChooser>
-	countertype32
-	calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
-			vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
-			const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z);
-
-
-
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
 	 * \details The differences between single cell and cell pair calculation<br>
@@ -336,79 +323,6 @@ private:
 	 */
 	template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 	void _calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2);
-
-	/**
-	 * \brief Policy class for single cell force calculation.
-	 */
-	class SingleCellPolicy_ {
-	public:
-
-		inline static size_t InitJ (const size_t i)  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
-		{  // i: only calculate j>=i
-			// however we do a floor for alignment purposes. ->  we have to mark some of the indices to not be computed (this is handled using the InitJ_Mask)
-			return vcp_floor_to_vec_size(i);  // this is i if i is divisible by VCP_VEC_SIZE otherwise the next smaller multiple of VCP_VEC_SIZE
-		}
-
-		inline static size_t InitJ2 (const size_t i __attribute__((unused)))  // needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
-		{
-#if VCP_VEC_TYPE!=VCP_VEC_MIC_GATHER
-			return InitJ(i);
-#else
-			return 0;
-#endif
-		}
-
-		inline static vcp_mask_vec InitJ_Mask(const size_t i) {  // calculations only for i onwards.
-			return vcp_simd_getInitMask(i);
-		}
-
-		inline static vcp_mask_vec GetForceMask(const vcp_double_vec& m_r2, const vcp_double_vec& rc2,
-				vcp_mask_vec& j_mask) {
-			vcp_mask_vec result = vcp_simd_and(vcp_simd_and(vcp_simd_lt(m_r2, rc2), vcp_simd_neq(m_r2, VCP_SIMD_ZEROV)),
-					j_mask);
-			j_mask = VCP_SIMD_ONESVM;
-			return result;
-		}
-
-
-
-	}; /* end of class SingleCellPolicy_ */
-
-	/**
-	 * \brief Policy class for cell pair force calculation.
-	 */
-	class CellPairPolicy_ {
-	public:
-
-		inline static bool Condition(double m_r2, double rc2)
-		{
-			// Because we have 2 different cells, no 2 centers on the same
-			// molecule can form a pair.
-			return m_r2 < rc2;
-		}
-
-		inline static size_t InitJ (const size_t /*i*/)
-		{
-			return 0;
-		}
-		inline static size_t InitJ2 (const size_t i)//needed for alignment. (guarantees, that one simd_load always accesses the same cache line.
-		{
-			return InitJ(i);
-		}
-
-		inline static vcp_mask_vec GetForceMask (const vcp_double_vec& m_r2, const vcp_double_vec& rc2, vcp_mask_vec& /*j_mask*/)
-		{
-			// Provide a mask with the same logic as used in
-			// bool Condition(double m_r2, double rc2)
-			return vcp_simd_lt(m_r2, rc2);
-		}
-
-		inline static vcp_mask_vec InitJ_Mask (const size_t /*i*/)
-		{
-			return VCP_SIMD_ONESVM;//totally unimportant, since not used...
-		}
-
-	}; /* end of class CellPairPolicy_ */
 
 }; /* end of class VectorizedCellProcessor */
 

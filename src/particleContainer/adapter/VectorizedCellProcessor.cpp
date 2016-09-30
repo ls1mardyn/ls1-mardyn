@@ -31,8 +31,10 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	global_log->info() << "VectorizedCellProcessor: using AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
 	global_log->info() << "VectorizedCellProcessor: using AVX2 intrinsics." << std::endl;
-#elif VCP_VEC_TYPE==VCP_VEC_MIC
-	global_log->info() << "VectorizedCellProcessor: using MIC intrinsics." << std::endl;
+#elif (VCP_VEC_TYPE==VCP_VEC_KNC) || (VCP_VEC_TYPE==VCP_VEC_KNC_GATHER)
+	global_log->info() << "VectorizedCellProcessor: using KNC intrinsics." << std::endl;
+#elif (VCP_VEC_TYPE==VCP_VEC_KNL) || (VCP_VEC_TYPE==VCP_VEC_KNL_GATHER)
+	global_log->info() << "VectorizedCellProcessor: using KNL intrinsics." << std::endl;
 #endif
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
@@ -734,53 +736,6 @@ void VectorizedCellProcessor::endTraversal() {
 		Mjj_z = vcp_simd_fma(minus_partialTjInvdr, eXrij_z, partialGij_eiXej_z);
 	}
 
-template<class ForcePolicy, class MaskGatherChooser>
-countertype32
-inline VectorizedCellProcessor::calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
-		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
-		const vcp_double_vec & cutoffRadiusSquareD, size_t end_j, const vcp_double_vec m1_r_x, const vcp_double_vec m1_r_y, const vcp_double_vec m1_r_z) {
-
-	size_t j = ForcePolicy :: InitJ(i_center_idx);
-	vcp_mask_vec initJ_mask = ForcePolicy :: InitJ_Mask(i_center_idx);
-
-	MaskGatherChooser mgc(soa2_center_dist_lookup, j);
-
-	for (; j < end_j; j += VCP_VEC_SIZE) {
-		const vcp_double_vec m2_r_x = vcp_simd_load(soa2_m_r_x + j);
-		const vcp_double_vec m2_r_y = vcp_simd_load(soa2_m_r_y + j);
-		const vcp_double_vec m2_r_z = vcp_simd_load(soa2_m_r_z + j);
-
-		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
-		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
-		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
-
-		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
-
-		const vcp_mask_vec forceMask = ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask);
-
-		mgc.storeCalcDistLookup(j, forceMask);
-
-	}
-	const vcp_mask_vec remainderMask = vcp_simd_getRemainderMask(soa2_num_centers);
-	if (vcp_simd_movemask(remainderMask)) {
-		const vcp_double_vec m2_r_x = vcp_simd_maskload(soa2_m_r_x + j, remainderMask);
-		const vcp_double_vec m2_r_y = vcp_simd_maskload(soa2_m_r_y + j, remainderMask);
-		const vcp_double_vec m2_r_z = vcp_simd_maskload(soa2_m_r_z + j, remainderMask);
-
-		const vcp_double_vec m_dx = m1_r_x - m2_r_x;
-		const vcp_double_vec m_dy = m1_r_y - m2_r_y;
-		const vcp_double_vec m_dz = m1_r_z - m2_r_z;
-
-		const vcp_double_vec m_r2 = vcp_simd_scalProd(m_dx, m_dy, m_dz, m_dx, m_dy, m_dz);
-
-		const vcp_mask_vec forceMask = vcp_simd_and(remainderMask, ForcePolicy::GetForceMask(m_r2, cutoffRadiusSquareD, initJ_mask));//AND remainderMask -> set unimportant ones to zero.
-		mgc.storeCalcDistLookup(j, forceMask);
-	}
-
-	return mgc.getCount();	//do not compute stuff if nothing needs to be computed.
-
-}
-
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
 	const int tid = omp_get_thread_num();
@@ -1078,7 +1033,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						sum_Vz1 = sum_Vz1 + Vz;
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_ljc);
 					if(remainderM != 0x00){
@@ -1218,7 +1173,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_charges_V_z, j, Vz, lookupORforceMask);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
@@ -1354,7 +1309,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						sum_M_z = vcp_simd_add(sum_M_z, M_z);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
@@ -1508,7 +1463,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						sum_M1_z = vcp_simd_add(sum_M1_z, M_z);
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_charges);
 					if(remainderM != 0x00){
@@ -1687,7 +1642,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
@@ -1847,7 +1802,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
@@ -2007,7 +1962,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_dipoles);
 					if(remainderM != 0x00){
@@ -2190,7 +2145,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						vcp_simd_load_add_store<MaskGatherChooser>(soa2_quadrupoles_M_z, j, M2_z, lookupORforceMask);//newton 3
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
@@ -2346,7 +2301,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
@@ -2507,7 +2462,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 					}
 				}
-#if VCP_VEC_TYPE == VCP_VEC_MIC_GATHER
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 				if(MaskGatherChooser::hasRemainder()){//remainder computations, that's not an if, but a constant branch... compiler is wise.
 					const __mmask8 remainderM = MaskGatherChooser::getRemainder(compute_molecule_quadrupoles);
 					if(remainderM != 0x00){
@@ -2606,7 +2561,8 @@ void VectorizedCellProcessor::processCell(ParticleCell & c) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
-	_calculatePairs<SingleCellPolicy_, CalculateMacroscopic, MaskGatherC>(soa, soa);
+	const bool ApplyCutoff = true;
+	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
 }
 
 // provisionally, the code from the legacy cell processor is used here
@@ -2652,15 +2608,17 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	// This saves the Molecule::isLessThan checks
 	// and works similar to the "Half-Shell" scheme
 
+	const bool ApplyCutoff = true;
+
 	if ((not c1Halo and not c2Halo) or						// no cell is halo or
 			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but c1.index < c2.index
 	{
 		const bool CalculateMacroscopic = true;
 
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
 
 	} else {
@@ -2670,9 +2628,9 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		const bool CalculateMacroscopic = false;
 
 		if (calc_soa1_soa2) {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
 		} else {
-			_calculatePairs<CellPairPolicy_, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
 		}
 	}
 }
