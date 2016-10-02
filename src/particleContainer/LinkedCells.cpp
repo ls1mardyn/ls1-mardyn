@@ -232,15 +232,13 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 void LinkedCells::update() {
-	std::vector<ParticleCell>::iterator celliter;
+	const int numCells = _cells.size();
 
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static, 1)
+	#pragma omp parallel for schedule(static)
 	#endif
-	for (celliter = _cells.begin(); celliter != _cells.end(); ++celliter) {
-
-		std::vector<Molecule> & molsToSort =
-				celliter->filterLeavingMolecules();
+	for (int i=0; i < numCells; i++) {
+		std::vector<Molecule> & molsToSort = _cells[i].filterLeavingMolecules();
 
 		for (auto it = molsToSort.begin(); it != molsToSort.end(); ++it) {
 			addParticle(*it);
@@ -693,12 +691,13 @@ void LinkedCells::deleteOuterParticles() {
 		global_simulation->exit(1);
 	}
 
-	vector<unsigned long>::iterator cellIndexIter;
+	const int numHaloCells = _haloCellIndices.size();
+
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static, 1)
+	#pragma omp parallel for schedule(static)
 	#endif
-	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
-		ParticleCell& currentCell = _cells[*cellIndexIter];
+	for (int i = 0; i < numHaloCells; i++) {
+		ParticleCell& currentCell = _cells[_haloCellIndices[i]];
 		currentCell.deallocateAllParticles();
 	}
 }
