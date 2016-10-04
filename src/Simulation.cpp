@@ -79,7 +79,7 @@ Simulation::Simulation()
 	_particlePairsHandler(NULL),
 	_cellProcessor(NULL),
 	_flopCounter(NULL),
-	_domainDecomposition(NULL),
+	_domainDecomposition(nullptr),
 	_integrator(NULL),
 	_domain(NULL),
 	_inputReader(NULL),
@@ -240,13 +240,19 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
 				DomainDecomposition * temp = 0;
-							temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
-							if (temp != 0) {
-								temp->initCommunicationPartners(getcutoffRadius(), _domain);
-							}
-							_domainDecomposition = new DomainDecomposition();
+				temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
+				if (temp != 0) {
+					temp->initCommunicationPartners(getcutoffRadius(), _domain);
+				}
+				if (_domainDecomposition != nullptr) {
+					delete _domainDecomposition;
+				}
+				_domainDecomposition = new DomainDecomposition();
 			}
 			else if(parallelisationtype == "KDDecomposition") {
+				if (_domainDecomposition != nullptr) {
+					delete _domainDecomposition;
+				}
 				_domainDecomposition = new KDDecomposition(getcutoffRadius(), _domain);
 			}
 			else {
@@ -556,9 +562,9 @@ void Simulation::initConfigXML(const string& inputfilename) {
 #ifdef ENABLE_MPI
 	// if we are using the DomainDecomposition, please complete its initialization:
 	{
-		DomainDecomposition * temp = 0;
+		DomainDecomposition * temp = nullptr;
 		temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
-		if (temp != 0) {
+		if (temp != nullptr) {
 			temp->initCommunicationPartners(_cutoffRadius, _domain);
 		}
 	}
@@ -1362,6 +1368,12 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 	#endif
 }
 
+void Simulation::setDomainDecomposition(DomainDecompBase* domainDecomposition) {
+	if (_domainDecomposition != nullptr) {
+		delete _domainDecomposition;
+	}
+	_domainDecomposition = domainDecomposition;
+}
 
 /* FIXME: we should provide a more general way of doing this */
 double Simulation::Tfactor(unsigned long simstep) {
@@ -1396,6 +1408,9 @@ void Simulation::initialize() {
 	_domainDecomposition = new DomainDecompBase();
 #else
 	global_log->info() << "Initializing the standard domain decomposition ... " << endl;
+	if (_domainDecomposition != nullptr) {
+		delete _domainDecomposition;
+	}
 	_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
 #endif
 	global_log->info() << "Initialization done" << endl;

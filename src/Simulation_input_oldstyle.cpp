@@ -178,7 +178,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #endif
 		} else if (token == "datastructure") {
 
-			if (_domainDecomposition == NULL) {
+			if (_domainDecomposition == nullptr) {
 				global_log->error()
 						<< "_domainDecomposition is NULL! Probably you compiled for MPI, but didn't specify line \"parallelization\" before line \"datastructure\"!"
 						<< endl;

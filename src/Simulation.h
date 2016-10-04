@@ -267,9 +267,7 @@ public:
 	 * Set the private _domainDecomposition variable to a new pointer.
 	 * @param domainDecomposition the new va
 	 */
-	void setDomainDecomposition(DomainDecompBase* domainDecomposition) {
-		_domainDecomposition = domainDecomposition;
-	}
+	void setDomainDecomposition(DomainDecompBase* domainDecomposition);
 
 	/** Return a reference to the domain decomposition used in the simulation */
 	DomainDecompBase& domainDecomposition() { return *_domainDecomposition; }

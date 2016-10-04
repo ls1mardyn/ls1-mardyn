@@ -18,6 +18,7 @@ class KDDecompositionTest : public utils::TestWithSimulationSetup {
 	TEST_SUITE(KDDecompositionTest);
 	TEST_METHOD(testCompleteTreeInfo);
 	TEST_METHOD(testRebalancingDeadlocks);
+	TEST_METHOD(testbalanceAndExchange);
 	TEST_SUITE_END();
 
 public:
@@ -35,6 +36,8 @@ public:
 	void completeTreeInfo(KDNode*& root, KDNode*& ownArea, int ownRank);
 
 	void testRebalancingDeadlocks();
+
+	void testbalanceAndExchange();
 
 private:
 

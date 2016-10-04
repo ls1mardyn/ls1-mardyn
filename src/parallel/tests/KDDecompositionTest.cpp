@@ -8,6 +8,7 @@
 #include "KDDecompositionTest.h"
 #include "Domain.h"
 #include "particleContainer/LinkedCells.h"
+#include "io/InputOldstyle.h"
 
 #include <sstream>
 #include <cmath>
@@ -154,6 +155,49 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 	// SHUTDOWN
 	delete moleculeContainer;
 	delete kdd;
+
+}
+
+void KDDecompositionTest::testbalanceAndExchange() {
+
+	// INIT
+	KDDecomposition * kdd;
+
+	const double cutOff = 3.5;
+	int fullSearchThreshold = 2;
+
+	InputOldstyle inputReader;
+	std::string fileName2=getTestDataFilename("DomainDecompBase.inp");
+	inputReader.setPhaseSpaceHeaderFile(fileName2.c_str());
+	inputReader.setPhaseSpaceFile(fileName2.c_str());
+	inputReader.readPhaseSpaceHeader(_domain, 1.0);
+
+	kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
+	_domainDecomposition = kdd;
+	global_simulation->setDomainDecomposition(kdd);
+	_rank = kdd->_rank;
+
+
+	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", cutOff);
+
+	kdd->initCommunicationPartners(cutOff, _domain);
+
+	moleculeContainer->update();
+
+
+	// TEST
+
+	const int numReps = 10;
+	if (_rank == 0) {
+		//cout << "running " << numReps << " repetitions" << std::endl;
+	}
+	for (int i = 0; i < numReps; ++i) {
+		kdd->balanceAndExchange(true, moleculeContainer, _domain);
+		moleculeContainer->updateMoleculeCaches();
+	}
+
+
+	// SHUTDOWN
 
 }
 
