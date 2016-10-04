@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<VTKFile byte_order="LittleEndian" type="UnstructuredGrid" version="0.1">
+  <UnstructuredGrid>
+    <Piece NumberOfCells="1" NumberOfPoints="8">
+      <PointData/>
+      <CellData>
+        <DataArray Name="rank" NumberOfComponents="1" format="ascii" type="Int32">0</DataArray>
+        <DataArray Name="load" NumberOfComponents="1" format="ascii" type="Float32">0</DataArray>
+        <DataArray Name="level" NumberOfComponents="1" format="ascii" type="Int32">0</DataArray>
+        <DataArray Name="index" NumberOfComponents="1" format="ascii" type="UInt32">0</DataArray>
+        <DataArray Name="processorSpeeds" NumberOfComponents="1" format="ascii" type="Float32">1</DataArray>
+        <DataArray Name="relativeLoad" NumberOfComponents="1" format="ascii" type="Float32">0</DataArray>
+      </CellData>
+      <Points>
+        <DataArray Name="points" NumberOfComponents="3" format="ascii" type="Float32">0 0 0 18 0 0 0 18 0 18 18 0 0 0 18 18 0 18 0 18 18 18 18 18</DataArray>
+      </Points>
+      <Cells>
+        <DataArray Name="connectivity" NumberOfComponents="1" format="ascii" type="Int32">0 1 2 3 4 5 6 7</DataArray>
+        <DataArray Name="offsets" NumberOfComponents="1" format="ascii" type="Int32">8</DataArray>
+        <DataArray Name="types" NumberOfComponents="1" format="ascii" type="Int32">11</DataArray>
+      </Cells>
+    </Piece>
+  </UnstructuredGrid>
+</VTKFile>
