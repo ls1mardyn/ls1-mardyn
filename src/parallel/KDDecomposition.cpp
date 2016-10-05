@@ -423,7 +423,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 			const int numMolsMigToSelf = migrateToSelf.size();
 			for (int i = 0; i < numMolsMigToSelf; i++) {
 				moleculeContainer->addParticle(*migrateToSelf[i], false, false);
-				//delete migrateToSelf[i];
+				delete migrateToSelf[i];
 			}
 			migrateToSelfDone = true;
 		}
