@@ -104,13 +104,12 @@ public:
 
 
 private:
-	bool _neighboursInitialized;
 
 	//! Number of processes in each dimension (i.e. 2 for 8 processes)
-	int _gridSize[DIM];
+	int _gridSize[DIMgeom];
 
 	//! Grid coordinates of process
-	int _coords[DIM];
+	int _coords[DIMgeom];
 };
 
 #endif /* DOMAINDECOMPOSITION_H_ */

@@ -14,6 +14,7 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "particleContainer/adapter/FlopCounter.h"
+#include "parallel/NeighbourCommunicationScheme.h"
 
 #include <cmath>
 
@@ -177,10 +178,10 @@ void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain 
 //	}
 //	_neighboursInitialized = true;
 
-	int ownLo[DIM];
-	int ownHi[DIM];
+	int ownLo[DIMgeom];
+	int ownHi[DIMgeom];
 
-	for (unsigned short d = 0; d < DIM; d++) {
+	for (unsigned short d = 0; d < DIMgeom; d++) {
 		ownLo[d] = _ownArea->_lowCorner[d];
 		ownHi[d] = _ownArea->_highCorner[d];
 
@@ -494,7 +495,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 	completeTreeInfo(newRoot, newOwnLeaf);
 	delete toCleanUp;
 	for (int d = 0; d < 3; ++d) {
-		_coversWholeDomain[d] = newOwnLeaf->_coversWholeDomain[d];
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, newOwnLeaf->_coversWholeDomain[d]);
 	}
 
 	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
