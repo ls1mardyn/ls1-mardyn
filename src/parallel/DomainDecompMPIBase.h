@@ -23,6 +23,8 @@
 
 class NeighbourCommunicationScheme;
 
+struct HaloRegion;
+
 class DomainDecompMPIBase: public DomainDecompBase {
 public:
 	DomainDecompMPIBase();
@@ -155,6 +157,8 @@ public:
 
 	virtual std::vector<int> getNeighbourRanks() =0;
 	virtual std::vector<int> getNeighbourRanksFullShell() =0;
+
+	virtual CommunicationPartner getNeighboursFromHaloRegion(const HaloRegion& haloRegion, double cutoff) = 0;
 
 #if defined(ENABLE_MPI)
 	MPI_Datatype getMPIParticleType() {

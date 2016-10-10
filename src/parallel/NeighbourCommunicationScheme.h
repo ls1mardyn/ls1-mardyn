@@ -13,6 +13,7 @@
 
 class DomainDecompMPIBase;
 class Domain;
+class FullShell;
 
 class NeighbourCommunicationScheme {
 public:
@@ -55,6 +56,9 @@ protected:
 	bool _coversWholeDomain[3];
 
 	unsigned int _commDimms;
+
+	//! communication scheme (FullShell, EightShell, ...)
+	FullShell* _commScheme;
 
 };
 

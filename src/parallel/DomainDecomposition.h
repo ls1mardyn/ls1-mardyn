@@ -35,18 +35,18 @@ public:
 	   </parallelisation>
 	   \endcode
 	 */
-	void readXML(XMLfileUnits& xmlconfig);
+	void readXML(XMLfileUnits& xmlconfig) override;
 
 	// documentation see father class (DomainDecompBase.h)
-	bool procOwnsPos(double x, double y, double z, Domain* domain);
+	bool procOwnsPos(double x, double y, double z, Domain* domain) override;
 
 	// documentation see father class (DomainDecompBase.h)
-	double getBoundingBoxMin(int dimension, Domain* domain);
+	double getBoundingBoxMin(int dimension, Domain* domain) override;
 
 	// documentation see father class (DomainDecompBase.h)
-	double getBoundingBoxMax(int dimension, Domain* domain);
+	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -80,28 +80,29 @@ public:
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
     //returns a vector of the neighbour ranks in x y and z direction (only neighbours connected by an area to local area)
-	std::vector<int> getNeighbourRanks();
+	std::vector<int> getNeighbourRanks() override;
 	
     //returns a vector of all 26 neighbour ranks in x y and z direction
-	std::vector<int> getNeighbourRanksFullShell();
+	std::vector<int> getNeighbourRanksFullShell() override;
 
 
 	// documentation in base class
-	virtual int getNonBlockingStageCount();
+	int getNonBlockingStageCount() override;
 
 	// documentation in base class
-	virtual void prepareNonBlockingStage(bool forceRebalancing,
+	void prepareNonBlockingStage(bool forceRebalancing,
 			ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber);
+			unsigned int stageNumber) override;
 
 	// documentation in base class
-	virtual void finishNonBlockingStage(bool forceRebalancing,
+	void finishNonBlockingStage(bool forceRebalancing,
 			ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber);
+			unsigned int stageNumber) override;
 
 	// documentation in base class
-	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
+	CommunicationPartner getNeighboursFromHaloRegion(const HaloRegion& haloRegion, double cutoff) override;
 
 private:
 

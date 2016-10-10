@@ -188,7 +188,7 @@ void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain 
 		_neighbours[d].clear();
 	}
 
-	for (unsigned short dimension = 0; dimension < DIM; dimension++) {
+	for (unsigned short dimension = 0; dimension < DIMgeom; dimension++) {
 		if(_coversWholeDomain[dimension]) {
 			// nothing to do;
 			continue;
