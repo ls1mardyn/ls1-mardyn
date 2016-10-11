@@ -177,7 +177,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				double bBoxMin[3];
 				double bBoxMax[3];
 				_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
-				_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+				if (_moleculeContainer != NULL) {
+					_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+				}
 			}
 #endif
 		} else if (token == "datastructure") {
