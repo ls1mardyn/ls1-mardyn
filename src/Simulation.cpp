@@ -1852,7 +1852,7 @@ void Simulation::simulate() {
 		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
 		
 		// shear rate accelerates the fluid
-		if(_doShearRate)
+		if(_doShearRate && _simstep >= _initStatistics)
 			_integrator->shearRate(_domainDecomposition, _moleculeContainer, _domain);
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
