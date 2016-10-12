@@ -67,7 +67,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 	   </parallelisation>
 	   \endcode
 	 */
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) override;
 
 	//###############################################
 	//### The following methods are those of the  ###
@@ -75,27 +75,27 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//###############################################
 
 	// documentation in base class
-	virtual int getNonBlockingStageCount();
+	virtual int getNonBlockingStageCount() override;
 
 	// documentation in base class
 	virtual void prepareNonBlockingStage(bool forceRebalancing,
 				ParticleContainer* moleculeContainer, Domain* domain,
-				unsigned int stageNumber);
+				unsigned int stageNumber) override;
 
 	// documentation in base class
 	virtual void finishNonBlockingStage(bool forceRebalancing,
 			ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber);
+			unsigned int stageNumber) override;
 
 	// documentation in base class
-	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
 	//! @todo comment and thing
-	double getBoundingBoxMin(int dimension, Domain* domain);
+	double getBoundingBoxMin(int dimension, Domain* domain) override;
 	//! @todo comment and thing
-	double getBoundingBoxMax(int dimension, Domain* domain);
+	double getBoundingBoxMax(int dimension, Domain* domain) override;
 
 	//! @brief writes information about the current decomposition into the given file
 	//!
@@ -115,16 +115,16 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//!  20.0 30.0 25.0 62.0 62.0 62.0
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(std::string filename, Domain* domain);
+	void printDecomp(std::string filename, Domain* domain) override;
 
 	int getUpdateFrequency() { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
-	virtual std::vector<int> getNeighbourRanks(){
+	virtual std::vector<int> getNeighbourRanks() override {
 		//global_log->error() << "not implemented \n";
 		exit(-1);
 		return std::vector<int> (0);
 	}
-	virtual std::vector<int> getNeighbourRanksFullShell(){
+	virtual std::vector<int> getNeighbourRanksFullShell() override{
 		//global_log->error() << "not implemented \n";
 		exit(-1);
 		return std::vector<int> (0);

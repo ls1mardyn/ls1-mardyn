@@ -54,13 +54,11 @@ public:
 	int getRank(){
 		return _rank;
 	}
-
 private:
 	int _rank;
 	double _bothLow[3], _bothHigh[3];
 	double _leavingLow[3], _leavingHigh[3];
 	double _copiesLow[3], _copiesHigh[3];
-
 	double _shift[3]; //! for periodic boundaries
 
 	// technical variables

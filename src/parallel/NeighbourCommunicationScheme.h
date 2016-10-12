@@ -78,8 +78,9 @@ public:
 	}
 	virtual ~NeighbourCommunicationScheme3Stage();
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
-			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
-	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp);
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
+	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
+			override;
 protected:
 	void initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
@@ -88,5 +89,6 @@ protected:
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
 	void exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
+	void convert1StageTo3StageNeighbours(const std::vector<CommunicationPartner>& commPartners, std::vector<std::vector<CommunicationPartner>>& neighbours);
 
 };

@@ -170,7 +170,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					cutsmaller=true;  // allow domain to be split not only along biggest side
 				}
 				if(line.find("forceRatio") != string::npos){
-					forceRatio=true;  // allow domain to be split not only along biggest side
+					forceRatio=true;  // never do a search for the best Partitioning, always force the ratio (should be similar to fullSeachThreshold=0)
 				}
 				_domainDecomposition = (DomainDecompBase*) new KDDecomposition(_cutoffRadius, _domain, updateFrequency,
 						fullSearchThreshold, hetero, cutsmaller, forceRatio);

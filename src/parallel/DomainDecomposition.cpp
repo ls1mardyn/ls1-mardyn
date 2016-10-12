@@ -230,7 +230,8 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 #endif
 }
 
-virtual CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(const HaloRegion& haloRegion, double cutoff) {
+virtual CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(Domain* domain,
+		const HaloRegion& haloRegion, double cutoff) {
 //TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
 // currently only one process per region is possible.
 	int rank;
@@ -239,25 +240,26 @@ virtual CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(co
 		regionCoords[d] = _coords[d] + haloRegion.offset[d];
 	}
 	//TODO: only full shell! (otherwise more neighbours possible)
-	MPI_CHECK(MPI_Cart_rank(getCommunicator(), regionCoords, &rank));//does automatic shift for periodic boundaries
+	MPI_CHECK(MPI_Cart_rank(getCommunicator(), regionCoords, &rank)); //does automatic shift for periodic boundaries
 	double haloLow[3];
 	double haloHigh[3];
 	double boundaryLow[3];
 	double boundaryHigh[3];
 	double shift[3];
 
-	for(unsigned int d=0; d < DIMgeom; d++){
+	for (unsigned int d = 0; d < DIMgeom; d++) {
 		haloLow[d] = haloRegion.rmin[d];
 		haloHigh[d] = haloRegion.rmax[d];
 		//TODO: ONLY FULL SHELL!!!
-		boundaryLow[d] = haloRegion.rmin[d] - haloRegion.offset[d] * cutoff;//rmin[d] if offset[d]==0
-		boundaryHigh[d] = haloRegion.rmax[d] - haloRegion.offset[d] * cutoff;//if offset[d]!=0 : shift by cutoff in negative offset direction
-		if(_coords[d] == 0 and offset[d]==-1){
-			shift[d]=
+		boundaryLow[d] = haloRegion.rmin[d] - haloRegion.offset[d] * cutoff; //rmin[d] if offset[d]==0
+		boundaryHigh[d] = haloRegion.rmax[d] - haloRegion.offset[d] * cutoff; //if offset[d]!=0 : shift by cutoff in negative offset direction
+		if (_coords[d] == 0 and haloRegion.offset[d] == -1) {
+			shift[d] = domain->getGlobalLength(d);
+		} else if (_coords[d] == _gridSize[d] - 1 and haloRegion.offset[d] == 1) {
+			shift[d] = -domain->getGlobalLength(d);
 		}
-		else if(_coords[d] == 0 and offset[d]==1)
-		=(_coords[d]==0 &&
+
 	}
 
-	return CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift);
+	return CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset);
 }

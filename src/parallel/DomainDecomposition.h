@@ -75,7 +75,7 @@ public:
 	//!  8 8
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	void printDecomp(std::string filename, Domain* domain);
+	void printDecomp(std::string filename, Domain* domain) override;
 
 	void initCommunicationPartners(double cutoffRadius, Domain * domain);
 
@@ -102,7 +102,7 @@ public:
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	CommunicationPartner getNeighboursFromHaloRegion(const HaloRegion& haloRegion, double cutoff) override;
+	CommunicationPartner getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
 private:
 

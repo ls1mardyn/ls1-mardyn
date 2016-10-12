@@ -132,10 +132,47 @@ void NeighbourCommunicationScheme3Stage::exchangeMoleculesMPI(ParticleContainer*
 	}
 }
 
+void NeighbourCommunicationScheme3Stage::convert1StageTo3StageNeighbours(
+		const std::vector<CommunicationPartner>& commPartners,
+		std::vector<std::vector<CommunicationPartner>>& neighbours) {
+	//TODO: extend for anything else than full shell
+	//TODO: implement conversion of 1StageTo3StageNeighbours
+
+	std::map<int,std::map<int,std::map<int,std::vector<CommunicationPartner>>>> orderedCommPartners;
+	// make sure, that everything that is sent from 0,0,0 to a non-face-sharing neighbour is first sent to a face-sharing neighbour.
+	for (unsigned int d = 2; d > 0; d--) {
+		// eliminate communication in direction d first (starting with z)
+		std::vector<CommunicationPartner> temp;
+		for (size_t j = 0; j < commPartners.size(); j++) {
+			if(commPartners[j]._offset[d]==0) {
+				// no communication in direction d -> unimportant
+				continue;
+			}
+			if(commPartners[j]._offset[(d+2)%3]==0 and commPartners[j]._offset[(d+2)%3]==0){
+				// communication only in direction d -> add to temp
+				temp.push_back(commPartners[j]);
+				continue;
+			}
+
+			// communication happens diagonally
+
+			for (size_t i = 0; i < commPartners.size(); i++) {
+				if (i == j) {
+					continue;
+				}
+				// check for communication from i to j
+
+
+			}
+		}
+		neighbours[d]=temp;
+	}
+}
+
 void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
 		DomainDecompMPIBase* domainDecomp) {
 
-	// corners of the process-specific domain
+// corners of the process-specific domain
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
 	double halo_width[DIMgeom]; // width of the halo strip
@@ -156,89 +193,95 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 	std::vector<HaloRegion> haloRegions = _commScheme->getHaloRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
-		commPartners.push_back(domainDecomp->getNeighboursFromHaloRegion(haloRegion));
+		commPartners.push_back(domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius));
 	}
 
-	for (unsigned short dimension = 0; dimension < DIMgeom; dimension++) {
-		if (_coversWholeDomain[dimension]) {
-			// nothing to do;
-			continue;
-		}
+//TODO: squeeze commPartners together (e.g. if (1,1,1) has the same rank as (1,1,0))
+//		this can happen e.g. for k-d decomposition
 
-		// set the ranks
-		int ranks[2];
+	convert1StageTo3StageNeighbours(commPartners, _neighbours);
 
-		MPI_CHECK(MPI_Cart_shift(domainDecomp->getCommunicator(), dimension, 1, &ranks[LOWER], &ranks[HIGHER]));
+	/*
+	 for (unsigned short dimension = 0; dimension < DIMgeom; dimension++) {
+	 if (_coversWholeDomain[dimension]) {
+	 // nothing to do;
+	 continue;
+	 }
 
-		// When moving a particle across a periodic boundary, the molecule position has to change.
-		// These offsets specify for each dimension (x, y and z) and each direction ("left"/lower
-		// neighbour and "right"/higher neighbour, how the particle coordinates have to be changed.
-		// e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
-		// moving to the left get the length of the whole domain added to their x-value
-		double offsetLower[DIMgeom];
-		double offsetHigher[DIMgeom];
-		offsetLower[dimension] = 0.0;
-		offsetHigher[dimension] = 0.0;
+	 // set the ranks
+	 int ranks[2];
 
-		// process on the left boundary
-		if (_coords[dimension] == 0)
-			offsetLower[dimension] = domain->getGlobalLength(dimension);
-		// process on the right boundary
-		if (_coords[dimension] == _gridSize[dimension] - 1)
-			offsetHigher[dimension] = -domain->getGlobalLength(dimension);
+	 MPI_CHECK(MPI_Cart_shift(domainDecomp->getCommunicator(), dimension, 1, &ranks[LOWER], &ranks[HIGHER]));
 
-		for (int direction = LOWER; direction <= HIGHER; direction++) {
-			double regToSendLow[DIMgeom];
-			double regToSendHigh[DIMgeom];
+	 // When moving a particle across a periodic boundary, the molecule position has to change.
+	 // These offsets specify for each dimension (x, y and z) and each direction ("left"/lower
+	 // neighbour and "right"/higher neighbour, how the particle coordinates have to be changed.
+	 // e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
+	 // moving to the left get the length of the whole domain added to their x-value
+	 double offsetLower[DIMgeom];
+	 double offsetHigher[DIMgeom];
+	 offsetLower[dimension] = 0.0;
+	 offsetHigher[dimension] = 0.0;
 
-			// set the regions
-			for (int i = 0; i < DIMgeom; i++) {
-				regToSendLow[i] = rmin[i] - halo_width[i];
-				regToSendHigh[i] = rmax[i] + halo_width[i];
-			}
+	 // process on the left boundary
+	 if (_coords[dimension] == 0)
+	 offsetLower[dimension] = domain->getGlobalLength(dimension);
+	 // process on the right boundary
+	 if (_coords[dimension] == _gridSize[dimension] - 1)
+	 offsetHigher[dimension] = -domain->getGlobalLength(dimension);
 
-			double haloLow[3];
-			double haloHigh[3];
-			double boundaryLow[3];
-			double boundaryHigh[3];
+	 for (int direction = LOWER; direction <= HIGHER; direction++) {
+	 double regToSendLow[DIMgeom];
+	 double regToSendHigh[DIMgeom];
 
-			switch (direction) {
-			case LOWER:
-				regToSendHigh[dimension] = rmin[dimension] + halo_width[dimension];
-				for (int i = 0; i < DIMgeom; ++i) {
-					haloLow[i] = regToSendLow[i];
-					if (i == dimension) {
-						haloHigh[i] = boundaryLow[i] = rmin[i];
-					} else {
-						haloHigh[i] = regToSendHigh[i];
-						boundaryLow[i] = regToSendLow[i];
-					}
-					boundaryHigh[i] = regToSendHigh[i];
-				}
-				break;
-			case HIGHER:
-				regToSendLow[dimension] = rmax[dimension] - halo_width[dimension];
-				for (int i = 0; i < DIMgeom; ++i) {
-					boundaryLow[i] = regToSendLow[i];
-					if (i == dimension) {
-						boundaryHigh[i] = haloLow[i] = rmax[i];
-					} else {
-						boundaryHigh[i] = regToSendHigh[i];
-						haloLow[i] = regToSendLow[i];
-					}
-					haloHigh[i] = regToSendHigh[i];
-				}
-				break;
-			}
+	 // set the regions
+	 for (int i = 0; i < DIMgeom; i++) {
+	 regToSendLow[i] = rmin[i] - halo_width[i];
+	 regToSendHigh[i] = rmax[i] + halo_width[i];
+	 }
 
-			// set the shift
-			double shift[3] = { 0., 0., 0. };
-			if (direction == LOWER)
-				shift[dimension] = offsetLower[dimension];
-			if (direction == HIGHER)
-				shift[dimension] = offsetHigher[dimension];
-			_neighbours[dimension].push_back(
-					CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
-		}
-	}
+	 double haloLow[3];
+	 double haloHigh[3];
+	 double boundaryLow[3];
+	 double boundaryHigh[3];
+
+	 switch (direction) {
+	 case LOWER:
+	 regToSendHigh[dimension] = rmin[dimension] + halo_width[dimension];
+	 for (int i = 0; i < DIMgeom; ++i) {
+	 haloLow[i] = regToSendLow[i];
+	 if (i == dimension) {
+	 haloHigh[i] = boundaryLow[i] = rmin[i];
+	 } else {
+	 haloHigh[i] = regToSendHigh[i];
+	 boundaryLow[i] = regToSendLow[i];
+	 }
+	 boundaryHigh[i] = regToSendHigh[i];
+	 }
+	 break;
+	 case HIGHER:
+	 regToSendLow[dimension] = rmax[dimension] - halo_width[dimension];
+	 for (int i = 0; i < DIMgeom; ++i) {
+	 boundaryLow[i] = regToSendLow[i];
+	 if (i == dimension) {
+	 boundaryHigh[i] = haloLow[i] = rmax[i];
+	 } else {
+	 boundaryHigh[i] = regToSendHigh[i];
+	 haloLow[i] = regToSendLow[i];
+	 }
+	 haloHigh[i] = regToSendHigh[i];
+	 }
+	 break;
+	 }
+
+	 // set the shift
+	 double shift[3] = { 0., 0., 0. };
+	 if (direction == LOWER)
+	 shift[dimension] = offsetLower[dimension];
+	 if (direction == HIGHER)
+	 shift[dimension] = offsetHigher[dimension];
+	 _neighbours[dimension].push_back(
+	 CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
+	 }
+	 }*/
 }
