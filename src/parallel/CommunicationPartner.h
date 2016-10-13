@@ -72,7 +72,7 @@ public:
 	}
 
 	void enlargeInOtherDirections(unsigned int d, double enlargement) {
-		for (unsigned int d2 = 0; d < 3; d++) {
+		for (unsigned int d2 = 0; d2 < 3; d2++) {
 			if (d2 == d)
 				continue;
 			_bothLow[d2] -= enlargement;

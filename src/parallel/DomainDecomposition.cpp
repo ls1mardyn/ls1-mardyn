@@ -187,6 +187,8 @@ CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(Domain* do
 			shift[d] = domain->getGlobalLength(d);
 		} else if (_coords[d] == _gridSize[d] - 1 and haloRegion.offset[d] == 1) {
 			shift[d] = -domain->getGlobalLength(d);
+		} else{
+			shift[d] = 0.;
 		}
 
 	}
