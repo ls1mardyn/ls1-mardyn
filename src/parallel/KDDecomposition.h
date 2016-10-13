@@ -130,6 +130,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 		return std::vector<int> (0);
 	}
 
+	virtual CommunicationPartner getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
+
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
 	/**

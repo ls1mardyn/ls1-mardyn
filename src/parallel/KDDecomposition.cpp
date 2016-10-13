@@ -177,7 +177,7 @@ void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain 
 //		return;
 //	}
 //	_neighboursInitialized = true;
-
+/*
 	int ownLo[DIMgeom];
 	int ownHi[DIMgeom];
 
@@ -293,6 +293,7 @@ void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain 
 
 		}
 	}
+	*/
 }
 
 void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const {
@@ -1309,3 +1310,11 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 
 }
 
+CommunicationPartner KDDecomposition::getNeighboursFromHaloRegion(Domain* domain,
+		const HaloRegion& haloRegion, double cutoff) {
+//TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
+// currently only one process per region is possible.
+	throw exception();
+
+	//return CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset);
+}

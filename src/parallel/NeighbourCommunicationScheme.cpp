@@ -26,6 +26,45 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 	delete _commScheme;
 }
 
+void NeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+			DomainDecompMPIBase* domainDecomp){}
+
+void NeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+			DomainDecompMPIBase* domainDecomp){}
+
+
+/*void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
+		DomainDecompMPIBase* domainDecomp) {
+
+// corners of the process-specific domain
+	double rmin[DIMgeom]; // lower corner
+	double rmax[DIMgeom]; // higher corner
+
+	for (int d = 0; d < DIMgeom; d++) {
+		rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
+		rmax[d] = domainDecomp->getBoundingBoxMax(d, domain);
+
+		// TODO: this should be safe, as long as molecules don't start flying around
+		// at the speed of one cutoffRadius per time step
+	}
+
+	for (unsigned int d = 0; d < _commDimms; d++) {
+		_neighbours[d].clear();
+	}
+	HaloRegion ownRegion = { rmin[0], rmin[1], rmin[2], rmax[0], rmax[1], rmax[2], 0, 0, 0 };
+	std::vector<HaloRegion> haloRegions = _commScheme->getHaloRegions(ownRegion, cutoffRadius, _coversWholeDomain);
+	std::vector<CommunicationPartner> commPartners;
+	for (HaloRegion haloRegion : haloRegions) {
+		commPartners.push_back(domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius));
+	}
+
+//TODO: squeeze commPartners together (e.g. if (1,1,1) has the same rank as (1,1,0))
+//		this can happen e.g. for k-d decomposition
+
+}*/
+
 void NeighbourCommunicationScheme3Stage::initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
@@ -134,38 +173,17 @@ void NeighbourCommunicationScheme3Stage::exchangeMoleculesMPI(ParticleContainer*
 
 void NeighbourCommunicationScheme3Stage::convert1StageTo3StageNeighbours(
 		const std::vector<CommunicationPartner>& commPartners,
-		std::vector<std::vector<CommunicationPartner>>& neighbours) {
+		std::vector<std::vector<CommunicationPartner>>& neighbours, HaloRegion& ownRegion, double cutoffRadius) {
 	//TODO: extend for anything else than full shell
 	//TODO: implement conversion of 1StageTo3StageNeighbours
 
-	std::map<int,std::map<int,std::map<int,std::vector<CommunicationPartner>>>> orderedCommPartners;
-	// make sure, that everything that is sent from 0,0,0 to a non-face-sharing neighbour is first sent to a face-sharing neighbour.
-	for (unsigned int d = 2; d > 0; d--) {
-		// eliminate communication in direction d first (starting with z)
-		std::vector<CommunicationPartner> temp;
-		for (size_t j = 0; j < commPartners.size(); j++) {
-			if(commPartners[j]._offset[d]==0) {
-				// no communication in direction d -> unimportant
-				continue;
-			}
-			if(commPartners[j]._offset[(d+2)%3]==0 and commPartners[j]._offset[(d+2)%3]==0){
-				// communication only in direction d -> add to temp
-				temp.push_back(commPartners[j]);
-				continue;
-			}
-
-			// communication happens diagonally
-
-			for (size_t i = 0; i < commPartners.size(); i++) {
-				if (i == j) {
-					continue;
-				}
-				// check for communication from i to j
-
-
-			}
+	for (const CommunicationPartner& commPartner : commPartners) {
+		if (!commPartner.isFaceCommunicator()) {
+			continue;  // if commPartner is not a face sharing communicator, we can ignore it!
 		}
-		neighbours[d]=temp;
+		unsigned int d = commPartner.getFaceCommunicationDirection();
+		neighbours[d].push_back(commPartner);
+		neighbours[d].back().enlargeInOtherDirections(d, cutoffRadius);
 	}
 }
 
@@ -175,7 +193,6 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 // corners of the process-specific domain
 	double rmin[DIMgeom]; // lower corner
 	double rmax[DIMgeom]; // higher corner
-	double halo_width[DIMgeom]; // width of the halo strip
 
 	for (int d = 0; d < DIMgeom; d++) {
 		rmin[d] = domainDecomp->getBoundingBoxMin(d, domain);
@@ -183,7 +200,6 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 
 		// TODO: this should be safe, as long as molecules don't start flying around
 		// at the speed of one cutoffRadius per time step
-		halo_width[d] = cutoffRadius;
 	}
 
 	for (unsigned int d = 0; d < _commDimms; d++) {
@@ -196,10 +212,9 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 		commPartners.push_back(domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius));
 	}
 
-//TODO: squeeze commPartners together (e.g. if (1,1,1) has the same rank as (1,1,0))
-//		this can happen e.g. for k-d decomposition
-
-	convert1StageTo3StageNeighbours(commPartners, _neighbours);
+	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
+	_fullShellNeighbours = commPartners;
+	convert1StageTo3StageNeighbours(commPartners, _neighbours, ownRegion, cutoffRadius);
 
 	/*
 	 for (unsigned short dimension = 0; dimension < DIMgeom; dimension++) {
@@ -283,5 +298,6 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 	 _neighbours[dimension].push_back(
 	 CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
 	 }
-	 }*/
+	 }
+	 */
 }

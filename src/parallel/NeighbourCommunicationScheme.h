@@ -14,7 +14,7 @@
 class DomainDecompMPIBase;
 class Domain;
 class FullShell;
-
+class HaloRegion;
 class NeighbourCommunicationScheme {
 public:
 	/**
@@ -45,6 +45,9 @@ public:
 	}
 
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp) = 0;
+
+	virtual std::vector<int> get3StageNeighbourRanks() = 0;
+	virtual std::vector<int> getFullShellNeighbourRanks() = 0;
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
@@ -62,25 +65,59 @@ protected:
 
 };
 
-class NeighbourCommunicationScheme1Stage: NeighbourCommunicationScheme {
+class NeighbourCommunicationScheme1Stage: public NeighbourCommunicationScheme {
 public:
 	NeighbourCommunicationScheme1Stage() :
 			NeighbourCommunicationScheme(1) {
 	}
-	virtual ~NeighbourCommunicationScheme1Stage();
+	virtual ~NeighbourCommunicationScheme1Stage(){};
+	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
+			override;
+	virtual std::vector<int> get3StageNeighbourRanks() override {
+		std::vector<int> neighbourRanks;
+		for (unsigned int i = 0; i < _neighbours[0].size(); i++) {
+			if (_neighbours[0][i].isFaceCommunicator()) {
+				neighbourRanks.push_back(_neighbours[0][i].getRank());
+			}
+		}
+		return neighbourRanks;
+	}
+	virtual std::vector<int> getFullShellNeighbourRanks() override {
+		std::vector<int> neighbourRanks;
+		for (unsigned int i = 0; i < _neighbours[0].size(); i++) {
+			neighbourRanks.push_back(_neighbours[0][i].getRank());
+		}
+		return neighbourRanks;
+	}
 };
 
-class NeighbourCommunicationScheme3Stage: NeighbourCommunicationScheme {
+class NeighbourCommunicationScheme3Stage: public NeighbourCommunicationScheme {
 public:
 
 	NeighbourCommunicationScheme3Stage() :
 			NeighbourCommunicationScheme(3) {
 	}
-	virtual ~NeighbourCommunicationScheme3Stage();
+	virtual ~NeighbourCommunicationScheme3Stage(){};
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
 			override;
+	virtual std::vector<int> get3StageNeighbourRanks() override {
+		std::vector<int> neighbourRanks;
+		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {
+			if (_fullShellNeighbours[i].isFaceCommunicator()) {
+				neighbourRanks.push_back(_fullShellNeighbours[i].getRank());
+			}
+		}
+		return neighbourRanks;
+	}
+	virtual std::vector<int> getFullShellNeighbourRanks() override {
+		std::vector<int> neighbourRanks;
+		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {
+			neighbourRanks.push_back(_fullShellNeighbours[i].getRank());
+		}
+		return neighbourRanks;
+	}
 protected:
 	void initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
@@ -89,6 +126,9 @@ protected:
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
 	void exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
-	void convert1StageTo3StageNeighbours(const std::vector<CommunicationPartner>& commPartners, std::vector<std::vector<CommunicationPartner>>& neighbours);
+	void convert1StageTo3StageNeighbours(const std::vector<CommunicationPartner>& commPartners,
+			std::vector<std::vector<CommunicationPartner>>& neighbours, HaloRegion& ownRegion, double cutoffRadius);
+
+	std::vector<CommunicationPartner> _fullShellNeighbours;
 
 };

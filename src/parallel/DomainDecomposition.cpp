@@ -7,6 +7,7 @@
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 #include "parallel/NeighbourCommunicationScheme.h"
+#include "parallel/HaloRegion.h"
 
 using Log::global_log;
 using namespace std;
@@ -126,25 +127,12 @@ void DomainDecomposition::printDecomp(string filename, Domain* domain) {
 
 std::vector<int> DomainDecomposition::getNeighbourRanks() {
 #if defined(ENABLE_MPI)
-	int numProcs;
-	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
 	std::vector<int> neighbours;
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	if (numProcs == 1) {
-
+	if (_numProcs == 1) {
 		for (int i = 0; i < 6; i++)
-			neighbours.push_back(rank);
+			neighbours.push_back(_rank);
 	} else {
-		for (int d = 0; d < DIM; d++) {
-			for (int n = 0; n < 2; n++) {
-				if (_coversWholeDomain[d]) {
-					neighbours.push_back(rank);
-				} else {
-					neighbours.push_back(_neighbours[d][n].getRank());
-				}
-			}
-		}
+		neighbours = _neighbourCommunicationScheme->get3StageNeighbourRanks();
 	}
 	return neighbours;
 #else
@@ -158,71 +146,13 @@ std::vector<int> DomainDecomposition::getNeighbourRanks() {
  **/
 std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 #if defined(ENABLE_MPI)
-	int numProcs;
-	MPI_Comm_size(MPI_COMM_WORLD, &numProcs);
-	int myRank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
 
 	std::vector<int> neighbours(26, -1);
-	if (numProcs == 1) {
-
+	if (_numProcs == 1) {
 		for (int i = 0; i < 26; i++)
-			neighbours[i] = myRank;
+			neighbours[i] = _rank;
 	} else {
-		for (int i = 0; i < 2 * DIM; i++) {
-			if (_coversWholeDomain[i / 2]) {
-				neighbours[i] = myRank;
-			} else {
-				neighbours[i] = (_neighbours[i / 2][i % 2].getRank());
-			}
-		}
-		std::vector<int> offsets(6, 0);
-		//calculate the rank offsets in every dimension in plus and minus direction
-		for (int i = 0; i < DIM * 2; i++) {
-			offsets[i] = neighbours[i] - myRank;
-		}
-
-		//calculate remaining 20 neighbours through offsets
-
-		//edges
-		//low x direction
-		for (int i = 0; i < 4; i++) { //all edges that are adjacent to lower x area (left)
-			neighbours[2 * i + 6] = neighbours[0] + offsets[i + 2];
-		}
-		//higher x direction
-		for (int i = 0; i < 4; i++) { //all edges that are adjacent to higher x area (right)
-			//always get opposite edges next to each other
-			int indexShift = (i % 2 == 0) ? +1 : -1;
-			neighbours[2 * i + 7] = neighbours[1] + offsets[i + 2 + indexShift];
-		}
-
-		//low y direction
-		for (int i = 0; i < 2; i++) { //all edges that are adjacent to lower y  area (bottom) not adjacent to lower x (left)
-			neighbours[2 * i + 14] = neighbours[2] + offsets[i + 4];
-		}
-		//higher y direction
-		for (int i = 0; i < 2; i++) { //all edges that are adjacent to higher y area (top) and not adjacent to lower x (right)
-			//always get opposite edges next to each other
-			int indexShift = (i % 2 == 0) ? +1 : -1;
-			neighbours[2 * i + 15] = neighbours[3] + offsets[i + 4 + indexShift];
-		}
-
-		//corners
-		//lower x direction
-		int index = 18;
-		for (int i = 0; i < 2; i++) {		//y offset
-			for (int j = 0; j < 2; j++) { // z offset
-				neighbours[index] = neighbours[0] + offsets[2 + i] + offsets[4 + j];
-				index = index + 2;
-			}
-		}
-		index = 19;
-		for (int i = 1; i >= 0; i--) { //y offset
-			for (int j = 1; j >= 0; j--) { // z offset
-				neighbours[index] = neighbours[1] + offsets[2 + i] + offsets[4 + j];
-				index = index + 2;
-			}
-		}
+		neighbours = _neighbourCommunicationScheme->getFullShellNeighbourRanks();
 	}
 	return neighbours;
 #else
@@ -230,8 +160,8 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 #endif
 }
 
-virtual CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(Domain* domain,
-		const HaloRegion& haloRegion, double cutoff) {
+CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion,
+		double cutoff) {
 //TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
 // currently only one process per region is possible.
 	int rank;
