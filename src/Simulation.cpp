@@ -305,7 +305,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 
 			double bBoxMin[3];
 			double bBoxMax[3];
-			/* TODO: replace Domain with DomainBase. */
 			_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
 			_moleculeContainer->rebuild(bBoxMin, bBoxMax);
 			xmlconfig.changecurrentnode("..");
