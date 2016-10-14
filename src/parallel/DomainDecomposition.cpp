@@ -160,7 +160,7 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 #endif
 }
 
-CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion,
+std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion,
 		double cutoff) {
 //TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
 // currently only one process per region is possible.
@@ -192,6 +192,6 @@ CommunicationPartner DomainDecomposition::getNeighboursFromHaloRegion(Domain* do
 		}
 
 	}
-
-	return CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset);
+	// initialize using initializer list - here a vector with one element is created
+	return std::vector<CommunicationPartner> {CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset)};
 }

@@ -15,6 +15,7 @@
 #include "utils/xmlfileUnits.h"
 #include "particleContainer/adapter/FlopCounter.h"
 #include "parallel/NeighbourCommunicationScheme.h"
+#include "parallel/HaloRegion.h"
 
 #include <cmath>
 
@@ -171,7 +172,8 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	}
 }
 
-void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain * domain) {
+void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
 
 //	if(_neighboursInitialized) {
 //		return;
@@ -208,26 +210,20 @@ void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain 
 				regToSendHi[i] = ownHi[i];
 			}
 
-			if (ownLo[dimension] == 0) {
-				regToSendLo[dimension] = _globalCellsPerDim[dimension];
-			} else if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
-				regToSendHi[dimension] = -1;
-			}
-
 			switch (direction) {
 			case LOWER:
-				--regToSendLo[dimension];
-				regToSendHi[dimension] = regToSendLo[dimension];
-				if (ownLo[dimension] == 0) {
+				if (ownLo[dimension] == 0) {  // go to periodic indices (needed for finding of ranks, ranges)
+					regToSendLo[dimension] = _globalCellsPerDim[dimension]-1;
 					shift[dimension] = domain->getGlobalLength(dimension);
 				}
+				regToSendHi[dimension] = regToSendLo[dimension];
 				break;
 			case HIGHER:
-				++regToSendHi[dimension];
-				regToSendLo[dimension] = regToSendHi[dimension];
 				if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
+					regToSendHi[dimension] = 0;
 					shift[dimension] = -domain->getGlobalLength(dimension);
 				}
+				regToSendLo[dimension] = regToSendHi[dimension];
 				break;
 			}
 
@@ -300,6 +296,13 @@ void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int l
 	for(int d = 0 ; d < 3; ++d) {
 		lC[d] = lo[d] * _cellSize[d];
 		hC[d] = (hi[d] + 1) * _cellSize[d];
+	}
+}
+
+void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const double lC[3], const double hC[3], const Domain* domain) const {
+	for (int d = 0; d < 3; ++d) {
+		lo[d] = static_cast<int>(lC[d] / _cellSize[d]);
+		hi[d] = static_cast<int>((hC[d] - 1e-10) / _cellSize[d]); // no -1, but -1e-10, to ensure, that the upper border is still within the cell
 	}
 }
 
@@ -1246,7 +1249,7 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
 	// First find out whether the area intersects the area given by testNode
 	bool areasIntersect = true;
 	for (int dim = 0; dim < KDDIM; dim++) {
-		if (not (coversWholeDomain[dim])) { // TODO: check wheter this can be removed || _ownArea->_coversWholeDomain[dim])){
+		if (not (coversWholeDomain[dim])) { // TODO: check whether this can be removed || _ownArea->_coversWholeDomain[dim])){
 			if (overlap[dim]) {
 				if (high[dim] < testNode->_lowCorner[dim] && low[dim] > testNode->_highCorner[dim])
 					areasIntersect = false;
@@ -1310,11 +1313,87 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 
 }
 
-CommunicationPartner KDDecomposition::getNeighboursFromHaloRegion(Domain* domain,
+std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(Domain* domain,
 		const HaloRegion& haloRegion, double cutoff) {
 //TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
-// currently only one process per region is possible.
-	throw exception();
+	std::vector<CommunicationPartner> temp;
+	int ownLo[DIMgeom];
+	int ownHi[DIMgeom];
+	double shift[DIMgeom];
 
-	//return CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset);
+	for (unsigned short d = 0; d < DIMgeom; d++) {
+		ownLo[d] = _ownArea->_lowCorner[d];
+		ownHi[d] = _ownArea->_highCorner[d];
+		shift[d] = 0.;
+	}
+
+	int regToSendLo[DIMgeom];
+	int regToSendHi[DIMgeom];
+
+	double rmin[3], rmax[3];
+	for (unsigned int d = 0; d < DIMgeom; d++) {  // put boundary options, such that everything lies within domain
+		// TODO: only for FullShell! (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks
+		if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
+			rmin[d] = haloRegion.rmin[d] + domain->getGlobalLength(d);
+			rmax[d] = haloRegion.rmax[d] + domain->getGlobalLength(d);
+			shift[d] = domain->getGlobalLength(d);
+		} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
+			rmin[d] = haloRegion.rmin[d] - domain->getGlobalLength(d);
+			rmax[d] = haloRegion.rmax[d] - domain->getGlobalLength(d);
+			shift[d] = -domain->getGlobalLength(d);
+		} else {
+			rmin[d] = haloRegion.rmin[d];
+			rmax[d] = haloRegion.rmax[d];
+		}
+	}
+
+	getCellIntCoordsFromRegionPeriodic(regToSendLo, regToSendHi, haloRegion.rmin, haloRegion.rmax, domain);
+
+	vector<int> ranks;
+	vector<int> ranges;
+	_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
+	int numNeighbours = ranks.size();
+	vector<int>::iterator indexIt = ranges.begin();
+	for (int n = 0; n < numNeighbours; ++n) {
+		int low[3];
+		int high[3];
+		for (int d = 0; d < 3; ++d) {
+			low[d] = *(indexIt++);
+			high[d] = *(indexIt++);
+			if (haloRegion.offset[d] != 0) {
+				assert(low[d] == high[d]); // TODO: only for FULLSHELL!!!
+			}
+		}
+		for (unsigned int d = 0; d < DIMgeom; d++) { // put boundary options, such that they lie around ownRegion again.
+			// TODO: only for FullShell! (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks
+			if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
+				low[d] -= _globalCellsPerDim[d];
+				high[d] -= _globalCellsPerDim[d];
+			} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
+				low[d] += _globalCellsPerDim[d];
+				high[d] += _globalCellsPerDim[d];
+			}
+		}
+
+		// region given by the current low-high range is the halo-range
+		double haloLow[3];
+		double haloHigh[3];
+		getCellBorderFromIntCoords(haloLow, haloHigh, low, high);
+
+		for (unsigned int d = 0; d < DIMgeom; d++) {
+			// shift for boundaryRegion (one cell)
+			low[d] -= haloRegion.offset[d] * cutoff;
+			high[d] -= haloRegion.offset[d] * cutoff;
+		}
+
+		double boundaryLow[3];
+		double boundaryHigh[3];
+		getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
+
+		temp.push_back(
+				CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset));
+
+	}
+
+	return temp;
 }

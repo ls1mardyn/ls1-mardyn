@@ -183,7 +183,7 @@ void NeighbourCommunicationScheme3Stage::convert1StageTo3StageNeighbours(
 		}
 		unsigned int d = commPartner.getFaceCommunicationDirection();
 		neighbours[d].push_back(commPartner);
-		neighbours[d].back().enlargeInOtherDirections(d, cutoffRadius);
+		neighbours[d].back().enlargeInOtherDirections(d, cutoffRadius); // do this more wisely if multiple neighbours exist in that direction.
 	}
 }
 
@@ -209,7 +209,8 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 	std::vector<HaloRegion> haloRegions = _commScheme->getHaloRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
-		commPartners.push_back(domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius));
+		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
+		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
 	}
 
 	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)

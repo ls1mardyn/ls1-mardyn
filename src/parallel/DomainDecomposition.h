@@ -102,7 +102,7 @@ public:
 	// documentation in base class
 	bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain) override;
 
-	CommunicationPartner getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
+	std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
 private:
 

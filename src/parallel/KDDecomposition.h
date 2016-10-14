@@ -130,7 +130,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 		return std::vector<int> (0);
 	}
 
-	virtual CommunicationPartner getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
+	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
  private:
 	void constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, ParticleContainer* moleculeContainer);
@@ -177,6 +177,7 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	void getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const;
 
+	void getCellIntCoordsFromRegionPeriodic(int * lo, int * hi, const double lC[3], const double hC[3], const Domain* domain) const;
 
 	//! @brief exchange decomposition data and build up the resulting tree
 	//!

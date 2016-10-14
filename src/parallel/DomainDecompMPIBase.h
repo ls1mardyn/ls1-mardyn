@@ -158,7 +158,7 @@ public:
 	virtual std::vector<int> getNeighbourRanks() =0;
 	virtual std::vector<int> getNeighbourRanksFullShell() =0;
 
-	virtual CommunicationPartner getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) = 0;
+	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) = 0;
 
 #if defined(ENABLE_MPI)
 	MPI_Datatype getMPIParticleType() {
