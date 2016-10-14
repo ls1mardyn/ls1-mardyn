@@ -1,4 +1,7 @@
 #!groovy
+// For now, this is not the Jenkinsfile used in Jenkins. Instead the web interface is used to input the data.
+// These files will/would become important, if we extend Jenkins to handle multiple branches and not just the trunk.
+
 echo 'Starting Mardyn Pipeline'
 def SVN_REVISION_GROOVY="HEAD"
 node('atsccs11') {
