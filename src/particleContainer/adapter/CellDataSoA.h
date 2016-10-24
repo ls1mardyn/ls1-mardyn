@@ -18,7 +18,6 @@
 class CellDataSoA {
 public:
 	typedef AlignedArray<size_t> IndexArray;
-	typedef AlignedArray<double> DoubleArray;
 
 	CellDataSoA(size_t molecules_arg, size_t lj_centers_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) :
 		_mol_num(molecules_arg),
@@ -83,15 +82,15 @@ public:
 	IndexArray _ljc_id;
 
 	// entries per charge
-	DoubleArray _charges_q;
+	AlignedArray<double> _charges_q;
 
 	// entries per dipole
-	DoubleArray _dipoles_p; // dipole moment
+	AlignedArray<double> _dipoles_p; // dipole moment
 	AlignedArrayTriplet<double> _dipoles_e; // orientation vector of dipole moment
 	AlignedArrayTriplet<double> _dipoles_M; // torque vector
 
 	// entries per quadrupole
-	DoubleArray _quadrupoles_m; // quadrupole moment
+	AlignedArray<double> _quadrupoles_m; // quadrupole moment
 	AlignedArrayTriplet<double> _quadrupoles_e; // orientation vector of quadrupole moment
 	AlignedArrayTriplet<double> _quadrupoles_M; // torque vector
 
