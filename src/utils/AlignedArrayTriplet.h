@@ -11,62 +11,63 @@
 #include "AlignedArray.h"
 #include <cassert>
 
+template <class T>
 class AlignedArrayTriplet {
 public:
 	AlignedArrayTriplet(size_t initialSize) : _data(), _numEntriesPerArray(0) {
 		resize(initialSize);
 	}
 
-	double* xBegin() {
+	T* xBegin() {
 		return _numEntriesPerArray > 0 ? &(_data[0 * _numEntriesPerArray]) : 0;
 	}
 
-	double* xBegin() const {
+	T* xBegin() const {
 		return _numEntriesPerArray > 0 ? &(_data[0 * _numEntriesPerArray]) : 0;
 	}
 
-	double* yBegin() {
+	T* yBegin() {
 		return _numEntriesPerArray > 0 ? &(_data[1 * _numEntriesPerArray]) : 0;
 	}
 
-	double* yBegin() const {
+	T* yBegin() const {
 		return _numEntriesPerArray > 0 ? &(_data[1 * _numEntriesPerArray]) : 0;
 	}
 
-	double* zBegin() {
+	T* zBegin() {
 		return _numEntriesPerArray > 0 ? &(_data[2 * _numEntriesPerArray]) : 0;
 	}
 
-	double* zBegin() const {
+	T* zBegin() const {
 		return _numEntriesPerArray > 0 ? &(_data[2 * _numEntriesPerArray]) : 0;
 	}
 
-	double& x(size_t i) {
+	T& x(size_t i) {
 		assert(i < _numEntriesPerArray);
 		return _data[i];
 	}
 
-	double& x(size_t i) const {
+	T& x(size_t i) const {
 		assert(i < _numEntriesPerArray);
 		return _data[i];
 	}
 
-	double& y(size_t i) {
+	T& y(size_t i) {
 		assert(i < _numEntriesPerArray);
 		return _data[i + _numEntriesPerArray];
 	}
 
-	double& y(size_t i) const {
+	T& y(size_t i) const {
 		assert(i < _numEntriesPerArray);
 		return _data[i + _numEntriesPerArray];
 	}
 
-	double& z(size_t i) {
+	T& z(size_t i) {
 		assert(i < _numEntriesPerArray);
 		return _data[i + 2 * _numEntriesPerArray];
 	}
 
-	double& z(size_t i) const {
+	T& z(size_t i) const {
 		assert(i < _numEntriesPerArray);
 		return _data[i + 2 * _numEntriesPerArray];
 	}
@@ -86,9 +87,9 @@ public:
 		if (_numEntriesPerArray > nEntriesPerArray) {
 			// set elements from nEntriesPerArray to _numEntriesPerArray to zero:
 			size_t elements = _numEntriesPerArray - nEntriesPerArray;
-			std::memset(&(x(nEntriesPerArray)), 0, elements * sizeof(double));
-			std::memset(&(y(nEntriesPerArray)), 0, elements * sizeof(double));
-			std::memset(&(z(nEntriesPerArray)), 0, elements * sizeof(double));
+			std::memset(&(x(nEntriesPerArray)), 0, elements * sizeof(T));
+			std::memset(&(y(nEntriesPerArray)), 0, elements * sizeof(T));
+			std::memset(&(z(nEntriesPerArray)), 0, elements * sizeof(T));
 		}
 	}
 
@@ -97,7 +98,7 @@ public:
 	}
 
 private:
-	AlignedArray<double> _data;
+	AlignedArray<T> _data;
 
 	//! at any point, _data contains precisely three times this storage
 	size_t _numEntriesPerArray;

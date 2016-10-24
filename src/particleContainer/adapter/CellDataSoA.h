@@ -67,17 +67,17 @@ public:
 	size_t _centers_size;
 
 	// entries per molecule
-	AlignedArrayTriplet _mol_pos;
+	AlignedArrayTriplet<double> _mol_pos;
 	AlignedArray<int> _mol_ljc_num;
 	AlignedArray<int> _mol_charges_num;
 	AlignedArray<int> _mol_dipoles_num;
 	AlignedArray<int> _mol_quadrupoles_num;
 
 	// entries per center
-	AlignedArrayTriplet _centers_m_r;
-	AlignedArrayTriplet _centers_r;
-	AlignedArrayTriplet _centers_f;
-	AlignedArrayTriplet _centers_V;
+	AlignedArrayTriplet<double> _centers_m_r;
+	AlignedArrayTriplet<double> _centers_r;
+	AlignedArrayTriplet<double> _centers_f;
+	AlignedArrayTriplet<double> _centers_V;
 
 	// entries per lj center
 	IndexArray _ljc_id;
@@ -87,13 +87,13 @@ public:
 
 	// entries per dipole
 	DoubleArray _dipoles_p; // dipole moment
-	AlignedArrayTriplet _dipoles_e; // orientation vector of dipole moment
-	AlignedArrayTriplet _dipoles_M; // torque vector
+	AlignedArrayTriplet<double> _dipoles_e; // orientation vector of dipole moment
+	AlignedArrayTriplet<double> _dipoles_M; // torque vector
 
 	// entries per quadrupole
 	DoubleArray _quadrupoles_m; // quadrupole moment
-	AlignedArrayTriplet _quadrupoles_e; // orientation vector of quadrupole moment
-	AlignedArrayTriplet _quadrupoles_M; // torque vector
+	AlignedArrayTriplet<double> _quadrupoles_e; // orientation vector of quadrupole moment
+	AlignedArrayTriplet<double> _quadrupoles_M; // torque vector
 
 	vcp_inline double* ljc_m_r_xBegin() const { return _centers_m_r.xBegin();}
 	vcp_inline double* ljc_m_r_yBegin() const { return _centers_m_r.yBegin();}
@@ -192,8 +192,9 @@ public:
 	 * @param array
 	 * @param size
 	 */
+	template<class T>
 	vcp_inline
-	void resizeCentersZero(AlignedArrayTriplet& triplet, const size_t& size) const{
+	void resizeCentersZero(AlignedArrayTriplet<T>& triplet, const size_t& size) const{
 
 		triplet.resize(size);
 
