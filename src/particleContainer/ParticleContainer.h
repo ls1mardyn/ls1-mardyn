@@ -119,7 +119,7 @@ public:
 
 	//! @brief adds a whole vector of particles
 	//! @param particles reference to a vector of pointers to particles
-	virtual int addParticles(std::vector<Molecule*>& particles, bool checkWhetherDuplicate=false) = 0;
+	virtual int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false) = 0;
 
 	//! @brief traverse pairs which are close to each other
 	//!
@@ -218,14 +218,14 @@ public:
 	 * @param direction
 	 * @param v
 	 */
-	virtual void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false) = 0;
+	virtual void getHaloParticlesDirection(int direction, std::vector<Molecule>& v, bool removeFromContainer = false) = 0;
 
 	/**
 	 * @brief copy particles from the boundary layer for filling halo layers
 	 * @param direction
 	 * @param v
 	 */
-	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v) = 0;
+	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule>& v) = 0;
 
 	virtual double getCutoff() = 0;
 

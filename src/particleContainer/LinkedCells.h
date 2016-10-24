@@ -115,7 +115,7 @@ public:
 
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
-	int addParticles(std::vector<Molecule*>& particles, bool checkWhetherDuplicate=false);
+	int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
 
 	//! @brief calculate the forces between the molecules.
 	//!
@@ -184,8 +184,8 @@ public:
 	//! @brief appends pointers to all particles in the halo region to the list
 	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
 
-	void getHaloParticlesDirection(int direction, std::vector<Molecule*>& v, bool removeFromContainer = false);
-	void getBoundaryParticlesDirection(int direction, std::vector<Molecule*>& v);
+	void getHaloParticlesDirection(int direction, std::vector<Molecule>& v, bool removeFromContainer = false);
+	void getBoundaryParticlesDirection(int direction, std::vector<Molecule>& v);
 
 
 	// documentation see father class (ParticleContainer.h)

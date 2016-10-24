@@ -232,15 +232,13 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 void LinkedCells::update() {
-	std::vector<ParticleCell>::iterator celliter;
+	const int numCells = _cells.size();
 
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static, 1)
+	#pragma omp parallel for schedule(static)
 	#endif
-	for (celliter = _cells.begin(); celliter != _cells.end(); ++celliter) {
-
-		std::vector<Molecule> & molsToSort =
-				celliter->filterLeavingMolecules();
+	for (int i=0; i < numCells; i++) {
+		std::vector<Molecule> & molsToSort = _cells[i].filterLeavingMolecules();
 
 		for (auto it = molsToSort.begin(); it != molsToSort.end(); ++it) {
 			addParticle(*it);
@@ -267,11 +265,11 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 	return wasInserted;
 }
 
-int LinkedCells::addParticles(std::vector<Molecule*>& particles, bool checkWhetherDuplicate) {
+int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
 	int oldNumberOfParticles = _cells.size();
 
-	typedef std::vector<Molecule*>::size_type index_t;
-	static std::vector< std::vector<ParticleCell>::size_type > index_vector;
+	typedef vector<Molecule>::size_type index_t;
+	static vector< vector<ParticleCell>::size_type > index_vector;
 	index_vector.resize(particles.size());
 
 	#if defined(_OPENMP)
@@ -283,13 +281,13 @@ int LinkedCells::addParticles(std::vector<Molecule*>& particles, bool checkWheth
 
 		const index_t start = (thread_id    ) * particles.size() / num_threads;
 		const index_t end   = (thread_id + 1) * particles.size() / num_threads;
-		for (index_t i = start; i < end; ++i) {
-			Molecule* particle = particles[i];
+		for (index_t i = start; i < end; i++) {
+			Molecule particle = particles[i];
 			#ifndef NDEBUG
-				assert(particle->inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
+				assert(particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
 			#endif
 
-			const unsigned long cellIndex = getCellIndexOfMolecule(particle);
+			const unsigned long cellIndex = getCellIndexOfMolecule(&particle);
 			assert(cellIndex < _cells.size());
 			index_vector[i] = cellIndex;
 		}
@@ -298,15 +296,15 @@ int LinkedCells::addParticles(std::vector<Molecule*>& particles, bool checkWheth
 		#pragma omp barrier
 		#endif
 
-		typedef std::vector<ParticleCell>::size_type cell_index_t;
+		typedef vector<ParticleCell>::size_type cell_index_t;
 		const cell_index_t cells_start = (thread_id    ) * _cells.size() / num_threads;
 		const cell_index_t cells_end   = (thread_id + 1) * _cells.size() / num_threads;
 
-		for (index_t i = 0; i < particles.size(); ++i) {
+		for (index_t i = 0; i < particles.size(); i++) {
 			index_t index = index_vector[i];
 			if (cells_start <= index and index < cells_end) {
-				_cells[index].addParticle(*particles[i], checkWhetherDuplicate);
-				delete particles[i];
+				_cells[index].addParticle(particles[i], checkWhetherDuplicate);
+				//delete particles[i]; //replace at end with particles.clear()?
 			}
 		}
 	} // end pragma omp parallel
@@ -341,25 +339,19 @@ unsigned LinkedCells::countParticles(unsigned int cid) {
 }
 
 // @todo: couldn't this use getRegion?
-unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom,
-		double* ctop) {
+unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* ctop) {
 	int minIndex[3];
 	int maxIndex[3];
 	for (int d = 0; d < 3; d++) {
 		if (cbottom[d] < this->_haloBoundingBoxMin[d])
 			minIndex[d] = 0;
 		else
-			minIndex[d] = (int) floor(
-					(cbottom[d] - this->_haloBoundingBoxMin[d])
-							/ _cellLength[d]);
+			minIndex[d] = (int) floor((cbottom[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]);
 
 		if (ctop[d] > this->_haloBoundingBoxMax[d])
-			maxIndex[d] = (int) floor(
-					(this->_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d])
-							/ this->_cellLength[d]);
+			maxIndex[d] = (int) floor((this->_haloBoundingBoxMax[d] - _haloBoundingBoxMin[d]) / this->_cellLength[d]);
 		else
-			maxIndex[d] = (int) floor(
-					(ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]);
+			maxIndex[d] = (int) floor((ctop[d] - this->_haloBoundingBoxMin[d]) / _cellLength[d]);
 
 		if (minIndex[d] < 0)
 			minIndex[d] = 0;
@@ -693,12 +685,13 @@ void LinkedCells::deleteOuterParticles() {
 		global_simulation->exit(1);
 	}
 
-	vector<unsigned long>::iterator cellIndexIter;
+	const int numHaloCells = _haloCellIndices.size();
+
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static, 1)
+	#pragma omp parallel for schedule(static)
 	#endif
-	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
-		ParticleCell& currentCell = _cells[*cellIndexIter];
+	for (int i = 0; i < numHaloCells; i++) {
+		ParticleCell& currentCell = _cells[_haloCellIndices[i]];
 		currentCell.deallocateAllParticles();
 	}
 }
@@ -715,12 +708,10 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 		global_simulation->exit(1);
 	}
 
-	std::vector<Molecule*>::iterator particleIter;
 	vector<unsigned long>::iterator cellIndexIter;
 
 	// loop over all halo cells
-	for (cellIndexIter = _haloCellIndices.begin();
-			cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
+	for (cellIndexIter = _haloCellIndices.begin(); cellIndexIter != _haloCellIndices.end(); cellIndexIter++) {
 		ParticleCell& currentCell = _cells[*cellIndexIter];
 		// loop over all molecules in the cell
 		const int numMols = currentCell.getMoleculeCount();
@@ -730,13 +721,11 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 	}
 }
 
-void LinkedCells::getHaloParticlesDirection(int direction,
-		std::vector<Molecule*>& v, bool removeFromContainer) {
+void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, bool removeFromContainer) {
 	assert(direction != 0);
 
 	int startIndex[3] = { 0, 0, 0 };
-	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1,
-			_cellsPerDimension[2] - 1 };
+	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
 
 	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
 	unsigned dim = abs(direction) - 1;
@@ -746,6 +735,84 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
 	}
 
+	#if 1
+	int totalNumMols = 0;
+	vector<vector<Molecule>> threadData;
+	vector<int> prefixArray;
+
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(v, totalNumMols, threadData)
+	#endif
+	{
+		const int numThreads = omp_get_num_threads();
+		const int threadNum = omp_get_thread_num();
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			threadData.resize(numThreads);
+			prefixArray.resize(numThreads + 1);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		#if defined (_OPENMP)
+		#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
+		#endif
+		for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+					const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+					ParticleCell & cell = _cells[cellIndex];
+
+					const int numMols = cell.getMoleculeCount();
+					for (int i = 0; i < numMols; ++i) {
+						threadData[threadNum].push_back(cell.moleculesAt(i));
+					}
+
+					if (removeFromContainer == true) {
+						cell.deallocateAllParticles();
+					}
+
+					totalNumMols += numMols;
+					prefixArray[threadNum + 1] += numMols;
+				}
+			}
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//build the prefix array and allocate memory for v
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			//build the prefix array
+			prefixArray[0] = 0;
+			for(int i = 1; i <= numThreads; i++){
+				prefixArray[i] += prefixArray[i - 1];
+			}
+
+			//allocate memory for v
+			v.resize(totalNumMols);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//reduce the molecules in v
+		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+		for(int i = 0; i < myThreadMolecules; i++){
+			v[prefixArray[threadNum] + i] = threadData[threadNum].back();
+			threadData[threadNum].pop_back();
+		}
+	}
+	#else
 	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
 		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
@@ -754,7 +821,7 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 
 				const int numMols = cell.getMoleculeCount();
 				for (int i = 0; i < numMols; ++i) {
-					v.push_back(new Molecule(cell.moleculesAt(i)));
+					v.push_back(cell.moleculesAt(i));
 				}
 
 				if (removeFromContainer == true) {
@@ -763,15 +830,14 @@ void LinkedCells::getHaloParticlesDirection(int direction,
 			}
 		}
 	}
+	#endif
 }
 
-void LinkedCells::getBoundaryParticlesDirection(int direction,
-		std::vector<Molecule*>& v) {
+void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>& v) {
 	assert(direction != 0);
 
 	int startIndex[3] = { 0, 0, 0 };
-	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1,
-			_cellsPerDimension[2] - 1 };
+	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
 
 	// get dimension in 0, 1, 2 format from direction in +-1, +-2, +-3 format
 	unsigned dim = abs(direction) - 1;
@@ -783,18 +849,94 @@ void LinkedCells::getBoundaryParticlesDirection(int direction,
 		startIndex[dim] = stopIndex[dim] - (_haloWidthInNumCells[dim] - 1); // -1 needed for equality below
 	}
 
+	#if 1
+	int totalNumMols = 0;
+	vector<vector<Molecule>> threadData;
+	vector<int> prefixArray;
+
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(v, totalNumMols, threadData)
+	#endif
+	{
+		const int numThreads = omp_get_num_threads();
+		const int threadNum = omp_get_thread_num();
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			threadData.resize(numThreads);
+			prefixArray.resize(numThreads + 1);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		#if defined (_OPENMP)
+		#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
+		#endif
+		for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+					const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+					ParticleCell & cell = _cells[cellIndex];
+
+					const int numMols = cell.getMoleculeCount();
+					for (int i = 0; i < numMols; ++i) {
+						threadData[threadNum].push_back(cell.moleculesAt(i));
+					}
+
+					totalNumMols += numMols;
+					prefixArray[threadNum + 1] += numMols;
+				}
+			}
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//build the prefix array and allocate memory for v
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			//build the predix array
+			prefixArray[0] = 0;
+			for(int i = 1; i <= numThreads; i++){
+				prefixArray[i] += prefixArray[i - 1];
+			}
+
+			//allocate memory for v
+			v.resize(totalNumMols);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//reduce the molecules in v
+		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+		for(int i = 0; i < myThreadMolecules; i++){
+			v[prefixArray[threadNum] + i] = threadData[threadNum].back();
+			threadData[threadNum].pop_back();
+		}
+	}
+	#else
 	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
 		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
 				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
-				int numMols = cell.getMoleculeCount();
+
+				const int numMols = cell.getMoleculeCount();
 				for (int i = 0; i < numMols; ++i) {
-					v.push_back(&(cell.moleculesAt(i)));
+					v.push_back(cell.moleculesAt(i));
 				}
 			}
 		}
 	}
+	#endif
 }
 
 void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3],
@@ -975,8 +1117,7 @@ void LinkedCells::initializeCells() {
 
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
 				cellBoxMin[0] = ix * _cellLength[0] + _haloBoundingBoxMin[0];
-				cellBoxMax[0] = (ix + 1) * _cellLength[0]
-						+ _haloBoundingBoxMin[0];
+				cellBoxMax[0] = (ix + 1) * _cellLength[0] + _haloBoundingBoxMin[0];
 
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
@@ -988,40 +1129,45 @@ void LinkedCells::initializeCells() {
 
 				cell.setBoxMin(cellBoxMin);
 				cell.setBoxMax(cellBoxMax);
-				_cells[cellIndex].setCellIndex(cellIndex);//set the index of the cell to the index of it...
-				if (ix < _haloWidthInNumCells[0] || iy < _haloWidthInNumCells[1]
-						|| iz < _haloWidthInNumCells[2]
-						|| ix >= _cellsPerDimension[0] - _haloWidthInNumCells[0]
-						|| iy >= _cellsPerDimension[1] - _haloWidthInNumCells[1]
-						|| iz
-								>= _cellsPerDimension[2]
-										- _haloWidthInNumCells[2]) {
+				_cells[cellIndex].setCellIndex(cellIndex); //set the index of the cell to the index of it...
+				if (ix < _haloWidthInNumCells[0] ||
+					iy < _haloWidthInNumCells[1] ||
+					iz < _haloWidthInNumCells[2] ||
+					ix >= _cellsPerDimension[0] - _haloWidthInNumCells[0] ||
+					iy >= _cellsPerDimension[1] - _haloWidthInNumCells[1] ||
+					iz >= _cellsPerDimension[2] - _haloWidthInNumCells[2]) {
+
 					cell.assignCellToHaloRegion();
 					_haloCellIndices.push_back(cellIndex);
-				} else if (ix < 2 * _haloWidthInNumCells[0]
-						|| iy < 2 * _haloWidthInNumCells[1]
-						|| iz < 2 * _haloWidthInNumCells[2]
-						|| ix
-								>= _cellsPerDimension[0]
-										- 2 * _haloWidthInNumCells[0]
-						|| iy
-								>= _cellsPerDimension[1]
-										- 2 * _haloWidthInNumCells[1]
-						|| iz
-								>= _cellsPerDimension[2]
-										- 2 * _haloWidthInNumCells[2]) {
-					cell.assignCellToBoundaryRegion();
-					_boundaryCellIndices.push_back(cellIndex);
-				} else if (ix < 3 * _haloWidthInNumCells[0] || iy < 3 * _haloWidthInNumCells[1]
-						|| iz < 3 * _haloWidthInNumCells[2] || ix >= _cellsPerDimension[0] - 3 * _haloWidthInNumCells[0]
-						|| iy >= _cellsPerDimension[1] - 3 * _haloWidthInNumCells[1]
-						|| iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
-					cell.assignCellToInnerRegion();
-					_innerCellIndices.push_back(cellIndex);
-				} else {
-					cell.assignCellToInnerMostAndInnerRegion();
-					_innerMostCellIndices.push_back(cellIndex);
-					_innerCellIndices.push_back(cellIndex);
+				}
+				else{
+					if (ix < 2 * _haloWidthInNumCells[0] ||
+						iy < 2 * _haloWidthInNumCells[1] ||
+						iz < 2 * _haloWidthInNumCells[2] ||
+						ix >= _cellsPerDimension[0] - 2 * _haloWidthInNumCells[0] ||
+						iy >= _cellsPerDimension[1] - 2 * _haloWidthInNumCells[1] ||
+						iz >= _cellsPerDimension[2] - 2 * _haloWidthInNumCells[2]) {
+
+						cell.assignCellToBoundaryRegion();
+						_boundaryCellIndices.push_back(cellIndex);
+					}
+					else{
+						if (ix < 3 * _haloWidthInNumCells[0] ||
+							iy < 3 * _haloWidthInNumCells[1] ||
+							iz < 3 * _haloWidthInNumCells[2] ||
+							ix >= _cellsPerDimension[0] - 3 * _haloWidthInNumCells[0] ||
+							iy >= _cellsPerDimension[1] - 3 * _haloWidthInNumCells[1] ||
+							iz >= _cellsPerDimension[2] - 3 * _haloWidthInNumCells[2]) {
+
+							cell.assignCellToInnerRegion();
+							_innerCellIndices.push_back(cellIndex);
+						}
+						else {
+							cell.assignCellToInnerMostAndInnerRegion();
+							_innerMostCellIndices.push_back(cellIndex);
+							_innerCellIndices.push_back(cellIndex);
+						}
+					}
 				}
 			}
 		}
@@ -1033,20 +1179,23 @@ void LinkedCells::initializeCells() {
 			for (int typ = 0; typ < 2; ++typ) {
 				_borderCellIndices[dim][dir][typ].clear();
 				int low[3] = { 0, 0, 0 };
-				int high[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1]
-						- 1, _cellsPerDimension[2] - 1 };
+				int high[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
 
 				if (typ == 1) {
-					if (dir == 0)
+					if (dir == 0){
 						low[dim]++;
-					else
+					}
+					else {
 						high[dim]--;
+					}
 				}
 
-				if (dir == 0)
+				if (dir == 0){
 					high[dim] = low[dim];
-				else
+				}
+				else {
 					low[dim] = high[dim];
+				}
 
 				for (int iz = low[2]; iz <= high[2]; ++iz) {
 					for (int iy = low[1]; iy <= high[1]; ++iy) {
@@ -1057,15 +1206,14 @@ void LinkedCells::initializeCells() {
 
 							assert(not cell.isInnerCell());
 
-							if (typ == 0)
+							if (typ == 0){
 								assert(cell.isHaloCell());
-							else{
+							} else {
 								 /* assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
 							}
 #endif
 
-							_borderCellIndices[dim][dir][typ].push_back(
-									cellIndex);
+							_borderCellIndices[dim][dir][typ].push_back(cellIndex);
 						}
 					}
 				}

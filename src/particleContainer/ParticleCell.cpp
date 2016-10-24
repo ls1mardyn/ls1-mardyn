@@ -113,8 +113,10 @@ std::vector<Molecule>& ParticleCell::filterLeavingMolecules() {
 void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
 	for (auto particleIter = _molecules.begin(); particleIter != _molecules.end();) {
 		if (particleIter->inBox(lowCorner, highCorner)) {
-			particlePtrs.push_back(&(*particleIter));
-			if (removeFromContainer) {
+			if (not removeFromContainer) {
+				particlePtrs.push_back(&(*particleIter));
+			} else {
+				particlePtrs.push_back(new Molecule(*particleIter));
 				UnorderedVector::fastRemove(_molecules, particleIter);
 				// particleIter already points at next molecule, so continue without incrementing
 				continue;
