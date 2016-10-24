@@ -1332,7 +1332,9 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 
 	double rmin[3], rmax[3];
 	for (unsigned int d = 0; d < DIMgeom; d++) {  // put boundary options, such that everything lies within domain
-		// TODO: only for FullShell! (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks
+		// TODO: only works for FullShell!
+		// (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks,
+		// i.e. if cellsize is less than 1 cutoff radius)
 		if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
 			rmin[d] = haloRegion.rmin[d] + domain->getGlobalLength(d);
 			rmax[d] = haloRegion.rmax[d] + domain->getGlobalLength(d);
@@ -1347,7 +1349,7 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 		}
 	}
 
-	getCellIntCoordsFromRegionPeriodic(regToSendLo, regToSendHi, haloRegion.rmin, haloRegion.rmax, domain);
+	getCellIntCoordsFromRegionPeriodic(regToSendLo, regToSendHi, rmin, rmax, domain);
 
 	vector<int> ranks;
 	vector<int> ranges;
@@ -1382,8 +1384,8 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 
 		for (unsigned int d = 0; d < DIMgeom; d++) {
 			// shift for boundaryRegion (one cell)
-			low[d] -= haloRegion.offset[d] * cutoff;
-			high[d] -= haloRegion.offset[d] * cutoff;
+			low[d] -= haloRegion.offset[d];
+			high[d] -= haloRegion.offset[d];
 		}
 
 		double boundaryLow[3];
