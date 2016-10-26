@@ -31,11 +31,11 @@ public:
 
 	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp);
+			DomainDecompMPIBase* domainDecomp) = 0;
 
 	virtual void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp);
+			DomainDecompMPIBase* domainDecomp) = 0;
 
 	virtual void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) = 0;
@@ -70,7 +70,9 @@ public:
 	NeighbourCommunicationScheme1Stage() :
 			NeighbourCommunicationScheme(1) {
 	}
-	virtual ~NeighbourCommunicationScheme1Stage(){};
+	virtual ~NeighbourCommunicationScheme1Stage() {
+	}
+	;
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
 			override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {
@@ -97,7 +99,8 @@ public:
 	NeighbourCommunicationScheme3Stage() :
 			NeighbourCommunicationScheme(3) {
 	}
-	virtual ~NeighbourCommunicationScheme3Stage(){};
+	virtual ~NeighbourCommunicationScheme3Stage() {
+	}
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
@@ -118,6 +121,14 @@ public:
 		}
 		return neighbourRanks;
 	}
+	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+			DomainDecompMPIBase* domainDecomp);
+
+	virtual void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+			DomainDecompMPIBase* domainDecomp);
+
 protected:
 	void initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);

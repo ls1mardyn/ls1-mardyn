@@ -26,16 +26,7 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 	delete _commScheme;
 }
 
-void NeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp){}
-
-void NeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
-			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
-			DomainDecompMPIBase* domainDecomp){}
-
-
-/*void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
+void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
 		DomainDecompMPIBase* domainDecomp) {
 
 // corners of the process-specific domain
@@ -57,13 +48,14 @@ void NeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer*
 	std::vector<HaloRegion> haloRegions = _commScheme->getHaloRegions(ownRegion, cutoffRadius, _coversWholeDomain);
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
-		commPartners.push_back(domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius));
+		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
+		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
 	}
 
-//TODO: squeeze commPartners together (e.g. if (1,1,1) has the same rank as (1,1,0))
-//		this can happen e.g. for k-d decomposition
+	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
+	_neighbours[0] = commPartners;
 
-}*/
+}
 
 void NeighbourCommunicationScheme3Stage::initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d,
@@ -171,6 +163,20 @@ void NeighbourCommunicationScheme3Stage::exchangeMoleculesMPI(ParticleContainer*
 	}
 }
 
+void NeighbourCommunicationScheme3Stage::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
+		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+		DomainDecompMPIBase* domainDecomp) {
+	assert(stageNumber < getCommDims());
+	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
+}
+
+void NeighbourCommunicationScheme3Stage::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
+		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+		DomainDecompMPIBase* domainDecomp) {
+	assert(stageNumber < getCommDims());
+	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
+}
+
 void NeighbourCommunicationScheme3Stage::convert1StageTo3StageNeighbours(
 		const std::vector<CommunicationPartner>& commPartners,
 		std::vector<std::vector<CommunicationPartner>>& neighbours, HaloRegion& ownRegion, double cutoffRadius) {
@@ -217,88 +223,4 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 	_fullShellNeighbours = commPartners;
 	convert1StageTo3StageNeighbours(commPartners, _neighbours, ownRegion, cutoffRadius);
 
-	/*
-	 for (unsigned short dimension = 0; dimension < DIMgeom; dimension++) {
-	 if (_coversWholeDomain[dimension]) {
-	 // nothing to do;
-	 continue;
-	 }
-
-	 // set the ranks
-	 int ranks[2];
-
-	 MPI_CHECK(MPI_Cart_shift(domainDecomp->getCommunicator(), dimension, 1, &ranks[LOWER], &ranks[HIGHER]));
-
-	 // When moving a particle across a periodic boundary, the molecule position has to change.
-	 // These offsets specify for each dimension (x, y and z) and each direction ("left"/lower
-	 // neighbour and "right"/higher neighbour, how the particle coordinates have to be changed.
-	 // e.g. for dimension x (d=0) and a process on the left boundary of the domain, particles
-	 // moving to the left get the length of the whole domain added to their x-value
-	 double offsetLower[DIMgeom];
-	 double offsetHigher[DIMgeom];
-	 offsetLower[dimension] = 0.0;
-	 offsetHigher[dimension] = 0.0;
-
-	 // process on the left boundary
-	 if (_coords[dimension] == 0)
-	 offsetLower[dimension] = domain->getGlobalLength(dimension);
-	 // process on the right boundary
-	 if (_coords[dimension] == _gridSize[dimension] - 1)
-	 offsetHigher[dimension] = -domain->getGlobalLength(dimension);
-
-	 for (int direction = LOWER; direction <= HIGHER; direction++) {
-	 double regToSendLow[DIMgeom];
-	 double regToSendHigh[DIMgeom];
-
-	 // set the regions
-	 for (int i = 0; i < DIMgeom; i++) {
-	 regToSendLow[i] = rmin[i] - halo_width[i];
-	 regToSendHigh[i] = rmax[i] + halo_width[i];
-	 }
-
-	 double haloLow[3];
-	 double haloHigh[3];
-	 double boundaryLow[3];
-	 double boundaryHigh[3];
-
-	 switch (direction) {
-	 case LOWER:
-	 regToSendHigh[dimension] = rmin[dimension] + halo_width[dimension];
-	 for (int i = 0; i < DIMgeom; ++i) {
-	 haloLow[i] = regToSendLow[i];
-	 if (i == dimension) {
-	 haloHigh[i] = boundaryLow[i] = rmin[i];
-	 } else {
-	 haloHigh[i] = regToSendHigh[i];
-	 boundaryLow[i] = regToSendLow[i];
-	 }
-	 boundaryHigh[i] = regToSendHigh[i];
-	 }
-	 break;
-	 case HIGHER:
-	 regToSendLow[dimension] = rmax[dimension] - halo_width[dimension];
-	 for (int i = 0; i < DIMgeom; ++i) {
-	 boundaryLow[i] = regToSendLow[i];
-	 if (i == dimension) {
-	 boundaryHigh[i] = haloLow[i] = rmax[i];
-	 } else {
-	 boundaryHigh[i] = regToSendHigh[i];
-	 haloLow[i] = regToSendLow[i];
-	 }
-	 haloHigh[i] = regToSendHigh[i];
-	 }
-	 break;
-	 }
-
-	 // set the shift
-	 double shift[3] = { 0., 0., 0. };
-	 if (direction == LOWER)
-	 shift[dimension] = offsetLower[dimension];
-	 if (direction == HIGHER)
-	 shift[dimension] = offsetHigher[dimension];
-	 _neighbours[dimension].push_back(
-	 CommunicationPartner(ranks[direction], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
-	 }
-	 }
-	 */
 }
