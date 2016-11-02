@@ -565,7 +565,7 @@ void Domain::writeCheckpoint( string filename,
 		}
 		checkpointfilestream << " NumberOfMolecules\t" << _globalNumMolecules << endl;
 
-		checkpointfilestream << " MoleculeFormat\t" << "ICRVQDV" << endl;
+		checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << endl;
 		checkpointfilestream.close();
 	}
 

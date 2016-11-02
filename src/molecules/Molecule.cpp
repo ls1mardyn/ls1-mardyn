@@ -405,6 +405,10 @@ void Molecule::scale_v(double s, double offx, double offy, double offz) {
 	this->vadd(offx, offy, offz);
 }
 
+std::string Molecule::getWriteFormat(){
+	return std::string("ICRVQD");
+}
+
 void Molecule::write(ostream& ostrm) const {
 	ostrm << _id << "\t" << (_component->ID() + 1) << "\t"
 	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
