@@ -67,13 +67,19 @@ public:
 		_free();
 	}
 
-	void resize_zero_shrink(size_t exact_size, bool zero_remaining, bool allow_shrink) {
+	void resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
-		bool will_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
+		bool need_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
 
-		if (will_resize) {
+		if (need_resize) {
 			resize(size_rounded_up);
+			// resize zero-s all
+		} else {
+			// we didn't resize, but we might still need to zero the rest of the Cache Line
+			if (zero_rest_of_CL) {
+				std::memset(_p + exact_size, 0, size_rounded_up - exact_size);
+			}
 		}
 	}
 

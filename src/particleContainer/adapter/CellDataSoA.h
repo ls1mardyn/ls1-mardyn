@@ -17,8 +17,6 @@
  */
 class CellDataSoA {
 public:
-	typedef AlignedArray<size_t> IndexArray;
-
 	CellDataSoA(size_t molecules_arg, size_t lj_centers_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) :
 		_mol_num(molecules_arg),
 		_ljc_num(lj_centers_arg),
@@ -79,7 +77,7 @@ public:
 	AlignedArrayTriplet<double> _centers_V;
 
 	// entries per lj center
-	IndexArray _ljc_id;
+	AlignedArray<size_t> _ljc_id;
 
 	// entries per charge
 	AlignedArray<double> _charges_q;
