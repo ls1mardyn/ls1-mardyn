@@ -157,7 +157,7 @@ public:
 	template<class T>
 	static vcp_inline
 	void resizeLastZero(AlignedArray<T>& array, const size_t& size, const size_t& startZero){
-		array.resize(size, startZero);
+		array.resize(size);
 	}
 
 	template<class T>
@@ -181,7 +181,7 @@ public:
 	template<class T>
 	vcp_inline
 	void resizeCentersZero(AlignedArray<T>& array, const size_t& size) const{
-		array.resize(size, size);
+		array.resize(size);
 		T* ptr = array;
 		setPaddingToZero(ptr);
 	}
@@ -218,7 +218,7 @@ public:
 
 			if (_ljc_num > _ljc_size) {
 				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
-				_ljc_id.resize(_ljc_size,_ljc_size);//set0 later on...
+				_ljc_id.resize(_ljc_size);//set0 later on...
 			}
 
 

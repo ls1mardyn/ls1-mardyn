@@ -29,7 +29,7 @@ public:
 	 * \brief Construct an empty array.
 	 */
 	AlignedArray() :
-			_n(0), _p(0) {
+			_n(0), _p(nullptr) {
 	}
 
 	/**
@@ -67,16 +67,26 @@ public:
 		_free();
 	}
 
+	void resize_zero_shrink(size_t exact_size, bool zero_remaining, bool allow_shrink) {
+		size_t size_rounded_up = _round_up(exact_size);
+
+		bool will_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
+
+		if (will_resize) {
+			resize(size_rounded_up);
+		}
+	}
+
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
-	void resize(size_t n, size_t num_non_zero=0) {
+	void resize(size_t n) {
 		if (n == _n)
 			return;
 		_free();
-		_p = 0;
-		_p = _allocate(n, num_non_zero);
-		if (!_p)
+		_p = nullptr;
+		_p = _allocate(n);
+		if (_p == nullptr)
 			throw std::bad_alloc();
 		_n = n;
 	}
@@ -109,18 +119,18 @@ private:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
-	static T* _allocate(size_t elements, size_t /*num_non_zero*/=0) {
+
+	static T* _allocate(size_t elements) {
+
 #if defined(__SSE3__) && ! defined(__PGI)
 		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
-		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
-		std::memset(ptr, 0, sizeof(T) * elements);
-		return ptr;
 #else
 		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
-		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+#endif
+
 		std::memset(ptr, 0, elements * sizeof(T));
 		return ptr;
-#endif
+
 	}
 
 	void _free()
