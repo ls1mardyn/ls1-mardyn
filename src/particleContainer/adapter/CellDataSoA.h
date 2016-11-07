@@ -217,25 +217,25 @@ public:
 			//TODO: "/ 8) * 8" things to be redone with AlignedArray::_round_up()
 
 			if (_ljc_num > _ljc_size) {
-				_ljc_size = ceil( (double)_ljc_num / 8) * 8;
+				_ljc_size = AlignedArray<double>::_round_up(_ljc_num);
 				_ljc_id.resize(_ljc_size);//set0 later on...
 			}
 
 
 			if (_charges_num > _charges_size) {
-				_charges_size = ceil( (double)_charges_num / 8) * 8;
+				_charges_size = AlignedArray<double>::_round_up(_charges_num);
 				resizeLastZero(_charges_q,_charges_size,_charges_num);
 			}
 
 			if (_dipoles_num > _dipoles_size) {
-				_dipoles_size = ceil( (double)_dipoles_num / 8) * 8;
+				_dipoles_size = AlignedArray<double>::_round_up(_dipoles_num);
 				resizeLastZero(_dipoles_p,_dipoles_size, _dipoles_num);
 				_dipoles_e.resize(_dipoles_size);
 				_dipoles_M.resize(_dipoles_size);
 			}
 
 			if (_quadrupoles_num > _quadrupoles_size) {
-				_quadrupoles_size = ceil( (double)_quadrupoles_num / 8) * 8;
+				_quadrupoles_size = AlignedArray<double>::_round_up(_quadrupoles_num);
 				resizeLastZero(_quadrupoles_m,_quadrupoles_size, _quadrupoles_num);
 				_quadrupoles_e.resize(_quadrupoles_size);
 				_quadrupoles_M.resize(_quadrupoles_size);
@@ -253,7 +253,7 @@ public:
 		}
 
 		if (_mol_num > _mol_size) {
-			_mol_size = ceil( (double)molecules_arg / 8) * 8;
+			_mol_size = AlignedArray<double>::_round_up(_mol_num);
 			_mol_pos.resize(_mol_size);
 			resizeLastZero(_mol_ljc_num,_mol_size, _mol_num);
 			resizeLastZero(_mol_charges_num,_mol_size, _mol_num);
