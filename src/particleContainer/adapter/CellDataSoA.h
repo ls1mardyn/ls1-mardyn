@@ -212,8 +212,6 @@ public:
 			_dipoles_num > _dipoles_size ||
 			_quadrupoles_num > _quadrupoles_size ) {
 
-			//TODO: "/ 8) * 8" things to be redone with AlignedArray::_round_up()
-
 			if (_ljc_num > _ljc_size) {
 				_ljc_size = AlignedArray<double>::_round_up(_ljc_num);
 				_ljc_id.resize(_ljc_size);//set0 later on...

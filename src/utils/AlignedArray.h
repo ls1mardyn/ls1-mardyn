@@ -63,11 +63,11 @@ public:
 	/**
 	 * \brief Free the array.
 	 */
-	~AlignedArray() {
+	virtual ~AlignedArray() {
 		_free();
 	}
 
-	void resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+	virtual void resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
 		bool need_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
@@ -77,7 +77,7 @@ public:
 			// resize zero-s all
 		} else {
 			// we didn't resize, but we might still need to zero the rest of the Cache Line
-			if (zero_rest_of_CL) {
+			if (zero_rest_of_CL and size_rounded_up > 0) {
 				std::memset(_p + exact_size, 0, size_rounded_up - exact_size);
 			}
 		}
@@ -86,7 +86,7 @@ public:
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
-	void resize(size_t n) {
+	virtual void resize(size_t n) {
 		if (n == _n)
 			return;
 		_free();
@@ -121,7 +121,7 @@ public:
 		return ((n + multiple - 1) / multiple) * multiple;
 	}
 
-private:
+protected:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
