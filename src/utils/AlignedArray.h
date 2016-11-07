@@ -12,6 +12,7 @@
 #include <malloc.h>
 #include <new>
 #include <cstring>
+#include <cassert>
 
 #define CACHE_LINE_SIZE 64
 
@@ -67,7 +68,7 @@ public:
 		_free();
 	}
 
-	virtual void resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
 		bool need_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
@@ -81,6 +82,9 @@ public:
 				std::memset(_p + exact_size, 0, size_rounded_up - exact_size);
 			}
 		}
+
+		assert(size_rounded_up == _n);
+		return _n;
 	}
 
 	/**
@@ -116,8 +120,13 @@ public:
 	}
 
 	static size_t _round_up(size_t n) {
+		// NOTE: this function is never called
+		// there are specializations provided after the class, as
+		// this function may be called in performance intensive places
+		assert(false);
+
 		size_t multiple = CACHE_LINE_SIZE / sizeof(T);
-		//assert(multiple * sizeof(T) == CACHE_LINE_SIZE);
+		assert(multiple * sizeof(T) == CACHE_LINE_SIZE);
 		return ((n + multiple - 1) / multiple) * multiple;
 	}
 
@@ -151,5 +160,27 @@ protected:
 	size_t _n;
 	T * _p;
 };
+
+template<>
+inline size_t AlignedArray<double>	::_round_up(size_t n) {
+	return (n + 7) & ~0x07;
+}
+
+template<>
+inline size_t AlignedArray<size_t>	::_round_up(size_t n) {
+	return (n + 7) & ~0x07;
+}
+
+template<>
+inline size_t AlignedArray<float>	::_round_up(size_t n) {
+	return (n + 15) & ~0x0F;
+}
+
+template<>
+inline size_t AlignedArray<int>		::_round_up(size_t n) {
+	return (n + 15) & ~0x0F;
+}
+
+
 
 #endif

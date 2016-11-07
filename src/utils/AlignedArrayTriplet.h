@@ -32,7 +32,7 @@ public:
 	T& y(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
 	T& z(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
 
-	void resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = this->_round_up(exact_size);
 		size_t size_rounded_up_x3 = size_rounded_up * 3;
 		_numEntriesPerArray = size_rounded_up;
@@ -48,6 +48,8 @@ public:
 				zero(exact_size);
 			}
 		}
+
+		return _numEntriesPerArray;
 	}
 
 	void zero(size_t start_idx) {
