@@ -118,6 +118,7 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 		v[2] = v_abs * cos(phi) * cos(theta);
 		molecule.setid(numMolecules);
 		for(int d = 0; d < 3; d++) {
+			assert(m.r[d] > 0 && m.r[d] < global_simulation->getDomain()->getGlobalLength(d));
 			molecule.setr(d, m.r[d]);
 			molecule.setv(d, v[d]);
 		}

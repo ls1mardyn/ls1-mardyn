@@ -5,6 +5,7 @@
 #include <iostream>
 #include <cassert>
 #include <array>
+#include <string>
 
 #include "molecules/Component.h"
 #include "molecules/Comp2Param.h"
@@ -33,7 +34,6 @@ public:
 
 	Molecule& operator=(const Molecule& m);
 
-public:
 	~Molecule() {
 		// don't delete SoA
 		_soa = nullptr;
@@ -300,6 +300,11 @@ public:
 	 */
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
+
+	/**
+	 * @return format of the function write(...)
+	 */
+	static std::string getWriteFormat();
 
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;

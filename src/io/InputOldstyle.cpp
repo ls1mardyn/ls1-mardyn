@@ -294,7 +294,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	unsigned long nummolecules;
 	unsigned long maxid = 0; // stores the highest molecule ID found in the phase space file
 	string ntypestring("ICRVQD");
-	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQDV;
+	enum Ndatatype { ICRVQDV, ICRVQD, IRV, ICRV } ntype = ICRVQD;
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
