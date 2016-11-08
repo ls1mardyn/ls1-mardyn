@@ -14,7 +14,7 @@
 template <class T>
 class AlignedArrayTriplet : public AlignedArray<T> {
 public:
-	AlignedArrayTriplet(size_t initialSize) : AlignedArray<T>(0), _numEntriesPerArray(0) {
+	AlignedArrayTriplet(size_t initialSize = 0) : AlignedArray<T>(0), _numEntriesPerArray(0) {
 		resize(initialSize);
 	}
 
@@ -53,8 +53,8 @@ public:
 	}
 
 	void zero(size_t start_idx) {
-		if (_numEntriesPerArray > 0) {
-			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
+		size_t num_to_zero = this->_round_up(start_idx) - start_idx;
+		if (_numEntriesPerArray > 0 and num_to_zero > 0) {
 			std::memset(&(x(start_idx)), 0, num_to_zero * sizeof(T));
 			std::memset(&(y(start_idx)), 0, num_to_zero * sizeof(T));
 			std::memset(&(z(start_idx)), 0, num_to_zero * sizeof(T));

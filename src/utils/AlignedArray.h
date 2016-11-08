@@ -83,7 +83,7 @@ public:
 			}
 		}
 
-		assert(size_rounded_up == _n);
+		assert(size_rounded_up <= _n);
 		return _n;
 	}
 
@@ -99,6 +99,13 @@ public:
 		if (_p == nullptr)
 			throw std::bad_alloc();
 		_n = n;
+	}
+
+	virtual void zero(size_t start_idx) {
+		if (_n > 0) {
+			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
+			std::memset(_p, 0, num_to_zero * sizeof(T));
+		}
 	}
 
 	inline size_t get_size() const {
