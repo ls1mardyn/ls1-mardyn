@@ -72,7 +72,6 @@ public:
 	}
 	virtual ~NeighbourCommunicationScheme1Stage() {
 	}
-	;
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
 			override;
 	virtual std::vector<int> get3StageNeighbourRanks() override {
@@ -91,6 +90,22 @@ public:
 		}
 		return neighbourRanks;
 	}
+	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+			DomainDecompMPIBase* domainDecomp);
+
+	virtual void finishNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
+			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
+			DomainDecompMPIBase* domainDecomp);
+
+	virtual void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
+
+protected:
+	void finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType /*msgType*/,
+			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp);
+	void initExchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* /*domain*/, MessageType msgType,
+			bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp);
 };
 
 class NeighbourCommunicationScheme3Stage: public NeighbourCommunicationScheme {

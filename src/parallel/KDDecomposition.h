@@ -181,9 +181,9 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	//! @brief exchange decomposition data and build up the resulting tree
 	//!
-	//! After the new decomposition has been determined (by recDecompPar), each
+	//! After the new decomposition has been determined (by decompose), each
 	//! process knows its own Area (and that part of the decomp tree which lies on the
-	//! the path between the root node and the node with the own Area), but each process
+	//! path between the root node and the node with the own Area), but each process
 	//! has to know the complete decomposition. This method exchanges the decomposition
 	//! data between the processes and builds up a complete decomposition Tree on
 	//! all processes.
