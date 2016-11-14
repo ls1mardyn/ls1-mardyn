@@ -91,8 +91,9 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 	bool allDone = false;
 	double startTime = MPI_Wtime();
 
-	for(unsigned int d=0;d<3;d++){
-		removeRecvDuplicates &= _coversWholeDomain[d];
+	// for 1-stage: if there is at least one neighbour with the same rank as the sending rank, make sure to remove received duplicates!
+	for (int i = 0; i < numNeighbours; i++) {
+		removeRecvDuplicates |= (domainDecomp->getRank() == _neighbours[0][i].getRank());
 	}
 
 	double waitCounter = 1.0;
