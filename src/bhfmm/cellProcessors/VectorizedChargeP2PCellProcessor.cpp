@@ -295,10 +295,8 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 	VCP2PCPThreadData &my_threadData = *_threadData[tid];
 
 	// initialize dist lookups
-	if(my_threadData._centers_dist_lookup.get_size() < soa2._charges_size){
-		soa2.resizeLastZero(my_threadData._centers_dist_lookup, soa2._charges_size, soa2._charges_num);
-	}
-	my_threadData._charges_dist_lookup = my_threadData._centers_dist_lookup;
+	soa2.initDistLookupPointersSingle(my_threadData._centers_dist_lookup,
+			my_threadData._charges_dist_lookup, soa2._charges_num);
 
 	// Pointer for molecules
 	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();

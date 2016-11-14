@@ -11,64 +11,54 @@
 #include "AlignedArray.h"
 #include <cassert>
 
-class AlignedArrayTriplet {
+template <class T>
+class AlignedArrayTriplet : public AlignedArray<T> {
 public:
-	AlignedArrayTriplet(size_t initialSize) : _data(), _numEntriesPerArray(0) {
+	AlignedArrayTriplet(size_t initialSize = 0) : AlignedArray<T>(0), _numEntriesPerArray(0) {
 		resize(initialSize);
 	}
 
-	double* xBegin() {
-		return _numEntriesPerArray > 0 ? &(_data[0 * _numEntriesPerArray]) : 0;
+	T* xBegin() { return _numEntriesPerArray > 0 ? this->_p + (0 * _numEntriesPerArray) : nullptr; }
+	T* yBegin() { return _numEntriesPerArray > 0 ? this->_p + (1 * _numEntriesPerArray) : nullptr; }
+	T* zBegin() { return _numEntriesPerArray > 0 ? this->_p + (2 * _numEntriesPerArray) : nullptr; }
+	T* xBegin() const { return _numEntriesPerArray > 0 ? this->_p + (0 * _numEntriesPerArray) : nullptr; }
+	T* yBegin() const { return _numEntriesPerArray > 0 ? this->_p + (1 * _numEntriesPerArray) : nullptr; }
+	T* zBegin() const { return _numEntriesPerArray > 0 ? this->_p + (2 * _numEntriesPerArray) : nullptr; }
+
+	T& x(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
+	T& y(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
+	T& z(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
+	T& x(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
+	T& y(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
+	T& z(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
+
+	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+		size_t size_rounded_up = this->_round_up(exact_size);
+		size_t size_rounded_up_x3 = size_rounded_up * 3;
+		_numEntriesPerArray = size_rounded_up;
+
+		bool need_resize = size_rounded_up_x3 > this->_n or (allow_shrink and size_rounded_up_x3 < this->_n);
+
+		if (need_resize) {
+			resize(size_rounded_up_x3);
+			// resize zero-s all
+		} else {
+			// we didn't resize, but we might still need to zero the rest of the Cache Line
+			if (zero_rest_of_CL) {
+				zero(exact_size);
+			}
+		}
+
+		return _numEntriesPerArray;
 	}
 
-	double* xBegin() const {
-		return _numEntriesPerArray > 0 ? &(_data[0 * _numEntriesPerArray]) : 0;
-	}
-
-	double* yBegin() {
-		return _numEntriesPerArray > 0 ? &(_data[1 * _numEntriesPerArray]) : 0;
-	}
-
-	double* yBegin() const {
-		return _numEntriesPerArray > 0 ? &(_data[1 * _numEntriesPerArray]) : 0;
-	}
-
-	double* zBegin() {
-		return _numEntriesPerArray > 0 ? &(_data[2 * _numEntriesPerArray]) : 0;
-	}
-
-	double* zBegin() const {
-		return _numEntriesPerArray > 0 ? &(_data[2 * _numEntriesPerArray]) : 0;
-	}
-
-	double& x(size_t i) {
-		assert(i < _numEntriesPerArray);
-		return _data[i];
-	}
-
-	double& x(size_t i) const {
-		assert(i < _numEntriesPerArray);
-		return _data[i];
-	}
-
-	double& y(size_t i) {
-		assert(i < _numEntriesPerArray);
-		return _data[i + _numEntriesPerArray];
-	}
-
-	double& y(size_t i) const {
-		assert(i < _numEntriesPerArray);
-		return _data[i + _numEntriesPerArray];
-	}
-
-	double& z(size_t i) {
-		assert(i < _numEntriesPerArray);
-		return _data[i + 2 * _numEntriesPerArray];
-	}
-
-	double& z(size_t i) const {
-		assert(i < _numEntriesPerArray);
-		return _data[i + 2 * _numEntriesPerArray];
+	void zero(size_t start_idx) {
+		size_t num_to_zero = this->_round_up(start_idx) - start_idx;
+		if (_numEntriesPerArray > 0 and num_to_zero > 0) {
+			std::memset(&(x(start_idx)), 0, num_to_zero * sizeof(T));
+			std::memset(&(y(start_idx)), 0, num_to_zero * sizeof(T));
+			std::memset(&(z(start_idx)), 0, num_to_zero * sizeof(T));
+		}
 	}
 
 	/**
@@ -80,25 +70,19 @@ public:
 
 		// make sure that this is divisible by eight, otherwise we break alignment
 		// get the rounded-up number of entries
-		_numEntriesPerArray = _data._round_up(nEntriesPerArray);
-		_data.resize(3 * _numEntriesPerArray);
+		_numEntriesPerArray = this->_round_up(nEntriesPerArray);
+		AlignedArray<T>::resize(3 * _numEntriesPerArray);
 
 		if (_numEntriesPerArray > nEntriesPerArray) {
 			// set elements from nEntriesPerArray to _numEntriesPerArray to zero:
 			size_t elements = _numEntriesPerArray - nEntriesPerArray;
-			std::memset(&(x(nEntriesPerArray)), 0, elements * sizeof(double));
-			std::memset(&(y(nEntriesPerArray)), 0, elements * sizeof(double));
-			std::memset(&(z(nEntriesPerArray)), 0, elements * sizeof(double));
+			std::memset(&(x(nEntriesPerArray)), 0, elements * sizeof(T));
+			std::memset(&(y(nEntriesPerArray)), 0, elements * sizeof(T));
+			std::memset(&(z(nEntriesPerArray)), 0, elements * sizeof(T));
 		}
 	}
 
-	size_t get_dynamic_memory() const {
-		return _data.get_dynamic_memory();
-	}
-
 private:
-	AlignedArray<double> _data;
-
 	//! at any point, _data contains precisely three times this storage
 	size_t _numEntriesPerArray;
 };

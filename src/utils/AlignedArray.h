@@ -12,6 +12,7 @@
 #include <malloc.h>
 #include <new>
 #include <cstring>
+#include <cassert>
 
 #define CACHE_LINE_SIZE 64
 
@@ -29,7 +30,7 @@ public:
 	 * \brief Construct an empty array.
 	 */
 	AlignedArray() :
-			_n(0), _p(0) {
+			_n(0), _p(nullptr) {
 	}
 
 	/**
@@ -63,22 +64,48 @@ public:
 	/**
 	 * \brief Free the array.
 	 */
-	~AlignedArray() {
+	virtual ~AlignedArray() {
 		_free();
+	}
+
+	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+		size_t size_rounded_up = _round_up(exact_size);
+
+		bool need_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
+
+		if (need_resize) {
+			resize(size_rounded_up);
+			// resize zero-s all
+		} else {
+			// we didn't resize, but we might still need to zero the rest of the Cache Line
+			if (zero_rest_of_CL and size_rounded_up > 0) {
+				std::memset(_p + exact_size, 0, size_rounded_up - exact_size);
+			}
+		}
+
+		assert(size_rounded_up <= _n);
+		return _n;
 	}
 
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
-	void resize(size_t n, size_t num_non_zero=0) {
+	virtual void resize(size_t n) {
 		if (n == _n)
 			return;
 		_free();
-		_p = 0;
-		_p = _allocate(n, num_non_zero);
-		if (!_p)
+		_p = nullptr;
+		_p = _allocate(n);
+		if (_p == nullptr)
 			throw std::bad_alloc();
 		_n = n;
+	}
+
+	virtual void zero(size_t start_idx) {
+		if (_n > 0) {
+			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
+			std::memset(_p, 0, num_to_zero * sizeof(T));
+		}
 	}
 
 	inline size_t get_size() const {
@@ -100,27 +127,32 @@ public:
 	}
 
 	static size_t _round_up(size_t n) {
+		// NOTE: this function is never called
+		// there are specializations provided after the class, as
+		// this function may be called in performance intensive places
+		assert(false);
+
 		size_t multiple = CACHE_LINE_SIZE / sizeof(T);
-		//assert(multiple * sizeof(T) == CACHE_LINE_SIZE);
+		assert(multiple * sizeof(T) == CACHE_LINE_SIZE);
 		return ((n + multiple - 1) / multiple) * multiple;
 	}
 
-private:
+protected:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
-	static T* _allocate(size_t elements, size_t /*num_non_zero*/=0) {
+
+	static T* _allocate(size_t elements) {
+
 #if defined(__SSE3__) && ! defined(__PGI)
 		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
-		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
-		std::memset(ptr, 0, sizeof(T) * elements);
-		return ptr;
 #else
 		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
-		//std::memset(ptr + num_non_zero, 0, (elements - num_non_zero) * sizeof(T));
+#endif
+
 		std::memset(ptr, 0, elements * sizeof(T));
 		return ptr;
-#endif
+
 	}
 
 	void _free()
@@ -135,5 +167,27 @@ private:
 	size_t _n;
 	T * _p;
 };
+
+template<>
+inline size_t AlignedArray<double>	::_round_up(size_t n) {
+	return (n + 7) & ~0x07;
+}
+
+template<>
+inline size_t AlignedArray<size_t>	::_round_up(size_t n) {
+	return (n + 7) & ~0x07;
+}
+
+template<>
+inline size_t AlignedArray<float>	::_round_up(size_t n) {
+	return (n + 15) & ~0x0F;
+}
+
+template<>
+inline size_t AlignedArray<int>		::_round_up(size_t n) {
+	return (n + 15) & ~0x0F;
+}
+
+
 
 #endif
