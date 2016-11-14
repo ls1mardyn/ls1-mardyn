@@ -82,7 +82,6 @@ using namespace vcp;
 	static vcp_inline vcp_double_vec vcp_simd_zerov() { return _mm_setzero_pd(); }
 	static vcp_inline vcp_double_vec vcp_simd_ones() { return _mm_castsi128_pd( _mm_set_epi32(~0, ~0, ~0, ~0) ); }
 	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
-	static const vcp_mask_vec MaskVec::zero() = _mm_castpd_si128(vcp_simd_zerov());
 	static const vcp_mask_vec VCP_SIMD_ONESVM = _mm_castpd_si128(vcp_simd_ones());
 	static vcp_inline vcp_mask_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_castpd_si128(_mm_cmplt_pd(a, b));}
 	static vcp_inline vcp_mask_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_castpd_si128(_mm_cmpeq_pd(a, b));}

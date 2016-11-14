@@ -43,7 +43,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return true;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_set_epi32(~0, ~0, ~0, ~0) );
+		return _mm_set_epi32(~0, ~0, ~0, ~0);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
@@ -55,7 +55,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _m and rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_and_si128(a, b);
+		return _mm_and_si128(_m, rhs);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
@@ -67,7 +67,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _m or rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_or_si128(a, b);
+		return _mm_or_si128(_m, rhs);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
@@ -79,7 +79,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _m xor rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_xor_si128(a, b);
+		return _mm_xor_si128(_m, rhs);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
@@ -115,7 +115,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _m;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_movemask_epi8(a);
+		return _mm_movemask_epi8(_m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_movemask_pd(_mm256_castsi256_pd(_m));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512

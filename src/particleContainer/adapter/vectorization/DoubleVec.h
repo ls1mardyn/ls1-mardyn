@@ -105,7 +105,7 @@ public:
 	}
 
 	static DoubleVec fmadd(const DoubleVec & a, const DoubleVec& b, const DoubleVec& c ) {
-#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE or VCP_VEC_TYPE == VCP_VEC_AVX
+#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return (a * b) + c;
 #elif VCP_VEC_TYPE == VCP_VEC_AVX2
 		return _mm256_fmadd_pd(a, b, c);
@@ -115,7 +115,7 @@ public:
 	}
 
 	static DoubleVec fnmadd(const DoubleVec & a, const DoubleVec& b, const DoubleVec& c ) {
-#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE or VCP_VEC_TYPE == VCP_VEC_AVX
+#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return c - (a * b);
 #elif VCP_VEC_TYPE == VCP_VEC_AVX2
 		return _mm256_fnmadd_pd(a, b, c);
@@ -125,7 +125,7 @@ public:
 	}
 
 	static DoubleVec fmsub(const DoubleVec & a, const DoubleVec& b, const DoubleVec& c) {
-#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE or VCP_VEC_TYPE == VCP_VEC_AVX
+#if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return (a * b) - c;
 #elif VCP_VEC_TYPE == VCP_VEC_AVX2
 		return _mm256_fmsub_pd(a, b, c);
@@ -242,7 +242,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d < rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return cast_DoubleVec_to_MaskVec(_mm128_cmp_pd(_d, rhs, _CMP_LT_OS));
+		return cast_DoubleVec_to_MaskVec(_mm_cmplt_pd(_d, rhs));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_LT_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
@@ -254,7 +254,7 @@ public:
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d != rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return cast_DoubleVec_to_MaskVec(_mm128_cmp_pd(_d, rhs, _CMP_NEQ_OS));
+		return cast_DoubleVec_to_MaskVec(_mm_cmpeq_pd(_d, rhs));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_NEQ_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
