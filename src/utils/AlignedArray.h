@@ -188,6 +188,9 @@ inline size_t AlignedArray<int>		::_round_up(size_t n) {
 	return (n + 15) & ~0x0F;
 }
 
-
+template<>
+inline size_t AlignedArray<bool>	::_round_up(size_t n) {
+	return (n + 63) & ~0x3F;
+}
 
 #endif
