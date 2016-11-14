@@ -131,16 +131,16 @@ private:
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyCharge(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& qii,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& qjj,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& qii,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& qjj,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+		const MaskVec& forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
@@ -157,7 +157,7 @@ private:
 	 * Returns whether to calculate the force for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
+	 * static DoubleVec GetForceMask(DoubleVec m_r2, DoubleVec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.

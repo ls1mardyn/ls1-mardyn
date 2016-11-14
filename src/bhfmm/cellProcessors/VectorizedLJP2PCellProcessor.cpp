@@ -155,59 +155,59 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	_timer.stop();
 }
 
-	//const vcp_double_vec minus_one = vcp_simd_set1(-1.0); //currently not used, would produce warning
-	const vcp_double_vec zero = VCP_SIMD_ZEROV;
-	const vcp_double_vec one = vcp_simd_set1(1.0);
-	const vcp_double_vec two = vcp_simd_set1(2.0);
-	const vcp_double_vec three = vcp_simd_set1(3.0);
-	const vcp_double_vec four = vcp_simd_set1(4.0);
-	const vcp_double_vec five = vcp_simd_set1(5.0);
-	const vcp_double_vec six = vcp_simd_set1(6.0);
-	const vcp_double_vec ten = vcp_simd_set1(10.0);
-	const vcp_double_vec _05 = vcp_simd_set1(0.5);
-	const vcp_double_vec _075 = vcp_simd_set1(0.75);
-	const vcp_double_vec _1pt5 = vcp_simd_set1(1.5);
-	const vcp_double_vec _15 = vcp_simd_set1(15.0);
+	//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
+	const DoubleVec zero = DoubleVec::zero();
+	const DoubleVec one = DoubleVec::set1(1.0);
+	const DoubleVec two = DoubleVec::set1(2.0);
+	const DoubleVec three = DoubleVec::set1(3.0);
+	const DoubleVec four = DoubleVec::set1(4.0);
+	const DoubleVec five = DoubleVec::set1(5.0);
+	const DoubleVec six = DoubleVec::set1(6.0);
+	const DoubleVec ten = DoubleVec::set1(10.0);
+	const DoubleVec _05 = DoubleVec::set1(0.5);
+	const DoubleVec _075 = DoubleVec::set1(0.75);
+	const DoubleVec _1pt5 = DoubleVec::set1(1.5);
+	const DoubleVec _15 = DoubleVec::set1(15.0);
 
 	template<bool calculateMacroscopic>
 	inline
 	void VectorizedLJP2PCellProcessor :: _loopBodyLJ(
-			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
-			const vcp_mask_vec& forceMask,
-			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
-			const vcp_double_vec& shift6)
+			const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+			const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+			const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+			const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+			DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+			DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+			DoubleVec& sum_upot6lj, DoubleVec& sum_virial,
+			const MaskVec& forceMask,
+			const DoubleVec& eps_24, const DoubleVec& sig2,
+			const DoubleVec& shift6)
 	{
-		const vcp_double_vec c_dx = r1_x - r2_x;
-		const vcp_double_vec c_dy = r1_y - r2_y;
-		const vcp_double_vec c_dz = r1_z - r2_z;
+		const DoubleVec c_dx = r1_x - r2_x;
+		const DoubleVec c_dy = r1_y - r2_y;
+		const DoubleVec c_dz = r1_z - r2_z;
 
-		const vcp_double_vec c_r2 = vcp_simd_scalProd(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
-		const vcp_double_vec r2_inv_unmasked = one / c_r2;
-		const vcp_double_vec r2_inv = vcp_simd_applymask(r2_inv_unmasked, forceMask);
+		const DoubleVec c_r2 = DoubleVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
+		const DoubleVec r2_inv_unmasked = one / c_r2;
+		const DoubleVec r2_inv = DoubleVec::apply_mask(r2_inv_unmasked, forceMask);
 
 
-		const vcp_double_vec lj2 = sig2 * r2_inv;//1FP (scale)
-		const vcp_double_vec lj4 = lj2 * lj2;//1FP (scale)
-		const vcp_double_vec lj6 = lj4 * lj2;//1FP (scale)
-		const vcp_double_vec lj12 = lj6 * lj6;//1FP (scale)
-		const vcp_double_vec lj12m6 = lj12 - lj6;//1FP (scale)
+		const DoubleVec lj2 = sig2 * r2_inv;//1FP (scale)
+		const DoubleVec lj4 = lj2 * lj2;//1FP (scale)
+		const DoubleVec lj6 = lj4 * lj2;//1FP (scale)
+		const DoubleVec lj12 = lj6 * lj6;//1FP (scale)
+		const DoubleVec lj12m6 = lj12 - lj6;//1FP (scale)
 
-		const vcp_double_vec eps24r2inv = eps_24 * r2_inv;//1FP (scale)
-		const vcp_double_vec lj12lj12m6 = lj12 + lj12m6;//1FP (scale)
-		const vcp_double_vec scale = eps24r2inv * lj12lj12m6;//1FP (scale)
+		const DoubleVec eps24r2inv = eps_24 * r2_inv;//1FP (scale)
+		const DoubleVec lj12lj12m6 = lj12 + lj12m6;//1FP (scale)
+		const DoubleVec scale = eps24r2inv * lj12lj12m6;//1FP (scale)
 
 		f_x = c_dx * scale;//1FP (apply scale)
 		f_y = c_dy * scale;//1FP (apply scale)
 		f_z = c_dz * scale;//1FP (apply scale)
-		const vcp_double_vec m_dx = m1_r_x - m2_r_x;//1FP (virial) (does not count)
-		const vcp_double_vec m_dy = m1_r_y - m2_r_y;//1FP (virial) (does not count)
-		const vcp_double_vec m_dz = m1_r_z - m2_r_z;//1FP (virial) (does not count)
+		const DoubleVec m_dx = m1_r_x - m2_r_x;//1FP (virial) (does not count)
+		const DoubleVec m_dy = m1_r_y - m2_r_y;//1FP (virial) (does not count)
+		const DoubleVec m_dz = m1_r_z - m2_r_z;//1FP (virial) (does not count)
 
 		V_x = m_dx * f_x;//1FP (virial)
 		V_y = m_dy * f_y;//1FP (virial)
@@ -216,8 +216,8 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 		// Check if we have to add the macroscopic values up
 		if (calculateMacroscopic) {
 
-			const vcp_double_vec upot_sh = vcp_simd_fma(eps_24, lj12m6, shift6); //2 FP upot				//shift6 is not masked -> we have to mask upot_shifted
-			const vcp_double_vec upot_masked = vcp_simd_applymask(upot_sh, forceMask); //mask it
+			const DoubleVec upot_sh = DoubleVec::fmadd(eps_24, lj12m6, shift6); //2 FP upot				//shift6 is not masked -> we have to mask upot_shifted
+			const DoubleVec upot_masked = DoubleVec::apply_mask(upot_sh, forceMask); //mask it
 
 			sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
 
@@ -268,10 +268,10 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
-	vcp_double_vec sum_upot6lj = VCP_SIMD_ZEROV;
-	vcp_double_vec sum_virial = VCP_SIMD_ZEROV;
+	DoubleVec sum_upot6lj = DoubleVec::zero();
+	DoubleVec sum_virial = DoubleVec::zero();
 
-	const vcp_double_vec rc2 = vcp_simd_set1(_LJCutoffRadiusSquare);
+	const DoubleVec rc2 = DoubleVec::set1(_LJCutoffRadiusSquare);
 
 	/*
 	 *  Here different end values for the loops are defined. For loops, which do not vectorize over the last (possibly "uneven") amount of indices, the normal values are computed. These mark the end of the vectorized part.
@@ -291,9 +291,9 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 
 	// Iterate over each center in the first cell.
 	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
-		const vcp_double_vec m1_r_x = vcp_simd_broadcast(soa1_mol_pos_x + i);
-		const vcp_double_vec m1_r_y = vcp_simd_broadcast(soa1_mol_pos_y + i);
-		const vcp_double_vec m1_r_z = vcp_simd_broadcast(soa1_mol_pos_z + i);
+		const DoubleVec m1_r_x = DoubleVec::broadcast(soa1_mol_pos_x + i);
+		const DoubleVec m1_r_y = DoubleVec::broadcast(soa1_mol_pos_y + i);
+		const DoubleVec m1_r_z = DoubleVec::broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
 		const countertype32 compute_molecule_ljc = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_ljc_idx, soa2._ljc_num, _LJCutoffRadiusSquare,
 				soa2_ljc_dist_lookup, soa2_ljc_m_r_x, soa2_ljc_m_r_y, soa2_ljc_m_r_z,
@@ -307,17 +307,17 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 		else {
 			// LJ force computation
 			for (int local_i = 0; local_i < soa1_mol_ljc_num[i]; local_i++) {//over the number of lj-centers in the molecule i
-				vcp_double_vec sum_fx1 = VCP_SIMD_ZEROV;
-				vcp_double_vec sum_fy1 = VCP_SIMD_ZEROV;
-				vcp_double_vec sum_fz1 = VCP_SIMD_ZEROV;
+				DoubleVec sum_fx1 = DoubleVec::zero();
+				DoubleVec sum_fy1 = DoubleVec::zero();
+				DoubleVec sum_fz1 = DoubleVec::zero();
 
-				vcp_double_vec sum_Vx1 = VCP_SIMD_ZEROV;
-				vcp_double_vec sum_Vy1 = VCP_SIMD_ZEROV;
-				vcp_double_vec sum_Vz1 = VCP_SIMD_ZEROV;
+				DoubleVec sum_Vx1 = DoubleVec::zero();
+				DoubleVec sum_Vy1 = DoubleVec::zero();
+				DoubleVec sum_Vz1 = DoubleVec::zero();
 
-				const vcp_double_vec c_r_x1 = vcp_simd_broadcast(soa1_ljc_r_x + i_ljc_idx);
-				const vcp_double_vec c_r_y1 = vcp_simd_broadcast(soa1_ljc_r_y + i_ljc_idx);
-				const vcp_double_vec c_r_z1 = vcp_simd_broadcast(soa1_ljc_r_z + i_ljc_idx);
+				const DoubleVec c_r_x1 = DoubleVec::broadcast(soa1_ljc_r_x + i_ljc_idx);
+				const DoubleVec c_r_y1 = DoubleVec::broadcast(soa1_ljc_r_y + i_ljc_idx);
+				const DoubleVec c_r_z1 = DoubleVec::broadcast(soa1_ljc_r_z + i_ljc_idx);
 
 				// Iterate over each pair of centers in the second cell.
 				size_t j = ForcePolicy::InitJ2(i_ljc_idx);
@@ -325,23 +325,23 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_ljc_dist_lookup, j);
 					// Only go on if at least 1 of the forces has to be calculated.
 					if (MaskGatherChooser::computeLoop(lookupORforceMask)) {
-						const vcp_double_vec c_r_x2 = MaskGatherChooser::load(soa2_ljc_r_x, j, lookupORforceMask);
-						const vcp_double_vec c_r_y2 = MaskGatherChooser::load(soa2_ljc_r_y, j, lookupORforceMask);
-						const vcp_double_vec c_r_z2 = MaskGatherChooser::load(soa2_ljc_r_z, j, lookupORforceMask);
+						const DoubleVec c_r_x2 = MaskGatherChooser::load(soa2_ljc_r_x, j, lookupORforceMask);
+						const DoubleVec c_r_y2 = MaskGatherChooser::load(soa2_ljc_r_y, j, lookupORforceMask);
+						const DoubleVec c_r_z2 = MaskGatherChooser::load(soa2_ljc_r_z, j, lookupORforceMask);
 
-						const vcp_double_vec m_r_x2 = MaskGatherChooser::load(soa2_ljc_m_r_x, j, lookupORforceMask);
-						const vcp_double_vec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j, lookupORforceMask);
-						const vcp_double_vec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j, lookupORforceMask);
+						const DoubleVec m_r_x2 = MaskGatherChooser::load(soa2_ljc_m_r_x, j, lookupORforceMask);
+						const DoubleVec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j, lookupORforceMask);
+						const DoubleVec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j, lookupORforceMask);
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
-						vcp_double_vec fx, fy, fz;
-						vcp_double_vec Vx, Vy, Vz;
+						DoubleVec fx, fy, fz;
+						DoubleVec Vx, Vy, Vz;
 
-						vcp_double_vec eps_24;
-						vcp_double_vec sig2;
+						DoubleVec eps_24;
+						DoubleVec sig2;
 						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, j, lookupORforceMask);
 
-						vcp_double_vec shift6;
+						DoubleVec shift6;
 						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, j, lookupORforceMask);
 
 						_loopBodyLJ<CalculateMacroscopic>(
@@ -377,23 +377,23 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_ljc_dist_lookup, j, remainderM);
 
-						const vcp_double_vec c_r_x2 = MaskGatherChooser::load(soa2_ljc_r_x, j, lookupORforceMask);
-						const vcp_double_vec c_r_y2 = MaskGatherChooser::load(soa2_ljc_r_y, j, lookupORforceMask);
-						const vcp_double_vec c_r_z2 = MaskGatherChooser::load(soa2_ljc_r_z, j, lookupORforceMask);
+						const DoubleVec c_r_x2 = MaskGatherChooser::load(soa2_ljc_r_x, j, lookupORforceMask);
+						const DoubleVec c_r_y2 = MaskGatherChooser::load(soa2_ljc_r_y, j, lookupORforceMask);
+						const DoubleVec c_r_z2 = MaskGatherChooser::load(soa2_ljc_r_z, j, lookupORforceMask);
 
-						const vcp_double_vec m_r_x2 = MaskGatherChooser::load(soa2_ljc_m_r_x, j, lookupORforceMask);
-						const vcp_double_vec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j, lookupORforceMask);
-						const vcp_double_vec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j, lookupORforceMask);
+						const DoubleVec m_r_x2 = MaskGatherChooser::load(soa2_ljc_m_r_x, j, lookupORforceMask);
+						const DoubleVec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j, lookupORforceMask);
+						const DoubleVec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j, lookupORforceMask);
 
 						const size_t id_i = soa1_ljc_id[i_ljc_idx];
-						vcp_double_vec fx, fy, fz;
-						vcp_double_vec Vx, Vy, Vz;
+						DoubleVec fx, fy, fz;
+						DoubleVec Vx, Vy, Vz;
 
-						vcp_double_vec eps_24;
-						vcp_double_vec sig2;
+						DoubleVec eps_24;
+						DoubleVec sig2;
 						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, j, lookupORforceMask);
 
-						vcp_double_vec shift6;
+						DoubleVec shift6;
 						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, j, lookupORforceMask);
 
 						_loopBodyLJ<CalculateMacroscopic>(

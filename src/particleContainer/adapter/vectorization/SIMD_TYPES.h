@@ -27,6 +27,11 @@
 #define VCP_VEC_KNL 6
 #define VCP_VEC_KNL_GATHER 7
 
+#define VCP_VEC_W__64 0
+#define VCP_VEC_W_128 1
+#define VCP_VEC_W_256 2
+#define VCP_VEC_W_512 3
+
 
 typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
 
@@ -91,6 +96,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef double vcp_double_vec;
 	#define VCP_VEC_SIZE 1u
 	#define VCP_VEC_SIZE_M1 0u
+	#define VCP_VEC_WIDTH VCP_VEC_W__64
 
 	typedef bool vcp_mask_vec;
 	typedef bool vcp_mask_single;
@@ -103,6 +109,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef __m128d vcp_double_vec;
 	#define VCP_VEC_SIZE 2u
 	#define VCP_VEC_SIZE_M1 1u
+	#define VCP_VEC_WIDTH VCP_VEC_W_128
 
 	typedef __m128i vcp_mask_vec;
 	typedef unsigned long vcp_mask_single;
@@ -115,6 +122,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef __m256d vcp_double_vec;
 	#define VCP_VEC_SIZE 4u
 	#define VCP_VEC_SIZE_M1 3u
+	#define VCP_VEC_WIDTH VCP_VEC_W_256
 
 	typedef __m256i vcp_mask_vec;
 	typedef unsigned long vcp_mask_single;
@@ -130,6 +138,7 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef __m512d vcp_double_vec;
 	#define VCP_VEC_SIZE 8u
 	#define VCP_VEC_SIZE_M1 7u
+	#define VCP_VEC_WIDTH VCP_VEC_W_512
 
 	typedef __mmask8 vcp_mask_vec;
 	typedef __mmask8 vcp_mask_single;
