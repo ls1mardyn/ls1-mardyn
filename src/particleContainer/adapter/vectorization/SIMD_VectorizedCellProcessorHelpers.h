@@ -48,8 +48,8 @@ void unpackEps24Sig2(DoubleVec& eps_24, DoubleVec& sig2, const DoubleArray& eps_
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 	const DoubleVec e0s0 = DoubleVec::aligned_load(eps_sigI + 2 * id_j_shifted[0]);
 	const DoubleVec e1s1 = DoubleVec::aligned_load(eps_sigI + 2 * id_j_shifted[1]);
-	eps_24 = vcp_simd_unpacklo(e0s0, e1s1);
-	sig2 = vcp_simd_unpackhi(e0s0, e1s1);
+	eps_24 = DoubleVec::unpack_lo(e0s0, e1s1);
+	sig2 = DoubleVec::unpack_hi(e0s0, e1s1);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx
 	//TODO: add gather for AVX2 (here only)
@@ -112,7 +112,7 @@ void unpackShift6(DoubleVec& shift6, const DoubleArray& shift6I,
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
 	const DoubleVec sh1 = _mm_load_sd(shift6I + id_j_shifted[0]);
 	const DoubleVec sh2 = _mm_load_sd(shift6I + id_j_shifted[1]);
-	shift6 = vcp_simd_unpacklo(sh1, sh2);
+	shift6 = DoubleVec::unpack_lo(sh1, sh2);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
@@ -121,8 +121,8 @@ void unpackShift6(DoubleVec& shift6, const DoubleArray& shift6I,
 	const DoubleVec sh2 = DoubleVec::aligned_load_mask(shift6I + id_j_shifted[2], memoryMask_first);
 	const DoubleVec sh3 = DoubleVec::aligned_load_mask(shift6I + id_j_shifted[3], memoryMask_first);
 
-	const DoubleVec sh0sh1 = vcp_simd_unpacklo(sh0, sh1);
-	const DoubleVec sh2sh3 = vcp_simd_unpacklo(sh2, sh3);
+	const DoubleVec sh0sh1 = DoubleVec::unpack_lo(sh0, sh1);
+	const DoubleVec sh2sh3 = DoubleVec::unpack_lo(sh2, sh3);
 
 	shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
 
