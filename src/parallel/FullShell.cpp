@@ -20,7 +20,7 @@ std::vector<HaloRegion> FullShell::getHaloRegions(HaloRegion initialRegion, doub
 	for (d[0] = -1; d[0] <= 1; d[0]++) {
 		for (d[1] = -1; d[1] <= 1; d[1]++) {
 			for (d[2] = -1; d[2] <= 1; d[2]++) {
-				if ((d[0] == d[1]) == (d[2] == 0))
+				if ((d[0] || d[1] || d[2]) == 0)  // if all are 0 (false), then continue
 					continue;
 				HaloRegion tmp = initialRegion;
 				for (unsigned int dimension = 0; dimension < 3; dimension++) {

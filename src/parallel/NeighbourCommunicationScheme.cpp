@@ -91,6 +91,10 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 	bool allDone = false;
 	double startTime = MPI_Wtime();
 
+	for(unsigned int d=0;d<3;d++){
+		removeRecvDuplicates &= _coversWholeDomain[d];
+	}
+
 	double waitCounter = 1.0;
 	double deadlockTimeOut = 60.0;
 	global_log->set_mpi_output_all();
