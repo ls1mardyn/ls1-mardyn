@@ -99,6 +99,12 @@ public:
 #endif
 	}
 
+#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+	static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
+		return _mm512_load_epi64(a);
+	}
+#endif
+
 	void aligned_store(vcp_mask_single * location) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		*location = _m;

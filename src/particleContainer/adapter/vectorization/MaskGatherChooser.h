@@ -153,7 +153,7 @@ public:
 	}
 
 	inline static MaskVec getForceMask(const vcp_lookupOrMask_vec& /*forceMask*/) {
-		return VCP_SIMD_ONESVM;//compute everything
+		return MaskVec::ones();//compute everything
 	}
 
 	inline static __mmask8 getRemainder(const size_t& numberComputations) {
