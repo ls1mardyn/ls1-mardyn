@@ -32,45 +32,6 @@ using namespace vcp;
 #endif /* defined SIMD_TYPES_H */
 
 #if VCP_VEC_TYPE==VCP_NOVEC
-	static vcp_inline vcp_double_vec vcp_simd_zerov() { return 0.; }
-	static vcp_inline vcp_double_vec vcp_simd_ones() { return 1.; }
-	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
-	static const vcp_mask_vec MaskVec::zero() = false;
-	static const vcp_mask_vec VCP_SIMD_ONESVM = true;
-	static vcp_inline vcp_mask_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return a < b;}
-	static vcp_inline vcp_mask_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return a == b;}
-	static vcp_inline vcp_mask_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b) {return a != b;}
-
-	/**
-	 * do not use this to apply a mask, use vcp_simd_applymask instead !!!
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	static vcp_inline vcp_mask_vec vcp_simd_and(const vcp_mask_vec& a, const vcp_mask_vec& b) {return a && b;}
-	static vcp_inline vcp_mask_vec vcp_simd_or(const vcp_mask_vec& a, const vcp_mask_vec& b) {return a || b;}
-	static vcp_inline vcp_mask_vec vcp_simd_xor(const vcp_mask_vec& a, const vcp_mask_vec& b) {return (a || b) && (not (a && b));}
-	static vcp_inline vcp_double_vec vcp_simd_applymask(const vcp_double_vec& a, const vcp_mask_vec& mask) {return mask?a:0.;}
-
-	static vcp_inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return a + b;}
-	static vcp_inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return a - b;}
-	static vcp_inline vcp_double_vec vcp_simd_mul(const vcp_double_vec& a, const vcp_double_vec& b) {return a * b;}
-	static vcp_inline vcp_double_vec vcp_simd_div(const vcp_double_vec& a, const vcp_double_vec& b) {return a / b;}
-	static vcp_inline vcp_double_vec vcp_simd_sqrt(const vcp_double_vec& a) {return sqrt(a);}
-
-	static vcp_inline vcp_double_vec vcp_simd_set1(const double& a) {return a;}
-	static vcp_inline vcp_mask_vec vcp_simd_set1(const vcp_mask_single& a) {return a;}
-
-	static vcp_inline vcp_double_vec vcp_simd_load(const double* const a) {return *a;}
-	static vcp_inline vcp_mask_vec vcp_simd_load(const vcp_mask_single* const a) {return *a;}
-	static vcp_inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return *a;}
-	static vcp_inline void vcp_simd_store(double* location, const vcp_double_vec& a) {*location = a;}
-	static vcp_inline void vcp_simd_store(vcp_mask_single* location, const vcp_mask_vec& a) {*location = a;}
-	//static vcp_inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpacklo_pd(a,b);}
-	//static vcp_inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm_unpackhi_pd(a,b);}
-
-	static vcp_inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return a;}
-	static vcp_inline vcp_double_vec vcp_simd_maskload(const double* const a, const vcp_mask_vec& mask) {return vcp_simd_applymask(vcp_simd_load(a),mask);}
 	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& /*i*/){
 		return true;
 	}

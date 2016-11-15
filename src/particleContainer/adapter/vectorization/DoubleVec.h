@@ -10,6 +10,7 @@
 
 #include "./SIMD_TYPES.h"
 #include "MaskVec.h"
+#include <cmath>
 
 namespace vcp {
 
@@ -148,7 +149,7 @@ public:
 
 	static DoubleVec sqrt (const DoubleVec& rhs) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return sqrt(rhs);
+		return std::sqrt(rhs);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_sqrt_pd(rhs);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -216,10 +217,10 @@ public:
 #endif
 	}
 
-	//TODO: static functions returning object, not void members
-
 	static DoubleVec unpack_lo(const DoubleVec& a, const DoubleVec& b) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		// makes no sense
+		return 0.0 / 0.0;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_unpacklo_pd(a,b);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -230,6 +231,8 @@ public:
 
 	static DoubleVec unpack_hi(const DoubleVec& a, const DoubleVec& b) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		// makes no sense
+		return 0.0 / 0.0;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_unpackhi_pd(a,b);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -263,7 +266,11 @@ public:
 	}
 
 	static DoubleVec apply_mask(const DoubleVec& d, const MaskVec& m) {
+#if VCP_VEC_TYPE == VCP_NOVEC
+		return m ? d : DoubleVec::zero();
+#else
 		return cast_MaskVec_to_DoubleVec(cast_DoubleVec_to_MaskVec(d) and m);
+#endif
 	}
 
 	static DoubleVec aligned_load_mask(const double * const a, MaskVec m) {
