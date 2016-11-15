@@ -193,4 +193,9 @@ inline size_t AlignedArray<bool>	::_round_up(size_t n) {
 	return (n + 63) & ~0x3F;
 }
 
+template<>
+inline size_t AlignedArray<unsigned char>::_round_up(size_t n) {
+	return (n + 63) & ~0x3F;
+}
+
 #endif
