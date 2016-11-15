@@ -72,54 +72,6 @@ using namespace vcp;
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or\
 	  VCP_VEC_TYPE==VCP_VEC_KNL or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 
-	static vcp_inline vcp_double_vec vcp_simd_zerov() { return _mm512_castsi512_pd( _mm512_set_epi32(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0) ); }//exists
-	static vcp_inline vcp_double_vec vcp_simd_ones() { return _mm512_castsi512_pd( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) ); }//exists
-	static const vcp_double_vec VCP_SIMD_ZEROV = vcp_simd_zerov();
-	static const vcp_mask_vec MaskVec::zero() = 0x00;
-	static const vcp_mask_vec VCP_SIMD_ONESVM = 0xFF;
-	//static vcp_inline vcp_double_vec mask_to_vcp_double_vec(const vcp_mask_vec& mask){return _mm512_mask_mov_pd(VCP_SIMD_ZEROV, mask, VCP_SIMD_ONESV);}
-	static vcp_inline vcp_mask_vec vcp_simd_lt(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_cmp_pd_mask(a, b, _CMP_LT_OS);}//exists
-	static vcp_inline vcp_mask_vec vcp_simd_eq(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_cmp_pd_mask(a, b, _CMP_EQ_OS);}//exists
-	static vcp_inline vcp_mask_vec vcp_simd_neq(const vcp_double_vec& a, const vcp_double_vec& b){return _mm512_cmp_pd_mask(a, b, _CMP_NEQ_UQ) ;}//exists
-	/**
-	 * do not use this to apply a mask, use vcp_simd_applymask instead !!!
-	 * @param a
-	 * @param b
-	 * @return
-	 */
-	static vcp_inline vcp_mask_vec vcp_simd_and(const vcp_mask_vec& a, const vcp_mask_vec& b) {
-		return a & b;
-	}//only for mask vecs -> unsigned char or so...
-	static vcp_inline vcp_mask_vec vcp_simd_or(const vcp_mask_vec& a, const vcp_mask_vec& b) {return a | b;}
-	static vcp_inline vcp_mask_vec vcp_simd_xor(const vcp_mask_vec& a, const vcp_mask_vec& b) {return a ^ b;}
-	static vcp_inline vcp_double_vec vcp_simd_applymask(const vcp_double_vec& a, const vcp_mask_vec& mask) {return _mm512_mask_mov_pd(VCP_SIMD_ZEROV, mask, a);}
-
-	static vcp_inline vcp_double_vec vcp_simd_add(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_add_pd(a,b);}
-	static vcp_inline vcp_double_vec vcp_simd_sub(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_sub_pd(a,b);}
-	static vcp_inline vcp_double_vec vcp_simd_mul(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_mul_pd(a,b);}
-	static vcp_inline vcp_double_vec vcp_simd_div(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm512_div_pd(a,b);}
-	static vcp_inline vcp_double_vec vcp_simd_sqrt(const vcp_double_vec& a) {return _mm512_sqrt_pd(a);}
-
-	static vcp_inline vcp_double_vec vcp_simd_set1(const double& a) {return _mm512_set1_pd(a);}//exists
-
-	static vcp_inline vcp_double_vec vcp_simd_load(const double* const a) {return _mm512_load_pd(a);}
-	static vcp_inline vcp_mask_vec vcp_simd_load(const vcp_mask_single* const a) {return *a;}
-	static vcp_inline vcp_double_vec vcp_simd_maskload(const double * const a, vcp_mask_vec mask) {return _mm512_mask_load_pd(VCP_SIMD_ZEROV, mask, a);}
-	//static vcp_inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return a;}
-
-	#if VCP_VECTYPE==VCP_VEC_KNC or VCP_VECTYPE==VCP_VEC_KNC_GATHER
-		static vcp_inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_extload_pd(a, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, _MM_HINT_NONE);}
-	#else
-		static vcp_inline vcp_double_vec vcp_simd_broadcast(const double* const a) {return _mm512_set1_pd(*a);}
-	#endif
-
-	static vcp_inline void vcp_simd_store(double* const location, const vcp_double_vec& a) {_mm512_store_pd(location, a);}
-	static vcp_inline void vcp_simd_store(vcp_mask_single* const location, const vcp_mask_vec& a) {*location = a;}
-
-	//static vcp_inline vcp_double_vec vcp_simd_unpacklo(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpacklo_pd(a,b);}//not needed
-	//static vcp_inline vcp_double_vec vcp_simd_unpackhi(const vcp_double_vec& a, const vcp_double_vec& b) {return _mm256_unpackhi_pd(a,b);}//not needed
-
-	static vcp_inline bool vcp_simd_movemask(const vcp_mask_vec& a) {return a != MaskVec::zero();}
 	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 		static vcp_inline vcp_lookupOrMask_vec vcp_simd_load(const vcp_lookupOrMask_single* const a) {return _mm512_load_epi64(a);}
 		static vcp_inline void vcp_simd_store(vcp_lookupOrMask_single* location, const vcp_lookupOrMask_vec& a) {_mm512_store_epi64(location, a);}

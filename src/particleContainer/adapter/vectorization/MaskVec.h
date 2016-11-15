@@ -35,7 +35,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_setzero_si256();
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_setzero_si256();
+		return 0x00;
 #endif
 	}
 
@@ -47,7 +47,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+		return 0xFF;
 #endif
 	}
 
@@ -59,7 +59,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m and rhs;
+		return _m & rhs;
 #endif
 	}
 
@@ -71,7 +71,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m or rhs;
+		return _m | rhs;
 #endif
 	}
 
@@ -83,7 +83,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m xor rhs;
+		return _m ^ rhs;
 #endif
 	}
 
@@ -95,7 +95,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_load_si256((const __m256i*)a);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return *a;
+		return *a; // is this used ?
 #endif
 	}
 
@@ -107,7 +107,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		_mm256_store_si256((__m256i*)location, _m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		*location = _m;
+		*location = _m; // is this used ?
 #endif
 	}
 
@@ -119,7 +119,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_movemask_pd(_mm256_castsi256_pd(_m));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		a != MaskVec::zero();
+		return _m != MaskVec::zero();
 #endif
 	}
 };

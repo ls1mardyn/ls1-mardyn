@@ -37,7 +37,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castsi256_pd(m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_castsi512_pd(m);
+		return set1(0.0 / 0.0); // do not use
 #endif
 	}
 
@@ -49,7 +49,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_castpd_si256(d);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_castpd_si512(d);
+		return false; // do not use
 #endif
 	}
 
@@ -66,7 +66,11 @@ public:
 	}
 
 	static DoubleVec ones() {
+#if VCP_VEC_WIDTH != VCP_VEC_W_512
 		return cast_MaskVec_to_DoubleVec(MaskVec::ones());
+#else
+		return _mm512_castsi512_pd( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) );
+#endif
 	}
 
 	DoubleVec operator + (const DoubleVec& rhs) const {
@@ -173,7 +177,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_set1_pd(v);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_set1_pd(a);
+		return _mm512_set1_pd(v);
 #endif
 	}
 
@@ -226,6 +230,8 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_unpacklo_pd(a,b);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		// not used!
+		return set1(0.0 / 0.0);
 #endif
 	}
 
@@ -238,6 +244,8 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_unpackhi_pd(a, b);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		// not used!
+		return set1(0.0 / 0.0);
 #endif
 	}
 
@@ -249,7 +257,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_LT_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return cast_DoubleVec_to_MaskVec(_mm512_cmp_pd(_d, rhs, _CMP_LT_OS));
+		return _mm512_cmp_pd_mask(_d, rhs, _CMP_LT_OS);
 #endif
 	}
 
@@ -261,14 +269,16 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_NEQ_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return cast_DoubleVec_to_MaskVec(_mm512_cmp_pd(_d, rhs, _CMP_NEQ_OS));
+		return _mm512_cmp_pd_mask(_d, rhs, _CMP_NEQ_OS);
 #endif
 	}
 
 	static DoubleVec apply_mask(const DoubleVec& d, const MaskVec& m) {
 #if VCP_VEC_TYPE == VCP_NOVEC
 		return m ? d : DoubleVec::zero();
-#else
+#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		return _mm512_mask_mov_pd(DoubleVec::zero(), m, d);
+#else // SSE, AVX, AVX2
 		return cast_MaskVec_to_DoubleVec(cast_DoubleVec_to_MaskVec(d) and m);
 #endif
 	}
