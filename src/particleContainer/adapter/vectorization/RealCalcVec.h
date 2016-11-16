@@ -1,12 +1,12 @@
 /*
- * DoubleVec.h
+ * RealCalcVec.h
  *
  *  Created on: 10 Nov 2016
  *      Author: tchipevn
  */
 
-#ifndef SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_DOUBLEVEC_H_
-#define SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_DOUBLEVEC_H_
+#ifndef SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALCALCVEC_H_
+#define SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALCALCVEC_H_
 
 #include "./SIMD_TYPES.h"
 #include "MaskVec.h"
@@ -14,24 +14,24 @@
 
 namespace vcp {
 
-class DoubleVec {
+class RealCalcVec {
 private:
-	vcp_double_vec _d;
+	vcp_real_calc_vec _d;
 
 public:
-	DoubleVec() {}
+	RealCalcVec() {}
 
-	operator vcp_double_vec() const {
+	operator vcp_real_calc_vec() const {
 		return _d;
 	}
 
-	DoubleVec(const vcp_double_vec & d) {
+	RealCalcVec(const vcp_real_calc_vec & d) {
 		_d = d;
 	}
 
-	static DoubleVec cast_MaskVec_to_DoubleVec(const MaskVec& m) {
+	static RealCalcVec cast_MaskVec_to_RealCalcVec(const MaskVec& m) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return static_cast<vcp_double_vec>(m);
+		return static_cast<vcp_real_calc_vec>(m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_castsi128_pd(m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -41,7 +41,7 @@ public:
 #endif
 	}
 
-	static MaskVec cast_DoubleVec_to_MaskVec(const DoubleVec& d) {
+	static MaskVec cast_RealCalcVec_to_MaskVec(const RealCalcVec& d) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return static_cast<vcp_mask_vec>(d);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -53,27 +53,27 @@ public:
 #endif
 	}
 
-	static DoubleVec zero() {
-		#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return 0.0;
-		#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-			return _mm_setzero_pd();
-		#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-			return _mm256_setzero_pd();
-		#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-			return _mm512_setzero_pd();
-		#endif
+	static RealCalcVec zero() {
+#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+		return 0.0;
+#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+		return _mm_setzero_pd();
+#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+		return _mm256_setzero_pd();
+#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+		return _mm512_setzero_pd();
+#endif
 	}
 
-	static DoubleVec ones() {
+	static RealCalcVec ones() {
 #if VCP_VEC_WIDTH != VCP_VEC_W_512
-		return cast_MaskVec_to_DoubleVec(MaskVec::ones());
+		return cast_MaskVec_to_RealCalcVec(MaskVec::ones());
 #else
 		return _mm512_castsi512_pd( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) );
 #endif
 	}
 
-	DoubleVec operator + (const DoubleVec& rhs) const {
+	RealCalcVec operator + (const RealCalcVec& rhs) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d + rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -85,7 +85,7 @@ public:
 #endif
 	}
 
-	DoubleVec operator - (const DoubleVec& rhs) const {
+	RealCalcVec operator - (const RealCalcVec& rhs) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d - rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -97,7 +97,7 @@ public:
 #endif
 	}
 
-	DoubleVec operator * (const DoubleVec& rhs) const {
+	RealCalcVec operator * (const RealCalcVec& rhs) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d * rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -109,7 +109,7 @@ public:
 #endif
 	}
 
-	static DoubleVec fmadd(const DoubleVec & a, const DoubleVec& b, const DoubleVec& c ) {
+	static RealCalcVec fmadd(const RealCalcVec & a, const RealCalcVec& b, const RealCalcVec& c ) {
 #if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return (a * b) + c;
 #elif VCP_VEC_TYPE == VCP_VEC_AVX2
@@ -119,7 +119,7 @@ public:
 #endif
 	}
 
-	static DoubleVec fnmadd(const DoubleVec & a, const DoubleVec& b, const DoubleVec& c ) {
+	static RealCalcVec fnmadd(const RealCalcVec & a, const RealCalcVec& b, const RealCalcVec& c ) {
 #if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return c - (a * b);
 #elif VCP_VEC_TYPE == VCP_VEC_AVX2
@@ -129,7 +129,7 @@ public:
 #endif
 	}
 
-	static DoubleVec fmsub(const DoubleVec & a, const DoubleVec& b, const DoubleVec& c) {
+	static RealCalcVec fmsub(const RealCalcVec & a, const RealCalcVec& b, const RealCalcVec& c) {
 #if VCP_VEC_TYPE == VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX
 		return (a * b) - c;
 #elif VCP_VEC_TYPE == VCP_VEC_AVX2
@@ -139,7 +139,7 @@ public:
 #endif
 	}
 
-	DoubleVec operator / (const DoubleVec& rhs) const {
+	RealCalcVec operator / (const RealCalcVec& rhs) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d / rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -151,7 +151,7 @@ public:
 #endif
 	}
 
-	static DoubleVec sqrt (const DoubleVec& rhs) {
+	static RealCalcVec sqrt (const RealCalcVec& rhs) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return std::sqrt(rhs);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -163,13 +163,13 @@ public:
 #endif
 	}
 
-	static DoubleVec scal_prod(
-			const DoubleVec& a1, const DoubleVec& a2, const DoubleVec& a3,
-			const DoubleVec& b1, const DoubleVec& b2, const DoubleVec& b3) {
+	static RealCalcVec scal_prod(
+			const RealCalcVec& a1, const RealCalcVec& a2, const RealCalcVec& a3,
+			const RealCalcVec& b1, const RealCalcVec& b2, const RealCalcVec& b3) {
 		return fmadd(a1, b1, fmadd(a2, b2, a3 * b3));
 	}
 
-	static DoubleVec set1(const double& v) {
+	static RealCalcVec set1(const double& v) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return v;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -181,7 +181,7 @@ public:
 #endif
 	}
 
-	static DoubleVec aligned_load(const double * const a) {
+	static RealCalcVec aligned_load(const double * const a) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return *a;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -193,7 +193,7 @@ public:
 #endif
 	}
 
-	static DoubleVec broadcast(const double * const a) {
+	static RealCalcVec broadcast(const double * const a) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return *a;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
@@ -221,7 +221,7 @@ public:
 #endif
 	}
 
-	static DoubleVec unpack_lo(const DoubleVec& a, const DoubleVec& b) {
+	static RealCalcVec unpack_lo(const RealCalcVec& a, const RealCalcVec& b) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		// makes no sense
 		return 0.0 / 0.0;
@@ -235,7 +235,7 @@ public:
 #endif
 	}
 
-	static DoubleVec unpack_hi(const DoubleVec& a, const DoubleVec& b) {
+	static RealCalcVec unpack_hi(const RealCalcVec& a, const RealCalcVec& b) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		// makes no sense
 		return 0.0 / 0.0;
@@ -249,53 +249,53 @@ public:
 #endif
 	}
 
-	MaskVec operator < (const DoubleVec & rhs) const {
+	MaskVec operator < (const RealCalcVec & rhs) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d < rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return cast_DoubleVec_to_MaskVec(_mm_cmplt_pd(_d, rhs));
+		return cast_RealCalcVec_to_MaskVec(_mm_cmplt_pd(_d, rhs));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_LT_OS));
+		return cast_RealCalcVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_LT_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		return _mm512_cmp_pd_mask(_d, rhs, _CMP_LT_OS);
 #endif
 	}
 
-	MaskVec operator != (const DoubleVec & rhs) const {
+	MaskVec operator != (const RealCalcVec & rhs) const {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return _d != rhs;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return cast_DoubleVec_to_MaskVec(_mm_cmpneq_pd(_d, rhs));
+		return cast_RealCalcVec_to_MaskVec(_mm_cmpneq_pd(_d, rhs));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_NEQ_OS));
+		return cast_RealCalcVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_NEQ_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
 		return _mm512_cmp_pd_mask(_d, rhs, _CMP_NEQ_OS);
 #endif
 	}
 
-	static DoubleVec apply_mask(const DoubleVec& d, const MaskVec& m) {
+	static RealCalcVec apply_mask(const RealCalcVec& d, const MaskVec& m) {
 #if VCP_VEC_TYPE == VCP_NOVEC
-		return m ? d : DoubleVec::zero();
+		return m ? d : RealCalcVec::zero();
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_mask_mov_pd(DoubleVec::zero(), m, d);
+		return _mm512_mask_mov_pd(RealCalcVec::zero(), m, d);
 #else // SSE, AVX, AVX2
-		return cast_MaskVec_to_DoubleVec(cast_DoubleVec_to_MaskVec(d) and m);
+		return cast_MaskVec_to_RealCalcVec(cast_RealCalcVec_to_MaskVec(d) and m);
 #endif
 	}
 
-	static DoubleVec aligned_load_mask(const double * const a, MaskVec m) {
+	static RealCalcVec aligned_load_mask(const double * const a, MaskVec m) {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return apply_mask(DoubleVec::aligned_load(a),m);
+		return apply_mask(RealCalcVec::aligned_load(a),m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return apply_mask(DoubleVec::aligned_load(a),m);
+		return apply_mask(RealCalcVec::aligned_load(a),m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_maskload_pd(a, m);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_mask_load_pd(DoubleVec::zero(), m, a);
+		return _mm512_mask_load_pd(RealCalcVec::zero(), m, a);
 #endif
 	}
 };
 
 } /* namespace vcp */
 
-#endif /* SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_DOUBLEVEC_H_ */
+#endif /* SRC_PARTICLECONTAINER_ADAPTER_VECTORIZATION_REALCALCVEC_H_ */

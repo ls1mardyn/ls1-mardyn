@@ -18,7 +18,7 @@
     #include "./SIMD_TYPES.h"
 #endif
 
-#include "DoubleVec.h"
+#include "RealCalcVec.h"
 #include "math.h"
 
 using namespace vcp;

@@ -232,52 +232,52 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 
 	//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
-	const DoubleVec zero = DoubleVec::zero();
-	const DoubleVec one = DoubleVec::set1(1.0);
-	const DoubleVec two = DoubleVec::set1(2.0);
-	const DoubleVec three = DoubleVec::set1(3.0);
-	const DoubleVec four = DoubleVec::set1(4.0);
-	const DoubleVec five = DoubleVec::set1(5.0);
-	const DoubleVec six = DoubleVec::set1(6.0);
-	const DoubleVec ten = DoubleVec::set1(10.0);
-	const DoubleVec _05 = DoubleVec::set1(0.5);
-	const DoubleVec _075 = DoubleVec::set1(0.75);
-	const DoubleVec _1pt5 = DoubleVec::set1(1.5);
-	const DoubleVec _15 = DoubleVec::set1(15.0);
+	const RealCalcVec zero = RealCalcVec::zero();
+	const RealCalcVec one = RealCalcVec::set1(1.0);
+	const RealCalcVec two = RealCalcVec::set1(2.0);
+	const RealCalcVec three = RealCalcVec::set1(3.0);
+	const RealCalcVec four = RealCalcVec::set1(4.0);
+	const RealCalcVec five = RealCalcVec::set1(5.0);
+	const RealCalcVec six = RealCalcVec::set1(6.0);
+	const RealCalcVec ten = RealCalcVec::set1(10.0);
+	const RealCalcVec _05 = RealCalcVec::set1(0.5);
+	const RealCalcVec _075 = RealCalcVec::set1(0.75);
+	const RealCalcVec _1pt5 = RealCalcVec::set1(1.5);
+	const RealCalcVec _15 = RealCalcVec::set1(15.0);
 
 	template<bool calculateMacroscopic>
 	inline void VectorizedChargeP2PCellProcessor :: _loopBodyCharge(
-			const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
-			const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
-			const DoubleVec& qii,
-			const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
-			const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
-			const DoubleVec& qjj,
-			DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
-			DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
-			DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
+			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
+			const RealCalcVec& qii,
+			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
+			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
+			const RealCalcVec& qjj,
+			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
+			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
+			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
 			const MaskVec& forceMask)
 	{
-		const DoubleVec c_dx = r1_x - r2_x;
-		const DoubleVec c_dy = r1_y - r2_y;
-		const DoubleVec c_dz = r1_z - r2_z;//fma not possible since they will be reused...
+		const RealCalcVec c_dx = r1_x - r2_x;
+		const RealCalcVec c_dy = r1_y - r2_y;
+		const RealCalcVec c_dz = r1_z - r2_z;//fma not possible since they will be reused...
 
-		const DoubleVec c_dr2 = DoubleVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
+		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
-		const DoubleVec c_dr2_inv_unmasked = one / c_dr2;
-		const DoubleVec c_dr2_inv = DoubleVec::apply_mask(c_dr2_inv_unmasked, forceMask);//masked
-	    const DoubleVec c_dr_inv = DoubleVec::sqrt(c_dr2_inv);//masked
+		const RealCalcVec c_dr2_inv_unmasked = one / c_dr2;
+		const RealCalcVec c_dr2_inv = RealCalcVec::apply_mask(c_dr2_inv_unmasked, forceMask);//masked
+	    const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
 
-		const DoubleVec q1q2per4pie0 = qii * qjj;
-		const DoubleVec upot = q1q2per4pie0 * c_dr_inv;//masked
-		const DoubleVec fac = upot * c_dr2_inv;//masked
+		const RealCalcVec q1q2per4pie0 = qii * qjj;
+		const RealCalcVec upot = q1q2per4pie0 * c_dr_inv;//masked
+		const RealCalcVec fac = upot * c_dr2_inv;//masked
 
 		f_x = c_dx * fac;
 		f_y = c_dy * fac;
 		f_z = c_dz * fac;
-		const DoubleVec m_dx = m1_r_x - m2_r_x;
-		const DoubleVec m_dy = m1_r_y - m2_r_y;
-		const DoubleVec m_dz = m1_r_z - m2_r_z;
+		const RealCalcVec m_dx = m1_r_x - m2_r_x;
+		const RealCalcVec m_dy = m1_r_y - m2_r_y;
+		const RealCalcVec m_dz = m1_r_z - m2_r_z;
 
 		V_x = m_dx * f_x;
 		V_y = m_dy * f_y;
@@ -333,10 +333,10 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
 
-	DoubleVec sum_upotXpoles = DoubleVec::zero();
-	DoubleVec sum_virial = DoubleVec::zero();
+	RealCalcVec sum_upotXpoles = RealCalcVec::zero();
+	RealCalcVec sum_virial = RealCalcVec::zero();
 
-	const DoubleVec cutoffRadiusSquare = DoubleVec::set1(_cutoffRadiusSquare);
+	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(_cutoffRadiusSquare);
 
 	/*
 	 *  Here different end values for the loops are defined. For loops, which do not vectorize over the last (possibly "uneven") amount of indices, the normal values are computed. These mark the end of the vectorized part.
@@ -352,9 +352,9 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 
 	// Iterate over each center in the first cell.
 	for (size_t i = 0; i < soa1._mol_num; ++i) {//over the molecules
-		const DoubleVec m1_r_x = DoubleVec::broadcast(soa1_mol_pos_x + i);
-		const DoubleVec m1_r_y = DoubleVec::broadcast(soa1_mol_pos_y + i);
-		const DoubleVec m1_r_z = DoubleVec::broadcast(soa1_mol_pos_z + i);
+		const RealCalcVec m1_r_x = RealCalcVec::broadcast(soa1_mol_pos_x + i);
+		const RealCalcVec m1_r_y = RealCalcVec::broadcast(soa1_mol_pos_y + i);
+		const RealCalcVec m1_r_z = RealCalcVec::broadcast(soa1_mol_pos_z + i);
 		// Iterate over centers of second cell
 		const countertype32 compute_molecule_charges = calcDistLookup<ForcePolicy, MaskGatherChooser>(i_charge_idx, soa2._charges_num, _cutoffRadiusSquare,
 				soa2_charges_dist_lookup, soa2_charges_m_r_x, soa2_charges_m_r_y, soa2_charges_m_r_z,
@@ -373,18 +373,18 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 			// Iterate over centers of actual molecule
 			for (int local_i = 0; local_i < soa1_mol_charges_num[i]; local_i++) {
 
-				const DoubleVec q1 = DoubleVec::broadcast(soa1_charges_q + i_charge_idx + local_i);
-				const DoubleVec r1_x = DoubleVec::broadcast(soa1_charges_r_x + i_charge_idx + local_i);
-				const DoubleVec r1_y = DoubleVec::broadcast(soa1_charges_r_y + i_charge_idx + local_i);
-				const DoubleVec r1_z = DoubleVec::broadcast(soa1_charges_r_z + i_charge_idx + local_i);
+				const RealCalcVec q1 = RealCalcVec::broadcast(soa1_charges_q + i_charge_idx + local_i);
+				const RealCalcVec r1_x = RealCalcVec::broadcast(soa1_charges_r_x + i_charge_idx + local_i);
+				const RealCalcVec r1_y = RealCalcVec::broadcast(soa1_charges_r_y + i_charge_idx + local_i);
+				const RealCalcVec r1_z = RealCalcVec::broadcast(soa1_charges_r_z + i_charge_idx + local_i);
 
-				DoubleVec sum_f1_x = DoubleVec::zero();
-				DoubleVec sum_f1_y = DoubleVec::zero();
-				DoubleVec sum_f1_z = DoubleVec::zero();
+				RealCalcVec sum_f1_x = RealCalcVec::zero();
+				RealCalcVec sum_f1_y = RealCalcVec::zero();
+				RealCalcVec sum_f1_z = RealCalcVec::zero();
 
-				DoubleVec sum_V1_x = DoubleVec::zero();
-				DoubleVec sum_V1_y = DoubleVec::zero();
-				DoubleVec sum_V1_z = DoubleVec::zero();
+				RealCalcVec sum_V1_x = RealCalcVec::zero();
+				RealCalcVec sum_V1_y = RealCalcVec::zero();
+				RealCalcVec sum_V1_z = RealCalcVec::zero();
 
 				// Iterate over centers of second cell
 				size_t j = ForcePolicy::InitJ2(i_charge_idx + local_i);
@@ -393,18 +393,18 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 					const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMask(soa2_charges_dist_lookup, j);
 					// Check if we have to calculate anything for at least one of the pairs
 					if (MaskGatherChooser::computeLoop(lookupORforceMask)) {
-						const DoubleVec q2 = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
+						const RealCalcVec q2 = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
 
-						const DoubleVec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j, lookupORforceMask);
-						const DoubleVec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j, lookupORforceMask);
-						const DoubleVec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j, lookupORforceMask);
+						const RealCalcVec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j, lookupORforceMask);
+						const RealCalcVec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j, lookupORforceMask);
+						const RealCalcVec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j, lookupORforceMask);
 
-						const DoubleVec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j, lookupORforceMask);
-						const DoubleVec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j, lookupORforceMask);
-						const DoubleVec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
+						const RealCalcVec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j, lookupORforceMask);
+						const RealCalcVec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j, lookupORforceMask);
+						const RealCalcVec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
-						DoubleVec f_x, f_y, f_z;
-						DoubleVec Vx, Vy, Vz;
+						RealCalcVec f_x, f_y, f_z;
+						RealCalcVec Vx, Vy, Vz;
 
 						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
@@ -439,17 +439,17 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 					if(remainderM != 0x00){
 						const vcp_lookupOrMask_vec lookupORforceMask = MaskGatherChooser::loadLookupOrForceMaskRemainder(soa2_charges_dist_lookup, j, remainderM);
 
-						const DoubleVec q2 = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
-						const DoubleVec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j, lookupORforceMask);
-						const DoubleVec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j, lookupORforceMask);
-						const DoubleVec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j, lookupORforceMask);
+						const RealCalcVec q2 = MaskGatherChooser::load(soa2_charges_q, j, lookupORforceMask);
+						const RealCalcVec r2_x = MaskGatherChooser::load(soa2_charges_r_x, j, lookupORforceMask);
+						const RealCalcVec r2_y = MaskGatherChooser::load(soa2_charges_r_y, j, lookupORforceMask);
+						const RealCalcVec r2_z = MaskGatherChooser::load(soa2_charges_r_z, j, lookupORforceMask);
 
-						const DoubleVec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j, lookupORforceMask);
-						const DoubleVec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j, lookupORforceMask);
-						const DoubleVec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
+						const RealCalcVec m2_r_x = MaskGatherChooser::load(soa2_charges_m_r_x, j, lookupORforceMask);
+						const RealCalcVec m2_r_y = MaskGatherChooser::load(soa2_charges_m_r_y, j, lookupORforceMask);
+						const RealCalcVec m2_r_z = MaskGatherChooser::load(soa2_charges_m_r_z, j, lookupORforceMask);
 
-						DoubleVec f_x, f_y, f_z;
-						DoubleVec Vx, Vy, Vz;
+						RealCalcVec f_x, f_y, f_z;
+						RealCalcVec Vx, Vy, Vz;
 
 						_loopBodyCharge<CalculateMacroscopic>(
 								m1_r_x, m1_r_y, m1_r_z,	r1_x, r1_y, r1_z, q1,
