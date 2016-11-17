@@ -124,7 +124,7 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning() << "DomainDecompMPIBase::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+			global_log->warning() << "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -135,7 +135,7 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error() << "DomainDecompMPIBase::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+			global_log->error() << "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {
@@ -247,7 +247,7 @@ void NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1D(Particle
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning() << "DomainDecompMPIBase::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+			global_log->warning() << "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -257,7 +257,7 @@ void NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1D(Particle
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error() << "DomainDecompMPIBase::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+			global_log->error() << "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {

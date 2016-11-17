@@ -185,8 +185,8 @@ void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int l
 
 void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const double lC[3], const double hC[3], const Domain* domain) const {
 	for (int d = 0; d < 3; ++d) {
-		lo[d] = static_cast<int>(lC[d] / _cellSize[d]);
-		hi[d] = static_cast<int>((hC[d] - 1e-10) / _cellSize[d]); // no -1, but -1e-10, to ensure, that the upper border is still within the cell
+		lo[d] = round(lC[d] / _cellSize[d]);
+		hi[d] = round(hC[d] / _cellSize[d]) - 1; // no -1
 	}
 }
 
