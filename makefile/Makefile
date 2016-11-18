@@ -23,7 +23,7 @@ PARTYPE ?= SEQ
 # choose target
 # Show list of all available targets for the current config with cfg_help
 # Each config should at least provide the two targets RELEASE and DEBUG.
-TARGET ?= RELEASE
+TARGET ?= DEBUG
 
 # compile using depmode?
 DEPS ?= 0
@@ -37,7 +37,7 @@ VTK ?= 0
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
-VECTORIZE_CODE ?= SSE
+VECTORIZE_CODE ?= AVX2
 # AOS      - LegacyCellProcessor
 # SSE      - VectorizedCellProcessor with SSE intrinsics (default)
 # AVX      - VectorizedCellProcessor with AVX intrinsics
@@ -51,6 +51,15 @@ VECTORIZE_CODE ?= SSE
 vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SOA SSEAMD AVXAMD
 ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
   $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
+endif
+
+PRECISION ?= SINGLE
+# SINGLE - SPSP - computation carried out in single precision, accumulation carried out in single precision
+# MIXED  - SPDP - computation carried out in single precision, accumulation carried out in double precision
+# DOUBLE - DPDP - computation carried out in double precision, accumulation carried out in double precision
+precision_options := SINGLE MIXED DOUBLE
+ifeq (, $(filter $(PRECISION), $(precision_options)))
+  $(error ERROR: no valid precision option chosen. Set to SINGLE, MIXED or DOUBLE.)
 endif
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
@@ -128,6 +137,16 @@ else
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
+endif
+
+ifeq ($(PRECISION), SINGLE)
+CXXFLAGS += -D MARDYN_SPSP
+endif
+ifeq ($(PRECISION), MIXED)
+CXXFLAGS += -D MARDYN_SPDP
+endif
+ifeq ($(PRECISION), DOUBLE)
+CXXFLAGS += -D MARDYN_DPDP
 endif
 
 ifeq ($(OPENMP), 1)

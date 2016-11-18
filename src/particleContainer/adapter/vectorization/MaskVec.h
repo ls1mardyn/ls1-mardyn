@@ -52,38 +52,74 @@ public:
 	}
 
 	MaskVec operator and (const MaskVec& rhs) const {
-#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return _m and rhs;
-#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_and_si128(_m, rhs);
-#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
-#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m & rhs;
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m and rhs;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_and_si128(_m, rhs);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(_m), _mm256_castsi256_ps(rhs)));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m & rhs;
+	#endif
+#else
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m and rhs;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_and_si128(_m, rhs);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m & rhs;
+	#endif
 #endif
 	}
 
 	MaskVec operator or (const MaskVec& rhs) const {
-#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return _m or rhs;
-#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_or_si128(_m, rhs);
-#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
-#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m | rhs;
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m or rhs;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_or_si128(_m, rhs);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_castps_si256(_mm256_or_ps(_mm256_castsi256_ps(_m), _mm256_castsi256_ps(rhs)));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m | rhs;
+	#endif
+#else
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m or rhs;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_or_si128(_m, rhs);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m | rhs;
+	#endif
 #endif
 	}
 
 	MaskVec operator xor (const MaskVec & rhs) const {
-#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return _m xor rhs;
-#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_xor_si128(_m, rhs);
-#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
-#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m ^ rhs;
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m xor rhs;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_xor_si128(_m, rhs);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(_m), _mm256_castsi256_ps(rhs)));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m ^ rhs;
+	#endif
+#else
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m xor rhs;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_xor_si128(_m, rhs);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(_m), _mm256_castsi256_pd(rhs)));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m ^ rhs;
+	#endif
 #endif
 	}
 
@@ -99,10 +135,18 @@ public:
 #endif
 	}
 
-#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
-	static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
-		return _mm512_load_epi64(a);
-	}
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+	#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+		static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
+			return _mm512_load_epi32(a);
+		}
+	#endif
+#else
+	#if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
+		static vcp_lookupOrMask_vec aligned_load(const vcp_lookupOrMask_single * const a) {
+			return _mm512_load_epi64(a);
+		}
+	#endif
 #endif
 
 	void aligned_store(vcp_mask_single * location) const {
@@ -118,14 +162,26 @@ public:
 	}
 
 	bool movemask() const {
-#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return _m;
-#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_movemask_epi8(_m);
-#elif VCP_VEC_WIDTH == VCP_VEC_W_256
-		return _mm256_movemask_pd(_mm256_castsi256_pd(_m));
-#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _m != MaskVec::zero();
+#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_movemask_epi8(_m); TODO
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_movemask_ps(_mm256_castsi256_ps(_m));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m != MaskVec::zero();
+	#endif
+#else
+	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
+			return _m;
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
+			return _mm_movemask_epi8(_m);
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
+			return _mm256_movemask_pd(_mm256_castsi256_pd(_m));
+	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
+			return _m != MaskVec::zero();
+	#endif
 #endif
 	}
 };

@@ -10,6 +10,7 @@
 
 #include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
+#include <cstdint>
 
 /**
  * \brief Structure of Arrays for vectorized force calculation.
@@ -29,85 +30,85 @@ public:
 	size_t _centers_num;
 
 	// entries per molecule
-	AlignedArrayTriplet<double> _mol_pos;
+	AlignedArrayTriplet<vcp_real_calc> _mol_pos;
 	AlignedArray<int> _mol_ljc_num;
 	AlignedArray<int> _mol_charges_num;
 	AlignedArray<int> _mol_dipoles_num;
 	AlignedArray<int> _mol_quadrupoles_num;
 
 	// entries per center
-	AlignedArrayTriplet<double> _centers_m_r;
-	AlignedArrayTriplet<double> _centers_r;
-	AlignedArrayTriplet<double> _centers_f;
-	AlignedArrayTriplet<double> _centers_V;
+	AlignedArrayTriplet<vcp_real_calc> _centers_m_r;
+	AlignedArrayTriplet<vcp_real_calc> _centers_r;
+	AlignedArrayTriplet<vcp_real_calc> _centers_f;
+	AlignedArrayTriplet<vcp_real_calc> _centers_V;
 
 	// entries per lj center
-	AlignedArray<size_t> _ljc_id;
+	AlignedArray<uint32_t> _ljc_id;
 
 	// entries per charge
-	AlignedArray<double> _charges_q;
+	AlignedArray<vcp_real_calc> _charges_q;
 
 	// entries per dipole
-	AlignedArray<double> _dipoles_p; // dipole moment
-	AlignedArrayTriplet<double> _dipoles_e; // orientation vector of dipole moment
-	AlignedArrayTriplet<double> _dipoles_M; // torque vector
+	AlignedArray<vcp_real_calc> _dipoles_p; // dipole moment
+	AlignedArrayTriplet<vcp_real_calc> _dipoles_e; // orientation vector of dipole moment
+	AlignedArrayTriplet<vcp_real_calc> _dipoles_M; // torque vector
 
 	// entries per quadrupole
-	AlignedArray<double> _quadrupoles_m; // quadrupole moment
-	AlignedArrayTriplet<double> _quadrupoles_e; // orientation vector of quadrupole moment
-	AlignedArrayTriplet<double> _quadrupoles_M; // torque vector
+	AlignedArray<vcp_real_calc> _quadrupoles_m; // quadrupole moment
+	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_e; // orientation vector of quadrupole moment
+	AlignedArrayTriplet<vcp_real_calc> _quadrupoles_M; // torque vector
 
-	vcp_inline double* ljc_m_r_xBegin() const { return _centers_m_r.xBegin();}
-	vcp_inline double* ljc_m_r_yBegin() const { return _centers_m_r.yBegin();}
-	vcp_inline double* ljc_m_r_zBegin() const { return _centers_m_r.zBegin();}
-	vcp_inline double* ljc_r_xBegin()   const { return _centers_r  .xBegin();}
-	vcp_inline double* ljc_r_yBegin()   const { return _centers_r  .yBegin();}
-	vcp_inline double* ljc_r_zBegin()   const { return _centers_r  .zBegin();}
-	vcp_inline double* ljc_f_xBegin()   const { return _centers_f  .xBegin();}
-	vcp_inline double* ljc_f_yBegin()   const { return _centers_f  .yBegin();}
-	vcp_inline double* ljc_f_zBegin()   const { return _centers_f  .zBegin();}
-	vcp_inline double* ljc_V_xBegin()   const { return _centers_V  .xBegin();}
-	vcp_inline double* ljc_V_yBegin()   const { return _centers_V  .yBegin();}
-	vcp_inline double* ljc_V_zBegin()   const { return _centers_V  .zBegin();}
+	vcp_inline vcp_real_calc* ljc_m_r_xBegin() const { return _centers_m_r.xBegin();}
+	vcp_inline vcp_real_calc* ljc_m_r_yBegin() const { return _centers_m_r.yBegin();}
+	vcp_inline vcp_real_calc* ljc_m_r_zBegin() const { return _centers_m_r.zBegin();}
+	vcp_inline vcp_real_calc* ljc_r_xBegin()   const { return _centers_r  .xBegin();}
+	vcp_inline vcp_real_calc* ljc_r_yBegin()   const { return _centers_r  .yBegin();}
+	vcp_inline vcp_real_calc* ljc_r_zBegin()   const { return _centers_r  .zBegin();}
+	vcp_inline vcp_real_calc* ljc_f_xBegin()   const { return _centers_f  .xBegin();}
+	vcp_inline vcp_real_calc* ljc_f_yBegin()   const { return _centers_f  .yBegin();}
+	vcp_inline vcp_real_calc* ljc_f_zBegin()   const { return _centers_f  .zBegin();}
+	vcp_inline vcp_real_calc* ljc_V_xBegin()   const { return _centers_V  .xBegin();}
+	vcp_inline vcp_real_calc* ljc_V_yBegin()   const { return _centers_V  .yBegin();}
+	vcp_inline vcp_real_calc* ljc_V_zBegin()   const { return _centers_V  .zBegin();}
 
-	vcp_inline double* charges_m_r_xBegin() const { return ljc_m_r_xBegin() + _centers_m_r._round_up(_ljc_num);}
-	vcp_inline double* charges_m_r_yBegin() const { return ljc_m_r_yBegin() + _centers_m_r._round_up(_ljc_num);}
-	vcp_inline double* charges_m_r_zBegin() const { return ljc_m_r_zBegin() + _centers_m_r._round_up(_ljc_num);}
-	vcp_inline double* charges_r_xBegin()   const { return ljc_r_xBegin()   + _centers_r  ._round_up(_ljc_num);}
-	vcp_inline double* charges_r_yBegin()   const { return ljc_r_yBegin()   + _centers_r  ._round_up(_ljc_num);}
-	vcp_inline double* charges_r_zBegin()   const { return ljc_r_zBegin()   + _centers_r  ._round_up(_ljc_num);}
-	vcp_inline double* charges_f_xBegin()   const { return ljc_f_xBegin()   + _centers_f  ._round_up(_ljc_num);}
-	vcp_inline double* charges_f_yBegin()   const { return ljc_f_yBegin()   + _centers_f  ._round_up(_ljc_num);}
-	vcp_inline double* charges_f_zBegin()   const { return ljc_f_zBegin()   + _centers_f  ._round_up(_ljc_num);}
-	vcp_inline double* charges_V_xBegin()   const { return ljc_V_xBegin()   + _centers_V  ._round_up(_ljc_num);}
-	vcp_inline double* charges_V_yBegin()   const { return ljc_V_yBegin()   + _centers_V  ._round_up(_ljc_num);}
-	vcp_inline double* charges_V_zBegin()   const { return ljc_V_zBegin()   + _centers_V  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_m_r_xBegin() const { return ljc_m_r_xBegin() + _centers_m_r._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_m_r_yBegin() const { return ljc_m_r_yBegin() + _centers_m_r._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_m_r_zBegin() const { return ljc_m_r_zBegin() + _centers_m_r._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_r_xBegin()   const { return ljc_r_xBegin()   + _centers_r  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_r_yBegin()   const { return ljc_r_yBegin()   + _centers_r  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_r_zBegin()   const { return ljc_r_zBegin()   + _centers_r  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_f_xBegin()   const { return ljc_f_xBegin()   + _centers_f  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_f_yBegin()   const { return ljc_f_yBegin()   + _centers_f  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_f_zBegin()   const { return ljc_f_zBegin()   + _centers_f  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_V_xBegin()   const { return ljc_V_xBegin()   + _centers_V  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_V_yBegin()   const { return ljc_V_yBegin()   + _centers_V  ._round_up(_ljc_num);}
+	vcp_inline vcp_real_calc* charges_V_zBegin()   const { return ljc_V_zBegin()   + _centers_V  ._round_up(_ljc_num);}
 
-	vcp_inline double* dipoles_m_r_xBegin() const { return charges_m_r_xBegin() + _centers_m_r._round_up(_charges_num);}
-	vcp_inline double* dipoles_m_r_yBegin() const { return charges_m_r_yBegin() + _centers_m_r._round_up(_charges_num);}
-	vcp_inline double* dipoles_m_r_zBegin() const { return charges_m_r_zBegin() + _centers_m_r._round_up(_charges_num);}
-	vcp_inline double* dipoles_r_xBegin()   const { return charges_r_xBegin()   + _centers_r  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_r_yBegin()   const { return charges_r_yBegin()   + _centers_r  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_r_zBegin()   const { return charges_r_zBegin()   + _centers_r  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_f_xBegin()   const { return charges_f_xBegin()   + _centers_f  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_f_yBegin()   const { return charges_f_yBegin()   + _centers_f  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_f_zBegin()   const { return charges_f_zBegin()   + _centers_f  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_V_xBegin()   const { return charges_V_xBegin()   + _centers_V  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_V_yBegin()   const { return charges_V_yBegin()   + _centers_V  ._round_up(_charges_num);}
-	vcp_inline double* dipoles_V_zBegin()   const { return charges_V_zBegin()   + _centers_V  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_m_r_xBegin() const { return charges_m_r_xBegin() + _centers_m_r._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_m_r_yBegin() const { return charges_m_r_yBegin() + _centers_m_r._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_m_r_zBegin() const { return charges_m_r_zBegin() + _centers_m_r._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_r_xBegin()   const { return charges_r_xBegin()   + _centers_r  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_r_yBegin()   const { return charges_r_yBegin()   + _centers_r  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_r_zBegin()   const { return charges_r_zBegin()   + _centers_r  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_f_xBegin()   const { return charges_f_xBegin()   + _centers_f  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_f_yBegin()   const { return charges_f_yBegin()   + _centers_f  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_f_zBegin()   const { return charges_f_zBegin()   + _centers_f  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_V_xBegin()   const { return charges_V_xBegin()   + _centers_V  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_V_yBegin()   const { return charges_V_yBegin()   + _centers_V  ._round_up(_charges_num);}
+	vcp_inline vcp_real_calc* dipoles_V_zBegin()   const { return charges_V_zBegin()   + _centers_V  ._round_up(_charges_num);}
 
-	vcp_inline double* quadrupoles_m_r_xBegin() const { return dipoles_m_r_xBegin() + _centers_m_r._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_m_r_yBegin() const { return dipoles_m_r_yBegin() + _centers_m_r._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_m_r_zBegin() const { return dipoles_m_r_zBegin() + _centers_m_r._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_r_xBegin()   const { return dipoles_r_xBegin()   + _centers_r  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_r_yBegin()   const { return dipoles_r_yBegin()   + _centers_r  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_r_zBegin()   const { return dipoles_r_zBegin()   + _centers_r  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_f_xBegin()   const { return dipoles_f_xBegin()   + _centers_f  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_f_yBegin()   const { return dipoles_f_yBegin()   + _centers_f  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_f_zBegin()   const { return dipoles_f_zBegin()   + _centers_f  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_V_xBegin()   const { return dipoles_V_xBegin()   + _centers_V  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_V_yBegin()   const { return dipoles_V_yBegin()   + _centers_V  ._round_up(_dipoles_num);}
-	vcp_inline double* quadrupoles_V_zBegin()   const { return dipoles_V_zBegin()   + _centers_V  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_m_r_xBegin() const { return dipoles_m_r_xBegin() + _centers_m_r._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_m_r_yBegin() const { return dipoles_m_r_yBegin() + _centers_m_r._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_m_r_zBegin() const { return dipoles_m_r_zBegin() + _centers_m_r._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_r_xBegin()   const { return dipoles_r_xBegin()   + _centers_r  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_r_yBegin()   const { return dipoles_r_yBegin()   + _centers_r  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_r_zBegin()   const { return dipoles_r_zBegin()   + _centers_r  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_f_xBegin()   const { return dipoles_f_xBegin()   + _centers_f  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_f_yBegin()   const { return dipoles_f_yBegin()   + _centers_f  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_f_zBegin()   const { return dipoles_f_zBegin()   + _centers_f  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_V_xBegin()   const { return dipoles_V_xBegin()   + _centers_V  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_V_yBegin()   const { return dipoles_V_yBegin()   + _centers_V  ._round_up(_dipoles_num);}
+	vcp_inline vcp_real_calc* quadrupoles_V_zBegin()   const { return dipoles_V_zBegin()   + _centers_V  ._round_up(_dipoles_num);}
 
 	void vcp_inline initDistLookupPointers(
 			AlignedArray<vcp_lookupOrMask_single>& centers_dist_lookup,
@@ -116,10 +117,10 @@ public:
 			vcp_lookupOrMask_single*& dipoles_dist_lookup,
 			vcp_lookupOrMask_single*& quadrupoles_dist_lookup) const {
 
-		size_t ljc_size 	= AlignedArray<double>::_round_up(_ljc_num);
-		size_t charges_size = AlignedArray<double>::_round_up(_charges_num);
-		size_t dipoles_size = AlignedArray<double>::_round_up(_dipoles_num);
-		size_t quadrupoles_size = AlignedArray<double>::_round_up(_quadrupoles_num);
+		size_t ljc_size 	= AlignedArray<vcp_real_calc>::_round_up(_ljc_num);
+		size_t charges_size = AlignedArray<vcp_real_calc>::_round_up(_charges_num);
+		size_t dipoles_size = AlignedArray<vcp_real_calc>::_round_up(_dipoles_num);
+		size_t quadrupoles_size = AlignedArray<vcp_real_calc>::_round_up(_quadrupoles_num);
 		size_t centers_size = ljc_size + charges_size + dipoles_size + quadrupoles_size;
 
 		centers_dist_lookup.resize_zero_shrink(centers_size);
@@ -171,16 +172,16 @@ public:
 
 		// entries per center
 		size_t num_centers_comp =
-				AlignedArray<double>::_round_up(_ljc_num) +
-				AlignedArray<double>::_round_up(_charges_num) +
-				AlignedArray<double>::_round_up(_dipoles_num) +
-				AlignedArray<double>::_round_up(_quadrupoles_num);
+				AlignedArray<vcp_real_calc>::_round_up(_ljc_num) +
+				AlignedArray<vcp_real_calc>::_round_up(_charges_num) +
+				AlignedArray<vcp_real_calc>::_round_up(_dipoles_num) +
+				AlignedArray<vcp_real_calc>::_round_up(_quadrupoles_num);
 
 		size_t num_centers_acc =
-				AlignedArray<double>::_round_up(_ljc_num) +
-				AlignedArray<double>::_round_up(_charges_num) +
-				AlignedArray<double>::_round_up(_dipoles_num) +
-				AlignedArray<double>::_round_up(_quadrupoles_num);
+				AlignedArray<vcp_real_calc>::_round_up(_ljc_num) +
+				AlignedArray<vcp_real_calc>::_round_up(_charges_num) +
+				AlignedArray<vcp_real_calc>::_round_up(_dipoles_num) +
+				AlignedArray<vcp_real_calc>::_round_up(_quadrupoles_num);
 
 		_centers_m_r.resize_zero_shrink(num_centers_comp);
 		_centers_r	.resize_zero_shrink(num_centers_comp);

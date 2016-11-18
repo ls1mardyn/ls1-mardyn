@@ -136,151 +136,151 @@ Molecule& Molecule::operator=(const Molecule& m) {
 std::array<double, 3> Molecule::ljcenter_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double,3> ret;
-	double* rx = _soa->ljc_r_xBegin();
-	double* ry = _soa->ljc_r_yBegin();
-	double* rz = _soa->ljc_r_zBegin();
-	ret[0] = rx[index_in_soa];
-	ret[1] = ry[index_in_soa];
-	ret[2] = rz[index_in_soa];
+	vcp_real_calc* rx = _soa->ljc_r_xBegin();
+	vcp_real_calc* ry = _soa->ljc_r_yBegin();
+	vcp_real_calc* rz = _soa->ljc_r_zBegin();
+	ret[0] = static_cast<double>(rx[index_in_soa]);
+	ret[1] = static_cast<double>(ry[index_in_soa]);
+	ret[2] = static_cast<double>(rz[index_in_soa]);
 	return ret;
 }
 
 std::array<double, 3> Molecule::charge_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
-	double* rx = _soa->charges_r_xBegin();
-	double* ry = _soa->charges_r_yBegin();
-	double* rz = _soa->charges_r_zBegin();
-	ret[0] = rx[index_in_soa];
-	ret[1] = ry[index_in_soa];
-	ret[2] = rz[index_in_soa];
+	vcp_real_calc* rx = _soa->charges_r_xBegin();
+	vcp_real_calc* ry = _soa->charges_r_yBegin();
+	vcp_real_calc* rz = _soa->charges_r_zBegin();
+	ret[0] = static_cast<double>(rx[index_in_soa]);
+	ret[1] = static_cast<double>(ry[index_in_soa]);
+	ret[2] = static_cast<double>(rz[index_in_soa]);
 	return ret;
 }
 
 std::array<double, 3> Molecule::dipole_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	double* rx = _soa->dipoles_r_xBegin();
-	double* ry = _soa->dipoles_r_yBegin();
-	double* rz = _soa->dipoles_r_zBegin();
-	ret[0] = rx[index_in_soa];
-	ret[1] = ry[index_in_soa];
-	ret[2] = rz[index_in_soa];
+	vcp_real_calc* rx = _soa->dipoles_r_xBegin();
+	vcp_real_calc* ry = _soa->dipoles_r_yBegin();
+	vcp_real_calc* rz = _soa->dipoles_r_zBegin();
+	ret[0] = static_cast<double>(rx[index_in_soa]);
+	ret[1] = static_cast<double>(ry[index_in_soa]);
+	ret[2] = static_cast<double>(rz[index_in_soa]);
 	return ret;
 }
 
 std::array<double, 3> Molecule::quadrupole_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	double* rx = _soa->quadrupoles_r_xBegin();
-	double* ry = _soa->quadrupoles_r_yBegin();
-	double* rz = _soa->quadrupoles_r_zBegin();
-	ret[0] = rx[index_in_soa];
-	ret[1] = ry[index_in_soa];
-	ret[2] = rz[index_in_soa];
+	vcp_real_calc* rx = _soa->quadrupoles_r_xBegin();
+	vcp_real_calc* ry = _soa->quadrupoles_r_yBegin();
+	vcp_real_calc* rz = _soa->quadrupoles_r_zBegin();
+	ret[0] = static_cast<double>(rx[index_in_soa]);
+	ret[1] = static_cast<double>(ry[index_in_soa]);
+	ret[2] = static_cast<double>(rz[index_in_soa]);
 	return ret;
 }
 
 std::array<double, 3> Molecule::ljcenter_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double, 3> ret;
-	double* fx = _soa->ljc_f_xBegin();
-	double* fy = _soa->ljc_f_yBegin();
-	double* fz = _soa->ljc_f_zBegin();
-	ret[0] = fx[index_in_soa];
-	ret[1] = fy[index_in_soa];
-	ret[2] = fz[index_in_soa];
+	vcp_real_calc* fx = _soa->ljc_f_xBegin();
+	vcp_real_calc* fy = _soa->ljc_f_yBegin();
+	vcp_real_calc* fz = _soa->ljc_f_zBegin();
+	ret[0] = static_cast<double>(fx[index_in_soa]);
+	ret[1] = static_cast<double>(fy[index_in_soa]);
+	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
 std::array<double, 3> Molecule::charge_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
-	double* fx = _soa->charges_f_xBegin();
-	double* fy = _soa->charges_f_yBegin();
-	double* fz = _soa->charges_f_zBegin();
-	ret[0] = fx[index_in_soa];
-	ret[1] = fy[index_in_soa];
-	ret[2] = fz[index_in_soa];
+	vcp_real_calc* fx = _soa->charges_f_xBegin();
+	vcp_real_calc* fy = _soa->charges_f_yBegin();
+	vcp_real_calc* fz = _soa->charges_f_zBegin();
+	ret[0] = static_cast<double>(fx[index_in_soa]);
+	ret[1] = static_cast<double>(fy[index_in_soa]);
+	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
 std::array<double, 3> Molecule::dipole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	double* fx = _soa->dipoles_f_xBegin();
-	double* fy = _soa->dipoles_f_yBegin();
-	double* fz = _soa->dipoles_f_zBegin();
-	ret[0] = fx[index_in_soa];
-	ret[1] = fy[index_in_soa];
-	ret[2] = fz[index_in_soa];
+	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
+	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
+	vcp_real_calc* fz = _soa->dipoles_f_zBegin();
+	ret[0] = static_cast<double>(fx[index_in_soa]);
+	ret[1] = static_cast<double>(fy[index_in_soa]);
+	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
 std::array<double, 3> Molecule::quadrupole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	double* fx = _soa->quadrupoles_f_xBegin();
-	double* fy = _soa->quadrupoles_f_yBegin();
-	double* fz = _soa->quadrupoles_f_zBegin();
-	ret[0] = fx[index_in_soa];
-	ret[1] = fy[index_in_soa];
-	ret[2] = fz[index_in_soa];
+	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
+	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
+	vcp_real_calc* fz = _soa->quadrupoles_f_zBegin();
+	ret[0] = static_cast<double>(fx[index_in_soa]);
+	ret[1] = static_cast<double>(fy[index_in_soa]);
+	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
 
 std::array<double, 3> Molecule::dipole_e(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
-	ret[0] = _soa->_dipoles_e.x(index_in_soa);
-	ret[1] = _soa->_dipoles_e.y(index_in_soa);
-	ret[2] = _soa->_dipoles_e.z(index_in_soa);
+	ret[0] = static_cast<double>(_soa->_dipoles_e.x(index_in_soa));
+	ret[1] = static_cast<double>(_soa->_dipoles_e.y(index_in_soa));
+	ret[2] = static_cast<double>(_soa->_dipoles_e.z(index_in_soa));
 	return ret;
 }
 std::array<double, 3> Molecule::quadrupole_e(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
-	ret[0] = _soa->_quadrupoles_e.x(index_in_soa);
-	ret[1] = _soa->_quadrupoles_e.y(index_in_soa);
-	ret[2] = _soa->_quadrupoles_e.z(index_in_soa);
+	ret[0] = static_cast<double>(_soa->_quadrupoles_e.x(index_in_soa));
+	ret[1] = static_cast<double>(_soa->_quadrupoles_e.y(index_in_soa));
+	ret[2] = static_cast<double>(_soa->_quadrupoles_e.z(index_in_soa));
 	return ret;
 }
 
 void Molecule::Fljcenteradd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_lj;
-	double* fx = _soa->ljc_f_xBegin();
-	double* fy = _soa->ljc_f_yBegin();
-	double* fz = _soa->ljc_f_zBegin();
-	fx[index_in_soa] += a[0];
-	fy[index_in_soa] += a[1];
-	fz[index_in_soa] += a[2];
+	vcp_real_calc* fx = _soa->ljc_f_xBegin();
+	vcp_real_calc* fy = _soa->ljc_f_yBegin();
+	vcp_real_calc* fz = _soa->ljc_f_zBegin();
+	fx[index_in_soa] += static_cast<double>(a[0]);
+	fy[index_in_soa] += static_cast<double>(a[1]);
+	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
 void Molecule::Fchargeadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_c;
-	double* fx = _soa->charges_f_xBegin();
-	double* fy = _soa->charges_f_yBegin();
-	double* fz = _soa->charges_f_zBegin();
-	fx[index_in_soa] += a[0];
-	fy[index_in_soa] += a[1];
-	fz[index_in_soa] += a[2];
+	vcp_real_calc* fx = _soa->charges_f_xBegin();
+	vcp_real_calc* fy = _soa->charges_f_yBegin();
+	vcp_real_calc* fz = _soa->charges_f_zBegin();
+	fx[index_in_soa] += static_cast<double>(a[0]);
+	fy[index_in_soa] += static_cast<double>(a[1]);
+	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
 void Molecule::Fdipoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_d;
-	double* fx = _soa->dipoles_f_xBegin();
-	double* fy = _soa->dipoles_f_yBegin();
-	double* fz = _soa->dipoles_f_zBegin();
-	fx[index_in_soa] += a[0];
-	fy[index_in_soa] += a[1];
-	fz[index_in_soa] += a[2];
+	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
+	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
+	vcp_real_calc* fz = _soa->dipoles_f_zBegin();
+	fx[index_in_soa] += static_cast<double>(a[0]);
+	fy[index_in_soa] += static_cast<double>(a[1]);
+	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
 void Molecule::Fquadrupoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_q;
-	double* fx = _soa->quadrupoles_f_xBegin();
-	double* fy = _soa->quadrupoles_f_yBegin();
-	double* fz = _soa->quadrupoles_f_zBegin();
-	fx[index_in_soa] += a[0];
-	fy[index_in_soa] += a[1];
-	fz[index_in_soa] += a[2];
+	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
+	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
+	vcp_real_calc* fz = _soa->quadrupoles_f_zBegin();
+	fx[index_in_soa] += static_cast<double>(a[0]);
+	fy[index_in_soa] += static_cast<double>(a[1]);
+	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
 void Molecule::Fljcentersub(unsigned int i, double a[]) {

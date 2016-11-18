@@ -73,11 +73,6 @@ private:
 	Timer _timer;
 
 	/**
-	 * \brief An aligned array of doubles.
-	 */
-	typedef AlignedArray<double> DoubleArray;
-
-	/**
 	 * \brief a vector of Molecule pointers.
 	 */
 	typedef std::vector<Molecule *> MoleculeList;
@@ -121,7 +116,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _charges_dist_lookup;
 
-		AlignedArray<double> _upotXpolesV, _virialV;
+		AlignedArray<vcp_real_calc> _upotXpolesV, _virialV;
 	};
 
 	std::vector<VCP2PCPThreadData *> _threadData;

@@ -97,7 +97,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 		const int tid = omp_get_thread_num();
 
 		// reduce vectors and clear local variable
-		double thread_upotXpoles = 0.0, thread_virial = 0.0;
+		vcp_real_calc thread_upotXpoles = 0.0, thread_virial = 0.0;
 
 		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
@@ -136,18 +136,18 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 
 	ComponentList components = *(_simulation.getEnsemble()->getComponents());
 
-	double* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
-	double* const soa_charges_m_r_y = soa.charges_m_r_yBegin();
-	double* const soa_charges_m_r_z = soa.charges_m_r_zBegin();
-	double* const soa_charges_r_x = soa.charges_r_xBegin();
-	double* const soa_charges_r_y = soa.charges_r_yBegin();
-	double* const soa_charges_r_z = soa.charges_r_zBegin();
-	double* const soa_charges_f_x = soa.charges_f_xBegin();
-	double* const soa_charges_f_y = soa.charges_f_yBegin();
-	double* const soa_charges_f_z = soa.charges_f_zBegin();
-	double* const soa_charges_V_x = soa.charges_V_xBegin();
-	double* const soa_charges_V_y = soa.charges_V_yBegin();
-	double* const soa_charges_V_z = soa.charges_V_zBegin();
+	vcp_real_calc* const soa_charges_m_r_x = soa.charges_m_r_xBegin();
+	vcp_real_calc* const soa_charges_m_r_y = soa.charges_m_r_yBegin();
+	vcp_real_calc* const soa_charges_m_r_z = soa.charges_m_r_zBegin();
+	vcp_real_calc* const soa_charges_r_x = soa.charges_r_xBegin();
+	vcp_real_calc* const soa_charges_r_y = soa.charges_r_yBegin();
+	vcp_real_calc* const soa_charges_r_z = soa.charges_r_zBegin();
+	vcp_real_calc* const soa_charges_f_x = soa.charges_f_xBegin();
+	vcp_real_calc* const soa_charges_f_y = soa.charges_f_yBegin();
+	vcp_real_calc* const soa_charges_f_z = soa.charges_f_zBegin();
+	vcp_real_calc* const soa_charges_V_x = soa.charges_V_xBegin();
+	vcp_real_calc* const soa_charges_V_y = soa.charges_V_yBegin();
+	vcp_real_calc* const soa_charges_V_z = soa.charges_V_zBegin();
 
 	size_t iCharges = 0;
 	// For each molecule iterate over all its centers.
@@ -155,9 +155,9 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 		Molecule& mol = c.moleculesAt(i);
 
 		const size_t mol_charges_num = mol.numCharges();
-		const double mol_pos_x = mol.r(0);
-		const double mol_pos_y = mol.r(1);
-		const double mol_pos_z = mol.r(2);
+		const vcp_real_calc mol_pos_x = mol.r(0);
+		const vcp_real_calc mol_pos_y = mol.r(1);
+		const vcp_real_calc mol_pos_z = mol.r(2);
 
 		soa._mol_pos.x(i) = mol_pos_x;
 		soa._mol_pos.y(i) = mol_pos_y;
@@ -192,12 +192,12 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 	using std::isnan; // C++11 required
 	CellDataSoA& soa = c.getCellDataSoA();
 
-	double* const soa_charges_f_x = soa.charges_f_xBegin();
-	double* const soa_charges_f_y = soa.charges_f_yBegin();
-	double* const soa_charges_f_z = soa.charges_f_zBegin();
-	double* const soa_charges_V_x = soa.charges_V_xBegin();
-	double* const soa_charges_V_y = soa.charges_V_yBegin();
-	double* const soa_charges_V_z = soa.charges_V_zBegin();
+	vcp_real_calc* const soa_charges_f_x = soa.charges_f_xBegin();
+	vcp_real_calc* const soa_charges_f_y = soa.charges_f_yBegin();
+	vcp_real_calc* const soa_charges_f_z = soa.charges_f_zBegin();
+	vcp_real_calc* const soa_charges_V_x = soa.charges_V_xBegin();
+	vcp_real_calc* const soa_charges_V_y = soa.charges_V_yBegin();
+	vcp_real_calc* const soa_charges_V_z = soa.charges_V_zBegin();
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
@@ -208,9 +208,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
 			double f[3];
-			f[0] = soa_charges_f_x[iCharges];
-			f[1] = soa_charges_f_y[iCharges];
-			f[2] = soa_charges_f_z[iCharges];
+			f[0] = static_cast<double>(soa_charges_f_x[iCharges]);
+			f[1] = static_cast<double>(soa_charges_f_y[iCharges]);
+			f[2] = static_cast<double>(soa_charges_f_z[iCharges]);
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
@@ -218,9 +218,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 			// Store the resulting virial in the molecule.
 			double V[3];
-			V[0] = soa_charges_V_x[iCharges]*0.5;
-			V[1] = soa_charges_V_y[iCharges]*0.5;
-			V[2] = soa_charges_V_z[iCharges]*0.5;
+			V[0] = static_cast<double>(soa_charges_V_x[iCharges]*0.5);
+			V[1] = static_cast<double>(soa_charges_V_y[iCharges]*0.5);
+			V[2] = static_cast<double>(soa_charges_V_z[iCharges]*0.5);
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
@@ -299,36 +299,36 @@ void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1,
 			my_threadData._charges_dist_lookup, soa2._charges_num);
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
-	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
-	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for charges
-	const double * const soa1_charges_r_x = soa1.charges_r_xBegin();
-	const double * const soa1_charges_r_y = soa1.charges_r_yBegin();
-	const double * const soa1_charges_r_z = soa1.charges_r_zBegin();
-	      double * const soa1_charges_f_x = soa1.charges_f_xBegin();
-	      double * const soa1_charges_f_y = soa1.charges_f_yBegin();
-	      double * const soa1_charges_f_z = soa1.charges_f_zBegin();
-	      double * const soa1_charges_V_x = soa1.charges_V_xBegin();
-	      double * const soa1_charges_V_y = soa1.charges_V_yBegin();
-	      double * const soa1_charges_V_z = soa1.charges_V_zBegin();
-	const double * const soa1_charges_q = soa1._charges_q;
+	const vcp_real_calc * const soa1_charges_r_x = soa1.charges_r_xBegin();
+	const vcp_real_calc * const soa1_charges_r_y = soa1.charges_r_yBegin();
+	const vcp_real_calc * const soa1_charges_r_z = soa1.charges_r_zBegin();
+	      vcp_real_calc * const soa1_charges_f_x = soa1.charges_f_xBegin();
+	      vcp_real_calc * const soa1_charges_f_y = soa1.charges_f_yBegin();
+	      vcp_real_calc * const soa1_charges_f_z = soa1.charges_f_zBegin();
+	      vcp_real_calc * const soa1_charges_V_x = soa1.charges_V_xBegin();
+	      vcp_real_calc * const soa1_charges_V_y = soa1.charges_V_yBegin();
+	      vcp_real_calc * const soa1_charges_V_z = soa1.charges_V_zBegin();
+	const vcp_real_calc * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const double * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
-	const double * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
-	const double * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
-	const double * const soa2_charges_r_x   = soa2.charges_r_xBegin();
-	const double * const soa2_charges_r_y   = soa2.charges_r_yBegin();
-	const double * const soa2_charges_r_z   = soa2.charges_r_zBegin();
-	      double * const soa2_charges_f_x   = soa2.charges_f_xBegin();
-	      double * const soa2_charges_f_y   = soa2.charges_f_yBegin();
-	      double * const soa2_charges_f_z   = soa2.charges_f_zBegin();
-	      double * const soa2_charges_V_x   = soa2.charges_V_xBegin();
-	      double * const soa2_charges_V_y   = soa2.charges_V_yBegin();
-	      double * const soa2_charges_V_z   = soa2.charges_V_zBegin();
-	const double * const soa2_charges_q = soa2._charges_q;
+	const vcp_real_calc * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
+	const vcp_real_calc * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
+	const vcp_real_calc * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
+	const vcp_real_calc * const soa2_charges_r_x   = soa2.charges_r_xBegin();
+	const vcp_real_calc * const soa2_charges_r_y   = soa2.charges_r_yBegin();
+	const vcp_real_calc * const soa2_charges_r_z   = soa2.charges_r_zBegin();
+	      vcp_real_calc * const soa2_charges_f_x   = soa2.charges_f_xBegin();
+	      vcp_real_calc * const soa2_charges_f_y   = soa2.charges_f_yBegin();
+	      vcp_real_calc * const soa2_charges_f_z   = soa2.charges_f_zBegin();
+	      vcp_real_calc * const soa2_charges_V_x   = soa2.charges_V_xBegin();
+	      vcp_real_calc * const soa2_charges_V_y   = soa2.charges_V_yBegin();
+	      vcp_real_calc * const soa2_charges_V_z   = soa2.charges_V_zBegin();
+	const vcp_real_calc * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 

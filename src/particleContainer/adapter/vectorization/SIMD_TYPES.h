@@ -161,6 +161,8 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 		#define VCP_VEC_SIZE_M1 1u
 	#endif
 
+	#define VCP_VEC_WIDTH VCP_VEC_W_128
+
 	typedef __m128i vcp_mask_vec;
 	typedef unsigned long vcp_mask_single;
 	#define VCP_INDICES_PER_LOOKUP_SINGLE 1

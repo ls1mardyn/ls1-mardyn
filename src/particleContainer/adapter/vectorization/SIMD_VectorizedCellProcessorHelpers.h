@@ -7,14 +7,12 @@
  * \author Steffen Seckler
  *
  **************************************************************************************/
-#pragma once
+//#pragma once
 #ifndef  SIMD_VECTORIZEDCELLPROCESSORHELPERS_H
 #define  SIMD_VECTORIZEDCELLPROCESSORHELPERS_H
 
 #include "SIMD_TYPES.h"
 #include "utils/AlignedArray.h"
-
-typedef AlignedArray<double> DoubleArray;
 
 #if VCP_VEC_TYPE==VCP_VEC_AVX2 or \
 	VCP_VEC_TYPE==VCP_VEC_KNC or \
@@ -34,11 +32,11 @@ static_assert (sizeof(size_t) == 8, "Code assumes, that sizeof(size_t) is 8. Con
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const DoubleArray& eps_sigI,
-		const size_t* const id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
+void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<vcp_real_calc>& eps_sigI,
+		const uint32_t* const id_j, const uint32_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
 
 #if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
-	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+	const uint32_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -52,6 +50,34 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const DoubleArray& 
 	sig2 = RealCalcVec::unpack_hi(e0s0, e1s1);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx
+#if 0
+	float eps24_f[8] __attribute__ ((aligned (32))) = {
+			eps_sigI[2 * id_j_shifted[0]],
+			eps_sigI[2 * id_j_shifted[1]],
+			eps_sigI[2 * id_j_shifted[2]],
+			eps_sigI[2 * id_j_shifted[3]],
+			eps_sigI[2 * id_j_shifted[4]],
+			eps_sigI[2 * id_j_shifted[5]],
+			eps_sigI[2 * id_j_shifted[6]],
+			eps_sigI[2 * id_j_shifted[7]],
+	};
+	eps_24 = _mm256_load_ps(eps24_f);
+	float sig2_f[8] __attribute__ ((aligned (32))) = {
+			eps_sigI[2 * id_j_shifted[0]+1],
+			eps_sigI[2 * id_j_shifted[1]+1],
+			eps_sigI[2 * id_j_shifted[2]+1],
+			eps_sigI[2 * id_j_shifted[3]+1],
+			eps_sigI[2 * id_j_shifted[4]+1],
+			eps_sigI[2 * id_j_shifted[5]+1],
+			eps_sigI[2 * id_j_shifted[6]+1],
+			eps_sigI[2 * id_j_shifted[7]+1],
+	};
+	sig2 = _mm256_load_ps(sig2_f);
+
+
+
+#elif 0
+
 	//TODO: add gather for AVX2 (here only)
 	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
 	const RealCalcVec e0s0 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
@@ -66,6 +92,12 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const DoubleArray& 
 
 	eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
 	sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
+#else
+	__m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
+	indices = _mm256_add_epi32(indices, indices); // only every second...
+	eps_24 = _mm256_i32gather_ps(eps_sigI, indices, 4);
+	sig2 = _mm256_i32gather_ps(eps_sigI+1, indices, 4);
+#endif
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
 	__m512i indices = _mm512_load_epi64(id_j_shifted);
@@ -100,10 +132,10 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const DoubleArray& 
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void unpackShift6(RealCalcVec& shift6, const DoubleArray& shift6I,
-		const size_t* id_j, const size_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
+void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6I,
+		const uint32_t* id_j, const uint32_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
 #if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
-	const size_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+	const uint32_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -127,8 +159,26 @@ void unpackShift6(RealCalcVec& shift6, const DoubleArray& shift6I,
 	shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
+#if 0
+	float shift6_f[8] __attribute__ ((aligned (32))) = {
+				shift6I[id_j_shifted[0]],
+				shift6I[id_j_shifted[1]],
+				shift6I[id_j_shifted[2]],
+				shift6I[id_j_shifted[3]],
+				shift6I[id_j_shifted[4]],
+				shift6I[id_j_shifted[5]],
+				shift6I[id_j_shifted[6]],
+				shift6I[id_j_shifted[7]],
+		};
+
+#elif 0
+
 	const __m256i indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), MaskVec::ones());
 	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
+#else
+	const __m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
+	shift6 = _mm256_i32gather_ps(shift6I, indices, 4);
+#endif
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
 	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
@@ -163,27 +213,10 @@ double horizontal_add_256 (__m256d a) {
  * sums up values in a and adds the result to *mem_addr
  */
 static vcp_inline
-void hSum_Add_Store( double * const mem_addr, const RealCalcVec & a ) {
-#if VCP_VEC_TYPE==VCP_NOVEC
-	(*mem_addr) += a; //there is just one value of a, so no second sum needed.
-#elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	_mm_store_sd(
-		mem_addr,
-		_mm_add_sd(
-			_mm_hadd_pd(a, a),
-			_mm_load_sd(mem_addr)
-		)
-	);
-#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
-	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
-	const RealCalcVec a_t1 = _mm256_permute2f128_pd(a, a, 0x1);
-	const RealCalcVec a_t2 = _mm256_hadd_pd(a, a_t1);
-	const RealCalcVec a_t3 = _mm256_hadd_pd(a_t2, a_t2);
-	_mm256_maskstore_pd(
-		mem_addr,
-		memoryMask_first,
-			a_t3 + RealCalcVec::aligned_load_mask(mem_addr, memoryMask_first)
-	);
+void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
+#if VCP_VEC_TYPE==VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE or VCP_VEC_TYPE == VCP_VEC_AVX or VCP_VEC_TYPE == VCP_VEC_AVX2
+	RealCalcVec::horizontal_add_and_store(a, mem_addr);
+
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 	*mem_addr += _mm512_reduce_add_pd(a);
 
@@ -196,7 +229,7 @@ void hSum_Add_Store( double * const mem_addr, const RealCalcVec & a ) {
 }
 
 static vcp_inline
-void load_hSum_Store_Clear(double * const compact, double * const wide) {
+void load_hSum_Store_Clear(vcp_real_calc * const compact, vcp_real_calc * const wide) {
 	RealCalcVec wide_reg = RealCalcVec::aligned_load(wide);
 	hSum_Add_Store(compact, wide_reg);
 	wide_reg = RealCalcVec::zero();
@@ -210,7 +243,7 @@ void load_hSum_Store_Clear(double * const compact, double * const wide) {
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_add_store(double * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+void vcp_simd_load_add_store(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
 	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum + value;
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
@@ -223,7 +256,7 @@ void vcp_simd_load_add_store(double * const addr, size_t offset, const RealCalcV
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_sub_store(double * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
+void vcp_simd_load_sub_store(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask){
 	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum - value;
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
@@ -236,7 +269,7 @@ void vcp_simd_load_sub_store(double * const addr, size_t offset, const RealCalcV
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_add_store_masked(double * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskVec mask){
+void vcp_simd_load_add_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskVec mask){
 	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum + value;
 	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
@@ -249,7 +282,7 @@ void vcp_simd_load_add_store_masked(double * const addr, size_t offset, const Re
  */
 template <class MaskGatherChooser>
 static vcp_inline
-void vcp_simd_load_sub_store_masked(double * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskVec mask){
+void vcp_simd_load_sub_store_masked(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const vcp_lookupOrMask_vec& lookupORforceMask, const MaskVec mask){
 	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
 	sum = sum - value;
 	MaskGatherChooser::storeMasked(addr, offset, sum, lookupORforceMask, mask);
@@ -336,8 +369,8 @@ public:
  */
 template<class ForcePolicy, class MaskGatherChooser>
 countertype32
-static inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const double & cutoffRadiusSquare,
-		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const double* const soa2_m_r_x, const double* const soa2_m_r_y, const double* const soa2_m_r_z,
+static inline calcDistLookup (const size_t & i_center_idx, const size_t & soa2_num_centers, const vcp_real_calc & cutoffRadiusSquare,
+		vcp_lookupOrMask_single* const soa2_center_dist_lookup, const vcp_real_calc* const soa2_m_r_x, const vcp_real_calc* const soa2_m_r_y, const vcp_real_calc* const soa2_m_r_z,
 		const RealCalcVec & cutoffRadiusSquareD, size_t end_j, const RealCalcVec m1_r_x, const RealCalcVec m1_r_y, const RealCalcVec m1_r_z) {
 
 	size_t j = ForcePolicy :: InitJ(i_center_idx);

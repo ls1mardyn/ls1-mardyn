@@ -55,8 +55,8 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	}
 
 	// One row for each LJ Center, one pair (epsilon*24, sigma^2) for each LJ Center in each row.
-	_eps_sig.resize(centers, DoubleArray(centers * 2));
-	_shift6.resize(centers, DoubleArray(centers));
+	_eps_sig.resize(centers, AlignedArray<vcp_real_calc>(centers * 2));
+	_shift6.resize(centers, AlignedArray<vcp_real_calc>(centers));
 
 	// Construct the parameter tables.
 	for (size_t comp_i = 0; comp_i < components.size(); ++comp_i) {
@@ -70,9 +70,13 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 						center_j < components[comp_j].numLJcenters();
 						++center_j) {
 					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
-					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)];
-					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1];
-					p >> _shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j];
+					double eps, sig, shift;
+					p >> eps;
+					p >> sig;
+					p >> shift;
+					_eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)] = static_cast <vcp_real_calc>(eps);
+					_eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1] = static_cast<vcp_real_calc>(sig);
+					_shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j] = static_cast<vcp_real_calc>(shift);
 				}
 			}
 		}
@@ -128,8 +132,8 @@ void VectorizedLJP2PCellProcessor::initTraversal() {
 
 
 void VectorizedLJP2PCellProcessor::endTraversal() {
-	double glob_upot6lj = 0.0;
-	double glob_virial = 0.0;
+	vcp_real_calc glob_upot6lj = 0.0;
+	vcp_real_calc glob_virial = 0.0;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:glob_upot6lj, glob_virial)
@@ -138,7 +142,7 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 		const int tid = omp_get_thread_num();
 
 		// reduce vectors and clear local variable
-		double thread_upot = 0.0, thread_virial = 0.0;
+		vcp_real_calc thread_upot = 0.0, thread_virial = 0.0;
 
 		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
 		load_hSum_Store_Clear(&thread_virial, _threadData[tid]->_virialV);
@@ -235,36 +239,36 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 				my_threadData._ljc_dist_lookup, soa2._ljc_num);
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
-	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
-	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for LJ centers
-	const double * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
-	const double * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
-	const double * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
-	      double * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
-	      double * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
-	      double * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
-	      double * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
-	      double * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
-	      double * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
+	const vcp_real_calc * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
+	const vcp_real_calc * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
+	const vcp_real_calc * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
+	      vcp_real_calc * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
+	      vcp_real_calc * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
+	      vcp_real_calc * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
+	      vcp_real_calc * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
+	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
+	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
-	const size_t * const soa1_ljc_id = soa1._ljc_id;
+	const uint32_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const double * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
-	const double * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
-	const double * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
-	const double * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
-	const double * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
-	const double * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
-	      double * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
-	      double * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
-	      double * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
-	      double * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
-	      double * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
-	      double * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
-	const size_t * const soa2_ljc_id = soa2._ljc_id;
+	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
+	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
+	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
+	const vcp_real_calc * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
+	const vcp_real_calc * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
+	const vcp_real_calc * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
+	      vcp_real_calc * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
+	      vcp_real_calc * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
+	      vcp_real_calc * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
+	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
+	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
+	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
+	const uint32_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 

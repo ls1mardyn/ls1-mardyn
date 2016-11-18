@@ -26,12 +26,12 @@ public:
 		return MaskVec::aligned_load(dist_lookup + offset/VCP_INDICES_PER_LOOKUP_SINGLE);
 	}
 
-	inline static RealCalcVec load(const double* const src,
+	inline static RealCalcVec load(const vcp_real_calc* const src,
 			const size_t& offset, const vcp_lookupOrMask_vec& /*lookup*/) {
 		return RealCalcVec::aligned_load(src + offset);
 	}
 
-	inline static void store(double* const addr, const size_t& offset,
+	inline static void store(vcp_real_calc* const addr, const size_t& offset,
 			RealCalcVec& value, const vcp_lookupOrMask_vec& /*lookup*/) {
 		value.aligned_store(addr + offset);
 	}
@@ -114,7 +114,7 @@ public:
 		#endif
 	}
 
-	inline static RealCalcVec load(const double* const src,
+	inline static RealCalcVec load(const vcp_real_calc* const src,
 			const size_t& offset, const vcp_lookupOrMask_vec& lookup) {
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			return _mm512_i32logather_pd(lookup, src, 8);
@@ -124,7 +124,7 @@ public:
 		#endif
 	}
 
-	inline static void store(double* const addr, const size_t& offset,
+	inline static void store(vcp_real_calc* const addr, const size_t& offset,
 			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup) {
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			_mm512_i32loscatter_pd(addr, lookup, value, 8);
@@ -134,7 +134,7 @@ public:
 		#endif
 	}
 
-	inline static void storeMasked(double* const addr, const size_t& offset,
+	inline static void storeMasked(vcp_real_calc* const addr, const size_t& offset,
 			RealCalcVec& value, const vcp_lookupOrMask_vec& lookup, const MaskVec mask) {
 		#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 			_mm512_mask_i32loscatter_pd(addr, mask, lookup, value, 8);

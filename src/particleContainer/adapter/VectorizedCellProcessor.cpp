@@ -54,8 +54,8 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 	}
 
 	// One row for each LJ Center, one pair (epsilon*24, sigma^2) for each LJ Center in each row.
-	_eps_sig.resize(centers, DoubleArray(centers * 2));
-	_shift6.resize(centers, DoubleArray(centers));
+	_eps_sig.resize(centers, AlignedArray<vcp_real_calc>(centers * 2));
+	_shift6.resize(centers, AlignedArray<vcp_real_calc>(centers));
 
 	// Construct the parameter tables.
 	for (size_t comp_i = 0; comp_i < components.size(); ++comp_i) {
@@ -69,9 +69,13 @@ VectorizedCellProcessor::VectorizedCellProcessor(Domain & domain, double cutoffR
 						center_j < components[comp_j].numLJcenters();
 						++center_j) {
 					// Extract epsilon*24.0, sigma^2 and shift*6.0 from paramStreams.
-					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)];
-					p >> _eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1];
-					p >> _shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j];
+					double eps, sig, shift;
+					p >> eps;
+					p >> sig;
+					p >> shift;
+					_eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j)] = static_cast <vcp_real_calc>(eps);
+					_eps_sig[compIDs[comp_i] + center_i][2 * (compIDs[comp_j] + center_j) + 1] = static_cast<vcp_real_calc>(sig);
+					_shift6[compIDs[comp_i] + center_i][compIDs[comp_j] + center_j] = static_cast<vcp_real_calc>(shift);
 				}
 			}
 		}
@@ -117,10 +121,10 @@ void VectorizedCellProcessor::initTraversal() {
 
 
 void VectorizedCellProcessor::endTraversal() {
-	double glob_upot6lj = 0.0;
-	double glob_upotXpoles = 0.0;
-	double glob_virial = 0.0;
-	double glob_myRF = 0.0;
+	vcp_real_calc glob_upot6lj = 0.0;
+	vcp_real_calc glob_upotXpoles = 0.0;
+	vcp_real_calc glob_virial = 0.0;
+	vcp_real_calc glob_myRF = 0.0;
 
 	#if defined(_OPENMP)
 	#pragma omp parallel reduction(+:glob_upot6lj, glob_upotXpoles, glob_virial, glob_myRF)
@@ -129,7 +133,7 @@ void VectorizedCellProcessor::endTraversal() {
 		const int tid = omp_get_thread_num();
 
 		// reduce vectors and clear local variable
-		double thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
+		vcp_real_calc thread_upot = 0.0, thread_upotXpoles = 0.0, thread_virial = 0.0, thread_myRF = 0.0;
 
 		load_hSum_Store_Clear(&thread_upot, _threadData[tid]->_upot6ljV);
 		load_hSum_Store_Clear(&thread_upotXpoles, _threadData[tid]->_upotXpolesV);
@@ -748,147 +752,147 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 			my_threadData._quadrupoles_dist_lookup);
 
 	// Pointer for molecules
-	const double * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
-	const double * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
-	const double * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
+	const vcp_real_calc * const soa1_mol_pos_x = soa1._mol_pos.xBegin();
+	const vcp_real_calc * const soa1_mol_pos_y = soa1._mol_pos.yBegin();
+	const vcp_real_calc * const soa1_mol_pos_z = soa1._mol_pos.zBegin();
 
 	// Pointer for LJ centers
-	const double * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
-	const double * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
-	const double * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
-	      double * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
-	      double * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
-	      double * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
-	      double * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
-	      double * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
-	      double * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
+	const vcp_real_calc * const soa1_ljc_r_x = soa1.ljc_r_xBegin();
+	const vcp_real_calc * const soa1_ljc_r_y = soa1.ljc_r_yBegin();
+	const vcp_real_calc * const soa1_ljc_r_z = soa1.ljc_r_zBegin();
+	      vcp_real_calc * const soa1_ljc_f_x = soa1.ljc_f_xBegin();
+	      vcp_real_calc * const soa1_ljc_f_y = soa1.ljc_f_yBegin();
+	      vcp_real_calc * const soa1_ljc_f_z = soa1.ljc_f_zBegin();
+	      vcp_real_calc * const soa1_ljc_V_x = soa1.ljc_V_xBegin();
+	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
+	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
-	const size_t * const soa1_ljc_id = soa1._ljc_id;
+	const uint32_t * const soa1_ljc_id = soa1._ljc_id;
 
-	const double * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
-	const double * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
-	const double * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
-	const double * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
-	const double * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
-	const double * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
-	      double * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
-	      double * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
-	      double * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
-	      double * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
-	      double * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
-	      double * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
-	const size_t * const soa2_ljc_id = soa2._ljc_id;
+	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
+	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
+	const vcp_real_calc * const soa2_ljc_m_r_z = soa2.ljc_m_r_zBegin();
+	const vcp_real_calc * const soa2_ljc_r_x = soa2.ljc_r_xBegin();
+	const vcp_real_calc * const soa2_ljc_r_y = soa2.ljc_r_yBegin();
+	const vcp_real_calc * const soa2_ljc_r_z = soa2.ljc_r_zBegin();
+	      vcp_real_calc * const soa2_ljc_f_x = soa2.ljc_f_xBegin();
+	      vcp_real_calc * const soa2_ljc_f_y = soa2.ljc_f_yBegin();
+	      vcp_real_calc * const soa2_ljc_f_z = soa2.ljc_f_zBegin();
+	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
+	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
+	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
+	const uint32_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
 	// Pointer for charges
-	const double * const soa1_charges_r_x = soa1.charges_r_xBegin();
-	const double * const soa1_charges_r_y = soa1.charges_r_yBegin();
-	const double * const soa1_charges_r_z = soa1.charges_r_zBegin();
-	      double * const soa1_charges_f_x = soa1.charges_f_xBegin();
-	      double * const soa1_charges_f_y = soa1.charges_f_yBegin();
-	      double * const soa1_charges_f_z = soa1.charges_f_zBegin();
-	      double * const soa1_charges_V_x = soa1.charges_V_xBegin();
-	      double * const soa1_charges_V_y = soa1.charges_V_yBegin();
-	      double * const soa1_charges_V_z = soa1.charges_V_zBegin();
-	const double * const soa1_charges_q = soa1._charges_q;
+	const vcp_real_calc * const soa1_charges_r_x = soa1.charges_r_xBegin();
+	const vcp_real_calc * const soa1_charges_r_y = soa1.charges_r_yBegin();
+	const vcp_real_calc * const soa1_charges_r_z = soa1.charges_r_zBegin();
+	      vcp_real_calc * const soa1_charges_f_x = soa1.charges_f_xBegin();
+	      vcp_real_calc * const soa1_charges_f_y = soa1.charges_f_yBegin();
+	      vcp_real_calc * const soa1_charges_f_z = soa1.charges_f_zBegin();
+	      vcp_real_calc * const soa1_charges_V_x = soa1.charges_V_xBegin();
+	      vcp_real_calc * const soa1_charges_V_y = soa1.charges_V_yBegin();
+	      vcp_real_calc * const soa1_charges_V_z = soa1.charges_V_zBegin();
+	const vcp_real_calc * const soa1_charges_q = soa1._charges_q;
 	const int * const soa1_mol_charges_num = soa1._mol_charges_num;
 
-	const double * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
-	const double * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
-	const double * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
-	const double * const soa2_charges_r_x   = soa2.charges_r_xBegin();
-	const double * const soa2_charges_r_y   = soa2.charges_r_yBegin();
-	const double * const soa2_charges_r_z   = soa2.charges_r_zBegin();
-	      double * const soa2_charges_f_x   = soa2.charges_f_xBegin();
-	      double * const soa2_charges_f_y   = soa2.charges_f_yBegin();
-	      double * const soa2_charges_f_z   = soa2.charges_f_zBegin();
-	      double * const soa2_charges_V_x   = soa2.charges_V_xBegin();
-	      double * const soa2_charges_V_y   = soa2.charges_V_yBegin();
-	      double * const soa2_charges_V_z   = soa2.charges_V_zBegin();
-	const double * const soa2_charges_q = soa2._charges_q;
+	const vcp_real_calc * const soa2_charges_m_r_x = soa2.charges_m_r_xBegin();
+	const vcp_real_calc * const soa2_charges_m_r_y = soa2.charges_m_r_yBegin();
+	const vcp_real_calc * const soa2_charges_m_r_z = soa2.charges_m_r_zBegin();
+	const vcp_real_calc * const soa2_charges_r_x   = soa2.charges_r_xBegin();
+	const vcp_real_calc * const soa2_charges_r_y   = soa2.charges_r_yBegin();
+	const vcp_real_calc * const soa2_charges_r_z   = soa2.charges_r_zBegin();
+	      vcp_real_calc * const soa2_charges_f_x   = soa2.charges_f_xBegin();
+	      vcp_real_calc * const soa2_charges_f_y   = soa2.charges_f_yBegin();
+	      vcp_real_calc * const soa2_charges_f_z   = soa2.charges_f_zBegin();
+	      vcp_real_calc * const soa2_charges_V_x   = soa2.charges_V_xBegin();
+	      vcp_real_calc * const soa2_charges_V_y   = soa2.charges_V_yBegin();
+	      vcp_real_calc * const soa2_charges_V_z   = soa2.charges_V_zBegin();
+	const vcp_real_calc * const soa2_charges_q = soa2._charges_q;
 
 	vcp_lookupOrMask_single* const soa2_charges_dist_lookup = my_threadData._charges_dist_lookup;
 
 	// Pointer for dipoles
-	const double * const soa1_dipoles_r_x = soa1.dipoles_r_xBegin();
-	const double * const soa1_dipoles_r_y = soa1.dipoles_r_yBegin();
-	const double * const soa1_dipoles_r_z = soa1.dipoles_r_zBegin();
-	      double * const soa1_dipoles_f_x = soa1.dipoles_f_xBegin();
-	      double * const soa1_dipoles_f_y = soa1.dipoles_f_yBegin();
-	      double * const soa1_dipoles_f_z = soa1.dipoles_f_zBegin();
-	      double * const soa1_dipoles_V_x = soa1.dipoles_V_xBegin();
-	      double * const soa1_dipoles_V_y = soa1.dipoles_V_yBegin();
-	      double * const soa1_dipoles_V_z = soa1.dipoles_V_zBegin();
-	const double * const soa1_dipoles_p = soa1._dipoles_p;
-	const double * const soa1_dipoles_e_x = soa1._dipoles_e.xBegin();
-	const double * const soa1_dipoles_e_y = soa1._dipoles_e.yBegin();
-	const double * const soa1_dipoles_e_z = soa1._dipoles_e.zBegin();
-	double * const soa1_dipoles_M_x = soa1._dipoles_M.xBegin();
-	double * const soa1_dipoles_M_y = soa1._dipoles_M.yBegin();
-	double * const soa1_dipoles_M_z = soa1._dipoles_M.zBegin();
+	const vcp_real_calc * const soa1_dipoles_r_x = soa1.dipoles_r_xBegin();
+	const vcp_real_calc * const soa1_dipoles_r_y = soa1.dipoles_r_yBegin();
+	const vcp_real_calc * const soa1_dipoles_r_z = soa1.dipoles_r_zBegin();
+	      vcp_real_calc * const soa1_dipoles_f_x = soa1.dipoles_f_xBegin();
+	      vcp_real_calc * const soa1_dipoles_f_y = soa1.dipoles_f_yBegin();
+	      vcp_real_calc * const soa1_dipoles_f_z = soa1.dipoles_f_zBegin();
+	      vcp_real_calc * const soa1_dipoles_V_x = soa1.dipoles_V_xBegin();
+	      vcp_real_calc * const soa1_dipoles_V_y = soa1.dipoles_V_yBegin();
+	      vcp_real_calc * const soa1_dipoles_V_z = soa1.dipoles_V_zBegin();
+	const vcp_real_calc * const soa1_dipoles_p = soa1._dipoles_p;
+	const vcp_real_calc * const soa1_dipoles_e_x = soa1._dipoles_e.xBegin();
+	const vcp_real_calc * const soa1_dipoles_e_y = soa1._dipoles_e.yBegin();
+	const vcp_real_calc * const soa1_dipoles_e_z = soa1._dipoles_e.zBegin();
+	vcp_real_calc * const soa1_dipoles_M_x = soa1._dipoles_M.xBegin();
+	vcp_real_calc * const soa1_dipoles_M_y = soa1._dipoles_M.yBegin();
+	vcp_real_calc * const soa1_dipoles_M_z = soa1._dipoles_M.zBegin();
 	const int * const soa1_mol_dipoles_num = soa1._mol_dipoles_num;
 
-	const double * const soa2_dipoles_m_r_x = soa2.dipoles_m_r_xBegin();
-	const double * const soa2_dipoles_m_r_y = soa2.dipoles_m_r_yBegin();
-	const double * const soa2_dipoles_m_r_z = soa2.dipoles_m_r_zBegin();
-	const double * const soa2_dipoles_r_x   = soa2.dipoles_r_xBegin();
-	const double * const soa2_dipoles_r_y   = soa2.dipoles_r_yBegin();
-	const double * const soa2_dipoles_r_z   = soa2.dipoles_r_zBegin();
-	      double * const soa2_dipoles_f_x   = soa2.dipoles_f_xBegin();
-	      double * const soa2_dipoles_f_y   = soa2.dipoles_f_yBegin();
-	      double * const soa2_dipoles_f_z   = soa2.dipoles_f_zBegin();
-	      double * const soa2_dipoles_V_x   = soa2.dipoles_V_xBegin();
-	      double * const soa2_dipoles_V_y   = soa2.dipoles_V_yBegin();
-	      double * const soa2_dipoles_V_z   = soa2.dipoles_V_zBegin();
-	const double * const soa2_dipoles_p = soa2._dipoles_p;
-	const double * const soa2_dipoles_e_x = soa2._dipoles_e.xBegin();
-	const double * const soa2_dipoles_e_y = soa2._dipoles_e.yBegin();
-	const double * const soa2_dipoles_e_z = soa2._dipoles_e.zBegin();
-	double * const soa2_dipoles_M_x = soa2._dipoles_M.xBegin();
-	double * const soa2_dipoles_M_y = soa2._dipoles_M.yBegin();
-	double * const soa2_dipoles_M_z = soa2._dipoles_M.zBegin();
+	const vcp_real_calc * const soa2_dipoles_m_r_x = soa2.dipoles_m_r_xBegin();
+	const vcp_real_calc * const soa2_dipoles_m_r_y = soa2.dipoles_m_r_yBegin();
+	const vcp_real_calc * const soa2_dipoles_m_r_z = soa2.dipoles_m_r_zBegin();
+	const vcp_real_calc * const soa2_dipoles_r_x   = soa2.dipoles_r_xBegin();
+	const vcp_real_calc * const soa2_dipoles_r_y   = soa2.dipoles_r_yBegin();
+	const vcp_real_calc * const soa2_dipoles_r_z   = soa2.dipoles_r_zBegin();
+	      vcp_real_calc * const soa2_dipoles_f_x   = soa2.dipoles_f_xBegin();
+	      vcp_real_calc * const soa2_dipoles_f_y   = soa2.dipoles_f_yBegin();
+	      vcp_real_calc * const soa2_dipoles_f_z   = soa2.dipoles_f_zBegin();
+	      vcp_real_calc * const soa2_dipoles_V_x   = soa2.dipoles_V_xBegin();
+	      vcp_real_calc * const soa2_dipoles_V_y   = soa2.dipoles_V_yBegin();
+	      vcp_real_calc * const soa2_dipoles_V_z   = soa2.dipoles_V_zBegin();
+	const vcp_real_calc * const soa2_dipoles_p = soa2._dipoles_p;
+	const vcp_real_calc * const soa2_dipoles_e_x = soa2._dipoles_e.xBegin();
+	const vcp_real_calc * const soa2_dipoles_e_y = soa2._dipoles_e.yBegin();
+	const vcp_real_calc * const soa2_dipoles_e_z = soa2._dipoles_e.zBegin();
+	vcp_real_calc * const soa2_dipoles_M_x = soa2._dipoles_M.xBegin();
+	vcp_real_calc * const soa2_dipoles_M_y = soa2._dipoles_M.yBegin();
+	vcp_real_calc * const soa2_dipoles_M_z = soa2._dipoles_M.zBegin();
 
 	vcp_lookupOrMask_single* const soa2_dipoles_dist_lookup = my_threadData._dipoles_dist_lookup;
 
 	// Pointer for quadrupoles
-	const double * const soa1_quadrupoles_r_x = soa1.quadrupoles_r_xBegin();
-	const double * const soa1_quadrupoles_r_y = soa1.quadrupoles_r_yBegin();
-	const double * const soa1_quadrupoles_r_z = soa1.quadrupoles_r_zBegin();
-	      double * const soa1_quadrupoles_f_x = soa1.quadrupoles_f_xBegin();
-	      double * const soa1_quadrupoles_f_y = soa1.quadrupoles_f_yBegin();
-	      double * const soa1_quadrupoles_f_z = soa1.quadrupoles_f_zBegin();
-	      double * const soa1_quadrupoles_V_x = soa1.quadrupoles_V_xBegin();
-	      double * const soa1_quadrupoles_V_y = soa1.quadrupoles_V_yBegin();
-	      double * const soa1_quadrupoles_V_z = soa1.quadrupoles_V_zBegin();
-	const double * const soa1_quadrupoles_m = soa1._quadrupoles_m;
-	const double * const soa1_quadrupoles_e_x = soa1._quadrupoles_e.xBegin();
-	const double * const soa1_quadrupoles_e_y = soa1._quadrupoles_e.yBegin();
-	const double * const soa1_quadrupoles_e_z = soa1._quadrupoles_e.zBegin();
-	      double * const soa1_quadrupoles_M_x = soa1._quadrupoles_M.xBegin();
-	      double * const soa1_quadrupoles_M_y = soa1._quadrupoles_M.yBegin();
-	      double * const soa1_quadrupoles_M_z = soa1._quadrupoles_M.zBegin();
+	const vcp_real_calc * const soa1_quadrupoles_r_x = soa1.quadrupoles_r_xBegin();
+	const vcp_real_calc * const soa1_quadrupoles_r_y = soa1.quadrupoles_r_yBegin();
+	const vcp_real_calc * const soa1_quadrupoles_r_z = soa1.quadrupoles_r_zBegin();
+	      vcp_real_calc * const soa1_quadrupoles_f_x = soa1.quadrupoles_f_xBegin();
+	      vcp_real_calc * const soa1_quadrupoles_f_y = soa1.quadrupoles_f_yBegin();
+	      vcp_real_calc * const soa1_quadrupoles_f_z = soa1.quadrupoles_f_zBegin();
+	      vcp_real_calc * const soa1_quadrupoles_V_x = soa1.quadrupoles_V_xBegin();
+	      vcp_real_calc * const soa1_quadrupoles_V_y = soa1.quadrupoles_V_yBegin();
+	      vcp_real_calc * const soa1_quadrupoles_V_z = soa1.quadrupoles_V_zBegin();
+	const vcp_real_calc * const soa1_quadrupoles_m = soa1._quadrupoles_m;
+	const vcp_real_calc * const soa1_quadrupoles_e_x = soa1._quadrupoles_e.xBegin();
+	const vcp_real_calc * const soa1_quadrupoles_e_y = soa1._quadrupoles_e.yBegin();
+	const vcp_real_calc * const soa1_quadrupoles_e_z = soa1._quadrupoles_e.zBegin();
+	      vcp_real_calc * const soa1_quadrupoles_M_x = soa1._quadrupoles_M.xBegin();
+	      vcp_real_calc * const soa1_quadrupoles_M_y = soa1._quadrupoles_M.yBegin();
+	      vcp_real_calc * const soa1_quadrupoles_M_z = soa1._quadrupoles_M.zBegin();
 	const int * const soa1_mol_quadrupoles_num = soa1._mol_quadrupoles_num;
 
-	const double * const soa2_quadrupoles_m_r_x = soa2.quadrupoles_m_r_xBegin();
-	const double * const soa2_quadrupoles_m_r_y = soa2.quadrupoles_m_r_yBegin();
-	const double * const soa2_quadrupoles_m_r_z = soa2.quadrupoles_m_r_zBegin();
-	const double * const soa2_quadrupoles_r_x   = soa2.quadrupoles_r_xBegin();
-	const double * const soa2_quadrupoles_r_y   = soa2.quadrupoles_r_yBegin();
-	const double * const soa2_quadrupoles_r_z   = soa2.quadrupoles_r_zBegin();
-	      double * const soa2_quadrupoles_f_x   = soa2.quadrupoles_f_xBegin();
-	      double * const soa2_quadrupoles_f_y   = soa2.quadrupoles_f_yBegin();
-	      double * const soa2_quadrupoles_f_z   = soa2.quadrupoles_f_zBegin();
-	      double * const soa2_quadrupoles_V_x   = soa2.quadrupoles_V_xBegin();
-	      double * const soa2_quadrupoles_V_y   = soa2.quadrupoles_V_yBegin();
-	      double * const soa2_quadrupoles_V_z   = soa2.quadrupoles_V_zBegin();
-	const double * const soa2_quadrupoles_m = soa2._quadrupoles_m;
-	const double * const soa2_quadrupoles_e_x = soa2._quadrupoles_e.xBegin();
-	const double * const soa2_quadrupoles_e_y = soa2._quadrupoles_e.yBegin();
-	const double * const soa2_quadrupoles_e_z = soa2._quadrupoles_e.zBegin();
-	      double * const soa2_quadrupoles_M_x = soa2._quadrupoles_M.xBegin();
-	      double * const soa2_quadrupoles_M_y = soa2._quadrupoles_M.yBegin();
-	      double * const soa2_quadrupoles_M_z = soa2._quadrupoles_M.zBegin();
+	const vcp_real_calc * const soa2_quadrupoles_m_r_x = soa2.quadrupoles_m_r_xBegin();
+	const vcp_real_calc * const soa2_quadrupoles_m_r_y = soa2.quadrupoles_m_r_yBegin();
+	const vcp_real_calc * const soa2_quadrupoles_m_r_z = soa2.quadrupoles_m_r_zBegin();
+	const vcp_real_calc * const soa2_quadrupoles_r_x   = soa2.quadrupoles_r_xBegin();
+	const vcp_real_calc * const soa2_quadrupoles_r_y   = soa2.quadrupoles_r_yBegin();
+	const vcp_real_calc * const soa2_quadrupoles_r_z   = soa2.quadrupoles_r_zBegin();
+	      vcp_real_calc * const soa2_quadrupoles_f_x   = soa2.quadrupoles_f_xBegin();
+	      vcp_real_calc * const soa2_quadrupoles_f_y   = soa2.quadrupoles_f_yBegin();
+	      vcp_real_calc * const soa2_quadrupoles_f_z   = soa2.quadrupoles_f_zBegin();
+	      vcp_real_calc * const soa2_quadrupoles_V_x   = soa2.quadrupoles_V_xBegin();
+	      vcp_real_calc * const soa2_quadrupoles_V_y   = soa2.quadrupoles_V_yBegin();
+	      vcp_real_calc * const soa2_quadrupoles_V_z   = soa2.quadrupoles_V_zBegin();
+	const vcp_real_calc * const soa2_quadrupoles_m = soa2._quadrupoles_m;
+	const vcp_real_calc * const soa2_quadrupoles_e_x = soa2._quadrupoles_e.xBegin();
+	const vcp_real_calc * const soa2_quadrupoles_e_y = soa2._quadrupoles_e.yBegin();
+	const vcp_real_calc * const soa2_quadrupoles_e_z = soa2._quadrupoles_e.zBegin();
+	      vcp_real_calc * const soa2_quadrupoles_M_x = soa2._quadrupoles_M.xBegin();
+	      vcp_real_calc * const soa2_quadrupoles_M_y = soa2._quadrupoles_M.yBegin();
+	      vcp_real_calc * const soa2_quadrupoles_M_z = soa2._quadrupoles_M.zBegin();
 
 	vcp_lookupOrMask_single* const soa2_quadrupoles_dist_lookup = my_threadData._quadrupoles_dist_lookup;
 
@@ -900,9 +904,9 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	RealCalcVec sum_virial = RealCalcVec::zero();
 	RealCalcVec sum_myRF = RealCalcVec::zero();
 
-	const RealCalcVec rc2 = RealCalcVec::set1(_LJCutoffRadiusSquare);
-	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(_cutoffRadiusSquare);
-	const RealCalcVec epsRFInvrc3 = RealCalcVec::broadcast(&_epsRFInvrc3);
+	const RealCalcVec rc2 = RealCalcVec::set1(static_cast<vcp_real_calc>(_LJCutoffRadiusSquare));
+	const RealCalcVec cutoffRadiusSquare = RealCalcVec::set1(static_cast<vcp_real_calc>(_cutoffRadiusSquare));
+	const RealCalcVec epsRFInvrc3 = RealCalcVec::set1(static_cast<vcp_real_calc>(_epsRFInvrc3));
 
 	/*
 	 *  Here different end values for the loops are defined. For loops, which do not vectorize over the last (possibly "uneven") amount of indices, the normal values are computed. These mark the end of the vectorized part.
@@ -995,16 +999,16 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						const RealCalcVec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j, lookupORforceMask);
 						const RealCalcVec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j, lookupORforceMask);
 
-						const size_t id_i = soa1_ljc_id[i_ljc_idx];
+						const uint32_t id_i = soa1_ljc_id[i_ljc_idx];
 						RealCalcVec fx, fy, fz;
 						RealCalcVec Vx, Vy, Vz;
 
 						RealCalcVec eps_24;
 						RealCalcVec sig2;
-						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, j, lookupORforceMask);
+						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, (uint32_t)j, lookupORforceMask);
 
 						RealCalcVec shift6;
-						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, j, lookupORforceMask);
+						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, (uint32_t)j, lookupORforceMask);
 
 						_loopBodyLJ<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
