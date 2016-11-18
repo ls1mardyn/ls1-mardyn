@@ -1258,6 +1258,10 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 			} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
 				low[d] += _globalCellsPerDim[d];
 				high[d] += _globalCellsPerDim[d];
+			} else if (haloRegion.offset[d] == 0 && ownLo[d] < low[d]){
+				low[d]--;
+			} else if (haloRegion.offset[d] == 0 && ownHi[d] > high[d]){
+				high[d]++;
 			}
 		}
 

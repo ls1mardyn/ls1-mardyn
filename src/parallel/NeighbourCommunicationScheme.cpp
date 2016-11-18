@@ -124,7 +124,8 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning() << "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+			global_log->warning()
+					<< "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -135,7 +136,8 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error() << "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+			global_log->error()
+					<< "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {
@@ -147,6 +149,25 @@ void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleCo
 
 	} // while not allDone
 	global_log->set_mpi_output_root(0);
+}
+
+std::vector<CommunicationPartner> squeezePartners(const std::vector<CommunicationPartner>& partners) {
+	std::vector<CommunicationPartner> squeezedPartners;
+	std::vector<bool> used(partners.size(), false); // flag table, that describes, whether a certain comm-partner has already been added
+	for (unsigned int i = 0; i < partners.size(); i++) {
+		if (used[i])
+			continue;  // if we already added the neighbour, don't add it again!
+		int rank = partners[i].getRank();
+		CommunicationPartner tmp = partners[i];
+		for (unsigned int j = i + 1; j < partners.size(); j++) {
+			if (partners[j].getRank() != rank)
+				continue;  // only add those with same rank
+			tmp.add(partners[j]);
+			used[j] = true;
+		}
+		squeezedPartners.push_back(tmp);
+	}
+	return squeezedPartners;
 }
 
 void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
@@ -174,9 +195,9 @@ void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoff
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
 		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
 	}
-
+	_fullShellNeighbours = commPartners;
 	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
-	_neighbours[0] = commPartners;
+	_neighbours[0] = squeezePartners(commPartners);
 
 }
 
@@ -247,7 +268,8 @@ void NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1D(Particle
 		// catch deadlocks
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
-			global_log->warning() << "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+			global_log->warning()
+					<< "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -257,7 +279,8 @@ void NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1D(Particle
 		}
 
 		if (waitingTime > deadlockTimeOut) {
-			global_log->error() << "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+			global_log->error()
+					<< "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {

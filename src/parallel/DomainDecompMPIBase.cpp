@@ -16,8 +16,8 @@ using Log::global_log;
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
 
-	_neighbourCommunicationScheme = new NeighbourCommunicationScheme3Stage();
-	//_neighbourCommunicationScheme = new NeighbourCommunicationScheme1Stage();
+	//_neighbourCommunicationScheme = new NeighbourCommunicationScheme3Stage();
+	_neighbourCommunicationScheme = new NeighbourCommunicationScheme1Stage();
 
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &_rank));
 

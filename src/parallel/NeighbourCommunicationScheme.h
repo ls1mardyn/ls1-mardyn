@@ -47,7 +47,14 @@ public:
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp) = 0;
 
 	virtual std::vector<int> get3StageNeighbourRanks() = 0;
-	virtual std::vector<int> getFullShellNeighbourRanks() = 0;
+
+	virtual std::vector<int> getFullShellNeighbourRanks() {
+		std::vector<int> neighbourRanks;
+		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {
+			neighbourRanks.push_back(_fullShellNeighbours[i].getRank());
+		}
+		return neighbourRanks;
+	}
 protected:
 
 	//! vector of neighbours. The first dimension should be of size getCommDims().
@@ -62,6 +69,9 @@ protected:
 
 	//! communication scheme (FullShell, EightShell, ...)
 	FullShell* _commScheme;
+
+	//! list of all neighbours (non-squeezed)
+	std::vector<CommunicationPartner> _fullShellNeighbours;
 
 };
 
@@ -83,13 +93,7 @@ public:
 		}
 		return neighbourRanks;
 	}
-	virtual std::vector<int> getFullShellNeighbourRanks() override {
-		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < _neighbours[0].size(); i++) {
-			neighbourRanks.push_back(_neighbours[0][i].getRank());
-		}
-		return neighbourRanks;
-	}
+
 	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 			DomainDecompMPIBase* domainDecomp);
@@ -129,13 +133,7 @@ public:
 		}
 		return neighbourRanks;
 	}
-	virtual std::vector<int> getFullShellNeighbourRanks() override {
-		std::vector<int> neighbourRanks;
-		for (unsigned int i = 0; i < _fullShellNeighbours.size(); i++) {
-			neighbourRanks.push_back(_fullShellNeighbours[i].getRank());
-		}
-		return neighbourRanks;
-	}
+
 	virtual void prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 			unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 			DomainDecompMPIBase* domainDecomp);
@@ -154,7 +152,5 @@ protected:
 			bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp);
 	void convert1StageTo3StageNeighbours(const std::vector<CommunicationPartner>& commPartners,
 			std::vector<std::vector<CommunicationPartner>>& neighbours, HaloRegion& ownRegion, double cutoffRadius);
-
-	std::vector<CommunicationPartner> _fullShellNeighbours;
 
 };
