@@ -269,7 +269,7 @@ public:
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_DoubleVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_NEQ_OS));
 #elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_cmp_pd_mask(_d, rhs, _CMP_NEQ_OS);
+		return _mm512_cmp_pd_mask(_d, rhs, _CMP_NEQ_UQ);
 #endif
 	}
 
