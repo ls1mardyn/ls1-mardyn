@@ -365,8 +365,10 @@ void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoff
 		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
 	}
 
-	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
 	_fullShellNeighbours = commPartners;
 	convert1StageTo3StageNeighbours(commPartners, _neighbours, ownRegion, cutoffRadius);
-
+	//squeeze neighbours -> only a single send, if rightneighbour == leftneighbour
+	for (unsigned int d = 0; d < _commDimms; d++) {
+		_neighbours[d]= squeezePartners(_neighbours[d]);
+	}
 }
