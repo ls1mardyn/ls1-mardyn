@@ -1224,8 +1224,8 @@ void LinkedCells::initializeCells() {
 
 void LinkedCells::calculateNeighbourIndices() {
 	global_log->debug() << "Setting up cell neighbour indice lists." << endl;
-	_forwardNeighbourOffsets.fill(0);
-	_backwardNeighbourOffsets.fill(0);
+	std::fill(_forwardNeighbourOffsets.begin(), _forwardNeighbourOffsets.end(), 0);
+	std::fill(_backwardNeighbourOffsets.begin(), _backwardNeighbourOffsets.end(), 0);
 	int forwardNeighbourIndex = 0, backwardNeighbourIndex = 0;
 
 	_maxNeighbourOffset = 0;
