@@ -196,111 +196,111 @@ private:
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyLJ(
-			const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-			const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-			const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-			const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-			vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-			vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-			vcp_double_vec& sum_upot6lj, vcp_double_vec& sum_virial,
-			const vcp_mask_vec& forceMask,
-			const vcp_double_vec& eps_24, const vcp_double_vec& sig2,
-			const vcp_double_vec& shift6);
+			const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+			const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+			const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+			const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+			DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+			DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+			DoubleVec& sum_upot6lj, DoubleVec& sum_virial,
+			const MaskVec& forceMask,
+			const DoubleVec& eps_24, const DoubleVec& sig2,
+			const DoubleVec& shift6);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyCharge(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& qii,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& qjj,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& qii,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& qjj,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+		const MaskVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeDipole(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& q,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& e_x, const vcp_double_vec& e_y, const vcp_double_vec& e_z,
-		const vcp_double_vec& p,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& q,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& e_x, const DoubleVec& e_y, const DoubleVec& e_z,
+		const DoubleVec& p,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& M_x, DoubleVec& M_y, DoubleVec& M_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+		const MaskVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyDipole(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
-		const vcp_double_vec& pii,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
-		const vcp_double_vec& pjj,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
-		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial, vcp_double_vec& sum_myRF,
-		const vcp_mask_vec& forceMask,
-		const vcp_double_vec& epsRFInvrc3);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& eii_x, const DoubleVec& eii_y, const DoubleVec& eii_z,
+		const DoubleVec& pii,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& ejj_x, const DoubleVec& ejj_y, const DoubleVec& ejj_z,
+		const DoubleVec& pjj,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& M1_x, DoubleVec& M1_y, DoubleVec& M1_z,
+		DoubleVec& M2_x, DoubleVec& M2_y, DoubleVec& M2_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial, DoubleVec& sum_myRF,
+		const MaskVec& forceMask,
+		const DoubleVec& epsRFInvrc3);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyChargeQuadrupole(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& q,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
-		const vcp_double_vec& m,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& M_x, vcp_double_vec& M_y, vcp_double_vec& M_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& q,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& ejj_x, const DoubleVec& ejj_y, const DoubleVec& ejj_z,
+		const DoubleVec& m,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& M_x, DoubleVec& M_y, DoubleVec& M_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+		const MaskVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyDipoleQuadrupole(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
-		const vcp_double_vec& p,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
-		const vcp_double_vec& m,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& M1_x, vcp_double_vec& M1_y, vcp_double_vec& M1_z,
-		vcp_double_vec& M2_x, vcp_double_vec& M2_y, vcp_double_vec& M2_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& eii_x, const DoubleVec& eii_y, const DoubleVec& eii_z,
+		const DoubleVec& p,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& ejj_x, const DoubleVec& ejj_y, const DoubleVec& ejj_z,
+		const DoubleVec& m,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& M1_x, DoubleVec& M1_y, DoubleVec& M1_z,
+		DoubleVec& M2_x, DoubleVec& M2_y, DoubleVec& M2_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+		const MaskVec& forceMask);
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyQuadrupole(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& eii_x, const vcp_double_vec& eii_y, const vcp_double_vec& eii_z,
-		const vcp_double_vec& mii,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& ejj_x, const vcp_double_vec& ejj_y, const vcp_double_vec& ejj_z,
-		const vcp_double_vec& mjj,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& Mii_x, vcp_double_vec& Mii_y, vcp_double_vec& Mii_z,
-		vcp_double_vec& Mjj_x, vcp_double_vec& Mjj_y, vcp_double_vec& Mjj_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
+		const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
+		const DoubleVec& eii_x, const DoubleVec& eii_y, const DoubleVec& eii_z,
+		const DoubleVec& mii,
+		const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
+		const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
+		const DoubleVec& ejj_x, const DoubleVec& ejj_y, const DoubleVec& ejj_z,
+		const DoubleVec& mjj,
+		DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
+		DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
+		DoubleVec& Mii_x, DoubleVec& Mii_y, DoubleVec& Mii_z,
+		DoubleVec& Mjj_x, DoubleVec& Mjj_y, DoubleVec& Mjj_z,
+		DoubleVec& sum_upotXpoles, DoubleVec& sum_virial,
+		const MaskVec& forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
@@ -314,7 +314,7 @@ private:
 	 * depending on the vectorization method.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
+	 * static DoubleVec GetForceMask(DoubleVec m_r2, DoubleVec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.
