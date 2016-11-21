@@ -100,7 +100,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 	calculateCellPairOffsets();
 
 	// get number of active threads
-	int num_active_threads = omp_get_max_threads();
+	int num_active_threads = mardyn_get_max_threads();
 
 	int strides[3];
 	if(num_active_threads > 1) {
@@ -276,8 +276,8 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 	#pragma omp parallel
 	#endif
 	{
-		const int thread_id = omp_get_thread_num();
-		const int num_threads = omp_get_num_threads();
+		const int thread_id = mardyn_get_thread_num();
+		const int num_threads = mardyn_get_num_threads();
 
 		const index_t start = (thread_id    ) * particles.size() / num_threads;
 		const index_t end   = (thread_id + 1) * particles.size() / num_threads;
@@ -744,8 +744,8 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 	#pragma omp parallel shared(v, totalNumMols, threadData)
 	#endif
 	{
-		const int numThreads = omp_get_num_threads();
-		const int threadNum = omp_get_thread_num();
+		const int numThreads = mardyn_get_num_threads();
+		const int threadNum = mardyn_get_thread_num();
 		#if defined (_OPENMP)
 		#pragma omp master
 		#endif
@@ -858,8 +858,8 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>&
 	#pragma omp parallel shared(v, totalNumMols, threadData)
 	#endif
 	{
-		const int numThreads = omp_get_num_threads();
-		const int threadNum = omp_get_thread_num();
+		const int numThreads = mardyn_get_num_threads();
+		const int threadNum = mardyn_get_thread_num();
 		#if defined (_OPENMP)
 		#pragma omp master
 		#endif

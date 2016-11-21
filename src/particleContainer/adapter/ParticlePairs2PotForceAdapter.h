@@ -24,7 +24,7 @@ public:
 		_domain(domain), _virial(0.0), _upot6LJ(0.0), _upotXpoles(0.0), _myRF(0.0) {
 		//this->_doRecordRDF = false;
 
-		const int numThreads = omp_get_max_threads();
+		const int numThreads = mardyn_get_max_threads();
 		Log::global_log->info() << "ParticlePairs2PotForceAdapter: allocate data for " << numThreads << " threads." << std::endl;
 		_threadData.resize(numThreads);
 		#if defined(_OPENMP)
@@ -32,7 +32,7 @@ public:
 		#endif
 		{
 			PP2PFAThreadData * myown = new PP2PFAThreadData();
-			const int myid = omp_get_thread_num();
+			const int myid = mardyn_get_thread_num();
 			_threadData[myid] = myown;
 		} // end pragma omp parallel
 	}
@@ -43,7 +43,7 @@ public:
 		#pragma omp parallel
 		#endif
 		{
-			const int myid = omp_get_thread_num();
+			const int myid = mardyn_get_thread_num();
 			delete _threadData[myid];
 		} // end pragma omp parallel
 	}
@@ -63,7 +63,7 @@ public:
 		#pragma omp parallel
 		#endif
 		{
-			const int myid = omp_get_thread_num();
+			const int myid = mardyn_get_thread_num();
 			_threadData[myid]->initComp2Param(_domain.getComp2Params());
 			_threadData[myid]->clear();
 		}
@@ -83,7 +83,7 @@ public:
 		#pragma omp parallel reduction(+:glob_virial, glob_upot6LJ, glob_upotXpoles, glob_myRF)
 		#endif
 		{
-			const int myid = omp_get_thread_num();
+			const int myid = mardyn_get_thread_num();
 			glob_virial += _threadData[myid]->_virial;
 			glob_upot6LJ += _threadData[myid]->_upot6LJ;
 			glob_upotXpoles += _threadData[myid]->_upotXpoles;
@@ -145,7 +145,7 @@ public:
      * @return                interaction energy
      */
 	double processPair(Molecule& molecule1, Molecule& molecule2, double distanceVector[3], PairType pairType, double dd, bool calculateLJ = true) {
-		const int tid = omp_get_thread_num();
+		const int tid = mardyn_get_thread_num();
 		PP2PFAThreadData &my_threadData = *_threadData[tid];
 
 		ParaStrm& params = (* my_threadData._comp2Param)(molecule1.componentid(), molecule2.componentid());

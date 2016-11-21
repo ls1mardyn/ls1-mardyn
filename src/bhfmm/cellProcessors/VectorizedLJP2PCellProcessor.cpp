@@ -79,7 +79,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	}
 
 	// initialize thread data
-	_numThreads = omp_get_max_threads();
+	_numThreads = mardyn_get_max_threads();
 	global_log->info() << "VectorizedLJP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
@@ -88,7 +88,7 @@ VectorizedLJP2PCellProcessor::VectorizedLJP2PCellProcessor(Domain & domain, doub
 	#endif
 	{
 		VLJP2PCPThreadData * myown = new VLJP2PCPThreadData();
-		const int myid = omp_get_thread_num();
+		const int myid = mardyn_get_thread_num();
 		_threadData[myid] = myown;
 	} // end pragma omp parallel
 
@@ -102,7 +102,7 @@ VectorizedLJP2PCellProcessor :: ~VectorizedLJP2PCellProcessor () {
 	#pragma omp parallel
 	#endif
 	{
-		const int myid = omp_get_thread_num();
+		const int myid = mardyn_get_thread_num();
 		delete _threadData[myid];
 	}
 }
@@ -135,7 +135,7 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 	#pragma omp parallel reduction(+:glob_upot6lj, glob_virial)
 	#endif
 	{
-		const int tid = omp_get_thread_num();
+		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
 		double thread_upot = 0.0, thread_virial = 0.0;
@@ -227,7 +227,7 @@ void VectorizedLJP2PCellProcessor::endTraversal() {
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
-	const int tid = omp_get_thread_num();
+	const int tid = mardyn_get_thread_num();
 	VLJP2PCPThreadData &my_threadData = *_threadData[tid];
 
 	// initialize dist lookups
