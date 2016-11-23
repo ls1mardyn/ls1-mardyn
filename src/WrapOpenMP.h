@@ -20,13 +20,13 @@
 #if defined(_OPENMP)
 	#include <omp.h>
 
-	inline int mardyn_get_thread_num()  noexcept {return omp_get_thread_num(); }
-	inline int mardyn_get_num_threads() noexcept {return omp_get_num_threads();}
-	inline int mardyn_get_max_threads() noexcept {return omp_get_max_threads();}
+	inline int mardyn_get_thread_num()  {return omp_get_thread_num(); }
+	inline int mardyn_get_num_threads() {return omp_get_num_threads();}
+	inline int mardyn_get_max_threads() {return omp_get_max_threads();}
 #else
-	inline int mardyn_get_thread_num()  noexcept {return 0;}
-	inline int mardyn_get_num_threads() noexcept {return 1;}
-	inline int mardyn_get_max_threads() noexcept {return 1;}
+	inline int mardyn_get_thread_num()  {return 0;}
+	inline int mardyn_get_num_threads() {return 1;}
+	inline int mardyn_get_max_threads() {return 1;}
 #endif
 
 #endif /* SRC_WRAPOPENMP_H_ */
