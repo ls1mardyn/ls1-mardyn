@@ -26,21 +26,21 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 	delete _commScheme;
 }
 
-void NeighbourCommunicationScheme1Stage::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
+void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
 	assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
-void NeighbourCommunicationScheme1Stage::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
+void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
 	assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
-void NeighbourCommunicationScheme1Stage::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
+void DirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 
@@ -48,7 +48,7 @@ void NeighbourCommunicationScheme1Stage::exchangeMoleculesMPI(ParticleContainer*
 
 }
 
-void NeighbourCommunicationScheme1Stage::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
+void DirectNeighbourCommunicationScheme::initExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp) {
 	// first use sequential version, if _coversWholeDomain
 	for (unsigned int d = 0; d < 3; d++) {
@@ -82,7 +82,7 @@ void NeighbourCommunicationScheme1Stage::initExchangeMoleculesMPI(ParticleContai
 
 }
 
-void NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
+void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType /*msgType*/, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 
 	const int numNeighbours = _neighbours[0].size();
@@ -170,7 +170,7 @@ std::vector<CommunicationPartner> squeezePartners(const std::vector<Communicatio
 	return squeezedPartners;
 }
 
-void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
+void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoffRadius, Domain * domain,
 		DomainDecompMPIBase* domainDecomp) {
 
 // corners of the process-specific domain
@@ -201,7 +201,7 @@ void NeighbourCommunicationScheme1Stage::initCommunicationPartners(double cutoff
 
 }
 
-void NeighbourCommunicationScheme3Stage::initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
+void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType msgType, bool /*removeRecvDuplicates*/, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	if (_coversWholeDomain[d]) {
@@ -230,7 +230,7 @@ void NeighbourCommunicationScheme3Stage::initExchangeMoleculesMPI1D(ParticleCont
 	}
 }
 
-void NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
+void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(ParticleContainer* moleculeContainer,
 		Domain* /*domain*/, MessageType /*msgType*/, bool removeRecvDuplicates, unsigned short d,
 		DomainDecompMPIBase* domainDecomp) {
 	if (_coversWholeDomain[d]) {
@@ -293,7 +293,7 @@ void NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1D(Particle
 	global_log->set_mpi_output_root(0);
 }
 
-void NeighbourCommunicationScheme3Stage::exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain,
+void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp) {
 
 	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
@@ -302,28 +302,28 @@ void NeighbourCommunicationScheme3Stage::exchangeMoleculesMPI1D(ParticleContaine
 
 }
 
-void NeighbourCommunicationScheme3Stage::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
+void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
 	for (unsigned short d = 0; d < getCommDims(); d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
 	}
 }
 
-void NeighbourCommunicationScheme3Stage::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
+void IndirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
 	assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 
-void NeighbourCommunicationScheme3Stage::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
+void IndirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
 	assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 
-void NeighbourCommunicationScheme3Stage::convert1StageTo3StageNeighbours(
+void IndirectNeighbourCommunicationScheme::convert1StageTo3StageNeighbours(
 		const std::vector<CommunicationPartner>& commPartners,
 		std::vector<std::vector<CommunicationPartner>>& neighbours, HaloRegion& ownRegion, double cutoffRadius) {
 	//TODO: extend for anything else than full shell
@@ -339,7 +339,7 @@ void NeighbourCommunicationScheme3Stage::convert1StageTo3StageNeighbours(
 	}
 }
 
-void NeighbourCommunicationScheme3Stage::initCommunicationPartners(double cutoffRadius, Domain * domain,
+void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoffRadius, Domain * domain,
 		DomainDecompMPIBase* domainDecomp) {
 
 // corners of the process-specific domain

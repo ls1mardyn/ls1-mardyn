@@ -78,9 +78,9 @@ void DomainDecomposition::balanceAndExchange(bool /*forceRebalancing*/, Particle
 	DomainDecompMPIBase::exchangeMoleculesMPI(moleculeContainer, domain, LEAVING_AND_HALO_COPIES);
 }
 
-void DomainDecomposition::readXML(XMLfileUnits& /*xmlconfig*/) {
-	/* no parameters */
+void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	/* TODO: Maybe add decomposition dimensions, default auto. */
+	DomainDecompBase::readXML(xmlconfig);
 }
 
 bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {

@@ -75,12 +75,12 @@ protected:
 
 };
 
-class NeighbourCommunicationScheme1Stage: public NeighbourCommunicationScheme {
+class DirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
-	NeighbourCommunicationScheme1Stage() :
+	DirectNeighbourCommunicationScheme() :
 			NeighbourCommunicationScheme(1) {
 	}
-	virtual ~NeighbourCommunicationScheme1Stage() {
+	virtual ~DirectNeighbourCommunicationScheme() {
 	}
 	virtual void initCommunicationPartners(double cutoffRadius, Domain * domain, DomainDecompMPIBase* domainDecomp)
 			override;
@@ -112,13 +112,13 @@ protected:
 			bool /*removeRecvDuplicates*/, DomainDecompMPIBase* domainDecomp);
 };
 
-class NeighbourCommunicationScheme3Stage: public NeighbourCommunicationScheme {
+class IndirectNeighbourCommunicationScheme: public NeighbourCommunicationScheme {
 public:
 
-	NeighbourCommunicationScheme3Stage() :
+	IndirectNeighbourCommunicationScheme() :
 			NeighbourCommunicationScheme(3) {
 	}
-	virtual ~NeighbourCommunicationScheme3Stage() {
+	virtual ~IndirectNeighbourCommunicationScheme() {
 	}
 	void exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain, MessageType msgType,
 			bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) override;

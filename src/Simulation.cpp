@@ -1347,7 +1347,6 @@ void Simulation::updateParticleContainerAndDecomposition() {
 void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 		Timer& decompositionTimer, Timer& computationTimer, Timer& forceCalculationTimer) {
 
-	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
 
 	//TODO: exchange the constructor for a real non-blocking version

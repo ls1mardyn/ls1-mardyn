@@ -16,8 +16,8 @@ using Log::global_log;
 DomainDecompMPIBase::DomainDecompMPIBase() :
 		_comm(MPI_COMM_WORLD) {
 
-	//_neighbourCommunicationScheme = new NeighbourCommunicationScheme3Stage();
-	_neighbourCommunicationScheme = new NeighbourCommunicationScheme1Stage();
+	_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
+	//_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
 
 	MPI_CHECK(MPI_Comm_rank(MPI_COMM_WORLD, &_rank));
 
@@ -33,6 +33,19 @@ DomainDecompMPIBase::~DomainDecompMPIBase() {
 	// MPI_COMM_WORLD doesn't need to be freed, so
 	// if a derived class does something with the communicator
 	// then the derived class should also free it
+}
+
+void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
+	std::string communicationScheme = "direct";
+	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
+	if (communicationScheme=="direct"){
+		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
+	} else if(communicationScheme=="indirect"){
+		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
+	} else{
+		global_log->warning() << "invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
+				<< std::endl;
+	}
 }
 
 unsigned DomainDecompMPIBase::Ndistribution(unsigned localN, float* minrnd, float* maxrnd) {

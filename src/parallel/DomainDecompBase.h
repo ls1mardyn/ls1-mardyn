@@ -46,8 +46,8 @@ typedef ParticleContainer TMoleculeContainer;
 //! available, the parallel version is used, otherwise the sequential version
 class DomainDecompBase {
 	friend class NeighbourCommunicationScheme;
-	friend class NeighbourCommunicationScheme3Stage;
-	friend class NeighbourCommunicationScheme1Stage;
+	friend class IndirectNeighbourCommunicationScheme;
+	friend class DirectNeighbourCommunicationScheme;
 public:
 	//! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
 	DomainDecompBase();

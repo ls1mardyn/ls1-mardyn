@@ -168,6 +168,8 @@ public:
 		return _comm;
 	}
 #endif
+
+	virtual void readXML(XMLfileUnits& xmlconfig);
 protected:
 
 	/**
