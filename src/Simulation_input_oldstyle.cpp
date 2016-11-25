@@ -141,19 +141,25 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			global_log->warning()
 			<< "Input file demands parallelization, but the current compilation doesn't\n\tsupport parallel execution.\n"
 			<< endl;
-			inputfilestream >> token;
+			string line;
+			getline(inputfilestream, line);
+			stringstream lineStream(line);
+			lineStream >> token;
 #else
-			inputfilestream >> token;
+			string line;
+			getline(inputfilestream, line);
+			stringstream lineStream(line);
+			lineStream >> token;
 			if (token == "DomainDecomposition") {
 				// default DomainDecomposition is already set in initialize();
 				//_domainDecomposition = (DomainDecompBase*) new DomainDecomposition();
+				if (line.find("direct") != string::npos) {
+					dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition)->setCommunicationScheme("direct");
+				}
 			} else if (token == "KDDecomposition") {
 				delete _domainDecomposition;
 				int updateFrequency = 100;
 				int fullSearchThreshold = 3;
-				string line;
-				getline(inputfilestream, line);
-				stringstream lineStream(line);
 				lineStream >> updateFrequency >> fullSearchThreshold;
 				bool hetero = false, cutsmaller = false, forceRatio = false;
 				if (line.find("hetero") != string::npos) {
@@ -172,6 +178,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_domainDecomposition->getBoundingBoxMinMax(_domain, bBoxMin, bBoxMax);
 				if (_moleculeContainer != NULL) {
 					_moleculeContainer->rebuild(bBoxMin, bBoxMax);
+				}
+
+				if (line.find("direct") != string::npos) {
+					dynamic_cast<DomainDecompMPIBase*>(_domainDecomposition)->setCommunicationScheme("direct"); // never do a search for the best Partitioning, always force the ratio (should be similar to fullSeachThreshold=0)
 				}
 			}
 #endif

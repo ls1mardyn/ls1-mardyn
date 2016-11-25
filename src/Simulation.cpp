@@ -239,11 +239,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				//_domainDecomposition = new DomainDecompDummy();
 			}
 			else if(parallelisationtype == "DomainDecomposition") {
-				DomainDecomposition * temp = 0;
-				temp = dynamic_cast<DomainDecomposition *>(_domainDecomposition);
-				if (temp != 0) {
-					temp->initCommunicationPartners(getcutoffRadius(), _domain);
-				}
 				if (_domainDecomposition != nullptr) {
 					delete _domainDecomposition;
 				}

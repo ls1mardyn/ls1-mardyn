@@ -39,11 +39,6 @@ DomainDecomposition::DomainDecomposition() :
 	MPI_CHECK(MPI_Cart_coords(_comm, _rank, DIMgeom, _coords));
 	global_log->info() << "MPI coordinate of current process: " << _coords[0] << ", " << _coords[1] << ", "
 			<< _coords[2] << endl;
-
-	for (int d = 0; d < DIMgeom; ++d) {
-		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
-	}
-
 }
 
 DomainDecomposition::~DomainDecomposition() {
@@ -51,11 +46,10 @@ DomainDecomposition::~DomainDecomposition() {
 }
 
 void DomainDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+	for (int d = 0; d < DIMgeom; ++d) {
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, _gridSize[d] == 1);
+	}
 	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
-}
-
-int DomainDecomposition::getNonBlockingStageCount() {
-	return 3;  // three stages: first x, then y, then z
 }
 
 void DomainDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/, ParticleContainer* moleculeContainer,
@@ -80,7 +74,7 @@ void DomainDecomposition::balanceAndExchange(bool /*forceRebalancing*/, Particle
 
 void DomainDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	/* TODO: Maybe add decomposition dimensions, default auto. */
-	DomainDecompBase::readXML(xmlconfig);
+	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
 bool DomainDecomposition::procOwnsPos(double x, double y, double z, Domain* domain) {

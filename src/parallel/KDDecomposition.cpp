@@ -107,11 +107,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << endl;
 	xmlconfig.getNodeValue("forceRatio", _forceRatio);
 	global_log->info() << "KDDecomposition forces load/performance ratio?: " << (_forceRatio?"yes":"no") << endl;
-	DomainDecompBase::readXML(xmlconfig);
-}
-
-int KDDecomposition::getNonBlockingStageCount(){
-	return 3;
+	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
 void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,

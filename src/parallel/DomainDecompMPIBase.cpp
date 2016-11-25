@@ -36,15 +36,29 @@ DomainDecompMPIBase::~DomainDecompMPIBase() {
 }
 
 void DomainDecompMPIBase::readXML(XMLfileUnits& xmlconfig) {
-	std::string communicationScheme = "direct";
+	std::string communicationScheme = "indirect";
 	xmlconfig.getNodeValue("CommunicationScheme", communicationScheme);
-	if (communicationScheme=="direct"){
+	setCommunicationScheme(communicationScheme);
+}
+
+int DomainDecompMPIBase::getNonBlockingStageCount(){
+	return _neighbourCommunicationScheme->getCommDims();
+}
+
+void DomainDecompMPIBase::setCommunicationScheme(std::string scheme){
+	if(_neighbourCommunicationScheme!=nullptr){
+		delete _neighbourCommunicationScheme;
+	}
+	if (scheme=="direct"){
+		global_log->info() << "DomainDecompMPIBase: Using DirectCommunicationScheme" << std::endl;
 		_neighbourCommunicationScheme = new DirectNeighbourCommunicationScheme();
-	} else if(communicationScheme=="indirect"){
+	} else if(scheme=="indirect"){
+		global_log->info() << "DomainDecompMPIBase: Using IndirectCommunicationScheme" << std::endl;
 		_neighbourCommunicationScheme = new IndirectNeighbourCommunicationScheme();
 	} else{
-		global_log->warning() << "invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
+		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
+		global_simulation->exit(1);
 	}
 }
 

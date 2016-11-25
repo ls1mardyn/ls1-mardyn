@@ -160,6 +160,7 @@ public:
 
 	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) = 0;
 
+
 #if defined(ENABLE_MPI)
 	MPI_Datatype getMPIParticleType() {
 		return _mpiParticleType;
@@ -170,6 +171,14 @@ public:
 #endif
 
 	virtual void readXML(XMLfileUnits& xmlconfig);
+
+	//! Sets the communicationScheme.
+	//! If this function is called dynamically, make sure to reinitialise the CommunicationPartners before exchanging molecules!
+	//! @param scheme
+	virtual void setCommunicationScheme(std::string scheme);
+
+	// documentation in base class
+	virtual int getNonBlockingStageCount() override;
 protected:
 
 	/**

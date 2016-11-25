@@ -75,9 +75,6 @@ class KDDecomposition: public DomainDecompMPIBase {
 	//###############################################
 
 	// documentation in base class
-	virtual int getNonBlockingStageCount() override;
-
-	// documentation in base class
 	virtual void prepareNonBlockingStage(bool forceRebalancing,
 				ParticleContainer* moleculeContainer, Domain* domain,
 				unsigned int stageNumber) override;
