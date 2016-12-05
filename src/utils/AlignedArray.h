@@ -13,6 +13,7 @@
 #include <new>
 #include <cstring>
 #include <cassert>
+#include <cstdint>
 
 #define CACHE_LINE_SIZE 64
 
@@ -185,6 +186,11 @@ inline size_t AlignedArray<float>	::_round_up(size_t n) {
 
 template<>
 inline size_t AlignedArray<int>		::_round_up(size_t n) {
+	return (n + 15) & ~0x0F;
+}
+
+template<>
+inline size_t AlignedArray<uint32_t>::_round_up(size_t n) {
 	return (n + 15) & ~0x0F;
 }
 

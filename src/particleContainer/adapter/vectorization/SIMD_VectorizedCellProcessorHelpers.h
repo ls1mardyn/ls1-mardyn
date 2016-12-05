@@ -49,55 +49,40 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 	eps_24 = RealCalcVec::unpack_lo(e0s0, e1s1);
 	sig2 = RealCalcVec::unpack_hi(e0s0, e1s1);
 
-#elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx
-#if 0
-	float eps24_f[8] __attribute__ ((aligned (32))) = {
-			eps_sigI[2 * id_j_shifted[0]],
-			eps_sigI[2 * id_j_shifted[1]],
-			eps_sigI[2 * id_j_shifted[2]],
-			eps_sigI[2 * id_j_shifted[3]],
-			eps_sigI[2 * id_j_shifted[4]],
-			eps_sigI[2 * id_j_shifted[5]],
-			eps_sigI[2 * id_j_shifted[6]],
-			eps_sigI[2 * id_j_shifted[7]],
-	};
-	eps_24 = _mm256_load_ps(eps24_f);
-	float sig2_f[8] __attribute__ ((aligned (32))) = {
-			eps_sigI[2 * id_j_shifted[0]+1],
-			eps_sigI[2 * id_j_shifted[1]+1],
-			eps_sigI[2 * id_j_shifted[2]+1],
-			eps_sigI[2 * id_j_shifted[3]+1],
-			eps_sigI[2 * id_j_shifted[4]+1],
-			eps_sigI[2 * id_j_shifted[5]+1],
-			eps_sigI[2 * id_j_shifted[6]+1],
-			eps_sigI[2 * id_j_shifted[7]+1],
-	};
-	sig2 = _mm256_load_ps(sig2_f);
+#elif VCP_VEC_TYPE==VCP_VEC_AVX
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		TODO!
+	#else /* VCP_DPDP */
+		static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
+		const RealCalcVec e0s0 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
+		const RealCalcVec e1s1 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[1], memoryMask_first_second);
+		const RealCalcVec e2s2 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[2], memoryMask_first_second);
+		const RealCalcVec e3s3 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[3], memoryMask_first_second);
 
+		const RealCalcVec e0e1 = RealCalcVec::unpack_lo(e0s0, e1s1);
+		const RealCalcVec s0s1 = RealCalcVec::unpack_hi(e0s0, e1s1);
+		const RealCalcVec e2e3 = RealCalcVec::unpack_lo(e2s2, e3s3);
+		const RealCalcVec s2s3 = RealCalcVec::unpack_hi(e2s2, e3s3);
 
+		eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
+		sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
+	#endif
 
-#elif 0
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2//avx
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
+		indices = _mm256_add_epi32(indices, indices); // only every second...
+		eps_24 = _mm256_i32gather_ps(eps_sigI, indices, 4);
+		sig2 = _mm256_i32gather_ps(eps_sigI+1, indices, 4);
 
-	//TODO: add gather for AVX2 (here only)
-	static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
-	const RealCalcVec e0s0 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
-	const RealCalcVec e1s1 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[1], memoryMask_first_second);
-	const RealCalcVec e2s2 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[2], memoryMask_first_second);
-	const RealCalcVec e3s3 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[3], memoryMask_first_second);
+	#else /* VCP_DPDP */
+		__m128i indices = _mm_maskload_epi32((const int*)(id_j_shifted), _mm_set_epi32(~0, ~0, ~0, ~0));
+		__m256i indices64 = _mm256_cvtepi32_epi64(indices);
+		indices64 = _mm256_add_epi64(indices64, indices64); // only every second...
+		eps_24 = _mm256_i64gather_pd(eps_sigI, indices64, 8);
+		sig2 = _mm256_i64gather_pd(eps_sigI+1, indices64, 8);
 
-	const RealCalcVec e0e1 = RealCalcVec::unpack_lo(e0s0, e1s1);
-	const RealCalcVec s0s1 = RealCalcVec::unpack_hi(e0s0, e1s1);
-	const RealCalcVec e2e3 = RealCalcVec::unpack_lo(e2s2, e3s3);
-	const RealCalcVec s2s3 = RealCalcVec::unpack_hi(e2s2, e3s3);
-
-	eps_24 = _mm256_permute2f128_pd(e0e1, e2e3, 1<<5);
-	sig2 = _mm256_permute2f128_pd(s0s1, s2s3, 1<<5);
-#else
-	__m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
-	indices = _mm256_add_epi32(indices, indices); // only every second...
-	eps_24 = _mm256_i32gather_ps(eps_sigI, indices, 4);
-	sig2 = _mm256_i32gather_ps(eps_sigI+1, indices, 4);
-#endif
+	#endif /* VCP_PREC */
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
 	__m512i indices = _mm512_load_epi64(id_j_shifted);
@@ -159,26 +144,19 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 	shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
-#if 0
-	float shift6_f[8] __attribute__ ((aligned (32))) = {
-				shift6I[id_j_shifted[0]],
-				shift6I[id_j_shifted[1]],
-				shift6I[id_j_shifted[2]],
-				shift6I[id_j_shifted[3]],
-				shift6I[id_j_shifted[4]],
-				shift6I[id_j_shifted[5]],
-				shift6I[id_j_shifted[6]],
-				shift6I[id_j_shifted[7]],
-		};
 
-#elif 0
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		const __m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
+		shift6 = _mm256_i32gather_ps(shift6I, indices, 4);
 
-	const __m256i indices = _mm256_maskload_epi64((const long long*)(id_j_shifted), MaskVec::ones());
-	shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
-#else
-	const __m256i indices = _mm256_maskload_epi32((const int*)(id_j_shifted), MaskVec::ones());
-	shift6 = _mm256_i32gather_ps(shift6I, indices, 4);
-#endif
+	#else /* VCP_DPDP */
+		__m128i indices = _mm_maskload_epi32((const int *)(id_j_shifted), _mm_set_epi32(~0, ~0, ~0, ~0));
+		__m256i indices64 = _mm256_cvtepi32_epi64(indices);
+
+		shift6 = _mm256_i64gather_pd(shift6I, indices64, 8);
+	#endif
+
+
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
 	const __m512i indices = _mm512_load_epi64(id_j_shifted);//load id_j, stored continuously
