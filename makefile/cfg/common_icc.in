@@ -43,4 +43,4 @@ else
 endif
 
 particleContainer/adapter/VectorizedCellProcessor.o: particleContainer/adapter/VectorizedCellProcessor.cpp
-	$(DEPCOMP) $(CXX) $(CXXFLAGS) -inline-forceinline -c $< -o $@
+	$(DEPCOMP) $(CXX) $(CXXFLAGS) -ipo -inline-forceinline -c $< -o $@
