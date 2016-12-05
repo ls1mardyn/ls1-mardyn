@@ -13,7 +13,6 @@
 #include <new>
 #include <cstring>
 #include <cassert>
-#include <cstdint>
 
 #define CACHE_LINE_SIZE 64
 
@@ -128,14 +127,21 @@ public:
 	}
 
 	static size_t _round_up(size_t n) {
-		// NOTE: this function is never called
-		// there are specializations provided after the class, as
-		// this function may be called in performance intensive places
-		assert(false);
-
-		size_t multiple = CACHE_LINE_SIZE / sizeof(T);
-		assert(multiple * sizeof(T) == CACHE_LINE_SIZE);
-		return ((n + multiple - 1) / multiple) * multiple;
+		size_t ret;
+		switch(sizeof(T)) {
+		case 1:
+			ret = (n + 63) & ~0x3F;
+			break;
+		case 4:
+			ret = (n + 15) & ~0x0F;
+			break;
+		case 8:
+			ret = (n + 7) & ~0x07;
+			break;
+		default:
+			assert(false);
+		}
+		return ret;
 	}
 
 protected:
@@ -168,40 +174,5 @@ protected:
 	size_t _n;
 	T * _p;
 };
-
-template<>
-inline size_t AlignedArray<double>	::_round_up(size_t n) {
-	return (n + 7) & ~0x07;
-}
-
-template<>
-inline size_t AlignedArray<size_t>	::_round_up(size_t n) {
-	return (n + 7) & ~0x07;
-}
-
-template<>
-inline size_t AlignedArray<float>	::_round_up(size_t n) {
-	return (n + 15) & ~0x0F;
-}
-
-template<>
-inline size_t AlignedArray<int>		::_round_up(size_t n) {
-	return (n + 15) & ~0x0F;
-}
-
-template<>
-inline size_t AlignedArray<uint32_t>::_round_up(size_t n) {
-	return (n + 15) & ~0x0F;
-}
-
-template<>
-inline size_t AlignedArray<bool>	::_round_up(size_t n) {
-	return (n + 63) & ~0x3F;
-}
-
-template<>
-inline size_t AlignedArray<unsigned char>::_round_up(size_t n) {
-	return (n + 63) & ~0x3F;
-}
 
 #endif
