@@ -232,8 +232,54 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 void LinkedCells::update() {
-	const int numCells = _cells.size();
+	const vector<ParticleCell>::size_type numCells = _cells.size();
 
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
+			_cells[cellIndex].preUpdateLeavingMolecules();
+		}
+
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < numCells; cellIndex++) {
+			ParticleCell& cell = _cells[cellIndex];
+
+			for (unsigned long j = 0; j < _backwardNeighbourOffsets.size(); j++) {
+				const unsigned long neighbourIndex = cellIndex - _backwardNeighbourOffsets[j];
+				if (neighbourIndex >= _cells.size()) {
+					// handles cell_index < 0 (indices are unsigned!)
+					assert(cell.isHaloCell());
+					continue;
+				}
+				cell.updateLeavingMolecules(_cells[neighbourIndex]);
+			}
+
+			for (unsigned long j = 0; j < _forwardNeighbourOffsets.size(); j++) {
+				const unsigned long neighbourIndex = cellIndex + _forwardNeighbourOffsets[j];
+				if (neighbourIndex >= numCells) {
+					assert(cell.isHaloCell());
+					continue;
+				}
+				cell.updateLeavingMolecules(_cells[neighbourIndex]);
+			}
+		}
+
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (vector<ParticleCell>::size_type cellIndex = 0; cellIndex < _cells.size(); cellIndex++) {
+			_cells[cellIndex].postUpdateLeavingMolecules();
+		}
+	} // end pragma omp parallel
+
+	/*
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
@@ -245,7 +291,7 @@ void LinkedCells::update() {
 		}
 		molsToSort.clear();
 	}
-
+	*/
 	_cellsValid = true;
 }
 
