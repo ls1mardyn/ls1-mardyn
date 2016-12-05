@@ -348,7 +348,7 @@ public:
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 		return *a;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-		return _mm_loaddup_ps(a);
+		return _mm_load_ps1(a);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return _mm256_broadcast_ss(a);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512

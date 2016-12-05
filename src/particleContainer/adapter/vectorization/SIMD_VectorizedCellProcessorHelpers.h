@@ -44,10 +44,25 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 	sig2 = eps_sigI[2 * id_j_shifted[0] + 1];
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
-	const RealCalcVec e0s0 = RealCalcVec::aligned_load(eps_sigI + 2 * id_j_shifted[0]);
-	const RealCalcVec e1s1 = RealCalcVec::aligned_load(eps_sigI + 2 * id_j_shifted[1]);
-	eps_24 = RealCalcVec::unpack_lo(e0s0, e1s1);
-	sig2 = RealCalcVec::unpack_hi(e0s0, e1s1);
+
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		const RealCalcVec e0s0 = _mm_loadl_pi(RealCalcVec::zero(), (const __m64 *)(eps_sigI + 2 * id_j_shifted[0]));
+		const RealCalcVec e1s1 = _mm_loadl_pi(RealCalcVec::zero(), (const __m64 *)(eps_sigI + 2 * id_j_shifted[1]));
+		const RealCalcVec e2s2 = _mm_loadl_pi(RealCalcVec::zero(), (const __m64 *)(eps_sigI + 2 * id_j_shifted[2]));
+		const RealCalcVec e3s3 = _mm_loadl_pi(RealCalcVec::zero(), (const __m64 *)(eps_sigI + 2 * id_j_shifted[3]));
+
+		const RealCalcVec e0e1s0s1 = RealCalcVec::unpack_lo(e0s0, e1s1);
+		const RealCalcVec e2e3s2s3 = RealCalcVec::unpack_lo(e2s2, e3s3);
+
+		eps_24 = _mm_castpd_ps(_mm_unpacklo_pd(_mm_castps_pd(e0e1s0s1), _mm_castps_pd(e2e3s2s3)));
+		sig2 = _mm_castpd_ps(_mm_unpackhi_pd(_mm_castps_pd(e0e1s0s1), _mm_castps_pd(e2e3s2s3)));
+
+	#else /* VCP_DPDP */
+		const RealCalcVec e0s0 = RealCalcVec::aligned_load(eps_sigI + 2 * id_j_shifted[0]);
+		const RealCalcVec e1s1 = RealCalcVec::aligned_load(eps_sigI + 2 * id_j_shifted[1]);
+		eps_24 = RealCalcVec::unpack_lo(e0s0, e1s1);
+		sig2 = RealCalcVec::unpack_hi(e0s0, e1s1);
+	#endif
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
@@ -150,9 +165,23 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 	shift6 = shift6I[id_j_shifted[0]];
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
-	const RealCalcVec sh1 = _mm_load_sd(shift6I + id_j_shifted[0]);
-	const RealCalcVec sh2 = _mm_load_sd(shift6I + id_j_shifted[1]);
-	shift6 = RealCalcVec::unpack_lo(sh1, sh2);
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		const RealCalcVec sh0 = _mm_load_ss(shift6I + id_j_shifted[0]);
+		const RealCalcVec sh1 = _mm_load_ss(shift6I + id_j_shifted[1]);
+		const RealCalcVec sh2 = _mm_load_ss(shift6I + id_j_shifted[2]);
+		const RealCalcVec sh3 = _mm_load_ss(shift6I + id_j_shifted[3]);
+
+		const RealCalcVec sh0sh1 = RealCalcVec::unpack_lo(sh0, sh1);
+		const RealCalcVec sh2sh3 = RealCalcVec::unpack_lo(sh2, sh3);
+
+		shift6 = _mm_castpd_ps(_mm_unpacklo_pd(_mm_castps_pd(sh0sh1), _mm_castps_pd(sh2sh3)));
+
+	#else /* VCP_DPDP */
+		const RealCalcVec sh0 = _mm_load_sd(shift6I + id_j_shifted[0]);
+		const RealCalcVec sh1 = _mm_load_sd(shift6I + id_j_shifted[1]);
+		shift6 = RealCalcVec::unpack_lo(sh0, sh1);
+	#endif
+
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
 
@@ -237,7 +266,7 @@ double horizontal_add_256 (__m256d a) {
  */
 static vcp_inline
 void hSum_Add_Store( vcp_real_calc * const mem_addr, const RealCalcVec & a ) {
-#if VCP_VEC_TYPE==VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE or VCP_VEC_TYPE == VCP_VEC_AVX or VCP_VEC_TYPE == VCP_VEC_AVX2
+#if VCP_VEC_TYPE==VCP_NOVEC or VCP_VEC_TYPE == VCP_VEC_SSE3 or VCP_VEC_TYPE == VCP_VEC_AVX or VCP_VEC_TYPE == VCP_VEC_AVX2
 	RealCalcVec::horizontal_add_and_store(a, mem_addr);
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNC_GATHER

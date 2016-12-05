@@ -166,7 +166,7 @@ public:
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
 			return _m;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
-			return _mm_movemask_epi8(_m); TODO
+			return _mm_movemask_epi8(_m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 			return _mm256_movemask_ps(_mm256_castsi256_ps(_m));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
