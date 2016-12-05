@@ -420,7 +420,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 
 						sum_Vx1 = sum_Vx1 + Vx;
 						sum_Vy1 = sum_Vy1 + Vy;
-						sum_Vz1 = sum_Vz1 +Vz;
+						sum_Vz1 = sum_Vz1 + Vz;
 					}
 				}
 #endif
