@@ -105,7 +105,11 @@ public:
 #if VCP_VEC_WIDTH != VCP_VEC_W_512
 		return cast_MaskVec_to_RealCalcVec(MaskVec::ones());
 #else
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		return _mm512_castsi512_ps( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) );
+	#else /* VCP_DPDP*/
 		return _mm512_castsi512_pd( _mm512_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0) );
+	#endif
 #endif
 	}
 

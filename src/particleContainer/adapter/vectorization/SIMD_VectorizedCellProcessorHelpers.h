@@ -123,12 +123,15 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 	#endif /* VCP_PREC */
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
+	TODO: careful here! Review epi32 <-> epi64 and differences KNC-KNL ;
+
 	__m512i indices = _mm512_load_epi64(id_j_shifted);
 	indices = _mm512_add_epi64(indices, indices);//only every second...
 	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
 	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	TODO: careful here! Review epi32 <-> epi64 and differences KNC-KNL ;
 
 	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
