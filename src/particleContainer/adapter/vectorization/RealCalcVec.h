@@ -80,7 +80,7 @@ public:
 	static RealCalcVec zero() {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return 0.0ff;
+		return 0.0f;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_setzero_ps();
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
