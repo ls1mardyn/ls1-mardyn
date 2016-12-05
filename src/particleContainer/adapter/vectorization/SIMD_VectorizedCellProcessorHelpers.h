@@ -51,7 +51,30 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-		TODO!
+		static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 1<<31);
+		const RealCalcVec e0s0 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
+		const RealCalcVec e1s1 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[1], memoryMask_first_second);
+		const RealCalcVec e2s2 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[2], memoryMask_first_second);
+		const RealCalcVec e3s3 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[3], memoryMask_first_second);
+		const RealCalcVec e4s4 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[4], memoryMask_first_second);
+		const RealCalcVec e5s5 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[5], memoryMask_first_second);
+		const RealCalcVec e6s6 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[6], memoryMask_first_second);
+		const RealCalcVec e7s7 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[7], memoryMask_first_second);
+
+		const RealCalcVec e0e1s0s1 = RealCalcVec::unpack_lo(e0s0, e1s1);
+		const RealCalcVec e2e3s2s3 = RealCalcVec::unpack_lo(e2s2, e3s3);
+		const RealCalcVec e4e5s4s5 = RealCalcVec::unpack_lo(e4s4, e5s5);
+		const RealCalcVec e6e7s6s7 = RealCalcVec::unpack_lo(e6s6, e7s7);
+
+		const RealCalcVec e0e1e2e3 = _mm256_castpd_ps(_mm256_unpacklo_pd(_mm256_castps_pd(e0e1s0s1), _mm256_castps_pd(e2e3s2s3)));
+		const RealCalcVec s0s1s2s3 = _mm256_castpd_ps(_mm256_unpackhi_pd(_mm256_castps_pd(e0e1s0s1), _mm256_castps_pd(e2e3s2s3)));
+
+		const RealCalcVec e4e5e6e7 = _mm256_castpd_ps(_mm256_unpacklo_pd(_mm256_castps_pd(e4e5s4s5), _mm256_castps_pd(e6e7s6s7)));
+		const RealCalcVec s4s5s6s7 = _mm256_castpd_ps(_mm256_unpackhi_pd(_mm256_castps_pd(e4e5s4s5), _mm256_castps_pd(e6e7s6s7)));
+
+		eps_24 = _mm256_permute2f128_ps(e0e1e2e3, e4e5e6e7, 1<<5);
+		sig2 = _mm256_permute2f128_ps(s0s1s2s3, s4s5s6s7, 1<<5);
+
 	#else /* VCP_DPDP */
 		static const __m256i memoryMask_first_second = _mm256_set_epi32(0, 0, 0, 0, 1<<31, 0, 1<<31, 0);
 		const RealCalcVec e0s0 = RealCalcVec::aligned_load_mask(eps_sigI + 2 * id_j_shifted[0], memoryMask_first_second);
@@ -132,16 +155,38 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 	shift6 = RealCalcVec::unpack_lo(sh1, sh2);
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX //avx
-	static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
-	const RealCalcVec sh0 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[0], memoryMask_first);
-	const RealCalcVec sh1 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[1], memoryMask_first);
-	const RealCalcVec sh2 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[2], memoryMask_first);
-	const RealCalcVec sh3 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[3], memoryMask_first);
 
-	const RealCalcVec sh0sh1 = RealCalcVec::unpack_lo(sh0, sh1);
-	const RealCalcVec sh2sh3 = RealCalcVec::unpack_lo(sh2, sh3);
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 0, 1<<31);
+		const RealCalcVec sh0 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[0], memoryMask_first);
+		const RealCalcVec sh1 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[1], memoryMask_first);
+		const RealCalcVec sh2 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[2], memoryMask_first);
+		const RealCalcVec sh3 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[3], memoryMask_first);
+		const RealCalcVec sh4 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[4], memoryMask_first);
+		const RealCalcVec sh5 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[5], memoryMask_first);
+		const RealCalcVec sh6 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[6], memoryMask_first);
+		const RealCalcVec sh7 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[7], memoryMask_first);
 
-	shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
+		const RealCalcVec sh0sh1 = RealCalcVec::unpack_lo(sh0, sh1);
+		const RealCalcVec sh2sh3 = RealCalcVec::unpack_lo(sh2, sh3);
+		const RealCalcVec sh4sh5 = RealCalcVec::unpack_lo(sh4, sh5);
+		const RealCalcVec sh6sh7 = RealCalcVec::unpack_lo(sh6, sh7);
+		const RealCalcVec sh0sh1sh2sh3 = _mm256_castpd_ps(_mm256_unpacklo_pd(_mm256_castps_pd(sh0sh1), _mm256_castps_pd(sh2sh3)));
+		const RealCalcVec sh4sh5sh6sh7 = _mm256_castpd_ps(_mm256_unpacklo_pd(_mm256_castps_pd(sh4sh5), _mm256_castps_pd(sh6sh7)));
+		shift6 = _mm256_permute2f128_ps(sh0sh1sh2sh3, sh4sh5sh6sh7, 1<<5);
+
+	#else /* VCP_PREC == VCP_DPDP */
+		static const __m256i memoryMask_first = _mm256_set_epi32(0, 0, 0, 0, 0, 0, 1<<31, 0);
+		const RealCalcVec sh0 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[0], memoryMask_first);
+		const RealCalcVec sh1 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[1], memoryMask_first);
+		const RealCalcVec sh2 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[2], memoryMask_first);
+		const RealCalcVec sh3 = RealCalcVec::aligned_load_mask(shift6I + id_j_shifted[3], memoryMask_first);
+
+		const RealCalcVec sh0sh1 = RealCalcVec::unpack_lo(sh0, sh1);
+		const RealCalcVec sh2sh3 = RealCalcVec::unpack_lo(sh2, sh3);
+
+		shift6 = _mm256_permute2f128_pd(sh0sh1, sh2sh3, 1<<5);
+	#endif
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2 //avx2 knows gather
 
