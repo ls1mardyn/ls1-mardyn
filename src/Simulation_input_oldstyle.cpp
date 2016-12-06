@@ -288,6 +288,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						outputPathAndPrefix));
 				global_log->debug() << "MmspdBinWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
+			} else if (token == "MmpldWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new MmpldWriter(writeFrequency,
+						outputPathAndPrefix));
+				global_log->debug() << "MmpldWriter " << writeFrequency << " '"
+						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {
 #ifdef VTK
 
