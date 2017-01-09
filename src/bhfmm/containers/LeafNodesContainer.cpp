@@ -55,7 +55,7 @@ LeafNodesContainer::LeafNodesContainer(double bBoxMin[3],
 	calculateCellPairOffsets();
 
 	// get number of active threads
-	int num_active_threads = omp_get_max_threads();
+	int num_active_threads = mardyn_get_max_threads();
 
 	int strides[3];
 	if(num_active_threads > 1) {

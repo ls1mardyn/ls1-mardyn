@@ -261,8 +261,8 @@ public:
 	virtual void updateMoleculeCaches();
 
 	ParticleIterator iteratorBegin () {
-		ParticleIterator :: CellIndex_T offset = omp_get_thread_num();
-		ParticleIterator :: CellIndex_T stride = omp_get_num_threads();
+		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
+		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
 		return ParticleIterator(&_cells, offset, stride);
 	}

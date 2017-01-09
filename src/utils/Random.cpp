@@ -60,3 +60,4 @@ double Random::gaussDeviate(double stdDeviation){
     return gset;
   }
 }
+

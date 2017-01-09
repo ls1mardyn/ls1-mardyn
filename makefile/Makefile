@@ -29,7 +29,7 @@ TARGET ?= DEBUG
 DEPS ?= 0
 
 # build unit tests?
-UNIT_TESTS ?= 0
+UNIT_TESTS ?= 1
 
 # build with VTK support
 VTK ?= 0
@@ -53,7 +53,7 @@ ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
   $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
 endif
 
-PRECISION ?= SINGLE
+PRECISION ?= DOUBLE
 # SINGLE - SPSP - computation carried out in single precision, accumulation carried out in single precision
 # MIXED  - SPDP - computation carried out in single precision, accumulation carried out in double precision
 # DOUBLE - DPDP - computation carried out in double precision, accumulation carried out in double precision
@@ -116,7 +116,7 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK -std=c++11
+CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 ifeq ($(SUPPORT_GENERATOR), 1)

@@ -37,7 +37,7 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 #endif
 
 	// initialize thread data
-	_numThreads = omp_get_max_threads();
+	_numThreads = mardyn_get_max_threads();
 	global_log->info() << "VectorizedChargeP2PCellProcessor: allocate data for " << _numThreads << " threads." << std::endl;
 	_threadData.resize(_numThreads);
 
@@ -46,7 +46,7 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	#endif
 	{
 		VCP2PCPThreadData * myown = new VCP2PCPThreadData();
-		const int myid = omp_get_thread_num();
+		const int myid = mardyn_get_thread_num();
 		_threadData[myid] = myown;
 	} // end pragma omp parallel
 
@@ -60,7 +60,7 @@ VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
 	#pragma omp parallel
 	#endif
 	{
-		const int myid = omp_get_thread_num();
+		const int myid = mardyn_get_thread_num();
 		delete _threadData[myid];
 	}
 }
@@ -94,7 +94,7 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 	#pragma omp parallel reduction(+:glob_upotXpoles, glob_virial)
 	#endif
 	{
-		const int tid = omp_get_thread_num();
+		const int tid = mardyn_get_thread_num();
 
 		// reduce vectors and clear local variable
 		vcp_real_calc thread_upotXpoles = 0.0, thread_virial = 0.0;
@@ -291,7 +291,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {
-	const int tid = omp_get_thread_num();
+	const int tid = mardyn_get_thread_num();
 	VCP2PCPThreadData &my_threadData = *_threadData[tid];
 
 	// initialize dist lookups
