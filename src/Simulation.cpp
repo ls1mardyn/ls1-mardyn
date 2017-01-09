@@ -818,7 +818,7 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 
-	// all timers except the ioTimer messure inside the main loop
+	// all timers except the ioTimer measure inside the main loop
 	Timer loopTimer; /* timer for the entire simulation loop (synced) */
 	Timer decompositionTimer; /* timer for decomposition */
 	Timer computationTimer; /* timer for computation */
@@ -852,6 +852,32 @@ void Simulation::simulate() {
 #endif
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
+		// Too many particle exchanges in the first 10 simulation steps.
+		// Reset the timers after 10 simulation steps and restart the timers
+		// 		for more accurate measurements for benchmarking.
+		if (_simstep == 10) {
+			loopTimer.stop();
+
+			global_log->info() << "Timestep 10:" << endl;
+			global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
+			global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
+			global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
+			global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
+			global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+			global_log->info() << endl;
+			global_log->info() << "RESETTING TIMERS" << endl;
+			global_log->info() << endl;
+
+			loopTimer.reset();
+			decompositionTimer.reset();
+			computationTimer.reset();
+			perStepIoTimer.reset();
+			ioTimer.reset();
+			forceCalculationTimer.reset();
+
+			loopTimer.start();
+		}
+
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
@@ -1088,9 +1114,8 @@ void Simulation::simulate() {
 
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
-		_domain->calculateGlobalValues(_domainDecomposition,
-				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
-								_simstep));//*/  //TODO: uncomment !!!!!
+		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer,
+				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 		
 		// scale velocity and angular momentum
 		if ( !_domain->NVE() && _temperatureControl == NULL){
@@ -1253,7 +1278,7 @@ void Simulation::simulate() {
 	global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
 	//#endif
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
 
 #if WITH_PAPI

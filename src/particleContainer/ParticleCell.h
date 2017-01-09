@@ -118,7 +118,13 @@ public:
 	 * filter molecules which have left the box
 	 * @return field vector containing leaving molecules
 	 */
-	std::vector<Molecule> & filterLeavingMolecules();
+	//std::vector<Molecule> & filterLeavingMolecules();
+
+	void preUpdateLeavingMolecules();
+
+	void updateLeavingMolecules(ParticleCell& otherCell);
+
+	void postUpdateLeavingMolecules();
 
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
@@ -145,13 +151,11 @@ private:
 	 */
 	std::vector<Molecule> _leavingMolecules;
 
-
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
 	CellDataSoA _cellDataSoA;
-
 
 	/**
 	 * \brief The index of the cell.

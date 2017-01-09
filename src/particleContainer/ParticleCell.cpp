@@ -91,6 +91,45 @@ bool ParticleCell::deleteMoleculeByIndex(std::vector<Molecule>::size_type index)
 	return found;
 }
 
+void ParticleCell::preUpdateLeavingMolecules(){
+	_leavingMolecules.clear();
+
+	#ifndef NDEBUG
+	const size_t size_total = _molecules.size(); // for debugging, see below
+	#endif
+
+	for (auto mol = _molecules.begin(); mol != _molecules.end(); ) {
+		mol->setSoA(nullptr);
+
+		const bool isStaying = mol->inBox(_boxMin, _boxMax);
+
+		if (isStaying) {
+			// don't do anything, just advance iterator
+			++mol;
+		}
+		else {
+			_leavingMolecules.push_back(*mol);
+			UnorderedVector::fastRemove(_molecules, mol);
+			// don't advance iterator, it now points to a new molecule
+		}
+	}
+
+	assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
+}
+
+void ParticleCell::updateLeavingMolecules(ParticleCell& otherCell){
+	for (auto m = otherCell._leavingMolecules.begin(); m != otherCell._leavingMolecules.end(); ++m) { // loop over all indices
+		if (m->inBox(_boxMin, _boxMax)) { // if molecule moves in this cell
+			addParticle(*m);
+		}
+	}
+}
+
+void ParticleCell::postUpdateLeavingMolecules(){
+	_leavingMolecules.clear();
+}
+
+/*
 std::vector<Molecule>& ParticleCell::filterLeavingMolecules() {
 
 	for (auto it = _molecules.begin(); it != _molecules.end();) {
@@ -109,6 +148,7 @@ std::vector<Molecule>& ParticleCell::filterLeavingMolecules() {
 
 	return _leavingMolecules;
 }
+*/
 
 void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
 	for (auto particleIter = _molecules.begin(); particleIter != _molecules.end();) {
