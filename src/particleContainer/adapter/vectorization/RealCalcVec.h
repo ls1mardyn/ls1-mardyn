@@ -484,7 +484,7 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_RealCalcVec_to_MaskVec(_mm256_cmp_ps(_d, rhs, _CMP_NEQ_OS));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_cmp_ps_mask(_d, rhs, _CMP_NEQ_OS);
+		return _mm512_cmp_ps_mask(_d, rhs, _CMP_NEQ_UQ);
 	#endif
 #else /* VCP_DPDP */
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
@@ -494,7 +494,7 @@ public:
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
 		return cast_RealCalcVec_to_MaskVec(_mm256_cmp_pd(_d, rhs, _CMP_NEQ_OS));
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_512
-		return _mm512_cmp_pd_mask(_d, rhs, _CMP_NEQ_OS);
+		return _mm512_cmp_pd_mask(_d, rhs, _CMP_NEQ_UQ);
 	#endif
 #endif
 	}
