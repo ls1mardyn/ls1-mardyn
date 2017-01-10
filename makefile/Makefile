@@ -18,12 +18,12 @@ CFG ?= gcc
 # parallelization type
 # Show list of all available parallelization types for the current config with cfg_help
 # Each config should at least provide the two parallelization types SEQ and PAR
-PARTYPE ?= SEQ
+PARTYPE ?= PAR
 
 # choose target
 # Show list of all available targets for the current config with cfg_help
 # Each config should at least provide the two targets RELEASE and DEBUG.
-TARGET ?= DEBUG
+TARGET ?= RELEASE
 
 # compile using depmode?
 DEPS ?= 0
@@ -37,7 +37,7 @@ VTK ?= 0
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
-VECTORIZE_CODE ?= AVX2
+VECTORIZE_CODE ?= SSE
 # AOS      - LegacyCellProcessor
 # SSE      - VectorizedCellProcessor with SSE intrinsics (default)
 # AVX      - VectorizedCellProcessor with AVX intrinsics
@@ -50,7 +50,7 @@ VECTORIZE_CODE ?= AVX2
 # see "make help_vect"
 vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SOA SSEAMD AVXAMD
 ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
-  $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
+  $(error ERROR: invalid vectorize code option chosen. see "make help_vect")
 endif
 
 PRECISION ?= DOUBLE
@@ -59,7 +59,22 @@ PRECISION ?= DOUBLE
 # DOUBLE - DPDP - computation carried out in double precision, accumulation carried out in double precision
 precision_options := SINGLE MIXED DOUBLE
 ifeq (, $(filter $(PRECISION), $(precision_options)))
-  $(error ERROR: no valid precision option chosen. Set to SINGLE, MIXED or DOUBLE.)
+  $(error ERROR: invalid PRECISION option chosen. Set to SINGLE, MIXED or DOUBLE.)
+endif
+ifeq ($(PRECISION), MIXED)
+  $(error ERROR: MIXED precision not supported yet)
+endif
+
+not_supported_single_vectorizations := KNC_MASK KNC_G_S KNL_MASK KNL_G_S 
+ifeq ($(PRECISION), SINGLE)
+  $(info # WARNING)
+  $(info # WARNING)
+  $(info # WARNING: you are selecting SINGLE precision instead of DOUBLE. Proceed at own risk! )
+  $(info # WARNING)
+  $(info # WARNING)
+  ifneq (, $(filter $(VECTORIZE_CODE), $(not_supported_single_vectorizations)))
+    $(error ERROR: SINGLE precision not yet extended to 512-bits)
+  endif
 endif
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
