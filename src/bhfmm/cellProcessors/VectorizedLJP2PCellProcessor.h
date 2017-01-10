@@ -80,11 +80,6 @@ private:
 	Timer _timer;
 
 	/**
-	 * \brief An aligned array of doubles.
-	 */
-	typedef AlignedArray<double> DoubleArray;
-
-	/**
 	 * \brief a vector of Molecule pointers.
 	 */
 	typedef std::vector<Molecule *> MoleculeList;
@@ -122,14 +117,14 @@ private:
 	 * \details Each DoubleArray contains parameters for one center combined with all centers.<br>
 	 * Each set of parameters is a pair (epsilon*24.0, sigma^2).
 	 */
-	std::vector<DoubleArray> _eps_sig;
+	std::vector<AlignedArray<vcp_real_calc> > _eps_sig;
 
 	/**
 	 * \brief Shift for pairs of LJcenters.
 	 * \details Each DoubleArray contains the LJ shift*6.0 for one center combined<br>
 	 * with all centers.
 	 */
-	std::vector<DoubleArray> _shift6;
+	std::vector<AlignedArray<vcp_real_calc> > _shift6;
 
 	/**
 	 * \brief Sum of all LJ potentials.
@@ -166,7 +161,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _ljc_dist_lookup;
 
-		AlignedArray<double> _upot6ljV, _virialV;
+		AlignedArray<vcp_real_calc> _upot6ljV, _virialV;
 	};
 
 	std::vector<VLJP2PCPThreadData *> _threadData;
@@ -177,16 +172,16 @@ private:
 	template<bool calculateMacroscopic>
 	inline
 	void _loopBodyLJ(
-			const DoubleVec& m1_r_x, const DoubleVec& m1_r_y, const DoubleVec& m1_r_z,
-			const DoubleVec& r1_x, const DoubleVec& r1_y, const DoubleVec& r1_z,
-			const DoubleVec& m2_r_x, const DoubleVec& m2_r_y, const DoubleVec& m2_r_z,
-			const DoubleVec& r2_x, const DoubleVec& r2_y, const DoubleVec& r2_z,
-			DoubleVec& f_x, DoubleVec& f_y, DoubleVec& f_z,
-			DoubleVec& V_x, DoubleVec& V_y, DoubleVec& V_z,
-			DoubleVec& sum_upot6lj, DoubleVec& sum_virial,
+			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
+			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
+			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
+			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
+			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
+			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
+			RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
 			const MaskVec& forceMask,
-			const DoubleVec& eps_24, const DoubleVec& sig2,
-			const DoubleVec& shift6);
+			const RealCalcVec& eps_24, const RealCalcVec& sig2,
+			const RealCalcVec& shift6);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
