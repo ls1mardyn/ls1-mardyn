@@ -40,44 +40,63 @@ using namespace vcp;
 	}
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
-		switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-			case 0: return _mm_set_epi32(~0, ~0, ~0, ~0);
-			default: return _mm_set_epi32(~0, ~0, 0, 0);
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0:  return _mm_set_epi32(~0, ~0, ~0, ~0);
+				case 1:  return _mm_set_epi32(~0, ~0, ~0,  0);
+				case 2:  return _mm_set_epi32(~0, ~0,  0,  0);
+				default: return _mm_set_epi32(~0,  0,  0,  0);
+			}
 		}
-	}
-	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
-		switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-			case 0: return _mm_set_epi32(0, 0, 0, 0);
-			default: return _mm_set_epi32(0, 0, ~0, ~0);
+		static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
+			switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0:  return _mm_set_epi32(0,  0,  0,  0);
+				case 1:  return _mm_set_epi32(0,  0,  0, ~0);
+				case 2:  return _mm_set_epi32(0,  0, ~0, ~0);
+				default: return _mm_set_epi32(0, ~0, ~0, ~0);
+			}
 		}
-	}
+	#else /*VCP_DPDP*/
+		static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm_set_epi32(~0, ~0, ~0, ~0);
+				default: return _mm_set_epi32(~0, ~0, 0, 0);
+			}
+		}
+		static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
+			switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0: return _mm_set_epi32(0, 0, 0, 0);
+				default: return _mm_set_epi32(0, 0, ~0, ~0);
+			}
+		}
+	#endif
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2
 	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
-	static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
-		switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-			case 0:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
-			case 1:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0,  0);
-			case 2:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0,  0,  0);
-			case 3:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0,  0,  0,  0);
-			case 4:  return _mm256_set_epi32(~0, ~0, ~0, ~0,  0,  0,  0,  0);
-			case 5:  return _mm256_set_epi32(~0, ~0, ~0,  0,  0,  0,  0,  0);
-			case 6:  return _mm256_set_epi32(~0, ~0,  0,  0,  0,  0,  0,  0);
-			default: return _mm256_set_epi32(~0,  0,  0,  0,  0,  0,  0,  0);
+		static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
+			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+				case 1:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0, ~0,  0);
+				case 2:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0, ~0,  0,  0);
+				case 3:  return _mm256_set_epi32(~0, ~0, ~0, ~0, ~0,  0,  0,  0);
+				case 4:  return _mm256_set_epi32(~0, ~0, ~0, ~0,  0,  0,  0,  0);
+				case 5:  return _mm256_set_epi32(~0, ~0, ~0,  0,  0,  0,  0,  0);
+				case 6:  return _mm256_set_epi32(~0, ~0,  0,  0,  0,  0,  0,  0);
+				default: return _mm256_set_epi32(~0,  0,  0,  0,  0,  0,  0,  0);
+			}
 		}
-	}
-	static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
-		switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
-			case 0:  return _mm256_set_epi32( 0,  0,  0,  0,  0,  0,  0,  0);
-			case 1:  return _mm256_set_epi32( 0,  0,  0,  0,  0,  0,  0, ~0);
-			case 2:  return _mm256_set_epi32( 0,  0,  0,  0,  0,  0, ~0, ~0);
-			case 3:  return _mm256_set_epi32( 0,  0,  0,  0,  0, ~0, ~0, ~0);
-			case 4:  return _mm256_set_epi32( 0,  0,  0,  0, ~0, ~0, ~0, ~0);
-			case 5:  return _mm256_set_epi32( 0,  0,  0, ~0, ~0, ~0, ~0, ~0);
-			case 6:  return _mm256_set_epi32( 0,  0, ~0, ~0, ~0, ~0, ~0, ~0);
-			default: return _mm256_set_epi32( 0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+		static vcp_inline vcp_mask_vec vcp_simd_getRemainderMask(const size_t& size) {
+			switch (size & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
+				case 0:  return _mm256_set_epi32( 0,  0,  0,  0,  0,  0,  0,  0);
+				case 1:  return _mm256_set_epi32( 0,  0,  0,  0,  0,  0,  0, ~0);
+				case 2:  return _mm256_set_epi32( 0,  0,  0,  0,  0,  0, ~0, ~0);
+				case 3:  return _mm256_set_epi32( 0,  0,  0,  0,  0, ~0, ~0, ~0);
+				case 4:  return _mm256_set_epi32( 0,  0,  0,  0, ~0, ~0, ~0, ~0);
+				case 5:  return _mm256_set_epi32( 0,  0,  0, ~0, ~0, ~0, ~0, ~0);
+				case 6:  return _mm256_set_epi32( 0,  0, ~0, ~0, ~0, ~0, ~0, ~0);
+				default: return _mm256_set_epi32( 0, ~0, ~0, ~0, ~0, ~0, ~0, ~0);
+			}
 		}
-	}
 	#else /* VCP_DPDP */
 		static vcp_inline vcp_mask_vec vcp_simd_getInitMask(const size_t& i){
 			switch (i & static_cast<size_t>(VCP_VEC_SIZE_M1)) {
