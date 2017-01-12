@@ -11,6 +11,39 @@
 #ifndef  SIMD_TYPES_H
 #define  SIMD_TYPES_H
 
+// definitions for precision:
+#if defined(VCP_SPSP) or \
+	defined(VCP_SPDP) or \
+	defined(VCP_DPDP)
+	#error conflicting precision definitions
+#endif
+
+#define VCP_SPSP 0
+#define VCP_SPDP 1
+#define VCP_DPDP 2
+
+#if defined(MARDYN_SPSP)
+	#define VCP_PREC VCP_SPSP
+
+	typedef float vcp_real_calc;
+	typedef float vcp_real_accum;
+
+#elif defined(MARDYN_SPDP)
+	#define VCP_PREC VCP_SPDP
+
+	typedef float vcp_real_calc;
+	typedef double vcp_real_accum;
+
+#elif defined(MARDYN_DPDP)
+	#define VCP_PREC VCP_DPDP
+
+	typedef double vcp_real_calc;
+	typedef double vcp_real_accum;
+
+#else
+	#error Precision macro not defined.
+#endif
+
 
 // The following error should NEVER occur, since it signalizes, that the macros, used by THIS translation unit are defined anywhere else in the program.
 #if defined(VCP_VEC_TYPE) || defined(VCP_NOVEC) || defined(VCP_VEC_SSE3) || defined(VCP_VEC_AVX) || defined(VCP_VEC_AVX2)
@@ -26,6 +59,11 @@
 #define VCP_VEC_KNC_GATHER 5
 #define VCP_VEC_KNL 6
 #define VCP_VEC_KNL_GATHER 7
+
+#define VCP_VEC_W__64 0
+#define VCP_VEC_W_128 1
+#define VCP_VEC_W_256 2
+#define VCP_VEC_W_512 3
 
 
 typedef int countertype32;//int is 4Byte almost everywhere... replace with __int32 if problems occur
@@ -88,9 +126,12 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 // define necessary types
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
-	typedef double vcp_double_vec;
+	typedef vcp_real_calc vcp_real_calc_vec;
+	typedef vcp_real_accum vcp_real_accum_vec;
+
 	#define VCP_VEC_SIZE 1u
 	#define VCP_VEC_SIZE_M1 0u
+	#define VCP_VEC_WIDTH VCP_VEC_W__64
 
 	typedef bool vcp_mask_vec;
 	typedef bool vcp_mask_single;
@@ -100,9 +141,27 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3 //sse3
-	typedef __m128d vcp_double_vec;
-	#define VCP_VEC_SIZE 2u
-	#define VCP_VEC_SIZE_M1 1u
+
+	#if VCP_PREC==VCP_SPSP
+		typedef __m128 vcp_real_calc_vec;
+		typedef __m128 vcp_accum_calc_vec;
+	#elif VCP_PREC==VCP_SPDP
+		typedef __m128 vcp_real_calc_vec;
+		typedef __m128d vcp_accum_calc_vec;
+	#else // VCP_PREC==VCP_DPDP
+		typedef __m128d vcp_real_calc_vec;
+		typedef __m128d vcp_accum_calc_vec;
+	#endif
+
+	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
+		#define VCP_VEC_SIZE 4u
+		#define VCP_VEC_SIZE_M1 3u
+	#else // VCP_PREC==VCP_DPDP
+		#define VCP_VEC_SIZE 2u
+		#define VCP_VEC_SIZE_M1 1u
+	#endif
+
+	#define VCP_VEC_WIDTH VCP_VEC_W_128
 
 	typedef __m128i vcp_mask_vec;
 	typedef unsigned long vcp_mask_single;
@@ -112,9 +171,26 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	typedef vcp_mask_single vcp_lookupOrMask_single;
 
 #elif VCP_VEC_TYPE==VCP_VEC_AVX or VCP_VEC_TYPE==VCP_VEC_AVX2//avx, avx2
-	typedef __m256d vcp_double_vec;
-	#define VCP_VEC_SIZE 4u
-	#define VCP_VEC_SIZE_M1 3u
+	#if VCP_PREC==VCP_SPSP
+		typedef __m256 vcp_real_calc_vec;
+		typedef __m256 vcp_accum_calc_vec;
+	#elif VCP_PREC==VCP_SPDP
+		typedef __m256 vcp_real_calc_vec;
+		typedef __m256d vcp_accum_calc_vec;
+	#else // VCP_PREC==VCP_DPDP
+		typedef __m256d vcp_real_calc_vec;
+		typedef __m256d vcp_accum_calc_vec;
+	#endif
+
+	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
+		#define VCP_VEC_SIZE 8u
+		#define VCP_VEC_SIZE_M1 7u
+	#else // VCP_PREC==VCP_DPDP
+		#define VCP_VEC_SIZE 4u
+		#define VCP_VEC_SIZE_M1 3u
+	#endif
+
+	#define VCP_VEC_WIDTH VCP_VEC_W_256	
 
 	typedef __m256i vcp_mask_vec;
 	typedef unsigned long vcp_mask_single;
@@ -127,18 +203,40 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	  VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
 	  VCP_VEC_TYPE==VCP_VEC_KNL or \
 	  VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	typedef __m512d vcp_double_vec;
-	#define VCP_VEC_SIZE 8u
-	#define VCP_VEC_SIZE_M1 7u
 
-	typedef __mmask8 vcp_mask_vec;
-	typedef __mmask8 vcp_mask_single;
+	#if VCP_PREC==VCP_SPSP
+		typedef __m512 vcp_real_calc_vec;
+		typedef __m512 vcp_accum_calc_vec;
+	#elif VCP_PREC==VCP_SPDP
+		typedef __m512 vcp_real_calc_vec;
+		typedef __m512d vcp_accum_calc_vec;
+	#else // VCP_PREC==VCP_DPDP
+		typedef __m512d vcp_real_calc_vec;
+		typedef __m512d vcp_accum_calc_vec;
+	#endif
+
+	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
+		#define VCP_VEC_SIZE 16u
+		#define VCP_VEC_SIZE_M1 15u
+		typedef __mmask16 vcp_mask_vec;
+		typedef __mmask16 vcp_mask_single;
+	#else // VCP_PREC==VCP_DPDP
+		#define VCP_VEC_SIZE 8u
+		#define VCP_VEC_SIZE_M1 7u
+		typedef __mmask8 vcp_mask_vec;
+		typedef __mmask8 vcp_mask_single;
+	#endif
+	
+	#define VCP_VEC_WIDTH VCP_VEC_W_512
+	
+
 	#if VCP_VEC_TYPE==VCP_VEC_KNC or\
 		VCP_VEC_TYPE==VCP_VEC_KNL
-		#define VCP_INDICES_PER_LOOKUP_SINGLE 8
-		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 7
-		typedef __mmask8 vcp_lookupOrMask_vec;
-		typedef __mmask8 vcp_lookupOrMask_single;
+		#define VCP_INDICES_PER_LOOKUP_SINGLE VCP_VEC_SIZE
+		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 VCP_VEC_SIZE_M1
+		typedef vcp_mask_vec vcp_lookupOrMask_vec;
+		typedef vcp_mask_single vcp_lookupOrMask_single;
+
 	#else  // VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
 		#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 		#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0

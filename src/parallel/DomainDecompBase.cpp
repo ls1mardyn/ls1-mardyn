@@ -29,9 +29,7 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 }
 
 void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const {
-
-	std::vector<Molecule * > mols;
-	std::vector<Molecule *>::iterator it;
+	static std::vector<Molecule> mols;
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
@@ -43,20 +41,24 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 		const bool removeFromContainer = true;
 		moleculeContainer->getHaloParticlesDirection(direction, mols, removeFromContainer);
 
-		for (it = mols.begin(); it != mols.end(); ++it) {
-			Molecule m = **it;
-			m.setr(dim, (*it)->r(dim) + shift);
-			moleculeContainer->addParticle(m);
-			delete *it;
+		std::vector<Molecule>::size_type numMols = mols.size();
+		#if defined (_OPENMP)
+		#pragma omp parallel for schedule(static)
+		#endif
+		for (std::vector<Molecule>::size_type i = 0; i < numMols; i++) {
+			Molecule& m = mols[i];
+			m.setr(dim, m.r(dim) + shift);
+			//moleculeContainer->addParticle(m);
 		}
+
+		const bool checkWhetherDuplicate = false;
+		moleculeContainer->addParticles(mols, checkWhetherDuplicate);
 		mols.clear();
 	}
 }
 
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
-
-	std::vector<Molecule * > mols;
-	std::vector<Molecule *>::iterator it;
+	static std::vector<Molecule> mols;
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
@@ -64,14 +66,21 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	// loop over -+1 for dim=0, -+2 for dim=1, -+3 for dim=2
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
+		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
 		moleculeContainer->getBoundaryParticlesDirection(direction, mols);
 
-		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
-		for (it = mols.begin(); it != mols.end(); ++it) {
-			Molecule m = Molecule(**it);
+		std::vector<Molecule>::size_type numMols = mols.size();
+		#if defined (_OPENMP)
+		#pragma omp parallel for schedule(static)
+		#endif
+		for (std::vector<Molecule>::size_type i = 0; i < numMols; i++) {
+			Molecule& m = mols[i];
 			m.setr(dim, m.r(dim) + shift);
-			moleculeContainer->addParticle(m);
+			//moleculeContainer->addParticle(m);
 		}
+
+		const bool checkWhetherDuplicate = true;
+		moleculeContainer->addParticles(mols, checkWhetherDuplicate);
 		mols.clear();
 	}
 }

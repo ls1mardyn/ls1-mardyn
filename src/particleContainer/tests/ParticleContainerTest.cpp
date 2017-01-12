@@ -87,8 +87,8 @@ void ParticleContainerTest::testUpdateAndDeleteOuterParticles(ParticleContainer*
 		if (molecule->id() == 1) {
 			molecule->setr(0, -0.2);
 		} else if (molecule->id() == 3) {
-			molecule->setr(1, 9.0);
-			molecule->setr(2, 9.4);
+			molecule->setr(1, 1.0);
+			molecule->setr(2, 2.4);
 		}
 		molecule = container->next();
 	}

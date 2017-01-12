@@ -1,8 +1,10 @@
 # Special compile-rule for the VectorizedCellProcessor to enforce inlining.
 # NOTE: depending on the installation settings, mpicxx may not actually use icpc! 
 # In that case, an error may occur here!
-particleContainer/adapter/VectorizedCellProcessor.o: particleContainer/adapter/VectorizedCellProcessor.cpp
-	$(DEPCOMP) $(CXX) $(CXXFLAGS) -inline-forceinline -c $< -o $@
+
+# C++11
+CXXFLAGS += -std=c++11
+
 
 # Vectorization settings:
 #########################################
@@ -39,3 +41,6 @@ else
   FLAGS_OPENMP += -qopenmp-simd
   endif
 endif
+
+particleContainer/adapter/VectorizedCellProcessor.o: particleContainer/adapter/VectorizedCellProcessor.cpp
+	$(DEPCOMP) $(CXX) $(CXXFLAGS) -ipo -inline-forceinline -c $< -o $@

@@ -18,7 +18,7 @@ CFG ?= gcc
 # parallelization type
 # Show list of all available parallelization types for the current config with cfg_help
 # Each config should at least provide the two parallelization types SEQ and PAR
-PARTYPE ?= SEQ
+PARTYPE ?= PAR
 
 # choose target
 # Show list of all available targets for the current config with cfg_help
@@ -50,7 +50,31 @@ VECTORIZE_CODE ?= SSE
 # see "make help_vect"
 vec_options := AOS SSE AVX AVX2 KNC_MASK KNC_G_S KNL_MASK KNL_G_S SOA SSEAMD AVXAMD
 ifeq (, $(filter $(VECTORIZE_CODE), $(vec_options)))
-  $(error ERROR: no valid vectorize code option chosen. see "make help_vect")
+  $(error ERROR: invalid vectorize code option chosen. see "make help_vect")
+endif
+
+PRECISION ?= DOUBLE
+# SINGLE - SPSP - computation carried out in single precision, accumulation carried out in single precision
+# MIXED  - SPDP - computation carried out in single precision, accumulation carried out in double precision
+# DOUBLE - DPDP - computation carried out in double precision, accumulation carried out in double precision
+precision_options := SINGLE MIXED DOUBLE
+ifeq (, $(filter $(PRECISION), $(precision_options)))
+  $(error ERROR: invalid PRECISION option chosen. Set to SINGLE, MIXED or DOUBLE.)
+endif
+ifeq ($(PRECISION), MIXED)
+  $(error ERROR: MIXED precision not supported yet)
+endif
+
+not_supported_single_vectorizations := KNC_MASK KNC_G_S KNL_MASK KNL_G_S 
+ifeq ($(PRECISION), SINGLE)
+  $(info # WARNING)
+  $(info # WARNING)
+  $(info # WARNING: you are selecting SINGLE precision instead of DOUBLE. Proceed at own risk! )
+  $(info # WARNING)
+  $(info # WARNING)
+  ifneq (, $(filter $(VECTORIZE_CODE), $(not_supported_single_vectorizations)))
+    $(error ERROR: SINGLE precision not yet extended to 512-bits)
+  endif
 endif
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
@@ -107,7 +131,7 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK -std=c++11
+CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 ifeq ($(SUPPORT_GENERATOR), 1)
@@ -128,6 +152,16 @@ else
 CXXFLAGS += -D ENABLE_VECTORIZED_CODE=1
 CXXFLAGS += $(CXXFLAGS_VECTORIZE)
 LDFLAGS += $(LDFLAGS_VECTORIZE)
+endif
+
+ifeq ($(PRECISION), SINGLE)
+CXXFLAGS += -D MARDYN_SPSP
+endif
+ifeq ($(PRECISION), MIXED)
+CXXFLAGS += -D MARDYN_SPDP
+endif
+ifeq ($(PRECISION), DOUBLE)
+CXXFLAGS += -D MARDYN_DPDP
 endif
 
 ifeq ($(OPENMP), 1)

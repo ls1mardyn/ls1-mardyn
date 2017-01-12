@@ -61,7 +61,7 @@ void program_execution_info(int argc, char **argv, Log::Logger &log) {
 	global_log->info() << "Running with " << world_size << " MPI processes." << endl;
 #endif
 #if defined(_OPENMP)
-	int num_threads = omp_get_max_threads();
+	int num_threads = mardyn_get_max_threads();
 	global_log->info() << "Running with " << num_threads << " OpenMP threads." << endl;
 #endif
 }

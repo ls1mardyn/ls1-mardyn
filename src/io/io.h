@@ -6,6 +6,7 @@
 #include "io/GridGenerator.h"
 #include "io/InputOldstyle.h"
 #include "io/MmspdWriter.h"
+#include "io/MmpldWriter.h"
 #include "io/PovWriter.h"
 #include "io/ResultWriter.h"
 #include "io/SysMonOutput.h"

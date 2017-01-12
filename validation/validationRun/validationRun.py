@@ -225,7 +225,9 @@ def doRun(directory, MardynExe):
         cmd.extend(split(MPI_START))
         cmd.extend(['-n', str(mpi)])
     cmd.extend(['./' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
+    #cmd.extend(['/work_fast/tchipevn/SDE/sde-external-7.41.0-2016-03-03-lin/sde64', '-knl', '--', './' + MardynExe, "--final-checkpoint=0", cfgBase, numIterations]); 
     print cmd
+    print "================"
     t = time.time()
     p = Popen(cmd, stdout=PIPE, stderr=PIPE)
     out, err = p.communicate()

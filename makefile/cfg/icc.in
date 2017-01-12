@@ -1,6 +1,6 @@
 # Intel compiler suite
 # http://software.intel.com/en-us/intel-compilers/
-# Version: 
+# Version:
 
 CFG_INFO = "Intel Compiler"
 
@@ -20,9 +20,9 @@ DEPMODE = icc
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -Wall -g 
+CXXFLAGS_SEQ_DEBUG  = -Wall -g
 LINKFLAGS_SEQ_DEBUG =
-#RELEASE
+# RELEASE
 CXXFLAGS_SEQ_RELEASE  = -O2 -Wall -DNDEBUG
 LINKFLAGS_SEQ_RELEASE =
 # CODECOV

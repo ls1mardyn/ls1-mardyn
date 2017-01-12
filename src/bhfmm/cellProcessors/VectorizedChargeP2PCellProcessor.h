@@ -73,11 +73,6 @@ private:
 	Timer _timer;
 
 	/**
-	 * \brief An aligned array of doubles.
-	 */
-	typedef AlignedArray<double> DoubleArray;
-
-	/**
 	 * \brief a vector of Molecule pointers.
 	 */
 	typedef std::vector<Molecule *> MoleculeList;
@@ -121,7 +116,7 @@ private:
 		 */
 		vcp_lookupOrMask_single* _charges_dist_lookup;
 
-		AlignedArray<double> _upotXpolesV, _virialV;
+		AlignedArray<vcp_real_calc> _upotXpolesV, _virialV;
 	};
 
 	std::vector<VCP2PCPThreadData *> _threadData;
@@ -131,16 +126,16 @@ private:
 
 	template<bool calculateMacroscopic>
 	inline void _loopBodyCharge(
-		const vcp_double_vec& m1_r_x, const vcp_double_vec& m1_r_y, const vcp_double_vec& m1_r_z,
-		const vcp_double_vec& r1_x, const vcp_double_vec& r1_y, const vcp_double_vec& r1_z,
-		const vcp_double_vec& qii,
-		const vcp_double_vec& m2_r_x, const vcp_double_vec& m2_r_y, const vcp_double_vec& m2_r_z,
-		const vcp_double_vec& r2_x, const vcp_double_vec& r2_y, const vcp_double_vec& r2_z,
-		const vcp_double_vec& qjj,
-		vcp_double_vec& f_x, vcp_double_vec& f_y, vcp_double_vec& f_z,
-		vcp_double_vec& V_x, vcp_double_vec& V_y, vcp_double_vec& V_z,
-		vcp_double_vec& sum_upotXpoles, vcp_double_vec& sum_virial,
-		const vcp_mask_vec& forceMask);
+		const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
+		const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
+		const RealCalcVec& qii,
+		const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
+		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
+		const RealCalcVec& qjj,
+		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
+		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
+		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
+		const MaskVec& forceMask);
 
 	/**
 	 * \brief Force calculation with abstraction of cell pairs.
@@ -157,7 +152,7 @@ private:
 	 * Returns whether to calculate the force for a non-vectorized pair.<br>
 	 * <br>
 	 * If the code is to be vectorized:<br>
-	 * static vcp_double_vec GetForceMask(vcp_double_vec m_r2, vcp_double_vec rc2);<br>
+	 * static DoubleVec GetForceMask(DoubleVec m_r2, DoubleVec rc2);<br>
 	 * Returns the mask indicating which pairs to calculate in the vectorized code.<br>
 	 * <br>
 	 * The boolean CalculateMacroscopic should specify, whether macroscopic values are to be calculated or not.
