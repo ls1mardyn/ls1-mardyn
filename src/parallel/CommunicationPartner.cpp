@@ -11,19 +11,22 @@
 #include <cmath>
 #include <sstream>
 
-CommunicationPartner::CommunicationPartner(int r, double hLo[3], double hHi[3],
-		double bLo[3], double bHi[3], double sh[3]) {
+CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
+		const double bHi[3], const double sh[3], const int offset[3]) {
 	_rank = r;
 
+	PositionInfo p;
 	for (int d = 0; d < 3; ++d) {
-		_leavingLow[d] = hLo[d];
-		_leavingHigh[d] = hHi[d];
-		_copiesLow[d] = bLo[d];
-		_copiesHigh[d] = bHi[d];
-		_bothLow[d] = fmin(hLo[d], bLo[d]);
-		_bothHigh[d] = fmax(hHi[d], bHi[d]);
-		_shift[d] = sh[d];
+		p._leavingLow[d] = hLo[d];
+		p._leavingHigh[d] = hHi[d];
+		p._copiesLow[d] = bLo[d];
+		p._copiesHigh[d] = bHi[d];
+		p._bothLow[d] = fmin(hLo[d], bLo[d]);
+		p._bothHigh[d] = fmax(hHi[d], bHi[d]);
+		p._shift[d] = sh[d];
+		p._offset[d] = offset[d];
 	}
+	_haloInfo.push_back(p);
 
 	// some values, to silence the warnings:
 	_sendRequest = new MPI_Request;
@@ -33,18 +36,20 @@ CommunicationPartner::CommunicationPartner(int r, double hLo[3], double hHi[3],
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
-CommunicationPartner::CommunicationPartner(int r) {
+CommunicationPartner::CommunicationPartner(const int r) {
 	_rank = r;
-
+	PositionInfo p;
 	for (int d = 0; d < 3; ++d) {
-		_leavingLow[d] = 0.;
-		_leavingHigh[d] = 0.;
-		_copiesLow[d] = 0.;
-		_copiesHigh[d] = 0.;
-		_bothLow[d] = 0.;
-		_bothHigh[d] = 0.;
-		_shift[d] = 0.;
+		p._leavingLow[d] = 0.;
+		p._leavingHigh[d] = 0.;
+		p._copiesLow[d] = 0.;
+		p._copiesHigh[d] = 0.;
+		p._bothLow[d] = 0.;
+		p._bothHigh[d] = 0.;
+		p._shift[d] = 0.;
+		p._offset[d] = 0;
 	}
+	_haloInfo.push_back(p);
 
 	// some values, to silence the warnings:
 	_sendRequest = new MPI_Request;
@@ -54,19 +59,20 @@ CommunicationPartner::CommunicationPartner(int r) {
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
-CommunicationPartner::CommunicationPartner(int r, double leavingLo[3], double leavingHigh[3]) {
+CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3], const double leavingHigh[3]) {
 	_rank = r;
-
+	PositionInfo p;
 	for (int d = 0; d < 3; ++d) {
-		_leavingLow[d] = leavingLo[d];
-		_leavingHigh[d] = leavingHigh[d];
-		_copiesLow[d] = 0.;
-		_copiesHigh[d] = 0.;
-		_bothLow[d] = 0.;
-		_bothHigh[d] = 0.;
-		_shift[d] = 0.;
+		p._leavingLow[d] = leavingLo[d];
+		p._leavingHigh[d] = leavingHigh[d];
+		p._copiesLow[d] = 0.;
+		p._copiesHigh[d] = 0.;
+		p._bothLow[d] = 0.;
+		p._bothHigh[d] = 0.;
+		p._shift[d] = 0.;
+		p._offset[d] = 0;
 	}
-
+	_haloInfo.push_back(p);
 	// some values, to silence the warnings:
 	_sendRequest = new MPI_Request;
 	_recvRequest = new MPI_Request;
@@ -78,15 +84,7 @@ CommunicationPartner::CommunicationPartner(int r, double leavingLo[3], double le
 CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
 	_rank = o._rank;
 
-	for(int d = 0; d < 3; ++d) {
-		_bothLow[d] = o._bothLow[d];
-		_bothHigh[d] = o._bothHigh[d];
-		_leavingLow[d] = o._leavingLow[d];
-		_leavingHigh[d] = o._leavingHigh[d];
-		_copiesLow[d] = o._copiesLow[d];
-		_copiesHigh[d] = o._copiesHigh[d];
-		_shift[d] = o._shift[d];
-	}
+	_haloInfo = o._haloInfo;
 
 	// some values, to silence the warnings:
 	_sendRequest = new MPI_Request;
@@ -103,30 +101,37 @@ CommunicationPartner::~CommunicationPartner() {
 	delete _recvStatus;
 }
 
-void CommunicationPartner::initSend(
-		ParticleContainer* moleculeContainer, const MPI_Comm& comm,
-		const MPI_Datatype& type, MessageType msgType,
-		bool removeFromContainer) {
-	using std::vector;
-	using Log::global_log;
+void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm,
+		const MPI_Datatype& type, MessageType msgType, bool removeFromContainer) {
 
 	global_log->debug() << _rank << std::endl;
 
-	vector<Molecule*> particles;
+	std::vector<Molecule*> particles;
+	std::vector<size_t> endings(_haloInfo.size() + 1, 0);  // stores last positions of the particles for each haloInfo
 
-	switch(msgType) {
+	switch (msgType) {
 	case LEAVING_AND_HALO_COPIES: {
-		moleculeContainer->getRegionSimple(_bothLow, _bothHigh, particles);
+		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+			moleculeContainer->getRegionSimple(_haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, particles);
+			endings[p+1] = particles.size();
+		}
 		global_log->debug() << "sending halo and boundary particles together" << std::endl;
 		break;
 	}
 	case LEAVING_ONLY: {
-		moleculeContainer->getRegionSimple(_leavingLow, _leavingHigh, particles, removeFromContainer);
+		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+			moleculeContainer->getRegionSimple(_haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, particles,
+					removeFromContainer);
+			endings[p+1] = particles.size();
+		}
 		global_log->debug() << "sending halo particles only" << std::endl;
 		break;
 	}
 	case HALO_COPIES: {
-		moleculeContainer->getRegionSimple(_copiesLow, _copiesHigh, particles);
+		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+			moleculeContainer->getRegionSimple(_haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, particles);
+			endings[p+1] = particles.size();
+		}
 		global_log->debug() << "sending boundary particles only" << std::endl;
 		break;
 	}
@@ -146,24 +151,24 @@ void CommunicationPartner::initSend(
 	// initialize send buffer
 	_sendBuf.resize(n);
 
-	for (int i = 0; i < n; ++i) {
-		ParticleData::MoleculeToParticleData(_sendBuf[i], *(particles[i]));
-		// add offsets for particles transfered over the periodic boundary
-		for (int d = 0; d < 3; ++d) {
-			_sendBuf[i].r[d] += _shift[d];
+	for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+		for (unsigned int i = endings[p]; i < endings[p+1]; ++i) {
+			ParticleData::MoleculeToParticleData(_sendBuf[i], *(particles[i]));
+			// add offsets for particles transfered over the periodic boundary
+			for (int d = 0; d < 3; ++d) {
+				_sendBuf[i].r[d] += _haloInfo[p]._shift[d];
+			}
 		}
 	}
-
-	MPI_CHECK(
-			MPI_Isend(&(_sendBuf[0]), (int) _sendBuf.size(), type, _rank,
-					99, comm, _sendRequest));
-	_msgSent = _countReceived = _msgReceived = false;
-
 	if (removeFromContainer) {
 		for (int i = 0; i < n; ++i) {
 			delete particles[i];
 		}
 	}
+
+	MPI_CHECK(MPI_Isend(&(_sendBuf[0]), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
+	_msgSent = _countReceived = _msgReceived = false;
+
 }
 
 bool CommunicationPartner::testSend() {
@@ -187,9 +192,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 			int numrecv;
 			MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
 			_recvBuf.resize(numrecv);
-			MPI_CHECK(
-					MPI_Irecv(&(_recvBuf[0]), numrecv, type, _rank, 99,
-							comm, _recvRequest));
+			MPI_CHECK(MPI_Irecv(&(_recvBuf[0]), numrecv, type, _rank, 99, comm, _recvRequest));
 		}
 
 	}
@@ -232,9 +235,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
 	_recvBuf.resize(numParticles);
-	MPI_CHECK(
-			MPI_Irecv(&(_recvBuf[0]), numParticles, type, _rank, 99,
-					comm, _recvRequest));
+	MPI_CHECK(MPI_Irecv(&(_recvBuf[0]), numParticles, type, _rank, 99, comm, _recvRequest));
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
@@ -243,8 +244,7 @@ void CommunicationPartner::deadlockDiagnosticSendRecv() {
 	deadlockDiagnosticSend();
 
 	if (not _countReceived) {
-		global_log->warning() << "Probe request to " << _rank
-				<< " not yet completed" << std::endl;
+		global_log->warning() << "Probe request to " << _rank << " not yet completed" << std::endl;
 	}
 
 	deadlockDiagnosticRecv();
@@ -253,14 +253,17 @@ void CommunicationPartner::deadlockDiagnosticSendRecv() {
 void CommunicationPartner::deadlockDiagnosticSend() {
 	// intentionally using std::cout instead of global_log, we want the messages from all processes
 	if (not _msgSent) {
-		Log::global_log->warning() << "Send request to " << _rank
-				<< " not yet completed" << std::endl;
+		Log::global_log->warning() << "Send request to " << _rank << " not yet completed" << std::endl;
 	}
 }
 
 void CommunicationPartner::deadlockDiagnosticRecv() {
 	if (not _msgReceived) {
-		Log::global_log->warning() << "Recv request to " << _rank
-				<< " not yet completed" << std::endl;
+		Log::global_log->warning() << "Recv request to " << _rank << " not yet completed" << std::endl;
 	}
+}
+
+void CommunicationPartner::add(CommunicationPartner partner) {
+	assert(partner._rank == _rank);
+	_haloInfo.push_back(partner._haloInfo[0]);
 }

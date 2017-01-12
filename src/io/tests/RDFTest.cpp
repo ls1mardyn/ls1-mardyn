@@ -181,6 +181,9 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 
 
 void RDFTest::testSiteSiteRDFLinkedCell() {
+	if (_domainDecomposition->getNumProcs() > 8) {
+		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
+	}
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "2clj-regular.inp", 3.5);
 	testSiteSiteRDF(moleculeContainer);
 	delete moleculeContainer;
@@ -188,9 +191,7 @@ void RDFTest::testSiteSiteRDFLinkedCell() {
 
 void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 
-	if (_domainDecomposition->getNumProcs() > 8) {
-		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
-	}
+	std::cout << "RDFTest::testSiteSiteRDF with " <<_domainDecomposition->getNumProcs()<<" procs" << std::endl;
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
