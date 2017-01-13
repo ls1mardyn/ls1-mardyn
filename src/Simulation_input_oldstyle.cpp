@@ -275,10 +275,40 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			} else if (token == "MmpldWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
-				inputfilestream >> writeFrequency >> outputPathAndPrefix;
-				_outputPlugins.push_back(new MmpldWriter(writeFrequency,
-						outputPathAndPrefix));
-				global_log->debug() << "MmpldWriter " << writeFrequency << " '"
+				string strSpheres;
+				string strInitSphereData;
+				string strSphereDataFilename = "unknown";
+				uint8_t bInitSphereData = ISD_USE_DEFAULT;
+				inputfilestream >> strSpheres >> writeFrequency >> outputPathAndPrefix >> strInitSphereData;
+				if("file" == strInitSphereData)
+				{
+					inputfilestream >> strSphereDataFilename;
+					bInitSphereData = ISD_READ_FROM_FILE;
+				}
+				else if("default" == strInitSphereData)
+					bInitSphereData = ISD_USE_DEFAULT;
+				else
+				{
+					global_log->error() << "MmpldWriter: wrong statement, expected default|file. Program exit... " << endl;
+					exit(-1);
+				}
+
+				MmpldWriter* mmpldWriter = NULL;
+				if("simple" == strSpheres)
+					mmpldWriter = new MmpldWriterSimpleSphere(writeFrequency, outputPathAndPrefix);
+				else if("multi" == strSpheres)
+					mmpldWriter = new MmpldWriterMultiSphere(writeFrequency, outputPathAndPrefix);
+				else
+				{
+					global_log->error() << "MmpldWriter: wrong statement, expected simple|multi. Program exit... " << endl;
+					exit(-1);
+				}
+				if(NULL != mmpldWriter)
+				{
+					mmpldWriter->SetInitSphereDataParameters(bInitSphereData, strSphereDataFilename);
+					_outputPlugins.push_back(mmpldWriter);
+				}
+				global_log->debug() << "MmpldWriter " << strSpheres << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
 			} else if (token == "VTKWriter") {
 #ifdef VTK
