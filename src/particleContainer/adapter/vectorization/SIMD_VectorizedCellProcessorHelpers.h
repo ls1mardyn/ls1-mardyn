@@ -14,14 +14,6 @@
 #include "SIMD_TYPES.h"
 #include "utils/AlignedArray.h"
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX2 or \
-	VCP_VEC_TYPE==VCP_VEC_KNC or \
-	VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
-	VCP_VEC_TYPE==VCP_VEC_KNL or \
-	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-static_assert (sizeof(size_t) == 8, "Code assumes, that sizeof(size_t) is 8. Contact SCCS developers if this fails.");
-#endif /* sizeof(size_t) */
-
 /**
  * unpacks eps_24 and sig2 from the eps_sigI array according to the index array id_j (for mic+avx2: use gather)
  * @param eps_24 vector in which eps_24 is saved
