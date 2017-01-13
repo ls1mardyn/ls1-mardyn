@@ -45,6 +45,9 @@ typedef ParticleContainer TMoleculeContainer;
 //! case the class Simulation) can decide which implementation to use. When MPI is
 //! available, the parallel version is used, otherwise the sequential version
 class DomainDecompBase {
+	friend class NeighbourCommunicationScheme;
+	friend class IndirectNeighbourCommunicationScheme;
+	friend class DirectNeighbourCommunicationScheme;
 public:
 	//! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
 	DomainDecompBase();

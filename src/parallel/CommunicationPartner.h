@@ -13,21 +13,31 @@
 #include <vector>
 
 typedef enum {
-	LEAVING_AND_HALO_COPIES = 0, 	/** send process-leaving particles and halo-copies together in one message */
-	HALO_COPIES = 1, 				/** send halo-copies only */
-	LEAVING_ONLY = 2 				/** send process-leaving particles only */
+	LEAVING_AND_HALO_COPIES = 0, /** send process-leaving particles and halo-copies together in one message */
+	HALO_COPIES = 1, /** send halo-copies only */
+	LEAVING_ONLY = 2 /** send process-leaving particles only */
 } MessageType;
 
 class ParticleContainer;
+
+struct PositionInfo {
+	double _bothLow[3], _bothHigh[3];
+	double _leavingLow[3], _leavingHigh[3];
+	double _copiesLow[3], _copiesHigh[3];
+	double _shift[3]; //! for periodic boundaries
+	int _offset[3];
+};
+
 
 /**
  * (Bi-Directional) MPI Communication Partner.
  */
 class CommunicationPartner {
 public:
-	CommunicationPartner(int r, double hLo[3], double hHi[3], double bLo[3], double bHi[3], double sh[3]);
-	CommunicationPartner(int r);
-	CommunicationPartner(int r, double leavingLo[3], double leavingHi[3]);
+	CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
+			const double bHi[3], const double sh[3], const int offset[3]);
+	CommunicationPartner(const int r);
+	CommunicationPartner(const int r, const double leavingLo[3], const double leavingHi[3]);
 
 	CommunicationPartner(const CommunicationPartner& o);
 
@@ -35,9 +45,8 @@ public:
 
 	~CommunicationPartner();
 
-	void initSend(
-			ParticleContainer* moleculeContainer, const MPI_Comm& comm,
-			const MPI_Datatype& type, MessageType msgType, bool removeFromContainer = false);
+	void initSend(ParticleContainer* moleculeContainer, const MPI_Comm& comm, const MPI_Datatype& type,
+			MessageType msgType, bool removeFromContainer = false);
 
 	bool testSend();
 
@@ -51,19 +60,49 @@ public:
 	void deadlockDiagnosticSend();
 	void deadlockDiagnosticRecv();
 
-	int getRank(){
+	int getRank() const {
 		return _rank;
 	}
 
+	const int* getOffset() {
+		return _haloInfo[0]._offset;
+	}
+
+	//! Specifies, whether the communication to the CommunicationPartner is along a shared face (_offset has only one entry != 0)
+	//! @return returns whether they are direct face sharing neighbours
+	bool isFaceCommunicator() const {
+		return (!!_haloInfo[0]._offset[0] + !!_haloInfo[0]._offset[1] + !!_haloInfo[0]._offset[2]) == 1;
+	}
+	//! @return returns in which direction the face is shared. If it is not a face communicator, -1 is returned
+	int getFaceCommunicationDirection() const {
+		if (!isFaceCommunicator())
+			return -1;
+		return !!_haloInfo[0]._offset[1] * 1 + !!_haloInfo[0]._offset[2] * 2;
+	}
+
+	void enlargeInOtherDirections(unsigned int d, double enlargement) {
+		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+			for (unsigned int d2 = 0; d2 < 3; d2++) {
+				if (d2 == d)
+					continue;
+				_haloInfo[p]._bothLow[d2] -= enlargement;
+				_haloInfo[p]._bothHigh[d2] += enlargement;
+				_haloInfo[p]._leavingLow[d2] -= enlargement;
+				_haloInfo[p]._leavingHigh[d2] += enlargement;
+				_haloInfo[p]._copiesLow[d2] -= enlargement;
+				_haloInfo[p]._copiesHigh[d2] += enlargement;
+			}
+		}
+	}
+
+//! Combines current CommunicationPartner with the given partner
+//! @param partner which to add to the current CommunicationPartner
+	void add(CommunicationPartner partner);
 private:
 	int _rank;
-	double _bothLow[3], _bothHigh[3];
-	double _leavingLow[3], _leavingHigh[3];
-	double _copiesLow[3], _copiesHigh[3];
+	std::vector<PositionInfo> _haloInfo;
 
-	double _shift[3]; //! for periodic boundaries
-
-	// technical variables
+// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
 	std::vector<ParticleData> _sendBuf, _recvBuf;

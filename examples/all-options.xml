@@ -144,7 +144,9 @@
 
     <!-- algorithm specific configuration options -->
     <algorithm>
-      <parallelisation type="DomainDecomposition"></parallelisation>
+      <parallelisation type="DomainDecomposition">
+          <CommunicationScheme>direct<CommunicationScheme>
+      </parallelisation>
       <datastructure type="LinkedCells">
           <cellsInCutoffRadius>1</cellsInCutoffRadius>
       </datastructure>

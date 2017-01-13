@@ -14,6 +14,8 @@
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "particleContainer/adapter/FlopCounter.h"
+#include "parallel/NeighbourCommunicationScheme.h"
+#include "parallel/HaloRegion.h"
 
 #include <cmath>
 
@@ -105,10 +107,7 @@ void KDDecomposition::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "KDDecomposition splits along biggest domain?: " << (_splitBiggest?"yes":"no") << endl;
 	xmlconfig.getNodeValue("forceRatio", _forceRatio);
 	global_log->info() << "KDDecomposition forces load/performance ratio?: " << (_forceRatio?"yes":"no") << endl;
-}
-
-int KDDecomposition::getNonBlockingStageCount(){
-	return 3;
+	DomainDecompMPIBase::readXML(xmlconfig);
 }
 
 void KDDecomposition::prepareNonBlockingStage(bool /*forceRebalancing*/,
@@ -170,134 +169,21 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 	}
 }
 
-void KDDecomposition::initCommunicationPartners(double /*cutoffRadius*/, Domain * domain) {
-
-//	if(_neighboursInitialized) {
-//		return;
-//	}
-//	_neighboursInitialized = true;
-
-	int ownLo[DIM];
-	int ownHi[DIM];
-
-	for (unsigned short d = 0; d < DIM; d++) {
-		ownLo[d] = _ownArea->_lowCorner[d];
-		ownHi[d] = _ownArea->_highCorner[d];
-
-		_neighbours[d].clear();
-	}
-
-	for (unsigned short dimension = 0; dimension < DIM; dimension++) {
-		if(_coversWholeDomain[dimension]) {
-			// nothing to do;
-			continue;
-		}
-
-		for (int direction = LOWER; direction <= HIGHER; direction++) {
-			double shift[DIM];
-			for (int i = 0; i < 3; ++i) {
-				shift[i] = 0.0;
-			}
-
-			int regToSendLo[DIM];
-			int regToSendHi[DIM];
-
-			for (int i = 0; i < DIM; ++i) {
-				regToSendLo[i] = ownLo[i];
-				regToSendHi[i] = ownHi[i];
-			}
-
-			if (ownLo[dimension] == 0) {
-				regToSendLo[dimension] = _globalCellsPerDim[dimension];
-			} else if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
-				regToSendHi[dimension] = -1;
-			}
-
-			switch (direction) {
-			case LOWER:
-				--regToSendLo[dimension];
-				regToSendHi[dimension] = regToSendLo[dimension];
-				if (ownLo[dimension] == 0) {
-					shift[dimension] = domain->getGlobalLength(dimension);
-				}
-				break;
-			case HIGHER:
-				++regToSendHi[dimension];
-				regToSendLo[dimension] = regToSendHi[dimension];
-				if (ownHi[dimension] == _globalCellsPerDim[dimension] - 1) {
-					shift[dimension] = -domain->getGlobalLength(dimension);
-				}
-				break;
-			}
-
-			vector<int> ranks;
-			vector<int> ranges;
-			_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
-			int numNeighbours = ranks.size();
-			vector<int>::iterator indexIt = ranges.begin();
-			for (int n = 0; n < numNeighbours; ++n) {
-				int low[3];
-				int high[3];
-				for (int d=0; d < 3; ++d) {
-					low[d] = *(indexIt++);
-					high[d] = *(indexIt++);
-					if (d == dimension) {
-						assert(low[d] == high[d]);
-					}
-				}
-				switch (direction) {
-				case LOWER:
-					if (low[dimension] + 1 != ownLo[dimension]) {
-						low[dimension] = high[dimension] = ownLo[dimension] - 1;
-					}
-					break;
-				case HIGHER:
-					if (high[dimension] - 1 != ownHi[dimension]) {
-						high[dimension] = low[dimension] = ownHi[dimension] + 1;
-					}
-					break;
-				}
-
-				// enlarge in two "other" dimensions
-				for (unsigned short d=0; d < 3; ++d) {
-					if(d != dimension) {
-						--low[d];
-						++high[d];
-					}
-				}
-
-				// region given by the current low-high range is the halo-range
-				double haloLow[3];
-				double haloHigh[3];
-				getCellBorderFromIntCoords(haloLow, haloHigh, low, high);
-
-				switch (direction) {
-				case LOWER:
-					low[dimension]++;
-					high[dimension]++;
-					break;
-				case HIGHER:
-					low[dimension]--;
-					high[dimension]--;
-					break;
-				}
-
-				double boundaryLow[3];
-				double boundaryHigh[3];
-				getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
-
-				_neighbours[dimension].push_back(CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift));
-
-			}
-
-		}
-	}
+void KDDecomposition::initCommunicationPartners(double cutoffRadius, Domain * domain) {
+	_neighbourCommunicationScheme->initCommunicationPartners(cutoffRadius, domain, this);
 }
 
 void KDDecomposition::getCellBorderFromIntCoords(double * lC, double * hC, int lo[3], int hi[3]) const {
 	for(int d = 0 ; d < 3; ++d) {
 		lC[d] = lo[d] * _cellSize[d];
 		hC[d] = (hi[d] + 1) * _cellSize[d];
+	}
+}
+
+void KDDecomposition::getCellIntCoordsFromRegionPeriodic(int* lo, int* hi, const double lC[3], const double hC[3], const Domain* domain) const {
+	for (int d = 0; d < 3; ++d) {
+		lo[d] = round(lC[d] / _cellSize[d]);
+		hi[d] = round(hC[d] / _cellSize[d]) - 1; // no -1
 	}
 }
 
@@ -494,7 +380,7 @@ void KDDecomposition::constructNewTree(KDNode *& newRoot, KDNode *& newOwnLeaf, 
 	completeTreeInfo(newRoot, newOwnLeaf);
 	delete toCleanUp;
 	for (int d = 0; d < 3; ++d) {
-		_coversWholeDomain[d] = newOwnLeaf->_coversWholeDomain[d];
+		_neighbourCommunicationScheme->setCoverWholeDomain(d, newOwnLeaf->_coversWholeDomain[d]);
 	}
 
 	global_log->info() << "KDDecomposition: rebalancing finished" << endl;
@@ -1244,7 +1130,7 @@ void KDDecomposition::getOwningProcs(int low[KDDIM], int high[KDDIM], KDNode* de
 	// First find out whether the area intersects the area given by testNode
 	bool areasIntersect = true;
 	for (int dim = 0; dim < KDDIM; dim++) {
-		if (not (coversWholeDomain[dim])) { // TODO: check wheter this can be removed || _ownArea->_coversWholeDomain[dim])){
+		if (not (coversWholeDomain[dim])) { // TODO: check whether this can be removed || _ownArea->_coversWholeDomain[dim])){
 			if (overlap[dim]) {
 				if (high[dim] < testNode->_lowCorner[dim] && low[dim] > testNode->_highCorner[dim])
 					areasIntersect = false;
@@ -1308,3 +1194,93 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 
 }
 
+std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(Domain* domain,
+		const HaloRegion& haloRegion, double cutoff) {
+//TODO: change this method for support of midpoint rule, half shell, eighth shell, Neutral Territory
+	std::vector<CommunicationPartner> temp;
+	int ownLo[DIMgeom];
+	int ownHi[DIMgeom];
+	double shift[DIMgeom];
+
+	for (unsigned short d = 0; d < DIMgeom; d++) {
+		ownLo[d] = _ownArea->_lowCorner[d];
+		ownHi[d] = _ownArea->_highCorner[d];
+		shift[d] = 0.;
+	}
+
+	int regToSendLo[DIMgeom];
+	int regToSendHi[DIMgeom];
+
+	double rmin[3], rmax[3];
+	for (unsigned int d = 0; d < DIMgeom; d++) {  // put boundary options, such that everything lies within domain
+		// TODO: only works for FullShell!
+		// (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks,
+		// i.e. if cellsize is less than 1 cutoff radius)
+		if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
+			rmin[d] = haloRegion.rmin[d] + domain->getGlobalLength(d);
+			rmax[d] = haloRegion.rmax[d] + domain->getGlobalLength(d);
+			shift[d] = domain->getGlobalLength(d);
+		} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
+			rmin[d] = haloRegion.rmin[d] - domain->getGlobalLength(d);
+			rmax[d] = haloRegion.rmax[d] - domain->getGlobalLength(d);
+			shift[d] = -domain->getGlobalLength(d);
+		} else {
+			rmin[d] = haloRegion.rmin[d];
+			rmax[d] = haloRegion.rmax[d];
+		}
+	}
+
+	getCellIntCoordsFromRegionPeriodic(regToSendLo, regToSendHi, rmin, rmax, domain);
+
+	vector<int> ranks;
+	vector<int> ranges;
+	_decompTree->getOwningProcs(regToSendLo, regToSendHi, ranks, ranges);
+	int numNeighbours = ranks.size();
+	vector<int>::iterator indexIt = ranges.begin();
+	for (int n = 0; n < numNeighbours; ++n) {
+		int low[3];
+		int high[3];
+		for (int d = 0; d < 3; ++d) {
+			low[d] = *(indexIt++);
+			high[d] = *(indexIt++);
+			if (haloRegion.offset[d] != 0) {
+				assert(low[d] == high[d]); // TODO: only for FULLSHELL!!!
+			}
+		}
+		for (unsigned int d = 0; d < DIMgeom; d++) { // put boundary options, such that they lie around ownRegion again.
+			// TODO: only for FullShell! (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks
+			if (haloRegion.offset[d] < 0 && ownLo[d] == 0) {
+				low[d] -= _globalCellsPerDim[d];
+				high[d] -= _globalCellsPerDim[d];
+			} else if (haloRegion.offset[d] > 0 && ownHi[d] == _globalCellsPerDim[d] - 1) {
+				low[d] += _globalCellsPerDim[d];
+				high[d] += _globalCellsPerDim[d];
+			} else if (haloRegion.offset[d] == 0 && ownLo[d] < low[d]){
+				low[d]--;
+			} else if (haloRegion.offset[d] == 0 && ownHi[d] > high[d]){
+				high[d]++;
+			}
+		}
+
+		// region given by the current low-high range is the halo-range
+		double haloLow[3];
+		double haloHigh[3];
+		getCellBorderFromIntCoords(haloLow, haloHigh, low, high);
+
+		for (unsigned int d = 0; d < DIMgeom; d++) {
+			// shift for boundaryRegion (one cell)
+			low[d] -= haloRegion.offset[d];
+			high[d] -= haloRegion.offset[d];
+		}
+
+		double boundaryLow[3];
+		double boundaryHigh[3];
+		getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
+
+		temp.push_back(
+				CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset));
+
+	}
+
+	return temp;
+}
