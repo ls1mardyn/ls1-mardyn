@@ -1,6 +1,5 @@
 // file      : xsd/cxx/xml/bits/literals.ixx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_BITS_LITERALS_IXX
@@ -73,7 +72,7 @@ namespace xsd
 
         template <>
         inline const char*
-        nil<char> ()
+        nil_lit<char> ()
         {
           return "nil";
         }
@@ -199,7 +198,7 @@ namespace xsd
 
         template <>
         inline const wchar_t*
-        nil<wchar_t> ()
+        nil_lit<wchar_t> ()
         {
           return L"nil";
         }

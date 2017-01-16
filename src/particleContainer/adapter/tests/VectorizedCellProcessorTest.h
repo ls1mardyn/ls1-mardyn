@@ -34,6 +34,8 @@ class VectorizedCellProcessorTest : public utils::TestWithSimulationSetup {
 
 	TEST_METHOD(testWaterVectorization);
 
+	TEST_METHOD(testMultiComponentMultiPotentials);
+
 	TEST_SUITE_END();
 
 public:
@@ -112,6 +114,11 @@ public:
 	 * Scenario, containing 1 LJ and 3 charges.
 	 */
 	void testWaterVectorization();
+
+	/**
+	 * Scenario, containing 2 components.
+	 */
+	void testMultiComponentMultiPotentials();
 
 };
 #endif /* VECTORIZEDCELLPROCESSORTEST_H_ */

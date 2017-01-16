@@ -4,9 +4,8 @@
 #include <vector>
 
 #include "Cell.h"
-
-class Molecule;
-class CellDataSoA ;
+#include "particleContainer/adapter/CellDataSoA.h"
+#include "molecules/Molecule.h"
 
 //! @brief ParticleCell data structure.
 //! @author Martin Buchholz
@@ -39,6 +38,8 @@ class CellDataSoA ;
  * actions should be executed during CellProcessor applications.
  */
 class ParticleCell : public Cell {
+/*private:
+	ParticleCell(const ParticleCell& that);*/
 public:
 	/**
 	 * \brief Initialize data pointers to 0.
@@ -51,16 +52,21 @@ public:
 	 */
 	~ParticleCell() ;
 
-	//! removes all elements from the list molecules
-	void removeAllParticles();
+	//! removes and deallocates all elements
+	void deallocateAllParticles();
 
 	//! insert a single molecule into this cell
-	void addParticle(Molecule* particle_ptr);
+	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false);
 
-	//! return a reference to the list of molecules (molecule pointers) in this cell
-	std::vector<Molecule*>& getParticlePointers();
+	Molecule& moleculesAt(std::vector<Molecule>::size_type i) {
+		return _molecules.at(i);
+	}
 
-	bool deleteMolecule(unsigned long molid);
+	bool isEmpty() const;
+
+	bool deleteMoleculeByID(unsigned long molid);
+
+	bool deleteMoleculeByIndex(std::vector<Molecule>::size_type index);
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;
@@ -69,28 +75,93 @@ public:
 	 * \brief Get the structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	CellDataSoA* getCellDataSoA() const {
+	CellDataSoA& getCellDataSoA() {
 		return _cellDataSoA;
 	}
 
 	/**
-	 * \brief Set the sturcture of arrays for VectorizedCellProcessor.
-	 * \author Johannes Heckl
+	 * Returns the cell index
 	 */
-	void setCellDataSoA(CellDataSoA * p) {
-		_cellDataSoA = p;
+	unsigned long getCellIndex() {
+		return _cellIndex;
 	}
+	
+	/**
+	 * Sets the cell index. On one process, this index must be unique.
+	 * @param cellIndex
+	 */
+	void setCellIndex(unsigned long cellIndex){
+		_cellIndex = cellIndex;
+	}
+	
+	double getBoxMin(int d) const {
+		return _boxMin[d];
+	}
+
+	void setBoxMin(const double b[3]) {
+		for(int d=0; d< 3; ++d) {
+			_boxMin[d] = b[d];
+		}
+	}
+
+	double getBoxMax(int d) const {
+		return _boxMax[d];
+	}
+
+	void setBoxMax(const double b[3]) {
+		for (int d = 0; d < 3; ++d) {
+			_boxMax[d] = b[d];
+		}
+	}
+
+	/**
+	 * filter molecules which have left the box
+	 * @return field vector containing leaving molecules
+	 */
+	//std::vector<Molecule> & filterLeavingMolecules();
+
+	void preUpdateLeavingMolecules();
+
+	void updateLeavingMolecules(ParticleCell& otherCell);
+
+	void postUpdateLeavingMolecules();
+
+	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+
+    void buildSoACaches();
 
 private:
 	/**
-	 * \brief A list of pointers to the Molecules in this cell.
+	 * \brief lower left front corner
 	 */
-	std::vector<Molecule *> molecules;
+	double _boxMin[3];
+
+	/**
+	 * \brief upper right back corner
+	 */
+	double _boxMax[3];
+
+	/**
+	 * \brief A vector of pointers to the Molecules in this cell.
+	 */
+	std::vector<Molecule> _molecules;
+
+	/**
+	 * \brief A vector of molecules, which have left this cell.
+	 */
+	std::vector<Molecule> _leavingMolecules;
+
 	/**
 	 * \brief Structure of arrays for VectorizedCellProcessor.
 	 * \author Johannes Heckl
 	 */
-	CellDataSoA * _cellDataSoA;
+	CellDataSoA _cellDataSoA;
+
+	/**
+	 * \brief The index of the cell.
+	 * On one process every index must be unique.
+	 */
+	unsigned long _cellIndex;
 };
 
 #endif /* PARTICLE CELL_H_ */

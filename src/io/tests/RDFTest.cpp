@@ -11,7 +11,7 @@
 #include "Domain.h"
 #include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #include "particleContainer/LinkedCells.h"
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
@@ -35,7 +35,7 @@ RDFTest::~RDFTest() {
 
 void RDFTest::testRDFCountSequential12_LinkedCell() {
 	// original pointer will be freed by the tearDown()-method.
-	_domainDecomposition = new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3.inp", 1.8);
 	testRDFCountSequential12(moleculeContainer);
@@ -43,27 +43,12 @@ void RDFTest::testRDFCountSequential12_LinkedCell() {
 	delete _domainDecomposition;
 }
 
-/**
- * TODO: Somehow this test fails in case of MPI,
- * I suspect the issue to reside in AdaptiveSubCells.
- */
-void RDFTest::testRDFCountSequential12_AdaptiveCell() {
-	// original pointer will be freed by the tearDown()-method.
-#ifdef ENABLE_MPI
-	test_log->info() << "Not executing RDFTest::testRDFCountSequential12_AdaptiveCell(); Compile without MPI" << endl;
-#else
-	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-2x2x3.inp", 1.8);
-	testRDFCountSequential12(moleculeContainer);
-	delete moleculeContainer;
-#endif
-}
-
 void RDFTest::testRDFCountSequential12(ParticleContainer* moleculeContainer) {
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
-	vector<Component>* components = global_simulation->getEnsemble()->components();
+	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
+	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->update();
@@ -128,18 +113,12 @@ void RDFTest::testRDFCountLinkedCell() {
 	delete moleculeContainer;
 }
 
-void RDFTest::testRDFCountAdaptiveCell() {
-	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-12x12x12.inp", 1.8);
-	testRDFCount(moleculeContainer);
-	delete moleculeContainer;
-}
-
 void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
+	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 	
-	vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	moleculeContainer->deleteOuterParticles();
@@ -202,6 +181,9 @@ void RDFTest::testRDFCount(ParticleContainer* moleculeContainer) {
 
 
 void RDFTest::testSiteSiteRDFLinkedCell() {
+	if (_domainDecomposition->getNumProcs() > 8) {
+		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
+	}
 	ParticleContainer* moleculeContainer = initializeFromFile(ParticleContainerFactory::LinkedCell, "2clj-regular.inp", 3.5);
 	testSiteSiteRDF(moleculeContainer);
 	delete moleculeContainer;
@@ -209,15 +191,13 @@ void RDFTest::testSiteSiteRDFLinkedCell() {
 
 void RDFTest::testSiteSiteRDF(ParticleContainer* moleculeContainer) {
 
-	if (_domainDecomposition->getNumProcs() > 8) {
-		ASSERT_FAIL("RUN THIS TEST WITH <= 8 PROCESSORS!");
-	}
+	std::cout << "RDFTest::testSiteSiteRDF with " <<_domainDecomposition->getNumProcs()<<" procs" << std::endl;
 
 	ParticlePairs2PotForceAdapter handler(*_domain);
 	double cutoff = moleculeContainer->getCutoff();
-	LegacyCellProcessor cellProcessor(cutoff, cutoff, cutoff, &handler);
+	LegacyCellProcessor cellProcessor(cutoff, cutoff, &handler);
 
-	vector<Component>* components = global_simulation->getEnsemble()->components();
+	vector<Component>* components = global_simulation->getEnsemble()->getComponents();
 	ASSERT_EQUAL((size_t) 1, components->size());
 
 	_domainDecomposition->balanceAndExchange(true, moleculeContainer, _domain);

@@ -1,13 +1,8 @@
-INTRODUCTION:
--------------
-
-ls1 mardyn short description ...
-
-
 INSTALLATION:
 -------------
-To build mardyn with the default target using GNU compiler and MPI simply call 
-make in the src directory. 
+
+To build ls1 mardyn with the default target, using the GNU compiler
+and MPI, simply call make in the src directory. 
 
   cd src
   make
@@ -30,7 +25,7 @@ To display further information about the available suboptions for a configuratio
 
 
 USAGE:
--------
+------
 
 The basic command to run ls1-mardyn is as follows:
 
@@ -51,3 +46,23 @@ For example:
 
 cd examples
 mpirun -np 2 MarDyn lj40000_t300.cfg 100
+
+
+LS1 MARDYN CONTACT POINT:
+-------------------------
+
+Please address your questions and suggestions to the ls1 mardyn
+contact point:
+
+   E-mail: contact@ls1-mardyn.de
+
+   University of Kaiserslautern
+   Laboratory of Engineering Thermodynamics
+   Erwin-Schroedinger-Str. 44
+   D-67663 Kaiserslautern, Germany
+
+   Phone: +49 631 205 3227
+   Fax: +49 631 205 3835
+
+   http://www.ls1-mardyn.de/
+

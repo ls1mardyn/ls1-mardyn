@@ -266,7 +266,7 @@ void ControlRegionD::ControlDensity(DomainDecompBase* domainDecomp, Molecule* mo
         double m1 = mol->mass();
 
         // inertgas component
-        vector<Component>& vComponents = *(simulation->getEnsemble()->components());
+        vector<Component>& vComponents = *(simulation->getEnsemble()->getComponents());
         vector<Component>::iterator cit;
         Component* comp3;  // inertgas
 

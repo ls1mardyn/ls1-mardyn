@@ -1,7 +1,3 @@
-/*
- * M. T. Horsch, LS1/Mardyn project moderated by Martin Bernreuther
- * (C)2010 GNU General Public License
- */
 #include "PressureGradient.h"
 
 #include <cmath>

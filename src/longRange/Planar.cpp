@@ -1,18 +1,3 @@
-/*************************************************************************
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or (at *
- * your option) any later version.                                       *
- *                                                                       *
- * This program is distributed in the hope that it will be useful, but   *
- * WITHOUT ANY WARRANTY; without even the implied warranty of            * 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      *
- * General Public License for more details.                              *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the Free Software           *
- * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.   *
- *************************************************************************/
 
 #include "Domain.h"
 #include "longRange/Planar.h"
@@ -30,21 +15,21 @@
 using namespace std;
 using Log::global_log;
 
-Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation){
+Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation){
 	cutoff=cutoffLJ; 
 	_domain = domain;
 	_domainDecomposition = domainDecomposition;
 	_particleContainer = particleContainer;
 	_slabs = slabs;
 	
+	_smooth=true; // Deactivate this for transient simulations!
 	_smooth=false;  //true; <-- only applicable to static density profiles
 	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
-	vector<Component>&  components = *_simulation.getEnsemble()->components();
+	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
 	numLJ = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numDipole = (unsigned *) malloc (sizeof(unsigned)*numComp);
-	numCharge = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numLJSum=0;
 	numDipoleSum = 0;
 	numLJSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
@@ -55,19 +40,18 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	}
 	for (unsigned i =0; i< numComp; i++){
 		numLJ[i]=components[i].numLJcenters();
-		numDipole[i]=components[i].numDipoles();
-		numLJSum+=numLJ[i];
-		if (components[i].numCharges() != 0){
-			numDipole[i]++;
+		if (components[i].numDipoles() > 0 || components[i].numCharges() != 0){
+			numDipole[i]=1;
+		} else{
+			numDipole[i]=0;
 		}
-		numCharge[i]=components[i].numCharges();
+		numLJSum+=numLJ[i];
 		numDipoleSum+=numDipole[i];
 		for (unsigned j=i+1; j< numComp; j++){
 			numLJSum2[j]+=numLJ[i];
 			numDipoleSum2[j]+=numDipole[i];
 		}
 	}
-	
 	muSquare =  (double*)malloc(sizeof(double)*numDipoleSum);
 	uLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
 	vNLJ = (double*)malloc(sizeof(double)*_slabs*numLJSum);
@@ -84,7 +68,7 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	eLong =  (double*)malloc(sizeof(double)*numLJSum);
 	
 	unsigned counter=0;
-	for (unsigned i =0; i< numComp; i++){
+	for (unsigned i =0; i< numComp; i++){		// Determination of the elongation of the Lennard-Jones sites
 		for (unsigned j=0; j< components[i].numLJcenters(); j++){
 			const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[i].ljcenter(j));
 			double dX[3];
@@ -105,28 +89,28 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 		rhoDipole[i]=0;
 	}
 	
-	_dipole = true;
-	
 	unsigned dpcount=0;
 	for (unsigned i=0; i<numComp; i++){
-		for (unsigned j=0; j<numDipole[i]; j++){
-			const Dipole& dipolej = static_cast<const Dipole&> (components[i].dipole(j));
-			muSquare[dpcount]=dipolej.absMy()*dipolej.absMy();
-			dpcount++;
-		}
-		double my2=0.;
-		double my[3];
-		my[0] = my[1] = my[2] = 0.;
-		for (unsigned j=0; j<components[i].numCharges(); j++){
-			double tq = components[i].charge(j).q();
-			for (unsigned k=0; k<3; k++){
-				my[k] += tq*components[i].charge(j).r()[k];
+	//	for (unsigned j=0; j<numDipole[i]; j++){
+		if (numDipole[i] != 0){
+			double chargeBalance[3];
+			for (unsigned d=0; d < 3; d++) chargeBalance[d] = 0;
+			for (unsigned si=0; si < components[i].numCharges(); si++){
+				double tq = components[i].charge(si).q();
+				for (unsigned d=0; d < 3; d++) chargeBalance[d] += tq * components[i].charge(si).r()[d];
 			}
+			for (unsigned si=0; si < components[i].numDipoles(); si++){
+				double tmy = components[i].dipole(si).absMy();
+				for (unsigned d=0; d < 3; d++) chargeBalance[d] += tmy * components[i].dipole(si).e()[d];
+			}
+
+			// const Dipole& dipolej = static_cast<const Dipole&> (components[i].dipole(j));
+			double my2 = 0;
+			for (unsigned d=0; d < 3; d++)	my2 += chargeBalance[d]*chargeBalance[d];
+			muSquare[dpcount]=my2;//dipolej.absMy()*dipolej.absMy();
+			dpcount++;
+			cout << dpcount << "\tmu: " << muSquare[dpcount-1] << endl;
 		}
-		for (unsigned j=0; j<3; j++){
-			my2 += my[j]*my[j];
-		}
-		muSquare[i] += my2;
 	} 	
 	
 	ymax=_domain->getGlobalLength(1);
@@ -138,7 +122,6 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	V=ymax*_domain->getGlobalLength(0)*_domain->getGlobalLength(2); // Volume
 	
 	sint=_slabs;
-	
 	simstep = 0;
 	
 	temp=_domain->getTargetTemperature(0);
@@ -147,7 +130,6 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 
 void Planar::calculateLongRange(){
 	Molecule* tempMol;
-	
 	if (_smooth){
 		for( tempMol = _particleContainer->begin(); tempMol != _particleContainer->end(); tempMol = _particleContainer->next()){
 			unsigned cid=tempMol->componentid();
@@ -161,17 +143,9 @@ void Planar::calculateLongRange(){
 				}
 				rho_g[loc+_slabs*(i+numLJSum2[cid])]+=_slabs/V;
 			}
-			if (_dipole){
-				for (unsigned i=0; i<numDipole[cid]; i++){
-					int loc=(tempMol->r(1)+tempMol->dipole_d(i)[1])/delta;
-					if (loc < 0){
-						loc=loc+_slabs;
-					}
-					else if (loc > sint-1){
-						loc=loc-_slabs;
-					}
-					rhoDipole[loc+_slabs*(i+numDipoleSum2[cid])]+=_slabs/V;
-				}
+			if (numDipole[cid] != 0){
+				int loc=tempMol->r(1)/delta;
+				rhoDipole[loc+_slabs*(numDipoleSum2[cid])]+=_slabs/V;
 			}
 		}
 	} 
@@ -206,6 +180,10 @@ void Planar::calculateLongRange(){
 					}
 					rho_l[loc+_slabs*(i+numLJSum2[cid])]+=_slabs/V;
 				}
+				if (numDipole[cid] != 0){
+					int loc=tempMol->r(1)/delta;
+					rhoDipoleL[loc+_slabs*numDipoleSum2[cid]]+=_slabs/V;
+				}
 			}
 		}
 		else{
@@ -216,14 +194,6 @@ void Planar::calculateLongRange(){
 				rhoDipoleL[i]=rhoDipole[i]/(simstep+1);
 			}
 		}
-		
-		double sumRhoL=0;
-		double sumRho=0;
-		for (unsigned i=0; i<_slabs*numLJSum; i++){
-			sumRhoL+=rho_l[i]*i;
-			sumRho+=rho_l[i];
-		}
-		unsigned centerM = sumRhoL/sumRho;
 		
 		// Distribution of the Density Profile to every node
 		_domainDecomposition->collCommInit(_slabs*(numLJSum+numDipoleSum));
@@ -244,13 +214,11 @@ void Planar::calculateLongRange(){
 		
 		_domainDecomposition->collCommFinalize();
 
-		// Calculation of the force on every slab in the left hand side
-		// Calculation is done partwise on every node
 		for (unsigned ci = 0; ci < numComp; ++ci){		
 			for (unsigned cj = 0; cj < numComp; ++cj){	
 				ParaStrm& params = _domain->getComp2Params()(ci,cj);
 				params.reset_read();
-				for (unsigned si = 0; si < numLJ[ci]; ++si) {
+				for (unsigned si = 0; si < numLJ[ci]; ++si) { // Long Range Correction for Lennard-Jones sites
 					for (unsigned sj = 0; sj < numLJ[cj]; ++sj) {
 						double eps24;
 						double sig2;
@@ -262,7 +230,7 @@ void Planar::calculateLongRange(){
 						sig2=sqrt(sig2);
 						eps=eps24/24;
 						if (eLong[numLJSum2[ci]+si] ==0 && eLong[numLJSum2[cj]+sj] == 0){
-							centerCenter(sig2,eps,ci,cj,si,sj,centerM);
+							centerCenter(sig2,eps,ci,cj,si,sj);
 						}
 						else if (eLong[numLJSum2[ci]+si] ==0 || eLong[numLJSum2[cj]+sj] == 0){
 							centerSite(sig2,eps,ci,cj,si,sj);
@@ -273,7 +241,6 @@ void Planar::calculateLongRange(){
 					}
 				}
 		
-				if (_dipole)
 				for (unsigned si=0; si< numDipole[ci]; si++){	//Long Range Correction for Dipoles
 					for (unsigned sj=0; sj< numDipole[cj]; sj++){
 						 dipoleDipole(ci,cj,si,sj);	
@@ -338,42 +305,18 @@ void Planar::calculateLongRange(){
 			tempMol->Viadd(Via);
 //			tempMol->Uadd(uLJ[loc+i*s+_slabs*numLJSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
 		}
-		if (_dipole){
-			for (unsigned i=0; i<numDipole[cid]; i++){
-				int loc=(tempMol->r(1)+tempMol->dipole_d(i)[1])/delta;
-				if (loc < 0){
-					loc=loc+_slabs;
-				}
-				else if (loc > sint-1){
-					loc=loc-_slabs;
-				}
-				Fa[1]=fDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-				Upot_c+=uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-				Virial_c+=2*vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]+vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-				Via[0]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-				Via[1]=vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-				Via[2]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
-				tempMol->Fdipoleadd(i,Fa);
-				tempMol->Viadd(Via);
-	//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
-			}
-			for (unsigned i=0; i<numCharge[cid]; i++){
-				int loc=(tempMol->r(1)+tempMol->charge_d(i)[1])/delta;
-				if (loc < 0){
-					loc=loc+_slabs;
-				}
-				else if (loc > sint-1){
-					loc=loc-_slabs;
-				}
-				Fa[1]=fDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Upot_c+=uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Virial_c+=(2*vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]+vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]])/numCharge[cid];
-				Via[0]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Via[1]=vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Via[2]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				tempMol->Fdipoleadd(i,Fa);
-				tempMol->Viadd(Via);
-			}
+		if (numDipole[cid] != 0){
+			int loc = tempMol->r(1)/delta;
+			Fa[1]=fDipole[loc+_slabs*numDipoleSum2[cid]];
+			Upot_c+=uDipole[loc+_slabs*numDipoleSum2[cid]];
+			Virial_c+=2*vTDipole[loc+_slabs*numDipoleSum2[cid]]+vNDipole[loc+_slabs*numDipoleSum2[cid]];
+			Via[0]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
+			Via[1]=vNDipole[loc+_slabs*numDipoleSum2[cid]];
+			Via[2]=vTDipole[loc+_slabs*numDipoleSum2[cid]];
+			tempMol->Fadd(Fa); // Force is stored on the center of mass of the molecule!
+			tempMol->Viadd(Via);
+//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
+		//	}
 		}				
 	}
 
@@ -394,7 +337,7 @@ void Planar::calculateLongRange(){
 }
 
 
-void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj,double centerM){
+void Planar::centerCenter(double sig, double eps,unsigned ci,unsigned cj,unsigned si, unsigned sj){
 	double rc=sig/cutoff;
 	double rc2=rc*rc;
 	double rc6=rc2*rc2*rc2;
@@ -966,15 +909,9 @@ double Planar::lrcLJ(Molecule* mol){
 		}
 		potentialEnergy += uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
 	}
-	for (unsigned i=0;i<numCharge[cid]; i++){
-		int loc=(mol->r(1)+mol->charge_d(i)[1])/delta;
-		if (loc < 0){
-			loc=loc+_slabs;
-		}
-		else if (loc > sint-1){
-			loc=loc-_slabs;
-		}
-		potentialEnergy += uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-	}		
 	return potentialEnergy;
+}
+
+void Planar::directDensityProfile(){
+	_smooth = false;
 }

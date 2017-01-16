@@ -49,21 +49,21 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.changecurrentnode("..");
 
 	std::map<string, LatticeSystem> latticeSystemName2Enum;
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("triclinic",   triclinic));
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("monoclinic",  monoclinic));
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("orthorombic", orthorombic));
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("tetragonal",  tetragonal));
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("rhomboedral", rhomboedral));
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("hexagonal",   hexagonal));
-	latticeSystemName2Enum.insert(pair<string,LatticeSystem>("cubic",cubic));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("triclinic", triclinic));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("monoclinic", monoclinic));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("orthorombic", orthorombic));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("tetragonal", tetragonal));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("rhomboedral", rhomboedral));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("hexagonal", hexagonal));
+	latticeSystemName2Enum.insert(pair<string, LatticeSystem>("cubic", cubic));
 
 	std::map<string, LatticeCentering> latticeCenteringName2Enum;
-	latticeCenteringName2Enum.insert(pair<string,LatticeCentering>("primitive",  primitive));
-	latticeCenteringName2Enum.insert(pair<string,LatticeCentering>("body",  body));
-	latticeCenteringName2Enum.insert(pair<string,LatticeCentering>("face",  face));
-	latticeCenteringName2Enum.insert(pair<string,LatticeCentering>("base A",  base_A));
-	latticeCenteringName2Enum.insert(pair<string,LatticeCentering>("base B",  base_B));
-	latticeCenteringName2Enum.insert(pair<string,LatticeCentering>("base C",  base_C));
+	latticeCenteringName2Enum.insert(pair<string, LatticeCentering>("primitive", primitive));
+	latticeCenteringName2Enum.insert(pair<string, LatticeCentering>("body", body));
+	latticeCenteringName2Enum.insert(pair<string, LatticeCentering>("face", face));
+	latticeCenteringName2Enum.insert(pair<string, LatticeCentering>("base A", base_A));
+	latticeCenteringName2Enum.insert(pair<string, LatticeCentering>("base B", base_B));
+	latticeCenteringName2Enum.insert(pair<string, LatticeCentering>("base C", base_C));
 
 	_lattice.init(latticeSystemName2Enum[latticeSystem], latticeCenteringName2Enum[latticeCentering], a, b, c, dims);
 
@@ -77,7 +77,7 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.changecurrentnode(siteIter);
 		string componentid;
 		xmlconfig.getNodeValue("componentid", componentid);
-		m.cid = _simulation.getEnsemble()->component(componentid)->ID();
+		m.cid = _simulation.getEnsemble()->getComponent(componentid)->ID();
 		xmlconfig.getNodeValueReduced("coordinate@x", m.r[0]);
 		xmlconfig.getNodeValueReduced("coordinate@y", m.r[1]);
 		xmlconfig.getNodeValueReduced("coordinate@z", m.r[2]);
@@ -96,16 +96,17 @@ void GridGenerator::readXML(XMLfileUnits& xmlconfig) {
 	_generator.init(_lattice, _basis, _origin);
 }
 
-long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* /*lmu*/,
+		Domain* /*domain*/, DomainDecompBase* /*domainDecomp*/) {
 	unsigned long numMolecules = 0;
 	molecule_t m; /* molecule type as provided by the generator */
 
 	Ensemble* ensemble = _simulation.getEnsemble();
 	Random rng;
-
+	unsigned long inserted_this_proc = 0;
 	_simulation.getDomain()->disableComponentwiseThermostat();
 	while(_generator.getMolecule(&m) > 0) {
-		Component* component = ensemble->component(m.cid);
+		Component* component = ensemble->getComponent(m.cid);
 		Molecule molecule(0, component); /* Molecule type as provided by mardyn */
 		double v_abs = sqrt(/*kB=1*/ ensemble->T() / molecule.component()->m());
 		double phi, theta;
@@ -117,15 +118,24 @@ long unsigned int GridGenerator::readPhaseSpace(ParticleContainer* particleConta
 		v[2] = v_abs * cos(phi) * cos(theta);
 		molecule.setid(numMolecules);
 		for(int d = 0; d < 3; d++) {
+			assert(m.r[d] > 0 && m.r[d] < global_simulation->getDomain()->getGlobalLength(d));
 			molecule.setr(d, m.r[d]);
 			molecule.setv(d, v[d]);
 		}
 		Quaternion q(1.0, 0., 0., 0.); /* orientation of molecules has to be set to a value other than 0,0,0,0! */
 		molecule.setq(q);
-		particleContainer->addParticle(molecule);
+		bool inserted = particleContainer->addParticle(molecule);
 		numMolecules++;
+		if(inserted){
+			inserted_this_proc++;
+		}
+	}
+	if (inserted_this_proc == 0) {
+		global_log->warning() << "No molecules inserted!!" << std::endl;
 	}
 	global_log->info() << "Number of inserted molecules: " << numMolecules << endl;
 	particleContainer->updateMoleculeCaches();
+	global_simulation->getDomain()->setglobalNumMolecules(numMolecules);
+	global_simulation->getDomain()->setglobalRho(numMolecules / global_simulation->getEnsemble()->V() );
 	return numMolecules;
 }

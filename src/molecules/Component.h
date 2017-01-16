@@ -7,7 +7,7 @@
 #include "molecules/Site.h"
 
 /**
- * @brief Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcenter, Charge, Dipole, Quadrupole, Tersoff).
+ * @brief Class implementing molecules as rigid rotators consisting out of different interaction sites (LJcenter, Charge, Dipole, Quadrupole).
  *
  * @author Martin Bernreuther
  */
@@ -23,8 +23,7 @@ public:
 	unsigned int numSites() const {
 		return this->numLJcenters() + this->numCharges()
 		                            + this->numDipoles()
-		                            + this->numQuadrupoles()
-		                            + this->numTersoff();
+		                            + this->numQuadrupoles();
 	}
 	/** get number of oriented interaction sites (dipoles and quadrupoles) */
 	unsigned int numOrientedSites() const { return numDipoles() + numQuadrupoles(); }
@@ -32,7 +31,6 @@ public:
 	unsigned int numCharges() const { return _charges.size(); }
 	unsigned int numDipoles() const { return _dipoles.size(); }
 	unsigned int numQuadrupoles() const { return _quadrupoles.size(); }
-	unsigned int numTersoff() const { return _tersoff.size(); }
 
 	double m() const { return _m; } /**< get mass of the molecule */
 	double I11() const { return _Ipa[0]; }
@@ -57,9 +55,6 @@ public:
 	const std::vector<Quadrupole>& quadrupoles() const { return _quadrupoles; }
 	Quadrupole& quadrupole(unsigned int i) { return _quadrupoles[i]; }
 	const Quadrupole& quadrupole(unsigned int i) const { return _quadrupoles[i]; }
-	const std::vector<Tersoff>& tersoff() const { return _tersoff; }
-	Tersoff& tersoff(unsigned int i) { return _tersoff[i]; }
-	const Tersoff& tersoff(unsigned int i) const { return _tersoff[i]; }
 
 	void setNumMolecules(unsigned long num) { _numMolecules = num; }  /**< set the number of molecules for this component */
 	void incNumMolecules() { ++_numMolecules; }  /**< increase the number of molecules for this component by 1 */ 
@@ -79,17 +74,12 @@ public:
 	void addQuadrupole(Quadrupole& quadrupolesite);
 	void addQuadrupole(double x, double y, double z,
 	                   double eQx, double eQy, double eQz, double eQabs);
-	void addTersoff(Tersoff& tersoffsite);
-	void addTersoff(double x, double y, double z,
-	                double m, double A, double B, double lambda, double mu, double R,
-	                double S, double c, double d, double h, double n, double beta);
 
 	/** delete the last site stored in the vector */
 	void deleteLJCenter() { _ljcenters.pop_back() ;}
 	void deleteCharge() { _charges.pop_back() ;}
 	void deleteDipole() { _dipoles.pop_back() ;}
 	void deleteQuadrupole() { _quadrupoles.pop_back() ;}
-	void deleteTersoff() { _tersoff.pop_back() ;}
 
 	/**
 	 * To be called after sites have been deleted or the properties of sites have been changed.
@@ -104,9 +94,6 @@ public:
 
 	void writeVIM(std::ostream& ostrm);
 
-	double getTersoffRadius() { return this->maximalTersoffExternalRadius; }
-	void setTersoffRadius(double mTER) { this->maximalTersoffExternalRadius = mTER; }
-
 	void setE_trans(double E) { _E_trans = E; }
 	void setE_rot(double E) { _E_rot = E; }
 	void setT(double T) { _T = T; }
@@ -119,7 +106,16 @@ public:
 
 	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>
 	//! needed by the MegaMol output format
+	double getEps(unsigned int i) const {return _ljcenters[i].eps();}
 	double getSigma(unsigned int i) const {return _ljcenters[i].sigma();}
+
+	unsigned getLookUpId() const {
+		return _lookUpID;
+	}
+
+	void setLookUpId(unsigned lookUpId) {
+		_lookUpID = lookUpId;
+	}
 
 private:
 
@@ -133,7 +129,6 @@ private:
 	std::vector<Charge> _charges;
 	std::vector<Dipole> _dipoles;
 	std::vector<Quadrupole> _quadrupoles;
-	std::vector<Tersoff> _tersoff;
 	/* for performance reasons better(?) omit Site-class indirection and use cached values */
 	double _m; /**< total mass */
 	/** moments of inertia tensor
@@ -149,9 +144,21 @@ private:
 	double _E_rot; // rotational energy
 	double _T; // temperature
 
-	double maximalTersoffExternalRadius;
-
 	std::string _name;
+
+	/**
+	 * for use by the Vectorization:
+	 * a look-up table is set up there,
+	 * which needs to know about the sites of all present components
+	 *
+	 * 
+	 * \brief One LJ center enumeration start index for each component.
+	 * \details All the LJ centers of all components are enumerated.<br>
+	 * Comp1 gets indices 0 through n1 - 1, Comp2 n1 through n2 - 1 and so on.<br>
+	 * This is necessary for finding the respective parameters for each interaction<br>
+	 * between two centers.
+	 */
+	unsigned _lookUpID;
 };
 
 std::ostream& operator<<(std::ostream& stream, const Component& component);

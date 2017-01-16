@@ -40,8 +40,9 @@ void VTKGridWriter::readXML(XMLfileUnits& xmlconfig) {
 
 void  VTKGridWriter::doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
-			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu
+			Domain* /*domain*/, unsigned long simstep,
+			std::list<ChemicalPotential>* /*lmu*/,
+			std::map<unsigned, CavityEnsemble>* /*mcav*/
 	) {
 
 	LinkedCells* container = dynamic_cast<LinkedCells*>(particleContainer);
@@ -110,7 +111,7 @@ void  VTKGridWriter::outputParallelVTKFile(unsigned int numProcs, unsigned long 
 
 
 void  VTKGridWriter::initOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomposition, Domain* domain) {
+			DomainDecompBase* /*domainDecomposition*/, Domain* /*domain*/) {
 #ifndef NDEBUG
 	if (dynamic_cast<LinkedCells*>(particleContainer) == NULL) {
 		global_log->error() << "VTKGridWriter works only with LinkCells!" << std::endl;
@@ -184,5 +185,5 @@ void VTKGridWriter::getCellData(LinkedCells* container, VTKGridCell& cell) {
 }
 
 //! NOP
-void  VTKGridWriter::finishOutput(ParticleContainer* particleContainer,
-			DomainDecompBase* domainDecomp, Domain* domain) { }
+void  VTKGridWriter::finishOutput(ParticleContainer* /*particleContainer*/,
+			DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) { }

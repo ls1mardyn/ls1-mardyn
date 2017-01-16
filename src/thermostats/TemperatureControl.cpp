@@ -210,7 +210,7 @@ void ControlRegionT::Init()
     // <-- CALC_HEAT_SUPPLY
 }
 
-void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
+void ControlRegionT::CalcGlobalValues(DomainDecompBase* /*domainDecomp*/)
 {
 #ifdef ENABLE_MPI
 
@@ -257,7 +257,7 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
 
 }
 
-void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp)
+void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* /*domainDecomp*/)
 {
     // check componentID
     if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0

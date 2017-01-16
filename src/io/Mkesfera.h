@@ -16,10 +16,10 @@ public:
 	MkesferaGenerator(){}
 	~MkesferaGenerator(){}
 
-	void setPhaseSpaceFile(std::string filename){}
-	void setPhaseSpaceHeaderFile(std::string filename){}
+	void setPhaseSpaceFile(std::string /*filename*/){}
+	void setPhaseSpaceHeaderFile(std::string /*filename*/){}
 
-	void readPhaseSpaceHeader(Domain* domain, double timestep){}
+	void readPhaseSpaceHeader(Domain* /*domain*/, double /*timestep*/){}
 	unsigned long readPhaseSpace(ParticleContainer* particleContainer, std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp);
 
 	/** @brief Read in XML configuration for MkesferaGenerator and all its included objects.

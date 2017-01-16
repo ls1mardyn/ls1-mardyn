@@ -16,6 +16,9 @@
 #define VARFRACTION 0.07
 #define BOXOVERLOAD 1.3333
 
+//might be necessary to increase for exascale
+#define OVERLAPFACTOR 1.5
+
 using namespace std;
 using Log::global_log;
 
@@ -47,13 +50,53 @@ void MkesferaGenerator::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Droplet center: " << center[0] << ", " << center[0] << ", " << center[0] << endl;
 }
 
-long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleContainer,
+		list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* /*domainDecomp*/) {
 
-	unsigned fl_units;
+	int fl_units;
 	double rhomax = (rho_i > rho_o)? rho_i: rho_o;
 	double N_boxes = 8.0*R_o*R_o*R_o * (BOXOVERLOAD*rhomax) / 3.0;
 	fl_units = ceil(pow(N_boxes, 1.0/3.0));
 	double fl_unit = 2.0*R_o / (double)fl_units;
+
+
+
+
+	int fl_units_local[3];
+	double box_max[3];
+	//borders of local subregion in parallel computation
+	double box_min_local[3];
+	double box_max_local[3];
+	/* box min is assumed to be 0 */
+	int startx[3];
+	int endx[3];
+	for(int d = 0; d < 3; d++) {
+			box_max[d] = _simulation.getEnsemble()->domain()->length(d);
+	#ifdef ENABLE_MPI
+			box_max_local[d] = particleContainer->getBoundingBoxMax(d);
+			box_min_local[d] = particleContainer->getBoundingBoxMin(d);
+
+	#else
+			box_min_local[d] = 0;
+			fl_units_local[d] = fl_units;
+			box_max_local[d] = box_max[d];
+	#endif
+	}
+	for(int d = 0; d < 3; d++){
+		startx[d] = floor(box_min_local[d] / fl_unit - 0.5);
+		endx[d] = ceil(box_max_local[d] / fl_unit);
+
+	}
+	for(int d = 0; d < 3; d++){
+
+		endx[d] = min(fl_units - 1, endx[d] + 1);
+
+		startx[d] = max(0,startx[d]-1);
+
+
+		fl_units_local[d] = endx[d] - startx[d] + 1;
+
+	}
 
 	double T = _simulation.getEnsemble()->T();
 	global_log->info() << "Temperature: " << T << endl;
@@ -66,12 +109,12 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 		+ (int)(100.0*R_i)
 	);
 
-   bool**** fill = new bool***[fl_units];
-	for (unsigned int i = 0; i < fl_units; i++) {
-		fill[i] = new bool**[fl_units];
-		for (unsigned int j = 0; j < fl_units; j++) {
-			fill[i][j] = new bool*[fl_units];
-			for (unsigned int k = 0; k < fl_units; k++) {
+   bool**** fill = new bool***[fl_units_local[0]];
+	for (int i = 0; i < fl_units_local[0]; i++) {
+		fill[i] = new bool**[fl_units_local[1]];
+		for (int j = 0; j < fl_units_local[1]; j++) {
+			fill[i][j] = new bool*[fl_units_local[2]];
+			for (int k = 0; k < fl_units_local[2]; k++) {
 					fill[i][j][k] = new bool[3];
 				}
 		}
@@ -83,8 +126,7 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	double P_out = rho_o / boxdensity;
 	global_log->debug() << "Insertion probability: " << P_in << " inside, " << P_out << " outside" << endl;
 
-	double box_max[3];
-	/* box min is assumed to be 0 */
+	/* box min is assumed to be 0 (not in parallel!)*/
 	for(int d = 0; d < 3; d++) {
 		box_max[d] = _simulation.getEnsemble()->domain()->length(d);
 	}
@@ -95,21 +137,38 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	goffset[0][2] = 0.5; goffset[1][2] = 0.5; goffset[2][2] = 0.0;
 
 	unsigned N = 0;
-	unsigned idx[3];
+	int idx[3];
+
+
 	for(idx[0]=0; idx[0] < fl_units; idx[0]++) {
 		for(idx[1]=0; idx[1] < fl_units; idx[1]++) {
 			for(idx[2]=0; idx[2] < fl_units; idx[2]++) {
 				for(int p=0; p < 3; p++) {
 					double qq = 0.0;
 					double q[3];
+					bool notInBox = 0;
 					for(int d = 0; d < 3; d++) {
-						q[d]= (idx[d] + goffset[d][p])*fl_unit - center[d];
+						q[d]= (idx[d] + goffset[d][p])*fl_unit;
+						if(q[d]>box_max_local[d] or q[d] < box_min_local[d]){
+							notInBox = 1;
+
+						}
+						q[d] -=  center[d];
 						q[d] = q[d] - round(q[d]/box_max[d])*box_max[d];
 						qq += q[d]*q[d];
 					}
 					double tP = (qq > R_i*R_i)? P_out: P_in;
 					bool tfill = (tP >= rnd->rnd());
-					fill[idx[0]][idx[1]][idx[2]][p] = tfill;
+					if(notInBox){
+						continue;
+					}
+
+
+					if(idx[0] - startx[0] >= fl_units_local[0] or idx[1] - startx[1] >= fl_units_local[1] or idx[2] - startx[2] >= fl_units_local[2] or startx[0] > idx[0] or startx[1] > idx[1] or startx[2] > idx[2]){
+						global_log->error() << "Error in calculation of start and end values! \n";
+						exit(0);
+					}
+					fill[idx[0]-startx[0]][idx[1]-startx[1]][idx[2]-startx[2]][p] = tfill;
 					if(tfill) {
 						N++;
 					}
@@ -117,52 +176,62 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 			}
 		}
 	}
+
+	int startID = 0;
+#ifdef ENABLE_MPI
+	MPI_Exscan(&N, &startID, 1 , MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+	MPI_Allreduce(MPI_IN_PLACE, &N, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
 	global_log->debug() << "Filling " << N << " out of " << slots << " slots" << endl;
 	global_log->debug() << "Density: " << N / (8.0*R_o*R_o*R_o) << endl;
 
-	_simulation.initCanonical(10);
-	_simulation.initStatistics(3003003);
-
-	domain->setGlobalTemperature(T);
-	domain->setglobalNumMolecules(N);
-	domain->setglobalRho(N / _simulation.getEnsemble()->V() );
 
 	double v_avg = sqrt(3.0 * T);
 
-	Component* component = _simulation.getEnsemble()->component(0);
-	unsigned ID = 1;
-	for(idx[0]=0; idx[0] < fl_units; idx[0]++) {
-		for(idx[1]=0; idx[1] < fl_units; idx[1]++) {
-			for(idx[2]=0; idx[2] < fl_units; idx[2]++) {
+	Component* component = _simulation.getEnsemble()->getComponent(0);
+	unsigned ID = 1+ startID;
+	unsigned int numberOfMolecules = 0;
+	for(idx[0]= 0; idx[0] < fl_units; idx[0]++) {
+		for(idx[1]= 0; idx[1] < fl_units; idx[1]++) {
+			for(idx[2]= 0; idx[2] < fl_units; idx[2]++) {
 				for(unsigned p=0; p < 3; p++) {
-					if(fill[idx[0]][idx[1]][idx[2]][p]) {
-						//global_log->debug() << "Inserting: " << idx[0] << "," << idx[1] << "," << idx[2] << "; " << p << endl;
-						double q[3];
-						for(int d=0; d < 3; d++)
-						{
-							q[d] = (idx[d] + VARFRACTION*(rnd->rnd() - 0.5) + goffset[d][p])*fl_unit;
-							if(q[d] < 0.0) q[d] += 2.0*R_o;
-							else if(q[d] > 2.0*R_o) q[d] -= 2.0*R_o;
-						}
-						double phi = 2*M_PI * rnd->rnd();
-						double omega = 2*M_PI * rnd->rnd();
+					float random1 = rnd->rnd();
+					float random2 = rnd->rnd();
+					float random3 = rnd->rnd();//every MPI process needs to get the same random numbers for the same molecules
+					if(idx[0] >= startx[0] and idx[0] <= endx[0] and idx[1] >= startx[1] and idx[1] <= endx[1] and idx[2] >= startx[2] and idx[2] <= endx[2]){
+						if(fill[idx[0]-startx[0]][idx[1]-startx[1]][idx[2]-startx[2]][p]) {
+							//global_log->debug() << "Inserting: " << idx[0] << "," << idx[1] << "," << idx[2] << "; " << p << endl;
+							double q[3];
+							bool notInBox = 0;
+							for(int d=0; d < 3; d++)
+							{
+								q[d] = (idx[d] + VARFRACTION*(random1 - 0.5) + goffset[d][p])*fl_unit;
+								if(q[d] < box_min_local[d]) notInBox = 1;
+								else if(q[d] > box_max_local[d]) notInBox = 1;
+							}
+							if(notInBox) continue;
+							double phi = 2*M_PI * random2;
+							double omega = 2*M_PI * random3;
 
-						double v[3];
-						v[0] = v_avg*cos(phi)*cos(omega);
-						v[1] = v_avg*cos(phi)*sin(omega);
-						v[2] = v_avg*sin(phi);
-						Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
-						particleContainer->addParticle(molecule);
-						ID++;
+							double v[3];
+							v[0] = v_avg*cos(phi)*cos(omega);
+							v[1] = v_avg*cos(phi)*sin(omega);
+							v[2] = v_avg*sin(phi);
+							Molecule molecule(ID, component, q[0], q[1], q[2], v[0], v[1], v[2], 1, 0, 0, 0, 0, 0, 0);
+							particleContainer->addParticle(molecule);
+							ID++;
+							numberOfMolecules++;
+						}
 					}
 				}
 			}
 		}
 	}
 
-	for (unsigned int i = 0; i < fl_units; i++) {
-		for (unsigned int j = 0; j < fl_units; j++) {
-			for (unsigned int k = 0; k < fl_units; k++) {
+	for ( int i = 0; i < fl_units_local[0]; i++) {
+		for (int j = 0; j < fl_units_local[1]; j++) {
+			for (int k = 0; k < fl_units_local[2]; k++) {
 				delete[] fill[i][j][k];
 			}
 			delete[] fill[i][j];
@@ -170,7 +239,14 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 		delete[] fill[i];
 	}
 	delete[] fill;
-	global_log->info() << "Inserted number of molecules: " << ID << endl;
+#ifdef ENABLE_MPI
+	MPI_Allreduce(MPI_IN_PLACE, &numberOfMolecules, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+#endif
+	domain->setGlobalTemperature(T);
+	domain->setglobalNumMolecules(numberOfMolecules);
+	domain->setglobalRho(numberOfMolecules / _simulation.getEnsemble()->V() );
+
+	global_log->info() << "Inserted number of molecules: " << numberOfMolecules << endl;
 	return ID;
 }
 

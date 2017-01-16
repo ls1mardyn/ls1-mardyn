@@ -7,7 +7,7 @@
 
 #include "CanonicalEnsembleTest.h"
 #include "ensemble/CanonicalEnsemble.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "Domain.h"
 
@@ -27,14 +27,14 @@ void CanonicalEnsembleTest::UpdateNumMoleculesSequential() {
 #ifndef ENABLE_MPI
 
 	// original pointer will be deleted by tearDown()
-	_domainDecomposition = new DomainDecompDummy();
+	_domainDecomposition = new DomainDecompBase();
 
 	// the halo is cleared for freshly initialized particle containers.
-	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::AdaptiveSubCell, "1clj-regular-12x12x12.inp", 1.0);
-	vector<Component>* components= global_simulation->getEnsemble()->components();
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-12x12x12.inp", 1.0);
+	vector<Component>* components= global_simulation->getEnsemble()->getComponents();
 	CanonicalEnsemble ensemble(container, components);
 
-	Component* component = ensemble.component(0);
+	Component* component = ensemble.getComponent(0);
 
 	ensemble.updateGlobalVariable(NUM_PARTICLES);
 	// has the ensemble counted the right number of particles?

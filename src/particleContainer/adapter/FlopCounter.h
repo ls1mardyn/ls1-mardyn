@@ -1,5 +1,8 @@
 /**
  * \file
+ *
+ * TODO: documentation severely outdated
+ *
  * \brief A CellProcessor that produces Flop information.
  * \details The LJFlopCounter calculates the number of flops that are required to
  * calculate the LJ force calculation for the given Molecules. Then it calls another
@@ -34,13 +37,15 @@
  * \author Johannes Heckl
  */
 
-#ifndef LJFLOPCOUNTER_H_
-#define LJFLOPCOUNTER_H_
+#ifndef FLOPCOUNTER_H_
+#define FLOPCOUNTER_H_
 
 #include "CellProcessor.h"
 #include <memory>
 #include <vector>
 #include <stddef.h>
+#include <string>
+#include <sstream>
 #include "../../utils/Timer.h"
 
 class Molecule;
@@ -48,6 +53,7 @@ class Molecule;
 /**
  * \brief
  * \author Johannes Heckl
+ * \author Nikola Tchipev
  */
 class FlopCounter: public CellProcessor {
 public:
@@ -64,7 +70,7 @@ public:
 	/**
 	 * \brief Initializes the internal counters.
 	 */
-	void initTraversal(const size_t);
+	void initTraversal();
 
 	/**
 	 * \brief Only pass through to child.
@@ -76,7 +82,8 @@ public:
 	 */
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
-	double processSingleMolecule(Molecule* m1, ParticleCell& cell2) { return 0.0; }
+	double processSingleMolecule(Molecule* /*m1*/, ParticleCell& /*cell2*/) { return 0.0; }  // why 0.0 flops???
+	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) { return 0.0; }  // analogous to "process single molecule"
 
 	/**
 	 * \brief Count flops for this cell.
@@ -97,180 +104,171 @@ public:
 		return _totalFlopCount;
 	}
 
+	void resetCounters() {
+		_currentCounts.clear();
+//		_totalCounts.clear();
+		_totalFlopCount = 0.;
+		_myFlopCount = 0.;
+	}
+
+	double getMyFlopCount() const {
+		return _myFlopCount;
+	}
 private:
-	// The cutoff radius squared.
-	const double _cutoffRadiusSquare;
-	const double _LJcutoffRadiusSquare;
+	void handlePair(const Molecule& Mi, const Molecule& Mj,
+			bool addMacro = true);
 
-	typedef std::vector<Molecule *> MoleculeList;
-
-	// Collection of counts that are tracked.
-	class _Counts {
-	public:
-		void clear() {
-			calc_molDist = 0;
-			calc_LJ = 0;
-			calc_Charges = 0;
-			calc_Dipoles = 0;
-			calc_ChargesDipoles = 0;
-			calc_LJMacro = 0;
-			calc_ChargesMacro = 0;
-			calc_DipolesMacro = 0;
-			calc_ChargesDipolesMacro = 0;
-
-			calc_Quadrupoles = 0;
-			calc_ChargesQuadrupoles = 0;
-			calc_DipolesQuadrupoles = 0;
-			calc_QuadrupolesMacro = 0;
-			calc_ChargesQuadrupolesMacro = 0;
-			calc_DipolesQuadrupolesMacro = 0;
-
-
-		}
-		void addCounts(const _Counts c) {
-			calc_molDist += c.calc_molDist;
-			calc_LJ += c.calc_LJ;
-			calc_Charges += c.calc_Charges;
-			calc_Dipoles += c.calc_Dipoles;
-			calc_ChargesDipoles += c.calc_ChargesDipoles;
-			calc_LJMacro += c.calc_LJMacro;
-			calc_ChargesMacro += c.calc_ChargesMacro;
-			calc_DipolesMacro += c.calc_ChargesMacro;
-			calc_ChargesDipolesMacro += c.calc_ChargesDipolesMacro;
-
-			calc_Quadrupoles += c.calc_Quadrupoles;
-			calc_ChargesQuadrupoles += c.calc_ChargesQuadrupoles;
-			calc_DipolesQuadrupoles += c.calc_DipolesQuadrupoles;
-			calc_QuadrupolesMacro += c.calc_QuadrupolesMacro;
-			calc_ChargesQuadrupolesMacro += c.calc_ChargesQuadrupolesMacro;
-			calc_DipolesQuadrupolesMacro += c.calc_DipolesQuadrupolesMacro;
-		}
-		double calc_molDist;
-		double calc_LJ;
-		double calc_Charges;
-		double calc_Dipoles;
-		double calc_ChargesDipoles;
-		double calc_LJMacro;
-		double calc_ChargesMacro;
-		double calc_DipolesMacro;
-		double calc_ChargesDipolesMacro;
-
-		double calc_Quadrupoles;
-		double calc_ChargesQuadrupoles;
-		double calc_DipolesQuadrupoles;
-		double calc_QuadrupolesMacro;
-		double calc_ChargesQuadrupolesMacro;
-		double calc_DipolesQuadrupolesMacro;
+	// used for indices within an array!
+	enum PotentialIndices {
+		I_LJ = 0,
+		I_CHARGE,
+		I_CHARGE_DIPOLE,
+		I_DIPOLE,
+		I_CHARGE_QUADRUPOLE,
+		I_DIPOLE_QUADRUPOLE,
+		I_QUADRUPOLE,
+		NUM_POTENTIALS
 	};
 
-	_Counts _totalCounts;
-	_Counts _currentCounts;
-	double _totalFlopCount;
+	class _PotentialCounts {
+	public:
+		void init(const std::string& n, int kM, int mM, int sFTM, int sMM) {
+			_name = n;
+			clear();
+			_kernelMultiplier = kM;
+			_macroMultiplier = mM;
+			_sumForceTorqueMultiplier = sFTM;
+			_sumMacroMultiplier = sMM;
+		}
+		void clear() {
+			_numKernelCalls = 0.0;
+			_numMacroCalls = 0.0;
+		}
+		void addPotentialCounts(const _PotentialCounts& pc) {
+			_numKernelCalls += pc._numKernelCalls;
+			_numMacroCalls += pc._numMacroCalls;
+		}
+		void addKernelAndMacro(double valueBoth, bool addMacro) {
+			_numKernelCalls += valueBoth;
+			if (addMacro)
+				_numMacroCalls += valueBoth;
+		}
+		void collCommAppend();
+		void collCommGet();
+		double getKernelAndMacroFlops() const {
+			return _numKernelCalls * _kernelMultiplier + _numMacroCalls * _macroMultiplier;
+		}
+		double getForceTorqueSums() const {
+			return _numKernelCalls * _sumForceTorqueMultiplier;
+		}
+		double getMacroValueSums() const {
+			return _numMacroCalls * _sumMacroMultiplier;
+		}
+		std::string printNameKernelAndMacroFlops() const {
+			std::ostringstream ostr;
 
-	/**
-	 * \brief The calculation of the distance between 2 molecules.
-	 * \details 3 + 3 + 2 for 3 differences between molecule coordinates,
-	 * squaring these differences, and adding the 3 values together with 2 additions.
-	 */
-	static const size_t _flops_MolDist = 8;
-	/**
-	 * \brief The calculation of the distance between 2 centers.
-	 * \details Same as _flops_MolDist for distances between centers.
-	 */
-	static const size_t _flops_CenterDist = 8;
-	/**
-	 * \brief The calculation of the force between 2 LJ centers.
-	 * \details 1 for inverse of r squared, 8 for calculation of scale, 3 for applying the
-	 * scale.
-	 */
-	static const size_t _flops_LJKernel = 12;
-	/**
-	 * \brief The calculation of the force between 2 charges.
-	 * \details 1 for inverse of r squared, 1 for square root, 2 for calculation of scale, 3 for applying the
-	 * scale.
-	 */
-	static const size_t _flops_ChargesKernel = 7;
-	/**
-	 * \brief The calculation of the force between 2 dipoles.
-	 * \details 1 for inverse of r squared, 1 for square root, 96 for calculation of forces and torques
-	 * scale.
-	 */
-	static const size_t _flops_DipolesKernel = 98;
-	/**
-	 * \brief The calculation of the force between 1 charge and 1 dipole.
-	 * \details 1 for inverse of r squared, 1 for square root, 29 for calculation forces and torque
-	 * scale.
-	 */
-	static const size_t _flops_ChargesDipolesKernel = 31;
-	/**
-	 * \brief The calculation of the force between 2 quadrupoles.
-	 * \details 1 for inverse of r squared, 1 for square root, 126 for calculation of forces and torques
-	 * scale.
-	 */
-	static const size_t _flops_QuadrupolesKernel = 128;
-	/**
-	 * \brief The calculation of the force between 1 charge and 1 quadrupole.
-	 * \details 1 for inverse of r squared, 1 for square root, 47 for calculation forces and torque
-	 * scale.
-	 */
-	static const size_t _flops_ChargesQuadrupolesKernel = 49;
-	/**
-	 * \brief The calculation of the force between 1 charge and 1 quadrupole.
-	 * \details 1 for inverse of r squared, 1 for square root, 116 for calculation forces and torque
-	 * scale.
-	 */
-	static const size_t _flops_DipolesQuadrupolesKernel = 118;
-	/**
-	 * \brief Summing up the forces.
-	 * \details 3 for adding or subtracting the resulting force or torque to one molecule
-	 * the other.
-	 */
-	static const size_t _flops_ForcesSum = 3;
-	/**
-	 * \brief The calculation of Virial and UPot for LJ centers.
-	 * \details 2 for upot, 5 for virial.
-	 */
-	static const size_t _flops_LJMacroValues = 7;
-	/**
-	 * \brief The calculation of Virial and UPot for charges.
-	 * \details 0 for upot, 5 for virial.
-	 */
-	static const size_t _flops_ChargesMacroValues = 5;
-	/**
-	 * \brief The calculation of Virial and UPot and reaction field for dipoles.
-	 * \details 3 for upot, 5 for virial, 1 for rf.
-	 */
-	static const size_t _flops_DipolesMacroValues = 9;
-	/**
-	 * \brief The calculation of Virial and UPot
-	 * \details 1 for upot, 5 for virial
-	 */
-	static const size_t _flops_ChargesDipolesMacroValues = 6;
-	/**
-	 * \brief The calculation of Virial
-	 * \details 5 for virial.
-	 */
-	static const size_t _flops_QuadrupolesMacroValues = 5;
-	/**
-	 * \brief The calculation of Virial
-	 * \details 5 for virial.
-	 */
-	static const size_t _flops_ChargesQuadrupolesMacroValues = 5;
-	/**
-	 * \brief The calculation of Virial
-	 * \details 5 for virial.
-	 */
-	static const size_t _flops_DipolesQuadrupolesMacroValues = 5;
-	/**
-	 * \brief Summing up Virial and UPot.
-	 * \details 2 additions.
-	 */
-	static const size_t _flops_MacroSum = 2;
-	/**
-	 * \brief Summing up rf.
-	 * \details 1 addition.
-	 */
-	static const size_t _flops_MacroSumRF = 1;
+			if (_numKernelCalls == 0) { return ostr.str(); } // potential is very likely not present
+
+			ostr << " " << _name << ": kernel: " << _numKernelCalls * _kernelMultiplier
+				<< ", macro: " << _numMacroCalls * _macroMultiplier << std::endl;
+			return ostr.str();
+		}
+
+		/* Fields */
+		double _numKernelCalls;
+		double _numMacroCalls;
+
+		/* Multipliers */
+		int _kernelMultiplier;
+		int _macroMultiplier;
+		int _sumForceTorqueMultiplier;
+		int _sumMacroMultiplier;
+
+		/* name */
+		std::string _name;
+	};
+
+	class _Counts {
+	public:
+		_Counts();
+		void clear() {
+			_moleculeDistances = 0;
+
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				_potCounts[i].clear();
+			}
+		}
+		void addCounts(const _Counts c) {
+			_moleculeDistances += c._moleculeDistances;
+
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				_potCounts[i].addPotentialCounts(c._potCounts[i]);
+			}
+		}
+		void allReduce();
+		double sumKernelCalls() const {
+			double ret = 0.;
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				ret += _potCounts[i]._numKernelCalls;
+			}
+			return ret;
+		}
+		double sumMacros() const {
+			double ret = 0.;
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				ret += _potCounts[i]._numMacroCalls;
+			}
+			return ret;
+		}
+		double process() const;
+
+		double getMoleculeDistanceFlops() const {
+			return _moleculeDistances * _distanceMultiplier;
+		}
+		double getCenterDistanceFlops() const {
+			return sumKernelCalls() * _distanceMultiplier;
+		}
+		double getForceTorqueSumFlops() const {
+			double ret = 0.;
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				ret += _potCounts[i].getForceTorqueSums();
+			}
+			return ret;
+		}
+		double getMacroValueSumFlops() const {
+			double ret = 0.;
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				ret += _potCounts[i].getMacroValueSums();
+			}
+			return ret;
+		}
+		double getTotalFlops() const {
+			double ret = getMoleculeDistanceFlops() + getCenterDistanceFlops();
+			for (int i = 0; i < NUM_POTENTIALS; ++i) {
+				ret += _potCounts[i].getKernelAndMacroFlops();
+			}
+			ret += getForceTorqueSumFlops() + getMacroValueSumFlops();
+			return ret;
+		}
+		void addKernelAndMacro(PotentialIndices i, double valueBoth, bool addMacro) {
+			_potCounts[i].addKernelAndMacro(valueBoth, addMacro);
+		}
+		void initPotCounter(PotentialIndices i, const std::string& n, int kM, int mM, int sFTM, int sMM) {
+			_potCounts[i].init(n, kM, mM, sFTM, sMM);
+		}
+
+		/* Fields which are summed explicitly */
+		double _moleculeDistances;
+		int _distanceMultiplier;
+
+		_PotentialCounts _potCounts[NUM_POTENTIALS];
+	};
+
+	_Counts _currentCounts;
+//	_Counts _totalCounts; TODO: is this needed?
+	double _totalFlopCount;
+	double _myFlopCount;
+	bool _synchronized;
 };
 
-#endif
+#endif /* FLOPCOUNTER_H_ */

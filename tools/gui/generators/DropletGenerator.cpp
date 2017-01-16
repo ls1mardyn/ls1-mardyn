@@ -67,7 +67,7 @@ void DropletGenerator::setClusterParameters(double gas, double fluidDen,
 
 }
 
-void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
+void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double /*timestep*/) {
 		global_simulation->setSimulationTime(0);
 
 		domain->disableComponentwiseThermostat();
@@ -75,7 +75,7 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		domain->setGlobalLength(0, simBoxLength[0]);
 		domain->setGlobalLength(1, simBoxLength[1]);
 		domain->setGlobalLength(2, simBoxLength[2]);
-		vector<Component>& dcomponents = *(global_simulation->getEnsemble()->components());
+		vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
 
 		_logger->debug() << "DropletGenerator: set global length=[" << simBoxLength[0]
 		    << "," << simBoxLength[1] << "," <<  simBoxLength[2] << "]" << endl;
@@ -92,7 +92,7 @@ void DropletGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 unsigned long DropletGenerator::readPhaseSpace(
 		ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain,
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain,
 		DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
@@ -123,7 +123,7 @@ unsigned long DropletGenerator::readPhaseSpace(
 	domain->setglobalNumMolecules(
 			countMolecules(domainDecomp, particleContainer, partsPerComp));
 
-	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->components());
+	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
 	for (unsigned int i = 0; i < partsPerComp.size(); i++) {
 		dcomponents[i].setNumMolecules(partsPerComp[i]);
 		domain->setglobalRotDOF(

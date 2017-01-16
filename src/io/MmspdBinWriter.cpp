@@ -49,7 +49,7 @@ void MmspdBinWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void MmspdBinWriter::initOutput(ParticleContainer* particleContainer,
+void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
                            DomainDecompBase* domainDecomp, Domain* domain) {
 	stringstream filenamestream;
 	filenamestream << _outputPrefix;
@@ -174,7 +174,8 @@ void MmspdBinWriter::initOutput(ParticleContainer* particleContainer,
 
 void MmspdBinWriter::doOutput( ParticleContainer* particleContainer,
 		   DomainDecompBase* domainDecomp, Domain* domain,
-		   unsigned long simstep, std::list<ChemicalPotential>* lmu){
+		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
+		   map<unsigned, CavityEnsemble>* /*mcav*/){
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream, outputstream;
 		filenamestream << _outputPrefix;
@@ -260,4 +261,4 @@ void MmspdBinWriter::doOutput( ParticleContainer* particleContainer,
 	}
 }
 
-void MmspdBinWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+void MmspdBinWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}

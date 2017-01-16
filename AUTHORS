@@ -1,4 +1,4 @@
-ls1-MarDyn Authors
+ls1 mardyn authors
 ==================
 
 The first predecessor ("Mader program") of the present code was written by Daniel Mader.
@@ -12,25 +12,26 @@ The list shown below only includes authors who contributed subsequent to the sec
 Username    Name                        Affiliation(s)
 ----------- --------------------------- -------------------------
 
-hpcbern     Martin Bernreuther          HLRS, IPVS
-horsch      Martin Horsch               UKL, UPB
-hpcchris    Christoph Niethammer        HLRS
-eckhardw,   Wolfgang Eckhardt           TUM
-eckhardw-ro
-buchholm    Martin Buchholz             TUM
-sbecker     Stefan Becker               UKL
-hpcfalko    Falko Schmidt               HLRS
-hpcdjenz    Domenic Jenz                HLRS
-mheinen     Matthias Heinen             UPB
-swerth      Stephan Werth               UKL
-florian     Florian Grötzner            TUM
-kovacevt    Kovacevic Tijana            TUM
-weisslj     Johannes Weißl              TUM
-wolfe       Wolfgang Hölzl              TUM
-yutaka      Yutaka Nagashima            TUM
-mettie      Andre Füssel                HLRS
-rhobert     Robert Hajda                TUM
 dejoy       De-Joy Amankwah             UKL
+sbecker     Stefan Becker               UKL
+hpcbern     Martin Bernreuther          HLRS, IPVS
+buchholm    Martin Buchholz             TUM
+eckelsbach  Stefan Eckelsbach           UPB
+eckhardw    Wolfgang Eckhardt           TUM
+mettie      Andre Füssel                HLRS
+florian     Florian Grötzner            TUM
+rhobert     Robert Hajda                TUM
+wolfe       Wolfgang Hölzl              TUM
+mheinen     Matthias Heinen             UPB
+horsch      Martin Horsch               UKL, UPB
+hpcdjenz    Domenic Jenz                HLRS
+kovacevt    Tijana Kovacevic            TUM
+yutaka      Yutaka Nagashima            TUM
+hpcchris    Christoph Niethammer        HLRS
+hpcfalko    Falko Schmidt               HLRS
+tchipevn    Nikola Tchipev              TUM
+weisslj     Johannes Weißl              TUM
+swerth      Stephan Werth               UKL
 
 Affiliation abbreviations:
 --------------------------
@@ -41,3 +42,21 @@ TUM = Technische Universitaet Muenchen
 UKL = University of Kaiserslautern
 IPVS = IPVS-SgS, University of Stuttgart
 
+
+ls1 mardyn contact point
+========================
+
+Please address your questions and suggestions to the ls1 mardyn
+contact point:
+
+   E-mail: contact@ls1-mardyn.de
+
+   University of Kaiserslautern
+   Laboratory of Engineering Thermodynamics
+   Erwin-Schroedinger-Str. 44
+   D-67663 Kaiserslautern, Germany
+
+   Phone: +49 631 205 3227
+   Fax: +49 631 205 3835
+
+   http://www.ls1-mardyn.de/
