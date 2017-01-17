@@ -428,12 +428,12 @@ void MmpldWriter::InitSphereData()
 			_vfSphereRadius.push_back(0.5);
 
 		//                            R    G    B  alpha
-		_vaSphereColors.push_back( {255,   0,   0, 255} );  // red
-		_vaSphereColors.push_back( {  0, 205, 255, 255} );  // lightblue
-		_vaSphereColors.push_back( {255,   0, 255, 255} );  // blue
-		_vaSphereColors.push_back( {  0, 155,   0, 255} );  // green
-		_vaSphereColors.push_back( {105,   0, 205, 255} );  // purple
-		_vaSphereColors.push_back( {255, 125,   0, 255} );  // orange
+		_vaSphereColors.push_back( std::array<uint8_t, 4>{255,   0,   0, 255} );  // red
+		_vaSphereColors.push_back( std::array<uint8_t, 4>{  0, 205, 255, 255} );  // lightblue
+		_vaSphereColors.push_back( std::array<uint8_t, 4>{255,   0, 255, 255} );  // blue
+		_vaSphereColors.push_back( std::array<uint8_t, 4>{  0, 155,   0, 255} );  // green
+		_vaSphereColors.push_back( std::array<uint8_t, 4>{105,   0, 205, 255} );  // purple
+		_vaSphereColors.push_back( std::array<uint8_t, 4>{255, 125,   0, 255} );  // orange
 
 		return;
 	}
