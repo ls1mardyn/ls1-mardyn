@@ -23,7 +23,7 @@ PARTYPE ?= PAR
 # choose target
 # Show list of all available targets for the current config with cfg_help
 # Each config should at least provide the two targets RELEASE and DEBUG.
-TARGET ?= RELEASE
+TARGET ?= DEBUG
 
 # compile using depmode?
 DEPS ?= 0
@@ -37,7 +37,7 @@ VTK ?= 0
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
-VECTORIZE_CODE ?= SSE
+VECTORIZE_CODE ?= KNL_G_S
 # AOS      - LegacyCellProcessor
 # SSE      - VectorizedCellProcessor with SSE intrinsics (default)
 # AVX      - VectorizedCellProcessor with AVX intrinsics

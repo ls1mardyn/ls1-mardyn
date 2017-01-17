@@ -767,7 +767,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
 	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
-	const uint32_t * const soa1_ljc_id = soa1._ljc_id;
+	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
 	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
 	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
@@ -781,7 +781,7 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
 	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
 	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
-	const uint32_t * const soa2_ljc_id = soa2._ljc_id;
+	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 
@@ -999,16 +999,16 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 						const RealCalcVec m_r_y2 = MaskGatherChooser::load(soa2_ljc_m_r_y, j, lookupORforceMask);
 						const RealCalcVec m_r_z2 = MaskGatherChooser::load(soa2_ljc_m_r_z, j, lookupORforceMask);
 
-						const uint32_t id_i = soa1_ljc_id[i_ljc_idx];
+						const vcp_ljc_id_t id_i = soa1_ljc_id[i_ljc_idx];
 						RealCalcVec fx, fy, fz;
 						RealCalcVec Vx, Vy, Vz;
 
 						RealCalcVec eps_24;
 						RealCalcVec sig2;
-						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, (uint32_t)j, lookupORforceMask);
+						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, (vcp_ljc_id_t)j, lookupORforceMask);
 
 						RealCalcVec shift6;
-						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, (uint32_t)j, lookupORforceMask);
+						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, (vcp_ljc_id_t)j, lookupORforceMask);
 
 						_loopBodyLJ<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,
@@ -1057,10 +1057,10 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 
 						RealCalcVec eps_24;
 						RealCalcVec sig2;
-						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, j, lookupORforceMask);
+						unpackEps24Sig2<MaskGatherChooser>(eps_24, sig2, _eps_sig[id_i], soa2_ljc_id, (vcp_ljc_id_t)j, lookupORforceMask);
 
 						RealCalcVec shift6;
-						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, j, lookupORforceMask);
+						unpackShift6<MaskGatherChooser>(shift6, _shift6[id_i], soa2_ljc_id, (vcp_ljc_id_t)j, lookupORforceMask);
 
 						_loopBodyLJ<CalculateMacroscopic>(
 							m1_r_x, m1_r_y, m1_r_z, c_r_x1, c_r_y1, c_r_z1,

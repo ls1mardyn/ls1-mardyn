@@ -254,7 +254,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 	      vcp_real_calc * const soa1_ljc_V_y = soa1.ljc_V_yBegin();
 	      vcp_real_calc * const soa1_ljc_V_z = soa1.ljc_V_zBegin();
 	const int * const soa1_mol_ljc_num = soa1._mol_ljc_num;
-	const uint32_t * const soa1_ljc_id = soa1._ljc_id;
+	const vcp_ljc_id_t * const soa1_ljc_id = soa1._ljc_id;
 
 	const vcp_real_calc * const soa2_ljc_m_r_x = soa2.ljc_m_r_xBegin();
 	const vcp_real_calc * const soa2_ljc_m_r_y = soa2.ljc_m_r_yBegin();
@@ -268,7 +268,7 @@ void VectorizedLJP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, con
 	      vcp_real_calc * const soa2_ljc_V_x = soa2.ljc_V_xBegin();
 	      vcp_real_calc * const soa2_ljc_V_y = soa2.ljc_V_yBegin();
 	      vcp_real_calc * const soa2_ljc_V_z = soa2.ljc_V_zBegin();
-	const uint32_t * const soa2_ljc_id = soa2._ljc_id;
+	const vcp_ljc_id_t * const soa2_ljc_id = soa2._ljc_id;
 
 	vcp_lookupOrMask_single* const soa2_ljc_dist_lookup = my_threadData._ljc_dist_lookup;
 

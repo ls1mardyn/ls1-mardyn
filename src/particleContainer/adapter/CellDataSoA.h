@@ -43,7 +43,7 @@ public:
 	AlignedArrayTriplet<vcp_real_calc> _centers_V;
 
 	// entries per lj center
-	AlignedArray<uint32_t> _ljc_id;
+	AlignedArray<vcp_ljc_id_t> _ljc_id;
 
 	// entries per charge
 	AlignedArray<vcp_real_calc> _charges_q;

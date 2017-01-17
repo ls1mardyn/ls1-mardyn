@@ -28,18 +28,21 @@
 	#define VCP_PREC VCP_SPSP
 
 	typedef float vcp_real_calc;
+	typedef uint32_t vcp_ljc_id_t;
 	typedef float vcp_real_accum;
 
 #elif defined(MARDYN_SPDP)
 	#define VCP_PREC VCP_SPDP
 
 	typedef float vcp_real_calc;
+	typedef uint32_t vcp_ljc_id_t;
 	typedef double vcp_real_accum;
 
 #elif defined(MARDYN_DPDP)
 	#define VCP_PREC VCP_DPDP
 
 	typedef double vcp_real_calc;
+	typedef uint64_t vcp_ljc_id_t;
 	typedef double vcp_real_accum;
 
 #else
