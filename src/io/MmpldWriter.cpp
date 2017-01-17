@@ -7,6 +7,9 @@
 #include <fstream>
 #include <sstream>
 #include <vector>
+#include <array>
+#include <iostream>
+#include <iomanip>
 
 #include "Common.h"
 #include "Domain.h"
@@ -20,55 +23,11 @@
 // set mmpld file version. possible values: 100 or 102
 #define MMPLD_FILE_VERSION 100
 
-// set color (RGBA-Bytes) and radius (FLOAT) for each component
-
-// component id 0
-#define CID0_RADIUS 0.5
-#define CID0_RED 255
-#define CID0_GREEN 0
-#define CID0_BLUE 0
-#define CID0_ALPHA 255
-
-// component id 1
-#define CID1_RADIUS 0.553
-#define CID1_RED 0
-#define CID1_GREEN 0
-#define CID1_BLUE 255
-#define CID1_ALPHA 255
-
-// component id 2
-#define CID2_RADIUS 1.0
-#define CID2_RED 0
-#define CID2_GREEN 255
-#define CID2_BLUE 0
-#define CID2_ALPHA 255
-
-// component id 3
-#define CID3_RADIUS 1.0
-#define CID3_RED 255
-#define CID3_GREEN 255
-#define CID3_BLUE 0
-#define CID3_ALPHA 255
-
-// component id 4
-#define CID4_RADIUS 1.0
-#define CID4_RED 255
-#define CID4_GREEN 0
-#define CID4_BLUE 255
-#define CID4_ALPHA 255
-
-// component id 5
-#define CID5_RADIUS 1.0
-#define CID5_RED 0
-#define CID5_GREEN 255
-#define CID5_BLUE 255
-#define CID5_ALPHA 255
-
-
 using Log::global_log;
 using namespace std;
 
-MmpldWriter::MmpldWriter(unsigned long writeFrequency, string outputPrefix) {
+MmpldWriter::MmpldWriter(unsigned long writeFrequency, string outputPrefix)
+{
 	_outputPrefix = outputPrefix;
 	_writeFrequency = writeFrequency;
 
@@ -101,7 +60,39 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 
 //Header Information
 void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
-                           DomainDecompBase* domainDecomp, Domain* domain) {
+                           DomainDecompBase* domainDecomp, Domain* domain)
+{
+	// number of components / sites
+	_numComponents = (uint8_t)domain->getNumberOfComponents();
+	_numSitesPerComp  = new uint8_t[_numComponents];
+	_nCompSitesOffset = new uint8_t[_numComponents];
+	_numSitesTotal = 0;
+
+	vector<Component>& vComponents = *(_simulation.getEnsemble()->getComponents() );
+	vector<Component>::iterator cit;
+	cit=vComponents.begin();
+
+	_nCompSitesOffset[0] = 0;
+	for(uint8_t cid=0; cid<_numComponents; cid++)
+	{
+		uint8_t numSites = (*cit).numLJcenters();
+		_numSitesPerComp[cid] = numSites;
+		if(cid>0)
+			_nCompSitesOffset[cid] = _nCompSitesOffset[cid-1] + _numSitesPerComp[cid-1];
+		// total number of sites (all components)
+		_numSitesTotal += numSites;
+		cit++;
+	}
+
+#ifndef NDEBUG
+	for(uint8_t cid=0; cid<_numComponents; cid++)
+		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset[cid] << endl;
+#endif
+
+	// init radius and color of spheres
+	this->InitSphereData();
+	this->SetNumSphereTypes();
+
 	stringstream filenamestream;
 	filenamestream << _outputPrefix;
 
@@ -167,23 +158,10 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
   mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
     
   //clipping box
-  uint32_t numComponents = domain->getNumberOfComponents();
-  float inflateRadius = CID0_RADIUS;
-  if ((inflateRadius < CID1_RADIUS) && (numComponents > 1)){
-	  inflateRadius = CID1_RADIUS;
-  }
-  if ((inflateRadius < CID2_RADIUS) && (numComponents > 2)){
-	  inflateRadius = CID2_RADIUS;
-  }
-  if ((inflateRadius < CID3_RADIUS) && (numComponents > 3)){
-	  inflateRadius = CID3_RADIUS;
-  }
-  if ((inflateRadius < CID4_RADIUS) && (numComponents > 4)){
-	  inflateRadius = CID4_RADIUS;
-  }
-  if ((inflateRadius < CID5_RADIUS) && (numComponents > 5)){
-	  inflateRadius = CID5_RADIUS;
-  }
+  float inflateRadius = *(_vfSphereRadius.begin() );
+  std::vector<float>::iterator it;
+  for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
+	  if(inflateRadius < (*it) ) inflateRadius = (*it);
   
   for (unsigned short d = 0; d < 3; ++d){
 	  maxbox[d] = maxbox[d] + inflateRadius;
@@ -201,6 +179,7 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 #ifdef ENABLE_MPI
 	}
 #endif
+
 }
 
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
@@ -224,50 +203,38 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		int numprocs = domainDecomp->getNumProcs();
 		unsigned long numberParticles = particleContainer->getNumberOfParticles();
 		long outputsize = 0;
-		uint32_t numComponents = domain->getNumberOfComponents();
-		uint64_t numCompParticles[numComponents];
-		for (uint32_t i = 0; i < numComponents; ++i){
-			numCompParticles[i] = 0;
+
+        uint64_t numSpheresPerType[_numSphereTypes];
+        for (uint8_t ti = 0; ti < _numSphereTypes; ++ti){
+			numSpheresPerType[ti] = 0;
 		}
-		
-		//calculate number of particles per component
+
+		//calculate number of spheres per component|siteType
 		uint32_t molcid = 0;
-		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
-			if (numComponents > 1){
-				molcid = pos->componentid();
-			}else{
-				molcid = 0;
-			}
-			if (molcid >= numComponents){
-				//cout << "ERROR: Rank: " << rank << " molcid: " << molcid << endl;
-				global_log->debug() << "MmpldWriter Error: Molecule ID out of range!" << endl;
-				return;
-			}
-			numCompParticles[molcid] = numCompParticles[molcid] + 1;
-		}
+		for (Molecule* mol = particleContainer->begin(); mol != particleContainer->end(); mol = particleContainer->next())
+			this->CalcNumSpheresPerType(numSpheresPerType, mol);
 		
 		//distribute global component particle count
-		uint64_t globalNumCompParticles[numComponents];
+		uint64_t globalNumCompSpheres[_numSphereTypes];
 		if (rank == 0){
-			for (uint32_t i = 0; i < numComponents; ++i){
-				globalNumCompParticles[i] = numCompParticles[i];
+			for (uint32_t i = 0; i < _numSphereTypes; ++i){
+				globalNumCompSpheres[i] = numSpheresPerType[i];
 			}
 			MPI_Status status;
-			uint64_t numCompParticlesTmp[numComponents];
+			uint64_t numSpheresPerTypeTmp[_numSphereTypes];
 			for (int source = rank+1; source < numprocs; ++source){
-				int recvcount = sizeof(numCompParticlesTmp);
+				int recvcount = sizeof(numSpheresPerTypeTmp);
 				int recvtag = 1;
-				MPI_Recv(numCompParticlesTmp, recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
-				for (uint32_t i = 0; i < numComponents; ++i){
-					globalNumCompParticles[i] = globalNumCompParticles[i] + numCompParticlesTmp[i];
-				}
+				MPI_Recv(numSpheresPerTypeTmp, recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
+				for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
+					globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
 			}
 		}else{
 				int dest = 0;
-				int sendcount = sizeof(numCompParticles);
+				int sendcount = sizeof(numSpheresPerType);
 				int sendtag = 1;
 				MPI_Request request;
-				MPI_Isend(numCompParticles, sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
+				MPI_Isend(numSpheresPerType, sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
 		
@@ -275,16 +242,16 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
 		
 		
-		//write particle list for each component
-		for (uint32_t componentIndex = 0; componentIndex < numComponents; ++componentIndex){
+		//write particle list for each component|site (sphere type)
+		for (uint8_t nSphereTypeIndex=0; nSphereTypeIndex<_numSphereTypes; ++nSphereTypeIndex){
 			//add space for particle data
-			outputsize = (long)numCompParticles[componentIndex]*12;
+			outputsize = (long)numSpheresPerType[nSphereTypeIndex]*12;
 			
 			//add space for particle list header
 			if (rank == 0){
 				//add particle list header
 				outputsize += 18;
-				if (componentIndex == 0){
+				if (nSphereTypeIndex == 0){
 					
 					switch (MMPLD_FILE_VERSION){
 						case 100:
@@ -323,7 +290,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				offset += outputsize_get;
 			}
 
-			global_log->debug() << "MmpldWriter rank: " << rank << "; step: " << simstep << "; component: " << componentIndex << "; offset: " << offset << endl;
+			global_log->debug() << "MmpldWriter rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
 
 			MPI_File_seek(fh, offset, MPI_SEEK_END);
 
@@ -333,7 +300,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			if (rank == 0){
 				
 				//write frame header if we are before the first particle list
-				if (componentIndex == 0){
+				if (nSphereTypeIndex == 0){
 					//store file position for seek table
 					if (_frameCount < _numSeekEntries){
 						MPI_Offset entry;
@@ -360,7 +327,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 							break;
 					}
 					
-					uint32_t frameHeader_numPLists = htole32(numComponents);
+					uint32_t frameHeader_numPLists = htole32(_numSphereTypes);
 					MPI_File_write(fh, &frameHeader_numPLists, 1, MPI_UNSIGNED, &status);
 					
 				}
@@ -378,69 +345,16 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				
 				//set color data type to NONE (only global color used)
 				pListHeader_colorType = 0;
-				
-				
-				//select different colors depending on componend id
-				switch (componentIndex) {
-					case 0:
-						pListHeader_globalRadius = CID0_RADIUS;
-						pListHeader_red = CID0_RED;
-						pListHeader_green = CID0_GREEN;
-						pListHeader_blue = CID0_BLUE;
-						pListHeader_alpha = CID0_ALPHA;
-						break;
-						
-					case 1:
-						pListHeader_globalRadius = CID1_RADIUS;
-						pListHeader_red = CID1_RED;
-						pListHeader_green = CID1_GREEN;
-						pListHeader_blue = CID1_BLUE;
-						pListHeader_alpha = CID1_ALPHA;
-						break;
-						
-					case 2:
-						pListHeader_globalRadius = CID2_RADIUS;
-						pListHeader_red = CID2_RED;
-						pListHeader_green = CID2_GREEN;
-						pListHeader_blue = CID2_BLUE;
-						pListHeader_alpha = CID2_ALPHA;
-						break;
-						
-					case 3:
-						pListHeader_globalRadius = CID3_RADIUS;
-						pListHeader_red = CID3_RED;
-						pListHeader_green = CID3_GREEN;
-						pListHeader_blue = CID3_BLUE;
-						pListHeader_alpha = CID3_ALPHA;
-						break;
-						
-					case 4:
-						pListHeader_globalRadius = CID4_RADIUS;
-						pListHeader_red = CID4_RED;
-						pListHeader_green = CID4_GREEN;
-						pListHeader_blue = CID4_BLUE;
-						pListHeader_alpha = CID4_ALPHA;
-						break;
-						
-					case 5:
-						pListHeader_globalRadius = CID5_RADIUS;
-						pListHeader_red = CID5_RED;
-						pListHeader_green = CID5_GREEN;
-						pListHeader_blue = CID5_BLUE;
-						pListHeader_alpha = CID5_ALPHA;
-						break;
-					
-					default:
-						pListHeader_globalRadius = 1.0;
-						pListHeader_red = 128;
-						pListHeader_green = 128;
-						pListHeader_blue = 128;
-						pListHeader_alpha = 255;
-						break;
-				}
+
+				//select different colors depending on component|site id
+				pListHeader_globalRadius = _vfSphereRadius[nSphereTypeIndex];
+				pListHeader_red   = _vaSphereColors[nSphereTypeIndex][0];
+				pListHeader_green = _vaSphereColors[nSphereTypeIndex][1];
+				pListHeader_blue  = _vaSphereColors[nSphereTypeIndex][2];
+				pListHeader_alpha = _vaSphereColors[nSphereTypeIndex][3];
 				
 				//store componentParticleCount
-				pListHeader_particleCount = htole64(globalNumCompParticles[componentIndex]);
+				pListHeader_particleCount = htole64(globalNumCompSpheres[nSphereTypeIndex]);
 				
 				MPI_File_write(fh, &pListHeader_vortexType, 1, MPI_BYTE, &status);
 				MPI_File_write(fh, &pListHeader_colorType, 1, MPI_BYTE, &status);
@@ -452,17 +366,11 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				MPI_File_write(fh, &pListHeader_particleCount, 1, MPI_LONG_LONG_INT, &status);
 			}
 			
-			float molpos[3];
-			for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
-				if (numComponents > 1){
-					molcid = pos->componentid();
-				}else{
-					molcid = 0;
-				}
-				if (molcid == componentIndex){
-					for (unsigned short d = 0; d < 3; ++d) molpos[d] = (float)pos->r(d);
-					MPI_File_write(fh, molpos, 3, MPI_FLOAT, &status);
-				}
+			float spherePos[3];
+			for (Molecule* mol = particleContainer->begin(); mol != particleContainer->end(); mol = particleContainer->next())
+			{
+				if(true == GetSpherePos(spherePos, mol, nSphereTypeIndex) )
+					MPI_File_write(fh, spherePos, 3, MPI_FLOAT, &status);
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
 		}
@@ -511,3 +419,123 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		
 #endif
 }
+
+void MmpldWriter::InitSphereData()
+{
+	if(_bInitSphereData == ISD_USE_DEFAULT)
+	{
+		for(uint8_t i=0; i<6; i++)
+			_vfSphereRadius.push_back(0.5);
+
+		//                            R    G    B  alpha
+		_vaSphereColors.push_back( {255,   0,   0, 255} );  // red
+		_vaSphereColors.push_back( {  0, 205, 255, 255} );  // lightblue
+		_vaSphereColors.push_back( {255,   0, 255, 255} );  // blue
+		_vaSphereColors.push_back( {  0, 155,   0, 255} );  // green
+		_vaSphereColors.push_back( {105,   0, 205, 255} );  // purple
+		_vaSphereColors.push_back( {255, 125,   0, 255} );  // orange
+
+		return;
+	}
+
+	std::ifstream filein(_strSphereDataFilename.c_str(), ios::in);
+	std::string strLine, strToken;
+	std::string strTokens[6];
+	std::array<uint8_t, 4> arrColors;
+
+	while (getline (filein, strLine))
+	{
+		stringstream sstr;
+		sstr << strLine;
+//		cout << sstr.str() << endl;
+
+		uint8_t ti=0;
+		while (sstr >> strToken)
+			if(ti<6) strTokens[ti++] = strToken;
+
+		if(ti==6 && strTokens[0][0] != '#')
+		{
+			_vfSphereRadius.push_back( (float)(atof( strTokens[1].c_str() ) ) );
+			for(uint8_t ci=0; ci<4; ci++)
+				arrColors[ci] = (uint8_t)(atoi(strTokens[ci+2].c_str() ) );
+			_vaSphereColors.push_back(arrColors);
+		}
+	}
+
+#ifndef NDEBUG
+	std::vector<float>::iterator it; int i=0; cout << "radii" << endl;
+	for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
+		cout << i++ << ": " << (*it) << endl;
+
+	std::vector< std::array<uint8_t, 4> >::iterator cit; i=0; cout << "colors" << endl;
+	for(cit=_vaSphereColors.begin(); cit!=_vaSphereColors.end(); ++cit)
+	{
+		cout << i++ << ":";
+		for(int j=0; j<4; j++)
+			 cout << setw(4) << (int)(*cit).data()[j];
+		cout << endl;
+	}
+#endif
+}
+
+
+// derived classes
+void MmpldWriterSimpleSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
+{
+	uint8_t cid = mol->componentid();
+	numSpheresPerType[cid]++;
+}
+
+bool MmpldWriterSimpleSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex)
+{
+	uint8_t cid = mol->componentid();
+	for (unsigned short d = 0; d < 3; ++d) spherePos[d] = (float)mol->r(d);
+	return (cid == nSphereTypeIndex);
+}
+
+
+void MmpldWriterMultiSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
+{
+	uint8_t cid = mol->componentid();
+	uint8_t offset = _nCompSitesOffset[cid];
+	for (uint8_t si = 0; si < _numSitesPerComp[cid]; ++si)
+		numSpheresPerType[offset+si]++;
+}
+
+bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, uint8_t& nSphereTypeIndex)
+{
+	bool ret = false;
+	uint8_t cid = mol->componentid();
+	uint8_t numSites =  _numSitesPerComp[cid];
+	uint8_t offset  = _nCompSitesOffset[cid];
+	for (uint8_t si = 0; si < numSites; ++si)
+	{
+		if(offset+si == nSphereTypeIndex)
+		{
+			const std::array<double,3> arrSite = mol->ljcenter_d_abs(si);
+			const double* posSite = arrSite.data();
+			for (unsigned short d = 0; d < 3; ++d) spherePos[d] = (float)posSite[d];
+			ret = true;
+		}
+	}
+	return ret;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
