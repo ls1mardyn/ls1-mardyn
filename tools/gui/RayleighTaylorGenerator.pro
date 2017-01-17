@@ -1,7 +1,7 @@
 TEMPLATE = lib
 
-CONFIG += dll debug
-#CONFIG += staticlib debug mardyn
+#CONFIG += dll debug
+CONFIG += staticlib debug mardyn
 lessThan(QT_MAJOR_VERSION, 5) {
 	QMAKE_CXXFLAGS += -std=c++11
 } else {
