@@ -212,7 +212,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "AdaptiveSubCells no longer supported." << std::endl;
 				global_simulation->exit(-1);
 			} else {
-				global_log->error() << "UNKOWN DATASTRUCTURE: " << token << endl;
+				global_log->error() << "UNKNOWN DATASTRUCTURE: " << token << endl;
 				exit(1);
 			}
 		} else if (token == "output") {
@@ -659,7 +659,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "NVE") {
 			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
-			global_log->error() << "Not implemented" << endl;
+			global_log->error() << "NVE ensemble not implemented." << endl;
 			this->exit(1);
 		} else if (token == "initCanonical") {
 			inputfilestream >> _initCanonical;
