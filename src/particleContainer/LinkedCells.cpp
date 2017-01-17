@@ -1400,7 +1400,23 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(
 				+ _haloWidthInNumCells[dim];
 
 	}
-	return this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
+	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
+	// in very rare cases rounding is stupid, thus we need a check...
+	//TODO: check if this can in any way be done better...
+	if (_cells[cellIndex1d].testInBox(*molecule)) {
+		return cellIndex1d;
+	} else {
+		for (int dim = 0; dim < 3; dim++) {
+			if(molecule->r(dim)<_cells[cellIndex1d].getBoxMin(dim)){
+				cellIndex[dim]--;
+			}else if(molecule->r(dim)>=_cells[cellIndex1d].getBoxMax(dim)){
+				cellIndex[dim]++;
+			}
+		}
+		cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
+		assert(_cells[cellIndex1d].testInBox(*molecule));
+		return cellIndex1d;
+	}
 }
 
 long int LinkedCells::cellIndexOf3DIndex(long int xIndex, long int yIndex,
