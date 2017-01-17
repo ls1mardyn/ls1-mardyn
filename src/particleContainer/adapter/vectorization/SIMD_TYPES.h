@@ -11,6 +11,8 @@
 #ifndef  SIMD_TYPES_H
 #define  SIMD_TYPES_H
 
+#include <cstdint>
+
 // definitions for precision:
 #if defined(VCP_SPSP) or \
 	defined(VCP_SPDP) or \
@@ -26,18 +28,21 @@
 	#define VCP_PREC VCP_SPSP
 
 	typedef float vcp_real_calc;
+	typedef uint32_t vcp_ljc_id_t;
 	typedef float vcp_real_accum;
 
 #elif defined(MARDYN_SPDP)
 	#define VCP_PREC VCP_SPDP
 
 	typedef float vcp_real_calc;
+	typedef uint32_t vcp_ljc_id_t;
 	typedef double vcp_real_accum;
 
 #elif defined(MARDYN_DPDP)
 	#define VCP_PREC VCP_DPDP
 
 	typedef double vcp_real_calc;
+	typedef uint64_t vcp_ljc_id_t;
 	typedef double vcp_real_accum;
 
 #else
@@ -156,15 +161,16 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
 		#define VCP_VEC_SIZE 4u
 		#define VCP_VEC_SIZE_M1 3u
+		typedef uint32_t vcp_mask_single;
 	#else // VCP_PREC==VCP_DPDP
 		#define VCP_VEC_SIZE 2u
 		#define VCP_VEC_SIZE_M1 1u
+		typedef uint64_t vcp_mask_single;
 	#endif
 
 	#define VCP_VEC_WIDTH VCP_VEC_W_128
 
 	typedef __m128i vcp_mask_vec;
-	typedef unsigned long vcp_mask_single;
 	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;
@@ -185,15 +191,16 @@ typedef int countertype32;//int is 4Byte almost everywhere... replace with __int
 	#if VCP_PREC==VCP_SPSP or VCP_PREC==VCP_SPDP
 		#define VCP_VEC_SIZE 8u
 		#define VCP_VEC_SIZE_M1 7u
+		typedef uint32_t vcp_mask_single;
 	#else // VCP_PREC==VCP_DPDP
 		#define VCP_VEC_SIZE 4u
 		#define VCP_VEC_SIZE_M1 3u
+		typedef uint64_t vcp_mask_single;
 	#endif
 
 	#define VCP_VEC_WIDTH VCP_VEC_W_256	
 
 	typedef __m256i vcp_mask_vec;
-	typedef unsigned long vcp_mask_single;
 	#define VCP_INDICES_PER_LOOKUP_SINGLE 1
 	#define VCP_INDICES_PER_LOOKUP_SINGLE_M1 0
 	typedef vcp_mask_vec vcp_lookupOrMask_vec;

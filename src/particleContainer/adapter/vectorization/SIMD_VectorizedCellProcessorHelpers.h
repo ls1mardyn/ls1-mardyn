@@ -14,14 +14,6 @@
 #include "SIMD_TYPES.h"
 #include "utils/AlignedArray.h"
 
-#if VCP_VEC_TYPE==VCP_VEC_AVX2 or \
-	VCP_VEC_TYPE==VCP_VEC_KNC or \
-	VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or \
-	VCP_VEC_TYPE==VCP_VEC_KNL or \
-	VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-static_assert (sizeof(size_t) == 8, "Code assumes, that sizeof(size_t) is 8. Contact SCCS developers if this fails.");
-#endif /* sizeof(size_t) */
-
 /**
  * unpacks eps_24 and sig2 from the eps_sigI array according to the index array id_j (for mic+avx2: use gather)
  * @param eps_24 vector in which eps_24 is saved
@@ -33,10 +25,10 @@ static_assert (sizeof(size_t) == 8, "Code assumes, that sizeof(size_t) is 8. Con
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<vcp_real_calc>& eps_sigI,
-		const uint32_t* const id_j, const uint32_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
+		const vcp_ljc_id_t* const id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask __attribute__((unused))) {
 
 #if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
-	const uint32_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -114,24 +106,31 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 		sig2 = _mm256_i32gather_ps(eps_sigI+1, indices, 4);
 
 	#else /* VCP_DPDP */
-		__m128i indices = _mm_maskload_epi32((const int*)(id_j_shifted), _mm_set_epi32(~0, ~0, ~0, ~0));
-		__m256i indices64 = _mm256_cvtepi32_epi64(indices);
-		indices64 = _mm256_add_epi64(indices64, indices64); // only every second...
-		eps_24 = _mm256_i64gather_pd(eps_sigI, indices64, 8);
-		sig2 = _mm256_i64gather_pd(eps_sigI+1, indices64, 8);
+		__m256i indices = _mm256_maskload_epi64((const long long *)(id_j_shifted), MaskVec::ones());
+		indices = _mm256_add_epi64(indices, indices); // only every second...
+		eps_24 = _mm256_i64gather_pd(eps_sigI, indices, 8);
+		sig2 = _mm256_i64gather_pd(eps_sigI+1, indices, 8);
 
 	#endif /* VCP_PREC */
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC or VCP_VEC_TYPE==VCP_VEC_KNL
-	TODO: careful here! Review epi32 <-> epi64 and differences KNC-KNL ;
+	#if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_SPDP
+		__m512i indices = _mm512_load_epi32(id_j_shifted);
+		indices = _mm512_add_epi32(indices, indices);//only every second...
+		eps_24 = _mm512_i32gather_ps(indices, eps_sigI, 4);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		sig2 = _mm512_i32gather_ps(indices, eps_sigI+1, 4);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+	#else /*VCP_DPDP */
+		__m512i indices = _mm512_load_epi64(id_j_shifted);
+		indices = _mm512_add_epi64(indices, indices);//only every second...
+		eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
+		sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
+	#endif
 
-	__m512i indices = _mm512_load_epi64(id_j_shifted);
-	indices = _mm512_add_epi64(indices, indices);//only every second...
-	eps_24 = _mm512_i64gather_pd(indices, eps_sigI, 8);//eps_sigI+2*id_j[0],eps_sigI+2*id_j[1],...
-	sig2 = _mm512_i64gather_pd(indices, eps_sigI+1, 8);//eps_sigI+1+2*id_j[0],eps_sigI+1+2*id_j[1],...
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
-	TODO: careful here! Review epi32 <-> epi64 and differences KNC-KNL ;
+	#if VCP_PREC != VCP_DPDP
+			TODO: adapt for epi32
+	#endif
 
 	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the indices
@@ -159,9 +158,9 @@ void unpackEps24Sig2(RealCalcVec& eps_24, RealCalcVec& sig2, const AlignedArray<
 template <class MaskGatherChooser>
 static vcp_inline
 void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6I,
-		const uint32_t* id_j, const uint32_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
+		const vcp_ljc_id_t* id_j, const vcp_ljc_id_t& offset, const vcp_lookupOrMask_vec& lookupORforceMask) {
 #if VCP_VEC_TYPE != VCP_VEC_KNC_GATHER and VCP_VEC_TYPE != VCP_VEC_KNL_GATHER
-	const uint32_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
+	const vcp_ljc_id_t* id_j_shifted = id_j + offset;//this is the pointer, to where the stuff is stored.
 #endif
 
 #if VCP_VEC_TYPE==VCP_NOVEC //novec comes first. For NOVEC no specific types are specified -- use build in ones.
@@ -227,10 +226,8 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 		shift6 = _mm256_i32gather_ps(shift6I, indices, 4);
 
 	#else /* VCP_DPDP */
-		__m128i indices = _mm_maskload_epi32((const int *)(id_j_shifted), _mm_set_epi32(~0, ~0, ~0, ~0));
-		__m256i indices64 = _mm256_cvtepi32_epi64(indices);
-
-		shift6 = _mm256_i64gather_pd(shift6I, indices64, 8);
+		__m256i indices = _mm256_maskload_epi64((const long long *)(id_j_shifted), MaskVec::ones());
+		shift6 = _mm256_i64gather_pd(shift6I, indices, 8);
 	#endif
 
 
@@ -240,6 +237,9 @@ void unpackShift6(RealCalcVec& shift6, const AlignedArray<vcp_real_calc>& shift6
 	shift6 = _mm512_i64gather_pd(indices, shift6I, 8);//gather shift6
 
 #elif VCP_VEC_TYPE==VCP_VEC_KNC_GATHER or VCP_VEC_TYPE==VCP_VEC_KNL_GATHER
+	#if VCP_PREC != VCP_DPDP
+			TODO: adapt for epi32
+	#endif
 
 	#if VCP_VEC_TYPE==VCP_VEC_KNC_GATHER
 		__m512i indices = _mm512_i32logather_epi64(lookupORforceMask, id_j, 8);//gather id_j using the lookupindices
