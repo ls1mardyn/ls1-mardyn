@@ -794,11 +794,35 @@ void Simulation::prepare_start() {
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
     // Init NEMD feature objects
-    if(_distControl != NULL)
-        _distControl->Init(_domainDecomposition, _domain, _moleculeContainer);
+    if(NULL != _distControl)
+        _distControl->Init(_moleculeContainer);
 
-    if(_regionSampling != NULL)
-        _regionSampling->Init(_domain);
+    // mheinen 2016-11-03 --> DISTANCE_CONTROL
+    if(NULL != _distControl)
+    {
+		_distControl->UpdatePositionsInit(_moleculeContainer);
+    	_distControl->WriteData(0);
+    }
+    // <-- DISTANCE_CONTROL
+
+    // Init control instances (data structures)
+    if(NULL != _regionSampling)
+    {
+    	_regionSampling->PrepareRegionSubdivisions();
+        _regionSampling->Init();
+    }
+
+    if(NULL != _temperatureControl)
+    {
+		_temperatureControl->PrepareRegionSubdivisions();
+    	_temperatureControl->PrepareRegionDataStructures();
+    }
+
+    if(NULL != _densityControl)
+    {
+    	_densityControl->Init(_densityControl->GetControlFreq() );
+    	_densityControl->CheckRegionBounds();
+    }
 }
 
 void Simulation::simulate() {
@@ -906,11 +930,18 @@ void Simulation::simulate() {
         unsigned long nNumMoleculesDeletedLocal = 0;
         unsigned long nNumMoleculesDeletedGlobal = 0;
 
-        if( _densityControl != NULL && _densityControl->ProcessIsRelevant() &&
+        if( _densityControl != NULL  &&
             _densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
             _simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
         {
+        	/*
+			// init MPI
+        	_densityControl->InitMPI();
 
+        	// only relevant processes should do the following
+            if( !_densityControl->ProcessIsRelevant() )
+            	break;
+        	 */
             Molecule* tM;
 
             // init density control
@@ -924,13 +955,13 @@ void Simulation::simulate() {
                  tM  = _moleculeContainer->next() )
             {
                 // measure density
-                _densityControl->MeasureDensity(tM, _domainDecomposition, _simstep);
+                _densityControl->MeasureDensity(tM, _simstep);
 
     //                nNumMoleculesLocal++;
             }
 
             // calc global values
-            _densityControl->CalcGlobalValues(_domainDecomposition, _simstep);
+            _densityControl->CalcGlobalValues(_simstep);
 
 
             bool bDeleteMolecule;
@@ -942,7 +973,7 @@ void Simulation::simulate() {
                 bDeleteMolecule = false;
 
                 // control density
-                _densityControl->ControlDensity(_domainDecomposition, tM, this, _simstep, bDeleteMolecule);
+                _densityControl->ControlDensity(tM, this, _simstep, bDeleteMolecule);
 
 
                 if(true == bDeleteMolecule)
@@ -956,7 +987,8 @@ void Simulation::simulate() {
                 }
 
             }
-
+            // write out deleted molecules data
+            _densityControl->WriteDataDeletedMolecules(_simstep);
         }
 
         // update global number of particles
@@ -980,50 +1012,15 @@ void Simulation::simulate() {
                  tM  = _moleculeContainer->next() )
             {
                 // sample density profile
-                _distControl->SampleDensityProfile(tM);
+                _distControl->SampleProfiles(tM);
             }
 
             // determine interface midpoints and update region positions
-            _distControl->UpdatePositions(_simstep, _domain);
-
-
-            // update CV positions
-            if(_densityControl != NULL)
-            {
-              // left CV
-              _densityControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetCVLeft() );
-
-              // right CV
-              _densityControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetCVRight() );
-            }
-
-            // update thermostat positions
-            if(_temperatureControl != NULL)
-            {
-                // left thermostat region (inertgas)
-                _temperatureControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidLeft() );
-
-                // middle thermostat region (liquid film, non-volatile component)
-                _temperatureControl->GetControlRegion(2)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
-                _temperatureControl->GetControlRegion(2)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
-
-                // left thermostat region (inertgas)
-                _temperatureControl->GetControlRegion(3)->SetLowerCorner(1, _distControl->GetInterfaceMidRight() );
-            }
-
-            // update drift control positions
-            if(_driftControl != NULL)
-            {
-                // left
-                _driftControl->GetControlRegion(1)->SetLowerCorner(1, _distControl->GetInterfaceMidLeft() );
-
-                // right
-                _driftControl->GetControlRegion(1)->SetUpperCorner(1, _distControl->GetInterfaceMidRight() );
-            }
+            _distControl->UpdatePositions(_simstep);
 
             // write data
-            _distControl->WriteData(_domainDecomposition, _domain, _simstep);
-            _distControl->WriteDataDensity(_domainDecomposition, _domain, _simstep);
+            _distControl->WriteData(_simstep);
+            _distControl->WriteDataProfiles(_simstep);
 
 
             // align system center of mass
@@ -1031,10 +1028,11 @@ void Simulation::simulate() {
                  tM != _moleculeContainer->end();
                  tM  = _moleculeContainer->next() )
             {
-                _distControl->AlignSystemCenterOfMass(_domain, tM, _simstep);
+                _distControl->AlignSystemCenterOfMass(tM, _simstep);
             }
         }
         // <-- DISTANCE_CONTROL
+
 
 		// activate RDF sampling
 		if ((_simstep >= _initStatistics) && _rdf != NULL) {
@@ -1254,13 +1252,13 @@ void Simulation::simulate() {
                  tM  = _moleculeContainer->next() )
             {
                 // measure drift
-                _driftControl->MeasureDrift(tM, _domainDecomposition, _simstep);
+                _driftControl->MeasureDrift(tM, _simstep);
 
 //                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
             }
 
             // calc global values
-            _driftControl->CalcGlobalValues(_domainDecomposition, _simstep);
+            _driftControl->CalcGlobalValues(_simstep);
 
             // calc scale factors
             _driftControl->CalcScaleFactors(_simstep);
@@ -1382,7 +1380,7 @@ void Simulation::simulate() {
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
         else if ( _temperatureControl != NULL)
         {
-            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
+            _temperatureControl->DoLoopsOverMolecules(_moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
 		
