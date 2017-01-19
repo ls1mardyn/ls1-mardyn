@@ -44,7 +44,6 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 	numComp=components.size();
 	numLJ = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numDipole = (unsigned *) malloc (sizeof(unsigned)*numComp);
-	numCharge = (unsigned *) malloc (sizeof(unsigned)*numComp);
 	numLJSum=0;
 	numDipoleSum = 0;
 	numLJSum2 = (unsigned *) malloc (sizeof(unsigned)*numComp);
@@ -57,10 +56,6 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 		numLJ[i]=components[i].numLJcenters();
 		numDipole[i]=components[i].numDipoles();
 		numLJSum+=numLJ[i];
-		if (components[i].numCharges() != 0){
-			numDipole[i]++;
-		}
-		numCharge[i]=components[i].numCharges();
 		numDipoleSum+=numDipole[i];
 		for (unsigned j=i+1; j< numComp; j++){
 			numLJSum2[j]+=numLJ[i];
@@ -114,19 +109,6 @@ Planar::Planar(double cutoffT, double cutoffLJ, Domain* domain, DomainDecompBase
 			muSquare[dpcount]=dipolej.absMy()*dipolej.absMy();
 			dpcount++;
 		}
-		double my2=0.;
-		double my[3];
-		my[0] = my[1] = my[2] = 0.;
-		for (unsigned j=0; j<components[i].numCharges(); j++){
-			double tq = components[i].charge(j).q();
-			for (unsigned k=0; k<3; k++){
-				my[k] += tq*components[i].charge(j).r()[k];
-			}
-		}
-		for (unsigned j=0; j<3; j++){
-			my2 += my[j]*my[j];
-		}
-		muSquare[i] += my2;
 	} 	
 	
 	ymax=_domain->getGlobalLength(1);
@@ -356,23 +338,6 @@ void Planar::calculateLongRange(){
 				tempMol->Fdipoleadd(i,Fa);
 				tempMol->Viadd(Via);
 	//			tempMol->Uadd(uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]);	// Storing potential energy onto the molecules is currently not implemented!
-			}
-			for (unsigned i=0; i<numCharge[cid]; i++){
-				int loc=(tempMol->r(1)+tempMol->charge_d(i)[1])/delta;
-				if (loc < 0){
-					loc=loc+_slabs;
-				}
-				else if (loc > sint-1){
-					loc=loc-_slabs;
-				}
-				Fa[1]=fDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Upot_c+=uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Virial_c+=(2*vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]+vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]])/numCharge[cid];
-				Via[0]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Via[1]=vNDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				Via[2]=vTDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-				tempMol->Fdipoleadd(i,Fa);
-				tempMol->Viadd(Via);
 			}
 		}				
 	}
@@ -966,15 +931,5 @@ double Planar::lrcLJ(Molecule* mol){
 		}
 		potentialEnergy += uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]];
 	}
-	for (unsigned i=0;i<numCharge[cid]; i++){
-		int loc=(mol->r(1)+mol->charge_d(i)[1])/delta;
-		if (loc < 0){
-			loc=loc+_slabs;
-		}
-		else if (loc > sint-1){
-			loc=loc-_slabs;
-		}
-		potentialEnergy += uDipole[loc+i*_slabs+_slabs*numDipoleSum2[cid]]/numCharge[cid];
-	}		
 	return potentialEnergy;
 }

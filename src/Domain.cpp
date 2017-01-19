@@ -472,8 +472,8 @@ void Domain::writeCheckpoint( string filename,
 		DomainDecompBase* domainDecomp )
 {
 	domainDecomp->assertDisjunctivity(particleContainer);
-	if(!this->_localRank)
-	{
+	/* Rank 0 writes file header */
+	if(0 == this->_localRank) {
 		ofstream checkpointfilestream(filename.c_str());
 		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 		checkpointfilestream << "\n";
@@ -504,6 +504,8 @@ void Domain::writeCheckpoint( string filename,
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
 		checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
 		checkpointfilestream << "# rcT\t" << global_simulation->getTersoffCutoff() << "\n";
+                checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <martin.horsch@mv.uni-kl.de>.\n# \n";
+
 #endif
 		if(this->_globalUSteps > 1)
 		{

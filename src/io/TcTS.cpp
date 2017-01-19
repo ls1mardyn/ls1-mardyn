@@ -110,9 +110,6 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 			<< " = " << slots[l] << " slots (ideally " << N_id[l] << ")" << endl;
 	}
 
-	_simulation.initCanonical(10);
-	_simulation.initStatistics(3003003);
-
 	double loffset[3][2];
 	loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
 	loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;

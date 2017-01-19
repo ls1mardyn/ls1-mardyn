@@ -74,35 +74,42 @@
     </algorithm>
 
     <output>
-    <!--
+
       <outputplugin name="SysMonOutput">
         <expression>procloadavg:loadavg1</expression>
         <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
         <expression>procselfstatm:size 1048576. /</expression>
         <writefrequency>10</writefrequency>
       </outputplugin>
-      -->
+
       <outputplugin name="Resultwriter">
         <writefrequency>10</writefrequency>
         <outputprefix>mkesfera</outputprefix>
       </outputplugin>
+
       <!--
       <outputplugin name="CheckpointWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>mkesfera</outputprefix>
       </outputplugin>
       -->
-    <!--
+
+      <!--
       <outputplugin name="MPICheckpointWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>mkesfera</outputprefix>
         <appendTimestamp>1</appendTimestamp>
+        <datarep>native</datarep>
+        <measureTime>1</measureTime>
       </outputplugin>
       -->
+
+      <!--
       <outputplugin name="PovWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>mkesfera</outputprefix>
       </outputplugin>
+      -->
       
     </output>
 

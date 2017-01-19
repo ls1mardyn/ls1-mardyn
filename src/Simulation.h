@@ -273,12 +273,6 @@ public:
 	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
 	void setTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
 
-	/** Set the maximum molecule ID. */
-	void setMaxID (unsigned long id) { maxid = id; }
-	/** Get the maximum molecule ID. */
-	unsigned long getMaxID () const { return maxid; }
-
-
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -325,6 +319,7 @@ public:
 	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
 	double getSimulationTime(){ return _simulationTime; }
 
+	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
 
 private:
@@ -332,15 +327,10 @@ private:
 
 	double _simulationTime; /**< Simulation time t in reduced units */
 
-	/** enum to get rid of a dynamic cast. With the xml format, there won't be any
-	 * need for this hack then.
-	 */
-	enum ParticleContainerType {LINKED_CELL, ADAPTIVE_LINKED_CELL};
-
-	ParticleContainerType _particleContainerType;
 
 	/** maximum id of particles */
-	unsigned long maxid;
+	/** @todo remove this from the simulation class */
+	unsigned long _maxMoleculeId;
 
 	/** maximum distance at which the forces between two molecules still have to be calculated. */
 	double _cutoffRadius;
@@ -509,8 +499,6 @@ private:
 	double h;
 	/** Time after which the application should write a checkpoint in seconds. */
 	double _forced_checkpoint_time;
-
-	
 };
 #endif /*SIMULATION_H_*/
 

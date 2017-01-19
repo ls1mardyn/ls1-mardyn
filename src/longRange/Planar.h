@@ -56,7 +56,6 @@ private:
 	unsigned numComp;
 	unsigned *numLJ;
 	unsigned *numDipole;
-	unsigned *numCharge;
 	unsigned numLJSum;
 	unsigned numDipoleSum;
 	unsigned *numLJSum2;

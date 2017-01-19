@@ -120,9 +120,6 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 	global_log->debug() << "Filling " << N << " out of " << slots << " slots" << endl;
 	global_log->debug() << "Density: " << N / (8.0*R_o*R_o*R_o) << endl;
 
-	_simulation.initCanonical(10);
-	_simulation.initStatistics(3003003);
-
 	domain->setGlobalTemperature(T);
 	domain->setglobalNumMolecules(N);
 	domain->setglobalRho(N / _simulation.getEnsemble()->V() );
