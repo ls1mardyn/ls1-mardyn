@@ -7,15 +7,7 @@
 
 #include "thermostats/TemperatureControl.h"
 #include "particleContainer/ParticleContainer.h"
-
 #include "parallel/DomainDecompBase.h"
-#ifdef ENABLE_MPI
-#include "parallel/DomainDecomposition.h"
-#include "parallel/KDDecomposition.h"
-#else
-#include "parallel/DomainDecompDummy.h"
-#endif
-
 #include "molecules/Molecule.h"
 #include "Domain.h"
 #include "utils/Region.h"
