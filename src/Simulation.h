@@ -61,6 +61,11 @@ class FastMultipoleMethod;
 } // bhfmm
 
 
+class DriftControl;
+class DistControl;
+class RegionSampling;
+class DensityControl;
+
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
  *
@@ -484,6 +489,11 @@ private:
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
+    // NEMD features
+    DriftControl*   _driftControl;
+    DistControl*    _distControl;
+    RegionSampling* _regionSampling;
+    DensityControl* _densityControl;
 
 public:
 	//! computational time for one execution of traverseCell

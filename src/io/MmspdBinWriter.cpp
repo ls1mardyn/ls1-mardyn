@@ -129,7 +129,7 @@ void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
 		  mmspdfstream.write((char*)&color,sizeof(color));
 		  //radius
 		  mmspdfstream.write((const char*)"r\0f", 4);
-		  float radius = 1.518;
+		  float radius = domain->getSigma(i,0)*0.5;
 		  mmspdfstream.write((char*)&radius,sizeof(radius));
 		  //position
 		  mmspdfstream.write((const char*)"x\0f\0y\0f\0z\0f", 12);
@@ -156,7 +156,7 @@ void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
 		  mmspdfstream.write((char*)&color,sizeof(color));
 		  //radius
 		  mmspdfstream.write((const char*)"r\0f", 4);
-		  float radius = 1.553;
+		  float radius = domain->getSigma(i,0)*0.5;
 		  mmspdfstream.write((char*)&radius,sizeof(radius));
 		  //position
 		  mmspdfstream.write((const char*)"x\0f\0y\0f\0z\0f", 12);

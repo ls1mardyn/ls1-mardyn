@@ -61,6 +61,11 @@
 
 #include "particleContainer/adapter/VectorizationTuner.h"
 
+#include "NEMD/DriftControl.h"
+#include "NEMD/DistControl.h"
+#include "NEMD/RegionSampling.h"
+#include "NEMD/DensityControl.h"
+
 using Log::global_log;
 using optparse::OptionParser;
 using optparse::OptionGroup;
@@ -92,6 +97,13 @@ Simulation::Simulation()
 	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
+
+
+    // NEMD features
+    _driftControl = NULL;
+    _distControl = NULL;
+    _densityControl = NULL;
+    _regionSampling = NULL;
 
 	initialize();
 }
@@ -781,7 +793,36 @@ void Simulation::prepare_start() {
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
+    // Init NEMD feature objects
+    if(NULL != _distControl)
+        _distControl->Init(_moleculeContainer);
 
+    // mheinen 2016-11-03 --> DISTANCE_CONTROL
+    if(NULL != _distControl)
+    {
+		_distControl->UpdatePositionsInit(_moleculeContainer);
+    	_distControl->WriteData(0);
+    }
+    // <-- DISTANCE_CONTROL
+
+    // Init control instances (data structures)
+    if(NULL != _regionSampling)
+    {
+    	_regionSampling->PrepareRegionSubdivisions();
+        _regionSampling->Init();
+    }
+
+    if(NULL != _temperatureControl)
+    {
+		_temperatureControl->PrepareRegionSubdivisions();
+    	_temperatureControl->PrepareRegionDataStructures();
+    }
+
+    if(NULL != _densityControl)
+    {
+    	_densityControl->Init(_densityControl->GetControlFreq() );
+    	_densityControl->CheckRegionBounds();
+    }
 }
 
 void Simulation::simulate() {
@@ -876,6 +917,122 @@ void Simulation::simulate() {
                 }
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
+
+	    // mheinen 2015-05-29 --> DENSITY_CONTROL
+	    // should done after calling eventNewTimestep() / before force calculation, because force _F[] on molecule is deleted by method Molecule::setupCache()
+	    // and this method is called when component of molecule changes by calling Molecule::setComponent()
+	    // halo must not be populated, because density may be calculated wrong then.
+
+	//        int nRank = _domainDecomposition->getRank();
+
+	//        cout << "[" << nRank << "]: " << "ProcessIsRelevant() = " << _densityControl->ProcessIsRelevant() << endl;
+
+        unsigned long nNumMoleculesDeletedLocal = 0;
+        unsigned long nNumMoleculesDeletedGlobal = 0;
+
+        if( _densityControl != NULL  &&
+            _densityControl->GetStart() < _simstep && _densityControl->GetStop() >= _simstep &&  // respect start/stop
+            _simstep % _densityControl->GetControlFreq() == 0 )  // respect control frequency
+        {
+        	/*
+			// init MPI
+        	_densityControl->InitMPI();
+
+        	// only relevant processes should do the following
+            if( !_densityControl->ProcessIsRelevant() )
+            	break;
+        	 */
+            Molecule* tM;
+
+            // init density control
+            _densityControl->Init(_simstep);
+
+    //            unsigned long nNumMoleculesLocal = 0;
+    //            unsigned long nNumMoleculesGlobal = 0;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // measure density
+                _densityControl->MeasureDensity(tM, _simstep);
+
+    //                nNumMoleculesLocal++;
+            }
+
+            // calc global values
+            _densityControl->CalcGlobalValues(_simstep);
+
+
+            bool bDeleteMolecule;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != NULL;  // _moleculeContainer->end();
+                 )
+            {
+                bDeleteMolecule = false;
+
+                // control density
+                _densityControl->ControlDensity(tM, this, _simstep, bDeleteMolecule);
+
+
+                if(true == bDeleteMolecule)
+                {
+                    tM = _moleculeContainer->deleteCurrent();
+                    nNumMoleculesDeletedLocal++;
+                }
+                else
+                {
+                    tM  = _moleculeContainer->next();
+                }
+
+            }
+            // write out deleted molecules data
+            _densityControl->WriteDataDeletedMolecules(_simstep);
+        }
+
+        // update global number of particles
+        _domainDecomposition->collCommInit(1);
+        _domainDecomposition->collCommAppendUnsLong(nNumMoleculesDeletedLocal);
+        _domainDecomposition->collCommAllreduceSum();
+        nNumMoleculesDeletedGlobal = _domainDecomposition->collCommGetUnsLong();
+        _domainDecomposition->collCommFinalize();
+
+        _domain->setglobalNumMolecules(_domain->getglobalNumMolecules() - nNumMoleculesDeletedGlobal);
+
+	    // <-- DENSITY_CONTROL
+
+        // mheinen 2015-03-16 --> DISTANCE_CONTROL
+        if(_distControl != NULL)
+        {
+            Molecule* tM;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // sample density profile
+                _distControl->SampleProfiles(tM);
+            }
+
+            // determine interface midpoints and update region positions
+            _distControl->UpdatePositions(_simstep);
+
+            // write data
+            _distControl->WriteData(_simstep);
+            _distControl->WriteDataProfiles(_simstep);
+
+
+            // align system center of mass
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                _distControl->AlignSystemCenterOfMass(tM, _simstep);
+            }
+        }
+        // <-- DISTANCE_CONTROL
+
 
 		// activate RDF sampling
 		if ((_simstep >= _initStatistics) && _rdf != NULL) {
@@ -1081,6 +1238,63 @@ void Simulation::simulate() {
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
+
+        // mheinen 2015-02-18 --> DRIFT_CONTROL
+        if(_driftControl != NULL)
+        {
+            Molecule* tM;
+
+            // init drift control
+            _driftControl->Init(_simstep);
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // measure drift
+                _driftControl->MeasureDrift(tM, _simstep);
+
+//                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
+            }
+
+            // calc global values
+            _driftControl->CalcGlobalValues(_simstep);
+
+            // calc scale factors
+            _driftControl->CalcScaleFactors(_simstep);
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // measure drift
+                _driftControl->ControlDrift(tM, _simstep);
+
+//                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
+            }
+        }
+        // <-- DRIFT_CONTROL
+
+
+        // mheinen 2015-03-18 --> REGION_SAMPLING
+        if(_regionSampling != NULL)
+        {
+            Molecule* tM;
+
+            for( tM  = _moleculeContainer->begin();
+                 tM != _moleculeContainer->end();
+                 tM  = _moleculeContainer->next() )
+            {
+                // sample profiles and vdf
+                _regionSampling->DoSampling(tM, _domainDecomposition, _simstep);
+            }
+
+            // write data
+            _regionSampling->WriteData(_domainDecomposition, _simstep, _domain);
+        }
+        // <-- REGION_SAMPLING
+
+
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
 		_domain->calculateGlobalValues(_domainDecomposition,
@@ -1166,7 +1380,7 @@ void Simulation::simulate() {
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
         else if ( _temperatureControl != NULL)
         {
-            _temperatureControl->DoLoopsOverMolecules(_domainDecomposition, _moleculeContainer, _simstep);
+            _temperatureControl->DoLoopsOverMolecules(_moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
 		

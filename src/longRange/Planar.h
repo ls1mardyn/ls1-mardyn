@@ -26,6 +26,7 @@ public:
 	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
 	void directDensityProfile();
+	void SetSmoothDensityProfileOption(bool bVal) {_smooth = bVal;}
 
 private:
 
