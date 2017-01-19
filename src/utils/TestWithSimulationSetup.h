@@ -34,11 +34,11 @@ class ParticleContainer;
  * With those members set up it should be possible to test all the single aspects
  * of a molecular dynamics simulation.
  *
- * Those fields are setup from scratch before the execution of every test method, so
+ * Those fiels are setup from scratch before the execution of every test method, so
  * every test has a clean test bed.
  * The member objects are automatically destroyed after a test method has been executed.
  *
- * @note Testing the sequential algorithm independent of the number of MPI-processes
+ * @note Testing the sequential algorithm indepentend of the number of MPI-processes
  *       Mardyn has been started with, should be possible if you replace the
  *       domainDecomposition with a dummyDomainDecomposition before the particleContainer
  *       is initialized.

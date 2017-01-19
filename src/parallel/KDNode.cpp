@@ -9,8 +9,6 @@
 #endif
 #include "utils/Logger.h"
 
-#include <algorithm> /* for min and max ?*/
-
 using namespace Log;
 
 KDNode* KDNode::findAreaForProcess(int rank) {
@@ -74,8 +72,6 @@ void KDNode::buildKDTree() {
 		cellsPerDim[dim] = _highCorner[dim] - _lowCorner[dim] + 1;
 	}
 	int divDir = 0;
-
-	// split in the dimension with the most cells
 	int maxCells = cellsPerDim[0];
 	if (cellsPerDim[1] > maxCells) {
 		divDir = 1;
@@ -158,7 +154,6 @@ bool KDNode::isResolvable() {
 }
 
 unsigned int KDNode::getNumMaxProcs() {
-	// we need at least 2 cells in each dimension per process (
 	unsigned int maxProcs = 1;
 	for (int dim = 0; dim < 3; dim++) {
 		maxProcs *= (_highCorner[dim] - _lowCorner[dim] + 1) / 2;
@@ -176,7 +171,6 @@ void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
 		coversAll[dim] = _coversWholeDomain[dim];
 	}
 
-	// if we cut it along the dimension divDimension, it can no longer cover the whole domain
 	coversAll[divDimension] = false;
 
 	int low1[KDDIM];
@@ -287,9 +281,9 @@ void KDNode::deserialize(std::istream& file) {
 	}
 }
 
-void KDNode::plotNode(const std::string& vtkFile, const std::vector<double>* processorSpeeds) const {
+void KDNode::plotNode(const std::string& vtkFile) const {
 #ifdef VTK
-	VTKGridWriterImplementation writer(_owningProc, processorSpeeds);
+	VTKGridWriterImplementation writer(_owningProc);
 	writer.initializeVTKFile();
 	plotNode(writer);
 	writer.writeVTKFile(vtkFile);
@@ -316,7 +310,7 @@ void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
 
 		VTKGridCell cell;
 		cell.setCellData(_owningProc, _load, _level);
-		cell.setIndex(_nodeID);
+
 		for (int i = 0; i < 8; i++) {
 			cell.setVertex(i, &vertices[i]);
 		}
@@ -325,31 +319,4 @@ void KDNode::plotNode(VTKGridWriterImplementation& writer) const {
 #else
 	global_log->warning() << "KDNode::plotNode() requires vtk output. Compile with -DVTK!" << std::endl;
 #endif
-}
-
-void KDNode::getOwningProcs(const int low[KDDIM], const int high[KDDIM], std::vector<int>& procIDs, std::vector<int>& neighbAreas) const {
-
-	int overlapLow[3];
-	int overlapHigh[3];
-
-	bool areasIntersect = true;
-	for (int dim = 0; dim < KDDIM; dim++) {
-		overlapLow[dim]  = std::max(low[dim],  _lowCorner[dim]);
-		overlapHigh[dim] = std::min(high[dim], _highCorner[dim]);
-		areasIntersect &= overlapLow[dim] <= _highCorner[dim] and overlapHigh[dim] >= _lowCorner[dim];
-	}
-
-	if (areasIntersect) {
-		if (_numProcs > 1) {
-			_child1->getOwningProcs(overlapLow, overlapHigh, procIDs, neighbAreas);
-			_child2->getOwningProcs(overlapLow, overlapHigh, procIDs, neighbAreas);
-		}
-		else { // leaf node found, add it (and it's area)
-			procIDs.push_back(_owningProc);
-			for (int d = 0; d < KDDIM; ++d) {
-				neighbAreas.push_back(overlapLow[d]);
-				neighbAreas.push_back(overlapHigh[d]);
-			}
-		}
-	}
 }

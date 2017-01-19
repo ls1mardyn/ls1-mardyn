@@ -9,12 +9,13 @@
 
 DrawableMolecule::DrawableMolecule(const Molecule& molecule, int numComponents)
 : _x(molecule.r(0),molecule.r(1), molecule.r(2)),
-  _v(molecule.v(0), molecule.v(1), molecule.v(2)), _id(molecule.id()), _numComponents(numComponents), _cid(molecule.componentid()) {
+  _v(molecule.v(0), molecule.v(1), molecule.v(2)), _id(molecule.id()), _cid(molecule.componentid()) {
+	_numComponents = numComponents;
 }
 
 DrawableMolecule::DrawableMolecule()
 : _x(0, 0, 0),
-  _v(0, 0, 0), _id(0), _numComponents(1), _cid(0) {
+  _v(0, 0, 0), _id(0), _cid(0), _numComponents(1) {
 }
 
 DrawableMolecule::~DrawableMolecule() {

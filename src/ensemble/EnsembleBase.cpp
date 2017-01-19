@@ -52,21 +52,4 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		_mixingrules.push_back(mixingrule);
 	}
 	xmlconfig.changecurrentnode(oldpath);
-
-	setComponentLookUpIDs();
-}
-
-void Ensemble::setComponentLookUpIDs() {
-	// Get the maximum Component ID.
-	unsigned maxID = 0;
-	for (auto c = _components.begin(); c != _components.end(); ++c)
-		maxID = std::max(maxID, c->ID());
-
-	// we need a look-up table for the Lennard-Jones centers in the Vectorized*CellProcessors
-	// (for no other centers)
-	unsigned centers = 0;
-	for (auto c = _components.begin(); c != _components.end(); ++c) {
-		c->setLookUpId(centers);
-		centers += c->numLJcenters();
-	}
 }

@@ -1,5 +1,4 @@
 #include "Molecule.h"
-#include "particleContainer/adapter/CellDataSoA.h"
 
 #include <cassert>
 #include <cmath>
@@ -32,27 +31,14 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_Vi[0]= 0.;
 	_Vi[1]= 0.;
 	_Vi[2]= 0.;
+	_sites_d = _sites_F =_osites_e = NULL;
+	_numTersoffNeighbours = 0;
+	fixedx = rx;
+	fixedy = ry;
 
-	_soa = nullptr;
-	_soa_index_lj = 0;
-	_soa_index_c = 0;
-	_soa_index_d = 0;
-	_soa_index_q = 0;
-
-	if(_component != nullptr) {
-		_m = _component->m();
-		_I[0] = _component->I11();
-		_I[1] = _component->I22();
-		_I[2] = _component->I33();
-		for (unsigned short d = 0; d < 3; ++d) {
-			if (_I[d] != 0.)
-				_invI[d] = 1. / _I[d];
-			else
-				_invI[d] = 0.;
-		}
+	if(_component != NULL) {
+		setupCache();
 	}
-	_F[0] = _F[1] = _F[2] = 0.;
-	_M[0] = _M[1] = _M[2] = 0.;
 }
 
 Molecule::Molecule(const Molecule& m) {
@@ -77,228 +63,16 @@ Molecule::Molecule(const Molecule& m) {
 	_Vi[0]= m._Vi[0];
 	_Vi[1]= m._Vi[1];
 	_Vi[2]= m._Vi[2];
+	_sites_d = _sites_F =_osites_e = NULL;
+	_numTersoffNeighbours = 0;
+	fixedx = m.fixedx;
+	fixedy = m.fixedy;
 
-	_soa = m._soa;
-	_soa_index_lj = m._soa_index_lj;
-	_soa_index_c = m._soa_index_c;
-	_soa_index_d = m._soa_index_d;
-	_soa_index_q = m._soa_index_q;
-
-	_m = m._m;
-	_I[0] = m._I[0];
-	_I[1] = m._I[1];
-	_I[2] = m._I[2];
-	_invI[0] = m._invI[0];
-	_invI[1] = m._invI[1];
-	_invI[2] = m._invI[2];
+	if(_component != NULL) {
+		setupCache();
+	}
 }
 
-Molecule& Molecule::operator=(const Molecule& m) {
-	_id = m._id;
-	_component = m._component;
-	_r[0] = m._r[0];
-	_r[1] = m._r[1];
-	_r[2] = m._r[2];
-	_v[0] = m._v[0];
-	_v[1] = m._v[1];
-	_v[2] = m._v[2];
-	_q = m._q;
-	_L[0] = m._L[0];
-	_L[1] = m._L[1];
-	_L[2] = m._L[2];
-	_F[0] = m._F[0];
-	_F[1] = m._F[1];
-	_F[2] = m._F[2];
-	_M[0] = m._M[0];
-	_M[1] = m._M[1];
-	_M[2] = m._M[2];
-	_Vi[0]= m._Vi[0];
-	_Vi[1]= m._Vi[1];
-	_Vi[2]= m._Vi[2];
-
-	_soa = m._soa;
-	_soa_index_lj = m._soa_index_lj;
-	_soa_index_c = m._soa_index_c;
-	_soa_index_d = m._soa_index_d;
-	_soa_index_q = m._soa_index_q;
-
-	_m = m._m;
-	_I[0] = m._I[0];
-	_I[1] = m._I[1];
-	_I[2] = m._I[2];
-	_invI[0] = m._invI[0];
-	_invI[1] = m._invI[1];
-	_invI[2] = m._invI[2];
-
-	return *this;
-}
-
-std::array<double, 3> Molecule::ljcenter_d_abs(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_lj;
-	std::array<double,3> ret;
-	vcp_real_calc* rx = _soa->ljc_r_xBegin();
-	vcp_real_calc* ry = _soa->ljc_r_yBegin();
-	vcp_real_calc* rz = _soa->ljc_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
-	return ret;
-}
-
-std::array<double, 3> Molecule::charge_d_abs(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_c;
-	std::array<double, 3> ret;
-	vcp_real_calc* rx = _soa->charges_r_xBegin();
-	vcp_real_calc* ry = _soa->charges_r_yBegin();
-	vcp_real_calc* rz = _soa->charges_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
-	return ret;
-}
-
-std::array<double, 3> Molecule::dipole_d_abs(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_d;
-	std::array<double, 3> ret;
-	vcp_real_calc* rx = _soa->dipoles_r_xBegin();
-	vcp_real_calc* ry = _soa->dipoles_r_yBegin();
-	vcp_real_calc* rz = _soa->dipoles_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
-	return ret;
-}
-
-std::array<double, 3> Molecule::quadrupole_d_abs(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_q;
-	std::array<double, 3> ret;
-	vcp_real_calc* rx = _soa->quadrupoles_r_xBegin();
-	vcp_real_calc* ry = _soa->quadrupoles_r_yBegin();
-	vcp_real_calc* rz = _soa->quadrupoles_r_zBegin();
-	ret[0] = static_cast<double>(rx[index_in_soa]);
-	ret[1] = static_cast<double>(ry[index_in_soa]);
-	ret[2] = static_cast<double>(rz[index_in_soa]);
-	return ret;
-}
-
-std::array<double, 3> Molecule::ljcenter_F(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_lj;
-	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->ljc_f_xBegin();
-	vcp_real_calc* fy = _soa->ljc_f_yBegin();
-	vcp_real_calc* fz = _soa->ljc_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
-	return ret;
-}
-std::array<double, 3> Molecule::charge_F(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_c;
-	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->charges_f_xBegin();
-	vcp_real_calc* fy = _soa->charges_f_yBegin();
-	vcp_real_calc* fz = _soa->charges_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
-	return ret;
-}
-std::array<double, 3> Molecule::dipole_F(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_d;
-	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
-	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
-	vcp_real_calc* fz = _soa->dipoles_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
-	return ret;
-}
-std::array<double, 3> Molecule::quadrupole_F(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_q;
-	std::array<double, 3> ret;
-	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
-	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
-	vcp_real_calc* fz = _soa->quadrupoles_f_zBegin();
-	ret[0] = static_cast<double>(fx[index_in_soa]);
-	ret[1] = static_cast<double>(fy[index_in_soa]);
-	ret[2] = static_cast<double>(fz[index_in_soa]);
-	return ret;
-}
-
-std::array<double, 3> Molecule::dipole_e(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_d;
-	std::array<double, 3> ret;
-	ret[0] = static_cast<double>(_soa->_dipoles_e.x(index_in_soa));
-	ret[1] = static_cast<double>(_soa->_dipoles_e.y(index_in_soa));
-	ret[2] = static_cast<double>(_soa->_dipoles_e.z(index_in_soa));
-	return ret;
-}
-std::array<double, 3> Molecule::quadrupole_e(unsigned int i) const {
-	const unsigned index_in_soa = i + _soa_index_q;
-	std::array<double, 3> ret;
-	ret[0] = static_cast<double>(_soa->_quadrupoles_e.x(index_in_soa));
-	ret[1] = static_cast<double>(_soa->_quadrupoles_e.y(index_in_soa));
-	ret[2] = static_cast<double>(_soa->_quadrupoles_e.z(index_in_soa));
-	return ret;
-}
-
-void Molecule::Fljcenteradd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_lj;
-	vcp_real_calc* fx = _soa->ljc_f_xBegin();
-	vcp_real_calc* fy = _soa->ljc_f_yBegin();
-	vcp_real_calc* fz = _soa->ljc_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
-}
-
-void Molecule::Fchargeadd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_c;
-	vcp_real_calc* fx = _soa->charges_f_xBegin();
-	vcp_real_calc* fy = _soa->charges_f_yBegin();
-	vcp_real_calc* fz = _soa->charges_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
-}
-
-void Molecule::Fdipoleadd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_d;
-	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
-	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
-	vcp_real_calc* fz = _soa->dipoles_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
-}
-
-void Molecule::Fquadrupoleadd(unsigned int i, double a[]) {
-	const unsigned index_in_soa = i + _soa_index_q;
-	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
-	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
-	vcp_real_calc* fz = _soa->quadrupoles_f_zBegin();
-	fx[index_in_soa] += static_cast<double>(a[0]);
-	fy[index_in_soa] += static_cast<double>(a[1]);
-	fz[index_in_soa] += static_cast<double>(a[2]);
-}
-
-void Molecule::Fljcentersub(unsigned int i, double a[]) {
-	double minusA[3] = {-a[0], -a[1], -a[2]};
-	Fljcenteradd(i, minusA);
-}
-void Molecule::Fchargesub(unsigned int i, double a[]) {
-	double minusA[3] = {-a[0], -a[1], -a[2]};
-	Fchargeadd(i, minusA);
-}
-void Molecule::Fdipolesub(unsigned int i, double a[]) {
-	double minusA[3] = {-a[0], -a[1], -a[2]};
-	Fdipoleadd(i, minusA);
-}
-void Molecule::Fquadrupolesub(unsigned int i, double a[]) {
-	double minusA[3] = {-a[0], -a[1], -a[2]};
-	Fquadrupoleadd(i, minusA);
-}
 
 void Molecule::upd_preF(double dt) {
 	assert(_m > 0);
@@ -310,7 +84,7 @@ void Molecule::upd_preF(double dt) {
 	}
 
 	double w[3];
-	_q.rotateinv(_L, w);
+	_q.rotate(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
 	Quaternion qhalfstep;
@@ -321,7 +95,7 @@ void Molecule::upd_preF(double dt) {
 	qhalfstep.scale(qcorr);
 	for (unsigned short d = 0; d < 3; ++d)
 		_L[d] += dt_halve * _M[d];
-	qhalfstep.rotateinv(_L, w);
+	qhalfstep.rotate(_L, w);
 	for (unsigned short d = 0; d < 3; ++d)
 		w[d] *= _invI[d];
 	Quaternion qincr;
@@ -333,8 +107,38 @@ void Molecule::upd_preF(double dt) {
 
 }
 
+
+void Molecule::upd_cache() {
+	unsigned int i;
+	unsigned int ns;
+
+	_q.normalize();
+
+	ns = numLJcenters();
+	for (i = 0; i < ns; ++i)
+		_q.rotateinv(_component->ljcenter(i).r(), &(_ljcenters_d[i*3]));
+	ns = numCharges();
+	for (i = 0; i < ns; ++i)
+		_q.rotateinv(_component->charge(i).r(), &(_charges_d[i*3]));
+	ns = numDipoles();
+	for (i = 0; i < ns; ++i) {
+		const Dipole& di = _component->dipole(i);
+		_q.rotateinv(di.r(), &(_dipoles_d[i*3]));
+		_q.rotateinv(di.e(), &(_dipoles_e[i*3]));
+	}
+	ns = numQuadrupoles();
+	for (i = 0; i < ns; ++i) {
+		const Quadrupole& qi = _component->quadrupole(i);
+		_q.rotateinv(qi.r(), &(_quadrupoles_d[i*3]));
+		_q.rotateinv(qi.e(), &(_quadrupoles_e[i*3]));
+	}
+	ns = numTersoff();
+	for (i = 0; i < ns; i++)
+		_q.rotateinv(_component->tersoff(i).r(), &(_tersoff_d[i*3]));
+}
+
+
 void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
-	using std::isnan; // C++11 needed
 
 	calcFM();
 
@@ -349,7 +153,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
     summv2 += _m * v2;
 
 	double w[3];
-	_q.rotateinv(_L, w); // L = D = Iw
+	_q.rotate(_L, w); // L = D = Iw
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -362,7 +166,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 
 double Molecule::U_rot() {
 	double w[3];
-	_q.rotateinv(_L, w);
+	_q.rotate(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -374,7 +178,7 @@ double Molecule::U_rot() {
 void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	summv2 += _m * v2();
 	double w[3];
-	_q.rotateinv(_L, w);
+	_q.rotate(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -390,7 +194,7 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, do
 	summv2 += _m * (vcx*vcx + vcy*vcy + vcz*vcz);
 
 	double w[3];
-	_q.rotateinv(_L, w);
+	_q.rotate(_L, w);
 	double Iw2 = 0.;
 	for (unsigned short d = 0; d < 3; ++d) {
 		w[d] *= _invI[d];
@@ -405,10 +209,6 @@ void Molecule::scale_v(double s, double offx, double offy, double offz) {
 	this->vadd(offx, offy, offz);
 }
 
-std::string Molecule::getWriteFormat(){
-	return std::string("ICRVQD");
-}
-
 void Molecule::write(ostream& ostrm) const {
 	ostrm << _id << "\t" << (_component->ID() + 1) << "\t"
 	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
@@ -418,72 +218,116 @@ void Molecule::write(ostream& ostrm) const {
 	      << endl;
 }
 
-// private functions
-// these are only used when compiling molecule.cpp and therefore might be inlined without any problems
+void Molecule::addTersoffNeighbour(Molecule* m, bool pairType) {
+	// this->_Tersoff_neighbours.insert(pair<Molecule*, bool>(m, (pairType > 0)));
+	for (int j = 0; j < _numTersoffNeighbours; j++) {
+		if (m->_id == _Tersoff_neighbours_first[j]->id()) {
+			this->_Tersoff_neighbours_first[j] = m;
+			this->_Tersoff_neighbours_second[j] = pairType;
+			return;
+		}
+	}
 
-void Molecule::clearFM() {
-	assert(_soa != nullptr);
-	_F[0] = _F[1] = _F[2] = 0.;
-	_M[0] = _M[1] = _M[2] = 0.;
-	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
-
-	// clear SoA-cache (quickest way)
-	unsigned ns = numLJcenters();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_lj;
-		_soa->ljc_f_xBegin()[index_in_soa] = 0.0;
-		_soa->ljc_f_yBegin()[index_in_soa] = 0.0;
-		_soa->ljc_f_zBegin()[index_in_soa] = 0.0;
-		_soa->ljc_V_xBegin()[index_in_soa] = 0.0;
-		_soa->ljc_V_yBegin()[index_in_soa] = 0.0;
-		_soa->ljc_V_zBegin()[index_in_soa] = 0.0;
-	}
-	ns = numCharges();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_c;
-		_soa->charges_f_xBegin()[index_in_soa] = 0.0;
-		_soa->charges_f_yBegin()[index_in_soa] = 0.0;
-		_soa->charges_f_zBegin()[index_in_soa] = 0.0;
-		_soa->charges_V_xBegin()[index_in_soa] = 0.0;
-		_soa->charges_V_yBegin()[index_in_soa] = 0.0;
-		_soa->charges_V_zBegin()[index_in_soa] = 0.0;
-	}
-	ns = numDipoles();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_d;
-		_soa->dipoles_f_xBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_f_yBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_f_zBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_V_xBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_V_yBegin()[index_in_soa] = 0.0;
-		_soa->dipoles_V_zBegin()[index_in_soa] = 0.0;
-		_soa->_dipoles_M.x(index_in_soa) = 0.0;
-		_soa->_dipoles_M.y(index_in_soa) = 0.0;
-		_soa->_dipoles_M.z(index_in_soa) = 0.0;
-	}
-	ns = numQuadrupoles();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_q;
-		_soa->quadrupoles_f_xBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_f_yBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_f_zBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_V_xBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_V_yBegin()[index_in_soa] = 0.0;
-		_soa->quadrupoles_V_zBegin()[index_in_soa] = 0.0;
-		_soa->_quadrupoles_M.x(index_in_soa) = 0.0;
-		_soa->_quadrupoles_M.y(index_in_soa) = 0.0;
-		_soa->_quadrupoles_M.z(index_in_soa) = 0.0;
+	this->_Tersoff_neighbours_first[_numTersoffNeighbours] = m;
+	this->_Tersoff_neighbours_second[_numTersoffNeighbours] = pairType;
+	this->_numTersoffNeighbours++;
+	if (_numTersoffNeighbours > MAX_TERSOFF_NEIGHBOURS) {
+		global_log->error() << "Tersoff neighbour list overflow: Molecule " << m->_id << " has more than " << MAX_TERSOFF_NEIGHBOURS << " Tersoff neighbours." << endl;
+		exit(1);
 	}
 }
 
-void Molecule::calcFM() {
-	using std::isnan; // C++11 needed
+double Molecule::tersoffParameters(double params[15]) //returns delta_r
+{
+	const Tersoff* t = &_component->tersoff()[0];
+	params[ 0] = t->R();
+	params[ 1] = t->S();
+	params[ 2] = t->h();
+	params[ 3] = t->cSquare();
+	params[ 4] = t->dSquare();
+	params[ 5] = t->A();
+	params[ 6] = t->minusLambda();
+	params[ 7] = t->minusMu();
+	params[ 8] = t->beta();
+	params[ 9] = t->n();
+	params[10] = M_PI / (t->S() - t->R());
+	params[11] = 1.0 + t->cSquare() / t->dSquare();
+	params[12] = t->S() * t->S();
+	params[13] = -(t->B());
+	params[14] = -0.5 / t->n();
 
+	return 0.000001 * (t->S() - t->R());
+}
+
+// private functions
+// these are only used when compiling molecule.cpp and therefore might be inlined without any problems
+
+// mheinen_2015-06-15 --> to inline method setupCache() doesnt work when its called by method setComponent(), defined in Molecule.h
+void Molecule::setupCache() {
+	assert(_component != NULL);
+
+	_m = _component->m();
+	_I[0] = _component->I11();
+	_I[1] = _component->I22();
+	_I[2] = _component->I33();
+	for (unsigned short d = 0; d < 3; ++d) {
+		if (_I[d] != 0.)
+			_invI[d] = 1. / _I[d];
+		else
+			_invI[d] = 0.;
+	}
+
+	int numsites = _component->numSites();
+    // if allocated before, previous allocated memory should be freed
+    if(_sites_d != NULL)
+        delete [] _sites_d;
+    _sites_d = new double[3*numsites];
+	assert(_sites_d);
+	_ljcenters_d = &(_sites_d[0]);
+	_charges_d = &(_ljcenters_d[3*numLJcenters()]);
+	_dipoles_d = &(_charges_d[3*numCharges()]);
+	_quadrupoles_d = &(_dipoles_d[3*numDipoles()]);
+	_tersoff_d = &(_quadrupoles_d[3*numQuadrupoles()]);
+
+	int numorientedsites = _component->numOrientedSites();
+    // if allocated before, previous allocated memory should be freed
+    if(_osites_e != NULL)
+        delete [] _osites_e;
+    _osites_e = new double[3*numorientedsites];
+	assert(_osites_e);
+	_dipoles_e = &(_osites_e[0]);
+	_quadrupoles_e = &(_dipoles_e[3*numDipoles()]);
+
+    // if allocated before, previous allocated memory should be freed
+    if(_sites_F != NULL)
+        delete [] _sites_F;
+    _sites_F = new double[3*numsites];
+	assert(_sites_F);
+	_ljcenters_F = &(_sites_F[0]);
+	_charges_F = &(_ljcenters_F[3*numLJcenters()]);
+	_dipoles_F = &(_charges_F[3*numCharges()]);
+	_quadrupoles_F = &(_dipoles_F[3*numDipoles()]);
+	_tersoff_F = &(_quadrupoles_F[3*numQuadrupoles()]);
+
+	this->clearFM();
+}
+
+void Molecule::clearFM() {
+	int numSites = _component->numSites();
+	for (int i = 0; i < 3*numSites; i++) {
+		_sites_F[i] = 0.;
+	}
+	_F[0] = _F[1] = _F[2] = 0.;
+	_M[0] = _M[1] = _M[2] = 0.;
+	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
+}
+
+void Molecule::calcFM() {
 	//_M[0] = _M[1] = _M[2] = 0.;
 	unsigned int ns = numSites();
 	for (unsigned int si = 0; si < ns; ++si) {
-		const std::array<double,3> Fsite = site_F(si);
-		const std::array<double,3> dsite = site_d(si);
+		const double* Fsite = site_F(si);
+		const double* dsite = site_d(si);
 #ifndef NDEBUG
 		/*
 		 * catches NaN assignments
@@ -500,58 +344,11 @@ void Molecule::calcFM() {
 		}
 #endif
 
-		Fadd(Fsite.data());
+		Fadd(Fsite);
 		_M[0] += dsite[1] * Fsite[2] - dsite[2] * Fsite[1];
 		_M[1] += dsite[2] * Fsite[0] - dsite[0] * Fsite[2];
 		_M[2] += dsite[0] * Fsite[1] - dsite[1] * Fsite[0];
 	}
-
-	// accumulate virial, dipoles_M and quadrupoles_M:
-	double temp_M[3] = { 0., 0., 0. };
-	double temp_Vi[3] = { 0., 0., 0. };
-
-	ns = numLJcenters();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_lj;
-		temp_Vi[0] += _soa->ljc_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->ljc_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->ljc_V_zBegin()[index_in_soa];
-	}
-	ns = numCharges();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_c;
-		temp_Vi[0] += _soa->charges_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->charges_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->charges_V_zBegin()[index_in_soa];
-	}
-	ns = numDipoles();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_d;
-		temp_Vi[0] += _soa->dipoles_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->dipoles_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->dipoles_V_zBegin()[index_in_soa];
-		temp_M[0] += _soa->_dipoles_M.x(index_in_soa);
-		temp_M[1] += _soa->_dipoles_M.y(index_in_soa);
-		temp_M[2] += _soa->_dipoles_M.z(index_in_soa);
-	}
-	ns = numQuadrupoles();
-	for (unsigned i = 0; i < ns; ++i) {
-		const unsigned index_in_soa = i + _soa_index_q;
-		temp_Vi[0] += _soa->quadrupoles_V_xBegin()[index_in_soa];
-		temp_Vi[1] += _soa->quadrupoles_V_yBegin()[index_in_soa];
-		temp_Vi[2] += _soa->quadrupoles_V_zBegin()[index_in_soa];
-		temp_M[0] += _soa->_quadrupoles_M.x(index_in_soa);
-		temp_M[1] += _soa->_quadrupoles_M.y(index_in_soa);
-		temp_M[2] += _soa->_quadrupoles_M.z(index_in_soa);
-	}
-	temp_Vi[0] *= 0.5;
-	temp_Vi[1] *= 0.5;
-	temp_Vi[2] *= 0.5;
-	assert(!isnan(temp_Vi[0]));
-	assert(!isnan(temp_Vi[1]));
-	assert(!isnan(temp_Vi[2]));
-	Viadd(temp_Vi);
-	Madd(temp_M);
 }
 
 
@@ -562,12 +359,8 @@ void Molecule::calcFM() {
  * If that's not available (C99), compare the value with itself. If the value
  * is NaN, the comparison will evaluate to false (according to IEEE754 spec.)
  */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
 void Molecule::check(unsigned long id) {
 #ifndef NDEBUG
-	using std::isnan; // C++11 needed
-
 	assert(_id == id);
 	assert(_m > 0.0);
 	for (int d = 0; d < 3; d++) {
@@ -577,19 +370,11 @@ void Molecule::check(unsigned long id) {
 		assert(!isnan(_F[d]));
 		assert(!isnan(_M[d]));
 		assert(!isnan(_I[d]));
-		// assert(!isnan(_Vi[d]));
+		assert(!isnan(_Vi[d]));
 		assert(!isnan(_invI[d]));
-	}
-	if(isnan(_Vi[0]) || isnan(_Vi[1]) || isnan(_Vi[2]))
-	{
-	   cout << "\talert: molecule id " << id << " (internal cid " << this->_component->ID() << ") has virial _Vi = (" << _Vi[0] << ", " << _Vi[1] << ", " << _Vi[2] << ")"<<endl;
-	   _Vi[0] = 0.0;
-	   _Vi[1] = 0.0;
-	   _Vi[2] = 0.0;
 	}
 #endif
 }
-#pragma GCC diagnostic pop
 
 bool Molecule::isLessThan(const Molecule& m2) const {
 	if (_r[2] < m2.r(2))
@@ -622,87 +407,21 @@ std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
 	os << "F:  (" << m.F(0) << ", " << m.F(1) << ", " << m.F(2) << ")\n" ;
 	os << "q:  [[" << m.q().qw() << ", " << m.q().qx() << "], [" << m.q().qy() << ", " << m.q().qz()<< "]]\n" ;
-	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")\n";
-	os << "Vi:  (" << m.Vi(0) << ", " << m.Vi(1) << ", " << m.Vi(2) << ")" ;
+	os << "w:  (" << m.D(0) << ", " << m.D(1) << ", " << m.D(2) << ")" ;
 	return os;
 }
 
 
 unsigned long Molecule::totalMemsize() const {
 	unsigned long size = sizeof (*this);
+
+	//_sites_d
+	size += sizeof(double) * _component->numSites()* 3;
+	// site orientation _osites_e
+	size += sizeof(double) * _component->numOrientedSites() * 4;
+	// site Forces _sites_F
+	// row order: Fx1,Fy1,Fz1,Fx2,Fy2,Fz2,...
+	size += sizeof(double) * _component->numSites() * 3;
+
 	return size;
-}
-
-void Molecule::setupSoACache(CellDataSoA* const s, unsigned iLJ, unsigned iC,
-		unsigned iD, unsigned iQ) {
-	setSoA(s);
-	setStartIndexSoA_LJ(iLJ);
-	setStartIndexSoA_C(iC);
-	setStartIndexSoA_D(iD);
-	setStartIndexSoA_Q(iQ);
-
-	normalizeQuaternion();
-
-	unsigned ns = numLJcenters();
-	for (unsigned j = 0; j < ns; ++j) {
-		double centerPos[3];
-		computeLJcenter_d(j, centerPos);
-		const unsigned ind = _soa_index_lj + j;
-		_soa->ljc_m_r_xBegin()[ind] = _r[0];
-		_soa->ljc_m_r_yBegin()[ind] = _r[1];
-		_soa->ljc_m_r_zBegin()[ind] = _r[2];
-		_soa->ljc_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->ljc_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->ljc_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_ljc_id[ind] = getComponentLookUpID() + j;
-	}
-	ns = numCharges();
-	for (unsigned j = 0; j < ns; ++j) {
-		double centerPos[3];
-		computeCharge_d(j, centerPos);
-		const unsigned ind = _soa_index_c + j;
-		_soa->charges_m_r_xBegin()[ind] = _r[0];
-		_soa->charges_m_r_yBegin()[ind] = _r[1];
-		_soa->charges_m_r_zBegin()[ind] = _r[2];
-		_soa->charges_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->charges_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->charges_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_charges_q[ind] = component()->charge(j).q();
-	}
-	ns = numDipoles();
-	for (unsigned j = 0; j < ns; ++j) {
-		double centerPos[3];
-		computeDipole_d(j, centerPos);
-		double orientation[3];
-		computeDipole_e(j, orientation);
-		const unsigned ind = _soa_index_d + j;
-		_soa->dipoles_m_r_xBegin()[ind] = _r[0];
-		_soa->dipoles_m_r_yBegin()[ind] = _r[1];
-		_soa->dipoles_m_r_zBegin()[ind] = _r[2];
-		_soa->dipoles_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->dipoles_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->dipoles_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_dipoles_p[ind] = component()->dipole(j).absMy();
-		_soa->_dipoles_e.x(ind) = orientation[0];
-		_soa->_dipoles_e.y(ind) = orientation[1];
-		_soa->_dipoles_e.z(ind) = orientation[2];
-	}
-	ns = numQuadrupoles();
-	for (unsigned j = 0; j < ns; ++j) {
-		double centerPos[3];
-		computeQuadrupole_d(j, centerPos);
-		double orientation[3];
-		computeQuadrupole_e(j, orientation);
-		const unsigned ind = _soa_index_q + j;
-		_soa->quadrupoles_m_r_xBegin()[ind] = _r[0];
-		_soa->quadrupoles_m_r_yBegin()[ind] = _r[1];
-		_soa->quadrupoles_m_r_zBegin()[ind] = _r[2];
-		_soa->quadrupoles_r_xBegin()[ind] = centerPos[0] + _r[0];
-		_soa->quadrupoles_r_yBegin()[ind] = centerPos[1] + _r[1];
-		_soa->quadrupoles_r_zBegin()[ind] = centerPos[2] + _r[2];
-		_soa->_quadrupoles_m[ind] = component()->quadrupole(j).absQ();
-		_soa->_quadrupoles_e.x(ind) = orientation[0];
-		_soa->_quadrupoles_e.y(ind) = orientation[1];
-		_soa->_quadrupoles_e.z(ind) = orientation[2];
-	}
 }

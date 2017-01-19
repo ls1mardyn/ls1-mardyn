@@ -1,5 +1,6 @@
 // file      : xsd/cxx/parser/non-validating/parser.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <cassert>
@@ -113,7 +114,7 @@ namespace xsd
           //
           if (ns == xml::bits::xsi_namespace<C> () &&
               (name == xml::bits::type<C> () ||
-               name == xml::bits::nil_lit<C> () ||
+               name == xml::bits::nil<C> () ||
                name == xml::bits::schema_location<C> () ||
                name == xml::bits::no_namespace_schema_location<C> ()))
             return;
@@ -152,7 +153,7 @@ namespace xsd
           //
           if (ns == xml::bits::xsi_namespace<C> () &&
               (name == xml::bits::type<C> () ||
-               name == xml::bits::nil_lit<C> () ||
+               name == xml::bits::nil<C> () ||
                name == xml::bits::schema_location<C> () ||
                name == xml::bits::no_namespace_schema_location<C> ()))
             return;
@@ -163,15 +164,15 @@ namespace xsd
           if (ns == xml::bits::xmlns_namespace<C> ())
             return;
 
-          if (!this->_attribute_impl (ns, name, value))
-            this->_any_attribute (ns, name, value);
+          if (!_attribute_impl (ns, name, value))
+            _any_attribute (ns, name, value);
         }
 
         template <typename C>
         void simple_content<C>::
         _characters (const ro_string<C>& str)
         {
-          this->_characters_impl (str);
+          _characters_impl (str);
         }
 
 
@@ -189,15 +190,15 @@ namespace xsd
           if (s.depth_++ > 0)
           {
             if (s.any_)
-              this->_start_any_element (ns, name, type);
+              _start_any_element (ns, name, type);
             else if (s.parser_)
               s.parser_->_start_element (ns, name, type);
           }
           else
           {
-            if (!this->_start_element_impl (ns, name, type))
+            if (!_start_element_impl (ns, name, type))
             {
-              this->_start_any_element (ns, name, type);
+              _start_any_element (ns, name, type);
               s.any_ = true;
             }
             else if (s.parser_ != 0)
@@ -234,7 +235,7 @@ namespace xsd
 
               this->_post_impl ();
 
-              if (!this->_end_element_impl (ns, name))
+              if (!_end_element_impl (ns, name))
                 assert (false);
             }
           }
@@ -245,7 +246,7 @@ namespace xsd
             if (--s.depth_ > 0)
             {
               if (s.any_)
-                this->_end_any_element (ns, name);
+                _end_any_element (ns, name);
               else if (s.parser_)
                 s.parser_->_end_element (ns, name);
             }
@@ -254,10 +255,10 @@ namespace xsd
               if (s.parser_ != 0 && !s.any_)
                 s.parser_->_post_impl ();
 
-              if (!this->_end_element_impl (ns, name))
+              if (!_end_element_impl (ns, name))
               {
                 s.any_ = false;
-                this->_end_any_element (ns, name);
+                _end_any_element (ns, name);
               }
             }
           }
@@ -275,7 +276,7 @@ namespace xsd
           //
           if (ns == xml::bits::xsi_namespace<C> () &&
               (name == xml::bits::type<C> () ||
-               name == xml::bits::nil_lit<C> () ||
+               name == xml::bits::nil<C> () ||
                name == xml::bits::schema_location<C> () ||
                name == xml::bits::no_namespace_schema_location<C> ()))
             return;
@@ -291,14 +292,14 @@ namespace xsd
           if (s.depth_ > 0)
           {
             if (s.any_)
-              this->_any_attribute (ns, name, value);
+              _any_attribute (ns, name, value);
             else if (s.parser_)
               s.parser_->_attribute (ns, name, value);
           }
           else
           {
-            if (!this->_attribute_impl (ns, name, value))
-              this->_any_attribute (ns, name, value);
+            if (!_attribute_impl (ns, name, value))
+              _any_attribute (ns, name, value);
           }
         }
 
@@ -311,14 +312,14 @@ namespace xsd
           if (s.depth_ > 0)
           {
             if (s.any_)
-              this->_any_characters (str);
+              _any_characters (str);
             else if (s.parser_)
               s.parser_->_characters (str);
           }
           else
           {
-            if (!this->_characters_impl (str))
-              this->_any_characters (str);
+            if (!_characters_impl (str))
+              _any_characters (str);
           }
         }
 

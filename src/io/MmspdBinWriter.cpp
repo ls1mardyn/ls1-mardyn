@@ -49,7 +49,7 @@ void MmspdBinWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
+void MmspdBinWriter::initOutput(ParticleContainer* particleContainer,
                            DomainDecompBase* domainDecomp, Domain* domain) {
 	stringstream filenamestream;
 	filenamestream << _outputPrefix;
@@ -129,7 +129,7 @@ void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
 		  mmspdfstream.write((char*)&color,sizeof(color));
 		  //radius
 		  mmspdfstream.write((const char*)"r\0f", 4);
-		  float radius = domain->getSigma(i,0)*0.5;
+		  float radius = 1.518;
 		  mmspdfstream.write((char*)&radius,sizeof(radius));
 		  //position
 		  mmspdfstream.write((const char*)"x\0f\0y\0f\0z\0f", 12);
@@ -156,7 +156,7 @@ void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
 		  mmspdfstream.write((char*)&color,sizeof(color));
 		  //radius
 		  mmspdfstream.write((const char*)"r\0f", 4);
-		  float radius = domain->getSigma(i,0)*0.5;
+		  float radius = 1.553;
 		  mmspdfstream.write((char*)&radius,sizeof(radius));
 		  //position
 		  mmspdfstream.write((const char*)"x\0f\0y\0f\0z\0f", 12);
@@ -174,8 +174,7 @@ void MmspdBinWriter::initOutput(ParticleContainer* /*particleContainer*/,
 
 void MmspdBinWriter::doOutput( ParticleContainer* particleContainer,
 		   DomainDecompBase* domainDecomp, Domain* domain,
-		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
-		   map<unsigned, CavityEnsemble>* /*mcav*/){
+		   unsigned long simstep, std::list<ChemicalPotential>* lmu){
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream, outputstream;
 		filenamestream << _outputPrefix;
@@ -261,4 +260,4 @@ void MmspdBinWriter::doOutput( ParticleContainer* particleContainer,
 	}
 }
 
-void MmspdBinWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void MmspdBinWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}

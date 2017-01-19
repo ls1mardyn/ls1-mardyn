@@ -26,7 +26,7 @@ Log::Logger* test_log;
 #endif /* UNIT_TESTS */
 
 
-int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases) {
+bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases) {
 	Log::logLevel globalLogLevel = Log::global_log->get_log_level();
 
 	test_log = new Log::Logger(testLogLevel);
@@ -38,10 +38,10 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 
 	setTestDataDirectory(testDataDirectory);
 
-	int testresult;
+	bool testresult;
 
 #ifndef UNIT_TESTS
-	test_log->error() << std::endl << "Running unit tests demanded, but program compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
+	test_log->error() << std::endl << "Running unit tests demanded, but programme compiled without -DCPPUNIT_TESTS!" << std::endl << std::endl;
 	testresult = true;
 
 #else /* UNIT_TESTS */
@@ -55,7 +55,7 @@ int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const s
 	runner.run(testcases);
 
 	CppUnit::TestResultCollector& collector = runner.result();
-	testresult = collector.testFailuresTotal();
+	testresult = collector.testFailuresTotal() != 0;
 
 	std::ofstream stream("results.xml");
 	CppUnit::XmlOutputter outputter( &collector, stream );
@@ -98,10 +98,10 @@ void utils::Test::setTestDataDirectory(std::string& testDataDir) {
 }
 
 
-std::string utils::Test::getTestDataFilename(const std::string& file, bool checkExistence) {
-	std::string fullPath = testDataDirectory +"/"+ file;
+std::string utils::Test::getTestDataFilename(const std::string& file) {
+	std::string fullPath = testDataDirectory + file;
 
-	if (!fileExists(fullPath.c_str()) and checkExistence) {
+	if (!fileExists(fullPath.c_str())) {
 		test_log->error() << "File " << fullPath << " for test input data does not exits!" << std::endl;
 		exit(-1);
 	}

@@ -27,9 +27,9 @@ MarDynInitOptionsTest::~MarDynInitOptionsTest() {
 
 void MarDynInitOptionsTest::testAllOptions() {
 	const char* const argv[] = { "DummyProgrammeName", "-n", "4", "-t", "-v",
-	    //"--phasespace-file", "phasespace.inp",
-	    //"--particle-container", "LinkedCells",
-	    //"--domain-decomposition", "KDDecomposition",
+	    "--phasespace-file", "phasespace.inp",
+	    "--particle-container", "AdaptiveSubCells",
+	    "--domain-decomposition", "KDDecomposition",
 	    "test_prefix" };
 
 	int argc = sizeof(argv) / sizeof(char*);

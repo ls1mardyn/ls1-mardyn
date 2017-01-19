@@ -2,11 +2,9 @@
 #define KDNODE_H_
 
 // include because of macro KDDIM
-#include "parallel/KDDecomposition.h" /* TODO seriously..? */
+#include "parallel/KDDecomposition.h"
 
 #include "parallel/MPIKDNode.h"
-
-#include <vector>
 
 class VTKGridWriterImplementation;
 
@@ -44,7 +42,7 @@ public:
 
 
 	/**
-	 * Copy constructor copies everything except for the children (are set to NULL!)
+	 * Copy constructor copies all execpt the children (are set to NULL!)
 	 */
 	KDNode(const KDNode& other) : _numProcs(other._numProcs), _nodeID(other._nodeID),
 			_owningProc(other._owningProc), _child1(NULL), _child2(NULL),
@@ -111,48 +109,24 @@ public:
 		return _load / ((double) _numProcs);
 	}
 
-	void calculateExpectedDeviation(std::vector<double>* accumulatedProcessorSpeeds = nullptr) {
-		double meanProcessorSpeed[] = { 1., 1. };
-		double averagedMeanProcessorSpeed = 1.;
-		if (accumulatedProcessorSpeeds != nullptr && accumulatedProcessorSpeeds->size() != 0) {
-			meanProcessorSpeed[0] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc]
-					- (*accumulatedProcessorSpeeds)[_owningProc]) / (_child1->_numProcs);
-			meanProcessorSpeed[1] = ((*accumulatedProcessorSpeeds)[_child2->_owningProc + _child2->_numProcs]
-					- (*accumulatedProcessorSpeeds)[_child2->_owningProc]) / (_child2->_numProcs);
-			averagedMeanProcessorSpeed = (meanProcessorSpeed[0] + meanProcessorSpeed[1]) / 2;
-		}
-		double child1Dev = _child1->calculateAvgLoadPerProc()
-				- _optimalLoadPerProcess * meanProcessorSpeed[0] / averagedMeanProcessorSpeed;
+	void calculateExpectedDeviation() {
+		double child1Dev = _child1->calculateAvgLoadPerProc() - _optimalLoadPerProcess;
 		child1Dev = child1Dev * child1Dev;
-		double child2Dev = _child2->calculateAvgLoadPerProc()
-				- _optimalLoadPerProcess * meanProcessorSpeed[1] / averagedMeanProcessorSpeed;
+		double child2Dev = _child2->calculateAvgLoadPerProc() - _optimalLoadPerProcess;
 		child2Dev = child2Dev * child2Dev;
-		_expectedDeviation = child1Dev * (double) _child1->_numProcs + child2Dev * (double) _child2->_numProcs;
+		_expectedDeviation = child1Dev * (double) _child1->_numProcs
+		                     + child2Dev * (double) _child2->_numProcs;
 	}
 
-	void calculateDeviation(std::vector<double>* processorSpeeds = nullptr, const double &totalMeanProcessorSpeed = 1.) {
+	void calculateDeviation() {
 		if (_numProcs == 1) {
-			double speed = 1.;
-			if (processorSpeeds != nullptr && processorSpeeds->size() > (unsigned int)_owningProc) {
-				speed = (*processorSpeeds)[_owningProc];
-			}
 			//_deviation = _load - _optimalLoadPerProcess;
-			double dev = _load - _optimalLoadPerProcess * speed / totalMeanProcessorSpeed;
+			double dev = _load - _optimalLoadPerProcess;
 			_deviation = dev * dev;
 		} else {
 			_deviation = _child1->_deviation + _child2->_deviation;
 		}
 	}
-
-	/**
-	 *
-	 * @param low
-	 * @param high
-	 * @param procIDs
-	 * @param neighbHaloAreas
-	 */
-	void getOwningProcs(const int low[KDDIM], const int high[KDDIM], std::vector<int>& procIDs, std::vector<int>& neighbHaloAreas) const;
-
 
 	/**
 	 * Split this node, i.e. create two children (note, that its children must be
@@ -188,7 +162,7 @@ public:
 	/**
 	 * plot the leafs of the KDTree with vtk.
 	 */
-	void plotNode(const std::string& vtkFile, const std::vector<double>* processorSpeeds=nullptr) const;
+	void plotNode(const std::string& vtkFile) const;
 
 	/**
 	 * Initialize the mpi datatype. Has to be called once initially.

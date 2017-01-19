@@ -7,7 +7,6 @@
 #include "ensemble/PressureGradient.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
-#include "particleContainer/ParticleIterator.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
@@ -47,98 +46,69 @@ void Leapfrog::eventNewTimestep(ParticleContainer* molCont, Domain* domain) {
 	}
 }
 
-void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
-	if (this->_state != STATE_NEW_TIMESTEP) {
-		global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << endl;
-		return;
-	}
-
-	#if defined(_OPENMP)
-	#pragma omp parallel
-	#endif
-	{
-		const ParticleIterator begin = molCont->iteratorBegin();
-		const ParticleIterator end = molCont->iteratorEnd();
-
-		for (ParticleIterator i = begin; i != end; ++i) {
-			(*i)->upd_preF(_timestepLength);
+void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
+	if (this->_state == STATE_NEW_TIMESTEP) {
+		Molecule* tempMolecule;
+		// double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
+		// double Dcorr = 2. - 1. / domain->getGlobalBetaRot();
+		for (tempMolecule = molCont->begin(); tempMolecule != molCont->end(); tempMolecule = molCont->next()) {
+			tempMolecule->upd_preF(_timestepLength);
 		}
-	}
 
-	this->_state = STATE_PRE_FORCE_CALCULATION;
+		this->_state = STATE_PRE_FORCE_CALCULATION;
+	}
+	else {
+		global_log->error() << "Leapfrog::transition1to2(...): Wrong state for state transition" << endl;
+	}
 }
 
 void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
-	if (this->_state != STATE_PRE_FORCE_CALCULATION) {
-		global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << endl;
-	}
-
-	/* TODO introduce
-	  	class Thermostat {
-		unsigned long N, rotDOF;
-		double summv2, sumIw2;
-	};
-	 * but not here, rather in a separate class. The current implementation of the thermostats
-	 * (here and in class Domain) is a nightmare.
-	 */
-
-	Molecule* tM;
-	map<int, unsigned long> N;
-	map<int, unsigned long> rotDOF;
-	map<int, double> summv2;
-	map<int, double> sumIw2;
-	double dt_half = 0.5 * this->_timestepLength;
-	if (domain->severalThermostats()) {
-		for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
-			int cid = tM->componentid();
-			int thermostat = domain->getThermostat(cid);
-			tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
-			N[thermostat]++;
-			rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+	if (this->_state == STATE_PRE_FORCE_CALCULATION) {
+		Molecule* tM;
+		map<int, unsigned long> N;
+		map<int, unsigned long> rotDOF;
+		map<int, double> summv2;
+		map<int, double> sumIw2;
+		double dt_half = 0.5 * this->_timestepLength;
+		if (domain->severalThermostats()) {
+			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
+				int cid = tM->componentid();
+				int thermostat = domain->getThermostat(cid);
+				tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
+				N[thermostat]++;
+				rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+			}
 		}
+		else {
+			unsigned long Ngt = 0;
+			unsigned long rotDOFgt = 0;
+			double summv2gt = 0.0;
+			double sumIw2gt = 0.0;
+			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
+				tM->upd_postF(dt_half, summv2gt, sumIw2gt);
+				assert(summv2gt >= 0.0);
+				Ngt++;
+				rotDOFgt += tM->component()->getRotationalDegreesOfFreedom();
+			}
+			N[0] = Ngt;
+			rotDOF[0] = rotDOFgt;
+			summv2[0] = summv2gt;
+			sumIw2[0] = sumIw2gt;
+		}
+		for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
+			domain->setLocalSummv2(thermit->second, thermit->first);
+			domain->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
+			domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
+		}
+
+		this->_state = STATE_POST_FORCE_CALCULATION;
 	}
 	else {
-		#if defined(_OPENMP)
-		#pragma omp parallel
-		#endif
-		{
-			unsigned long Ngt_l = 0;
-			unsigned long rotDOFgt_l = 0;
-			double summv2gt_l = 0.0;
-			double sumIw2gt_l = 0.0;
-
-			const ParticleIterator begin = molCont->iteratorBegin();
-			const ParticleIterator end = molCont->iteratorEnd();
-
-			for (ParticleIterator i = begin; i != end; ++i) {
-				(*i)->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
-				assert(summv2gt_l >= 0.0);
-				Ngt_l++;
-				rotDOFgt_l += (*i)->component()->getRotationalDegreesOfFreedom();
-			}
-
-			#if defined(_OPENMP)
-			#pragma omp critical (thermostat)
-			#endif
-			{
-				N[0] += Ngt_l;
-				rotDOF[0] += rotDOFgt_l;
-				summv2[0] += summv2gt_l;
-				sumIw2[0] += sumIw2gt_l;
-			}
-		} // end pragma omp parallel
+		global_log->error() << "Leapfrog::transition2to3(...): Wrong state for state transition" << endl;
 	}
-	for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
-		domain->setLocalSummv2(thermit->second, thermit->first);
-		domain->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
-		domain->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
-	}
-
-	this->_state = STATE_POST_FORCE_CALCULATION;
-
 }
 
-void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/) {
+void Leapfrog::transition3to1(ParticleContainer* molCont, Domain* domain) {
 	if (this->_state == STATE_POST_FORCE_CALCULATION) {
 		this->_state = STATE_NEW_TIMESTEP;
 	}
@@ -149,7 +119,7 @@ void Leapfrog::transition3to1(ParticleContainer* /*molCont*/, Domain* /*domain*/
 
 void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	map<unsigned, double>* additionalAcceleration = domain->getPG()->getUAA();
-	vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
+	vector<Component> comp = *(_simulation.getEnsemble()->components());
 	vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	for (compit = comp.begin(); compit != comp.end(); compit++) {
@@ -173,7 +143,7 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 }
 
 void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* domain) {
-	vector<Component> comp = *(_simulation.getEnsemble()->getComponents());
+	vector<Component> comp = *(_simulation.getEnsemble()->components());
 	vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	for (compit = comp.begin(); compit != comp.end(); compit++) {
@@ -194,4 +164,17 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 		              componentwiseVelocityDelta[1][cid],
 		              componentwiseVelocityDelta[2][cid]);
 	}
+}
+
+void Leapfrog::init1D(unsigned zoscillator, ParticleContainer* molCont) {
+	Molecule* thismol;
+	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+		if (!(thismol->id() % zoscillator) && thismol->numTersoff()) thismol->setXY();
+}
+
+void Leapfrog::zOscillation(unsigned zoscillator, ParticleContainer* molCont) {
+	Molecule* thismol;
+	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+		/* TODO: use cid instead of complicated id + tersoff */
+		if (!(thismol->id() % zoscillator) && thismol->numTersoff()) thismol->resetXY();
 }

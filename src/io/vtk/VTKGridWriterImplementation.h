@@ -39,14 +39,13 @@ private:
 	//! the rank of the process
 	int _rank;
 
-	const std::vector<double>* _processorSpeeds;
 
 public:
 
 	/**
 	 * @param rank the MPI rank of the process
 	 */
-	VTKGridWriterImplementation(int rank, const std::vector<double>* processorSpeeds = nullptr);
+	VTKGridWriterImplementation(int rank);
 
 	virtual ~VTKGridWriterImplementation();
 

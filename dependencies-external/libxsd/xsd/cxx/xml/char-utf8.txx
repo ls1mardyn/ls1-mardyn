@@ -1,14 +1,9 @@
 // file      : xsd/cxx/xml/char-utf8.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
-#include <xsd/cxx/config.hxx> // XSD_CXX11
-
-#ifdef XSD_CXX11
-#  include <memory> // std::unique_ptr
-#else
-#  include <xsd/cxx/auto-array.hxx>
-#endif
+#include <xsd/cxx/auto-array.hxx>
 
 namespace xsd
 {
@@ -189,12 +184,7 @@ namespace xsd
         if (!valid)
           throw invalid_utf8_string ();
 
-#ifdef XSD_CXX11
-        std::unique_ptr<XMLCh[]> r (
-#else
-        auto_array<XMLCh> r (
-#endif
-          new XMLCh[rl + 1]);
+        auto_array<XMLCh> r (new XMLCh[rl + 1]);
         XMLCh* ir (r.get ());
 
         unsigned int u (0); // Four byte UCS-4 char.

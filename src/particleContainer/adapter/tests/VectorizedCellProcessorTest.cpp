@@ -128,7 +128,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), Tolerance);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	LegacyCellProcessor cellProcessor( ScenarioCutoff, ScenarioCutoff, &forceAdapter);
+	LegacyCellProcessor cellProcessor( ScenarioCutoff, ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
 	for (Molecule* m = container_1->begin(); m != container_1->end(); m = container_1->next()) {
@@ -174,8 +174,6 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
 			// check torque
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->M(i), m_2->M(i), Tolerance);
-			//check local molecule-wise virial
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
 		}
 		// advance molecule of first container
 		m_1 = container_1->next();
@@ -213,11 +211,11 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 			ParticleContainerFactory::LinkedCell, filename,
 			ScenarioCutoff);
 
-	ASSERT_DOUBLES_EQUAL_MSG("upot initialization 1", 0.0, _domain->getLocalUpot(), Tolerance);
-	ASSERT_DOUBLES_EQUAL_MSG("virial initialization 1", 0.0, _domain->getLocalVirial(), Tolerance);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), Tolerance);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), Tolerance);
 
 	ParticlePairs2PotForceAdapter forceAdapter(*_domain);
-	LegacyCellProcessor cellProcessor(ScenarioCutoff, ScenarioCutoff, &forceAdapter);
+	LegacyCellProcessor cellProcessor(ScenarioCutoff, ScenarioCutoff, ScenarioCutoff, &forceAdapter);
 	container_1->traverseCells(cellProcessor);
 
 	for (Molecule* m = container_1->begin(); m != container_1->end(); m = container_1->next()) {
@@ -239,8 +237,8 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 			ParticleContainerFactory::LinkedCell, filename,
 			ScenarioCutoff);
 
-	ASSERT_DOUBLES_EQUAL_MSG("upot initialization 2", 0.0, _domain->getLocalUpot(), Tolerance);
-	ASSERT_DOUBLES_EQUAL_MSG("virial initialization 2", 0.0, _domain->getLocalVirial(), Tolerance);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), Tolerance);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), Tolerance);
 
 	VectorizedCellProcessor vectorized_cell_proc(*_domain, ScenarioCutoff,
 			ScenarioCutoff);
@@ -266,16 +264,14 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->F(i), m_2->F(i), Tolerance);
 			// check torque
 			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->M(i), m_2->M(i), Tolerance);
-			//check local molecule-wise virial
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), m_1->Vi(i), m_2->Vi(i), Tolerance);
 		}
 		// advance molecule of first container
 		m_1 = container_1->next();
 	}
 
 	// Assert that macroscopic quantities are the same
-	ASSERT_DOUBLES_EQUAL_MSG("upot unequal", legacy_u_pot, vectorized_u_pot, Tolerance);
-	ASSERT_DOUBLES_EQUAL_MSG("virial unequal", legacy_virial, vectorized_virial, Tolerance);
+	ASSERT_DOUBLES_EQUAL(legacy_u_pot, vectorized_u_pot, Tolerance);
+	ASSERT_DOUBLES_EQUAL(legacy_virial, vectorized_virial, Tolerance);
 
 	//-----------------------------------------------------------------------------//
 	// Clear any global/static variables between applying the two cell-processors, //
@@ -322,7 +318,3 @@ void VectorizedCellProcessorTest::testWaterVectorization() {
 	testElectrostaticVectorization(filename, 6.16);
 }
 
-void VectorizedCellProcessorTest::testMultiComponentMultiPotentials() {
-	const char* filename = "VectorizationMultiComponentMultiPotentials.inp";
-	testElectrostaticVectorization(filename, 35.0);
-}

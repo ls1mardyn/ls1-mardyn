@@ -11,6 +11,7 @@
 #include "Domain.h"
 #include "Simulation.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecompDummy.h"
 
 #ifdef ENABLE_MPI
 #include "parallel/DomainDecomposition.h"
@@ -28,12 +29,12 @@ utils::TestWithSimulationSetup::TestWithSimulationSetup()
 
 utils::TestWithSimulationSetup::~TestWithSimulationSetup() {
 	if (_domain != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
+		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
 		delete _domain;
 	}
 
 	if (_domainDecomposition != NULL) {
-		Log::global_log->warning() << "TestCase did not free it' resources!" << std::endl;
+		Log::global_log->warning() << "TestCase did not free it' ressources!" << std::endl;
 		delete _domainDecomposition;
 	}
 }

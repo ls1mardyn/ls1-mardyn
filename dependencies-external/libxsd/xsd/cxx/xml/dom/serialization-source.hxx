@@ -1,5 +1,6 @@
 // file      : xsd/cxx/xml/dom/serialization-source.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_SERIALIZATION_SOURCE_HXX
@@ -46,19 +47,13 @@ namespace xsd
         xercesc::DOMElement&
         create_element (const C* name, const C* ns, xercesc::DOMElement&);
 
-        // Add namespace declarations and schema locations.
-        //
-        template <typename C>
-        void
-        add_namespaces (xercesc::DOMElement&, const namespace_infomap<C>&);
-
         // Serialization flags.
         //
         const unsigned long no_xml_declaration = 0x00010000UL;
         const unsigned long dont_pretty_print  = 0x00020000UL;
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         serialize (const std::basic_string<C>& root_element,
                    const std::basic_string<C>& root_element_namespace,
                    const namespace_infomap<C>& map,
@@ -67,7 +62,7 @@ namespace xsd
         // This one helps Sun C++ to overcome its fears.
         //
         template <typename C>
-        inline XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        inline xml::dom::auto_ptr<xercesc::DOMDocument>
         serialize (const C* root_element,
                    const C* root_element_namespace,
                    const namespace_infomap<C>& map,
@@ -108,12 +103,16 @@ namespace xsd
 
         public:
           // I know, some of those consts are stupid. But that's what
-          // Xerces folks put into their interfaces and VC thinks there
-          // are different signatures if one strips this fluff off.
+          // Xerces folks put into their interfaces and VC-7.1 thinks
+          // there are different signatures if one strips this fluff off.
           //
           virtual void
           writeChars (const XMLByte* const buf,
+#if _XERCES_VERSION >= 30000
                       const XMLSize_t size,
+#else
+                      const unsigned int size,
+#endif
                       xercesc::XMLFormatter* const)
           {
             // Ignore the write request if there was a stream failure and the

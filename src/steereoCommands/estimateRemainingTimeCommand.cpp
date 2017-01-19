@@ -11,9 +11,11 @@
 #include <utils/Timer.h>
 
 EstimateRemainingTimeCommand::EstimateRemainingTimeCommand() : SteereoCommand (false, "estimateRemainingTime", 0) {
+	// TODO Auto-generated constructor stub
 }
 
 EstimateRemainingTimeCommand::~EstimateRemainingTimeCommand() {
+	// TODO Auto-generated destructor stub
 }
 
 ReturnType EstimateRemainingTimeCommand::execute ()

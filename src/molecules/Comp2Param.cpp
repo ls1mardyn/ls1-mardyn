@@ -20,22 +20,26 @@ void Comp2Param::initialize(
 		ParaStrm& pstrmii = m_ssparatbl(compi, compi);
 		unsigned int nci = components[compi].numLJcenters();
 		double epsi, sigi, epsj, sigj, epsilon24, sigma2, shift6i;
-		// single-component interaction
-		for (unsigned int centeri = 0; centeri < nci; ++centeri) {
-			const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
-			epsi = ljcenteri.eps();
-			sigi = ljcenteri.sigma();
-			shift6i = ljcenteri.shift6();
-			for (unsigned int centerj = 0; centerj < nci; ++centerj) {
-				const LJcenter& ljcenterj = static_cast<const LJcenter&>(components[compi].ljcenter(centerj));
-				epsj = ljcenterj.eps();
-				sigj = ljcenterj.sigma();
-				epsilon24 = 24. * sqrt(epsi * epsj);
-				sigma2 = .5 * (sigi + sigj);
-				sigma2 *= sigma2;
-				pstrmii << epsilon24;
-				pstrmii << sigma2;
-				pstrmii << shift6i;
+		unsigned nti = components[compi].numTersoff();
+		// no LJ interaction between solid atoms belonging to the same component
+		if (!nti) {
+			// single-component interaction
+			for (unsigned int centeri = 0; centeri < nci; ++centeri) {
+				const LJcenter& ljcenteri = static_cast<const LJcenter&>(components[compi].ljcenter(centeri));
+				epsi = ljcenteri.eps();
+				sigi = ljcenteri.sigma();
+				shift6i = ljcenteri.shift6();
+				for (unsigned int centerj = 0; centerj < nci; ++centerj) {
+					const LJcenter& ljcenterj = static_cast<const LJcenter&>(components[compi].ljcenter(centerj));
+					epsj = ljcenterj.eps();
+					sigj = ljcenterj.sigma();
+					epsilon24 = 24. * sqrt(epsi * epsj);
+					sigma2 = .5 * (sigi + sigj);
+					sigma2 *= sigma2;
+					pstrmii << epsilon24;
+					pstrmii << sigma2;
+					pstrmii << shift6i;
+				}
 			}
 		}
 		// interaction between different components
@@ -181,4 +185,57 @@ void Comp2Param::initialize(
 			}
 		}
 	}
+
+	/*
+	// Tersoff interaction parameters
+	//
+	m_tersofftbl.redim(m_numcomp, m_numcomp);
+
+	for (unsigned int compi = 0; compi < this->m_numcomp; compi++) {
+		unsigned int nti = components[compi].numTersoff();
+		for (unsigned int compj = 0; compj < this->m_numcomp; compj++) {
+			unsigned int ntj = components[compj].numTersoff();
+			ParaStrm& pstrmij = m_tersofftbl(compi, compj);
+
+			for (unsigned int centeri = 0; centeri < nti; centeri++) {
+				const Tersoff& tersoffi = static_cast<const Tersoff&> (components[compi].tersoff(centeri));
+				double Ai = tersoffi.A();
+				double Bi = tersoffi.B();
+				double minus_lambdai = tersoffi.minusLambda();
+				double minus_mui = tersoffi.minusMu();
+				double Ri = tersoffi.R();
+				double Si = tersoffi.S();
+				double cci = tersoffi.cSquare();
+				double ddi = tersoffi.dSquare();
+				double hi = tersoffi.h();
+				double ni = tersoffi.n();
+				double betai = tersoffi.beta();
+
+				for (unsigned int centerj = 0; centerj < ntj; centerj++) {
+					const Tersoff& tersoffj = static_cast<const Tersoff&> (components[compj].tersoff(centerj));
+					double Aj = tersoffj.A();
+					double Bj = tersoffj.B();
+					double minus_lambdaj = tersoffj.minusLambda();
+					double minus_muj = tersoffj.minusMu();
+					double Rj = tersoffj.R();
+					double Sj = tersoffj.S();
+
+					double S = sqrt(Si * Sj);
+
+					pstrmij << sqrt(Ri*Rj)       // R
+					        << S                 // S
+					        << hi                // h
+					        << cci               // c^2
+					        << ddi               // d^2
+					        << sqrt(Ai*Aj)       // A
+					        << -1.0*sqrt(Bi*Bj)  // -B
+					        << 0.5 * (minus_lambdai + minus_lambdaj)  // -lambda
+					        << 0.5 * (minus_mui + minus_muj)          // -mu
+					        << betai             // beta
+					        << ni;               // n_i
+				}
+			}
+		}
+	}
+	*/
 }

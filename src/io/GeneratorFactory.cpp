@@ -18,8 +18,7 @@ using namespace Log;
 using namespace std;
 
 string GeneratorFactory::generators[] = {"droplet", "cubicgrid"};
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::string configFile) {
 #ifdef SUPPORT_GENERATOR
 	MDGenerator* generator = NULL;
@@ -43,4 +42,3 @@ InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::strin
 	return NULL;
 #endif
 }
-#pragma GCC diagnostic pop

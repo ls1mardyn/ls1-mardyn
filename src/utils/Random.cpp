@@ -29,35 +29,3 @@ float Random::rnd()
    rnd = am * ((IM & (ix ^ iy)) | (int)1);
    return rnd;
 }
-
-// by Stefan Becker
-double Random::gaussDeviate(double stdDeviation){
-  /** Method generates a gaussian distributed deviate with mean = 0 and the specified standard deviation
-   * borrowed from "Numerical Recipes in C++" by W.H. Press et al., Cambridge University Press*/
-  static bool iset = true;	// flag decides wheter or not the reserve is returned
-  static double gset; 		// normal distributed deviate as a reserve for next call --> speed up
-  double fac, rsq, v1, v2;
-  
-  //if(randFlag < 0) iset = true; // every 2nd time the reserve value is returned
-  if(iset){
-   do{					
-     v1 = 2.0*this->rnd() - 1.0; 
-     v2 = 2.0*this->rnd() - 1.0;
-     rsq = v1*v1 + v2*v2;     
-   }while(rsq >= 1.0 || rsq == 0.0);
-   /* Box-Muller transformation to get two normal distributed deviates.
-    * One is returned and gset is saved for the next time (reserve)*/
-   fac = sqrt(-2.0*log(rsq)/rsq);
-   
-  /* perform transformation from a standard normal distributed random number v1*fac
-   *to a normal distributed number with specified standrard deviation (mean is 0) by multiplying the stdandard deviation*/
-   gset = v1*fac*stdDeviation;
-   iset = false;
-   return v2*fac*stdDeviation;
-  }
-  else{
-    iset = true;
-    return gset;
-  }
-}
-

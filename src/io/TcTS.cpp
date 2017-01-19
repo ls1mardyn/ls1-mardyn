@@ -29,8 +29,7 @@ void MkTcTSGenerator::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Layer 2, density: " << rho2 << endl;
 }
 
-long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* /*lmu*/,
-		Domain* domain, DomainDecompBase* /*domainDecomp*/) {
+long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleContainer, list< ChemicalPotential >* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	double T = _simulation.getEnsemble()->T();
 	double box[3];
@@ -111,6 +110,9 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 			<< " = " << slots[l] << " slots (ideally " << N_id[l] << ")" << endl;
 	}
 
+	_simulation.initCanonical(10);
+	_simulation.initStatistics(3003003);
+
 	double loffset[3][2];
 	loffset[0][0] = 0.1; loffset[1][0] = 0.3; loffset[2][0] = 0.1;
 	loffset[0][1] = 0.1; loffset[1][1] = 0.8; loffset[2][1] = 0.1;
@@ -122,7 +124,7 @@ long unsigned int MkTcTSGenerator::readPhaseSpace(ParticleContainer* particleCon
 
 	double v_avg = sqrt(3.0 * T);
 
-	Component* component = _simulation.getEnsemble()->getComponent(0);
+	Component* component = _simulation.getEnsemble()->component(0);
 	unsigned ID = 1;
 	for(unsigned l=0; l < 2; l++) {
 		for(unsigned i=0; i < fl_units[0][l]; i++) {

@@ -76,6 +76,20 @@ public:
 		return this->processPair(particle1, particle2, distanceVector, pairType, dd, calculateLJ, NULL);
 	}
 
+	//! Only for so-called original pairs (pair type 0) the contributions
+	//! to the macroscopic values have to be collected
+	//!
+	//! @brief register Tersoff neighbours
+	void preprocessTersoffPair(Molecule& particle1, Molecule& particle2, bool pairType) {
+		return;
+	}
+
+	//! @brief process Tersoff interaction
+	//!
+	void processTersoffAtom(Molecule& particle1, double params[15], double delta_r) {
+		return;
+	}
+
 //	void recordRDF() {
 //		return;
 //	}

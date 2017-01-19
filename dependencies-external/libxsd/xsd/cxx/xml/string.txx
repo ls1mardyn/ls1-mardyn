@@ -1,5 +1,6 @@
 // file      : xsd/cxx/xml/string.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_STRING_TXX
@@ -46,13 +47,7 @@ namespace xsd
         XMLCh* wchar_transcoder<W, 2>::
         from (const W* s, std::size_t length)
         {
-#ifdef XSD_CXX11
-          std::unique_ptr<XMLCh[]> r (
-#else
-          auto_array<XMLCh> r (
-#endif
-            new XMLCh[length + 1]);
-
+          auto_array<XMLCh> r (new XMLCh[length + 1]);
           XMLCh* ir (r.get ());
 
           for (std::size_t i (0); i < length; ++ir, ++i)
@@ -125,13 +120,7 @@ namespace xsd
             rl += (*p & 0xFFFF0000) ? 2 : 1;
           }
 
-#ifdef XSD_CXX11
-          std::unique_ptr<XMLCh[]> r (
-#else
-          auto_array<XMLCh> r (
-#endif
-            new XMLCh[rl + 1]);
-
+          auto_array<XMLCh> r (new XMLCh[rl + 1]);
           XMLCh* ir (r.get ());
 
           for (const W* p (s); p < s + length; ++p)

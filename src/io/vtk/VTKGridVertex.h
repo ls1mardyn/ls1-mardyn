@@ -32,7 +32,7 @@ public:
 
 	virtual ~VTKGridVertex();
 
-	const double* getCoordinates() const;
+	const double* const getCoordinates() const;
 
 	void setIndex(int index);
 

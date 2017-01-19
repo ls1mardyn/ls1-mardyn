@@ -25,14 +25,6 @@ bool fileExists(const char* fileName) {
 	return retVal == 0;
 }
 
-std::string getFileExtension(const char* fileName) {
-	std::string extension ("");
-	const char* pos = strrchr(fileName, '.');
-	if(NULL != pos) {
-		extension = std::string(pos + 1);
-	}
-	return extension;
-}
 
 void removeFile(const char* fileName) {
 	int retVal = remove(fileName);

@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/comparison-map.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_COMPARISON_MAP_HXX
@@ -26,7 +27,7 @@ namespace xsd
         comparison_map ();
 
         void
-        register_type (const type_id&, comparator, bool replace = true);
+        register_type (const type_id&, comparator, bool override = true);
 
         void
         unregister_type (const type_id&);

@@ -47,7 +47,3 @@ LINKFLAGS_PAR_COVERAGE = $(LINKFLAGS_PAR_RELEASE) --coverage
 # COVERAGE
 CXXFLAGS_PAR_PROFILE  = $(CXXFLAGS_PAR_RELEASE) -pg
 LINKFLAGS_PAR_PROFILE = $(LINKFLAGS_PAR_RELEASE) -pg
-
-# Further settings, common to all configurations, which use gcc
-#########################################
-include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)

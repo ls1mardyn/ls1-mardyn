@@ -50,20 +50,16 @@ void PovWriter::readXML(XMLfileUnits& xmlconfig) {
 	if(appendTimestamp > 0) {
 		_appendTimestamp = true;
 	}
-	else{
-		_appendTimestamp = false;
-	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void PovWriter::initOutput(ParticleContainer* /*particleContainer*/,
-                           DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
+void PovWriter::initOutput(ParticleContainer* particleContainer,
+                           DomainDecompBase* domainDecomp, Domain* domain) {
 }
 
 void PovWriter::doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* /*domainDecomp*/, Domain* domain,
-                         unsigned long simstep, list<ChemicalPotential>* /*lmu*/,
-			 map<unsigned, CavityEnsemble>* /*mcav*/) {
+                         DomainDecompBase* domainDecomp, Domain* domain,
+                         unsigned long simstep, list<ChemicalPotential>* lmu) {
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
@@ -91,7 +87,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "//*PMRawBegin" << endl;
 		ostrm << "background {rgb <1,1,1>}" << endl;
 		ostrm << "//*PMRawEnd" << endl;
-		vector<Component>* dcomponents = _simulation.getEnsemble()->getComponents();
+		vector<Component>* dcomponents = _simulation.getEnsemble()->components();
 		for (unsigned int i = 0; i < dcomponents->size(); ++i) {
 			ostringstream osstrm;
 			osstrm.clear();
@@ -124,7 +120,7 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 		ostrm << "// " << dcomponents->size() << " objects for the atoms following..." << endl;
 		double mrot[3][3];
 		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
-			(pos->q()).getRotMatrix(mrot);
+			(pos->q()).getRotinvMatrix(mrot);
 			//cout << "object { T0 rotate <0,0,0> translate <0,0,0>}" << endl;
 			ostrm << "object { T" << pos->componentid();
 			ostrm << " matrix <"
@@ -139,4 +135,4 @@ void PovWriter::doOutput(ParticleContainer* particleContainer,
 	}
 }
 
-void PovWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
+void PovWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}

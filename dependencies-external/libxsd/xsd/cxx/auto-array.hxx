@@ -1,15 +1,10 @@
 // file      : xsd/cxx/auto-array.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_AUTO_ARRAY_HXX
 #define XSD_CXX_AUTO_ARRAY_HXX
-
-#include <xsd/cxx/config.hxx> // XSD_CXX11
-
-#ifdef XSD_CXX11
-#  error use std::unique_ptr instead of non-standard auto_array
-#endif
 
 #include <cstddef> // std::size_t
 
@@ -18,20 +13,20 @@ namespace xsd
   namespace cxx
   {
     template <typename T>
-    struct std_array_deleter
+    struct std_deallocator
     {
       void
-      operator() (T* p) const
+      deallocate (T* p)
       {
         delete[] p;
       }
     };
 
     // Simple automatic array. The second template parameter is
-    // an optional deleter type. If not specified, delete[]
+    // an optional deallocator type. If not specified, delete[]
     // is used.
     //
-    template <typename T, typename D = std_array_deleter<T> >
+    template <typename T, typename D = std_deallocator<T> >
     struct auto_array
     {
       auto_array (T a[])
@@ -39,7 +34,7 @@ namespace xsd
       {
       }
 
-      auto_array (T a[], const D& d)
+      auto_array (T a[], D& d)
           : a_ (a), d_ (&d)
       {
       }
@@ -47,7 +42,7 @@ namespace xsd
       ~auto_array ()
       {
         if (d_ != 0)
-          (*d_) (a_);
+          d_->deallocate (a_);
         else
           delete[] a_;
       }
@@ -78,7 +73,7 @@ namespace xsd
         if (a_ != a)
         {
           if (d_ != 0)
-            (*d_) (a_);
+            d_->deallocate (a_);
           else
             delete[] a_;
 
@@ -105,7 +100,7 @@ namespace xsd
 
     private:
       T* a_;
-      const D* d_;
+      D* d_;
     };
 
     template <typename T, typename D>

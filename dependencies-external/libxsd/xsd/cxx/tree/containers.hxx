@@ -1,19 +1,20 @@
 // file      : xsd/cxx/tree/containers.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_CONTAINERS_HXX
 #define XSD_CXX_TREE_CONTAINERS_HXX
 
+#include <cstddef>   // std::ptrdiff_t
+#include <string>
 #include <vector>
-#include <memory>    // std::auto_ptr/unique_ptr
+#include <memory>    // std::auto_ptr
+#include <iterator>  // std::iterator_traits
 #include <algorithm> // std::equal, std::lexicographical_compare
 #include <iosfwd>
 
-#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
-
 #include <xsd/cxx/tree/elements.hxx>
-#include <xsd/cxx/tree/iterator-adapter.hxx>
 
 namespace xsd
 {
@@ -131,11 +132,11 @@ namespace xsd
       public:
         ~one ();
 
-        one (container*);
+        one (flags, container*);
 
-        one (const T&, container*);
+        one (const T&, flags, container*);
 
-        one (XSD_AUTO_PTR<T>, container*);
+        one (std::auto_ptr<T>, flags, container*);
 
         one (const one&, flags, container*);
 
@@ -156,13 +157,10 @@ namespace xsd
         }
 
         void
-        set (const T& x)
-        {
-          set (x, 0);
-        }
+        set (const T&);
 
         void
-        set (XSD_AUTO_PTR<T>);
+        set (std::auto_ptr<T>);
 
         bool
         present () const
@@ -170,21 +168,18 @@ namespace xsd
           return x_ != 0;
         }
 
-        XSD_AUTO_PTR<T>
+        std::auto_ptr<T>
         detach ()
         {
           T* x (x_);
           x->_container (0);
           x_ = 0;
-          return XSD_AUTO_PTR<T> (x);
+          return std::auto_ptr<T> (x);
         }
 
       protected:
-        void
-        set (const T&, flags);
-
-      protected:
         T* x_;
+        flags flags_;
         container* container_;
       };
 
@@ -193,12 +188,12 @@ namespace xsd
       class one<T, true>
       {
       public:
-        one (container*)
+        one (flags, container*)
             : present_ (false)
         {
         }
 
-        one (const T& x, container*)
+        one (const T& x, flags, container*)
             : x_ (x), present_ (true)
         {
         }
@@ -251,6 +246,9 @@ namespace xsd
         bool present_;
       };
 
+
+      // Note that I cannot get rid of fund because of HP aCC3.
+      //
       template <typename T, bool fund = fundamental_p<T>::r>
       class optional;
 
@@ -261,13 +259,13 @@ namespace xsd
         ~optional ();
 
         explicit
-        optional (container* = 0);
+        optional (flags = 0, container* = 0);
 
         explicit
-        optional (const T&, container* = 0);
+        optional (const T&, flags = 0, container* = 0);
 
         explicit
-        optional (XSD_AUTO_PTR<T>, container* = 0);
+        optional (std::auto_ptr<T>, flags = 0, container* = 0);
 
         optional (const optional&, flags = 0, container* = 0);
 
@@ -334,35 +332,30 @@ namespace xsd
         }
 
         void
-        set (const T& x)
-        {
-          set (x, 0);
-        }
+        set (const T&);
 
         void
-        set (XSD_AUTO_PTR<T>);
+        set (std::auto_ptr<T>);
 
         void
         reset ();
 
-        XSD_AUTO_PTR<T>
+        std::auto_ptr<T>
         detach ()
         {
           T* x (x_);
           x->_container (0);
           x_ = 0;
-          return XSD_AUTO_PTR<T> (x);
+          return std::auto_ptr<T> (x);
         }
 
-      protected:
-        void
-        set (const T&, flags);
-
+      private:
         void
         true_ ();
 
-      protected:
+      private:
         T* x_;
+        flags flags_;
         container* container_;
       };
 
@@ -374,13 +367,13 @@ namespace xsd
       {
       public:
         explicit
-        optional (container* = 0)
+        optional (flags  = 0, container* = 0)
             : present_ (false)
         {
         }
 
         explicit
-        optional (const T&, container* = 0);
+        optional (const T&, flags = 0, container* = 0);
 
         optional (const optional&, flags = 0, container* = 0);
 
@@ -513,7 +506,7 @@ namespace xsd
         return !(a < b);
       }
 
-      // Provide an ostream insertion operator to prevent confusion from
+      // Provide an ostream insertion opretaor to prevent confusion from
       // the implicit bool conversion.
       //
       template <typename C, typename T, bool fund>
@@ -523,8 +516,263 @@ namespace xsd
 
       // Sequence.
       //
+
+      // Note that I cannot get rid of 'fund' because HP aCC3 likes it
+      // this way.
+      //
       template <typename T, bool fund = fundamental_p<T>::r>
       class sequence;
+
+
+      // Sun CC's <iterator> does not have iterator_traits. To overcome
+      // this, we will wrap std::iterator_traits into our own and also
+      // specialize it for pointer types. Since Sun CC uses pointer
+      // for vector::iterator, it will use the specialization and won't
+      // notice the std::iterator_traits.
+      //
+#ifndef _RWSTD_NO_CLASS_PARTIAL_SPEC
+      template <typename I>
+      struct iterator_traits
+      {
+        typedef
+        typename std::iterator_traits<I>::iterator_category
+        iterator_category;
+
+        typedef
+        typename std::iterator_traits<I>::value_type
+        value_type;
+
+        typedef
+        typename std::iterator_traits<I>::difference_type
+        difference_type;
+      };
+#else
+      // The Pointer specialization does not work for reverse and
+      // set iterators. But these iterators are user-dfined types
+      // and have suitable typedefs that we can use.
+      //
+      template <typename I>
+      struct iterator_traits
+      {
+        typedef typename I::iterator_category iterator_category;
+        typedef typename I::value_type value_type;
+        typedef typename I::difference_type difference_type;
+      };
+
+      template <typename T>
+      struct iterator_traits<T*>
+      {
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef T value_type;
+        typedef std::ptrdiff_t difference_type;
+      };
+#endif
+
+      // Iterator adapter for complex types. It expects I to point to
+      // a smart pointer-like object that has operator*() that returns
+      // a refernce to a type static_cast'able to T and get() that
+      // returns a pointer to a type static_cast'able to T.
+      //
+
+      template <typename I, typename T>
+      struct iterator_adapter
+      {
+        typedef T value_type;
+        typedef value_type& reference;
+        typedef value_type* pointer;
+
+        typedef
+        typename iterator_traits<I>::iterator_category
+        iterator_category;
+
+        typedef
+        typename iterator_traits<I>::difference_type
+        difference_type;
+
+
+      public:
+        iterator_adapter ()
+            : i_ () // i_ can be of a pointer type.
+        {
+        }
+
+        // Allow iterator to const_iterator conversion.
+        //
+        template <typename J, typename T2>
+        iterator_adapter (const iterator_adapter<J, T2>& j)
+            : i_ (j.base ())
+        {
+        }
+
+        explicit
+        iterator_adapter (const I& i)
+            : i_ (i)
+        {
+        }
+
+      public:
+        // Forward iterator requirements.
+        //
+        reference
+        operator* () const
+        {
+          return static_cast<reference> (**i_);
+        }
+
+        pointer
+        operator-> () const
+        {
+          return static_cast<pointer> (i_->get ());
+        }
+
+        iterator_adapter&
+        operator++ ()
+        {
+          ++i_;
+          return *this;
+        }
+
+        iterator_adapter
+        operator++ (int)
+        {
+          iterator_adapter r (*this);
+          ++i_;
+          return r;
+        }
+
+        // Bidirectional iterator requirements.
+        //
+        iterator_adapter&
+        operator-- ()
+        {
+          --i_;
+          return *this;
+        }
+
+        iterator_adapter
+        operator-- (int)
+        {
+          iterator_adapter r (*this);
+          --i_;
+          return r;
+        }
+
+        // Random access iterator requirements.
+        //
+        reference
+        operator[] (difference_type n) const
+        {
+          return static_cast<reference> (*(i_[n]));
+        }
+
+        iterator_adapter&
+        operator+= (difference_type n)
+        {
+          i_ += n;
+          return *this;
+        }
+
+        iterator_adapter
+        operator+ (difference_type n) const
+        {
+          return iterator_adapter (i_ + n);
+        }
+
+        iterator_adapter&
+        operator-= (difference_type n)
+        {
+          i_ -= n;
+          return *this;
+        }
+
+        iterator_adapter
+        operator- (difference_type n) const
+        {
+          return iterator_adapter (i_ - n);
+        }
+
+      public:
+        const I&
+        base () const
+        {
+          return i_;
+        }
+
+      private:
+        I i_;
+      };
+
+      // Note: We use different types for left- and right-hand-side
+      // arguments to allow comparison between iterator and const_iterator.
+      //
+
+      // Forward iterator requirements.
+      //
+      template <typename I, typename J, typename T1, typename T2>
+      inline bool
+      operator== (const iterator_adapter<I, T1>& i,
+                  const iterator_adapter<J, T2>& j)
+      {
+        return i.base () == j.base ();
+      }
+
+      template <typename I, typename J, typename T1, typename T2>
+      inline bool
+      operator!= (const iterator_adapter<I, T1>& i,
+                  const iterator_adapter<J, T2>& j)
+      {
+        return i.base () != j.base ();
+      }
+
+      // Random access iterator requirements
+      //
+      template <typename I, typename J, typename T1, typename T2>
+      inline bool
+      operator< (const iterator_adapter<I, T1>& i,
+                 const iterator_adapter<J, T2>& j)
+      {
+        return i.base () < j.base ();
+      }
+
+      template <typename I, typename J, typename T1, typename T2>
+      inline bool
+      operator> (const iterator_adapter<I, T1>& i,
+                 const iterator_adapter<J, T2>& j)
+      {
+        return i.base () > j.base ();
+      }
+
+      template <typename I, typename J, typename T1, typename T2>
+      inline bool
+      operator<= (const iterator_adapter<I, T1>& i,
+                  const iterator_adapter<J, T2>& j)
+      {
+        return i.base () <= j.base ();
+      }
+
+      template <typename I, typename J, typename T1, typename T2>
+      inline bool
+      operator>= (const iterator_adapter<I, T1>& i,
+                  const iterator_adapter<J, T2>& j)
+      {
+        return i.base () >= j.base ();
+      }
+
+      template <typename I, typename J, typename T1, typename T2>
+      inline typename iterator_adapter<I, T1>::difference_type
+      operator- (const iterator_adapter<I, T1>& i,
+                 const iterator_adapter<J, T2>& j)
+      {
+        return i.base () - j.base ();
+      }
+
+      template <typename I, typename T>
+      inline iterator_adapter<I, T>
+      operator+ (typename iterator_adapter<I, T>::difference_type n,
+                 const iterator_adapter<I, T>& i)
+      {
+        return iterator_adapter<I, T> (i.base () + n);
+      }
 
       //
       //
@@ -611,33 +859,33 @@ namespace xsd
         typedef base_sequence::allocator_type  allocator_type;
 
       protected:
-        sequence_common (container* c)
-            : container_ (c)
+        sequence_common (flags f, container* c)
+            : flags_ (f), container_ (c)
         {
         }
 
         sequence_common (size_type n, const type& x, container* c)
-            : container_ (c)
+            : flags_ (0), container_ (c)
         {
           assign (n, x);
         }
 
         template <typename I>
         sequence_common (const I& begin, const I& end, container* c)
-            : container_ (c)
+            : flags_ (0), container_ (c)
         {
           assign (begin, end);
         }
 
         sequence_common (const sequence_common& v, flags f, container* c)
-            : container_ (c)
+            : flags_ (f), container_ (c)
         {
           v_.reserve (v.v_.size ());
 
           for (base_const_iterator i (v.v_.begin ()), e (v.v_.end ());
                i != e; ++i)
           {
-            ptr p ((**i)._clone (f, container_));
+            ptr p ((**i)._clone (flags_, container_));
             v_.push_back (p);
           }
         }
@@ -658,7 +906,7 @@ namespace xsd
           {
             // We have no ptr_ref.
             //
-            ptr p ((**si)._clone (0, container_));
+            ptr p ((**si)._clone (flags_, container_));
             *di = p;
           }
 
@@ -710,7 +958,7 @@ namespace xsd
 
           for (base_iterator i (v_.begin ()), e (v_.end ()); i != e; ++i)
           {
-            ptr p (x._clone (0, container_));
+            ptr p (x._clone (flags_, container_));
             *i = p;
           }
         }
@@ -726,7 +974,7 @@ namespace xsd
 
           for (I i (begin); i != end; ++i)
           {
-            ptr p (i->_clone (0, container_));
+            ptr p (i->_clone (flags_, container_));
             v_.push_back (p);
           }
         }
@@ -742,7 +990,7 @@ namespace xsd
             for (base_iterator i (v_.begin () + old), e (v_.end ());
                  i != e; ++i)
             {
-              ptr p (x._clone (0, container_));
+              ptr p (x._clone (flags_, container_));
               *i = p;
             }
           }
@@ -756,7 +1004,7 @@ namespace xsd
 
           for (base_iterator i (v_.end () - d); n != 0; --n)
           {
-            ptr r (x._clone (0, container_));
+            ptr r (x._clone (flags_, container_));
             *(--i) = r;
           }
         }
@@ -773,7 +1021,7 @@ namespace xsd
             for (I i (end);;)
             {
               --i;
-              ptr r (i->_clone (0, container_));
+              ptr r (i->_clone (flags_, container_));
               p = v_.insert (p, r);
 
               if (i == begin)
@@ -783,6 +1031,7 @@ namespace xsd
         }
 
       protected:
+        flags flags_;
         container* container_;
         base_sequence v_;
       };
@@ -826,8 +1075,8 @@ namespace xsd
 
       public:
         explicit
-        sequence (container* c = 0)
-            : sequence_common (c)
+        sequence (flags f = 0, container* c = 0)
+            : sequence_common (f, c)
         {
         }
 
@@ -1011,11 +1260,11 @@ namespace xsd
         void
         push_back (const T& x)
         {
-          v_.push_back (ptr (x._clone (0, container_)));
+          v_.push_back (ptr (x._clone (flags_, container_)));
         }
 
         void
-        push_back (XSD_AUTO_PTR<T> x)
+        push_back (std::auto_ptr<T> x)
         {
           if (x->_container () != container_)
             x->_container (container_);
@@ -1029,7 +1278,7 @@ namespace xsd
           v_.pop_back ();
         }
 
-        XSD_AUTO_PTR<T>
+        std::auto_ptr<T>
         detach_back (bool pop = true)
         {
           ptr& p (v_.back ());
@@ -1039,7 +1288,7 @@ namespace xsd
           if (pop)
             v_.pop_back ();
 
-          return XSD_AUTO_PTR<T> (x);
+          return std::auto_ptr<T> (x);
         }
 
         iterator
@@ -1047,11 +1296,11 @@ namespace xsd
         {
           return iterator (
             v_.insert (
-              position.base (), ptr (x._clone (0, container_))));
+              position.base (), ptr (x._clone (flags_, container_))));
         }
 
         iterator
-        insert (iterator position, XSD_AUTO_PTR<T> x)
+        insert (iterator position, std::auto_ptr<T> x)
         {
           if (x->_container () != container_)
             x->_container (container_);
@@ -1085,11 +1334,12 @@ namespace xsd
         }
 
         iterator
-        detach (iterator position, XSD_AUTO_PTR<T>& r, bool erase = true)
+        detach (iterator position, std::auto_ptr<T>& r, bool erase = true)
         {
           ptr& p (*position.base ());
           p->_container (0);
-          r.reset (static_cast<T*> (p.release ()));
+          std::auto_ptr<T> tmp (static_cast<T*> (p.release ()));
+          r = tmp;
 
           if (erase)
             return iterator (v_.erase (position.base ()));
@@ -1118,7 +1368,7 @@ namespace xsd
 
       public:
         explicit
-        sequence (container* = 0)
+        sequence (flags = 0, container* = 0)
         {
         }
 

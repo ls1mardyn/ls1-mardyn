@@ -17,6 +17,7 @@ using namespace std;
 #include "MDGenerator.h"
 #include "common/ComponentParameters.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecompDummy.h"
 
 #ifndef RAYLEIGHTALORGENERATOR_H_
 #define RAYLEIGHTALORGENERATOR_H_
@@ -45,14 +46,14 @@ public:
 	static const double unitCharge_2_mardyn;*/
 
 	// tildes are defined on page 282 of NSMD
-	static constexpr double atomic_mass_unit_u 	= 1.6605655e-27;//[kg]
-	static constexpr double m_tilde				= 1. * 1.6605655e-27; //[kg]
+	static const double atomic_mass_unit_u 	= 1.6605655e-27;//[kg]
+	static const double m_tilde				= 1. * 1.6605655e-27; //[kg]
 
-	static constexpr double elementary_charge	= 1.6021892e-19;//[C]
-	static constexpr double q_tilde				= 1. * 1.6021892e-19;//[C]
+	static const double elementary_charge	= 1.6021892e-19;//[C]
+	static const double q_tilde				= 1. * 1.6021892e-19;//[C]
 
-	static constexpr double sigma_tilde 		= 2.22; //[ngstr m]
-	static constexpr double epsilon_tilde 		= 1.04710e-21; // [J]
+	static const double sigma_tilde 		= 2.22; //[ngstr m]
+	static const double epsilon_tilde 		= 1.04710e-21; // [J]
 
 	/**
 	 * Constructor

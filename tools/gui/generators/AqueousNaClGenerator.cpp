@@ -103,7 +103,7 @@ void AqueousNaClGenerator::calculateSimulationBoxLength() {
 
 void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator..." << endl;
-	//domain->setCurrentTime(0);
+	domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);
@@ -114,7 +114,7 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		Component component = _components[i];
 		principalAxisTransform(component);
-		global_simulation->getEnsemble()->addComponent(component);
+		domain->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from AqueousNaClGenerator done." << endl;
@@ -125,7 +125,7 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 
 unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();

@@ -1,5 +1,6 @@
 // file      : xsd/cxx/xml/dom/parsing-source.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_PARSING_SOURCE_HXX
@@ -18,6 +19,7 @@
 
 #include <xsd/cxx/xml/elements.hxx>      // properies
 #include <xsd/cxx/xml/error-handler.hxx>
+
 #include <xsd/cxx/xml/dom/auto-ptr.hxx>
 #include <xsd/cxx/xml/dom/elements.hxx>  // name
 #include <xsd/cxx/xml/dom/parsing-header.hxx>
@@ -30,47 +32,30 @@ namespace xsd
     {
       namespace dom
       {
-        // Parser state object. Can be used for parsing elements (and
-        // optionally text), attributes, or both.
+        // Parser state object. Can be used for parsing element, attributes,
+        // or both.
         //
         template <typename C>
         class parser
         {
         public:
-          parser (const xercesc::DOMElement& e, bool ep, bool tp, bool ap);
+          parser (const xercesc::DOMElement& e, bool ep, bool ap);
 
-          // Content parsing.
-          //
           bool
-          more_content ()
+          more_elements ()
           {
-            return next_content_ != 0;
+            return next_element_ != 0;
           }
 
           const xercesc::DOMElement&
           cur_element ()
           {
-            return *static_cast<const xercesc::DOMElement*> (next_content_);
-          }
-
-          const xercesc::DOMText&
-          cur_text ()
-          {
-            return *static_cast<const xercesc::DOMText*> (next_content_);
-          }
-
-          bool
-          cur_is_text ()
-          {
-            return next_content_->getNodeType () !=
-              xercesc::DOMNode::ELEMENT_NODE;
+            return *static_cast<const xercesc::DOMElement*> (next_element_);
           }
 
           void
-          next_content (bool text);
+          next_element ();
 
-          // Attribute parsing.
-          //
           bool
           more_attributes ()
           {
@@ -103,7 +88,7 @@ namespace xsd
 
         private:
           const xercesc::DOMElement& element_;
-          const xercesc::DOMNode* next_content_;
+          const xercesc::DOMNode* next_element_;
 
           const xercesc::DOMNamedNodeMap* a_;
           XMLSize_t ai_; // Index of the next DOMAttr.
@@ -117,28 +102,28 @@ namespace xsd
         const unsigned long no_muliple_imports = 0x00000800UL;
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (xercesc::InputSource&,
                error_handler<C>&,
                const properties<C>&,
                unsigned long flags);
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (xercesc::InputSource&,
                xercesc::DOMErrorHandler&,
                const properties<C>&,
                unsigned long flags);
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (const std::basic_string<C>& uri,
                error_handler<C>&,
                const properties<C>&,
                unsigned long flags);
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (const std::basic_string<C>& uri,
                xercesc::DOMErrorHandler&,
                const properties<C>&,

@@ -13,7 +13,7 @@
 /* 
  * TODO add comments for variables 
  */
-#define CHECKPOINT_FILE_VERSION 20160512  /**< checkpoint file version */
+#define CHECKPOINT_FILE_VERSION 20140131  /**< checkpoint file version */
 
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
@@ -64,9 +64,8 @@ public:
 	//! @param particleContainer The molecules that have to be written to the file are stored here
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
-	//! @param currentTime The current time to be printed.
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
-			const DomainDecompBase* domainDecomp, double currentTime);
+			DomainDecompBase* domainDecomp );
 
 	//! @brief initialize far field correction parameters
 	//!
@@ -110,18 +109,6 @@ public:
 
 	//! @brief get the potential of the local process
 	double getLocalUpot() const;
-	
-	//! @brief set the fluid and fluid-solid potential of the local process
-	void setLocalUpotCompSpecific(double UpotCspec);
-
-	//! @brief set the number of fluid phase components (specified in the config-file)
-	void setNumFluidComponents(unsigned nc);
-	
-	//! @brief get the numbr of fluid molecules as specified in the config file (*_1R.cfg)
-	unsigned getNumFluidComponents();
-	
-	//! @brief get the fluid and fluid-solid potential of the local process
-	double getLocalUpotCompSpecific();
 
 	//! @brief set the virial of the local process
 	void setLocalVirial(double Virial);
@@ -181,13 +168,6 @@ public:
 	//! global potential has been calculated (method calculateGlobalValues)
 	double getAverageGlobalUpot() const;
         double getGlobalUpot() const;
-
-	//! by Stefan Becker: return the average global potential of the fluid-fluid and fluid-solid interaction (but NOT solid-solid interaction)
-	double getAverageGlobalUpotCSpec();
-
-	//! by Stefan Becker: determine and return the totel number of fluid molecules
-	//! this method assumes all molecules with a component-ID less than _numFluidComponent to be fluid molecules 
-	unsigned long getNumFluidMolecules();
 
 	//! @brief get the global average virial per particle
 	//!
@@ -328,41 +308,6 @@ public:
 	void outputProfile(const char* prefix, bool virialProfile);
 	void resetProfile(bool virialProfile);
 
-
-	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods employed for setting up a density profile in cylindrical coordinates
-	//begin
-	// prerequisite for the cylindrical coordinate system: R2max, centre, InvProfileUnit[3] => counterpart of setupProfile(), beyond that recordProfile() is extended
-	void sesDrop();
-	// number of the current bin a particle is located in. Actual parameters: global cartesian coordinates of the particle with respect to the simulation box coordinate system
-	long int unID(double qx, double qy, double qz);
-	// returning the parameter that controls wheter or not a cylindrical profile is created. method called by Simulation::output()
-	bool isCylindrical();
-	// writing out a 3-dimensional density profile in cylindrical coordinates, counterpart of outputProfile.
-	void outputCylProfile(const char* prefix, bool virialProfile);
-	// setting the offset in y-direction (obtained from the config file), needed in the density profile output file 
-	void sYOffset(double in_yOff);
-	// end
-
-	// by Stefan Becker <stefan.becker@mv.uni-kl.de>. Methods providing a shift of the particles in the simulation box so that 
-	// the center of mass is placed in the middle of the box with respect of the x- and z-direction ( 0- and 2-direction), and the
-	// wall is kept at its initial position
-	void determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction);
-	void determineYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction);
-	void noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-			     double fraction);
-	// in this method there is no shift specific to different components, only the profiled component is kept in the centre of the box
-	void determineShift( DomainDecompBase* domainDecomp, ParticleContainer* molCont,
-                             double fraction);
-
-	// carrying out the actual shift of ALL particles
-	void realign( ParticleContainer* molCont);
-	
-	// method defining the component that is employed for determining the shift distance in y-direction
-	void considerComponentForYShift(unsigned cidMin, unsigned cidMax);
-
-
 	unsigned long N() {return _globalNumMolecules;}
 
 	void Nadd(unsigned cid, int N, int localN);
@@ -415,18 +360,10 @@ private:
 
 	//! Potential of the local process
 	double _localUpot;
-	//! by Stefan Becker: component specific potential of the local process (fluid-fluid and fluid-solid, but not solid-solid)
-	double _localUpotCspecif;
-	//! by Stefan Becker: number of fluid components specified in the config file 
-	//! --> used to determine the average component specific potential energy
-	unsigned _numFluidComponent;
-
 	//! Virial of the local process
 	double _localVirial;
 	//! global Potential
 	double _globalUpot;
-	//! global component specific potential (fluid-fluid and fluid-solid but NOT solid-solid)
-	double _globalUpotCspecif;
 	//! global virial
 	double _globalVirial;
 	//! global density
@@ -528,33 +465,6 @@ private:
         double _universalLambda;  // set from outside
         float _globalDecisiveDensity;  // set from outside
 
-	//! writing out a density profile in cylindrical coordinates
-	bool _universalCylindricalGeometry=false;
-	//! centre of the cylindrical coordinate system
-	double _universalCentre[3];
-	//! outermost radial distance up to which the binning is applied
-	double _universalR2max;
-	//! offset in y-direction => to be written out along with the density profile
-	double _yOff;
-	// end
-
-	//! by Stefan Becker => implementing a new velocity profile: 
-	//! local squared value of the velocity components
-	//!@TODO: kind of redundant to kinetic profile
-//	std::map<unsigned,double> _localV2Profile[3];
-	//! global squared value of the velocity components
-//	std::map<unsigned,double> _universalV2Profile[3];
-
-	//! by Stefan Becker <stefan.becker@mv.uni-kl.de>  => concerning the realignment tool: realignment to the centre of mass
-	// begin 
-	// _globalRealignmentMass[0] corresponds to the xz-shift,  _globalRealignmentMass[1] to the y-shift
-	double _globalRealignmentMass[2];
-	double _globalRealignmentBalance[3];
-	double _universalRealignmentMotion[3];
-	// The component responsible for the shift in y-direction
-	std::map<unsigned,bool> _componentForYShift;
-	//end
-
 	int _universalSelectiveThermostatCounter;
 	int _universalSelectiveThermostatWarning;
 	int _universalSelectiveThermostatError;
@@ -579,7 +489,6 @@ private:
 	double _VirialCorr;
 
 	//! Contains the time t in reduced units
-	double currentTime;  //edited by Michaela Heier
 
 	//! parameter streams for each possible pair of molecule-types
 	Comp2Param _comp2params;

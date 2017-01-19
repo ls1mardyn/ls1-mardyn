@@ -30,7 +30,7 @@ public:
 	//! @param timestep timestep length
 	virtual void readPhaseSpaceHeader(Domain* domain, double timestep) = 0;
 
-	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
 
 	/**
 	 *  @brief read the actual phase space information

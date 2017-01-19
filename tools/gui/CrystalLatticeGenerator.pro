@@ -2,11 +2,9 @@ TEMPLATE = lib
 
 CONFIG += dll debug
 #CONFIG += staticlib debug mardyn
-CONFIG += c++11
+
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
-
- 
 
 mardyn {
 DESTDIR=./staticlibs
@@ -42,7 +40,7 @@ SOURCES  += src/Tokenize.cpp
 DEFINES += MARDYN
 } else {
 HEADERS  += src/Objects/Object.h
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets core gui
+
 INCLUDEPATH += $(VTKINCLUDEPATH)
 LIBS += -L. -lMardyn
 HEADERS  += generators/common/DrawableMolecule.h
@@ -74,4 +72,3 @@ SOURCES  += generators/common/OutputConfiguration.cpp
 
 INCLUDEPATH += ./src/
 INCLUDEPATH += ../../src/
-INCLUDEPATH += ../../src/External/

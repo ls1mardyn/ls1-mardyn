@@ -5,7 +5,6 @@
  * Copyright (c) 2013      Christoph Niethammer <christoph.niethammer@gmail.com>
  */
 
-#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdlib>
@@ -53,35 +52,6 @@ public:
         stddev /= getSize();
         stddev = sqrt(stddev);
         return stddev;
-    }
-
-    /** Return percentile
-	 * @param[in]  p  percentile as real, e.g. 0.5 for the median (50\%)
-	 * @return Requested percentile of the sliding window
-	 */
-    T getPercentile(double p) {
-        T *sorted_data = new T[_size];
-        std::copy(_data, _data + _size, sorted_data);
-        std::sort(sorted_data, sorted_data + _size);
-        T retValue = sorted_data[static_cast<size_t>(_size * p) - 1];
-        delete sorted_data;
-        return retValue;
-    }
-
-    /** Return inter percentile range
-	 * @param[in]  pmin  lower percentile as real, e.g. 0.25 for the median (25\%)
-	 * @param[in]  pmax  upper percentile as real, e.g. 0.75 for the median (75\%)
-	 * @return Requested inter percentile range of the sliding window
-	 */
-    T getInterPercentileRange(double pmin, double pmax) {
-        T *sorted_data = new T[_size];
-        std::copy(_data, _data + _size, sorted_data);
-        std::sort(sorted_data, sorted_data + _size);
-        T qmin = sorted_data[static_cast<size_t>(_size * pmin) - 1];
-        T qmax = sorted_data[static_cast<size_t>(_size * pmax) - 1];
-        T retValue = qmax - qmin;
-        delete sorted_data;
-        return retValue;
     }
 
     /** Move sliding window forward by adding a new value replacing the oldest entry.

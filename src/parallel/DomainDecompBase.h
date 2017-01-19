@@ -1,13 +1,7 @@
 #ifndef DOMAINDECOMPBASE_H_
 #define DOMAINDECOMPBASE_H_
 
-#include "parallel/CollectiveCommBase.h"
 #include <string>
-
-#ifdef ENABLE_MPI
-#include <mpi.h>
-#endif
-#include <iostream>
 
 class Molecule;
 class Component;
@@ -18,7 +12,7 @@ class XMLfileUnits;
 typedef ParticleContainer TMoleculeContainer;
 
 //! @brief handle boundary region and multiple processes
-//! @author Martin Buchholz, Nikola Tchipev
+//! @author Martin Buchholz
 //!
 //! This program is designed to run on a HPC (High Performance Computer).
 //! But sometimes one might want to execute it on a single processor, possibly even
@@ -26,7 +20,7 @@ typedef ParticleContainer TMoleculeContainer;
 //! have two different versions of the program, one sequential version and one parallel version.
 //! But that isn't feasible, as it is hardly possible to keep them both up to date without
 //! investing a lot of additional time.
-//! Before describing how this problem is solved, you'll have to know a little bit about
+//! Befor describing how this problem is solved, you'll have to know a little bit about
 //! how the parallel version works.
 //!
 //! At the moment, domain decomposition is used. The basic idea is, that the region which
@@ -38,67 +32,48 @@ typedef ParticleContainer TMoleculeContainer;
 //! this interface) is called, which then somehow does the communication.
 //!
 //! Assume you have an class which implements this interface and which is capable of
-//! doing all the necessary stuff for the parallelization. Further assume that
+//! doing all the necessary stuff for the parallelisation. Further assume that
 //! you have a second class which also implements this interface which is only capable
 //! of handling one process but doesn't need any MPI (with only one process, there is
 //! no need for message passing between processes). So the main program (or in this
 //! case the class Simulation) can decide which implementation to use. When MPI is
 //! available, the parallel version is used, otherwise the sequential version
 class DomainDecompBase {
-	friend class NeighbourCommunicationScheme;
-	friend class IndirectNeighbourCommunicationScheme;
-	friend class DirectNeighbourCommunicationScheme;
 public:
 	//! @brief The Constructor determines the own rank and the number of the neighbours                                                       */
-	DomainDecompBase();
+	DomainDecompBase() {
+	}
 
 	//! @brief The Destructor finalizes MPI
-	virtual ~DomainDecompBase();
+	virtual ~DomainDecompBase() {
+	}
 
-	virtual void readXML(XMLfileUnits& xmlconfig);
+	virtual void readXML(XMLfileUnits& xmlconfig) = 0;
 
 	//! @brief exchange molecules between processes
 	//!
 	//! molecules which aren't in the domain of their process any
 	//! more are transferred to their neighbours. Additionally, the
 	//! molecules for the halo-region are transferred.
-	//! This implementation is the one used in sequential mode.
 	//! @param moleculeContainer needed to get those molecules which have to be exchanged
-	//! @param components when creating a new Molecule-object (from the received data),
+	//! @param components when creating a new Molecule-object (from the recieved data),
 	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void exchangeMolecules(ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
-	/**
-	 * Specifies the amount of non-blocking stages, when performing overlapping balanceAndExchange and computation.
-	 * For a communication scheme, where only direct neighbours communicate, 3 stages of communication are necessary,
-	 * since the particles have to be transmitted in the x-direction first, then in the y-direction, then in the z-direction.
-	 * @return The amount of communication stages. Returns -1 if it is not possible.
-	 */
-	virtual int getNonBlockingStageCount();
-
-	//! @brief Checks whether the balance and exchange step can be performed non-blocking.
-	//!
-	//! A non-blocking behaviour is typically possible, as long as no rebalancing has to be done.
-	//!
-	//! @param forceRebalancing if true, a rebalancing is forced;
-	//! 					otherwise automatic balancing of Decomposition is applied
-	//! @param moleculeContainer needed for calculating load and to get the particles
-	//! @param domain is e.g. needed to get the size of the local domain
-	virtual bool queryBalanceAndExchangeNonBlocking(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
-
-	//! @brief balance the load (and optimize communication) and exchange boundary particles
+	//! @brief balance the load (and optimise communication) and exchange boundary particles
 	//!
 	//! This method is used to perform a new decomposition of the global domain with the
 	//! goal of getting the equal load (and possibly additional goals) on each process.
 	//! This method is then also responsible for redistributing all particles, so after the
 	//! method was called, each process has a domain with all particles belonging to this
 	//! domain (as if exchangeParticles was called after the new decomposition).
-	//! @param balance if true, a rebalancing is forced;
-	//! 					otherwise automatic balancing of Decomposition is applied
+	//! @param balance if true, a rebalancing should be performed, otherwise only exchange
 	//! @param moleculeContainer needed for calculating load and to get the particles
+	//! @param components when creating a new Molecule-object (from the recieved data),
+	//!                   the Molecule-constructor needs this component vector
 	//! @param domain is e.g. needed to get the size of the local domain
-	virtual void balanceAndExchange(bool forceRebalancing, ParticleContainer* moleculeContainer, Domain* domain);
+	virtual void balanceAndExchange(bool balance, ParticleContainer* moleculeContainer, Domain* domain) = 0;
 
 	//! @brief find out whether the given position belongs to the domain of this process
 	//!
@@ -109,47 +84,47 @@ public:
 	//! @param y y-coordinate of the position to be checked
 	//! @param z z-coordinate of the position to be checked
 	//! @param domain might be needed to get the bounding box
-	virtual bool procOwnsPos(double x, double y, double z, Domain* domain);
+	virtual bool procOwnsPos(double x, double y, double z, Domain* domain) = 0;
 
 	void getBoundingBoxMinMax(Domain* domain, double* min, double* max);
 
 	//! @brief get the minimum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the minimum of the bounding box is returned
 	//! @param domain here the bounding box is stored
-	virtual double getBoundingBoxMin(int dimension, Domain* domain);
+	virtual double getBoundingBoxMin(int dimension, Domain* domain) = 0;
 
 	//! @brief get the maximum of the bounding box of this process' domain in the given dimension (0,1,2)
 	//! @param dimension coordinate direction for which the maximum of the bounding box is returned
 	//! @param domain here the bounding box is stored
-	virtual double getBoundingBoxMax(int dimension, Domain* domain);
+	virtual double getBoundingBoxMax(int dimension, Domain* domain) = 0;
 
 	//! @brief writes information about the current decomposition into the given file
-	//!        The format is not strictly defined and depends on the decomposition
+	//!        The format is not strictly defined and depends on the decompositio
 	//! @param filename name of the file into which the data will be written
 	//! @param domain e.g. needed to get the bounding boxes
-	virtual void printDecomp(std::string filename, Domain* domain);
+	virtual void printDecomp(std::string filename, Domain* domain) = 0;
 
 
 	//! @brief returns the own rank
 	//! @return rank of the process
-	virtual int getRank() const;
+	virtual int getRank() = 0;
 
 	//! @brief returns the number of processes
 	//! @return number of processes
-	virtual int getNumProcs() const;
+	virtual int getNumProcs() = 0;
 
-	//! @brief synchronizes all processes
-	virtual void barrier() const;
+	//! @brief synchronises all processes
+	virtual void barrier() = 0;
 
 	//! @brief returns the time in seconds since some time in the past
-	virtual double getTime() const;
+	virtual double getTime() = 0;
 
 	//! @brief returns total number of molecules
-	virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd);
+	virtual unsigned Ndistribution(unsigned localN, float* minrnd, float* maxrnd) = 0;
 
 	//! @brief checks identity of random number generators
-	virtual void assertIntIdentity(int IX);
-	virtual void assertDisjunctivity(TMoleculeContainer* mm) const;
+	virtual void assertIntIdentity(int IX) = 0;
+	virtual void assertDisjunctivity(TMoleculeContainer* mm) = 0;
 
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
 	//! @param filename name of the file into which the data will be written
@@ -160,7 +135,7 @@ public:
 	//! there is a loop over all processes with a barrier in between
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) const;
+	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer);
 
 
 	//##################################################################
@@ -172,61 +147,33 @@ public:
 	// the documentation of the class CollectiveCommunication.
 	//##################################################################
 	//! has to call init method of a CollComm class
-	virtual void collCommInit(int numValues);
+	virtual void collCommInit(int numValues) = 0;
 	//! has to call finalize method of a CollComm class
-	virtual void collCommFinalize();
+	virtual void collCommFinalize() = 0;
 	//! has to call appendInt method of a CollComm class
-	virtual void collCommAppendInt(int intValue);
+	virtual void collCommAppendInt(int intValue) = 0;
 	//! has to call appendUnsLong method of a CollComm class
-	virtual void collCommAppendUnsLong(unsigned long unsLongValue);
+	virtual void collCommAppendUnsLong(unsigned long unsLongValue) = 0;
 	//! has to call appendFloat method of a CollComm class
-	virtual void collCommAppendFloat(float floatValue);
+	virtual void collCommAppendFloat(float floatValue) = 0;
 	//! has to call appendDouble method of a CollComm class
-	virtual void collCommAppendDouble(double doubleValue);
+	virtual void collCommAppendDouble(double doubleValue) = 0;
 	//! has to call appendLongDouble method of a CollComm class
-	virtual void collCommAppendLongDouble(long double longDoubleValue);
+	virtual void collCommAppendLongDouble(long double longDoubleValue) = 0;
 	//! has to call getInt method of a CollComm class
-	virtual int collCommGetInt();
+	virtual int collCommGetInt() = 0;
 	//! has to call getUnsLong method of a CollComm class
-	virtual unsigned long collCommGetUnsLong();
+	virtual unsigned long collCommGetUnsLong() = 0;
 	//! has to call getFloat method of a CollComm class
-	virtual float collCommGetFloat();
+	virtual float collCommGetFloat() = 0;
 	//! has to call getDouble method of a CollComm class
-	virtual double collCommGetDouble();
+	virtual double collCommGetDouble() = 0;
 	//! has to call getLongDouble method of a CollComm class
-	virtual long double collCommGetLongDouble();
+	virtual long double collCommGetLongDouble() = 0;
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
-	virtual void collCommAllreduceSum();
+	virtual void collCommAllreduceSum() = 0;
 	//! has to call broadcast method of a CollComm class (none in sequential version)
-	virtual void collCommBroadcast(int root = 0);
-	//returns the ranks of the neighbours
-	virtual std::vector<int> getNeighbourRanks(){
-		return std::vector<int>(0);
-	}
-	//returns the ranks of the neighbours
-	virtual std::vector<int> getNeighbourRanksFullShell(){
-		std::cout << "Not yet implemented";
-		return std::vector<int>(0);
-	}
-#if defined(ENABLE_MPI)
-	virtual MPI_Comm getCommunicator(){
-	    return MPI_COMM_WORLD;
-	}
-#endif
-
-protected:
-	void handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const;
-
-	void populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const;
-
-	//! the id of the current process
-	int _rank;
-
-	//! total number of processes in the simulation
-	int _numProcs;
-
-private:
-	CollectiveCommBase _collCommBase;
+	virtual void collCommBroadcast(int root = 0) = 0;
 };
 
 #endif /* DOMAINDECOMPBASE_H_ */

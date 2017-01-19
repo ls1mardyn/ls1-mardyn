@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/ace-cdr-stream-extraction.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_ACE_CDR_STREAM_EXTRACTION_HXX
@@ -11,13 +12,7 @@
 #include <ace/ACE.h> // ACE::strdelete
 #include <ace/CDR_Stream.h>
 
-#include <xsd/cxx/config.hxx> // XSD_CXX11
-
-#ifdef XSD_CXX11
-#  include <memory> // std::unique_ptr
-#else
-#  include <xsd/cxx/auto-array.hxx>
-#endif
+#include <xsd/cxx/auto-array.hxx>
 
 #include <xsd/cxx/tree/buffer.hxx>
 #include <xsd/cxx/tree/istream.hxx>
@@ -263,11 +258,11 @@ namespace xsd
 
       namespace bits
       {
-        template <typename C>
-        struct ace_str_deleter
+        template<typename C>
+        struct ace_str_deallocator
         {
           void
-          operator() (C* s) const
+          deallocate (C* s)
           {
             ACE::strdelete (s);
           }
@@ -277,22 +272,18 @@ namespace xsd
       inline istream<ACE_InputCDR>&
       operator>> (istream<ACE_InputCDR>& s, std::basic_string<char>& x)
       {
-        typedef bits::ace_str_deleter<char> deleter;
+        typedef bits::ace_str_deallocator<char> deallocator;
 
-        deleter d;
+        deallocator d;
         char* r;
 
         if (!s.impl ().read_string (r))
           throw ace_cdr_stream_extraction ();
 
-#ifdef XSD_CXX11
-        std::unique_ptr<char[], deleter&> ar (
-#else
-        auto_array<char, deleter> ar (
-#endif
-          r, d);
+        auto_array<char, deallocator> ar (r, d);
 
         x = r;
+
         return s;
       }
 
@@ -300,22 +291,18 @@ namespace xsd
       inline istream<ACE_InputCDR>&
       operator>> (istream<ACE_InputCDR>& s, std::basic_string<wchar_t>& x)
       {
-        typedef bits::ace_str_deleter<wchar_t> deleter;
+        typedef bits::ace_str_deallocator<wchar_t> deallocator;
 
-        deleter d;
+        deallocator d;
         wchar_t* r;
 
         if (!s.impl ().read_wstring (r))
           throw ace_cdr_stream_extraction ();
 
-#ifdef XSD_CXX11
-        std::unique_ptr<wchar_t[], deleter&> ar (
-#else
-        auto_array<wchar_t, deleter> ar (
-#endif
-          r, d);
+        auto_array<wchar_t, deallocator> ar (r, d);
 
         x = r;
+
         return s;
       }
 #endif

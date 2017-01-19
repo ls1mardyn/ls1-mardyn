@@ -65,8 +65,7 @@ public:
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
+			std::list<ChemicalPotential>* lmu
 	);
 
 	virtual void finishOutput(ParticleContainer* particleContainer,

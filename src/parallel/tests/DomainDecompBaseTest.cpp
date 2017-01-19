@@ -6,7 +6,7 @@
  */
 
 #include "parallel/tests/DomainDecompBaseTest.h"
-#include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecompDummy.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Component.h"
 #include "molecules/Molecule.h"
@@ -25,8 +25,8 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	dummyComponent.addLJcenter(0,0,0,1,1,1,0,false);
 	components.push_back(dummyComponent);
 
-	// make sure we have a DomainDecompBase
-	_domainDecomposition = new DomainDecompBase();
+	// make sure we have a DomainDecompDummy
+	_domainDecomposition = new DomainDecompDummy();
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "DomainDecompBase.inp", 17.0);
 
 	unsigned int count[3] = {0};

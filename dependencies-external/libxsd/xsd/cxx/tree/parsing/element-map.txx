@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/parsing/element-map.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_PARSING_ELEMENT_MAP_TXX
@@ -16,7 +17,7 @@ namespace xsd
     namespace tree
     {
       template <typename C, typename T>
-      XSD_AUTO_PTR<element_type<C, T> > element_map<C, T>::
+      std::auto_ptr<element_type<C, T> > element_map<C, T>::
       parse (const xercesc::DOMElement& e, flags f)
       {
         const qualified_name n (xml::dom::name<C> (e));
@@ -29,10 +30,10 @@ namespace xsd
       }
 
       template<typename T, typename C, typename B>
-      XSD_AUTO_PTR<element_type<C, B> >
+      std::auto_ptr<element_type<C, B> >
       parser_impl (const xercesc::DOMElement& e, flags f)
       {
-        return XSD_AUTO_PTR<element_type<C, B> > (new T (e, f));
+        return std::auto_ptr<element_type<C, B> > (new T (e, f));
       }
     }
   }

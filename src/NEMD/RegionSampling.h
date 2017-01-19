@@ -16,46 +16,46 @@ enum RegionSamplingDimensions
 };
 
 #include <vector>
-#include "utils/ObserverBase.h"
-#include "utils/Region.h"
 
 class Domain;
 class DomainDecompBase;
 class Molecule;
 class RegionSampling;
-
-class SampleRegion : public CuboidRegionObs
+class SampleRegion
 {
 public:
-    SampleRegion(ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] );
+    SampleRegion(RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned short nID);
     ~SampleRegion();
 
+    // standard region methods
+    double* GetLowerCorner() {return _dLowerCorner;}
+    double* GetUpperCorner() {return _dUpperCorner;}
+    void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal; this->UpdateSlabParameters();}
+    void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal; this->UpdateSlabParameters();}
+    double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
+    void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
+    unsigned short GetID() {return _nID;}
+
     // set parameters
-    void SetParamProfiles( unsigned long initSamplingProfiles, unsigned long writeFrequencyProfiles)
+    void SetParamProfiles( unsigned long initSamplingProfiles, unsigned long writeFrequencyProfiles,
+                           unsigned int nNumShellsProfiles)
     {
         _initSamplingProfiles   = initSamplingProfiles;
         _writeFrequencyProfiles = writeFrequencyProfiles;
+        _nNumShellsProfiles     = nNumShellsProfiles;
     }
     void SetParamVDF( unsigned long initSamplingVDF, unsigned long writeFrequencyVDF,
-                      unsigned int nNumDiscreteStepsVDF, double dVeloMax)
+                      unsigned int nNumShellsVDF, unsigned int nNumDiscreteStepsVDF, double dVeloMax)
     {
         _initSamplingVDF       = initSamplingVDF;
         _writeFrequencyVDF     = writeFrequencyVDF;
+        _nNumShellsVDF         = nNumShellsVDF;
         _nNumDiscreteStepsVDF  = nNumDiscreteStepsVDF;
          _dVeloMax             = dVeloMax;
     }
 
-    // subdivision
-	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumShellsProfiles = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-	void SetSubdivisionProfiles(const double& dSlabWidth) {_dShellWidthProfilesInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
-	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_nNumShellsVDF = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-	void SetSubdivisionVDF(const double& dSlabWidth) {_dShellWidthVDFInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
-	void PrepareSubdivisionProfiles();  // need to be called before data structure allocation
-	void PrepareSubdivisionVDF();  		// need to be called before data structure allocation
-
-
     // init sampling
-    void InitSamplingProfiles(int nDimension);
+    void InitSamplingProfiles(int nDimension, Domain* domain);
     void InitSamplingVDF(int nDimension);
     void DoDiscretisationProfiles(int nDimension);
     void DoDiscretisationVDF(int nDimension);
@@ -81,12 +81,17 @@ private:
 
 private:
 
-    // instances / ID
-    static unsigned short _nStaticID;
+    double _dLowerCorner[3];
+    double _dUpperCorner[3];
+    unsigned short _nID;
+
+    RegionSampling* _parent;
+
 
     // ******************
     // sampling variables
     // ******************
+
 
     // --- temperature / density profiles, SamplingZone ---
 
@@ -241,19 +246,17 @@ private:
 };
 
 
-class RegionSampling : public ControlInstance
+class RegionSampling
 {
 public:
-    RegionSampling(Domain* domain, DomainDecompBase* domainDecomp);
+    RegionSampling(Domain* domain);
     ~RegionSampling();
 
-    std::string GetShortName() {return "ReS";}
-    void AddRegion(SampleRegion* region);
+    void AddRegion(double dLowerCorner[3], double dUpperCorner[3] );
     int GetNumRegions() {return _vecSampleRegions.size();}
-    SampleRegion* GetSampleRegion(unsigned short nRegionID) {return _vecSampleRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
+    SampleRegion* GetSampleRegion(unsigned short nRegionID) {return &(_vecSampleRegions.at(nRegionID-1) ); }  // vector index starts with 0, region index with 1
 
-    void PrepareRegionSubdivisions();  // need to be called before method Init() that allocates the data structures
-    void Init();
+    void Init(Domain* domain);
     void DoSampling(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep);
 
     void WriteData(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
@@ -261,13 +264,14 @@ public:
     unsigned short GetNumComponents() {return _nNumComponents;}
 
 private:
-    std::vector<SampleRegion*> _vecSampleRegions;
+    std::vector<SampleRegion> _vecSampleRegions;
 
     unsigned long _initSamplingProfiles;
     unsigned long _writeFrequencyProfiles;
     unsigned long _initSamplingVDF;
     unsigned long _writeFrequencyVDF;
 
+    Domain* _domain;
     unsigned short _nNumComponents;
 };
 

@@ -165,12 +165,6 @@ void KDNodeTest::testGetMPIKDNode() {
 }
 
 void KDNodeTest::testserializeDeserialize() {
-	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "KDNodeTest::testserializeDeserialize()"
-				<< " not executed (rerun with only 1 Process!)" << std::endl;
-		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
-		return;
-	}
 	int lowerEnd[] = {0, 0, 0};
 	int upperEnd[] = {7, 7, 7};
 	bool coversAll[] = {true, true, true};

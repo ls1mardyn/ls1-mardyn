@@ -14,75 +14,37 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include <limits>
 
 using namespace std;
 
-// init static ID --> instance counting
-unsigned short SampleRegion::_nStaticID = 0;
 
-SampleRegion::SampleRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] )
-: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+SampleRegion::SampleRegion(RegionSampling* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned short nID)
 {
-	// ID
-	_nID = ++_nStaticID;
+    // set lower and upper corner
+    for(unsigned short d=0; d<3; ++d)
+    {
+        _dLowerCorner[d] = dLowerCorner[d];
+        _dUpperCorner[d] = dUpperCorner[d];
+    }
+
+    // set ID
+    _nID = nID;
 
     // init control
     _bDiscretisationDoneProfiles = false;
     _bDiscretisationDoneVDF = false;
 
-    // init subdivison option
-    _nSubdivisionOpt = SDOPT_UNKNOWN;
+    // store parent pointer
+    _parent = parent;
 }
 
 
 SampleRegion::~SampleRegion()
 {
+
 }
 
-void SampleRegion::PrepareSubdivisionProfiles()
-{
-	double dWidth = this->GetWidth(1);
-
-	switch(_nSubdivisionOpt)
-	{
-	case SDOPT_BY_NUM_SLABS:
-		_dShellWidthProfilesInit = this->GetWidth(1) / ( (double)(_nNumShellsProfiles) );
-		_dShellWidthProfiles = _dShellWidthProfilesInit;
-		break;
-	case SDOPT_BY_SLAB_WIDTH:
-		_nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);
-		_dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
-		break;
-	case SDOPT_UNKNOWN:
-	default:
-		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dShellWidthProfilesInit nor _nNumShellsProfiles was set correctly! Programm exit..." << endl;
-		exit(-1);
-	}
-}
-
-void SampleRegion::PrepareSubdivisionVDF()
-{
-	double dWidth = this->GetWidth(1);
-
-	switch(_nSubdivisionOpt)
-	{
-	case SDOPT_BY_NUM_SLABS:
-		_dShellWidthVDFInit = this->GetWidth(1) / ( (double)(_nNumShellsVDF) );
-		_dShellWidthVDF = _dShellWidthVDFInit;
-		break;
-	case SDOPT_BY_SLAB_WIDTH:
-		_nNumShellsVDF = round(dWidth / _dShellWidthVDFInit);
-		_dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
-		break;
-	case SDOPT_UNKNOWN:
-	default:
-		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Neither _dShellWidthVDFInit nor _nNumShellsVDF was set correctly! Programm exit..." << endl;
-		exit(-1);
-	}
-}
-
-void SampleRegion::InitSamplingProfiles(int nDimension)
+void SampleRegion::InitSamplingProfiles(int nDimension, Domain* domain)
 {
     // shell width
     double dNumShellsTemperature = (double) _nNumShellsProfiles;
@@ -91,7 +53,6 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 
     // shell volume
     double dArea;
-    Domain* domain = this->GetParent()->GetDomain();
 
     switch(nDimension)
     {
@@ -1140,54 +1101,105 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
         {
     #endif
 
+
+
             // header
             //outputstream << "           pos         v_d,x         v_d,y         v_d,z            Tx            Ty            Tz           rho        v_d,y+        v_d,y-";
-            outputstream << "                     pos";
-            outputstream << "                   v_d,x";
-            outputstream << "                   v_d,y";
-            outputstream << "                   v_d,z";
-            outputstream << "                      Tx";
-            outputstream << "                      Ty";
-            outputstream << "                      Tz";
-            outputstream << "                     rho";
-            outputstream << "                  v_d,y+";
-            outputstream << "                  v_d,y-";
-            outputstream << "                    DOF+";
-            outputstream << "                    DOF-";
-            outputstream << "                 DOF_ges";
+            outputstream << "           pos         v_d,x         v_d,y         v_d,z            Tx            Ty            Tz";
+            outputstream << "           rho        v_d,y+        v_d,y-          DOF+          DOF-       DOF_ges";
             outputstream << endl;
 
             // data
+            double dVal;
+
             for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
             {
                 outputstream << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
 
-                // drift x, y, z
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityAverageGlobal[s][0];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityAverageGlobal[s][1];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityAverageGlobal[s][2];
+                // drift x
+                dVal = _dDriftVelocityAverageGlobal[s][0];
 
-                // temperature Tx, Ty, Tz
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComponentAverageGlobal[s][0];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComponentAverageGlobal[s][1];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComponentAverageGlobal[s][2];
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+                // drift y
+                dVal = _dDriftVelocityAverageGlobal[s][1];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+                // drift z
+                dVal = _dDriftVelocityAverageGlobal[s][2];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+
+                // temperature Tx
+                dVal = _dTemperatureComponentAverageGlobal[s][0];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+                // temperature Ty
+                dVal = _dTemperatureComponentAverageGlobal[s][1];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+                // temperature Tz
+                dVal = _dTemperatureComponentAverageGlobal[s][2];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
 
                 // density rho
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityAverageGlobal[s];
+                dVal = _dDensityAverageGlobal[s];
 
-                // drift y+, y-
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityPlusAverageGlobal[s][1];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityMinusAverageGlobal[s][1];
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+
+                // drift y+
+                dVal = _dDriftVelocityPlusAverageGlobal[s][1];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
+
+                // drift y-
+                dVal = _dDriftVelocityMinusAverageGlobal[s][1];
+
+                if( abs(dVal) < 0.00001 )
+                    outputstream << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                else
+                    outputstream << std::setw(14) << std::setprecision(6) << dVal;
 
                 // DOF+, DOF-, DOF_ges
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesPlusSumCumulativeGlobal[s];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesMinusSumCumulativeGlobal[s];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesSumCumulativeGlobal[s];
+                outputstream << std::setw(14) << _nNumMoleculesPlusSumCumulativeGlobal[s];
+                outputstream << std::setw(14) << _nNumMoleculesMinusSumCumulativeGlobal[s];
+                outputstream << std::setw(14) << _nNumMoleculesSumCumulativeGlobal[s];
 
                 outputstream << endl;
             }
 
-            // Datei zum schreiben oeffnen, daten schreiben
+            // Datei zum schreiben öffnen, daten schreiben
             ofstream fileout(filenamestream.str().c_str(), ios::out);
             fileout << outputstream.str();
             fileout.close();
@@ -1197,6 +1209,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
     #ifdef ENABLE_MPI
         }
     #endif
+
 
     // writing .dat-files
     std::stringstream outputstream_comp;
@@ -1214,38 +1227,142 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
             nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 
             // header
-            outputstream_comp << "                     pos";
+            outputstream_comp << "           pos";
 
-            // temperature/density
+            // temperature
             for(unsigned short c = 0; c < nNumComponents; ++c)
             {
-                outputstream_comp << "                    T[" << c << "]";
-                outputstream_comp << "                  rho[" << c << "]";
+                outputstream_comp << "          T[" << c << "]";
             }
+
+            // density
+            for(unsigned short c = 0; c < nNumComponents; ++c)
+            {
+                outputstream_comp << "        rho[" << c << "]";
+            }
+
             outputstream_comp << endl;
 
             // data
+            double dVal;
+
             for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
             {
-                outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsProfiles[s];
+
+                outputstream_comp << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
 
                 for(unsigned short c = 0; c < nNumComponents; ++c)
                 {
-                    // temperature/density componentwise
-                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureCompGlobal[c][s];
-                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityCompGlobal[c][s];
+                    // temperature componentwise
+                    dVal = _dTemperatureCompGlobal[c][s];
+
+                    if( abs(dVal) < 0.00001 )
+                        outputstream_comp << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                    else
+                        outputstream_comp << std::setw(14) << std::setprecision(6) << dVal;
                 }
+
+                for(unsigned short c = 0; c < nNumComponents; ++c)
+                {
+                    // temperature componentwise
+                    dVal = _dDensityCompGlobal[c][s];
+
+                    if( abs(dVal) < 0.00001 )
+                        outputstream_comp << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                    else
+                        outputstream_comp << std::setw(14) << std::setprecision(6) << dVal;
+                }
+
                 outputstream_comp << endl;
             }
 
-            // Datei zum schreiben oeffnen, daten schreiben
+            // Datei zum schreiben öffnen, daten schreiben
             ofstream fileout(filenamestream_comp.str().c_str(), ios::out);
             fileout << outputstream_comp.str();
             fileout.close();
 
+            // global_log->info() << "files closed." << endl;   // writing .dat-files
+            std::stringstream outputstream_comp;
+            std::stringstream filenamestream_comp;
+            filenamestream_comp << "T-rho_comp_region" << this->GetID() << "_TS" << simstep << ".dat";
+
+            #ifdef ENABLE_MPI
+                rank = domainDecomp->getRank();
+                // int numprocs = domainDecomp->getNumProcs();
+                if (rank== 0)
+                {
+            #endif
+
+                    unsigned int nNumComponents;
+                    nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
+
+                    // header
+                    outputstream_comp << "           pos";
+
+                    // temperature
+                    for(unsigned short c = 0; c < nNumComponents; ++c)
+                    {
+                        outputstream_comp << "          T[" << c << "]";
+                    }
+
+                    // density
+                    for(unsigned short c = 0; c < nNumComponents; ++c)
+                    {
+                        outputstream_comp << "        rho[" << c << "]";
+                    }
+
+                    outputstream_comp << endl;
+
+                    // data
+                    double dVal;
+
+                    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+                    {
+
+                        outputstream_comp << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
+
+                        for(unsigned short c = 0; c < nNumComponents; ++c)
+                        {
+                            // temperature componentwise
+                            dVal = _dTemperatureCompGlobal[c][s];
+
+                            if( abs(dVal) < 0.00001 )
+                                outputstream_comp << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                            else
+                                outputstream_comp << std::setw(14) << std::setprecision(6) << dVal;
+                        }
+
+                        for(unsigned short c = 0; c < nNumComponents; ++c)
+                        {
+                            // temperature componentwise
+                            dVal = _dDensityCompGlobal[c][s];
+
+                            if( abs(dVal) < 0.00001 )
+                                outputstream_comp << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                            else
+                                outputstream_comp << std::setw(14) << std::setprecision(6) << dVal;
+                        }
+
+                        outputstream_comp << endl;
+                    }
+
+                    // Datei zum schreiben öffnen, daten schreiben
+                    ofstream fileout(filenamestream_comp.str().c_str(), ios::out);
+                    fileout << outputstream_comp.str();
+                    fileout.close();
+
+                    // global_log->info() << "files closed." << endl;
+
+            #ifdef ENABLE_MPI
+                }
+            #endif
+
     #ifdef ENABLE_MPI
         }
     #endif
+
+
+
 
         // writing .dat-files
          std::stringstream outputstream_comp_Fv;
@@ -1263,61 +1380,119 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
                  nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 
                  // header
-                 outputstream_comp_Fv << "                     pos";
+                 outputstream_comp_Fv << "           pos";
 
                  // density j+/j-
                  for(unsigned short c = 0; c < nNumComponents; ++c)
                  {
-                     outputstream_comp_Fv << "               rho_py[" << c << "]";
-                     outputstream_comp_Fv << "               rho_ny[" << c << "]";
+                     outputstream_comp_Fv << "     rho_py[" << c << "]";
+                     outputstream_comp_Fv << "     rho_ny[" << c << "]";
                  }
 
                  // velocity vx, vy, vz ; j+/j-
                  for(unsigned short c = 0; c < nNumComponents; ++c)
                  {
-                     outputstream_comp_Fv << "                 vx_py[" << c << "]";
-                     outputstream_comp_Fv << "                 vy_py[" << c << "]";
-                     outputstream_comp_Fv << "                 vz_py[" << c << "]";
-                     outputstream_comp_Fv << "                 vx_ny[" << c << "]";
-                     outputstream_comp_Fv << "                 vy_ny[" << c << "]";
-                     outputstream_comp_Fv << "                 vz_ny[" << c << "]";
+                     outputstream_comp_Fv << "      vx_py[" << c << "]";
+                     outputstream_comp_Fv << "      vy_py[" << c << "]";
+                     outputstream_comp_Fv << "      vz_py[" << c << "]";
+                     outputstream_comp_Fv << "      vx_ny[" << c << "]";
+                     outputstream_comp_Fv << "      vy_ny[" << c << "]";
+                     outputstream_comp_Fv << "      vz_ny[" << c << "]";
                  }
 
                  // force fx, fy, fz ; j+/j-
                  for(unsigned short c = 0; c < nNumComponents; ++c)
                  {
-                     outputstream_comp_Fv << "                 fx_py[" << c << "]";
-                     outputstream_comp_Fv << "                 fy_py[" << c << "]";
-                     outputstream_comp_Fv << "                 fz_py[" << c << "]";
-                     outputstream_comp_Fv << "                 fx_ny[" << c << "]";
-                     outputstream_comp_Fv << "                 fy_ny[" << c << "]";
-                     outputstream_comp_Fv << "                 fz_ny[" << c << "]";
+                     outputstream_comp_Fv << "      fx_py[" << c << "]";
+                     outputstream_comp_Fv << "      fy_py[" << c << "]";
+                     outputstream_comp_Fv << "      fz_py[" << c << "]";
+                     outputstream_comp_Fv << "      fx_ny[" << c << "]";
+                     outputstream_comp_Fv << "      fy_ny[" << c << "]";
+                     outputstream_comp_Fv << "      fz_ny[" << c << "]";
                  }
 
                  outputstream_comp_Fv << endl;
 
                  // data
+                 double dVal;
+
                  for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
                  {
-                     outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsProfiles[s];
 
+                     outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
+
+                     // density
                      for(unsigned short c = 0; c < nNumComponents; ++c)
                      {
-                         // density j+,j-
-                         outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityCompGlobal_py[c][s];
-                         outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityCompGlobal_ny[c][s];
+                         // density j+
+                         dVal = _dDensityCompGlobal_py[c][s];
+
+                         if( abs(dVal) < 0.00001 )
+                             outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                         else
+                             outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+
+                         // density j-
+                         dVal = _dDensityCompGlobal_ny[c][s];
+
+                         if( abs(dVal) < 0.00001 )
+                             outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                         else
+                             outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                     }
+
+                     // velocity
+                     for(unsigned short c = 0; c < nNumComponents; ++c)
+                     {
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // velocity j+
+                             dVal = _dVelocityCompGlobal_py[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
 
                          for(unsigned short d = 0; d < 3; ++d)
                          {
-                             // velocity j+,j-
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dVelocityCompGlobal_py[c][d][s];
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dVelocityCompGlobal_ny[c][d][s];
+                             // velocity j-
+                             dVal = _dVelocityCompGlobal_ny[c][d][s];
 
-                             // force j+,j-
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForceCompGlobal_py[c][d][s];
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForceCompGlobal_ny[c][d][s];
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
                          }
                      }
+
+                     // force
+                     for(unsigned short c = 0; c < nNumComponents; ++c)
+                     {
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // force j+
+                             dVal = _dForceCompGlobal_py[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
+
+                         for(unsigned short d = 0; d < 3; ++d)
+                         {
+                             // force j-
+                             dVal = _dForceCompGlobal_ny[c][d][s];
+
+                             if( abs(dVal) < 0.00001 )
+                                 outputstream_comp_Fv << std::setw(14) << fixed << std::setprecision(10) << dVal;
+                             else
+                                 outputstream_comp_Fv << std::setw(14) << std::setprecision(6) << dVal;
+                         }
+                     }
+
                      outputstream_comp_Fv << endl;
                  }
 
@@ -1334,6 +1509,10 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 }
 
 
+
+
+
+
 void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep)
 {
     // sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
@@ -1343,8 +1522,10 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
     if ( (simstep - _initSamplingVDF) % _writeFrequencyVDF != 0 )
         return;
 
+
     // calc global values
     this->CalcGlobalValuesVDF();  // calculate global velocity distribution sums
+
 
     // reset local values
     this->ResetLocalValuesVDF();
@@ -1407,40 +1588,40 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
     #endif
 
             // header
-            outputstreamVelo_py_abs << "v/y                     ";
-            outputstreamVelo_py_pvx << "v/y                     ";
-            outputstreamVelo_py_pvy << "v/y                     ";
-            outputstreamVelo_py_pvz << "v/y                     ";
-            outputstreamVelo_py_nvx << "v/y                     ";
-            outputstreamVelo_py_nvy << "v/y                     ";
-            outputstreamVelo_py_nvz << "v/y                     ";
+            outputstreamVelo_py_abs << "v/y         ";
+            outputstreamVelo_py_pvx << "v/y         ";
+            outputstreamVelo_py_pvy << "v/y         ";
+            outputstreamVelo_py_pvz << "v/y         ";
+            outputstreamVelo_py_nvx << "v/y         ";
+            outputstreamVelo_py_nvy << "v/y         ";
+            outputstreamVelo_py_nvz << "v/y         ";
 
-            outputstreamVelo_ny_abs << "v/y                     ";
-            outputstreamVelo_ny_pvx << "v/y                     ";
-            outputstreamVelo_ny_pvy << "v/y                     ";
-            outputstreamVelo_ny_pvz << "v/y                     ";
-            outputstreamVelo_ny_nvx << "v/y                     ";
-            outputstreamVelo_ny_nvy << "v/y                     ";
-            outputstreamVelo_ny_nvz << "v/y                     ";
+            outputstreamVelo_ny_abs << "v/y         ";
+            outputstreamVelo_ny_pvx << "v/y         ";
+            outputstreamVelo_ny_pvy << "v/y         ";
+            outputstreamVelo_ny_pvz << "v/y         ";
+            outputstreamVelo_ny_nvx << "v/y         ";
+            outputstreamVelo_ny_nvy << "v/y         ";
+            outputstreamVelo_ny_nvz << "v/y         ";
 
             // first line - discrete radius values
             for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
             {
-                outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
+                outputstreamVelo_py_abs << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_pvx << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_pvy << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_pvz << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_nvx << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_nvy << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_nvz << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
 
-                outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
+                outputstreamVelo_ny_abs << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_pvx << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_pvy << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_pvz << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_nvx << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_nvy << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_nvz << _dShellMidpointsVDF[s] << std::setw(12) << std::setprecision(6);
             }
             outputstreamVelo_py_abs << endl;
             outputstreamVelo_py_pvx << endl;
@@ -1463,39 +1644,39 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
             // velocity distribution matrix
             for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
             {
-                outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
+                outputstreamVelo_py_abs << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_pvx << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_pvy << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_pvz << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_nvx << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_nvy << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_py_nvz << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
 
-                outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
-                outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
+                outputstreamVelo_ny_abs << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_pvx << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_pvy << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_pvz << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_nvx << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_nvy << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
+                outputstreamVelo_ny_nvz << _dDiscreteVelocityValues[v] << std::setw(12) << std::setprecision(6);
 
                 for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
                 {
-                    outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_abs[s][v];
-                    outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvx[s][v];
-                    outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvy[s][v];
-                    outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvz[s][v];
-                    outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_nvx[s][v];
-                    outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_nvy[s][v];
-                    outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_nvz[s][v];
+                    outputstreamVelo_py_abs << _veloDistrMatrixGlobal_py_abs[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_py_pvx << _veloDistrMatrixGlobal_py_pvx[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_py_pvy << _veloDistrMatrixGlobal_py_pvy[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_py_pvz << _veloDistrMatrixGlobal_py_pvz[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_py_nvx << _veloDistrMatrixGlobal_py_nvx[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_py_nvy << _veloDistrMatrixGlobal_py_nvy[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_py_nvz << _veloDistrMatrixGlobal_py_nvz[s][v] << std::setw(12) << std::setprecision(6);
 
-                    outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_abs[s][v];
-                    outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_pvx[s][v];
-                    outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_pvy[s][v];
-                    outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_pvz[s][v];
-                    outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_nvx[s][v];
-                    outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_nvy[s][v];
-                    outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_ny_nvz[s][v];
+                    outputstreamVelo_ny_abs << _veloDistrMatrixGlobal_ny_abs[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_ny_pvx << _veloDistrMatrixGlobal_ny_pvx[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_ny_pvy << _veloDistrMatrixGlobal_ny_pvy[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_ny_pvz << _veloDistrMatrixGlobal_ny_pvz[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_ny_nvx << _veloDistrMatrixGlobal_ny_nvx[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_ny_nvy << _veloDistrMatrixGlobal_ny_nvy[s][v] << std::setw(12) << std::setprecision(6);
+                    outputstreamVelo_ny_nvz << _veloDistrMatrixGlobal_ny_nvz[s][v] << std::setw(12) << std::setprecision(6);
                 }
 
                 outputstreamVelo_py_abs << endl;
@@ -1614,8 +1795,6 @@ void SampleRegion::ResetLocalValuesVDF()
 
 void SampleRegion::ResetLocalValuesProfiles()
 {
-	RegionSampling* parent = static_cast<RegionSampling*>(_parent);
-	unsigned int nNumComponents = parent->GetNumComponents();
 
     // reset cumulative data structures TODO: <-- should be placed elsewhere
     for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
@@ -1642,7 +1821,7 @@ void SampleRegion::ResetLocalValuesProfiles()
 
 
     // componentwise temperature / density
-    for(unsigned int c = 0; c < nNumComponents; ++c)
+    for(unsigned int c = 0; c < _parent->GetNumComponents(); ++c)
     {
         for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
         {
@@ -1656,7 +1835,7 @@ void SampleRegion::ResetLocalValuesProfiles()
 
     // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
 
-    for(unsigned short c=0; c < nNumComponents; ++c)
+    for(unsigned short c=0; c < _parent->GetNumComponents(); ++c)
     {
         for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
         {
@@ -1682,12 +1861,12 @@ void SampleRegion::UpdateSlabParameters()
 {
     double dWidth = this->GetWidth(1);
 
-    // profiles
-    _nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);
+    // update profile sampling parameters
+    // _nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);  <-- number of slabs cannot increase, otherwise data structures have to be reallocated
     _dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
 
-	// VDF
-    _nNumShellsVDF = round(dWidth / _dShellWidthVDFInit);
+    // update VDF sampling parameters
+    // _nNumShellsVDF = round(dWidth / _dShellWidthVDFInit); <-- number of slabs cannot increase, otherwise data structures have to be reallocated
     _dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
 
 
@@ -1710,11 +1889,14 @@ void SampleRegion::UpdateSlabParameters()
 
 // class RegionSampling
 
-RegionSampling::RegionSampling(Domain* domain, DomainDecompBase* domainDecomp)
-: ControlInstance(domain, domainDecomp)
+RegionSampling::RegionSampling(Domain* domain)
 {
+    //store domain pointer
+    _domain = domain;
+
     // number of components
     _nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
+
 }
 
 
@@ -1722,57 +1904,51 @@ RegionSampling::~RegionSampling()
 {
 }
 
-void RegionSampling::AddRegion(SampleRegion* region)
+void RegionSampling::AddRegion(double dLowerCorner[3], double dUpperCorner[3] )
 {
-    _vecSampleRegions.push_back(region);
+    unsigned short nID = this->GetNumRegions() + 1;
+
+    _vecSampleRegions.push_back(SampleRegion(this, dLowerCorner, dUpperCorner, nID) );
 }
 
-void RegionSampling::Init()
+void RegionSampling::Init(Domain* domain)
 {
     // init data structures
-    std::vector<SampleRegion*>::iterator it;
+    std::vector<SampleRegion>::iterator it;
 
     for(it=_vecSampleRegions.begin(); it!=_vecSampleRegions.end(); ++it)
     {
-        (*it)->InitSamplingProfiles(RS_DIMENSION_Y);
-        (*it)->InitSamplingVDF(RS_DIMENSION_Y);
+        (*it).InitSamplingProfiles(RS_DIMENSION_Y, domain);
+        (*it).InitSamplingVDF(RS_DIMENSION_Y);
     }
 }
 
 void RegionSampling::DoSampling(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep)
 {
     // sample profiles and vdf
-    std::vector<SampleRegion*>::iterator it;
+    std::vector<SampleRegion>::iterator it;
 
     for(it=_vecSampleRegions.begin(); it!=_vecSampleRegions.end(); ++it)
     {
-        (*it)->SampleProfiles(mol, RS_DIMENSION_Y);
-        (*it)->SampleVDF(mol, RS_DIMENSION_Y);
+        (*it).SampleProfiles(mol, RS_DIMENSION_Y);
+        (*it).SampleVDF(mol, RS_DIMENSION_Y);
     }
 }
 
 void RegionSampling::WriteData(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
 {
     // write out profiles and vdf
-    std::vector<SampleRegion*>::iterator it;
+    std::vector<SampleRegion>::iterator it;
 
     for(it=_vecSampleRegions.begin(); it!=_vecSampleRegions.end(); ++it)
     {
-        (*it)->WriteDataProfiles(domainDecomp, simstep, domain);
-        (*it)->WriteDataVDF(domainDecomp, simstep);
+        (*it).WriteDataProfiles(domainDecomp, simstep, domain);
+        (*it).WriteDataVDF(domainDecomp, simstep);
     }
 }
 
-void RegionSampling::PrepareRegionSubdivisions()
-{
-    std::vector<SampleRegion*>::iterator it;
 
-    for(it=_vecSampleRegions.begin(); it!=_vecSampleRegions.end(); ++it)
-    {
-        (*it)->PrepareSubdivisionProfiles();
-        (*it)->PrepareSubdivisionVDF();
-    }
-}
+
 
 
 

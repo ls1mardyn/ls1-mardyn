@@ -23,8 +23,7 @@ public:
 	void doOutput(
 			ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain,
-			unsigned long simstep, std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
+			unsigned long simstep, std::list<ChemicalPotential>* lmu 
 	);
 	//! @todo comment
 	void finishOutput(ParticleContainer* particleContainer,

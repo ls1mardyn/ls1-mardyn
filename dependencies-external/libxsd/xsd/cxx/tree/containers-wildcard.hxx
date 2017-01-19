@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/containers-wildcard.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_CONTAINERS_WILDCARD_HXX
@@ -15,7 +16,7 @@
 
 #include <xsd/cxx/xml/string.hxx>
 
-#include <xsd/cxx/tree/iterator-adapter.hxx>
+#include <xsd/cxx/tree/containers.hxx> // iterator_adapter
 
 namespace xsd
 {
@@ -935,7 +936,7 @@ namespace xsd
 
             return r < 0
               ? true
-              : (r > 0 ? false : XMLString::compareString (an, bn) < 0);
+              : (r > 0 ? false : XMLString::compareString (an, bn));
           }
         };
 

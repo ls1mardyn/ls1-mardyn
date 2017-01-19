@@ -1,17 +1,13 @@
 // file      : xsd/cxx/tree/types.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/util/Base64.hpp>
 #include <xercesc/util/XMLString.hpp>
+#include <xercesc/util/XercesVersion.hpp>
 
-#include <xsd/cxx/config.hxx> // XSD_CXX11
-
-#ifdef XSD_CXX11
-#  include <memory> // std::unique_ptr
-#else
-#  include <xsd/cxx/auto-array.hxx>
-#endif
+#include <xsd/cxx/auto-array.hxx>
 
 #include <xsd/cxx/xml/std-memory-manager.hxx>
 
@@ -172,6 +168,11 @@ namespace xsd
         return *this;
       }
 
+      // It would have been cleaner to mention empty and _container
+      // with the using-declaration but HP aCC3 can't handle it in
+      // some non-trivial to track down cases. So we are going to use
+      // the old-n-ugly this-> techniques.
+      //
       template <typename C, typename B>
       void id<C, B>::
       _container (container* c)
@@ -203,15 +204,20 @@ namespace xsd
 
       // idref
       //
-      template <typename C, typename B, typename T>
-      idref<C, B, T>* idref<C, B, T>::
+      template <typename T, typename C, typename B>
+      idref<T, C, B>* idref<T, C, B>::
       _clone (flags f, container* c) const
       {
         return new idref (*this, f, c);
       }
 
-      template <typename C, typename B, typename T>
-      const _type* idref<C, B, T>::
+      // It would have been cleaner to mention empty, _root, etc. with
+      // the using-declaration but HP aCC3 can't handle it in some
+      // non-trivial to track down cases. So we are going to use the
+      // old-n-ugly this-> techniques.
+      //
+      template <typename T, typename C, typename B>
+      const _type* idref<T, C, B>::
       get_ () const
       {
         if (!this->empty () && this->_container () != 0)
@@ -222,8 +228,8 @@ namespace xsd
           return 0;
       }
 
-      template <typename C, typename B, typename T>
-      _type* idref<C, B, T>::
+      template <typename T, typename C, typename B>
+      _type* idref<T, C, B>::
       get_ ()
       {
         if (!this->empty () && this->_container () != 0)
@@ -234,8 +240,8 @@ namespace xsd
           return 0;
       }
 
-      template <typename C, typename B, typename T>
-      void idref<C, B, T>::
+      template <typename T, typename C, typename B>
+      void idref<T, C, B>::
       true_ ()
       {
       }
@@ -315,21 +321,25 @@ namespace xsd
         return new base64_binary (*this, f, c);
       }
 
+      // It would have been cleaner to mention size, and data with the
+      // using-declaration but HP aCC3 can't handle it in some non-
+      // trivial to track down cases. So we are going to use the
+      // old-n- ugly this-> techniques.
+      //
       template <typename C, typename B>
       std::basic_string<C> base64_binary<C, B>::
       encode () const
       {
-        using namespace xercesc;
+        // HP aCC3 cannot handle using namespace xercesc;
+        //
+        using xercesc::Base64;
         std::basic_string<C> str;
 
+#if _XERCES_VERSION >= 30000
         XMLSize_t n;
-        xml::std_memory_manager mm;
 
-#ifdef XSD_CXX11
-        std::unique_ptr<XMLByte[], xml::std_memory_manager&> r (
-#else
+        xml::std_memory_manager mm;
         auto_array<XMLByte, xml::std_memory_manager> r (
-#endif
           Base64::encode (
             reinterpret_cast<const XMLByte*> (this->data ()),
             static_cast<XMLSize_t> (this->size ()),
@@ -349,6 +359,31 @@ namespace xsd
         {
           //@@ throw
         }
+#else
+        unsigned int n;
+
+        xml::std_memory_manager mm;
+        auto_array<XMLByte, xml::std_memory_manager> r (
+          Base64::encode (
+            reinterpret_cast<const XMLByte*> (this->data ()),
+            static_cast<unsigned int> (this->size ()),
+            &n,
+            &mm),
+	  mm);
+
+        if (r)
+        {
+          str.reserve (n + 1);
+          str.resize (n);
+
+          for (unsigned int i (0); i < n; ++i)
+            str[i] = C (r[i]);
+        }
+        else
+        {
+          //@@ throw
+        }
+#endif
 
         return str;
       }
@@ -357,18 +392,28 @@ namespace xsd
       void base64_binary<C, B>::
       decode (const XMLCh* src)
       {
-        using namespace xercesc;
+        // HP aCC3 cannot handle using namespace xercesc;
+        //
+        using xercesc::Base64;
 
         xml::std_memory_manager mm;
-        XMLSize_t size;
 
-#ifdef XSD_CXX11
-        std::unique_ptr<XMLByte[], xml::std_memory_manager&> data (
-#else
+        // Xerces 2.6.0 and earlier do not have decodeToXMLByte which
+        // makes my life harder and your code slower.
+        //
+#if _XERCES_VERSION >= 20700
+
+#if _XERCES_VERSION >= 30000
+        XMLSize_t size;
         auto_array<XMLByte, xml::std_memory_manager> data (
-#endif
           Base64::decodeToXMLByte (src, &size, &mm, Base64::Conf_RFC2045),
-          mm);
+	  mm);
+#else
+        unsigned int size;
+        auto_array<XMLByte, xml::std_memory_manager> data (
+          Base64::decodeToXMLByte (src, &size, &mm, Base64::Conf_RFC2045),
+	  mm);
+#endif // _XERCES_VERSION >= 30000
 
         if (data)
         {
@@ -380,6 +425,30 @@ namespace xsd
         {
           //@@ throw
         }
+#else
+        unsigned int size;
+
+#if _XERCES_VERSION >= 20600  // Xerces 2.5.0 does not have Conf_RFC2045.
+        auto_array<XMLCh, xml::std_memory_manager> data (
+          Base64::decode (src, &size, &mm, Base64::Conf_RFC2045),
+	  mm);
+#else
+        auto_array<XMLCh, xml::std_memory_manager> data (
+          Base64::decode (src, &size, &mm), mm);
+#endif // _XERCES_VERSION >= 20600
+
+        if (data)
+        {
+          buffer<C> tmp (size);
+          for (unsigned int i (0); i < size; ++i)
+            tmp.data ()[i] = static_cast<char> (data[i]);
+          this->swap (tmp); // g++ 4.1 likes it qualified, not sure why.
+        }
+        else
+        {
+          //@@ throw
+        }
+#endif  //_XERCES_VERSION >= 20700
       }
 
 
@@ -427,6 +496,11 @@ namespace xsd
         return new hex_binary (*this, f, c);
       }
 
+      // It would have been cleaner to mention size, and data with the
+      // using-declaration but HP aCC3 can't handle it in some non-
+      // trivial to track down cases. So we are going to use the
+      // old-n-ugly this-> techniques.
+      //
       template <typename C, typename B>
       std::basic_string<C> hex_binary<C, B>::
       encode () const

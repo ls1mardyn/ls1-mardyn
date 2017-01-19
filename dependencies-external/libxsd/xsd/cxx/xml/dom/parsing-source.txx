@@ -1,10 +1,14 @@
 // file      : xsd/cxx/xml/dom/parsing-source.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
-#include <xercesc/dom/DOMLSParser.hpp>
-#include <xercesc/dom/DOMLSException.hpp>
-
+#if _XERCES_VERSION >= 30000
+#  include <xercesc/dom/DOMLSParser.hpp>
+#  include <xercesc/dom/DOMLSException.hpp>
+#else
+#  include <xercesc/dom/DOMBuilder.hpp>
+#endif
 #include <xercesc/dom/DOMNamedNodeMap.hpp>
 #include <xercesc/dom/DOMImplementation.hpp>
 #include <xercesc/dom/DOMImplementationRegistry.hpp>
@@ -29,9 +33,9 @@ namespace xsd
         //
         template <typename C>
         parser<C>::
-        parser (const xercesc::DOMElement& e, bool ep, bool tp, bool ap)
+        parser (const xercesc::DOMElement& e, bool ep, bool ap)
             : element_ (e),
-              next_content_ (0),
+              next_element_ (0),
               a_ (0),
               ai_ (0)
         {
@@ -39,21 +43,10 @@ namespace xsd
 
           if (ep)
           {
-            for (next_content_ = e.getFirstChild ();;
-                 next_content_ = next_content_->getNextSibling ())
-            {
-              if (next_content_ == 0)
-                break;
-
-              DOMNode::NodeType t (next_content_->getNodeType ());
-
-              if (t == DOMNode::ELEMENT_NODE)
-                break;
-
-              if (tp && (t == DOMNode::TEXT_NODE ||
-                         t == DOMNode::CDATA_SECTION_NODE))
-                break;
-            }
+            for (next_element_ = e.getFirstChild ();
+                 next_element_ != 0 &&
+                   next_element_->getNodeType () != DOMNode::ELEMENT_NODE;
+                 next_element_ = next_element_->getNextSibling ()) /*noop*/;
           }
 
           if (ap)
@@ -65,31 +58,20 @@ namespace xsd
 
         template <typename C>
         void parser<C>::
-        next_content (bool tp)
+        next_element ()
         {
           using xercesc::DOMNode;
 
-          for (next_content_ = next_content_->getNextSibling ();;
-               next_content_ = next_content_->getNextSibling ())
-          {
-            if (next_content_ == 0)
-              break;
-
-            DOMNode::NodeType t (next_content_->getNodeType ());
-
-            if (t == DOMNode::ELEMENT_NODE)
-              break;
-
-            if (tp && (t == DOMNode::TEXT_NODE ||
-                       t == DOMNode::CDATA_SECTION_NODE))
-              break;
-          }
+          for (next_element_ = next_element_->getNextSibling ();
+               next_element_ != 0 &&
+                 next_element_->getNodeType () != DOMNode::ELEMENT_NODE;
+               next_element_ = next_element_->getNextSibling ())/*noop*/;
         }
 
         // parse()
         //
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (xercesc::InputSource& is,
                error_handler<C>& eh,
                const properties<C>& prop,
@@ -100,13 +82,28 @@ namespace xsd
         }
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        auto_ptr<xercesc::DOMDocument>
         parse (xercesc::InputSource& is,
                xercesc::DOMErrorHandler& eh,
                const properties<C>& prop,
                unsigned long flags)
         {
-          using namespace xercesc;
+          // HP aCC cannot handle using namespace xercesc;
+          //
+          using xercesc::DOMImplementationRegistry;
+          using xercesc::DOMImplementationLS;
+          using xercesc::DOMImplementation;
+          using xercesc::DOMDocument;
+#if _XERCES_VERSION >= 30000
+          using xercesc::DOMLSParser;
+          using xercesc::DOMConfiguration;
+#else
+          using xercesc::DOMBuilder;
+#endif
+
+          using xercesc::Wrapper4InputSource;
+          using xercesc::XMLUni;
+
 
           // Instantiate the DOM parser.
           //
@@ -119,7 +116,8 @@ namespace xsd
           DOMImplementation* impl (
             DOMImplementationRegistry::getDOMImplementation (ls_id));
 
-          XSD_DOM_AUTO_PTR<DOMLSParser> parser (
+#if _XERCES_VERSION >= 30000
+          auto_ptr<DOMLSParser> parser (
             impl->createLSParser (DOMImplementationLS::MODE_SYNCHRONOUS, 0));
 
           DOMConfiguration* conf (parser->getDomConfig ());
@@ -165,6 +163,7 @@ namespace xsd
             if (!(flags & no_muliple_imports))
               conf->setParameter (XMLUni::fgXercesHandleMultipleImports, true);
 #endif
+
             // This feature checks the schema grammar for additional
             // errors. We most likely do not need it when validating
             // instances (assuming the schema is valid).
@@ -215,9 +214,64 @@ namespace xsd
           bits::error_handler_proxy<C> ehp (eh);
           conf->setParameter (XMLUni::fgDOMErrorHandler, &ehp);
 
+#else // _XERCES_VERSION >= 30000
+
+          // Same as above but for Xerces-C++ 2 series.
+          //
+          auto_ptr<DOMBuilder> parser (
+            impl->createDOMBuilder (DOMImplementationLS::MODE_SYNCHRONOUS, 0));
+
+          parser->setFeature (XMLUni::fgDOMComments, false);
+          parser->setFeature (XMLUni::fgDOMDatatypeNormalization, true);
+          parser->setFeature (XMLUni::fgDOMEntities, false);
+          parser->setFeature (XMLUni::fgDOMNamespaces, true);
+          parser->setFeature (XMLUni::fgDOMWhitespaceInElementContent, false);
+
+          if (flags & dont_validate)
+          {
+            parser->setFeature (XMLUni::fgDOMValidation, false);
+            parser->setFeature (XMLUni::fgXercesSchema, false);
+            parser->setFeature (XMLUni::fgXercesSchemaFullChecking, false);
+          }
+          else
+          {
+            parser->setFeature (XMLUni::fgDOMValidation, true);
+            parser->setFeature (XMLUni::fgXercesSchema, true);
+            parser->setFeature (XMLUni::fgXercesSchemaFullChecking, false);
+          }
+
+          parser->setFeature (XMLUni::fgXercesUserAdoptsDOMDocument, true);
+
+          if (!prop.schema_location ().empty ())
+          {
+            xml::string sl (prop.schema_location ());
+            const void* v (sl.c_str ());
+
+            parser->setProperty (
+              XMLUni::fgXercesSchemaExternalSchemaLocation,
+              const_cast<void*> (v));
+          }
+
+          if (!prop.no_namespace_schema_location ().empty ())
+          {
+            xml::string sl (prop.no_namespace_schema_location ());
+            const void* v (sl.c_str ());
+
+            parser->setProperty (
+              XMLUni::fgXercesSchemaExternalNoNameSpaceSchemaLocation,
+              const_cast<void*> (v));
+          }
+
+          bits::error_handler_proxy<C> ehp (eh);
+          parser->setErrorHandler (&ehp);
+
+#endif // _XERCES_VERSION >= 30000
+
           xercesc::Wrapper4InputSource wrap (&is, false);
 
-          XSD_DOM_AUTO_PTR<DOMDocument> doc;
+#if _XERCES_VERSION >= 30000
+          auto_ptr<DOMDocument> doc;
+
           try
           {
             doc.reset (parser->parse (&wrap));
@@ -225,7 +279,9 @@ namespace xsd
           catch (const xercesc::DOMLSException&)
           {
           }
-
+#else
+          auto_ptr<DOMDocument> doc (parser->parse (wrap));
+#endif
           if (ehp.failed ())
             doc.reset ();
 
@@ -233,7 +289,7 @@ namespace xsd
         }
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         parse (const std::basic_string<C>& uri,
                error_handler<C>& eh,
                const properties<C>& prop,
@@ -244,13 +300,26 @@ namespace xsd
         }
 
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        auto_ptr<xercesc::DOMDocument>
         parse (const std::basic_string<C>& uri,
                xercesc::DOMErrorHandler& eh,
                const properties<C>& prop,
                unsigned long flags)
         {
-          using namespace xercesc;
+          // HP aCC cannot handle using namespace xercesc;
+          //
+          using xercesc::DOMImplementationRegistry;
+          using xercesc::DOMImplementationLS;
+          using xercesc::DOMImplementation;
+          using xercesc::DOMDocument;
+#if _XERCES_VERSION >= 30000
+          using xercesc::DOMLSParser;
+          using xercesc::DOMConfiguration;
+#else
+          using xercesc::DOMBuilder;
+#endif
+          using xercesc::XMLUni;
+
 
           // Instantiate the DOM parser.
           //
@@ -263,7 +332,8 @@ namespace xsd
           DOMImplementation* impl (
             DOMImplementationRegistry::getDOMImplementation (ls_id));
 
-          XSD_DOM_AUTO_PTR<DOMLSParser> parser (
+#if _XERCES_VERSION >= 30000
+          auto_ptr<DOMLSParser> parser (
             impl->createLSParser(DOMImplementationLS::MODE_SYNCHRONOUS, 0));
 
           DOMConfiguration* conf (parser->getDomConfig ());
@@ -360,7 +430,63 @@ namespace xsd
           bits::error_handler_proxy<C> ehp (eh);
           conf->setParameter (XMLUni::fgDOMErrorHandler, &ehp);
 
-          XSD_DOM_AUTO_PTR<DOMDocument> doc;
+#else // _XERCES_VERSION >= 30000
+
+          // Same as above but for Xerces-C++ 2 series.
+          //
+          auto_ptr<DOMBuilder> parser (
+            impl->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0));
+
+          parser->setFeature (XMLUni::fgDOMComments, false);
+          parser->setFeature (XMLUni::fgDOMDatatypeNormalization, true);
+          parser->setFeature (XMLUni::fgDOMEntities, false);
+          parser->setFeature (XMLUni::fgDOMNamespaces, true);
+          parser->setFeature (XMLUni::fgDOMWhitespaceInElementContent, false);
+
+          if (flags & dont_validate)
+          {
+            parser->setFeature (XMLUni::fgDOMValidation, false);
+            parser->setFeature (XMLUni::fgXercesSchema, false);
+            parser->setFeature (XMLUni::fgXercesSchemaFullChecking, false);
+          }
+          else
+          {
+            parser->setFeature (XMLUni::fgDOMValidation, true);
+            parser->setFeature (XMLUni::fgXercesSchema, true);
+            parser->setFeature (XMLUni::fgXercesSchemaFullChecking, false);
+          }
+
+          parser->setFeature (XMLUni::fgXercesUserAdoptsDOMDocument, true);
+
+          if (!prop.schema_location ().empty ())
+          {
+            xml::string sl (prop.schema_location ());
+            const void* v (sl.c_str ());
+
+            parser->setProperty (
+              XMLUni::fgXercesSchemaExternalSchemaLocation,
+              const_cast<void*> (v));
+          }
+
+          if (!prop.no_namespace_schema_location ().empty ())
+          {
+            xml::string sl (prop.no_namespace_schema_location ());
+            const void* v (sl.c_str ());
+
+            parser->setProperty (
+              XMLUni::fgXercesSchemaExternalNoNameSpaceSchemaLocation,
+              const_cast<void*> (v));
+          }
+
+          bits::error_handler_proxy<C> ehp (eh);
+          parser->setErrorHandler (&ehp);
+
+#endif // _XERCES_VERSION >= 30000
+
+
+#if _XERCES_VERSION >= 30000
+          auto_ptr<DOMDocument> doc;
+
           try
           {
             doc.reset (parser->parseURI (string (uri).c_str ()));
@@ -368,6 +494,10 @@ namespace xsd
           catch (const xercesc::DOMLSException&)
           {
           }
+#else
+          auto_ptr<DOMDocument> doc (
+            parser->parseURI (string (uri).c_str ()));
+#endif
 
           if (ehp.failed ())
             doc.reset ();

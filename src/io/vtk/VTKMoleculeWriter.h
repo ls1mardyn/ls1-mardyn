@@ -26,9 +26,7 @@ private:
 	std::string _fileName;
 
 public:
-	VTKMoleculeWriter() :
-			_writeFrequency(50), _fileName("") {
-	}
+	VTKMoleculeWriter() {}
 
 	VTKMoleculeWriter(unsigned int frequency, std::string name):
 		_writeFrequency(frequency), _fileName(name) {}
@@ -43,8 +41,7 @@ public:
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
+			std::list<ChemicalPotential>* lmu
 	);
 
 	//! @todo document me!

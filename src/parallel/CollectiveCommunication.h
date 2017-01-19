@@ -1,17 +1,19 @@
 #ifndef COLLECTIVECOMMUNICATION_H_
 #define COLLECTIVECOMMUNICATION_H_
 
-#include "utils/Logger.h"
-#include "CollectiveCommBase.h"
 #include <mpi.h>
+
 #include <cassert>
+
+#include "utils/Logger.h"
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
  * user defined reduce operation so that the MPI reduce operation is only called once. */
 #define ENABLE_AGGLOMERATED_REDUCE 1
 
+
 //! @brief This class is used to transfer several values of different types with a single command
-//! @author Nikola Tchipev, Martin Buchholz
+//! @author Martin Buchholz
 //!
 //! At different points in the simulation process, collective communication commands are
 //! necessary. One thing that always has to be done is a reduce command to get global
@@ -58,130 +60,58 @@
 //!   // finalize the communication (important for deleting memory)
 //!   collComm.finalize();
 //! @endcode
-class CollectiveCommunication: public CollectiveCommBase {
+class CollectiveCommunication {
+
+	//! As in C++ arrays have to contain only one type of variable,
+	//! but this class (see documentation of CollectiveCommunication class)
+	//! shall be able to store values of different types for the transfer,
+	//! this union is needed to be able to store the values of different
+	//! types in one array.
+	union valType {
+		int val_int;
+		unsigned long val_unsLong;
+		float val_float;
+		double val_double;
+		long double val_longDouble;
+	};
+
 public:
 	CollectiveCommunication() {
-		_communicator = 0;
-		_agglomeratedType = MPI_DATATYPE_NULL;
+		_sendValues = 0;
+		_recvValues = 0;
+		_valuesType = MPI_DATATYPE_NULL;
 	}
 
 	virtual ~CollectiveCommunication() {
-		assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		assert(_sendValues == 0);
+		assert(_recvValues == 0);
+		assert( _valuesType == MPI_DATATYPE_NULL );
 	}
-
+		
 	//! @brief allocate memory for the values to be sent, initialize counters
 	//! @param numValues number of values that shall be communicated
 	void init(MPI_Comm communicator, int numValues) {
-		CollectiveCommBase::init(numValues);
-
 		_communicator = communicator;
-		_types.reserve(numValues);
+		_listOfTypes = new MPI_Datatype[numValues];
+		_sendValues = new valType[numValues];
+		_recvValues = new valType[numValues];
+		_numValues = numValues;
+		_setCounter = 0;
+		_getCounter = 0;
 	}
 
-	// documentation in base class
+	//! @brief delete memory and MPI_Type
 	void finalize() {
-		CollectiveCommBase::finalize();
-		_types.clear();
-
-		assert(_agglomeratedType == MPI_DATATYPE_NULL);
-	}
-
-	// documentation in base class
-	void appendInt(int intValue) {
-		CollectiveCommBase::appendInt(intValue);
-		_types.push_back(MPI_INT);
-	}
-
-	// documentation in base class
-	void appendUnsLong(unsigned long unsLongValue) {
-		CollectiveCommBase::appendUnsLong(unsLongValue);
-		_types.push_back(MPI_UNSIGNED_LONG);
-	}
-
-	// documentation in base class
-	void appendFloat(float floatValue) {
-		CollectiveCommBase::appendFloat(floatValue);
-		_types.push_back(MPI_FLOAT);
-	}
-
-	// documentation in base class
-	void appendDouble(double doubleValue) {
-		CollectiveCommBase::appendDouble(doubleValue);
-		_types.push_back(MPI_DOUBLE);
-	}
-
-	// documentation in base class
-	void appendLongDouble(long double longDoubleValue) {
-		CollectiveCommBase::appendLongDouble(longDoubleValue);
-		_types.push_back(MPI_LONG_DOUBLE);
-	}
-
-	//! Get the MPI communicator
-	//! @return MPI communicator
-	MPI_Comm getTopology() {
-		return _communicator;
-	}
-
-	// Getters don't need to be overridden, see parent class
-
-	// documentation in base class
-	void broadcast(int root = 0) {
-		setMPIType();
-		valType * startOfValues = &(_values[0]);
-		MPI_CHECK(
-				MPI_Bcast(startOfValues, 1, _agglomeratedType, root,
-						_communicator));
-		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
-	}
-
-	// documentation in base class
-	void allreduceSum() {
-#if ENABLE_AGGLOMERATED_REDUCE
-		setMPIType();
-		MPI_Op agglomeratedTypeAddOperator;
-		const int commutative = 1;
-		valType * startOfValues = &(_values[0]);
-		MPI_CHECK(
-				MPI_Op_create(
-						(MPI_User_function * ) CollectiveCommunication::add,
-						commutative, &agglomeratedTypeAddOperator));
-		MPI_CHECK(
-				MPI_Allreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator));
-		MPI_CHECK(MPI_Op_free(&agglomeratedTypeAddOperator));
-		MPI_CHECK(MPI_Type_free(&_agglomeratedType));
-#else
-		for( int i = 0; i < _numValues; i++ ) {
-			MPI_CHECK( MPI_Allreduce( MPI_IN_PLACE, &(_values[i]), 1, _types[i], MPI_SUM, _communicator ) );
-		}
-#endif
-	}
-
-private:
-	//! @brief defines a MPI datatype which can be used to transfer a CollectiveCommunication object
-	//!
-	//! before this method is called, init has to be called and all values to be
-	//! communicated have to be added with the append<type> methods. Then this method
-	//! will construct a MPI-datatype which represents all the added values. The
-	//! datatype is stored in the member variable _valuesType;
-	void setMPIType() {
-		int numblocks = _values.size();
-		int blocklengths[numblocks];
-		MPI_Aint disps[numblocks];
-		int disp = 0;
-		for (int i = 0; i < numblocks; i++) {
-			blocklengths[i] = 1;
-			disps[i] = disp;
-			disp += sizeof(valType);
-		}
-		MPI_Datatype * startOfTypes = &(_types[0]);
-#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-		MPI_CHECK(
-				MPI_Type_create_struct(numblocks, blocklengths, disps,
-						startOfTypes, &_agglomeratedType));
-#else
-		MPI_CHECK( MPI_Type_struct(numblocks, blocklengths, disps, startOfTypes, &_agglomeratedType) );
-#endif
-		MPI_CHECK(MPI_Type_commit(&_agglomeratedType));
+		_numValues = 0;
+		_setCounter = 0;
+		_getCounter = 0;
+		delete[] _listOfTypes;
+		delete[] _sendValues;
+		delete[] _recvValues;
+		_listOfTypes = NULL;
+		_sendValues = NULL;
+		_recvValues = NULL;
+		assert( _valuesType == MPI_DATATYPE_NULL );
 	}
 
 	//! @brief method used by MPI to add variables of this type
@@ -190,57 +120,175 @@ private:
 	//! which should be used to combine the values from the different processes.
 	//! As with this class, special datatypes are sent, the build-in
 	//! MPI operations don't work on those datatypes. Therefore, operations have
-	//! to be defined which work on those datatypes. MPI allows to create own
+	//! to be definded which work on those datatypes. MPI allows to create own
 	//! operations (type MPI_Op) by specifying a function which will be used
 	//! in the reduce operation. MPI specifies the signature of such functions
 	//! This methods checks from which basic datatypes the given datatype
 	//! was constructed and performs an add operation for each of the basic types.
-	static void add(valType *invec, valType *inoutvec, int */*len*/,
-			MPI_Datatype *dtype) {
+	static void add(valType *invec, valType *inoutvec, int *len, MPI_Datatype *dtype) {
 		int numints;
 		int numaddr;
 		int numtypes;
 		int combiner;
 
-		MPI_CHECK(
-				MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes,
-						&combiner));
+		MPI_CHECK( MPI_Type_get_envelope(*dtype, &numints, &numaddr, &numtypes, &combiner) );
 
 		int arrayInts[numints];
 		MPI_Aint arrayAddr[numaddr];
 		MPI_Datatype arrayTypes[numtypes];
 
-		MPI_CHECK(
-				MPI_Type_get_contents(*dtype, numints, numaddr, numtypes,
-						arrayInts, arrayAddr, arrayTypes));
+		MPI_CHECK( MPI_Type_get_contents(*dtype, numints, numaddr, numtypes, arrayInts, arrayAddr, arrayTypes) );
 
 		for (int i = 0; i < numtypes; i++) {
 			if (arrayTypes[i] == MPI_INT) {
-				inoutvec[i].v_int += invec[i].v_int;
+				inoutvec[i].val_int += invec[i].val_int;
 			}
 			else if (arrayTypes[i] == MPI_UNSIGNED_LONG) {
-				inoutvec[i].v_unsLong += invec[i].v_unsLong;
+				inoutvec[i].val_unsLong += invec[i].val_unsLong;
 			}
 			else if (arrayTypes[i] == MPI_FLOAT) {
-				inoutvec[i].v_float += invec[i].v_float;
+				inoutvec[i].val_float += invec[i].val_float;
 			}
 			else if (arrayTypes[i] == MPI_DOUBLE) {
-				inoutvec[i].v_double += invec[i].v_double;
+				inoutvec[i].val_double += invec[i].val_double;
 			}
 			else if (arrayTypes[i] == MPI_LONG_DOUBLE) {
-				inoutvec[i].v_longDouble += invec[i].v_longDouble;
+				inoutvec[i].val_longDouble += invec[i].val_longDouble;
 			}
 		}
 	}
 
-	//! Vector of the corresponding MPI types for the values stored in _values
-	std::vector<MPI_Datatype> _types;
+	//! @brief defines a MPI datatype which can be used to transfer a CollectiveCommunication object
+	//!
+	//! befor this method is called, init has to be called and all values to be
+	//! communicated have to be added with the append<type> methods. Then this method
+	//! will construct a MPI-datatype which represents all the added values. The
+	//! datatype is stored in the member variable _valuesType;
+	void setMPIType() {
+		int numblocks = _numValues;
+		int blocklengths[numblocks];
+		MPI_Aint disps[numblocks];
+		int disp = 0;
+		for (int i = 0; i < numblocks; i++) {
+			blocklengths[i] = 1;
+			disps[i] = disp;
+			disp += sizeof(valType);
+		}
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
+	MPI_CHECK( MPI_Type_create_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType) );
+#else
+	MPI_CHECK( MPI_Type_struct(numblocks, blocklengths, disps, _listOfTypes, &_valuesType) );
+#endif
+		MPI_CHECK( MPI_Type_commit(&_valuesType) );
+	}
 
+	//! Append an int value to the list of values to be sent
+	void appendInt(int intValue) {
+		_sendValues[_setCounter].val_int = intValue;
+		_listOfTypes[_setCounter] = MPI_INT;
+		_setCounter++;
+	}
+
+	//! Append a unsigned long value to the list of values to be sent
+	void appendUnsLong(unsigned long unsLongValue) {
+		_sendValues[_setCounter].val_unsLong = unsLongValue;
+		_listOfTypes[_setCounter] = MPI_UNSIGNED_LONG;
+		_setCounter++;
+	}
+
+	//! Append a float value to the list of values to be sent
+	void appendFloat(float floatValue) {
+		_sendValues[_setCounter].val_float = floatValue;
+		_listOfTypes[_setCounter] = MPI_FLOAT;
+		_setCounter++;
+	}
+
+	//! Append a double value to the list of values to be sent
+	void appendDouble(double doubleValue) {
+		_sendValues[_setCounter].val_double = doubleValue;
+		_listOfTypes[_setCounter] = MPI_DOUBLE;
+		_setCounter++;
+	}
+
+	//! Append a long double value to the list of values to be sent
+	void appendLongDouble(double longDoubleValue) {
+		_sendValues[_setCounter].val_longDouble = longDoubleValue;
+		_listOfTypes[_setCounter] = MPI_LONG_DOUBLE;
+		_setCounter++;
+	}
+
+	MPI_Comm getTopology() {
+		return this->_communicator;
+	}
+
+	//! Get the next value from the list, which must be int
+	int getInt() {
+		return _recvValues[_getCounter++].val_int;
+	}
+
+	//! Get the next value from the list, which must be unsigned long
+	unsigned long getUnsLong() {
+		return _recvValues[_getCounter++].val_unsLong;
+	}
+
+	//! Get the next value from the list, which must be float
+	float getFloat() {
+		return _recvValues[_getCounter++].val_float;
+	}
+
+	//! Get the next value from the list, which must be double
+	double getDouble() {
+		return _recvValues[_getCounter++].val_double;
+	}
+
+	//! Get the next value from the list, which must be long double
+	long double getLongDouble() {
+		return _recvValues[_getCounter++].val_longDouble;
+	}
+
+	//! Broadcast all values from the process with rank 0 to all others
+	void broadcast(int root = 0) {
+		setMPIType();
+		MPI_CHECK( MPI_Bcast(_sendValues, 1, _valuesType, root, _communicator) );
+		for (int i = 0; i < _numValues; i++) {
+			_recvValues[i] = _sendValues[i];
+		}
+		MPI_CHECK( MPI_Type_free(&_valuesType) );
+	}
+
+	//! Do Allreduce off all values with reduce operation add
+	void allreduceSum() {
+#if ENABLE_AGGLOMERATED_REDUCE
+		setMPIType();
+		MPI_Op reduceOp;
+		MPI_CHECK( MPI_Op_create((MPI_User_function *) CollectiveCommunication::add, 1, &reduceOp) );
+		MPI_CHECK( MPI_Allreduce(_sendValues, _recvValues, 1, _valuesType, reduceOp, _communicator) );
+		MPI_CHECK( MPI_Op_free(&reduceOp) );
+		MPI_CHECK( MPI_Type_free(&_valuesType) );
+#else
+		for( int i = 0; i < _numValues; i++ ) {
+			MPI_CHECK( MPI_Allreduce( &_sendValues[i], &_recvValues[i], 1, _listOfTypes[i], MPI_SUM, _communicator ) );
+		}
+#endif
+	}
+
+	//! number of values (possibly different types) to be communicated
+	int _numValues;
+	//! counter which points to the position which shall be written next
+	int _setCounter;
+	//! counter which points to the position which shall be read next
+	int _getCounter;
+
+	//! Array to store the values which shall be communicated
+	valType* _sendValues;
+	valType* _recvValues;
+	//! Array of the corresponding MPI types for the values stored in _values
+	MPI_Datatype* _listOfTypes;
 	//! MPI_Datatype which will be used in the communication command and which
 	//! represents all values
-	MPI_Datatype _agglomeratedType;
+	MPI_Datatype _valuesType;
 
-	//! Communicator to be used by the communication commands
+	//! Communicater to be used by the communication commands
 	MPI_Comm _communicator;
 
 };

@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/type-factory-map.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_TYPE_FACTORY_MAP_HXX
@@ -7,12 +8,10 @@
 
 #include <map>
 #include <string>
-#include <memory>  // std::auto_ptr/unique_ptr
+#include <memory>  // std::auto_ptr
 #include <cstddef> // std::size_t
 
 #include <xercesc/dom/DOMElement.hpp>
-
-#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
 
 #include <xsd/cxx/tree/elements.hxx>
 #include <xsd/cxx/xml/qualified-name.hxx>
@@ -27,16 +26,16 @@ namespace xsd
       struct type_factory_map
       {
         typedef xml::qualified_name<C> qualified_name;
-        typedef XSD_AUTO_PTR<type> (*factory) (const xercesc::DOMElement&,
-                                               flags,
-                                               container*);
+        typedef std::auto_ptr<type> (*factory) (const xercesc::DOMElement&,
+                                                flags,
+                                                container*);
       public:
         type_factory_map ();
 
         void
         register_type (const qualified_name& name,
                        factory,
-                       bool replace = true);
+                       bool override = true);
 
         void
         unregister_type (const qualified_name& name);
@@ -50,7 +49,7 @@ namespace xsd
         unregister_element (const qualified_name& root,
                             const qualified_name& subst);
 
-        XSD_AUTO_PTR<type>
+        std::auto_ptr<type>
         create (const C* name, // element name
                 const C* ns,   // element namespace
                 factory static_type,
@@ -67,7 +66,7 @@ namespace xsd
 
       private:
         template <typename T>
-        static XSD_AUTO_PTR<type>
+        static std::auto_ptr<type>
         traits_adapter (const xercesc::DOMElement&, flags, container*);
 
       private:
@@ -133,7 +132,7 @@ namespace xsd
       //
       //
       template<typename T>
-      XSD_AUTO_PTR<type>
+      std::auto_ptr<type>
       factory_impl (const xercesc::DOMElement&, flags, container*);
 
       //

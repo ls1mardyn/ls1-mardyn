@@ -11,6 +11,7 @@ using namespace std;
 #include "MDGenerator.h"
 #include "common/ComponentParameters.h"
 #include "parallel/DomainDecompBase.h"
+#include "parallel/DomainDecompDummy.h"
 
 #ifndef DROPLETGENERATOR_H_
 #define DROPLETGENERATOR_H_

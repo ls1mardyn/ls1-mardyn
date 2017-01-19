@@ -9,8 +9,6 @@
 
 class DomainDecompBase;
 class ParticleContainer;
-class CellProcessor;
-class Domain;
 
 typedef ParticleContainer TMoleculeContainer;
 
@@ -73,16 +71,6 @@ public:
 	double getLambda() { return this->lambda; }
 	float getDensityCoefficient() { return this->decisive_density; }
 
-	/* Moved from LinkedCells! */
-	int getLocalGrandcanonicalBalance() {
-		return this->_localInsertionsMinusDeletions;
-	}
-	/* Moved from LinkedCells! */
-	void grandcanonicalStep(TMoleculeContainer * moleculeContainer, double T, Domain* domain, CellProcessor* cellProcessor);
-	/* Moved from LinkedCells! */
-	int grandcanonicalBalance(DomainDecompBase* comm);
-
-
 private:
 	int ownrank;  // only for debugging purposes (indicate rank in console output)
 
@@ -122,9 +110,6 @@ private:
         bool widom;  // Widom method -> determine mu by test insertions which are all rejected
 
 	Molecule* reservoir;
-
-	/* Moved from LinkedCells! */
-	int _localInsertionsMinusDeletions; //!< balance of the grand canonical ensemble
 };
 
 #endif /* GRANDCANONICAL_H_ */

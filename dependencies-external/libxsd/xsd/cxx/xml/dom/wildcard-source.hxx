@@ -1,5 +1,6 @@
 // file      : xsd/cxx/xml/dom/wildcard-source.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_DOM_WILDCARD_SOURCE_HXX
@@ -18,7 +19,7 @@ namespace xsd
       namespace dom
       {
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         create_document ();
       }
     }

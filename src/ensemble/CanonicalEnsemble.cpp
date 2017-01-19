@@ -137,7 +137,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 
 			double E_kin = _components[cid].E(); 
 			double T = E_kin / degreesOfFreedom;
-			global_log->debug() << "Temperature of component " << cid << ": " <<
+			global_log->debug() << "Temprature of component " << cid << ": " <<
 				              "T = " << T << endl;
 			_components[cid].setT( T );
 		}

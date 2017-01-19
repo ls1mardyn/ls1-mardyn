@@ -29,6 +29,7 @@ SendCouplingMDCommand::SendCouplingMDCommand() : SteereoCouplingCommand (false, 
 
 SendCouplingMDCommand::~SendCouplingMDCommand()
 {
+	// TODO Auto-generated destructor stub
 }
 
 /** transfer the accumulated molecules to the coupled simulation.

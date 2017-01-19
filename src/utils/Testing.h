@@ -27,7 +27,7 @@
  *                  should be executed
  * @return false if no errors occured, true otherwise
  */
-int runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases = std::string(""));
+bool runTests(Log::logLevel testLogLevel, std::string& testDataDirectory, const std::string& testcases = std::string(""));
 
 //! delegate to Test::setTestDataDirectory
 void setTestDataDirectory(std::string& testDataDirectory);
@@ -185,7 +185,7 @@ public:
 	static void setTestDataDirectory(std::string& testDataDirectory);
 
 protected:
-	std::string getTestDataFilename(const std::string& file, bool checkExistence = true);
+	std::string getTestDataFilename(const std::string& file);
 
 private:
 	static std::string testDataDirectory;

@@ -75,6 +75,14 @@ public:
 			ParticleContainer* molCont,
 			Domain* domain
 	);
+	virtual void init1D(
+			unsigned zoscillator,
+			ParticleContainer* molCont
+	);
+	virtual void zOscillation(
+			unsigned zoscillator,
+			ParticleContainer* molCont
+	);
 
 private:
 

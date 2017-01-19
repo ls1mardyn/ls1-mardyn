@@ -1,14 +1,13 @@
 // file      : xsd/cxx/parser/non-validating/xml-schema-pskel.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_NON_VALIDATING_XML_SCHEMA_PSKEL_HXX
 #define XSD_CXX_PARSER_NON_VALIDATING_XML_SCHEMA_PSKEL_HXX
 
 #include <string>
-#include <memory> // std::auto_ptr/unique_ptr
-
-#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
+#include <memory> // auto_ptr
 
 #include <xsd/cxx/parser/xml-schema.hxx>
 #include <xsd/cxx/parser/non-validating/parser.hxx>
@@ -495,7 +494,7 @@ namespace xsd
         template <typename C>
         struct base64_binary_pskel: simple_content<C>
         {
-          virtual XSD_AUTO_PTR<buffer>
+          virtual std::auto_ptr<buffer>
           post_base64_binary () = 0;
 
           static const C*
@@ -508,7 +507,7 @@ namespace xsd
         template <typename C>
         struct hex_binary_pskel: simple_content<C>
         {
-          virtual XSD_AUTO_PTR<buffer>
+          virtual std::auto_ptr<buffer>
           post_hex_binary () = 0;
 
           static const C*

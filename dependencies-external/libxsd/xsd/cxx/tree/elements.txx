@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/elements.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/util/XMLUniDefs.hpp>
@@ -27,8 +28,8 @@ namespace xsd
 
       // simple_type
       //
-      template <typename C, typename B>
-      simple_type<C, B>::
+      template <typename B>
+      simple_type<B>::
       simple_type (const simple_type& other,
                    flags f,
                    container* c)
@@ -36,8 +37,8 @@ namespace xsd
       {
       }
 
-      template <typename C, typename B>
-      simple_type<C, B>* simple_type<C, B>::
+      template <typename B>
+      simple_type<B>* simple_type<B>::
       _clone (flags f, container* c) const
       {
         return new simple_type (*this, f, c);

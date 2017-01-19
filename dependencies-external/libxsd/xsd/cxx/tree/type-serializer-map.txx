@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/type-serializer-map.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/util/XMLUni.hpp>
@@ -10,6 +11,8 @@
 
 #include <xsd/cxx/tree/types.hxx>
 #include <xsd/cxx/tree/bits/literals.hxx>
+
+#include <iostream>
 
 namespace xsd
 {
@@ -36,7 +39,7 @@ namespace xsd
           &serializer_impl<type>,
           false);
 
-        typedef simple_type<C, type> simple_type;
+        typedef simple_type<type> simple_type;
         register_type (
           typeid (simple_type),
           qualified_name (bits::any_simple_type<C> (), xsd),
@@ -112,7 +115,7 @@ namespace xsd
           &serializer_impl<id>,
           false);
 
-        typedef idref<C, ncname, type> idref;
+        typedef idref<type, C, ncname> idref;
         register_type (
           typeid (idref),
           qualified_name (bits::idref<C> (), xsd),
@@ -252,9 +255,9 @@ namespace xsd
       register_type (const type_id& tid,
                      const qualified_name& name,
                      serializer s,
-                     bool replace)
+                     bool override)
       {
-        if (replace || type_map_.find (&tid) == type_map_.end ())
+        if (override || type_map_.find (&tid) == type_map_.end ())
           type_map_[&tid] = type_info (name, s);
       }
 
@@ -396,7 +399,7 @@ namespace xsd
       }
 
       template <typename C>
-      XSD_DOM_AUTO_PTR<xercesc::DOMDocument> type_serializer_map<C>::
+      xml::dom::auto_ptr<xercesc::DOMDocument> type_serializer_map<C>::
       serialize (const C* name,
                  const C* ns,
                  const xml::dom::namespace_infomap<C>& m,

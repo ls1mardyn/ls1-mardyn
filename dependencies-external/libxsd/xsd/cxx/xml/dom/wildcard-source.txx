@@ -1,5 +1,6 @@
 // file      : xsd/cxx/xml/dom/wildcard-source.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/util/XMLUniDefs.hpp> // chLatin_L, etc
@@ -16,7 +17,7 @@ namespace xsd
       namespace dom
       {
         template <typename C>
-        XSD_DOM_AUTO_PTR<xercesc::DOMDocument>
+        xml::dom::auto_ptr<xercesc::DOMDocument>
         create_document ()
         {
           const XMLCh ls[] = {xercesc::chLatin_L,
@@ -28,7 +29,7 @@ namespace xsd
           xercesc::DOMImplementation* impl (
             xercesc::DOMImplementationRegistry::getDOMImplementation (ls));
 
-          return XSD_DOM_AUTO_PTR<xercesc::DOMDocument> (
+          return xml::dom::auto_ptr<xercesc::DOMDocument> (
             impl->createDocument ());
         }
       }

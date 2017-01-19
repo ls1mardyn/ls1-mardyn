@@ -37,7 +37,7 @@ InputFileTest::~InputFileTest() {
  */
 void InputFileTest::testRemoveMomentum() {
 
-	std::vector<Component>& components = *(global_simulation->getEnsemble()->getComponents());
+	std::vector<Component>& components = _domain->getComponents();
 
 	ParticleContainer* particleContainer
 		= initializeFromFile(ParticleContainerFactory::LinkedCell, "1clj-regular-2x2x3-removeMomentum.inp", 1.5);
@@ -50,7 +50,6 @@ void InputFileTest::testRemoveMomentum() {
 
 	Molecule* molecule = particleContainer->begin();
 	while(molecule != particleContainer->end()){
-		assert(components.size() > molecule->componentid());
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);

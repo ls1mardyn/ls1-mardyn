@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/stream-insertion.hxx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_STREAM_INSERTION_HXX
@@ -23,19 +24,15 @@ namespace xsd
       inline ostream<S>&
       operator<< (ostream<S>& s, const type&)
       {
-        // Not saving DOM content even if it's there.
         return s;
       }
 
       // simple_type
       //
-      template <typename S, typename C, typename B>
+      template <typename S, typename B>
       inline ostream<S>&
-      operator<< (ostream<S>& s, const simple_type<C, B>& x)
+      operator<< (ostream<S>& s, const simple_type<B>&)
       {
-        if (!x.null_content ())
-          s << x.text_content ();
-
         return s;
       }
 
@@ -180,9 +177,9 @@ namespace xsd
 
       // idref
       //
-      template <typename S, typename C, typename B, typename T>
+      template <typename S, typename T, typename C, typename B>
       inline ostream<S>&
-      operator<< (ostream<S>& s, const idref<C, B, T>& x)
+      operator<< (ostream<S>& s, const idref<T, C, B>& x)
       {
         const B& r (x);
         return s << r;

@@ -1,5 +1,6 @@
 // file      : xsd/cxx/tree/type-factory-map.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/validators/schema/SchemaSymbols.hpp>
@@ -37,7 +38,7 @@ namespace xsd
           &factory_impl<type>,
           false);
 
-        typedef simple_type<C, type> simple_type;
+        typedef simple_type<type> simple_type;
         register_type (
           qualified_name (bits::any_simple_type<C> (), xsd),
           &factory_impl<simple_type>,
@@ -103,7 +104,7 @@ namespace xsd
           &factory_impl<id>,
           false);
 
-        typedef idref<C, ncname, type> idref;
+        typedef idref<type, C, ncname> idref;
         register_type (
           qualified_name (bits::idref<C> (), xsd),
           &factory_impl<idref>,
@@ -225,9 +226,9 @@ namespace xsd
       void type_factory_map<C>::
       register_type (const qualified_name& name,
                      factory f,
-                     bool replace)
+                     bool override)
       {
-        if (replace || type_map_.find (name) == type_map_.end ())
+        if (override || type_map_.find (name) == type_map_.end ())
           type_map_[name] = f;
       }
 
@@ -272,7 +273,7 @@ namespace xsd
       }
 
       template <typename C>
-      XSD_AUTO_PTR<type> type_factory_map<C>::
+      std::auto_ptr<type> type_factory_map<C>::
       create (const C* name,
               const C* ns,
               factory static_type,
@@ -306,7 +307,7 @@ namespace xsd
         }
 
         if (f == 0)
-          return XSD_AUTO_PTR<type> (); // No match.
+          return std::auto_ptr<type> (0); // No match.
 
         // Check for xsi:type
         //
@@ -325,10 +326,11 @@ namespace xsd
 
       template <typename C>
       template <typename T>
-      XSD_AUTO_PTR<type> type_factory_map<C>::
+      std::auto_ptr<type> type_factory_map<C>::
       traits_adapter (const xercesc::DOMElement& e, flags f, container* c)
       {
-        return XSD_AUTO_PTR<type> (traits<T, C>::create (e, f, c));
+        std::auto_ptr<T> r (traits<T, C>::create (e, f, c));
+        return std::auto_ptr<type> (r.release ());
       }
 
       template <typename C>
@@ -426,10 +428,10 @@ namespace xsd
       //
       //
       template<typename T>
-      XSD_AUTO_PTR<type>
+      std::auto_ptr<type>
       factory_impl (const xercesc::DOMElement& e, flags f, container* c)
       {
-        return XSD_AUTO_PTR<type> (new T (e, f, c));
+        return std::auto_ptr<type> (new T (e, f, c));
       }
 
       //

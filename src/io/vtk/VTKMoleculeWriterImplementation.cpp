@@ -98,9 +98,13 @@ void VTKMoleculeWriterImplementation::plotMolecule(Molecule& molecule) {
 			plotCenter(molecule, centerID, Quadrupole);
 			centerID++;
 		}
+		for (size_t i = 0; i < molecule.numTersoff(); i++) {
+			plotCenter(molecule, centerID, Tersoff);
+			centerID++;
+		}
+
 	} else {
-		PointData::DataArray_sequence& pointDataArraySequence =
-				(*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
+		PointData::DataArray_sequence& pointDataArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().PointData().DataArray();
 		PointData::DataArray_iterator data_iterator = pointDataArraySequence.begin();
 		// id
 		data_iterator->push_back(molecule.id());
@@ -140,7 +144,7 @@ void VTKMoleculeWriterImplementation::plotCenter(Molecule& molecule, int centerI
 	data_iterator->push_back(_rank);
 	data_iterator++;
 
-	const std::array<double, 3> center_force = molecule.site_F(centerID);
+	const double* center_force = molecule.site_F(centerID);
 	data_iterator->push_back(center_force[0]);
 	data_iterator->push_back(center_force[1]);
 	data_iterator->push_back(center_force[2]);
@@ -153,10 +157,10 @@ void VTKMoleculeWriterImplementation::plotCenter(Molecule& molecule, int centerI
 	Points::DataArray_sequence& pointsArraySequence = (*_vtkFile).UnstructuredGrid()->Piece().Points().DataArray();
 	Points::DataArray_iterator coordinates_iterator = pointsArraySequence.begin();
 
-	const std::array<double, 3> curr_center = molecule.ljcenter_d_abs(centerID);
-	coordinates_iterator->push_back(curr_center[0]);
-	coordinates_iterator->push_back(curr_center[1]);
-	coordinates_iterator->push_back(curr_center[2]);
+	const double* curr_center = molecule.ljcenter_d(centerID);
+	coordinates_iterator->push_back(molecule.r(0) + curr_center[0]);
+	coordinates_iterator->push_back(molecule.r(1) + curr_center[1]);
+	coordinates_iterator->push_back(molecule.r(2) + curr_center[2]);
 	_numMoleculesPlotted++;
 }
 

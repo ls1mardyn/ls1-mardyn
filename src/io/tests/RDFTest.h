@@ -15,9 +15,9 @@ class RDFTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(RDFTest);
 	TEST_METHOD(testRDFCountSequential12_LinkedCell);
-//	TEST_METHOD(testRDFCountSequential12_AdaptiveCell);
+	TEST_METHOD(testRDFCountSequential12_AdaptiveCell);
 	TEST_METHOD(testRDFCountLinkedCell);
-//	TEST_METHOD(testRDFCountAdaptiveCell);
+	TEST_METHOD(testRDFCountAdaptiveCell);
 	TEST_METHOD(testSiteSiteRDFLinkedCell);
 	TEST_SUITE_END();
 

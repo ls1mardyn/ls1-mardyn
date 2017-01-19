@@ -1,14 +1,9 @@
 // file      : xsd/cxx/xml/char-iso8859-1.txx
-// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
+// author    : Boris Kolpackov <boris@codesynthesis.com>
+// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
-#include <xsd/cxx/config.hxx> // XSD_CXX11
-
-#ifdef XSD_CXX11
-#  include <memory> // std::unique_ptr
-#else
-#  include <xsd/cxx/auto-array.hxx>
-#endif
+#include <xsd/cxx/auto-array.hxx>
 
 namespace xsd
 {
@@ -92,12 +87,7 @@ namespace xsd
       {
         const C* end (s + len);
 
-#ifdef XSD_CXX11
-        std::unique_ptr<XMLCh[]> r (
-#else
-        auto_array<XMLCh> r (
-#endif
-          new XMLCh[len + 1]);
+        auto_array<XMLCh> r (new XMLCh[len + 1]);
         XMLCh* ir (r.get ());
 
         for (const C* p (s); p < end; ++p)

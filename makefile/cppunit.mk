@@ -26,3 +26,15 @@ CXXFLAGS += -DUNIT_TESTS
 LDFLAGS  += -ldl -lcppunit
 SOURCES += $(CPPUNIT_TESTS)
 
+
+.PHONY: test
+	
+ifeq ($(PARTYPE), PAR)
+$(info # Parallel defined!) 
+MPICMD=mpirun -n 2 
+endif
+
+test: $(BINARY)
+	$(info # Running test with $(MPICMD)) 
+	$(MPICMD) ./$(BINARY) -t -d ../test_input/
+

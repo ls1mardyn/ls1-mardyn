@@ -144,13 +144,11 @@
 
     <!-- algorithm specific configuration options -->
     <algorithm>
-      <parallelisation type="DomainDecomposition">
-          <CommunicationScheme>direct<CommunicationScheme>
-      </parallelisation>
+      <parallelisation type="DomainDecomposition"></parallelisation>
       <datastructure type="LinkedCells">
-          <cellsInCutoffRadius>1</cellsInCutoffRadius>
+          <cellsInCutoffRadius>2</cellsInCutoffRadius>
       </datastructure>
-
+      
       <!-- cutoff definitions -->
       <cutoffs type="CenterOfMass" >
         <!-- Lennard Jones cutoff radius -->
@@ -180,45 +178,35 @@
       - ResultWriter
       - XyzWriter
       - VISWriter
-      - MmspdWriter
+	  - MmspdWriter
       - PovWriter	  
       - StatisticsWriter
       - DecompWriter
     The element “writefrequency” contains a integer value which controls the frequency of writing out the data. For example the value “10” makes
-    sure that every 10th timestep data will be written out.
+	sure that every 10th timestep data will be written out.
     The element “outputprefix” holds a string which defines the prefix of the output filename. For example the string “default” will result
-    in a output file named “default.res”. -->
-    <output>
-
-       <!-- CheckpointWriter plugin 
-      This writer will create a restart file which format or structure is the same as used by input files *.inp.
-      These files can be used to continue a simulation. -->
-      <outputplugin name="CheckpointWriter">
+	in a output file named “default.res”. -->
+	<output>
+	
+	  <!-- CheckpointWriter plugin 
+	  This writer will create a restart file which format or structure is the same as used by input files *.inp.
+	  These files can be used to continue a simulation. -->
+	  <outputplugin name="CheckpointWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
 
-      <!-- LJ flop counter plugin
-      This writer outputs the actual FLOPS rate of the LJ calculations. -->
-      <outputplugin name="LJFLOPCounter">
+	  <!-- LJ flop counter plugin
+	  This writer outputs the actual FLOPS rate of the LJ calculations. -->
+	  <outputplugin name="LJFLOPCounter">
         <!-- TODO: make the LJ flop counter a real output plugin
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
         -->
       </outputplugin>
-
-      <!-- SysMonOutput
-       system monitor output for an RPN expression
-      -->
-      <outputplugin name="SysMonOutput">
-        <expression>procloadavg:loadavg1</expression>
-        <expression label="Free+BufferRAM [MB]">sysinfo:freeram sysinfo:bufferram + sysinfo:mem_unit * float 1048576 /</expression>
-        <expression>procselfstatm:size 1048576. /</expression>
-        <writefrequency>10</writefrequency>
-      </outputplugin>
-
+    
       <!-- ResultWriter plugin 
-        Writes thermodynamic properties to a file. The following values will be written to a file:
+	  Writes thermodynamic properties to a file. The following values will be written to a file:
         - Simulation time step
         - time since the simulation started
         - Average potential Energy
@@ -240,71 +228,59 @@
         <bins>1000</bins>
         <intervallength>0.003</intervallength>
       </outputplugin>
-
-      <!-- visualization output plugins
-      These writers are used to generate files which can be used for visualization purpose by different visualization software.
-      Depending on the specific software different file formats are supported. -->
-  
-      <!-- XyzWriter plugin
-      The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
-      (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
-      <outputplugin name="XyzWriter">
+	  
+	  <!-- visualization output plugins
+	  These writers are used to generate files which can be used for visualization purpose by different visualization software.
+	  Depending on the specific software different file formats are supported. -->
+	  
+	  <!-- XyzWriter plugin
+	  The *.xyz-format contains x, y, z coordinates of the molecules. Such a file can be read by visualization software like vmd
+	  (for detail information visit: http://www.ks.uiuc.edu/Research/vmd/). -->
+	  <outputplugin name="XyzWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+	  
+	  <!-- VISWriter plugin
+	  Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
+	  of the molecules (using quaternions). The files can be read by software like:
+	    - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
+		- Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
+	  <outputplugin name="VISWriter">
+        <writefrequency>10</writefrequency>
+        <outputprefix>default</outputprefix>
+      </outputplugin>
+	  
+	  <!-- MmspdWriter plugin
+      The *.mmspd-format contains the coordinates of the molecules and information about the dimensions of the simulation box.
+	  The file can be read by the software MegaMol (for detail information visit: https://svn.vis.uni-stuttgart.de/trac/megamol/). -->
+	  <outputplugin name="MmspdWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
 
-      <!-- VISWriter plugin
-      Additional to the coordinates of the molecules, the *.vis-format also contains the orientation information
-      of the molecules (using quaternions). The files can be read by software like:
-      - MolCloud (visit: http://www.visus.uni-stuttgart.de/index.php?id=995)
-      - Megamol  (visit: https://svn.vis.uni-stuttgart.de/trac/megamol/) -->
-      <outputplugin name="VISWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-      </outputplugin>
-
-      <!-- MmspdWriter plugin
-       The *.mmspd-format contains the coordinates of the molecules and information about the dimensions of the simulation box.
-       The file can be read by the software MegaMol (for detail information visit: https://svn.vis.uni-stuttgart.de/trac/megamol/). -->
-      <outputplugin name="MmspdWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-      </outputplugin>
-
-      <!-- PovWriter
+	  <!-- PovWriter
       This writer creates a file containing the current state of simulation in *.pov-format. It can be used to visualize with
-      POVray software (for detail information visit: www.povray.org). -->
-      <outputplugin name="PovWriter">
+	  POVray software (for detail information visit: www.povray.org). -->
+	  <outputplugin name="PovWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
-      </outputplugin>
-
-      <!-- MPICheckpointWriter
-       write binary data for checkpointing using MPIIO
-       there might be some problems with "external32" data representation; better use "native" or "internal"
-      -->
-      <outputplugin name="MPICheckpointWriter">
-        <writefrequency>10</writefrequency>
-        <outputprefix>default</outputprefix>
-        <appendTimestamp>1</appendTimestamp>
-        <datarep>native</datarep>
-        <measureTime>1</measureTime>
       </outputplugin>
 
       <!-- more output plugins -->
-
-      <!-- StatisticsWriter
+	  
+	  <!-- StatisticsWriter
       This writer writes plot statistics to a file. At the moment, only a histogramm showing the occupancy of the cells is produced.
         - x: number of Molecules
         - y: number of cells with the respective number of molecules -->
-      <outputplugin name="StatisticsWriter">
+	  <outputplugin name="StatisticsWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>
 
-      <!-- DecompWriter
-      This writer writes out information about the decomposition of the simulation domain. -->
-      <outputplugin name="DecompWriter">
+	  <!-- DecompWriter
+	  This writer writes out information about the decomposition of the simulation domain. -->
+	  <outputplugin name="DecompWriter">
         <writefrequency>10</writefrequency>
         <outputprefix>default</outputprefix>
       </outputplugin>

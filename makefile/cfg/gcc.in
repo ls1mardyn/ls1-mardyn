@@ -21,7 +21,7 @@ DEPMODE = gcc3
 # SEQ
 #########################################
 # DEBUG
-CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -g -ggdb -Wno-unused-parameter #-Weffc++ 
+CXXFLAGS_SEQ_DEBUG  = -Wall -Wextra -Weffc++ -g -ggdb
 LINKFLAGS_SEQ_DEBUG = 
 # RELEASE
 CXXFLAGS_SEQ_RELEASE  = -O3 -Wall -Werror -DNDEBUG
@@ -36,7 +36,7 @@ LINKFLAGS_SEQ_PROFILE = $(LINKFLAGS_SEQ_RELEASE) -pg
 # PAR
 #########################################
 # DEBUG
-CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -g -ggdb -DENABLE_MPI -Wno-unused-parameter #-Weffc++ 
+CXXFLAGS_PAR_DEBUG  = -Wall -Wextra -Weffc++ -g -ggdb -DENABLE_MPI
 LINKFLAGS_PAR_DEBUG =
 # RELEASE
 CXXFLAGS_PAR_RELEASE  = -O3 -Wall -Werror -DNDEBUG -DENABLE_MPI
@@ -44,10 +44,23 @@ LINKFLAGS_PAR_RELEASE =
 # COVERAGE
 CXXFLAGS_PAR_COVERAGE  = $(CXXFLAGS_PAR_RELEASE) --coverage
 LINKFLAGS_PAR_COVERAGE = $(LINKFLAGS_PAR_RELEASE) --coverage
-# PROFILE
+# COVERAGE
 CXXFLAGS_PAR_PROFILE  = $(CXXFLAGS_PAR_RELEASE) -pg
 LINKFLAGS_PAR_PROFILE = $(LINKFLAGS_PAR_RELEASE) -pg
 
-# Further settings, common to all configurations, which use gcc
+# Vectorization settings:
 #########################################
-include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)
+ifeq ($(VECTORIZE_CODE),1)
+CXXFLAGS_VECTORIZE = -msse3
+endif
+ifeq ($(VECTORIZE_CODE),2)
+CXXFLAGS_VECTORIZE = -mavx
+endif
+
+# On AMD BUlldozer:
+#ifeq ($(VECTORIZE_CODE),1)
+#CXXFLAGS_VECTORIZE = -msse3 -mfma4 -march=bdver1
+#endif
+#ifeq ($(VECTORIZE_CODE),2)
+#CXXFLAGS_VECTORIZE = -mavx -mfma4 -march=bdver1
+#endif

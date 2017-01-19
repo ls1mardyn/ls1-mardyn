@@ -164,7 +164,7 @@ if logfile:
 		parasubs["$LOGFILEPATH"]=os.path.realpath(logfile)
 		print "log file:\t{0}".format(logfile)
 	except IOError, (errno, strerror):
-		print "Error ({0}) opening {1} for writing: {2}".format(errno,logfile,strerror)
+		print "Error ({0}) opening {1} for writing: {2}".format(errno,substfile,strerror)
 		#logfhdl=None
 		print "\tlogging deactivated"
 		del parasubs["$LOGFILENAME"]
@@ -253,7 +253,7 @@ class Parameter:
 		return self.__index
 	
 	def setindex(self,idx):
-		self.__index=(idx)%self.numvalues()
+		self.__index=(idx)%numvalues()
 	
 	def values(self):
 		return self.__values
@@ -301,32 +301,26 @@ parameters=[]
 paraformulae=[]
 numvar=0
 jobname=""
-if cfgparser.has_section("parameters"):
-	for i in cfgparser.items("parameters"):
-		if numvar==0: numvar=1
-		p=Parameter(i[0],i[1])
-		parasubs['$'+p.name()]=p.strvalues()
-		if p.numvalues()>1:
-			parameters.append(Parameter(p))
-			numvar*=p.numvalues()
-			print "{0}\t{1}\t({2},{3})\t*{4}".format(p.name(),p.values(),p.maxlen(),p.onlydigits(),p.numvalues())
+for i in cfgparser.items("parameters"):
+	if numvar==0: numvar=1
+	p=Parameter(i[0],i[1])
+	parasubs['$'+p.name()]=p.strvalues()
+	if p.numvalues()>1:
+		parameters.append(Parameter(p))
+		numvar*=p.numvalues()
+		print "{0}\t{1}\t({2},{3})\t*{4}".format(p.name(),p.values(),p.maxlen(),p.onlydigits(),p.numvalues())
+	else:
+		if p.value()[0]=='=':
+			paraformulae.append(Parameter(p))
+			print "{0}\t{1}\t(formula substitution)".format(p.name(),p.value())
+			# initial assignment should not be the formula itself, so do something useful(?) here...
+			#del parasubs['$'+p.name()]
+			#parasubs['$'+p.name()]=""
+			parasubs['$'+p.name()]="("+p.value()[1:]+")"	# works for formulas without variables
 		else:
-			if p.value()[0]=='=':
-				paraformulae.append(Parameter(p))
-				print "{0}\t{1}\t(formula substitution)".format(p.name(),p.value())
-				# initial assignment should not be the formula itself, so do something useful(?) here...
-				#del parasubs['$'+p.name()]
-				#parasubs['$'+p.name()]=""
-				parasubs['$'+p.name()]="("+p.value()[1:]+")"	# works for formulas without variables
-			else:
-				jobname+=p.name()+p.value()
-				print "{0}\t{1}\t(substitution only)".format(p.name(),p.value())
-	print "number of jobs:\t{0}".format(numvar)
-else:
-	print "WARNING: ",configfile," does not have a \"parameters\" section"
-	if logfhdl is not None:
-		logfhdl.write("WARNING: configuration file {0} does not contain a \"parameters\" section\n".format(configfile))
-	
+			jobname+=p.name()+p.value()
+			print "{0}\t{1}\t(substitution only)".format(p.name(),p.value())
+print "number of jobs:\t{0}".format(numvar)
 
 
 def execmd(cmd,wd="."):
@@ -361,31 +355,25 @@ def execmd(cmd,wd="."):
 	return status,stdoutdata,stderrdata
 
 def adjrlinks(dstdir,srcdir):
-	""" adjust relative links
-	"""
 	global logfhdl
 	#print "adapt relative links contained in directory {0} copied from {1}".format(dstdir,srcdir)
 	dstdirqueue=["."]
 	while len(dstdirqueue)>0:
-		qdir=dstdirqueue.pop()
-		dstqdir=os.path.normpath(os.path.join(dstdir,qdir))
-		for dirname, dirnames, filenames in os.walk(dstqdir):
+		for dirname, dirnames, filenames in os.walk(os.path.join(dstdir,dstdirqueue.pop())):
 			for subdirname in dirnames:
-				#dstsubdir=os.path.normpath(os.path.join(dstqdir,subdirname))
 				dstdirqueue.append(subdirname)
-			for filename in filenames:	# filenames also contains links to directories
-				dstfile=os.path.normpath(os.path.join(dstqdir,filename))
-				if os.path.islink(dstfile):	# correct (relative) links
-					#dstlinkfile=os.path.realpath(dstfile)
-					templatelinkfile=os.path.realpath(os.path.join(srcdir,qdir,filename))
+			for filename in filenames:
+				dstfile=os.path.join(dstdir,filename)
+				if os.path.islink(dstfile):
+					dstlinkfile=os.path.realpath(dstfile)
+					templatelinkfile=os.path.realpath(os.path.join(srcdir,filename))
 					if dstfile!=templatelinkfile:
 						os.remove(dstfile)
 						if logfhdl is not None:
 							logfhdl.write("rm {0}\n".format(dstfile))
-						symlinkpath=os.path.relpath(templatelinkfile,dstqdir)
-						os.symlink(symlinkpath,dstfile)
+						os.symlink(os.path.relpath(templatelinkfile,dstdir),dstfile)
 						if logfhdl is not None:
-							logfhdl.write("ln -s {0} {1}\n".format(symlinkpath,dstfile))
+							logfhdl.write("ln -s {0} {1}\n".format(os.path.relpath(templatelinkfile,dstdir),dstfile))
 
 
 if os.path.exists(dstroot):
@@ -412,7 +400,6 @@ print
 
 print "generate jobs ##########################################################"
 createdjobs=[]
-cmd=None
 cmd_output=[]
 #cmd_status=[]
 cmd_failed=0

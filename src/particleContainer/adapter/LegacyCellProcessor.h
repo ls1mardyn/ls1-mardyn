@@ -21,31 +21,29 @@ class ParticleCell;
 class LegacyCellProcessor : public CellProcessor {
 
 private:
-	//const double _cutoffRadiusSquare;
-	//const double _LJCutoffRadiusSquare;
+	const double _cutoffRadiusSquare;
+	const double _LJCutoffRadiusSquare;
+	const double _tersoffCutoffRadiusSquare;
 	ParticlePairsHandler* const _particlePairsHandler;
 
 public:
-	LegacyCellProcessor& operator=(const LegacyCellProcessor&) = delete;
 
 	LegacyCellProcessor(const double cutoffRadius, const double LJCutoffRadius,
-			ParticlePairsHandler* particlePairsHandler);
+			const double tersoffCutoffRadius, ParticlePairsHandler* particlePairsHandler);
 
 	virtual ~LegacyCellProcessor();
 
-	void initTraversal();
+	void initTraversal(const size_t numCells);
 
-	void preprocessCell(ParticleCell& /*cell*/) {}
+	void preprocessCell(ParticleCell& cell);
 
 	void processCellPair(ParticleCell& cell1, ParticleCell& cell2);
 
 	double processSingleMolecule(Molecule* m1, ParticleCell& cell2);
 
-	int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR);
-
 	void processCell(ParticleCell& cell);
 
-	void postprocessCell(ParticleCell& /*cell*/) {}
+	void postprocessCell(ParticleCell& cell);
 
 	void endTraversal();
 };

@@ -91,7 +91,7 @@ void CrystalLatticeGenerator::calculateSimulationBoxLength() {
 
 void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator..." << endl;
-	//domain->setCurrentTime(0);
+	domain->setCurrentTime(0);
 
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(0);
@@ -100,7 +100,7 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 	domain->setGlobalLength(2, _simBoxLength);
 
 	for (unsigned int i = 0; i < _components.size(); i++) {
-		global_simulation->getEnsemble()->addComponent(_components[i]);
+		domain->addComponent(_components[i]);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from CubicGridGenerator done." << endl;
@@ -111,7 +111,7 @@ void CrystalLatticeGenerator::readPhaseSpaceHeader(Domain* domain, double timest
 
 
 unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();
@@ -175,10 +175,10 @@ unsigned long CrystalLatticeGenerator::readPhaseSpace(ParticleContainer* particl
 }
 
 void CrystalLatticeGenerator::addMolecule(double x, double y, double z, unsigned long id, unsigned cid, ParticleContainer* particleContainer) {
-	Molecule m(id, &_components[cid], x, y, z, // position
+	Molecule m(id, cid, x, y, z, // position
 			0.0, 0.0, 0.0, // velocity
 			1.0, 0.0, 0.0, 0.0, // orientation
-			0.0, 0.0, 0.0);
+			0.0, 0.0, 0.0, &_components);
 	particleContainer->addParticle(m);
 }
 

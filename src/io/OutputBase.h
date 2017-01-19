@@ -5,7 +5,6 @@
 #include <string>
 
 #include "ensemble/GrandCanonical.h"
-#include "ensemble/CavityEnsemble.h"
 
 class ParticleContainer;
 class DomainDecompBase; 
@@ -60,7 +59,7 @@ public:
 	virtual void initOutput(ParticleContainer* particleContainer,
 			DomainDecompBase* domainDecomp, Domain* domain) = 0;
 
-	virtual void readXML(XMLfileUnits& /*xmlconfig*/) {}
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
 
 	//! @brief will be called in each time step
 	//!
@@ -71,8 +70,7 @@ public:
 	virtual void doOutput(
 			ParticleContainer* particleContainer, DomainDecompBase* domainDecomp,
 			Domain* domain, unsigned long simstep,
-			std::list<ChemicalPotential>* lmu,
-			std::map<unsigned, CavityEnsemble>* mcav
+			std::list<ChemicalPotential>* lmu
 	) = 0;
 
 	//! @brief will be called at the end of the simulation

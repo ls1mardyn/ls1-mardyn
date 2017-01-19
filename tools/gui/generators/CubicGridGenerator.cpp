@@ -127,7 +127,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	domain->setGlobalLength(1, _simBoxLength);
 	domain->setGlobalLength(2, _simBoxLength);
 
-	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->getComponents());
+	vector<Component>& dcomponents = *(global_simulation->getEnsemble()->components());
 	for (unsigned int i = 0; i < _components.size(); i++) {
 		Component component = _components[i];
 		if (_configuration.performPrincipalAxisTransformation()) {
@@ -144,7 +144,7 @@ void CubicGridGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 
 unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();
