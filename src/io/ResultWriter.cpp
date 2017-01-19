@@ -1,21 +1,3 @@
-/***************************************************************************
- *   Copyright (C) 2010 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- *   This program is distributed in the hope that it will be useful,       *
- *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
- *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
- *   GNU General Public License for more details.                          *
- *                                                                         *
- *   You should have received a copy of the GNU General Public License     *
- *   along with this program; if not, write to the                         *
- *   Free Software Foundation, Inc.,                                       *
- *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             *
- ***************************************************************************/
 
 #include "io/ResultWriter.h"
 
@@ -55,8 +37,8 @@ void ResultWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Accumulation steps: " << acc_steps << endl;
 }
 
-void ResultWriter::initOutput(ParticleContainer* particleContainer,
-			      DomainDecompBase* domainDecomp, Domain* domain){
+void ResultWriter::initOutput(ParticleContainer* /*particleContainer*/,
+			      DomainDecompBase* domainDecomp, Domain* /*domain*/){
 	 
 	// initialize result file
 	string resultfile(_outputPrefix+".res");
@@ -65,12 +47,12 @@ void ResultWriter::initOutput(ParticleContainer* particleContainer,
 	if(domainDecomp->getRank()==0){
 		_resultStream.open(resultfile.c_str());
 		_resultStream << "# ls1 MarDyn simulation started at " << ctime(&now) << endl;
-		_resultStream << "#step\tt\t\tU_pot\tU_pot_avg\t\tp\tp_avg\t\tbeta_trans\tbeta_rot\t\tc_v" << endl;
+		_resultStream << "#step\tt\t\tU_pot\tU_pot_avg\t\tp\tp_avg\t\tbeta_trans\tbeta_rot\t\tc_v\t\tN\t(N_cav*)\n";
 	}
 }
 
-void ResultWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
-	unsigned long simstep, list<ChemicalPotential>* lmu )
+void ResultWriter::doOutput( ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* domain,
+	unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* mcav )
 {
 	_U_pot_acc->addEntry(domain->getGlobalUpot());
 	_p_acc->addEntry(domain->getGlobalPressure());
@@ -79,16 +61,23 @@ void ResultWriter::doOutput( ParticleContainer* particleContainer, DomainDecompB
 		              << "\t\t" << domain->getGlobalUpot() << "\t" << _U_pot_acc->getAverage()
 					  << "\t\t" << domain->getGlobalPressure() << "\t" << _p_acc->getAverage()
 		              << "\t\t" << domain->getGlobalBetaTrans() << "\t" << domain->getGlobalBetaRot()
-		              << "\t\t" << domain->cv() << "\n";
+		              << "\t\t" << domain->cv() << "\t\t" << domain->getglobalNumMolecules();
+                 
+                map<unsigned, CavityEnsemble>::iterator ceit;
+                for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
+                {
+                   _resultStream << "\t" << ceit->second.numCavities();
+                }
+                _resultStream << "\n";
 	}
 }
 
-void ResultWriter::finishOutput(ParticleContainer* particleContainer,
-				DomainDecompBase* domainDecomp, Domain* domain){
+void ResultWriter::finishOutput(ParticleContainer* /*particleContainer*/,
+				DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
 	time_t now;
 	time(&now);
-	_resultStream << "# ls1 MarDyn simulation finished at " << ctime(&now) << endl;
-        _resultStream << "# \n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: martin.horsch@mv.uni-kl.de\n# \n# Phone: +49 631 205 3227\n# Fax: +49 631 205 3835\n# University of Kaiserslautern\n# Laboratory of Engineering Thermodynamics\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n";
+	_resultStream << "# ls1 mardyn simulation finished at " << ctime(&now) << endl;
+        _resultStream << "# \n# Please address your questions and suggestions to the ls1 mardyn contact point:\n# \n# E-mail: contact@ls1-mardyn.de\n# \n# Phone: +49 631 205 3227\n# University of Kaiserslautern\n# Computational Molecular Engineering\n# Erwin-Schroedinger-Str. 44\n# D-67663 Kaiserslautern, Germany\n# \n# http://www.ls1-mardyn.de/\n";
 
 	_resultStream.close();
 }

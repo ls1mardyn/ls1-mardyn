@@ -12,22 +12,25 @@
 #include <malloc.h>
 #include <new>
 #include <cstring>
+#include <cassert>
+
+#define CACHE_LINE_SIZE 64
 
 /**
  * \brief An aligned array.
  * \details Has pointer to T semantics.
  * \tparam T The type of the array elements.
  * \tparam alignment The alignment restriction. Must be a power of 2, should not be 8.
- * \author Johannes Heckl
+ * \author Johannes Heckl, Nikola Tchipev
  */
-template<class T, size_t alignment = 64>
+template<class T, size_t alignment = CACHE_LINE_SIZE>
 class AlignedArray {
 public:
 	/**
 	 * \brief Construct an empty array.
 	 */
 	AlignedArray() :
-			_n(0), _p(0) {
+			_n(0), _p(nullptr) {
 	}
 
 	/**
@@ -61,23 +64,48 @@ public:
 	/**
 	 * \brief Free the array.
 	 */
-	~AlignedArray() {
+	virtual ~AlignedArray() {
 		_free();
+	}
+
+	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+		size_t size_rounded_up = _round_up(exact_size);
+
+		bool need_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
+
+		if (need_resize) {
+			resize(size_rounded_up);
+			// resize zero-s all
+		} else {
+			// we didn't resize, but we might still need to zero the rest of the Cache Line
+			if (zero_rest_of_CL and size_rounded_up > 0) {
+				std::memset(_p + exact_size, 0, size_rounded_up - exact_size);
+			}
+		}
+
+		assert(size_rounded_up <= _n);
+		return _n;
 	}
 
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
-	void resize(size_t n) {
+	virtual void resize(size_t n) {
 		if (n == _n)
 			return;
 		_free();
-		_p = 0;
+		_p = nullptr;
 		_p = _allocate(n);
-		if (!_p)
+		if (_p == nullptr)
 			throw std::bad_alloc();
 		_n = n;
-		//std::memset(_p,0,sizeof(T)*_n);
+	}
+
+	virtual void zero(size_t start_idx) {
+		if (_n > 0) {
+			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
+			std::memset(_p, 0, num_to_zero * sizeof(T));
+		}
 	}
 
 	inline size_t get_size() const {
@@ -90,20 +118,48 @@ public:
 	operator T*() const {
 		return _p;
 	}
-private:
+
+	/**
+	 * \brief Return amount of allocated storage + .
+	 */
+	size_t get_dynamic_memory() const {
+		return _n * sizeof(T);
+	}
+
+	static size_t _round_up(size_t n) {
+		size_t ret;
+		switch(sizeof(T)) {
+		case 1:
+			ret = (n + 63) & ~0x3F;
+			break;
+		case 4:
+			ret = (n + 15) & ~0x0F;
+			break;
+		case 8:
+			ret = (n + 7) & ~0x07;
+			break;
+		default:
+			assert(false);
+		}
+		return ret;
+	}
+
+protected:
 	void _assign(T * p) const {
 		std::memcpy(_p, p, _n * sizeof(T));
 	}
+
 	static T* _allocate(size_t elements) {
+
 #if defined(__SSE3__) && ! defined(__PGI)
-		T* ptr=static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
-		//std::memset(ptr, 0, sizeof(T) * elements);
-		return ptr;
+		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
 #else
 		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
-		//std::memset(ptr, 0, sizeof(T) * elements);
-		return ptr;
 #endif
+
+		std::memset(ptr, 0, elements * sizeof(T));
+		return ptr;
+
 	}
 
 	void _free()

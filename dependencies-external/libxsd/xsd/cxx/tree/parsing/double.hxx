@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/parsing/double.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_PARSING_DOUBLE_HXX
@@ -45,7 +44,7 @@ namespace xsd
       double traits<double, C, schema_type::double_>::
       create (const xercesc::DOMElement& e, flags f, container* c)
       {
-        return create (text_content<C> (e), 0, f, c);
+        return create (tree::text_content<C> (e), 0, f, c);
       }
 
       template <typename C>

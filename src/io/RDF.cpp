@@ -14,7 +14,7 @@ using namespace std;
 using namespace Log;
 
 RDF::RDF() :
-	_components(_simulation.getEnsemble()->components())
+	_components(_simulation.getEnsemble()->getComponents())
 {
 }
 
@@ -116,11 +116,11 @@ void RDF::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Interval length: " << _intervalLength << endl;
 }
 
-void RDF::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void RDF::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 	init();
 }
 
-void RDF::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {
+void RDF::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
 }
 
 
@@ -262,8 +262,8 @@ void RDF::setOutputPrefix(string prefix) {
 	_outputPrefix = prefix;
 }
 
-
-void RDF::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu) {
+void RDF::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomposition, Domain* domain,
+		unsigned long simStep, std::list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
 	if(_numberOfRDFTimesteps <= 0) return;
 
 	if (simStep > 0 && simStep % _writeFrequency == 0) {

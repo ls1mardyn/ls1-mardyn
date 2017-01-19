@@ -66,7 +66,7 @@ public:
 	void setOutputPrefix(std::string prefix);
 
 	//! plot all the statistics calculated to one or several files
-	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu);
+	void doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomposition, Domain* domain, unsigned long simStep, std::list<ChemicalPotential>* lmu, std::map<unsigned, CavityEnsemble>* mcav);
 
 	//! increment the counter indicating for how many iterations
 	//! the molecule pairs have been counted.
@@ -78,7 +78,7 @@ public:
 	//! @todo: remove it and replace it by component.getNumMolecules()
 	void accumulateNumberOfMolecules(std::vector<Component>& components) const;
 
-	void observeRDF(Molecule& mi, Molecule& mj, double dd, double distanceVector[3]) const {
+	void observeRDF(Molecule& mi, Molecule& mj, double dd, double /*distanceVector*/ [3]) const {
 		observeRDF(dd, mi.componentid(), mj.componentid());
 
 		if(_doCollectSiteRDF) {
@@ -89,9 +89,9 @@ public:
 			if(si+sj > 2) {
 				for(unsigned m = 0; m < si; m++) {
 					for(unsigned n = 0; n < sj; n++) {
-						const double* dii = mi.site_d(m);
-						const double* djj = mj.site_d(n);
-						SiteSiteDistance(distanceVector, dii, djj, drs, dr2);
+						const std::array<double,3> dii = mi.site_d_abs(m);
+						const std::array<double,3> djj = mj.site_d_abs(n);
+						SiteSiteDistanceAbs(dii.data(), djj.data(), drs, dr2);
 						observeRDF(dr2, mi.componentid(), mj.componentid(), m, n);
 					}
 				}
@@ -105,8 +105,15 @@ public:
 	void observeRDF(double dd, unsigned i, unsigned j) const {
 		if(_numberOfRDFTimesteps <= 0) return;
 		if(dd > _maxDistanceSquare) return;
-		if(i > j) { this->observeRDF(dd, j, i); return; }
+		if(i > j) {
+			this->observeRDF(dd, j, i);
+			return;
+		}
+
 		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		#if defined _OPENMP
+		#pragma omp atomic
+		#endif
 		this->_localDistribution[i][j-i][l] ++;
 	}
 
@@ -123,9 +130,17 @@ public:
 		}
 
 		unsigned l = (unsigned)floor(sqrt(dd)/this->_intervalLength);
+		#if defined _OPENMP
+		#pragma omp atomic
+		#endif
 		this->_localSiteDistribution[i][j-i][m][n][l] ++;
-                if((i == j) && (m != n)) this->_localSiteDistribution[i][j-i][n][m][l] ++;
-//		std::cout << "Observed RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
+		if((i == j) && (m != n)){
+			#if defined _OPENMP
+			#pragma omp atomic
+			#endif
+			this->_localSiteDistribution[i][j-i][n][m][l] ++;
+		}
+		//std::cout << "Observed RDF i=" << i << " j=" << j << " m=" << m << " n=" << n << std::endl;
 	}
 
 	bool siteRDF() {

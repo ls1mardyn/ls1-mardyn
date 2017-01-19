@@ -37,14 +37,14 @@ void SysMonOutput::readXML(XMLfileUnits& xmlconfig) {
 	//global_log->info() << sysmon->InfoString("System Monitor\n","\t");
 }
 
-void SysMonOutput::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+void SysMonOutput::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
 	SysMon* sysmon = SysMon::getSysMon();
 	sysmon->updateExpressionValues();
 	global_log->info() << sysmon->InfoString("System Monitor (initial)\n","\t");
 }
 
-void SysMonOutput::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep,
-			list<ChemicalPotential>* lmu)
+void SysMonOutput::doOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/, unsigned long simstep,
+			list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/)
 {
 	if((simstep % _writeFrequency) == 0) {
 		SysMon* sysmon = SysMon::getSysMon();
@@ -55,7 +55,7 @@ void SysMonOutput::doOutput(ParticleContainer* particleContainer, DomainDecompBa
 	}
 }
 
-void SysMonOutput::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain){
+void SysMonOutput::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/){
 	SysMon* sysmon = SysMon::getSysMon();
 	sysmon->updateExpressionValues();
 	global_log->info() << sysmon->InfoString("System Monitor (final)\n","\t");

@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/std-ostream-map.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xsd/cxx/tree/types.hxx>
@@ -25,7 +24,7 @@ namespace xsd
           &inserter_impl<C, type>,
           false);
 
-        typedef simple_type<type> simple_type;
+        typedef simple_type<C, type> simple_type;
         register_type (
           typeid (simple_type),
           &inserter_impl<C, simple_type>,
@@ -91,7 +90,7 @@ namespace xsd
           &inserter_impl<C, id>,
           false);
 
-        typedef idref<type, C, ncname> idref;
+        typedef idref<C, ncname, type> idref;
         register_type (
           typeid (idref),
           &inserter_impl<C, idref>,
@@ -211,9 +210,9 @@ namespace xsd
 
       template <typename C>
       void std_ostream_map<C>::
-      register_type (const type_id& tid, inserter i, bool override)
+      register_type (const type_id& tid, inserter i, bool replace)
       {
-        if (override || type_map_.find (&tid) == type_map_.end ())
+        if (replace || type_map_.find (&tid) == type_map_.end ())
           type_map_[&tid] = i;
       }
 

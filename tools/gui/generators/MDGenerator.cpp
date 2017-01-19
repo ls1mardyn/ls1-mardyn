@@ -8,7 +8,7 @@
 #include "MDGenerator.h"
 
 #include "ensemble/GrandCanonical.h"
-#include "parallel/DomainDecompDummy.h"
+#include "parallel/DomainDecompBase.h"
 #include "io/CheckpointWriter.h"
 #include "ensemble/PressureGradient.h"
 #include "particleContainer/LinkedCells.h"
@@ -87,7 +87,7 @@ void MDGenerator::generatePreview() {
 	int rank = 0;
 	PressureGradient gradient(rank);
 	Domain domain(rank, &gradient);
-	DomainDecompDummy domainDecomposition;
+	DomainDecompBase domainDecomposition;
 	list<ChemicalPotential> lmu;
 
 	double bBoxMin[3] = { 0,0,0};
@@ -114,7 +114,7 @@ void MDGenerator::generatePreview() {
 
 	Molecule* molecule = container.begin();
 	while (molecule != container.end()) {
-		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, domain.getComponents().size()-1));
+		ScenarioGeneratorApplication::getInstance()->addObject(new DrawableMolecule(*molecule, global_simulation->getEnsemble()->getComponents()->size()-1));
 		molecule = container.next();
 	}
 #endif
@@ -140,13 +140,12 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	int rank = 0;
 	PressureGradient gradient(rank);
 	Domain domain(rank, &gradient);
-	DomainDecompDummy domainDecomposition;
+	DomainDecompBase domainDecomposition;
 	list<ChemicalPotential> lmu;
 
 #ifndef MARDYN
 	global_simulation = new Simulation();
 	global_simulation->setcutoffRadius(3.0);
-	global_simulation->setTersoffCutoff(3.0);
 #endif
 
 	double bBoxMin[3] = { 0,0,0};
@@ -169,9 +168,9 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	domain.setglobalNumMolecules(container.getNumberOfParticles());
 	std::cout << "NumMolecules in Container: " << container.getNumberOfParticles() << endl;
 
-	string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
+	std::string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
 	_logger->info() << "Writing output to: " << destination << endl;
-	domain.writeCheckpoint(destination, &container, &domainDecomposition);
+	domain.writeCheckpoint(destination, &container, &domainDecomposition, 0.);
 
 #ifndef MARDYN
 	delete global_simulation;

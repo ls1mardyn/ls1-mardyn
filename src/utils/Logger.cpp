@@ -39,16 +39,16 @@ Logger::~Logger() {
 
 
 /// allow logging only for a single process
-bool Logger::set_mpi_output_root(int root) {
+void Logger::set_mpi_output_root(int root) {
 	if (_rank != root)
 		_do_output = false;
-	return _do_output;
+	else
+		_do_output = true;
 }
 
 /// all processes shall perform logging
-bool Logger::set_mpi_output_all() {
+void Logger::set_mpi_output_all() {
 	_do_output = true;
-	return _do_output;
 }
 
 /// allow a set of processes for logging

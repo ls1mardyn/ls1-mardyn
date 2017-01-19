@@ -1,6 +1,5 @@
 // file      : xsd/cxx/xml/elements.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_XML_ELEMENTS_HXX
@@ -8,7 +7,12 @@
 
 #include <string>
 
+#include <xercesc/util/XercesVersion.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
+
+#if _XERCES_VERSION < 30000
+#  error Xerces-C++ 2-series is not supported
+#endif
 
 namespace xsd
 {

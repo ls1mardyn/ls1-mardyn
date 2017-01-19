@@ -15,7 +15,7 @@ VTKGridVertex::~VTKGridVertex() {
 }
 
 
-const double* const VTKGridVertex::getCoordinates() const {
+const double* VTKGridVertex::getCoordinates() const {
 	return _coordinates;
 }
 

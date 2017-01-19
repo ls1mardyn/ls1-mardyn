@@ -68,6 +68,7 @@ private:
 	*/
 	void setupMolecules(ParticleContainer* container);
 
+protected:
 	std::vector<Component> _components;
 };
 

@@ -1,15 +1,16 @@
 // file      : xsd/cxx/tree/element-map.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_ELEMENT_MAP_HXX
 #define XSD_CXX_TREE_ELEMENT_MAP_HXX
 
 #include <map>
-#include <memory>   // std::auto_ptr
+#include <memory>   // std::auto_ptr/unique_ptr
 #include <cstddef>  // std::size_t
 #include <string>
+
+#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
 
 #include <xsd/cxx/xml/qualified-name.hxx>
 #include <xsd/cxx/tree/elements.hxx>
@@ -44,7 +45,7 @@ namespace xsd
          * @param f Flags to create the new element object with.
          * @return An automatic pointer to the new element object.
          */
-        static std::auto_ptr<element_type>
+        static XSD_AUTO_PTR<element_type>
         parse (const xercesc::DOMElement& e, flags f = 0);
 
         /**
@@ -61,7 +62,7 @@ namespace xsd
 
         typedef xml::qualified_name<C> qualified_name;
 
-        typedef std::auto_ptr<element_type>
+        typedef XSD_AUTO_PTR<element_type>
         (*parser) (const xercesc::DOMElement&, flags f);
 
         typedef void
@@ -113,7 +114,7 @@ namespace xsd
       //
       //
       template<typename T, typename C, typename B>
-      std::auto_ptr<element_type<C, B> >
+      XSD_AUTO_PTR<element_type<C, B> >
       parser_impl (const xercesc::DOMElement&, flags);
 
       template<typename T, typename C, typename B>

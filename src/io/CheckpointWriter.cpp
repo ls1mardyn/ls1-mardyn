@@ -32,6 +32,11 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
 	global_log->info() << "Write frequency: " << _writeFrequency << endl;
 
+	if(_writeFrequency == 0 ){
+		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
+		exit(-1);
+	}
+
 	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
@@ -49,9 +54,10 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void CheckpointWriter::initOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+void CheckpointWriter::initOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}
 
-void CheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep, list<ChemicalPotential>* lmu ) {
+void CheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
+		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
 	if( simstep % _writeFrequency == 0 ) {
 		stringstream filenamestream;
 		filenamestream << _outputPrefix;
@@ -69,12 +75,10 @@ void CheckpointWriter::doOutput( ParticleContainer* particleContainer, DomainDec
 		filenamestream << ".restart.dat";
 
 		string filename = filenamestream.str();
-		domain->writeCheckpoint(filename, particleContainer, domainDecomp);
+		domain->writeCheckpoint(filename, particleContainer, domainDecomp, _simulation.getSimulationTime());
 	}
 }
 
-void CheckpointWriter::finishOutput(
-	 ParticleContainer* particleContainer,
-	 DomainDecompBase* domainDecomp, Domain* domain
-) {
+void CheckpointWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/,
+		Domain* /*domain*/) {
 }

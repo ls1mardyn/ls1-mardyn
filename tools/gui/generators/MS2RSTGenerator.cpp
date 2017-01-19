@@ -108,17 +108,17 @@ void MS2RSTGenerator::setParameter(Parameter* p) {
 
 
 void MS2RSTGenerator::calculateSimulationBoxLength() {
-// 1 mol/l = 0.6022 / nm^3 = 0.0006022 / Ang^3 = 0.089236726516 / a0^3
-double parts_per_a0 = _molarDensity * MDGenerator::molPerL_2_mardyn;
-double volume = _numMolecules / parts_per_a0;
-_simBoxLength = pow(volume, 1./3.);
+	// 1 mol/l = 0.6022 / nm^3 = 0.0006022 / Ang^3 = 0.089236726516 / a0^3
+	double parts_per_a0 = _molarDensity * MDGenerator::molPerL_2_mardyn;
+	double volume = _numMolecules / parts_per_a0;
+	_simBoxLength = pow(volume, 1. / 3.);
 }
 
 
 void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 	_logger->info() << "Reading PhaseSpaceHeader from MS2RSTGenerator..." << endl;
 
-	domain->setCurrentTime(0);
+	//domain->setCurrentTime(0);
 	domain->disableComponentwiseThermostat();
 	domain->setGlobalTemperature(_temperature);
 	domain->setGlobalLength(0, _simBoxLength);
@@ -131,7 +131,7 @@ void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 		if (_configuration.performPrincipalAxisTransformation()) {
 			principalAxisTransform(component);
 		}
-		domain->addComponent(component);
+		global_simulation->getEnsemble()->addComponent(component);
 	}
 	domain->setepsilonRF(1e+10);
 	_logger->info() << "Reading PhaseSpaceHeader from MS2RSTGenerator done." << endl;
@@ -142,7 +142,7 @@ void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 
 
 unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContainer,
-		std::list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
+		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
 	Timer inputTimer;
 	inputTimer.start();
@@ -154,7 +154,7 @@ unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContain
 	MS2RestartReader::MoleculeData* ms2mols = MS2RestartReader::readMS2RestartFile(
 			_filePath, 1, _numMolecules, rotationDOF);
 
-	for (int i = 0; i < _numMolecules; i++) {
+	for (unsigned int i = 0; i < _numMolecules; i++) {
 		for (int j = 0; j < 3; j++) {
 			ms2mols[i].x[j] = ms2mols[i].x[j] * _ms2_to_angstroem * angstroem_2_atomicUnitLength;
 			if (ms2mols[i].x[j] < 0 || ms2mols[i].x[j] > _simBoxLength) {

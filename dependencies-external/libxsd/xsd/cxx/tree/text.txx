@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/text.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <xercesc/dom/DOMText.hpp>
@@ -31,14 +30,7 @@ namespace xsd
             n->getNextSibling () == 0)
         {
           DOMText* t (static_cast<DOMText*> (n));
-
-          // Berkeley DB XML DOM does not implement getLength().
-          //
-#ifndef DBXML_DOM
           return xml::transcode<C> (t->getData (), t->getLength ());
-#else
-	  return xml::transcode<C> (t->getData ());
-#endif
         }
 
         std::basic_string<C> r;
@@ -51,14 +43,7 @@ namespace xsd
           case DOMNode::CDATA_SECTION_NODE:
             {
               DOMText* t (static_cast<DOMText*> (n));
-
-              // Berkeley DB XML DOM does not implement getLength().
-              //
-#ifndef DBXML_DOM
               r += xml::transcode<C> (t->getData (), t->getLength ());
-#else
-	      r += xml::transcode<C> (t->getData ());
-#endif
               break;
             }
           case DOMNode::ELEMENT_NODE:

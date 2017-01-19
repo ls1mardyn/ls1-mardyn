@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/exceptions.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 /**
@@ -1032,5 +1031,3 @@ namespace xsd
 #include <xsd/cxx/tree/exceptions.txx>
 
 #endif  // XSD_CXX_TREE_EXCEPTIONS_HXX
-
-#include <xsd/cxx/tree/exceptions.ixx>

@@ -1,6 +1,5 @@
 // file      : xsd/cxx/tree/xdr-stream-extraction.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_TREE_XDR_STREAM_EXTRACTION_HXX
@@ -8,6 +7,19 @@
 
 #include <rpc/types.h>
 #include <rpc/xdr.h>
+
+// Of course BSD has to be different and name its functions u_intXX
+// instead of uintXX. Plus it does not have XX == 8.
+//
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#  if !defined(XSD_CXX_TREE_ASSUME_SUN_XDR) && !defined(xdr_int8_t)
+#    define xdr_int8_t(x, y) xdr_char(x, reinterpret_cast<char*> (y))
+#    define xdr_uint8_t(x, y) xdr_u_char(x, reinterpret_cast<unsigned char*> (y))
+#    define xdr_uint16_t xdr_u_int16_t
+#    define xdr_uint32_t xdr_u_int32_t
+#    define xdr_uint64_t xdr_u_int64_t
+#  endif
+#endif
 
 #include <string>
 
@@ -249,7 +261,7 @@ namespace xsd
         // Dangerous but fast.
         //
 	x.clear ();
-	
+
 	if (n != 0)
 	{
           x.resize (n);

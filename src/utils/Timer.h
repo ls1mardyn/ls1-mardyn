@@ -4,7 +4,7 @@
 #include <iostream>
 
 /* We use MPIs Wtime in parallel application, else clock */
-#ifdef ENABLE_MPI 
+#ifdef ENABLE_MPI
 #include <mpi.h>
 #else
 #include <sys/time.h>
@@ -28,6 +28,23 @@
 #define PAPI_CHECK(BOOL,MSG) (BOOL);
 #endif /* NDEBUG */
 
+class PAPI_Initializer{
+public:
+	PAPI_Initializer() {
+		static bool initialized = false;
+		if (!initialized) {
+			initialized = true;
+			PAPI_CHECK( PAPI_library_init(PAPI_VER_CURRENT) != PAPI_OK, "Failed initializing PAPI library." );
+			PAPI_CHECK( PAPI_thread_init(pthread_self) != PAPI_OK, "Failed initializing PAPI thread support." );
+			this->initialized = true;
+		}
+	}
+
+	bool papi_initialized() { return this->initialized; }
+
+private:
+	bool initialized = false;
+};
 #endif /* WITH_PAPI */
 
 typedef enum {
@@ -61,6 +78,13 @@ public:
 		, _papi_start(0), _papi_stop(0), _papi_counter(0), _papi_num_counters(0), _papi_num_avail_counters(0), _papi_EventSet(0), _collect_papi(false)
 #endif /* WITH_PAPI */
 	{
+#ifdef WITH_PAPI
+		// static dummy used to make PAPI initialization thread-safe (according C++11)
+		static PAPI_Initializer pi;
+		if (!pi.papi_initialized()) {
+			std::cerr << "PAPI not initialized!!!1"  << std::endl;
+		}
+#endif
 		reset();
 	}
 
@@ -108,6 +132,14 @@ public:
 	void reset() {
 		_state = TIMER_HALTED;
 		_start = _stop = _etime = 0.;
+#if WITH_PAPI
+		if (_collect_papi) {
+			PAPI_reset(_papi_EventSet);
+            for (int i = 0; i < _papi_num_counters; i++) {
+				_papi_counter[i] = 0;
+			}
+		}
+#endif /* WITH_PAPI */
 	}
 
 	double get_start() {

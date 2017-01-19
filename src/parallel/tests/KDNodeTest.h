@@ -8,9 +8,9 @@
 #ifndef KDNODETEST_H_
 #define KDNODETEST_H_
 
-#include "utils/Testing.h"
+#include "utils/TestWithSimulationSetup.h"
 
-class KDNodeTest : public utils::Test {
+class KDNodeTest : public utils::TestWithSimulationSetup {
 
 	TEST_SUITE(KDNodeTest);
 	TEST_METHOD(testEqual);

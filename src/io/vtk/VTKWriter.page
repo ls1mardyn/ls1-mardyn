@@ -24,8 +24,9 @@ The VTK-XML-Schema is divided into two parts:
 - one describing the file format for the meta-file (for parallel io)
 
 To generate the code, exute 
+Ubuntu provides the package xsdcxx (with executable xsdcxx)
 
-./xsd-3.3.0.b1-x86_64-linux-gnu/bin/xsd cxx-tree --root-element-last --generate-doxygen --generate-serialization vtk-unstructured.xsd
+./xsdcxx cxx-tree --std c++11 --root-element-last --generate-doxygen --generate-serialization vtk-unstructured.xsd
 
 on both xsd-files.
 

@@ -32,7 +32,6 @@ ReceiveCouplingMDCommand::ReceiveCouplingMDCommand() : SteereoCouplingCommand(fa
 
 ReceiveCouplingMDCommand::~ReceiveCouplingMDCommand()
 {
-	// TODO Auto-generated destructor stub
 }
 
 ReturnType ReceiveCouplingMDCommand::executeProcessing()

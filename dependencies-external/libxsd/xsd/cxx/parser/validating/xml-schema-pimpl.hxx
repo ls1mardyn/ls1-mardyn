@@ -1,12 +1,13 @@
 // file      : xsd/cxx/parser/validating/xml-schema-pimpl.hxx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #ifndef XSD_CXX_PARSER_VALIDATING_XML_SCHEMA_PIMPL_HXX
 #define XSD_CXX_PARSER_VALIDATING_XML_SCHEMA_PIMPL_HXX
 
 #include <string>
+
+#include <xsd/cxx/config.hxx> // XSD_AUTO_PTR
 
 #include <xsd/cxx/parser/validating/xml-schema-pskel.hxx>
 
@@ -664,12 +665,12 @@ namespace xsd
           virtual void
           _post ();
 
-          virtual std::auto_ptr<buffer>
+          virtual XSD_AUTO_PTR<buffer>
           post_base64_binary ();
 
         protected:
           std::basic_string<C> str_;
-          std::auto_ptr<buffer> buf_;
+          XSD_AUTO_PTR<buffer> buf_;
         };
 
         // hexBinary
@@ -686,12 +687,12 @@ namespace xsd
           virtual void
           _post ();
 
-          virtual std::auto_ptr<buffer>
+          virtual XSD_AUTO_PTR<buffer>
           post_hex_binary ();
 
         protected:
           std::basic_string<C> str_;
-          std::auto_ptr<buffer> buf_;
+          XSD_AUTO_PTR<buffer> buf_;
         };
 
         // gday

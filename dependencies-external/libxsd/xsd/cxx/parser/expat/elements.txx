@@ -1,6 +1,5 @@
 // file      : xsd/cxx/parser/expat/elements.txx
-// author    : Boris Kolpackov <boris@codesynthesis.com>
-// copyright : Copyright (c) 2005-2010 Code Synthesis Tools CC
+// copyright : Copyright (c) 2005-2014 Code Synthesis Tools CC
 // license   : GNU GPL v2 + exceptions; see accompanying LICENSE file
 
 #include <new>     // std::bad_alloc
@@ -334,18 +333,18 @@ namespace xsd
         {
           // First call.
           //
-          if (auto_xml_parser_ == 0)
+          if (auto_xml_parser_.get () == 0)
           {
             auto_xml_parser_ = XML_ParserCreateNS (0, XML_Char (' '));
 
-            if (auto_xml_parser_ == 0)
+            if (auto_xml_parser_.get () == 0)
               throw std::bad_alloc ();
 
             if (system_id || public_id)
-              parse_begin (auto_xml_parser_,
+              parse_begin (auto_xml_parser_.get (),
                            system_id ? *system_id : *public_id, eh);
             else
-              parse_begin (auto_xml_parser_, eh);
+              parse_begin (auto_xml_parser_.get (), eh);
           }
 
           bool r (XML_Parse (xml_parser_,
@@ -594,7 +593,7 @@ namespace xsd
             {
               try
               {
-                start_element (ns, name, 0);
+                this->start_element (ns, name, 0);
               }
               catch (const schema_exception<C>& e)
               {
@@ -621,7 +620,7 @@ namespace xsd
               {
                 try
                 {
-                  start_element (ns, name, 0);
+                  this->start_element (ns, name, 0);
                 }
                 catch (const schema_exception<C>& e)
                 {
@@ -693,7 +692,7 @@ namespace xsd
                   }
 
                   ro_string<C> ro_id (id);
-                  start_element (ns, name, &ro_id);
+                  this->start_element (ns, name, &ro_id);
                 }
                 catch (const schema_exception<C>& e)
                 {
@@ -713,7 +712,7 @@ namespace xsd
 
             try
             {
-              attribute (ns, name, value);
+              this->attribute (ns, name, value);
             }
             catch (const schema_exception<C>& e)
             {
@@ -748,7 +747,7 @@ namespace xsd
 
           try
           {
-            end_element (ns, name);
+            this->end_element (ns, name);
           }
           catch (const schema_exception<C>& e)
           {
@@ -777,7 +776,7 @@ namespace xsd
 
             try
             {
-              characters (str);
+              this->characters (str);
             }
             catch (const schema_exception<C>& e)
             {

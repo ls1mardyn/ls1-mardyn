@@ -13,7 +13,6 @@
 #include "MDGenerator.h"
 
 #include "parallel/DomainDecompBase.h"
-#include "parallel/DomainDecompDummy.h"
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/LinkedCells.h"
 #include "ensemble/PressureGradient.h"

@@ -50,16 +50,17 @@ void VISWriter::readXML(XMLfileUnits& xmlconfig) {
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
 }
 
-void VISWriter::initOutput(ParticleContainer* particleContainer,
-                           DomainDecompBase* domainDecomp, Domain* domain) {
+void VISWriter::initOutput(ParticleContainer* /*particleContainer*/,
+                           DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {
     string filename = _outputPrefix + ".vis";
 	ofstream fileout(filename.c_str(), ios::out);
 	fileout.close();
 }
 
 void VISWriter::doOutput(ParticleContainer* particleContainer,
-                         DomainDecompBase* domainDecomp, Domain* domain,
-                         unsigned long simstep, list<ChemicalPotential>* lmu) {
+                         DomainDecompBase* domainDecomp, Domain* /*domain*/,
+                         unsigned long simstep, list<ChemicalPotential>* /*lmu*/,
+			 map<unsigned, CavityEnsemble>* /*mcav*/) {
 	if (simstep % _writeFrequency == 0) {
 		stringstream filenamestream, outputstream;
 		filenamestream << _outputPrefix;
@@ -142,4 +143,4 @@ void VISWriter::doOutput(ParticleContainer* particleContainer,
 	}
 }
 
-void VISWriter::finishOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain) {}
+void VISWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* /*domainDecomp*/, Domain* /*domain*/) {}

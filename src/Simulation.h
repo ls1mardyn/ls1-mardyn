@@ -1,12 +1,17 @@
 #ifndef SIMULATION_H_
 #define SIMULATION_H_
 
+#include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
 #include "thermostats/VelocityScalingThermostat.h"
-
+#ifdef USE_VT
+#include "VT.h"
+#endif
+class Wall;
+class Mirror;
 using optparse::Values;
 
 #ifndef SIMULATION_SRC
@@ -51,6 +56,15 @@ class DriftControl;
 class DistControl;
 class RegionSampling;
 class DensityControl;
+
+// by Stefan Becker
+const int ANDERSEN_THERMOSTAT = 2;
+const int VELSCALE_THERMOSTAT = 1;
+
+namespace bhfmm {
+class FastMultipoleMethod;
+} // bhfmm
+
 
 /** @brief Controls the simulation process
  *  @author Martin Bernreuther <bernreuther@hlrs.de> et al. (2010)
@@ -245,9 +259,20 @@ public:
 	 */
 	void updateParticleContainerAndDecomposition();
 
-	void setDomainDecomposition(DomainDecompBase* domainDecomposition) {
-		_domainDecomposition = domainDecomposition;
-	}
+	/**
+	 * Performs both the decomposition and the celltraversal in an overlapping way.
+	 * The overlapping is needed to speed up the overall computation. The order of cells
+	 * traversed will be different, than for the non-overlapping case, slightly different results are possible.
+	 * @param decompositionTimer The timer for the decomposition
+	 * @param computationTimer The timer for the computation
+	 */
+	void performOverlappingDecompositionAndCellTraversalStep(Timer& decompositionTimer, Timer& computationTimer, Timer& forceCalculationTimer);
+
+	/**
+	 * Set the private _domainDecomposition variable to a new pointer.
+	 * @param domainDecomposition the new va
+	 */
+	void setDomainDecomposition(DomainDecompBase* domainDecomposition);
 
 	/** Return a reference to the domain decomposition used in the simulation */
 	DomainDecompBase& domainDecomposition() { return *_domainDecomposition; }
@@ -270,9 +295,6 @@ public:
 	void setcutoffRadius(double cutoffRadius) { _cutoffRadius = cutoffRadius; }
 	double getLJCutoff() const { return _LJCutoffRadius; }
 	void setLJCutoff(double LJCutoffRadius) { _LJCutoffRadius = LJCutoffRadius; }
-	double getTersoffCutoff() const { return _tersoffCutoffRadius; }
-	void setTersoffCutoff(double tersoffCutoffRadius) { _tersoffCutoffRadius = tersoffCutoffRadius; }
-
 
 	/** @brief Temperature increase factor function during automatic equilibration.
 	 * @param[in]  current simulation time step
@@ -338,9 +360,6 @@ private:
 	/** LJ cutoff (may be smaller than the RDF/electrostatics cutoff) */
 	double _LJCutoffRadius;
 
-	/** external cutoff radius for the Tersoff potential */
-	double _tersoffCutoffRadius;
-
 	/** flag specifying whether planar interface profiles are recorded */
 	bool _doRecordProfile;
 	/** Interval between two evaluations of the profile.
@@ -378,18 +397,10 @@ private:
 	 */
 	unsigned _collectThermostatDirectedVelocity;
 
-	/** Sometimes during equilibration, a solid wall surrounded by
-	 * liquid may experience a stress or an excessive pressure, which
-	 * could damage its structure. With the flag this->_zoscillation,
-	 * the z coordinate for some of the solid atoms (i.e. those which
-	 * include Tersoff sites) is fixed, so that no motion in z
-	 * direction can occur for the wall structure.
-	 */
-	bool _zoscillation;
-	/** The fixed z coordinate applies to 1 out of this->_zoscillator
-	 * atoms for all solid components.
-	 */
-	unsigned _zoscillator;
+	//! by Stefan Becker: the Type of the thermostat(velocity scaling or Andersen or...)
+	//! appropriate tokens stored as constants at the top of this file
+	int _thermostatType;
+	double _nuAndersen;
 
 	unsigned long _numberOfTimesteps;   /**< Number of discrete time steps to be performed in the simulation */
 
@@ -439,12 +450,41 @@ private:
 
 	/** prefix for the names of all output files */
 	std::string _outputPrefix;
+
+	// by Stefan Becker <stefan.becker@mv.uni-kl.de>
+	//! flags that control the realign tool
+	//! if _doAlignCentre == true => the alignment is carried out
+	bool _doAlignCentre;
+	// if _componentSpecificAlignment == true => a separate realignment with respect to the x,z-direction and the y-direction is carried out.
+	// The separate directions of the realignment are due to different components, i.e. that solid wall is always kept at the bottom (y-direction) whereas
+	// the fluid is kept in the centre of the x,z-plane.
+	bool _componentSpecificAlignment;
+	//! number of discrete timesteps after which the realignment is carried out
+	unsigned long _alignmentInterval;
+	//! strength of the realignment
+	double _alignmentCorrection;
 	
+	//! applying a field representing the wall
+	bool _applyWallFun_LJ_9_3;
+	bool _applyWallFun_LJ_10_4;
+	bool _applyMirror;
+	
+	Wall* _wall;
+	Mirror* _mirror;
+
+	//! flags to control the cancel of the momentum 
+	bool _doCancelMomentum;
+	//! number of time steps after which the canceling is carried outline
+	unsigned _momentumInterval;
+	
+	//! random number generator
+	Random _rand;
+
 	/** Long Range Correction */
 	LongRangeCorrection* _longRangeCorrection;
 
 	/** Temperature Control (Slab Thermostat) */
-    TemperatureControl* _temperatureControl;
+	TemperatureControl* _temperatureControl;
 
     // NEMD features
     DriftControl*   _driftControl;
@@ -452,7 +492,21 @@ private:
     RegionSampling* _regionSampling;
     DensityControl* _densityControl;
 
+	/** The Fast Multipole Method object */
+	bhfmm::FastMultipoleMethod* _FMM;
+
+
 public:
+	//! computational time for one execution of traverseCell
+	double getAndResetOneLoopCompTime() {
+		if(_loopCompTimeSteps==0){
+			return 1.;
+		}
+		double t = _loopCompTime/_loopCompTimeSteps;
+		_loopCompTime = 0.;
+		_loopCompTimeSteps = 0;
+		return t;
+	}
 	void setOutputPrefix( std::string prefix ) { _outputPrefix = prefix; }
 	void setOutputPrefix( char *prefix ) { _outputPrefix = std::string( prefix ); }
 	std::string getOutputPrefix() { return _outputPrefix; }
@@ -464,12 +518,18 @@ public:
 
 	/** initialize all member variables with a suitable value */
 	void initialize();
+	void setName(std::string name) {
+		_programName = name;
+	}
+	std::string getName() {
+		return _programName;
+	}
 
 private:
-    
-    /** Enable final checkpoint after simulation run. */
-    bool _finalCheckpoint;
-    
+
+	/** Enable final checkpoint after simulation run. */
+	bool _finalCheckpoint;
+
 	/** List of output plugins to use */
 	std::list<OutputBase*> _outputPlugins;
 
@@ -488,6 +548,7 @@ private:
 	 * gradient of the chemical potential.
 	 */
 	std::list<ChemicalPotential> _lmu;
+        std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).
@@ -497,8 +558,16 @@ private:
 	 * internal use of the program.
 	 */
 	double h;
+
 	/** Time after which the application should write a checkpoint in seconds. */
 	double _forced_checkpoint_time;
+
+	//! computational time for one loop
+	double _loopCompTime;
+
+	int _loopCompTimeSteps;
+
+	std::string _programName;
 };
 #endif /*SIMULATION_H_*/
 

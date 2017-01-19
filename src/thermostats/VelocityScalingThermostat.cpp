@@ -4,6 +4,7 @@
 #include "molecules/Molecule.h"
 #include "Simulation.h"
 #include "utils/Logger.h"
+#include "particleContainer/ParticleContainer.h"
 
 using namespace std;
 using Log::global_log;
@@ -67,18 +68,29 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 		}
 	}
 	else {
-		double betaTrans = _globalBetaTrans;
-		double betaRot = _globalBetaRot;
-		global_log->debug() << "Beta rot: " << betaRot << endl;
-		global_log->debug() << "Beta trans: " << betaTrans << endl;
-		for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()) {
-			if(this->_useGlobalVelocity) {
-				molecule->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
-				molecule->scale_v(betaTrans);
-				molecule->vadd(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			double betaTrans = _globalBetaTrans;
+			double betaRot = _globalBetaRot;
+			global_log->debug() << "Beta rot: " << betaRot << endl;
+			global_log->debug() << "Beta trans: " << betaTrans << endl;
+
+			const ParticleIterator begin = moleculeContainer->iteratorBegin();
+			const ParticleIterator end = moleculeContainer->iteratorEnd();
+
+			for (ParticleIterator i = begin; i != end; ++i) {
+				if(this->_useGlobalVelocity) {
+					(*i)->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
+					(*i)->scale_v(betaTrans);
+					(*i)->vadd(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
+				}
+				else {
+					(*i)->scale_v(betaTrans);
+				}
+				(*i)->scale_D(betaRot);
 			}
-			else molecule->scale_v(betaTrans);
-			molecule->scale_D(betaRot);
-		}
+		} // end pragma omp parallel
 	}
 }

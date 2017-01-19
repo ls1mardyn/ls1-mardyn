@@ -34,11 +34,6 @@ LINKFLAGS_PAR_DEBUG =
 CXXFLAGS_PAR_RELEASE  = -O2 -Wall -DNDEBUG -DENABLE_MPI
 LINKFLAGS_PAR_RELEASE = 
 
-# Vectorization settings:
+# Further settings, common to all configurations, which use gcc
 #########################################
-ifeq ($(VECTORIZE_CODE),1)
-CXXFLAGS_VECTORIZE = -msse3
-endif
-ifeq ($(VECTORIZE_CODE),2)
-CXXFLAGS_VECTORIZE = -mavx
-endif
+include $(realpath $(MAKEFILEDIR)/cfg/common_gcc.in)

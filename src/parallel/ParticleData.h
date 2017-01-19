@@ -25,7 +25,7 @@ public:
 	static void MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule);
 
 	//! @brief copy data from object of class class ParticleData to object of class Molecule
-	static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule **molecule);
+	static void ParticleDataToMolecule(ParticleData &particleStruct, Molecule &molecule);
 
 #ifndef NDEBUG
 	ParticleData();

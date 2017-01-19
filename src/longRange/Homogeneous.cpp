@@ -1,20 +1,3 @@
-/*************************************************************************
- * Copyright (C) 2012 by Martin Bernreuther <bernreuther@hlrs.de> et al. *
- *                                                                       *
- * This program is free software; you can redistribute it and/or modify  *
- * it under the terms of the GNU General Public License as published by  *
- * the Free Software Foundation; either version 2 of the License, or (at *
- * your option) any later version.                                       *
- *                                                                       *
- * This program is distributed in the hope that it will be useful, but   *
- * WITHOUT ANY WARRANTY; without even the implied warranty of            * 
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU      *
- * General Public License for more details.                              *
- *                                                                       *
- * You should have received a copy of the GNU General Public License     *
- * along with this program; if not, write to the Free Software           *
- * Foundation, 59 Temple Place, Suite 330, Boston, MA 02111-1307, USA.   *
- *************************************************************************/
 
 #include <cmath>
 
@@ -34,7 +17,7 @@ using namespace std;
 
 Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* domain, Simulation _simulation) {
 	_domain = domain;
-	_components = *_simulation.getEnsemble()->components();
+	_components = *_simulation.getEnsemble()->getComponents();
 	_comp2params = _domain->getComp2Params();
 	global_log->info() << "Long range correction for homogeneous systems is used " << endl;
 	double UpotCorrLJ=0.;
@@ -51,7 +34,6 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 		unsigned int numljcentersi=ci.numLJcenters();
 		unsigned int numchargesi = ci.numCharges();
 		unsigned int numdipolesi=ci.numDipoles();
-		unsigned int numtersoffi = ci.numTersoff();
 
 		// effective dipoles computed from point charge distributions
 		double chargeBalance[3];
@@ -76,9 +58,6 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 
 		for(unsigned int j=0;j<numcomp;++j) {
 			Component& cj=_components[j];
-			unsigned numtersoffj = cj.numTersoff();
-			// no LJ interaction between Tersoff components
-			if(numtersoffi && numtersoffj) continue;
 			unsigned int numljcentersj=cj.numLJcenters();
 			ParaStrm& params=_comp2params(i,j);
 			params.reset_read();
