@@ -7,9 +7,19 @@
 
 #include "thermostats/TemperatureControl.h"
 #include "particleContainer/ParticleContainer.h"
+
 #include "parallel/DomainDecompBase.h"
+#ifdef ENABLE_MPI
+#include "parallel/DomainDecomposition.h"
+#include "parallel/KDDecomposition.h"
+#else
+#include "parallel/DomainDecompDummy.h"
+#endif
+
 #include "molecules/Molecule.h"
 #include "Domain.h"
+#include "utils/Region.h"
+#include "utils/DynAlloc.h"
 
 #include <iostream>
 #include <fstream>
@@ -21,43 +31,74 @@
 
 using namespace std;
 
+// init static ID --> instance counting
+unsigned short tec::ControlRegion::_nStaticID = 0;
 
-// class ControlRegionT
+// class tec::ControlRegion
 
-ControlRegionT::ControlRegionT( TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
-                                double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections, unsigned short nRegionID, unsigned int nNumSlabsDeltaEkin )
+tec::ControlRegion::ControlRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
+                                   double* dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
+                                   int nTemperatureControlType, unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq)
+: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
 {
-    // store parent pointer
-    _parent = parent;
+	// ID
+	_nID = ++_nStaticID;
 
-    // region ID
-    _nRegionID = nRegionID;
-
-    // region span
-    for(unsigned short d=0; d<3; ++d)
-    {
-        _dLowerCorner[d] = dLowerCorner[d];
-        _dUpperCorner[d] = dUpperCorner[d];
-    }
+    // init subdivision
+    _nNumSlabs = 0;
+    _dSlabWidthInit = 0.;
 
     _nTargetComponentID = nComp;
-    _dTargetTemperature = dTargetTemperature;
+    _dTargetTemperature[0] = dTargetTemperature[0];
+    _dTargetTemperature[1] = dTargetTemperature[1];
 
     _dTemperatureExponent = dTemperatureExponent;
 
-    // number of slabs
-    _nNumSlabs = nNumSlabs;
+    // type of temperature control constant/gradient/adjust
+    _nTemperatureControlType = nTemperatureControlType;
 
-    // calc slab width
-    _dSlabWidthInit = this->GetWidth(1) / ( (double)(_nNumSlabs) );
-    _dSlabWidth = _dSlabWidthInit;
+    // temperature control adjust
+	_nStartAdjust = nStartAdjust;
+	_nStopAdjust  = nStopAdjust;
+	_nAdjustFreq  = nAdjustFreq;
 
-    // heat supply data structure
-    _nNumSlabsDeltaEkin = nNumSlabsDeltaEkin;
-    _dSlabWidthDeltaEkin = _parent->GetDomain()->getGlobalLength(1) / ( (double)(_nNumSlabsDeltaEkin) );
+	// init datastructure pointers
+	this->InitDataStructurePointers();
 
-    // init data structures
-    this->Init();
+    if(TCT_TEMPERATURE_ADJUST == _nTemperatureControlType)
+    {
+		double dAdjustFreq = (double) (_nAdjustFreq);
+		double dSteps = (_nStopAdjust - _nStartAdjust) / dAdjustFreq;
+		_dDeltaTemperatureAdjust = (dTargetTemperature[1] - dTargetTemperature[0]) / dSteps;
+		_dTargetTemperatureActual = _dTargetTemperature[0];
+    }
+    else if(TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType)
+    {
+		double dAdjustFreq = (double) (_nAdjustFreq);
+		double dSteps = (_nStopAdjust - _nStartAdjust) / dAdjustFreq;
+
+		double dT_lower = min(dTargetTemperature[0], dTargetTemperature[1]);
+		double dT_upper = max(dTargetTemperature[0], dTargetTemperature[1]);
+
+		_dDeltaTemperatureAdjust = (dT_lower - dT_upper) / dSteps;
+		_dTargetTemperatureActual = dT_upper;
+    }
+    else if(TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType)
+    {
+		double dAdjustFreq = (double) (_nAdjustFreq);
+		double dSteps = (_nStopAdjust - _nStartAdjust) / dAdjustFreq;
+
+		double dT_lower = min(dTargetTemperature[0], dTargetTemperature[1]);
+		double dT_upper = max(dTargetTemperature[0], dTargetTemperature[1]);
+
+		_dDeltaTemperatureAdjust = (dT_upper - dT_lower) / dSteps;
+		_dTargetTemperatureActual = dT_lower;
+    }
+    else
+    {
+		_dDeltaTemperatureAdjust = 0.;
+		_dTargetTemperatureActual = _dTargetTemperature[0];
+    }
 
     // create accumulator object dependent on which translatoric directions should be thermostated (xyz)
 /*
@@ -141,61 +182,108 @@ ControlRegionT::ControlRegionT( TemperatureControl* parent, double dLowerCorner[
 }
 
 
-ControlRegionT::~ControlRegionT()
+tec::ControlRegion::~ControlRegion()
 {
 
 }
 
-void ControlRegionT::Init()
+void tec::ControlRegion::InitDataStructurePointers()
 {
-    // allocate more slabs as initially needed as a reserve for the case that the
-    // temperature control region grows during simulation
+    _nNumMoleculesLocal  = NULL;
+    _nNumMoleculesGlobal = NULL;
+    _nRotDOFLocal  = NULL;
+    _nRotDOFGlobal = NULL;
+
+    _d2EkinTransLocal  = NULL;
+    _d2EkinTransGlobal = NULL;
+	_d2EkinRotLocal  = NULL;
+    _d2EkinRotGlobal = NULL;
+
+	_dBetaTransGlobal = NULL;
+	_dBetaRotGlobal = NULL;
+
+	_dTargetTemperatureVec = NULL;
+
+    // heat supply
+	_nNumMoleculesSumLocal  = NULL;
+	_nNumMoleculesSumGlobal = NULL;
+
+	_dDelta2EkinTransSumLocal  = NULL;
+	_dDelta2EkinTransSumGlobal = NULL;
+}
+
+void tec::ControlRegion::AllocateDataStructuresT()
+{
+	// allocate more slabs as initially needed as a reserve for the case that the
+	// temperature control region grows during simulation
     double dBoxWidthY = _parent->GetDomain()->getGlobalLength(1);
     _nNumSlabsReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
 
-#ifdef DEBUG
-    cout << "_nNumSlabsReserve = " << _nNumSlabsReserve << endl;
-#endif
+	// allocate temperature data structures
+	AllocateUnsLongArray(_nNumMoleculesLocal, _nNumSlabsReserve);
+	AllocateUnsLongArray(_nNumMoleculesGlobal, _nNumSlabsReserve);
+	AllocateUnsLongArray(_nRotDOFLocal, _nNumSlabsReserve);
+	AllocateUnsLongArray(_nRotDOFGlobal, _nNumSlabsReserve);
 
-    _nNumMoleculesLocal  = new unsigned long[_nNumSlabsReserve];
-    _nNumMoleculesGlobal = new unsigned long[_nNumSlabsReserve];
-    _nRotDOFLocal  = new unsigned long[_nNumSlabsReserve];
-    _nRotDOFGlobal = new unsigned long[_nNumSlabsReserve];
+	AllocateDoubleArray(_d2EkinTransLocal, _nNumSlabsReserve);
+	AllocateDoubleArray(_d2EkinTransGlobal, _nNumSlabsReserve);
+	AllocateDoubleArray(_d2EkinRotLocal, _nNumSlabsReserve);
+	AllocateDoubleArray(_d2EkinRotGlobal, _nNumSlabsReserve);
 
-    _d2EkinTransLocal  = new double[_nNumSlabsReserve];
-    _d2EkinTransGlobal = new double[_nNumSlabsReserve];
-    _d2EkinRotLocal  = new double[_nNumSlabsReserve];
-    _d2EkinRotGlobal = new double[_nNumSlabsReserve];
+	AllocateDoubleArray(_dBetaTransGlobal, _nNumSlabsReserve);
+	AllocateDoubleArray(_dBetaRotGlobal, _nNumSlabsReserve);
 
-    _dBetaTransGlobal = new double[_nNumSlabsReserve];
-    _dBetaRotGlobal   = new double[_nNumSlabsReserve];
+	// target temperature vector to maintain a temperature gradient
+	AllocateDoubleArray(_dTargetTemperatureVec, _nNumSlabsReserve);
+}
 
+void tec::ControlRegion::InitDataStructuresT()
+{
+//	cout << "tec::ControlRegion::_nNumSlabsReserve = " << _nNumSlabsReserve << endl;
+
+	// init temperature datastructures
     for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
     {
         _nNumMoleculesLocal[s]  = 0;
         _nNumMoleculesGlobal[s] = 0;
-        _nRotDOFLocal[s]  = 0;
-        _nRotDOFGlobal[s] = 0;
+        _nRotDOFLocal[s]        = 0;
+        _nRotDOFGlobal[s]       = 0;
 
         _d2EkinTransLocal[s]  = 0.;
         _d2EkinTransGlobal[s] = 0.;
-        _d2EkinRotLocal[s]  = 0.;
-        _d2EkinRotGlobal[s] = 0.;
+        _d2EkinRotLocal[s]    = 0.;
+        _d2EkinRotGlobal[s]   = 0.;
 
         _dBetaTransGlobal[s] = 0.;
         _dBetaRotGlobal[s]   = 0.;
     }
 
+	// target temperature vector to maintain a temperature gradient
+    if( TCT_TEMPERATURE_GRADIENT       == _nTemperatureControlType ||
+    	TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType ||
+    	TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType )
+    	this->AdjustTemperatureGradient();
+}
 
-    // mheinen 2015-10-27 --> CALC_HEAT_SUPPLY
+void tec::ControlRegion::AllocateDataStructuresDEkin()
+{
+	// allocate more slabs as initially needed as a reserve for the case that the
+	// temperature control region grows during simulation
+    double dBoxWidthY = _parent->GetDomain()->getGlobalLength(1);
+    _nNumSlabsDEkinReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
 
-    _nNumMoleculesSumLocal = new unsigned long[_nNumSlabsDeltaEkin];
-    _nNumMoleculesSumGlobal = new unsigned long[_nNumSlabsDeltaEkin];
+	// allocate Delta Ekin data structures
+	AllocateUnsLongArray(_nNumMoleculesSumLocal, _nNumSlabsDEkinReserve);
+	AllocateUnsLongArray(_nNumMoleculesSumGlobal, _nNumSlabsDEkinReserve);
 
-    _dDelta2EkinTransSumLocal = new double[_nNumSlabsDeltaEkin];
-    _dDelta2EkinTransSumGlobal = new double[_nNumSlabsDeltaEkin];
+	AllocateDoubleArray(_dDelta2EkinTransSumLocal, _nNumSlabsDEkinReserve);
+	AllocateDoubleArray(_dDelta2EkinTransSumGlobal, _nNumSlabsDEkinReserve);
+}
 
-    for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
+void tec::ControlRegion::InitDataStructuresDEkin()
+{
+	// init Delta Ekin datastructures
+    for(unsigned int s = 0; s<_nNumSlabsDEkinReserve; ++s)
     {
         _nNumMoleculesSumLocal[s]  = 0;
         _nNumMoleculesSumGlobal[s]  = 0;
@@ -204,25 +292,31 @@ void ControlRegionT::Init()
         _dDelta2EkinTransSumGlobal[s]  = 0.;
     }
 
-    // write out files (headers only)
-    this->WriteHeaderDeltaEkin(_parent->GetDomainDecomposition(), _parent->GetDomain() );
-
-    // <-- CALC_HEAT_SUPPLY
+	// write out files (headers only)
+    this->WriteHeaderDeltaEkin();
 }
 
-void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
+void tec::ControlRegion::PrepareDataStructures()
+{
+	this->AllocateDataStructuresT();
+	this->InitDataStructuresT();
+	this->AllocateDataStructuresDEkin();
+	this->InitDataStructuresDEkin();
+}
+
+void tec::ControlRegion::CalcGlobalValues(unsigned long simstep)
 {
 #ifdef ENABLE_MPI
 
     // ToDo: communicate _nNumSlabs is enough?? or have to communicate _nNumSlabsReserve (whole data structure)
-    MPI_Allreduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumSlabs, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce( _nRotDOFLocal, _nRotDOFGlobal, _nNumSlabs, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumSlabsReserve, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce( _nRotDOFLocal, _nRotDOFGlobal, _nNumSlabsReserve, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
 
-    MPI_Allreduce( _d2EkinTransLocal, _d2EkinTransGlobal, _nNumSlabs, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce( _d2EkinRotLocal, _d2EkinRotGlobal, _nNumSlabs, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce( _d2EkinTransLocal, _d2EkinTransGlobal, _nNumSlabsReserve, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce( _d2EkinRotLocal, _d2EkinRotGlobal, _nNumSlabsReserve, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
 #else
-    for(unsigned int s = 0; s<_nNumSlabs; ++s)
+    for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
     {
         _nNumMoleculesGlobal[s] = _nNumMoleculesLocal[s];
         _nRotDOFGlobal[s] = _nRotDOFLocal[s];
@@ -233,18 +327,82 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
 #endif
 
     // calc betaTrans, betaRot
-    for(unsigned int s = 0; s<_nNumSlabs; ++s)
-    {
-        if( _nNumMoleculesGlobal[s] < 1 )
-            _dBetaTransGlobal[s] = 1.;
-        else
-            _dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * _dTargetTemperature / _d2EkinTransGlobal[s], _dTemperatureExponent);
+    double dTargetTemperature = _dTargetTemperature[0];
 
-        if( _nRotDOFGlobal[s] < 1 )
-            _dBetaRotGlobal[s] = 1.;
-        else
-            _dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperature / _d2EkinRotGlobal[s], _dTemperatureExponent);
+    switch(_nTemperatureControlType)
+    {
+
+    case TCT_CONSTANT_TEMPERATURE:
+
+		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
+		{
+			if( _nNumMoleculesGlobal[s] < 1 )
+				_dBetaTransGlobal[s] = 1.;
+			else
+				_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * dTargetTemperature / _d2EkinTransGlobal[s], _dTemperatureExponent);
+
+			if( _nRotDOFGlobal[s] < 1 )
+				_dBetaRotGlobal[s] = 1.;
+			else
+				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * dTargetTemperature / _d2EkinRotGlobal[s], _dTemperatureExponent);
+		}
+		break;
+
+
+    case TCT_TEMPERATURE_GRADIENT:
+    case TCT_TEMPERATURE_GRADIENT_LOWER:
+    case TCT_TEMPERATURE_GRADIENT_RAISE:
+
+    	if( _nStartAdjust < simstep && _nStopAdjust >= simstep &&
+    	    0 == simstep % _nAdjustFreq && TCT_TEMPERATURE_GRADIENT != _nTemperatureControlType)
+    	{
+    		_dTargetTemperatureActual += _dDeltaTemperatureAdjust;
+    		this->AdjustTemperatureGradient();
+    	}
+
+		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
+		{
+			if( _nNumMoleculesGlobal[s] < 1 )
+				_dBetaTransGlobal[s] = 1.;
+			else
+				_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * _dTargetTemperatureVec[s] / _d2EkinTransGlobal[s], _dTemperatureExponent);
+
+			if( _nRotDOFGlobal[s] < 1 )
+				_dBetaRotGlobal[s] = 1.;
+			else
+				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperatureVec[s] / _d2EkinRotGlobal[s], _dTemperatureExponent);
+		}
+		break;
+
+    case TCT_TEMPERATURE_ADJUST:
+
+    	if( _nStartAdjust < simstep && _nStopAdjust >= simstep &&
+    	    0 == simstep % _nAdjustFreq)
+    	{
+    		_dTargetTemperatureActual += _dDeltaTemperatureAdjust;
+//    		cout << "_dTargetTemperatureActual = " << _dTargetTemperatureActual << endl;
+    	}
+
+		for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
+		{
+			if( _nNumMoleculesGlobal[s] < 1 )
+				_dBetaTransGlobal[s] = 1.;
+			else
+				_dBetaTransGlobal[s] = pow(_nNumThermostatedTransDirections * _nNumMoleculesGlobal[s] * _dTargetTemperatureActual / _d2EkinTransGlobal[s], _dTemperatureExponent);
+
+			if( _nRotDOFGlobal[s] < 1 )
+				_dBetaRotGlobal[s] = 1.;
+			else
+				_dBetaRotGlobal[s] = pow( _nRotDOFGlobal[s] * _dTargetTemperatureActual / _d2EkinRotGlobal[s], _dTemperatureExponent);
+		}
+		break;
+
+    default:
+
+    	cout << "No valid TemperatureControl type! Programm exit...";
+    	exit(-1);
     }
+
 
 //    cout << "_nNumMoleculesGlobal[0] = " << _nNumMoleculesGlobal[0] << endl;
 //    cout << "_dBetaTransGlobal[0] = " << _dBetaTransGlobal[0] << endl;
@@ -257,7 +415,27 @@ void ControlRegionT::CalcGlobalValues(DomainDecompBase* domainDecomp)
 
 }
 
-void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp)
+void tec::ControlRegion::PrepareSubdivision()
+{
+	// catch errors
+	if( (0 == _nNumSlabs && 0. == _dSlabWidthInit) || (0 != _nNumSlabs && 0. != _dSlabWidthInit) )
+	{
+		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dSlabWidthInit nor _nNumSlabs was set correctly! Programm exit..." << endl;
+		exit(-1);
+	}
+
+    // calc slab width
+	if(0. == _dSlabWidthInit)
+    	_dSlabWidthInit = this->GetWidth(1) / ( (double)(_nNumSlabs) );
+
+	this->UpdateSlabParameters();
+
+    // heat supply data structure TODO: heat supply data structure --> independent number of slabs
+//    _dSlabWidthDeltaEkin = _parent->GetDomain()->getGlobalLength(1) / ( (double)(_nNumSlabsDeltaEkin) );
+
+}
+
+void tec::ControlRegion::MeasureKineticEnergy(Molecule* mol)
 {
     // check componentID
     if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
@@ -311,7 +489,7 @@ void ControlRegionT::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domai
 }
 
 
-void ControlRegionT::ControlTemperature(Molecule* mol)
+void tec::ControlRegion::ControlTemperature(Molecule* mol)
 {
     // check componentID
     if(mol->componentid()+1 != _nTargetComponentID && 0 != _nTargetComponentID)  // program intern componentID starts with 0
@@ -367,7 +545,7 @@ void ControlRegionT::ControlTemperature(Molecule* mol)
     _nNumMoleculesSumLocal[nPosIndex]++;
 }
 
-void ControlRegionT::ResetLocalValues()
+void tec::ControlRegion::ResetLocalValues()
 {
     // reset local values
     for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
@@ -383,34 +561,32 @@ void ControlRegionT::ResetLocalValues()
     }
 }
 
-void ControlRegionT::UpdateSlabParameters()
+void tec::ControlRegion::UpdateSlabParameters()
 {
     double dWidth = this->GetWidth(1);
-//    unsigned int nNumSlabsOld = _nNumSlabs;
 
     _nNumSlabs = round(dWidth / _dSlabWidthInit);
     _dSlabWidth =  dWidth / ( (double)(_nNumSlabs) );
 
-/*
-    // number of slabs cannot increase, otherwise data structures have to be reallocated
-    if(_nNumSlabs > nNumSlabsOld)
-    {
-        _nNumSlabs = nNumSlabsOld;
-        _dSlabWidth =  dWidth / ( (double)(_nNumSlabs) );
+	// heat supply data structure TODO: heat supply data structure --> independent number of slabs
+	_dSlabWidthDeltaEkin = _dSlabWidth;
+	_nNumSlabsDeltaEkin = _nNumSlabs;
 
-        cout << "WARNING! Temperature reason increased!" << endl;
-    }
-*/
+    // target temperature vector to maintain a temperature gradient
+    if( TCT_TEMPERATURE_GRADIENT       == _nTemperatureControlType ||
+        TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType ||
+        TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType )
+        	this->AdjustTemperatureGradient();
 }
 
 
-void ControlRegionT::CalcGlobalValuesDeltaEkin()
+void tec::ControlRegion::CalcGlobalValuesDeltaEkin()
 {
 
 #ifdef ENABLE_MPI
 
-    MPI_Allreduce( _nNumMoleculesSumLocal, _nNumMoleculesSumGlobal, _nNumSlabsDeltaEkin, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce( _dDelta2EkinTransSumLocal, _dDelta2EkinTransSumGlobal, _nNumSlabsDeltaEkin, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Reduce( _nNumMoleculesSumLocal,    _nNumMoleculesSumGlobal,    _nNumSlabsDeltaEkin, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+    MPI_Reduce( _dDelta2EkinTransSumLocal, _dDelta2EkinTransSumGlobal, _nNumSlabsDeltaEkin, MPI_DOUBLE,        MPI_SUM, 0, MPI_COMM_WORLD);
 
 #else
     for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
@@ -422,7 +598,7 @@ void ControlRegionT::CalcGlobalValuesDeltaEkin()
 }
 
 
-void ControlRegionT::ResetValuesDeltaEkin()
+void tec::ControlRegion::ResetValuesDeltaEkin()
 {
     // reset local values
     for(unsigned int s = 0; s<_nNumSlabsDeltaEkin; ++s)
@@ -433,8 +609,11 @@ void ControlRegionT::ResetValuesDeltaEkin()
 
 }
 
-void ControlRegionT::WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain* domain)
+void tec::ControlRegion::WriteHeaderDeltaEkin()
 {
+	// domain decomposition
+    DomainDecompBase* domainDecomp = _parent->GetDomainDecomposition();
+
     // write header
     stringstream outputstreamDeltaEkin;
     stringstream outputstreamN;
@@ -479,8 +658,11 @@ void ControlRegionT::WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain
 #endif
 }
 
-void ControlRegionT::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep)
+void tec::ControlRegion::WriteDataDeltaEkin(unsigned long simstep)
 {
+	// domain decomposition
+    DomainDecompBase* domainDecomp = _parent->GetDomainDecomposition();
+
     // calc global values
     this->CalcGlobalValuesDeltaEkin();
 
@@ -534,22 +716,58 @@ void ControlRegionT::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned
     #endif
 }
 
+void tec::ControlRegion::AdjustTemperatureGradient()
+{
+	double T[2];
+	T[0] = _dTargetTemperature[0];
+	T[1] = _dTargetTemperature[1];
+
+    if(TCT_TEMPERATURE_GRADIENT_RAISE == _nTemperatureControlType)
+    {
+    	if(T[1] > T[0])
+    		T[1] = _dTargetTemperatureActual;
+    	else
+    		T[0] = _dTargetTemperatureActual;
+    }
+    else if(TCT_TEMPERATURE_GRADIENT_LOWER == _nTemperatureControlType)
+    {
+    	if(T[1] > T[0])
+    		T[0] = _dTargetTemperatureActual;
+    	else
+    		T[1] = _dTargetTemperatureActual;
+    }
+
+	double dT = T[1] - T[0];
+	double dSlabsMinusOne = (double)(_nNumSlabs-1);
+
+//	cout << "--------------------------" << endl;
+//	cout << "region: " << this->GetID() << endl;
+	for(unsigned int s = 0; s<_nNumSlabsReserve; ++s)
+	{
+		_dTargetTemperatureVec[s] = T[0] + dT/dSlabsMinusOne*s;
+//		cout << "[" << s << "]: " << dT << " | " << dT/dSlabsMinusOne*s << " | " << T[0] << " | " << _dTargetTemperatureVec[s] << "" << endl;
+
+	}
+//	cout << "--------------------------" << endl;
+}
 
 
 // class TemperatureControl
 
 TemperatureControl::TemperatureControl(Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop)
+: ControlInstance(domain, domainDecomp)
 {
-    // store pointer to Domain and DomainDecomposition
-    _domain = domain;
-    _domainDecomp = domainDecomp;
-
     // control frequency
     _nControlFreq = nControlFreq;
 
     // start/stop timestep
     _nStart = nStart;
     _nStop  = nStop;
+
+    // init heat supply variables
+    _bWriteDataDeltaEkin = false;
+    _nNumSlabsDeltaEkin = 1;
+    _nWriteFreqDeltaEkin = 1000;
 }
 
 TemperatureControl::~TemperatureControl()
@@ -557,36 +775,36 @@ TemperatureControl::~TemperatureControl()
 
 }
 
-void TemperatureControl::AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections)
+void TemperatureControl::AddRegion(tec::ControlRegion* region)
 {
-    _vecControlRegions.push_back(ControlRegionT(this, dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature, dTemperatureExponent, strTransDirections, GetNumRegions()+1, _nNumSlabsDeltaEkin ) );
+    _vecControlRegions.push_back(region);
 }
 
-void TemperatureControl::MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep)
+void TemperatureControl::MeasureKineticEnergy(Molecule* mol, unsigned long simstep)
 {
     if(simstep % _nControlFreq != 0)
         return;
 
     // measure drift in each control region
-    std::vector<ControlRegionT>::iterator it;
+    std::vector<tec::ControlRegion*>::iterator it;
 
     for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
     {
-        (*it).MeasureKineticEnergy(mol, domainDecomp);
+        (*it)->MeasureKineticEnergy(mol);
     }
 }
 
-void TemperatureControl::CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep)
+void TemperatureControl::CalcGlobalValues(unsigned long simstep)
 {
     if(simstep % _nControlFreq != 0)
         return;
 
     // calc global values for control region
-    std::vector<ControlRegionT>::iterator it;
+    std::vector<tec::ControlRegion*>::iterator it;
 
     for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
     {
-        (*it).CalcGlobalValues(domainDecomp);
+        (*it)->CalcGlobalValues(simstep);
     }
 }
 
@@ -597,29 +815,29 @@ void TemperatureControl::ControlTemperature(Molecule* mol, unsigned long simstep
         return;
 
     // control drift of all regions
-    std::vector<ControlRegionT>::iterator it;
+    std::vector<tec::ControlRegion*>::iterator it;
 
     for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
     {
-        (*it).ControlTemperature(mol);
+        (*it)->ControlTemperature(mol);
     }
 }
 
-void TemperatureControl::Init(unsigned long simstep)
+void TemperatureControl::InitControl(unsigned long simstep)
 {
     if(simstep % _nControlFreq != 0)
         return;
 
     // reset local values
-    std::vector<ControlRegionT>::iterator it;
+    std::vector<tec::ControlRegion*>::iterator it;
 
     for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
     {
-        (*it).ResetLocalValues();
+        (*it)->ResetLocalValues();
     }
 }
 
-void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned long simstep)
+void TemperatureControl::DoLoopsOverMolecules(ParticleContainer* particleContainer, unsigned long simstep)
 {
     // respect start/stop
     if(this->GetStart() <= simstep && this->GetStop() > simstep)
@@ -629,21 +847,21 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
         Molecule* tM;
 
         // init temperature control
-        this->Init(simstep);
+        this->InitControl(simstep);
 
         for( tM  = particleContainer->begin();
              tM != particleContainer->end();
              tM  = particleContainer->next() )
         {
             // measure kinetic energy
-            this->MeasureKineticEnergy(tM, domainDecomposition, simstep);
+            this->MeasureKineticEnergy(tM, simstep);
 
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }
 
 
         // calc global values
-        this->CalcGlobalValues(domainDecomposition, simstep);
+        this->CalcGlobalValues(simstep);
 
 
         for( tM  = particleContainer->begin();
@@ -658,23 +876,43 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
 
 
         // write out heat supply
-        this->WriteDataDeltaEkin(domainDecomposition, simstep);
+        if(true == _bWriteDataDeltaEkin)
+        	this->WriteDataDeltaEkin(simstep);
     }
 }
 
-void TemperatureControl::WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep)
+void TemperatureControl::WriteDataDeltaEkin(unsigned long simstep)
 {
     if(simstep % _nWriteFreqDeltaEkin != 0)
         return;
 
     // reset local values
-    std::vector<ControlRegionT>::iterator it;
+    std::vector<tec::ControlRegion*>::iterator it;
 
     for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
     {
-        (*it).WriteDataDeltaEkin(domainDecomp, simstep);
+        (*it)->WriteDataDeltaEkin(simstep);
     }
 }
 
 
+void TemperatureControl::PrepareRegionDataStructures()
+{
+    std::vector<tec::ControlRegion*>::iterator it;
+
+    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+    {
+        (*it)->PrepareDataStructures();
+    }
+}
+
+void TemperatureControl::PrepareRegionSubdivisions()
+{
+    std::vector<tec::ControlRegion*>::iterator it;
+
+    for(it=_vecControlRegions.begin(); it!=_vecControlRegions.end(); ++it)
+    {
+        (*it)->PrepareSubdivision();
+    }
+}
 

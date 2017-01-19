@@ -8,7 +8,12 @@
 #ifndef DISTCONTROL_H_
 #define DISTCONTROL_H_
 
+#include <iostream>
 #include <string>
+#include <sstream>
+#include <vector>
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
 
 using namespace std;
 
@@ -17,45 +22,83 @@ class ParticleContainer;
 class DomainDecompBase;
 class Molecule;
 
-class DistControl
+enum DistControlUpdateMethods
+{
+	DCUM_UNKNOWN = 0,
+	DCUM_DENSITY_PROFILE = 1,
+	DCUM_DENSITY_PROFILE_DERIVATION = 2,
+//	DCUM_FORCE_PROFILE = 3,
+};
+
+enum DistControlInitMethods
+{
+	DCIM_UNKNOWN = 0,
+	DCIM_START_CONFIGURATION = 1,
+	DCIM_MIDPOINT_VALUES = 2,
+	DCIM_READ_FROM_FILE = 3,
+};
+
+class DistControl : public ControlInstance, public SubjectBase
 {
 public:
-    DistControl(Domain* domain, unsigned int nUpdateFreq, unsigned int nNumShells);
+    DistControl(DomainDecompBase* domainDecomp, Domain* domain, unsigned int nUpdateFreq, unsigned int nWriteFreqProfiles);
     ~DistControl();
+
+    std::string GetShortName() {return "DiC";}
+
+    // set subdivision
+	void SetSubdivision(unsigned int nNumSlabs) {_nNumShells = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
+    void SetSubdivision(double dSlabWidth) {_dShellWidth = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
+    void PrepareSubdivision();  // need to be called before PrepareDataStructures()
+
+    // data structures
+    void PrepareDataStructures();
 
     // init
     void InitPositions(double dInterfaceMidLeft, double dInterfaceMidRight);
 
     double GetInterfaceMidLeft() {return _dInterfaceMidLeft;}
     double GetInterfaceMidRight() {return _dInterfaceMidRight;}
-    void SetDistances(double dDistMidToCV)
-    {
-        _dDistMidToCV = dDistMidToCV;
-    }
+    unsigned int GetUpdateFreq() {return _nUpdateFreq;}
+    unsigned int GetWriteFreqProfiles() {return _nWriteFreqProfiles;}
 
-    // get positions
-    // positions
-    double GetCVLeft() {return _dControlVolumeLeft;}
-    double GetCVRight() {return _dControlVolumeRight;}
+    // set update/init method
+    void SetUpdateMethod(const std::string& strMethod, const std::stringstream& sstr);
+    void SetInitMethod(const int& nMethod, const std::stringstream& sstr) {_nMethodInit = nMethod; _sstrInit << sstr.rdbuf();}
+    int GetInitMethod() {return _nMethodInit;}
 
-    void Init(DomainDecompBase* domainDecomp, Domain* domain, ParticleContainer* particleContainer);
-    void WriteHeader(DomainDecompBase* domainDecomp, Domain* domain);
-    void WriteData(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
-    void WriteDataDensity(DomainDecompBase* domainDecomp, Domain* domain, unsigned long simstep);
-
+    void Init(ParticleContainer* particleContainer);
+    void WriteHeader();
+    void WriteData(unsigned long simstep);
+    void WriteDataProfiles(unsigned long simstep);
 
     // place method inside loop over molecule container
-    void SampleDensityProfile(Molecule* mol);
+    void SampleProfiles(Molecule* mol);
 
+    void UpdatePositionsInit(ParticleContainer* particleContainer);  // call in Simulation::prepare_start()
+    void UpdatePositions(unsigned long simstep);
+    void AlignSystemCenterOfMass(Molecule* mol, unsigned long simstep);
+
+    // SubjectBase methods
+	virtual void registerObserver(ObserverBase* observer);
+	virtual void deregisterObserver(ObserverBase* observer);
+	virtual void informObserver();
+
+private:
     // place methods after the loop
-private:
-    void EstimateInterfaceMidpoint(Domain* domain);  // called by UpdatePositions
-public:
-    void UpdatePositions(unsigned long simstep, Domain* domain);
-    void AlignSystemCenterOfMass(Domain* domain, Molecule* mol, unsigned long simstep);
-
-private:
+	void CalcProfiles();
+    void EstimateInterfaceMidpoint();  // called by UpdatePositions
+    void EstimateInterfaceMidpointsByForce();
     void ResetLocalValues();
+
+    // data structures
+    void InitDataStructurePointers();
+    void AllocateDataStructures();
+	void InitDataStructures();
+
+	// processing profiles
+	void SmoothProfiles(const unsigned int& nNeighbourVals);
+	void DerivateProfiles(const unsigned int& nNeighbourVals);
 
 private:
     double _dInterfaceMidLeft;
@@ -63,25 +106,44 @@ private:
 
     unsigned long* _nNumMoleculesLocal;
     unsigned long* _nNumMoleculesGlobal;
+    double* _dMidpointPositions;
+	double* _dForceSumLocal;
+	double* _dForceSumGlobal;
     double* _dDensityProfile;
+    double* _dDensityProfileSmoothed;
+    double* _dDensityProfileSmoothedDerivation;
+	double* _dForceProfile;
+    double* _dForceProfileSmoothed;
     unsigned int _nNumShells;
     double _dShellWidth;
     double _dInvertShellWidth;
     double _dShellVolume;
     unsigned int _nUpdateFreq;
     unsigned int _nWriteFreq;
-    unsigned int _nWriteFreqDensity;
+    unsigned int _nWriteFreqProfiles;
 
-    // distances
-    double _dDistMidToCV;     // interface midpoint <--> control volume
+	// update method
+    int _nMethod;
+	double _dVaporDensity;
+	unsigned short _nNeighbourValsSmooth;
+	unsigned short _nNeighbourValsDerivate;
 
-    // positions
-    double _dControlVolumeLeft;
-    double _dControlVolumeRight;
+    int _nMethodInit;
+    std::stringstream _sstrInit;
+	std::string _strFilenameInit;
+	unsigned long _nRestartTimestep;
 
     // write data
-    string _strFilename;
-    string _strFilenameDensityPrefix;
+    std::string _strFilename;
+    std::string _strFilenameProfilesPrefix;
+
+    // simtype
+    int _nSimType;
+
+    // observer
+	std::vector<ObserverBase*> _observer;
+
+	int _nSubdivisionOpt;
 
 };  // class DistControl
 

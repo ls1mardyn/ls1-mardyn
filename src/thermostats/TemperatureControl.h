@@ -12,47 +12,69 @@
 #include <string>
 
 #include "molecules/Molecule.h"
+#include "utils/ObserverBase.h"
+#include "utils/Region.h"
+
+enum TemperatureControlTypes
+{
+	TCT_UNKNOWN = 0,
+	TCT_CONSTANT_TEMPERATURE = 1,
+	TCT_TEMPERATURE_ADJUST = 2,
+	TCT_TEMPERATURE_GRADIENT = 3,
+	TCT_TEMPERATURE_GRADIENT_LOWER = 4,
+	TCT_TEMPERATURE_GRADIENT_RAISE = 5
+};
 
 class DomainDecompBase;
 class ParticleContainer;
 class AccumulatorBase;
 class TemperatureControl;
-class ControlRegionT
+
+namespace tec
+{
+
+class ControlRegion : public CuboidRegionObs
 {
 public:
-    ControlRegionT( TemperatureControl* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp,
-                    double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections, unsigned short nRegionID, unsigned int nNumSlabsDeltaEkin );
-    ~ControlRegionT();
+    ControlRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3], unsigned int nComp,
+                   double* dTargetTemperature, double dTemperatureExponent, std::string strTransDirections,
+                   int nTemperatureControlType, unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq );
+    virtual ~ControlRegion();
 
-    void Init();
-    unsigned short GetID() {return _nRegionID;}
-    double* GetLowerCorner() {return _dLowerCorner;}
-    double* GetUpperCorner() {return _dUpperCorner;}
-    void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal; this->UpdateSlabParameters();}
-    void SetUpperCorner(unsigned short nDim, double dVal) {_dUpperCorner[nDim] = dVal; this->UpdateSlabParameters();}
-    double GetWidth(unsigned short nDim) {return _dUpperCorner[nDim] - _dLowerCorner[nDim];}
-    void GetRange(unsigned short nDim, double& dRangeBegin, double& dRangeEnd) {dRangeBegin = _dLowerCorner[nDim]; dRangeEnd = _dUpperCorner[nDim];}
-    void CalcGlobalValues(DomainDecompBase* domainDecomp);
-    void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp);
-
+    void SetSubdivision(unsigned int nNumSlabs) {_nNumSlabs = nNumSlabs;}
+    void SetSubdivision(double dSlabWidth) {_dSlabWidthInit = dSlabWidth;}
+    void PrepareSubdivision();  // need to be called before InitDataStructures()
+    void PrepareDataStructures();
+    void CalcGlobalValues(unsigned long simstep);
+    void MeasureKineticEnergy(Molecule* mol);
     void ControlTemperature(Molecule* mol);
-
     void ResetLocalValues();
-
     void UpdateSlabParameters();
 
     // write out data --> heat supply
     void CalcGlobalValuesDeltaEkin();
     void ResetValuesDeltaEkin();
-    void WriteHeaderDeltaEkin(DomainDecompBase* domainDecomp, Domain* domain);
-    void WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep);
+    void WriteHeaderDeltaEkin();
+    void WriteDataDeltaEkin(unsigned long simstep);
+
+    // set adjust parameters
+    void SetTemperatureControlAdjustParameters(unsigned long nStartAdjust, unsigned long nStopAdjust, unsigned long nAdjustFreq)
+    {
+    	_nStartAdjust = nStartAdjust;
+    	_nStopAdjust  = nStopAdjust;
+    	_nAdjustFreq  = nAdjustFreq;
+    }
+
+	// private methods
+private:
+    void InitDataStructurePointers();
+    void AdjustTemperatureGradient();
+    void AllocateDataStructuresT();
+	void InitDataStructuresT();
+	void AllocateDataStructuresDEkin();
+	void InitDataStructuresDEkin();
 
 private:
-    TemperatureControl* _parent;
-
-    double _dLowerCorner[3];
-    double _dUpperCorner[3];
-
     unsigned int _nNumSlabs;
     unsigned int _nNumSlabsReserve;
     double _dSlabWidth;
@@ -71,17 +93,24 @@ private:
     double* _dBetaTransGlobal;
     double* _dBetaRotGlobal;
 
-    double _dTargetTemperature;
+    double _dTargetTemperature[2];
+    double* _dTargetTemperatureVec;
     double _dTemperatureExponent;
     unsigned int _nTargetComponentID;
     unsigned short _nNumThermostatedTransDirections;
 
-    unsigned short _nRegionID;
+    double _dTargetTemperatureActual;
+    double _dDeltaTemperatureAdjust;
+    unsigned long _nStartAdjust;
+    unsigned long _nStopAdjust;
+    unsigned long _nAdjustFreq;
+    unsigned int _nTemperatureControlType;
 
     AccumulatorBase* _accumulator;
 
     // heat supply
     unsigned int _nNumSlabsDeltaEkin;
+    unsigned int _nNumSlabsDEkinReserve;
     double _dSlabWidthDeltaEkin;
 
     unsigned long* _nNumMoleculesSumLocal;
@@ -90,54 +119,55 @@ private:
     double* _dDelta2EkinTransSumLocal;
     double* _dDelta2EkinTransSumGlobal;
 
+    // instances / ID
+    static unsigned short _nStaticID;
 };
 
+}
 
 class Domain;
 class DomainDecompBase;
-class TemperatureControl
+class TemperatureControl : public ControlInstance
 {
 public:
     TemperatureControl(Domain* domain, DomainDecompBase* domainDecomp, unsigned long nControlFreq, unsigned long nStart, unsigned long nStop);
     ~TemperatureControl();
 
-    void AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections);
+    std::string GetShortName() {return "TeC";}
+    void AddRegion(tec::ControlRegion* region);
     int GetNumRegions() {return _vecControlRegions.size();}
-    ControlRegionT* GetControlRegion(unsigned short nRegionID) {return &(_vecControlRegions.at(nRegionID-1) ); }  // vector index starts with 0, region index with 1
+    tec::ControlRegion* GetControlRegion(unsigned short nRegionID) {return _vecControlRegions.at(nRegionID-1); }  // vector index starts with 0, region index with 1
 
-    void Init(unsigned long simstep);
-    void MeasureKineticEnergy(Molecule* mol, DomainDecompBase* domainDecomp, unsigned long simstep);
-    void CalcGlobalValues(DomainDecompBase* domainDecomp, unsigned long simstep);
+    void PrepareRegionSubdivisions();
+    void PrepareRegionDataStructures();
+    void InitControl(unsigned long simstep);
+    void MeasureKineticEnergy(Molecule* mol, unsigned long simstep);
+    void CalcGlobalValues(unsigned long simstep);
     void ControlTemperature(Molecule* mol, unsigned long simstep);
 
     unsigned long GetStart() {return _nStart;}
     unsigned long GetStop()  {return _nStop;}
 
     // loops over molecule container
-    void DoLoopsOverMolecules(DomainDecompBase*, ParticleContainer* particleContainer, unsigned long simstep);
-
-    Domain* GetDomain() {return _domain;}
-    DomainDecompBase* GetDomainDecomposition() {return _domainDecomp;}
+    void DoLoopsOverMolecules(ParticleContainer* particleContainer, unsigned long simstep);
 
     // heat supply
     void SetDeltaEkinParameters( unsigned int nWriteFreqDeltaEkin, unsigned int nNumSlabsDeltaEkin)
     {
-        _nWriteFreqDeltaEkin = nWriteFreqDeltaEkin; _nNumSlabsDeltaEkin = nNumSlabsDeltaEkin;
+        _nWriteFreqDeltaEkin = nWriteFreqDeltaEkin; _nNumSlabsDeltaEkin = nNumSlabsDeltaEkin; _bWriteDataDeltaEkin = true;
     }
-    void WriteDataDeltaEkin(DomainDecompBase* domainDecomp, unsigned long simstep);
+    void WriteDataDeltaEkin(unsigned long simstep);
 
 private:
-    std::vector<ControlRegionT> _vecControlRegions;
+    std::vector<tec::ControlRegion*> _vecControlRegions;
     unsigned long _nControlFreq;
     unsigned long _nStart;
     unsigned long _nStop;
 
     // heat supply
+    bool _bWriteDataDeltaEkin;
     unsigned int _nWriteFreqDeltaEkin;
     unsigned int _nNumSlabsDeltaEkin;
-
-    Domain* _domain;
-    DomainDecompBase* _domainDecomp;
 };
 
 
