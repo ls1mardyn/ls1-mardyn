@@ -267,14 +267,9 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 //    int nRank = domainDecomp->getRank();
 //    double dPosY = mol->r(1);
 
-    // check if molecule is inside
-    for(unsigned short d = 0; d<3; ++d)
-    {
-        double dPos = mol->r(d);
-
-        if(dPos <= _dLowerCorner[d] || dPos >= _dUpperCorner[d] )
-            return;
-    }
+	// check if molecule is inside
+	for(uint8_t d=0; d<3; ++d)
+		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
 
     if( 0. == _dTargetDensity)
     {
