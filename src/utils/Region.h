@@ -78,9 +78,10 @@ public:
     bool PositionIsInside(unsigned short nDim, double dPos) {return dPos > _dLowerCorner[nDim] && dPos < _dUpperCorner[nDim];}
     bool PositionIsInside(double* dPos)
     {
-    	return dPos[0] > _dLowerCorner[0] && dPos[0] < _dUpperCorner[0] &&
-    	       dPos[1] > _dLowerCorner[1] && dPos[1] < _dUpperCorner[1] &&
-    	       dPos[2] > _dLowerCorner[2] && dPos[2] < _dUpperCorner[2];
+    	if		( !(dPos[0] > _dLowerCorner[0] && dPos[0] < _dUpperCorner[0]) ) return false;
+    	else if ( !(dPos[1] > _dLowerCorner[1] && dPos[1] < _dUpperCorner[1]) ) return false;
+    	else if	( !(dPos[2] > _dLowerCorner[2] && dPos[2] < _dUpperCorner[2]) ) return false;
+    	else	return true;
     }
 
 protected:
