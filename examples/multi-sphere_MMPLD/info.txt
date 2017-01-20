@@ -1,0 +1,28 @@
+# test scenarios for MmpldWriter - writing visualization file for MegaMol using its binary file format: MMPLD
+
+run01:
+------
+6 LJ particles, represented as simple spheres with default radius and colors
+(note: particles in fact can be bigger than the visualized spheres, when using default values for sphere radii).
+
+run02:
+------
+6 LJ particles, represented as simple spheres with radii and colors that are read-in from file.
+(note: radii of the visualized spheres should of course be half of the diameter 'sigma' of the LJ-Sites used in the simulation)
+
+run03:
+------
+6 rigid molecules, with 3 different species (2 molecules of each) interacting with each other.
+Radii and colors of all LJ-sites of the different molecule types are read-in from parameter file.
+
+
+# setting parameters of MmpldWriter in config-file (*.cfg)
+
+output  MmpldWriter  simple|multi  <write frequency>  <output prefix>  default|file  [filename]
+
+output  MmpldWriter: first two keywords are mandatory
+simple|multi       : choose between 'simple' and 'multi', writing out either all molecule positions or all site positions
+write frequency    : write out every n-th timestep
+default|file       : choose if 'default' values should be used for radius and color of spheres, or if values should be read-in from parameter 'file'
+filename           : specify filename of parameter file if choosed option 'file' in previous statement
+
