@@ -45,6 +45,8 @@ public:
 	 */
 	CubicGridGenerator();
 
+	virtual ~CubicGridGenerator(){};
+
 	/**
 	 * Sets the new parameter
 	 * @param p the new parameter to be added to the list

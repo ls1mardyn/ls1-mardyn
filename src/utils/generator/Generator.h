@@ -39,7 +39,7 @@ int generator_getMolecule(generator_t* generator, molecule_t *molecule);
 class Generator {
 public:
     Generator(){}
-    ~Generator(){}
+    virtual ~Generator(){}
 
 	/** Initialize the generator
 	 * @param[in]  lattice  The underlying point lattice to be used

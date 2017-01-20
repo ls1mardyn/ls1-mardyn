@@ -168,7 +168,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	domain.setglobalNumMolecules(container.getNumberOfParticles());
 	std::cout << "NumMolecules in Container: " << container.getNumberOfParticles() << endl;
 
-	string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
+	std::string destination = directory + "/" + _configuration.getScenarioName() + ".inp";
 	_logger->info() << "Writing output to: " << destination << endl;
 	domain.writeCheckpoint(destination, &container, &domainDecomposition, 0.);
 

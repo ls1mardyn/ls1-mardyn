@@ -114,6 +114,9 @@ public:
 		}
 	}
 
+	bool testInBox(const Molecule& particle) const{
+		return particle.inBox(_boxMin, _boxMax);
+	}
 	/**
 	 * filter molecules which have left the box
 	 * @return field vector containing leaving molecules
@@ -129,6 +132,7 @@ public:
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
     void buildSoACaches();
+
 
 private:
 	/**
