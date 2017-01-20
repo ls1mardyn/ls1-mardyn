@@ -4,8 +4,8 @@
 #include <vector>
 
 #include "Cell.h"
+#include "particleContainer/ParticleCellBase.h"
 #include "particleContainer/adapter/CellDataSoA.h"
-#include "molecules/Molecule.h"
 
 //! @brief ParticleCell data structure.
 //! @author Martin Buchholz
@@ -37,7 +37,7 @@
  * know the proper copy semantics. This should not cause any problems because no copy<br>
  * actions should be executed during CellProcessor applications.
  */
-class ParticleCell : public Cell {
+class ParticleCell : public ParticleCellBase {
 /*private:
 	ParticleCell(const ParticleCell& that);*/
 public:
@@ -58,15 +58,13 @@ public:
 	//! insert a single molecule into this cell
 	bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false);
 
-	Molecule& moleculesAt(std::vector<Molecule>::size_type i) {
+	Molecule& moleculesAt(size_t i) {
 		return _molecules.at(i);
 	}
 
 	bool isEmpty() const;
 
-	bool deleteMoleculeByID(unsigned long molid);
-
-	bool deleteMoleculeByIndex(std::vector<Molecule>::size_type index);
+	bool deleteMoleculeByIndex(size_t index);
 
 	//! return the number of molecules contained in this cell
 	int getMoleculeCount() const;
@@ -89,6 +87,8 @@ public:
 	//std::vector<Molecule> & filterLeavingMolecules();
 
 	void preUpdateLeavingMolecules();
+
+	void updateLeavingMoleculesBase(ParticleCellBase& otherCell);
 
 	void updateLeavingMolecules(ParticleCell& otherCell);
 

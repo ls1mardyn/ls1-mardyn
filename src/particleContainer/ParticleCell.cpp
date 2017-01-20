@@ -61,20 +61,7 @@ int ParticleCell::getMoleculeCount() const {
 	return _molecules.size();
 }
 
-bool ParticleCell::deleteMoleculeByID(unsigned long molecule_id) {
-	bool found = false;
-
-	for (auto molecule_iter = _molecules.begin(); molecule_iter != _molecules.end(); molecule_iter++) {
-		if (molecule_iter->id() == molecule_id) {
-			found = true;
-			UnorderedVector::fastRemove(_molecules, molecule_iter);
-			break;
-		}
-	}
-	return found;
-}
-
-bool ParticleCell::deleteMoleculeByIndex(std::vector<Molecule>::size_type index) {
+bool ParticleCell::deleteMoleculeByIndex(size_t index) {
 //	assert(index >= 0); - this is always true now
 	assert(index < _molecules.size());
 
@@ -84,7 +71,7 @@ bool ParticleCell::deleteMoleculeByIndex(std::vector<Molecule>::size_type index)
 	return found;
 }
 
-void ParticleCell::preUpdateLeavingMolecules(){
+void ParticleCell::preUpdateLeavingMolecules() {
 	_leavingMolecules.clear();
 
 	#ifndef NDEBUG
@@ -108,6 +95,20 @@ void ParticleCell::preUpdateLeavingMolecules(){
 	}
 
 	assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
+}
+
+void ParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
+#ifndef NDEBUG
+	ParticleCell* oCellPointer = nullptr;
+	oCellPointer = dynamic_cast<ParticleCell*>(&otherCell);
+	if(oCellPointer == nullptr) {
+		global_log->error() << "wrong type of ParticleCell for call to updateLeavingMoleculesBase" << std::endl;
+		exit(1);
+	}
+#endif
+
+	ParticleCell& oCell = dynamic_cast<ParticleCell&>(otherCell);
+	updateLeavingMolecules(oCell);
 }
 
 void ParticleCell::updateLeavingMolecules(ParticleCell& otherCell){
