@@ -1,23 +1,31 @@
 #ifndef MOLECULE_H_
 #define MOLECULE_H_
 
+
+/**
+ * if we are not in MARDYN_WR mode, use the normal class Molecule
+ * else, use the Molecule_WR.h class
+ */
+#ifndef MARDYN_WR
+
+#include "MoleculeInterface.h"
+#include "molecules/Component.h"
+#include "molecules/Comp2Param.h"
+#include "molecules/Quaternion.h"
+#include "molecules/Site.h"
+
 #include <vector>
 #include <iostream>
 #include <cassert>
 #include <array>
 #include <string>
 
-#include "molecules/Component.h"
-#include "molecules/Comp2Param.h"
-#include "molecules/Quaternion.h"
-#include "molecules/Site.h"
-
 
 class Domain;
 class CellDataSoA;
 
 //! @brief Molecule modeled as LJ sphere with point polarities
-class Molecule {
+class Molecule : public MoleculeInterface {
 
 public:
 	// TODO Correct this constructor: the components vector is optional,
@@ -336,14 +344,6 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
 
-	/**
-	 * \brief test whether molecule is inside a cuboid region
-	 * @param l lower left front corner of cube (equality allowed)
-	 * @param u upper right back corner of cube (equality not allowed)
-	 * @return true if molecule is contained in the box, false otherwise
-	 */
-	bool inBox(const double l[3], const double u[3]) const
-	{bool in = true; for(int d=0; d < 3; ++d) {in &= (_r[d] >= l[d] and _r[d] < u[d]);} return in;}
 
 private:
     Component *_component;  /**< IDentification number of its component type */
@@ -365,62 +365,13 @@ private:
 	unsigned _soa_index_c;
 	unsigned _soa_index_d;
 	unsigned _soa_index_q;
-
-#ifdef MARDYN_WR
-	CellDataSoA_WR * _soa_WR;
-	unsigned _soa_index_WR;
-#endif
 };
 
+#else /* MARDYN_WR is defined */
+#include "Molecule_WR.h"
+typedef Molecule_WR Molecule;
+#endif
 
 std::ostream& operator<<( std::ostream& os, const Molecule& m );
-
-
-
-/** @brief Calculate the distance between two sites of two molecules.
- *
- * @param[in]  drm distance vector between the two molecule centers
- * @param[in]  ds1 distance vector from the center of molecule1 to its site
- * @param[in]  ds2 distance vector from the center of molecule2 to its site
- * @param[out] drs distance vector site-site
- * @param[out] dr2 distance site-site
- *
- */
-inline void SiteSiteDistance(const double drm[3], const double ds1[3], const double ds2[3], double drs[3], double& dr2)
-{
-	for (unsigned short d = 0; d < 3; ++d)
-		drs[d] = drm[d] + ds1[d] - ds2[d];
-	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
-}
-
-/** @brief Calculate the distance between two sites of two molecules.
- *
- * @param[in]  ds1 absolute position of site 1
- * @param[in]  ds2 absolute position of site 2
- * @param[out] drs distance vector site-site
- * @param[out] dr2 distance site-site
- *
- */
-inline void SiteSiteDistanceAbs(const double ds1[3], const double ds2[3], double drs[3], double& dr2)
-{
-	for (unsigned short d = 0; d < 3; ++d)
-		drs[d] = ds1[d] - ds2[d];
-	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
-}
-
-
-inline void minusSiteSiteDistance(const double drm[3], const double ds1[3], const double ds2[3], double drs[3], double& dr2)
-{
-	for (unsigned short d = 0; d < 3; ++d)
-		drs[d] = ds2[d] - drm[d] - ds1[d];
-	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
-}
-
-inline void minusSiteSiteDistanceAbs(const double ds1[3], const double ds2[3], double drs[3], double& dr2)
-{
-	for (unsigned short d = 0; d < 3; ++d)
-		drs[d] = ds2[d] - ds1[d];
-	dr2 = drs[0]*drs[0] + drs[1]*drs[1] + drs[2]*drs[2];
-}
 
 #endif /* MOLECULE_H_ */

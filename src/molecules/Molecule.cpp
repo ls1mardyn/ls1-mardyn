@@ -591,29 +591,6 @@ void Molecule::check(unsigned long id) {
 }
 #pragma GCC diagnostic pop
 
-bool Molecule::isLessThan(const Molecule& m2) const {
-	if (_r[2] < m2.r(2))
-		return true;
-	else if (_r[2] > m2.r(2))
-		return false;
-	else {
-		if (_r[1] < m2.r(1))
-			return true;
-		else if (_r[1] > m2.r(1))
-			return false;
-		else {
-			if (_r[0] < m2.r(0))
-				return true;
-			else if (_r[0] > m2.r(0))
-				return false;
-			else {
-				global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << endl;
-				exit(1);
-			}
-		}
-	}
-	return false; /* Silence warnings about missing return statement */
-}
 
 
 std::ostream& operator<<( std::ostream& os, const Molecule& m ) {

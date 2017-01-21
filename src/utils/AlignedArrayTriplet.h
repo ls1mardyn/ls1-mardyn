@@ -32,6 +32,15 @@ public:
 	T& y(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
 	T& z(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
 
+	size_t dimensionToOffset(int i) const {
+		assert(i >= 0);
+		assert(i < 3);
+		static size_t rets[3] = {0 * _numEntriesPerArray, 1 * _numEntriesPerArray, 2 * _numEntriesPerArray};
+		return rets[i];
+	}
+
+	T& linearCrossAccess(size_t i) { assert(i < _numEntriesPerArray); return this->p[i];}
+
 	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = this->_round_up(exact_size);
 		size_t size_rounded_up_x3 = size_rounded_up * 3;

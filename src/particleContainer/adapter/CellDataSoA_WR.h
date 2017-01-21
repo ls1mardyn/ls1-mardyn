@@ -11,6 +11,7 @@
 #include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
 #include "molecules/Molecule.h"
+#include "CellDataSoABase.h"
 #include <cstdint>
 
 /**
@@ -18,7 +19,7 @@
  * the WR run.
  * \author Nikola Tchipev
  */
-class CellDataSoA_WR {
+class CellDataSoA_WR : public CellDataSoABase {
 public:
 	CellDataSoA_WR(size_t mol_arg) {
 		resize(mol_arg);
