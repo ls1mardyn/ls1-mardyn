@@ -365,6 +365,11 @@ private:
 	unsigned _soa_index_c;
 	unsigned _soa_index_d;
 	unsigned _soa_index_q;
+
+#ifdef MARDYN_WR
+	CellDataSoA_WR * _soa_WR;
+	unsigned _soa_index_WR;
+#endif
 };
 
 

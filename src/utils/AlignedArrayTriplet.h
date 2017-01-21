@@ -37,7 +37,7 @@ public:
 		size_t size_rounded_up_x3 = size_rounded_up * 3;
 		_numEntriesPerArray = size_rounded_up;
 
-		bool need_resize = size_rounded_up_x3 > this->_n or (allow_shrink and size_rounded_up_x3 < this->_n);
+		bool need_resize = size_rounded_up_x3 > this->_capacity or (allow_shrink and size_rounded_up_x3 < this->_capacity);
 
 		if (need_resize) {
 			resize(size_rounded_up_x3);
@@ -80,6 +80,22 @@ public:
 			std::memset(&(y(nEntriesPerArray)), 0, elements * sizeof(T));
 			std::memset(&(z(nEntriesPerArray)), 0, elements * sizeof(T));
 		}
+	}
+
+	void appendValueTriplet(T v0, T v1, T v2, size_t oldNumElements) {
+		assert(oldNumElements <= _numEntriesPerArray);
+		if (oldNumElements < _numEntriesPerArray) {
+			// no need to resize
+		} else {
+			// shit, we need to resize, but also keep contents
+			AlignedArray<T> backupCopy(*this);
+			resize_zero_shrink(oldNumElements + 1);
+			size_t oldNumElementsTripled = 3 * _numEntriesPerArray;
+			std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled);
+		}
+		x(oldNumElements) = v0;
+		y(oldNumElements) = v1;
+		z(oldNumElements) = v2;
 	}
 
 private:

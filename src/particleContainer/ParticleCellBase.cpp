@@ -19,14 +19,24 @@ ParticleCellBase::~ParticleCellBase() {
 bool ParticleCellBase::deleteMoleculeByID(unsigned long molid) {
 	bool found = false;
 
+	size_t index;
+	findMoleculeByID(found, index, molid);
+	if (found) {
+		deleteMoleculeByIndex(index);
+	}
+
+	return found;
+}
+
+void ParticleCellBase::findMoleculeByID(bool& wasFound, size_t& index, unsigned long molid) const {
+	wasFound = false;
 	int numMolecules = getMoleculeCount();
 
 	for (int i = 0; i < numMolecules; ++i) {
-		if (moleculesAt(i).id() == molid) {
-			found = true;
-			deleteMoleculeByIndex(i);
+		if (moleculesAtConst(i).id() == molid) {
+			index = i;
+			wasFound = true;
 			break;
 		}
 	}
-	return found;
 }

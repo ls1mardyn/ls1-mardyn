@@ -10,6 +10,7 @@
 
 #include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
+#include "molecules/Molecule.h"
 #include <cstdint>
 
 /**
@@ -56,6 +57,33 @@ public:
 		total += _mol_uid.get_dynamic_memory();
 
 		return total;
+	}
+
+	void appendMolecule(Molecule& m) {
+		_mol_r.appendValueTriplet(m.r(0), m.r(1), m.r(2), _mol_num);
+		_mol_v.appendValueTriplet(m.v(0), m.v(1), m.v(2), _mol_num);
+		_mol_uid.appendValue(m.id(), _mol_num);
+		++_mol_num;
+	}
+
+	void readMolecule(size_t index, Molecule& m) const {
+		m.setr(0, _mol_r.x(index));
+		m.setr(1, _mol_r.y(index));
+		m.setr(2, _mol_r.z(index));
+		m.setv(0, _mol_v.x(index));
+		m.setv(1, _mol_v.y(index));
+		m.setv(2, _mol_v.z(index));
+		m.setid(_mol_uid[index]);
+	}
+
+	void writeMolecule(size_t index, Molecule& m) {
+		_mol_r.x(index) = m.r(0);
+		_mol_r.y(index) = m.r(1);
+		_mol_r.z(index) = m.r(2);
+		_mol_v.x(index) = m.v(0);
+		_mol_v.y(index) = m.v(1);
+		_mol_v.z(index) = m.v(2);
+		_mol_uid[index] = m.id();
 	}
 };
 

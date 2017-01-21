@@ -62,6 +62,10 @@ public:
 		return _molecules.at(i);
 	}
 
+	const Molecule& moleculesAtConst(size_t i) const {
+		return _molecules.at(i);
+	}
+
 	bool isEmpty() const;
 
 	bool deleteMoleculeByIndex(size_t index);
@@ -97,6 +101,8 @@ public:
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
     void buildSoACaches();
+
+    void reserveMoleculeStorage(size_t numMols);
 
 
 private:

@@ -35,15 +35,9 @@ bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 
 		// perform a check whether this molecule exists (has been received) already
 
-		unsigned long pID = particle.id();
-		bool found = false;
-
-		for (auto it = _molecules.begin(); it != _molecules.end(); ++it) {
-			if (pID == it->id()) {
-				found = true;
-				break;
-			}
-		}
+		bool found;
+		size_t index;
+		findMoleculeByID(found, index, particle.id());
 
 		if (not found) {
 			_molecules.push_back(particle);
@@ -210,4 +204,8 @@ void ParticleCell::buildSoACaches() {
 
 		M.clearFM();
 	}
+}
+
+void ParticleCell::reserveMoleculeStorage(size_t numMols) {
+	_molecules.reserve(numMols);
 }

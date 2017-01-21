@@ -18,9 +18,17 @@ public:
 
 	virtual void deallocateAllParticles() = 0;
 
+	/**
+	 * \param particle the particle to be added
+	 * \param checkWhetherDuplicate if true, perform a check by molecule IDs,
+	 * whether a particle with the same ID already exists
+	 * \return true, if inserted
+	 */
 	virtual bool addParticle(Molecule& particle, bool checkWhetherDuplicate = false) = 0;
 
 	virtual Molecule& moleculesAt(size_t i) = 0;
+
+	virtual const Molecule& moleculesAtConst(size_t i) const = 0;
 
 	virtual bool isEmpty() const = 0;
 
@@ -40,9 +48,14 @@ public:
 
     virtual void buildSoACaches() = 0;
 
+    virtual void reserveMoleculeStorage(size_t numMols) = 0;
+
 	bool testInBox(const Molecule& particle) const {
 		return particle.inBox(_boxMin, _boxMax);
 	}
+
+protected:
+	void findMoleculeByID(bool& wasFound, size_t& index, unsigned long molid) const;
 };
 
 #endif /* SRC_PARTICLECONTAINER_PARTICLECELLBASE_H_ */
