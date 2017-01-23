@@ -79,41 +79,6 @@ public:
 		return _cellDataSoA;
 	}
 
-	/**
-	 * Returns the cell index
-	 */
-	unsigned long getCellIndex() {
-		return _cellIndex;
-	}
-	
-	/**
-	 * Sets the cell index. On one process, this index must be unique.
-	 * @param cellIndex
-	 */
-	void setCellIndex(unsigned long cellIndex){
-		_cellIndex = cellIndex;
-	}
-	
-	double getBoxMin(int d) const {
-		return _boxMin[d];
-	}
-
-	void setBoxMin(const double b[3]) {
-		for(int d=0; d< 3; ++d) {
-			_boxMin[d] = b[d];
-		}
-	}
-
-	double getBoxMax(int d) const {
-		return _boxMax[d];
-	}
-
-	void setBoxMax(const double b[3]) {
-		for (int d = 0; d < 3; ++d) {
-			_boxMax[d] = b[d];
-		}
-	}
-
 	bool testInBox(const Molecule& particle) const{
 		return particle.inBox(_boxMin, _boxMax);
 	}
@@ -136,16 +101,6 @@ public:
 
 private:
 	/**
-	 * \brief lower left front corner
-	 */
-	double _boxMin[3];
-
-	/**
-	 * \brief upper right back corner
-	 */
-	double _boxMax[3];
-
-	/**
 	 * \brief A vector of pointers to the Molecules in this cell.
 	 */
 	std::vector<Molecule> _molecules;
@@ -160,12 +115,6 @@ private:
 	 * \author Johannes Heckl
 	 */
 	CellDataSoA _cellDataSoA;
-
-	/**
-	 * \brief The index of the cell.
-	 * On one process every index must be unique.
-	 */
-	unsigned long _cellIndex;
 };
 
 #endif /* PARTICLE CELL_H_ */

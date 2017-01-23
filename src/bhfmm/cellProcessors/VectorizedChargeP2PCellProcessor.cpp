@@ -126,8 +126,8 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 	size_t nDipoles = 0;
 	size_t nQuadrupoles = 0;
 	
-	for (auto m = c.moleculesBegin();  m != c.moleculesEnd(); ++m) {
-		nCharges += (*m)->numCharges();
+	for (size_t i = 0; i < numMolecules; ++i) {
+		nCharges += c.moleculesAt(i).numCharges();
 	}
 
 	// Construct the SoA.
@@ -201,9 +201,11 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 
 	// For each molecule iterate over all its centers.
 	size_t iCharges = 0;
-	for (auto m = c.moleculesBegin(); m != c.moleculesEnd(); ++m) {
+	size_t numMolecules = c.getMoleculeCount();
+	for (size_t i = 0; i < numMolecules; ++i) {
+		Molecule& m = c.moleculesAt(i);
 
-		const size_t mol_charges_num = (*m)->numCharges();
+		const size_t mol_charges_num = m.numCharges();
 
 		for (size_t i = 0; i < mol_charges_num; ++i, ++iCharges) {
 			// Store the resulting force in the molecule.
@@ -214,7 +216,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			assert(!isnan(f[0]));
 			assert(!isnan(f[1]));
 			assert(!isnan(f[2]));
-			(*m)->Fchargeadd(i, f);
+			m.Fchargeadd(i, f);
 
 			// Store the resulting virial in the molecule.
 			double V[3];
@@ -224,7 +226,7 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			assert(!isnan(V[0]));
 			assert(!isnan(V[1]));
 			assert(!isnan(V[2]));
-			(*m)->Viadd(V);
+			m.Viadd(V);
 		}
 	}
 }

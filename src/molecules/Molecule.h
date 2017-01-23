@@ -46,7 +46,7 @@ public:
 	/** get the molecule's component ID */
 	unsigned int componentid() const { return _component->ID(); }
 	/** set the molecule's component */
-	void setComponent(Component *component) { _component = component;}
+	void setComponent(Component *component) { _component = component; this->updateMassInertia();}
 	/** return pointer to component to which the molecule belongs */
 	Component* component() const { return _component; }
 	/** get component lookUpID */
@@ -88,7 +88,21 @@ public:
 	//by Stefan Becker
 		/** get the moment of inertia of a particle */
 	double getI(unsigned short d) const { return _I[d]; }
-
+	/** update mass and moment of inertia by component definition */
+	void updateMassInertia() {
+		if(_component != nullptr) {
+			_m = _component->m();
+			_I[0] = _component->I11();
+			_I[1] = _component->I22();
+			_I[2] = _component->I33();
+			for (unsigned short d = 0; d < 3; ++d) {
+				if (_I[d] != 0.)
+					_invI[d] = 1. / _I[d];
+				else
+					_invI[d] = 0.;
+			}
+		}
+	}
 
 	/** calculate and return the square velocity */
 	double v2() const {return _v[0]*_v[0]+_v[1]*_v[1]+_v[2]*_v[2]; }

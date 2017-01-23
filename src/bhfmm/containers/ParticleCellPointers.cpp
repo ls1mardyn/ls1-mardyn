@@ -17,12 +17,7 @@ using namespace std;
 namespace bhfmm {
 
 ParticleCellPointers::ParticleCellPointers() :
-		_molecules(), _cellDataSoA(0, 0, 0, 0, 0), _cellIndex(0) {
-	for (int d = 0; d < 3; ++d) {
-		_boxMin[d] = 0.0;
-		_boxMax[d] = 0.0;
-	}
-}
+		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) { }
 
 ParticleCellPointers::~ParticleCellPointers() {
 //	if(!isEmpty()) {
