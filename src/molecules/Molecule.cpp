@@ -39,18 +39,8 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_soa_index_d = 0;
 	_soa_index_q = 0;
 
-	if(_component != nullptr) {
-		_m = _component->m();
-		_I[0] = _component->I11();
-		_I[1] = _component->I22();
-		_I[2] = _component->I33();
-		for (unsigned short d = 0; d < 3; ++d) {
-			if (_I[d] != 0.)
-				_invI[d] = 1. / _I[d];
-			else
-				_invI[d] = 0.;
-		}
-	}
+	this->updateMassInertia();
+
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
 }
