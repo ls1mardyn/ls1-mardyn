@@ -34,12 +34,20 @@ public:
 		_v[2] = vz;
 		_id = id;
 		_soa = nullptr;
+
+		if(not _initCalled) {
+			initStaticVars();
+		}
 	}
 
 	Molecule_WR(CellDataSoA_WR * soa, size_t index) {
 		_state = SOA;
 		_soa = soa;
 		_soa_index = index;
+
+		if (not _initCalled) {
+			initStaticVars();
+		}
 	}
 
 	~Molecule_WR() {}
@@ -173,7 +181,7 @@ public:
 #ifndef NDEBUG
 		derived = nullptr;
 		derived = dynamic_cast<CellDataSoA_WR *>(s);
-		if(derived == nullptr) {
+		if(derived == nullptr and s != nullptr) {
 			global_log->error() << "expected CellDataSoA_WR pointer for m" << _id << std::endl;
 			assert(false);
 		}
@@ -331,8 +339,11 @@ public:
 
 
 private:
+	static void initStaticVars();
+
     static Component *_component;  /**< IDentification number of its component type */
     static Quaternion _quaternion;
+    static bool _initCalled;
 
     StorageState _state;
 
