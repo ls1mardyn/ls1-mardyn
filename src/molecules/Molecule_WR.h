@@ -10,7 +10,8 @@
 
 #include "MoleculeInterface.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
-#include "particleContainer/adapter/CellDataSoA_WR.h"
+
+class CellDataSoA_WR;
 
 class Molecule_WR : public MoleculeInterface {
 	enum StorageState {
@@ -52,69 +53,13 @@ public:
 
 	~Molecule_WR() {}
 
-	double r(unsigned short d) const {
-		assert(_state == SOA or _state == AOS);
+	unsigned long id() const;
+	void setid(unsigned long id);
+	void setr(unsigned short d, double r);
+	void setv(unsigned short d, double v);
+	double r(unsigned short d) const;
+	double v(unsigned short d) const;
 
-		if (_state == AOS) {
-			return _r[d];
-		} else {
-			size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
-			return _soa->_mol_r.linearCrossAccess(linOffset + _soa_index);
-		}
-	}
-
-	double v(unsigned short d) const {
-		assert(_state == SOA or _state == AOS);
-
-		if (_state == AOS) {
-			return _v[d];
-		} else {
-			size_t linOffset = _soa->_mol_v.dimensionToOffset(d);
-			return _soa->_mol_v.linearCrossAccess(linOffset + _soa_index);
-		}
-	}
-
-	unsigned long id() const {
-		assert(_state == SOA or _state == AOS);
-
-		if (_state == AOS) {
-			return _id;
-		} else {
-			return _soa->_mol_uid[_soa_index];
-		}
-	}
-
-	void setr(unsigned short d, double r) {
-		assert(_state == SOA or _state == AOS);
-
-		if (_state == AOS) {
-			_r[d] = r;
-		} else {
-			size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
-			_soa->_mol_r.linearCrossAccess(linOffset + _soa_index) = r;
-		}
-	}
-
-	void setv(unsigned short d, double v) {
-		assert(_state == SOA or _state == AOS);
-
-		if (_state == AOS) {
-			_v[d] = v;
-		} else {
-			size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
-			_soa->_mol_v.linearCrossAccess(linOffset + _soa_index) = v;
-		}
-	}
-
-	void setid(unsigned long id) {
-		assert(_state == SOA or _state == AOS);
-
-		if (_state == AOS) {
-			_id = id;
-		} else {
-			_soa->_mol_uid[_soa_index] = id;
-		}
-	}
 
 	void setComponent(Component *component) {
 		_component = component;
@@ -175,21 +120,7 @@ public:
 		_soa_index = iLJ;
 	}
 
-	void setSoA(CellDataSoABase * const s) {
-		assert(_state == AOS);
-		CellDataSoA_WR * derived;
-#ifndef NDEBUG
-		derived = nullptr;
-		derived = dynamic_cast<CellDataSoA_WR *>(s);
-		if(derived == nullptr and s != nullptr) {
-			global_log->error() << "expected CellDataSoA_WR pointer for m" << _id << std::endl;
-			assert(false);
-		}
-#else
-		derived = static_cast<CellDataSoA *>(s);
-#endif
-		_soa = derived;
-	}
+	void setSoA(CellDataSoABase * const s);
 
 	void setStartIndexSoA_LJ(unsigned i) {
 		assert(false);
@@ -304,38 +235,41 @@ public:
 	void computeDipole_e(unsigned int i, double result[3]) const {}
 	void computeQuadrupole_e(unsigned int i, double result[3]) const {}
 
-	unsigned long totalMemsize() const = 0;
+	unsigned long totalMemsize() const {
+		//todo: check
+		assert(false);
+		return sizeof(*this);
+	}
 
-	void setF(double F[3]) = 0;
-	void setM(double M[3]) = 0;
-	void setVi(double Vi[3]) = 0;
-	void scale_v(double s) = 0;
-	void scale_v(double s, double offx, double offy, double offz);
-	void scale_F(double s) = 0;
-	void scale_D(double s) = 0;
-	void scale_M(double s) = 0;
-	void Fadd(const double a[]) = 0;
-	void Madd(const double a[]) = 0;
-	void Viadd(const double a[]) = 0;
-	void vadd(const double ax, const double ay, const double az) = 0;
-	void vsub(const double ax, const double ay, const double az) = 0;
-	void Fljcenteradd(unsigned int i, double a[]) = 0;
-	void Fljcentersub(unsigned int i, double a[]) = 0;
-	void Fchargeadd(unsigned int i, double a[]) = 0;
-	void Fchargesub(unsigned int i, double a[]) = 0;
-	void Fdipoleadd(unsigned int i, double a[]) = 0;
-	void Fdipolesub(unsigned int i, double a[]) = 0;
-	void Fquadrupoleadd(unsigned int i, double a[]) = 0;
-	void Fquadrupolesub(unsigned int i, double a[]) = 0;
-	void upd_preF(double dt) = 0;
-	void upd_postF(double dt_halve, double& summv2, double& sumIw2) = 0;
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2) = 0;
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) = 0;
+	void setF(double F[3]) {}
+	void setM(double M[3]) {}
+	void setVi(double Vi[3]) {}
+	void scale_v(double s) {}
+	void scale_F(double s) {}
+	void scale_D(double s) {}
+	void scale_M(double s) {}
+	void Fadd(const double a[]) {}
+	void Madd(const double a[]) {}
+	void Viadd(const double a[]) {}
+	void vadd(const double ax, const double ay, const double az) {}
+	void vsub(const double ax, const double ay, const double az) {}
+	void Fljcenteradd(unsigned int i, double a[]) {}
+	void Fljcentersub(unsigned int i, double a[]) {}
+	void Fchargeadd(unsigned int i, double a[]) {}
+	void Fchargesub(unsigned int i, double a[]) {}
+	void Fdipoleadd(unsigned int i, double a[]) {}
+	void Fdipolesub(unsigned int i, double a[]) {}
+	void Fquadrupoleadd(unsigned int i, double a[]) {}
+	void Fquadrupolesub(unsigned int i, double a[]) {}
+	void upd_preF(double dt) {}
+	void upd_postF(double dt_halve, double& summv2, double& sumIw2) {}
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {}
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {}
 	static std::string getWriteFormat(); // TODO
-	void write(std::ostream& ostrm) const = 0;
-	void clearFM() = 0;
-	void calcFM() = 0;
-	void check(unsigned long id) = 0;
+	void write(std::ostream& ostrm) const {}
+	void clearFM() {}
+	void calcFM() {}
+	void check(unsigned long id) {}
 
 
 private:
