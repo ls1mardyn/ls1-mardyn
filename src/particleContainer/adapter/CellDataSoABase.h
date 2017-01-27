@@ -10,7 +10,7 @@
 
 class CellDataSoABase {
 public:
-	virtual ~CellDataSoABase();
+	virtual ~CellDataSoABase() {}
 };
 
 #endif /* SRC_PARTICLECONTAINER_ADAPTER_CELLDATASOABASE_H_ */

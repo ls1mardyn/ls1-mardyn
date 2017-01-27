@@ -9,9 +9,7 @@
 #ifndef MARDYN_WR
 
 #include "MoleculeInterface.h"
-#include "molecules/Component.h"
 #include "molecules/Comp2Param.h"
-#include "molecules/Quaternion.h"
 #include "molecules/Site.h"
 
 #include <vector>
@@ -108,9 +106,9 @@ public:
 	/** return total kinetic energy of the molecule */
 	double U_kin() { return U_trans() + U_rot(); }
 	
-	void setupSoACache(CellDataSoA * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ);
+	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ);
 
-	void setSoA(CellDataSoA * const s) {_soa = s;}
+	void setSoA(CellDataSoABase * const s);
 	void setStartIndexSoA_LJ(unsigned i) {_soa_index_lj = i;}
 	void setStartIndexSoA_C(unsigned i) {_soa_index_c = i;}
 	void setStartIndexSoA_D(unsigned i) {_soa_index_d = i;}
@@ -324,26 +322,6 @@ public:
 	
 	/** perform data consistency check for the molecule (only debug mode) */
 	void check(unsigned long id);
-
-	//! @brief find out whether m1 is before m2 (in some global ordering)
-	//!
-	//! Compares this molecule to m2 based on their coordinates.
-	//!
-	//! @return true if this molecule is smaller than m2 (according to the order
-	//!         induced by the coordinates (z,y,x)
-	//!
-	//! At the boundary between two processes (if used in parallel mode), the forces
-	//! for pairs which cross the boundary are calculated twice (once by each proc who
-	//! owns one of the particles). But the contribution to macroscopic value must be
-	//! counted only once, which is done by the process who owns the "first" particle.
-	//! As order criterion, the spacial position is used int this method. The particles
-	//! with lower x-coordinate is first (if equal, then y- or z-coordinate).
-	//! For pairs which are completely on one process, the first particle can be
-	//! determined from the cell structure. But for pairs on different procs, the
-	//! corresponding cell discretisations might be different as well, and therefore
-	//! the cell structure must not be used to determine the order.
-	bool isLessThan(const Molecule& m2) const;
-
 
 private:
     Component *_component;  /**< IDentification number of its component type */

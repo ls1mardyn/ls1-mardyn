@@ -8,9 +8,9 @@
 #ifndef SRC_MOLECULES_MOLECULE_WR_H_
 #define SRC_MOLECULES_MOLECULE_WR_H_
 
-#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "MoleculeInterface.h"
-#include "CellDataSoA_WR.h"
+#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
+#include "particleContainer/adapter/CellDataSoA_WR.h"
 
 class Molecule_WR : public MoleculeInterface {
 	enum StorageState {
@@ -19,7 +19,7 @@ class Molecule_WR : public MoleculeInterface {
 	};
 
 public:
-	Molecule_WR::Molecule_WR(unsigned long id = 0, Component *component = nullptr,
+	Molecule_WR(unsigned long id = 0, Component *component = nullptr,
         double rx = 0., double ry = 0., double rz = 0.,
         double vx = 0., double vy = 0., double vz = 0.,
         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
@@ -36,7 +36,7 @@ public:
 		_soa = nullptr;
 	}
 
-	Molecule_WR::Molecule_WR(CellDataSoA_WR * soa, size_t index) {
+	Molecule_WR(CellDataSoA_WR * soa, size_t index) {
 		_state = SOA;
 		_soa = soa;
 		_soa_index = index;
@@ -161,16 +161,26 @@ public:
 	}
 
 	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) {
-		// should this ever be like called?
 		assert(false);
-		assert(_state == AOS);
-		_soa = s;
+		// should this ever be like called?
+		setSoA(s);
 		_soa_index = iLJ;
 	}
 
 	void setSoA(CellDataSoABase * const s) {
-		assert(false);
-		_soa = dynamic_cast<CellDataSoA_WR>(s);
+		assert(_state == AOS);
+		CellDataSoA_WR * derived;
+#ifndef NDEBUG
+		derived = nullptr;
+		derived = dynamic_cast<CellDataSoA_WR *>(s);
+		if(derived == nullptr) {
+			global_log->error() << "expected CellDataSoA_WR pointer for m" << _id << std::endl;
+			assert(false);
+		}
+#else
+		derived = static_cast<CellDataSoA *>(s);
+#endif
+		_soa = derived;
 	}
 
 	void setStartIndexSoA_LJ(unsigned i) {
@@ -216,15 +226,15 @@ public:
 	}
 	std::array<double, 3> charge_d(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> dipole_d(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> quadrupole_d(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 
 	std::array<double, 3> site_d_abs(unsigned int i) const {
@@ -237,45 +247,45 @@ public:
 	}
 	std::array<double, 3> charge_d_abs(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> dipole_d_abs(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> quadrupole_d_abs(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 
 	std::array<double, 3> dipole_e(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> quadrupole_e(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 
 	std::array<double, 3> site_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> ljcenter_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> charge_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> dipole_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 	std::array<double, 3> quadrupole_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>(0.0);
+		return std::array<double, 3>({0.0, 0.0, 0.0});
 	}
 
 	void normalizeQuaternion() {}

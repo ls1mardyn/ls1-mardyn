@@ -8,6 +8,8 @@
 #ifndef SRC_MOLECULES_MOLECULEINTERFACE_H_
 #define SRC_MOLECULES_MOLECULEINTERFACE_H_
 
+#include "molecules/Component.h"
+#include "molecules/Quaternion.h"
 #include "particleContainer/adapter/CellDataSoABase.h"
 
 class MoleculeInterface {
@@ -118,7 +120,11 @@ public:
 	virtual void setM(double M[3]) = 0;
 	virtual void setVi(double Vi[3]) = 0;
 	virtual void scale_v(double s) = 0;
-	virtual void scale_v(double s, double offx, double offy, double offz);
+	void scale_v(double s, double offx, double offy, double offz) {
+		vsub(offx, offy, offz);
+		scale_v(s);
+		vadd(offx, offy, offz);
+	}
 	virtual void scale_F(double s) = 0;
 	virtual void scale_D(double s) = 0;
 	virtual void scale_M(double s) = 0;

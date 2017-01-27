@@ -610,7 +610,22 @@ unsigned long Molecule::totalMemsize() const {
 	return size;
 }
 
-void Molecule::setupSoACache(CellDataSoA* const s, unsigned iLJ, unsigned iC,
+void Molecule::setSoA(CellDataSoABase * const s) {
+	CellDataSoA * derived;
+#ifndef NDEBUG
+	derived = nullptr;
+	derived = dynamic_cast<CellDataSoA *>(s);
+	if(derived == nullptr) {
+		global_log->error() << "expected CellDataSoA pointer for m" << _id << endl;
+		assert(false);
+	}
+#else
+	derived = static_cast<CellDataSoA *>(s);
+#endif
+	_soa = derived;
+}
+
+void Molecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigned iC,
 		unsigned iD, unsigned iQ) {
 	setSoA(s);
 	setStartIndexSoA_LJ(iLJ);
