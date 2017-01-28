@@ -48,7 +48,7 @@
 #include <sstream>
 #include "../../utils/Timer.h"
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 
 /**
  * \brief

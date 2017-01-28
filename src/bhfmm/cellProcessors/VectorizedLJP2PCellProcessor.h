@@ -17,10 +17,11 @@
 #include "utils/Timer.h"
 #include "WrapOpenMP.h"
 
+#include "molecules/MoleculeForwardDeclaration.h"
+
 class Component;
 class Domain;
 class Comp2Param;
-class Molecule;
 class CellDataSoA;
 
 namespace bhfmm {

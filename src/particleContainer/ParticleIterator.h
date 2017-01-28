@@ -19,7 +19,7 @@
 #include <cassert>
 #include "ParticleCell.h"
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 
 class ParticleIterator {
 public:

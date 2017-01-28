@@ -10,19 +10,21 @@
 #include "bhfmm/containers/ParticleCellPointers.h"
 #include "utils/AlignedArray.h"
 #include "utils/Timer.h"
-#include <iostream>
-#include <vector>
-#include <cmath>
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 #include "WrapOpenMP.h"
 
+#include <iostream>
+#include <vector>
+#include <cmath>
+
+#include "molecules/MoleculeForwardDeclaration.h"
+
 class Component;
 class Domain;
 class Comp2Param;
-class Molecule;
-//class CellDataSoA;
+
 namespace bhfmm {
 /**
  * \brief Vectorized calculation of the force.

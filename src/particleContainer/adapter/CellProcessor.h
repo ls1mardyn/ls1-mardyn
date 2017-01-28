@@ -4,8 +4,8 @@
 
 #include <cstddef>
 #include <cmath>
-class Molecule;
 
+#include "molecules/MoleculeForwardDeclaration.h"
 class ParticleCell;
 
 /**

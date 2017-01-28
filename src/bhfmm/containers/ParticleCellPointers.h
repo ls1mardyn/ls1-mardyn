@@ -13,7 +13,7 @@
 #include "particleContainer/Cell.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 
 /**
  * simpler copy of the class ParticleCellPointers.
