@@ -37,7 +37,7 @@ VTK ?= 0
 SUPPORT_GENERATOR ?= 0
 
 # select vectorization mode:
-VECTORIZE_CODE ?= KNL_G_S
+VECTORIZE_CODE ?= AVX2
 # AOS      - LegacyCellProcessor
 # SSE      - VectorizedCellProcessor with SSE intrinsics (default)
 # AVX      - VectorizedCellProcessor with AVX intrinsics
@@ -77,6 +77,9 @@ ifeq ($(PRECISION), SINGLE)
   endif
 endif
 
+# Set World Record?
+WORLD_RECORD ?= 1
+
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0
 
@@ -87,6 +90,7 @@ ENABLE_OVERLAPPING ?= 0
 OPENMP ?= 0
 
 PAPI ?= 0
+
 
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
@@ -184,6 +188,10 @@ endif
 ifeq ($(PAPI),1)
 CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
+endif
+
+ifeq ($(WORLD_RECORD), 1)
+CXXFLAGS += -D MARDYN_WR=1
 endif
 
 
