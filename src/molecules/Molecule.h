@@ -1,13 +1,6 @@
 #ifndef MOLECULE_H_
 #define MOLECULE_H_
 
-
-/**
- * if we are not in MARDYN_WR mode, use the normal class Molecule
- * else, use the Molecule_WR.h class
- */
-#ifndef MARDYN_WR
-
 #include "MoleculeInterface.h"
 #include "molecules/Comp2Param.h"
 #include "molecules/Site.h"
@@ -344,11 +337,6 @@ private:
 	unsigned _soa_index_d;
 	unsigned _soa_index_q;
 };
-
-#else /* MARDYN_WR is defined */
-#include "Molecule_WR.h"
-typedef Molecule_WR Molecule;
-#endif
 
 std::ostream& operator<<( std::ostream& os, const Molecule& m );
 
