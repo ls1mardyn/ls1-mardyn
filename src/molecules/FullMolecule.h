@@ -1,5 +1,5 @@
-#ifndef MOLECULE_H_
-#define MOLECULE_H_
+#ifndef FULLMOLECULE_H_
+#define FULLMOLECULE_H_
 
 #include "MoleculeInterface.h"
 #include "molecules/Comp2Param.h"
@@ -15,25 +15,25 @@
 class Domain;
 class CellDataSoA;
 
-//! @brief Molecule modeled as LJ sphere with point polarities
-class Molecule : public MoleculeInterface {
+//! @brief FullMolecule modeled as LJ sphere with point polarities
+class FullMolecule : public MoleculeInterface {
 
 public:
 	// TODO Correct this constructor: the components vector is optional,
 	// but if it is left away, all pointer data is not initialized (which is not
 	// neccessarily bad), but then assertions fail (e.g. in the destructor) and we can't
 	// use it's instances.
-	Molecule(unsigned long id = 0, Component *component = nullptr,
+	FullMolecule(unsigned long id = 0, Component *component = nullptr,
 	         double rx = 0., double ry = 0., double rz = 0.,
 	         double vx = 0., double vy = 0., double vz = 0.,
 	         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
 	         double Dx = 0., double Dy = 0., double Dz = 0.
 	);
-	Molecule(const Molecule& m);
+	FullMolecule(const FullMolecule& m);
 
-	Molecule& operator=(const Molecule& m);
+	FullMolecule& operator=(const FullMolecule& m);
 
-	~Molecule() {
+	~FullMolecule() {
 		// don't delete SoA
 		_soa = nullptr;
 	}
@@ -239,7 +239,7 @@ public:
 	 *
 	 *  \param molecule2 molecule to which the distance shall be calculated
 	 */
-	double dist2(const Molecule& molecule2, double dr[3]) const {
+	double dist2(const FullMolecule& molecule2, double dr[3]) const {
 		double d2 = 0.;
 		for (unsigned short d = 0; d < 3; d++) {
 			dr[d] = molecule2._r[d] - _r[d];
@@ -338,6 +338,6 @@ private:
 	unsigned _soa_index_q;
 };
 
-std::ostream& operator<<( std::ostream& os, const Molecule& m );
+std::ostream& operator<<( std::ostream& os, const FullMolecule& m );
 
-#endif /* MOLECULE_H_ */
+#endif /* FULLMOLECULE_H_ */
