@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 class VTKFile_t;
 
 /**

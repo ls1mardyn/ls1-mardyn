@@ -9,7 +9,7 @@
 #endif
 #include <iostream>
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 class Component;
 class Domain;
 class ParticleContainer;

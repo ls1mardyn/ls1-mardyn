@@ -8,9 +8,9 @@
 #ifndef SRC_BHFMM_CELLPROCESSORS_SIMPLECELLPROCESSOR_H_
 #define SRC_BHFMM_CELLPROCESSORS_SIMPLECELLPROCESSOR_H_
 
+#include "molecules/MoleculeForwardDeclaration.h"
 #include <cstddef>
 #include <cmath>
-class Molecule;
 
 namespace bhfmm {
 

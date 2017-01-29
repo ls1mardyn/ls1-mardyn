@@ -24,12 +24,12 @@
 #include <vector>
 #include "ParticleIterator.h"
 
+#include "molecules/MoleculeForwardDeclaration.h"
 class CavityEnsemble;
 class CellProcessor;
 class ChemicalPotential;
 class Domain;
 class DomainDecompBase;
-class Molecule;
 class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;

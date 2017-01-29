@@ -77,6 +77,9 @@ ifeq ($(PRECISION), SINGLE)
   endif
 endif
 
+# Set World Record?
+WORLD_RECORD ?= 0
+
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0
 
@@ -186,6 +189,9 @@ CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
 endif
 
+ifeq ($(WORLD_RECORD), 1)
+CXXFLAGS += -D MARDYN_WR=1
+endif
 
 ifeq ($(DEPS),1)
 # create .deps subdirectories containing dependency information

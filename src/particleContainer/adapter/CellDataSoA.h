@@ -8,6 +8,7 @@
 #ifndef CELLDATASOA_H_
 #define CELLDATASOA_H_
 
+#include "CellDataSoABase.h"
 #include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
 #include <cstdint>
@@ -16,7 +17,7 @@
  * \brief Structure of Arrays for vectorized force calculation.
  * \author Johannes Heckl, Wolfgang Eckhardt, Uwe Ehmann
  */
-class CellDataSoA {
+class CellDataSoA : public CellDataSoABase {
 public:
 	CellDataSoA(size_t mol_arg, size_t ljc_arg, size_t charges_arg, size_t dipoles_arg, size_t quadrupoles_arg) {
 		resize(mol_arg, ljc_arg, charges_arg, dipoles_arg, quadrupoles_arg);

@@ -16,10 +16,10 @@
 #include "vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 #include "WrapOpenMP.h"
 
+#include "molecules/MoleculeForwardDeclaration.h"
 class Component;
 class Domain;
 class Comp2Param;
-class Molecule;
 class CellDataSoA;
 
 /**
