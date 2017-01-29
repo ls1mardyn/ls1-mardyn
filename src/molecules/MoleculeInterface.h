@@ -59,6 +59,8 @@ public:
 	virtual double U_rot() = 0;
 	double U_kin() { return U_trans() + U_rot(); }
 
+	virtual void updateMassInertia() = 0;
+
 	virtual void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) = 0;
 
 	virtual void setSoA(CellDataSoABase * const s) = 0;

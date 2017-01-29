@@ -63,6 +63,7 @@ public:
 
 	void setComponent(Component *component) {
 		_component = component;
+		this->updateMassInertia();
 	}
 
 	Component* component() const {
@@ -107,6 +108,8 @@ public:
 		// TODO: check values for single-centered molecules
 		return 0.0;
 	}
+
+	void updateMassInertia() {}
 
 
 	double U_rot() {
