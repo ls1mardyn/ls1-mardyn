@@ -104,3 +104,16 @@ void Molecule_WR::setid(unsigned long id) {
 		_soa->_mol_uid[_soa_index] = id;
 	}
 }
+
+std::string Molecule_WR::getWriteFormat(){
+	// TODO?
+	assert(false);
+	return std::string("ICRV");
+}
+
+std::ostream& operator<<( std::ostream& os, const Molecule_WR& m ) {
+	os << "ID: " << m.id() << "\n";
+	os << "r:  (" << m.r(0) << ", " << m.r(1) << ", " << m.r(2) << ")\n" ;
+	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
+	return os;
+}

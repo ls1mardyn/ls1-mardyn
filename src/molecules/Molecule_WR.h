@@ -265,7 +265,7 @@ public:
 	void upd_postF(double dt_halve, double& summv2, double& sumIw2) {}
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {}
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {}
-	static std::string getWriteFormat(); // TODO
+	static std::string getWriteFormat();
 	void write(std::ostream& ostrm) const {}
 	void clearFM() {}
 	void calcFM() {}
@@ -290,5 +290,7 @@ private:
 	CellDataSoA_WR * _soa;
 	size_t _soa_index;
 };
+
+std::ostream& operator<<( std::ostream& os, const Molecule_WR& m );
 
 #endif /* SRC_MOLECULES_MOLECULE_WR_H_ */
