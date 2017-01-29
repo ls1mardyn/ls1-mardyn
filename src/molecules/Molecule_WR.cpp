@@ -36,7 +36,7 @@ void Molecule_WR::setSoA(CellDataSoABase * const s) {
 		assert(false);
 	}
 #else
-	derived = static_cast<CellDataSoA *>(s);
+	derived = static_cast<CellDataSoA_WR *>(s);
 #endif
 	_soa = derived;
 }
