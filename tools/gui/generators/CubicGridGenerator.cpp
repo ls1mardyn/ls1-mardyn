@@ -188,8 +188,6 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 					addMolecule(x, y, z, id, particleContainer);
 					id++;
 				}
-				// increment id in any case, because this particle will probably
-				// be added by some other process
 			}
 		}
 		if ((int)(i * percentage) > percentageRead) {
@@ -210,8 +208,6 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 					addMolecule(x, y, z, id, particleContainer);
 					id++;
 				}
-				// increment id in any case, because this particle will probably
-				// be added by some other process
 			}
 		}
 		if ((int)(50 + i * percentage) > percentageRead) {
@@ -224,6 +220,12 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
 	inputTimer.stop();
 	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+
+	std::cout << "END-ID=" << id << std::endl;
+        if(id > _numMolecules * (domainDecomp->getRank()+1) / domainDecomp->getNumProcs()){
+            std::cout << "end-id excedes limits aborting. Please choose the parameters, such that the domains of each process have the same size!" << std::endl;
+            global_simulation->exit(203);
+        }
 	return id;
 }
 
