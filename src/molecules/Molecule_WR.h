@@ -159,75 +159,109 @@ public:
 
 	std::array<double, 3> site_d(unsigned int i) const {
 		assert(i == 0);
-		return std::array<double, 3>( { r(0), r(1), r(2) });
+		std::array<double, 3> ret;
+		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
+		return ret;
 	}
 
 	std::array<double, 3> ljcenter_d(unsigned int i) const {
 		assert(i == 0);
-		return std::array<double, 3>( { r(0), r(1), r(2) });
+		std::array<double, 3> ret;
+		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
+		return ret;
 	}
 	std::array<double, 3> charge_d(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> dipole_d(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> quadrupole_d(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 
 	std::array<double, 3> site_d_abs(unsigned int i) const {
 		assert(i == 0);
-		return std::array<double, 3>( { r(0), r(1), r(2) });
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
 		assert(i == 0);
-		return std::array<double, 3>( { r(0), r(1), r(2) });
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> charge_d_abs(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> dipole_d_abs(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> quadrupole_d_abs(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 
 	std::array<double, 3> dipole_e(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> quadrupole_e(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 
 	std::array<double, 3> site_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> ljcenter_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> charge_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> dipole_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 	std::array<double, 3> quadrupole_F(unsigned int i) const {
 		assert(false);
-		return std::array<double, 3>({0.0, 0.0, 0.0});
+		std::array<double, 3> ret;
+		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		return ret;
 	}
 
 	void normalizeQuaternion() {}

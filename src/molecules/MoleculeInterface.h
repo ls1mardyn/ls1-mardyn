@@ -11,6 +11,7 @@
 #include "molecules/Component.h"
 #include "molecules/Quaternion.h"
 #include "particleContainer/adapter/CellDataSoABase.h"
+#include <array>
 
 class MoleculeInterface {
 public:

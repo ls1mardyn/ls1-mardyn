@@ -8,7 +8,6 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
-#include <array>
 #include <string>
 
 
