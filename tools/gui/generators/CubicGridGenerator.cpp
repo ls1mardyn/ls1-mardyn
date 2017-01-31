@@ -159,9 +159,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		_components[1].updateMassInertia();
 	}
 
-
-	unsigned long int id = _numMolecules * domainDecomp->getRank() / domainDecomp->getNumProcs();
-	std::cout << "Start-ID=" << id << std::endl;
+	unsigned long int id = 0;
 	double spacing = _simBoxLength / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
@@ -215,18 +213,28 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
 		}
 	}
+
+
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(id);//number of local molecules
+	domainDecomp->collCommScanSum();
+	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
+	domainDecomp->collCommFinalize();
+	// fix ID's to be unique:
+	for (auto mol = particleContainer->begin(); mol != particleContainer->end(); mol = particleContainer->next()) {
+		mol->setid(mol->id()+idOffset);
+	}
+	std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
+	std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
+
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
 	inputTimer.stop();
 	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
 
-	std::cout << "END-ID=" << id << std::endl;
-        if(id > _numMolecules * (domainDecomp->getRank()+1) / domainDecomp->getNumProcs()){
-            std::cout << "end-id excedes limits aborting. Please choose the parameters, such that the domains of each process have the same size!" << std::endl;
-            global_simulation->exit(203);
-        }
-	return id;
+
+	return id + idOffset;
 }
 
 void CubicGridGenerator::addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer) {

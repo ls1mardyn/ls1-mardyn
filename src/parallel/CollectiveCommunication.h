@@ -156,6 +156,27 @@ public:
 #endif
 	}
 
+	// documentation in base class
+	void scanSum() {
+	#if ENABLE_AGGLOMERATED_REDUCE
+			setMPIType();
+			MPI_Op agglomeratedTypeAddOperator;
+			const int commutative = 1;
+			valType * startOfValues = &(_values[0]);
+			MPI_CHECK(
+					MPI_Op_create(
+							(MPI_User_function * ) CollectiveCommunication::add,
+							commutative, &agglomeratedTypeAddOperator));
+			MPI_CHECK(
+					MPI_Scan(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator));
+			MPI_CHECK(MPI_Op_free(&agglomeratedTypeAddOperator));
+			MPI_CHECK(MPI_Type_free(&_agglomeratedType));
+	#else
+			for( int i = 0; i < _numValues; i++ ) {
+				MPI_CHECK( MPI_Scan( MPI_IN_PLACE, &(_values[i]), 1, _types[i], MPI_SUM, _communicator ) );
+			}
+	#endif
+		}
 private:
 	//! @brief defines a MPI datatype which can be used to transfer a CollectiveCommunication object
 	//!

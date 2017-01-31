@@ -103,6 +103,10 @@ public:
 		_collCommunication.allreduceSum();
 	}
 
+	void collCommScanSum() {
+		_collCommunication.scanSum();
+	}
+
 	void collCommBroadcast(int root = 0) {
 		_collCommunication.broadcast(root);
 	}

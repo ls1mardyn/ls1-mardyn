@@ -222,6 +222,10 @@ void DomainDecompBase::collCommAllreduceSum() {
 	_collCommBase.allreduceSum();
 }
 
+void DomainDecompBase::collCommScanSum() {
+	_collCommBase.scanSum();
+}
+
 void DomainDecompBase::collCommBroadcast(int root) {
 	_collCommBase.broadcast(root);
 }
