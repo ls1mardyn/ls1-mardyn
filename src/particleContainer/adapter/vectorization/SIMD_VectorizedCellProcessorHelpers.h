@@ -317,6 +317,14 @@ void vcp_simd_load_sub_store(vcp_real_calc * const addr, size_t offset, const Re
 	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
 }
 
+template <class MaskGatherChooser>
+static vcp_inline
+void vcp_simd_load_fnmadd_store(vcp_real_calc * const addr, size_t offset, const RealCalcVec& value, const RealCalcVec& mult, const vcp_lookupOrMask_vec& lookupORforceMask) {
+	RealCalcVec sum = MaskGatherChooser::load(addr, offset, lookupORforceMask);
+	sum = RealCalcVec::fnmadd(value, mult, sum);
+	MaskGatherChooser::store(addr, offset, sum, lookupORforceMask);
+}
+
 /**
  * loads vector from memory location, adds the value to it and saves the combined result.
  * @param addr memory address where value should be loaded from and stored to
