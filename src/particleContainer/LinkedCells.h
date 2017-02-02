@@ -317,7 +317,7 @@ private:
 	long int cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const;
 
 	//! @brief given the index in the cell vector, return the index of the cell.
-	void threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const;
+	void threeDIndexOfCellIndex(int ind, int r[3], const int dim[3]) const;
 
 	/**
 	 * @brief delete particles which lie outside a cuboid region
@@ -368,10 +368,7 @@ private:
 	long _minNeighbourOffset;
 
 	// addition for compact SimpleMD-style traversal
-	std::vector<std::pair<unsigned long, unsigned long> > _cellPairOffsets;
-
-	unsigned int _numActiveColours;
-	std::vector<std::vector<long int> > _cellIndicesPerColour;
+	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
