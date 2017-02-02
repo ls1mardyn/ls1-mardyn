@@ -312,7 +312,7 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 }
 
 int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
-	int oldNumberOfParticles = _cells.size();
+	int oldNumberOfParticles = getNumberOfParticles();//_cells.size(); <- cells.size() is wrong!
 
 	typedef vector<Molecule>::size_type index_t;
 	static vector< vector<ParticleCell>::size_type > index_vector;
@@ -357,7 +357,8 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 	index_vector.clear();
 
-	int numberOfAddedParticles = _cells.size() - oldNumberOfParticles;
+	//int numberOfAddedParticles = _cells.size() - oldNumberOfParticles;//wrong!!!
+	int numberOfAddedParticles = getNumberOfParticles() - oldNumberOfParticles;
 	global_log->debug()<<"In LinkedCells::addParticles :"<<endl;
 	global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<endl;
 	global_log->debug()<<"\t#Particles actually added = "<<numberOfAddedParticles<<endl;
