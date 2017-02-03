@@ -66,9 +66,9 @@ public:
 	unsigned int getComponentID() { return this->componentid; }
 	int rank() { return this->ownrank; }
 
-        void disableWidom() { this->widom = false; }
-        void enableWidom() { this->widom = true; }
-        bool isWidom() { return this->widom; }
+	void disableWidom() { this->widom = false; }
+	void enableWidom() { this->widom = true; }
+	bool isWidom() { return this->widom; }
 
 	double getLambda() { return this->lambda; }
 	float getDensityCoefficient() { return this->decisive_density; }
@@ -119,7 +119,7 @@ private:
 
 	double lambda;
 
-        bool widom;  // Widom method -> determine mu by test insertions which are all rejected
+	bool widom; // Widom method -> determine mu by test insertions which are all rejected
 
 	Molecule* reservoir;
 
