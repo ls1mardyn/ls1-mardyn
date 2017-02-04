@@ -32,7 +32,7 @@ public:
 	void prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
-	bool getDeletion(TMoleculeContainer* cell, double* minco, double* maxco);
+	bool getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco);
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);
@@ -84,6 +84,8 @@ public:
 
 
 private:
+	bool moleculeStrictlyNotInBox(const Molecule& m, const double l[3], const double u[3]) const;
+
 	int ownrank;  // only for debugging purposes (indicate rank in console output)
 
 	double h;  // Plancksches Wirkungsquantum

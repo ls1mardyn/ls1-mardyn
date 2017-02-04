@@ -179,8 +179,17 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 	}
 }
 
-bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco,
-		double* maxco) {
+bool ChemicalPotential::moleculeStrictlyNotInBox(const Molecule& m,
+		const double l[3], const double u[3]) const {
+
+	bool out = false;
+	for (int d = 0; d < 3; ++d) {
+		out |= m.r(d) < l[d] or m.r(d) > u[d];
+	}
+	return out;
+}
+
+bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco) {
 	if (this->remainingDeletions.empty())
 		return false; // DELETION_FALSE (always occurring for Widom)
 
@@ -190,10 +199,8 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco,
 	double tmaxco[3];
 	if (restrictedControlVolume)
 		for (int d = 0; d < 3; d++) {
-			tminco[d] =
-					(minco[d] > control_bottom[d]) ?
-							minco[d] : control_bottom[d];
-			tmaxco[d] = (maxco[d] < control_top[d]) ? maxco[d] : control_top[d];
+			tminco[d] = (minco[d] > control_bottom[d]) ? minco[d] : control_bottom[d];
+			tmaxco[d] = (maxco[d] < control_top[d])    ? maxco[d] : control_top[d];
 		}
 	else
 		for (int d = 0; d < 3; d++) {
@@ -201,48 +208,47 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* cell, double* minco,
 			tmaxco[d] = maxco[d];
 		}
 
-	if (cell->getNumberOfParticles() == 0)
+	if (moleculeContainer->getNumberOfParticles() == 0)
 		return false; // DELETION_INVALID
-	Molecule* m = cell->begin();
+
+	Molecule* m = moleculeContainer->begin();
 	int j = 0;
 	for (unsigned i = 0; (i < idx); i++) {
-		while (((m->r(0) > tmaxco[0]) || (m->r(1) > tmaxco[1])
-				|| (m->r(2) > tmaxco[2]) || (m->r(0) < tminco[0])
-				|| (m->r(1) < tminco[1]) || (m->r(2) < tminco[2])
-				|| (m->componentid() != this->componentid))
-				&& (m != cell->end())) {
-			m = cell->next();
-			if (m == cell->end()) {
+		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != this->componentid))
+				and (m != moleculeContainer->end()))
+		{
+			m = moleculeContainer->next();
+			if (m == moleculeContainer->end()) {
 				if (j == 0)
 					return false; // DELETION_FALSE
-				m = cell->begin();
+				m = moleculeContainer->begin();
 				j = 0;
 			}
 		}
-		m = cell->next();
+		m = moleculeContainer->next();
 		j++;
-		if (m == cell->end()) {
+		if (m == moleculeContainer->end()) {
 			if (j == 0)
 				return false; // DELETION_FALSE
-			m = cell->begin();
+			m = moleculeContainer->begin();
 			j = 0;
 		}
 	}
-	while ((m->r(0) > tmaxco[0]) || (m->r(1) > tmaxco[1])
-			|| (m->r(2) > tmaxco[2]) || (m->r(0) < tminco[0])
-			|| (m->r(1) < tminco[1]) || (m->r(2) < tminco[2])
-			|| (m->componentid() != this->componentid)) {
-		m = cell->next();
-		if (m == cell->end()) {
+
+	while (moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != this->componentid))
+	{
+		m = moleculeContainer->next();
+		if (m == moleculeContainer->end()) {
 			if (j == 0)
 				return false; // DELETION_FALSE
-			m = cell->begin();
+			m = moleculeContainer->begin();
 		}
 	}
+
 #ifndef NDEBUG
-	global_log->debug() << "ID " << m->id() << " selected for deletion (index "
-			<< idx << ")." << std::endl;
+	global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
+
 	assert(m->id() < nextid);
 	return true; // DELETION_TRUE
 }
