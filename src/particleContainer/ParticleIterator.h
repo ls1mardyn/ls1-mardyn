@@ -28,6 +28,7 @@ public:
 
 	ParticleIterator ();
 	ParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg);
+	ParticleIterator& operator=(const ParticleIterator& other);
 
 	void operator ++ ();
 
@@ -74,6 +75,15 @@ inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, cons
 //			// leave object as is
 //		}
 	}
+}
+
+inline ParticleIterator& ParticleIterator::operator=(const ParticleIterator& other)
+{
+	assert(_stride == other._stride);
+	_cells = other._cells;
+	_cell_index = other._cell_index;
+	_mol_index = other._mol_index;
+	return *this;
 }
 
 inline void ParticleIterator :: next_non_empty_cell()

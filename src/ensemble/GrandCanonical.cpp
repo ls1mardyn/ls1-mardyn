@@ -211,37 +211,38 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 	if (moleculeContainer->getNumberOfParticles() == 0)
 		return false; // DELETION_INVALID
 
-	Molecule* m = moleculeContainer->begin();
+	ParticleIterator m = moleculeContainer->iteratorBegin();
 	int j = 0;
 	for (unsigned i = 0; (i < idx); i++) {
 		while ((moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != this->componentid))
-				and (m != moleculeContainer->end()))
+				and (m != moleculeContainer->iteratorEnd()))
 		{
-			m = moleculeContainer->next();
-			if (m == moleculeContainer->end()) {
+			++m;
+			if (m == moleculeContainer->iteratorEnd()) {
 				if (j == 0)
 					return false; // DELETION_FALSE
-				m = moleculeContainer->begin();
+				m = moleculeContainer->iteratorBegin();
 				j = 0;
 			}
-		}
-		m = moleculeContainer->next();
+		} /*end while*/
+
+		++m;
 		j++;
-		if (m == moleculeContainer->end()) {
+		if (m == moleculeContainer->iteratorEnd()) {
 			if (j == 0)
-				return false; // DELETION_FALSE
-			m = moleculeContainer->begin();
+				return false; // DELETION_FALSE // this will never be executed?
+			m = moleculeContainer->iteratorBegin();
 			j = 0;
 		}
 	}
 
 	while (moleculeStrictlyNotInBox(*m, tminco, tmaxco) or (m->componentid() != this->componentid))
 	{
-		m = moleculeContainer->next();
-		if (m == moleculeContainer->end()) {
+		++m;
+		if (m == moleculeContainer->iteratorEnd()) {
 			if (j == 0)
 				return false; // DELETION_FALSE
-			m = moleculeContainer->begin();
+			m = moleculeContainer->iteratorBegin();
 		}
 	}
 
