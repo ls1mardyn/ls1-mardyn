@@ -144,32 +144,6 @@ public:
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
 
-	//! @brief returns a pointer to the first particle in the Linked Cells
-	//!
-	//! Internally, the particles are store in a std::list. To traverse this
-	//! list, a iterator (_particleIter) for the list is used.
-	//! This method sets this iterator to point to the begin of the list
-	//! and return a pointer to the value pointed to by the iterator
-	MoleculeIterator begin();
-
-	//! @brief returns a pointer to the next particle in the Linked Cells
-	//!
-	//! The iterator _particleIter is first incremented. Then a pointer
-	//! to the value pointed to by the iterator is returned. If the
-	//! iterator points to the end of the list (which is one element after the last
-	//! element), NULL is returned
-	MoleculeIterator next();
-
-	//! @brief returns current particle
-	MoleculeIterator current();
-
-	//! @brief returns NULL
-	MoleculeIterator end();
-
-	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-	// i.e. use as follows: for(it = LC.begin(); it != LC.end();) {if(erase) {it = deleteCurrent();} else {it = LC.next()}}
-	MoleculeIterator deleteCurrent();
-
 	// @todo: where is this function called?
 	void clear();
 

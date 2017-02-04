@@ -607,73 +607,6 @@ unsigned long LinkedCells::getNumberOfParticles() {
 	return N;
 }
 
-MoleculeIterator LinkedCells::nextNonEmptyCell() {
-	MoleculeIterator ret = LinkedCells::end();
-
-	const std::vector<ParticleCell>::const_iterator cellsEnd = _cells.end();
-
-	do {
-		++_cellIterator;
-	} while (_cellIterator != cellsEnd and _cellIterator->isEmpty());
-
-	if (_cellIterator != cellsEnd) {
-		_particleIndex = 0;
-		ret = &(_cellIterator->moleculesAt(_particleIndex));
-	}
-
-	return ret;
-}
-
-MoleculeIterator LinkedCells::begin() {
-	MoleculeIterator ret = LinkedCells::end();
-
-	_cellIterator = _cells.begin();
-
-	if (_cellIterator->isEmpty()) {
-		ret = nextNonEmptyCell();
-	} else {
-		_particleIndex = 0;
-		ret = &(_cellIterator->moleculesAt(_particleIndex));
-	}
-
-	return ret;
-}
-
-MoleculeIterator LinkedCells::next() {
-	MoleculeIterator ret = LinkedCells::end();
-
-	++_particleIndex;
-
-	if (_particleIndex != static_cast<std::vector<Molecule *>::size_type>(_cellIterator->getMoleculeCount())) {
-		ret = &(_cellIterator->moleculesAt(_particleIndex));
-	} else {
-		ret = nextNonEmptyCell();
-	}
-
-	return ret;
-}
-
-MoleculeIterator LinkedCells::current() {
-	return &(_cellIterator->moleculesAt(_particleIndex));
-}
-
-MoleculeIterator LinkedCells::end() {
-	return nullptr;
-}
-
-MoleculeIterator LinkedCells::deleteCurrent() {
-	_cellIterator->deleteMoleculeByIndex(_particleIndex);
-
-	MoleculeIterator ret;
-	if (_particleIndex != static_cast<std::vector<Molecule *>::size_type>(_cellIterator->getMoleculeCount())) {
-		ret = &(_cellIterator->moleculesAt(_particleIndex));
-	} else {
-		ret = nextNonEmptyCell();
-	}
-
-	return ret;
-}
-
 void LinkedCells::clear() {
 	vector<ParticleCell>::iterator cellIter;
 	for (cellIter = _cells.begin(); cellIter != _cells.end(); cellIter++) {
@@ -683,13 +616,15 @@ void LinkedCells::clear() {
 
 void LinkedCells::deleteParticlesOutsideBox(double boxMin[3],
 		double boxMax[3]) {
-	Molecule * it;
-	for (it = begin(); it != end();) {
+	// This should be unimportant
+
+	ParticleIterator it;
+	for (it = iteratorBegin(); it != iteratorEnd();) {
 		bool keepMolecule = it->inBox(boxMin, boxMax);
 		if (keepMolecule) {
-			it = next();
+			++it;
 		} else {
-			it = deleteCurrent();
+			it.deleteCurrentParticle();
 		}
 	}
 }

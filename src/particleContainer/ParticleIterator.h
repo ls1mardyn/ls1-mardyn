@@ -40,6 +40,8 @@ public:
 
 	static ParticleIterator invalid ();
 
+	void deleteCurrentParticle();
+
 private:
 	CellContainer_T_ptr _cells;
 
@@ -152,4 +154,12 @@ inline void ParticleIterator :: make_invalid ()
 	_mol_index = MolIndex_T(-1);
 }
 
+inline void ParticleIterator :: deleteCurrentParticle ()
+{
+	_cells->at(_cell_index).deleteMoleculeByIndex(_mol_index);
+
+	if (_mol_index >= static_cast<MolIndex_T>(_cells->at(_cell_index).getMoleculeCount())) {
+		next_non_empty_cell();
+	}
+}
 #endif /* #ifndef ParticleIterator_INC */
