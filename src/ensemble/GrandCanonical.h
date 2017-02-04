@@ -11,6 +11,7 @@ class DomainDecompBase;
 class ParticleContainer;
 class CellProcessor;
 class Domain;
+class ParticleIterator;
 
 typedef ParticleContainer TMoleculeContainer;
 
@@ -32,7 +33,7 @@ public:
 	void prepareTimestep(TMoleculeContainer* cell, DomainDecompBase* comm);  // C must not contain the halo!
 
 	// false if no deletion remains for this subdomain
-	bool getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco);
+	bool getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret);
 	unsigned long getInsertion(double* ins);  // 0 if no insertion remains for this subdomain
 	bool decideDeletion(double deltaUTilde);
 	bool decideInsertion(double deltaUTilde);

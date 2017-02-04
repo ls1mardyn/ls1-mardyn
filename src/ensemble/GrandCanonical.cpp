@@ -189,7 +189,7 @@ bool ChemicalPotential::moleculeStrictlyNotInBox(const Molecule& m,
 	return out;
 }
 
-bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco) {
+bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, double* minco, double* maxco, ParticleIterator* ret) {
 	if (this->remainingDeletions.empty())
 		return false; // DELETION_FALSE (always occurring for Widom)
 
@@ -251,6 +251,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 #endif
 
 	assert(m->id() < nextid);
+	*ret = m;
 	return true; // DELETION_TRUE
 }
 
@@ -443,7 +444,7 @@ void ChemicalPotential::grandcanonicalStep(
 		CellProcessor* cellProcessor) {
 	bool accept = true;
 	double DeltaUpot;
-	Molecule* m;
+	ParticleIterator m;
 	ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
 
 	this->_localInsertionsMinusDeletions = 0;
@@ -462,18 +463,14 @@ void ChemicalPotential::grandcanonicalStep(
 	unsigned nextid = 0;
 	while (hasDeletion || hasInsertion) {
 		if (hasDeletion)
-			hasDeletion = this->getDeletion(moleculeContainer, minco, maxco);
+			hasDeletion = this->getDeletion(moleculeContainer, minco, maxco, &m);
 		if (hasDeletion) {
-			m = moleculeContainer->current();
-			DeltaUpot = -1.0
-					* moleculeContainer->getEnergy(&particlePairsHandler, m,
-							*cellProcessor);
+			DeltaUpot = -1.0 * moleculeContainer->getEnergy(&particlePairsHandler, &(*m), *cellProcessor);
 
 			accept = this->decideDeletion(DeltaUpot / T);
 #ifndef NDEBUG
 			if (accept) {
-				cout << "r" << this->rank() << "d" << m->id() << " with energy "
-						<< DeltaUpot << endl;
+				cout << "r" << this->rank() << "d" << m->id() << " with energy " << DeltaUpot << endl;
 				cout.flush();
 			}
 			/*
@@ -494,23 +491,18 @@ void ChemicalPotential::grandcanonicalStep(
 
 				this->storeMolecule(*m);
 
-				moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1),
-						m->r(2), true/*rebuildCaches*/);
-				//moleculeContainer->_particleIterator = moleculeContainer->begin();
-				moleculeContainer->begin(); // will set _particleIterator to the beginning
+				moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2), true/*rebuildCaches*/);
+				m = moleculeContainer->iteratorBegin();
 				this->_localInsertionsMinusDeletions--;
 			}
-		}
+		} /* end of second hasDeletion */
 
 		if (!this->hasSample()) {
-			m = moleculeContainer->begin();
-			//old: m = &(*(_particles.begin()));
+			m = moleculeContainer->iteratorBegin();
 			bool rightComponent = false;
-			MoleculeIterator mit;
+			ParticleIterator mit;
 			if (m->componentid() != this->getComponentID()) {
-				for (mit = moleculeContainer->begin();
-						mit != moleculeContainer->end();
-						mit = moleculeContainer->next()) {
+				for (mit = moleculeContainer->iteratorBegin(); mit != moleculeContainer->iteratorEnd(); ++mit) {
 					if (mit->componentid() == this->getComponentID()) {
 						rightComponent = true;
 						break;
@@ -518,7 +510,7 @@ void ChemicalPotential::grandcanonicalStep(
 				}
 			}
 			if (rightComponent)
-				m = &(*(mit));
+				m = mit;
 			this->storeMolecule(*m);
 		}
 		if (hasInsertion) {
@@ -537,16 +529,15 @@ void ChemicalPotential::grandcanonicalStep(
 
 //			std::list<Molecule>::iterator mit = _particles.end();
 			Molecule* mit = &tmp;
-			m = &(*mit);
 			// m->upd_cache(); TODO: what to do here? somebody deleted the method "upd_cache"!!! why??? -- update caches do no longer exist ;)
 			// reset forces and torques to zero
 			if (!this->isWidom()) {
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
-				m->setF(zeroVec);
-				m->setM(zeroVec);
-				m->setVi(zeroVec);
+				mit->setF(zeroVec);
+				mit->setM(zeroVec);
+				mit->setVi(zeroVec);
 			}
-			m->check(nextid);
+			mit->check(nextid);
 #ifndef NDEBUG
 			/*
 			 cout << "rank " << this->rank() << ": insert "
@@ -557,7 +548,7 @@ void ChemicalPotential::grandcanonicalStep(
 
 //			unsigned long cellid = moleculeContainer->getCellIndexOfMolecule(m);
 //			moleculeContainer->_cells[cellid].addParticle(m);
-			DeltaUpot = moleculeContainer->getEnergy(&particlePairsHandler, m,
+			DeltaUpot = moleculeContainer->getEnergy(&particlePairsHandler, mit,
 					*cellProcessor);
 			domain->submitDU(this->getComponentID(), DeltaUpot, ins);
 			accept = this->decideInsertion(DeltaUpot / T);
@@ -578,10 +569,8 @@ void ChemicalPotential::grandcanonicalStep(
 				this->_localInsertionsMinusDeletions++;
 				double zeroVec[3] = { 0.0, 0.0, 0.0 };
 				tmp.setVi(zeroVec);
-				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false,
-						rebuildCaches = true;
-				moleculeContainer->addParticle(tmp, inBoxCheckedAlready,
-						checkWhetherDuplicate, rebuildCaches);
+				bool inBoxCheckedAlready = false, checkWhetherDuplicate = false, rebuildCaches = true;
+				moleculeContainer->addParticle(tmp, inBoxCheckedAlready, checkWhetherDuplicate, rebuildCaches);
 			} else {
 				// moleculeContainer->deleteMolecule(m->id(), m->r(0), m->r(1), m->r(2));
 //				moleculeContainer->_cells[cellid].deleteMolecule(m->id());
@@ -589,14 +578,13 @@ void ChemicalPotential::grandcanonicalStep(
 				mit->setF(zeroVec);
 				mit->setM(zeroVec);
 				mit->setVi(zeroVec);
-				mit->check(m->id());
+				mit->check(mit->id());
 //				moleculeContainer->_particles.erase(mit);
 			}
 		}
 	}
 #ifndef NDEBUG
-	for (m = moleculeContainer->begin(); m != moleculeContainer->end(); m =
-			moleculeContainer->next()) {
+	for (m = moleculeContainer->iteratorBegin(); m != moleculeContainer->iteratorEnd(); ++m) {
 		// cout << *m << "\n";
 		// cout.flush();
 		m->check(m->id());
