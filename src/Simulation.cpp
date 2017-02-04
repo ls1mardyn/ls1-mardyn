@@ -786,9 +786,6 @@ void Simulation::prepare_start() {
 
 void Simulation::simulate() {
 
-	// by Stefan Becker
-	Molecule* tM;
-
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
@@ -1125,7 +1122,7 @@ void Simulation::simulate() {
 				double tTarget;
 				double stdDevTrans, stdDevRot;
 				if(_domain->severalThermostats()) {
-					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
 						if (_rand.rnd() < nuDt){
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
@@ -1141,7 +1138,7 @@ void Simulation::simulate() {
 				}
 				else{
 					tTarget = _domain->getTargetTemperature(0);
-					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
 						if (_rand.rnd() < nuDt){
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity

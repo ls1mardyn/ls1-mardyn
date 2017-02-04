@@ -82,14 +82,14 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 	 * (here and in class Domain) is a nightmare.
 	 */
 
-	Molecule* tM;
+	ParticleIterator tM;
 	map<int, unsigned long> N;
 	map<int, unsigned long> rotDOF;
 	map<int, double> summv2;
 	map<int, double> sumIw2;
 	double dt_half = 0.5 * this->_timestepLength;
 	if (domain->severalThermostats()) {
-		for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
+		for (tM = molCont->iteratorBegin(); tM != molCont->iteratorEnd(); ++tM) {
 			int cid = tM->componentid();
 			int thermostat = domain->getThermostat(cid);
 			tM->upd_postF(dt_half, summv2[thermostat], sumIw2[thermostat]);
@@ -162,8 +162,8 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 				componentwiseVelocityDelta[d][compit->ID()] = 0;
 	}
 
-	Molecule* thismol;
-	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
+	ParticleIterator thismol;
+	for (thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol) {
 		unsigned cid = thismol->componentid();
 		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
@@ -186,8 +186,8 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 				componentwiseVelocityDelta[d][compit->ID()] = 0;
 	}
 
-	Molecule* thismol;
-	for (thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
+	ParticleIterator thismol;
+	for (thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol) {
 		unsigned cid = thismol->componentid();
 		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
