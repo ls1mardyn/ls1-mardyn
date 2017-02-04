@@ -45,11 +45,11 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 	LegacyCellProcessor cellProcessor( 1.1, 1.1, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		m->calcFM();
 	}
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << std::endl;
@@ -84,11 +84,11 @@ void ForceCalculationTest::testForcePotentialCalculationF0() {
 	LegacyCellProcessor cellProcessor( 1.3, 1.3, &forceAdapter);
 	container->traverseCells(cellProcessor);
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		m->calcFM();
 	}
 
-	for (Molecule* m = container->begin(); m != container->end(); m = container->next()) {
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
 		for (int i = 0; i < 3; i++) {
 			std::stringstream str;
 			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;

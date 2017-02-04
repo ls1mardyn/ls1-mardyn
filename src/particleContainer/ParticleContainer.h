@@ -171,7 +171,7 @@ public:
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMax(int dimension) const;
 
-#if 1
+#if 0
 	//! @brief Returns a pointer to the first particle in the Container
 	virtual MoleculeIterator begin() = 0;
 
