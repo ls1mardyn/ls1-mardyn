@@ -262,7 +262,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		MPI_CHECK( MPI_File_set_view(mpifh, mpioffset, mpidtParticleM, mpidtParticleM, const_cast<char*>(mpidatarep), MPI_INFO_NULL) );	// arg 5 type cast due to old MPI (<=V2) implementations (should be const char* now)
 		global_log->debug() << "MPICheckpointWriter" << ownrank << "\twriting molecule data" << endl;
 		ParticleData particleStruct;
-		for (Molecule* pos = particleContainer->begin(); pos != particleContainer->end(); pos = particleContainer->next()) {
+		for (ParticleIterator pos = particleContainer->iteratorBegin(); pos != particleContainer->iteratorEnd(); ++pos) {
 			//global_log->debug() << pos->id() << "\t" << pos->componentid() << "\t" << pos->r(0) << "," << pos->r(1) << "," << pos->r(2) << endl;
 			ParticleData::MoleculeToParticleData(particleStruct, *pos);
 			MPI_CHECK( MPI_File_write(mpifh, &particleStruct, 1, mpidtParticleD, &mpistat) );

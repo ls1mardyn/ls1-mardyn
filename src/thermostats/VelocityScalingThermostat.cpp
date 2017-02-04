@@ -43,9 +43,8 @@ void VelocityScalingThermostat::setVelocity(int componentId, double v[3]) {
 }
 
 void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
-	Molecule *molecule;
 	if(_componentwise ) {
-		for (molecule = moleculeContainer->begin(); molecule != moleculeContainer->end(); molecule = moleculeContainer->next()) {
+		for (ParticleIterator molecule = moleculeContainer->iteratorBegin(); molecule != moleculeContainer->iteratorEnd(); ++molecule) {
 			int thermostatId;
 			double betaTrans = _globalBetaTrans;
 			double betaRot = _globalBetaRot;

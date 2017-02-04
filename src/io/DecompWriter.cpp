@@ -84,8 +84,8 @@ void DecompWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBa
 					if(ownRank==0) {
 						decompstrm << "particleData xyz" << endl;
 					}
-					Molecule* moleculePtr;
-					for(moleculePtr = particleContainer->begin(); moleculePtr != particleContainer->end(); moleculePtr = particleContainer->next()) {
+					ParticleIterator moleculePtr;
+					for(moleculePtr = particleContainer->iteratorBegin(); moleculePtr != particleContainer->iteratorEnd(); ++moleculePtr) {
 						decompstrm << moleculePtr->r(0) << "\t" << moleculePtr->r(1) << "\t" << moleculePtr->r(2) << endl;
 					}
 					decompstrm.close();
