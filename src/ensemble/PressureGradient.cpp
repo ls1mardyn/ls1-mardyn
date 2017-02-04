@@ -72,13 +72,13 @@ void PressureGradient::determineAdditionalAcceleration
 
 	for(ParticleIterator thismol = mBegin; thismol != mEnd; ++thismol)
 	{
-		unsigned int cid = (*thismol)->componentid();
+		unsigned int cid = thismol->componentid();
 		map<unsigned int, unsigned int>::iterator uCSIDit = this->_universalComponentSetID.find(cid);
 		if(uCSIDit == _universalComponentSetID.end()) continue;
 		unsigned cosetid = uCSIDit->second;
 		this->_localN[cosetid]++;
 		for(unsigned short int d = 0; d < 3; d++)
-			this->_localVelocitySum[d][cosetid] += (*thismol)->v(d);
+			this->_localVelocitySum[d][cosetid] += thismol->v(d);
 	}
 
 	// domainDecomp->collectCosetVelocity(&_localN, _localVelocitySum, &_globalN, _globalVelocitySum);

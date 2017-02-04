@@ -167,7 +167,7 @@ void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential
 	// and begin and end work correctly
 	unsigned long uID = 1;
 	for (ParticleIterator mol = begin; mol != end; ++mol, ++uID) {
-		ASSERT_EQUAL(uID, (*mol)->id());
+		ASSERT_EQUAL(uID, mol->id());
 	}
 }
 

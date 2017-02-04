@@ -82,14 +82,14 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer) {
 
 			for (ParticleIterator i = begin; i != end; ++i) {
 				if(this->_useGlobalVelocity) {
-					(*i)->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
-					(*i)->scale_v(betaTrans);
-					(*i)->vadd(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
+					i->vsub(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
+					i->scale_v(betaTrans);
+					i->vadd(_globalVelocity[0], _globalVelocity[1], _globalVelocity[2]);
 				}
 				else {
-					(*i)->scale_v(betaTrans);
+					i->scale_v(betaTrans);
 				}
-				(*i)->scale_D(betaRot);
+				i->scale_D(betaRot);
 			}
 		} // end pragma omp parallel
 	}

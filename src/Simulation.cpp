@@ -723,7 +723,7 @@ void Simulation::prepare_start() {
 		const ParticleIterator end = _moleculeContainer->iteratorEnd();
 
 		for (ParticleIterator i = begin; i != end; ++i){
-			(*i)->calcFM();
+			i->calcFM();
 		}
 	} // end pragma omp parallel
 

@@ -61,7 +61,7 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* /*domain*/) {
 		const ParticleIterator end = molCont->iteratorEnd();
 
 		for (ParticleIterator i = begin; i != end; ++i) {
-			(*i)->upd_preF(_timestepLength);
+			i->upd_preF(_timestepLength);
 		}
 	}
 
@@ -111,10 +111,10 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			const ParticleIterator end = molCont->iteratorEnd();
 
 			for (ParticleIterator i = begin; i != end; ++i) {
-				(*i)->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
+				i->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
 				assert(summv2gt_l >= 0.0);
 				Ngt_l++;
-				rotDOFgt_l += (*i)->component()->getRotationalDegreesOfFreedom();
+				rotDOFgt_l += i->component()->getRotationalDegreesOfFreedom();
 			}
 
 			#if defined(_OPENMP)

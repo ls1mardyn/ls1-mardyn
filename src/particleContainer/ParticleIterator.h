@@ -19,8 +19,6 @@
 #include <cassert>
 #include "ParticleCell.h"
 
-#include "molecules/MoleculeForwardDeclaration.h"
-
 class ParticleIterator {
 public:
 	typedef std :: vector<ParticleCell> CellContainer_T;
@@ -36,7 +34,8 @@ public:
 	bool operator == (const ParticleIterator& other) const;
 	bool operator != (const ParticleIterator& other) const;
 
-	Molecule* operator * () const;
+	Molecule& operator *  () const;
+	Molecule* operator -> () const;
 
 	static ParticleIterator invalid ();
 
@@ -119,11 +118,18 @@ inline bool ParticleIterator :: operator != (const ParticleIterator& other) cons
 	return not (*this == other);
 }
 
-inline Molecule* ParticleIterator :: operator * () const
+inline Molecule& ParticleIterator :: operator * () const
 {
 	// .at method performs automatically an out-of-bounds check
-	return &(_cells->at(_cell_index).moleculesAt(_mol_index));
+	return _cells->at(_cell_index).moleculesAt(_mol_index);
 }
+
+// no clue why this returns a pointer
+inline Molecule* ParticleIterator:: operator-> () const
+{
+	return &(this->operator*());
+}
+
 
 inline ParticleIterator ParticleIterator :: invalid ()
 {

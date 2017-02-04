@@ -171,6 +171,7 @@ public:
 	//! @param dimension the coordinate which should be returned
 	double getBoundingBoxMax(int dimension) const;
 
+#if 1
 	//! @brief Returns a pointer to the first particle in the Container
 	virtual MoleculeIterator begin() = 0;
 
@@ -188,6 +189,7 @@ public:
 
 	//! @brief Has to return the same as next() after it already pointed to the last particle
 	virtual MoleculeIterator end() = 0;
+#endif
 
 	//! @brief Delete all molecules in container
 	virtual void clear() = 0;
