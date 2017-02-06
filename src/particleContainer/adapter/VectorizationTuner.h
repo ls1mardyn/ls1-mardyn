@@ -23,7 +23,7 @@ enum MoleculeCntIncreaseTypeEnum{
 #include "ensemble/EnsembleBase.h"
 
 class Component;
-class ParticleCell;
+#include "particleContainer/ParticleCellForwardDeclaration.h"
 //class VectorizedCellProcessor;
 //class FlopCounter;
 

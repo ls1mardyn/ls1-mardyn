@@ -6,7 +6,7 @@
 #include <cmath>
 
 #include "molecules/MoleculeForwardDeclaration.h"
-class ParticleCell;
+#include "particleContainer/ParticleCellForwardDeclaration.h"
 
 /**
  * Interface for traversal of cells to allow a cell-wise treatment of molecules.
