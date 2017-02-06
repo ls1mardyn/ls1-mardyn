@@ -108,7 +108,7 @@ void FullParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	}
 #endif
 
-	FullParticleCell& oCell = dynamic_cast<FullParticleCell&>(otherCell);
+	FullParticleCell& oCell = static_cast<FullParticleCell&>(otherCell);
 	updateLeavingMolecules(oCell);
 }
 

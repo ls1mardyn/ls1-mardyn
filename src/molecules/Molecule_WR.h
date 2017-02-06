@@ -14,9 +14,10 @@
 class CellDataSoA_WR;
 
 class Molecule_WR : public MoleculeInterface {
+public:
 	enum StorageState {
-		SOA = 0,
-		AOS = 1
+		STORAGE_SOA = 0,
+		STORAGE_AOS = 1
 	};
 
 public:
@@ -26,7 +27,7 @@ public:
         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
         double Dx = 0., double Dy = 0., double Dz = 0.
 	) {
-		_state = AOS;
+		_state = STORAGE_AOS;
 		_r[0] = rx;
 		_r[1] = ry;
 		_r[2] = rz;
@@ -42,7 +43,7 @@ public:
 	}
 
 	Molecule_WR(CellDataSoA_WR * soa, size_t index) {
-		_state = SOA;
+		_state = STORAGE_SOA;
 		_soa = soa;
 		_soa_index = index;
 
@@ -126,7 +127,7 @@ public:
 	void setSoA(CellDataSoABase * const s);
 
 	void setStartIndexSoA_LJ(unsigned i) {
-		assert(false);
+		_soa_index = i;
 	}
 	void setStartIndexSoA_C(unsigned i) {
 		assert(false);
@@ -308,6 +309,17 @@ public:
 	void calcFM() {}
 	void check(unsigned long id) {}
 
+	static Component * getStaticWRComponent() {
+		return _component;
+	}
+
+	void setStorageState(StorageState s) {
+		_state = s;
+	}
+
+	StorageState getStorageState() const {
+		return _state;
+	}
 
 private:
 	static void initStaticVars();

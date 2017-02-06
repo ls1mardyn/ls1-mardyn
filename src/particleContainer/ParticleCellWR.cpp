@@ -41,7 +41,12 @@ bool ParticleCell_WR::addParticle(Molecule& particle, bool checkWhetherDuplicate
 }
 
 Molecule& ParticleCell_WR::moleculesAt(size_t i) {
-	_cellDataSoA_WR.readMolecule(i, _dummy);
+	_cellDataSoA_WR.readMutableMolecule(i, _dummy);
+	return _dummy;
+}
+
+const Molecule& ParticleCell_WR::moleculesAtConst(size_t i) const {
+	_cellDataSoA_WR.readImmutableMolecule(i, const_cast<Molecule &>(_dummy));
 	return _dummy;
 }
 

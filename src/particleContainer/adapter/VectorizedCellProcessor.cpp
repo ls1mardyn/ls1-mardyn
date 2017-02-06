@@ -7,6 +7,7 @@
 #include "CellDataSoA.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleCell.h"
+#include "particleContainer/FullParticleCell.h"
 #include "Domain.h"
 #include "utils/Logger.h"
 #include "ensemble/EnsembleBase.h"
@@ -2560,7 +2561,9 @@ void VectorizedCellProcessor::_calculatePairs(const CellDataSoA & soa1, const Ce
 } // void LennardJonesCellHandler::CalculatePairs_(LJSoA & soa1, LJSoA & soa2)
 
 void VectorizedCellProcessor::processCell(ParticleCell & c) {
-	CellDataSoA& soa = c.getCellDataSoA();
+	FullParticleCell & full_c = downcastReferenceFull(c);
+
+	CellDataSoA& soa = full_c.getCellDataSoA();
 	if (c.isHaloCell() or soa._mol_num < 2) {
 		return;
 	}
@@ -2589,10 +2592,13 @@ int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, 
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
 	assert(&c1 != &c2);
-	const CellDataSoA& soa1 = c1.getCellDataSoA();
-	const CellDataSoA& soa2 = c2.getCellDataSoA();
-	const bool c1Halo = c1.isHaloCell();
-	const bool c2Halo = c2.isHaloCell();
+	FullParticleCell & full_c1 = downcastReferenceFull(c1);
+	FullParticleCell & full_c2 = downcastReferenceFull(c2);
+
+	const CellDataSoA& soa1 = full_c1.getCellDataSoA();
+	const CellDataSoA& soa2 = full_c2.getCellDataSoA();
+	const bool c1Halo = full_c1.isHaloCell();
+	const bool c2Halo = full_c2.isHaloCell();
 
 	// this variable determines whether
 	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
@@ -2607,7 +2613,7 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	// Macroscopic conditions:
 	// if none of the cells is halo, then compute
 	// if one of them is halo:
-	// 		if c1-index < c2-index, then compute
+	// 		if full_c1-index < full_c2-index, then compute
 	// 		else, then don't compute
 	// This saves the Molecule::isLessThan checks
 	// and works similar to the "Half-Shell" scheme
@@ -2615,7 +2621,7 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 	const bool ApplyCutoff = true;
 
 	if ((not c1Halo and not c2Halo) or						// no cell is halo or
-			(c1.getCellIndex() < c2.getCellIndex())) 		// one of them is halo, but c1.index < c2.index
+			(full_c1.getCellIndex() < full_c2.getCellIndex())) 		// one of them is halo, but full_c1.index < full_c2.index
 	{
 		const bool CalculateMacroscopic = true;
 
@@ -2627,7 +2633,7 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 
 	} else {
 		assert(c1Halo != c2Halo);							// one of them is halo and
-		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
+		assert(not (full_c1.getCellIndex() < full_c2.getCellIndex()));// full_c1.index not < full_c2.index
 
 		const bool CalculateMacroscopic = false;
 

@@ -222,7 +222,7 @@ void LinkedCells::update() {
 					assert(cell.isHaloCell());
 					continue;
 				}
-				cell.updateLeavingMolecules(_cells[neighbourIndex]);
+				cell.updateLeavingMoleculesBase(_cells[neighbourIndex]);
 			}
 
 			for (unsigned long j = 0; j < _forwardNeighbourOffsets.size(); j++) {
@@ -231,7 +231,7 @@ void LinkedCells::update() {
 					assert(cell.isHaloCell());
 					continue;
 				}
-				cell.updateLeavingMolecules(_cells[neighbourIndex]);
+				cell.updateLeavingMoleculesBase(_cells[neighbourIndex]);
 			}
 		}
 

@@ -26,7 +26,7 @@ void Molecule_WR::initStaticVars() {
 }
 
 void Molecule_WR::setSoA(CellDataSoABase * const s) {
-	assert(_state == AOS);
+	assert(_state == STORAGE_AOS);
 	CellDataSoA_WR * derived;
 #ifndef NDEBUG
 	derived = nullptr;
@@ -42,9 +42,9 @@ void Molecule_WR::setSoA(CellDataSoABase * const s) {
 }
 
 double Molecule_WR::r(unsigned short d) const {
-	assert(_state == SOA or _state == AOS);
+	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
-	if (_state == AOS) {
+	if (_state == STORAGE_AOS) {
 		return _r[d];
 	} else {
 		size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
@@ -53,9 +53,9 @@ double Molecule_WR::r(unsigned short d) const {
 }
 
 double Molecule_WR::v(unsigned short d) const {
-	assert(_state == SOA or _state == AOS);
+	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
-	if (_state == AOS) {
+	if (_state == STORAGE_AOS) {
 		return _v[d];
 	} else {
 		size_t linOffset = _soa->_mol_v.dimensionToOffset(d);
@@ -64,9 +64,9 @@ double Molecule_WR::v(unsigned short d) const {
 }
 
 unsigned long Molecule_WR::id() const {
-	assert(_state == SOA or _state == AOS);
+	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
-	if (_state == AOS) {
+	if (_state == STORAGE_AOS) {
 		return _id;
 	} else {
 		return _soa->_mol_uid[_soa_index];
@@ -74,9 +74,9 @@ unsigned long Molecule_WR::id() const {
 }
 
 void Molecule_WR::setr(unsigned short d, double r) {
-	assert(_state == SOA or _state == AOS);
+	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
-	if (_state == AOS) {
+	if (_state == STORAGE_AOS) {
 		_r[d] = r;
 	} else {
 		size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
@@ -85,9 +85,9 @@ void Molecule_WR::setr(unsigned short d, double r) {
 }
 
 void Molecule_WR::setv(unsigned short d, double v) {
-	assert(_state == SOA or _state == AOS);
+	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
-	if (_state == AOS) {
+	if (_state == STORAGE_AOS) {
 		_v[d] = v;
 	} else {
 		size_t linOffset = _soa->_mol_r.dimensionToOffset(d);
@@ -96,9 +96,9 @@ void Molecule_WR::setv(unsigned short d, double v) {
 }
 
 void Molecule_WR::setid(unsigned long id) {
-	assert(_state == SOA or _state == AOS);
+	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
-	if (_state == AOS) {
+	if (_state == STORAGE_AOS) {
 		_id = id;
 	} else {
 		_soa->_mol_uid[_soa_index] = id;

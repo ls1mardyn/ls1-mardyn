@@ -22,6 +22,8 @@ public:
 
 	Molecule& moleculesAt(size_t i);
 
+	const Molecule& moleculesAtConst(size_t i) const;
+
 	bool isEmpty() const;
 
 	bool deleteMoleculeByIndex(size_t index);
