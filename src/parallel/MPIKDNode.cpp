@@ -303,7 +303,7 @@ MPI_Datatype MPIKDNodePacked::Datatype = 0;
  * However, at the moment I'm not quite sure how that works...
  */
 void MPIKDNodePacked::initDatatype() {
-	MPIKDNodePacked dummyMPIKDNodePacked[2];
+	MPIKDNodePacked dummyMPIKDNodePacked[1];
 
 	const int Attributes = 13;
 	MPI_Datatype subtypes[Attributes] = {
@@ -355,7 +355,6 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._deviation))), 		&disp[10] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._level))), 		&disp[11] );
 	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[12] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[1]._lowCorner[0]))), 		&disp[13] );
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {
