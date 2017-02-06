@@ -5,6 +5,7 @@
  *      Author: tchipevn
  */
 
+#include "particleContainer/ParticleCell.h"
 #include "particleContainer/FullParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"

@@ -26,7 +26,6 @@ void Molecule_WR::initStaticVars() {
 }
 
 void Molecule_WR::setSoA(CellDataSoABase * const s) {
-	assert(_state == STORAGE_AOS);
 	CellDataSoA_WR * derived;
 #ifndef NDEBUG
 	derived = nullptr;

@@ -77,7 +77,6 @@ public:
 	}
 
 	const Quaternion& q() const {
-		assert(false);
 		return _quaternion;
 	}
 
