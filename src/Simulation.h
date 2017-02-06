@@ -252,7 +252,7 @@ public:
 	 * - update the caches of the molecules
 	 * - update the ParticleContainer
 	 */
-	void updateParticleContainerAndDecomposition();
+	void updateParticleContainerAndDecomposition(Timer& mpiOMPCommunicationTimer);
 
 	/**
 	 * Performs both the decomposition and the celltraversal in an overlapping way.

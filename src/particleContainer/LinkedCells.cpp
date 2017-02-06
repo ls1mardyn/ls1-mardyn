@@ -276,7 +276,7 @@ bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool
 }
 
 int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDuplicate) {
-	int oldNumberOfParticles = getNumberOfParticles();//_cells.size(); <- cells.size() is wrong!
+	int oldNumberOfParticles = getNumberOfParticles();
 
 	typedef vector<Molecule>::size_type index_t;
 	static vector< vector<ParticleCell>::size_type > index_vector;
@@ -321,7 +321,6 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 
 	index_vector.clear();
 
-	//int numberOfAddedParticles = _cells.size() - oldNumberOfParticles;//wrong!!!
 	int numberOfAddedParticles = getNumberOfParticles() - oldNumberOfParticles;
 	global_log->debug()<<"In LinkedCells::addParticles :"<<endl;
 	global_log->debug()<<"\t#Particles to be added = "<<particles.size()<<endl;
@@ -416,7 +415,7 @@ unsigned LinkedCells::countParticles(unsigned int cid, double* cbottom, double* 
 	return N;
 }
 
-void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
+void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
 		global_simulation->exit(1);
@@ -431,7 +430,7 @@ void LinkedCells::traverseNonInnermostCells(CellProcessor& cellProcessor){
 	} // loop over all cells
 }
 
-void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount){
+void LinkedCells::traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
 	if (_cellsValid == false) {
 		global_log->error() << "Cell structure in LinkedCells (traversePairs) invalid, call update first" << endl;
 		global_simulation->exit(1);
@@ -536,7 +535,7 @@ void LinkedCells::traverseCellsOrig(CellProcessor& cellProcessor) {
 	cellProcessor.endTraversal();
 }
 
-void LinkedCells::traverseCellsC08(CellProcessor& cellProcessor){
+void LinkedCells::traverseCellsC08(CellProcessor& cellProcessor) {
 	cellProcessor.initTraversal();
 
 	#if defined(_OPENMP)
@@ -614,8 +613,7 @@ void LinkedCells::clear() {
 	}
 }
 
-void LinkedCells::deleteParticlesOutsideBox(double boxMin[3],
-		double boxMax[3]) {
+void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
 	// This should be unimportant
 
 	ParticleIterator it;
@@ -688,31 +686,83 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 	}
 
 	#if 1
-	int totalNumMols = 0;
-	vector<vector<Molecule>> threadData;
-	vector<int> prefixArray;
+		int totalNumMols = 0;
+		vector<vector<Molecule>> threadData;
+		vector<int> prefixArray;
 
-	#if defined (_OPENMP)
-	#pragma omp parallel shared(v, totalNumMols, threadData)
-	#endif
-	{
-		const int numThreads = mardyn_get_num_threads();
-		const int threadNum = mardyn_get_thread_num();
 		#if defined (_OPENMP)
-		#pragma omp master
+		#pragma omp parallel shared(v, totalNumMols, threadData)
 		#endif
 		{
-			threadData.resize(numThreads);
-			prefixArray.resize(numThreads + 1);
+			const int numThreads = mardyn_get_num_threads();
+			const int threadNum = mardyn_get_thread_num();
+			#if defined (_OPENMP)
+			#pragma omp master
+			#endif
+			{
+				threadData.resize(numThreads);
+				prefixArray.resize(numThreads + 1);
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			#if defined (_OPENMP)
+			#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
+			#endif
+			for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+				for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+					for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+						const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+						ParticleCell & cell = _cells[cellIndex];
+
+						const int numMols = cell.getMoleculeCount();
+						for (int i = 0; i < numMols; ++i) {
+							threadData[threadNum].push_back(cell.moleculesAt(i));
+						}
+
+						if (removeFromContainer == true) {
+							cell.deallocateAllParticles();
+						}
+
+						totalNumMols += numMols;
+						prefixArray[threadNum + 1] += numMols;
+					}
+				}
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			//build the prefix array and allocate memory for v
+			#if defined (_OPENMP)
+			#pragma omp master
+			#endif
+			{
+				//build the prefix array
+				prefixArray[0] = 0;
+				for(int i = 1; i <= numThreads; i++){
+					prefixArray[i] += prefixArray[i - 1];
+				}
+
+				//allocate memory for v
+				v.resize(totalNumMols);
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			//reduce the molecules in v
+			int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+			for(int i = 0; i < myThreadMolecules; i++){
+				v[prefixArray[threadNum] + i] = threadData[threadNum].back();
+				threadData[threadNum].pop_back();
+			}
 		}
-
-		#if defined (_OPENMP)
-		#pragma omp barrier
-		#endif
-
-		#if defined (_OPENMP)
-		#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
-		#endif
+	#else
 		for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
 			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
@@ -721,67 +771,15 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 
 					const int numMols = cell.getMoleculeCount();
 					for (int i = 0; i < numMols; ++i) {
-						threadData[threadNum].push_back(cell.moleculesAt(i));
+						v.push_back(cell.moleculesAt(i));
 					}
 
 					if (removeFromContainer == true) {
 						cell.deallocateAllParticles();
 					}
-
-					totalNumMols += numMols;
-					prefixArray[threadNum + 1] += numMols;
 				}
 			}
 		}
-
-		#if defined (_OPENMP)
-		#pragma omp barrier
-		#endif
-
-		//build the prefix array and allocate memory for v
-		#if defined (_OPENMP)
-		#pragma omp master
-		#endif
-		{
-			//build the prefix array
-			prefixArray[0] = 0;
-			for(int i = 1; i <= numThreads; i++){
-				prefixArray[i] += prefixArray[i - 1];
-			}
-
-			//allocate memory for v
-			v.resize(totalNumMols);
-		}
-
-		#if defined (_OPENMP)
-		#pragma omp barrier
-		#endif
-
-		//reduce the molecules in v
-		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
-		for(int i = 0; i < myThreadMolecules; i++){
-			v[prefixArray[threadNum] + i] = threadData[threadNum].back();
-			threadData[threadNum].pop_back();
-		}
-	}
-	#else
-	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
-		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
-			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
-				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				ParticleCell & cell = _cells[cellIndex];
-
-				const int numMols = cell.getMoleculeCount();
-				for (int i = 0; i < numMols; ++i) {
-					v.push_back(cell.moleculesAt(i));
-				}
-
-				if (removeFromContainer == true) {
-					cell.deallocateAllParticles();
-				}
-			}
-		}
-	}
 	#endif
 }
 
@@ -802,31 +800,79 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>&
 	}
 
 	#if 1
-	int totalNumMols = 0;
-	vector<vector<Molecule>> threadData;
-	vector<int> prefixArray;
+		int totalNumMols = 0;
+		vector<vector<Molecule>> threadData;
+		vector<int> prefixArray;
 
-	#if defined (_OPENMP)
-	#pragma omp parallel shared(v, totalNumMols, threadData)
-	#endif
-	{
-		const int numThreads = mardyn_get_num_threads();
-		const int threadNum = mardyn_get_thread_num();
 		#if defined (_OPENMP)
-		#pragma omp master
+		#pragma omp parallel shared(v, totalNumMols, threadData)
 		#endif
 		{
-			threadData.resize(numThreads);
-			prefixArray.resize(numThreads + 1);
+			const int numThreads = mardyn_get_num_threads();
+			const int threadNum = mardyn_get_thread_num();
+			#if defined (_OPENMP)
+			#pragma omp master
+			#endif
+			{
+				threadData.resize(numThreads);
+				prefixArray.resize(numThreads + 1);
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			#if defined (_OPENMP)
+			#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
+			#endif
+			for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+				for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+					for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+						const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+						ParticleCell & cell = _cells[cellIndex];
+
+						const int numMols = cell.getMoleculeCount();
+						for (int i = 0; i < numMols; ++i) {
+							threadData[threadNum].push_back(cell.moleculesAt(i));
+						}
+
+						totalNumMols += numMols;
+						prefixArray[threadNum + 1] += numMols;
+					}
+				}
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			//build the prefix array and allocate memory for v
+			#if defined (_OPENMP)
+			#pragma omp master
+			#endif
+			{
+				//build the prefix array
+				prefixArray[0] = 0;
+				for(int i = 1; i <= numThreads; i++){
+					prefixArray[i] += prefixArray[i - 1];
+				}
+
+				//allocate memory for v
+				v.resize(totalNumMols);
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			//reduce the molecules in v
+			int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+			for(int i = 0; i < myThreadMolecules; i++){
+				v[prefixArray[threadNum] + i] = threadData[threadNum].back();
+				threadData[threadNum].pop_back();
+			}
 		}
-
-		#if defined (_OPENMP)
-		#pragma omp barrier
-		#endif
-
-		#if defined (_OPENMP)
-		#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
-		#endif
+	#else
 		for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
 			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
@@ -835,64 +881,15 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>&
 
 					const int numMols = cell.getMoleculeCount();
 					for (int i = 0; i < numMols; ++i) {
-						threadData[threadNum].push_back(cell.moleculesAt(i));
+						v.push_back(cell.moleculesAt(i));
 					}
-
-					totalNumMols += numMols;
-					prefixArray[threadNum + 1] += numMols;
 				}
 			}
 		}
-
-		#if defined (_OPENMP)
-		#pragma omp barrier
-		#endif
-
-		//build the prefix array and allocate memory for v
-		#if defined (_OPENMP)
-		#pragma omp master
-		#endif
-		{
-			//build the predix array
-			prefixArray[0] = 0;
-			for(int i = 1; i <= numThreads; i++){
-				prefixArray[i] += prefixArray[i - 1];
-			}
-
-			//allocate memory for v
-			v.resize(totalNumMols);
-		}
-
-		#if defined (_OPENMP)
-		#pragma omp barrier
-		#endif
-
-		//reduce the molecules in v
-		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
-		for(int i = 0; i < myThreadMolecules; i++){
-			v[prefixArray[threadNum] + i] = threadData[threadNum].back();
-			threadData[threadNum].pop_back();
-		}
-	}
-	#else
-	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
-		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
-			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
-				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				ParticleCell & cell = _cells[cellIndex];
-
-				const int numMols = cell.getMoleculeCount();
-				for (int i = 0; i < numMols; ++i) {
-					v.push_back(cell.moleculesAt(i));
-				}
-			}
-		}
-	}
 	#endif
 }
 
-void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3],
-		std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
+void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs, bool removeFromContainer) {
 	if (_cellsValid == false) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegionSimple) invalid, call update first"
@@ -902,18 +899,11 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3],
 
 	int startIndex[3];
 	int stopIndex[3];
-	int globalCellIndex;
-	std::vector<Molecule*>::iterator particleIter;
 
 	for (int dim = 0; dim < 3; dim++) {
-		if (lowCorner[dim] <= this->_haloBoundingBoxMax[dim]
-				&& highCorner[dim] >= this->_haloBoundingBoxMin[dim]) {
-			startIndex[dim] = (int) floor(
-					(lowCorner[dim] - _haloBoundingBoxMin[dim])
-							/ _cellLength[dim]);
-			stopIndex[dim] = (int) floor(
-					(highCorner[dim] - _haloBoundingBoxMin[dim])
-							/ _cellLength[dim]);
+		if (lowCorner[dim] <= this->_haloBoundingBoxMax[dim] && highCorner[dim] >= this->_haloBoundingBoxMin[dim]) {
+			startIndex[dim] = (int) floor( (lowCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+			stopIndex[dim] = (int) floor( (highCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 			if (startIndex[dim] < 0)
 				startIndex[dim] = 0;
 			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
@@ -924,23 +914,96 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3],
 		}
 	}
 
-	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
-		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
-			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
-				// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
-				globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				// loop over all subcells (either 1 or 8)
-				// traverse all molecules in the current cell
-				ParticleCell & currentCell = _cells[globalCellIndex];
-				currentCell.getRegion(lowCorner, highCorner, particlePtrs,
-						removeFromContainer);
+	#if 1
+		const int prevNumMols = particlePtrs.size();
+		int totalNumMols = 0;
+		vector<vector<Molecule*>> threadData;
+		vector<int> prefixArray;
+
+		#if defined (_OPENMP)
+		#pragma omp parallel shared(particlePtrs, totalNumMols, threadData)
+		#endif
+		{
+			const int numThreads = mardyn_get_num_threads();
+			const int threadNum = mardyn_get_thread_num();
+			#if defined (_OPENMP)
+			#pragma omp master
+			#endif
+			{
+				threadData.resize(numThreads);
+				prefixArray.resize(numThreads + 1);
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			#if defined (_OPENMP)
+			#pragma omp for schedule(static) collapse(3) reduction(+: totalNumMols)
+			#endif
+			for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+				for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+					for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+						const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
+						ParticleCell & currentCell = _cells[cellIndex];
+
+						// traverse all molecules in the current cell, save to-go-molecules in threadData[threadNum]
+						currentCell.getRegion(lowCorner, highCorner, threadData[threadNum], removeFromContainer);
+						totalNumMols = threadData[threadNum].size();
+					}
+				}
+			}
+
+			prefixArray[threadNum + 1] = threadData[threadNum].size();
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			//build the prefix array and allocate memory for particlePtrs
+			#if defined (_OPENMP)
+			#pragma omp master
+			#endif
+			{
+				//build the prefix array
+				prefixArray[0] = 0;
+				for(int i = 1; i <= numThreads; i++){
+					prefixArray[i] += prefixArray[i - 1];
+				}
+
+				//allocate / extend memory for particlePtrs
+				particlePtrs.resize(prevNumMols + totalNumMols);
+			}
+
+			#if defined (_OPENMP)
+			#pragma omp barrier
+			#endif
+
+			//reduce the molecules in particlePtrs
+			int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+			for(int i = 0; i < myThreadMolecules; i++){
+				particlePtrs[prevNumMols + prefixArray[threadNum] + i] = threadData[threadNum].back();
+				threadData[threadNum].pop_back();
 			}
 		}
-	}
+	#else
+		int globalCellIndex;
+		for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
+			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
+				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
+					// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
+					globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
+					// loop over all subcells (either 1 or 8)
+					// traverse all molecules in the current cell
+					ParticleCell & currentCell = _cells[globalCellIndex];
+					currentCell.getRegion(lowCorner, highCorner, particlePtrs, removeFromContainer);
+				}
+			}
+		}
+	#endif
 }
 
-void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
-		std::vector<Molecule*> &particlePtrs) {
+void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs) {
 	if (_cellsValid == false) {
 		global_log->error()
 				<< "Cell structure in LinkedCells (getRegion) invalid, call update first"
@@ -951,17 +1014,11 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 	int startIndex[3];
 	int stopIndex[3];
 	int globalCellIndex;
-	std::vector<Molecule*>::iterator particleIter;
 
 	for (int dim = 0; dim < 3; dim++) {
-		if (lowCorner[dim] < this->_boundingBoxMax[dim]
-				&& highCorner[dim] > this->_boundingBoxMin[dim]) {
-			startIndex[dim] = (int) floor(
-					(lowCorner[dim] - _haloBoundingBoxMin[dim])
-							/ _cellLength[dim]) - 1;
-			stopIndex[dim] = (int) floor(
-					(highCorner[dim] - _haloBoundingBoxMin[dim])
-							/ _cellLength[dim]) + 1;
+		if (lowCorner[dim] < this->_boundingBoxMax[dim] && highCorner[dim] > this->_boundingBoxMin[dim]) {
+			startIndex[dim] = (int) floor( (lowCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]) - 1;
+			stopIndex[dim] = (int) floor( (highCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]) + 1;
 			if (startIndex[dim] < 0)
 				startIndex[dim] = 0;
 			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
@@ -986,8 +1043,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3],
 	}
 }
 
-int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR)
-{
+int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR) {
         int m1neigh = 0;
         assert(_cellsValid);
         unsigned long cellIndex = getCellIndexOfMolecule(m1);
@@ -1024,19 +1080,16 @@ int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/,
         return m1neigh;
 }
 
-unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm)
-{
+unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm) {
    return ce->communicateNumCavities(comm);
 }
 
-void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, CellProcessor& cellProcessor)
-{
+void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, CellProcessor& cellProcessor) {
    ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
    map<unsigned long, Molecule*>* pc = ce->particleContainer();
    double RR = ce->getRR();
    
-   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++)
-   {
+   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
       assert(pcit->second != NULL);
       Molecule* m1 = pcit->second;
       unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
@@ -1044,6 +1097,32 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
       assert(m1id == m1->id());
       ce->decideActivity(neigh, m1id);
    }
+}
+
+RegionParticleIterator LinkedCells::iterateRegionBegin(const double startCorner[3], const double endCorner[3], IterateType type, bool removeFromContainer) {
+	// parameters "type" and "removeFromContainer" not yet used
+	// add functionality in a future version...
+
+	int start3DIndices[3], end3DIndices[3];
+	int regionDimensions[3];
+	unsigned int startRegionCellIndex;
+	unsigned int endRegionCellIndex;
+
+	getCellIndicesOfRegion(startCorner, endCorner, startRegionCellIndex, endRegionCellIndex);
+
+	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
+	threeDIndexOfCellIndex(endRegionCellIndex, end3DIndices, _cellsPerDimension);
+	for(int d = 0; d < 3; d++){
+		regionDimensions[d] = end3DIndices[d] - start3DIndices[d] + 1;
+	}
+	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
+	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
+
+	return RegionParticleIterator(&_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension);
+}
+
+RegionParticleIterator LinkedCells::iterateRegionEnd() {
+	return RegionParticleIterator::invalid();
 }
 
 //################################################
@@ -1282,25 +1361,22 @@ void LinkedCells::calculateCellPairOffsets() {
 	_cellPairOffsets[13] = make_pair(o, o  );
 }
 
-unsigned long int LinkedCells::getCellIndexOfMolecule(
-		Molecule* molecule) const {
+unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
 	int cellIndex[3]; // 3D Cell index
 
 	for (int dim = 0; dim < 3; dim++) {
-#ifndef NDEBUG
-		if (molecule->r(dim) < _haloBoundingBoxMin[dim]
-				|| molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
-			cout << "Molecule is outside of bounding box"
-					<< endl;
-			cout << "Molecule:\n" << *molecule << endl;
+		#ifndef NDEBUG
+		if (molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
+			global_log->debug() << "Molecule is outside of bounding box" << endl;
+			global_log->debug() << "Molecule:\n" << *molecule << endl;
+			global_log->debug() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << endl;
+			global_log->debug() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << endl;
 			exit(1);
 		}
-#endif
-//		this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
-//		cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-		cellIndex[dim] = ((int) floor(
-				(molecule->r(dim) - _boundingBoxMin[dim]) / _cellLength[dim]))
-				+ _haloWidthInNumCells[dim];
+		#endif
+		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
+		//cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+		cellIndex[dim] = ((int) floor((molecule->r(dim) - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim];
 
 	}
 	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
@@ -1322,6 +1398,56 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(
 	}
 }
 
+unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const {
+	int cellIndex[3]; // 3D Cell index
+	double localPoint[] = {point[0], point[1], point[2]};
+
+	for (int dim = 0; dim < 3; dim++) {
+		// different than getCellIndexOfMolecule!!!
+		// what if the point is exactly on the edge of the box?
+		if (localPoint[dim] < _haloBoundingBoxMin[dim] || localPoint[dim] >= _haloBoundingBoxMax[dim]) {
+			if (localPoint[dim] == _haloBoundingBoxMax[dim]) {
+				localPoint[dim] -= _cellLength[dim]/2; //get the point in the cell
+			}
+			else{
+				#ifndef NDEBUG
+					global_log->debug() << "Point is outside of halo bounding box" << endl;
+					global_log->debug() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << endl;
+					global_log->debug() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << endl;
+					global_log->debug() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << endl;
+					exit(1);
+				#endif
+			}
+		}
+
+		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
+		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
+		cellIndex[dim] = ((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim];
+
+	}
+	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
+	// in very rare cases rounding is stupid, thus we need a check...
+	//TODO: check if this can in any way be done better...
+	if (_cells[cellIndex1d].testPointInCell(localPoint)) {
+		return cellIndex1d;
+	}
+	else {
+		for (int dim = 0; dim < 3; dim++) {
+			if(localPoint[dim]<_cells[cellIndex1d].getBoxMin(dim)){
+				cellIndex[dim]--;
+			}
+			else{
+				if(localPoint[dim]>=_cells[cellIndex1d].getBoxMax(dim)){
+					cellIndex[dim]++;
+				}
+			}
+		}
+		cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
+		assert(_cells[cellIndex1d].testPointInCell(localPoint));
+		return cellIndex1d;
+	}
+}
+
 long int LinkedCells::cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const {
 	return (zIndex * _cellsPerDimension[1] + yIndex) * _cellsPerDimension[0] + xIndex;
 }
@@ -1332,15 +1458,16 @@ void LinkedCells::threeDIndexOfCellIndex(int ind, int r[3], const int dim[3]) co
 	r[0] = ind - dim[0] * (r[1] + dim[1] * r[2]);
 }
 
-void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
-		double z, const bool& rebuildCaches) {
+void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startIndex, unsigned int &endIndex) {
+	//find the cellIndices of the cells which contain the start and end corners of the region
+	startIndex = getCellIndexOfPoint(startRegion);
+	endIndex = getCellIndexOfPoint(endRegion);
+}
 
-	int ix = (int) floor(
-			(x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
-	int iy = (int) floor(
-			(y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
-	int iz = (int) floor(
-			(z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
+void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {
+	int ix = (int) floor( (x - this->_haloBoundingBoxMin[0]) / this->_cellLength[0]);
+	int iy = (int) floor( (y - this->_haloBoundingBoxMin[1]) / this->_cellLength[1]);
+	int iz = (int) floor( (z - this->_haloBoundingBoxMin[2]) / this->_cellLength[2]);
 
 	unsigned long hash = this->cellIndexOf3DIndex(ix, iy, iz);
 	if (hash >= _cells.size()) {
@@ -1362,8 +1489,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y,
 	}
 }
 
-double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
-		Molecule* m1, CellProcessor& cellProcessorI) {
+double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessorI) {
 	CellProcessor* cellProcessor;
 	if (dynamic_cast<LegacyCellProcessor*>(&cellProcessorI)) {
 		cellProcessor = &cellProcessorI;
@@ -1427,7 +1553,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler,
 	return u;
 }
 
-void LinkedCells::updateInnerMoleculeCaches(){
+void LinkedCells::updateInnerMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif
@@ -1438,7 +1564,7 @@ void LinkedCells::updateInnerMoleculeCaches(){
 	}
 }
 
-void LinkedCells::updateBoundaryAndHaloMoleculeCaches(){
+void LinkedCells::updateBoundaryAndHaloMoleculeCaches() {
 	#if defined(_OPENMP)
 	#pragma omp parallel for schedule(static)
 	#endif

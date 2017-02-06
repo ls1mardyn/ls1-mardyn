@@ -8,10 +8,17 @@
 #include "CommunicationPartner.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
+#include "utils/Timer.h"
 #include <cmath>
 #include <sstream>
+#include "WrapOpenMP.h"
 
-CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
+extern Timer communicationPartnerInitSendTimer;
+extern Timer communicationPartnerTestRecvTimer;
+Timer communicationPartnerInitSendTimer;
+Timer communicationPartnerTestRecvTimer;
+
+CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
 		const double bHi[3], const double sh[3], const int offset[3]) {
 	_rank = r;
 
@@ -105,70 +112,121 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		const MPI_Datatype& type, MessageType msgType, bool removeFromContainer) {
 
 	global_log->debug() << _rank << std::endl;
-
-	std::vector<Molecule*> particles;
-	std::vector<size_t> endings(_haloInfo.size() + 1, 0);  // stores last positions of the particles for each haloInfo
-
 	switch (msgType) {
-	case LEAVING_AND_HALO_COPIES: {
-		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
-			moleculeContainer->getRegionSimple(_haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, particles);
-			endings[p+1] = particles.size();
+		case LEAVING_AND_HALO_COPIES: {
+			global_log->debug() << "sending halo and boundary particles together" << std::endl;
+			break;
 		}
-		global_log->debug() << "sending halo and boundary particles together" << std::endl;
-		break;
-	}
-	case LEAVING_ONLY: {
-		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
-			moleculeContainer->getRegionSimple(_haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, particles,
-					removeFromContainer);
-			endings[p+1] = particles.size();
+		case LEAVING_ONLY: {
+			global_log->debug() << "sending halo particles only" << std::endl;
+			break;
 		}
-		global_log->debug() << "sending halo particles only" << std::endl;
-		break;
-	}
-	case HALO_COPIES: {
-		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
-			moleculeContainer->getRegionSimple(_haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, particles);
-			endings[p+1] = particles.size();
+		case HALO_COPIES: {
+			global_log->debug() << "sending boundary particles only" << std::endl;
+			break;
 		}
-		global_log->debug() << "sending boundary particles only" << std::endl;
-		break;
-	}
 	}
 
-	const int n = particles.size();
+	if (removeFromContainer){
+		std::vector<Molecule*> particles;
+		std::vector<size_t> endings(_haloInfo.size() + 1, 0);  // stores last positions of the particles for each haloInfo
 
-#ifndef NDEBUG
-	global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
-	std::ostringstream buf;
-	for (int i = 0; i < n; ++i) {
-		buf << particles[i]->id() << " ";
-	}
-	global_log->debug() << buf.str() << std::endl;
-#endif
-
-	// initialize send buffer
-	_sendBuf.resize(n);
-
-	for (unsigned int p = 0; p < _haloInfo.size(); p++) {
-		for (unsigned int i = endings[p]; i < endings[p+1]; ++i) {
-			ParticleData::MoleculeToParticleData(_sendBuf[i], *(particles[i]));
-			// add offsets for particles transfered over the periodic boundary
-			for (int d = 0; d < 3; ++d) {
-				_sendBuf[i].r[d] += _haloInfo[p]._shift[d];
+		communicationPartnerInitSendTimer.start();
+		switch (msgType) {
+			case LEAVING_AND_HALO_COPIES: {
+				for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+					moleculeContainer->getRegionSimple(_haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, particles);
+					endings[p+1] = particles.size();
+				}
+				break;
+			}
+			case LEAVING_ONLY: {
+				for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+					moleculeContainer->getRegionSimple(_haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, particles, removeFromContainer);
+					endings[p+1] = particles.size();
+				}
+				break;
+			}
+			case HALO_COPIES: {
+				for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+					moleculeContainer->getRegionSimple(_haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, particles);
+					endings[p+1] = particles.size();
+				}
+				break;
 			}
 		}
-	}
-	if (removeFromContainer) {
-		for (int i = 0; i < n; ++i) {
+		communicationPartnerInitSendTimer.stop();
+		const int n = particles.size();
+
+		#ifndef NDEBUG
+			global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
+			std::ostringstream buf;
+			for (int i = 0; i < n; ++i) {
+				buf << particles[i]->id() << " ";
+			}
+			global_log->debug() << buf.str() << std::endl;
+		#endif
+
+		// initialize send buffer
+		_sendBuf.resize(n);
+
+		communicationPartnerInitSendTimer.start();
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (unsigned int p = 0; p < _haloInfo.size(); p++) {
+			for (unsigned int i = endings[p]; i < endings[p+1]; i++) {
+				ParticleData::MoleculeToParticleData(_sendBuf[i], *(particles[i]));
+				// add offsets for particles transfered over the periodic boundary
+				for (int d = 0; d < 3; d++) {
+					_sendBuf[i].r[d] += _haloInfo[p]._shift[d];
+				}
+			}
+		}
+		#if defined(_OPENMP)
+		#pragma omp for schedule(static)
+		#endif
+		for (int i = 0; i < n; i++) {
 			delete particles[i];
 		}
+		communicationPartnerInitSendTimer.stop();
+	}
+	else{
+		const unsigned int numHaloInfo = _haloInfo.size();
+		switch (msgType){
+			case LEAVING_AND_HALO_COPIES: {
+				for(unsigned int p = 0; p < numHaloInfo; p++){
+					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._bothLow, _haloInfo[p]._bothHigh, _haloInfo[p]._shift);
+				}
+				break;
+			}
+			case LEAVING_ONLY: {
+				for(unsigned int p = 0; p < numHaloInfo; p++){
+					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift);
+				}
+				break;
+			}
+			case HALO_COPIES: {
+				for(unsigned int p = 0; p < numHaloInfo; p++){
+					collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
+				}
+				break;
+			}
+		}
+
+		#ifndef NDEBUG
+			const int n = _sendBuf.size();
+			global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
+			std::ostringstream buf;
+			for (int i = 0; i < n; ++i) {
+				buf << _sendBuf[i].id << " ";
+			}
+			global_log->debug() << buf.str() << std::endl;
+		#endif
 	}
 
 	MPI_CHECK(MPI_Isend(&(_sendBuf[0]), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
-
 }
 
 bool CommunicationPartner::testSend() {
@@ -208,25 +266,37 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			_msgReceived = true;
 			int numrecv = _recvBuf.size();
 
-#ifndef NDEBUG
-			global_log->debug() << "Receiving particles from" << _rank << std::endl;
-			global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl;
-			std::ostringstream buf;
-#endif
+			#ifndef NDEBUG
+				global_log->debug() << "Receiving particles from" << _rank << std::endl;
+				global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl;
+				std::ostringstream buf;
+			#endif
 
+			communicationPartnerTestRecvTimer.start();
+			static std::vector<Molecule> mols;
+			mols.resize(numrecv);
+			#if defined(_OPENMP)
+			#pragma omp for schedule(static)
+			#endif
 			for (int i = 0; i < numrecv; i++) {
 				Molecule m;
 				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
-				const bool inBoxCheckedAlready = false;
-				moleculeContainer->addParticle(m, inBoxCheckedAlready, removeRecvDuplicates);
-#ifndef NDEBUG
-				buf << m.id() << " ";
-#endif
+				mols[i] = m;
 			}
-#ifndef NDEBUG
-			global_log->debug() << buf.str() << std::endl;
-#endif
+			communicationPartnerTestRecvTimer.stop();
+
+			#ifndef NDEBUG
+				for (int i = 0; i < numrecv; i++) {
+					buf << mols[i].id() << " ";
+				}
+				global_log->debug() << buf.str() << std::endl;
+			#endif
+
+			communicationPartnerTestRecvTimer.start();
+			moleculeContainer->addParticles(mols, removeRecvDuplicates);
+			mols.clear();
 			_recvBuf.clear();
+			communicationPartnerTestRecvTimer.stop();
 		}
 	}
 	return _msgReceived;
@@ -266,4 +336,80 @@ void CommunicationPartner::deadlockDiagnosticRecv() {
 void CommunicationPartner::add(CommunicationPartner partner) {
 	assert(partner._rank == _rank);
 	_haloInfo.push_back(partner._haloInfo[0]);
+}
+
+void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3]){
+	communicationPartnerInitSendTimer.start();
+	int prevNumMols = _sendBuf.size();
+	int totalNumMols = 0;
+	vector<vector<Molecule>> threadData;
+	vector<int> prefixArray;
+
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(totalNumMols, threadData)
+	#endif
+	{
+		const int numThreads = mardyn_get_num_threads();
+		const int threadNum = mardyn_get_thread_num();
+		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(lowCorner, highCorner);
+		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			threadData.resize(numThreads);
+			prefixArray.resize(numThreads + 1);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		for(RegionParticleIterator i = begin; i != end; i++){
+			//traverse and gather all molecules in the cells containing part of the box specified as parameter
+			//i is a pointer to a Molecule; (*i) is the Molecule
+			if((*i).inBox(lowCorner, highCorner)){
+				threadData[threadNum].push_back(*i);
+			}
+		}
+
+		prefixArray[threadNum + 1] = threadData[threadNum].size();
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//build the prefix array and resize the send buffer
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			//build the prefix array
+			prefixArray[0] = 0;
+			for(int i = 1; i <= numThreads; i++){
+				prefixArray[i] += prefixArray[i - 1];
+				totalNumMols += threadData[i - 1].size();
+			}
+
+			//resize the send buffer
+			_sendBuf.resize(prevNumMols + totalNumMols);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//reduce the molecules in the send buffer and also apply the shift
+		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+		for(int i = 0; i < myThreadMolecules; i++){
+			ParticleData m;
+			ParticleData::MoleculeToParticleData(m, threadData[threadNum][i]);
+			m.r[0] += shift[0];
+			m.r[1] += shift[1];
+			m.r[2] += shift[2];
+			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
+		}
+	}
+	communicationPartnerInitSendTimer.stop();
 }

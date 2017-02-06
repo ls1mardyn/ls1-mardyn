@@ -143,7 +143,8 @@ void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vec
 		if (particleIter->inBox(lowCorner, highCorner)) {
 			if (not removeFromContainer) {
 				particlePtrs.push_back(&(*particleIter));
-			} else {
+			}
+			else {
 				particlePtrs.push_back(new Molecule(*particleIter));
 				UnorderedVector::fastRemove(_molecules, particleIter);
 				// particleIter already points at next molecule, so continue without incrementing

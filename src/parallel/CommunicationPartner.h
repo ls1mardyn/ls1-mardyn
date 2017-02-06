@@ -95,14 +95,17 @@ public:
 		}
 	}
 
-//! Combines current CommunicationPartner with the given partner
-//! @param partner which to add to the current CommunicationPartner
+	//! Combines current CommunicationPartner with the given partner
+	//! @param partner which to add to the current CommunicationPartner
 	void add(CommunicationPartner partner);
+
 private:
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3]);
+
 	int _rank;
 	std::vector<PositionInfo> _haloInfo;
 
-// technical variables
+	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
 	std::vector<ParticleData> _sendBuf, _recvBuf;

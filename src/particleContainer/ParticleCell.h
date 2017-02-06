@@ -81,9 +81,15 @@ public:
 		return _cellDataSoA;
 	}
 
-	bool testInBox(const Molecule& particle) const{
+	bool testPointInCell(const double point[3]) const {
+		return _boxMin[0] <= point[0] && _boxMin[1] <= point[1] && _boxMin[2] <= point[2] &&
+				point[0] < _boxMax[0] && point[1] < _boxMax[1] && point[2] < _boxMax[2];
+	}
+
+	bool testInBox(const Molecule& particle) const {
 		return particle.inBox(_boxMin, _boxMax);
 	}
+
 	/**
 	 * filter molecules which have left the box
 	 * @return field vector containing leaving molecules

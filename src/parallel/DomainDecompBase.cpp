@@ -112,10 +112,10 @@ bool DomainDecompBase::procOwnsPos(double x, double y, double z, Domain* domain)
 double DomainDecompBase::getBoundingBoxMin(int /*dimension*/, Domain* /*domain*/) {
 	return 0.0;
 }
+
 double DomainDecompBase::getBoundingBoxMax(int dimension, Domain* domain) {
 	return domain->getGlobalLength(dimension);
 }
-
 
 double DomainDecompBase::getTime() const {
 	return double(clock()) / CLOCKS_PER_SEC;
