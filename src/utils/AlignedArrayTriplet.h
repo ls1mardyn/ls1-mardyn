@@ -39,7 +39,7 @@ public:
 		return rets[i];
 	}
 
-	T& linearCrossAccess(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i];}
+	T& linearCrossAccess(size_t i) { assert(i < 3*_numEntriesPerArray); return this->_p[i];}
 
 	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = this->_round_up(exact_size);
