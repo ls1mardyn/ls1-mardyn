@@ -100,7 +100,7 @@ public:
 			AlignedArray<T> backupCopy(*this);
 			resize_zero_shrink(oldNumElements + 1);
 			size_t oldNumElementsTripled = 3 * _numEntriesPerArray;
-			std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled);
+			std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled * sizeof(T));
 		}
 		x(oldNumElements) = v0;
 		y(oldNumElements) = v1;
