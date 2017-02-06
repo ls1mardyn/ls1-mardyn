@@ -11,6 +11,7 @@
 #include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
 #include "molecules/Molecule.h"
+#include "molecules/Molecule_WR.h"
 #include "CellDataSoABase.h"
 #include <cstdint>
 
@@ -60,30 +61,34 @@ public:
 		return total;
 	}
 
-	void appendMolecule(Molecule_WR& m) {
+	void appendMolecule(MoleculeInterface& m) {
 		_mol_r.appendValueTriplet(m.r(0), m.r(1), m.r(2), _mol_num);
 		_mol_v.appendValueTriplet(m.v(0), m.v(1), m.v(2), _mol_num);
 		_mol_uid.appendValue(m.id(), _mol_num);
 		++_mol_num;
 	}
 
-	void readImmutableMolecule(size_t index, Molecule_WR& m) const {
+	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
+		Molecule_WR& m_wr = downcastReferenceWR(m);
+
 		// changes in AOS storage will not be saved
-		m.setStorageState(Molecule_WR::STORAGE_AOS);
-		m.setr(0, _mol_r.x(index));
-		m.setr(1, _mol_r.y(index));
-		m.setr(2, _mol_r.z(index));
-		m.setv(0, _mol_v.x(index));
-		m.setv(1, _mol_v.y(index));
-		m.setv(2, _mol_v.z(index));
-		m.setid(_mol_uid[index]);
+		m_wr.setStorageState(Molecule_WR::STORAGE_AOS);
+		m_wr.setr(0, _mol_r.x(index));
+		m_wr.setr(1, _mol_r.y(index));
+		m_wr.setr(2, _mol_r.z(index));
+		m_wr.setv(0, _mol_v.x(index));
+		m_wr.setv(1, _mol_v.y(index));
+		m_wr.setv(2, _mol_v.z(index));
+		m_wr.setid(_mol_uid[index]);
 	}
 
-	void readMutableMolecule(size_t index, Molecule_WR& m) {
+	void readMutableMolecule(size_t index, MoleculeInterface& m) {
+		Molecule_WR& m_wr = downcastReferenceWR(m);
+
 		// changes in SOA storage will be saved
-		m.setStorageState(Molecule_WR::STORAGE_SOA);
-		m.setSoA(this);
-		m.setStartIndexSoA_LJ(index);
+		m_wr.setStorageState(Molecule_WR::STORAGE_SOA);
+		m_wr.setSoA(this);
+		m_wr.setStartIndexSoA_LJ(index);
 	}
 };
 

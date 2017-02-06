@@ -24,4 +24,14 @@ inline FullParticleCell& downcastReferenceFull(ParticleCellBase& c) {
 	return static_cast<FullParticleCell&>(c);
 }
 
+inline ParticleCell_WR* downcastPointerWR(ParticleCellBase* c) {
+	assert(static_cast<ParticleCell_WR*>(c) == dynamic_cast<ParticleCell_WR*>(c));
+	return static_cast<ParticleCell_WR*>(c);
+}
+
+inline ParticleCell_WR& downcastReferenceWR(ParticleCellBase& c) {
+	assert(&static_cast<ParticleCell_WR&>(c) == &dynamic_cast<ParticleCell_WR&>(c));
+	return static_cast<ParticleCell_WR&>(c);
+}
+
 #endif /* PARTICLE_CELL_H_ */

@@ -99,16 +99,7 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 }
 
 void FullParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
-#ifndef NDEBUG
-	FullParticleCell* oCellPointer = nullptr;
-	oCellPointer = dynamic_cast<FullParticleCell*>(&otherCell);
-	if(oCellPointer == nullptr) {
-		global_log->error() << "wrong type of FullParticleCell for call to updateLeavingMoleculesBase" << std::endl;
-		exit(1);
-	}
-#endif
-
-	FullParticleCell& oCell = static_cast<FullParticleCell&>(otherCell);
+	FullParticleCell& oCell = downcastReferenceFull(otherCell);
 	updateLeavingMolecules(oCell);
 }
 
