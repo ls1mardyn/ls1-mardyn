@@ -19,8 +19,6 @@
 #include <cassert>
 #include "ParticleCell.h"
 
-#include "molecules/MoleculeForwardDeclaration.h"
-
 class ParticleIterator {
 public:
 	typedef std :: vector<ParticleCell> CellContainer_T;
@@ -30,15 +28,19 @@ public:
 
 	ParticleIterator ();
 	ParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg);
+	ParticleIterator& operator=(const ParticleIterator& other);
 
 	void operator ++ ();
 
 	bool operator == (const ParticleIterator& other) const;
 	bool operator != (const ParticleIterator& other) const;
 
-	Molecule* operator * () const;
+	Molecule& operator *  () const;
+	Molecule* operator -> () const;
 
 	static ParticleIterator invalid ();
+
+	void deleteCurrentParticle();
 
 private:
 	CellContainer_T_ptr _cells;
@@ -75,6 +77,15 @@ inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, cons
 //			// leave object as is
 //		}
 	}
+}
+
+inline ParticleIterator& ParticleIterator::operator=(const ParticleIterator& other)
+{
+	assert(_stride == other._stride);
+	_cells = other._cells;
+	_cell_index = other._cell_index;
+	_mol_index = other._mol_index;
+	return *this;
 }
 
 inline void ParticleIterator :: next_non_empty_cell()
@@ -119,11 +130,18 @@ inline bool ParticleIterator :: operator != (const ParticleIterator& other) cons
 	return not (*this == other);
 }
 
-inline Molecule* ParticleIterator :: operator * () const
+inline Molecule& ParticleIterator :: operator * () const
 {
 	// .at method performs automatically an out-of-bounds check
-	return &(_cells->at(_cell_index).moleculesAt(_mol_index));
+	return _cells->at(_cell_index).moleculesAt(_mol_index);
 }
+
+// no clue why this returns a pointer
+inline Molecule* ParticleIterator:: operator-> () const
+{
+	return &(this->operator*());
+}
+
 
 inline ParticleIterator ParticleIterator :: invalid ()
 {
@@ -136,4 +154,12 @@ inline void ParticleIterator :: make_invalid ()
 	_mol_index = MolIndex_T(-1);
 }
 
+inline void ParticleIterator :: deleteCurrentParticle ()
+{
+	_cells->at(_cell_index).deleteMoleculeByIndex(_mol_index);
+
+	if (_mol_index >= static_cast<MolIndex_T>(_cells->at(_cell_index).getMoleculeCount())) {
+		next_non_empty_cell();
+	}
+}
 #endif /* #ifndef ParticleIterator_INC */

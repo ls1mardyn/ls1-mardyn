@@ -94,6 +94,10 @@ public:
 	virtual void allreduceSum() {
 	}
 
+	//! Performs a scan (sum)
+	virtual void scanSum() {
+	}
+
 	//! Get the next value from the list, which must be int
 	//! @details no check is performed that the type is correct,
 	//! so we rely on the sanity of the programmer to ensure

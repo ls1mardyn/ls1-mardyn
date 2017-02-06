@@ -65,7 +65,12 @@ void PressureGradient::determineAdditionalAcceleration
 		for(unsigned short int d = 0; d < 3; d++)
 			this->_localVelocitySum[d][uAAit->first] = 0.0;
 	}
-	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+
+	// TODO: consider parallelization, but when we have input
+	const ParticleIterator mBegin = molCont->iteratorBegin();
+	const ParticleIterator mEnd = molCont->iteratorEnd();
+
+	for(ParticleIterator thismol = mBegin; thismol != mEnd; ++thismol)
 	{
 		unsigned int cid = thismol->componentid();
 		map<unsigned int, unsigned int>::iterator uCSIDit = this->_universalComponentSetID.find(cid);

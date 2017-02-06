@@ -225,9 +225,9 @@ bool MDGenerator::isInsideDomain(Domain* domain, double position[3]) {
 }
 
 void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std::vector<Component>& components) {
-	double mass=0.;
-	double mass_sum=0.;
-	double momentum_sum[3] = {0., 0., 0.};
+	double mass = 0.;
+	double mass_sum = 0.;
+	double momentum_sum[3] = { 0., 0., 0. };
 
 	int i = 0;
 	Molecule* molecule = particleContainer->begin();
@@ -241,23 +241,23 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 		i++;
 	}
 
-	double momentum_sub0=momentum_sum[0]/mass_sum;
-	double momentum_sub1=momentum_sum[1]/mass_sum;
-	double momentum_sub2=momentum_sum[2]/mass_sum;
+	double momentum_sub0 = momentum_sum[0] / mass_sum;
+	double momentum_sub1 = momentum_sum[1] / mass_sum;
+	double momentum_sub2 = momentum_sum[2] / mass_sum;
 
 	molecule = particleContainer->begin();
-	while(molecule != particleContainer->end()){
-		molecule->vsub(momentum_sub0,momentum_sub1,momentum_sub2);
+	while (molecule != particleContainer->end()) {
+		molecule->vsub(momentum_sub0, momentum_sub1, momentum_sub2);
 		molecule = particleContainer->next();
 	}
 
 	//test
-	momentum_sum[0]=0.;
-	momentum_sum[1]=0.;
-	momentum_sum[2]=0.;
+	momentum_sum[0] = 0.;
+	momentum_sum[1] = 0.;
+	momentum_sum[2] = 0.;
 
 	molecule = particleContainer->begin();
-	while(molecule != particleContainer->end()){
+	while (molecule != particleContainer->end()) {
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);
@@ -266,8 +266,8 @@ void MDGenerator::removeMomentum(ParticleContainer* particleContainer, const std
 		molecule = particleContainer->next();
 	}
 
-	printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);
-	printf("momentum_sum[1] from removeMomentum is %lf\n", momentum_sum[1]);
-	printf("momentum_sum[2] from removeMomentum is %lf\n", momentum_sum[2]);
+	//printf("momentum_sum[0] from removeMomentum is %lf\n", momentum_sum[0]);
+	//printf("momentum_sum[1] from removeMomentum is %lf\n", momentum_sum[1]);
+	//printf("momentum_sum[2] from removeMomentum is %lf\n", momentum_sum[2]);
 }
 

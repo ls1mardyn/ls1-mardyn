@@ -1172,8 +1172,8 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 		bBMin[dim] = moleculeContainer->getBoundingBoxMin(dim);// - moleculeContainer->get_halo_L(dim);
 		//bBMax[dim] = moleculeContainer->getBoundingBoxMax(dim);// + moleculeContainer->get_halo_L(dim);
 	}
-	Molecule* molPtr = moleculeContainer->begin();
-	while (molPtr != moleculeContainer->end()) {
+	ParticleIterator molPtr = moleculeContainer->iteratorBegin();
+	while (molPtr != moleculeContainer->iteratorEnd()) {
 		int cellIndex[3]; // 3D Cell index (local)
 		int globalCellIdx[3]; // 3D Cell index (global)
 
@@ -1187,7 +1187,7 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 		}
 
 		_numParticlesPerCell[_globalCellsPerDim[0] * (globalCellIdx[2] * _globalCellsPerDim[1] + globalCellIdx[1]) + globalCellIdx[0]]++;
-		molPtr = moleculeContainer->next();
+		++molPtr;
 		count++;
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );

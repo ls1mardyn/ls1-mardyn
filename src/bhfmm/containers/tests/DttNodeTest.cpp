@@ -81,9 +81,9 @@ void DttNodeTest::testSoAConvertions(){
 	double p_pos[3];
 	bool check = true;
 
-	Molecule * it;
-	for (it = container->begin(); it != container->end(); it = container->next()) {
-		root.addParticle(it);
+	ParticleIterator it;
+	for (it = container->iteratorBegin(); it != container->iteratorEnd(); ++it) {
+		root.addParticle(&(*it));
 
 		if (check) {
 			p_pos[0] = it->r(0);
@@ -126,9 +126,9 @@ void DttNodeTest::testDepth(double cutoffRadius){
 
 	std::vector<Molecule *> particles;
 
-	Molecule * it;
-	for(it = container->begin(); it != container->end(); it = container->next()) {
-		particles.push_back(it);
+	ParticleIterator it;
+	for(it = container->iteratorBegin(); it != container->iteratorEnd(); ++it) {
+		particles.push_back(&(*it));
 	}
 	
 	int depth = log2((globalDomainLength[0] / cutoffRadius));
@@ -159,9 +159,9 @@ void DttNodeTest::testDivideParticles() {
 	ParticleContainer * container = initializeFromFile(ParticleContainerFactory::LinkedCell, "FMMCharge.inp", 1.0);
 
 	std::vector<Molecule *> particles;
-	Molecule * it;
-	for(it = container->begin(); it != container->end(); it = container->next()) {
-		particles.push_back(it);
+	ParticleIterator it;
+	for(it = container->iteratorBegin(); it != container->iteratorEnd(); ++it) {
+		particles.push_back(&(*it));
 	}
 
 	std::array<std::vector<Molecule*>, 8> children;

@@ -376,17 +376,17 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
     {
 //        cout << "Thermostat ON!" << endl;
 
-        Molecule* tM;
+    	ParticleIterator tM;
 
         // init temperature control
         this->Init(simstep);
 
-        for( tM  = particleContainer->begin();
-             tM != particleContainer->end();
-             tM  = particleContainer->next() )
+        for( tM  = particleContainer->iteratorBegin();
+             tM != particleContainer->iteratorEnd();
+             ++tM)
         {
             // measure kinetic energy
-            this->MeasureKineticEnergy(tM, domainDecomposition, simstep);
+            this->MeasureKineticEnergy(&(*tM), domainDecomposition, simstep);
 
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }
@@ -395,12 +395,12 @@ void TemperatureControl::DoLoopsOverMolecules(DomainDecompBase* domainDecomposit
         this->CalcGlobalValues(domainDecomposition, simstep);
 
 
-        for( tM  = particleContainer->begin();
-             tM != particleContainer->end();
-             tM  = particleContainer->next() )
+        for( tM  = particleContainer->iteratorBegin();
+             tM != particleContainer->iteratorEnd();
+             ++tM)
         {
             // control temperature
-            this->ControlTemperature(tM, simstep);
+            this->ControlTemperature(&(*tM), simstep);
 
 //          cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
         }

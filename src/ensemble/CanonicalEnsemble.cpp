@@ -23,10 +23,6 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 
 	const int numComponents = this->numComponents();
 
-
-	Molecule *tM;
-
-
 	/* calculate local variables */
 
 	/* "fixed" variables of this ensemble */
@@ -36,7 +32,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 		unsigned long *numMolecules = new unsigned long[numComponents];
 		for( int cid = 0; cid < numComponents; cid++) 
 			numMolecules[cid] = 0;
-		for( tM = _particles->begin(); tM != _particles->end(); tM = _particles->next() ) {
+		for(ParticleIterator tM = _particles->iteratorBegin(); tM != _particles->iteratorEnd(); ++tM) {
 			Molecule& molecule = *tM;
 			const int cid = molecule.componentid();
 			numMolecules[cid]++;
@@ -83,7 +79,7 @@ void CanonicalEnsemble::updateGlobalVariable( GlobalVariable variable ) {
 	  double *E_rot = new double[numComponents];
 	  for( int cid = 0; cid < numComponents; cid++)
 		  E_trans[cid] = E_rot[cid] = 0.0;
-	  for( tM = _particles->begin(); tM != _particles->end(); tM = _particles->next() ) {
+	  for(ParticleIterator tM = _particles->iteratorBegin(); tM != _particles->iteratorEnd(); ++tM) {
 		  Molecule& molecule = *tM;
 		  const int cid = molecule.componentid();
 		  double E_trans_loc = 0.0;

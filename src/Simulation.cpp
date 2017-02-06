@@ -723,7 +723,7 @@ void Simulation::prepare_start() {
 		const ParticleIterator end = _moleculeContainer->iteratorEnd();
 
 		for (ParticleIterator i = begin; i != end; ++i){
-			(*i)->calcFM();
+			i->calcFM();
 		}
 	} // end pragma omp parallel
 
@@ -785,9 +785,6 @@ void Simulation::prepare_start() {
 }
 
 void Simulation::simulate() {
-
-	// by Stefan Becker
-	Molecule* tM;
 
 	global_log->info() << "Started simulation" << endl;
 
@@ -890,9 +887,7 @@ void Simulation::simulate() {
 		 *the halo MUST NOT be present*/
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
-		particleNoTest = 0;
-		for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
-			particleNoTest++;
+		particleNoTest = _moleculeContainer->getNumberOfParticles();
 		global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
@@ -919,9 +914,7 @@ void Simulation::simulate() {
 			}
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI			
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-				particleNoTest++;
+			particleNoTest = _moleculeContainer->getNumberOfParticles();
 			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
@@ -1125,7 +1118,7 @@ void Simulation::simulate() {
 				double tTarget;
 				double stdDevTrans, stdDevRot;
 				if(_domain->severalThermostats()) {
-					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
 						if (_rand.rnd() < nuDt){
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
@@ -1141,7 +1134,7 @@ void Simulation::simulate() {
 				}
 				else{
 					tTarget = _domain->getTargetTemperature(0);
-					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
+					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
 						if (_rand.rnd() < nuDt){
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
@@ -1204,9 +1197,7 @@ void Simulation::simulate() {
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
 			unsigned particleNoTest = 0;
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
+			particleNoTest = _moleculeContainer->getNumberOfParticles();
 			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
 #endif
 #endif

@@ -46,13 +46,16 @@ void LinkedCellsTest::testUpdateAndDeleteOuterParticles8Particles() {
 }
 
 void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
+	// NOTE: we do not open an OpenMP parallel region!
+	// Hence, this test is always executed sequentially!
+
 	Molecule dummyMolecule1(1, &_components[0], 1.0,1.0,1.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	Molecule dummyMolecule2(2, &_components[0], 2.0,2.0,2.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	Molecule dummyMolecule3(3, &_components[0], 3.0,3.0,3.0,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 	Molecule dummyMolecule4(4, &_components[0], 5.1,5.1,5.1,0,0,0, 0, 0, 0, 0, 0, 0, 0);
 
 	LinkedCells LC;
-	MoleculeIterator molIt;
+	ParticleIterator molIt;
 
 	std::vector<ParticleCell> & cells = LC._cells;
 
@@ -82,43 +85,35 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 
 	// cell[4] is empty
 
-	// NEXTNONEMPTY: start at particle 3, and arrive at particle 4
-
-	LC._cellIterator = cells.begin() + 1;
-	molIt = LC.nextNonEmptyCell();
-	ASSERT_TRUE_MSG("nextNonEmpty::_cellIterator", LC._cellIterator == LC._cells.begin() + 3);
-	ASSERT_TRUE_MSG("nextNonEmpty::_particleIterator", LC.current()->id() == 4ul);
-	ASSERT_TRUE_MSG("nextNonEmpty::return", molIt->id() == 4ul);
-
 	// BEGIN:
-	molIt = LC.begin();
+	molIt = LC.iteratorBegin();
 	ASSERT_TRUE_MSG("begin()", molIt->id() == 1ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.end());
+	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
 
 	// NEXT:
-	molIt = LC.next();
+	++molIt;
 	ASSERT_TRUE_MSG("next() within cell", molIt->id() == 2ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.end());
-	molIt = LC.next();
+	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
+	++molIt;
 	ASSERT_TRUE_MSG("next() within cell", molIt->id() == 3ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.end());
-	molIt = LC.next();
+	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
+	++molIt;
 	ASSERT_TRUE_MSG("next() across cells", molIt->id() == 4ul);
-	ASSERT_TRUE_MSG("end()", molIt != LC.end());
-	molIt = LC.next();
-	ASSERT_TRUE_MSG("next() arrive at end()", molIt == LC.end());
+	ASSERT_TRUE_MSG("end()", molIt != LC.iteratorEnd());
+	++molIt;
+	ASSERT_TRUE_MSG("next() arrive at end()", molIt == LC.iteratorEnd());
 
 	// DELETECURRENT:
-	molIt = LC.begin();
+	molIt = LC.iteratorBegin();
 
-	molIt = LC.deleteCurrent();
+	molIt.deleteCurrentParticle();
 	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->id()); // 3 copied in place of 1
-	molIt = LC.deleteCurrent();
+	molIt.deleteCurrentParticle();
 	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 2ul); // 2 copied in place of 3
-	molIt = LC.deleteCurrent();
+	molIt.deleteCurrentParticle();
 	ASSERT_TRUE_MSG("delete() across cells", molIt->id() == 4ul); // cell 1 became empty, we advanced to cell 3
-	molIt = LC.deleteCurrent();
-	ASSERT_TRUE_MSG("delete() last", molIt == LC.end()); // cell 4 became empty, we arrived at end()
+	molIt.deleteCurrentParticle();
+	ASSERT_TRUE_MSG("delete() last", molIt == LC.iteratorEnd()); // cell 4 became empty, we arrived at end()
 }
 
 void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential() {
@@ -167,7 +162,7 @@ void LinkedCellsTest::testParticleIteratorBeginNextEndParticleIteratorSequential
 	// and begin and end work correctly
 	unsigned long uID = 1;
 	for (ParticleIterator mol = begin; mol != end; ++mol, ++uID) {
-		ASSERT_EQUAL(uID, (*mol)->id());
+		ASSERT_EQUAL(uID, mol->id());
 	}
 }
 

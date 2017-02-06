@@ -153,8 +153,8 @@ void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContai
 		if (getRank() == process) {
 			std::ofstream checkpointfilestream(filename.c_str(), std::ios::app);
 			checkpointfilestream.precision(20);
-			Molecule* tempMolecule;
-			for (tempMolecule = moleculeContainer->begin(); tempMolecule != moleculeContainer->end(); tempMolecule = moleculeContainer->next()) {
+			ParticleIterator tempMolecule;
+			for (tempMolecule = moleculeContainer->iteratorBegin(); tempMolecule != moleculeContainer->iteratorEnd(); ++tempMolecule) {
 				tempMolecule->write(checkpointfilestream);
 			}
 			checkpointfilestream.close();
@@ -220,6 +220,10 @@ long double DomainDecompBase::collCommGetLongDouble() {
 
 void DomainDecompBase::collCommAllreduceSum() {
 	_collCommBase.allreduceSum();
+}
+
+void DomainDecompBase::collCommScanSum() {
+	_collCommBase.scanSum();
 }
 
 void DomainDecompBase::collCommBroadcast(int root) {

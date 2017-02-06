@@ -22,10 +22,10 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	double lowBound[3] = { 0.0, 0.0, 0.0 };
 	double highBound[3] = { _domainLength[0], _domainLength[1], _domainLength[2]};
 
-	Molecule* tM;
-	for (tM = pc->begin(); tM != pc->end(); tM = pc->next()) {
+	ParticleIterator tM;
+	for (tM = pc->iteratorBegin(); tM != pc->iteratorEnd(); ++tM) {
 		if (tM->inBox(lowBound, highBound)) {
-			_particles.push_back(tM);
+			_particles.push_back(&(*tM));
 		}
 	}
 

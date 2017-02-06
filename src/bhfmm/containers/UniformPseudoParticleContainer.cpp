@@ -371,8 +371,8 @@ void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
 	_timerFMMcomplete.start();
 	_leafContainer->clearParticles();
 
-	Molecule* tM;
-	for(tM = pc->begin(); tM != pc->end(); tM = pc->next()) {
+	ParticleIterator tM;
+	for(tM = pc->iteratorBegin(); tM != pc->iteratorEnd(); ++tM) {
 		_leafContainer->addParticle(*tM);
 	}
 }
