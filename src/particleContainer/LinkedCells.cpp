@@ -831,11 +831,11 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>&
 			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
 					const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-					ParticleCell & cell = _cells[cellIndex];
+					const ParticleCell & cell = _cells[cellIndex];
 
 					const int numMols = cell.getMoleculeCount();
 					for (int i = 0; i < numMols; ++i) {
-						threadData[threadNum].push_back(cell.moleculesAt(i));
+						threadData[threadNum].push_back(cell.moleculesAtConst(i));
 					}
 
 					totalNumMols += numMols;
@@ -879,11 +879,11 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>&
 		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
 			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
 				const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				ParticleCell & cell = _cells[cellIndex];
+				const ParticleCell & cell = _cells[cellIndex];
 
 				const int numMols = cell.getMoleculeCount();
 				for (int i = 0; i < numMols; ++i) {
-					v.push_back(cell.moleculesAt(i));
+					v.push_back(cell.moleculesAtConst(i));
 				}
 			}
 		}

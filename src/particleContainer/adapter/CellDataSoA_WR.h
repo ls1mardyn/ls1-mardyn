@@ -62,9 +62,11 @@ public:
 	}
 
 	void appendMolecule(MoleculeInterface& m) {
-		_mol_r.appendValueTriplet(m.r(0), m.r(1), m.r(2), _mol_num);
-		_mol_v.appendValueTriplet(m.v(0), m.v(1), m.v(2), _mol_num);
-		_mol_uid.appendValue(m.id(), _mol_num);
+		Molecule_WR& m_wr = downcastReferenceWR(m);
+
+		_mol_r.appendValueTriplet(m_wr.r(0), m_wr.r(1), m_wr.r(2), _mol_num);
+		_mol_v.appendValueTriplet(m_wr.v(0), m_wr.v(1), m_wr.v(2), _mol_num);
+		_mol_uid.appendValue(m_wr.id(), _mol_num);
 		++_mol_num;
 	}
 
