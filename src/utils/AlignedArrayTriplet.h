@@ -15,7 +15,7 @@ template <class T>
 class AlignedArrayTriplet : public AlignedArray<T> {
 public:
 	AlignedArrayTriplet(size_t initialSize = 0) : AlignedArray<T>(0), _numEntriesPerArray(0) {
-		resize(initialSize);
+		AlignedArrayTriplet<T>::resize(initialSize);
 	}
 
 	T* xBegin() { return _numEntriesPerArray > 0 ? this->_p + (0 * _numEntriesPerArray) : nullptr; }
@@ -49,7 +49,7 @@ public:
 		bool need_resize = size_rounded_up_x3 > this->_capacity or (allow_shrink and size_rounded_up_x3 < this->_capacity);
 
 		if (need_resize) {
-			resize(size_rounded_up_x3);
+			AlignedArray<T>::resize(size_rounded_up_x3);
 			// resize zero-s all
 		} else {
 			// we didn't resize, but we might still need to zero the rest of the Cache Line
