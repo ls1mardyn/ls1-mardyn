@@ -318,16 +318,6 @@ private:
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
 
-#if 0
-	std::list<Molecule> _particles; //!< List containing all molecules from the phasespace
-
-	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
-#else
-
-	std::vector<ParticleCell>::iterator _cellIterator;
-	std::vector<Molecule>::size_type _particleIndex;
-#endif
-
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
 	std::vector<unsigned long> _innerMostCellIndices; //!< Vector containing the indices (for the cells vector) of all inner cells (without boundary)
