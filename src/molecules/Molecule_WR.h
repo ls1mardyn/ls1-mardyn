@@ -72,8 +72,12 @@ public:
 	}
 
 	double F(unsigned short d) const {
+#ifndef NDEBUG
+		return v(d);
+#else
 		assert(false);
 		return 0.0;
+#endif
 	}
 
 	const Quaternion& q() const {
@@ -198,7 +202,7 @@ public:
 	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
 		assert(i == 0);
 		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
 		return ret;
 	}
 	std::array<double, 3> charge_d_abs(unsigned int i) const {
@@ -290,8 +294,20 @@ public:
 	void Viadd(const double a[]) {}
 	void vadd(const double ax, const double ay, const double az) {}
 	void vsub(const double ax, const double ay, const double az) {}
-	void Fljcenteradd(unsigned int i, double a[]) {}
-	void Fljcentersub(unsigned int i, double a[]) {}
+	void Fljcenteradd(unsigned int i, double a[]) {
+#ifndef NDEBUG
+		assert(i == 0);
+		for(int d = 0; d < 3; ++d)
+			setv(d, v(d) + a[d]);
+#endif
+	}
+	void Fljcentersub(unsigned int i, double a[]) {
+#ifndef NDEBUG
+		assert(i == 0);
+		for(int d = 0; d < 3; ++d)
+			setv(d, v(d) - a[d]);
+#endif
+	}
 	void Fchargeadd(unsigned int i, double a[]) {}
 	void Fchargesub(unsigned int i, double a[]) {}
 	void Fdipoleadd(unsigned int i, double a[]) {}
