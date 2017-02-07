@@ -19,14 +19,13 @@
 #include <cassert>
 #include "ParticleCell.h"
 
-using namespace std;
 
 class ParticleIterator {
 public:
-	typedef vector<ParticleCell> CellContainer_T;
+	typedef std::vector<ParticleCell> CellContainer_T;
 	typedef CellContainer_T* CellContainer_T_ptr;
 	typedef CellContainer_T::size_type CellIndex_T;
-	typedef vector<Molecule>::size_type MolIndex_T;
+	typedef std::vector<Molecule>::size_type MolIndex_T;
 
 	ParticleIterator ();
 	ParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize=true);

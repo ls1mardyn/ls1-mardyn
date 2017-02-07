@@ -140,6 +140,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 	}
 
 	if (removeFromContainer){
+		std::cout << "->"<<_rank <<": CP: initsend remove start" << std::endl << std::flush;
 		std::vector<Molecule*> particles;
 		std::vector<size_t> endings(_haloInfo.size() + 1, 0);  // stores last positions of the particles for each haloInfo
 
@@ -198,8 +199,10 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		for (int i = 0; i < n; i++) {
 			delete particles[i];
 		}
+		std::cout << "->"<< _rank <<": CP: initsend remove end" << std::endl << std::flush;
 	}
 	else{
+		std::cout << "->"<<_rank <<": CP: initsend non-remove start" << std::endl << std::flush;
 		const unsigned int numHaloInfo = _haloInfo.size();
 		switch (msgType){
 			case LEAVING_AND_HALO_COPIES: {
@@ -221,7 +224,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 				break;
 			}
 		}
-
+		std::cout <<"->"<< _rank <<": CP: initsend non-remove middle" << std::endl << std::flush;
 		#ifndef NDEBUG
 			const int n = _sendBuf.size();
 			global_log->debug() << "Buffer contains " << n << " particles with IDs " << std::endl;
@@ -231,10 +234,12 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			}
 			global_log->debug() << buf.str() << std::endl;
 		#endif
+			std::cout <<"->"<< _rank <<": CP: initsend non-remove end" << std::endl << std::flush;
 	}
-
+	std::cout <<"->"<< _rank <<": CP: initsend isend start" << std::endl << std::flush;
 	MPI_CHECK(MPI_Isend(&(_sendBuf[0]), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
+	std::cout <<"->"<< _rank <<": CP: initsend isend end" << std::endl << std::flush;
 }
 
 bool CommunicationPartner::testSend() {
@@ -354,8 +359,11 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 	{
 		const int numThreads = mardyn_get_num_threads();
 		const int threadNum = mardyn_get_thread_num();
+		std::cout <<"->"<< _rank <<": CP: collectMoleculesRegion getiterator begin" << std::endl << std::flush;
 		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(lowCorner, highCorner);
+		std::cout <<"->"<< _rank <<": CP: collectMoleculesRegion getiterator end" << std::endl << std::flush;
 		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+		std::cout <<"->"<< _rank <<": CP: collectMoleculesRegion got both iterators" << std::endl << std::flush;
 
 		#if defined (_OPENMP)
 		#pragma omp master

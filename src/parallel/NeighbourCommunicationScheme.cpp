@@ -206,7 +206,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		DomainDecompMPIBase* domainDecomp) {
 	if (_coversWholeDomain[d]) {
 		// use the sequential version
-
+		std::cout << domainDecomp->getRank() <<": initexchange coverwhole start" << std::endl << std::flush;
 		switch (msgType) {
 		case LEAVING_AND_HALO_COPIES:
 			domainDecomp->DomainDecompBase::handleDomainLeavingParticles(d, moleculeContainer);
@@ -219,7 +219,9 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
 			break;
 		}
+		std::cout << domainDecomp->getRank() <<": initexchange coverwhole end" << std::endl << std::flush;
 	} else {
+		std::cout << domainDecomp->getRank() <<": initexchange non-coverwhole start" << std::endl << std::flush;
 		const int numNeighbours = _neighbours[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
@@ -227,6 +229,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 		}
+		std::cout << domainDecomp->getRank() <<": initexchange non-coverwhole end" << std::endl << std::flush;
 	}
 }
 
@@ -295,18 +298,21 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, unsigned short d, DomainDecompMPIBase* domainDecomp) {
-
+	std::cout << domainDecomp->getRank() <<"indi nghb comm scheme: starting initexmol1d" << std::endl << std::flush;
 	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
-
+	std::cout << domainDecomp->getRank() <<"indi nghb comm scheme: starting finalizeexmol1d" << std::endl << std::flush;
 	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
+	std::cout << domainDecomp->getRank() <<"indi nghb comm scheme: done exmol1d" << std::endl << std::flush;
 
 }
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
+	std::cout << domainDecomp->getRank() <<"ind nghb comm scheme exchange start" << std::endl;
 	for (unsigned short d = 0; d < getCommDims(); d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
 	}
+	std::cout << domainDecomp->getRank() <<"ind nghb comm scheme exchange end" << std::endl;
 }
 
 void IndirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,

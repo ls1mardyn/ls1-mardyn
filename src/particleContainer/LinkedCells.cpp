@@ -1107,9 +1107,9 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const double startCorner[
 	int regionDimensions[3];
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
-
+	std::cout <<": LC: getCellIndicesOfRegion start" << std::endl << std::flush;
 	getCellIndicesOfRegion(startCorner, endCorner, startRegionCellIndex, endRegionCellIndex);
-
+	std::cout <<": LC: getCellIndicesOfRegion end" << std::endl << std::flush;
 	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
 	threeDIndexOfCellIndex(endRegionCellIndex, end3DIndices, _cellsPerDimension);
 	for(int d = 0; d < 3; d++){
@@ -1411,11 +1411,11 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 			}
 			else{
 				#ifndef NDEBUG
-					global_log->debug() << "Point is outside of halo bounding box" << endl;
-					global_log->debug() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << endl;
-					global_log->debug() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << endl;
-					global_log->debug() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << endl;
-					exit(1);
+					global_log->error() << "Point is outside of halo bounding box" << endl;
+					global_log->error() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << endl;
+					global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << endl;
+					global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << endl;
+					global_simulation->exit(1);
 				#endif
 			}
 		}
