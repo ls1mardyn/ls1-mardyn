@@ -1107,9 +1107,7 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const double startCorner[
 	int regionDimensions[3];
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
-	std::cout <<": LC: getCellIndicesOfRegion start" << std::endl << std::flush;
 	getCellIndicesOfRegion(startCorner, endCorner, startRegionCellIndex, endRegionCellIndex);
-	std::cout <<": LC: getCellIndicesOfRegion end" << std::endl << std::flush;
 	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
 	threeDIndexOfCellIndex(endRegionCellIndex, end3DIndices, _cellsPerDimension);
 	for(int d = 0; d < 3; d++){
