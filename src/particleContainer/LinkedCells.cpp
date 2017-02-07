@@ -1402,22 +1402,24 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 
 	for (int dim = 0; dim < 3; dim++) {
 		// different than getCellIndexOfMolecule!!!
-		// what if the point is exactly on the edge of the box?
-		if (localPoint[dim] < _haloBoundingBoxMin[dim] || localPoint[dim] >= _haloBoundingBoxMax[dim]) {
-			if (localPoint[dim] == _haloBoundingBoxMax[dim]) {
-				localPoint[dim] -= _cellLength[dim]/2; //get the point in the cell
-			}
-			else{
-				#ifndef NDEBUG
-					global_log->error() << "Point is outside of halo bounding box" << endl;
-					global_log->error() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << endl;
-					global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << endl;
-					global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << endl;
-					global_simulation->exit(1);
-				#endif
-			}
+
+		// ignore a bit of rounding, if the point is outside of the box.
+		if (localPoint[dim] < _haloBoundingBoxMin[dim]){
+			localPoint[dim] += _cellLength[dim]/2;
+		} else if(localPoint[dim] >= _haloBoundingBoxMax[dim]){
+			localPoint[dim] -= _cellLength[dim]/2;
 		}
 
+#ifndef NDEBUG
+		//this should never ever happen!
+		if (localPoint[dim] < _haloBoundingBoxMin[dim] || localPoint[dim] >= _haloBoundingBoxMax[dim]) {
+			global_log->error() << "Point is outside of halo bounding box" << endl;
+			global_log->error() << "Point p = (" << localPoint[0] << ", " << localPoint[1] << ", " << localPoint[2] << ")" << endl;
+			global_log->error() << "_haloBoundingBoxMin = (" << _haloBoundingBoxMin[0] << ", " << _haloBoundingBoxMin[1] << ", " << _haloBoundingBoxMin[2] << ")" << endl;
+			global_log->error() << "_haloBoundingBoxMax = (" << _haloBoundingBoxMax[0] << ", " << _haloBoundingBoxMax[1] << ", " << _haloBoundingBoxMax[2] << ")" << endl;
+			global_simulation->exit(1);
+		}
+#endif
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
 		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 		cellIndex[dim] = ((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim];
