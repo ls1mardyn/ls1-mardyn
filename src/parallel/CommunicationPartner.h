@@ -41,7 +41,9 @@ public:
 
 	CommunicationPartner(const CommunicationPartner& o);
 
-	// TODO: no operator= implemented!
+	CommunicationPartner() = delete;
+
+	CommunicationPartner& operator =(const CommunicationPartner& b);
 
 	~CommunicationPartner();
 

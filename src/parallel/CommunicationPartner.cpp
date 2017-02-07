@@ -95,6 +95,24 @@ CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
+CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartner& o){
+// make sure, that the send requests are properly initialized. the delete and new operators are probably unimportant...
+	if (this != &o) {
+		_rank = o._rank;
+		_haloInfo = o._haloInfo;
+		delete _sendRequest;
+		delete _recvRequest;
+		delete _sendStatus;
+		delete _recvStatus;
+		_sendRequest = new MPI_Request;
+		_recvRequest = new MPI_Request;
+		_sendStatus = new MPI_Status;
+		_recvStatus = new MPI_Status;
+		_msgSent = _countReceived = _msgReceived = false;
+	}
+	return *this;
+}
+
 CommunicationPartner::~CommunicationPartner() {
 	delete _sendRequest;
 	delete _recvRequest;
