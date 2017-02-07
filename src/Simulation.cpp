@@ -70,9 +70,6 @@ using namespace std;
 
 Simulation* global_simulation;
 
-extern Timer communicationPartnerInitSendTimer;
-extern Timer communicationPartnerTestRecvTimer;
-
 Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
@@ -572,7 +569,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-//	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// test new Decomposition
 	_moleculeContainer->update();
@@ -684,9 +681,7 @@ void Simulation::prepare_start() {
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
-	// temporary addition until MPI communication is parallelized with OpenMP
-	Timer mpiOMPCommunicationTimer;
-	updateParticleContainerAndDecomposition(mpiOMPCommunicationTimer);
+	updateParticleContainerAndDecomposition();
 	global_log->info() << "Performing initial force calculation" << endl;
 	Timer t;
 	t.start();
@@ -824,9 +819,7 @@ void Simulation::simulate() {
 	//#if defined(_OPENMP)
 	Timer forceCalculationTimer; /* timer for force calculation */
 	//#endif
-	// temporary addition until MPI communication is parallelized with OpenMP
-	Timer mpiOMPCommunicationTimer;
-
+	
 	loopTimer.set_sync(true);
 #if WITH_PAPI
 	const char *papi_event_list[] = {
@@ -850,38 +843,6 @@ void Simulation::simulate() {
 #endif
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
-		// Too many particle exchanges in the first 10 simulation steps.
-		// Reset the timers after 10 simulation steps and restart the timers
-		// 		for more accurate measurements for benchmarking.
-		if (_simstep == 10) {
-			loopTimer.stop();
-
-			global_log->info() << "Simstep 10:" << endl;
-			global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
-			global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
-			global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
-			global_log->info() << "Communication took:            " << mpiOMPCommunicationTimer.get_etime() << " sec" << endl;
-			global_log->info() << "    initSend() took:           " << communicationPartnerInitSendTimer.get_etime() << " sec" << endl;
-			global_log->info() << "    testRecv() took:           " << communicationPartnerTestRecvTimer.get_etime() << " sec" << endl;
-			global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
-			global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
-			global_log->info() << endl;
-			global_log->info() << "RESETTING TIMERS" << endl;
-			global_log->info() << endl;
-
-			loopTimer.reset();
-			decompositionTimer.reset();
-			mpiOMPCommunicationTimer.reset();
-			communicationPartnerInitSendTimer.reset();
-			communicationPartnerTestRecvTimer.reset();
-			computationTimer.reset();
-			perStepIoTimer.reset();
-			ioTimer.reset();
-			forceCalculationTimer.reset();
-
-			loopTimer.start();
-		}
-
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
@@ -972,7 +933,7 @@ void Simulation::simulate() {
 			decompositionTimer.start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
-			updateParticleContainerAndDecomposition(mpiOMPCommunicationTimer);
+			updateParticleContainerAndDecomposition();
 			decompositionTimer.stop();
 
 			double startEtime = computationTimer.get_etime();
@@ -1264,9 +1225,6 @@ void Simulation::simulate() {
 	global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
 	//#endif
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Communication took:            " << mpiOMPCommunicationTimer.get_etime() << " sec" << endl;
-	global_log->info() << "    initSend() took:           " << communicationPartnerInitSendTimer.get_etime() << " sec" << endl;
-	global_log->info() << "    testRecv() took:           " << communicationPartnerTestRecvTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
 
@@ -1346,15 +1304,13 @@ void Simulation::finalize() {
 	global_simulation = NULL;
 }
 
-void Simulation::updateParticleContainerAndDecomposition(Timer& mpiOMPCommunicationTimer) {
+void Simulation::updateParticleContainerAndDecomposition() {
 	// The particles have moved, so the neighbourhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
-	mpiOMPCommunicationTimer.start();
 	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
-	mpiOMPCommunicationTimer.stop();
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();

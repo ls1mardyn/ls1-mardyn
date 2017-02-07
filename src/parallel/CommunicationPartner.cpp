@@ -8,15 +8,9 @@
 #include "CommunicationPartner.h"
 #include "particleContainer/ParticleContainer.h"
 #include "molecules/Molecule.h"
-#include "utils/Timer.h"
 #include <cmath>
 #include <sstream>
 #include "WrapOpenMP.h"
-
-extern Timer communicationPartnerInitSendTimer;
-extern Timer communicationPartnerTestRecvTimer;
-Timer communicationPartnerInitSendTimer;
-Timer communicationPartnerTestRecvTimer;
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
 		const double bHi[3], const double sh[3], const int offset[3]) {
@@ -131,7 +125,6 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		std::vector<Molecule*> particles;
 		std::vector<size_t> endings(_haloInfo.size() + 1, 0);  // stores last positions of the particles for each haloInfo
 
-		communicationPartnerInitSendTimer.start();
 		switch (msgType) {
 			case LEAVING_AND_HALO_COPIES: {
 				for (unsigned int p = 0; p < _haloInfo.size(); p++) {
@@ -155,7 +148,6 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 				break;
 			}
 		}
-		communicationPartnerInitSendTimer.stop();
 		const int n = particles.size();
 
 		#ifndef NDEBUG
@@ -170,7 +162,6 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		// initialize send buffer
 		_sendBuf.resize(n);
 
-		communicationPartnerInitSendTimer.start();
 		#if defined(_OPENMP)
 		#pragma omp for schedule(static)
 		#endif
@@ -189,7 +180,6 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		for (int i = 0; i < n; i++) {
 			delete particles[i];
 		}
-		communicationPartnerInitSendTimer.stop();
 	}
 	else{
 		const unsigned int numHaloInfo = _haloInfo.size();
@@ -272,7 +262,6 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				std::ostringstream buf;
 			#endif
 
-			communicationPartnerTestRecvTimer.start();
 			static std::vector<Molecule> mols;
 			mols.resize(numrecv);
 			#if defined(_OPENMP)
@@ -283,8 +272,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
 				mols[i] = m;
 			}
-			communicationPartnerTestRecvTimer.stop();
-
+			
 			#ifndef NDEBUG
 				for (int i = 0; i < numrecv; i++) {
 					buf << mols[i].id() << " ";
@@ -292,11 +280,9 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				global_log->debug() << buf.str() << std::endl;
 			#endif
 
-			communicationPartnerTestRecvTimer.start();
 			moleculeContainer->addParticles(mols, removeRecvDuplicates);
 			mols.clear();
 			_recvBuf.clear();
-			communicationPartnerTestRecvTimer.stop();
 		}
 	}
 	return _msgReceived;
@@ -339,7 +325,6 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 }
 
 void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3]){
-	communicationPartnerInitSendTimer.start();
 	int prevNumMols = _sendBuf.size();
 	int totalNumMols = 0;
 	vector<vector<Molecule>> threadData;
@@ -411,5 +396,4 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 			_sendBuf[prevNumMols + prefixArray[threadNum] + i] = m;
 		}
 	}
-	communicationPartnerInitSendTimer.stop();
 }
