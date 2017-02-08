@@ -58,7 +58,6 @@ public:
 		return 0.0;
 	}
 	int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) {
-		exit(0);
 		return 0;
 	}
 

@@ -627,7 +627,7 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 					double tau2=sqrt(xj*xj+yj*yj+zj*zj);
 					if(tau1+tau2>=cutoffRadiusLJ){
 						global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
-						exit(1);
+						Simulation::exit(1);
 					}
 					double eps24;
 					params >> eps24;
@@ -1322,7 +1322,7 @@ long int Domain::unID(double qx, double qy, double qz){
 	          global_log->error() << "Severe error!! Invalid profile unit (" << xun << " / " << yun << " / " << zun << ").\n\n";
 	          global_log->error() << "Coordinates (" << qx << " / " << qy << " / " << qz << ").\n";
 		  global_log->error() << "unID = " << unID << "\n";
-	          //exit(707);
+	          //Simulation::exit(707);
 	       }
 	       return unID;
 }

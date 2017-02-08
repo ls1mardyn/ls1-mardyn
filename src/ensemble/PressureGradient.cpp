@@ -7,6 +7,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
+#include "Simulation.h"
 
 using namespace Log;
 using namespace std;
@@ -222,8 +223,8 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 	if(this->_localRank != 0) return;
 	if(this->_universalConstantAccelerationTimesteps == 0)
 	{
-		cout << "SEVERE ERROR: unknown UCAT!\n";
-		exit(78);
+		global_log->error() << "SEVERE ERROR: unknown UCAT!\n";
+		Simulation::exit(78);
 	}
 	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
 	map<unsigned int, unsigned int>::iterator vqlit;

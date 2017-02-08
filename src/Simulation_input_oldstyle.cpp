@@ -63,7 +63,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	ifstream inputfilestream(inputfilename.c_str());
 	if (!inputfilestream.is_open()) {
 		global_log->error() << "Could not open file " << inputfilename << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	//  std::string inputPath;
@@ -85,7 +85,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	inputfilestream >> token;
 	if ((token != "mardynconfig") && (token != "MDProjectConfig")) {
 		global_log->error() << "Not a mardynconfig file! First token: " << token << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	while (inputfilestream && !inputfilestream.eof()) {
@@ -103,7 +103,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			if (timestepLength == 0.0) {
 				global_log->error() << "timestep missing." << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			if (phaseSpaceFileFormat == "OldStyle") {
 				string phaseSpaceFileName;
@@ -125,7 +125,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			} else {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			if (_LJCutoffRadius == 0.0)
 				_LJCutoffRadius = _cutoffRadius;
@@ -191,7 +191,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error()
 						<< "_domainDecomposition is NULL! Probably you compiled for MPI, but didn't specify line \"parallelization\" before line \"datastructure\"!"
 						<< endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 
 			inputfilestream >> token;
@@ -210,10 +210,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						cellsInCutoffRadius);
 			} else if (token == "AdaptiveSubCells") {
 				global_log->error() << "AdaptiveSubCells no longer supported." << std::endl;
-				global_simulation->exit(-1);
+				Simulation::exit(-1);
 			} else {
 				global_log->error() << "UNKNOWN DATASTRUCTURE: " << token << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 		} else if (token == "output") {
 			token.clear();
@@ -244,7 +244,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				if (writeFrequency == 0) {
 					global_log->error() << "Write frequency must be a positive nonzero integer, but is "
 							<< writeFrequency << endl;
-					exit(-1);
+					Simulation::exit(-1);
 				}
 				global_log->debug() << "CheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "PovWriter") {
@@ -290,7 +290,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				else
 				{
 					global_log->error() << "MmpldWriter: wrong statement, expected default|file. Program exit... " << endl;
-					exit(-1);
+					Simulation::exit(-1);
 				}
 
 				MmpldWriter* mmpldWriter = NULL;
@@ -301,7 +301,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				else
 				{
 					global_log->error() << "MmpldWriter: wrong statement, expected simple|multi. Program exit... " << endl;
-					exit(-1);
+					Simulation::exit(-1);
 				}
 				if(NULL != mmpldWriter)
 				{
@@ -382,7 +382,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			if (token != "comp") {
 				global_log->error() << "Expected 'comp' instead of '" << token << "'.\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			int cid = 0;
 			while (cid >= 0) {
@@ -400,7 +400,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			if (token != "towards") {
 				global_log->error() << "Expected 'towards' instead of '" << token << "'.\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			double dir[3];
 			double dirnorm = 0;
@@ -416,7 +416,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			if (token != "within") {
 				global_log->error() << "Expected 'within' instead of '" << token << "'.\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			double tau;
 			inputfilestream >> tau;
@@ -425,14 +425,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 			if (token != "from") {
 				global_log->error() << "Expected 'from' instead of '" << token << "'.\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			double ainit[3];
 			for (unsigned d = 0; d < 3; d++)
 				inputfilestream >> ainit[3];
 			if (timestepLength == 0.0) {
 				global_log->error() << "timestep missing." << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			_pressureGradient->specifyComponentSet(cosetid, dir, tau, ainit, timestepLength);
 		} else if (token == "constantAccelerationTimesteps") {
@@ -448,7 +448,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> tauPrime;
 			if (timestepLength == 0.0) {
 				global_log->error() << "timestep missing." << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			_pressureGradient->specifyTauPrime(tauPrime, timestepLength);
 		} else if (token == "profile") {
@@ -475,7 +475,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> interval >> bins;
 			if (global_simulation->getEnsemble()->getComponents()->size() <= 0) {
 				global_log->error() << "PhaseSpaceFile-Specification has to occur before RDF-Token!" << endl;
-				exit(-1);
+				Simulation::exit(-1);
 			}
 			_rdf = new RDF(interval, bins, global_simulation->getEnsemble()->getComponents());
 			_outputPlugins.push_back(_rdf);
@@ -511,7 +511,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "zOscillator") {
 			global_log->error() << "zOscillator was used for the Tersoff potential, which is no longer supported."
 					<< std::endl;
-			global_simulation->exit(-1);
+			Simulation::exit(-1);
 		}
 		// by Stefan Becker
 		else if (token == "AlignCentre") {
@@ -536,7 +536,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
 						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
 						<< endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			unsigned icid;
 			inputfilestream >> icid;
@@ -553,7 +553,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
 							<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] "
 							<< "conduct <ntest> tests every <nstep> steps" << endl;
-					exit(1);
+					Simulation::exit(1);
 				}
 				inputfilestream >> x1 >> y1 >> z1;
 				inputfilestream >> token;
@@ -563,7 +563,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
 						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
 						<< endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			unsigned intest;
 			inputfilestream >> intest;
@@ -573,7 +573,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
 						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
 						<< endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			inputfilestream >> token;
 			if (token != "every") {
@@ -581,7 +581,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
 						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
 						<< endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			unsigned instep;
 			inputfilestream >> instep;
@@ -591,7 +591,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->debug() << "Syntax: chemicalPotential <mu> component <cid> "
 						<< "[control <x0> <y0> <z0> to <x1> <y1> <z1>] " << "conduct <ntest> tests every <nstep> steps"
 						<< endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			ChemicalPotential tmu = ChemicalPotential();
 			tmu.setMu(icid, imu);
@@ -618,7 +618,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "Expected 'radius' instead of '" << token << "'.\n";
 				global_log->debug()
 						<< "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			double cavity_radius;
 			inputfilestream >> cavity_radius;
@@ -629,7 +629,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "Expected 'grid' instead of '" << token << "'.\n";
 				global_log->debug()
 						<< "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			unsigned gridx, gridy, gridz;
 			inputfilestream >> gridx >> gridy >> gridz;
@@ -638,7 +638,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "Expected 'every' instead of '" << token << "'.\n";
 				global_log->debug()
 						<< "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			unsigned cavity_steps;
 			inputfilestream >> cavity_steps;
@@ -647,7 +647,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				global_log->error() << "Expected 'steps' instead of '" << token << "'.\n";
 				global_log->debug()
 						<< "Syntax: cavity <cid> radius <R> <coord_max> grid <N_x> <N_y> <N_z> every <n_step> steps\n";
-				exit(1);
+				Simulation::exit(1);
 			}
 			this->_mcav[cavity_cid] = CavityEnsemble();
 			this->_mcav[cavity_cid].setInterval(cavity_steps);
@@ -660,7 +660,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			/* TODO: Documentation, what it does (no "Enerstat" at the moment) */
 			_domain->thermostatOff();
 			global_log->error() << "NVE ensemble not implemented." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		} else if (token == "initCanonical") {
 			inputfilestream >> _initCanonical;
 		} else if (token == "initGrandCanonical") { /* suboption of chemical potential */
@@ -677,7 +677,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			this->setLJCutoff(rc);
 		} else if (token == "tersoffCutoffRadius") {
 			global_log->error() << "tersoff no longer supported." << std::endl;
-			global_simulation->exit(-1);
+			Simulation::exit(-1);
 		} else if (token == "WallFun_LJ_9_3") {
 			double rho_w, sig_w, eps_w, y_off, y_cut;
 			unsigned numComponents;
@@ -767,7 +767,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					_domain->SetExplosionHeuristics(bUseExplosionHeuristics);
 				} else {
 					global_log->error() << "TemperatureControl object already exist, program exit..." << endl;
-					exit(-1);
+					Simulation::exit(-1);
 				}
 			} else if (strToken == "region") {
 				double dLowerCorner[3];
@@ -800,12 +800,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						&& strTransDirections != "xyz") {
 					global_log->error() << "TemperatureControl: Wrong statement! Expected x, y, z, xy, xz, yz or xyz!"
 							<< endl;
-					exit(-1);
+					Simulation::exit(-1);
 				}
 
 				if (_temperatureControl == NULL) {
 					global_log->error() << "TemperatureControl object doesnt exist, programm exit..." << endl;
-					exit(-1);
+					Simulation::exit(-1);
 				} else {
 					// add regions
 					_temperatureControl->AddRegion(dLowerCorner, dUpperCorner, nNumSlabs, nComp, dTargetTemperature,
@@ -813,7 +813,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 			} else {
 				global_log->error() << "TemperatureControl: Wrong statement in cfg, programm exit..." << endl;
-				exit(-1);
+				Simulation::exit(-1);
 			}
 
 			// <-- TEMPERATURE_CONTROL

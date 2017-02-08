@@ -133,7 +133,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_integrator = new Leapfrog();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
@@ -165,11 +165,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 			// _ensemble = new GrandCanonicalEnsemble();
 		} else {
 			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 		_ensemble->readXML(xmlconfig);
 		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
@@ -181,7 +181,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		global_log->error() << "Ensemble section missing." << endl;
-		this->exit(1);
+		Simulation::exit(1);
 	}
 
 	/* algorithm */
@@ -199,13 +199,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_cutoffRadius = max(_cutoffRadius, _LJCutoffRadius);
 			if(_cutoffRadius <= 0) {
 				global_log->error() << "cutoff radius <= 0." << endl;
-				this->exit(1);
+				Simulation::exit(1);
 			}
 			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Cutoff section missing." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		/* electrostatics */
@@ -218,7 +218,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Electrostatics section for reaction field setup missing." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
@@ -251,7 +251,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
-				this->exit(1);
+				Simulation::exit(1);
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
@@ -259,7 +259,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						<< "Executable was compiled without support for parallel execution: "
 						<< parallelisationtype
 						<< " not available. Using serial mode." << endl;
-				//this->exit(1);
+				//Simulation::exit(1);
 			}
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
@@ -269,7 +269,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else {
 		#ifdef ENABLE_MPI
 			global_log->error() << "Parallelisation section missing." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		#else /* serial */
 			//_domainDecomposition = new DomainDecompBase(); // already set in initialize()
 		#endif
@@ -289,11 +289,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
-				global_simulation->exit(-1);
+				Simulation::exit(-1);
 			}
 			else {
 				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
-				this->exit(1);
+				Simulation::exit(1);
 			}
 			_moleculeContainer->readXML(xmlconfig);
 
@@ -304,7 +304,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Datastructure section missing" << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		if(xmlconfig.changecurrentnode("thermostats")) {
@@ -463,7 +463,7 @@ void Simulation::readConfigFile(string filename) {
 	}
 	else {
 		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
-		this->exit(1);;
+		Simulation::exit(1);;
 	}
 }
 
@@ -476,7 +476,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	if(inp.changecurrentnode("/mardyn") < 0) {
 		global_log->error() << "Cound not find root node /mardyn." << endl;
 		global_log->error() << "Not a valid MarDyn XML input file." << endl;
-		this->exit(1);
+		Simulation::exit(1);
 	}
 
 	string version("unknown");
@@ -498,11 +498,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				return;
 			} else {
 				global_log->error() << "Unknown input file type: " << siminptype << endl;
-				this->exit(1);;
+				Simulation::exit(1);;
 			}
 		} else if (numsimpfiles > 1) {
 			global_log->error() << "Multiple input file sections are not supported." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		readXML(inp);
@@ -538,7 +538,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			}
 			else {
 				global_log->error() << "Unknown generator: " << generatorName << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			_inputReader->readXML(inp);
 		}
@@ -549,7 +549,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	} // simulation-section
 	else {
 		global_log->error() << "Simulation section missing" << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 #ifdef ENABLE_MPI

@@ -161,7 +161,7 @@ void CanonicalEnsemble::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		global_log->error() << "Volume type not supported." << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	xmlconfig.changecurrentnode("domain");
 	_domain->readXML(xmlconfig);

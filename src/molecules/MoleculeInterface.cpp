@@ -12,6 +12,7 @@
 #include <fstream>
 
 #include "utils/Logger.h"
+#include "Simulation.h"
 
 using namespace std;
 using Log::global_log;
@@ -38,7 +39,7 @@ bool MoleculeInterface::isLessThan(const MoleculeInterface& m2) const {
 				return false;
 			else {
 				global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 		}
 	}

@@ -70,7 +70,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 		global_log->error() << "Fast Multipole Method: bad subdivision factor:"
 				<< _LJCellSubdivisionFactor << endl;
 		global_log->error() << "expected 1,2,4 or 8" << endl;
-		exit(5);
+		Simulation::exit(5);
 	}
 	global_log->info()
 			<< "Fast Multipole Method: each LJ cell will be subdivided in "
@@ -82,7 +82,7 @@ void FastMultipoleMethod::init(double globalDomainLength[3], double bBoxMin[3],
 #if defined(ENABLE_MPI)
 	if (_adaptive){
 		global_log->error() << "not supported yet" << endl;
-		exit(-1);
+		Simulation::exit(-1);
 	}
 #endif
 	if (not _adaptive) {

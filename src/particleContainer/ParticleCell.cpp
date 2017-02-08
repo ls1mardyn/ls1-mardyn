@@ -1,6 +1,7 @@
 #include "particleContainer/ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"
+#include "Simulation.h"
 
 #include <cassert>
 #include <vector>
@@ -97,7 +98,7 @@ void ParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	oCellPointer = dynamic_cast<ParticleCell*>(&otherCell);
 	if(oCellPointer == nullptr) {
 		global_log->error() << "wrong type of ParticleCell for call to updateLeavingMoleculesBase" << std::endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 #endif
 

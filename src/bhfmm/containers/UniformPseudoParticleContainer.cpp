@@ -67,7 +67,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 #if WIGNER == 1
 	//global_log->error() << "not supported yet" << endl;
-	exit(-1);
+	Simulation::exit(-1);
 #endif
 #ifdef ENABLE_MPI
 	_timerProcessCells.set_sync(false);
@@ -111,7 +111,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	_globalLevel = ceil(log2(numProcessors)/3.0);
 	if(_globalLevel > _maxLevel){
 		std::cout << "too many MPI ranks \n";
-		exit(-1);
+		Simulation::exit(-1);
 	}
 	//numProcessers has to be a power of 2
 	assert(pow(2,log2(numProcessors)) == numProcessors);

@@ -4,6 +4,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 #include "molecules/Quaternion.h"
+#include "Simulation.h"
 
 #define COMMUNICATION_THRESHOLD 3
 
@@ -93,7 +94,7 @@ void CavityEnsemble::setControlVolume(double x0, double y0, double z0, double x1
       global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0 
                           << " / " << z0 << ") to (" << x1 << " / " << y1 << " / "
                           << z1 << ")." << std::endl;
-			exit(711);
+			Simulation::exit(711);
    }
 	 
    this->restrictedControlVolume = true;
@@ -111,22 +112,22 @@ void CavityEnsemble::init(Component* component, unsigned Nx, unsigned Ny, unsign
    if(this->ownrank < 0)
    {
       global_log->error() << "\nInvalid rank " << ownrank << ".\n";
-      exit(712);
+      Simulation::exit(712);
    }
    if(this->initialized)
    {
       global_log->error() << "\nCavity ensemble initialized twice.\n";
-      exit(713);
+      Simulation::exit(713);
    }
    if(0.0 >= this->T)
    {
       global_log->error() << "\nInvalid temperature T = " << T << ".\n";
-      exit(714);
+      Simulation::exit(714);
    }
    if(0.0 >= this->globalV)
    {
       global_log->error() << "\nInvalid control volume V_ctrl = " << globalV << ".\n";
-      exit(715);
+      Simulation::exit(715);
    }
 
    this->componentid = component->ID();

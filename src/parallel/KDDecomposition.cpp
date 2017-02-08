@@ -67,7 +67,7 @@ KDDecomposition::KDDecomposition(double cutoffRadius, Domain* domain, int update
 		global_log->error() << "KDDecompsition not possible. Each process needs at least 8 cells." << endl;
 		global_log->error() << "The number of Cells is only sufficient for " << _decompTree->getNumMaxProcs() << " Procs!" << endl;
 		barrier(); // the messages above are only promoted to std::out if we have the barrier somehow...
-		global_simulation->exit(-1);
+		Simulation::exit(-1);
 	}
 	_decompTree->buildKDTree();
 	_ownArea = _decompTree->findAreaForProcess(_rank);
@@ -157,7 +157,7 @@ void KDDecomposition::balanceAndExchange(bool forceRebalancing, ParticleContaine
 		if (not migrationSuccessful) {
 			global_log->error() << "A problem occurred during particle migration between old decomposition and new decomposition of the KDDecomposition." << endl;
 			global_log->error() << "Aborting. Please save your input files and last available checkpoint and contact TUM SCCS." << endl;
-			global_simulation->exit(1);
+			Simulation::exit(1);
 		}
 		delete _decompTree;
 		_decompTree = newDecompRoot;
@@ -830,7 +830,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 			if (splitLoad) {  // if we split the load in a specific ratio, numProcsLeft is calculated differently
 				if(_accumulatedProcessorSpeeds.size()==0){
 					global_log->error() << "no processor speeds given" << std::endl;
-					global_simulation->exit(-1);
+					Simulation::exit(-1);
 				}
 				double optimalLoad = (_accumulatedProcessorSpeeds[node->_owningProc + node->_numProcs] - _accumulatedProcessorSpeeds[node->_owningProc]) * leftRightLoadRatio
 						/ (1. + leftRightLoadRatio);
@@ -895,7 +895,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 					(clone->_child2->_numProcs <= 0 || clone->_child2->_numProcs >= node->_numProcs) ){
 				//continue;
 				global_log->error_always_output() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
-				global_simulation->exit(1);
+				Simulation::exit(1);
 			}
 			assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
 
@@ -1192,6 +1192,18 @@ void KDDecomposition::getNumParticles(ParticleContainer* moleculeContainer) {
 	}
 	MPI_CHECK( MPI_Allreduce(MPI_IN_PLACE, _numParticlesPerCell, _globalNumCells, MPI_UNSIGNED, MPI_SUM, MPI_COMM_WORLD) );
 
+}
+
+std::vector<int> KDDecomposition::getNeighbourRanks() {
+	//global_log->error() << "not implemented \n";
+	Simulation::exit(-1);
+	return std::vector<int> (0);
+}
+
+std::vector<int> KDDecomposition::getNeighbourRanksFullShell() {
+	//global_log->error() << "not implemented \n";
+	Simulation::exit(-1);
+	return std::vector<int> (0);
 }
 
 std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(Domain* domain,

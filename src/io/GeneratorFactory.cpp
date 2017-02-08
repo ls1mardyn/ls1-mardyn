@@ -31,7 +31,7 @@ InputBase* GeneratorFactory::loadGenerator(std::string generatorName, std::strin
 	}
 	else {
 		global_log->error() << " Generator " << generatorName << " not known!" << endl;
-		exit(-1);
+		Simulation::exit(-1);
 	}
 
 	generator->setLogger(global_log);

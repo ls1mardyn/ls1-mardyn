@@ -47,7 +47,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	if( token != "mardyn")
 	{
 		global_log->error() << _phaseSpaceHeaderFile << " not a valid mardyn input file." << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	string inputversion;
@@ -55,12 +55,12 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 	// FIXME: remove tag trunk from file specification?
 	if(token != "trunk") {
 		global_log->error() << "Wrong input file specifier (\'" << token << "\' instead of \'trunk\')." << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	if( strtoul(inputversion.c_str(), NULL, 0) < 20080701 ) {
 		global_log->error() << "Input version tool old (" << inputversion << ")" << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 	global_log->info() << "Reading phase space header from file " << _phaseSpaceHeaderFile << endl;
@@ -162,7 +162,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				if (numtersoff != 0) {
 					global_log->error() << "tersoff no longer supported."
 							<< std::endl;
-					global_simulation->exit(-1);
+					Simulation::exit(-1);
 				}
 				double x, y, z, m;
 				for( unsigned int j = 0; j < numljcenters; j++ ) {
@@ -281,7 +281,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	_phaseSpaceFileStream.open( _phaseSpaceFile.c_str() );
 	if (!_phaseSpaceFileStream.is_open()) {
 		global_log->error() << "Could not open phaseSpaceFile " << _phaseSpaceFile << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	global_log->info() << "Reading phase space file " << _phaseSpaceFile << endl;
 #ifdef ENABLE_MPI
@@ -305,7 +305,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	}
 	if((token != "NumberOfMolecules") && (token != "N")) {
 		global_log->error() << "Expected the token 'NumberOfMolecules (N)' instead of '" << token << "'" << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	_phaseSpaceFileStream >> nummolecules;
 #ifdef ENABLE_MPI
@@ -335,7 +335,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 		else if (ntypestring == "IRV")  ntype = IRV;
 		else {
 			global_log->error() << "Unknown molecule format '" << ntypestring << "'" << endl;
-			exit(1);
+			Simulation::exit(1);
 		}
 	} else {
 		_phaseSpaceFileStream.seekg(spos);
@@ -404,7 +404,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 
 			if( componentid > numcomponents ) {
 				global_log->error() << "Molecule id " << id << " has wrong componentid: " << componentid << ">" << numcomponents << endl;
-				global_simulation->exit(1);
+				Simulation::exit(1);
 			}
 			componentid --; // TODO: Component IDs start with 0 in the program.
 

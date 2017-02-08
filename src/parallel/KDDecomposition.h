@@ -116,16 +116,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	int getUpdateFrequency() { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
-	virtual std::vector<int> getNeighbourRanks() override {
-		//global_log->error() << "not implemented \n";
-		exit(-1);
-		return std::vector<int> (0);
-	}
-	virtual std::vector<int> getNeighbourRanksFullShell() override{
-		//global_log->error() << "not implemented \n";
-		exit(-1);
-		return std::vector<int> (0);
-	}
+	virtual std::vector<int> getNeighbourRanks() override;
+	virtual std::vector<int> getNeighbourRanksFullShell() override;
 
 	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 

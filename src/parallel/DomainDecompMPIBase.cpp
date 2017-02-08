@@ -58,7 +58,7 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme){
 	} else{
 		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
-		global_simulation->exit(1);
+		Simulation::exit(1);
 	}
 }
 

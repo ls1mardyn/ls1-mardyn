@@ -144,7 +144,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
 			}
-			global_simulation->exit(457);
+			Simulation::exit(457);
 		}
 
 	} // while not allDone
@@ -289,7 +289,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 			for (int i = 0; i < numNeighbours; ++i) {
 				_neighbours[d][i].deadlockDiagnosticSendRecv();
 			}
-			global_simulation->exit(457);
+			Simulation::exit(457);
 		}
 
 	} // while not allDone

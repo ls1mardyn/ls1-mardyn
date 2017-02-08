@@ -49,7 +49,7 @@ void  VTKGridWriter::doOutput(
 #ifndef NDEBUG
 	if (container == NULL) {
 		global_log->error() << "VTKGridWriter works only with PlottableLinkCells!" << std::endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 #endif
 
@@ -115,7 +115,7 @@ void  VTKGridWriter::initOutput(ParticleContainer* particleContainer,
 #ifndef NDEBUG
 	if (dynamic_cast<LinkedCells*>(particleContainer) == NULL) {
 		global_log->error() << "VTKGridWriter works only with LinkCells!" << std::endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 #endif
 }

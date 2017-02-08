@@ -34,7 +34,7 @@ void CheckpointWriter::readXML(XMLfileUnits& xmlconfig) {
 
 	if(_writeFrequency == 0 ){
 		global_log->error() << "Write frequency must be a positive nonzero integer, but is " << _writeFrequency << endl;
-		exit(-1);
+		Simulation::exit(-1);
 	}
 
 	_outputPrefix = "mardyn";
