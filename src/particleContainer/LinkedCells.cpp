@@ -1597,7 +1597,7 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 		#endif
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
 		//cellIndex[dim] = (int) floor((molecule->r(dim) - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-		cellIndex[dim] = ((int) floor((molecule->r(dim) - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim];
+		cellIndex[dim] = min(max(((int) floor((molecule->r(dim) - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
 
 	}
 	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
@@ -1627,7 +1627,7 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		// different than getCellIndexOfMolecule!!!
 
 		// ignore a bit of rounding, if the point is outside of the box.
-		if (localPoint[dim] < _haloBoundingBoxMin[dim]){
+		if (localPoint[dim] <= _haloBoundingBoxMin[dim]){
 			localPoint[dim] += _cellLength[dim]/2;
 		} 
 		else if(localPoint[dim] >= _haloBoundingBoxMax[dim]){
@@ -1647,7 +1647,7 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 		
 		//this version is sensitive to roundoffs, if we have molecules (initialized) precisely at position 0.0:
 		//cellIndex[dim] = (int) floor(point[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-		cellIndex[dim] = ((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim];
+		cellIndex[dim] = min(max(((int) floor((localPoint[dim] - _boundingBoxMin[dim]) / _cellLength[dim])) + _haloWidthInNumCells[dim],0),_cellsPerDimension[dim]-1);
 	}
 	
 	int cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
