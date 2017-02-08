@@ -102,7 +102,7 @@ public:
 	void add(CommunicationPartner partner);
 
 private:
-	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3]);
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
 
 	int _rank;
 	std::vector<PositionInfo> _haloInfo;
