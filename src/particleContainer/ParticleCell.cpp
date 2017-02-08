@@ -3,7 +3,7 @@
 #include "utils/UnorderedVector.h"
 #include "Simulation.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <vector>
 
 using namespace std;
@@ -26,7 +26,7 @@ bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 
 #ifndef NDEBUG
 	bool isIn = particle.inBox(_boxMin, _boxMax);
-	assert(isIn);
+	mardyn_assert(isIn);
 #endif
 
 	if (checkWhetherDuplicate == false) {
@@ -57,8 +57,8 @@ int ParticleCell::getMoleculeCount() const {
 }
 
 bool ParticleCell::deleteMoleculeByIndex(size_t index) {
-//	assert(index >= 0); - this is always true now
-	assert(index < _molecules.size());
+//	mardyn_assert(index >= 0); - this is always true now
+	mardyn_assert(index < _molecules.size());
 
 	bool found = true;
 	auto it = _molecules.begin() + index;
@@ -89,7 +89,7 @@ void ParticleCell::preUpdateLeavingMolecules() {
 		}
 	}
 
-	assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
+	mardyn_assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
 }
 
 void ParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {

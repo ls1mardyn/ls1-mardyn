@@ -139,7 +139,7 @@ void VTKGridWriter::setupVTKGrid(ParticleContainer* particleContainer) {
 			for (int k = 0; k < numCellsPerDimension[0]+1; k++) {
 				int vertexIndex = i * (numCellsPerDimension[1]+1) * (numCellsPerDimension[0]+1) + j * (numCellsPerDimension[0]+1) + k;
 
-				assert(vertexIndex < _numVertices);
+				mardyn_assert(vertexIndex < _numVertices);
 				int x = k * lc->_cellLength[0];
 				int y = j * lc->_cellLength[1];
 				int z = i * lc->_cellLength[2];
@@ -153,7 +153,7 @@ void VTKGridWriter::setupVTKGrid(ParticleContainer* particleContainer) {
 		for (int j = 0; j < numCellsPerDimension[1]; j++) {
 			for (int k = 0; k < numCellsPerDimension[0]; k++) {
 				int cellsIndex = i * numCellsPerDimension[1] * numCellsPerDimension[0] + j * numCellsPerDimension[0] + k;
-				assert(cellsIndex < _numCells);
+				mardyn_assert(cellsIndex < _numCells);
 				// calculate the indices of the inner cells, taking the halo into account
 				int containerIndex = lc->cellIndexOf3DIndex(k + lc->_haloWidthInNumCells[0],
 						j + lc->_haloWidthInNumCells[1],
@@ -163,7 +163,7 @@ void VTKGridWriter::setupVTKGrid(ParticleContainer* particleContainer) {
 				for (int l = 0; l < 8; l++) {
 					int vertexIndex =   (i + (l & 4 ? 1 : 0)) * (numCellsPerDimension[1]+1) * (numCellsPerDimension[0]+1)
 						                    		 + (j + (l & 2 ? 1 : 0)) * (numCellsPerDimension[0]+1) + (k + (l & 1));
-					assert(vertexIndex < _numVertices);
+					mardyn_assert(vertexIndex < _numVertices);
 					_cells[cellsIndex].setVertex(l, &_vertices[vertexIndex]);
 				}
 

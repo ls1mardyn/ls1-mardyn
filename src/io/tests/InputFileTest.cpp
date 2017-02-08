@@ -50,7 +50,7 @@ void InputFileTest::testRemoveMomentum() {
 
 	ParticleIterator molecule = particleContainer->iteratorBegin();
 	while(molecule != particleContainer->iteratorEnd()){
-		assert(components.size() > molecule->componentid());
+		mardyn_assert(components.size() > molecule->componentid());
 		mass = components[molecule->componentid()].m();
 		mass_sum = mass_sum + mass;
 		momentum_sum[0] = momentum_sum[0] + mass * molecule->v(0);

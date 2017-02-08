@@ -5,7 +5,7 @@
  *      Author: uwe
  */
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <cmath>
 #include <iostream>
 #include <iomanip>
@@ -27,7 +27,7 @@ inline int minus_one_pow(int m)
 
 void WignerMatrix::evaluate_0_Pip2(double theta)
 {
-	assert(theta > 0 && theta <= M_PI/2);
+	mardyn_assert(theta > 0 && theta <= M_PI/2);
 	const int ord = order;
 
 	/* g_lm (Dachsel Paper eq. (29))

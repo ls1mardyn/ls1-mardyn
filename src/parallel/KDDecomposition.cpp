@@ -276,12 +276,12 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				bool removeFromContainer = true;
 				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, removeFromContainer);
 				// decrement numProcsSend for further uses:
-				assert(willMigrateToSelf == true);
+				mardyn_assert(willMigrateToSelf == true);
 				numProcsSend--;
 			}
 		}
 	}
-	assert(moleculeContainer->getNumberOfParticles() == 0ul);
+	mardyn_assert(moleculeContainer->getNumberOfParticles() == 0ul);
 	double newBoxMin[3];
 	double newBoxMax[3];
 	for (int dim = 0; dim < 3; dim++) {
@@ -452,7 +452,7 @@ void KDDecomposition::updateMeanProcessorSpeeds(std::vector<double>& processorSp
 	}
 	accumulatedProcessorSpeeds[0] = 0.;
 	for (size_t i = 0; i < processorSpeeds.size(); i++) {
-		assert(processorSpeeds[i] > 0);
+		mardyn_assert(processorSpeeds[i] > 0);
 		accumulatedProcessorSpeeds[i + 1] = accumulatedProcessorSpeeds[i] + processorSpeeds[i];
 	}
 	_totalProcessorSpeed =
@@ -604,7 +604,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 	// recursion termination criterion
 	if (fatherNode->_numProcs == 1) {
 		// own area must belong to this process!
-		assert(fatherNode->_owningProc == _rank);
+		mardyn_assert(fatherNode->_owningProc == _rank);
 		ownArea = fatherNode;
 		fatherNode->calculateDeviation(&_processorSpeeds, _totalMeanProcessorSpeed);
 		return domainTooSmall;
@@ -612,7 +612,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 
 	std::list<KDNode*> subdivisions;
 	domainTooSmall = calculateAllSubdivisions(fatherNode, subdivisions, commGroup);
-	assert(subdivisions.size() > 0);
+	mardyn_assert(subdivisions.size() > 0);
 
 	KDNode* bestSubdivision = NULL;
 	double minimalDeviation = globalMinimalDeviation;
@@ -682,7 +682,7 @@ bool KDDecomposition::decompose(KDNode* fatherNode, KDNode*& ownArea, MPI_Comm c
 			deviationChildren[0] = (*iter)->_child1->_deviation;
 			domainTooSmall = (domainTooSmall || subdomainTooSmall);
 		} else {									  // ... or the second child
-			assert(_rank >= (*iter)->_child2->_owningProc);
+			mardyn_assert(_rank >= (*iter)->_child2->_owningProc);
 			bool subdomainTooSmall = decompose((*iter)->_child2, newOwnArea, newComm, minimalDeviation);
 			deviationChildren[1] = (*iter)->_child2->_deviation;
 			domainTooSmall = (domainTooSmall || subdomainTooSmall);
@@ -897,7 +897,7 @@ bool KDDecomposition::calculateAllSubdivisions(KDNode* node, std::list<KDNode*>&
 				global_log->error_always_output() << "ERROR in calculateAllSubdivisions(), part of the domain was not assigned to a proc" << endl;
 				Simulation::exit(1);
 			}
-			assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
+			mardyn_assert( clone->_child1->isResolvable() && clone->_child2->isResolvable() );
 
 			clone->_child1->_load = costsLeft[dim][i];
 			clone->_child2->_load = costsRight[dim][i];
@@ -1257,7 +1257,7 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 			low[d] = *(indexIt++);
 			high[d] = *(indexIt++);
 			if (haloRegion.offset[d] != 0) {
-				assert(low[d] == high[d]); // TODO: only for FULLSHELL!!!
+				mardyn_assert(low[d] == high[d]); // TODO: only for FULLSHELL!!!
 			}
 			enlarged[d][0] = enlarged[d][1] = false;
 		}

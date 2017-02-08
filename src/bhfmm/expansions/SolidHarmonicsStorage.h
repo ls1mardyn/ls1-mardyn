@@ -8,7 +8,7 @@
 #ifndef SOLIDHARMONICSSTORAGE_H_
 #define SOLIDHARMONICSSTORAGE_H_
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 namespace bhfmm {
 class SolidHarmonicsStorage;
@@ -94,10 +94,10 @@ public:
 	 * @return corresponding sequential index
 	 */
 	int index(int l, int m) const {
-		assert(l >= 0);
-		assert(m >= 0);
-		assert(l <= _numRows);
-		assert(m <= l);
+		mardyn_assert(l >= 0);
+		mardyn_assert(m >= 0);
+		mardyn_assert(l <= _numRows);
+		mardyn_assert(m <= l);
 		return l * (l + 1) / 2 + m;
 	}
 

@@ -271,7 +271,7 @@ void CommunicationPartner::deadlockDiagnosticRecv() {
 }
 
 void CommunicationPartner::add(CommunicationPartner partner) {
-	assert(partner._rank == _rank);
+	mardyn_assert(partner._rank == _rank);
 	_haloInfo.push_back(partner._haloInfo[0]);
 }
 

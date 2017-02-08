@@ -64,7 +64,7 @@ LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
 				+ 2 * _haloWidthInNumCells[d];
 
 		numberOfCells *= _cellsPerDimension[d];
-		assert(numberOfCells > 0);
+		mardyn_assert(numberOfCells > 0);
 	}
 	global_log->debug() << "Cell size (" << _cellLength[0] << ", "
 			<< _cellLength[1] << ", " << _cellLength[2] << ")" << endl;
@@ -219,7 +219,7 @@ void LinkedCells::update() {
 				const unsigned long neighbourIndex = cellIndex - _backwardNeighbourOffsets[j];
 				if (neighbourIndex >= _cells.size()) {
 					// handles cell_index < 0 (indices are unsigned!)
-					assert(cell.isHaloCell());
+					mardyn_assert(cell.isHaloCell());
 					continue;
 				}
 				cell.updateLeavingMolecules(_cells[neighbourIndex]);
@@ -228,7 +228,7 @@ void LinkedCells::update() {
 			for (unsigned long j = 0; j < _forwardNeighbourOffsets.size(); j++) {
 				const unsigned long neighbourIndex = cellIndex + _forwardNeighbourOffsets[j];
 				if (neighbourIndex >= numCells) {
-					assert(cell.isHaloCell());
+					mardyn_assert(cell.isHaloCell());
 					continue;
 				}
 				cell.updateLeavingMolecules(_cells[neighbourIndex]);
@@ -302,11 +302,11 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 				if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
 					global_log->error()<<"At particle with ID "<<particle.id()<<" assertion failed..."<<endl;
 				}
-				assert(particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
+				mardyn_assert(particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax));
 			#endif
 
 			const unsigned long cellIndex = getCellIndexOfMolecule(&particle);
-			assert(cellIndex < _cells.size());
+			mardyn_assert(cellIndex < _cells.size());
 			index_vector[i] = cellIndex;
 		}
 
@@ -675,7 +675,7 @@ void LinkedCells::getHaloParticles(list<Molecule*> &haloParticlePtrs) {
 }
 
 void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, bool removeFromContainer) {
-	assert(direction != 0);
+	mardyn_assert(direction != 0);
 
 	int startIndex[3] = { 0, 0, 0 };
 	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
@@ -858,7 +858,7 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 }
 
 void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>& v) {
-	assert(direction != 0);
+	mardyn_assert(direction != 0);
 
 	int startIndex[3] = { 0, 0, 0 };
 	int stopIndex[3] = { _cellsPerDimension[0] - 1, _cellsPerDimension[1] - 1, _cellsPerDimension[2] - 1 };
@@ -1259,7 +1259,7 @@ void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], vector<Mo
 
 int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR) {
         int m1neigh = 0;
-        assert(_cellsValid);
+        mardyn_assert(_cellsValid);
         unsigned long cellIndex = getCellIndexOfMolecule(m1);
         ParticleCell& currentCell = _cells[cellIndex];
 
@@ -1304,11 +1304,11 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
    double RR = ce->getRR();
    
    for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
-      assert(pcit->second != NULL);
+      mardyn_assert(pcit->second != NULL);
       Molecule* m1 = pcit->second;
       unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
       unsigned long m1id = pcit->first;
-      assert(m1id == m1->id());
+      mardyn_assert(m1id == m1->id());
       ce->decideActivity(neigh, m1id);
    }
 }
@@ -1453,12 +1453,12 @@ void LinkedCells::initializeCells() {
 #ifndef NDEBUG
 							ParticleCell & cell = _cells[cellIndex];
 
-							assert(not cell.isInnerCell());
+							mardyn_assert(not cell.isInnerCell());
 
 							if (typ == 0){
-								assert(cell.isHaloCell());
+								mardyn_assert(cell.isHaloCell());
 							} else {
-								 /* assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
+								 /* mardyn_assert(cell.isBoundaryCell()) is not always true, as we have some halo cells in there */
 							}
 #endif
 
@@ -1531,8 +1531,8 @@ void LinkedCells::calculateNeighbourIndices() {
 		}
 	}
 
-	assert(forwardNeighbourIndex == 13);
-	assert(backwardNeighbourIndex == 13);
+	mardyn_assert(forwardNeighbourIndex == 13);
+	mardyn_assert(backwardNeighbourIndex == 13);
 
 	global_log->info() << "Neighbour offsets are bounded by "
 			<< _minNeighbourOffset << ", " << _maxNeighbourOffset << endl;
@@ -1611,7 +1611,7 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 			}
 		}
 		cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
-		assert(_cells[cellIndex1d].testInBox(*molecule));
+		mardyn_assert(_cells[cellIndex1d].testInBox(*molecule));
 		return cellIndex1d;
 	}
 }
@@ -1665,7 +1665,7 @@ unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const 
 			}
 		}
 		cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
-		assert(_cells[cellIndex1d].testPointInCell(localPoint));
+		mardyn_assert(_cells[cellIndex1d].testPointInCell(localPoint));
 		return cellIndex1d;
 	}
 }
@@ -1739,7 +1739,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	ParticleCell& currentCell = _cells[cellIndex];
 
-	assert(not currentCell.isHaloCell());
+	mardyn_assert(not currentCell.isHaloCell());
 
 	cellProcessor->initTraversal();
 
@@ -1770,7 +1770,7 @@ double LinkedCells::getEnergy(ParticlePairsHandler* particlePairsHandler, Molecu
 
 	dummyCell.deallocateAllParticles();
 
-    assert(not std::isnan(u)); // catches NaN
+    mardyn_assert(not std::isnan(u)); // catches NaN
 
 	return u;
 }

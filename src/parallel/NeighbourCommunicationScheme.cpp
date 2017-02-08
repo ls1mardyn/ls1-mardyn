@@ -29,14 +29,14 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
 void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
@@ -317,14 +317,14 @@ void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContaine
 void IndirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 
 void IndirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 

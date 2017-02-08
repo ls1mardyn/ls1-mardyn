@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <stdexcept>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include "ParticleCell.h"
 
 
@@ -69,7 +69,7 @@ inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, cons
 		return;
 	}
 
-	assert(_cells != nullptr);
+	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
 
@@ -89,7 +89,7 @@ inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, cons
 }
 
 inline ParticleIterator& ParticleIterator::operator=(const ParticleIterator& other) {
-	assert(_stride == other._stride);
+	mardyn_assert(_stride == other._stride);
 	_cells = other._cells;
 	_cell_index = other._cell_index;
 	_mol_index = other._mol_index;
@@ -97,8 +97,8 @@ inline ParticleIterator& ParticleIterator::operator=(const ParticleIterator& oth
 }
 
 inline void ParticleIterator :: next_non_empty_cell() {
-	assert(*this != ParticleIterator :: invalid());
-	assert(_cells != nullptr);
+	mardyn_assert(*this != ParticleIterator :: invalid());
+	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
 	const CellIndex_T numCells = cells.size();

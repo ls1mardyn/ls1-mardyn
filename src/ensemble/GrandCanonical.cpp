@@ -91,7 +91,7 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 	this->remainingDeletions.clear();
 #ifndef NDEBUG
 	for (int d = 0; d < 3; d++)
-		assert(this->remainingInsertions[d].empty());
+		mardyn_assert(this->remainingInsertions[d].empty());
 #endif
 	this->remainingDecisions.clear();
 
@@ -250,7 +250,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 	global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 
-	assert(m->id() < nextid);
+	mardyn_assert(m->id() < nextid);
 	*ret = m;
 	return true; // DELETION_TRUE
 }
@@ -271,7 +271,7 @@ unsigned long ChemicalPotential::getInsertion(double* ins) {
 }
 
 bool ChemicalPotential::decideDeletion(double deltaUTilde) {
-	assert(!this->widom); // the Widom test particle method should never call decideDeletion ...
+	mardyn_assert(!this->widom); // the Widom test particle method should never call decideDeletion ...
 
 	if (this->remainingDecisions.empty()) {
 		if (this->widom) {
@@ -382,10 +382,10 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 }
 
 Molecule ChemicalPotential::loadMolecule() {
-	assert(this->reservoir != NULL);
+	mardyn_assert(this->reservoir != NULL);
 	Molecule tmp = *reservoir;
 	unsigned rotdof = tmp.component()->getRotationalDegreesOfFreedom();
-	assert(tmp.componentid() == componentid);
+	mardyn_assert(tmp.componentid() == componentid);
 #ifndef NDEBUG
 	tmp.check(tmp.id());
 #endif

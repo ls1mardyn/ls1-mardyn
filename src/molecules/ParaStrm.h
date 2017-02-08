@@ -9,7 +9,7 @@
 
 #include <malloc.h>
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <cstddef>
 #include <cstdlib>
 #include <cstring>
@@ -28,7 +28,7 @@ public:
     /// Constructor using an existing parameter stream (resets the reading "pointer" to the beginning of the stream).
 	ParaStrm( const ParaStrm& param_stream ) : m_size( param_stream.m_size ), m_pstrm(NULL), m_readpos(NULL) {
         m_pstrm = (char *) malloc(m_size);
-        assert(m_pstrm);
+        mardyn_assert(m_pstrm);
         memcpy( m_pstrm, param_stream.m_pstrm, m_size );
         m_readpos = m_pstrm;
 	}
@@ -56,7 +56,7 @@ public:
     ParaStrm& operator=( const ParaStrm& param_stream ) {
         m_size  = param_stream.m_size;
         m_pstrm = (char *) malloc(m_size);
-        assert(m_pstrm);
+        mardyn_assert(m_pstrm);
         memcpy( m_pstrm, param_stream.m_pstrm, m_size );
         m_readpos = m_pstrm;
         return *this;
@@ -74,7 +74,7 @@ public:
 		else
 			m_pstrm = (char*) realloc(m_pstrm, m_size);
 		// realloc might change m_pstrm!
-		assert(m_pstrm);
+		mardyn_assert(m_pstrm);
 		// save value
 		*((T*) (m_pstrm + oldsize)) = p;
 		//m_ptypes.push_back(UNDEF);
@@ -85,7 +85,7 @@ public:
 
 	/// read value at actual stream position and move position
 	template<class T> ParaStrm& operator >>(T& p) {
-		assert(m_readpos+sizeof(T)<=m_pstrm+m_size);
+		mardyn_assert(m_readpos+sizeof(T)<=m_pstrm+m_size);
 		// get value
 		p = *((T*) m_readpos);
 		// move reading position

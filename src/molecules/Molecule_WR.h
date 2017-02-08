@@ -71,12 +71,12 @@ public:
 	}
 
 	double F(unsigned short d) const {
-		assert(false);
+		mardyn_assert(false);
 		return 0.0;
 	}
 
 	const Quaternion& q() const {
-		assert(false);
+		mardyn_assert(false);
 		return _quaternion;
 	}
 
@@ -104,7 +104,7 @@ public:
 		return mass();
 	}
 	double getI(unsigned short d) const {
-		assert(false);
+		mardyn_assert(false);
 		// TODO: check values for single-centered molecules
 		return 0.0;
 	}
@@ -117,7 +117,7 @@ public:
 	}
 
 	void setupSoACache(CellDataSoABase * const s, unsigned iLJ, unsigned iC, unsigned iD, unsigned iQ) {
-		assert(false);
+		mardyn_assert(false);
 		// should this ever be like called?
 		setSoA(s);
 		_soa_index = iLJ;
@@ -126,16 +126,16 @@ public:
 	void setSoA(CellDataSoABase * const s);
 
 	void setStartIndexSoA_LJ(unsigned i) {
-		assert(false);
+		mardyn_assert(false);
 	}
 	void setStartIndexSoA_C(unsigned i) {
-		assert(false);
+		mardyn_assert(false);
 	}
 	void setStartIndexSoA_D(unsigned i) {
-		assert(false);
+		mardyn_assert(false);
 	}
 	void setStartIndexSoA_Q(unsigned i) {
-		assert(false);
+		mardyn_assert(false);
 	}
 
 	unsigned int numSites() const {
@@ -158,107 +158,107 @@ public:
 	}
 
 	std::array<double, 3> site_d(unsigned int i) const {
-		assert(i == 0);
+		mardyn_assert(i == 0);
 		std::array<double, 3> ret;
 		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
 		return ret;
 	}
 
 	std::array<double, 3> ljcenter_d(unsigned int i) const {
-		assert(i == 0);
+		mardyn_assert(i == 0);
 		std::array<double, 3> ret;
 		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
 		return ret;
 	}
 	std::array<double, 3> charge_d(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> dipole_d(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> quadrupole_d(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 
 	std::array<double, 3> site_d_abs(unsigned int i) const {
-		assert(i == 0);
+		mardyn_assert(i == 0);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
-		assert(i == 0);
+		mardyn_assert(i == 0);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> charge_d_abs(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> dipole_d_abs(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> quadrupole_d_abs(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 
 	std::array<double, 3> dipole_e(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> quadrupole_e(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 
 	std::array<double, 3> site_F(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> ljcenter_F(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> charge_F(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> dipole_F(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
 	}
 	std::array<double, 3> quadrupole_F(unsigned int i) const {
-		assert(false);
+		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
@@ -274,7 +274,7 @@ public:
 
 	unsigned long totalMemsize() const {
 		//todo: check
-		assert(false);
+		mardyn_assert(false);
 		return sizeof(*this);
 	}
 

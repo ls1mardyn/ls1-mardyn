@@ -4,7 +4,7 @@
 #include "utils/Logger.h"
 #include "CollectiveCommBase.h"
 #include <mpi.h>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 /* Enable agglomerated reduce operations. This will store all values in one array and apply a
  * user defined reduce operation so that the MPI reduce operation is only called once. */
@@ -66,7 +66,7 @@ public:
 	}
 
 	virtual ~CollectiveCommunication() {
-		assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	//! @brief allocate memory for the values to be sent, initialize counters
@@ -83,7 +83,7 @@ public:
 		CollectiveCommBase::finalize();
 		_types.clear();
 
-		assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	// documentation in base class

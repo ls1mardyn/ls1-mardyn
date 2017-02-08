@@ -7,7 +7,7 @@
 
 #include "MoleculeInterface.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <cmath>
 #include <fstream>
 

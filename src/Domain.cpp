@@ -239,7 +239,7 @@ void Domain::calculateGlobalValues(
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
-		assert((summv2 > 0.0) || (numMolecules == 0));
+		mardyn_assert((summv2 > 0.0) || (numMolecules == 0));
 
 		/* calculate the temperature of the entire system */
 		if(numMolecules > 0)
@@ -723,8 +723,8 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 						+ pow((thismol->r(2) - this->_universalCentre[2]), 2.0);
 				if (distFor_unID <= this->_universalR2max) {
 					unID = this->unID(thismol->r(0), thismol->r(1), thismol->r(2));
-					assert(unID >= 0);
-					assert(
+					mardyn_assert(unID >= 0);
+					mardyn_assert(
 							unID
 									< (this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 											* this->_universalNProfileUnits[2]));

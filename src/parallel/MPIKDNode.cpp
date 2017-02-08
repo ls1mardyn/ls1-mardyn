@@ -1,11 +1,11 @@
 #include "MPIKDNode.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 #include "utils/Logger.h"
 
-#define assertion(x) assert(x)
-#define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; assert(x);}
+#define assertion(x) mardyn_assert(x)
+#define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; mardyn_assert(x);}
 
 using Log::global_log;
 

@@ -16,7 +16,7 @@
 
 #include <vector>
 #include <stdexcept>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include "ParticleCell.h"
 
 class RegionParticleIterator : public ParticleIterator {
@@ -56,7 +56,7 @@ inline RegionParticleIterator :: RegionParticleIterator (CellContainer_T_ptr cel
 
 	_cell_index = getGlobalCellIndex();
 
-	assert(_cells != nullptr);
+	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
 	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0]; //cells.size();
@@ -75,8 +75,8 @@ inline RegionParticleIterator :: RegionParticleIterator (CellContainer_T_ptr cel
 
 inline void RegionParticleIterator :: next_non_empty_cell() {
 	//cellIndex should always be the index in the cell array (_cells member variable in LinkedCells)
-	assert(*this != ParticleIterator :: invalid());
-	assert(_cells != nullptr);
+	mardyn_assert(*this != ParticleIterator :: invalid());
+	mardyn_assert(_cells != nullptr);
 
 	const CellContainer_T& cells = *_cells;
 	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0];

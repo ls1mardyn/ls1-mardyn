@@ -31,7 +31,7 @@ void Leapfrog::readXML(XMLfileUnits& xmlconfig) {
 	_timestepLength = 0;
 	xmlconfig.getNodeValueReduced("timestep", _timestepLength);
 	global_log->info() << "Timestep: " << _timestepLength << endl;
-	assert(_timestepLength > 0);
+	mardyn_assert(_timestepLength > 0);
 }
 
 void Leapfrog::eventForcesCalculated(ParticleContainer* molCont, Domain* domain) {
@@ -112,7 +112,7 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 
 			for (ParticleIterator i = begin; i != end; ++i) {
 				i->upd_postF(dt_half, summv2gt_l, sumIw2gt_l);
-				assert(summv2gt_l >= 0.0);
+				mardyn_assert(summv2gt_l >= 0.0);
 				Ngt_l++;
 				rotDOFgt_l += i->component()->getRotationalDegreesOfFreedom();
 			}
@@ -165,7 +165,7 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	ParticleIterator thismol;
 	for (thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol) {
 		unsigned cid = thismol->componentid();
-		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
+		mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
 		              componentwiseVelocityDelta[1][cid],
 		              componentwiseVelocityDelta[2][cid]);
@@ -189,7 +189,7 @@ void Leapfrog::accelerateInstantaneously(ParticleContainer* molCont, Domain* dom
 	ParticleIterator thismol;
 	for (thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol) {
 		unsigned cid = thismol->componentid();
-		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
+		mardyn_assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
 		thismol->vadd(componentwiseVelocityDelta[0][cid],
 		              componentwiseVelocityDelta[1][cid],
 		              componentwiseVelocityDelta[2][cid]);

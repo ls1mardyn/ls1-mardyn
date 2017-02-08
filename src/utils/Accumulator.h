@@ -6,7 +6,7 @@
  */
 
 #include <algorithm>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <cmath>
 #include <cstdlib>
 
@@ -106,7 +106,7 @@ public:
      * @return     value added id times before
      */
     T getEntry(size_t id) {
-        assert(0 < id && id <= _windowLength);
+        mardyn_assert(0 < id && id <= _windowLength);
         return _data[(_insertPosition + _windowLength - id) % _windowLength];
     }
 

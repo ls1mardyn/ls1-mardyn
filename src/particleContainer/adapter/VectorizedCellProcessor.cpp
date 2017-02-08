@@ -2588,7 +2588,7 @@ int VectorizedCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, 
 }
 
 void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & c2) {
-	assert(&c1 != &c2);
+	mardyn_assert(&c1 != &c2);
 	const CellDataSoA& soa1 = c1.getCellDataSoA();
 	const CellDataSoA& soa2 = c2.getCellDataSoA();
 	const bool c1Halo = c1.isHaloCell();
@@ -2626,8 +2626,8 @@ void VectorizedCellProcessor::processCellPair(ParticleCell & c1, ParticleCell & 
 		}
 
 	} else {
-		assert(c1Halo != c2Halo);							// one of them is halo and
-		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
+		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
+		mardyn_assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
 
 		const bool CalculateMacroscopic = false;
 

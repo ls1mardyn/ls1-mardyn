@@ -2,7 +2,7 @@
 #define UNORDERED_VECTOR_H
 
 #include <vector>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 /**
  * \brief Leveraging performance (and especially OpenMP)
@@ -23,11 +23,11 @@ void fastRemove(std::vector<T, A>& v, typename std::vector<T, A>::iterator& pos)
 
 	// assumption: if the vector is empty, then the method is not called at all
 	// i.e. v is not empty()
-	assert(not v.empty());
+	mardyn_assert(not v.empty());
 
 	// assert that the iterator points inside this vector
-	assert(pos >= v.begin());
-	assert(pos < v.end());
+	mardyn_assert(pos >= v.begin());
+	mardyn_assert(pos < v.end());
 
 	// either std::swap, or a user-written function in the namespace
 	swap(*pos, v.back());

@@ -109,16 +109,9 @@ Simulation::~Simulation() {
 }
 
 void Simulation::exit(int exitcode) {
-#ifdef ENABLE_MPI
-	// terminate all mpi processes and return exitcode
-	MPI_Abort(MPI_COMM_WORLD, exitcode);
-#else
-	// call global exit
-	::exit(exitcode);
-#endif
+	// .. to avoid code duplication ..
+	mardyn_exit(exitcode);
 }
-
-
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
 #ifdef USE_VT

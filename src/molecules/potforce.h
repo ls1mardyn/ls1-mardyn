@@ -480,7 +480,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	mj.Viadd(Virial);
 	
 	// check whether all parameters were used
-	assert(params.eos());
+	mardyn_assert(params.eos());
 }
 
 /** @brief Calculates the LJ and electrostatic potential energy of the mi-mj interaction (no multi-body potentials are considered) */
@@ -628,7 +628,7 @@ inline void FluidPot(Molecule& mi, Molecule& mj, ParaStrm& params, double /*drm*
 	}
 
 	// check whether all parameters were used
-	assert(params.eos());
+	mardyn_assert(params.eos());
 }
 
 #endif /* POTFORCE_H_ */
