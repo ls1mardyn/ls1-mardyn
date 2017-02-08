@@ -33,7 +33,7 @@ public:
 
 	virtual ~ParticleIterator(){}
 
-	virtual void operator ++ ();
+	void operator ++ ();
 
 	bool operator == (const ParticleIterator& other) const;
 	bool operator != (const ParticleIterator& other) const;
@@ -51,18 +51,20 @@ protected:
 	CellIndex_T _cell_index;
 	MolIndex_T _mol_index;
 
+	bool _currentParticleDeleted;
+
 	const CellIndex_T _stride;
 
 	virtual void make_invalid ();
 	virtual void next_non_empty_cell();
 };
 
-inline ParticleIterator :: ParticleIterator () : _cells (nullptr), _cell_index (0), _mol_index (0), _stride (1) {
+inline ParticleIterator :: ParticleIterator () : _cells (nullptr), _cell_index (0), _mol_index (0), _currentParticleDeleted(false), _stride (1) {
 	make_invalid();
 }
 
 inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize) :
-		_cells (cells_arg), _cell_index (offset_arg), _mol_index (0), _stride (stride_arg) {
+		_cells (cells_arg), _cell_index (offset_arg), _mol_index (0), _currentParticleDeleted(false), _stride (stride_arg) {
 	if ( !initialize ) {
 		return;
 	}
@@ -119,13 +121,19 @@ inline void ParticleIterator :: next_non_empty_cell() {
 }
 
 inline void ParticleIterator :: operator ++ () {
-	++_mol_index;
+
+	// if the "current" particle was deleted, then there is a new particle at _mol_index
+	// and the _mol_index value should not be incremented.
+	_mol_index += _currentParticleDeleted ? 0 : 1;
 
 	const CellContainer_T& cells = *_cells;
 
 	if (_mol_index >= static_cast<MolIndex_T>(cells[_cell_index].getMoleculeCount())) {
 		next_non_empty_cell();
 	}
+
+	// at this stage, we are pointing to a new particle, or are invalid, in any case we can set this:
+	_currentParticleDeleted = false;
 }
 
 inline bool ParticleIterator :: operator == (const ParticleIterator& other) const {
@@ -157,9 +165,6 @@ inline void ParticleIterator :: make_invalid () {
 
 inline void ParticleIterator :: deleteCurrentParticle () {
 	_cells->at(_cell_index).deleteMoleculeByIndex(_mol_index);
-
-	if (_mol_index >= static_cast<MolIndex_T>(_cells->at(_cell_index).getMoleculeCount())) {
-		next_non_empty_cell();
-	}
+	_currentParticleDeleted = true;
 }
 #endif /* #ifndef ParticleIterator_INC */

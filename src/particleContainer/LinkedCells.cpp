@@ -624,12 +624,9 @@ void LinkedCells::clear() {
 void LinkedCells::deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]) {
 	// This should be unimportant
 
-	ParticleIterator it;
-	for (it = iteratorBegin(); it != iteratorEnd();) {
-		bool keepMolecule = it->inBox(boxMin, boxMax);
-		if (keepMolecule) {
-			++it;
-		} else {
+	for (auto it = iteratorBegin(); it != iteratorEnd(); ++it) {
+		bool outside = not it->inBox(boxMin, boxMax);
+		if (outside) {
 			it.deleteCurrentParticle();
 		}
 	}
@@ -704,7 +701,7 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 		{
 			const int numThreads = mardyn_get_num_threads();
 			const int threadNum = mardyn_get_thread_num();
-			RegionParticleIterator begin = iterateRegionBegin(startCellIndex, endCellIndex, IterateType::ALL, removeFromContainer);
+			RegionParticleIterator begin = iterateRegionBegin(startCellIndex, endCellIndex, IterateType::ALL);
 			RegionParticleIterator end = iterateRegionEnd();
 
 			#if defined (_OPENMP)
@@ -723,6 +720,9 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 				//traverse and gather all halo particles in the cells
 				//i is a pointer to a Molecule; (*i) is the Molecule
 				threadData[threadNum].push_back(*i);
+				if (removeFromContainer) {
+					i.deleteCurrentParticle();
+				}
 			}
 
 			prefixArray[threadNum + 1] = threadData[threadNum].size();
@@ -1081,7 +1081,7 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vec
 			#pragma omp barrier
 			#endif
 
-			for(RegionParticleIterator i = begin; i != end; ){
+			for(RegionParticleIterator i = begin; i != end; ++i){
 				//traverse and gather all halo particles in the cells
 				//i is a pointer to a Molecule; (*i) is the Molecule
 				if ((*i).inBox(lowCorner, highCorner)) {
@@ -1092,11 +1092,8 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vec
 					else {
 						threadData[threadNum].push_back(new Molecule(*m));
 						i.deleteCurrentParticle();
-						// i is already at next molecule, so continue without incrementing
-						continue;
 					}
 				}
-				++i;
 			}
 
 			prefixArray[threadNum + 1] = threadData[threadNum].size();
@@ -1316,7 +1313,7 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
    }
 }
 
-RegionParticleIterator LinkedCells::iterateRegionBegin(const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type, bool removeFromContainer) {
+RegionParticleIterator LinkedCells::iterateRegionBegin(const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type) {
 	// parameters "type" and "removeFromContainer" not yet used
 	// add functionality in a future version...
 
@@ -1333,13 +1330,13 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const unsigned int startC
 	return RegionParticleIterator(&_cells, offset, stride, startCellIndex, regionDimensions, _cellsPerDimension);
 }
 
-RegionParticleIterator LinkedCells::iterateRegionBegin(const double startCorner[3], const double endCorner[3], IterateType type, bool removeFromContainer) {
+RegionParticleIterator LinkedCells::iterateRegionBegin(const double startCorner[3], const double endCorner[3], IterateType type) {
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
 
 	getCellIndicesOfRegion(startCorner, endCorner, startRegionCellIndex, endRegionCellIndex);
 
-	return iterateRegionBegin(startRegionCellIndex, endRegionCellIndex, type, removeFromContainer);
+	return iterateRegionBegin(startRegionCellIndex, endRegionCellIndex, type);
 }
 
 RegionParticleIterator LinkedCells::iterateRegionEnd() {

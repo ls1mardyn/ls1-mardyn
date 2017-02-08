@@ -248,8 +248,8 @@ public:
 
 		return ParticleIterator(&_cells, offset, stride);
 	}
-	RegionParticleIterator iterateRegionBegin (const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type = ALL, bool removeFromContainer = false);
-	RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL, bool removeFromContainer = false);
+	RegionParticleIterator iterateRegionBegin (const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type = ALL);
+	RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL);
 	
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();

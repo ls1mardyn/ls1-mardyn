@@ -276,6 +276,7 @@ void CommunicationPartner::add(CommunicationPartner partner) {
 }
 
 void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer){
+	using std::vector;
 	int prevNumMols = _sendBuf.size();
 	vector<vector<Molecule>> threadData;
 	vector<int> prefixArray;
@@ -301,21 +302,15 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		#pragma omp barrier
 		#endif
 
-		for(RegionParticleIterator i = begin; i != end; ){
+		for (RegionParticleIterator i = begin; i != end; ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
 			if(i->inBox(lowCorner, highCorner)){
-				if (not removeFromContainer) {
-					threadData[threadNum].push_back(*i);
-				}
-				else {
-					threadData[threadNum].push_back(Molecule(*i));
+				threadData[threadNum].push_back(*i);
+				if (removeFromContainer) {
 					i.deleteCurrentParticle();
-					// i is already at next molecule, so continue without incrementing
-					continue;
 				}
 			}
-			++i;
 		}
 
 		prefixArray[threadNum + 1] = threadData[threadNum].size();

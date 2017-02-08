@@ -152,7 +152,7 @@ public:
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
 	virtual ParticleIterator iteratorBegin () = 0;
-	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL, bool removeFromContainer = false) = 0;
+	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL) = 0;
 
 	virtual ParticleIterator iteratorEnd () = 0;
 	virtual RegionParticleIterator iterateRegionEnd () = 0;

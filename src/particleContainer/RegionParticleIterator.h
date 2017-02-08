@@ -19,16 +19,10 @@
 #include <cassert>
 #include "ParticleCell.h"
 
-using namespace std;
-
-#include "molecules/MoleculeForwardDeclaration.h"
-
 class RegionParticleIterator : public ParticleIterator {
 	public:
 		RegionParticleIterator ();
-		RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const bool removeFromContainer_arg = false);
-
-		void operator ++();
+		RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3]);
 
 		static RegionParticleIterator invalid();
 
@@ -43,16 +37,14 @@ class RegionParticleIterator : public ParticleIterator {
 		CellIndex_T _localCellIndex;
 		CellIndex_T _regionDimensions[3];
 		CellIndex_T _globalDimensions[3];
-
-		const bool _removeFromContainer;
 };
 
-inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(), _localCellIndex(-1), _removeFromContainer(false) {
+inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(), _localCellIndex(-1){
 	make_invalid();
 }
 
-inline RegionParticleIterator :: RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const bool removeFromContainer_arg) :
-		ParticleIterator(cells_arg, offset_arg, stride_arg, false), _localCellIndex (offset_arg), _removeFromContainer(removeFromContainer_arg) {
+inline RegionParticleIterator :: RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3]) :
+		ParticleIterator(cells_arg, offset_arg, stride_arg, false), _localCellIndex (offset_arg) {
 	for (int d = 0; d < 3; d++) {
 		_regionDimensions[d] = regionDimensions_arg[d];
 		_globalDimensions[d] = globalDimensions_arg[d];
@@ -104,20 +96,6 @@ inline void RegionParticleIterator :: next_non_empty_cell() {
 		// else there is no next non-empty cell..
 		// invalid
 		make_invalid();
-	}
-}
-
-inline void RegionParticleIterator :: operator ++ () {
-	if (_removeFromContainer) {
-		deleteCurrentParticle();
-	}
-	else {
-		++_mol_index;
-
-		const CellContainer_T& cells = *_cells;
-		if (_mol_index >= static_cast<MolIndex_T>(cells[_cell_index].getMoleculeCount())) {
-			next_non_empty_cell();
-		}
 	}
 }
 
