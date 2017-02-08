@@ -26,6 +26,7 @@ struct PositionInfo {
 	double _copiesLow[3], _copiesHigh[3];
 	double _shift[3]; //! for periodic boundaries
 	int _offset[3];
+	bool _enlarged[3][2];
 };
 
 
@@ -35,7 +36,7 @@ struct PositionInfo {
 class CommunicationPartner {
 public:
 	CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
-			const double bHi[3], const double sh[3], const int offset[3]);
+			const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]);
 	CommunicationPartner(const int r);
 	CommunicationPartner(const int r, const double leavingLo[3], const double leavingHi[3]);
 
@@ -87,12 +88,18 @@ public:
 			for (unsigned int d2 = 0; d2 < 3; d2++) {
 				if (d2 == d)
 					continue;
-				_haloInfo[p]._bothLow[d2] -= enlargement;
-				_haloInfo[p]._bothHigh[d2] += enlargement;
-				_haloInfo[p]._leavingLow[d2] -= enlargement;
-				_haloInfo[p]._leavingHigh[d2] += enlargement;
-				_haloInfo[p]._copiesLow[d2] -= enlargement;
-				_haloInfo[p]._copiesHigh[d2] += enlargement;
+				if (!_haloInfo[p]._enlarged[0]) {
+					_haloInfo[p]._bothLow[d2] -= enlargement;
+					_haloInfo[p]._leavingLow[d2] -= enlargement;
+					_haloInfo[p]._copiesLow[d2] -= enlargement;
+					_haloInfo[p]._enlarged[d2][0] = true;
+				}
+				if (!_haloInfo[p]._enlarged[1]) {
+					_haloInfo[p]._bothHigh[d2] += enlargement;
+					_haloInfo[p]._leavingHigh[d2] += enlargement;
+					_haloInfo[p]._copiesHigh[d2] += enlargement;
+					_haloInfo[p]._enlarged[d2][1] = true;
+				}
 			}
 		}
 	}

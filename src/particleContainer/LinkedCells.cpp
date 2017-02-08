@@ -294,10 +294,10 @@ int LinkedCells::addParticles(vector<Molecule>& particles, bool checkWhetherDupl
 		for (index_t i = start; i < end; i++) {
 			Molecule particle = particles[i];
 			//there could be particles meant for another process that get here...
-			if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
+			/*if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
 				index_vector[i] = -1; //this particle is not meant for this process...
 				continue;
-			}
+			}*/
 			#ifndef NDEBUG
 				if(!particle.inBox(_haloBoundingBoxMin, _haloBoundingBoxMax)){
 					global_log->error()<<"At particle with ID "<<particle.id()<<" assertion failed..."<<endl;

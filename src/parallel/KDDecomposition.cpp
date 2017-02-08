@@ -1240,12 +1240,14 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 	for (int n = 0; n < numNeighbours; ++n) {
 		int low[3];
 		int high[3];
+		bool enlarged[3][2];
 		for (int d = 0; d < 3; ++d) {
 			low[d] = *(indexIt++);
 			high[d] = *(indexIt++);
 			if (haloRegion.offset[d] != 0) {
 				assert(low[d] == high[d]); // TODO: only for FULLSHELL!!!
 			}
+			enlarged[d][0] = enlarged[d][1] = false;
 		}
 		for (unsigned int d = 0; d < DIMgeom; d++) { // put boundary options, such that they lie around ownRegion again.
 			// TODO: only for FullShell! (theoretically this could start at offset[d]=-2 or so, if HaloRegion goes over multiple ranks
@@ -1257,8 +1259,10 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 				high[d] += _globalCellsPerDim[d];
 			} else if (haloRegion.offset[d] == 0 && ownLo[d] < low[d]){
 				low[d]--;
+				enlarged[d][0] = true;
 			} else if (haloRegion.offset[d] == 0 && ownHi[d] > high[d]){
 				high[d]++;
+				enlarged[d][1] = true;
 			}
 		}
 
@@ -1278,7 +1282,7 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 		getCellBorderFromIntCoords(boundaryLow, boundaryHigh, low, high);
 
 		temp.push_back(
-				CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset));
+				CommunicationPartner(ranks[n], haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset, enlarged));
 
 	}
 

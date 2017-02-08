@@ -13,7 +13,7 @@
 #include "WrapOpenMP.h"
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
-		const double bHi[3], const double sh[3], const int offset[3]) {
+		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
 	_rank = r;
 
 	PositionInfo p;
@@ -26,6 +26,8 @@ CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], con
 		p._bothHigh[d] = fmax(hHi[d], bHi[d]);
 		p._shift[d] = sh[d];
 		p._offset[d] = offset[d];
+		p._enlarged[d][0] = enlarged[d][0];
+		p._enlarged[d][1] = enlarged[d][1];
 	}
 	_haloInfo.push_back(p);
 
@@ -49,6 +51,8 @@ CommunicationPartner::CommunicationPartner(const int r) {
 		p._bothHigh[d] = 0.;
 		p._shift[d] = 0.;
 		p._offset[d] = 0;
+		p._enlarged[d][0] = false;
+		p._enlarged[d][1] = false;
 	}
 	_haloInfo.push_back(p);
 
@@ -72,6 +76,8 @@ CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3
 		p._bothHigh[d] = 0.;
 		p._shift[d] = 0.;
 		p._offset[d] = 0;
+		p._enlarged[d][0] = false;
+		p._enlarged[d][1] = false;
 	}
 	_haloInfo.push_back(p);
 	// some values, to silence the warnings:
@@ -298,7 +304,7 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		for(RegionParticleIterator i = begin; i != end; ){
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
-			if((*i).inBox(lowCorner, highCorner)){
+			if(i->inBox(lowCorner, highCorner)){
 				if (not removeFromContainer) {
 					threadData[threadNum].push_back(*i);
 				}
