@@ -248,6 +248,7 @@ public:
 
 		return ParticleIterator(&_cells, offset, stride);
 	}
+	RegionParticleIterator iterateRegionBegin (const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type = ALL, bool removeFromContainer = false);
 	RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL, bool removeFromContainer = false);
 	
 	ParticleIterator iteratorEnd () {
@@ -350,7 +351,7 @@ private:
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
 
 	int _cellsInCutoff; //!< Minimal number of cells within the cutoff radius
-	int _cellsPerDimension[3]; //!< Number of Cells in each spacial dimension (including halo)
+	int _cellsPerDimension[3]; //!< Number of Cells in each spatial dimension (including halo)
 	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
