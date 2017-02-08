@@ -33,8 +33,7 @@ public:
 
 	virtual ~ParticleIterator(){}
 
-	void operator ++ ();
-	void operator ++ (int);
+	virtual void operator ++ ();
 
 	bool operator == (const ParticleIterator& other) const;
 	bool operator != (const ParticleIterator& other) const;
@@ -120,16 +119,6 @@ inline void ParticleIterator :: next_non_empty_cell() {
 }
 
 inline void ParticleIterator :: operator ++ () {
-	++_mol_index;
-
-	const CellContainer_T& cells = *_cells;
-
-	if (_mol_index >= static_cast<MolIndex_T>(cells[_cell_index].getMoleculeCount())) {
-		next_non_empty_cell();
-	}
-}
-
-inline void ParticleIterator :: operator ++ (int) {
 	++_mol_index;
 
 	const CellContainer_T& cells = *_cells;

@@ -719,7 +719,7 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 			#pragma omp barrier
 			#endif
 
-			for(RegionParticleIterator i = begin; i != end; i++){
+			for(RegionParticleIterator i = begin; i != end; ++i){
 				//traverse and gather all halo particles in the cells
 				//i is a pointer to a Molecule; (*i) is the Molecule
 				threadData[threadNum].push_back(*i);
@@ -901,7 +901,7 @@ void LinkedCells::getBoundaryParticlesDirection(int direction, vector<Molecule>&
 			#pragma omp barrier
 			#endif
 
-			for(RegionParticleIterator i = begin; i != end; i++){
+			for(RegionParticleIterator i = begin; i != end; ++i){
 				//traverse and gather all halo particles in the cells
 				//i is a pointer to a Molecule; (*i) is the Molecule
 				threadData[threadNum].push_back(*i);
@@ -1091,12 +1091,12 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vec
 					}
 					else {
 						threadData[threadNum].push_back(new Molecule(*m));
-						i.removeCurrentMoleculeFromContainer();
+						i.deleteCurrentParticle();
 						// i is already at next molecule, so continue without incrementing
 						continue;
 					}
 				}
-				i++;
+				++i;
 			}
 
 			prefixArray[threadNum + 1] = threadData[threadNum].size();

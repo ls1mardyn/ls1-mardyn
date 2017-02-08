@@ -29,9 +29,6 @@ class RegionParticleIterator : public ParticleIterator {
 		RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const bool removeFromContainer_arg = false);
 
 		void operator ++();
-		void operator ++(int);
-
-		void removeCurrentMoleculeFromContainer();
 
 		static RegionParticleIterator invalid();
 
@@ -84,14 +81,6 @@ inline RegionParticleIterator :: RegionParticleIterator (CellContainer_T_ptr cel
 	}
 }
 
-inline void RegionParticleIterator :: removeCurrentMoleculeFromContainer() {
-	(*_cells)[_cell_index].deleteMoleculeByIndex(_mol_index);
-
-	if (_mol_index >= static_cast<MolIndex_T>((*_cells)[_cell_index].getMoleculeCount())) {
-		next_non_empty_cell();
-	}
-}
-
 inline void RegionParticleIterator :: next_non_empty_cell() {
 	//cellIndex should always be the index in the cell array (_cells member variable in LinkedCells)
 	assert(*this != ParticleIterator :: invalid());
@@ -120,7 +109,7 @@ inline void RegionParticleIterator :: next_non_empty_cell() {
 
 inline void RegionParticleIterator :: operator ++ () {
 	if (_removeFromContainer) {
-		removeCurrentMoleculeFromContainer();
+		deleteCurrentParticle();
 	}
 	else {
 		++_mol_index;
@@ -130,10 +119,6 @@ inline void RegionParticleIterator :: operator ++ () {
 			next_non_empty_cell();
 		}
 	}
-}
-
-inline void RegionParticleIterator :: operator ++ (int) {
-	this->operator ++();
 }
 
 inline void RegionParticleIterator :: make_invalid() {

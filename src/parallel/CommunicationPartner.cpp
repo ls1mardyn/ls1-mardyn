@@ -310,12 +310,12 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 				}
 				else {
 					threadData[threadNum].push_back(Molecule(*i));
-					i.removeCurrentMoleculeFromContainer();
+					i.deleteCurrentParticle();
 					// i is already at next molecule, so continue without incrementing
 					continue;
 				}
 			}
-			i++;
+			++i;
 		}
 
 		prefixArray[threadNum + 1] = threadData[threadNum].size();
