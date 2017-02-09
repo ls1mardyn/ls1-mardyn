@@ -1331,7 +1331,7 @@ RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
 
-	getCellIndicesOfRegion(startCorner, endCorner, startRegionCellIndex, endRegionCellIndex);
+	getCellIndicesOfRegion(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 
 	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 }

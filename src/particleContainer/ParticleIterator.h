@@ -133,7 +133,7 @@ inline void ParticleIterator :: operator ++ () {
 	}
 
 	// at this stage, we are pointing to a new particle, or are invalid, in any case we can set this:
-	currentParticleDeleted = false;
+	_currentParticleDeleted = false;
 }
 
 inline bool ParticleIterator :: operator == (const ParticleIterator& other) const {
