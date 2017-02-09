@@ -1359,15 +1359,22 @@ void LinkedCells::initializeCells() {
 	for (int iz = 0; iz < _cellsPerDimension[2]; ++iz) {
 		cellBoxMin[2] = iz * _cellLength[2] + _haloBoundingBoxMin[2];
 		cellBoxMax[2] = (iz + 1) * _cellLength[2] + _haloBoundingBoxMin[2];
+		if(iz==_cellsPerDimension[2]-1){//make sure, that the cells span the whole domain... for iz=0 this is already implicitly done
+			cellBoxMax[2]=_haloBoundingBoxMax[2];
+		}
 
 		for (int iy = 0; iy < _cellsPerDimension[1]; ++iy) {
 			cellBoxMin[1] = iy * _cellLength[1] + _haloBoundingBoxMin[1];
 			cellBoxMax[1] = (iy + 1) * _cellLength[1] + _haloBoundingBoxMin[1];
-
+			if (iy == _cellsPerDimension[1] - 1) { //make sure, that the cells span the whole domain... for iy=0 this is already implicitly done
+				cellBoxMax[1] = _haloBoundingBoxMax[1];
+			}
 			for (int ix = 0; ix < _cellsPerDimension[0]; ++ix) {
 				cellBoxMin[0] = ix * _cellLength[0] + _haloBoundingBoxMin[0];
 				cellBoxMax[0] = (ix + 1) * _cellLength[0] + _haloBoundingBoxMin[0];
-
+				if (ix == _cellsPerDimension[0] - 1) { //make sure, that the cells span the whole domain... for ix=0 this is already implicitly done
+					cellBoxMax[0] = _haloBoundingBoxMax[0];
+				}
 				cellIndex = cellIndexOf3DIndex(ix, iy, iz);
 				ParticleCell & cell = _cells[cellIndex];
 
@@ -1378,7 +1385,7 @@ void LinkedCells::initializeCells() {
 
 				cell.setBoxMin(cellBoxMin);
 				cell.setBoxMax(cellBoxMax);
-				_cells[cellIndex].setCellIndex(cellIndex); //set the index of the cell to the index of it...
+				cell.setCellIndex(cellIndex); //set the index of the cell to the index of it...
 				if (ix < _haloWidthInNumCells[0] ||
 					iy < _haloWidthInNumCells[1] ||
 					iz < _haloWidthInNumCells[2] ||
@@ -1580,8 +1587,10 @@ void LinkedCells::calculateCellPairOffsets() {
 }
 
 unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const {
-	int cellIndex[3]; // 3D Cell index
+	double r[3] = {molecule->r(0), molecule->r(1), molecule->r(2)};
+	return getCellIndexOfPoint(r);
 
+	/*
 	for (int dim = 0; dim < 3; dim++) {
 		#ifndef NDEBUG
 		if (molecule->r(dim) < _haloBoundingBoxMin[dim] || molecule->r(dim) >= _haloBoundingBoxMax[dim]) {
@@ -1613,7 +1622,7 @@ unsigned long int LinkedCells::getCellIndexOfMolecule(Molecule* molecule) const 
 		cellIndex1d = this->cellIndexOf3DIndex(cellIndex[0], cellIndex[1], cellIndex[2]);
 		mardyn_assert(_cells[cellIndex1d].testInBox(*molecule));
 		return cellIndex1d;
-	}
+	}*/
 }
 
 unsigned long int LinkedCells::getCellIndexOfPoint(const double point[3]) const {
