@@ -701,7 +701,7 @@ void LinkedCells::getHaloParticlesDirection(int direction, vector<Molecule>& v, 
 		{
 			const int numThreads = mardyn_get_num_threads();
 			const int threadNum = mardyn_get_thread_num();
-			RegionParticleIterator begin = iterateRegionBegin(startCellIndex, endCellIndex, IterateType::ALL);
+			RegionParticleIterator begin = iterateRegionBegin(startCellIndex, endCellIndex);
 			RegionParticleIterator end = iterateRegionEnd();
 
 			#if defined (_OPENMP)
@@ -1084,15 +1084,13 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vec
 			for(RegionParticleIterator i = begin; i != end; ++i){
 				//traverse and gather all halo particles in the cells
 				//i is a pointer to a Molecule; (*i) is the Molecule
-				if ((*i).inBox(lowCorner, highCorner)) {
-					Molecule* m = &(*i);
-					if (not removeFromContainer) {
-						threadData[threadNum].push_back(m);
-					}
-					else {
-						threadData[threadNum].push_back(new Molecule(*m));
-						i.deleteCurrentParticle();
-					}
+				Molecule* m = &(*i);
+				if (not removeFromContainer) {
+					threadData[threadNum].push_back(m);
+				}
+				else {
+					threadData[threadNum].push_back(new Molecule(*m));
+					i.deleteCurrentParticle();
 				}
 			}
 
@@ -1313,30 +1311,29 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
    }
 }
 
-RegionParticleIterator LinkedCells::iterateRegionBegin(const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type) {
-	// parameters "type" and "removeFromContainer" not yet used
+RegionParticleIterator LinkedCells::iterateRegionBegin(const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex, IterateType type) {
+	// parameter "type" not yet used
 	// add functionality in a future version...
+	double startRegion[3];
+	double endRegion[3];
 
-	int start3DIndices[3], end3DIndices[3];
-	int regionDimensions[3];
-	threeDIndexOfCellIndex(startCellIndex, start3DIndices, _cellsPerDimension);
-	threeDIndexOfCellIndex(endCellIndex, end3DIndices, _cellsPerDimension);
-	for(int d = 0; d < 3; d++){
-		regionDimensions[d] = end3DIndices[d] - start3DIndices[d] + 1;
+	for(int d=0; d<3; d++){
+		startRegion[d] = _cells[startRegionCellIndex].getBoxMin(d);
+		endRegion[d] = _cells[endRegionCellIndex].getBoxMax(d);
 	}
-	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
-	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
 
-	return RegionParticleIterator(&_cells, offset, stride, startCellIndex, regionDimensions, _cellsPerDimension);
+	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 }
 
-RegionParticleIterator LinkedCells::iterateRegionBegin(const double startCorner[3], const double endCorner[3], IterateType type) {
+RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[3], const double endRegion[3], IterateType type) {
+	// parameter "type" not yet used
+	// add functionality in a future version...
 	unsigned int startRegionCellIndex;
 	unsigned int endRegionCellIndex;
 
 	getCellIndicesOfRegion(startCorner, endCorner, startRegionCellIndex, endRegionCellIndex);
 
-	return iterateRegionBegin(startRegionCellIndex, endRegionCellIndex, type);
+	return getRegionParticleIterator(startRegion, endRegion, startRegionCellIndex, endRegionCellIndex);
 }
 
 RegionParticleIterator LinkedCells::iterateRegionEnd() {
@@ -1693,6 +1690,20 @@ void LinkedCells::getCellIndicesOfRegion(const double startRegion[3], const doub
 	//find the cellIndices of the cells which contain the start and end corners of the region
 	startIndex = getCellIndexOfPoint(startRegion);
 	endIndex = getCellIndexOfPoint(endRegion);
+}
+
+RegionParticleIterator LinkedCells::getRegionParticleIterator(const double startRegion[3], const double endRegion[3], const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex){
+	int start3DIndices[3], end3DIndices[3];
+	int regionDimensions[3];
+	threeDIndexOfCellIndex(startRegionCellIndex, start3DIndices, _cellsPerDimension);
+	threeDIndexOfCellIndex(endRegionCellIndex, end3DIndices, _cellsPerDimension);
+	for(int d = 0; d < 3; d++){
+		regionDimensions[d] = end3DIndices[d] - start3DIndices[d] + 1;
+	}
+	ParticleIterator::CellIndex_T offset = mardyn_get_thread_num(); // starting position
+	ParticleIterator::CellIndex_T stride = mardyn_get_num_threads(); // stride
+
+	return RegionParticleIterator(&_cells, offset, stride, startRegionCellIndex, regionDimensions, _cellsPerDimension, startRegion, endRegion);
 }
 
 void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) {

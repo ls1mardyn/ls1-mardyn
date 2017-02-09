@@ -19,7 +19,6 @@
 #include "utils/mardyn_assert.h"
 #include "ParticleCell.h"
 
-
 class ParticleIterator {
 public:
 	typedef std::vector<ParticleCell> CellContainer_T;
@@ -93,6 +92,7 @@ inline ParticleIterator& ParticleIterator::operator=(const ParticleIterator& oth
 	_cells = other._cells;
 	_cell_index = other._cell_index;
 	_mol_index = other._mol_index;
+	_currentParticleDeleted = other._currentParticleDeleted;
 	return *this;
 }
 
@@ -133,7 +133,7 @@ inline void ParticleIterator :: operator ++ () {
 	}
 
 	// at this stage, we are pointing to a new particle, or are invalid, in any case we can set this:
-	_currentParticleDeleted = false;
+	currentParticleDeleted = false;
 }
 
 inline bool ParticleIterator :: operator == (const ParticleIterator& other) const {
@@ -161,10 +161,12 @@ inline ParticleIterator ParticleIterator :: invalid () {
 inline void ParticleIterator :: make_invalid () {
 	_cell_index = CellIndex_T(-1);
 	_mol_index = MolIndex_T(-1);
+	_currentParticleDeleted = false;
 }
 
 inline void ParticleIterator :: deleteCurrentParticle () {
 	_cells->at(_cell_index).deleteMoleculeByIndex(_mol_index);
 	_currentParticleDeleted = true;
 }
+
 #endif /* #ifndef ParticleIterator_INC */

@@ -305,11 +305,9 @@ void CommunicationPartner::collectMoleculesInRegion(ParticleContainer* moleculeC
 		for (RegionParticleIterator i = begin; i != end; ++i) {
 			//traverse and gather all molecules in the cells containing part of the box specified as parameter
 			//i is a pointer to a Molecule; (*i) is the Molecule
-			if(i->inBox(lowCorner, highCorner)){
-				threadData[threadNum].push_back(*i);
-				if (removeFromContainer) {
-					i.deleteCurrentParticle();
-				}
+			threadData[threadNum].push_back(*i);
+			if (removeFromContainer) {
+				i.deleteCurrentParticle();
 			}
 		}
 

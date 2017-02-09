@@ -248,8 +248,8 @@ public:
 
 		return ParticleIterator(&_cells, offset, stride);
 	}
-	RegionParticleIterator iterateRegionBegin (const unsigned int startCellIndex, const unsigned int endCellIndex, IterateType type = ALL);
-	RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL);
+	RegionParticleIterator iterateRegionBegin (const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex, IterateType type = ALL);
+	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], IterateType type = ALL);
 	
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();
@@ -325,7 +325,9 @@ private:
 	 */
 	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
 
-	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startIndex, unsigned int &endIndex);
+	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
+
+	RegionParticleIterator getRegionParticleIterator(const double startRegion[3], const double endRegion[3], const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex);
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
