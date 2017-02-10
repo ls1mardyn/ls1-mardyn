@@ -159,8 +159,8 @@ public:
 	void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 
-	// documentation see father class (ParticleContainer.h)
-	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]);
+	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }

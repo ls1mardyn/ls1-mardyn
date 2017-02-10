@@ -16,6 +16,7 @@
 #include "particleContainer/adapter/FlopCounter.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "parallel/HaloRegion.h"
+#include "WrapOpenMP.h"
 
 #include <cmath>
 
@@ -273,8 +274,10 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 				const bool removeFromContainer = true;
 				sendPartners.back().initSend(moleculeContainer, _comm, _mpiParticleType, LEAVING_ONLY, removeFromContainer); // molecules have been taken out of container
 			} else {
-				bool removeFromContainer = true;
-				moleculeContainer->getRegionSimple(leavingLow, leavingHigh, migrateToSelf, removeFromContainer);
+				if(moleculeContainer->isRegionInHaloBoundingBox(leavingLow, leavingHigh)){
+					collectMoleculesInRegion(moleculeContainer, leavingLow, leavingHigh, migrateToSelf);
+				}
+
 				// decrement numProcsSend for further uses:
 				mardyn_assert(willMigrateToSelf == true);
 				numProcsSend--;
@@ -308,7 +311,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 		if (migrateToSelfDone != true) {
 			const int numMolsMigToSelf = migrateToSelf.size();
 			for (int i = 0; i < numMolsMigToSelf; i++) {
-				moleculeContainer->addParticle(*migrateToSelf[i], false, false);
+				moleculeContainer->addParticle(*migrateToSelf[i]);
 				delete migrateToSelf[i];
 			}
 			migrateToSelfDone = true;
@@ -1299,4 +1302,70 @@ std::vector<CommunicationPartner> KDDecomposition::getNeighboursFromHaloRegion(D
 	}
 
 	return temp;
+}
+
+void KDDecomposition::collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], vector<Molecule*>& mols) const {
+	vector<vector<Molecule*>> threadData;
+	vector<int> prefixArray;
+
+	#if defined (_OPENMP)
+	#pragma omp parallel shared(mols, threadData)
+	#endif
+	{
+		const int prevNumMols = mols.size();
+		const int numThreads = mardyn_get_num_threads();
+		const int threadNum = mardyn_get_thread_num();
+		RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+		RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			threadData.resize(numThreads);
+			prefixArray.resize(numThreads + 1);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		for (RegionParticleIterator i = begin; i != end; ++i) {
+			threadData[threadNum].push_back(new Molecule(*i));
+			i.deleteCurrentParticle(); //removeFromContainer = true;
+		}
+
+		prefixArray[threadNum + 1] = threadData[threadNum].size();
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//build the prefix array and resize the molecule array
+		#if defined (_OPENMP)
+		#pragma omp master
+		#endif
+		{
+			int totalNumMols = 0;
+			//build the prefix array
+			prefixArray[0] = 0;
+			for(int i = 1; i <= numThreads; i++){
+				prefixArray[i] += prefixArray[i - 1];
+				totalNumMols += threadData[i - 1].size();
+			}
+
+			//resize the molecule array
+			mols.resize(prevNumMols + totalNumMols);
+		}
+
+		#if defined (_OPENMP)
+		#pragma omp barrier
+		#endif
+
+		//reduce the molecules in the molecule array
+		int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
+		for(int i = 0; i < myThreadMolecules; i++){
+			mols[prevNumMols + prefixArray[threadNum] + i] = threadData[threadNum][i];
+		}
+	}
 }

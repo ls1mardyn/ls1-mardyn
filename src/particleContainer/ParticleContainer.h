@@ -197,11 +197,9 @@ public:
 	// get the region of the boundary particles in this container based on direction
 	virtual void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
 
-	//! @brief fills the given list with pointers to all particles in the given region
-	//! @param lowCorner minimum x-, y- and z-coordinate of the region
-	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	//! @param removeFromContainer if true, particles are erased, else - left in container
-	virtual void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer=false) = 0;
+	virtual bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) = 0;
+
+	virtual bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
 	virtual double getCutoff() = 0;
 

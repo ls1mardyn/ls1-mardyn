@@ -705,192 +705,24 @@ void LinkedCells::getBoundaryRegionPerDirection(int direction, double (*startReg
 	}
 }
 
-void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs, bool removeFromContainer) {
-	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (getRegionSimple) invalid, call update first" << endl;
-		Simulation::exit(1);
-	}
-
-	//int startIndex[3];
-	//int stopIndex[3];
-
+bool LinkedCells::isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]){
 	for (int dim = 0; dim < 3; dim++) {
-		if (lowCorner[dim] <= this->_haloBoundingBoxMax[dim] && highCorner[dim] >= this->_haloBoundingBoxMin[dim]) {
-			/*
-			startIndex[dim] = (int) floor( (lowCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-			stopIndex[dim] = (int) floor( (highCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
-			if (startIndex[dim] < 0)
-				startIndex[dim] = 0;
-			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
-				stopIndex[dim] = _cellsPerDimension[dim] - 1;
-			*/
-		}
-		else {
+		if (!(startRegion[dim] <= this->_haloBoundingBoxMax[dim] && endRegion[dim] >= this->_haloBoundingBoxMin[dim])) {
 			// No Part of the given region is owned by this process
-			return;
+			return false;
 		}
 	}
+	return true;
+}
 
-	#if 1
-		const int prevNumMols = particlePtrs.size();
-		vector<vector<Molecule*>> threadData;
-		vector<int> prefixArray;
-
-		#if defined (_OPENMP)
-		#pragma omp parallel shared(particlePtrs, threadData)
-		#endif
-		{
-			const int numThreads = mardyn_get_num_threads();
-			const int threadNum = mardyn_get_thread_num();
-			RegionParticleIterator begin = iterateRegionBegin(lowCorner, highCorner);
-			RegionParticleIterator end = iterateRegionEnd();
-
-			#if defined (_OPENMP)
-			#pragma omp master
-			#endif
-			{
-				threadData.resize(numThreads);
-				prefixArray.resize(numThreads + 1);
-			}
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			for(RegionParticleIterator i = begin; i != end; ++i){
-				//traverse and gather all halo particles in the cells
-				//i is a pointer to a Molecule; (*i) is the Molecule
-				Molecule* m = &(*i);
-				if (not removeFromContainer) {
-					threadData[threadNum].push_back(m);
-				}
-				else {
-					threadData[threadNum].push_back(new Molecule(*m));
-					i.deleteCurrentParticle();
-				}
-			}
-
-			prefixArray[threadNum + 1] = threadData[threadNum].size();
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			//build the prefix array and resize the send buffer
-			#if defined (_OPENMP)
-			#pragma omp master
-			#endif
-			{
-				int totalNumMols = 0;
-				//build the prefix array
-				prefixArray[0] = 0;
-				for(int i = 1; i <= numThreads; i++){
-					prefixArray[i] += prefixArray[i - 1];
-					totalNumMols += threadData[i - 1].size();
-				}
-
-				//resize the send buffer
-				particlePtrs.resize(prevNumMols + totalNumMols);
-			}
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			//reduce the molecules in particlePtrs
-			int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
-			for(int i = 0; i < myThreadMolecules; i++){
-				particlePtrs[prevNumMols + prefixArray[threadNum] + i] = threadData[threadNum][i];
-			}
+bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[3]){
+	for (int dim = 0; dim < 3; dim++) {
+		if (!(startRegion[dim] < this->_boundingBoxMax[dim] && endRegion[dim] > this->_boundingBoxMin[dim])) {
+			// No Part of the given region is owned by this process
+			return false;
 		}
-	#else
-		const int prevNumMols = particlePtrs.size();
-		vector<vector<Molecule*>> threadData;
-		vector<int> prefixArray;
-
-		#if defined (_OPENMP)
-		#pragma omp parallel shared(particlePtrs, threadData)
-		#endif
-		{
-			const int numThreads = mardyn_get_num_threads();
-			const int threadNum = mardyn_get_thread_num();
-			#if defined (_OPENMP)
-			#pragma omp master
-			#endif
-			{
-				threadData.resize(numThreads);
-				prefixArray.resize(numThreads + 1);
-			}
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			#if defined (_OPENMP)
-			#pragma omp for schedule(static) collapse(3)
-			#endif
-			for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
-				for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
-					for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
-						const int cellIndex = cellIndexOf3DIndex(ix, iy, iz);
-						ParticleCell & currentCell = _cells[cellIndex];
-
-						// traverse all molecules in the current cell, save to-go-molecules in threadData[threadNum]
-						currentCell.getRegion(lowCorner, highCorner, threadData[threadNum], removeFromContainer);
-					}
-				}
-			}
-
-			prefixArray[threadNum + 1] = threadData[threadNum].size();
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			//build the prefix array and allocate memory for particlePtrs
-			#if defined (_OPENMP)
-			#pragma omp master
-			#endif
-			{
-				int totalNumMols = 0;
-				//build the prefix array
-				prefixArray[0] = 0;
-				for(int i = 1; i <= numThreads; i++){
-					prefixArray[i] += prefixArray[i - 1];
-					totalNumMols += threadData[i - 1].size();
-				}
-
-				//allocate / extend memory for particlePtrs
-				particlePtrs.resize(prevNumMols + totalNumMols);
-			}
-
-			#if defined (_OPENMP)
-			#pragma omp barrier
-			#endif
-
-			//reduce the molecules in particlePtrs
-			int myThreadMolecules = prefixArray[threadNum + 1] - prefixArray[threadNum];
-			for(int i = 0; i < myThreadMolecules; i++){
-				particlePtrs[prevNumMols + prefixArray[threadNum] + i] = threadData[threadNum].back();
-				threadData[threadNum].pop_back();
-			}
-		}
-		/*
-		int globalCellIndex;
-		for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
-			for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
-				for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
-					// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
-					globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
-					// loop over all subcells (either 1 or 8)
-					// traverse all molecules in the current cell
-					ParticleCell & currentCell = _cells[globalCellIndex];
-					currentCell.getRegion(lowCorner, highCorner, particlePtrs, removeFromContainer);
-				}
-			}
-		}
-		*/
-	#endif
+	}
+	return true;
 }
 
 int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR) {
