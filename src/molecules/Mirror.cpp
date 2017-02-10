@@ -15,9 +15,6 @@ void Mirror::initialize(const std::vector<Component>* /*components*/, double in_
 
 void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* /*domain*/) {
 	double regionLowCorner[3], regionHighCorner[3];
-	vector<Molecule*> particlePtrsForRegion;
-  
-	particlePtrsForRegion.clear();
   
 	/*!*** Mirror boundary in y-direction on top of the simulation box ****/
 	if(partContainer->getBoundingBoxMax(1) > _yMirr){ // if linked cell in the region of the mirror boundary
@@ -26,29 +23,26 @@ void Mirror::VelocityChange( ParticleContainer* partContainer, Domain* /*domain*
 			regionHighCorner[d] = partContainer->getBoundingBoxMax(d);
 		}
 
-		// regionLowCorner[1] = (partContainer->getBoundingBoxMin(1) > _yMirr) ? (partContainer->getBoundingBoxMin(1)) : _yMirr;
-		partContainer->getRegion(regionLowCorner, regionHighCorner, particlePtrsForRegion);
+		//perform a check if the region is contained by the particleContainer???
+		if(partContainer->isRegionInBoundingBox(regionLowCorner, regionHighCorner)){
+			#if defined (_OPENMP)
+			#pragma omp parallel shared(regionLowCorner, regionHighCorner)
+			#endif
+			{
+				RegionParticleIterator begin = partContainer->iterateRegionBegin(regionLowCorner, regionHighCorner);
+				RegionParticleIterator end = partContainer->iterateRegionEnd();
 
-		std::vector<Molecule*>::iterator particlePtrIter;
-
-		for(particlePtrIter = particlePtrsForRegion.begin(); particlePtrIter != particlePtrsForRegion.end(); particlePtrIter++){
-			double additionalForce[3];
-			additionalForce[0]=0;
-			additionalForce[2]=0;
-			//global_log->info() << "Mirror\n";
-			if ((*particlePtrIter)->r(1) > _yMirr){
-				//global_log->info()<<"particle bigger than mirror\n";
-				//double _forceConstant = 1 * 10 ^ 20; //1e20
-				double distance = (*particlePtrIter)->r(1) - _yMirr;
-				additionalForce[1] = -_forceConstant*distance;
-				//global_log->info() << additionalForce[0] << "\n";
-				//global_log->info() << additionalForce[1] << "\n";
-				//global_log->info() << additionalForce[2] << "\n";
-				(*particlePtrIter)->Fljcenteradd(0,additionalForce);
+				for(RegionParticleIterator i = begin; i != end; ++i){
+					double additionalForce[3];
+					additionalForce[0] = 0;
+					additionalForce[2] = 0;
+					if ((*i).r(1) > _yMirr){
+						double distance = (*i).r(1) - _yMirr;
+						additionalForce[1] = -_forceConstant * distance;
+						(*i).Fljcenteradd(0, additionalForce);
+					}
+				}
 			}
-			//if((*particlePtrIter)->v(1) > 0){
-			//(*particlePtrIter)->setv(1, -(*particlePtrIter)->v(1));
-			//}
 		}
 	}
 }

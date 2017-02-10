@@ -711,17 +711,19 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vec
 		Simulation::exit(1);
 	}
 
-	int startIndex[3];
-	int stopIndex[3];
+	//int startIndex[3];
+	//int stopIndex[3];
 
 	for (int dim = 0; dim < 3; dim++) {
 		if (lowCorner[dim] <= this->_haloBoundingBoxMax[dim] && highCorner[dim] >= this->_haloBoundingBoxMin[dim]) {
+			/*
 			startIndex[dim] = (int) floor( (lowCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 			stopIndex[dim] = (int) floor( (highCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]);
 			if (startIndex[dim] < 0)
 				startIndex[dim] = 0;
 			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
 				stopIndex[dim] = _cellsPerDimension[dim] - 1;
+			*/
 		}
 		else {
 			// No Part of the given region is owned by this process
@@ -889,44 +891,6 @@ void LinkedCells::getRegionSimple(double lowCorner[3], double highCorner[3], vec
 		}
 		*/
 	#endif
-}
-
-void LinkedCells::getRegion(double lowCorner[3], double highCorner[3], vector<Molecule*> &particlePtrs) {
-	if (_cellsValid == false) {
-		global_log->error() << "Cell structure in LinkedCells (getRegion) invalid, call update first" << endl;
-		Simulation::exit(1);
-	}
-
-	int startIndex[3];
-	int stopIndex[3];
-	int globalCellIndex;
-
-	for (int dim = 0; dim < 3; dim++) {
-		if (lowCorner[dim] < this->_boundingBoxMax[dim] && highCorner[dim] > this->_boundingBoxMin[dim]) {
-			startIndex[dim] = (int) floor( (lowCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]) - 1;
-			stopIndex[dim] = (int) floor( (highCorner[dim] - _haloBoundingBoxMin[dim]) / _cellLength[dim]) + 1;
-			if (startIndex[dim] < 0)
-				startIndex[dim] = 0;
-			if (stopIndex[dim] > _cellsPerDimension[dim] - 1)
-				stopIndex[dim] = _cellsPerDimension[dim] - 1;
-		} else {
-			// No Part of the given region is owned by this process
-			return;
-		}
-	}
-
-	for (int iz = startIndex[2]; iz <= stopIndex[2]; iz++) {
-		for (int iy = startIndex[1]; iy <= stopIndex[1]; iy++) {
-			for (int ix = startIndex[0]; ix <= stopIndex[0]; ix++) {
-				// globalCellIndex is the cellIndex of the molecule on the coarse Cell level.
-				globalCellIndex = cellIndexOf3DIndex(ix, iy, iz);
-				// loop over all subcells (either 1 or 8)
-				// traverse all molecules in the current cell
-				ParticleCell & currentCell = _cells[globalCellIndex];
-				currentCell.getRegion(lowCorner, highCorner, particlePtrs);
-			}
-		}
-	}
 }
 
 int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR) {

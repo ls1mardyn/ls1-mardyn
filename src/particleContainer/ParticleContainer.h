@@ -201,7 +201,6 @@ public:
 	//! @param lowCorner minimum x-, y- and z-coordinate of the region
 	//! @param highwCorner maximum x-, y- and z-coordinate of the region
 	//! @param removeFromContainer if true, particles are erased, else - left in container
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
 	virtual void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer=false) = 0;
 
 	virtual double getCutoff() = 0;

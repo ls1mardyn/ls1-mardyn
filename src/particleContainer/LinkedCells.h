@@ -160,7 +160,6 @@ public:
 	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 
 	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
 	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
 	double getCutoff() { return _cutoffRadius; }
