@@ -71,11 +71,16 @@ public:
 			ParticleContainer* molCont,
 			Domain* domain
 	);
+	
+	// accelerates the component that is designated to be "moved" instantaneously (without ramp profile)
+	// and in each time step to a certain velocity 
 	virtual void accelerateInstantaneously(
 			DomainDecompBase* domainDecomp,
 			ParticleContainer* molCont,
 			Domain* domain
 	);
+	// keeps the velocity of the system at its box margins in y-direction at v=0, while it accelerates the system
+	// in the middle at y=0.5*y_max to a certain velocity to maintain the target shear rate
 	virtual void shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain);
 	virtual void init1D(
 			unsigned zoscillator,

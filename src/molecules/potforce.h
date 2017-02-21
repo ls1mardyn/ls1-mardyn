@@ -385,17 +385,25 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						  string stress ("Stress");
 						  string weightingFunc = mi.getWeightingFuncStress();
 						  mi.calculateHardyIntersection(drm, mj.r(0), mj.r(1), mj.r(2), &domain, stress, weightingFunc);
-						  std::map<unsigned, long double> bondFrac;
+						  std::map<unsigned long, long double> bondFrac;
 						  bondFrac = mi.getBondFractionUNID();
 						  for (unsigned short d = 0; d < 3; ++d){
 						    for (unsigned short e = 0; e < 3; ++e){
 							// the prefactor 0.5 in the virialForce is added because this term is calculated twice (once by molecule mi, once by molecule mj)
 							virialForce = 0.5 * drm[d] * f[e];
-							for(std::map<unsigned, long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){ 
+							virialHeat_i = virialForce;
+							virialHeat_j = virialForce;
+							for(std::map<unsigned long, long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){ 
 							    mi.addVirialForceHardyStress(d, e, it->first, virialForce*it->second);
-							    mj.addVirialForceHardyStress(d, e, it->first, virialForce*it->second);							      
+							    mj.addVirialForceHardyStress(d, e, it->first, virialForce*it->second);
+							    mi.addDiffusiveHeatfluxHardyStress(d, e, it->first, virialHeat_i*it->second);
+							    mj.addDiffusiveHeatfluxHardyStress(d, e, it->first, virialHeat_j*it->second);
 							}
 						    }
+						    convectivePotHeat_i = 0.5 * u/6;
+						    convectivePotHeat_j = 0.5 * u/6;
+						    mi.addConvectivePotHeatfluxStress(d, convectivePotHeat_i);
+						    mj.addConvectivePotHeatfluxStress(d, convectivePotHeat_j);
 						  }
 						}else if((domain.isStressCalculating(mi.componentid()) || domain.isStressCalculating(mj.componentid())) && !(domain.getSimstep() % domain.getStressRecordTimeStep())){
 						  for (unsigned short d = 0; d < 3; ++d){
@@ -403,7 +411,15 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 							virialForce = 0.5 * drm[d] * f[e];
 							mi.addVirialForce(d, e, virialForce);
 							mj.addVirialForce(d, e, virialForce);
+							virialHeat_i = virialForce;// * (mi.v(e) - mi.getDirectedVelocityConfinement(e));
+							virialHeat_j = virialForce;// * (mj.v(e) - mj.getDirectedVelocityConfinement(e));
+							mi.addDiffusiveHeatfluxStress(d, e, virialHeat_i);
+							mj.addDiffusiveHeatfluxStress(d, e, virialHeat_j);
 						    }
+						    convectivePotHeat_i = 0.5 * u/6;
+						    convectivePotHeat_j = 0.5 * u/6;
+						    mi.addConvectivePotHeatfluxStress(d, convectivePotHeat_i);
+						    mj.addConvectivePotHeatfluxStress(d, convectivePotHeat_j);
 						  }
 						}
 						  
@@ -438,7 +454,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 						    if(domain.isConfinementHardy(mi.componentid()) || domain.isConfinementHardy(mj.componentid())){
 						      mi.calculateHardyIntersection(drm, mj.r(0), mj.r(1), mj.r(2), &domain, stress, weightingFunc);
 						    }
-						    std::map<unsigned, long double> bondFrac;
+						    std::map<unsigned long, long double> bondFrac;
 						    if(domain.isConfinementHardy(mi.componentid()) || domain.isConfinementHardy(mj.componentid()))
 						      bondFrac = mi.getBondFractionUNID();
 						    for (unsigned short d = 0; d < 3; ++d){
@@ -451,7 +467,7 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 							    virialForce = 0.5 * drm[d] * f[e];
 							    virialHeat_i = virialForce;// * (mi.v(e) - mi.getDirectedVelocityConfinement(e));
 							    virialHeat_j = virialForce;// * (mj.v(e) - mj.getDirectedVelocityConfinement(e));
-							    for(std::map<unsigned,long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){
+							    for(std::map<unsigned long,long double>::iterator it=bondFrac.begin(); it!=bondFrac.end(); ++it){
 							      mi.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
 							      mj.addVirialForceHardyConfinement(d, e, it->first, virialForce*it->second);
 							      mi.addDiffusiveHeatfluxHardyConfinement(d, e, it->first, virialHeat_i*it->second);

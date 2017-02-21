@@ -165,10 +165,9 @@ public:
 	void scale_D(double s) { for(unsigned short d=0;d<3;++d) _L[d]*=s; }
 	void scale_M(double s) { for(unsigned short d=0;d<3;++d) _M[d]*=s; }
 	
-	// scale velocity just in one direction; and just the undirected part
+	// scale velocity just in one direction; and just the thermal part
 	void scale_v_1Dim(double s, unsigned short d) { _v[d] = (_v[d]-_directedVelocity[d])*s + _directedVelocity[d]; }
-	//void scale_v_1DimAcc(double s, unsigned short d, double vd);
-
+	
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
 
 	void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
@@ -179,6 +178,7 @@ public:
 	void vsub(const double ax, const double ay, const double az) {
 		_v[0] -= ax; _v[1] -= ay; _v[2] -= az;
 	}
+	// option used in domain->cancelMomentum() to reduce the directed velocities by the momentum (ax,ay,az)
 	void vDirSub(const double ax, const double ay, const double az, bool slab, bool stress, bool confinement);
 	void setXY() { fixedx = _r[0]; fixedy = _r[1]; }
 	void resetXY()
@@ -223,7 +223,9 @@ public:
 	 * @param[out] summv2   twice the translational kinetic energy \f$ m v^2 \f$
 	 * @param[out] sumIw2   twice the rotational kinetic energy \f$ I \omega^2 \f$
 	 */
+	// considers one-dimensional thermostat
 	void calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& sumIw2, int dimToThermostat, Domain *dom);
+	// considers just the thermal part of the velocities to contribute to the kinetic energy
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, string directedVelType);
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz);
 
@@ -264,21 +266,42 @@ public:
 	//! the cell structure must not be used to determine the order.
 	bool isLessThan(const Molecule& m2) const;
 	
-	// virial calculation (kinetic and force part) for stresses in solids
+	// --------------- STRESS --------------------
+	// stresses and pressure
 	void addVirialForce(int d, int e, long double virialForce) { this->_virialForce[d][e] += virialForce; }
 	void setVirialForce(int d, int e, long double virialForce) { this->_virialForce[d][e] = virialForce; }
 	long double getVirialForce(int d, int e) { return this->_virialForce[d][e]; }
 	void addVirialKin(int d, int e, long double virialKin) { this->_virialKin[d][e] += virialKin; }
 	void setVirialKin(int d, int e, long double virialKin) { this->_virialKin[d][e] = virialKin; }
 	long double getVirialKin(int d, int e) { return this->_virialKin[d][e]; }
+	// heatflux
+	void addDiffusiveHeatfluxStress(int d, int e, long double virialForceFraction) { this->_diffusiveHeatfluxStress[d][e] += virialForceFraction; }
+	void setDiffusiveHeatfluxStress(int d, int e, long double virialForceFraction) { this->_diffusiveHeatfluxStress[d][e] = virialForceFraction; }
+	long double getDiffusiveHeatfluxStress(int d, int e) { return this->_diffusiveHeatfluxStress[d][e]; }
+	void addConvectivePotHeatfluxStress(int d, long double virialForceFraction) { this->_convectivePotHeatfluxStress[d] += virialForceFraction; }
+	void setConvectivePotHeatfluxStress(int d, long double virialForceFraction) { this->_convectivePotHeatfluxStress[d] = virialForceFraction; }
+	long double getConvectivePotHeatfluxStress(int d) { return this->_convectivePotHeatfluxStress[d]; }
+	// Hardy Stress
+	bool isHardyStress() { return this->_HardyStress; }
+	void setHardyStress(bool boolean) { this->_HardyStress = boolean; }
+	void addVirialForceHardyStress(int d, int e, unsigned long unID, double virialForceFraction) { this->_virialForceHardyStress[unID][d][e] += virialForceFraction; }
+	void setVirialForceHardyStress(int d, int e, unsigned long unID, double virialForceFraction) { this->_virialForceHardyStress[unID][d][e] = virialForceFraction; }
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > getVirialForceHardyStress() { return this->_virialForceHardyStress; }
+	void clearVirialForceHardyStress() { _virialForceHardyStress.clear(); }
+	std::string getWeightingFuncStress() { return this->_weightingFuncStress; }
+	void setHardyStressWeighting(string weighting) { this->_weightingFuncStress = weighting; }
+	// Heatflux (Hardy-like)
+	void addDiffusiveHeatfluxHardyStress(int d, int e, unsigned long unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyStress[unID][d][e] += diffHeatflux; }
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > getDiffusiveHeatfluxHardyStress() { return this->_diffusiveHeatfluxHardyStress; }
+	void clearDiffusiveHeatfluxHardyStress() { _diffusiveHeatfluxHardyStress.clear(); }
 	
+	// ------------ BULK PRESSURE -----------------
 	void addPressureKin(int d, long double pressureKin) { this->_pressureKin[d] += pressureKin; }
 	void setPressureKin(int d, long double pressureKin) { this->_pressureKin[d] = pressureKin; }
 	long double getPressureKin(int d) { return this->_pressureKin[d]; }
 	void addPressureVirial(int d, long double pressureVirial) { this->_pressureVirial[d] += pressureVirial; }
 	void setPressureVirial(int d, long double pressureVirial) { this->_pressureVirial[d] = pressureVirial; }
 	long double getPressureVirial(int d) { return this->_pressureVirial[d]; }
-	
 	// barostat
 	void addPressureKin_barostat(int d, long double pressureKin) { this->_pressureKin_barostat[d] += pressureKin; }
 	void setPressureKin_barostat(int d, long double pressureKin) { this->_pressureKin_barostat[d] = pressureKin; }
@@ -287,28 +310,42 @@ public:
 	void setPressureVirial_barostat(int d, long double pressureVirial) { this->_pressureVirial_barostat[d] = pressureVirial; }
 	long double getPressureVirial_barostat(int d) { return this->_pressureVirial_barostat[d]; }
 	
-	// For measuring pressure and forces in the confinement
+	// ------------- CONFINEMENT ------------------
+	// stresses and pressure
 	void addVirialForceConfinement(int d, int e, long double virialForce) { this->_virialForceConfinement[d][e] += virialForce; }
 	void setVirialForceConfinement(int d, int e, long double virialForce) { this->_virialForceConfinement[d][e] = virialForce; }
 	long double getVirialForceConfinement(int d, int e) { return this->_virialForceConfinement[d][e]; }
 	void addVirialKinConfinement(int d, int e, long double virialKin) { this->_virialKinConfinement[d][e] += virialKin; }
 	void setVirialKinConfinement(int d, int e, long double virialKin) { this->_virialKinConfinement[d][e] = virialKin; }
 	long double getVirialKinConfinement(int d, int e) { return this->_virialKinConfinement[d][e]; }
-	
 	void addPressureKinConfinement(int d, long double pressureKin) { this->_pressureKinConfinement[d] += pressureKin; }
 	void setPressureKinConfinement(int d, long double pressureKin) { this->_pressureKinConfinement[d] = pressureKin; }
 	long double getPressureKinConfinement(int d) { return this->_pressureKinConfinement[d]; }
 	void addPressureVirialConfinement(int d, long double pressureVirial) { this->_pressureVirialConfinement[d] += pressureVirial; }
 	void setPressureVirialConfinement(int d, long double pressureVirial) { this->_pressureVirialConfinement[d] = pressureVirial; }
 	long double getPressureVirialConfinement(int d) { return this->_pressureVirialConfinement[d]; }
-	
+	// heatflux
 	void addDiffusiveHeatflux(int d, int e, long double virialForceFraction) { this->_diffusiveHeatflux[d][e] += virialForceFraction; }
 	void setDiffusiveHeatflux(int d, int e, long double virialForceFraction) { this->_diffusiveHeatflux[d][e] = virialForceFraction; }
 	long double getDiffusiveHeatflux(int d, int e) { return this->_diffusiveHeatflux[d][e]; }
 	void addConvectivePotHeatflux(int d, long double virialForceFraction) { this->_convectivePotHeatflux[d] += virialForceFraction; }
 	void setConvectivePotHeatflux(int d, long double virialForceFraction) { this->_convectivePotHeatflux[d] = virialForceFraction; }
 	long double getConvectivePotHeatflux(int d) { return this->_convectivePotHeatflux[d]; }
+	// Hardy Stresses
+	bool isHardyConfinement() { return this->_HardyConfinement; }
+	void setHardyConfinement(bool boolean) { this->_HardyConfinement = boolean; }
+	void addVirialForceHardyConfinement(int d, int e, unsigned long unID, double virialForceFraction) { this->_virialForceHardyConfinement[unID][d][e] += virialForceFraction; }
+	void setVirialForceHardyConfinement(int d, int e, unsigned long unID, double virialForceFraction) { this->_virialForceHardyConfinement[unID][d][e] = virialForceFraction; }
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > getVirialForceHardyConfinement() { return this->_virialForceHardyConfinement; }
+	void clearVirialForceHardyConfinement() { _virialForceHardyConfinement.clear(); }
+	std::string getWeightingFuncConfinement() { return this->_weightingFuncConfinement; }
+	void setHardyConfinementWeighting(string weighting) { this->_weightingFuncConfinement = weighting; }
+	// Heatflux (Hardy-like)
+	void addDiffusiveHeatfluxHardyConfinement(int d, int e, unsigned long unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d][e] += diffHeatflux; }
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > getDiffusiveHeatfluxHardyConfinement() { return this->_diffusiveHeatfluxHardyConfinement; }
+	void clearDiffusiveHeatfluxHardyConfinement() { _diffusiveHeatfluxHardyConfinement.clear(); }
 	
+	// assignment of the directed velocities
 	void setDirectedVelocity(int d, double directedVelocity) { this->_directedVelocity[d] = directedVelocity; }
 	double getDirectedVelocity(int d) { return this->_directedVelocity[d]; }
 	void setDirectedVelocitySlab(int d, double directedVelocity) { this->_directedVelocitySlab[d] = directedVelocity; }
@@ -318,40 +355,20 @@ public:
 	void setDirectedVelocityConfinement(int d, double directedVelocity) { this->_directedVelocityConfinement[d] = directedVelocity; }
 	double getDirectedVelocityConfinement(int d) { return this->_directedVelocityConfinement[d]; }
 	
-	// VTK Molecule Date
+	// Particlewise vtk-data for ParticleData
 	long double getAveragedVelocity(int d) { return this->_vAverage[d]; }
 	long double getAveragedTemperature() { return this->_T; }
-// 	long double getAveragedDensity()  { return this->_rho; }
 	void setAveragedVelocity(int d, double v) { this->_vAverage[d] = v; }
 	void setAveragedTemperature(double T) { this->_T = T; }
-// 	void setAveragedDensity(double rho)  { this->_rho = rho; } 
 	void addAveragedVelocity(int d, double v) { this->_vAverage[d] += v; }
 	void addAveragedTemperature(double T) { this->_T += T; }
-// 	void addAveragedDensity(double rho)  { this->_rho += rho; }
 	unsigned long getAverageCount() {return this->_count; }
 	void setAverageCount(unsigned zero) { this->_count = zero; }
 	void addAverageCount(unsigned count) { this->_count += count; }
 	
-	// Hardy Stresses
-	bool isHardyStress() { return this->_HardyStress; }
-	bool isHardyConfinement() { return this->_HardyConfinement; }
-	void setHardyStress(bool boolean) { this->_HardyStress = boolean; }
-	void setHardyConfinement(bool boolean) { this->_HardyConfinement = boolean; }
+	// Hardy Stresses (general)
 	void calculateHardyIntersection(const double drm[3], double mjx, double mjy, double mjz, Domain *dom, string stress, string weightingFunc);
-	std::map<unsigned, long double> getBondFractionUNID() { return this->_bondFractionUNID; }
-	void addVirialForceHardyStress(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyStress[unID][d][e] += virialForceFraction; }
-	void setVirialForceHardyStress(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyStress[unID][d][e] = virialForceFraction; }
-	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > getVirialForceHardyStress() { return this->_virialForceHardyStress; }
-	void clearVirialForceHardyStress() { _virialForceHardyStress.clear(); }
-	void addVirialForceHardyConfinement(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyConfinement[unID][d][e] += virialForceFraction; }
-	void setVirialForceHardyConfinement(int d, int e, unsigned unID, double virialForceFraction) { this->_virialForceHardyConfinement[unID][d][e] = virialForceFraction; }
-	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > getVirialForceHardyConfinement() { return this->_virialForceHardyConfinement; }
-	void clearVirialForceHardyConfinement() { _virialForceHardyConfinement.clear(); }
-	
-	std::string getWeightingFuncStress() { return this->_weightingFuncStress; }
-	std::string getWeightingFuncConfinement() { return this->_weightingFuncConfinement; }
-	void setHardyStressWeighting(string weighting) { this->_weightingFuncStress = weighting; }
-	void setHardyConfinementWeighting(string weighting) { this->_weightingFuncConfinement = weighting; }
+	std::map<unsigned long, long double> getBondFractionUNID() { return this->_bondFractionUNID; }
 	long double bondFunctionPyramide(long double n0, long double n1, int signF, int signG, long double halfDeltaX, long double halfDeltaY, long double deltaXMol, long double deltaYMol, long double deltaXCentre, long double deltaYCentre);
 	double weightingFunctionPyramide(unsigned xun, unsigned yun, double deltaX, double deltaY, double xStart, double yStart);
 	int signumFunction(long double x) {
@@ -359,11 +376,6 @@ public:
 	    if (x < 0) return -1;
 	    return 1; 
 	}
-	
-	// Heat flux (Hardy-like)
-	void addDiffusiveHeatfluxHardyConfinement(int d, int e, unsigned unID, double diffHeatflux) { this->_diffusiveHeatfluxHardyConfinement[unID][d][e] += diffHeatflux; }
-	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > getDiffusiveHeatfluxHardyConfinement() { return this->_diffusiveHeatfluxHardyConfinement; }
-	void clearDiffusiveHeatfluxHardyConfinement() { _diffusiveHeatfluxHardyConfinement.clear(); }
 private:
         Component *_component;  /**< IDentification number of its component type */ 
 	double _r[3];  /**< position coordinates */
@@ -405,44 +417,50 @@ private:
 	// setup cache values/properties
 	void setupCache();
 	
-	// virial calculation (kinetic and force part) for stresses in solids
+	// --------------- STRESS --------------------
 	long double _virialForce[3][3], _virialKin[3][3];
-	long double _pressureVirial[3], _pressureKin[3];
+	// Hardy Stresses
+	bool _HardyStress;
+	std::string _weightingFuncStress;
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyStress;
+	// Heatflux (Hardy-like) 
+	std::map<unsigned long, std::map<unsigned, double> > _diffusiveHeatfluxStress;
+	std::map<unsigned long, double> _convectivePotHeatfluxStress;
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > _diffusiveHeatfluxHardyStress;
 	
-	// barostat
-	long double _pressureVirial_barostat[3], _pressureKin_barostat[3];
-	
-	// pressure and forces for the confinement
+	// ------------- CONFINEMENT ------------------
 	long double _virialForceConfinement[3][3], _virialKinConfinement[3][3];
 	long double _pressureVirialConfinement[3], _pressureKinConfinement[3];
+	// Hardy Stresses
+	bool _HardyConfinement;
+	std::string _weightingFuncConfinement;
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyConfinement;
+	// Heatflux (Hardy-like)
+	std::map<unsigned long, std::map<unsigned, double> > _diffusiveHeatflux;
+	std::map<unsigned long, double> _convectivePotHeatflux;
+	std::map<unsigned long, std::map<unsigned, std::map<unsigned, double> > > _diffusiveHeatfluxHardyConfinement;
+	
+	// ------------ BULK PRESSURE -----------------
+	long double _pressureVirial[3], _pressureKin[3];
+	// barostat
+	long double _pressureVirial_barostat[3], _pressureKin_barostat[3];
 	
 	// directed velocity
 	double _directedVelocity[3];
 	double _directedVelocity2[3];
 	double _directedVelocitySlab[3], _directedVelocityStress[3], _directedVelocityConfinement[3];
 	
-	// VTK Molecule Data
+	// Particlewise vtk-data for ParticleData
 	long double _T;
-// 	long double _rho;
 	long double _vAverage[3]; 
 	unsigned long _count;
 	
-	// Hardy stresses
-	bool _HardyStress;
-	bool _HardyConfinement;
-	std::string _weightingFuncStress;
-	std::string _weightingFuncConfinement;
+	// Hardy stresses (general)
 	std::map<long double, long double> _HardyIntersectionX;
 	std::map<long double, long double> _HardyIntersectionY;
 	std::map<long double, long double> _HardyIntersectionZ;
-	std::map<unsigned, long double>_bondFractionUNID;
-	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyStress;	
-	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > >_virialForceHardyConfinement;	
-	
-	std::map<unsigned, std::map<unsigned, double> > _diffusiveHeatflux;
-	std::map<unsigned, double> _convectivePotHeatflux;
-	std::map<unsigned, std::map<unsigned, std::map<unsigned, double> > > _diffusiveHeatfluxHardyConfinement;
-	
+	std::map<unsigned long, long double>_bondFractionUNID;
+
 };
 
 

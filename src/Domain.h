@@ -16,7 +16,7 @@
  */
 #define CHECKPOINT_FILE_VERSION 20140131  /**< checkpoint file version */
 
-#define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
+#define MIN_BETA 0.000000000001  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
 
 class Molecule;
@@ -133,9 +133,26 @@ public:
 	double getGlobalBetaRot();
 	double getGlobalBetaRot(int thermostat);
 	
-	//! @brief get thermostat scaling for rotations
+	//! @brief get thermostat induced energy
 	long double getThT_heatFlux(int thermostat) { return _universalThT_heatFlux[thermostat]; }
 	void setThT_heatFlux(int thermostat, double value) { _universalThT_heatFlux[thermostat] = value; }
+	
+	//! @brief get shear rate induced kinetic energy
+	void addPreShearEnergyConf(double mv2) { this->_preShearRateConf += mv2; }
+	void setPreShearEnergyConf(double zero) { this->_preShearRateConf = zero; }
+	long double getPreShearEnergyConf() { return this->_preShearRateConf; }
+	void addPostShearEnergyConf(double mv2) { this->_postShearRateConf += mv2; }
+	void setPostShearEnergyConf(double zero) { this->_postShearRateConf = zero; }
+	long double getPostShearEnergyConf() { return this->_postShearRateConf; }
+	void addPreShearEnergyDefault(double mv2) { this->_preShearRateDefault += mv2; }
+	void setPreShearEnergyDefault(double zero) { this->_preShearRateDefault = zero; }
+	long double getPreShearEnergyDefault() { return this->_preShearRateDefault; }
+	void addPostShearEnergyDefault(double mv2) { this->_postShearRateDefault += mv2; }
+	void setPostShearEnergyDefault(double zero) { this->_postShearRateDefault = zero; }
+	long double getPostShearEnergyDefault() { return this->_postShearRateDefault; }
+	void addShearVelDelta(double dv) { this->_shearVelDelta += dv; }
+	void setShearVelDelta(double zero) { this->_shearVelDelta = zero; }
+	long double getShearVelDelta() { return this->_shearVelDelta; }
 	
 	double getGlobalVirial(int d) { return this->_globalVirialI[d]; }
         double getGlobalVirialIILL() { return this->_globalVirialIILL; }
@@ -154,19 +171,26 @@ public:
 
 	//! @brief get the global temperature for the whole system (i.e. thermostat ID 0)
 	double getGlobalCurrentTemperature() { return this->getCurrentTemperature(0); }
+	//! @brief get the actual temperature of a specific thermostat
 	double getCurrentTemperature(int thermostat) { return this->_globalTemperatureMap[thermostat]; }
+	//! @brief get the target temperature of a specific thermostat
 	double getTargetTemperature(int thermostat) { return this->_universalTargetTemperature[thermostat]; }
+	//! @brief get the time span in which a specific thermostat is active
 	// index = 0: startTime; index = 1: endTime
 	unsigned long get_thermostatTimeSlot(int thermostat, int index) {return this->_thermostatTimeSlot[index][thermostat]; }
 
-	//! @brief set the global temperature
+	//! @brief auxiliary functions for the setup of the thermostat 
 	void setGlobalTemperature(double T);
 	void setTargetTemperature(int thermostat, double T);
 	void set1DimThermostat(int thermostat, int dimension);
 	void setThermostatTimeSlot(int thermostat_id, unsigned long startTime, unsigned long endTime);
+	// if the thermostat is applied to layers instead of the complete system, the following functions become important
 	void setThermostatLayer(int thermostat_id, double xmin, double xmax, double ymin, double ymax, double zmin, double zmax);
+	// checks initially whether there is an overlapping between the thermostat layers
 	void checkThermostatLayerDisjunct();
+	// returns a boolean operator that determines whether the thermostating is applied layerwise
 	bool isThermostatLayer() {return _enableThermostatLayers; }
+	// checks whether a molecule is affected by one of the thermostat layers and connects it eventually
 	int moleculeInLayer(double x, double y, double z);
 
 	//! @brief get the mixcoeff
@@ -180,6 +204,7 @@ public:
 
 	//! @brief get globalNumMolecules
 	unsigned long getglobalNumMolecules() const;
+	// since the number of molecules may change during the barostating by insertion or deletion that function returns the original number of molecules
 	unsigned long getglobalOrigNumMolecules() const { return _globalOrigNumMolecules; }
 
 	//! @brief set globalNumMolecules
@@ -215,16 +240,6 @@ public:
 		this->_localThermostatN[thermostat] = N;
 		this->_localRotationalDOF[thermostat] = rotDOF;
 	}
-	
-	int getUniversalNProfileUnits_Stress(int d) {return this->_universalNProfileUnits_Stress[d]; }
-	double getUniversalInvProfileUnit_Stress(int d) {return this->_universalInvProfileUnit_Stress[d]; }
-	int getUniversalNProfileUnitsConfinement(int d) {return this->_universalNProfileUnitsConfinement[d]; }
-	double getUniversalInvProfileUnitConfinement(int d) {return this->_universalInvProfileUnitConfinement[d]; }
-	int getUniversalNProfileUnitsSlab(int d) {return this->_universalNProfileUnitsSlab[d]; }
-	double getUniversalInvProfileUnitSlab(int d) {return this->_universalInvProfileUnitSlab[d]; }
-	
-	int getUniversalNProfileUnitsStressConfinement(int d) {return this->_universalNProfileUnitsStressConfinement[d]; }
-	double getUniversalInvProfileUnitStressConfinement(int d) {return this->_universalInvProfileUnitStressConfinement[d]; }
 
 	//! @brief get globalRho
 	double getglobalRho();
@@ -308,20 +323,26 @@ public:
 	//! directed velocity is not explicitly computed.
 	double getThermostatDirectedVelocity(int thermostat, int d) { return this->_universalThermostatDirectedVelocity[d][thermostat]; }
 	
+	//! applies onedimensional thermostating to a certain component or thermostat
 	void enable1DimThermostat(int thermostat) { this->_scale_v_1Dim[thermostat] = true; }
+	//! returns direction in which the onedimensional thermostat is apllied for a certain component or thermostat
 	std::map<int, int> getDim() { return this->_dimToThermostat; }
+	//! set the direction in which the onedimensional thermostat is apllied for a certain component or thermostat
 	void setDim(int thermostat, int dim) { this->_dimToThermostat[thermostat] = dim; }
-	//! one-dimensional thermostat applied?
+	//! returns a boolean operator determining whether the onedimensional thermostat is applied
 	bool isScaling1Dim(int thermostat) { return this->_scale_v_1Dim[thermostat]; }
+	//! returns a boolean operator determining whether the onedimensional thermostat is applied
 	bool getAlphaTransCorrection(int thermostat) { return this->_alphaTransCorrection[thermostat]; }
 	
+	//! applies recording of the stress in stressProfile
 	void enableStressCalculation(int component) { this->_stressCalc[component] = true; }
 	bool isStressCalculating(int component) {return this->_stressCalc[component]; }
 	
+	//! applies recording of the bulk pressure in bulkPressure
 	bool isBulkPressure(int component) {return this->_bulkComponent[component]; }
 	double getBulkBoundary(int dim) {return this->_bulkCorner[dim]; }
 	
-	// barostat
+	//! applies barostating in a certain area
 	bool isBarostat(int component) {return this->_barostatComponent[component]; }
 	double getControl_top(int d) {return this->_control_top[d]; }
 	double getControl_bottom(int d) {return this->_control_bottom[d]; }
@@ -363,61 +384,77 @@ public:
 	void enableUndirectedThermostat(int thermostat);
 
 	PressureGradient* getPG() { return this->_universalPG; }
-
-	void setupProfile(unsigned xun, unsigned yun, unsigned zun);
-	void setupSlabProfile(unsigned xun, unsigned yun, unsigned zun);
-	void setupStressProfile(unsigned xun, unsigned yun, unsigned zun);
-	void setupBulkPressure(double xmin, double xmax, double ymin, double ymax, unsigned cid);
-	void setupConfinementProperties(double wallThickness, double horDist, double vertDist, double radius2, int cid, double xmax, double ymax, double zmax, unsigned long upperID, unsigned long lowerID);
-	void setupConfinementPropertiesFixed(double xmin, double xmax, double ymin, double ymax, double zmax, int cid);
-	void setupConfinementProfile(unsigned xun,unsigned yun, double correlationLength);
-	void setupConfinementRecTime(unsigned long confinementRecordingTimesteps) { this->_confinementRecordingTimesteps = confinementRecordingTimesteps;}
-	void considerComponentInProfile(int cid) { this->_universalProfiledComponents[cid] = true; }
-	void considerComponentInProfileSlab(int cid) { this->_universalProfiledComponentsSlab[cid] = true; }
-	void recordProfile(ParticleContainer* molCont);
-	void recordSlabProfile(ParticleContainer* molCont);
-	void recordStressProfile(ParticleContainer* molCont);
-	void recordBulkPressure(ParticleContainer* molCont);
-	void recordConfinementProperties(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned long simstep, unsigned long initStatistics);
-	void collectProfile(DomainDecompBase* domainDecomp);
-	void collectSlabProfile(DomainDecompBase* domainDecomp);
-	void collectStressProfile(DomainDecompBase* domainDecomp);
-	void collectBulkPressure(DomainDecompBase* dode);
-	void collectConfinementProperties(DomainDecompBase* dode);
-	void outputProfile(const char* prefix);
-	void outputSlabProfile(const char* prefix);
-	void outputStressProfile(const char* prefix);
-	void outputConfinementProperties(const char* prefix, PressureGradient* pg);
-	void resetProfile();
-	void resetSlabProfile();
-        void resetStressProfile();
-	void resetBulkPressure();
-	void resetConfinementProperties();
-	long double **allocStressMatrix(size_t rows, size_t cols);
-	void dellocStressMatrix(long double **matrix, size_t rows, size_t cols);
-	long double **_universalStress;
-	long double **_localStress;
-	long double **_localStressConfinement;
-	long double **_globalStressConfinement;
 	
+	// ------------- CONFINEMENT ------------------
+	// geometrical initialization and definition of the confinement area; boundaries are detected by means of
+	// the localization of upper and lower boundary walls and may flexibly and transiently change
+	void setupConfinementProperties(double wallThickness, double horDist, double vertDist, double radius2, int cid, double xmax, double ymax, double zmax, unsigned long upperID, unsigned long lowerID);
+	// geometrical initialization and definition of the confinement area; boundaries are explicitly given and constant
+	void setupConfinementPropertiesFixed(double xmin, double xmax, double ymin, double ymax, double zmax, int cid);
+	// geometrical initialization and definition of the control volumes
+	void setupConfinementProfile(unsigned xun,unsigned yun, double correlationLength);
+	// definition of how many time steps are inbetween the recording of data
+	void setupConfinementRecTime(unsigned long confinementRecordingTimesteps) { this->_confinementRecordingTimesteps = confinementRecordingTimesteps;}
+	// calculation of all the relevant data on parallel processes
+	void recordConfinementProperties(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned long simstep, unsigned long initStatistics);
+	// collection and distribution of the relevant data over all parallel processes
+	void collectConfinementProperties(DomainDecompBase* dode);
+	// output of the collected data in a specified file format
+	void outputConfinementProperties(const char* prefix, PressureGradient* pg);
+	// initialization of all necessary variables mainly with the value 0
+	void resetConfinementProperties();
+	// returns number of control volumes and their size for the confinementProfile
+	int getUniversalNProfileUnitsConfinement(int d) {return this->_universalNProfileUnitsConfinement[d]; }
+	double getUniversalInvProfileUnitConfinement(int d) {return this->_universalInvProfileUnitConfinement[d]; }
+	int getUniversalNProfileUnitsStressConfinement(int d) {return this->_universalNProfileUnitsStressConfinement[d]; }
+	double getUniversalInvProfileUnitStressConfinement(int d) {return this->_universalInvProfileUnitStressConfinement[d]; }
+	// averaged measurements in the confinement
+	unsigned long get_universalNConfinement() { return this->_universalNConfinement; }
+	long double get_universalPressureVirial_Confinement() { return this->_universalPressureVirial_Confinement; }
+	long double get_universalPressureKin_Confinement() { return this->_universalPressureKin_Confinement; }
+	long double get_universalDOFProfile_Confinement() { return this->_universalDOFProfile_Confinement; }
+	long double get_universalKineticProfile_Confinement() { return this->_universalKineticProfile_Confinement; }
+	long double get_globalForce_Confinement(int d) { return this->_globalForce_Confinement[d]; }
+	// returns maximum distance between upper and lower boundary
+	long double get_dMax() { return this->_dMax; }
+	// returns averaged distance between upper and lower boundary
+	double get_dAveraged() { return this->_dAveraged; }
+	double get_confinedVolume() { return this->_confinedVolume; }
+	double get_confinedSolidSurface() { return this->_confinedSolidSurface; }
+	// return boolean operator that determines whether the data shall be calculated in the confinement area
+	bool isConfinement(int component) { return this->_confinementComponent[component]; }
+	// return boolean operator that determines whether the Hardy method for the stress calculation shall be used in the confinement area
+	bool isConfinementHardy(int component) { return this->_confinementComponentHardy[component]; }
+	double get_confinementMidPoint(int d) { return this->_confinementMidPoint[d]; }
+	void collectForcesOnComponentConfinement(ParticleContainer* molCont);
+	unsigned getRank() { return this->_localRank; }
+	double getConfinementEdge(int d) { return this->_confinementEdge[d]; }
+	unsigned getConfinementRecordTimeStep();
+	void specifyStressCalcMethodConfinement(std::string stressCalc) { this->_stressCalcMethodConfinement = stressCalc; }
+	std::string getStressCalcMethodConfinement() { return this->_stressCalcMethodConfinement; }
+	
+	// ------------ BULK PRESSURE -----------------
+	// geometrical initialization and definition of the area that is relevant for the bulk pressure calculation
+	void setupBulkPressure(double xmin, double xmax, double ymin, double ymax, unsigned cid);
+	// calculation of all the relevant data on parallel processes
+	void recordBulkPressure(ParticleContainer* molCont);
+	// collection and distribution of the relevant data over all parallel processes
+	void collectBulkPressure(DomainDecompBase* dode);
+	// initialization of all necessary variables mainly with the value 0
+	void resetBulkPressure();
+	// averaged measurements in the bulk and data transfer
 	double getGlobalBulkPressure() {return this->_universalBulkPressure; }
 	void setGlobalBulkPressure(double bulkPressure) { this->_universalBulkPressure = bulkPressure; }
 	double getGlobalBulkDensity() {return this->_universalBulkDensity;}
 	void setGlobalBulkDensity(double bulkDensity) { this->_universalBulkDensity = bulkDensity; }
 	double getGlobalBulkTemperature() {return this->_universalBulkTemp; }
 	void setGlobalBulkTemperature(double bulkTemp) { this->_universalBulkTemp = bulkTemp; }
-	
 	long double getPressureVirial() {return this->_universalPressureVirial; }
 	long double getPressureKin() {return this->_universalPressureKin; }
 	double getBulkVolume() {return this->_bulkVolume; }
 	long double getBulkN() {return this->_universalNBulk; }
 	unsigned getAccumulatedDatasetsBulkPressure() {return this->_globalAccumulatedDatasets_BulkPressure; }
-	void setStressXX(long double stress) {this->_stressXX = stress; }
-	void setStressYY(long double stress) {this->_stressYY = stress; }
-	long double getStressXX() {return this->_stressXX; }
-	long double getStressYY() {return this->_stressYY; }
-	
-	// barostat
+	// relevant features for the suboption barostat
 	long double getPressureVirial_barostat() {return this->_universalPressureVirial_barostat; }
 	long double getPressureKin_barostat() {return this->_universalPressureKin_barostat; }
 	long double getN_barostat() {return this->_universalN_barostat; }
@@ -430,11 +467,70 @@ public:
 	bool getDifferentBarostatInterval() {return this->_differentBarostatInterval; }
 	void checkMergeConfinementBarostatPossible();
 	
+	// ---------------- SLAB ---------------------
+	// geometrical initialization and definition of the control volumes
+	void setupSlabProfile(unsigned xun, unsigned yun, unsigned zun);
+	// calculation of all the relevant data on parallel processes	
+	void recordSlabProfile(ParticleContainer* molCont);
+	// collection and distribution of the relevant data over all parallel processes
+	void collectSlabProfile(DomainDecompBase* domainDecomp);
+	// output of the collected data in a specified file format
+	void outputSlabProfile(const char* prefix);
+	// initialization of all necessary variables mainly with the value 0
+	void resetSlabProfile();
+	// sets whether a component shall be considered for the slab calculation or not
+	void considerComponentInProfileSlab(int cid) { this->_universalProfiledComponentsSlab[cid] = true; }
+	// returns number of control volumes and their size for the slabProfile
+	int getUniversalNProfileUnitsSlab(int d) {return this->_universalNProfileUnitsSlab[d]; }
+	double getUniversalInvProfileUnitSlab(int d) {return this->_universalInvProfileUnitSlab[d]; }
+	
+	
+	// --------------- STRESS --------------------
+	// geometrical initialization and definition of the control volumes
+	void setupStressProfile(unsigned xun, unsigned yun, unsigned zun, bool properties[6]);
+	// definition of the properties that shall be calculated
+	void setupStressProperties(bool properties[6]);
+	// definition of how many time steps are inbetween the recording of data
+	void setupStressRecTime(unsigned long stressRecordingTimesteps) { this->_stressRecordingTimesteps = stressRecordingTimesteps;}
+	// calculation of all the relevant data on parallel processes
+	void recordStressProfile(ParticleContainer* molCont, unsigned long simstep, unsigned long initStatistics);
+	// collection and distribution of the relevant data over all parallel processes
+	void collectStressProfile(DomainDecompBase* domainDecomp);
+	// output of the collected data in a specified file format
+	void outputStressProfile(const char* prefix);
+	// initialization of all necessary variables mainly with the value 0
+	void resetStressProfile();
+	// returns number of control volumes and their size for the stressProfile
+	int getUniversalNProfileUnits_Stress(int d) {return this->_universalNProfileUnits_Stress[d]; }
+	double getUniversalInvProfileUnit_Stress(int d) {return this->_universalInvProfileUnit_Stress[d]; }
+	unsigned getStressRecordTimeStep();
+	void setStressXX(long double stress) {this->_stressXX = stress; }
+	void setStressYY(long double stress) {this->_stressYY = stress; }
+	long double getStressXX() {return this->_stressXX; }
+	long double getStressYY() {return this->_stressYY; }
+
+	// --------------- PROFILE -------------------
+	void setupProfile(unsigned xun, unsigned yun, unsigned zun);
+	void considerComponentInProfile(int cid) { this->_universalProfiledComponents[cid] = true; }
+	void recordProfile(ParticleContainer* molCont);
+	void collectProfile(DomainDecompBase* domainDecomp);
+	void outputProfile(const char* prefix);
+	void resetProfile();
+	
+	// allocation and deallocation of the stress matrices
+	double **allocStressMatrix(size_t rows, size_t cols);
+	void dellocStressMatrix(double **matrix, size_t rows, size_t cols);
+	double **_universalStress;
+	double **_localStress;
+	double **_localStressConfinement;
+	double **_globalStressConfinement;
+	
 	// Cylindrical Density Profile
 	void confinementDensity(double radius1, double radius2, double xCentre, double yCentre);
 	bool isCylindrical();
 	long int unID(double qx, double qy, double qz);
 	void outputCylindricalProfile(const char* prefix);	
+		
 	
 	unsigned long N() {return _globalNumMolecules;}
 
@@ -469,37 +565,12 @@ public:
 	// needed for the MmspdWriter (MegaMol)
 	unsigned getNumberOfComponents();
 	
-	
-	// Measurements in the confinement
-	//
-	unsigned long get_universalNConfinement() { return this->_universalNConfinement; }
-	long double get_universalPressureVirial_Confinement() { return this->_universalPressureVirial_Confinement; }
-	long double get_universalPressureKin_Confinement() { return this->_universalPressureKin_Confinement; }
-	long double get_universalDOFProfile_Confinement() { return this->_universalDOFProfile_Confinement; }
-	long double get_universalKineticProfile_Confinement() { return this->_universalKineticProfile_Confinement; }
-	long double get_globalForce_Confinement(int d) { return this->_globalForce_Confinement[d]; }
-	long double get_dMax() { return this->_dMax; }
-	double get_dAveraged() { return this->_dAveraged; }
-	double get_confinedVolume() { return this->_confinedVolume; }
-	double get_confinedSolidSurface() { return this->_confinedSolidSurface; }
-	bool isConfinement(int component) { return this->_confinementComponent[component]; }
-	bool isConfinementHardy(int component) { return this->_confinementComponentHardy[component]; }
-	double get_confinementMidPoint(int d) { return this->_confinementMidPoint[d]; }
-	void collectForcesOnComponentConfinement(ParticleContainer* molCont);
-	unsigned getRank() { return this->_localRank; }
-	double getConfinementEdge(int d) { return this->_confinementEdge[d]; }
-	
+	//! @brief general auxiliary functions 
 	void specifyOutputFormat(std::string outputFormat) { this->_outputFormat = outputFormat; }
 	std::string getOutputFormat() { return this->_outputFormat; }
-	
-	void specifyStressCalcMethodConfinement(std::string stressCalc) { this->_stressCalcMethodConfinement = stressCalc; }
-	std::string getStressCalcMethodConfinement() { return this->_stressCalcMethodConfinement; }
-	
 	unsigned long getSimstep();
 	unsigned long getInitStatistics();
 	double getTimestepLength();
-	unsigned getStressRecordTimeStep();
-	unsigned getConfinementRecordTimeStep();
 	double getCutoffRadius();
 	unsigned getBarostatTimeInit();
 	unsigned getBarostatTimeEnd();
@@ -533,7 +604,182 @@ private:
 	unsigned long _globalOrigNumMolecules;
 	//! side length of the cubic simulation box
 	double _globalLength[3];
-
+	
+	// ------------- CONFINEMENT ------------------
+	// local N profile map
+	std::map<int, unsigned long> _localNConfinement;
+	// local N profile map of wall atoms
+	std::map<int, unsigned long> _localWallNConfinement;
+	// local virial part of the pressure for confinement average in Confinement.dat
+	std::map<int, long double> _localPressureVirial_Confinement;
+	// local kinetic part of the pressure for confinement average in Confinement.dat
+	std::map<int, long double> _localPressureKin_Confinement;
+	// local virial part of the stress tensor
+	std::map<int, long double> _localVirialForce_Confinement;
+	// local kinetic part of the stress tensor
+	std::map<int, long double> _localVirialKin_Confinement;
+	// local degrees of freedom
+	std::map<int, long double> _localDOFProfile_Confinement;
+	// local kinetic energy (twice)
+	std::map<int, long double> _localKineticProfile_Confinement;
+	// local velocity in each direction
+	std::map<int, long double> _localvProfile_Confinement[3];
+	// local forces in each direction
+	std::map<int, long double> _localForceConfinement[3];
+	// local forces of the fluid in each direction
+	std::map<int, long double> _localFluidForce_Confinement[3];
+	// local area of fluid component
+	std::map<int, unsigned long>_localFluidicArea;
+	// global N profile map
+	std::map<int, unsigned long> _globalNConfinement;
+	// global N profile map of wall atoms
+	std::map<int, unsigned long> _globalWallNConfinement;
+	// global virial part of the pressure for confinement average in Confinement.dat
+	std::map<int, long double> _globalVirialForce_Confinement;
+	// global kinetic part of the pressure for confinement average in Confinement.dat
+	std::map<int, long double> _globalVirialKin_Confinement;
+	// global virial part of the stress tensor
+	std::map<int, long double> _globalPressureVirial_Confinement;
+	// global kinetic part of the stress tensor
+	std::map<int, long double> _globalPressureKin_Confinement;	
+	// global degrees of freedom
+	std::map<int, long double> _globalDOFProfile_Confinement;
+	// global kinetic energy (twice)
+	std::map<int, long double> _globalKineticProfile_Confinement;
+	// global velocity in each direction
+	std::map<int, long double> _globalvProfile_Confinement[3];
+	// global forces in each direction
+	std::map<int, long double> _globalForceConfinement[3];
+	// global forces of the fluid in each direction
+	std::map<int, long double> _globalFluidForce_Confinement[3];
+	// global area of fluid component
+	std::map<int, unsigned long>_globalFluidicArea;
+	// geometrical factors defining the confinement area
+	std::map<int, long double> _confinementEdge;
+	std::map<int, long double> _confinementMidPoint;
+	std::map<int, unsigned long> _confinementMidPointID;
+	long double _dMax;
+	double _dAveraged;
+	std::map<int, unsigned> _dBinFailCount;
+	unsigned _dBinFailureCount;
+	// auxiliary variables
+	std::map<int, bool> _confinementComponent;
+	std::map<int, bool> _confinementComponentHardy;
+	double _confinedVolume;
+	double _confinedSolidSurface;
+	std::map<int, unsigned> _universalNProfileUnitsConfinement;
+	std::map<int, double> _universalInvProfileUnitConfinement;
+	std::map<int, unsigned> _universalNProfileUnitsStressConfinement;
+	std::map<int, double> _universalInvProfileUnitStressConfinement;
+	std::map<unsigned, double> _lowUpper;
+	std::map<unsigned, double> _highLower;
+	std::map<int, long double> _dBin;
+	// number of consideres time steps for the averaging
+	unsigned long _globalAccumulatedDatasets_ConfinementProperties;
+	// relevant for Confinement.dat
+	unsigned long _universalNConfinement;
+	long double _universalPressureVirial_Confinement;
+	long double _universalPressureKin_Confinement;
+	long double _universalDOFProfile_Confinement;
+	long double _universalKineticProfile_Confinement;
+	long double _globalForce_Confinement[3];
+	bool _isConfinement;
+	bool _confinementAreaFixed;
+	// how many time steps are inbetween two subsequent data recordings
+	unsigned long _confinementRecordingTimesteps;
+	// broken down parts of the heatflux (local and global)
+	std::map<int, std::map<unsigned long, double> > _localDiffusiveHeatflux;
+	std::map<int, std::map<unsigned long, double> > _globalDiffusiveHeatflux;
+	std::map<int, std::map<unsigned long, double> > _localConvectiveKinHeatflux;
+	std::map<int, std::map<unsigned long, double> > _globalConvectiveKinHeatflux;
+	std::map<int, std::map<unsigned long, double> > _localConvectivePotHeatflux;
+	std::map<int, std::map<unsigned long, double> > _globalConvectivePotHeatflux;
+	std::map<int, std::map<unsigned long, double> > _localTotalHeatflux;
+	std::map<int, std::map<unsigned long, double> > _globalTotalHeatflux;
+	// local and global diffusion constant
+	std::map<int, std::map<unsigned long, double> > _localDiffusiveMovement;
+	std::map<int, std::map<unsigned long, double> > _globalDiffusiveMovement;
+	
+	// ------------ BULK PRESSURE -----------------
+	std::map<unsigned, double> _bulkCorner;
+	std::map<unsigned, bool> _bulkComponent;
+	// local and global parts of the pressure
+	long double _localPressureKin, _localPressureVirial, _universalPressureKin, _universalPressureVirial;
+	// local and global N
+	long double _localNBulk, _universalNBulk;
+	double _bulkVolume;
+	// averaged p, rho, T, sigma_xx, sigma_yy
+	double _universalBulkPressure, _universalBulkDensity, _universalBulkTemp, _stressXX, _stressYY;
+	// number of consideres time steps for the averaging
+	unsigned long _globalAccumulatedDatasets_BulkPressure;
+	// barostat
+	std::map<unsigned, bool> _barostatComponent;
+	double _control_top[3], _control_bottom[3];
+	long double _localPressureKin_barostat, _localPressureVirial_barostat, _universalPressureKin_barostat, _universalPressureVirial_barostat;
+	long double _localN_barostat, _universalN_barostat;
+	unsigned long _globalAccumulatedDatasets_barostat;
+	bool _differentBarostatInterval;
+	
+	// ---------------- SLAB ---------------------
+	//! 1 / dimension of a profile bin
+	double _universalInvProfileUnitSlab[3];
+	//! number of successive profile bins in x/y/z direction
+	unsigned _universalNProfileUnitsSlab[3];
+	//! local N profile map
+	std::map<unsigned long, unsigned> _localNProfileSlab;
+	//! global N profile map
+	std::map<unsigned long, unsigned> _universalNProfileSlab;
+	//! local directed velocity profile map
+	std::map<unsigned long, double> _localvProfileSlab[3];
+	//! global directed velocity  profile map
+	std::map<unsigned long, double> _universalvProfileSlab[3];
+	//! local kinetic energy profile map
+	std::map<unsigned long, double> _localKineticProfileSlab;
+	//! global kinetic energy profile map
+	std::map<unsigned long, double> _universalKineticProfileSlab;
+	//! local counter w. r. t. degrees of freedom
+	std::map<unsigned long, unsigned> _localDOFProfileSlab;
+	//! global counter w. r. t. degrees of freedom
+	std::map<unsigned long, unsigned> _universalDOFProfileSlab;
+	//! how many _evaluated_ timesteps are currently accumulated in the profile?
+	unsigned _globalAccumulatedDatasetsSlab;
+	//! which components should be considered?
+	std::map<unsigned, bool> _universalProfiledComponentsSlab;
+	double _maxSlabDist2;
+	double _universalCenterZ;
+	
+	// --------------- STRESS --------------------
+	//! 1 / dimension of a profile cuboid for stresses in solids
+	double _universalInvProfileUnit_Stress[3];
+	//! number of successive profile cuboids in x/y/z direction for stress in solids
+	unsigned _universalNProfileUnits_Stress[3];
+	//! local N profile map
+	std::map<unsigned long, unsigned> _localNProfile_Stress;
+	//! global N profile map
+	std::map<unsigned long, unsigned> _universalNProfile_Stress;
+	//! how many _evaluated_ timesteps are currently accumulated in the profile?
+	unsigned long _globalAccumulatedDatasets_Stress;
+	double _maxSlabDist2_Stress;
+	double _universalCenterZ_Stress;
+	std::map<unsigned, bool> _stressProfiledComponents;
+	// boolean operator that determines which property shall be calculated
+	bool _stressOutputProperty[6];
+	// how many time steps are inbetween two subsequent data recordings
+	unsigned long _stressRecordingTimesteps;
+	// broken down parts of the heatflux (local and global)
+	std::map<int, std::map<unsigned long, double> > _localDiffusiveHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _globalDiffusiveHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _localConvectiveKinHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _globalConvectiveKinHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _localConvectivePotHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _globalConvectivePotHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _localTotalHeatfluxStress;
+	std::map<int, std::map<unsigned long, double> > _globalTotalHeatfluxStress;
+	// local and global diffusion constant
+	std::map<int, std::map<unsigned long, double> > _localDiffusiveMovementStress;
+	std::map<int, std::map<unsigned long, double> > _globalDiffusiveMovementStress;
+	
+	
 	//! does a componentwise thermostat apply?
 	bool _componentwiseThermostat;
 	bool _enableThermostatLayers;
@@ -544,7 +790,15 @@ private:
 	
 	//! one-dimensional thermostat (velocity scaling)
 	std::map < int, int > _dimToThermostat;
-
+	
+	//! should the directed movement be subtracted when calculating the temperature?
+	std::map<int, bool> _universalUndirectedThermostat;
+	//! stores the velocity of the directed movement
+	std::map<int, double> _universalThermostatDirectedVelocity[3];
+	std::map<int, double> _localThermostatDirectedVelocity[3];
+	std::map<int, unsigned long>_thermostatTimeSlot[2];
+	std::map<int, double> _thermostatLayer[6];
+	
 	//! _localThermostatN[0] and _universalThermostatN[0] are always the total number
 	//! of particles in the subdomain and, respectively, the entire domain
 	std::map<int, unsigned long> _localThermostatN;
@@ -554,21 +808,23 @@ private:
 	//! _globalTemperatureMap[0] is always the temperature of the whole system,
 	//! including components to which no thermostat is applied.
 	//! The _globalTemperatureMap stores actual CURRENT temperatures, whereas
-	//! the temperature objective of the thermostat is stored in _universalTargetTemperature
+	//! the target temperature of the thermostat is stored in _universalTargetTemperature
 	std::map<int, double> _globalTemperatureMap;
 	std::map<int, double> _universalTargetTemperature;
+	//! scaling factor for the general three-dimensional velocity scaling
 	std::map<int, double> _universalBTrans;
+	//! scaling factor for the one-dimensional velocity scaling
 	std::map<int, double> _universalATrans;
 	std::map<int, double> _universalBRot;
 	std::map<int, bool> _alphaTransCorrection;
+	
+	//! kinetic energy before and after shearing as well as thermostatwise heatflux
 	std::map<int, long double> _universalThT_heatFlux;
-	//! should the directed movement be subtracted when calculating the temperature?
-	std::map<int, bool> _universalUndirectedThermostat;
-	//! stores the velocity of the directed movement
-	std::map<int, double> _universalThermostatDirectedVelocity[3];
-	std::map<int, double> _localThermostatDirectedVelocity[3];
-	std::map<int, unsigned long>_thermostatTimeSlot[2];
-	std::map<int, double> _thermostatLayer[6];
+	long double _preShearRateConf;
+	long double _postShearRateConf;
+	long double _preShearRateDefault;
+	long double _postShearRateDefault;
+	long double _shearVelDelta;
 
 	/* FIXME: This info should go into an ensemble class */
 	bool _universalNVE;
@@ -605,139 +861,10 @@ private:
 	//! which components should be considered?
 	std::map<unsigned, bool> _universalProfiledComponents;
         double _universalProfiledComponentMass;  // set from outside
-        
-        /*
-	 * Slab Profile
-        */
-	//! 1 / dimension of a profile bin
-	double _universalInvProfileUnitSlab[3];
-	//! number of successive profile bins in x/y/z direction
-	unsigned _universalNProfileUnitsSlab[3];
-	//! local N profile map
-	std::map<unsigned, long double> _localNProfileSlab;
-	//! global N profile map
-	std::map<unsigned, double> _universalNProfileSlab;
-	//! local directed velocity profile map
-	std::map<unsigned, long double> _localvProfileSlab[3];
-	//! global directed velocity  profile map
-	std::map<unsigned, double> _universalvProfileSlab[3];
-	//! local kinetic energy profile map
-	std::map<unsigned, long double> _localKineticProfileSlab;
-	//! global kinetic energy profile map
-	std::map<unsigned, double> _universalKineticProfileSlab;
-	//! local counter w. r. t. degrees of freedom
-	std::map<unsigned, long double> _localDOFProfileSlab;
-	//! global counter w. r. t. degrees of freedom
-	std::map<unsigned, double> _universalDOFProfileSlab;
-	//! how many _evaluated_ timesteps are currently accumulated in the profile?
-	unsigned _globalAccumulatedDatasetsSlab;
-	//! which components should be considered?
-	std::map<unsigned, bool> _universalProfiledComponentsSlab;
-	double _maxSlabDist2;
-	double _universalCenterZ;
-	
-	//! 1 / dimension of a profile cuboid for stresses in solids
-	double _universalInvProfileUnit_Stress[3];
-	//! number of successive profile cuboids in x/y/z direction for stress in solids
-	unsigned _universalNProfileUnits_Stress[3];
-	//! local N profile map
-	std::map<unsigned, long double> _localNProfile_Stress;
-	//! local N profile map of molecules that are nor part of the profiled component but part of the profile cuboid
-	std::map<unsigned, long double> _localNProfileResidual_Stress;
-	//! global N profile map
-	std::map<unsigned, long double> _universalNProfile_Stress;
-	//! global N profile map
-	std::map<unsigned, long double> _universalNProfileResidual_Stress;
-	//! how many _evaluated_ timesteps are currently accumulated in the profile?
-	unsigned long _globalAccumulatedDatasets_Stress;
-	double _maxSlabDist2_Stress;
-	double _universalCenterZ_Stress;
-	std::map<unsigned, bool> _stressProfiledComponents;
-	
-	std::map<unsigned, double> _bulkCorner;
-	std::map<unsigned, bool> _bulkComponent;
-	long double _localPressureKin, _localPressureVirial, _universalPressureKin, _universalPressureVirial;
-	long double _localNBulk, _universalNBulk;
-	double _bulkVolume;
-	double _universalBulkPressure, _universalBulkDensity, _universalBulkTemp, _stressXX, _stressYY;
-	unsigned long _globalAccumulatedDatasets_BulkPressure;
-	
-	//barostat
-	std::map<unsigned, bool> _barostatComponent;
-	double _control_top[3], _control_bottom[3];
-	long double _localPressureKin_barostat, _localPressureVirial_barostat, _universalPressureKin_barostat, _universalPressureVirial_barostat;
-	long double _localN_barostat, _universalN_barostat;
-	unsigned long _globalAccumulatedDatasets_barostat;
-	bool _differentBarostatInterval;
 	
 	// Cylindrical Density Profile
 	bool _universalCylindricalGeometry;
 	double _lowerAsperityRadius, _upperAsperityRadius, _universalR2max, _universalR2min, _universalCentre[3];	
-	
-	// Measurements in the confinement
-	std::map<int, unsigned long> _localNConfinement;
-	std::map<int, unsigned long> _localWallNConfinement;
-	std::map<int, long double> _localPressureVirial_Confinement;
-	std::map<int, long double> _localPressureKin_Confinement;
-	std::map<int, long double> _localVirialForce_Confinement;
-	std::map<int, long double> _localVirialKin_Confinement;
-	std::map<int, long double> _localDOFProfile_Confinement;
-	std::map<int, long double> _localKineticProfile_Confinement;
-	std::map<int, long double> _localvProfile_Confinement[3];
-	std::map<int, unsigned long> _globalNConfinement;
-	std::map<int, unsigned long> _globalWallNConfinement;
-	std::map<int, long double> _globalVirialForce_Confinement;
-	std::map<int, long double> _globalVirialKin_Confinement;
-	std::map<int, long double> _globalPressureVirial_Confinement;
-	std::map<int, long double> _globalPressureKin_Confinement;	
-	std::map<int, long double> _globalDOFProfile_Confinement;
-	std::map<int, long double> _globalKineticProfile_Confinement;
-	std::map<int, long double> _globalvProfile_Confinement[3];
-	std::map<int, long double> _localForceConfinement[3];
-	std::map<int, long double> _globalForceConfinement[3];
-	std::map<int, long double> _localFluidForce_Confinement[3];
-	std::map<int, long double> _globalFluidForce_Confinement[3];
-	std::map<int, long double> _confinementEdge;
-	std::map<int, long double> _confinementMidPoint;
-	std::map<int, bool> _confinementComponent;
-	std::map<int, bool> _confinementComponentHardy;
-	std::map<int, unsigned long> _confinementMidPointID;
-	long double _dMax;
-	double _dAveraged;
-	std::map<int, unsigned> _dBinFailCount;
-	unsigned _dBinFailureCount;
-	double _confinedVolume;
-	double _confinedSolidSurface;
-	std::map<int, unsigned> _universalNProfileUnitsConfinement;
-	std::map<int, double> _universalInvProfileUnitConfinement;
-	std::map<int, unsigned> _universalNProfileUnitsStressConfinement;
-	std::map<int, double> _universalInvProfileUnitStressConfinement;
-	std::map<unsigned, double> _lowUpper;
-	std::map<unsigned, double> _highLower;
-	std::map<int, long double> _dBin;
-	unsigned long _globalAccumulatedDatasets_ConfinementProperties;
-	unsigned long _universalNConfinement;
-	long double _universalPressureVirial_Confinement;
-	long double _universalPressureKin_Confinement;
-	long double _universalDOFProfile_Confinement;
-	long double _universalKineticProfile_Confinement;
-	long double _globalForce_Confinement[3];
-	std::map<int, unsigned long>_localFluidicArea;
-	std::map<int, unsigned long>_globalFluidicArea;
-	std::map<int, std::map<unsigned long, long double> > _localDiffusiveHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _globalDiffusiveHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _localConvectiveKinHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _globalConvectiveKinHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _localConvectivePotHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _globalConvectivePotHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _localTotalHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _globalTotalHeatflux;
-	std::map<int, std::map<unsigned long, long double> > _localDiffusiveMovement;
-	std::map<int, std::map<unsigned long, long double> > _globalDiffusiveMovement;
-	bool _isConfinement;
-	bool _confinementAreaFixed;
-	unsigned long _confinementRecordingTimesteps;
-	
 	
         std::map<unsigned, double> _universalTProfile; 
         std::map<unsigned, long double> _localWidomProfile;  // submit individually

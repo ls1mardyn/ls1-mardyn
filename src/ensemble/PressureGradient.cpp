@@ -25,7 +25,7 @@ PressureGradient::PressureGradient(int rank) {
 	this->_universalConstantTau = true;
 	this->_universalZetaFlow = 0.0;
 	this->_universalTauPrime = 0.0;
-	
+	this->_shearRampTime = 1;
 }
 
 void PressureGradient::specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep)
@@ -329,19 +329,22 @@ double* PressureGradient::getAdditionalAcceleration(unsigned int set)
 	return retv;
 }
 
-void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate)
+void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate, double shearWidth)
 {	
 	this->_shearRateBox[0] = xmin;
 	this->_shearRateBox[1] = xmax;
 	this->_shearRateBox[2] = ymin;
 	this->_shearRateBox[3] = ymax;
 	this->_shearRate = shearRate;
+	this->_shearWidth = shearWidth;
 	this->_shearComp = cid;
+	this->_shearRampTime = ceil((_shearRateBox[3]-_shearRateBox[2])*_shearRate*10000);
+	cout << "Shear info: the final shear velocity is firstly reached " << _shearRampTime << " timesteps after the initStatistics!";
 }
 
 void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecompBase* domainDecomp, unsigned directedVelTime)
 {	
-	unsigned yuns = ceil((_shearRateBox[3] - _shearRateBox[2])*10);
+	unsigned yuns = 4;
 	unsigned yun; 
 	
 	for(yun = 0; yun < yuns; yun++){
@@ -361,10 +364,18 @@ void PressureGradient::prepareShearRate(ParticleContainer* molCont, DomainDecomp
 	  
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{
-	  if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] && thismol->r(1) <= _shearRateBox[3]){
-		yun = floor((thismol->r(1) - this->_shearRateBox[2])*10);
-		this->_localShearN[yun]++;
-		this->_localShearVelocitySum[yun] += thismol->v(0);
+	  if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[2] && thismol->r(1) <= _shearRateBox[2] + _shearWidth){
+		this->_localShearN[0]++;
+		this->_localShearVelocitySum[0] += thismol->v(0);
+	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= 0.5 * (_shearRateBox[3]-_shearRateBox[2]) - _shearWidth && thismol->r(1) < 0.5 * (_shearRateBox[3]-_shearRateBox[2])){
+		this->_localShearN[1]++;
+		this->_localShearVelocitySum[1] += thismol->v(0);
+	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= 0.5 * (_shearRateBox[3]-_shearRateBox[2]) && thismol->r(1) <= 0.5 * (_shearRateBox[3]-_shearRateBox[2]) + _shearWidth){
+		this->_localShearN[2]++;
+		this->_localShearVelocitySum[2] += thismol->v(0);	
+	  }else if(thismol->componentid() == _shearComp && thismol->r(0) >= _shearRateBox[0] && thismol->r(0) <= _shearRateBox[1] && thismol->r(1) >= _shearRateBox[3] - _shearWidth && thismol->r(1) <= _shearRateBox[3]){
+		this->_localShearN[3]++;
+		this->_localShearVelocitySum[3] += thismol->v(0);
 	  }
 	}
 	

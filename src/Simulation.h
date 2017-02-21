@@ -254,13 +254,16 @@ public:
 	
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
-	/** Get the number of time steps to be performed in the simulatoin */
+	/** Get the number of time steps to be performed in the simulation */
 	unsigned long getNumTimesteps() { return _numberOfTimesteps; }
 
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
+	/** Get the number of the time steps used for initialization. */
 	unsigned long getInitStatistics() { return _initStatistics; }
+	/** Get the number of the time steps that are used for averaging during the calculation of the directed velocity. */
 	unsigned getDirectedVelocityTime() { return _directedVelocityTime; }
+	/** Returns a boolean operator determining whether the directed velocities is calculated or not. */
 	bool getBoolDirVel() { return _boolDirectedVel; }
 
 	double getcutoffRadius() const { return _cutoffRadius; }
@@ -279,9 +282,12 @@ public:
 	void  setTimeStepLength(double timeStepLength) { _timeStepLength = timeStepLength; }
 	double getTimeStepLength() const {return _timeStepLength; }
 
-        // for velocity scaling apply
+        // Important for the application of the velocity scaling
+        /** Returns the CID for a given type of movement. */
         unsigned getCIDMovement(std::string moveStyle, unsigned numberOfComp);
+	/** Returns a boolean operator determining whether instantaneous acceleration is applied. */
         bool isAcceleratingInstantaneously();
+
         double getMovedVel(int d, unsigned cid);
 
 	/** @brief Temperature increase factor function during automatic equilibration.
@@ -349,19 +355,37 @@ public:
 	void setSimulationTime(double curtime){ _simulationTime = curtime; }
 	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
 	double getSimulationTime(){ return _simulationTime; }
+	
 	unsigned getStressRecordTimestep() {return _stressProfileRecordingTimesteps; }
 	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
+	/** Returns a boolean operator determining whether a shear-like velocity profile is applied. */
 	bool isShearRate() { return _doShearRate; }
+	
 	double getSimulationStart(){return _simStart; }
         void setSimulationStart(double simStart){ _simStart = simStart/_timeStepLength; }
 
 	Ensemble* getEnsemble() { return _ensemble; }
-
+	/** Get the time step when the barostat is turned on. */
 	unsigned getBarostatTimeInit() { return _initGrandCanonical; }
+	/** Get the time step when the barostat is turned off. */
 	unsigned getBarostatTimeEnd() { return _endGrandCanonical; }
+	/** Returns boolean operators determining which kind of result is calculated. */
 	bool isRecordingSlabProfile() { return _doRecordSlabProfile; }
 	bool isRecordingStressProfile() { return _doRecordStressProfile; }
 	bool isRecordingConfinementProfile() { return _doRecordConfinement; }
+	/** Returns a boolean operator determining whether the momentum of the total system is canceled. */
+	bool isCancelMomentum() { return _cancelMomentum; }
+	/** Stops outputting the velocity in slabProfile --> data reduction (e.g. for large simulations). */
+	bool reduceData() { return _reduceDataSlab; }
+	/** Stops outputting the xyz-file and allows just the output of cavity-files  --> data reduction (e.g. for large simulations). */
+	bool noXYZ() { return _noXYZ; }
+	/** Returns a boolean operator determining which kind of calculation method for the directed velocities is applied. */
+	/** Directed velocities calculated as a simple average with in control volumes of size: 1*1*z_max. */
+	bool isSimpleAverageSigma2D() { return _doSimpleAverageSigma2D; }
+	/** Directed velocities calculated as a simple average with in control volumes of size: 1*1*1. */
+	bool isSimpleAverageSigma3D() { return _doSimpleAverageSigma3D; }
+	/** Directed velocities calculated as a moving average with in control volumes of size: 1*1*z_max. */
+	bool isMovingAverageSigma2D() { return _doMovingAverageSigma2D; }
 private:
 
 
@@ -396,14 +420,26 @@ private:
 	string _weightingStress;
 	string _weightingConfinement;
 
-	/** flag specifying whether planar interface profiles are recorded */
+	/** flag specifying which profiles is are recorded */
 	bool _doRecordProfile;
 	bool _doRecordSlabProfile;
 	bool _doRecordStressProfile;
 	bool _doRecordBulkPressure;
 	bool _doRecordConfinement;
+	
+	/** flag specifying special simulation features */
 	bool _doShearRate;
 	bool _cancelMomentum;
+	bool _reduceDataSlab;
+	bool _noXYZ;
+	
+	/** flag specifying the calculation method for the directed velocities */
+	bool _doSimpleAverage;
+	bool _doSimpleAverageSigma2D;
+	bool _doSimpleAverageSigma3D;
+	bool _doMovingAverageSigma2D;
+	bool _doNeighbourAverage;
+	
 	/** Interval between two evaluations of the profile.
 	 * This means that only 1 / _profileRecordingTimesteps of the
 	 * internally available data are actually used, so if precision is

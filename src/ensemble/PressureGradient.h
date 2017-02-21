@@ -102,13 +102,24 @@ public:
 	double getCosetN(unsigned int cosetid) { return this->_globalN[cosetid]; }
 	unsigned int maxCoset() { return this->_universalTau.size(); }
 	//! @brief shear rate acceleration of the fluid
-	void setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate);
+	// geometrical setup of the box in which shear is applied
+	void setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate, double shearWidth);
+	// returns box margins
 	double getShearRateBox(int d) { return this->_shearRateBox[d]; }
+	// returns target shear rate
 	double getShearRate() { return this->_shearRate; }
+	// returns half the width of the stripe in which the target velocity is applied
+	double getShearWidth() { return this->_shearWidth; }
+	// returns the ID of the sheared component
 	unsigned getShearComp() { return this->_shearComp; }
+	// returns the current directed velocity of the sheared component in that stripe
 	double getDirectedShearVel(unsigned yun) {return this->_directedShearVel[yun]; }
+	// returns the averaged directed velocity of the sheared component in that stripe
 	double getDirectedShearVelAverage(unsigned yun) {return this->_directedShearVelAverage[yun]; }
+	// calculation of _directedShearVel and _directedShearVelAverage
 	void prepareShearRate(ParticleContainer* molCont, DomainDecompBase* domainDecomp, unsigned directedVelTime);
+	// returns the time span in which the systems is gradually increased
+	unsigned getShearRampTime() {return this->_shearRampTime; }
 	
 	//! @brief returns the component -> set ID map
 	std::map<unsigned int, unsigned int> getComponentSets() { return this->_universalComponentSetID; }
@@ -217,8 +228,11 @@ private:
 	double _shearRateBox[4];
 	/// shear rate for the fluid acceleration
 	double _shearRate;
+	/// width of the stripe where the fluid is accelerated or limited
+	double _shearWidth;
 	/// component that is sheared
 	unsigned _shearComp;
+	unsigned _shearRampTime;
 	std::map<unsigned int, long double> _directedShearVel;
 	std::map<unsigned int, long double> _directedShearVelAverage;
 	std::map<unsigned int, unsigned long> _localShearN;

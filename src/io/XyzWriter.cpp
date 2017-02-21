@@ -112,10 +112,12 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 		
 		int ownRank = domainDecomp->getRank();
 		if( ownRank == 0 ) {
-			ofstream xyzfilestream( filenamestream.str(). c_str() );
-			xyzfilestream << domain->getglobalNumMolecules() << endl;
-			xyzfilestream << "comment line" << endl;
-			xyzfilestream.close();
+			if(!_simulation.noXYZ()){
+				ofstream xyzfilestream( filenamestream.str(). c_str() );
+				xyzfilestream << domain->getglobalNumMolecules() << endl;
+				xyzfilestream << "comment line" << endl;
+				xyzfilestream.close();
+			}
                         
                         for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
                         {
@@ -132,7 +134,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 		for( int process = 0; process < domainDecomp->getNumProcs(); process++ ){
 			domainDecomp->barrier();
 			if( ownRank == process ){
-			  
+			  if(!_simulation.noXYZ()){
 				ofstream xyzfilestream( filenamestream.str().c_str(), ios::app );
 				ofstream particleDataFilestream( vtk.str().c_str(), ios::app );
 				Molecule* tempMol;
@@ -169,7 +171,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 				}
 				xyzfilestream.close();
 				particleDataFilestream.close();
-				
+			 }
                                 for(ceit = mcav->begin(); ceit != mcav->end(); ceit++)
                                 {
                                    ofstream cavfilestream( cav_filenamestream[ceit->first]->str().c_str(), ios::app );
@@ -190,6 +192,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 				}
 			}
 		}
+	      if(!_simulation.noXYZ()){
 		//NEW: Sorting of Molecules in the same Order as in Timestep t=0 for a continously Post-Processing in VMD 
 		stringstream arrangedFileName;
 		arrangedFileName << "./Results/Profile/";
@@ -319,6 +322,7 @@ void XyzWriter::doOutput( ParticleContainer* particleContainer, DomainDecompBase
 			  write_point_mesh(vtk.str().c_str(), 0, numberOfMolecules, coordinates, nvars, vardims, varnames, vars);
 			}
 		}
+	      }
 	}
 }
 

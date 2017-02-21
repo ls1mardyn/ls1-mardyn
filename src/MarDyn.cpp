@@ -130,7 +130,6 @@ int main(int argc, char** argv) {
 			unsigned long steps = 0;
 			istringstream(args[1]) >> steps;
 			simulation.setNumTimesteps(steps);
-			cout << " sumSteps " << steps <<endl;
 		}
 		if( numargs > 2 ) {
 			simulation.setOutputPrefix(args[2]);

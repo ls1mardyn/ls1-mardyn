@@ -361,7 +361,7 @@ void MPIKDNodePacked::initDatatype() {
 		if (!(disp[i] > disp[i-1])) {
 			global_log->debug() << "i=" << i << std::endl;
 		}
-		assertion1( disp[i] > disp[i-1], i );
+		assertion1( (disp[i] > disp[i-1]), i );
 	}
 	for (int i=0; i<Attributes; i++) {
 		disp[i] -= base;

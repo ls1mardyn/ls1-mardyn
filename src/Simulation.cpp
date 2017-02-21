@@ -546,6 +546,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 	// used to store one token of the inputfilestream
 	string token;
+	string token2;
 
 	double timestepLength;
 	unsigned cosetid = 0;
@@ -700,6 +701,8 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 						outputPathAndPrefix, true));
 				global_log->debug() << "XyzWriter " << writeFrequency << " '"
 						<< outputPathAndPrefix << "'.\n";
+			} else if (token == "justCavityFiles") { // suboption of XyzWriter: suppresses the output of xyz-profiles --> data reduction
+				_noXYZ = true;
 			} else if (token == "CheckpointWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
@@ -893,7 +896,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			std::string RDFOutputPrefix;
 			inputfilestream >> RDFOutputPrefix;
 			_rdf->setOutputPrefix(RDFOutputPrefix);
-		} else if(token == "OutputFormat") {
+		} else if(token == "OutputFormat") { // determination of the output format
 			string outputFormat;
 			inputfilestream >> outputFormat;
 			_domain->specifyOutputFormat(outputFormat);
@@ -923,18 +926,31 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			_domain->considerComponentInProfile(cid);
 		} else if (token == "profileOutputPrefix") { /* TODO: suboption of profile */
 			inputfilestream >> _profileOutputPrefix;
-		} else if (token == "confinementDensity"){	/* variation of profile: records discrete information about temperature, density and velocity 
-								   averaged over in-plane-direction in polar coordinates around the lower asperity;
-								   needs: _domain->setupProfile(xun, yun, zun), _profileRecordingTimesteps, _profileOutputTimesteps */
+		} else if (token == "confinementDensity"){	/* variation of profile: records discrete information about temperature, density and velocity averaged over in-plane-direction in polar coordinates around the lower asperity; needs: _domain->setupProfile(xun, yun, zun), _profileRecordingTimesteps, _profileOutputTimesteps */
 			double radius1, radius2, xCentre, yCentre;
 			inputfilestream >> radius1 >> radius2 >> xCentre >> yCentre;
 			this->_domain->confinementDensity(radius1, radius2, xCentre, yCentre);				  
-		} else if (token == "directedVelocityTimeSpan") {	// records discrete information about temperature, density and velocity averaged over in-plane-direction
+		} else if (token == "directedVelocityTimeSpan") {	// if this option is given directed velocities are by default calculated as a moving average over a certain time span; if an additional suboption is chosen for the directed velocities, here, the time span for the averaging is determined
 			unsigned dirVelTime;
 			inputfilestream >> dirVelTime;
 			_directedVelocityTime = dirVelTime;
 			_boolDirectedVel = true;
 			global_log->info() << "Directed velocity is calculated each " << _directedVelocityTime << " timesteps." << endl;
+		} else if (token == "movingAverageSigma2D") {	// if this option is given directed velocities are calculated as a moving average in size 1*1*z_max over a certain time span
+			_doMovingAverageSigma2D = true;
+			global_log->info() << "Directed velocity is calculated as moving average 'Sigma 2D'." << endl;	
+		} else if (token == "simpleAverage") {	// if this option is given directed velocities are calculated as a simple average over a certain time span; good for large parallel simulations
+			_doSimpleAverage = true;
+			global_log->info() << "Directed velocity is calculated as simple average." << endl;
+		} else if (token == "simpleAverageSigma2D") {	// if this option is given directed velocities are calculated as a simple average in size 1*1*z_max over a certain time span; good for large parallel simulations
+			_doSimpleAverageSigma2D = true;
+			global_log->info() << "Directed velocity is calculated as simple average 'Sigma 2D'." << endl;
+		} else if (token == "simpleAverageSigma3D") {	// if this option is given directed velocities are calculated as a simple average in size 1*1*1 over a certain time span; good for large parallel simulations
+			_doSimpleAverageSigma3D = true;
+			global_log->info() << "Directed velocity is calculated as simple average 'Sigma 3D'." << endl;	
+		} else if (token == "neighbourListAverage") {	// if this option is given directed velocities are calculated as a moving averaged over a certain time span and over the neighbour list; good for large parallel simulations
+			_doNeighbourAverage = true;
+			global_log->info() << "Directed velocity is calculated as moving average over the neighbour list." << endl;
 		} else if (token == "slabProfile") {	// records discrete information about temperature, density and velocity averaged over in-plane-direction
 			unsigned xun, yun, zun;
 			inputfilestream >> xun >> yun >> zun;
@@ -951,13 +967,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			_domain->considerComponentInProfileSlab(cid);
 		} else if (token == "slabProfileOutputPrefix") { /* TODO: suboption of slabProfile */
 			inputfilestream >> _slabProfileOutputPrefix;
+		} else if (token == "slabNoVelocity") { /* TODO: suboption of slabProfile */
+			_reduceDataSlab = true;
 		} else if (token == "stress") {	   // calculates virial stresses in the desired component
 			unsigned xun, yun, zun;
 			string stress, weightingFunc;
+			bool properties[6];
+			for (int prop_n = 0; prop_n < 6; prop_n++)
+				properties[prop_n] = true;
+			
 			inputfilestream >> xun >> yun >> zun >> stress;
-			_domain->setupStressProfile(xun, yun, zun);
 			_doRecordStressProfile = true;
-			if(stress == "Hardy"){ // calculates Hardy Stresses
+			if(stress == "Hardy" && zun == 1){ // calculates Hardy Stresses; just possible in 2D(x,y)
 			  _HardyStress = true;
 			  inputfilestream >> token;
 			  if (token != "Linear" && token != "Pyramide" ) {
@@ -967,10 +988,49 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			  }
 			  weightingFunc = token;
 			  _weightingStress = weightingFunc;
+			}else if(stress == "Hardy" && zun != 1){
+				global_log->info() << "Hardy stresses can just be calculated in 2D so far. Therefore, the calculation method is switched to 'Virial' automatically!\n";
+				stress == "Virial";
 			}
 			global_log->info() << "Stress profile: " << stress << endl;
+			_domain->setupStressProfile(xun, yun, zun, properties);
+		} else if (token == "stressProperties"){ // calculate properties: p = hydrodynamic pressure, normalStress = normal stresses, shearStress = shear stresses, misesStress = Mises stress, q = heatflux, D = diffusion
+			bool properties[6];
+			int numberOfProperties = 0;
+			int count = 0;
+			for (int prop_n = 0; prop_n < 6; prop_n++)
+				properties[prop_n] = false;
+			  inputfilestream >> numberOfProperties;
+			  for (count = 0; count < numberOfProperties; count++){
+				inputfilestream >> token2;
+				if (token2 == "p") {
+					properties[0] = true;
+					global_log->info() << "Stress property: " << token2 << endl;
+				}else if (token2 == "normalStress") {
+					properties[1] = true;
+					global_log->info() << "Stress property: " << token2 << endl;
+				}else if (token2 == "shearStress") {
+					properties[2] = true;  
+					global_log->info() << "Stress property: " << token2 << endl;
+				}else if (token2 == "misesStress") {
+					properties[3] = true;   
+					global_log->info() << "Stress property: " << token2 << endl;
+				}else if (token2 == "q") {
+					properties[4] = true;
+					global_log->info() << "Stress property: " << token2 << endl;
+				}else if (token2 == "D") {
+					properties[5] = true;  
+					global_log->info() << "Stress property: " << token2 << endl;
+				}else{
+					global_log->error() << "Number of calculated properties doesn't match the expectation or you chose the wrong indentifier!\n";
+					global_log->error() << "Accepted indentifier: p normalStress shearStress misesStress q D\n";
+					exit(1);
+				}
+			  }
+			_domain->setupStressProperties(properties);
 		} else if (token == "stressProfileRecordingTimesteps") { /* TODO: suboption of stressProfile */
 			inputfilestream >> _stressProfileRecordingTimesteps;
+			_domain->setupStressRecTime(_stressProfileRecordingTimesteps);
 		} else if (token == "stressProfileOutputTimesteps") { /* TODO: suboption of stressProfile */
 			inputfilestream >> _stressProfileOutputTimesteps;	
 		} else if (token == "stressProfiledComponent") { /* TODO: suboption of stressProfile, check if required to enable output in general */
@@ -1040,12 +1100,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 		} else if (token == "confinementProfilePrefix") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementProfileOutputPrefix;
 		} else if (token == "shearRate") {	// calculates the pressure, temperature and density in the bulk fluid (due to desired component and control volume)
-			double xmin, xmax, ymin, ymax, shearRate;
+			double xmin, xmax, ymin, ymax, shearRate, shearWidth;
 			unsigned cid;
-			inputfilestream >> xmin >> xmax >> ymin >> ymax >> cid >> shearRate;
+			inputfilestream >> xmin >> xmax >> ymin >> ymax >> cid >> shearRate >> shearWidth;
 			cid--;
 			_doShearRate = true;
-			_pressureGradient->setupShearRate(xmin, xmax, ymin, ymax, cid, shearRate);	
+			_pressureGradient->setupShearRate(xmin, xmax, ymin, ymax, cid, shearRate, shearWidth);	
 		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} else if (token == "zOscillator") {
@@ -1245,7 +1305,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			this->setTersoffCutoff(rc);
 		} else if (token == "ultra") {
                         ultra = true;
-		} else if (token == "cancelMomentum") {
+		} else if (token == "cancelMomentum") { // cancels momentum of the total system
                         _cancelMomentum = true;
 		} else {
 			if (token != "")
@@ -1395,7 +1455,7 @@ void Simulation::prepare_start() {
 						* _integrator->getTimestepLength());
 		global_log->info() << "Uniform acceleration initialised." << endl;
 	}
-
+	
 	global_log->info() << "Calculating global values" << endl;
 	_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
 	
@@ -1469,12 +1529,13 @@ void Simulation::simulate() {
 	for (int tht_id = 0; tht_id <= 3; tht_id++)
 		_domain->setThT_heatFlux(tht_id, 0.0);
 	  
-	   // initialize result files
+	// initialize result files
 	    std::ofstream ForceData;
 	    std::ofstream BulkPressure;
 	    std::ofstream Confinement;
 	    std::ofstream HeatFlux;
 	    
+	// writing header for result files    
 	if(_domainDecomposition->getRank() == 0){
 		if(ForceData.is_open()) ForceData.close();
 		if(BulkPressure.is_open()) BulkPressure.close();
@@ -1513,7 +1574,10 @@ void Simulation::simulate() {
 		}
 		HeatFlux << "#A_Comp_2 (upper plate) " << 2*_domain->getGlobalLength(0)*_domain->getGlobalLength(2) << "\n" << "#A_Comp_3 (lower plate)" << 2*((_domain->getConfinementEdge(1)-_domain->getConfinementEdge(0)) + _domain->get_confinementMidPoint(3))*_domain->getGlobalLength(2) << "\n\n";
 		HeatFlux << "#Comp_1 (fluid) " << _domain->getThermostat(0) << "\n#Comp_2 (upper plate) " << _domain->getThermostat(1) << "\n#Comp_3 (lower plate) " <<  _domain->getThermostat(2) << "\n\n";
-		HeatFlux << "#step\t\t\tQ_ThT_ges\tQ_ThT_1\tQ_ThT_2\tQ_ThT_3\n\n";
+		HeatFlux << "#step\t\t\tQ_ThT_ges\tQ_ThT_1\tQ_ThT_2\tQ_ThT_3";
+		if(_doShearRate)
+			HeatFlux << "\tdEnergy_noDirVel\tdEnergy_Default\tshearVelDelta";
+		HeatFlux << "\n\n";
 		
 		//Check discjunction of thermostat layers
 		if(_domain->isThermostatLayer() == true)
@@ -1624,7 +1688,7 @@ void Simulation::simulate() {
 		    unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
 		    cid--;
 		    if (cid >= 0 && cid < _domain->getNumberOfComponents()){
-		      if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
+		      if(cid >= 0 && cid < (unsigned)_domain->getNumberOfComponents())
 		       _pressureGradient->collectForcesOnComponent(_domainDecomposition, cid);
 		      if(_simstep == timeStepForce && _pressureGradient->isSpringDamped())
 			_pressureGradient->resetSpringForcesOnComponent(cid);
@@ -1645,7 +1709,7 @@ void Simulation::simulate() {
 			  if(_pressureGradient->isSpringDamped())
 			    ForceData << "\t\t\t" << SpringForce[0][cid] << " " << SpringForce[1][cid] << " " << SpringForce[2][cid];
 			}
-			if(cid >= 0 && cid < (int)_domain->getNumberOfComponents())
+			if(cid >= 0 && cid < (unsigned)_domain->getNumberOfComponents())
 			  _pressureGradient->resetForcesOnComponent(cid);
 			if(_pressureGradient->isSpringDamped())
 			  _pressureGradient->resetSpringForcesOnComponent(cid);
@@ -1653,10 +1717,9 @@ void Simulation::simulate() {
 		    }
 		}
 		
-		// test deletions and insertions
+		// test deletions and insertions for the grand canonical ensemble and the barostat
 		if (_simstep >= _initGrandCanonical && _simstep <= _endGrandCanonical) {
 			unsigned j = 0;
-			
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 				if ((!((_simstep + 2 * j + 3) % cpit->getInterval()) && _domain->getDifferentBarostatInterval() == false) || (_simstep == cpit->getInterval() && _domain->getDifferentBarostatInterval() == true)) {
@@ -1678,7 +1741,6 @@ void Simulation::simulate() {
 					    targetPressure = cpit->getTargetPressure();
 					    currentPressure = (double)((p_Vir + p_Kin)/(3 * Volume));
 					    currentTemp = (double)(p_Kin/(3 * N));
-					    
 					    // artificial prefactor (~damping function) applied to the number number of test insertions and time interval between test
 					    dampFac = ((long double)(_endGrandCanonical - _simstep))/((long double)(_endGrandCanonical - _initGrandCanonical)); 
 					    dampFac = 0.1 + dampFac * dampFac;
@@ -1691,14 +1753,12 @@ void Simulation::simulate() {
 					    if(deltaPressure == 0)
 					      deltaPressure = 0.01;
 					    unsigned newInstances = (unsigned)floor(cpit->getOriginalInstances()*10*deltaPressure*dampFac);
-					    
 					    // amount of instances are reglemented to be not bigger than 3 times the amount of original instances
 					    if(newInstances > 3 * cpit->getOriginalInstances())
 					      newInstances = 3 * cpit->getOriginalInstances();
 					    
 					    if(_domainDecomposition->getRank()==0)
 					      cout << " newInst " << newInstances << endl;
-					    
 					  if(0.99*targetPressure > currentPressure){
 					    imu = 50;
 					    cpit->setMu(icid, imu);
@@ -1790,7 +1850,7 @@ void Simulation::simulate() {
                       }
                    }
                 }
-
+                
 		global_log->debug() << "Delete outer particles / clearing halo" << endl;
 		_moleculeContainer->deleteOuterParticles();
 		
@@ -1851,9 +1911,7 @@ void Simulation::simulate() {
 		if(_domainDecomposition->getRank() == 0) 
 		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
 		
-		// shear rate accelerates the fluid
-		if(_doShearRate && _simstep >= _initStatistics)
-			_integrator->shearRate(_domainDecomposition, _moleculeContainer, _domain);
+		// Acceleration of the component type "moved"; independent of the shear rate calculation
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
 				global_log->debug() << "Determine the additional acceleration"
@@ -1893,9 +1951,10 @@ void Simulation::simulate() {
 		  }
 		}
 		
-		// Calculate directed velocities
-		if(_boolDirectedVel == true)
-		  _velocityScalingThermostat.calculateDirectedVelocities(_moleculeContainer, _domainDecomposition);
+				
+		// shear rate accelerates the total system with a velocity gradient
+		if(_doShearRate && _simstep >= _initStatistics)
+			_integrator->shearRate(_domainDecomposition, _moleculeContainer, _domain);
 		
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
@@ -1960,6 +2019,22 @@ void Simulation::simulate() {
 			}
 		}
 		
+		// Calculate directed velocities
+		if(_boolDirectedVel == true){
+			if(_doSimpleAverage == true)
+				_velocityScalingThermostat.calculateDirectedVelocitiesSimple(_moleculeContainer, _domainDecomposition);
+			else if(_doSimpleAverageSigma2D == true)
+				_velocityScalingThermostat.calculateDirectedVelocitiesSimple(_moleculeContainer, _domainDecomposition);
+			else if(_doSimpleAverageSigma3D == true)
+				_velocityScalingThermostat.calculateDirectedVelocitiesSimpleSigma3D(_moleculeContainer, _domainDecomposition);
+			else if(_doNeighbourAverage == true)
+				_velocityScalingThermostat.calculateDirectedVelocitiesNeighbourList(_moleculeContainer, _domainDecomposition);
+			else if(_doMovingAverageSigma2D == true)
+				_velocityScalingThermostat.calculateDirectedVelocities(_moleculeContainer, _domainDecomposition);
+			else
+				_velocityScalingThermostat.calculateDirectedVelocities(_moleculeContainer, _domainDecomposition);
+		}
+		
 		advanceSimulationTime(_integrator->getTimestepLength());
 		
 		/* BEGIN PHYSICAL SECTION:
@@ -2003,10 +2078,6 @@ void Simulation::simulate() {
 		    double temperature2 = (double)(eKin/dof);
 		    double velocity_x_solid =  _pressureGradient->getGlobalTargetVelocity(0,1);
 		    double viscosity = (double)((force[0]/Surface)/(velocity_x_solid/dAverage));
-		    
-		    cout << "T1: " << p_Kin << " | " << 3*N << endl;
-		    cout << "T2: " << eKin << " | " << dof << endl;
-		    cout << "T1/T2: " << p_Kin/eKin << endl;
 
 		    Confinement << _simstep << "\t\t\t" << N << "\t\t\t" << Volume << "\t\t" << Surface << "\t\t" << dMax << "\t\t" << dAverage << "\t\t";
 		    Confinement << density << "\t\t" << pressure << "\t" << temperature1 << "\t" << temperature2 << "\t\t\t";
@@ -2022,12 +2093,23 @@ void Simulation::simulate() {
 		    osstrm.clear();
 		    
 		    // Heat flux consumed by the thermostats
-		    HeatFlux << _simstep << "\t" << _domain->getThT_heatFlux(0) << "\t" << _domain->getThT_heatFlux(1) << "\t" << _domain->getThT_heatFlux(2) << "\t" << _domain->getThT_heatFlux(3) << "\n";
+		    HeatFlux << _simstep << "\t" << _domain->getThT_heatFlux(0) << "\t" << _domain->getThT_heatFlux(1) << "\t" << _domain->getThT_heatFlux(2) << "\t" << _domain->getThT_heatFlux(3);
+		    if(_doShearRate){
+			    HeatFlux << "\t" << 0.5 * (_domain->getPostShearEnergyConf() - _domain->getPreShearEnergyConf()) << "\t" << 0.5 * (_domain->getPostShearEnergyDefault() - _domain->getPreShearEnergyDefault()) << "\t" << _domain->getShearVelDelta()/((double)_domain->getglobalNumMolecules()*(double)_confinementOutputTimesteps);
+		    }
+		    HeatFlux << "\n";
 		  }		
 		    _domain->resetConfinementProperties(); 
 		    // reset heat flux average
 		    for (int tht_id = 0; tht_id <= 3; tht_id++)
 			_domain->setThT_heatFlux(tht_id, 0.0);
+		    if(_doShearRate){
+			    _domain->setPostShearEnergyConf(0.0);
+			    _domain->setPreShearEnergyConf(0.0);
+			    _domain->setPostShearEnergyDefault(0.0);
+			    _domain->setPreShearEnergyDefault(0.0);
+			    _domain->setShearVelDelta(0.0);
+		    }
 		}
 		
 		// test deletions and insertions for barostat
@@ -2083,7 +2165,7 @@ void Simulation::simulate() {
 
 	// dellocate stress tensor
 	if(_doRecordStressProfile == true) {
-	  size_t rows = 6, cols = _domain->getUniversalNProfileUnits_Stress(0)*_domain->getUniversalNProfileUnits_Stress(1);
+	  size_t rows = 6, cols = _domain->getUniversalNProfileUnits_Stress(0)*_domain->getUniversalNProfileUnits_Stress(1)*_domain->getUniversalNProfileUnits_Stress(2);
 	  _domain->dellocStressMatrix(_domain->_localStress, rows, cols);
 	  _domain->dellocStressMatrix(_domain->_universalStress, rows, cols);
 	}
@@ -2124,10 +2206,12 @@ void Simulation::output(unsigned long simstep) {
 
 	int mpi_rank = _domainDecomposition->getRank();
 	std::list<OutputBase*>::iterator outputIter;
+	if (simstep >= _initStatistics){
 	for (outputIter = _outputPlugins.begin(); outputIter != _outputPlugins.end(); outputIter++) {
 		OutputBase* output = (*outputIter);
 		global_log->debug() << "Ouptut from " << output->getPluginName() << endl;
 		output->doOutput(_moleculeContainer, _domainDecomposition, _domain, simstep, &this->_lmu, &this->_mcav);
+	}
 	}
 	if ((simstep >= _initStatistics) && _doRecordProfile && !(simstep % _profileRecordingTimesteps)) {
 		_domain->recordProfile(_moleculeContainer);
@@ -2170,7 +2254,7 @@ void Simulation::output(unsigned long simstep) {
 		_domain->resetSlabProfile();
 	}
 	if ((simstep >= _initStatistics) && _doRecordStressProfile && !(simstep % _stressProfileRecordingTimesteps)) {
-		_domain->recordStressProfile(_moleculeContainer);
+		_domain->recordStressProfile(_moleculeContainer, simstep, _initStatistics);
 		if (simstep == _initStatistics)
 		      _domain->resetStressProfile();
 	}
@@ -2299,8 +2383,15 @@ void Simulation::initialize() {
 	_doRecordStressProfile = false;
 	_doShearRate = false;
 	_cancelMomentum = false;
+	_reduceDataSlab = false;
+	_noXYZ = false;
 	_boolDirectedVel = false;
 	_directedVelocityTime = 1000;
+	_doMovingAverageSigma2D = false;
+	_doNeighbourAverage = false;
+	_doSimpleAverage = false;
+	_doSimpleAverageSigma2D = false;
+	_doSimpleAverageSigma3D = false;
 	_HardyStress = false;
 	_HardyConfinement = false;
 	_weightingStress = string("Linear");

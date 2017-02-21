@@ -47,6 +47,7 @@ Molecule::Molecule(unsigned long id, Component *component,
 	    setVirialForceConfinement(d, e, 0.0);
 	    setVirialKinConfinement(d, e, 0.0);
 	    setDiffusiveHeatflux(d, e, 0.0);
+	    setDiffusiveHeatfluxStress(d, e, 0.0);
 	  }
 	  setPressureVirial(d, 0.0);
 	  setPressureKin(d, 0.0);
@@ -55,15 +56,15 @@ Molecule::Molecule(unsigned long id, Component *component,
 	  setPressureVirial_barostat(d, 0.0);
 	  setPressureKin_barostat(d, 0.0);
 	  setConvectivePotHeatflux(d, 0.0);
+	  setConvectivePotHeatfluxStress(d, 0.0);
 	  setDirectedVelocity(d, 0.0);
 	  setDirectedVelocitySlab(d, 0.0);
 	  setDirectedVelocityStress(d, 0.0);
 	  setDirectedVelocityConfinement(d, 0.0);
 	}
 	
-	// VTK Molecule Data
+	// Particlewise vtk-data for ParticleData
 	_T = 0.0;
-// 	_rho = 0.0;
 	_vAverage[0] = 0.0;
 	_vAverage[1] = 0.0;
 	_vAverage[2] = 0.0;
@@ -116,6 +117,7 @@ Molecule::Molecule(const Molecule& m) {
 	    setVirialForceConfinement(d, e, 0.0);
 	    setVirialKinConfinement(d, e, 0.0);
 	    setDiffusiveHeatflux(d, e, 0.0);
+	    setDiffusiveHeatfluxStress(d, e, 0.0);
 	  }
 	  setPressureVirial(d, 0.0);
 	  setPressureKin(d, 0.0);
@@ -124,15 +126,15 @@ Molecule::Molecule(const Molecule& m) {
 	  setPressureVirial_barostat(d, 0.0);
 	  setPressureKin_barostat(d, 0.0);
 	  setConvectivePotHeatflux(d, 0.0);
+	  setConvectivePotHeatfluxStress(d, 0.0);
 	  setDirectedVelocity(d, 0.0);
 	  setDirectedVelocitySlab(d, 0.0);
 	  setDirectedVelocityStress(d, 0.0);
 	  setDirectedVelocityConfinement(d, 0.0);
 	}
 	
-	// VTK Molecule Data
+	// Particlewise vtk-data for ParticleData
 	_T = m._T;
-// 	_rho = m._rho;
 	_vAverage[0] = m._vAverage[0];
 	_vAverage[1] = m._vAverage[1];
 	_vAverage[2] = m._vAverage[2];
@@ -159,6 +161,8 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
 	}
 	int dim;
+	
+	// consideration of the one-dimensional thermostat
 	if(dom->isScaling1Dim(thermostat)  && dom->getAlphaTransCorrection(thermostat) == false){
 	    map<int, int> Dim = dom->getDim();
 	    dim = Dim[thermostat];
@@ -242,13 +246,14 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 	double dtInv2m = dt_halve / _m;
 	double v2 = 0.0;
 	double v_aux = 0.0;
+
 	for (unsigned short d = 0; d < 3; d++) {
 		_v[d] += dtInv2m * _F[d];
-		// in the case of directed velocities
 		v_aux = _v[d] - _directedVelocity[d];
 		v2 += v_aux * v_aux;
 		_L[d] += dt_halve * _M[d];
 	}
+	
     assert(!isnan(v2)); // catches NaN
     summv2 += _m * v2;
  
@@ -262,7 +267,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
     assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 	
-  // one-dimensional thermostat
+	// consideration of the one-dimensional thermostat
 	int thermostat = dom->getThermostat(this->componentid());
 	if(dom->isThermostatLayer() == true){
 		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
@@ -276,7 +281,6 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 		  if(thermostat == gDit->first){
 		    v2 = 0.0;
 		    v_aux = 0.0;
-		    // in the case of directed velocities
 		    v_aux = _v[gDit->second] - _directedVelocity[gDit->second];
 		    v2 += v_aux * v_aux;	
 		    assert(!isnan(v2)); // catches NaN
@@ -303,14 +307,12 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& su
 	double v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
 	summv2 += _m * v2;
 	
-	// without correction due to directed movement
-	//summv2 += _m * v2();
-	
 	double v2_1Dim = 0.0;
 	int thermostat = dom->getThermostat(this->componentid());
 	if(dom->isThermostatLayer() == true){
 		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
 	}
+	// consideration of the one-dimensional thermostat
 	if(dom->isScaling1Dim(thermostat)){ 
 	  v2_1Dim = (v(dimToThermostat)-_directedVelocity[dimToThermostat])*(v(dimToThermostat)-_directedVelocity[dimToThermostat]);
 	  summv2_1Dim += _m * v2_1Dim;
@@ -332,6 +334,7 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, string directed
 	string Slab ("Slab");
 	string Stress ("Stress");
 	string Confinement ("Confinement");
+	string noDirVel ("noDirVel");
 	
 	// with  correction due to directed movement
 	double v2;
@@ -343,12 +346,11 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, string directed
 	  v2 = (_v[0]-_directedVelocityConfinement[0])*(_v[0]-_directedVelocityConfinement[0]) + (_v[1]-_directedVelocityConfinement[1])*(_v[1]-_directedVelocityConfinement[1]) + (_v[2]-_directedVelocityConfinement[2])*(_v[2]-_directedVelocityConfinement[2]);
 	else if(directedVelocityType == Default)
 	  v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
+	else if(directedVelocityType == noDirVel)
+	  v2 = _v[0]*_v[0] + _v[1]*_v[1] + _v[2]*_v[2]; 
 	else
 	  v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
 	summv2 += _m * v2;
-	
-	// without correction due to directed movement
-	//summv2 += _m * v2();
 	
 	double w[3];
 	_q.rotate(_L, w);
@@ -1051,6 +1053,7 @@ unsigned long Molecule::totalMemsize() const {
 	return size;
 }
 
+// option used in domain->cancelMomentum() to reduce the directed velocities by the momentum (ax,ay,az)
 void Molecule::vDirSub(const double ax, const double ay, const double az, bool slab, bool stress, bool confinement){
 	
 	this->_directedVelocity[0] -= ax;
@@ -1074,13 +1077,3 @@ void Molecule::vDirSub(const double ax, const double ay, const double az, bool s
 	  this->_directedVelocityConfinement[2] -= az;
 	}
 }
-
-// void Molecule::scale_vAcc(double s, double vx, double vy, double vz){
-//         _v[0] = (_v[0]-vx)*s + vx;
-//         _v[1] = (_v[1]-vx)*s + vx;
-//         _v[2] = (_v[2]-vx)*s + vx;
-// }
-// void Molecule::scale_v_1DimAcc(double s, unsigned short d, double vd){
-//     _v[d] = (_v[d]-vd)*s + vd;
-// }
-

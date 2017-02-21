@@ -187,22 +187,23 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 	}
 }
 
+// accelerates the component that is designated to be "moved" instantaneously (without ramp profile)
+// and in each time step to a certain velocity 
 void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) {
-	//vector<Component> comp = *(_simulation.getEnsemble()->components());
-	//vector<Component>::iterator compit;
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	string moved ("moved");
 	unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
 	//calculates globalN and globalVelocitySum for getMissingVelocity(); necessary!
 	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents(), _simulation.getDirectedVelocityTime());
 	
-	// Just the velocity in x-direction (horizontally) is regulated to a constant value; in y and z the velocity is unrestricted 			
+	// returns the value for delta_v = v_target - 2*v_directed,currently + v_directed,average
 	for (int d = 0; d < 3; d++)
 	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d);
 	
 	for(int d = 0; d < 3; d++)
 	  domain->getPG()->addGlobalVelSumBeforeAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d, cid_moved) / domain->getPG()->getGlobalN(cid_moved));
-	  
+	
+	// acceleration by adding delta_v to all molecules of the component
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
 		unsigned cid = thismol->componentid();
 		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
@@ -217,29 +218,112 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	  domain->getPG()->addGlobalVelSumAfterAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d,cid_moved) / domain->getPG()->getGlobalN(cid_moved));
 }
 
+// keeps the velocity of the system at its box margins in y-direction at v=0, while it accelerates the system
+// in the middle at y=0.5*y_max to a certain velocity to maintain the target shear rate
 void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) {
 	double shearVelocityDelta, shearVelocityTarget, directedVel, directedVelAverage;
 	double shearRateBox[4];
+	// geometrical dimensions of the box where shear is applied
+	// x_min
 	shearRateBox[0] = domain->getPG()->getShearRateBox(0);
+	// x_max
 	shearRateBox[1] = domain->getPG()->getShearRateBox(1);
+	// y_min
 	shearRateBox[2] = domain->getPG()->getShearRateBox(2);
+	// y_max
 	shearRateBox[3] = domain->getPG()->getShearRateBox(3);
+	// half width of the stripe in which the target velocity is applied
+	double shearWidth = domain->getPG()->getShearWidth();
 	double shearYmax = shearRateBox[3] - shearRateBox[2];
 	double shearRate = domain->getPG()->getShearRate();
+	double slowAcceleration = 1.0;
 	unsigned cid = domain->getPG()->getShearComp();
 	unsigned yun;
-	
+	// time span in which the acceleration or target velocity is gradually increased to its final value
+	int influencingTime = _simulation.getSimulationStep() -_simulation.getInitStatistics() - domain->getPG()->getShearRampTime();
+	// asymptotic value for the influenceFactor
+	double influenceFactor = 0.1265769815;
+	string Confinement ("Confinement");
+	string Default ("Default");
+	string noDirVel ("noDirVel");
+	// slowAcceleration = [0;1]
+	if((_simulation.getSimulationStep()-_simulation.getInitStatistics()) < domain->getPG()->getShearRampTime())
+			slowAcceleration = (double)(_simulation.getSimulationStep()-_simulation.getInitStatistics())/domain->getPG()->getShearRampTime();
+	// during influencingTime span the influence of the acceleration delta_v is slowly decreased from 1 to 0.1265769815
+	// ---> at the beginning the influence of the acceleration is a lot more intense than later ---> increasing stability!
+	if(influencingTime > 0 && abs(influencingTime) < _simulation.getDirectedVelocityTime())
+		influenceFactor = 1.0 - exp((-1)*(double)_simulation.getDirectedVelocityTime()/((double)influencingTime*exp(2)));
+	else if(influencingTime <= 0)
+		influenceFactor = 1.0;
+	//calculates _globalShearN and _globalShearVelocitySum for getDirectedShearVel(); necessary!
 	domain->getPG()->prepareShearRate(molCont, domainDecomp, _simulation.getDirectedVelocityTime());
 
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
-		// Just the velocity in x-direction (horizontally) is regulated to a constant value; in y and z the velocity is unrestricted 			
-		if(thismol->componentid() == cid && (thismol->r(1) <= shearRateBox[3] && thismol->r(1) >= shearRateBox[2]) && (thismol->r(0) <= shearRateBox[1] && thismol->r(0) >= shearRateBox[0])){
-		  yun = floor((thismol->r(1) - shearRateBox[2])*10);
+		if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[2] && thismol->r(1) <= shearRateBox[2] + shearWidth){
+			yun = 0;
+		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= 0.5 * (shearRateBox[3]-shearRateBox[2]) - shearWidth && thismol->r(1) < 0.5 * (shearRateBox[3]-shearRateBox[2])){
+			yun = 1;
+		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= 0.5 * (shearRateBox[3]-shearRateBox[2]) && thismol->r(1) <= 0.5 * (shearRateBox[3]-shearRateBox[2]) + shearWidth){
+			yun = 2;	
+		}else if(thismol->componentid() == cid && thismol->r(0) >= shearRateBox[0] && thismol->r(0) <= shearRateBox[1] && thismol->r(1) >= shearRateBox[3] - shearWidth && thismol->r(1) <= shearRateBox[3]){
+			yun = 3;
+		}else
+			yun = 4;
+		if(yun < 4){
 		  directedVel = domain->getPG()->getDirectedShearVel(yun);
 		  directedVelAverage = domain->getPG()->getDirectedShearVelAverage(yun);
 		  shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - thismol->r(1)) * shearRate);
-		  shearVelocityDelta = shearVelocityTarget - 2*directedVel + directedVelAverage;
+		  shearVelocityTarget = slowAcceleration*shearVelocityTarget;
+		  
+		  // returns the value for delta_v = v_target - 2*v_directed,currently + v_directed,average
+		  shearVelocityDelta = shearVelocityTarget - 2*directedVel + 1*directedVelAverage;
+		  
+		  // damping of the influence as 1 - exp(A/t)
+		  if(influencingTime > 0)
+				shearVelocityDelta = influenceFactor*shearVelocityDelta;
+		  
+		  // adaption of the directed velocities
+		  thismol->setDirectedVelocity(0, shearVelocityTarget); 
+		  thismol->setDirectedVelocitySlab(0, shearVelocityTarget);
+		  thismol->setDirectedVelocityStress(0, shearVelocityTarget); 
+		  thismol->setDirectedVelocityConfinement(0, shearVelocityTarget);
+		  thismol->setDirectedVelocity(1, 0.0); 
+		  thismol->setDirectedVelocitySlab(1, 0.0);
+		  thismol->setDirectedVelocityStress(1, 0.0); 
+		  thismol->setDirectedVelocityConfinement(1, 0.0);
+		  thismol->setDirectedVelocity(2, 0.0); 
+		  thismol->setDirectedVelocitySlab(2, 0.0);
+		  thismol->setDirectedVelocityStress(2, 0.0); 
+		  thismol->setDirectedVelocityConfinement(2, 0.0);
+		  
+		  double mv2 = 0.0;
+		  double Iw2 = 0.0;
+		  thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
+			
+		  // calculation of the energetical influence of the shear
+		  domain->addPreShearEnergyConf(mv2);
+
+		  mv2 = 0.0;
+		  Iw2 = 0.0;
+		  thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
+		  // calculation of the energetical influence of the shear
+		  domain->addPreShearEnergyDefault(mv2);
+		  
+		  // acceleration!
 		  thismol->vadd(shearVelocityDelta,0.0,0.0);
+		  domain->addShearVelDelta(shearVelocityDelta);
+		  
+		  mv2 = 0.0;
+		  Iw2 = 0.0;
+		  thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
+		  // calculation of the energetical influence of the shear
+		  domain->addPostShearEnergyConf(mv2);
+
+		  mv2 = 0.0;
+		  Iw2 = 0.0;
+		  thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
+		  // calculation of the energetical influence of the shear
+		  domain->addPostShearEnergyDefault(mv2);
 		}
 	}
 }
