@@ -8,7 +8,7 @@ $(info # Including cppunit.mk!)
 #CPPUNIT_LIB_DIR=/usr/lib64
 #LDFLAGS += -L$(CPPUNIT_LIB_DIR)
 
-INCLUDES += -I../dependencies-external/cppunit-1.12.1
+#INCLUDES += -I../dependencies-external/cppunit-1.12.1/include
 
 CPPUNIT_TESTS = $(shell find ./ -name "*.cpp" | grep -v "parallel/" | grep -v "vtk/" | grep "/tests/")
 ifneq ($(PARTYPE), PAR)
