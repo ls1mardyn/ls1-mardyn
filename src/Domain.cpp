@@ -1158,17 +1158,20 @@ void Domain::outputKartesian2DProfile(const char* prefix, bool virialProfile)
 					Tpr << 0 << "\t";
 				}
 				else{
-					if(this->_universalNProfile[unID] >= 64.0)
-					{
+					//if(this->_universalNProfile[unID] >= 64.0)
+					//{
 						double vvdir = 0.0;
 						for(unsigned d = 0; d < 3; d++)
 						{
 							double vd = this->_universalvProfile[d][unID] / (this->_universalNProfile[unID]);
 							vvdir += vd*vd;
 						}
+
 						twoEkindiry = this->_universalNProfile[unID] * _universalProfiledComponentMass * vvdir;
 						Tpr << ((this->_universalKineticProfile[unID] - twoEkindiry) / (this->_universalDOFProfile[unID])) << "\t";
-					}
+
+					//}
+						
 				}
 				}
 			}
