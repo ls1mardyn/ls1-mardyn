@@ -777,11 +777,29 @@ void Simulation::prepare_start() {
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
+}
 
+//returns size of cached memory in kB (0 if error occurs)
+unsigned long long getCachedSize(){
+	size_t MAXLEN=1024;
+	FILE *fp;
+	char buf[MAXLEN];
+	fp = fopen("/proc/meminfo", "r");
+	while (fgets(buf, MAXLEN, fp)) {
+		char *p1 = strstr(buf, "Cached:");
+		if (p1 != NULL) {
+			int colon = ':';
+			char *p1 = strchr(buf, colon)+1;
+			std::cout << p1 << endl;
+			unsigned long long t = strtoull(p1, NULL, 10);
+			std::cout << t << endl;
+			return t;
+		}
+	}
+	return 0;
 }
 
 void Simulation::simulate() {
-
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
@@ -842,7 +860,8 @@ void Simulation::simulate() {
 		struct sysinfo memInfo;
 		sysinfo(&memInfo);
 		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
-		long long usedMem = (memInfo.totalram - memInfo.freeram) * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
 		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
 				<< usedMem * 100. / totalMem << "%)" << endl;
 	}
@@ -1236,7 +1255,8 @@ void Simulation::simulate() {
 		struct sysinfo memInfo;
 		sysinfo(&memInfo);
 		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
-		long long usedMem = (memInfo.totalram - memInfo.freeram) * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
 		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
 				<< usedMem * 100. / totalMem << "%)" << endl;
 	}
