@@ -224,8 +224,8 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 	for (auto mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol) {
 		mol->setid(mol->id()+idOffset);
 	}
-	std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
-	std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
+	//std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
+	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
 
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);

@@ -9,6 +9,10 @@
 #include <sstream>
 #include <string>
 
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+
+
 #include "WrapOpenMP.h"
 
 #include "Common.h"
@@ -834,6 +838,14 @@ void Simulation::simulate() {
 		unsigned particleNoTest;
 #endif
 #endif
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = (memInfo.totalram - memInfo.freeram) * memInfo.mem_unit / 1024 / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
@@ -1220,6 +1232,14 @@ void Simulation::simulate() {
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = (memInfo.totalram - memInfo.freeram) * memInfo.mem_unit / 1024 / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
 #if WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;
