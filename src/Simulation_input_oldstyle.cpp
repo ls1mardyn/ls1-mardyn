@@ -50,6 +50,7 @@
 #include "NEMD/DistControl.h"
 #include "NEMD/RegionSampling.h"
 #include "NEMD/DensityControl.h"
+#include "NEMD/ParticleTracker.h"
 
 using namespace std;
 
@@ -1369,11 +1370,21 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 							exit(-1);
 						}
 
-			         // <-- REGION_SAMPLING
-		} else {
-			if (token != "")
-				global_log->warning() << "Did not process unknown token " << token << endl;
-		}
+						// <-- REGION_SAMPLING
+
+			// mheinen 2017-03-01 --> PARTICLE_TRACKER
+			} else if (token == "Particletracker" || token == "ParticleTracker" ) {
+				unsigned long simstepStart, simstepStop;
+				inputfilestream >> simstepStart >> simstepStop;
+				if(NULL == _particleTracker) {
+					_particleTracker = new ParticleTracker(_domainDecomposition, simstepStart, simstepStop);
+				}
+			// <-- PARTICLE_TRACKER
+
+			} else {
+				if (token != "")
+					global_log->warning() << "Did not process unknown token " << token << endl;
+			}
 	}
 
 #ifdef ENABLE_MPI

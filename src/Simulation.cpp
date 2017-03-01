@@ -65,6 +65,7 @@
 #include "NEMD/DistControl.h"
 #include "NEMD/RegionSampling.h"
 #include "NEMD/DensityControl.h"
+#include "NEMD/ParticleTracker.h"
 
 using Log::global_log;
 using optparse::OptionParser;
@@ -104,6 +105,7 @@ Simulation::Simulation()
     _distControl = NULL;
     _densityControl = NULL;
     _regionSampling = NULL;
+    _particleTracker = NULL;
 
 	initialize();
 }
@@ -823,6 +825,12 @@ void Simulation::prepare_start() {
     	_densityControl->Init(_densityControl->GetControlFreq() );
     	_densityControl->CheckRegionBounds();
     }
+
+	// PARTICLE_TRACKER
+	if(NULL != _particleTracker)
+	{
+		_particleTracker->Prepare();
+	}
 }
 
 void Simulation::simulate() {
@@ -1238,6 +1246,21 @@ void Simulation::simulate() {
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 
+		// PARTICLE_TRACKER
+		if(_particleTracker != NULL)
+		{
+			_particleTracker->PreLoopAction(_simstep);
+
+			for(Molecule* tM  = _moleculeContainer->begin();
+			tM != _moleculeContainer->end();
+			tM  = _moleculeContainer->next() )
+			{
+				_particleTracker->LoopAction(tM);
+			}  // loop over molecules
+
+			_particleTracker->PostLoopAction();
+
+		}  // PARTICLE_TRACKER
 
         // mheinen 2015-02-18 --> DRIFT_CONTROL
         if(_driftControl != NULL)

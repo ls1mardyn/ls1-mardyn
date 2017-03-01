@@ -51,6 +51,7 @@ class LongRangeCorrection;
 class Homogeneous;
 class Planar;
 class TemperatureControl;
+class ParticleTracker;
 
 // by Stefan Becker
 const int ANDERSEN_THERMOSTAT = 2;
@@ -567,6 +568,9 @@ private:
 	int _loopCompTimeSteps;
 
 	std::string _programName;
+
+	ParticleTracker* _particleTracker;
+
 };
 #endif /*SIMULATION_H_*/
 
