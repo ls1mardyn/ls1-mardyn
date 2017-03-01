@@ -33,4 +33,17 @@ void removeFile(const char* fileName);
  */
 unsigned int getFileSize(const char* fileName);
 
+/**
+ * Adding string of numbers with leading zeros to stream (e.g. simstep in output filename)
+ */
+struct fill_width
+{
+	fill_width( char f, uint8_t w )
+		: fill(f), width(w) {}
+	char fill;
+	int width;
+};
+
+std::ostream& operator<<( std::ostream& o, const fill_width& a );
+
 #endif /* FILEUTILS_H_ */
