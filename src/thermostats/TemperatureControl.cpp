@@ -211,6 +211,13 @@ void tec::ControlRegion::AllocateDataStructuresT()
     double dBoxWidthY = _parent->GetDomain()->getGlobalLength(1);
     _nNumSlabsReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
 
+#ifndef NDEBUG
+    cout << "this->GetWidth(1) = " << this->GetWidth(1) << endl;
+    cout << "dBoxWidthY = " << dBoxWidthY << endl;
+    cout << "_nNumSlabs = " << _nNumSlabs << endl;
+    cout << "_nNumSlabsReserve = " << _nNumSlabsReserve << endl;
+#endif
+
 	// allocate temperature data structures
 	AllocateUnsLongArray(_nNumMoleculesLocal, _nNumSlabsReserve);
 	AllocateUnsLongArray(_nNumMoleculesGlobal, _nNumSlabsReserve);
