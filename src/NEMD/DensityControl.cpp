@@ -9,6 +9,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+#include "molecules/Quaternion.h"
 #include "Simulation.h"
 //#include <cmath>
 //#include <list>
@@ -270,6 +271,65 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 	// check if molecule is inside
 	for(uint8_t d=0; d<3; ++d)
 		if( !(PositionIsInside(d, mol->r(d) ) ) ) return;
+
+	// change identity
+	std::array<uint8_t, 3> arrChangComps;
+	arrChangComps = {2, 1, 2};
+
+	uint8_t cid = (uint8_t)mol->componentid();
+
+	std::vector<Component>* ptrComps = simulation->getEnsemble()->getComponents();
+	if(arrChangComps.at(cid) != cid)
+	{
+		Component* compOld = mol->component();
+		Component* compNew = &(ptrComps->at(arrChangComps.at(cid) ) );
+
+		// rotation
+		double U_rot = mol->U_rot();
+#ifndef NDEBUG
+		cout << "U_rot = " << U_rot << endl;
+#endif
+		double L[3];
+		double Ipa[3];
+		double U_rot_FG[3];
+
+		Ipa[0] = compNew->I11();
+		Ipa[1] = compNew->I22();
+		Ipa[2] = compNew->I33();
+
+		U_rot_FG[0] = U_rot * 0.5;
+		U_rot_FG[1] = U_rot * 0.5;
+		U_rot_FG[2] = U_rot * 0.0;
+
+		L[0] = sqrt(U_rot_FG[0] * 2. * Ipa[0] );
+		L[1] = sqrt(U_rot_FG[1] * 2. * Ipa[1] );
+		L[2] = sqrt(U_rot_FG[2] * 2. * Ipa[2] );
+#ifndef NDEBUG
+		cout << "L[0] = " << L[0] << endl;
+		cout << "L[1] = " << L[1] << endl;
+		cout << "L[2] = " << L[2] << endl;
+#endif
+		mol->setD(0, L[0] );
+		mol->setD(1, L[1] );
+		mol->setD(2, L[2] );
+
+		Quaternion q(1., 0., 0., 0.);
+		mol->setq(q);
+
+		mol->setComponent(compNew);
+//		mol->clearFM();  // <-- necessary?
+#ifndef NDEBUG
+		cout << "Changed cid of molecule " << mol->id() << " from: " << (int32_t)cid << " to: " << mol->componentid() << endl;
+#endif
+		double mr = compOld->m()/compNew->m();
+		double mrf = sqrt(mr);
+		mol->scale_v(mrf);
+
+		U_rot = mol->U_rot();
+#ifndef NDEBUG
+		cout << "U_rot = " << U_rot << endl;
+#endif
+	}
 
     if( 0. == _dTargetDensity)
     {

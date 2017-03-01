@@ -102,6 +102,7 @@ public:
 					_invI[d] = 0.;
 			}
 		}
+//		_L[0] = _L[1] = _L[2] = 0.;
 	}
 
 	/** calculate and return the square velocity */
