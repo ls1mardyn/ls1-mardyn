@@ -1522,10 +1522,7 @@ void Simulation::output(unsigned long simstep) {
 		_domain->collectProfile(_domainDecomposition, _doRecordVirialProfile);
 		if (mpi_rank == 0) {
 			ostringstream osstrm;
-			osstrm << _profileOutputPrefix << ".";
-			osstrm.fill('0');
-			osstrm.width(9);
-			osstrm << right << simstep;
+			osstrm << _profileOutputPrefix << "." << fill_width('0', 9) << simstep;
 			//edited by Michaela Heier 
 			if(this->_domain->isCylindrical()){
 				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
