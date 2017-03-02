@@ -10,6 +10,7 @@
 #include "particleContainer/ParticleContainer.h"
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
+#include "utils/FileUtils.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -1131,7 +1132,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
     // writing .dat-files
     std::stringstream outputstream;
     std::stringstream filenamestream;
-    filenamestream << "T-rho_region" << this->GetID() << "_TS" << simstep << ".dat";
+    filenamestream << "T-rho_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
 
     #ifdef ENABLE_MPI
         int rank = domainDecomp->getRank();
@@ -1201,7 +1202,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
     // writing .dat-files
     std::stringstream outputstream_comp;
     std::stringstream filenamestream_comp;
-    filenamestream_comp << "T-rho_comp_region" << this->GetID() << "_TS" << simstep << ".dat";
+    filenamestream_comp << "T-rho_comp_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
 
     #ifdef ENABLE_MPI
         rank = domainDecomp->getRank();
@@ -1250,7 +1251,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
         // writing .dat-files
          std::stringstream outputstream_comp_Fv;
          std::stringstream filenamestream_comp_Fv;
-         filenamestream_comp_Fv << "F-v-rho_comp_region" << this->GetID() << "_TS" << simstep << ".dat";
+         filenamestream_comp_Fv << "F-v-rho_comp_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
 
          #ifdef ENABLE_MPI
              rank = domainDecomp->getRank();
@@ -1382,21 +1383,21 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
     std::stringstream filenamestreamVelo_ny_nvy;
     std::stringstream filenamestreamVelo_ny_nvz;
 
-    filenamestreamVelo_py_abs << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfabs";
-    filenamestreamVelo_py_pvx << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfpvx";
-    filenamestreamVelo_py_pvy << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfpvy";
-    filenamestreamVelo_py_pvz << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfpvz";
-    filenamestreamVelo_py_nvx << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfnvx";
-    filenamestreamVelo_py_nvy << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfnvy";
-    filenamestreamVelo_py_nvz << "VDF_region" << this->GetID() << "_TS" << simstep << "_py.vdfnvz";
+    filenamestreamVelo_py_abs << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfabs";
+    filenamestreamVelo_py_pvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfpvx";
+    filenamestreamVelo_py_pvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfpvy";
+    filenamestreamVelo_py_pvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfpvz";
+    filenamestreamVelo_py_nvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfnvx";
+    filenamestreamVelo_py_nvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfnvy";
+    filenamestreamVelo_py_nvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_py.vdfnvz";
 
-    filenamestreamVelo_ny_abs << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfabs";
-    filenamestreamVelo_ny_pvx << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfpvx";
-    filenamestreamVelo_ny_pvy << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfpvy";
-    filenamestreamVelo_ny_pvz << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfpvz";
-    filenamestreamVelo_ny_nvx << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfnvx";
-    filenamestreamVelo_ny_nvy << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfnvy";
-    filenamestreamVelo_ny_nvz << "VDF_region" << this->GetID() << "_TS" << simstep << "_ny.vdfnvz";
+    filenamestreamVelo_ny_abs << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfabs";
+    filenamestreamVelo_ny_pvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfpvx";
+    filenamestreamVelo_ny_pvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfpvy";
+    filenamestreamVelo_ny_pvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfpvz";
+    filenamestreamVelo_ny_nvx << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfnvx";
+    filenamestreamVelo_ny_nvy << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfnvy";
+    filenamestreamVelo_ny_nvz << "VDF_region" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << "_ny.vdfnvz";
 
 
     #ifdef ENABLE_MPI
