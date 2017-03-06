@@ -303,13 +303,32 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 		}
 		else if(token == "State") {
 			unsigned component_id;
-			_phaseSpaceHeaderFileStream >> component_id;
-			string moveStyle;
-			_phaseSpaceHeaderFileStream >> moveStyle;
-			domain->getPG()->specifyMovementStyle(component_id, moveStyle);
 			string fixed ("fixed");
 			string moved ("moved");
 			string free ("free");
+			_phaseSpaceHeaderFileStream >> component_id;
+			string moveStyle;
+			_phaseSpaceHeaderFileStream >> moveStyle;
+			if(fixed.compare(moveStyle) == 0){
+				_phaseSpaceHeaderFileStream >> token;
+				if (token == "every") {
+					unsigned xth_mol;
+					_phaseSpaceHeaderFileStream >> xth_mol;
+					domain->getPG()->specifyFixed(xth_mol);
+				}else if (token == "region") {	
+					double x_min, x_max, y_min, y_max, z_min, z_max;
+					_phaseSpaceHeaderFileStream >> x_min >> x_max >> y_min >> y_max >> z_min >> z_max;
+					domain->getPG()->specifyFixed(x_min, x_max, y_min, y_max, z_min, z_max);
+				}else{	
+					global_log->error() << "Expected 'every' or 'region' instead of '"
+						<< token << "'.\n";
+					global_log->debug()
+						<< "Syntax: fixed every <xth_mol> "
+						<< "OR:  fixed region <x0> <x1> <y0> <y1> <z0> <z1>] " << endl;
+					exit(1);
+				}
+			}
+			domain->getPG()->specifyMovementStyle(component_id, moveStyle);
 			if(fixed.compare(moveStyle) == 0 || moved.compare(moveStyle) == 0 || free.compare(moveStyle) == 0)
 			  global_log->info() << "Component No. " << component_id << " is " << moveStyle << endl;
 			else{
@@ -352,6 +371,15 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			_phaseSpaceHeaderFileStream >> springConst;
 
 			domain->getPG()->specifySpringInfluence(minSpringID, maxSpringID, averageYPos, springConst);
+		}
+		else if(token == "Gravity") {
+			unsigned int cid, direction;
+			double force;
+			_phaseSpaceHeaderFileStream >> cid >> direction >> force;
+
+			cid--;
+			domain->getPG()->specifyGravity(cid, direction, force);
+			
 		}
 		else {
 			global_log->error() << "Invalid token \'" << token << "\' found. Skipping rest of the header." << endl;

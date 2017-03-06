@@ -40,6 +40,19 @@ public:
 	void specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep);
 	//! @brief sets type of movement for each component (ID)
 	void specifyMovementStyle(unsigned int cid, std::string moveStyle) { this->_movementCompID[cid] = moveStyle; }
+	//! @brief sets for type 'fixed' that it is fixed by not integrating every xth molecule
+	void specifyFixed(unsigned xth_mol);
+	//! @brief sets for type 'fixed' that it is fixed by not integrating a region spanned by the lower left and upper right corner
+	void specifyFixed(double x_min, double x_max, double y_min, double y_max, double z_min, double z_max);
+	/// assigns the type of fixation for the 'fixed' component: fix every xth molecule
+	bool isFixedEvery() { return this->_doFixEvery; }
+	/// every xth molecule is fixed
+	unsigned getFixEvery() { return this->_fixEvery; }
+	/// assigns the type of fixation for the 'fixed' component: fix each molecule within a region
+	bool isFixedRegion() { return this->_doFixRegion; }
+	/// region for the fixation of the 'fixed' component
+	double getFixedRegion(int d) { return this->_fixRegion[d]; }
+	
 	//! @brief sets the number of timesteps between two updates of the uniform acceleration
 	void setUCAT(unsigned int uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
 	//! @brief returns the number of timesteps between two updates of the uniform acceleration
@@ -103,7 +116,7 @@ public:
 	unsigned int maxCoset() { return this->_universalTau.size(); }
 	//! @brief shear rate acceleration of the fluid
 	// geometrical setup of the box in which shear is applied
-	void setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate, double shearWidth);
+	void setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate, double shearWidth, bool shearForce);
 	// returns box margins
 	double getShearRateBox(int d) { return this->_shearRateBox[d]; }
 	// returns target shear rate
@@ -120,7 +133,9 @@ public:
 	void prepareShearRate(ParticleContainer* molCont, DomainDecompBase* domainDecomp, unsigned directedVelTime);
 	// returns the time span in which the systems is gradually increased
 	unsigned getShearRampTime() {return this->_shearRampTime; }
-	
+	// returns whether shear force (true) or shear rate (false) is applied
+	bool isShearForce() { return this->_doApplyShearForce; }
+	 	
 	//! @brief returns the component -> set ID map
 	std::map<unsigned int, unsigned int> getComponentSets() { return this->_universalComponentSetID; }
 
@@ -129,6 +144,13 @@ public:
 
 	double* getTargetVelocity(unsigned int set);
 	double* getAdditionalAcceleration(unsigned int set);
+	
+	// exerts a gravity-like force on a certain component
+	void specifyGravity(unsigned int cid, unsigned int direction, double force);
+	bool isGravity() { return _isGravity; }
+	unsigned int getGravityComp() { return _gravitationalComp; }
+	unsigned int getGravityDir() { return _gravitationalDir; }
+	double getGravityForce() { return _gravitationalForce; }
 	
 	//TEST: Spring Force Influence
 	void specifySpringInfluence(unsigned long minSpringID, unsigned long maxSpringID, double averageYPos, double springConst);
@@ -176,6 +198,17 @@ private:
 	std::map<unsigned int, unsigned int> _universalComponentSetID;
 	/// assigns the type of movement to the components
 	std::map<unsigned, std::string> _movementCompID;
+	/// assigns the type of fixation for the 'fixed' component: fix every xth molecule
+	bool _doFixEvery;
+	/// every xth molecule is fixed
+	unsigned _fixEvery;
+	/// assigns the type of fixation for the 'fixed' component: fix each molecule within a region
+	bool _doFixRegion;
+	/// region for the fixation of the 'fixed' component
+	double _fixRegion[6];
+	/// determines whether shear force (true) or shear rate (false) is applied
+	bool _doApplyShearForce;
+	
 	/// local number of molecules that belong to a given component set ID
 	std::map<unsigned int, unsigned long> _localN;
 	/// global number of molecules that belong to a given component set ID
@@ -204,6 +237,15 @@ private:
 	std::map<unsigned int, std::deque<long double> > _globalPriorVelocitySums[3];
 	/// number of items in the velocity queue
 	std::map<unsigned int, unsigned int> _globalVelocityQueuelength;
+
+	/// gravitational force component
+	unsigned int _gravitationalComp;
+	/// gravitational force direction
+	unsigned int _gravitationalDir;
+	/// gravitational force
+	double _gravitationalForce;
+	/// gravitational force boolean
+	bool _isGravity;
 	
 	//TEST: Spring Force Influence
 	unsigned long _minSpringID, _maxSpringID;

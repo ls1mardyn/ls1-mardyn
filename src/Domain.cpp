@@ -680,8 +680,15 @@ void Domain::writeCheckpoint( string filename,
 			    checkpointfilestream << "State\t" << i+1 << " " << "free\n"; 
 			else if(i == cid_moved)
 			    checkpointfilestream << "State\t" << i+1 << " " << "moved\n"; 
-			else if(i == cid_fixed)
-			    checkpointfilestream << "State\t" << i+1 << " " << "fixed\n"; 
+			else if(i == cid_fixed){
+			    checkpointfilestream << "State\t" << i+1 << " " << "fixed "; 
+			    if(getPG()->isFixedEvery() == true)
+				    checkpointfilestream << "every\t" << getPG()->getFixEvery() << "\n"; 
+			    else //isFixedRegion
+				    checkpointfilestream << "region\t" << getPG()->getFixedRegion(0) << " " << getPG()->getFixedRegion(1)<< " "
+				    << getPG()->getFixedRegion(2) << " " << getPG()->getFixedRegion(3) << " "
+				    << getPG()->getFixedRegion(4) << " " << getPG()->getFixedRegion(5) << "\n"; 
+			}
 		}
 		
 		map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
@@ -710,7 +717,14 @@ void Domain::writeCheckpoint( string filename,
 		
 		if(getPG()->isSpringDamped())
 		{
-			checkpointfilestream << "Spring\t" << getPG()->getMinSpringID() << " " << getPG()->getMaxSpringID() << " " << getPG()->getAverageY() << " " << getPG()->getSpringConst() << endl;
+			checkpointfilestream << "Spring\t" << getPG()->getMinSpringID() << " " << getPG()->getMaxSpringID() << " " 
+			<< getPG()->getAverageY() << " " << getPG()->getSpringConst() << endl;
+		}
+		
+		if(getPG()->isGravity())
+		{
+			checkpointfilestream << "Gravity\t" << getPG()->getGravityComp()+1 << " " << getPG()->getGravityDir() << " " 
+			<< getPG()->getGravityForce() << endl;
 		}
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
@@ -2823,7 +2837,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	    dode->collCommAllreduceMin();
 	    this->_confinementMidPointID[0] = (double)dode->collCommGetDouble();
 	    this->_confinementMidPointID[1] = (double)dode->collCommGetDouble();
-	    if((this->_confinementMidPointID[0] == _globalNumMolecules + 1 || this->_confinementMidPointID[0] == _globalNumMolecules + 1) && (this->isShearRate() == false)){
+	    if((this->_confinementMidPointID[0] == _globalNumMolecules + 1 || this->_confinementMidPointID[0] == _globalNumMolecules + 1) && (this->isShearRate() == false && this->isShearForce() == false)){
 		auxFactor += 0.1;
 		goto LOOP;
 	    }
@@ -2978,7 +2992,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	  }
 	 
 	  // in the upper loop, just one to two CPUs are responsible to the finding of the midpoint coordinates; here this current value is communicated to all CPUs
-	  if(this->isShearRate() == false && this->_confinementAreaFixed == false){
+	  if(this->isShearRate() == false  && this->isShearForce() == false && this->_confinementAreaFixed == false){
 	    dode->collCommInit(4);
 	    for(int i = 0; i < 4; i++)
 	      dode->collCommAppendDouble(confinementMidPointAux[i]);
@@ -3197,7 +3211,7 @@ void Domain::collectConfinementProperties(DomainDecompBase* dode)
 	  this->_dAveraged += _dBin[binID];
 	}
 	this->_dAveraged = this->_dAveraged/(unIDs_dist - _dBinFailureCount);
-	if (this->isShearRate() == true || this->_confinementAreaFixed == true)
+	if ((this->isShearRate() == true || this->isShearForce() == true) || this->_confinementAreaFixed == true)
 	  this->_dAveraged = this->_confinementMidPoint[1] - this->_confinementMidPoint[3];
 	
 	for(unsigned unID = 0; unID < unIDs; unID++){
@@ -4244,7 +4258,7 @@ void Domain::cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* m
    for(unsigned num = 0; num < numComp; num++){
     for(unsigned short d = 0; d < 3; d++) globalMomentum[num][d] /= globalNumberOfMoleculesPerComp[num];
     
-    if(_simulation.isShearRate() || getPG()->isAcceleratingInstantaneously(getNumberOfComponents()))
+    if((_simulation.isShearRate() || _simulation.isShearForce()) || getPG()->isAcceleratingInstantaneously(getNumberOfComponents()))
 	    globalMomentum[num][0] = 0.0;
    }
 	    
@@ -4284,4 +4298,7 @@ double Domain::getCutoffRadius(){
 }
 bool Domain::isShearRate(){
     return _simulation.isShearRate();
+}
+bool Domain::isShearForce(){
+    return _simulation.isShearForce();
 }

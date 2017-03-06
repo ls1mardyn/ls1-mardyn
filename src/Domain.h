@@ -575,6 +575,7 @@ public:
 	unsigned getBarostatTimeInit();
 	unsigned getBarostatTimeEnd();
 	bool isShearRate();
+	bool isShearForce();
 	// Cancelling momentum for each component seperately
 	void cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* molCont);
 private:

@@ -26,6 +26,10 @@ PressureGradient::PressureGradient(int rank) {
 	this->_universalZetaFlow = 0.0;
 	this->_universalTauPrime = 0.0;
 	this->_shearRampTime = 1;
+	this->_doFixRegion = false;
+	this->_doFixEvery = false;
+	this->_isGravity = false;
+	this->_doApplyShearForce = false;
 }
 
 void PressureGradient::specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep)
@@ -84,6 +88,17 @@ void PressureGradient::specifySpringInfluence(unsigned long minSpringID, unsigne
 	
 	if(!this->_localRank)
 	    cout << "Spring Force Effect is prepared for MolIDs " << this->_minSpringID << " to " << this->_maxSpringID << " with minimum y-Position " << this->_averageYPos << endl;
+}
+
+void  PressureGradient::specifyGravity(unsigned int cid, unsigned int direction, double force)
+{
+	this->_gravitationalComp = cid;
+	this->_gravitationalDir = direction;
+	this->_gravitationalForce = force;
+	this->_isGravity = true;
+	
+	if(!this->_localRank)
+	    cout << "Gravitation is prepared for component " << this->_gravitationalComp << " in direction " << this->_gravitationalDir << " (0 = x; 1 = y; 2 = z) with the force " << this->_gravitationalForce << endl;
 }
 
 /*
@@ -329,7 +344,7 @@ double* PressureGradient::getAdditionalAcceleration(unsigned int set)
 	return retv;
 }
 
-void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate, double shearWidth)
+void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, double ymax, unsigned cid, double shearRate, double shearWidth, bool shearForce)
 {	
 	this->_shearRateBox[0] = xmin;
 	this->_shearRateBox[1] = xmax;
@@ -338,6 +353,7 @@ void PressureGradient::setupShearRate(double xmin, double xmax, double ymin, dou
 	this->_shearRate = shearRate;
 	this->_shearWidth = shearWidth;
 	this->_shearComp = cid;
+	this->_doApplyShearForce = shearForce;
 	this->_shearRampTime = ceil((_shearRateBox[3]-_shearRateBox[2])*_shearRate*10000);
 	cout << "Shear info: the final shear velocity is firstly reached " << _shearRampTime << " timesteps after the initStatistics!";
 }
@@ -553,3 +569,19 @@ void PressureGradient::adjustTau(double dt) {
 	}
 }
 
+
+// sets for type 'fixed' that it is fixed by not integrating every xth molecule
+void PressureGradient::specifyFixed(unsigned xth_mol) {
+	this->_doFixEvery = true;
+	this->_fixEvery = xth_mol;
+}
+// sets for type 'fixed' that it is fixed by not integrating a region spanned by the lower left and upper right corner
+void PressureGradient::specifyFixed(double x_min, double x_max, double y_min, double y_max, double z_min, double z_max) {
+	this->_doFixRegion = true;
+	this->_fixRegion[0] = x_min;
+	this->_fixRegion[1] = x_max;
+	this->_fixRegion[2] = y_min;
+	this->_fixRegion[3] = y_max;
+	this->_fixRegion[4] = z_min;
+	this->_fixRegion[5] = z_max;
+}

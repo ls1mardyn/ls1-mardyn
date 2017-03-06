@@ -385,7 +385,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	for(double x = 0.5; x < xMax; x++)
 	      for(double y = 0.5; y < yMax; y++)
 		for(int d = 0; d < 3; d++){
-		  if(_simulation.isShearRate() && 1==0)
+		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
 			dode->collCommAppendDouble(2*this->_currentDirectedVel[cid][x][y][d] - this->_universalDirectedVelocity[cid][x][y][d]);
 		  else
 			dode->collCommAppendDouble(this->_universalDirectedVelocity[cid][x][y][d]);
@@ -466,7 +466,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	    for(unsigned y = 0; y < yunSlab_tot; y++)
 	      for(unsigned z = 0; z < zunSlab_tot; z++)
 		for(int d = 0; d < 3; d++){
-		  if(_simulation.isShearRate() && 1==0)		
+		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
 			dode->collCommAppendDouble(2*this->_currentDirectedVelSlab[cid][x][y][z][d] - this->_universalDirectedVelocitySlab[cid][x][y][z][d]);
 		  else
 			dode->collCommAppendDouble(this->_universalDirectedVelocitySlab[cid][x][y][z][d]);
@@ -545,7 +545,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(unsigned y = 0; y < yunStress_tot; y++)
 	   for(unsigned z = 0; z < zunStress_tot; z++)
 		for(int d = 0; d < 3; d++){
-		  if(_simulation.isShearRate() && 1==0)		
+		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
 			dode->collCommAppendDouble(2*this->_currentDirectedVelStress[cid][x][y][z][d] - this->_universalDirectedVelocityStress[cid][x][y][z][d]);
 		  else
 			dode->collCommAppendDouble(this->_universalDirectedVelocityStress[cid][x][y][z][d]);
@@ -622,7 +622,7 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
 	  for(unsigned y = 0; y < yunConf_tot; y++)
 		for(int d = 0; d < 3; d++){
 		//Original
-		  if(_simulation.isShearRate() && 1==0)
+		  if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
 			dode->collCommAppendDouble(2*this->_currentDirectedVelConfinement[cid][x][y][d] - this->_universalDirectedVelocityConfinement[cid][x][y][d]);
 		  else
 			dode->collCommAppendDouble(this->_universalDirectedVelocityConfinement[cid][x][y][d]);  	
@@ -879,7 +879,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 		}
 		
 		for(int d = 0; d < 3; d++){
-			if(_simulation.isShearRate() && 1==0)
+			if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
 				_universalDirectedVelocity[out->first][in->first][inner->first][d] = 2*this->_currentDirectedVel[out->first][in->first][inner->first][d] - this->_universalDirectedVelocity[out->first][in->first][inner->first][d];
 			else
 				_universalDirectedVelocity[out->first][in->first][inner->first][d] = _universalDirectedVelocity[out->first][in->first][inner->first][d];
@@ -922,7 +922,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 					}
 					
 					for(int d = 0; d < 3; d++){
-						if(_simulation.isShearRate() && 1==0)		
+						if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
 							_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d] = 2*this->_currentDirectedVelSlab[out->first][mid->first][in->first][inner->first][d] - this->_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d];
 						else
 							_universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d] = _universalDirectedVelocitySlab[out->first][mid->first][in->first][inner->first][d];	
@@ -963,7 +963,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 					}
 					
 					for(int d = 0; d < 3; d++){
-						if(_simulation.isShearRate() && 1==0)		
+						if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)		
 							_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d] = 2*this->_currentDirectedVelStress[out->first][mid->first][in->first][inner->first][d] - this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d];
 						else
 							_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d] = this->_universalDirectedVelocityStress[out->first][mid->first][in->first][inner->first][d];
@@ -1003,7 +1003,7 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
 				}
 
 				for(int d = 0; d < 3; d++){
-					if(_simulation.isShearRate() && 1==0)
+					if((_simulation.isShearRate() || _simulation.isShearForce()) && 1==0)
 						_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d] = 2*this->_currentDirectedVelConfinement[out->first][in->first][inner->first][d] - this->_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d];
 					else
 						_universalDirectedVelocityConfinement[out->first][in->first][inner->first][d] = _universalDirectedVelocityConfinement[out->first][in->first][inner->first][d];  

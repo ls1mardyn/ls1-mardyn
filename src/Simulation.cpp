@@ -1099,13 +1099,28 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> _confinementOutputTimesteps;
 		} else if (token == "confinementProfilePrefix") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementProfileOutputPrefix;
-		} else if (token == "shearRate") {	// calculates the pressure, temperature and density in the bulk fluid (due to desired component and control volume)
+		} else if (token == "shearRate") {	// applies shear by keeping the two mostouter layers of atoms fixed and setting a target velocity in the middle layer
 			double xmin, xmax, ymin, ymax, shearRate, shearWidth;
 			unsigned cid;
 			inputfilestream >> xmin >> xmax >> ymin >> ymax >> cid >> shearRate >> shearWidth;
 			cid--;
 			_doShearRate = true;
-			_pressureGradient->setupShearRate(xmin, xmax, ymin, ymax, cid, shearRate, shearWidth);	
+			if(_doShearForce == true){
+				global_log->error() << "There is already a shear force applied. Please, just select one of the two options!\n";
+				exit(1);
+			}
+			_pressureGradient->setupShearRate(xmin, xmax, ymin, ymax, cid, shearRate, shearWidth, false);
+		} else if (token == "shearForce") {	// applies shear by keeping the two mostouter layers of atoms fixed and setting a target force profile over the rest of the system
+			double xmin, xmax, ymin, ymax, shearRate, shearWidth;
+			unsigned cid;
+			inputfilestream >> xmin >> xmax >> ymin >> ymax >> cid >> shearRate >> shearWidth;
+			cid--;
+			_doShearForce = true;
+			if(_doShearRate == true){
+				global_log->error() << "There is already a shear rate applied. Please, just select one of the two options!\n";
+				exit(1);
+			}
+			_pressureGradient->setupShearRate(xmin, xmax, ymin, ymax, cid, shearRate, shearWidth, true);		
 		} else if (token == "collectThermostatDirectedVelocity") { /* subotion of the thermostate replace with directe thermostate */
 			inputfilestream >> _collectThermostatDirectedVelocity;
 		} else if (token == "zOscillator") {
@@ -1952,8 +1967,8 @@ void Simulation::simulate() {
 		}
 		
 				
-		// shear rate accelerates the total system with a velocity gradient
-		if(_doShearRate && _simstep >= _initStatistics)
+		// shear rate accelerates the total system with a velocity gradient; for _doShearForce just the margin layers are fixed
+		if((_doShearRate||_doShearForce) && _simstep >= _initStatistics)
 			_integrator->shearRate(_domainDecomposition, _moleculeContainer, _domain);
 		
 		// calculate the global macroscopic values from the local values
@@ -2382,6 +2397,7 @@ void Simulation::initialize() {
 	_doRecordConfinement = false;
 	_doRecordStressProfile = false;
 	_doShearRate = false;
+	_doShearForce = false;
 	_cancelMomentum = false;
 	_reduceDataSlab = false;
 	_noXYZ = false;

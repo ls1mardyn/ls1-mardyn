@@ -74,6 +74,13 @@ public:
 	/* counts the call of the method potforce.h->PotForceSpring() to ensure that its just called once each timestep */
 	void setCounter(unsigned long counter){_counter = counter; }
 	unsigned long getCounter() const {return _counter; }
+	/* counts the call of the method potforce.h->PotForceGravity() to ensure that its just called once each timestep */
+	void setCounterGravity(unsigned long counter){_counterGrav = counter; }
+	unsigned long getCounterGravity() const {return _counterGrav; }
+	
+	/* counts the call of the method potforce.h->PotForceShear() to ensure that its just called once each timestep */
+	void setCounterShear(unsigned long counter){_counterShear = counter; }
+	unsigned long getCounterShear() const {return _counterShear; }
 	
 	/** get coordinate of current force onto molecule */
 	double F(unsigned short d) const {return _F[d]; }
@@ -408,6 +415,9 @@ private:
 	       
 	double _F_Spring[3]; /**< spring forces */
 	unsigned long _counter; /**< counts the call of the method potforce.h->PotForceSpring() to ensure that its just called once each timestep */
+	unsigned long _counterGrav; /**< counts the call of the method potforce.h->PotForceGravity() to ensure that its just called once each timestep */
+	
+	unsigned long _counterShear; /**< counts the call of the method potforce.h->PotForceShear() to ensure that its just called once each timestep */
 
 	Molecule* _Tersoff_neighbours_first[MAX_TERSOFF_NEIGHBOURS];
 	bool _Tersoff_neighbours_second[MAX_TERSOFF_NEIGHBOURS]; /* TODO: Comment */

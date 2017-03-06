@@ -360,6 +360,8 @@ public:
 	unsigned getConfinementRecordTimestep() {return _confinementRecordingTimesteps; }
 	/** Returns a boolean operator determining whether a shear-like velocity profile is applied. */
 	bool isShearRate() { return _doShearRate; }
+	/** Returns a boolean operator determining whether a shear-like force profile is applied. */
+	bool isShearForce() { return _doShearForce; }
 	
 	double getSimulationStart(){return _simStart; }
         void setSimulationStart(double simStart){ _simStart = simStart/_timeStepLength; }
@@ -429,6 +431,7 @@ private:
 	
 	/** flag specifying special simulation features */
 	bool _doShearRate;
+	bool _doShearForce;
 	bool _cancelMomentum;
 	bool _reduceDataSlab;
 	bool _noXYZ;

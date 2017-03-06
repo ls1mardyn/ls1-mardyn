@@ -69,7 +69,14 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 			thermostat = domain->moleculeInLayer(tempMolecule->r(0), tempMolecule->r(1), tempMolecule->r(2));
 		  }
 		  
-		  if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!
+		  /*if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!*/
+		  if (domain->getPG()->isFixedEvery() == true && molID%domain->getPG()->getFixEvery() == 0 && cid == cid_fixed){}
+		  else if (domain->getPG()->isFixedRegion() == true && cid == cid_fixed
+				&& tempMolecule->r(0) > domain->getPG()->getFixedRegion(0) && tempMolecule->r(0) < domain->getPG()->getFixedRegion(1) 
+				&& tempMolecule->r(1) > domain->getPG()->getFixedRegion(2) && tempMolecule->r(1) < domain->getPG()->getFixedRegion(3)
+				&& tempMolecule->r(2) > domain->getPG()->getFixedRegion(4) && tempMolecule->r(2) < domain->getPG()->getFixedRegion(5)){}
+		  else if ((domain->getPG()->isFixedEvery() == false && domain->getPG()->isFixedRegion() == false && molID%500 == 0 && cid == cid_fixed) 
+				|| (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	
 		  else {					
 		    if(domain->isScaling1Dim(thermostat) && domain->getAlphaTransCorrection(thermostat) == false){
 			vcorr = 2. - 1. / domain->getGlobalAlphaTrans();
@@ -106,7 +113,14 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
 				molID = tM->id();
 				cid = tM->componentid();
-				if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!
+				/*if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!*/
+				if (domain->getPG()->isFixedEvery() == true && molID%domain->getPG()->getFixEvery() == 0 && cid == cid_fixed){}
+				else if (domain->getPG()->isFixedRegion() == true && cid == cid_fixed
+						&& tM->r(0) > domain->getPG()->getFixedRegion(0) && tM->r(0) < domain->getPG()->getFixedRegion(1) 
+						&& tM->r(1) > domain->getPG()->getFixedRegion(2) && tM->r(1) < domain->getPG()->getFixedRegion(3)
+						&& tM->r(2) > domain->getPG()->getFixedRegion(4) && tM->r(2) < domain->getPG()->getFixedRegion(5)){}
+				else if ((domain->getPG()->isFixedEvery() == false && domain->getPG()->isFixedRegion() == false && molID%500 == 0 && cid == cid_fixed) 
+						|| (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}
 				else {
 				  int thermostat = domain->getThermostat(cid);
 				  if(domain->isThermostatLayer() == true){
@@ -246,6 +260,9 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 	string Confinement ("Confinement");
 	string Default ("Default");
 	string noDirVel ("noDirVel");
+	double mv2 = 0.0;
+	double Iw2 = 0.0;
+	
 	// slowAcceleration = [0;1]
 	if((_simulation.getSimulationStep()-_simulation.getInitStatistics()) < domain->getPG()->getShearRampTime())
 			slowAcceleration = (double)(_simulation.getSimulationStep()-_simulation.getInitStatistics())/domain->getPG()->getShearRampTime();
@@ -269,11 +286,14 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 			yun = 3;
 		}else
 			yun = 4;
-		if(yun < 4){
+		if((_simulation.isShearRate() && yun < 4) || (_simulation.isShearForce() && (yun == 0 || yun == 3))){
 		  directedVel = domain->getPG()->getDirectedShearVel(yun);
 		  directedVelAverage = domain->getPG()->getDirectedShearVelAverage(yun);
-		  shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - thismol->r(1)) * shearRate);
-		  shearVelocityTarget = slowAcceleration*shearVelocityTarget;
+		  if(_simulation.isShearRate()){
+			shearVelocityTarget = shearRate * shearYmax/2 - fabs((shearYmax/2 - thismol->r(1)) * shearRate);
+			shearVelocityTarget = slowAcceleration*shearVelocityTarget;
+		  }else
+			shearVelocityTarget = 0.0;  
 		  
 		  // returns the value for delta_v = v_target - 2*v_directed,currently + v_directed,average
 		  shearVelocityDelta = shearVelocityTarget - 2*directedVel + 1*directedVelAverage;
@@ -282,48 +302,51 @@ void Leapfrog::shearRate(DomainDecompBase* domainDecomp, ParticleContainer* molC
 		  if(influencingTime > 0)
 				shearVelocityDelta = influenceFactor*shearVelocityDelta;
 		  
-		  // adaption of the directed velocities
-		  thismol->setDirectedVelocity(0, shearVelocityTarget); 
-		  thismol->setDirectedVelocitySlab(0, shearVelocityTarget);
-		  thismol->setDirectedVelocityStress(0, shearVelocityTarget); 
-		  thismol->setDirectedVelocityConfinement(0, shearVelocityTarget);
-		  thismol->setDirectedVelocity(1, 0.0); 
-		  thismol->setDirectedVelocitySlab(1, 0.0);
-		  thismol->setDirectedVelocityStress(1, 0.0); 
-		  thismol->setDirectedVelocityConfinement(1, 0.0);
-		  thismol->setDirectedVelocity(2, 0.0); 
-		  thismol->setDirectedVelocitySlab(2, 0.0);
-		  thismol->setDirectedVelocityStress(2, 0.0); 
-		  thismol->setDirectedVelocityConfinement(2, 0.0);
+		  if(_simulation.isShearRate()){
+			// adaption of the directed velocities
+			thismol->setDirectedVelocity(0, shearVelocityTarget); 
+			thismol->setDirectedVelocitySlab(0, shearVelocityTarget);
+			thismol->setDirectedVelocityStress(0, shearVelocityTarget); 
+			thismol->setDirectedVelocityConfinement(0, shearVelocityTarget);
+			thismol->setDirectedVelocity(1, 0.0); 
+			thismol->setDirectedVelocitySlab(1, 0.0);
+			thismol->setDirectedVelocityStress(1, 0.0); 
+			thismol->setDirectedVelocityConfinement(1, 0.0);
+			thismol->setDirectedVelocity(2, 0.0); 
+			thismol->setDirectedVelocitySlab(2, 0.0);
+			thismol->setDirectedVelocityStress(2, 0.0); 
+			thismol->setDirectedVelocityConfinement(2, 0.0);
 		  
-		  double mv2 = 0.0;
-		  double Iw2 = 0.0;
-		  thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
+			mv2 = 0.0;
+			Iw2 = 0.0;
+			thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
 			
-		  // calculation of the energetical influence of the shear
-		  domain->addPreShearEnergyConf(mv2);
+			// calculation of the energetical influence of the shear
+			domain->addPreShearEnergyConf(mv2);
 
-		  mv2 = 0.0;
-		  Iw2 = 0.0;
-		  thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
-		  // calculation of the energetical influence of the shear
-		  domain->addPreShearEnergyDefault(mv2);
-		  
+			mv2 = 0.0;
+			Iw2 = 0.0;
+			thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
+			// calculation of the energetical influence of the shear
+			domain->addPreShearEnergyDefault(mv2);
+		  }
 		  // acceleration!
 		  thismol->vadd(shearVelocityDelta,0.0,0.0);
 		  domain->addShearVelDelta(shearVelocityDelta);
 		  
-		  mv2 = 0.0;
-		  Iw2 = 0.0;
-		  thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
-		  // calculation of the energetical influence of the shear
-		  domain->addPostShearEnergyConf(mv2);
+		  if(_simulation.isShearRate()){
+			mv2 = 0.0;
+			Iw2 = 0.0;
+			thismol->calculate_mv2_Iw2(mv2, Iw2, noDirVel);
+			// calculation of the energetical influence of the shear
+			domain->addPostShearEnergyConf(mv2);
 
-		  mv2 = 0.0;
-		  Iw2 = 0.0;
-		  thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
-		  // calculation of the energetical influence of the shear
-		  domain->addPostShearEnergyDefault(mv2);
+			mv2 = 0.0;
+			Iw2 = 0.0;
+			thismol->calculate_mv2_Iw2(mv2, Iw2, Default);
+			// calculation of the energetical influence of the shear
+			domain->addPostShearEnergyDefault(mv2);
+		  }
 		}
 	}
 }

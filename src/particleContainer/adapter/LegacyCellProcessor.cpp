@@ -54,6 +54,8 @@ void LegacyCellProcessor::preprocessCell(ParticleCell& cell) {
 			molecule1.setF_Spring(d, 0.0);
 		 
 		molecule1.setCounter(0);
+		molecule1.setCounterGravity(0);
+		molecule1.setCounterShear(0);
 	}
 }
 

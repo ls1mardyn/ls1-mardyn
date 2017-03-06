@@ -17,7 +17,7 @@ using namespace std;
 /** @brief Calculates force as spring equivalent for upper layer of upper plate. */
 inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, unsigned long minID, const double springConst, unsigned long molID, double currentYPos, double f[3], unsigned long initStatistics, unsigned long simstep)
 {
-  if(simstep > initStatistics){
+  if(simstep > 2*initStatistics){
 	if (molID <= maxID && molID >= minID){
 	    // spring force is of interest for y-direction
 	    f[0] = 0.0;
@@ -31,11 +31,104 @@ inline void PotForceSpring(const double averageZeroYPos, unsigned long maxID, un
 	}
   }
   else{
-	if (molID <= maxID && molID >= minID){
+	if (simstep > 1.5*initStatistics && molID <= maxID && molID >= minID){
 	    // spring force is of interest for y-direction
-	    double uniformIncrease = sqrt(simstep/initStatistics);
+	    double uniformIncrease = (double)(sqrt((long double)((simstep-1.5*initStatistics)*2.0)/(long double)initStatistics));
 	    f[0] = 0.0;
 	    f[1] = -springConst*uniformIncrease*(currentYPos - averageZeroYPos);
+	    f[2] = 0.0;
+	}
+	else if (simstep > initStatistics && molID <= maxID && molID >= minID){
+	    // spring force is of interest for y-direction
+	    f[0] = 0.0;
+	    f[1] = -0.5*(currentYPos - averageZeroYPos);
+	    f[2] = 0.0;
+	}
+	else{
+	    f[0] = 0.0;
+	    f[1] = 0.0;
+	    f[2] = 0.0;
+	}
+  } 
+}
+
+/** @brief Calculates force as gravity equivalent. */
+inline void PotForceGravity(const int gravitationalDir, const double gravitationalForce, double f[3], unsigned long initStatistics, unsigned long simstep)
+{
+  if(simstep > 2*initStatistics){
+	for(int d = 0; d < 3; d++){
+		f[d] = 0.0;
+		if(d == gravitationalDir)
+			f[d] = gravitationalForce;
+	}
+  }
+  else{
+	if (simstep > 1.5*initStatistics){
+	    // spring force is of interest for y-direction
+	    double uniformIncrease = (double)(sqrt((long double)((simstep-1.5*initStatistics)*2.0)/(long double)initStatistics));
+	    for(int d = 0; d < 3; d++){
+		f[d] = 0.0;
+		if(d == gravitationalDir)
+			f[d] = uniformIncrease*gravitationalForce;
+	    }
+	}
+	else if (simstep > initStatistics){
+	    for(int d = 0; d < 3; d++){
+		f[d] = 0.0;
+		if(d == gravitationalDir)
+			f[d] = 0.05;
+	    }
+	}
+	else{
+	    for(int d = 0; d < 3; d++)
+		f[d] = 0.0;
+	}
+  } 
+}
+
+/** @brief Calculates shear force. */
+inline void PotForceShear(const double shearYmax, const double shearForce, double currentYPos, double f[3], unsigned long initStatistics, unsigned long simstep, unsigned long rampTime)
+{
+  double slowAccelerate = 1.0;	
+  if((simstep-initStatistics) < rampTime)
+			slowAccelerate = (double)(simstep-initStatistics)/rampTime;
+  
+  //double shearForceTarget = shearForce * shearYmax/2 - fabs((shearYmax/2 - currentYPos) * shearForce);
+  //double auxDist = (1-(fabs((shearYmax/2 - currentYPos)/(shearYmax/2))));
+  //double shearForceTarget = shearForce * auxDist * auxDist;
+//   double shearForceTarget;
+//   if (currentYPos < shearYmax/2)
+// 	  shearForceTarget = shearForce/10.0 * (-1)/(currentYPos - shearYmax/2 - 0.1);
+//   else if (currentYPos > shearYmax/2)
+// 	  shearForceTarget = shearForce/10.0 * 1/(currentYPos - shearYmax/2 + 0.1);
+//   else
+// 	  shearForceTarget = shearForce;
+  
+  double shearForceTarget = 0.0;
+  if (fabs(shearYmax/2 - currentYPos) < 0.5 )
+	  shearForceTarget = shearForce;
+		  
+  shearForceTarget = slowAccelerate*shearForceTarget;
+  
+//   cout << " shearForce " << shearForceTarget << " y " << round(currentYPos) << endl;
+	
+  if(simstep > 2*initStatistics){
+	    f[0] = shearForceTarget;
+	    f[1] = 0.0;
+	    f[2] = 0.0;
+  }
+  else{
+	if (simstep > 1.5*initStatistics){
+	    // spring force is of interest for y-direction
+	    double uniformIncrease = (double)(sqrt((long double)((simstep-1.5*initStatistics)*2.0)/(long double)initStatistics));
+	    f[0] = uniformIncrease*shearForceTarget;
+	    f[1] = 0.0;
+	    f[2] = 0.0;
+	}
+	else if (simstep > initStatistics){
+	    // spring force is of interest for y-direction
+	    f[0] = -0.005*shearForceTarget;
+	    f[1] = 0.0;
 	    f[2] = 0.0;
 	}
 	else{
@@ -532,6 +625,43 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		    mi.setCounter(1);
 		    
 		}
+	    }
+	}
+	
+	//TEST: gravitational force is added to the LJ-force
+	if (domain.getPG()->isGravity()){
+	    if (mi.getCounterGravity() == 0 && mi.componentid() == domain.getPG()->getGravityComp()){
+		for (unsigned int si = 0; si < 1; ++si) {
+		    PotForceGravity(domain.getPG()->getGravityDir(), domain.getPG()->getGravityForce(), f, domain.getInitStatistics(), domain.getSimstep());
+		    mi.Fljcenteradd(si, f);
+		    for (unsigned short d = 0; d < 3; ++d)
+			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
+		    
+		    // Prohibits that the gravitational force is added to one molecule more than once
+		    mi.setCounterGravity(1);
+		    
+		}
+	    }
+	}
+	
+	//TEST: shear force is added to the LJ-force
+	if (domain.getPG()->isShearForce()){
+	    if (mi.getCounterShear() == 0){
+// 		    cout << " box0 " << domain.getPG()->getShearRateBox(0) << " box1 " << domain.getPG()->getShearRateBox(1) << " box2 " << domain.getPG()->getShearRateBox(2)<< " box3 " << domain.getPG()->getShearRateBox(3) << " width " <<  domain.getPG()->getShearWidth() << endl;
+	     if(mi.r(0) > domain.getPG()->getShearRateBox(0) && mi.r(0) < domain.getPG()->getShearRateBox(1) 
+		&& mi.r(1) > domain.getPG()->getShearRateBox(2)+domain.getPG()->getShearWidth() && mi.r(1) < domain.getPG()->getShearRateBox(3)-domain.getPG()->getShearWidth()){
+		for (unsigned int si = 0; si < 1; ++si) {
+// 			cout << " TESTESTEST\n";
+		    PotForceShear(domain.getPG()->getShearRateBox(3)-domain.getPG()->getShearRateBox(2)-2*domain.getPG()->getShearWidth(), domain.getPG()->getShearRate(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep(), domain.getPG()->getShearRampTime());
+		    mi.Fljcenteradd(si, f);
+		    for (unsigned short d = 0; d < 3; ++d)
+			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
+		    
+		    // Prohibits that the shear force is added to one molecule more than once
+		    mi.setCounterShear(1);
+		    
+		}
+	     }
 	    }
 	}
 
