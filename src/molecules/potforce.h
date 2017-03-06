@@ -87,7 +87,7 @@ inline void PotForceGravity(const int gravitationalDir, const double gravitation
 }
 
 /** @brief Calculates shear force. */
-inline void PotForceShear(const double shearYmax, const double shearForce, double currentYPos, double f[3], unsigned long initStatistics, unsigned long simstep, unsigned long rampTime)
+inline void PotForceShear(const double shearYmax, const double shearForce, const double shearWidth, double currentYPos, double f[3], unsigned long initStatistics, unsigned long simstep, unsigned long rampTime)
 {
   double slowAccelerate = 1.0;	
   if((simstep-initStatistics) < rampTime)
@@ -105,7 +105,7 @@ inline void PotForceShear(const double shearYmax, const double shearForce, doubl
 // 	  shearForceTarget = shearForce;
   
   double shearForceTarget = 0.0;
-  if (fabs(shearYmax/2 - currentYPos) < 0.5 )
+  if (fabs(shearYmax/2 - currentYPos) < shearWidth)
 	  shearForceTarget = shearForce;
 		  
   shearForceTarget = slowAccelerate*shearForceTarget;
@@ -647,12 +647,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	//TEST: shear force is added to the LJ-force
 	if (domain.getPG()->isShearForce()){
 	    if (mi.getCounterShear() == 0){
-// 		    cout << " box0 " << domain.getPG()->getShearRateBox(0) << " box1 " << domain.getPG()->getShearRateBox(1) << " box2 " << domain.getPG()->getShearRateBox(2)<< " box3 " << domain.getPG()->getShearRateBox(3) << " width " <<  domain.getPG()->getShearWidth() << endl;
 	     if(mi.r(0) > domain.getPG()->getShearRateBox(0) && mi.r(0) < domain.getPG()->getShearRateBox(1) 
 		&& mi.r(1) > domain.getPG()->getShearRateBox(2)+domain.getPG()->getShearWidth() && mi.r(1) < domain.getPG()->getShearRateBox(3)-domain.getPG()->getShearWidth()){
 		for (unsigned int si = 0; si < 1; ++si) {
-// 			cout << " TESTESTEST\n";
-		    PotForceShear(domain.getPG()->getShearRateBox(3)-domain.getPG()->getShearRateBox(2)-2*domain.getPG()->getShearWidth(), domain.getPG()->getShearRate(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep(), domain.getPG()->getShearRampTime());
+		    PotForceShear(domain.getPG()->getShearRateBox(3)-domain.getPG()->getShearRateBox(2), domain.getPG()->getShearRate(), domain.getPG()->getShearWidth(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep(), domain.getPG()->getShearRampTime());
 		    mi.Fljcenteradd(si, f);
 		    for (unsigned short d = 0; d < 3; ++d)
 			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial
