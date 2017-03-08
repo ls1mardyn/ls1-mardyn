@@ -361,6 +361,17 @@ double Molecule::U_rot() {
 	return 0.5 * Iw2;
 }
 
+double Molecule::U2_rot() {
+	double w[3];
+	_q.rotateinv(_L, w);
+	double Iw2 = 0.;
+	for (unsigned short d = 0; d < 3; ++d) {
+		w[d] *= _invI[d];
+		Iw2 += _I[d] * w[d] * w[d];
+	}
+	return Iw2;
+}
+
 void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	summv2 += _m * v2();
 	double w[3];

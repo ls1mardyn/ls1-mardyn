@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <map>
 
 #include "molecules/Molecule.h"
 #include "utils/ObserverBase.h"
@@ -65,6 +66,22 @@ public:
     	_nAdjustFreq  = nAdjustFreq;
     }
 
+	virtual void Print(std::ostream& os)
+	{
+		os << "----------------------------------------------------------------" << std::endl;
+		os << "ID: " << _nID << std::endl;
+		os << "width: " << this->GetWidth(0) << " " << this->GetWidth(1) << " " << this->GetWidth(2) << std::endl;
+		double lc[3];
+		double uc[3];
+		this->GetLowerCorner(lc);
+		this->GetUpperCorner(uc);
+		os << "lowerCorner: " << lc[0] << " " << lc[1] << " " << lc[2] << std::endl;
+		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
+		os << "target T: " << _dTargetTemperature[0] << ", " << _dTargetTemperature[1] << std::endl;
+		os << "target cid: " << _nTargetComponentID << std::endl;
+		os << "----------------------------------------------------------------" << std::endl;
+	}
+
 	// private methods
 private:
     void InitDataStructurePointers();
@@ -118,12 +135,22 @@ private:
 
     double* _dDelta2EkinTransSumLocal;
     double* _dDelta2EkinTransSumGlobal;
+	double* _dDelta2EkinRotSumLocal;
+	double* _dDelta2EkinRotSumGlobal;
 
     // instances / ID
     static unsigned short _nStaticID;
 };
 
 }
+
+struct paramLineHeat
+{
+	unsigned int nWriteFreq;
+	std::string slabsKey;
+	std::string slabsVal;
+	unsigned int nWriteFreqRegions;
+};
 
 class Domain;
 class DomainDecompBase;
@@ -152,10 +179,10 @@ public:
     void DoLoopsOverMolecules(ParticleContainer* particleContainer, unsigned long simstep);
 
     // heat supply
-    void SetDeltaEkinParameters( unsigned int nWriteFreqDeltaEkin, unsigned int nNumSlabsDeltaEkin)
-    {
-        _nWriteFreqDeltaEkin = nWriteFreqDeltaEkin; _nNumSlabsDeltaEkin = nNumSlabsDeltaEkin; _bWriteDataDeltaEkin = true;
-    }
+	void SetDeltaEkinParameters(const paramLineHeat &paramLine);
+	void SampleDeltaEkin(Molecule* mol, const double &dAdded2EkinTrans, const double &dAdded2EkinRot);
+	void CalcGlobalValuesDeltaEkin();
+	void ResetLocalValuesDeltaEkin();
     void WriteDataDeltaEkin(unsigned long simstep);
 
 private:
@@ -167,9 +194,18 @@ private:
     // heat supply
     bool _bWriteDataDeltaEkin;
     unsigned int _nWriteFreqDeltaEkin;
+	unsigned int _nWriteFreqDeltaEkinRegions;
     unsigned int _nNumSlabsDeltaEkin;
-};
+	double _dSlabWidthDeltaEkin;
 
+	std::vector<double> _dSlabCoords;
+	std::vector<std::vector<unsigned long> > _nNumMoleculesSumLocal;
+	std::vector<std::vector<unsigned long> > _nNumMoleculesSumGlobal;
+	std::vector<std::vector<double> > _dDelta2EkinTransSumLocal;
+	std::vector<std::vector<double> > _dDelta2EkinTransSumGlobal;
+	std::vector<std::vector<double> > _dDelta2EkinRotSumLocal;
+	std::vector<std::vector<double> > _dDelta2EkinRotSumGlobal;
+};
 
 // Accumulate kinetic energy dependent on which translatoric directions should be thermostated
 
@@ -181,157 +217,8 @@ protected:
 
 public:
     virtual double CalcKineticEnergyContribution(Molecule* mol) = 0;
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum) = 0;
-};
-
-class AccumulatorX : public AccumulatorBase
-{
-public:
-    AccumulatorX() {}
-    virtual ~AccumulatorX() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vx = mol->v(0);
-        double m  = mol->mass();
-
-        return m * vx*vx;
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(0, mol->v(0) * vcorr);
-    }
-};
-
-class AccumulatorY : public AccumulatorBase
-{
-public:
-    AccumulatorY() {}
-    virtual ~AccumulatorY() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vy = mol->v(1);
-        double m  = mol->mass();
-
-        return m * vy*vy;
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(1, mol->v(1) * vcorr);
-    }
-};
-
-class AccumulatorZ : public AccumulatorBase
-{
-public:
-    AccumulatorZ() {}
-    virtual ~AccumulatorZ() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vz = mol->v(2);
-        double m  = mol->mass();
-
-        return m * vz*vz;
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(2, mol->v(2) * vcorr);
-    }
-};
-
-class AccumulatorXY : public AccumulatorBase
-{
-public:
-    AccumulatorXY() {}
-    virtual ~AccumulatorXY() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vx = mol->v(0);
-        double vy = mol->v(1);
-        double m  = mol->mass();
-
-        return m * (vx*vx + vy*vy);
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(0, mol->v(0) * vcorr);
-        mol->setv(1, mol->v(1) * vcorr);
-    }
-};
-
-class AccumulatorXZ : public AccumulatorBase
-{
-public:
-    AccumulatorXZ() {}
-    virtual ~AccumulatorXZ() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vx = mol->v(0);
-        double vz = mol->v(2);
-        double m  = mol->mass();
-
-        return m * (vx*vx + vz*vz);
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(0, mol->v(0) * vcorr);
-        mol->setv(2, mol->v(2) * vcorr);
-    }
-};
-
-class AccumulatorYZ : public AccumulatorBase
-{
-public:
-    AccumulatorYZ() {}
-    virtual ~AccumulatorYZ() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vy = mol->v(1);
-        double vz = mol->v(2);
-        double m  = mol->mass();
-
-        return m * (vy*vy + vz*vz);
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(1, mol->v(1) * vcorr);
-        mol->setv(2, mol->v(2) * vcorr);
-    }
-};
-
-class AccumulatorXYZ : public AccumulatorBase
-{
-public:
-    AccumulatorXYZ() {}
-    virtual ~AccumulatorXYZ() {}
-
-public:
-    virtual double CalcKineticEnergyContribution(Molecule* mol)
-    {
-        double vx = mol->v(0);
-        double vy = mol->v(1);
-        double vz = mol->v(2);
-        double m  = mol->mass();
-
-        return m * (vx*vx + vy*vy + vz*vz);
-    }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr)
-    {
-        mol->setv(0, mol->v(0) * vcorr);
-        mol->setv(1, mol->v(1) * vcorr);
-        mol->setv(2, mol->v(2) * vcorr);
-    }
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot) = 0;
 };
 
 
@@ -351,21 +238,31 @@ public:
 
         return m * vx*vx;
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[0] = mol->v(0);
         v_new[0] = v_old[0] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(0, v_new[0]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 
@@ -383,21 +280,31 @@ public:
 
         return m * vy*vy;
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[1] = mol->v(1);
         v_new[1] = v_old[1] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(1, v_new[1]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 
@@ -415,21 +322,31 @@ public:
 
         return m * vz*vz;
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[2] = mol->v(2);
         v_new[2] = v_old[2] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(2, v_new[2]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 
@@ -448,11 +365,13 @@ public:
 
         return m * (vx*vx + vy*vy);
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[0] = mol->v(0);
@@ -460,13 +379,20 @@ public:
         v_new[0] = v_old[0] * vcorr;
         v_new[1] = v_old[1] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(0, v_new[0]);
         mol->setv(1, v_new[1]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
-        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 
@@ -485,11 +411,13 @@ public:
 
         return m * (vx*vx + vz*vz);
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[0] = mol->v(0);
@@ -497,13 +425,20 @@ public:
         v_new[0] = v_old[0] * vcorr;
         v_new[2] = v_old[2] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(0, v_new[0]);
         mol->setv(2, v_new[2]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
-        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 
@@ -522,11 +457,13 @@ public:
 
         return m * (vy*vy + vz*vz);
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[1] = mol->v(1);
@@ -534,13 +471,20 @@ public:
         v_new[1] = v_old[1] * vcorr;
         v_new[2] = v_old[2] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(1, v_new[1]);
         mol->setv(2, v_new[2]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
-        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 
@@ -560,11 +504,13 @@ public:
 
         return m * (vx*vx + vy*vy + vz*vz);
     }
-    virtual void ScaleVelocityComponents(Molecule* mol, double vcorr, double& dDelta2EkinTransSum)
+	virtual void ScaleVelocityComponents(Molecule* mol, const double &vcorr, const double &Dcorr,
+		double& dAdded2EkinTrans, double& dAdded2EkinRot)
     {
-        double m  = mol->mass();
         double v_old[3];
         double v_new[3];
+		double d2EkinTrans_old, d2EkinRot_old;
+		d2EkinTrans_old = d2EkinRot_old = 0.;
 
         // calc new velocities
         v_old[0] = mol->v(0);
@@ -574,15 +520,21 @@ public:
         v_new[1] = v_old[1] * vcorr;
         v_new[2] = v_old[2] * vcorr;
 
+		// store old kinetic energy
+		d2EkinTrans_old = mol->U2_trans();
+		d2EkinRot_old   = mol->U2_rot();
+
         // set new velocities
         mol->setv(0, v_new[0]);
         mol->setv(1, v_new[1]);
         mol->setv(2, v_new[2]);
 
-        // accumulate added kinetic energy (heat)
-        dDelta2EkinTransSum += m * ( (v_new[0] * v_new[0]) - (v_old[0] * v_old[0]) );
-        dDelta2EkinTransSum += m * ( (v_new[1] * v_new[1]) - (v_old[1] * v_old[1]) );
-        dDelta2EkinTransSum += m * ( (v_new[2] * v_new[2]) - (v_old[2] * v_old[2]) );
+		// set new angular momentum
+		mol->scale_D(Dcorr);
+
+		// calc added kinetic energy
+		dAdded2EkinTrans = mol->U2_trans() - d2EkinTrans_old;
+		dAdded2EkinRot   = mol->U2_rot()   - d2EkinRot_old;
     }
 };
 

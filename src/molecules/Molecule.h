@@ -110,8 +110,10 @@ public:
 	
 	/** return the translational energy of the molecule */
 	double U_trans() const { return 0.5 * _m * v2(); }
+	double U2_trans() const { return _m * v2(); }
 	/** return the rotational energy of the molecule */
 	double U_rot();
+	double U2_rot();
 	/** return total kinetic energy of the molecule */
 	double U_kin() { return U_trans() + U_rot(); }
 	

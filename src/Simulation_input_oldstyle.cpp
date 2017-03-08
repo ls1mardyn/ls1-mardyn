@@ -781,17 +781,16 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			            }
 			            else if(strToken == "heat")
 			            {
-
-			                unsigned long nWriteFreq;
-			                unsigned long nSlabs;
-
-			                inputfilestream >> nWriteFreq;
-			                inputfilestream >> nSlabs;
+							paramLineHeat paramLine;
+							inputfilestream >> paramLine.nWriteFreq;
+							inputfilestream >> paramLine.slabsKey;
+							inputfilestream >> paramLine.slabsVal;
+							inputfilestream >> paramLine.nWriteFreqRegions;
 
 			                if(_temperatureControl != NULL)
 			                {
 			                    // set heat supply measurement parameters
-			                    _temperatureControl->SetDeltaEkinParameters(nWriteFreq, nSlabs);
+			                    _temperatureControl->SetDeltaEkinParameters(paramLine);
 			                }
 			                else
 			                {
