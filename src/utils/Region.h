@@ -10,6 +10,7 @@
 
 #include "utils/ObserverBase.h"
 #include <string>
+#include <ostream>
 
 enum SubdivisionOption
 {
@@ -46,6 +47,7 @@ public:
     unsigned short GetID() {return _nID;}
     int GetType() {return _nType;}
     ControlInstance* GetParent() {return _parent;}
+	virtual void Print(std::ostream& os) = 0;
 
 protected:
     unsigned short _nID;
@@ -68,7 +70,7 @@ public:
     double GetLowerCorner(unsigned short nDim) {return _dLowerCorner[nDim];}
     double GetUpperCorner(unsigned short nDim) {return _dUpperCorner[nDim];}
     void GetLowerCorner(double* dLC) {dLC[0]=_dLowerCorner[0]; dLC[1]=_dLowerCorner[1]; dLC[2]=_dLowerCorner[2];}
-    void GetUpperCorner(double* dLC) {dLC[0]=_dUpperCorner[0]; dLC[1]=_dUpperCorner[1]; dLC[2]=_dUpperCorner[2];}
+    void GetUpperCorner(double* dUC) {dUC[0]=_dUpperCorner[0]; dUC[1]=_dUpperCorner[1]; dUC[2]=_dUpperCorner[2];}
     double* GetLowerCorner() {return _dLowerCorner;}
     double* GetUpperCorner() {return _dUpperCorner;}
     void SetLowerCorner(unsigned short nDim, double dVal) {_dLowerCorner[nDim] = dVal;}
@@ -83,6 +85,19 @@ public:
     	else if	( !(dPos[2] > _dLowerCorner[2] && dPos[2] < _dUpperCorner[2]) ) return false;
     	else	return true;
     }
+	virtual void Print(std::ostream& os)
+	{
+		os << "----------------------------------------------------------------" << std::endl;
+		os << "ID: " << _nID << std::endl;
+		os << "width: " << this->GetWidth(0) << " " << this->GetWidth(1) << " " << this->GetWidth(2) << std::endl;
+		double lc[3];
+		double uc[3];
+		this->GetLowerCorner(lc);
+		this->GetUpperCorner(uc);
+		os << "lowerCorner: " << lc[0] << " " << lc[1] << " " << lc[2] << std::endl;
+		os << "upperCorner: " << uc[0] << " " << uc[1] << " " << uc[2] << std::endl;
+		os << "----------------------------------------------------------------" << std::endl;
+	}
 
 protected:
     double _dLowerCorner[3];
@@ -91,7 +106,6 @@ protected:
     int _nSubdivisionOpt;
 
 };  // class CuboidRegion
-
 
 // class CuboidRegionObs
 
@@ -113,5 +127,7 @@ private:
     bool _bMaskMidpointRight[6];
 
 };  // class CuboidRegionObs
+
+std::ostream& operator<<( std::ostream& os, Region& region);
 
 #endif  // REGION_H_

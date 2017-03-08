@@ -45,7 +45,6 @@ CuboidRegion::~CuboidRegion()
 {
 }
 
-
 CuboidRegionObs::CuboidRegionObs(ControlInstance* parent) : CuboidRegion(parent)
 {
 }
@@ -94,4 +93,10 @@ void CuboidRegionObs::PrepareAsObserver(const unsigned short refCoords[6])
 	_bMaskMidpointRight[3] = refCoords[3] == 2;
 	_bMaskMidpointRight[4] = refCoords[4] == 2;
 	_bMaskMidpointRight[5] = refCoords[5] == 2;
+}
+
+std::ostream& operator<<( std::ostream& os, Region& region)
+{
+	region.Print(os);
+	return os;
 }
