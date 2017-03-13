@@ -554,11 +554,7 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 
 		// determine interface midpoints and update region positions
 		this->UpdatePositions(this->GetUpdateFreq() );
-
-		cout << "DistControl::_dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
-		cout << "DistControl::_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
-
-		return;
+		break;
 	case DCIM_MIDPOINT_VALUES:
 
 		_sstrInit >> _dInterfaceMidLeft;
@@ -603,8 +599,10 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 		exit(-1);
 	}
 
+#ifndef NDEBUG
 	cout << "DistControl::_dInterfaceMidLeft = " << _dInterfaceMidLeft << endl;
 	cout << "DistControl::_dInterfaceMidRight = " << _dInterfaceMidRight << endl;
+#endif
 
     // update positions
     this->informObserver();

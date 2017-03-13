@@ -237,7 +237,9 @@ void tec::ControlRegion::AllocateDataStructuresDEkin()
     double dBoxWidthY = _parent->GetDomain()->getGlobalLength(1);
     _nNumSlabsDEkinReserve = (unsigned int) ( ceil(dBoxWidthY / this->GetWidth(1) * _nNumSlabs) );
 
-    cout << "_nNumSlabsDEkinReserve = " << _nNumSlabsDEkinReserve << endl;
+#ifndef NDEBUG
+	cout << "_nNumSlabsDEkinReserve = " << _nNumSlabsDEkinReserve << endl;
+#endif
 
 	// allocate Delta Ekin data structures
 	AllocateUnsLongArray(_nNumMoleculesSumLocal, _nNumSlabsDEkinReserve);
@@ -560,8 +562,11 @@ void tec::ControlRegion::CalcGlobalValuesDeltaEkin()
 		_dDelta2EkinRotSumGlobal[s]   = _dDelta2EkinRotSumLocal[s];
     }
 #endif
+
+#ifndef NDEBUG
 	cout << "Rank: " << _parent->GetDomainDecomposition()->getRank() << ", region: " << this->GetID() << ":_nNumMoleculesSumLocal[0] = " << _nNumMoleculesSumLocal[0] << endl;
 	cout << "Rank: " << _parent->GetDomainDecomposition()->getRank() << ", region: " << this->GetID() << ":_nNumMoleculesSumGlobal[0] = " << _nNumMoleculesSumGlobal[0] << endl;
+#endif
 }
 
 
