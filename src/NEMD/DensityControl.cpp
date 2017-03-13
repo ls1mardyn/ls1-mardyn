@@ -297,8 +297,8 @@ void dec::ControlRegion::ControlDensity(Molecule* mol, Simulation* simulation, b
 		Ipa[1] = compNew->I22();
 		Ipa[2] = compNew->I33();
 
-		U_rot_FG[0] = U_rot * 0.5;
-		U_rot_FG[1] = U_rot * 0.5;
+		U_rot_FG[0] = U_rot * 1./3.;  // 0.5 * 2./3.
+		U_rot_FG[1] = U_rot * 1./3.;  // 0.5 * 2./3.
 		U_rot_FG[2] = U_rot * 0.0;
 
 		L[0] = sqrt(U_rot_FG[0] * 2. * Ipa[0] );
