@@ -374,6 +374,21 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 			}
 			MPI_Barrier(MPI_COMM_WORLD);
 		}
+
+		if (rank == 0)
+		{
+			MPI_Status status;
+			uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_frameCount-1));
+			MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
+			uint64_t seekPosition;
+			seekPosition = htole64(_seekTable[_frameCount-1]);
+			MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+			uint32_t frameCount = htole32(_frameCount-1);  // last frame will be ignored when simulation is aborted
+			MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
+			MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+
 		MPI_File_close(&fh);
 #endif
 	}
@@ -402,13 +417,15 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
 		_seekTable[_numSeekEntries-1] = (uint64_t)endPosition;
-		MPI_File_seek(fh, 0x3C, MPI_SEEK_SET);
+		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_numSeekEntries-1));
+		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
 		MPI_Status status;
-		for (uint32_t i = 0; i < _numSeekEntries; ++i){
-			seekPosition = htole64(_seekTable[i]);
-			MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
-		}
+		seekPosition = htole64(_seekTable[_numSeekEntries-1]);
+		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
+		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
+		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
 		delete[] _seekTable;
 		MPI_File_close(&fh);
 	}else{
