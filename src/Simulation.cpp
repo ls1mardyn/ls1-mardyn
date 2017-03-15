@@ -790,9 +790,9 @@ unsigned long long getCachedSize(){
 		if (p1 != NULL) {
 			int colon = ':';
 			char *p1 = strchr(buf, colon)+1;
-			std::cout << p1 << endl;
+			//std::cout << p1 << endl;
 			unsigned long long t = strtoull(p1, NULL, 10);
-			std::cout << t << endl;
+			//std::cout << t << endl;
 			return t;
 		}
 	}
