@@ -285,6 +285,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				string strInitSphereData;
 				string strSphereDataFilename = "unknown";
 				uint8_t bInitSphereData = ISD_USE_DEFAULT;
+				uint64_t numFramesPerFile;
 				inputfilestream >> strSpheres >> writeFrequency >> outputPathAndPrefix >> strInitSphereData;
 				if("file" == strInitSphereData)
 				{
@@ -298,12 +299,13 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					global_log->error() << "MmpldWriter: wrong statement, expected default|file. Program exit... " << endl;
 					exit(-1);
 				}
+				inputfilestream >> numFramesPerFile;
 
 				MmpldWriter* mmpldWriter = NULL;
 				if("simple" == strSpheres)
-					mmpldWriter = new MmpldWriterSimpleSphere(writeFrequency, outputPathAndPrefix);
+					mmpldWriter = new MmpldWriterSimpleSphere(writeFrequency, outputPathAndPrefix, numFramesPerFile);
 				else if("multi" == strSpheres)
-					mmpldWriter = new MmpldWriterMultiSphere(writeFrequency, outputPathAndPrefix);
+					mmpldWriter = new MmpldWriterMultiSphere(writeFrequency, outputPathAndPrefix, numFramesPerFile);
 				else
 				{
 					global_log->error() << "MmpldWriter: wrong statement, expected simple|multi. Program exit... " << endl;

@@ -30,7 +30,7 @@ protected:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-    MmpldWriter(unsigned long writeFrequency, std::string outputPrefix);
+	MmpldWriter(unsigned long writeFrequency, string outputPrefix, uint64_t numFramesPerFile);
 	virtual ~MmpldWriter();
 	virtual void SetNumSphereTypes() = 0;
 	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol) = 0;
@@ -61,16 +61,17 @@ public:
 	}
 
 protected:
+	void MultiFileApproachReset(ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, Domain* domain);
+
+protected:
 	std::string _outputPrefix;
 	unsigned long _writeFrequency;
 	bool _appendTimestamp;
 	std::string _timestampString;
 	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
-#ifdef ENABLE_MPI
 	uint64_t *_seekTable;
-
-#endif
 	uint8_t  _numComponents;
 	uint8_t  _numSitesTotal;
 	uint8_t  _numSphereTypes;
@@ -80,13 +81,21 @@ protected:
 	std::vector< std::array<uint8_t, 4> > _vaSphereColors;
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
+	bool _bWroteStartConfigFrame;
+
+	// split files
+	uint64_t _numFramesPerFile;
+	uint8_t _nFileIndex;
+	uint8_t _numFiles;
+	std::vector<string> _vecFilePrefixes;
+	std::vector<uint64_t> _vecFramesPerFile;
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
 {
 public:
-	MmpldWriterSimpleSphere(unsigned long writeFrequency, std::string outputPrefix)
-			: MmpldWriter(writeFrequency, outputPrefix)
+	MmpldWriterSimpleSphere(unsigned long writeFrequency, std::string outputPrefix, uint64_t numFramesPerFile)
+			: MmpldWriter(writeFrequency, outputPrefix, numFramesPerFile)
 	{
 //		MmpldWriter::_numSphereTypes = &(MmpldWriter::_numComponents);
 	}
@@ -100,8 +109,8 @@ public:
 class MmpldWriterMultiSphere : public MmpldWriter
 {
 public:
-	MmpldWriterMultiSphere(unsigned long writeFrequency, std::string outputPrefix)
-			: MmpldWriter(writeFrequency, outputPrefix)
+	MmpldWriterMultiSphere(unsigned long writeFrequency, std::string outputPrefix, uint64_t numFramesPerFile)
+			: MmpldWriter(writeFrequency, outputPrefix, numFramesPerFile)
 	{
 //		MmpldWriter::_numSphereTypes = &(MmpldWriter::_numSitesTotal);
 	}

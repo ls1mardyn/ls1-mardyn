@@ -137,14 +137,6 @@ int main(int argc, char** argv) {
 
 	Simulation simulation;
 	simulation.setName(op.prog());
-	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
-	if( fileExists(args[0].c_str()) ) {
-		global_log->info() << "Config file: " << args[0] << endl;
-		simulation.readConfigFile(args[0]);
-	} else {
-		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
-		global_simulation->exit(-54);
-	}
 
 	/** @todo remove unnamed options, present as --steps, --output-prefix below */
 	if (numargs > 1) {
@@ -154,6 +146,15 @@ int main(int argc, char** argv) {
 	}
 	if( numargs > 2 ) {
 		simulation.setOutputPrefix(args[2]);
+	}
+
+	/* First read the given config file if it exists, then overwrite parameters with command line arguments. */
+	if( fileExists(args[0].c_str()) ) {
+		global_log->info() << "Config file: " << args[0] << endl;
+		simulation.readConfigFile(args[0]);
+	} else {
+		global_log->error() << "Cannot open input file '" << args[0] << "'" << endl;
+		exit(-54); // Simulation::exit(-54);
 	}
 
 	if ( (int) options.get("final-checkpoint") > 0 ) {

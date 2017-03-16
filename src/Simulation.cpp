@@ -80,6 +80,7 @@ Simulation* global_simulation;
 Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
+	_ensemble(NULL),
 	_rdf(NULL),
 	_moleculeContainer(NULL),
 	_particlePairsHandler(NULL),
@@ -177,6 +178,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", ensembletype);
 		global_log->info() << "Ensemble: " << ensembletype<< endl;
 		if (ensembletype == "NVT") {
+			if(_ensemble != NULL) delete _ensemble;
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
