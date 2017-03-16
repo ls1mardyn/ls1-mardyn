@@ -91,7 +91,13 @@ MmpldWriter::MmpldWriter(unsigned long writeFrequency, string outputPrefix, uint
 		exit(-1);  // TODO: use MarDyn exit
 }
 
-MmpldWriter::~MmpldWriter(){}
+MmpldWriter::~MmpldWriter()
+{
+	// free dynamic data structures
+	delete[] _numSitesPerComp;
+	delete[] _nCompSitesOffset;
+	delete[] _seekTable;
+}
 
 void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
@@ -578,6 +584,12 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 {
 	this->finishOutput(particleContainer, domainDecomp, domain);
 	_nFileIndex++;
+
+	// free dynamic data structures
+	delete[] _numSitesPerComp;
+	delete[] _nCompSitesOffset;
+	delete[] _seekTable;
+
 	this->initOutput(particleContainer, domainDecomp, domain);
 }
 
