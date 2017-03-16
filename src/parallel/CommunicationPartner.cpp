@@ -166,7 +166,7 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 		global_log->debug() << buf.str() << std::endl;
 	#endif
 
-	MPI_CHECK(MPI_Isend(&(_sendBuf[0]), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
+	MPI_CHECK(MPI_Isend(_sendBuf.data(), (int ) _sendBuf.size(), type, _rank, 99, comm, _sendRequest));
 	_msgSent = _countReceived = _msgReceived = false;
 }
 
@@ -190,8 +190,12 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 			_countReceived = true;
 			int numrecv;
 			MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
+                        #ifndef NDEBUG
+                                global_log->debug() << "Received particleCount from " << _rank << std::endl;
+                                global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
+                        #endif
 			_recvBuf.resize(numrecv);
-			MPI_CHECK(MPI_Irecv(&(_recvBuf[0]), numrecv, type, _rank, 99, comm, _recvRequest));
+			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
 		}
 
 	}
@@ -208,7 +212,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			int numrecv = _recvBuf.size();
 
 			#ifndef NDEBUG
-				global_log->debug() << "Receiving particles from" << _rank << std::endl;
+				global_log->debug() << "Receiving particles from " << _rank << std::endl;
 				global_log->debug() << "Buffer contains " << numrecv << " particles with IDs " << std::endl;
 				std::ostringstream buf;
 			#endif
@@ -242,7 +246,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
 	_recvBuf.resize(numParticles);
-	MPI_CHECK(MPI_Irecv(&(_recvBuf[0]), numParticles, type, _rank, 99, comm, _recvRequest));
+	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
