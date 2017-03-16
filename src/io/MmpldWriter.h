@@ -71,12 +71,12 @@ protected:
 	std::string _timestampString;
 	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
-	uint64_t *_seekTable;
 	uint8_t  _numComponents;
 	uint8_t  _numSitesTotal;
 	uint8_t  _numSphereTypes;
-	uint8_t* _numSitesPerComp;
-	uint8_t* _nCompSitesOffset;
+	std::vector<uint64_t> _seekTable;
+	std::vector<uint8_t> _numSitesPerComp;
+	std::vector<uint8_t> _nCompSitesOffset;
 	std::vector<float> _vfSphereRadius;
 	std::vector< std::array<uint8_t, 4> > _vaSphereColors;
 	std::string _strSphereDataFilename;

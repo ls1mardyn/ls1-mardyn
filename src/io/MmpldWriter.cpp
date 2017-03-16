@@ -93,10 +93,6 @@ MmpldWriter::MmpldWriter(unsigned long writeFrequency, string outputPrefix, uint
 
 MmpldWriter::~MmpldWriter()
 {
-	// free dynamic data structures
-	delete[] _numSitesPerComp;
-	delete[] _nCompSitesOffset;
-	delete[] _seekTable;
 }
 
 void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
@@ -124,21 +120,21 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 
 	// number of components / sites
 	_numComponents = (uint8_t)domain->getNumberOfComponents();
-	_numSitesPerComp  = new uint8_t[_numComponents];
-	_nCompSitesOffset = new uint8_t[_numComponents];
+	_numSitesPerComp.resize(_numComponents);
+	_nCompSitesOffset.resize(_numComponents);
 	_numSitesTotal = 0;
 
 	vector<Component>& vComponents = *(_simulation.getEnsemble()->getComponents() );
 	vector<Component>::iterator cit;
 	cit=vComponents.begin();
 
-	_nCompSitesOffset[0] = 0;
+	_nCompSitesOffset.at(0) = 0;
 	for(uint8_t cid=0; cid<_numComponents; cid++)
 	{
 		uint8_t numSites = (*cit).numLJcenters();
-		_numSitesPerComp[cid] = numSites;
+		_numSitesPerComp.at(cid) = numSites;
 		if(cid>0)
-			_nCompSitesOffset[cid] = _nCompSitesOffset[cid-1] + _numSitesPerComp[cid-1];
+			_nCompSitesOffset.at(cid) = _nCompSitesOffset.at(cid-1) + _numSitesPerComp.at(cid-1);
 		// total number of sites (all components)
 		_numSitesTotal += numSites;
 		cit++;
@@ -146,7 +142,7 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 
 #ifndef NDEBUG
 	for(uint8_t cid=0; cid<_numComponents; cid++)
-		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset[cid] << endl;
+		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset.at(cid) << endl;
 #endif
 
 	// init radius and color of spheres
@@ -210,7 +206,7 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	numframes_le = htole32(numframes);
 	mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
 
-	_seekTable = new uint64_t[_numSeekEntries];
+	_seekTable.resize(_numSeekEntries);
 
 	//boundary box
 	float minbox[3] = {0, 0, 0};
@@ -373,7 +369,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 				if (_frameCount < _numSeekEntries){
 					MPI_Offset entry;
 					MPI_File_get_position(fh, &entry);
-					_seekTable[_frameCount] = (uint64_t)entry;
+					_seekTable.at(_frameCount) = (uint64_t)entry;
 				}
 //					_frameCount = _frameCount + 1;
 				
@@ -456,7 +452,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_frameCount-1));
 		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
-		seekPosition = htole64(_seekTable[_frameCount-1]);
+		seekPosition = htole64(_seekTable.at(_frameCount-1) );
 		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
 		uint32_t frameCount = htole32(_frameCount-1);  // last frame will be ignored when simulation is aborted
 		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
@@ -494,17 +490,16 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
-		_seekTable[_numSeekEntries-1] = (uint64_t)endPosition;
+		_seekTable.at(_numSeekEntries-1) = (uint64_t)endPosition;
 		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_numSeekEntries-1));
 		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
 		MPI_Status status;
-		seekPosition = htole64(_seekTable[_numSeekEntries-1]);
+		seekPosition = htole64(_seekTable.at(_numSeekEntries-1) );
 		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
 		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
 		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
 		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
-		delete[] _seekTable;
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;
@@ -584,12 +579,6 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 {
 	this->finishOutput(particleContainer, domainDecomp, domain);
 	_nFileIndex++;
-
-	// free dynamic data structures
-	delete[] _numSitesPerComp;
-	delete[] _nCompSitesOffset;
-	delete[] _seekTable;
-
 	this->initOutput(particleContainer, domainDecomp, domain);
 }
 
@@ -611,8 +600,8 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol,
 void MmpldWriterMultiSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
 {
 	uint8_t cid = mol->componentid();
-	uint8_t offset = _nCompSitesOffset[cid];
-	for (uint8_t si = 0; si < _numSitesPerComp[cid]; ++si)
+	uint8_t offset = _nCompSitesOffset.at(cid);
+	for (uint8_t si = 0; si < _numSitesPerComp.at(cid); ++si)
 		numSpheresPerType[offset+si]++;
 }
 
@@ -620,8 +609,8 @@ bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, 
 {
 	bool ret = false;
 	uint8_t cid = mol->componentid();
-	uint8_t numSites =  _numSitesPerComp[cid];
-	uint8_t offset  = _nCompSitesOffset[cid];
+	uint8_t numSites =  _numSitesPerComp.at(cid);
+	uint8_t offset  = _nCompSitesOffset.at(cid);
 	for (uint8_t si = 0; si < numSites; ++si)
 	{
 		if(offset+si == nSphereTypeIndex)
