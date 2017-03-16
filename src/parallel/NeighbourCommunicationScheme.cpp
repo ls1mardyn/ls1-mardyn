@@ -225,7 +225,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		const int numNeighbours = _neighbours[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
+			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 		}
