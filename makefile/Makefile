@@ -91,6 +91,9 @@ OPENMP ?= 0
 
 PAPI ?= 0
 
+# use workarounds to disable potential deadlocks in MPI applications. Might negatively impact the performance.
+MPI_WORKAROUND ?= 0
+
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
@@ -134,12 +137,12 @@ else
 endif
 
 CXX = $(CXX_$(PARTYPE))
-CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -DMPICH_IGNORE_CXX_SEEK
+CXXFLAGS += $(CXXFLAGS_$(PARTYPE)_$(TARGET)) $(INCLUDES) -D MPICH_IGNORE_CXX_SEEK
 LDFLAGS = $(LINKFLAGS_$(PARTYPE)_$(TARGET)) 
 
 ifeq ($(SUPPORT_GENERATOR), 1)
 LDFLAGS += -L../tools/gui/staticlibs -lCubicGridGenerator -lDropletGenerator
-CXXFLAGS += -DSUPPORT_GENERATOR
+CXXFLAGS += -D SUPPORT_GENERATOR
 INCLUDES += -I../tools/gui/ -I../tools/gui/src/
 endif
 
@@ -177,16 +180,20 @@ else
 endif
 
 ifeq ($(ENABLE_FMM_FFT),1)
-CXXFLAGS += -DFMM_FFT
+CXXFLAGS += -D FMM_FFT
 endif
 
 ifeq ($(ENABLE_OVERLAPPING),1)
-CXXFLAGS += -DENABLE_OVERLAPPING
+CXXFLAGS += -D ENABLE_OVERLAPPING
 endif
 
 ifeq ($(PAPI),1)
 CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
+endif
+
+ifeq ($(MPI_WORKAROUND),1)
+CXXFLAGS += -D MPI_WORKAROUND
 endif
 
 ifeq ($(WORLD_RECORD), 1)

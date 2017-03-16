@@ -319,7 +319,7 @@ bool KDDecomposition::migrateParticles(const KDNode& newRoot, const KDNode& newO
 
 		// unpack molecules
 		for (int i = 0; i < numProcsRecv; ++i) {
-			allDone &= recvPartners[i].testRecv(moleculeContainer, false);
+			allDone &= recvPartners[i].testRecv(moleculeContainer, false, true);
 		}
 
 		// catch deadlocks

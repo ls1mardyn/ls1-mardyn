@@ -55,7 +55,7 @@ public:
 
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
+	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool alwaysNonBlocking=false);
 
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
 

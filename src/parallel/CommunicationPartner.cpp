@@ -195,20 +195,29 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
                                 global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
                         #endif
 			_recvBuf.resize(numrecv);
-			//MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
-                        MPI_CHECK(MPI_Recv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvStatus));
+#ifndef MPI_WORKAROUND
+			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
+#else
+			MPI_CHECK(MPI_Recv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvStatus));
+#endif
 		}
 	}
 	return _countReceived;
 }
-
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool alwaysNonBlocking) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
-		//int flag = 0;
-		//MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
-		//if (flag == 1) {
-		if (true) {
+#ifndef MPI_WORKAROUND
+		int flag = 0;
+		MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
+		if (flag == 1) {
+#else
+		int flag = 0;
+		if(alwaysNonBlocking){
+			MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
+		}
+		if((not alwaysNonBlocking) || flag == 1) {  // if it is not alwaysnonblocking: check for the flag.
+#endif
 			_msgReceived = true;
 			int numrecv = _recvBuf.size();
 
@@ -247,7 +256,11 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
 	_recvBuf.resize(numParticles);
+//#ifndef MPI_WORKAROUND
 	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
+//#else
+//	MPI_CHECK(MPI_Recv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvStatus));
+//#endif
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {
