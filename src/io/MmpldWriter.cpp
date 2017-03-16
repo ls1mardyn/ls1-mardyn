@@ -156,12 +156,14 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 	filenamestream << ".mmpld";
 
-	int rank = domainDecomp->getRank();
-	cout << "rank[" << rank << "]: _nFileIndex = " << (uint32_t)_nFileIndex << endl;
-	cout << filenamestream.str() << endl;
-
 	char filename[filenamestream.str().size()+1];
 	strcpy(filename,filenamestream.str().c_str());
+
+	int rank = domainDecomp->getRank();
+#ifndef NDEBUG
+	cout << "rank[" << rank << "]: _nFileIndex = " << (uint32_t)_nFileIndex
+			<< ", filename = " << filenamestream.str() << endl;
+#endif
 
 #ifdef ENABLE_MPI
 //	int rank = domainDecomp->getRank();
@@ -437,8 +439,9 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 
 	// data of frame is written
 	_frameCount++;
-//	int rank = domainDecomp->getRank();
+#ifndef NDEBUG
 	cout << "rank[" << rank << "]: _frameCount = " << _frameCount << endl;
+#endif
 
 	// write seek table entry
 	if (rank == 0)
@@ -573,24 +576,8 @@ void MmpldWriter::InitSphereData()
 void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
-//#ifdef ENABLE_MPI
-//	MPI_Barrier(MPI_COMM_WORLD);
-//#endif
-
-	int rank = domainDecomp->getRank();
-
-	cout << "rank[" << rank << "]: finishOutput()" << endl;
-
 	this->finishOutput(particleContainer, domainDecomp, domain);
-
-//#ifdef ENABLE_MPI
-//	MPI_Barrier(MPI_COMM_WORLD);
-//#endif
-
-	cout << "rank[" << rank << "]: initOutput()" << endl;
-
 	_nFileIndex++;
-
 	this->initOutput(particleContainer, domainDecomp, domain);
 }
 
