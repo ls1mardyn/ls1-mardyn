@@ -21,4 +21,13 @@
 #include "io/GammaWriter.h"
 #include "io/CavityWriter.h"
 
+#include "io/BinaryReader.h"
+#include "io/BinaryCheckpointWriter.h"
+
+#ifdef ENABLE_MPI
+#include "io/MPI_IOReader.h"
+#include "io/MPI_IOCheckpointWriter.h"
+#endif
+
+
 #endif  /* IO_H_  */

@@ -65,7 +65,22 @@ public:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param currentTime The current time to be printed.
+	//! @param binary indicates wheter binary I/O is used or not
 	void writeCheckpoint( std::string filename, ParticleContainer* particleContainer,
+			const DomainDecompBase* domainDecomp, double currentTime, bool binary = false);
+
+	//! @brief writes a checkpoint file that can be used to continue the simulation
+	//!
+	//! The format of the checkpointfile written by this method is the same as the format
+	//! of the input file.
+	//! @param filename Name of the header file (including path). Dependent on the I/O format, this could
+	//! 				be the same file as the data file
+	//! @param particleContainer The molecules that have to be written to the file are stored here
+	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
+	//!                     Methods to achieve this are available in domainDecomp
+	//! @param currentTime The current time to be printed.
+	void writeCheckpointHeader(std::string filename,
+			ParticleContainer* particleContainer,
 			const DomainDecompBase* domainDecomp, double currentTime);
 
 	//! @brief initialize far field correction parameters

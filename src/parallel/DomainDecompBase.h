@@ -151,6 +151,16 @@ public:
 	virtual void assertIntIdentity(int IX);
 	virtual void assertDisjunctivity(TMoleculeContainer* mm) const;
 
+	//! @brief returns an cutoff radius for a dimension for a global linked cells datastructure
+	//!
+	//! This method is e.g. used for the parallelCheckpointWriter, which builds a new global
+	//! cell structure. This method returns a cutoff radius, so that each cell is fully
+	//! contained in one process
+	//! @param dim the dimension, which will be returned
+	//! @param domain e.g. needed to get the bounding boxes
+	//! @param moleculeContainer e.g. needed for the cutoff radius
+	double getIOCutoffRadius(int dim, Domain* domain, ParticleContainer* moleculeContainer);
+
 	//! @brief appends molecule data to the file. The format is the same as that of the input file
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
@@ -160,7 +170,8 @@ public:
 	//! there is a loop over all processes with a barrier in between
 	//! @param filename name of the file into which the data will be written
 	//! @param moleculeContainer all Particles from this container will be written to the file
-	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) const;
+	//! @param binary flag, that is true if the output shall be binary
+	void writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary = false) const;
 
 
 	//##################################################################

@@ -460,117 +460,131 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 	}
 }
 
-void Domain::writeCheckpoint( string filename,
-		ParticleContainer* particleContainer,
-		const DomainDecompBase* domainDecomp, double currentTime)
-{
-	domainDecomp->assertDisjunctivity(particleContainer);
-	/* Rank 0 writes file header */
-	if(0 == this->_localRank) {
-		ofstream checkpointfilestream(filename.c_str());
-		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
-		checkpointfilestream << "\n";
-		checkpointfilestream << "currentTime\t"  << currentTime << "\n"; //edited by Michaela Heier
-		checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
-		if(this->_componentwiseThermostat)
-		{
-			for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
-					thermit != this->_componentToThermostatIdMap.end();
-					thermit++ )
+void Domain::writeCheckpointHeader(string filename,
+		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime) {
+		domainDecomp->assertDisjunctivity(particleContainer);
+		/* Rank 0 writes file header */
+		if(0 == this->_localRank) {
+			ofstream checkpointfilestream(filename.c_str());
+			checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
+			checkpointfilestream << "\n";
+			checkpointfilestream << "currentTime\t"  << currentTime << "\n"; //edited by Michaela Heier
+			checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
+			if(this->_componentwiseThermostat)
 			{
-				if(0 >= thermit->second) continue;
-				checkpointfilestream << " CT\t" << 1+thermit->first
-					<< "\t" << thermit->second << "\n";
+				for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
+						thermit != this->_componentToThermostatIdMap.end();
+						thermit++ )
+				{
+					if(0 >= thermit->second) continue;
+					checkpointfilestream << " CT\t" << 1+thermit->first
+						<< "\t" << thermit->second << "\n";
+				}
+				for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
+						Tit != this->_universalTargetTemperature.end();
+						Tit++ )
+				{
+					if((0 >= Tit->first) || (0 >= Tit->second)) continue;
+					checkpointfilestream << " ThT " << Tit->first << "\t" << Tit->second << "\n";
+				}
 			}
-			for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
-					Tit != this->_universalTargetTemperature.end();
-					Tit++ )
+			else
 			{
-				if((0 >= Tit->first) || (0 >= Tit->second)) continue;
-				checkpointfilestream << " ThT " << Tit->first << "\t" << Tit->second << "\n";
+				checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << endl;
 			}
-		}
-		else
-		{
-			checkpointfilestream << " Temperature\t" << _universalTargetTemperature[0] << endl;
-		}
-#ifndef NDEBUG
-		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
-		//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
-        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
-#endif
-		/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
-		if(this->_globalUSteps > 1)
-		if(this->_globalUSteps > 1)
-		{
-			checkpointfilestream << setprecision(13);
-			checkpointfilestream << " I\t" << this->_globalUSteps << " "
-				<< this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
-			checkpointfilestream << setprecision(8);
-		}
-		*/
-		vector<Component>* components = _simulation.getEnsemble()->getComponents();
-		checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
-		for(vector<Component>::const_iterator pos=components->begin();pos!=components->end();++pos){
-			pos->write(checkpointfilestream);
-		}
-		unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
-		unsigned int iout=0;
-		for(vector<double>::const_iterator pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
-			checkpointfilestream << *pos;
-			iout++;
-			// 2 parameters (xi and eta)
-			if(iout/2>=numperline) {
-				checkpointfilestream << endl;
-				iout=0;
-				--numperline;
+	#ifndef NDEBUG
+			checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
+			//checkpointfilestream << "# rc\t" << global_simulation->getcutoffRadius() << "\n";
+	        checkpointfilestream << "# \n# Please address your questions and suggestions to\n# the ls1 mardyn contact point: <contact@ls1-mardyn.de>.\n# \n";
+	#endif
+			/* by Stefan Becker: the output line "I ..." causes an error: the restart run does not start!!!
+			if(this->_globalUSteps > 1)
+			if(this->_globalUSteps > 1)
+			{
+				checkpointfilestream << setprecision(13);
+				checkpointfilestream << " I\t" << this->_globalUSteps << " "
+					<< this->_globalSigmaU << " " << this->_globalSigmaUU << "\n";
+				checkpointfilestream << setprecision(8);
 			}
-			else if(!(iout%2)) {
-				checkpointfilestream << "\t";
+			*/
+			vector<Component>* components = _simulation.getEnsemble()->getComponents();
+			checkpointfilestream << " NumberOfComponents\t" << components->size() << endl;
+			for(vector<Component>::const_iterator pos=components->begin();pos!=components->end();++pos){
+				pos->write(checkpointfilestream);
 			}
-			else {
-				checkpointfilestream << " ";
+			unsigned int numperline=_simulation.getEnsemble()->getComponents()->size();
+			unsigned int iout=0;
+			for(vector<double>::const_iterator pos=_mixcoeff.begin();pos!=_mixcoeff.end();++pos){
+				checkpointfilestream << *pos;
+				iout++;
+				// 2 parameters (xi and eta)
+				if(iout/2>=numperline) {
+					checkpointfilestream << endl;
+					iout=0;
+					--numperline;
+				}
+				else if(!(iout%2)) {
+					checkpointfilestream << "\t";
+				}
+				else {
+					checkpointfilestream << " ";
+				}
 			}
-		}
-		checkpointfilestream << _epsilonRF << endl;
-		map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
-		for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
-				uCSIDit != componentSets.end();
-				uCSIDit++ )
-		{
-			if(uCSIDit->first > 100) continue;
-			checkpointfilestream << " S\t" << 1+uCSIDit->first << "\t" << uCSIDit->second << "\n";
-		}
-		map<unsigned, double> tau = this->_universalPG->getTau();
-		for( map<unsigned, double>::const_iterator gTit = tau.begin();
-				gTit != tau.end();
-				gTit++ )
-		{
-			unsigned cosetid = gTit->first;
-			double* ttargetv = this->_universalPG->getTargetVelocity(cosetid);
-			double* tacc = this->_universalPG->getAdditionalAcceleration(cosetid);
-			checkpointfilestream << " A\t" << cosetid << "\t"
-				<< ttargetv[0] << " " << ttargetv[1] << " " << ttargetv[2] << "\t"
-				<< gTit->second << "\t"
-				<< tacc[0] << " " << tacc[1] << " " << tacc[2] << "\n";
-			delete ttargetv;
-			delete tacc;
-		}
-		for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
-				uutit != this->_universalUndirectedThermostat.end();
-				uutit++ )
-		{
-			if(0 > uutit->first) continue;
-			if(uutit->second) checkpointfilestream << " U\t" << uutit->first << "\n";
-		}
-		checkpointfilestream << " NumberOfMolecules\t" << _globalNumMolecules << endl;
+			checkpointfilestream << _epsilonRF << endl;
+			map<unsigned, unsigned> componentSets = this->_universalPG->getComponentSets();
+			for( map<unsigned, unsigned>::const_iterator uCSIDit = componentSets.begin();
+					uCSIDit != componentSets.end();
+					uCSIDit++ )
+			{
+				if(uCSIDit->first > 100) continue;
+				checkpointfilestream << " S\t" << 1+uCSIDit->first << "\t" << uCSIDit->second << "\n";
+			}
+			map<unsigned, double> tau = this->_universalPG->getTau();
+			for( map<unsigned, double>::const_iterator gTit = tau.begin();
+					gTit != tau.end();
+					gTit++ )
+			{
+				unsigned cosetid = gTit->first;
+				double* ttargetv = this->_universalPG->getTargetVelocity(cosetid);
+				double* tacc = this->_universalPG->getAdditionalAcceleration(cosetid);
+				checkpointfilestream << " A\t" << cosetid << "\t"
+					<< ttargetv[0] << " " << ttargetv[1] << " " << ttargetv[2] << "\t"
+					<< gTit->second << "\t"
+					<< tacc[0] << " " << tacc[1] << " " << tacc[2] << "\n";
+				delete ttargetv;
+				delete tacc;
+			}
+			for( map<int, bool>::iterator uutit = this->_universalUndirectedThermostat.begin();
+					uutit != this->_universalUndirectedThermostat.end();
+					uutit++ )
+			{
+				if(0 > uutit->first) continue;
+				if(uutit->second) checkpointfilestream << " U\t" << uutit->first << "\n";
+			}
+			checkpointfilestream << " NumberOfMolecules\t" << _globalNumMolecules << endl;
 
-		checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << endl;
-		checkpointfilestream.close();
+			checkpointfilestream << " MoleculeFormat\t" << Molecule::getWriteFormat() << endl;
+			checkpointfilestream.close();
+		}
+
+}
+
+void Domain::writeCheckpoint(string filename,
+		ParticleContainer* particleContainer, const DomainDecompBase* domainDecomp, double currentTime,
+		bool binary) {
+	if (binary == true) {
+		this->writeCheckpointHeader((filename + ".header.xdr"), particleContainer, domainDecomp, currentTime);
+	} else {
+		this->writeCheckpointHeader(filename, particleContainer, domainDecomp, currentTime);
 	}
 
-	domainDecomp->writeMoleculesToFile(filename, particleContainer);
+	if (binary == true) {
+		domainDecomp->writeMoleculesToFile(filename, particleContainer, true);
+	} else {
+		domainDecomp->writeMoleculesToFile(filename, particleContainer, false);
+	}
 }
+
 
 void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 	_comp2params.initialize(*(_simulation.getEnsemble()->getComponents()), _mixcoeff, _epsilonRF, cutoffRadius, cutoffRadiusLJ);
