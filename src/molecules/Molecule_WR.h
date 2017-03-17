@@ -304,6 +304,7 @@ public:
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {}
 	static std::string getWriteFormat();
 	void write(std::ostream& ostrm) const {}
+	void writeBinary(std::ostream& ostrm) const {}
 	void clearFM() {}
 	void calcFM() {}
 	void check(unsigned long id) {}
