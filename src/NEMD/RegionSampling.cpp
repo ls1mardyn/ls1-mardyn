@@ -23,17 +23,14 @@ using namespace std;
 unsigned short SampleRegion::_nStaticID = 0;
 
 SampleRegion::SampleRegion( ControlInstance* parent, double dLowerCorner[3], double dUpperCorner[3] )
-: CuboidRegionObs(parent, dLowerCorner, dUpperCorner)
+	: CuboidRegionObs(parent, dLowerCorner, dUpperCorner),
+	_bDiscretisationDoneProfiles(false),
+	_SamplingEnabledProfiles(false),
+	_bDiscretisationDoneVDF(false),
+	_SamplingEnabledVDF(false)
 {
-	// ID
 	_nID = ++_nStaticID;
-
-    // init control
-    _bDiscretisationDoneProfiles = false;
-    _bDiscretisationDoneVDF = false;
-
-    // init subdivison option
-    _nSubdivisionOpt = SDOPT_UNKNOWN;
+	_nSubdivisionOpt = SDOPT_UNKNOWN;
 }
 
 
@@ -43,6 +40,9 @@ SampleRegion::~SampleRegion()
 
 void SampleRegion::PrepareSubdivisionProfiles()
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
 	double dWidth = this->GetWidth(1);
 
 	switch(_nSubdivisionOpt)
@@ -64,6 +64,9 @@ void SampleRegion::PrepareSubdivisionProfiles()
 
 void SampleRegion::PrepareSubdivisionVDF()
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
 	double dWidth = this->GetWidth(1);
 
 	switch(_nSubdivisionOpt)
@@ -85,6 +88,9 @@ void SampleRegion::PrepareSubdivisionVDF()
 
 void SampleRegion::InitSamplingProfiles(int nDimension)
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
     // shell width
     double dNumShellsTemperature = (double) _nNumShellsProfiles;
     _dShellWidthProfilesInit = this->GetWidth(nDimension) / dNumShellsTemperature;
@@ -416,6 +422,9 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 
 void SampleRegion::InitSamplingVDF(int nDimension)
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
     // shell width
     double dNumShellsVDF = (double) _nNumShellsVDF;
     _dShellWidthVDFInit = this->GetWidth(nDimension) / dNumShellsVDF;
@@ -564,6 +573,9 @@ void SampleRegion::InitSamplingVDF(int nDimension)
 
 void SampleRegion::DoDiscretisationProfiles(int nDimension)
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
     if(_bDiscretisationDoneProfiles == true)  // if allready done -> return
         return;
 
@@ -581,6 +593,9 @@ void SampleRegion::DoDiscretisationProfiles(int nDimension)
 
 void SampleRegion::DoDiscretisationVDF(int nDimension)
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
     if(_bDiscretisationDoneVDF == true)  // if allready done -> return
         return;
 
@@ -610,6 +625,9 @@ void SampleRegion::DoDiscretisationVDF(int nDimension)
 
 void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
     unsigned int nPosIndex;
     unsigned int nIndexMax = _nNumShellsProfiles - 1;
 
@@ -747,6 +765,9 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 
 void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
     // return if discretisation is not done yet
     // reason: v_max has to be determined first (when not set manually)
     if(false == _bDiscretisationDoneVDF)
@@ -843,6 +864,9 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 
 void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Domain* domain)
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
     int ownRank = domainDecomp->getRank();
 //  int numprocs = domainDecomp->getNumProcs();
 
@@ -1049,6 +1073,9 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 
 void SampleRegion::CalcGlobalValuesVDF()
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
     #ifdef ENABLE_MPI
 
         for(unsigned int s = 0; s < _nNumShellsVDF; s++)
@@ -1114,6 +1141,9 @@ void SampleRegion::CalcGlobalValuesVDF()
 
 void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
     // sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
     if( simstep <= _initSamplingProfiles )
         return;
@@ -1337,6 +1367,9 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 
 void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep)
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
     // sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
     if( simstep <= _initSamplingVDF )
         return;
@@ -1587,6 +1620,9 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
 
 void SampleRegion::ResetLocalValuesVDF()
 {
+	if(false == _SamplingEnabledVDF)
+		return;
+
     // reset values
     for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
     {
@@ -1615,6 +1651,9 @@ void SampleRegion::ResetLocalValuesVDF()
 
 void SampleRegion::ResetLocalValuesProfiles()
 {
+	if(false == _SamplingEnabledProfiles)
+		return;
+
 	RegionSampling* parent = static_cast<RegionSampling*>(_parent);
 	unsigned int nNumComponents = parent->GetNumComponents();
 
@@ -1681,31 +1720,30 @@ void SampleRegion::ResetLocalValuesProfiles()
 
 void SampleRegion::UpdateSlabParameters()
 {
-    double dWidth = this->GetWidth(1);
+	double dWidth = this->GetWidth(1);
+	double* dLowerCorner = this->GetLowerCorner();
 
-    // profiles
-    _nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);
-    _dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
+	// profiles
+	if(true == _SamplingEnabledProfiles)
+	{
+		_nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);
+		_dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
+
+		// recalculate shell midpoint positions
+		for(unsigned int s = 0; s < _nNumShellsProfiles; s++)
+			_dShellMidpointsProfiles[s] = (s + 0.5) * _dShellWidthProfiles + dLowerCorner[1];
+	}
 
 	// VDF
-    _nNumShellsVDF = round(dWidth / _dShellWidthVDFInit);
-    _dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
+	if(true == _SamplingEnabledVDF)
+	{
+		_nNumShellsVDF = round(dWidth / _dShellWidthVDFInit);
+		_dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
 
-
-    // recalculate shell midpoint positions
-    double* dLowerCorner = this->GetLowerCorner();
-
-    // profiles
-    for(unsigned int s = 0; s < _nNumShellsProfiles; s++)
-    {
-        _dShellMidpointsProfiles[s] = (s + 0.5) * _dShellWidthProfiles + dLowerCorner[1];
-    }
-
-    // VDF
-    for(unsigned int s = 0; s < _nNumShellsVDF; s++)
-    {
-        _dShellMidpointsVDF[s] = (s + 0.5) * _dShellWidthVDF + dLowerCorner[1];
-    }
+		// recalculate shell midpoint positions
+		for(unsigned int s = 0; s < _nNumShellsVDF; s++)
+			_dShellMidpointsVDF[s] = (s + 0.5) * _dShellWidthVDF + dLowerCorner[1];
+	}
 }
 
 

@@ -35,6 +35,7 @@ public:
     {
         _initSamplingProfiles   = initSamplingProfiles;
         _writeFrequencyProfiles = writeFrequencyProfiles;
+		_SamplingEnabledProfiles = true;
     }
     void SetParamVDF( unsigned long initSamplingVDF, unsigned long writeFrequencyVDF,
                       unsigned int nNumDiscreteStepsVDF, double dVeloMax)
@@ -43,6 +44,7 @@ public:
         _writeFrequencyVDF     = writeFrequencyVDF;
         _nNumDiscreteStepsVDF  = nNumDiscreteStepsVDF;
          _dVeloMax             = dVeloMax;
+		_SamplingEnabledVDF = true;
     }
 
     // subdivision
@@ -92,6 +94,7 @@ private:
 
     // control
     bool _bDiscretisationDoneProfiles;
+	bool _SamplingEnabledProfiles;
 
     // parameters
     unsigned long _initSamplingProfiles;
