@@ -132,10 +132,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_inputReader->setPhaseSpaceFile(token);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
 			} else if (phaseSpaceFileFormat == "MPI-IO") {
-			#ifndef ENABLE_MPI
-				global_log->error() << "MPI not enabled! Program exit..." << endl;
-				Simulation::exit(1);
-			#endif
+			#ifdef ENABLE_MPI
 				_inputReader = (InputBase*) new MPI_IOReader();
 				string token;
 				inputfilestream >> token;
@@ -143,6 +140,10 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				inputfilestream >> token;
 				_inputReader->setPhaseSpaceFile(token);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			#else
+				global_log->error() << "MPI not enabled! Program exit..." << endl;
+				Simulation::exit(1);
+			#endif
 			} else {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
 				Simulation::exit(1);

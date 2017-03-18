@@ -21,9 +21,10 @@
 #include "ensemble/PressureGradient.h"
 #include "Simulation.h"
 #include "molecules/Molecule.h"
-
+#ifdef ENABLE_MPI
 #include "parallel/DomainDecompBase.h"
 #include "parallel/ParticleData.h"
+#endif
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
 #include "utils/Timer.h"
@@ -310,6 +311,7 @@ void MPI_IOReader::readPhaseSpaceHeader(Domain* domain, double timestep) {
 unsigned long MPI_IOReader::readPhaseSpace(
 		ParticleContainer* particleContainer, list<ChemicalPotential>* lmu,
 		Domain* domain, DomainDecompBase* domainDecomp) {
+#ifdef ENABLE_MPI
 	Timer inputTimer;
 	inputTimer.start();
 
@@ -673,9 +675,13 @@ unsigned long MPI_IOReader::readPhaseSpace(
 			MPI_COMM_WORLD);
 
 	return globalMaxid;
+#else
+	return 0;
+#endif
 }
 
 void MPI_IOReader::handle_error(int i) {
+#ifdef ENABLE_MPI
 	char error_string[BUFSIZ];
 	int length_of_error_string;
 
@@ -684,4 +690,5 @@ void MPI_IOReader::handle_error(int i) {
 	global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
 	exit(1);
+#endif
 }

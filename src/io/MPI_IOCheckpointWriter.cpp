@@ -13,13 +13,15 @@
 
 #include "Common.h"
 #include "Domain.h"
-#include "parallel/DomainDecompBase.h"
 #include "utils/Logger.h"
 
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleCell.h"
+#ifdef ENABLE_MPI
 #include "parallel/ParticleData.h"
+#include "parallel/DomainDecompBase.h"
 #include <mpi.h>
+#endif
 #include <time.h>
 
 #include <cassert>
@@ -71,6 +73,7 @@ void MPI_IOCheckpointWriter::initOutput(ParticleContainer* particleContainer,
 
 void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainDecompBase* domainDecomp, Domain* domain,
 		unsigned long simstep, list<ChemicalPotential>* /*lmu*/, map<unsigned, CavityEnsemble>* /*mcav*/) {
+#ifdef ENABLE_MPI
 	if (simstep % _writeFrequency == 0) {
 		//get the file name
 		std::stringstream filenamestream;
@@ -383,6 +386,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		MPI_File_close(&fh);
 	}
+#endif
 }
 
 void MPI_IOCheckpointWriter::finishOutput(ParticleContainer* particleContainer,
@@ -391,6 +395,7 @@ void MPI_IOCheckpointWriter::finishOutput(ParticleContainer* particleContainer,
 }
 
 void MPI_IOCheckpointWriter::handle_error(int i) {
+#ifdef ENABLE_MPI
 	char error_string[BUFSIZ];
 	int length_of_error_string;
 
@@ -399,4 +404,5 @@ void MPI_IOCheckpointWriter::handle_error(int i) {
 	global_log->error() << "Writing of file was not successfull " << " , " << i
 			<< " , " << error_string << std::endl;
 	exit(1);
+#endif
 }
