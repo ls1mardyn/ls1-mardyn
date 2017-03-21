@@ -603,14 +603,14 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 		}
 	}
 	
-	//TEST: spring force is added to the LJ-force
+	//TEST: spring force is added to the LJ-force, as long as the spring constant is unlike zero
 	// the molecules to be effected by the spring force lay in one plane and have continous IDs;
 	// to add the spring force just once to each molecule of the upper layer of the upper plate
 	// an if-request is upstreamed
-	if (domain.getPG()->isSpringDamped()){
+	if (domain.isSpringDamped() && domain.getSpringConst() != 0.0){
 	    if (mi.getCounter() == 0){
 		for (unsigned int si = 0; si < 1; ++si) {
-		    PotForceSpring(domain.getPG()->getAverageY(), domain.getPG()->getMaxSpringID(), domain.getPG()->getMinSpringID(), domain.getPG()->getSpringConst(), mi.id(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep());
+		    PotForceSpring(domain.getAverageY(), domain.getMaxSpringID(), domain.getMinSpringID(), domain.getSpringConst(), mi.id(), mi.r(1), f, domain.getInitStatistics(), domain.getSimstep());
 		    mi.Fljcenteradd(si, f);
 		    for (unsigned short d = 0; d < 3; ++d)
 		    {
@@ -629,10 +629,10 @@ inline void PotForce(Molecule& mi, Molecule& mj, ParaStrm& params, double drm[3]
 	}
 	
 	//TEST: gravitational force is added to the LJ-force
-	if (domain.getPG()->isGravity()){
-	    if (mi.getCounterGravity() == 0 && mi.componentid() == domain.getPG()->getGravityComp()){
+	if (domain.isGravity()){
+	    if (mi.getCounterGravity() == 0 && mi.componentid() == domain.getGravityComp()){
 		for (unsigned int si = 0; si < 1; ++si) {
-		    PotForceGravity(domain.getPG()->getGravityDir(), domain.getPG()->getGravityForce(), f, domain.getInitStatistics(), domain.getSimstep());
+		    PotForceGravity(domain.getGravityDir(), domain.getGravityForce(), f, domain.getInitStatistics(), domain.getSimstep());
 		    mi.Fljcenteradd(si, f);
 		    for (unsigned short d = 0; d < 3; ++d)
 			Virial += drm[d] * f[d];		// TODO: Check if random or directed virial

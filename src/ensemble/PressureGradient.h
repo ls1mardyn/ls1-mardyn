@@ -38,20 +38,6 @@ public:
 	void assignCoset(unsigned int cid, unsigned int cosetid) { _universalComponentSetID[cid] = cosetid; }
 	//! @brief sets the information on the acceleration model for one coset
 	void specifyComponentSet(unsigned int cosetid, double v[3], double tau, double ainit[3], double timestep);
-	//! @brief sets type of movement for each component (ID)
-	void specifyMovementStyle(unsigned int cid, std::string moveStyle) { this->_movementCompID[cid] = moveStyle; }
-	//! @brief sets for type 'fixed' that it is fixed by not integrating every xth molecule
-	void specifyFixed(unsigned xth_mol);
-	//! @brief sets for type 'fixed' that it is fixed by not integrating a region spanned by the lower left and upper right corner
-	void specifyFixed(double x_min, double x_max, double y_min, double y_max, double z_min, double z_max);
-	/// assigns the type of fixation for the 'fixed' component: fix every xth molecule
-	bool isFixedEvery() { return this->_doFixEvery; }
-	/// every xth molecule is fixed
-	unsigned getFixEvery() { return this->_fixEvery; }
-	/// assigns the type of fixation for the 'fixed' component: fix each molecule within a region
-	bool isFixedRegion() { return this->_doFixRegion; }
-	/// region for the fixation of the 'fixed' component
-	double getFixedRegion(int d) { return this->_fixRegion[d]; }
 	
 	//! @brief sets the number of timesteps between two updates of the uniform acceleration
 	void setUCAT(unsigned int uCAT) { this->_universalConstantAccelerationTimesteps = uCAT; }
@@ -76,19 +62,10 @@ public:
 		DomainDecompBase* domainDecomp,
 		ParticleContainer* molCont, double dtConstantAcc
 	);
-	//! @brief returns the type of movement of each component (ID)
-	std::string getMovementStyle(unsigned int cid){ return this->_movementCompID[cid]; }
+	
 	//! @brief returns the acceleration map (necessary for passing data to the integrator)
 	std::map<unsigned int, double>* getUAA() { return this->_universalAdditionalAcceleration; }
-	//! @brief returns the cid of a component due to its type of movement
-	unsigned getCidMovement(std::string moveStyle, unsigned numberOfComp){
-	      for(unsigned i = 1; i < (numberOfComp+1); i++){
-		if(getMovementStyle(i) == moveStyle){
-		    return i;
-		}
-	      }
-	      return 0;
-	} 
+	
 	//! @brief returns the cosetid of a component (0 for unaccelerated components)
 	unsigned int getComponentSet(unsigned int cid) {
 		if(_universalComponentSetID.find(cid) == _universalComponentSetID.end())
@@ -110,7 +87,7 @@ public:
 	//! @brief calculates globalN and globalVelocitySum
 	void prepare_getMissingVelocity(DomainDecompBase* domainDecomp, ParticleContainer* molCont, unsigned int cosetid, unsigned numberOfComp, unsigned directedVelTime);
 	//! @brief returns the difference between the desired velocity and the global average velocity
-	double getMissingVelocity(unsigned int cosetid, unsigned short int d); 
+	double getMissingVelocity(unsigned int cosetid, unsigned short int d, unsigned long simstep, unsigned long init); 
 	//! @brief total number of particles that belong to the specified component set
 	double getCosetN(unsigned int cosetid) { return this->_globalN[cosetid]; }
 	unsigned int maxCoset() { return this->_universalTau.size(); }
@@ -145,23 +122,6 @@ public:
 	double* getTargetVelocity(unsigned int set);
 	double* getAdditionalAcceleration(unsigned int set);
 	
-	// exerts a gravity-like force on a certain component
-	void specifyGravity(unsigned int cid, unsigned int direction, double force);
-	bool isGravity() { return _isGravity; }
-	unsigned int getGravityComp() { return _gravitationalComp; }
-	unsigned int getGravityDir() { return _gravitationalDir; }
-	double getGravityForce() { return _gravitationalForce; }
-	
-	//TEST: Spring Force Influence
-	void specifySpringInfluence(unsigned long minSpringID, unsigned long maxSpringID, double averageYPos, double springConst);
-	bool isSpringDamped() {
-		return (this->_springConst > 0)
-				&& (this->_maxSpringID > this->_minSpringID);
-	}
-	unsigned long getMinSpringID() { return this->_minSpringID; }
-	unsigned long getMaxSpringID() { return this->_maxSpringID; }
-	double getAverageY() { return this->_averageYPos; }
-	double getSpringConst() { return this->_springConst; }
 	void setGlobalVelSumBeforeAcc(int d, unsigned cosetid, long double VelSum) {_globalVelSumBeforeAcc[d][cosetid] = VelSum; }
 	void setGlobalVelSumAfterAcc(int d, unsigned cosetid, long double VelSum) {_globalVelSumAfterAcc[d][cosetid] = VelSum; }
 	void setGlobalVelSumAfterThT(int d, unsigned cosetid, long double VelSum) {_globalVelSumAfterThT[d][cosetid] = VelSum; }
@@ -196,18 +156,6 @@ private:
 	unsigned int _universalConstantAccelerationTimesteps;
 	/// assigns a component set ID to some of the components
 	std::map<unsigned int, unsigned int> _universalComponentSetID;
-	/// assigns the type of movement to the components
-	std::map<unsigned, std::string> _movementCompID;
-	/// assigns the type of fixation for the 'fixed' component: fix every xth molecule
-	bool _doFixEvery;
-	/// every xth molecule is fixed
-	unsigned _fixEvery;
-	/// assigns the type of fixation for the 'fixed' component: fix each molecule within a region
-	bool _doFixRegion;
-	/// region for the fixation of the 'fixed' component
-	double _fixRegion[6];
-	/// determines whether shear force (true) or shear rate (false) is applied
-	bool _doApplyShearForce;
 	
 	/// local number of molecules that belong to a given component set ID
 	std::map<unsigned int, unsigned long> _localN;
@@ -238,18 +186,6 @@ private:
 	/// number of items in the velocity queue
 	std::map<unsigned int, unsigned int> _globalVelocityQueuelength;
 
-	/// gravitational force component
-	unsigned int _gravitationalComp;
-	/// gravitational force direction
-	unsigned int _gravitationalDir;
-	/// gravitational force
-	double _gravitationalForce;
-	/// gravitational force boolean
-	bool _isGravity;
-	
-	//TEST: Spring Force Influence
-	unsigned long _minSpringID, _maxSpringID;
-	double _averageYPos, _springConst;
 	/// global sum of the velocity vectors before artificial acceleration corresponding to a given component set ID
 	std::map<unsigned int, long double> _globalVelSumBeforeAcc[3];
 	/// global sum of the velocity vectors after artificial acceleration corresponding to a given component set ID
@@ -275,6 +211,8 @@ private:
 	/// component that is sheared
 	unsigned _shearComp;
 	unsigned _shearRampTime;
+	/// determines whether shear force (true) or shear rate (false) is applied
+	bool _doApplyShearForce;
 	std::map<unsigned int, long double> _directedShearVel;
 	std::map<unsigned int, long double> _directedShearVelAverage;
 	std::map<unsigned int, unsigned long> _localShearN;
@@ -292,5 +230,6 @@ private:
 	std::map<unsigned int, unsigned long> _averagedAccN;
 	std::map<unsigned int, std::deque<long double> > _globalPriorAccVelocitySums[3];
 	std::map<unsigned int, std::deque<unsigned long> > _globalPriorAccN;
+	
 };	
 #endif /* PRESSUREGRADIENT_H_ */

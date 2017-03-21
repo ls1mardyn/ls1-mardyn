@@ -191,7 +191,10 @@ public:
 	// returns a boolean operator that determines whether the thermostating is applied layerwise
 	bool isThermostatLayer() {return _enableThermostatLayers; }
 	// checks whether a molecule is affected by one of the thermostat layers and connects it eventually
-	int moleculeInLayer(double x, double y, double z);
+	int moleculeInLayer(double x, double y, double z, unsigned int cid);
+	// if the thermostat is applied to each layer in a wall instead of the complete system, the following functions become important
+	void setThermostatWallLayer();
+	bool isThermostatWallLayer() {return _enableThermostatWallLayers; }
 
 	//! @brief get the mixcoeff
 	std::vector<double> & getmixcoeff();
@@ -360,6 +363,8 @@ public:
 	void enableComponentwiseThermostat();
 	//! @brief enables the layerwise thermostat
 	void enableLayerwiseThermostat();
+	//! @brief enables the layerwise thermostat for walls
+	void enableLayerwiseWallThermostat();
 	//! @brief returns the ID of the "last" thermostat in the system
 	//!
 	//! The idea is that ID -1 refers to DOF without thermostats,
@@ -578,6 +583,52 @@ public:
 	bool isShearForce();
 	// Cancelling momentum for each component seperately
 	void cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* molCont);
+	
+	//! @brief sets type of movement for each component (ID)
+	void specifyMovementStyle(unsigned int cid, std::string moveStyle) { this->_movementCompID[cid] = moveStyle; }
+	//! @brief returns the type of movement of each component (ID)
+	std::string getMovementStyle(unsigned int cid){ return this->_movementCompID[cid]; }
+	//! @brief returns the cid of a component due to its type of movement
+	unsigned getCidMovement(std::string moveStyle, unsigned numberOfComp){
+	      for(unsigned i = 1; i < (numberOfComp+1); i++){
+		if(getMovementStyle(i) == moveStyle){
+		    return i;
+		}
+	      }
+	      return 0;
+	} 
+	
+	//! @brief sets for type 'fixed' that it is fixed by not integrating every xth molecule
+	void specifyFixed(unsigned xth_mol);
+	//! @brief sets for type 'fixed' that it is fixed by not integrating a region spanned by the lower left and upper right corner
+	void specifyFixed(double x_min, double x_max, double y_min, double y_max, double z_min, double z_max);
+	/// assigns the type of fixation for the 'fixed' component: fix every xth molecule
+	bool isFixedEvery() { return this->_doFixEvery; }
+	/// every xth molecule is fixed
+	unsigned getFixEvery() { return this->_fixEvery; }
+	/// assigns the type of fixation for the 'fixed' component: fix each molecule within a region
+	bool isFixedRegion() { return this->_doFixRegion; }
+	/// region for the fixation of the 'fixed' component
+	double getFixedRegion(int d) { return this->_fixRegion[d]; }
+		
+	// exerts a gravity-like force on a certain component
+	void specifyGravity(unsigned int cid, unsigned int direction, double force);
+	bool isGravity() { return _isGravity; }
+	unsigned int getGravityComp() { return _gravitationalComp; }
+	unsigned int getGravityDir() { return _gravitationalDir; }
+	double getGravityForce() { return _gravitationalForce; }
+	
+	//TEST: Spring Force Influence
+	// when the springConst is set to zero the upper layer is fixed completely
+	void specifySpringInfluence(unsigned long minSpringID, unsigned long maxSpringID, double averageYPos, double springConst);
+	bool isSpringDamped() {
+		return (this->_maxSpringID > this->_minSpringID);
+	}
+	unsigned long getMinSpringID() { return this->_minSpringID; }
+	unsigned long getMaxSpringID() { return this->_maxSpringID; }
+	double getAverageY() { return this->_averageYPos; }
+	double getSpringConst() { return this->_springConst; }	
+
 private:
 
 	//! rank of the local process
@@ -784,6 +835,7 @@ private:
 	//! does a componentwise thermostat apply?
 	bool _componentwiseThermostat;
 	bool _enableThermostatLayers;
+	bool _enableThermostatWallLayers;
 	//! thermostat IDs. negative: no thermostat, 0: global, positive: componentwise
 	//! in the case of a componentwise thermostat, all components are assigned
 	//! a thermostat ID different from zero.
@@ -799,6 +851,7 @@ private:
 	std::map<int, double> _localThermostatDirectedVelocity[3];
 	std::map<int, unsigned long>_thermostatTimeSlot[2];
 	std::map<int, double> _thermostatLayer[6];
+	std::map<int, int> _thermostatLayerComp;
 	
 	//! _localThermostatN[0] and _universalThermostatN[0] are always the total number
 	//! of particles in the subdomain and, respectively, the entire domain
@@ -923,6 +976,36 @@ private:
 	string _vtk;
 	string _all;
 	std::string _stressCalcMethodConfinement;
+	
+	/// assigns the type of movement to the components
+	std::map<unsigned, std::string> _movementCompID;
+	
+	/// assigns the type of fixation for the 'fixed' component: fix every xth molecule
+	bool _doFixEvery;
+	/// every xth molecule is fixed
+	unsigned _fixEvery;
+	/// assigns the type of fixation for the 'fixed' component: fix each molecule within a region
+	bool _doFixRegion;
+	/// region for the fixation of the 'fixed' component
+	double _fixRegion[6];
+	
+	/// gravitational force component
+	unsigned int _gravitationalComp;
+	/// gravitational force direction
+	unsigned int _gravitationalDir;
+	/// gravitational force
+	double _gravitationalForce;
+	/// gravitational force boolean
+	bool _isGravity;
+	
+	//TEST: Spring Force Influence
+	unsigned long _minSpringID, _maxSpringID;
+	double _averageYPos, _springConst;
+	
+	std::map<int, int> _originalThtID;
+	std::map<int, unsigned long> _originalStartTime;
+	std::map<int, unsigned long> _originalEndTime;
+	std::map<int, double> _originalTargetTemp;
 };
 
 

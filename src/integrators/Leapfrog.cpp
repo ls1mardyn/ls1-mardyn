@@ -52,36 +52,37 @@ void Leapfrog::transition1to2(ParticleContainer* molCont, Domain* domain) {
 		Molecule* tempMolecule;
 		double vcorr = 2. - 1. / domain->getGlobalBetaTrans();
 		double Dcorr = 2. - 1. / domain->getGlobalBetaRot();
-		unsigned molID;
 		unsigned int cid;
 		int thermostat;
+		unsigned molID;
+
 		string moved ("moved");
 		string fixed ("fixed");
-		unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
-		unsigned cid_fixed =  domain->getPG()->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
+		unsigned cid_moved =  domain->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+		unsigned cid_fixed =  domain->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
 
-		
 		for (tempMolecule = molCont->begin(); tempMolecule != molCont->end(); tempMolecule = molCont->next()) {
-		  molID = tempMolecule->id();
+		  molID = tempMolecule->id();	
 		  cid = tempMolecule->componentid();
 		  thermostat = domain->getThermostat(cid);
-		  if(domain->isThermostatLayer() == true){
-			thermostat = domain->moleculeInLayer(tempMolecule->r(0), tempMolecule->r(1), tempMolecule->r(2));
+		  if(domain->isThermostatLayer() == true || domain->isThermostatWallLayer() == true){
+			thermostat = domain->moleculeInLayer(tempMolecule->r(0), tempMolecule->r(1), tempMolecule->r(2), tempMolecule->componentid());
 		  }
-		  
-		  /*if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!*/
-		  if (domain->getPG()->isFixedEvery() == true && molID%domain->getPG()->getFixEvery() == 0 && cid == cid_fixed){}
-		  else if (domain->getPG()->isFixedRegion() == true && cid == cid_fixed
-				&& tempMolecule->r(0) > domain->getPG()->getFixedRegion(0) && tempMolecule->r(0) < domain->getPG()->getFixedRegion(1) 
-				&& tempMolecule->r(1) > domain->getPG()->getFixedRegion(2) && tempMolecule->r(1) < domain->getPG()->getFixedRegion(3)
-				&& tempMolecule->r(2) > domain->getPG()->getFixedRegion(4) && tempMolecule->r(2) < domain->getPG()->getFixedRegion(5)){}
-		  else if ((domain->getPG()->isFixedEvery() == false && domain->getPG()->isFixedRegion() == false && molID%500 == 0 && cid == cid_fixed) 
-				|| (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	
-		  else {					
-		    if(domain->isScaling1Dim(thermostat) && domain->getAlphaTransCorrection(thermostat) == false){
-			vcorr = 2. - 1. / domain->getGlobalAlphaTrans();
-		    }
-		    tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr, domain);
+		  if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){
+				for(unsigned short d=0;d<3;++d) tempMolecule->setv(d, 0.0);	
+		  }else if (domain->isFixedRegion() == true && cid == cid_fixed
+				&& tempMolecule->r(0) > domain->getFixedRegion(0) && tempMolecule->r(0) < domain->getFixedRegion(1) 
+				&& tempMolecule->r(1) > domain->getFixedRegion(2) && tempMolecule->r(1) < domain->getFixedRegion(3)
+				&& tempMolecule->r(2) > domain->getFixedRegion(4) && tempMolecule->r(2) < domain->getFixedRegion(5)){ 
+				for(unsigned short d=0;d<3;++d) tempMolecule->setv(d, 0.0);	
+		  }else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 && cid == cid_fixed) 
+				|| (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){
+				for(unsigned short d=0;d<3;++d) tempMolecule->setv(d, 0.0);		
+		  }else {				
+			if(domain->isScaling1Dim(thermostat) && domain->getAlphaTransCorrection(thermostat) == false){
+				vcorr = 2. - 1. / domain->getGlobalAlphaTrans();
+			}
+			tempMolecule->upd_preF(_timestepLength, vcorr, Dcorr, domain);
 		  }
 		}
 
@@ -100,36 +101,44 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 		map<int, double> summv2;
 		map<int, double> sumIw2;
 		map<int, double> summv2_1Dim;
-		int molID;
 		unsigned int cid;
+		int molID;
 		
 		string moved ("moved");
 		string fixed ("fixed");
-		unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
-		unsigned cid_fixed =  domain->getPG()->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
+		unsigned cid_moved =  domain->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+		unsigned cid_fixed =  domain->getCidMovement(fixed, domain->getNumberOfComponents()) - 1;
 
 		double dt_half = 0.5 * this->_timestepLength;
 		if (domain->severalThermostats()) {
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
 				molID = tM->id();
 				cid = tM->componentid();
-				/*if((molID%250 == 0 && cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}	// each 250th Molecules in Component CID=3 and each 500th in CID=2 (for t<=_initStatistics) are fixed to allow Temperatures T > 0K!*/
-				if (domain->getPG()->isFixedEvery() == true && molID%domain->getPG()->getFixEvery() == 0 && cid == cid_fixed){}
-				else if (domain->getPG()->isFixedRegion() == true && cid == cid_fixed
-						&& tM->r(0) > domain->getPG()->getFixedRegion(0) && tM->r(0) < domain->getPG()->getFixedRegion(1) 
-						&& tM->r(1) > domain->getPG()->getFixedRegion(2) && tM->r(1) < domain->getPG()->getFixedRegion(3)
-						&& tM->r(2) > domain->getPG()->getFixedRegion(4) && tM->r(2) < domain->getPG()->getFixedRegion(5)){}
-				else if ((domain->getPG()->isFixedEvery() == false && domain->getPG()->isFixedRegion() == false && molID%500 == 0 && cid == cid_fixed) 
-						|| (_simulation.getSimulationStep() <= _simulation.getInitStatistics() && (molID%500 == 0 && cid == cid_moved))){}
-				else {
-				  int thermostat = domain->getThermostat(cid);
-				  if(domain->isThermostatLayer() == true){
-				      thermostat = domain->moleculeInLayer(tM->r(0), tM->r(1), tM->r(2));
-				  }
-				  tM->upd_postF(dt_half, summv2[thermostat], summv2_1Dim[thermostat], sumIw2[thermostat], domain);
-				  
-				  N[thermostat]++;
-				  rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+				int thermostat = domain->getThermostat(cid);
+				if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){ 
+					for(unsigned short d=0;d<3;++d) tM->setv(d, 0.0); 
+				}else if (domain->isFixedRegion() == true && cid == cid_fixed
+					&& tM->r(0) > domain->getFixedRegion(0) && tM->r(0) < domain->getFixedRegion(1) 
+					&& tM->r(1) > domain->getFixedRegion(2) && tM->r(1) < domain->getFixedRegion(3)
+					&& tM->r(2) > domain->getFixedRegion(4) && tM->r(2) < domain->getFixedRegion(5)){ 
+					for(unsigned short d=0;d<3;++d) tM->setv(d, 0.0); 
+				}else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 
+					&& cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() 
+					&& (molID%500 == 0 && cid == cid_moved))){
+					for(unsigned short d=0;d<3;++d) tM->setv(d, 0.0);
+				}else {
+					if(domain->isThermostatLayer() == true || domain->isThermostatWallLayer() == true){
+						thermostat = domain->moleculeInLayer(tM->r(0), tM->r(1), tM->r(2), tM->componentid());
+					}
+					tM->upd_postF(dt_half, summv2[thermostat], summv2_1Dim[thermostat], sumIw2[thermostat], domain);
+				 
+					N[thermostat]++;
+					rotDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
+					if (domain->isSpringDamped() == true && tM->componentid() == cid_moved &&  domain->getSpringConst() == 0 
+						&& tM->r(1) > domain->getAverageY()-1.5){
+						N[thermostat]--;
+						rotDOF[thermostat] -= tM->component()->getRotationalDegreesOfFreedom();
+					}
 				}
 			}
 		}
@@ -140,10 +149,27 @@ void Leapfrog::transition2to3(ParticleContainer* molCont, Domain* domain) {
 			double sumIw2gt = 0.0;
 			double summv2_1Dimgt = 0.0;
 			for (tM = molCont->begin(); tM != molCont->end(); tM = molCont->next()) {
-				tM->upd_postF(dt_half, summv2gt, summv2_1Dimgt, sumIw2gt, domain);
-				assert(summv2gt >= 0.0);
-				Ngt++;
-				rotDOFgt += tM->component()->getRotationalDegreesOfFreedom();
+				molID = tM->id();
+				cid = tM->componentid();
+				if (domain->isFixedEvery() == true && molID%domain->getFixEvery() == 0 && cid == cid_fixed){ }
+				else if (domain->isFixedRegion() == true && cid == cid_fixed
+					&& tM->r(0) > domain->getFixedRegion(0) && tM->r(0) < domain->getFixedRegion(1) 
+					&& tM->r(1) > domain->getFixedRegion(2) && tM->r(1) < domain->getFixedRegion(3)
+					&& tM->r(2) > domain->getFixedRegion(4) && tM->r(2) < domain->getFixedRegion(5)){ }
+				else if ((domain->isFixedEvery() == false && domain->isFixedRegion() == false && molID%500 == 0 
+					&& cid == cid_fixed) || (_simulation.getSimulationStep() <= _simulation.getInitStatistics() 
+					&& (molID%500 == 0 && cid == cid_moved))){ }
+				else {
+					tM->upd_postF(dt_half, summv2gt, summv2_1Dimgt, sumIw2gt, domain);
+					assert(summv2gt >= 0.0);
+					Ngt++;
+					rotDOFgt += tM->component()->getRotationalDegreesOfFreedom();
+					if (domain->isSpringDamped() == true && tM->componentid() == cid_moved &&  domain->getSpringConst() == 0 
+						&& tM->r(1) > domain->getAverageY()-1.5){
+						Ngt--;
+						rotDOFgt -= tM->component()->getRotationalDegreesOfFreedom();
+					}
+				}
 			}
 			N[0] = Ngt;
 			rotDOF[0] = rotDOFgt;
@@ -206,13 +232,25 @@ void Leapfrog::accelerateUniformly(ParticleContainer* molCont, Domain* domain) {
 void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, ParticleContainer* molCont, Domain* domain) {
 	map<unsigned, double> componentwiseVelocityDelta[3];
 	string moved ("moved");
-	unsigned cid_moved =  domain->getPG()->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
+	unsigned cid_moved =  domain->getCidMovement(moved, domain->getNumberOfComponents()) - 1;
 	//calculates globalN and globalVelocitySum for getMissingVelocity(); necessary!
 	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents(), _simulation.getDirectedVelocityTime());
 	
+	// time span in which the acceleration or target velocity is gradually increased to its final value
+	int influencingTime = _simulation.getSimulationStep() -_simulation.getInitStatistics() - 25000;
+	// asymptotic value for the influenceFactor
+	double influenceFactor = 0.1265769815;
+	
+	// during influencingTime span the influence of the acceleration delta_v is slowly decreased from 1 to 0.1265769815
+	// ---> at the beginning the influence of the acceleration is a lot more intense than later ---> increasing stability!
+	if(influencingTime > 0 && abs(influencingTime) < _simulation.getDirectedVelocityTime())
+		influenceFactor = 1.0 - exp((-1)*(double)_simulation.getDirectedVelocityTime()/((double)influencingTime*exp(2)));
+	else if(influencingTime <= 0)
+		influenceFactor = 1.0;
+        
 	// returns the value for delta_v = v_target - 2*v_directed,currently + v_directed,average
 	for (int d = 0; d < 3; d++)
-	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d);
+	  componentwiseVelocityDelta[d][cid_moved] = domain->getPG()->getMissingVelocity(cid_moved, d, _simulation.getSimulationStep(), _simulation.getInitStatistics());
 	
 	for(int d = 0; d < 3; d++)
 	  domain->getPG()->addGlobalVelSumBeforeAcc(d, cid_moved, domain->getPG()->getGlobalVelSum(d, cid_moved) / domain->getPG()->getGlobalN(cid_moved));
@@ -221,9 +259,9 @@ void Leapfrog::accelerateInstantaneously(DomainDecompBase* domainDecomp, Particl
 	for (Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next()) {
 		unsigned cid = thismol->componentid();
 		assert(componentwiseVelocityDelta[0].find(cid) != componentwiseVelocityDelta[0].end());
-		thismol->vadd(componentwiseVelocityDelta[0][cid],
-		              componentwiseVelocityDelta[1][cid],
-		              componentwiseVelocityDelta[2][cid]);
+		thismol->vadd(influenceFactor*componentwiseVelocityDelta[0][cid],
+		              influenceFactor*componentwiseVelocityDelta[1][cid],
+		              influenceFactor*componentwiseVelocityDelta[2][cid]);
 	}
 	// Control of velocity after artificial acceleration
 	domain->getPG()->prepare_getMissingVelocity(domainDecomp, molCont, cid_moved, domain->getNumberOfComponents(), _simulation.getDirectedVelocityTime());

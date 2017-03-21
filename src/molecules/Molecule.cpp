@@ -157,17 +157,21 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
 	int thermostat = dom->getThermostat(this->componentid());
-	if(dom->isThermostatLayer() == true){
-		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
+	if(dom->isThermostatLayer() == true || dom->isThermostatWallLayer() == true){
+		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2), this->componentid());
 	}
 	int dim;
+	string moved ("moved");
+	unsigned cid_moved =  dom->getCidMovement(moved, dom->getNumberOfComponents()) - 1;
 	
 	// consideration of the one-dimensional thermostat
 	if(dom->isScaling1Dim(thermostat)  && dom->getAlphaTransCorrection(thermostat) == false){
 	    map<int, int> Dim = dom->getDim();
 	    dim = Dim[thermostat];
 		for (unsigned short d = 0; d < 3; ++d) {
-		   if(d == dim)
+		   if (d == 1 && dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
+		      _v[d] = 0.0;
+		   else if(d == dim)
 		      _v[d] = vcorr * _v[d] + dtInv2m * _F[d];
 		   else
 		      _v[d] = _v[d] + dtInv2m * _F[d];
@@ -180,7 +184,10 @@ void Molecule::upd_preF(double dt, double vcorr, double Dcorr, Domain *dom) {
 	}
 	else{
 	    for (unsigned short d = 0; d < 3; ++d) {
-		_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
+	        if (d == 1 && dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5)
+		      _v[d] = 0.0;
+		else
+			_v[d] = vcorr * _v[d] + dtInv2m * _F[d];
 		
 		//rOld necessary for the calculation of the diffusion coefficient
 		 _rOld[d] = _r[d];
@@ -243,7 +250,21 @@ void Molecule::upd_cache() {
 }
 
 void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, double& sumIw2, Domain *dom) {
-	double dtInv2m = dt_halve / _m;
+   string moved ("moved");
+   unsigned cid_moved =  dom->getCidMovement(moved, dom->getNumberOfComponents()) - 1;	
+   double dtInv2m = dt_halve / _m;
+   
+   if (dom->isSpringDamped() == true && this->componentid() == cid_moved &&  dom->getSpringConst() == 0 && _r[1] > dom->getAverageY()-1.5){
+	summv2 += 0.0;
+	summv2_1Dim += 0.0;
+	sumIw2 += 0.0;
+	
+	for (unsigned short d = 0; d < 3; d++) {
+		_v[d] += 0.0;
+		_L[d] += 0.0;
+	}
+   }else{	
+	
 	double v2 = 0.0;
 	double v_aux = 0.0;
 
@@ -254,8 +275,8 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 		_L[d] += dt_halve * _M[d];
 	}
 	
-    assert(!isnan(v2)); // catches NaN
-    summv2 += _m * v2;
+	assert(!isnan(v2)); // catches NaN
+	summv2 += _m * v2;
  
 	double w[3];
 	_q.rotate(_L, w); // L = D = Iw
@@ -264,13 +285,13 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 		w[d] *= _invI[d];
 		Iw2 += _I[d] * w[d] * w[d];
 	}
-    assert(!isnan(Iw2)); // catches NaN
+	assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 	
 	// consideration of the one-dimensional thermostat
 	int thermostat = dom->getThermostat(this->componentid());
-	if(dom->isThermostatLayer() == true){
-		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
+	if(dom->isThermostatLayer() == true || dom->isThermostatWallLayer() == true){
+		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2), this->componentid());
 	}
 	if(dom->isScaling1Dim(thermostat)){
 	    map<int, int> Dim = dom->getDim();
@@ -288,6 +309,8 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& summv2_1Dim, d
 		  }
 		}	  
 	}
+   }
+
 }
 
 double Molecule::U_rot() {
@@ -309,8 +332,8 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& summv2_1Dim, double& su
 	
 	double v2_1Dim = 0.0;
 	int thermostat = dom->getThermostat(this->componentid());
-	if(dom->isThermostatLayer() == true){
-		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2));
+	if(dom->isThermostatLayer() == true || dom->isThermostatWallLayer() == true){
+		thermostat = dom->moleculeInLayer(this->r(0), this->r(1), this->r(2), this->componentid());
 	}
 	// consideration of the one-dimensional thermostat
 	if(dom->isScaling1Dim(thermostat)){ 
@@ -342,8 +365,9 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, string directed
 	  v2 = (_v[0]-_directedVelocitySlab[0])*(_v[0]-_directedVelocitySlab[0]) + (_v[1]-_directedVelocitySlab[1])*(_v[1]-_directedVelocitySlab[1]) + (_v[2]-_directedVelocitySlab[2])*(_v[2]-_directedVelocitySlab[2]);
 	else if(directedVelocityType == Stress)
 	  v2 = (_v[0]-_directedVelocityStress[0])*(_v[0]-_directedVelocityStress[0]) + (_v[1]-_directedVelocityStress[1])*(_v[1]-_directedVelocityStress[1]) + (_v[2]-_directedVelocityStress[2])*(_v[2]-_directedVelocityStress[2]);
-	else if(directedVelocityType == Confinement)
+	else if(directedVelocityType == Confinement){
 	  v2 = (_v[0]-_directedVelocityConfinement[0])*(_v[0]-_directedVelocityConfinement[0]) + (_v[1]-_directedVelocityConfinement[1])*(_v[1]-_directedVelocityConfinement[1]) + (_v[2]-_directedVelocityConfinement[2])*(_v[2]-_directedVelocityConfinement[2]);
+	}
 	else if(directedVelocityType == Default)
 	  v2 = (_v[0]-_directedVelocity[0])*(_v[0]-_directedVelocity[0]) + (_v[1]-_directedVelocity[1])*(_v[1]-_directedVelocity[1]) + (_v[2]-_directedVelocity[2])*(_v[2]-_directedVelocity[2]);
 	else if(directedVelocityType == noDirVel)
@@ -847,9 +871,20 @@ double Molecule::weightingFunctionPyramide(unsigned xun, unsigned yun, double de
 
 void Molecule::write(ostream& ostrm) const {
 	ostrm << _id << "\t" << (_component->ID() + 1) << "\t"
-	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
-	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
-	      << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
+	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t";
+	      if (_v[0] != _v[0])
+		   ostrm << "0.0";
+	      else
+		   ostrm << _v[0] << " ";
+	      if (_v[1] != _v[1])
+		   ostrm << "0.0";
+	      else
+		   ostrm << _v[1] << " ";
+	      if (_v[2] != _v[2])
+		   ostrm << "0.0\t";
+	      else
+		   ostrm << _v[2] << "\t";
+	ostrm << _q.qw() << " " << _q.qx() << " " << _q.qy() << " " << _q.qz() << "\t"
 	      << _L[0] << " " << _L[1] << " " << _L[2] << "\t"
 	      << endl;
 }

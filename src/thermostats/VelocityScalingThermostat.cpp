@@ -52,8 +52,8 @@ void VelocityScalingThermostat::apply(ParticleContainer *moleculeContainer, Doma
 			unsigned cid = molecule->componentid();
 			double alphaTrans = _globalAlphaTrans;
 			thermostatId = _simulation.getDomain()->getThermostat(cid);
-			if(_simulation.getDomain()->isThermostatLayer() == true){
-			  thermostatId = _simulation.getDomain()->moleculeInLayer(molecule->r(0), molecule->r(1), molecule->r(2));
+			if(_simulation.getDomain()->isThermostatLayer() == true || _simulation.getDomain()->isThermostatWallLayer() == true){
+			  thermostatId = _simulation.getDomain()->moleculeInLayer(molecule->r(0), molecule->r(1), molecule->r(2), molecule->componentid());
 			}
 			betaTrans = _componentBetaTrans[thermostatId];
 			betaRot   = _componentBetaRot[thermostatId];
@@ -154,8 +154,8 @@ void VelocityScalingThermostat::calculateDirectedVelocities(ParticleContainer *m
    
    string moved ("moved");
    string fixed ("fixed");
-   unsigned cid_moved = _simulation.getCIDMovement(moved, _simulation.getDomain()->getNumberOfComponents()) - 1;
-   unsigned cid_fixed = _simulation.getCIDMovement(fixed, _simulation.getDomain()->getNumberOfComponents()) - 1;
+   unsigned cid_moved = _simulation.getDomain()->getCidMovement(moved, _simulation.getDomain()->getNumberOfComponents()) - 1;
+   unsigned cid_fixed = _simulation.getDomain()->getCidMovement(fixed, _simulation.getDomain()->getNumberOfComponents()) - 1;
    
    // ------- PREPARATION --------
    if(_simulation.isRecordingSlabProfile()){
@@ -704,8 +704,8 @@ void VelocityScalingThermostat::calculateDirectedVelocitiesNeighbourList(Particl
    
    string moved ("moved");
    string fixed ("fixed");
-   unsigned cid_moved = _simulation.getCIDMovement(moved, _simulation.getDomain()->getNumberOfComponents()) - 1;
-   unsigned cid_fixed = _simulation.getCIDMovement(fixed, _simulation.getDomain()->getNumberOfComponents()) - 1;
+   unsigned cid_moved = _simulation.getDomain()->getCidMovement(moved, _simulation.getDomain()->getNumberOfComponents()) - 1;
+   unsigned cid_fixed = _simulation.getDomain()->getCidMovement(fixed, _simulation.getDomain()->getNumberOfComponents()) - 1;
    
    std::map<unsigned,  std::map<double, std::map<double, bool> > > list;
    std::map<unsigned,  std::map<unsigned, std::map<unsigned, std::map<unsigned, bool> > > > list_Slab;

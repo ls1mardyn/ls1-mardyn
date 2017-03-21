@@ -130,7 +130,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			domain->setComponentThermostat( component_id, thermostat_id );
 		}
 		else if(token == "ThLayer") {
-			// specify a thermostat for a component
+			// specify a thermostat for a layer
 			if( !domain->severalThermostats() )
 				domain->enableLayerwiseThermostat();
 			int thermostat_id;
@@ -202,8 +202,8 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			string moved ("moved");
 			string fixed ("fixed");
 			for(unsigned cid = 1; cid <= numcomponents; cid++){
-			  if(moved.compare(domain->getPG()->getMovementStyle(cid)) != 0 && fixed.compare(domain->getPG()->getMovementStyle(cid)) != 0)
-			    domain->getPG()->specifyMovementStyle(cid, free);
+			  if(moved.compare(domain->getMovementStyle(cid)) != 0 && fixed.compare(domain->getMovementStyle(cid)) != 0)
+			    domain->specifyMovementStyle(cid, free);
 			}
 			
 			for( unsigned int i = 0; i < numcomponents; i++ ) {
@@ -314,11 +314,11 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 				if (token == "every") {
 					unsigned xth_mol;
 					_phaseSpaceHeaderFileStream >> xth_mol;
-					domain->getPG()->specifyFixed(xth_mol);
+					domain->specifyFixed(xth_mol);
 				}else if (token == "region") {	
 					double x_min, x_max, y_min, y_max, z_min, z_max;
 					_phaseSpaceHeaderFileStream >> x_min >> x_max >> y_min >> y_max >> z_min >> z_max;
-					domain->getPG()->specifyFixed(x_min, x_max, y_min, y_max, z_min, z_max);
+					domain->specifyFixed(x_min, x_max, y_min, y_max, z_min, z_max);
 				}else{	
 					global_log->error() << "Expected 'every' or 'region' instead of '"
 						<< token << "'.\n";
@@ -328,7 +328,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 					exit(1);
 				}
 			}
-			domain->getPG()->specifyMovementStyle(component_id, moveStyle);
+			domain->specifyMovementStyle(component_id, moveStyle);
 			if(fixed.compare(moveStyle) == 0 || moved.compare(moveStyle) == 0 || free.compare(moveStyle) == 0)
 			  global_log->info() << "Component No. " << component_id << " is " << moveStyle << endl;
 			else{
@@ -343,7 +343,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			_phaseSpaceHeaderFileStream >> component_id >> cosetid;
 			component_id--; // FIXME: Component ID starting with 0 in program ...
 			domain->getPG()->assignCoset( component_id, cosetid );
-			if(moved.compare(domain->getPG()->getMovementStyle(component_id+1)) != 0){
+			if(moved.compare(domain->getMovementStyle(component_id+1)) != 0){
 			  global_log->info() << "Invalid type of movement for component No. \'" << component_id+1 << "\' found. [Allowed:  moved]" << endl;
 			  global_log->error() << "Invalid type of movement for component No. \'" << component_id+1 << "\' found. [Allowed: moved]" << endl;
 			  header = false;
@@ -370,7 +370,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			double springConst;
 			_phaseSpaceHeaderFileStream >> springConst;
 
-			domain->getPG()->specifySpringInfluence(minSpringID, maxSpringID, averageYPos, springConst);
+			domain->specifySpringInfluence(minSpringID, maxSpringID, averageYPos, springConst);
 		}
 		else if(token == "Gravity") {
 			unsigned int cid, direction;
@@ -378,7 +378,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 			_phaseSpaceHeaderFileStream >> cid >> direction >> force;
 
 			cid--;
-			domain->getPG()->specifyGravity(cid, direction, force);
+			domain->specifyGravity(cid, direction, force);
 			
 		}
 		else {

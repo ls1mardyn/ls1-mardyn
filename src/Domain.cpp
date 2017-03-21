@@ -106,6 +106,7 @@ Domain::Domain(int rank, PressureGradient* pg){
 	}
 	this->_differentBarostatInterval = false;
 	this->_enableThermostatLayers = false;
+	this->_enableThermostatWallLayers = false;
 	for(int cid = 0; cid < maxThermostat(); cid++){
 	  this->_scale_v_1Dim[cid] = false;
 	  this->_alphaTransCorrection[cid] = false;
@@ -118,6 +119,10 @@ Domain::Domain(int rank, PressureGradient* pg){
 	this->_local2KETrans_1Dim[0] = 0.0;
 	this->_universalATrans = map<int, double>();
 	this->_universalATrans[0] = 1.0;
+	
+	this->_doFixRegion = false;
+	this->_doFixEvery = false;
+	this->_isGravity = false;
 	
 	this->_confinementMidPointID[0] = 0;
 	this->_confinementMidPointID[1] = 0;
@@ -289,7 +294,7 @@ void Domain::calculateGlobalValues(
 	 * thermostat ID 0 represents the entire system
 	 */
 	map<int, unsigned long>::iterator thermit;
-	if( _componentwiseThermostat || _enableThermostatLayers)
+	if( _componentwiseThermostat || _enableThermostatLayers || _enableThermostatWallLayers)
 	{ 
 #ifndef NDEBUG
 		global_log->debug() << "* applying a componentwise thermostat" << endl;
@@ -349,7 +354,7 @@ void Domain::calculateGlobalValues(
 		rotDOF = domainDecomp->collCommGetUnsLong();
 		domainDecomp->collCommFinalize();
 		if(!this->_localRank)
-		global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF 
+		        global_log->debug() << "[ thermostat ID " << thermit->first << "]\tN = " << numMolecules << "\trotDOF = " << rotDOF 
 			<< "\tmv2 = " <<  summv2 << "\tIw2 = " << sumIw2 << endl;
 			
 		this->_universalThermostatN[thermit->first] = numMolecules;
@@ -503,6 +508,14 @@ void Domain::calculateGlobalValues(
 			<< " bt=" << _universalBTrans[thermit->first]
 			<< " br=" << _universalBRot[thermit->first] << "\n";
 #endif
+			if(!this->_localRank)
+		        global_log->debug()/*cout*/ << "* Th" << thermit->first << " N=" << numMolecules
+			<< " DOF=" << rotDOF + 3.0*numMolecules
+			<< " Tcur=" << _globalTemperatureMap[thermit->first]
+			<< " Ttar=" << _universalTargetTemperature[thermit->first]
+			<< " Tfactor=" << Tfactor
+			<< " bt=" << _universalBTrans[thermit->first]
+			<< " br=" << _universalBRot[thermit->first] << "\n";
 	}
 	if(this->_universalSelectiveThermostatCounter > 0)
 		this->_universalSelectiveThermostatCounter--;
@@ -515,7 +528,7 @@ void Domain::calculateGlobalValues(
 void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
 	Molecule* tM;
-	if(this->_componentwiseThermostat || this->_enableThermostatLayers)
+	if(this->_componentwiseThermostat || this->_enableThermostatLayers || this->_enableThermostatWallLayers)
 	{		
 		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
 				thit != _universalUndirectedThermostat.end();
@@ -528,8 +541,8 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
-			if(isThermostatLayer() == true){
-			  thermostat = moleculeInLayer(tM->r(0), tM->r(1), tM->r(2));
+			if(isThermostatLayer() == true || isThermostatWallLayer() == true){
+			  thermostat = moleculeInLayer(tM->r(0), tM->r(1), tM->r(2), tM->componentid());
 			}
 			if(this->_universalUndirectedThermostat[thermostat] && thermostat != -10)
 			{
@@ -552,14 +565,14 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
 	Molecule* tM;
-	if(this->_componentwiseThermostat || this->_enableThermostatLayers)
+	if(this->_componentwiseThermostat || this->_enableThermostatLayers || this->_enableThermostatWallLayers)
 	{	
 		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
-			if(isThermostatLayer() == true)
-			  thermostat = moleculeInLayer(tM->r(0), tM->r(1), tM->r(2));
+			if(isThermostatLayer() == true || isThermostatWallLayer() == true)
+			  thermostat = moleculeInLayer(tM->r(0), tM->r(1), tM->r(2), tM->componentid());
 			this->_localThermostatN[thermostat]++;
 			this->_localRotationalDOF[thermostat] += tM->component()->getRotationalDegreesOfFreedom();
 			if(this->_universalUndirectedThermostat[thermostat]  && thermostat != -10)
@@ -611,11 +624,18 @@ void Domain::writeCheckpoint( string filename,
 		ofstream checkpointfilestream(filename.c_str());
 		checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
 		checkpointfilestream << "\n";
-		checkpointfilestream << "currentTime\t" << _simulation.getSimulationTime() << endl;
+		checkpointfilestream << "currentTime\t" << _simulation.getSimulationTime()-_simulation.getTimeStepLength() << endl;
 		checkpointfilestream << "Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
-		if(this->_componentwiseThermostat || this->_enableThermostatLayers)
+		if(this->_componentwiseThermostat || this->_enableThermostatLayers || this->_enableThermostatWallLayers)
 		{
 		    if(!this->_enableThermostatLayers){
+		      if(this->_enableThermostatWallLayers){
+			for( unsigned compID = 0; compID < getNumberOfComponents(); compID++)
+			{
+				if(0 > this->_originalThtID[compID]) continue;
+				checkpointfilestream << "CT\t" << compID+1 << "\t" << this->_originalThtID[compID] << "\n";
+			}      
+		      }else{
 			for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
 					thermit != this->_componentToThermostatIdMap.end();
 					thermit++ )
@@ -624,7 +644,15 @@ void Domain::writeCheckpoint( string filename,
 				checkpointfilestream << "CT\t" << 1+thermit->first
 					<< "\t" << thermit->second << "\n";
 			}
+		      }
 		    }
+		    if(this->_enableThermostatWallLayers){
+			for( unsigned compID = 0; compID < getNumberOfComponents(); compID++)
+			{
+				if((0 >= this->_originalTargetTemp[compID])) continue;
+				checkpointfilestream << "ThT " << this->_originalThtID[compID] << "\t" << this->_originalTargetTemp[compID] << "\n";
+			}      
+		      }else{
 			for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
 					Tit != this->_universalTargetTemperature.end();
 					Tit++ )
@@ -632,6 +660,7 @@ void Domain::writeCheckpoint( string filename,
 				if((0 >= Tit->first) || (0 >= Tit->second)) continue;
 				checkpointfilestream << "ThT " << Tit->first << "\t" << Tit->second << "\n";
 			}
+		      }
 		    if(this->_enableThermostatLayers){
 			for( map<int, double>::iterator Tit = this->_universalTargetTemperature.begin();
 					Tit != this->_universalTargetTemperature.end();
@@ -642,6 +671,14 @@ void Domain::writeCheckpoint( string filename,
 				<< _thermostatLayer[2][Tit->first] << "\t" << _thermostatLayer[3][Tit->first] << "\t" <<  _thermostatLayer[4][Tit->first] << "\t" << _thermostatLayer[5][Tit->first] << "\n";
 			}
 		    }
+		    if(this->_enableThermostatWallLayers){
+			for( unsigned compID = 0; compID < getNumberOfComponents(); compID++)
+			{
+				if((_simulation.getSimulationStep()-1) == this->_originalEndTime[compID])
+				    checkpointfilestream << "#";
+				checkpointfilestream << "ThTS " << this->_originalThtID[compID] << "\t" << this->_originalStartTime[compID] << " " << this->_originalEndTime[compID] << "\n";
+			}      
+		    }else{
 			for( map<int, int>::iterator ThTime = this->_componentToThermostatIdMap.begin(); 
 					ThTime != this->_componentToThermostatIdMap.end();
 					ThTime++ )
@@ -651,8 +688,14 @@ void Domain::writeCheckpoint( string filename,
 				    checkpointfilestream << "#";
 				checkpointfilestream << "ThTS " << ThTime->second << "\t" << this->_thermostatTimeSlot[0][ThTime->second] << " " << this->_thermostatTimeSlot[1][ThTime->second] << "\n";
 			}
-	
-			
+		    }
+		    if(this->_enableThermostatWallLayers){
+			for( unsigned tht = 1; tht <= getNumberOfComponents(); tht++)
+			{
+				if(isScaling1Dim(tht))
+				    checkpointfilestream << "oneDim\t" << tht << " " << this->_dimToThermostat[tht] << "\n";
+			}      
+		    }else{
 			for( map<int, int>::iterator thermit = this->_componentToThermostatIdMap.begin();
 					thermit != this->_componentToThermostatIdMap.end();
 					thermit++ )
@@ -661,6 +704,7 @@ void Domain::writeCheckpoint( string filename,
 				if(isScaling1Dim(thermit->second))
 				    checkpointfilestream << "oneDim\t" << thermit->second << " " << this->_dimToThermostat[thermit->second] << "\n";
 			}
+		    }
 		}
 		else
 		{
@@ -670,9 +714,9 @@ void Domain::writeCheckpoint( string filename,
 		string free ("free");
 		string moved ("moved");
 		string fixed ("fixed");
-		unsigned cid_free =  getPG()->getCidMovement(free, getNumberOfComponents()) - 1;
-		unsigned cid_moved =  getPG()->getCidMovement(moved, getNumberOfComponents()) - 1;
-		unsigned cid_fixed =  getPG()->getCidMovement(fixed, getNumberOfComponents()) - 1;
+		unsigned cid_free =  getCidMovement(free, getNumberOfComponents()) - 1;
+		unsigned cid_moved =  getCidMovement(moved, getNumberOfComponents()) - 1;
+		unsigned cid_fixed =  getCidMovement(fixed, getNumberOfComponents()) - 1;
 		
 		for(unsigned i = 0; i < getNumberOfComponents(); i++)
 		{
@@ -682,12 +726,12 @@ void Domain::writeCheckpoint( string filename,
 			    checkpointfilestream << "State\t" << i+1 << " " << "moved\n"; 
 			else if(i == cid_fixed){
 			    checkpointfilestream << "State\t" << i+1 << " " << "fixed "; 
-			    if(getPG()->isFixedEvery() == true)
-				    checkpointfilestream << "every\t" << getPG()->getFixEvery() << "\n"; 
+			    if(isFixedEvery() == true)
+				    checkpointfilestream << "every\t" << getFixEvery() << "\n"; 
 			    else //isFixedRegion
-				    checkpointfilestream << "region\t" << getPG()->getFixedRegion(0) << " " << getPG()->getFixedRegion(1)<< " "
-				    << getPG()->getFixedRegion(2) << " " << getPG()->getFixedRegion(3) << " "
-				    << getPG()->getFixedRegion(4) << " " << getPG()->getFixedRegion(5) << "\n"; 
+				    checkpointfilestream << "region\t" << getFixedRegion(0) << " " << getFixedRegion(1)<< " "
+				    << getFixedRegion(2) << " " << getFixedRegion(3) << " "
+				    << getFixedRegion(4) << " " << getFixedRegion(5) << "\n"; 
 			}
 		}
 		
@@ -715,16 +759,16 @@ void Domain::writeCheckpoint( string filename,
 			delete tacc;
 		}
 		
-		if(getPG()->isSpringDamped())
+		if(isSpringDamped())
 		{
-			checkpointfilestream << "Spring\t" << getPG()->getMinSpringID() << " " << getPG()->getMaxSpringID() << " " 
-			<< getPG()->getAverageY() << " " << getPG()->getSpringConst() << endl;
+			checkpointfilestream << "Spring\t" << getMinSpringID() << " " << getMaxSpringID() << " " 
+			<< getAverageY() << " " << getSpringConst() << endl;
 		}
 		
-		if(getPG()->isGravity())
+		if(isGravity())
 		{
-			checkpointfilestream << "Gravity\t" << getPG()->getGravityComp()+1 << " " << getPG()->getGravityDir() << " " 
-			<< getPG()->getGravityForce() << endl;
+			checkpointfilestream << "Gravity\t" << getGravityComp()+1 << " " << getGravityDir() << " " 
+			<< getGravityForce() << endl;
 		}
 #ifndef NDEBUG
 		checkpointfilestream << "# rho\t" << this->_globalRho << "\n";
@@ -733,7 +777,6 @@ void Domain::writeCheckpoint( string filename,
 #endif
 		if(this->_globalUSteps > 1)
 		{
-			//if(getPG()->isSpringDamped())
 			checkpointfilestream << "#";
 			checkpointfilestream << setprecision(13);
 			checkpointfilestream << "I\t" << this->_globalUSteps << " "
@@ -2791,9 +2834,9 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 	string moved ("moved");
 	string fixed ("fixed");
 	string free ("free");
-	unsigned cid_moved =  getPG()->getCidMovement(moved, getNumberOfComponents()) - 1;
-	unsigned cid_fixed =  getPG()->getCidMovement(fixed, getNumberOfComponents()) - 1;
-	unsigned cid_free =  getPG()->getCidMovement(free, getNumberOfComponents()) - 1;
+	unsigned cid_moved =  getCidMovement(moved, getNumberOfComponents()) - 1;
+	unsigned cid_fixed =  getCidMovement(fixed, getNumberOfComponents()) - 1;
+	unsigned cid_free =  getCidMovement(free, getNumberOfComponents()) - 1;
 	
 	// finds once the IDs of the midpoint molecules of the asperities
 	if(simstep == initStatistics && (this->_confinementMidPointID[0] == 0 || this->_confinementMidPointID[1] == 0) && this->_confinementAreaFixed == false){
@@ -2886,6 +2929,7 @@ void Domain::recordConfinementProperties(DomainDecompBase* dode, ParticleContain
 			// record _twice_ the total (ordered + unordered) kinetic energy
 			double mv2 = 0.0;
 			double Iw2 = 0.0;
+			
 			thismol->calculate_mv2_Iw2(mv2, Iw2, Confinement);
 			this->_localKineticProfile_Confinement[unID] += mv2+Iw2;
 			
@@ -3077,7 +3121,7 @@ void Domain::collectForcesOnComponentConfinement(ParticleContainer* molCont)
 {
 	unsigned xun, yun, unID;
 	string moved ("moved");
-	unsigned cid_moved =  getPG()->getCidMovement(moved, getNumberOfComponents()) - 1;
+	unsigned cid_moved =  getCidMovement(moved, getNumberOfComponents()) - 1;
 	  
 	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
 	{	  
@@ -3188,7 +3232,7 @@ void Domain::collectConfinementProperties(DomainDecompBase* dode)
 	dode->collCommFinalize();
 	
 	string free ("free");
-	unsigned cid_free =  getPG()->getCidMovement(free, getNumberOfComponents()) - 1;
+	unsigned cid_free =  getCidMovement(free, getNumberOfComponents()) - 1;
 	
 	// averaging results
 	_dBinFailureCount = 0;
@@ -3922,7 +3966,7 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	this->_globalNumMolecules += N;
 	this->_localRotationalDOF[0] += localN * rotationDegreesOfFreeedom;
 	this->_universalRotationalDOF[0] += N * rotationDegreesOfFreeedom;
-	if( (this->_componentwiseThermostat || this->_enableThermostatLayers)
+	if( (this->_componentwiseThermostat || this->_enableThermostatLayers || this->_enableThermostatWallLayers)
 			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
 		int thid = this->_componentToThermostatIdMap[cid];
@@ -3971,7 +4015,7 @@ void Domain::setTargetTemperature(int thermostat, double targetT)
 		global_log->warning() << "Disabling the component wise thermostat!" << endl;
 		disableComponentwiseThermostat();
 	}
-	if(thermostat >= 1) {
+	if(thermostat >= 1 && !this->_enableThermostatWallLayers) {
 		if( ! _componentwiseThermostat ) {
 			/* FIXME: Substantial change in program behaviour! */
 			global_log->warning() << "Enabling the component wise thermostat!" << endl;
@@ -4028,6 +4072,83 @@ void Domain::setThermostatLayer(int thermostat, double xmin, double xmax, double
 	this->_enableThermostatLayers = true;
 }
 
+void Domain::setThermostatWallLayer()
+{
+	int numberOfLayersPerWall = ceil(this->_confinementMidPoint[3]/0.775)+1;
+	double lowEdgeUpperWall = this->_confinementMidPoint[1];
+	//double highEdgeLowerWall = this->_confinementMidPoint[3];
+	
+	for(unsigned id = 0; id < getNumberOfComponents(); id++){
+		this->_originalThtID[id] = _componentToThermostatIdMap[id];
+		this->_originalStartTime[id] = this->_thermostatTimeSlot[0][this->_originalThtID[id]];
+		this->_originalEndTime[id] = this->_thermostatTimeSlot[1][this->_originalThtID[id]];
+		this->_originalTargetTemp[id] = this->_universalTargetTemperature[this->_originalThtID[id]];
+	}
+	
+	int thermostat = 1;
+	
+	// new setting of the thermostats
+	for (unsigned compCount = 0; compCount < getNumberOfComponents(); compCount++){
+		if(compCount == 0){
+			for (int layerCount = 0; layerCount < numberOfLayersPerWall; layerCount++){
+				this->_componentToThermostatIdMap[thermostat] = thermostat;
+				this->_universalThermostatN[thermostat] = 0;
+				this->_thermostatLayer[0][thermostat] = 0.0;
+				this->_thermostatLayer[1][thermostat] = 10000;
+				if(layerCount == 0)
+					this->_thermostatLayer[2][thermostat] = lowEdgeUpperWall - 0.350;
+				else
+					this->_thermostatLayer[2][thermostat] = this->_thermostatLayer[2][thermostat-1] + 0.776;
+				this->_thermostatLayer[3][thermostat] = this->_thermostatLayer[2][thermostat] + 0.775;
+				this->_thermostatLayer[4][thermostat] = 0.0;
+				this->_thermostatLayer[5][thermostat] = 10000;
+				this->_thermostatLayerComp[thermostat] = 1;		// upper wall
+				setTargetTemperature(thermostat, this->_originalTargetTemp[1]);
+				setThermostatTimeSlot(thermostat, this->_originalStartTime[1], this->_originalEndTime[1]);
+				if(_localRank == 0)
+					cout << " upThT " << thermostat << " ymin " << this->_thermostatLayer[2][thermostat] << " ymax " << this->_thermostatLayer[3][thermostat] << " CID " << this->_thermostatLayerComp[thermostat] << " T_tar " << this->_originalTargetTemp[1] << " tmin " << this->_originalStartTime[1] << " tmax " << this->_originalEndTime[1] << endl;
+				thermostat++;
+			}
+		}else if(compCount == 1){
+			for (int layerCount = 0; layerCount < numberOfLayersPerWall; layerCount++){
+				this->_componentToThermostatIdMap[thermostat] = thermostat;
+				this->_universalThermostatN[thermostat] = 0;
+				this->_thermostatLayer[0][thermostat] = 0.0;
+				this->_thermostatLayer[1][thermostat] = 10000;
+				if(layerCount == 0)
+					this->_thermostatLayer[2][thermostat] = 0.0 - 0.350;
+				else
+					this->_thermostatLayer[2][thermostat] = this->_thermostatLayer[2][thermostat-1] + 0.776;
+				this->_thermostatLayer[3][thermostat] = this->_thermostatLayer[2][thermostat] + 0.775;
+				this->_thermostatLayer[4][thermostat] = 0.0;
+				this->_thermostatLayer[5][thermostat] = 10000;
+				this->_thermostatLayerComp[thermostat] = 2;	// lower wall
+				setTargetTemperature(thermostat, this->_originalTargetTemp[2]);
+				setThermostatTimeSlot(thermostat, this->_originalStartTime[2], this->_originalEndTime[2]);
+				if(_localRank == 0)
+					cout << " lowThT " << thermostat << " ymin " << this->_thermostatLayer[2][thermostat] << " ymax " << this->_thermostatLayer[3][thermostat] << " CID " << this->_thermostatLayerComp[thermostat] << " T_tar " << this->_originalTargetTemp[2] << " tmin " << this->_originalStartTime[2] << " tmax " << this->_originalEndTime[2] << endl;
+				thermostat++;
+			}
+		}else{
+			this->_componentToThermostatIdMap[thermostat] = thermostat;
+			this->_universalThermostatN[thermostat] = 0;
+			this->_thermostatLayer[0][thermostat] = 0.0;
+			this->_thermostatLayer[1][thermostat] = 10000;
+			this->_thermostatLayer[2][thermostat] = 0.0;
+			this->_thermostatLayer[3][thermostat] = 10000;
+			this->_thermostatLayer[4][thermostat] = 0.0;
+			this->_thermostatLayer[5][thermostat] = 10000;
+			this->_thermostatLayerComp[thermostat] = 0;	// fluid
+			setTargetTemperature(thermostat, this->_originalTargetTemp[0]);
+			setThermostatTimeSlot(thermostat, this->_originalStartTime[0], this->_originalEndTime[0]);
+			if(_localRank == 0)
+					cout << " fluidThT " << thermostat << " ymin " << this->_thermostatLayer[2][thermostat] << " ymax " << this->_thermostatLayer[3][thermostat] << " CID " << this->_thermostatLayerComp[thermostat] << " T_tar " << this->_originalTargetTemp[0] << " tmin " << this->_originalStartTime[0] << " tmax " << this->_originalEndTime[0] << endl;
+			thermostat++;
+		}
+	}
+	this->_enableThermostatWallLayers = true;
+}
+
 // checks whether there is an overlap between the thermostats layers; if there is an overlap that leads to an error   
 void Domain::checkThermostatLayerDisjunct()
 {
@@ -4062,7 +4183,7 @@ void Domain::checkThermostatLayerDisjunct()
 }
 
 // assigns each molecule to its current thermostat layer
-int Domain::moleculeInLayer(double molX, double molY, double molZ)
+int Domain::moleculeInLayer(double molX, double molY, double molZ, unsigned int cid)
 {	
     int layer = -10, inside = 0;
     for(int layer1 = 1; layer1 <= maxThermostat(); layer1++){
@@ -4071,12 +4192,13 @@ int Domain::moleculeInLayer(double molX, double molY, double molZ)
       if(this->_thermostatLayer[3][layer1] >= molY && this->_thermostatLayer[2][layer1] < molY) {inside++;}
       if(this->_thermostatLayer[5][layer1] >= molZ && this->_thermostatLayer[4][layer1] < molZ) {inside++;}
       
-      if(inside == 3){
+      if((inside == 3 && !this->_enableThermostatWallLayers) 
+      || (inside == 3 && this->_enableThermostatWallLayers && cid == (unsigned int)this->_thermostatLayerComp[layer1])){
 	layer = layer1;
-	break;
+	goto LAYER;
       }
     }
-     if(inside == 3)
+     LAYER:if(inside == 3)
 	return layer;
       else
 	return -10;
@@ -4120,6 +4242,20 @@ void Domain::enableLayerwiseThermostat()
 			this->_componentToThermostatIdMap[ tc ] = -1;
 		}
 	}
+}
+
+void Domain::enableLayerwiseWallThermostat()
+{
+	if(this->_enableThermostatWallLayers) return;
+
+	this->_enableThermostatWallLayers = true;
+	this->_universalTargetTemperature.erase(0);
+	for( int tc = 1; tc <= maxThermostat(); tc ++ ) {
+		if(!(this->_componentToThermostatIdMap[ tc ] > 0)) {
+			this->_componentToThermostatIdMap[ tc ] = -1;
+		}
+	}
+	
 }
 
 void Domain::enableUndirectedThermostat(int tst)
@@ -4270,6 +4406,45 @@ void Domain::cancelMomentum(DomainDecompBase* domainDecomp, ParticleContainer* m
       if(_simulation.getBoolDirVel() == true)
 	tm->vDirSub(globalMomentum[comp][0]/tmass, globalMomentum[comp][1]/tmass, globalMomentum[comp][2]/tmass, _simulation.isRecordingSlabProfile(), _simulation.isRecordingStressProfile(), _simulation.isRecordingConfinementProfile());
    }
+}
+
+// sets for type 'fixed' that it is fixed by not integrating every xth molecule
+void Domain::specifyFixed(unsigned xth_mol) {
+	this->_doFixEvery = true;
+	this->_fixEvery = xth_mol;
+}
+
+// sets for type 'fixed' that it is fixed by not integrating a region spanned by the lower left and upper right corner
+void Domain::specifyFixed(double x_min, double x_max, double y_min, double y_max, double z_min, double z_max) {
+	this->_doFixRegion = true;
+	this->_fixRegion[0] = x_min;
+	this->_fixRegion[1] = x_max;
+	this->_fixRegion[2] = y_min;
+	this->_fixRegion[3] = y_max;
+	this->_fixRegion[4] = z_min;
+	this->_fixRegion[5] = z_max;
+}
+
+void Domain::specifySpringInfluence(unsigned long minSpringID, unsigned long maxSpringID, double averageYPos, double springConst)
+{
+	this->_minSpringID = minSpringID;
+	this->_maxSpringID = maxSpringID;
+	this->_averageYPos = averageYPos;
+	this->_springConst = springConst;
+	
+	if(!this->_localRank)
+	    cout << "Spring Force Effect is prepared for MolIDs " << this->_minSpringID << " to " << this->_maxSpringID << " with minimum y-Position " << this->_averageYPos << endl;
+}
+
+void  Domain::specifyGravity(unsigned int cid, unsigned int direction, double force)
+{
+	this->_gravitationalComp = cid;
+	this->_gravitationalDir = direction;
+	this->_gravitationalForce = force;
+	this->_isGravity = true;
+	
+	if(!this->_localRank)
+	    cout << "Gravitation is prepared for component " << this->_gravitationalComp << " in direction " << this->_gravitationalDir << " (0 = x; 1 = y; 2 = z) with the force " << this->_gravitationalForce << endl;
 }
 
 unsigned long Domain::getSimstep(){

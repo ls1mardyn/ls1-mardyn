@@ -1099,6 +1099,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> _confinementOutputTimesteps;
 		} else if (token == "confinementProfilePrefix") { /* TODO: suboption of confinementProfile */
 			inputfilestream >> _confinementProfileOutputPrefix;
+		} else if (token == "ThWallLayer") {
+			_domain->setThermostatWallLayer( );
+			// specify a thermostat for each layer in the components 'fixed' and 'moved'
+			if( !_domain->severalThermostats() )
+				_domain->enableLayerwiseWallThermostat();
 		} else if (token == "shearRate") {	// applies shear by keeping the two mostouter layers of atoms fixed and setting a target velocity in the middle layer
 			double xmin, xmax, ymin, ymax, shearRate, shearWidth;
 			unsigned cid;
@@ -1700,18 +1705,18 @@ void Simulation::simulate() {
 		unsigned long timeStepForce = 1000;
 		if(_simstep%timeStepForce == 0 /*&& _simstep >= _initStatistics*/){
 		    string moved ("moved");
-		    unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+		    unsigned cid = _domain->getCidMovement(moved, _domain->getNumberOfComponents());
 		    cid--;
 		    if (cid >= 0 && cid < _domain->getNumberOfComponents()){
 		      if(cid >= 0 && cid < (unsigned)_domain->getNumberOfComponents())
 		       _pressureGradient->collectForcesOnComponent(_domainDecomposition, cid);
-		      if(_simstep == timeStepForce && _pressureGradient->isSpringDamped())
+		      if(_simstep-_initSimulation == timeStepForce && _domain->isSpringDamped())
 			_pressureGradient->resetSpringForcesOnComponent(cid);
 		      
 		      if(_simstep > _initStatistics){
 			for(int d = 0; d < 3; d++)
 			      Force[d][cid] = _pressureGradient->getGlobalForceSum(d, cid)/timeStepForce;
-			if(_pressureGradient->isSpringDamped()){
+			if(_domain->isSpringDamped()){
 			      _pressureGradient->collectSpringForcesOnComponent(_domainDecomposition, cid);
 
 			    if(_domainDecomposition->getRank() == 0)   
@@ -1721,12 +1726,12 @@ void Simulation::simulate() {
 			
 			if(_domainDecomposition->getRank()==0){  
 			  ForceData << _simstep << "\t\t\t" << Force[0][cid] << " " << Force[1][cid] << " " << Force[2][cid];
-			  if(_pressureGradient->isSpringDamped())
+			  if(_domain->isSpringDamped())
 			    ForceData << "\t\t\t" << SpringForce[0][cid] << " " << SpringForce[1][cid] << " " << SpringForce[2][cid];
 			}
 			if(cid >= 0 && cid < (unsigned)_domain->getNumberOfComponents())
 			  _pressureGradient->resetForcesOnComponent(cid);
-			if(_pressureGradient->isSpringDamped())
+			if(_domain->isSpringDamped())
 			  _pressureGradient->resetSpringForcesOnComponent(cid);
 		      }
 		    }
@@ -1876,11 +1881,11 @@ void Simulation::simulate() {
 		if ((_simstep > _initStatistics)) {
 		  // collects ID of component that moves due to an external force field
 		   string moved ("moved");
-		   unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+		   unsigned cid = _domain->getCidMovement(moved, _domain->getNumberOfComponents());
 		   cid--;
 		   if(cid >= 0 && cid < _domain->getNumberOfComponents())
 		       _pressureGradient->calculateForcesOnComponent(_moleculeContainer, cid);
-		   if(_pressureGradient->isSpringDamped())
+		   if(_domain->isSpringDamped())
 		       _pressureGradient->calculateSpringForcesOnComponent(_moleculeContainer, cid);
 		}
 		
@@ -1923,8 +1928,12 @@ void Simulation::simulate() {
 		global_log->debug() << "Inform the integrator" << endl;
 		_integrator->eventForcesCalculated(_moleculeContainer, _domain);
 		
-		if(_domainDecomposition->getRank() == 0) 
-		    cout << "T1: " << _domain->getCurrentTemperature(_domain->getThermostat(0)) << " T2: " << _domain->getCurrentTemperature(_domain->getThermostat(1)) << " T3: " << _domain->getCurrentTemperature(_domain->getThermostat(2)) << endl;
+		if(_domainDecomposition->getRank() == 0 && (_simstep % 10) == 0) 
+			for (int t = 0; t <= _domain->maxThermostat(); t++){
+				cout << " T" << t << ": " << _domain->getCurrentTemperature(_domain->getThermostat(t));
+				if (t == _domain->maxThermostat())
+					cout << endl;
+			}
 		
 		// Acceleration of the component type "moved"; independent of the shear rate calculation
 		if (_pressureGradient->isAcceleratingUniformly()) {
@@ -1944,7 +1953,7 @@ void Simulation::simulate() {
 			_integrator->accelerateInstantaneously(_domainDecomposition, _moleculeContainer, _domain);
 			// collects ID of component that is moving due to external force field
 			string moved ("moved");
-			unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+			unsigned cid = _domain->getCidMovement(moved, _domain->getNumberOfComponents());
 			cid--;
 			// initialization for time averaging of velocity sums of moved component
 			if(_simstep == _initStatistics){
@@ -2013,7 +2022,7 @@ void Simulation::simulate() {
 			if(_simstep >= _initStatistics){
 			    // collects ID of the component that is allowed to move
 			    string moved ("moved");
-			    unsigned cid = _pressureGradient->getCidMovement(moved, _domain->getNumberOfComponents());
+			    unsigned cid = _domain->getCidMovement(moved, _domain->getNumberOfComponents());
 			    cid--;
 			    if(_simstep == _initStatistics){
 			      for(int d = 0; d < 3; d++)
@@ -2431,10 +2440,6 @@ void Simulation::initialize() {
         
         this->_mcav = map<unsigned, CavityEnsemble>();
 }
-
-
-// for Velocity Scaling apply()
-unsigned Simulation::getCIDMovement(std::string moveStyle, unsigned numberOfComp){ return _domain->getPG()->getCidMovement(moveStyle, numberOfComp); }
 
 bool Simulation::isAcceleratingInstantaneously(){ return _domain->getPG()->isAcceleratingInstantaneously(_domain->getNumberOfComponents()); }
 

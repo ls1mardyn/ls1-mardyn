@@ -282,9 +282,6 @@ public:
 	void  setTimeStepLength(double timeStepLength) { _timeStepLength = timeStepLength; }
 	double getTimeStepLength() const {return _timeStepLength; }
 
-        // Important for the application of the velocity scaling
-        /** Returns the CID for a given type of movement. */
-        unsigned getCIDMovement(std::string moveStyle, unsigned numberOfComp);
 	/** Returns a boolean operator determining whether instantaneous acceleration is applied. */
         bool isAcceleratingInstantaneously();
 
