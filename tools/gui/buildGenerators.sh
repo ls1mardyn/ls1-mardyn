@@ -17,7 +17,7 @@ if [ -e libMardyn* ]; then
 rm -r libMardyn*
 fi
 
-cp /home/wwwsccs/html/mardyn/lastSuccessfulBuild/lib/libMardyn.so.1.0 .
+wget www5.in.tum.de/mardyn/lastSuccessfulBuild/lib/libMardyn.so.1.0 .
 ln -s libMardyn.so.1.0 libMardyn.so
 
 make -f Makefile.droplet -j2
