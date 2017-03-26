@@ -13,7 +13,7 @@
 #include "particleContainer/Cell.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 
 /**
  * simpler copy of the class ParticleCellPointers.
@@ -48,7 +48,7 @@ public:
 	//! insert a single molecule into this cell
 	bool addParticle(Molecule* particle_ptr);
 
-	Molecule& moleculesAt(std::vector<Molecule *>::size_type i) {
+	Molecule& moleculesAt(size_t i) {
 		return *_molecules.at(i);
 	}
 

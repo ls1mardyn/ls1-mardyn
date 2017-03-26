@@ -14,13 +14,13 @@
 #include <vector>
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
+#include "molecules/MoleculeForwardDeclaration.h"
 
 using namespace std;
 
 class Domain;
 class ParticleContainer;
 class DomainDecompBase;
-class Molecule;
 
 enum DistControlUpdateMethods
 {

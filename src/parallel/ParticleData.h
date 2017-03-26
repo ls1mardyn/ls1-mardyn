@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 
 //! @brief class to represent that particle data that is necessary for the exchange between processes
 //! @author Martin Buchholz

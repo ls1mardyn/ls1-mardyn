@@ -16,6 +16,14 @@
 
 #define CACHE_LINE_SIZE 64
 
+// TODO: managing this class is becoming too complicated
+// mainly because of the need to remember what happens when,
+// since our functions don't follow standard naming rules
+// and conventions stemming from std::vector.
+//
+// Switch to std::vector with a custom allocator
+// so that it is at least clear what happens when.
+
 /**
  * \brief An aligned array.
  * \details Has pointer to T semantics.
@@ -30,14 +38,14 @@ public:
 	 * \brief Construct an empty array.
 	 */
 	AlignedArray() :
-			_n(0), _p(nullptr) {
+			_capacity(0), _p(nullptr) {
 	}
 
 	/**
 	 * \brief Construct an array of n elements.
 	 */
 	AlignedArray(size_t n) :
-			_n(n), _p(_allocate(n)) {
+			_capacity(n), _p(_allocate(n)) {
 		if (!_p)
 			throw std::bad_alloc();
 	}
@@ -46,7 +54,7 @@ public:
 	 * \brief Construct a copy of another AlignedArray.
 	 */
 	AlignedArray(const AlignedArray & a) :
-			_n(a._n), _p(_allocate(a._n)) {
+			_capacity(a._capacity), _p(_allocate(a._capacity)) {
 		if (!_p)
 			throw std::bad_alloc();
 		_assign(a);
@@ -56,7 +64,7 @@ public:
 	 * \brief Assign a copy of another AlignedArray.
 	 */
 	AlignedArray & operator=(const AlignedArray & a) {
-		resize(a._n);
+		resize(a._capacity);
 		_assign(a);
 		return *this;
 	}
@@ -68,10 +76,23 @@ public:
 		_free();
 	}
 
+	void appendValue(T v, size_t oldNumElements) {
+		assert(oldNumElements <= _capacity);
+		if(oldNumElements < _capacity) {
+			// no need to resize
+		} else {
+			// shit, we need to resize, but also keep contents
+			AlignedArray<T> backupCopy(*this);
+			resize_zero_shrink(oldNumElements + 1);
+			std::memcpy (_p, backupCopy._p, oldNumElements);
+		}
+		_p[oldNumElements] = v;
+	}
+
 	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
-		bool need_resize = size_rounded_up > _n or (allow_shrink and size_rounded_up < _n);
+		bool need_resize = size_rounded_up > _capacity or (allow_shrink and size_rounded_up < _capacity);
 
 		if (need_resize) {
 			resize(size_rounded_up);
@@ -83,33 +104,33 @@ public:
 			}
 		}
 
-		assert(size_rounded_up <= _n);
-		return _n;
+		assert(size_rounded_up <= _capacity);
+		return _capacity;
 	}
 
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
 	virtual void resize(size_t n) {
-		if (n == _n)
+		if (n == _capacity)
 			return;
 		_free();
 		_p = nullptr;
 		_p = _allocate(n);
 		if (_p == nullptr)
 			throw std::bad_alloc();
-		_n = n;
+		_capacity = n;
 	}
 
 	virtual void zero(size_t start_idx) {
-		if (_n > 0) {
+		if (_capacity > 0) {
 			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
 			std::memset(_p, 0, num_to_zero * sizeof(T));
 		}
 	}
 
 	inline size_t get_size() const {
-		return this->_n;
+		return this->_capacity;
 	}
 
 	/**
@@ -123,7 +144,7 @@ public:
 	 * \brief Return amount of allocated storage + .
 	 */
 	size_t get_dynamic_memory() const {
-		return _n * sizeof(T);
+		return _capacity * sizeof(T);
 	}
 
 	static size_t _round_up(size_t n) {
@@ -146,7 +167,7 @@ public:
 
 protected:
 	void _assign(T * p) const {
-		std::memcpy(_p, p, _n * sizeof(T));
+		std::memcpy(_p, p, _capacity * sizeof(T));
 	}
 
 	static T* _allocate(size_t elements) {
@@ -171,7 +192,7 @@ protected:
 #endif
 	}
 
-	size_t _n;
+	size_t _capacity;
 	T * _p;
 };
 

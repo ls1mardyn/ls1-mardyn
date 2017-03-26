@@ -11,9 +11,9 @@
 #include <vector>
 #include <map>
 #include <string>
+#include "molecules/MoleculeForwardDeclaration.h"
 
 class DomainDecompBase;
-class Molecule;
 
 class TrackerState;
 class ParticleTracker

@@ -18,10 +18,10 @@ enum RegionSamplingDimensions
 #include <vector>
 #include "utils/ObserverBase.h"
 #include "utils/Region.h"
+#include "molecules/MoleculeForwardDeclaration.h"
 
 class Domain;
 class DomainDecompBase;
-class Molecule;
 class RegionSampling;
 
 class SampleRegion : public CuboidRegionObs

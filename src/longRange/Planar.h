@@ -13,9 +13,9 @@
 #include <string>
 #include <map>
 
+#include "molecules/MoleculeForwardDeclaration.h"
 class Domain;
 class ParticleContainer;
-class Molecule;
 
 class Planar:public LongRangeCorrection {
 public:

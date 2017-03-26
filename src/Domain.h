@@ -18,7 +18,7 @@
 #define MIN_BETA 0.9  /**< minimal scaling factor before an explosion is detected */
 #define KINLIMIT_PER_T 10.0
 
-class Molecule;
+#include "molecules/MoleculeForwardDeclaration.h"
 class ParticleContainer;
 class DomainDecompBase; 
 class PressureGradient;

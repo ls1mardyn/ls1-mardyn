@@ -1,4 +1,4 @@
-#include "Molecule.h"
+#include "FullMolecule.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 
 #include <cassert>
@@ -11,7 +11,7 @@ using namespace std;
 using Log::global_log;
 
 
-Molecule::Molecule(unsigned long id, Component *component,
+FullMolecule::FullMolecule(unsigned long id, Component *component,
 	                 double rx,  double ry,  double rz,
 	                 double vx,  double vy,  double vz,
 	                 double q0,  double q1,  double q2, double q3,
@@ -45,7 +45,7 @@ Molecule::Molecule(unsigned long id, Component *component,
 	_M[0] = _M[1] = _M[2] = 0.;
 }
 
-Molecule::Molecule(const Molecule& m) {
+FullMolecule::FullMolecule(const FullMolecule& m) {
 	_id = m._id;
 	_component = m._component;
 	_r[0] = m._r[0];
@@ -83,7 +83,7 @@ Molecule::Molecule(const Molecule& m) {
 	_invI[2] = m._invI[2];
 }
 
-Molecule& Molecule::operator=(const Molecule& m) {
+FullMolecule& FullMolecule::operator=(const FullMolecule& m) {
 	_id = m._id;
 	_component = m._component;
 	_r[0] = m._r[0];
@@ -123,7 +123,7 @@ Molecule& Molecule::operator=(const Molecule& m) {
 	return *this;
 }
 
-std::array<double, 3> Molecule::ljcenter_d_abs(unsigned int i) const {
+std::array<double, 3> FullMolecule::ljcenter_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double,3> ret;
 	vcp_real_calc* rx = _soa->ljc_r_xBegin();
@@ -135,7 +135,7 @@ std::array<double, 3> Molecule::ljcenter_d_abs(unsigned int i) const {
 	return ret;
 }
 
-std::array<double, 3> Molecule::charge_d_abs(unsigned int i) const {
+std::array<double, 3> FullMolecule::charge_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
 	vcp_real_calc* rx = _soa->charges_r_xBegin();
@@ -147,7 +147,7 @@ std::array<double, 3> Molecule::charge_d_abs(unsigned int i) const {
 	return ret;
 }
 
-std::array<double, 3> Molecule::dipole_d_abs(unsigned int i) const {
+std::array<double, 3> FullMolecule::dipole_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	vcp_real_calc* rx = _soa->dipoles_r_xBegin();
@@ -159,7 +159,7 @@ std::array<double, 3> Molecule::dipole_d_abs(unsigned int i) const {
 	return ret;
 }
 
-std::array<double, 3> Molecule::quadrupole_d_abs(unsigned int i) const {
+std::array<double, 3> FullMolecule::quadrupole_d_abs(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	vcp_real_calc* rx = _soa->quadrupoles_r_xBegin();
@@ -171,7 +171,7 @@ std::array<double, 3> Molecule::quadrupole_d_abs(unsigned int i) const {
 	return ret;
 }
 
-std::array<double, 3> Molecule::ljcenter_F(unsigned int i) const {
+std::array<double, 3> FullMolecule::ljcenter_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	std::array<double, 3> ret;
 	vcp_real_calc* fx = _soa->ljc_f_xBegin();
@@ -182,7 +182,7 @@ std::array<double, 3> Molecule::ljcenter_F(unsigned int i) const {
 	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
-std::array<double, 3> Molecule::charge_F(unsigned int i) const {
+std::array<double, 3> FullMolecule::charge_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_c;
 	std::array<double, 3> ret;
 	vcp_real_calc* fx = _soa->charges_f_xBegin();
@@ -193,7 +193,7 @@ std::array<double, 3> Molecule::charge_F(unsigned int i) const {
 	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
-std::array<double, 3> Molecule::dipole_F(unsigned int i) const {
+std::array<double, 3> FullMolecule::dipole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
@@ -204,7 +204,7 @@ std::array<double, 3> Molecule::dipole_F(unsigned int i) const {
 	ret[2] = static_cast<double>(fz[index_in_soa]);
 	return ret;
 }
-std::array<double, 3> Molecule::quadrupole_F(unsigned int i) const {
+std::array<double, 3> FullMolecule::quadrupole_F(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
@@ -216,7 +216,7 @@ std::array<double, 3> Molecule::quadrupole_F(unsigned int i) const {
 	return ret;
 }
 
-std::array<double, 3> Molecule::dipole_e(unsigned int i) const {
+std::array<double, 3> FullMolecule::dipole_e(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_d;
 	std::array<double, 3> ret;
 	ret[0] = static_cast<double>(_soa->_dipoles_e.x(index_in_soa));
@@ -224,7 +224,7 @@ std::array<double, 3> Molecule::dipole_e(unsigned int i) const {
 	ret[2] = static_cast<double>(_soa->_dipoles_e.z(index_in_soa));
 	return ret;
 }
-std::array<double, 3> Molecule::quadrupole_e(unsigned int i) const {
+std::array<double, 3> FullMolecule::quadrupole_e(unsigned int i) const {
 	const unsigned index_in_soa = i + _soa_index_q;
 	std::array<double, 3> ret;
 	ret[0] = static_cast<double>(_soa->_quadrupoles_e.x(index_in_soa));
@@ -233,7 +233,7 @@ std::array<double, 3> Molecule::quadrupole_e(unsigned int i) const {
 	return ret;
 }
 
-void Molecule::Fljcenteradd(unsigned int i, double a[]) {
+void FullMolecule::Fljcenteradd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_lj;
 	vcp_real_calc* fx = _soa->ljc_f_xBegin();
 	vcp_real_calc* fy = _soa->ljc_f_yBegin();
@@ -243,7 +243,7 @@ void Molecule::Fljcenteradd(unsigned int i, double a[]) {
 	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
-void Molecule::Fchargeadd(unsigned int i, double a[]) {
+void FullMolecule::Fchargeadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_c;
 	vcp_real_calc* fx = _soa->charges_f_xBegin();
 	vcp_real_calc* fy = _soa->charges_f_yBegin();
@@ -253,7 +253,7 @@ void Molecule::Fchargeadd(unsigned int i, double a[]) {
 	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
-void Molecule::Fdipoleadd(unsigned int i, double a[]) {
+void FullMolecule::Fdipoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_d;
 	vcp_real_calc* fx = _soa->dipoles_f_xBegin();
 	vcp_real_calc* fy = _soa->dipoles_f_yBegin();
@@ -263,7 +263,7 @@ void Molecule::Fdipoleadd(unsigned int i, double a[]) {
 	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
-void Molecule::Fquadrupoleadd(unsigned int i, double a[]) {
+void FullMolecule::Fquadrupoleadd(unsigned int i, double a[]) {
 	const unsigned index_in_soa = i + _soa_index_q;
 	vcp_real_calc* fx = _soa->quadrupoles_f_xBegin();
 	vcp_real_calc* fy = _soa->quadrupoles_f_yBegin();
@@ -273,24 +273,24 @@ void Molecule::Fquadrupoleadd(unsigned int i, double a[]) {
 	fz[index_in_soa] += static_cast<double>(a[2]);
 }
 
-void Molecule::Fljcentersub(unsigned int i, double a[]) {
+void FullMolecule::Fljcentersub(unsigned int i, double a[]) {
 	double minusA[3] = {-a[0], -a[1], -a[2]};
 	Fljcenteradd(i, minusA);
 }
-void Molecule::Fchargesub(unsigned int i, double a[]) {
+void FullMolecule::Fchargesub(unsigned int i, double a[]) {
 	double minusA[3] = {-a[0], -a[1], -a[2]};
 	Fchargeadd(i, minusA);
 }
-void Molecule::Fdipolesub(unsigned int i, double a[]) {
+void FullMolecule::Fdipolesub(unsigned int i, double a[]) {
 	double minusA[3] = {-a[0], -a[1], -a[2]};
 	Fdipoleadd(i, minusA);
 }
-void Molecule::Fquadrupolesub(unsigned int i, double a[]) {
+void FullMolecule::Fquadrupolesub(unsigned int i, double a[]) {
 	double minusA[3] = {-a[0], -a[1], -a[2]};
 	Fquadrupoleadd(i, minusA);
 }
 
-void Molecule::upd_preF(double dt) {
+void FullMolecule::upd_preF(double dt) {
 	assert(_m > 0);
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
@@ -323,7 +323,7 @@ void Molecule::upd_preF(double dt) {
 
 }
 
-void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
+void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 	using std::isnan; // C++11 needed
 
 	calcFM();
@@ -350,7 +350,7 @@ void Molecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 }
 
 
-double Molecule::U_rot() {
+double FullMolecule::U_rot() {
 	double w[3];
 	_q.rotateinv(_L, w);
 	double Iw2 = 0.;
@@ -361,7 +361,7 @@ double Molecule::U_rot() {
 	return 0.5 * Iw2;
 }
 
-double Molecule::U2_rot() {
+double FullMolecule::U2_rot() {
 	double w[3];
 	_q.rotateinv(_L, w);
 	double Iw2 = 0.;
@@ -372,7 +372,7 @@ double Molecule::U2_rot() {
 	return Iw2;
 }
 
-void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
+void FullMolecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	summv2 += _m * v2();
 	double w[3];
 	_q.rotateinv(_L, w);
@@ -384,7 +384,7 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 	sumIw2 += Iw2;
 }
 
-void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {
+void FullMolecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {
 	double vcx = _v[0] - offx;
 	double vcy = _v[1] - offy;
 	double vcz = _v[2] - offz;
@@ -400,17 +400,17 @@ void Molecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, do
 	sumIw2 += Iw2;
 }
 
-void Molecule::scale_v(double s, double offx, double offy, double offz) {
+void FullMolecule::scale_v(double s, double offx, double offy, double offz) {
 	this->vsub(offx, offy, offz);
 	this->scale_v(s);
 	this->vadd(offx, offy, offz);
 }
 
-std::string Molecule::getWriteFormat(){
+std::string FullMolecule::getWriteFormat(){
 	return std::string("ICRVQD");
 }
 
-void Molecule::write(ostream& ostrm) const {
+void FullMolecule::write(ostream& ostrm) const {
 	ostrm << _id << "\t" << (_component->ID() + 1) << "\t"
 	      << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
 	      << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
@@ -422,7 +422,7 @@ void Molecule::write(ostream& ostrm) const {
 // private functions
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
-void Molecule::clearFM() {
+void FullMolecule::clearFM() {
 	assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
@@ -477,7 +477,7 @@ void Molecule::clearFM() {
 	}
 }
 
-void Molecule::calcFM() {
+void FullMolecule::calcFM() {
 	using std::isnan; // C++11 needed
 
 	//_M[0] = _M[1] = _M[2] = 0.;
@@ -565,7 +565,7 @@ void Molecule::calcFM() {
  */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
-void Molecule::check(unsigned long id) {
+void FullMolecule::check(unsigned long id) {
 #ifndef NDEBUG
 	using std::isnan; // C++11 needed
 
@@ -592,32 +592,9 @@ void Molecule::check(unsigned long id) {
 }
 #pragma GCC diagnostic pop
 
-bool Molecule::isLessThan(const Molecule& m2) const {
-	if (_r[2] < m2.r(2))
-		return true;
-	else if (_r[2] > m2.r(2))
-		return false;
-	else {
-		if (_r[1] < m2.r(1))
-			return true;
-		else if (_r[1] > m2.r(1))
-			return false;
-		else {
-			if (_r[0] < m2.r(0))
-				return true;
-			else if (_r[0] > m2.r(0))
-				return false;
-			else {
-				global_log->error() << "LinkedCells::isFirstParticle: both Particles have the same position" << endl;
-				exit(1);
-			}
-		}
-	}
-	return false; /* Silence warnings about missing return statement */
-}
 
 
-std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
+std::ostream& operator<<( std::ostream& os, const FullMolecule& m ) {
 	os << "ID: " << m.id() << "\n";
 	os << "r:  (" << m.r(0) << ", " << m.r(1) << ", " << m.r(2) << ")\n" ;
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
@@ -629,12 +606,27 @@ std::ostream& operator<<( std::ostream& os, const Molecule& m ) {
 }
 
 
-unsigned long Molecule::totalMemsize() const {
+unsigned long FullMolecule::totalMemsize() const {
 	unsigned long size = sizeof (*this);
 	return size;
 }
 
-void Molecule::setupSoACache(CellDataSoA* const s, unsigned iLJ, unsigned iC,
+void FullMolecule::setSoA(CellDataSoABase * const s) {
+	CellDataSoA * derived;
+#ifndef NDEBUG
+	derived = nullptr;
+	derived = dynamic_cast<CellDataSoA *>(s);
+	if(derived == nullptr and s != nullptr) {
+		global_log->error() << "expected CellDataSoA pointer for m" << _id << endl;
+		assert(false);
+	}
+#else
+	derived = static_cast<CellDataSoA *>(s);
+#endif
+	_soa = derived;
+}
+
+void FullMolecule::setupSoACache(CellDataSoABase* const s, unsigned iLJ, unsigned iC,
 		unsigned iD, unsigned iQ) {
 	setSoA(s);
 	setStartIndexSoA_LJ(iLJ);
