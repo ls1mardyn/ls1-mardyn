@@ -9,6 +9,10 @@
 #include <sstream>
 #include <string>
 
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+
+
 #include "WrapOpenMP.h"
 
 #include "Common.h"
@@ -76,7 +80,6 @@ using namespace std;
 
 Simulation* global_simulation;
 
-
 Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
@@ -125,16 +128,9 @@ Simulation::~Simulation() {
 }
 
 void Simulation::exit(int exitcode) {
-#ifdef ENABLE_MPI
-	// terminate all mpi processes and return exitcode
-	MPI_Abort(MPI_COMM_WORLD, exitcode);
-#else
-	// call global exit
-	::exit(exitcode);
-#endif
+	// .. to avoid code duplication ..
+	mardyn_exit(exitcode);
 }
-
-
 
 void Simulation::readXML(XMLfileUnits& xmlconfig) {
 #ifdef USE_VT
@@ -149,7 +145,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_integrator = new Leapfrog();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
@@ -182,11 +178,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 			// _ensemble = new GrandCanonicalEnsemble();
 		} else {
 			global_log->error() << "Unknown ensemble type: " << ensembletype << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 		_ensemble->readXML(xmlconfig);
 		/** @todo Here we store data in the _domain member as long as we do not use the ensemble everywhere */
@@ -198,7 +194,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	}
 	else {
 		global_log->error() << "Ensemble section missing." << endl;
-		this->exit(1);
+		Simulation::exit(1);
 	}
 
 	/* algorithm */
@@ -216,13 +212,13 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			_cutoffRadius = max(_cutoffRadius, _LJCutoffRadius);
 			if(_cutoffRadius <= 0) {
 				global_log->error() << "cutoff radius <= 0." << endl;
-				this->exit(1);
+				Simulation::exit(1);
 			}
 			global_log->info() << "dimensionless cutoff radius:\t" << _cutoffRadius << endl;
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Cutoff section missing." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		/* electrostatics */
@@ -235,7 +231,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Electrostatics section for reaction field setup missing." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		if (xmlconfig.changecurrentnode("electrostatic[@type='FastMultipoleMethod']")) {
@@ -268,7 +264,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else {
 				global_log->error() << "Unknown parallelisation type: " << parallelisationtype << endl;
-				this->exit(1);
+				Simulation::exit(1);
 			}
 		#else /* serial */
 			if(parallelisationtype != "DummyDecomposition") {
@@ -276,7 +272,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						<< "Executable was compiled without support for parallel execution: "
 						<< parallelisationtype
 						<< " not available. Using serial mode." << endl;
-				//this->exit(1);
+				//Simulation::exit(1);
 			}
 			//_domainDecomposition = new DomainDecompBase();  // already set in initialize()
 		#endif
@@ -286,7 +282,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else {
 		#ifdef ENABLE_MPI
 			global_log->error() << "Parallelisation section missing." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		#else /* serial */
 			//_domainDecomposition = new DomainDecompBase(); // already set in initialize()
 		#endif
@@ -306,11 +302,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			}
 			else if(datastructuretype == "AdaptiveSubCells") {
 				global_log->warning() << "AdaptiveSubCells no longer supported." << std::endl;
-				global_simulation->exit(-1);
+				Simulation::exit(-1);
 			}
 			else {
 				global_log->error() << "Unknown data structure type: " << datastructuretype << endl;
-				this->exit(1);
+				Simulation::exit(1);
 			}
 			_moleculeContainer->readXML(xmlconfig);
 
@@ -321,7 +317,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			xmlconfig.changecurrentnode("..");
 		} else {
 			global_log->error() << "Datastructure section missing" << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		if(xmlconfig.changecurrentnode("thermostats")) {
@@ -480,7 +476,7 @@ void Simulation::readConfigFile(string filename) {
 	}
 	else {
 		global_log->error() << "Unknown config file extension '" << extension << "'." << endl;
-		this->exit(1);;
+		Simulation::exit(1);;
 	}
 }
 
@@ -493,7 +489,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	if(inp.changecurrentnode("/mardyn") < 0) {
 		global_log->error() << "Cound not find root node /mardyn." << endl;
 		global_log->error() << "Not a valid MarDyn XML input file." << endl;
-		this->exit(1);
+		Simulation::exit(1);
 	}
 
 	string version("unknown");
@@ -515,11 +511,11 @@ void Simulation::initConfigXML(const string& inputfilename) {
 				return;
 			} else {
 				global_log->error() << "Unknown input file type: " << siminptype << endl;
-				this->exit(1);;
+				Simulation::exit(1);;
 			}
 		} else if (numsimpfiles > 1) {
 			global_log->error() << "Multiple input file sections are not supported." << endl;
-			this->exit(1);
+			Simulation::exit(1);
 		}
 
 		readXML(inp);
@@ -555,7 +551,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 			}
 			else {
 				global_log->error() << "Unknown generator: " << generatorName << endl;
-				exit(1);
+				Simulation::exit(1);
 			}
 			_inputReader->readXML(inp);
 		}
@@ -566,7 +562,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 	} // simulation-section
 	else {
 		global_log->error() << "Simulation section missing" << endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 
 #ifdef ENABLE_MPI
@@ -586,7 +582,7 @@ void Simulation::initConfigXML(const string& inputfilename) {
 
 
 	_domain->initParameterStreams(_cutoffRadius, _LJCutoffRadius);
-//	_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
+	//domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// test new Decomposition
 	_moleculeContainer->update();
@@ -739,7 +735,7 @@ void Simulation::prepare_start() {
 		const ParticleIterator end = _moleculeContainer->iteratorEnd();
 
 		for (ParticleIterator i = begin; i != end; ++i){
-			(*i)->calcFM();
+			i->calcFM();
 		}
 	} // end pragma omp parallel
 
@@ -835,11 +831,27 @@ void Simulation::prepare_start() {
 	}
 }
 
+//returns size of cached memory in kB (0 if error occurs)
+unsigned long long getCachedSize(){
+	size_t MAXLEN=1024;
+	FILE *fp;
+	char buf[MAXLEN];
+	fp = fopen("/proc/meminfo", "r");
+	while (fgets(buf, MAXLEN, fp)) {
+		char *p1 = strstr(buf, "Cached:");
+		if (p1 != NULL) {
+			int colon = ':';
+			char *p1 = strchr(buf, colon)+1;
+			//std::cout << p1 << endl;
+			unsigned long long t = strtoull(p1, NULL, 10);
+			//std::cout << t << endl;
+			return t;
+		}
+	}
+	return 0;
+}
+
 void Simulation::simulate() {
-
-	// by Stefan Becker
-	Molecule* tM;
-
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
@@ -874,7 +886,7 @@ void Simulation::simulate() {
 	//#if defined(_OPENMP)
 	Timer forceCalculationTimer; /* timer for force calculation */
 	//#endif
-
+	
 	loopTimer.set_sync(true);
 #if WITH_PAPI
 	const char *papi_event_list[] = {
@@ -896,6 +908,15 @@ void Simulation::simulate() {
 		unsigned particleNoTest;
 #endif
 #endif
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
 	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
@@ -909,22 +930,19 @@ void Simulation::simulate() {
 			list<ChemicalPotential>::iterator cpit;
 			for (cpit = _lmu.begin(); cpit != _lmu.end(); cpit++) {
 				if (!((_simstep + 2 * j + 3) % cpit->getInterval())) {
-					cpit->prepareTimestep(_moleculeContainer,
-							_domainDecomposition);
+					cpit->prepareTimestep(_moleculeContainer, _domainDecomposition);
 				}
 				j++;
 			}
 		}
 		if (_simstep >= _initStatistics) {
-                   map<unsigned, CavityEnsemble>::iterator ceit;
-                   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
-                   {
-                      if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
-                      {
-                         ceit->second.preprocessStep();
-                      }
-                   }
-                }
+		   map<unsigned, CavityEnsemble>::iterator ceit;
+		   for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
+			  if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
+				 ceit->second.preprocessStep();
+			  }
+		   }
+		}
 
 		_integrator->eventNewTimestep(_moleculeContainer, _domain);
 
@@ -1057,15 +1075,12 @@ void Simulation::simulate() {
 		 *the halo MUST NOT be present*/
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
-		particleNoTest = 0;
-		for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next())
-			particleNoTest++;
+		particleNoTest = _moleculeContainer->getNumberOfParticles();
 		global_log->info()<<"particles before determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
-        if(_doAlignCentre && !(_simstep % _alignmentInterval))
-		{
-			if(_componentSpecificAlignment){
+        if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
+			if(_componentSpecificAlignment) {
 				//! !!! the sequence of calling the two methods MUST be: FIRST determineXZShift() THEN determineYShift() !!!
 				_domain->determineXZShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
 				_domain->determineYShift(_domainDecomposition, _moleculeContainer, _alignmentCorrection);
@@ -1086,9 +1101,7 @@ void Simulation::simulate() {
 			}
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI			
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-				particleNoTest++;
+			particleNoTest = _moleculeContainer->getNumberOfParticles();
 			global_log->info()<<"particles after determine shift-methods, halo not present:" << particleNoTest<< "\n";
 #endif
 #endif
@@ -1098,7 +1111,9 @@ void Simulation::simulate() {
 
 
 #ifdef ENABLE_MPI
-		bool overlapCommComp = true;
+		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+		bool overlapCommComp = false; // change back to true after testing!
+		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #else
 		bool overlapCommComp = false;
 #endif
@@ -1109,8 +1124,7 @@ void Simulation::simulate() {
 		else {
 			decompositionTimer.start();
 			// ensure that all Particles are in the right cells and exchange Particles
-			global_log->debug() << "Updating container and decomposition"
-					<< endl;
+			global_log->debug() << "Updating container and decomposition" << endl;
 			updateParticleContainerAndDecomposition();
 			decompositionTimer.stop();
 
@@ -1185,13 +1199,10 @@ void Simulation::simulate() {
 			}
 		}
 		
-		if(_simstep >= _initStatistics)
-		{
+		if(_simstep >= _initStatistics) {
 			map<unsigned, CavityEnsemble>::iterator ceit;
-			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++)
-			{
-				if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval()))
-				{
+			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
+				if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
 					global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
 
 					this->_moleculeContainer->cavityStep(
@@ -1201,30 +1212,26 @@ void Simulation::simulate() {
 
 				if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
 						(!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
-						(!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) )
-				{
+						(!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) ) {
 					this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
 				}
 			}
 		}
 		
 		// clear halo
-	    //
 		global_log->debug() << "Deleting outer particles / clearing halo." << endl;
 		_moleculeContainer->deleteOuterParticles();
 
 		/** @todo For grand canonical ensemble? Sould go into appropriate ensemble class. Needs documentation. */
 		if (_simstep >= _initGrandCanonical) {
-			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(),
-					_domainDecomposition);
+			_domain->evaluateRho(_moleculeContainer->getNumberOfParticles(), _domainDecomposition);
 		}
 
 		if (!(_simstep % _collectThermostatDirectedVelocity))
 			_domain->calculateThermostatDirectedVelocity(_moleculeContainer);
 		if (_pressureGradient->isAcceleratingUniformly()) {
 			if (!(_simstep % uCAT)) {
-				global_log->debug() << "Determine the additional acceleration"
-						<< endl;
+				global_log->debug() << "Determine the additional acceleration" << endl;
 				_pressureGradient->determineAdditionalAcceleration(
 						_domainDecomposition, _moleculeContainer, uCAT
 						* _integrator->getTimestepLength());
@@ -1322,13 +1329,12 @@ void Simulation::simulate() {
 
 		// calculate the global macroscopic values from the local values
 		global_log->debug() << "Calculate macroscopic values" << endl;
-		_domain->calculateGlobalValues(_domainDecomposition,
-				_moleculeContainer, (!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(
-								_simstep));
+		_domain->calculateGlobalValues(_domainDecomposition, _moleculeContainer, 
+				(!(_simstep % _collectThermostatDirectedVelocity)), Tfactor(_simstep));
 		
 		// scale velocity and angular momentum
-		if ( !_domain->NVE() && _temperatureControl == NULL){
-			if (_thermostatType ==VELSCALE_THERMOSTAT){
+		if ( !_domain->NVE() && _temperatureControl == NULL) {
+			if (_thermostatType ==VELSCALE_THERMOSTAT) {
 				global_log->debug() << "Velocity scaling" << endl;
 				if (_domain->severalThermostats()) {
 					_velocityScalingThermostat.enableComponentwise();
@@ -1337,8 +1343,8 @@ void Simulation::simulate() {
 						_velocityScalingThermostat.setBetaTrans(thermostatId, _domain->getGlobalBetaTrans(thermostatId));
 						_velocityScalingThermostat.setBetaRot(thermostatId, _domain->getGlobalBetaRot(thermostatId));
 						global_log->debug() << "Thermostat for CID: " << cid << " thermID: " << thermostatId
-						<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
-						<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << endl;
+								<< " B_trans: " << _velocityScalingThermostat.getBetaTrans(thermostatId)
+								<< " B_rot: " << _velocityScalingThermostat.getBetaRot(thermostatId) << endl;
 						double v[3];
 						for(int d = 0; d < 3; d++) {
 							v[d] = _domain->getThermostatDirectedVelocity(thermostatId, d);
@@ -1356,7 +1362,7 @@ void Simulation::simulate() {
 
 
 			}
-			else if(_thermostatType == ANDERSEN_THERMOSTAT){ //! the Andersen Thermostat
+			else if(_thermostatType == ANDERSEN_THERMOSTAT) { //! the Andersen Thermostat
 				//global_log->info() << "Andersen Thermostat" << endl;
 				double nuDt = _nuAndersen * _integrator->getTimestepLength();
 				//global_log->info() << "Timestep length = " << _integrator->getTimestepLength() << " nuDt = " << nuDt << "\n";
@@ -1364,13 +1370,13 @@ void Simulation::simulate() {
 				double tTarget;
 				double stdDevTrans, stdDevRot;
 				if(_domain->severalThermostats()) {
-					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-						if (_rand.rnd() < nuDt){
+					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
+						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							int thermostat = _domain->getThermostat(tM->componentid());
 							tTarget = _domain->getTargetTemperature(thermostat);
 							stdDevTrans = sqrt(tTarget/tM->gMass());
-							for(unsigned short d = 0; d < 3; d++){
+							for(unsigned short d = 0; d < 3; d++) {
 								stdDevRot = sqrt(tTarget*tM->getI(d));
 								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
 								tM->setD(d,_rand.gaussDeviate(stdDevRot));
@@ -1380,12 +1386,12 @@ void Simulation::simulate() {
 				}
 				else{
 					tTarget = _domain->getTargetTemperature(0);
-					for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) {
-						if (_rand.rnd() < nuDt){
+					for (ParticleIterator tM = _moleculeContainer->iteratorBegin(); tM != _moleculeContainer->iteratorEnd(); ++tM) {
+						if (_rand.rnd() < nuDt) {
 							numPartThermo++;
 							// action of the anderson thermostat: mimic a collision by assigning a maxwell distributed velocity
 							stdDevTrans = sqrt(tTarget/tM->gMass());
-							for(unsigned short d = 0; d < 3; d++){
+							for(unsigned short d = 0; d < 3; d++) {
 								stdDevRot = sqrt(tTarget*tM->getI(d));
 								tM->setv(d,_rand.gaussDeviate(stdDevTrans));
 								tM->setD(d,_rand.gaussDeviate(stdDevRot));
@@ -1393,18 +1399,18 @@ void Simulation::simulate() {
 						}
 					}
 				}
-				//		    global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
+				//global_log->info() << "Andersen Thermostat: n = " << numPartThermo ++ << " particles thermostated\n";
 			}
 
-
-			// if(_mirror && _applyMirror){
-			//  _mirror->VelocityChange(_moleculeContainer, _domain);
-			//}
+			/*
+			if(_mirror && _applyMirror){
+				_mirror->VelocityChange(_moleculeContainer, _domain);
+			}
+			*/
 
 		}
 		// mheinen 2015-07-27 --> TEMPERATURE_CONTROL
-        else if ( _temperatureControl != NULL)
-        {
+        else if ( _temperatureControl != NULL) {
             _temperatureControl->DoLoopsOverMolecules(_moleculeContainer, _simstep);
         }
         // <-- TEMPERATURE_CONTROL
@@ -1416,15 +1422,14 @@ void Simulation::simulate() {
 		/* BEGIN PHYSICAL SECTION:
 		 * the system is in a consistent state so we can extract global variables
 		 */
-		/*ensemble.updateGlobalVariable(NUM_PARTICLES);
-		global_log->debug() << "Number of particles in the Ensemble: "
-				<< ensemble.N() << endl;
+		/*
+		ensemble.updateGlobalVariable(NUM_PARTICLES);
+		global_log->debug() << "Number of particles in the Ensemble: " << ensemble.N() << endl;
 		ensemble.updateGlobalVariable(ENERGY);
-		global_log->debug() << "Kinetic energy in the Ensemble: "
-				<< ensemble.E() << endl;
+		global_log->debug() << "Kinetic energy in the Ensemble: " << ensemble.E() << endl;
 		ensemble.updateGlobalVariable(TEMPERATURE);
-		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T()
-			<< endl;*/
+		global_log->debug() << "Temperature of the Ensemble: " << ensemble.T() << endl;
+		*/
 		/* END PHYSICAL SECTION */
 
 		computationTimer.stop();
@@ -1437,15 +1442,12 @@ void Simulation::simulate() {
 		  * realignment tools borrowed from Martin Horsch
 		  * For the actual shift the halo MUST NOT be present!
 		  */
-		if(_doAlignCentre && !(_simstep % _alignmentInterval))
-		{
+		if(_doAlignCentre && !(_simstep % _alignmentInterval)) {
 			_domain->realign(_moleculeContainer);
 #ifndef NDEBUG 
 #ifndef ENABLE_MPI
 			unsigned particleNoTest = 0;
-			particleNoTest = 0;
-			for (tM = _moleculeContainer->begin(); tM != _moleculeContainer->end(); tM = _moleculeContainer->next()) 
-			particleNoTest++;
+			particleNoTest = _moleculeContainer->getNumberOfParticles();
 			cout <<"particles after realign(), halo absent: " << particleNoTest<< "\n";
 #endif
 #endif
@@ -1487,8 +1489,17 @@ void Simulation::simulate() {
 	global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
 	//#endif
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop  took:         " << perStepIoTimer.get_etime() << " sec" << endl;
+	global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
 #if WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;

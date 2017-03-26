@@ -1,7 +1,7 @@
 #include "FullMolecule.h"
 #include "particleContainer/adapter/CellDataSoA.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <cmath>
 #include <fstream>
 
@@ -291,7 +291,7 @@ void FullMolecule::Fquadrupolesub(unsigned int i, double a[]) {
 }
 
 void FullMolecule::upd_preF(double dt) {
-	assert(_m > 0);
+	mardyn_assert(_m > 0);
 	double dt_halve = .5 * dt;
 	double dtInv2m = dt_halve / _m;
 	for (unsigned short d = 0; d < 3; ++d) {
@@ -335,7 +335,7 @@ void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		v2 += _v[d] * _v[d];
 		_L[d] += dt_halve * _M[d];
 	}
-    assert(!isnan(v2)); // catches NaN
+    mardyn_assert(!isnan(v2)); // catches NaN
     summv2 += _m * v2;
 
 	double w[3];
@@ -345,7 +345,7 @@ void FullMolecule::upd_postF(double dt_halve, double& summv2, double& sumIw2) {
 		w[d] *= _invI[d];
 		Iw2 += _I[d] * w[d] * w[d];
 	}
-    assert(!isnan(Iw2)); // catches NaN
+    mardyn_assert(!isnan(Iw2)); // catches NaN
 	sumIw2 += Iw2;
 }
 
@@ -423,7 +423,7 @@ void FullMolecule::write(ostream& ostrm) const {
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 
 void FullMolecule::clearFM() {
-	assert(_soa != nullptr);
+	mardyn_assert(_soa != nullptr);
 	_F[0] = _F[1] = _F[2] = 0.;
 	_M[0] = _M[1] = _M[2] = 0.;
 	_Vi[0]= _Vi[1]= _Vi[2]= 0.;
@@ -492,11 +492,11 @@ void FullMolecule::calcFM() {
 		for (int d = 0; d < 3; d++) {
 			if (isnan(dsite[d])) {
 				global_log->error() << "Severe dsite[" << d << "] error for site " << si << " of m" << _id << endl;
-				assert(false);
+				mardyn_assert(false);
 			}
 			if (isnan(Fsite[d])) {
 				global_log->error() << "Severe Fsite[" << d << "] error for site " << si << " of m" << _id << endl;
-				assert(false);
+				mardyn_assert(false);
 			}
 		}
 #endif
@@ -548,9 +548,9 @@ void FullMolecule::calcFM() {
 	temp_Vi[0] *= 0.5;
 	temp_Vi[1] *= 0.5;
 	temp_Vi[2] *= 0.5;
-	assert(!isnan(temp_Vi[0]));
-	assert(!isnan(temp_Vi[1]));
-	assert(!isnan(temp_Vi[2]));
+	mardyn_assert(!isnan(temp_Vi[0]));
+	mardyn_assert(!isnan(temp_Vi[1]));
+	mardyn_assert(!isnan(temp_Vi[2]));
 	Viadd(temp_Vi);
 	Madd(temp_M);
 }
@@ -569,17 +569,17 @@ void FullMolecule::check(unsigned long id) {
 #ifndef NDEBUG
 	using std::isnan; // C++11 needed
 
-	assert(_id == id);
-	assert(_m > 0.0);
+	mardyn_assert(_id == id);
+	mardyn_assert(_m > 0.0);
 	for (int d = 0; d < 3; d++) {
-		assert(!isnan(_r[d]));
-		assert(!isnan(_v[d]));
-		assert(!isnan(_L[d]));
-		assert(!isnan(_F[d]));
-		assert(!isnan(_M[d]));
-		assert(!isnan(_I[d]));
-		// assert(!isnan(_Vi[d]));
-		assert(!isnan(_invI[d]));
+		mardyn_assert(!isnan(_r[d]));
+		mardyn_assert(!isnan(_v[d]));
+		mardyn_assert(!isnan(_L[d]));
+		mardyn_assert(!isnan(_F[d]));
+		mardyn_assert(!isnan(_M[d]));
+		mardyn_assert(!isnan(_I[d]));
+		// mardyn_assert(!isnan(_Vi[d]));
+		mardyn_assert(!isnan(_invI[d]));
 	}
 	if(isnan(_Vi[0]) || isnan(_Vi[1]) || isnan(_Vi[2]))
 	{
@@ -618,7 +618,7 @@ void FullMolecule::setSoA(CellDataSoABase * const s) {
 	derived = dynamic_cast<CellDataSoA *>(s);
 	if(derived == nullptr and s != nullptr) {
 		global_log->error() << "expected CellDataSoA pointer for m" << _id << endl;
-		assert(false);
+		mardyn_assert(false);
 	}
 #else
 	derived = static_cast<CellDataSoA *>(s);

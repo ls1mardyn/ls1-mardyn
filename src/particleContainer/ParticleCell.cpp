@@ -1,8 +1,9 @@
 #include "particleContainer/ParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"
+#include "Simulation.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <vector>
 
 using namespace std;
@@ -25,7 +26,7 @@ bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 
 #ifndef NDEBUG
 	bool isIn = particle.inBox(_boxMin, _boxMax);
-	assert(isIn);
+	mardyn_assert(isIn);
 #endif
 
 	if (checkWhetherDuplicate == false) {
@@ -56,8 +57,8 @@ int ParticleCell::getMoleculeCount() const {
 }
 
 bool ParticleCell::deleteMoleculeByIndex(size_t index) {
-//	assert(index >= 0); - this is always true now
-	assert(index < _molecules.size());
+//	mardyn_assert(index >= 0); - this is always true now
+	mardyn_assert(index < _molecules.size());
 
 	bool found = true;
 	auto it = _molecules.begin() + index;
@@ -88,7 +89,7 @@ void ParticleCell::preUpdateLeavingMolecules() {
 		}
 	}
 
-	assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
+	mardyn_assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
 }
 
 void ParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
@@ -97,7 +98,7 @@ void ParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
 	oCellPointer = dynamic_cast<ParticleCell*>(&otherCell);
 	if(oCellPointer == nullptr) {
 		global_log->error() << "wrong type of ParticleCell for call to updateLeavingMoleculesBase" << std::endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 #endif
 
@@ -143,7 +144,8 @@ void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vec
 		if (particleIter->inBox(lowCorner, highCorner)) {
 			if (not removeFromContainer) {
 				particlePtrs.push_back(&(*particleIter));
-			} else {
+			}
+			else {
 				particlePtrs.push_back(new Molecule(*particleIter));
 				UnorderedVector::fastRemove(_molecules, particleIter);
 				// particleIter already points at next molecule, so continue without incrementing

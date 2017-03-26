@@ -170,6 +170,7 @@ std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegi
 	double boundaryLow[3];
 	double boundaryHigh[3];
 	double shift[3];
+	bool enlarged[3][2];
 
 	for (unsigned int d = 0; d < DIMgeom; d++) {
 		haloLow[d] = haloRegion.rmin[d];
@@ -184,8 +185,9 @@ std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegi
 		} else{
 			shift[d] = 0.;
 		}
-
+		enlarged[d][0] = false;
+		enlarged[d][1] = false;
 	}
 	// initialize using initializer list - here a vector with one element is created
-	return std::vector<CommunicationPartner> {CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset)};
+	return std::vector<CommunicationPartner> {CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset, enlarged)};
 }

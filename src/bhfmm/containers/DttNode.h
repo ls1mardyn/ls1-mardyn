@@ -6,7 +6,7 @@
 #include "bhfmm/utils/Vector3.h"
 
 #include <vector>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <array>
 
 class DttNodeTest;
@@ -65,7 +65,7 @@ public:
 		return _domLen;
 	}
 	double getSize(int d) const {
-		assert(d < 2 and d >= 0);
+		mardyn_assert(d < 2 and d >= 0);
 		return _domLen[d];
 	}
 	MpCell& getMpCell() {

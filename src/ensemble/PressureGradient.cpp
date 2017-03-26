@@ -7,6 +7,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
+#include "Simulation.h"
 
 using namespace Log;
 using namespace std;
@@ -65,7 +66,12 @@ void PressureGradient::determineAdditionalAcceleration
 		for(unsigned short int d = 0; d < 3; d++)
 			this->_localVelocitySum[d][uAAit->first] = 0.0;
 	}
-	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+
+	// TODO: consider parallelization, but when we have input
+	const ParticleIterator mBegin = molCont->iteratorBegin();
+	const ParticleIterator mEnd = molCont->iteratorEnd();
+
+	for(ParticleIterator thismol = mBegin; thismol != mEnd; ++thismol)
 	{
 		unsigned int cid = thismol->componentid();
 		map<unsigned int, unsigned int>::iterator uCSIDit = this->_universalComponentSetID.find(cid);
@@ -217,8 +223,8 @@ void PressureGradient::specifyTauPrime(double tauPrime, double dt)
 	if(this->_localRank != 0) return;
 	if(this->_universalConstantAccelerationTimesteps == 0)
 	{
-		cout << "SEVERE ERROR: unknown UCAT!\n";
-		exit(78);
+		global_log->error() << "SEVERE ERROR: unknown UCAT!\n";
+		Simulation::exit(78);
 	}
 	unsigned int vql = (unsigned int)ceil(tauPrime / (dt*this->_universalConstantAccelerationTimesteps));
 	map<unsigned int, unsigned int>::iterator vqlit;

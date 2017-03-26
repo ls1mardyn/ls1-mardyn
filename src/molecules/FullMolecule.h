@@ -7,8 +7,7 @@
 
 #include <vector>
 #include <iostream>
-#include <cassert>
-#include <array>
+#include "utils/mardyn_assert.h"
 #include <string>
 
 
@@ -146,7 +145,7 @@ public:
 			return charge_d(i - n1);
 		} else if (i < n3) {
 			return dipole_d(i - n2);
-		} else { assert(i < n4);
+		} else { mardyn_assert(i < n4);
 			return quadrupole_d(i - n3);
 		}
 	}
@@ -182,7 +181,7 @@ public:
 			return charge_d_abs(i - n1);
 		} else if (i < n3) {
 			return dipole_d_abs(i - n2);
-		} else { assert(i < n4);
+		} else { mardyn_assert(i < n4);
 			return quadrupole_d_abs(i - n3);
 		}
 	}
@@ -205,7 +204,7 @@ public:
 			return charge_F(i - n1);
 		} else if (i < n3) {
 			return dipole_F(i - n2);
-		} else { assert(i < n4);
+		} else { mardyn_assert(i < n4);
 			return quadrupole_F(i - n3);
 		}
 	}
@@ -218,27 +217,27 @@ public:
 		_q.normalize();
 	}
 	void computeLJcenter_d(unsigned int i, double result[3]) const {
-		assert(_q.isNormalized());
+		mardyn_assert(_q.isNormalized());
 		_q.rotate(_component->ljcenter(i).r(), result);
 	}
 	void computeCharge_d(unsigned int i, double result[3]) const {
-		assert(_q.isNormalized());
+		mardyn_assert(_q.isNormalized());
 		_q.rotate(_component->charge(i).r(), result);
 	}
 	void computeDipole_d(unsigned int i, double result[3]) const {
-		assert(_q.isNormalized());
+		mardyn_assert(_q.isNormalized());
 		_q.rotate(_component->dipole(i).r(), result);
 	}
 	void computeQuadrupole_d(unsigned int i, double result[3]) const {
-		assert(_q.isNormalized());
+		mardyn_assert(_q.isNormalized());
 		_q.rotate(_component->quadrupole(i).r(), result);
 	}
 	void computeDipole_e(unsigned int i, double result[3]) const {
-		assert(_q.isNormalized());
+		mardyn_assert(_q.isNormalized());
 		_q.rotate(_component->dipole(i).e(), result);
 	}
 	void computeQuadrupole_e(unsigned int i, double result[3]) const {
-		assert(_q.isNormalized());
+		mardyn_assert(_q.isNormalized());
 		_q.rotate(_component->quadrupole(i).e(), result);
 	}
 

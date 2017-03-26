@@ -162,7 +162,7 @@ public:
 	 * for the different parallelization schemes. e.g. terminating other processes in MPI parallel
 	 * execution mode.
 	 */
-	void exit(int exitcode);
+	static void exit(int exitcode);
 
 	/** @brief process configuration file
 	 *

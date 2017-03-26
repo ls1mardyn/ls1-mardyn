@@ -167,9 +167,9 @@ unsigned int KDNode::getNumMaxProcs() {
 }
 
 void KDNode::split(int divDimension, int splitIndex, int numProcsLeft) {
-	assert(_numProcs > 1);
-	assert(splitIndex > _lowCorner[divDimension]);
-	assert(splitIndex < _highCorner[divDimension]);
+	mardyn_assert(_numProcs > 1);
+	mardyn_assert(splitIndex > _lowCorner[divDimension]);
+	mardyn_assert(splitIndex < _highCorner[divDimension]);
 
 	bool coversAll[KDDIM];
 	for (int dim = 0; dim < KDDIM; dim++) {
@@ -261,7 +261,7 @@ void KDNode::deserialize(const std::string& fileName) {
 }
 
 void KDNode::deserialize(std::istream& file) {
-	assert(!file.eof());
+	mardyn_assert(!file.eof());
 #ifdef BINARY
 	file.read((char*) &_numProcs, sizeof(_numProcs));
 	file.read((char*) _lowCorner, sizeof(_lowCorner));

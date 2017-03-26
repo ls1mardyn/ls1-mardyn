@@ -32,10 +32,10 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	unsigned int count[3] = {0};
 	ASSERT_EQUAL(3ul, container->getNumberOfParticles());
 
-	Molecule* m = container->begin();
-	while ( m != container->end()) {
+	ParticleIterator m = container->iteratorBegin();
+	while ( m != container->iteratorEnd()) {
 		count[m->id()]++;
-		m = container->next();
+		++m;
 	}
 
 	for (int i = 0; i < 3; i++) {
@@ -47,10 +47,10 @@ void DomainDecompBaseTest::testExchangeMolecules() {
 	_domainDecomposition->exchangeMolecules(container, _domain);
 	ASSERT_EQUAL(24ul, container->getNumberOfParticles());
 
-	m = container->begin();
-	while(m != container->end()) {
+	m = container->iteratorBegin();
+	while(m != container->iteratorEnd()) {
 		count[m->id()]++;
-		m = container->next();
+		++m;
 	}
 
 	for (int i = 0; i < 3; i++) {

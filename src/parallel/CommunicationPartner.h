@@ -26,6 +26,7 @@ struct PositionInfo {
 	double _copiesLow[3], _copiesHigh[3];
 	double _shift[3]; //! for periodic boundaries
 	int _offset[3];
+	bool _enlarged[3][2];
 };
 
 
@@ -35,13 +36,15 @@ struct PositionInfo {
 class CommunicationPartner {
 public:
 	CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3],
-			const double bHi[3], const double sh[3], const int offset[3]);
+			const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]);
 	CommunicationPartner(const int r);
 	CommunicationPartner(const int r, const double leavingLo[3], const double leavingHi[3]);
 
 	CommunicationPartner(const CommunicationPartner& o);
 
-	// TODO: no operator= implemented!
+	CommunicationPartner() = delete;
+
+	CommunicationPartner& operator =(const CommunicationPartner& b);
 
 	~CommunicationPartner();
 
@@ -85,24 +88,33 @@ public:
 			for (unsigned int d2 = 0; d2 < 3; d2++) {
 				if (d2 == d)
 					continue;
-				_haloInfo[p]._bothLow[d2] -= enlargement;
-				_haloInfo[p]._bothHigh[d2] += enlargement;
-				_haloInfo[p]._leavingLow[d2] -= enlargement;
-				_haloInfo[p]._leavingHigh[d2] += enlargement;
-				_haloInfo[p]._copiesLow[d2] -= enlargement;
-				_haloInfo[p]._copiesHigh[d2] += enlargement;
+				if (!_haloInfo[p]._enlarged[d2][0]) {
+					_haloInfo[p]._bothLow[d2] -= enlargement;
+					_haloInfo[p]._leavingLow[d2] -= enlargement;
+					_haloInfo[p]._copiesLow[d2] -= enlargement;
+					_haloInfo[p]._enlarged[d2][0] = true;
+				}
+				if (!_haloInfo[p]._enlarged[d2][1]) {
+					_haloInfo[p]._bothHigh[d2] += enlargement;
+					_haloInfo[p]._leavingHigh[d2] += enlargement;
+					_haloInfo[p]._copiesHigh[d2] += enlargement;
+					_haloInfo[p]._enlarged[d2][1] = true;
+				}
 			}
 		}
 	}
 
-//! Combines current CommunicationPartner with the given partner
-//! @param partner which to add to the current CommunicationPartner
+	//! Combines current CommunicationPartner with the given partner
+	//! @param partner which to add to the current CommunicationPartner
 	void add(CommunicationPartner partner);
+
 private:
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
+
 	int _rank;
 	std::vector<PositionInfo> _haloInfo;
 
-// technical variables
+	// technical variables
 	MPI_Request *_sendRequest, *_recvRequest;
 	MPI_Status *_sendStatus, *_recvStatus;
 	std::vector<ParticleData> _sendBuf, _recvBuf;

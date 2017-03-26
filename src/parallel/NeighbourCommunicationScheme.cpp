@@ -29,14 +29,14 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
 void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
@@ -97,7 +97,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 	}
 
 	double waitCounter = 1.0;
-	double deadlockTimeOut = 60.0;
+	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
@@ -125,7 +125,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
 			global_log->warning()
-					<< "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -137,14 +137,14 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 
 		if (waitingTime > deadlockTimeOut) {
 			global_log->error()
-					<< "NeighbourCommunicationScheme1Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
 			}
-			global_simulation->exit(457);
+			Simulation::exit(457);
 		}
 
 	} // while not allDone
@@ -219,14 +219,17 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
 			break;
 		}
+
 	} else {
+
 		const int numNeighbours = _neighbours[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
+			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 		}
+
 	}
 }
 
@@ -244,7 +247,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 	double startTime = MPI_Wtime();
 
 	double waitCounter = 1.0;
-	double deadlockTimeOut = 60.0;
+	double deadlockTimeOut = 360.0;
 	global_log->set_mpi_output_all();
 	while (not allDone) {
 		allDone = true;
@@ -269,7 +272,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 		double waitingTime = MPI_Wtime() - startTime;
 		if (waitingTime > waitCounter) {
 			global_log->warning()
-					<< "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
+					<< "IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
 			waitCounter += 1.0;
@@ -280,13 +283,13 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 
 		if (waitingTime > deadlockTimeOut) {
 			global_log->error()
-					<< "NeighbourCommunicationScheme3Stage::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
+					<< "IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock error: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << deadlockTimeOut << " seconds"
 					<< std::endl;
 			for (int i = 0; i < numNeighbours; ++i) {
 				_neighbours[d][i].deadlockDiagnosticSendRecv();
 			}
-			global_simulation->exit(457);
+			Simulation::exit(457);
 		}
 
 	} // while not allDone
@@ -304,22 +307,24 @@ void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContai
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
+
 	for (unsigned short d = 0; d < getCommDims(); d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
 	}
+
 }
 
 void IndirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 
 void IndirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 

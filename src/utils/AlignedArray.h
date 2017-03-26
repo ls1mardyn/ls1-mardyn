@@ -12,7 +12,7 @@
 #include <malloc.h>
 #include <new>
 #include <cstring>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 #define CACHE_LINE_SIZE 64
 
@@ -77,7 +77,7 @@ public:
 	}
 
 	void appendValue(T v, size_t oldNumElements) {
-		assert(oldNumElements <= _capacity);
+		mardyn_assert(oldNumElements <= _capacity);
 		if(oldNumElements < _capacity) {
 			// no need to resize
 		} else {
@@ -104,7 +104,7 @@ public:
 			}
 		}
 
-		assert(size_rounded_up <= _capacity);
+		mardyn_assert(size_rounded_up <= _capacity);
 		return _capacity;
 	}
 
@@ -160,7 +160,7 @@ public:
 			ret = (n + 7) & ~0x07;
 			break;
 		default:
-			assert(false);
+			mardyn_assert(false);
 		}
 		return ret;
 	}

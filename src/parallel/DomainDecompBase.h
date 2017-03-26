@@ -197,6 +197,8 @@ public:
 	virtual long double collCommGetLongDouble();
 	//! has to call allreduceSum method of a CollComm class (none in sequential version)
 	virtual void collCommAllreduceSum();
+	//! has to call scanSum method of a CollComm class (none in sequential version)
+	virtual void collCommScanSum();
 	//! has to call broadcast method of a CollComm class (none in sequential version)
 	virtual void collCommBroadcast(int root = 0);
 	//returns the ranks of the neighbours

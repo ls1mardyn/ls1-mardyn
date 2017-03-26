@@ -9,7 +9,7 @@
 #define ARRAY2D_H_
 
 #include <vector>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 template<class T>
 class Array2D: private std::vector<T> {
@@ -21,7 +21,7 @@ public:
 	 **/
 	Array2D(std::size_t dim0 = 0, std::size_t dim1 = 0) :
 			std::vector<T>(dim0 * dim1) {
-		assert(this->size() == dim0 * dim1);
+		mardyn_assert(this->size() == dim0 * dim1);
 		m_dim[0] = dim0;
 		m_dim[1] = dim1;
 	}
@@ -45,7 +45,7 @@ public:
 	 parameter d unsigned char dimension
 	 **/
 	std::size_t dim(unsigned char d) const {
-		assert(d < 3);
+		mardyn_assert(d < 3);
 		return m_dim[d];
 	}
 
@@ -56,7 +56,7 @@ public:
 	 **/
 	void redim(std::size_t dim0, std::size_t dim1) {
 		this->resize(dim0 * dim1);
-		assert(this->size() == dim0 * dim1);
+		mardyn_assert(this->size() == dim0 * dim1);
 		m_dim[0] = dim0;
 		m_dim[1] = dim1;
 	}
@@ -76,8 +76,8 @@ public:
 	 parameter i1  std::size_t second index
 	 **/
 	std::size_t indices2hash(std::size_t i0, std::size_t i1) const {
-		assert(i0 < dim0());
-		assert(i1 < dim1());
+		mardyn_assert(i0 < dim0());
+		mardyn_assert(i1 < dim1());
 
 		//return i0*m_dim[1]+i1;  // "column-order"
 		return i1 * m_dim[0] + i0;  // "row-order"
@@ -90,7 +90,7 @@ public:
 	 parameter i1  std::size_t&  second index
 	 **/
 	void hash2indices(std::size_t h, std::size_t& i0, std::size_t& i1) const {
-		assert(h < this->size());
+		mardyn_assert(h < this->size());
 
 		// "column-order"
 		//i1=h%m_dim[1];

@@ -116,16 +116,8 @@ class KDDecomposition: public DomainDecompMPIBase {
 
 	int getUpdateFrequency() { return _frequency; }
 	void setUpdateFrequency(int frequency) { _frequency = frequency; }
-	virtual std::vector<int> getNeighbourRanks() override {
-		//global_log->error() << "not implemented \n";
-		exit(-1);
-		return std::vector<int> (0);
-	}
-	virtual std::vector<int> getNeighbourRanksFullShell() override{
-		//global_log->error() << "not implemented \n";
-		exit(-1);
-		return std::vector<int> (0);
-	}
+	virtual std::vector<int> getNeighbourRanks() override;
+	virtual std::vector<int> getNeighbourRanksFullShell() override;
 
 	virtual std::vector<CommunicationPartner> getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion, double cutoff) override;
 
@@ -227,6 +219,13 @@ class KDDecomposition: public DomainDecompMPIBase {
 	
 	void updateMeanProcessorSpeeds(std::vector<double>& processorSpeeds,
 			std::vector<double>& accumulatedProcessorSpeeds, ParticleContainer* moleculeContainer);
+
+	//! @brief fills the given vector with all particles in the given region of the particle container
+	//! @param moleculeContainer container with the particles to be collected
+	//! @param lowCorner minimum x-, y- and z-coordinate of the region
+	//! @param highwCorner maximum x-, y- and z-coordinate of the region
+	//! @param mols vector to put the particles in
+	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double startRegion[3], const double endRegion[3], std::vector<Molecule*>& mols) const;
 
 	//######################################
 	//###    private member variables    ###

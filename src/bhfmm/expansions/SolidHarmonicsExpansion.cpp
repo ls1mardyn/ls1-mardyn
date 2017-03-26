@@ -32,7 +32,7 @@ SolidHarmonicsExpansion::~SolidHarmonicsExpansion() {
 }
 
 void swap(SolidHarmonicsExpansion & s1, SolidHarmonicsExpansion & s2) {
-	assert(s1.getOrder() == s2.getOrder());
+	mardyn_assert(s1.getOrder() == s2.getOrder());
 	swap(s1._c, s2._c);
 	swap(s1._s, s2._s);
 }
@@ -40,13 +40,13 @@ void swap(SolidHarmonicsExpansion & s1, SolidHarmonicsExpansion & s2) {
 // OPERATORS //
 
 SolidHarmonicsExpansion & SolidHarmonicsExpansion::operator=(SolidHarmonicsExpansion RHS) {
-	assert(this->_order == RHS._order);
+	mardyn_assert(this->_order == RHS._order);
 	swap(*this, RHS);
 	return *this;
 }
 
 SolidHarmonicsExpansion & SolidHarmonicsExpansion::operator+=(const SolidHarmonicsExpansion & RHS) {
-	assert(this->_order == RHS._order);
+	mardyn_assert(this->_order == RHS._order);
 	this->_c += RHS._c;
 	this->_s += RHS._s;
 	return *this;
@@ -409,16 +409,16 @@ void SolidHarmonicsExpansion::rotatePhi(const double* CosSinPhi, int negate) {
 			const double val_M_c = acc_C(l, m);
 			const double val_M_s = acc_S(l, m);
 
-			assert(!isnan(val_M_c));
-			assert(!isnan(val_M_s));
-			assert(!isnan(this->acc_C(l, m)));
-			assert(!isnan(this->acc_S(l, m)));
+			mardyn_assert(!isnan(val_M_c));
+			mardyn_assert(!isnan(val_M_s));
+			mardyn_assert(!isnan(this->acc_C(l, m)));
+			mardyn_assert(!isnan(this->acc_S(l, m)));
 
 			acc_C(l, m) = (CosSinPhi[2*m]*val_M_c + negate*CosSinPhi[2*m+1]*val_M_s);
 			acc_S(l, m) = (CosSinPhi[2*m]*val_M_s - negate*CosSinPhi[2*m+1]*val_M_c);
 
-			assert(!isnan(this->acc_C(l, m)));
-			assert(!isnan(this->acc_S(l, m)));
+			mardyn_assert(!isnan(this->acc_C(l, m)));
+			mardyn_assert(!isnan(this->acc_S(l, m)));
 		}
 	}
 }
@@ -479,7 +479,7 @@ SolidHarmonicsExpansion rotatePhi(const SolidHarmonicsExpansion & E, const doubl
 }
 
 SolidHarmonicsExpansion rotateThetaL(const SolidHarmonicsExpansion & LE, const WignerMatrix& W) {
-	assert(W.getType() == bhfmm::ROT_TYPE_L);
+	mardyn_assert(W.getType() == bhfmm::ROT_TYPE_L);
 	const bool initializeToZero = false;
 	const int order = LE.getOrder();
 	SolidHarmonicsExpansion L_result(order, initializeToZero);
@@ -489,7 +489,7 @@ SolidHarmonicsExpansion rotateThetaL(const SolidHarmonicsExpansion & LE, const W
 }
 
 SolidHarmonicsExpansion rotateThetaM(const SolidHarmonicsExpansion & ME, const WignerMatrix& W) {
-	assert(W.getType() == bhfmm::ROT_TYPE_M);
+	mardyn_assert(W.getType() == bhfmm::ROT_TYPE_M);
 	const bool initializeToZero = false;
 	const int order = ME.getOrder();
 	SolidHarmonicsExpansion M_result(order, initializeToZero);
@@ -601,7 +601,7 @@ Vector3<double> forceGradLAndM(const SolidHarmonicsExpansion & LE, const SolidHa
 }
 
 Vector3<double> forceLAndGradM(const SolidHarmonicsExpansion & LE, const SolidHarmonicsExpansion & ME) {
-	assert(ME._order == LE._order + 1);
+	mardyn_assert(ME._order == LE._order + 1);
 
 	const int ord = (int) ME._order;
 

@@ -74,7 +74,7 @@ Homogeneous::Homogeneous(double cutoffRadius, double cutoffRadiusLJ, Domain* dom
 					double tau2=sqrt(xj*xj+yj*yj+zj*zj);
 					if(tau1+tau2>=cutoffRadiusLJ){
 						global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
-						exit(1);
+						Simulation::exit(1);
 					}
 					double eps24;
 					params >> eps24;

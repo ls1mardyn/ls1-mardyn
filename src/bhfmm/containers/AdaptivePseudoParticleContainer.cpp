@@ -22,10 +22,10 @@ void AdaptivePseudoParticleContainer::build(ParticleContainer* pc) {
 	double lowBound[3] = { 0.0, 0.0, 0.0 };
 	double highBound[3] = { _domainLength[0], _domainLength[1], _domainLength[2]};
 
-	Molecule* tM;
-	for (tM = pc->begin(); tM != pc->end(); tM = pc->next()) {
+	ParticleIterator tM;
+	for (tM = pc->iteratorBegin(); tM != pc->iteratorEnd(); ++tM) {
 		if (tM->inBox(lowBound, highBound)) {
-			_particles.push_back(tM);
+			_particles.push_back(&(*tM));
 		}
 	}
 
@@ -170,7 +170,7 @@ void AdaptivePseudoParticleContainer::push_on_stack(DttNode * trg,
 		break;
 	case split_internal:
 		if (trg->get_children(*trg_chs)) {
-			assert(src->get_children(*src_chs));
+			mardyn_assert(src->get_children(*src_chs));
 			for (unsigned int i = 0; i < trg_chs->size(); i++) {
 				for (unsigned int j = i; j < trg_chs->size(); j++) {
 					tst.target = (*trg_chs)[i];

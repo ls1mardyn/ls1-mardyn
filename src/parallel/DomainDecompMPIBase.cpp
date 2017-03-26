@@ -58,7 +58,7 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme){
 	} else{
 		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
-		global_simulation->exit(1);
+		Simulation::exit(1);
 	}
 }
 
@@ -100,15 +100,13 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) const {
 	using std::map;
 	using std::endl;
 
-	Molecule* m;
-
 	if (_rank) {
 		int num_molecules = mm->getNumberOfParticles();
 		unsigned long *tids;
 		tids = new unsigned long[num_molecules];
 
 		int i = 0;
-		for (m = mm->begin(); m != mm->end(); m = mm->next()) {
+		for (ParticleIterator m = mm->iteratorBegin(); m != mm->iteratorEnd(); ++m) {
 			tids[i] = m->id();
 			i++;
 		}
@@ -118,7 +116,7 @@ void DomainDecompMPIBase::assertDisjunctivity(TMoleculeContainer* mm) const {
 	} else {
 		map<unsigned long, int> check;
 
-		for (m = mm->begin(); m != mm->end(); m = mm->next())
+		for (ParticleIterator m = mm->iteratorBegin(); m != mm->iteratorEnd(); ++m)
 			check[m->id()] = 0;
 
 		MPI_Status status;
@@ -153,7 +151,7 @@ void DomainDecompMPIBase::balanceAndExchangeInitNonBlocking(bool /*forceRebalanc
 
 void DomainDecompMPIBase::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates) {
-	assert(stageNumber < _neighbourCommunicationScheme->getCommDims());
+	mardyn_assert(stageNumber < _neighbourCommunicationScheme->getCommDims());
 	_neighbourCommunicationScheme->prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, msgType,
 			removeRecvDuplicates, this);
 }

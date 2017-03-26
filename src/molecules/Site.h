@@ -3,7 +3,7 @@
 
 #include <iostream>
 #include <cmath>
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
@@ -29,7 +29,7 @@ public:
 	 * set the d-th component of the position
 	 */
 	void setR(int d, double r) {
-		assert(d < 3);
+		mardyn_assert(d < 3);
 		_r[d] = r;
 	}
 
@@ -193,7 +193,7 @@ public:
 
 	/** set the d-th component of the orientation vector */
 	void setE(int d, double e) {
-		assert(d < 3);
+		mardyn_assert(d < 3);
 		_e[d] = e;
 	}
 

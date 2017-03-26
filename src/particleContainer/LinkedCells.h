@@ -6,6 +6,7 @@
 
 #include "particleContainer/ParticleContainer.h"
 #include "particleContainer/ParticleIterator.h"
+#include "particleContainer/RegionParticleIterator.h"
 #include "particleContainer/ParticleCell.h"
 
 #include "WrapOpenMP.h"
@@ -144,32 +145,6 @@ public:
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
 
-	//! @brief returns a pointer to the first particle in the Linked Cells
-	//!
-	//! Internally, the particles are store in a std::list. To traverse this
-	//! list, a iterator (_particleIter) for the list is used.
-	//! This method sets this iterator to point to the begin of the list
-	//! and return a pointer to the value pointed to by the iterator
-	MoleculeIterator begin();
-
-	//! @brief returns a pointer to the next particle in the Linked Cells
-	//!
-	//! The iterator _particleIter is first incremented. Then a pointer
-	//! to the value pointed to by the iterator is returned. If the
-	//! iterator points to the end of the list (which is one element after the last
-	//! element), NULL is returned
-	MoleculeIterator next();
-
-	//! @brief returns current particle
-	MoleculeIterator current();
-
-	//! @brief returns NULL
-	MoleculeIterator end();
-
-	//! @brief deletes the current Molecule the iterator is at and returns the iterator to the next Molecule
-	// i.e. use as follows: for(it = LC.begin(); it != LC.end();) {if(erase) {it = deleteCurrent();} else {it = LC.next()}}
-	MoleculeIterator deleteCurrent();
-
 	// @todo: where is this function called?
 	void clear();
 
@@ -181,16 +156,11 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	//! @brief appends pointers to all particles in the halo region to the list
-	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
+	void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
+	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 
-	void getHaloParticlesDirection(int direction, std::vector<Molecule>& v, bool removeFromContainer = false);
-	void getBoundaryParticlesDirection(int direction, std::vector<Molecule>& v);
-
-
-	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
-	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]);
+	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
@@ -236,18 +206,26 @@ public:
 #endif
 
 
-
 	friend class StatisticsWriter;
 
 
-	//! @brief Get the index in the cell vector to which this Molecule belong
+	//! @brief Get the index in the cell vector to which this Molecule belongs
 	//!
-	//! each spacial position within the bounding box of the linked cells
+	//! each spatial position within the bounding box of the linked cells
 	//! belongs unambiguously to one cell. \n
 	//! This method determines for a given Molecule the corresponding cell
 	//! and returns the index of that cell in the cell vector. \n
 	//! If the molecule is not inside the bounding box, an error is printed
-	unsigned long getCellIndexOfMolecule(Molecule* molecule) const;
+	unsigned long int getCellIndexOfMolecule(Molecule* molecule) const;
+
+	//! @brief Get the index in the cell vector to which the point belongs
+	//!
+	//! each spatial position within the bounding box of the linked cells
+	//! belongs unambiguously to one cell. \n
+	//! This method determines for a given point the corresponding cell
+	//! and returns the index of that cell in the cell vector. \n
+	//! If the point is not inside the bounding box, an error is printed
+	unsigned long int getCellIndexOfPoint(const double point[3]) const;
 
 	ParticleCell& getCell(int idx){ return _cells[idx];}
 
@@ -266,10 +244,13 @@ public:
 
 		return ParticleIterator(&_cells, offset, stride);
 	}
+	RegionParticleIterator iterateRegionBegin (const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex, IterateType type = ALL);
+	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], IterateType type = ALL);
 	
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();
 	}
+	RegionParticleIterator iterateRegionEnd ();
 
 private:
 	//####################################
@@ -300,7 +281,7 @@ private:
 	//! and the central cell is calculated (sqrt(x^2+y^2+z^2)). If that distance
 	//! is larger than the cutoff radius, the cell can be neglected.
 	//! The distance in one dimension is the width of a cell multiplied with the number
-	//! of cells between the two cells (this is received by substracting one of the difference).
+	//! of cells between the two cells (this is received by subtracting one of the difference).
 	void calculateNeighbourIndices();
 
 	//! @brief addition for compact SimpleMD-style traversal
@@ -317,10 +298,10 @@ private:
 	long int cellIndexOf3DIndex(long int xIndex, long int yIndex, long int zIndex) const;
 
 	//! @brief given the index in the cell vector, return the index of the cell.
-	void threeDIndexOfCellIndex(int ind, int r[3], int dim[3]) const;
+	void threeDIndexOfCellIndex(int ind, int r[3], const int dim[3]) const;
 
 	/**
-	 * @brief delete particles which lie outside a cuboid region
+	 * @brief delete particles which lie outside a cubic region
 	 * @param boxMin lower left front corner
 	 * @param boxMax upper right back corner
 	 */
@@ -333,26 +314,20 @@ private:
 	MoleculeIterator nextNonEmptyCell();
 
 	/**
-	 * traverses sindle cell
+	 * traverses single cell
 	 * @param cellIndex
 	 * @param cellProcessor
 	 * @return
 	 */
 	void traverseCell(long int cellIndex, CellProcessor& cellProcessor);
 
+	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
+
+	RegionParticleIterator getRegionParticleIterator(const double startRegion[3], const double endRegion[3], const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex);
+
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####
 	//####################################
-
-#if 0
-	std::list<Molecule> _particles; //!< List containing all molecules from the phasespace
-
-	std::list<Molecule>::iterator _particleIter; //!< Iterator to traverse the list of particles (_particles)
-#else
-
-	std::vector<ParticleCell>::iterator _cellIterator;
-	std::vector<Molecule>::size_type _particleIndex;
-#endif
 
 	std::vector<ParticleCell> _cells; //!< Vector containing all cells (including halo)
 
@@ -368,23 +343,19 @@ private:
 	long _minNeighbourOffset;
 
 	// addition for compact SimpleMD-style traversal
-	std::vector<std::pair<unsigned long, unsigned long> > _cellPairOffsets;
-
-	unsigned int _numActiveColours;
-	std::vector<std::vector<long int> > _cellIndicesPerColour;
+	std::array<std::pair<unsigned long, unsigned long>, 14> _cellPairOffsets;
 
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
 
 	int _cellsInCutoff; //!< Minimal number of cells within the cutoff radius
-	int _cellsPerDimension[3]; //!< Number of Cells in each spacial dimension (including halo)
+	int _cellsPerDimension[3]; //!< Number of Cells in each spatial dimension (including halo)
 	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
-    double _LJCutoffRadius;
-
+	double _LJCutoffRadius;
 
 	//! @brief True if all Particles are in the right cell
 	//!
@@ -399,7 +370,6 @@ private:
 	//! abort the program if not). After the cells are updated, _cellsValid
 	//! should be set to true.
 	bool _cellsValid;
-
 };
 
 #endif /* LINKEDCELLS_H_ */

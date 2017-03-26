@@ -126,13 +126,13 @@ int main(int argc, char** argv) {
 		#ifdef ENABLE_MPI
 		MPI_Finalize();
 		#endif
-		exit(testresult);
+		exit(testresult); // using exit here should be OK
 	}
 
 	unsigned int numargs = args.size();
 	if (numargs < 1) {
 		op.print_usage();
-		global_simulation->exit(-13);
+		Simulation::exit(-13);
 	}
 
 	Simulation simulation;

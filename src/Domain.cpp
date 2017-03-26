@@ -239,7 +239,7 @@ void Domain::calculateGlobalValues(
 
 		this->_universalThermostatN[thermit->first] = numMolecules;
 		this->_universalRotationalDOF[thermit->first] = rotDOF;
-		assert((summv2 > 0.0) || (numMolecules == 0));
+		mardyn_assert((summv2 > 0.0) || (numMolecules == 0));
 
 		/* calculate the temperature of the entire system */
 		if(numMolecules > 0)
@@ -276,10 +276,10 @@ void Domain::calculateGlobalValues(
 			double limit_energy =  KINLIMIT_PER_T * Ti;
 			double limit_rot_energy;
 			double vcorr, Dcorr;
-			Molecule* tM;
-			for( tM = particleContainer->begin();
-					tM != particleContainer->end();
-					tM = particleContainer->next() )
+			ParticleIterator tM;
+			for( tM = particleContainer->iteratorBegin();
+					tM != particleContainer->iteratorEnd();
+					++tM)
 			{
 				Utrans = tM->U_trans();
 				if(Utrans > limit_energy)
@@ -378,7 +378,7 @@ void Domain::calculateGlobalValues(
 
 void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 {
-	Molecule* tM;
+	ParticleIterator tM;
 	if(this->_componentwiseThermostat)
 	{
 		for( map<int, bool>::iterator thit = _universalUndirectedThermostat.begin();
@@ -388,7 +388,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 			if(thit->second)
 				for(int d=0; d < 3; d++) _localThermostatDirectedVelocity[d][thit->first] = 0.0;
 		}
-		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
+		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -402,7 +402,7 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 	else if(this->_universalUndirectedThermostat[0])
 	{
 		for(int d=0; d < 3; d++) _localThermostatDirectedVelocity[d][0] = 0.0;
-		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
+		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
 		{
 			for(int d=0; d < 3; d++)
 				_localThermostatDirectedVelocity[d][0] += tM->v(d);
@@ -412,10 +412,10 @@ void Domain::calculateThermostatDirectedVelocity(ParticleContainer* partCont)
 
 void Domain::calculateVelocitySums(ParticleContainer* partCont)
 {
-	Molecule* tM;
+	ParticleIterator tM;
 	if(this->_componentwiseThermostat)
 	{
-		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
+		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
 		{
 			int cid = tM->componentid();
 			int thermostat = this->_componentToThermostatIdMap[cid];
@@ -437,7 +437,7 @@ void Domain::calculateVelocitySums(ParticleContainer* partCont)
 	}
 	else
 	{
-		for(tM = partCont->begin(); tM != partCont->end(); tM = partCont->next() )
+		for(tM = partCont->iteratorBegin(); tM != partCont->iteratorEnd(); ++tM)
 		{
 			this->_localThermostatN[0]++;
 			this->_localRotationalDOF[0] += tM->component()->getRotationalDegreesOfFreedom();
@@ -627,7 +627,7 @@ void Domain::initParameterStreams(double cutoffRadius, double cutoffRadiusLJ){
 					double tau2=sqrt(xj*xj+yj*yj+zj*zj);
 					if(tau1+tau2>=cutoffRadiusLJ){
 						global_log->error() << "Error calculating cutoff corrections, rc too small" << endl;
-						exit(1);
+						Simulation::exit(1);
 					}
 					double eps24;
 					params >> eps24;
@@ -708,7 +708,7 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 	unID = 0;
 	unsigned lNin = 0;
 	unsigned lNout = 0;
-	for(Molecule* thismol = molCont->begin(); thismol != molCont->end(); thismol = molCont->next())
+	for(ParticleIterator thismol = molCont->iteratorBegin(); thismol != molCont->iteratorEnd(); ++thismol)
 	{
 		cid = thismol->componentid();
 		if(this->_universalProfiledComponents[cid])
@@ -723,8 +723,8 @@ void Domain::recordProfile(ParticleContainer* molCont, bool virialProfile)
 						+ pow((thismol->r(2) - this->_universalCentre[2]), 2.0);
 				if (distFor_unID <= this->_universalR2max) {
 					unID = this->unID(thismol->r(0), thismol->r(1), thismol->r(2));
-					assert(unID >= 0);
-					assert(
+					mardyn_assert(unID >= 0);
+					mardyn_assert(
 							unID
 									< (this->_universalNProfileUnits[0] * this->_universalNProfileUnits[1]
 											* this->_universalNProfileUnits[2]));
@@ -1256,7 +1256,7 @@ void Domain::calculateGamma(ParticleContainer* _particleContainer, DomainDecompB
 	for (unsigned i=0; i<numComp; i++){
 		_localGamma[i]=0;
 	}
-	for(Molecule* tempMol = _particleContainer->begin(); tempMol != _particleContainer->end(); tempMol = _particleContainer->next()){
+	for(ParticleIterator tempMol = _particleContainer->iteratorBegin(); tempMol != _particleContainer->iteratorEnd(); ++tempMol){
 		unsigned cid=tempMol->componentid();
 		_localGamma[cid]+=tempMol->Vi(1)-0.5*(tempMol->Vi(0)+tempMol->Vi(2));
 	//	cout << _localGamma[cid] << "\t" << cid << endl;
@@ -1322,7 +1322,7 @@ long int Domain::unID(double qx, double qy, double qz){
 	          global_log->error() << "Severe error!! Invalid profile unit (" << xun << " / " << yun << " / " << zun << ").\n\n";
 	          global_log->error() << "Coordinates (" << qx << " / " << qy << " / " << qz << ").\n";
 		  global_log->error() << "unID = " << unID << "\n";
-	          //exit(707);
+	          //Simulation::exit(707);
 	       }
 	       return unID;
 }
@@ -1377,7 +1377,7 @@ void Domain::determineXZShift( DomainDecompBase* domainDecomp, ParticleContainer
    double localMass = 0.0;
    int cid;
 
-   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
@@ -1415,7 +1415,7 @@ void Domain::determineYShift( DomainDecompBase* domainDecomp, ParticleContainer*
    double localBalance = 0.0;
    double localMass = 0.0;
    int cid;
-   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
      cid = tm->componentid();
      if(_componentForYShift[cid])
@@ -1463,7 +1463,7 @@ void Domain::noYShift( DomainDecompBase* domainDecomp, ParticleContainer* molCon
    //static double initialCentreOfMassY;
    double localBalance = 0.0;
    double localMass = 0.0;
-   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
 
 	double tmass = tm->gMass();
@@ -1516,7 +1516,7 @@ void Domain::determineShift( DomainDecompBase* domainDecomp, ParticleContainer* 
    double localMass = 0.0;
    int cid;
 
-   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
       cid = tm->componentid();
       if(_universalProfiledComponents[cid])
@@ -1563,7 +1563,7 @@ void Domain::realign(
 			 << "=> adjustment: (" << _universalRealignmentMotion[0] << ", " << _universalRealignmentMotion[1] << ", " << _universalRealignmentMotion[2] << ").\n";
 #endif
    }
-   for(Molecule* tm = molCont->begin(); tm != molCont->end(); tm = molCont->next())
+   for(ParticleIterator tm = molCont->iteratorBegin(); tm != molCont->iteratorEnd(); ++tm)
    {
      for(unsigned short d=0; d<3; d++){
        tm->move(d, _universalRealignmentMotion[d]);

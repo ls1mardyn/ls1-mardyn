@@ -174,7 +174,7 @@ public:
                 FluidPot(molecule1, molecule2, params, distanceVector, dummy1, dummy2, dummy3, calculateLJ);
                 return dummy1 / 6.0 + dummy2 + dummy3;
             default:
-                exit(666);
+                Simulation::exit(666);
         }
         return 0.0;
 	}

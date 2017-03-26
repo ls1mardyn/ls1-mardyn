@@ -159,9 +159,7 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 		_components[1].updateMassInertia();
 	}
 
-
-	unsigned long int id = _numMolecules * domainDecomp->getRank() / domainDecomp->getNumProcs();
-	std::cout << "Start-ID=" << id << std::endl;
+	unsigned long int id = 0;
 	double spacing = _simBoxLength / numMoleculesPerDimension;
 	double origin = spacing / 4.; // origin of the first DrawableMolecule
 
@@ -188,8 +186,6 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 					addMolecule(x, y, z, id, particleContainer);
 					id++;
 				}
-				// increment id in any case, because this particle will probably
-				// be added by some other process
 			}
 		}
 		if ((int)(i * percentage) > percentageRead) {
@@ -210,8 +206,6 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 					addMolecule(x, y, z, id, particleContainer);
 					id++;
 				}
-				// increment id in any case, because this particle will probably
-				// be added by some other process
 			}
 		}
 		if ((int)(50 + i * percentage) > percentageRead) {
@@ -219,12 +213,28 @@ unsigned long CubicGridGenerator::readPhaseSpace(ParticleContainer* particleCont
 			_logger->info() << "Finished reading molecules: " << (percentageRead) << "%\r" << flush;
 		}
 	}
+
+
+	domainDecomp->collCommInit(1);
+	domainDecomp->collCommAppendUnsLong(id);//number of local molecules
+	domainDecomp->collCommScanSum();
+	unsigned long idOffset = domainDecomp->collCommGetUnsLong() - id;
+	domainDecomp->collCommFinalize();
+	// fix ID's to be unique:
+	for (auto mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol) {
+		mol->setid(mol->id()+idOffset);
+	}
+	//std::cout << domainDecomp->getRank()<<": #num local molecules:" << id << std::endl;
+	//std::cout << domainDecomp->getRank()<<": offset:" << idOffset << std::endl;
+
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
 	inputTimer.stop();
 	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
-	return id;
+
+
+	return id + idOffset;
 }
 
 void CubicGridGenerator::addMolecule(double x, double y, double z, unsigned long id, ParticleContainer* particleContainer) {

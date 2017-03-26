@@ -277,13 +277,13 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 	uint32_t molcid = 0;
 	/*
 	 * should use this version in future
-	 *
+	 */
 	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
 			this->CalcNumSpheresPerType(numSpheresPerType, &(*mol));
-	*/
+	/*
 	for (Molecule* mol = particleContainer->begin(); mol != particleContainer->end(); mol = particleContainer->next())
 		this->CalcNumSpheresPerType(numSpheresPerType, mol);
-
+*/
 	//distribute global component particle count
 	uint64_t globalNumCompSpheres[_numSphereTypes];
 	if (rank == 0){
@@ -439,14 +439,14 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		float spherePos[3];
 		/*
 		 * should use this version in future
-		 *
+		 */
 		for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
 		{
 			if(true == GetSpherePos(spherePos, &(*mol), nSphereTypeIndex) )
-		*/
+		/*
 		for (Molecule* mol = particleContainer->begin(); mol != particleContainer->end(); mol = particleContainer->next())
 		{
-			if(true == GetSpherePos(spherePos, mol, nSphereTypeIndex) )
+			if(true == GetSpherePos(spherePos, mol, nSphereTypeIndex) )*/
 				MPI_File_write(fh, spherePos, 3, MPI_FLOAT, &status);
 		}
 		MPI_Barrier(MPI_COMM_WORLD);

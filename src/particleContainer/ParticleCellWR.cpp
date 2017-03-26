@@ -50,7 +50,7 @@ bool ParticleCell_WR::isEmpty() const {
 }
 
 bool ParticleCell_WR::deleteMoleculeByIndex(size_t index) {
-	assert(false);
+	mardyn_assert(false);
 	return false;
 }
 
