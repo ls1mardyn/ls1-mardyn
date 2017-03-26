@@ -542,14 +542,13 @@ void DistControl::UpdatePositionsInit(ParticleContainer* particleContainer)
 	switch(_nMethodInit )
 	{
 	case DCIM_START_CONFIGURATION:
-		Molecule* tM;
 
-		for( tM  = particleContainer->begin();
-			 tM != particleContainer->end();
-			 tM  = particleContainer->next() )
+		for( ParticleIterator tM  = particleContainer->iteratorBegin();
+			 tM != particleContainer->iteratorEnd();
+			 ++tM)
 		{
 			// sample density profile
-			this->SampleProfiles(tM);
+			this->SampleProfiles(&(*tM));
 		}
 
 		// determine interface midpoints and update region positions

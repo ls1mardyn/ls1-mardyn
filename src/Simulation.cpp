@@ -970,7 +970,6 @@ void Simulation::simulate() {
             if( !_densityControl->ProcessIsRelevant() )
             	break;
         	 */
-            Molecule* tM;
 
             // init density control
             _densityControl->Init(_simstep);
@@ -978,12 +977,12 @@ void Simulation::simulate() {
     //            unsigned long nNumMoleculesLocal = 0;
     //            unsigned long nNumMoleculesGlobal = 0;
 
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
+            for( ParticleIterator tM = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
                 // measure density
-                _densityControl->MeasureDensity(tM, _simstep);
+                _densityControl->MeasureDensity(&(*tM), _simstep);
 
     //                nNumMoleculesLocal++;
             }
@@ -994,26 +993,26 @@ void Simulation::simulate() {
 
             bool bDeleteMolecule;
 
-            for( tM  = _moleculeContainer->begin();
-                 tM != NULL;  // _moleculeContainer->end();
-                 )
+            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
                 bDeleteMolecule = false;
 
                 // control density
-                _densityControl->ControlDensity(tM, this, _simstep, bDeleteMolecule);
+                _densityControl->ControlDensity(&(*tM), this, _simstep, bDeleteMolecule);
 
 
                 if(true == bDeleteMolecule)
                 {
-                    tM = _moleculeContainer->deleteCurrent();
+					unsigned long id = tM->id();
+					double x, y, z;
+					x = tM->r(0);
+					y = tM->r(1);
+					z = tM->r(2);
+					_moleculeContainer->deleteMolecule(id, x, y, z, false);
                     nNumMoleculesDeletedLocal++;
                 }
-                else
-                {
-                    tM  = _moleculeContainer->next();
-                }
-
             }
             // write out deleted molecules data
             _densityControl->WriteDataDeletedMolecules(_simstep);
@@ -1033,14 +1032,12 @@ void Simulation::simulate() {
         // mheinen 2015-03-16 --> DISTANCE_CONTROL
         if(_distControl != NULL)
         {
-            Molecule* tM;
-
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
+            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
                 // sample density profile
-                _distControl->SampleProfiles(tM);
+                _distControl->SampleProfiles(&(*tM));
             }
 
             // determine interface midpoints and update region positions
@@ -1052,11 +1049,11 @@ void Simulation::simulate() {
 
 
             // align system center of mass
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
+            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
-                _distControl->AlignSystemCenterOfMass(tM, _simstep);
+                _distControl->AlignSystemCenterOfMass(&(*tM), _simstep);
             }
         }
         // <-- DISTANCE_CONTROL
@@ -1260,11 +1257,11 @@ void Simulation::simulate() {
 		{
 			_particleTracker->PreLoopAction(_simstep);
 
-			for(Molecule* tM  = _moleculeContainer->begin();
-			tM != _moleculeContainer->end();
-			tM  = _moleculeContainer->next() )
+			for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+				 tM != _moleculeContainer->iteratorEnd();
+				 ++tM )
 			{
-				_particleTracker->LoopAction(tM);
+				_particleTracker->LoopAction(&(*tM));
 			}  // loop over molecules
 
 			_particleTracker->PostLoopAction();
@@ -1279,12 +1276,12 @@ void Simulation::simulate() {
             // init drift control
             _driftControl->Init(_simstep);
 
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
+            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
                 // measure drift
-                _driftControl->MeasureDrift(tM, _simstep);
+                _driftControl->MeasureDrift(&(*tM), _simstep);
 
 //                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
             }
@@ -1295,12 +1292,12 @@ void Simulation::simulate() {
             // calc scale factors
             _driftControl->CalcScaleFactors(_simstep);
 
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
+            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
                 // measure drift
-                _driftControl->ControlDrift(tM, _simstep);
+                _driftControl->ControlDrift(&(*tM), _simstep);
 
 //                cout << "id = " << tM->id() << ", (vx,vy,vz) = " << tM->v(0) << ", " << tM->v(1) << ", " << tM->v(2) << endl;
             }
@@ -1311,14 +1308,12 @@ void Simulation::simulate() {
         // mheinen 2015-03-18 --> REGION_SAMPLING
         if(_regionSampling != NULL)
         {
-            Molecule* tM;
-
-            for( tM  = _moleculeContainer->begin();
-                 tM != _moleculeContainer->end();
-                 tM  = _moleculeContainer->next() )
+            for( ParticleIterator tM  = _moleculeContainer->iteratorBegin();
+                 tM != _moleculeContainer->iteratorEnd();
+                 ++tM )
             {
                 // sample profiles and vdf
-                _regionSampling->DoSampling(tM, _domainDecomposition, _simstep);
+                _regionSampling->DoSampling(&(*tM), _domainDecomposition, _simstep);
             }
 
             // write data
