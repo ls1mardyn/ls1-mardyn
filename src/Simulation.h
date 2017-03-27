@@ -529,6 +529,7 @@ private:
 
 	/** Enable final checkpoint after simulation run. */
 	bool _finalCheckpoint;
+	bool _finalCheckpointBinary;
 
 	/** List of output plugins to use */
 	std::list<OutputBase*> _outputPlugins;

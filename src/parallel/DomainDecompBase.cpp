@@ -156,14 +156,27 @@ int DomainDecompBase::getNumProcs() const {
 void DomainDecompBase::barrier() const {
 }
 
-void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer) const{
+void DomainDecompBase::writeMoleculesToFile(std::string filename, ParticleContainer* moleculeContainer, bool binary) const{
 	for (int process = 0; process < getNumProcs(); process++) {
 		if (getRank() == process) {
-			std::ofstream checkpointfilestream(filename.c_str(), std::ios::app);
-			checkpointfilestream.precision(20);
+			std::ofstream checkpointfilestream;
+			if(binary == true){
+//				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::trunc);
+				checkpointfilestream.open((filename + ".xdr").c_str(), std::ios::binary | std::ios::out | std::ios::app);
+			}
+			else {
+				checkpointfilestream.open(filename.c_str(), std::ios::app);
+				checkpointfilestream.precision(20);
+			}
+
 			ParticleIterator tempMolecule;
 			for (tempMolecule = moleculeContainer->iteratorBegin(); tempMolecule != moleculeContainer->iteratorEnd(); ++tempMolecule) {
-				tempMolecule->write(checkpointfilestream);
+				if(binary == true){
+					tempMolecule->writeBinary(checkpointfilestream);
+				}
+				else {
+					tempMolecule->write(checkpointfilestream);
+				}
 			}
 			checkpointfilestream.close();
 		}
@@ -237,3 +250,15 @@ void DomainDecompBase::collCommScanSum() {
 void DomainDecompBase::collCommBroadcast(int root) {
 	_collCommBase.broadcast(root);
 }
+
+double DomainDecompBase::getIOCutoffRadius(int dim, Domain* domain,
+		ParticleContainer* moleculeContainer) {
+
+	double length = domain->getGlobalLength(dim);
+	double cutoff = moleculeContainer->getCutoff();
+	assert( ((int) length / cutoff ) == length / cutoff );
+	return cutoff;
+}
+
+
+

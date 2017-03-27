@@ -419,6 +419,31 @@ void FullMolecule::write(ostream& ostrm) const {
 	      << endl;
 }
 
+void FullMolecule::writeBinary(std::ostream& ostrm) const {
+	unsigned int cid = _component->ID() + 1;
+	double qw = _q.qw();
+	double qx = _q.qx();
+	double qy = _q.qy();
+	double qz = _q.qz();
+
+	ostrm.write(reinterpret_cast<const char*>(&_id), 8);
+	ostrm.write(reinterpret_cast<const char*>(&cid), 4);
+	ostrm.write(reinterpret_cast<const char*>(&(_r[0])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_r[1])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_r[2])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_v[0])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_v[1])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_v[2])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&qw), 8);
+	ostrm.write(reinterpret_cast<const char*>(&qx), 8);
+	ostrm.write(reinterpret_cast<const char*>(&qy), 8);
+	ostrm.write(reinterpret_cast<const char*>(&qz), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_L[0])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_L[1])), 8);
+	ostrm.write(reinterpret_cast<const char*>(&(_L[2])), 8);
+}
+
+
 // private functions
 // these are only used when compiling molecule.cpp and therefore might be inlined without any problems
 

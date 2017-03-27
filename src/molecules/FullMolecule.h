@@ -324,6 +324,9 @@ public:
 	/** write information to stream */
 	void write(std::ostream& ostrm) const;
 
+	/** write binary information to stream */
+	void writeBinary(std::ostream& ostrm) const;
+
 	/** clear forces and moments */
 	void clearFM();
 	/** calculate forces and moments for already given site forces */

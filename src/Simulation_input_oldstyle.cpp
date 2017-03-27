@@ -129,6 +129,27 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				lineStream >> generatorName >> inputFile;
 				_inputReader = GeneratorFactory::loadGenerator(generatorName, inputFile);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			} else if (phaseSpaceFileFormat == "Binary") {
+				_inputReader = (InputBase*) new BinaryReader();
+				string token;
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceHeaderFile(token);
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceFile(token);
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			} else if (phaseSpaceFileFormat == "MPI-IO") {
+			#ifdef ENABLE_MPI
+				_inputReader = (InputBase*) new MPI_IOReader();
+				string token;
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceHeaderFile(token);
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceFile(token);
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			#else
+				global_log->error() << "MPI not enabled! Program exit..." << endl;
+				Simulation::exit(1);
+			#endif
 			} else {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
 				exit(1);
@@ -253,6 +274,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					exit(-1);
 				}
 				global_log->debug() << "CheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+			} else if (token == "BinaryCheckpointWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new BinaryCheckpointWriter(writeFrequency, outputPathAndPrefix, true));
+				global_log->debug() << "BinaryCheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+#ifdef ENABLE_MPI
+			} else if (token == "MPI-IOCheckpointWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new MPI_IOCheckpointWriter(writeFrequency, outputPathAndPrefix, true));
+				global_log->debug() << "MPI-IOCheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+#endif
 			} else if (token == "PovWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
@@ -1382,10 +1417,18 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				}
 			// <-- PARTICLE_TRACKER
 
-			} else {
-				if (token != "")
-					global_log->warning() << "Did not process unknown token " << token << endl;
+		} else if (token == "finalCheckpoint") {
+			std::string strKey;
+			inputfilestream >> strKey;
+			if (strKey == "binary")
+			{
+				_finalCheckpoint = true;
+				_finalCheckpointBinary = true;
 			}
+		} else {
+			if (token != "")
+				global_log->warning() << "Did not process unknown token " << token << endl;
+		}
 	}
 
 #ifdef ENABLE_MPI

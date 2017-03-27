@@ -1462,13 +1462,12 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/*****************************//**********************************************/
-
     ioTimer.start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.xdr");
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
-        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
     }
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
@@ -1636,6 +1635,7 @@ void Simulation::initialize() {
 	global_simulation = this;
 
 	_finalCheckpoint = true;
+	_finalCheckpointBinary = false;
 
         // TODO:
 #ifndef ENABLE_MPI
