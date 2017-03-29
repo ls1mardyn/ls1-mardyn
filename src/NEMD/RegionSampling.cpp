@@ -31,6 +31,8 @@ SampleRegion::SampleRegion( ControlInstance* parent, double dLowerCorner[3], dou
 {
 	_nID = ++_nStaticID;
 	_nSubdivisionOpt = SDOPT_UNKNOWN;
+
+	_nNumComponents = this->GetParent()->GetDomain()->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
 }
 
 
@@ -48,16 +50,16 @@ void SampleRegion::PrepareSubdivisionProfiles()
 	switch(_nSubdivisionOpt)
 	{
 	case SDOPT_BY_NUM_SLABS:
-		_dShellWidthProfilesInit = this->GetWidth(1) / ( (double)(_nNumShellsProfiles) );
-		_dShellWidthProfiles = _dShellWidthProfilesInit;
+		_dBinWidthProfilesInit = this->GetWidth(1) / ( (double)(_nNumBinsProfiles) );
+		_dBinWidthProfiles = _dBinWidthProfilesInit;
 		break;
 	case SDOPT_BY_SLAB_WIDTH:
-		_nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);
-		_dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
+		_nNumBinsProfiles = round(dWidth / _dBinWidthProfilesInit);
+		_dBinWidthProfiles = dWidth / ( (double)(_nNumBinsProfiles) );
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dShellWidthProfilesInit nor _nNumShellsProfiles was set correctly! Programm exit..." << endl;
+		global_log->error() << "ERROR in tec::ControlRegion::PrepareSubdivision(): Neither _dBinWidthProfilesInit nor _nNumBinsProfiles was set correctly! Programm exit..." << endl;
 		exit(-1);
 	}
 }
@@ -72,16 +74,16 @@ void SampleRegion::PrepareSubdivisionVDF()
 	switch(_nSubdivisionOpt)
 	{
 	case SDOPT_BY_NUM_SLABS:
-		_dShellWidthVDFInit = this->GetWidth(1) / ( (double)(_nNumShellsVDF) );
-		_dShellWidthVDF = _dShellWidthVDFInit;
+		_dBinWidthVDFInit = this->GetWidth(1) / ( (double)(_nNumBinsVDF) );
+		_dBinWidthVDF = _dBinWidthVDFInit;
 		break;
 	case SDOPT_BY_SLAB_WIDTH:
-		_nNumShellsVDF = round(dWidth / _dShellWidthVDFInit);
-		_dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
+		_nNumBinsVDF = round(dWidth / _dBinWidthVDFInit);
+		_dBinWidthVDF = dWidth / ( (double)(_nNumBinsVDF) );
 		break;
 	case SDOPT_UNKNOWN:
 	default:
-		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Neither _dShellWidthVDFInit nor _nNumShellsVDF was set correctly! Programm exit..." << endl;
+		global_log->error() << "ERROR in SampleRegion::PrepareSubdivisionVDF(): Neither _dBinWidthVDFInit nor _nNumBinsVDF was set correctly! Programm exit..." << endl;
 		exit(-1);
 	}
 }
@@ -91,12 +93,12 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	if(false == _SamplingEnabledProfiles)
 		return;
 
-    // shell width
-    double dNumShellsTemperature = (double) _nNumShellsProfiles;
-    _dShellWidthProfilesInit = this->GetWidth(nDimension) / dNumShellsTemperature;
-    _dShellWidthProfiles = _dShellWidthProfilesInit;
+    // Bin width
+    double dNumBinsProfiles = (double) _nNumBinsProfiles;
+    _dBinWidthProfilesInit = this->GetWidth(nDimension) / dNumBinsProfiles;
+    _dBinWidthProfiles = _dBinWidthProfilesInit;
 
-    // shell volume
+    // Bin volume
     double dArea;
     Domain* domain = this->GetParent()->GetDomain();
 
@@ -116,304 +118,82 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
     default:
         dArea = domain->getGlobalLength(0) * domain->getGlobalLength(2);
     }
-    _dShellVolumeProfiles = _dShellWidthProfiles * dArea;
+    _dBinVolumeProfiles = _dBinWidthProfiles * dArea;
+	_dInvertBinVolumeProfiles = 1. / _dBinVolumeProfiles;
+	_dInvertBinVolSamplesProfiles = _dInvertBinVolumeProfiles * _dInvertNumSamplesProfiles;
 
 
-    // discrete values: shell midpoints, velocity values
-    _dShellMidpointsProfiles = new double[_nNumShellsProfiles];
+    // discrete values: Bin midpoints, velocity values
+    _dBinMidpointsProfiles = new double[_nNumBinsProfiles];
 
-    // number of molecules
-    _nNumMoleculesSumLocal            = new unsigned long[_nNumShellsProfiles];
-    _nNumMoleculesSumCumulativeLocal  = new unsigned long[_nNumShellsProfiles];
-    _nNumMoleculesSumGlobal           = new unsigned long[_nNumShellsProfiles];
-    _nNumMoleculesSumCumulativeGlobal = new unsigned long[_nNumShellsProfiles];
+	_nNumValsScalar = _nNumBinsProfiles * _nNumComponents * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
+	_nNumValsVector = _nNumValsScalar * 3;                        // * 3: x, y, z-component
 
-    // j+, j-
-    _nNumMoleculesPlusSumCumulativeLocal = new unsigned long[_nNumShellsProfiles];
-    _nNumMoleculesPlusSumCumulativeGlobal = new unsigned long[_nNumShellsProfiles];
-    _nNumMoleculesMinusSumCumulativeLocal = new unsigned long[_nNumShellsProfiles];
-    _nNumMoleculesMinusSumCumulativeGlobal = new unsigned long[_nNumShellsProfiles];
+	// Offsets
+	_nOffsetScalar = new unsigned long*[3];
+	for(unsigned int dir = 0; dir<3; ++dir)
+		_nOffsetScalar[dir] = new unsigned long[_nNumComponents];
 
-    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-    {
-        _dShellMidpointsProfiles[s] = 0.;
+	_nOffsetVector = new unsigned long**[3];
+	for(unsigned int dim = 0; dim<3; ++dim)
+	{
+		_nOffsetVector[dim] = new unsigned long*[3];
+		for(unsigned int dir = 0; dir<3; ++dir)
+			_nOffsetVector[dim][dir] = new unsigned long[_nNumComponents];
+	}
 
-        // number of molecules
-        _nNumMoleculesSumLocal[s] = 0;
-        _nNumMoleculesSumCumulativeLocal[s] = 0;
-        _nNumMoleculesSumGlobal[s] = 0;
-        _nNumMoleculesSumCumulativeGlobal[s] = 0;
+	unsigned long nOffset;
 
-        // j+, j-
-        _nNumMoleculesPlusSumCumulativeLocal[s] = 0;
-        _nNumMoleculesPlusSumCumulativeGlobal[s] = 0;
-        _nNumMoleculesMinusSumCumulativeLocal[s] = 0;
-        _nNumMoleculesMinusSumCumulativeGlobal[s] = 0;
-    }
+	// Scalar quantities
+	nOffset = 0;
+	for(unsigned int dir = 0; dir<3; ++dir){
+		for(unsigned int cid = 0; cid<_nNumComponents; ++cid){
+			_nOffsetScalar[dir][cid] = nOffset;
+			nOffset += _nNumBinsProfiles;
+		}
+	}
+	// Vector quantities
+	nOffset = 0;
+	for(unsigned int dim = 0; dim<3; ++dim){
+		for(unsigned int dir = 0; dir<3; ++dir){
+			for(unsigned int cid = 0; cid<_nNumComponents; ++cid){
+				_nOffsetVector[dim][dir][cid] = nOffset;
+				nOffset += _nNumBinsProfiles;
+			}
+		}
+	}
 
-    // output values
+	// Scalar quantities
+	// [direction all|+|-][component][position]
+	_nNumMoleculesLocal  = new unsigned long[_nNumValsScalar];
+	_nNumMoleculesGlobal = new unsigned long[_nNumValsScalar];
+	_nRotDOFLocal  = new unsigned long[_nNumValsScalar];
+	_nRotDOFGlobal = new unsigned long[_nNumValsScalar];
+	_d2EkinTransLocal  = new double[_nNumValsScalar];
+	_d2EkinTransGlobal = new double[_nNumValsScalar];
+	_d2EkinRotLocal  = new double[_nNumValsScalar];
+	_d2EkinRotGlobal = new double[_nNumValsScalar];
 
-    // local
-    _dVelocityComponentSumsLocal                  = new double*[_nNumShellsProfiles];
-    _dVelocityComponentSumsCumulativeLocal        = new double*[_nNumShellsProfiles];
-    _dSquaredVelocityComponentSumsLocal           = new double*[_nNumShellsProfiles];
-    _dSquaredVelocityComponentSumsCumulativeLocal = new double*[_nNumShellsProfiles];
+	// output profiles
+	_dDensity = new double[_nNumValsScalar];
+	_dTemperature = new double[_nNumValsScalar];
 
-    // global
-    _dVelocityComponentSumsGlobal                  = new double*[_nNumShellsProfiles];
-    _dVelocityComponentSumsCumulativeGlobal        = new double*[_nNumShellsProfiles];
-    _dSquaredVelocityComponentSumsGlobal           = new double*[_nNumShellsProfiles];
-    _dSquaredVelocityComponentSumsCumulativeGlobal = new double*[_nNumShellsProfiles];
+	// Vector quantities
+	// [direction all|+|-][component][position][dimension x|y|z]
+	_dVelocityLocal  = new double[_nNumValsVector];
+	_dVelocityGlobal = new double[_nNumValsVector];
+	_dSquaredVelocityLocal  = new double[_nNumValsVector];
+	_dSquaredVelocityGlobal = new double[_nNumValsVector];
+	_dForceLocal  = new double[_nNumValsVector];
+	_dForceGlobal = new double[_nNumValsVector];
 
-    _dDriftVelocityGlobal               = new double*[_nNumShellsProfiles];
-    _dDriftVelocityAverageGlobal        = new double*[_nNumShellsProfiles];
-    _dTemperatureComponentGlobal        = new double*[_nNumShellsProfiles];
-    _dTemperatureComponentAverageGlobal = new double*[_nNumShellsProfiles];
+	// output profiles
+	_dTemperatureComp = new double[_nNumValsVector];
+	_dDriftVelocity   = new double[_nNumValsVector];
+	_dForce = new double[_nNumValsVector];
 
-    _dDensityGlobal        = new double[_nNumShellsProfiles];
-    _dDensityAverageGlobal = new double[_nNumShellsProfiles];
-
-
-    // j+, j-
-    _dVelocityComponentPlusSumsCumulativeLocal = new double*[_nNumShellsProfiles];
-    _dVelocityComponentMinusSumsCumulativeLocal = new double*[_nNumShellsProfiles];
-    _dVelocityComponentPlusSumsCumulativeGlobal = new double*[_nNumShellsProfiles];
-    _dVelocityComponentMinusSumsCumulativeGlobal = new double*[_nNumShellsProfiles];
-
-    _dDriftVelocityPlusAverageGlobal = new double*[_nNumShellsProfiles];
-    _dDriftVelocityMinusAverageGlobal = new double*[_nNumShellsProfiles];
-
-
-    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-    {
-        // local
-        _dVelocityComponentSumsLocal[s]                  = new double[3];
-        _dVelocityComponentSumsCumulativeLocal[s]        = new double[3];
-        _dSquaredVelocityComponentSumsLocal[s]           = new double[3];
-        _dSquaredVelocityComponentSumsCumulativeLocal[s] = new double[3];
-
-        // global
-        _dVelocityComponentSumsGlobal[s]                  = new double[3];
-        _dVelocityComponentSumsCumulativeGlobal[s]        = new double[3];
-        _dSquaredVelocityComponentSumsGlobal[s]           = new double[3];
-        _dSquaredVelocityComponentSumsCumulativeGlobal[s] = new double[3];
-
-        _dDriftVelocityGlobal[s]               = new double[3];
-        _dDriftVelocityAverageGlobal[s]        = new double[3];
-        _dTemperatureComponentGlobal[s]        = new double[3];
-        _dTemperatureComponentAverageGlobal[s] = new double[3];
-
-        // j+, j-
-        _dVelocityComponentPlusSumsCumulativeLocal[s] = new double[3];
-        _dVelocityComponentMinusSumsCumulativeLocal[s] = new double[3];
-        _dVelocityComponentPlusSumsCumulativeGlobal[s] = new double[3];
-        _dVelocityComponentMinusSumsCumulativeGlobal[s] = new double[3];
-
-        _dDriftVelocityPlusAverageGlobal[s] = new double[3];
-        _dDriftVelocityMinusAverageGlobal[s] = new double[3];
-    }
-
-
-    // init values
-    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-    {
-        // init density
-        _dDensityGlobal[s] = 0.;
-        _dDensityAverageGlobal[s] = 0.;
-
-        for(unsigned int d = 0; d < 3; ++d)  // 3 diminsions: x, y, z
-        {
-            // local
-            _dVelocityComponentSumsLocal[s][d]                  = 0.;
-            _dVelocityComponentSumsCumulativeLocal[s][d]        = 0.;
-            _dSquaredVelocityComponentSumsLocal[s][d]           = 0.;
-            _dSquaredVelocityComponentSumsCumulativeLocal[s][d] = 0.;
-
-            // global
-            _dVelocityComponentSumsGlobal[s][d]                  = 0.;
-            _dVelocityComponentSumsCumulativeGlobal[s][d]        = 0.;
-            _dSquaredVelocityComponentSumsGlobal[s][d]           = 0.;
-            _dSquaredVelocityComponentSumsCumulativeGlobal[s][d] = 0.;
-
-            _dDriftVelocityGlobal[s][d]               = 0.;
-            _dDriftVelocityAverageGlobal[s][d]        = 0.;
-            _dTemperatureComponentGlobal[s][d]        = 0.;
-            _dTemperatureComponentAverageGlobal[s][d] = 0.;
-
-            // j+, j-
-            _dVelocityComponentPlusSumsCumulativeLocal[s][d] = 0.;
-            _dVelocityComponentMinusSumsCumulativeLocal[s][d] = 0.;
-            _dVelocityComponentPlusSumsCumulativeGlobal[s][d] = 0.;
-            _dVelocityComponentMinusSumsCumulativeGlobal[s][d] = 0.;
-
-            _dDriftVelocityPlusAverageGlobal[s][d]  = 0.;
-            _dDriftVelocityMinusAverageGlobal[s][d] = 0.;
-        }
-    }
-
-//    cout << "_initSamplingProfiles = " << _initSamplingProfiles << endl;
-//    cout << "_writeFrequencyProfiles = " << _writeFrequencyProfiles << endl;
-//    cout << "_nNumShellsProfiles = " << _nNumShellsProfiles << endl;
-
-
-    // componentwise temperature
-    unsigned int nNumComponents;
-    nNumComponents = domain->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
-
-    _nNumMoleculesCompLocal  = new unsigned long* [nNumComponents];
-    _nNumMoleculesCompGlobal = new unsigned long* [nNumComponents];
-    _nRotDOFCompLocal  = new unsigned long* [nNumComponents];
-    _nRotDOFCompGlobal = new unsigned long* [nNumComponents];
-
-    _d2EkinTransCompLocal = new double* [nNumComponents];
-    _d2EkinTransCompGlobal = new double* [nNumComponents];
-    _d2EkinRotCompLocal = new double* [nNumComponents];
-    _d2EkinRotCompGlobal = new double* [nNumComponents];
-
-    _dTemperatureCompGlobal = new double* [nNumComponents];
-    _dDensityCompGlobal = new double* [nNumComponents];
-
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        _nNumMoleculesCompLocal[c]  = new unsigned long[_nNumShellsProfiles];
-        _nNumMoleculesCompGlobal[c] = new unsigned long[_nNumShellsProfiles];
-        _nRotDOFCompLocal[c]  = new unsigned long[_nNumShellsProfiles];
-        _nRotDOFCompGlobal[c] = new unsigned long[_nNumShellsProfiles];
-
-        _d2EkinTransCompLocal[c]  = new double[_nNumShellsProfiles];
-        _d2EkinTransCompGlobal[c] = new double[_nNumShellsProfiles];
-        _d2EkinRotCompLocal[c]  = new double[_nNumShellsProfiles];
-        _d2EkinRotCompGlobal[c] = new double[_nNumShellsProfiles];
-
-        _dTemperatureCompGlobal[c] = new double[_nNumShellsProfiles];
-        _dDensityCompGlobal[c] = new double[_nNumShellsProfiles];
-    }
-
-    // init
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
-        {
-            _nNumMoleculesCompLocal[c][s]  = 0;
-            _nNumMoleculesCompGlobal[c][s]  = 0;
-            _nRotDOFCompLocal[c][s]  = 0;
-            _nRotDOFCompGlobal[c][s]  = 0;
-
-            _d2EkinTransCompLocal[c][s]  = 0.;
-            _d2EkinTransCompGlobal[c][s]  = 0.;
-            _d2EkinRotCompLocal[c][s]  = 0.;
-            _d2EkinRotCompGlobal[c][s]  = 0.;
-
-            _dTemperatureCompGlobal[c][s]  = 0.;
-            _dDensityCompGlobal[c][s]  = 0.;
-        }
-    }
-
-
-    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
-
-    // [component][position]
-    _nNumMoleculesCompLocal_py  = new unsigned long*[nNumComponents];
-    _nNumMoleculesCompLocal_ny  = new unsigned long*[nNumComponents];
-    _nNumMoleculesCompGlobal_py = new unsigned long*[nNumComponents];
-    _nNumMoleculesCompGlobal_ny = new unsigned long*[nNumComponents];
-
-    // [component][position]
-    _dDensityCompGlobal_py = new double*[nNumComponents];
-    _dDensityCompGlobal_ny = new double*[nNumComponents];
-
-    // [component][vx,vy,vz][position]
-    _dVelocityCompLocal_py  = new double**[nNumComponents];
-    _dVelocityCompLocal_ny  = new double**[nNumComponents];
-    _dVelocityCompGlobal_py = new double**[nNumComponents];
-    _dVelocityCompGlobal_ny = new double**[nNumComponents];
-
-    // [component][fx,fy,fz][position]
-    _dForceCompLocal_py  = new double**[nNumComponents];
-    _dForceCompLocal_ny  = new double**[nNumComponents];
-    _dForceCompGlobal_py = new double**[nNumComponents];
-    _dForceCompGlobal_ny = new double**[nNumComponents];
-
-
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        // [component][position]
-        _nNumMoleculesCompLocal_py[c]  = new unsigned long[_nNumShellsProfiles];
-        _nNumMoleculesCompLocal_ny[c]  = new unsigned long[_nNumShellsProfiles];
-        _nNumMoleculesCompGlobal_py[c] = new unsigned long[_nNumShellsProfiles];
-        _nNumMoleculesCompGlobal_ny[c] = new unsigned long[_nNumShellsProfiles];
-
-        // [component][position]
-        _dDensityCompGlobal_py[c] = new double[_nNumShellsProfiles];
-        _dDensityCompGlobal_ny[c] = new double[_nNumShellsProfiles];
-
-        // [component][vx,vy,vz][position]
-        _dVelocityCompLocal_py[c]  = new double*[3];
-        _dVelocityCompLocal_ny[c]  = new double*[3];
-        _dVelocityCompGlobal_py[c] = new double*[3];
-        _dVelocityCompGlobal_ny[c] = new double*[3];
-
-        // [component][fx,fy,fz][position]
-        _dForceCompLocal_py[c]  = new double*[3];
-        _dForceCompLocal_ny[c]  = new double*[3];
-        _dForceCompGlobal_py[c] = new double*[3];
-        _dForceCompGlobal_ny[c] = new double*[3];
-    }
-
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        for(unsigned short d=0; d < 3; ++d)
-        {
-            // [component][vx,vy,vz][position]
-            _dVelocityCompLocal_py[c][d]  = new double[_nNumShellsProfiles];
-            _dVelocityCompLocal_ny[c][d]  = new double[_nNumShellsProfiles];
-            _dVelocityCompGlobal_py[c][d] = new double[_nNumShellsProfiles];
-            _dVelocityCompGlobal_ny[c][d] = new double[_nNumShellsProfiles];
-
-            // [component][fx,fy,fz][position]
-            _dForceCompLocal_py[c][d]  = new double[_nNumShellsProfiles];
-            _dForceCompLocal_ny[c][d]  = new double[_nNumShellsProfiles];
-            _dForceCompGlobal_py[c][d] = new double[_nNumShellsProfiles];
-            _dForceCompGlobal_ny[c][d] = new double[_nNumShellsProfiles];
-        }
-    }
-
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
-        {
-            // [component][position]
-            _nNumMoleculesCompLocal_py[c][s] = 0;
-            _nNumMoleculesCompLocal_ny[c][s] = 0;
-            _nNumMoleculesCompGlobal_py[c][s] = 0;
-            _nNumMoleculesCompGlobal_ny[c][s] = 0;
-
-            // [component][position]
-            _dDensityCompGlobal_py[c][s] = 0.;
-            _dDensityCompGlobal_ny[c][s] = 0.;
-        }
-    }
-
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        for(unsigned short d=0; d < 3; ++d)
-        {
-            for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
-            {
-                // [component][vx,vy,vz][position]
-                _dVelocityCompLocal_py[c][d][s]  = 0.;
-                _dVelocityCompLocal_ny[c][d][s]  = 0.;
-                _dVelocityCompGlobal_py[c][d][s] = 0.;
-                _dVelocityCompGlobal_ny[c][d][s] = 0.;
-
-                // [component][fx,fy,fz][position]
-                _dForceCompLocal_py[c][d][s]  = 0.;
-                _dForceCompLocal_ny[c][d][s]  = 0.;
-                _dForceCompGlobal_py[c][d][s] = 0.;
-                _dForceCompGlobal_ny[c][d][s] = 0.;
-            }
-        }
-    }
+	// init sampling data structures
+	this->ResetLocalValuesProfiles();
 
     // discretisation
     this->DoDiscretisationProfiles(RS_DIMENSION_Y);
@@ -425,17 +205,17 @@ void SampleRegion::InitSamplingVDF(int nDimension)
 	if(false == _SamplingEnabledVDF)
 		return;
 
-    // shell width
-    double dNumShellsVDF = (double) _nNumShellsVDF;
-    _dShellWidthVDFInit = this->GetWidth(nDimension) / dNumShellsVDF;
-    _dShellWidthVDF = _dShellWidthVDFInit;
+    // Bin width
+    double dNumBinsVDF = (double) _nNumBinsVDF;
+    _dBinWidthVDFInit = this->GetWidth(nDimension) / dNumBinsVDF;
+    _dBinWidthVDF = _dBinWidthVDFInit;
 
-    // discrete values: shell midpoints, velocity values
-    _dShellMidpointsVDF = new double[_nNumShellsVDF];
+    // discrete values: Bin midpoints, velocity values
+    _dBinMidpointsVDF = new double[_nNumBinsVDF];
 
-    for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+    for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
     {
-        _dShellMidpointsVDF[s] = 0.;
+        _dBinMidpointsVDF[s] = 0.;
     }
 
     _dDiscreteVelocityValues = new double[_nNumDiscreteStepsVDF];
@@ -446,41 +226,41 @@ void SampleRegion::InitSamplingVDF(int nDimension)
     }
 
     // local
-    _veloDistrMatrixLocal_py_abs = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_py_pvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_py_pvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_py_pvz = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_py_nvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_py_nvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_py_nvz = new unsigned long*[_nNumShellsVDF];
+    _veloDistrMatrixLocal_py_abs = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_py_pvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_py_pvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_py_pvz = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_py_nvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_py_nvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_py_nvz = new unsigned long*[_nNumBinsVDF];
 
-    _veloDistrMatrixLocal_ny_abs = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_ny_pvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_ny_pvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_ny_pvz = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_ny_nvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_ny_nvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixLocal_ny_nvz = new unsigned long*[_nNumShellsVDF];
+    _veloDistrMatrixLocal_ny_abs = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_ny_pvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_ny_pvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_ny_pvz = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_ny_nvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_ny_nvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixLocal_ny_nvz = new unsigned long*[_nNumBinsVDF];
 
     // global
-    _veloDistrMatrixGlobal_py_abs = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_py_pvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_py_pvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_py_pvz = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_py_nvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_py_nvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_py_nvz = new unsigned long*[_nNumShellsVDF];
+    _veloDistrMatrixGlobal_py_abs = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_py_pvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_py_pvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_py_pvz = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_py_nvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_py_nvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_py_nvz = new unsigned long*[_nNumBinsVDF];
 
-    _veloDistrMatrixGlobal_ny_abs = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_ny_pvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_ny_pvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_ny_pvz = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_ny_nvx = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_ny_nvy = new unsigned long*[_nNumShellsVDF];
-    _veloDistrMatrixGlobal_ny_nvz = new unsigned long*[_nNumShellsVDF];
+    _veloDistrMatrixGlobal_ny_abs = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_ny_pvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_ny_pvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_ny_pvz = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_ny_nvx = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_ny_nvy = new unsigned long*[_nNumBinsVDF];
+    _veloDistrMatrixGlobal_ny_nvz = new unsigned long*[_nNumBinsVDF];
 
 
-    for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+    for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
     {
         // local
         _veloDistrMatrixLocal_py_abs[s] = new unsigned long[_nNumDiscreteStepsVDF];
@@ -519,7 +299,7 @@ void SampleRegion::InitSamplingVDF(int nDimension)
     }
 
     // init values
-    for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+    for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
     {
         for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
         {
@@ -562,7 +342,7 @@ void SampleRegion::InitSamplingVDF(int nDimension)
 /*
     cout << "_initSamplingVDF = " << _initSamplingVDF << endl;
     cout << "_writeFrequencyVDF = " << _writeFrequencyVDF << endl;
-    cout << "_nNumShellsVDF = " << _nNumShellsVDF << endl;
+    cout << "_nNumBinsVDF = " << _nNumBinsVDF << endl;
     cout << "_nNumDiscreteStepsVDF = " << _nNumDiscreteStepsVDF << endl;
 */
 
@@ -581,10 +361,10 @@ void SampleRegion::DoDiscretisationProfiles(int nDimension)
 
     double* dLowerCorner = this->GetLowerCorner();
 
-    // calc shell midpoints
-    for(unsigned int s = 0; s < _nNumShellsProfiles; s++)
+    // calc Bin midpoints
+    for(unsigned int s = 0; s < _nNumBinsProfiles; s++)
     {
-        _dShellMidpointsProfiles[s] = (s + 0.5) * _dShellWidthProfiles + dLowerCorner[nDimension];
+        _dBinMidpointsProfiles[s] = (s + 0.5) * _dBinWidthProfiles + dLowerCorner[nDimension];
     }
 
     _bDiscretisationDoneProfiles = true;
@@ -605,10 +385,10 @@ void SampleRegion::DoDiscretisationVDF(int nDimension)
 
     double* dLowerCorner = this->GetLowerCorner();
 
-    // calc shell midpoints
-    for(unsigned int s = 0; s < _nNumShellsVDF; s++)
+    // calc Bin midpoints
+    for(unsigned int s = 0; s < _nNumBinsVDF; s++)
     {
-        _dShellMidpointsVDF[s] = (s + 0.5) * _dShellWidthVDF + dLowerCorner[nDimension];
+        _dBinMidpointsVDF[s] = (s + 0.5) * _dBinWidthVDF + dLowerCorner[nDimension];
     }
 
 
@@ -629,137 +409,71 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 		return;
 
     unsigned int nPosIndex;
-    unsigned int nIndexMax = _nNumShellsProfiles - 1;
+    unsigned int nIndexMax = _nNumBinsProfiles - 1;
 
     // do not reset profile matrices here!!!
     // BUT: reset profile before calling this function!!!
-
-    double v[3];
 
     // calc position index
     double* dLowerCorner = this->GetLowerCorner();
     double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
 
-    nPosIndex = (unsigned int) floor(dPosRelative / _dShellWidthProfiles);
+    nPosIndex = (unsigned int) floor(dPosRelative / _dBinWidthProfiles);
 
     // ignore outer (halo) molecules
     if(nPosIndex > nIndexMax)  // negative values will be ignored to: cast to unsigned int --> high value
         return;
 
-    v[0] = molecule->v(0);
-    v[1] = molecule->v(1);
-    v[2] = molecule->v(2);
+	unsigned int cid = molecule->componentid() + 1;  // id starts internally with 0
+	unsigned int nRotDOF = molecule->component()->getRotationalDegreesOfFreedom();
+	double d2EkinTrans = molecule->U2_trans();
+	double d2EkinRot   = molecule->U2_rot();
+	double v[3];
+	v[0] = molecule->v(0);
+	v[1] = molecule->v(1);
+	v[2] = molecule->v(2);
+	double F[3];
+	F[0] = molecule->F(0);
+	F[1] = molecule->F(1);
+	F[2] = molecule->F(2);
+	double v2[3];
+	v2[0] = v[0]*v[0];
+	v2[1] = v[1]*v[1];
+	v2[2] = v[2]*v[2];
 
-    // component velocity sums (drift velocities)
-    // [position][x,y,z-component]
-    _dVelocityComponentSumsLocal[nPosIndex][0] += v[0];
-    _dVelocityComponentSumsLocal[nPosIndex][1] += v[1];
-    _dVelocityComponentSumsLocal[nPosIndex][2] += v[2];
+	// Loop over directions: all (+/-) | only (+) | only (-)
+	for(unsigned int dir = 0; dir<3; ++dir)
+	{
+		// only (+)
+		if(1==dir && v[1] < 0.)
+			continue;
+		// only (-)
+		if(2==dir && v[1] > 0.)
+			continue;
 
-    _dVelocityComponentSumsCumulativeLocal[nPosIndex][0] += v[0];
-    _dVelocityComponentSumsCumulativeLocal[nPosIndex][1] += v[1];
-    _dVelocityComponentSumsCumulativeLocal[nPosIndex][2] += v[2];
+		// Scalar quantities
+		_nNumMoleculesLocal[ _nOffsetScalar[dir][0  ] + nPosIndex ] ++;  // all components
+		_nNumMoleculesLocal[ _nOffsetScalar[dir][cid] + nPosIndex ] ++;  // specific component
+		_nRotDOFLocal      [ _nOffsetScalar[dir][0  ] + nPosIndex ] += nRotDOF;
+		_nRotDOFLocal      [ _nOffsetScalar[dir][cid] + nPosIndex ] += nRotDOF;
 
+		_d2EkinTransLocal  [ _nOffsetScalar[dir][0  ] + nPosIndex ] += d2EkinTrans;
+		_d2EkinTransLocal  [ _nOffsetScalar[dir][cid] + nPosIndex ] += d2EkinTrans;
+		_d2EkinRotLocal    [ _nOffsetScalar[dir][0  ] + nPosIndex ] += d2EkinRot;
+		_d2EkinRotLocal    [ _nOffsetScalar[dir][cid] + nPosIndex ] += d2EkinRot;
 
-    // TODO: perhabs calc m * v_drift instead of v_drift
-    // important when we have mixture with different molecule masses
-
-    // squared component velocity sums (need to calculate kinetic energies)
-    // [position][x,y,z-component]
-    _dSquaredVelocityComponentSumsLocal[nPosIndex][0] += v[0]*v[0];
-    _dSquaredVelocityComponentSumsLocal[nPosIndex][1] += v[1]*v[1];
-    _dSquaredVelocityComponentSumsLocal[nPosIndex][2] += v[2]*v[2];
-
-    _dSquaredVelocityComponentSumsCumulativeLocal[nPosIndex][0] += v[0]*v[0];
-    _dSquaredVelocityComponentSumsCumulativeLocal[nPosIndex][1] += v[1]*v[1];
-    _dSquaredVelocityComponentSumsCumulativeLocal[nPosIndex][2] += v[2]*v[2];
-
-    // sum up molecules taken into account
-    _nNumMoleculesSumLocal[nPosIndex]++;
-    _nNumMoleculesSumCumulativeLocal[nPosIndex]++;
-
-    // j+, j-
-    bool bVelocityIsPlus = (v[1] > 0);
-
-/*
-    cout << "v[1] = " << v[1] << endl;
-    cout << "bVelocityIsPlus = " << bVelocityIsPlus << endl;
-    cout << "!bVelocityIsPlus = " << !bVelocityIsPlus << endl;
-    cout << "bVelocityIsPlus * v[1] = " << bVelocityIsPlus * v[1] << endl;
-    cout << "!bVelocityIsPlus * v[1] = " << !bVelocityIsPlus * v[1] << endl;
-*/
-
-    _nNumMoleculesPlusSumCumulativeLocal[nPosIndex]  +=  bVelocityIsPlus;
-    _nNumMoleculesMinusSumCumulativeLocal[nPosIndex] += !bVelocityIsPlus;
-
-    // y-direction
-    _dVelocityComponentPlusSumsCumulativeLocal[nPosIndex][1]  +=  bVelocityIsPlus * v[1];
-    _dVelocityComponentMinusSumsCumulativeLocal[nPosIndex][1] += !bVelocityIsPlus * v[1];
-
-
-    // componentwise temperature
-    unsigned int cid = molecule->componentid()+1;  // starts with 0
-
-    _nNumMoleculesCompLocal[cid][nPosIndex]++;
-    _nRotDOFCompLocal[cid][nPosIndex] += molecule->component()->getRotationalDegreesOfFreedom();
-
-    molecule->calculate_mv2_Iw2(_d2EkinTransCompLocal[cid][nPosIndex], _d2EkinRotCompLocal[cid][nPosIndex]);
-
-    // total
-    _nNumMoleculesCompLocal[0][nPosIndex]++;
-    _nRotDOFCompLocal[0][nPosIndex] += molecule->component()->getRotationalDegreesOfFreedom();
-
-    molecule->calculate_mv2_Iw2(_d2EkinTransCompLocal[0][nPosIndex], _d2EkinRotCompLocal[0][nPosIndex]);
-
-
-    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
-
-    // [component][position]
-    _nNumMoleculesCompLocal_py[0][nPosIndex]   +=  bVelocityIsPlus;;
-    _nNumMoleculesCompLocal_ny[0][nPosIndex]   += !bVelocityIsPlus;
-    _nNumMoleculesCompLocal_py[cid][nPosIndex] +=  bVelocityIsPlus;;
-    _nNumMoleculesCompLocal_ny[cid][nPosIndex] += !bVelocityIsPlus;
-
-    // [component][vx,vy,vz][position]
-    _dVelocityCompLocal_py[0][0][nPosIndex]  +=  bVelocityIsPlus * v[0];
-    _dVelocityCompLocal_py[0][1][nPosIndex]  +=  bVelocityIsPlus * v[1];
-    _dVelocityCompLocal_py[0][2][nPosIndex]  +=  bVelocityIsPlus * v[2];
-
-    _dVelocityCompLocal_ny[0][0][nPosIndex]  += !bVelocityIsPlus * v[0];
-    _dVelocityCompLocal_ny[0][1][nPosIndex]  += !bVelocityIsPlus * v[1];
-    _dVelocityCompLocal_ny[0][2][nPosIndex]  += !bVelocityIsPlus * v[2];
-
-    _dVelocityCompLocal_py[cid][0][nPosIndex]  +=  bVelocityIsPlus * v[0];
-    _dVelocityCompLocal_py[cid][1][nPosIndex]  +=  bVelocityIsPlus * v[1];
-    _dVelocityCompLocal_py[cid][2][nPosIndex]  +=  bVelocityIsPlus * v[2];
-
-    _dVelocityCompLocal_ny[cid][0][nPosIndex]  += !bVelocityIsPlus * v[0];
-    _dVelocityCompLocal_ny[cid][1][nPosIndex]  += !bVelocityIsPlus * v[1];
-    _dVelocityCompLocal_ny[cid][2][nPosIndex]  += !bVelocityIsPlus * v[2];
-
-    // force vector
-    double f[3];
-
-    f[0] = molecule->F(0);
-    f[1] = molecule->F(1);
-    f[2] = molecule->F(2);
-
-    // [component][fx,fy,fz][position]
-    _dForceCompLocal_py[0][0][nPosIndex]  +=  bVelocityIsPlus * f[0];
-    _dForceCompLocal_py[0][1][nPosIndex]  +=  bVelocityIsPlus * f[1];
-    _dForceCompLocal_py[0][2][nPosIndex]  +=  bVelocityIsPlus * f[2];
-
-    _dForceCompLocal_ny[0][0][nPosIndex]  += !bVelocityIsPlus * f[0];
-    _dForceCompLocal_ny[0][1][nPosIndex]  += !bVelocityIsPlus * f[1];
-    _dForceCompLocal_ny[0][2][nPosIndex]  += !bVelocityIsPlus * f[2];
-
-    _dForceCompLocal_py[cid][0][nPosIndex]  +=  bVelocityIsPlus * f[0];
-    _dForceCompLocal_py[cid][1][nPosIndex]  +=  bVelocityIsPlus * f[1];
-    _dForceCompLocal_py[cid][2][nPosIndex]  +=  bVelocityIsPlus * f[2];
-
-    _dForceCompLocal_ny[cid][0][nPosIndex]  += !bVelocityIsPlus * f[0];
-    _dForceCompLocal_ny[cid][1][nPosIndex]  += !bVelocityIsPlus * f[1];
-    _dForceCompLocal_ny[cid][2][nPosIndex]  += !bVelocityIsPlus * f[2];
+		// Vector quantities
+		// Loop over dimensions  x, y, z (vector components)
+		for(unsigned int dim = 0; dim<3; ++dim)
+		{
+			_dVelocityLocal       [ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += v[dim];
+			_dVelocityLocal       [ _nOffsetVector[dim][dir][cid] + nPosIndex ] += v[dim];
+			_dSquaredVelocityLocal[ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += v2[dim];
+			_dSquaredVelocityLocal[ _nOffsetVector[dim][dir][cid] + nPosIndex ] += v2[dim];
+			_dForceLocal          [ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += F[dim];
+			_dForceLocal          [ _nOffsetVector[dim][dir][cid] + nPosIndex ] += F[dim];
+		}
+	}
 }
 
 
@@ -775,7 +489,7 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
 
     unsigned int nPosIndex;
     unsigned int nVelocityIndex;
-    unsigned int nIndexMax     = _nNumShellsVDF - 1;
+    unsigned int nIndexMax     = _nNumBinsVDF - 1;
     unsigned int nIndexMaxVelo = _nNumDiscreteStepsVDF - 1;
 
     double dVelocity;
@@ -787,7 +501,7 @@ void SampleRegion::SampleVDF(Molecule* molecule, int nDimension)
     double* dLowerCorner = this->GetLowerCorner();
     double dPosRelative = molecule->r(nDimension) - dLowerCorner[nDimension];
 
-    nPosIndex = (unsigned int) floor(dPosRelative / _dShellWidthVDF);
+    nPosIndex = (unsigned int) floor(dPosRelative / _dBinWidthVDF);
 
     // ignore outer (halo) molecules
     if(nPosIndex > nIndexMax)
@@ -867,208 +581,81 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	if(false == _SamplingEnabledProfiles)
 		return;
 
-    int ownRank = domainDecomp->getRank();
-//  int numprocs = domainDecomp->getNumProcs();
-
-    double dInvertDOF;
-    double dInvertDOF_plus, dInvertDOF_minus;
-    double dInvertShellVolume = 1. / _dShellVolumeProfiles;
-
-    double dInvertNumSamples = (double) (_writeFrequencyProfiles);  // TODO: perhabs in future different from writeFrequency
-    dInvertNumSamples = 1. / dInvertNumSamples;
-
-
-    // <<< important !! >>>
-    // reset global values before reduce operation, cause this function can be called more than once
-    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-    {
-        _nNumMoleculesSumGlobal[s] = 0;
-        _nNumMoleculesSumCumulativeGlobal[s] = 0;
-
-        for(unsigned short d = 0; d<3; ++d)
-        {
-            _dVelocityComponentSumsGlobal[s][d] = 0.;
-            _dVelocityComponentSumsCumulativeGlobal[s][d] = 0.;
-            _dSquaredVelocityComponentSumsGlobal[s][d] = 0.;
-            _dSquaredVelocityComponentSumsCumulativeGlobal[s][d] = 0.;
-        }
-    }
-
-
-    // perform reduce operation, process further calculations
+	// perform reduce operation, process further calculations
 #ifdef ENABLE_MPI
 
-    MPI_Reduce( _nNumMoleculesSumLocal,           _nNumMoleculesSumGlobal,           _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce( _nNumMoleculesSumCumulativeLocal, _nNumMoleculesSumCumulativeGlobal, _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce( _nNumMoleculesPlusSumCumulativeLocal, _nNumMoleculesPlusSumCumulativeGlobal, _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-    MPI_Reduce( _nNumMoleculesMinusSumCumulativeLocal, _nNumMoleculesMinusSumCumulativeGlobal, _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	// Scalar quantities
+	// [direction all|+|-][component][position]
+	MPI_Reduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _nRotDOFLocal,       _nRotDOFGlobal,       _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _d2EkinTransLocal,   _d2EkinTransGlobal,   _nNumValsScalar, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _d2EkinRotLocal,     _d2EkinRotGlobal,     _nNumValsScalar, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
+	// Vector quantities
+	// [dimension x|y|z][direction all|+|-][component][position]
+	MPI_Reduce( _dVelocityLocal,        _dVelocityGlobal,        _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dSquaredVelocityLocal, _dSquaredVelocityGlobal, _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	MPI_Reduce( _dForceLocal,           _dForceGlobal,           _nNumValsVector, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+#else
+	// Scalar quantities
+	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
+	{
+		_nNumMoleculesGlobal[i] = _nNumMoleculesLocal[i];
+		_nRotDOFGlobal[i]       = _nRotDOFLocal[i];
+		_d2EkinTransGlobal[i]   = _d2EkinTransLocal[i];
+		_d2EkinRotGlobal[i]     = _d2EkinRotLocal[i];
+	}
+
+	// Vector quantities
+	for(unsigned int i = 0; i < _nNumValsVector; ++i)
+	{
+		_dVelocityGlobal[i]        = _dVelocityLocal[i];
+		_dSquaredVelocityGlobal[i] = _dSquaredVelocityLocal[i];
+		_dForceGlobal[i]           = _dForceLocal[i];
+	}
 #endif
 
+	int rank = domainDecomp->getRank();
+	//  int numprocs = domainDecomp->getNumProcs();
 
-    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-    {
-    #ifdef ENABLE_MPI
+	// only root process writes out data
+	if(rank != 0)
+		 return;
 
-        MPI_Reduce( _dVelocityComponentSumsLocal[s],                  _dVelocityComponentSumsGlobal[s],                  3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _dVelocityComponentSumsCumulativeLocal[s],        _dVelocityComponentSumsCumulativeGlobal[s],        3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _dSquaredVelocityComponentSumsLocal[s],           _dSquaredVelocityComponentSumsGlobal[s],           3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _dSquaredVelocityComponentSumsCumulativeLocal[s], _dSquaredVelocityComponentSumsCumulativeGlobal[s], 3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _dVelocityComponentPlusSumsCumulativeLocal[s],        _dVelocityComponentPlusSumsCumulativeGlobal[s],        3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _dVelocityComponentMinusSumsCumulativeLocal[s],        _dVelocityComponentMinusSumsCumulativeGlobal[s],        3, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+	double dInvertBinVolume = 1. / _dBinVolumeProfiles;
 
-    #endif
+	double dInvertNumSamples = (double) (_writeFrequencyProfiles);  // TODO: perhabs in future different from writeFrequency
+	dInvertNumSamples = 1. / dInvertNumSamples;
 
-        if(ownRank != 0)
-            continue;
+	// Scalar quantities
+	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
+	{
+		unsigned long nNumMolecules = _nNumMoleculesGlobal[i];
+		double dInvertNumMolecules = 1. / ( (double)(nNumMolecules) );
+		double dInvertDOF = 1. / ( (double)(3. * nNumMolecules + _nRotDOFGlobal[i] ) );
+		// cout << i << ": nNumMolecules = " << nNumMolecules << endl;
 
-        // actual values
-        dInvertDOF = (double) (_nNumMoleculesSumGlobal[s]);
-        dInvertDOF = 1. / dInvertDOF;
+		_dDensity [i] = nNumMolecules * _dInvertBinVolSamplesProfiles;
+		_dTemperature[i] = (_d2EkinTransGlobal[i] + _d2EkinRotGlobal[i] ) * dInvertDOF;
+	}
 
-        _dDriftVelocityGlobal[s][0] = _dVelocityComponentSumsGlobal[s][0] * dInvertDOF;
-        _dDriftVelocityGlobal[s][1] = _dVelocityComponentSumsGlobal[s][1] * dInvertDOF;
-        _dDriftVelocityGlobal[s][2] = _dVelocityComponentSumsGlobal[s][2] * dInvertDOF;
+	// Vector quantities
+	for(unsigned int dim = 0; dim<3; ++dim)
+	{
+		unsigned long nDimOffset = _nNumValsScalar*dim;
 
-        // TODO: has to be multiplied by molecule mass
-        _dTemperatureComponentGlobal[s][0] = _dSquaredVelocityComponentSumsGlobal[s][0] * dInvertDOF;
-        _dTemperatureComponentGlobal[s][1] = _dSquaredVelocityComponentSumsGlobal[s][1] * dInvertDOF;
-        _dTemperatureComponentGlobal[s][2] = _dSquaredVelocityComponentSumsGlobal[s][2] * dInvertDOF;
+		for(unsigned int i = 0; i < _nNumValsScalar; ++i)
+		{
+			unsigned long nNumMolecules = _nNumMoleculesGlobal[i];
+			double dInvertNumMolecules = 1. / ( (double)(nNumMolecules) );
 
-        _dDensityGlobal[s] = _nNumMoleculesSumGlobal[s] * dInvertShellVolume;
-
-        // average values
-        dInvertDOF = (double) (_nNumMoleculesSumCumulativeGlobal[s]);
-        dInvertDOF = 1. / dInvertDOF;
-
-        dInvertDOF_plus = (double) (_nNumMoleculesPlusSumCumulativeGlobal[s]);
-        dInvertDOF_plus = 1. / dInvertDOF_plus;
-        dInvertDOF_minus = (double) (_nNumMoleculesMinusSumCumulativeGlobal[s]);
-        dInvertDOF_minus = 1. / dInvertDOF_minus;
-
-//        if(ownRank == 0)
-//        {
-//            cout << "[" << ownRank << "]: Region: " << this->GetID() << endl;
-//            cout << "[" << ownRank << "]: _nNumMoleculesSumCumulativeLocal[" << s << "] = " << _nNumMoleculesSumCumulativeLocal[s] << endl;
-//            cout << "[" << ownRank << "]: _nNumMoleculesSumCumulativeGlobal[" << s << "] = " << _nNumMoleculesSumCumulativeGlobal[s] << endl;
-//            cout << "[" << ownRank << "]: dInvertDOF = " << dInvertDOF << endl;
-//            cout << "[" << ownRank << "]: _dVelocityComponentSumsCumulativeGlobal[" << s << "][0] = " << _dVelocityComponentSumsCumulativeGlobal[s][0] << endl;
-//        }
-
-        _dDriftVelocityAverageGlobal[s][0] = _dVelocityComponentSumsCumulativeGlobal[s][0] * dInvertDOF;
-        _dDriftVelocityAverageGlobal[s][1] = _dVelocityComponentSumsCumulativeGlobal[s][1] * dInvertDOF;
-        _dDriftVelocityAverageGlobal[s][2] = _dVelocityComponentSumsCumulativeGlobal[s][2] * dInvertDOF;
-
-        // j+, j-
-        _dDriftVelocityPlusAverageGlobal[s][0] = _dVelocityComponentPlusSumsCumulativeGlobal[s][0] * dInvertDOF_plus;
-        _dDriftVelocityPlusAverageGlobal[s][1] = _dVelocityComponentPlusSumsCumulativeGlobal[s][1] * dInvertDOF_plus;
-        _dDriftVelocityPlusAverageGlobal[s][2] = _dVelocityComponentPlusSumsCumulativeGlobal[s][2] * dInvertDOF_plus;
-
-        _dDriftVelocityMinusAverageGlobal[s][0] = _dVelocityComponentMinusSumsCumulativeGlobal[s][0] * dInvertDOF_minus;
-        _dDriftVelocityMinusAverageGlobal[s][1] = _dVelocityComponentMinusSumsCumulativeGlobal[s][1] * dInvertDOF_minus;
-        _dDriftVelocityMinusAverageGlobal[s][2] = _dVelocityComponentMinusSumsCumulativeGlobal[s][2] * dInvertDOF_minus;
-
-//        if(ownRank == 0)
-//        {
-//            cout << "[" << ownRank << "]: _dDriftVelocityAverageGlobal[" << s << "][0] = " << _dDriftVelocityAverageGlobal[s][0] << endl;
-//        }
-
-        // TODO: has to be multiplied by molecule mass
-        _dTemperatureComponentAverageGlobal[s][0] = _dSquaredVelocityComponentSumsCumulativeGlobal[s][0] * dInvertDOF;
-        _dTemperatureComponentAverageGlobal[s][1] = _dSquaredVelocityComponentSumsCumulativeGlobal[s][1] * dInvertDOF;
-        _dTemperatureComponentAverageGlobal[s][2] = _dSquaredVelocityComponentSumsCumulativeGlobal[s][2] * dInvertDOF;
-
-        _dDensityAverageGlobal[s] = _nNumMoleculesSumCumulativeGlobal[s] * dInvertShellVolume * dInvertNumSamples;
-    }
-
-
-    // componentwise temperature
-    unsigned short nNumComponents = domain->getNumberOfComponents()+1;
-
-#ifdef ENABLE_MPI
-    for(unsigned int c = 0; c < nNumComponents; ++c)
-    {
-        MPI_Reduce( _nNumMoleculesCompLocal[c], _nNumMoleculesCompGlobal[c], _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _nRotDOFCompLocal[c],       _nRotDOFCompGlobal[c],       _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _d2EkinTransCompLocal[c],   _d2EkinTransCompGlobal[c],   _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _d2EkinRotCompLocal[c],     _d2EkinRotCompGlobal[c],     _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    }
-#endif
-
-
-
-    for(unsigned int c = 0; c < nNumComponents; ++c)
-    {
-        for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-        {
-            double dInvertDOF = (double) (1. / (3. * _nNumMoleculesCompGlobal[c][s] + _nRotDOFCompGlobal[c][s] ) );
-            _dTemperatureCompGlobal[c][s] = (_d2EkinTransCompGlobal[c][s] + _d2EkinRotCompGlobal[c][s] ) * dInvertDOF;
-
-            // density componentwise
-            _dDensityCompGlobal[c][s] = _nNumMoleculesCompGlobal[c][s] * dInvertShellVolume * dInvertNumSamples;
-        }
-    }
-
-
-
-    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
-
-#ifdef ENABLE_MPI
-    for(unsigned int c = 0; c < nNumComponents; ++c)
-    {
-        MPI_Reduce( _nNumMoleculesCompLocal_py[c], _nNumMoleculesCompGlobal_py[c], _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce( _nNumMoleculesCompLocal_ny[c], _nNumMoleculesCompGlobal_ny[c], _nNumShellsProfiles, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-
-        for(unsigned int d = 0; d < 3; ++d)
-        {
-            MPI_Reduce( _dVelocityCompLocal_py[c][d], _dVelocityCompGlobal_py[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce( _dVelocityCompLocal_ny[c][d], _dVelocityCompGlobal_ny[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-
-            MPI_Reduce( _dForceCompLocal_py[c][d], _dForceCompGlobal_py[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-            MPI_Reduce( _dForceCompLocal_ny[c][d], _dForceCompGlobal_ny[c][d], _nNumShellsProfiles, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        }
-    }
-#endif
-
-
-
-    for(unsigned int c = 0; c < nNumComponents; ++c)
-    {
-        for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-        {
-            // density componentwise
-            _dDensityCompGlobal_py[c][s] = _nNumMoleculesCompGlobal_py[c][s] * dInvertShellVolume * dInvertNumSamples;
-            _dDensityCompGlobal_ny[c][s] = _nNumMoleculesCompGlobal_ny[c][s] * dInvertShellVolume * dInvertNumSamples;
-        }
-    }
-
-    // average drift velocity and mean force have to be divided by number of sampled particles
-    double dInvertDOF_py, dInvertDOF_ny;
-
-    for(unsigned int c = 0; c < nNumComponents; ++c)
-    {
-        for(unsigned int d = 0; d < 3; ++d)
-        {
-            for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-            {
-            	// number of sampled particles
-                dInvertDOF_py = (double) (_nNumMoleculesCompGlobal_py[c][s]);
-                dInvertDOF_ny = (double) (_nNumMoleculesCompGlobal_ny[c][s]);
-                dInvertDOF_py = 1. / dInvertDOF_py;
-                dInvertDOF_ny = 1. / dInvertDOF_ny;
-
-                // [component][vx,vy,vz][position]
-                _dVelocityCompGlobal_py[c][d][s] *= dInvertDOF_py;
-                _dVelocityCompGlobal_ny[c][d][s] *= dInvertDOF_ny;
-
-                // [component][fx,fy,fz][position]
-                _dForceCompGlobal_py[c][d][s] *= dInvertDOF_py;
-                _dForceCompGlobal_ny[c][d][s] *= dInvertDOF_ny;
-            }
-        }
-    }
+			_dDriftVelocity  [nDimOffset+i] = _dVelocityGlobal       [nDimOffset+i] * dInvertNumMolecules;
+			_dTemperatureComp[nDimOffset+i] = _dSquaredVelocityGlobal[nDimOffset+i] * dInvertNumMolecules;  // TODO: * mass
+			_dForce          [nDimOffset+i] = _dForceGlobal          [nDimOffset+i] * dInvertNumMolecules;
+		}
+	}
 }
-
 
 
 void SampleRegion::CalcGlobalValuesVDF()
@@ -1078,7 +665,7 @@ void SampleRegion::CalcGlobalValuesVDF()
 
     #ifdef ENABLE_MPI
 
-        for(unsigned int s = 0; s < _nNumShellsVDF; s++)
+        for(unsigned int s = 0; s < _nNumBinsVDF; s++)
         {
             // positive y-direction
 
@@ -1109,7 +696,7 @@ void SampleRegion::CalcGlobalValuesVDF()
 
         }
     #else
-        for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+        for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
         {
             for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
             {
@@ -1172,8 +759,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
     #endif
 
             // header
-            //outputstream << "           pos         v_d,x         v_d,y         v_d,z            Tx            Ty            Tz           rho        v_d,y+        v_d,y-";
-            outputstream << "                     pos";
+            outputstream << "           pos";
             outputstream << "                   v_d,x";
             outputstream << "                   v_d,y";
             outputstream << "                   v_d,z";
@@ -1189,31 +775,31 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
             outputstream << endl;
 
             // data
-            for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+            for(unsigned int s = 0; s < _nNumBinsProfiles; ++s)
             {
-                outputstream << std::setw(14) << std::setprecision(6) << _dShellMidpointsProfiles[s];
+                outputstream << std::setw(14) << std::setprecision(6) << _dBinMidpointsProfiles[s];
 
                 // drift x, y, z
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityAverageGlobal[s][0];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityAverageGlobal[s][1];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityAverageGlobal[s][2];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[0][0][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][0][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[2][0][0]+s ];
 
                 // temperature Tx, Ty, Tz
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComponentAverageGlobal[s][0];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComponentAverageGlobal[s][1];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComponentAverageGlobal[s][2];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[ _nOffsetVector[0][0][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[ _nOffsetVector[1][0][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[ _nOffsetVector[2][0][0]+s ];
 
                 // density rho
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityAverageGlobal[s];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity[ _nOffsetScalar[0][0]+s ];
 
                 // drift y+, y-
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityPlusAverageGlobal[s][1];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocityMinusAverageGlobal[s][1];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][1][1]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][2][1]+s ];
 
                 // DOF+, DOF-, DOF_ges
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesPlusSumCumulativeGlobal[s];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesMinusSumCumulativeGlobal[s];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesSumCumulativeGlobal[s];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesGlobal[ _nOffsetScalar[1][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesGlobal[ _nOffsetScalar[2][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesGlobal[ _nOffsetScalar[0][0]+s ];
 
                 outputstream << endl;
             }
@@ -1256,15 +842,15 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
             outputstream_comp << endl;
 
             // data
-            for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+            for(unsigned int s = 0; s < _nNumBinsProfiles; ++s)
             {
-                outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsProfiles[s];
+                outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 
                 for(unsigned short c = 0; c < nNumComponents; ++c)
                 {
                     // temperature/density componentwise
-                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureCompGlobal[c][s];
-                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityCompGlobal[c][s];
+                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperature[ _nOffsetScalar[0][c]+s ];
+                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity[ _nOffsetScalar[0][c]+s ];
                 }
                 outputstream_comp << endl;
             }
@@ -1328,25 +914,25 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
                  outputstream_comp_Fv << endl;
 
                  // data
-                 for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
+                 for(unsigned int s = 0; s < _nNumBinsProfiles; ++s)
                  {
-                     outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsProfiles[s];
+                     outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
 
                      for(unsigned short c = 0; c < nNumComponents; ++c)
                      {
                          // density j+,j-
-                         outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityCompGlobal_py[c][s];
-                         outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensityCompGlobal_ny[c][s];
+                         outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity[ _nOffsetScalar[1][c]+s ];
+                         outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity[ _nOffsetScalar[2][c]+s ];
 
                          for(unsigned short d = 0; d < 3; ++d)
                          {
                              // velocity j+,j-
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dVelocityCompGlobal_py[c][d][s];
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dVelocityCompGlobal_ny[c][d][s];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][c][d]+s ];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[2][c][d]+s ];
 
                              // force j+,j-
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForceCompGlobal_py[c][d][s];
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForceCompGlobal_ny[c][d][s];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[ _nOffsetVector[1][c][d]+s ];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[ _nOffsetVector[2][c][d]+s ];
                          }
                      }
                      outputstream_comp_Fv << endl;
@@ -1458,23 +1044,23 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
             outputstreamVelo_ny_nvz << "v/y                     ";
 
             // first line - discrete radius values
-            for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+            for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
             {
-                outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
+                outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_py_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_py_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_py_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_py_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_py_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
 
-                outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
-                outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dShellMidpointsVDF[s];
+                outputstreamVelo_ny_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_ny_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_ny_pvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_ny_pvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_ny_nvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
+                outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsVDF[s];
             }
             outputstreamVelo_py_abs << endl;
             outputstreamVelo_py_pvx << endl;
@@ -1513,7 +1099,7 @@ void SampleRegion::WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long si
                 outputstreamVelo_ny_nvy << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
                 outputstreamVelo_ny_nvz << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDiscreteVelocityValues[v];
 
-                for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+                for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
                 {
                     outputstreamVelo_py_abs << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_abs[s][v];
                     outputstreamVelo_py_pvx << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _veloDistrMatrixGlobal_py_pvx[s][v];
@@ -1624,7 +1210,7 @@ void SampleRegion::ResetLocalValuesVDF()
 		return;
 
     // reset values
-    for(unsigned int s = 0; s < _nNumShellsVDF; ++s)
+    for(unsigned int s = 0; s < _nNumBinsVDF; ++s)
     {
         // reset local velocity profile arrays
         for(unsigned int v = 0; v < _nNumDiscreteStepsVDF; ++v)
@@ -1657,65 +1243,22 @@ void SampleRegion::ResetLocalValuesProfiles()
 	RegionSampling* parent = static_cast<RegionSampling*>(_parent);
 	unsigned int nNumComponents = parent->GetNumComponents();
 
-    // reset cumulative data structures TODO: <-- should be placed elsewhere
-    for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-    {
-        // reset local num molecules
-        _nNumMoleculesSumCumulativeLocal[s] = 0;
+	// Scalar quantities
+	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
+	{
+		_nNumMoleculesLocal[i] = 0;
+		_nRotDOFLocal[i] = 0;
+		_d2EkinTransLocal[i] = 0.;
+		_d2EkinRotLocal[i]   = 0.;
+	}
 
-        // j+, j-
-        _nNumMoleculesPlusSumCumulativeLocal[s] = 0;
-        _nNumMoleculesMinusSumCumulativeLocal[s] = 0;
-
-        // reset velocity sums
-        for(unsigned int d = 0; d < 3; ++d)
-        {
-            // [position][x,y,z-component]
-            _dVelocityComponentSumsCumulativeLocal[s][d] = 0.;
-            _dSquaredVelocityComponentSumsCumulativeLocal[s][d] = 0.;
-
-            // j+, j-
-            _dVelocityComponentPlusSumsCumulativeLocal[s][d] = 0.;
-            _dVelocityComponentMinusSumsCumulativeLocal[s][d] = 0.;
-        }
-    }
-
-
-    // componentwise temperature / density
-    for(unsigned int c = 0; c < nNumComponents; ++c)
-    {
-        for(unsigned int s = 0; s < _nNumShellsProfiles; ++s)
-        {
-            _nNumMoleculesCompLocal[c][s] = 0;
-            _nRotDOFCompLocal[c][s] = 0;
-            _d2EkinTransCompLocal[c][s] = 0.;
-            _d2EkinRotCompLocal[c][s] = 0.;
-        }
-    }
-
-
-    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
-
-    for(unsigned short c=0; c < nNumComponents; ++c)
-    {
-        for(unsigned short s=0; s < _nNumShellsProfiles; ++s)
-        {
-            // [component][position]
-            _nNumMoleculesCompLocal_py[c][s] = 0;
-            _nNumMoleculesCompLocal_ny[c][s] = 0;
-
-            for(unsigned short d=0; d < 3; ++d)
-            {
-                // [component][vx,vy,vz][position]
-                _dVelocityCompLocal_py[c][d][s]  = 0.;
-                _dVelocityCompLocal_ny[c][d][s]  = 0.;
-
-                // [component][fx,fy,fz][position]
-                _dForceCompLocal_py[c][d][s]  = 0.;
-                _dForceCompLocal_ny[c][d][s]  = 0.;
-            }
-        }
-    }
+	// Vector quantities
+	for(unsigned int i = 0; i < _nNumValsVector; ++i)
+	{
+		_dVelocityLocal[i] = 0.;
+		_dSquaredVelocityLocal[i] = 0.;
+		_dForceLocal[i] = 0.;
+	}
 }
 
 void SampleRegion::UpdateSlabParameters()
@@ -1726,23 +1269,23 @@ void SampleRegion::UpdateSlabParameters()
 	// profiles
 	if(true == _SamplingEnabledProfiles)
 	{
-		_nNumShellsProfiles = round(dWidth / _dShellWidthProfilesInit);
-		_dShellWidthProfiles = dWidth / ( (double)(_nNumShellsProfiles) );
+		_nNumBinsProfiles = round(dWidth / _dBinWidthProfilesInit);
+		_dBinWidthProfiles = dWidth / ( (double)(_nNumBinsProfiles) );
 
-		// recalculate shell midpoint positions
-		for(unsigned int s = 0; s < _nNumShellsProfiles; s++)
-			_dShellMidpointsProfiles[s] = (s + 0.5) * _dShellWidthProfiles + dLowerCorner[1];
+		// recalculate Bin midpoint positions
+		for(unsigned int s = 0; s < _nNumBinsProfiles; s++)
+			_dBinMidpointsProfiles[s] = (s + 0.5) * _dBinWidthProfiles + dLowerCorner[1];
 	}
 
 	// VDF
 	if(true == _SamplingEnabledVDF)
 	{
-		_nNumShellsVDF = round(dWidth / _dShellWidthVDFInit);
-		_dShellWidthVDF = dWidth / ( (double)(_nNumShellsVDF) );
+		_nNumBinsVDF = round(dWidth / _dBinWidthVDFInit);
+		_dBinWidthVDF = dWidth / ( (double)(_nNumBinsVDF) );
 
-		// recalculate shell midpoint positions
-		for(unsigned int s = 0; s < _nNumShellsVDF; s++)
-			_dShellMidpointsVDF[s] = (s + 0.5) * _dShellWidthVDF + dLowerCorner[1];
+		// recalculate Bin midpoint positions
+		for(unsigned int s = 0; s < _nNumBinsVDF; s++)
+			_dBinMidpointsVDF[s] = (s + 0.5) * _dBinWidthVDF + dLowerCorner[1];
 	}
 }
 

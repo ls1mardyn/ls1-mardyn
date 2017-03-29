@@ -36,6 +36,7 @@ public:
         _initSamplingProfiles   = initSamplingProfiles;
         _writeFrequencyProfiles = writeFrequencyProfiles;
 		_SamplingEnabledProfiles = true;
+		_dInvertNumSamplesProfiles = 1. / ( (double)(_writeFrequencyProfiles) );  // needed for e.g. density profiles
     }
     void SetParamVDF( unsigned long initSamplingVDF, unsigned long writeFrequencyVDF,
                       unsigned int nNumDiscreteStepsVDF, double dVeloMax)
@@ -48,10 +49,10 @@ public:
     }
 
     // subdivision
-	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumShellsProfiles = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-	void SetSubdivisionProfiles(const double& dSlabWidth) {_dShellWidthProfilesInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
-	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_nNumShellsVDF = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
-	void SetSubdivisionVDF(const double& dSlabWidth) {_dShellWidthVDFInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
+	void SetSubdivisionProfiles(const unsigned int& nNumSlabs) {_nNumBinsProfiles = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
+	void SetSubdivisionProfiles(const double& dSlabWidth) {_dBinWidthProfilesInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
+	void SetSubdivisionVDF(const unsigned int& nNumSlabs) {_nNumBinsVDF = nNumSlabs; _nSubdivisionOpt = SDOPT_BY_NUM_SLABS;}
+	void SetSubdivisionVDF(const double& dSlabWidth) {_dBinWidthVDFInit = dSlabWidth; _nSubdivisionOpt = SDOPT_BY_SLAB_WIDTH;}
 	void PrepareSubdivisionProfiles();  // need to be called before data structure allocation
 	void PrepareSubdivisionVDF();  		// need to be called before data structure allocation
 
@@ -99,58 +100,60 @@ private:
     // parameters
     unsigned long _initSamplingProfiles;
     unsigned long _writeFrequencyProfiles;
-    unsigned int _nNumShellsProfiles;
+    unsigned int _nNumBinsProfiles;
 
-    double _dShellWidthProfiles;
-    double _dShellWidthProfilesInit;
-    double _dShellVolumeProfiles;
-    double* _dShellMidpointsProfiles;
+    double  _dBinWidthProfiles;
+    double  _dBinWidthProfilesInit;
+    double  _dBinVolumeProfiles;
+    double* _dBinMidpointsProfiles;
 
-    unsigned long* _nNumMoleculesSumLocal;
-    unsigned long* _nNumMoleculesSumCumulativeLocal;
-    unsigned long* _nNumMoleculesSumGlobal;
-    unsigned long* _nNumMoleculesSumCumulativeGlobal;
+	// offsets
+	unsigned long**  _nOffsetScalar;  //                  [direction all|+|-][component]
+	unsigned long*** _nOffsetVector;  // [dimension x|y|z][direction all|+|-][component]
 
-    // counting j+, j-
-    unsigned long* _nNumMoleculesPlusSumCumulativeLocal;
-    unsigned long* _nNumMoleculesMinusSumCumulativeLocal;
-    unsigned long* _nNumMoleculesPlusSumCumulativeGlobal;
-    unsigned long* _nNumMoleculesMinusSumCumulativeGlobal;
+	unsigned long _nNumValsScalar;
+	unsigned long _nNumValsVector;
 
-    // [position][x,y,z-component]
-    double** _dVelocityComponentSumsLocal;
-    double** _dVelocityComponentSumsCumulativeLocal;
-    double** _dSquaredVelocityComponentSumsLocal;
-    double** _dSquaredVelocityComponentSumsCumulativeLocal;
-    double** _dVelocityComponentPlusSumsCumulativeLocal;
-    double** _dVelocityComponentMinusSumsCumulativeLocal;
+	unsigned int _nNumComponents;
+	double _dInvertNumSamplesProfiles;
+	double _dInvertBinVolumeProfiles;
+	double _dInvertBinVolSamplesProfiles;
 
-    double** _dVelocityComponentSumsGlobal;
-    double** _dVelocityComponentSumsCumulativeGlobal;
-    double** _dSquaredVelocityComponentSumsGlobal;
-    double** _dSquaredVelocityComponentSumsCumulativeGlobal;
-    double** _dVelocityComponentPlusSumsCumulativeGlobal;
-    double** _dVelocityComponentMinusSumsCumulativeGlobal;
+	// Scalar quantities
+	// [direction all|+|-][component][position]
+	unsigned long* _nNumMoleculesLocal;
+	unsigned long* _nNumMoleculesGlobal;
+	unsigned long* _nRotDOFLocal;
+	unsigned long* _nRotDOFGlobal;
+	double* _d2EkinTransLocal;
+	double* _d2EkinTransGlobal;
+	double* _d2EkinRotLocal;
+	double* _d2EkinRotGlobal;
 
-    // output values
-    double** _dDriftVelocityGlobal;
-    double** _dDriftVelocityAverageGlobal;
-    double** _dTemperatureComponentGlobal;
-    double** _dTemperatureComponentAverageGlobal;
-    double*  _dDensityGlobal;
-    double*  _dDensityAverageGlobal;
-    double** _dDriftVelocityPlusAverageGlobal;
-    double** _dDriftVelocityMinusAverageGlobal;
+	// output profiles
+	double* _dDensity;
+	double* _dTemperature;
 
-    // --- temperature profiles ---
+	// Vector quantities
+	// [dimension x|y|z][direction all|+|-][component][position]
+	double* _dVelocityLocal;
+	double* _dVelocityGlobal;
+	double* _dSquaredVelocityLocal;
+	double* _dSquaredVelocityGlobal;
+	double* _dForceLocal;
+	double* _dForceGlobal;
 
+	// output profiles
+	double* _dTemperatureComp;
+	double* _dDriftVelocity;
+	double* _dForce;
 
     // --- VDF ---
 
     // parameters
     unsigned long _initSamplingVDF;
     unsigned long _writeFrequencyVDF;
-    unsigned int _nNumShellsVDF;
+    unsigned int _nNumBinsVDF;
     unsigned int _nNumDiscreteStepsVDF;
     double _dVeloMax;
 
@@ -158,9 +161,9 @@ private:
     bool _bDiscretisationDoneVDF;
     bool _SamplingEnabledVDF;
 
-    double  _dShellWidthVDF;
-    double  _dShellWidthVDFInit;
-    double* _dShellMidpointsVDF;
+    double  _dBinWidthVDF;
+    double  _dBinWidthVDFInit;
+    double* _dBinMidpointsVDF;
     double* _dDiscreteVelocityValues;
 
     // local
@@ -197,50 +200,6 @@ private:
     unsigned long** _veloDistrMatrixGlobal_ny_nvy;
     unsigned long** _veloDistrMatrixGlobal_ny_nvz;
 
-    // --- VDF ---
-
-
-    // --- componentwise temperature ---
-
-    unsigned long** _nNumMoleculesCompLocal;
-    unsigned long** _nNumMoleculesCompGlobal;
-
-    unsigned long** _nRotDOFCompLocal;
-    unsigned long** _nRotDOFCompGlobal;
-
-    double** _d2EkinTransCompLocal;
-    double** _d2EkinTransCompGlobal;
-
-    double** _d2EkinRotCompLocal;
-    double** _d2EkinRotCompGlobal;
-
-    double** _dTemperatureCompGlobal;
-    double** _dDensityCompGlobal;
-
-
-    // --- componentwise; x,y,z ; j+/j-; slabwise; rho, vx,vy,vz; Fx,Fy,Fz ---
-
-    // [component][position]
-    unsigned long** _nNumMoleculesCompLocal_py;
-    unsigned long** _nNumMoleculesCompLocal_ny;
-    unsigned long** _nNumMoleculesCompGlobal_py;
-    unsigned long** _nNumMoleculesCompGlobal_ny;
-
-    // [component][position]
-    double** _dDensityCompGlobal_py;
-    double** _dDensityCompGlobal_ny;
-
-    // [component][vx,vy,vz][position]
-    double*** _dVelocityCompLocal_py;
-    double*** _dVelocityCompLocal_ny;
-    double*** _dVelocityCompGlobal_py;
-    double*** _dVelocityCompGlobal_ny;
-
-    // [component][fx,fy,fz][position]
-    double*** _dForceCompLocal_py;
-    double*** _dForceCompLocal_ny;
-    double*** _dForceCompGlobal_py;
-    double*** _dForceCompGlobal_ny;
 };
 
 
