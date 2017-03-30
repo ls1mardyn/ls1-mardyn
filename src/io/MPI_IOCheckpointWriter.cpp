@@ -22,7 +22,10 @@
 #include "parallel/DomainDecompBase.h"
 #include <mpi.h>
 #endif
-#include <time.h>
+//#include <time.h>
+
+#include "particleContainer/LinkedCells.h"
+#include "particleContainer/Cell.h"
 
 #include <cassert>
 using Log::global_log;
@@ -96,18 +99,35 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		filenamestream << ".mpi";
 		std::string filename = filenamestream.str();
 
-		//cutoff radius for the cell structure in the output file
+
+		LinkedCells* lcContainer = dynamic_cast<LinkedCells*>(particleContainer);
+		#ifndef NDEBUG
+			if (lcContainer == NULL) {
+				global_log->error() << "MPI_IOCheckpointwriter works only with LinkedCells!" << std::endl;
+				Simulation::exit(1);
+			}
+		#endif
+
+		//some debug stuff to gather cell information from the LinkedCells Class
+		/*
+		int *boxCellDimension = lcContainer->boxWidthInNumCells();
+		long realLocalNumCells = boxCellDimension[0]*boxCellDimension[1]*boxCellDimension[2];
+		long realGlobalNumCells = 0;
+		MPI_Allreduce(&realLocalNumCells, &realGlobalNumCells, 1, MPI_LONG, MPI_SUM, MPI_COMM_WORLD);
+		cout << "Rank: " << domainDecomp->getRank() << " realGlobalNumCells: " << realGlobalNumCells << std::endl;
+		cout << "Rank: " << domainDecomp->getRank() << " BoundingBoxMin: " << domainDecomp->getBoundingBoxMin(0, domain) << "," << domainDecomp->getBoundingBoxMin(1, domain) << "," << domainDecomp->getBoundingBoxMin(2, domain) << " BoundingBoxMax: " << domainDecomp->getBoundingBoxMax(0, domain) << "," << domainDecomp->getBoundingBoxMax(1, domain) << "," << domainDecomp->getBoundingBoxMax(2, domain) << std::endl;
+		domainDecomp->getBoundingBoxMin(0, domain);
+		*/
+
+
+		//cell length for the cell structure in the output file
 		//here each cell has the same radius in x-,y- and z-direction
-		double cutoffRadius[3];
-		for (unsigned short i = 0; i < 3; i++) {
-			cutoffRadius[i] = domainDecomp->getIOCutoffRadius(i, domain,
-					particleContainer);
-		}
+		double *cellLength = lcContainer->cellLength();
 
 		//compute lengths and sizes of the domain
 		int lengthInCells[3];
 		for (unsigned short i = 0; i < 3; i++) {
-			lengthInCells[i] = domain->getGlobalLength(i) / cutoffRadius[i];
+			lengthInCells[i] = domain->getGlobalLength(i) / cellLength[i];
 		}
 
 		long globalNumCells = 1;
@@ -115,7 +135,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		for (unsigned short i = 0; i < 3; i++) {
 			assert(lengthInCells[i] > 0);
-//			assert((lengthInCells[i] - (domain->getGlobalLength(i) / cutoffRadius[i])) == 0);
+//			assert((lengthInCells[i] - (domain->getGlobalLength(i) / cellLength[i])) == 0);
 
 			if (lengthInCells[i] != 0) {
 				globalNumCells *= lengthInCells[i];
@@ -139,7 +159,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {
 				cellIndex[i]
-						= (int) floor(tempMolecule->r(i) / cutoffRadius[i]);
+						= (int) floor(tempMolecule->r(i) / cellLength[i]);
 			}
 			unsigned long index = (cellIndex[2] * lengthInCells[1]
 					+ cellIndex[1]) * lengthInCells[0] + cellIndex[0];
@@ -148,8 +168,10 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 				isCellOfProcess[index] = true;
 			}
 			localNumParticlesPerCell[index]++;
+
 		}
 
+		/*
 		//Timer:
 		timeval timer1, timer2;
 		double timeDiff;
@@ -158,6 +180,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			gettimeofday(&timer1, NULL);
 		}
 
+		*/
 		//every process has to know how many particles each cell in the linked cell has,
 		//as every process has to know the same header data
 		MPI_Allreduce(localNumParticlesPerCell, globalNumParticlesPerCell,
@@ -172,6 +195,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			}
 		}
 
+		/*
 		if (domainDecomp->getRank() == 0) {
 			gettimeofday(&timer2, NULL);
 			timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
@@ -179,6 +203,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			global_log->info() << "Das MPI-IO Allreduce hat " << timeDiff
 					<< " Sekunden benötigt" << std::endl;
 		}
+		*/
 
 		//Parallel IO
 		int ret, size;
@@ -192,9 +217,11 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		MPI_Info_create(&info);
 
+		/*
 		if (domainDecomp->getRank() == 0) {
 			gettimeofday(&timer1, NULL);
 		}
+		*/
 
 		ret = MPI_File_open(MPI_COMM_WORLD, fileName,
 				MPI_MODE_CREATE | MPI_MODE_WRONLY, info, &fh);
@@ -202,7 +229,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			handle_error(ret);
 		}
 
-		//setGlobalNumCells, CutoffRadius, NumParticles
+		//setGlobalNumCells, cellLength, NumParticles
 		long numCellsAndMolecules[2];
 		numCellsAndMolecules[0] = globalNumCells;
 		numCellsAndMolecules[1] = domain->getglobalNumMolecules();
@@ -230,7 +257,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 				handle_error(ret);
 			}
 
-			ret = MPI_File_write(fh, cutoffRadius, 3, MPI_DOUBLE, &status);
+			ret = MPI_File_write(fh, cellLength, 3, MPI_DOUBLE, &status);
 			if (ret != MPI_SUCCESS) {
 				handle_error(ret);
 			}
@@ -262,6 +289,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			handle_error(ret);
 		}
 
+		/*
 		if (domainDecomp->getRank() == 0) {
 			gettimeofday(&timer2, NULL);
 			timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
@@ -273,6 +301,8 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 		if (domainDecomp->getRank() == 0) {
 			gettimeofday(&timer1, NULL);
 		}
+
+		*/
 
 		//Writing:
 		MPI_Datatype mpiParticleData;
@@ -316,7 +346,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 			int cellIndex[3];
 			for (unsigned short i = 0; i < 3; i++) {
-				cellIndex[i] = floor(tempMolecule->r(i) / cutoffRadius[i]);
+				cellIndex[i] = floor(tempMolecule->r(i) / cellLength[i]);
 			}
 			int index = (cellIndex[2] * lengthInCells[1] + cellIndex[1])
 					* lengthInCells[0] + cellIndex[0];
@@ -332,6 +362,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			}
 		}
 
+		/*
 		if (domainDecomp->getRank() == 0) {
 			gettimeofday(&timer2, NULL);
 			timeDiff = timer2.tv_sec - timer1.tv_sec + (timer2.tv_usec
@@ -344,6 +375,8 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 
 		gettimeofday(&timer1, NULL);
+
+		*/
 
 
 		ret = MPI_Type_size(mpiParticleData, &size);
@@ -366,17 +399,24 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 			offset += (globalNumParticlesPerCell[i] * size);
 		}
 
+		/*
 		gettimeofday(&timer2, NULL);
 		timeDiff = timer2.tv_sec - timer1.tv_sec
 				+ (timer2.tv_usec - timer1.tv_usec) / 1.E6;
 		double timeDiffGlobal = 0;
 		MPI_Reduce(&timeDiff, &timeDiffGlobal, 1, MPI_DOUBLE, MPI_MAX, 0,
 					MPI_COMM_WORLD);
+
+		*/
+
+		/*
 		if (domainDecomp->getRank() == 0) {
 
 			global_log->info() << "Das Lesen der Zellen hat " << timeDiffGlobal
 					<< " Sekunden benötigt" << std::endl;
 		}
+
+		*/
 
 		//delete tempMolecule;
 		for (int i = 0; i < localNumCells; i++) {
