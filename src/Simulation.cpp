@@ -65,6 +65,7 @@
 
 #include "particleContainer/adapter/VectorizationTuner.h"
 
+#include "NEMD/NEMD.h"
 #include "NEMD/DriftControl.h"
 #include "NEMD/DistControl.h"
 #include "NEMD/RegionSampling.h"
@@ -99,7 +100,8 @@ Simulation::Simulation()
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.),
 	_loopCompTimeSteps(0),
-	_programName("")
+	_programName(""),
+	_flagsNEMD(0)
 {
 	_ensemble = new CanonicalEnsemble();
 
@@ -822,6 +824,7 @@ void Simulation::prepare_start() {
     {
     	_densityControl->Init(_densityControl->GetControlFreq() );
     	_densityControl->CheckRegionBounds();
+		_densityControl->SetFlagsNEMD(_flagsNEMD);
     }
 
 	// PARTICLE_TRACKER
@@ -858,8 +861,8 @@ void Simulation::simulate() {
 	unsigned uCAT = _pressureGradient->getUCAT();
 // 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
 // 			/ _integrator->getTimestepLength());
-    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
-	// _initSimulation = 1;
+//    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+	_initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
 	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
 	ensemble.updateGlobalVariable(NUM_PARTICLES);

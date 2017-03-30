@@ -46,6 +46,7 @@
 #include "longRange/Planar.h"
 #include "particleContainer/adapter/VectorizationTuner.h"
 
+#include "NEMD/NEMD.h"
 #include "NEMD/DriftControl.h"
 #include "NEMD/DistControl.h"
 #include "NEMD/RegionSampling.h"
@@ -773,20 +774,25 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			double numFluidComp;
 			inputfilestream >> numFluidComp;
 			_domain->setNumFluidComponents(numFluidComp);
+		} else if (token == "flagsNEMD") {
+			std::string strFlag;
+			inputfilestream >> strFlag;
+			if (strFlag == "CHANGE_COMPONENT_AC_TO_N2")
+				_flagsNEMD = (_flagsNEMD | CHANGE_COMPONENT_AC_TO_N2);
+		}
 
-			   /** mheinen 2015-07-27 --> TEMPERATURE_CONTROL
-					 *
-				     * Temperature Control (Slab Thermostat)
-				     *
-				     * - applicable to different regions
-					 * - using different target temperatures
-					 * - using different number of slabs
-					 * - componentwise if required
-				     * - thermostating only selected directions: x, y, z, xy, xz, yz or xyz
-				     *
-				     **/
-
-			        } else if (token == "TemperatureControl" || token == "Temperaturecontrol" || token == "temperatureControl") {
+		/** mheinen 2015-07-27 --> TEMPERATURE_CONTROL
+		 *
+		 * Temperature Control (Slab Thermostat)
+		 *
+		 * - applicable to different regions
+		 * - using different target temperatures
+		 * - using different number of slabs
+		 * - componentwise if required
+		 * - thermostating only selected directions: x, y, z, xy, xz, yz or xyz
+		 *
+		 **/
+		else if (token == "TemperatureControl" || token == "Temperaturecontrol" || token == "temperatureControl") {
 
 			            string strToken;
 

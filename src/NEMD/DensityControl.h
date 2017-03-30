@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <cstdint>
 #include "molecules/Molecule.h"
 #include "parallel/DomainDecompBase.h"
 #include "utils/ObserverBase.h"
@@ -107,6 +108,10 @@ public:
     void WriteHeaderDeletedMolecules();
     void WriteDataDeletedMolecules(unsigned long simstep);
 
+	// NEMD flags
+	void     SetFlagsNEMD(const uint32_t &flagsNEMD) {_flagsNEMD = flagsNEMD;}
+	uint32_t GetFlagsNEMD() {return _flagsNEMD;}
+
 private:
     std::vector<dec::ControlRegion*> _vecControlRegions;
     unsigned long _nControlFreq;
@@ -116,6 +121,8 @@ private:
     bool _bProcessIsRelevant;
 
     unsigned int _nWriteFreqDeleted;
+
+	uint32_t _flagsNEMD;
 };
 
 

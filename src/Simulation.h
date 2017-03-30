@@ -30,6 +30,7 @@ class Ensemble;
 #include <list>
 #include <vector>
 #include <string>
+#include <cstdint>
 
 #ifdef STEEREO
 class SteereoSimSteering;
@@ -572,6 +573,7 @@ private:
 
 	ParticleTracker* _particleTracker;
 
+	uint32_t _flagsNEMD;
 };
 #endif /*SIMULATION_H_*/
 
