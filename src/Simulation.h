@@ -282,7 +282,8 @@ public:
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
 	/** Get the number of time steps to be performed in the simulatoin */
 	unsigned long getNumTimesteps() { return _numberOfTimesteps; }
-
+	/** Get initial number of steps */
+	unsigned long getNumInitTimesteps() { return _initSimulation; }
 	/** Get the number of the actual time step currently processed in the simulation. */
 	unsigned long getSimulationStep() { return _simstep; }
 
