@@ -40,6 +40,7 @@
 #include "thermostats/TemperatureControl.h"
 
 #include "utils/Logger.h"
+#include "utils/FileUtils.h"
 
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
@@ -308,14 +309,26 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_outputPlugins.push_back(new MmspdBinWriter(writeFrequency, outputPathAndPrefix));
 				global_log->debug() << "MmspdBinWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "MmpldWriter") {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				string strSpheres;
-				string strInitSphereData;
-				string strSphereDataFilename = "unknown";
-				uint8_t bInitSphereData = ISD_USE_DEFAULT;
+				std::string strSpheres;
+				uint64_t startTimestep;
+				uint64_t writeFrequency;
+				uint64_t stopTimestep;
 				uint64_t numFramesPerFile;
-				inputfilestream >> strSpheres >> writeFrequency >> outputPathAndPrefix >> strInitSphereData;
+				std::string strWriteControl;
+				std::string outputPathAndPrefix;
+				std::string strInitSphereData;
+				std::string strSphereDataFilename = "unknown";
+				uint8_t bInitSphereData = ISD_USE_DEFAULT;
+				inputfilestream >> strSpheres >> strWriteControl >> outputPathAndPrefix >> strInitSphereData;
+
+				// tokenize write control parameters
+				std::vector<string> fields;
+				fields = split( fields, strWriteControl, ":", split_type::no_empties );
+				startTimestep    = atoi( fields.at(0).c_str() );
+				writeFrequency   = atoi( fields.at(1).c_str() );
+				stopTimestep     = atoi( fields.at(2).c_str() );
+				numFramesPerFile = atoi( fields.at(3).c_str() );
+
 				if("file" == strInitSphereData)
 				{
 					inputfilestream >> strSphereDataFilename;
@@ -328,13 +341,12 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					global_log->error() << "MmpldWriter: wrong statement, expected default|file. Program exit... " << endl;
 					Simulation::exit(-1);
 				}
-				inputfilestream >> numFramesPerFile;
 
 				MmpldWriter* mmpldWriter = NULL;
 				if("simple" == strSpheres)
-					mmpldWriter = new MmpldWriterSimpleSphere(writeFrequency, outputPathAndPrefix, numFramesPerFile);
+					mmpldWriter = new MmpldWriterSimpleSphere(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPathAndPrefix);
 				else if("multi" == strSpheres)
-					mmpldWriter = new MmpldWriterMultiSphere(writeFrequency, outputPathAndPrefix, numFramesPerFile);
+					mmpldWriter = new MmpldWriterMultiSphere (startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPathAndPrefix);
 				else
 				{
 					global_log->error() << "MmpldWriter: wrong statement, expected simple|multi. Program exit... " << endl;
