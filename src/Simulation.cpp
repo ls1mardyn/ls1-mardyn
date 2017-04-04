@@ -767,6 +767,9 @@ void Simulation::prepare_start() {
 		}
 	}
 
+	// initial number of timesteps
+	_initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+
 	// initialize output
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter
@@ -808,7 +811,7 @@ void Simulation::simulate() {
 	unsigned uCAT = _pressureGradient->getUCAT();
 // 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
 // 			/ _integrator->getTimestepLength());
-    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+//    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
 	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
@@ -868,7 +871,7 @@ void Simulation::simulate() {
 				<< usedMem * 100. / totalMem << "%)" << endl;
 	}
 
-	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
+	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
