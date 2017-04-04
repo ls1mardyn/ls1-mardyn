@@ -9,6 +9,7 @@
 #define FILEUTILS_H_
 
 #include <string>
+#include <cstddef>
 
 /**
  * Check if a file exists.
@@ -45,5 +46,48 @@ struct fill_width
 };
 
 std::ostream& operator<<( std::ostream& o, const fill_width& a );
+
+/*
+ * Split / Tokenize a string
+ * copied from here: http://www.cplusplus.com/faq/sequences/strings/split/
+ *
+ * call e.g. like this:
+ *
+ * std::vector<string> fields;
+ * std::string str = "split:this:string";
+ * fields = split( fields, str, ":", split_type::no_empties );
+ *
+ */
+
+struct split_type
+{
+	enum empties_t { empties_ok, no_empties };
+};
+
+template <typename Container>
+Container& split(
+	Container&                            result,
+	const typename Container::value_type& s,
+	const typename Container::value_type& delimiters,
+	split_type::empties_t                      empties = split_type::empties_ok )
+	{
+	result.clear();
+	size_t current;
+	size_t next = -1;
+	do
+	{
+		if (empties == split_type::no_empties)
+		{
+			next = s.find_first_not_of( delimiters, next + 1 );
+			if (next == Container::value_type::npos) break;
+			next -= 1;
+		}
+		current = next + 1;
+		next = s.find_first_of( delimiters, current );
+		result.push_back( s.substr( current, next - current ) );
+	}
+	while (next != Container::value_type::npos);
+	return result;
+}
 
 #endif /* FILEUTILS_H_ */
