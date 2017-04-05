@@ -793,8 +793,8 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
                 outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity[ _nOffsetScalar[0][0]+s ];
 
                 // drift y+, y-
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][1][1]+s ];
-                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][2][1]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][1][0]+s ];
+                outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][2][0]+s ];
 
                 // DOF+, DOF-, DOF_ges
                 outputstream << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _nNumMoleculesGlobal[ _nOffsetScalar[1][0]+s ];
@@ -850,7 +850,7 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
                 {
                     // temperature/density componentwise
                     outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperature[ _nOffsetScalar[0][c]+s ];
-                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity[ _nOffsetScalar[0][c]+s ];
+                    outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity    [ _nOffsetScalar[0][c]+s ];
                 }
                 outputstream_comp << endl;
             }
@@ -927,12 +927,12 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
                          for(unsigned short d = 0; d < 3; ++d)
                          {
                              // velocity j+,j-
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[1][c][d]+s ];
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[2][c][d]+s ];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[d][1][c]+s ];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[ _nOffsetVector[d][2][c]+s ];
 
                              // force j+,j-
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[ _nOffsetVector[1][c][d]+s ];
-                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[ _nOffsetVector[2][c][d]+s ];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[ _nOffsetVector[d][1][c]+s ];
+                             outputstream_comp_Fv << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[ _nOffsetVector[d][2][c]+s ];
                          }
                      }
                      outputstream_comp_Fv << endl;
