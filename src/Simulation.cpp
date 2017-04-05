@@ -111,6 +111,8 @@ Simulation::~Simulation() {
 	delete _inputReader;
 	delete _flopCounter;
 	delete _FMM;
+	delete _ensemble;
+	delete _longRangeCorrection;
 }
 
 void Simulation::exit(int exitcode) {

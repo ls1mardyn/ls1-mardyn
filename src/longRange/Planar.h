@@ -20,7 +20,7 @@ class ParticleContainer;
 class Planar:public LongRangeCorrection {
 public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation);
-//	 ~Planar();	
+	virtual ~Planar() {}
 
 	void calculateLongRange();
 	double lrcLJ(Molecule* mol);
