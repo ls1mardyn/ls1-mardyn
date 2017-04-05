@@ -129,6 +129,13 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	_nNumValsScalar = _nNumBinsProfiles * _nNumComponents * 3;  // * 3: directions: all(+/-) | only (+) | only (-)
 	_nNumValsVector = _nNumValsScalar * 3;                        // * 3: x, y, z-component
 
+#ifndef NDEBUG
+	cout << "_nNumBinsProfiles = " << _nNumBinsProfiles << endl;
+	cout << "_nNumComponents   = " << _nNumComponents   << endl;
+	cout << "_nNumValsScalar   = " << _nNumValsScalar   << endl;
+	cout << "_nNumValsVector   = " << _nNumValsVector   << endl;
+#endif
+
 	// Offsets
 	_nOffsetScalar = new unsigned long*[3];
 	for(unsigned int dir = 0; dir<3; ++dir)
@@ -451,6 +458,9 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 		if(2==dir && v[1] > 0.)
 			continue;
 
+		mardyn_assert(_nOffsetScalar[dir][0  ] + nPosIndex < _nNumValsScalar);
+		mardyn_assert(_nOffsetScalar[dir][cid] + nPosIndex < _nNumValsScalar);
+
 		// Scalar quantities
 		_nNumMoleculesLocal[ _nOffsetScalar[dir][0  ] + nPosIndex ] ++;  // all components
 		_nNumMoleculesLocal[ _nOffsetScalar[dir][cid] + nPosIndex ] ++;  // specific component
@@ -466,6 +476,9 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 		// Loop over dimensions  x, y, z (vector components)
 		for(unsigned int dim = 0; dim<3; ++dim)
 		{
+			mardyn_assert(_nOffsetVector[dim][dir][0  ] + nPosIndex < _nNumValsVector);
+			mardyn_assert(_nOffsetVector[dim][dir][cid] + nPosIndex < _nNumValsVector);
+
 			_dVelocityLocal       [ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += v[dim];
 			_dVelocityLocal       [ _nOffsetVector[dim][dir][cid] + nPosIndex ] += v[dim];
 			_dSquaredVelocityLocal[ _nOffsetVector[dim][dir][0  ] + nPosIndex ] += v2[dim];
@@ -777,6 +790,17 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
             // data
             for(unsigned int s = 0; s < _nNumBinsProfiles; ++s)
             {
+            	// scalar quantities
+				mardyn_assert( _nOffsetScalar[0][0]+s < _nNumValsScalar );
+				mardyn_assert( _nOffsetScalar[1][0]+s < _nNumValsScalar );
+				mardyn_assert( _nOffsetScalar[2][0]+s < _nNumValsScalar );
+				// vector quantities
+				mardyn_assert( _nOffsetVector[0][0][0]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[1][0][0]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[2][0][0]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[1][1][0]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[1][2][0]+s < _nNumValsVector );
+
                 outputstream << std::setw(14) << std::setprecision(6) << _dBinMidpointsProfiles[s];
 
                 // drift x, y, z
@@ -848,6 +872,9 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
 
                 for(unsigned short c = 0; c < nNumComponents; ++c)
                 {
+    				mardyn_assert( _nOffsetScalar[0][c]+s < _nNumValsScalar );
+    				mardyn_assert( _nOffsetScalar[0][c]+s < _nNumValsScalar );
+
                     // temperature/density componentwise
                     outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperature[ _nOffsetScalar[0][c]+s ];
                     outputstream_comp << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDensity    [ _nOffsetScalar[0][c]+s ];
@@ -1263,6 +1290,9 @@ void SampleRegion::ResetLocalValuesProfiles()
 
 void SampleRegion::UpdateSlabParameters()
 {
+	mardyn_assert(0 > 1);
+	return;  // Do not update these parameters by now. TODO: Get rid of this??
+
 	double dWidth = this->GetWidth(1);
 	double* dLowerCorner = this->GetLowerCorner();
 
