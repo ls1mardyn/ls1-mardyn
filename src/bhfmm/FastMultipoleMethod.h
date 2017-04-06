@@ -34,7 +34,7 @@ public:
 			bool periodic = true, bool adaptive = false);
 
 	void init(double globalDomainLength[3], double bBoxMin[3],
-			double bBoxMax[3], double LJCellLength[3]);
+			double bBoxMax[3], double LJCellLength[3], ParticleContainer* ljContainer);
 
 	void computeElectrostatics(ParticleContainer * ljContainer);
 

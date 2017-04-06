@@ -160,6 +160,9 @@ long unsigned int MkesferaGenerator::readPhaseSpace(ParticleContainer* particleC
 					double tP = (qq > R_i*R_i)? P_out: P_in;
 					bool tfill = (tP >= rnd->rnd());
 					if(notInBox){
+						if(idx[0] >= startx[0] and idx[0] <= endx[0] and idx[1] >= startx[1] and idx[1] <= endx[1] and idx[2] >= startx[2] and idx[2] <= endx[2]){
+							fill[idx[0]-startx[0]][idx[1]-startx[1]][idx[2]-startx[2]][p] = 0;
+						}
 						continue;
 					}
 

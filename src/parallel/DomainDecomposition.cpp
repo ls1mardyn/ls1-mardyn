@@ -139,6 +139,95 @@ std::vector<int> DomainDecomposition::getNeighbourRanks() {
  *
  **/
 std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
+	//order of ranks is important in current version!!!
+#if defined(ENABLE_MPI) //evil hack to not destroy the necessary order
+    int myRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+	int numProcs;
+	MPI_Comm_size(MPI_COMM_WORLD,&numProcs);
+	std::vector<std::vector<std::vector<int>>> ranks = getAllRanks();
+	int myCoords[3];
+	MPI_Cart_coords(_comm, myRank, 3, myCoords);
+	std::vector<int> neighbours(26,-1);
+	if(numProcs == 1){
+		for(int i = 0; i<26; i++)
+			neighbours[i] = myRank;
+	}
+	else{
+		for(int i = 0; i<26; i++){
+			int x,y,z;
+			switch(i)
+			{
+			case 0: //faces
+				x=-1;y=0;z=0;break;
+			case 1:
+				x=1;y=0;z=0;break;
+			case 2:
+				x=0;y=-1;z=0;break;
+			case 3:
+				x=0;y=1;z=0;break;
+			case 4:
+				x=0;y=0;z=-1;break;
+			case 5:
+				x=0;y=0;z=1;break;
+			case 6: //edges
+				x=-1;y=-1;z=0;break;
+			case 7:
+				x=1;y=1;z=0;break;
+			case 8:
+				x=-1;y=1;z=0;break;
+			case 9:
+				x=1;y=-1;z=0;break;
+			case 10:
+				x=-1;y=0;z=-1;break;
+			case 11:
+				x=1;y=0;z=1; break;
+			case 12:
+				x=-1;y=0;z=1;break;
+			case 13:
+				x=1;y=0;z=-1;break;
+			case 14:
+				x=0;y=-1;z=-1;break;
+			case 15:
+				x=0;y=1;z=1;break;
+			case 16:
+				x=0;y=-1;z=1;break;
+			case 17:
+				x=0;y=1;z=-1;break;
+			case 18:
+				x=-1;y=-1;z=-1;break;
+			case 19: //corners
+				x=1;y=1;z=1;break;
+			case 20:
+				x=-1;y=-1;z=1;break;
+			case 21:
+				x=1;y=1;z=-1;break;
+			case 22:
+				x=-1;y=1;z=-1;break;
+			case 23:
+				x=1;y=-1;z=1;break;
+			case 24:
+				x=-1;y=1;z=1;break;
+			case 25:
+				x=1;y=-1;z=-1;break;
+			}
+			int coordsTemp[3];
+			coordsTemp[0] = (myCoords[0] + x + ranks.size()) % ranks.size();
+			coordsTemp[1] = (myCoords[1] + y + ranks[0].size()) % ranks[0].size();
+			coordsTemp[2] = (myCoords[2] + z + ranks[0][0].size()) % ranks[0][0].size();
+			int rank;
+			MPI_Cart_rank(_comm, coordsTemp, &rank);
+			neighbours[i] = rank;
+		}
+	}
+	/*for(int i=0; i< 26;i++)
+		std::cout << neighbours[i];*/
+	std::cout << "\n";
+	return neighbours;
+#else
+	return std::vector<int>(0);
+#endif
+	/* new version that does not work so far
 #if defined(ENABLE_MPI)
 
 	std::vector<int> neighbours(26, -1);
@@ -152,7 +241,46 @@ std::vector<int> DomainDecomposition::getNeighbourRanksFullShell() {
 #else
 	return std::vector<int>(0);
 #endif
+*/
 }
+
+
+std::vector<std::vector<std::vector<int>>> DomainDecomposition::getAllRanks(){
+#ifdef ENABLE_MPI
+	std::vector<std::vector<std::vector<int>>> ranks;
+	int myRank;
+	MPI_Comm_rank(MPI_COMM_WORLD,&myRank);
+	int numProcessors;
+	MPI_Comm_size(MPI_COMM_WORLD,&numProcessors);
+
+	ranks.resize(_gridSize[0]);
+	for(int i = 0; i < _gridSize[0]; i++){
+		ranks[i].resize(_gridSize[1]);
+		for(int j = 0; j < _gridSize[1]; j++){
+			ranks[i][j].resize(_gridSize[2]);
+		}
+	}
+	int coords[3];
+	for(int i = 0; i < numProcessors; i++){
+		MPI_Cart_coords(_comm, i, 3, coords);
+		ranks[coords[0]][coords[1]][coords[2]] = i;
+//		if(myRank == 0)
+//		std:: cout << i << coords[0] << coords[1] << coords[2] << "\n";
+	}
+//	if(myRank == 0){
+//		int previous, next;
+//		MPI_CHECK( MPI_Cart_shift(_comm, 0, 1, &previous, &next ) );
+//		if(next != ranks[1][0][0]){
+//			std::cout << "Error!!!!!!! \n\n\n\n\n\n";
+//		}
+//	}
+
+	return ranks;
+#else
+	return std::vector<std::vector<std::vector<int>>>(0);
+#endif
+}
+
 
 std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegion(Domain* domain, const HaloRegion& haloRegion,
 		double cutoff) {
@@ -191,3 +319,4 @@ std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegi
 	// initialize using initializer list - here a vector with one element is created
 	return std::vector<CommunicationPartner> {CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset, enlarged)};
 }
+

@@ -40,7 +40,7 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 
 	bhfmm::FastMultipoleMethod uniform;
 	uniform.setParameters(LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
-	uniform.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength);
+	uniform.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LCUniform);
 
 	uniform.computeElectrostatics(LCUniform);
 	for (ParticleIterator m = LCUniform->iteratorBegin(); m != LCUniform->iteratorEnd(); ++m) {
@@ -57,7 +57,7 @@ void CompareFMMContainersTest::compare(double cutoffRadius, bool periodic) {
 
 	bhfmm::FastMultipoleMethod adaptive;
 	adaptive.setParameters(LJSubdivisionFactor, orderOfExpansions, periodic, adaptiveArg);
-	adaptive.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength);
+	adaptive.init(globalDomainLength, bBoxMin, bBoxMax, LJCellLength, LCAdaptive);
 
 	adaptive.computeElectrostatics(LCAdaptive);
 	for (ParticleIterator m = LCAdaptive->iteratorBegin(); m != LCAdaptive->iteratorEnd(); ++m) {
