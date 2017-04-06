@@ -221,6 +221,12 @@ public:
 		std::cout << "Not yet implemented";
 		return std::vector<int>(0);
 	}
+
+	//returns the ranks of all ranks
+	virtual std::vector<std::vector<std::vector<int>>> getAllRanks(){
+		std::cout << "Not yet implemented";
+		return std::vector<std::vector<std::vector<int>>>(0);
+	}
 #if defined(ENABLE_MPI)
 	virtual MPI_Comm getCommunicator(){
 	    return MPI_COMM_WORLD;

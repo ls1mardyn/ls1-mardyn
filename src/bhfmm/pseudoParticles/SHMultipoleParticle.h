@@ -78,6 +78,10 @@ public:
 		_expansionL.readValuesFromMPIBuffer(buf,position);
 	}
 
+	void addValuesFromMPIBuffer(double * buf, int& position) {
+		_expansionL.addValuesFromMPIBuffer(buf,position);
+	}
+
 private:
 	SolidHarmonicsExpansion _expansionL;
 };

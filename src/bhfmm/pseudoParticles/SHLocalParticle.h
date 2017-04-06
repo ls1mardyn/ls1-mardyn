@@ -91,6 +91,9 @@ public:
 	void readValuesFromMPIBuffer(double * buf, int& position) {
 		_expansionM.readValuesFromMPIBuffer(buf,position);
 	}
+	void addValuesFromMPIBuffer(double * buf, int& position) {
+		_expansionM.addValuesFromMPIBuffer(buf,position);
+	}
 
 private:
 	SolidHarmonicsExpansion _expansionM;

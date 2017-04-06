@@ -337,6 +337,15 @@ public:
 			acc_S_seq(i) = buf[position++];
 		}
 	}
+	void addValuesFromMPIBuffer(double * buf, int& position) {
+		const int end = _c.getTotalNumValues();
+		for (int i = 0; i < end; ++i) {
+			acc_C_seq(i) += buf[position++];
+		}
+		for (int i = 0; i < end; ++i) {
+			acc_S_seq(i) += buf[position++];
+		}
+	}
 
 private:
 	//private accessors to C and S terms
