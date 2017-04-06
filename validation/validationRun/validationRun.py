@@ -192,6 +192,7 @@ def doRun(directory, MardynExe):
     else:
         localRemote = remote
     os.chdir(directory)
+    call(['chmod', '+x', MardynExe])
     cmd = []
     
     doRemote = localRemote and (directory == 'new' or not baseIsLocal)
