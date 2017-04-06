@@ -953,6 +953,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 			}
 			_timerBusyWaiting.start();
 		}
+#if defined(ENABLE_MPI)
 		if(finishedFlag == 5){ //local back communication receive finished -> set values
 			communicateHalosOverlapPostProcessingSetHalos();
 		}
@@ -974,6 +975,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 				}
 			}
 		}
+#endif
 	}
 	_timerBusyWaiting.stop();
 	//in case of neutral territory version exchange halo values
