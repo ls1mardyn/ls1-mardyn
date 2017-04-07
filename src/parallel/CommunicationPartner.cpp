@@ -201,7 +201,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
                                 global_log->debug() << "Received particleCount from " << _rank << std::endl;
                                 global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
                         #endif
-			_recvBuf.resize(numrecv+5);
+			_recvBuf.resize(numrecv);
 			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
 		}
 	}
@@ -222,7 +222,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 		}
 		if (flag == true) {
 			_msgReceived = true;
-			int numrecv = _recvBuf.size() - 5;
+			int numrecv = _recvBuf.size();
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
@@ -260,7 +260,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
-	_recvBuf.resize(numParticles+5);
+	_recvBuf.resize(numParticles);
 	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
 }
 
