@@ -11,6 +11,7 @@
 #include <cmath>
 #include <sstream>
 #include "WrapOpenMP.h"
+#include "Simulation.h"
 
 CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], const double hHi[3], const double bLo[3], 
 		const double bHi[3], const double sh[3], const int offset[3], const bool enlarged[3][2]) {
@@ -37,6 +38,7 @@ CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], con
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
+        _countTested = 0;
 }
 
 CommunicationPartner::CommunicationPartner(const int r) {
@@ -62,6 +64,7 @@ CommunicationPartner::CommunicationPartner(const int r) {
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
+        _countTested = 0;
 }
 
 CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3], const double leavingHigh[3]) {
@@ -86,6 +89,7 @@ CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
+        _countTested = 0;
 }
 
 CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
@@ -99,6 +103,7 @@ CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
+        _countTested = 0;
 }
 
 CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartner& o){
@@ -115,6 +120,7 @@ CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartne
 		_sendStatus = new MPI_Status;
 		_recvStatus = new MPI_Status;
 		_msgSent = _countReceived = _msgReceived = false;
+                _countTested = 0;
 	}
 	return *this;
 }
@@ -141,14 +147,14 @@ void CommunicationPartner::initSend(ParticleContainer* moleculeContainer, const 
 			break;
 		}
 		case LEAVING_ONLY: {
-			global_log->debug() << "sending halo particles only" << std::endl;
+			global_log->debug() << "sending leaving particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._leavingLow, _haloInfo[p]._leavingHigh, _haloInfo[p]._shift, removeFromContainer);
 			}
 			break;
 		}
 		case HALO_COPIES: {
-			global_log->debug() << "sending boundary particles only" << std::endl;
+			global_log->debug() << "sending halo particles only" << std::endl;
 			for(unsigned int p = 0; p < numHaloInfo; p++){
 				collectMoleculesInRegion(moleculeContainer, _haloInfo[p]._copiesLow, _haloInfo[p]._copiesHigh, _haloInfo[p]._shift);
 			}
@@ -186,40 +192,37 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 	if (not _countReceived) {
 		int flag = 0;
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
-		if (flag == 1) {
+		if (flag == true) {
 			_countReceived = true;
+                        _countTested = 0;
 			int numrecv;
 			MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
                         #ifndef NDEBUG
                                 global_log->debug() << "Received particleCount from " << _rank << std::endl;
                                 global_log->debug() << "Preparing to receive " << numrecv << " particles." << std::endl;
                         #endif
-			_recvBuf.resize(numrecv);
-#ifndef MPI_WORKAROUND
+			_recvBuf.resize(numrecv+5);
 			MPI_CHECK(MPI_Irecv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvRequest));
-#else
-			MPI_CHECK(MPI_Recv(_recvBuf.data(), numrecv, type, _rank, 99, comm, _recvStatus));
-#endif
 		}
 	}
 	return _countReceived;
 }
-bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool alwaysNonBlocking) {
+bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates) {
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
-#ifndef MPI_WORKAROUND
-		int flag = 0;
-		MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
-		if (flag == 1) {
-#else
-		int flag = 0;
-		if(alwaysNonBlocking){
-			MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
-		}
-		if((not alwaysNonBlocking) || flag == 1) {  // if it is not alwaysnonblocking: check for the flag.
-#endif
+		int flag = 1;
+                if(_countTested > 10){
+                    // some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait
+                    // this fallback just ensures, that messages get received properly.
+                    MPI_Wait(_recvRequest,_recvStatus);
+                    _countTested = 0;
+                    flag = 1;
+                }else{
+                    MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
+                }
+                if (flag == true) {
 			_msgReceived = true;
-			int numrecv = _recvBuf.size();
+			int numrecv = _recvBuf.size()-5;
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
@@ -249,13 +252,16 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			mols.clear();
 			_recvBuf.clear();
 		}
+                else{
+                    ++_countTested;
+                }
 	}
 	return _msgReceived;
 }
 
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
-	_recvBuf.resize(numParticles);
+	_recvBuf.resize(numParticles+5);
 //#ifndef MPI_WORKAROUND
 	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
 //#else
