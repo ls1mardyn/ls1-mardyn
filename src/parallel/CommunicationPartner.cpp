@@ -38,7 +38,7 @@ CommunicationPartner::CommunicationPartner(const int r, const double hLo[3], con
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
-        _countTested = 0;
+	_countTested = 0;
 }
 
 CommunicationPartner::CommunicationPartner(const int r) {
@@ -64,7 +64,7 @@ CommunicationPartner::CommunicationPartner(const int r) {
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
-        _countTested = 0;
+	_countTested = 0;
 }
 
 CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3], const double leavingHigh[3]) {
@@ -89,7 +89,7 @@ CommunicationPartner::CommunicationPartner(const int r, const double leavingLo[3
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
-        _countTested = 0;
+	_countTested = 0;
 }
 
 CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
@@ -103,7 +103,7 @@ CommunicationPartner::CommunicationPartner(const CommunicationPartner& o) {
 	_sendStatus = new MPI_Status;
 	_recvStatus = new MPI_Status;
 	_msgSent = _countReceived = _msgReceived = false;
-        _countTested = 0;
+	_countTested = 0;
 }
 
 CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartner& o){
@@ -120,7 +120,7 @@ CommunicationPartner& CommunicationPartner::operator =(const CommunicationPartne
 		_sendStatus = new MPI_Status;
 		_recvStatus = new MPI_Status;
 		_msgSent = _countReceived = _msgReceived = false;
-                _countTested = 0;
+		_countTested = 0;
 	}
 	return *this;
 }
@@ -194,7 +194,7 @@ bool CommunicationPartner::iprobeCount(const MPI_Comm& comm, const MPI_Datatype&
 		MPI_CHECK(MPI_Iprobe(_rank, 99, comm, &flag, _recvStatus));
 		if (flag == true) {
 			_countReceived = true;
-                        _countTested = 0;
+			_countTested = 0;
 			int numrecv;
 			MPI_CHECK(MPI_Get_count(_recvStatus, type, &numrecv));
                         #ifndef NDEBUG
@@ -211,18 +211,18 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 	using Log::global_log;
 	if (_countReceived and not _msgReceived) {
 		int flag = 1;
-                if(_countTested > 10){
-                    // some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait
-                    // this fallback just ensures, that messages get received properly.
-                    MPI_Wait(_recvRequest,_recvStatus);
-                    _countTested = 0;
-                    flag = 1;
-                }else{
-                    MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
-                }
-                if (flag == true) {
+		if (_countTested > 10) {
+			// some MPI (Intel, IBM) implementations can produce deadlocks using MPI_Test without any MPI_Wait
+			// this fallback just ensures, that messages get received properly.
+			MPI_Wait(_recvRequest, _recvStatus);
+			_countTested = 0;
+			flag = 1;
+		} else {
+			MPI_CHECK(MPI_Test(_recvRequest, &flag, _recvStatus));
+		}
+		if (flag == true) {
 			_msgReceived = true;
-			int numrecv = _recvBuf.size()-5;
+			int numrecv = _recvBuf.size() - 5;
 
 			#ifndef NDEBUG
 				global_log->debug() << "Receiving particles from " << _rank << std::endl;
@@ -240,7 +240,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 				ParticleData::ParticleDataToMolecule(_recvBuf[i], m);
 				mols[i] = m;
 			}
-			
+
 			#ifndef NDEBUG
 				for (int i = 0; i < numrecv; i++) {
 					buf << mols[i].id() << " ";
@@ -251,10 +251,9 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 			moleculeContainer->addParticles(mols, removeRecvDuplicates);
 			mols.clear();
 			_recvBuf.clear();
+		} else {
+			++_countTested;
 		}
-                else{
-                    ++_countTested;
-                }
 	}
 	return _msgReceived;
 }
