@@ -262,11 +262,7 @@ bool CommunicationPartner::testRecv(ParticleContainer* moleculeContainer, bool r
 void CommunicationPartner::initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type) {
 	_countReceived = true;
 	_recvBuf.resize(numParticles+5);
-//#ifndef MPI_WORKAROUND
 	MPI_CHECK(MPI_Irecv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvRequest));
-//#else
-//	MPI_CHECK(MPI_Recv(_recvBuf.data(), numParticles, type, _rank, 99, comm, _recvStatus));
-//#endif
 }
 
 void CommunicationPartner::deadlockDiagnosticSendRecv() {

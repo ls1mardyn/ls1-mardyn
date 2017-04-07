@@ -91,9 +91,6 @@ OPENMP ?= 0
 
 PAPI ?= 0
 
-# use workarounds to disable potential deadlocks in MPI applications. Might negatively impact the performance.
-MPI_WORKAROUND ?= 0
-
 ifeq ($(ENABLE_FMM_FFT), 1)
 OPENMP_SIMD = 1
 USE_FFTW = 1
@@ -190,10 +187,6 @@ endif
 ifeq ($(PAPI),1)
 CXXFLAGS += -D WITH_PAPI=1
 LDFLAGS += -lpapi
-endif
-
-ifeq ($(MPI_WORKAROUND),1)
-CXXFLAGS += -D MPI_WORKAROUND
 endif
 
 ifeq ($(WORLD_RECORD), 1)
