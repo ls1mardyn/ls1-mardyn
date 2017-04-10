@@ -78,7 +78,7 @@ ifeq ($(PRECISION), SINGLE)
 endif
 
 # Set World Record?
-WORLD_RECORD ?= 1
+WORLD_RECORD ?= 0
 
 # allow FFT acceleration of FMM (requires FFTW!) ?
 ENABLE_FMM_FFT ?= 0

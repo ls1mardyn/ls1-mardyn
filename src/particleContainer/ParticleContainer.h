@@ -191,29 +191,15 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	virtual double get_halo_L(int index) const = 0;
 
-	//! @brief appends pointers to all particles in the halo region to the list
-	virtual void getHaloParticles(std::list<Molecule*> &haloParticlePtrs) = 0;
+	// get the region of the halo particles in this container based on direction
+	virtual void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
 
-	//! @brief fills the given list with pointers to all particles in the given region
-	//! @param lowCorner minimum x-, y- and z-coordinate of the region
-	//! @param highwCorner maximum x-, y- and z-coordinate of the region
-	//! @param removeFromContainer if true, particles are erased, else - left in container
-	virtual void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs) = 0;
-	virtual void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer=false) = 0;
+	// get the region of the boundary particles in this container based on direction
+	virtual void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]) = 0;
 
-	/**
-	 * @brief move particles from the halo layer in the respective direction into the current vector
-	 * @param direction
-	 * @param v
-	 */
-	virtual void getHaloParticlesDirection(int direction, std::vector<Molecule>& v, bool removeFromContainer = false) = 0;
+	virtual bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
-	/**
-	 * @brief copy particles from the boundary layer for filling halo layers
-	 * @param direction
-	 * @param v
-	 */
-	virtual void getBoundaryParticlesDirection(int direction, std::vector<Molecule>& v) = 0;
+	virtual bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]) = 0;
 
 	virtual double getCutoff() = 0;
 

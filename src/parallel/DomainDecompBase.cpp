@@ -29,7 +29,6 @@ void DomainDecompBase::exchangeMolecules(ParticleContainer* moleculeContainer, D
 }
 
 void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContainer* moleculeContainer) const {
-	static std::vector<Molecule> mols;
 	const double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
@@ -38,27 +37,31 @@ void DomainDecompBase::handleDomainLeavingParticles(unsigned dim, ParticleContai
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
-		const bool removeFromContainer = true;
-		moleculeContainer->getHaloParticlesDirection(direction, mols, removeFromContainer);
 
-		std::vector<Molecule>::size_type numMols = mols.size();
+		double startRegion[3];
+		double endRegion[3];
+
+		moleculeContainer->getHaloRegionPerDirection(direction, &startRegion, &endRegion);
+
 		#if defined (_OPENMP)
-		#pragma omp parallel for schedule(static)
+		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
-		for (std::vector<Molecule>::size_type i = 0; i < numMols; i++) {
-			Molecule& m = mols[i];
-			m.setr(dim, m.r(dim) + shift);
-			//moleculeContainer->addParticle(m);
-		}
+		{
+			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
 
-		const bool checkWhetherDuplicate = false;
-		moleculeContainer->addParticles(mols, checkWhetherDuplicate);
-		mols.clear();
+			//traverse and gather all halo particles in the cells
+			for(RegionParticleIterator i = begin; i != end; ++i){
+				Molecule m = *i;
+				m.setr(dim, m.r(dim) + shift);
+				moleculeContainer->addParticle(m);
+				i.deleteCurrentParticle(); //removeFromContainer = true;
+			}
+		}
 	}
 }
 
 void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContainer* moleculeContainer) const {
-	static std::vector<Molecule> mols;
 	double shiftMagnitude = moleculeContainer->getBoundingBoxMax(dim) - moleculeContainer->getBoundingBoxMin(dim);
 
 	// molecules that have crossed the lower boundary need a positive shift
@@ -67,21 +70,26 @@ void DomainDecompBase::populateHaloLayerWithCopies(unsigned dim, ParticleContain
 	const int sDim = dim+1;
 	for(int direction = -sDim; direction < 2*sDim; direction += 2*sDim) {
 		double shift = copysign(shiftMagnitude, static_cast<double>(-direction));
-		moleculeContainer->getBoundaryParticlesDirection(direction, mols);
 
-		std::vector<Molecule>::size_type numMols = mols.size();
+		double startRegion[3];
+		double endRegion[3];
+
+		moleculeContainer->getBoundaryRegionPerDirection(direction, &startRegion, &endRegion);
+
 		#if defined (_OPENMP)
-		#pragma omp parallel for schedule(static)
+		#pragma omp parallel shared(startRegion, endRegion)
 		#endif
-		for (std::vector<Molecule>::size_type i = 0; i < numMols; i++) {
-			Molecule& m = mols[i];
-			m.setr(dim, m.r(dim) + shift);
-			//moleculeContainer->addParticle(m);
-		}
+		{
+			RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(startRegion, endRegion);
+			RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
 
-		const bool checkWhetherDuplicate = true;
-		moleculeContainer->addParticles(mols, checkWhetherDuplicate);
-		mols.clear();
+			//traverse and gather all boundary particles in the cells
+			for(RegionParticleIterator i = begin; i != end; ++i){
+				Molecule m = *i;
+				m.setr(dim, m.r(dim) + shift);
+				moleculeContainer->addParticle(m);
+			}
+		}
 	}
 }
 

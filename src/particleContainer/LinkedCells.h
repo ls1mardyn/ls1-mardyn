@@ -156,15 +156,11 @@ public:
 	//!       e.g. replace it by the cutoff-radius
 	double get_halo_L(int index) const;
 
-	//! @brief appends pointers to all particles in the halo region to the list
-	void getHaloParticles(std::list<Molecule*> &haloParticlePtrs);
+	void getHaloRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
+	void getBoundaryRegionPerDirection(int direction, double (*startRegion)[3], double (*endRegion)[3]);
 
-	void getHaloParticlesDirection(int direction, std::vector<Molecule>& v, bool removeFromContainer = false);
-	void getBoundaryParticlesDirection(int direction, std::vector<Molecule>& v);
-
-	// documentation see father class (ParticleContainer.h)
-	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs);
-	void getRegionSimple(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
+	bool isRegionInHaloBoundingBox(double startRegion[3], double endRegion[3]);
+	bool isRegionInBoundingBox(double startRegion[3], double endRegion[3]);
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
