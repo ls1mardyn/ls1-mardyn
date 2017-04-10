@@ -30,7 +30,8 @@ protected:
 	//! @param domainDecomp In the parallel version, the file has to be written by more than one process.
 	//!                     Methods to achieve this are available in domainDecomp
 	//! @param writeFrequency Controls the frequency of writing out the data (every timestep, every 10th, 100th, ... timestep)
-    MmpldWriter(unsigned long writeFrequency, std::string outputPrefix);
+	MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+			std::string outputPrefix);
 	virtual ~MmpldWriter();
 	virtual void SetNumSphereTypes() = 0;
 	virtual void CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol) = 0;
@@ -61,32 +62,49 @@ public:
 	}
 
 protected:
+	void MultiFileApproachReset(ParticleContainer* particleContainer,
+			DomainDecompBase* domainDecomp, Domain* domain);
+	void PrepareWriteControl();
+
+protected:
+	uint64_t _startTimestep;
+	uint64_t _writeFrequency;
+	uint64_t _stopTimestep;
+	uint64_t _numFramesPerFile;
 	std::string _outputPrefix;
-	unsigned long _writeFrequency;
 	bool _appendTimestamp;
 	std::string _timestampString;
 	uint32_t _numSeekEntries;
 	uint32_t _frameCount;
-#ifdef ENABLE_MPI
-	uint64_t *_seekTable;
-
-#endif
 	uint8_t  _numComponents;
 	uint8_t  _numSitesTotal;
 	uint8_t  _numSphereTypes;
-	uint8_t* _numSitesPerComp;
-	uint8_t* _nCompSitesOffset;
+	std::vector<uint64_t> _seekTable;
+	std::vector<uint8_t> _numSitesPerComp;
+	std::vector<uint8_t> _nCompSitesOffset;
 	std::vector<float> _vfSphereRadius;
 	std::vector< std::array<uint8_t, 4> > _vaSphereColors;
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
+	bool _bWriteControlPrepared;
+
+	// split files
+	uint8_t _nFileIndex;
+	uint8_t _numFiles;
+	std::vector<string> _vecFilePrefixes;
+	std::vector<uint64_t> _vecFramesPerFile;
+	std::vector<std::vector<uint64_t> > _vecFrameLists;
+	std::vector<std::vector<uint64_t> >::iterator _frameListsIterator;
+	std::vector<uint64_t> _vecFrameList;
+	std::vector<uint64_t>::iterator _frameListIterator;
 };
 
 class MmpldWriterSimpleSphere : public MmpldWriter
 {
 public:
-	MmpldWriterSimpleSphere(unsigned long writeFrequency, std::string outputPrefix)
-			: MmpldWriter(writeFrequency, outputPrefix)
+	MmpldWriterSimpleSphere(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+			std::string outputPrefix)
+			: MmpldWriter(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPrefix)
 	{
 //		MmpldWriter::_numSphereTypes = &(MmpldWriter::_numComponents);
 	}
@@ -100,8 +118,9 @@ public:
 class MmpldWriterMultiSphere : public MmpldWriter
 {
 public:
-	MmpldWriterMultiSphere(unsigned long writeFrequency, std::string outputPrefix)
-			: MmpldWriter(writeFrequency, outputPrefix)
+	MmpldWriterMultiSphere(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+			std::string outputPrefix)
+			: MmpldWriter(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPrefix)
 	{
 //		MmpldWriter::_numSphereTypes = &(MmpldWriter::_numSitesTotal);
 	}

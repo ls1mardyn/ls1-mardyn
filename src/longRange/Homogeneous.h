@@ -15,7 +15,8 @@ class Homogeneous: public LongRangeCorrection{
 public:
 //	Homogeneous();
 	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation _simulation);
-  
+	virtual ~Homogeneous() {}
+
 //	void initializeLongRange();
 	void calculateLongRange();
 

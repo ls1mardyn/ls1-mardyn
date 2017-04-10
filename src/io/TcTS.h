@@ -5,8 +5,8 @@
 
 /** @brief Generates a scenario of two layers of the same component but with different densities.
  *
- * Creates two layers of the same heigth in the simulation box. The density of
- * the two layers can be chosen seperately. The layers consist both out of
+ * Creates two layers of the same height in the simulation box. The density of
+ * the two layers can be chosen separately. The layers consist both out of
  * molecules from the component with ID=1 in the xml input file.
  */
 class MkTcTSGenerator : public InputBase {

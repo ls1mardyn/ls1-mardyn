@@ -9,6 +9,10 @@
 #include <sstream>
 #include <string>
 
+#include "sys/types.h"
+#include "sys/sysinfo.h"
+
+
 #include "WrapOpenMP.h"
 
 #include "Common.h"
@@ -73,6 +77,7 @@ Simulation* global_simulation;
 Simulation::Simulation()
 	: _simulationTime(0),
 	_initStatistics(0),
+	_ensemble(NULL),
 	_rdf(NULL),
 	_moleculeContainer(NULL),
 	_particlePairsHandler(NULL),
@@ -106,6 +111,8 @@ Simulation::~Simulation() {
 	delete _inputReader;
 	delete _flopCounter;
 	delete _FMM;
+	delete _ensemble;
+	delete _longRangeCorrection;
 }
 
 void Simulation::exit(int exitcode) {
@@ -155,6 +162,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@type", ensembletype);
 		global_log->info() << "Ensemble: " << ensembletype<< endl;
 		if (ensembletype == "NVT") {
+			if(_ensemble != NULL) delete _ensemble;
 			_ensemble = new CanonicalEnsemble();
 		} else if (ensembletype == "muVT") {
 			global_log->error() << "muVT ensemble not completely implemented via XML input." << endl;
@@ -665,7 +673,7 @@ void Simulation::prepare_start() {
 			bBoxMax[i] = _domainDecomposition->getBoundingBoxMax(i, _domain);
 		}
 		_FMM->init(globalLength, bBoxMin, bBoxMax,
-				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength());
+				dynamic_cast<LinkedCells*>(_moleculeContainer)->cellLength(), _moleculeContainer);
 
 		delete _cellProcessor;
 		_cellProcessor = new bhfmm::VectorizedLJP2PCellProcessor(*_domain, _LJCutoffRadius, _cutoffRadius);
@@ -761,6 +769,9 @@ void Simulation::prepare_start() {
 		}
 	}
 
+	// initial number of timesteps
+	_initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+
 	// initialize output
 	std::list<OutputBase*>::iterator outputIter;
 	for (outputIter = _outputPlugins.begin(); outputIter
@@ -773,18 +784,36 @@ void Simulation::prepare_start() {
 	global_log->info() << "System contains "
 			<< _domain->getglobalNumMolecules() << " molecules." << endl;
 
+}
 
+//returns size of cached memory in kB (0 if error occurs)
+unsigned long long getCachedSize(){
+	size_t MAXLEN=1024;
+	FILE *fp;
+	char buf[MAXLEN];
+	fp = fopen("/proc/meminfo", "r");
+	while (fgets(buf, MAXLEN, fp)) {
+		char *p1 = strstr(buf, "Cached:");
+		if (p1 != NULL) {
+			int colon = ':';
+			char *p1 = strchr(buf, colon)+1;
+			//std::cout << p1 << endl;
+			unsigned long long t = strtoull(p1, NULL, 10);
+			//std::cout << t << endl;
+			return t;
+		}
+	}
+	return 0;
 }
 
 void Simulation::simulate() {
-
 	global_log->info() << "Started simulation" << endl;
 
 	// (universal) constant acceleration (number of) timesteps
 	unsigned uCAT = _pressureGradient->getUCAT();
 // 	_initSimulation = (unsigned long) (_domain->getCurrentTime()
 // 			/ _integrator->getTimestepLength());
-    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
+//    _initSimulation = (unsigned long) (this->_simulationTime / _integrator->getTimestepLength());
 	// _initSimulation = 1;
 	/* demonstration for the usage of the new ensemble class */
 	/*CanonicalEnsemble ensemble(_moleculeContainer, global_simulation->getEnsemble()->getComponents());
@@ -834,8 +863,17 @@ void Simulation::simulate() {
 		unsigned particleNoTest;
 #endif
 #endif
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
-	for (_simstep = _initSimulation; _simstep <= _numberOfTimesteps; _simstep++) {
+	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
@@ -1196,13 +1234,12 @@ void Simulation::simulate() {
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/*****************************//**********************************************/
-
     ioTimer.start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.xdr");
         global_log->info() << "Writing final checkpoint to file '" << cpfile << "'" << endl;
-        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
+        _domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime, _finalCheckpointBinary);
     }
 	// finish output
 	std::list<OutputBase*>::iterator outputIter;
@@ -1220,6 +1257,15 @@ void Simulation::simulate() {
 	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
 	global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
 	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+	{
+		struct sysinfo memInfo;
+		sysinfo(&memInfo);
+		long long totalMem = memInfo.totalram * memInfo.mem_unit / 1024 / 1024;
+		long long usedMem = ((memInfo.totalram - memInfo.freeram - memInfo.bufferram) * memInfo.mem_unit / 1024
+				- getCachedSize()) / 1024;
+		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
+				<< usedMem * 100. / totalMem << "%)" << endl;
+	}
 
 #if WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;
@@ -1255,10 +1301,7 @@ void Simulation::output(unsigned long simstep) {
 		_domain->collectProfile(_domainDecomposition, _doRecordVirialProfile);
 		if (mpi_rank == 0) {
 			ostringstream osstrm;
-			osstrm << _profileOutputPrefix << ".";
-			osstrm.fill('0');
-			osstrm.width(9);
-			osstrm << right << simstep;
+			osstrm << _profileOutputPrefix << "." << fill_width('0', 9) << simstep;
 			//edited by Michaela Heier 
 			if(this->_domain->isCylindrical()){
 				this->_domain->outputCylProfile(osstrm.str().c_str(),_doRecordVirialProfile);
@@ -1364,6 +1407,7 @@ void Simulation::initialize() {
 	global_simulation = this;
 
 	_finalCheckpoint = true;
+	_finalCheckpointBinary = false;
 
         // TODO:
 #ifndef ENABLE_MPI

@@ -40,6 +40,7 @@
 #include "thermostats/TemperatureControl.h"
 
 #include "utils/Logger.h"
+#include "utils/FileUtils.h"
 
 #include "longRange/LongRangeCorrection.h"
 #include "longRange/Homogeneous.h"
@@ -123,6 +124,27 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				lineStream >> generatorName >> inputFile;
 				_inputReader = GeneratorFactory::loadGenerator(generatorName, inputFile);
 				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			} else if (phaseSpaceFileFormat == "Binary") {
+				_inputReader = (InputBase*) new BinaryReader();
+				string token;
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceHeaderFile(token);
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceFile(token);
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			} else if (phaseSpaceFileFormat == "MPI-IO") {
+			#ifdef ENABLE_MPI
+				_inputReader = (InputBase*) new MPI_IOReader();
+				string token;
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceHeaderFile(token);
+				inputfilestream >> token;
+				_inputReader->setPhaseSpaceFile(token);
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			#else
+				global_log->error() << "MPI not enabled! Program exit..." << endl;
+				Simulation::exit(1);
+			#endif
 			} else {
 				global_log->error() << "Don't recognize phasespaceFile reader " << phaseSpaceFileFormat << endl;
 				Simulation::exit(1);
@@ -247,6 +269,20 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 					Simulation::exit(-1);
 				}
 				global_log->debug() << "CheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+			} else if (token == "BinaryCheckpointWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new BinaryCheckpointWriter(writeFrequency, outputPathAndPrefix, true));
+				global_log->debug() << "BinaryCheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+#ifdef ENABLE_MPI
+			} else if (token == "MPI-IOCheckpointWriter") {
+				unsigned long writeFrequency;
+				string outputPathAndPrefix;
+				inputfilestream >> writeFrequency >> outputPathAndPrefix;
+				_outputPlugins.push_back(new MPI_IOCheckpointWriter(writeFrequency, outputPathAndPrefix, true));
+				global_log->debug() << "MPI-IOCheckpointWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
+#endif
 			} else if (token == "PovWriter") {
 				unsigned long writeFrequency;
 				string outputPathAndPrefix;
@@ -273,13 +309,26 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 				_outputPlugins.push_back(new MmspdBinWriter(writeFrequency, outputPathAndPrefix));
 				global_log->debug() << "MmspdBinWriter " << writeFrequency << " '" << outputPathAndPrefix << "'.\n";
 			} else if (token == "MmpldWriter") {
-				unsigned long writeFrequency;
-				string outputPathAndPrefix;
-				string strSpheres;
-				string strInitSphereData;
-				string strSphereDataFilename = "unknown";
+				std::string strSpheres;
+				uint64_t startTimestep;
+				uint64_t writeFrequency;
+				uint64_t stopTimestep;
+				uint64_t numFramesPerFile;
+				std::string strWriteControl;
+				std::string outputPathAndPrefix;
+				std::string strInitSphereData;
+				std::string strSphereDataFilename = "unknown";
 				uint8_t bInitSphereData = ISD_USE_DEFAULT;
-				inputfilestream >> strSpheres >> writeFrequency >> outputPathAndPrefix >> strInitSphereData;
+				inputfilestream >> strSpheres >> strWriteControl >> outputPathAndPrefix >> strInitSphereData;
+
+				// tokenize write control parameters
+				std::vector<string> fields;
+				fields = split( fields, strWriteControl, ":", split_type::no_empties );
+				startTimestep    = atoi( fields.at(0).c_str() );
+				writeFrequency   = atoi( fields.at(1).c_str() );
+				stopTimestep     = atoi( fields.at(2).c_str() );
+				numFramesPerFile = atoi( fields.at(3).c_str() );
+
 				if("file" == strInitSphereData)
 				{
 					inputfilestream >> strSphereDataFilename;
@@ -295,9 +344,9 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 
 				MmpldWriter* mmpldWriter = NULL;
 				if("simple" == strSpheres)
-					mmpldWriter = new MmpldWriterSimpleSphere(writeFrequency, outputPathAndPrefix);
+					mmpldWriter = new MmpldWriterSimpleSphere(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPathAndPrefix);
 				else if("multi" == strSpheres)
-					mmpldWriter = new MmpldWriterMultiSphere(writeFrequency, outputPathAndPrefix);
+					mmpldWriter = new MmpldWriterMultiSphere (startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPathAndPrefix);
 				else
 				{
 					global_log->error() << "MmpldWriter: wrong statement, expected simple|multi. Program exit... " << endl;
@@ -817,6 +866,14 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			}
 
 			// <-- TEMPERATURE_CONTROL
+		} else if (token == "finalCheckpoint") {
+			std::string strKey;
+			inputfilestream >> strKey;
+			if (strKey == "binary")
+			{
+				_finalCheckpoint = true;
+				_finalCheckpointBinary = true;
+			}
 		} else {
 			if (token != "")
 				global_log->warning() << "Did not process unknown token " << token << endl;

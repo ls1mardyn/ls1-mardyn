@@ -54,3 +54,10 @@ unsigned int getFileSize(const char* fileName) {
 	}
 	return retVal;
 }
+
+std::ostream& operator<<( std::ostream& o, const fill_width& a )
+{
+	o.fill( a.fill );
+	o.width( a.width );
+	return o;
+}

@@ -12,7 +12,7 @@ class LongRangeCorrection{
 
 public:
 	LongRangeCorrection() {}
-//	~LongRangeCorrection() {}
+	virtual ~LongRangeCorrection() {}
 //	void initializeLongRange();
 	virtual void calculateLongRange() = 0;
 /*

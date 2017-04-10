@@ -193,7 +193,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
-		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
+		commPartners.insert(commPartners.end(), newCommPartners.begin(), newCommPartners.end());
 	}
 	_fullShellNeighbours = commPartners;
 	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
@@ -225,7 +225,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 		const int numNeighbours = _neighbours[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
-			global_log->debug() << "Rank " << domainDecomp->getRank() << "is initiating communication to";
+			global_log->debug() << "Rank " << domainDecomp->getRank() << " is initiating communication to" << std::endl;
 			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 		}
@@ -367,7 +367,7 @@ void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cuto
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
-		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
+		commPartners.insert(commPartners.end(), newCommPartners.begin(), newCommPartners.end());
 	}
 
 	_fullShellNeighbours = commPartners;

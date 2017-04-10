@@ -112,6 +112,7 @@ private:
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
 
 	int _rank;
+        int _countTested;
 	std::vector<PositionInfo> _haloInfo;
 
 	// technical variables

@@ -85,6 +85,10 @@ public:
     //returns a vector of all 26 neighbour ranks in x y and z direction
 	std::vector<int> getNeighbourRanksFullShell() override;
 
+	//returns the ranks of the neighbours
+	std::vector<std::vector<std::vector<int>>> getAllRanks();
+
+
 	// documentation in base class
 	void prepareNonBlockingStage(bool forceRebalancing,
 			ParticleContainer* moleculeContainer, Domain* domain,

@@ -19,6 +19,7 @@
 #include "Simulation.h"
 #include "utils/Logger.h"
 #include "/usr/include/endian.h"
+#include "utils/FileUtils.h"
 
 // set mmpld file version. possible values: 100 or 102
 #define MMPLD_FILE_VERSION 100
@@ -26,20 +27,25 @@
 using Log::global_log;
 using namespace std;
 
-MmpldWriter::MmpldWriter(unsigned long writeFrequency, string outputPrefix)
+MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+		std::string outputPrefix)
+		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
+		 	_bWriteControlPrepared(false), _nFileIndex(0)
 {
-	_outputPrefix = outputPrefix;
-	_writeFrequency = writeFrequency;
-
-	if (outputPrefix == "default") {
+//	if (outputPrefix == "default") <-- what for??
+	if(false)
 		_appendTimestamp = true;
-	}
-	else {
+	else
 		_appendTimestamp = false;
-	}
+
+	// ERROR
+	if (0 == _writeFrequency)
+		mardyn_exit(-1);
 }
 
-MmpldWriter::~MmpldWriter(){}
+MmpldWriter::~MmpldWriter()
+{
+}
 
 void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 	_writeFrequency = 1;
@@ -60,25 +66,30 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 
 //Header Information
 void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
-                           DomainDecompBase* domainDecomp, Domain* domain)
+		DomainDecompBase* domainDecomp, Domain* domain)
 {
+	// only executed once
+	this->PrepareWriteControl();
+
+	_frameCount = 0;
+
 	// number of components / sites
 	_numComponents = (uint8_t)domain->getNumberOfComponents();
-	_numSitesPerComp  = new uint8_t[_numComponents];
-	_nCompSitesOffset = new uint8_t[_numComponents];
+	_numSitesPerComp.resize(_numComponents);
+	_nCompSitesOffset.resize(_numComponents);
 	_numSitesTotal = 0;
 
 	vector<Component>& vComponents = *(_simulation.getEnsemble()->getComponents() );
 	vector<Component>::iterator cit;
 	cit=vComponents.begin();
 
-	_nCompSitesOffset[0] = 0;
+	_nCompSitesOffset.at(0) = 0;
 	for(uint8_t cid=0; cid<_numComponents; cid++)
 	{
 		uint8_t numSites = (*cit).numLJcenters();
-		_numSitesPerComp[cid] = numSites;
+		_numSitesPerComp.at(cid) = numSites;
 		if(cid>0)
-			_nCompSitesOffset[cid] = _nCompSitesOffset[cid-1] + _numSitesPerComp[cid-1];
+			_nCompSitesOffset.at(cid) = _nCompSitesOffset.at(cid-1) + _numSitesPerComp.at(cid-1);
 		// total number of sites (all components)
 		_numSitesTotal += numSites;
 		cit++;
@@ -86,7 +97,7 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 
 #ifndef NDEBUG
 	for(uint8_t cid=0; cid<_numComponents; cid++)
-		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset[cid] << endl;
+		cout << "_nCompSitesOffset[" << (uint32_t)cid << "] = " << (uint32_t)_nCompSitesOffset.at(cid) << endl;
 #endif
 
 	// init radius and color of spheres
@@ -94,7 +105,7 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	this->SetNumSphereTypes();
 
 	stringstream filenamestream;
-	filenamestream << _outputPrefix;
+	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
 	if(_appendTimestamp) {
 		_timestampString = gettimestring();
@@ -105,77 +116,79 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	char filename[filenamestream.str().size()+1];
 	strcpy(filename,filenamestream.str().c_str());
 
-#ifdef ENABLE_MPI
 	int rank = domainDecomp->getRank();
+#ifndef NDEBUG
+	cout << "rank[" << rank << "]: _nFileIndex = " << (uint32_t)_nFileIndex
+			<< ", filename = " << filenamestream.str() << endl;
+#endif
+
+#ifdef ENABLE_MPI
+//	int rank = domainDecomp->getRank();
 	if (rank == 0){
 #endif
 	ofstream mmpldfstream(filename, ios::binary|ios::out);
 
-  //format marker
-  uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
-  mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
-  
-  //version number
-  uint16_t versionNumber;
-  switch (MMPLD_FILE_VERSION){
-	  case 100:
+	//format marker
+	uint8_t magicIdentifier[6] = {0x4D, 0x4D, 0x50, 0x4C, 0x44, 0x00};
+	mmpldfstream.write((char*)magicIdentifier, sizeof(magicIdentifier));
+
+	//version number
+	uint16_t versionNumber;
+	switch (MMPLD_FILE_VERSION)
+	{
+	case 100:
 		versionNumber = htole16(100);
 		break;
 
-	  case 102:
+	case 102:
 		versionNumber = htole16(102);
 		break;
-	  
-	  default:
+
+	default:
 		cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
 		return;
 		break;
-  }
-  
-  mmpldfstream.write((char*)&versionNumber, sizeof(versionNumber));
-  
-  //calculate the number of frames
-  unsigned long numTimesteps = _simulation.getNumTimesteps();
-  uint32_t numframes;
-  uint32_t numframes_le;
-  if (_writeFrequency == 0){
-	  numframes = numTimesteps;
-  }else{
-	  numframes = (numTimesteps/_writeFrequency)+1;
-  }
-  _frameCount = 0;
-  _numSeekEntries = numframes+1;
-  numframes_le = htole32(numframes);
-  mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
-  #ifdef ENABLE_MPI
-	_seekTable = new uint64_t[_numSeekEntries];
-  #endif
-  //boundary box
-  float minbox[3] = {0, 0, 0};
-  float maxbox[3];
-  for (unsigned short d = 0; d < 3; ++d) maxbox[d] = domain->getGlobalLength(d);
-  mmpldfstream.write((char*)&minbox,sizeof(minbox));
-  mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
-    
-  //clipping box
-  float inflateRadius = *(_vfSphereRadius.begin() );
-  std::vector<float>::iterator it;
-  for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
-	  if(inflateRadius < (*it) ) inflateRadius = (*it);
-  
-  for (unsigned short d = 0; d < 3; ++d){
-	  maxbox[d] = maxbox[d] + inflateRadius;
-	  minbox[d] = minbox[d] - inflateRadius;
-  }
-  mmpldfstream.write((char*)&minbox,sizeof(minbox));
-  mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
-  
-  //preallocate seektable
-  uint64_t seekNum = 0;
-  for (uint32_t i = 0; i <= numframes; ++i){
-	  mmpldfstream.write((char*)&seekNum,sizeof(seekNum));
-  }
-  mmpldfstream.close();
+	}
+
+	mmpldfstream.write((char*)&versionNumber, sizeof(versionNumber));
+
+	//calculate the number of frames
+	uint32_t numframes;
+	uint32_t numframes_le;
+	numframes = _vecFramesPerFile.at(_nFileIndex);
+
+	_numSeekEntries = numframes+1;
+	numframes_le = htole32(numframes);
+	mmpldfstream.write((char*)&numframes_le,sizeof(numframes_le));
+
+	_seekTable.resize(_numSeekEntries);
+
+	//boundary box
+	float minbox[3] = {0, 0, 0};
+	float maxbox[3];
+	for (unsigned short d = 0; d < 3; ++d) maxbox[d] = domain->getGlobalLength(d);
+	mmpldfstream.write((char*)&minbox,sizeof(minbox));
+	mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
+
+	//clipping box
+	float inflateRadius = *(_vfSphereRadius.begin() );
+	std::vector<float>::iterator it;
+	for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
+		if(inflateRadius < (*it) ) inflateRadius = (*it);
+
+	for (unsigned short d = 0; d < 3; ++d){
+		maxbox[d] = maxbox[d] + inflateRadius;
+		minbox[d] = minbox[d] - inflateRadius;
+	}
+	mmpldfstream.write((char*)&minbox,sizeof(minbox));
+	mmpldfstream.write((char*)&maxbox,sizeof(maxbox));
+
+	//preallocate seektable
+	uint64_t seekNum = 0;
+	for (uint32_t i = 0; i <= numframes; ++i)
+		mmpldfstream.write((char*)&seekNum,sizeof(seekNum));
+
+	mmpldfstream.close();
 #ifdef ENABLE_MPI
 	}
 #endif
@@ -185,204 +198,234 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		   DomainDecompBase* domainDecomp, Domain* domain,
 		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
-		   map<unsigned, CavityEnsemble>* /*mcav*/){
-	if (simstep % _writeFrequency == 0) {
-		stringstream filenamestream, outputstream;
-		filenamestream << _outputPrefix;
+		   map<unsigned, CavityEnsemble>* /*mcav*/)
+{
+	if( (*_frameListIterator) != simstep)
+		return;
 
-		if(_appendTimestamp) {
-			filenamestream << "-" << _timestampString;
-		}
-		filenamestream << ".mmpld";
-		
-		char filename[filenamestream.str().size()+1];
-		strcpy(filename,filenamestream.str().c_str());
+	stringstream filenamestream, outputstream;
+	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+
+	if(_appendTimestamp) {
+		filenamestream << "-" << _timestampString;
+	}
+	filenamestream << ".mmpld";
+
+	char filename[filenamestream.str().size()+1];
+	strcpy(filename,filenamestream.str().c_str());
 
 #ifdef ENABLE_MPI
-		int rank = domainDecomp->getRank();
-		int numprocs = domainDecomp->getNumProcs();
-		unsigned long numberParticles = particleContainer->getNumberOfParticles();
-		long outputsize = 0;
+	int rank = domainDecomp->getRank();
+	int numprocs = domainDecomp->getNumProcs();
+	unsigned long numberParticles = particleContainer->getNumberOfParticles();
+	long outputsize = 0;
 
-        uint64_t numSpheresPerType[_numSphereTypes];
-        for (uint8_t ti = 0; ti < _numSphereTypes; ++ti){
-			numSpheresPerType[ti] = 0;
+	uint64_t numSpheresPerType[_numSphereTypes];
+	for (uint8_t ti = 0; ti < _numSphereTypes; ++ti){
+		numSpheresPerType[ti] = 0;
+	}
+
+	//calculate number of spheres per component|siteType
+	uint32_t molcid = 0;
+	for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
+		this->CalcNumSpheresPerType(numSpheresPerType, &(*mol));
+
+	//distribute global component particle count
+	uint64_t globalNumCompSpheres[_numSphereTypes];
+	if (rank == 0){
+		for (uint32_t i = 0; i < _numSphereTypes; ++i){
+			globalNumCompSpheres[i] = numSpheresPerType[i];
+		}
+		MPI_Status status;
+		uint64_t numSpheresPerTypeTmp[_numSphereTypes];
+		for (int source = rank+1; source < numprocs; ++source){
+			int recvcount = sizeof(numSpheresPerTypeTmp);
+			int recvtag = 1;
+			MPI_Recv(numSpheresPerTypeTmp, recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
+			for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
+				globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
+		}
+	}else{
+			int dest = 0;
+			int sendcount = sizeof(numSpheresPerType);
+			int sendtag = 1;
+			MPI_Request request;
+			MPI_Isend(numSpheresPerType, sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	MPI_File fh;
+	MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
+
+
+	//write particle list for each component|site (sphere type)
+	for (uint8_t nSphereTypeIndex=0; nSphereTypeIndex<_numSphereTypes; ++nSphereTypeIndex){
+		//add space for particle data
+		outputsize = (long)numSpheresPerType[nSphereTypeIndex]*12;
+		
+		//add space for particle list header
+		if (rank == 0){
+			//add particle list header
+			outputsize += 18;
+			if (nSphereTypeIndex == 0){
+
+				switch (MMPLD_FILE_VERSION){
+					case 100:
+						//add space for number of particle lists
+						outputsize += 4;
+						break;
+
+					case 102:
+						//add space for timestamp and number of particle lists
+						outputsize += 8;
+						break;
+
+					default:
+						cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
+						return;
+						break;
+				}
+			}
+		}
+		
+		//send outputsize of current rank to next rank
+		for (int dest = rank+1; dest < numprocs; ++dest){
+			int sendcount = 1;
+			int sendtag = 0;
+			MPI_Request request;
+			MPI_Isend(&outputsize, sendcount, MPI_LONG, dest, sendtag, MPI_COMM_WORLD, &request);
+		}
+		//accumulate outputsizes of previous ranks and use it as offset for output file
+		MPI_Status status;
+		long offset = 0;
+		long outputsize_get;
+		for (int source = 0; source < rank; ++source){
+			int recvcount = 1;
+			int recvtag = 0;
+			MPI_Recv(&outputsize_get, recvcount, MPI_LONG, source, recvtag, MPI_COMM_WORLD, &status);
+			offset += outputsize_get;
 		}
 
-		//calculate number of spheres per component|siteType
-		uint32_t molcid = 0;
-		for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
-			this->CalcNumSpheresPerType(numSpheresPerType, &(*mol));
-		
-		//distribute global component particle count
-		uint64_t globalNumCompSpheres[_numSphereTypes];
+		global_log->debug() << "MmpldWriter rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
+
+		MPI_File_seek(fh, offset, MPI_SEEK_END);
+
+		MPI_Barrier(MPI_COMM_WORLD);
+
+		//write particle list header
 		if (rank == 0){
-			for (uint32_t i = 0; i < _numSphereTypes; ++i){
-				globalNumCompSpheres[i] = numSpheresPerType[i];
+			
+			//write frame header if we are before the first particle list
+			if (nSphereTypeIndex == 0){
+				//store file position for seek table
+				if (_frameCount < _numSeekEntries){
+					MPI_Offset entry;
+					MPI_File_get_position(fh, &entry);
+					_seekTable.at(_frameCount) = (uint64_t)entry;
+				}
+//					_frameCount = _frameCount + 1;
+				
+				float frameHeader_timestamp = simstep;
+				
+				switch (MMPLD_FILE_VERSION){
+					case 100:
+						//do not write timestamp to frame header
+						break;
+
+					case 102:
+						//write timestamp to frame header
+						MPI_File_write(fh, &frameHeader_timestamp, 1, MPI_FLOAT, &status);
+						break;
+
+					default:
+						cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
+						return;
+						break;
+				}
+				
+				uint32_t frameHeader_numPLists = htole32(_numSphereTypes);
+				MPI_File_write(fh, &frameHeader_numPLists, 1, MPI_UNSIGNED, &status);
+				
 			}
-			MPI_Status status;
-			uint64_t numSpheresPerTypeTmp[_numSphereTypes];
-			for (int source = rank+1; source < numprocs; ++source){
-				int recvcount = sizeof(numSpheresPerTypeTmp);
-				int recvtag = 1;
-				MPI_Recv(numSpheresPerTypeTmp, recvcount, MPI_BYTE, source, recvtag, MPI_COMM_WORLD, &status);
-				for (uint8_t ti = 0; ti < _numSphereTypes; ++ti)
-					globalNumCompSpheres[ti] = globalNumCompSpheres[ti] + numSpheresPerTypeTmp[ti];
-			}
-		}else{
-				int dest = 0;
-				int sendcount = sizeof(numSpheresPerType);
-				int sendtag = 1;
-				MPI_Request request;
-				MPI_Isend(numSpheresPerType, sendcount, MPI_BYTE, dest, sendtag, MPI_COMM_WORLD, &request);
+			uint8_t pListHeader_vortexType;
+			uint8_t pListHeader_colorType;
+			float pListHeader_globalRadius;
+			uint8_t pListHeader_red;
+			uint8_t pListHeader_green;
+			uint8_t pListHeader_blue;
+			uint8_t pListHeader_alpha;
+			uint64_t pListHeader_particleCount;
+
+			//set vortex data type to FLOAT_XYZ
+			pListHeader_vortexType = 1;
+			
+			//set color data type to NONE (only global color used)
+			pListHeader_colorType = 0;
+
+			//select different colors depending on component|site id
+			pListHeader_globalRadius = _vfSphereRadius[nSphereTypeIndex];
+			pListHeader_red   = _vaSphereColors[nSphereTypeIndex][0];
+			pListHeader_green = _vaSphereColors[nSphereTypeIndex][1];
+			pListHeader_blue  = _vaSphereColors[nSphereTypeIndex][2];
+			pListHeader_alpha = _vaSphereColors[nSphereTypeIndex][3];
+
+			//store componentParticleCount
+			pListHeader_particleCount = htole64(globalNumCompSpheres[nSphereTypeIndex]);
+
+			MPI_File_write(fh, &pListHeader_vortexType, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_colorType, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_globalRadius, 1, MPI_FLOAT, &status);
+			MPI_File_write(fh, &pListHeader_red, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_green, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_blue, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_alpha, 1, MPI_BYTE, &status);
+			MPI_File_write(fh, &pListHeader_particleCount, 1, MPI_LONG_LONG_INT, &status);
+		}  // if (rank == 0){
+
+		float spherePos[3];
+		for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
+		{
+			if(true == GetSpherePos(spherePos, &(*mol), nSphereTypeIndex) )
+				MPI_File_write(fh, spherePos, 3, MPI_FLOAT, &status);
 		}
 		MPI_Barrier(MPI_COMM_WORLD);
-		
-		MPI_File fh;
-		MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_WRONLY|MPI_MODE_APPEND|MPI_MODE_CREATE, MPI_INFO_NULL, &fh);
-		
-		
-		//write particle list for each component|site (sphere type)
-		for (uint8_t nSphereTypeIndex=0; nSphereTypeIndex<_numSphereTypes; ++nSphereTypeIndex){
-			//add space for particle data
-			outputsize = (long)numSpheresPerType[nSphereTypeIndex]*12;
-			
-			//add space for particle list header
-			if (rank == 0){
-				//add particle list header
-				outputsize += 18;
-				if (nSphereTypeIndex == 0){
-					
-					switch (MMPLD_FILE_VERSION){
-						case 100:
-							//add space for number of particle lists
-							outputsize += 4;
-							break;
-							
-						case 102:
-							//add space for timestamp and number of particle lists
-							outputsize += 8;
-							break;
-							
-						default:
-							cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-							return;
-							break;
-					}
-				}
-			}
-			
-			//send outputsize of current rank to next rank
-			for (int dest = rank+1; dest < numprocs; ++dest){
-				int sendcount = 1;
-				int sendtag = 0;
-				MPI_Request request;
-				MPI_Isend(&outputsize, sendcount, MPI_LONG, dest, sendtag, MPI_COMM_WORLD, &request);
-			}
-			//accumulate outputsizes of previous ranks and use it as offset for output file
-			MPI_Status status;
-			long offset = 0;
-			long outputsize_get;
-			for (int source = 0; source < rank; ++source){
-				int recvcount = 1;
-				int recvtag = 0;
-				MPI_Recv(&outputsize_get, recvcount, MPI_LONG, source, recvtag, MPI_COMM_WORLD, &status);
-				offset += outputsize_get;
-			}
+	}  // for (uint8_t nSphereTypeIndex=0; nSphereTypeIndex<_numSphereTypes; ++nSphereTypeIndex)
 
-			global_log->debug() << "MmpldWriter rank: " << rank << "; step: " << simstep << "; sphereTypeIndex: " << nSphereTypeIndex << "; offset: " << offset << endl;
-
-			MPI_File_seek(fh, offset, MPI_SEEK_END);
-
-			MPI_Barrier(MPI_COMM_WORLD);
-			
-			//write particle list header
-			if (rank == 0){
-				
-				//write frame header if we are before the first particle list
-				if (nSphereTypeIndex == 0){
-					//store file position for seek table
-					if (_frameCount < _numSeekEntries){
-						MPI_Offset entry;
-						MPI_File_get_position(fh, &entry);
-						_seekTable[_frameCount] = (uint64_t)entry;
-					}
-					_frameCount = _frameCount + 1;
-					
-					float frameHeader_timestamp = simstep;
-					
-					switch (MMPLD_FILE_VERSION){
-						case 100:
-							//do not write timestamp to frame header
-							break;
-							
-						case 102:
-							//write timestamp to frame header
-							MPI_File_write(fh, &frameHeader_timestamp, 1, MPI_FLOAT, &status);
-							break;
-							
-						default:
-							cout << "Error mmpld-writer: file version " << MMPLD_FILE_VERSION << " not supported." << endl;
-							return;
-							break;
-					}
-					
-					uint32_t frameHeader_numPLists = htole32(_numSphereTypes);
-					MPI_File_write(fh, &frameHeader_numPLists, 1, MPI_UNSIGNED, &status);
-					
-				}
-				uint8_t pListHeader_vortexType;
-				uint8_t pListHeader_colorType;
-				float pListHeader_globalRadius;
-				uint8_t pListHeader_red;
-				uint8_t pListHeader_green;
-				uint8_t pListHeader_blue;
-				uint8_t pListHeader_alpha;
-				uint64_t pListHeader_particleCount;
-				
-				//set vortex data type to FLOAT_XYZ
-				pListHeader_vortexType = 1;
-				
-				//set color data type to NONE (only global color used)
-				pListHeader_colorType = 0;
-
-				//select different colors depending on component|site id
-				pListHeader_globalRadius = _vfSphereRadius[nSphereTypeIndex];
-				pListHeader_red   = _vaSphereColors[nSphereTypeIndex][0];
-				pListHeader_green = _vaSphereColors[nSphereTypeIndex][1];
-				pListHeader_blue  = _vaSphereColors[nSphereTypeIndex][2];
-				pListHeader_alpha = _vaSphereColors[nSphereTypeIndex][3];
-				
-				//store componentParticleCount
-				pListHeader_particleCount = htole64(globalNumCompSpheres[nSphereTypeIndex]);
-				
-				MPI_File_write(fh, &pListHeader_vortexType, 1, MPI_BYTE, &status);
-				MPI_File_write(fh, &pListHeader_colorType, 1, MPI_BYTE, &status);
-				MPI_File_write(fh, &pListHeader_globalRadius, 1, MPI_FLOAT, &status);
-				MPI_File_write(fh, &pListHeader_red, 1, MPI_BYTE, &status);
-				MPI_File_write(fh, &pListHeader_green, 1, MPI_BYTE, &status);
-				MPI_File_write(fh, &pListHeader_blue, 1, MPI_BYTE, &status);
-				MPI_File_write(fh, &pListHeader_alpha, 1, MPI_BYTE, &status);
-				MPI_File_write(fh, &pListHeader_particleCount, 1, MPI_LONG_LONG_INT, &status);
-			}
-			
-			float spherePos[3];
-			for (ParticleIterator mol = particleContainer->iteratorBegin(); mol != particleContainer->iteratorEnd(); ++mol)
-			{
-				if(true == GetSpherePos(spherePos, &(*mol), nSphereTypeIndex) )
-					MPI_File_write(fh, spherePos, 3, MPI_FLOAT, &status);
-			}
-			MPI_Barrier(MPI_COMM_WORLD);
-		}
-		MPI_File_close(&fh);
+	// data of frame is written
+	_frameCount++;
+#ifndef NDEBUG
+	cout << "rank[" << rank << "]: _frameCount = " << _frameCount << endl;
 #endif
+
+	// write seek table entry
+	if (rank == 0)
+	{
+		MPI_Status status;
+		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_frameCount-1));
+		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
+		uint64_t seekPosition;
+		seekPosition = htole64(_seekTable.at(_frameCount-1) );
+		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+		uint32_t frameCount = htole32(_frameCount-1);  // last frame will be ignored when simulation is aborted
+		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
+		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+
+	MPI_File_close(&fh);
+#endif
+
+	// split data to multiple files
+	_frameListIterator++;
+//	if(_frameCount == _vecFramesPerFile.at(_nFileIndex) && (_nFileIndex+1) < _numFiles)
+	if(_frameListIterator == _vecFrameList.end() && (_nFileIndex+1) < _numFiles)
+		this->MultiFileApproachReset(particleContainer, domainDecomp, domain);
 }
 
 void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainDecompBase* domainDecomp, Domain* /*domain*/) {
 	//fill seektable
 	stringstream filenamestream;
-	filenamestream << _outputPrefix;
+	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
@@ -401,15 +444,16 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 		MPI_File_seek(fh, 0, MPI_SEEK_END);
 		MPI_Offset endPosition;
 		MPI_File_get_position(fh, &endPosition);
-		_seekTable[_numSeekEntries-1] = (uint64_t)endPosition;
-		MPI_File_seek(fh, 0x3C, MPI_SEEK_SET);
+		_seekTable.at(_numSeekEntries-1) = (uint64_t)endPosition;
+		uint64_t seektablePos = 0x3C+(sizeof(uint64_t)*(_numSeekEntries-1));
+		MPI_File_seek(fh, seektablePos, MPI_SEEK_SET);
 		uint64_t seekPosition;
 		MPI_Status status;
-		for (uint32_t i = 0; i < _numSeekEntries; ++i){
-			seekPosition = htole64(_seekTable[i]);
-			MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
-		}
-		delete[] _seekTable;
+		seekPosition = htole64(_seekTable.at(_numSeekEntries-1) );
+		MPI_File_write(fh, &seekPosition, 1, MPI_LONG_LONG_INT, &status);
+		uint32_t frameCount = htole32(_frameCount);  // set final number of frames
+		MPI_File_seek(fh, 0x08, MPI_SEEK_SET);  // 0x08: frame count position in file header
+		MPI_File_write(fh, &frameCount, 1, MPI_UNSIGNED, &status);
 		MPI_File_close(&fh);
 	}else{
 		MPI_File fh;
@@ -484,6 +528,105 @@ void MmpldWriter::InitSphereData()
 #endif
 }
 
+void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
+		DomainDecompBase* domainDecomp, Domain* domain)
+{
+	this->finishOutput(particleContainer, domainDecomp, domain);
+	_nFileIndex++;
+	this->initOutput(particleContainer, domainDecomp, domain);
+
+	// update frame list iterators
+	_frameListsIterator = _vecFrameLists.begin() + _nFileIndex;
+	_vecFrameList = *_frameListsIterator;
+	_frameListIterator = _vecFrameList.begin();
+}
+
+void MmpldWriter::PrepareWriteControl()
+{
+	// this method should only be executed once
+	if(true == _bWriteControlPrepared)
+		return;
+	_bWriteControlPrepared = true;
+
+	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps()+1;
+	if( 0 == _stopTimestep )
+		_stopTimestep = _simulation.getNumTimesteps();
+	else
+		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() )     ? _stopTimestep  : _simulation.getNumTimesteps();
+	uint64_t numTimesteps = _stopTimestep - _startTimestep + 1;
+	uint64_t numFramesTotal = numTimesteps/_writeFrequency;  // +1: start configuration frame not included here!
+	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
+		_numFramesPerFile = numFramesTotal + 1;  // +1: start configuration frame not included here!
+
+#ifndef NDEBUG
+	cout << "_startTimestep    = " << _startTimestep << endl;
+	cout << "_writeFrequency   = " << _writeFrequency << endl;
+	cout << "_stopTimestep     = " << _stopTimestep << endl;
+	cout << "_numFramesPerFile = " << _numFramesPerFile << endl;
+	cout << "numTimesteps      = " << numTimesteps << endl;
+	cout << "numFramesTotal    = " << numFramesTotal << endl;
+#endif
+
+	uint64_t ts = _startTimestep + _writeFrequency - 1;
+	uint64_t numFrames = 1;
+	std::vector<uint64_t> vecFrameList;
+	vecFrameList.push_back(_startTimestep);
+	while(ts <= _stopTimestep)
+	{
+		if(numFrames == _numFramesPerFile + (_vecFrameLists.size() == 0) )  // + ... : first file +1 frame (start configuration)
+		{
+			numFrames = 0;
+			_vecFrameLists.push_back(vecFrameList);
+			vecFrameList.clear();
+		}
+
+		vecFrameList.push_back(ts);
+		numFrames++;
+		ts += _writeFrequency;
+	}
+	_vecFrameLists.push_back(vecFrameList);
+
+	// number of files that will be created
+	_numFiles = _vecFrameLists.size();
+#ifndef NDEBUG
+	cout << "_numFiles = " << (uint32_t)(_numFiles) << endl;
+#endif
+
+#ifndef NDEBUG
+	vector<vector<uint64_t> >::iterator fit;
+	vector<uint64_t>::iterator lit;
+	cout << "_vecFrameLists ..." << endl;
+	for(auto& fit : _vecFrameLists) {
+		for(auto& lit : fit)
+			cout << lit << ", ";
+		cout << endl;
+	}
+#endif
+
+	// frames per file, file prefix vector
+	uint32_t nFileNr = 1;
+
+	for(auto& fit : _vecFrameLists)
+	{
+		_vecFramesPerFile.push_back(fit.size() );
+		std::stringstream sstrPrefix;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << nFileNr;
+		_vecFilePrefixes.push_back(sstrPrefix.str() );
+		nFileNr++;
+	}
+
+	// init frame list iterators
+	_frameListsIterator = _vecFrameLists.begin();
+	_vecFrameList = *_frameListsIterator;
+	_frameListIterator = _vecFrameList.begin();
+
+#ifndef NDEBUG
+	for(auto fit : _vecFilePrefixes)
+		cout << fit << endl;
+	for(auto fit : _vecFramesPerFile)
+		cout << fit << endl;
+#endif
+}
 
 // derived classes
 void MmpldWriterSimpleSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
@@ -503,8 +646,8 @@ bool MmpldWriterSimpleSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol,
 void MmpldWriterMultiSphere::CalcNumSpheresPerType(uint64_t* numSpheresPerType, Molecule* mol)
 {
 	uint8_t cid = mol->componentid();
-	uint8_t offset = _nCompSitesOffset[cid];
-	for (uint8_t si = 0; si < _numSitesPerComp[cid]; ++si)
+	uint8_t offset = _nCompSitesOffset.at(cid);
+	for (uint8_t si = 0; si < _numSitesPerComp.at(cid); ++si)
 		numSpheresPerType[offset+si]++;
 }
 
@@ -512,8 +655,8 @@ bool MmpldWriterMultiSphere::GetSpherePos(float (&spherePos)[3], Molecule* mol, 
 {
 	bool ret = false;
 	uint8_t cid = mol->componentid();
-	uint8_t numSites =  _numSitesPerComp[cid];
-	uint8_t offset  = _nCompSitesOffset[cid];
+	uint8_t numSites =  _numSitesPerComp.at(cid);
+	uint8_t offset  = _nCompSitesOffset.at(cid);
 	for (uint8_t si = 0; si < numSites; ++si)
 	{
 		if(offset+si == nSphereTypeIndex)
