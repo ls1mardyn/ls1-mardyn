@@ -1195,7 +1195,7 @@ void LinkedCells::deleteMolecule(unsigned long molid, double x, double y, double
 	if (!found) {
 		global_log->error_always_output() << "could not delete molecule " << molid << "."
 				<< endl;
-		Simulation::exit(1);
+//		Simulation::exit(1);
 	}
 	else if (rebuildCaches) {
 		_cells[hash].buildSoACaches();
