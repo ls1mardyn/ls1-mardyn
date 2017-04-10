@@ -183,8 +183,6 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	_nNumMoleculesGlobal = new unsigned long[_nNumValsScalar];
 	_nRotDOFLocal  = new unsigned long[_nNumValsScalar];
 	_nRotDOFGlobal = new unsigned long[_nNumValsScalar];
-	_d2EkinTransLocal  = new double[_nNumValsScalar];
-	_d2EkinTransGlobal = new double[_nNumValsScalar];
 	_d2EkinRotLocal  = new double[_nNumValsScalar];
 	_d2EkinRotGlobal = new double[_nNumValsScalar];
 
@@ -483,8 +481,6 @@ void SampleRegion::SampleProfiles(Molecule* molecule, int nDimension)
 		_nRotDOFLocal      [ _nOffsetScalar[dir][0  ] + nPosIndex ] += nRotDOF;
 		_nRotDOFLocal      [ _nOffsetScalar[dir][cid] + nPosIndex ] += nRotDOF;
 
-		_d2EkinTransLocal  [ _nOffsetScalar[dir][0  ] + nPosIndex ] += d2EkinTrans;
-		_d2EkinTransLocal  [ _nOffsetScalar[dir][cid] + nPosIndex ] += d2EkinTrans;
 		_d2EkinRotLocal    [ _nOffsetScalar[dir][0  ] + nPosIndex ] += d2EkinRot;
 		_d2EkinRotLocal    [ _nOffsetScalar[dir][cid] + nPosIndex ] += d2EkinRot;
 
@@ -617,7 +613,6 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	// [direction all|+|-][component][position]
 	MPI_Reduce( _nNumMoleculesLocal, _nNumMoleculesGlobal, _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce( _nRotDOFLocal,       _nRotDOFGlobal,       _nNumValsScalar, MPI_UNSIGNED_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
-	MPI_Reduce( _d2EkinTransLocal,   _d2EkinTransGlobal,   _nNumValsScalar, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 	MPI_Reduce( _d2EkinRotLocal,     _d2EkinRotGlobal,     _nNumValsScalar, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
 
 	// Vector quantities
@@ -632,7 +627,6 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	{
 		_nNumMoleculesGlobal[i] = _nNumMoleculesLocal[i];
 		_nRotDOFGlobal[i]       = _nRotDOFLocal[i];
-		_d2EkinTransGlobal[i]   = _d2EkinTransLocal[i];
 		_d2EkinRotGlobal[i]     = _d2EkinRotLocal[i];
 	}
 
@@ -1526,7 +1520,6 @@ void SampleRegion::ResetLocalValuesProfiles()
 	{
 		_nNumMoleculesLocal[i] = 0;
 		_nRotDOFLocal[i] = 0;
-		_d2EkinTransLocal[i] = 0.;
 		_d2EkinRotLocal[i]   = 0.;
 	}
 

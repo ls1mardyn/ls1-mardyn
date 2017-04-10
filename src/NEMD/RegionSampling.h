@@ -129,8 +129,6 @@ private:
 	unsigned long* _nNumMoleculesGlobal;
 	unsigned long* _nRotDOFLocal;
 	unsigned long* _nRotDOFGlobal;
-	double* _d2EkinTransLocal;
-	double* _d2EkinTransGlobal;
 	double* _d2EkinRotLocal;
 	double* _d2EkinRotGlobal;
 
