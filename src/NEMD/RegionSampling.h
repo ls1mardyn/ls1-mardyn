@@ -72,6 +72,7 @@ public:
     void CalcGlobalValuesVDF();
 
     // output
+    void WriteDataProfilesOld(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
     void WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain);
     void WriteDataVDF(DomainDecompBase* domainDecomp, unsigned long simstep);
 
@@ -80,6 +81,7 @@ public:
 private:
     // reset local values
     void ResetLocalValuesProfiles();
+	void ResetOutputDataProfiles();
     void ResetLocalValuesVDF();
 
 private:
@@ -108,6 +110,7 @@ private:
     double* _dBinMidpointsProfiles;
 
 	// offsets
+    // TODO: Use only 1 offset array: for scalar one can take the offsets of dimension x, right???
 	unsigned long**  _nOffsetScalar;  //                  [direction all|+|-][component]
 	unsigned long*** _nOffsetVector;  // [dimension x|y|z][direction all|+|-][component]
 
@@ -115,6 +118,7 @@ private:
 	unsigned long _nNumValsVector;
 
 	unsigned int _nNumComponents;
+	std::vector<double> _vecMass;
 	double _dInvertNumSamplesProfiles;
 	double _dInvertBinVolumeProfiles;
 	double _dInvertBinVolSamplesProfiles;
@@ -132,7 +136,14 @@ private:
 
 	// output profiles
 	double* _dDensity;
+	double* _d2EkinTotal;
+	double* _d2EkinTrans;
+	double* _d2EkinDrift;
+	double* _d2EkinRot;
+	double* _d2EkinT;
 	double* _dTemperature;
+	double* _dTemperatureTrans;
+	double* _dTemperatureRot;
 
 	// Vector quantities
 	// [dimension x|y|z][direction all|+|-][component][position]
@@ -144,9 +155,11 @@ private:
 	double* _dForceGlobal;
 
 	// output profiles
-	double* _dTemperatureComp;
-	double* _dDriftVelocity;
 	double* _dForce;
+	double* _dDriftVelocity;
+	double* _d2EkinTransComp;
+	double* _d2EkinDriftComp;
+	double* _dTemperatureComp;
 
     // --- VDF ---
 

@@ -33,6 +33,13 @@ SampleRegion::SampleRegion( ControlInstance* parent, double dLowerCorner[3], dou
 	_nSubdivisionOpt = SDOPT_UNKNOWN;
 
 	_nNumComponents = this->GetParent()->GetDomain()->getNumberOfComponents() + 1;  // + 1 because component 0 stands for all components
+	_vecMass.resize(_nNumComponents);
+	_vecMass.at(0) = 0.;
+	for(uint8_t cid=1; cid<_nNumComponents; ++cid)
+	{
+		_vecMass.at(cid) = global_simulation->getEnsemble()->getComponent(cid-1)->m();
+//		cout << "cid = " << cid << ": mass = " << _vecMass.at(cid) << endl;
+	}
 }
 
 
@@ -183,7 +190,14 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 
 	// output profiles
 	_dDensity = new double[_nNumValsScalar];
-	_dTemperature = new double[_nNumValsScalar];
+	_d2EkinTotal = new double[_nNumValsScalar];
+	_d2EkinTrans = new double[_nNumValsScalar];
+	_d2EkinDrift = new double[_nNumValsScalar];
+	_d2EkinRot   = new double[_nNumValsScalar];
+	_d2EkinT     = new double[_nNumValsScalar];
+	_dTemperature      = new double[_nNumValsScalar];
+	_dTemperatureTrans = new double[_nNumValsScalar];
+	_dTemperatureRot   = new double[_nNumValsScalar];
 
 	// Vector quantities
 	// [direction all|+|-][component][position][dimension x|y|z]
@@ -195,9 +209,11 @@ void SampleRegion::InitSamplingProfiles(int nDimension)
 	_dForceGlobal = new double[_nNumValsVector];
 
 	// output profiles
-	_dTemperatureComp = new double[_nNumValsVector];
-	_dDriftVelocity   = new double[_nNumValsVector];
 	_dForce = new double[_nNumValsVector];
+	_dDriftVelocity   = new double[_nNumValsVector];
+	_d2EkinTransComp   = new double[_nNumValsVector];
+	_d2EkinDriftComp   = new double[_nNumValsVector];
+	_dTemperatureComp = new double[_nNumValsVector];
 
 	// init sampling data structures
 	this->ResetLocalValuesProfiles();
@@ -636,21 +652,94 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 	if(rank != 0)
 		 return;
 
+	// reset data structures of kinetic energy, before cumsum is for all components is calculated
+	this->ResetOutputDataProfiles();
+
 	double dInvertBinVolume = 1. / _dBinVolumeProfiles;
 
 	double dInvertNumSamples = (double) (_writeFrequencyProfiles);  // TODO: perhabs in future different from writeFrequency
 	dInvertNumSamples = 1. / dInvertNumSamples;
 
+	// sum for cid == 0 (all components)
+	for(uint8_t dir=0; dir<3; ++dir)
+	{
+		for(uint8_t dim=0; dim<3; ++dim)
+		{
+			for(uint8_t cid=1; cid<_nNumComponents; ++cid)
+			{
+				unsigned long offsetN    =      _nOffsetScalar[dir][cid];
+				unsigned long offsetComp = _nOffsetVector[dim][dir][cid];
+				unsigned long offsetSum  = _nOffsetVector[dim][dir][  0];
+
+				for(uint32_t s = 0; s < _nNumBinsProfiles; ++s)
+				{
+					mardyn_assert( (offsetSum+s)  < _nNumValsVector );
+					mardyn_assert( (offsetComp+s) < _nNumValsVector );
+
+					// Ekin trans.
+					double v2 = _dSquaredVelocityGlobal[offsetComp+s];
+					double d2EkinTrans = v2 * _vecMass.at(cid);
+					_d2EkinTransComp[offsetComp+s] = d2EkinTrans;
+					_d2EkinTransComp[offsetSum+s] += d2EkinTrans;
+					// Ekin drift
+					unsigned long N = _nNumMoleculesGlobal[offsetN+s];
+					unsigned long dInvN = 1. / ( (double)(N) );
+					double vd = _dVelocityGlobal[offsetComp+s];
+					double d2EkinDrift = vd*vd * _vecMass.at(cid) * dInvN;
+					_d2EkinDriftComp[offsetComp+s] = d2EkinDrift;
+					_d2EkinDriftComp[offsetSum+s] += d2EkinDrift;
+				}
+			}
+		}
+	}
+
+	// sum x, y, z --> scalar
+	for(uint8_t dir=0; dir<3; ++dir)
+	{
+		for(uint8_t dim=0; dim<3; ++dim)
+		{
+			for(uint8_t cid=0; cid<_nNumComponents; ++cid)
+			{
+				unsigned long offsetDim = _nOffsetVector[dim][dir][cid];
+				unsigned long offsetSum = _nOffsetVector[  0][dir][cid];  // sum x, y, z --> scalar
+
+				for(uint32_t s = 0; s < _nNumBinsProfiles; ++s)
+				{
+					mardyn_assert( (offsetDim+s) < _nNumValsVector );
+					mardyn_assert( (offsetSum+s) < _nNumValsScalar );
+
+					_d2EkinTrans[offsetSum+s] += _d2EkinTransComp[offsetDim+s];
+					_d2EkinDrift[offsetSum+s] += _d2EkinDriftComp[offsetDim+s];
+				}
+			}
+		}
+	}
+
 	// Scalar quantities
 	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
 	{
 		unsigned long nNumMolecules = _nNumMoleculesGlobal[i];
-		double dInvertNumMolecules = 1. / ( (double)(nNumMolecules) );
-		double dInvertDOF = 1. / ( (double)(3. * nNumMolecules + _nRotDOFGlobal[i] ) );
-		// cout << i << ": nNumMolecules = " << nNumMolecules << endl;
+		unsigned long nDOF_trans = nNumMolecules * 3;
+		unsigned long nDOF_rot   = _nRotDOFGlobal[i];
+		unsigned long nDOF_total = nDOF_trans + nDOF_rot;
+		double dInvDOF_trans = 1./ ( (double)(nDOF_trans) );
+		double dInvDOF_rot   = 1./ ( (double)(nDOF_rot)   );
+		double dInvDOF_total = 1./ ( (double)(nDOF_total) );
 
+		// density profile
 		_dDensity [i] = nNumMolecules * _dInvertBinVolSamplesProfiles;
-		_dTemperature[i] = (_d2EkinTransGlobal[i] + _d2EkinRotGlobal[i] ) * dInvertDOF;
+
+		double d2EkinTrans = _d2EkinTrans[i];
+		double d2EkinDrift = _d2EkinDrift[i];
+		double d2EkinRot   = _d2EkinRotGlobal[i];
+		double d2EkinTotal = d2EkinTrans + d2EkinRot;
+		double d2EkinT     = d2EkinTotal - d2EkinDrift;
+		_d2EkinRot[i]   = d2EkinRot;
+		_d2EkinTotal[i] = d2EkinTotal;
+		_d2EkinT[i]     = d2EkinT;
+		_dTemperature[i]      = d2EkinT     * dInvDOF_total;
+		_dTemperatureTrans[i] = d2EkinTrans * dInvDOF_trans;
+		_dTemperatureRot[i]   = d2EkinRot   * dInvDOF_rot;
 	}
 
 	// Vector quantities
@@ -663,9 +752,14 @@ void SampleRegion::CalcGlobalValuesProfiles(DomainDecompBase* domainDecomp, Doma
 			unsigned long nNumMolecules = _nNumMoleculesGlobal[i];
 			double dInvertNumMolecules = 1. / ( (double)(nNumMolecules) );
 
-			_dDriftVelocity  [nDimOffset+i] = _dVelocityGlobal       [nDimOffset+i] * dInvertNumMolecules;
-			_dTemperatureComp[nDimOffset+i] = _dSquaredVelocityGlobal[nDimOffset+i] * dInvertNumMolecules;  // TODO: * mass
-			_dForce          [nDimOffset+i] = _dForceGlobal          [nDimOffset+i] * dInvertNumMolecules;
+			_dDriftVelocity[nDimOffset+i] = _dVelocityGlobal[nDimOffset+i] * dInvertNumMolecules;
+			_dForce        [nDimOffset+i] = _dForceGlobal   [nDimOffset+i] * dInvertNumMolecules;
+			double d2EkinTrans = _d2EkinTransComp[nDimOffset+i];
+			double d2EkinDrift = _d2EkinDriftComp[nDimOffset+i];
+//			cout << "nDimOffset+i = " << nDimOffset+i << endl;
+//			cout << "dEkinTrans = " << dEkinTrans << endl;
+//			cout << "dEkinDrift = " << dEkinDrift << endl;
+			_dTemperatureComp[nDimOffset+i] = (d2EkinTrans - d2EkinDrift) * dInvertNumMolecules;
 		}
 	}
 }
@@ -739,7 +833,7 @@ void SampleRegion::CalcGlobalValuesVDF()
 
 
 
-void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
+void SampleRegion::WriteDataProfilesOld(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
 {
 	if(false == _SamplingEnabledProfiles)
 		return;
@@ -975,6 +1069,166 @@ void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned lo
          #ifdef ENABLE_MPI
              }
          #endif
+}
+
+
+void SampleRegion::WriteDataProfiles(DomainDecompBase* domainDecomp, unsigned long simstep, Domain* domain)
+{
+	if(false == _SamplingEnabledProfiles)
+		return;
+
+	// sampling starts after initial timestep (_initSamplingVDF) and with respect to write frequency (_writeFrequencyVDF)
+	if( simstep <= _initSamplingProfiles )
+		return;
+
+	if ( (simstep - _initSamplingProfiles) % _writeFrequencyProfiles != 0 )
+		return;
+
+	// calc global values
+	this->CalcGlobalValuesProfiles(domainDecomp, domain);
+
+	// reset local values
+	this->ResetLocalValuesProfiles();
+
+	// writing .dat-files
+	std::stringstream filenamestream_scal[3];
+	std::stringstream filenamestream_vect[3];
+	std::string dir_prefix[3] = {"all", "pos", "neg"};
+	for(uint8_t dir=0; dir<3; dir++) {
+		filenamestream_scal[dir] << "scalquant_" << dir_prefix[dir] << "_reg" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
+		filenamestream_vect[dir] << "vectquant_" << dir_prefix[dir] << "_reg" << this->GetID() << "_TS" << fill_width('0', 9) << simstep << ".dat";
+	}
+
+#ifdef ENABLE_MPI
+	int rank = domainDecomp->getRank();
+	// int numprocs = domainDecomp->getNumProcs();
+	if (rank!= 0)
+		return;
+#endif
+
+	for(uint8_t dir=0; dir<3; ++dir)
+	{
+		std::stringstream outputstream_scal;
+		std::stringstream outputstream_vect;
+
+		// header
+		outputstream_scal << "                     pos";
+		outputstream_vect << "                     pos";
+		for(uint32_t cid = 0; cid < _nNumComponents; ++cid)
+		{
+			// scalar
+			outputstream_scal << "            DOF_total[" << cid << "]";
+			outputstream_scal << "            DOF_trans[" << cid << "]";
+			outputstream_scal << "              DOF_rot[" << cid << "]";
+			outputstream_scal << "                  rho[" << cid << "]";
+			outputstream_scal << "           Ekin_total[" << cid << "]";
+			outputstream_scal << "           Ekin_trans[" << cid << "]";
+			outputstream_scal << "           Ekin_drift[" << cid << "]";
+			outputstream_scal << "             Ekin_rot[" << cid << "]";
+			outputstream_scal << "               Ekin_T[" << cid << "]";
+			outputstream_scal << "                 Epot[" << cid << "]";
+			outputstream_scal << "                    T[" << cid << "]";
+			outputstream_scal << "              T_trans[" << cid << "]";
+			outputstream_scal << "                T_rot[" << cid << "]";
+
+			// vector
+			outputstream_vect << "                   Fx[" << cid << "]";
+			outputstream_vect << "                   Fy[" << cid << "]";
+			outputstream_vect << "                   Fz[" << cid << "]";
+			outputstream_vect << "                   vx[" << cid << "]";
+			outputstream_vect << "                   vy[" << cid << "]";
+			outputstream_vect << "                   vz[" << cid << "]";
+			outputstream_vect << "         Ekin_trans,x[" << cid << "]";
+			outputstream_vect << "         Ekin_trans,y[" << cid << "]";
+			outputstream_vect << "         Ekin_trans,z[" << cid << "]";
+			outputstream_vect << "         Ekin_drift,x[" << cid << "]";
+			outputstream_vect << "         Ekin_drift,y[" << cid << "]";
+			outputstream_vect << "         Ekin_drift,z[" << cid << "]";
+			outputstream_vect << "                   Tx[" << cid << "]";
+			outputstream_vect << "                   Ty[" << cid << "]";
+			outputstream_vect << "                   Tz[" << cid << "]";
+		}
+		outputstream_scal << endl;
+		outputstream_vect << endl;
+
+		// data
+		for(uint32_t s=0; s<_nNumBinsProfiles; ++s)
+		{
+			outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
+			outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dBinMidpointsProfiles[s];
+
+			for(uint8_t cid=0; cid<_nNumComponents; ++cid)
+			{
+				// scalar
+				mardyn_assert( _nOffsetScalar[dir][cid]+s < _nNumValsScalar );
+
+				unsigned long offset = _nOffsetScalar[dir][cid]+s;
+				unsigned long DOF_trans = _nNumMoleculesGlobal[offset] * 3;
+				unsigned long DOF_rot   = _nRotDOFGlobal[offset];
+				unsigned long DOF_total = DOF_trans + DOF_rot;
+				double rho = _dDensity[offset];
+				double Ekin_total = _d2EkinTotal[offset] * 0.5;
+				double Ekin_trans = _d2EkinTrans[offset] * 0.5;
+				double Ekin_drift = _d2EkinDrift[offset] * 0.5;
+				double Ekin_rot   = _d2EkinRot  [offset] * 0.5;
+				double Ekin_T     = _d2EkinT    [offset] * 0.5;
+				double Epot = 0.;
+				double T = _dTemperature[offset];
+				double T_trans = _dTemperatureTrans[offset];
+				double T_rot   = _dTemperatureRot[offset];
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_total;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_trans;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << DOF_rot;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << rho;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_total * _dInvertNumSamplesProfiles;;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_trans * _dInvertNumSamplesProfiles;;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_drift * _dInvertNumSamplesProfiles;;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_rot   * _dInvertNumSamplesProfiles;;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Ekin_T     * _dInvertNumSamplesProfiles;;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << Epot       * _dInvertNumSamplesProfiles;;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_trans;
+				outputstream_scal << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << T_rot;
+
+				// vector
+				mardyn_assert( _nOffsetVector[0][dir][cid]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[1][dir][cid]+s < _nNumValsVector );
+				mardyn_assert( _nOffsetVector[2][dir][cid]+s < _nNumValsVector );
+
+				unsigned long offset_x = _nOffsetVector[0][dir][cid]+s;
+				unsigned long offset_y = _nOffsetVector[1][dir][cid]+s;
+				unsigned long offset_z = _nOffsetVector[2][dir][cid]+s;
+
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_x];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_y];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dForce[offset_z];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[offset_x];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[offset_y];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dDriftVelocity[offset_z];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _d2EkinTransComp[offset_x] * _dInvertNumSamplesProfiles * 0.5;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _d2EkinTransComp[offset_y] * _dInvertNumSamplesProfiles * 0.5;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _d2EkinTransComp[offset_z] * _dInvertNumSamplesProfiles * 0.5;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _d2EkinDriftComp[offset_x] * _dInvertNumSamplesProfiles * 0.5;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _d2EkinDriftComp[offset_y] * _dInvertNumSamplesProfiles * 0.5;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _d2EkinDriftComp[offset_z] * _dInvertNumSamplesProfiles * 0.5;
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[offset_x];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[offset_y];
+				outputstream_vect << std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10) << _dTemperatureComp[offset_z];
+			} // loop: cid
+			outputstream_scal << endl;
+			outputstream_vect << endl;
+		} // loop: pos
+
+		// open file for writing
+		// scalar
+		ofstream fileout_scal(filenamestream_scal[dir].str().c_str(), ios::out);
+		fileout_scal << outputstream_scal.str();
+		fileout_scal.close();
+		// vector
+		ofstream fileout_vect(filenamestream_vect[dir].str().c_str(), ios::out);
+		fileout_vect << outputstream_vect.str();
+		fileout_vect.close();
+	} // loop: dir
 }
 
 
@@ -1267,9 +1521,6 @@ void SampleRegion::ResetLocalValuesProfiles()
 	if(false == _SamplingEnabledProfiles)
 		return;
 
-	RegionSampling* parent = static_cast<RegionSampling*>(_parent);
-	unsigned int nNumComponents = parent->GetNumComponents();
-
 	// Scalar quantities
 	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
 	{
@@ -1285,6 +1536,26 @@ void SampleRegion::ResetLocalValuesProfiles()
 		_dVelocityLocal[i] = 0.;
 		_dSquaredVelocityLocal[i] = 0.;
 		_dForceLocal[i] = 0.;
+	}
+}
+
+void SampleRegion::ResetOutputDataProfiles()
+{
+	if(false == _SamplingEnabledProfiles)
+		return;
+
+	// Scalar quantities
+	for(unsigned int i = 0; i < _nNumValsScalar; ++i)
+	{
+		_d2EkinTrans[i] = 0.;
+		_d2EkinDrift[i] = 0.;
+	}
+
+	// Vector quantities
+	for(unsigned int i = 0; i < _nNumValsVector; ++i)
+	{
+		_d2EkinTransComp[i] = 0.;
+		_d2EkinDriftComp[i] = 0.;
 	}
 }
 
