@@ -7,7 +7,7 @@
 
 #include "bhfmm/pseudoParticles/SHLocalParticle.h"
 #include "bhfmm/pseudoParticles/SHMultipoleParticle.h"
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 namespace bhfmm {
 
@@ -24,13 +24,13 @@ void SHLocalParticle::addSource(const Vector3<double>& position, double charge) 
 	Vector3<double> r_pseudo_to_part = position - _center;
 
 	// assert that the source does not lie in the local particle
-	assert(r_pseudo_to_part.L2NormSquare() > _radiusSquared);
+	mardyn_assert(r_pseudo_to_part.L2NormSquare() > _radiusSquared);
 
 	_expansionM += charge * evaluateMOfR(_order, r_pseudo_to_part);
 }
 
 void SHLocalParticle::addMultipoleParticle(const MultipoleParticle& multipole, Vector3<double> periodicShift) {
-	assert(multipole.getOrder() == _order);
+	mardyn_assert(multipole.getOrder() == _order);
 
 	const SHMultipoleParticle& sh_multipole = static_cast<const SHMultipoleParticle&>(multipole);
 
@@ -41,7 +41,7 @@ void SHLocalParticle::addMultipoleParticle(const MultipoleParticle& multipole, V
 	Vector3<double> r_target_to_source = shifted_center - _center;
 	//std::cout << r_target_to_source <<" \n";
 	// assert that cells are not touching
-	assert(r_target_to_source.L2Norm() >= _radius + multipole.getRadius());
+	mardyn_assert(r_target_to_source.L2Norm() >= _radius + multipole.getRadius());
 
 	_expansionM += convoluteLM(setAtMinusR(sh_multipole.getConstExpansion()), evaluateMOfR(_order, r_target_to_source));
 }
@@ -49,7 +49,7 @@ void SHLocalParticle::addMultipoleParticle(const MultipoleParticle& multipole, V
 void SHLocalParticle::addMultipoleParticle_Wigner(const MultipoleParticle& multipole, Vector3<double> periodicShift,
 		double* cellWid,
 		std::map<Vector3<int>, RotationParams, Vector3<int>::compare>& M2L_Wigner) {
-	assert(multipole.getOrder() == _order);
+	mardyn_assert(multipole.getOrder() == _order);
 
 	const SHMultipoleParticle& sh_multipole = static_cast<const SHMultipoleParticle&>(multipole);
 
@@ -60,7 +60,7 @@ void SHLocalParticle::addMultipoleParticle_Wigner(const MultipoleParticle& multi
 	Vector3<double> r_target_to_source = shifted_center - _center;
 
 	// assert that cells are not touching
-	assert(r_target_to_source.L2Norm() >= _radius + multipole.getRadius());
+	mardyn_assert(r_target_to_source.L2Norm() >= _radius + multipole.getRadius());
 
 	// distance-vector FROM big TO small along the z-axis
 	Vector3<double> r_big_to_small_Z(0.0, 0.0, r_target_to_source.L2Norm());
@@ -71,7 +71,7 @@ void SHLocalParticle::addMultipoleParticle_Wigner(const MultipoleParticle& multi
 			rint(r_target_to_source[2]/(cellWid[2])));
 
 	// assert that Wigner matrices are present
-	assert(M2L_Wigner.find(idxVec) != M2L_Wigner.end());
+	mardyn_assert(M2L_Wigner.find(idxVec) != M2L_Wigner.end());
 
 	RotationParams& param = M2L_Wigner[idxVec];
 
@@ -84,7 +84,7 @@ void SHLocalParticle::addMultipoleParticle_Wigner(const MultipoleParticle& multi
 }
 
 void SHLocalParticle::actOnLocalParticle(LocalParticle& small) const {
-	assert(small.getOrder() == _order);
+	mardyn_assert(small.getOrder() == _order);
 
 	SHLocalParticle& sh_small = static_cast<SHLocalParticle&>(small);
 
@@ -92,14 +92,14 @@ void SHLocalParticle::actOnLocalParticle(LocalParticle& small) const {
 	Vector3<double> r_big_to_small = small.getCenter() - _center;
 
 	// assert that small is covered by big
-	//assert(r_big_to_small.L2Norm() + small.getRadius() <= _radius);
+	//mardyn_assert(r_big_to_small.L2Norm() + small.getRadius() <= _radius);
 
 	sh_small.getExpansion() += convoluteLM(evaluateLOfR(_order, r_big_to_small), _expansionM);
 }
 
 void SHLocalParticle::actOnLocalParticle_Wigner(LocalParticle& small,
 		const WignerMatrix& W_pos, const WignerMatrix& W_neg, const double* CosSinPhi, const int negate, const double& magnitude) const {
-	assert(small.getOrder() == _order);
+	mardyn_assert(small.getOrder() == _order);
 
 	SHLocalParticle& sh_small = static_cast<SHLocalParticle&>(small);
 
@@ -107,7 +107,7 @@ void SHLocalParticle::actOnLocalParticle_Wigner(LocalParticle& small,
 	Vector3<double> r_big_to_small_Z(0.0, 0.0, magnitude);
 
 	// assert that small is covered by big
-	assert(r_big_to_small_Z.L2Norm() + small.getRadius() <= _radius);
+	mardyn_assert(r_big_to_small_Z.L2Norm() + small.getRadius() <= _radius);
 
 	SolidHarmonicsExpansion M_trafo = rotatePhi(_expansionM, CosSinPhi, negate); // pos. rotation
 	M_trafo = rotateThetaM(M_trafo, W_pos);
@@ -122,7 +122,7 @@ void SHLocalParticle::actOnTarget(const Vector3<double>& position, double charge
 	Vector3<double> r_pseudo_to_target = position - _center;
 
 	// assert target does not lie in pseudo particle
-	//assert(r_pseudo_to_target.L2NormSquare() >= _radiusSquared);
+	//mardyn_assert(r_pseudo_to_target.L2NormSquare() >= _radiusSquared);
 
 	SolidHarmonicsExpansion temp_L = evaluateLOfR(_order, r_pseudo_to_target);
 

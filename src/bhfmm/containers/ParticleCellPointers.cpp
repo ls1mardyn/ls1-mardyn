@@ -9,7 +9,7 @@
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <vector>
 
 using namespace std;
@@ -34,7 +34,7 @@ void ParticleCellPointers::removeAllParticles() {
 bool ParticleCellPointers::addParticle(Molecule* particle_ptr) {
 #ifndef NDEBUG
 	bool isIn = particle_ptr->inBox(_boxMin, _boxMax);
-	assert(isIn);
+	mardyn_assert(isIn);
 #endif
 
 	_molecules.push_back(particle_ptr);

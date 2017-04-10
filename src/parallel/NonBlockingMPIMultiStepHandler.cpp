@@ -33,7 +33,7 @@ NonBlockingMPIMultiStepHandler::~NonBlockingMPIMultiStepHandler() {
 void NonBlockingMPIMultiStepHandler::performComputation() {
 	int stageCount = _domainDecomposition->getNonBlockingStageCount();
 
-	assert(stageCount > 0);
+	mardyn_assert(stageCount > 0);
 	_forceCalculationTimer->start();
 	_cellProcessor->initTraversal();
 	_forceCalculationTimer->stop();
@@ -75,7 +75,7 @@ void NonBlockingMPIMultiStepHandler::performComputation() {
 void NonBlockingMPIMultiStepHandler::initBalanceAndExchange(
 		bool forceRebalancing) {
 
-	assert(!forceRebalancing);
+	mardyn_assert(!forceRebalancing);
 
 	_decompositionTimer->start();
 	_domainDecomposition->balanceAndExchangeInitNonBlocking(forceRebalancing,

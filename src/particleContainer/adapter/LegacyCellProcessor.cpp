@@ -122,7 +122,7 @@ void LegacyCellProcessor::processCell(ParticleCell& cell) {
 
 			for (int j = i+1; j < currentParticleCount; j++) {
 				Molecule& molecule2 = cell.moleculesAt(j);
-				assert(&molecule1 != &molecule2);
+				mardyn_assert(&molecule1 != &molecule2);
 				double dd = molecule2.dist2(molecule1, distanceVector);
 
 				if (dd < _cutoffRadiusSquare) {

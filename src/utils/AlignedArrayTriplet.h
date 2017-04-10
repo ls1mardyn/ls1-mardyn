@@ -9,7 +9,7 @@
 #define ALIGNEDARRAYTRIPLET_H
 
 #include "AlignedArray.h"
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 template <class T>
 class AlignedArrayTriplet : public AlignedArray<T> {
@@ -25,21 +25,21 @@ public:
 	T* yBegin() const { return _numEntriesPerArray > 0 ? this->_p + (1 * _numEntriesPerArray) : nullptr; }
 	T* zBegin() const { return _numEntriesPerArray > 0 ? this->_p + (2 * _numEntriesPerArray) : nullptr; }
 
-	T& x(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
-	T& y(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
-	T& z(size_t i) { assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
-	T& x(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
-	T& y(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
-	T& z(size_t i) const { assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
+	T& x(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
+	T& y(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
+	T& z(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
+	T& x(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 0 * _numEntriesPerArray]; }
+	T& y(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 1 * _numEntriesPerArray]; }
+	T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
 
 	size_t dimensionToOffset(int i) const {
-		assert(i >= 0);
-		assert(i < 3);
+		mardyn_assert(i >= 0);
+		mardyn_assert(i < 3);
 		static size_t rets[3] = {0 * _numEntriesPerArray, 1 * _numEntriesPerArray, 2 * _numEntriesPerArray};
 		return rets[i];
 	}
 
-	T& linearCrossAccess(size_t i) { assert(i < 3*_numEntriesPerArray); return this->_p[i];}
+	T& linearCrossAccess(size_t i) { mardyn_assert(i < 3*_numEntriesPerArray); return this->_p[i];}
 
 	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = this->_round_up(exact_size);
@@ -92,7 +92,7 @@ public:
 	}
 
 	void appendValueTriplet(T v0, T v1, T v2, size_t oldNumElements) {
-		assert(oldNumElements <= _numEntriesPerArray);
+		mardyn_assert(oldNumElements <= _numEntriesPerArray);
 		if (oldNumElements < _numEntriesPerArray) {
 			// no need to resize
 		} else {

@@ -29,14 +29,14 @@ NeighbourCommunicationScheme::~NeighbourCommunicationScheme() {
 void DirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
 void DirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI(moleculeContainer, domain, msgType, removeRecvDuplicates, domainDecomp);
 }
 
@@ -144,7 +144,7 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
 					_neighbours[0][i].deadlockDiagnosticSendRecv();
 			}
-			global_simulation->exit(457);
+			Simulation::exit(457);
 		}
 
 	} // while not allDone
@@ -219,7 +219,9 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 			domainDecomp->DomainDecompBase::populateHaloLayerWithCopies(d, moleculeContainer);
 			break;
 		}
+
 	} else {
+
 		const int numNeighbours = _neighbours[d].size();
 
 		for (int i = 0; i < numNeighbours; ++i) {
@@ -227,6 +229,7 @@ void IndirectNeighbourCommunicationScheme::initExchangeMoleculesMPI1D(ParticleCo
 			_neighbours[d][i].initSend(moleculeContainer, domainDecomp->getCommunicator(),
 					domainDecomp->getMPIParticleType(), msgType);
 		}
+
 	}
 }
 
@@ -286,7 +289,7 @@ void IndirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1D(Partic
 			for (int i = 0; i < numNeighbours; ++i) {
 				_neighbours[d][i].deadlockDiagnosticSendRecv();
 			}
-			global_simulation->exit(457);
+			Simulation::exit(457);
 		}
 
 	} // while not allDone
@@ -304,22 +307,24 @@ void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI1D(ParticleContai
 
 void IndirectNeighbourCommunicationScheme::exchangeMoleculesMPI(ParticleContainer* moleculeContainer, Domain* domain,
 		MessageType msgType, bool removeRecvDuplicates, DomainDecompMPIBase* domainDecomp) {
+
 	for (unsigned short d = 0; d < getCommDims(); d++) {
 		exchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, d, domainDecomp);
 	}
+
 }
 
 void IndirectNeighbourCommunicationScheme::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	initExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 
 void IndirectNeighbourCommunicationScheme::finishNonBlockingStageImpl(ParticleContainer* moleculeContainer,
 		Domain* domain, unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates,
 		DomainDecompMPIBase* domainDecomp) {
-	assert(stageNumber < getCommDims());
+	mardyn_assert(stageNumber < getCommDims());
 	finalizeExchangeMoleculesMPI1D(moleculeContainer, domain, msgType, removeRecvDuplicates, stageNumber, domainDecomp);
 }
 

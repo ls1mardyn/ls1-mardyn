@@ -7,7 +7,7 @@
 
 #include "bhfmm/pseudoParticles/SHMultipoleParticle.h"
 #include "bhfmm/pseudoParticles/SHLocalParticle.h"
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 namespace bhfmm {
 
@@ -24,13 +24,13 @@ void SHMultipoleParticle::addSource(const Vector3<double>& position, double char
 	Vector3<double> r_pseudo_to_part = position - _center;
 
 	/* ToDo: fails: corner case centers should go to different cells */
-	//assert(r_pseudo_to_part.L2NormSquare() < _radiusSquared);
+	//mardyn_assert(r_pseudo_to_part.L2NormSquare() < _radiusSquared);
 
 	_expansionL += charge * evaluateLOfR(_order, r_pseudo_to_part);
 }
 
 void SHMultipoleParticle::addMultipoleParticle(const MultipoleParticle& small) {
-	assert(small.getOrder() == _order);
+	mardyn_assert(small.getOrder() == _order);
 
 	const SHMultipoleParticle& sh_small = static_cast<const SHMultipoleParticle&>(small);
 
@@ -39,7 +39,7 @@ void SHMultipoleParticle::addMultipoleParticle(const MultipoleParticle& small) {
 
 	// assert that small is covered by big
 	/* ToDo: fails: maybe this can be covered by adding a small eps: _radius + eps */
-	//assert(r_big_to_small.L2Norm() + small.getRadius() <= _radius);
+	//mardyn_assert(r_big_to_small.L2Norm() + small.getRadius() <= _radius);
 
 	_expansionL += convoluteLL(sh_small._expansionL, evaluateLOfR(_order, r_big_to_small));
 
@@ -47,7 +47,7 @@ void SHMultipoleParticle::addMultipoleParticle(const MultipoleParticle& small) {
 
 void SHMultipoleParticle::addMultipoleParticle_Wigner(const MultipoleParticle& small,
 		const WignerMatrix& W_pos, const WignerMatrix& W_neg, const double* CosSinPhi, const int negate, const double& magnitude) {
-	assert(small.getOrder() == _order);
+	mardyn_assert(small.getOrder() == _order);
 
 	const SHMultipoleParticle& sh_small = static_cast<const SHMultipoleParticle&>(small);
 
@@ -55,7 +55,7 @@ void SHMultipoleParticle::addMultipoleParticle_Wigner(const MultipoleParticle& s
 	Vector3<double> r_big_to_small_Z(0.0, 0.0, magnitude);
 
 	// assert that small is covered by big
-	assert(r_big_to_small_Z.L2Norm() + small.getRadius() <= _radius);
+	mardyn_assert(r_big_to_small_Z.L2Norm() + small.getRadius() <= _radius);
 
 	SolidHarmonicsExpansion L_trafo = rotatePhi(sh_small._expansionL, CosSinPhi, negate); // pos. rotation
 	L_trafo = rotateThetaL(L_trafo, W_pos);
@@ -66,7 +66,7 @@ void SHMultipoleParticle::addMultipoleParticle_Wigner(const MultipoleParticle& s
 }
 
 void SHMultipoleParticle::actOnLocalParticle(LocalParticle& local) const {
-	assert(local.getOrder() == _order);
+	mardyn_assert(local.getOrder() == _order);
 
 	SHLocalParticle& sh_local = static_cast<SHLocalParticle&>(local);
 
@@ -74,7 +74,7 @@ void SHMultipoleParticle::actOnLocalParticle(LocalParticle& local) const {
 	Vector3<double> r_target_to_source = _center - local.getCenter();
 
 	// assert that cells are not touching
-	assert(r_target_to_source.L2Norm() >= _radius + local.getRadius());
+	mardyn_assert(r_target_to_source.L2Norm() >= _radius + local.getRadius());
 
 	sh_local.getExpansion() += convoluteLM(setAtMinusR(_expansionL), evaluateMOfR(_order, r_target_to_source));
 }
@@ -84,7 +84,7 @@ void SHMultipoleParticle::actOnTarget(const Vector3<double>& position, double /*
 	Vector3<double> r_pseudo_to_target = position - _center;
 
 	// assert that point-target particle does not lie in pseudo particle
-	assert(r_pseudo_to_target.L2NormSquare() >= _radiusSquared);
+	mardyn_assert(r_pseudo_to_target.L2NormSquare() >= _radiusSquared);
 
 	// for the force, generate expansion of order (ord+1),
 	// in order to fully utilise the current L expansion (due to particular stencil of gradient)

@@ -42,7 +42,7 @@ public:
 	void storeMolecule( Molecule& old )
 	{
 		if(hasSample()) return;
-		assert(old.componentid() == componentid);
+		mardyn_assert(old.componentid() == componentid);
 #ifndef NDEBUG
 		old.check(old.id());
 #endif

@@ -1,11 +1,11 @@
 #include "MPIKDNode.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 
 #include "utils/Logger.h"
 
-#define assertion(x) assert(x)
-#define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; assert(x);}
+#define assertion(x) mardyn_assert(x)
+#define assertion1(x,y) { if (!(x)) std::cerr << (y) << std::endl; mardyn_assert(x);}
 
 using Log::global_log;
 
@@ -303,7 +303,7 @@ MPI_Datatype MPIKDNodePacked::Datatype = 0;
  * However, at the moment I'm not quite sure how that works...
  */
 void MPIKDNodePacked::initDatatype() {
-	MPIKDNodePacked dummyMPIKDNodePacked[1];
+	MPIKDNodePacked dummyMPIKDNodePacked;
 
 	const int Attributes = 13;
 	MPI_Datatype subtypes[Attributes] = {
@@ -341,20 +341,20 @@ void MPIKDNodePacked::initDatatype() {
 	MPI_Aint     disp[Attributes];
 
 	MPI_Aint base;
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]))), &base);
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._lowCorner[0]))), 		&disp[0] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._highCorner[0]))), 		&disp[1] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nodeID))), 		&disp[2] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._owningProc))), 		&disp[3] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._firstChildID))), 		&disp[4] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._secondChildID))), 		&disp[5] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._nextSendingProcess))), 		&disp[6] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._load))), 		&disp[7] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._OptimalLoadPerProcess))), 		&disp[8] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._expectedDeviation))), 		&disp[9] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._deviation))), 		&disp[10] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._level))), 		&disp[11] );
-	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked[0]._packedRecords0))), 		&disp[12] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked))), &base);
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._lowCorner[0]))), 		&disp[0] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._highCorner[0]))), 		&disp[1] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._nodeID))), 		&disp[2] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._owningProc))), 		&disp[3] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._firstChildID))), 		&disp[4] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._secondChildID))), 		&disp[5] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._nextSendingProcess))), 		&disp[6] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._load))), 		&disp[7] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._OptimalLoadPerProcess))), 		&disp[8] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._expectedDeviation))), 		&disp[9] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._deviation))), 		&disp[10] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._level))), 		&disp[11] );
+	MPI_Get_address( const_cast<void*>(static_cast<const void*>(&(dummyMPIKDNodePacked._packedRecords0))), 		&disp[12] );
 
 	for (int i=1; i<Attributes; i++) {
 		if (!(disp[i] > disp[i-1])) {

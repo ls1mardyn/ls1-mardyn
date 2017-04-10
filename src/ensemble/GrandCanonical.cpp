@@ -91,7 +91,7 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 	this->remainingDeletions.clear();
 #ifndef NDEBUG
 	for (int d = 0; d < 3; d++)
-		assert(this->remainingInsertions[d].empty());
+		mardyn_assert(this->remainingInsertions[d].empty());
 #endif
 	this->remainingDecisions.clear();
 
@@ -250,7 +250,7 @@ bool ChemicalPotential::getDeletion(TMoleculeContainer* moleculeContainer, doubl
 	global_log->debug() << "ID " << m->id() << " selected for deletion (index " << idx << ")." << std::endl;
 #endif
 
-	assert(m->id() < nextid);
+	mardyn_assert(m->id() < nextid);
 	*ret = m;
 	return true; // DELETION_TRUE
 }
@@ -271,7 +271,7 @@ unsigned long ChemicalPotential::getInsertion(double* ins) {
 }
 
 bool ChemicalPotential::decideDeletion(double deltaUTilde) {
-	assert(!this->widom); // the Widom test particle method should never call decideDeletion ...
+	mardyn_assert(!this->widom); // the Widom test particle method should never call decideDeletion ...
 
 	if (this->remainingDecisions.empty()) {
 		if (this->widom) {
@@ -280,7 +280,7 @@ bool ChemicalPotential::decideDeletion(double deltaUTilde) {
 			return false;
 		}
 		global_log->error() << "No decision is possible." << std::endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	float dec = *this->remainingDecisions.begin();
 	this->remainingDecisions.erase(this->remainingDecisions.begin());
@@ -312,7 +312,7 @@ bool ChemicalPotential::decideInsertion(double deltaUTilde) {
 			return false;
 		}
 		global_log->error() << "No decision is possible." << std::endl;
-		exit(1);
+		Simulation::exit(1);
 	}
 	double acc = this->globalReducedVolume * exp(muTilde - deltaUTilde)
 			/ (1.0 + (double) (this->globalN));
@@ -368,7 +368,7 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 		global_log->error() << "\nInvalid control volume (" << x0 << " / " << y0
 				<< " / " << z0 << ") to (" << x1 << " / " << y1 << " / " << z1
 				<< ")." << std::endl;
-		exit(611);
+		Simulation::exit(611);
 	}
 
 	this->restrictedControlVolume = true;
@@ -382,10 +382,10 @@ void ChemicalPotential::setControlVolume(double x0, double y0, double z0,
 }
 
 Molecule ChemicalPotential::loadMolecule() {
-	assert(this->reservoir != NULL);
+	mardyn_assert(this->reservoir != NULL);
 	Molecule tmp = *reservoir;
 	unsigned rotdof = tmp.component()->getRotationalDegreesOfFreedom();
-	assert(tmp.componentid() == componentid);
+	mardyn_assert(tmp.componentid() == componentid);
 #ifndef NDEBUG
 	tmp.check(tmp.id());
 #endif

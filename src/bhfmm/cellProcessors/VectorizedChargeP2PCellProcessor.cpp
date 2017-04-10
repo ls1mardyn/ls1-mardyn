@@ -213,9 +213,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			f[0] = static_cast<double>(soa_charges_f_x[iCharges]);
 			f[1] = static_cast<double>(soa_charges_f_y[iCharges]);
 			f[2] = static_cast<double>(soa_charges_f_z[iCharges]);
-			assert(!isnan(f[0]));
-			assert(!isnan(f[1]));
-			assert(!isnan(f[2]));
+			mardyn_assert(!isnan(f[0]));
+			mardyn_assert(!isnan(f[1]));
+			mardyn_assert(!isnan(f[2]));
 			m.Fchargeadd(i, f);
 
 			// Store the resulting virial in the molecule.
@@ -223,9 +223,9 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 			V[0] = static_cast<double>(soa_charges_V_x[iCharges]*0.5);
 			V[1] = static_cast<double>(soa_charges_V_y[iCharges]*0.5);
 			V[2] = static_cast<double>(soa_charges_V_z[iCharges]*0.5);
-			assert(!isnan(V[0]));
-			assert(!isnan(V[1]));
-			assert(!isnan(V[2]));
+			mardyn_assert(!isnan(V[0]));
+			mardyn_assert(!isnan(V[1]));
+			mardyn_assert(!isnan(V[2]));
 			m.Viadd(V);
 		}
 	}
@@ -511,7 +511,7 @@ void VectorizedChargeP2PCellProcessor::processCell(ParticleCellPointers & c) {
 }
 
 void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCellPointers & c1, ParticleCellPointers & c2) {
-	assert(&c1 != &c2);
+	mardyn_assert(&c1 != &c2);
 	const CellDataSoA& soa1 = c1.getCellDataSoA();
 	const CellDataSoA& soa2 = c2.getCellDataSoA();
 	const bool c1Halo = c1.isHaloCell();
@@ -549,8 +549,8 @@ void VectorizedChargeP2PCellProcessor::processCellPair(ParticleCellPointers & c1
 		}
 
 	} else {
-		assert(c1Halo != c2Halo);							// one of them is halo and
-		assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
+		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
+		mardyn_assert(not (c1.getCellIndex() < c2.getCellIndex()));// c1.index not < c2.index
 
 		const bool CalculateMacroscopic = false;
 

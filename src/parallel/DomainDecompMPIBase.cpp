@@ -58,7 +58,7 @@ void DomainDecompMPIBase::setCommunicationScheme(std::string scheme){
 	} else{
 		global_log->error() << "DomainDecompMPIBase: invalid CommunicationScheme specified. Valid values are 'direct' and 'indirect'"
 				<< std::endl;
-		global_simulation->exit(1);
+		Simulation::exit(1);
 	}
 }
 
@@ -151,7 +151,7 @@ void DomainDecompMPIBase::balanceAndExchangeInitNonBlocking(bool /*forceRebalanc
 
 void DomainDecompMPIBase::prepareNonBlockingStageImpl(ParticleContainer* moleculeContainer, Domain* domain,
 		unsigned int stageNumber, MessageType msgType, bool removeRecvDuplicates) {
-	assert(stageNumber < _neighbourCommunicationScheme->getCommDims());
+	mardyn_assert(stageNumber < _neighbourCommunicationScheme->getCommDims());
 	_neighbourCommunicationScheme->prepareNonBlockingStageImpl(moleculeContainer, domain, stageNumber, msgType,
 			removeRecvDuplicates, this);
 }

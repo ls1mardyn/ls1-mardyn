@@ -170,7 +170,7 @@ void AdaptivePseudoParticleContainer::push_on_stack(DttNode * trg,
 		break;
 	case split_internal:
 		if (trg->get_children(*trg_chs)) {
-			assert(src->get_children(*src_chs));
+			mardyn_assert(src->get_children(*src_chs));
 			for (unsigned int i = 0; i < trg_chs->size(); i++) {
 				for (unsigned int j = i; j < trg_chs->size(); j++) {
 					tst.target = (*trg_chs)[i];

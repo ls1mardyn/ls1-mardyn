@@ -106,13 +106,13 @@ void LinkedCellsTest::testMoleculeBeginNextEndDeleteCurrent() {
 	// DELETECURRENT:
 	molIt = LC.iteratorBegin();
 
-	molIt.deleteCurrentParticle();
+	molIt.deleteCurrentParticle(); ++molIt;
 	ASSERT_EQUAL_MSG("delete() within cell", 3ul, molIt->id()); // 3 copied in place of 1
-	molIt.deleteCurrentParticle();
+	molIt.deleteCurrentParticle(); ++molIt;
 	ASSERT_TRUE_MSG("delete() within cell", molIt->id() == 2ul); // 2 copied in place of 3
-	molIt.deleteCurrentParticle();
+	molIt.deleteCurrentParticle(); ++molIt;
 	ASSERT_TRUE_MSG("delete() across cells", molIt->id() == 4ul); // cell 1 became empty, we advanced to cell 3
-	molIt.deleteCurrentParticle();
+	molIt.deleteCurrentParticle(); ++molIt;
 	ASSERT_TRUE_MSG("delete() last", molIt == LC.iteratorEnd()); // cell 4 became empty, we arrived at end()
 }
 

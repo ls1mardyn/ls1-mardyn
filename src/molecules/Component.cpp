@@ -66,7 +66,7 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 		} else
 		if ( siteType == "Tersoff" ) {
 			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
-			global_simulation->exit(-1);
+			Simulation::exit(-1);
 		}else {
 			global_log->warning() << "Unknown site type:" << siteType << endl;
 		}

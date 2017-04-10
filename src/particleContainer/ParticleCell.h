@@ -15,22 +15,22 @@
 #endif
 
 inline FullParticleCell* downcastPointerFull(ParticleCellBase* c) {
-	assert(static_cast<FullParticleCell*>(c) == dynamic_cast<FullParticleCell*>(c));
+	mardyn_assert(static_cast<FullParticleCell*>(c) == dynamic_cast<FullParticleCell*>(c));
 	return static_cast<FullParticleCell*>(c);
 }
 
 inline FullParticleCell& downcastReferenceFull(ParticleCellBase& c) {
-	assert(&static_cast<FullParticleCell&>(c) == &dynamic_cast<FullParticleCell&>(c));
+	mardyn_assert(&static_cast<FullParticleCell&>(c) == &dynamic_cast<FullParticleCell&>(c));
 	return static_cast<FullParticleCell&>(c);
 }
 
 inline ParticleCell_WR* downcastPointerWR(ParticleCellBase* c) {
-	assert(static_cast<ParticleCell_WR*>(c) == dynamic_cast<ParticleCell_WR*>(c));
+	mardyn_assert(static_cast<ParticleCell_WR*>(c) == dynamic_cast<ParticleCell_WR*>(c));
 	return static_cast<ParticleCell_WR*>(c);
 }
 
 inline ParticleCell_WR& downcastReferenceWR(ParticleCellBase& c) {
-	assert(&static_cast<ParticleCell_WR&>(c) == &dynamic_cast<ParticleCell_WR&>(c));
+	mardyn_assert(&static_cast<ParticleCell_WR&>(c) == &dynamic_cast<ParticleCell_WR&>(c));
 	return static_cast<ParticleCell_WR&>(c);
 }
 

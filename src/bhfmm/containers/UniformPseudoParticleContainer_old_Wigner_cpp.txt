@@ -45,7 +45,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 #endif
 #if WIGNER == 1
 	//global_log->error() << "not supported yet" << endl;
-	exit(-1);
+	Simulation::exit(-1);
 #endif
 #ifdef ENABLE_MPI
 	_timerProcessCells.set_sync(false);
@@ -73,18 +73,18 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 	_globalNumCellsPerDim = domainLength[0] / cellLength[0];
 	_maxLevel = log2(_globalNumCellsPerDim);
-	assert(_maxLevel == log2(domainLength[1] / cellLength[1]));
-	assert(_maxLevel == log2(domainLength[2] / cellLength[2]));
+	mardyn_assert(_maxLevel == log2(domainLength[1] / cellLength[1]));
+	mardyn_assert(_maxLevel == log2(domainLength[2] / cellLength[2]));
 #if defined(ENABLE_MPI)
 	int numProcessors;
 	MPI_Comm_size(_comm,&numProcessors);
 	_globalLevel = log2(numProcessors)/3;
 	if(_globalLevel > _maxLevel){
 		std::cout << "too many MPI ranks \n";
-		exit(-1);
+		Simulation::exit(-1);
 	}
 	//numProcessers has to be a power of 8
-	assert(log2(numProcessors) == _globalLevel * 3);
+	mardyn_assert(log2(numProcessors) == _globalLevel * 3);
 	_numProcessorsPerDim = pow(2,log2(numProcessors)/3);
 #else
 	_globalLevel = _maxLevel;
@@ -119,7 +119,7 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 		num_cells_in_level_one_dim *= 2;
 	}
-//	assert(
+//	mardyn_assert(
 //			num_cells_in_level
 //					== _globalNumCellsPerDim * _globalNumCellsPerDim
 //							* _globalNumCellsPerDim);
@@ -778,7 +778,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 				for (m2z = LoLim(2) + 2; m2z <= HiLim(2) + 2; m2z++) {
 					if (m2z < 0 or m2z >= localMpCells) {
 						std::cout << "Error \n";
-						exit(-1);
+						Simulation::exit(-1);
 					}
 
 
@@ -786,7 +786,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 					for (m2y = LoLim(1) + 2; m2y <= HiLim(1) + 2; m2y++) {
 						if (m2y < 0 or m2y >= localMpCells) {
 							std::cout << "Error \n";
-							exit(-1);
+							Simulation::exit(-1);
 						}
 
 
@@ -794,7 +794,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_MPI(double *cellWid, int lo
 						for (m2x = LoLim(0) + 2; m2x <= HiLim(0) + 2; m2x++) {
 							if (m2x < 0 or m2x >= localMpCells) {
 								std::cout << "Error \n";
-								exit(-1);
+								Simulation::exit(-1);
 							}
 
 							m2v[0] = m2x;
@@ -1029,7 +1029,7 @@ void UniformPseudoParticleContainer::processMultipole(ParticleCell& cell){
 	int cellIndex = ((_globalNumCellsPerDim * cellIndexV[2] + cellIndexV[1])	* _globalNumCellsPerDim) + cellIndexV[0];
 #endif
 
-//	assert(cell.isInActiveWindow());
+//	mardyn_assert(cell.isInActiveWindow());
 
 	std::vector<Molecule*>& currentCellParticles = cell.getParticlePointers();
 	int currentParticleCount = currentCellParticles.size();
@@ -1205,7 +1205,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 		// NOTE: coeffIndex modified in following call:
 		currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
 
-		assert(cellIndex < _globalNumCells);
+		mardyn_assert(cellIndex < _globalNumCells);
 		_occVector[cellIndex] = currentCell.occ;
 	}
 
@@ -1240,7 +1240,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevel(int numCells
 		// NOTE: coeffIndex modified in following call:
 		currentCell.multipole.writeValuesToMPIBuffer(_coeffVector, coeffIndex);
 
-		assert(cellIndex < numCellsLevel);
+		mardyn_assert(cellIndex < numCellsLevel);
 		_occVector[cellIndex] = currentCell.occ;
 	}
 

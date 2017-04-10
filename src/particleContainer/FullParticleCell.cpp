@@ -9,8 +9,9 @@
 #include "particleContainer/FullParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"
+#include "Simulation.h"
 
-#include <cassert>
+#include "utils/mardyn_assert.h"
 #include <vector>
 
 using namespace std;
@@ -33,7 +34,7 @@ bool FullParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicat
 
 #ifndef NDEBUG
 	bool isIn = particle.inBox(_boxMin, _boxMax);
-	assert(isIn);
+	mardyn_assert(isIn);
 #endif
 
 	if (checkWhetherDuplicate == false) {
@@ -64,8 +65,8 @@ int FullParticleCell::getMoleculeCount() const {
 }
 
 bool FullParticleCell::deleteMoleculeByIndex(size_t index) {
-//	assert(index >= 0); - this is always true now
-	assert(index < _molecules.size());
+//	mardyn_assert(index >= 0); - this is always true now
+	mardyn_assert(index < _molecules.size());
 
 	bool found = true;
 	auto it = _molecules.begin() + index;
@@ -96,7 +97,7 @@ void FullParticleCell::preUpdateLeavingMolecules() {
 		}
 	}
 
-	assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
+	mardyn_assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
 }
 
 void FullParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {

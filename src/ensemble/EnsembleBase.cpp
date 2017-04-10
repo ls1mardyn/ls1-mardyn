@@ -4,6 +4,7 @@
 #include "molecules/mixingrules/LorentzBerthelot.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
+#include "Simulation.h"
 
 using namespace std;
 using Log::global_log;
@@ -46,7 +47,7 @@ void Ensemble::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else {
 			global_log->error() << "Unknown mixing rule " << mixingruletype << endl;
-			exit(1);
+			Simulation::exit(1);
 		}
 		mixingrule->readXML(xmlconfig);
 		_mixingrules.push_back(mixingrule);

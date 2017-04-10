@@ -311,7 +311,7 @@ public:
 	//! @param cid internal ID of the component
 	//! @param th internal ID of the thermostat
 	void setComponentThermostat(int cid, int thermostat) {
-		if((0 > cid) || (0 >= thermostat)) exit(787);
+		if((0 > cid) || (0 >= thermostat)) Simulation::exit(787);
 		this->_componentToThermostatIdMap[cid] = thermostat;
 		this->_universalThermostatN[thermostat] = 0;
 	}

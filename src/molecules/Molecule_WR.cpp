@@ -32,7 +32,7 @@ void Molecule_WR::setSoA(CellDataSoABase * const s) {
 	derived = dynamic_cast<CellDataSoA_WR *>(s);
 	if(derived == nullptr and s != nullptr) {
 		global_log->error() << "expected CellDataSoA_WR pointer for m" << _id << std::endl;
-		assert(false);
+		mardyn_assert(false);
 	}
 #else
 	derived = static_cast<CellDataSoA_WR *>(s);
@@ -41,7 +41,7 @@ void Molecule_WR::setSoA(CellDataSoABase * const s) {
 }
 
 double Molecule_WR::r(unsigned short d) const {
-	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
+	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
 		return _r[d];
@@ -52,7 +52,7 @@ double Molecule_WR::r(unsigned short d) const {
 }
 
 double Molecule_WR::v(unsigned short d) const {
-	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
+	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
 		return _v[d];
@@ -63,7 +63,7 @@ double Molecule_WR::v(unsigned short d) const {
 }
 
 unsigned long Molecule_WR::id() const {
-	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
+	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
 		return _id;
@@ -73,7 +73,7 @@ unsigned long Molecule_WR::id() const {
 }
 
 void Molecule_WR::setr(unsigned short d, double r) {
-	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
+	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
 		_r[d] = r;
@@ -84,7 +84,7 @@ void Molecule_WR::setr(unsigned short d, double r) {
 }
 
 void Molecule_WR::setv(unsigned short d, double v) {
-	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
+	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
 		_v[d] = v;
@@ -95,7 +95,7 @@ void Molecule_WR::setv(unsigned short d, double v) {
 }
 
 void Molecule_WR::setid(unsigned long id) {
-	assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
+	mardyn_assert(_state == STORAGE_SOA or _state == STORAGE_AOS);
 
 	if (_state == STORAGE_AOS) {
 		_id = id;
@@ -106,7 +106,7 @@ void Molecule_WR::setid(unsigned long id) {
 
 std::string Molecule_WR::getWriteFormat(){
 	// TODO?
-	assert(false);
+	mardyn_assert(false);
 	return std::string("ICRV");
 }
 

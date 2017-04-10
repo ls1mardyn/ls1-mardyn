@@ -29,7 +29,7 @@ public:
 	 * Destructor
 	 */
 	virtual ~CollectiveCommunicationSingleNonBlocking() {
-		assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
 	void initAllreduceSum(int /*key*/) {
@@ -58,36 +58,36 @@ public:
 	 */
 	void wait(){
 		MPI_CHECK(MPI_Wait(&_request, MPI_STATUS_IGNORE));
-		assert(testReceived());
+		mardyn_assert(testReceived());
 	}
 
 	// documented in base class
 	int getInt() {
-		assert(testReceived());
+		mardyn_assert(testReceived());
 		return CollectiveCommBase::getInt();
 	}
 
 	// documented in base class
 	unsigned long getUnsLong() {
-		assert(testReceived());
+		mardyn_assert(testReceived());
 		return CollectiveCommBase::getInt();
 	}
 
 	// documented in base class
 	float getFloat() {
-		assert(testReceived());
+		mardyn_assert(testReceived());
 		return CollectiveCommBase::getInt();
 	}
 
 	// documented in base class
 	double getDouble() {
-		assert(testReceived());
+		mardyn_assert(testReceived());
 		return CollectiveCommBase::getInt();
 	}
 
 	// documented in base class
 	long double getLongDouble() {
-		assert(testReceived());
+		mardyn_assert(testReceived());
 		return CollectiveCommBase::getInt();
 	}
 private:
