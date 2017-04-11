@@ -108,7 +108,9 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 			for (unsigned d=0; d < 3; d++)	my2 += chargeBalance[d]*chargeBalance[d];
 			muSquare[dpcount]=my2;//dipolej.absMy()*dipolej.absMy();
 			dpcount++;
+#ifndef NDEBUG
 			cout << dpcount << "\tmu: " << muSquare[dpcount-1] << endl;
+#endif
 		}
 	} 	
 	
