@@ -30,17 +30,23 @@ public:
 
 	int getMoleculeCount() const;
 
-	void preUpdateLeavingMolecules();
+	void preUpdateLeavingMolecules() {}
 
 	void updateLeavingMoleculesBase(ParticleCellBase& otherCell);
 
-	void postUpdateLeavingMolecules();
+	void postUpdateLeavingMolecules() {}
 
 	void getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer = false);
 
-	void buildSoACaches();
+	void buildSoACaches() {}
 
 	void reserveMoleculeStorage(size_t numMols);
+
+	int countInRegion(double lowCorner[3], double highCorner[3]) const;
+
+	void swapAndAppendToCell(ParticleCell_WR& other);
+
+	void swapMolecules(int i, ParticleCell_WR& other, int j);
 
 private:
 	/**

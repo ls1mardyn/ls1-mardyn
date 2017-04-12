@@ -92,6 +92,32 @@ public:
 		m_wr.setSoA(this);
 		m_wr.setStartIndexSoA_LJ(index);
 	}
+
+	void writeMolecule(size_t i, const MoleculeInterface& m) {
+//		Molecule_WR& m_wr = downcastReferenceWR(m);
+
+		_mol_r.x(i) = m.r(0);
+		_mol_r.y(i) = m.r(1);
+		_mol_r.z(i) = m.r(2);
+		_mol_v.x(i) = m.v(0);
+		_mol_v.y(i) = m.v(1);
+		_mol_v.z(i) = m.v(2);
+		_mol_uid[i] = m.id();
+	}
+
+	void deleteMolecule(size_t index) {
+		mardyn_assert(index < static_cast<size_t>(_mol_num));
+		if(_mol_num > 1 and index < _mol_num - 1) {
+			_mol_r.x(index) = _mol_r.x(_mol_num-1);
+			_mol_r.y(index) = _mol_r.y(_mol_num-1);
+			_mol_r.z(index) = _mol_r.z(_mol_num-1);
+			_mol_v.x(index) = _mol_v.x(_mol_num-1);
+			_mol_v.y(index) = _mol_v.y(_mol_num-1);
+			_mol_v.z(index) = _mol_v.z(_mol_num-1);
+			_mol_uid[index] = _mol_uid[_mol_num-1];
+		}
+		--_mol_num;
+	}
 };
 
 #endif /* CELLDATASOA_WR_H_ */

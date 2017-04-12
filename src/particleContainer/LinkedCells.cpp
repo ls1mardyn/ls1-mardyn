@@ -197,6 +197,16 @@ void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 }
 
 void LinkedCells::update() {
+#ifndef MARDYN_WR
+	update_via_copies();
+#else
+	update_via_coloring();
+#endif
+
+	_cellsValid = true;
+}
+
+void LinkedCells::update_via_copies() {
 	const vector<ParticleCell>::size_type numCells = _cells.size();
 
 	#if defined(_OPENMP)
@@ -243,21 +253,58 @@ void LinkedCells::update() {
 			_cells[cellIndex].postUpdateLeavingMolecules();
 		}
 	} // end pragma omp parallel
-
-	/*
+}
+void LinkedCells::update_via_coloring() {
 	#if defined(_OPENMP)
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel
 	#endif
-	for (int i=0; i < numCells; i++) {
-		std::vector<Molecule> & molsToSort = _cells[i].filterLeavingMolecules();
+	{
+		const int strides[3] = {2, 2, 2};
+		for (int col = 0; col < 8; ++col) {
+			int startIndices[3];
+			threeDIndexOfCellIndex(col, startIndices, strides);
 
-		for (auto it = molsToSort.begin(); it != molsToSort.end(); ++it) {
-			addParticle(*it);
+			#if defined (_OPENMP)
+			#pragma omp for schedule(dynamic, 1) collapse(3)
+			#endif
+			for (int z = startIndices[2]; z < _cellsPerDimension[2]-1 ; z+= strides[2]) {
+				for (int y = startIndices[1]; y < _cellsPerDimension[1]-1; y += strides[1]) {
+					for (int x = startIndices[0]; x < _cellsPerDimension[0]-1; x += strides[0]) {
+						long int baseIndex = cellIndexOf3DIndex(x, y, z);
+
+						const int num_pairs = _cellPairOffsets.size();
+						for(int j = 0; j < num_pairs; ++j) {
+							pair<long int, long int> current_pair = _cellPairOffsets[j];
+
+							long int offset1 = current_pair.first;
+							long int cellIndex1 = baseIndex + offset1;
+							if ((cellIndex1 < 0) || (cellIndex1 >= (int) (_cells.size())))
+								continue;
+
+							long int offset2 = current_pair.second;
+							long int cellIndex2 = baseIndex + offset2;
+							if ((cellIndex2 < 0) || (cellIndex2 >= (int) (_cells.size())))
+								continue;
+
+							ParticleCell& cell1 = _cells[cellIndex1];
+							ParticleCell& cell2 = _cells[cellIndex2];
+
+							if(cell1.isHaloCell() and cell2.isHaloCell()) {
+								continue;
+							}
+
+							if(cellIndex1 == cellIndex2) {
+								continue;
+							}
+							else {
+								cell1.updateLeavingMoleculesBase(cell2);
+							}
+						}
+					}
+				}
+			}
 		}
-		molsToSort.clear();
-	}
-	*/
-	_cellsValid = true;
+	} // end pragma omp parallel
 }
 
 bool LinkedCells::addParticle(Molecule& particle, bool inBoxCheckedAlready, bool checkWhetherDuplicate, const bool& rebuildCaches) {

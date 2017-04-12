@@ -11,6 +11,10 @@
 #include "MoleculeInterface.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 
+#ifdef UNIT_TESTS
+#define DEBUG_FUNCTIONALITY_HACKS
+#endif
+
 class CellDataSoA_WR;
 
 class Molecule_WR : public MoleculeInterface {
@@ -72,7 +76,7 @@ public:
 	}
 
 	double F(unsigned short d) const {
-#ifndef NDEBUG
+#ifdef DEBUG_FUNCTIONALITY_HACKS
 		return v(d);
 #else
 		mardyn_assert(false);
@@ -295,14 +299,14 @@ public:
 	void vadd(const double ax, const double ay, const double az) {}
 	void vsub(const double ax, const double ay, const double az) {}
 	void Fljcenteradd(unsigned int i, double a[]) {
-#ifndef NDEBUG
+#ifdef DEBUG_FUNCTIONALITY_HACKS
 		assert(i == 0);
 		for(int d = 0; d < 3; ++d)
 			setv(d, v(d) + a[d]);
 #endif
 	}
 	void Fljcentersub(unsigned int i, double a[]) {
-#ifndef NDEBUG
+#ifdef DEBUG_FUNCTIONALITY_HACKS
 		assert(i == 0);
 		for(int d = 0; d < 3; ++d)
 			setv(d, v(d) - a[d]);

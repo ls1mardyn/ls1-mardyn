@@ -114,6 +114,9 @@ public:
 	//! ParticleContainer is it's corresponding cell.
 	void update();
 
+	void update_via_copies();
+	void update_via_coloring();
+
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
 	int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
