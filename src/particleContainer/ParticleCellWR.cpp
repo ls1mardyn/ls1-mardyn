@@ -98,7 +98,7 @@ void ParticleCell_WR::swapAndAppendToCell(ParticleCell_WR& other) {
 
 		// find next swap/insertion position
 		for (;j <other.getMoleculeCount(); ++j) {
-			if (not moleculesAt(j).inBox(_boxMin,_boxMax))
+			if (not other.moleculesAt(j).inBox(_boxMin,_boxMax))
 				continue;
 		}
 
