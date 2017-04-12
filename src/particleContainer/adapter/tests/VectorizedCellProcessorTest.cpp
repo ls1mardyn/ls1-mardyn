@@ -29,6 +29,9 @@ VectorizedCellProcessorTest::~VectorizedCellProcessorTest() {
 }
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
+#ifdef MARDYN_WR
+	return;
+#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -72,6 +75,9 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 }
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
+#ifdef MARDYN_WR
+	return;
+#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -111,6 +117,9 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 }
 
 void VectorizedCellProcessorTest::testLennardJonesVectorization() {
+#ifdef MARDYN_WR
+	return;
+#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -191,6 +200,9 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 }
 
 void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* filename, double ScenarioCutoff) {
+#ifdef MARDYN_WR
+	return;
+#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info()
 				<< "DomainDecompositionTest::testExchangeMolecules1Proc()"

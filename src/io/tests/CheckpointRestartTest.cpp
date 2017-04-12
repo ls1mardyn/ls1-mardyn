@@ -32,6 +32,9 @@ CheckpointRestartTest::~CheckpointRestartTest() {
  * testRemoveMomentum tests if removeMomentum in MDGenerator works properly or not.
  */
 void CheckpointRestartTest::testCheckpointRestart() {
+#ifdef MARDYN_WR
+	return;
+#endif
 
 	ParticleContainer* particleContainer
 		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 1.5);
