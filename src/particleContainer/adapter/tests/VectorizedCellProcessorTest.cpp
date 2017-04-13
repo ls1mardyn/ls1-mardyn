@@ -13,7 +13,11 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 
+#ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(VectorizedCellProcessorTest);
+#else
+#warning "VectorizedCellProcessorTest disabled in MARDYN_WR mode"
+#endif
 
 VectorizedCellProcessorTest::VectorizedCellProcessorTest() {
 #if VCP_VEC_TYPE==VCP_NOVEC
@@ -29,9 +33,6 @@ VectorizedCellProcessorTest::~VectorizedCellProcessorTest() {
 }
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
-#ifdef MARDYN_WR
-	return;
-#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -75,9 +76,6 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 }
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
-#ifdef MARDYN_WR
-	return;
-#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -117,9 +115,6 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 }
 
 void VectorizedCellProcessorTest::testLennardJonesVectorization() {
-#ifdef MARDYN_WR
-	return;
-#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -200,9 +195,6 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 }
 
 void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* filename, double ScenarioCutoff) {
-#ifdef MARDYN_WR
-	return;
-#endif
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info()
 				<< "DomainDecompositionTest::testExchangeMolecules1Proc()"

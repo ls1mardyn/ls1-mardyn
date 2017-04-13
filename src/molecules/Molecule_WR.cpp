@@ -19,6 +19,10 @@ Quaternion 		Molecule_WR::_quaternion;
 
 void Molecule_WR::initStaticVars() {
 	if (not _initCalled) {
+		if (global_simulation == nullptr)
+			return;
+		if (global_simulation->getEnsemble() == nullptr)
+			return;
 		_component = global_simulation->getEnsemble()->getComponent(0);
 		if (_component == nullptr) {
 			// we are in some constructor and are not ready to initialise yet

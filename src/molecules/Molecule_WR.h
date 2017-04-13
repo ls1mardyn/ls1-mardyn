@@ -41,7 +41,11 @@ public:
 		_id = id;
 		_soa = nullptr;
 
-		if(not _initCalled) {
+		if(component != nullptr) {
+			_component = component;
+			_quaternion = Quaternion(1.0, 0.0, 0.0, 0.0);
+			_initCalled = true;
+		} else if(not _initCalled) {
 			initStaticVars();
 		}
 	}
@@ -242,7 +246,6 @@ public:
 	}
 
 	std::array<double, 3> site_F(unsigned int i) const {
-		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
