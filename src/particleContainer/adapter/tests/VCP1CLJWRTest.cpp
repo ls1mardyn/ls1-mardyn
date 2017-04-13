@@ -20,16 +20,17 @@ TEST_SUITE_REGISTRATION(VCP1CLJWRTest);
 
 
 VCP1CLJWRTest::VCP1CLJWRTest() {
-	test_log->info() << "Testing VCP1CLJWR cell processor against: " <<
+	test_log->info() << "Testing VCP1CLJWR cell processor against: "
 #if VCP_VEC_TYPE==VCP_NOVEC
-	"VectorizedCellProcessor with no intrinsics." << std::endl;
+	<< "VectorizedCellProcessor with no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
-	"VectorizedCellProcessor with SSE intrinsics." << std::endl;
+	<< "VectorizedCellProcessor with SSE intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
-	"VectorizedCellProcessor with AVX intrinsics." << std::endl;
+	<< "VectorizedCellProcessor with AVX intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX2
-	"VectorizedCellProcessor with AVX2 intrinsics." << std::endl;
+	<< "VectorizedCellProcessor with AVX2 intrinsics." << std::endl;
 #endif
+	;
 }
 
 VCP1CLJWRTest::~VCP1CLJWRTest() {
@@ -117,5 +118,54 @@ void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 	delete container;
 }
 
+// free function
+void VCP1CLJWRTest__initFullCell(const ParticleCell_WR & cell_wr, FullParticleCell& full_cell) {
+	double low[3], hig[3];
+	for (int d = 0; d < 3; ++d) {
+		low[d] = cell_wr.getBoxMin(d);
+		hig[d] = cell_wr.getBoxMax(d);
+	}
+
+	full_cell.setBoxMin(low);
+	full_cell.setBoxMax(hig);
+
+	const int numMols = static_cast<int>(cell_wr.getMoleculeCount());
+	for (int i = 0; i < numMols; ++i) {
+//		FullMolecule m = FullMolecule(cell_wr.moleculesAtConst(i));
+//		full_cell.addParticle(m);
+		TODO: create an std vector of FullMolecules and SoA for two cells
+		TODO: compute forces via _calculatePairs
+	}
+}
+
 void VCP1CLJWRTest::testLennardJonesVectorization() {
+	double ScenarioCutoff = 35.0;
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
+
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
+
+	VCP1CLJ_WR cellProcessor( *_domain,  ScenarioCutoff, ScenarioCutoff);
+	cellProcessor.setDtInv2m(1.0);
+	container->traverseCells(cellProcessor);
+
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		m->calcFM();
+	}
+
+#if 0
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int i = 0; i < 3; i++) {
+			std::stringstream str;
+			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
+			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), 1e-7);
+		}
+	}
+
+	ASSERT_DOUBLES_EQUAL(-4, _domain->getLocalUpot(), 1e-8);
+	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-6);
+#endif
+
+	delete container;
+
 }
