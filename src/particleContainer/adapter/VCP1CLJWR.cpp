@@ -20,7 +20,7 @@
 #include <algorithm>
 
 VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadius) :
-	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInv2m(1.0), _upot6lj(0.0), _virial(0.0) {
+	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInv2m(0.0), _upot6lj(0.0), _virial(0.0) {
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VCP1CLJ_WR: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
@@ -45,8 +45,12 @@ VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 	_sig2 = static_cast<vcp_real_calc>(sig);
 	_shift6 = static_cast<vcp_real_calc>(shi);
 
-	double dt_halve = .5 * global_simulation->getIntegrator()->getTimestepLength();
-	double dtInv2m = dt_halve / componentZero.m();
+	if (global_simulation != nullptr and global_simulation->getIntegrator() != nullptr) {
+		double dt_halve = .5 * global_simulation->getIntegrator()->getTimestepLength();
+		double dtInv2m = dt_halve / componentZero.m();
+	} else {
+		global_log->info() << "VCP1CLJWR: initialize dtInv2m via setter method necessary." << endl;
+	}
 
 	// initialize thread data
 	_numThreads = mardyn_get_max_threads();
@@ -75,6 +79,8 @@ VCP1CLJ_WR::~VCP1CLJ_WR() {
 }
 
 void VCP1CLJ_WR::initTraversal() {
+	mardyn_assert(_dtInv2m != static_cast<vcp_real_calc>(0.0));
+
 	#if defined(_OPENMP)
 	#pragma omp master
 	#endif
@@ -87,18 +93,70 @@ void VCP1CLJ_WR::initTraversal() {
 }
 
 void VCP1CLJ_WR::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
+	mardyn_assert(&cell1 != &cell2);
+	ParticleCell_WR & cellWR1 = downcastReferenceWR(cell1);
+	ParticleCell_WR & cellWR2 = downcastReferenceWR(cell2);
+
+	const CellDataSoA_WR& soa1 = cellWR1.getCellDataSoA();
+	const CellDataSoA_WR& soa2 = cellWR2.getCellDataSoA();
+	const bool c1Halo = cellWR1.isHaloCell();
+	const bool c2Halo = cellWR2.isHaloCell();
+
+	// this variable determines whether
+	// _calcPairs(soa1, soa2) or _calcPairs(soa2, soa1)
+	// is more efficient
+	const bool calc_soa1_soa2 = (soa1._mol_num <= soa2._mol_num);
+
+	// if one cell is empty, or both cells are Halo, skip
+	if (soa1._mol_num == 0 or soa2._mol_num == 0 or (c1Halo and c2Halo)) {
+		return;
+	}
+
+	// Macroscopic conditions:
+	// if none of the cells is halo, then compute
+	// if one of them is halo:
+	// 		if full_c1-index < full_c2-index, then compute
+	// 		else, then don't compute
+	// This saves the Molecule::isLessThan checks
+	// and works similar to the "Half-Shell" scheme
+
+	const bool ApplyCutoff = true;
+
+	if ((not c1Halo and not c2Halo) or						// no cell is halo or
+			(cellWR1.getCellIndex() < cellWR2.getCellIndex())) 		// one of them is halo, but cellWR1.index < cellWR2.index
+	{
+		const bool CalculateMacroscopic = true;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+		}
+
+	} else {
+		mardyn_assert(c1Halo != c2Halo);							// one of them is halo and
+		mardyn_assert(not (cellWR1.getCellIndex() < cellWR2.getCellIndex()));// cellWR1.index not < cellWR2.index
+
+		const bool CalculateMacroscopic = false;
+
+		if (calc_soa1_soa2) {
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa1, soa2);
+		} else {
+			_calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa2, soa1);
+		}
+	}
 }
 
 void VCP1CLJ_WR::processCell(ParticleCell& cell) {
-#if 0
-	CellDataSoA& soa = c.getCellDataSoA();
-	if (c.isHaloCell() or soa._mol_num < 2) {
+	ParticleCell_WR & cellWR = downcastReferenceWR(cell);
+
+	CellDataSoA_WR& soa = cellWR.getCellDataSoA();
+	if (cellWR.isHaloCell() or soa._mol_num < 2) {
 		return;
 	}
 	const bool CalculateMacroscopic = true;
 	const bool ApplyCutoff = true;
 	_calculatePairs<SingleCellPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(soa, soa);
-#endif
 }
 
 void VCP1CLJ_WR::endTraversal() {

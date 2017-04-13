@@ -26,6 +26,8 @@ VectorizedCellProcessorTest::VectorizedCellProcessorTest() {
 	test_log->info() << "VectorizedCellProcessorTest: testing SSE intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	test_log->info() << "VectorizedCellProcessorTest: testing AVX intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2
+	test_log->info() << "VectorizedCellProcessorTest: testing AVX2 intrinsics." << std::endl;
 #endif
 }
 

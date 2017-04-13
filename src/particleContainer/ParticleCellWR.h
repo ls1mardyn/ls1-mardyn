@@ -48,6 +48,8 @@ public:
 
 	void swapMolecules(int i, ParticleCell_WR& other, int j);
 
+	CellDataSoA_WR & getCellDataSoA() {return _cellDataSoA_WR;}
+
 private:
 	/**
 	 * \brief object used for the moleculesAt() interface
