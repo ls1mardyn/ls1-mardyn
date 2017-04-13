@@ -7,7 +7,7 @@ lessThan(QT_MAJOR_VERSION, 5) {
 } else {
 	CONFIG += c++11
 }
-
+QMAKE_CXXFLAGS += -O3
 MOC_DIR = moc_obj
 OBJECTS_DIR = obj
 

@@ -9,7 +9,7 @@
 
 #include "optFFT_API.h"
 #include "FakedOptFFT.h"
-#include "BasicOptFFT.h"
+//#include "BasicOptFFT.h"
 
 class optFFT_API_Factory {
 public:
@@ -28,9 +28,13 @@ public:
 	 */
 	static optFFT_API* getOptFFT_API(const int order,
 			const bool square_matrix) {
+#if 0
+// this was calling Jakub Kurzak's code. Refer to HLRS SVN Revision 4368 and earlier to reintegrate if necessary.
+// There was no performance gain over FFTW, so we decided to switch to FFTW and remove the dependence to Jakub Kurzak's code.
 		if (square_matrix && order > 4 && order < 16)
 			return new BasicOptFFT();
 		else
+#endif
 			return new FakedOptFFT();
 	}
 };

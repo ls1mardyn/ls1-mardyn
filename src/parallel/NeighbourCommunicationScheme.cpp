@@ -128,8 +128,6 @@ void DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI(ParticleCo
 					<< "DirectNeighbourCommunicationScheme::finalizeExchangeMoleculesMPI1d: Deadlock warning: Rank "
 					<< domainDecomp->getRank() << " is waiting for more than " << waitCounter << " seconds"
 					<< std::endl;
-			global_log->warning() << "should this produce a deadlock, please consider using another MPI implementation"
-					<< ", or compile the application with MPI_WORKAROUND=1" << std::endl;
 			waitCounter += 1.0;
 			for (int i = 0; i < numNeighbours; ++i) {
 				if (domainDecomp->getRank() != _neighbours[0][i].getRank())
@@ -195,7 +193,7 @@ void DirectNeighbourCommunicationScheme::initCommunicationPartners(double cutoff
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
-		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
+		commPartners.insert(commPartners.end(), newCommPartners.begin(), newCommPartners.end());
 	}
 	_fullShellNeighbours = commPartners;
 	//we could squeeze the fullShellNeighbours if we would want to (might however screw up FMM)
@@ -369,7 +367,7 @@ void IndirectNeighbourCommunicationScheme::initCommunicationPartners(double cuto
 	std::vector<CommunicationPartner> commPartners;
 	for (HaloRegion haloRegion : haloRegions) {
 		auto newCommPartners = domainDecomp->getNeighboursFromHaloRegion(domain, haloRegion, cutoffRadius);
-		commPartners.insert(std::end(commPartners), std::begin(newCommPartners), std::end(newCommPartners));
+		commPartners.insert(commPartners.end(), newCommPartners.begin(), newCommPartners.end());
 	}
 
 	_fullShellNeighbours = commPartners;

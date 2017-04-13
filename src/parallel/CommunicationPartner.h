@@ -55,7 +55,7 @@ public:
 
 	bool iprobeCount(const MPI_Comm& comm, const MPI_Datatype& type);
 
-	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates, bool alwaysNonBlocking=false);
+	bool testRecv(ParticleContainer* moleculeContainer, bool removeRecvDuplicates);
 
 	void initRecv(int numParticles, const MPI_Comm& comm, const MPI_Datatype& type);
 
@@ -112,6 +112,7 @@ private:
 	void collectMoleculesInRegion(ParticleContainer* moleculeContainer, const double lowCorner[3], const double highCorner[3], const double shift[3], const bool removeFromContainer = false);
 
 	int _rank;
+        int _countTested;
 	std::vector<PositionInfo> _haloInfo;
 
 	// technical variables

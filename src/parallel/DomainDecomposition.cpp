@@ -317,6 +317,8 @@ std::vector<CommunicationPartner> DomainDecomposition::getNeighboursFromHaloRegi
 		enlarged[d][1] = false;
 	}
 	// initialize using initializer list - here a vector with one element is created
-	return std::vector<CommunicationPartner> {CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset, enlarged)};
+	std::vector<CommunicationPartner> temp;
+	temp.push_back(CommunicationPartner(rank, haloLow, haloHigh, boundaryLow, boundaryHigh, shift, haloRegion.offset, enlarged));
+	return temp;
 }
 
