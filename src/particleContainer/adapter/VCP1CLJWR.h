@@ -64,6 +64,10 @@ public:
 	 */
 	void endTraversal();
 
+	void setDtInv2m(double dtInv2m) {
+		_dtInv2m = static_cast<vcp_real_calc>(dtInv2m);
+	}
+
 private:
 	/**
 	 * \brief The Domain where macroscopic values will be stored.
@@ -121,7 +125,6 @@ private:
 	void _loopBodyLJ(
 		const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 		RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
 		const MaskVec& forceMask,
 		const RealCalcVec& eps_24, const RealCalcVec& sig2,

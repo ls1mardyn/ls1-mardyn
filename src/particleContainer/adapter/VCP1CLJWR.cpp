@@ -20,7 +20,7 @@
 #include <algorithm>
 
 VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadius) :
-	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInv2m(0.0), _upot6lj(0.0), _virial(0.0) {
+	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInv2m(1.0), _upot6lj(0.0), _virial(0.0) {
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VCP1CLJ_WR: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
@@ -134,7 +134,6 @@ template<bool calculateMacroscopic>
 inline void VCP1CLJ_WR::_loopBodyLJ(
 	const RealCalcVec& c_dx, const RealCalcVec& c_dy, const RealCalcVec& c_dz, const RealCalcVec& c_r2,
 	RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-	RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
 	RealCalcVec& sum_upot6lj, RealCalcVec& sum_virial,
 	const MaskVec& forceMask,
 	const RealCalcVec& eps_24, const RealCalcVec& sig2,
@@ -158,10 +157,6 @@ inline void VCP1CLJ_WR::_loopBodyLJ(
 	f_y = c_dy * scale;//1FP (apply scale)
 	f_z = c_dz * scale;//1FP (apply scale)
 
-	V_x = c_dx * f_x;//1FP (virial)
-	V_y = c_dy * f_y;//1FP (virial)
-	V_z = c_dz * f_z;//1FP (virial)
-
 	// Check if we have to add the macroscopic values up
 	if (calculateMacroscopic) {
 
@@ -170,7 +165,7 @@ inline void VCP1CLJ_WR::_loopBodyLJ(
 
 		sum_upot6lj = sum_upot6lj + upot_masked;//1FP (sum macro)
 
-		sum_virial = sum_virial +  V_x + V_y + V_z;//1 FP (sum macro) + 2 FP (virial)
+		sum_virial = sum_virial + c_dx * f_x + c_dy * f_y + c_dz * f_z;//1 FP (sum macro) + 2 FP (virial)
 	}
 }
 
@@ -232,9 +227,6 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 		RealCalcVec sum_fy1 = RealCalcVec::zero();
 		RealCalcVec sum_fz1 = RealCalcVec::zero();
 
-
-		MaskGatherChooser mgc(soa2_ljc_dist_lookup, j);
-
 		for (; j < end_ljc_j; j += VCP_VEC_SIZE) {
 			const RealCalcVec m2_r_x = RealCalcVec::aligned_load(soa2_mol_pos_x + j);
 			const RealCalcVec m2_r_y = RealCalcVec::aligned_load(soa2_mol_pos_y + j);
@@ -250,8 +242,7 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 
 			if (MaskGatherChooser::computeLoop(forceMask)) {
 				RealCalcVec fx, fy, fz;
-				RealCalcVec VirX, VirY, VirZ;
-				_loopBodyLJ<CalculateMacroscopic>(m_dx, m_dy, m_dz, m_r2, fx, fy, fz, VirX, VirY, VirZ, sum_upot6lj, sum_virial, forceMask, eps24, sig2, shift6);
+				_loopBodyLJ<CalculateMacroscopic>(m_dx, m_dy, m_dz, m_r2, fx, fy, fz, sum_upot6lj, sum_virial, forceMask, eps24, sig2, shift6);
 
 				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_x, j, fx, dtInv2m, forceMask);
 				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_y, j, fy, dtInv2m, forceMask);
@@ -279,8 +270,7 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 
 			if (MaskGatherChooser::computeLoop(forceMask)) {
 				RealCalcVec fx, fy, fz;
-				RealCalcVec VirX, VirY, VirZ;
-				_loopBodyLJ<CalculateMacroscopic>(m_dx, m_dy, m_dz, m_r2, fx, fy, fz, VirX, VirY, VirZ, sum_upot6lj, sum_virial, forceMask, eps24, sig2, shift6);
+				_loopBodyLJ<CalculateMacroscopic>(m_dx, m_dy, m_dz, m_r2, fx, fy, fz, sum_upot6lj, sum_virial, forceMask, eps24, sig2, shift6);
 
 				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_x, j, fx, dtInv2m, forceMask);
 				vcp_simd_load_fnmadd_store<MaskGatherChooser>(soa2_mol_vel_y, j, fy, dtInv2m, forceMask);
