@@ -94,13 +94,21 @@ public:
 	void appendValueTriplet(T v0, T v1, T v2, size_t oldNumElements) {
 		mardyn_assert(oldNumElements <= _numEntriesPerArray);
 		if (oldNumElements < _numEntriesPerArray) {
-			// no need to resize
+			// no need to resize, baby
 		} else {
-			// shit, we need to resize, but also keep contents
-			AlignedArray<T> backupCopy(*this);
-			resize_zero_shrink(oldNumElements + 1);
-			size_t oldNumElementsTripled = 3 * _numEntriesPerArray;
-			std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled * sizeof(T));
+			// shit, we need to resize
+
+			// do we need to keep contents?
+			if(oldNumElements == 0) {
+				// No
+				resize_zero_shrink(oldNumElements + 1);
+			} else {
+				// Yes
+				AlignedArray<T> backupCopy(*this);
+				resize_zero_shrink(oldNumElements + 1);
+				size_t oldNumElementsTripled = 3 * oldNumElements;
+				std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled * sizeof(T));
+			}
 		}
 		x(oldNumElements) = v0;
 		y(oldNumElements) = v1;
