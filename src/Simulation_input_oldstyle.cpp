@@ -1239,16 +1239,23 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 								global_log->error() << "DistControl object does not exist, programm exit..." << endl;
 								exit(-1);
 							}
-
-							string strMethod;
-							std::stringstream sstr;
-							char buffer[128];
+							std::string strMethod;
+							int nMethod;
+							unsigned short nVal1, nVal2, nVal3;
+							double dVal;
 
 							inputfilestream >> strMethod;
-							inputfilestream.getline(buffer, 128);
-							sstr << buffer;
-
-							_distControl->SetUpdateMethod(strMethod, sstr);
+							if(strMethod == "density")
+							{
+								inputfilestream >> dVal >> nVal3;
+								nMethod = DCUM_DENSITY_PROFILE;
+							}
+							else if(strMethod == "denderiv")
+							{
+								inputfilestream >> nVal1 >> nVal2 >> nVal3;
+								nMethod = DCUM_DENSITY_PROFILE_DERIVATION;
+							}
+							_distControl->SetUpdateMethod(nMethod, nVal1, nVal2, nVal3, dVal);
 						}
 						else if(strToken == "init")
 						{
@@ -1257,40 +1264,31 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 								global_log->error() << "DistControl object does not exist, programm exit..." << endl;
 								exit(-1);
 							}
+							std::string strMethod;
+							int nMethod;
+							double dVal1 = 0.;
+							double dVal2 = 0.;
+							std::string strVal = "unknown";
+							unsigned long nVal = 0;
 
-							string strToken;
-							std::stringstream sstr;
-							inputfilestream >> strToken;
-
-							if(strToken == "startconfig")
+							inputfilestream >> strMethod;
+							if(strMethod == "startconfig")
 							{
-								sstr.clear();
-								_distControl->SetInitMethod(DCIM_START_CONFIGURATION, sstr);
+								nMethod = DCIM_START_CONFIGURATION;
 							}
-							else if(strToken == "values")
+							else if(strMethod == "values")
 							{
-								char buffer[128];
-								inputfilestream.getline(buffer, 128);
-								sstr << buffer;
-			//					cout << "sstr = " << sstr.str() << endl;
-								_distControl->SetInitMethod(DCIM_MIDPOINT_VALUES, sstr);
+								inputfilestream >> dVal1 >> dVal2;
+								nMethod = DCIM_MIDPOINT_VALUES;
 							}
-							else if(strToken == "file")
+							else if(strMethod == "file")
 							{
-								char buffer[128];
-								inputfilestream.getline(buffer, 128);
-								sstr << buffer;
-			//					cout << "sstr = " << sstr.str() << endl;
-								string strToken;
-			//					inputfilestream >> strToken;
-			//					cout << "strToken = " << strToken << endl;
-								_distControl->SetInitMethod(DCIM_READ_FROM_FILE, sstr);
+								inputfilestream >> strVal >> nVal;
+								nMethod = DCIM_READ_FROM_FILE;
 							}
 							else
-							{
-								cout << "DistControl: Wrong statements, expected 'startconfig|values|file' ! Programm exit..." << endl;
-								exit(-1);
-							}
+								nMethod = DCIM_UNKNOWN;
+							_distControl->SetInitMethod(nMethod, dVal1, dVal2, strVal, nVal);
 						}
 			         // <-- DISTANCE_CONTROL
 

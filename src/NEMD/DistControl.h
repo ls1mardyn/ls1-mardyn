@@ -22,6 +22,8 @@ class Domain;
 class ParticleContainer;
 class DomainDecompBase;
 
+#define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
+
 enum DistControlUpdateMethods
 {
 	DCUM_UNKNOWN = 0,
@@ -63,8 +65,8 @@ public:
     unsigned int GetWriteFreqProfiles() {return _nWriteFreqProfiles;}
 
     // set update/init method
-    void SetUpdateMethod(const std::string& strMethod, const std::stringstream& sstr);
-    void SetInitMethod(const int& nMethod, const std::stringstream& sstr) {_nMethodInit = nMethod; _sstrInit << sstr.rdbuf();}
+    void SetUpdateMethod(const int& nMethod, const unsigned short& nVal1, const unsigned short& nVal2, const unsigned short& nVal3, const double& dVal);
+    void SetInitMethod(const int& nMethod, const double& dVal1, const double& dVal2, std::string strVal, const unsigned long& nVal);
     int GetInitMethod() {return _nMethodInit;}
 
     void Init(ParticleContainer* particleContainer);
@@ -97,12 +99,20 @@ private:
 	void InitDataStructures();
 
 	// processing profiles
+	void SmoothProfile(double* dData, double* dSmoothData, const unsigned long& nNumVals, const unsigned int& nNeighbourVals);
 	void SmoothProfiles(const unsigned int& nNeighbourVals);
+	void DerivateProfile(double* dDataX, double* dDataY, double* dDerivDataY, const unsigned long& nNumVals, const unsigned int& nNeighbourVals);
 	void DerivateProfiles(const unsigned int& nNeighbourVals);
+
 
 private:
     double _dInterfaceMidLeft;
     double _dInterfaceMidRight;
+
+    unsigned short _nNumComponents;
+    unsigned short _nTargetCompID;
+	unsigned long _nNumValuesScalar;
+	unsigned long* _nOffsets;
 
     unsigned long* _nNumMoleculesLocal;
     unsigned long* _nNumMoleculesGlobal;
@@ -128,8 +138,7 @@ private:
 	unsigned short _nNeighbourValsSmooth;
 	unsigned short _nNeighbourValsDerivate;
 
-    int _nMethodInit;
-    std::stringstream _sstrInit;
+	int _nMethodInit;
 	std::string _strFilenameInit;
 	unsigned long _nRestartTimestep;
 
