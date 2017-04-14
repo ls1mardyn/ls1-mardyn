@@ -10,6 +10,10 @@
 
 #include <string>
 #include <cstddef>
+#include <limits>
+
+// write out data in scientific format with max. number of digits
+#define FORMAT_SCI_MAX_DIGITS std::setw(24) << std::scientific << std::setprecision(std::numeric_limits<double>::digits10)
 
 /**
  * Check if a file exists.
