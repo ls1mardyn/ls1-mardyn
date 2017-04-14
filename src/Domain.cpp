@@ -14,6 +14,7 @@
 #include "Simulation.h"
 #include "ensemble/EnsembleBase.h"
 
+#include "utils/FileUtils.h"
 #include "utils/Logger.h"
 using Log::global_log;
 
@@ -467,8 +468,10 @@ void Domain::writeCheckpointHeader(string filename,
 		if(0 == this->_localRank) {
 			ofstream checkpointfilestream(filename.c_str());
 			checkpointfilestream << "mardyn trunk " << CHECKPOINT_FILE_VERSION;
-			checkpointfilestream << "\n";
-			checkpointfilestream << "currentTime\t"  << currentTime << "\n"; //edited by Michaela Heier
+			checkpointfilestream << "\n";  // store default format flags
+			ios::fmtflags f( checkpointfilestream.flags() );
+			checkpointfilestream << "currentTime\t"  << FORMAT_SCI_MAX_DIGITS << currentTime << "\n"; //edited by Michaela Heier
+			checkpointfilestream.flags(f);  // restore default format flags
 			checkpointfilestream << " Length\t" << setprecision(9) << _globalLength[0] << " " << _globalLength[1] << " " << _globalLength[2] << "\n";
 			if(this->_componentwiseThermostat)
 			{
