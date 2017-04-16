@@ -21,6 +21,7 @@ TEST_SUITE_REGISTRATION(VCP1CLJWRTest);
 
 
 VCP1CLJWRTest::VCP1CLJWRTest() {
+#ifdef MARDYN_WR
 	test_log->info() << "Testing VCP1CLJWR cell processor against: "
 #if VCP_VEC_TYPE==VCP_NOVEC
 	<< "VectorizedCellProcessor with no intrinsics." << std::endl;
@@ -32,12 +33,14 @@ VCP1CLJWRTest::VCP1CLJWRTest() {
 	<< "VectorizedCellProcessor with AVX2 intrinsics." << std::endl;
 #endif
 	;
+#endif /* MARDYN_WR */
 }
 
 VCP1CLJWRTest::~VCP1CLJWRTest() {
 }
 
 void VCP1CLJWRTest::testForcePotentialCalculationU0() {
+#ifdef MARDYN_WR
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -78,9 +81,11 @@ void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 	ASSERT_DOUBLES_EQUAL(96, _domain->getLocalVirial(), 1e-8);
 
 	delete container;
+#endif /* MARDYN_WR */
 }
 
 void VCP1CLJWRTest::testForcePotentialCalculationF0() {
+#ifdef MARDYN_WR
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
@@ -117,10 +122,12 @@ void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-6);
 
 	delete container;
+#endif /* MARDYN_WR */
 }
 
 // free function
 void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA& fullSoA) {
+#ifdef MARDYN_WR
 
 //	for (int i = 0; i < numMols; ++i) {
 ////		FullMolecule m = FullMolecule(cell_wr.moleculesAtConst(i));
@@ -189,9 +196,11 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 		fullSoA.ljc_V_yBegin()[ind] = 0.0;
 		fullSoA.ljc_V_zBegin()[ind] = 0.0;
 	}
+#endif /* MARDYN_WR */
 }
 
 void VCP1CLJWRTest::testProcessCell() {
+#ifdef MARDYN_WR
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
 	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
@@ -247,9 +256,11 @@ void VCP1CLJWRTest::testProcessCell() {
 	}
 
 	delete container;
+#endif /* MARDYN_WR */
 }
 
 void VCP1CLJWRTest::testProcessCellPair() {
+#ifdef MARDYN_WR
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
@@ -324,5 +335,5 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	}
 
 	delete container;
-
+#endif /* MARDYN_WR */
 }
