@@ -33,10 +33,8 @@ public:
 	T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
 
 	size_t dimensionToOffset(int i) const {
-		mardyn_assert(i >= 0);
-		mardyn_assert(i < 3);
-		static size_t rets[3] = {0 * _numEntriesPerArray, 1 * _numEntriesPerArray, 2 * _numEntriesPerArray};
-		return rets[i];
+		mardyn_assert(i >= 0 and i < 3);
+		return i * _numEntriesPerArray;
 	}
 
 	T& linearCrossAccess(size_t i) { mardyn_assert(i < 3*_numEntriesPerArray); return this->_p[i];}
