@@ -16,7 +16,8 @@ class VCP1CLJWRTest : public utils::TestWithSimulationSetup {
 
 	TEST_METHOD(testForcePotentialCalculationU0);
 	TEST_METHOD(testForcePotentialCalculationF0);
-	TEST_METHOD(testLennardJonesVectorization);
+	TEST_METHOD(testProcessCell);
+	TEST_METHOD(testProcessCellPair);
 
 	TEST_SUITE_END();
 
@@ -48,11 +49,18 @@ public:
 
 	/**
 	 * Run first the Legacy- and then the VectorizedCellProcessor on the same
-	 * input file. Then verify all forces and torques on each molecule, as well as
-	 * the potential and virial.
-	 * Input file contains only multi-centered Lennard-Jones components.
+	 * input file. Then verify all forces and the potential computed on the first cell.
+	 * Input file contains only single-centered Lennard-Jones components.
 	 */
-	void testLennardJonesVectorization();
+	void testProcessCell();
+
+	/**
+	 * Run first the Legacy- and then the VectorizedCellProcessor on the same
+	 * input file. Then verify all forces and the potential computed on the first cell.
+	 * Input file contains only single-centered Lennard-Jones components.
+	 */
+	void testProcessCellPair();
+
 
 };
 

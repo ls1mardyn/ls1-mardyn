@@ -191,7 +191,7 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 	}
 }
 
-void VCP1CLJWRTest::testLennardJonesVectorization() {
+void VCP1CLJWRTest::testProcessCell() {
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
 	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
@@ -232,10 +232,6 @@ void VCP1CLJWRTest::testLennardJonesVectorization() {
 
 	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, 1.0e-17);
 	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, 1.0e-17);
-	test_log->info() << "WR computed Upot :" << WR_Upot << std::endl;
-	test_log->info() << "WR computed Virial :" << WR_Virial << std::endl;
-	test_log->info() << "num Molecules " << cell_wr.getMoleculeCount() << std::endl;
-
 
 	size_t numMolecules = cell_wr.getMoleculeCount();
 	for (size_t i = 0; i < numMolecules; ++i) {
@@ -245,6 +241,83 @@ void VCP1CLJWRTest::testLennardJonesVectorization() {
 		double full_f_x = full_SoA._centers_f.x(i);
 		double full_f_y = full_SoA._centers_f.y(i);
 		double full_f_z = full_SoA._centers_f.z(i);
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
+	}
+
+	delete container;
+}
+
+void VCP1CLJWRTest::testProcessCellPair() {
+	// copy-paste cause I'm lazy and have no particular time for unit tests.
+	double ScenarioCutoff = 35.0;
+	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int d = 0; d < 3; ++d) {
+			m->setv(d, 0.0);
+		}
+	}
+
+	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
+
+	VCP1CLJ_WR vcp_WR( *_domain,  ScenarioCutoff, ScenarioCutoff);
+	vcp_WR.setDtInv2m(1.0);
+	VectorizedCellProcessor vcp_full(*_domain,  ScenarioCutoff, ScenarioCutoff);
+
+	// get an inner cell
+	double innerPoint[3] = {0.1, 0.1, 0.1};
+	unsigned long firstCellIndex = linkedCells->getCellIndexOfPoint(innerPoint);
+	ParticleCell_WR& cell_wr1 = linkedCells->getCell(firstCellIndex);
+	ParticleCell_WR& cell_wr2 = linkedCells->getCell(firstCellIndex + 1);
+
+
+	CellDataSoA full_SoA1(0,0,0,0,0);
+	CellDataSoA full_SoA2(0,0,0,0,0);
+	VCP1CLJWRTest__initFullCellSoA(cell_wr1, full_SoA1);
+	VCP1CLJWRTest__initFullCellSoA(cell_wr2, full_SoA2);
+
+	vcp_WR.initTraversal();
+	vcp_WR.processCellPair(cell_wr1, cell_wr2);
+	vcp_WR.endTraversal();
+
+
+	double WR_Upot = _domain->getLocalUpot();
+	double WR_Virial = _domain->getLocalVirial();
+
+	vcp_full.initTraversal();
+	const bool CalculateMacroscopic = true;
+	const bool ApplyCutoff = true;
+	vcp_full._calculatePairs<CellPairPolicy_<ApplyCutoff>, CalculateMacroscopic, MaskGatherC>(full_SoA2, full_SoA1);
+	vcp_full.endTraversal();
+
+	double full_Upot = _domain->getLocalUpot();
+	double full_Virial = _domain->getLocalVirial();
+
+	ASSERT_DOUBLES_EQUAL(full_Upot, WR_Upot, 1.0e-17);
+	ASSERT_DOUBLES_EQUAL(full_Virial, WR_Virial, 1.0e-17);
+
+	size_t numMolecules1 = cell_wr1.getMoleculeCount();
+	for (size_t i = 0; i < numMolecules1; ++i) {
+		double WR_f_x = cell_wr1.moleculesAt(i).F(0);
+		double WR_f_y = cell_wr1.moleculesAt(i).F(1);
+		double WR_f_z = cell_wr1.moleculesAt(i).F(2);
+		double full_f_x = full_SoA1._centers_f.x(i);
+		double full_f_y = full_SoA1._centers_f.y(i);
+		double full_f_z = full_SoA1._centers_f.z(i);
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
+	}
+
+	size_t numMolecules2 = cell_wr2.getMoleculeCount();
+	for (size_t i = 0; i < numMolecules2; ++i) {
+		double WR_f_x = cell_wr2.moleculesAt(i).F(0);
+		double WR_f_y = cell_wr2.moleculesAt(i).F(1);
+		double WR_f_z = cell_wr2.moleculesAt(i).F(2);
+		double full_f_x = full_SoA2._centers_f.x(i);
+		double full_f_y = full_SoA2._centers_f.y(i);
+		double full_f_z = full_SoA2._centers_f.z(i);
 		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
 		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
