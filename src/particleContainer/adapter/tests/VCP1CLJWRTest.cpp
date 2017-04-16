@@ -182,22 +182,25 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 		fullSoA._ljc_id[ind] = 0;
 
 		// clear FM
-		fullSoA.ljc_f_xBegin()[ind] = M.r(0);
-		fullSoA.ljc_f_yBegin()[ind] = M.r(1);
-		fullSoA.ljc_f_zBegin()[ind] = M.r(2);
-		fullSoA.ljc_V_xBegin()[ind] = M.r(0);
-		fullSoA.ljc_V_yBegin()[ind] = M.r(1);
-		fullSoA.ljc_V_zBegin()[ind] = M.r(2);
+		fullSoA.ljc_f_xBegin()[ind] = 0.0;
+		fullSoA.ljc_f_yBegin()[ind] = 0.0;
+		fullSoA.ljc_f_zBegin()[ind] = 0.0;
+		fullSoA.ljc_V_xBegin()[ind] = 0.0;
+		fullSoA.ljc_V_yBegin()[ind] = 0.0;
+		fullSoA.ljc_V_zBegin()[ind] = 0.0;
 	}
 }
 
 void VCP1CLJWRTest::testLennardJonesVectorization() {
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
-	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
+	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
+		for (int d = 0; d < 3; ++d) {
+			m->setv(d, 0.0);
+		}
+	}
 
-	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalUpot(), 1e-8);
-	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
+	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
 
 	VCP1CLJ_WR vcp_WR( *_domain,  ScenarioCutoff, ScenarioCutoff);
 	vcp_WR.setDtInv2m(1.0);
@@ -213,6 +216,7 @@ void VCP1CLJWRTest::testLennardJonesVectorization() {
 	vcp_WR.initTraversal();
 	vcp_WR.processCell(cell_wr);
 	vcp_WR.endTraversal();
+
 
 	double WR_Upot = _domain->getLocalUpot();
 	double WR_Virial = _domain->getLocalVirial();
@@ -233,18 +237,18 @@ void VCP1CLJWRTest::testLennardJonesVectorization() {
 	test_log->info() << "num Molecules " << cell_wr.getMoleculeCount() << std::endl;
 
 
-#if 0
-	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
-		for (int i = 0; i < 3; i++) {
-			std::stringstream str;
-			str << "Molecule id=" << m->id() << " index i="<< i << " F[i]=" << m->F(i) << std::endl;
-			ASSERT_DOUBLES_EQUAL_MSG(str.str(), 0.0, m->F(i), 1e-7);
-		}
+	size_t numMolecules = cell_wr.getMoleculeCount();
+	for (size_t i = 0; i < numMolecules; ++i) {
+		double WR_f_x = cell_wr.moleculesAt(i).F(0);
+		double WR_f_y = cell_wr.moleculesAt(i).F(1);
+		double WR_f_z = cell_wr.moleculesAt(i).F(2);
+		double full_f_x = full_SoA._centers_f.x(i);
+		double full_f_y = full_SoA._centers_f.y(i);
+		double full_f_z = full_SoA._centers_f.z(i);
+		ASSERT_DOUBLES_EQUAL_MSG("force x should have been equal.", full_f_x, WR_f_x, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force y should have been equal.", full_f_y, WR_f_y, 1.0e-20);
+		ASSERT_DOUBLES_EQUAL_MSG("force z should have been equal.", full_f_z, WR_f_z, 1.0e-20);
 	}
-
-	ASSERT_DOUBLES_EQUAL(-4, _domain->getLocalUpot(), 1e-8);
-	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-6);
-#endif
 
 	delete container;
 

@@ -266,7 +266,6 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 
 	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2._mol_num);
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._mol_num);//this is ceil _ljc_num, VCP_VEC_SIZE
-	size_t i_ljc_idx = 0;
 
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
 	not implemented yet
@@ -340,9 +339,9 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 			}
 		}
 
-		hSum_Add_Store(soa1_mol_vel_x + i_ljc_idx, sum_fx1 * dtInv2m);
-		hSum_Add_Store(soa1_mol_vel_y + i_ljc_idx, sum_fy1 * dtInv2m);
-		hSum_Add_Store(soa1_mol_vel_z + i_ljc_idx, sum_fz1 * dtInv2m);
+		hSum_Add_Store(soa1_mol_vel_x + i, sum_fx1 * dtInv2m);
+		hSum_Add_Store(soa1_mol_vel_y + i, sum_fy1 * dtInv2m);
+		hSum_Add_Store(soa1_mol_vel_z + i, sum_fz1 * dtInv2m);
 	}
 
 	hSum_Add_Store(my_threadData._upot6ljV, sum_upot6lj);
