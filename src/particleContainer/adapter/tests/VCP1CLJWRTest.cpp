@@ -42,7 +42,7 @@ VCP1CLJWRTest::~VCP1CLJWRTest() {
 void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 #ifdef MARDYN_WR
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VCP1CLJWRTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -87,7 +87,7 @@ void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 #ifdef MARDYN_WR
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VCP1CLJWRTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -201,6 +201,13 @@ void VCP1CLJWRTest__initFullCellSoA(const ParticleCell_WR & cell_wr, CellDataSoA
 
 void VCP1CLJWRTest::testProcessCell() {
 #ifdef MARDYN_WR
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "VCP1CLJWRTest::testProcessCell()"
+				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
+
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);
 	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
@@ -261,6 +268,13 @@ void VCP1CLJWRTest::testProcessCell() {
 
 void VCP1CLJWRTest::testProcessCellPair() {
 #ifdef MARDYN_WR
+	if (_domainDecomposition->getNumProcs() != 1) {
+		test_log->info() << "VCP1CLJWRTest::testProcessCellPair()"
+				<< " not executed (rerun with only 1 Process!)" << std::endl;
+		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
+		return;
+	}
+
 	// copy-paste cause I'm lazy and have no particular time for unit tests.
 	double ScenarioCutoff = 35.0;
 	ParticleContainer* container = initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationLennardJones1CLJ.inp", ScenarioCutoff);

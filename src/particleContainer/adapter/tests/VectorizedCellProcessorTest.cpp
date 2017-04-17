@@ -36,7 +36,7 @@ VectorizedCellProcessorTest::~VectorizedCellProcessorTest() {
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VectorizedCellProcessorTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -79,7 +79,7 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VectorizedCellProcessorTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -118,7 +118,7 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 
 void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VectorizedCellProcessorTest::testLennardJonesVectorization()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -199,7 +199,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* filename, double ScenarioCutoff) {
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info()
-				<< "DomainDecompositionTest::testExchangeMolecules1Proc()"
+				<< "VectorizedCellProcessorTest::testElectrostaticVectorization()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs()
 				<< std::endl;
