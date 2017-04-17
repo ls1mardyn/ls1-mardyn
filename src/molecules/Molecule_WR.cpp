@@ -114,7 +114,6 @@ void Molecule_WR::setid(unsigned long id) {
 
 std::string Molecule_WR::getWriteFormat(){
 	// TODO?
-	mardyn_assert(false);
 	return std::string("ICRV");
 }
 

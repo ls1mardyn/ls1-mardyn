@@ -24,7 +24,9 @@ public:
 		computeVelocities(moleculeContainer, domain);
 	}
 
-	void eventNewTimestep(ParticleContainer* moleculeContainer, Domain* domain);
+	void eventNewTimestep(ParticleContainer* moleculeContainer, Domain* domain) {
+		computePositions(moleculeContainer, domain);
+	}
 
 	void accelerateUniformly(
 			ParticleContainer* molCont,
@@ -38,7 +40,7 @@ public:
 private:
 	
 	void computePositions(ParticleContainer* molCont, Domain* dom);
-	void computeVelocities(ParticleContainer* molCont, Domain* dom) {}
+	void computeVelocities(ParticleContainer* molCont, Domain* dom);
 
 };
 

@@ -32,11 +32,51 @@ void ExplicitEuler_WR::readXML(XMLfileUnits & xmlconfig) {
 	mardyn_assert(_timestepLength > 0);
 }
 
-void ExplicitEuler_WR::eventNewTimestep(ParticleContainer* moleculeContainer,
-		Domain* domain) {
-	computePositions(moleculeContainer, domain);
-}
-
 void ExplicitEuler_WR::computePositions(ParticleContainer* molCont, Domain* dom) {
 
+}
+
+void ExplicitEuler_WR::computeVelocities(ParticleContainer* molCont, Domain* dom) {
+	// TODO: I hate this piece of code. It will be rewritten from within the Leapfrog integrator ASAP.
+	map<int, unsigned long> N;
+	map<int, unsigned long> rotDOF;
+	map<int, double> summv2;
+	map<int, double> sumIw2;
+	{
+		#if defined(_OPENMP)
+		#pragma omp parallel
+		#endif
+		{
+			unsigned long Ngt_l = 0;
+			unsigned long rotDOFgt_l = 0;
+			double summv2gt_l = 0.0;
+			double sumIw2gt_l = 0.0;
+
+			const ParticleIterator begin = molCont->iteratorBegin();
+			const ParticleIterator end = molCont->iteratorEnd();
+
+			for (ParticleIterator i = begin; i != end; ++i) {
+				double dummy;
+				i->upd_postF(dummy, summv2gt_l, sumIw2gt_l);
+				mardyn_assert(summv2gt_l >= 0.0);
+				Ngt_l++;
+				rotDOFgt_l += i->component()->getRotationalDegreesOfFreedom();
+			}
+
+			#if defined(_OPENMP)
+			#pragma omp critical (thermostat)
+			#endif
+			{
+				N[0] += Ngt_l;
+				rotDOF[0] += rotDOFgt_l;
+				summv2[0] += summv2gt_l;
+				sumIw2[0] += sumIw2gt_l;
+			}
+		} // end pragma omp parallel
+	}
+	for (map<int, double>::iterator thermit = summv2.begin(); thermit != summv2.end(); thermit++) {
+		dom->setLocalSummv2(thermit->second, thermit->first);
+		dom->setLocalSumIw2(sumIw2[thermit->first], thermit->first);
+		dom->setLocalNrotDOF(thermit->first, N[thermit->first], rotDOF[thermit->first]);
+	}
 }

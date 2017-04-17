@@ -340,9 +340,18 @@ public:
 			setr(d,r(d) + dt * v(d));
 		}
 	}
-	void upd_postF(double dt_halve, double& summv2, double& sumIw2) {}
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {}
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {}
+	void upd_postF(double /*dt_halve*/, double& summv2, double& sumIw2) {
+		summv2 += _component->m() * v2();
+	}
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {
+		summv2 += _component->m() * v2();
+	}
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {
+		double vcx = _v[0] - offx;
+		double vcy = _v[1] - offy;
+		double vcz = _v[2] - offz;
+		summv2 += _component->m() * (vcx*vcx + vcy*vcy + vcz*vcz);
+	}
 	static std::string getWriteFormat();
 	void write(std::ostream& ostrm) const {}
 	void writeBinary(std::ostream& ostrm) const {}

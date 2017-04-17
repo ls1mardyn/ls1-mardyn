@@ -31,9 +31,11 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
+#include "particleContainer/adapter/VCP1CLJWR.h"
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+#include "integrators/ExplicitEulerWR.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -128,6 +130,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("integrator")) {
 		string integratorType;
 		xmlconfig.getNodeValue("@type", integratorType);
+#ifndef MARDYN_WR
 		global_log->info() << "Integrator type: " << integratorType << endl;
 		if(integratorType == "Leapfrog") {
 			_integrator = new Leapfrog();
@@ -135,6 +138,10 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
 			Simulation::exit(1);
 		}
+#else
+		global_log->info() << "Integrator type: Explicit Euler (WR mode only)" << endl;
+		_integrator = new ExplicitEuler_WR();
+#endif
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
 		xmlconfig.changecurrentnode("..");
@@ -644,6 +651,7 @@ void Simulation::prepare_start() {
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else*/
+#ifndef MARDYN_WR
 	if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
@@ -655,6 +663,10 @@ void Simulation::prepare_start() {
 		global_log->info() << "Using vectorized cell processor." << endl;
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
+#else
+	global_log->info() << "Using WR cell processor." << endl;
+	_cellProcessor = new VCP1CLJ_WR( *_domain, _cutoffRadius, _LJCutoffRadius);
+#endif /* MARDYN_WR */
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
