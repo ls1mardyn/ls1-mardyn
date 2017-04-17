@@ -20,7 +20,7 @@
 #include <algorithm>
 
 VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadius) :
-	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInv2m(0.0), _upot6lj(0.0), _virial(0.0) {
+	CellProcessor(cutoffRadius, LJcutoffRadius), _domain(domain), _eps24(), _sig2(), _shift6(), _dtInvm(0.0), _upot6lj(0.0), _virial(0.0) {
 #if VCP_VEC_TYPE==VCP_NOVEC
 	global_log->info() << "VCP1CLJ_WR: using no intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_SSE3
@@ -46,8 +46,8 @@ VCP1CLJ_WR::VCP1CLJ_WR(Domain& domain, double cutoffRadius, double LJcutoffRadiu
 	_shift6 = static_cast<vcp_real_calc>(shi);
 
 	if (global_simulation != nullptr and global_simulation->getIntegrator() != nullptr) {
-		double dt_halve = .5 * global_simulation->getIntegrator()->getTimestepLength();
-		double dtInv2m = dt_halve / componentZero.m();
+		double dt = global_simulation->getIntegrator()->getTimestepLength();
+		_dtInvm = dt / componentZero.m();
 	} else {
 		global_log->info() << "VCP1CLJWR: initialize dtInv2m via setter method necessary." << endl;
 	}
@@ -79,7 +79,7 @@ VCP1CLJ_WR::~VCP1CLJ_WR() {
 }
 
 void VCP1CLJ_WR::initTraversal() {
-	mardyn_assert(_dtInv2m != static_cast<vcp_real_calc>(0.0));
+	mardyn_assert(_dtInvm != static_cast<vcp_real_calc>(0.0));
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -262,7 +262,7 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 	const RealCalcVec eps24 = RealCalcVec::set1(_eps24);
 	const RealCalcVec sig2 = RealCalcVec::set1(_sig2);
 	const RealCalcVec shift6 = RealCalcVec::set1(_shift6);
-	const RealCalcVec dtInv2m = RealCalcVec::set1(_dtInv2m);
+	const RealCalcVec dtInv2m = RealCalcVec::set1(_dtInvm);
 
 	const size_t end_ljc_j = vcp_floor_to_vec_size(soa2._mol_num);
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._mol_num);//this is ceil _ljc_num, VCP_VEC_SIZE

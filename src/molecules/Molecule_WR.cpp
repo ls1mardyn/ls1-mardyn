@@ -124,3 +124,4 @@ std::ostream& operator<<( std::ostream& os, const Molecule_WR& m ) {
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
 	return os;
 }
+

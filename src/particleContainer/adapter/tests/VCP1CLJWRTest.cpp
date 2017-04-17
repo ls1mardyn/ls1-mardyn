@@ -62,7 +62,7 @@ void VCP1CLJWRTest::testForcePotentialCalculationU0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
 	VCP1CLJ_WR cellProcessor( *_domain, 1.1, 1.1);
-	cellProcessor.setDtInv2m(1.0);
+	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
 	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
@@ -103,7 +103,7 @@ void VCP1CLJWRTest::testForcePotentialCalculationF0() {
 	ASSERT_DOUBLES_EQUAL(0.0, _domain->getLocalVirial(), 1e-8);
 
 	VCP1CLJ_WR cellProcessor( *_domain,  1.3, 1.3);
-	cellProcessor.setDtInv2m(1.0);
+	cellProcessor.setDtInvm(1.0);
 	container->traverseCells(cellProcessor);
 
 	for (ParticleIterator m = container->iteratorBegin(); m != container->iteratorEnd(); ++m) {
@@ -219,7 +219,7 @@ void VCP1CLJWRTest::testProcessCell() {
 	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
 
 	VCP1CLJ_WR vcp_WR( *_domain,  ScenarioCutoff, ScenarioCutoff);
-	vcp_WR.setDtInv2m(1.0);
+	vcp_WR.setDtInvm(1.0);
 	VectorizedCellProcessor vcp_full(*_domain,  ScenarioCutoff, ScenarioCutoff);
 
 	// get an inner cell
@@ -287,7 +287,7 @@ void VCP1CLJWRTest::testProcessCellPair() {
 	LinkedCells * linkedCells = dynamic_cast<LinkedCells*>(container);
 
 	VCP1CLJ_WR vcp_WR( *_domain,  ScenarioCutoff, ScenarioCutoff);
-	vcp_WR.setDtInv2m(1.0);
+	vcp_WR.setDtInvm(1.0);
 	VectorizedCellProcessor vcp_full(*_domain,  ScenarioCutoff, ScenarioCutoff);
 
 	// get an inner cell

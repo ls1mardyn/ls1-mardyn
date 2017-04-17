@@ -64,8 +64,8 @@ public:
 	 */
 	void endTraversal();
 
-	void setDtInv2m(double dtInv2m) {
-		_dtInv2m = static_cast<vcp_real_calc>(dtInv2m);
+	void setDtInvm(double dtInvm) {
+		_dtInvm = static_cast<vcp_real_calc>(dtInvm);
 	}
 
 private:
@@ -75,7 +75,7 @@ private:
 	Domain & _domain;
 
 
-	vcp_real_calc _eps24, _sig2, _shift6, _dtInv2m;
+	vcp_real_calc _eps24, _sig2, _shift6, _dtInvm;
 
 	/**
 	 * \brief Sum of all LJ potentials.
