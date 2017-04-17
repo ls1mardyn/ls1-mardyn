@@ -50,6 +50,18 @@ public:
 		}
 	}
 
+	// copy constructor should always create an AOS molecule?
+	Molecule_WR(const Molecule_WR& other) {
+		_state = STORAGE_AOS;
+		for (int d = 0; d < 3; ++d) {
+			setr(d, other.r(d));
+			setv(d, other.v(d));
+		}
+		_id = other.id();
+		_soa = nullptr;
+		_soa_index = static_cast<size_t>(-1);
+	}
+
 	Molecule_WR(CellDataSoA_WR * soa, size_t index) {
 		_state = STORAGE_SOA;
 		_soa = soa;

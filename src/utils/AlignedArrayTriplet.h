@@ -104,8 +104,9 @@ public:
 				// Yes
 				AlignedArray<T> backupCopy(*this);
 				resize_zero_shrink(oldNumElements + 1);
-				size_t oldNumElementsTripled = 3 * oldNumElements;
-				std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled * sizeof(T));
+				std::memcpy(xBegin(), &(backupCopy[0*oldNumElements]), oldNumElements * sizeof(T));
+				std::memcpy(yBegin(), &(backupCopy[1*oldNumElements]), oldNumElements * sizeof(T));
+				std::memcpy(zBegin(), &(backupCopy[2*oldNumElements]), oldNumElements * sizeof(T));
 			}
 		}
 		x(oldNumElements) = v0;
