@@ -33,7 +33,16 @@ void ExplicitEuler_WR::readXML(XMLfileUnits & xmlconfig) {
 }
 
 void ExplicitEuler_WR::computePositions(ParticleContainer* molCont, Domain* dom) {
-
+	#if defined(_OPENMP)
+	#pragma omp parallel
+	#endif
+	{
+		const ParticleIterator begin = molCont->iteratorBegin();
+		const ParticleIterator end = molCont->iteratorEnd();
+		for(auto i = begin; i != end; ++i) {
+			i->ee_upd_preF(_timestepLength);
+		}
+	}
 }
 
 void ExplicitEuler_WR::computeVelocities(ParticleContainer* molCont, Domain* dom) {
@@ -56,8 +65,8 @@ void ExplicitEuler_WR::computeVelocities(ParticleContainer* molCont, Domain* dom
 			const ParticleIterator end = molCont->iteratorEnd();
 
 			for (ParticleIterator i = begin; i != end; ++i) {
-				double dummy;
-				i->upd_postF(dummy, summv2gt_l, sumIw2gt_l);
+				double dummy = 0.0;
+				i->ee_upd_postF(_timestepLength, summv2gt_l);
 				mardyn_assert(summv2gt_l >= 0.0);
 				Ngt_l++;
 				rotDOFgt_l += i->component()->getRotationalDegreesOfFreedom();

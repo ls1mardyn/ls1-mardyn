@@ -113,8 +113,14 @@ void Molecule_WR::setid(unsigned long id) {
 }
 
 std::string Molecule_WR::getWriteFormat(){
-	// TODO?
-	return std::string("ICRV");
+	return std::string("IRV");
+}
+
+void Molecule_WR::write(std::ostream& ostrm) const {
+	ostrm << _id << "\t"
+		  << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
+		  << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
+		  << endl;
 }
 
 std::ostream& operator<<( std::ostream& os, const Molecule_WR& m ) {
@@ -123,4 +129,3 @@ std::ostream& operator<<( std::ostream& os, const Molecule_WR& m ) {
 	os << "v:  (" << m.v(0) << ", " << m.v(1) << ", " << m.v(2) << ")\n" ;
 	return os;
 }
-

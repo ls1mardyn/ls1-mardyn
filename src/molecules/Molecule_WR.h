@@ -333,15 +333,11 @@ public:
 	void Fdipolesub(unsigned int i, double a[]) {}
 	void Fquadrupoleadd(unsigned int i, double a[]) {}
 	void Fquadrupolesub(unsigned int i, double a[]) {}
-	void upd_preF(double dt) {
-		double m = _component->m();
-		mardyn_assert(m > 0);
-		for (unsigned short d = 0; d < 3; ++d) {
-			setr(d,r(d) + dt * v(d));
-		}
+	void upd_preF(double /*dt*/) {
+		mardyn_assert(false);
 	}
-	void upd_postF(double /*dt_halve*/, double& summv2, double& sumIw2) {
-		summv2 += _component->m() * v2();
+	void upd_postF(double /*dt_halve*/, double& /*summv2*/, double& /*sumIw2*/) {
+		mardyn_assert(false);
 	}
 	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {
 		summv2 += _component->m() * v2();
@@ -353,7 +349,7 @@ public:
 		summv2 += _component->m() * (vcx*vcx + vcy*vcy + vcz*vcz);
 	}
 	static std::string getWriteFormat();
-	void write(std::ostream& ostrm) const {}
+	void write(std::ostream& ostrm) const;
 	void writeBinary(std::ostream& ostrm) const {}
 	void clearFM() {}
 	void calcFM() {}
