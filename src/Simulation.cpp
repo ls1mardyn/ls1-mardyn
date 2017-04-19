@@ -1,3 +1,4 @@
+
 #define SIMULATION_SRC
 #include "Simulation.h"
 
@@ -35,7 +36,7 @@
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "integrators/ExplicitEulerWR.h"
+#include "integrators/ExplicitEuler.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -130,18 +131,16 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	if(xmlconfig.changecurrentnode("integrator")) {
 		string integratorType;
 		xmlconfig.getNodeValue("@type", integratorType);
-#ifndef MARDYN_WR
 		global_log->info() << "Integrator type: " << integratorType << endl;
 		if(integratorType == "Leapfrog") {
 			_integrator = new Leapfrog();
+		} else if (integratorType == "ExplicitEuler") {
+			global_log->info() << "Integrator type: Explicit Euler (WR mode only)" << endl;
+			_integrator = new ExplicitEuler();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
 			Simulation::exit(1);
 		}
-#else
-		global_log->info() << "Integrator type: Explicit Euler (WR mode only)" << endl;
-		_integrator = new ExplicitEuler_WR();
-#endif
 		_integrator->readXML(xmlconfig);
 		_integrator->init();
 		xmlconfig.changecurrentnode("..");
@@ -695,13 +694,18 @@ void Simulation::prepare_start() {
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
 	updateParticleContainerAndDecomposition();
+
+#ifndef MARDYN_WR
 	global_log->info() << "Performing initial force calculation" << endl;
 	Timer t;
 	t.start();
 	_moleculeContainer->traverseCells(*_cellProcessor);
 	t.stop();
 	_loopCompTime = t.get_etime();
-	_loopCompTimeSteps = 1;
+	++_loopCompTimeSteps;
+#else
+	global_log->info() << "No initial force calculation needed in WR mode" << endl;
+#endif /* MARDYN_WR */
 
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;

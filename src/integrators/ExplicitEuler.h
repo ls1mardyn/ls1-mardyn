@@ -1,20 +1,20 @@
 /*
- * LeapFrogWR.h
+ * ExplicitEulerWR.h
  *
  *  Created on: Apr 16, 2017
  *      Author: tchipevn
  */
 
-#ifndef SRC_INTEGRATORS_EXPLICITEULERWR_H_
-#define SRC_INTEGRATORS_EXPLICITEULERWR_H_
+#ifndef SRC_INTEGRATORS_EXPLICITEULER_H_
+#define SRC_INTEGRATORS_EXPLICITEULER_H_
 
 #include "Integrator.h"
 
-class ExplicitEuler_WR : public Integrator {
+class ExplicitEuler : public Integrator {
 public:
-	ExplicitEuler_WR() {}
-	ExplicitEuler_WR(double timestepLength);
-	~ExplicitEuler_WR() {}
+	ExplicitEuler() {}
+	ExplicitEuler(double timestepLength);
+	~ExplicitEuler() {}
 
 	void readXML(XMLfileUnits& xmlconfig);
 
@@ -44,4 +44,4 @@ private:
 
 };
 
-#endif /* SRC_INTEGRATORS_EXPLICITEULERWR_H_ */
+#endif /* SRC_INTEGRATORS_EXPLICITEULER_H_ */

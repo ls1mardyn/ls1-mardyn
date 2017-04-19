@@ -25,7 +25,7 @@
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
-#include "integrators/ExplicitEulerWR.h"
+#include "integrators/ExplicitEuler.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -903,7 +903,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 #ifndef MARDYN_WR
 	_integrator = new Leapfrog(timestepLength);
 #else
-	_integrator = new ExplicitEuler_WR(timestepLength);
+	_integrator = new ExplicitEuler(timestepLength);
 #endif
 
 	// test new Decomposition

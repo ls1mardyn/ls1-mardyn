@@ -153,18 +153,20 @@ public:
 	// Needed for WR mode. Placing it here, so that we can
 	// verify the WR code against the non-WR code.
 	void ee_upd_preF(double dt) {
-		double m = component()->m();
-		mardyn_assert(m > 0);
 		for (unsigned short d = 0; d < 3; ++d) {
 			setr(d,r(d) + dt * v(d));
 		}
 	}
 	void ee_upd_postF(double dt, double& summv2) {
+
+		calcFM();
+
 #ifndef MARDYN_WR
 		for (unsigned short d = 0; d < 3; ++d) {
 			setv(d, v(d) + dt * F(d));
 		}
 #endif /*MARDYN_WR */
+
 		summv2 += component()->m() * v2();
 	}
 
