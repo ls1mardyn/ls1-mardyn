@@ -117,9 +117,9 @@ std::string Molecule_WR::getWriteFormat(){
 }
 
 void Molecule_WR::write(std::ostream& ostrm) const {
-	ostrm << _id << "\t"
-		  << _r[0] << " " << _r[1] << " " << _r[2] << "\t"
-		  << _v[0] << " " << _v[1] << " " << _v[2] << "\t"
+	ostrm << id() << "\t"
+		  << r(0) << " " << r(1) << " " << r(2) << "\t"
+		  << v(0) << " " << v(1) << " " << v(2) << "\t"
 		  << endl;
 }
 
