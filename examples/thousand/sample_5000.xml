@@ -4,7 +4,7 @@
   <simulation type="MD" >
     <integrator type="Leapfrog" >
       <!-- MD ODE integrator -->
-      <timestep unit="reduced" >0.01</timestep>
+      <timestep unit="reduced" >0.330696</timestep>
     </integrator>
 
     <run>
@@ -35,7 +35,7 @@
       </components>
 
       <phasespacepoint>
-        <file type="ASCII">sample_1000.inp</file>
+        <file type="ASCII">sample_5000.inp</file>
       </phasespacepoint>
     </ensemble>
 
@@ -68,10 +68,12 @@
         <expression>procselfstatm:size 1048576. /</expression>
         <writefrequency>10</writefrequency>
       </outputplugin>
+	  <!--
       <outputplugin name="CheckpointWriter">
         <writefrequency>10</writefrequency>
-        <outputprefix>simple-lj</outputprefix>
+        <outputprefix>sample-5000</outputprefix>
       </outputplugin>
+	  -->
     </output>
 
   </simulation>
