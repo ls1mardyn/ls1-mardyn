@@ -23,7 +23,7 @@ class MDGenerator;
 #ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);
 #else
-#warning "CheckpointRestartTest disabled in MARDYN_WR mode."
+#pragma message "Compilation Info: CheckpointRestartTest disabled in MARDYN_WR mode."
 #endif
 
 

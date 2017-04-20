@@ -16,7 +16,7 @@
 #ifdef MARDYN_WR
 TEST_SUITE_REGISTRATION(VCP1CLJWRTest);
 #else
-#warning "The unit test for the WR force calculation is not executed in non-WR mode."
+#pragma message "Compilation info: The unit test for the WR force calculation is not executed in non-WR mode."
 #endif
 
 

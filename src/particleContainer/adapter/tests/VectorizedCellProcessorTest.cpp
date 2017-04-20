@@ -16,7 +16,7 @@
 #ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(VectorizedCellProcessorTest);
 #else
-#warning "VectorizedCellProcessorTest disabled in MARDYN_WR mode"
+#pragma message "Compilation info: VectorizedCellProcessorTest disabled in MARDYN_WR mode"
 #endif
 
 VectorizedCellProcessorTest::VectorizedCellProcessorTest() {
