@@ -27,6 +27,7 @@ class CellDataSoA;
  * \author Johannes Heckl
  */
 class VectorizedCellProcessor : public CellProcessor {
+	friend class VCP1CLJWRTest;
 public:
 	typedef std::vector<Component> ComponentList;
 

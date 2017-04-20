@@ -25,6 +25,7 @@
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+#include "integrators/ExplicitEuler.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -899,7 +900,11 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 	//_domain->initFarFieldCorr(_cutoffRadius, _LJCutoffRadius);
 
 	// @todo comment
+#ifndef MARDYN_WR
 	_integrator = new Leapfrog(timestepLength);
+#else
+	_integrator = new ExplicitEuler(timestepLength);
+#endif
 
 	// test new Decomposition
 	_moleculeContainer->update();

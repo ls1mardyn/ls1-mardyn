@@ -273,18 +273,9 @@ public:
 	void setM(double M[3]) { for(int d = 0; d < 3; d++ ) { _M[d] = M[d]; } }
 	void setVi(double Vi[3]) { for(int d = 0; d < 3; d++) { _Vi[d] = Vi[d]; } }
 
-	void scale_v(double s) { for(unsigned short d=0;d<3;++d) _v[d]*=s; }
-	void scale_v(double s, double offx, double offy, double offz);
-	void scale_F(double s) { for(unsigned short d=0;d<3;++d) _F[d]*=s; }
-	void scale_D(double s) { for(unsigned short d=0;d<3;++d) _L[d]*=s; }
-	void scale_M(double s) { for(unsigned short d=0;d<3;++d) _M[d]*=s; }
-
 	void Fadd(const double a[]) { for(unsigned short d=0;d<3;++d) _F[d]+=a[d]; }
-
 	void Madd(const double a[]) { for(unsigned short d=0;d<3;++d) _M[d]+=a[d]; }
-	
 	void Viadd(const double a[]) { for(unsigned short d=0;d<3;++d) _Vi[d]+=a[d]; }
-
 	void vadd(const double ax, const double ay, const double az) {
 		_v[0] += ax; _v[1] += ay; _v[2] += az;
 	}

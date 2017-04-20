@@ -14,12 +14,33 @@
  * and provide a stub at least for compiling Molecule_WR
  */
 
+#include "FullMolecule.h"
+#include "Molecule_WR.h"
+
 #ifndef MARDYN_WR
-	#include "FullMolecule.h"
 	typedef FullMolecule Molecule;
 #else
-	#include "Molecule_WR.h"
 	typedef Molecule_WR Molecule;
 #endif
+
+inline FullMolecule* downcastPointerFull(MoleculeInterface* c) {
+	mardyn_assert(static_cast<FullMolecule*>(c) == dynamic_cast<FullMolecule*>(c));
+	return static_cast<FullMolecule*>(c);
+}
+
+inline FullMolecule& downcastReferenceFull(MoleculeInterface& c) {
+	mardyn_assert(&static_cast<FullMolecule&>(c) == &dynamic_cast<FullMolecule&>(c));
+	return static_cast<FullMolecule&>(c);
+}
+
+inline Molecule_WR* downcastPointerWR(MoleculeInterface* c) {
+	mardyn_assert(static_cast<Molecule_WR*>(c) == dynamic_cast<Molecule_WR*>(c));
+	return static_cast<Molecule_WR*>(c);
+}
+
+inline Molecule_WR& downcastReferenceWR(MoleculeInterface& c) {
+	mardyn_assert(&static_cast<Molecule_WR&>(c) == &dynamic_cast<Molecule_WR&>(c));
+	return static_cast<Molecule_WR&>(c);
+}
 
 #endif /* SRC_MOLECULES_MOLECULE_H_ */

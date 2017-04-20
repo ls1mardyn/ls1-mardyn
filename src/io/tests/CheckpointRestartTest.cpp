@@ -20,7 +20,12 @@ using namespace std;
 
 class MDGenerator;
 
+#ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(CheckpointRestartTest);
+#else
+#pragma message "Compilation Info: CheckpointRestartTest disabled in MARDYN_WR mode."
+#endif
+
 
 CheckpointRestartTest::CheckpointRestartTest() {
 }
@@ -32,7 +37,6 @@ CheckpointRestartTest::~CheckpointRestartTest() {
  * testRemoveMomentum tests if removeMomentum in MDGenerator works properly or not.
  */
 void CheckpointRestartTest::testCheckpointRestart() {
-
 	ParticleContainer* particleContainer
 		= initializeFromFile(ParticleContainerFactory::LinkedCell, "VectorizationMultiComponentMultiPotentials_50_molecules.inp", 1.5);
 

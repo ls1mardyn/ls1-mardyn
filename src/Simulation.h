@@ -275,6 +275,9 @@ public:
 	/** Get pointer to the domain */
 	Domain* getDomain() { return _domain; }
 
+	/** Get pointer to the integrator */
+	Integrator* getIntegrator() {return _integrator; }
+
 	/** Get pointer to the molecule container */
 	ParticleContainer* getMolecules() { return _moleculeContainer; }
 	

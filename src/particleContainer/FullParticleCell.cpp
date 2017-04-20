@@ -1,4 +1,12 @@
+/*
+ * FullParticleCell.cpp
+ *
+ *  Created on: 6 Feb 2017
+ *      Author: tchipevn
+ */
+
 #include "particleContainer/ParticleCell.h"
+#include "particleContainer/FullParticleCell.h"
 #include "molecules/Molecule.h"
 #include "utils/UnorderedVector.h"
 #include "Simulation.h"
@@ -8,20 +16,20 @@
 
 using namespace std;
 
-ParticleCell::ParticleCell() :
+FullParticleCell::FullParticleCell() :
 		_molecules(), _cellDataSoA(0, 0, 0, 0, 0) { }
 
-ParticleCell::~ParticleCell() {
+FullParticleCell::~FullParticleCell() {
 //	if(!isEmpty()) {
 //		deallocateAllParticles();
 //	}
 }
 
-void ParticleCell::deallocateAllParticles() {
+void FullParticleCell::deallocateAllParticles() {
 	_molecules.clear();
 }
 
-bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
+bool FullParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 	bool wasInserted = false;
 
 #ifndef NDEBUG
@@ -48,15 +56,15 @@ bool ParticleCell::addParticle(Molecule& particle, bool checkWhetherDuplicate) {
 	return wasInserted;
 }
 
-bool ParticleCell::isEmpty() const {
+bool FullParticleCell::isEmpty() const {
 	return _molecules.empty();
 }
 
-int ParticleCell::getMoleculeCount() const {
+int FullParticleCell::getMoleculeCount() const {
 	return _molecules.size();
 }
 
-bool ParticleCell::deleteMoleculeByIndex(size_t index) {
+bool FullParticleCell::deleteMoleculeByIndex(size_t index) {
 //	mardyn_assert(index >= 0); - this is always true now
 	mardyn_assert(index < _molecules.size());
 
@@ -66,7 +74,7 @@ bool ParticleCell::deleteMoleculeByIndex(size_t index) {
 	return found;
 }
 
-void ParticleCell::preUpdateLeavingMolecules() {
+void FullParticleCell::preUpdateLeavingMolecules() {
 	_leavingMolecules.clear();
 
 	#ifndef NDEBUG
@@ -92,21 +100,12 @@ void ParticleCell::preUpdateLeavingMolecules() {
 	mardyn_assert(_molecules.size() + _leavingMolecules.size() == size_total); // any molecules lost?
 }
 
-void ParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
-#ifndef NDEBUG
-	ParticleCell* oCellPointer = nullptr;
-	oCellPointer = dynamic_cast<ParticleCell*>(&otherCell);
-	if(oCellPointer == nullptr) {
-		global_log->error() << "wrong type of ParticleCell for call to updateLeavingMoleculesBase" << std::endl;
-		Simulation::exit(1);
-	}
-#endif
-
-	ParticleCell& oCell = dynamic_cast<ParticleCell&>(otherCell);
+void FullParticleCell::updateLeavingMoleculesBase(ParticleCellBase& otherCell) {
+	FullParticleCell& oCell = downcastReferenceFull(otherCell);
 	updateLeavingMolecules(oCell);
 }
 
-void ParticleCell::updateLeavingMolecules(ParticleCell& otherCell){
+void FullParticleCell::updateLeavingMolecules(FullParticleCell& otherCell){
 	for (auto m = otherCell._leavingMolecules.begin(); m != otherCell._leavingMolecules.end(); ++m) { // loop over all indices
 		if (m->inBox(_boxMin, _boxMax)) { // if molecule moves in this cell
 			addParticle(*m);
@@ -114,12 +113,12 @@ void ParticleCell::updateLeavingMolecules(ParticleCell& otherCell){
 	}
 }
 
-void ParticleCell::postUpdateLeavingMolecules(){
+void FullParticleCell::postUpdateLeavingMolecules(){
 	_leavingMolecules.clear();
 }
 
 /*
-std::vector<Molecule>& ParticleCell::filterLeavingMolecules() {
+std::vector<Molecule>& FullParticleCell::filterLeavingMolecules() {
 
 	for (auto it = _molecules.begin(); it != _molecules.end();) {
 		it->setSoA(nullptr);
@@ -139,13 +138,12 @@ std::vector<Molecule>& ParticleCell::filterLeavingMolecules() {
 }
 */
 
-void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
+void FullParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vector<Molecule*> &particlePtrs, bool removeFromContainer) {
 	for (auto particleIter = _molecules.begin(); particleIter != _molecules.end();) {
 		if (particleIter->inBox(lowCorner, highCorner)) {
 			if (not removeFromContainer) {
 				particlePtrs.push_back(&(*particleIter));
-			}
-			else {
+			} else {
 				particlePtrs.push_back(new Molecule(*particleIter));
 				UnorderedVector::fastRemove(_molecules, particleIter);
 				// particleIter already points at next molecule, so continue without incrementing
@@ -156,7 +154,7 @@ void ParticleCell::getRegion(double lowCorner[3], double highCorner[3], std::vec
 	}
 }
 
-void ParticleCell::buildSoACaches() {
+void FullParticleCell::buildSoACaches() {
 
 	// Determine the total number of centers.
 	size_t numMolecules = _molecules.size();
@@ -208,6 +206,6 @@ void ParticleCell::buildSoACaches() {
 	}
 }
 
-void ParticleCell::reserveMoleculeStorage(size_t numMols) {
+void FullParticleCell::reserveMoleculeStorage(size_t numMols) {
 	_molecules.reserve(numMols);
 }

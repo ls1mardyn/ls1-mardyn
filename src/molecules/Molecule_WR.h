@@ -11,12 +11,17 @@
 #include "MoleculeInterface.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 
+#ifdef UNIT_TESTS
+#define DEBUG_FUNCTIONALITY_HACKS
+#endif
+
 class CellDataSoA_WR;
 
 class Molecule_WR : public MoleculeInterface {
+public:
 	enum StorageState {
-		SOA = 0,
-		AOS = 1
+		STORAGE_SOA = 0,
+		STORAGE_AOS = 1
 	};
 
 public:
@@ -26,7 +31,7 @@ public:
         double q0 = 0., double q1 = 0., double q2 = 0., double q3 = 0.,
         double Dx = 0., double Dy = 0., double Dz = 0.
 	) {
-		_state = AOS;
+		_state = STORAGE_AOS;
 		_r[0] = rx;
 		_r[1] = ry;
 		_r[2] = rz;
@@ -36,13 +41,29 @@ public:
 		_id = id;
 		_soa = nullptr;
 
-		if(not _initCalled) {
+		if(component != nullptr) {
+			_component = component;
+			_quaternion = Quaternion(1.0, 0.0, 0.0, 0.0);
+			_initCalled = true;
+		} else if(not _initCalled) {
 			initStaticVars();
 		}
 	}
 
+	// copy constructor should always create an AOS molecule?
+	Molecule_WR(const Molecule_WR& other) {
+		_state = STORAGE_AOS;
+		for (int d = 0; d < 3; ++d) {
+			setr(d, other.r(d));
+			setv(d, other.v(d));
+		}
+		_id = other.id();
+		_soa = nullptr;
+		_soa_index = static_cast<size_t>(-1);
+	}
+
 	Molecule_WR(CellDataSoA_WR * soa, size_t index) {
-		_state = SOA;
+		_state = STORAGE_SOA;
 		_soa = soa;
 		_soa_index = index;
 
@@ -71,12 +92,15 @@ public:
 	}
 
 	double F(unsigned short d) const {
+#ifdef DEBUG_FUNCTIONALITY_HACKS
+		return v(d);
+#else
 		mardyn_assert(false);
 		return 0.0;
+#endif
 	}
 
 	const Quaternion& q() const {
-		mardyn_assert(false);
 		return _quaternion;
 	}
 
@@ -126,7 +150,7 @@ public:
 	void setSoA(CellDataSoABase * const s);
 
 	void setStartIndexSoA_LJ(unsigned i) {
-		mardyn_assert(false);
+		_soa_index = i;
 	}
 	void setStartIndexSoA_C(unsigned i) {
 		mardyn_assert(false);
@@ -198,7 +222,7 @@ public:
 	std::array<double, 3> ljcenter_d_abs(unsigned int i) const {
 		mardyn_assert(i == 0);
 		std::array<double, 3> ret;
-		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
+		ret[0] = r(0); ret[1] = r(1); ret[2] = r(2);
 		return ret;
 	}
 	std::array<double, 3> charge_d_abs(unsigned int i) const {
@@ -234,7 +258,6 @@ public:
 	}
 
 	std::array<double, 3> site_F(unsigned int i) const {
-		mardyn_assert(false);
 		std::array<double, 3> ret;
 		ret[0] = 0.0; ret[1] = 0.0; ret[2] = 0.0;
 		return ret;
@@ -281,34 +304,64 @@ public:
 	void setF(double F[3]) {}
 	void setM(double M[3]) {}
 	void setVi(double Vi[3]) {}
-	void scale_v(double s) {}
-	void scale_F(double s) {}
-	void scale_D(double s) {}
-	void scale_M(double s) {}
 	void Fadd(const double a[]) {}
 	void Madd(const double a[]) {}
 	void Viadd(const double a[]) {}
 	void vadd(const double ax, const double ay, const double az) {}
 	void vsub(const double ax, const double ay, const double az) {}
-	void Fljcenteradd(unsigned int i, double a[]) {}
-	void Fljcentersub(unsigned int i, double a[]) {}
+	void Fljcenteradd(unsigned int i, double a[]) {
+#ifdef DEBUG_FUNCTIONALITY_HACKS
+		assert(i == 0);
+		for(int d = 0; d < 3; ++d)
+			setv(d, v(d) + a[d]);
+#endif
+	}
+	void Fljcentersub(unsigned int i, double a[]) {
+#ifdef DEBUG_FUNCTIONALITY_HACKS
+		assert(i == 0);
+		for(int d = 0; d < 3; ++d)
+			setv(d, v(d) - a[d]);
+#endif
+	}
 	void Fchargeadd(unsigned int i, double a[]) {}
 	void Fchargesub(unsigned int i, double a[]) {}
 	void Fdipoleadd(unsigned int i, double a[]) {}
 	void Fdipolesub(unsigned int i, double a[]) {}
 	void Fquadrupoleadd(unsigned int i, double a[]) {}
 	void Fquadrupolesub(unsigned int i, double a[]) {}
-	void upd_preF(double dt) {}
-	void upd_postF(double dt_halve, double& summv2, double& sumIw2) {}
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {}
-	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {}
+	void upd_preF(double /*dt*/) {
+		mardyn_assert(false);
+	}
+	void upd_postF(double /*dt_halve*/, double& /*summv2*/, double& /*sumIw2*/) {
+		mardyn_assert(false);
+	}
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2) {
+		summv2 += _component->m() * v2();
+	}
+	void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) {
+		double vcx = _v[0] - offx;
+		double vcy = _v[1] - offy;
+		double vcz = _v[2] - offz;
+		summv2 += _component->m() * (vcx*vcx + vcy*vcy + vcz*vcz);
+	}
 	static std::string getWriteFormat();
-	void write(std::ostream& ostrm) const {}
+	void write(std::ostream& ostrm) const;
 	void writeBinary(std::ostream& ostrm) const {}
 	void clearFM() {}
 	void calcFM() {}
 	void check(unsigned long id) {}
 
+	static Component * getStaticWRComponent() {
+		return _component;
+	}
+
+	void setStorageState(StorageState s) {
+		_state = s;
+	}
+
+	StorageState getStorageState() const {
+		return _state;
+	}
 
 private:
 	static void initStaticVars();

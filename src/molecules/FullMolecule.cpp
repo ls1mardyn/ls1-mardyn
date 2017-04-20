@@ -389,12 +389,6 @@ void FullMolecule::calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx
 	sumIw2 += Iw2;
 }
 
-void FullMolecule::scale_v(double s, double offx, double offy, double offz) {
-	this->vsub(offx, offy, offz);
-	this->scale_v(s);
-	this->vadd(offx, offy, offz);
-}
-
 std::string FullMolecule::getWriteFormat(){
 	return std::string("ICRVQD");
 }

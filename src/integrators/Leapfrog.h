@@ -3,6 +3,12 @@
 
 #include "integrators/Integrator.h"
 
+/**
+ *  TODO: unnecessarily complicated and cluttered:
+ *  * remove states, transition*to*, they serve no purpose.
+ *  * reimplement the thermostats, those maps are ugly.
+ */
+
 /** @brief Implementation of the rotational leapfrog integration scheme.
  *
  * This Leapfrog integrator is implemented as a deterministic finite automaton (DFA):
