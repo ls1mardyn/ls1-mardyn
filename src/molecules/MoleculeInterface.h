@@ -122,15 +122,29 @@ public:
 	virtual void setF(double F[3]) = 0;
 	virtual void setM(double M[3]) = 0;
 	virtual void setVi(double Vi[3]) = 0;
-	virtual void scale_v(double s) = 0;
+	void scale_v(double s) {
+		for(int d = 0; d < 3; ++d) {
+			setv(d, v(d) * s);
+		}
+	}
 	void scale_v(double s, double offx, double offy, double offz) {
 		vsub(offx, offy, offz);
 		scale_v(s);
 		vadd(offx, offy, offz);
 	}
-	virtual void scale_F(double s) = 0;
-	virtual void scale_D(double s) = 0;
-	virtual void scale_M(double s) = 0;
+	void scale_F(double s) {
+		double Fscaled[3] = {F(0) * s, F(1) * s, F(2) * s};
+		setF(Fscaled);
+	}
+	void scale_D(double s) {
+		for (int d = 0; d < 3; ++d) {
+			setD(d, D(d) * s);
+		}
+	}
+	void scale_M(double s) {
+		double Mscaled[3] = {M(0) * s, M(1) * s, M(2) * s};
+		setM(Mscaled);
+	}
 	virtual void Fadd(const double a[]) = 0;
 	virtual void Madd(const double a[]) = 0;
 	virtual void Viadd(const double a[]) = 0;
@@ -162,8 +176,9 @@ public:
 		calcFM();
 
 #ifndef MARDYN_WR
+		double dtInvM = dt / component()->m();
 		for (unsigned short d = 0; d < 3; ++d) {
-			setv(d, v(d) + dt * F(d));
+			setv(d, v(d) + dtInvM * F(d));
 		}
 #endif /*MARDYN_WR */
 

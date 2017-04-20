@@ -304,10 +304,6 @@ public:
 	void setF(double F[3]) {}
 	void setM(double M[3]) {}
 	void setVi(double Vi[3]) {}
-	void scale_v(double s) {}
-	void scale_F(double s) {}
-	void scale_D(double s) {}
-	void scale_M(double s) {}
 	void Fadd(const double a[]) {}
 	void Madd(const double a[]) {}
 	void Viadd(const double a[]) {}
