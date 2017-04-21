@@ -268,7 +268,7 @@ inline void VCP1CLJ_WR::_calculatePairs(const CellDataSoA_WR& soa1, const CellDa
 	const size_t end_ljc_j_longloop = vcp_ceil_to_vec_size(soa2._mol_num);//this is ceil _ljc_num, VCP_VEC_SIZE
 
 #if VCP_VEC_TYPE == VCP_VEC_KNC_GATHER or VCP_VEC_TYPE == VCP_VEC_KNL_GATHER
-	not implemented yet
+	#pragma message "TODO: WR Mode is not implemented yet for KNC/KNL."
 #endif
 
 
