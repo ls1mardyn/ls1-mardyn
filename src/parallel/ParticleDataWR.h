@@ -4,6 +4,7 @@
 #include <mpi.h>
 
 #include "molecules/MoleculeForwardDeclaration.h"
+#include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 
 //! @brief class to represent that particle data that is necessary for the exchange between processes
 //! @author Martin Buchholz
@@ -28,8 +29,8 @@ public:
 	static void ParticleDataToMolecule(ParticleDataWR &particleStruct, Molecule &molecule);
 
 	unsigned long id;
-	double r[3];
-	double v[3];
+	vcp_real_calc r[3];
+	vcp_real_calc v[3];
 };
 
 #endif /* ParticleDataWR_H_ */

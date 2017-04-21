@@ -16,9 +16,9 @@ void ParticleDataFull::getMPIType(MPI_Datatype &sendPartType) {
 	ParticleDataFull pdata_dummy;
 
 	//if the following statements are not true, then the 13 double values do not follow one after the other!
-	//mardyn_assert(&(pdata_dummy.r[0]) + 3 == &(pdata_dummy.v[0]));
-	//mardyn_assert(&(pdata_dummy.r[0]) + 6 == &(pdata_dummy.q[0]));
-	//mardyn_assert(&(pdata_dummy.r[0]) + 10 == &(pdata_dummy.D[0]));
+	mardyn_assert(&(pdata_dummy.r[0]) + 3 == &(pdata_dummy.v[0]));
+	mardyn_assert(&(pdata_dummy.r[0]) + 6 == &(pdata_dummy.q[0]));
+	mardyn_assert(&(pdata_dummy.r[0]) + 10 == &(pdata_dummy.D[0]));
 
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
 	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements) );
