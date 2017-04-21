@@ -359,7 +359,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	ParticleData particle_buff[PARTICLE_BUFFER_SIZE];
 	int particle_buff_pos = 0;
 	MPI_Datatype mpi_Particle;
-	ParticleData::setMPIType(mpi_Particle);
+	ParticleData::getMPIType(mpi_Particle);
 
 	int size;
 	MPI_CHECK(MPI_Type_size(mpi_Particle, &size));

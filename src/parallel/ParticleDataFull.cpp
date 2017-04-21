@@ -1,4 +1,4 @@
-#include "parallel/ParticleData.h"
+#include "ParticleDataFull.h"
 
 #include <mpi.h>
 
@@ -8,22 +8,29 @@
 #include "utils/Logger.h"
 
 
-void ParticleData::setMPIType(MPI_Datatype &sendPartType) {
+void ParticleDataFull::getMPIType(MPI_Datatype &sendPartType) {
 	int blocklengths[] = { 1, 1, 13 }; // 1 unsLong value (id), 1 int value (cid), 13 double values (3r, 3v, 4q, 3D)
 	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_INT, MPI_DOUBLE };
 
 	MPI_Aint displacements[3];
-	ParticleData pdata_dummy;
+	ParticleDataFull pdata_dummy;
+
+	//if the following statements are not true, then the 13 double values do not follow one after the other!
+	//mardyn_assert(&(pdata_dummy.r[0]) + 3 == &(pdata_dummy.v[0]));
+	//mardyn_assert(&(pdata_dummy.r[0]) + 6 == &(pdata_dummy.q[0]));
+	//mardyn_assert(&(pdata_dummy.r[0]) + 10 == &(pdata_dummy.D[0]));
+
 #if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
-	MPI_CHECK( MPI_Get_address(&pdata_dummy, displacements) );
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements) );
 	MPI_CHECK( MPI_Get_address(&pdata_dummy.cid, displacements + 1) );
 	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 2) );
 #else
-	MPI_CHECK( MPI_Address(&pdata_dummy, displacements) );
+	MPI_CHECK( MPI_Address(&pdata_dummy.id, displacements) );
 	MPI_CHECK( MPI_Address(&pdata_dummy.cid, displacements + 1) );
 	MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements + 2) );
 #endif
-	MPI_Aint base = displacements[0];
+	MPI_Aint base;
+	MPI_CHECK( MPI_Get_address(&pdata_dummy, &base) );
 	for (int i = 0; i < 3; i++)
 		displacements[i] -= base;
 
@@ -35,7 +42,7 @@ MPI_CHECK( MPI_Type_struct(3, blocklengths, displacements, types, &sendPartType)
 	MPI_CHECK( MPI_Type_commit(&sendPartType) );
 }
 
-void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule &molecule) {
+void ParticleDataFull::MoleculeToParticleData(ParticleDataFull &particleStruct, Molecule &molecule) {
 	particleStruct.id = molecule.id();
 	particleStruct.cid = molecule.componentid();
 	particleStruct.r[0] = molecule.r(0);
@@ -53,7 +60,7 @@ void ParticleData::MoleculeToParticleData(ParticleData &particleStruct, Molecule
 	particleStruct.D[2] = molecule.D(2);
 }
 
-void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule &molecule) {
+void ParticleDataFull::ParticleDataToMolecule(ParticleDataFull &particleStruct, Molecule &molecule) {
 	Component* component = _simulation.getEnsemble()->getComponent(particleStruct.cid);
 	molecule = Molecule(particleStruct.id, component,
 						particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
@@ -62,15 +69,3 @@ void ParticleData::ParticleDataToMolecule(ParticleData &particleStruct, Molecule
 						particleStruct.D[0], particleStruct.D[1], particleStruct.D[2]
 	);
 }
-
-#ifndef NDEBUG
-ParticleData::ParticleData() : id(0), cid(-1) {
-	for (int i = 0; i < 3; i++ ) {
-		r[i] = 0.0;
-		v[i] = 0.0;
-		D[i] = 0.0;
-		q[i] = 0.0;
-	}
-	q[3] = 0.0;
-}
-#endif

@@ -1,0 +1,59 @@
+#include "ParticleDataWR.h"
+
+#include <mpi.h>
+
+#include "ensemble/EnsembleBase.h"
+#include "molecules/Molecule.h"
+#include "Simulation.h"
+#include "utils/Logger.h"
+
+
+void ParticleDataWR::getMPIType(MPI_Datatype &sendPartType) {
+	int blocklengths[] = { 1, 6 }; // 1 unsLong value (id), 6 double values (3r, 3v)
+
+	MPI_Datatype types[] = { MPI_UNSIGNED_LONG, MPI_DOUBLE };
+
+	MPI_Aint displacements[3];
+	ParticleDataWR pdata_dummy;
+	//if the following statement is not true, then the 6 double values do not follow one after the other.
+	mardyn_assert(&(pdata_dummy.r[0]) + 3 == &(pdata_dummy.v[0]));
+
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.id, displacements) );
+	MPI_CHECK( MPI_Get_address(&pdata_dummy.r[0], displacements + 1) );
+#else
+	MPI_CHECK( MPI_Address(&pdata_dummy.id, displacements) );
+	MPI_CHECK( MPI_Address(&pdata_dummy.r[0], displacements + 1) );
+#endif
+	MPI_Aint base;
+	MPI_CHECK( MPI_Get_address(&pdata_dummy, &base) );
+	for (int i = 0; i < 2; i++)
+		displacements[i] -= base;
+
+#if MPI_VERSION >= 2 && MPI_SUBVERSION >= 0
+	MPI_CHECK( MPI_Type_create_struct(2, blocklengths, displacements, types, &sendPartType) );
+#else
+	MPI_CHECK( MPI_Type_struct(2, blocklengths, displacements, types, &sendPartType) );
+#endif
+	MPI_CHECK( MPI_Type_commit(&sendPartType) );
+}
+
+void ParticleDataWR::MoleculeToParticleData(ParticleDataWR &particleStruct, Molecule &molecule) {
+	particleStruct.id = molecule.id();
+	particleStruct.r[0] = molecule.r(0);
+	particleStruct.r[1] = molecule.r(1);
+	particleStruct.r[2] = molecule.r(2);
+	particleStruct.v[0] = molecule.v(0);
+	particleStruct.v[1] = molecule.v(1);
+	particleStruct.v[2] = molecule.v(2);
+}
+
+void ParticleDataWR::ParticleDataToMolecule(ParticleDataWR &particleStruct, Molecule &molecule) {
+	Component* component = _simulation.getEnsemble()->getComponent(0);
+	molecule = Molecule(particleStruct.id, component,
+						particleStruct.r[0], particleStruct.r[1], particleStruct.r[2],
+						particleStruct.v[0], particleStruct.v[1], particleStruct.v[2],
+						1., 0., 0., 0.,
+						0., 0., 0.
+	);
+}

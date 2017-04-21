@@ -10,8 +10,8 @@
 
 #include "DomainDecompMPIBase.h"
 #include "parallel/CollectiveCommunication.h"
+#include "ParticleDataForwardDeclaration.h"
 
-class ParticleData;
 class KDNode;
 
 

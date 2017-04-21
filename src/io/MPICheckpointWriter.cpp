@@ -247,7 +247,7 @@ void MPICheckpointWriter::doOutput(ParticleContainer* particleContainer, DomainD
 		                    << "\tstarting index=" << startidx << " numParticles=" << numParticles << endl;
 		//
 		MPI_Datatype mpidtParticleM, mpidtParticleD;
-		ParticleData::setMPIType(mpidtParticleM);
+		ParticleData::getMPIType(mpidtParticleM);
 		mpidtParticleD=mpidtParticleM;
 		MPI_Aint mpidtParticleMsize=sizeof(ParticleData);	// !=MPI_Type_size
 		// MPI_Type_get_extent

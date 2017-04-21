@@ -489,7 +489,7 @@ unsigned long MPI_IOReader::readPhaseSpace(
 	//setup the elementary Datatype
 	//it's the same, which is used for sending particles
 	MPI_Datatype mpiParticleData;
-	ParticleData::setMPIType(mpiParticleData);
+	ParticleData::getMPIType(mpiParticleData);
 
 	ret = MPI_Type_size(mpiParticleData, &size);
 	if (ret != MPI_SUCCESS) {
