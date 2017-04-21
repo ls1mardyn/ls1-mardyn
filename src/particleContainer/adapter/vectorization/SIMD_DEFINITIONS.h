@@ -20,6 +20,8 @@
 
 #include "RealCalcVec.h"
 #include "math.h"
+#include "sys/types.h"
+
 
 using namespace vcp;
 
