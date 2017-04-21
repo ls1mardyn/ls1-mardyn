@@ -95,8 +95,8 @@ Simulation::Simulation()
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.),
 	_loopCompTimeSteps(0),
-	_programName(""),
-	_timerProfiler()
+	_timerProfiler(),
+	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
 

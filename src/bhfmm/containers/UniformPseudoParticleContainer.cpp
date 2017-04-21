@@ -983,7 +983,6 @@ void UniformPseudoParticleContainer::horizontalPass(
 	}
 	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 	//in case of neutral territory version exchange halo values
-	//in case of neutral territory version exchange halo values
 
 
 }
@@ -2670,7 +2669,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
 
 #endif
-	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
 }
 
 void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int numCellsLevel,int startingLevel) {
@@ -3682,16 +3681,6 @@ void UniformPseudoParticleContainer::printTimers() {
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT"), "M2M Init", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE"), "M2M Finalize", _comm);
 	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL"), "M2M Traversal", _comm);
-
-
-	printTimer(_timerGlobalM2MCalculation.get_etime(),"M2M calculation global",_comm);
-
-	printTimer(_timerGlobalM2MInit.get_etime(),"M2M Init",_comm);
-
-	printTimer(_timerGlobalM2MFinalize.get_etime(),"M2M Finalize",_comm);
-
-	printTimer(_timerGlobalM2MTraversal.get_etime(),"M2M Traversal",_comm);
-
 
 #endif
 }
