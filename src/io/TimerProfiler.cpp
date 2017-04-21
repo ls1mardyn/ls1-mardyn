@@ -42,7 +42,7 @@ void TimerProfiler::registerTimer(string timerName, vector<string> parentTimerNa
 	_timers[timerName] = _Timer(_timerCount, timerName, timer);
 
 	if (!parentTimerNames.size()) parentTimerNames.push_back(_baseTimerName);
-	for (int i=0; i<parentTimerNames.size(); i++) {
+	for (size_t i=0; i<parentTimerNames.size(); i++) {
 		_timers[parentTimerNames[i]]._childTimerNames.push_back(timerName);
 		_timers[timerName]._parentTimerNames.push_back(parentTimerNames[i]);
 	}
@@ -80,7 +80,7 @@ void TimerProfiler::printTimers(string startingTimerName, string outputPrefix){
 		print(startingTimerName, outputPrefix);
 		outputPrefix += "\t";
 	}
-	for(int i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
+	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
 		printTimers(_timers[startingTimerName]._childTimerNames[i], outputPrefix);
 	}
 }
@@ -115,7 +115,7 @@ void TimerProfiler::reset(string timerName){
 void TimerProfiler::resetTimers(string startingTimerName){
 	if (!_timers.count(startingTimerName)) return ;
 	reset(startingTimerName);
-	for(int i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
+	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
 		resetTimers(_timers[startingTimerName]._childTimerNames[i]);
 	}
 }
@@ -242,7 +242,7 @@ void TimerProfiler::_clearTimers(string startingTimerName){
 	if (!_timers.count(startingTimerName)){
 		return;
 	}
-	for(int i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
+	for(size_t i=0; i<_timers[startingTimerName]._childTimerNames.size(); i++){
 		_clearTimers(_timers[startingTimerName]._childTimerNames[i]);
 	}
 	if (_checkTimer(startingTimerName, false)) {
