@@ -13,7 +13,6 @@
 #include "common/PrincipalAxisTransform.h"
 #include "molecules/Molecule.h"
 #include "Tokenize.h"
-#include "utils/Timer.h"
 #include <cstring>
 
 #ifndef MARDYN
@@ -127,8 +126,7 @@ void AqueousNaClGenerator::readPhaseSpaceHeader(Domain* domain, double timestep)
 unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("AQUEOUS_NA_CL_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (AqueousNaClGenerator)." << endl;
 
 	int numMoleculesPerDimension = round(pow((double) _numMolecules, 1./3.));
@@ -192,8 +190,9 @@ unsigned long AqueousNaClGenerator::readPhaseSpace(ParticleContainer* particleCo
 	removeMomentum(particleContainer, _components);
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("AQUEOUS_NA_CL_GENERATOR_INPUT");
+	global_simulation->setOutputString("AQUEOUS_NA_CL_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("AQUEOUS_NA_CL_GENERATOR_INPUT") << " sec" << endl;
 	return id;
 }
 
@@ -227,7 +226,6 @@ void AqueousNaClGenerator::addMolecule(double x, double y, double z, unsigned lo
 			w[0], w[1], w[2] );
 	particleContainer->addParticle(m);
 }
-
 
 bool AqueousNaClGenerator::isNearIon(Ion* ions, int ni) const {
 	for (int i = 0; i < ni; i++) {
@@ -272,5 +270,3 @@ bool AqueousNaClGenerator::validateParameters() {
 	}
 	return valid;
 }
-
-

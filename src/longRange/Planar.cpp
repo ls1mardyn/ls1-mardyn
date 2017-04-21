@@ -5,7 +5,6 @@
 #include "parallel/DomainDecompBase.h"
 #include "particleContainer/ParticleContainer.h"
 #include "Simulation.h"
-#include "utils/Timer.h"
 
 #include <vector>
 #include <cmath>

@@ -17,7 +17,6 @@
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "utils/Timer.h"
 
 #include <cmath>
 #include <climits>
@@ -85,8 +84,7 @@ void RayleighTaylorGenerator::readPhaseSpaceHeader(Domain* domain, double /*time
 unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("REYLEIGH_TAYLOR_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (RayleighTaylorGenerator)." << endl;
 
 	_components[0].updateMassInertia();
@@ -142,8 +140,9 @@ unsigned long RayleighTaylorGenerator::readPhaseSpace(ParticleContainer* particl
 	domainDecomp->collCommFinalize();
 
 	domain->setglobalNumMolecules(globalNumMolecules);
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("REYLEIGH_TAYLOR_GENERATOR_INPUT");
+	global_simulation->setOutputString("REYLEIGH_TAYLOR_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("REYLEIGH_TAYLOR_GENERATOR_INPUT") << " sec" << endl;
 	return id;
 }
 

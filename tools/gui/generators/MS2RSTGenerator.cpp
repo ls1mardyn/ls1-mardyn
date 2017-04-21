@@ -15,7 +15,6 @@
 #include "molecules/Molecule.h"
 #include "common/MS2RestartReader.h"
 #include "Tokenize.h"
-#include "utils/Timer.h"
 #include <cstring>
 
 #ifndef MARDYN
@@ -144,8 +143,7 @@ void MS2RSTGenerator::readPhaseSpaceHeader(Domain* domain, double timestep) {
 unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContainer,
 		std::list<ChemicalPotential>* /*lmu*/, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("MS2RST_GENERATOR_INPUT");
 	_logger->info() << "Reading phase space file (MS2RSTGenerator)." << endl;
 
 	std::vector<bool> rotationDOF(1);
@@ -175,8 +173,9 @@ unsigned long MS2RSTGenerator::readPhaseSpace(ParticleContainer* particleContain
 
 	domain->evaluateRho(particleContainer->getNumberOfParticles(), domainDecomp);
 	_logger->info() << "Calculated Rho=" << domain->getglobalRho() << endl;
-	inputTimer.stop();
-	_logger->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->startTimer("MS2RST_GENERATOR_INPUT");
+	global_simulation->setOutputString("MS2RST_GENERATOR_INPUT", "Initial IO took:                 ");
+	_logger->info() << "Initial IO took:                 " << global_simulation->getTime("MS2RST_GENERATOR_INPUT") << " sec" << endl;
 	return _numMolecules;
 }
 

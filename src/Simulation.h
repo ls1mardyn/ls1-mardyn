@@ -3,6 +3,7 @@
 
 #include "ensemble/CavityEnsemble.h"
 #include "ensemble/GrandCanonical.h"
+#include "io/TimerProfiler.h"
 #include "parallel/DomainDecompTypes.h"
 #include "utils/OptionParser.h"
 #include "utils/SysMon.h"
@@ -44,7 +45,6 @@ class Integrator;
 class OutputBase;
 class DomainDecompBase;
 class InputBase;
-class Timer;
 class RDF;
 class FlopCounter;
 class LongRangeCorrection;
@@ -255,13 +255,11 @@ public:
 	void updateParticleContainerAndDecomposition();
 
 	/**
-	 * Performs both the decomposition and the celltraversal in an overlapping way.
+	 * Performs both the decomposition and the cell traversal in an overlapping way.
 	 * The overlapping is needed to speed up the overall computation. The order of cells
 	 * traversed will be different, than for the non-overlapping case, slightly different results are possible.
-	 * @param decompositionTimer The timer for the decomposition
-	 * @param computationTimer The timer for the computation
 	 */
-	void performOverlappingDecompositionAndCellTraversalStep(Timer& decompositionTimer, Timer& computationTimer, Timer& forceCalculationTimer);
+	void performOverlappingDecompositionAndCellTraversalStep();
 
 	/**
 	 * Set the private _domainDecomposition variable to a new pointer.
@@ -283,7 +281,7 @@ public:
 	
 	/** Set the number of time steps to be performed in the simulation */
 	void setNumTimesteps( unsigned long steps ) { _numberOfTimesteps = steps; }
-	/** Get the number of time steps to be performed in the simulatoin */
+	/** Get the number of time steps to be performed in the simulation */
 	unsigned long getNumTimesteps() { return _numberOfTimesteps; }
 	/** Get initial number of steps */
 	unsigned long getNumInitTimesteps() { return _initSimulation; }
@@ -325,23 +323,70 @@ public:
 
 	void mkTcTS(Values &options);
 
-        void initCanonical(unsigned long t) { this->_initCanonical = t; }
-        void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
-        void initStatistics(unsigned long t) { this->_initStatistics = t; }
+	void initCanonical(unsigned long t) { this->_initCanonical = t; }
+	void initGrandCanonical(unsigned long t) { this->_initGrandCanonical = t; }
+	void initStatistics(unsigned long t) { this->_initStatistics = t; }
 
-        void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix)
-        {
-           this->_doRecordProfile = true;
-           this->_profileRecordingTimesteps = profileRecordingTimesteps;
-           this->_profileOutputTimesteps = profileOutputTimesteps;
-           this->_profileOutputPrefix = profileOutputPrefix;
-        }
-	void setSimulationTime(double curtime){ _simulationTime = curtime; }
-	void advanceSimulationTime(double timestep){ _simulationTime += timestep; }
-	double getSimulationTime(){ return _simulationTime; }
+	void profileSettings(unsigned long profileRecordingTimesteps, unsigned long profileOutputTimesteps, std::string profileOutputPrefix) {
+	   this->_doRecordProfile = true;
+	   this->_profileRecordingTimesteps = profileRecordingTimesteps;
+	   this->_profileOutputTimesteps = profileOutputTimesteps;
+	   this->_profileOutputPrefix = profileOutputPrefix;
+	}
+	void setSimulationTime(double curtime) { _simulationTime = curtime; }
+	void advanceSimulationTime(double timestep) { _simulationTime += timestep; }
+	double getSimulationTime() { return _simulationTime; }
 
 	void setEnsemble(Ensemble *ensemble) { _ensemble = ensemble; }
 	Ensemble* getEnsemble() { return _ensemble; }
+
+	Timer* getTimer(std::string timerName){
+		return _timerProfiler.getTimer(timerName);
+	}
+
+	void activateTimer(std::string timerName){
+		_timerProfiler.activateTimer(timerName);
+	}
+
+	void deactivateTimer(std::string timerName){
+		_timerProfiler.deactivateTimer(timerName);
+	}
+
+	void setSyncTimer(std::string timerName, bool sync){
+		_timerProfiler.setSyncTimer(timerName, sync);
+	}
+
+	void printTimer(std::string timerName){
+		_timerProfiler.print(timerName);
+	}
+
+	void printTimers(std::string startingTimerName="SIMULATION"){
+		_timerProfiler.printTimers(startingTimerName);
+	}
+
+	void resetTimers(std::string startingTimerName="SIMULATION"){
+		_timerProfiler.resetTimers(startingTimerName);
+	}
+
+	void startTimer(std::string timerName){
+		_timerProfiler.start(timerName);
+	}
+
+	void stopTimer(std::string timerName){
+		_timerProfiler.stop(timerName);
+	}
+
+	void resetTimer(std::string timerName){
+		_timerProfiler.reset(timerName);
+	}
+
+	double getTime(std::string timerName){
+		return _timerProfiler.getTime(timerName);
+	}
+
+	void setOutputString(std::string timerName, std::string outputString){
+		_timerProfiler.setOutputString(timerName, outputString);
+	}
 
 private:
 
@@ -488,6 +533,8 @@ private:
 	/** The Fast Multipole Method object */
 	bhfmm::FastMultipoleMethod* _FMM;
 
+	/** manager for all timers in the project except the MarDyn main timer */
+	TimerProfiler _timerProfiler;
 
 public:
 	//! computational time for one execution of traverseCell
@@ -542,7 +589,7 @@ private:
 	 * gradient of the chemical potential.
 	 */
 	std::list<ChemicalPotential> _lmu;
-        std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
+	std::map<unsigned, CavityEnsemble> _mcav;  // first: component id; second: cavity ensemble
 
 	/** This is Planck's constant. (Required for the Metropolis
 	 * criterion which is used for the grand canonical ensemble).

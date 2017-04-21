@@ -46,7 +46,6 @@
 #include <stddef.h>
 #include <string>
 #include <sstream>
-#include "../../utils/Timer.h"
 
 #include "molecules/MoleculeForwardDeclaration.h"
 
