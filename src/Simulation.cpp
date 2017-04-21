@@ -92,10 +92,10 @@ Simulation::Simulation()
 	_longRangeCorrection(NULL),
 	_temperatureControl(NULL),
 	_FMM(NULL),
+	_timerProfiler(),
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.),
 	_loopCompTimeSteps(0),
-	_timerProfiler(),
 	_programName("")
 {
 	_ensemble = new CanonicalEnsemble();
