@@ -691,13 +691,30 @@ void LinkedCells::traversePartialInnermostCellsOrig(CellProcessor& cellProcessor
 }
 
 void LinkedCells::traversePartialInnermostCellsC08(CellProcessor& cellProcessor, unsigned int stage, int stageCount) {
-	//TODO: add support for multiple stages!
-	if(stage!=0)
-		return;
+	int splitdim = 0;
+	int maxcellsize = _cellsPerDimension[0];
+	for (int i = 1; i < 3; i++){
+		if (_cellsPerDimension[i] > maxcellsize) {
+			splitdim = i;
+			maxcellsize = _cellsPerDimension[i];
+		}
+	}
+	int splitsize = maxcellsize - 5;
+	int minsize = min(_cellsPerDimension[0], min(_cellsPerDimension[1], _cellsPerDimension[2]));
+	assert(minsize>=4);  // there should be at least 4 cells in each dimension, otherwise we did something stupid!
+	if (minsize <= 5) {
+		return;  // we can not iterate over any inner cells, that do not depend on boundary or halo cells
+	}
 
-	//TODO: reuse these somehow:
-	//const long int lower =  _innerMostCellIndices.size() * stage / stageCount;
-	//const long int upper =  _innerMostCellIndices.size() * (stage+1) / stageCount;
+	int lower[3];
+	int upper[3];
+	for (int i = 0; i < 3; i++) {
+		lower[i] = 2;
+		upper[i] = _cellsPerDimension[i] - 3;
+	}
+	lower[splitdim] = 2 + splitsize * stage / stageCount;  // at least 2
+	upper[splitdim] = 2 + splitsize * (stage+1) / stageCount;  // at most _cellsPerDimension[i] - 3
+
 
 	#if defined(_OPENMP)
 		#pragma omp parallel
@@ -708,13 +725,15 @@ void LinkedCells::traversePartialInnermostCellsC08(CellProcessor& cellProcessor,
 		for (int col = 0; col < 8; ++col) {
 			int startIndices[3];
 			threeDIndexOfCellIndex(col, startIndices, strides);
-
+			for (int i = 0; i < 3; i++) {
+				startIndices[i] = startIndices[i] + lower[i];
+			}
 			#if defined (_OPENMP)
 			#pragma omp for schedule(dynamic, 1) collapse(3)
 			#endif
-			for (int z = startIndices[2] + 2; z < _cellsPerDimension[2] - 1 - 2; z += strides[2]) {
-				for (int y = startIndices[1] + 2; y < _cellsPerDimension[1] - 1 - 2; y += strides[1]) {
-					for (int x = startIndices[0] + 2; x < _cellsPerDimension[0] - 1 - 2; x += strides[0]) {
+			for (int z = startIndices[2]; z < upper[2]; z += strides[2]) {
+				for (int y = startIndices[1]; y < upper[1]; y += strides[1]) {
+					for (int x = startIndices[0]; x < upper[0]; x += strides[0]) {
 						// the start cell indices have to be shifted upwards by 2, as halo and boundary are not allowed to be computed yet!
 						// the end cell indices have to be shifted downwards by 2, as halo and boundary are not allowed to be computed yet!
 						long int baseIndex = cellIndexOf3DIndex(x, y, z);
