@@ -142,8 +142,12 @@ public:
 	void traverseCellsC08(CellProcessor& cellProcessor);
 
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+	void traverseNonInnermostCellsOrig(CellProcessor& cellProcessor);
+	void traverseNonInnermostCellsC08(CellProcessor& cellProcessor);
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+	void traversePartialInnermostCellsOrig(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+	void traversePartialInnermostCellsC08(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();
