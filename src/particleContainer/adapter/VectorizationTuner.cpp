@@ -204,7 +204,16 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 
 	double BoxMin[3] = {0., 0., 0.};
 	double BoxMax[3] = {1., 1., 1.};
-	double dirxplus[3] = {1., 0., 0.};
+	double dirxplus[3] = { 1., 0., 0.};
+	double BoxMin2[3] = { 1., 0., 0. };
+	double BoxMax2[3] = { 2., 1., 1. };
+
+	firstCell.setBoxMin(BoxMin);
+	secondCell.setBoxMin(BoxMin2);
+
+	firstCell.setBoxMax(BoxMax);
+	secondCell.setBoxMax(BoxMax2);
+
 	//double diryplus[3] = {0., 1., 0.};
 	//double dirzplus[3] = {0., 0., 1.};
 
@@ -212,8 +221,11 @@ void VectorizationTuner::iterate(std::vector<Component> ComponentList, unsigned 
 
 	//initialize both cells with molecules between 0,0,0 and 1,1,1
     initUniformRandomMolecules(BoxMin, BoxMax, comp, firstCell, numMols);
-    initUniformRandomMolecules(BoxMin, BoxMax, comp, secondCell, numMols);
-    moveMolecules(dirxplus, secondCell);
+    initUniformRandomMolecules(BoxMin2, BoxMax2, comp, secondCell, numMols);
+    //moveMolecules(dirxplus, secondCell);
+
+	firstCell.buildSoACaches();
+	secondCell.buildSoACaches();
 
 	long long int numRepetitions = std::max(20000000u / (numMols*numMols), 10u);
 
