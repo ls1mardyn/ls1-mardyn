@@ -102,25 +102,31 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 	Simulation::exit(-1);
 #endif
 #ifdef ENABLE_MPI
-	_timerProcessCells.set_sync(false);
-	_timerAllreduce.set_sync(false);
-	_timerAllreduce_me.set_sync(false);
-	_timerCombineMpCellGlobal.set_sync(false);
-	_timerGatherWellSepLoGlobal.set_sync(false);
-	_timerPropagateCellLoGlobal.set_sync(false);
-	_timerCombineMpCellLokal.set_sync(false);
-	_timerGatherWellSepLoLokal.set_sync(false);
-	_timerPropagateCellLoLokal.set_sync(false);
-	_timerProcessFarField.set_sync(false);
-	_timerCommunicationHalos.set_sync(false);
-	_timerHaloGather.set_sync(false);
-	_timerBusyWaiting.set_sync(false);
-	_timerFMMcomplete.set_sync(false);
-	_timerGlobalM2MCalculation.set_sync(false);
-	_timerGlobalM2MInit.set_sync(false);
-	_timerGlobalM2MFinalize.set_sync(false);
-	_timerGlobalM2MTraversal.set_sync(false);
-
+	/*
+	//they are per default false
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_CELLS", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_FAR_FIELD", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_EVAL_M", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_EVAL_LM", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", false);
+	global_simulation->setSyncTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL", false);
+	*/
 
 
 
@@ -470,24 +476,24 @@ UniformPseudoParticleContainer::UniformPseudoParticleContainer(
 
 //reset timers
 #ifdef ENABLE_MPI
-	_timerProcessCells.reset();
-	_timerAllreduce.reset();
-	_timerAllreduce_me.reset();
-	_timerCombineMpCellGlobal.reset();
-	_timerGatherWellSepLoGlobal.reset();
-	_timerPropagateCellLoGlobal.reset();
-	_timerCombineMpCellLokal.reset();
-	_timerGatherWellSepLoLokal.reset();
-	_timerPropagateCellLoLokal.reset();
-	_timerProcessFarField.reset();
-	_timerCommunicationHalos.reset();
-	_timerHaloGather.reset();
-	_timerBusyWaiting.reset();
-	_timerFMMcomplete.reset();
-	_timerGlobalM2MCalculation.reset();
-	_timerGlobalM2MInit.reset();
-	_timerGlobalM2MFinalize.reset();
-	_timerGlobalM2MTraversal.reset();
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_CELLS");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROCESS_FAR_FIELD");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
+	global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 #endif
 
 }
@@ -521,7 +527,7 @@ UniformPseudoParticleContainer::~UniformPseudoParticleContainer() {
 }
 
 void UniformPseudoParticleContainer::build(ParticleContainer* pc) {
-	_timerFMMcomplete.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 	_leafContainer->clearParticles();
 	ParticleIterator tM;
 	for(tM = pc->iteratorBegin(); tM != pc->iteratorEnd(); ++tM) {
@@ -538,7 +544,6 @@ int UniformPseudoParticleContainer::optimizeAllReduce(/*ParticleContainer* ljCon
 	L2PCellProcessor * _L2PProcessor = new L2PCellProcessor(this);
 	VectorizedChargeP2PCellProcessor *_P2PProcessor = new VectorizedChargeP2PCellProcessor(
 				*(global_simulation->getDomain()));
-	Timer timer;
 	double minTime = pow(2,100);
 	int bestStopLevel = 1;
 	double timeArray[_globalLevel];
@@ -574,16 +579,15 @@ int UniformPseudoParticleContainer::optimizeAllReduce(/*ParticleContainer* ljCon
 //		 clear expansions
 		clear();
 
-		timer.reset();
-		timer.set_sync(false);
-		timer.start();
+		global_simulation->resetTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL");
+		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL");
 
 		// P2M, M2P
 		upwardPass(_P2MProcessor);
 
 		horizontalPass(_P2PProcessor);
-		timer.stop();
-		timeArray[stopLevel] = timer.get_etime();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL");
+		timeArray[stopLevel] = global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_STOP_LEVEL");
 		MPI_Allreduce(MPI_IN_PLACE,&timeArray[stopLevel],1,MPI_DOUBLE,MPI_MAX,_comm);
 		if(timeArray[stopLevel]<minTime){
 			minTime = timeArray[stopLevel];
@@ -605,7 +609,7 @@ int UniformPseudoParticleContainer::optimizeAllReduce(/*ParticleContainer* ljCon
 void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 	// P2M
 	_leafContainer->traverseCells(*cp);
-	_timerCombineMpCellGlobal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL");
 
 	int curCellsEdge=_globalNumCellsPerDim;
 	double cellWid[3];
@@ -694,8 +698,8 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 			communicateHalos();
 		}
 		if(curLevel == _globalLevel){
-			_timerCombineMpCellGlobal.stop();
-			_timerCombineMpCellLokal.start();
+			global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL");
+			global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL");
 
 		}
 #else
@@ -753,10 +757,10 @@ void UniformPseudoParticleContainer::upwardPass(P2MCellProcessor* cp) {
 		AllReduceMultipoleMomentsLevelToTop(_globalLevelNumCells,_globalLevel);
 	}
 	if(_globalLevel != 0){
-		_timerCombineMpCellLokal.stop();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL");
 	}
 	else{
-		_timerCombineMpCellGlobal.stop();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL");
 	}
 
 #endif
@@ -803,7 +807,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 
 
 	int finishedFlag = 0;
-	_timerBusyWaiting.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 	//initialize busy waiting variables
 	initBusyWaiting();
 	//start busy waiting
@@ -812,7 +816,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 #if defined(ENABLE_MPI)
 
 		if(finishedFlag == 1){ //communication of local tree halos finished
-			_timerBusyWaiting.stop();
+			global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 			communicateHalosOverlapSetHalos();
 			//start receiving for second halo exchange in NT method
 			if(_doNTLocal){
@@ -840,13 +844,13 @@ void UniformPseudoParticleContainer::horizontalPass(
 #endif
 				}
 			}
-			_timerBusyWaiting.start();
+			global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 		}
 
 #endif
 
 		if(finishedFlag == 2){ //communication of global tree finished
-			_timerBusyWaiting.stop();
+			global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 #ifdef ENABLE_MPI
 			if(_avoidAllReduce){ // set halo values
 				if(_globalLevel >= 2){
@@ -951,7 +955,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 				}
 #endif
 			}
-			_timerBusyWaiting.start();
+			global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 		}
 #if defined(ENABLE_MPI)
 		if(finishedFlag == 5){ //local back communication receive finished -> set values
@@ -977,7 +981,7 @@ void UniformPseudoParticleContainer::horizontalPass(
 		}
 #endif
 	}
-	_timerBusyWaiting.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING");
 	//in case of neutral territory version exchange halo values
 
 
@@ -1104,7 +1108,7 @@ void UniformPseudoParticleContainer::downwardPass(L2PCellProcessor* cp) {
 	// L2P
 	_leafContainer->traverseCells(*cp);
 
-	_timerFMMcomplete.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE");
 }
 
 
@@ -1225,7 +1229,7 @@ void UniformPseudoParticleContainer::CombineMpCell_Local(double* /*cellWid*/, Ve
 #define LoLim(t) ToEven(m1v[t])- 2*_wellSep
 
 void UniformPseudoParticleContainer::GatherWellSepLo_Global(double *cellWid, int mpCells, int curLevel){
-	_timerGatherWellSepLoGlobal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, mpCells)
 #endif
@@ -1332,7 +1336,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_Global(double *cellWid, int
 			} // tower closed
 		} //m1 closed
 	}
-	_timerGatherWellSepLoGlobal.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
 
 } // GatherWellSepLo closed
 
@@ -1401,9 +1405,9 @@ bool UniformPseudoParticleContainer::filterM2Local(bool doHalos, int m1, int m1x
 
 
 void UniformPseudoParticleContainer::GatherWellSepLo_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, int doHalos){
-	_timerGatherWellSepLoLokal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
 	if(doHalos){
-		_timerHaloGather.start();
+		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER");
 	}
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
@@ -1497,9 +1501,9 @@ void UniformPseudoParticleContainer::GatherWellSepLo_Local(double* /*cellWid*/, 
 
 		} //mloop closed
 	}
-	_timerGatherWellSepLoLokal.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
 	if(doHalos){
-		_timerHaloGather.stop();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER");
 	}
 } // GatherWellSepLo closed
 
@@ -1668,7 +1672,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local(double *cellWid, 
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		double *cellWid, int mpCells, int curLevel) {
-	_timerGatherWellSepLoGlobal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, mpCells, cellWid)
 #endif
@@ -1689,7 +1693,7 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		FFTDataContainer* tf;
 		//Initialize FFT
 #ifndef ENABLE_OPENMP
-		_timerGlobalM2MInit.start();
+		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
 #endif
 #ifdef ENABLE_OPENMP
 #pragma omp for schedule(dynamic,1)
@@ -1765,8 +1769,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		}
 #ifndef ENABLE_OPENMP
 
-		_timerGlobalM2MInit.stop();
-		_timerGlobalM2MTraversal.start();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT");
+		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 #endif
 		//M2L in Fourier space
 #ifdef ENABLE_OPENMP
@@ -1840,8 +1844,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 										base_unit);
 #ifndef ENABLE_OPENMP
 
-								_timerGlobalM2MTraversal.stop();
-								_timerGlobalM2MCalculation.start();
+								global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
+								global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
 #endif
 								if (UseM2L_2way) {
 									FFTAccelerableExpansion& source2 =
@@ -1902,8 +1906,8 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 									}
 								}
 #ifndef ENABLE_OPENMP
-								_timerGlobalM2MCalculation.stop();
-								_timerGlobalM2MTraversal.start();
+								global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION");
+								global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 #endif
 								if (!UseTFMemoization) {
 									delete tf; //free useless memory
@@ -1932,11 +1936,11 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		} //m1 closed
 #ifndef ENABLE_OPENMP
 
-		_timerGlobalM2MTraversal.stop();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL");
 
 		//Finalize FFT
 
-		_timerGlobalM2MFinalize.start();
+		global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
 #endif
 #ifdef ENABLE_OPENMP
 #pragma omp for schedule(dynamic,1)
@@ -2000,18 +2004,18 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Global_template(
 		}
 #ifndef ENABLE_OPENMP
 
-		_timerGlobalM2MFinalize.stop();
+		global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE");
 #endif
 //		std::cout << "global " <<n <<" all " << m <<" \n";
 	}
-	_timerGatherWellSepLoGlobal.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL");
 
 } // GatherWellSepLo_FFT_template closed
 
 template<bool UseVectorization, bool UseTFMemoization, bool UseM2L_2way, bool UseOrderReduction>
 void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 		double *cellWid, Vector3<int> localMpCells, int curLevel, int doHalos) {
-	_timerGatherWellSepLoLokal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, doHalos, localMpCells)
 #endif
@@ -2277,14 +2281,14 @@ void UniformPseudoParticleContainer::GatherWellSepLo_FFT_Local_template(
 		}
 
 	}
-	_timerGatherWellSepLoLokal.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_LOKAL");
 
 } // GatherWellSepLo_FFT_MPI_template closed
 #endif /* FMM_FFT */
 
 
 void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/, int mpCells, int curLevel){
-	_timerPropagateCellLoGlobal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, mpCells)
 #endif
@@ -2327,12 +2331,12 @@ void UniformPseudoParticleContainer::PropagateCellLo_Global(double */*cellWid*/,
 			} // iDir
 		}
 	}
-	_timerPropagateCellLoGlobal.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL");
 } // PropogateCellLo
 
 
 void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, Vector3<int> localMpCells, int curLevel, Vector3<int> offset){
-	_timerPropagateCellLoLokal.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
 #ifdef ENABLE_OPENMP
 #pragma omp parallel firstprivate(curLevel, localMpCells, offset)
 #endif
@@ -2398,7 +2402,7 @@ void UniformPseudoParticleContainer::PropagateCellLo_Local(double* /*cellWid*/, 
 			} // iDir
 		}
 	}
-	_timerPropagateCellLoLokal.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL");
 } // PropogateCellLo_MPI
 
 
@@ -2636,7 +2640,7 @@ void UniformPseudoParticleContainer::clear() {
 }
 
 void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
-	_timerAllreduce.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
 #ifdef ENABLE_MPI
 	int coeffIndex = 0;
 	for (int cellIndex = 0; cellIndex < _globalNumCells; cellIndex++) {
@@ -2665,11 +2669,11 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMoments() {
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
 
 #endif
-	_timerAllreduce.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
 }
 
 void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int numCellsLevel,int startingLevel) {
-	_timerAllreduce.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
 #ifdef ENABLE_MPI
 	if(startingLevel > 0){
 		int coeffIndex = 0;
@@ -2690,7 +2694,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsLevelToTop(int num
 	}
 
 #endif
-	_timerAllreduce.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE");
 }
 void UniformPseudoParticleContainer::AllReduceMultipoleMomentsSetValues(int numCellsLevel,int startingLevel) {
 #ifdef ENABLE_MPI
@@ -2712,7 +2716,7 @@ void UniformPseudoParticleContainer::AllReduceMultipoleMomentsSetValues(int numC
 #endif
 }
 void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _curLevel) {
-	_timerAllreduce_me.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME");
 
 #ifdef ENABLE_MPI
 
@@ -2743,7 +2747,7 @@ void UniformPseudoParticleContainer::AllReduceLocalMoments(int mpCells, int _cur
 	std::fill(_coeffVector, _coeffVector + _coeffVectorLength * 2, 0.0);
 
 #endif
-	_timerAllreduce_me.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE_ME");
 }
 
 
@@ -2844,14 +2848,14 @@ void UniformPseudoParticleContainer::setHaloValues(Vector3<int> localMpCellsBott
 }
 
 void UniformPseudoParticleContainer::communicateHalos(){
-	_timerCommunicationHalos.start();
+	global_simulation->startTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS");
 	if(!_overlapComm){
 		communicateHalosNoOverlap();
 	}
 	else{
 		communicateHalosOverlapStart();
 	}
-	_timerCommunicationHalos.stop();
+	global_simulation->stopTimer("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS");
 }
 #ifdef ENABLE_MPI
 void UniformPseudoParticleContainer::communicateOwnGlobalValue(int stopLevel, bool receive ){
@@ -3660,43 +3664,25 @@ void printTimer(double localTimer, std::string nameOfTimer, MPI_Comm comm){
 }
 #endif
 void UniformPseudoParticleContainer::printTimers() {
-
-
 #ifdef ENABLE_MPI
-	printTimer(_timerAllreduce.get_etime(),"Allreduce",_comm);
 
-	//std::cout << "\t\t" << _timerAllreduce_me.get_etime()			<< "\t\t" <<"s in Allreduce_me"<<std::endl;
-	printTimer(_timerCombineMpCellGlobal.get_etime(),"CombineMpCellGlobal",_comm);
-
-	printTimer(_timerGatherWellSepLoGlobal.get_etime(),"GatherWellSepLoGlobal",_comm);
-
-	printTimer(_timerPropagateCellLoGlobal.get_etime(),"PropagateCellLoGlobal",_comm);
-
-	printTimer(_timerCombineMpCellLokal.get_etime(),"CombineMpCellLokal",_comm);
-
-	printTimer(_timerGatherWellSepLoLokal.get_etime(),"GatherWellSepLoLokal",_comm);
-
-	printTimer(_timerPropagateCellLoLokal.get_etime(),"PropagateCellLoLokal",_comm);
-
-	printTimer(_timerCommunicationHalos.get_etime(),"Halo communication",_comm);
-
-	printTimer(_timerHaloGather.get_etime(),"GatherWellSepLoHalos",_comm);
-
-	printTimer(_timerBusyWaiting.get_etime(),"BusyWaiting",_comm);
-
-	printTimer(_timerFMMcomplete.get_etime(),"total FMM",_comm);
-
-	printTimer(_timerGlobalM2MCalculation.get_etime(),"M2M calculation global",_comm);
-
-	printTimer(_timerGlobalM2MInit.get_etime(),"M2M Init",_comm);
-
-	printTimer(_timerGlobalM2MFinalize.get_etime(),"M2M Finalize",_comm);
-
-	printTimer(_timerGlobalM2MTraversal.get_etime(),"M2M Traversal",_comm);
-
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_ALL_REDUCE"), "Allreduce", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_GLOBAL"), "CombineMpCellGlobal", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GATHER_WELL_SEP_LO_GLOBAL"), "GatherWellSepLoGlobal", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_GLOBAL"), "PropagateCellLoGlobal", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMBINE_MP_CELL_LOKAL"), "CombineMpCellLokal", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GARHTER_WELL_SEP_LO_LOKAL"), "GatherWellSepLoLokal", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_PROPAGATE_CELL_LO_LOKAL"), "PropagateCellLoLokal", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_COMMUNICATION_HALOS"), "Halo communication", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_HALO_GATHER"), "GatherWellSepLoHalos", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_BUSY_WAITING"), "BusyWaiting", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_FMM_COMPLETE"), "total FMM", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_CALCULATION"), "M2M calculation global", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_INIT"), "M2M Init", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_FINALIZE"), "M2M Finalize", _comm);
+	printTimer(global_simulation->getTime("UNIFORM_PSEUDO_PARTICLE_CONTAINER_GLOBAL_M2M_TRAVERSAL"), "M2M Traversal", _comm);
 
 #endif
-
 }
 
 

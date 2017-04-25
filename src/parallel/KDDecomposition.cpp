@@ -10,7 +10,6 @@
 #include "molecules/Molecule.h"
 #include "Simulation.h"
 #include "particleContainer/ParticleContainer.h"
-#include "ParticleData.h"
 #include "utils/Logger.h"
 #include "utils/xmlfileUnits.h"
 #include "particleContainer/adapter/FlopCounter.h"
@@ -19,6 +18,7 @@
 #include "WrapOpenMP.h"
 
 #include <cmath>
+#include "ParticleData.h"
 
 using namespace std;
 using Log::global_log;

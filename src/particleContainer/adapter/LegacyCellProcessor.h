@@ -11,7 +11,7 @@
 #include "particleContainer/adapter/CellProcessor.h"
 
 class ParticlePairsHandler;
-class ParticleCell;
+#include "particleContainer/ParticleCellForwardDeclaration.h"
 
 /**
  * This class is a simple extraction of the cell handling from the old

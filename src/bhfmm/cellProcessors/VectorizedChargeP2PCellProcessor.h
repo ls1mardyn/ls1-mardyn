@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include "bhfmm/containers/ParticleCellPointers.h"
 #include "utils/AlignedArray.h"
-#include "utils/Timer.h"
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
 #include "particleContainer/adapter/CellDataSoA.h"
@@ -71,8 +70,6 @@ public:
 
 private:
 	double _cutoffRadiusSquare;
-
-	Timer _timer;
 
 	/**
 	 * \brief a vector of Molecule pointers.

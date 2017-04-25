@@ -11,6 +11,7 @@
 #include "utils/AlignedArrayTriplet.h"
 #include "vectorization/SIMD_TYPES.h"
 #include "molecules/Molecule.h"
+#include "molecules/Molecule_WR.h"
 #include "CellDataSoABase.h"
 #include <cstdint>
 
@@ -60,31 +61,62 @@ public:
 		return total;
 	}
 
-	void appendMolecule(Molecule& m) {
-		_mol_r.appendValueTriplet(m.r(0), m.r(1), m.r(2), _mol_num);
-		_mol_v.appendValueTriplet(m.v(0), m.v(1), m.v(2), _mol_num);
-		_mol_uid.appendValue(m.id(), _mol_num);
+	void appendMolecule(MoleculeInterface& m) {
+		Molecule_WR& m_wr = downcastReferenceWR(m);
+
+		_mol_r.appendValueTriplet(m_wr.r(0), m_wr.r(1), m_wr.r(2), _mol_num);
+		_mol_v.appendValueTriplet(m_wr.v(0), m_wr.v(1), m_wr.v(2), _mol_num);
+		_mol_uid.appendValue(m_wr.id(), _mol_num);
 		++_mol_num;
 	}
 
-	void readMolecule(size_t index, Molecule& m) const {
-		m.setr(0, _mol_r.x(index));
-		m.setr(1, _mol_r.y(index));
-		m.setr(2, _mol_r.z(index));
-		m.setv(0, _mol_v.x(index));
-		m.setv(1, _mol_v.y(index));
-		m.setv(2, _mol_v.z(index));
-		m.setid(_mol_uid[index]);
+	void readImmutableMolecule(size_t index, MoleculeInterface& m) const {
+		Molecule_WR& m_wr = downcastReferenceWR(m);
+
+		// changes in AOS storage will not be saved
+		m_wr.setStorageState(Molecule_WR::STORAGE_AOS);
+		m_wr.setr(0, _mol_r.x(index));
+		m_wr.setr(1, _mol_r.y(index));
+		m_wr.setr(2, _mol_r.z(index));
+		m_wr.setv(0, _mol_v.x(index));
+		m_wr.setv(1, _mol_v.y(index));
+		m_wr.setv(2, _mol_v.z(index));
+		m_wr.setid(_mol_uid[index]);
 	}
 
-	void writeMolecule(size_t index, Molecule& m) {
-		_mol_r.x(index) = m.r(0);
-		_mol_r.y(index) = m.r(1);
-		_mol_r.z(index) = m.r(2);
-		_mol_v.x(index) = m.v(0);
-		_mol_v.y(index) = m.v(1);
-		_mol_v.z(index) = m.v(2);
-		_mol_uid[index] = m.id();
+	void readMutableMolecule(size_t index, MoleculeInterface& m) {
+		Molecule_WR& m_wr = downcastReferenceWR(m);
+
+		// changes in SOA storage will be saved
+		m_wr.setStorageState(Molecule_WR::STORAGE_SOA);
+		m_wr.setSoA(this);
+		m_wr.setStartIndexSoA_LJ(index);
+	}
+
+	void writeMolecule(size_t i, const MoleculeInterface& m) {
+//		Molecule_WR& m_wr = downcastReferenceWR(m);
+
+		_mol_r.x(i) = m.r(0);
+		_mol_r.y(i) = m.r(1);
+		_mol_r.z(i) = m.r(2);
+		_mol_v.x(i) = m.v(0);
+		_mol_v.y(i) = m.v(1);
+		_mol_v.z(i) = m.v(2);
+		_mol_uid[i] = m.id();
+	}
+
+	void deleteMolecule(size_t index) {
+		mardyn_assert(index < static_cast<size_t>(_mol_num));
+		if(_mol_num > 1 and index < _mol_num - 1) {
+			_mol_r.x(index) = _mol_r.x(_mol_num-1);
+			_mol_r.y(index) = _mol_r.y(_mol_num-1);
+			_mol_r.z(index) = _mol_r.z(_mol_num-1);
+			_mol_v.x(index) = _mol_v.x(_mol_num-1);
+			_mol_v.y(index) = _mol_v.y(_mol_num-1);
+			_mol_v.z(index) = _mol_v.z(_mol_num-1);
+			_mol_uid[index] = _mol_uid[_mol_num-1];
+		}
+		--_mol_num;
 	}
 };
 

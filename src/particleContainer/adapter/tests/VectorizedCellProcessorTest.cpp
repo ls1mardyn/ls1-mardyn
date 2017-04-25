@@ -13,7 +13,11 @@
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
 
+#ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(VectorizedCellProcessorTest);
+#else
+#pragma message "Compilation info: VectorizedCellProcessorTest disabled in MARDYN_WR mode"
+#endif
 
 VectorizedCellProcessorTest::VectorizedCellProcessorTest() {
 #if VCP_VEC_TYPE==VCP_NOVEC
@@ -22,6 +26,8 @@ VectorizedCellProcessorTest::VectorizedCellProcessorTest() {
 	test_log->info() << "VectorizedCellProcessorTest: testing SSE intrinsics." << std::endl;
 #elif VCP_VEC_TYPE==VCP_VEC_AVX
 	test_log->info() << "VectorizedCellProcessorTest: testing AVX intrinsics." << std::endl;
+#elif VCP_VEC_TYPE==VCP_VEC_AVX2
+	test_log->info() << "VectorizedCellProcessorTest: testing AVX2 intrinsics." << std::endl;
 #endif
 }
 
@@ -30,7 +36,7 @@ VectorizedCellProcessorTest::~VectorizedCellProcessorTest() {
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VectorizedCellProcessorTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -73,7 +79,7 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationU0() {
 
 void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VectorizedCellProcessorTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -112,7 +118,7 @@ void VectorizedCellProcessorTest::testForcePotentialCalculationF0() {
 
 void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "VectorizedCellProcessorTest::testLennardJonesVectorization()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -193,7 +199,7 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* filename, double ScenarioCutoff) {
 	if (_domainDecomposition->getNumProcs() != 1) {
 		test_log->info()
-				<< "DomainDecompositionTest::testExchangeMolecules1Proc()"
+				<< "VectorizedCellProcessorTest::testElectrostaticVectorization()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs()
 				<< std::endl;

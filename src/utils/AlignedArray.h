@@ -84,7 +84,7 @@ public:
 			// shit, we need to resize, but also keep contents
 			AlignedArray<T> backupCopy(*this);
 			resize_zero_shrink(oldNumElements + 1);
-			std::memcpy (_p, backupCopy._p, oldNumElements);
+			std::memcpy (_p, backupCopy._p, oldNumElements * sizeof(T));
 		}
 		_p[oldNumElements] = v;
 	}

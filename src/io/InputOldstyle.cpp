@@ -19,7 +19,6 @@
 #endif
 #include "particleContainer/ParticleContainer.h"
 #include "utils/Logger.h"
-#include "utils/Timer.h"
 
 using Log::global_log;
 using namespace std;
@@ -270,8 +269,7 @@ void InputOldstyle::readPhaseSpaceHeader(Domain* domain, double timestep)
 
 unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer, list<ChemicalPotential>* lmu, Domain* domain, DomainDecompBase* domainDecomp) {
 
-	Timer inputTimer;
-	inputTimer.start();
+	global_simulation->startTimer("INPUT_OLDSTYLE_INPUT");
 
 #ifdef ENABLE_MPI
 	if (domainDecomp->getRank() == 0) 
@@ -359,7 +357,7 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	ParticleData particle_buff[PARTICLE_BUFFER_SIZE];
 	int particle_buff_pos = 0;
 	MPI_Datatype mpi_Particle;
-	ParticleData::setMPIType(mpi_Particle);
+	ParticleData::getMPIType(mpi_Particle);
 
 	int size;
 	MPI_CHECK(MPI_Type_size(mpi_Particle, &size));
@@ -485,8 +483,9 @@ unsigned long InputOldstyle::readPhaseSpace(ParticleContainer* particleContainer
 	} // Rank 0 only
 #endif
 
-	inputTimer.stop();
-	global_log->info() << "Initial IO took:                 " << inputTimer.get_etime() << " sec" << endl;
+	global_simulation->stopTimer("INPUT_OLDSTYLE_INPUT");
+	global_simulation->setOutputString("INPUT_OLDSTYLE_INPUT", "Initial IO took:                 ");
+	global_simulation->printTimer("INPUT_OLDSTYLE_INPUT");
 #ifdef ENABLE_MPI
 	MPI_CHECK( MPI_Type_free(&mpi_Particle) );
 #endif

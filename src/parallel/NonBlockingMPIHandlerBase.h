@@ -6,7 +6,6 @@
  */
 #pragma once
 
-class Timer;
 class DomainDecompMPIBase;
 class ParticleContainer;
 class Domain;
@@ -22,18 +21,13 @@ class NonBlockingMPIHandlerBase {
 public:
 	/**
 	 * Constructor of the class
-	 * @param decompositionTimer timer for the decomposition
-	 * @param computationTimer timer for the computation
 	 * @param domainDecomposition domainDecomposition
 	 * @param moleculeContainer the molecule container (linked cells)
 	 * @param domain the domain
 	 * @param cellProcessor the cell processor
 	 */
-	NonBlockingMPIHandlerBase(Timer* decompositionTimer,
-			Timer* computationTimer, Timer* forceCalculationTimer,
-			DomainDecompMPIBase* domainDecomposition,
-			ParticleContainer* moleculeContainer, Domain* domain,
-			CellProcessor* cellProcessor);
+	NonBlockingMPIHandlerBase(DomainDecompMPIBase* domainDecomposition,
+			ParticleContainer* moleculeContainer, Domain* domain, CellProcessor* cellProcessor);
 
 	/**
 	 * Virtual destructor of the class.
@@ -68,9 +62,6 @@ protected:
 	 */
 	virtual void performComputation();
 
-	Timer* _decompositionTimer;
-	Timer* _computationTimer;
-	Timer* _forceCalculationTimer;
 	DomainDecompMPIBase* _domainDecomposition;
 	ParticleContainer* _moleculeContainer;
 	Domain* _domain;

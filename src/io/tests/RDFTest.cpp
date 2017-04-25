@@ -24,7 +24,12 @@
 
 using namespace std;
 
+#ifndef MARDYN_WR
 TEST_SUITE_REGISTRATION(RDFTest);
+#else
+#pragma message "Compilation info: RDFTest disabled in MARDYN_WR mode"
+#endif
+
 
 RDFTest::RDFTest() {
 }

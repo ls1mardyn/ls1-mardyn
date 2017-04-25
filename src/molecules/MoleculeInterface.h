@@ -122,15 +122,29 @@ public:
 	virtual void setF(double F[3]) = 0;
 	virtual void setM(double M[3]) = 0;
 	virtual void setVi(double Vi[3]) = 0;
-	virtual void scale_v(double s) = 0;
+	void scale_v(double s) {
+		for(int d = 0; d < 3; ++d) {
+			setv(d, v(d) * s);
+		}
+	}
 	void scale_v(double s, double offx, double offy, double offz) {
 		vsub(offx, offy, offz);
 		scale_v(s);
 		vadd(offx, offy, offz);
 	}
-	virtual void scale_F(double s) = 0;
-	virtual void scale_D(double s) = 0;
-	virtual void scale_M(double s) = 0;
+	void scale_F(double s) {
+		double Fscaled[3] = {F(0) * s, F(1) * s, F(2) * s};
+		setF(Fscaled);
+	}
+	void scale_D(double s) {
+		for (int d = 0; d < 3; ++d) {
+			setD(d, D(d) * s);
+		}
+	}
+	void scale_M(double s) {
+		double Mscaled[3] = {M(0) * s, M(1) * s, M(2) * s};
+		setM(Mscaled);
+	}
 	virtual void Fadd(const double a[]) = 0;
 	virtual void Madd(const double a[]) = 0;
 	virtual void Viadd(const double a[]) = 0;
@@ -144,8 +158,33 @@ public:
 	virtual void Fdipolesub(unsigned int i, double a[]) = 0;
 	virtual void Fquadrupoleadd(unsigned int i, double a[]) = 0;
 	virtual void Fquadrupolesub(unsigned int i, double a[]) = 0;
+
+	// Leapfrog integration:
 	virtual void upd_preF(double dt) = 0;
 	virtual void upd_postF(double dt_halve, double& summv2, double& sumIw2) = 0;
+
+	// Explicit Euler integration for single-centered molecules.
+	// Needed for WR mode. Placing it here, so that we can
+	// verify the WR code against the non-WR code.
+	void ee_upd_preF(double dt) {
+		for (unsigned short d = 0; d < 3; ++d) {
+			setr(d,r(d) + dt * v(d));
+		}
+	}
+	void ee_upd_postF(double dt, double& summv2) {
+
+		calcFM();
+
+#ifndef MARDYN_WR
+		double dtInvM = dt / component()->m();
+		for (unsigned short d = 0; d < 3; ++d) {
+			setv(d, v(d) + dtInvM * F(d));
+		}
+#endif /*MARDYN_WR */
+
+		summv2 += component()->m() * v2();
+	}
+
 	virtual void calculate_mv2_Iw2(double& summv2, double& sumIw2) = 0;
 	virtual void calculate_mv2_Iw2(double& summv2, double& sumIw2, double offx, double offy, double offz) = 0;
 	static std::string getWriteFormat(); // TODO

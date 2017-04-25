@@ -1,3 +1,4 @@
+
 #define SIMULATION_SRC
 #include "Simulation.h"
 
@@ -11,7 +12,6 @@
 
 #include "sys/types.h"
 #include "sys/sysinfo.h"
-
 
 #include "WrapOpenMP.h"
 
@@ -31,9 +31,11 @@
 #include "particleContainer/adapter/ParticlePairs2PotForceAdapter.h"
 #include "particleContainer/adapter/LegacyCellProcessor.h"
 #include "particleContainer/adapter/VectorizedCellProcessor.h"
+#include "particleContainer/adapter/VCP1CLJWR.h"
 #include "particleContainer/adapter/FlopCounter.h"
 #include "integrators/Integrator.h"
 #include "integrators/Leapfrog.h"
+#include "integrators/ExplicitEuler.h"
 #include "molecules/Wall.h"
 #include "molecules/Mirror.h"
 
@@ -42,6 +44,7 @@
 #include "io/RDF.h"
 #include "io/TcTS.h"
 #include "io/Mkesfera.h"
+#include "io/TimerProfiler.h"
 
 #include "ensemble/GrandCanonical.h"
 #include "ensemble/CanonicalEnsemble.h"
@@ -53,7 +56,6 @@
 
 #include "utils/FileUtils.h"
 #include "utils/OptionParser.h"
-#include "utils/Timer.h"
 #include "utils/Logger.h"
 
 #include "longRange/LongRangeCorrection.h"
@@ -97,6 +99,7 @@ Simulation::Simulation()
 	_longRangeCorrection(NULL),
 	_temperatureControl(NULL),
 	_FMM(NULL),
+	_timerProfiler(),
 	_forced_checkpoint_time(0),
 	_loopCompTime(0.),
 	_loopCompTimeSteps(0),
@@ -147,6 +150,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		global_log->info() << "Integrator type: " << integratorType << endl;
 		if(integratorType == "Leapfrog") {
 			_integrator = new Leapfrog();
+		} else if (integratorType == "ExplicitEuler") {
+			global_log->info() << "Integrator type: Explicit Euler (WR mode only)" << endl;
+			_integrator = new ExplicitEuler();
 		} else {
 			global_log-> error() << "Unknown integrator " << integratorType << endl;
 			Simulation::exit(1);
@@ -660,6 +666,7 @@ void Simulation::prepare_start() {
 		_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
 	}
 	else*/
+#ifndef MARDYN_WR
 	if(this->_doRecordVirialProfile) {
 		global_log->warning() << "Using legacy cell processor. (The vectorized code does not support the virial tensor and the localized virial profile.)" << endl;
 		_cellProcessor = new LegacyCellProcessor(_cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
@@ -671,6 +678,10 @@ void Simulation::prepare_start() {
 		global_log->info() << "Using vectorized cell processor." << endl;
 		_cellProcessor = new VectorizedCellProcessor( *_domain, _cutoffRadius, _LJCutoffRadius);
 	}
+#else
+	global_log->info() << "Using WR cell processor." << endl;
+	_cellProcessor = new VCP1CLJ_WR( *_domain, _cutoffRadius, _LJCutoffRadius);
+#endif /* MARDYN_WR */
 #else
 	global_log->info() << "Using legacy cell processor." << endl;
 	_cellProcessor = new LegacyCellProcessor( _cutoffRadius, _LJCutoffRadius, _particlePairsHandler);
@@ -698,14 +709,26 @@ void Simulation::prepare_start() {
 	global_log->info() << "Clearing halos" << endl;
 	_moleculeContainer->deleteOuterParticles();
 	global_log->info() << "Updating domain decomposition" << endl;
+
+	// temporary addition until MPI communication is parallelized with OpenMP
+	//we don't actually need the mpiOMPCommunicationTimer here -> deactivate it..
+	global_simulation->deactivateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	updateParticleContainerAndDecomposition();
+	global_simulation->activateTimer("SIMULATION_MPI_OMP_COMMUNICATION");
+
+
+#ifndef MARDYN_WR
 	global_log->info() << "Performing initial force calculation" << endl;
-	Timer t;
-	t.start();
+	global_simulation->startTimer("SIMULATION_FORCE_CALCULATION");
 	_moleculeContainer->traverseCells(*_cellProcessor);
-	t.stop();
-	_loopCompTime = t.get_etime();
-	_loopCompTimeSteps = 1;
+	global_simulation->stopTimer("SIMULATION_FORCE_CALCULATION");
+
+	_loopCompTime = global_simulation->getTime("SIMULATION_FORCE_CALCULATION");
+	global_simulation->resetTimer("SIMULATION_FORCE_CALCULATION");
+	++_loopCompTimeSteps;
+#else
+	global_log->info() << "No initial force calculation needed in WR mode" << endl;
+#endif /* MARDYN_WR */
 
 	if (_FMM != NULL) {
 		global_log->info() << "Performing initial FMM force calculation" << endl;
@@ -884,18 +907,26 @@ void Simulation::simulate() {
 	/* BEGIN MAIN LOOP                                                         */
 	/***************************************************************************/
 
-	// all timers except the ioTimer messure inside the main loop
-	Timer loopTimer; /* timer for the entire simulation loop (synced) */
-	Timer decompositionTimer; /* timer for decomposition */
-	Timer computationTimer; /* timer for computation */
-	Timer perStepIoTimer; /* timer for io in simulation loop */
-	Timer ioTimer; /* timer for final io */
-	// temporary addition until merging OpenMP is complete
-	//#if defined(_OPENMP)
-	Timer forceCalculationTimer; /* timer for force calculation */
-	//#endif
-	
-	loopTimer.set_sync(true);
+	// all timers except the ioTimer measure inside the main loop
+	Timer* loopTimer = global_simulation->getTimer("SIMULATION_LOOP"); // timer for the entire simulation loop (synced)
+	global_simulation->setOutputString("SIMULATION_LOOP", "Computation in main loop took:");
+	Timer* decompositionTimer = global_simulation->getTimer("SIMULATION_DECOMPOSITION"); // timer for decomposition: sub-timer of loopTimer
+	global_simulation->setOutputString("SIMULATION_DECOMPOSITION", "Decomposition took:");
+	Timer* computationTimer = global_simulation->getTimer("SIMULATION_COMPUTATION"); // timer for computation: sub-timer of loopTimer
+	global_simulation->setOutputString("SIMULATION_COMPUTATION", "Computation took:");
+	Timer* perStepIoTimer = global_simulation->getTimer("SIMULATION_PER_STEP_IO"); // timer for io in simulation loop: sub-timer of loopTimer
+	global_simulation->setOutputString("SIMULATION_PER_STEP_IO", "IO in main loop took:");
+	Timer* ioTimer = global_simulation->getTimer("SIMULATION_IO"); // timer for final io
+	global_simulation->setOutputString("SIMULATION_IO", "Final IO took:");
+	Timer* forceCalculationTimer = global_simulation->getTimer("SIMULATION_FORCE_CALCULATION"); // timer for force calculation: sub-timer of computationTimer
+	global_simulation->setOutputString("SIMULATION_FORCE_CALCULATION", "Force calculation took:");
+	Timer* mpiOMPCommunicationTimer = global_simulation->getTimer("SIMULATION_MPI_OMP_COMMUNICATION"); // timer for measuring MPI-OMP communication time: sub-timer of decompositionTimer
+	global_simulation->setOutputString("SIMULATION_MPI_OMP_COMMUNICATION", "Communication took:");
+	global_simulation->setOutputString("COMMUNICATION_PARTNER_INIT_SEND", "initSend() took:");
+	global_simulation->setOutputString("COMMUNICATION_PARTNER_TEST_RECV", "testRecv() took:");
+
+	//loopTimer->set_sync(true);
+	global_simulation->setSyncTimer("SIMULATION_LOOP", true);
 #if WITH_PAPI
 	const char *papi_event_list[] = {
 		"PAPI_TOT_CYC",
@@ -908,9 +939,9 @@ void Simulation::simulate() {
 	// 	"PAPI_VEC_INS"
 	};
 	int num_papi_events = sizeof(papi_event_list) / sizeof(papi_event_list[0]);
-	loopTimer.add_papi_counters(num_papi_events, (char**) papi_event_list);
+	loopTimer->add_papi_counters(num_papi_events, (char**) papi_event_list);
 #endif
-	loopTimer.start();
+	loopTimer->start();
 #ifndef NDEBUG
 #ifndef ENABLE_MPI
 		unsigned particleNoTest;
@@ -927,10 +958,26 @@ void Simulation::simulate() {
 	}
 
 	for (_simstep = _initSimulation + 1; _simstep <= _numberOfTimesteps; _simstep++) {
+		// Too many particle exchanges in the first 10 simulation steps.
+		// Reset the timers after 10 simulation steps and restart the timers
+		// 		for more accurate measurements for benchmarking.
+		if (_simstep == 10) {
+			loopTimer->stop();
+
+			global_log->info() << "Simstep 10:" << endl;
+			global_simulation->printTimers();
+			global_log->info() << endl;
+			global_log->info() << "RESETTING TIMERS" << endl;
+			global_simulation->resetTimers();
+			global_log->info() << endl;
+
+			loopTimer->start();
+		}
+
 		global_log->debug() << "timestep: " << getSimulationStep() << endl;
 		global_log->debug() << "simulation time: " << getSimulationTime() << endl;
 
-		computationTimer.start();
+		computationTimer->start();
 
 		/** @todo What is this good for? Where come the numbers from? Needs documentation */
 		if (_simstep >= _initGrandCanonical) {
@@ -1111,7 +1158,7 @@ void Simulation::simulate() {
 #endif
 #endif
 		}
-		computationTimer.stop();
+		computationTimer->stop();
 
 
 
@@ -1124,33 +1171,28 @@ void Simulation::simulate() {
 #endif
 
 		if (overlapCommComp) {
-			performOverlappingDecompositionAndCellTraversalStep(decompositionTimer, computationTimer, forceCalculationTimer);
+			performOverlappingDecompositionAndCellTraversalStep();
 		}
 		else {
-			decompositionTimer.start();
+			decompositionTimer->start();
 			// ensure that all Particles are in the right cells and exchange Particles
 			global_log->debug() << "Updating container and decomposition" << endl;
 			updateParticleContainerAndDecomposition();
-			decompositionTimer.stop();
+			decompositionTimer->stop();
 
-			double startEtime = computationTimer.get_etime();
+			double startEtime = computationTimer->get_etime();
 			// Force calculation and other pair interaction related computations
 			global_log->debug() << "Traversing pairs" << endl;
-			computationTimer.start();
-			// temporary addition until merging OpenMP is complete
-			//#if defined(_OPENMP)
-			forceCalculationTimer.start();
-			//#endif
+			computationTimer->start();
+			forceCalculationTimer->start();
 			_moleculeContainer->traverseCells(*_cellProcessor);
-			// temporary addition until merging OpenMP is complete
-			//#if defined(_OPENMP)
-			forceCalculationTimer.stop();
-			//#endif
-			computationTimer.stop();
-			_loopCompTime += computationTimer.get_etime() - startEtime;
+			forceCalculationTimer->stop();
+			computationTimer->stop();
+
+			_loopCompTime += computationTimer->get_etime() - startEtime;
 			_loopCompTimeSteps ++;
 		}
-		computationTimer.start();
+		computationTimer->start();
 		if (_FMM != NULL) {
 			global_log->debug() << "Performing FMM calculation" << endl;
 			_FMM->computeElectrostatics(_moleculeContainer);
@@ -1435,8 +1477,8 @@ void Simulation::simulate() {
 		*/
 		/* END PHYSICAL SECTION */
 
-		computationTimer.stop();
-		perStepIoTimer.start();
+		computationTimer->stop();
+		perStepIoTimer->start();
 
 		output(_simstep);
 		
@@ -1456,21 +1498,21 @@ void Simulation::simulate() {
 #endif
 		}
 		
-		if(_forced_checkpoint_time >= 0 && (decompositionTimer.get_etime() + computationTimer.get_etime()
-				+ ioTimer.get_etime() + perStepIoTimer.get_etime()) >= _forced_checkpoint_time) {
+		if(_forced_checkpoint_time >= 0 && (decompositionTimer->get_etime() + computationTimer->get_etime()
+				+ ioTimer->get_etime() + perStepIoTimer->get_etime()) >= _forced_checkpoint_time) {
 			/* force checkpoint for specified time */
 			string cpfile(_outputPrefix + ".timed.restart.xdr");
 			global_log->info() << "Writing timed, forced checkpoint to file '" << cpfile << "'" << endl;
 			_domain->writeCheckpoint(cpfile, _moleculeContainer, _domainDecomposition, _simulationTime);
 			_forced_checkpoint_time = -1; /* disable for further timesteps */
 		}
-		perStepIoTimer.stop();
+		perStepIoTimer->stop();
 	}
-	loopTimer.stop();
+	loopTimer->stop();
 	/***************************************************************************/
 	/* END MAIN LOOP                                                           */
 	/*****************************//**********************************************/
-    ioTimer.start();
+    ioTimer->start();
     if( _finalCheckpoint ) {
         /* write final checkpoint */
         string cpfile(_outputPrefix + ".restart.xdr");
@@ -1483,16 +1525,9 @@ void Simulation::simulate() {
 		(*outputIter)->finishOutput(_moleculeContainer, _domainDecomposition, _domain);
 		delete (*outputIter);
 	}
-	ioTimer.stop();
-
-	global_log->info() << "Computation in main loop took: " << loopTimer.get_etime() << " sec" << endl;
-	// temporary addition until merging OpenMP is complete
-	//#if defined(_OPENMP)
-	global_log->info() << "Force calculation took:        " << forceCalculationTimer.get_etime() << " sec" << endl;
-	//#endif
-	global_log->info() << "Decomposition took:            " << decompositionTimer.get_etime() << " sec" << endl;
-	global_log->info() << "IO in main loop took:          " << perStepIoTimer.get_etime() << " sec" << endl;
-	global_log->info() << "Final IO took:                 " << ioTimer.get_etime() << " sec" << endl;
+	ioTimer->stop();
+	global_simulation->printTimers();
+	global_simulation->resetTimers();
 	{
 		struct sysinfo memInfo;
 		sysinfo(&memInfo);
@@ -1502,16 +1537,17 @@ void Simulation::simulate() {
 		global_log->info() << "Memory usage:                  " << usedMem << " MB out of " << totalMem << " MB ("
 				<< usedMem * 100. / totalMem << "%)" << endl;
 	}
+	global_log->info() << endl;
 
 #if WITH_PAPI
 	global_log->info() << "PAPI counter values for loop timer:"  << endl;
-	for(int i = 0; i < loopTimer.get_papi_num_counters(); i++) {
-		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer.get_global_papi_counter(i) << endl;
+	for(int i = 0; i < loopTimer->get_papi_num_counters(); i++) {
+		global_log->info() << "  " << papi_event_list[i] << ": " << loopTimer->get_global_papi_counter(i) << endl;
 	}
 #endif /* WITH_PAPI */
 
 	unsigned long numTimeSteps = _numberOfTimesteps - _initSimulation + 1; // +1 because of <= in loop
-	double elapsed_time = loopTimer.get_etime();
+	double elapsed_time = loopTimer->get_etime();
 	if(NULL != _flopCounter) {
 		double flop_rate = _flopCounter->getTotalFlopCount() * numTimeSteps / elapsed_time / (1024*1024);
 		global_log->info() << "FLOP-Count per Iteration: " << _flopCounter->getTotalFlopCount() << " FLOPs" <<endl;
@@ -1577,20 +1613,20 @@ void Simulation::finalize() {
 }
 
 void Simulation::updateParticleContainerAndDecomposition() {
-	// The particles have moved, so the neighbourhood relations have
+	// The particles have moved, so the neighborhood relations have
 	// changed and have to be adjusted
 	_moleculeContainer->update();
 	//_domainDecomposition->exchangeMolecules(_moleculeContainer, _domain);
 	bool forceRebalancing = false;
+	global_simulation->startTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	_domainDecomposition->balanceAndExchange(forceRebalancing, _moleculeContainer, _domain);
+	global_simulation->stopTimer("SIMULATION_MPI_OMP_COMMUNICATION");
 	// The cache of the molecules must be updated/build after the exchange process,
 	// as the cache itself isn't transferred
 	_moleculeContainer->updateMoleculeCaches();
 }
 
-void Simulation::performOverlappingDecompositionAndCellTraversalStep(
-		Timer& decompositionTimer, Timer& computationTimer, Timer& forceCalculationTimer) {
-
+void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
 	bool forceRebalancing = false;
 
 	//TODO: exchange the constructor for a real non-blocking version
@@ -1598,12 +1634,10 @@ void Simulation::performOverlappingDecompositionAndCellTraversalStep(
 	#ifdef ENABLE_MPI
 		#ifdef ENABLE_OVERLAPPING
 			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
-					new NonBlockingMPIMultiStepHandler(&decompositionTimer, &computationTimer, &forceCalculationTimer,
-							static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+					new NonBlockingMPIMultiStepHandler(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
 		#else
 			NonBlockingMPIHandlerBase* nonBlockingMPIHandler =
-					new NonBlockingMPIHandlerBase(&decompositionTimer, &computationTimer, &forceCalculationTimer,
-							static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
+					new NonBlockingMPIHandlerBase(static_cast<DomainDecompMPIBase*>(_domainDecomposition), _moleculeContainer, _domain, _cellProcessor);
 		#endif
 
 		nonBlockingMPIHandler->performOverlappingTasks(forceRebalancing);
@@ -1631,8 +1665,6 @@ double Simulation::Tfactor(unsigned long simstep) {
 	else
 		return 4 - 10.0 * xi / 3.0;
 }
-
-
 
 void Simulation::initialize() {
 	int ownrank = 0;

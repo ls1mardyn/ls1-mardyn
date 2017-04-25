@@ -14,7 +14,6 @@
 #include <cmath>
 #include "particleContainer/adapter/vectorization/SIMD_TYPES.h"
 #include "particleContainer/adapter/vectorization/SIMD_VectorizedCellProcessorHelpers.h"
-#include "utils/Timer.h"
 #include "WrapOpenMP.h"
 
 #include "molecules/MoleculeForwardDeclaration.h"
@@ -77,8 +76,6 @@ public:
 	void printTimers();
 
 private:
-	Timer _timer;
-
 	/**
 	 * \brief a vector of Molecule pointers.
 	 */

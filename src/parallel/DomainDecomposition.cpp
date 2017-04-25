@@ -3,11 +3,11 @@
 #include "Domain.h"
 #include "molecules/Molecule.h"
 #include "particleContainer/ParticleContainer.h"
-#include "parallel/ParticleData.h"
 #include "utils/xmlfileUnits.h"
 #include "utils/Logger.h"
 #include "parallel/NeighbourCommunicationScheme.h"
 #include "parallel/HaloRegion.h"
+#include "ParticleData.h"
 
 using Log::global_log;
 using namespace std;

@@ -114,6 +114,9 @@ public:
 	//! ParticleContainer is it's corresponding cell.
 	void update();
 
+	void update_via_copies();
+	void update_via_coloring();
+
 	bool addParticle(Molecule& particle, bool inBoxCheckedAlready = false, bool checkWhetherDuplicate = false, const bool& rebuildCaches=false) override;
 
 	int addParticles(std::vector<Molecule>& particles, bool checkWhetherDuplicate=false);
@@ -139,8 +142,12 @@ public:
 	void traverseCellsC08(CellProcessor& cellProcessor);
 
 	void traverseNonInnermostCells(CellProcessor& cellProcessor);
+	void traverseNonInnermostCellsOrig(CellProcessor& cellProcessor);
+	void traverseNonInnermostCellsC08(CellProcessor& cellProcessor);
 
 	void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+	void traversePartialInnermostCellsOrig(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
+	void traversePartialInnermostCellsC08(CellProcessor& cellProcessor, unsigned int stage, int stageCount);
 
 	//! @return the number of particles stored in the Linked Cells
 	unsigned long getNumberOfParticles();

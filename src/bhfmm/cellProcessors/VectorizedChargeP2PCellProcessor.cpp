@@ -51,7 +51,8 @@ VectorizedChargeP2PCellProcessor::VectorizedChargeP2PCellProcessor(Domain & doma
 	} // end pragma omp parallel
 
 #ifdef ENABLE_MPI
-	_timer.set_sync(false);
+	global_simulation->setOutputString("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", "FMM: Time spent in Charge P2P ");
+	//global_simulation->setSyncTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P", false); //it is per default false
 #endif
 }
 
@@ -66,12 +67,12 @@ VectorizedChargeP2PCellProcessor :: ~VectorizedChargeP2PCellProcessor () {
 }
 
 void VectorizedChargeP2PCellProcessor::printTimers() {
-	std::cout << "FMM: Time spent in Charge P2P " << _timer.get_etime() << std::endl;
+	std::cout << "FMM: Time spent in Charge P2P " << global_simulation->getTime("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P") << std::endl;
+	//global_simulation->printTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
 
-
 void VectorizedChargeP2PCellProcessor::initTraversal() {
-	_timer.start();
+	global_simulation->startTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 
 	#if defined(_OPENMP)
 	#pragma omp master
@@ -82,7 +83,6 @@ void VectorizedChargeP2PCellProcessor::initTraversal() {
 	} // end pragma omp master
 
 }
-
 
 void VectorizedChargeP2PCellProcessor::endTraversal() {
 	double currentVirial = _domain.getLocalVirial();
@@ -111,9 +111,8 @@ void VectorizedChargeP2PCellProcessor::endTraversal() {
 	_virial = glob_virial;
 	_domain.setLocalVirial(currentVirial + _virial);
 	_domain.setLocalUpot(currentUpot + _upotXpoles);
-	_timer.stop();
+	global_simulation->stopTimer("VECTORIZED_CHARGE_P2P_CELL_PROCESSOR_VCP2P");
 }
-
 
 void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) {
 	// as pre new integration of Caches in SoAs, 
@@ -185,7 +184,6 @@ void VectorizedChargeP2PCellProcessor::preprocessCell(ParticleCellPointers & c) 
 	}
 }
 
-
 void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c) {
 	// as pre new integration of Caches in SoAs, 
 	// this function work as before, as it builds secondary SoAs
@@ -231,65 +229,63 @@ void VectorizedChargeP2PCellProcessor::postprocessCell(ParticleCellPointers & c)
 	}
 }
 
+//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
+const RealCalcVec zero = RealCalcVec::zero();
+const RealCalcVec one = RealCalcVec::set1(1.0);
+const RealCalcVec two = RealCalcVec::set1(2.0);
+const RealCalcVec three = RealCalcVec::set1(3.0);
+const RealCalcVec four = RealCalcVec::set1(4.0);
+const RealCalcVec five = RealCalcVec::set1(5.0);
+const RealCalcVec six = RealCalcVec::set1(6.0);
+const RealCalcVec ten = RealCalcVec::set1(10.0);
+const RealCalcVec _05 = RealCalcVec::set1(0.5);
+const RealCalcVec _075 = RealCalcVec::set1(0.75);
+const RealCalcVec _1pt5 = RealCalcVec::set1(1.5);
+const RealCalcVec _15 = RealCalcVec::set1(15.0);
 
+template<bool calculateMacroscopic>
+inline void VectorizedChargeP2PCellProcessor :: _loopBodyCharge(
+		const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
+		const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
+		const RealCalcVec& qii,
+		const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
+		const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
+		const RealCalcVec& qjj,
+		RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
+		RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
+		RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
+		const MaskVec& forceMask)
+{
+	const RealCalcVec c_dx = r1_x - r2_x;
+	const RealCalcVec c_dy = r1_y - r2_y;
+	const RealCalcVec c_dz = r1_z - r2_z;//fma not possible since they will be reused...
 
-	//const DoubleVec minus_one = DoubleVec::set1(-1.0); //currently not used, would produce warning
-	const RealCalcVec zero = RealCalcVec::zero();
-	const RealCalcVec one = RealCalcVec::set1(1.0);
-	const RealCalcVec two = RealCalcVec::set1(2.0);
-	const RealCalcVec three = RealCalcVec::set1(3.0);
-	const RealCalcVec four = RealCalcVec::set1(4.0);
-	const RealCalcVec five = RealCalcVec::set1(5.0);
-	const RealCalcVec six = RealCalcVec::set1(6.0);
-	const RealCalcVec ten = RealCalcVec::set1(10.0);
-	const RealCalcVec _05 = RealCalcVec::set1(0.5);
-	const RealCalcVec _075 = RealCalcVec::set1(0.75);
-	const RealCalcVec _1pt5 = RealCalcVec::set1(1.5);
-	const RealCalcVec _15 = RealCalcVec::set1(15.0);
+	const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
 
-	template<bool calculateMacroscopic>
-	inline void VectorizedChargeP2PCellProcessor :: _loopBodyCharge(
-			const RealCalcVec& m1_r_x, const RealCalcVec& m1_r_y, const RealCalcVec& m1_r_z,
-			const RealCalcVec& r1_x, const RealCalcVec& r1_y, const RealCalcVec& r1_z,
-			const RealCalcVec& qii,
-			const RealCalcVec& m2_r_x, const RealCalcVec& m2_r_y, const RealCalcVec& m2_r_z,
-			const RealCalcVec& r2_x, const RealCalcVec& r2_y, const RealCalcVec& r2_z,
-			const RealCalcVec& qjj,
-			RealCalcVec& f_x, RealCalcVec& f_y, RealCalcVec& f_z,
-			RealCalcVec& V_x, RealCalcVec& V_y, RealCalcVec& V_z,
-			RealCalcVec& sum_upotXpoles, RealCalcVec& sum_virial,
-			const MaskVec& forceMask)
-	{
-		const RealCalcVec c_dx = r1_x - r2_x;
-		const RealCalcVec c_dy = r1_y - r2_y;
-		const RealCalcVec c_dz = r1_z - r2_z;//fma not possible since they will be reused...
+	const RealCalcVec c_dr2_inv_unmasked = one / c_dr2;
+	const RealCalcVec c_dr2_inv = RealCalcVec::apply_mask(c_dr2_inv_unmasked, forceMask);//masked
+	const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
 
-		const RealCalcVec c_dr2 = RealCalcVec::scal_prod(c_dx, c_dy, c_dz, c_dx, c_dy, c_dz);
+	const RealCalcVec q1q2per4pie0 = qii * qjj;
+	const RealCalcVec upot = q1q2per4pie0 * c_dr_inv;//masked
+	const RealCalcVec fac = upot * c_dr2_inv;//masked
 
-		const RealCalcVec c_dr2_inv_unmasked = one / c_dr2;
-		const RealCalcVec c_dr2_inv = RealCalcVec::apply_mask(c_dr2_inv_unmasked, forceMask);//masked
-	    const RealCalcVec c_dr_inv = RealCalcVec::sqrt(c_dr2_inv);//masked
+	f_x = c_dx * fac;
+	f_y = c_dy * fac;
+	f_z = c_dz * fac;
+	const RealCalcVec m_dx = m1_r_x - m2_r_x;
+	const RealCalcVec m_dy = m1_r_y - m2_r_y;
+	const RealCalcVec m_dz = m1_r_z - m2_r_z;
 
-		const RealCalcVec q1q2per4pie0 = qii * qjj;
-		const RealCalcVec upot = q1q2per4pie0 * c_dr_inv;//masked
-		const RealCalcVec fac = upot * c_dr2_inv;//masked
-
-		f_x = c_dx * fac;
-		f_y = c_dy * fac;
-		f_z = c_dz * fac;
-		const RealCalcVec m_dx = m1_r_x - m2_r_x;
-		const RealCalcVec m_dy = m1_r_y - m2_r_y;
-		const RealCalcVec m_dz = m1_r_z - m2_r_z;
-
-		V_x = m_dx * f_x;
-		V_y = m_dy * f_y;
-		V_z = m_dz * f_z;
-		// Check if we have to add the macroscopic values up
-		if (calculateMacroscopic) {
-			sum_upotXpoles = sum_upotXpoles + upot;
-			sum_virial = sum_virial + V_x + V_y + V_z;//DoubleVec::scal_prod(m_dx, m_dy, m_dz, f_x, f_y, f_z);
-		}
+	V_x = m_dx * f_x;
+	V_y = m_dy * f_y;
+	V_z = m_dz * f_z;
+	// Check if we have to add the macroscopic values up
+	if (calculateMacroscopic) {
+		sum_upotXpoles = sum_upotXpoles + upot;
+		sum_virial = sum_virial + V_x + V_y + V_z;//DoubleVec::scal_prod(m_dx, m_dy, m_dz, f_x, f_y, f_z);
 	}
+}
 
 template<class ForcePolicy, bool CalculateMacroscopic, class MaskGatherChooser>
 void VectorizedChargeP2PCellProcessor::_calculatePairs(const CellDataSoA & soa1, const CellDataSoA & soa2) {

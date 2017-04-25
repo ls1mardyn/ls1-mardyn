@@ -33,13 +33,11 @@ public:
 	T& z(size_t i) const { mardyn_assert(i < _numEntriesPerArray); return this->_p[i + 2 * _numEntriesPerArray]; }
 
 	size_t dimensionToOffset(int i) const {
-		mardyn_assert(i >= 0);
-		mardyn_assert(i < 3);
-		static size_t rets[3] = {0 * _numEntriesPerArray, 1 * _numEntriesPerArray, 2 * _numEntriesPerArray};
-		return rets[i];
+		mardyn_assert(i >= 0 and i < 3);
+		return i * _numEntriesPerArray;
 	}
 
-	T& linearCrossAccess(size_t i) { mardyn_assert(i < _numEntriesPerArray); return this->_p[i];}
+	T& linearCrossAccess(size_t i) { mardyn_assert(i < 3*_numEntriesPerArray); return this->_p[i];}
 
 	size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
 		size_t size_rounded_up = this->_round_up(exact_size);
@@ -94,13 +92,22 @@ public:
 	void appendValueTriplet(T v0, T v1, T v2, size_t oldNumElements) {
 		mardyn_assert(oldNumElements <= _numEntriesPerArray);
 		if (oldNumElements < _numEntriesPerArray) {
-			// no need to resize
+			// no need to resize, baby
 		} else {
-			// shit, we need to resize, but also keep contents
-			AlignedArray<T> backupCopy(*this);
-			resize_zero_shrink(oldNumElements + 1);
-			size_t oldNumElementsTripled = 3 * _numEntriesPerArray;
-			std::memcpy(this->_p, &(backupCopy[0]), oldNumElementsTripled);
+			// shit, we need to resize
+
+			// do we need to keep contents?
+			if(oldNumElements == 0) {
+				// No
+				resize_zero_shrink(oldNumElements + 1);
+			} else {
+				// Yes
+				AlignedArray<T> backupCopy(*this);
+				resize_zero_shrink(oldNumElements + 1);
+				std::memcpy(xBegin(), &(backupCopy[0*oldNumElements]), oldNumElements * sizeof(T));
+				std::memcpy(yBegin(), &(backupCopy[1*oldNumElements]), oldNumElements * sizeof(T));
+				std::memcpy(zBegin(), &(backupCopy[2*oldNumElements]), oldNumElements * sizeof(T));
+			}
 		}
 		x(oldNumElements) = v0;
 		y(oldNumElements) = v1;

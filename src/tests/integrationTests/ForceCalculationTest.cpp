@@ -22,7 +22,7 @@ ForceCalculationTest::~ForceCalculationTest() {
 
 void ForceCalculationTest::testForcePotentialCalculationU0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "ForceCalculationTest::testForcePotentialCalculationU0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;
@@ -65,7 +65,7 @@ void ForceCalculationTest::testForcePotentialCalculationU0() {
 
 void ForceCalculationTest::testForcePotentialCalculationF0() {
 	if (_domainDecomposition->getNumProcs() != 1) {
-		test_log->info() << "DomainDecompositionTest::testExchangeMolecules1Proc()"
+		test_log->info() << "ForceCalculationTest::testForcePotentialCalculationF0()"
 				<< " not executed (rerun with only 1 Process!)" << std::endl;
 		std::cout << "numProcs:" << _domainDecomposition->getNumProcs() << std::endl;
 		return;

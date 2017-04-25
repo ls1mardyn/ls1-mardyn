@@ -8,9 +8,9 @@
 #ifndef COMMUNICATIONPARTNER_H_
 #define COMMUNICATIONPARTNER_H_
 
-#include "parallel/ParticleData.h"
 #include "mpi.h"
 #include <vector>
+#include "ParticleDataForwardDeclaration.h"
 
 typedef enum {
 	LEAVING_AND_HALO_COPIES = 0, /** send process-leaving particles and halo-copies together in one message */

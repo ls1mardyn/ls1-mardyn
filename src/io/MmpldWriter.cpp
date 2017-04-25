@@ -27,68 +27,20 @@
 using Log::global_log;
 using namespace std;
 
-MmpldWriter::MmpldWriter(unsigned long writeFrequency, string outputPrefix, uint64_t numFramesPerFile)
-	:	_outputPrefix(outputPrefix), _writeFrequency(writeFrequency), _numFramesPerFile(numFramesPerFile),
-		_nFileIndex(0)
+MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
+		std::string outputPrefix)
+		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
+		 	_bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep), _strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
-	// first frame that should be written is the start configuration at the beginning of the simulation
-	_bWroteStartConfigFrame = false;
-
 //	if (outputPrefix == "default") <-- what for??
 	if(false)
 		_appendTimestamp = true;
 	else
 		_appendTimestamp = false;
 
-	unsigned long numTimesteps = _simulation.getNumTimesteps();
-	unsigned long numFrames = numTimesteps/_writeFrequency;
-
-#ifndef NDEBUG
-	cout << "_writeFrequency = " << _writeFrequency << endl;
-	cout << "numTimesteps = " << numTimesteps << endl;
-	cout << "numFrames = " << numFrames << endl;
-	cout << "_numFramesPerFile = " << _numFramesPerFile << endl;
-#endif
-
-	if(_numFramesPerFile >= numFrames || _numFramesPerFile == 0)
-	{
-		_vecFilePrefixes.push_back(_outputPrefix);
-		_vecFramesPerFile.push_back(numFrames+1);  // +1: because of start configuration frame is written out first
-	}
-	else
-	{
-		uint32_t numFiles = (numFrames / _numFramesPerFile);
-
-		for(uint32_t fi=0; fi<numFiles; fi++)
-		{
-			std::stringstream sstrPrefix;
-			sstrPrefix << _outputPrefix << "_frames" << fill_width('0', 9) << _numFramesPerFile * (fi+1);
-			_vecFilePrefixes.push_back(sstrPrefix.str() );
-			if(0 == fi)
-				_vecFramesPerFile.push_back(_numFramesPerFile+1);  // +1: first file includes (additionally) the start configuration frame
-			else
-				_vecFramesPerFile.push_back(_numFramesPerFile);
-		}
-		if(numFrames % _numFramesPerFile != 0)
-		{
-			std::stringstream sstrPrefix;
-			sstrPrefix << _outputPrefix << "_frames" << fill_width('0', 9) << numFrames;
-			_vecFilePrefixes.push_back(sstrPrefix.str() );
-			_vecFramesPerFile.push_back(numFrames % _numFramesPerFile);
-		}
-	}
-	_numFiles = _vecFilePrefixes.size();
-
-#ifndef NDEBUG
-	for(auto fit : _vecFilePrefixes)
-		cout << fit << endl;
-	for(auto fit : _vecFramesPerFile)
-		cout << fit << endl;
-#endif
-
 	// ERROR
 	if (0 == _writeFrequency)
-		exit(-1);  // TODO: use MarDyn exit
+		mardyn_exit(-1);
 }
 
 MmpldWriter::~MmpldWriter()
@@ -113,10 +65,15 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 }
 
 //Header Information
-void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
+void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
+	// only executed once
+	this->PrepareWriteControl();
+
 	_frameCount = 0;
+	_strOutputPrefixCurrent = _vecFilePrefixes.at(_nFileIndex);
+	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
 
 	// number of components / sites
 	_numComponents = (uint8_t)domain->getNumberOfComponents();
@@ -150,12 +107,15 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	this->SetNumSphereTypes();
 
 	stringstream filenamestream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+	filenamestream << _strOutputPrefixCurrent;
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
-		_timestampString = gettimestring();
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
 	char filename[filenamestream.str().size()+1];
@@ -238,6 +198,10 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 #endif
 
+	// eventually write initial frame
+	if(false == _bInitFrameDone && (_startTimestep == _simulation.getNumInitTimesteps() ) )
+		this->doOutput(particleContainer, domainDecomp, domain, _nextRecSimstep, NULL, NULL);
+	_bInitFrameDone = true;
 }
 
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
@@ -245,18 +209,21 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
 		   map<unsigned, CavityEnsemble>* /*mcav*/)
 {
-	if ( !(simstep % _writeFrequency == 0 || false == _bWroteStartConfigFrame) )
+	// control writing with desired write frequency
+	if( _nextRecSimstep != simstep)
 		return;
-
-	// first frame written
-	_bWroteStartConfigFrame = true;
+	_nextRecSimstep += _writeFrequency;
 
 	stringstream filenamestream, outputstream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+	filenamestream << _strOutputPrefixCurrent;
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
 	char filename[filenamestream.str().size()+1];
@@ -477,7 +444,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 #endif
 
 	// split data to multiple files
-	if(_frameCount == _vecFramesPerFile.at(_nFileIndex) && (_nFileIndex+1) < _numFiles)
+	if(_frameCount == _frameCountMax && (_nFileIndex+1) < _numFiles)
 		this->MultiFileApproachReset(particleContainer, domainDecomp, domain);
 }
 
@@ -486,9 +453,13 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 	stringstream filenamestream;
 	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
 	char filename[filenamestream.str().size()+1];
@@ -593,6 +564,65 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 	this->finishOutput(particleContainer, domainDecomp, domain);
 	_nFileIndex++;
 	this->initOutput(particleContainer, domainDecomp, domain);
+}
+
+void MmpldWriter::PrepareWriteControl()
+{
+	// this method should only be executed once
+	if(true == _bWriteControlPrepared)
+		return;
+	_bWriteControlPrepared = true;
+
+	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
+	_nextRecSimstep = _startTimestep;
+	if( 0 == _stopTimestep )
+		_stopTimestep = _simulation.getNumTimesteps();
+	else
+		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() ) ? _stopTimestep  : _simulation.getNumTimesteps();
+
+	uint64_t numTimesteps = _stopTimestep - _startTimestep;
+	uint64_t numFramesTotal = numTimesteps/_writeFrequency;
+	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
+		_numFramesPerFile = numFramesTotal;
+
+#ifndef NDEBUG
+	cout << "_startTimestep    = " << _startTimestep << endl;
+	cout << "_writeFrequency   = " << _writeFrequency << endl;
+	cout << "_stopTimestep     = " << _stopTimestep << endl;
+	cout << "_numFramesPerFile = " << _numFramesPerFile << endl;
+	cout << "numTimesteps      = " << numTimesteps << endl;
+	cout << "numFramesTotal    = " << numFramesTotal << endl;
+#endif
+
+	// init frames per file vector
+	_numFiles = numFramesTotal/_numFramesPerFile;
+	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
+	_vecFramesPerFile.at(0) += 1;  // +1 frame in first file: start configuration
+
+	// init file prefix vector
+	for(uint8_t fi=0; fi<_numFiles; ++fi)
+	{
+		std::stringstream sstrPrefix;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(fi+1);
+		_vecFilePrefixes.push_back(sstrPrefix.str() );
+	}
+
+	// handle the case: numFramesTotal not a multiple of _numFramesPerFile
+	if(0 != numFramesTotal % _numFramesPerFile)
+	{
+		_numFiles++;
+		_vecFramesPerFile.push_back(numFramesTotal % _numFramesPerFile);
+		std::stringstream sstrPrefix;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(_numFiles);
+		_vecFilePrefixes.push_back(sstrPrefix.str() );
+	}
+
+#ifndef NDEBUG
+	for(auto fit : _vecFilePrefixes)
+		cout << fit << endl;
+	for(auto fit : _vecFramesPerFile)
+		cout << fit << endl;
+#endif
 }
 
 // derived classes

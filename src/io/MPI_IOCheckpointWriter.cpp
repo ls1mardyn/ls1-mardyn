@@ -306,7 +306,7 @@ void MPI_IOCheckpointWriter::doOutput(ParticleContainer* particleContainer, Doma
 
 		//Writing:
 		MPI_Datatype mpiParticleData;
-		ParticleData::setMPIType(mpiParticleData);
+		ParticleData::getMPIType(mpiParticleData);
 
 		//First dimension represents the cell
 		//Second dimension contains the molecules of this cell

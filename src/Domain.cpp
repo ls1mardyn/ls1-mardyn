@@ -1082,8 +1082,6 @@ void Domain::Nadd(unsigned cid, int N, int localN)
 	unsigned int rotationDegreesOfFreeedom = component->getRotationalDegreesOfFreedom();
 
 	this->_globalNumMolecules += N;
-	this->_localRotationalDOF[0] += localN * rotationDegreesOfFreeedom;
-	this->_universalRotationalDOF[0] += N * rotationDegreesOfFreeedom;
 	if( (this->_componentwiseThermostat)
 			&& (this->_componentToThermostatIdMap[cid] > 0) )
 	{
