@@ -30,7 +30,7 @@ using namespace std;
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-		 	_bWriteControlPrepared(false), _nFileIndex(0)
+		 	_bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep), _strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
 //	if (outputPrefix == "default") <-- what for??
 	if(false)
@@ -65,13 +65,15 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 }
 
 //Header Information
-void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
+void MmpldWriter::initOutput(ParticleContainer* particleContainer,
 		DomainDecompBase* domainDecomp, Domain* domain)
 {
 	// only executed once
 	this->PrepareWriteControl();
 
 	_frameCount = 0;
+	_strOutputPrefixCurrent = _vecFilePrefixes.at(_nFileIndex);
+	_frameCountMax = _vecFramesPerFile.at(_nFileIndex);
 
 	// number of components / sites
 	_numComponents = (uint8_t)domain->getNumberOfComponents();
@@ -105,12 +107,15 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	this->SetNumSphereTypes();
 
 	stringstream filenamestream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+	filenamestream << _strOutputPrefixCurrent;
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
-		_timestampString = gettimestring();
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
 	char filename[filenamestream.str().size()+1];
@@ -193,6 +198,10 @@ void MmpldWriter::initOutput(ParticleContainer* /*particleContainer*/,
 	}
 #endif
 
+	// eventually write initial frame
+	if(false == _bInitFrameDone && (_startTimestep == _simulation.getNumInitTimesteps() ) )
+		this->doOutput(particleContainer, domainDecomp, domain, _nextRecSimstep, NULL, NULL);
+	_bInitFrameDone = true;
 }
 
 void MmpldWriter::doOutput( ParticleContainer* particleContainer,
@@ -200,15 +209,21 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 		   unsigned long simstep, std::list<ChemicalPotential>* /*lmu*/,
 		   map<unsigned, CavityEnsemble>* /*mcav*/)
 {
-	if( (*_frameListIterator) != simstep)
+	// control writing with desired write frequency
+	if( _nextRecSimstep != simstep)
 		return;
+	_nextRecSimstep += _writeFrequency;
 
 	stringstream filenamestream, outputstream;
-	filenamestream << _vecFilePrefixes.at(_nFileIndex);
+	filenamestream << _strOutputPrefixCurrent;
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
 	char filename[filenamestream.str().size()+1];
@@ -416,9 +431,7 @@ void MmpldWriter::doOutput( ParticleContainer* particleContainer,
 #endif
 
 	// split data to multiple files
-	_frameListIterator++;
-//	if(_frameCount == _vecFramesPerFile.at(_nFileIndex) && (_nFileIndex+1) < _numFiles)
-	if(_frameListIterator == _vecFrameList.end() && (_nFileIndex+1) < _numFiles)
+	if(_frameCount == _frameCountMax && (_nFileIndex+1) < _numFiles)
 		this->MultiFileApproachReset(particleContainer, domainDecomp, domain);
 }
 
@@ -427,9 +440,13 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 	stringstream filenamestream;
 	filenamestream << _vecFilePrefixes.at(_nFileIndex);
 
+	/*
+	 * not in use actually
+	 *
 	if(_appendTimestamp) {
 		filenamestream << "-" << _timestampString;
 	}
+	*/
 	filenamestream << ".mmpld";
 
 	char filename[filenamestream.str().size()+1];
@@ -534,11 +551,6 @@ void MmpldWriter::MultiFileApproachReset(ParticleContainer* particleContainer,
 	this->finishOutput(particleContainer, domainDecomp, domain);
 	_nFileIndex++;
 	this->initOutput(particleContainer, domainDecomp, domain);
-
-	// update frame list iterators
-	_frameListsIterator = _vecFrameLists.begin() + _nFileIndex;
-	_vecFrameList = *_frameListsIterator;
-	_frameListIterator = _vecFrameList.begin();
 }
 
 void MmpldWriter::PrepareWriteControl()
@@ -548,15 +560,17 @@ void MmpldWriter::PrepareWriteControl()
 		return;
 	_bWriteControlPrepared = true;
 
-	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps()+1;
+	_startTimestep = ( _startTimestep > _simulation.getNumInitTimesteps() ) ? _startTimestep : _simulation.getNumInitTimesteps();
+	_nextRecSimstep = _startTimestep;
 	if( 0 == _stopTimestep )
 		_stopTimestep = _simulation.getNumTimesteps();
 	else
-		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() )     ? _stopTimestep  : _simulation.getNumTimesteps();
-	uint64_t numTimesteps = _stopTimestep - _startTimestep + 1;
-	uint64_t numFramesTotal = numTimesteps/_writeFrequency;  // +1: start configuration frame not included here!
+		_stopTimestep  = ( _stopTimestep  < _simulation.getNumTimesteps() ) ? _stopTimestep  : _simulation.getNumTimesteps();
+
+	uint64_t numTimesteps = _stopTimestep - _startTimestep;
+	uint64_t numFramesTotal = numTimesteps/_writeFrequency;
 	if(_numFramesPerFile >= numFramesTotal || _numFramesPerFile == 0)
-		_numFramesPerFile = numFramesTotal + 1;  // +1: start configuration frame not included here!
+		_numFramesPerFile = numFramesTotal;
 
 #ifndef NDEBUG
 	cout << "_startTimestep    = " << _startTimestep << endl;
@@ -567,58 +581,28 @@ void MmpldWriter::PrepareWriteControl()
 	cout << "numFramesTotal    = " << numFramesTotal << endl;
 #endif
 
-	uint64_t ts = _startTimestep + _writeFrequency - 1;
-	uint64_t numFrames = 1;
-	std::vector<uint64_t> vecFrameList;
-	vecFrameList.push_back(_startTimestep);
-	while(ts <= _stopTimestep)
+	// init frames per file vector
+	_numFiles = numFramesTotal/_numFramesPerFile;
+	_vecFramesPerFile.insert (_vecFramesPerFile.begin(), _numFiles, _numFramesPerFile);
+	_vecFramesPerFile.at(0) += 1;  // +1 frame in first file: start configuration
+
+	// init file prefix vector
+	for(uint8_t fi=0; fi<_numFiles; ++fi)
 	{
-		if(numFrames == _numFramesPerFile + (_vecFrameLists.size() == 0) )  // + ... : first file +1 frame (start configuration)
-		{
-			numFrames = 0;
-			_vecFrameLists.push_back(vecFrameList);
-			vecFrameList.clear();
-		}
-
-		vecFrameList.push_back(ts);
-		numFrames++;
-		ts += _writeFrequency;
-	}
-	_vecFrameLists.push_back(vecFrameList);
-
-	// number of files that will be created
-	_numFiles = _vecFrameLists.size();
-#ifndef NDEBUG
-	cout << "_numFiles = " << (uint32_t)(_numFiles) << endl;
-#endif
-
-#ifndef NDEBUG
-	vector<vector<uint64_t> >::iterator fit;
-	vector<uint64_t>::iterator lit;
-	cout << "_vecFrameLists ..." << endl;
-	for(auto& fit : _vecFrameLists) {
-		for(auto& lit : fit)
-			cout << lit << ", ";
-		cout << endl;
-	}
-#endif
-
-	// frames per file, file prefix vector
-	uint32_t nFileNr = 1;
-
-	for(auto& fit : _vecFrameLists)
-	{
-		_vecFramesPerFile.push_back(fit.size() );
 		std::stringstream sstrPrefix;
-		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << nFileNr;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(fi+1);
 		_vecFilePrefixes.push_back(sstrPrefix.str() );
-		nFileNr++;
 	}
 
-	// init frame list iterators
-	_frameListsIterator = _vecFrameLists.begin();
-	_vecFrameList = *_frameListsIterator;
-	_frameListIterator = _vecFrameList.begin();
+	// handle the case: numFramesTotal not a multiple of _numFramesPerFile
+	if(0 != numFramesTotal % _numFramesPerFile)
+	{
+		_numFiles++;
+		_vecFramesPerFile.push_back(numFramesTotal % _numFramesPerFile);
+		std::stringstream sstrPrefix;
+		sstrPrefix << _outputPrefix << "_" << fill_width('0', 4) << (uint32_t)(_numFiles);
+		_vecFilePrefixes.push_back(sstrPrefix.str() );
+	}
 
 #ifndef NDEBUG
 	for(auto fit : _vecFilePrefixes)
