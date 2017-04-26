@@ -124,8 +124,13 @@ void VectorizedCellProcessorTest::testLennardJonesVectorization() {
 		return;
 	}
 
-	double ScenarioCutoff = 35.0;
+#if defined(MARDYN_SPDP) or defined(MARDYN_DPDP)
 	double Tolerance = 1e-12; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
+#else
+	double Tolerance = 1e-06; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
+#endif
+
+	double ScenarioCutoff = 35.0;
 	const char filename[] = {"VectorizationLennardJones.inp"};
 
 	ParticleContainer* container_1 = initializeFromFile(ParticleContainerFactory::LinkedCell, filename, ScenarioCutoff);
@@ -211,10 +216,11 @@ void VectorizedCellProcessorTest::testElectrostaticVectorization(const char* fil
 	// AVX breaks at 1e-14
 	// probably architecture dependent. set at 1e-11 to be on the safe side
 	// also on other architectures
-	double Tolerance = 1e-11;
-
-
-
+#if defined(MARDYN_SPDP) or defined(MARDYN_DPDP)
+	double Tolerance = 1e-11; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
+#else
+	double Tolerance = 1e-05; // goes through up until 1e-16. Leave it at 1e-12 to be on the safe side
+#endif
 	ParticleContainer* container_1 = initializeFromFile(
 			ParticleContainerFactory::LinkedCell, filename,
 			ScenarioCutoff);
