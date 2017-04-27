@@ -1012,10 +1012,8 @@ void Simulation::simulate() {
 
 
 
-#ifdef ENABLE_MPI
-		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-		bool overlapCommComp = false; // change back to true after testing!
-		// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#if defined(ENABLE_MPI) && defined(ENABLE_OVERLAPPING)
+		bool overlapCommComp = true;
 #else
 		bool overlapCommComp = false;
 #endif
@@ -1408,8 +1406,6 @@ void Simulation::updateParticleContainerAndDecomposition() {
 
 void Simulation::performOverlappingDecompositionAndCellTraversalStep() {
 	bool forceRebalancing = false;
-
-	//TODO: exchange the constructor for a real non-blocking version
 
 	#ifdef ENABLE_MPI
 		#ifdef ENABLE_OVERLAPPING
