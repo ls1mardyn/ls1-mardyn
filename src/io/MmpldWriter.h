@@ -11,14 +11,15 @@
 enum InitSphereData : uint8_t
 {
 	ISD_USE_DEFAULT = 1,
-	ISD_READ_FROM_FILE = 2
+	ISD_READ_FROM_FILE = 2,
+	ISD_READ_FROM_XML = 3,
 };
 
 class Simulation;
 class MmpldWriter : public OutputBase
 {
 protected:
-    MmpldWriter(){};
+	MmpldWriter();
 	//! @brief: writes a mmspd file used by MegaMol
 	//!
 	//! Depending on write frequency (for example: every timestep, or every 10th, 100th, 1000th ...) number of frames
@@ -83,7 +84,7 @@ protected:
 	std::vector<uint8_t> _numSitesPerComp;
 	std::vector<uint8_t> _nCompSitesOffset;
 	std::vector<float> _vfSphereRadius;
-	std::vector< std::array<uint8_t, 4> > _vaSphereColors;
+	std::vector< std::array<uint32_t, 4> > _vaSphereColors;
 	std::string _strSphereDataFilename;
 	uint8_t _bInitSphereData;
 	bool _bWriteControlPrepared;
@@ -102,6 +103,7 @@ protected:
 class MmpldWriterSimpleSphere : public MmpldWriter
 {
 public:
+	MmpldWriterSimpleSphere() {}
 	MmpldWriterSimpleSphere(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 			std::string outputPrefix)
 			: MmpldWriter(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPrefix)
@@ -118,6 +120,7 @@ public:
 class MmpldWriterMultiSphere : public MmpldWriter
 {
 public:
+	MmpldWriterMultiSphere() {}
 	MmpldWriterMultiSphere(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 			std::string outputPrefix)
 			: MmpldWriter(startTimestep, writeFrequency, stopTimestep, numFramesPerFile, outputPrefix)

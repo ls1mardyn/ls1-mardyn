@@ -389,7 +389,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 	XMLfile::Query::const_iterator outputPluginIter;
 	for( outputPluginIter = query.begin(); outputPluginIter; outputPluginIter++ ) {
 		xmlconfig.changecurrentnode( outputPluginIter );
-		OutputBase *outputPlugin;
+		OutputBase *outputPlugin = NULL;
 		string pluginname("");
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
@@ -407,6 +407,23 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "MmspdWriter") {
 			outputPlugin = new MmspdWriter();
 		}
+		else if(pluginname == "MmspdBinWriter") {
+			outputPlugin = new MmspdBinWriter();
+		}
+		else if(pluginname == "MmpldWriter") {
+			std::string strType = "unknown";
+			xmlconfig.getNodeValue("@type", strType);
+
+			if("simple" == strType)
+				outputPlugin = new MmpldWriterSimpleSphere();
+			else if("multi" == strType)
+				outputPlugin = new MmpldWriterMultiSphere ();
+			else
+			{
+				global_log->error() << "MmpldWriter: wrong attribute, expected type=simple|multi. Program exit... " << endl;
+				Simulation::exit(-1);
+			}
+		}
 		else if(pluginname == "PovWriter") {
 			outputPlugin = new PovWriter();
 		}
@@ -422,9 +439,6 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		}
 		else if(pluginname == "VISWriter") {
 			outputPlugin = new VISWriter();
-		}
-		else if(pluginname == "MmspdBinWriter") {
-			outputPlugin = new MmspdBinWriter();
 		}
 #ifdef VTK
 		else if(pluginname == "VTKMoleculeWriter") {
@@ -452,9 +466,11 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			continue;
 		}
 
-
-		outputPlugin->readXML(xmlconfig);
-		_outputPlugins.push_back(outputPlugin);
+		if(NULL != outputPlugin)
+		{
+			outputPlugin->readXML(xmlconfig);
+			_outputPlugins.push_back(outputPlugin);
+		}
 	}
 	xmlconfig.changecurrentnode(oldpath);
 }

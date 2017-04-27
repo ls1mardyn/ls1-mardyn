@@ -27,10 +27,27 @@
 using Log::global_log;
 using namespace std;
 
+MmpldWriter::MmpldWriter()
+		:	_startTimestep(0), _writeFrequency(1000), _stopTimestep(0), _numFramesPerFile(0), _outputPrefix("unknown"),
+		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(0),
+		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+{
+	//	if (outputPrefix == "default") <-- what for??
+		if(false)
+			_appendTimestamp = true;
+		else
+			_appendTimestamp = false;
+
+		// ERROR
+		if (0 == _writeFrequency)
+			mardyn_exit(-1);
+}
+
 MmpldWriter::MmpldWriter(uint64_t startTimestep, uint64_t writeFrequency, uint64_t stopTimestep, uint64_t numFramesPerFile,
 		std::string outputPrefix)
 		:	_startTimestep(startTimestep), _writeFrequency(writeFrequency), _stopTimestep(stopTimestep), _numFramesPerFile(numFramesPerFile), _outputPrefix(outputPrefix),
-		 	_bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep), _strOutputPrefixCurrent("unknown"), _frameCountMax(1)
+		 	_bInitSphereData(ISD_READ_FROM_XML), _bWriteControlPrepared(false), _bInitFrameDone(false), _nFileIndex(0), _numFiles(1), _nextRecSimstep(startTimestep),
+		 	_strOutputPrefixCurrent("unknown"), _frameCountMax(1)
 {
 //	if (outputPrefix == "default") <-- what for??
 	if(false)
@@ -47,12 +64,18 @@ MmpldWriter::~MmpldWriter()
 {
 }
 
-void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
-	_writeFrequency = 1;
-	xmlconfig.getNodeValue("writefrequency", _writeFrequency);
-	global_log->info() << "Write frequency: " << _writeFrequency << endl;
+void MmpldWriter::readXML(XMLfileUnits& xmlconfig)
+{
+	// write control
+	xmlconfig.getNodeValue("writecontrol/start", _startTimestep);
+	xmlconfig.getNodeValue("writecontrol/writefrequency", _writeFrequency);
+	xmlconfig.getNodeValue("writecontrol/stop", _stopTimestep);
+	xmlconfig.getNodeValue("writecontrol/framesperfile", _numFramesPerFile);
+	global_log->info() << "Start sampling from simstep: " << _startTimestep << endl;
+	global_log->info() << "Write with frequency: " << _writeFrequency << endl;
+	global_log->info() << "Stop sampling at simstep: " << _stopTimestep << endl;
+	global_log->info() << "Split files every " << _numFramesPerFile << "th frame."<< endl;
 
-	_outputPrefix = "mardyn";
 	xmlconfig.getNodeValue("outputprefix", _outputPrefix);
 	global_log->info() << "Output prefix: " << _outputPrefix << endl;
 	
@@ -62,6 +85,32 @@ void MmpldWriter::readXML(XMLfileUnits& xmlconfig) {
 		_appendTimestamp = true;
 	}
 	global_log->info() << "Append timestamp: " << _appendTimestamp << endl;
+
+	// sphere params: radius, colors
+	uint32_t numSites = 0;
+	XMLfile::Query query = xmlconfig.query("spheres/site");
+	numSites = query.card();
+	global_log->info() << "Number of sites: " << numSites << endl;
+	if(numSites < 1) {
+		global_log->warning() << "No site parameters specified." << endl;
+	}
+	string oldpath = xmlconfig.getcurrentnodepath();
+	XMLfile::Query::const_iterator outputSiteIter;
+	for( outputSiteIter = query.begin(); outputSiteIter; outputSiteIter++ )
+	{
+		xmlconfig.changecurrentnode( outputSiteIter );
+		float radius;
+		uint32_t r, g, b, alpha;
+		xmlconfig.getNodeValue("radius", radius);
+		xmlconfig.getNodeValue("color/r", r);
+		xmlconfig.getNodeValue("color/g", g);
+		xmlconfig.getNodeValue("color/b", b);
+		xmlconfig.getNodeValue("color/alpha", alpha);
+
+		_vfSphereRadius.push_back(radius);
+		std::array<uint32_t, 4> arrColors = {r, g, b, alpha};
+		_vaSphereColors.push_back(arrColors);
+	}
 }
 
 //Header Information
@@ -483,23 +532,25 @@ void MmpldWriter::finishOutput(ParticleContainer* /*particleContainer*/, DomainD
 
 void MmpldWriter::InitSphereData()
 {
-	if(_bInitSphereData == ISD_USE_DEFAULT)
+	if(_bInitSphereData == ISD_READ_FROM_XML)
+		return;
+	else if(_bInitSphereData == ISD_USE_DEFAULT)
 	{
 		for(uint8_t i=0; i<6; i++)
 			_vfSphereRadius.push_back(0.5);
 
 		//                            R    G    B  alpha
-		std::array<uint8_t, 4> red = { 255, 0, 0, 255 };
+		std::array<uint32_t, 4> red = { 255, 0, 0, 255 };
 		_vaSphereColors.push_back(red);
-		std::array<uint8_t, 4> lightblue = { 0, 205, 255, 255 };
+		std::array<uint32_t, 4> lightblue = { 0, 205, 255, 255 };
 		_vaSphereColors.push_back(lightblue);
-		std::array<uint8_t, 4> blue = { 255, 0, 255, 255 };
+		std::array<uint32_t, 4> blue = { 255, 0, 255, 255 };
 		_vaSphereColors.push_back(blue);
-		std::array<uint8_t, 4> green = { 0, 155, 0, 255 };
+		std::array<uint32_t, 4> green = { 0, 155, 0, 255 };
 		_vaSphereColors.push_back(green);
-		std::array<uint8_t, 4> purple = { 105, 0, 205, 255 };
+		std::array<uint32_t, 4> purple = { 105, 0, 205, 255 };
 		_vaSphereColors.push_back(purple);
-		std::array<uint8_t, 4> orange = { 255, 125, 0, 255 };
+		std::array<uint32_t, 4> orange = { 255, 125, 0, 255 };
 		_vaSphereColors.push_back(orange);
 
 		return;
@@ -508,7 +559,7 @@ void MmpldWriter::InitSphereData()
 	std::ifstream filein(_strSphereDataFilename.c_str(), ios::in);
 	std::string strLine, strToken;
 	std::string strTokens[6];
-	std::array<uint8_t, 4> arrColors;
+	std::array<uint32_t, 4> arrColors;
 
 	while (getline (filein, strLine))
 	{
@@ -524,7 +575,7 @@ void MmpldWriter::InitSphereData()
 		{
 			_vfSphereRadius.push_back( (float)(atof( strTokens[1].c_str() ) ) );
 			for(uint8_t ci=0; ci<4; ci++)
-				arrColors[ci] = (uint8_t)(atoi(strTokens[ci+2].c_str() ) );
+				arrColors[ci] = (uint32_t)(atoi(strTokens[ci+2].c_str() ) );
 			_vaSphereColors.push_back(arrColors);
 		}
 	}
@@ -534,7 +585,7 @@ void MmpldWriter::InitSphereData()
 	for(it=_vfSphereRadius.begin(); it!=_vfSphereRadius.end(); ++it)
 		cout << i++ << ": " << (*it) << endl;
 
-	std::vector< std::array<uint8_t, 4> >::iterator cit; i=0; cout << "colors" << endl;
+	std::vector< std::array<uint32_t, 4> >::iterator cit; i=0; cout << "colors" << endl;
 	for(cit=_vaSphereColors.begin(); cit!=_vaSphereColors.end(); ++cit)
 	{
 		cout << i++ << ":";
