@@ -56,7 +56,7 @@ public:
 	 */
 	AlignedArray(const AlignedArray & a) {
 		vec = new std::vector<T, AlignedAllocator<T, alignment>>(a.vec->size());
-		for (size_t i; i < a.vec->size(); ++i) {
+		for (size_t i = 0; i < a.vec->size(); ++i) {
 			(*vec)[i] = (*a.vec)[i];
 		}
 	}
@@ -66,7 +66,7 @@ public:
 	 */
 	AlignedArray & operator=(const AlignedArray & a) {
 		vec->resize(a.vec->size());
-		for (size_t i; i < a.vec->size(); ++i) {
+		for (size_t i = 0; i < a.vec->size(); ++i) {
 			(*vec)[i] = (*a.vec)[i];
 		}
 		return *this;
