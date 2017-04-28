@@ -28,7 +28,7 @@
 
 /**
  * \brief An aligned array.
- * \details Has pointer to T semantics. Internal capacity is always rounded up to fill up full cache-lines.
+ * \details Has pointer to T semantics. Internal size is rounded up to fill up full cache-lines.
  * \tparam T The type of the array elements.
  * \tparam alignment The alignment restriction. Must be a power of 2, should not be 8.
  * \author Johannes Heckl, Nikola Tchipev, Micha Mueller
@@ -55,10 +55,9 @@ public:
 	 * \brief Construct a copy of another AlignedArray.
 	 */
 	AlignedArray(const AlignedArray & a) {
-		vec = new std::vector<T, AlignedAllocator<T, alignment>>(
-				_round_up(a.vec->size()));
-		for (size_t i = 0; i < a.vec->size(); ++i) {
-			vec->push_back((*a.vec)[i]);
+		vec = new std::vector<T, AlignedAllocator<T, alignment>>(a.vec->size());
+		for (size_t i; i < a.vec->size(); ++i) {
+			(*vec)[i] = (*a.vec)[i];
 		}
 	}
 
@@ -66,9 +65,9 @@ public:
 	 * \brief Assign a copy of another AlignedArray.
 	 */
 	AlignedArray & operator=(const AlignedArray & a) {
-		vec->resize(_round_up(a.vec->size()));
-		for (size_t i = 0; i < a.vec->size(); ++i) {
-			vec->push_back((*a.vec)[i]);
+		vec->resize(a.vec->size());
+		for (size_t i; i < a.vec->size(); ++i) {
+			(*vec)[i] = (*a.vec)[i];
 		}
 		return *this;
 	}
@@ -82,29 +81,33 @@ public:
 
 	void appendValue(T v, size_t oldNumElements) {
 		mardyn_assert(oldNumElements <= vec->size());
-		vec->push_back(v);
+		if (oldNumElements < vec->size()) {
+			// no need to resize
+		} else {
+			// shit, we need to resize, but also keep contents
+			vec->resize(_round_up(oldNumElements + 1));
+		}
+		(*vec)[oldNumElements] = v;
 	}
 
 	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL =
 			false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
-		bool need_resize = size_rounded_up > vec->capacity()
-				or (allow_shrink and size_rounded_up < vec->capacity());
+		bool need_resize = size_rounded_up > vec->size()
+				or (allow_shrink and size_rounded_up < vec->size());
 
 		if (need_resize) {
 			vec->resize(size_rounded_up);
-			// resize zero-s all
-		} else {
-			// we didn't resize, but we might still need to zero the rest of the Cache Line
-			if (zero_rest_of_CL and size_rounded_up > 0) {
-				std::memset(vec->data() + exact_size, 0,
-						size_rounded_up - exact_size);
-			}
+		}
+		// we might still need to zero the rest of the Cache Line
+		if (zero_rest_of_CL and size_rounded_up > 0) {
+			std::memset(vec->data() + exact_size, 0,
+					size_rounded_up - exact_size);
 		}
 
-		mardyn_assert(size_rounded_up <= vec->capacity());
-		return vec->capacity();
+		mardyn_assert(size_rounded_up <= vec->size());
+		return vec->size();
 	}
 
 	/**
@@ -115,17 +118,17 @@ public:
 	}
 
 	virtual void zero(size_t start_idx) {
-		if (vec->capacity() > 0) {
+		if (vec->size() > 0) {
 			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
 			std::memset(vec->data(), 0, num_to_zero * sizeof(T));
 		}
 	}
 
 	/**
-	 * \brief Return size of currently allocated memory in terms of elements. Not equal to the actual amount of elements currently stored.
+	 * \brief Return current size in terms of elements
 	 */
 	inline size_t get_size() const {
-		return vec->capacity();
+		return vec->size();
 	}
 
 	/**
@@ -139,7 +142,7 @@ public:
 	 * \brief Return amount of allocated storage + .
 	 */
 	size_t get_dynamic_memory() const {
-		return vec->capacity() * sizeof(T);
+		return vec->size() * sizeof(T);
 	}
 
 	static size_t _round_up(size_t n) {
