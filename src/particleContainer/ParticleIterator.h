@@ -21,13 +21,18 @@
 
 class ParticleIterator {
 public:
+	enum Type {
+		ALL_CELLS=0, /* iterates every cell */
+		ONLY_INNER_AND_BOUNDARY=1, /* iterates every cell except halo cells */
+	};
+
 	typedef std::vector<ParticleCell> CellContainer_T;
 	typedef CellContainer_T* CellContainer_T_ptr;
 	typedef CellContainer_T::size_type CellIndex_T;
 	typedef std::vector<Molecule>::size_type MolIndex_T;
 
 	ParticleIterator ();
-	ParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize=true);
+	ParticleIterator (Type t_arg, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize=true);
 	ParticleIterator& operator=(const ParticleIterator& other);
 
 	virtual ~ParticleIterator(){}
@@ -45,6 +50,7 @@ public:
 	void deleteCurrentParticle();
 
 protected:
+	Type _type;
 	CellContainer_T_ptr _cells;
 
 	CellIndex_T _cell_index;
@@ -58,12 +64,12 @@ protected:
 	virtual void next_non_empty_cell();
 };
 
-inline ParticleIterator :: ParticleIterator () : _cells (nullptr), _cell_index (0), _mol_index (0), _currentParticleDeleted(false), _stride (1) {
+inline ParticleIterator :: ParticleIterator () : _type(ALL_CELLS), _cells (nullptr), _cell_index (0), _mol_index (0), _currentParticleDeleted(false), _stride (1) {
 	make_invalid();
 }
 
-inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize) :
-		_cells (cells_arg), _cell_index (offset_arg), _mol_index (0), _currentParticleDeleted(false), _stride (stride_arg) {
+inline ParticleIterator :: ParticleIterator (Type t_arg, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const bool initialize) :
+		_type(t_arg), _cells (cells_arg), _cell_index (offset_arg), _mol_index (0), _currentParticleDeleted(false), _stride (stride_arg) {
 	if ( !initialize ) {
 		return;
 	}
@@ -89,6 +95,7 @@ inline ParticleIterator :: ParticleIterator (CellContainer_T_ptr cells_arg, cons
 
 inline ParticleIterator& ParticleIterator::operator=(const ParticleIterator& other) {
 	mardyn_assert(_stride == other._stride);
+	_type = other._type;
 	_cells = other._cells;
 	_cell_index = other._cell_index;
 	_mol_index = other._mol_index;
@@ -104,18 +111,20 @@ inline void ParticleIterator :: next_non_empty_cell() {
 	const CellIndex_T numCells = cells.size();
 
 	// find the next non-empty cell
-	do {
-		_cell_index += _stride;
-	} while (_cell_index < numCells and cells[_cell_index].isEmpty());
+	bool validCellFound = false;
 
-	if (_cell_index < numCells) {
-		// if we found a non-empty cell..
-		// valid
-		_mol_index = 0;
+	for (_cell_index += _stride; _cell_index < numCells; _cell_index += _stride) {
+
+		const ParticleCell & c = cells[_cell_index];
+
+		if(c.isNotEmpty() and (_type == ALL_CELLS or not c.isHaloCell())) {
+			validCellFound = true;
+			_mol_index = 0;
+			break;
+		}
 	}
-	else {
-		// else there is no next non-empty cell..
-		// invalid
+
+	if (not validCellFound) {
 		make_invalid();
 	}
 }

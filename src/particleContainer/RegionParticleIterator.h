@@ -22,7 +22,7 @@
 class RegionParticleIterator : public ParticleIterator {
 	public:
 		RegionParticleIterator ();
-		RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]);
+		RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]);
 		RegionParticleIterator& operator=(const RegionParticleIterator& other);
 
 		void operator ++ ();
@@ -49,8 +49,8 @@ inline RegionParticleIterator :: RegionParticleIterator () : ParticleIterator(),
 	make_invalid();
 }
 
-inline RegionParticleIterator :: RegionParticleIterator (CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]) :
-		ParticleIterator(cells_arg, offset_arg, stride_arg, false), _localCellIndex (offset_arg) {
+inline RegionParticleIterator :: RegionParticleIterator (Type t, CellContainer_T_ptr cells_arg, const CellIndex_T offset_arg, const CellIndex_T stride_arg, const int startCellIndex_arg, const int regionDimensions_arg[3], const int globalDimensions_arg[3], const double startRegion_arg[3], const double endRegion_arg[3]) :
+		ParticleIterator(t, cells_arg, offset_arg, stride_arg, false), _localCellIndex (offset_arg) {
 	for (int d = 0; d < 3; d++) {
 		_regionDimensions[d] = regionDimensions_arg[d];
 		_globalDimensions[d] = globalDimensions_arg[d];
@@ -118,19 +118,20 @@ inline void RegionParticleIterator :: next_non_empty_cell() {
 	const CellIndex_T numCellsInRegion = _regionDimensions[2] * _regionDimensions[1] * _regionDimensions[0];
 
 	// find the next non-empty cell
-	do {
-		_localCellIndex += _stride;
-	} while (_localCellIndex < numCellsInRegion and cells[getGlobalCellIndex()].isEmpty());
+	bool validCellFound = false;
+	for (_localCellIndex += _stride; _localCellIndex < numCellsInRegion; _localCellIndex += _stride) {
 
-	if (_localCellIndex < numCellsInRegion) {
-		// if we found a non-empty cell..
-		// valid
-		_cell_index = getGlobalCellIndex();
-		_mol_index = 0;
+		const ParticleCell & c = cells[getGlobalCellIndex()];
+
+		if (c.isNotEmpty() and (_type == ALL_CELLS or not c.isHaloCell())) {
+			validCellFound = true;
+			_cell_index = getGlobalCellIndex();
+			_mol_index = 0;
+			break;
+		}
 	}
-	else {
-		// else there is no next non-empty cell..
-		// invalid
+
+	if (not validCellFound) {
 		make_invalid();
 	}
 }

@@ -241,14 +241,13 @@ public:
 	// documentation in base class
 	virtual void updateMoleculeCaches();
 
-	ParticleIterator iteratorBegin () {
+	ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) {
 		ParticleIterator :: CellIndex_T offset = mardyn_get_thread_num();
 		ParticleIterator :: CellIndex_T stride = mardyn_get_num_threads();
 
-		return ParticleIterator(&_cells, offset, stride);
+		return ParticleIterator(t, &_cells, offset, stride);
 	}
-	RegionParticleIterator iterateRegionBegin (const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex, IterateType type = ALL);
-	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], IterateType type = ALL);
+	RegionParticleIterator iterateRegionBegin (const double startRegion[3], const double endRegion[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS);
 	
 	ParticleIterator iteratorEnd () {
 		return ParticleIterator :: invalid();
@@ -311,12 +310,6 @@ private:
 	void deleteParticlesOutsideBox(double boxMin[3], double boxMax[3]);
 
 	/**
-	 * advance _cellIterator, until a non-empty cell is found,
-	 * set _particleIterator and return the corresponding Molecule* value
-	 */
-	MoleculeIterator nextNonEmptyCell();
-
-	/**
 	 * traverses single cell
 	 * @param cellIndex
 	 * @param cellProcessor
@@ -326,7 +319,10 @@ private:
 
 	void getCellIndicesOfRegion(const double startRegion[3], const double endRegion[3], unsigned int &startRegionCellIndex, unsigned int &endRegionCellIndex);
 
-	RegionParticleIterator getRegionParticleIterator(const double startRegion[3], const double endRegion[3], const unsigned int startRegionCellIndex, const unsigned int endRegionCellIndex);
+	RegionParticleIterator getRegionParticleIterator(
+			const double startRegion[3], const double endRegion[3],
+			const unsigned int startRegionCellIndex,
+			const unsigned int endRegionCellIndex, ParticleIterator::Type type);
 
 	//####################################
 	//##### PRIVATE MEMBER VARIABLES #####

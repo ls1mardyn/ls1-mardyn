@@ -35,13 +35,6 @@ class ParticleContainer;
 class ParticlePairsHandler;
 class XMLfileUnits;
 
-typedef Molecule* MoleculeIterator;
-
-enum IterateType {
-	ONLY_INNER_AND_BOUNDARY=0, /* iterates every cell except halo cells */
-	ALL=1 /* iterates every cell */
-};
-
 //! @brief This Interface is used to get access to particles and pairs of particles
 //! @author Martin Buchholz
 //!
@@ -151,8 +144,8 @@ public:
 
 	virtual void traversePartialInnermostCells(CellProcessor& cellProcessor, unsigned int stage, int stageCount) = 0;
 
-	virtual ParticleIterator iteratorBegin () = 0;
-	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], IterateType type = ALL) = 0;
+	virtual ParticleIterator iteratorBegin (ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
+	virtual RegionParticleIterator iterateRegionBegin (const double startCorner[3], const double endCorner[3], ParticleIterator::Type t = ParticleIterator::ALL_CELLS) = 0;
 
 	virtual ParticleIterator iteratorEnd () = 0;
 	virtual RegionParticleIterator iterateRegionEnd () = 0;
