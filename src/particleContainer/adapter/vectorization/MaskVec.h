@@ -29,7 +29,7 @@ public:
 
 	static MaskVec zero() {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return false;
+		return 0;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_setzero_si128();
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -41,7 +41,7 @@ public:
 
 	static MaskVec ones() {
 #if   VCP_VEC_WIDTH == VCP_VEC_W__64
-		return true;
+		return ~0;
 #elif VCP_VEC_WIDTH == VCP_VEC_W_128
 		return _mm_set_epi32(~0, ~0, ~0, ~0);
 #elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -54,7 +54,7 @@ public:
 	MaskVec operator and (const MaskVec& rhs) const {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m and rhs;
+			return _m & rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_and_si128(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -64,7 +64,7 @@ public:
 	#endif
 #else
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m and rhs;
+			return _m & rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_and_si128(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -78,7 +78,7 @@ public:
 	MaskVec operator or (const MaskVec& rhs) const {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m or rhs;
+			return _m | rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_or_si128(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -88,7 +88,7 @@ public:
 	#endif
 #else
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m or rhs;
+			return _m | rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_or_si128(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -102,7 +102,7 @@ public:
 	MaskVec operator xor (const MaskVec & rhs) const {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m xor rhs;
+			return _m ^ rhs;
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_xor_si128(_m, rhs);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -164,7 +164,7 @@ public:
 	bool movemask() const {
 #if VCP_PREC == VCP_SPSP or VCP_PREC == VCP_DPDP
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m;
+			return _m != MaskVec::zero();
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_movemask_epi8(_m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
@@ -174,7 +174,7 @@ public:
 	#endif
 #else
 	#if   VCP_VEC_WIDTH == VCP_VEC_W__64
-			return _m;
+			return _m != MaskVec::zero();
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_128
 			return _mm_movemask_epi8(_m);
 	#elif VCP_VEC_WIDTH == VCP_VEC_W_256
