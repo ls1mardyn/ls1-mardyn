@@ -78,8 +78,7 @@ public:
 	//!        ==> cells have to be larger: cellsPerDimension = phasespacelength/celllength = 100/celllength = 66 cells \n
 	//!        ==> celllength = 100/66 = 1.5152
 	LinkedCells(
-		double bBoxMin[3], double bBoxMax[3], double cutoffRadius, double LJCutoffRadius,
-		double cellsInCutoffRadius
+		double bBoxMin[3], double bBoxMax[3], double cutoffRadius
 	);
 
 	//! Default constructor
@@ -171,9 +170,6 @@ public:
 
 	double getCutoff() { return _cutoffRadius; }
 	void setCutoff(double rc) { _cutoffRadius = rc; }
-
-	int getCellsInCutoff() { return _cellsInCutoff; }
-	void setCellsInCutoff(int n) { _cellsInCutoff = n; }
 
 	//! @brief counts all particles inside the bounding box
 	unsigned countParticles(unsigned int cid);
@@ -355,14 +351,12 @@ private:
 	double _haloBoundingBoxMin[3]; //!< low corner of the bounding box around the linked cells (including halo)
 	double _haloBoundingBoxMax[3]; //!< high corner of the bounding box around the linked cells (including halo)
 
-	int _cellsInCutoff; //!< Minimal number of cells within the cutoff radius
 	int _cellsPerDimension[3]; //!< Number of Cells in each spatial dimension (including halo)
 	int _haloWidthInNumCells[3]; //!< Halo width (in cells) in each dimension
 	int _boxWidthInNumCells[3]; //!< Box width (in cells) in each dimension
 	double _haloLength[3]; //!< width of the halo strip (in size units)
 	double _cellLength[3]; //!< length of the cell (for each dimension)
 	double _cutoffRadius; //!< RDF/electrostatics cutoff radius
-	double _LJCutoffRadius;
 
 	//! @brief True if all Particles are in the right cell
 	//!

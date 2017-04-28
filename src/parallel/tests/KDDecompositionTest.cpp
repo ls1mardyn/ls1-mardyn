@@ -70,14 +70,13 @@ void KDDecompositionTest::testRebalancingDeadlocks() {
 		_domain->setGlobalLength(2, boxL);
 		kdd = new KDDecomposition(cutOff, _domain, 1, fullSearchThreshold);
 
-		double cellsInCutoffRadius = 1.0;
 		double bBoxMin[3];
 		double bBoxMax[3];
 		for (int i = 0; i < 3; i++) {
 			bBoxMin[i] = kdd->getBoundingBoxMin(i, _domain);
 			bBoxMax[i] = kdd->getBoundingBoxMax(i, _domain);
 		}
-		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff, cutOff, cellsInCutoffRadius);
+		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutOff);
 		moleculeContainer->update();
 		kdd->_steps = 0;
 		_rank = kdd->_rank;

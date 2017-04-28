@@ -28,11 +28,8 @@ ParticleContainer* ParticleContainerFactory::createEmptyParticleContainer(type t
 		double bBoxMin[] = {0.0, 0.0, 0.0, 0.0};
 		double bBoxMax[] = {2.0, 2.0, 2.0, 2.0};
 		double cutoffRadius = 1.0;
-		double LJCutoffRadius = 1.0;
-		double cellsInCutoffRadius = 1.0;
 
-		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius, LJCutoffRadius,
-		                                         cellsInCutoffRadius);
+		LinkedCells* container = new LinkedCells(bBoxMin, bBoxMax, cutoffRadius);
 		return container;
 
 	} else {
@@ -59,7 +56,7 @@ ParticleContainer* ParticleContainerFactory::createInitializedParticleContainer(
 
 	ParticleContainer* moleculeContainer;
 	if (type == LinkedCell) {
-		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff, cutoff, 1.0);
+		moleculeContainer = new LinkedCells(bBoxMin, bBoxMax, cutoff);
 		#if ENABLE_MPI
 		DomainDecomposition * temp = 0;
 		temp = dynamic_cast<DomainDecomposition *>(domainDecomposition);

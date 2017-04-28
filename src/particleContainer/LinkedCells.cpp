@@ -21,42 +21,25 @@ using Log::global_log;
 //################################################
 
 LinkedCells::LinkedCells(double bBoxMin[3], double bBoxMax[3],
-		double cutoffRadius, double LJCutoffRadius, double cellsInCutoffRadius) :
+		double cutoffRadius) :
 		ParticleContainer(bBoxMin, bBoxMax) {
 	int numberOfCells = 1;
 	_cutoffRadius = cutoffRadius;
-	_LJCutoffRadius = LJCutoffRadius;
 
 	global_log->debug() << "cutoff: " << cutoffRadius << endl;
-	global_log->debug() << "LJ cutoff:" << LJCutoffRadius << endl;
-	global_log->debug() << "# cells in cutoff: " << cellsInCutoffRadius << endl;
-
-	_cellsInCutoff = ceil(cellsInCutoffRadius);
-
-	if (_cellsInCutoff != 1) {
-		global_log->error()
-				<< "With the recent release only 1 cell per cutoff radius is supported,"
-				<< " but the input file prescribes " << _cellsInCutoff
-				<< " cells per cutoff radius." << endl
-				<< "\tThe support has been dropped, since no speedup can be expected using"
-				<< " multiple cells per cutoff radius." << endl
-				<< "\tIf you can provide a case, where this is not true, please contact us."
-				<< endl;
-		Simulation::exit(-1);
-	}
+	global_log->debug() << "# cells in cutoff hardcoded to 1 " << endl;
 
 	for (int d = 0; d < 3; d++) {
 		/* first calculate the cell length for this dimension */
 		_boxWidthInNumCells[d] = floor(
-				(_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius
-						* cellsInCutoffRadius);
+				(_boundingBoxMax[d] - _boundingBoxMin[d]) / cutoffRadius);
 		// in each dimension at least one layer of (inner+boundary) cells is necessary
 		if (_boxWidthInNumCells[d] == 0) {
 			_boxWidthInNumCells[d] = 1;
 		}
 		_cellLength[d] = (_boundingBoxMax[d] - _boundingBoxMin[d])
 				/ _boxWidthInNumCells[d];
-		_haloWidthInNumCells[d] = ceil(cellsInCutoffRadius);
+		_haloWidthInNumCells[d] = 1;
 		_haloLength[d] = _haloWidthInNumCells[d] * _cellLength[d];
 		_haloBoundingBoxMin[d] = _boundingBoxMin[d] - _haloLength[d];
 		_haloBoundingBoxMax[d] = _boundingBoxMax[d] + _haloLength[d];
@@ -111,26 +94,15 @@ LinkedCells::~LinkedCells() {
 }
 
 void LinkedCells::readXML(XMLfileUnits& xmlconfig) {
-	xmlconfig.getNodeValue("cellsInCutoffRadius", _cellsInCutoff);
-	if (_cellsInCutoff != 1) {
-		global_log->error()
-				<< "With the recent release only 1 cell per cutoff radius is supported,"
-				<< " but the input file prescribes " << _cellsInCutoff
-				<< " cells per cutoff radius." << endl
-				<< "\tThe support has been dropped, since no speedup can be expected using"
-				<< " multiple cells per cutoff radius." << endl
-				<< "\tIf you can provide a case, where this is not true, please contact us."
-				<< endl;
-		Simulation::exit(-1);
-	}
-	global_log->info() << "Cells in cut-off radius: " << _cellsInCutoff << endl;
+	global_log->info() << "Cells in cut-off radius hardcoded to 1." << endl;
 }
 
 void LinkedCells::rebuild(double bBoxMin[3], double bBoxMax[3]) {
 	for (int i = 0; i < 3; i++) {
 		this->_boundingBoxMin[i] = bBoxMin[i];
 		this->_boundingBoxMax[i] = bBoxMax[i];
-		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff); /* TODO: Single value?! */
+//		_haloWidthInNumCells[i] = ::ceil(_cellsInCutoff);
+		_haloWidthInNumCells[i] = 1;
 	}
 	int numberOfCells = 1;
 
