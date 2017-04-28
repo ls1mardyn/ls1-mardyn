@@ -105,10 +105,10 @@ void ChemicalPotential::prepareTimestep(TMoleculeContainer* cell,
 	else if ((minredco[0] < 0.0) || (minredco[1] < 0.0) || (minredco[2] < 0.0)
 			|| (maxredco[0] > 1.0) || (maxredco[1] > 1.0)
 			|| (maxredco[2] > 1.0))
-		localN = cell->countParticles(this->componentid, this->control_bottom,
+		localN = this->countParticles(cell, this->componentid, this->control_bottom,
 				this->control_top);
 	else
-		localN = cell->countParticles(this->componentid);
+		localN = this->countParticles(cell, this->componentid);
 	float minrnd = 0.0;
 	float maxrnd = 1.0;
 	this->globalN = comm->Ndistribution(localN, &minrnd, &maxrnd);
@@ -590,4 +590,41 @@ void ChemicalPotential::grandcanonicalStep(
 		m->check(m->id());
 	}
 #endif
+}
+
+unsigned ChemicalPotential::countParticles(
+		TMoleculeContainer* moleculeContainer, unsigned int cid) const {
+	// ParticleContainer::countParticles functionality moved here as it was:
+	// i.e. halo-particles are NOT counted
+
+	ParticleIterator begin = moleculeContainer->iteratorBegin(ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	ParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+	unsigned N = 0;
+
+	for (auto m = begin; m != end; ++m) {
+		if (m->componentid() == cid)
+			++N;
+	}
+
+	return N;
+}
+
+unsigned ChemicalPotential::countParticles(
+		TMoleculeContainer* moleculeContainer, unsigned int cid,
+		double* cbottom, double* ctop) const {
+	// ParticleContainer::countParticles functionality moved here as it was:
+	// i.e. halo-particles NOT counted
+
+	RegionParticleIterator begin = moleculeContainer->iterateRegionBegin(cbottom, ctop, ParticleIterator::ONLY_INNER_AND_BOUNDARY);
+	RegionParticleIterator end = moleculeContainer->iterateRegionEnd();
+
+	unsigned N = 0;
+	for (auto m = begin; m != end; ++m) {
+		if (m->componentid() == cid) {
+			++N;
+		}
+	}
+
+	return N;
 }

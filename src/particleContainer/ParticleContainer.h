@@ -196,14 +196,6 @@ public:
 
 	virtual double getCutoff() = 0;
 
-    /* TODO: This goes into the component class */
-	//! @brief counts all particles inside the bounding box
-	virtual unsigned countParticles(unsigned int cid) = 0;
-
-    /* TODO: This goes into the component class */
-	//! @brief counts particles in the intersection of bounding box and control volume
-	virtual unsigned countParticles(unsigned int cid, double* cbottom, double* ctop) = 0;
-
     /* TODO: Have a look on this */
 	virtual void deleteMolecule(unsigned long molid, double x, double y, double z, const bool& rebuildCaches) = 0;
 
