@@ -12,7 +12,9 @@
 #include <malloc.h>
 #include <new>
 #include <cstring>
+#include <vector>
 #include "utils/mardyn_assert.h"
+#include "AlignedAllocator.h"
 
 #define CACHE_LINE_SIZE 64
 
@@ -26,10 +28,10 @@
 
 /**
  * \brief An aligned array.
- * \details Has pointer to T semantics.
+ * \details Has pointer to T semantics. Internal capacity is always rounded up to fill up full cache-lines.
  * \tparam T The type of the array elements.
  * \tparam alignment The alignment restriction. Must be a power of 2, should not be 8.
- * \author Johannes Heckl, Nikola Tchipev
+ * \author Johannes Heckl, Nikola Tchipev, Micha Mueller
  */
 template<class T, size_t alignment = CACHE_LINE_SIZE>
 class AlignedArray {
@@ -37,35 +39,37 @@ public:
 	/**
 	 * \brief Construct an empty array.
 	 */
-	AlignedArray() :
-			_capacity(0), _p(nullptr) {
+	AlignedArray() {
+		vec = new std::vector<T, AlignedAllocator<T, alignment>>();
+
 	}
 
 	/**
 	 * \brief Construct an array of n elements.
 	 */
-	AlignedArray(size_t n) :
-			_capacity(n), _p(_allocate(n)) {
-		if (!_p)
-			throw std::bad_alloc();
+	AlignedArray(size_t n) {
+		vec = new std::vector<T, AlignedAllocator<T, alignment>>(_round_up(n));
 	}
 
 	/**
 	 * \brief Construct a copy of another AlignedArray.
 	 */
-	AlignedArray(const AlignedArray & a) :
-			_capacity(a._capacity), _p(_allocate(a._capacity)) {
-		if (!_p)
-			throw std::bad_alloc();
-		_assign(a);
+	AlignedArray(const AlignedArray & a) {
+		vec = new std::vector<T, AlignedAllocator<T, alignment>>(
+				_round_up(a.vec->size()));
+		for (size_t i = 0; i < a.vec->size(); ++i) {
+			vec->push_back((*a.vec)[i]);
+		}
 	}
 
 	/**
 	 * \brief Assign a copy of another AlignedArray.
 	 */
 	AlignedArray & operator=(const AlignedArray & a) {
-		resize(a._capacity);
-		_assign(a);
+		vec->resize(_round_up(a.vec->size()));
+		for (size_t i = 0; i < a.vec->size(); ++i) {
+			vec->push_back((*a.vec)[i]);
+		}
 		return *this;
 	}
 
@@ -73,83 +77,74 @@ public:
 	 * \brief Free the array.
 	 */
 	virtual ~AlignedArray() {
-		_free();
+		delete vec;
 	}
 
 	void appendValue(T v, size_t oldNumElements) {
-		mardyn_assert(oldNumElements <= _capacity);
-		if(oldNumElements < _capacity) {
-			// no need to resize
-		} else {
-			// shit, we need to resize, but also keep contents
-			AlignedArray<T> backupCopy(*this);
-			resize_zero_shrink(oldNumElements + 1);
-			std::memcpy (_p, backupCopy._p, oldNumElements * sizeof(T));
-		}
-		_p[oldNumElements] = v;
+		mardyn_assert(oldNumElements <= vec->size());
+		vec->push_back(v);
 	}
 
-	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL = false, bool allow_shrink = false) {
+	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL =
+			false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
-		bool need_resize = size_rounded_up > _capacity or (allow_shrink and size_rounded_up < _capacity);
+		bool need_resize = size_rounded_up > vec->capacity()
+				or (allow_shrink and size_rounded_up < vec->capacity());
 
 		if (need_resize) {
-			resize(size_rounded_up);
+			vec->resize(size_rounded_up);
 			// resize zero-s all
 		} else {
 			// we didn't resize, but we might still need to zero the rest of the Cache Line
 			if (zero_rest_of_CL and size_rounded_up > 0) {
-				std::memset(_p + exact_size, 0, size_rounded_up - exact_size);
+				std::memset(vec->data() + exact_size, 0,
+						size_rounded_up - exact_size);
 			}
 		}
 
-		mardyn_assert(size_rounded_up <= _capacity);
-		return _capacity;
+		mardyn_assert(size_rounded_up <= vec->capacity());
+		return vec->capacity();
 	}
 
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
 	virtual void resize(size_t n) {
-		if (n == _capacity)
-			return;
-		_free();
-		_p = nullptr;
-		_p = _allocate(n);
-		if (_p == nullptr)
-			throw std::bad_alloc();
-		_capacity = n;
+		vec->resize(_round_up(n));
 	}
 
 	virtual void zero(size_t start_idx) {
-		if (_capacity > 0) {
+		if (vec->capacity() > 0) {
 			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
-			std::memset(_p, 0, num_to_zero * sizeof(T));
+			std::memset(vec->data(), 0, num_to_zero * sizeof(T));
 		}
 	}
 
+	/**
+	 * \brief Return size of currently allocated memory in terms of elements. Not equal to the actual amount of elements currently stored.
+	 */
 	inline size_t get_size() const {
-		return this->_capacity;
+		return vec->capacity();
 	}
 
 	/**
 	 * \brief Implicit conversion into pointer to T.
 	 */
 	operator T*() const {
-		return _p;
+		return vec->data();
 	}
 
 	/**
 	 * \brief Return amount of allocated storage + .
 	 */
 	size_t get_dynamic_memory() const {
-		return _capacity * sizeof(T);
+		return vec->capacity() * sizeof(T);
 	}
 
 	static size_t _round_up(size_t n) {
 		size_t ret;
-		switch(sizeof(T)) {
+		switch (sizeof(T)) {
 		case 1:
 			ret = (n + 63) & ~0x3F;
 			break;
@@ -166,34 +161,9 @@ public:
 	}
 
 protected:
-	void _assign(T * p) const {
-		std::memcpy(_p, p, _capacity * sizeof(T));
-	}
 
-	static T* _allocate(size_t elements) {
+	std::vector<T, AlignedAllocator<T, alignment>>* vec;
 
-#if defined(__SSE3__) && ! defined(__PGI)
-		T* ptr = static_cast<T*>(_mm_malloc(sizeof(T) * elements, alignment));
-#else
-		T* ptr = static_cast<T*>(memalign(alignment, sizeof(T) * elements));
-#endif
-
-		std::memset(ptr, 0, elements * sizeof(T));
-		return ptr;
-
-	}
-
-	void _free()
-	{
-#if defined(__SSE3__) && ! defined(__PGI)
-		_mm_free(_p);
-#else
-		free(_p);
-#endif
-	}
-
-	size_t _capacity;
-	T * _p;
 };
 
 #endif
