@@ -18,6 +18,7 @@ public:
 	virtual ~Homogeneous() {}
 
 //	void initializeLongRange();
+	virtual void readXML(XMLfileUnits& xmlconfig) {}
 	void calculateLongRange();
 
 private:

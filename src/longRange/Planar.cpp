@@ -10,19 +10,25 @@
 #include <cmath>
 
 #include "utils/Logger.h"
+#include "utils/xmlfileUnits.h"
 
 using namespace std;
 using Log::global_log;
 
-Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation){
+Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation)
+{
+	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
+
 	cutoff=cutoffLJ; 
 	_domain = domain;
 	_domainDecomposition = domainDecomposition;
 	_particleContainer = particleContainer;
 	_slabs = slabs;
-	
+}
+
+void Planar::init()
+{
 	_smooth=true; // Deactivate this for transient simulations!
-	global_log->info() << "Long Range Correction for planar interfaces is used" << endl;
 	
 	vector<Component>&  components = *_simulation.getEnsemble()->getComponents();
 	numComp=components.size();
@@ -127,6 +133,18 @@ Planar::Planar(double /*cutoffT*/, double cutoffLJ, Domain* domain, DomainDecomp
 	temp=_domain->getTargetTemperature(0);
 }
 
+void Planar::readXML(XMLfileUnits& xmlconfig)
+{
+	xmlconfig.getNodeValue("slabs", _slabs);
+	xmlconfig.getNodeValue("smooth", _smooth);
+	xmlconfig.getNodeValue("frequency", frequency);
+	global_log->info() << "Long Range Correction: using " << _slabs << " slabs for profiles to calculate LRC." << endl;
+	global_log->info() << "Long Range Correction: sampling profiles every " << frequency << "th simstep." << endl;
+	global_log->info() << "Long Range Correction: profiles are smoothed (averaged over time): " << std::boolalpha << _smooth << endl;
+
+	// init
+	this->init();
+}
 
 void Planar::calculateLongRange(){
 	if (_smooth){

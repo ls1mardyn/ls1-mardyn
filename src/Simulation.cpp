@@ -358,17 +358,37 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->warning() << "Thermostats section missing." << endl;
 		}
 		
-		
-	/*	if(xmlconfig.changecurrentnode("planarLRC")) {
-			XMLfile::Query query = xmlconfig.query("slabs");
-			unsigned slabs = query.card();
-			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, slabs, global_simulation);
-			_domainDecomposition->readXML(xmlconfig);
+		/* long range correction*/
+		if(xmlconfig.changecurrentnode("longrange") )
+		{
+			std::string type;
+			if( !xmlconfig.getNodeValue("@type", type) )
+			{
+				global_log->error() << "LongRangeCorrection: Missing type specification. Program exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			if("planar" == type)
+			{
+				unsigned int nSlabs = 10;
+				_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition, _moleculeContainer, nSlabs, global_simulation);
+				_longRangeCorrection->readXML(xmlconfig);
+			}
+			else if("homogeneous" == type)
+			{
+				/*
+				 * Needs to be initialized later for some reason, done in Simulation::prepare_start()
+				 * TODO: perhabs work on this, to make it more robust 
+				 *
+				 *_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);
+                 */
+			}
+			else
+			{
+				global_log->error() << "LongRangeCorrection: Wrong type. Expected type == homogeneous|planar. Program exit ..." << endl;
+                Simulation::exit(-1);
+			}
 			xmlconfig.changecurrentnode("..");
 		}
-		else {
-			_longRangeCorrection = new Homogeneous(_cutoffRadius, _LJCutoffRadius,_domain,global_simulation);	
-		}*/
 
 		xmlconfig.changecurrentnode(".."); /* algorithm section */
 	}

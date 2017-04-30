@@ -22,6 +22,8 @@ public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation);
 	virtual ~Planar() {}
 
+	void init();
+	virtual void readXML(XMLfileUnits& xmlconfig);
 	void calculateLongRange();
 	double lrcLJ(Molecule* mol);
 	// For non-equilibrium simulations the density profile must not be smoothed, therefore the density profile from the actual time step is used.
