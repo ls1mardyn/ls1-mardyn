@@ -777,6 +777,7 @@ void Simulation::initConfigOldstyle(const string& inputfilename) {
 			inputfilestream >> slabs;
 			_longRangeCorrection = new Planar(_cutoffRadius, _LJCutoffRadius, _domain, _domainDecomposition,
 					_moleculeContainer, slabs, global_simulation);
+			_longRangeCorrection->init();
 		} else if (token == "NumberOfFluidComponents") {
 			double numFluidComp;
 			inputfilestream >> numFluidComp;

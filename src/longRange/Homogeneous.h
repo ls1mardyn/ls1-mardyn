@@ -17,7 +17,7 @@ public:
 	Homogeneous(double cutoffRadius, double cutoffRadiusLJ,  Domain* domain, Simulation _simulation);
 	virtual ~Homogeneous() {}
 
-//	void initializeLongRange();
+	virtual void init() {}
 	virtual void readXML(XMLfileUnits& xmlconfig) {}
 	void calculateLongRange();
 

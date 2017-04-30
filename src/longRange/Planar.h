@@ -22,7 +22,7 @@ public:
 	Planar(double cutoffT,double cutoffLJ,Domain* domain,  DomainDecompBase* domainDecomposition, ParticleContainer* particleContainer, unsigned slabs, Simulation _simulation);
 	virtual ~Planar() {}
 
-	void init();
+	virtual void init();
 	virtual void readXML(XMLfileUnits& xmlconfig);
 	void calculateLongRange();
 	double lrcLJ(Molecule* mol);
