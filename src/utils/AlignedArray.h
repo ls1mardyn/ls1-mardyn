@@ -39,36 +39,29 @@ public:
 	/**
 	 * \brief Construct an empty array.
 	 */
-	AlignedArray() {
-		vec = new std::vector<T, AlignedAllocator<T, alignment>>();
-
+	AlignedArray() :
+			_vec(0), _vec_ptr(&_vec) {
 	}
 
 	/**
 	 * \brief Construct an array of n elements.
 	 */
-	AlignedArray(size_t n) {
-		vec = new std::vector<T, AlignedAllocator<T, alignment>>(_round_up(n));
+	AlignedArray(size_t n) :
+			_vec(n), _vec_ptr(&_vec) {
 	}
 
 	/**
 	 * \brief Construct a copy of another AlignedArray.
 	 */
-	AlignedArray(const AlignedArray & a) {
-		vec = new std::vector<T, AlignedAllocator<T, alignment>>(a.vec->size());
-		for (size_t i = 0; i < a.vec->size(); ++i) {
-			(*vec)[i] = (*a.vec)[i];
-		}
+	AlignedArray(const AlignedArray & a) :
+			_vec(a._vec), _vec_ptr(&_vec) {
 	}
 
 	/**
 	 * \brief Assign a copy of another AlignedArray.
 	 */
 	AlignedArray & operator=(const AlignedArray & a) {
-		vec->resize(a.vec->size());
-		for (size_t i = 0; i < a.vec->size(); ++i) {
-			(*vec)[i] = (*a.vec)[i];
-		}
+		_vec = a._vec;
 		return *this;
 	}
 
@@ -76,51 +69,48 @@ public:
 	 * \brief Free the array.
 	 */
 	virtual ~AlignedArray() {
-		delete vec;
 	}
 
 	void appendValue(T v, size_t oldNumElements) {
-		mardyn_assert(oldNumElements <= vec->size());
-		if (oldNumElements < vec->size()) {
-			// no need to resize
-		} else {
+		mardyn_assert(oldNumElements <= _vec.size());
+		if (oldNumElements >= _vec.size()) {
 			// shit, we need to resize, but also keep contents
-			vec->resize(_round_up(oldNumElements + 1));
+			_vec.resize(_round_up(oldNumElements + 1));
 		}
-		(*vec)[oldNumElements] = v;
+		_vec[oldNumElements] = v;
 	}
 
 	virtual size_t resize_zero_shrink(size_t exact_size, bool zero_rest_of_CL =
 			false, bool allow_shrink = false) {
 		size_t size_rounded_up = _round_up(exact_size);
 
-		bool need_resize = size_rounded_up > vec->size()
-				or (allow_shrink and size_rounded_up < vec->size());
+		bool need_resize = size_rounded_up > _vec.size()
+				or (allow_shrink and size_rounded_up < _vec.size());
 
 		if (need_resize) {
-			vec->resize(size_rounded_up);
+			_vec.resize(size_rounded_up);
 		}
 		// we might still need to zero the rest of the Cache Line
 		if (zero_rest_of_CL and size_rounded_up > 0) {
-			std::memset(vec->data() + exact_size, 0,
+			std::memset(_vec.data() + exact_size, 0,
 					size_rounded_up - exact_size);
 		}
 
-		mardyn_assert(size_rounded_up <= vec->size());
-		return vec->size();
+		mardyn_assert(size_rounded_up <= _vec.size());
+		return _vec.size();
 	}
 
 	/**
 	 * \brief Reallocate the array. All content may be lost.
 	 */
 	virtual void resize(size_t n) {
-		vec->resize(_round_up(n));
+		_vec.resize(_round_up(n));
 	}
 
 	virtual void zero(size_t start_idx) {
-		if (vec->size() > 0) {
+		if (_vec.size() > 0) {
 			size_t num_to_zero = this->_round_up(start_idx) - start_idx;
-			std::memset(vec->data(), 0, num_to_zero * sizeof(T));
+			std::memset(_vec.data(), 0, num_to_zero * sizeof(T));
 		}
 	}
 
@@ -128,21 +118,21 @@ public:
 	 * \brief Return current size in terms of elements
 	 */
 	inline size_t get_size() const {
-		return vec->size();
+		return _vec.size();
 	}
 
 	/**
 	 * \brief Implicit conversion into pointer to T.
 	 */
 	operator T*() const {
-		return vec->data();
+		return _vec_ptr->data();
 	}
 
 	/**
 	 * \brief Return amount of allocated storage + .
 	 */
 	size_t get_dynamic_memory() const {
-		return vec->size() * sizeof(T);
+		return _vec.size() * sizeof(T);
 	}
 
 	static size_t _round_up(size_t n) {
@@ -165,8 +155,10 @@ public:
 
 protected:
 
-	std::vector<T, AlignedAllocator<T, alignment>>* vec;
+	std::vector<T, AlignedAllocator<T, alignment>> _vec;
+	std::vector<T, AlignedAllocator<T, alignment>>* _vec_ptr;
 
 };
 
 #endif
+
