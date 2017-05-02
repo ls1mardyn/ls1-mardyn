@@ -929,21 +929,6 @@ bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[
 	return true;
 }
 
-void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, CellProcessor& cellProcessor) {
-   ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
-   map<unsigned long, Molecule*>* pc = ce->particleContainer();
-   double RR = ce->getRR();
-   
-   for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
-      mardyn_assert(pcit->second != NULL);
-      Molecule* m1 = pcit->second;
-      unsigned neigh = ce->countNeighbours(this, m1);
-      unsigned long m1id = pcit->first;
-      mardyn_assert(m1id == m1->id());
-      ce->decideActivity(neigh, m1id);
-   }
-}
-
 RegionParticleIterator LinkedCells::iterateRegionBegin(const double startRegion[3], const double endRegion[3], ParticleIterator::Type type) {
 	// parameter "type" not yet used
 	// add functionality in a future version...

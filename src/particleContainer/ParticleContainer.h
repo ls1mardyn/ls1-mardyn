@@ -202,8 +202,6 @@ public:
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
 
-	virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
-	
 	//! @brief Update the caches of the molecules, that lie in inner cells.
 	//! The caches of boundary and halo cells is not updated.
 	//! This method is used for a multi-step scheme of overlapping mpi communication

@@ -46,15 +46,15 @@ class CavityEnsemble {
    void determineBoundary();
    void processBoundary();
 
+   void cavityStep(ParticleContainer * globalMoleculeContainer);
+
+ private:
    /**
     * iterate a box of center this molecule and side-lengths two times the search-radius
     * and count the neighbours contained in it.
     */
    unsigned countNeighbours(ParticleContainer * container, Molecule * m1) const;
 
-   void cavityStep(ParticleContainer * globalMoleculeContainer);
-
- private:
    int ownrank;  // for debugging purposes (indicate rank in console output)
    bool initialized;
    bool rotated;
