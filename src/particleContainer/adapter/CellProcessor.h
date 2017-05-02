@@ -74,8 +74,6 @@ public:
 
 	virtual double processSingleMolecule(Molecule* m1, ParticleCell& cell2) = 0;
 
-	virtual int countNeighbours(Molecule* m1, ParticleCell& cell2, double RR) = 0;
-
 	/**
 	 * Called after the cell has been considered for the last time during the traversal.
 	 */

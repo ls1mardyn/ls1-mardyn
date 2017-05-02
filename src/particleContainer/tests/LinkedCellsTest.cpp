@@ -233,10 +233,6 @@ public:
 		return 0.;
 	}
 
-	virtual int countNeighbours(Molecule* /*m1*/, ParticleCell& /*cell2*/, double /*RR*/) {
-		return 0;
-	}
-
 	virtual void postprocessCell(ParticleCell& /*cell*/) {
 	}
 

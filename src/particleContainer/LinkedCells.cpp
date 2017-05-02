@@ -929,43 +929,6 @@ bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[
 	return true;
 }
 
-int LinkedCells::countNeighbours(ParticlePairsHandler* /*particlePairsHandler*/, Molecule* m1, CellProcessor& cellProcessor, double RR) {
-        int m1neigh = 0;
-        mardyn_assert(_cellsValid);
-        unsigned long cellIndex = getCellIndexOfMolecule(m1);
-        ParticleCell& currentCell = _cells[cellIndex];
-
-        cellProcessor.initTraversal();
-
-        // extend the window of cells with cache activated
-        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1 ; windowCellIndex++) {
-                cellProcessor.preprocessCell(_cells[windowCellIndex]);
-        }
-
-        m1neigh += cellProcessor.countNeighbours(m1, currentCell, RR);
-
-        // forward neighbours
-        for (auto neighbourOffsetsIter = _forwardNeighbourOffsets.begin(); neighbourOffsetsIter != _forwardNeighbourOffsets.end(); neighbourOffsetsIter++)
-        {
-                ParticleCell& neighbourCell = _cells[cellIndex + *neighbourOffsetsIter];
-                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
-        }
-        // backward neighbours
-        for (auto neighbourOffsetsIter = _backwardNeighbourOffsets.begin(); neighbourOffsetsIter != _backwardNeighbourOffsets.end(); neighbourOffsetsIter++)
-        {
-                ParticleCell& neighbourCell = _cells[cellIndex - *neighbourOffsetsIter];  // minus oder plus?
-                m1neigh += cellProcessor.countNeighbours(m1, neighbourCell, RR);
-        }
-
-        // close the window of cells activated
-        for (unsigned int windowCellIndex = cellIndex - _minNeighbourOffset; windowCellIndex < cellIndex + _maxNeighbourOffset+1; windowCellIndex++) {
-                cellProcessor.postprocessCell(_cells[windowCellIndex]);
-        }
-
-        cellProcessor.endTraversal();
-        return m1neigh;
-}
-
 unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm) {
    return ce->communicateNumCavities(comm);
 }
@@ -978,11 +941,7 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
    for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
       mardyn_assert(pcit->second != NULL);
       Molecule* m1 = pcit->second;
-#if 0
-      unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
-#else
       unsigned neigh = ce->countNeighbours(this, m1);
-#endif
       unsigned long m1id = pcit->first;
       mardyn_assert(m1id == m1->id());
       ce->decideActivity(neigh, m1id);

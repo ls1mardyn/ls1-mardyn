@@ -51,22 +51,6 @@ double LegacyCellProcessor::processSingleMolecule(Molecule* m1, ParticleCell& ce
 	return u;
 }
 
-int LegacyCellProcessor::countNeighbours(Molecule* m1, ParticleCell& cell2, double RR)
-{
-        int tn = 0;
-        double distanceVector[3];
-
-        int neighbourParticleCount = cell2.getMoleculeCount();
-
-        for (int j = 0; j < neighbourParticleCount; j++) {
-                Molecule& molecule2 = cell2.moleculesAt(j);
-                if(m1->id() == molecule2.id()) continue;
-                double dd = molecule2.dist2(*m1, distanceVector);
-                if (dd < RR) tn++;
-        }
-        return tn;
-}
-
 void LegacyCellProcessor::processCellPair(ParticleCell& cell1, ParticleCell& cell2) {
 	double distanceVector[3];
 
