@@ -10,7 +10,7 @@
 class BinaryCheckpointWriter: public OutputBase {
 public:
 
-    BinaryCheckpointWriter(){}
+	BinaryCheckpointWriter();
 	//! @brief writes a checkpoint file that can be used to continue the simulation
 	//!
 	//! The format of the checkpointfile written by this method is the same as the format

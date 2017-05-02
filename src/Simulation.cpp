@@ -429,7 +429,18 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		xmlconfig.getNodeValue("@name", pluginname);
 		global_log->info() << "Enabling output plugin: " << pluginname << endl;
 		if(pluginname == "CheckpointWriter") {
-			outputPlugin = new CheckpointWriter();
+			std::string strType = "unknown";
+			xmlconfig.getNodeValue("@type", strType);
+
+			if("ASCII" == strType)
+				outputPlugin = new CheckpointWriter();
+			else if("binary" == strType)
+				outputPlugin = new BinaryCheckpointWriter();
+			else
+			{
+				global_log->error() << "Unknown CheckpointWriter type, expected: ASCII|binary. Program exit... " << endl;
+				Simulation::exit(-1);
+			}
 		}
 		else if(pluginname == "DecompWriter") {
 			outputPlugin = new DecompWriter();
@@ -569,19 +580,42 @@ void Simulation::initConfigXML(const string& inputfilename) {
 		readXML(inp);
 
 		string pspfile;
-		if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
-			pspfile.insert(0, inp.getDir());
-			global_log->info() << "phasespacepoint description file:\t"
-					<< pspfile << endl;
-
-			string pspfiletype("ASCII");
-			inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype);
-			global_log->info() << "       phasespacepoint file type:\t"
-					<< pspfiletype << endl;
+		string pspfileheader;
+		string pspfiletype("ASCII");
+		if (inp.getNodeValue("ensemble/phasespacepoint/file@type", pspfiletype) ){
 			if (pspfiletype == "ASCII") {
+				if (inp.getNodeValue("ensemble/phasespacepoint/file", pspfile)) {
+					pspfile.insert(0, inp.getDir());
+					global_log->info() << "phasespacepoint description file:\t"
+							<< pspfile << endl;
+				}
 				_inputReader = (InputBase*) new InputOldstyle();
 				_inputReader->setPhaseSpaceFile(pspfile);
 			}
+			else if (pspfiletype == "binary") {
+				if (inp.getNodeValue("ensemble/phasespacepoint/file/header", pspfileheader)) {
+					pspfileheader.insert(0, inp.getDir());
+					global_log->info() << "phasespacepoint description file:\t"
+							<< pspfileheader << endl;
+				}
+				if (inp.getNodeValue("ensemble/phasespacepoint/file/data", pspfile)) {
+					pspfile.insert(0, inp.getDir());
+				}
+				_inputReader = (InputBase*) new BinaryReader();
+				_inputReader->setPhaseSpaceHeaderFile(pspfileheader);
+				_inputReader->setPhaseSpaceFile(pspfile);
+
+				// read header
+				double timestepLength = 0.005;  // <-- TODO: should be removed from parameter list
+				_inputReader->readPhaseSpaceHeader(_domain, timestepLength);
+			}
+			else {
+				global_log->error() << "Unknown type in node: ensemble/phasespacepoint/file, "
+						"expected: ASCII|binary. Programm exit ..." << endl;
+				Simulation::exit(-1);
+			}
+			global_log->info() << "       phasespacepoint file type:\t"
+					<< pspfiletype << endl;
 		}
 		string oldpath = inp.getcurrentnodepath();
 		if(inp.changecurrentnode("ensemble/phasespacepoint/generator")) {
