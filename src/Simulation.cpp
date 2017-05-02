@@ -1134,11 +1134,7 @@ void Simulation::simulate() {
 					(!((_simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
 
 					// warning, return value is ignored!
-#if 0
-					this->_moleculeContainer->numCavities(&cavEns, this->_domainDecomposition);
-#else
 					/*unsigned long ret = */ cavEns.communicateNumCavities(this->_domainDecomposition);
-#endif
 				}
 			}
 		}

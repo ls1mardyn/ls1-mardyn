@@ -202,7 +202,6 @@ public:
     /* TODO goes into grand canonical ensemble */
 	virtual double getEnergy(ParticlePairsHandler* particlePairsHandler, Molecule* m1, CellProcessor& cellProcessor) = 0;
 
-	virtual unsigned long numCavities(CavityEnsemble* ce, DomainDecompBase* comm) = 0;
 	virtual void cavityStep(CavityEnsemble* ce, double T, Domain* domain, CellProcessor& cellProcessor) = 0;
 	
 	//! @brief Update the caches of the molecules, that lie in inner cells.

@@ -929,10 +929,6 @@ bool LinkedCells::isRegionInBoundingBox(double startRegion[3], double endRegion[
 	return true;
 }
 
-unsigned long LinkedCells::numCavities(CavityEnsemble* ce, DomainDecompBase* comm) {
-   return ce->communicateNumCavities(comm);
-}
-
 void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, CellProcessor& cellProcessor) {
    ParticlePairs2PotForceAdapter particlePairsHandler(*domain);
    map<unsigned long, Molecule*>* pc = ce->particleContainer();
