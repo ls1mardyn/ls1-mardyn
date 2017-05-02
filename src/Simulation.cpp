@@ -1117,18 +1117,28 @@ void Simulation::simulate() {
 		if(_simstep >= _initStatistics) {
 			map<unsigned, CavityEnsemble>::iterator ceit;
 			for(ceit = this->_mcav.begin(); ceit != this->_mcav.end(); ceit++) {
-				if (!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) {
-					global_log->debug() << "Cavity ensemble for component " << ceit->first << ".\n";
+
+				unsigned cavityComponentID = ceit->first;
+				CavityEnsemble & cavEns = ceit->second;
+
+				if (!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
+					global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
 
 					this->_moleculeContainer->cavityStep(
-							&ceit->second, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
+							&cavEns, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
 					);
 				}
 
-				if( (!((_simstep + 2 * ceit->first + 7) % ceit->second.getInterval())) ||
-						(!((_simstep + 2 * ceit->first + 3) % ceit->second.getInterval())) ||
-						(!((_simstep + 2 * ceit->first - 1) % ceit->second.getInterval())) ) {
-					this->_moleculeContainer->numCavities(&ceit->second, this->_domainDecomposition);
+				if( (!((_simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||
+					(!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) ||
+					(!((_simstep + 2 * cavityComponentID - 1) % cavEns.getInterval())) ) {
+
+					// warning, return value is ignored!
+#if 0
+					this->_moleculeContainer->numCavities(&cavEns, this->_domainDecomposition);
+#else
+					/*unsigned long ret = */ cavEns.communicateNumCavities(this->_domainDecomposition);
+#endif
 				}
 			}
 		}
