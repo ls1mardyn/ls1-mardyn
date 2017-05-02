@@ -11,6 +11,7 @@
 using namespace std;
 
 class DomainDecompBase;
+class ParticleContainer;
 
 class CavityEnsemble {
  public:
@@ -28,7 +29,7 @@ class CavityEnsemble {
    );
 
    void setMaxNeighbours(unsigned n, double rr) { this->maxNeighbours = n; this->r2n = rr; }
-   double getRR() { return this->r2n; }
+   double getRR() const { return this->r2n; }
 
    void init(Component* component, unsigned Nx, unsigned Ny, unsigned Nz);
    void preprocessStep();
@@ -44,6 +45,12 @@ class CavityEnsemble {
    
    void determineBoundary();
    void processBoundary();
+
+   /**
+    * iterate a box of center this molecule and side-lengths two times the search-radius
+    * and count the neighbours contained in it.
+    */
+   unsigned countNeighbours(ParticleContainer * container, Molecule * m1) const;
 
  private:
    int ownrank;  // for debugging purposes (indicate rank in console output)

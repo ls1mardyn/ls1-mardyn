@@ -23,7 +23,7 @@ class ParticleIterator {
 public:
 	enum Type {
 		ALL_CELLS=0, /* iterates every cell */
-		ONLY_INNER_AND_BOUNDARY=1, /* iterates every cell except halo cells */
+		ONLY_INNER_AND_BOUNDARY=1, /* iterates only inner and boundary cells, i.e. no halo cells */
 	};
 
 	typedef std::vector<ParticleCell> CellContainer_T;

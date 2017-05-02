@@ -978,7 +978,11 @@ void LinkedCells::cavityStep(CavityEnsemble* ce, double /*T*/, Domain* domain, C
    for(map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
       mardyn_assert(pcit->second != NULL);
       Molecule* m1 = pcit->second;
+#if 0
       unsigned neigh = this->countNeighbours(&particlePairsHandler, m1, cellProcessor, RR);
+#else
+      unsigned neigh = ce->countNeighbours(this, m1);
+#endif
       unsigned long m1id = pcit->first;
       mardyn_assert(m1id == m1->id());
       ce->decideActivity(neigh, m1id);
