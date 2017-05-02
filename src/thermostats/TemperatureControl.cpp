@@ -10,6 +10,7 @@
 #include "parallel/DomainDecompBase.h"
 #include "molecules/Molecule.h"
 #include "Domain.h"
+#include "utils/xmlfileUnits.h"
 
 #include <iostream>
 #include <fstream>
@@ -305,6 +306,56 @@ TemperatureControl::TemperatureControl(unsigned long nControlFreq, unsigned long
 TemperatureControl::~TemperatureControl()
 {
 
+}
+
+void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
+{
+    // control
+    xmlconfig.getNodeValue("control/start", _nStart);
+    xmlconfig.getNodeValue("control/frequency", _nControlFreq);
+    xmlconfig.getNodeValue("control/stop", _nStop);
+    global_log->info() << "Start control from simstep: " << _nStart << endl;
+    global_log->info() << "Control with frequency: " << _nControlFreq << endl;
+    global_log->info() << "Stop control at simstep: " << _nStop << endl;	
+
+	// turn on/off explosion heuristics
+    //_domain->SetExplosionHeuristics(bUseExplosionHeuristics);
+
+	// add regions
+    uint32_t numRegions = 0;
+    XMLfile::Query query = xmlconfig.query("regions/region");
+    numRegions = query.card();
+    global_log->info() << "Number of control regions: " << numRegions << endl;
+    if(numRegions < 1) {
+        global_log->warning() << "No region parameters specified." << endl;
+    }
+    string oldpath = xmlconfig.getcurrentnodepath();
+    XMLfile::Query::const_iterator outputRegionIter;
+    for( outputRegionIter = query.begin(); outputRegionIter; outputRegionIter++ )
+    {
+        xmlconfig.changecurrentnode( outputRegionIter );
+        double lc[3];
+		double uc[3];
+		double dTemperature;
+		double dExponent;
+		std::string strDirections;
+		uint32_t nNumSlabs;
+		uint32_t nCompID;
+        xmlconfig.getNodeValue("coords/lcx", lc[0]);
+        xmlconfig.getNodeValue("coords/lcy", lc[1]);
+        xmlconfig.getNodeValue("coords/lcz", lc[2]);
+        xmlconfig.getNodeValue("coords/ucx", uc[0]);
+        xmlconfig.getNodeValue("coords/ucy", uc[1]);
+        xmlconfig.getNodeValue("coords/ucz", uc[2]);
+		xmlconfig.getNodeValue("target/temperature", dTemperature);
+		xmlconfig.getNodeValue("target/component", nCompID);
+		xmlconfig.getNodeValue("settings/numslabs", nNumSlabs);
+		xmlconfig.getNodeValue("settings/exponent", dExponent);
+		xmlconfig.getNodeValue("settings/directions", strDirections);
+
+		this->AddRegion(lc, uc, nNumSlabs, nCompID, dTemperature,
+				dExponent, strDirections);
+    }
 }
 
 void TemperatureControl::AddRegion(double dLowerCorner[3], double dUpperCorner[3], unsigned int nNumSlabs, unsigned int nComp, double dTargetTemperature, double dTemperatureExponent, std::string strTransDirections)

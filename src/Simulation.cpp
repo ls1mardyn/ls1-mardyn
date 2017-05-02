@@ -314,6 +314,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			Simulation::exit(1);
 		}
 
+		/* thermostats */
 		if(xmlconfig.changecurrentnode("thermostats")) {
 			long numThermostats = 0;
 			XMLfile::Query query = xmlconfig.query("thermostat");
@@ -346,7 +347,21 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 						global_log->info() << "Adding velocity scaling thermostat for component '" << componentName << "' (ID: " << componentId << "), T = " << temperature << endl;
 					}
 				}
-				else {
+				else if(thermostattype == "TemperatureControl")
+				{
+					if(NULL == _temperatureControl)
+					{
+						_temperatureControl = new TemperatureControl();
+						_temperatureControl->readXML(xmlconfig);
+					}
+					else
+					{
+						global_log->error() << "Instance of TemperatureControl allready exist! Programm exit ..." << endl;
+						Simulation::exit(-1);
+					}
+				}
+				else
+				{
 					global_log->warning() << "Unknown thermostat " << thermostattype << endl;
 					continue;
 				}
@@ -358,7 +373,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 			global_log->warning() << "Thermostats section missing." << endl;
 		}
 		
-		/* long range correction*/
+		/* long range correction */
 		if(xmlconfig.changecurrentnode("longrange") )
 		{
 			std::string type;
@@ -474,6 +489,9 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 		else if(pluginname == "CavityWriter") {
 			outputPlugin = new CavityWriter();
 		}
+        else if(pluginname == "GammaWriter") {
+            outputPlugin = new GammaWriter();
+        }
 		/* temporary */
 		else if(pluginname == "MPICheckpointWriter") {
 			outputPlugin = new MPICheckpointWriter();
