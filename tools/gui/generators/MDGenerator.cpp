@@ -93,8 +93,6 @@ void MDGenerator::generatePreview() {
 	double bBoxMin[3] = { 0,0,0};
 	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
-	double LJCutoffRadius = 3.0;
-	double cellsInCutoffRadius = 1;
 
 	readPhaseSpaceHeader(&domain, 0);
 	bBoxMax[0] = domain.getGlobalLength(0);
@@ -106,8 +104,7 @@ void MDGenerator::generatePreview() {
 			<< bBoxMax[0] << "," << bBoxMax[1] << "," << bBoxMax[2] << "]" << endl;
 	_logger->info() << "MDGenerator: temperature=" << domain.getTargetTemperature(0) << endl;
 
-	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, cellsInCutoffRadius);
+	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius);
 
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	_logger->info() << "MDGenerator: " << container.getNumberOfParticles() << " particles were created." << endl;
@@ -151,8 +148,6 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	double bBoxMin[3] = { 0,0,0};
 	double bBoxMax[3] = { 0,0,0};
 	double cutoffRadius = 3.0;
-	double LJCutoffRadius = 3.0;
-	double cellsInCutoffRadius = 1;
 
 	std::cout << "MDGenerator::generateOutput before read phasespace header!" << endl;
 	readPhaseSpaceHeader(&domain, 0);
@@ -160,8 +155,7 @@ void MDGenerator::generateOutput(const std::string& directory) {
 	bBoxMax[0] = domain.getGlobalLength(0);
 	bBoxMax[1] = domain.getGlobalLength(1);
 	bBoxMax[2] = domain.getGlobalLength(2);
-	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius,
-			LJCutoffRadius, cellsInCutoffRadius);
+	LinkedCells container(bBoxMin, bBoxMax, cutoffRadius);
 	std::cout << "MDGenerator::generateOutput before read phasespace!" << endl;
 	readPhaseSpace(&container, &lmu, &domain, &domainDecomposition);
 	std::cout << "MDGenerator::generateOutput read phasespace done!" << endl;
