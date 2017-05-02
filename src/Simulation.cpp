@@ -773,7 +773,7 @@ void Simulation::prepare_start() {
 
 	// here we have to call calcFM() manually, otherwise force and moment are not
 	// updated inside the molecule (actually this is done in upd_postF)
-	// or should we better call the integrator->eventForcesCalculated?
+	// integrator->eventForcesCalculated should not be called, since otherwise the velocities would already be updated.
 	#if defined(_OPENMP)
 	#pragma omp parallel
 	#endif
