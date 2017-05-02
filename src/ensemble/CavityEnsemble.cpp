@@ -320,3 +320,18 @@ unsigned CavityEnsemble::countNeighbours(ParticleContainer * container, Molecule
 
 	return m1neigh;
 }
+
+void CavityEnsemble::cavityStep(ParticleContainer * globalMoleculeContainer) {
+
+	// don't confuse with the other ParticleContainer, the base-class of LinkedCells!
+	map<unsigned long, Molecule*>* pc = this->particleContainer();
+
+	for (map<unsigned long, Molecule*>::iterator pcit = pc->begin(); pcit != pc->end(); pcit++) {
+		mardyn_assert(pcit->second != NULL);
+		Molecule* m1 = pcit->second;
+		unsigned neigh = this->countNeighbours(globalMoleculeContainer, m1);
+		unsigned long m1id = pcit->first;
+		mardyn_assert(m1id == m1->id());
+		this->decideActivity(neigh, m1id);
+	}
+}

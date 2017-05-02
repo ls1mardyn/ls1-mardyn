@@ -1124,9 +1124,13 @@ void Simulation::simulate() {
 				if (!((_simstep + 2 * cavityComponentID + 3) % cavEns.getInterval())) {
 					global_log->debug() << "Cavity ensemble for component " << cavityComponentID << ".\n";
 
+#if 0
 					this->_moleculeContainer->cavityStep(
 							&cavEns, _domain->getGlobalCurrentTemperature(), this->_domain, *_cellProcessor
 					);
+#else
+					cavEns.cavityStep(this->_moleculeContainer);
+#endif
 				}
 
 				if( (!((_simstep + 2 * cavityComponentID + 7) % cavEns.getInterval())) ||

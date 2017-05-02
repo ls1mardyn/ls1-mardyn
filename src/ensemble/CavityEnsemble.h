@@ -52,6 +52,8 @@ class CavityEnsemble {
     */
    unsigned countNeighbours(ParticleContainer * container, Molecule * m1) const;
 
+   void cavityStep(ParticleContainer * globalMoleculeContainer);
+
  private:
    int ownrank;  // for debugging purposes (indicate rank in console output)
    bool initialized;
