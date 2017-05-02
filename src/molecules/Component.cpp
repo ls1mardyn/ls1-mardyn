@@ -68,7 +68,8 @@ void Component::readXML(XMLfileUnits& xmlconfig) {
 			global_log->error() << "Tersoff no longer supported:" << siteType << endl;
 			Simulation::exit(-1);
 		}else {
-			global_log->warning() << "Unknown site type:" << siteType << endl;
+			global_log->error() << "Unknown site type:" << siteType << endl;
+			Simulation::exit(-1);
 		}
 	}
 
