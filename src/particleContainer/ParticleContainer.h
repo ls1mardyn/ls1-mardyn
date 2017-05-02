@@ -26,7 +26,6 @@
 #include "RegionParticleIterator.h"
 
 #include "molecules/MoleculeForwardDeclaration.h"
-class CavityEnsemble;
 class CellProcessor;
 class ChemicalPotential;
 class Domain;
