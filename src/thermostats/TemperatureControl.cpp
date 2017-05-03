@@ -18,6 +18,7 @@
 #include <vector>
 #include <string>
 #include <cmath>
+#include <cstdint>
 
 using namespace std;
 
@@ -292,6 +293,10 @@ void ControlRegionT::ResetLocalValues()
 
 
 // class TemperatureControl
+TemperatureControl::TemperatureControl(Domain* domain)
+	: _domain(domain)
+{
+}
 
 TemperatureControl::TemperatureControl(unsigned long nControlFreq, unsigned long nStart, unsigned long nStop)
 {
@@ -336,17 +341,28 @@ void TemperatureControl::readXML(XMLfileUnits& xmlconfig)
         xmlconfig.changecurrentnode( outputRegionIter );
         double lc[3];
 		double uc[3];
+		std::string strVal[3];
 		double dTemperature;
 		double dExponent;
 		std::string strDirections;
 		uint32_t nNumSlabs;
 		uint32_t nCompID;
-        xmlconfig.getNodeValue("coords/lcx", lc[0]);
-        xmlconfig.getNodeValue("coords/lcy", lc[1]);
-        xmlconfig.getNodeValue("coords/lcz", lc[2]);
-        xmlconfig.getNodeValue("coords/ucx", uc[0]);
-        xmlconfig.getNodeValue("coords/ucy", uc[1]);
-        xmlconfig.getNodeValue("coords/ucz", uc[2]);
+
+		// coordinates
+		xmlconfig.getNodeValue("coords/lcx", lc[0]);
+		xmlconfig.getNodeValue("coords/lcy", lc[1]);
+		xmlconfig.getNodeValue("coords/lcz", lc[2]);
+		xmlconfig.getNodeValue("coords/ucx", strVal[0]);
+		xmlconfig.getNodeValue("coords/ucy", strVal[1]);
+		xmlconfig.getNodeValue("coords/ucz", strVal[2]);
+		// read upper corner
+		for(uint8_t d=0; d<3; ++d)
+			uc[d] = (strVal[d] == "box") ? _domain->getGlobalLength(d) : atof(strVal[d].c_str() );
+
+#ifndef NDEBUG
+		global_log->info() << "TemperatureControl: upper corner: " << uc[0] << ", " << uc[1] << ", " << uc[2] << endl;
+#endif
+
 		xmlconfig.getNodeValue("target/temperature", dTemperature);
 		xmlconfig.getNodeValue("target/component", nCompID);
 		xmlconfig.getNodeValue("settings/numslabs", nNumSlabs);

@@ -351,7 +351,7 @@ void Simulation::readXML(XMLfileUnits& xmlconfig) {
 				{
 					if(NULL == _temperatureControl)
 					{
-						_temperatureControl = new TemperatureControl();
+						_temperatureControl = new TemperatureControl(_domain);
 						_temperatureControl->readXML(xmlconfig);
 					}
 					else
