@@ -22,7 +22,7 @@ using Log::global_log;
  * This allows the use of multiple different collective calls, which is needed for the different ensembles.
  * @author Steffen Seckler
  */
-class CollectiveCommunicationNonBlocking: public CollectiveCommunicationInterface, public CollectiveCommBaseInterface {
+class CollectiveCommunicationNonBlocking: public CollectiveCommunicationInterface {
 public:
 	//! Constructor, does nothing yet
 	CollectiveCommunicationNonBlocking() :
@@ -46,23 +46,23 @@ public:
 		}
 
 		_currentKey = key;
+
+		// add the key, if it is not yet existent:
 		if (! _comms.emplace(_currentKey, _currentKey).second) {
 			// this happens, if the key is already existent.
 			global_log->debug() << "CollectiveCommunicationNonBlocking: key "
 					<< _currentKey << " already existent. Reusing information." << std::endl;
 		}
-		else{
-			_comms.at(_currentKey).init(communicator, numValues);
-		}
+		_comms.at(_currentKey).init(communicator, numValues, _currentKey);
 	}
 
 	//! @brief delete memory and MPI_Type
 	//! @param key The key of the collective communication
 	void finalize() override {
+		_comms.at(_currentKey).finalize();
 		if(_currentKey == 0){
 			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key "
 								<< _currentKey << ", thus the entry is removed." << std::endl;
-			_comms.at(_currentKey).finalize();
 			_comms.erase(_currentKey);
 		}
 		_currentKey = -1;
@@ -166,6 +166,10 @@ public:
 	virtual void allreduceSumAllowPrevious() override {
 		mardyn_assert(_currentKey > 0);  // _currentKey has to be positive non-zero and should be unique for allreduceSumAllowPrevious
 		_comms.at(_currentKey).allreduceSumAllowPrevious();
+	}
+
+	void scanSum() override {
+		_comms.at(_currentKey).scanSum();
 	}
 
 	/**

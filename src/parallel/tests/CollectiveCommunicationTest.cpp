@@ -34,13 +34,56 @@ void CollectiveCommunicationTest::testCollectiveCommBase() {
 void CollectiveCommunicationTest::testCollectiveCommunication() {
 	CollectiveCommunication collComm;
 
+	testSingleIteration(collComm);
+
+}
+
+void CollectiveCommunicationTest::testCollectiveCommunicationNonBlocking() {
+#if MPI_VERSION >= 3
+	CollectiveCommunicationNonBlocking collComm;
+
+	testSingleIteration(collComm);
+
+	collComm.init(MPI_COMM_WORLD, 1, 1);
+	collComm.appendDouble(1.);
+	collComm.allreduceSumAllowPrevious();
+	double val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(1. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 1);
+	collComm.appendDouble(2.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(1. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 1);
+	collComm.appendDouble(3.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(2. * _commSize, val1, 1e-8);
+
+	collComm.init(MPI_COMM_WORLD, 1, 1);
+	collComm.appendDouble(4.);
+	collComm.allreduceSumAllowPrevious();
+	val1 = collComm.getDouble();
+	collComm.finalize();
+	ASSERT_DOUBLES_EQUAL(3. * _commSize, val1, 1e-8);
+#else
+#pragma message "CollectiveCommunicationNonBlocking not supported and not tested. MPI_Version is too old."
+#endif
+}
+
+void CollectiveCommunicationTest::testSingleIteration(CollectiveCommunicationInterface& collComm) {
 	// allreduce with double
 	collComm.init(MPI_COMM_WORLD, 1);
 	collComm.appendDouble(2.);
 	collComm.allreduceSum();
 	double val1 = collComm.getDouble();
 	collComm.finalize();
-	ASSERT_DOUBLES_EQUAL(val1, 2. * _commSize, 1e-8);
+	ASSERT_DOUBLES_EQUAL(2. * _commSize, val1, 1e-8);
 
 	// broadcast with int
 	collComm.init(MPI_COMM_WORLD, 1);
@@ -72,19 +115,7 @@ void CollectiveCommunicationTest::testCollectiveCommunication() {
 	float val5 = collComm.getFloat();
 	double val6 = collComm.getDouble();
 	collComm.finalize();
-	ASSERT_DOUBLES_EQUAL(val4, 1. * _commSize, 1e-8);
-	ASSERT_DOUBLES_EQUAL(val5, 2.f * _commSize, 1e-8);
-	ASSERT_DOUBLES_EQUAL(val6, 3. * _commSize, 1e-8);
-}
-
-void CollectiveCommunicationTest::testCollectiveCommunicationNonBlocking() {
-#if MPI_VERSION >= 3
-
-#else
-#pragma message CollectiveCommunicationNonBlocking not
-#endif
-}
-
-void CollectiveCommunicationTest::testSingleIteration(){
-
+	ASSERT_DOUBLES_EQUAL(1. * _commSize, val4, 1e-8);
+	ASSERT_DOUBLES_EQUAL(2.f * _commSize, val5, 1e-8);
+	ASSERT_DOUBLES_EQUAL(3. * _commSize, val6, 1e-8);
 }

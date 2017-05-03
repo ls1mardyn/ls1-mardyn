@@ -21,7 +21,7 @@ public:
 	 * Constructor
 	 * @param key the key of the collective operation
 	 */
-	CollectiveCommunicationSingleNonBlocking(int key=0) {
+	CollectiveCommunicationSingleNonBlocking(int key = 0) {
 		_key = key;
 		_request = MPI_REQUEST_NULL;
 		_communicationInitiated = false;
@@ -33,36 +33,46 @@ public:
 	 * Destructor
 	 */
 	virtual ~CollectiveCommunicationSingleNonBlocking() {
+		MPI_Wait(&_request, MPI_STATUS_IGNORE);
 		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
 	}
 
-
 	void allreduceSumAllowPrevious() override {
-		if(!_valuesValid){
-			if(_communicationInitiated){
+		if (!_valuesValid) {
+			if (_communicationInitiated) {
 				// if the values are not valid and communication is already initiated, first wait for the communication to finish.
 				waitAndUpdateData();
 			}
 			// if the values were invalid, we have to do a proper allreduce!
 			allreduceSum();
+			_tempValues = _values;  // save it somewhere safe for next iteration!
 			_valuesValid = true;
+		} else {
+
+			if (_communicationInitiated) {
+				// if the values are not valid and communication is already initiated, first wait for the communication to finish.
+				// safe the data, that needs to be sent
+				std::vector<valType> toSendValues = _values;
+				// get the new data, this updates _values
+				waitAndUpdateData();
+				// initiate the next allreduce
+				initAllreduceSum(toSendValues);
+			} else {
+				std::vector<valType> previous = _tempValues;
+				// initiate the next allreduce
+				initAllreduceSum(_values);  // this updates _tempValues
+				// restore saved data from previous operations.
+				_values = previous;
+			}
+
 		}
-
-		// initiate the next allreduce
-		initAllreduceSum();
-
 	}
 
 	// documentation in base class
 	virtual void init(MPI_Comm communicator, int numValues, int key = 0) override {
-		CollectiveCommBase::init(numValues);
-
-		_communicator = communicator;
-		if (_firstComm) {
-			_types.reserve(numValues);
-		}
+		CollectiveCommunication::init(communicator, numValues);
 #ifndef NDEBUG
-		else {
+		if (!_firstComm) {
 			mardyn_assert(static_cast<int>(_values.size()) == numValues);
 		}
 #endif
@@ -70,17 +80,16 @@ public:
 
 	// documentation in base class
 	virtual void finalize() override {
-		_types.clear();
-		mardyn_assert(_agglomeratedType == MPI_DATATYPE_NULL);
+		CollectiveCommunication::finalize();
 	}
 
 private:
 
 	/*int testReceived() {
-		int flag;
-		MPI_CHECK(MPI_Test(&_request, &flag, MPI_STATUS_IGNORE));
-		return flag;
-	}*/
+	 int flag;
+	 MPI_CHECK(MPI_Test(&_request, &flag, MPI_STATUS_IGNORE));
+	 return flag;
+	 }*/
 
 	/**
 	 * Waits for communication to end and also sets the data in the correct place (values)
@@ -94,20 +103,19 @@ private:
 		_valuesValid = true;
 	}
 
-	void initAllreduceSum() {
+	void initAllreduceSum(std::vector<valType> values) {
 		// copy the values to a temporary vector:
 		// all nonblocking operations have to be performed on this vector!
 		// this is necessary to maintain the validity of the data from previous steps
-		_tempValues = _values;
+		_tempValues = values;
 #if ENABLE_AGGLOMERATED_REDUCE
 		setMPIType();
 		MPI_Op agglomeratedTypeAddOperator;
 		const int commutative = 1;
 		valType * startOfValues = &(_tempValues[0]);
 		MPI_CHECK(
-				MPI_Op_create(
-						(MPI_User_function * ) CollectiveCommunication::add,
-						commutative, &agglomeratedTypeAddOperator));
+				MPI_Op_create((MPI_User_function * ) CollectiveCommunication::add, commutative,
+						&agglomeratedTypeAddOperator));
 		MPI_CHECK(
 				MPI_Iallreduce(MPI_IN_PLACE, startOfValues, 1, _agglomeratedType, agglomeratedTypeAddOperator, _communicator, & _request));
 		MPI_CHECK(MPI_Op_free(&agglomeratedTypeAddOperator));

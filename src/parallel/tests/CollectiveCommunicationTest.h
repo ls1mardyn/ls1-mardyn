@@ -9,6 +9,8 @@
 #include "utils/Testing.h"
 
 #include <vector>
+class CollectiveCommunicationInterface;
+
 
 class CollectiveCommunicationTest : public utils::Test {
 
@@ -31,7 +33,7 @@ public:
 	void testCollectiveCommunicationNonBlocking();
 
 private:
-	void testSingleIteration();
+	void testSingleIteration(CollectiveCommunicationInterface& collComm);
 	int _rank;
 	int _commSize;
 
