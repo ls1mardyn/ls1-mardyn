@@ -8,6 +8,7 @@
 #pragma once
 
 #include "CollectiveCommunication.h"
+#if MPI_VERSION >= 3
 
 /**
  * CollectiveCommunicationSingleNonBlocking extends the CollectiveCommunication by an implementation of nonblocking collectives.
@@ -20,7 +21,7 @@ public:
 	 * Constructor
 	 * @param key the key of the collective operation
 	 */
-	CollectiveCommunicationSingleNonBlocking(int key) {
+	CollectiveCommunicationSingleNonBlocking(int key=0) {
 		_key = key;
 		_request = MPI_REQUEST_NULL;
 		_communicationInitiated = false;
@@ -62,7 +63,7 @@ public:
 		}
 #ifndef NDEBUG
 		else {
-			mardyn_assert(_values.size() == numValues);
+			mardyn_assert(static_cast<int>(_values.size()) == numValues);
 		}
 #endif
 	}
@@ -126,3 +127,5 @@ private:
 	std::vector<valType> _tempValues;
 	bool _firstComm;
 };
+
+#endif // MPI_VERSION >= 3

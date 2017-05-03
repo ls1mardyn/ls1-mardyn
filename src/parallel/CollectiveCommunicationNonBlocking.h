@@ -11,6 +11,10 @@
 #include "CollectiveCommunicationSingleNonBlocking.h"
 #include <map>
 #include <utils/Logger.h>
+#include "Simulation.h"
+
+#if MPI_VERSION >= 3
+
 
 using Log::global_log;
 /**
@@ -22,7 +26,7 @@ class CollectiveCommunicationNonBlocking: public CollectiveCommunicationInterfac
 public:
 	//! Constructor, does nothing yet
 	CollectiveCommunicationNonBlocking() :
-			_comms(), _currentKey(-1) {
+			_currentKey(-1), _comms() {
 	}
 	/**
 	 * Destructor
@@ -40,24 +44,25 @@ public:
 					<< " not yet finalized" << std::endl;
 			Simulation::exit(234);
 		}
+
 		_currentKey = key;
-		if (!_comms.emplace(key).second) {
+		if (! _comms.emplace(_currentKey, _currentKey).second) {
 			// this happens, if the key is already existent.
 			global_log->debug() << "CollectiveCommunicationNonBlocking: key "
-					<< key << " already existent. Reusing information." << std::endl;
+					<< _currentKey << " already existent. Reusing information." << std::endl;
 		}
 		else{
-			_comms[key].init(communicator, numValues);
+			_comms.at(_currentKey).init(communicator, numValues);
 		}
 	}
 
 	//! @brief delete memory and MPI_Type
 	//! @param key The key of the collective communication
 	void finalize() override {
-		if(_currentKey==0){
+		if(_currentKey == 0){
 			global_log->debug() << "CollectiveCommunicationNonBlocking: finalizing with key "
 								<< _currentKey << ", thus the entry is removed." << std::endl;
-			_comms[_currentKey].finalize();
+			_comms.at(_currentKey).finalize();
 			_comms.erase(_currentKey);
 		}
 		_currentKey = -1;
@@ -66,37 +71,37 @@ public:
 	//! Append an int value to the list of values to be sent
 	//! @param intValue value to be appended
 	void appendInt(int intValue) override {
-		_comms[_currentKey].appendInt(intValue);
+		_comms.at(_currentKey).appendInt(intValue);
 	}
 
 	//! Append a unsigned long value to the list of values to be sent
 	//! @param unsLongValue value to be appended
 	void appendUnsLong(unsigned long unsLongValue) override {
-		_comms[_currentKey].appendUnsLong(unsLongValue);
+		_comms.at(_currentKey).appendUnsLong(unsLongValue);
 	}
 
 	//! Append a float value to the list of values to be sent
 	//! @param unsLongValue value to be appended
 	void appendFloat(float floatValue) override {
-		_comms[_currentKey].appendFloat(floatValue);
+		_comms.at(_currentKey).appendFloat(floatValue);
 	}
 
 	//! Append a double value to the list of values to be sent
 	//! @param unsLongValue value to be appended
 	void appendDouble(double doubleValue) override {
-		_comms[_currentKey].appendDouble(doubleValue);
+		_comms.at(_currentKey).appendDouble(doubleValue);
 	}
 
 	//! Append a long double value to the list of values to be sent
 	//! @param unsLongValue value to be appended
 	void appendLongDouble(long double longDoubleValue) override {
-		_comms[_currentKey].appendLongDouble(longDoubleValue);
+		_comms.at(_currentKey).appendLongDouble(longDoubleValue);
 	}
 
 	//! Get the MPI communicator
 	//! @return MPI communicator
 	MPI_Comm getTopology() override {
-		return _comms[_currentKey].getTopology();
+		return _comms.at(_currentKey).getTopology();
 	}
 
 	//! Get the next value from the list, which must be int
@@ -105,7 +110,7 @@ public:
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
 	int getInt() override {
-		return _comms[_currentKey].getInt();
+		return _comms.at(_currentKey).getInt();
 	}
 
 	//! Get the next value from the list, which must be unsigned long
@@ -114,7 +119,7 @@ public:
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
 	unsigned long getUnsLong() override {
-		return _comms[_currentKey].getUnsLong();
+		return _comms.at(_currentKey).getUnsLong();
 	}
 
 	//! Get the next value from the list, which must be float
@@ -123,7 +128,7 @@ public:
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
 	float getFloat() override {
-		return _comms[_currentKey].getFloat();
+		return _comms.at(_currentKey).getFloat();
 	}
 
 	//! Get the next value from the list, which must be double
@@ -132,7 +137,7 @@ public:
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
 	double getDouble() override {
-		return _comms[_currentKey].getDouble();
+		return _comms.at(_currentKey).getDouble();
 	}
 
 	//! Get the next value from the list, which must be long double
@@ -141,18 +146,18 @@ public:
 	//! FIFO ordering w.r.t. append-get order
 	//! @return the value
 	long double getLongDouble() override {
-		return _comms[_currentKey].getLongDouble();
+		return _comms.at(_currentKey).getLongDouble();
 	}
 
 	//! Broadcast all values from the process with rank 0 to all others
 	//! @param root The root of the broadcast
 	void broadcast(int root = 0) override {
-		_comms[_currentKey].broadcast(root);
+		_comms.at(_currentKey).broadcast(root);
 	}
 
 	//! Do Allreduce off all values with reduce operation add
 	void allreduceSum() override {
-		_comms[_currentKey].allreduceSum();
+		_comms.at(_currentKey).allreduceSum();
 	}
 
 	//! Performs an all-reduce (sum), however values of previous iterations are permitted.
@@ -160,7 +165,7 @@ public:
 	//! One possible use case for this function is the reduction of slowly changing variables, e.g. the temperature.
 	virtual void allreduceSumAllowPrevious() override {
 		mardyn_assert(_currentKey > 0);  // _currentKey has to be positive non-zero and should be unique for allreduceSumAllowPrevious
-		_comms[_currentKey].allreduceSumAllowPrevious();
+		_comms.at(_currentKey).allreduceSumAllowPrevious();
 	}
 
 	/**
@@ -177,3 +182,5 @@ private:
 	std::map<int, CollectiveCommunicationSingleNonBlocking> _comms;
 };
 
+
+#endif // MPI_VERSION >= 3
